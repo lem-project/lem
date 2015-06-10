@@ -81,13 +81,25 @@
     (setf (textbuf-cache-line textbuf) line)
     line))
 
+(defun textbuf-line-length (textbuf linum)
+  (length (line-str (textbuf-get-line textbuf linum))))
+
+(defun textbuf-take-lines (textbuf linum len)
+  (let ((strings))
+    (do ((line (textbuf-get-line textbuf linum) (line-next line))
+	 (i 0 (1+ i)))
+	((or (null line) (= i len)))
+      (push (line-str line) strings))
+    (nreverse strings)))
+
 (defun textbuf-insert-char (textbuf linum col c)
   (let ((line (textbuf-get-line textbuf linum)))
     (setf (line-str line)
           (concatenate 'string
 	               (subseq (line-str line) 0 col)
 		       (string c)
-		       (subseq (line-str line) col)))))
+		       (subseq (line-str line) col))))
+  t)
 
 (defun textbuf-insert-newline (textbuf linum col)
   (let ((line (textbuf-get-line textbuf linum)))
@@ -98,7 +110,9 @@
       (when (eq line (textbuf-tail-line textbuf))
         (setf (textbuf-tail-line textbuf) newline))
       (setf (line-str line)
-	    (subseq (line-str line) 0 col)))))
+	    (subseq (line-str line) 0 col))))
+  (incf (textbuf-nlines textbuf))
+  t)
 
 (defun textbuf-delete-char (textbuf linum col)
   (let ((line (textbuf-get-line textbuf linum)))
@@ -110,8 +124,11 @@
                            (line-str (line-next line))))
         (when (eq (line-next line)
                   (textbuf-tail-line textbuf))
-          (setf (textbuf-tail-line textbuf) line)))
-      (setf (line-str line)
-	    (concatenate 'string
-			 (subseq (line-str line) 0 col)
-			 (subseq (line-str line) (1+ col)))))))
+          (setf (textbuf-tail-line textbuf) line))
+	t)
+      (progn
+        (setf (line-str line)
+	      (concatenate 'string
+			   (subseq (line-str line) 0 col)
+			   (subseq (line-str line) (1+ col))))
+	t))))

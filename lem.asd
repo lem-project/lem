@@ -4,5 +4,12 @@
 
 (defsystem lem
   :serial t
-  :components ()
+  :components ((:file "util")
+	       (:file "key")
+	       (:file "globals")
+	       (:file "textbuf")
+	       (:file "buffer")
+	       (:file "window")
+	       (:file "command")
+	       (:file "lem"))
   :depends-on ("cl-ncurses"))

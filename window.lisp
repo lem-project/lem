@@ -52,36 +52,56 @@
 
 (defun window-redraw-line (buffer str y)
   (let ((width (str-width str))
-	(cury (- (buffer-cur-linum buffer)
-		 (buffer-vtop-linum buffer)))
-	(cols (buffer-ncols buffer))
-	(curx (buffer-cur-col buffer)))
+        (cury (- (buffer-cur-linum buffer)
+                 (buffer-vtop-linum buffer)))
+        (cols (buffer-ncols buffer))
+        (curx))
+    (when (= cury y)
+      (setq curx (str-width str (buffer-cur-col buffer))))
     (cond
       ((< width (buffer-ncols buffer))
-	nil)
+        nil)
       ((or (/= cury y)
-	   (< curx (1- cols)))
-	(setq str
-	      (concatenate 'string
-                           (substring-width str 0 (1- cols))
-                           (string #\$))))
+           (< curx (1- cols)))
+	(let ((i (wide-index str (1- cols))))
+          (setq str
+                (if (<= cols (str-width str i))
+                  (format nil "~a $" (subseq str 0 (1- i)))
+                  (format nil "~a$" (subseq str 0 i))))))
+      ((< (buffer-cur-col buffer) (length str))
+        (let* ((begin (wide-index str (- curx cols -3)))
+	       (end (1+ (buffer-cur-col buffer)))
+	       (substr (subseq str begin end)))
+          (setq str
+	        (if (<= cols (+ (str-width substr) 2))
+	          (format nil "$~a$" substr)
+	          (format nil "$~a $" substr))))
+        (setq curx (- cols 2)))
       (t
-	)))
-  (cl-ncurses:mvwaddstr (buffer-win buffer) y 0 str))
+        (setq str
+              (format nil
+                      "$~a"
+                      (substring-width str (- curx cols -2))))
+        (setq curx (- cols 1))))
+    (cl-ncurses:mvwaddstr (buffer-win buffer) y 0 str)
+    curx))
 
 (defmethod window-redraw ((buffer buffer))
   (cl-ncurses:werase (buffer-win buffer))
-  (do ((lines
-         (textbuf-take-lines (buffer-textbuf buffer)
-                             (buffer-vtop-linum buffer)
-                             (1- (buffer-nlines buffer)))
-         (cdr lines))
-       (y 0 (1+ y)))
-      ((null lines))
-    (window-redraw-line buffer (car lines) y))
-  (cl-ncurses:wmove (buffer-win buffer)
-		    (- (buffer-cur-linum buffer) (buffer-vtop-linum buffer))
-		    (buffer-cur-col buffer))
+  (let (x)
+    (do ((lines
+           (textbuf-take-lines (buffer-textbuf buffer)
+                               (buffer-vtop-linum buffer)
+                               (1- (buffer-nlines buffer)))
+           (cdr lines))
+         (y 0 (1+ y)))
+        ((null lines))
+      (let ((curx (window-redraw-line buffer (car lines) y)))
+        (when curx
+          (setq x curx))))
+    (cl-ncurses:wmove (buffer-win buffer)
+                      (- (buffer-cur-linum buffer) (buffer-vtop-linum buffer))
+                      x))
   (cl-ncurses:wrefresh (buffer-win buffer)))
 
 (defmethod window-update ((buffer buffer))

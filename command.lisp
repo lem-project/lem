@@ -20,4 +20,3 @@
 
 (defun command-find-keybind (keys)
   (gethash keys *keybind-table*))
-

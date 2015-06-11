@@ -50,15 +50,18 @@
                     (aref vec i)))))))
     (rec 0 (1- (length vec)))))
 
-(defun char-width (c)
-  (if (binary-search *eastasian-full* (char-code c) 'wide-table-cmp)
-    2
-    1))
+(defun char-width (c w)
+  (cond ((char= c #\tab)
+	 (+ (* (floor w *tab-size*) *tab-size*) *tab-size*))
+	((binary-search *eastasian-full* (char-code c) 'wide-table-cmp)
+	 (+ w 2))
+	(t
+	 (+ w 1))))
 
 (defun %str-width (str)
   (loop with width = 0
         for c across str
-        do (incf width (char-width c))
+        do (setq width (char-width c width))
 	finally (return width)))
 
 (defun str-width (str &optional n)
@@ -68,13 +71,12 @@
       str)))
 
 (defun wide-index (str goal)
-  (do ((i 0 (1+ i)))
-      ((<= (length str) i) i)
-    (let ((w (char-width (aref str i))))
-      (if ;(>= 0 (- goal w))
-	  (>= 0 goal)
-	(return i)
-        (decf goal w)))))
+  (loop with w = 0
+	for i from 0 below (length str) by 1
+	for c across str do
+	  (setq w (char-width c w))
+	  (when (<= goal w)
+	    (return i))))
 
 (defun substring-width (str begin &optional end)
   (let ((wb (wide-index str begin))

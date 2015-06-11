@@ -39,7 +39,6 @@
             (list (char-code (aref (sb-ext:octets-to-string bytes) 0)))))))))
 
 (defun lem-init (args)
-  (declare (ignore args))
   (cl-ncurses:initscr)
   (cl-ncurses:noecho)
   (cl-ncurses:cbreak)

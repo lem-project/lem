@@ -4,9 +4,9 @@
 
 (defsystem lem
   :serial t
-  :components ((:file "util")
-	       (:file "key")
+  :components ((:file "key")
 	       (:file "globals")
+	       (:file "util")
 	       (:file "textbuf")
 	       (:file "buffer")
 	       (:file "window")

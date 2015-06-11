@@ -12,6 +12,7 @@
   cur-col
   max-col)
 
+(defgeneric buffer-change-textbuf (buffer textbuf))
 (defgeneric buffer-head-line-p (buffer linum))
 (defgeneric buffer-tail-line-p (buffer linum))
 (defgeneric buffer-bolp (buffer))
@@ -41,6 +42,28 @@
     :cur-linum 1
     :cur-col 0
     :max-col 0))
+
+(defmethod buffer-change-textbuf ((buffer buffer) textbuf)
+  (let ((old-tb (buffer-textbuf buffer)))
+    (setf (textbuf-keep-binfo-f old-tb)
+          (lambda ()
+	    (values (buffer-vtop-linum buffer)
+	            (buffer-cur-linum buffer)
+	            (buffer-cur-col buffer)
+	            (buffer-max-col buffer)))))
+  (setf (buffer-textbuf buffer) textbuf)
+  (let ((vtop-linum 1)
+        (cur-linum 1)
+        (cur-col 0)
+        (max-col 0))
+    (when (textbuf-keep-binfo-f textbuf)
+      (multiple-value-setq
+       (vtop-linum cur-linum cur-col max-col)
+       (funcall (textbuf-keep-binfo-f textbuf))))
+    (setf (buffer-vtop-linum buffer) vtop-linum)
+    (setf (buffer-cur-linum buffer) cur-linum)
+    (setf (buffer-cur-col buffer) cur-col)
+    (setf (buffer-max-col buffer) max-col)))
 
 (defmethod buffer-head-line-p ((buffer buffer) linum)
   (values (<= linum 1) (- 1 linum)))

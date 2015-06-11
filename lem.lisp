@@ -47,7 +47,8 @@
   (cl-ncurses:refresh)
   (command-init)
   (window-init)
-  )
+  (dolist (arg args)
+    (file-open *current-buffer* arg)))
 
 (defun lem-finallize ()
   (cl-ncurses:endwin))

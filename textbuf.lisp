@@ -35,12 +35,15 @@
 (defun line-backward-n (line n)
   (line-step-n line n 'line-prev))
 
+(defvar *textbuf-list* nil)
+
 (defstruct (textbuf (:constructor make-textbuf-internal))
   name
   head-line
   tail-line
   cache-line
   cache-linum
+  keep-binfo-f
   (nlines 1))
 
 (defun make-textbuf (name)
@@ -50,6 +53,7 @@
     (setf (textbuf-tail-line textbuf) line)
     (setf (textbuf-cache-line textbuf) line)
     (setf (textbuf-cache-linum textbuf) 1)
+    (push textbuf *textbuf-list*)
     textbuf))
 
 (defun %textbuf-get-line (textbuf linum)
@@ -91,6 +95,16 @@
 	((or (null line) (= i len)))
       (push (line-str line) strings))
     (nreverse strings)))
+
+(defun textbuf-append-line (textbuf str)
+  (let* ((line (textbuf-tail-line textbuf))
+	 (newline (make-line line (line-next line) str)))
+    (when (= 1 (textbuf-nlines textbuf))
+      (setf (textbuf-head-line textbuf) newline)
+      (setf (textbuf-cache-line textbuf) newline))
+    (setf (textbuf-tail-line textbuf) newline)
+    (incf (textbuf-nlines textbuf))
+    t))
 
 (defun textbuf-insert-char (textbuf linum col c)
   (let ((line (textbuf-get-line textbuf linum)))

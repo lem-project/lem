@@ -10,6 +10,7 @@
 	       (:file "textbuf")
 	       (:file "buffer")
 	       (:file "window")
+	       (:file "file")
 	       (:file "command")
 	       (:file "lem"))
   :depends-on ("cl-ncurses"))

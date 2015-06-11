@@ -16,7 +16,8 @@
     (cond
       (cmd
 	(funcall cmd *current-buffer* arg))
-      ((< 31 (car keys))
+      ((or (< 31 (car keys))
+           (= key::ctrl-i (car keys)))
 	(self-insert (code-char (car keys)) arg))
       (t
 	; key not found

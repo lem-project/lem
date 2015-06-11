@@ -45,8 +45,8 @@
   (cl-ncurses:cbreak)
   (cl-ncurses:raw)
   (cl-ncurses:refresh)
-  (window-init)
   (command-init)
+  (window-init)
   )
 
 (defun lem-finallize ()
@@ -54,9 +54,9 @@
 
 (defun lem-main ()
   (do ((*exit* nil)) (*exit*)
+    (window-update *current-buffer*)
     (let ((keys (input-keys)))
-      (execute keys nil)
-      (window-update *current-buffer*))))
+      (execute keys nil))))
 
 (defun lem (&rest args)
   (with-open-file (*error-output* "ERROR"

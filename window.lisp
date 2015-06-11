@@ -50,6 +50,15 @@
         (window-recenter buffer)
 	(window-scroll buffer offset)))))
 
+(defun window-redraw-modeline (buffer)
+  (cl-ncurses:wattron (buffer-win buffer) cl-ncurses:a_reverse)
+  (cl-ncurses:mvwaddstr (buffer-win buffer)
+			(1- (buffer-nlines buffer))
+			0
+			(make-string (buffer-ncols buffer)
+				     :initial-element #\-))
+  (cl-ncurses:wattroff (buffer-win buffer) cl-ncurses:a_reverse))
+
 (defun window-redraw-line (buffer str y)
   (let ((width (str-width str))
         (cury (- (buffer-cur-linum buffer)
@@ -86,8 +95,7 @@
     (cl-ncurses:mvwaddstr (buffer-win buffer) y 0 str)
     curx))
 
-(defmethod window-redraw ((buffer buffer))
-  (cl-ncurses:werase (buffer-win buffer))
+(defun window-redraw-lines (buffer)
   (let (x)
     (do ((lines
            (textbuf-take-lines (buffer-textbuf buffer)
@@ -101,7 +109,12 @@
           (setq x curx))))
     (cl-ncurses:wmove (buffer-win buffer)
                       (- (buffer-cur-linum buffer) (buffer-vtop-linum buffer))
-                      x))
+                      x)))
+
+(defmethod window-redraw ((buffer buffer))
+  (cl-ncurses:werase (buffer-win buffer))
+  (window-redraw-modeline buffer)
+  (window-redraw-lines buffer)
   (cl-ncurses:wrefresh (buffer-win buffer)))
 
 (defmethod window-update ((buffer buffer))

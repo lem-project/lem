@@ -47,6 +47,7 @@
   (cl-ncurses:refresh)
   (command-init)
   (window-init)
+  (mb-init)
   (dolist (arg args)
     (file-open *current-buffer* arg)))
 

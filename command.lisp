@@ -15,6 +15,7 @@
     (add 'end-of-line #'buffer-eol key::ctrl-e)
     (add 'delete-char #'buffer-delete-char key::ctrl-d)
     (add 'newline #'buffer-insert-newline key::ctrl-j)
+    (add 'find-file #'file-find key::ctrl-x key::ctrl-f)
     (add 'exit-lem #'exit-lem key::ctrl-x key::ctrl-c)
     ))
 

@@ -50,13 +50,48 @@
         (window-recenter buffer)
 	(window-scroll buffer offset)))))
 
+(defun window-percentage (buffer)
+  (cond
+   ((<= (textbuf-nlines (buffer-textbuf buffer))
+        (buffer-nlines buffer))
+    "All")
+   ((= 1 (buffer-vtop-linum buffer))
+    "Top")
+   ((<= (textbuf-nlines (buffer-textbuf buffer))
+      (+ (buffer-vtop-linum buffer) (buffer-nlines buffer))
+        )
+    "Bot")
+   (t
+    (format nil "~2d%"
+      (floor
+       (* 100
+	(float
+	 (/ (buffer-vtop-linum buffer)
+            (textbuf-nlines (buffer-textbuf buffer))))))))))
+
+(defun window-redraw-modeline-1 (buffer bg-char)
+  (cl-ncurses:mvwaddstr
+   (buffer-win buffer)
+   (1- (buffer-nlines buffer))
+   0
+   (let ((str (format nil "~c~c ~a: ~a (~{~a ~}) "
+		bg-char ; read-only-flag
+		bg-char ; modified-flag
+		"Lem"
+		"main"
+		nil)))
+     (format nil
+       (format nil
+	 "~~~d,,,'~ca ~a ~a"
+	 (- (buffer-ncols buffer) 7)
+	 bg-char
+	 (window-percentage buffer)
+	 (make-string 2 :initial-element bg-char))
+       str))))
+
 (defun window-redraw-modeline (buffer)
   (cl-ncurses:wattron (buffer-win buffer) cl-ncurses:a_reverse)
-  (cl-ncurses:mvwaddstr (buffer-win buffer)
-			(1- (buffer-nlines buffer))
-			0
-			(make-string (buffer-ncols buffer)
-				     :initial-element #\-))
+  (window-redraw-modeline-1 buffer #\-)
   (cl-ncurses:wattroff (buffer-win buffer) cl-ncurses:a_reverse))
 
 (defun window-redraw-line (buffer str y)

@@ -139,6 +139,8 @@
         (when (eq (line-next line)
                   (textbuf-tail-line textbuf))
           (setf (textbuf-tail-line textbuf) line))
+	(line-free (line-next line))
+	(decf (textbuf-nlines textbuf))
 	t)
       (progn
         (setf (line-str line)

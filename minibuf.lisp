@@ -19,6 +19,18 @@
   (cl-ncurses:mvwaddstr *mb-win* 0 0 msg)
   (cl-ncurses:wrefresh *mb-win*))
 
+(defun mb-y-or-n-p (prompt)
+  (do () (nil)
+    (cl-ncurses:werase *mb-win*)
+    (cl-ncurses:mvwaddstr *mb-win* 0 0 (format nil "~a [y/n]?" prompt))
+    (cl-ncurses:wrefresh *mb-win*)
+    (let ((c (code-char (cl-ncurses:getch))))
+      (cond
+       ((char= #\y c)
+        (return t))
+       ((char= #\n c)
+        (return nil))))))
+
 (defun mb-readline (prompt)
   (let ((str ""))
     (do ((break nil))

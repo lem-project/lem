@@ -8,8 +8,8 @@
   (let ((textbuf (make-textbuf filename filename)))
     (with-open-file (in filename :if-does-not-exist nil)
       (when in
-	(loop
-	  (multiple-value-bind (str eof-p) (read-line in nil)
+	(do () (nil)
+          (multiple-value-bind (str eof-p) (read-line in nil)
 	    (if (not eof-p)
 	      (textbuf-append-line textbuf str)
 	      (progn

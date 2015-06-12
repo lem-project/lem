@@ -55,7 +55,7 @@
     (setf (textbuf-tail-line textbuf) line)
     (setf (textbuf-cache-line textbuf) line)
     (setf (textbuf-cache-linum textbuf) 1)
-    (push textbuf *textbuf-list*)
+    (tblist-add textbuf)
     textbuf))
 
 (defun %textbuf-get-line (textbuf linum)

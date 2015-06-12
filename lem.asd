@@ -8,6 +8,7 @@
 	       (:file "globals")
 	       (:file "util")
 	       (:file "textbuf")
+	       (:file "tblist")
 	       (:file "buffer")
 	       (:file "window")
 	       (:file "minibuf")

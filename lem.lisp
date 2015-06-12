@@ -5,7 +5,9 @@
 (defgeneric exit-lem (buffer arg))
 (defmethod exit-lem ((buffer buffer) arg)
   (declare (ignore arg))
-  (setq *exit* t))
+  (when (or (not (tblist-any-modif-p))
+          (mb-y-or-n-p "Modified buffers exist. Leave anyway"))
+    (setq *exit* t)))
 
 (defun self-insert (c arg)
   (arg-repeat (arg t)

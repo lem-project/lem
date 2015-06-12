@@ -15,14 +15,14 @@
     (buffer-unmark buffer nil)
     t))
 
-(add-command 'file-find 'find-file key::ctrl-x key::ctrl-f)
+(add-command 'file-find 'find-file "C-xC-f")
 (defun file-find (buffer arg)
   (declare (ignore arg))
   (let ((filename (mb-readline "Find File: ")))
     (file-open buffer filename)
     t))
 
-(add-command 'file-save 'save-file key::ctrl-x key::ctrl-s)
+(add-command 'file-save 'save-file "C-xC-s")
 (defun file-save (buffer arg)
   (declare (ignore arg))
   (let ((textbuf (buffer-textbuf buffer)))

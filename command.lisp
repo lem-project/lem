@@ -3,10 +3,23 @@
 (defvar *command-table* (make-hash-table))
 (defvar *keybind-table* (make-hash-table :test 'equal))
 
-(defun command-find-keybind (keys)
-  (gethash keys *keybind-table*))
+(defun keys-to-keystr (keys)
+  (apply 'concatenate 'string
+    (mapcar (lambda (c)
+              (cond
+               ((key::ctrl-p c)
+                (format nil "C-~c"
+                  (char-downcase (code-char (+ 64 (char-code c))))))
+               ((char= c key::escape)
+                "M-")
+               (t
+                (string c))))
+      keys)))
 
-(defun add-command (func cmd &rest keys)
+(defun find-command (keys)
+  (gethash (keys-to-keystr keys) *keybind-table*))
+
+(defun add-command (func cmd &optional keystr)
   (setf (gethash cmd *command-table*) func)
-  (when keys
-    (setf (gethash keys *keybind-table*) func)))
+  (when keystr
+    (setf (gethash keystr *keybind-table*) func)))

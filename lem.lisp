@@ -8,7 +8,7 @@
       (throw 'abort t)
       c)))
 
-(add-command 'exit-lem 'exit-lem key::ctrl-x key::ctrl-c)
+(add-command 'exit-lem 'exit-lem "C-xC-c")
 (defun exit-lem (buffer arg)
   (declare (ignore arg))
   (when (or (not (tblist-any-modif-p))
@@ -19,7 +19,7 @@
   (buffer-insert-char *current-buffer* c arg))
 
 (defun execute (keys arg)
-  (let ((cmd (command-find-keybind keys)))
+  (let ((cmd (find-command keys)))
     (cond
      (cmd
       (funcall cmd *current-buffer* arg))

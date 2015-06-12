@@ -31,3 +31,6 @@
 (defconstant ctrl-y (code-char 25))
 (defconstant ctrl-z (code-char 26))
 (defconstant escape (code-char 27))
+
+(defun ctrl-p (c)
+  (char<= ctrl-space c ctrl-z))

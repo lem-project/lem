@@ -25,7 +25,7 @@
     :cur-col 0
     :max-col 0))
 
-(add-command 'buffer-unmark 'unmark-buffer key::escape #\~)
+(add-command 'buffer-unmark 'unmark-buffer "M-~")
 (defun buffer-unmark (buffer arg)
   (declare (ignore arg))
   (setf (textbuf-modif-p (buffer-textbuf buffer)) nil)
@@ -88,7 +88,7 @@
     (buffer-next-char buffer 1))
   t)
 
-(add-command 'buffer-insert-newline 'newline key::ctrl-j)
+(add-command 'buffer-insert-newline 'newline "C-j")
 (defun buffer-insert-newline (buffer arg)
   (arg-repeat (arg)
     (textbuf-insert-newline (buffer-textbuf buffer)
@@ -97,7 +97,7 @@
     (buffer-next-line buffer 1))
   t)
 
-(add-command 'buffer-delete-char 'delete-char key::ctrl-d)
+(add-command 'buffer-delete-char 'delete-char "C-d")
 (defun buffer-delete-char (buffer arg)
   (arg-repeat (arg t)
     (when (textbuf-delete-char (buffer-textbuf buffer)
@@ -109,12 +109,12 @@
   (setf (buffer-cur-col buffer) col)
   (setf (buffer-max-col buffer) col))
 
-(add-command 'buffer-bol 'beginning-of-line key::ctrl-a)
+(add-command 'buffer-bol 'beginning-of-line "C-a")
 (defun buffer-bol (buffer arg)
   (declare (ignore arg))
   (buffer-set-col buffer 0))
 
-(add-command 'buffer-eol 'end-of-line key::ctrl-e)
+(add-command 'buffer-eol 'end-of-line "C-e")
 (defun buffer-eol (buffer arg)
   (declare (ignore arg))
   (buffer-set-col buffer
@@ -132,7 +132,7 @@
 	        (buffer-textbuf buffer)
 		(buffer-cur-linum buffer))))))
 
-(add-command 'buffer-next-line 'next-line key::ctrl-n)
+(add-command 'buffer-next-line 'next-line "C-n")
 (defun buffer-next-line (buffer arg)
   (if (arg-repeat (arg t)
         (if (buffer-tail-line-p buffer (buffer-cur-linum buffer))
@@ -141,7 +141,7 @@
     (progn (%buffer-adjust-col buffer arg) t)
     (progn (buffer-bol buffer nil) t)))
 
-(add-command 'buffer-prev-line 'prev-line key::ctrl-p)
+(add-command 'buffer-prev-line 'prev-line "C-p")
 (defun buffer-prev-line (buffer arg)
   (if (arg-repeat (arg t)
         (if (buffer-head-line-p buffer (buffer-cur-linum buffer))
@@ -150,7 +150,7 @@
     (progn (%buffer-adjust-col buffer arg) t)
     (progn (buffer-bol buffer nil) nil)))
 
-(add-command 'buffer-next-char 'next-char key::ctrl-f)
+(add-command 'buffer-next-char 'next-char "C-f")
 (defun buffer-next-char (buffer arg)
   (arg-repeat (arg t)
     (cond
@@ -161,7 +161,7 @@
       (t
        (buffer-set-col buffer (1+ (buffer-cur-col buffer)))))))
 
-(add-command 'buffer-prev-char 'prev-char key::ctrl-b)
+(add-command 'buffer-prev-char 'prev-char "C-b")
 (defun buffer-prev-char (buffer arg)
   (arg-repeat (arg t)
     (cond

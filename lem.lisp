@@ -3,7 +3,10 @@
 (defvar *exit*)
 
 (defun getch ()
-  (cl-ncurses:getch))
+  (let ((c (cl-ncurses:getch)))
+    (if (= c key::ctrl-g)
+      (throw 'abort t)
+      c)))
 
 (add-command 'exit-lem 'exit-lem key::ctrl-x key::ctrl-c)
 (defun exit-lem (buffer arg)
@@ -95,10 +98,12 @@
 (defun lem-main ()
   (do ((*exit* nil)) (*exit*)
     (window-update *current-buffer*)
-    (multiple-value-bind (keys uarg)
-        (input-keys)
-      (mb-clear)
-      (execute keys uarg))))
+    (when (catch 'abort
+            (multiple-value-bind (keys uarg) (input-keys)
+              (mb-clear)
+              (execute keys uarg))
+            nil)
+      (mb-write "Abort"))))
 
 (defun lem (&rest args)
   (with-open-file (*error-output* "ERROR"

@@ -1,12 +1,5 @@
 (in-package :lem)
 
-(defgeneric window-offset-view (buffer))
-(defgeneric window-recenter (buffer))
-(defgeneric window-scroll (buffer n))
-(defgeneric window-adjust-view (buffer recenter))
-(defgeneric window-redraw (buffer))
-(defgeneric window-update (buffer))
-
 (defun window-init ()
   (setq *current-buffer*
         (make-buffer (make-textbuf "main" nil)
@@ -15,7 +8,7 @@
                      0
                      0)))
 
-(defmethod window-offset-view ((buffer buffer))
+(defun window-offset-view (buffer)
   (let ((vtop-linum (buffer-vtop-linum buffer))
 	(nlines (buffer-nlines buffer))
 	(linum (buffer-cur-linum buffer)))
@@ -27,12 +20,12 @@
       (t
 	0))))
 
-(defmethod window-recenter ((buffer buffer))
+(defun window-recenter (buffer)
   (setf (buffer-vtop-linum buffer)
         (buffer-cur-linum buffer))
   (window-scroll buffer (floor (buffer-nlines buffer) 2)))
 
-(defmethod window-scroll ((buffer buffer) n)
+(defun window-scroll (buffer n)
   (incf (buffer-vtop-linum buffer) n)
   (multiple-value-bind (outp offset)
       (buffer-head-line-p buffer (1+ (buffer-vtop-linum buffer)))
@@ -43,7 +36,7 @@
     (when outp
       (incf (buffer-vtop-linum buffer)))))
 
-(defmethod window-adjust-view ((buffer buffer) recenter)
+(defun window-adjust-view (buffer recenter)
   (let ((offset (window-offset-view buffer)))
     (unless (zerop offset)
       (if recenter
@@ -146,12 +139,12 @@
                       (- (buffer-cur-linum buffer) (buffer-vtop-linum buffer))
                       x)))
 
-(defmethod window-redraw ((buffer buffer))
+(defun window-redraw (buffer)
   (cl-ncurses:werase (buffer-win buffer))
   (window-redraw-modeline buffer)
   (window-redraw-lines buffer)
   (cl-ncurses:wrefresh (buffer-win buffer)))
 
-(defmethod window-update ((buffer buffer))
+(defun window-update (buffer)
   (window-adjust-view buffer nil)
   (window-redraw buffer))

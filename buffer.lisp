@@ -12,25 +12,6 @@
   cur-col
   max-col)
 
-(defgeneric buffer-unmark (buffer arg))
-(defgeneric buffer-change-textbuf (buffer textbuf))
-(defgeneric buffer-head-line-p (buffer linum))
-(defgeneric buffer-tail-line-p (buffer linum))
-(defgeneric buffer-bolp (buffer))
-(defgeneric buffer-eolp (buffer))
-(defgeneric buffer-bobp (buffer))
-(defgeneric buffer-eobp (buffer))
-(defgeneric buffer-insert-char (buffer c arg))
-(defgeneric buffer-insert-newline (buffer arg))
-(defgeneric buffer-delete-char (buffer arg))
-(defgeneric buffer-set-col (buffer col))
-(defgeneric buffer-bol (buffer arg))
-(defgeneric buffer-eol (buffer arg))
-(defgeneric buffer-next-line (buffer arg))
-(defgeneric buffer-prev-line (buffer arg))
-(defgeneric buffer-next-char (buffer arg))
-(defgeneric buffer-prev-char (buffer arg))
-
 (defun make-buffer (textbuf nlines ncols y x)
   (make-buffer-internal
     :win (cl-ncurses:newwin nlines ncols y x)
@@ -44,12 +25,13 @@
     :cur-col 0
     :max-col 0))
 
-(defmethod buffer-unmark ((buffer buffer) arg)
+(add-command 'buffer-unmark 'unmark-buffer key::escape (char-code #\~))
+(defun buffer-unmark (buffer arg)
   (declare (ignore arg))
   (setf (textbuf-modif-p (buffer-textbuf buffer)) nil)
   t)
 
-(defmethod buffer-change-textbuf ((buffer buffer) textbuf)
+(defun buffer-change-textbuf (buffer textbuf)
   (let ((old-tb (buffer-textbuf buffer)))
     (setf (textbuf-keep-binfo-f old-tb)
           (lambda ()
@@ -71,33 +53,33 @@
     (setf (buffer-cur-col buffer) cur-col)
     (setf (buffer-max-col buffer) max-col)))
 
-(defmethod buffer-head-line-p ((buffer buffer) linum)
+(defun buffer-head-line-p (buffer linum)
   (values (<= linum 1) (- 1 linum)))
 
-(defmethod buffer-tail-line-p ((buffer buffer) linum)
+(defun buffer-tail-line-p (buffer linum)
   (let ((nlines (textbuf-nlines (buffer-textbuf buffer))))
     (values (<= nlines linum) (- nlines linum))))
 
-(defmethod buffer-bolp ((buffer buffer))
+(defun buffer-bolp (buffer)
   (zerop (buffer-cur-col buffer)))
 
-(defmethod buffer-eolp ((buffer buffer))
+(defun buffer-eolp (buffer)
   (= (buffer-cur-col buffer)
      (textbuf-line-length
       (buffer-textbuf buffer)
       (buffer-cur-linum buffer))))
 
-(defmethod buffer-bobp ((buffer buffer))
+(defun buffer-bobp (buffer)
   (and (buffer-head-line-p buffer (buffer-cur-linum buffer))
        (buffer-bolp buffer)))
 
-(defmethod buffer-eobp ((buffer buffer))
+(defun buffer-eobp (buffer)
   (and (buffer-tail-line-p
 	buffer
 	(buffer-cur-linum buffer))
        (buffer-eolp buffer)))
 
-(defmethod buffer-insert-char ((buffer buffer) c arg)
+(defun buffer-insert-char (buffer c arg)
   (arg-repeat (arg)
     (textbuf-insert-char (buffer-textbuf buffer)
 			 (buffer-cur-linum buffer)
@@ -106,7 +88,8 @@
     (buffer-next-char buffer 1))
   t)
 
-(defmethod buffer-insert-newline ((buffer buffer) arg)
+(add-command 'buffer-insert-newline 'newline key::ctrl-j)
+(defun buffer-insert-newline (buffer arg)
   (arg-repeat (arg)
     (textbuf-insert-newline (buffer-textbuf buffer)
 			    (buffer-cur-linum buffer)
@@ -114,22 +97,25 @@
     (buffer-next-line buffer 1))
   t)
 
-(defmethod buffer-delete-char ((buffer buffer) arg)
+(add-command 'buffer-delete-char 'delete-char key::ctrl-d)
+(defun buffer-delete-char (buffer arg)
   (arg-repeat (arg t)
     (when (textbuf-delete-char (buffer-textbuf buffer)
 			       (buffer-cur-linum buffer)
 			       (buffer-cur-col buffer))
       (return nil))))
 
-(defmethod buffer-set-col ((buffer buffer) col)
+(defun buffer-set-col (buffer col)
   (setf (buffer-cur-col buffer) col)
   (setf (buffer-max-col buffer) col))
 
-(defmethod buffer-bol ((buffer buffer) arg)
+(add-command 'buffer-bol 'beginning-of-line key::ctrl-a)
+(defun buffer-bol (buffer arg)
   (declare (ignore arg))
   (buffer-set-col buffer 0))
 
-(defmethod buffer-eol ((buffer buffer) arg)
+(add-command 'buffer-eol 'end-of-line key::ctrl-e)
+(defun buffer-eol (buffer arg)
   (declare (ignore arg))
   (buffer-set-col buffer
 		  (textbuf-line-length
@@ -146,7 +132,8 @@
 	        (buffer-textbuf buffer)
 		(buffer-cur-linum buffer))))))
 
-(defmethod buffer-next-line ((buffer buffer) arg)
+(add-command 'buffer-next-line 'next-line key::ctrl-n)
+(defun buffer-next-line (buffer arg)
   (if (arg-repeat (arg t)
         (if (buffer-tail-line-p buffer (buffer-cur-linum buffer))
           (return)
@@ -154,7 +141,8 @@
     (progn (%buffer-adjust-col buffer arg) t)
     (progn (buffer-bol buffer nil) t)))
 
-(defmethod buffer-prev-line ((buffer buffer) arg)
+(add-command 'buffer-prev-line 'prev-line key::ctrl-p)
+(defun buffer-prev-line (buffer arg)
   (if (arg-repeat (arg t)
         (if (buffer-head-line-p buffer (buffer-cur-linum buffer))
           (return)
@@ -162,7 +150,8 @@
     (progn (%buffer-adjust-col buffer arg) t)
     (progn (buffer-bol buffer nil) nil)))
 
-(defmethod buffer-next-char ((buffer buffer) arg)
+(add-command 'buffer-next-char 'next-char key::ctrl-f)
+(defun buffer-next-char (buffer arg)
   (arg-repeat (arg t)
     (cond
       ((buffer-eobp buffer)
@@ -172,7 +161,8 @@
       (t
        (buffer-set-col buffer (1+ (buffer-cur-col buffer)))))))
 
-(defmethod buffer-prev-char ((buffer buffer) arg)
+(add-command 'buffer-prev-char 'prev-char key::ctrl-b)
+(defun buffer-prev-char (buffer arg)
   (arg-repeat (arg t)
     (cond
       ((buffer-bobp buffer)

@@ -2,8 +2,8 @@
 
 (defvar *exit*)
 
-(defgeneric exit-lem (buffer arg))
-(defmethod exit-lem ((buffer buffer) arg)
+(add-command 'exit-lem 'exit-lem key::ctrl-x key::ctrl-c)
+(defun exit-lem (buffer arg)
   (declare (ignore arg))
   (when (or (not (tblist-any-modif-p))
           (mb-y-or-n-p "Modified buffers exist. Leave anyway"))
@@ -46,7 +46,6 @@
   (cl-ncurses:cbreak)
   (cl-ncurses:raw)
   (cl-ncurses:refresh)
-  (command-init)
   (window-init)
   (mb-init)
   (dolist (arg args)

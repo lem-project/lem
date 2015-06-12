@@ -1,10 +1,6 @@
 (in-package :lem)
 
-(defgeneric file-open (buffer filename))
-(defgeneric file-find (buffer arg))
-(defgeneric file-save (buffer arg))
-
-(defmethod file-open ((buffer buffer) filename)
+(defun file-open (buffer filename)
   (let ((textbuf (make-textbuf filename filename)))
     (with-open-file (in filename :if-does-not-exist nil)
       (when in
@@ -19,13 +15,15 @@
     (buffer-unmark buffer nil)
     t))
 
-(defmethod file-find ((buffer buffer) arg)
+(add-command 'file-find 'find-file key::ctrl-x key::ctrl-f)
+(defun file-find (buffer arg)
   (declare (ignore arg))
   (let ((filename (mb-readline "Find File: ")))
     (file-open buffer filename)
     t))
 
-(defmethod file-save ((buffer buffer) arg)
+(add-command 'file-save 'save-file key::ctrl-x key::ctrl-s)
+(defun file-save (buffer arg)
   (declare (ignore arg))
   (let ((textbuf (buffer-textbuf buffer)))
     (cond

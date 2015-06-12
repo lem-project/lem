@@ -45,7 +45,7 @@
   tail-line
   cache-line
   cache-linum
-  keep-binfo-f
+  keep-binfo
   (nlines 1))
 
 (defun make-textbuf (name filename)

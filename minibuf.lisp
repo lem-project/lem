@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (defvar *mb-win*)
+(defvar *mb-print-flag* nil)
 
 (defun mb-init ()
   (setq *mb-win*
@@ -11,15 +12,19 @@
 	 0)))
 
 (defun mb-clear ()
-  (cl-ncurses:werase *mb-win*)
-  (cl-ncurses:wrefresh *mb-win*))
+  (when *mb-print-flag*
+    (cl-ncurses:werase *mb-win*)
+    (cl-ncurses:wrefresh *mb-win*)
+    (setq *mb-print-flag* nil)))
 
 (defun mb-write (msg)
+  (setq *mb-print-flag* t)
   (cl-ncurses:werase *mb-win*)
   (cl-ncurses:mvwaddstr *mb-win* 0 0 msg)
   (cl-ncurses:wrefresh *mb-win*))
 
 (defun mb-y-or-n-p (prompt)
+  (setq *mb-print-flag* t)
   (do () (nil)
     (cl-ncurses:werase *mb-win*)
     (cl-ncurses:mvwaddstr *mb-win* 0 0 (format nil "~a [y/n]?" prompt))
@@ -32,12 +37,14 @@
         (return nil))))))
 
 (defun mb-read-char (prompt)
+  (setq *mb-print-flag* t)
   (cl-ncurses:werase *mb-win*)
   (cl-ncurses:mvwaddstr *mb-win* 0 0 prompt)
   (cl-ncurses:wrefresh *mb-win*)
   (getch))
 
 (defun mb-readline (prompt)
+  (setq *mb-print-flag* t)
   (let ((str ""))
     (do ((break nil))
         (break)

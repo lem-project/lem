@@ -24,12 +24,18 @@
     (cl-ncurses:werase *mb-win*)
     (cl-ncurses:mvwaddstr *mb-win* 0 0 (format nil "~a [y/n]?" prompt))
     (cl-ncurses:wrefresh *mb-win*)
-    (let ((c (code-char (cl-ncurses:getch))))
+    (let ((c (code-char (getch))))
       (cond
        ((char= #\y c)
         (return t))
        ((char= #\n c)
         (return nil))))))
+
+(defun mb-read-char (prompt)
+  (cl-ncurses:werase *mb-win*)
+  (cl-ncurses:mvwaddstr *mb-win* 0 0 prompt)
+  (cl-ncurses:wrefresh *mb-win*)
+  (code-char (getch)))
 
 (defun mb-readline (prompt)
   (let ((str ""))
@@ -38,7 +44,7 @@
       (cl-ncurses:werase *mb-win*)
       (cl-ncurses:mvwaddstr *mb-win* 0 0 (format nil "~a~a" prompt str))
       (cl-ncurses:wrefresh *mb-win*)
-      (let ((c (cl-ncurses:getch)))
+      (let ((c (getch)))
         (cond
 	  ((= c key::ctrl-j)
 	   (setq break t))

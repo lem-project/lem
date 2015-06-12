@@ -2,6 +2,9 @@
 
 (defvar *exit*)
 
+(defun getch ()
+  (cl-ncurses:getch))
+
 (add-command 'exit-lem 'exit-lem key::ctrl-x key::ctrl-c)
 (defun exit-lem (buffer arg)
   (declare (ignore arg))
@@ -10,8 +13,7 @@
     (setq *exit* t)))
 
 (defun self-insert (c arg)
-  (arg-repeat (arg t)
-    (buffer-insert-char *current-buffer* c arg)))
+  (buffer-insert-char *current-buffer* c arg))
 
 (defun execute (keys arg)
   (let ((cmd (command-find-keybind keys)))
@@ -24,21 +26,57 @@
      (t
       (mb-write "Key not found")))))
 
+(defun universal-argument ()
+  (let ((numlist)
+        n)
+    (do ((c (mb-read-char "C-u 4")
+            (mb-read-char
+             (format nil "C-u ~{~d ~}" numlist))))
+        (nil)
+      (cond
+       ((eql (char-code c) key::ctrl-u)
+        (setq numlist
+          (mapcar 'digit-char-p
+            (coerce
+             (format nil "~a"
+              (* 4
+                (if numlist
+                  (parse-integer
+                   (format nil "~{~d~}" numlist))
+                  4)))
+             'list))))
+       ((setq n (digit-char-p c))
+        (setq numlist
+          (append numlist (list n))))
+       (t
+        (return
+         (values
+          (char-code c)
+          (if numlist
+            (parse-integer (format nil "~{~a~}" numlist))
+            4))))))))
+
 (defun input-keys ()
-  (let ((c (cl-ncurses:getch)))
+  (let ((c (getch))
+        uarg)
+    (when (= c key::ctrl-u)
+      (multiple-value-setq (c uarg)
+        (universal-argument)))
     (if (or (= c key::ctrl-x)
             (= c key::escape))
-      (list c (cl-ncurses:getch))
+      (values (list c (getch)) uarg)
       (let ((bytes (utf8-bytes c)))
 	(if (= bytes 1)
-	  (list c)
+	  (values (list c) uarg)
           (let ((bytes
                   (coerce
                     (cons c
                           (loop repeat (1- bytes)
-                                collect (cl-ncurses:getch)))
+                                collect (getch)))
                   '(vector (unsigned-byte 8)))))
-            (list (char-code (aref (sb-ext:octets-to-string bytes) 0)))))))))
+            (values
+             (list (char-code (aref (sb-ext:octets-to-string bytes) 0)))
+             uarg)))))))
 
 (defun lem-init (args)
   (cl-ncurses:initscr)
@@ -57,9 +95,10 @@
 (defun lem-main ()
   (do ((*exit* nil)) (*exit*)
     (window-update *current-buffer*)
-    (let ((keys (input-keys)))
+    (multiple-value-bind (keys uarg)
+        (input-keys)
       (mb-clear)
-      (execute keys nil))))
+      (execute keys uarg))))
 
 (defun lem (&rest args)
   (with-open-file (*error-output* "ERROR"

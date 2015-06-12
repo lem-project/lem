@@ -25,7 +25,7 @@
     :cur-col 0
     :max-col 0))
 
-(add-command 'buffer-unmark 'unmark-buffer key::escape (char-code #\~))
+(add-command 'buffer-unmark 'unmark-buffer key::escape #\~)
 (defun buffer-unmark (buffer arg)
   (declare (ignore arg))
   (setf (textbuf-modif-p (buffer-textbuf buffer)) nil)

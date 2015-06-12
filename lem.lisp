@@ -3,8 +3,8 @@
 (defvar *exit*)
 
 (defun getch ()
-  (let ((c (cl-ncurses:getch)))
-    (if (= c key::ctrl-g)
+  (let ((c (code-char (cl-ncurses:getch))))
+    (if (char= c key::ctrl-g)
       (throw 'abort t)
       c)))
 
@@ -23,9 +23,9 @@
     (cond
      (cmd
       (funcall cmd *current-buffer* arg))
-     ((or (< 31 (car keys))
-        (= key::ctrl-i (car keys)))
-      (self-insert (code-char (car keys)) arg))
+     ((or (< 31 (char-code (car keys)))
+        (char= key::ctrl-i (car keys)))
+      (self-insert (car keys) arg))
      (t
       (mb-write "Key not found")))))
 
@@ -37,7 +37,7 @@
              (format nil "C-u ~{~d ~}" numlist))))
         (nil)
       (cond
-       ((eql (char-code c) key::ctrl-u)
+       ((char= c key::ctrl-u)
         (setq numlist
           (mapcar 'digit-char-p
             (coerce
@@ -54,7 +54,7 @@
        (t
         (return
          (values
-          (char-code c)
+          c
           (if numlist
             (parse-integer (format nil "~{~a~}" numlist))
             4))))))))
@@ -62,23 +62,23 @@
 (defun input-keys ()
   (let ((c (getch))
         uarg)
-    (when (= c key::ctrl-u)
+    (when (char= c key::ctrl-u)
       (multiple-value-setq (c uarg)
         (universal-argument)))
-    (if (or (= c key::ctrl-x)
-            (= c key::escape))
+    (if (or (char= c key::ctrl-x)
+            (char= c key::escape))
       (values (list c (getch)) uarg)
-      (let ((bytes (utf8-bytes c)))
+      (let ((bytes (utf8-bytes (char-code c))))
 	(if (= bytes 1)
 	  (values (list c) uarg)
-          (let ((bytes
-                  (coerce
-                    (cons c
-                          (loop repeat (1- bytes)
-                                collect (getch)))
-                  '(vector (unsigned-byte 8)))))
+          (let ((bytes (coerce
+                        (mapcar 'char-code
+                          (cons c
+                            (loop repeat (1- bytes)
+                              collect (getch))))
+                        '(vector (unsigned-byte 8)))))
             (values
-             (list (char-code (aref (sb-ext:octets-to-string bytes) 0)))
+             (list (aref (sb-ext:octets-to-string bytes) 0))
              uarg)))))))
 
 (defun lem-init (args)

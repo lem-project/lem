@@ -10,6 +10,10 @@
 	 (1- cl-ncurses:*lines*)
 	 0)))
 
+(defun mb-clear ()
+  (cl-ncurses:werase *mb-win*)
+  (cl-ncurses:wrefresh *mb-win*))
+
 (defun mb-write (msg)
   (cl-ncurses:werase *mb-win*)
   (cl-ncurses:mvwaddstr *mb-win* 0 0 msg)

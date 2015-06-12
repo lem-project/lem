@@ -9,7 +9,7 @@
 
 (defun window-init ()
   (setq *current-buffer*
-        (make-buffer (make-textbuf "main")
+        (make-buffer (make-textbuf "main" nil)
                      (- cl-ncurses:*lines* 1)
                      cl-ncurses:*cols*
                      0
@@ -76,9 +76,9 @@
    0
    (let ((str (format nil "~c~c ~a: ~a (~{~a ~}) "
 		bg-char ; read-only-flag
-		bg-char ; modified-flag
+		(if (textbuf-modif-p (buffer-textbuf buffer)) #\* bg-char)
 		"Lem"
-		"main"
+		(textbuf-name (buffer-textbuf buffer))
 		nil)))
      (format nil
        (format nil

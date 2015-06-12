@@ -39,6 +39,8 @@
 
 (defstruct (textbuf (:constructor make-textbuf-internal))
   name
+  filename
+  modif-p
   head-line
   tail-line
   cache-line
@@ -46,8 +48,8 @@
   keep-binfo-f
   (nlines 1))
 
-(defun make-textbuf (name)
-  (let ((textbuf (make-textbuf-internal :name name))
+(defun make-textbuf (name filename)
+  (let ((textbuf (make-textbuf-internal :name name :filename filename))
 	(line (make-line nil nil "")))
     (setf (textbuf-head-line textbuf) line)
     (setf (textbuf-tail-line textbuf) line)
@@ -97,16 +99,21 @@
     (nreverse strings)))
 
 (defun textbuf-append-line (textbuf str)
+  (setf (textbuf-modif-p textbuf) t)
   (let* ((line (textbuf-tail-line textbuf))
 	 (newline (make-line line (line-next line) str)))
-    (when (= 1 (textbuf-nlines textbuf))
-      (setf (textbuf-head-line textbuf) newline)
-      (setf (textbuf-cache-line textbuf) newline))
+    (if (and
+	 (= 1 (textbuf-nlines textbuf))
+	 (zerop (length (line-str (textbuf-head-line textbuf)))))
+      (progn
+        (setf (textbuf-head-line textbuf) newline)
+        (setf (textbuf-cache-line textbuf) newline))
+      (incf (textbuf-nlines textbuf)))
     (setf (textbuf-tail-line textbuf) newline)
-    (incf (textbuf-nlines textbuf))
     t))
 
 (defun textbuf-insert-char (textbuf linum col c)
+  (setf (textbuf-modif-p textbuf) t)
   (let ((line (textbuf-get-line textbuf linum)))
     (setf (line-str line)
           (concatenate 'string
@@ -116,6 +123,7 @@
   t)
 
 (defun textbuf-insert-newline (textbuf linum col)
+  (setf (textbuf-modif-p textbuf) t)
   (let ((line (textbuf-get-line textbuf linum)))
     (let ((newline
             (make-line line
@@ -128,7 +136,7 @@
   (incf (textbuf-nlines textbuf))
   t)
 
-(defun textbuf-delete-char (textbuf linum col)
+(defun textbuf-delete-char-1 (textbuf linum col)
   (let ((line (textbuf-get-line textbuf linum)))
     (if (>= col (length (line-str line)))
       (unless (eq line (textbuf-tail-line textbuf))
@@ -148,3 +156,9 @@
 			   (subseq (line-str line) 0 col)
 			   (subseq (line-str line) (1+ col))))
 	t))))
+
+(defun textbuf-delete-char (textbuf linum col)
+  (let ((result (textbuf-delete-char-1 textbuf linum col)))
+    (when result
+      (setf (textbuf-modif-p textbuf) t)
+      result)))

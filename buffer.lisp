@@ -12,6 +12,7 @@
   cur-col
   max-col)
 
+(defgeneric buffer-unmark (buffer arg))
 (defgeneric buffer-change-textbuf (buffer textbuf))
 (defgeneric buffer-head-line-p (buffer linum))
 (defgeneric buffer-tail-line-p (buffer linum))
@@ -42,6 +43,11 @@
     :cur-linum 1
     :cur-col 0
     :max-col 0))
+
+(defmethod buffer-unmark ((buffer buffer) arg)
+  (declare (ignore arg))
+  (setf (textbuf-modif-p (buffer-textbuf buffer)) nil)
+  t)
 
 (defmethod buffer-change-textbuf ((buffer buffer) textbuf)
   (let ((old-tb (buffer-textbuf buffer)))

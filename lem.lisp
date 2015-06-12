@@ -14,14 +14,13 @@
 (defun execute (keys arg)
   (let ((cmd (command-find-keybind keys)))
     (cond
-      (cmd
-	(funcall cmd *current-buffer* arg))
-      ((or (< 31 (car keys))
-           (= key::ctrl-i (car keys)))
-	(self-insert (code-char (car keys)) arg))
-      (t
-	; key not found
-	))))
+     (cmd
+      (funcall cmd *current-buffer* arg))
+     ((or (< 31 (car keys))
+        (= key::ctrl-i (car keys)))
+      (self-insert (code-char (car keys)) arg))
+     (t
+      (mb-write "Key not found")))))
 
 (defun input-keys ()
   (let ((c (cl-ncurses:getch)))
@@ -58,6 +57,7 @@
   (do ((*exit* nil)) (*exit*)
     (window-update *current-buffer*)
     (let ((keys (input-keys)))
+      (mb-clear)
       (execute keys nil))))
 
 (defun lem (&rest args)

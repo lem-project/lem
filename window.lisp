@@ -1,6 +1,11 @@
 (in-package :lem)
 
+(defvar *current-cols*)
+(defvar *current-lines*)
+
 (defun window-init ()
+  (setq *current-cols* cl-ncurses:*cols*)
+  (setq *current-lines* cl-ncurses:*lines*)
   (setq *current-buffer*
         (make-buffer (make-textbuf "main" nil)
                      (- cl-ncurses:*lines* 1)
@@ -227,15 +232,11 @@
     (mb-write "Can not delete this window")
     nil)
    (t
-    (window-next buffer nil)
+    (when (eq *current-buffer* buffer)
+      (window-next buffer nil))
     (cl-ncurses:delwin (buffer-win buffer))
-    (let ((blist (sort (copy-list *buffer-list*)
-                   (lambda (b1 b2)
-                     (> (buffer-y b1) (buffer-y b2))))))
-      (let ((upbuf (cadr
-                    (member-if (lambda (b)
-                                 (= (buffer-y buffer) (buffer-y b)))
-                      blist))))
+    (let ((blist (reverse *buffer-list*)))
+      (let ((upbuf (cadr (member buffer blist))))
         (when (null upbuf)
           (setq upbuf (cadr *buffer-list*))
           (window-move upbuf 0 (buffer-x upbuf)))
@@ -245,3 +246,39 @@
           (buffer-ncols upbuf))))
     (setq *buffer-list* (delete buffer *buffer-list*))
     t)))
+
+(defun window-adjust-all ()
+  (let ((ofcols (- cl-ncurses:*cols* *current-cols*))
+        (oflines (- cl-ncurses:*lines* *current-lines*)))
+    (dolist (b *buffer-list*)
+      (window-resize b
+        (buffer-nlines b)
+        (+ (buffer-ncols b) ofcols)))
+    (multiple-value-bind (div mod)
+      (funcall (if (minusp oflines)
+                 'ceiling
+                 'floor)
+        oflines
+        (length *buffer-list*))
+      (do ((blist *buffer-list* (cdr blist)))
+        ((null blist))
+        (let ((b (car blist)))
+          (unless (eq b (car *buffer-list*))
+            (window-move b
+              (+ (buffer-y b) div)
+              (buffer-x b)))
+          (let ((nlines2 (+ (buffer-nlines b)
+                           (if (cdr blist)
+                             div
+                             (+ div mod)))))
+            (window-resize b
+              nlines2
+              (buffer-ncols b))
+            (when (>= 1 nlines2)
+              (window-delete b nil)))))))
+  (dolist (b *buffer-list*)
+    (cl-ncurses:mvwin (buffer-win b) (buffer-y b) (buffer-x b))
+    (cl-ncurses:wresize (buffer-win b) (buffer-nlines b) (buffer-ncols b)))
+  (setq *current-cols* cl-ncurses:*cols*)
+  (setq *current-lines* cl-ncurses:*lines*)
+  (window-update-all))

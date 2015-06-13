@@ -11,6 +11,16 @@
 	 (1- cl-ncurses:*lines*)
 	 0)))
 
+(defun mb-resize ()
+  (cl-ncurses:mvwin *mb-win*
+    (1- cl-ncurses:*lines*)
+    0)
+  (cl-ncurses:wresize *mb-win*
+    1
+    cl-ncurses:*cols*)
+  (cl-ncurses:werase *mb-win*)
+  (cl-ncurses:wrefresh *mb-win*))
+
 (defun mb-clear ()
   (when *mb-print-flag*
     (cl-ncurses:werase *mb-win*)

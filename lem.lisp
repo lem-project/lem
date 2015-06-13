@@ -3,10 +3,17 @@
 (defvar *exit*)
 
 (defun getch ()
-  (let ((c (code-char (cl-ncurses:getch))))
-    (if (char= c key::ctrl-g)
-      (throw 'abort t)
-      c)))
+  (let* ((code (cl-ncurses:wgetch
+                (buffer-win *current-buffer*)))
+         (char (code-char code)))
+    (cond
+     ((= code 410)
+      (mb-resize)
+      (window-adjust-all)
+      (getch))
+     ((char= char key::ctrl-g)
+      (throw 'abort t))
+     (t char))))
 
 (add-command 'exit-lem 'exit-lem "C-xC-c")
 (defun exit-lem (buffer arg)

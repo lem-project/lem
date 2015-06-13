@@ -148,3 +148,46 @@
 (defun window-update (buffer)
   (window-adjust-view buffer nil)
   (window-redraw buffer))
+
+(defun window-update-all ()
+  (dolist (b *buffer-list*)
+    (unless (eq b *current-buffer*)
+      (window-update b)))
+  (window-update *current-buffer*))
+
+(add-command 'window-vsplit 'split-window-vertical "C-x2")
+(defun window-vsplit (buffer arg)
+  (declare (ignore arg))
+  (multiple-value-bind (nlines rem)
+      (floor (buffer-nlines buffer) 2)
+    (let ((newbuf (make-buffer
+                   (buffer-textbuf buffer)
+                   nlines
+                   (buffer-ncols buffer)
+                   (+ (buffer-y buffer)
+                     nlines
+                     rem)
+                   (buffer-x buffer))))
+      (decf (buffer-nlines buffer) nlines)
+      (cl-ncurses:wresize
+       (buffer-win buffer)
+       (buffer-nlines buffer)
+       (buffer-ncols buffer))
+      (setf (buffer-vtop-linum newbuf)
+            (buffer-vtop-linum buffer))
+      (setf (buffer-cur-linum newbuf)
+            (buffer-cur-linum buffer))
+      (setf (buffer-cur-col newbuf)
+            (buffer-cur-col buffer))
+      (setf (buffer-max-col newbuf)
+            (buffer-max-col buffer))))
+  t)
+
+(add-command 'window-next 'other-window "C-xo")
+(defun window-next (buffer arg)
+  (arg-repeat (arg t)
+    (let ((result (member *current-buffer* *buffer-list*)))
+      (setq *current-buffer*
+        (if (cdr result)
+          (cadr result)
+          (car *buffer-list*))))))

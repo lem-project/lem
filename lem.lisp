@@ -97,7 +97,7 @@
 
 (defun lem-main ()
   (do ((*exit* nil)) (*exit*)
-    (window-update *current-buffer*)
+    (window-update-all)
     (when (catch 'abort
             (multiple-value-bind (keys uarg) (input-keys)
               (mb-clear)

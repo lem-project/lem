@@ -1,5 +1,7 @@
 (in-package :lem)
 
+(defvar *buffer-list* nil)
+
 (defstruct (buffer (:constructor make-buffer-internal))
   win
   nlines
@@ -13,17 +15,20 @@
   max-col)
 
 (defun make-buffer (textbuf nlines ncols y x)
-  (make-buffer-internal
-    :win (cl-ncurses:newwin nlines ncols y x)
-    :nlines nlines
-    :ncols ncols
-    :y y
-    :x x
-    :textbuf textbuf
-    :vtop-linum 1
-    :cur-linum 1
-    :cur-col 0
-    :max-col 0))
+  (let ((buffer
+         (make-buffer-internal
+          :win (cl-ncurses:newwin nlines ncols y x)
+          :nlines nlines
+          :ncols ncols
+          :y y
+          :x x
+          :textbuf textbuf
+          :vtop-linum 1
+          :cur-linum 1
+          :cur-col 0
+          :max-col 0)))
+    (setq *buffer-list* (append *buffer-list* (list buffer)))
+    buffer))
 
 (add-command 'buffer-unmark 'unmark-buffer "M-~")
 (defun buffer-unmark (buffer arg)

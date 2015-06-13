@@ -86,3 +86,6 @@
 
 (defmacro arg-repeat ((arg &optional result) &body body)
   `(dotimes (_ (or ,arg 1) ,result) ,@body))
+
+(defun arg-minus-p (arg)
+  (and (integerp arg) (minusp arg)))

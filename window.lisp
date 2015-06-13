@@ -3,6 +3,9 @@
 (defvar *current-cols*)
 (defvar *current-lines*)
 
+(defun one-window-p ()
+  (null (cdr *buffer-list*)))
+
 (defun window-init ()
   (setq *current-cols* cl-ncurses:*cols*)
   (setq *current-lines* cl-ncurses:*lines*)
@@ -192,14 +195,18 @@
         (< (buffer-y b1) (buffer-y b2)))))
   t)
 
+(defun get-next-window (buffer)
+  (let ((result (member buffer *buffer-list*)))
+    (if (cdr result)
+      (cadr result)
+      (car *buffer-list*))))
+
 (add-command 'window-next 'other-window "C-xo")
 (defun window-next (buffer arg)
   (arg-repeat (arg t)
-    (let ((result (member *current-buffer* *buffer-list*)))
-      (setq *current-buffer*
-        (if (cdr result)
-          (cadr result)
-          (car *buffer-list*))))))
+    (setq buffer (get-next-window buffer)))
+  (setq *current-buffer* buffer)
+  t)
 
 (defun window-move (buffer y x)
   (cl-ncurses:mvwin (buffer-win buffer) y x)
@@ -228,7 +235,7 @@
 (defun window-delete (buffer arg)
   (declare (ignore arg))
   (cond
-   ((null (cdr *buffer-list*))
+   ((one-window-p)
     (mb-write "Can not delete this window")
     nil)
    (t

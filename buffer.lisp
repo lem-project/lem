@@ -51,7 +51,7 @@
     (when (textbuf-keep-binfo textbuf)
       (multiple-value-setq
        (vtop-linum cur-linum cur-col max-col)
-       (apply 'values (textbuf-keep-binfo-f textbuf))))
+       (apply 'values (textbuf-keep-binfo textbuf))))
     (setf (buffer-vtop-linum buffer) vtop-linum)
     (setf (buffer-cur-linum buffer) cur-linum)
     (setf (buffer-cur-col buffer) cur-col)

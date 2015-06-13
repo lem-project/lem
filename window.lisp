@@ -191,3 +191,17 @@
         (if (cdr result)
           (cadr result)
           (car *buffer-list*))))))
+
+(add-command 'window-delete-other-windows 'delete-other-windows "C-x1")
+(defun window-delete-other-windows (buffer arg)
+  (declare (ignore arg))
+  (setq *buffer-list* (list buffer))
+  (setf (buffer-nlines buffer) (1- cl-ncurses:*lines*))
+  (setf (buffer-ncols buffer) cl-ncurses:*cols*)
+  (setf (buffer-y buffer) 0)
+  (setf (buffer-x buffer) 0)
+  (cl-ncurses:wresize
+   (buffer-win buffer)
+   (buffer-nlines buffer)
+   (buffer-ncols buffer))
+  t)

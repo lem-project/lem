@@ -181,6 +181,10 @@
             (buffer-cur-col buffer))
       (setf (buffer-max-col newbuf)
             (buffer-max-col buffer))))
+  (setq *buffer-list*
+    (sort *buffer-list*
+      (lambda (b1 b2)
+        (< (buffer-y b1) (buffer-y b2)))))
   t)
 
 (add-command 'window-next 'other-window "C-xo")
@@ -192,16 +196,52 @@
           (cadr result)
           (car *buffer-list*))))))
 
+(defun window-move (buffer y x)
+  (cl-ncurses:mvwin (buffer-win buffer) y x)
+  (setf (buffer-y buffer) y)
+  (setf (buffer-x buffer) x))
+
+(defun window-resize (buffer nlines ncols)
+  (cl-ncurses:wresize (buffer-win buffer) nlines ncols)
+  (setf (buffer-nlines buffer) nlines)
+  (setf (buffer-ncols buffer) ncols))
+
 (add-command 'window-delete-other-windows 'delete-other-windows "C-x1")
 (defun window-delete-other-windows (buffer arg)
   (declare (ignore arg))
+  (dolist (b *buffer-list*)
+    (unless (eq b buffer)
+      (cl-ncurses:delwin (buffer-win b))))
   (setq *buffer-list* (list buffer))
-  (setf (buffer-nlines buffer) (1- cl-ncurses:*lines*))
-  (setf (buffer-ncols buffer) cl-ncurses:*cols*)
-  (setf (buffer-y buffer) 0)
-  (setf (buffer-x buffer) 0)
-  (cl-ncurses:wresize
-   (buffer-win buffer)
-   (buffer-nlines buffer)
-   (buffer-ncols buffer))
+  (window-move buffer 0 0)
+  (window-resize buffer
+    (1- cl-ncurses:*lines*)
+    cl-ncurses:*cols*)
   t)
+
+(add-command 'window-delete 'delete-window "C-x0")
+(defun window-delete (buffer arg)
+  (declare (ignore arg))
+  (cond
+   ((null (cdr *buffer-list*))
+    (mb-write "Can not delete this window")
+    nil)
+   (t
+    (window-next buffer nil)
+    (cl-ncurses:delwin (buffer-win buffer))
+    (let ((blist (sort (copy-list *buffer-list*)
+                   (lambda (b1 b2)
+                     (> (buffer-y b1) (buffer-y b2))))))
+      (let ((upbuf (cadr
+                    (member-if (lambda (b)
+                                 (= (buffer-y buffer) (buffer-y b)))
+                      blist))))
+        (when (null upbuf)
+          (setq upbuf (cadr *buffer-list*))
+          (window-move upbuf 0 (buffer-x upbuf)))
+        (window-resize upbuf
+          (+ (buffer-nlines upbuf)
+            (buffer-nlines buffer))
+          (buffer-ncols upbuf))))
+    (setq *buffer-list* (delete buffer *buffer-list*))
+    t)))

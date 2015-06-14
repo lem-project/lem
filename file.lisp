@@ -27,7 +27,7 @@
        (not (buffer-filename buf))
        (string/= filename (buffer-filename buf)))
       (let ((name (uniq-buffer-name filename)))
-        (set-buffer (make-buffer name name))))
+        (set-buffer (make-buffer name filename))))
      (t
       (set-buffer buf)))))
 

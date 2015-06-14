@@ -160,3 +160,13 @@
     (when result
       (setf (buffer-modified-p buffer) t)
       result)))
+
+(defun buffer-erase (buffer)
+  (setf (buffer-modified-p buffer) t)
+  (let ((line (make-line nil nil "")))
+    (setf (buffer-head-line buffer) line)
+    (setf (buffer-tail-line buffer) line)
+    (setf (buffer-cache-line buffer) line)
+    (setf (buffer-cache-linum buffer) 1)
+    (setf (buffer-keep-binfo buffer) nil)
+    (setf (buffer-nlines buffer) 1)))

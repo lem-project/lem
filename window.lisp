@@ -382,3 +382,11 @@
   (setq *current-cols* cl-ncurses:*cols*)
   (setq *current-lines* cl-ncurses:*lines*)
   (window-update-all))
+
+(defun pop-to-buffer (buffer)
+  (let ((old-window *current-window*))
+    (when (one-window-p)
+      (split-window nil))
+    (other-window nil)
+    (set-buffer buffer)
+    (setq *current-window* old-window)))

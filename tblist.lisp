@@ -26,7 +26,7 @@
   (let* ((name (mb-readline "Kill buffer: "))
          (tb (tblist-find name)))
     (when (cdr *tblist*)
-      (dolist (b *buffer-list*)
+      (dolist (b *window-list*)
         (when (eq tb (buffer-textbuf b))
           (tblist-next b nil)))
       (setq *tblist* (delete tb *tblist*))))

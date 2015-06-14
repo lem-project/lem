@@ -1,7 +1,5 @@
 (in-package :lem)
 
-(defvar *buffer-list* nil)
-
 (defstruct (buffer (:constructor make-buffer-internal))
   win
   nlines
@@ -27,7 +25,6 @@
           :cur-linum 1
           :cur-col 0
           :max-col 0)))
-    (setq *buffer-list* (append *buffer-list* (list buffer)))
     buffer))
 
 (add-command 'buffer-unmark 'unmark-buffer "M-~")

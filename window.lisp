@@ -1,10 +1,12 @@
 (in-package :lem)
 
+(defvar *window-list* nil)
+
 (defvar *current-cols*)
 (defvar *current-lines*)
 
 (defun one-window-p ()
-  (null (cdr *buffer-list*)))
+  (null (cdr *window-list*)))
 
 (defun window-init ()
   (setq *current-cols* cl-ncurses:*cols*)
@@ -14,7 +16,8 @@
                      (- cl-ncurses:*lines* 1)
                      cl-ncurses:*cols*
                      0
-                     0)))
+                     0))
+  (setq *window-list* (list *current-buffer*)))
 
 (defun window-offset-view (buffer)
   (let ((vtop-linum (buffer-vtop-linum buffer))
@@ -158,7 +161,7 @@
   (window-redraw buffer))
 
 (defun window-update-all ()
-  (dolist (b *buffer-list*)
+  (dolist (b *window-list*)
     (unless (eq b *current-buffer*)
       (window-update b)))
   (window-update *current-buffer*))
@@ -188,18 +191,18 @@
       (setf (buffer-cur-col newbuf)
             (buffer-cur-col buffer))
       (setf (buffer-max-col newbuf)
-            (buffer-max-col buffer))))
-  (setq *buffer-list*
-    (sort *buffer-list*
-      (lambda (b1 b2)
-        (< (buffer-y b1) (buffer-y b2)))))
+            (buffer-max-col buffer))
+      (setq *window-list*
+        (sort (copy-list (append *window-list* (list newbuf)))
+          (lambda (b1 b2)
+            (< (buffer-y b1) (buffer-y b2)))))))
   t)
 
 (defun get-next-window (buffer)
-  (let ((result (member buffer *buffer-list*)))
+  (let ((result (member buffer *window-list*)))
     (if (cdr result)
       (cadr result)
-      (car *buffer-list*))))
+      (car *window-list*))))
 
 (add-command 'window-next 'other-window "C-xo")
 (defun window-next (buffer arg)
@@ -221,10 +224,10 @@
 (add-command 'window-delete-other-windows 'delete-other-windows "C-x1")
 (defun window-delete-other-windows (buffer arg)
   (declare (ignore arg))
-  (dolist (b *buffer-list*)
+  (dolist (b *window-list*)
     (unless (eq b buffer)
       (cl-ncurses:delwin (buffer-win b))))
-  (setq *buffer-list* (list buffer))
+  (setq *window-list* (list buffer))
   (window-move buffer 0 0)
   (window-resize buffer
     (1- cl-ncurses:*lines*)
@@ -242,27 +245,27 @@
     (when (eq *current-buffer* buffer)
       (window-next buffer nil))
     (cl-ncurses:delwin (buffer-win buffer))
-    (let ((blist (reverse *buffer-list*)))
+    (let ((blist (reverse *window-list*)))
       (let ((upbuf (cadr (member buffer blist))))
         (when (null upbuf)
-          (setq upbuf (cadr *buffer-list*))
+          (setq upbuf (cadr *window-list*))
           (window-move upbuf 0 (buffer-x upbuf)))
         (window-resize upbuf
           (+ (buffer-nlines upbuf)
             (buffer-nlines buffer))
           (buffer-ncols upbuf))))
-    (setq *buffer-list* (delete buffer *buffer-list*))
+    (setq *window-list* (delete buffer *window-list*))
     t)))
 
 (defun window-adjust-all ()
-  (dolist (b *buffer-list*)
+  (dolist (b *window-list*)
     (window-resize b
       (buffer-nlines b)
       cl-ncurses:*cols*))
-  (dolist (b *buffer-list*)
+  (dolist (b *window-list*)
     (when (<= cl-ncurses:*lines* (+ 2 (buffer-y b)))
       (window-delete b nil)))
-  (let ((b (car (last *buffer-list*))))
+  (let ((b (car (last *window-list*))))
     (window-resize b
       (+ (buffer-nlines b)
         (- cl-ncurses:*lines* *current-lines*))

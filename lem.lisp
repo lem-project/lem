@@ -23,13 +23,13 @@
     (setq *exit* t)))
 
 (defun self-insert (c arg)
-  (buffer-insert-char *current-window* c arg))
+  (insert-char c arg))
 
 (defun execute (keys arg)
   (let ((cmd (find-command keys)))
     (cond
      (cmd
-      (funcall cmd *current-window* arg))
+      (funcall cmd arg))
      ((or (< 31 (char-code (car keys)))
         (char= key::ctrl-i (car keys)))
       (self-insert (car keys) arg))
@@ -99,7 +99,7 @@
   (window-init)
   (mb-init)
   (dolist (arg args)
-    (file-open *current-window* arg)))
+    (file-open arg)))
 
 (defun lem-finallize ()
   (cl-ncurses:endwin))

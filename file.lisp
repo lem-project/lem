@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(defun file-open (buffer filename)
+(defun file-open (filename)
   (let ((textbuf (make-textbuf filename filename)))
     (with-open-file (in filename :if-does-not-exist nil)
       (when in
@@ -11,21 +11,21 @@
 	      (progn
 	       (textbuf-append-line textbuf (or str ""))
 	       (return)))))))
-    (buffer-change-textbuf buffer textbuf)
-    (buffer-unmark buffer nil)
+    (set-buffer textbuf)
+    (unmark-buffer)
     t))
 
-(add-command 'file-find 'find-file "C-xC-f")
-(defun file-find (buffer arg)
+(add-command 'find-file 'find-file "C-xC-f")
+(defun find-file (arg)
   (declare (ignore arg))
   (let ((filename (mb-readline "Find File: ")))
-    (file-open buffer filename)
+    (file-open filename)
     t))
 
-(add-command 'file-save 'save-file "C-xC-s")
-(defun file-save (buffer arg)
+(add-command 'save-file 'save-file "C-xC-s")
+(defun save-file (arg)
   (declare (ignore arg))
-  (let ((textbuf (window-textbuf buffer)))
+  (let ((textbuf (window-textbuf)))
     (cond
      ((null (textbuf-modif-p textbuf))
       nil)
@@ -39,6 +39,6 @@
                         :if-does-not-exist :create)
 	(dolist (str (textbuf-take-lines textbuf 1 (textbuf-nlines textbuf)))
 	  (format out "~&~a" str)))
-      (buffer-unmark buffer nil)
+      (unmark-buffer)
       (mb-write "Wrote")
       t))))

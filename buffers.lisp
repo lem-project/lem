@@ -13,6 +13,10 @@
              (string= name (buffer-name buffer)))
     *buffer-list*))
 
+(defun get-buffer-create (name)
+  (or (get-buffer name)
+    (make-buffer name nil)))
+
 (defun uniq-buffer-name (name)
   (if (null (get-buffer name))
     name

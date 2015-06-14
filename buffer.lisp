@@ -1,32 +1,5 @@
 (in-package :lem)
 
-(defstruct (buffer (:constructor make-buffer-internal))
-  win
-  nlines
-  ncols
-  y
-  x
-  textbuf
-  vtop-linum
-  cur-linum
-  cur-col
-  max-col)
-
-(defun make-buffer (textbuf nlines ncols y x)
-  (let ((buffer
-         (make-buffer-internal
-          :win (cl-ncurses:newwin nlines ncols y x)
-          :nlines nlines
-          :ncols ncols
-          :y y
-          :x x
-          :textbuf textbuf
-          :vtop-linum 1
-          :cur-linum 1
-          :cur-col 0
-          :max-col 0)))
-    buffer))
-
 (add-command 'buffer-unmark 'unmark-buffer "M-~")
 (defun buffer-unmark (buffer arg)
   (declare (ignore arg))

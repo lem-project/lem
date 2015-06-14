@@ -1,5 +1,32 @@
 (in-package :lem)
 
+(defstruct (window (:constructor make-window-internal))
+  win
+  nlines
+  ncols
+  y
+  x
+  textbuf
+  vtop-linum
+  cur-linum
+  cur-col
+  max-col)
+
+(defun make-window (textbuf nlines ncols y x)
+  (let ((buffer
+         (make-window-internal
+          :win (cl-ncurses:newwin nlines ncols y x)
+          :nlines nlines
+          :ncols ncols
+          :y y
+          :x x
+          :textbuf textbuf
+          :vtop-linum 1
+          :cur-linum 1
+          :cur-col 0
+          :max-col 0)))
+    buffer))
+
 (defvar *window-list* nil)
 
 (defvar *current-cols*)
@@ -12,7 +39,7 @@
   (setq *current-cols* cl-ncurses:*cols*)
   (setq *current-lines* cl-ncurses:*lines*)
   (setq *current-buffer*
-        (make-buffer (make-textbuf "main" nil)
+        (make-window (make-textbuf "main" nil)
                      (- cl-ncurses:*lines* 1)
                      cl-ncurses:*cols*
                      0
@@ -171,7 +198,7 @@
   (declare (ignore arg))
   (multiple-value-bind (nlines rem)
       (floor (buffer-nlines buffer) 2)
-    (let ((newbuf (make-buffer
+    (let ((newbuf (make-window
                    (buffer-textbuf buffer)
                    nlines
                    (buffer-ncols buffer)

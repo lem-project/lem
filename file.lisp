@@ -1,17 +1,17 @@
 (in-package :lem)
 
 (defun file-open (filename)
-  (let ((textbuf (make-textbuf filename filename)))
+  (let ((buffer (make-buffer filename filename)))
     (with-open-file (in filename :if-does-not-exist nil)
       (when in
 	(do () (nil)
           (multiple-value-bind (str eof-p) (read-line in nil)
 	    (if (not eof-p)
-	      (textbuf-append-line textbuf str)
+	      (buffer-append-line buffer str)
 	      (progn
-	       (textbuf-append-line textbuf (or str ""))
+	       (buffer-append-line buffer (or str ""))
 	       (return)))))))
-    (set-buffer textbuf)
+    (set-buffer buffer)
     (unmark-buffer)
     t))
 
@@ -25,19 +25,19 @@
 (add-command 'save-file 'save-file "C-xC-s")
 (defun save-file (arg)
   (declare (ignore arg))
-  (let ((textbuf (window-textbuf)))
+  (let ((buffer (window-buffer)))
     (cond
-     ((null (textbuf-modified-p textbuf))
+     ((null (buffer-modified-p buffer))
       nil)
-     ((null (textbuf-filename textbuf))
+     ((null (buffer-filename buffer))
       (mb-write "No file name")
       nil)
      (t
-      (with-open-file (out (textbuf-filename textbuf)
+      (with-open-file (out (buffer-filename buffer)
                         :direction :output
                         :if-exists :overwrite
                         :if-does-not-exist :create)
-	(dolist (str (textbuf-take-lines textbuf 1 (textbuf-nlines textbuf)))
+	(dolist (str (buffer-take-lines buffer 1 (buffer-nlines buffer)))
 	  (format out "~&~a" str)))
       (unmark-buffer)
       (mb-write "Wrote")

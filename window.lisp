@@ -11,8 +11,8 @@
     :initarg :y)
    (x
     :initarg :x)
-   (textbuf
-    :initarg :textbuf)
+   (buffer
+    :initarg :buffer)
    (vtop-linum
     :initarg :vtop-linum)
    (cur-linum
@@ -37,8 +37,8 @@
 (defun window-x (&optional (window *current-window*))
   (slot-value window 'x))
 
-(defun window-textbuf (&optional (window *current-window*))
-  (slot-value window 'textbuf))
+(defun window-buffer (&optional (window *current-window*))
+  (slot-value window 'buffer))
 
 (defun window-vtop-linum (&optional (window *current-window*))
   (slot-value window 'vtop-linum))
@@ -72,8 +72,8 @@
   (setf (slot-value window 'x) val)
   val)
 
-(defun (setf window-textbuf) (val &optional (window *current-window*))
-  (setf (slot-value window 'textbuf) val)
+(defun (setf window-buffer) (val &optional (window *current-window*))
+  (setf (slot-value window 'buffer) val)
   val)
 
 (defun (setf window-vtop-linum) (val &optional (window *current-window*))
@@ -92,7 +92,7 @@
   (setf (slot-value window 'max-col) val)
   val)
 
-(defun make-window (textbuf nlines ncols y x)
+(defun make-window (buffer nlines ncols y x)
   (let ((window
          (make-instance 'window
           :win (cl-ncurses:newwin nlines ncols y x)
@@ -100,7 +100,7 @@
           :ncols ncols
           :y y
           :x x
-          :textbuf textbuf
+          :buffer buffer
           :vtop-linum 1
           :cur-linum 1
           :cur-col 0
@@ -117,7 +117,7 @@
   (setq *current-cols* cl-ncurses:*cols*)
   (setq *current-lines* cl-ncurses:*lines*)
   (setq *current-window*
-        (make-window (make-textbuf "main" nil)
+        (make-window (make-buffer "main" nil)
                      (- cl-ncurses:*lines* 1)
                      cl-ncurses:*cols*
                      0
@@ -161,12 +161,12 @@
 
 (defun window-percentage (window)
   (cond
-   ((<= (textbuf-nlines (window-textbuf window))
+   ((<= (buffer-nlines (window-buffer window))
         (window-nlines window))
     "All")
    ((= 1 (window-vtop-linum window))
     "Top")
-   ((<= (textbuf-nlines (window-textbuf window))
+   ((<= (buffer-nlines (window-buffer window))
       (+ (window-vtop-linum window) (window-nlines window))
         )
     "Bot")
@@ -176,7 +176,7 @@
        (* 100
 	(float
 	 (/ (window-vtop-linum window)
-            (textbuf-nlines (window-textbuf window))))))))))
+            (buffer-nlines (window-buffer window))))))))))
 
 (defun window-redraw-modeline-1 (window bg-char)
   (cl-ncurses:mvwaddstr
@@ -185,9 +185,9 @@
    0
    (let ((str (format nil "~c~c ~a: ~a (~{~a ~}) "
 		bg-char ; read-only-flag
-		(if (textbuf-modified-p (window-textbuf window)) #\* bg-char)
+		(if (buffer-modified-p (window-buffer window)) #\* bg-char)
 		"Lem"
-		(textbuf-name (window-textbuf window))
+		(buffer-name (window-buffer window))
 		nil)))
      (format nil
        (format nil
@@ -242,7 +242,7 @@
 (defun window-redraw-lines (window)
   (let (x)
     (do ((lines
-           (textbuf-take-lines (window-textbuf window)
+           (buffer-take-lines (window-buffer window)
                                (window-vtop-linum window)
                                (1- (window-nlines window)))
            (cdr lines))
@@ -277,7 +277,7 @@
   (multiple-value-bind (nlines rem)
       (floor (window-nlines) 2)
     (let ((newwin (make-window
-                   (window-textbuf)
+                   (window-buffer)
                    nlines
                    (window-ncols)
                    (+ (window-y)

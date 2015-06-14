@@ -9,7 +9,7 @@
 	       (:file "util")
 	       (:file "minibuf")
 	       (:file "command")
-	       (:file "textbuf")
+	       (:file "buffer")
 	       (:file "buffers")
 	       (:file "bufed")
 	       (:file "window")

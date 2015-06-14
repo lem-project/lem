@@ -5,8 +5,8 @@
 (defun add-buffer (textbuf)
   (push textbuf *buffer-list*))
 
-(defun any-modif-buffer-p ()
-  (find-if 'textbuf-modif-p *buffer-list*))
+(defun any-modified-buffer-p ()
+  (find-if 'textbuf-modified-p *buffer-list*))
 
 (defun get-buffer (name)
   (find-if (lambda (textbuf)

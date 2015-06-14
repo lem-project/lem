@@ -2,7 +2,7 @@
 
 (add-command 'unmark-buffer 'unmark-buffer "M-~")
 (defun unmark-buffer ()
-  (setf (textbuf-modif-p (window-textbuf)) nil)
+  (setf (textbuf-modified-p (window-textbuf)) nil)
   t)
 
 (defun set-buffer (textbuf)

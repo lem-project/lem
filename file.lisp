@@ -27,7 +27,7 @@
   (declare (ignore arg))
   (let ((textbuf (window-textbuf)))
     (cond
-     ((null (textbuf-modif-p textbuf))
+     ((null (textbuf-modified-p textbuf))
       nil)
      ((null (textbuf-filename textbuf))
       (mb-write "No file name")

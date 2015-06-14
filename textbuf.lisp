@@ -38,7 +38,7 @@
 (defstruct (textbuf (:constructor make-textbuf-internal))
   name
   filename
-  modif-p
+  modified-p
   head-line
   tail-line
   cache-line
@@ -97,7 +97,7 @@
     (nreverse strings)))
 
 (defun textbuf-append-line (textbuf str)
-  (setf (textbuf-modif-p textbuf) t)
+  (setf (textbuf-modified-p textbuf) t)
   (let* ((line (textbuf-tail-line textbuf))
 	 (newline (make-line line (line-next line) str)))
     (if (and
@@ -111,7 +111,7 @@
     t))
 
 (defun textbuf-insert-char (textbuf linum col c)
-  (setf (textbuf-modif-p textbuf) t)
+  (setf (textbuf-modified-p textbuf) t)
   (let ((line (textbuf-get-line textbuf linum)))
     (setf (line-str line)
           (concatenate 'string
@@ -121,7 +121,7 @@
   t)
 
 (defun textbuf-insert-newline (textbuf linum col)
-  (setf (textbuf-modif-p textbuf) t)
+  (setf (textbuf-modified-p textbuf) t)
   (let ((line (textbuf-get-line textbuf linum)))
     (let ((newline
             (make-line line
@@ -158,5 +158,5 @@
 (defun textbuf-delete-char (textbuf linum col)
   (let ((result (textbuf-delete-char-1 textbuf linum col)))
     (when result
-      (setf (textbuf-modif-p textbuf) t)
+      (setf (textbuf-modified-p textbuf) t)
       result)))

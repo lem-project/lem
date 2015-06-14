@@ -18,7 +18,7 @@
 (add-command 'exit-lem 'exit-lem "C-xC-c")
 (defun exit-lem (arg)
   (declare (ignore arg))
-  (when (or (not (any-modif-buffer-p))
+  (when (or (not (any-modified-buffer-p))
           (mb-y-or-n-p "Modified buffers exist. Leave anyway"))
     (setq *exit* t)))
 

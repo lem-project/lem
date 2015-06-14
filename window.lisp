@@ -185,7 +185,7 @@
    0
    (let ((str (format nil "~c~c ~a: ~a (~{~a ~}) "
 		bg-char ; read-only-flag
-		(if (textbuf-modif-p (window-textbuf window)) #\* bg-char)
+		(if (textbuf-modified-p (window-textbuf window)) #\* bg-char)
 		"Lem"
 		(textbuf-name (window-textbuf window))
 		nil)))

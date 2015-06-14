@@ -35,8 +35,6 @@
 (defun line-backward-n (line n)
   (line-step-n line n 'line-prev))
 
-(defvar *textbuf-list* nil)
-
 (defstruct (textbuf (:constructor make-textbuf-internal))
   name
   filename
@@ -55,7 +53,7 @@
     (setf (textbuf-tail-line textbuf) line)
     (setf (textbuf-cache-line textbuf) line)
     (setf (textbuf-cache-linum textbuf) 1)
-    (tblist-add textbuf)
+    (add-buffer textbuf)
     textbuf))
 
 (defun %textbuf-get-line (textbuf linum)

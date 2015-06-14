@@ -25,7 +25,7 @@
 (add-command 'file-save 'save-file "C-xC-s")
 (defun file-save (buffer arg)
   (declare (ignore arg))
-  (let ((textbuf (buffer-textbuf buffer)))
+  (let ((textbuf (window-textbuf buffer)))
     (cond
      ((null (textbuf-modif-p textbuf))
       nil)

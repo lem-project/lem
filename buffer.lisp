@@ -3,17 +3,17 @@
 (add-command 'buffer-unmark 'unmark-buffer "M-~")
 (defun buffer-unmark (buffer arg)
   (declare (ignore arg))
-  (setf (textbuf-modif-p (buffer-textbuf buffer)) nil)
+  (setf (textbuf-modif-p (window-textbuf buffer)) nil)
   t)
 
 (defun buffer-change-textbuf (buffer textbuf)
-  (let ((old-tb (buffer-textbuf buffer)))
+  (let ((old-tb (window-textbuf buffer)))
     (setf (textbuf-keep-binfo old-tb)
-      (list (buffer-vtop-linum buffer)
-        (buffer-cur-linum buffer)
-        (buffer-cur-col buffer)
-        (buffer-max-col buffer))))
-  (setf (buffer-textbuf buffer) textbuf)
+      (list (window-vtop-linum buffer)
+        (window-cur-linum buffer)
+        (window-cur-col buffer)
+        (window-max-col buffer))))
+  (setf (window-textbuf buffer) textbuf)
   (let ((vtop-linum 1)
         (cur-linum 1)
         (cur-col 0)
@@ -22,42 +22,42 @@
       (multiple-value-setq
        (vtop-linum cur-linum cur-col max-col)
        (apply 'values (textbuf-keep-binfo textbuf))))
-    (setf (buffer-vtop-linum buffer) vtop-linum)
-    (setf (buffer-cur-linum buffer) cur-linum)
-    (setf (buffer-cur-col buffer) cur-col)
-    (setf (buffer-max-col buffer) max-col)))
+    (setf (window-vtop-linum buffer) vtop-linum)
+    (setf (window-cur-linum buffer) cur-linum)
+    (setf (window-cur-col buffer) cur-col)
+    (setf (window-max-col buffer) max-col)))
 
 (defun buffer-head-line-p (buffer linum)
   (values (<= linum 1) (- 1 linum)))
 
 (defun buffer-tail-line-p (buffer linum)
-  (let ((nlines (textbuf-nlines (buffer-textbuf buffer))))
+  (let ((nlines (textbuf-nlines (window-textbuf buffer))))
     (values (<= nlines linum) (- nlines linum))))
 
 (defun buffer-bolp (buffer)
-  (zerop (buffer-cur-col buffer)))
+  (zerop (window-cur-col buffer)))
 
 (defun buffer-eolp (buffer)
-  (= (buffer-cur-col buffer)
+  (= (window-cur-col buffer)
      (textbuf-line-length
-      (buffer-textbuf buffer)
-      (buffer-cur-linum buffer))))
+      (window-textbuf buffer)
+      (window-cur-linum buffer))))
 
 (defun buffer-bobp (buffer)
-  (and (buffer-head-line-p buffer (buffer-cur-linum buffer))
+  (and (buffer-head-line-p buffer (window-cur-linum buffer))
        (buffer-bolp buffer)))
 
 (defun buffer-eobp (buffer)
   (and (buffer-tail-line-p
 	buffer
-	(buffer-cur-linum buffer))
+	(window-cur-linum buffer))
        (buffer-eolp buffer)))
 
 (defun buffer-insert-char (buffer c arg)
   (arg-repeat (arg)
-    (textbuf-insert-char (buffer-textbuf buffer)
-			 (buffer-cur-linum buffer)
-			 (buffer-cur-col buffer)
+    (textbuf-insert-char (window-textbuf buffer)
+			 (window-cur-linum buffer)
+			 (window-cur-col buffer)
 			 c)
     (buffer-next-char buffer 1))
   t)
@@ -65,9 +65,9 @@
 (add-command 'buffer-insert-newline 'newline "C-j")
 (defun buffer-insert-newline (buffer arg)
   (arg-repeat (arg)
-    (textbuf-insert-newline (buffer-textbuf buffer)
-			    (buffer-cur-linum buffer)
-			    (buffer-cur-col buffer))
+    (textbuf-insert-newline (window-textbuf buffer)
+			    (window-cur-linum buffer)
+			    (window-cur-col buffer))
     (buffer-next-line buffer 1))
   t)
 
@@ -77,14 +77,14 @@
     (buffer-backward-delete-char buffer (- arg))
     (arg-repeat (arg t)
       (when (textbuf-delete-char
-             (buffer-textbuf buffer)
-             (buffer-cur-linum buffer)
-             (buffer-cur-col buffer))
+             (window-textbuf buffer)
+             (window-cur-linum buffer)
+             (window-cur-col buffer))
         (return nil)))))
 
 (defun buffer-set-col (buffer col)
-  (setf (buffer-cur-col buffer) col)
-  (setf (buffer-max-col buffer) col))
+  (setf (window-cur-col buffer) col)
+  (setf (window-max-col buffer) col))
 
 (add-command 'buffer-bol 'beginning-of-line "C-a")
 (defun buffer-bol (buffer arg)
@@ -96,27 +96,27 @@
   (declare (ignore arg))
   (buffer-set-col buffer
 		  (textbuf-line-length
-		   (buffer-textbuf buffer)
-		   (buffer-cur-linum buffer)))
+		   (window-textbuf buffer)
+		   (window-cur-linum buffer)))
   t)
 
 (defun %buffer-adjust-col (buffer arg)
   (if arg
     (buffer-bol buffer nil)
-    (setf (buffer-cur-col buffer)
-	  (min (buffer-max-col buffer)
+    (setf (window-cur-col buffer)
+	  (min (window-max-col buffer)
 	       (textbuf-line-length
-	        (buffer-textbuf buffer)
-		(buffer-cur-linum buffer))))))
+	        (window-textbuf buffer)
+		(window-cur-linum buffer))))))
 
 (add-command 'buffer-next-line 'next-line "C-n")
 (defun buffer-next-line (buffer arg)
   (if (arg-minus-p arg)
     (buffer-prev-line buffer (- arg))
     (if (arg-repeat (arg t)
-          (if (buffer-tail-line-p buffer (buffer-cur-linum buffer))
+          (if (buffer-tail-line-p buffer (window-cur-linum buffer))
             (return)
-            (incf (buffer-cur-linum buffer))))
+            (incf (window-cur-linum buffer))))
       (progn (%buffer-adjust-col buffer arg) t)
       (progn (buffer-bol buffer nil) t))))
 
@@ -125,9 +125,9 @@
   (if (arg-minus-p arg)
     (buffer-next-line buffer (- arg))
     (if (arg-repeat (arg t)
-          (if (buffer-head-line-p buffer (buffer-cur-linum buffer))
+          (if (buffer-head-line-p buffer (window-cur-linum buffer))
             (return)
-            (decf (buffer-cur-linum buffer))))
+            (decf (window-cur-linum buffer))))
       (progn (%buffer-adjust-col buffer arg) t)
       (progn (buffer-bol buffer nil) nil))))
 
@@ -142,7 +142,7 @@
        ((buffer-eolp buffer)
         (buffer-next-line buffer 1))
        (t
-        (buffer-set-col buffer (1+ (buffer-cur-col buffer))))))))
+        (buffer-set-col buffer (1+ (window-cur-col buffer))))))))
 
 (add-command 'buffer-prev-char 'prev-char "C-b")
 (defun buffer-prev-char (buffer arg)
@@ -156,4 +156,4 @@
         (buffer-prev-line buffer 1)
         (buffer-eol buffer 1))
        (t
-        (buffer-set-col buffer (1- (buffer-cur-col buffer))))))))
+        (buffer-set-col buffer (1- (window-cur-col buffer))))))))

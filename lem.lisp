@@ -4,7 +4,7 @@
 
 (defun getch ()
   (let* ((code (cl-ncurses:wgetch
-                (buffer-win *current-buffer*)))
+                (window-win *current-buffer*)))
          (char (code-char code)))
     (cond
      ((= code 410)

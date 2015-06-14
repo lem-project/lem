@@ -13,6 +13,14 @@
              (string= name (buffer-name buffer)))
     *buffer-list*))
 
+(defun uniq-buffer-name (name)
+  (if (null (get-buffer name))
+    name
+    (do ((n 1 (1+ n))) (nil)
+      (let ((name (format nil "~a<~d>" name n)))
+        (unless (get-buffer name)
+          (return name))))))
+
 (add-command 'select-buffer 'select-buffer "C-xb")
 (defun select-buffer (arg)
   (let* ((name (mb-readline "Use buffer: "))

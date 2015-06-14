@@ -18,9 +18,18 @@
 (add-command 'find-file 'find-file "C-xC-f")
 (defun find-file (arg)
   (declare (ignore arg))
-  (let ((filename (mb-readline "Find File: ")))
-    (file-open filename)
-    t))
+  (let* ((filename (mb-readline "Find File: "))
+         (buf (get-buffer filename)))
+    (cond
+     ((null buf)
+      (file-open filename))
+     ((or
+       (not (buffer-filename buf))
+       (string/= filename (buffer-filename buf)))
+      (let ((name (uniq-buffer-name filename)))
+        (set-buffer (make-buffer name name))))
+     (t
+      (set-buffer buf)))))
 
 (add-command 'save-file 'save-file "C-xC-s")
 (defun save-file (arg)

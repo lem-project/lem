@@ -16,7 +16,8 @@
 (add-command 'select-buffer 'select-buffer "C-xb")
 (defun select-buffer (arg)
   (let* ((name (mb-readline "Use buffer: "))
-         (buf (get-buffer name)))
+         (buf (or (get-buffer name)
+                (make-buffer name nil))))
     (set-buffer buf)
     t))
 

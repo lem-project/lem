@@ -1,4 +1,4 @@
 (in-package :lem)
 
-(defvar *current-buffer*)
+(defvar *current-window*)
 (defvar *tab-size* 8)

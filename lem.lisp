@@ -4,7 +4,7 @@
 
 (defun getch ()
   (let* ((code (cl-ncurses:wgetch
-                (window-win *current-buffer*)))
+                (window-win *current-window*)))
          (char (code-char code)))
     (cond
      ((= code 410)
@@ -23,13 +23,13 @@
     (setq *exit* t)))
 
 (defun self-insert (c arg)
-  (buffer-insert-char *current-buffer* c arg))
+  (buffer-insert-char *current-window* c arg))
 
 (defun execute (keys arg)
   (let ((cmd (find-command keys)))
     (cond
      (cmd
-      (funcall cmd *current-buffer* arg))
+      (funcall cmd *current-window* arg))
      ((or (< 31 (char-code (car keys)))
         (char= key::ctrl-i (car keys)))
       (self-insert (car keys) arg))
@@ -99,7 +99,7 @@
   (window-init)
   (mb-init)
   (dolist (arg args)
-    (file-open *current-buffer* arg)))
+    (file-open *current-window* arg)))
 
 (defun lem-finallize ()
   (cl-ncurses:endwin))

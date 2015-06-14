@@ -123,7 +123,7 @@
             (return)
             (incf (window-cur-linum))))
       (progn (%buffer-adjust-col arg) t)
-      (progn (beginning-of-line nil) t))))
+      (progn (end-of-line nil) t))))
 
 (add-command 'prev-line 'prev-line "C-p")
 (defun prev-line (arg)

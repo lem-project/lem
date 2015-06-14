@@ -25,11 +25,11 @@
     (setf (window-cur-col) cur-col)
     (setf (window-max-col) max-col)))
 
-(defun buffer-head-line-p (window linum)
+(defun head-line-p (window linum)
   (declare (ignore window))
   (values (<= linum 1) (- 1 linum)))
 
-(defun buffer-tail-line-p (window linum)
+(defun tail-line-p (window linum)
   (let ((nlines (textbuf-nlines (window-textbuf))))
     (values (<= nlines linum) (- nlines linum))))
 
@@ -43,11 +43,11 @@
       (window-cur-linum))))
 
 (defun bobp ()
-  (and (buffer-head-line-p *current-window* (window-cur-linum))
+  (and (head-line-p *current-window* (window-cur-linum))
        (bolp)))
 
 (defun eobp ()
-  (and (buffer-tail-line-p
+  (and (tail-line-p
         *current-window*
         (window-cur-linum))
        (eolp)))
@@ -88,19 +88,19 @@
     (when (prev-char arg)
       (delete-char arg))))
 
-(defun buffer-set-col (col)
+(defun goto-column (col)
   (setf (window-cur-col) col)
   (setf (window-max-col) col))
 
 (add-command 'beginning-of-line 'beginning-of-line "C-a")
 (defun beginning-of-line (arg)
   (declare (ignore arg))
-  (buffer-set-col 0))
+  (goto-column 0))
 
 (add-command 'end-of-line 'end-of-line "C-e")
 (defun end-of-line (arg)
   (declare (ignore arg))
-  (buffer-set-col (textbuf-line-length
+  (goto-column (textbuf-line-length
                    (window-textbuf)
                    (window-cur-linum)))
   t)
@@ -119,7 +119,7 @@
   (if (arg-minus-p arg)
     (prev-line (- arg))
     (if (arg-repeat (arg t)
-          (if (buffer-tail-line-p *current-window* (window-cur-linum))
+          (if (tail-line-p *current-window* (window-cur-linum))
             (return)
             (incf (window-cur-linum))))
       (progn (%buffer-adjust-col arg) t)
@@ -130,7 +130,7 @@
   (if (arg-minus-p arg)
     (next-line (- arg))
     (if (arg-repeat (arg t)
-          (if (buffer-head-line-p *current-window* (window-cur-linum))
+          (if (head-line-p *current-window* (window-cur-linum))
             (return)
             (decf (window-cur-linum))))
       (progn (%buffer-adjust-col arg) t)
@@ -147,7 +147,7 @@
        ((eolp)
         (next-line 1))
        (t
-        (buffer-set-col (1+ (window-cur-col))))))))
+        (goto-column (1+ (window-cur-col))))))))
 
 (add-command 'prev-char 'prev-char "C-b")
 (defun prev-char (arg)
@@ -161,4 +161,4 @@
         (prev-line 1)
         (end-of-line nil))
        (t
-        (buffer-set-col (1- (window-cur-col))))))))
+        (goto-column (1- (window-cur-col))))))))

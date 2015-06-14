@@ -144,11 +144,11 @@
 (defun window-scroll (window n)
   (incf (window-vtop-linum window) n)
   (multiple-value-bind (outp offset)
-      (buffer-head-line-p window (1+ (window-vtop-linum window)))
+      (head-line-p window (1+ (window-vtop-linum window)))
     (when outp
       (incf (window-vtop-linum window))))
   (multiple-value-bind (outp offset)
-      (buffer-tail-line-p window (window-vtop-linum window))
+      (tail-line-p window (window-vtop-linum window))
     (when outp
       (incf (window-vtop-linum window)))))
 

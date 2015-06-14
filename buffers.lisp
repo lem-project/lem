@@ -49,3 +49,32 @@
   (arg-repeat (arg t)
     (let ((buf (cadr (member (window-buffer) *buffer-list*))))
       (set-buffer (or buf (car *buffer-list*))))))
+
+(add-command 'list-buffers 'list-buffers "C-xC-b")
+(defun list-buffers (arg)
+  (let* ((buf (get-buffer-create "*Buffers*"))
+         (max-name-len
+          (+ 3 (apply 'max
+                 (mapcar (lambda (b)
+                           (length (buffer-name b)))
+                   *buffer-list*))))
+         (max-filename-len
+          (apply 'max
+            (mapcar (lambda (b)
+                      (length (buffer-filename b)))
+              *buffer-list*))))
+    (pop-to-buffer buf)
+    (buffer-erase buf)
+    (buffer-append-line buf
+      (format nil
+        (format nil "Buffer~~~dTFile"
+          max-name-len)))
+    (buffer-append-line buf
+      (make-string (+ max-name-len max-filename-len) :initial-element #\-))
+    (dolist (b *buffer-list*)
+      (buffer-append-line buf
+        (format nil
+          (format nil "~a~~~dT~a"
+            (buffer-name b)
+            max-name-len
+            (or (buffer-filename b) "")))))))

@@ -21,7 +21,7 @@
           (return name))))))
 
 (define-key "C-xb" 'select-buffer)
-(defcommand select-buffer (name) ("sUse Buffer: ")
+(defcommand select-buffer (name) ("BUse Buffer: ")
   (let ((buf (or (get-buffer name)
                (make-buffer name nil))))
     (set-buffer buf)

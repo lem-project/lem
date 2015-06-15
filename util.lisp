@@ -90,3 +90,21 @@
       (list str)
       (cons (subseq str 0 i)
         (split-string (subseq str (1+ i)) delim)))))
+
+(defun completion (name list)
+  (let ((strings (remove-if-not (lambda (elt)
+                                  (and (<= (length name) (length elt))
+                                    (string= name elt
+                                      :end2 (length name))))
+                   list)))
+    (cond
+     ((null strings) nil)
+     ((null (cdr strings)) (car strings))
+     (t
+      (let* ((str (car strings))
+             (len (length str)))
+        (dolist (s (cdr strings))
+          (let ((res (mismatch str s :end1 len)))
+            (when res
+              (setq len res))))
+        (values (subseq str 0 len) strings))))))

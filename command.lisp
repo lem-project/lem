@@ -35,6 +35,10 @@
                   garg)
                  ((char= #\s (aref arg-descripter 0))
                   `(mb-readline ,(subseq arg-descripter 1)))
+                 ((char= #\b (aref arg-descripter 0))
+                  `(mb-read-buffer ,(subseq arg-descripter 1) *current-buffer* t))
+                 ((char= #\B (aref arg-descripter 0))
+                  `(mb-read-buffer ,(subseq arg-descripter 1) *prev-buffer* nil))
                  (t
                   (error "Illegal arg-descripter: ~a" arg-descripter))))
       (split-string arg-descripter #\newline))))

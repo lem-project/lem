@@ -7,6 +7,7 @@
 
 (defun set-buffer (buffer)
   (let ((old-buf (window-buffer)))
+    (setq *prev-buffer* old-buf)
     (setf (buffer-keep-binfo old-buf)
       (list (window-vtop-linum)
         (window-cur-linum)

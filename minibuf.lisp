@@ -53,7 +53,17 @@
   (cl-ncurses:wrefresh *mb-win*)
   (getch))
 
-(defun mb-readline (prompt)
+(defun mb-completion (comp-f str)
+  (multiple-value-bind (result strings) (funcall comp-f str)
+    (let ((buffer (get-buffer-create "*Completion*")))
+      (buffer-erase buffer)
+      (dolist (s strings)
+        (buffer-append-line buffer s))
+      (pop-to-buffer buffer)
+      (window-update-all))
+    result))
+
+(defun mb-readline (prompt &optional comp-f existing-p)
   (setq *mb-print-flag* t)
   (let ((str ""))
     (do ((break nil))
@@ -63,10 +73,29 @@
       (cl-ncurses:wrefresh *mb-win*)
       (let ((c (getch)))
         (cond
-	  ((char= c key::ctrl-j)
-	   (setq break t))
-	  ((char= c key::ctrl-h)
-	   (setq str (subseq str 0 (1- (length str)))))
-	  (t
-	   (setq str (concatenate 'string str (string c)))))))
+         ((char= c key::ctrl-j)
+          (when (or (string= str "")
+                    (null existing-p)
+                    (funcall existing-p str))
+            (setq break t)))
+         ((char= c key::ctrl-i)
+          (when comp-f
+            (setq str
+              (mb-completion comp-f str))))
+         ((char= c key::ctrl-h)
+          (setq str (subseq str 0 (1- (length str)))))
+         (t
+          (setq str (concatenate 'string str (string c)))))))
     str))
+
+(defun mb-read-buffer (prompt &optional default existing)
+  (let* ((buffer-names (mapcar 'buffer-name *buffer-list*))
+         (result (mb-readline prompt
+                   (lambda (name)
+                     (completion name buffer-names))
+                   (and existing
+                     (lambda (name)
+                       (member name buffer-names :test 'string=))))))
+    (if (string= result "")
+      (buffer-name default)
+      result)))

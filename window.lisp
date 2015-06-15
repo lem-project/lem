@@ -122,6 +122,7 @@
                      cl-ncurses:*cols*
                      0
                      0))
+  (setq *prev-buffer* (window-buffer))
   (setq *window-list* (list *current-window*)))
 
 (defun window-offset-view (window)

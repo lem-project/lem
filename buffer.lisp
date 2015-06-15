@@ -46,6 +46,11 @@
   keep-binfo
   (nlines 1))
 
+(defmethod print-object ((buffer buffer) stream)
+  (format stream "#<BUFFER ~a ~a>"
+    (buffer-name buffer)
+    (buffer-filename buffer)))
+
 (defun make-buffer (name filename)
   (let ((buffer (make-buffer-internal :name name :filename filename))
 	(line (make-line nil nil "")))

@@ -84,8 +84,9 @@
 	      (wide-index str end))))
     (subseq str wb we)))
 
-(defmacro arg-repeat ((arg &optional result) &body body)
-  `(dotimes (_ (or ,arg 1) ,result) ,@body))
-
-(defun arg-minus-p (arg)
-  (and (integerp arg) (minusp arg)))
+(defun split-string (str delim)
+  (let ((i (position delim str)))
+    (if (null i)
+      (list str)
+      (cons (subseq str 0 i)
+        (split-string (subseq str (1+ i)) delim)))))

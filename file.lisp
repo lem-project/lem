@@ -15,9 +15,8 @@
     (unmark-buffer)
     t))
 
-(add-command 'find-file 'find-file "C-xC-f")
-(defun find-file (arg)
-  (declare (ignore arg))
+(define-key "C-xC-f" 'find-file)
+(defcommand find-file () ()
   (let* ((filename (mb-readline "Find File: "))
          (buf (get-buffer filename)))
     (cond
@@ -31,9 +30,8 @@
      (t
       (set-buffer buf)))))
 
-(add-command 'save-file 'save-file "C-xC-s")
-(defun save-file (arg)
-  (declare (ignore arg))
+(define-key "C-xC-s" 'save-file)
+(defcommand save-file () ()
   (let ((buffer (window-buffer)))
     (cond
      ((null (buffer-modified-p buffer))

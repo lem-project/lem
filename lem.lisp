@@ -15,15 +15,11 @@
       (throw 'abort t))
      (t char))))
 
-(add-command 'exit-lem 'exit-lem "C-xC-c")
-(defun exit-lem (arg)
-  (declare (ignore arg))
+(define-key "C-xC-c" 'exit-lem)
+(defcommand exit-lem () ()
   (when (or (not (any-modified-buffer-p))
           (mb-y-or-n-p "Modified buffers exist. Leave anyway"))
     (setq *exit* t)))
-
-(defun self-insert (c arg)
-  (insert-char c arg))
 
 (defun execute (keys arg)
   (let ((cmd (find-command keys)))
@@ -32,7 +28,7 @@
       (funcall cmd arg))
      ((or (< 31 (char-code (car keys)))
         (char= key::ctrl-i (car keys)))
-      (self-insert (car keys) arg))
+      (insert-char (car keys) (or arg 1)))
      (t
       (mb-write "Key not found")))))
 

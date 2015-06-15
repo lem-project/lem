@@ -271,9 +271,8 @@
       (window-update win)))
   (window-update *current-window*))
 
-(add-command 'split-window 'split-window "C-x2")
-(defun split-window (arg)
-  (declare (ignore arg))
+(define-key "C-x2" 'split-window)
+(defcommand split-window () ()
   (multiple-value-bind (nlines rem)
       (floor (window-nlines) 2)
     (let ((newwin (make-window
@@ -309,13 +308,11 @@
       (cadr result)
       (car *window-list*))))
 
-(add-command 'other-window 'other-window "C-xo")
-(defun other-window (arg)
-  (let ((window *current-window*))
-    (arg-repeat (arg t)
-      (setq window (get-next-window window)))
-    (setq *current-window* window))
-  t)
+(define-key "C-xo" 'other-window)
+(defcommand other-window (&optional (n 1)) ("p")
+  (dotimes (_ n t)
+    (setq *current-window*
+      (get-next-window *current-window*))))
 
 (defun window-move (window y x)
   (cl-ncurses:mvwin (window-win window) y x)
@@ -327,9 +324,8 @@
   (setf (window-nlines window) nlines)
   (setf (window-ncols window) ncols))
 
-(add-command 'delete-other-windows 'delete-other-windows "C-x1")
-(defun delete-other-windows (arg)
-  (declare (ignore arg))
+(define-key "C-x1" 'delete-other-windows)
+(defcommand delete-other-windows () ()
   (dolist (win *window-list*)
     (unless (eq win *current-window*)
       (cl-ncurses:delwin (window-win win))))
@@ -340,19 +336,18 @@
     cl-ncurses:*cols*)
   t)
 
-(add-command 'delete-window 'delete-window "C-x0")
-(defun delete-window (arg)
+(define-key "C-x0" 'delete-window)
+(defcommand delete-window () ()
   (delete-window-1 *current-window*))
 
 (defun delete-window-1 (window)
-  (declare (ignore arg))
   (cond
    ((one-window-p)
     (mb-write "Can not delete this window")
     nil)
    (t
     (when (eq *current-window* window)
-      (other-window nil))
+      (other-window))
     (cl-ncurses:delwin (window-win window))
     (let ((wlist (reverse *window-list*)))
       (let ((upwin (cadr (member window wlist))))
@@ -386,7 +381,7 @@
 (defun pop-to-buffer (buffer)
   (let ((old-window *current-window*))
     (when (one-window-p)
-      (split-window nil))
-    (other-window nil)
+      (split-window))
+    (other-window)
     (set-buffer buffer)
     (setq *current-window* old-window)))

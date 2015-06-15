@@ -96,6 +96,8 @@
       str)))
 
 (defun mb-read-buffer (prompt &optional default existing)
+  (when default
+    (setq prompt (format nil "~a(~a) " prompt default)))
   (let* ((buffer-names (mapcar 'buffer-name *buffer-list*))
          (result (mb-readline prompt
                    (lambda (name)
@@ -104,5 +106,5 @@
                      (lambda (name)
                        (member name buffer-names :test 'string=))))))
     (if (string= result "")
-      (buffer-name default)
+      default
       result)))

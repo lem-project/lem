@@ -1,10 +1,5 @@
 (in-package :lem)
 
-(defvar *buffer-list* nil)
-
-(defun add-buffer (buffer)
-  (push buffer *buffer-list*))
-
 (defun any-modified-buffer-p ()
   (find-if 'buffer-modified-p *buffer-list*))
 

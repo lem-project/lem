@@ -53,7 +53,7 @@
     (setf (buffer-tail-line buffer) line)
     (setf (buffer-cache-line buffer) line)
     (setf (buffer-cache-linum buffer) 1)
-    (add-buffer buffer)
+    (push buffer *buffer-list*)
     buffer))
 
 (defun %buffer-get-line (buffer linum)

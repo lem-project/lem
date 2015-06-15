@@ -28,7 +28,7 @@
     t))
 
 (define-key "C-xk" 'kill-buffer)
-(defcommand kill-buffer (name) ("sKill buffer: ")
+(defcommand kill-buffer (name) ("bKill buffer: ")
   (let ((buf (get-buffer name)))
     (when (cdr *buffer-list*)
       (dolist (win *window-list*)

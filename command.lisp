@@ -36,7 +36,7 @@
                  ((char= #\s (aref arg-descripter 0))
                   `(mb-readline ,(subseq arg-descripter 1)))
                  ((char= #\b (aref arg-descripter 0))
-                  `(mb-read-buffer ,(subseq arg-descripter 1) *current-buffer* t))
+                  `(mb-read-buffer ,(subseq arg-descripter 1) (window-buffer) t))
                  ((char= #\B (aref arg-descripter 0))
                   `(mb-read-buffer ,(subseq arg-descripter 1) *prev-buffer* nil))
                  (t

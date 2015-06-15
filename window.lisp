@@ -117,7 +117,7 @@
   (setq *current-cols* cl-ncurses:*cols*)
   (setq *current-lines* cl-ncurses:*lines*)
   (setq *current-window*
-        (make-window (make-buffer "main" nil)
+        (make-window (get-buffer-create "main")
                      (- cl-ncurses:*lines* 1)
                      cl-ncurses:*cols*
                      0
@@ -380,9 +380,9 @@
   (window-update-all))
 
 (defun pop-to-buffer (buffer)
-  (let ((old-window *current-window*))
-    (when (one-window-p)
-      (split-window))
-    (other-window)
+  (when (one-window-p)
+    (split-window))
+  (let ((*current-window*
+         (get-next-window *current-window*)))
     (set-buffer buffer)
-    (setq *current-window* old-window)))
+    *current-window*))

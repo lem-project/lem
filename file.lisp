@@ -16,9 +16,8 @@
     t))
 
 (define-key "C-xC-f" 'find-file)
-(defcommand find-file () ()
-  (let* ((filename (mb-readline "Find File: "))
-         (buf (get-buffer filename)))
+(defcommand find-file (filename) ("sFind File: ")
+  (let ((buf (get-buffer filename)))
     (cond
      ((null buf)
       (file-open filename))

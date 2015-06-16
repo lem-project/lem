@@ -4,7 +4,8 @@
 
 (defsystem lem
   :serial t
-  :components ((:file "key")
+  :components ((:file "wrappers")
+	       (:file "key")
 	       (:file "globals")
 	       (:file "util")
 	       (:file "minibuf")

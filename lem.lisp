@@ -83,7 +83,7 @@
                               collect (getch))))
                         '(vector (unsigned-byte 8)))))
             (values
-             (list (aref (sb-ext:octets-to-string bytes) 0))
+             (list (aref (bytes-to-string bytes) 0))
              uarg)))))))
 
 (defun lem-init (args)

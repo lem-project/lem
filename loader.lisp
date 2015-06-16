@@ -1,3 +1,3 @@
 (require :asdf)
 (require :lem)
-(apply 'lem:lem (cdr sb-ext:*posix-argv*))
+(apply 'lem:lem (lem::argv))

@@ -17,20 +17,12 @@
     filename))
 
 (defun current-directory ()
-  (file-name-as-directory (sb-posix:getcwd)))
+  (file-name-as-directory (pwd)))
 
 (defun file-exist-p (file-name)
   (if (probe-file file-name)
     t
     nil))
-
-(defun files (dirname)
-  (mapcar #'namestring
-    (directory
-     (make-pathname
-      :name :wild
-      :type :wild
-      :defaults dirname))))
 
 (defun expand-file-name (filename &optional directory)
   (when (char/= (aref filename 0) #\/)

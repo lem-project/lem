@@ -101,7 +101,10 @@
   (cl-ncurses:endwin))
 
 (defun lem-main ()
-  (do ((*exit* nil)) (*exit*)
+  (do ((*exit* nil)
+       (*curr-kill-flag* nil nil)
+       (*last-kill-flag* nil *curr-kill-flag*))
+      (*exit*)
     (window-update-all)
     (when (catch 'abort
             (multiple-value-bind (keys uarg) (input-keys)

@@ -10,6 +10,7 @@
 	       (:file "util")
 	       (:file "minibuf")
 	       (:file "command")
+	       (:file "kill")
 	       (:file "buffer")
 	       (:file "buffers")
 	       (:file "bufed")

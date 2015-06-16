@@ -35,6 +35,18 @@
 (defun line-backward-n (line n)
   (line-step-n line n 'line-prev))
 
+(defun line-debug-print (head tail)
+  (let ((lines))
+    (do ((line head (line-next line)))
+        ((null line))
+      (push (line-str line) lines))
+    (pdebug (nreverse lines)))
+  (let ((lines))
+    (do ((line tail (line-prev line)))
+        ((null line))
+      (push (line-str line) lines))
+    (pdebug (nreverse lines))))
+
 (defstruct (buffer (:constructor make-buffer-internal))
   name
   filename
@@ -117,13 +129,15 @@
 
 (defun buffer-insert-char (buffer linum col c)
   (setf (buffer-modified-p buffer) t)
-  (let ((line (buffer-get-line buffer linum)))
-    (setf (line-str line)
-          (concatenate 'string
-	               (subseq (line-str line) 0 col)
-		       (string c)
-		       (subseq (line-str line) col))))
-  t)
+  (if (char= c #\newline)
+    (buffer-insert-newline buffer linum col)
+    (let ((line (buffer-get-line buffer linum)))
+      (setf (line-str line)
+        (concatenate 'string
+          (subseq (line-str line) 0 col)
+          (string c)
+          (subseq (line-str line) col)))
+      t)))
 
 (defun buffer-insert-newline (buffer linum col)
   (setf (buffer-modified-p buffer) t)
@@ -139,32 +153,53 @@
   (incf (buffer-nlines buffer))
   t)
 
-(defun buffer-delete-char-1 (buffer linum col)
+(defun buffer-insert-line (buffer linum col str)
+  (setf (buffer-modified-p buffer) t)
   (let ((line (buffer-get-line buffer linum)))
-    (if (>= col (length (line-str line)))
-      (unless (eq line (buffer-tail-line buffer))
+    (setf (line-str line)
+      (concatenate 'string
+        (subseq (line-str line) 0 col)
+        str
+        (subseq (line-str line) col))))
+  t)
+
+(defun buffer-delete-char (buffer linum col n)
+  (let ((line (buffer-get-line buffer linum))
+        (acc "")
+        (result t))
+    (loop while (plusp n) do
+      (cond
+       ((<= n (- (length (line-str line)) col))
+        (setf (buffer-modified-p buffer) t)
+        (setq acc
+          (format nil "~a~a" 
+            acc
+            (subseq (line-str line) col (+ col n))))
         (setf (line-str line)
-              (concatenate 'string
-                           (line-str line)
-                           (line-str (line-next line))))
+          (concatenate 'string
+            (subseq (line-str line) 0 col)
+            (subseq (line-str line) (+ col n))))
+        (setq n 0))
+       (t
+        (setq acc
+          (format nil "~a~a~%"
+            acc
+            (subseq (line-str line) col)))
+        (unless (line-next line)
+          (setq result nil)
+          (return nil))
+        (decf n (1+ (- (length (line-str line)) col)))
+        (decf (buffer-nlines buffer))
+        (setf (buffer-modified-p buffer) t)
+        (setf (line-str line)
+          (concatenate 'string
+            (subseq (line-str line) 0 col)
+            (line-str (line-next line))))
         (when (eq (line-next line)
                   (buffer-tail-line buffer))
           (setf (buffer-tail-line buffer) line))
-	(line-free (line-next line))
-	(decf (buffer-nlines buffer))
-	t)
-      (progn
-        (setf (line-str line)
-	      (concatenate 'string
-			   (subseq (line-str line) 0 col)
-			   (subseq (line-str line) (1+ col))))
-	t))))
-
-(defun buffer-delete-char (buffer linum col)
-  (let ((result (buffer-delete-char-1 buffer linum col)))
-    (when result
-      (setf (buffer-modified-p buffer) t)
-      result)))
+        (line-free (line-next line)))))
+    (values result acc)))
 
 (defun buffer-erase (buffer)
   (setf (buffer-modified-p buffer) t)

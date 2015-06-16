@@ -108,3 +108,10 @@
             (when res
               (setq len res))))
         (values (subseq str 0 len) strings))))))
+
+(defun join (str strings)
+  (do ((rest strings (cdr rest))
+       (acc ""))
+      ((null (cdr rest))
+       (concatenate 'string acc (car rest)))
+    (setq acc (concatenate 'string acc (car rest) str))))

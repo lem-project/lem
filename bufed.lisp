@@ -55,11 +55,24 @@
 
 (defun insert-char (c n)
   (dotimes (_ n t)
-    (buffer-insert-char (window-buffer)
-                         (window-cur-linum)
-                         (window-cur-col)
-                         c)
+    (buffer-insert-char
+     (window-buffer)
+     (window-cur-linum)
+     (window-cur-col)
+     c)
     (next-char 1)))
+
+(defun insert-string (str)
+  (do ((rest (split-string str #\newline) (cdr rest)))
+      ((null rest))
+    (buffer-insert-line
+     (window-buffer)
+     (window-cur-linum)
+     (window-cur-col)
+     (car rest))
+    (next-char (length (car rest)))
+    (when (cdr rest)
+      (insert-newline 1))))
 
 (define-key "C-j" 'insert-newline)
 (defcommand insert-newline (n) ("p")
@@ -70,15 +83,25 @@
     (next-line 1)))
 
 (define-key "C-d" 'delete-char)
-(defcommand delete-char (n) ("p")
-  (if (minusp n)
-    (backward-delete-char (- n))
-    (dotimes (_ n t)
-      (when (buffer-delete-char
-             (window-buffer)
-             (window-cur-linum)
-             (window-cur-col))
-        (return nil)))))
+(defcommand delete-char (n) ("P")
+  (cond
+   ((null n)
+    (buffer-delete-char
+     (window-buffer)
+     (window-cur-linum)
+     (window-cur-col)
+     1))
+   ((minusp n)
+    (backward-delete-char (- n)))
+   (t
+    (multiple-value-bind (result str)
+        (buffer-delete-char
+         (window-buffer)
+         (window-cur-linum)
+         (window-cur-col)
+         n)
+      (with-kill ()
+        (kill-push str))))))
 
 (define-key "C-h" 'backward-delete-char)
 (defcommand backward-delete-char (n) ("p")

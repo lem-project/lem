@@ -15,4 +15,4 @@
 	       (:file "window")
 	       (:file "file")
 	       (:file "lem"))
-  :depends-on ("cl-ncurses"))
+  :depends-on (:cl-ncurses :sb-posix))

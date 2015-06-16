@@ -34,7 +34,7 @@
                  ((string= "P" arg-descripter)
                   garg)
                  ((char= #\s (aref arg-descripter 0))
-                  `(mb-readline ,(subseq arg-descripter 1)))
+                  `(mb-read-string ,(subseq arg-descripter 1)))
                  ((char= #\b (aref arg-descripter 0))
                   `(mb-read-buffer ,(subseq arg-descripter 1)
                      (buffer-name (window-buffer))
@@ -43,6 +43,18 @@
                   `(mb-read-buffer ,(subseq arg-descripter 1)
                      (buffer-name *prev-buffer*)
                      nil))
+                 ((char= #\f (aref arg-descripter 0))
+                  `(mb-read-file-name
+                    ,(subseq arg-descripter 1)
+                    (current-directory)
+                    nil
+                    t))
+                 ((char= #\F (aref arg-descripter 0))
+                  `(mb-read-file-name
+                    ,(subseq arg-descripter 1)
+                    (current-directory)
+                    nil
+                    nil))
                  (t
                   (error "Illegal arg-descripter: ~a" arg-descripter))))
       (split-string arg-descripter #\newline))))

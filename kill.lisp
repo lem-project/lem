@@ -31,8 +31,13 @@
     (kill-append str *kill-before-p*))))
 
 (define-key "C-y" 'yank)
-(defcommand yank () ()
-  (insert-string (car *kill-ring-yank-ptr*)))
+(defcommand yank (n) ("p")
+  (do ((ptr *kill-ring-yank-ptr*
+         (or (cdr ptr)
+             *kill-ring*))
+       (n n (1- n)))
+      ((>= 1 n)
+       (insert-string (car ptr)))))
 
 (defmacro with-kill ((&optional before-p) &body body)
   `(let ((*kill-before-p* ,before-p))

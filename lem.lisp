@@ -18,7 +18,7 @@
 (define-key "C-xC-c" 'exit-lem)
 (defcommand exit-lem () ()
   (when (or (not (any-modified-buffer-p))
-          (mb-y-or-n-p "Modified buffers exist. Leave anyway"))
+          (y-or-n-p "Modified buffers exist. Leave anyway"))
     (setq *exit* t)))
 
 (defun execute (keys arg)
@@ -35,8 +35,8 @@
 (defun universal-argument ()
   (let ((numlist)
         n)
-    (do ((c (mb-read-char "C-u 4")
-            (mb-read-char
+    (do ((c (read-char "C-u 4")
+            (read-char
              (format nil "C-u ~{~a~}" numlist))))
         (nil)
       (cond

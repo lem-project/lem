@@ -36,7 +36,7 @@
   (cl-ncurses:mvwaddstr *mb-win* 0 0 msg)
   (cl-ncurses:wrefresh *mb-win*))
 
-(defun mb-y-or-n-p (prompt)
+(defun y-or-n-p (prompt)
   (setq *mb-print-flag* t)
   (do () (nil)
     (cl-ncurses:werase *mb-win*)
@@ -49,7 +49,7 @@
        ((char= #\n c)
         (return nil))))))
 
-(defun mb-read-char (prompt)
+(defun read-char (prompt)
   (setq *mb-print-flag* t)
   (cl-ncurses:werase *mb-win*)
   (cl-ncurses:mvwaddstr *mb-win* 0 0 prompt)
@@ -96,10 +96,10 @@
         (delete-window)))
     str))
 
-(defun mb-read-string (prompt &optional initial)
+(defun read-string (prompt &optional initial)
   (mb-readline prompt (or initial "") nil nil))
 
-(defun mb-read-buffer (prompt &optional default existing)
+(defun read-buffer (prompt &optional default existing)
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))
   (let* ((buffer-names (mapcar 'buffer-name *buffer-list*))
@@ -114,7 +114,7 @@
       default
       result)))
 
-(defun mb-read-file-name (prompt &optional directory default existing)
+(defun read-file-name (prompt &optional directory default existing)
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))
   (let ((result (mb-readline prompt

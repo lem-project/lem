@@ -26,38 +26,42 @@
 
 (let ((garg (gensym "ARG")))
   (defun defcommand-gen-args (arg-descripter)
-    (cons 'list
-      (mapcar (lambda (arg-descripter)
-                (cond
-                 ((string= "p" arg-descripter)
-                  `(or ,garg 1))
-                 ((string= "P" arg-descripter)
-                  garg)
-                 ((char= #\s (aref arg-descripter 0))
-                  `(mb-read-string ,(subseq arg-descripter 1)))
-                 ((char= #\b (aref arg-descripter 0))
-                  `(mb-read-buffer ,(subseq arg-descripter 1)
-                     (buffer-name (window-buffer))
-                     t))
-                 ((char= #\B (aref arg-descripter 0))
-                  `(mb-read-buffer ,(subseq arg-descripter 1)
-                     (buffer-name *prev-buffer*)
-                     nil))
-                 ((char= #\f (aref arg-descripter 0))
-                  `(mb-read-file-name
-                    ,(subseq arg-descripter 1)
-                    (current-directory)
-                    nil
-                    t))
-                 ((char= #\F (aref arg-descripter 0))
-                  `(mb-read-file-name
-                    ,(subseq arg-descripter 1)
-                    (current-directory)
-                    nil
-                    nil))
-                 (t
-                  (error "Illegal arg-descripter: ~a" arg-descripter))))
-      (split-string arg-descripter #\newline))))
+    (cond
+     ((string= "p" arg-descripter)
+      `(list (or ,garg 1)))
+     ((string= "P" arg-descripter)
+      `(list ,garg))
+     ((string= "r" arg-descripter)
+      `(list (region-beginning) (region-end)))
+     (t
+      (cons 'list
+        (mapcar (lambda (arg-descripter)
+                  (cond
+                   ((char= #\s (aref arg-descripter 0))
+                    `(mb-read-string ,(subseq arg-descripter 1)))
+                   ((char= #\b (aref arg-descripter 0))
+                    `(mb-read-buffer ,(subseq arg-descripter 1)
+                       (buffer-name (window-buffer))
+                       t))
+                   ((char= #\B (aref arg-descripter 0))
+                    `(mb-read-buffer ,(subseq arg-descripter 1)
+                       (buffer-name *prev-buffer*)
+                       nil))
+                   ((char= #\f (aref arg-descripter 0))
+                    `(mb-read-file-name
+                      ,(subseq arg-descripter 1)
+                      (current-directory)
+                      nil
+                      t))
+                   ((char= #\F (aref arg-descripter 0))
+                    `(mb-read-file-name
+                      ,(subseq arg-descripter 1)
+                      (current-directory)
+                      nil
+                      nil))
+                   (t
+                    (error "Illegal arg-descripter: ~a" arg-descripter))))
+          (split-string arg-descripter #\newline))))))
   (defun defcommand-gen-cmd (name parms arg-descripter body)
     `(defun ,name (,garg)
        (declare (ignorable ,garg))

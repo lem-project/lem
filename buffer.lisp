@@ -55,6 +55,8 @@
   tail-line
   cache-line
   cache-linum
+  mark-linum
+  mark-col
   keep-binfo
   (nlines 1))
 

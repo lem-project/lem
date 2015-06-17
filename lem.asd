@@ -11,6 +11,8 @@
 	       (:file "minibuf")
 	       (:file "command")
 	       (:file "kill")
+	       (:file "point")
+	       (:file "region")
 	       (:file "buffer")
 	       (:file "buffers")
 	       (:file "bufed")

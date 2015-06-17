@@ -184,3 +184,24 @@
         (end-of-line))
        (t
         (goto-column (1- (window-cur-col))))))))
+
+(define-key "C-@" 'mark-set)
+(defcommand mark-set () ()
+  (let ((buffer (window-buffer)))
+    (setf (buffer-mark-linum buffer)
+      (window-cur-linum))
+    (setf (buffer-mark-col buffer)
+      (window-cur-col))
+    (mb-write "Mark set")
+    t))
+
+(define-key "C-xC-x" 'exchange-point-mark)
+(defcommand exchange-point-mark () ()
+  (let ((buffer (window-buffer)))
+    (psetf
+     (window-cur-linum) (buffer-mark-linum buffer)
+     (window-cur-col) (buffer-mark-col buffer)
+     (buffer-mark-linum buffer) (window-cur-linum)
+     (buffer-mark-col buffer) (window-cur-col))
+    (setf (window-max-col) (buffer-mark-col buffer))
+    t))

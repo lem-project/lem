@@ -5,12 +5,17 @@
 (defvar *kill-ring-max* 10)
 
 (defvar *kill-new-flag* t)
+(defvar *kill-before-p* nil)
 
-(defun kill-append (str)
+(defun kill-append (str before-p)
   (setf (car *kill-ring-yank-ptr*)
-    (concatenate 'string
-      (car *kill-ring-yank-ptr*)
-      str)))
+    (if before-p
+      (concatenate 'string
+        str
+        (car *kill-ring-yank-ptr*))
+      (concatenate 'string
+        (car *kill-ring-yank-ptr*)
+        str))))
 
 (defun kill-push (str)
   (cond
@@ -23,14 +28,14 @@
     (setq *kill-new-flag* nil)
     str)
    (t
-    (kill-append str))))
+    (kill-append str *kill-before-p*))))
 
 (define-key "C-y" 'yank)
 (defcommand yank () ()
   (insert-string (car *kill-ring-yank-ptr*)))
 
-(defmacro with-kill (() &body body)
-  `(progn
+(defmacro with-kill ((&optional before-p) &body body)
+  `(let ((*kill-before-p* ,before-p))
     (when (not *last-kill-flag*)
       (setq *kill-new-flag* t))
     (setq *curr-kill-flag* t)

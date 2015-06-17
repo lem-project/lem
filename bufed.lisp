@@ -31,7 +31,7 @@
   (values (<= linum 1) (- 1 linum)))
 
 (defun tail-line-p (window linum)
-  (let ((nlines (buffer-nlines (window-buffer))))
+  (let ((nlines (buffer-nlines (window-buffer window))))
     (values (<= nlines linum) (- nlines linum))))
 
 (defun bolp ()
@@ -101,7 +101,8 @@
          (window-cur-col)
          n)
       (with-kill ()
-        (kill-push str))))))
+        (kill-push str))
+      result))))
 
 (define-key "C-h" 'backward-delete-char)
 (defcommand backward-delete-char (n) ("p")

@@ -147,11 +147,11 @@
   (multiple-value-bind (outp offset)
       (head-line-p window (1+ (window-vtop-linum window)))
     (when outp
-      (incf (window-vtop-linum window))))
+      (incf (window-vtop-linum window) offset)))
   (multiple-value-bind (outp offset)
       (tail-line-p window (window-vtop-linum window))
     (when outp
-      (incf (window-vtop-linum window)))))
+      (incf (window-vtop-linum window) offset))))
 
 (defun window-adjust-view (window recenter)
   (let ((offset (window-offset-view window)))

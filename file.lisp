@@ -47,8 +47,7 @@
 
 (defun file-completion (str)
   (setq str (expand-file-name str))
-  (let ((dirname (file-name-directory str))
-        (filename (file-name-nondirectory str)))
+  (let ((dirname (file-name-directory str)))
     (completion str (files dirname))))
 
 (defun file-open (filename)

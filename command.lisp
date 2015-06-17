@@ -60,6 +60,7 @@
       (split-string arg-descripter #\newline))))
   (defun defcommand-gen-cmd (name parms arg-descripter body)
     `(defun ,name (,garg)
+       (declare (ignorable ,garg))
        ,(if (null arg-descripter)
           (progn (assert (null parms))
             `(progn ,@body))

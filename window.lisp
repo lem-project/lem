@@ -272,7 +272,7 @@
       (window-update win)))
   (window-update *current-window*))
 
-(define-key "C-x2" 'split-window)
+(define-key *global-keymap* "C-x2" 'split-window)
 (defcommand split-window () ()
   (multiple-value-bind (nlines rem)
       (floor (window-nlines) 2)
@@ -309,7 +309,7 @@
       (cadr result)
       (car *window-list*))))
 
-(define-key "C-xo" 'other-window)
+(define-key *global-keymap* "C-xo" 'other-window)
 (defcommand other-window (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (setq *current-window*
@@ -325,7 +325,7 @@
   (setf (window-nlines window) nlines)
   (setf (window-ncols window) ncols))
 
-(define-key "C-x1" 'delete-other-windows)
+(define-key *global-keymap* "C-x1" 'delete-other-windows)
 (defcommand delete-other-windows () ()
   (dolist (win *window-list*)
     (unless (eq win *current-window*)
@@ -337,7 +337,7 @@
     cl-ncurses:*cols*)
   t)
 
-(define-key "C-x0" 'delete-window)
+(define-key *global-keymap* "C-x0" 'delete-window)
 (defcommand delete-window () ()
   (delete-window-1 *current-window*))
 

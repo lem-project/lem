@@ -20,14 +20,14 @@
         (unless (get-buffer name)
           (return name))))))
 
-(define-key "C-xb" 'select-buffer)
+(define-key *global-keymap* "C-xb" 'select-buffer)
 (defcommand select-buffer (name) ("BUse Buffer: ")
   (let ((buf (or (get-buffer name)
                (make-buffer name nil))))
     (set-buffer buf)
     t))
 
-(define-key "C-xk" 'kill-buffer)
+(define-key *global-keymap* "C-xk" 'kill-buffer)
 (defcommand kill-buffer (name) ("bKill buffer: ")
   (let ((buf (get-buffer name)))
     (when (cdr *buffer-list*)
@@ -38,13 +38,13 @@
       (setq *buffer-list* (delete buf *buffer-list*))))
   t)
 
-(define-key "C-xx" 'next-buffer)
+(define-key *global-keymap* "C-xx" 'next-buffer)
 (defcommand next-buffer (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (let ((buf (cadr (member (window-buffer) *buffer-list*))))
       (set-buffer (or buf (car *buffer-list*))))))
 
-(define-key "C-xC-b" 'list-buffers)
+(define-key *global-keymap* "C-xC-b" 'list-buffers)
 (defcommand list-buffers () ()
   (let* ((buf (get-buffer-create "*Buffers*"))
          (max-name-len

@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(define-key "M-~" 'unmark-buffer)
+(define-key *global-keymap* "M-~" 'unmark-buffer)
 (defcommand unmark-buffer () ()
   (setf (buffer-modified-p (window-buffer)) nil)
   t)
@@ -74,7 +74,7 @@
     (when (cdr rest)
       (insert-newline 1))))
 
-(define-key "C-j" 'insert-newline)
+(define-key *global-keymap* "C-j" 'insert-newline)
 (defcommand insert-newline (n) ("p")
   (dotimes (_ n t)
     (buffer-insert-newline (window-buffer)
@@ -82,7 +82,7 @@
                             (window-cur-col))
     (next-line 1)))
 
-(define-key "C-d" 'delete-char)
+(define-key *global-keymap* "C-d" 'delete-char)
 (defcommand delete-char (n) ("P")
   (cond
    ((null n)
@@ -104,7 +104,7 @@
         (kill-push str))
       result))))
 
-(define-key "C-h" 'backward-delete-char)
+(define-key *global-keymap* "C-h" 'backward-delete-char)
 (defcommand backward-delete-char (n) ("p")
   (if (minusp n)
     (delete-char (- n))
@@ -115,12 +115,12 @@
   (setf (window-cur-col) col)
   (setf (window-max-col) col))
 
-(define-key "C-a" 'beginning-of-line)
+(define-key *global-keymap* "C-a" 'beginning-of-line)
 (defcommand beginning-of-line () ()
   (goto-column 0)
   t)
 
-(define-key "C-e" 'end-of-line)
+(define-key *global-keymap* "C-e" 'end-of-line)
 (defcommand end-of-line () ()
   (goto-column (buffer-line-length
                 (window-buffer)
@@ -136,7 +136,7 @@
                 (window-buffer)
                 (window-cur-linum))))))
 
-(define-key "C-n" 'next-line)
+(define-key *global-keymap* "C-n" 'next-line)
 (defcommand next-line (n) ("P")
   (if (and n (minusp n))
     (prev-line (- n))
@@ -147,7 +147,7 @@
       (progn (%buffer-adjust-col n) t)
       (progn (end-of-line) t))))
 
-(define-key "C-p" 'prev-line)
+(define-key *global-keymap* "C-p" 'prev-line)
 (defcommand prev-line (n) ("P")
   (if (and n (minusp n))
     (next-line (- n))
@@ -158,7 +158,7 @@
       (progn (%buffer-adjust-col n) t)
       (progn (beginning-of-line) nil))))
 
-(define-key "C-f" 'next-char)
+(define-key *global-keymap* "C-f" 'next-char)
 (defcommand next-char (n) ("p")
   (if (minusp n)
     (prev-char (- n))
@@ -171,7 +171,7 @@
        (t
         (goto-column (1+ (window-cur-col))))))))
 
-(define-key "C-b" 'prev-char)
+(define-key *global-keymap* "C-b" 'prev-char)
 (defcommand prev-char (n) ("p")
   (if (minusp n)
     (next-char (- n))
@@ -185,7 +185,7 @@
        (t
         (goto-column (1- (window-cur-col))))))))
 
-(define-key "C-@" 'mark-set)
+(define-key *global-keymap* "C-@" 'mark-set)
 (defcommand mark-set () ()
   (let ((buffer (window-buffer)))
     (setf (buffer-mark-linum buffer)
@@ -195,7 +195,7 @@
     (mb-write "Mark set")
     t))
 
-(define-key "C-xC-x" 'exchange-point-mark)
+(define-key *global-keymap* "C-xC-x" 'exchange-point-mark)
 (defcommand exchange-point-mark () ()
   (let ((buffer (window-buffer)))
     (psetf

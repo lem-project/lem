@@ -30,7 +30,7 @@
    (t
     (kill-append str *kill-before-p*))))
 
-(define-key "C-y" 'yank)
+(define-key *global-keymap* "C-y" 'yank)
 (defcommand yank (n) ("p")
   (do ((ptr *kill-ring-yank-ptr*
          (or (cdr ptr)

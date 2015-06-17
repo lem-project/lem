@@ -67,7 +67,7 @@
     (unmark-buffer)
     t))
 
-(define-key "C-xC-f" 'find-file)
+(define-key *global-keymap* "C-xC-f" 'find-file)
 (defcommand find-file (filename) ("FFind File: ")
   (let ((buf (get-buffer filename)))
     (cond
@@ -81,7 +81,7 @@
      (t
       (set-buffer buf)))))
 
-(define-key "C-xC-s" 'save-file)
+(define-key *global-keymap* "C-xC-s" 'save-file)
 (defcommand save-file () ()
   (let ((buffer (window-buffer)))
     (cond

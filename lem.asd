@@ -11,6 +11,7 @@
 	       (:file "util")
 	       (:file "minibuf")
 	       (:file "command")
+	       (:file "keymap")
 	       (:file "kill")
 	       (:file "point")
 	       (:file "region")

@@ -1,29 +1,5 @@
 (in-package :lem)
 
-(defvar *command-table* (make-hash-table))
-(defvar *keybind-table* (make-hash-table :test 'equal))
-
-(defun keys-to-keystr (keys)
-  (apply 'concatenate 'string
-    (mapcar (lambda (c)
-              (cond
-               ((key::ctrl-p c)
-                (format nil "C-~c"
-                  (char-downcase (code-char (+ 64 (char-code c))))))
-               ((char= c key::escape)
-                "M-")
-               (t
-                (string c))))
-      keys)))
-
-(defun find-command (keys)
-  (let ((cmd (gethash (keys-to-keystr keys) *keybind-table*)))
-    (when cmd
-      (get cmd 'command))))
-
-(defun define-key (keystr name)
-  (setf (gethash keystr *keybind-table*) name))
-
 (let ((garg (gensym "ARG")))
   (defun defcommand-gen-args (arg-descripter)
     (cond
@@ -80,3 +56,6 @@
       (setf (get ',name 'command) ',gcmd)
       (defun ,name ,parms ,@body)
       ,(defcommand-gen-cmd gcmd parms arg-descripter body))))
+
+(defun cmd-call (cmd arg)
+  (funcall (get cmd 'command) arg))

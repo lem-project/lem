@@ -104,6 +104,9 @@
     (setf (buffer-cache-line buffer) line)
     line))
 
+(defun buffer-get-line-string (buffer linum)
+  (line-str (buffer-get-line buffer linum)))
+
 (defun buffer-line-length (buffer linum)
   (length (line-str (buffer-get-line buffer linum))))
 

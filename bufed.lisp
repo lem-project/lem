@@ -210,3 +210,8 @@
         (buffer-mark-col buffer) (window-cur-col))
        (setf (window-max-col) (buffer-mark-col buffer))
        t))))
+
+(defun current-line-string ()
+  (buffer-get-line-string
+   (window-buffer)
+   (window-cur-linum)))

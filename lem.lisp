@@ -3,21 +3,23 @@
 (defvar *exit*)
 (defvar *universal-argument* nil)
 
-(defun getch ()
-  (let* ((code (cl-ncurses:wgetch
-                (window-win *current-window*)))
-         (char (code-char code)))
-    (cond
-     ((= code 410)
-      (mb-resize)
-      (window-adjust-all)
-      (getch))
-     ((char= char key::ctrl-g)
-      (throw 'abort t))
-     (t char))))
-
-(defun ungetch (c)
-  (cl-ncurses:ungetch (char-code c)))
+(let ((queue (make-tlist)))
+  (defun getch ()
+    (let* ((code (if (not (tlist-empty-p queue))
+                   (tlist-rem-left queue)
+                   (cl-ncurses:wgetch
+                    (window-win *current-window*))))
+           (char (code-char code)))
+      (cond
+       ((= code 410)
+        (mb-resize)
+        (window-adjust-all)
+        (getch))
+       ((char= char key::ctrl-g)
+        (throw 'abort t))
+       (t char))))
+  (defun ungetch (c)
+    (tlist-add-right queue (char-code c))))
 
 (define-key *global-keymap* "C-xC-c" 'exit-lem)
 (defcommand exit-lem () ()

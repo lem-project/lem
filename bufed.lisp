@@ -137,7 +137,7 @@
                 (window-cur-linum))))))
 
 (define-key *global-keymap* "C-n" 'next-line)
-(defcommand next-line (n) ("P")
+(defcommand next-line (&optional n) ("P")
   (if (and n (minusp n))
     (prev-line (- n))
     (if (dotimes (_ (or n 1) t)
@@ -148,7 +148,7 @@
       (progn (end-of-line) t))))
 
 (define-key *global-keymap* "C-p" 'prev-line)
-(defcommand prev-line (n) ("P")
+(defcommand prev-line (&optional n) ("P")
   (if (and n (minusp n))
     (next-line (- n))
     (if (dotimes (_ (or n 1) t)
@@ -159,7 +159,7 @@
       (progn (beginning-of-line) nil))))
 
 (define-key *global-keymap* "C-f" 'next-char)
-(defcommand next-char (n) ("p")
+(defcommand next-char (&optional (n 1)) ("p")
   (if (minusp n)
     (prev-char (- n))
     (dotimes (_ n t)
@@ -172,7 +172,7 @@
         (goto-column (1+ (window-cur-col))))))))
 
 (define-key *global-keymap* "C-b" 'prev-char)
-(defcommand prev-char (n) ("p")
+(defcommand prev-char (&optional (n 1)) ("p")
   (if (minusp n)
     (next-char (- n))
     (dotimes (_ n t)

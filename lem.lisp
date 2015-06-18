@@ -4,7 +4,7 @@
 (defvar *universal-argument* nil)
 
 (let ((queue (make-tlist)))
-  (defun getch ()
+  (defun getch (&optional (abort-jump t))
     (let* ((code (if (not (tlist-empty-p queue))
                    (tlist-rem-left queue)
                    (cl-ncurses:wgetch
@@ -15,11 +15,16 @@
         (mb-resize)
         (window-adjust-all)
         (getch))
-       ((char= char key::ctrl-g)
+       ((and (char= char key::ctrl-g) abort-jump)
         (throw 'abort t))
        (t char))))
   (defun ungetch (c)
     (tlist-add-right queue (char-code c))))
+
+(define-key *global-keymap* "C-g" 'keyboard-quit)
+(defcommand keyboard-quit () ()
+  (setq *universal-argument* nil)
+  (mb-write "Quit"))
 
 (define-key *global-keymap* "C-xC-c" 'exit-lem)
 (defcommand exit-lem () ()
@@ -61,10 +66,10 @@
         (return (main-step)))))))
 
 (defun input-keys ()
-  (let ((c (getch)))
+  (let ((c (getch nil)))
     (if (or (char= c key::ctrl-x)
           (char= c key::escape))
-      (list c (getch))
+      (list c (getch nil))
       (let ((bytes (utf8-bytes (char-code c))))
         (if (= bytes 1)
           (list c)
@@ -72,7 +77,7 @@
                         (mapcar 'char-code
                           (cons c
                             (loop repeat (1- bytes)
-                              collect (getch))))
+                              collect (getch nil))))
                         '(vector (unsigned-byte 8)))))
             (list (aref (bytes-to-string bytes) 0))))))))
 

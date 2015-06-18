@@ -14,6 +14,7 @@
 	       (:file "keymap")
 	       (:file "kill")
 	       (:file "point")
+	       (:file "search")
 	       (:file "region")
 	       (:file "buffer")
 	       (:file "buffers")

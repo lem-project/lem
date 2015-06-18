@@ -89,11 +89,11 @@
     (setq *universal-argument* nil)))
 
 (defun undefined-key (keys)
-  (if (or (< 31 (char-code (car keys)))
-        (char= key::ctrl-i (car keys)))
-    (insert-char (car keys)
-      (or *universal-argument* 1))
-    (mb-write "Key not found")))
+  (let ((c (insertion-key-p keys)))
+    (if c
+      (insert-char c
+        (or *universal-argument* 1))
+      (mb-write "Key not found"))))
 
 (defun lem-init (args)
   (cl-ncurses:initscr)

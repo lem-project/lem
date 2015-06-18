@@ -43,3 +43,8 @@
 (defun key-undef-hook (keymap keys)
   (when (keymap-undef-hook keymap)
     (funcall (keymap-undef-hook keymap) keys)))
+
+(defun insertion-key-p (keys)
+  (when (or (< 31 (char-code (car keys)))
+            (char= key::ctrl-i (car keys)))
+    (car keys)))

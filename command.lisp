@@ -1,13 +1,13 @@
 (in-package :lem)
 
 (let ((garg (gensym "ARG")))
-  (defun defcommand-gen-args (arg-descripter)
+  (defun defcommand-gen-args (arg-descripters)
     (cond
-     ((string= "p" arg-descripter)
+     ((string= "p" (car arg-descripters))
       `(list (or ,garg 1)))
-     ((string= "P" arg-descripter)
+     ((string= "P" (car arg-descripters))
       `(list ,garg))
-     ((string= "r" arg-descripter)
+     ((string= "r" (car arg-descripters))
       `(list (region-beginning) (region-end)))
      (t
       (cons 'list
@@ -37,25 +37,25 @@
                       nil))
                    (t
                     (error "Illegal arg-descripter: ~a" arg-descripter))))
-          (split-string arg-descripter #\newline))))))
-  (defun defcommand-gen-cmd (name parms arg-descripter body)
+          arg-descripters)))))
+  (defun defcommand-gen-cmd (name parms arg-descripters body)
     `(defun ,name (,garg)
        (declare (ignorable ,garg))
-       ,(if (null arg-descripter)
+       ,(if (null arg-descripters)
           (progn (assert (null parms))
             `(progn ,@body))
           `(destructuring-bind ,parms
-             ,(if (stringp arg-descripter)
-                (defcommand-gen-args arg-descripter)
-                arg-descripter)
+             ,(if (stringp (car arg-descripters))
+                (defcommand-gen-args arg-descripters)
+                (car arg-descripters))
              ,@body)))))
 
-(defmacro defcommand (name parms (&optional arg-descripter) &body body)
+(defmacro defcommand (name parms (&rest arg-descripters) &body body)
   (let ((gcmd (gensym (symbol-name name))))
     `(progn
       (setf (get ',name 'command) ',gcmd)
       (defun ,name ,parms ,@body)
-      ,(defcommand-gen-cmd gcmd parms arg-descripter body))))
+      ,(defcommand-gen-cmd gcmd parms arg-descripters body))))
 
 (defun cmd-call (cmd arg)
   (funcall (get cmd 'command) arg))

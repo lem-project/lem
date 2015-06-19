@@ -198,15 +198,11 @@
 (define-key *global-keymap* "C-xC-x" 'exchange-point-mark)
 (defcommand exchange-point-mark () ()
   (let ((buffer (window-buffer)))
-    (if (null (buffer-mark-linum buffer))
-      (progn
-       (mb-write "Not mark in this buffer")
-       nil)
-      (progn
-       (psetf
-        (window-cur-linum) (buffer-mark-linum buffer)
-        (window-cur-col) (buffer-mark-col buffer)
-        (buffer-mark-linum buffer) (window-cur-linum)
-        (buffer-mark-col buffer) (window-cur-col))
-       (setf (window-max-col) (buffer-mark-col buffer))
-       t))))
+    (when (buffer-check-marked buffer)
+      (psetf
+       (window-cur-linum) (buffer-mark-linum buffer)
+       (window-cur-col) (buffer-mark-col buffer)
+       (buffer-mark-linum buffer) (window-cur-linum)
+       (buffer-mark-col buffer) (window-cur-col))
+      (setf (window-max-col) (buffer-mark-col buffer))
+      t)))

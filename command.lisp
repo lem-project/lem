@@ -1,14 +1,16 @@
 (in-package :lem)
 
 (let ((garg (gensym "ARG")))
-  (defun defcommand-gen-args (arg-descripters)
+  (defun defcommand-gen-args (name arg-descripters)
     (cond
      ((string= "p" (car arg-descripters))
       `(list (or ,garg 1)))
      ((string= "P" (car arg-descripters))
       `(list ,garg))
      ((string= "r" (car arg-descripters))
-      `(list (region-beginning) (region-end)))
+      `(if (buffer-check-marked (window-buffer))
+         (list (region-beginning) (region-end))
+         (return-from ,name nil)))
      (t
       (cons 'list
         (mapcar (lambda (arg-descripter)
@@ -46,7 +48,7 @@
             `(progn ,@body))
           `(destructuring-bind ,parms
              ,(if (stringp (car arg-descripters))
-                (defcommand-gen-args arg-descripters)
+                (defcommand-gen-args name arg-descripters)
                 (car arg-descripters))
              ,@body)))))
 

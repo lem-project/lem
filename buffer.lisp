@@ -212,3 +212,10 @@
     (setf (buffer-cache-linum buffer) 1)
     (setf (buffer-keep-binfo buffer) nil)
     (setf (buffer-nlines buffer) 1)))
+
+(defun buffer-check-marked (buffer)
+  (if (buffer-mark-linum buffer)
+    t
+    (progn
+     (mb-write "Not mark in this buffer")
+     nil)))

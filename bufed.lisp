@@ -142,10 +142,10 @@
     (prev-line (- n))
     (if (dotimes (_ (or n 1) t)
           (if (tail-line-p *current-window* (window-cur-linum))
-            (return)
+            (return nil)
             (incf (window-cur-linum))))
       (progn (%buffer-adjust-col n) t)
-      (progn (end-of-line) t))))
+      (progn (end-of-line) nil))))
 
 (define-key *global-keymap* "C-p" 'prev-line)
 (defcommand prev-line (&optional n) ("P")

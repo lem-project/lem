@@ -3,13 +3,18 @@
 (defvar *exit*)
 (defvar *universal-argument* nil)
 
+(defvar *macro-recording-p* nil)
+(defvar *macro-chars* nil)
+(defvar *macro-running-p* nil)
+
 (let ((queue (make-tlist)))
   (defun getch (&optional (abort-jump t))
     (let* ((code (if (not (tlist-empty-p queue))
                    (tlist-rem-left queue)
-                   (cl-ncurses:wgetch
-                    (window-win *current-window*))))
+                   (cl-ncurses:wgetch (window-win))))
            (char (code-char code)))
+      (when *macro-recording-p*
+        (push char *macro-chars*))
       (cond
        ((= code 410)
         (mb-resize)
@@ -19,11 +24,14 @@
         (throw 'abort t))
        (t char))))
   (defun ungetch (c)
-    (tlist-add-right queue (char-code c))))
+    (tlist-add-right queue (char-code c)))
+  (defun getch-queue-length ()
+    (length (car queue))))
 
 (define-key *global-keymap* "C-g" 'keyboard-quit)
 (defcommand keyboard-quit () ()
   (setq *universal-argument* nil)
+  (setq *macro-recording-p* nil)
   (mb-write "Quit"))
 
 (define-key *global-keymap* "C-xC-c" 'exit-lem)
@@ -31,6 +39,32 @@
   (when (or (not (any-modified-buffer-p))
           (y-or-n-p "Modified buffers exist. Leave anyway"))
     (setq *exit* t)))
+
+(define-key *global-keymap* "C-x(" 'begin-macro)
+(defcommand begin-macro () ()
+  (mb-write "Start macro")
+  (setq *macro-recording-p* t)
+  (setq *macro-chars* nil))
+
+(define-key *global-keymap* "C-x)" 'end-macro)
+(defcommand end-macro () ()
+  (when *macro-recording-p*
+    (setq *macro-recording-p* nil)
+    (setq *macro-chars* (nreverse *macro-chars*))
+    (mb-write "End macro"))
+  t)
+
+(define-key *global-keymap* "C-xe" 'execute-macro)
+(defcommand execute-macro (n) ("p")
+  (let ((*macro-running-p* t))
+    (loop repeat n while *macro-running-p* do
+      (let ((length (getch-queue-length)))
+        (dolist (c *macro-chars*)
+          (ungetch c))
+        (do ()
+          ((or (not *macro-running-p*)
+               (>= length (getch-queue-length))))
+          (main-step))))))
 
 (define-key *global-keymap* "C-u" 'universal-argument)
 (defcommand universal-argument () ()
@@ -81,12 +115,12 @@
                         '(vector (unsigned-byte 8)))))
             (list (aref (bytes-to-string bytes) 0))))))))
 
-
 (defun execute (keys)
   (let* ((keymap *current-keymap*)
          (cmd (keymap-find-command keymap keys)))
     (if cmd
-      (cmd-call cmd *universal-argument*)
+      (unless (cmd-call cmd *universal-argument*)
+        (setq *macro-running-p* nil))
       (key-undef-hook keymap keys))))
 
 (defun main-step ()

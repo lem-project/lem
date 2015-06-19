@@ -116,6 +116,17 @@
        (concatenate 'string acc (car rest)))
     (setq acc (concatenate 'string acc (car rest) str))))
 
+(defun replace-string (before after string)
+  (let ((i (search before string)))
+    (if i
+      (values (concatenate 'string
+                (subseq string 0 i)
+                after
+                (replace-string before after
+                  (subseq string (+ i (length before)))))
+        t)
+      (values string nil))))
+
 (declaim (inline make-tlist tlist-left
                  tlist-right tlist-empty-p))
 

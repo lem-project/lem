@@ -85,13 +85,7 @@
 (define-key *global-keymap* "C-d" 'delete-char)
 (defcommand delete-char (n) ("P")
   (cond
-   ((null n)
-    (buffer-delete-char
-     (window-buffer)
-     (window-cur-linum)
-     (window-cur-col)
-     1))
-   ((minusp n)
+   ((and n (minusp n))
     (backward-delete-char (- n)))
    (t
     (multiple-value-bind (result str)
@@ -99,9 +93,17 @@
          (window-buffer)
          (window-cur-linum)
          (window-cur-col)
-         n)
-      (with-kill ()
-        (kill-push str))
+         (or n 1))
+      (when n
+        (with-kill ()
+          (kill-push str)))
+      (dolist (win *window-list*)
+        (when (and
+               (not (eq win *current-window*))
+               (eq (window-buffer win) (window-buffer))
+               (> (window-cur-linum win)
+                  (buffer-nlines (window-buffer win))))
+          (decf (window-cur-linum win))))
       result))))
 
 (define-key *global-keymap* "C-h" 'backward-delete-char)

@@ -45,6 +45,15 @@
       (1- (length *isearch-string*))))
   (isearch-update-minibuf))
 
+(define-key *isearch-keymap* "C-q" 'isearch-raw-insert)
+(defcommand isearch-raw-insert () ()
+  (isearch-add-char (getch)))
+
+(define-key *isearch-keymap* "C-j" 'isearch-end)
+(defcommand isearch-end () ()
+  (setq *current-keymap*
+    *isearch-tmp-keymap*))
+
 (define-key *isearch-keymap* "C-s" 'isearch-next)
 (defcommand isearch-next () ()
   (search-forward-aux *isearch-string*)
@@ -71,36 +80,46 @@
       (isearch-add-char c)
       (progn
        (mapc 'ungetch keys)
-       (setq *current-keymap* 
+       (setq *current-keymap*
          *isearch-tmp-keymap*)))))
 
-(defun search-step (str first-search search step get-col endp)
+(defun search-step (str first-search search step goto-matched-pos endp)
   (let ((point (point))
         (result
-         (let ((res (funcall first-search str (current-line-string))))
+         (let ((res (funcall first-search)))
            (if res
              (progn
-              (goto-column (funcall get-col res))
+              (funcall goto-matched-pos res)
               t)
              (do () ((funcall endp))
                (funcall step)
-               (let ((res (funcall search str (current-line-string))))
+               (let ((res (funcall search)))
                  (when res
-                   (goto-column (funcall get-col res))
+                   (funcall goto-matched-pos res)
                    (return t))))))))
     (unless result
       (point-set point))
     result))
 
 (defun search-forward-aux (str)
-  (search-step str
-    (lambda (str line)
-      (search str line
-        :start2 (window-cur-col)))
-    #'search
-    (lambda () (next-line 1))
-    (lambda (i) (+ i (length str)))
-    #'eobp))
+  (let* ((lines (split-string str #\newline))
+         (length (length lines)))
+    (flet ((take-string ()
+             (join (string #\newline)
+               (buffer-take-lines (window-buffer)
+                 (window-cur-linum)
+                 length))))
+      (search-step str
+        (lambda ()
+          (search str (take-string)
+            :start2 (window-cur-col)))
+        (lambda ()
+          (search str (take-string)))
+        (lambda () (next-line 1))
+        (lambda (i)
+          (beginning-of-line)
+          (next-char (+ i (length str))))
+        #'eobp))))
 
 (define-key *global-keymap* "M-s" 'search-forward)
 (defcommand search-forward (str) ("sSearch forward: ")
@@ -110,17 +129,29 @@
      nil)))
 
 (defun search-backward-aux (str)
-  (search-step str
-    (lambda (str line)
-      (search str line
-        :end2 (window-cur-col)
-        :from-end t))
-    (lambda (str line)
-      (search str line
-        :from-end t))
-    (lambda () (prev-line 1))
-    #'identity
-    #'bobp))
+  (let* ((lines (split-string str #\newline))
+         (length (length lines)))
+    (flet ((%search (&rest args)
+             (let ((linum (- (window-cur-linum) (1- length))))
+               (when (< 0 linum)
+                 (apply 'search str
+                   (join (string #\newline)
+                     (buffer-take-lines (window-buffer)
+                       linum
+                       length))
+                   :from-end t
+                   args)))))
+      (search-step str
+        (lambda ()
+          (%search :end2 (window-cur-col)))
+        (lambda ()
+          (%search))
+        (lambda () (prev-line 1))
+        (lambda (i)
+          (prev-line (1- length))
+          (beginning-of-line)
+          (next-char i))
+        #'bobp))))
 
 (define-key *global-keymap* "M-r" 'search-backward)
 (defcommand search-backward (str) ("sSearch backward: ")

@@ -121,13 +121,6 @@
           (next-char (+ i (length str))))
         #'eobp))))
 
-(define-key *global-keymap* "M-s" 'search-forward)
-(defcommand search-forward (str) ("sSearch forward: ")
-  (or (search-forward-aux str)
-    (progn
-     (mb-write "Not found")
-     nil)))
-
 (defun search-backward-aux (str)
   (let* ((lines (split-string str #\newline))
          (length (length lines)))
@@ -152,13 +145,6 @@
           (beginning-of-line)
           (next-char i))
         #'bobp))))
-
-(define-key *global-keymap* "M-r" 'search-backward)
-(defcommand search-backward (str) ("sSearch backward: ")
-  (or (search-backward-aux str)
-    (progn
-     (mb-write "Not found")
-     nil)))
 
 (define-key *global-keymap* "M-C-r" 'query-replace)
 (defcommand query-replace (before after) ("sBefore: " "sAfter: ")

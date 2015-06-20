@@ -24,7 +24,7 @@
   (cl-ncurses:werase *mb-win*)
   (cl-ncurses:wrefresh *mb-win*))
 
-(defun mb-clear ()
+(defun clear-message-line ()
   (when *mb-print-flag*
     (cl-ncurses:werase *mb-win*)
     (cl-ncurses:wrefresh *mb-win*)

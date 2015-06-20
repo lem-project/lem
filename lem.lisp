@@ -124,7 +124,7 @@
 
 (defun main-step ()
   (let ((keys (input-keys)))
-    (mb-clear)
+    (clear-message-line)
     (execute keys)
     (setq *universal-argument* nil)))
 

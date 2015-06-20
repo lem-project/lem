@@ -173,5 +173,5 @@
             (return))
            ((char= c #\!)
             (setq pass-through t)))))))
-  (mb-clear)
+  (clear-message-line)
   t)

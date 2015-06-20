@@ -95,10 +95,15 @@
      (t
       (with-open-file (out (buffer-filename buffer)
                         :direction :output
-                        :if-exists :overwrite
+                        :if-exists :supersede
                         :if-does-not-exist :create)
-	(dolist (str (buffer-take-lines buffer 1 (buffer-nlines buffer)))
-	  (format out "~&~a" str)))
+        (do ((lines
+              (buffer-take-lines buffer 1 (buffer-nlines buffer))
+              (cdr lines)))
+            ((null lines))
+          (princ (car lines) out)
+          (when (cdr lines)
+            (terpri out))))
       (unmark-buffer)
       (mb-write "Wrote")
       t))))

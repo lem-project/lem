@@ -9,3 +9,5 @@
 
 (defvar *last-kill-flag* nil)
 (defvar *curr-kill-flag* nil)
+
+(defvar *universal-argument* nil)

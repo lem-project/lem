@@ -2,6 +2,7 @@
 
 (defvar *command-names* nil)
 
+(eval-when (:compile-toplevel :load-toplevel)
 (let ((garg (gensym "ARG")))
   (defun defcommand-gen-args (name arg-descripters)
     (cond
@@ -54,12 +55,12 @@
              ,(if (stringp (car arg-descripters))
                 (defcommand-gen-args name arg-descripters)
                 (car arg-descripters))
-             ,@body)))))
+             ,@body))))))
 
 (defmacro defcommand (name parms (&rest arg-descripters) &body body)
   (let ((gcmd (gensym (symbol-name name))))
-    (pushnew (string-downcase (symbol-name name)) *command-names*)
     `(progn
+      (pushnew ,(string-downcase (symbol-name name)) *command-names*)
       (setf (get ',name 'command) ',gcmd)
       (defun ,name ,parms ,@body)
       ,(defcommand-gen-cmd gcmd parms arg-descripters body))))
@@ -72,3 +73,13 @@
 
 (defun exist-command-p (str)
   (find str *command-names* :test 'equal))
+
+(define-key *global-keymap* "M-x" 'execute-command)
+(defcommand execute-command (name)
+  ((list (read-minibuffer
+          "M-x "
+          ""
+          'command-completion
+          'exist-command-p)))
+  (cmd-call (intern (string-upcase name) :lem)
+    *universal-argument*))

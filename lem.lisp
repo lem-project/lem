@@ -1,7 +1,6 @@
 (in-package :lem)
 
 (defvar *exit*)
-(defvar *universal-argument* nil)
 
 (defvar *macro-recording-p* nil)
 (defvar *macro-chars* nil)
@@ -33,16 +32,6 @@
   (setq *universal-argument* nil)
   (setq *macro-recording-p* nil)
   (write-message "Quit"))
-
-(define-key *global-keymap* "M-x" 'execute-command)
-(defcommand execute-command (name)
-  ((list (read-minibuffer
-          "M-x "
-          ""
-          'command-completion
-          'exist-command-p)))
-  (cmd-call (intern (string-upcase name) :lem)
-    *universal-argument*))
 
 (define-key *global-keymap* "C-xC-c" 'exit-lem)
 (defcommand exit-lem () ()

@@ -84,6 +84,12 @@
      (t
       (set-buffer buf)))))
 
+(define-key *global-keymap* "C-xC-r" 'read-file)
+(defcommand read-file (filename) ("FRead File: ")
+  (find-file filename)
+  (setf (buffer-read-only-p (window-buffer)) t)
+  t)
+
 (define-key *global-keymap* "C-xC-s" 'save-file)
 (defcommand save-file () ()
   (let ((buffer (window-buffer)))

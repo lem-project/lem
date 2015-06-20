@@ -39,6 +39,15 @@
           (y-or-n-p "Modified buffers exist. Leave anyway"))
     (setq *exit* t)))
 
+(define-key *global-keymap* "C-x?" 'describe-key)
+(defcommand describe-key () ()
+  (write-message "describe-key: ")
+  (let* ((keys (input-keys))
+         (cmd (keymap-find-command *current-keymap* keys)))
+    (write-message (format nil "describe-key: ~a ~a"
+                     (keys-to-keystr keys)
+                     cmd))))
+
 (define-key *global-keymap* "C-x(" 'begin-macro)
 (defcommand begin-macro () ()
   (write-message "Start macro")

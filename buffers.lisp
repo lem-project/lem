@@ -10,7 +10,7 @@
 
 (defun get-buffer-create (name)
   (or (get-buffer name)
-    (make-buffer name nil)))
+    (make-buffer name)))
 
 (defun uniq-buffer-name (name)
   (if (null (get-buffer name))
@@ -23,7 +23,7 @@
 (define-key *global-keymap* "C-xb" 'select-buffer)
 (defcommand select-buffer (name) ("BUse Buffer: ")
   (let ((buf (or (get-buffer name)
-               (make-buffer name nil))))
+               (make-buffer name))))
     (set-buffer buf)
     t))
 

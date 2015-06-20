@@ -5,6 +5,12 @@
   (setf (buffer-modified-p (window-buffer)) nil)
   t)
 
+(define-key *global-keymap* "C-xC-q" 'toggle-read-only)
+(defcommand toggle-read-only () ()
+  (setf (buffer-read-only-p (window-buffer))
+    (not (buffer-read-only-p (window-buffer))))
+  t)
+
 (defun set-buffer (buffer)
   (let ((old-buf (window-buffer)))
     (setq *prev-buffer* old-buf)
@@ -55,12 +61,12 @@
 
 (defun insert-char (c n)
   (dotimes (_ n t)
-    (buffer-insert-char
-     (window-buffer)
-     (window-cur-linum)
-     (window-cur-col)
-     c)
-    (next-char 1)))
+    (when (buffer-insert-char
+           (window-buffer)
+           (window-cur-linum)
+           (window-cur-col)
+           c)
+      (next-char 1))))
 
 (defun insert-string (str)
   (do ((rest (split-string str #\newline) (cdr rest)))

@@ -189,7 +189,7 @@
    (1- (window-nlines window))
    0
    (let ((str (format nil "~c~c ~a: ~a (~{~a ~}) "
-		bg-char ; read-only-flag
+                (if (buffer-read-only-p (window-buffer window)) #\% bg-char)
 		(if (buffer-modified-p (window-buffer window)) #\* bg-char)
 		"Lem"
 		(buffer-name (window-buffer window))

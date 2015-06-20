@@ -51,6 +51,7 @@
   name
   filename
   modified-p
+  read-only-p
   head-line
   tail-line
   cache-line
@@ -65,8 +66,11 @@
     (buffer-name buffer)
     (buffer-filename buffer)))
 
-(defun make-buffer (name filename)
-  (let ((buffer (make-buffer-internal :name name :filename filename))
+(defun make-buffer (name &key filename read-only-p)
+  (let ((buffer (make-buffer-internal
+                 :name name
+                 :filename filename
+                 :read-only-p read-only-p))
 	(line (make-line nil nil "")))
     (setf (buffer-head-line buffer) line)
     (setf (buffer-tail-line buffer) line)
@@ -74,6 +78,11 @@
     (setf (buffer-cache-linum buffer) 1)
     (push buffer *buffer-list*)
     buffer))
+
+(defmacro buffer-read-only-guard (buffer name)
+  `(when (buffer-read-only-p ,buffer)
+     (mb-write "Read only")
+     (return-from ,name nil)))
 
 (defun %buffer-get-line (buffer linum)
   (cond
@@ -116,6 +125,7 @@
     (nreverse strings)))
 
 (defun buffer-append-line (buffer str)
+  (buffer-read-only-guard buffer buffer-append-line)
   (setf (buffer-modified-p buffer) t)
   (let* ((line (buffer-tail-line buffer))
 	 (newline (make-line line (line-next line) str)))
@@ -130,6 +140,7 @@
     t))
 
 (defun buffer-insert-char (buffer linum col c)
+  (buffer-read-only-guard buffer buffer-insert-char)
   (setf (buffer-modified-p buffer) t)
   (if (char= c #\newline)
     (buffer-insert-newline buffer linum col)
@@ -142,6 +153,7 @@
       t)))
 
 (defun buffer-insert-newline (buffer linum col)
+  (buffer-read-only-guard buffer buffer-insert-newline)
   (setf (buffer-modified-p buffer) t)
   (let ((line (buffer-get-line buffer linum)))
     (let ((newline
@@ -156,6 +168,7 @@
   t)
 
 (defun buffer-insert-line (buffer linum col str)
+  (buffer-read-only-guard buffer buffer-insert-line)
   (setf (buffer-modified-p buffer) t)
   (let ((line (buffer-get-line buffer linum)))
     (setf (line-str line)
@@ -166,6 +179,7 @@
   t)
 
 (defun buffer-delete-char (buffer linum col n)
+  (buffer-read-only-guard buffer buffer-delete-char)
   (let ((line (buffer-get-line buffer linum))
         (acc "")
         (result t))
@@ -204,6 +218,7 @@
     (values result acc)))
 
 (defun buffer-erase (buffer)
+  (buffer-read-only-guard buffer buffer-erase)
   (setf (buffer-modified-p buffer) t)
   (let ((line (make-line nil nil "")))
     (setf (buffer-head-line buffer) line)

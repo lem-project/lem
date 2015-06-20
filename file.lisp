@@ -55,7 +55,7 @@
   (unless (string= "" filename)
     (let ((buffer (make-buffer
                    filename
-                   (expand-file-name filename))))
+                   :filename (expand-file-name filename))))
       (with-open-file (in filename :if-does-not-exist nil)
         (when in
           (do () (nil)
@@ -79,7 +79,8 @@
        (not (buffer-filename buf))
        (string/= filename (buffer-filename buf)))
       (let ((name (uniq-buffer-name filename)))
-        (set-buffer (make-buffer (file-name-nondirectory name) filename))))
+        (set-buffer (make-buffer (file-name-nondirectory name)
+                      :filename filename))))
      (t
       (set-buffer buf)))))
 

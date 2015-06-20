@@ -54,3 +54,27 @@
       (dotimes (_ n t)
         (unless (prev-word-aux (lambda () (backward-delete-char 1)))
           (return))))))
+
+(defun case-word-aux (n first-case rest-case)
+  (dotimes (_ n t)
+    (do () ((in-word-p (following-char)))
+      (unless (next-char)
+        (return-from case-word-aux nil)))
+    (replace-char (funcall first-case (following-char)))
+    (do () ((not (in-word-p (following-char))))
+      (unless (next-char)
+        (return-from case-word-aux nil))
+      (when (in-word-p (following-char))
+        (replace-char (funcall rest-case (following-char)))))))
+
+(define-key *global-keymap* "M-c" 'case-word-capitalize)
+(defcommand case-word-capitalize (&optional (n 1)) ("p")
+  (case-word-aux n 'char-upcase 'char-downcase))
+
+(define-key *global-keymap* "M-l" 'case-word-lower)
+(defcommand case-word-lower (&optional (n 1)) ("p")
+  (case-word-aux n 'char-downcase 'char-downcase))
+
+(define-key *global-keymap* "M-u" 'case-word-upper)
+(defcommand case-word-upper (&optional (n 1)) ("p")
+  (case-word-aux n 'char-upcase 'char-upcase))

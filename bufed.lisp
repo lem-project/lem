@@ -94,7 +94,7 @@
   (prev-char n))
 
 (define-key *global-keymap* "C-d" 'delete-char)
-(defcommand delete-char (n) ("P")
+(defcommand delete-char (&optional n) ("P")
   (cond
    ((and n (minusp n))
     (backward-delete-char (- n)))
@@ -285,3 +285,11 @@
     (buffer-get-char (window-buffer)
       (window-cur-linum)
       (1- (window-cur-col))))))
+
+(defun replace-char (c)
+  (delete-char)
+  (buffer-insert-char
+   (window-buffer)
+   (window-cur-linum)
+   (window-cur-col)
+   c))

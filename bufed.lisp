@@ -115,6 +115,21 @@
     (when (prev-char n)
       (delete-char n))))
 
+(define-key *global-keymap* "C-k" 'kill-line)
+(defcommand kill-line (&optional n) ("P")
+  (cond
+   ((null n)
+    (let ((size (- (buffer-line-length
+                    (window-buffer)
+                    (window-cur-linum))
+                  (window-cur-col))))
+      (if (zerop size)
+        (delete-char 1)
+        (delete-char size))))
+   ((plusp n)
+    (dotimes (_ n)
+      (kill-line)))))
+
 (defun goto-column (col)
   (setf (window-cur-col) col)
   (setf (window-max-col) col))

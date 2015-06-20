@@ -96,6 +96,17 @@
 (defun read-string (prompt &optional initial)
   (mb-readline prompt (or initial "") nil nil))
 
+(defun read-number (prompt)
+  (parse-integer
+   (mb-readline prompt "" nil
+     (lambda (str)
+       (multiple-value-bind (n len)
+           (parse-integer str :junk-allowed t)
+         (and
+          n
+          (/= 0 (length str))
+          (= (length str) len)))))))
+
 (defun read-buffer (prompt &optional default existing)
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))

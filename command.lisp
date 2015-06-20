@@ -17,6 +17,8 @@
                   (cond
                    ((char= #\s (aref arg-descripter 0))
                     `(read-string ,(subseq arg-descripter 1)))
+                   ((char= #\n (aref arg-descripter 0))
+                    `(read-number ,(subseq arg-descripter 1)))
                    ((char= #\b (aref arg-descripter 0))
                     `(read-buffer ,(subseq arg-descripter 1)
                        (buffer-name (window-buffer))

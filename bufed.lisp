@@ -82,6 +82,11 @@
                             (window-cur-col))
     (next-line 1)))
 
+(define-key *global-keymap* "C-o" 'open-line)
+(defcommand open-line (n) ("p")
+  (insert-newline n)
+  (prev-char n))
+
 (define-key *global-keymap* "C-d" 'delete-char)
 (defcommand delete-char (n) ("P")
   (cond

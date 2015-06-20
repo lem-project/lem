@@ -7,7 +7,7 @@
 (defvar *isearch-search-function*)
 
 (defun isearch-update-minibuf ()
-  (mb-write (format nil "ISearch: ~a" *isearch-string*)))
+  (write-message (format nil "ISearch: ~a" *isearch-string*)))
 
 (define-key *global-keymap* "C-s" 'isearch-forward)
 (defcommand isearch-forward () ()
@@ -153,7 +153,7 @@
     (do () (nil)
       (unless (search-forward-aux before)
         (return))
-      (mb-write (format nil "Replace ~s with ~s" before after))
+      (write-message (format nil "Replace ~s with ~s" before after))
       (prev-char n)
       (unless pass-through (window-update-all))
       (do () (nil)

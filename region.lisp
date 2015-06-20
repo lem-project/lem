@@ -68,7 +68,7 @@
   (let ((str (region-string begin end)))
     (with-kill ()
       (kill-push str)))
-  (mb-write "region copied")
+  (write-message "region copied")
   t)
 
 (define-key *global-keymap* "C-w" 'kill-region)

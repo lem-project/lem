@@ -32,7 +32,7 @@
 (defcommand keyboard-quit () ()
   (setq *universal-argument* nil)
   (setq *macro-recording-p* nil)
-  (mb-write "Quit"))
+  (write-message "Quit"))
 
 (define-key *global-keymap* "C-xC-c" 'exit-lem)
 (defcommand exit-lem () ()
@@ -42,7 +42,7 @@
 
 (define-key *global-keymap* "C-x(" 'begin-macro)
 (defcommand begin-macro () ()
-  (mb-write "Start macro")
+  (write-message "Start macro")
   (setq *macro-recording-p* t)
   (setq *macro-chars* nil))
 
@@ -51,7 +51,7 @@
   (when *macro-recording-p*
     (setq *macro-recording-p* nil)
     (setq *macro-chars* (nreverse *macro-chars*))
-    (mb-write "End macro"))
+    (write-message "End macro"))
   t)
 
 (define-key *global-keymap* "C-xe" 'execute-macro)
@@ -134,7 +134,7 @@
     (if c
       (insert-char c
         (or *universal-argument* 1))
-      (mb-write "Key not found"))))
+      (write-message "Key not found"))))
 
 (defun lem-init (args)
   (cl-ncurses:initscr)
@@ -159,7 +159,7 @@
     (when (catch 'abort
             (main-step)
             nil)
-      (mb-write "Abort"))))
+      (write-message "Abort"))))
 
 (defun lem (&rest args)
   (let ((*print-circle* t))

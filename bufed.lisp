@@ -252,7 +252,7 @@
       (window-cur-linum))
     (setf (buffer-mark-col buffer)
       (window-cur-col))
-    (mb-write "Mark set")
+    (write-message "Mark set")
     t))
 
 (define-key *global-keymap* "C-xC-x" 'exchange-point-mark)

@@ -97,7 +97,7 @@
      ((null (buffer-modified-p buffer))
       nil)
      ((null (buffer-filename buffer))
-      (mb-write "No file name")
+      (write-message "No file name")
       nil)
      (t
       (with-open-file (out (buffer-filename buffer)
@@ -112,5 +112,5 @@
           (when (cdr lines)
             (terpri out))))
       (unmark-buffer)
-      (mb-write "Wrote")
+      (write-message "Wrote")
       t))))

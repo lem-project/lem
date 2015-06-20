@@ -81,7 +81,7 @@
 
 (defmacro buffer-read-only-guard (buffer name)
   `(when (buffer-read-only-p ,buffer)
-     (mb-write "Read only")
+     (write-message "Read only")
      (return-from ,name nil)))
 
 (defun %buffer-get-line (buffer linum)
@@ -242,5 +242,5 @@
   (if (buffer-mark-linum buffer)
     t
     (progn
-     (mb-write "Not mark in this buffer")
+     (write-message "Not mark in this buffer")
      nil)))

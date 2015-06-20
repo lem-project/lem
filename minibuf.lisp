@@ -30,7 +30,7 @@
     (cl-ncurses:wrefresh *mb-win*)
     (setq *mb-print-flag* nil)))
 
-(defun mb-write (msg)
+(defun write-message (msg)
   (setq *mb-print-flag* t)
   (cl-ncurses:werase *mb-win*)
   (cl-ncurses:mvwaddstr *mb-win*
@@ -42,7 +42,7 @@
 (defun y-or-n-p (prompt)
   (setq *mb-print-flag* t)
   (do () (nil)
-    (mb-write (format nil "~a [y/n]? " prompt))
+    (write-message (format nil "~a [y/n]? " prompt))
     (let ((c (getch)))
       (cond
        ((char= #\y c)
@@ -52,7 +52,7 @@
 
 (defun read-char (prompt)
   (setq *mb-print-flag* t)
-  (mb-write prompt)
+  (write-message prompt)
   (getch))
 
 (defun mb-completion (comp-f str)
@@ -71,7 +71,7 @@
         (comp-flag))
     (do ((break nil))
         (break)
-      (mb-write (format nil "~a~a" prompt str))
+      (write-message (format nil "~a~a" prompt str))
       (let ((c (getch)))
         (cond
          ((char= c key::ctrl-j)

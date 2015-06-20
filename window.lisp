@@ -348,7 +348,7 @@
 (defun delete-window-1 (window)
   (cond
    ((one-window-p)
-    (mb-write "Can not delete this window")
+    (write-message "Can not delete this window")
     nil)
    (t
     (when (eq *current-window* window)

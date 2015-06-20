@@ -2,6 +2,7 @@
 
 (defvar *isearch-keymap* (make-keymap 'isearch-undef-hook))
 (defvar *isearch-string*)
+(defvar *isearch-prev-string* "")
 (defvar *isearch-start-point*)
 (defvar *isearch-tmp-keymap*)
 (defvar *isearch-search-function*)
@@ -51,16 +52,20 @@
 
 (define-key *isearch-keymap* "C-j" 'isearch-end)
 (defcommand isearch-end () ()
-  (setq *current-keymap*
-    *isearch-tmp-keymap*))
+  (setq *isearch-prev-string* *isearch-string*)
+  (setq *current-keymap* *isearch-tmp-keymap*))
 
 (define-key *isearch-keymap* "C-s" 'isearch-next)
 (defcommand isearch-next () ()
+  (when (string= "" *isearch-string*)
+    (setq *isearch-string* *isearch-prev-string*))
   (search-forward-aux *isearch-string*)
   (isearch-update-minibuf))
 
 (define-key *isearch-keymap* "C-r" 'isearch-prev)
 (defcommand isearch-prev () ()
+  (when (string= "" *isearch-string*)
+    (setq *isearch-string* *isearch-prev-string*))
   (search-backward-aux *isearch-string*)
   (isearch-update-minibuf))
 
@@ -80,8 +85,7 @@
       (isearch-add-char c)
       (progn
        (mapc 'ungetch keys)
-       (setq *current-keymap*
-         *isearch-tmp-keymap*)))))
+       (isearch-end)))))
 
 (defun search-step (str first-search search step goto-matched-pos endp)
   (let ((point (point))

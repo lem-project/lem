@@ -131,6 +131,26 @@
                 (window-cur-linum)))
   t)
 
+(define-key *global-keymap* "M-g" 'goto-line)
+(defcommand goto-line (n) ("nLine to GOTO: ")
+  (when (< 0 n (1+ (buffer-nlines (window-buffer))))
+    (setf (window-cur-linum) n)
+    t))
+
+(define-key *global-keymap* "M-<" 'beginning-of-buffer)
+(defcommand beginning-of-buffer () ()
+  (goto-line 1)
+  (goto-column 0)
+  t)
+
+(define-key *global-keymap* "M->" 'end-of-buffer)
+(defcommand end-of-buffer () ()
+  (goto-line (buffer-nlines (window-buffer)))
+  (goto-column (buffer-line-length
+                (window-buffer)
+                (window-cur-linum)))
+  t)
+
 (defun %buffer-adjust-col (arg)
   (if arg
     (beginning-of-line)

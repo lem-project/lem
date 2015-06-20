@@ -103,7 +103,9 @@
                (eq (window-buffer win) (window-buffer))
                (> (window-cur-linum win)
                   (buffer-nlines (window-buffer win))))
-          (decf (window-cur-linum win))))
+          (decf (window-cur-linum win)
+            (- (window-cur-linum win)
+               (buffer-nlines (window-buffer win))))))
       result))))
 
 (define-key *global-keymap* "C-h" 'backward-delete-char)

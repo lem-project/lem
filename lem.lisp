@@ -34,6 +34,16 @@
   (setq *macro-recording-p* nil)
   (write-message "Quit"))
 
+(define-key *global-keymap* "M-x" 'execute-command)
+(defcommand execute-command (name)
+  ((list (mb-readline
+          "M-x "
+          ""
+          'command-completion
+          'exist-command-p)))
+  (cmd-call (intern (string-upcase name) :lem)
+    *universal-argument*))
+
 (define-key *global-keymap* "C-xC-c" 'exit-lem)
 (defcommand exit-lem () ()
   (when (or (not (any-modified-buffer-p))

@@ -1,5 +1,7 @@
 (in-package :lem)
 
+(defvar *command-names* nil)
+
 (let ((garg (gensym "ARG")))
   (defun defcommand-gen-args (name arg-descripters)
     (cond
@@ -56,6 +58,7 @@
 
 (defmacro defcommand (name parms (&rest arg-descripters) &body body)
   (let ((gcmd (gensym (symbol-name name))))
+    (pushnew (string-downcase (symbol-name name)) *command-names*)
     `(progn
       (setf (get ',name 'command) ',gcmd)
       (defun ,name ,parms ,@body)
@@ -63,3 +66,9 @@
 
 (defun cmd-call (cmd arg)
   (funcall (get cmd 'command) arg))
+
+(defun command-completion (str)
+  (completion str *command-names*))
+
+(defun exist-command-p (str)
+  (find str *command-names* :test 'equal))

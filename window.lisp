@@ -137,10 +137,14 @@
       (t
 	0))))
 
+(define-key *global-keymap* "C-l" 'recenter)
+(defcommand recenter () ()
+  (window-recenter *current-window*))
+
 (defun window-recenter (window)
   (setf (window-vtop-linum window)
         (window-cur-linum window))
-  (window-scroll window (floor (window-nlines window) 2)))
+  (window-scroll window (- (floor (window-nlines window) 2))))
 
 (defun window-scroll (window n)
   (incf (window-vtop-linum window) n)

@@ -28,7 +28,7 @@
 
 (defun head-line-p (window linum)
   (declare (ignore window))
-  (values (<= linum 1) (- 1 linum)))
+  (values (<= linum 1) (- 2 linum)))
 
 (defun tail-line-p (window linum)
   (let ((nlines (buffer-nlines (window-buffer window))))

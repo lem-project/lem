@@ -19,6 +19,7 @@
 	       (:file "buffer")
 	       (:file "buffers")
 	       (:file "bufed")
+	       (:file "word")
 	       (:file "window")
 	       (:file "file")
 	       (:file "lem"))

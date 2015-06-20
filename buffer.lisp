@@ -113,6 +113,16 @@
     (setf (buffer-cache-line buffer) line)
     line))
 
+(defun buffer-get-char (buffer linum column)
+  (let ((line (buffer-get-line buffer linum)))
+    (when (line-p line)
+      (let ((str (line-str line)))
+        (cond
+         ((<= 0 column (1- (length str)))
+          (aref str column))
+         ((= column (length str))
+          #\newline))))))
+
 (defun buffer-line-length (buffer linum)
   (length (line-str (buffer-get-line buffer linum))))
 

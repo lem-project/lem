@@ -266,3 +266,22 @@
        (buffer-mark-col buffer) (window-cur-col))
       (setf (window-max-col) (buffer-mark-col buffer))
       t)))
+
+(defun following-char ()
+  (buffer-get-char (window-buffer)
+    (window-cur-linum)
+    (window-cur-col)))
+
+(defun preceding-char ()
+  (cond
+   ((bobp)
+    nil)
+   ((bolp)
+    (buffer-get-char (window-buffer)
+      (1- (window-cur-linum))
+      (buffer-line-length (window-buffer)
+        (1- (window-cur-linum)))))
+   (t
+    (buffer-get-char (window-buffer)
+      (window-cur-linum)
+      (1- (window-cur-col))))))

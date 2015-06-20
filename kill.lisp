@@ -39,8 +39,8 @@
       ((>= 1 n)
        (insert-string (car ptr)))))
 
-(defmacro with-kill ((&optional before-p) &body body)
-  `(let ((*kill-before-p* ,before-p))
+(defmacro with-kill (() &body body)
+  `(progn
     (when (not *last-kill-flag*)
       (setq *kill-new-flag* t))
     (setq *curr-kill-flag* t)

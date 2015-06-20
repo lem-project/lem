@@ -86,6 +86,8 @@
               (mb-completion comp-f str))))
          ((char= c key::ctrl-h)
           (setq str (subseq str 0 (1- (length str)))))
+         ((char= c key::ctrl-q)
+          (setq str (concatenate 'string str (string (getch)))))
          (t
           (setq str (concatenate 'string str (string c)))))))
     (when comp-flag

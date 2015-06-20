@@ -36,7 +36,7 @@
 
 (define-key *global-keymap* "M-x" 'execute-command)
 (defcommand execute-command (name)
-  ((list (mb-readline
+  ((list (read-minibuffer
           "M-x "
           ""
           'command-completion

@@ -65,7 +65,7 @@
       (window-update-all))
     (or result str)))
 
-(defun mb-readline (prompt initial comp-f existing-p)
+(defun read-minibuffer (prompt initial comp-f existing-p)
   (setq *mb-print-flag* t)
   (let ((str initial)
         (comp-flag))
@@ -96,11 +96,11 @@
     str))
 
 (defun read-string (prompt &optional initial)
-  (mb-readline prompt (or initial "") nil nil))
+  (read-minibuffer prompt (or initial "") nil nil))
 
 (defun read-number (prompt)
   (parse-integer
-   (mb-readline prompt "" nil
+   (read-minibuffer prompt "" nil
      (lambda (str)
        (multiple-value-bind (n len)
            (parse-integer str :junk-allowed t)
@@ -113,7 +113,7 @@
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))
   (let* ((buffer-names (mapcar 'buffer-name *buffer-list*))
-         (result (mb-readline prompt
+         (result (read-minibuffer prompt
                    ""
                    (lambda (name)
                      (completion name buffer-names))
@@ -127,7 +127,7 @@
 (defun read-file-name (prompt &optional directory default existing)
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))
-  (let ((result (mb-readline prompt
+  (let ((result (read-minibuffer prompt
                   directory
                   #'file-completion
                   (and existing #'file-exist-p))))

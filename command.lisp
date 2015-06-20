@@ -90,5 +90,9 @@
     (pop-to-buffer buffer)
     (dolist (name *command-names*)
       (when (search str name)
-        (buffer-append-line buffer
-          name)))))
+        (let ((result (keybind-find-from-command name)))
+          (buffer-append-line buffer
+            (if result
+              (format nil "~a~a~a~a~a"
+                name #\tab (car result) #\tab (cadr result))
+              name)))))))

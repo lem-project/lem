@@ -3,16 +3,17 @@
 (defvar *keymaps* nil)
 
 (defstruct (keymap (:constructor make-keymap-internal))
+  name
   undef-hook
   alist)
 
-(defun make-keymap (&optional undef-hook)
-  (let ((keymap (make-keymap-internal :undef-hook undef-hook)))
+(defun make-keymap (name &optional undef-hook)
+  (let ((keymap (make-keymap-internal :name name :undef-hook undef-hook)))
     (push keymap *keymaps*)
     keymap))
 
 (defvar *global-keymap*
-  (make-keymap 'undefined-key))
+  (make-keymap "global" 'undefined-key))
 
 (defun define-key (keymap kbd cmd-name)
   (push (cons kbd cmd-name)
@@ -39,6 +40,15 @@
                 (keymap-alist keymap)
                 :test 'equal))))
     cmd))
+
+(defun keybind-find-from-command (name)
+  (let ((name (intern (string-upcase name) :lem)))
+    (dolist (keymap *keymaps*)
+      (dolist (elt (keymap-alist keymap))
+        (when (eq name (cdr elt))
+          (return-from
+           keybind-find-from-command
+           (list (car elt) (keymap-name keymap))))))))
 
 (defun key-undef-hook (keymap keys)
   (when (keymap-undef-hook keymap)

@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(defvar *isearch-keymap* (make-keymap 'isearch-undef-hook))
+(defvar *isearch-keymap* (make-keymap "isearch" 'isearch-undef-hook))
 (defvar *isearch-string*)
 (defvar *isearch-prev-string* "")
 (defvar *isearch-start-point*)

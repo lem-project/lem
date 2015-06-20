@@ -83,3 +83,12 @@
           'exist-command-p)))
   (cmd-call (intern (string-upcase name) :lem)
     *universal-argument*))
+
+(defcommand apropos (str) ("sApropos: ")
+  (let ((buffer (get-buffer-create "*Apropos*")))
+    (buffer-erase buffer)
+    (pop-to-buffer buffer)
+    (dolist (name *command-names*)
+      (when (search str name)
+        (buffer-append-line buffer
+          name)))))

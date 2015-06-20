@@ -1,7 +1,7 @@
 (defpackage :lem
   (:use :cl)
   (:export :lem)
-  (:shadow :y-or-n-p :read-char))
+  (:shadow :y-or-n-p :read-char :apropos))
 
 (defsystem lem
   :serial t

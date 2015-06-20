@@ -209,6 +209,16 @@
        (t
         (goto-column (1- (window-cur-col))))))))
 
+(define-key *global-keymap* "C-v" 'next-page)
+(defcommand next-page (&optional (n 1)) ("p")
+  (next-line (* n (- (window-nlines) 1)))
+  (recenter))
+
+(define-key *global-keymap* "M-v" 'prev-page)
+(defcommand prev-page (&optional (n 1)) ("p")
+  (prev-line (* n (- (window-nlines) 1)))
+  (recenter))
+
 (define-key *global-keymap* "C-@" 'mark-set)
 (defcommand mark-set () ()
   (let ((buffer (window-buffer)))

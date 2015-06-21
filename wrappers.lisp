@@ -16,3 +16,8 @@
       :name :wild
       :type :wild
       :defaults dirname))))
+
+(defun shell-command (str &key output input)
+  (sb-ext:run-program "/bin/sh" (list "-c" str)
+    :output output
+    :input input))

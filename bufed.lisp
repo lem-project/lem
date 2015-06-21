@@ -68,7 +68,7 @@
            c)
       (next-char 1))))
 
-(defun insert-string (str)
+(defcommand insert-string (str) ("sInsert string: ")
   (do ((rest (split-string str #\newline) (cdr rest)))
       ((null rest))
     (buffer-insert-line

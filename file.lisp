@@ -118,7 +118,11 @@
      (t
       (save-file-internal buffer)))))
 
+(defcommand change-file-name (filename) ("sChange file name: ")
+  (setf (buffer-filename (window-buffer)) filename)
+  t)
+
 (define-key *global-keymap* "C-xC-w" 'write-file)
 (defcommand write-file (filename) ("FWrite File: ")
-  (setf (buffer-filename (window-buffer)) filename)
+  (change-file-name filename)
   (save-file-internal (window-buffer)))

@@ -88,8 +88,10 @@
   (let ((i (position delim str)))
     (if (null i)
       (list str)
-      (cons (subseq str 0 i)
-        (split-string (subseq str (1+ i)) delim)))))
+      (if (zerop i)
+        (split-string (subseq str (1+ i)) delim)
+        (cons (subseq str 0 i)
+          (split-string (subseq str (1+ i)) delim))))))
 
 (defun completion (name list)
   (let ((strings (remove-if-not (lambda (elt)

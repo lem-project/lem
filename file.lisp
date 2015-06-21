@@ -126,3 +126,12 @@
 (defcommand write-file (filename) ("FWrite File: ")
   (change-file-name filename)
   (save-file-internal (window-buffer)))
+
+(define-key *global-keymap* "C-xC-i" 'insert-file)
+(defcommand insert-file (filename) ("fInsert file: ")
+  (with-open-file (in filename)
+    (do ((str #1=(read-line in nil) #1#))
+        ((null str))
+      (insert-string str)
+      (insert-newline 1))
+    t))

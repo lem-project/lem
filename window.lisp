@@ -315,21 +315,41 @@
       (cadr result)
       (car *window-list*))))
 
+(defun upper-window (window)
+  (unless (one-window-p)
+    (do ((prev *window-list* (cdr prev)))
+        ((null (cdr prev)))
+      (when (eq (cadr prev) window)
+        (return (car prev))))))
+
+(defun lower-window (window)
+  (cadr (member window *window-list*)))
+
 (define-key *global-keymap* "C-xo" 'other-window)
 (defcommand other-window (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (setq *current-window*
       (get-next-window *current-window*))))
 
-(defun window-move (window y x)
+(defun window-set-pos (window y x)
   (cl-ncurses:mvwin (window-win window) y x)
   (setf (window-y window) y)
   (setf (window-x window) x))
 
-(defun window-resize (window nlines ncols)
+(defun window-set-size (window nlines ncols)
   (cl-ncurses:wresize (window-win window) nlines ncols)
   (setf (window-nlines window) nlines)
   (setf (window-ncols window) ncols))
+
+(defun window-move (window dy dx)
+  (window-set-pos window
+    (+ (window-y window) dy)
+    (+ (window-x window) dx)))
+
+(defun window-resize (window dl dc)
+  (window-set-size window
+    (+ (window-nlines window) dl)
+    (+ (window-ncols window) dc)))
 
 (define-key *global-keymap* "C-x1" 'delete-other-windows)
 (defcommand delete-other-windows () ()
@@ -337,8 +357,8 @@
     (unless (eq win *current-window*)
       (cl-ncurses:delwin (window-win win))))
   (setq *window-list* (list *current-window*))
-  (window-move *current-window* 0 0)
-  (window-resize *current-window*
+  (window-set-pos *current-window* 0 0)
+  (window-set-size *current-window*
     (1- cl-ncurses:*lines*)
     cl-ncurses:*cols*)
   t)
@@ -360,8 +380,8 @@
       (let ((upwin (cadr (member window wlist))))
         (when (null upwin)
           (setq upwin (cadr *window-list*))
-          (window-move upwin 0 (window-x upwin)))
-        (window-resize upwin
+          (window-set-pos upwin 0 (window-x upwin)))
+        (window-set-size upwin
           (+ (window-nlines upwin)
             (window-nlines window))
           (window-ncols upwin))))
@@ -370,14 +390,14 @@
 
 (defun window-adjust-all ()
   (dolist (win *window-list*)
-    (window-resize win
+    (window-set-size win
       (window-nlines win)
       cl-ncurses:*cols*))
   (dolist (win *window-list*)
     (when (<= cl-ncurses:*lines* (+ 2 (window-y win)))
       (delete-window-1 win)))
   (let ((win (car (last *window-list*))))
-    (window-resize win
+    (window-set-size win
       (+ (window-nlines win)
         (- cl-ncurses:*lines* *current-lines*))
       (window-ncols win)))
@@ -392,3 +412,32 @@
          (get-next-window *current-window*)))
     (set-buffer buffer)
     *current-window*))
+
+(define-key *global-keymap* "C-x^" 'grow-window)
+(defcommand grow-window (n) ("p")
+  (if (one-window-p)
+    (progn
+     (write-message "Only one window")
+     nil)
+    (let* ((lowerwin (lower-window *current-window*))
+           (upperwin (if lowerwin nil (upper-window *current-window*))))
+      (if lowerwin
+        (cond
+         ((>= 1 (- (window-nlines lowerwin) n))
+          (write-message "Impossible change")
+          nil)
+         (t
+          (window-resize *current-window* n 0)
+          (window-resize lowerwin (- n) 0)
+          (window-move lowerwin n 0)
+          t))
+        (cond
+         ((>= 1 (- (window-nlines upperwin) n))
+          (write-message "Impossible change")
+          nil)
+         (t
+          (window-resize *current-window* n 0)
+          (window-move *current-window* (- n) 0)
+          (window-resize upperwin (- n) 0))))
+      (cl-ncurses:clear))))
+

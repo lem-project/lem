@@ -17,7 +17,7 @@
       (cond
        ((= code 410)
         (mb-resize)
-        (window-adjust-all)
+        (adjust-screen-size)
         (getch))
        ((and (char= char key::ctrl-g) abort-jump)
         (throw 'abort t))

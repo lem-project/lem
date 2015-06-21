@@ -388,7 +388,7 @@
     (setq *window-list* (delete window *window-list*))
     t)))
 
-(defun window-adjust-all ()
+(defun adjust-screen-size ()
   (dolist (win *window-list*)
     (window-set-size win
       (window-nlines win)

@@ -159,7 +159,9 @@
   t)
 
 (define-key *global-keymap* "M-g" 'goto-line)
-(defcommand goto-line (n) ("nLine to GOTO: ")
+(defcommand goto-line (n) ("P")
+  (unless n
+    (setq n (read-number "nLine to GOTO: ")))
   (when (< 0 n (1+ (buffer-nlines (window-buffer))))
     (setf (window-cur-linum) n)
     t))

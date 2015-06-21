@@ -126,6 +126,16 @@
 (defun buffer-line-length (buffer linum)
   (length (line-str (buffer-get-line buffer linum))))
 
+(defun buffer-line-string (buffer linum)
+  (let ((line (buffer-get-line buffer linum)))
+    (when (line-p line)
+      (line-str line))))
+
+(defun (setf buffer-line-string) (val buffer linum)
+  (let ((line (buffer-get-line buffer linum)))
+    (when (line-p line)
+      (setf (line-str line) val))))
+
 (defun buffer-take-lines (buffer linum len)
   (let ((strings))
     (do ((line (buffer-get-line buffer linum) (line-next line))

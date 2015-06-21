@@ -293,3 +293,38 @@
    (window-cur-linum)
    (window-cur-col)
    c))
+
+(defun tab-line-aux (n make-space-str)
+  (dotimes (_ n t)
+    (let ((str (buffer-line-string (window-buffer) (window-cur-linum)))
+          (count 0)
+          index)
+      (dotimes (i (length str))
+        (setq index i)
+        (case (aref str i)
+          (#\space
+           (incf count))
+          (#\tab
+           (setq count (char-width #\tab count)))
+          (otherwise
+           (return))))
+      (multiple-value-bind (div mod) (floor count *tab-size*)
+        (setf (buffer-line-string (window-buffer) (window-cur-linum))
+          (concatenate 'string
+            (funcall make-space-str div)
+            (make-string mod :initial-element #\space)
+            (subseq str index)))))
+    (unless (next-line 1)
+      (return))))
+
+(define-key *global-keymap* "C-xC-e" 'entab-line)
+(defcommand entab-line (n) ("p")
+  (tab-line-aux n
+    (lambda (n)
+      (make-string n :initial-element #\tab))))
+
+(define-key *global-keymap* "C-xC-a" 'detab-line)
+(defcommand detab-line (n) ("p")
+  (tab-line-aux n
+    (lambda (n)
+      (make-string (* n *tab-size*) :initial-element #\space))))

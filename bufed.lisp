@@ -105,19 +105,20 @@
          (window-cur-linum)
          (window-cur-col)
          (or n 1))
-      (when n
-        (with-kill ()
-          (kill-push str)))
-      (dolist (win *window-list*)
-        (when (and
-               (not (eq win *current-window*))
-               (eq (window-buffer win) (window-buffer))
-               (> (window-cur-linum win)
-                  (buffer-nlines (window-buffer win))))
-          (decf (window-cur-linum win)
-            (- (window-cur-linum win)
-               (buffer-nlines (window-buffer win))))))
-      result))))
+      (when result
+        (when n
+          (with-kill ()
+            (kill-push str)))
+        (dolist (win *window-list*)
+          (when (and
+                 (not (eq win *current-window*))
+                 (eq (window-buffer win) (window-buffer))
+                 (> (window-cur-linum win)
+                   (buffer-nlines (window-buffer win))))
+            (decf (window-cur-linum win)
+              (- (window-cur-linum win)
+                (buffer-nlines (window-buffer win))))))
+        result)))))
 
 (define-key *global-keymap* "C-h" 'backward-delete-char)
 (defcommand backward-delete-char (n) ("p")
@@ -328,3 +329,24 @@
   (tab-line-aux n
     (lambda (n)
       (make-string (* n *tab-size*) :initial-element #\space))))
+
+(defun blank-line-p ()
+  (let ((str (buffer-line-string
+              (window-buffer)
+              (window-cur-linum))))
+    (dotimes (i (length str) (1+ (length str)))
+      (let ((c (aref str i)))
+        (unless (or (char= c #\space) (char= c #\tab))
+          (return nil))))))
+
+(define-key *global-keymap* "C-xC-o" 'delete-blank-lines)
+(defcommand delete-blank-lines () ()
+  (do ()
+      ((not (blank-line-p))
+       (next-line 1))
+    (unless (prev-line 1)
+      (return)))
+  (do () ((eobp))
+    (let ((result (blank-line-p)))
+      (unless (and result (delete-char result))
+        (return)))))

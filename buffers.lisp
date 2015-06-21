@@ -70,14 +70,17 @@
     (buffer-erase buf)
     (buffer-append-line buf
       (format nil
-        (format nil "Buffer~~~dTFile"
-          max-name-len)))
+        (format nil "MOD ROL Buffer~~~dTFile"
+          (+ 8 max-name-len))))
     (buffer-append-line buf
-      (make-string (+ max-name-len max-filename-len) :initial-element #\-))
+      (make-string (+ max-name-len max-filename-len 8)
+        :initial-element #\-))
     (dolist (b *buffer-list*)
       (buffer-append-line buf
         (format nil
-          (format nil "~a~~~dT~a"
+          (format nil " ~a   ~a  ~a~~~dT~a"
+            (if (buffer-modified-p b) "*" " ")
+            (if (buffer-read-only-p b) "*" " ")
             (buffer-name b)
-            max-name-len
+            (+ 8 max-name-len)
             (or (buffer-filename b) "")))))))

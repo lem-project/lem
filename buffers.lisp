@@ -1,7 +1,16 @@
 (in-package :lem)
 
+(defun filter-special-buffers ()
+  (remove-if (lambda (buffer)
+               (let ((name (buffer-name buffer)))
+                 (and
+                  (char= #\* (aref name 0))
+                  (char= #\* (aref name (1- (length name)))))))
+    *buffer-list*))
+
 (defun any-modified-buffer-p ()
-  (find-if 'buffer-modified-p *buffer-list*))
+  (find-if 'buffer-modified-p
+    (filter-special-buffers)))
 
 (defun get-buffer (name)
   (find-if (lambda (buffer)

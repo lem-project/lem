@@ -310,7 +310,7 @@
           (otherwise
            (return))))
       (multiple-value-bind (div mod) (floor count *tab-size*)
-        (setf (buffer-line-string (window-buffer) (window-cur-linum))
+        (buffer-line-string-set (window-buffer) (window-cur-linum)
           (concatenate 'string
             (funcall make-space-str div)
             (make-string mod :initial-element #\space)
@@ -350,3 +350,27 @@
     (let ((result (blank-line-p)))
       (unless (and result (delete-char result))
         (return)))))
+
+(define-key *global-keymap* "C-t" 'transpose-characters)
+(defcommand transpose-characters () ()
+  (cond
+   ((bolp))
+   ((eolp)
+    (let* ((str (buffer-line-string (window-buffer) (window-cur-linum)))
+           (len (length str)))
+      (when (< 1 len)
+        (buffer-line-string-set (window-buffer) (window-cur-linum)
+          (concatenate 'string
+            (subseq str 0 (- len 2))
+            (string (aref str (- len 1)))
+            (string (aref str (- len 2)))))))
+    t)
+   (t
+    (let ((str (buffer-line-string (window-buffer) (window-cur-linum))))
+      (buffer-line-string-set (window-buffer) (window-cur-linum)
+        (concatenate 'string
+          (subseq str 0 (- (window-cur-col) 1))
+          (string (aref str (window-cur-col)))
+          (string (aref str (1- (window-cur-col))))
+          (subseq str (1+ (window-cur-col))))))
+    t)))

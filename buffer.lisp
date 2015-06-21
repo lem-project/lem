@@ -131,10 +131,12 @@
     (when (line-p line)
       (line-str line))))
 
-(defun (setf buffer-line-string) (val buffer linum)
+(defun buffer-line-string-set (buffer linum str)
+  (buffer-read-only-guard buffer buffer-line-string-set)
+  (setf (buffer-modified-p buffer) t)
   (let ((line (buffer-get-line buffer linum)))
     (when (line-p line)
-      (setf (line-str line) val))))
+      (setf (line-str line) str))))
 
 (defun buffer-take-lines (buffer linum len)
   (let ((strings))

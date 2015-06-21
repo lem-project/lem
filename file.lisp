@@ -90,6 +90,22 @@
   (setf (buffer-read-only-p (window-buffer)) t)
   t)
 
+(defun save-file-internal (buffer)
+  (with-open-file (out (buffer-filename buffer)
+                    :direction :output
+                    :if-exists :supersede
+                    :if-does-not-exist :create)
+    (do ((lines
+          (buffer-take-lines buffer 1 (buffer-nlines buffer))
+          (cdr lines)))
+      ((null lines))
+      (princ (car lines) out)
+      (when (cdr lines)
+        (terpri out))))
+  (unmark-buffer)
+  (write-message "Wrote")
+  t)
+
 (define-key *global-keymap* "C-xC-s" 'save-file)
 (defcommand save-file () ()
   (let ((buffer (window-buffer)))
@@ -100,17 +116,9 @@
       (write-message "No file name")
       nil)
      (t
-      (with-open-file (out (buffer-filename buffer)
-                        :direction :output
-                        :if-exists :supersede
-                        :if-does-not-exist :create)
-        (do ((lines
-              (buffer-take-lines buffer 1 (buffer-nlines buffer))
-              (cdr lines)))
-            ((null lines))
-          (princ (car lines) out)
-          (when (cdr lines)
-            (terpri out))))
-      (unmark-buffer)
-      (write-message "Wrote")
-      t))))
+      (save-file-internal buffer)))))
+
+(define-key *global-keymap* "C-xC-w" 'write-file)
+(defcommand write-file (filename) ("FWrite File: ")
+  (setf (buffer-filename (window-buffer)) filename)
+  (save-file-internal (window-buffer)))

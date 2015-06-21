@@ -438,6 +438,26 @@
          (t
           (window-resize *current-window* n 0)
           (window-move *current-window* (- n) 0)
-          (window-resize upperwin (- n) 0))))
-      (cl-ncurses:clear))))
+          (window-resize upperwin (- n) 0)))))))
 
+(define-key *global-keymap* "C-xC-z" 'shrink-window)
+(defcommand shrink-window (n) ("p")
+  (cond
+   ((one-window-p)
+    (write-message "Only one window")
+    nil)
+   ((>= 1 (- (window-nlines *current-window*) n))
+    (write-message "Impossible change")
+    nil)
+   (t
+    (let* ((lowerwin (lower-window *current-window*))
+           (upperwin (if lowerwin nil (upper-window *current-window*))))
+      (cond
+       (lowerwin
+        (window-resize *current-window* (- n) 0)
+        (window-resize lowerwin (+ n) 0)
+        (window-move lowerwin (- n) 0))
+       (t
+        (window-resize *current-window* (- n) 0)
+        (window-move *current-window* n 0)
+        (window-resize upperwin n 0)))))))

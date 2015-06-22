@@ -67,24 +67,24 @@
   (let ((dirname (file-name-directory str)))
     (completion str (files dirname))))
 
-(defun file-open (filename)
-  (setq filename (file-name-nondirectory filename))
-  (unless (string= "" filename)
-    (let ((buffer (make-buffer
-                   filename
-                   :filename (expand-file-name filename))))
-      (with-open-file (in filename :if-does-not-exist nil)
-        (when in
-          (do () (nil)
-            (multiple-value-bind (str eof-p) (read-line in nil)
-              (if (not eof-p)
-                (buffer-append-line buffer str)
-                (progn
-                 (buffer-append-line buffer (or str ""))
-                 (return)))))))
-      (set-buffer buffer)
-      (unmark-buffer)
-      t)))
+(defun file-open (path)
+  (let ((filename (file-name-nondirectory path)))
+    (unless (string= "" filename)
+      (let ((buffer (make-buffer
+                     filename
+                     :filename (expand-file-name path))))
+        (with-open-file (in (buffer-filename buffer) :if-does-not-exist nil)
+          (when in
+            (do () (nil)
+              (multiple-value-bind (str eof-p) (read-line in nil)
+                (if (not eof-p)
+                  (buffer-append-line buffer str)
+                  (progn
+                   (buffer-append-line buffer (or str ""))
+                   (return)))))))
+        (set-buffer buffer)
+        (unmark-buffer)
+        t))))
 
 (define-key *global-keymap* "C-xC-f" 'find-file)
 (defcommand find-file (filename) ("FFind File: ")

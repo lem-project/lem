@@ -166,3 +166,6 @@
 
 (defun tlist-update (tl)
   (setf (cdr tl) (last (car tl))))
+
+(defun random-range (min max)
+  (+ min (random (1+ (- max min)))))

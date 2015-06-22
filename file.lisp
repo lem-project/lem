@@ -24,6 +24,23 @@
     t
     nil))
 
+(defun temp-file-name-1 ()
+  (concatenate 'string
+    "/tmp/"
+    *program-name*
+    "-"
+    (coerce (loop repeat 8
+              collect (code-char
+                       (random-range
+                        (char-code #\a)
+                        (char-code #\z))))
+      'string)))
+
+(defun temp-file-name ()
+  (loop for name = (temp-file-name-1)
+    while (file-exist-p name)
+    finally (return name)))
+
 (defun expand-file-name (filename &optional directory)
   (when (char/= (aref filename 0) #\/)
     (setq filename

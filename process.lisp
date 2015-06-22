@@ -6,9 +6,11 @@
                   :element-type 'character
                   :fill-pointer t)))
     (with-output-to-string (output outstr)
-      (with-input-from-string (input
-                               (join (string #\newline)
-                                 (buffer-take-lines (window-buffer))))
-        (shell-command str :output output :input input)))
-    (buffer-erase (window-buffer))
-    (insert-string outstr)))
+      (let ((temp-file-name (temp-file-name)))
+        (write-to-file (window-buffer) temp-file-name)
+        (shell-command (format nil "cat ~a | ~a" temp-file-name str)
+          :output output)
+        (delete-file temp-file-name)))
+    (erase-buffer)
+    (insert-string outstr)
+    (beginning-of-buffer)))

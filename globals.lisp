@@ -1,5 +1,7 @@
 (in-package :lem)
 
+(defvar *program-name* "Lem")
+
 (defvar *window-list*)
 (defvar *current-window*)
 (defvar *prev-buffer*)

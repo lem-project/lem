@@ -377,3 +377,8 @@
           (string (aref str (1- (window-cur-col))))
           (subseq str (1+ (window-cur-col))))))
     t)))
+
+(defcommand erase-buffer () ()
+  (beginning-of-buffer)
+  (buffer-erase (window-buffer))
+  t)

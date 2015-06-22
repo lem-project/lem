@@ -90,18 +90,20 @@
   (setf (buffer-read-only-p (window-buffer)) t)
   t)
 
-(defun save-file-internal (buffer)
-  (with-open-file (out (buffer-filename buffer)
+(defun write-to-file (buffer filename)
+  (with-open-file (out filename
                     :direction :output
                     :if-exists :supersede
                     :if-does-not-exist :create)
-    (map-buffer-lines
-     (lambda (line eof-p linum)
-       (declare (ignore linum))
-       (princ line out)
-       (unless eof-p
-         (terpri out)))
-     buffer))
+    (map-buffer-lines (lambda (line eof-p linum)
+                        (declare (ignore linum))
+                        (princ line out)
+                        (unless eof-p
+                          (terpri out)))
+      buffer)))
+
+(defun save-file-internal (buffer)
+  (write-to-file buffer (buffer-filename buffer))
   (unmark-buffer)
   (write-message "Wrote")
   t)

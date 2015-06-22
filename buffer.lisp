@@ -153,7 +153,11 @@
         (if (line-next line) nil t)
         i))))
 
-(defun buffer-take-lines (buffer linum len)
+(defun buffer-take-lines (buffer &optional linum len)
+  (unless linum
+    (setq linum 1))
+  (unless len
+    (setq len (buffer-nlines buffer)))
   (let ((strings))
     (map-buffer-lines
      (lambda (str eof-p linum)

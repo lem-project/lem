@@ -20,6 +20,7 @@
 	       (:file "buffers")
 	       (:file "bufed")
 	       (:file "word")
+	       (:file "process")
 	       (:file "window")
 	       (:file "file")
 	       (:file "lem"))

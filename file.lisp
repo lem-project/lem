@@ -95,13 +95,13 @@
                     :direction :output
                     :if-exists :supersede
                     :if-does-not-exist :create)
-    (do ((lines
-          (buffer-take-lines buffer 1 (buffer-nlines buffer))
-          (cdr lines)))
-      ((null lines))
-      (princ (car lines) out)
-      (when (cdr lines)
-        (terpri out))))
+    (map-buffer-lines
+     (lambda (line eof-p linum)
+       (declare (ignore linum))
+       (princ line out)
+       (unless eof-p
+         (terpri out)))
+     buffer))
   (unmark-buffer)
   (write-message "Wrote")
   t)

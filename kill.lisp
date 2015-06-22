@@ -7,28 +7,36 @@
 (defvar *kill-new-flag* t)
 (defvar *kill-before-p* nil)
 
-(defun kill-append (str before-p)
-  (setf (car *kill-ring-yank-ptr*)
+(defun kill-append (lines before-p)
+  (setf (car *kill-ring*)
     (if before-p
-      (concatenate 'string
-        str
-        (car *kill-ring-yank-ptr*))
-      (concatenate 'string
-        (car *kill-ring-yank-ptr*)
-        str))))
+      (append
+       (butlast lines)
+       (list
+        (concatenate 'string
+          (car (last lines))
+          (first (car *kill-ring*))))
+       (rest (car *kill-ring*)))
+      (append
+       (butlast (car *kill-ring*))
+       (list
+        (concatenate 'string
+          (car (last (car *kill-ring*)))
+          (first lines)))
+       (rest lines)))))
 
-(defun kill-push (str)
+(defun kill-push (lines)
   (cond
    (*kill-new-flag*
-    (push str *kill-ring*)
+    (push lines *kill-ring*)
     (when (nthcdr *kill-ring-max* *kill-ring*)
       (setq *kill-ring*
         (subseq *kill-ring* 0 *kill-ring-max*)))
     (setq *kill-ring-yank-ptr* *kill-ring*)
-    (setq *kill-new-flag* nil)
-    str)
+    (setq *kill-new-flag* nil))
    (t
-    (kill-append str *kill-before-p*))))
+    (kill-append lines *kill-before-p*)))
+  t)
 
 (define-key *global-keymap* "C-y" 'yank)
 (defcommand yank (n) ("p")
@@ -37,7 +45,7 @@
              *kill-ring*))
        (n n (1- n)))
       ((>= 1 n)
-       (insert-string (car ptr)))))
+       (insert-lines (car ptr)))))
 
 (defmacro with-kill (() &body body)
   `(progn

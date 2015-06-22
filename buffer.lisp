@@ -203,15 +203,15 @@
 (defun buffer-delete-char (buffer linum col n)
   (buffer-read-only-guard buffer buffer-delete-char)
   (let ((line (buffer-get-line buffer linum))
-        (acc "")
+        (del-lines (list ""))
         (result t))
     (loop while (plusp n) do
       (cond
        ((<= n (- (length (line-str line)) col))
         (setf (buffer-modified-p buffer) t)
-        (setq acc
-          (format nil "~a~a" 
-            acc
+        (setf (car del-lines)
+          (concatenate 'string
+            (car del-lines)
             (subseq (line-str line) col (+ col n))))
         (setf (line-str line)
           (concatenate 'string
@@ -219,10 +219,11 @@
             (subseq (line-str line) (+ col n))))
         (setq n 0))
        (t
-        (setq acc
-          (format nil "~a~a~%"
-            acc
+        (setf (car del-lines)
+          (concatenate 'string
+            (car del-lines)
             (subseq (line-str line) col)))
+        (push "" del-lines)
         (unless (line-next line)
           (setq result nil)
           (return nil))
@@ -237,7 +238,7 @@
                   (buffer-tail-line buffer))
           (setf (buffer-tail-line buffer) line))
         (line-free (line-next line)))))
-    (values result acc)))
+    (values result (nreverse del-lines))))
 
 (defun buffer-erase (buffer)
   (buffer-read-only-guard buffer buffer-erase)

@@ -68,8 +68,8 @@
            c)
       (next-char 1))))
 
-(defcommand insert-string (str) ("sInsert string: ")
-  (do ((rest (split-string str #\newline) (cdr rest)))
+(defun insert-lines (lines)
+  (do ((rest lines (cdr rest)))
       ((null rest))
     (buffer-insert-line
      (window-buffer)
@@ -79,6 +79,9 @@
     (next-char (length (car rest)))
     (when (cdr rest)
       (insert-newline 1))))
+
+(defcommand insert-string (str) ("sInsert string: ")
+  (insert-lines (split-string str #\newline)))
 
 (define-key *global-keymap* "C-j" 'insert-newline)
 (defcommand insert-newline (n) ("p")
@@ -99,7 +102,7 @@
    ((and n (minusp n))
     (backward-delete-char (- n)))
    (t
-    (multiple-value-bind (result str)
+    (multiple-value-bind (result lines)
         (buffer-delete-char
          (window-buffer)
          (window-cur-linum)
@@ -108,7 +111,7 @@
       (when result
         (when n
           (with-kill ()
-            (kill-push str)))
+            (kill-push lines)))
         (dolist (win *window-list*)
           (when (and
                  (not (eq win *current-window*))

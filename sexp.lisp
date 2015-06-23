@@ -17,9 +17,13 @@
 
 (defmacro define-dir-functions ((forward-name backward-name) parms aliases &body body)
   `(progn
-    (defun ,forward-name ,parms ,@body)
-    (flet-aliases ,aliases
-      (defun ,backward-name ,parms ,@body))))
+    (flet ((forward-p () t)
+           (backward-p () nil))
+      (defun ,forward-name ,parms ,@body))
+    (flet ((forward-p () nil)
+           (backward-p () t))
+      (flet-aliases ,aliases
+        (defun ,backward-name ,parms ,@body)))))
 
 (define-dir-functions (skip-chars-forward skip-chars-backward)
   (pred &optional not-p)
@@ -75,6 +79,11 @@
             (prev-char 1))
            ((eql c goal-char)
             (next-char 1)
+            (do ()
+                ((not (and (backward-p)
+                           (syntax-expr-prefix-char-p
+                            (following-char)))))
+              (next-char 1))
             (return t))
            ((syntax-string-quote-char-p c)
             (skip-string-forward)
@@ -126,9 +135,17 @@
           (syntax-word-char-p c)))
         (return t))))))
 
+(defun start-sexp-p (c)
+  (or (syntax-open-paren-char-p c)
+      (and (syntax-expr-prefix-char-p c)
+           (syntax-open-paren-char-p (char-after 1)))
+      (and (syntax-expr-prefix-char-p c)
+           (syntax-expr-prefix-char-p (char-after 1))
+           (syntax-open-paren-char-p (char-after 2)))))
+
 (define-dir-functions (%forward-sexp %backward-sexp) ()
   ((skip-space-forward skip-space-backward)
-   (syntax-open-paren-char-p syntax-closed-paren-char-p)
+   (start-sexp-p syntax-closed-paren-char-p)
    (syntax-closed-paren-char-p syntax-open-paren-char-p)
    (following-char preceding-char)
    (preceding-char char-before-2)
@@ -143,7 +160,7 @@
       (next-char 1)
       (setq c (following-char)))
     (cond
-     ((syntax-open-paren-char-p c)
+     ((start-sexp-p c)
       (forward-list-1))
      ((syntax-closed-paren-char-p c)
       nil)

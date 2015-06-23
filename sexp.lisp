@@ -180,3 +180,19 @@
   (dotimes (_ n t)
     (unless (%backward-sexp)
       (return))))
+
+(define-key *global-keymap* "M-C-d" 'down-list)
+(defcommand down-list (n) ("p")
+  (block outer
+    (dotimes (_ n t)
+      (let ((point (point)))
+        (do ()
+            ((and
+              (syntax-open-paren-char-p (following-char))
+              (not (escape-p (preceding-char) (char-before-2))))
+             (next-char 1))
+          (when (or
+                 (syntax-closed-paren-char-p (following-char))
+                 (not (next-char 1)))
+            (point-set point)
+            (return-from outer nil)))))))

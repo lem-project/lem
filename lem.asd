@@ -20,6 +20,8 @@
 	       (:file "buffers")
 	       (:file "bufed")
 	       (:file "word")
+	       (:file "syntax")
+	       (:file "sexp")
 	       (:file "process")
 	       (:file "window")
 	       (:file "file")

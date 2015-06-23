@@ -45,6 +45,10 @@
 (defun skip-until-closed-paren-backward ()
   (skip-chars-backward 'syntax-closed-paren-char-p t))
 
+(defun escape-p (before-1 before-2)
+  (and (syntax-escape-char-p before-1)
+       (not (syntax-escape-char-p before-2))))
+
 (define-dir-functions (forward-list-1 backward-list-1) ()
   ((skip-until-open-paren-forward skip-until-closed-paren-backward)
    (following-char preceding-char)
@@ -61,8 +65,7 @@
     (do () (nil)
         (unless (next-char 1)
           (return))
-      (unless (and (syntax-escape-char-p (preceding-char))
-                (not (syntax-escape-char-p (char-before-2))))
+      (unless (escape-p (preceding-char) (char-before-2))
         (let ((c (following-char)))
           (cond
            ((eql c paren-char)
@@ -98,8 +101,7 @@
     (do () (nil)
       (unless (next-char 1)
         (return))
-      (unless (and (syntax-escape-char-p (preceding-char))
-                   (not (syntax-escape-char-p (char-before-2))))
+      (unless (escape-p (preceding-char) (char-before-2))
         (when (eql (following-char) goal-char)
           (next-char 1)
           (return t))))))
@@ -114,9 +116,7 @@
       (return))
     (let ((c (following-char)))
       (cond
-       ((and
-         (syntax-escape-char-p (preceding-char))
-         (not (syntax-escape-char-p (char-before-2)))))
+       ((escape-p (preceding-char) (char-before-2)))
        ((not
          (or
           (syntax-escape-char-p c)
@@ -133,12 +133,11 @@
    (char-before-2 char-before-3)
    (forward-list-1 backward-list-1)
    (skip-string-forward skip-string-backward)
-   (skip-symbol-forward skip-symbol-backward))
+   (skip-symbol-forward skip-symbol-backward)
+   (next-char prev-char))
   (skip-space-forward)
   (let ((c (following-char)))
-    (when (and
-           (syntax-escape-char-p (preceding-char))
-           (not (syntax-escape-char-p (char-before-2))))
+    (when (escape-p (preceding-char) (char-before-2))
       (next-char 1)
       (setq c (following-char)))
     (cond

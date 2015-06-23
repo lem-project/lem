@@ -196,13 +196,19 @@
   (block outer
     (dotimes (_ n t)
       (let ((point (point)))
-        (do ()
-            ((and
-              (syntax-open-paren-char-p (following-char))
-              (not (escape-forward-p)))
-             (next-char 1))
-          (when (or
-                 (syntax-closed-paren-char-p (following-char))
-                 (not (next-char 1)))
-            (point-set point)
-            (return-from outer nil)))))))
+        (do () (nil)
+          (let ((c (following-char)))
+            (cond
+             ((and
+               (syntax-open-paren-char-p c)
+               (not (escape-forward-p)))
+              (next-char 1)
+              (return t))
+             ((and (syntax-string-quote-char-p c)
+                (not (escape-forward-p)))
+              (skip-string-forward))
+             ((or
+               (syntax-closed-paren-char-p c)
+               (not (next-char 1)))
+              (point-set point)
+              (return-from outer nil)))))))))

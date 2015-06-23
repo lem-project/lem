@@ -212,3 +212,30 @@
                (not (next-char 1)))
               (point-set point)
               (return-from outer nil)))))))))
+
+(define-key *global-keymap* "M-C-u" 'up-list)
+(defcommand up-list (n) ("p")
+  (block outer
+    (let ((point (point)))
+    (dotimes (_ n t)
+      (do () (nil)
+        (let ((c (preceding-char)))
+          (cond
+           ((and
+             (syntax-closed-paren-char-p c)
+             (not (escape-backward-p)))
+            (unless (backward-list-1)
+              (point-set point)
+              (return-from outer nil)))
+           ((and
+             (syntax-open-paren-char-p c)
+             (not (escape-backward-p)))
+            (prev-char 1)
+            (return t))
+           ((and
+             (syntax-string-quote-char-p c)
+             (not (escape-backward-p)))
+            (skip-string-backward))
+           ((not (prev-char 1))
+            (point-set point)
+            (return-from outer nil)))))))))

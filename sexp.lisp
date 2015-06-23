@@ -29,6 +29,11 @@
     (prog1 (preceding-char)
       (next-char 1))))
 
+(defun three-preceding-char ()
+  (when (prev-char 2)
+    (prog1 (preceding-char)
+      (next-char 2))))
+
 (define-key *global-keymap* "M-C-n" 'forward-list)
 (defcommand forward-list (&optional (n 1)) ("p")
   (dotimes (_ n t)
@@ -38,7 +43,8 @@
       (do () (nil)
         (unless (next-char 1)
           (return))
-        (unless (syntax-escape-char-p (preceding-char))
+        (unless (and (syntax-escape-char-p (preceding-char))
+                     (not (syntax-escape-char-p (two-preceding-char))))
           (let ((c (following-char)))
             (cond
              ((char= c paren-char)
@@ -60,7 +66,8 @@
       (do () (nil)
         (unless (prev-char 1)
           (return))
-        (unless (syntax-escape-char-p (two-preceding-char))
+        (unless (and (syntax-escape-char-p (two-preceding-char))
+                     (not (syntax-escape-char-p (three-preceding-char))))
           (let ((c (preceding-char)))
             (cond
              ((char= c paren-char)
@@ -79,11 +86,11 @@
     (do () (nil)
       (unless (next-char 1)
         (return))
-      (when (and
-             (not (syntax-escape-char-p (preceding-char)))
-             (char= (following-char) goal-char))
-        (next-char 1)
-        (return t)))))
+      (unless (and (syntax-escape-char-p (preceding-char))
+                   (not (syntax-escape-char-p (two-preceding-char))))
+        (when (char= (following-char) goal-char)
+          (next-char 1)
+          (return t))))))
 
 (defun skip-string-backward ()
   (skip-chars-backward 'syntax-string-quote-char-p t)
@@ -91,29 +98,43 @@
     (do () (nil)
       (unless (prev-char 1)
         (return))
-      (when (and
-             (not (syntax-escape-char-p (two-preceding-char)))
-             (char= (preceding-char) goal-char))
-        (prev-char 1)
-        (return t)))))
+      (unless (and (syntax-escape-char-p (two-preceding-char))
+                   (not (syntax-escape-char-p (three-preceding-char))))
+        (when (char= (preceding-char) goal-char)
+          (prev-char 1)
+          (return t))))))
 
 (defun skip-symbol-forward ()
   (do () (nil)
     (unless (next-char 1)
       (return))
     (let ((c (following-char)))
-      (unless (or (syntax-symbol-char-p c)
-                  (syntax-word-char-p c))
-        (return t)))))
+      (cond
+       ((and
+         (syntax-escape-char-p (preceding-char))
+         (not (syntax-escape-char-p (two-preceding-char)))))
+       ((not
+         (or
+          (syntax-escape-char-p c)
+          (syntax-symbol-char-p c)
+          (syntax-word-char-p c)))
+        (return t))))))
 
 (defun skip-symbol-backward ()
   (do () (nil)
     (unless (prev-char 1)
       (return))
     (let ((c (preceding-char)))
-      (unless (or (syntax-symbol-char-p c)
-                  (syntax-word-char-p c))
-        (return t)))))
+      (cond
+       ((and
+         (syntax-escape-char-p (two-preceding-char))
+         (not (syntax-escape-char-p (three-preceding-char)))))
+       ((not
+         (or
+          (syntax-escape-char-p c)
+          (syntax-symbol-char-p c)
+          (syntax-word-char-p c)))
+        (return t))))))
 
 (define-key *global-keymap* "M-C-f" 'forward-sexp)
 (defcommand forward-sexp (n) ("p")

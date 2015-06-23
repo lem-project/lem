@@ -239,3 +239,18 @@
            ((not (prev-char 1))
             (point-set point)
             (return-from outer nil)))))))))
+
+(define-key *global-keymap* "M-C-a" 'beginning-of-defun)
+(defcommand beginning-of-defun (n) ("p")
+  (dotimes (_ n t)
+    (if (up-list 1)
+      (do () ((not (up-list 1)) t))
+      (unless (backward-sexp 1)
+        (return nil)))))
+
+(define-key *global-keymap* "M-C-e" 'end-of-defun)
+(defcommand end-of-defun (n) ("p")
+  (dotimes (_ n t)
+    (do () ((not (up-list 1)) t))
+    (unless (forward-sexp 1)
+      (return nil))))

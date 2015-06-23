@@ -290,6 +290,16 @@
       (window-cur-linum)
       (1- (window-cur-col))))))
 
+(defun char-after (&optional (n 0))
+  (when (next-char n)
+    (prog1 (following-char)
+      (prev-char n))))
+
+(defun char-before (&optional (n 1))
+  (when (prev-char (1- n))
+    (prog1 (preceding-char)
+      (next-char (1- n)))))
+
 (defun replace-char (c)
   (delete-char)
   (buffer-insert-char

@@ -99,7 +99,9 @@
         (set-buffer (make-buffer (file-name-nondirectory name)
                       :filename filename))))
      (t
-      (set-buffer buf)))))
+      (set-buffer buf)))
+    (run-hooks 'find-file-hooks)
+    ))
 
 (define-key *global-keymap* "C-xC-r" 'read-file)
 (defcommand read-file (filename) ("FRead File: ")

@@ -2,34 +2,35 @@
 
 (defvar *special-indent-symbols*
   '(block
-    let*
-    return-from
-    catch
-    load-time-value
-    ;setq
-    eval-when
-    locally
-    symbol-macrolet
-    flet
-    macrolet
-    tagbody
-    function
-    multiple-value-call
-    the
-    go
-    multiple-value-prog1
-    throw
-    if
-    progn
-    unwind-protect
-    labels
-    progv
-    let
-    quote
-    defun
-    defmacro
-    lambda
-    ))
+     let*
+     return-from
+     catch
+     load-time-value
+     ;setq
+     eval-when
+     locally
+     symbol-macrolet
+     flet
+     macrolet
+     tagbody
+     function
+     multiple-value-call
+     the
+     go
+     multiple-value-prog1
+     throw
+     if
+     progn
+     unwind-protect
+     labels
+     progv
+     let
+     quote
+     defun
+     defmacro
+     lambda
+     when
+     ))
 
 (defvar *lisp-mode-keymap*
   (make-keymap "lisp" 'undefined-key *global-keymap*))
@@ -77,8 +78,8 @@
            t)))
       (point-set point)
       (let ((first (intern (string-upcase (coerce (nreverse chars) 'string)))))
-        (insert-char #\space
-          (+ col
-             (if (member first *special-indent-symbols*)
-               1
-               0)))))))
+        (if (member first *special-indent-symbols*)
+          (insert-char #\space (1+ col))
+          (if flag
+            (insert-char #\space flag)
+            (insert-char #\space col)))))))

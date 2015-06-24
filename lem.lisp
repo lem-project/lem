@@ -152,8 +152,11 @@
   (cl-ncurses:refresh)
   (window-init)
   (mb-init)
+  (add-hook 'find-file-hooks
+            (lambda ()
+              (lisp-mode)))
   (dolist (arg args)
-    (file-open arg)))
+    (find-file arg)))
 
 (defun lem-finallize ()
   (cl-ncurses:endwin))

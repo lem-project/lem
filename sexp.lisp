@@ -140,6 +140,7 @@
        ((escape-forward-p))
        ((not
          (or
+          (syntax-expr-prefix-char-p c)
           (syntax-escape-char-p c)
           (syntax-symbol-char-p c)
           (syntax-word-char-p c)))

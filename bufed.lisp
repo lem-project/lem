@@ -392,3 +392,9 @@
   (beginning-of-buffer)
   (buffer-erase (window-buffer))
   t)
+
+(defcommand delete-while-whitespaces () ()
+  (do ((n 0 (1+ n))) (nil)
+    (if (syntax-space-char-p (following-char))
+      (delete-char 1)
+      (return n))))

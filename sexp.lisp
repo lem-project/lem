@@ -15,7 +15,8 @@
               aliases)
        ,@body)))
 
-(defmacro define-dir-functions ((forward-name backward-name) parms aliases &body body)
+(defmacro define-dir-functions ((forward-name backward-name)
+                                parms aliases &body body)
   `(progn
     (flet ((forward-p () t)
            (backward-p () nil))
@@ -266,3 +267,26 @@
 (defcommand kill-sexp (n) ("p")
   (mark-sexp)
   (kill-region (region-beginning) (region-end)))
+
+(define-key *global-keymap* "M-C-t" 'transpose-sexps)
+(defcommand transpose-sexps () ()
+  (let ((point (point)))
+    (or
+     (block outer
+       (let (left right)
+         (unless (forward-sexp 1)
+           (return-from outer nil))
+         (unless (backward-sexp 2)
+           (return-from outer nil))
+         (kill-sexp 1)
+         (setq *kill-new-flag* t)
+         (delete-while-whitespaces)
+         (setq *kill-new-flag* t)
+         (kill-sexp 1)
+         (yank 1)
+         (yank 2)
+         (yank 3)
+         (setq *kill-new-flag* t)
+         t))
+     (progn (point-set point)
+       nil))))

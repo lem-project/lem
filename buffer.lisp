@@ -52,6 +52,7 @@
   filename
   modified-p
   read-only-p
+  major-mode
   head-line
   tail-line
   cache-line

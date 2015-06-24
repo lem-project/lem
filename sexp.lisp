@@ -254,3 +254,15 @@
     (do () ((not (up-list 1)) t))
     (unless (forward-sexp 1)
       (return nil))))
+
+(define-key *global-keymap* "M-C-@" 'mark-sexp)
+(defcommand mark-sexp () ()
+  (let ((point (point)))
+    (forward-sexp 1)
+    (mark-set)
+    (point-set point)))
+
+(define-key *global-keymap* "M-C-k" 'kill-sexp)
+(defcommand kill-sexp (n) ("p")
+  (mark-sexp)
+  (kill-region (region-beginning) (region-end)))

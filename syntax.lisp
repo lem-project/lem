@@ -19,7 +19,7 @@
                   (#\{ . #\}))
    :string-quote-chars '(#\")
    :escape-chars '(#\\)
-   :expr-prefix-chars '(#\' #\, #\@ #\#)
+   :expr-prefix-chars '(#\' #\, #\@ #\# #\`)
    :comment-starter-chars '(#\;)
    :comment-ender-chars '(#\newline)))
 

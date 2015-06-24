@@ -5,21 +5,22 @@
 (defstruct (keymap (:constructor make-keymap-internal))
   name
   undef-hook
+  parent
   alist)
 
-(defun make-keymap (name &optional undef-hook)
-  (let ((keymap (make-keymap-internal :name name :undef-hook undef-hook)))
+(defun make-keymap (name &optional undef-hook parent)
+  (let ((keymap (make-keymap-internal
+                 :name name
+                 :undef-hook undef-hook
+                 :parent parent)))
     (push keymap *keymaps*)
     keymap))
 
-(defvar *global-keymap*
-  (make-keymap "global" 'undefined-key))
+(defvar *global-keymap* (make-keymap "global" 'undefined-key))
 
 (defun define-key (keymap kbd cmd-name)
   (push (cons kbd cmd-name)
     (keymap-alist keymap)))
-
-(defvar *current-keymap* *global-keymap*)
 
 (defun keys-to-keystr (keys)
   (apply 'concatenate 'string
@@ -39,7 +40,10 @@
               (assoc (keys-to-keystr keys)
                 (keymap-alist keymap)
                 :test 'equal))))
-    cmd))
+    (or cmd
+      (let ((keymap (keymap-parent keymap)))
+        (when keymap
+          (keymap-find-command keymap keys))))))
 
 (defun keybind-find-from-command (name)
   (let ((name (intern (string-upcase name) :lem)))

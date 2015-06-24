@@ -24,6 +24,7 @@
 	       (:file "file")
 	       (:file "word")
 	       (:file "mode")
+	       (:file "lisp-mode")
 	       (:file "sexp")
 	       (:file "lem"))
   :depends-on (:cl-ncurses :sb-posix))

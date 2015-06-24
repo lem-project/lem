@@ -10,50 +10,37 @@
   comment-starter-chars
   comment-ender-chars)
 
-(defstruct major-mode
-  name
-  indent-command
-  syntax-table)
-
 (defun major-mode ()
-  (get (or (buffer-major-mode (window-buffer))
-           'fundamental-mode)
-    'major-mode))
+  (or (buffer-major-mode (window-buffer))
+    'fundamental-mode))
 
 (defun mode-name ()
-  (major-mode-name (major-mode)))
+  (get (major-mode) 'mode-name))
+
+(defun current-mode-keymap ()
+  (get (major-mode) 'keymap))
+
+(defun set-current-mode-keymap (keymap)
+  (setf (get (major-mode) 'keymap) keymap))
 
 (defun set-major-mode (major-mode)
   (setf (buffer-major-mode (window-buffer)) major-mode))
 
-(defmacro define-mode (major-mode &rest args)
-  `(prog1
+(defmacro define-mode (major-mode &key name keymap syntax-table)
+  `(progn
+    (setf (get ',major-mode 'mode-name) ,name)
+    (setf (get ',major-mode 'keymap) ,keymap)
+    (setf (get ',major-mode 'syntax-table) ,syntax-table)
     (defcommand ,major-mode () ()
-      (set-major-mode ',major-mode))
-    (setf (get ',major-mode 'major-mode) (make-major-mode ,@args))))
+      (set-major-mode ',major-mode))))
 
 (define-mode fundamental-mode
- :name "fundamental-mode"
- :indent-command nil
- :syntax-table (make-syntax-table))
-
-(define-mode lisp-mode
- :name "lisp-mode"
- :indent-command nil
- :syntax-table (make-syntax-table
-                :space-chars '(#\space #\tab #\newline)
-                :symbol-chars '(#\$ #\& #\* #\+ #\- #\_ #\< #\>)
-                :paren-alist '((#\( . #\))
-                               (#\[ . #\])
-                               (#\{ . #\}))
-                :string-quote-chars '(#\")
-                :escape-chars '(#\\)
-                :expr-prefix-chars '(#\' #\, #\@ #\# #\`)
-                :comment-starter-chars '(#\;)
-                :comment-ender-chars '(#\newline)))
+  :name "fundamental-mode"
+  :keymap *global-keymap*
+  :syntax-table (make-syntax-table))
 
 (defun current-syntax ()
-  (major-mode-syntax-table (major-mode)))
+  (get (major-mode) 'syntax-table))
 
 (defun syntax-word-char-p (c)
   (not

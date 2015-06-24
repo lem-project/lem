@@ -25,8 +25,8 @@
      (search-backward-aux str))))
 
 (defun isearch-start (search-func)
-  (setq *isearch-tmp-keymap* *current-keymap*)
-  (setq *current-keymap* *isearch-keymap*)
+  (setq *isearch-tmp-keymap* (current-mode-keymap))
+  (set-current-mode-keymap *isearch-keymap*)
   (setq *isearch-string* "")
   (isearch-update-minibuf)
   (setq *isearch-search-function* search-func)
@@ -53,7 +53,7 @@
 (define-key *isearch-keymap* "C-j" 'isearch-end)
 (defcommand isearch-end () ()
   (setq *isearch-prev-string* *isearch-string*)
-  (setq *current-keymap* *isearch-tmp-keymap*))
+  (set-current-mode-keymap *isearch-tmp-keymap*))
 
 (define-key *isearch-keymap* "C-s" 'isearch-next)
 (defcommand isearch-next () ()

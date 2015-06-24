@@ -142,8 +142,7 @@
          (or
           (syntax-expr-prefix-char-p c)
           (syntax-escape-char-p c)
-          (syntax-symbol-char-p c)
-          (syntax-word-char-p c)))
+          (syntax-symbol-char-p c)))
         (return t))))))
 
 (defun start-sexp-p (c)
@@ -182,19 +181,19 @@
       (skip-symbol-forward)))))
 
 (define-key *global-keymap* "M-C-f" 'forward-sexp)
-(defcommand forward-sexp (n) ("p")
+(defcommand forward-sexp (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (unless (%forward-sexp)
       (return))))
 
 (define-key *global-keymap* "M-C-b" 'backward-sexp)
-(defcommand backward-sexp (n) ("p")
+(defcommand backward-sexp (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (unless (%backward-sexp)
       (return))))
 
 (define-key *global-keymap* "M-C-d" 'down-list)
-(defcommand down-list (n) ("p")
+(defcommand down-list (&optional (n 1)) ("p")
   (block outer
     (dotimes (_ n t)
       (let ((point (point)))
@@ -216,7 +215,7 @@
               (return-from outer nil)))))))))
 
 (define-key *global-keymap* "M-C-u" 'up-list)
-(defcommand up-list (n) ("p")
+(defcommand up-list (&optional (n 1)) ("p")
   (block outer
     (let ((point (point)))
     (dotimes (_ n t)
@@ -243,7 +242,7 @@
             (return-from outer nil)))))))))
 
 (define-key *global-keymap* "M-C-a" 'beginning-of-defun)
-(defcommand beginning-of-defun (n) ("p")
+(defcommand beginning-of-defun (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (if (up-list 1)
       (do () ((not (up-list 1)) t))
@@ -251,7 +250,7 @@
         (return nil)))))
 
 (define-key *global-keymap* "M-C-e" 'end-of-defun)
-(defcommand end-of-defun (n) ("p")
+(defcommand end-of-defun (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (do () ((not (up-list 1)) t))
     (unless (forward-sexp 1)
@@ -265,7 +264,7 @@
     (point-set point)))
 
 (define-key *global-keymap* "M-C-k" 'kill-sexp)
-(defcommand kill-sexp (n) ("p")
+(defcommand kill-sexp (&optional (n 1)) ("p")
   (mark-sexp)
   (kill-region (region-beginning) (region-end)))
 

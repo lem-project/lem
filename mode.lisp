@@ -43,23 +43,14 @@
   (get (major-mode) 'syntax-table))
 
 (defun syntax-word-char-p (c)
-  (not
-   (or
-    (syntax-space-char-p c)
-    (syntax-symbol-char-p c)
-    (syntax-open-paren-char-p c)
-    (syntax-closed-paren-char-p c)
-    (syntax-string-quote-char-p c)
-    (syntax-escape-char-p c)
-    (syntax-expr-prefix-char-p c)
-    (syntax-comment-starter-char-p c)
-    (syntax-comment-ender-char-p c))))
+  (alphanumericp c))
 
 (defun syntax-space-char-p (c)
   (member c (syntax-table-space-chars (current-syntax))))
 
 (defun syntax-symbol-char-p (c)
-  (member c (syntax-table-symbol-chars (current-syntax))))
+  (or (syntax-word-char-p c)
+      (member c (syntax-table-symbol-chars (current-syntax)))))
 
 (defun syntax-open-paren-char-p (c)
   (assoc c (syntax-table-paren-alist (current-syntax))))

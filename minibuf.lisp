@@ -68,7 +68,8 @@
 (defun read-minibuffer (prompt initial comp-f existing-p)
   (setq *mb-print-flag* t)
   (let ((str initial)
-        (comp-flag))
+        (comp-flag)
+        (one-window-p (one-window-p)))
     (do ((break nil))
         (break)
       (write-message (format nil "~a~a" prompt str))
@@ -90,9 +91,11 @@
           (setq str (concatenate 'string str (string (getch)))))
          (t
           (setq str (concatenate 'string str (string c)))))))
-    (when comp-flag
-      (let ((*current-window* *completion-window*))
-        (delete-window)))
+    (let ((*current-window* *completion-window*))
+      (if (and comp-flag one-window-p)
+        (delete-window)
+        (if comp-flag
+          (set-buffer *prev-buffer*))))
     str))
 
 (defun read-string (prompt &optional initial)

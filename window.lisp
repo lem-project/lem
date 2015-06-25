@@ -411,7 +411,10 @@
   (when (one-window-p)
     (split-window))
   (let ((*current-window*
-         (get-next-window *current-window*)))
+         (or (find-if (lambda (window)
+                        (eq buffer (window-buffer window)))
+                      *window-list*)
+             (get-next-window *current-window*))))
     (set-buffer buffer)
     *current-window*))
 

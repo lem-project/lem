@@ -64,15 +64,16 @@
 
 (define-key *global-keymap* "C-xe" 'execute-macro)
 (defcommand execute-macro (n) ("p")
-  (let ((*macro-running-p* t))
+  (let ((*macro-running-p* t)
+        (*universal-argument* nil))
     (loop repeat n while *macro-running-p* do
       (let ((length (getch-queue-length)))
         (dolist (c *macro-chars*)
           (ungetch c))
         (do ()
-          ((or (not *macro-running-p*)
-               (>= length (getch-queue-length))))
-          (main-step))))))
+            ((or (not *macro-running-p*)
+                 (>= length (getch-queue-length))))
+            (main-step))))))
 
 (define-key *global-keymap* "C-u" 'universal-argument)
 (defcommand universal-argument () ()

@@ -399,14 +399,19 @@
   (buffer-erase (window-buffer))
   t)
 
-(define-command delete-while-whitespaces
-    (&optional ignore-newline-p use-kill-ring) ("P")
+(defun delete-while-whitespaces (&optional ignore-newline-p use-kill-ring)
   (do ((n 0 (1+ n))) (nil)
     (let ((c (following-char)))
       (if (or (and ignore-newline-p (char= c #\newline))
               (not (syntax-space-char-p c)))
         (return n)
         (delete-char (if use-kill-ring 1 nil))))))
+
+(define-key *global-keymap* "M- " 'just-one-space)
+(define-command just-one-space () ()
+  (delete-while-whitespaces nil nil)
+  (insert-char #\space 1)
+  t)
 
 (defun insert-paren-hilighting-aux (c n)
   (when (insert-char c n)

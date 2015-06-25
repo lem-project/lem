@@ -102,13 +102,13 @@
               )))))))
 
 (define-key *global-keymap* "M-C-n" 'forward-list)
-(defcommand forward-list (n) ("p")
+(define-command forward-list (n) ("p")
   (dotimes (_ n t)
     (unless (forward-list-1)
       (return))))
 
 (define-key *global-keymap* "M-C-p" 'backward-list)
-(defcommand backward-list (n) ("p")
+(define-command backward-list (n) ("p")
   (dotimes (_ n t)
     (unless (backward-list-1)
       (return))))
@@ -185,19 +185,19 @@
       (skip-symbol-forward)))))
 
 (define-key *global-keymap* "M-C-f" 'forward-sexp)
-(defcommand forward-sexp (&optional (n 1)) ("p")
+(define-command forward-sexp (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (unless (%forward-sexp)
       (return))))
 
 (define-key *global-keymap* "M-C-b" 'backward-sexp)
-(defcommand backward-sexp (&optional (n 1)) ("p")
+(define-command backward-sexp (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (unless (%backward-sexp)
       (return))))
 
 (define-key *global-keymap* "M-C-d" 'down-list)
-(defcommand down-list (&optional (n 1)) ("p")
+(define-command down-list (&optional (n 1)) ("p")
   (block outer
     (dotimes (_ n t)
       (let ((point (point)))
@@ -219,7 +219,7 @@
               (return-from outer nil)))))))))
 
 (define-key *global-keymap* "M-C-u" 'up-list)
-(defcommand up-list (&optional (n 1)) ("p")
+(define-command up-list (&optional (n 1)) ("p")
   (block outer
     (let ((point (point)))
     (dotimes (_ n t)
@@ -246,7 +246,7 @@
             (return-from outer nil)))))))))
 
 (define-key *global-keymap* "M-C-a" 'beginning-of-defun)
-(defcommand beginning-of-defun (&optional (n 1)) ("p")
+(define-command beginning-of-defun (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (if (up-list 1)
       (do () ((not (up-list 1)) t))
@@ -254,26 +254,26 @@
         (return nil)))))
 
 (define-key *global-keymap* "M-C-e" 'end-of-defun)
-(defcommand end-of-defun (&optional (n 1)) ("p")
+(define-command end-of-defun (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (do () ((not (up-list 1)) t))
     (unless (forward-sexp 1)
       (return nil))))
 
 (define-key *global-keymap* "M-C-@" 'mark-sexp)
-(defcommand mark-sexp () ()
+(define-command mark-sexp () ()
   (let ((point (point)))
     (forward-sexp 1)
     (mark-set)
     (point-set point)))
 
 (define-key *global-keymap* "M-C-k" 'kill-sexp)
-(defcommand kill-sexp (&optional (n 1)) ("p")
+(define-command kill-sexp (&optional (n 1)) ("p")
   (mark-sexp)
   (kill-region (region-beginning) (region-end)))
 
 (define-key *global-keymap* "M-C-t" 'transpose-sexps)
-(defcommand transpose-sexps () ()
+(define-command transpose-sexps () ()
   (let ((point (point)))
     (or
      (block outer

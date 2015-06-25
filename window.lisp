@@ -138,7 +138,7 @@
 	0))))
 
 (define-key *global-keymap* "C-l" 'recenter)
-(defcommand recenter () ()
+(define-command recenter () ()
   (window-recenter *current-window*))
 
 (defun window-recenter (window)
@@ -284,7 +284,7 @@
   (window-update *current-window*))
 
 (define-key *global-keymap* "C-x2" 'split-window)
-(defcommand split-window () ()
+(define-command split-window () ()
   (multiple-value-bind (nlines rem)
       (floor (window-nlines) 2)
     (let ((newwin (make-window
@@ -331,7 +331,7 @@
   (cadr (member window *window-list*)))
 
 (define-key *global-keymap* "C-xo" 'other-window)
-(defcommand other-window (&optional (n 1)) ("p")
+(define-command other-window (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (setq *current-window*
       (get-next-window *current-window*))))
@@ -357,7 +357,7 @@
     (+ (window-ncols window) dc)))
 
 (define-key *global-keymap* "C-x1" 'delete-other-windows)
-(defcommand delete-other-windows () ()
+(define-command delete-other-windows () ()
   (dolist (win *window-list*)
     (unless (eq win *current-window*)
       (cl-ncurses:delwin (window-win win))))
@@ -369,7 +369,7 @@
   t)
 
 (define-key *global-keymap* "C-x0" 'delete-window)
-(defcommand delete-window () ()
+(define-command delete-window () ()
   (delete-window-1 *current-window*))
 
 (defun delete-window-1 (window)
@@ -422,7 +422,7 @@
     *current-window*))
 
 (define-key *global-keymap* "C-x^" 'grow-window)
-(defcommand grow-window (n) ("p")
+(define-command grow-window (n) ("p")
   (if (one-window-p)
     (progn
      (write-message "Only one window")
@@ -449,7 +449,7 @@
           (window-resize upperwin (- n) 0)))))))
 
 (define-key *global-keymap* "C-xC-z" 'shrink-window)
-(defcommand shrink-window (n) ("p")
+(define-command shrink-window (n) ("p")
   (cond
    ((one-window-p)
     (write-message "Only one window")
@@ -471,7 +471,7 @@
         (window-resize upperwin n 0)))))))
 
 (define-key *global-keymap* "C-z" 'scroll-down)
-(defcommand scroll-down (n) ("p")
+(define-command scroll-down (n) ("p")
   (if (minusp n)
     (scroll-up (- n))
     (dotimes (_ n t)
@@ -480,7 +480,7 @@
       (window-scroll *current-window* 1))))
 
 (define-key *global-keymap* "M-z" 'scroll-up)
-(defcommand scroll-up (n) ("p")
+(define-command scroll-up (n) ("p")
   (if (minusp n)
     (scroll-down (- n))
     (dotimes (_ n t)

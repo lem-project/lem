@@ -39,7 +39,7 @@
   t)
 
 (define-key *global-keymap* "C-y" 'yank)
-(defcommand yank (n) ("p")
+(define-command yank (n) ("p")
   (do ((ptr *kill-ring-yank-ptr*
          (or (cdr ptr)
              *kill-ring*))

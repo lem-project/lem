@@ -45,7 +45,7 @@
                  :comment-ender-chars '(#\newline)))
 
 (define-key *lisp-mode-keymap* "C-i" 'lisp-indent-line)
-(defcommand lisp-indent-line () ()
+(define-command lisp-indent-line () ()
   (beginning-of-line)
   (delete-while-whitespaces t)
   (let (col
@@ -91,6 +91,6 @@
               (insert-char #\space col))))))))
 
 (define-key *lisp-mode-keymap* "M-j" 'newline-and-indent)
-(defcommand newline-and-indent (n) ("p")
+(define-command newline-and-indent (n) ("p")
   (insert-newline n)
   (lisp-indent-line))

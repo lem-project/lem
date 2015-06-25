@@ -59,7 +59,7 @@
     count))
 
 (define-key *global-keymap* "M-w" 'copy-region)
-(defcommand copy-region (begin end) ("r")
+(define-command copy-region (begin end) ("r")
   (let ((lines (region-lines begin end)))
     (with-kill ()
       (kill-push lines)))
@@ -67,7 +67,7 @@
   t)
 
 (define-key *global-keymap* "C-w" 'kill-region)
-(defcommand kill-region (begin end) ("r")
+(define-command kill-region (begin end) ("r")
   (unless (equal (point) begin)
     (exchange-point-mark))
   (delete-char (region-count begin end)))

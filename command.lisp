@@ -4,7 +4,7 @@
 
 (eval-when (:compile-toplevel :load-toplevel)
 (let ((garg (gensym "ARG")))
-  (defun defcommand-gen-args (name arg-descripters)
+  (defun define-command-gen-args (name arg-descripters)
     (cond
      ((string= "p" (car arg-descripters))
       `(list (or ,garg 1)))
@@ -45,7 +45,7 @@
                    (t
                     (error "Illegal arg-descripter: ~a" arg-descripter))))
           arg-descripters)))))
-  (defun defcommand-gen-cmd (name parms arg-descripters body)
+  (defun define-command-gen-cmd (name parms arg-descripters body)
     `(defun ,name (,garg)
        (declare (ignorable ,garg))
        ,(if (null arg-descripters)
@@ -53,17 +53,17 @@
             `(progn ,@body))
           `(destructuring-bind ,parms
              ,(if (stringp (car arg-descripters))
-                (defcommand-gen-args name arg-descripters)
+                (define-command-gen-args name arg-descripters)
                 (car arg-descripters))
              ,@body))))))
 
-(defmacro defcommand (name parms (&rest arg-descripters) &body body)
+(defmacro define-command (name parms (&rest arg-descripters) &body body)
   (let ((gcmd (gensym (symbol-name name))))
     `(progn
       (pushnew ,(string-downcase (symbol-name name)) *command-names*)
       (setf (get ',name 'command) ',gcmd)
       (defun ,name ,parms ,@body)
-      ,(defcommand-gen-cmd gcmd parms arg-descripters body))))
+      ,(define-command-gen-cmd gcmd parms arg-descripters body))))
 
 (defun cmd-call (cmd arg)
   (funcall (get cmd 'command) arg))
@@ -75,7 +75,7 @@
   (find str *command-names* :test 'equal))
 
 (define-key *global-keymap* "M-x" 'execute-command)
-(defcommand execute-command (name)
+(define-command execute-command (name)
   ((list (read-minibuffer
           "M-x "
           ""
@@ -84,7 +84,7 @@
   (cmd-call (intern (string-upcase name) :lem)
     *universal-argument*))
 
-(defcommand apropos (str) ("sApropos: ")
+(define-command apropos (str) ("sApropos: ")
   (let ((buffer (get-buffer-create "*Apropos*")))
     (buffer-erase buffer)
     (pop-to-buffer buffer)

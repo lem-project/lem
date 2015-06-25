@@ -87,7 +87,7 @@
         t))))
 
 (define-key *global-keymap* "C-xC-f" 'find-file)
-(defcommand find-file (filename) ("FFind File: ")
+(define-command find-file (filename) ("FFind File: ")
   (let ((buf (get-buffer (file-name-nondirectory filename))))
     (cond
      ((null buf)
@@ -102,7 +102,7 @@
     (run-hooks 'find-file-hooks)))
 
 (define-key *global-keymap* "C-xC-r" 'read-file)
-(defcommand read-file (filename) ("FRead File: ")
+(define-command read-file (filename) ("FRead File: ")
   (find-file filename)
   (setf (buffer-read-only-p (window-buffer)) t)
   t)
@@ -126,7 +126,7 @@
   t)
 
 (define-key *global-keymap* "C-xC-s" 'save-file)
-(defcommand save-file () ()
+(define-command save-file () ()
   (let ((buffer (window-buffer)))
     (cond
      ((null (buffer-modified-p buffer))
@@ -137,17 +137,17 @@
      (t
       (save-file-internal buffer)))))
 
-(defcommand change-file-name (filename) ("sChange file name: ")
+(define-command change-file-name (filename) ("sChange file name: ")
   (setf (buffer-filename (window-buffer)) filename)
   t)
 
 (define-key *global-keymap* "C-xC-w" 'write-file)
-(defcommand write-file (filename) ("FWrite File: ")
+(define-command write-file (filename) ("FWrite File: ")
   (change-file-name filename)
   (save-file-internal (window-buffer)))
 
 (define-key *global-keymap* "C-xC-i" 'insert-file)
-(defcommand insert-file (filename) ("fInsert file: ")
+(define-command insert-file (filename) ("fInsert file: ")
   (with-open-file (in filename)
     (do ((str #1=(read-line in nil) #1#))
         ((null str))

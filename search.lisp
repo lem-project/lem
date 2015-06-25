@@ -11,14 +11,14 @@
   (write-message (format nil "ISearch: ~a" *isearch-string*)))
 
 (define-key *global-keymap* "C-s" 'isearch-forward)
-(defcommand isearch-forward () ()
+(define-command isearch-forward () ()
   (isearch-start
    (lambda (str)
      (prev-char (length str))
      (search-forward-aux str))))
 
 (define-key *global-keymap* "C-r" 'isearch-backward)
-(defcommand isearch-backward () ()
+(define-command isearch-backward () ()
   (isearch-start
    (lambda (str)
      (next-char (length str))
@@ -34,12 +34,12 @@
   t)
 
 (define-key *isearch-keymap* "C-g" 'isearch-abort)
-(defcommand isearch-abort () ()
+(define-command isearch-abort () ()
   (point-set *isearch-start-point*)
   t)
 
 (define-key *isearch-keymap* "C-h" 'isearch-delete-char)
-(defcommand isearch-delete-char () ()
+(define-command isearch-delete-char () ()
   (setq *isearch-string*
     (subseq *isearch-string*
       0
@@ -47,23 +47,23 @@
   (isearch-update-minibuf))
 
 (define-key *isearch-keymap* "C-q" 'isearch-raw-insert)
-(defcommand isearch-raw-insert () ()
+(define-command isearch-raw-insert () ()
   (isearch-add-char (getch)))
 
 (define-key *isearch-keymap* "C-j" 'isearch-end)
-(defcommand isearch-end () ()
+(define-command isearch-end () ()
   (setq *isearch-prev-string* *isearch-string*)
   (set-current-mode-keymap *isearch-tmp-keymap*))
 
 (define-key *isearch-keymap* "C-s" 'isearch-next)
-(defcommand isearch-next () ()
+(define-command isearch-next () ()
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
   (search-forward-aux *isearch-string*)
   (isearch-update-minibuf))
 
 (define-key *isearch-keymap* "C-r" 'isearch-prev)
-(defcommand isearch-prev () ()
+(define-command isearch-prev () ()
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
   (search-backward-aux *isearch-string*)
@@ -151,7 +151,7 @@
         #'bobp))))
 
 (define-key *global-keymap* "M-C-r" 'query-replace)
-(defcommand query-replace (before after) ("sBefore: " "sAfter: ")
+(define-command query-replace (before after) ("sBefore: " "sAfter: ")
   (let ((n (length before))
         (pass-through))
     (do () (nil)

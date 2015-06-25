@@ -1,12 +1,12 @@
 (in-package :lem)
 
 (define-key *global-keymap* "M-~" 'unmark-buffer)
-(defcommand unmark-buffer () ()
+(define-command unmark-buffer () ()
   (setf (buffer-modified-p (window-buffer)) nil)
   t)
 
 (define-key *global-keymap* "C-xC-q" 'toggle-read-only)
-(defcommand toggle-read-only () ()
+(define-command toggle-read-only () ()
   (setf (buffer-read-only-p (window-buffer))
     (not (buffer-read-only-p (window-buffer))))
   t)
@@ -82,11 +82,11 @@
     (when (cdr rest)
       (insert-newline 1))))
 
-(defcommand insert-string (str) ("sInsert string: ")
+(define-command insert-string (str) ("sInsert string: ")
   (insert-lines (split-string str #\newline)))
 
 (define-key *global-keymap* "C-j" 'insert-newline)
-(defcommand insert-newline (n) ("p")
+(define-command insert-newline (n) ("p")
   (dotimes (_ n t)
     (buffer-insert-newline (window-buffer)
                             (window-cur-linum)
@@ -94,12 +94,12 @@
     (next-line 1)))
 
 (define-key *global-keymap* "C-o" 'open-line)
-(defcommand open-line (n) ("p")
+(define-command open-line (n) ("p")
   (insert-newline n)
   (prev-char n))
 
 (define-key *global-keymap* "C-d" 'delete-char)
-(defcommand delete-char (&optional n) ("P")
+(define-command delete-char (&optional n) ("P")
   (cond
    ((and n (minusp n))
     (backward-delete-char (- n)))
@@ -126,14 +126,14 @@
         result)))))
 
 (define-key *global-keymap* "C-h" 'backward-delete-char)
-(defcommand backward-delete-char (n) ("p")
+(define-command backward-delete-char (n) ("p")
   (if (minusp n)
     (delete-char (- n))
     (when (prev-char n)
       (delete-char n))))
 
 (define-key *global-keymap* "C-k" 'kill-line)
-(defcommand kill-line (&optional n) ("P")
+(define-command kill-line (&optional n) ("P")
   (cond
    ((null n)
     (let ((size (- (buffer-line-length
@@ -152,19 +152,19 @@
   (setf (window-max-col) col))
 
 (define-key *global-keymap* "C-a" 'beginning-of-line)
-(defcommand beginning-of-line () ()
+(define-command beginning-of-line () ()
   (goto-column 0)
   t)
 
 (define-key *global-keymap* "C-e" 'end-of-line)
-(defcommand end-of-line () ()
+(define-command end-of-line () ()
   (goto-column (buffer-line-length
                 (window-buffer)
                 (window-cur-linum)))
   t)
 
 (define-key *global-keymap* "M-g" 'goto-line)
-(defcommand goto-line (n) ("P")
+(define-command goto-line (n) ("P")
   (unless n
     (setq n (read-number "nLine to GOTO: ")))
   (when (< 0 n (1+ (buffer-nlines (window-buffer))))
@@ -172,13 +172,13 @@
     t))
 
 (define-key *global-keymap* "M-<" 'beginning-of-buffer)
-(defcommand beginning-of-buffer () ()
+(define-command beginning-of-buffer () ()
   (goto-line 1)
   (goto-column 0)
   t)
 
 (define-key *global-keymap* "M->" 'end-of-buffer)
-(defcommand end-of-buffer () ()
+(define-command end-of-buffer () ()
   (goto-line (buffer-nlines (window-buffer)))
   (goto-column (buffer-line-length
                 (window-buffer)
@@ -195,7 +195,7 @@
                 (window-cur-linum))))))
 
 (define-key *global-keymap* "C-n" 'next-line)
-(defcommand next-line (&optional n) ("P")
+(define-command next-line (&optional n) ("P")
   (if (and n (minusp n))
     (prev-line (- n))
     (if (dotimes (_ (or n 1) t)
@@ -206,7 +206,7 @@
       (progn (end-of-line) nil))))
 
 (define-key *global-keymap* "C-p" 'prev-line)
-(defcommand prev-line (&optional n) ("P")
+(define-command prev-line (&optional n) ("P")
   (if (and n (minusp n))
     (next-line (- n))
     (if (dotimes (_ (or n 1) t)
@@ -217,7 +217,7 @@
       (progn (beginning-of-line) nil))))
 
 (define-key *global-keymap* "C-f" 'next-char)
-(defcommand next-char (&optional (n 1)) ("p")
+(define-command next-char (&optional (n 1)) ("p")
   (if (minusp n)
     (prev-char (- n))
     (dotimes (_ n t)
@@ -230,7 +230,7 @@
         (goto-column (1+ (window-cur-col))))))))
 
 (define-key *global-keymap* "C-b" 'prev-char)
-(defcommand prev-char (&optional (n 1)) ("p")
+(define-command prev-char (&optional (n 1)) ("p")
   (if (minusp n)
     (next-char (- n))
     (dotimes (_ n t)
@@ -244,15 +244,15 @@
         (goto-column (1- (window-cur-col))))))))
 
 (define-key *global-keymap* "C-v" 'next-page)
-(defcommand next-page (&optional (n 1)) ("p")
+(define-command next-page (&optional (n 1)) ("p")
   (scroll-down (* n (- (window-nlines) 1))))
 
 (define-key *global-keymap* "M-v" 'prev-page)
-(defcommand prev-page (&optional (n 1)) ("p")
+(define-command prev-page (&optional (n 1)) ("p")
   (scroll-up (* n (- (window-nlines) 1))))
 
 (define-key *global-keymap* "C-@" 'mark-set)
-(defcommand mark-set () ()
+(define-command mark-set () ()
   (let ((buffer (window-buffer)))
     (setf (buffer-mark-linum buffer)
       (window-cur-linum))
@@ -262,7 +262,7 @@
     t))
 
 (define-key *global-keymap* "C-xC-x" 'exchange-point-mark)
-(defcommand exchange-point-mark () ()
+(define-command exchange-point-mark () ()
   (let ((buffer (window-buffer)))
     (when (buffer-check-marked buffer)
       (psetf
@@ -338,13 +338,13 @@
       (return))))
 
 (define-key *global-keymap* "C-xC-e" 'entab-line)
-(defcommand entab-line (n) ("p")
+(define-command entab-line (n) ("p")
   (tab-line-aux n
     (lambda (n)
       (make-string n :initial-element #\tab))))
 
 (define-key *global-keymap* "C-xC-a" 'detab-line)
-(defcommand detab-line (n) ("p")
+(define-command detab-line (n) ("p")
   (tab-line-aux n
     (lambda (n)
       (make-string (* n *tab-size*) :initial-element #\space))))
@@ -359,7 +359,7 @@
           (return nil))))))
 
 (define-key *global-keymap* "C-xC-o" 'delete-blank-lines)
-(defcommand delete-blank-lines () ()
+(define-command delete-blank-lines () ()
   (do ()
       ((not (blank-line-p))
        (next-line 1))
@@ -371,7 +371,7 @@
         (return)))))
 
 (define-key *global-keymap* "C-t" 'transpose-characters)
-(defcommand transpose-characters () ()
+(define-command transpose-characters () ()
   (cond
    ((bolp))
    ((eolp)
@@ -394,12 +394,12 @@
           (subseq str (1+ (window-cur-col))))))
     t)))
 
-(defcommand erase-buffer () ()
+(define-command erase-buffer () ()
   (beginning-of-buffer)
   (buffer-erase (window-buffer))
   t)
 
-(defcommand delete-while-whitespaces
+(define-command delete-while-whitespaces
     (&optional ignore-newline-p use-kill-ring) ("P")
   (do ((n 0 (1+ n))) (nil)
     (let ((c (following-char)))
@@ -424,7 +424,7 @@
                 `(progn
                    (define-key *global-keymap* ,(string c)
                                ',name)
-                   (defcommand ,name (n) ("p")
+                   (define-command ,name (n) ("p")
                                (insert-paren-hilighting-aux ,c n)))))
   (def insert-paren-hilighting #\))
   (def insert-brace-hilighting #\])

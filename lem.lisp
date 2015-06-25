@@ -28,19 +28,19 @@
     (length (car queue))))
 
 (define-key *global-keymap* "C-g" 'keyboard-quit)
-(defcommand keyboard-quit () ()
+(define-command keyboard-quit () ()
   (setq *universal-argument* nil)
   (setq *macro-recording-p* nil)
   (write-message "Quit"))
 
 (define-key *global-keymap* "C-xC-c" 'exit-lem)
-(defcommand exit-lem () ()
+(define-command exit-lem () ()
   (when (or (not (any-modified-buffer-p))
           (y-or-n-p "Modified buffers exist. Leave anyway"))
     (setq *exit* t)))
 
 (define-key *global-keymap* "C-x?" 'describe-key)
-(defcommand describe-key () ()
+(define-command describe-key () ()
   (write-message "describe-key: ")
   (let* ((keys (input-keys))
          (cmd (keymap-find-command (current-mode-keymap) keys)))
@@ -49,13 +49,13 @@
                      cmd))))
 
 (define-key *global-keymap* "C-x(" 'begin-macro)
-(defcommand begin-macro () ()
+(define-command begin-macro () ()
   (write-message "Start macro")
   (setq *macro-recording-p* t)
   (setq *macro-chars* nil))
 
 (define-key *global-keymap* "C-x)" 'end-macro)
-(defcommand end-macro () ()
+(define-command end-macro () ()
   (when *macro-recording-p*
     (setq *macro-recording-p* nil)
     (setq *macro-chars* (nreverse *macro-chars*))
@@ -63,7 +63,7 @@
   t)
 
 (define-key *global-keymap* "C-xe" 'execute-macro)
-(defcommand execute-macro (n) ("p")
+(define-command execute-macro (n) ("p")
   (let ((*macro-running-p* t)
         (*universal-argument* nil))
     (loop repeat n while *macro-running-p* do
@@ -76,7 +76,7 @@
             (main-step))))))
 
 (define-key *global-keymap* "C-u" 'universal-argument)
-(defcommand universal-argument () ()
+(define-command universal-argument () ()
   (let ((numlist)
         n)
     (do ((c (read-char "C-u 4")

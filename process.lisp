@@ -1,7 +1,7 @@
 (in-package :lem)
 
 (define-key *global-keymap* "C-x#" 'filter-buffer)
-(defcommand filter-buffer (str) ("sFilter buffer: ")
+(define-command filter-buffer (str) ("sFilter buffer: ")
   (let ((outstr (make-array '(0)
                   :element-type 'character
                   :fill-pointer t)))
@@ -16,7 +16,7 @@
     (beginning-of-buffer)))
 
 (define-key *global-keymap* "C-x@" 'pipe-command)
-(defcommand pipe-command (str) ("sPipe command: ")
+(define-command pipe-command (str) ("sPipe command: ")
   (let ((outstr (make-array '(0)
                   :element-type 'character
                   :fill-pointer t)))

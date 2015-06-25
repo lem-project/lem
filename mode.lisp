@@ -33,7 +33,7 @@
     (setf (get ',major-mode 'mode-name) ,name)
     (setf (get ',major-mode 'keymap) ,keymap)
     (setf (get ',major-mode 'syntax-table) ,syntax-table)
-    (defcommand ,major-mode () ()
+    (define-command ,major-mode () ()
       (set-major-mode ',major-mode))))
 
 (define-mode fundamental-mode

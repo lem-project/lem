@@ -30,6 +30,7 @@
      defmacro
      lambda
      when
+     unless
      ))
 
 (defvar *lisp-mode-keymap*

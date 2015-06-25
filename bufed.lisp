@@ -318,7 +318,7 @@
   (dotimes (_ n t)
     (let ((str (buffer-line-string (window-buffer) (window-cur-linum)))
           (count 0)
-          index)
+          (index 0))
       (dotimes (i (length str))
         (setq index i)
         (case (aref str i)

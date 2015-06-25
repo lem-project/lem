@@ -76,16 +76,19 @@
            (push c chars)
            t)))
       (point-set start-point)
-      (let* ((first (intern (string-upcase (coerce (nreverse chars) 'string))
-                            :lem))
+      (let* ((first-str (string-upcase (coerce (nreverse chars) 'string)))
+             (first (intern first-str :lem))
              (indent (get first 'lisp-indent)))
         (if indent
           (if (< num indent)
             (insert-char #\space (+ col 3))
             (insert-char #\space (+ col 1)))
-          (if cadr-col
-            (insert-char #\space cadr-col)
-            (insert-char #\space col)))))))
+          (if (or (eql 0 (search "DEFINE-" first-str))
+                  (eql 0 (search "WITH-" first-str)))
+            (insert-char #\space (+ col 1))
+            (if cadr-col
+              (insert-char #\space cadr-col)
+              (insert-char #\space col))))))))
 
 (define-key *lisp-mode-keymap* "M-j" 'newline-and-indent)
 (defcommand newline-and-indent (n) ("p")

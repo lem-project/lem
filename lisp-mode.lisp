@@ -94,3 +94,31 @@
 (define-command newline-and-indent (n) ("p")
   (insert-newline n)
   (lisp-indent-line))
+
+(define-command eval-region (&optional begin end) ("r")
+  (unless (or begin end)
+    (setq begin (region-beginning))
+    (setq end (region-end)))
+  (write-message
+   (format nil "~a"
+           (eval (read-from-string
+                  (region-string begin end))))))
+
+(define-key *lisp-mode-keymap* "M-C-x" 'eval-defun)
+(define-command eval-defun () ()
+  (let ((point (point)))
+    (end-of-defun)
+    (beginning-of-defun)
+    (mark-sexp)
+    (eval-region)
+    (point-set point)
+    t))
+
+(define-key *lisp-mode-keymap* "C-xu" 'eval-last-sexp)
+(define-command eval-last-sexp () ()
+  (let ((point (point)))
+    (when (backward-sexp)
+      (mark-sexp)
+      (eval-region)
+      (point-set point)
+      t)))

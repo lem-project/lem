@@ -117,7 +117,7 @@
   (setq *current-cols* cl-ncurses:*cols*)
   (setq *current-lines* cl-ncurses:*lines*)
   (setq *current-window*
-        (make-window (get-buffer-create "main")
+        (make-window (get-buffer-create "*tmp*")
                      (- cl-ncurses:*lines* 1)
                      cl-ncurses:*cols*
                      0

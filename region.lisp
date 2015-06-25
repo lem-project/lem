@@ -50,6 +50,9 @@
             (push (car rest) acc))
           (nreverse acc))))))
 
+(defun region-string (begin end)
+  (join (string #\newline) (region-lines begin end)))
+
 (defun region-count (begin end)
   (let ((count 0))
     (do ((lines (region-lines begin end) (cdr lines)))

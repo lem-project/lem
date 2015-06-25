@@ -155,7 +155,9 @@
   (mb-init)
   (add-hook 'find-file-hooks
             (lambda ()
-              (lisp-mode)))
+              (when (or (search ".lisp" (buffer-filename (window-buffer)))
+                        (search ".asd" (buffer-filename (window-buffer))))
+                (lisp-mode))))
   (dolist (arg args)
     (find-file arg)))
 

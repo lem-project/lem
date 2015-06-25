@@ -284,7 +284,7 @@
            (return-from outer nil))
          (kill-sexp 1)
          (setq *kill-new-flag* t)
-         (delete-while-whitespaces)
+         (delete-while-whitespaces nil t)
          (setq *kill-new-flag* t)
          (kill-sexp 1)
          (yank 1)

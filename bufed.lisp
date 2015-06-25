@@ -399,13 +399,14 @@
   (buffer-erase (window-buffer))
   t)
 
-(defcommand delete-while-whitespaces (&optional ignore-newline-p) ("P")
+(defcommand delete-while-whitespaces
+    (&optional ignore-newline-p use-kill-ring) ("P")
   (do ((n 0 (1+ n))) (nil)
     (let ((c (following-char)))
       (if (or (and ignore-newline-p (char= c #\newline))
               (not (syntax-space-char-p c)))
         (return n)
-        (delete-char 1)))))
+        (delete-char (if use-kill-ring 1 nil))))))
 
 (defun insert-paren-hilighting-aux (c n)
   (when (insert-char c n)

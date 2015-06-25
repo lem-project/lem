@@ -1,10 +1,7 @@
 (in-package :lem)
 
 (defun in-word-p (c)
-  (when c
-    (or (char<= #\a c #\z)
-        (char<= #\A c #\Z)
-        (char<= #\0 c #\9))))
+  (and c (alphanumericp c)))
 
 (defun next-word-aux (fn)
   (do () ((in-word-p (following-char)))

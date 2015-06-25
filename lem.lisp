@@ -36,7 +36,7 @@
 (define-key *global-keymap* "C-xC-c" 'exit-lem)
 (define-command exit-lem () ()
   (when (or (not (any-modified-buffer-p))
-          (y-or-n-p "Modified buffers exist. Leave anyway"))
+            (y-or-n-p "Modified buffers exist. Leave anyway"))
     (setq *exit* t)))
 
 (define-key *global-keymap* "C-x?" 'describe-key)

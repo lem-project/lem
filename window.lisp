@@ -470,7 +470,6 @@
         (window-move *current-window* n 0)
         (window-resize upperwin n 0)))))))
 
-(define-key *global-keymap* "C-z" 'scroll-down)
 (define-command scroll-down (n) ("p")
   (if (minusp n)
     (scroll-up (- n))
@@ -479,7 +478,6 @@
         (next-line n))
       (window-scroll *current-window* 1))))
 
-(define-key *global-keymap* "M-z" 'scroll-up)
 (define-command scroll-up (n) ("p")
   (if (minusp n)
     (scroll-down (- n))

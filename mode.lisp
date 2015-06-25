@@ -1,11 +1,13 @@
 (in-package :lem)
 
 (defstruct syntax-table
-  space-chars
+  (space-chars '(#\space #\tab #\newline))
   symbol-chars
-  paren-alist
-  string-quote-chars
-  escape-chars
+  (paren-alist '((#\( . #\))
+                 (#\[ . #\])
+                 (#\{ . #\})))
+  (string-quote-chars '(#\"))
+  (escape-chars '(#\\))
   expr-prefix-chars
   comment-starter-chars
   comment-ender-chars)

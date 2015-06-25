@@ -88,20 +88,18 @@
 
 (define-key *global-keymap* "C-xC-f" 'find-file)
 (defcommand find-file (filename) ("FFind File: ")
-  (let ((buf (get-buffer filename)))
+  (let ((buf (get-buffer (file-name-nondirectory filename))))
     (cond
      ((null buf)
       (file-open filename))
-     ((or
-       (not (buffer-filename buf))
-       (string/= filename (buffer-filename buf)))
+     ((or (not (buffer-filename buf))
+          (string/= filename (buffer-filename buf)))
       (let ((name (uniq-buffer-name filename)))
         (set-buffer (make-buffer (file-name-nondirectory name)
                       :filename filename))))
      (t
       (set-buffer buf)))
-    (run-hooks 'find-file-hooks)
-    ))
+    (run-hooks 'find-file-hooks)))
 
 (define-key *global-keymap* "C-xC-r" 'read-file)
 (defcommand read-file (filename) ("FRead File: ")

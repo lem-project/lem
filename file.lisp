@@ -154,3 +154,9 @@
       (insert-string str)
       (insert-newline 1))
     t))
+
+(defun save-some-buffers ()
+  (dolist (buffer *buffer-list*)
+    (when (and (buffer-modified-p buffer)
+               (buffer-filename buffer))
+      (save-file-internal buffer))))

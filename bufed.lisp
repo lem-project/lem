@@ -413,6 +413,17 @@
   (insert-char #\space 1)
   t)
 
+(define-key *global-keymap* "M-^" 'delete-indentation)
+(define-command delete-indentation () ()
+  (beginning-of-line)
+  (let ((point (point)))
+    (prev-line)
+    (end-of-line)
+    (dotimes (_ (region-count (point) point))
+      (delete-char))
+    (just-one-space)
+    t))
+
 (defun insert-paren-hilighting-aux (c n)
   (when (insert-char c n)
     (let ((point (point)))

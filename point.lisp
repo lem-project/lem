@@ -24,3 +24,13 @@
 (defun point-set (point)
   (setf (window-cur-linum) (point-linum point))
   (setf (window-cur-col) (point-column point)))
+
+(defun point< (p1 p2)
+  (cond ((< (point-linum p1) (point-linum p2))
+         t)
+        ((> (point-linum p1) (point-linum p2))
+         nil)
+        ((< (point-column p1) (point-column p2))
+         t)
+        (t
+         nil)))

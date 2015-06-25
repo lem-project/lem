@@ -86,3 +86,8 @@
           (if cadr-col
             (insert-char #\space cadr-col)
             (insert-char #\space col)))))))
+
+(define-key *lisp-mode-keymap* "M-j" 'newline-and-indent)
+(defcommand newline-and-indent (n) ("p")
+  (insert-newline n)
+  (lisp-indent-line))

@@ -31,6 +31,8 @@
      lambda
      when
      unless
+     dotimes
+     dolist
      ))
 
 (defvar *lisp-mode-keymap*

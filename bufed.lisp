@@ -409,6 +409,7 @@
 
 (define-key *global-keymap* "M- " 'just-one-space)
 (define-command just-one-space () ()
+  (skip-chars-backward 'syntax-space-char-p)
   (delete-while-whitespaces nil nil)
   (insert-char #\space 1)
   t)

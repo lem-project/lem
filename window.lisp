@@ -271,7 +271,7 @@
   (cl-ncurses:werase (window-win window))
   (window-redraw-modeline window)
   (window-redraw-lines window)
-  (cl-ncurses:wrefresh (window-win window)))
+  (cl-ncurses:wnoutrefresh (window-win window)))
 
 (defun window-update (window)
   (window-adjust-view window nil)
@@ -281,7 +281,8 @@
   (dolist (win *window-list*)
     (unless (eq win *current-window*)
       (window-update win)))
-  (window-update *current-window*))
+  (window-update *current-window*)
+  (cl-ncurses:doupdate))
 
 (define-key *global-keymap* "C-x2" 'split-window)
 (define-command split-window () ()

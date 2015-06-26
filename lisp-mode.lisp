@@ -148,6 +148,16 @@
     (point-set point)
     t))
 
+(define-key *lisp-mode-keymap* "C-xl" 'load-file)
+(define-command load-file () ()
+  (cond ((null (buffer-filename (window-buffer)))
+         (write-message "Not linked to file")
+         nil)
+        (t
+         (write-message
+          (format nil "~a"
+                  (load (buffer-filename (window-buffer))))))))
+
 (define-key *lisp-mode-keymap* "C-xz" 'go-to-lisp)
 (define-key *lisp-mode-keymap* "M-z" 'go-to-lisp)
 (define-command go-to-lisp () ()

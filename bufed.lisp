@@ -447,3 +447,9 @@
   (def insert-paren-hilighting #\))
   (def insert-brace-hilighting #\])
   (def insert-block-hilighting #\}))
+
+(define-key *global-keymap* "M-m" 'back-to-indentation)
+(define-command back-to-indentation () ()
+  (beginning-of-line)
+  (skip-chars-forward (lambda (c) (member c '(#\space #\tab))))
+  t)

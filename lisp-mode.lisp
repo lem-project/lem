@@ -25,6 +25,7 @@
                        (dolist 1)
                        (multiple-value-bind 3)
                        (do 3)
+                       (defclass 2)
                        ))
           (setf (get (car elt) 'lisp-indent) (cadr elt))))
 

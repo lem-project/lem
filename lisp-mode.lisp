@@ -154,7 +154,10 @@
   (save-some-buffers)
   (dolist (buffer *buffer-list*)
     (when (eq 'lisp-mode (buffer-major-mode buffer))
-      (set-buffer buffer)
-      (eval-buffer)
-      (unmark-buffer)))
+      (if (buffer-filename buffer)
+        (load (buffer-filename buffer))
+        (progn
+          (set-buffer buffer)
+          (eval-buffer)
+          (unmark-buffer)))))
   (exit-lem))

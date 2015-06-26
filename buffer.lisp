@@ -47,7 +47,7 @@
       (push (line-str line) lines))
     (pdebug (nreverse lines))))
 
-(defstruct (buffer (:constructor make-buffer-internal))
+(define-class buffer () (window-buffer)
   name
   filename
   modified-p
@@ -57,28 +57,31 @@
   tail-line
   cache-line
   cache-linum
-  (mark-linum 1)
-  (mark-col 0)
+  mark-linum
+  mark-col
   keep-binfo
-  (nlines 1))
-
-(defmethod print-object ((buffer buffer) stream)
-  (format stream "#<BUFFER ~a ~a>"
-    (buffer-name buffer)
-    (buffer-filename buffer)))
+  nlines)
 
 (defun make-buffer (name &key filename read-only-p)
-  (let ((buffer (make-buffer-internal
-                 :name name
-                 :filename filename
-                 :read-only-p read-only-p))
+  (let ((buffer (make-instance 'buffer
+                               :name name
+                               :filename filename
+                               :read-only-p read-only-p))
 	(line (make-line nil nil "")))
     (setf (buffer-head-line buffer) line)
     (setf (buffer-tail-line buffer) line)
     (setf (buffer-cache-line buffer) line)
     (setf (buffer-cache-linum buffer) 1)
+    (setf (buffer-mark-linum buffer) 1)
+    (setf (buffer-mark-col buffer) 0)
+    (setf (buffer-nlines buffer) 1)
     (push buffer *buffer-list*)
     buffer))
+
+(defmethod print-object ((buffer buffer) stream)
+  (format stream "#<BUFFER ~a ~a>"
+    (buffer-name buffer)
+    (buffer-filename buffer)))
 
 (defmacro buffer-read-only-guard (buffer name)
   `(when (buffer-read-only-p ,buffer)

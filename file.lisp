@@ -92,8 +92,8 @@
     (cond
      ((null buf)
       (file-open filename))
-     ((or (not (buffer-filename buf))
-          (string/= filename (buffer-filename buf)))
+     ((and (buffer-filename buf)
+           (string/= (expand-file-name filename) (buffer-filename buf)))
       (let ((name (uniq-buffer-name filename)))
         (set-buffer (make-buffer (file-name-nondirectory name)
                       :filename filename))))

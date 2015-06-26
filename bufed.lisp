@@ -372,7 +372,10 @@
       (return)))
   (do () ((eobp))
     (let ((result (blank-line-p)))
-      (unless (and result (delete-char result))
+      (unless (and result
+                   (dotimes (_ result t)
+                     (unless (delete-char)
+                       (return))))
         (return)))))
 
 (define-key *global-keymap* "C-t" 'transpose-characters)

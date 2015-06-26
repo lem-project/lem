@@ -36,6 +36,12 @@
     (set-buffer buf)
     t))
 
+(defun get-next-buffer (buffer)
+  (let ((res (member buffer *buffer-list*)))
+    (if (cdr res)
+      (cadr res)
+      (car *buffer-list*))))
+
 (define-key *global-keymap* "C-xk" 'kill-buffer)
 (define-command kill-buffer (name) ("bKill buffer: ")
   (let ((buf (get-buffer name)))
@@ -43,15 +49,16 @@
       (dolist (win *window-list*)
         (when (eq buf (window-buffer win))
           (let ((*current-window* win))
-            (next-buffer))))
+            (next-buffer)))
+        (when (eq buf *prev-buffer*)
+          (setq *prev-buffer* (get-next-buffer *prev-buffer*))))
       (setq *buffer-list* (delete buf *buffer-list*))))
   t)
 
 (define-key *global-keymap* "C-xx" 'next-buffer)
 (define-command next-buffer (&optional (n 1)) ("p")
   (dotimes (_ n t)
-    (let ((buf (cadr (member (window-buffer) *buffer-list*))))
-      (set-buffer (or buf (car *buffer-list*))))))
+    (set-buffer (get-next-buffer (window-buffer)))))
 
 (define-key *global-keymap* "C-xC-b" 'list-buffers)
 (define-command list-buffers () ()

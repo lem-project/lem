@@ -1,96 +1,16 @@
 (in-package :lem)
 
-(defclass window ()
-  ((win
-    :initarg :win)
-   (nlines
-    :initarg :nlines)
-   (ncols
-    :initarg :ncols)
-   (y
-    :initarg :y)
-   (x
-    :initarg :x)
-   (buffer
-    :initarg :buffer)
-   (vtop-linum
-    :initarg :vtop-linum)
-   (cur-linum
-    :initarg :cur-linum)
-   (cur-col
-    :initarg :cur-col)
-   (max-col
-    :initarg :max-col)))
-
-(defun window-win (&optional (window *current-window*))
-  (slot-value window 'win))
-
-(defun window-nlines (&optional (window *current-window*))
-  (slot-value window 'nlines))
-
-(defun window-ncols (&optional (window *current-window*))
-  (slot-value window 'ncols))
-
-(defun window-y (&optional (window *current-window*))
-  (slot-value window 'y))
-
-(defun window-x (&optional (window *current-window*))
-  (slot-value window 'x))
-
-(defun window-buffer (&optional (window *current-window*))
-  (slot-value window 'buffer))
-
-(defun window-vtop-linum (&optional (window *current-window*))
-  (slot-value window 'vtop-linum))
-
-(defun window-cur-linum (&optional (window *current-window*))
-  (slot-value window 'cur-linum))
-
-(defun window-cur-col (&optional (window *current-window*))
-  (slot-value window 'cur-col))
-
-(defun window-max-col(&optional (window *current-window*))
-  (slot-value window 'max-col))
-
-(defun (setf window-win) (val &optional (window *current-window*))
-  (setf (slot-value window 'win) val)
-  val)
-
-(defun (setf window-nlines) (val &optional (window *current-window*))
-  (setf (slot-value window 'nlines) val)
-  val)
-
-(defun (setf window-ncols) (val &optional (window *current-window*))
-  (setf (slot-value window 'ncols) val)
-  val)
-
-(defun (setf window-y) (val &optional (window *current-window*))
-  (setf (slot-value window 'y) val)
-  val)
-
-(defun (setf window-x) (val &optional (window *current-window*))
-  (setf (slot-value window 'x) val)
-  val)
-
-(defun (setf window-buffer) (val &optional (window *current-window*))
-  (setf (slot-value window 'buffer) val)
-  val)
-
-(defun (setf window-vtop-linum) (val &optional (window *current-window*))
-  (setf (slot-value window 'vtop-linum) val)
-  val)
-
-(defun (setf window-cur-linum) (val &optional (window *current-window*))
-  (setf (slot-value window 'cur-linum) val)
-  val)
-
-(defun (setf window-cur-col) (val &optional (window *current-window*))
-  (setf (slot-value window 'cur-col) val)
-  val)
-
-(defun (setf window-max-col) (val &optional (window *current-window*))
-  (setf (slot-value window 'max-col) val)
-  val)
+(define-class window () *current-window*
+  win
+  nlines
+  ncols
+  y
+  x
+  buffer
+  vtop-linum
+  cur-linum
+  cur-col
+  max-col)
 
 (defun make-window (buffer nlines ncols y x)
   (let ((window

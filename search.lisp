@@ -51,6 +51,7 @@
   (isearch-add-char (getch)))
 
 (define-key *isearch-keymap* "C-j" 'isearch-end)
+(define-key *isearch-keymap* "C-m" 'isearch-end)
 (define-command isearch-end () ()
   (setq *isearch-prev-string* *isearch-string*)
   (set-current-mode-keymap *isearch-tmp-keymap*))

@@ -150,6 +150,7 @@
   (cl-ncurses:noecho)
   (cl-ncurses:cbreak)
   (cl-ncurses:raw)
+  (cl-ncurses:nonl)
   (cl-ncurses:refresh)
   (window-init)
   (mb-init)

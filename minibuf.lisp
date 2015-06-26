@@ -75,7 +75,8 @@
       (write-message (format nil "~a~a" prompt str))
       (let ((c (getch)))
         (cond
-         ((char= c key::ctrl-j)
+         ((or (char= c key::ctrl-j)
+              (char= c key::ctrl-m))
           (when (or (string= str "")
                   (null existing-p)
                   (funcall existing-p str))

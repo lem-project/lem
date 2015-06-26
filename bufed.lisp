@@ -86,6 +86,7 @@
   (insert-lines (split-string str #\newline)))
 
 (define-key *global-keymap* "C-j" 'insert-newline)
+(define-key *global-keymap* "C-m" 'insert-newline)
 (define-command insert-newline (n) ("p")
   (dotimes (_ n t)
     (buffer-insert-newline (window-buffer)

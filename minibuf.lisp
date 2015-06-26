@@ -96,7 +96,8 @@
      ((and comp-flag one-window-p)
       (delete-window-1 *completion-window*))
      (comp-flag
-      (set-buffer *prev-buffer*)))
+      (let ((*current-window* *completion-window*))
+        (set-buffer *prev-buffer*))))
     str))
 
 (defun read-string (prompt &optional initial)

@@ -148,25 +148,27 @@
         nil)
       ((or (/= cury y)
            (< curx (1- cols)))
-	(let ((i (wide-index str (1- cols))))
+	(let ((i (wide-index str cols)))
           (setq str
                 (if (<= cols (str-width str i))
                   (format nil "~a $" (subseq str 0 (1- i)))
                   (format nil "~a$" (subseq str 0 i))))))
       ((< (window-cur-col window) (length str))
-        (let* ((begin (wide-index str (- curx cols -3)))
+        (let* ((begin (wide-index str (- curx cols -4)))
 	       (end (1+ (window-cur-col window)))
 	       (substr (subseq str begin end)))
-          (setq str
-	        (if (<= cols (+ (str-width substr) 2))
-	          (format nil "$~a$" substr)
-	          (format nil "$~a $" substr))))
-        (setq curx (- cols 2)))
+          (setq curx (- cols 2))
+          (if (wide-char-p (aref substr (- (length substr) 1)))
+            (progn
+              (setq substr (subseq substr 0 (1- (length substr))))
+              (setq str (format nil "$~a $" substr))
+              (decf curx))
+            (setq str (format nil "$~a$" substr)))))
       (t
         (setq str
               (format nil
                       "$~a"
-                      (substring-width str (- curx cols -2))))
+                      (substring-width str (- curx cols -3))))
         (setq curx (- cols 1))))
     (cl-ncurses:mvwaddstr (window-win window) y 0 str)
     curx))

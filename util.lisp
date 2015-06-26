@@ -50,10 +50,13 @@
                     (aref vec i)))))))
     (rec 0 (1- (length vec)))))
 
+(defun wide-char-p (c)
+  (binary-search *eastasian-full* (char-code c) 'wide-table-cmp))
+
 (defun char-width (c w)
   (cond ((char= c #\tab)
 	 (+ (* (floor w *tab-size*) *tab-size*) *tab-size*))
-	((binary-search *eastasian-full* (char-code c) 'wide-table-cmp)
+	((wide-char-p c)
 	 (+ w 2))
 	(t
 	 (+ w 1))))

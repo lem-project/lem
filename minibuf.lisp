@@ -91,11 +91,11 @@
           (setq str (concatenate 'string str (string (getch)))))
          (t
           (setq str (concatenate 'string str (string c)))))))
-    (let ((*current-window* *completion-window*))
-      (if (and comp-flag one-window-p)
-        (delete-window)
-        (if comp-flag
-          (set-buffer *prev-buffer*))))
+    (cond
+     ((and comp-flag one-window-p)
+      (delete-window-1 *completion-window*))
+     (comp-flag
+      (set-buffer *prev-buffer*)))
     str))
 
 (defun read-string (prompt &optional initial)

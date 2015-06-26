@@ -26,6 +26,7 @@
                        (multiple-value-bind 3)
                        (do 3)
                        (defclass 2)
+                       (destructuring-bind 3)
                        ))
           (setf (get (car elt) 'lisp-indent) (cadr elt))))
 

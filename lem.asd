@@ -27,5 +27,6 @@
 	       (:file "mode")
 	       (:file "sexp")
 	       (:file "lisp-mode")
+               (:file "grep")
 	       (:file "lem"))
   :depends-on (:cl-ncurses :sb-posix))

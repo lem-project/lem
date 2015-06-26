@@ -1,7 +1,7 @@
 (in-package :lem)
 
 (defvar *grep-vector* nil)
-(defvar *grep-index* 0)
+(defvar *grep-index* -1)
 
 (defun grep-parse-line (line)
   (ignore-errors
@@ -19,7 +19,8 @@
         (let ((result (grep-parse-line line)))
           (when result
             (push result list)))))
-    (setq *grep-vector* (apply 'vector (nreverse list)))))
+    (setq *grep-vector* (apply 'vector (nreverse list)))
+    (setq *grep-index* -1)))
 
 (define-command grep (str) ("sgrep -nH ")
   (let ((str
@@ -36,23 +37,21 @@
 (define-key *global-keymap* "M-n" 'grep-next)
 (define-command grep-next (&optional (n 1)) ("p")
   (when (and *grep-vector*
-             (< *grep-index* (length *grep-vector*)))
+             (< (1+ *grep-index*) (length *grep-vector*)))
+    (incf *grep-index*)
     (destructuring-bind (filename linum)
         (aref *grep-vector* *grep-index*)
       (find-file filename)
       (goto-line linum))
-    (when (< (1+ *grep-index*) (length *grep-vector*))
-      (incf *grep-index*))
     t))
 
 (define-key *global-keymap* "M-p" 'grep-prev)
 (define-command grep-prev (&optional (n 1)) ("p")
   (when (and *grep-vector*
-             (< 0 *grep-index*))
+             (<= 0 (1- *grep-index*)))
+    (decf *grep-index*)
     (destructuring-bind (filename linum)
         (aref *grep-vector* *grep-index*)
       (find-file filename)
       (goto-line linum))
-    (when (< 0 (1- *grep-index*))
-      (decf *grep-index*))
     t))

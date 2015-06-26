@@ -1,5 +1,7 @@
 (in-package :lem)
 
+(defvar *init-flag* nil)
+
 (defvar *exit*)
 
 (defvar *macro-recording-p* nil)
@@ -152,13 +154,15 @@
   (cl-ncurses:raw)
   (cl-ncurses:nonl)
   (cl-ncurses:refresh)
-  (window-init)
-  (mb-init)
-  (add-hook 'find-file-hooks
-            (lambda ()
-              (when (or (search ".lisp" (buffer-filename (window-buffer)))
-                        (search ".asd" (buffer-filename (window-buffer))))
-                (lisp-mode))))
+  (unless *init-flag*
+    (setq *init-flag* t)
+    (window-init)
+    (mb-init)
+    (add-hook 'find-file-hooks
+              (lambda ()
+                (when (or (search ".lisp" (buffer-filename (window-buffer)))
+                          (search ".asd" (buffer-filename (window-buffer))))
+                  (lisp-mode)))))
   (dolist (arg args)
     (find-file arg)))
 

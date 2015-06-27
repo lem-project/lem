@@ -174,6 +174,7 @@
     (setq n (read-number "Line to GOTO: ")))
   (when (< 0 n (1+ (buffer-nlines (window-buffer))))
     (setf (window-cur-linum) n)
+    (recenter)
     t))
 
 (define-key *global-keymap* "M-<" 'beginning-of-buffer)

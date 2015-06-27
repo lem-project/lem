@@ -69,7 +69,7 @@
 
 (defun str-width (str &optional n)
   (%str-width
-    (if n
+    (if (and n (< n (length str)))
       (subseq str 0 n)
       str)))
 

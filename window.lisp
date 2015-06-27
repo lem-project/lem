@@ -45,18 +45,6 @@
   (setq *prev-buffer* (window-buffer))
   (setq *window-list* (list *current-window*)))
 
-(defun window-offset-view (window)
-  (let ((vtop-linum (window-vtop-linum window))
-	(nlines (window-nlines window))
-	(linum (window-cur-linum window)))
-    (cond
-      ((< #1=(+ vtop-linum nlines -2) linum)
-	(- linum #1#))
-      ((> vtop-linum linum)
-	(- linum vtop-linum))
-      (t
-	0))))
-
 (define-key *global-keymap* "C-l" 'recenter)
 (define-command recenter () ()
   (window-recenter *current-window*))
@@ -77,14 +65,7 @@
     (when outp
       (incf (window-vtop-linum window) offset))))
 
-(defun window-adjust-view (window recenter)
-  (let ((offset (window-offset-view window)))
-    (unless (zerop offset)
-      (if recenter
-        (window-recenter window)
-	(window-scroll window offset)))))
-
-(defun window-percentage (window)
+(defun window-posline (window)
   (cond
    ((<= (buffer-nlines (window-buffer window))
         (window-nlines window))
@@ -92,16 +73,14 @@
    ((= 1 (window-vtop-linum window))
     "Top")
    ((<= (buffer-nlines (window-buffer window))
-      (+ (window-vtop-linum window) (window-nlines window))
-        )
+        (+ (window-vtop-linum window) (window-nlines window)))
     "Bot")
    (t
     (format nil "~2d%"
       (floor
        (* 100
-	(float
-	 (/ (window-vtop-linum window)
-            (buffer-nlines (window-buffer window))))))))))
+          (float (/ (window-vtop-linum window)
+                    (buffer-nlines (window-buffer window))))))))))
 
 (defun window-redraw-modeline-1 (window bg-char)
   (cl-ncurses:mvwaddstr
@@ -123,7 +102,7 @@
 	 "~~~d,,,'~ca ~a ~a"
 	 (- (window-ncols window) 7)
 	 bg-char
-	 (window-percentage window)
+	 (window-posline window)
 	 (make-string 2 :initial-element bg-char))
        str))))
 
@@ -160,8 +139,9 @@
           (setq curx (- cols 2))
           (if (wide-char-p (aref substr (- (length substr) 1)))
             (progn
-              (setq substr (subseq substr 0 (1- (length substr))))
-              (setq str (format nil "$~a $" substr))
+              (setq str
+                    (format nil "$~a $"
+                            (subseq substr 0 (1- (length substr)))))
               (decf curx))
             (setq str (format nil "$~a$" substr)))))
       (t
@@ -194,6 +174,25 @@
   (window-redraw-modeline window)
   (window-redraw-lines window)
   (cl-ncurses:wnoutrefresh (window-win window)))
+
+(defun window-offset-view (window)
+  (let ((vtop-linum (window-vtop-linum window))
+	(nlines (window-nlines window))
+	(linum (window-cur-linum window)))
+    (cond
+      ((< #1=(+ vtop-linum nlines -2) linum)
+	(- linum #1#))
+      ((> vtop-linum linum)
+	(- linum vtop-linum))
+      (t
+	0))))
+
+(defun window-adjust-view (window recenter)
+  (let ((offset (window-offset-view window)))
+    (unless (zerop offset)
+      (if recenter
+        (window-recenter window)
+	(window-scroll window offset)))))
 
 (defun window-update (window)
   (window-adjust-view window nil)

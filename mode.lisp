@@ -9,8 +9,7 @@
   (string-quote-chars '(#\"))
   (escape-chars '(#\\))
   expr-prefix-chars
-  comment-starter-chars
-  comment-ender-chars)
+  line-comment-char)
 
 (defun major-mode ()
   (or (buffer-major-mode (window-buffer))
@@ -75,8 +74,5 @@
 (defun syntax-expr-prefix-char-p (c)
   (member c (syntax-table-expr-prefix-chars (current-syntax))))
 
-(defun syntax-comment-starter-char-p (c)
-  (member c (syntax-table-comment-starter-chars (current-syntax))))
-
-(defun syntax-comment-ender-char-p (c)
-  (member c (syntax-table-comment-ender-chars (current-syntax))))
+(defun syntax-line-comment-char-p (c)
+  (eql c (syntax-table-line-comment-char (current-syntax))))

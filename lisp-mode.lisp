@@ -27,6 +27,8 @@
                        (do 3)
                        (defclass 2)
                        (destructuring-bind 3)
+                       (case 2)
+                       (ecase 2)
                        ))
           (setf (get (car elt) 'lisp-indent) (cadr elt))))
 
@@ -45,8 +47,7 @@
                  :string-quote-chars '(#\")
                  :escape-chars '(#\\)
                  :expr-prefix-chars '(#\' #\, #\@ #\# #\`)
-                 :comment-starter-chars '(#\;)
-                 :comment-ender-chars '(#\newline)))
+                 :line-comment-char #\;))
 
 (define-key *lisp-mode-keymap* "C-i" 'lisp-indent-line)
 (define-command lisp-indent-line () ()

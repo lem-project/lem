@@ -100,7 +100,7 @@
   (prev-char n))
 
 (define-key *global-keymap* "C-d" 'delete-char)
-(define-command delete-char (&optional n) ("P")
+(define-command delete-char (&optional n does-not-kill-p) ("P")
   (cond
    ((and n (minusp n))
     (backward-delete-char (- n)))
@@ -112,7 +112,7 @@
          (window-cur-col)
          (or n 1))
       (when result
-        (when n
+        (when (and (not does-not-kill-p) n)
           (with-kill ()
             (kill-push lines)))
         (dolist (win *window-list*)
@@ -373,10 +373,7 @@
       (return)))
   (do () ((eobp))
     (let ((result (blank-line-p)))
-      (unless (and result
-                   (dotimes (_ result t)
-                     (unless (delete-char)
-                       (return))))
+      (unless (and result (delete-char result t))
         (return)))))
 
 (define-key *global-keymap* "C-t" 'transpose-characters)
@@ -414,7 +411,7 @@
       (if (or (and ignore-newline-p (char= c #\newline))
               (not (syntax-space-char-p c)))
         (return n)
-        (delete-char (if use-kill-ring 1 nil))))))
+        (delete-char 1 (not use-kill-ring))))))
 
 (define-key *global-keymap* "M- " 'just-one-space)
 (define-command just-one-space () ()
@@ -429,8 +426,7 @@
   (let ((point (point)))
     (prev-line)
     (end-of-line)
-    (dotimes (_ (region-count (point) point))
-      (delete-char))
+    (delete-char (region-count (point) point) t)
     (just-one-space)
     t))
 

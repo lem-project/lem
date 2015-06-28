@@ -115,7 +115,7 @@
   (def scan-symbol
        (unless (or (eq x 'symbol)
                    (eq x 'expr-prefix))
-         (when (and (plusp dir) (bolp))
+         (do () ((not (and (plusp dir) (bolp))))
            (prev-char))
          (return-from outer t))))
 

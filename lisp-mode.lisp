@@ -215,3 +215,25 @@
           (eval-buffer)
           (unmark-buffer)))))
   (exit-lem))
+
+(define-key *lisp-mode-keymap* "C-xm" 'macroexpand-lisp)
+(define-command macroexpand-lisp (arg) ("P")
+  (let ((expr
+         (read-from-string
+          (region-string (point)
+                         (let ((start (point)))
+                           (forward-sexp)
+                           (prog1 (point)
+                             (point-set start))))))
+        (*current-window*
+         (pop-to-buffer
+          (get-buffer-create "*macroexpand*"))))
+    (erase-buffer)
+    (beginning-of-buffer)
+    (insert-string
+     (with-output-to-string (s)
+       (pprint (if arg
+                 (macroexpand expr)
+                 (macroexpand-1 expr))
+               s)))
+    (beginning-of-buffer)))

@@ -129,6 +129,11 @@
               (point-set point)
               (delete-while-whitespaces t)
               (cond
+               ((and (null num)
+                     (or (eql 0 (search "define-" car-name-str))
+                         (eql 0 (search "with-" car-name-str))
+                         (eql 0 (search "do-" car-name-str))))
+                (insert-char #\space (+ start-col 2)))
                ((null num)
                 (if arg-col
                   (insert-char #\space arg-col)

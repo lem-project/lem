@@ -169,13 +169,16 @@
 (define-command up-list (&optional (n 1)) ("p")
   (scan-lists (point) (- n) 1))
 
+(defun top-of-defun ()
+  (do () ((not (up-list 1)) t)))
+
 (define-key *global-keymap* "M-C-a" 'beginning-of-defun)
 (define-command beginning-of-defun (&optional (n 1)) ("p")
   (if (minusp n)
     (end-of-defun (- n))
     (dotimes (_ n t)
       (if (up-list 1)
-        (do () ((not (up-list 1)) t))
+        (top-of-defun)
         (unless (backward-sexp 1)
           (return nil))))))
 
@@ -184,7 +187,7 @@
   (if (minusp n)
     (beginning-of-defun (- n))
     (dotimes (_ n t)
-      (do () ((not (up-list 1)) t))
+      (top-of-defun)
       (unless (forward-sexp 1)
         (return nil)))))
 

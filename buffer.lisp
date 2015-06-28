@@ -83,10 +83,9 @@
     (buffer-name buffer)
     (buffer-filename buffer)))
 
-(defmacro buffer-read-only-guard (buffer name)
+(defmacro buffer-read-only-guard (buffer)
   `(when (buffer-read-only-p ,buffer)
-     (write-message "Read only")
-     (return-from ,name nil)))
+     (throw 'abort 'readonly)))
 
 (defun %buffer-get-line (buffer linum)
   (cond
@@ -136,7 +135,7 @@
       (line-str line))))
 
 (defun buffer-line-string-set (buffer linum str)
-  (buffer-read-only-guard buffer buffer-line-string-set)
+  (buffer-read-only-guard buffer)
   (setf (buffer-modified-p buffer) t)
   (when (and (= linum (buffer-mark-linum buffer))
              (< (length str) (buffer-mark-linum buffer)))
@@ -176,7 +175,7 @@
     (nreverse strings)))
 
 (defun buffer-append-line (buffer str)
-  (buffer-read-only-guard buffer buffer-append-line)
+  (buffer-read-only-guard buffer)
   (setf (buffer-modified-p buffer) t)
   (let* ((line (buffer-tail-line buffer))
 	 (newline (make-line line (line-next line) str)))
@@ -191,7 +190,7 @@
     t))
 
 (defun buffer-insert-char (buffer linum col c)
-  (buffer-read-only-guard buffer buffer-insert-char)
+  (buffer-read-only-guard buffer)
   (setf (buffer-modified-p buffer) t)
   (when (and (= linum (buffer-mark-linum buffer))
              (<= col (buffer-mark-col buffer)))
@@ -207,7 +206,7 @@
       t)))
 
 (defun buffer-insert-newline (buffer linum col)
-  (buffer-read-only-guard buffer buffer-insert-newline)
+  (buffer-read-only-guard buffer)
   (setf (buffer-modified-p buffer) t)
   (cond
    ((= (buffer-mark-linum buffer) linum)
@@ -228,7 +227,7 @@
   t)
 
 (defun buffer-insert-line (buffer linum col str)
-  (buffer-read-only-guard buffer buffer-insert-line)
+  (buffer-read-only-guard buffer)
   (setf (buffer-modified-p buffer) t)
   (when (and (= linum (buffer-mark-linum buffer))
              (<= col (buffer-mark-col buffer)))
@@ -242,7 +241,7 @@
   t)
 
 (defun buffer-delete-char (buffer linum col n)
-  (buffer-read-only-guard buffer buffer-delete-char)
+  (buffer-read-only-guard buffer)
   (let ((line (buffer-get-line buffer linum))
         (del-lines (list ""))
         (result t))
@@ -294,7 +293,7 @@
     (values result (nreverse del-lines))))
 
 (defun buffer-erase (buffer)
-  (buffer-read-only-guard buffer buffer-erase)
+  (buffer-read-only-guard buffer)
   (setf (buffer-modified-p buffer) t)
   (let ((line (make-line nil nil "")))
     (setf (buffer-head-line buffer) line)

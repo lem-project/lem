@@ -22,7 +22,7 @@
         (adjust-screen-size)
         (getch))
        ((and (char= char key::ctrl-g) abort-jump)
-        (throw 'abort t))
+        (throw 'abort 'abort))
        (t char))))
   (defun ungetch (c)
     (tlist-add-right queue (char-code c)))
@@ -175,10 +175,13 @@
        (*last-kill-flag* nil *curr-kill-flag*))
       (*exit*)
     (window-update-all)
-    (when (catch 'abort
+    (case (catch 'abort
             (main-step)
             nil)
-      (write-message "Abort"))))
+      (readonly
+       (write-message "Read Only"))
+      (abort
+       (keyboard-quit)))))
 
 (defun lem (&rest args)
   (let ((*print-circle* t))

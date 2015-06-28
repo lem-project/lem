@@ -45,7 +45,8 @@
     finally (return name)))
 
 (defun expand-file-name (filename &optional directory)
-  (when (char/= (aref filename 0) #\/)
+  (when (and (string/= filename "")
+             (char/= (aref filename 0) #\/))
     (setq filename
       (concatenate 'string
         (or (and directory (file-name-as-directory directory))

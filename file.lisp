@@ -17,7 +17,10 @@
     filename))
 
 (defun current-directory ()
-  (file-name-as-directory (pwd)))
+  (if (buffer-filename)
+    (file-name-directory
+     (buffer-filename))
+    (file-name-as-directory (pwd))))
 
 (defun file-exist-p (file-name)
   (if (probe-file file-name)

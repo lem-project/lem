@@ -169,12 +169,13 @@
   t)
 
 (define-key *global-keymap* "M-g" 'goto-line)
-(define-command goto-line (n) ("P")
+(define-command goto-line (n &optional does-not-recenter-p) ("P")
   (unless n
     (setq n (read-number "Line to GOTO: ")))
   (when (< 0 n (1+ (buffer-nlines (window-buffer))))
     (setf (window-cur-linum) n)
-    (recenter)
+    (unless does-not-recenter-p
+      (recenter))
     t))
 
 (define-key *global-keymap* "M-<" 'beginning-of-buffer)
@@ -185,7 +186,7 @@
 
 (define-key *global-keymap* "M->" 'end-of-buffer)
 (define-command end-of-buffer () ()
-  (goto-line (buffer-nlines (window-buffer)))
+  (goto-line (buffer-nlines (window-buffer)) t)
   (goto-column (buffer-line-length
                 (window-buffer)
                 (window-cur-linum)))

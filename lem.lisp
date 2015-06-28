@@ -77,6 +77,13 @@
                  (>= length (getch-queue-length))))
             (main-step))))))
 
+(define-command apply-macro-to-region-lines () ()
+  (apply-region-lines (region-beginning)
+                      (region-end)
+                      (lambda ()
+                        (execute-macro 1)))
+  t)
+
 (define-key *global-keymap* "C-u" 'universal-argument)
 (define-command universal-argument () ()
   (let ((numlist)

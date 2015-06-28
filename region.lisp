@@ -74,3 +74,12 @@
   (unless (equal (point) begin)
     (exchange-point-mark))
   (delete-char (region-count begin end)))
+
+(defun apply-region-lines (begin end fn)
+  (point-set begin)
+  (do () ((point<= end (point)))
+    (let ((linum (window-cur-linum)))
+      (beginning-of-line)
+      (funcall fn)
+      (when (= linum (window-cur-linum))
+        (next-line 1)))))

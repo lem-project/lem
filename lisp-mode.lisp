@@ -237,3 +237,16 @@
                  (macroexpand-1 expr))
                s)))
     (beginning-of-buffer)))
+
+(define-command indent-region-lisp () ()
+  (let ((point (point)))
+    (apply-region-lines (region-beginning)
+                        (region-end)
+                        'lisp-indent-line)
+    (point-set point)
+    t))
+
+(define-key *lisp-mode-keymap* "M-C-q" 'indent-sexp)
+(define-command indent-sexp () ()
+  (mark-sexp)
+  (indent-region-lisp))

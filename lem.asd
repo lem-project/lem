@@ -25,7 +25,7 @@
 	       (:file "file")
 	       (:file "word")
 	       (:file "mode")
-	       (:file "sexp")
+               (:file "sexp")
 	       (:file "lisp-mode")
                (:file "grep")
 	       (:file "lem"))

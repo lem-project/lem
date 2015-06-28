@@ -413,6 +413,18 @@
         (return n)
         (delete-char 1 (not use-kill-ring))))))
 
+(macrolet ((def (name at-char step-char)
+                `(defun ,name (pred &optional not-p)
+                   (do ()
+                       ((not (if (funcall pred (,at-char))
+                               (not not-p)
+                               not-p))
+                        t)
+                     (unless (,step-char)
+                       (return))))))
+  (def skip-chars-forward following-char next-char)
+  (def skip-chars-backward preceding-char prev-char))
+
 (define-key *global-keymap* "M- " 'just-one-space)
 (define-command just-one-space () ()
   (skip-chars-backward 'syntax-space-char-p)

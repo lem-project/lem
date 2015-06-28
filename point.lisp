@@ -34,3 +34,10 @@
          t)
         (t
          nil)))
+
+(defun point= (p1 p2)
+  (equal p1 p2))
+
+(defun point<= (p1 p2)
+  (or (point< p1 p2)
+      (point= p1 p2)))

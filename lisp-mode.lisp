@@ -172,7 +172,7 @@
              (lambda ()
                (handler-case
                    (let ((out (make-buffer-output-stream
-                               (window-buffer)
+                               (get-buffer-create "*REPL*")
                                (point))))
                      (let ((*error-output* out)
                            (*standard-output* out))

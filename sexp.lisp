@@ -64,6 +64,9 @@
                  ,@body)
                (unless (next-char ,gdir)
                  (return-from ,outer nil)))
+             (let ((,type-var 'space)
+                   (,dir-var ,gdir))
+               ,@body)
              (unless (next-char ,gdir)
                (return-from ,outer nil))
              finally
@@ -115,8 +118,6 @@
   (def scan-symbol
        (unless (or (eq x 'symbol)
                    (eq x 'expr-prefix))
-         (do () ((not (and (plusp dir) (bolp))))
-           (prev-char))
          (return-from outer t))))
 
 (defun scan-sexps (point count)

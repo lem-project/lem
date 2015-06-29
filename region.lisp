@@ -82,4 +82,5 @@
       (beginning-of-line)
       (funcall fn)
       (when (= linum (window-cur-linum))
-        (next-line 1)))))
+        (unless (next-line 1)
+          (return))))))

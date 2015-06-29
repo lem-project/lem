@@ -83,7 +83,7 @@
           (setq str (concatenate 'string str (string c)))))))
     (cond
      ((and comp-flag one-window-p)
-      (delete-window-1 *completion-window*))
+      (delete-completion-window))
      (comp-flag
       (let ((*current-window* *completion-window*))
         (set-buffer *prev-buffer*))))

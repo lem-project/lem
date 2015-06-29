@@ -31,3 +31,11 @@
                  (buffer-append-line (window-buffer) s))))
       (window-update-all))
     (or result str)))
+
+(defun delete-completion-window ()
+  (dolist (win *window-list*)
+    (when (and (eq win *completion-window*)
+               (string= (buffer-name (window-buffer win))
+                        *comp-buffer-name*))
+      (delete-window-1 win)
+      (return))))

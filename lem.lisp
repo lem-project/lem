@@ -144,6 +144,7 @@
 (defun main-step ()
   (let ((keys (input-keys)))
     (clear-message-line)
+    (delete-completion-window)
     (execute keys)
     (setq *universal-argument* nil)))
 

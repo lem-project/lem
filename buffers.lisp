@@ -72,20 +72,21 @@
                  (mapcar (lambda (b)
                            (length (buffer-filename b)))
                          *buffer-list*))))
-    (popup-string
-     (get-buffer-create "*Buffers*")
-     (with-output-to-string (out)
-       (format out
-               (format nil "MOD ROL Buffer~~~dTFile~~%"
-                       (+ 8 max-name-len)))
-       (format out "~a~%"
-               (make-string (+ max-name-len max-filename-len 8)
-                            :initial-element #\-))
-       (dolist (b *buffer-list*)
-         (format out
-                 (format nil " ~a   ~a  ~a~~~dT~a~~%"
-                         (if (buffer-modified-p b) "*" " ")
-                         (if (buffer-read-only-p b) "*" " ")
-                         (buffer-name b)
-                         (+ 8 max-name-len)
-                         (or (buffer-filename b) ""))))))))
+    (let* ((buffer (get-buffer-create "*Buffers*"))
+           (out (make-buffer-output-stream buffer)))
+      (popup buffer
+             (lambda ()
+               (format out
+                       (format nil "MOD ROL Buffer~~~dTFile~~%"
+                               (+ 8 max-name-len)))
+               (format out "~a~%"
+                       (make-string (+ max-name-len max-filename-len 8)
+                                    :initial-element #\-))
+               (dolist (b *buffer-list*)
+                 (format out
+                         (format nil " ~a   ~a  ~a~~~dT~a~~%"
+                                 (if (buffer-modified-p b) "*" " ")
+                                 (if (buffer-read-only-p b) "*" " ")
+                                 (buffer-name b)
+                                 (+ 8 max-name-len)
+                                 (or (buffer-filename b) "")))))))))

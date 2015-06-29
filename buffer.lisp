@@ -309,3 +309,74 @@
     (progn
      (write-message "Not mark in this buffer")
      nil)))
+
+(defclass buffer-output-stream (sb-gray:fundamental-output-stream)
+  ((buffer
+    :initarg :buffer
+    :accessor buffer-output-stream-buffer)
+   (linum
+    :initarg :linum
+    :accessor buffer-output-stream-linum)
+   (column
+    :initarg :column
+    :accessor buffer-output-stream-column)))
+
+(defun make-buffer-output-stream (buffer &optional point)
+  (make-instance 'buffer-output-stream
+                 :buffer buffer
+                 :linum (if point
+                          (point-linum point)
+                          1)
+                 :column (if point
+                           (point-column point)
+                           0)))
+
+(defmethod stream-element-type ((stream buffer-output-stream))
+  'line)
+
+(defmethod sb-gray:stream-line-column ((stream buffer-output-stream))
+  nil)
+
+(defmethod sb-gray:stream-line-length ((stream buffer-output-stream))
+  nil)
+
+(defmethod sb-gray:stream-fresh-line ((stream buffer-output-stream))
+  (unless (zerop (buffer-output-stream-column stream))
+    (sb-gray:stream-terpri stream)))
+
+(defmethod sb-gray:stream-write-byte ((stream buffer-output-stream) byte)
+  (sb-gray:stream-write-char stream (code-char byte)))
+
+(defmethod sb-gray:stream-write-char ((stream buffer-output-stream) char)
+  (prog1 (buffer-insert-char (buffer-output-stream-buffer stream)
+                             (buffer-output-stream-linum stream)
+                             (buffer-output-stream-column stream)
+                             char)
+    (if (char= char #\newline)
+      (progn
+        (incf (buffer-output-stream-linum stream))
+        (setf (buffer-output-stream-column stream) 0))
+      (incf (buffer-output-stream-column stream)))))
+
+(defmethod sb-gray:stream-write-sequence ((stream buffer-output-stream)
+                                          sequence &optional (start 0) end)
+  (map (type-of sequence)
+       (lambda (c)
+         (sb-gray:stream-write-byte stream c))
+       (subseq sequence start end)))
+
+(defmethod sb-gray:stream-write-string ((stream buffer-output-stream)
+                                        (string string)
+                                        &optional (start 0) end)
+  (map 'string
+       (lambda (c)
+         (sb-gray:stream-write-char stream c))
+       (subseq string start end)))
+
+(defmethod sb-gray:stream-terpri ((stream buffer-output-stream))
+  (prog1 (buffer-insert-newline (buffer-output-stream-buffer stream)
+                                (buffer-output-stream-linum stream)
+                                (buffer-output-stream-column stream))
+    (incf (buffer-output-stream-linum stream))
+    (setf (buffer-output-stream-column stream) 0)))
+

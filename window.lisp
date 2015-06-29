@@ -343,12 +343,20 @@
     (set-buffer buffer)
     *current-window*))
 
-(defun popup-string (buffer string)
+(defun popup (buffer fn &optional (goto-bob-p t) (erase-p t))
   (let ((*current-window* (pop-to-buffer buffer)))
-    (erase-buffer)
-    (beginning-of-buffer)
-    (insert-string string)
-    (beginning-of-buffer)))
+    (when erase-p
+      (erase-buffer))
+    (funcall fn)
+    (when goto-bob-p
+      (beginning-of-buffer))))
+
+(defun popup-string (buffer string)
+  (popup buffer
+         (lambda ()
+           (insert-string string))
+         t
+         t))
 
 (define-key *global-keymap* "C-x^" 'grow-window)
 (define-command grow-window (n) ("p")

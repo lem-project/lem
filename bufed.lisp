@@ -404,6 +404,7 @@
 (define-command erase-buffer () ()
   (beginning-of-buffer)
   (buffer-erase (window-buffer))
+  (beginning-of-buffer)
   t)
 
 (defun delete-while-whitespaces (&optional ignore-newline-p use-kill-ring)

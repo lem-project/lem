@@ -171,16 +171,21 @@
             (bt:make-thread
              (lambda ()
                (handler-case
-                   (insert-string
-                    (with-output-to-string (s)
-                      (let ((*error-output* s)
-                            (*standard-output* s))
-                        (setq val (eval x)))))
+                   (let ((out (make-buffer-output-stream
+                               (window-buffer)
+                               (point))))
+                     (let ((*error-output* out)
+                           (*standard-output* out))
+                       (prog1 (setq val (eval x))
+                         (point-set (make-point
+                                     (buffer-output-stream-linum out)
+                                     (buffer-output-stream-column out))))))
                  (error (cdt)
-                        (popup-string
-                         (get-buffer-create "*Error*")
-                         (with-output-to-string (s)
-                           (princ cdt s))))))))
+                        (let* ((buffer (get-buffer-create "*Error*"))
+                               (out (make-buffer-output-stream buffer)))
+                          (popup buffer 
+                                 (lambda ()
+                                   (princ cdt out)))))))))
            (mi-thread
             (bt:make-thread
              (lambda ()
@@ -268,12 +273,14 @@
                            (forward-sexp)
                            (prog1 (point)
                              (point-set start)))))))
-    (popup-string (get-buffer-create "*macroexpand*")
-                  (with-output-to-string (s)
-                    (pprint (if arg
-                              (macroexpand expr)
-                              (macroexpand-1 expr))
-                            s)))))
+    (let* ((buffer (get-buffer-create "*macroexpand*"))
+           (out (make-buffer-output-stream buffer)))
+      (popup buffer
+             (lambda ()
+               (pprint (if arg
+                         (macroexpand expr)
+                         (macroexpand-1 expr))
+                       out))))))
 
 (define-command indent-region-lisp () ()
   (let ((point (point)))
@@ -301,18 +308,6 @@
     (setq *current-window* (pop-to-buffer buffer))
     (inferior-lisp-mode)))
 
-(defun inferior-lisp-eval-aux (x)
-  (let* ((res)
-         (str
-          (with-output-to-string (output)
-            (let ((*standard-output* output)
-                  (*error-output* output)
-                  (*debug-io* output))
-              (setq res (safe-eval x))))))
-    (when (string/= "" str)
-      (insert-string str))
-    res))
-
 (define-key *inferior-lisp-mode-keymap* "C-m" 'inferior-lisp-eval)
 (define-command inferior-lisp-eval () ()
   (let ((point (point)))
@@ -324,5 +319,5 @@
                              (region-end)))))
         (point-set point)
         (insert-newline 1)
-        (insert-string (write-to-string (inferior-lisp-eval-aux expr)))
+        (insert-string (write-to-string (safe-eval expr)))
         (insert-newline 1)))))

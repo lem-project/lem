@@ -165,14 +165,41 @@
         (setq str (subseq str i))))
     (cons 'progn (nreverse exps))))
 
+(defun safe-eval-1 (x)
+  (let ((val))
+    (let* ((eval-thread
+            (bt:make-thread
+             (lambda ()
+               (handler-case
+                   (insert-string
+                    (with-output-to-string (s)
+                      (let ((*error-output* s)
+                            (*standard-output* s))
+                        (setq val (eval x)))))
+                 (error (cdt)
+                        (popup-string
+                         (get-buffer-create "*Error*")
+                         (with-output-to-string (s)
+                           (princ cdt s))))))))
+           (mi-thread
+            (bt:make-thread
+             (lambda ()
+               (let ((c (cl-ncurses:getch)))
+                 (when (char= key::ctrl-c (code-char c))
+                   (bt:destroy-thread eval-thread)))))))
+      (bt:join-thread eval-thread)
+      (bt:destroy-thread mi-thread))
+    val))
+
 (defun safe-eval (x)
-  (handler-case (eval x)
-    (error (cdt)
-           (popup-string
-            (get-buffer-create "*Error*")
-            (with-output-to-string (s)
-              (princ cdt s)))
-           nil)))
+  (let ((result
+         (handler-case (safe-eval-1 x)
+           #+sbcl
+           (sb-thread:join-thread-error
+            (cdt)
+            (write-message "interrupt")
+            nil))))
+    result))
 
 (defun eval-string (str)
   (write-message

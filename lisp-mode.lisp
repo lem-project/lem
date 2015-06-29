@@ -67,12 +67,10 @@
     (setf (get (car elt) 'lisp-indent) (cdr elt))))
 
 (defvar *lisp-mode-keymap*
-  (make-keymap "lisp" 'undefined-key *global-keymap*))
+        (make-keymap "lisp" 'undefined-key *global-keymap*))
 
-(define-mode lisp-mode
-  :name "lisp-mode"
-  :keymap *lisp-mode-keymap*
-  :syntax-table (make-syntax-table
+(defvar *lisp-syntax-table*
+        (make-syntax-table
                  :space-chars '(#\space #\tab #\newline)
                  :symbol-chars '(#\$ #\& #\* #\+ #\- #\_ #\< #\> #\= #\/ #\:)
                  :paren-alist '((#\( . #\))
@@ -82,6 +80,11 @@
                  :escape-chars '(#\\)
                  :expr-prefix-chars '(#\' #\, #\@ #\# #\`)
                  :line-comment-char #\;))
+
+(define-mode lisp-mode
+  :name "lisp-mode"
+  :keymap *lisp-mode-keymap*
+  :syntax-table *lisp-syntax-table*)
 
 (defun lisp-looking-at-word ()
   (let ((point (point)))
@@ -168,7 +171,8 @@
            (popup-string
             (get-buffer-create "*Error*")
             (with-output-to-string (s)
-              (princ cdt s))))))
+              (princ cdt s)))
+           nil)))
 
 (defun eval-string (str)
   (write-message
@@ -256,3 +260,42 @@
 (define-command indent-sexp () ()
   (mark-sexp)
   (indent-region-lisp))
+
+(defvar *inferior-lisp-mode-keymap*
+        (make-keymap "inferior-lisp" 'undefined-key *lisp-mode-keymap*))
+
+(define-mode inferior-lisp-mode
+  :name "inferior-lisp-mode"
+  :keymap *inferior-lisp-mode-keymap*
+  :syntax-table *lisp-syntax-table*)
+
+(define-command inferior-lisp () ()
+  (let* ((buffer (get-buffer-create "*REPL*")))
+    (setq *current-window* (pop-to-buffer buffer))
+    (inferior-lisp-mode)))
+
+(defun inferior-lisp-eval-aux (x)
+  (let* ((res)
+         (str
+          (with-output-to-string (output)
+            (let ((*standard-output* output)
+                  (*error-output* output)
+                  (*debug-io* output))
+              (setq res (safe-eval x))))))
+    (when (string/= "" str)
+      (insert-string str))
+    res))
+
+(define-key *inferior-lisp-mode-keymap* "C-m" 'inferior-lisp-eval)
+(define-command inferior-lisp-eval () ()
+  (let ((point (point)))
+    (when (backward-sexp)
+      (mark-sexp)
+      (let ((expr
+             (read-from-string
+              (region-string (region-beginning)
+                             (region-end)))))
+        (point-set point)
+        (insert-newline 1)
+        (insert-string (write-to-string (inferior-lisp-eval-aux expr)))
+        (insert-newline 1)))))

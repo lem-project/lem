@@ -10,6 +10,7 @@
 	       (:file "globals")
 	       (:file "util")
                (:file "hooks")
+               (:file "comp")
 	       (:file "minibuf")
 	       (:file "keymap")
 	       (:file "command")

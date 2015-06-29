@@ -1,8 +1,5 @@
 (in-package :lem)
 
-(defvar *comp-buffer-name* "*Completion*")
-(defvar *completion-window* nil)
-
 (defvar *mb-win*)
 (defvar *mb-print-flag* nil)
 
@@ -55,16 +52,6 @@
   (write-message prompt)
   (getch))
 
-(defun mb-completion (comp-f str)
-  (multiple-value-bind (result strings) (funcall comp-f str)
-    (popup (get-buffer-create *comp-buffer-name*)
-           (lambda ()
-             (setq *completion-window* *current-window*)
-             (dolist (s strings)
-               (buffer-append-line (window-buffer) s))))
-    (window-update-all)
-    (or result str)))
-
 (defun read-minibuffer (prompt initial comp-f existing-p)
   (setq *mb-print-flag* t)
   (let ((str initial)
@@ -85,7 +72,7 @@
           (when comp-f
             (setq comp-flag t)
             (setq str
-              (mb-completion comp-f str))))
+              (popup-completion comp-f str))))
          ((char= c key::ctrl-h)
           (setq str (subseq str 0 (1- (length str)))))
          ((char= c key::ctrl-u)

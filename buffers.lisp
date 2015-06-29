@@ -62,32 +62,30 @@
 
 (define-key *global-keymap* "C-xC-b" 'list-buffers)
 (define-command list-buffers () ()
-  (let* ((buf (get-buffer-create "*Buffers*"))
-         (max-name-len
+  (let* ((max-name-len
           (+ 3 (apply 'max
-                 (mapcar (lambda (b)
-                           (length (buffer-name b)))
-                   *buffer-list*))))
+                      (mapcar (lambda (b)
+                                (length (buffer-name b)))
+                              *buffer-list*))))
          (max-filename-len
           (apply 'max
-            (mapcar (lambda (b)
-                      (length (buffer-filename b)))
-              *buffer-list*))))
-    (pop-to-buffer buf)
-    (buffer-erase buf)
-    (buffer-append-line buf
-      (format nil
-        (format nil "MOD ROL Buffer~~~dTFile"
-          (+ 8 max-name-len))))
-    (buffer-append-line buf
-      (make-string (+ max-name-len max-filename-len 8)
-        :initial-element #\-))
-    (dolist (b *buffer-list*)
-      (buffer-append-line buf
-        (format nil
-          (format nil " ~a   ~a  ~a~~~dT~a"
-            (if (buffer-modified-p b) "*" " ")
-            (if (buffer-read-only-p b) "*" " ")
-            (buffer-name b)
-            (+ 8 max-name-len)
-            (or (buffer-filename b) "")))))))
+                 (mapcar (lambda (b)
+                           (length (buffer-filename b)))
+                         *buffer-list*))))
+    (popup-string
+     (get-buffer-create "*Buffers*")
+     (with-output-to-string (out)
+       (format out
+               (format nil "MOD ROL Buffer~~~dTFile~~%"
+                       (+ 8 max-name-len)))
+       (format out "~a~%"
+               (make-string (+ max-name-len max-filename-len 8)
+                            :initial-element #\-))
+       (dolist (b *buffer-list*)
+         (format out
+                 (format nil " ~a   ~a  ~a~~~dT~a~~%"
+                         (if (buffer-modified-p b) "*" " ")
+                         (if (buffer-read-only-p b) "*" " ")
+                         (buffer-name b)
+                         (+ 8 max-name-len)
+                         (or (buffer-filename b) ""))))))))

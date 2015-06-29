@@ -162,12 +162,24 @@
         (setq str (subseq str i))))
     (cons 'progn (nreverse exps))))
 
+(defun safe-eval (x)
+  (handler-case (eval x)
+    (error (cdt)
+           (popup-string
+            (get-buffer-create "*Error*")
+            (with-output-to-string (s)
+              (princ cdt s))))))
+
+(defun eval-string (str)
+  (write-message
+   (write-to-string
+    (safe-eval (string-to-exps str)))))
+
 (define-command eval-region (&optional begin end) ("r")
   (unless (or begin end)
     (setq begin (region-beginning))
     (setq end (region-end)))
-  (let ((expr (string-to-exps (region-string begin end))))
-    (write-message (format nil "~a" (eval expr))))
+  (eval-string (region-string begin end))
   t)
 
 (define-key *lisp-mode-keymap* "M-C-x" 'eval-defun)
@@ -224,19 +236,13 @@
                          (let ((start (point)))
                            (forward-sexp)
                            (prog1 (point)
-                             (point-set start))))))
-        (*current-window*
-         (pop-to-buffer
-          (get-buffer-create "*macroexpand*"))))
-    (erase-buffer)
-    (beginning-of-buffer)
-    (insert-string
-     (with-output-to-string (s)
-       (pprint (if arg
-                 (macroexpand expr)
-                 (macroexpand-1 expr))
-               s)))
-    (beginning-of-buffer)))
+                             (point-set start)))))))
+    (popup-string (get-buffer-create "*macroexpand*")
+                  (with-output-to-string (s)
+                    (pprint (if arg
+                              (macroexpand expr)
+                              (macroexpand-1 expr))
+                            s)))))
 
 (define-command indent-region-lisp () ()
   (let ((point (point)))

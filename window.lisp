@@ -343,6 +343,13 @@
     (set-buffer buffer)
     *current-window*))
 
+(defun popup-string (buffer string)
+  (let ((*current-window* (pop-to-buffer buffer)))
+    (erase-buffer)
+    (beginning-of-buffer)
+    (insert-string string)
+    (beginning-of-buffer)))
+
 (define-key *global-keymap* "C-x^" 'grow-window)
 (define-command grow-window (n) ("p")
   (if (one-window-p)

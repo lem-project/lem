@@ -85,14 +85,15 @@
     *universal-argument*))
 
 (define-command apropos (str) ("sApropos: ")
-  (let ((buffer (get-buffer-create "*Apropos*")))
-    (buffer-erase buffer)
-    (pop-to-buffer buffer)
-    (dolist (name *command-names*)
-      (when (search str name)
-        (let ((result (keybind-find-from-command name)))
-          (buffer-append-line buffer
-            (if result
-              (format nil "~a~a~a~a~a"
-                name #\tab (car result) #\tab (cadr result))
-              name)))))))
+  (popup-string
+   (get-buffer-create "*Apropos*")
+   (with-output-to-string (out)
+     (dolist (name *command-names*)
+       (when (search str name)
+         (let ((result (keybind-find-from-command name)))
+           (fresh-line out)
+           (princ (if result
+                    (format nil "~a~a~a~a~a"
+                            name #\tab (car result) #\tab (cadr result))
+                    name)
+                  out)))))))

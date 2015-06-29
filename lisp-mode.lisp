@@ -295,6 +295,31 @@
   (mark-sexp)
   (indent-region-lisp))
 
+(define-key *lisp-mode-keymap* "M-C-i" 'complete-symbol)
+(define-command complete-symbol () ()
+  (let* ((end (point))
+         (begin (prog2 (backward-sexp)
+                    (point)
+                  (point-set end)))
+         (str (region-string begin end)))
+    (when (< 0 (length str))
+      (let ((upcase-p (char<= #\A (aref str 0) #\Z))
+            (symbols))
+        (let ((str (string-upcase str)))
+          (do-symbols (sym)
+            (when (eql 0 (search str (symbol-name sym)))
+              (push (if upcase-p 
+                      (symbol-name sym)
+                      (string-downcase (symbol-name sym)))
+                    symbols))))
+        (let ((comp-str
+               (popup-completion (lambda (str)
+                                   (completion str symbols))
+                                 str)))
+          (insert-string
+           (subseq comp-str (length str)))))
+      t)))
+
 (defvar *inferior-lisp-mode-keymap*
         (make-keymap "inferior-lisp" 'undefined-key *lisp-mode-keymap*))
 

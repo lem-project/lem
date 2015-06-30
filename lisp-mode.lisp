@@ -165,27 +165,36 @@
         (setq str (subseq str i))))
     (cons 'progn (nreverse exps))))
 
-(defun safe-eval-1 (x)
+(defun eval-from-string (str)
+  (eval (string-to-exps str)))
+
+(defun safe-eval-from-string-1 (str)
+  (unless (get-buffer "*REPL*")
+    (let ((*current-window* *current-window*))
+      (inferior-lisp)))
   (let ((val))
     (let* ((eval-thread
             (bt:make-thread
              (lambda ()
-               (handler-case
-                   (let ((out (make-buffer-output-stream
-                               (get-buffer-create "*REPL*")
-                               (point))))
-                     (let ((*error-output* out)
-                           (*standard-output* out))
-                       (prog1 (setq val (eval x))
+               (let ((out 
+                      (let ((repl-buffer (get-buffer-create "*REPL*")))
+                        (make-buffer-output-stream
+                         repl-buffer
+                         (make-point (buffer-nlines repl-buffer)
+                                     0)))))
+                 (let ((*error-output* (or out *error-output*))
+                       (*standard-output* (or out *standard-output*)))
+                   (handler-case
+                       (prog1 (setq val (eval-from-string str))
                          (point-set (make-point
                                      (buffer-output-stream-linum out)
-                                     (buffer-output-stream-column out))))))
-                 (error (cdt)
-                        (let* ((buffer (get-buffer-create "*Error*"))
-                               (out (make-buffer-output-stream buffer)))
-                          (popup buffer 
-                                 (lambda ()
-                                   (princ cdt out)))))))))
+                                     (buffer-output-stream-column out))))
+                     (error (cdt)
+                            (let* ((buffer (get-buffer-create "*Error*"))
+                                   (out (make-buffer-output-stream buffer)))
+                              (popup buffer 
+                                     (lambda ()
+                                       (princ cdt out)))))))))))
            (mi-thread
             (bt:make-thread
              (lambda ()
@@ -196,20 +205,18 @@
       (bt:destroy-thread mi-thread))
     val))
 
-(defun safe-eval (x)
-  (let ((result
-         (handler-case (safe-eval-1 x)
-           #+sbcl
-           (sb-thread:join-thread-error
-            (cdt)
-            (write-message "interrupt")
-            nil))))
-    result))
+(defun safe-eval-from-string (x)
+  (handler-case (safe-eval-from-string-1 x)
+    #+sbcl
+    (sb-thread:join-thread-error
+     (cdt)
+     (write-message "interrupt")
+     nil)))
 
 (defun eval-string (str)
   (write-message
    (write-to-string
-    (safe-eval (string-to-exps str)))))
+    (safe-eval-from-string str))))
 
 (define-command eval-region (&optional begin end) ("r")
   (unless (or begin end)
@@ -338,11 +345,10 @@
   (let ((point (point)))
     (when (backward-sexp)
       (mark-sexp)
-      (let ((expr
-             (read-from-string
-              (region-string (region-beginning)
-                             (region-end)))))
+
+      (let ((str (region-string (region-beginning)
+                                (region-end))))
         (point-set point)
         (insert-newline 1)
-        (insert-string (write-to-string (safe-eval expr)))
+        (insert-string (write-to-string (safe-eval-from-string str)))
         (insert-newline 1)))))

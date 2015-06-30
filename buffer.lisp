@@ -81,7 +81,7 @@
     (setf (buffer-mark-linum buffer) 1)
     (setf (buffer-mark-col buffer) 0)
     (setf (buffer-nlines buffer) 1)
-    (setf (buffer-undo-stack buffer) nil)
+    (setf (buffer-undo-stack buffer) (make-tlist))
     (setf (buffer-redo-stack buffer) nil)
     (push buffer *buffer-list*)
     buffer))
@@ -92,7 +92,7 @@
     (buffer-filename buffer)))
 
 (defun push-undo-stack (buffer elt)
-  (push elt (buffer-undo-stack buffer)))
+  (tlist-add-right (buffer-undo-stack buffer) elt))
 
 (defun push-redo-stack (buffer elt)
   (push elt (buffer-redo-stack buffer)))
@@ -372,7 +372,7 @@
     (setf (buffer-cache-linum buffer) 1)
     (setf (buffer-keep-binfo buffer) nil)
     (setf (buffer-nlines buffer) 1)
-    (setf (buffer-undo-stack buffer) nil)
+    (setf (buffer-undo-stack buffer) (make-tlist))
     (setf (buffer-redo-stack buffer) nil)))
 
 (defun buffer-check-marked (buffer)
@@ -383,9 +383,12 @@
      nil)))
 
 (defun buffer-undo (buffer)
-  (let ((f (pop (buffer-undo-stack buffer))))
-    (when f
-      (let ((*use-redo-stack* t))
+  (let ((tlist (buffer-undo-stack buffer)))
+    (unless (tlist-empty-p tlist)
+      (let ((f (tlist-right tlist))
+            (*use-redo-stack* t))
+        (setf (car tlist) (butlast (car tlist)))
+        (tlist-update tlist)
         (funcall f)))))
 
 (defun buffer-redo (buffer)

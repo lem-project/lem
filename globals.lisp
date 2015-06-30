@@ -9,7 +9,10 @@
 
 (defvar *tab-size* 8)
 
-(defvar *last-kill-flag* nil)
-(defvar *curr-kill-flag* nil)
+(defvar *last-flags* nil)
+(defvar *curr-flags* nil)
 
 (defvar *universal-argument* nil)
+
+(defstruct flags
+  kill)

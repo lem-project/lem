@@ -179,8 +179,8 @@
 
 (defun lem-main ()
   (do ((*exit* nil)
-       (*curr-kill-flag* nil nil)
-       (*last-kill-flag* nil *curr-kill-flag*))
+       (*curr-flags* (make-flags) (make-flags))
+       (*last-flags* (make-flags) *curr-flags*))
       (*exit*)
     (window-update-all)
     (case (catch 'abort

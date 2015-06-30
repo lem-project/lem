@@ -49,8 +49,8 @@
 
 (defmacro with-kill (() &body body)
   `(progn
-    (when (not *last-kill-flag*)
+    (when (not (flags-kill *last-flags*))
       (setq *kill-new-flag* t))
-    (setq *curr-kill-flag* t)
-    (setq *last-kill-flag* t)
+    (setf (flags-kill *curr-flags*) t)
+    (setf (flags-kill *last-flags*) t)
     ,@body))

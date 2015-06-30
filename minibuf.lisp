@@ -85,7 +85,7 @@
     (cond
      ((and comp-flag one-window-p)
       (delete-completion-window))
-     (comp-flag
+     ((and comp-flag *completion-window*)
       (let ((*current-window* *completion-window*))
         (set-buffer *prev-buffer*))))
     str))

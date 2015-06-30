@@ -74,7 +74,8 @@
             (setq str
               (popup-completion comp-f str))))
          ((char= c key::ctrl-h)
-          (setq str (subseq str 0 (1- (length str)))))
+          (when (< 0 (length str))
+            (setq str (subseq str 0 (1- (length str))))))
          ((char= c key::ctrl-u)
           (setq str ""))
          ((char= c key::ctrl-q)

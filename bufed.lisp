@@ -471,3 +471,10 @@
   (beginning-of-line)
   (skip-chars-forward (lambda (c) (member c '(#\space #\tab))))
   t)
+
+(define-key *global-keymap* "C-z" 'undo)
+(define-command undo () ()
+  (let ((point (buffer-undo (window-buffer))))
+    (when point
+      (point-set point)
+      t)))

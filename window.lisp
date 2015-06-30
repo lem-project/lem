@@ -195,7 +195,7 @@
 	(window-scroll window offset)))))
 
 (defun window-update (window)
-  (window-adjust-view window nil)
+  (window-adjust-view window t)
   (window-redraw window))
 
 (defun window-update-all ()

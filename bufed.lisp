@@ -478,3 +478,10 @@
     (when point
       (point-set point)
       t)))
+
+(define-key *global-keymap* "M-C-z" 'redo)
+(define-command redo () ()
+  (let ((point (buffer-redo (window-buffer))))
+    (when point
+      (point-set point)
+      t)))

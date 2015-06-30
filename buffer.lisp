@@ -62,9 +62,11 @@
   keep-binfo
   nlines
   undo-stack
+  redo-stack
   )
 
 (defvar *use-undo-stack* t)
+(defvar *use-redo-stack* nil)
 
 (defun make-buffer (name &key filename read-only-p)
   (let ((buffer (make-instance 'buffer
@@ -80,6 +82,7 @@
     (setf (buffer-mark-col buffer) 0)
     (setf (buffer-nlines buffer) 1)
     (setf (buffer-undo-stack buffer) nil)
+    (setf (buffer-redo-stack buffer) nil)
     (push buffer *buffer-list*)
     buffer))
 
@@ -88,17 +91,26 @@
     (buffer-name buffer)
     (buffer-filename buffer)))
 
+(defun push-undo-stack (buffer elt)
+  (push elt (buffer-undo-stack buffer)))
+
+(defun push-redo-stack (buffer elt)
+  (push elt (buffer-redo-stack buffer)))
+
 (defmacro with-push-undo ((buffer) &body body)
   (let ((gmark-linum (gensym "MARK-LINUM"))
         (gmark-col (gensym "MARK-COL")))
-    `(when *use-undo-stack*
+    `(when (or *use-undo-stack*
+               *use-redo-stack*)
        (let ((,gmark-linum (buffer-mark-linum ,buffer))
              (,gmark-col (buffer-mark-col ,buffer)))
-         (push (lambda ()
-                 (setf (buffer-mark-col ,buffer) ,gmark-col)
-                 (setf (buffer-mark-linum ,buffer) ,gmark-linum)
-                 ,@body)
-               (buffer-undo-stack ,buffer))))))
+         (let ((elt (lambda ()
+                      (setf (buffer-mark-col ,buffer) ,gmark-col)
+                      (setf (buffer-mark-linum ,buffer) ,gmark-linum)
+                      ,@body)))
+           (if *use-redo-stack*
+             (push-redo-stack ,buffer elt)
+             (push-undo-stack ,buffer elt)))))))
 
 (defmacro buffer-read-only-guard (buffer)
   `(when (buffer-read-only-p ,buffer)
@@ -360,7 +372,8 @@
     (setf (buffer-cache-linum buffer) 1)
     (setf (buffer-keep-binfo buffer) nil)
     (setf (buffer-nlines buffer) 1)
-    (setf (buffer-undo-stack buffer) nil)))
+    (setf (buffer-undo-stack buffer) nil)
+    (setf (buffer-redo-stack buffer) nil)))
 
 (defun buffer-check-marked (buffer)
   (if (buffer-mark-linum buffer)
@@ -372,7 +385,13 @@
 (defun buffer-undo (buffer)
   (let ((f (pop (buffer-undo-stack buffer))))
     (when f
-      (let ((*use-undo-stack*))
+      (let ((*use-redo-stack* t))
+        (funcall f)))))
+
+(defun buffer-redo (buffer)
+  (let ((f (pop (buffer-redo-stack buffer))))
+    (when f
+      (let ((*use-undo-stack* t))
         (funcall f)))))
 
 (defclass buffer-output-stream (sb-gray:fundamental-output-stream)

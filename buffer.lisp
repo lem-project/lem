@@ -61,12 +61,14 @@
   mark-col
   keep-binfo
   nlines
+  undo-size
   undo-stack
   redo-stack
   )
 
 (defvar *use-undo-stack* t)
 (defvar *use-redo-stack* nil)
+(defvar *undo-limit* 10000)
 
 (defun make-buffer (name &key filename read-only-p)
   (let ((buffer (make-instance 'buffer
@@ -81,6 +83,7 @@
     (setf (buffer-mark-linum buffer) 1)
     (setf (buffer-mark-col buffer) 0)
     (setf (buffer-nlines buffer) 1)
+    (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) (make-tlist))
     (setf (buffer-redo-stack buffer) nil)
     (push buffer *buffer-list*)
@@ -92,6 +95,10 @@
     (buffer-filename buffer)))
 
 (defun push-undo-stack (buffer elt)
+  (cond ((<= *undo-limit* (buffer-undo-size buffer))
+         (tlist-rem-left (buffer-undo-stack buffer)))
+        (t
+         (incf (buffer-undo-size buffer))))
   (tlist-add-right (buffer-undo-stack buffer) elt))
 
 (defun push-redo-stack (buffer elt)
@@ -302,50 +309,50 @@
         (result t)
         (old-modified-p (buffer-modified-p buffer)))
     (loop while (plusp n) do
-      (cond
-       ((<= n (- (length (line-str line)) col))
-        (when (and (= linum (buffer-mark-linum buffer))
+          (cond
+           ((<= n (- (length (line-str line)) col))
+            (when (and (= linum (buffer-mark-linum buffer))
+                       (< col (buffer-mark-col buffer)))
+              (setf (buffer-mark-col buffer)
+                    (if (> col (- (buffer-mark-col buffer) n))
+                      col
+                      (- (buffer-mark-col buffer) n))))
+            (setf (buffer-modified-p buffer) t)
+            (setf (car del-lines)
+                  (concatenate 'string
+                               (car del-lines)
+                               (subseq (line-str line) col (+ col n))))
+            (setf (line-str line)
+                  (concatenate 'string
+                               (subseq (line-str line) 0 col)
+                               (subseq (line-str line) (+ col n))))
+            (setq n 0))
+           (t
+            (cond
+             ((and (= linum (buffer-mark-linum buffer))
                    (< col (buffer-mark-col buffer)))
-          (setf (buffer-mark-col buffer)
-            (if (> col (- (buffer-mark-col buffer) n))
-              col
-              (- (buffer-mark-col buffer) n))))
-        (setf (buffer-modified-p buffer) t)
-        (setf (car del-lines)
-          (concatenate 'string
-            (car del-lines)
-            (subseq (line-str line) col (+ col n))))
-        (setf (line-str line)
-          (concatenate 'string
-            (subseq (line-str line) 0 col)
-            (subseq (line-str line) (+ col n))))
-        (setq n 0))
-       (t
-        (cond
-         ((and (= linum (buffer-mark-linum buffer))
-               (< col (buffer-mark-col buffer)))
-          (setf (buffer-mark-col buffer) col))
-         ((< linum (buffer-mark-linum buffer))
-          (decf (buffer-mark-linum buffer))))
-        (setf (car del-lines)
-          (concatenate 'string
-            (car del-lines)
-            (subseq (line-str line) col)))
-        (push "" del-lines)
-        (unless (line-next line)
-          (setq result nil)
-          (return nil))
-        (decf n (1+ (- (length (line-str line)) col)))
-        (decf (buffer-nlines buffer))
-        (setf (buffer-modified-p buffer) t)
-        (setf (line-str line)
-          (concatenate 'string
-            (subseq (line-str line) 0 col)
-            (line-str (line-next line))))
-        (when (eq (line-next line)
-                  (buffer-tail-line buffer))
-          (setf (buffer-tail-line buffer) line))
-        (line-free (line-next line)))))
+              (setf (buffer-mark-col buffer) col))
+             ((< linum (buffer-mark-linum buffer))
+              (decf (buffer-mark-linum buffer))))
+            (setf (car del-lines)
+                  (concatenate 'string
+                               (car del-lines)
+                               (subseq (line-str line) col)))
+            (push "" del-lines)
+            (unless (line-next line)
+              (setq result nil)
+              (return nil))
+            (decf n (1+ (- (length (line-str line)) col)))
+            (decf (buffer-nlines buffer))
+            (setf (buffer-modified-p buffer) t)
+            (setf (line-str line)
+                  (concatenate 'string
+                               (subseq (line-str line) 0 col)
+                               (line-str (line-next line))))
+            (when (eq (line-next line)
+                      (buffer-tail-line buffer))
+              (setf (buffer-tail-line buffer) line))
+            (line-free (line-next line)))))
     (setq del-lines (nreverse del-lines))
     (with-push-undo (buffer)
       (let ((linum linum)
@@ -371,6 +378,7 @@
     (setf (buffer-cache-linum buffer) 1)
     (setf (buffer-keep-binfo buffer) nil)
     (setf (buffer-nlines buffer) 1)
+    (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) (make-tlist))
     (setf (buffer-redo-stack buffer) nil)))
 
@@ -384,6 +392,7 @@
 (defun buffer-undo (buffer)
   (let ((tlist (buffer-undo-stack buffer)))
     (unless (tlist-empty-p tlist)
+      (decf (buffer-undo-size buffer))
       (let ((f (tlist-right tlist))
             (*use-redo-stack* t))
         (setf (car tlist) (butlast (car tlist)))

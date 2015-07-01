@@ -15,4 +15,5 @@
 (defvar *universal-argument* nil)
 
 (defstruct flags
-  kill)
+  kill
+  undo)

@@ -99,7 +99,11 @@
          (tlist-rem-left (buffer-undo-stack buffer)))
         (t
          (incf (buffer-undo-size buffer))))
-  (tlist-add-right (buffer-undo-stack buffer) elt))
+  (when (not (flags-undo *last-flags*))
+    (tlist-add-right (buffer-undo-stack buffer) :undo-separator))
+  (tlist-add-right (buffer-undo-stack buffer) elt)
+  (setf (flags-undo *curr-flags*) t)
+  (setf (flags-undo *last-flags*) t))
 
 (defun push-redo-stack (buffer elt)
   (push elt (buffer-redo-stack buffer)))
@@ -369,15 +373,21 @@
      (write-message "Not mark in this buffer")
      nil)))
 
-(defun buffer-undo (buffer)
+(defun buffer-undo-1 (buffer)
   (let ((tlist (buffer-undo-stack buffer)))
     (unless (tlist-empty-p tlist)
       (decf (buffer-undo-size buffer))
-      (let ((f (tlist-right tlist))
+      (let ((elt (tlist-right tlist))
             (*use-redo-stack* t))
         (setf (car tlist) (butlast (car tlist)))
         (tlist-update tlist)
-        (funcall f)))))
+        (unless (eq elt :undo-separator)
+          (funcall elt))))))
+
+(defun buffer-undo (buffer)
+  (do ((res #1=(buffer-undo-1 buffer) #1#)
+       (pres nil res))
+      ((not res) pres)))
 
 (defun buffer-redo (buffer)
   (let ((f (pop (buffer-redo-stack buffer))))

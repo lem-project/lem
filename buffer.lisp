@@ -99,11 +99,10 @@
          (tlist-rem-left (buffer-undo-stack buffer)))
         (t
          (incf (buffer-undo-size buffer))))
-  (when (not (flags-undo *last-flags*))
-    (tlist-add-right (buffer-undo-stack buffer) :undo-separator))
-  (tlist-add-right (buffer-undo-stack buffer) elt)
-  (setf (flags-undo *curr-flags*) t)
-  (setf (flags-undo *last-flags*) t))
+  (when-interrupted-flag 
+   undo
+   (tlist-add-right (buffer-undo-stack buffer) :undo-separator))
+  (tlist-add-right (buffer-undo-stack buffer) elt))
 
 (defun push-redo-stack (buffer elt)
   (push elt (buffer-redo-stack buffer)))

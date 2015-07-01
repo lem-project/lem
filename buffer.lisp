@@ -84,7 +84,7 @@
     (setf (buffer-mark-col buffer) 0)
     (setf (buffer-nlines buffer) 1)
     (setf (buffer-undo-size buffer) 0)
-    (setf (buffer-undo-stack buffer) (make-tlist))
+    (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
     (push buffer *buffer-list*)
     buffer))
@@ -96,13 +96,13 @@
 
 (defun push-undo-stack (buffer elt)
   (cond ((<= *undo-limit* (buffer-undo-size buffer))
-         (tlist-rem-left (buffer-undo-stack buffer)))
+         )
         (t
          (incf (buffer-undo-size buffer))))
   (when-interrupted-flag 
    undo
-   (tlist-add-right (buffer-undo-stack buffer) :undo-separator))
-  (tlist-add-right (buffer-undo-stack buffer) elt))
+   (push :undo-separator (buffer-undo-stack buffer)))
+  (push elt (buffer-undo-stack buffer)))
 
 (defun push-redo-stack (buffer elt)
   (push elt (buffer-redo-stack buffer)))
@@ -362,7 +362,7 @@
     (setf (buffer-keep-binfo buffer) nil)
     (setf (buffer-nlines buffer) 1)
     (setf (buffer-undo-size buffer) 0)
-    (setf (buffer-undo-stack buffer) (make-tlist))
+    (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)))
 
 (defun buffer-check-marked (buffer)
@@ -373,26 +373,36 @@
      nil)))
 
 (defun buffer-undo-1 (buffer)
-  (let ((tlist (buffer-undo-stack buffer)))
-    (unless (tlist-empty-p tlist)
+  (let ((elt (pop (buffer-undo-stack buffer))))
+    (when elt
       (decf (buffer-undo-size buffer))
-      (let ((elt (tlist-right tlist))
-            (*use-redo-stack* t))
-        (setf (car tlist) (butlast (car tlist)))
-        (tlist-update tlist)
+      (let ((*use-redo-stack* t))
         (unless (eq elt :undo-separator)
           (funcall elt))))))
 
 (defun buffer-undo (buffer)
-  (do ((res #1=(buffer-undo-1 buffer) #1#)
-       (pres nil res))
-      ((not res) pres)))
+  (when (eq :undo-separator (car (buffer-undo-stack buffer)))
+    (pop (buffer-undo-stack buffer)))
+  (prog1
+      (do ((res #1=(buffer-undo-1 buffer) #1#)
+           (pres nil res))
+          ((not res) pres))
+    (push :undo-separator (buffer-redo-stack buffer))))
+
+(defun buffer-redo-1 (buffer)
+  (let ((elt (pop (buffer-redo-stack buffer))))
+    (when elt
+      (let ((*use-undo-stack* t))
+        (unless (eq elt :undo-separator)
+          (funcall elt))))))
 
 (defun buffer-redo (buffer)
-  (let ((f (pop (buffer-redo-stack buffer))))
-    (when f
-      (let ((*use-undo-stack* t))
-        (funcall f)))))
+  (when (eq :undo-separator (car (buffer-redo-stack buffer)))
+    (pop (buffer-redo-stack buffer)))
+  (prog1 (do ((res #1=(buffer-redo-1 buffer) #1#)
+              (pres nil res))
+             ((not res) pres))
+    (push :undo-separator (buffer-undo-stack buffer))))
 
 (defclass buffer-output-stream (sb-gray:fundamental-output-stream)
   ((buffer

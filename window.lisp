@@ -91,7 +91,7 @@
           (format nil "~c~c ~a: ~a (~a) (~d, ~d)"
                   (if (buffer-read-only-p (window-buffer window)) #\% bg-char)
                   (if (buffer-modified-p (window-buffer window)) #\* bg-char)
-                  "Lem"
+                  *program-name*
                   (buffer-name (window-buffer window))
                   (let ((*current-window* window))
                     (mode-name))

@@ -192,13 +192,16 @@
        (keyboard-quit)))))
 
 (defun lem (&rest args)
+  (unwind-protect
+    (progn
+      (lem-init args)
+      (lem-main))
+    (lem-finallize)))
+
+(defun lem-save-error (&rest args)
   (let ((*print-circle* t))
     (with-open-file (*error-output* "ERROR"
-                      :direction :output
-                      :if-exists :overwrite
-                      :if-does-not-exist :create)
-      (unwind-protect
-       (progn
-        (lem-init args)
-        (lem-main))
-       (lem-finallize)))))
+                                    :direction :output
+                                    :if-exists :overwrite
+                                    :if-does-not-exist :create)
+      (apply #'lem args))))

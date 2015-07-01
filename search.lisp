@@ -70,6 +70,13 @@
   (search-backward-aux *isearch-string*)
   (isearch-update-minibuf))
 
+(define-key *isearch-keymap* "C-y" 'isearch-yank)
+(define-command isearch-yank () ()
+  (let ((str (caar *kill-ring-yank-ptr*)))
+    (when str
+      (setq *isearch-string* str)
+      (isearch-update-minibuf))))
+
 (defun isearch-add-char (c)
   (setq *isearch-string*
     (concatenate 'string

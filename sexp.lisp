@@ -76,28 +76,31 @@
   (point-set point)
   (dotimes (_ (abs count) t)
     (unless
-      (do-scan outer
-               (if (plusp count) 1 -1)
-               (x dir)
-               (ecase x
-                 ((open-paren closed-paren)
-                  (if (eq x 'open-paren)
-                    (incf depth)
-                    (decf depth))
-                  (cond ((zerop depth)
-                         (next-char dir)
-                         (when (minusp dir)
-                           (do () 
-                               ((not (syntax-expr-prefix-char-p
-                                      (preceding-char))))
-                             (prev-char)))
-                         (return-from outer t))
-                        ((minusp depth)
-                         (return-from outer nil)))) 
-                 (string-quote
-                  (scan-string (point) dir))
-                 ((symbol space expr-prefix)
-                  nil)))
+        (let ((in-string-p))
+          (do-scan outer
+            (if (plusp count) 1 -1)
+            (x dir)
+            (ecase x
+              ((open-paren closed-paren)
+               (unless in-string-p
+                 (if (eq x 'open-paren)
+                   (incf depth)
+                   (decf depth))
+                 (cond ((zerop depth)
+                        (next-char dir)
+                        (when (minusp dir)
+                          (do ()
+                              ((not (syntax-expr-prefix-char-p
+                                     (preceding-char))))
+                            (prev-char)))
+                        (return-from outer t))
+                       ((minusp depth)
+                        (return-from outer nil)))) )
+              (string-quote
+               (setq in-string-p
+                     (not in-string-p)))
+              ((symbol space expr-prefix)
+               nil))))
       (point-set point)
       (return nil))))
 

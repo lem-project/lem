@@ -116,17 +116,18 @@
 (defmacro with-push-undo ((buffer) &body body)
   (let ((gmark-linum (gensym "MARK-LINUM"))
         (gmark-col (gensym "MARK-COL")))
-    `(when (or *use-undo-stack*
-               *use-redo-stack*)
-       (let ((,gmark-linum (buffer-mark-linum ,buffer))
-             (,gmark-col (buffer-mark-col ,buffer)))
-         (let ((elt (lambda ()
-                      (setf (buffer-mark-col ,buffer) ,gmark-col)
-                      (setf (buffer-mark-linum ,buffer) ,gmark-linum)
-                      ,@body)))
-           (if *use-redo-stack*
-             (push-redo-stack ,buffer elt)
-             (push-undo-stack ,buffer elt)))))))
+    `(unless (special-buffer-p ,buffer)
+       (when (or *use-undo-stack*
+                 *use-redo-stack*)
+         (let ((,gmark-linum (buffer-mark-linum ,buffer))
+               (,gmark-col (buffer-mark-col ,buffer)))
+           (let ((elt (lambda ()
+                        (setf (buffer-mark-col ,buffer) ,gmark-col)
+                        (setf (buffer-mark-linum ,buffer) ,gmark-linum)
+                        ,@body)))
+             (if *use-redo-stack*
+               (push-redo-stack ,buffer elt)
+               (push-undo-stack ,buffer elt))))))))
 
 (defmacro buffer-read-only-guard (buffer)
   `(when (buffer-read-only-p ,buffer)

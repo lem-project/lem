@@ -1,12 +1,13 @@
 (in-package :lem)
 
+(defun special-buffer-p (buffer)
+  (let ((name (buffer-name buffer)))
+    (and
+     (char= #\* (aref name 0))
+     (char= #\* (aref name (1- (length name)))))))
+
 (defun filter-special-buffers ()
-  (remove-if (lambda (buffer)
-               (let ((name (buffer-name buffer)))
-                 (and
-                  (char= #\* (aref name 0))
-                  (char= #\* (aref name (1- (length name)))))))
-    *buffer-list*))
+  (remove-if #'special-buffer-p *buffer-list*))
 
 (defun any-modified-buffer-p ()
   (find-if 'buffer-modified-p

@@ -127,15 +127,15 @@
         result)))))
 
 (define-key *global-keymap* "C-h" 'backward-delete-char)
-(define-command backward-delete-char (&optional n) ("P")
+(define-command backward-delete-char (&optional n does-not-kill-p) ("P")
   (cond ((null n)
          (prev-char)
          (delete-char))
         ((minusp n)
-         (delete-char (- n)))
+         (delete-char (- n) does-not-kill-p))
         (t
          (when (prev-char n)
-           (delete-char n)))))
+           (delete-char n does-not-kill-p)))))
 
 (define-key *global-keymap* "C-k" 'kill-line)
 (define-command kill-line (&optional n) ("P")

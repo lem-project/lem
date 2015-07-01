@@ -253,9 +253,11 @@
 
 (define-key *lisp-mode-keymap* "C-xl" 'load-file)
 (define-command load-file (filename) ("fLoad File: ")
-  (write-message
-   (format nil "~a"
-           (load filename))))
+  (when (and (file-exist-p filename)
+             (not (file-directory-p filename)))
+    (write-message
+     (format nil "~a"
+             (load filename)))))
 
 (define-key *lisp-mode-keymap* "C-xz" 'go-to-lisp)
 (define-key *lisp-mode-keymap* "M-z" 'go-to-lisp)

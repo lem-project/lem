@@ -16,6 +16,9 @@
     (concatenate 'string filename "/")
     filename))
 
+(defun file-directory-p (filename)
+  (string= "" (file-name-nondirectory filename)))
+
 (defun current-directory ()
   (if (buffer-filename)
     (file-name-directory

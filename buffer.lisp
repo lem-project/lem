@@ -95,8 +95,14 @@
     (buffer-filename buffer)))
 
 (defun push-undo-stack (buffer elt)
-  (cond ((<= *undo-limit* (buffer-undo-size buffer))
-         )
+  (cond ((<= (+ *undo-limit* (floor (* *undo-limit* 0.3)))
+             (buffer-undo-size buffer))
+         (setf (buffer-undo-stack buffer)
+               (subseq (buffer-undo-stack buffer)
+                       0
+                       *undo-limit*))
+         (setf (buffer-undo-size buffer)
+               (1+ (length (buffer-undo-stack buffer)))))
         (t
          (incf (buffer-undo-size buffer))))
   (when-interrupted-flag 

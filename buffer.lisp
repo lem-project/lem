@@ -170,26 +170,6 @@
     (when (line-p line)
       (line-str line))))
 
-(defun buffer-line-string-set (buffer linum str)
-  (buffer-read-only-guard buffer)
-  (let ((line (buffer-get-line buffer linum))
-        (mark-linum (buffer-mark-linum buffer))
-        (mark-col (buffer-mark-col buffer)))
-    (let ((oldstr (line-str line))
-          (old-modified-p (buffer-modified-p buffer)))
-      (with-push-undo (buffer)
-        (buffer-line-string-set buffer
-                                linum
-                                oldstr)
-        (setf (buffer-modified-p buffer) old-modified-p)
-        (make-point linum (length oldstr))))
-    (setf (buffer-modified-p buffer) t)
-    (when (and (= linum (buffer-mark-linum buffer))
-               (< (length str) (buffer-mark-linum buffer)))
-      (setf (buffer-mark-linum buffer) (length str)))
-    (when (line-p line)
-      (setf (line-str line) str))))
-
 (defun map-buffer-lines (fn buffer &optional start end)
   (let ((head-line
          (if start

@@ -127,7 +127,7 @@
         result)))))
 
 (define-key *global-keymap* "C-h" 'backward-delete-char)
-(define-command backward-delete-char (n) ("P")
+(define-command backward-delete-char (&optional n) ("P")
   (cond ((null n)
          (prev-char)
          (delete-char))
@@ -323,24 +323,24 @@
 
 (defun tab-line-aux (n make-space-str)
   (dotimes (_ n t)
-    (let ((str (buffer-line-string (window-buffer) (window-cur-linum)))
-          (count 0)
-          (index 0))
-      (dotimes (i (length str))
-        (setq index i)
-        (case (aref str i)
+    (let ((count 0))
+      (beginning-of-line)
+      (do ((c #1=(following-char) #1#))
+          ((eolp))
+        (case c
           (#\space
            (incf count))
           (#\tab
            (setq count (char-width #\tab count)))
           (otherwise
-           (return))))
-      (multiple-value-bind (div mod) (floor count *tab-size*)
-        (buffer-line-string-set (window-buffer) (window-cur-linum)
-          (concatenate 'string
-            (funcall make-space-str div)
-            (make-string mod :initial-element #\space)
-            (subseq str index)))))
+           (return)))
+        (next-char))
+      (multiple-value-bind (div mod)
+          (floor count *tab-size*)
+        (beginning-of-line)
+        (delete-while-whitespaces t nil)
+        (insert-string (funcall make-space-str div))
+        (insert-char #\space mod)))
     (unless (next-line 1)
       (return))))
 
@@ -357,13 +357,15 @@
       (make-string (* n *tab-size*) :initial-element #\space))))
 
 (defun blank-line-p ()
-  (let ((str (buffer-line-string
-              (window-buffer)
-              (window-cur-linum))))
-    (dotimes (i (length str) (1+ (length str)))
-      (let ((c (aref str i)))
-        (unless (or (char= c #\space) (char= c #\tab))
-          (return nil))))))
+  (let ((point (point)))
+    (beginning-of-line)
+    (prog1 (do ((count 0 (1+ count)))
+               ((eolp) (1+ count))
+             (case (following-char)
+               ((#\space #\tab))
+               (otherwise (return nil)))
+             (next-char))
+      (point-set point))))
 
 (define-key *global-keymap* "C-xC-o" 'delete-blank-lines)
 (define-command delete-blank-lines () ()
@@ -379,27 +381,22 @@
 
 (define-key *global-keymap* "C-t" 'transpose-characters)
 (define-command transpose-characters () ()
-  (cond
-   ((bolp))
-   ((eolp)
-    (let* ((str (buffer-line-string (window-buffer) (window-cur-linum)))
-           (len (length str)))
-      (when (< 1 len)
-        (buffer-line-string-set (window-buffer) (window-cur-linum)
-          (concatenate 'string
-            (subseq str 0 (- len 2))
-            (string (aref str (- len 1)))
-            (string (aref str (- len 2)))))))
-    t)
-   (t
-    (let ((str (buffer-line-string (window-buffer) (window-cur-linum))))
-      (buffer-line-string-set (window-buffer) (window-cur-linum)
-        (concatenate 'string
-          (subseq str 0 (- (window-cur-col) 1))
-          (string (aref str (window-cur-col)))
-          (string (aref str (1- (window-cur-col))))
-          (subseq str (1+ (window-cur-col))))))
-    t)))
+  (cond ((bolp))
+        ((eolp)
+         (let* ((c1 (char-before 1))
+                (c2 (char-before 2)))
+           (unless (eql c2 #\newline)
+             (backward-delete-char)
+             (backward-delete-char)
+             (insert-char c1 1)
+             (insert-char c2 1))))
+        (t
+         (let* ((c1 (following-char))
+                (c2 (preceding-char)))
+           (delete-char)
+           (backward-delete-char)
+           (insert-char c1 1)
+           (insert-char c2 1)))))
 
 (define-command erase-buffer () ()
   (beginning-of-buffer)

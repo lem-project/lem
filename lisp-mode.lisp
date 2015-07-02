@@ -281,7 +281,8 @@
                          (let ((start (point)))
                            (forward-sexp)
                            (prog1 (point)
-                             (point-set start)))))))
+                             (point-set start))))
+          nil)))
     (let* ((buffer (get-buffer-create "*macroexpand*"))
            (out (make-buffer-output-stream buffer)))
       (popup buffer

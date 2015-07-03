@@ -7,6 +7,7 @@
   y
   x
   buffer
+  display-lines
   vtop-linum
   cur-linum
   cur-col
@@ -15,16 +16,17 @@
 (defun make-window (buffer nlines ncols y x)
   (let ((window
          (make-instance 'window
-          :win (cl-ncurses:newwin nlines ncols y x)
-          :nlines nlines
-          :ncols ncols
-          :y y
-          :x x
-          :buffer buffer
-          :vtop-linum 1
-          :cur-linum 1
-          :cur-col 0
-          :max-col 0)))
+                        :win (cl-ncurses:newwin nlines ncols y x)
+                        :nlines nlines
+                        :ncols ncols
+                        :y y
+                        :x x
+                        :buffer buffer
+                        :display-lines (make-array nlines :initial-element "")
+                        :vtop-linum 1
+                        :cur-linum 1
+                        :cur-col 0
+                        :max-col 0)))
     window))
 
 (defvar *current-cols*)
@@ -47,7 +49,8 @@
 
 (define-key *global-keymap* "C-l" 'recenter)
 (define-command recenter () ()
-  (window-recenter *current-window*))
+  (window-recenter *current-window*)
+  t)
 
 (defun window-recenter (window)
   (setf (window-vtop-linum window)
@@ -83,10 +86,8 @@
                     (buffer-nlines (window-buffer window))))))))))
 
 (defun window-redraw-modeline-1 (window bg-char)
-  (cl-ncurses:mvwaddstr
-   (window-win window)
-   (1- (window-nlines window))
-   0
+  (window-redraw-line-1
+   window
    (let ((str
           (format nil "~c~c ~a: ~a (~a) (~d, ~d)"
                   (if (buffer-read-only-p (window-buffer window)) #\% bg-char)
@@ -104,7 +105,8 @@
 	 bg-char
 	 (window-posline window)
 	 (make-string 2 :initial-element bg-char))
-       str))))
+       str))
+   (1- (window-nlines window))))
 
 (defun window-redraw-modeline (window)
   (cl-ncurses:wattron (window-win window) cl-ncurses:a_reverse)
@@ -115,42 +117,61 @@
   (- (window-cur-linum window)
      (window-vtop-linum window)))
 
+(defun window-redraw-line-1 (window str y)
+  (when (string/= str (aref (window-display-lines window) y))
+    (setf (aref (window-display-lines window) y) str)
+    (cl-ncurses:mvwaddstr
+     (window-win window) y 0
+     (concatenate 'string
+                  str
+                  (make-string (- (window-ncols window) (length str))
+                               :initial-element #\space)))
+    (cl-ncurses:touchline (window-win) y 1)))
+
 (defun window-redraw-line (window str y)
-  (let ((width (str-width str))
-        (cury (window-cursor-y window))
-        (cols (window-ncols window))
+  (let ((cury (window-cursor-y window))
         (curx))
     (when (= cury y)
       (setq curx (str-width str (window-cur-col window))))
-    (cond
-      ((< width (window-ncols window))
-        nil)
-      ((or (/= cury y)
-           (< curx (1- cols)))
-	(let ((i (wide-index str cols)))
+    (when (string/= str (aref (window-display-lines window) y))
+      (setf (aref (window-display-lines window) y) str)
+      (let ((width (str-width str))
+            (cols (window-ncols window)))
+        (cond
+         ((< width (window-ncols window))
+          nil)
+         ((or (/= cury y)
+              (< curx (1- cols)))
+          (let ((i (wide-index str cols)))
+            (setq str
+                  (if (<= cols (str-width str i))
+                    (format nil "~a $" (subseq str 0 (1- i)))
+                    (format nil "~a$" (subseq str 0 i))))))
+         ((< (window-cur-col window) (length str))
+          (let* ((begin (wide-index str (- curx cols -4)))
+                 (end (1+ (window-cur-col window)))
+                 (substr (subseq str begin end)))
+            (setq curx (- cols 2))
+            (if (wide-char-p (aref substr (- (length substr) 1)))
+              (progn
+                (setq str
+                      (format nil "$~a $"
+                              (subseq substr 0 (1- (length substr)))))
+                (decf curx))
+              (setq str (format nil "$~a$" substr)))))
+         (t
           (setq str
-                (if (<= cols (str-width str i))
-                  (format nil "~a $" (subseq str 0 (1- i)))
-                  (format nil "~a$" (subseq str 0 i))))))
-      ((< (window-cur-col window) (length str))
-        (let* ((begin (wide-index str (- curx cols -4)))
-	       (end (1+ (window-cur-col window)))
-	       (substr (subseq str begin end)))
-          (setq curx (- cols 2))
-          (if (wide-char-p (aref substr (- (length substr) 1)))
-            (progn
-              (setq str
-                    (format nil "$~a $"
-                            (subseq substr 0 (1- (length substr)))))
-              (decf curx))
-            (setq str (format nil "$~a$" substr)))))
-      (t
-        (setq str
-              (format nil
-                      "$~a"
-                      (substring-width str (- curx cols -3))))
-        (setq curx (- cols 1))))
-    (cl-ncurses:mvwaddstr (window-win window) y 0 str)
+                (format nil
+                        "$~a"
+                        (substring-width str (- curx cols -3))))
+          (setq curx (- cols 1))))
+        (cl-ncurses:mvwaddstr
+         (window-win window) y 0
+         (concatenate 'string
+                      str
+                      (make-string (- (window-ncols window) (length str))
+                                   :initial-element #\space)))
+        (cl-ncurses:touchline (window-win) y 1)))
     curx))
 
 (defun window-redraw-lines (window)
@@ -161,19 +182,22 @@
                                (1- (window-nlines window)))
            (cdr lines))
          (y 0 (1+ y)))
-        ((null lines))
-      (let ((curx (window-redraw-line window (car lines) y)))
-        (when curx
-          (setq x curx))))
+        ((<= (1- (window-nlines window)) y))
+      (if (null lines)
+        (window-redraw-line-1 window "" y)
+        (let ((curx (window-redraw-line window (car lines) y)))
+          (when curx
+            (setq x curx)))))
     (cl-ncurses:wmove (window-win window)
                       (- (window-cur-linum window) (window-vtop-linum window))
                       x)))
 
 (defun window-redraw (window)
-  (cl-ncurses:werase (window-win window))
+  ;(cl-ncurses:werase (window-win window))
   (window-redraw-modeline window)
   (window-redraw-lines window)
-  (cl-ncurses:wnoutrefresh (window-win window)))
+  ;(cl-ncurses:wnoutrefresh (window-win window))
+  )
 
 (defun window-offset-view (window)
   (let ((vtop-linum (window-vtop-linum window))
@@ -266,7 +290,9 @@
 (defun window-set-size (window nlines ncols)
   (cl-ncurses:wresize (window-win window) nlines ncols)
   (setf (window-nlines window) nlines)
-  (setf (window-ncols window) ncols))
+  (setf (window-ncols window) ncols)
+  (setf (window-display-lines window)
+        (make-array nlines :initial-element "")))
 
 (defun window-move (window dy dx)
   (window-set-pos window

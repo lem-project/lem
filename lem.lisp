@@ -153,7 +153,9 @@
     (if c
       (insert-char c
         (or *universal-argument* 1))
-      (write-message "Key not found"))))
+      (write-message (format nil
+                             "Key not found: ~a"
+                             (keys-to-keystr keys))))))
 
 (defun lem-init (args)
   (cl-ncurses:initscr)

@@ -36,7 +36,9 @@
       (setq buffer-list
             (remove (window-buffer win)
                     buffer-list)))
-    (car buffer-list)))
+    (if (null buffer-list)
+      (car *buffer-list*)
+      (car buffer-list))))
 
 (defun update-prev-buffer (buffer)
   (setq *buffer-list*

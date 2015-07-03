@@ -2,6 +2,7 @@
 
 (defvar *mb-win*)
 (defvar *mb-print-flag* nil)
+(defvar *mb-read-log* nil)
 
 (defun mb-init ()
   (setq *mb-win*
@@ -56,7 +57,9 @@
   (setq *mb-print-flag* t)
   (let ((str initial)
         (comp-flag)
-        (one-window-p (one-window-p)))
+        (one-window-p (one-window-p))
+        (prev-read-log *mb-read-log*)
+        (next-read-log))
     (do ((break nil))
         (break)
       (write-message (format nil "~a~a" prompt str))
@@ -78,6 +81,16 @@
             (setq str (subseq str 0 (1- (length str))))))
          ((char= c key::ctrl-u)
           (setq str ""))
+         ((char= c key::ctrl-p)
+          (when prev-read-log
+            (let ((elt (pop prev-read-log)))
+              (push elt next-read-log)
+              (setq str elt))))
+         ((char= c key::ctrl-n)
+          (when next-read-log
+            (let ((elt (pop next-read-log)))
+              (push elt prev-read-log)
+              (setq str elt))))
          ((char= c key::ctrl-q)
           (setq str (concatenate 'string str (string (getch)))))
          (t
@@ -88,6 +101,7 @@
      ((and comp-flag *completion-window*)
       (let ((*current-window* *completion-window*))
         (set-buffer (car *buffer-list*)))))
+    (push str *mb-read-log*)
     str))
 
 (defun read-string (prompt &optional initial)

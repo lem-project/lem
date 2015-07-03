@@ -28,24 +28,23 @@
    '(#x1f250 #x1f251) '(#x20000 #x2fffd) '(#x30000 #x3fffd)))
 
 (defun wide-table-cmp (key val)
-  (cond
-    ((< key (car val))
-     -1)
-    ((> key (cadr val))
-     1)
-    (t
-     0)))
+  (cond ((<= (car val) key (cadr val))
+         0)
+        ((< key (car val))
+         -1)
+        (t
+         1)))
 
 (defun binary-search (vec val cmp-f)
   (labels ((rec (begin end)
-             (unless (= begin end)
+             (when (<= begin end)
                (let* ((i (floor (+ end begin) 2))
                       (result (funcall cmp-f val (aref vec i))))
                  (cond
                    ((plusp result)
-                    (rec i end))
+                    (rec (1+ i) end))
                    ((minusp result)
-                    (rec begin i))
+                    (rec begin (1- i)))
                    (t
                     (aref vec i)))))))
     (rec 0 (1- (length vec)))))

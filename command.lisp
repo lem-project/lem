@@ -28,7 +28,7 @@
                        t))
                    ((char= #\B (aref arg-descripter 0))
                     `(read-buffer ,(subseq arg-descripter 1)
-                       (buffer-name *prev-buffer*)
+                       (buffer-name (other-buffer))
                        nil))
                    ((char= #\f (aref arg-descripter 0))
                     `(read-file-name

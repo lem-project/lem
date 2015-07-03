@@ -30,6 +30,42 @@
         (unless (get-buffer name)
           (return name))))))
 
+(defun other-buffer ()
+  (let ((buffer-list *buffer-list*))
+    (dolist (win *window-list*)
+      (setq buffer-list
+            (remove (window-buffer win)
+                    buffer-list)))
+    (car buffer-list)))
+
+(defun update-prev-buffer (buffer)
+  (setq *buffer-list*
+        (cons buffer
+              (delete buffer *buffer-list*))))
+
+(defun set-buffer (buffer)
+  (unless (eq (window-buffer) buffer)
+    (let ((old-buf (window-buffer)))
+      (update-prev-buffer old-buf)
+      (setf (buffer-keep-binfo old-buf)
+            (list (window-vtop-linum)
+                  (window-cur-linum)
+                  (window-cur-col)
+                  (window-max-col))))
+    (setf (window-buffer) buffer)
+    (let ((vtop-linum 1)
+          (cur-linum 1)
+          (cur-col 0)
+          (max-col 0))
+      (when (buffer-keep-binfo buffer)
+        (multiple-value-setq
+         (vtop-linum cur-linum cur-col max-col)
+         (apply 'values (buffer-keep-binfo buffer))))
+      (setf (window-vtop-linum) vtop-linum)
+      (setf (window-cur-linum) cur-linum)
+      (setf (window-cur-col) cur-col)
+      (setf (window-max-col) max-col))))
+
 (define-key *global-keymap* "C-xb" 'select-buffer)
 (define-command select-buffer (name) ("BUse Buffer: ")
   (let ((buf (or (get-buffer name)
@@ -50,9 +86,7 @@
       (dolist (win *window-list*)
         (when (eq buf (window-buffer win))
           (let ((*current-window* win))
-            (next-buffer)))
-        (when (eq buf *prev-buffer*)
-          (setq *prev-buffer* (get-next-buffer *prev-buffer*))))
+            (next-buffer))))
       (setq *buffer-list* (delete buf *buffer-list*))))
   t)
 

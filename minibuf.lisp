@@ -87,7 +87,7 @@
       (delete-completion-window))
      ((and comp-flag *completion-window*)
       (let ((*current-window* *completion-window*))
-        (set-buffer *prev-buffer*))))
+        (set-buffer (car *buffer-list*)))))
     str))
 
 (defun read-string (prompt &optional initial)

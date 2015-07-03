@@ -22,7 +22,7 @@
                         :y y
                         :x x
                         :buffer buffer
-                        :display-lines (make-array nlines :initial-element "")
+                        :display-lines (make-array nlines :initial-element nil)
                         :vtop-linum 1
                         :cur-linum 1
                         :cur-col 0
@@ -45,7 +45,6 @@
                      cl-ncurses:*cols*
                      0
                      0))
-  (setq *prev-buffer* (window-buffer))
   (setq *window-list* (list *current-window*)))
 
 (define-key *global-keymap* "C-l" 'recenter)
@@ -121,6 +120,7 @@
 
 (defun window-update-line-p (window y str)
   (or *window-force-update*
+      (null (aref (window-display-lines window) y))
       (string/= str (aref (window-display-lines window) y))))
 
 (defun window-update-line (window y cache-str display-str)
@@ -297,7 +297,7 @@
   (setf (window-nlines window) nlines)
   (setf (window-ncols window) ncols)
   (setf (window-display-lines window)
-        (make-array nlines :initial-element "")))
+        (make-array nlines :initial-element nil)))
 
 (defun window-move (window dy dx)
   (window-set-pos window

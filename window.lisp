@@ -365,14 +365,14 @@
 
 (defun pop-to-buffer (buffer)
   (when (one-window-p)
-    (split-window))
+    (values (split-window) t))
   (let ((*current-window*
          (or (find-if (lambda (window)
                         (eq buffer (window-buffer window)))
                       *window-list*)
              (get-next-window *current-window*))))
     (set-buffer buffer)
-    *current-window*))
+    (values *current-window* nil)))
 
 (defun popup (buffer fn &optional (goto-bob-p t) (erase-p t))
   (let ((*current-window* (pop-to-buffer buffer)))

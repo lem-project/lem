@@ -50,6 +50,7 @@
 (define-key *global-keymap* "C-l" 'recenter)
 (define-command recenter () ()
   (window-recenter *current-window*)
+  (window-update-all t)
   t)
 
 (defun window-recenter (window)

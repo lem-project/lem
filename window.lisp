@@ -381,23 +381,26 @@
   (window-update-all))
 
 (defun pop-to-buffer (buffer)
-  (when (one-window-p)
-    (values (split-window) t))
-  (let ((*current-window*
-         (or (find-if (lambda (window)
-                        (eq buffer (window-buffer window)))
-                      *window-list*)
-             (get-next-window *current-window*))))
-    (set-buffer buffer)
-    (values *current-window* nil)))
+  (let ((one-p (one-window-p)))
+    (when one-p
+      (split-window))
+    (let ((*current-window*
+           (or (find-if (lambda (window)
+                          (eq buffer (window-buffer window)))
+                        *window-list*)
+               (get-next-window *current-window*))))
+      (set-buffer buffer)
+      (values *current-window* one-p))))
 
 (defun popup (buffer fn &optional (goto-bob-p t) (erase-p t))
-  (let ((*current-window* (pop-to-buffer buffer)))
+  (multiple-value-bind (*current-window* newwin-p)
+      (pop-to-buffer buffer)
     (when erase-p
       (erase-buffer))
     (funcall fn)
     (when goto-bob-p
-      (beginning-of-buffer))))
+      (beginning-of-buffer))
+    (values *current-window* newwin-p)))
 
 (defun popup-string (buffer string)
   (popup buffer

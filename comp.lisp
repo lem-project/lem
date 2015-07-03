@@ -46,7 +46,7 @@
                  (string= (buffer-name (window-buffer win))
                           *comp-buffer-name*))
         (if *comp-popup-window*
-          (delete-window-1 win)
+          (delete-window win)
           (let ((*current-window* *completion-window*))
             (set-buffer (car *buffer-list*))))
         (return)))))

@@ -338,11 +338,11 @@
     cl-ncurses:*cols*)
   t)
 
-(define-key *global-keymap* "C-x0" 'delete-window)
-(define-command delete-window () ()
-  (delete-window-1 *current-window*))
+(define-key *global-keymap* "C-x0" 'delete-current-window)
+(define-command delete-current-window () ()
+  (delete-window *current-window*))
 
-(defun delete-window-1 (window)
+(defun delete-window (window)
   (cond
    ((one-window-p)
     (write-message "Can not delete this window")
@@ -370,7 +370,7 @@
       cl-ncurses:*cols*))
   (dolist (win *window-list*)
     (when (<= cl-ncurses:*lines* (+ 2 (window-y win)))
-      (delete-window-1 win)))
+      (delete-window win)))
   (let ((win (car (last *window-list*))))
     (window-set-size win
       (+ (window-nlines win)

@@ -445,7 +445,7 @@
   (when (insert-char c n)
     (let ((point (point)))
       (when (backward-list 1)
-        (window-update-all)
+        (window-update *current-window* t)
         (cl-ncurses:timeout 1000)
         (let ((c (cl-ncurses:getch)))
           (unless (= -1 c) (cl-ncurses:ungetch c)))

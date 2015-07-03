@@ -167,6 +167,13 @@
 (defun eval-from-string (str)
   (eval (string-to-exps str)))
 
+(defun lisp-error-clause (cdt)
+  (let* ((buffer (get-buffer-create "*Error*"))
+         (out (make-buffer-output-stream buffer)))
+    (popup buffer
+           (lambda ()
+             (princ cdt out)))))
+
 (defun safe-eval-from-string-1 (str)
   (unless (get-buffer "*REPL*")
     (let ((*current-window* *current-window*))
@@ -189,11 +196,7 @@
                                      (buffer-output-stream-linum out)
                                      (buffer-output-stream-column out))))
                      (error (cdt)
-                            (let* ((buffer (get-buffer-create "*Error*"))
-                                   (out (make-buffer-output-stream buffer)))
-                              (popup buffer 
-                                     (lambda ()
-                                       (princ cdt out)))))))))))
+                            (lisp-error-clause cdt))))))))
            (mi-thread
             (bt:make-thread
              (lambda ()
@@ -249,11 +252,14 @@
 
 (define-key *lisp-mode-keymap* "C-xl" 'load-file)
 (define-command load-file (filename) ("fLoad File: ")
-  (when (and (file-exist-p filename)
-             (not (file-directory-p filename)))
-    (write-message
-     (format nil "~a"
-             (load filename)))))
+  (handler-case
+      (when (and (file-exist-p filename)
+                 (not (file-directory-p filename)))
+        (write-message
+         (format nil "~a"
+                 (load filename))))
+    (error (cdt)
+           (lisp-error-clause cdt))))
 
 (define-key *lisp-mode-keymap* "C-xz" 'go-to-lisp)
 (define-key *lisp-mode-keymap* "M-z" 'go-to-lisp)

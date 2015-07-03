@@ -6,21 +6,22 @@
   name
   undef-hook
   parent
-  alist)
+  table)
 
 (defun make-keymap (name &optional undef-hook parent)
   (let ((keymap (make-keymap-internal
                  :name name
                  :undef-hook undef-hook
-                 :parent parent)))
+                 :parent parent
+                 :table (make-hash-table :test 'equal))))
     (push keymap *keymaps*)
     keymap))
 
 (defvar *global-keymap* (make-keymap "global" 'undefined-key))
 
 (defun define-key (keymap kbd cmd-name)
-  (push (cons kbd cmd-name)
-    (keymap-alist keymap)))
+  (setf (gethash kbd (keymap-table keymap))
+        cmd-name))
 
 (defun keys-to-keystr (keys)
   (apply 'concatenate 'string
@@ -36,10 +37,8 @@
       keys)))
 
 (defun keymap-find-command (keymap keys)
-  (let ((cmd (cdr
-              (assoc (keys-to-keystr keys)
-                (keymap-alist keymap)
-                :test 'equal))))
+  (let ((cmd (gethash (keys-to-keystr keys)
+                       (keymap-table keymap))))
     (or cmd
       (let ((keymap (keymap-parent keymap)))
         (when keymap
@@ -48,11 +47,11 @@
 (defun keybind-find-from-command (name)
   (let ((name (intern (string-upcase name) :lem)))
     (dolist (keymap *keymaps*)
-      (dolist (elt (keymap-alist keymap))
-        (when (eq name (cdr elt))
-          (return-from
-           keybind-find-from-command
-           (list (car elt) (keymap-name keymap))))))))
+      (maphash (lambda (key val)
+                 (when (eq name val)
+                   (return-from keybind-find-from-command
+                     (list key (keymap-name keymap)))))
+               (keymap-table keymap)))))
 
 (defun key-undef-hook (keymap keys)
   (when (keymap-undef-hook keymap)

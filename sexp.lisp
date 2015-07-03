@@ -36,8 +36,8 @@
               (t
                (push 'symbol acc)))))
     (if reverse-p
-      acc
-      (nreverse acc))))
+      (nconc acc (list 'space))
+      (nreverse (cons 'space acc)))))
 
 (defmacro do-scan (outer dir (type-var dir-var) &body body)
   (let ((gdir (gensym "DIR"))
@@ -64,11 +64,6 @@
                  ,@body)
                (unless (next-char ,gdir)
                  (return-from ,outer nil)))
-             (let ((,type-var 'space)
-                   (,dir-var ,gdir))
-               ,@body)
-             (unless (next-char ,gdir)
-               (return-from ,outer nil))
              finally
              (return-from ,outer t)))))
 

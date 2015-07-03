@@ -9,6 +9,7 @@
 	       (:file "key")
 	       (:file "globals")
 	       (:file "util")
+               (:file "macros")
                (:file "hooks")
 	       (:file "keymap")
 	       (:file "command")

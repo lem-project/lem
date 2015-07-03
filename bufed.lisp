@@ -277,18 +277,16 @@
       (1- (window-cur-col))))))
 
 (defun char-after (&optional (n 0))
-  (let ((point (point)))
-    (prog1 (when (next-char n)
-             (prog1 (following-char)
-                    (prev-char n)))
-           (point-set point))))
+  (save-excursion
+   (when (next-char n)
+     (prog1 (following-char)
+       (prev-char n)))))
 
 (defun char-before (&optional (n 1))
-  (let ((point (point)))
-    (prog1 (when (prev-char (1- n))
-             (prog1 (preceding-char)
-                    (next-char (1- n))))
-           (point-set point))))
+  (save-excursion
+   (when (prev-char (1- n))
+     (prog1 (preceding-char)
+       (next-char (1- n))))))
 
 (defun replace-char (c)
   (delete-char)
@@ -334,15 +332,14 @@
       (make-string (* n *tab-size*) :initial-element #\space))))
 
 (defun blank-line-p ()
-  (let ((point (point)))
-    (beginning-of-line)
-    (prog1 (do ((count 0 (1+ count)))
-               ((eolp) (1+ count))
-             (case (following-char)
-               ((#\space #\tab))
-               (otherwise (return nil)))
-             (next-char))
-      (point-set point))))
+  (save-excursion
+   (beginning-of-line)
+   (do ((count 0 (1+ count)))
+       ((eolp) (1+ count))
+     (case (following-char)
+       ((#\space #\tab))
+       (otherwise (return nil)))
+     (next-char))))
 
 (define-key *global-keymap* "C-xC-o" 'delete-blank-lines)
 (define-command delete-blank-lines () ()
@@ -420,14 +417,13 @@
 
 (defun insert-paren-hilighting-aux (c n)
   (when (insert-char c n)
-    (let ((point (point)))
-      (when (backward-list 1)
+    (save-excursion
+     (when (backward-list 1)
         (window-update *current-window* t)
         (cl-ncurses:timeout 1000)
         (let ((c (cl-ncurses:getch)))
           (unless (= -1 c) (cl-ncurses:ungetch c)))
         (cl-ncurses:timeout -1)
-        (point-set point)
         t))))
 
 (macrolet ((def (name c)

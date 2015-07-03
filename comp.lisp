@@ -52,14 +52,13 @@
         (return)))))
 
 (defun preceding-word ()
-  (let ((chars)
-        (point (point)))
-    (skip-chars-backward
-     (lambda (c)
-       (when (and c (syntax-symbol-char-p c))
-         (push c chars))))
-    (prog1 (coerce chars 'string)
-      (point-set point))))
+  (let ((chars))
+    (save-excursion
+     (skip-chars-backward
+      (lambda (c)
+        (when (and c (syntax-symbol-char-p c))
+          (push c chars))))
+     (coerce chars 'string))))
 
 (defun scan-line-words (str)
   (let ((words))

@@ -87,20 +87,19 @@
   :syntax-table *lisp-syntax-table*)
 
 (defun lisp-looking-at-word ()
-  (let ((point (point)))
+  (save-excursion
     (skip-chars-forward
      (lambda (c)
        (or (eq c #\space)
            (eq c #\tab))))
     (let ((begin (point)))
       (forward-sexp)
-      (prog1 (list (region-string begin (point))
+      (list (region-string begin (point))
                    (when (= (window-cur-linum)
                             (progn
                               (skip-chars-forward 'syntax-space-char-p)
                               (window-cur-linum)))
-                     (window-cur-col)))
-             (point-set point)))))
+                     (window-cur-col))))))
 
 (defun lisp-count-sexps (goal)
   (do ((count 0 (1+ count)))
@@ -227,29 +226,26 @@
 
 (define-key *lisp-mode-keymap* "M-C-x" 'eval-defun)
 (define-command eval-defun () ()
-  (let ((point (point)))
-    (top-of-defun)
-    (mark-sexp)
-    (eval-region)
-    (point-set point)
-    t))
+  (save-excursion
+   (top-of-defun)
+   (mark-sexp)
+   (eval-region)
+   t))
 
 (define-key *lisp-mode-keymap* "C-xu" 'eval-last-sexp)
 (define-command eval-last-sexp () ()
-  (let ((point (point)))
-    (when (backward-sexp)
-      (mark-sexp)
-      (eval-region)
-      (point-set point)
-      t)))
+  (save-excursion
+   (when (backward-sexp)
+     (mark-sexp)
+     (eval-region)
+     t)))
 
 (define-key *lisp-mode-keymap* "C-xy" 'eval-buffer)
 (define-command eval-buffer () ()
-  (let ((point (point)))
-    (eval-region (progn (beginning-of-buffer) (point))
-                 (progn (end-of-buffer) (point)))
-    (point-set point)
-    t))
+  (save-excursion
+   (eval-region (progn (beginning-of-buffer) (point))
+                (progn (end-of-buffer) (point)))
+   t))
 
 (define-key *lisp-mode-keymap* "C-xl" 'load-file)
 (define-command load-file (filename) ("fLoad File: ")
@@ -293,12 +289,11 @@
                        out))))))
 
 (define-command indent-region-lisp () ()
-  (let ((point (point)))
-    (apply-region-lines (region-beginning)
-                        (region-end)
-                        'lisp-indent-line)
-    (point-set point)
-    t))
+  (save-excursion
+   (apply-region-lines (region-beginning)
+                       (region-end)
+                       'lisp-indent-line)
+   t))
 
 (define-key *lisp-mode-keymap* "M-C-q" 'indent-sexp)
 (define-command indent-sexp () ()

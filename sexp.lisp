@@ -192,10 +192,9 @@
 
 (define-key *global-keymap* "M-C-@" 'mark-sexp)
 (define-command mark-sexp () ()
-  (let ((point (point)))
+  (save-excursion
     (forward-sexp 1)
-    (mark-set)
-    (point-set point)))
+    (mark-set)))
 
 (define-key *global-keymap* "M-C-k" 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")

@@ -59,7 +59,7 @@
 (define-command describe-key () ()
   (write-message "describe-key: ")
   (let* ((keys (input-keys))
-         (cmd (keymap-find-command (current-mode-keymap) keys)))
+         (cmd (mode-find-keybind keys)))
     (write-message (format nil "describe-key: ~a ~a"
                      (keys-to-keystr keys)
                      cmd))))
@@ -149,7 +149,7 @@
 
 (defun execute (keys)
   (let* ((keymap (current-mode-keymap))
-         (cmd (keymap-find-command keymap keys)))
+         (cmd (mode-find-keybind keys)))
     (if cmd
       (unless (cmd-call cmd *universal-argument*)
         (setq *macro-running-p* nil))

@@ -102,7 +102,7 @@
                  :expr-prefix-chars '(#\' #\, #\@ #\# #\`)
                  :line-comment-char #\;))
 
-(define-mode lisp-mode
+(define-major-mode lisp-mode
   :name "lisp-mode"
   :keymap *lisp-mode-keymap*
   :syntax-table *lisp-syntax-table*)
@@ -354,7 +354,7 @@
 (defvar *inferior-lisp-mode-keymap*
         (make-keymap "inferior-lisp" 'undefined-key *lisp-mode-keymap*))
 
-(define-mode inferior-lisp-mode
+(define-major-mode inferior-lisp-mode
   :name "inferior-lisp-mode"
   :keymap *inferior-lisp-mode-keymap*
   :syntax-table *lisp-syntax-table*)

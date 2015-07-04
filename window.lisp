@@ -110,13 +110,16 @@
                          bg-char
                          (window-posline window)
                          (make-string 2 :initial-element bg-char))
-                 (format nil "~c~c ~a: ~a (~a) (~d, ~d)"
+                 (format nil "~c~c ~a: ~a ~a (~d, ~d)"
                          (if (buffer-read-only-p (window-buffer window)) #\% bg-char)
                          (if (buffer-modified-p (window-buffer window)) #\* bg-char)
                          *program-name*
                          (buffer-name (window-buffer window))
                          (let ((*current-window* window))
-                           (mode-name))
+                           (mapcar 'mode-name
+                                   (cons (major-mode)
+                                         (buffer-minor-modes
+                                          (window-buffer)))))
                          (window-cur-linum window)
                          (window-cur-col window)))))
     (window-update-line

@@ -7,6 +7,7 @@
           buffer-modified-p
           buffer-read-only-p
           buffer-major-mode
+          buffer-minor-modes
           buffer-nlines
           buffer-get-char
           buffer-line-lelngth
@@ -74,6 +75,7 @@
   modified-p
   read-only-p
   major-mode
+  minor-modes
   head-line
   tail-line
   cache-line

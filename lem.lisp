@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(exit-lem
+(export '(*lem-error-file*
+          exit-lem
           describe-key
           begin-macro
           end-macro
@@ -12,6 +13,7 @@
           lem
           lem-save-error))
 
+(defvar *lem-error-file* "~/.lem-error")
 (defvar *init-flag* nil)
 
 (defvar *exit*)
@@ -214,7 +216,7 @@
 
 (defun lem-save-error (&rest args)
   (let ((*print-circle* t))
-    (with-open-file (*error-output* "ERROR"
+    (with-open-file (*error-output* *lem-error-file*
                                     :direction :output
                                     :if-exists :overwrite
                                     :if-does-not-exist :create)

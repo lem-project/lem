@@ -1,5 +1,20 @@
 (in-package :lem)
 
+(export '(one-window-p
+          recenter
+          split-window
+          get-next-window
+          other-window
+          delete-other-windows
+          delete-current-window
+          delete-window
+          pop-to-buffer
+          popup-string
+          grow-window
+          shrink-window
+          scroll-down
+          scroll-up))
+
 (define-class window () *current-window*
   win
   nlines

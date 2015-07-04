@@ -1,5 +1,17 @@
 (in-package :lem)
 
+(export '(exit-lem
+          describe-key
+          begin-macro
+          end-macro
+          execute-macro
+          apply-macro-to-region-lines
+          universal-argument
+          input-keys
+          undefined-key
+          lem
+          lem-save-error))
+
 (defvar *init-flag* nil)
 
 (defvar *exit*)

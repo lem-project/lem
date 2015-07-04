@@ -1,5 +1,7 @@
 (in-package :lem)
 
+(export '(argv pwd files shell-command))
+
 (defun argv ()
   (cdr sb-ext:*posix-argv*))
 

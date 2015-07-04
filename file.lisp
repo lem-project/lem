@@ -1,5 +1,25 @@
 (in-package :lem)
 
+(export '(file-name-directory
+          file-name-nondirectory
+          file-name-as-directory
+          file-directory-p
+          current-directory
+          file-exist-p
+          temp-file-name
+          expand-file-name
+          file-completion
+          file-open
+          find-file
+          read-file
+          write-to-file
+          save-file-internal
+          save-file
+          change-file-name
+          write-file
+          insert-file
+          save-some-buffers))
+
 (defun file-name-directory (filename)
   (let ((pos (position #\/ filename :from-end t)))
     (when pos

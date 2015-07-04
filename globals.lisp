@@ -1,5 +1,10 @@
 (in-package :lem)
 
+(export '(*window-list*
+          *current-window*
+          *buffer-list*
+          *tab-size*))
+
 (defvar *program-name* "Lem")
 
 (defvar *window-list*)

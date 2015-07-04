@@ -1,5 +1,17 @@
 (in-package :lem)
 
+(export '(forward-list
+          backward-list
+          forward-sexp
+          backward-sexp
+          down-list
+          up-list
+          beginning-of-defun
+          end-of-defun
+          mark-sexp
+          kill-sexp
+          transpose-sexps))
+
 (defun convert-line (str reverse-p)
   (let ((acc)
         (comment-p))

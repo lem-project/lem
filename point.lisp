@@ -1,5 +1,14 @@
 (in-package :lem)
 
+(export '(make-point
+          point-linum
+          point-column
+          with-points
+          point
+          point-set
+          point<
+          point<=))
+
 (defun make-point (linum column)
   (list linum column))
 
@@ -23,7 +32,8 @@
 
 (defun point-set (point)
   (setf (window-cur-linum) (point-linum point))
-  (setf (window-cur-col) (point-column point)))
+  (setf (window-cur-col) (point-column point))
+  (setf (window-max-col) (point-column point)))
 
 (defun point< (p1 p2)
   (cond ((< (point-linum p1) (point-linum p2))

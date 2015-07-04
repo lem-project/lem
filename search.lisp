@@ -1,5 +1,10 @@
 (in-package :lem)
 
+(export '(*isearch-keymap*
+          isearch-forward
+          isearch-backward
+          query-replace))
+
 (defvar *isearch-keymap* (make-keymap "isearch" 'isearch-undef-hook))
 (defvar *isearch-string*)
 (defvar *isearch-prev-string* "")

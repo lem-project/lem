@@ -1,5 +1,13 @@
 (in-package :lem)
 
+(export '(syntax-table
+          make-syntax-table
+          major-mode
+          mode-name
+          define-mode
+          fundamental-mode
+          current-syntax))
+
 (defstruct syntax-table
   (space-chars '(#\space #\tab #\newline))
   symbol-chars

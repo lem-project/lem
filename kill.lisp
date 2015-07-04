@@ -1,5 +1,13 @@
 (in-package :lem)
 
+(export '(*kill-ring*
+          *kill-ring-yank-ptr*
+          *kill-ring-max*
+          *kill-new-flag*
+          kill-append
+          kill-push
+          yank))
+
 (defvar *kill-ring* nil)
 (defvar *kill-ring-yank-ptr* nil)
 (defvar *kill-ring-max* 10)

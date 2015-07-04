@@ -1,5 +1,7 @@
 (in-package :lem)
 
+(export '(filter-buffer pipe-command))
+
 (define-key *global-keymap* "C-x#" 'filter-buffer)
 (define-command filter-buffer (str) ("sFilter buffer: ")
   (let ((outstr (make-array '(0)

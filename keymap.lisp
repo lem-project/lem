@@ -1,5 +1,15 @@
 (in-package :lem)
 
+(export '(*keymaps*
+          keymap
+          keymap-name
+          keymap-undef-hook
+          keymap-parent
+          keymap-table
+          make-keymap
+          *global-keymap*
+          define-key))
+
 (defvar *keymaps* nil)
 
 (defstruct (keymap (:constructor make-keymap-internal))

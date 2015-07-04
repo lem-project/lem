@@ -1,5 +1,26 @@
 (in-package :lem)
 
+(export '(*lisp-mode-keymap*
+          *lisp-syntax-table*
+          lisp-mode
+          lisp-indent-line
+          lisp-newline-and-indent
+          eval-string
+          eval-region
+          eval-defun
+          eval-last-sexp
+          eval-buffer
+          load-file
+          go-to-lisp
+          macroexpand-lisp
+          indent-region-lisp
+          indent-sexp
+          complete-symbol
+          *inferior-lisp-mode-keymap*
+          inferior-lisp-mode
+          inferior-lisp
+          inferior-lisp-eval))
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (dolist (elt '((block . 1)
                  (case . 1)

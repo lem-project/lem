@@ -1,5 +1,10 @@
 (in-package :lem)
 
+(export '(completion
+          popup-completion
+          delete-completion-window
+          abbrev))
+
 (defvar *comp-buffer-name* "*Completion*")
 (defvar *completion-window* nil)
 (defvar *completion-flag* nil)

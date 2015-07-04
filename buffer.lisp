@@ -1,5 +1,26 @@
 (in-package :lem)
 
+(export '(*undo-limit*
+          buffer
+          buffer-name
+          buffer-filename
+          buffer-modified-p
+          buffer-read-only-p
+          buffer-major-mode
+          buffer-nlines
+          buffer-get-char
+          buffer-line-lelngth
+          buffer-line-string
+          map-buffer-lines
+          buffer-take-lines
+          buffer-insert-char
+          buffer-insert-newline
+          buffer-insert-line
+          buffer-delete-char
+          buffer-erase
+          buffer-output-stream
+          make-buffer-output-stream))
+
 (defstruct (line (:constructor make-line-internal))
   (prev nil)
   (str "")

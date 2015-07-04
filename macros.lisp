@@ -1,5 +1,7 @@
 (in-package :lem)
 
+(export '(save-excursion))
+
 (defmacro when-interrupted-flag (flag-name &body body)
   (let ((name (intern (string-upcase (format nil "flags-~a" flag-name)))))
     `(progn

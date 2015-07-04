@@ -1,5 +1,13 @@
 (in-package :lem)
 
+(export '(next-word
+          prev-word
+          delete-word
+          backward-delete-word
+          case-word-capitalize
+          case-word-lower
+          case-word-upper))
+
 (defun in-word-p (c)
   (and c (alphanumericp c)))
 

@@ -1,5 +1,54 @@
 (in-package :lem)
 
+(export '(unmark-buffer
+          toggle-read-only
+          bolp
+          eolp
+          bobp
+          eobp
+          insert-char
+          insert-lines
+          insert-string
+          insert-newline
+          newline-and-indent
+          open-line
+          delete-char
+          backward-delete-char
+          kill-line
+          goto-column
+          beginning-of-line
+          end-of-line
+          goto-line
+          beginning-of-buffer
+          end-of-buffer
+          next-line
+          prev-line
+          next-char
+          prev-char
+          next-page
+          prev-page
+          mark-set
+          exchange-point-mark
+          following-char
+          preceding-char
+          char-after
+          char-before
+          replace-char
+          entab-line
+          detab-line
+          blank-line-p
+          delete-blank-lines
+          transpose-characters
+          erase-buffer
+          delete-while-whitespaces
+          skip-chars-forward
+          skip-chars-backward
+          just-one-space
+          delete-indentation
+          back-to-indentation
+          undo
+          redo))
+
 (define-key *global-keymap* "M-~" 'unmark-buffer)
 (define-command unmark-buffer () ()
   (setf (buffer-modified-p (window-buffer)) nil)

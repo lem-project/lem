@@ -1,5 +1,13 @@
 (in-package :lem)
 
+(export '(region-beginning
+          region-end
+          region-string
+          region-count
+          copy-region
+          kill-region
+          apply-region-lines))
+
 (defun region-beginning ()
   (let* ((buffer (window-buffer))
          (linum1 (window-cur-linum))

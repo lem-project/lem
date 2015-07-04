@@ -1,5 +1,21 @@
 (in-package :lem)
 
+(export '(special-buffer-p
+          filter-special-buffers
+          any-modified-buffer-p
+          current-buffer
+          get-buffer
+          get-buffer-create
+          uniq-buffer-name
+          other-buffer
+          update-prev-buffer
+          set-buffer
+          select-buffer
+          get-next-buffer
+          kill-buffer
+          next-buffer
+          list-buffers))
+
 (defun special-buffer-p (buffer)
   (let ((name (buffer-name buffer)))
     (and

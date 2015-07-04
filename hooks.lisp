@@ -1,5 +1,8 @@
 (in-package :lem)
 
+(export '(run-hooks
+          add-hook))
+
 (defun run-hooks (hook)
   (mapc 'funcall (get hook 'hooks)))
 

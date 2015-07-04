@@ -1,5 +1,15 @@
 (in-package :lem)
 
+(export '(clear-message-line
+          write-message
+          y-or-n-p
+          read-char
+          read-minibuffer
+          read-string
+          read-number
+          read-buffer
+          read-file-name))
+
 (defvar *mb-win*)
 (defvar *mb-print-flag* nil)
 (defvar *mb-read-log* nil)

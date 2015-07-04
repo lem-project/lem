@@ -1,5 +1,9 @@
 (in-package :lem)
 
+(export '(grep
+          grep-next
+          grep-prev))
+
 (defvar *grep-vector* nil)
 (defvar *grep-index* -1)
 

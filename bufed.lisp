@@ -62,14 +62,23 @@
 (define-command insert-string (str) ("sInsert string: ")
   (insert-lines (split-string str #\newline)))
 
-(define-key *global-keymap* "C-j" 'insert-newline)
 (define-key *global-keymap* "C-m" 'insert-newline)
-(define-command insert-newline (n) ("p")
+(define-command insert-newline (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (buffer-insert-newline (window-buffer)
                             (window-cur-linum)
                             (window-cur-col))
     (next-line 1)))
+
+(define-key *global-keymap* "C-j" 'newline-and-indent)
+(define-command newline-and-indent (n) ("p")
+  (dotimes (_ n t)
+    (let ((spaces (second
+                   (multiple-value-list
+                    (count-indent)))))
+      (unless (and (insert-newline 1)
+                   (insert-string spaces))
+        (return nil)))))
 
 (define-key *global-keymap* "C-o" 'open-line)
 (define-command open-line (n) ("p")
@@ -296,20 +305,28 @@
    (window-cur-col)
    c))
 
+(defun count-indent ()
+  (save-excursion
+   (beginning-of-line)
+   (let ((count 0)
+         (chars))
+     (loop for c = (following-char)
+           until (eolp) do
+           (case c
+             (#\space
+              (incf count))
+             (#\tab
+              (setq count (char-width #\tab count)))
+             (otherwise
+              (return)))
+           (push c chars)
+           (next-char 1))
+     (values count
+             (coerce (nreverse chars) 'string)))))
+
 (defun tab-line-aux (n make-space-str)
   (dotimes (_ n t)
-    (let ((count 0))
-      (beginning-of-line)
-      (do ((c #1=(following-char) #1#))
-          ((eolp))
-        (case c
-          (#\space
-           (incf count))
-          (#\tab
-           (setq count (char-width #\tab count)))
-          (otherwise
-           (return)))
-        (next-char))
+    (let ((count (count-indent)))
       (multiple-value-bind (div mod)
           (floor count *tab-size*)
         (beginning-of-line)

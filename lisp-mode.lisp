@@ -145,8 +145,8 @@
                (t
                 (insert-char #\space (+ start-col 2)))))))))))
 
-(define-key *lisp-mode-keymap* "C-j" 'newline-and-indent)
-(define-command newline-and-indent (n) ("p")
+(define-key *lisp-mode-keymap* "C-j" 'lisp-newline-and-indent)
+(define-command lisp-newline-and-indent (n) ("p")
   (insert-newline n)
   (lisp-indent-line))
 

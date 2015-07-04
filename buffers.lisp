@@ -13,6 +13,9 @@
   (find-if 'buffer-modified-p
     (filter-special-buffers)))
 
+(defun current-buffer ()
+  (window-buffer))
+
 (defun get-buffer (name)
   (find-if (lambda (buffer)
              (string= name (buffer-name buffer)))

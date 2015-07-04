@@ -1,0 +1,7 @@
+(in-package :lem)
+
+(add-hook 'find-file-hooks
+          (lambda ()
+            (when (or (search ".lisp" (buffer-filename))
+                      (search ".asd" (buffer-filename)))
+              (lisp-mode))))

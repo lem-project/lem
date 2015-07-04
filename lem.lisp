@@ -171,6 +171,15 @@
                              "Key not found: ~a"
                              (keys-to-keystr keys))))))
 
+(defun load-init-file ()
+  (flet ((test (path)
+               (when (file-exist-p path)
+                 (load path)
+                 (write-message (format nil "Load file: ~a" path))
+                 t)))
+    (or (test (merge-pathnames "lem.rc" (truename ".")))
+        (test (merge-pathnames ".lemrc" (user-homedir-pathname))))))
+
 (defun lem-init (args)
   (cl-ncurses:initscr)
   (cl-ncurses:noecho)
@@ -182,11 +191,7 @@
     (setq *init-flag* t)
     (window-init)
     (mb-init)
-    (add-hook 'find-file-hooks
-              (lambda ()
-                (when (or (search ".lisp" (buffer-filename (window-buffer)))
-                          (search ".asd" (buffer-filename (window-buffer))))
-                  (lisp-mode)))))
+    (load-init-file))
   (dolist (arg args)
     (find-file arg)))
 

@@ -283,7 +283,6 @@
            (lisp-error-clause cdt))))
 
 (define-key *lisp-mode-keymap* "C-xz" 'go-to-lisp)
-(define-key *lisp-mode-keymap* "M-z" 'go-to-lisp)
 (define-command go-to-lisp () ()
   (save-some-buffers)
   (dolist (buffer *buffer-list*)

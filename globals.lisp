@@ -18,7 +18,9 @@
 
 (defvar *universal-argument* nil)
 
-(defstruct flags
-  kill
-  undo
-  abbrev)
+(defvar *continue-command-flags* (list :kill :undo :abbrev))
+
+(defun make-flags ()
+  (mapcar (lambda (sym)
+            (cons sym nil))
+          *continue-command-flags*))

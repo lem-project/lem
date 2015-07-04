@@ -2,13 +2,12 @@
 
 (export '(save-excursion))
 
-(defmacro when-interrupted-flag (flag-name &body body)
-  (let ((name (intern (string-upcase (format nil "flags-~a" flag-name)))))
-    `(progn
-       (unless (,name *last-flags*)
-         ,@body)
-       (setf (,name *last-flags*) t)
-       (setf (,name *curr-flags*) t))))
+(defmacro when-interrupted-flag (flag &body body)
+  (let ((gflag (gensym "FLAG")))
+    `(let ((,gflag ,flag))
+       (unless (cdr (assoc ,flag *last-flags*)) ,@body)
+       (push (cons ,gflag t) *last-flags*)
+       (push (cons ,gflag t) *curr-flags*))))
 
 (defmacro save-excursion (&body body)
   (let ((gpoint (gensym "POINT")))

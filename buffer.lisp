@@ -129,7 +129,7 @@
         (t
          (incf (buffer-undo-size buffer))))
   (when-interrupted-flag 
-   undo
+   :undo
    (push :undo-separator (buffer-undo-stack buffer)))
   (push elt (buffer-undo-stack buffer)))
 

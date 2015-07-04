@@ -57,6 +57,6 @@
 
 (defmacro with-kill (() &body body)
   `(progn
-     (when-interrupted-flag kill
+     (when-interrupted-flag :kill
                             (setq *kill-new-flag* t))
      ,@body))

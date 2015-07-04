@@ -139,31 +139,13 @@
       (null (aref (window-display-lines window) y))
       (string/= str (aref (window-display-lines window) y))))
 
-(defun display-detab (str)
-  (loop with i = 0 and chars = ()
-        for c across str do
-        (cond ((char= c #\tab)
-               (let ((j (char-width c i)))
-                 (dotimes (_ (- j i))
-                   (push #\space chars))
-                 (setq i j)))
-              (t
-               (incf i)
-               (push c chars)))
-        finally (return
-                  (coerce (nreverse chars)
-                          'string))))
-
 (defun window-update-line (window y cache-str display-str)
   (when (window-update-line-p window y cache-str)
     (setf (aref (window-display-lines window) y) cache-str)
-    (setq display-str (display-detab display-str))
     (cl-ncurses:mvwaddstr
      (window-win window) y 0
-     (concatenate 'string
-                  display-str
-                  (make-string (- (window-ncols window) (length display-str))
-                               :initial-element #\space)))
+     display-str)
+    (cl-ncurses:wclrtoeol (window-win window))
     (cl-ncurses:touchline (window-win) y 1)))
 
 (defun window-refresh-line (window str y)

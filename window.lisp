@@ -142,22 +142,25 @@
       (null (aref (window-display-lines window) y))
       (string/= str (aref (window-display-lines window) y))))
 
-(defun window-update-line (window y cache-str display-str)
-  (when (window-update-line-p window y cache-str)
-    (setf (aref (window-display-lines window) y) cache-str)
+(defun window-update-line (window y str)
+  (when (window-update-line-p window y str)
+    (setf (aref (window-display-lines window) y) str)
     (cl-ncurses:mvwaddstr
      (window-win window) y 0
-     display-str)
-    (cl-ncurses:wclrtoeol (window-win window))
+     (concatenate 'string str
+                  (make-string (- (window-ncols window)
+                                  (str-width str))
+                               :initial-element #\space)))
     (cl-ncurses:touchline (window-win) y 1)))
 
 (defun window-refresh-line (window str y)
   (let ((cury (window-cursor-y window))
         (curx)
         (oldstr str))
-    (when (= cury y)
-      (setq curx (str-width str (window-cur-col window))))
-    (when (window-update-line-p window y oldstr)
+    (when (or (window-update-line-p window y oldstr)
+              (= cury y))
+      (when (= cury y)
+        (setq curx (str-width str (window-cur-col window))))
       (let ((width (str-width str))
             (cols (window-ncols window)))
         (cond
@@ -188,7 +191,7 @@
                         "$~a"
                         (substring-width str (- curx cols -3))))
           (setq curx (- cols 1))))
-        (window-update-line window y oldstr str)))
+        (window-update-line window y str)))
     curx))
 
 (defun window-refresh-lines (window)
@@ -201,7 +204,7 @@
          (y 0 (1+ y)))
         ((<= (1- (window-nlines window)) y))
       (if (null lines)
-        (window-update-line window y "" "")
+        (window-update-line window y "")
         (let ((curx (window-refresh-line window (car lines) y)))
           (when curx
             (setq x curx)))))

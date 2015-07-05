@@ -60,17 +60,13 @@
 	(t
 	 (+ w 1))))
 
-(defun %str-width (str)
+(defun str-width (str &optional n)
+  (when (and n (< n (length str)))
+    (setq str (subseq str 0 n)))
   (loop with width = 0
         for c across str
         do (setq width (char-width c width))
 	finally (return width)))
-
-(defun str-width (str &optional n)
-  (%str-width
-    (if (and n (< n (length str)))
-      (subseq str 0 n)
-      str)))
 
 (defun wide-index (str goal)
   (loop with w = 0

@@ -25,6 +25,7 @@
 (defstruct (line (:constructor make-line-internal))
   (prev nil)
   (str "")
+  (prop nil)
   (next nil))
 
 (defun make-line (prev next str)
@@ -34,6 +35,9 @@
     (when prev
       (setf (line-next prev) line))
     line))
+
+(defun line-set-str (line str)
+  (setf (line-str line) str))
 
 (defun line-free (line)
   (when (line-prev line)
@@ -56,18 +60,6 @@
 
 (defun line-backward-n (line n)
   (line-step-n line n 'line-prev))
-
-(defun line-debug-print (head tail)
-  (let ((lines))
-    (do ((line head (line-next line)))
-        ((null line))
-      (push (line-str line) lines))
-    (pdebug (nreverse lines)))
-  (let ((lines))
-    (do ((line tail (line-prev line)))
-        ((null line))
-      (push (line-str line) lines))
-    (pdebug (nreverse lines))))
 
 (define-class buffer () (window-buffer)
   name
@@ -262,11 +254,11 @@
              (when (and (= linum (buffer-mark-linum buffer))
                         (<= col (buffer-mark-col buffer)))
                (incf (buffer-mark-col buffer)))
-             (setf (line-str line)
-                   (concatenate 'string
-                                (subseq (line-str line) 0 col)
-                                (string c)
-                                (subseq (line-str line) col)))))))
+             (line-set-str line
+                           (concatenate 'string
+                                        (subseq (line-str line) 0 col)
+                                        (string c)
+                                        (subseq (line-str line) col)))))))
   t)
 
 (defun buffer-insert-newline (buffer linum col)
@@ -290,8 +282,7 @@
                       (subseq (line-str line) col))))
       (when (eq line (buffer-tail-line buffer))
         (setf (buffer-tail-line buffer) newline))
-      (setf (line-str line)
-            (subseq (line-str line) 0 col))))
+      (line-set-str line (subseq (line-str line) 0 col))))
   (incf (buffer-nlines buffer))
   t)
 
@@ -308,11 +299,11 @@
     (when (and (= linum (buffer-mark-linum buffer))
                (<= col (buffer-mark-col buffer)))
       (incf (buffer-mark-col buffer) (length str)))
-    (setf (line-str line)
-      (concatenate 'string
-        (subseq (line-str line) 0 col)
-        str
-        (subseq (line-str line) col))))
+    (line-set-str line
+                  (concatenate 'string
+                               (subseq (line-str line) 0 col)
+                               str
+                               (subseq (line-str line) col))))
   t)
 
 (defun buffer-delete-char (buffer linum col n)
@@ -335,10 +326,11 @@
                   (concatenate 'string
                                (car del-lines)
                                (subseq (line-str line) col (+ col n))))
-            (setf (line-str line)
-                  (concatenate 'string
-                               (subseq (line-str line) 0 col)
-                               (subseq (line-str line) (+ col n))))
+            (line-set-str
+             line
+             (concatenate 'string
+                          (subseq (line-str line) 0 col)
+                          (subseq (line-str line) (+ col n))))
             (setq n 0))
            (t
             (cond
@@ -358,10 +350,11 @@
             (decf n (1+ (- (length (line-str line)) col)))
             (decf (buffer-nlines buffer))
             (setf (buffer-modified-p buffer) t)
-            (setf (line-str line)
-                  (concatenate 'string
-                               (subseq (line-str line) 0 col)
-                               (line-str (line-next line))))
+            (line-set-str
+             line
+             (concatenate 'string
+                          (subseq (line-str line) 0 col)
+                          (line-str (line-next line))))
             (when (eq (line-next line)
                       (buffer-tail-line buffer))
               (setf (buffer-tail-line buffer) line))

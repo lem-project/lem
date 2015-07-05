@@ -125,7 +125,6 @@
     (window-update-line
      window
      (1- (window-nlines window))
-     str
      str)))
 
 (defun window-refresh-modeline (window)

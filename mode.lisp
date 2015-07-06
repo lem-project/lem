@@ -10,11 +10,11 @@
 
 (defstruct syntax-table
   (space-chars '(#\space #\tab #\newline))
-  symbol-chars
+  (symbol-chars '(#\_))
   (paren-alist '((#\( . #\))
                  (#\[ . #\])
                  (#\{ . #\})))
-  (string-quote-chars '(#\"))
+  (string-quote-chars '(#\" #\'))
   (escape-chars '(#\\))
   expr-prefix-chars
   line-comment-char)

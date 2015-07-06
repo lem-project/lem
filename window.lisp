@@ -174,7 +174,7 @@
                     (format nil "~a$" (subseq str 0 i))))))
          ((< (window-cur-col window) (length str))
           (let* ((begin (wide-index str (- curx cols -4)))
-                 (end (1+ (window-cur-col window)))
+                 (end (window-cur-col window))
                  (substr (subseq str begin end)))
             (setq curx (- cols 2))
             (if (wide-char-p (aref substr (- (length substr) 1)))

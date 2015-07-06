@@ -14,6 +14,7 @@
 
 (defvar *kill-new-flag* t)
 (defvar *kill-before-p* nil)
+(defvar *kill-disable-p* nil)
 
 (defun kill-append (lines before-p)
   (setf (car *kill-ring*)
@@ -56,7 +57,7 @@
        (insert-lines (car ptr)))))
 
 (defmacro with-kill (() &body body)
-  `(progn
+  `(unless *kill-disable-p*
      (when-interrupted-flag :kill
                             (setq *kill-new-flag* t))
      ,@body))

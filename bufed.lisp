@@ -445,7 +445,7 @@
   t)
 
 (defun delete-while-whitespaces (&optional ignore-newline-p use-kill-ring)
-  (do ((n 0 (1+ n))) (nil)
+  (do ((n 0 (1+ n))) ((eobp))
     (let ((c (following-char)))
       (if (or (and ignore-newline-p (char= c #\newline))
               (not (syntax-space-char-p c)))

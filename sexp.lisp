@@ -79,6 +79,11 @@
              finally
              (return-from ,outer t)))))
 
+(defun sexp-at-char (dir)
+  (if (plusp dir)
+    (following-char)
+    (preceding-char)))
+
 (defun scan-lists (point count depth)
   (point-set point)
   (dotimes (_ (abs count) t)
@@ -91,10 +96,7 @@
             (ecase x
               ((open-paren closed-paren)
                (unless in-string-p
-                 (let ((at-char
-                        (if (plusp dir)
-                          (following-char)
-                          (preceding-char))))
+                 (let ((at-char (sexp-at-char dir)))
                    (when (or (when (null paren-char)
                                (setq paren-char at-char))
                              (char= paren-char at-char)
@@ -122,8 +124,8 @@
       (point-set point)
       (return nil))))
 
-(macrolet ((def (name &body body)
-                `(defun ,name (point dir)
+(macrolet ((def (name args &body body)
+                `(defun ,name (point dir ,@args)
                    (point-set point)
                    (if (do-scan outer
                                 dir
@@ -133,10 +135,10 @@
                      (progn
                        (point-set point)
                        nil)))))
-  (def scan-string
-       (when (eq x 'string-quote)
+  (def scan-string (char)
+       (when (eql char (sexp-at-char dir))
          (return-from outer t)))
-  (def scan-symbol
+  (def scan-symbol ()
        (unless (or (eq x 'symbol)
                    (eq x 'expr-prefix))
          (return-from outer t))))
@@ -157,7 +159,7 @@
                  (string-quote
                   (next-char dir)
                   (return-from outer
-                               (and (scan-string (point) dir)
+                               (and (scan-string (point) dir (sexp-at-char (- dir)))
                                     (next-char dir))))
                  (space
                   nil)

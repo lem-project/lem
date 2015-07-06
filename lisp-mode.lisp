@@ -354,6 +354,10 @@
            (subseq comp-str (length str)))))
       t)))
 
+(defvar *inferior-lisp-log* nil)
+(defvar *inferior-lisp-log-back* nil)
+(defvar *inferior-lisp-last-point* nil)
+
 (defvar *inferior-lisp-mode-keymap*
         (make-keymap "inferior-lisp" 'undefined-key *lisp-mode-keymap*))
 
@@ -365,6 +369,7 @@
 (define-command inferior-lisp () ()
   (let* ((buffer (get-buffer-create "*REPL*")))
     (setq *current-window* (pop-to-buffer buffer))
+    (setq *inferior-lisp-log* nil)
     (inferior-lisp-mode)
     (insert-string "> ")))
 
@@ -375,8 +380,32 @@
       (mark-sexp)
       (let ((str (region-string (region-beginning)
                                 (region-end))))
+        (push str *inferior-lisp-log*)
         (end-of-buffer)
         (insert-newline 1)
         (insert-string (write-to-string (safe-eval-from-string str)))
         (insert-newline 1)
-        (insert-string "> ")))))
+        (insert-string "> ")
+        (setq *inferior-lisp-last-point* (point))))))
+
+(define-key *inferior-lisp-mode-keymap* "M-p" 'inferior-lisp-prev)
+(define-command inferior-lisp-prev () ()
+  (when *inferior-lisp-last-point*
+    (point-set *inferior-lisp-last-point*)
+    (let ((*kill-disable-p* t))
+      (kill-sexp)))
+  (setq *inferior-lisp-last-point* (point))
+  (let ((str (pop *inferior-lisp-log*)))
+    (push str *inferior-lisp-log-back*)
+    (insert-string str)))
+
+(define-key *inferior-lisp-mode-keymap* "M-n" 'inferior-lisp-next)
+(define-command inferior-lisp-next () ()
+  (when *inferior-lisp-last-point*
+    (point-set *inferior-lisp-last-point*)
+    (let ((*kill-disable-p* t))
+      (kill-sexp)))
+  (setq *inferior-lisp-last-point* (point))
+  (let ((str (pop *inferior-lisp-log-back*)))
+    (push str *inferior-lisp-log*)
+    (insert-string str)))

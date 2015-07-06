@@ -25,7 +25,7 @@
 (defstruct (line (:constructor make-line-internal))
   (prev nil)
   (str "")
-  (prop nil)
+  (props nil)
   (next nil))
 
 (defun make-line (prev next str)
@@ -148,6 +148,18 @@
   `(when (buffer-read-only-p ,buffer)
      (throw 'abort 'readonly)))
 
+(defun buffer-put-property (buffer point prop)
+  (let ((line (buffer-get-line buffer (point-linum point))))
+    (push (list (point-column point) prop)
+          (line-props line))))
+
+(defun buffer-remove-property (buffer point)
+  (let ((line (buffer-get-line buffer (point-linum point))))
+    (setf (line-props line)
+          (delete-if (lambda (prop)
+                       (= (car prop) (point-column point)))
+                     (line-props line)))))
+
 (defun %buffer-get-line (buffer linum)
   (cond
     ((= linum (buffer-cache-linum buffer))
@@ -193,7 +205,8 @@
 (defun buffer-line-string (buffer linum)
   (let ((line (buffer-get-line buffer linum)))
     (when (line-p line)
-      (line-str line))))
+      (values (line-str line)
+              (line-props line)))))
 
 (defun map-buffer-lines (fn buffer &optional start end)
   (let ((head-line

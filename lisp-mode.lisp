@@ -208,9 +208,12 @@
                         (make-buffer-output-stream
                          repl-buffer
                          (make-point (buffer-nlines repl-buffer)
-                                     0)))))
+                                     0))))
+                     (in
+                      (make-minibuffer-input-stream)))
                  (let ((*error-output* (or out *error-output*))
-                       (*standard-output* (or out *standard-output*)))
+                       (*standard-output* (or out *standard-output*))
+                       (*standard-input* in))
                    (handler-case
                        (prog1 (setq val (eval-from-string str))
                          (point-set (make-point

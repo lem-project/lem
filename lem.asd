@@ -19,6 +19,7 @@
                         (:file "search")
                         (:file "region")
                         (:file "buffer")
+                        (:file "io")
                         (:file "buffers")
                         (:file "bufed")
                         (:file "process")

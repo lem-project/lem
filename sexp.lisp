@@ -83,26 +83,37 @@
   (point-set point)
   (dotimes (_ (abs count) t)
     (unless
-        (let ((in-string-p))
+        (let ((in-string-p)
+              (paren-char))
           (do-scan outer
             (if (plusp count) 1 -1)
             (x dir)
             (ecase x
               ((open-paren closed-paren)
                (unless in-string-p
-                 (if (eq x 'open-paren)
-                   (incf depth)
-                   (decf depth))
-                 (cond ((zerop depth)
-                        (next-char dir)
-                        (when (minusp dir)
-                          (do ()
-                              ((not (syntax-expr-prefix-char-p
-                                     (preceding-char))))
-                            (prev-char)))
-                        (return-from outer t))
-                       ((minusp depth)
-                        (return-from outer nil)))) )
+                 (let ((at-char
+                        (if (plusp dir)
+                          (following-char)
+                          (preceding-char))))
+                   (when (or (when (null paren-char)
+                               (setq paren-char at-char))
+                             (char= paren-char at-char)
+                             (char= (syntax-parallel-paren paren-char)
+                                    at-char))
+                     (cond ((eq x 'open-paren)
+                            (incf depth))
+                           (t
+                            (decf depth)))
+                     (cond ((zerop depth)
+                            (next-char dir)
+                            (when (minusp dir)
+                              (do ()
+                                  ((not (syntax-expr-prefix-char-p
+                                         (preceding-char))))
+                                (prev-char)))
+                            (return-from outer t))
+                           ((minusp depth)
+                            (return-from outer nil)))))))
               (string-quote
                (setq in-string-p
                      (not in-string-p)))

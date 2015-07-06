@@ -93,6 +93,10 @@
 (defun syntax-pair-closed-paren (c)
   (cdr (assoc c (syntax-table-paren-alist (current-syntax)))))
 
+(defun syntax-parallel-paren (c)
+  (or (syntax-pair-open-paren c)
+      (syntax-pair-closed-paren c)))
+
 (defun syntax-string-quote-char-p (c)
   (member c (syntax-table-string-quote-chars (current-syntax))))
 

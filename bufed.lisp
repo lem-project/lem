@@ -483,14 +483,15 @@
 
 (defun insert-paren-hilighting-aux (c n)
   (when (insert-char c n)
-    (save-excursion
-     (when (backward-list 1)
-        (window-update *current-window* t)
-        (cl-ncurses:timeout 1000)
-        (let ((c (cl-ncurses:getch)))
-          (unless (= -1 c) (cl-ncurses:ungetch c)))
-        (cl-ncurses:timeout -1)
-        t))))
+    (or (macro-running-p)
+        (save-excursion
+         (when (backward-list 1)
+           (window-update *current-window* t)
+           (cl-ncurses:timeout 1000)
+           (let ((c (cl-ncurses:getch)))
+             (unless (= -1 c) (cl-ncurses:ungetch c)))
+           (cl-ncurses:timeout -1)
+           t)))))
 
 (macrolet ((def (name c)
                 `(progn

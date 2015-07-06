@@ -22,6 +22,8 @@
 (defvar *macro-chars* nil)
 (defvar *macro-running-p* nil)
 
+(defun macro-running-p () *macro-running-p*)
+
 (let ((queue (make-tlist)))
   (defun getch (&optional (abort-jump t))
     (let* ((code (if (not (tlist-empty-p queue))
@@ -66,17 +68,25 @@
 
 (define-key *global-keymap* "C-x(" 'begin-macro)
 (define-command begin-macro () ()
-  (write-message "Start macro")
-  (setq *macro-recording-p* t)
-  (setq *macro-chars* nil))
+  (cond (*macro-recording-p*
+         (write-message "Macro already active")
+         nil)
+        (t 
+         (write-message "Start macro")
+         (setq *macro-recording-p* t)
+         (setq *macro-chars* nil)
+         t)))
 
 (define-key *global-keymap* "C-x)" 'end-macro)
 (define-command end-macro () ()
-  (when *macro-recording-p*
-    (setq *macro-recording-p* nil)
-    (setq *macro-chars* (nreverse *macro-chars*))
-    (write-message "End macro"))
-  t)
+  (cond (*macro-running-p* t)
+        ((not *macro-recording-p*)
+         (write-message "Macro not active"))
+        (t
+         (setq *macro-recording-p* nil)
+         (setq *macro-chars* (nreverse *macro-chars*))
+         (write-message "End macro")
+         t)))
 
 (define-key *global-keymap* "C-xe" 'execute-macro)
 (define-command execute-macro (n) ("p")

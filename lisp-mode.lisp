@@ -190,7 +190,8 @@
          (out (make-buffer-output-stream buffer)))
     (popup buffer
            (lambda ()
-             (princ cdt out)))))
+             (princ cdt out)))
+    cdt))
 
 (defun safe-eval-from-string-1 (str)
   (unless (get-buffer "*REPL*")
@@ -217,6 +218,7 @@
                                      (buffer-output-stream-linum out)
                                      (buffer-output-stream-column out))))
                      (error (cdt)
+                            (setq val cdt)
                             (lisp-error-clause cdt))))))))
            (mi-thread
             (bt:make-thread

@@ -369,6 +369,7 @@
   (let* ((buffer (get-buffer-create "*REPL*")))
     (setq *current-window* (pop-to-buffer buffer))
     (setq *inferior-lisp-log* nil)
+    (setq *inferior-lisp-last-point* nil)
     (inferior-lisp-mode)
     (insert-string "> ")))
 

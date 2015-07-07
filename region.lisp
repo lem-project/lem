@@ -79,8 +79,7 @@
 
 (define-key *global-keymap* (kbd "C-w") 'kill-region)
 (define-command kill-region (begin end) ("r")
-  (unless (equal (point) begin)
-    (exchange-point-mark))
+  (point-set begin)
   (delete-char (region-count begin end)))
 
 (defun apply-region-lines (begin end fn)

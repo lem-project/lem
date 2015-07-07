@@ -86,3 +86,20 @@
 (define-key *global-keymap* (kbd "M-u") 'case-word-upper)
 (define-command case-word-upper (&optional (n 1)) ("p")
   (case-word-aux n 'char-upcase 'char-upcase))
+
+(define-key *global-keymap* (kbd "M-}") 'forward-paragraph)
+(define-key *global-keymap* (list key::ctrl-down) 'forward-paragraph)
+(define-command forward-paragraph (&optional (n 1)) ("p")
+  (block outer
+    (let ((dir (if (minusp n) -1 1)))
+      (dotimes (_ (abs n) t)
+        (loop
+         (unless (next-line dir)
+           (return-from outer nil))
+         (when (blank-line-p)
+           (return t)))))))
+
+(define-key *global-keymap* (kbd "M-{") 'backward-paragraph)
+(define-key *global-keymap* (list key::ctrl-up) 'backward-paragraph)
+(define-command backward-paragraph (&optional (n 1)) ("p")
+  (forward-paragraph (- n)))

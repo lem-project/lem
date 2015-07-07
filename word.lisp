@@ -28,6 +28,7 @@
       (return))))
 
 (define-key *global-keymap* (kbd "M-f") 'next-word)
+(define-key *global-keymap* (list key::ctrl-right) 'next-word)
 (define-command next-word (n) ("p")
   (if (minusp n)
     (prev-word (- n))
@@ -36,6 +37,7 @@
         (return)))))
 
 (define-key *global-keymap* (kbd "M-b") 'prev-word)
+(define-key *global-keymap* (list key::ctrl-left) 'prev-word)
 (define-command prev-word (n) ("p")
   (if (minusp n)
     (next-word (- n))
@@ -44,6 +46,7 @@
         (return)))))
 
 (define-key *global-keymap* (kbd "M-d") 'delete-word)
+(define-key *global-keymap* (list key::ctrl-dc) 'delete-word)
 (define-command delete-word (n) ("p")
   (if (minusp n)
     (backward-delete-word (- n))

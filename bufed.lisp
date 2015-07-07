@@ -135,6 +135,7 @@
   (prev-char n))
 
 (define-key *global-keymap* (kbd "C-d") 'delete-char)
+(define-key *global-keymap* (list key::dc) 'delete-char)
 (define-command delete-char (&optional n does-not-kill-p) ("P")
   (cond
    ((and n (minusp n))
@@ -238,6 +239,7 @@
                 (window-cur-linum))))))
 
 (define-key *global-keymap* (kbd "C-n") 'next-line)
+(define-key *global-keymap* (list key::down) 'next-line)
 (define-command next-line (&optional n) ("P")
   (if (and n (minusp n))
     (prev-line (- n))
@@ -249,6 +251,7 @@
       (progn (end-of-line) nil))))
 
 (define-key *global-keymap* (kbd "C-p") 'prev-line)
+(define-key *global-keymap* (list key::up) 'prev-line)
 (define-command prev-line (&optional n) ("P")
   (if (and n (minusp n))
     (next-line (- n))
@@ -260,6 +263,7 @@
       (progn (beginning-of-line) nil))))
 
 (define-key *global-keymap* (kbd "C-f") 'next-char)
+(define-key *global-keymap* (list key::right) 'next-char)
 (define-command next-char (&optional (n 1)) ("p")
   (if (minusp n)
     (prev-char (- n))
@@ -273,6 +277,7 @@
         (goto-column (1+ (window-cur-col))))))))
 
 (define-key *global-keymap* (kbd "C-b") 'prev-char)
+(define-key *global-keymap* (list key::left) 'prev-char)
 (define-command prev-char (&optional (n 1)) ("p")
   (if (minusp n)
     (next-char (- n))

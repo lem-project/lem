@@ -133,16 +133,13 @@
 (define-key *lisp-mode-keymap* (kbd "C-i") 'lisp-indent-line)
 (define-command lisp-indent-line () ()
   (beginning-of-line)
-  (let ((point (point))
-        (blank-line-flag (blank-line-p)))
+  (let ((point (point)))
     (when (and (up-list 1) (down-list 1))
       (let ((start-col (1- (window-cur-col))))
         (destructuring-bind (car-name-str arg-col)
             (lisp-looking-at-word)
           (let* ((car-name (intern (string-upcase car-name-str) :lem))
                  (count (lisp-count-sexps point)))
-            (when blank-line-flag
-              (incf count))
             (let ((num
                    (do ((val (get car-name 'lisp-indent))
                         (count 0 (1+ count)))

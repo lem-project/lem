@@ -55,7 +55,7 @@
 (defun char-width (c w)
   (cond ((char= c #\tab)
 	 (+ (* (floor w *tab-size*) *tab-size*) *tab-size*))
-	((wide-char-p c)
+	((or (wide-char-p c) (key::ctrl-p c))
 	 (+ w 2))
 	(t
 	 (+ w 1))))

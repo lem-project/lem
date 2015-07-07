@@ -96,6 +96,17 @@
            c)
       (next-char 1))))
 
+(define-key *global-keymap* (kbd "C-q") 'quoted-insert)
+(define-command quoted-insert (&optional (n 1)) ("p")
+  (let ((c (getch)))
+    (dotimes (_ n t)
+      (cond ((char= c key::ctrl-m)
+             (insert-newline 1))
+            ((char= c key::ctrl-d)
+             (delete-char))
+            (t
+             (insert-char c 1))))))
+
 (defun insert-lines (lines)
   (do ((rest lines (cdr rest)))
       ((null rest))

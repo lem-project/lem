@@ -103,3 +103,11 @@
 (define-key *global-keymap* (list key::ctrl-up) 'backward-paragraph)
 (define-command backward-paragraph (&optional (n 1)) ("p")
   (forward-paragraph (- n)))
+
+(define-key *global-keymap* (kbd "M-k") 'kill-paragraph)
+(define-command kill-paragraph (&optional (n 1)) ("p")
+  (dotimes (_ n t)
+    (let ((point (point)))
+      (unless (and (forward-paragraph)
+                   (kill-region point (point)))
+        (return)))))

@@ -8,7 +8,9 @@
           keymap-table
           make-keymap
           *global-keymap*
-          define-key))
+          define-key
+          kbd-to-string
+          kbd))
 
 (defvar *keymaps* nil)
 
@@ -29,8 +31,13 @@
 
 (defvar *global-keymap* (make-keymap "global" 'undefined-key))
 
-(defun define-key (keymap kbd cmd-name)
-  (setf (gethash kbd (keymap-table keymap))
+(defun define-key (keymap key cmd-name)
+  (unless (and (listp key)
+               (dolist (k key t)
+                 (unless (characterp k)
+                   (return nil))))
+    (error "define-key: ~s is illegal key" key))
+  (setf (gethash key (keymap-table keymap))
         cmd-name))
 
 (defun kbd-to-string (key)
@@ -46,9 +53,29 @@
                 (string c))))
       key)))
 
+(defun kbd (str)
+  (let ((i 0)
+        (key))
+    (do ((i 0 (1+ i)))
+        ((>= i (length str)))
+      (case (aref str i)
+        (#\C
+         (assert (char= #\- (aref str (incf i))))
+         (push (code-char
+                (- (char-code
+                    (char-upcase
+                     (aref str (incf i))))
+                   64))
+               key))
+        (#\M
+         (assert (char= #\- (aref str (incf i))))
+         (push key::escape key))
+        (t
+         (push (aref str i) key))))
+    (nreverse key)))
+
 (defun keymap-find-command (keymap key)
-  (let ((cmd (gethash (kbd-to-string key)
-                       (keymap-table keymap))))
+  (let ((cmd (gethash key (keymap-table keymap))))
     (or cmd
       (let ((keymap (keymap-parent keymap)))
         (when keymap

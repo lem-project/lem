@@ -13,7 +13,7 @@
     ((<= #xc2 c #xdf) 2)
     ((<= #xe0 c #xef) 3)
     ((<= #xf0 c #xf4) 4)
-    (t (error "unexpected character ~a" c))))
+    (t 1)))
 
 (defvar *eastasian-full*
   (vector

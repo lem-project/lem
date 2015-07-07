@@ -88,7 +88,7 @@
       (setf (window-cur-col) cur-col)
       (setf (window-max-col) max-col))))
 
-(define-key *global-keymap* "C-xb" 'select-buffer)
+(define-key *global-keymap* (kbd "C-xb") 'select-buffer)
 (define-command select-buffer (name) ("BUse Buffer: ")
   (let ((buf (or (get-buffer name)
                (make-buffer name))))
@@ -101,7 +101,7 @@
       (cadr res)
       (car *buffer-list*))))
 
-(define-key *global-keymap* "C-xk" 'kill-buffer)
+(define-key *global-keymap* (kbd "C-xk") 'kill-buffer)
 (define-command kill-buffer (name) ("bKill buffer: ")
   (let ((buf (get-buffer name)))
     (when (cdr *buffer-list*)
@@ -112,12 +112,12 @@
       (setq *buffer-list* (delete buf *buffer-list*))))
   t)
 
-(define-key *global-keymap* "C-xx" 'next-buffer)
+(define-key *global-keymap* (kbd "C-xx") 'next-buffer)
 (define-command next-buffer (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (set-buffer (get-next-buffer (window-buffer)))))
 
-(define-key *global-keymap* "C-xC-b" 'list-buffers)
+(define-key *global-keymap* (kbd "C-xC-b") 'list-buffers)
 (define-command list-buffers () ()
   (let* ((max-name-len
           (+ 3 (apply 'max

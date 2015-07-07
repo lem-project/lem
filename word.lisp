@@ -27,7 +27,7 @@
     (unless (funcall fn)
       (return))))
 
-(define-key *global-keymap* "M-f" 'next-word)
+(define-key *global-keymap* (kbd "M-f") 'next-word)
 (define-command next-word (n) ("p")
   (if (minusp n)
     (prev-word (- n))
@@ -35,7 +35,7 @@
       (unless (next-word-aux 'next-char)
         (return)))))
 
-(define-key *global-keymap* "M-b" 'prev-word)
+(define-key *global-keymap* (kbd "M-b") 'prev-word)
 (define-command prev-word (n) ("p")
   (if (minusp n)
     (next-word (- n))
@@ -43,7 +43,7 @@
       (unless (prev-word-aux 'prev-char)
         (return)))))
 
-(define-key *global-keymap* "M-d" 'delete-word)
+(define-key *global-keymap* (kbd "M-d") 'delete-word)
 (define-command delete-word (n) ("p")
   (if (minusp n)
     (backward-delete-word (- n))
@@ -51,7 +51,7 @@
       (unless (next-word-aux (lambda () (delete-char 1)))
         (return)))))
 
-(define-key *global-keymap* "M-C-h" 'backward-delete-word)
+(define-key *global-keymap* (kbd "M-C-h") 'backward-delete-word)
 (define-command backward-delete-word (n) ("p")
   (if (minusp n)
     (delete-word (- n))
@@ -72,14 +72,14 @@
       (when (in-word-p (following-char))
         (replace-char (funcall rest-case (following-char)))))))
 
-(define-key *global-keymap* "M-c" 'case-word-capitalize)
+(define-key *global-keymap* (kbd "M-c") 'case-word-capitalize)
 (define-command case-word-capitalize (&optional (n 1)) ("p")
   (case-word-aux n 'char-upcase 'char-downcase))
 
-(define-key *global-keymap* "M-l" 'case-word-lower)
+(define-key *global-keymap* (kbd "M-l") 'case-word-lower)
 (define-command case-word-lower (&optional (n 1)) ("p")
   (case-word-aux n 'char-downcase 'char-downcase))
 
-(define-key *global-keymap* "M-u" 'case-word-upper)
+(define-key *global-keymap* (kbd "M-u") 'case-word-upper)
 (define-command case-word-upper (&optional (n 1)) ("p")
   (case-word-aux n 'char-upcase 'char-upcase))

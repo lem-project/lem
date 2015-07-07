@@ -80,7 +80,7 @@
 (defun exist-command-p (str)
   (find str *command-names* :test 'equal))
 
-(define-key *global-keymap* "M-x" 'execute-command)
+(define-key *global-keymap* (kbd "M-x") 'execute-command)
 (define-command execute-command (name)
   ((list (read-minibuffer
           "M-x "
@@ -103,7 +103,7 @@
                             (format nil "~a~a~a~a~a"
                                     name
                                     #\tab
-                                    (car result)
+                                    (kbd-to-string (car result))
                                     #\tab
                                     (cadr result))
                             name)

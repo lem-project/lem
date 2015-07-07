@@ -45,28 +45,28 @@
   (defun getch-queue-length ()
     (length (car queue))))
 
-(define-key *global-keymap* "C-g" 'keyboard-quit)
+(define-key *global-keymap* (kbd "C-g") 'keyboard-quit)
 (define-command keyboard-quit () ()
   (setq *universal-argument* nil)
   (setq *macro-recording-p* nil)
   (write-message "Quit"))
 
-(define-key *global-keymap* "C-xC-c" 'exit-lem)
+(define-key *global-keymap* (kbd "C-xC-c") 'exit-lem)
 (define-command exit-lem () ()
   (when (or (not (any-modified-buffer-p))
             (y-or-n-p "Modified buffers exist. Leave anyway"))
     (setq *exit* t)))
 
-(define-key *global-keymap* "C-x?" 'describe-key)
+(define-key *global-keymap* (kbd "C-x?") 'describe-key)
 (define-command describe-key () ()
   (write-message "describe-key: ")
   (let* ((key (input-key))
          (cmd (mode-find-keybind key)))
     (write-message (format nil "describe-key: ~a ~a"
-                     (kbd-to-string key)
-                     cmd))))
+                           (kbd-to-string key)
+                           cmd))))
 
-(define-key *global-keymap* "C-x(" 'begin-macro)
+(define-key *global-keymap* (kbd "C-x(") 'begin-macro)
 (define-command begin-macro () ()
   (cond (*macro-recording-p*
          (write-message "Macro already active")
@@ -77,7 +77,7 @@
          (setq *macro-chars* nil)
          t)))
 
-(define-key *global-keymap* "C-x)" 'end-macro)
+(define-key *global-keymap* (kbd "C-x)") 'end-macro)
 (define-command end-macro () ()
   (cond (*macro-running-p* t)
         ((not *macro-recording-p*)
@@ -88,7 +88,7 @@
          (write-message "End macro")
          t)))
 
-(define-key *global-keymap* "C-xe" 'execute-macro)
+(define-key *global-keymap* (kbd "C-xe") 'execute-macro)
 (define-command execute-macro (n) ("p")
   (let ((*macro-running-p* t)
         (*universal-argument* nil))
@@ -108,7 +108,7 @@
                         (execute-macro 1)))
   t)
 
-(define-key *global-keymap* "C-u" 'universal-argument)
+(define-key *global-keymap* (kbd "C-u") 'universal-argument)
 (define-command universal-argument () ()
   (let ((numlist)
         n)

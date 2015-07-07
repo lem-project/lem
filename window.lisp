@@ -42,6 +42,7 @@
                         :cur-linum 1
                         :cur-col 0
                         :max-col 0)))
+    (cl-ncurses:keypad (window-win window) 1)
     window))
 
 (defvar *current-cols*)
@@ -62,7 +63,7 @@
                      0))
   (setq *window-list* (list *current-window*)))
 
-(define-key *global-keymap* "C-l" 'recenter)
+(define-key *global-keymap* (kbd "C-l") 'recenter)
 (define-command recenter () ()
   (window-recenter *current-window*)
   (window-update-all t)
@@ -280,7 +281,7 @@
     (window-update-1 *current-window*)
     (cl-ncurses:doupdate)))
 
-(define-key *global-keymap* "C-x2" 'split-window)
+(define-key *global-keymap* (kbd "C-x2") 'split-window)
 (define-command split-window () ()
   (multiple-value-bind (nlines rem)
       (floor (window-nlines) 2)
@@ -327,7 +328,7 @@
 (defun lower-window (window)
   (cadr (member window *window-list*)))
 
-(define-key *global-keymap* "C-xo" 'other-window)
+(define-key *global-keymap* (kbd "C-xo") 'other-window)
 (define-command other-window (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (setq *current-window*
@@ -355,7 +356,7 @@
     (+ (window-nlines window) dl)
     (+ (window-ncols window) dc)))
 
-(define-key *global-keymap* "C-x1" 'delete-other-windows)
+(define-key *global-keymap* (kbd "C-x1") 'delete-other-windows)
 (define-command delete-other-windows () ()
   (dolist (win *window-list*)
     (unless (eq win *current-window*)
@@ -367,7 +368,7 @@
     cl-ncurses:*cols*)
   t)
 
-(define-key *global-keymap* "C-x0" 'delete-current-window)
+(define-key *global-keymap* (kbd "C-x0") 'delete-current-window)
 (define-command delete-current-window () ()
   (delete-window *current-window*))
 
@@ -438,7 +439,7 @@
          t
          t))
 
-(define-key *global-keymap* "C-x^" 'grow-window)
+(define-key *global-keymap* (kbd "C-x^") 'grow-window)
 (define-command grow-window (n) ("p")
   (if (one-window-p)
     (progn
@@ -465,7 +466,7 @@
           (window-move *current-window* (- n) 0)
           (window-resize upperwin (- n) 0)))))))
 
-(define-key *global-keymap* "C-xC-z" 'shrink-window)
+(define-key *global-keymap* (kbd "C-xC-z") 'shrink-window)
 (define-command shrink-window (n) ("p")
   (cond
    ((one-window-p)
@@ -487,7 +488,7 @@
         (window-move *current-window* n 0)
         (window-resize upperwin n 0)))))))
 
-(define-key *global-keymap* "C-xC-n" 'scroll-down)
+(define-key *global-keymap* (kbd "C-xC-n") 'scroll-down)
 (define-command scroll-down (n) ("p")
   (if (minusp n)
     (scroll-up (- n))
@@ -496,7 +497,7 @@
         (next-line n))
       (window-scroll *current-window* 1))))
 
-(define-key *global-keymap* "C-xC-p" 'scroll-up)
+(define-key *global-keymap* (kbd "C-xC-p") 'scroll-up)
 (define-command scroll-up (n) ("p")
   (if (minusp n)
     (scroll-down (- n))

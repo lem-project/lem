@@ -130,7 +130,7 @@
     (when (point< goal (point))
       (return (values count t)))))
 
-(define-key *lisp-mode-keymap* "C-i" 'lisp-indent-line)
+(define-key *lisp-mode-keymap* (kbd "C-i") 'lisp-indent-line)
 (define-command lisp-indent-line () ()
   (beginning-of-line)
   (let ((point (point))
@@ -166,7 +166,7 @@
                (t
                 (insert-char #\space (+ start-col 2)))))))))))
 
-(define-key *lisp-mode-keymap* "C-j" 'lisp-newline-and-indent)
+(define-key *lisp-mode-keymap* (kbd "C-j") 'lisp-newline-and-indent)
 (define-command lisp-newline-and-indent (n) ("p")
   (insert-newline n)
   (lisp-indent-line))
@@ -251,7 +251,7 @@
   (eval-string (region-string begin end))
   t)
 
-(define-key *lisp-mode-keymap* "M-C-x" 'eval-defun)
+(define-key *lisp-mode-keymap* (kbd "M-C-x") 'eval-defun)
 (define-command eval-defun () ()
   (save-excursion
    (top-of-defun)
@@ -259,7 +259,7 @@
    (eval-region)
    t))
 
-(define-key *lisp-mode-keymap* "C-xu" 'eval-last-sexp)
+(define-key *lisp-mode-keymap* (kbd "C-xu") 'eval-last-sexp)
 (define-command eval-last-sexp () ()
   (save-excursion
    (when (backward-sexp)
@@ -267,14 +267,14 @@
      (eval-region)
      t)))
 
-(define-key *lisp-mode-keymap* "C-xy" 'eval-buffer)
+(define-key *lisp-mode-keymap* (kbd "C-xy") 'eval-buffer)
 (define-command eval-buffer () ()
   (save-excursion
    (eval-region (progn (beginning-of-buffer) (point))
                 (progn (end-of-buffer) (point)))
    t))
 
-(define-key *lisp-mode-keymap* "C-xl" 'load-file)
+(define-key *lisp-mode-keymap* (kbd "C-xl") 'load-file)
 (define-command load-file (filename) ("fLoad File: ")
   (handler-case
       (when (and (file-exist-p filename)
@@ -285,7 +285,7 @@
     (error (cdt)
            (lisp-error-clause cdt))))
 
-(define-key *lisp-mode-keymap* "C-xz" 'go-to-lisp)
+(define-key *lisp-mode-keymap* (kbd "C-xz") 'go-to-lisp)
 (define-command go-to-lisp () ()
   (save-some-buffers)
   (dolist (buffer *buffer-list*)
@@ -298,7 +298,7 @@
           (unmark-buffer)))))
   (exit-lem))
 
-(define-key *lisp-mode-keymap* "C-xm" 'macroexpand-lisp)
+(define-key *lisp-mode-keymap* (kbd "C-xm") 'macroexpand-lisp)
 (define-command macroexpand-lisp (arg) ("P")
   (let ((expr
          (read-from-string
@@ -324,12 +324,12 @@
                        'lisp-indent-line)
    t))
 
-(define-key *lisp-mode-keymap* "M-C-q" 'indent-sexp)
+(define-key *lisp-mode-keymap* (kbd "M-C-q") 'indent-sexp)
 (define-command indent-sexp () ()
   (mark-sexp)
   (indent-region-lisp))
 
-(define-key *lisp-mode-keymap* "M-C-i" 'complete-symbol)
+(define-key *lisp-mode-keymap* (kbd "M-C-i") 'complete-symbol)
 (define-command complete-symbol () ()
   (let* ((end (point))
          (begin (prog2 (backward-sexp)
@@ -373,7 +373,7 @@
     (inferior-lisp-mode)
     (insert-string "> ")))
 
-(define-key *inferior-lisp-mode-keymap* "C-m" 'inferior-lisp-eval)
+(define-key *inferior-lisp-mode-keymap* (kbd "C-m") 'inferior-lisp-eval)
 (define-command inferior-lisp-eval () ()
   (let ((point (point)))
     (when (backward-sexp)
@@ -388,7 +388,7 @@
         (insert-string "> ")
         (setq *inferior-lisp-last-point* (point))))))
 
-(define-key *inferior-lisp-mode-keymap* "M-p" 'inferior-lisp-prev)
+(define-key *inferior-lisp-mode-keymap* (kbd "M-p") 'inferior-lisp-prev)
 (define-command inferior-lisp-prev () ()
   (when *inferior-lisp-last-point*
     (point-set *inferior-lisp-last-point*)
@@ -399,7 +399,7 @@
     (push str *inferior-lisp-log-back*)
     (insert-string str)))
 
-(define-key *inferior-lisp-mode-keymap* "M-n" 'inferior-lisp-next)
+(define-key *inferior-lisp-mode-keymap* (kbd "M-n") 'inferior-lisp-next)
 (define-command inferior-lisp-next () ()
   (when *inferior-lisp-last-point*
     (point-set *inferior-lisp-last-point*)

@@ -69,7 +69,7 @@
       (incf count (1+ (length (car lines)))))
     count))
 
-(define-key *global-keymap* "M-w" 'copy-region)
+(define-key *global-keymap* (kbd "M-w") 'copy-region)
 (define-command copy-region (begin end) ("r")
   (let ((lines (region-lines begin end)))
     (with-kill ()
@@ -77,7 +77,7 @@
   (write-message "region copied")
   t)
 
-(define-key *global-keymap* "C-w" 'kill-region)
+(define-key *global-keymap* (kbd "C-w") 'kill-region)
 (define-command kill-region (begin end) ("r")
   (unless (equal (point) begin)
     (exchange-point-mark))

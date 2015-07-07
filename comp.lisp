@@ -104,7 +104,7 @@
                   *buffer-list*))
    :test #'equal))
 
-(define-key *global-keymap* "M-/" 'abbrev)
+(define-key *global-keymap* (kbd "M-/") 'abbrev)
 (let ((save-words))
   (define-command abbrev () ()
     (let ((first nil))

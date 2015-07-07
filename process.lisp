@@ -2,7 +2,7 @@
 
 (export '(filter-buffer pipe-command))
 
-(define-key *global-keymap* "C-x#" 'filter-buffer)
+(define-key *global-keymap* (kbd "C-x#") 'filter-buffer)
 (define-command filter-buffer (str) ("sFilter buffer: ")
   (let ((outstr (make-array '(0)
                   :element-type 'character
@@ -17,7 +17,7 @@
     (insert-string outstr)
     (beginning-of-buffer)))
 
-(define-key *global-keymap* "C-x@" 'pipe-command)
+(define-key *global-keymap* (kbd "C-x@") 'pipe-command)
 (define-command pipe-command (str) ("sPipe command: ")
   (let ((outstr (make-array '(0)
                   :element-type 'character

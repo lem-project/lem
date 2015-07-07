@@ -15,14 +15,14 @@
 (defun isearch-update-minibuf ()
   (write-message (format nil "ISearch: ~a" *isearch-string*)))
 
-(define-key *global-keymap* "C-s" 'isearch-forward)
+(define-key *global-keymap* (kbd "C-s") 'isearch-forward)
 (define-command isearch-forward () ()
   (isearch-start
    (lambda (str)
      (prev-char (length str))
      (search-forward-aux str))))
 
-(define-key *global-keymap* "C-r" 'isearch-backward)
+(define-key *global-keymap* (kbd "C-r") 'isearch-backward)
 (define-command isearch-backward () ()
   (isearch-start
    (lambda (str)
@@ -38,12 +38,12 @@
   (setq *isearch-start-point* (point))
   t)
 
-(define-key *isearch-keymap* "C-g" 'isearch-abort)
+(define-key *isearch-keymap* (kbd "C-g") 'isearch-abort)
 (define-command isearch-abort () ()
   (point-set *isearch-start-point*)
   t)
 
-(define-key *isearch-keymap* "C-h" 'isearch-delete-char)
+(define-key *isearch-keymap* (kbd "C-h") 'isearch-delete-char)
 (define-command isearch-delete-char () ()
   (setq *isearch-string*
     (subseq *isearch-string*
@@ -51,31 +51,31 @@
       (1- (length *isearch-string*))))
   (isearch-update-minibuf))
 
-(define-key *isearch-keymap* "C-q" 'isearch-raw-insert)
+(define-key *isearch-keymap* (kbd "C-q") 'isearch-raw-insert)
 (define-command isearch-raw-insert () ()
   (isearch-add-char (getch)))
 
-(define-key *isearch-keymap* "C-j" 'isearch-end)
-(define-key *isearch-keymap* "C-m" 'isearch-end)
+(define-key *isearch-keymap* (kbd "C-j") 'isearch-end)
+(define-key *isearch-keymap* (kbd "C-m") 'isearch-end)
 (define-command isearch-end () ()
   (setq *isearch-prev-string* *isearch-string*)
   (set-current-mode-keymap *isearch-tmp-keymap*))
 
-(define-key *isearch-keymap* "C-s" 'isearch-next)
+(define-key *isearch-keymap* (kbd "C-s") 'isearch-next)
 (define-command isearch-next () ()
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
   (search-forward-aux *isearch-string*)
   (isearch-update-minibuf))
 
-(define-key *isearch-keymap* "C-r" 'isearch-prev)
+(define-key *isearch-keymap* (kbd "C-r") 'isearch-prev)
 (define-command isearch-prev () ()
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
   (search-backward-aux *isearch-string*)
   (isearch-update-minibuf))
 
-(define-key *isearch-keymap* "C-y" 'isearch-yank)
+(define-key *isearch-keymap* (kbd "C-y") 'isearch-yank)
 (define-command isearch-yank () ()
   (let ((str (caar *kill-ring-yank-ptr*)))
     (when str
@@ -163,7 +163,7 @@
           (next-char i))
         #'bobp))))
 
-(define-key *global-keymap* "M-C-r" 'query-replace)
+(define-key *global-keymap* (kbd "M-C-r") 'query-replace)
 (define-command query-replace (before after) ("sBefore: " "sAfter: ")
   (let ((n (length before))
         (pass-through))

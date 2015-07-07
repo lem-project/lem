@@ -169,34 +169,34 @@
                  ((expr-prefix))))
       (return nil))))
       
-(define-key *global-keymap* "M-C-n" 'forward-list)
+(define-key *global-keymap* (kbd "M-C-n") 'forward-list)
 (define-command forward-list (&optional (n 1)) ("p")
   (scan-lists (point) n 0))
 
-(define-key *global-keymap* "M-C-p" 'backward-list)
+(define-key *global-keymap* (kbd "M-C-p") 'backward-list)
 (define-command backward-list (&optional (n 1)) ("p")
   (scan-lists (point) (- n) 0))
 
-(define-key *global-keymap* "M-C-f" 'forward-sexp)
+(define-key *global-keymap* (kbd "M-C-f") 'forward-sexp)
 (define-command forward-sexp (&optional (n 1)) ("p")
   (scan-sexps (point) n))
 
-(define-key *global-keymap* "M-C-b" 'backward-sexp)
+(define-key *global-keymap* (kbd "M-C-b") 'backward-sexp)
 (define-command backward-sexp (&optional (n 1)) ("p")
   (scan-sexps (point) (- n)))
 
-(define-key *global-keymap* "M-C-d" 'down-list)
+(define-key *global-keymap* (kbd "M-C-d") 'down-list)
 (define-command down-list (&optional (n 1)) ("p")
   (scan-lists (point) n -1))
 
-(define-key *global-keymap* "M-C-u" 'up-list)
+(define-key *global-keymap* (kbd "M-C-u") 'up-list)
 (define-command up-list (&optional (n 1)) ("p")
   (scan-lists (point) (- n) 1))
 
 (defun top-of-defun ()
   (do () ((not (up-list 1)) t)))
 
-(define-key *global-keymap* "M-C-a" 'beginning-of-defun)
+(define-key *global-keymap* (kbd "M-C-a") 'beginning-of-defun)
 (define-command beginning-of-defun (&optional (n 1)) ("p")
   (if (minusp n)
     (end-of-defun (- n))
@@ -206,7 +206,7 @@
         (unless (backward-sexp 1)
           (return nil))))))
 
-(define-key *global-keymap* "M-C-e" 'end-of-defun)
+(define-key *global-keymap* (kbd "M-C-e") 'end-of-defun)
 (define-command end-of-defun (&optional (n 1)) ("p")
   (if (minusp n)
     (beginning-of-defun (- n))
@@ -215,18 +215,18 @@
       (unless (forward-sexp 1)
         (return nil)))))
 
-(define-key *global-keymap* "M-C-@" 'mark-sexp)
+(define-key *global-keymap* (kbd "M-C-@") 'mark-sexp)
 (define-command mark-sexp () ()
   (save-excursion
     (forward-sexp 1)
     (mark-set)))
 
-(define-key *global-keymap* "M-C-k" 'kill-sexp)
+(define-key *global-keymap* (kbd "M-C-k") 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")
   (mark-sexp)
   (kill-region (region-beginning) (region-end)))
 
-(define-key *global-keymap* "M-C-t" 'transpose-sexps)
+(define-key *global-keymap* (kbd "M-C-t") 'transpose-sexps)
 (define-command transpose-sexps () ()
   (let ((point (point)))
     (or

@@ -86,7 +86,8 @@
             (setq comp-flag t)
             (setq str
               (popup-completion comp-f str))))
-         ((char= c key::ctrl-h)
+         ((or (char= c key::ctrl-h)
+              (char= c key::backspace))
           (when (< 0 (length str))
             (setq str (subseq str 0 (1- (length str))))))
          ((char= c key::ctrl-u)

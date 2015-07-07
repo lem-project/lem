@@ -92,12 +92,12 @@
     (unless (funcall *isearch-search-function* *isearch-string*)
       (point-set point))))
 
-(defun isearch-undef-hook (keys)
-  (let ((c (insertion-key-p keys)))
+(defun isearch-undef-hook (key)
+  (let ((c (insertion-key-p key)))
     (if c
       (isearch-add-char c)
       (progn
-       (mapc 'ungetch keys)
+       (mapc 'ungetch key)
        (isearch-end)))))
 
 (defun search-step (str first-search search step goto-matched-pos endp)

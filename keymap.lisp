@@ -33,7 +33,7 @@
   (setf (gethash kbd (keymap-table keymap))
         cmd-name))
 
-(defun keys-to-keystr (keys)
+(defun kbd-to-string (key)
   (apply 'concatenate 'string
     (mapcar (lambda (c)
               (cond
@@ -44,15 +44,15 @@
                 "M-")
                (t
                 (string c))))
-      keys)))
+      key)))
 
-(defun keymap-find-command (keymap keys)
-  (let ((cmd (gethash (keys-to-keystr keys)
+(defun keymap-find-command (keymap key)
+  (let ((cmd (gethash (kbd-to-string key)
                        (keymap-table keymap))))
     (or cmd
       (let ((keymap (keymap-parent keymap)))
         (when keymap
-          (keymap-find-command keymap keys))))))
+          (keymap-find-command keymap key))))))
 
 (defun keybind-find-from-command (name)
   (let ((name (intern (string-upcase name) :lem)))
@@ -63,11 +63,11 @@
                      (list key (keymap-name keymap)))))
                (keymap-table keymap)))))
 
-(defun key-undef-hook (keymap keys)
+(defun key-undef-hook (keymap key)
   (when (keymap-undef-hook keymap)
-    (funcall (keymap-undef-hook keymap) keys)))
+    (funcall (keymap-undef-hook keymap) key)))
 
-(defun insertion-key-p (keys)
-  (when (or (< 31 (char-code (car keys)))
-            (char= key::ctrl-i (car keys)))
-    (car keys)))
+(defun insertion-key-p (key)
+  (when (or (< 31 (char-code (car key)))
+            (char= key::ctrl-i (car key)))
+    (car key)))

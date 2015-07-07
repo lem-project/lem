@@ -32,12 +32,12 @@
 (defun set-current-mode-keymap (keymap)
   (setf (get (major-mode) 'keymap) keymap))
 
-(defun mode-find-keybind (keys)
+(defun mode-find-keybind (key)
   (dolist (mode (buffer-minor-modes))
-    (let ((result (keymap-find-command (get mode 'keymap) keys)))
+    (let ((result (keymap-find-command (get mode 'keymap) key)))
       (when result
         (return-from mode-find-keybind result))))
-  (keymap-find-command (current-mode-keymap) keys))
+  (keymap-find-command (current-mode-keymap) key))
 
 (defun set-major-mode (major-mode)
   (setf (buffer-major-mode (window-buffer)) major-mode))

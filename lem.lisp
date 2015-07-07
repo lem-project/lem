@@ -8,7 +8,7 @@
           execute-macro
           apply-macro-to-region-lines
           universal-argument
-          input-keys
+          input-key
           undefined-key
           lem
           lem-save-error))
@@ -60,10 +60,10 @@
 (define-key *global-keymap* "C-x?" 'describe-key)
 (define-command describe-key () ()
   (write-message "describe-key: ")
-  (let* ((keys (input-keys))
-         (cmd (mode-find-keybind keys)))
+  (let* ((key (input-key))
+         (cmd (mode-find-keybind key)))
     (write-message (format nil "describe-key: ~a ~a"
-                     (keys-to-keystr keys)
+                     (kbd-to-string key)
                      cmd))))
 
 (define-key *global-keymap* "C-x(" 'begin-macro)
@@ -141,7 +141,7 @@
             4))
         (return (main-step)))))))
 
-(defun input-keys ()
+(defun input-key ()
   (let ((c (getch nil)))
     (if (or (char= c key::ctrl-x)
           (char= c key::escape))
@@ -157,29 +157,29 @@
                         '(vector (unsigned-byte 8)))))
             (list (aref (bytes-to-string bytes) 0))))))))
 
-(defun execute (keys)
+(defun execute (key)
   (let* ((keymap (current-mode-keymap))
-         (cmd (mode-find-keybind keys)))
+         (cmd (mode-find-keybind key)))
     (if cmd
       (unless (cmd-call cmd *universal-argument*)
         (setq *macro-running-p* nil))
-      (key-undef-hook keymap keys))))
+      (key-undef-hook keymap key))))
 
 (defun main-step ()
-  (let ((keys (input-keys)))
+  (let ((key (input-key)))
     (clear-message-line)
     (delete-completion-window)
-    (execute keys)
+    (execute key)
     (setq *universal-argument* nil)))
 
-(defun undefined-key (keys)
-  (let ((c (insertion-key-p keys)))
+(defun undefined-key (key)
+  (let ((c (insertion-key-p key)))
     (if c
       (insert-char c
         (or *universal-argument* 1))
       (write-message (format nil
                              "Key not found: ~a"
-                             (keys-to-keystr keys))))))
+                             (kbd-to-string key))))))
 
 (defun load-init-file ()
   (flet ((test (path)

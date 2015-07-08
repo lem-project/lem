@@ -149,6 +149,8 @@
               (point-set point)
               (delete-while-whitespaces t)
               (cond
+               ((char= #\( (aref car-name-str 0))
+                (insert-char #\space (+ start-col 1)))
                ((and (null num)
                      (or (eql 0 (search "define-" car-name-str))
                          (eql 0 (search "with-" car-name-str))

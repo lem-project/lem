@@ -96,10 +96,11 @@
     t))
 
 (defun get-next-buffer (buffer)
-  (let ((res (member buffer *buffer-list*)))
+  (let* ((buffer-list (reverse *buffer-list*))
+         (res (member buffer buffer-list)))
     (if (cdr res)
       (cadr res)
-      (car *buffer-list*))))
+      (car buffer-list))))
 
 (define-key *global-keymap* (kbd "C-xk") 'kill-buffer)
 (define-command kill-buffer (name) ("bKill buffer: ")

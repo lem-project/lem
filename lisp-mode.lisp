@@ -193,41 +193,45 @@
              (princ cdt out)))
     cdt))
 
+(defvar *eval-thread*)
+(defvar *mi-thread*)
+
 (defun safe-eval-from-string-1 (str)
   (unless (get-buffer "*REPL*")
     (let ((*current-window* *current-window*))
       (inferior-lisp)))
   (let ((val))
-    (let* ((eval-thread
-            (bt:make-thread
-             (lambda ()
-               (let ((out 
-                      (let ((repl-buffer (get-buffer-create "*REPL*")))
-                        (make-buffer-output-stream
-                         repl-buffer
-                         (make-point (buffer-nlines repl-buffer)
-                                     0))))
-                     (in
-                      (make-minibuffer-input-stream)))
-                 (let ((*error-output* (or out *error-output*))
-                       (*standard-output* (or out *standard-output*))
-                       (*standard-input* in))
-                   (handler-case
-                       (prog1 (setq val (eval-from-string str))
-                         (point-set (make-point
-                                     (buffer-output-stream-linum out)
-                                     (buffer-output-stream-column out))))
-                     (error (cdt)
-                            (setq val cdt)
-                            (lisp-error-clause cdt))))))))
-           (mi-thread
-            (bt:make-thread
-             (lambda ()
-               (let ((c (cl-ncurses:getch)))
-                 (when (char= key::ctrl-c (code-char c))
-                   (bt:destroy-thread eval-thread)))))))
-      (bt:join-thread eval-thread)
-      (bt:destroy-thread mi-thread))
+    (labels ((eval-thread-closure
+              ()
+              (let ((out
+                     (let ((repl-buffer (get-buffer-create "*REPL*")))
+                       (make-buffer-output-stream
+                        repl-buffer
+                        (make-point (buffer-nlines repl-buffer)
+                                    0))))
+                    (in
+                     (make-minibuffer-input-stream)))
+                (let ((*error-output* (or out *error-output*))
+                      (*standard-output* (or out *standard-output*))
+                      (*standard-input* in))
+                  (handler-case
+                      (prog1 (setq val (eval-from-string str))
+                        (point-set (make-point
+                                    (buffer-output-stream-linum out)
+                                    (buffer-output-stream-column out))))
+                    (error (cdt)
+                           (setq val cdt)
+                           (lisp-error-clause cdt))))))
+             (mi-thread-closure
+              ()
+              (loop for c = (cl-ncurses:getch)
+                    do
+                    (when (char= key::ctrl-c (code-char c))
+                      (bt:destroy-thread *eval-thread*)))))
+      (setq *eval-thread* (bt:make-thread #'eval-thread-closure))
+      (setq *mi-thread* (bt:make-thread #'mi-thread-closure))
+      (bt:join-thread *eval-thread*)
+      (bt:destroy-thread *mi-thread*))
     val))
 
 (defun safe-eval-from-string (x)
@@ -235,6 +239,7 @@
     #+sbcl
     (sb-thread:join-thread-error
      (cdt)
+     (bt:destroy-thread *mi-thread*)
      (write-message "interrupt")
      nil)))
 

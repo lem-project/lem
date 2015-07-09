@@ -190,10 +190,11 @@
 (defun lisp-error-clause (cdt)
   (let* ((buffer (get-buffer-create "*Error*"))
          (out (make-buffer-output-stream buffer)))
-    (popup buffer
-           (lambda ()
-             (princ cdt out)))
-    cdt))
+    (let ((*current-window* (pop-to-buffer buffer)))
+      (erase-buffer)
+      (princ cdt out)
+      (sb-debug:backtrace 100 out)))
+  cdt)
 
 (defvar *eval-thread*)
 (defvar *mi-thread*)
@@ -217,13 +218,13 @@
                       (*standard-output* (or out *standard-output*))
                       (*standard-input* in))
                   (handler-case
-                      (prog1 (setq val (eval-from-string str))
-                        (point-set (make-point
-                                    (buffer-output-stream-linum out)
-                                    (buffer-output-stream-column out))))
+                      (handler-bind ((error #'lisp-error-clause))
+                        (prog1 (setq val (eval-from-string str))
+                          (point-set (make-point
+                                      (buffer-output-stream-linum out)
+                                      (buffer-output-stream-column out)))))
                     (error (cdt)
-                           (setq val cdt)
-                           (lisp-error-clause cdt))))))
+                           (setq val cdt))))))
              (mi-thread-closure
               ()
               (loop for c = (cl-ncurses:getch)

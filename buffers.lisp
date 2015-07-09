@@ -64,9 +64,9 @@
         (cons buffer
               (delete buffer *buffer-list*))))
 
-(defun set-buffer (buffer &optional update-prev-buffer-p)
+(defun set-buffer (buffer &optional (update-prev-buffer-p t))
   (unless (eq (window-buffer) buffer)
-    (unless update-prev-buffer-p
+    (when update-prev-buffer-p
       (let ((old-buf (window-buffer)))
         (update-prev-buffer old-buf)
         (setf (buffer-keep-binfo old-buf)

@@ -87,8 +87,9 @@
           ""
           'command-completion
           'exist-command-p)))
-  (cmd-call (intern (string-upcase name) :lem)
-    *universal-argument*))
+  (let ((cmd (intern (string-upcase name) :lem)))
+    (when (get cmd 'command)
+      (cmd-call cmd *universal-argument*))))
 
 (define-command apropos (str) ("sApropos: ")
   (let* ((buffer (get-buffer-create "*Apropos*"))

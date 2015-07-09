@@ -222,12 +222,27 @@
       (abort
        (keyboard-quit)))))
 
-(defun lem (&rest args)
+(defun lem-internal (args)
   (unwind-protect
-    (progn
-      (lem-init args)
-      (lem-main))
+    (handler-case
+        (handler-bind ((error #'lisp-error-clause))
+          (lem-main))
+      (error (cdt)
+             (lem-internal args)))
     (lem-finallize)))
+
+(defun lem (&rest args)
+  (labels ((f ()
+              (handler-case
+                  (handler-bind ((error #'lisp-error-clause))
+                    (lem-main))
+                (error (cdt)
+                       (f)))))
+    (unwind-protect
+      (progn
+        (lem-init args)
+        (f))
+      (lem-finallize))))
 
 (defun lem-save-error (&rest args)
   (let ((*print-circle* t))

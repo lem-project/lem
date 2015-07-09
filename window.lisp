@@ -149,10 +149,11 @@
       (progn
         (cl-ncurses:mvwaddstr
          (window-win window) y 0
-         (concatenate 'string str
-                      (make-string (- (window-ncols window)
-                                      (str-width str))
-                                   :initial-element #\space))))
+         (uffi::convert-to-cstring
+          (concatenate 'string str
+                       (make-string (- (window-ncols window)
+                                       (str-width str))
+                                    :initial-element #\space)))))
       (let ((vec
              (map 'vector #'list
                   (concatenate 'string
@@ -170,10 +171,10 @@
                 do
                 (cond ((eq prop :underline)
                        (cl-ncurses:wattron win cl-ncurses:a_underline)
-                       (cl-ncurses:mvwaddstr win y x (string c))
+                       (cl-ncurses:mvwaddstr win y x (uffi::convert-to-cstring (string c)))
                        (cl-ncurses:wattroff win cl-ncurses:a_underline))
                       (t
-                       (cl-ncurses:mvwaddstr win y x (string c))))
+                       (cl-ncurses:mvwaddstr win y x (uffi::convert-to-cstring (string c)))))
                 (incf x (if (wide-char-p c) 2 1))))))
     (cl-ncurses:touchline (window-win) y 1)))
 

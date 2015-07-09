@@ -41,10 +41,12 @@
 (defun write-message (msg)
   (setq *mb-print-flag* t)
   (cl-ncurses:werase *mb-win*)
-  (cl-ncurses:mvwaddstr *mb-win*
-    0
-    0
-    (replace-string (string #\newline) "<NL>" msg))
+  (cl-ncurses:mvwaddstr
+   *mb-win*
+   0
+   0
+   (uffi::convert-to-cstring
+    (replace-string (string #\newline) "<NL>" msg)))
   (cl-ncurses:wrefresh *mb-win*))
 
 (defun y-or-n-p (prompt)

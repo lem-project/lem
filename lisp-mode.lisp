@@ -203,7 +203,8 @@
   (unless (get-buffer "*REPL*")
     (let ((*current-window* *current-window*))
       (inferior-lisp)))
-  (let ((val))
+  (let ((val)
+        (error-p))
     (labels ((eval-thread-closure
               ()
               (let ((out
@@ -224,6 +225,7 @@
                                       (buffer-output-stream-linum out)
                                       (buffer-output-stream-column out)))))
                     (error (cdt)
+                           (setq error-p t)
                            (setq val cdt))))))
              (mi-thread-closure
               ()
@@ -235,7 +237,7 @@
       (setq *mi-thread* (bt:make-thread #'mi-thread-closure))
       (bt:join-thread *eval-thread*)
       (bt:destroy-thread *mi-thread*))
-    val))
+    (values val error-p)))
 
 (defun safe-eval-from-string (x)
   (handler-case (safe-eval-from-string-1 x)
@@ -361,6 +363,8 @@
            (subseq comp-str (length str)))))
       t)))
 
+(defvar *inferior-lisp-prompt* "* ")
+
 (defvar *inferior-lisp-log* nil)
 (defvar *inferior-lisp-log-back* nil)
 (defvar *inferior-lisp-last-point* nil)
@@ -379,7 +383,7 @@
     (setq *inferior-lisp-log* nil)
     (setq *inferior-lisp-last-point* nil)
     (inferior-lisp-mode)
-    (insert-string "> ")))
+    (insert-string *inferior-lisp-prompt*)))
 
 (define-key *inferior-lisp-mode-keymap* (kbd "C-m") 'inferior-lisp-eval)
 (define-command inferior-lisp-eval () ()
@@ -391,9 +395,13 @@
         (push str *inferior-lisp-log*)
         (end-of-buffer)
         (insert-newline 1)
-        (insert-string (write-to-string (safe-eval-from-string str)))
+        (multiple-value-bind (value error-p)
+            (safe-eval-from-string str)
+          (declare (ignore error-p))
+          (insert-string (write-to-string value)))
+        (end-of-buffer)
         (insert-newline 1)
-        (insert-string "> ")
+        (insert-string *inferior-lisp-prompt*)
         (setq *inferior-lisp-last-point* (point))))))
 
 (define-key *inferior-lisp-mode-keymap* (kbd "M-p") 'inferior-lisp-prev)

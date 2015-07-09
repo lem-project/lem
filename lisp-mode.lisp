@@ -138,7 +138,11 @@
       (let ((start-col (1- (window-cur-col))))
         (destructuring-bind (car-name-str arg-col)
             (lisp-looking-at-word)
-          (let* ((car-name (intern (string-upcase car-name-str) :lem))
+          (setq car-name-str
+                (string-upcase
+                 (car
+                  (last (split-string car-name-str #\:)))))
+          (let* ((car-name (intern car-name-str :lem))
                  (count (lisp-count-sexps point)))
             (let ((num
                    (do ((val (get car-name 'lisp-indent))
@@ -152,9 +156,9 @@
                ((char= #\( (aref car-name-str 0))
                 (insert-char #\space (+ start-col 1)))
                ((and (null num)
-                     (or (eql 0 (search "define-" car-name-str))
-                         (eql 0 (search "with-" car-name-str))
-                         (eql 0 (search "do-" car-name-str))))
+                     (or (eql 0 (search "DEFINE-" car-name-str))
+                         (eql 0 (search "WITH-" car-name-str))
+                         (eql 0 (search "DO-" car-name-str))))
                 (insert-char #\space (+ start-col 2)))
                ((null num)
                 (if arg-col

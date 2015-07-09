@@ -284,6 +284,7 @@
    t))
 
 (define-key *lisp-mode-keymap* (kbd "C-xl") 'load-file)
+(define-key *lisp-mode-keymap* (kbd "C-xC-l") 'load-file)
 (define-command load-file (filename) ("fLoad File: ")
   (handler-case
       (when (and (file-exist-p filename)
@@ -293,19 +294,6 @@
                  (load filename))))
     (error (cdt)
            (lisp-error-clause cdt))))
-
-(define-key *lisp-mode-keymap* (kbd "C-xz") 'go-to-lisp)
-(define-command go-to-lisp () ()
-  (save-some-buffers)
-  (dolist (buffer *buffer-list*)
-    (when (eq 'lisp-mode (buffer-major-mode buffer))
-      (if (buffer-filename buffer)
-        (load (buffer-filename buffer))
-        (progn
-          (set-buffer buffer)
-          (eval-buffer)
-          (unmark-buffer)))))
-  (exit-lem))
 
 (define-key *lisp-mode-keymap* (kbd "C-xm") 'macroexpand-lisp)
 (define-command macroexpand-lisp (arg) ("P")
@@ -377,6 +365,8 @@
   :keymap *inferior-lisp-mode-keymap*
   :syntax-table *lisp-syntax-table*)
 
+(define-key *global-keymap* (kbd "C-xz") 'inferior-lisp)
+(define-key *global-keymap* (kbd "C-xC-z") 'inferior-lisp)
 (define-command inferior-lisp () ()
   (let* ((buffer (get-buffer-create "*REPL*")))
     (setq *current-window* (pop-to-buffer buffer))

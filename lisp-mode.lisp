@@ -215,6 +215,7 @@
                     (tmpbuf (current-buffer))
                     (replbuf (get-buffer "*REPL*")))
                 (set-buffer replbuf nil)
+                (end-of-buffer)
                 (insert-string
                  (with-output-to-string (out)
                    (let ((*error-output* out)

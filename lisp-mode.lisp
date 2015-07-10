@@ -211,26 +211,23 @@
         (error-p))
     (labels ((eval-thread-closure
               ()
-              (let ((out
-                     (let ((repl-buffer (get-buffer-create "*REPL*")))
-                       (make-buffer-output-stream
-                        repl-buffer
-                        (make-point (buffer-nlines repl-buffer)
-                                    0))))
-                    (in
-                     (make-minibuffer-input-stream)))
-                (let ((*error-output* (or out *error-output*))
-                      (*standard-output* (or out *standard-output*))
-                      (*standard-input* in))
-                  (handler-case
-                      (handler-bind ((error #'lisp-error-clause))
-                        (prog1 (setq val (eval-from-string str))
-                          (point-set (make-point
-                                      (buffer-output-stream-linum out)
-                                      (buffer-output-stream-column out)))))
-                    (error (cdt)
-                           (setq error-p t)
-                           (setq val cdt))))))
+              (let ((in (make-minibuffer-input-stream))
+                    (tmpbuf (current-buffer))
+                    (replbuf (get-buffer "*REPL*")))
+                (set-buffer replbuf nil)
+                (insert-string
+                 (with-output-to-string (out)
+                   (let ((*error-output* out)
+                         (*trace-output* out)
+                         (*standard-output* out)
+                         (*standard-input* in))
+                     (handler-case
+                         (handler-bind ((error #'lisp-error-clause))
+                           (setq val (eval-from-string str)))
+                       (error (cdt)
+                              (setq error-p t)
+                              (setq val cdt))))))
+                (set-buffer tmpbuf nil)))
              (mi-thread-closure
               ()
               (loop for c = (cl-ncurses:getch)

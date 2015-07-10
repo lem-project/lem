@@ -368,6 +368,8 @@
 (defvar *inferior-lisp-log-back* nil)
 (defvar *inferior-lisp-last-point* nil)
 
+(push :inferior-lisp-log *continue-command-flags*)
+
 (defvar *inferior-lisp-mode-keymap*
         (make-keymap "inferior-lisp" 'undefined-key *lisp-mode-keymap*))
 
@@ -405,24 +407,26 @@
         (insert-string *inferior-lisp-prompt*)
         (setq *inferior-lisp-last-point* (point))))))
 
+(defmacro inferior-lisp-back-log (log1 log2)
+  `(progn
+     (when-continue-flag :inferior-lisp-log
+                         (when *inferior-lisp-last-point*
+                           (point-set *inferior-lisp-last-point*)
+                           (let ((*kill-disable-p* t))
+                             (kill-sexp))))
+     (setq *inferior-lisp-last-point* (point))
+     (let ((str (pop ,log1)))
+       (push str ,log2)
+       (insert-string str))))
+
 (define-key *inferior-lisp-mode-keymap* (kbd "M-p") 'inferior-lisp-prev)
 (define-command inferior-lisp-prev () ()
-  (when *inferior-lisp-last-point*
-    (point-set *inferior-lisp-last-point*)
-    (let ((*kill-disable-p* t))
-      (kill-sexp)))
-  (setq *inferior-lisp-last-point* (point))
-  (let ((str (pop *inferior-lisp-log*)))
-    (push str *inferior-lisp-log-back*)
-    (insert-string str)))
+  (inferior-lisp-back-log
+   *inferior-lisp-log*
+   *inferior-lisp-log-back*))
 
 (define-key *inferior-lisp-mode-keymap* (kbd "M-n") 'inferior-lisp-next)
 (define-command inferior-lisp-next () ()
-  (when *inferior-lisp-last-point*
-    (point-set *inferior-lisp-last-point*)
-    (let ((*kill-disable-p* t))
-      (kill-sexp)))
-  (setq *inferior-lisp-last-point* (point))
-  (let ((str (pop *inferior-lisp-log-back*)))
-    (push str *inferior-lisp-log*)
-    (insert-string str)))
+  (inferior-lisp-back-log
+   *inferior-lisp-log-back*
+   *inferior-lisp-log*))

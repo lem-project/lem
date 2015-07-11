@@ -288,14 +288,10 @@
 (define-key *lisp-mode-keymap* (kbd "C-xl") 'load-file)
 (define-key *lisp-mode-keymap* (kbd "C-xC-l") 'load-file)
 (define-command load-file (filename) ("fLoad File: ")
-  (handler-case
-      (when (and (file-exist-p filename)
-                 (not (file-directory-p filename)))
-        (write-message
-         (format nil "~a"
-                 (load filename))))
-    (error (cdt)
-           (lisp-error-clause cdt))))
+  (when (and (file-exist-p filename)
+             (not (file-directory-p filename)))
+    (eval-string
+     (format nil "(load ~s)" filename))))
 
 (define-key *lisp-mode-keymap* (kbd "C-xm") 'macroexpand-lisp)
 (define-command macroexpand-lisp (arg) ("P")

@@ -513,7 +513,7 @@
     (or (macro-running-p)
         (save-excursion
          (when (backward-list 1)
-           (window-update *current-window* t)
+           (window-update-all)
            (cl-ncurses:timeout 1000)
            (let ((c (cl-ncurses:getch)))
              (unless (= -1 c) (cl-ncurses:ungetch c)))

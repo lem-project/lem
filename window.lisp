@@ -22,7 +22,6 @@
   y
   x
   buffer
-  display-lines
   vtop-linum
   cur-linum
   cur-col
@@ -37,7 +36,6 @@
                         :y y
                         :x x
                         :buffer buffer
-                        :display-lines (make-array nlines :initial-element nil)
                         :vtop-linum 1
                         :cur-linum 1
                         :cur-col 0
@@ -47,7 +45,6 @@
 
 (defvar *current-cols*)
 (defvar *current-lines*)
-(defvar *window-force-update* nil)
 
 (defun one-window-p ()
   (null (cdr *window-list*)))
@@ -66,7 +63,7 @@
 (define-key *global-keymap* (kbd "C-l") 'recenter)
 (define-command recenter () ()
   (window-recenter *current-window*)
-  (window-update-all t)
+  (window-update-all)
   t)
 
 (defun window-recenter (window)
@@ -137,107 +134,67 @@
   (- (window-cur-linum window)
      (window-vtop-linum window)))
 
-(defun window-update-line-p (window y str)
-  (or *window-force-update*
-      (null (aref (window-display-lines window) y))
-      (string/= str (aref (window-display-lines window) y))))
+(defun window-update-line (window y str)
+  (cl-ncurses:mvwaddstr
+   (window-win window) y 0
+   (uffi::convert-to-cstring
+    (concatenate 'string
+                 str
+                 (make-string (- (window-ncols window)
+                                 (str-width str))
+                              :initial-element #\space)))))
 
-(defun window-update-line (window y str &optional props (offset 0))
-  (when (window-update-line-p window y str)
-    (setf (aref (window-display-lines window) y) str)
-    (if (null props)
-      (progn
-        (cl-ncurses:mvwaddstr
-         (window-win window) y 0
-         (uffi::convert-to-cstring
-          (concatenate 'string str
-                       (make-string (- (window-ncols window)
-                                       (str-width str))
-                                    :initial-element #\space)))))
-      (let ((vec
-             (map 'vector #'list
-                  (concatenate 'string
-                               str
-                               (make-string (- (window-ncols window)
-                                               (str-width str))
-                                            :initial-element #\space)))))
-        (dolist (prop props)
-          (destructuring-bind (i p) prop
-            (when (<= 0 (decf i offset) (1- (window-ncols window)))
-              (setf (cdr (aref vec i)) p))))
-        (let ((win (window-win window)))
-          (loop with x = 0
-                for (c . prop) across vec
-                do
-                (cond ((eq prop :underline)
-                       (cl-ncurses:wattron win cl-ncurses:a_underline)
-                       (cl-ncurses:mvwaddstr win y x (uffi::convert-to-cstring (string c)))
-                       (cl-ncurses:wattroff win cl-ncurses:a_underline))
-                      (t
-                       (cl-ncurses:mvwaddstr win y x (uffi::convert-to-cstring (string c)))))
-                (incf x (if (wide-char-p c) 2 1))))))
-    (cl-ncurses:touchline (window-win) y 1)))
-
-(defun window-refresh-line (window y str props)
+(defun window-refresh-line (window y str)
   (let ((cury (window-cursor-y window))
-        (curx)
-        (oldstr str))
-    (when (or (window-update-line-p window y oldstr)
-              (= cury y))
-      (when (= cury y)
-        (setq curx (str-width str (window-cur-col window))))
-      (let ((width (str-width str))
-            (cols (window-ncols window))
-            (offset 0))
-        (cond
-         ((< width (window-ncols window))
-          nil)
-         ((or (/= cury y)
-              (< curx (1- cols)))
-          (let ((i (wide-index str cols)))
-            (setq str
-                  (if (<= cols (str-width str i))
-                    (format nil "~a $" (subseq str 0 (1- i)))
-                    (format nil "~a$" (subseq str 0 i))))))
-         ((< (window-cur-col window) (length str))
-          (let* ((begin (wide-index str (- curx cols -4)))
-                 (end (window-cur-col window))
-                 (substr (subseq str begin end)))
-            (setq offset (1- begin))
-            (setq curx (- cols 2))
-            (if (wide-char-p (aref substr (- (length substr) 1)))
-              (progn
-                (setq str
-                      (format nil "$~a $"
-                              (subseq substr 0 (1- (length substr)))))
-                (decf curx))
-              (setq str (format nil "$~a$" substr)))))
-         (t
-          (setq offset (- curx cols -1))
+        (curx))
+    (when (= cury y)
+      (setq curx (str-width str (window-cur-col window))))
+    (let ((width (str-width str))
+          (cols (window-ncols window)))
+      (cond
+       ((< width (window-ncols window))
+        nil)
+       ((or (/= cury y)
+            (< curx (1- cols)))
+        (let ((i (wide-index str cols)))
           (setq str
-                (format nil
-                        "$~a"
-                        (substring-width str (- curx cols -3))))
-          (setq curx (- cols 1))))
-        (window-update-line window y str props offset)))
+                (if (<= cols (str-width str i))
+                  (format nil "~a $" (subseq str 0 (1- i)))
+                  (format nil "~a$" (subseq str 0 i))))))
+       ((< (window-cur-col window) (length str))
+        (let* ((begin (wide-index str (- curx cols -4)))
+               (end (window-cur-col window))
+               (substr (subseq str begin end)))
+          (setq curx (- cols 2))
+          (if (wide-char-p (aref substr (- (length substr) 1)))
+            (progn
+              (setq str
+                    (format nil "$~a $"
+                            (subseq substr 0 (1- (length substr)))))
+              (decf curx))
+            (setq str (format nil "$~a$" substr)))))
+       (t
+        (setq str
+              (format nil
+                      "$~a"
+                      (substring-width str (- curx cols -3))))
+        (setq curx (- cols 1))))
+      (window-update-line window y str))
     curx))
 
 (defun window-refresh-lines (window)
   (let ((x 0))
-    (do ((disp-y 0 (1+ disp-y))
-         (buff-y (window-vtop-linum window) (1+ buff-y)))
-        ((or (> buff-y (buffer-nlines (window-buffer window)))
-             (= disp-y (- (window-nlines window) 1)))
-         (do ((disp-y disp-y (1+ disp-y)))
-             ((= disp-y (- (window-nlines window) 1)))
-           (window-refresh-line window disp-y "" nil)))
-      (multiple-value-bind (str props)
-          (buffer-line-string (window-buffer window) buff-y)
-        (let ((curx (window-refresh-line window disp-y str props)))
-          (when curx
-            (setq x curx)))))
+    (loop for str in (buffer-take-lines (window-buffer window)
+                                        (window-vtop-linum window)
+                                        (1- (window-nlines window)))
+          for y from 0
+          do (pdebug str)
+          do (let ((curx (window-refresh-line window y str)))
+               (when curx
+                 (setq x curx))))
     (cl-ncurses:wmove (window-win window)
-                      (- (window-cur-linum window) (window-vtop-linum window))
+                      (- (window-cur-linum window)
+                         (window-vtop-linum window))
                       x)))
 
 (defun window-refresh (window)
@@ -264,23 +221,17 @@
         (window-recenter window)
 	(window-scroll window offset)))))
 
-(defun window-update-1 (window)
+(defun window-update (window)
   (window-adjust-view window t)
   (window-refresh window))
 
-(defun window-update (window &optional force)
-  (let ((*window-force-update* force))
-    (window-update-1 window)
-    (when force
-      (cl-ncurses:wrefresh (window-win window)))))
-
-(defun window-update-all (&optional force)
-  (let ((*window-force-update* force))
-    (dolist (win *window-list*)
-      (unless (eq win *current-window*)
-        (window-update win)))
-    (window-update-1 *current-window*)
-    (cl-ncurses:doupdate)))
+(defun window-update-all ()
+  (cl-ncurses:erase)
+  (dolist (win *window-list*)
+    (unless (eq win *current-window*)
+      (window-update win)))
+  (window-update *current-window*)
+  (cl-ncurses:doupdate))
 
 (define-key *global-keymap* (kbd "C-x2") 'split-window)
 (define-command split-window () ()
@@ -343,9 +294,7 @@
 (defun window-set-size (window nlines ncols)
   (cl-ncurses:wresize (window-win window) nlines ncols)
   (setf (window-nlines window) nlines)
-  (setf (window-ncols window) ncols)
-  (setf (window-display-lines window)
-        (make-array nlines :initial-element nil)))
+  (setf (window-ncols window) ncols))
 
 (defun window-move (window dy dx)
   (window-set-pos window

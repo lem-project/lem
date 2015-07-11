@@ -84,7 +84,9 @@
                  (with-condition-restarts . multiple-value-bind)
                  (with-output-to-string . 1)
                  (with-slots . multiple-value-bind)
-                 (with-standard-io-syntax . 2)))
+                 (with-standard-io-syntax . 2)
+                 (defparameter . 1)
+                 (defvar . 1)))
     (setf (get (car elt) 'lisp-indent) (cdr elt))))
 
 (defvar *lisp-mode-keymap*

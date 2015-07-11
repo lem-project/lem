@@ -174,12 +174,12 @@
 
 (defun undefined-key (key)
   (let ((c (insertion-key-p key)))
-    (if c
-      (insert-char c
-        (or *universal-argument* 1))
-      (write-message (format nil
-                             "Key not found: ~a"
-                             (kbd-to-string key))))))
+    (cond (c
+           (setf (window-update-flag *current-window*) :insert)
+           (insert-char c (or *universal-argument* 1)))
+          (t (write-message (format nil
+                                    "Key not found: ~a"
+                                    (kbd-to-string key)))))))
 
 (defun load-init-file ()
   (flet ((test (path)
@@ -213,7 +213,7 @@
        (*curr-flags* (make-flags) (make-flags))
        (*last-flags* (make-flags) *curr-flags*))
       (*exit*)
-    (window-update-all)
+    (window-update-all-minimize)
     (case (catch 'abort
             (main-step)
             nil)

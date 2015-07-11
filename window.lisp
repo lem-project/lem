@@ -25,7 +25,8 @@
   vtop-linum
   cur-linum
   cur-col
-  max-col)
+  max-col
+  update-flag)
 
 (defun make-window (buffer nlines ncols y x)
   (let ((window
@@ -188,7 +189,6 @@
                                         (window-vtop-linum window)
                                         (1- (window-nlines window)))
           for y from 0
-          do (pdebug str)
           do (let ((curx (window-refresh-line window y str)))
                (when curx
                  (setq x curx))))
@@ -222,16 +222,33 @@
 	(window-scroll window offset)))))
 
 (defun window-update (window)
+  (cl-ncurses:werase (window-win window))
   (window-adjust-view window t)
   (window-refresh window))
 
 (defun window-update-all ()
-  (cl-ncurses:erase)
   (dolist (win *window-list*)
     (unless (eq win *current-window*)
       (window-update win)))
   (window-update *current-window*)
   (cl-ncurses:doupdate))
+
+(defun window-update-all-minimize ()
+  (case (window-update-flag)
+    (:insert
+     (let* ((cury (window-cursor-y *current-window*))
+            (curx (window-refresh-line
+                   *current-window*
+                   cury
+                   (buffer-line-string
+                    (window-buffer)
+                    (window-cur-linum *current-window*)))))
+       (cl-ncurses:wmove (window-win) cury curx)))
+    (:newline
+     )
+    (otherwise
+     (window-update-all)))
+  (setf (window-update-flag) nil))
 
 (define-key *global-keymap* (kbd "C-x2") 'split-window)
 (define-command split-window () ()

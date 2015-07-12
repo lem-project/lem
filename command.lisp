@@ -4,7 +4,7 @@
           define-command
           exist-command-p
           execute-command
-          apropos))
+          apropos-command))
 
 (defvar *command-names* nil)
 
@@ -91,7 +91,7 @@
     (when (get cmd 'command)
       (cmd-call cmd *universal-argument*))))
 
-(define-command apropos (str) ("sApropos: ")
+(define-command apropos-command (str) ("sApropos: ")
   (let* ((buffer (get-buffer-create "*Apropos*"))
          (out (make-buffer-output-stream buffer)))
     (popup buffer

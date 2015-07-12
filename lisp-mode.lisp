@@ -195,11 +195,12 @@
 
 (defun lisp-error-clause (cdt)
   (let* ((buffer (get-buffer-create "*Error*"))
-         (out (make-buffer-output-stream buffer)))
-    (let ((*current-window* (pop-to-buffer buffer)))
-      (erase-buffer)
-      (princ cdt out)
-      (sb-debug:backtrace 100 out)))
+         (*current-window* (pop-to-buffer buffer)))
+    (erase-buffer)
+    (insert-string
+     (with-output-to-string (out)
+       (princ cdt out)
+       (sb-debug:backtrace 100 out))))
   cdt)
 
 (defvar *eval-thread*)

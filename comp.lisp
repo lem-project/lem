@@ -88,7 +88,8 @@
      (lambda (str eof-p linum)
        (declare (ignore eof-p linum))
        (dolist (w (remove-if-not (lambda (tok)
-                                   (eql 0 (search word tok)))
+                                   (and (string/= word tok)
+                                        (eql 0 (search word tok))))
                                  (scan-line-words str)))
          (push w words)))
      buffer

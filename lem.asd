@@ -1,6 +1,6 @@
 (defpackage :lem
   (:use :cl)
-  (:shadow :y-or-n-p :read-char :apropos))
+  (:shadow :apropos))
 
 (defsystem lem
            :serial t

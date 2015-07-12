@@ -86,7 +86,7 @@
 
 (defmethod sb-gray:stream-read-char ((stream minibuffer-input-stream))
   (let ((c (or (pop (minibuffer-input-stream-queue stream))
-               (read-char "Read char: "))))
+               (minibuf-read-char "Read char: "))))
     (if (char= c #\eot)
       :eof
       c)))
@@ -109,7 +109,7 @@
       (sb-gray:stream-unread-char stream c))))
 
 (defmethod sb-gray:stream-read-line ((stream minibuffer-input-stream))
-  (read-string "Read line: "))
+  (minibuf-read-string "Read line: "))
 
 (defmethod sb-gray:stream-clear-input ((stream minibuffer-input-stream))
   nil)

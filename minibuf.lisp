@@ -1,20 +1,20 @@
 (in-package :lem)
 
-(export '(clear-message-line
-          write-message
-          y-or-n-p
-          read-char
-          read-minibuffer
-          read-string
-          read-number
-          read-buffer
-          read-file-name))
+(export '(minibuf-clear
+          minibuf-print
+          minibuf-y-or-n-p
+          minibuf-read-char
+          minibuf-read-line
+          minibuf-read-string
+          minibuf-read-number
+          minibuf-read-buffer
+          minibuf-read-file))
 
 (defvar *mb-win*)
 (defvar *mb-print-flag* nil)
 (defvar *mb-read-log* nil)
 
-(defun mb-init ()
+(defun minibuf-init ()
   (setq *mb-win*
 	(cl-ncurses:newwin
 	 1
@@ -22,7 +22,7 @@
 	 (1- cl-ncurses:*lines*)
 	 0)))
 
-(defun mb-resize ()
+(defun minibuf-resize ()
   (cl-ncurses:mvwin *mb-win*
     (1- cl-ncurses:*lines*)
     0)
@@ -32,13 +32,13 @@
   (cl-ncurses:werase *mb-win*)
   (cl-ncurses:wrefresh *mb-win*))
 
-(defun clear-message-line ()
+(defun minibuf-clear ()
   (when *mb-print-flag*
     (cl-ncurses:werase *mb-win*)
     (cl-ncurses:wrefresh *mb-win*)
     (setq *mb-print-flag* nil)))
 
-(defun write-message (msg)
+(defun minibuf-print (msg)
   (setq *mb-print-flag* t)
   (cl-ncurses:werase *mb-win*)
   (cl-ncurses:mvwaddstr
@@ -49,10 +49,10 @@
     (replace-string (string #\newline) "<NL>" msg)))
   (cl-ncurses:wrefresh *mb-win*))
 
-(defun y-or-n-p (prompt)
+(defun minibuf-y-or-n-p (prompt)
   (setq *mb-print-flag* t)
   (do () (nil)
-    (write-message (format nil "~a [y/n]? " prompt))
+    (minibuf-print (format nil "~a [y/n]? " prompt))
     (let ((c (getch)))
       (cond
        ((char= #\y c)
@@ -60,12 +60,12 @@
        ((char= #\n c)
         (return nil))))))
 
-(defun read-char (prompt)
+(defun minibuf-read-char (prompt)
   (setq *mb-print-flag* t)
-  (write-message prompt)
+  (minibuf-print prompt)
   (getch))
 
-(defun read-minibuffer (prompt initial comp-f existing-p)
+(defun minibuf-read-line (prompt initial comp-f existing-p)
   (setq *mb-print-flag* t)
   (let ((str initial)
         (comp-flag)
@@ -74,7 +74,7 @@
         (next-read-log))
     (do ((break nil))
         (break)
-      (write-message (format nil "~a~a" prompt str))
+      (minibuf-print (format nil "~a~a" prompt str))
       (let ((c (getch)))
         (cond
          ((or (char= c key::ctrl-j)
@@ -117,12 +117,12 @@
     (push str *mb-read-log*)
     str))
 
-(defun read-string (prompt &optional initial)
-  (read-minibuffer prompt (or initial "") nil nil))
+(defun minibuf-read-string (prompt &optional initial)
+  (minibuf-read-line prompt (or initial "") nil nil))
 
-(defun read-number (prompt)
+(defun minibuf-read-number (prompt)
   (parse-integer
-   (read-minibuffer prompt "" nil
+   (minibuf-read-line prompt "" nil
      (lambda (str)
        (multiple-value-bind (n len)
            (parse-integer str :junk-allowed t)
@@ -131,11 +131,11 @@
           (/= 0 (length str))
           (= (length str) len)))))))
 
-(defun read-buffer (prompt &optional default existing)
+(defun minibuf-read-buffer (prompt &optional default existing)
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))
   (let* ((buffer-names (mapcar 'buffer-name *buffer-list*))
-         (result (read-minibuffer prompt
+         (result (minibuf-read-line prompt
                    ""
                    (lambda (name)
                      (completion name buffer-names))
@@ -146,10 +146,10 @@
       default
       result)))
 
-(defun read-file-name (prompt &optional directory default existing)
+(defun minibuf-read-file (prompt &optional directory default existing)
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))
-  (let ((result (read-minibuffer prompt
+  (let ((result (minibuf-read-line prompt
                   directory
                   #'file-completion
                   (and existing #'file-exist-p))))

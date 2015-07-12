@@ -342,7 +342,7 @@
 (defun delete-window (window)
   (cond
    ((one-window-p)
-    (write-message "Can not delete this window")
+    (minibuf-print "Can not delete this window")
     nil)
    (t
     (when (eq *current-window* window)
@@ -410,14 +410,14 @@
 (define-command grow-window (n) ("p")
   (if (one-window-p)
     (progn
-     (write-message "Only one window")
+     (minibuf-print "Only one window")
      nil)
     (let* ((lowerwin (lower-window *current-window*))
            (upperwin (if lowerwin nil (upper-window *current-window*))))
       (if lowerwin
         (cond
          ((>= 1 (- (window-nlines lowerwin) n))
-          (write-message "Impossible change")
+          (minibuf-print "Impossible change")
           nil)
          (t
           (window-resize *current-window* n 0)
@@ -426,7 +426,7 @@
           t))
         (cond
          ((>= 1 (- (window-nlines upperwin) n))
-          (write-message "Impossible change")
+          (minibuf-print "Impossible change")
           nil)
          (t
           (window-resize *current-window* n 0)
@@ -437,10 +437,10 @@
 (define-command shrink-window (n) ("p")
   (cond
    ((one-window-p)
-    (write-message "Only one window")
+    (minibuf-print "Only one window")
     nil)
    ((>= 1 (- (window-nlines *current-window*) n))
-    (write-message "Impossible change")
+    (minibuf-print "Impossible change")
     nil)
    (t
     (let* ((lowerwin (lower-window *current-window*))

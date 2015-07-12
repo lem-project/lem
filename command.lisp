@@ -25,25 +25,25 @@
               (mapcar (lambda (arg-descripter)
                         (cond
                          ((char= #\s (aref arg-descripter 0))
-                          `(read-string ,(subseq arg-descripter 1)))
+                          `(minibuf-read-string ,(subseq arg-descripter 1)))
                          ((char= #\n (aref arg-descripter 0))
-                          `(read-number ,(subseq arg-descripter 1)))
+                          `(minibuf-read-number ,(subseq arg-descripter 1)))
                          ((char= #\b (aref arg-descripter 0))
-                          `(read-buffer ,(subseq arg-descripter 1)
+                          `(minibuf-read-buffer ,(subseq arg-descripter 1)
                                         (buffer-name (window-buffer))
                                         t))
                          ((char= #\B (aref arg-descripter 0))
-                          `(read-buffer ,(subseq arg-descripter 1)
+                          `(minibuf-read-buffer ,(subseq arg-descripter 1)
                                         (buffer-name (other-buffer))
                                         nil))
                          ((char= #\f (aref arg-descripter 0))
-                          `(read-file-name
+                          `(minibuf-read-file
                             ,(subseq arg-descripter 1)
                             (current-directory)
                             nil
                             t))
                          ((char= #\F (aref arg-descripter 0))
-                          `(read-file-name
+                          `(minibuf-read-file
                             ,(subseq arg-descripter 1)
                             (current-directory)
                             nil
@@ -82,7 +82,7 @@
 
 (define-key *global-keymap* (kbd "M-x") 'execute-command)
 (define-command execute-command (name)
-  ((list (read-minibuffer
+  ((list (minibuf-read-line
           "M-x "
           ""
           'command-completion

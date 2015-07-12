@@ -250,11 +250,11 @@
     (sb-thread:join-thread-error
      (cdt)
      (bt:destroy-thread *mi-thread*)
-     (write-message "interrupt")
+     (minibuf-print "interrupt")
      nil)))
 
 (defun eval-string (str)
-  (write-message
+  (minibuf-print
    (write-to-string
     (safe-eval-from-string str))))
 

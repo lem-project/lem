@@ -219,7 +219,7 @@
 (define-key *global-keymap* (kbd "M-g") 'goto-line)
 (define-command goto-line (n &optional does-not-recenter-p) ("P")
   (unless n
-    (setq n (read-number "Line to GOTO: ")))
+    (setq n (minibuf-read-number "Line to GOTO: ")))
   (when (< 0 n (1+ (buffer-nlines (window-buffer))))
     (setf (window-cur-linum) n)
     (unless does-not-recenter-p
@@ -327,7 +327,7 @@
       (window-cur-linum))
     (setf (buffer-mark-col buffer)
       (window-cur-col))
-    (write-message "Mark set")
+    (minibuf-print "Mark set")
     t))
 
 (define-key *global-keymap* (kbd "C-xC-x") 'exchange-point-mark)

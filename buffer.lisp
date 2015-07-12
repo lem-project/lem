@@ -403,7 +403,7 @@
   (if (buffer-mark-linum buffer)
     t
     (progn
-     (write-message "Not mark in this buffer")
+     (minibuf-print "Not mark in this buffer")
      nil)))
 
 (defun buffer-undo-1 (buffer)

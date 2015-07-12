@@ -34,7 +34,7 @@
         (push char *macro-chars*))
       (cond
        ((= code 410)
-        (mb-resize)
+        (minibuf-resize)
         (adjust-screen-size)
         (getch))
        ((and (char= char key::ctrl-g) abort-jump)
@@ -49,30 +49,30 @@
 (define-command keyboard-quit () ()
   (setq *universal-argument* nil)
   (setq *macro-recording-p* nil)
-  (write-message "Quit"))
+  (minibuf-print "Quit"))
 
 (define-key *global-keymap* (kbd "C-xC-c") 'exit-lem)
 (define-command exit-lem () ()
   (when (or (not (any-modified-buffer-p))
-            (y-or-n-p "Modified buffers exist. Leave anyway"))
+            (minibuf-y-or-n-p "Modified buffers exist. Leave anyway"))
     (setq *exit* t)))
 
 (define-key *global-keymap* (kbd "C-x?") 'describe-key)
 (define-command describe-key () ()
-  (write-message "describe-key: ")
+  (minibuf-print "describe-key: ")
   (let* ((key (input-key))
          (cmd (mode-find-keybind key)))
-    (write-message (format nil "describe-key: ~a ~a"
+    (minibuf-print (format nil "describe-key: ~a ~a"
                            (kbd-to-string key)
                            cmd))))
 
 (define-key *global-keymap* (kbd "C-x(") 'begin-macro)
 (define-command begin-macro () ()
   (cond (*macro-recording-p*
-         (write-message "Macro already active")
+         (minibuf-print "Macro already active")
          nil)
         (t 
-         (write-message "Start macro")
+         (minibuf-print "Start macro")
          (setq *macro-recording-p* t)
          (setq *macro-chars* nil)
          t)))
@@ -81,11 +81,11 @@
 (define-command end-macro () ()
   (cond (*macro-running-p* t)
         ((not *macro-recording-p*)
-         (write-message "Macro not active"))
+         (minibuf-print "Macro not active"))
         (t
          (setq *macro-recording-p* nil)
          (setq *macro-chars* (nreverse *macro-chars*))
-         (write-message "End macro")
+         (minibuf-print "End macro")
          t)))
 
 (define-key *global-keymap* (kbd "C-xe") 'execute-macro)
@@ -112,8 +112,8 @@
 (define-command universal-argument () ()
   (let ((numlist)
         n)
-    (do ((c (read-char "C-u 4")
-            (read-char
+    (do ((c (minibuf-read-char "C-u 4")
+            (minibuf-read-char
              (format nil "C-u ~{~a~}" numlist))))
         (nil)
       (cond
@@ -167,7 +167,7 @@
 
 (defun main-step ()
   (let ((key (input-key)))
-    (clear-message-line)
+    (minibuf-clear)
     (delete-completion-window)
     (execute key)
     (setq *universal-argument* nil)))
@@ -177,7 +177,7 @@
     (cond (c
            (setf (window-update-flag *current-window*) :insert)
            (insert-char c (or *universal-argument* 1)))
-          (t (write-message (format nil
+          (t (minibuf-print (format nil
                                     "Key not found: ~a"
                                     (kbd-to-string key)))))))
 
@@ -185,7 +185,7 @@
   (flet ((test (path)
                (when (file-exist-p path)
                  (load path)
-                 (write-message (format nil "Load file: ~a" path))
+                 (minibuf-print (format nil "Load file: ~a" path))
                  t)))
     (or (test (merge-pathnames "lem.rc" (truename ".")))
         (test (merge-pathnames ".lemrc" (user-homedir-pathname))))))
@@ -200,7 +200,7 @@
   (unless *init-flag*
     (setq *init-flag* t)
     (window-init)
-    (mb-init)
+    (minibuf-init)
     (load-init-file))
   (dolist (arg args)
     (find-file arg)))
@@ -218,7 +218,7 @@
             (main-step)
             nil)
       (readonly
-       (write-message "Read Only"))
+       (minibuf-print "Read Only"))
       (abort
        (keyboard-quit)))))
 

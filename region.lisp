@@ -74,7 +74,7 @@
   (let ((lines (region-lines begin end)))
     (with-kill ()
       (kill-push lines)))
-  (write-message "region copied")
+  (minibuf-print "region copied")
   t)
 
 (define-key *global-keymap* (kbd "C-w") 'kill-region)

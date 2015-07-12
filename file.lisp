@@ -149,7 +149,7 @@
 (defun save-file-internal (buffer)
   (write-to-file buffer (buffer-filename buffer))
   (unmark-buffer)
-  (write-message "Wrote")
+  (minibuf-print "Wrote")
   t)
 
 (define-key *global-keymap* (kbd "C-xC-s") 'save-file)
@@ -159,7 +159,7 @@
      ((null (buffer-modified-p buffer))
       nil)
      ((null (buffer-filename buffer))
-      (write-message "No file name")
+      (minibuf-print "No file name")
       nil)
      (t
       (save-file-internal buffer)))))

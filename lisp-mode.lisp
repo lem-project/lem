@@ -400,6 +400,8 @@
         (multiple-value-bind (value error-p)
             (safe-eval-from-string str)
           (declare (ignore error-p))
+          (unless (bolp)
+            (insert-newline))
           (insert-string (write-to-string value)))
         (end-of-buffer)
         (insert-newline 1)

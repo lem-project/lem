@@ -11,7 +11,6 @@
           eval-last-sexp
           eval-buffer
           load-file
-          go-to-lisp
           macroexpand-lisp
           indent-region-lisp
           indent-sexp
@@ -223,6 +222,7 @@
                  (with-output-to-string (out)
                    (let ((*error-output* out)
                          (*trace-output* out)
+                         (*debug-io* out)
                          (*standard-output* out)
                          (*standard-input* in))
                      (handler-case

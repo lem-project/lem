@@ -116,6 +116,9 @@
           (setq save-words
                 (setq *abbrev-words*
                       (scan-all-buffer-words src-word)))
+          (unless save-words
+            (setq *abbrev-words* (list src-word))
+            (setq save-words *abbrev-words*))
           (backward-delete-char (length src-word) t)
           (insert-string (pop save-words)))
         (let ((src-word (preceding-word)))

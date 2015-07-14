@@ -231,6 +231,7 @@
                        (error (cdt)
                               (setq error-p t)
                               (setq val cdt))))))
+                (inferior-lisp-set-point)
                 (set-buffer tmpbuf nil)))
              (mi-thread-closure
               ()
@@ -372,6 +373,9 @@
 (defvar *inferior-lisp-mode-keymap*
         (make-keymap "inferior-lisp" 'undefined-key *lisp-mode-keymap*))
 
+(defun inferior-lisp-set-point ()
+  (setq *inferior-lisp-last-point* (point)))
+
 (define-major-mode inferior-lisp-mode
   :name "inferior-lisp-mode"
   :keymap *inferior-lisp-mode-keymap*
@@ -390,23 +394,23 @@
 (define-key *inferior-lisp-mode-keymap* (kbd "C-m") 'inferior-lisp-eval)
 (define-command inferior-lisp-eval () ()
   (let ((point (point)))
-    (when (backward-sexp)
-      (mark-sexp)
-      (let ((str (region-string (region-beginning)
-                                (region-end))))
-        (push str *inferior-lisp-log*)
-        (end-of-buffer)
+    (end-of-buffer)
+    (let ((str (region-string (or *inferior-lisp-last-point* (make-point 1 0))
+                              (region-end))))
+      (unless (string= "" (string-trim '(#\newline #\tab #\space) str))
         (insert-newline 1)
         (multiple-value-bind (value error-p)
             (safe-eval-from-string str)
-          (declare (ignore error-p))
-          (unless (bolp)
-            (insert-newline))
-          (insert-string (write-to-string value)))
+          (when str
+            (push str *inferior-lisp-log*))
+          (unless error-p
+            (unless (bolp)
+              (insert-newline))
+            (insert-string (write-to-string value))))
         (end-of-buffer)
         (insert-newline 1)
         (insert-string *inferior-lisp-prompt*)
-        (setq *inferior-lisp-last-point* (point))))))
+        (inferior-lisp-set-point)))))
 
 (defmacro inferior-lisp-back-log (log1 log2)
   `(progn
@@ -415,10 +419,11 @@
                            (point-set *inferior-lisp-last-point*)
                            (let ((*kill-disable-p* t))
                              (kill-sexp))))
-     (setq *inferior-lisp-last-point* (point))
+     (inferior-lisp-set-point)
      (let ((str (pop ,log1)))
-       (push str ,log2)
-       (insert-string str))))
+       (when str
+         (push str ,log2)
+         (insert-string str)))))
 
 (define-key *inferior-lisp-mode-keymap* (kbd "M-p") 'inferior-lisp-prev)
 (define-command inferior-lisp-prev () ()

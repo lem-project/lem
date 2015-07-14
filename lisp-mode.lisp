@@ -257,7 +257,8 @@
 (defun eval-string (str)
   (minibuf-print
    (write-to-string
-    (safe-eval-from-string str))))
+    (safe-eval-from-string str)))
+  (inferior-lisp-prompt))
 
 (define-command eval-region (&optional begin end) ("r")
   (unless (or begin end)
@@ -381,6 +382,17 @@
   :keymap *inferior-lisp-mode-keymap*
   :syntax-table *lisp-syntax-table*)
 
+(defun inferior-lisp-prompt ()
+  (let ((*currnet-window* *current-window*)
+        (save-buffer (current-buffer)))
+    (set-buffer (get-buffer-create "*REPL*") nil)
+    (end-of-buffer)
+    (unless (bolp)
+      (insert-newline 1))
+    (insert-string *inferior-lisp-prompt*)
+    (inferior-lisp-set-point)
+    (set-buffer save-buffer nil)))
+
 (define-key *global-keymap* (kbd "C-xz") 'inferior-lisp)
 (define-key *global-keymap* (kbd "C-xC-z") 'inferior-lisp)
 (define-command inferior-lisp () ()
@@ -389,7 +401,7 @@
     (setq *inferior-lisp-log* nil)
     (setq *inferior-lisp-last-point* nil)
     (inferior-lisp-mode)
-    (insert-string *inferior-lisp-prompt*)))
+    (inferior-lisp-prompt)))
 
 (define-key *inferior-lisp-mode-keymap* (kbd "C-m") 'inferior-lisp-eval)
 (define-command inferior-lisp-eval () ()
@@ -407,10 +419,7 @@
             (unless (bolp)
               (insert-newline))
             (insert-string (write-to-string value))))
-        (end-of-buffer)
-        (insert-newline 1)
-        (insert-string *inferior-lisp-prompt*)
-        (inferior-lisp-set-point)))))
+        (inferior-lisp-prompt)))))
 
 (defmacro inferior-lisp-back-log (log1 log2)
   `(progn

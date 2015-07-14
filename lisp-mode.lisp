@@ -55,7 +55,7 @@
                  (generic-labels . flet)
                  (handler-case . 1)
                  (restart-case . handler-case)
-                 (if . 1)
+                 ;(if . 1)
                  (lambda . 1)
                  (let . 1)
                  (let* . let)

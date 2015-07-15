@@ -210,7 +210,7 @@
   (unless (get-buffer "*REPL*")
     (let ((*current-window* *current-window*))
       (inferior-lisp)))
-  (let ((val)
+  (let ((values)
         (error-p))
     (labels ((eval-thread-closure
               ()
@@ -228,10 +228,10 @@
                          (*standard-input* in))
                      (handler-case
                          (handler-bind ((error #'lisp-error-clause))
-                           (setq val (eval-from-string str)))
+                           (setq values (multiple-value-list (eval-from-string str))))
                        (error (cdt)
                               (setq error-p t)
-                              (setq val cdt))))))
+                              (setq values (list cdt)))))))
                 (inferior-lisp-set-point)
                 (set-buffer tmpbuf nil)))
              (mi-thread-closure
@@ -244,7 +244,7 @@
       (setq *mi-thread* (bt:make-thread #'mi-thread-closure))
       (bt:join-thread *eval-thread*)
       (bt:destroy-thread *mi-thread*))
-    (values val error-p)))
+    (values values error-p)))
 
 (defun safe-eval-from-string (x)
   (handler-case (safe-eval-from-string-1 x)
@@ -258,7 +258,7 @@
 (defun eval-string (str)
   (minibuf-print
    (write-to-string
-    (safe-eval-from-string str)))
+    (first (safe-eval-from-string str))))
   (inferior-lisp-prompt))
 
 (define-command eval-region (&optional begin end) ("r")
@@ -412,14 +412,16 @@
                               (region-end))))
       (unless (string= "" (string-trim '(#\newline #\tab #\space) str))
         (insert-newline 1)
-        (multiple-value-bind (value error-p)
+        (multiple-value-bind (values error-p)
             (safe-eval-from-string str)
           (when str
             (push str *inferior-lisp-log*))
           (unless error-p
             (unless (bolp)
               (insert-newline))
-            (insert-string (write-to-string value))))
+            (dolist (v values)
+              (insert-string (write-to-string v))
+              (insert-newline 1))))
         (inferior-lisp-prompt)))))
 
 (defmacro inferior-lisp-back-log (log1 log2)

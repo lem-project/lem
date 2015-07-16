@@ -13,14 +13,11 @@
           transpose-sexps))
 
 (defun convert-line (str reverse-p)
-  (let ((acc)
-        (comment-p))
+  (let ((acc))
     (do ((i 0 (1+ i)))
         ((<= (length str) i))
       (let ((c (aref str i)))
-        (cond (comment-p
-               (push 'space acc))
-              ((syntax-space-char-p c)
+        (cond ((syntax-space-char-p c)
                (push 'space acc))
               ((syntax-symbol-char-p c)
                (push 'symbol acc))
@@ -43,8 +40,7 @@
               ((syntax-expr-prefix-char-p c)
                (push 'expr-prefix acc))
               ((syntax-line-comment-char-p c)
-               (push 'space acc)
-               (setq comment-p t))
+               (push 'space acc))
               (t
                (push 'symbol acc)))))
     (if reverse-p

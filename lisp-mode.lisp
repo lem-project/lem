@@ -295,14 +295,15 @@
                            (prog1 (point)
                              (point-set start))))
           nil)))
-    (let* ((buffer (get-buffer-create "*macroexpand*"))
-           (out (make-buffer-output-stream buffer)))
+    (let* ((buffer (get-buffer-create "*macroexpand*")))
       (popup buffer
              (lambda ()
-               (pprint (if arg
-                         (macroexpand expr)
-                         (macroexpand-1 expr))
-                       out))))))
+               (insert-string
+                (with-output-to-string (out)
+                  (pprint (if arg
+                              (macroexpand expr)
+                              (macroexpand-1 expr))
+                          out))))))))
 
 (define-command indent-region-lisp () ()
   (save-excursion

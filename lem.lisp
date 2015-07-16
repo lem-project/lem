@@ -250,4 +250,5 @@
                                     :direction :output
                                     :if-exists :overwrite
                                     :if-does-not-exist :create)
-      (apply #'lem args))))
+      (lem-init args)
+      (lem-main))))

@@ -92,20 +92,21 @@
       (cmd-call cmd *universal-argument*))))
 
 (define-command apropos-command (str) ("sApropos: ")
-  (let* ((buffer (get-buffer-create "*Apropos*"))
-         (out (make-buffer-output-stream buffer)))
+  (let* ((buffer (get-buffer-create "*Apropos*")))
     (popup buffer
            (lambda ()
-             (dolist (name *command-names*)
-               (when (search str name)
-                 (let ((result (keybind-find-from-command name)))
-                   (fresh-line out)
-                   (princ (if result
-                            (format nil "~a~a~a~a~a"
-                                    name
-                                    #\tab
-                                    (kbd-to-string (car result))
-                                    #\tab
-                                    (cadr result))
-                            name)
-                          out))))))))
+             (insert-string
+              (with-output-to-string (out)
+                (dolist (name *command-names*)
+                  (when (search str name)
+                    (let ((result (keybind-find-from-command name)))
+                      (fresh-line out)
+                      (princ (if result
+                                 (format nil "~a~a~a~a~a"
+                                         name
+                                         #\tab
+                                         (kbd-to-string (car result))
+                                         #\tab
+                                         (cadr result))
+                                 name)
+                             out))))))))))

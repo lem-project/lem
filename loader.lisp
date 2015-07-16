@@ -1,2 +1,2 @@
 (ql:quickload :lem)
-(apply 'lem::lem-save-error (lem::argv))
+(apply 'lem::lem (lem::argv))

@@ -14,11 +14,7 @@
           macroexpand-lisp
           indent-region-lisp
           indent-sexp
-          complete-symbol
-          *inferior-lisp-mode-keymap*
-          inferior-lisp-mode
-          inferior-lisp
-          inferior-lisp-eval))
+          complete-symbol))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (dolist (elt '((block . 1)
@@ -207,33 +203,24 @@
 (defvar *mi-thread*)
 
 (defun safe-eval-from-string-1 (str)
-  (unless (get-buffer "*REPL*")
-    (let ((*current-window* *current-window*))
-      (inferior-lisp)))
   (let ((values)
         (error-p))
     (labels ((eval-thread-closure
               ()
-              (let ((in (make-minibuffer-input-stream))
-                    (tmpbuf (current-buffer))
-                    (replbuf (get-buffer "*REPL*")))
-                (set-buffer replbuf nil)
-                (end-of-buffer)
-                (insert-string
-                 (with-output-to-string (out)
-                   (let ((*error-output* out)
-                         (*trace-output* out)
-                         (*debug-io* out)
-                         (*standard-output* out)
-                         (*standard-input* in))
-                     (handler-case
-                         (handler-bind ((error #'lisp-error-clause))
-                           (setq values (multiple-value-list (eval-from-string str))))
-                       (error (cdt)
-                              (setq error-p t)
-                              (setq values (list cdt)))))))
-                (inferior-lisp-set-point)
-                (set-buffer tmpbuf nil)))
+              (let ((output-string
+                     (with-output-to-string (out)
+                       (let ((*error-output* out)
+                             (*trace-output* out)
+                             (*debug-io* out)
+                             (*standard-output* out))
+                         (handler-case
+                             (handler-bind ((error #'lisp-error-clause))
+                               (setq values (multiple-value-list (eval-from-string str))))
+                           (error (cdt)
+                                  (setq error-p t)
+                                  (setq values (list cdt))))))))
+                (popup-string (get-buffer-create "*OUTPUT*")
+                              output-string)))
              (mi-thread-closure
               ()
               (loop for c = (cl-ncurses:getch)
@@ -258,8 +245,7 @@
 (defun eval-string (str)
   (minibuf-print
    (write-to-string
-    (first (safe-eval-from-string str))))
-  (inferior-lisp-prompt))
+    (first (safe-eval-from-string str)))))
 
 (define-command eval-region (&optional begin end) ("r")
   (unless (or begin end)
@@ -363,88 +349,3 @@
           (insert-string
            (subseq comp-str (length str)))))
       t)))
-
-(defvar *inferior-lisp-prompt* "* ")
-
-(defvar *inferior-lisp-log* nil)
-(defvar *inferior-lisp-log-back* nil)
-(defvar *inferior-lisp-last-point* nil)
-
-(push :inferior-lisp-log *continue-command-flags*)
-
-(defvar *inferior-lisp-mode-keymap*
-        (make-keymap "inferior-lisp" 'undefined-key *lisp-mode-keymap*))
-
-(defun inferior-lisp-set-point ()
-  (setq *inferior-lisp-last-point* (point)))
-
-(define-major-mode inferior-lisp-mode
-  :name "inferior-lisp-mode"
-  :keymap *inferior-lisp-mode-keymap*
-  :syntax-table *lisp-syntax-table*)
-
-(defun inferior-lisp-prompt ()
-  (let ((*currnet-window* *current-window*)
-        (save-buffer (current-buffer)))
-    (set-buffer (get-buffer-create "*REPL*") nil)
-    (end-of-buffer)
-    (unless (bolp)
-      (insert-newline 1))
-    (insert-string *inferior-lisp-prompt*)
-    (inferior-lisp-set-point)
-    (set-buffer save-buffer nil)))
-
-(define-key *global-keymap* (kbd "C-xz") 'inferior-lisp)
-(define-key *global-keymap* (kbd "C-xC-z") 'inferior-lisp)
-(define-command inferior-lisp () ()
-  (let* ((buffer (get-buffer-create "*REPL*")))
-    (setq *current-window* (pop-to-buffer buffer))
-    (setq *inferior-lisp-log* nil)
-    (setq *inferior-lisp-last-point* nil)
-    (inferior-lisp-mode)
-    (inferior-lisp-prompt)))
-
-(define-key *inferior-lisp-mode-keymap* (kbd "C-m") 'inferior-lisp-eval)
-(define-command inferior-lisp-eval () ()
-  (let ((point (point)))
-    (end-of-buffer)
-    (let ((str (region-string (or *inferior-lisp-last-point* (make-point 1 0))
-                              (region-end))))
-      (unless (string= "" (string-trim '(#\newline #\tab #\space) str))
-        (insert-newline 1)
-        (multiple-value-bind (values error-p)
-            (safe-eval-from-string str)
-          (when str
-            (push str *inferior-lisp-log*))
-          (unless error-p
-            (unless (bolp)
-              (insert-newline))
-            (dolist (v values)
-              (insert-string (write-to-string v))
-              (insert-newline 1))))
-        (inferior-lisp-prompt)))))
-
-(defmacro inferior-lisp-back-log (log1 log2)
-  `(progn
-     (when-continue-flag :inferior-lisp-log
-                         (when *inferior-lisp-last-point*
-                           (point-set *inferior-lisp-last-point*)
-                           (let ((*kill-disable-p* t))
-                             (kill-sexp))))
-     (inferior-lisp-set-point)
-     (let ((str (pop ,log1)))
-       (when str
-         (push str ,log2)
-         (insert-string str)))))
-
-(define-key *inferior-lisp-mode-keymap* (kbd "M-p") 'inferior-lisp-prev)
-(define-command inferior-lisp-prev () ()
-  (inferior-lisp-back-log
-   *inferior-lisp-log*
-   *inferior-lisp-log-back*))
-
-(define-key *inferior-lisp-mode-keymap* (kbd "M-n") 'inferior-lisp-next)
-(define-command inferior-lisp-next () ()
-  (inferior-lisp-back-log
-   *inferior-lisp-log-back*
-   *inferior-lisp-log*))

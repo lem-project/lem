@@ -196,6 +196,7 @@
     (insert-string
      (with-output-to-string (out)
        (princ cdt out)
+       #+sbcl
        (sb-debug:backtrace 100 out))))
   cdt)
 

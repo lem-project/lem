@@ -3,23 +3,35 @@
 (export '(argv pwd files shell-command))
 
 (defun argv ()
-  (cdr sb-ext:*posix-argv*))
+  #+sbcl
+  (cdr sb-ext:*posix-argv*)
+  #-sbcl
+  nil)
 
 (defun bytes-to-string (bytes)
-  (sb-ext:octets-to-string bytes))
+  #+sbcl
+  (sb-ext:octets-to-string bytes)
+  #-sbcl
+  (code-char (aref bytes 0)))
 
 (defun pwd ()
-  (sb-posix:getcwd))
+  #+sbcl
+  (sb-posix:getcwd)
+  #+ecl
+  (namestring (ext:getcwd)))
 
 (defun files (dirname)
-  (mapcar #'namestring
-    (directory
-     (make-pathname
-      :name :wild
-      :type :wild
-      :defaults dirname))))
+  (mapcar #'namestring (cl-fad:list-directory dirname)))
 
 (defun shell-command (str &key output input)
+  #+sbcl
   (sb-ext:run-program "/bin/sh" (list "-c" str)
     :output output
-    :input input))
+    :input input)
+  #+ecl
+  (destructuring-bind (cmd &rest args)
+      (split-string str #\space)
+    (let ((s (ext:run-program cmd args)))
+      (loop for x = (read s nil nil)
+        while x
+        do (print x output)))))

@@ -30,5 +30,6 @@
                         (:file "grep")
                         (:file "lem"))
            :depends-on (:cl-charms
+                        :cl-fad
                         #+sbcl :sb-posix
                         :bordeaux-threads))

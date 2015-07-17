@@ -16,38 +16,37 @@
 
 (defun minibuf-init ()
   (setq *mb-win*
-	(cl-ncurses:newwin
+	(cl-charms/low-level:newwin
 	 1
-	 cl-ncurses:*cols*
-	 (1- cl-ncurses:*lines*)
+	 cl-charms/low-level:*cols*
+	 (1- cl-charms/low-level:*lines*)
 	 0)))
 
 (defun minibuf-resize ()
-  (cl-ncurses:mvwin *mb-win*
-    (1- cl-ncurses:*lines*)
+  (cl-charms/low-level:mvwin *mb-win*
+    (1- cl-charms/low-level:*lines*)
     0)
-  (cl-ncurses:wresize *mb-win*
+  (cl-charms/low-level:wresize *mb-win*
     1
-    cl-ncurses:*cols*)
-  (cl-ncurses:werase *mb-win*)
-  (cl-ncurses:wrefresh *mb-win*))
+    cl-charms/low-level:*cols*)
+  (cl-charms/low-level:werase *mb-win*)
+  (cl-charms/low-level:wrefresh *mb-win*))
 
 (defun minibuf-clear ()
   (when *mb-print-flag*
-    (cl-ncurses:werase *mb-win*)
-    (cl-ncurses:wrefresh *mb-win*)
+    (cl-charms/low-level:werase *mb-win*)
+    (cl-charms/low-level:wrefresh *mb-win*)
     (setq *mb-print-flag* nil)))
 
 (defun minibuf-print (msg)
   (setq *mb-print-flag* t)
-  (cl-ncurses:werase *mb-win*)
-  (cl-ncurses:mvwaddstr
+  (cl-charms/low-level:werase *mb-win*)
+  (cl-charms/low-level:mvwaddstr
    *mb-win*
    0
    0
-   (uffi::convert-to-cstring
-    (replace-string (string #\newline) "<NL>" msg)))
-  (cl-ncurses:wrefresh *mb-win*))
+   (replace-string (string #\newline) "<NL>" msg))
+  (cl-charms/low-level:wrefresh *mb-win*))
 
 (defun minibuf-y-or-n-p (prompt)
   (setq *mb-print-flag* t)

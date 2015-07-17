@@ -28,7 +28,7 @@
   (defun getch (&optional (abort-jump t))
     (let* ((code (if (not (tlist-empty-p queue))
                    (tlist-rem-left queue)
-                   (cl-ncurses:wgetch (window-win))))
+                   (cl-charms/low-level:wgetch (window-win))))
            (char (code-char code)))
       (when *macro-recording-p*
         (push char *macro-chars*))
@@ -191,12 +191,12 @@
         (test (merge-pathnames ".lemrc" (user-homedir-pathname))))))
 
 (defun lem-init (args)
-  (cl-ncurses:initscr)
-  (cl-ncurses:noecho)
-  (cl-ncurses:cbreak)
-  (cl-ncurses:raw)
-  (cl-ncurses:nonl)
-  (cl-ncurses:refresh)
+  (cl-charms/low-level:initscr)
+  (cl-charms/low-level:noecho)
+  (cl-charms/low-level:cbreak)
+  (cl-charms/low-level:raw)
+  (cl-charms/low-level:nonl)
+  (cl-charms/low-level:refresh)
   (unless *init-flag*
     (setq *init-flag* t)
     (window-init)
@@ -206,7 +206,7 @@
     (find-file arg)))
 
 (defun lem-finallize ()
-  (cl-ncurses:endwin))
+  (cl-charms/low-level:endwin))
 
 (defun lem-main ()
   (do ((*exit* nil)

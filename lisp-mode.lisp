@@ -223,7 +223,7 @@
                               output-string)))
              (mi-thread-closure
               ()
-              (loop for c = (cl-ncurses:getch)
+              (loop for c = (cl-charms/low-level:getch)
                     do
                     (when (char= key::ctrl-c (code-char c))
                       (bt:destroy-thread *eval-thread*)))))

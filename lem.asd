@@ -29,6 +29,6 @@
                         (:file "lisp-mode")
                         (:file "grep")
                         (:file "lem"))
-           :depends-on (:cl-ncurses
+           :depends-on (:cl-charms
                         #+sbcl :sb-posix
                         :bordeaux-threads))

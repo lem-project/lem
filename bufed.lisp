@@ -514,10 +514,10 @@
         (save-excursion
          (when (backward-list 1)
            (window-update-all)
-           (cl-ncurses:timeout 1000)
-           (let ((c (cl-ncurses:getch)))
-             (unless (= -1 c) (cl-ncurses:ungetch c)))
-           (cl-ncurses:timeout -1)
+           (cl-charms/low-level:timeout 1000)
+           (let ((c (cl-charms/low-level:getch)))
+             (unless (= -1 c) (cl-charms/low-level:ungetch c)))
+           (cl-charms/low-level:timeout -1)
            t)))))
 
 (macrolet ((def (name c)

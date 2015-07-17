@@ -190,14 +190,11 @@
   (eval (string-to-exps str)))
 
 (defun lisp-error-clause (cdt)
-  (let* ((buffer (get-buffer-create "*Error*"))
-         (*current-window* (pop-to-buffer buffer)))
-    (erase-buffer)
-    (insert-string
-     (with-output-to-string (out)
-       (princ cdt out)
-       #+sbcl
-       (sb-debug:backtrace 100 out))))
+  (info-popup "*Error*"
+              (with-output-to-string (out)
+                (princ cdt out)
+                #+sbcl
+                (sb-debug:backtrace 100 out)))
   cdt)
 
 (defvar *eval-thread*)
@@ -220,8 +217,9 @@
                            (error (cdt)
                                   (setq error-p t)
                                   (setq values (list cdt))))))))
-                (popup-string (get-buffer-create "*OUTPUT*")
-                              output-string)))
+                (unless (string= "" output-string)
+                  (info-popup "*OUTPUT*"
+                              output-string))))
              (mi-thread-closure
               ()
               (loop for c = (cl-charms/low-level:getch)
@@ -296,15 +294,12 @@
                            (prog1 (point)
                              (point-set start))))
           nil)))
-    (let* ((buffer (get-buffer-create "*macroexpand*")))
-      (popup buffer
-             (lambda ()
-               (insert-string
+    (info-popup "*macroexpand*"
                 (with-output-to-string (out)
                   (pprint (if arg
                               (macroexpand expr)
                               (macroexpand-1 expr))
-                          out))))))))
+                          out)))))
 
 (define-command indent-region-lisp () ()
   (save-excursion
@@ -351,3 +346,17 @@
           (insert-string
            (subseq comp-str (length str)))))
       t)))
+
+(defvar *info-mode-keymap*
+  (make-keymap "info" nil *global-keymap*))
+
+(define-major-mode info-mode
+  :name "info-mode"
+  :keymap *info-mode-keymap*)
+
+(define-key *info-mode-keymap* (kbd "q") 'delete-current-window)
+
+(defun info-popup (buffer-name string)
+  (let ((buffer (get-buffer-create buffer-name)))
+    (setf *current-window* (popup-string buffer string))
+    (info-mode)))

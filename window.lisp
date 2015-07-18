@@ -121,7 +121,7 @@
                                           (window-buffer)))))
                          (window-cur-linum window)
                          (window-cur-col window)))))
-    (window-update-line
+    (window-print-line
      window
      (1- (window-nlines window))
      str)))
@@ -135,7 +135,7 @@
   (- (window-cur-linum window)
      (window-vtop-linum window)))
 
-(defun window-update-line (window y str)
+(defun window-print-line (window y str)
   (cl-charms/low-level:mvwaddstr
    (window-win window) y 0
    (concatenate 'string
@@ -179,7 +179,7 @@
                       "$~a"
                       (substring-width str (- curx cols -3))))
         (setq curx (- cols 1))))
-      (window-update-line window y str))
+      (window-print-line window y str))
     curx))
 
 (defun window-refresh-lines (window)

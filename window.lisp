@@ -242,6 +242,7 @@
                    (buffer-line-string
                     (window-buffer)
                     (window-cur-linum *current-window*)))))
+       (window-refresh-modeline *current-window*)
        (cl-charms/low-level:wmove (window-win) cury curx)))
     (:newline
      )

@@ -200,26 +200,27 @@
 (defvar *eval-thread*)
 (defvar *mi-thread*)
 
-(defun safe-eval-from-string-1 (str)
+(defun safe-eval-from-string-1 (str popup-p)
   (let ((values)
-        (error-p))
+        (error-p)
+        (output-string ""))
     (labels ((eval-thread-closure
               ()
-              (let ((output-string
-                     (with-output-to-string (out)
-                       (let ((*error-output* out)
-                             (*trace-output* out)
-                             (*debug-io* out)
-                             (*standard-output* out))
-                         (handler-case
-                             (handler-bind ((error #'lisp-error-clause))
-                               (setq values (multiple-value-list (eval-from-string str))))
-                           (error (cdt)
-                                  (setq error-p t)
-                                  (setq values (list cdt))))))))
-                (unless (string= "" output-string)
-                  (info-popup "*OUTPUT*"
-                              output-string))))
+              (setq output-string
+                    (with-output-to-string (out)
+                      (let ((*error-output* out)
+                            (*trace-output* out)
+                            (*debug-io* out)
+                            (*standard-output* out))
+                        (handler-case
+                            (handler-bind ((error #'lisp-error-clause))
+                              (setq values (multiple-value-list
+                                            (eval-from-string str))))
+                          (error (cdt)
+                                 (setq error-p t)
+                                 (setq values (list cdt)))))))
+              (when (and popup-p (string/= "" output-string))
+                (info-popup "*OUTPUT*" output-string)))
              (mi-thread-closure
               ()
               (loop for c = (cl-charms/low-level:getch)
@@ -230,10 +231,10 @@
       (setq *mi-thread* (bt:make-thread #'mi-thread-closure))
       (bt:join-thread *eval-thread*)
       (bt:destroy-thread *mi-thread*))
-    (values values error-p)))
+    (values values error-p output-string)))
 
-(defun safe-eval-from-string (x)
-  (handler-case (safe-eval-from-string-1 x)
+(defun safe-eval-from-string (x &optional (popup-p t))
+  (handler-case (safe-eval-from-string-1 x popup-p)
     #+sbcl
     (sb-thread:join-thread-error
      (cdt)
@@ -360,3 +361,30 @@
   (let ((buffer (get-buffer-create buffer-name)))
     (setf *current-window* (popup-string buffer string))
     (info-mode)))
+
+(defvar *scratch-mode-keymap*
+  (make-keymap "scartch" 'undefined-key *lisp-mode-keymap*))
+
+(define-major-mode scratch-mode
+  :name "scratch-mode"
+  :keymap *scratch-mode-keymap*
+  :syntax-table *lisp-syntax-table*)
+
+(define-key *scratch-mode-keymap* (kbd "M-j") 'eval-print-last-sexp)
+(define-command eval-print-last-sexp () ()
+  (let ((point (point)))
+    (when (backward-sexp)
+      (let ((str (string-trim '(#\newline #\tab #\space)
+                              (region-string (point) point))))
+        (point-set point)
+        (unless (string= str "")
+          (insert-newline 1)
+          (let ((tmp-window *current-window*))
+            (multiple-value-bind (values error-p output-string)
+                (safe-eval-from-string str nil)
+              (let ((*current-window* tmp-window))
+                (insert-string output-string))
+              (unless error-p
+                (dolist (v values)
+                  (insert-string (write-to-string v))
+                  (insert-newline 1))))))))))

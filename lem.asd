@@ -5,9 +5,8 @@
            :serial t
            :components ((:file "wrappers")
                         (:file "key")
-                        (:file "globals")
+                        (:file "header")
                         (:file "util")
-                        (:file "macros")
                         (:file "hooks")
                         (:file "keymap")
                         (:file "command")

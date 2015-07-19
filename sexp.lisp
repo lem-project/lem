@@ -215,13 +215,13 @@
 (define-key *global-keymap* (kbd "M-C-@") 'mark-sexp)
 (define-command mark-sexp () ()
   (save-excursion
-    (forward-sexp 1)
-    (mark-set)))
+   (and (forward-sexp 1)
+        (mark-set))))
 
 (define-key *global-keymap* (kbd "M-C-k") 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")
-  (mark-sexp)
-  (kill-region (region-beginning) (region-end)))
+  (and (mark-sexp)
+       (kill-region (region-beginning) (region-end))))
 
 (define-key *global-keymap* (kbd "M-C-t") 'transpose-sexps)
 (define-command transpose-sexps () ()

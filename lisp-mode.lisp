@@ -254,28 +254,28 @@
   (eval-string (region-string begin end))
   t)
 
+(defun %eval-sexp (move-sexp)
+  (let ((str (save-excursion
+              (and (funcall move-sexp)
+                   (mark-sexp)
+                   (region-string (region-beginning) (region-end))))))
+    (when str
+      (eval-string str)
+      t)))
+
 (define-key *lisp-mode-keymap* (kbd "M-C-x") 'eval-defun)
 (define-command eval-defun () ()
-  (save-excursion
-   (top-of-defun)
-   (mark-sexp)
-   (eval-region)
-   t))
+  (%eval-sexp #'top-of-defun))
 
 (define-key *lisp-mode-keymap* (kbd "C-xu") 'eval-last-sexp)
 (define-command eval-last-sexp () ()
-  (save-excursion
-   (when (backward-sexp)
-     (mark-sexp)
-     (eval-region)
-     t)))
+  (%eval-sexp #'backward-sexp))
 
 (define-key *lisp-mode-keymap* (kbd "C-xy") 'eval-buffer)
 (define-command eval-buffer () ()
-  (save-excursion
-   (eval-region (progn (beginning-of-buffer) (point))
-                (progn (end-of-buffer) (point)))
-   t))
+  (eval-string
+   (region-string (progn (beginning-of-buffer) (point))
+                  (progn (end-of-buffer) (point)))))
 
 (define-key *lisp-mode-keymap* (kbd "C-xl") 'load-file)
 (define-key *lisp-mode-keymap* (kbd "C-xC-l") 'load-file)
@@ -359,7 +359,7 @@
 
 (defun info-popup (buffer-name string)
   (let ((buffer (get-buffer-create buffer-name)))
-    (setf *current-window* (popup-string buffer string))
+    (setq *current-window* (popup-string buffer string))
     (info-mode)))
 
 (defvar *scratch-mode-keymap*

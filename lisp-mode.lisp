@@ -168,6 +168,7 @@
                 (insert-char #\space (+ start-col 2)))))))))))
 
 (define-key *lisp-mode-keymap* (kbd "C-j") 'lisp-newline-and-indent)
+(define-key *lisp-mode-keymap* (kbd "M-j") 'lisp-newline-and-indent)
 (define-command lisp-newline-and-indent (n) ("p")
   (insert-newline n)
   (lisp-indent-line))
@@ -225,7 +226,7 @@
               ()
               (loop for c = (cl-charms/low-level:getch)
                     do
-                    (when (char= key::ctrl-c (code-char c))
+                    (when (char= key::ctrl-g (code-char c))
                       (bt:destroy-thread *eval-thread*)))))
       (setq *eval-thread* (bt:make-thread #'eval-thread-closure))
       (setq *mi-thread* (bt:make-thread #'mi-thread-closure))
@@ -370,7 +371,7 @@
   :keymap *scratch-mode-keymap*
   :syntax-table *lisp-syntax-table*)
 
-(define-key *scratch-mode-keymap* (kbd "M-j") 'eval-print-last-sexp)
+(define-key *scratch-mode-keymap* (kbd "C-j") 'eval-print-last-sexp)
 (define-command eval-print-last-sexp () ()
   (let ((point (point)))
     (when (backward-sexp)

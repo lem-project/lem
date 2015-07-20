@@ -349,6 +349,13 @@
            (subseq comp-str (length str)))))
       t)))
 
+(define-key *lisp-mode-keymap* (kbd "C-xz") 'popup-scratch-buffer)
+(define-key *lisp-mode-keymap* (kbd "C-xC-z") 'popup-scratch-buffer)
+(define-command popup-scratch-buffer () ()
+  (setq *current-window*
+        (pop-to-buffer (get-buffer-create "*scratch*")))
+  t)
+
 (defvar *info-mode-keymap*
   (make-keymap "info" nil *global-keymap*))
 

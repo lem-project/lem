@@ -54,7 +54,7 @@
   (setq *current-cols* cl-charms/low-level:*cols*)
   (setq *current-lines* cl-charms/low-level:*lines*)
   (setq *current-window*
-        (make-window (get-buffer-create "*tmp*")
+        (make-window (get-buffer-create "*scratch*")
                      (- cl-charms/low-level:*lines* 1)
                      cl-charms/low-level:*cols*
                      0

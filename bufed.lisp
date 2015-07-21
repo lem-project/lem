@@ -177,8 +177,8 @@
 (define-key *global-keymap* (list key::backspace) 'backward-delete-char)
 (define-command backward-delete-char (&optional n does-not-kill-p) ("P")
   (cond ((null n)
-         (prev-char)
-         (delete-char))
+         (when (prev-char)
+           (delete-char)))
         ((minusp n)
          (delete-char (- n) does-not-kill-p))
         (t

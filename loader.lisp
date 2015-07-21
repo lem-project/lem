@@ -1,2 +1,2 @@
-(ql:quickload :lem)
+(require :lem)
 (apply 'lem::lem (lem::argv))

@@ -46,11 +46,12 @@
 (define-key *isearch-keymap* (kbd "C-h") 'isearch-delete-char)
 (define-key *isearch-keymap* (list key::backspace) 'isearch-delete-char)
 (define-command isearch-delete-char () ()
-  (setq *isearch-string*
-    (subseq *isearch-string*
-      0
-      (1- (length *isearch-string*))))
-  (isearch-update-minibuf))
+  (when (plusp (length *isearch-string*))
+    (setq *isearch-string*
+          (subseq *isearch-string*
+                  0
+                  (1- (length *isearch-string*))))
+    (isearch-update-minibuf)))
 
 (define-key *isearch-keymap* (kbd "C-q") 'isearch-raw-insert)
 (define-command isearch-raw-insert () ()

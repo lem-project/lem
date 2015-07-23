@@ -82,6 +82,7 @@
                  (with-standard-io-syntax . 2)
                  (defparameter . 1)
                  (defvar . 1)
+                 (defconstant . 1)
                  (loop . 0)))
     (setf (get (car elt) 'lisp-indent) (cdr elt))))
 

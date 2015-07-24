@@ -39,13 +39,13 @@
                          ((char= #\f (aref arg-descripter 0))
                           `(minibuf-read-file
                             ,(subseq arg-descripter 1)
-                            (current-directory)
+                            (buffer-directory)
                             nil
                             t))
                          ((char= #\F (aref arg-descripter 0))
                           `(minibuf-read-file
                             ,(subseq arg-descripter 1)
-                            (current-directory)
+                            (buffer-directory)
                             nil
                             nil))
                          (t

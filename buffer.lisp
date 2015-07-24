@@ -18,7 +18,8 @@
           buffer-insert-newline
           buffer-insert-line
           buffer-delete-char
-          buffer-erase))
+          buffer-erase
+          buffer-directory))
 
 (defstruct (line (:constructor make-line-internal))
   (prev nil)
@@ -405,6 +406,12 @@
     (progn
      (minibuf-print "Not mark in this buffer")
      nil)))
+
+(defun buffer-directory ()
+  (if (buffer-filename)
+    (file-name-directory
+     (buffer-filename))
+    (file-name-as-directory (pwd))))
 
 (defun buffer-undo-1 (buffer)
   (let ((elt (pop (buffer-undo-stack buffer))))

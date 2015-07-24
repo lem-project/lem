@@ -4,7 +4,6 @@
           file-name-nondirectory
           file-name-as-directory
           file-directory-p
-          current-directory
           file-exist-p
           temp-file-name
           expand-file-name
@@ -39,12 +38,6 @@
 (defun file-directory-p (filename)
   (string= "" (file-name-nondirectory filename)))
 
-(defun current-directory ()
-  (if (buffer-filename)
-    (file-name-directory
-     (buffer-filename))
-    (file-name-as-directory (pwd))))
-
 (defun file-exist-p (file-name)
   (if (probe-file file-name)
     t
@@ -73,7 +66,7 @@
     (setq filename
       (concatenate 'string
         (or (and directory (file-name-as-directory directory))
-            (current-directory))
+            (buffer-directory))
         filename)))
   (let ((path))
     (dolist (name (split-string filename #\/))

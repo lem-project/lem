@@ -18,7 +18,9 @@
   #+sbcl
   (sb-posix:getcwd)
   #+ecl
-  (namestring (ext:getcwd)))
+  (namestring (ext:getcwd))
+  #+ccl
+  (namestring (cl-user::current-directory)))
 
 (defun files (dirname)
   (mapcar #'namestring (cl-fad:list-directory dirname)))
@@ -34,4 +36,8 @@
     (let ((s (ext:run-program cmd args)))
       (loop for x = (read s nil nil)
         while x
-        do (print x output)))))
+        do (print x output))))
+  #+ccl
+  (cl-user::run-program "/bin/sh" (list "-c" str)
+                        :output output 
+                        :input input))

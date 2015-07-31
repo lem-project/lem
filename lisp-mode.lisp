@@ -358,11 +358,12 @@
   t)
 
 (defvar *info-mode-keymap*
-  (make-keymap "info" nil *global-keymap*))
+  (make-keymap "info" nil *lisp-mode-keymap*))
 
 (define-major-mode info-mode
   :name "info-mode"
-  :keymap *info-mode-keymap*)
+  :keymap *info-mode-keymap*
+  :syntax-table *lisp-syntax-table*)
 
 (define-key *info-mode-keymap* (kbd "q") 'delete-current-window)
 

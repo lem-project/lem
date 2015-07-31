@@ -304,6 +304,12 @@
                               (macroexpand-1 expr))
                           out)))))
 
+(define-key *lisp-mode-keymap* (kbd "C-xd") 'lisp-describe-symbol)
+(define-command lisp-describe-symbol (name) ("sDescribe: ")
+  (info-popup "*describe*"
+              (with-output-to-string (out)
+                (describe (read-from-string name) out))))
+
 (define-command indent-region-lisp () ()
   (save-excursion
    (apply-region-lines (region-beginning)

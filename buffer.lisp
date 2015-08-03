@@ -80,8 +80,8 @@
   redo-stack
   )
 
-(defvar *use-undo-stack* t)
-(defvar *use-redo-stack* nil)
+(defvar *undo-modes* '(:edit :undo :redo))
+(defvar *undo-mode* :edit)
 (defvar *undo-limit* 10000)
 
 (defun make-buffer (name &key filename read-only-p)
@@ -131,17 +131,20 @@
   (let ((gmark-linum (gensym "MARK-LINUM"))
         (gmark-col (gensym "MARK-COL")))
     `(unless (special-buffer-p ,buffer)
-       (when (or *use-undo-stack*
-                 *use-redo-stack*)
-         (let ((,gmark-linum (buffer-mark-linum ,buffer))
-               (,gmark-col (buffer-mark-col ,buffer)))
-           (let ((elt (lambda ()
-                        (setf (buffer-mark-col ,buffer) ,gmark-col)
-                        (setf (buffer-mark-linum ,buffer) ,gmark-linum)
-                        ,@body)))
-             (if *use-redo-stack*
-               (push-redo-stack ,buffer elt)
-               (push-undo-stack ,buffer elt))))))))
+       (let ((,gmark-linum (buffer-mark-linum ,buffer))
+             (,gmark-col (buffer-mark-col ,buffer)))
+         (let ((elt (lambda ()
+                      (setf (buffer-mark-col ,buffer) ,gmark-col)
+                      (setf (buffer-mark-linum ,buffer) ,gmark-linum)
+                      ,@body)))
+           (ecase *undo-mode*
+             (:edit
+              (push-undo-stack ,buffer elt)
+              (setf (buffer-redo-stack ,buffer) nil))
+             (:undo
+              (push-undo-stack ,buffer elt))
+             (:redo
+              (push-redo-stack ,buffer elt))))))))
 
 (defmacro buffer-read-only-guard (buffer)
   `(when (buffer-read-only-p ,buffer)
@@ -417,7 +420,7 @@
   (let ((elt (pop (buffer-undo-stack buffer))))
     (when elt
       (decf (buffer-undo-size buffer))
-      (let ((*use-redo-stack* t))
+      (let ((*undo-mode* :redo))
         (unless (eq elt :undo-separator)
           (funcall elt))))))
 
@@ -433,7 +436,7 @@
 (defun buffer-redo-1 (buffer)
   (let ((elt (pop (buffer-redo-stack buffer))))
     (when elt
-      (let ((*use-undo-stack* t))
+      (let ((*undo-mode* :undo))
         (unless (eq elt :undo-separator)
           (funcall elt))))))
 

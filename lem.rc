@@ -3,7 +3,10 @@
 (add-hook 'find-file-hooks
           (lambda ()
             (when (or (search ".lisp" (buffer-filename))
-                      (search ".asd" (buffer-filename)))
+                      (search ".asd" (buffer-filename))
+                      (search ".lemrc" (buffer-filename))
+                      (search ".stumpwmrc" (buffer-filename))
+                      (search ".sbclrc" (buffer-filename)))
               (lisp-mode))))
 
-(lisp-mode)
+(scratch-mode)

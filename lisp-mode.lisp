@@ -330,6 +330,10 @@
                   (point-set end)))
          (str (region-string begin end))
          (pkg :cl-user))
+    (setf str
+          (string-left-trim '(#\' #\` #\,)
+                            (string-left-trim '(#\#)
+                                              str)))
     (let ((list (split-string str #\:)))
       (when (cdr list)
         (setq pkg (intern (string-upcase (car list))))

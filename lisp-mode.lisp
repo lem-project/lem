@@ -375,10 +375,17 @@
   :keymap *info-mode-keymap*
   :syntax-table *lisp-syntax-table*)
 
-(define-key *info-mode-keymap* (kbd "q") 'delete-current-window)
+(define-key *info-mode-keymap* (kbd "q") 'info-quit)
+(define-command info-quit () ()
+  (let ((buffer (current-buffer)))
+    (when (buffer-get buffer :popup)
+      (delete-current-window))
+    (kill-buffer (buffer-name buffer))
+    t))
 
 (defun info-popup (buffer-name string)
   (let ((buffer (get-buffer-create buffer-name)))
+    (buffer-put buffer :popup (one-window-p))
     (setq *current-window* (popup-string buffer string))
     (info-mode)))
 

@@ -78,7 +78,7 @@
   undo-size
   undo-stack
   redo-stack
-  )
+  plist)
 
 (defvar *undo-modes* '(:edit :undo :redo))
 (defvar *undo-mode* :edit)
@@ -447,3 +447,9 @@
               (pres nil res))
              ((not res) pres))
     (push :undo-separator (buffer-undo-stack buffer))))
+
+(defun buffer-get (buffer indicator &optional default)
+  (getf (buffer-plist buffer) indicator default))
+
+(defun buffer-put (buffer indicator value)
+  (setf (getf (buffer-plist buffer) indicator) value))

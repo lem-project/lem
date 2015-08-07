@@ -19,6 +19,8 @@
 
 (defvar *universal-argument* nil)
 
+(defvar *getch-wait-flag* nil)
+
 (defvar *continue-command-flags* (list :kill :undo :abbrev))
 
 (defun make-flags ()

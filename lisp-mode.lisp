@@ -213,11 +213,15 @@
                       (let ((*error-output* out)
                             (*trace-output* out)
                             (*debug-io* out)
-                            (*standard-output* out))
+                            (*standard-output* out)
+                            (*standard-input* (make-minibuffer-input-stream))
+                            (*getch-wait-flag* t))
                         (handler-case
                             (handler-bind ((error #'lisp-error-clause))
                               (setq values (multiple-value-list
-                                            (eval-from-string str))))
+                                            (unwind-protect
+                                              (eval-from-string str)
+                                              (getch-clear-queue)))))
                           (error (cdt)
                                  (setq error-p t)
                                  (setq values (list cdt)))))))
@@ -225,10 +229,11 @@
                 (info-popup "*OUTPUT*" output-string)))
              (mi-thread-closure
               ()
-              (loop for c = (cl-charms/low-level:getch)
-                    do
-                    (when (char= key::ctrl-g (code-char c))
-                      (bt:destroy-thread *eval-thread*)))))
+              (loop
+                for char = (code-char (cl-charms/low-level:getch))
+                do (if (char= key::ctrl-g char)
+                       (bt:destroy-thread *eval-thread*)
+                       (ungetch char)))))
       (setq *eval-thread* (bt:make-thread #'eval-thread-closure))
       (setq *mi-thread* (bt:make-thread #'mi-thread-closure))
       (bt:join-thread *eval-thread*)

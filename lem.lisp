@@ -26,9 +26,13 @@
 
 (let ((queue (make-tlist)))
   (defun getch (&optional (abort-jump t))
-    (let* ((code (if (not (tlist-empty-p queue))
-                   (tlist-rem-left queue)
-                   (cl-charms/low-level:wgetch (window-win))))
+    (let* ((code (cond (*getch-wait-flag*
+                        (loop while (tlist-empty-p queue))
+                        (tlist-rem-left queue))
+                       ((not (tlist-empty-p queue))
+                        (tlist-rem-left queue))
+                       (t
+                        (cl-charms/low-level:wgetch (window-win)))))
            (char (code-char code)))
       (when *macro-recording-p*
         (push char *macro-chars*))
@@ -43,7 +47,9 @@
   (defun ungetch (c)
     (tlist-add-right queue (char-code c)))
   (defun getch-queue-length ()
-    (length (car queue))))
+    (length (car queue)))
+  (defun getch-clear-queue ()
+    (setf queue (make-tlist))))
 
 (define-key *global-keymap* (kbd "C-g") 'keyboard-quit)
 (define-command keyboard-quit () ()

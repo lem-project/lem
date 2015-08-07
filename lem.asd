@@ -17,6 +17,7 @@
                         (:file "search")
                         (:file "region")
                         (:file "buffer")
+                        (:file "io")
                         (:file "buffers")
                         (:file "bufed")
                         (:file "process")
@@ -31,4 +32,5 @@
            :depends-on (:cl-charms
                         :cl-fad
                         #+sbcl :sb-posix
-                        :bordeaux-threads))
+                        :bordeaux-threads
+                        :trivial-gray-streams))

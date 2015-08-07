@@ -7,7 +7,8 @@
           point
           point-set
           point<
-          point<=))
+          point<=
+          point-max))
 
 (defun make-point (linum column)
   (list linum column))
@@ -51,3 +52,8 @@
 (defun point<= (p1 p2)
   (or (point< p1 p2)
       (point= p1 p2)))
+
+(defun point-max ()
+  (save-excursion
+   (end-of-buffer)
+   (point)))

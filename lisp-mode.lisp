@@ -202,31 +202,29 @@
 (defvar *eval-thread*)
 (defvar *mi-thread*)
 
-(defun safe-eval-from-string-1 (str popup-p)
+(defun safe-eval-from-string-1 (str output-buffer update-point-p)
   (let ((values)
-        (error-p)
-        (output-string ""))
+        (error-p))
     (labels ((eval-thread-closure
               ()
-              (setq output-string
-                    (with-output-to-string (out)
-                      (let ((*error-output* out)
-                            (*trace-output* out)
-                            (*debug-io* out)
-                            (*standard-output* out)
-                            (*standard-input* (make-minibuffer-input-stream))
-                            (*getch-wait-flag* t))
-                        (handler-case
-                            (handler-bind ((error #'lisp-error-clause))
-                              (setq values (multiple-value-list
-                                            (unwind-protect
-                                              (eval-from-string str)
-                                              (getch-clear-queue)))))
-                          (error (cdt)
-                                 (setq error-p t)
-                                 (setq values (list cdt)))))))
-              (when (and popup-p (string/= "" output-string))
-                (info-popup "*OUTPUT*" output-string)))
+              (let ((out (make-buffer-output-stream output-buffer (point))))
+                (let ((*error-output* out)
+                      (*trace-output* out)
+                      (*debug-io* out)
+                      (*standard-output* out)
+                      (*standard-input* (make-minibuffer-input-stream))
+                      (*getch-wait-flag* t))
+                  (handler-case
+                      (handler-bind ((error #'lisp-error-clause))
+                        (setq values (multiple-value-list
+                                      (unwind-protect
+                                        (prog1 (eval-from-string str)
+                                          (when update-point-p
+                                            (point-set (buffer-output-stream-point out))))
+                                        (getch-clear-queue)))))
+                    (error (cdt)
+                           (setq error-p t)
+                           (setq values (list cdt)))))))
              (mi-thread-closure
               ()
               (loop
@@ -238,10 +236,10 @@
       (setq *mi-thread* (bt:make-thread #'mi-thread-closure))
       (bt:join-thread *eval-thread*)
       (bt:destroy-thread *mi-thread*))
-    (values values error-p output-string)))
+    (values values error-p)))
 
-(defun safe-eval-from-string (x &optional (popup-p t))
-  (handler-case (safe-eval-from-string-1 x popup-p)
+(defun safe-eval-from-string (x output-buffer &optional update-point-p)
+  (handler-case (safe-eval-from-string-1 x output-buffer update-point-p)
     #+sbcl
     (sb-thread:join-thread-error
      (cdt)
@@ -252,7 +250,7 @@
 (defun eval-string (str)
   (minibuf-print
    (write-to-string
-    (first (safe-eval-from-string str)))))
+    (first (safe-eval-from-string str (get-buffer-create "*OUTPUT*"))))))
 
 (define-command eval-region (&optional begin end) ("r")
   (unless (or begin end)
@@ -411,12 +409,9 @@
         (point-set point)
         (unless (string= str "")
           (insert-newline 1)
-          (let ((tmp-window *current-window*))
-            (multiple-value-bind (values error-p output-string)
-                (safe-eval-from-string str nil)
-              (let ((*current-window* tmp-window))
-                (insert-string output-string))
-              (unless error-p
-                (dolist (v values)
-                  (insert-string (write-to-string v))
-                  (insert-newline 1))))))))))
+          (multiple-value-bind (values error-p)
+              (safe-eval-from-string str (current-buffer) t)
+            (unless error-p
+              (dolist (v values)
+                (insert-string (write-to-string v))
+                (insert-newline 1)))))))))

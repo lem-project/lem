@@ -1,8 +1,85 @@
 (in-package :lem)
 
-(export '(minibuffer-input-stream
+(export '(buffer-output-stream
+          make-buffer-output-stream
+          minibuffer-input-stream
           make-minibuffer-input-stream))
 
+(defclass buffer-output-stream (trivial-gray-streams:fundamental-output-stream)
+  ((buffer
+    :initarg :buffer
+    :accessor buffer-output-stream-buffer)
+   (linum
+    :initarg :linum
+    :accessor buffer-output-stream-linum)
+   (column
+    :initarg :column
+    :accessor buffer-output-stream-column)))
+
+(defun make-buffer-output-stream (buffer &optional point)
+  (make-instance 'buffer-output-stream
+                 :buffer buffer
+                 :linum (if point
+                          (point-linum point)
+                          1)
+                 :column (if point
+                           (point-column point)
+                           0)))
+
+(defun buffer-output-stream-point (stream)
+  (make-point (buffer-output-stream-linum stream)
+              (buffer-output-stream-column stream)))
+
+(defmethod stream-element-type ((stream buffer-output-stream))
+  'line)
+
+(defmethod trivial-gray-streams:stream-line-column ((stream buffer-output-stream))
+  nil)
+
+(defmethod trivial-gray-streams:stream-fresh-line ((stream buffer-output-stream))
+  (unless (zerop (buffer-output-stream-column stream))
+    (trivial-gray-streams:stream-terpri stream)))
+
+(defmethod trivial-gray-streams:stream-write-byte ((stream buffer-output-stream) byte)
+  (trivial-gray-streams:stream-write-char stream (code-char byte)))
+
+(defmethod trivial-gray-streams:stream-write-char ((stream buffer-output-stream) char)
+  (prog1 char
+    (buffer-insert-char (buffer-output-stream-buffer stream)
+                        (buffer-output-stream-linum stream)
+                        (buffer-output-stream-column stream)
+                        char)
+    (if (char= char #\newline)
+      (progn
+        (incf (buffer-output-stream-linum stream))
+        (setf (buffer-output-stream-column stream) 0))
+      (incf (buffer-output-stream-column stream)))))
+
+(defmethod trivial-gray-streams:stream-write-sequence
+    ((stream buffer-output-stream)
+     sequence start end &key)
+  (map (type-of sequence)
+       (lambda (c)
+         (trivial-gray-streams:stream-write-byte stream c))
+       (subseq sequence start end)))
+
+(defmethod trivial-gray-streams:stream-write-string ((stream buffer-output-stream)
+                                        (string string)
+                                        &optional (start 0) end)
+  (map 'string
+       (lambda (c)
+         (trivial-gray-streams:stream-write-char stream c))
+       (subseq string start end)))
+
+(defmethod trivial-gray-streams:stream-terpri ((stream buffer-output-stream))
+  (prog1 (buffer-insert-newline (buffer-output-stream-buffer stream)
+                                (buffer-output-stream-linum stream)
+                                (buffer-output-stream-column stream))
+    (window-update-all)
+    (incf (buffer-output-stream-linum stream))
+    (setf (buffer-output-stream-column stream) 0)))
+
+
 (defclass minibuffer-input-stream (trivial-gray-streams:fundamental-input-stream)
   ((queue
     :initform nil

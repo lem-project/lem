@@ -61,26 +61,43 @@
     finally (return name)))
 
 (defun expand-file-name (filename &optional directory)
-  (when (and (string/= filename "")
-             (char/= (aref filename 0) #\/))
-    (setq filename
-      (concatenate 'string
-        (or (and directory (file-name-as-directory directory))
-            (buffer-directory))
-        filename)))
-  (let ((path))
-    (dolist (name (split-string filename #\/))
-      (cond
-       ((string= ".." name)
-        (pop path))
-       ((string/= "." name)
-        (push name path))))
-    (let ((str ""))
-      (dolist (p (nreverse path))
-        (setq str
-          (concatenate 'string
-            str "/" p)))
-      (subseq str 1))))
+  (declare (ignorable directory))
+  (let ((path)
+        (home (nreverse
+               (cons ""
+                     (split-string
+                      (string-trim '(#\/)
+                                   (or directory
+                                       (namestring
+                                        (user-homedir-pathname))))
+                      #\/)))))
+    (loop
+      (let ((pos (position #\/ filename)))
+        (cond ((null pos)
+               (push filename path)
+               (return))
+              ((and (zerop pos) path)
+               (setf path (list ""))
+               (setf filename (subseq filename 1)))
+              (t
+               (let ((str (subseq filename 0 pos)))
+                 (setf filename (subseq filename (1+ pos)))
+                 (cond ((string= str "."))
+                       ((string= str "..")
+                        (pop path))
+                       ((string= str "~")
+                        (setf path home))
+                       (t
+                        (push str path))))))))
+    (let ((filename (join "/" (nreverse path))))
+      (cond ((string= "" filename)
+             "/")
+            ((char/= #\/ (aref filename 0))
+             (concatenate 'string
+                          (namestring (user-homedir-pathname))
+                          filename))
+            (t
+             filename)))))
 
 (defun file-completion (str)
   (setq str (expand-file-name str))

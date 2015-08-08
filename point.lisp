@@ -53,6 +53,9 @@
   (or (point< p1 p2)
       (point= p1 p2)))
 
+(defun point-min ()
+  (make-point 1 0))
+
 (defun point-max ()
   (save-excursion
    (end-of-buffer)

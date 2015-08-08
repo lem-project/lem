@@ -389,12 +389,12 @@
       (set-buffer buffer)
       (values *current-window* one-p))))
 
-(defun popup (buffer fn &optional (goto-bob-p t) (erase-p t))
+(defun popup (buffer &optional fn (goto-bob-p t) (erase-p t))
   (multiple-value-bind (*current-window* newwin-p)
       (pop-to-buffer buffer)
     (when erase-p
       (erase-buffer))
-    (funcall fn)
+    (when fn (funcall fn))
     (when goto-bob-p
       (beginning-of-buffer))
     (values *current-window* newwin-p)))

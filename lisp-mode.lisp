@@ -202,12 +202,12 @@
 (defvar *eval-thread*)
 (defvar *mi-thread*)
 
-(defun safe-eval-from-string-1 (str output-buffer update-point-p)
+(defun safe-eval-from-string-1 (str output-buffer point update-point-p)
   (let ((values)
         (error-p))
     (labels ((eval-thread-closure
               ()
-              (let ((out (make-buffer-output-stream output-buffer (point))))
+              (let ((out (make-buffer-output-stream output-buffer point)))
                 (let ((*error-output* out)
                       (*trace-output* out)
                       (*debug-io* out)
@@ -238,8 +238,11 @@
       (bt:destroy-thread *mi-thread*))
     (values values error-p)))
 
-(defun safe-eval-from-string (x output-buffer &optional update-point-p)
-  (handler-case (safe-eval-from-string-1 x output-buffer update-point-p)
+(defun safe-eval-from-string (x output-buffer point &optional update-point-p)
+  (handler-case (safe-eval-from-string-1 x
+                                         output-buffer
+                                         point
+                                         update-point-p)
     #+sbcl
     (sb-thread:join-thread-error
      (cdt)
@@ -248,9 +251,15 @@
      nil)))
 
 (defun eval-string (str)
-  (minibuf-print
-   (write-to-string
-    (first (safe-eval-from-string str (get-buffer-create "*OUTPUT*"))))))
+  (let ((output-buffer (get-buffer-create "*OUTPUT*")))
+    (setf (buffer-modified-p output-buffer) nil)
+    (prog1 (minibuf-print
+            (write-to-string
+             (first (safe-eval-from-string str
+                                           output-buffer
+                                           (point-min)))))
+      (when (buffer-modified-p output-buffer)
+        (info-pop-to-buffer output-buffer)))))
 
 (define-command eval-region (&optional begin end) ("r")
   (unless (or begin end)
@@ -386,11 +395,16 @@
     (kill-buffer (buffer-name buffer))
     t))
 
+(defun info-pop-to-buffer (buffer &optional fn)
+  (buffer-put buffer :popup (one-window-p))
+  (setf *current-window* (popup buffer fn t nil))
+  (info-mode))
+
 (defun info-popup (buffer-name string)
-  (let ((buffer (get-buffer-create buffer-name)))
-    (buffer-put buffer :popup (one-window-p))
-    (setq *current-window* (popup-string buffer string))
-    (info-mode)))
+  (info-pop-to-buffer
+   (get-buffer-create buffer-name)
+   (lambda ()
+     (insert-string string))))
 
 (defvar *scratch-mode-keymap*
   (make-keymap "scartch" 'undefined-key *lisp-mode-keymap*))
@@ -410,7 +424,7 @@
         (unless (string= str "")
           (insert-newline 1)
           (multiple-value-bind (values error-p)
-              (safe-eval-from-string str (current-buffer) t)
+              (safe-eval-from-string str (current-buffer) (point) t)
             (unless error-p
               (dolist (v values)
                 (insert-string (write-to-string v))

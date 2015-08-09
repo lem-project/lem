@@ -216,12 +216,14 @@
                       (*getch-wait-flag* t))
                   (handler-case
                       (handler-bind ((error #'lisp-error-clause))
-                        (setq values (multiple-value-list
-                                      (unwind-protect
-                                        (prog1 (eval-from-string str)
-                                          (when update-point-p
-                                            (point-set (buffer-output-stream-point out))))
-                                        (getch-clear-queue)))))
+                        (setq values
+                              (unwind-protect
+                                (prog1 (multiple-value-list
+                                        (eval-from-string str))
+                                  (when update-point-p
+                                    (point-set
+                                     (buffer-output-stream-point out))))
+                                (getch-clear-queue))))
                     (error (cdt)
                            (setq error-p t)
                            (setq values (list cdt)))))))

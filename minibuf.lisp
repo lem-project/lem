@@ -119,7 +119,7 @@
 (defun minibuf-read-string (prompt &optional initial)
   (minibuf-read-line prompt (or initial "") nil nil))
 
-(defun minibuf-read-number (prompt)
+(defun minibuf-read-number (prompt &optional min max)
   (parse-integer
    (minibuf-read-line prompt "" nil
      (lambda (str)
@@ -128,7 +128,9 @@
          (and
           n
           (/= 0 (length str))
-          (= (length str) len)))))))
+          (= (length str) len)
+          (if min (<= min n) t)
+          (if max (<= n max) t)))))))
 
 (defun minibuf-read-buffer (prompt &optional default existing)
   (when default

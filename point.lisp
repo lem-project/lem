@@ -32,9 +32,14 @@
    (window-cur-col)))
 
 (defun point-set (point)
-  (setf (window-cur-linum) (point-linum point))
-  (setf (window-cur-col) (point-column point))
-  (setf (window-max-col) (point-column point)))
+  (setf (window-cur-linum)
+        (min (buffer-nlines)
+             (point-linum point)))
+  (setf (window-cur-col)
+        (min (buffer-line-length (window-buffer)
+                                 (window-cur-linum))
+             (point-column point)))
+  (setf (window-max-col) (window-cur-col)))
 
 (defun point< (p1 p2)
   (cond ((< (point-linum p1) (point-linum p2))

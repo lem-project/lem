@@ -60,44 +60,43 @@
     while (file-exist-p name)
     finally (return name)))
 
-(defun expand-file-name (filename &optional directory)
-  (declare (ignorable directory))
-  (let ((path)
-        (home (nreverse
-               (cons ""
-                     (split-string
-                      (string-trim '(#\/)
-                                   (or directory
-                                       (namestring
-                                        (user-homedir-pathname))))
-                      #\/)))))
+(defun parse-pathname (pathname)
+  (let ((path))
     (loop
-      (let ((pos (position #\/ filename)))
-        (cond ((null pos)
-               (push filename path)
-               (return))
-              ((and (zerop pos) path)
-               (setf path (list ""))
-               (setf filename (subseq filename 1)))
-              (t
-               (let ((str (subseq filename 0 pos)))
-                 (setf filename (subseq filename (1+ pos)))
-                 (cond ((string= str "."))
-                       ((string= str "..")
-                        (pop path))
-                       ((string= str "~")
-                        (setf path home))
-                       (t
-                        (push str path))))))))
-    (let ((filename (join "/" (nreverse path))))
-      (cond ((string= "" filename)
-             "/")
-            ((char/= #\/ (aref filename 0))
-             (concatenate 'string
-                          (namestring (user-homedir-pathname))
-                          filename))
-            (t
-             filename)))))
+      (let ((pos (position #\/ pathname)))
+        (when (null pos)
+          (push pathname path)
+          (return))
+        (let ((str (subseq pathname 0 pos)))
+          (setf pathname (subseq pathname (1+ pos)))
+          (cond ((string= str "."))
+                ((string= str "..")
+                 (pop path))
+                ((string= str "~")
+                 (setf path
+                       (nreverse
+                        (parse-pathname
+                         (string-right-trim
+                          '(#\/)
+                          (namestring
+                           (user-homedir-pathname)))))))
+                ((string= str "")
+                 (setf path nil))
+                (t
+                 (push str path))))))
+    (nreverse path)))
+
+(defun expand-file-name (pathname &optional directory)
+  (concatenate 'string
+               "/"
+               (join "/"
+                     (parse-pathname
+                      (if (and (plusp (length pathname))
+                               (char/= #\/ (aref pathname 0)))
+                          (format nil "~a~a"
+                                  (or directory (buffer-directory))
+                                  pathname)
+                          pathname)))))
 
 (defun file-completion (str)
   (setq str (expand-file-name str))

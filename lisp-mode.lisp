@@ -374,6 +374,22 @@
            (subseq comp-str (length str)))))
       t)))
 
+(define-key *global-keymap* (kbd "C-x;") 'lisp-comment-region)
+(define-command lisp-comment-region (arg) ("P")
+  (let ((begin (region-beginning))
+        (end (region-end)))
+    (apply-region-lines
+     begin
+     end
+     (if arg
+         (lambda ()
+           (beginning-of-line)
+           (when (equal #\; (following-char))
+             (delete-char)))
+         (lambda ()
+           (beginning-of-line)
+           (insert-string ";"))))))
+
 (define-key *lisp-mode-keymap* (kbd "C-xz") 'popup-scratch-buffer)
 (define-key *lisp-mode-keymap* (kbd "C-xC-z") 'popup-scratch-buffer)
 (define-command popup-scratch-buffer () ()

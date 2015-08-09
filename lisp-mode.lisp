@@ -215,7 +215,7 @@
                       (*standard-input* (make-minibuffer-input-stream))
                       (*getch-wait-flag* t))
                   (handler-case
-                      (handler-bind ((error #'lisp-error-clause))
+                      (handler-bind ((error #'lisp-debugger))
                         (setq values
                               (unwind-protect
                                 (prog1 (multiple-value-list
@@ -225,8 +225,8 @@
                                      (buffer-output-stream-point out))))
                                 (getch-clear-queue))))
                     (error (cdt)
-                           (setq error-p t)
-                           (setq values (list cdt)))))))
+                           (setf error-p t)
+                           (setf values (list cdt)))))))
              (mi-thread-closure
               ()
               (loop
@@ -431,3 +431,19 @@
               (dolist (v values)
                 (insert-string (write-to-string v))
                 (insert-newline 1)))))))))
+
+(defun lisp-debugger (condition)
+  (let* ((choices (compute-restarts condition))
+         (n (length choices)))
+    (info-popup "*ERROR*"
+                (with-output-to-string (out)
+                  (format out "~a~%~%" condition)
+                  (loop
+                    for choice in choices
+                    for i from 1
+                    do (format out "~&[~d] ~a~%" i choice))
+                  (terpri out)
+                  #+sbcl (sb-debug:backtrace 100 out)))
+    (let ((i (minibuf-read-number "Continue: " 1 n)))
+      (invoke-restart-interactively (nth i choices))))
+  condition)

@@ -1,5 +1,23 @@
 (in-package :lem)
 
+(define-command delete-trailing-whitespace () ()
+  (save-excursion
+   (beginning-of-buffer)
+   (loop until (eobp)
+     do
+     (loop
+       (end-of-line)
+       (let ((c (preceding-char)))
+         (if (or (equal c #\space)
+                 (equal c #\tab))
+             (backward-delete-char)
+             (return))))
+     (next-line 1))
+   (end-of-buffer)
+   (delete-blank-lines)))
+
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
+
 (add-hook 'find-file-hooks
           (lambda ()
             (when (or (search ".lisp" (buffer-filename))

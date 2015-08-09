@@ -156,9 +156,11 @@
       buffer)))
 
 (defun save-file-internal (buffer)
+  (run-hooks 'before-save-hook)
   (write-to-file buffer (buffer-filename buffer))
   (unmark-buffer)
   (minibuf-print "Wrote")
+  (run-hooks 'after-save-hook)
   t)
 
 (define-key *global-keymap* (kbd "C-xC-s") 'save-file)

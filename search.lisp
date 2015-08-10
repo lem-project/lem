@@ -79,7 +79,7 @@
 
 (define-key *isearch-keymap* (kbd "C-y") 'isearch-yank)
 (define-command isearch-yank () ()
-  (let ((str (caar *kill-ring-yank-ptr*)))
+  (let ((str (kill-ring-first)))
     (when str
       (setq *isearch-string* str)
       (isearch-update-minibuf))))

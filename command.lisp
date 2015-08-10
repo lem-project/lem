@@ -99,14 +99,15 @@
               (with-output-to-string (out)
                 (dolist (name *command-names*)
                   (when (search str name)
-                    (let ((result (keybind-find-from-command name)))
+                    (loop
+                      for (kbd keymap-name)
+                      in (search-keybind-all name)
+                      do
                       (fresh-line out)
-                      (princ (if result
-                                 (format nil "~a~a~a~a~a"
-                                         name
-                                         #\tab
-                                         (kbd-to-string (car result))
-                                         #\tab
-                                         (cadr result))
-                                 name)
+                      (princ (format nil "~a~a~a~a~a"
+                                     name
+                                     #\tab
+                                     (kbd-to-string kbd)
+                                     #\tab
+                                     keymap-name)
                              out))))))))))

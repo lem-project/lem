@@ -81,14 +81,15 @@
         (when keymap
           (keymap-find-command keymap key))))))
 
-(defun keybind-find-from-command (name)
-  (let ((name (intern (string-upcase name) :lem)))
+(defun search-keybind-all (name)
+  (let ((name (intern (string-upcase name) :lem))
+        (acc))
     (dolist (keymap *keymaps*)
       (maphash (lambda (key val)
                  (when (eq name val)
-                   (return-from keybind-find-from-command
-                     (list key (keymap-name keymap)))))
-               (keymap-table keymap)))))
+                   (push (list key (keymap-name keymap)) acc)))
+               (keymap-table keymap)))
+    acc))
 
 (defun key-undef-hook (keymap key)
   (when (keymap-undef-hook keymap)

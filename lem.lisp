@@ -77,7 +77,7 @@
   (cond (*macro-recording-p*
          (minibuf-print "Macro already active")
          nil)
-        (t 
+        (t
          (minibuf-print "Start macro")
          (setq *macro-recording-p* t)
          (setq *macro-chars* nil)

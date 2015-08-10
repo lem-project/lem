@@ -88,7 +88,8 @@
             (setq str
               (popup-completion comp-f str))))
          ((or (char= c key::ctrl-h)
-              (char= c key::backspace))
+              (char= c key::backspace)
+              (char= c #\rubout))
           (when (< 0 (length str))
             (setq str (subseq str 0 (1- (length str))))))
          ((char= c key::ctrl-u)
@@ -105,6 +106,10 @@
               (setq str elt))))
          ((char= c key::ctrl-q)
           (setq str (concatenate 'string str (string (getch)))))
+         ((char= c key::ctrl-y)
+          (let ((str1 (kill-ring-first)))
+            (when str1
+              (setq str (concatenate 'string str str1)))))
          (t
           (setq str (concatenate 'string str (string c)))))))
     (cond

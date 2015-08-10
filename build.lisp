@@ -1,5 +1,4 @@
-(require :asdf)
-(require :lem)
+(ql:quickload :lem)
 
 (defun main ()
   (apply 'lem::lem (lem::argv)))

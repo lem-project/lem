@@ -60,6 +60,10 @@
     (not (buffer-read-only-p (window-buffer))))
   t)
 
+(define-command rename-buffer (name) ("sRename buffer: ")
+  (setf (buffer-name (current-buffer)) name)
+  t)
+
 (defun head-line-p (window linum)
   (declare (ignore window))
   (values (<= linum 1) (- 2 linum)))

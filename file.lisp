@@ -130,9 +130,11 @@
       (file-open filename))
      ((and (buffer-filename buf)
            (string/= (expand-file-name filename) (buffer-filename buf)))
-      (let ((name (uniq-buffer-name filename)))
-        (set-buffer (make-buffer (file-name-nondirectory name)
-                      :filename filename))))
+      (let ((uniq-name
+             (uniq-buffer-name
+              (file-name-nondirectory filename))))
+        (file-open filename)
+        (rename-buffer uniq-name)))
      (t
       (set-buffer buf)))
     (run-hooks 'find-file-hooks)))

@@ -25,8 +25,7 @@
   vtop-linum
   cur-linum
   cur-col
-  max-col
-  update-flag)
+  max-col)
 
 (defun make-window (buffer nlines ncols y x)
   (let ((window
@@ -252,23 +251,14 @@
   (window-update *current-window*)
   (cl-charms/low-level:doupdate))
 
-(defun window-update-all-minimize ()
-  (case (window-update-flag)
-    (:insert
-     (let* ((cury (window-cursor-y *current-window*))
-            (curx (window-refresh-line
-                   *current-window*
-                   cury
-                   (buffer-line-string
-                    (window-buffer)
-                    (window-cur-linum *current-window*)))))
-       (window-refresh-modeline *current-window*)
-       (cl-charms/low-level:wmove (window-win) cury curx)))
-    (:newline
-     )
-    (otherwise
-     (window-update-all)))
-  (setf (window-update-flag) nil))
+(let ((prev-time))
+  (defun window-update-all-minimize ()
+    (unless (and prev-time
+                 (> *refresh-threshold-time*
+                    (- (get-internal-real-time)
+                       prev-time)))
+      (window-update-all))
+    (setf prev-time (get-internal-real-time))))
 
 (define-key *global-keymap* (kbd "C-x2") 'split-window)
 (define-command split-window () ()

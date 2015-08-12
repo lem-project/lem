@@ -180,9 +180,7 @@
 
 (defun undefined-key (key)
   (let ((c (insertion-key-p key)))
-    (cond (c
-           (setf (window-update-flag *current-window*) :insert)
-           (insert-char c (or *universal-argument* 1)))
+    (cond (c (insert-char c (or *universal-argument* 1)))
           (t (minibuf-print (format nil
                                     "Key not found: ~a"
                                     (kbd-to-string key)))))))

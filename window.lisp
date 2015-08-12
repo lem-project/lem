@@ -100,36 +100,56 @@
           (float (/ (window-vtop-linum window)
                     (buffer-nlines (window-buffer window))))))))))
 
-(defun window-refresh-modeline-1 (window bg-char)
-  (let ((str
-         (format nil
-                 (format nil
-                         "~~~d,,,'~ca ~a ~a"
-                         (- (window-ncols window) 7)
-                         bg-char
-                         (window-posline window)
-                         (make-string 2 :initial-element bg-char))
-                 (format nil "~c~c ~a: ~a ~a (~d, ~d)"
-                         (if (buffer-read-only-p (window-buffer window)) #\% bg-char)
-                         (if (buffer-modified-p (window-buffer window)) #\* bg-char)
-                         *program-name*
-                         (buffer-name (window-buffer window))
-                         (let ((*current-window* window))
-                           (mapcar 'mode-name
-                                   (cons (major-mode)
-                                         (buffer-minor-modes
-                                          (window-buffer)))))
-                         (window-cur-linum window)
-                         (window-cur-col window)))))
-    (window-print-line
-     window
-     (1- (window-nlines window))
-     str)))
+(defun modeline-string (bg-char ncols
+                        ronly-p
+                        modif-p
+                        program-name
+                        buffer-name
+                        modes
+                        linum
+                        column
+                        line-pos)
+  (let ((str (format nil "~C~C ~A:~A ~A (~D, ~D)"
+                     (if ronly-p #\% #\-)
+                     (if modif-p #\* #\-)
+                     program-name
+                     buffer-name
+                     modes
+                     linum
+                     column)))
+    (format nil "~a~v,,,va ~a ~c~c"
+            str
+            (- ncols 7 (length str))
+            bg-char
+            #\space
+            line-pos
+            bg-char
+            bg-char)))
 
 (defun window-refresh-modeline (window)
-  (cl-charms/low-level:wattron (window-win window) cl-charms/low-level:a_reverse)
-  (window-refresh-modeline-1 window #\-)
-  (cl-charms/low-level:wattroff (window-win window) cl-charms/low-level:a_reverse))
+  (cl-charms/low-level:wattron (window-win window)
+                               cl-charms/low-level:a_reverse)
+  (let ((modeline-str
+         (modeline-string #\-
+                          (window-ncols window)
+                          (buffer-read-only-p (window-buffer window))
+                          (buffer-modified-p (window-buffer window))
+                          *program-name*
+                          (buffer-name (window-buffer window))
+                          (let ((*current-window* window))
+                            (mapcar 'mode-name
+                                    (cons (major-mode)
+                                          (buffer-minor-modes
+                                           (window-buffer)))))
+                          (window-cur-linum window)
+                          (window-cur-col window)
+                          (window-posline window))))
+    (cl-charms/low-level:mvwaddstr (window-win window)
+                                   (1- (window-nlines window))
+                                   0
+                                   modeline-str))
+  (cl-charms/low-level:wattroff (window-win window)
+                                cl-charms/low-level:a_reverse))
 
 (defun window-cursor-y (window)
   (- (window-cur-linum window)

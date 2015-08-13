@@ -24,6 +24,7 @@
                         (:file "window")
                         (:file "file")
                         (:file "word")
+                        (:file "syntax")
                         (:file "mode")
                         (:file "sexp")
                         (:file "lisp-mode")

@@ -196,11 +196,15 @@
     t))
 
 (define-key *global-keymap* (kbd "C-xs") 'save-some-buffers)
-(define-command save-some-buffers () ()
+(define-command save-some-buffers (&optional save-silently-p) ("P")
   (let ((buffer (current-buffer)))
     (dolist (buffer *buffer-list*)
       (when (and (buffer-modified-p buffer)
                  (buffer-filename buffer))
         (set-buffer buffer nil)
-        (save-file)))
+        (when (or save-silently-p
+                  (progn
+                    (window-update-all)
+                    (minibuf-y-or-n-p "Save file")))
+          (save-file))))
     (set-buffer buffer)))

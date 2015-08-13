@@ -520,7 +520,8 @@
            (window-update-all)
            (cl-charms/low-level:timeout 1000)
            (let ((c (cl-charms/low-level:getch)))
-             (unless (= -1 c) (cl-charms/low-level:ungetch c)))
+             (unless (= -1 c)
+               (ungetch (code-char c))))
            (cl-charms/low-level:timeout -1)
            t)))))
 

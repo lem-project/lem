@@ -30,6 +30,7 @@
                         (loop while (tlist-empty-p queue))
                         (tlist-rem-left queue))
                        ((not (tlist-empty-p queue))
+                        (setf *prev-refresh-time* nil)
                         (tlist-rem-left queue))
                        (t
                         (cl-charms/low-level:wgetch (window-win)))))
@@ -150,26 +151,26 @@
 (defun input-key ()
   (let ((c (getch nil)))
     (if (or (char= c key::ctrl-x)
-          (char= c key::escape))
-      (list c (getch nil))
-      (let ((bytes (utf8-bytes (char-code c))))
-        (if (= bytes 1)
-          (list c)
-          (let ((bytes (coerce
-                        (mapcar 'char-code
-                          (cons c
-                            (loop repeat (1- bytes)
-                              collect (getch nil))))
-                        '(vector (unsigned-byte 8)))))
-            (list (aref (bytes-to-string bytes) 0))))))))
+            (char= c key::escape))
+        (list c (getch nil))
+        (let ((bytes (utf8-bytes (char-code c))))
+          (if (= bytes 1)
+              (list c)
+              (let ((bytes (coerce
+                            (mapcar 'char-code
+                                    (cons c
+                                          (loop repeat (1- bytes)
+                                            collect (getch nil))))
+                            '(vector (unsigned-byte 8)))))
+                (list (aref (bytes-to-string bytes) 0))))))))
 
 (defun execute (key)
   (let* ((keymap (current-mode-keymap))
          (cmd (mode-find-keybind key)))
     (if cmd
-      (unless (cmd-call cmd *universal-argument*)
-        (setq *macro-running-p* nil))
-      (key-undef-hook keymap key))))
+        (unless (cmd-call cmd *universal-argument*)
+          (setq *macro-running-p* nil))
+        (key-undef-hook keymap key))))
 
 (defun main-step ()
   (let ((key (input-key)))

@@ -178,12 +178,32 @@
     (execute key)
     (setq *universal-argument* nil)))
 
-(defun undefined-key (key)
-  (let ((c (insertion-key-p key)))
-    (cond (c (insert-char c (or *universal-argument* 1)))
-          (t (minibuf-print (format nil
-                                    "Key not found: ~a"
-                                    (kbd-to-string key)))))))
+(let ((prev-time))
+  (defun undefined-key (key)
+    (let ((c (insertion-key-p key)))
+      (cond (c (insert-char c (or *universal-argument* 1))
+               (when (and prev-time
+                          (> 10
+                             (- (get-internal-real-time)
+                                prev-time)))
+                 (exec-paste))
+               (setf prev-time (get-internal-real-time)))
+            (t (minibuf-print (format nil
+                                      "Key not found: ~a"
+                                      (kbd-to-string key))))))))
+
+(defun exec-paste ()
+  (cl-charms/low-level:timeout 10)
+  (loop
+    for c = (cl-charms/low-level:getch)
+    while (/= c -1)
+    do
+    (setf c (code-char c))
+    (if (or (char= c key::ctrl-j)
+            (char= c key::ctrl-m))
+        (insert-newline 1)
+        (insert-char c 1)))
+  (window-update-all))
 
 (defun load-init-file ()
   (flet ((test (path)

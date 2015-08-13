@@ -129,7 +129,7 @@
   (cl-charms/low-level:wattron (window-win window)
                                cl-charms/low-level:a_reverse)
   (let ((modeline-str
-         (modeline-string #\-
+         (modeline-string (if (eq window *current-window*) #\- #\space)
                           (window-ncols window)
                           (buffer-read-only-p (window-buffer window))
                           (buffer-modified-p (window-buffer window))

@@ -30,7 +30,6 @@
                         (loop while (tlist-empty-p queue))
                         (tlist-rem-left queue))
                        ((not (tlist-empty-p queue))
-                        (setf *prev-refresh-time* nil)
                         (tlist-rem-left queue))
                        (t
                         (cl-charms/low-level:wgetch (window-win)))))
@@ -218,7 +217,7 @@
        (*curr-flags* (make-flags) (make-flags))
        (*last-flags* (make-flags) *curr-flags*))
       (*exit*)
-    (window-update-all-minimize)
+    (window-update-all)
     (case (catch 'abort
             (main-step)
             nil)

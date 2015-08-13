@@ -121,8 +121,8 @@
     result))
 
 (defun search-forward-aux (str)
-  (let* ((lines (split-string str #\newline))
-         (length (length lines)))
+  (multiple-value-bind (lines length)
+      (split-string str #\newline)
     (flet ((take-string ()
              (join (string #\newline)
                (buffer-take-lines (window-buffer)
@@ -141,8 +141,8 @@
         #'eobp))))
 
 (defun search-backward-aux (str)
-  (let* ((lines (split-string str #\newline))
-         (length (length lines)))
+  (multiple-value-bind (lines length)
+      (split-string str #\newline)
     (flet ((%search (&rest args)
              (let ((linum (- (window-cur-linum) (1- length))))
                (when (< 0 linum)

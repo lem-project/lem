@@ -251,14 +251,13 @@
   (window-update *current-window*)
   (cl-charms/low-level:doupdate))
 
-(let ((prev-time))
-  (defun window-update-all-minimize ()
-    (unless (and prev-time
-                 (> *refresh-threshold-time*
-                    (- (get-internal-real-time)
-                       prev-time)))
-      (window-update-all))
-    (setf prev-time (get-internal-real-time))))
+(defun window-update-all-minimize ()
+  (unless (and *prev-refresh-time*
+               (> *refresh-threshold-time*
+                  (- (get-internal-real-time)
+                     *prev-refresh-time*)))
+    (window-update-all))
+  (setf *prev-refresh-time* (get-internal-real-time)))
 
 (define-key *global-keymap* (kbd "C-x2") 'split-window)
 (define-command split-window () ()

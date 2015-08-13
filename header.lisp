@@ -15,6 +15,7 @@
 (defvar *tab-size* 8)
 
 (defvar *refresh-threshold-time* 10)
+(defvar *prev-refresh-time* nil)
 
 (defvar *last-flags* nil)
 (defvar *curr-flags* nil)

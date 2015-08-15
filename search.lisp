@@ -95,7 +95,7 @@
     with buffer = (window-buffer)
     for (start . end) in *isearch-hilight-points*
     do (buffer-remove-property buffer start end :highlight))
-  (setf *isearch-hilight-points* nil))
+  (setq *isearch-hilight-points* nil))
 
 (defun isearch-update-buffer ()
   (isearch-reset-buffer)
@@ -113,7 +113,7 @@
                   (buffer-string (car buffer-strings)))
              (if (= 1 length)
                  (loop with col = 0 do
-                   (setf col
+                   (setq col
                          (search search-string
                                  buffer-string
                                  :start2 col))

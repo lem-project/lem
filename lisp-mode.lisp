@@ -225,8 +225,8 @@
                                      (buffer-output-stream-point out))))
                                 (getch-clear-queue))))
                     (error (cdt)
-                           (setf error-p t)
-                           (setf values (list cdt)))))))
+                           (setq error-p t)
+                           (setq values (list cdt)))))))
              (mi-thread-closure
               ()
               (loop
@@ -344,7 +344,7 @@
                   (point-set end)))
          (str (region-string begin end))
          (pkg :cl-user))
-    (setf str
+    (setq str
           (string-left-trim '(#\' #\` #\,)
                             (string-left-trim '(#\#)
                                               str)))
@@ -415,7 +415,7 @@
 
 (defun info-pop-to-buffer (buffer &optional fn)
   (buffer-put buffer :popup (one-window-p))
-  (setf *current-window* (popup buffer fn t nil))
+  (setq *current-window* (popup buffer fn t nil))
   (info-mode))
 
 (defun info-popup (buffer-name string)

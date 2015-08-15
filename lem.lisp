@@ -49,7 +49,7 @@
   (defun getch-queue-length ()
     (length (car queue)))
   (defun getch-clear-queue ()
-    (setf queue (make-tlist))))
+    (setq queue (make-tlist))))
 
 (define-key *global-keymap* (kbd "C-g") 'keyboard-quit)
 (define-command keyboard-quit () ()
@@ -187,7 +187,7 @@
                              (- (get-internal-real-time)
                                 prev-time)))
                  (exec-paste))
-               (setf prev-time (get-internal-real-time)))
+               (setq prev-time (get-internal-real-time)))
             (t (minibuf-print (format nil
                                       "Key not found: ~a"
                                       (kbd-to-string key))))))))
@@ -198,7 +198,7 @@
     for c = (cl-charms/low-level:getch)
     while (/= c -1)
     do
-    (setf c (code-char c))
+    (setq c (code-char c))
     (if (or (char= c key::ctrl-j)
             (char= c key::ctrl-m))
         (insert-newline 1)

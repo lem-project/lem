@@ -68,12 +68,12 @@
           (push pathname path)
           (return))
         (let ((str (subseq pathname 0 pos)))
-          (setf pathname (subseq pathname (1+ pos)))
+          (setq pathname (subseq pathname (1+ pos)))
           (cond ((string= str "."))
                 ((string= str "..")
                  (pop path))
                 ((string= str "~")
-                 (setf path
+                 (setq path
                        (nreverse
                         (parse-pathname
                          (string-right-trim
@@ -81,7 +81,7 @@
                           (namestring
                            (user-homedir-pathname)))))))
                 ((string= str "")
-                 (setf path nil))
+                 (setq path nil))
                 (t
                  (push str path))))))
     (nreverse path)))

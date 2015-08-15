@@ -162,7 +162,7 @@
         (cl-charms/low-level:wattron (window-win window) cl-charms/low-level:a_reverse)
         (cl-charms/low-level:mvwinsch (window-win window) y pos (char-code (schar str pos)))
         (cl-charms/low-level:wattroff (window-win window) cl-charms/low-level:a_reverse)
-        (setf x (1+ pos))))
+        (setq x (1+ pos))))
     (let ((rest-str (subseq str x)))
       (cl-charms/low-level:mvwinsstr (window-win window) y x
                                      (concatenate 'string
@@ -193,7 +193,7 @@
         (let* ((start (wide-index str (- curx cols -4)))
                (end (window-cur-col window))
                (substr (subseq str start end)))
-          (setf offset-column start)
+          (setq offset-column start)
           (setq curx (- cols 2))
           (if (wide-char-p (aref substr (- (length substr) 1)))
               (progn
@@ -204,8 +204,8 @@
               (setq str (format nil "$~a$" substr)))))
        (t
         (let ((start (- curx cols -3)))
-          (setf offset-column start)
-          (setf str
+          (setq offset-column start)
+          (setq str
                 (format nil
                         "$~a"
                         (substring-width str start))))
@@ -226,7 +226,7 @@
           (buffer-line-string buffer linum)
         (let ((curx (window-refresh-line window y str props)))
           (when curx
-            (setf x curx)))))
+            (setq x curx)))))
     (cl-charms/low-level:wmove (window-win window)
                                (- (window-cur-linum window)
                                   (window-vtop-linum window))

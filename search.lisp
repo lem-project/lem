@@ -11,6 +11,11 @@
 (defvar *isearch-start-point*)
 (defvar *isearch-tmp-keymap*)
 (defvar *isearch-search-function*)
+(defvar *isearch-hilight-points* nil)
+
+(defun isearch-update-display ()
+  (isearch-update-minibuf)
+  (isearch-update-buffer))
 
 (defun isearch-update-minibuf ()
   (minibuf-print (format nil "ISearch: ~a" *isearch-string*)))
@@ -51,7 +56,7 @@
           (subseq *isearch-string*
                   0
                   (1- (length *isearch-string*))))
-    (isearch-update-minibuf)))
+    (isearch-update-display)))
 
 (define-key *isearch-keymap* (kbd "C-q") 'isearch-raw-insert)
 (define-command isearch-raw-insert () ()
@@ -60,6 +65,7 @@
 (define-key *isearch-keymap* (kbd "C-j") 'isearch-end)
 (define-key *isearch-keymap* (kbd "C-m") 'isearch-end)
 (define-command isearch-end () ()
+  (isearch-reset-buffer)
   (setq *isearch-prev-string* *isearch-string*)
   (set-current-mode-keymap *isearch-tmp-keymap*))
 
@@ -68,28 +74,85 @@
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
   (search-forward-aux *isearch-string*)
-  (isearch-update-minibuf))
+  (isearch-update-display))
 
 (define-key *isearch-keymap* (kbd "C-r") 'isearch-prev)
 (define-command isearch-prev () ()
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
   (search-backward-aux *isearch-string*)
-  (isearch-update-minibuf))
+  (isearch-update-display))
 
 (define-key *isearch-keymap* (kbd "C-y") 'isearch-yank)
 (define-command isearch-yank () ()
   (let ((str (kill-ring-first)))
     (when str
       (setq *isearch-string* str)
-      (isearch-update-minibuf))))
+      (isearch-update-display))))
+
+(defun isearch-reset-buffer ()
+  (loop
+    with buffer = (window-buffer)
+    for (start . end) in *isearch-hilight-points*
+    do (buffer-remove-property buffer start end :highlight))
+  (setf *isearch-hilight-points* nil))
+
+(defun isearch-update-buffer ()
+  (isearch-reset-buffer)
+  (window-adjust-view *current-window* t)
+  (multiple-value-bind (search-strings length)
+      (split-string *isearch-string* #\newline)
+    (let ((buffer (window-buffer))
+          (start (window-vtop-linum))
+          (end (- (window-nlines) length))
+          (buffer-nlines (buffer-nlines)))
+      (loop for linum from start repeat end
+        while (< linum buffer-nlines)
+        do (let* ((buffer-strings (buffer-take-lines buffer linum length))
+                  (search-string (car search-strings))
+                  (buffer-string (car buffer-strings)))
+             (if (= 1 length)
+                 (loop with col = 0 do
+                   (setf col
+                         (search search-string
+                                 buffer-string
+                                 :start2 col))
+                   (if (null col)
+                       (return)
+                       (let ((start (make-point linum col))
+                             (end (make-point
+                                   linum (+ col (length search-string)))))
+                         (push (cons start end) *isearch-hilight-points*)
+                         (buffer-put-property buffer start end
+                                              :highlight)))
+                   (incf col (length search-string)))
+                 (let ((col
+                        (- (length buffer-string)
+                           (length search-string)))
+                       (last-search-string
+                        (car (last search-strings))))
+                   (when (and (every #'string=
+                                     (butlast (cdr search-strings))
+                                     (butlast (cdr buffer-strings)))
+                              (string= search-string
+                                       buffer-string
+                                       :start2 col)
+                              (string= last-search-string
+                                       (car (last buffer-strings))
+                                       :end2 (length last-search-string)))
+                     (let ((start (make-point linum col))
+                           (end (make-point (+ linum length -1)
+                                            (length last-search-string))))
+                       (push (cons start end) *isearch-hilight-points*)
+                       (buffer-put-property buffer start end
+                                            :highlight))))))))))
 
 (defun isearch-add-char (c)
   (setq *isearch-string*
     (concatenate 'string
       *isearch-string*
       (string c)))
-  (isearch-update-minibuf)
+  (isearch-update-display)
   (let ((point (point)))
     (unless (funcall *isearch-search-function* *isearch-string*)
       (point-set point))))

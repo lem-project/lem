@@ -154,18 +154,27 @@
   (- (window-cur-linum window)
      (window-vtop-linum window)))
 
-(defun window-print-line (window y str)
-  (cl-charms/low-level:mvwaddstr
-   (window-win window) y 0
-   (concatenate 'string
-                str
-                (make-string (- (window-ncols window)
-                                (str-width str))
-                             :initial-element #\space))))
+(defun window-print-line (window y str props offset-column)
+  (let ((x 0))
+    (loop for (pos . prop) in props do
+      (when (eq prop :highlight)
+        (cl-charms/low-level:mvwinsstr (window-win window) y x (subseq str x pos))
+        (cl-charms/low-level:wattron (window-win window) cl-charms/low-level:a_reverse)
+        (cl-charms/low-level:mvwinsch (window-win window) y pos (char-code (schar str pos)))
+        (cl-charms/low-level:wattroff (window-win window) cl-charms/low-level:a_reverse)
+        (setf x (1+ pos))))
+    (let ((rest-str (subseq str x)))
+      (cl-charms/low-level:mvwinsstr (window-win window) y x
+                                     (concatenate 'string
+                                                  rest-str
+                                                  (make-string (- (window-ncols window)
+                                                                  (str-width rest-str))
+                                                               :initial-element #\space))))))
 
-(defun window-refresh-line (window y str)
+(defun window-refresh-line (window y str props)
   (let ((cury (window-cursor-y window))
-        (curx))
+        (curx)
+        (offset-column 0))
     (when (= cury y)
       (setq curx (str-width str (window-cur-col window))))
     (let ((width (str-width str))
@@ -178,42 +187,50 @@
         (let ((i (wide-index str cols)))
           (setq str
                 (if (<= cols (str-width str i))
-                  (format nil "~a $" (subseq str 0 (1- i)))
-                  (format nil "~a$" (subseq str 0 i))))))
+                    (format nil "~a $" (subseq str 0 (1- i)))
+                    (format nil "~a$" (subseq str 0 i))))))
        ((< (window-cur-col window) (length str))
-        (let* ((begin (wide-index str (- curx cols -4)))
+        (let* ((start (wide-index str (- curx cols -4)))
                (end (window-cur-col window))
-               (substr (subseq str begin end)))
+               (substr (subseq str start end)))
+          (setf offset-column start)
           (setq curx (- cols 2))
           (if (wide-char-p (aref substr (- (length substr) 1)))
-            (progn
-              (setq str
-                    (format nil "$~a $"
-                            (subseq substr 0 (1- (length substr)))))
-              (decf curx))
-            (setq str (format nil "$~a$" substr)))))
+              (progn
+                (setq str
+                      (format nil "$~a $"
+                              (subseq substr 0 (1- (length substr)))))
+                (decf curx))
+              (setq str (format nil "$~a$" substr)))))
        (t
-        (setq str
-              (format nil
-                      "$~a"
-                      (substring-width str (- curx cols -3))))
+        (let ((start (- curx cols -3)))
+          (setf offset-column start)
+          (setf str
+                (format nil
+                        "$~a"
+                        (substring-width str start))))
         (setq curx (- cols 1))))
-      (window-print-line window y str))
+      (window-print-line window y str props offset-column))
     curx))
 
 (defun window-refresh-lines (window)
-  (let ((x 0))
-    (loop for str in (buffer-take-lines (window-buffer window)
-                                        (window-vtop-linum window)
-                                        (1- (window-nlines window)))
-          for y from 0
-          do (let ((curx (window-refresh-line window y str)))
-               (when curx
-                 (setq x curx))))
+  (let* ((x 0)
+         (buffer (window-buffer window))
+         (win-nlines (1- (window-nlines window)))
+         (buf-nlines (buffer-nlines buffer)))
+    (do ((linum (window-vtop-linum window) (1+ linum))
+         (y 0 (1+ y)))
+        ((or (<= win-nlines y)
+             (< buf-nlines linum)))
+      (multiple-value-bind (str props)
+          (buffer-line-string buffer linum)
+        (let ((curx (window-refresh-line window y str props)))
+          (when curx
+            (setf x curx)))))
     (cl-charms/low-level:wmove (window-win window)
-                      (- (window-cur-linum window)
-                         (window-vtop-linum window))
-                      x)))
+                               (- (window-cur-linum window)
+                                  (window-vtop-linum window))
+                               x)))
 
 (defun window-refresh (window)
   (window-refresh-modeline window)

@@ -9,8 +9,9 @@
           buffer-major-mode
           buffer-minor-modes
           buffer-nlines
+          buffer-put-property
           buffer-get-char
-          buffer-line-lelngth
+          buffer-line-length
           buffer-line-string
           map-buffer-lines
           buffer-take-lines
@@ -37,6 +38,25 @@
 
 (defun line-set-str (line str)
   (setf (line-str line) str))
+
+(defun line-put-property (line start end prop)
+  (loop for pos from start below end
+    do (setf (line-props line)
+             (merge 'list
+                    (list (cons pos prop))
+                    (line-props line)
+                    #'<
+                    :key #'car)))
+  (setf (line-props line)
+        (delete-duplicates (line-props line)
+                           :key #'car)))
+
+(defun line-remove-property (line start end prop)
+  (setf (line-props line)
+        (delete-if #'(lambda (elt)
+                       (and (<= start (car elt) (1- end))
+                            (eql prop (cdr elt))))
+                   (line-props line))))
 
 (defun line-free (line)
   (when (line-prev line)
@@ -150,17 +170,49 @@
   `(when (buffer-read-only-p ,buffer)
      (throw 'abort 'readonly)))
 
-(defun buffer-put-property (buffer point prop)
-  (let ((line (buffer-get-line buffer (point-linum point))))
-    (push (list (point-column point) prop)
-          (line-props line))))
+(defun buffer-line-set-property (line-set-fn buffer prop linum
+                                        &optional start-column end-column)
+  (let ((line (buffer-get-line buffer linum)))
+    (funcall line-set-fn
+             line
+             (or start-column 0)
+             (or end-column (length (line-str line)))
+             prop)))
 
-(defun buffer-remove-property (buffer point)
-  (let ((line (buffer-get-line buffer (point-linum point))))
-    (setf (line-props line)
-          (delete-if (lambda (prop)
-                       (= (car prop) (point-column point)))
-                     (line-props line)))))
+(defun buffer-set-property (line-set-fn buffer start end prop)
+  (with-points (((start-linum start-column) start)
+                ((end-linum end-column) end))
+    (cond ((= start-linum end-linum)
+           (buffer-line-set-property line-set-fn
+                                     buffer
+                                     prop
+                                     start-linum
+                                     start-column
+                                     end-column))
+          (t
+           (buffer-line-set-property line-set-fn
+                                     buffer
+                                     prop
+                                     start-linum
+                                     start-column)
+           (buffer-line-set-property line-set-fn
+                                     buffer
+                                     prop
+                                     end-linum
+                                     start-column
+                                     end-column)
+           (loop
+             for linum from (1+ start-linum) below end-linum
+             do (buffer-line-set-property line-set-fn
+                                          buffer
+                                          prop
+                                          linum))))))
+
+(defun buffer-put-property (buffer start end prop)
+  (buffer-set-property #'line-put-property buffer start end prop))
+
+(defun buffer-remove-property (buffer start end prop)
+  (buffer-set-property #'line-remove-property buffer start end prop))
 
 (defun %buffer-get-line (buffer linum)
   (cond

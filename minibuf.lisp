@@ -16,19 +16,19 @@
 
 (defun minibuf-init ()
   (setq *mb-win*
-	(cl-charms/low-level:newwin
-	 1
-	 cl-charms/low-level:*cols*
-	 (1- cl-charms/low-level:*lines*)
-	 0)))
+        (cl-charms/low-level:newwin
+         1
+         cl-charms/low-level:*cols*
+         (1- cl-charms/low-level:*lines*)
+         0)))
 
 (defun minibuf-resize ()
   (cl-charms/low-level:mvwin *mb-win*
-    (1- cl-charms/low-level:*lines*)
-    0)
+                             (1- cl-charms/low-level:*lines*)
+                             0)
   (cl-charms/low-level:wresize *mb-win*
-    1
-    cl-charms/low-level:*cols*)
+                               1
+                               cl-charms/low-level:*cols*)
   (cl-charms/low-level:werase *mb-win*)
   (cl-charms/low-level:wrefresh *mb-win*))
 
@@ -79,14 +79,14 @@
          ((or (char= c key::ctrl-j)
               (char= c key::ctrl-m))
           (when (or (string= str "")
-                  (null existing-p)
-                  (funcall existing-p str))
+                    (null existing-p)
+                    (funcall existing-p str))
             (setq break t)))
          ((char= c key::ctrl-i)
           (when comp-f
             (setq comp-flag t)
             (setq str
-              (popup-completion comp-f str))))
+                  (popup-completion comp-f str))))
          ((or (char= c key::ctrl-h)
               (char= c key::backspace)
               (char= c #\rubout))
@@ -127,38 +127,39 @@
 (defun minibuf-read-number (prompt &optional min max)
   (parse-integer
    (minibuf-read-line prompt "" nil
-     (lambda (str)
-       (multiple-value-bind (n len)
-           (parse-integer str :junk-allowed t)
-         (and
-          n
-          (/= 0 (length str))
-          (= (length str) len)
-          (if min (<= min n) t)
-          (if max (<= n max) t)))))))
+                      (lambda (str)
+                        (multiple-value-bind (n len)
+                            (parse-integer str :junk-allowed t)
+                          (and
+                           n
+                           (/= 0 (length str))
+                           (= (length str) len)
+                           (if min (<= min n) t)
+                           (if max (<= n max) t)))))))
 
 (defun minibuf-read-buffer (prompt &optional default existing)
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))
   (let* ((buffer-names (mapcar 'buffer-name *buffer-list*))
-         (result (minibuf-read-line prompt
-                   ""
-                   (lambda (name)
-                     (completion name buffer-names))
-                   (and existing
-                     (lambda (name)
-                       (member name buffer-names :test 'string=))))))
+         (result (minibuf-read-line
+                  prompt
+                  ""
+                  (lambda (name)
+                    (completion name buffer-names))
+                  (and existing
+                       (lambda (name)
+                         (member name buffer-names :test 'string=))))))
     (if (string= result "")
-      default
-      result)))
+        default
+        result)))
 
 (defun minibuf-read-file (prompt &optional directory default existing)
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))
   (let ((result (minibuf-read-line prompt
-                  directory
-                  #'file-completion
-                  (and existing #'file-exist-p))))
+                                   directory
+                                   #'file-completion
+                                   (and existing #'file-exist-p))))
     (if (string= result "")
-      default
-      result)))
+        default
+        result)))

@@ -42,16 +42,18 @@
 
 (defun kbd-to-string (key)
   (apply 'concatenate 'string
-    (mapcar (lambda (c)
-              (cond
-               ((key::ctrl-p c)
-                (format nil "C-~c"
-                  (char-downcase (code-char (+ 64 (char-code c))))))
-               ((char= c key::escape)
-                "M-")
-               (t
-                (string c))))
-      key)))
+         (mapcar (lambda (c)
+                   (cond
+                    ((key::ctrl-p c)
+                     (format nil "C-~c"
+                             (char-downcase
+                              (code-char
+                               (+ 64 (char-code c))))))
+                    ((char= c key::escape)
+                     "M-")
+                    (t
+                     (string c))))
+                 key)))
 
 (defun kbd (str)
   (let ((i 0)
@@ -77,9 +79,9 @@
 (defun keymap-find-command (keymap key)
   (let ((cmd (gethash key (keymap-table keymap))))
     (or cmd
-      (let ((keymap (keymap-parent keymap)))
-        (when keymap
-          (keymap-find-command keymap key))))))
+        (let ((keymap (keymap-parent keymap)))
+          (when keymap
+            (keymap-find-command keymap key))))))
 
 (defun search-keybind-all (name)
   (let ((name (intern (string-upcase name) :lem))

@@ -2,18 +2,18 @@
 
 (defun pdebug (x)
   (with-open-file (out "DEBUG"
-		   :direction :output
-		   :if-exists :append
-		   :if-does-not-exist :create)
+                       :direction :output
+                       :if-exists :append
+                       :if-does-not-exist :create)
     (print x out)))
 
 (defun utf8-bytes (c)
   (cond
-    ((<= c #x7f) 1)
-    ((<= #xc2 c #xdf) 2)
-    ((<= #xe0 c #xef) 3)
-    ((<= #xf0 c #xf4) 4)
-    (t 1)))
+   ((<= c #x7f) 1)
+   ((<= #xc2 c #xdf) 2)
+   ((<= #xe0 c #xef) 3)
+   ((<= #xf0 c #xf4) 4)
+   (t 1)))
 
 (defvar *eastasian-full*
   (vector
@@ -37,16 +37,16 @@
 
 (defun binary-search (vec val cmp-f)
   (labels ((rec (begin end)
-             (when (<= begin end)
-               (let* ((i (floor (+ end begin) 2))
-                      (result (funcall cmp-f val (aref vec i))))
-                 (cond
-                   ((plusp result)
-                    (rec (1+ i) end))
-                   ((minusp result)
-                    (rec begin (1- i)))
-                   (t
-                    (aref vec i)))))))
+                (when (<= begin end)
+                  (let* ((i (floor (+ end begin) 2))
+                         (result (funcall cmp-f val (aref vec i))))
+                    (cond
+                     ((plusp result)
+                      (rec (1+ i) end))
+                     ((minusp result)
+                      (rec begin (1- i)))
+                     (t
+                      (aref vec i)))))))
     (rec 0 (1- (length vec)))))
 
 (defun wide-char-p (c)
@@ -54,32 +54,34 @@
 
 (defun char-width (c w)
   (cond ((char= c #\tab)
-	 (+ (* (floor w *tab-size*) *tab-size*) *tab-size*))
-	((or (wide-char-p c) (key::ctrl-p c))
-	 (+ w 2))
-	(t
-	 (+ w 1))))
+         (+ (* (floor w *tab-size*) *tab-size*) *tab-size*))
+        ((or (wide-char-p c) (key::ctrl-p c))
+         (+ w 2))
+        (t
+         (+ w 1))))
 
 (defun str-width (str &optional n)
   (when (and n (< n (length str)))
     (setq str (subseq str 0 n)))
-  (loop with width = 0
-        for c across str
-        do (setq width (char-width c width))
-	finally (return width)))
+  (loop
+    with width = 0
+    for c across str
+    do (setq width (char-width c width))
+    finally (return width)))
 
 (defun wide-index (str goal)
-  (loop with w = 0
-	for i from 0 below (length str) by 1
-	for c across str do
-	  (setq w (char-width c w))
-	  (when (<= goal w)
-	    (return i))))
+  (loop
+    with w = 0
+    for i from 0 below (length str) by 1
+    for c across str do
+    (setq w (char-width c w))
+    (when (<= goal w)
+      (return i))))
 
 (defun substring-width (str begin &optional end)
   (let ((wb (wide-index str begin))
-	(we (when end
-	      (wide-index str end))))
+        (we (when end
+              (wide-index str end))))
     (subseq str wb we)))
 
 (defun split-string (str delim)
@@ -103,13 +105,14 @@
 (defun replace-string (before after string)
   (let ((i (search before string)))
     (if i
-      (values (concatenate 'string
-                (subseq string 0 i)
-                after
-                (replace-string before after
-                  (subseq string (+ i (length before)))))
-        t)
-      (values string nil))))
+        (values (concatenate
+                 'string
+                 (subseq string 0 i)
+                 after
+                 (replace-string before after
+                                 (subseq string (+ i (length before)))))
+                t)
+        (values string nil))))
 
 (declaim (inline make-tlist tlist-left
                  tlist-right tlist-empty-p))
@@ -125,26 +128,26 @@
 (defun tlist-add-left (tl it)
   (let ((x (cons it (car tl))))
     (if (tlist-empty-p tl)
-      (setf (cdr tl) x))
+        (setf (cdr tl) x))
     (setf (car tl) x)))
 
 (defun tlist-add-right (tl it)
   (let ((x (cons it nil)))
     (if (tlist-empty-p tl)
-      (setf (car tl) x)
-      (setf (cddr tl) x))
+        (setf (car tl) x)
+        (setf (cddr tl) x))
     (setf (cdr tl) x)))
 
 (declaim (inline tlist-rem-left))
 
 (defun tlist-rem-left (tl)
   (if (tlist-empty-p tl)
-    (error "Remove from empty tlist")
-    (let ((x (car tl)))
-      (setf (car tl) (cdar tl))
-      (if (tlist-empty-p tl)
-        (setf (cdr tl) nil))
-      (car x))))
+      (error "Remove from empty tlist")
+      (let ((x (car tl)))
+        (setf (car tl) (cdar tl))
+        (if (tlist-empty-p tl)
+            (setf (cdr tl) nil))
+        (car x))))
 
 (declaim (inline tlist-update))
 

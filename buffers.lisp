@@ -18,16 +18,15 @@
 
 (defun special-buffer-p (buffer)
   (let ((name (buffer-name buffer)))
-    (and
-     (char= #\* (aref name 0))
-     (char= #\* (aref name (1- (length name)))))))
+    (and (char= #\* (aref name 0))
+         (char= #\* (aref name (1- (length name)))))))
 
 (defun filter-special-buffers ()
   (remove-if #'special-buffer-p *buffer-list*))
 
 (defun any-modified-buffer-p ()
   (find-if 'buffer-modified-p
-    (filter-special-buffers)))
+           (filter-special-buffers)))
 
 (defun current-buffer ()
   (window-buffer))
@@ -35,19 +34,19 @@
 (defun get-buffer (name)
   (find-if (lambda (buffer)
              (string= name (buffer-name buffer)))
-    *buffer-list*))
+           *buffer-list*))
 
 (defun get-buffer-create (name)
   (or (get-buffer name)
-    (make-buffer name)))
+      (make-buffer name)))
 
 (defun uniq-buffer-name (name)
   (if (null (get-buffer name))
-    name
-    (do ((n 1 (1+ n))) (nil)
-      (let ((name (format nil "~a<~d>" name n)))
-        (unless (get-buffer name)
-          (return name))))))
+      name
+      (do ((n 1 (1+ n))) (nil)
+        (let ((name (format nil "~a<~d>" name n)))
+          (unless (get-buffer name)
+            (return name))))))
 
 (defun other-buffer ()
   (let ((buffer-list *buffer-list*))
@@ -56,8 +55,8 @@
             (remove (window-buffer win)
                     buffer-list)))
     (if (null buffer-list)
-      (car *buffer-list*)
-      (car buffer-list))))
+        (car *buffer-list*)
+        (car buffer-list))))
 
 (defun update-prev-buffer (buffer)
   (setq *buffer-list*
@@ -91,7 +90,7 @@
 (define-key *global-keymap* (kbd "C-xb") 'select-buffer)
 (define-command select-buffer (name) ("BUse Buffer: ")
   (let ((buf (or (get-buffer name)
-               (make-buffer name))))
+                 (make-buffer name))))
     (set-buffer buf)
     t))
 
@@ -99,8 +98,8 @@
   (let* ((buffer-list (reverse *buffer-list*))
          (res (member buffer buffer-list)))
     (if (cdr res)
-      (cadr res)
-      (car buffer-list))))
+        (cadr res)
+        (car buffer-list))))
 
 (define-key *global-keymap* (kbd "C-xk") 'kill-buffer)
 (define-command kill-buffer (name) ("bKill buffer: ")

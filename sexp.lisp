@@ -23,13 +23,13 @@
                (push 'symbol acc))
               ((syntax-open-paren-char-p c)
                (push (if reverse-p 
-                       'closed-paren
-                       'open-paren)
+                         'closed-paren
+                         'open-paren)
                      acc))
               ((syntax-closed-paren-char-p c)
                (push (if reverse-p
-                       'open-paren
-                       'closed-paren)
+                         'open-paren
+                         'closed-paren)
                      acc))
               ((syntax-string-quote-char-p c)
                (push 'string-quote acc))
@@ -44,8 +44,8 @@
               (t
                (push 'symbol acc)))))
     (if reverse-p
-      (nconc acc (list 'space))
-      (nreverse (cons 'space acc)))))
+        (nconc acc (list 'space))
+        (nreverse (cons 'space acc)))))
 
 (defmacro do-scan (outer dir (type-var dir-var) &body body)
   (let ((gdir (gensym "DIR"))
@@ -56,29 +56,29 @@
         (gtype (gensym "TYPE")))
     `(let ((,gdir ,dir))
        (loop named ,outer
-             for ,gpoint = (point)
-             for ,gstr = (buffer-line-string 
-                          (window-buffer)
-                          (point-linum ,gpoint))
-             for ,glen = (length ,gstr)
-             for ,gline = (convert-line ,gstr (minusp ,gdir))
-             do
-             (dolist (,gtype (nthcdr (if (plusp ,gdir)
-                                       (point-column ,gpoint)
-                                       (- ,glen (point-column ,gpoint)))
-                                     ,gline))
-               (let ((,type-var ,gtype)
-                     (,dir-var ,gdir))
-                 ,@body)
-               (unless (next-char ,gdir)
-                 (return-from ,outer nil)))
-             finally
-             (return-from ,outer t)))))
+         for ,gpoint = (point)
+         for ,gstr = (buffer-line-string 
+                      (window-buffer)
+                      (point-linum ,gpoint))
+         for ,glen = (length ,gstr)
+         for ,gline = (convert-line ,gstr (minusp ,gdir))
+         do
+         (dolist (,gtype (nthcdr (if (plusp ,gdir)
+                                     (point-column ,gpoint)
+                                     (- ,glen (point-column ,gpoint)))
+                                 ,gline))
+           (let ((,type-var ,gtype)
+                 (,dir-var ,gdir))
+             ,@body)
+           (unless (next-char ,gdir)
+             (return-from ,outer nil)))
+         finally
+         (return-from ,outer t)))))
 
 (defun sexp-at-char (dir)
   (if (plusp dir)
-    (following-char)
-    (preceding-char)))
+      (following-char)
+      (preceding-char)))
 
 (defun scan-lists (point count depth)
   (point-set point)
@@ -124,13 +124,13 @@
                 `(defun ,name (point dir ,@args)
                    (point-set point)
                    (if (do-scan outer
-                                dir
-                                (x dir)
-                                ,@body)
-                     t
-                     (progn
-                       (point-set point)
-                       nil)))))
+                         dir
+                         (x dir)
+                         ,@body)
+                       t
+                       (progn
+                         (point-set point)
+                         nil)))))
   (def scan-string (char)
        (when (and (eq x 'string-quote)
                   (eql char (sexp-at-char dir)))
@@ -144,26 +144,26 @@
   (point-set point)
   (dotimes (_ (abs count) t)
     (unless 
-      (do-scan outer
-               (if (plusp count) 1 -1)
-               (x dir)
-               (ecase x
-                 (open-paren
-                  (return-from outer
-                               (scan-lists (point) dir 0)))
-                 (closed-paren
-                  (return-from outer nil))
-                 (string-quote
-                  (next-char dir)
-                  (return-from outer
-                               (and (scan-string (point) dir (sexp-at-char (- dir)))
-                                    (next-char dir))))
-                 (space
-                  nil)
-                 ((symbol)
-                  (return-from outer
-                               (scan-symbol (point) dir)))
-                 ((expr-prefix))))
+        (do-scan outer
+          (if (plusp count) 1 -1)
+          (x dir)
+          (ecase x
+            (open-paren
+             (return-from outer
+               (scan-lists (point) dir 0)))
+            (closed-paren
+             (return-from outer nil))
+            (string-quote
+             (next-char dir)
+             (return-from outer
+               (and (scan-string (point) dir (sexp-at-char (- dir)))
+                    (next-char dir))))
+            (space
+             nil)
+            ((symbol)
+             (return-from outer
+               (scan-symbol (point) dir)))
+            ((expr-prefix))))
       (return nil))))
       
 (define-key *global-keymap* (kbd "M-C-n") 'forward-list)
@@ -196,21 +196,21 @@
 (define-key *global-keymap* (kbd "M-C-a") 'beginning-of-defun)
 (define-command beginning-of-defun (&optional (n 1)) ("p")
   (if (minusp n)
-    (end-of-defun (- n))
-    (dotimes (_ n t)
-      (if (up-list 1)
-        (top-of-defun)
-        (unless (backward-sexp 1)
-          (return nil))))))
+      (end-of-defun (- n))
+      (dotimes (_ n t)
+        (if (up-list 1)
+            (top-of-defun)
+            (unless (backward-sexp 1)
+              (return nil))))))
 
 (define-key *global-keymap* (kbd "M-C-e") 'end-of-defun)
 (define-command end-of-defun (&optional (n 1)) ("p")
   (if (minusp n)
-    (beginning-of-defun (- n))
-    (dotimes (_ n t)
-      (top-of-defun)
-      (unless (forward-sexp 1)
-        (return nil)))))
+      (beginning-of-defun (- n))
+      (dotimes (_ n t)
+        (top-of-defun)
+        (unless (forward-sexp 1)
+          (return nil)))))
 
 (define-key *global-keymap* (kbd "M-C-@") 'mark-sexp)
 (define-command mark-sexp () ()

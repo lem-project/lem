@@ -28,8 +28,8 @@
 (defun shell-command (str &key output input)
   #+sbcl
   (sb-ext:run-program "/bin/sh" (list "-c" str)
-    :output output
-    :input input)
+                      :output output
+                      :input input)
   #+ecl
   (destructuring-bind (cmd &rest args)
       (split-string str #\space)

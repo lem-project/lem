@@ -45,18 +45,18 @@
                 ((linum2 col2) end))
     (let ((lines
            (buffer-take-lines (window-buffer)
-             linum1
-             (1+ (- linum2 linum1)))))
+                              linum1
+                              (1+ (- linum2 linum1)))))
       (if (= linum1 linum2)
-        (list (subseq (car lines) col1 col2))
-        (let ((acc
-               (list (subseq (car lines) col1))))
-          (do ((rest (cdr lines) (cdr rest)))
-              ((null (cdr rest))
-               (when rest
-                 (push (subseq (car rest) 0 col2) acc)))
-            (push (car rest) acc))
-          (nreverse acc))))))
+          (list (subseq (car lines) col1 col2))
+          (let ((acc
+                 (list (subseq (car lines) col1))))
+            (do ((rest (cdr lines) (cdr rest)))
+                ((null (cdr rest))
+                 (when rest
+                   (push (subseq (car rest) 0 col2) acc)))
+              (push (car rest) acc))
+            (nreverse acc))))))
 
 (defun region-string (begin end)
   (join (string #\newline) (region-lines begin end)))

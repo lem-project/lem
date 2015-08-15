@@ -20,11 +20,11 @@
   (make-instance 'buffer-output-stream
                  :buffer buffer
                  :linum (if point
-                          (point-linum point)
-                          1)
+                            (point-linum point)
+                            1)
                  :column (if point
-                           (point-column point)
-                           0)))
+                             (point-column point)
+                             0)))
 
 (defun buffer-output-stream-point (stream)
   (make-point (buffer-output-stream-linum stream)
@@ -50,10 +50,10 @@
                         (buffer-output-stream-column stream)
                         char)
     (if (char= char #\newline)
-      (progn
-        (incf (buffer-output-stream-linum stream))
-        (setf (buffer-output-stream-column stream) 0))
-      (incf (buffer-output-stream-column stream)))))
+        (progn
+          (incf (buffer-output-stream-linum stream))
+          (setf (buffer-output-stream-column stream) 0))
+        (incf (buffer-output-stream-column stream)))))
 
 (defmethod trivial-gray-streams:stream-write-sequence
     ((stream buffer-output-stream)
@@ -63,9 +63,10 @@
          (trivial-gray-streams:stream-write-byte stream c))
        (subseq sequence start end)))
 
-(defmethod trivial-gray-streams:stream-write-string ((stream buffer-output-stream)
-                                        (string string)
-                                        &optional (start 0) end)
+(defmethod trivial-gray-streams:stream-write-string
+    ((stream buffer-output-stream)
+     (string string)
+     &optional (start 0) end)
   (map 'string
        (lambda (c)
          (trivial-gray-streams:stream-write-char stream c))
@@ -93,8 +94,8 @@
   (let ((c (or (pop (minibuffer-input-stream-queue stream))
                (minibuf-read-char "Read char: "))))
     (if (char= c #\eot)
-      :eof
-      c)))
+        :eof
+        c)))
 
 (defmethod trivial-gray-streams:stream-unread-char ((stream minibuffer-input-stream) char)
   (push char (minibuffer-input-stream-queue stream))

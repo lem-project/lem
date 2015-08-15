@@ -109,7 +109,7 @@
                                :name name
                                :filename filename
                                :read-only-p read-only-p))
-	(line (make-line nil nil "")))
+        (line (make-line nil nil "")))
     (setf (buffer-head-line buffer) line)
     (setf (buffer-tail-line buffer) line)
     (setf (buffer-cache-line buffer) line)
@@ -125,8 +125,8 @@
 
 (defmethod print-object ((buffer buffer) stream)
   (format stream "#<BUFFER ~a ~a>"
-    (buffer-name buffer)
-    (buffer-filename buffer)))
+          (buffer-name buffer)
+          (buffer-filename buffer)))
 
 (defun push-undo-stack (buffer elt)
   (cond ((<= (+ *undo-limit* (floor (* *undo-limit* 0.3)))
@@ -171,7 +171,7 @@
      (throw 'abort 'readonly)))
 
 (defun buffer-line-set-property (line-set-fn buffer prop linum
-                                        &optional start-column end-column)
+                                 &optional start-column end-column)
   (let ((line (buffer-get-line buffer linum)))
     (funcall line-set-fn
              line
@@ -216,26 +216,26 @@
 
 (defun %buffer-get-line (buffer linum)
   (cond
-    ((= linum (buffer-cache-linum buffer))
-     (buffer-cache-line buffer))
-    ((> linum (buffer-cache-linum buffer))
-     (if (< (- linum (buffer-cache-linum buffer))
-	    (- (buffer-nlines buffer) linum))
-       (line-forward-n
-	(buffer-cache-line buffer)
-	(- linum (buffer-cache-linum buffer)))
-       (line-backward-n
-	(buffer-tail-line buffer)
-	(- (buffer-nlines buffer) linum))))
-    (t
-     (if (< (1- linum)
-	    (- (buffer-cache-linum buffer) linum))
-       (line-forward-n
-        (buffer-head-line buffer)
-	(1- linum))
-       (line-backward-n
-        (buffer-cache-line buffer)
-	(- (buffer-cache-linum buffer) linum))))))
+   ((= linum (buffer-cache-linum buffer))
+    (buffer-cache-line buffer))
+   ((> linum (buffer-cache-linum buffer))
+    (if (< (- linum (buffer-cache-linum buffer))
+           (- (buffer-nlines buffer) linum))
+        (line-forward-n
+         (buffer-cache-line buffer)
+         (- linum (buffer-cache-linum buffer)))
+        (line-backward-n
+         (buffer-tail-line buffer)
+         (- (buffer-nlines buffer) linum))))
+   (t
+    (if (< (1- linum)
+           (- (buffer-cache-linum buffer) linum))
+        (line-forward-n
+         (buffer-head-line buffer)
+         (1- linum))
+        (line-backward-n
+         (buffer-cache-line buffer)
+         (- (buffer-cache-linum buffer) linum))))))
 
 (defun buffer-get-line (buffer linum)
   (let ((line (%buffer-get-line buffer linum)))
@@ -265,17 +265,17 @@
 (defun map-buffer-lines (fn buffer &optional start end)
   (let ((head-line
          (if start
-           (buffer-get-line buffer start)
-           (buffer-head-line buffer))))
+             (buffer-get-line buffer start)
+             (buffer-head-line buffer))))
     (unless end
       (setq end (buffer-nlines buffer)))
     (do ((line head-line (line-next line))
          (i (or start 1) (1+ i)))
         ((or (null line) (< end i)))
       (funcall fn
-        (line-str line)
-        (if (line-next line) nil t)
-        i))))
+               (line-str line)
+               (if (line-next line) nil t)
+               i))))
 
 (defun buffer-take-lines (buffer &optional linum len)
   (unless linum
@@ -296,7 +296,7 @@
   (buffer-read-only-guard buffer)
   (setf (buffer-modified-p buffer) t)
   (let* ((line (buffer-tail-line buffer))
-	 (newline (make-line line (line-next line) str)))
+         (newline (make-line line (line-next line) str)))
     (cond ((and (= 1 (buffer-nlines buffer))
                 (zerop (length (line-str (buffer-head-line buffer)))))
            (setf (buffer-head-line buffer) newline)
@@ -380,52 +380,52 @@
         (result t)
         (old-modified-p (buffer-modified-p buffer)))
     (loop while (plusp n) do
-          (cond
-           ((<= n (- (length (line-str line)) col))
-            (when (and (= linum (buffer-mark-linum buffer))
-                       (< col (buffer-mark-col buffer)))
-              (setf (buffer-mark-col buffer)
-                    (if (> col (- (buffer-mark-col buffer) n))
-                      col
-                      (- (buffer-mark-col buffer) n))))
-            (setf (buffer-modified-p buffer) t)
-            (setf (car del-lines)
-                  (concatenate 'string
-                               (car del-lines)
-                               (subseq (line-str line) col (+ col n))))
-            (line-set-str
-             line
-             (concatenate 'string
-                          (subseq (line-str line) 0 col)
-                          (subseq (line-str line) (+ col n))))
-            (setq n 0))
-           (t
-            (cond
-             ((and (= linum (buffer-mark-linum buffer))
+      (cond
+       ((<= n (- (length (line-str line)) col))
+        (when (and (= linum (buffer-mark-linum buffer))
                    (< col (buffer-mark-col buffer)))
-              (setf (buffer-mark-col buffer) col))
-             ((< linum (buffer-mark-linum buffer))
-              (decf (buffer-mark-linum buffer))))
-            (setf (car del-lines)
-                  (concatenate 'string
-                               (car del-lines)
-                               (subseq (line-str line) col)))
-            (push "" del-lines)
-            (unless (line-next line)
-              (setq result nil)
-              (return nil))
-            (decf n (1+ (- (length (line-str line)) col)))
-            (decf (buffer-nlines buffer))
-            (setf (buffer-modified-p buffer) t)
-            (line-set-str
-             line
-             (concatenate 'string
-                          (subseq (line-str line) 0 col)
-                          (line-str (line-next line))))
-            (when (eq (line-next line)
-                      (buffer-tail-line buffer))
-              (setf (buffer-tail-line buffer) line))
-            (line-free (line-next line)))))
+          (setf (buffer-mark-col buffer)
+                (if (> col (- (buffer-mark-col buffer) n))
+                    col
+                    (- (buffer-mark-col buffer) n))))
+        (setf (buffer-modified-p buffer) t)
+        (setf (car del-lines)
+              (concatenate 'string
+                           (car del-lines)
+                           (subseq (line-str line) col (+ col n))))
+        (line-set-str
+         line
+         (concatenate 'string
+                      (subseq (line-str line) 0 col)
+                      (subseq (line-str line) (+ col n))))
+        (setq n 0))
+       (t
+        (cond
+         ((and (= linum (buffer-mark-linum buffer))
+               (< col (buffer-mark-col buffer)))
+          (setf (buffer-mark-col buffer) col))
+         ((< linum (buffer-mark-linum buffer))
+          (decf (buffer-mark-linum buffer))))
+        (setf (car del-lines)
+              (concatenate 'string
+                           (car del-lines)
+                           (subseq (line-str line) col)))
+        (push "" del-lines)
+        (unless (line-next line)
+          (setq result nil)
+          (return nil))
+        (decf n (1+ (- (length (line-str line)) col)))
+        (decf (buffer-nlines buffer))
+        (setf (buffer-modified-p buffer) t)
+        (line-set-str
+         line
+         (concatenate 'string
+                      (subseq (line-str line) 0 col)
+                      (line-str (line-next line))))
+        (when (eq (line-next line)
+                  (buffer-tail-line buffer))
+          (setf (buffer-tail-line buffer) line))
+        (line-free (line-next line)))))
     (setq del-lines (nreverse del-lines))
     (with-push-undo (buffer)
       (let ((linum linum)
@@ -457,16 +457,16 @@
 
 (defun buffer-check-marked (buffer)
   (if (buffer-mark-linum buffer)
-    t
-    (progn
-     (minibuf-print "Not mark in this buffer")
-     nil)))
+      t
+      (progn
+        (minibuf-print "Not mark in this buffer")
+        nil)))
 
 (defun buffer-directory ()
   (if (buffer-filename)
-    (file-name-directory
-     (buffer-filename))
-    (file-name-as-directory (pwd))))
+      (file-name-directory
+       (buffer-filename))
+      (file-name-as-directory (pwd))))
 
 (defun buffer-undo-1 (buffer)
   (let ((elt (pop (buffer-undo-stack buffer))))

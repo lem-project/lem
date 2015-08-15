@@ -87,19 +87,19 @@
     (setf (get (car elt) 'lisp-indent) (cdr elt))))
 
 (defvar *lisp-mode-keymap*
-        (make-keymap "lisp" 'undefined-key *global-keymap*))
+  (make-keymap "lisp" 'undefined-key *global-keymap*))
 
 (defvar *lisp-syntax-table*
-        (make-syntax-table
-                 :space-chars '(#\space #\tab #\newline)
-                 :symbol-chars '(#\$ #\& #\* #\+ #\- #\_ #\< #\> #\= #\/ #\:)
-                 :paren-alist '((#\( . #\))
-                                (#\[ . #\])
-                                (#\{ . #\}))
-                 :string-quote-chars '(#\")
-                 :escape-chars '(#\\)
-                 :expr-prefix-chars '(#\' #\, #\@ #\# #\`)
-                 :line-comment-char #\;))
+  (make-syntax-table
+   :space-chars '(#\space #\tab #\newline)
+   :symbol-chars '(#\$ #\& #\* #\+ #\- #\_ #\< #\> #\= #\/ #\:)
+   :paren-alist '((#\( . #\))
+                  (#\[ . #\])
+                  (#\{ . #\}))
+   :string-quote-chars '(#\")
+   :escape-chars '(#\\)
+   :expr-prefix-chars '(#\' #\, #\@ #\# #\`)
+   :line-comment-char #\;))
 
 (define-major-mode lisp-mode
   :name "lisp-mode"
@@ -108,18 +108,18 @@
 
 (defun lisp-looking-at-word ()
   (save-excursion
-    (skip-chars-forward
-     (lambda (c)
-       (or (eq c #\space)
-           (eq c #\tab))))
-    (let ((begin (point)))
-      (forward-sexp)
-      (list (region-string begin (point))
-                   (when (= (window-cur-linum)
-                            (progn
-                              (skip-chars-forward 'syntax-space-char-p)
-                              (window-cur-linum)))
-                     (window-cur-col))))))
+   (skip-chars-forward
+    (lambda (c)
+      (or (eq c #\space)
+          (eq c #\tab))))
+   (let ((begin (point)))
+     (forward-sexp)
+     (list (region-string begin (point))
+           (when (= (window-cur-linum)
+                    (progn
+                      (skip-chars-forward 'syntax-space-char-p)
+                      (window-cur-linum)))
+             (window-cur-col))))))
 
 (defun lisp-count-sexps (goal)
   (do ((count 0 (1+ count)))
@@ -161,8 +161,8 @@
                 (insert-char #\space (+ start-col 2)))
                ((null num)
                 (if arg-col
-                  (insert-char #\space arg-col)
-                  (insert-char #\space (+ start-col 1))))
+                    (insert-char #\space arg-col)
+                    (insert-char #\space (+ start-col 1))))
                ((< (1- count) num)
                 (insert-char #\space (+ start-col 4)))
                (t
@@ -363,8 +363,8 @@
           (do-symbols (sym pkg)
             (when (eql 0 (search str (symbol-name sym)))
               (push (if upcase-p 
-                      (symbol-name sym)
-                      (string-downcase (symbol-name sym)))
+                        (symbol-name sym)
+                        (string-downcase (symbol-name sym)))
                     symbols))))
         (let ((comp-str
                (popup-completion (lambda (str)

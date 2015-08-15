@@ -18,21 +18,21 @@
 
 (defun kill-append (lines before-p)
   (setf (car *kill-ring*)
-    (if before-p
-      (append
-       (butlast lines)
-       (list
-        (concatenate 'string
-          (car (last lines))
-          (first (car *kill-ring*))))
-       (rest (car *kill-ring*)))
-      (append
-       (butlast (car *kill-ring*))
-       (list
-        (concatenate 'string
-          (car (last (car *kill-ring*)))
-          (first lines)))
-       (rest lines)))))
+        (if before-p
+            (append
+             (butlast lines)
+             (list
+              (concatenate 'string
+                           (car (last lines))
+                           (first (car *kill-ring*))))
+             (rest (car *kill-ring*)))
+            (append
+             (butlast (car *kill-ring*))
+             (list
+              (concatenate 'string
+                           (car (last (car *kill-ring*)))
+                           (first lines)))
+             (rest lines)))))
 
 (defun kill-push (lines)
   (cond
@@ -40,7 +40,7 @@
     (push lines *kill-ring*)
     (when (nthcdr *kill-ring-max* *kill-ring*)
       (setq *kill-ring*
-        (subseq *kill-ring* 0 *kill-ring-max*)))
+            (subseq *kill-ring* 0 *kill-ring-max*)))
     (setq *kill-ring-yank-ptr* *kill-ring*)
     (setq *kill-new-flag* nil))
    (t

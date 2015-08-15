@@ -33,7 +33,7 @@
   `(let ,(mapcan (lambda (b)
                    `((,(caar b) (point-linum ,(cadr b)))
                      (,(cadar b) (point-column ,(cadr b)))))
-           binds)
+                 binds)
      ,@body))
 
 (defun point ()

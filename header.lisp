@@ -42,7 +42,7 @@
                      `((defun ,name (&optional (,garg ,default-arg-expr))
                          (slot-value ,garg ',slot))
                        (defun (setf ,name)
-                         (,gval &optional (,garg ,default-arg-expr))
+                           (,gval &optional (,garg ,default-arg-expr))
                          (setf (slot-value ,garg ',slot) ,gval)
                          ,gval))))
                  slots))))

@@ -105,7 +105,7 @@
         (do ()
             ((or (not *macro-running-p*)
                  (>= length (getch-queue-length))))
-            (main-step))))))
+          (main-step))))))
 
 (define-command apply-macro-to-region-lines () ()
   (apply-region-lines (region-beginning)
@@ -125,26 +125,26 @@
       (cond
        ((char= c key::ctrl-u)
         (setq numlist
-          (mapcar 'digit-char-p
-            (coerce
-             (format nil "~a"
-              (* 4
-                (if numlist
-                  (parse-integer
-                   (format nil "~{~a~}" numlist))
-                  4)))
-             'list))))
+              (mapcar 'digit-char-p
+                      (coerce
+                       (format nil "~a"
+                               (* 4
+                                  (if numlist
+                                      (parse-integer
+                                       (format nil "~{~a~}" numlist))
+                                      4)))
+                       'list))))
        ((and (char= c #\-) (null numlist))
         (setq numlist (append numlist (list #\-))))
        ((setq n (digit-char-p c))
         (setq numlist
-          (append numlist (list n))))
+              (append numlist (list n))))
        (t
         (ungetch c)
         (setq *universal-argument*
-          (if numlist
-            (parse-integer (format nil "~{~a~}" numlist))
-            4))
+              (if numlist
+                  (parse-integer (format nil "~{~a~}" numlist))
+                  4))
         (return (main-step)))))))
 
 (defun input-key ()

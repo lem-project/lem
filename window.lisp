@@ -94,12 +94,13 @@
     "Bot")
    (t
     (format nil "~2d%"
-      (floor
-       (* 100
-          (float (/ (window-vtop-linum window)
-                    (buffer-nlines (window-buffer window))))))))))
+            (floor
+             (* 100
+                (float (/ (window-vtop-linum window)
+                          (buffer-nlines (window-buffer window))))))))))
 
-(defun modeline-string (bg-char ncols
+(defun modeline-string (bg-char
+                        ncols
                         ronly-p
                         modif-p
                         program-name
@@ -155,21 +156,23 @@
      (window-vtop-linum window)))
 
 (defun window-print-line (window y str props offset-column)
-  (let ((x 0))
+  (let ((x 0)
+        (win (window-win window)))
     (loop for (pos . prop) in props do
       (when (eq prop :highlight)
-        (cl-charms/low-level:mvwinsstr (window-win window) y x (subseq str x pos))
-        (cl-charms/low-level:wattron (window-win window) cl-charms/low-level:a_reverse)
-        (cl-charms/low-level:mvwinsch (window-win window) y pos (char-code (schar str pos)))
-        (cl-charms/low-level:wattroff (window-win window) cl-charms/low-level:a_reverse)
+        (cl-charms/low-level:mvwinsstr win y x (subseq str x pos))
+        (cl-charms/low-level:wattron win cl-charms/low-level:a_reverse)
+        (cl-charms/low-level:mvwinsch win y pos (char-code (schar str pos)))
+        (cl-charms/low-level:wattroff win cl-charms/low-level:a_reverse)
         (setq x (1+ pos))))
     (let ((rest-str (subseq str x)))
-      (cl-charms/low-level:mvwinsstr (window-win window) y x
-                                     (concatenate 'string
-                                                  rest-str
-                                                  (make-string (- (window-ncols window)
-                                                                  (str-width rest-str))
-                                                               :initial-element #\space))))))
+      (cl-charms/low-level:mvwinsstr
+       win y x
+       (concatenate 'string
+                    rest-str
+                    (make-string (- (window-ncols window)
+                                    (str-width rest-str))
+                                 :initial-element #\space))))))
 
 (defun window-refresh-line (window y str props)
   (let ((cury (window-cursor-y window))
@@ -239,22 +242,22 @@
 
 (defun window-offset-view (window)
   (let ((vtop-linum (window-vtop-linum window))
-	(nlines (window-nlines window))
-	(linum (window-cur-linum window)))
+        (nlines (window-nlines window))
+        (linum (window-cur-linum window)))
     (cond
-      ((< #1=(+ vtop-linum nlines -2) linum)
-	(- linum #1#))
-      ((> vtop-linum linum)
-	(- linum vtop-linum))
-      (t
-	0))))
+     ((< #1=(+ vtop-linum nlines -2) linum)
+      (- linum #1#))
+     ((> vtop-linum linum)
+      (- linum vtop-linum))
+     (t
+      0))))
 
 (defun window-adjust-view (window recenter)
   (let ((offset (window-offset-view window)))
     (unless (zerop offset)
       (if recenter
-        (window-recenter window)
-	(window-scroll window offset)))))
+          (window-recenter window)
+          (window-scroll window offset)))))
 
 (defun window-update (window)
   (cl-charms/low-level:werase (window-win window))
@@ -277,8 +280,8 @@
                    nlines
                    (window-ncols)
                    (+ (window-y)
-                     nlines
-                     rem)
+                      nlines
+                      rem)
                    (window-x))))
       (decf (window-nlines) nlines)
       (cl-charms/low-level:wresize
@@ -294,16 +297,16 @@
       (setf (window-max-col newwin)
             (window-max-col))
       (setq *window-list*
-        (sort (copy-list (append *window-list* (list newwin)))
-          (lambda (b1 b2)
-            (< (window-y b1) (window-y b2)))))))
+            (sort (copy-list (append *window-list* (list newwin)))
+                  (lambda (b1 b2)
+                    (< (window-y b1) (window-y b2)))))))
   t)
 
 (defun get-next-window (window)
   (let ((result (member window *window-list*)))
     (if (cdr result)
-      (cadr result)
-      (car *window-list*))))
+        (cadr result)
+        (car *window-list*))))
 
 (defun upper-window (window)
   (unless (one-window-p)
@@ -319,7 +322,7 @@
 (define-command other-window (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (setq *current-window*
-      (get-next-window *current-window*))))
+          (get-next-window *current-window*))))
 
 (defun window-set-pos (window y x)
   (cl-charms/low-level:mvwin (window-win window) y x)
@@ -333,13 +336,13 @@
 
 (defun window-move (window dy dx)
   (window-set-pos window
-    (+ (window-y window) dy)
-    (+ (window-x window) dx)))
+                  (+ (window-y window) dy)
+                  (+ (window-x window) dx)))
 
 (defun window-resize (window dl dc)
   (window-set-size window
-    (+ (window-nlines window) dl)
-    (+ (window-ncols window) dc)))
+                   (+ (window-nlines window) dl)
+                   (+ (window-ncols window) dc)))
 
 (define-key *global-keymap* (kbd "C-x1") 'delete-other-windows)
 (define-command delete-other-windows () ()
@@ -349,8 +352,8 @@
   (setq *window-list* (list *current-window*))
   (window-set-pos *current-window* 0 0)
   (window-set-size *current-window*
-    (1- cl-charms/low-level:*lines*)
-    cl-charms/low-level:*cols*)
+                   (1- cl-charms/low-level:*lines*)
+                   cl-charms/low-level:*cols*)
   t)
 
 (define-key *global-keymap* (kbd "C-x0") 'delete-current-window)
@@ -372,25 +375,25 @@
           (setq upwin (cadr *window-list*))
           (window-set-pos upwin 0 (window-x upwin)))
         (window-set-size upwin
-          (+ (window-nlines upwin)
-            (window-nlines window))
-          (window-ncols upwin))))
+                         (+ (window-nlines upwin)
+                            (window-nlines window))
+                         (window-ncols upwin))))
     (setq *window-list* (delete window *window-list*))
     t)))
 
 (defun adjust-screen-size ()
   (dolist (win *window-list*)
     (window-set-size win
-      (window-nlines win)
-      cl-charms/low-level:*cols*))
+                     (window-nlines win)
+                     cl-charms/low-level:*cols*))
   (dolist (win *window-list*)
     (when (<= cl-charms/low-level:*lines* (+ 2 (window-y win)))
       (delete-window win)))
   (let ((win (car (last *window-list*))))
     (window-set-size win
-      (+ (window-nlines win)
-        (- cl-charms/low-level:*lines* *current-lines*))
-      (window-ncols win)))
+                     (+ (window-nlines win)
+                        (- cl-charms/low-level:*lines* *current-lines*))
+                     (window-ncols win)))
   (setq *current-cols* cl-charms/low-level:*cols*)
   (setq *current-lines* cl-charms/low-level:*lines*)
   (window-update-all))
@@ -427,29 +430,29 @@
 (define-key *global-keymap* (kbd "C-x^") 'grow-window)
 (define-command grow-window (n) ("p")
   (if (one-window-p)
-    (progn
-     (minibuf-print "Only one window")
-     nil)
-    (let* ((lowerwin (lower-window *current-window*))
-           (upperwin (if lowerwin nil (upper-window *current-window*))))
-      (if lowerwin
-        (cond
-         ((>= 1 (- (window-nlines lowerwin) n))
-          (minibuf-print "Impossible change")
-          nil)
-         (t
-          (window-resize *current-window* n 0)
-          (window-resize lowerwin (- n) 0)
-          (window-move lowerwin n 0)
-          t))
-        (cond
-         ((>= 1 (- (window-nlines upperwin) n))
-          (minibuf-print "Impossible change")
-          nil)
-         (t
-          (window-resize *current-window* n 0)
-          (window-move *current-window* (- n) 0)
-          (window-resize upperwin (- n) 0)))))))
+      (progn
+        (minibuf-print "Only one window")
+        nil)
+      (let* ((lowerwin (lower-window *current-window*))
+             (upperwin (if lowerwin nil (upper-window *current-window*))))
+        (if lowerwin
+            (cond
+             ((>= 1 (- (window-nlines lowerwin) n))
+              (minibuf-print "Impossible change")
+              nil)
+             (t
+              (window-resize *current-window* n 0)
+              (window-resize lowerwin (- n) 0)
+              (window-move lowerwin n 0)
+              t))
+            (cond
+             ((>= 1 (- (window-nlines upperwin) n))
+              (minibuf-print "Impossible change")
+              nil)
+             (t
+              (window-resize *current-window* n 0)
+              (window-move *current-window* (- n) 0)
+              (window-resize upperwin (- n) 0)))))))
 
 (define-key *global-keymap* (kbd "C-xC-z") 'shrink-window)
 (define-command shrink-window (n) ("p")
@@ -476,18 +479,18 @@
 (define-key *global-keymap* (kbd "C-xC-n") 'scroll-down)
 (define-command scroll-down (n) ("p")
   (if (minusp n)
-    (scroll-up (- n))
-    (dotimes (_ n t)
-      (when (= (window-cursor-y *current-window*) 0)
-        (next-line n))
-      (window-scroll *current-window* 1))))
+      (scroll-up (- n))
+      (dotimes (_ n t)
+        (when (= (window-cursor-y *current-window*) 0)
+          (next-line n))
+        (window-scroll *current-window* 1))))
 
 (define-key *global-keymap* (kbd "C-xC-p") 'scroll-up)
 (define-command scroll-up (n) ("p")
   (if (minusp n)
-    (scroll-down (- n))
-    (dotimes (_ n t)
-      (when (= (window-cursor-y *current-window*)
-               (- (window-nlines) 2))
-        (prev-line 1))
-      (window-scroll *current-window* (- 1)))))
+      (scroll-down (- n))
+      (dotimes (_ n t)
+        (when (= (window-cursor-y *current-window*)
+                 (- (window-nlines) 2))
+          (prev-line 1))
+        (window-scroll *current-window* (- 1)))))

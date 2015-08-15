@@ -27,36 +27,37 @@
 (defun file-name-nondirectory (filename)
   (let ((pos (position #\/ filename :from-end t)))
     (if pos
-      (subseq filename (1+ pos))
-      filename)))
+        (subseq filename (1+ pos))
+        filename)))
 
 (defun file-name-as-directory (filename)
   (if (char/= #\/ (aref filename (1- (length filename))))
-    (concatenate 'string filename "/")
-    filename))
+      (concatenate 'string filename "/")
+      filename))
 
 (defun file-directory-p (filename)
   (string= "" (file-name-nondirectory filename)))
 
 (defun file-exist-p (file-name)
   (if (probe-file file-name)
-    t
-    nil))
+      t
+      nil))
 
 (defun temp-file-name-1 ()
   (concatenate 'string
-    "/tmp/"
-    *program-name*
-    "-"
-    (coerce (loop repeat 8
-              collect (code-char
-                       (random-range
-                        (char-code #\a)
-                        (char-code #\z))))
-      'string)))
+               "/tmp/"
+               *program-name*
+               "-"
+               (coerce (loop repeat 8
+                         collect (code-char
+                                  (random-range
+                                   (char-code #\a)
+                                   (char-code #\z))))
+                       'string)))
 
 (defun temp-file-name ()
-  (loop for name = (temp-file-name-1)
+  (loop
+    for name = (temp-file-name-1)
     while (file-exist-p name)
     finally (return name)))
 
@@ -114,10 +115,10 @@
             (do () (nil)
               (multiple-value-bind (str eof-p) (read-line in nil)
                 (if (not eof-p)
-                  (buffer-append-line buffer str)
-                  (progn
-                   (buffer-append-line buffer (or str ""))
-                   (return)))))))
+                    (buffer-append-line buffer str)
+                    (progn
+                      (buffer-append-line buffer (or str ""))
+                      (return)))))))
         (set-buffer buffer)
         (unmark-buffer)
         t))))
@@ -147,15 +148,15 @@
 
 (defun write-to-file (buffer filename)
   (with-open-file (out filename
-                    :direction :output
-                    :if-exists :supersede
-                    :if-does-not-exist :create)
+                       :direction :output
+                       :if-exists :supersede
+                       :if-does-not-exist :create)
     (map-buffer-lines (lambda (line eof-p linum)
                         (declare (ignore linum))
                         (princ line out)
                         (unless eof-p
                           (terpri out)))
-      buffer)))
+                      buffer)))
 
 (defun save-file-internal (buffer)
   (run-hooks 'before-save-hook)

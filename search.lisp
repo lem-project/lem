@@ -149,9 +149,9 @@
 
 (defun isearch-add-char (c)
   (setq *isearch-string*
-    (concatenate 'string
-      *isearch-string*
-      (string c)))
+        (concatenate 'string
+                     *isearch-string*
+                     (string c)))
   (isearch-update-display)
   (let ((point (point)))
     (unless (funcall *isearch-search-function* *isearch-string*)
@@ -160,25 +160,25 @@
 (defun isearch-undef-hook (key)
   (let ((c (insertion-key-p key)))
     (if c
-      (isearch-add-char c)
-      (progn
-       (mapc 'ungetch key)
-       (isearch-end)))))
+        (isearch-add-char c)
+        (progn
+          (mapc 'ungetch key)
+          (isearch-end)))))
 
 (defun search-step (str first-search search step goto-matched-pos endp)
   (let ((point (point))
         (result
          (let ((res (funcall first-search)))
            (if res
-             (progn
-              (funcall goto-matched-pos res)
-              t)
-             (do () ((funcall endp))
-               (funcall step)
-               (let ((res (funcall search)))
-                 (when res
-                   (funcall goto-matched-pos res)
-                   (return t))))))))
+               (progn
+                 (funcall goto-matched-pos res)
+                 t)
+               (do () ((funcall endp))
+                 (funcall step)
+                 (let ((res (funcall search)))
+                   (when res
+                     (funcall goto-matched-pos res)
+                     (return t))))))))
     (unless result
       (point-set point))
     result))
@@ -187,46 +187,46 @@
   (multiple-value-bind (lines length)
       (split-string str #\newline)
     (flet ((take-string ()
-             (join (string #\newline)
-               (buffer-take-lines (window-buffer)
-                 (window-cur-linum)
-                 length))))
+                        (join (string #\newline)
+                              (buffer-take-lines (window-buffer)
+                                                 (window-cur-linum)
+                                                 length))))
       (search-step str
-        (lambda ()
-          (search str (take-string)
-            :start2 (window-cur-col)))
-        (lambda ()
-          (search str (take-string)))
-        (lambda () (next-line 1))
-        (lambda (i)
-          (beginning-of-line)
-          (next-char (+ i (length str))))
-        #'eobp))))
+                   (lambda ()
+                     (search str (take-string)
+                             :start2 (window-cur-col)))
+                   (lambda ()
+                     (search str (take-string)))
+                   (lambda () (next-line 1))
+                   (lambda (i)
+                     (beginning-of-line)
+                     (next-char (+ i (length str))))
+                   #'eobp))))
 
 (defun search-backward-aux (str)
   (multiple-value-bind (lines length)
       (split-string str #\newline)
     (flet ((%search (&rest args)
-             (let ((linum (- (window-cur-linum) (1- length))))
-               (when (< 0 linum)
-                 (apply 'search str
-                   (join (string #\newline)
-                     (buffer-take-lines (window-buffer)
-                       linum
-                       length))
-                   :from-end t
-                   args)))))
+                    (let ((linum (- (window-cur-linum) (1- length))))
+                      (when (< 0 linum)
+                        (apply 'search str
+                               (join (string #\newline)
+                                     (buffer-take-lines (window-buffer)
+                                                        linum
+                                                        length))
+                               :from-end t
+                               args)))))
       (search-step str
-        (lambda ()
-          (%search :end2 (window-cur-col)))
-        (lambda ()
-          (%search))
-        (lambda () (prev-line 1))
-        (lambda (i)
-          (prev-line (1- length))
-          (beginning-of-line)
-          (next-char i))
-        #'bobp))))
+                   (lambda ()
+                     (%search :end2 (window-cur-col)))
+                   (lambda ()
+                     (%search))
+                   (lambda () (prev-line 1))
+                   (lambda (i)
+                     (prev-line (1- length))
+                     (beginning-of-line)
+                     (next-char i))
+                   #'bobp))))
 
 (define-key *global-keymap* (kbd "M-C-r") 'query-replace)
 (define-command query-replace (before after) ("sBefore: " "sAfter: ")
@@ -243,7 +243,7 @@
           (cond
            ((or pass-through (char= c #\y))
             (buffer-delete-char (window-buffer)
-              (window-cur-linum) (window-cur-col) n)
+                                (window-cur-linum) (window-cur-col) n)
             (insert-string after)
             (return))
            ((char= c #\n)

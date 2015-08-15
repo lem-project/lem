@@ -11,11 +11,12 @@
 (defvar *comp-popup-window* nil)
 
 (defun completion (name list)
-  (let ((strings (remove-if-not (lambda (elt)
-                                  (and (<= (length name) (length elt))
-                                    (string= name elt
-                                      :end2 (length name))))
-                   list)))
+  (let ((strings
+         (remove-if-not (lambda (elt)
+                          (and (<= (length name) (length elt))
+                               (string= name elt
+                                        :end2 (length name))))
+                        list)))
     (cond
      ((null strings) nil)
      ((null (cdr strings)) (car strings))
@@ -51,9 +52,9 @@
                  (string= (buffer-name (window-buffer win))
                           *comp-buffer-name*))
         (if *comp-popup-window*
-          (delete-window win)
-          (let ((*current-window* *completion-window*))
-            (set-buffer (car *buffer-list*))))
+            (delete-window win)
+            (let ((*current-window* *completion-window*))
+              (set-buffer (car *buffer-list*))))
         (return)))))
 
 (defun preceding-word ()
@@ -111,19 +112,19 @@
     (let ((first nil))
       (when-interrupted-flag :abbrev (setq first t))
       (if first
-        (let ((src-word (preceding-word)))
-          (setq *abbrev-save-word* src-word)
-          (setq save-words
-                (setq *abbrev-words*
-                      (scan-all-buffer-words src-word)))
-          (unless save-words
-            (setq *abbrev-words* (list src-word))
-            (setq save-words *abbrev-words*))
-          (backward-delete-char (length src-word) t)
-          (insert-string (pop save-words)))
-        (let ((src-word (preceding-word)))
-          (unless save-words
-            (setq save-words *abbrev-words*))
-          (let ((dst-word (pop save-words)))
+          (let ((src-word (preceding-word)))
+            (setq *abbrev-save-word* src-word)
+            (setq save-words
+                  (setq *abbrev-words*
+                        (scan-all-buffer-words src-word)))
+            (unless save-words
+              (setq *abbrev-words* (list src-word))
+              (setq save-words *abbrev-words*))
             (backward-delete-char (length src-word) t)
-            (insert-string dst-word)))))))
+            (insert-string (pop save-words)))
+          (let ((src-word (preceding-word)))
+            (unless save-words
+              (setq save-words *abbrev-words*))
+            (let ((dst-word (pop save-words)))
+              (backward-delete-char (length src-word) t)
+              (insert-string dst-word)))))))

@@ -31,17 +31,17 @@
 
 (defun toggle-minor-mode (minor-mode)
   (if (member minor-mode (buffer-minor-modes))
-    (setf (buffer-minor-modes)
-          (delete minor-mode (buffer-minor-modes)))
-    (push minor-mode (buffer-minor-modes))))
+      (setf (buffer-minor-modes)
+            (delete minor-mode (buffer-minor-modes)))
+      (push minor-mode (buffer-minor-modes))))
 
 (defmacro define-major-mode (major-mode &key name keymap syntax-table)
   `(progn
-    (setf (get ',major-mode 'mode-name) ,name)
-    (setf (get ',major-mode 'keymap) ,keymap)
-    (setf (get ',major-mode 'syntax-table) ,syntax-table)
-    (define-command ,major-mode () ()
-      (set-major-mode ',major-mode))))
+     (setf (get ',major-mode 'mode-name) ,name)
+     (setf (get ',major-mode 'keymap) ,keymap)
+     (setf (get ',major-mode 'syntax-table) ,syntax-table)
+     (define-command ,major-mode () ()
+       (set-major-mode ',major-mode))))
 
 (defmacro define-minor-mode (minor-mode &key name keymap)
   `(progn

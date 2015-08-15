@@ -160,11 +160,13 @@
         (win (window-win window)))
     (loop for (pos . prop) in props do
       (when (eq prop :highlight)
-        (cl-charms/low-level:mvwinsstr win y x (subseq str x pos))
-        (cl-charms/low-level:wattron win cl-charms/low-level:a_reverse)
-        (cl-charms/low-level:mvwinsch win y pos (char-code (schar str pos)))
-        (cl-charms/low-level:wattroff win cl-charms/low-level:a_reverse)
-        (setq x (1+ pos))))
+        (decf pos offset-column)
+        (when (<= 0 pos (- (window-ncols window) 2))
+          (cl-charms/low-level:mvwinsstr win y x (subseq str x pos))
+          (cl-charms/low-level:wattron win cl-charms/low-level:a_reverse)
+          (cl-charms/low-level:mvwinsch win y pos (char-code (schar str pos)))
+          (cl-charms/low-level:wattroff win cl-charms/low-level:a_reverse)
+          (setq x (1+ pos)))))
     (let ((rest-str (subseq str x)))
       (cl-charms/low-level:mvwinsstr
        win y x

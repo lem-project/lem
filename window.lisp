@@ -164,14 +164,14 @@
       (when (eq prop :highlight)
         (decf pos offset-column)
         (when (<= 0 pos (- (window-ncols window) 2))
-          (cl-charms/low-level:mvwinsstr win y x (subseq str x pos))
+          (cl-charms/low-level:mvwaddstr win y (str-width str x) (subseq str x pos))
           (cl-charms/low-level:wattron win cl-charms/low-level:a_reverse)
-          (cl-charms/low-level:mvwinsch win y pos (char-code (schar str pos)))
+          (cl-charms/low-level:mvwaddstr win y (str-width str pos) (string (schar str pos)))
           (cl-charms/low-level:wattroff win cl-charms/low-level:a_reverse)
           (setq x (1+ pos)))))
-    (let ((rest-str (subseq str x)))
+    (let ((rest-str (if (zerop x) str (subseq str x))))
       (cl-charms/low-level:mvwaddstr
-       win y x
+       win y (str-width str x)
        (concatenate 'string
                     rest-str
                     (make-string (- (window-ncols window)

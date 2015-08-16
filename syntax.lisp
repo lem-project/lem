@@ -15,7 +15,8 @@
   line-comment-char)
 
 (defun syntax-word-char-p (c)
-  (alphanumericp c))
+  (and (characterp c)
+       (alphanumericp c)))
 
 (defun syntax-space-char-p (c)
   (member c (syntax-table-space-chars (current-syntax))))
@@ -39,6 +40,13 @@
 (defun syntax-parallel-paren (c)
   (or (syntax-pair-open-paren c)
       (syntax-pair-closed-paren c)))
+
+(defun syntax-equal-paren-p (x y)
+  (flet ((f (c)
+            (if (syntax-open-paren-char-p c)
+                c
+                (syntax-pair-open-paren c))))
+    (eql (f x) (f y))))
 
 (defun syntax-string-quote-char-p (c)
   (member c (syntax-table-string-quote-chars (current-syntax))))

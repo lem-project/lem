@@ -12,196 +12,256 @@
           kill-sexp
           transpose-sexps))
 
-(defun convert-line (str reverse-p)
-  (let ((acc))
-    (do ((i 0 (1+ i)))
-        ((<= (length str) i))
-      (let ((c (aref str i)))
-        (cond ((syntax-space-char-p c)
-               (push 'space acc))
-              ((syntax-symbol-char-p c)
-               (push 'symbol acc))
-              ((syntax-open-paren-char-p c)
-               (push (if reverse-p 
-                         'closed-paren
-                         'open-paren)
-                     acc))
-              ((syntax-closed-paren-char-p c)
-               (push (if reverse-p
-                         'open-paren
-                         'closed-paren)
-                     acc))
-              ((syntax-string-quote-char-p c)
-               (push 'string-quote acc))
-              ((syntax-escape-char-p c)
-               (push 'symbol acc)
-               (push 'symbol acc)
-               (incf i))
-              ((syntax-expr-prefix-char-p c)
-               (push 'expr-prefix acc))
-              ((syntax-line-comment-char-p c)
-               (push 'space acc))
-              (t
-               (push 'symbol acc)))))
-    (if reverse-p
-        (nconc acc (list 'space))
-        (nreverse (cons 'space acc)))))
+(defun skip-space-forward ()
+  (loop for c = (following-char) do
+    (cond ((syntax-space-char-p c)
+           (unless (next-char 1)
+             (return nil)))
+          ((and (syntax-line-comment-char-p c)
+                (not (sexp-escape-p t)))
+           (unless (next-line 1)
+             (return nil))
+           (beginning-of-line))
+          (t
+           (return t)))))
 
-(defmacro do-scan (outer dir (type-var dir-var) &body body)
-  (let ((gdir (gensym "DIR"))
-        (gpoint (gensym "POINT"))
-        (gstr (gensym "STR"))
-        (glen (gensym "LEN"))
-        (gline (gensym "LINE"))
-        (gtype (gensym "TYPE")))
-    `(let ((,gdir ,dir))
-       (loop named ,outer
-         for ,gpoint = (point)
-         for ,gstr = (buffer-line-string 
-                      (window-buffer)
-                      (point-linum ,gpoint))
-         for ,glen = (length ,gstr)
-         for ,gline = (convert-line ,gstr (minusp ,gdir))
-         do
-         (dolist (,gtype (nthcdr (if (plusp ,gdir)
-                                     (point-column ,gpoint)
-                                     (- ,glen (point-column ,gpoint)))
-                                 ,gline))
-           (let ((,type-var ,gtype)
-                 (,dir-var ,gdir))
-             ,@body)
-           (unless (next-char ,gdir)
-             (return-from ,outer nil)))
-         finally
-         (return-from ,outer t)))))
+(defun line-comment-column ()
+  (labels ((f (str i in-string-p)
+              (if (>= i (length str))
+                  nil
+                  (let ((c (schar str i)))
+                    (cond ((syntax-escape-char-p c)
+                           (f str (+ i 2) in-string-p))
+                          (in-string-p
+                           (f str (1+ i) t))
+                          ((syntax-string-quote-char-p c)
+                           (f str (1+ i) (not in-string-p)))
+                          ((syntax-line-comment-char-p c)
+                           i)
+                          (t
+                           (f str (1+ i) in-string-p)))))))
+    (f (buffer-line-string (window-buffer) (window-cur-linum))
+       0
+       nil)))
 
-(defun sexp-at-char (dir)
-  (if (plusp dir)
+(defun skip-space-backward ()
+  (loop
+    (if (bolp)
+        (if (prev-line 1)
+            (let ((col (line-comment-column)))
+              (if col
+                  (goto-column col)
+                  (end-of-line)))
+            (return nil))
+        (let ((c (preceding-char)))
+          (if (or (syntax-space-char-p c)
+                  (syntax-line-comment-char-p c))
+              (unless (prev-char 1)
+                (return nil))
+              (return t))))))
+
+(defparameter *converted-char-types*
+  '(:space
+    :symbol
+    :open-paren
+    :closed-paren
+    :string-quote
+    :expr-prefix
+    :line-comment))
+
+(defun sexp-get-char (dir)
+  (if dir
       (following-char)
       (preceding-char)))
 
-(defun scan-lists (point count depth)
-  (point-set point)
-  (dotimes (_ (abs count) t)
-    (unless
-        (let ((in-string-p)
-              (paren-char))
-          (do-scan outer
-            (if (plusp count) 1 -1)
-            (x dir)
-            (ecase x
-              ((open-paren closed-paren)
-               (unless in-string-p
-                 (let ((at-char (sexp-at-char dir)))
-                   (when (or (when (null paren-char)
-                               (setq paren-char at-char))
-                             (char= paren-char at-char)
-                             (char= (syntax-parallel-paren paren-char)
-                                    at-char))
-                     (cond ((eq x 'open-paren)
-                            (incf depth))
-                           (t
-                            (decf depth)))
-                     (cond ((zerop depth)
-                            (next-char dir)
-                            (when (minusp dir)
-                              (do ()
-                                  ((not (syntax-expr-prefix-char-p
-                                         (preceding-char))))
-                                (prev-char)))
-                            (return-from outer t))
-                           ((minusp depth)
-                            (return-from outer nil)))))))
-              (string-quote
-               (setq in-string-p
-                     (not in-string-p)))
-              ((symbol space expr-prefix)
-               nil))))
-      (point-set point)
-      (return nil))))
+(defun sexp-escape-p (dir)
+  (oddp (mod (loop for n from (if dir 1 2)
+               while (syntax-escape-char-p
+                      (char-before n))
+               count 1)
+             2)))
 
-(macrolet ((def (name args &body body)
-                `(defun ,name (point dir ,@args)
-                   (point-set point)
-                   (if (do-scan outer
-                         dir
-                         (x dir)
-                         ,@body)
-                       t
-                       (progn
-                         (point-set point)
-                         nil)))))
-  (def scan-string (char)
-       (when (and (eq x 'string-quote)
-                  (eql char (sexp-at-char dir)))
-         (return-from outer t)))
-  (def scan-symbol ()
-       (unless (or (eq x 'symbol)
-                   (eq x 'expr-prefix))
-         (return-from outer t))))
+(defun sexp-get-syntax-type (dir)
+  (if (sexp-escape-p dir)
+      :symbol
+      (let ((c (sexp-get-char dir)))
+        (cond ((syntax-space-char-p c)        :space)
+              ((syntax-symbol-char-p c)       :symbol)
+              ((syntax-open-paren-char-p c)   :open-paren)
+              ((syntax-closed-paren-char-p c) :closed-paren)
+              ((syntax-string-quote-char-p c) :string-quote)
+              ((syntax-escape-char-p c)       :escape)
+              ((syntax-expr-prefix-char-p c)  :expr-prefix)
+              ((syntax-line-comment-char-p c) :line-comment)
+              (t                              :symbol)))))
 
-(defun scan-sexps (point count)
-  (point-set point)
-  (dotimes (_ (abs count) t)
-    (unless 
-        (do-scan outer
-          (if (plusp count) 1 -1)
-          (x dir)
-          (ecase x
-            (open-paren
-             (return-from outer
-               (scan-lists (point) dir 0)))
-            (closed-paren
-             (return-from outer nil))
-            (string-quote
-             (next-char dir)
-             (return-from outer
-               (and (scan-string (point) dir (sexp-at-char (- dir)))
-                    (next-char dir))))
-            (space
-             nil)
-            ((symbol)
-             (return-from outer
-               (scan-symbol (point) dir)))
-            ((expr-prefix))))
-      (return nil))))
-      
-(define-key *global-keymap* (kbd "M-C-n") 'forward-list)
-(define-command forward-list (&optional (n 1)) ("p")
-  (scan-lists (point) n 0))
+(defun sexp-step-char (dir)
+  (if dir
+      (next-char 1)
+      (prev-char 1)))
 
-(define-key *global-keymap* (kbd "M-C-p") 'backward-list)
-(define-command backward-list (&optional (n 1)) ("p")
-  (scan-lists (point) (- n) 0))
+(defun skip-symbol (dir)
+  (loop
+    (case (sexp-get-syntax-type dir)
+      ((:symbol :expr-prefix :escape)
+       (unless (sexp-step-char dir)
+         (return)))
+      (t
+       (return t)))))
+
+(defun skip-symbol-forward ()
+  (skip-symbol t))
+
+(defun skip-symbol-backward ()
+  (skip-symbol nil))
+
+(defun skip-list (depth dir)
+  (loop with paren-char = nil do
+    (unless (if dir
+                (skip-space-forward)
+                (skip-space-backward))
+      (return))
+    (let ((type (sexp-get-syntax-type dir)))
+      (case type
+        ((:open-paren :closed-paren)
+         (let ((c (sexp-get-char dir))
+               (count-flag))
+           (cond ((not paren-char)
+                  (setq paren-char c)
+                  (setq count-flag t))
+                 ((syntax-equal-paren-p paren-char c)
+                  (setq count-flag t)))
+           (when count-flag
+             (if (eql type :open-paren)
+                 (if dir
+                     (incf depth)
+                     (decf depth))
+                 (if dir
+                     (decf depth)
+                     (incf depth)))
+             (when (and dir
+                        (eq type :closed-paren)
+                        (minusp depth))
+               (return nil))
+             (when (and (not dir)
+                        (eq type :open-paren)
+                        (minusp depth))
+               (return nil))
+             (sexp-step-char dir)
+             (when (zerop depth)
+               (return t)))))
+        ((:string-quote)
+         (skip-string dir))
+        (otherwise
+         (sexp-step-char dir))))))
+
+(defun skip-list-forward (depth)
+  (skip-list depth t))
+
+(defun skip-list-backward (depth)
+  (skip-list depth nil))
+
+(defun skip-string (dir)
+  (loop with quote-char = (sexp-get-char dir) do
+    (unless (sexp-step-char dir)
+      (return))
+    (when (and (eq :string-quote (sexp-get-syntax-type dir))
+               (char= quote-char (sexp-get-char dir)))
+      (sexp-step-char dir)
+      (return t))))
+
+(defun skip-string-forward ()
+  (skip-string t))
+
+(defun skip-string-backward ()
+  (skip-string nil))
+
+(defun skip-sexp-forward ()
+  (loop
+    (case (sexp-get-syntax-type t)
+      ((:symbol :escape)
+       (return (skip-symbol-forward)))
+      ((:expr-prefix)
+       (unless (next-char 1)
+         (return)))
+      ((:open-paren)
+       (return (skip-list-forward 0)))
+      ((:closed-paren)
+       (return))
+      ((:string-quote)
+       (return (skip-string-forward)))
+      (otherwise
+       (return t)))))
+
+(defun skip-sexp-backward ()
+  (ecase (sexp-get-syntax-type nil)
+    ((:symbol :expr-prefix :escape)
+     (skip-symbol-backward))
+    ((:closed-paren)
+     (skip-list-backward 0)
+     (loop while (eq :expr-prefix (sexp-get-syntax-type nil))
+       do (unless (prev-char 1)
+            (return))
+       finally (return t)))
+    ((:open-paren)
+     nil)
+    ((:string-quote)
+     (skip-string-backward))))
 
 (define-key *global-keymap* (kbd "M-C-f") 'forward-sexp)
 (define-command forward-sexp (&optional (n 1)) ("p")
-  (scan-sexps (point) n))
+  (let ((skip-space
+         (if (plusp n)
+             #'skip-space-forward
+             #'skip-space-backward))
+        (skip-sexp
+         (if (plusp n)
+             #'skip-sexp-forward
+             #'skip-sexp-backward)))
+    (dotimes (_ (abs n) t)
+      (unless (and (funcall skip-space)
+                   (funcall skip-sexp))
+        (return nil)))))
 
 (define-key *global-keymap* (kbd "M-C-b") 'backward-sexp)
 (define-command backward-sexp (&optional (n 1)) ("p")
-  (scan-sexps (point) (- n)))
+  (forward-sexp (- n)))
+
+(defun scan-lists (n depth)
+  (let ((dir (plusp n))
+        (point (point)))
+    (dotimes (_ (abs n) t)
+      (unless (skip-list depth dir)
+        (point-set point)
+        (return)))))
+
+(define-key *global-keymap* (kbd "M-C-n") 'forward-list)
+(define-command forward-list (&optional (n 1)) ("p")
+  (scan-lists n 0))
+
+(define-key *global-keymap* (kbd "M-C-p") 'backward-list)
+(define-command backward-list (&optional (n 1)) ("p")
+  (scan-lists (- n) 0))
 
 (define-key *global-keymap* (kbd "M-C-d") 'down-list)
 (define-command down-list (&optional (n 1)) ("p")
-  (scan-lists (point) n -1))
+  (scan-lists n -1))
 
 (define-key *global-keymap* (kbd "M-C-u") 'up-list)
 (define-command up-list (&optional (n 1)) ("p")
-  (scan-lists (point) (- n) 1))
+  (scan-lists (- n) 1))
 
 (defun top-of-defun ()
-  (do () ((not (up-list 1)) t)))
+  (loop while (up-list 1) count 1))
 
 (define-key *global-keymap* (kbd "M-C-a") 'beginning-of-defun)
 (define-command beginning-of-defun (&optional (n 1)) ("p")
   (if (minusp n)
       (end-of-defun (- n))
       (dotimes (_ n t)
-        (if (up-list 1)
-            (top-of-defun)
-            (unless (backward-sexp 1)
-              (return nil))))))
+        (when (zerop (top-of-defun))
+          (unless (backward-sexp 1)
+            (return nil))))))
 
 (define-key *global-keymap* (kbd "M-C-e") 'end-of-defun)
 (define-command end-of-defun (&optional (n 1)) ("p")
@@ -221,14 +281,14 @@
 (define-key *global-keymap* (kbd "M-C-k") 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")
   (and (mark-sexp)
-       (kill-region (region-beginning) (region-end))))
+       (kill-region (region-beginning)
+                    (region-end))))
 
 (define-key *global-keymap* (kbd "M-C-t") 'transpose-sexps)
 (define-command transpose-sexps () ()
   (let ((point (point)))
-    (cond ((not
-            (and (forward-sexp 1)
-                 (backward-sexp 2)))
+    (cond ((not (and (forward-sexp 1)
+                     (backward-sexp 2)))
            (point-set point)
            nil)
           (t

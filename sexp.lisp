@@ -270,7 +270,17 @@
       (dotimes (_ n t)
         (top-of-defun)
         (unless (forward-sexp 1)
-          (return nil)))))
+          (return nil))
+        (loop
+          for c = (following-char)
+          do (cond ((char= c #\newline)
+                    (next-line 1)
+                    (beginning-of-line)
+                    (return t))
+                   ((syntax-space-char-p c)
+                    (next-char 1))
+                   (t
+                    (return t)))))))
 
 (define-key *global-keymap* (kbd "M-C-@") 'mark-sexp)
 (define-command mark-sexp () ()

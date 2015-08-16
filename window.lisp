@@ -168,7 +168,7 @@
           (cl-charms/low-level:wattroff win cl-charms/low-level:a_reverse)
           (setq x (1+ pos)))))
     (let ((rest-str (subseq str x)))
-      (cl-charms/low-level:mvwinsstr
+      (cl-charms/low-level:mvwaddstr
        win y x
        (concatenate 'string
                     rest-str

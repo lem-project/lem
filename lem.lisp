@@ -147,21 +147,27 @@
                   4))
         (return (main-step)))))))
 
+(defun input-char (code getchar-fn)
+  (let* ((nbytes (utf8-bytes code))
+         (char (if (= nbytes 1)
+                   (code-char code)
+                   (aref (bytes-to-string
+                          (coerce
+                           (cons code
+                                 (loop repeat (1- nbytes)
+                                   collect (funcall getchar-fn)))
+                           '(vector (unsigned-byte 8))))
+                         0))))
+    char))
+
 (defun input-key ()
   (let ((c (getch nil)))
     (if (or (char= c key::ctrl-x)
             (char= c key::escape))
         (list c (getch nil))
-        (let ((bytes (utf8-bytes (char-code c))))
-          (if (= bytes 1)
-              (list c)
-              (let ((bytes (coerce
-                            (mapcar 'char-code
-                                    (cons c
-                                          (loop repeat (1- bytes)
-                                            collect (getch nil))))
-                            '(vector (unsigned-byte 8)))))
-                (list (aref (bytes-to-string bytes) 0))))))))
+        (list (input-char
+               (char-code c)
+               #'(lambda () (char-code (getch nil))))))))
 
 (defun execute (key)
   (let* ((keymap (current-mode-keymap))
@@ -194,15 +200,13 @@
 
 (defun exec-paste ()
   (cl-charms/low-level:timeout 10)
-  (loop
-    for c = (cl-charms/low-level:getch)
-    while (/= c -1)
-    do
-    (setq c (code-char c))
-    (if (or (char= c key::ctrl-j)
-            (char= c key::ctrl-m))
-        (insert-newline 1)
-        (insert-char c 1)))
+  (do ((code #1=(cl-charms/low-level:getch) #1#))
+      ((= code -1))
+    (let* ((char (input-char code #'cl-charms/low-level:getch)))
+      (if (or (char= char key::ctrl-j)
+              (char= char key::ctrl-m))
+          (insert-newline 1)
+          (insert-char char 1))))
   (window-update-all))
 
 (defun load-init-file ()

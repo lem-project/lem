@@ -175,7 +175,7 @@
        (concatenate 'string
                     rest-str
                     (make-string (- (window-ncols window)
-                                    (str-width rest-str))
+                                    (str-width str))
                                  :initial-element #\space))))))
 
 (defun window-refresh-line (window y str props)

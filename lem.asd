@@ -1,5 +1,14 @@
+(cl:in-package :cl-user)
+
+#-asdf(require :asdf)
+
 (defpackage :lem
   (:use :cl))
+
+(defpackage :lem-asd
+  (:use :cl :asdf))
+
+(in-package :lem-asd)
 
 (defsystem lem
            :serial t

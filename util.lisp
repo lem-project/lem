@@ -156,3 +156,8 @@
 
 (defun random-range (min max)
   (+ min (random (1+ (- max min)))))
+
+(defun safe-aref (seq i &optional default)
+  (if (< -1 i (length seq))
+      (aref seq i)
+      default))

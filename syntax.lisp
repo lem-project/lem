@@ -12,7 +12,8 @@
   (string-quote-chars '(#\" #\'))
   (escape-chars '(#\\))
   expr-prefix-chars
-  line-comment-char)
+  line-comment-preceding-char
+  line-comment-following-char)
 
 (defun syntax-word-char-p (c)
   (and (characterp c)
@@ -57,5 +58,9 @@
 (defun syntax-expr-prefix-char-p (c)
   (member c (syntax-table-expr-prefix-chars (current-syntax))))
 
-(defun syntax-line-comment-char-p (c)
-  (eql c (syntax-table-line-comment-char (current-syntax))))
+(defun syntax-line-comment-p (c1 c2)
+  (let ((pre (syntax-table-line-comment-preceding-char (current-syntax)))
+        (aft (syntax-table-line-comment-following-char (current-syntax))))
+    (and (eql pre c1)
+         (or (null aft)
+             (eql aft c2)))))

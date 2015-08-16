@@ -17,7 +17,7 @@
     (cond ((syntax-space-char-p c)
            (unless (next-char 1)
              (return nil)))
-          ((and (syntax-line-comment-char-p c)
+          ((and (syntax-line-comment-p c (char-after 1))
                 (not (sexp-escape-p t)))
            (unless (next-line 1)
              (return nil))
@@ -36,7 +36,10 @@
                            (f str (1+ i) t))
                           ((syntax-string-quote-char-p c)
                            (f str (1+ i) (not in-string-p)))
-                          ((syntax-line-comment-char-p c)
+                          ((syntax-line-comment-p c
+                                                  (safe-aref str
+                                                             (1+ i)
+                                                             #\newline))
                            i)
                           (t
                            (f str (1+ i) in-string-p)))))))
@@ -55,7 +58,7 @@
             (return nil))
         (let ((c (preceding-char)))
           (if (or (syntax-space-char-p c)
-                  (syntax-line-comment-char-p c))
+                  (syntax-line-comment-p c (following-char)))
               (unless (prev-char 1)
                 (return nil))
               (return t))))))
@@ -85,15 +88,19 @@
   (if (sexp-escape-p dir)
       :symbol
       (let ((c (sexp-get-char dir)))
-        (cond ((syntax-space-char-p c)        :space)
-              ((syntax-symbol-char-p c)       :symbol)
-              ((syntax-open-paren-char-p c)   :open-paren)
+        (cond ((syntax-space-char-p c) :space)
+              ((syntax-symbol-char-p c) :symbol)
+              ((syntax-open-paren-char-p c) :open-paren)
               ((syntax-closed-paren-char-p c) :closed-paren)
               ((syntax-string-quote-char-p c) :string-quote)
-              ((syntax-escape-char-p c)       :escape)
-              ((syntax-expr-prefix-char-p c)  :expr-prefix)
-              ((syntax-line-comment-char-p c) :line-comment)
-              (t                              :symbol)))))
+              ((syntax-escape-char-p c) :escape)
+              ((syntax-expr-prefix-char-p c) :expr-prefix)
+              ((syntax-line-comment-p c
+                                      (if dir
+                                          (char-after 1)
+                                          (following-char)))
+               :line-comment)
+              (t :symbol)))))
 
 (defun sexp-step-char (dir)
   (if dir

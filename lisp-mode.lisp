@@ -99,7 +99,7 @@
    :string-quote-chars '(#\")
    :escape-chars '(#\\)
    :expr-prefix-chars '(#\' #\, #\@ #\# #\`)
-   :line-comment-char #\;))
+   :line-comment-preceding-char #\;))
 
 (define-major-mode lisp-mode
   :name "lisp-mode"

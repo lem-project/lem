@@ -12,18 +12,35 @@
           kill-sexp
           transpose-sexps))
 
-(defun skip-space-forward ()
-  (loop for c = (following-char) do
-    (cond ((syntax-space-char-p c)
-           (unless (next-char 1)
-             (return nil)))
-          ((and (syntax-line-comment-p c (char-after 1))
+(defun skip-block-comment-forward ()
+  (loop
+    for c1 = (following-char)
+    for c2 = (char-after 1)
+    do (if (and (syntax-end-block-comment-p c1 c2)
                 (not (sexp-escape-p t)))
-           (unless (next-line 1)
-             (return nil))
-           (beginning-of-line))
-          (t
-           (return t)))))
+           (progn
+             (next-char 2)
+             (return))
+           (unless (next-char 1)
+             (return)))))
+
+(defun skip-space-forward ()
+  (loop
+    for c1 = (following-char)
+    for c2 = (char-after 1)
+    do (cond ((syntax-space-char-p c1)
+              (unless (next-char 1)
+                (return nil)))
+             ((and (syntax-line-comment-p c1 c2)
+                   (not (sexp-escape-p t)))
+              (unless (next-line 1)
+                (return nil))
+              (beginning-of-line))
+             ((and (syntax-start-block-comment-p c1 c2)
+                   (not (sexp-escape-p t)))
+              (skip-block-comment-forward))
+             (t
+              (return t)))))
 
 (defun line-comment-column ()
   (labels ((f (str i in-string-p)
@@ -47,6 +64,19 @@
        0
        nil)))
 
+(defun skip-block-comment-backward ()
+  (loop
+    for count from 0
+    for c1 = (following-char)
+    for c2 = (preceding-char)
+    do (if (and (syntax-start-block-comment-p c2 c1)
+                (not (sexp-escape-p nil)))
+           (progn
+             (prev-char 2)
+             (return))
+           (unless (prev-char 1)
+             (return)))))
+
 (defun skip-space-backward ()
   (loop
     (if (bolp)
@@ -56,12 +86,17 @@
                   (goto-column col)
                   (end-of-line)))
             (return nil))
-        (let ((c (preceding-char)))
-          (if (or (syntax-space-char-p c)
-                  (syntax-line-comment-p c (following-char)))
-              (unless (prev-char 1)
-                (return nil))
-              (return t))))))
+        (let ((c1 (preceding-char))
+              (c2 (char-before 2)))
+          (cond ((or (syntax-space-char-p c1)
+                     (syntax-line-comment-p c2 c1))
+                 (unless (prev-char 1)
+                   (return nil)))
+                ((and (syntax-end-block-comment-p c2 c1)
+                      (not (sexp-escape-p nil)))
+                 (skip-block-comment-backward))
+                (t
+                 (return t)))))))
 
 (defparameter *converted-char-types*
   '(:space

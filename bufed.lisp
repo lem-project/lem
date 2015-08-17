@@ -365,16 +365,26 @@
                      (1- (window-cur-col))))))
 
 (defun char-after (&optional (n 0))
-  (save-excursion
-   (when (next-char n)
-     (prog1 (following-char)
-       (prev-char n)))))
+  (if (zerop n)
+      (following-char)
+      (let ((point (point)))
+        (if (next-char n)
+            (prog1 (following-char)
+              (prev-char n))
+            (progn
+              (point-set point)
+              nil)))))
 
 (defun char-before (&optional (n 1))
-  (save-excursion
-   (when (prev-char (1- n))
-     (prog1 (preceding-char)
-       (next-char (1- n))))))
+  (if (= n 1)
+      (preceding-char)
+      (let ((point (point)))
+        (if (prev-char (1- n))
+            (prog1 (preceding-char)
+              (next-char (1- n)))
+            (progn
+              (point-set point)
+              nil)))))
 
 (defun replace-char (c)
   (delete-char)

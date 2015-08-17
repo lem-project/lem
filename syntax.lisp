@@ -13,7 +13,9 @@
   (escape-chars '(#\\))
   expr-prefix-chars
   line-comment-preceding-char
-  line-comment-following-char)
+  line-comment-following-char
+  block-comment-preceding-char
+  block-comment-following-char)
 
 (defun syntax-word-char-p (c)
   (and (characterp c)
@@ -58,9 +60,24 @@
 (defun syntax-expr-prefix-char-p (c)
   (member c (syntax-table-expr-prefix-chars (current-syntax))))
 
+(defun equal-comment-p (a b x y)
+  (and (eql a x)
+       (or (null b)
+           (eql b y))))
+
 (defun syntax-line-comment-p (c1 c2)
-  (let ((pre (syntax-table-line-comment-preceding-char (current-syntax)))
-        (aft (syntax-table-line-comment-following-char (current-syntax))))
-    (and (eql pre c1)
-         (or (null aft)
-             (eql aft c2)))))
+  (equal-comment-p
+   (syntax-table-line-comment-preceding-char (current-syntax))
+   (syntax-table-line-comment-following-char (current-syntax))
+   c1
+   c2))
+
+(defun syntax-start-block-comment-p (c1 c2)
+  (equal-comment-p
+   (syntax-table-block-comment-preceding-char (current-syntax))
+   (syntax-table-block-comment-following-char (current-syntax))
+   c1
+   c2))
+
+(defun syntax-end-block-comment-p (c1 c2)
+  (syntax-start-block-comment-p c2 c1))

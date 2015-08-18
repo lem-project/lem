@@ -221,19 +221,19 @@
     curx))
 
 (defun window-refresh-lines (window)
-  (let* ((x 0)
-         (buffer (window-buffer window))
-         (win-nlines (1- (window-nlines window)))
-         (buf-nlines (buffer-nlines buffer)))
-    (do ((linum (window-vtop-linum window) (1+ linum))
-         (y 0 (1+ y)))
-        ((or (<= win-nlines y)
-             (< buf-nlines linum)))
-      (multiple-value-bind (str props)
-          (buffer-line-string buffer linum)
-        (let ((curx (window-refresh-line window y str props)))
-          (when curx
-            (setq x curx)))))
+  (let ((x 0))
+    (loop
+      for y from 0
+      for (str . props) across (buffer-display-lines
+                                (window-buffer window)
+                                (window-vtop-linum window)
+                                (1- (window-nlines window)))
+      do
+      (when props
+        (setf props (sort props #'< :key #'car)))
+      (let ((curx (window-refresh-line window y str props)))
+        (when curx
+          (setq x curx))))
     (cl-charms/low-level:wmove (window-win window)
                                (- (window-cur-linum window)
                                   (window-vtop-linum window))

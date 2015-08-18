@@ -11,7 +11,7 @@
 (defvar *isearch-start-point*)
 (defvar *isearch-tmp-keymap*)
 (defvar *isearch-search-function*)
-(defvar *isearch-hilight-points* nil)
+(defvar *isearch-highlight-overlays* nil)
 
 (defun isearch-update-display ()
   (isearch-update-minibuf)
@@ -91,11 +91,8 @@
       (isearch-update-display))))
 
 (defun isearch-reset-buffer ()
-  (loop
-    with buffer = (window-buffer)
-    for (start . end) in *isearch-hilight-points*
-    do (buffer-remove-property buffer start end :highlight))
-  (setq *isearch-hilight-points* nil))
+  (mapc #'delete-overlay *isearch-highlight-overlays*)
+  (setq *isearch-highlight-overlays* nil))
 
 (defun isearch-update-buffer ()
   (isearch-reset-buffer)
@@ -123,9 +120,10 @@
                          (let ((start (make-point linum col))
                                (end (make-point
                                      linum (+ col (length search-string)))))
-                           (push (cons start end) *isearch-hilight-points*)
-                           (buffer-put-property buffer start end
-                                                :highlight)))
+                           (push (make-overlay start end
+                                               :prop :face
+                                               :value :highlight)
+                                 *isearch-highlight-overlays*)))
                      (incf col (length search-string)))
                    (let ((col
                           (- (length buffer-string)
@@ -135,18 +133,22 @@
                      (when (and (every #'string=
                                        (butlast (cdr search-strings))
                                        (butlast (cdr buffer-strings)))
+                                (<= 0 col)
                                 (string= search-string
                                          buffer-string
                                          :start2 col)
+                                (<= (length last-search-string)
+                                    (length (car (last buffer-strings))))
                                 (string= last-search-string
                                          (car (last buffer-strings))
                                          :end2 (length last-search-string)))
                        (let ((start (make-point linum col))
                              (end (make-point (+ linum length -1)
                                               (length last-search-string))))
-                         (push (cons start end) *isearch-hilight-points*)
-                         (buffer-put-property buffer start end
-                                              :highlight)))))))))))
+                         (push (make-overlay start end
+                                             :prop :face
+                                             :value :highlight)
+                               *isearch-highlight-overlays*)))))))))))
 
 (defun isearch-add-char (c)
   (setq *isearch-string*

@@ -26,6 +26,7 @@
                         (:file "search")
                         (:file "region")
                         (:file "buffer")
+                        (:file "overlay")
                         (:file "io")
                         (:file "buffers")
                         (:file "bufed")

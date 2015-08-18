@@ -98,6 +98,7 @@
   undo-size
   undo-stack
   redo-stack
+  overlays
   plist)
 
 (defvar *undo-modes* '(:edit :undo :redo))
@@ -214,6 +215,19 @@
 (defun buffer-remove-property (buffer start end prop)
   (buffer-set-property #'line-remove-property buffer start end prop))
 
+(defun buffer-add-overlay (buffer overlay)
+  (setf (buffer-overlays buffer)
+        (merge 'list
+               (list overlay)
+               (buffer-overlays buffer)
+               #'<
+               :key #'(lambda (overlay)
+                        (point-linum (overlay-start overlay))))))
+
+(defun buffer-delete-overlay (buffer overlay)
+  (setf (buffer-overlays buffer)
+        (delete overlay (buffer-overlays buffer))))
+
 (defun %buffer-get-line (buffer linum)
   (cond
    ((= linum (buffer-cache-linum buffer))
@@ -284,13 +298,88 @@
     (setq len (buffer-nlines buffer)))
   (let ((strings))
     (map-buffer-lines
-     (lambda (str eof-p linum)
-       (declare (ignore eof-p linum))
-       (push str strings))
+     #'(lambda (str eof-p linum)
+         (declare (ignore eof-p linum))
+         (push str strings))
      buffer
      linum
      (+ linum len -1))
     (nreverse strings)))
+
+(defun set-prop-display-line (disp-lines
+                              propval
+                              start-linum
+                              linum
+                              start-column
+                              end-column)
+  (let ((i (- linum start-linum)))
+    (unless end-column
+      (setq end-column (length (car (aref disp-lines i)))))
+    (loop
+      for col from start-column below end-column
+      for elt = (aref disp-lines i)
+      do (setf (aref disp-lines i)
+               (list* (car elt)
+                      (cons col propval)
+                      (cdr elt))))))
+
+(defun display-lines-set-overlays (disp-lines overlays start-linum end-linum)
+  (loop
+    for overlay in overlays
+    for start = (overlay-start overlay)
+    for end = (overlay-end overlay)
+    when (eq :face (overlay-prop overlay))
+    do (cond ((and (= (point-linum start) (point-linum end))
+                   (<= start-linum (point-linum start) end-linum))
+              (set-prop-display-line disp-lines
+                                     (overlay-value overlay)
+                                     start-linum
+                                     (point-linum start)
+                                     (point-column start)
+                                     (point-column end)))
+             ((and (<= start-linum (point-linum start))
+                   (<= (point-linum end) end-linum))
+              (set-prop-display-line disp-lines
+                                     (overlay-value overlay)
+                                     start-linum
+                                     (point-linum start)
+                                     (point-column start)
+                                     nil)
+              (loop
+                for linum from (1+ (point-linum start))
+                below (point-linum end) do
+                (set-prop-display-line disp-lines
+                                       (overlay-value overlay)
+                                       start-linum
+                                       linum
+                                       0
+                                       nil))
+              (set-prop-display-line disp-lines
+                                     (overlay-value overlay)
+                                     start-linum
+                                     (point-linum end)
+                                     0
+                                     (point-column end))))))
+
+(defun buffer-display-lines (buffer start-linum nlines)
+  (let ((end-linum (+ start-linum nlines))
+        (disp-lines (make-array nlines :initial-element (list "" nil)))
+        (disp-nlines 0))
+    (loop
+      for linum from start-linum
+      for i from 0
+      while (and (<= linum (buffer-nlines buffer))
+                 (< i nlines))
+      do (multiple-value-bind (str props)
+             (buffer-line-string buffer linum)
+           (incf disp-nlines)
+           (setf (aref disp-lines i)
+                 (cons str props))))
+    (display-lines-set-overlays disp-lines
+                                (buffer-overlays buffer)
+                                start-linum
+                                end-linum)
+    disp-lines))
 
 (defun buffer-append-line (buffer str)
   (buffer-read-only-guard buffer)
@@ -453,7 +542,8 @@
     (setf (buffer-nlines buffer) 1)
     (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) nil)
-    (setf (buffer-redo-stack buffer) nil)))
+    (setf (buffer-redo-stack buffer) nil)
+    (setf (buffer-overlays buffer) nil)))
 
 (defun buffer-check-marked (buffer)
   (if (buffer-mark-linum buffer)
@@ -505,3 +595,4 @@
 
 (defun buffer-put (buffer indicator value)
   (setf (getf (buffer-plist buffer) indicator) value))
+

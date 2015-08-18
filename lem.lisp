@@ -279,4 +279,5 @@
                                     :if-exists :overwrite
                                     :if-does-not-exist :create)
       (lem-init args)
-      (lem-main))))
+      (lem-main)
+      (lem-finallize))))

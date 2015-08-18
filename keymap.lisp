@@ -66,8 +66,7 @@
 (defun kbd (str)
   (make-instance
    'kbd
-   :list (let ((i 0)
-               (key))
+   :list (let ((key))
            (do ((i 0 (1+ i)))
                ((>= i (length str)))
              (case (aref str i)

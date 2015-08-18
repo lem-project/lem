@@ -25,14 +25,14 @@
   (isearch-start
    (lambda (str)
      (prev-char (length str))
-     (search-forward-aux str))))
+     (search-forward str))))
 
 (define-key *global-keymap* (kbd "C-r") 'isearch-backward)
 (define-command isearch-backward () ()
   (isearch-start
    (lambda (str)
      (next-char (length str))
-     (search-backward-aux str))))
+     (search-backward str))))
 
 (defun isearch-start (search-func)
   (setq *isearch-tmp-keymap* (current-mode-keymap))
@@ -73,14 +73,14 @@
 (define-command isearch-next () ()
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
-  (search-forward-aux *isearch-string*)
+  (search-forward *isearch-string*)
   (isearch-update-display))
 
 (define-key *isearch-keymap* (kbd "C-r") 'isearch-prev)
 (define-command isearch-prev () ()
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
-  (search-backward-aux *isearch-string*)
+  (search-backward *isearch-string*)
   (isearch-update-display))
 
 (define-key *isearch-keymap* (kbd "C-y") 'isearch-yank)
@@ -186,7 +186,7 @@
       (point-set point))
     result))
 
-(defun search-forward-aux (str)
+(defun search-forward (str)
   (multiple-value-bind (lines length)
       (split-string str #\newline)
     (flet ((take-string ()
@@ -206,7 +206,7 @@
                      (next-char (+ i (length str))))
                    #'eobp))))
 
-(defun search-backward-aux (str)
+(defun search-backward (str)
   (multiple-value-bind (lines length)
       (split-string str #\newline)
     (flet ((%search (&rest args)
@@ -236,7 +236,7 @@
   (let ((n (length before))
         (pass-through))
     (do () (nil)
-      (unless (search-forward-aux before)
+      (unless (search-forward before)
         (return))
       (minibuf-print (format nil "Replace ~s with ~s" before after))
       (prev-char n)

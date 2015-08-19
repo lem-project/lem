@@ -105,14 +105,15 @@
     (completion str (files dirname))))
 
 (defun file-open (path)
-  (let ((filename (file-name-nondirectory path)))
-    (unless (string= "" filename)
-      (let ((buffer (make-buffer
-                     filename
-                     :filename (expand-file-name path))))
-        (with-open-file (in (buffer-filename buffer) :if-does-not-exist nil)
+  (let ((name (file-name-nondirectory path))
+        (absolute-path (expand-file-name path)))
+    (when (and (string/= "" name)
+               (not (cl-fad:directory-exists-p absolute-path)))
+      (let ((buffer (make-buffer name :filename absolute-path)))
+        (with-open-file (in (buffer-filename buffer)
+                            :if-does-not-exist nil)
           (when in
-            (do () (nil)
+            (loop
               (multiple-value-bind (str eof-p) (read-line in nil)
                 (if (not eof-p)
                     (buffer-append-line buffer str)

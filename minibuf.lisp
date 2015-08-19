@@ -111,7 +111,8 @@
             (when str1
               (setq str (concatenate 'string str str1)))))
          (t
-          (setq str (concatenate 'string str (string c)))))))
+          (let ((c (input-char (char-code c))))
+            (setq str (concatenate 'string str (string c))))))))
     (cond
      ((and comp-flag one-window-p)
       (delete-completion-window))

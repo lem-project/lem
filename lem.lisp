@@ -147,7 +147,7 @@
                   4))
         (return (main-step)))))))
 
-(defun input-char (code getchar-fn)
+(defun input-char (code &optional getchar-fn)
   (let* ((nbytes (utf8-bytes code))
          (char (if (= nbytes 1)
                    (code-char code)
@@ -155,7 +155,9 @@
                           (coerce
                            (cons code
                                  (loop repeat (1- nbytes)
-                                   collect (funcall getchar-fn)))
+                                   collect (if getchar-fn
+                                               (funcall getchar-fn)
+                                               (char-code (getch)))))
                            '(vector (unsigned-byte 8))))
                          0))))
     char))
@@ -166,8 +168,7 @@
             (char= c key::escape))
         (list c (getch nil))
         (list (input-char
-               (char-code c)
-               #'(lambda () (char-code (getch nil))))))))
+               (char-code c))))))
 
 (defun execute (key)
   (let* ((keymap (current-mode-keymap))

@@ -192,7 +192,8 @@
   (defun undefined-key (key)
     (let ((c (insertion-key-p key)))
       (cond (c (insert-char c (or *universal-argument* 1))
-               (when (and prev-time
+               (when (and (not *macro-running-p*)
+                          prev-time
                           (> 10
                              (- (get-internal-real-time)
                                 prev-time)))

@@ -207,7 +207,9 @@
   (cl-charms/low-level:timeout 10)
   (do ((code #1=(cl-charms/low-level:getch) #1#))
       ((= code -1))
-    (let* ((char (input-char code #'cl-charms/low-level:getch)))
+    (when *macro-recording-p*
+      (push (code-char code) *macro-chars*))
+    (let* ((char (input-char code)))
       (if (or (char= char key::ctrl-j)
               (char= char key::ctrl-m))
           (insert-newline 1)

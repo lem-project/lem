@@ -329,9 +329,9 @@
   (if (minusp n)
       (beginning-of-defun (- n) no-errors)
       (dotimes (_ n t)
-        (down-list)
-        (beginning-of-defun)
-        (unless (forward-sexp 1 no-errors)
+        (unless (and (down-list 1 t)
+                     (beginning-of-defun 1 t)
+                     (forward-sexp 1 no-errors))
           (return nil))
         (loop
           for c = (following-char)

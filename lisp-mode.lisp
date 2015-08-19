@@ -224,7 +224,7 @@
                                   (when update-point-p
                                     (point-set
                                      (buffer-output-stream-point out))))
-                                (getch-clear-queue))))
+                                (getch-flush))))
                     (error (cdt)
                            (setq error-p t)
                            (setq values (list cdt)))))))

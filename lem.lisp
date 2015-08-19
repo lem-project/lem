@@ -24,13 +24,13 @@
 
 (defun macro-running-p () *macro-running-p*)
 
-(let ((queue (make-tlist)))
+(let ((keys nil))
   (defun getch (&optional (abort-jump t))
     (let* ((code (cond (*getch-wait-flag*
-                        (loop while (tlist-empty-p queue))
-                        (tlist-rem-left queue))
-                       ((not (tlist-empty-p queue))
-                        (tlist-rem-left queue))
+                        (loop while (null keys))
+                        (pop keys))
+                       (keys
+                        (pop keys))
                        (t
                         (cl-charms/low-level:wgetch (window-win)))))
            (char (code-char code)))
@@ -47,11 +47,11 @@
   (defun ungetch (c)
     (when *macro-recording-p*
       (pop *macro-chars*))
-    (tlist-add-left queue (char-code c)))
-  (defun getch-queue-length ()
-    (length (car queue)))
-  (defun getch-clear-queue ()
-    (setq queue (make-tlist))))
+    (push (char-code c) keys))
+  (defun getch-count-ungetch ()
+    (length keys))
+  (defun getch-flush ()
+    (setq keys nil)))
 
 (define-key *global-keymap* (kbd "C-g") 'keyboard-quit)
 (define-command keyboard-quit () ()
@@ -100,11 +100,11 @@
   (let ((*macro-running-p* t)
         (*universal-argument* nil))
     (loop repeat n while *macro-running-p* do
-      (let ((length (getch-queue-length)))
+      (let ((length (getch-count-ungetch)))
         (dolist (c *macro-chars*)
           (ungetch c))
         (loop while (and *macro-running-p*
-                         (< length (getch-queue-length)))
+                         (< length (getch-count-ungetch)))
           do (main-step))))))
 
 (define-command apply-macro-to-region-lines () ()

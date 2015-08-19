@@ -45,7 +45,9 @@
         (throw 'abort 'abort))
        (t char))))
   (defun ungetch (c)
-    (tlist-add-right queue (char-code c)))
+    (when *macro-recording-p*
+      (pop *macro-chars*))
+    (tlist-add-left queue (char-code c)))
   (defun getch-queue-length ()
     (length (car queue)))
   (defun getch-clear-queue ()
@@ -90,7 +92,6 @@
          (minibuf-print "Macro not active"))
         (t
          (setq *macro-recording-p* nil)
-         (setq *macro-chars* (nreverse *macro-chars*))
          (minibuf-print "End macro")
          t)))
 
@@ -102,10 +103,9 @@
       (let ((length (getch-queue-length)))
         (dolist (c *macro-chars*)
           (ungetch c))
-        (do ()
-            ((or (not *macro-running-p*)
-                 (>= length (getch-queue-length))))
-          (main-step))))))
+        (loop while (and *macro-running-p*
+                         (< length (getch-queue-length)))
+          do (main-step))))))
 
 (define-command apply-macro-to-region-lines () ()
   (apply-region-lines (region-beginning)
@@ -145,7 +145,9 @@
               (if numlist
                   (parse-integer (format nil "~{~a~}" numlist))
                   4))
-        (return (main-step)))))))
+        (return
+          (prog1 (execute (input-key))
+            (setq *universal-argument* nil))))))))
 
 (defun input-char (code &optional getchar-fn)
   (let* ((nbytes (utf8-bytes code))
@@ -174,8 +176,9 @@
   (let* ((keymap (current-mode-keymap))
          (cmd (mode-find-keybind key)))
     (if cmd
-        (unless (cmd-call cmd *universal-argument*)
-          (setq *macro-running-p* nil))
+        (if (cmd-call cmd *universal-argument*)
+            t
+            (setq *macro-running-p* nil))
         (key-undef-hook keymap key))))
 
 (defun main-step ()

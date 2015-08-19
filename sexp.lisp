@@ -202,6 +202,8 @@
                (return t)))))
         ((:string-quote)
          (skip-string dir))
+        ((:symbol)
+         (skip-symbol dir))
         (otherwise
          (sexp-step-char dir))))))
 
@@ -309,24 +311,26 @@
 (define-command up-list (&optional (n 1) no-errors) ("p")
   (scan-lists (- n) 1 no-errors))
 
-(defun top-of-defun ()
-  (loop while (up-list 1 t) count 1))
-
 (define-key *global-keymap* (kbd "M-C-a") 'beginning-of-defun)
 (define-command beginning-of-defun (&optional (n 1) no-errors) ("p")
-  (if (minusp n)
-      (end-of-defun (- n) no-errors)
-      (dotimes (_ n t)
-        (when (zerop (top-of-defun))
-          (unless (backward-sexp 1 no-errors)
-            (return nil))))))
+  (let ((arg (if (plusp n) 1 -1)))
+    (dotimes (_ (abs n) t)
+      (when (bolp)
+        (prev-line arg))
+      (loop
+        (beginning-of-line)
+        (when (eql #\( (following-char))
+          (return t))
+        (unless (prev-line arg)
+          (return nil))))))
 
 (define-key *global-keymap* (kbd "M-C-e") 'end-of-defun)
 (define-command end-of-defun (&optional (n 1) no-errors) ("p")
   (if (minusp n)
       (beginning-of-defun (- n) no-errors)
       (dotimes (_ n t)
-        (top-of-defun)
+        (down-list)
+        (beginning-of-defun)
         (unless (forward-sexp 1 no-errors)
           (return nil))
         (loop

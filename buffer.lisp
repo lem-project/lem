@@ -99,6 +99,8 @@
   undo-stack
   redo-stack
   overlays
+  undo-node
+  saved-node
   plist)
 
 (defvar *undo-modes* '(:edit :undo :redo))
@@ -121,6 +123,8 @@
     (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
+    (setf (buffer-undo-node buffer) 0)
+    (setf (buffer-saved-node buffer) 0)
     (push buffer *buffer-list*)
     buffer))
 
@@ -128,6 +132,10 @@
   (format stream "#<BUFFER ~a ~a>"
           (buffer-name buffer)
           (buffer-filename buffer)))
+
+(defun buffer-save-node (buffer)
+  (setf (buffer-saved-node buffer)
+        (buffer-undo-node buffer)))
 
 (defun push-undo-stack (buffer elt)
   (cond ((<= (+ *undo-limit* (floor (* *undo-limit* 0.3)))
@@ -157,14 +165,20 @@
          (let ((elt (lambda ()
                       (setf (buffer-mark-col ,buffer) ,gmark-col)
                       (setf (buffer-mark-linum ,buffer) ,gmark-linum)
-                      ,@body)))
+                      (prog1 (progn ,@body)
+                        (setf (buffer-modified-p ,buffer)
+                              (/= (buffer-undo-node ,buffer)
+                                  (buffer-saved-node ,buffer)))))))
            (ecase *undo-mode*
              (:edit
+              (incf (buffer-undo-node ,buffer))
               (push-undo-stack ,buffer elt)
               (setf (buffer-redo-stack ,buffer) nil))
              (:undo
+              (incf (buffer-undo-node ,buffer))
               (push-undo-stack ,buffer elt))
              (:redo
+              (decf (buffer-undo-node ,buffer))
               (push-redo-stack ,buffer elt))))))))
 
 (defmacro buffer-read-only-guard (buffer)
@@ -400,30 +414,26 @@
   (cond ((char= c #\newline)
          (buffer-insert-newline buffer linum col))
         (t
-         (let ((old-modified-p (buffer-modified-p buffer)))
-           (with-push-undo (buffer)
-             (buffer-delete-char buffer linum col 1)
-             (setf (buffer-modified-p buffer) old-modified-p)
-             (make-point linum col))
-           (setf (buffer-modified-p buffer) t)
-           (let ((line (buffer-get-line buffer linum)))
-             (when (and (= linum (buffer-mark-linum buffer))
-                        (<= col (buffer-mark-col buffer)))
-               (incf (buffer-mark-col buffer)))
-             (line-set-str line
-                           (concatenate 'string
-                                        (subseq (line-str line) 0 col)
-                                        (string c)
-                                        (subseq (line-str line) col)))))))
+         (with-push-undo (buffer)
+           (buffer-delete-char buffer linum col 1)
+           (make-point linum col))
+         (setf (buffer-modified-p buffer) t)
+         (let ((line (buffer-get-line buffer linum)))
+           (when (and (= linum (buffer-mark-linum buffer))
+                      (<= col (buffer-mark-col buffer)))
+             (incf (buffer-mark-col buffer)))
+           (line-set-str line
+                         (concatenate 'string
+                                      (subseq (line-str line) 0 col)
+                                      (string c)
+                                      (subseq (line-str line) col))))))
   t)
 
 (defun buffer-insert-newline (buffer linum col)
   (buffer-read-only-guard buffer)
-  (let ((old-modified-p (buffer-modified-p buffer)))
-    (with-push-undo (buffer)
-      (buffer-delete-char buffer linum col 1)
-      (setf (buffer-modified-p buffer) old-modified-p)
-      (make-point linum col)))
+  (with-push-undo (buffer)
+    (buffer-delete-char buffer linum col 1)
+    (make-point linum col))
   (setf (buffer-modified-p buffer) t)
   (cond
    ((= (buffer-mark-linum buffer) linum)
@@ -445,11 +455,9 @@
 (defun buffer-insert-line (buffer linum col str)
   (buffer-read-only-guard buffer)
   (let ((line (buffer-get-line buffer linum)))
-    (let ((oldstr (line-str line))
-          (old-modified-p (buffer-modified-p buffer)))
+    (let ((oldstr (line-str line)))
       (with-push-undo (buffer)
         (buffer-delete-char buffer linum col (length str))
-        (setf (buffer-modified-p buffer) old-modified-p)
         (make-point linum col)))
     (setf (buffer-modified-p buffer) t)
     (when (and (= linum (buffer-mark-linum buffer))
@@ -466,8 +474,7 @@
   (buffer-read-only-guard buffer)
   (let ((line (buffer-get-line buffer linum))
         (del-lines (list ""))
-        (result t)
-        (old-modified-p (buffer-modified-p buffer)))
+        (result t))
     (loop while (plusp n) do
       (cond
        ((<= n (- (length (line-str line)) col))
@@ -526,7 +533,6 @@
             (buffer-insert-newline buffer linum (+ col (length (car rest))))
             (incf linum)
             (setq col 0)))
-        (setf (buffer-modified-p buffer) old-modified-p)
         (make-point linum col)))
     (values result del-lines)))
 
@@ -543,6 +549,8 @@
     (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
+    (setf (buffer-undo-node buffer) 0)
+    (setf (buffer-saved-node buffer) 0)
     (setf (buffer-overlays buffer) nil)))
 
 (defun buffer-check-marked (buffer)

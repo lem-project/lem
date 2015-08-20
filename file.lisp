@@ -157,7 +157,8 @@
                         (princ line out)
                         (unless eof-p
                           (terpri out)))
-                      buffer)))
+                      buffer))
+  (buffer-save-node buffer))
 
 (defun save-file-internal (buffer)
   (run-hooks 'before-save-hook)

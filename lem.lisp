@@ -272,10 +272,17 @@
 
 (defun lem-save-error (&rest args)
   (let ((*print-circle* t))
-    (with-open-file (*error-output* *lem-error-file*
-                                    :direction :output
-                                    :if-exists :overwrite
-                                    :if-does-not-exist :create)
-      (lem-init args)
-      (lem-main)
-      (lem-finallize))))
+    (with-open-file (out *lem-error-file*
+                         :direction :output
+                         :if-exists :overwrite
+                         :if-does-not-exist :create)
+      (let ((*error-output* out))
+        (lem-init args)
+        #+sbcl
+        (handler-bind ((sb-sys:interactive-interrupt
+                        #'(lambda (c) (declare (ignore c))
+                            (sb-debug:backtrace 100 out))))
+          (lem-main))
+        #-sbcl
+        (lem-main)
+        (lem-finallize)))))

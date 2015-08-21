@@ -123,7 +123,7 @@
     (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
-    (setf (buffer-undo-node buffer) 0)
+    (setf (buffer-undo-node buffer) -1)
     (setf (buffer-saved-node buffer) 0)
     (push buffer *buffer-list*)
     buffer))
@@ -150,6 +150,7 @@
          (incf (buffer-undo-size buffer))))
   (when-interrupted-flag 
    :undo
+   (incf (buffer-undo-node buffer))
    (push :undo-separator (buffer-undo-stack buffer)))
   (push elt (buffer-undo-stack buffer)))
 
@@ -171,14 +172,11 @@
                                   (buffer-saved-node ,buffer)))))))
            (ecase *undo-mode*
              (:edit
-              (incf (buffer-undo-node ,buffer))
               (push-undo-stack ,buffer elt)
               (setf (buffer-redo-stack ,buffer) nil))
              (:undo
-              (incf (buffer-undo-node ,buffer))
               (push-undo-stack ,buffer elt))
              (:redo
-              (decf (buffer-undo-node ,buffer))
               (push-redo-stack ,buffer elt))))))))
 
 (defmacro buffer-read-only-guard (buffer)
@@ -549,7 +547,7 @@
     (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
-    (setf (buffer-undo-node buffer) 0)
+    (setf (buffer-undo-node buffer) -1)
     (setf (buffer-saved-node buffer) 0)
     (setf (buffer-overlays buffer) nil)))
 
@@ -581,6 +579,7 @@
       (do ((res #1=(buffer-undo-1 buffer) #1#)
            (pres nil res))
           ((not res) pres))
+    (decf (buffer-undo-node buffer))
     (push :undo-separator (buffer-redo-stack buffer))))
 
 (defun buffer-redo-1 (buffer)
@@ -596,6 +595,7 @@
   (prog1 (do ((res #1=(buffer-redo-1 buffer) #1#)
               (pres nil res))
              ((not res) pres))
+    (incf (buffer-undo-node buffer))
     (push :undo-separator (buffer-undo-stack buffer))))
 
 (defun buffer-get (buffer indicator &optional default)

@@ -257,15 +257,6 @@
       (abort
        (keyboard-quit)))))
 
-(defun lem-internal (args)
-  (unwind-protect
-    (handler-case
-        (handler-bind ((error #'lisp-error-clause))
-          (lem-main))
-      (error (cdt)
-             (lem-internal args)))
-    (lem-finallize)))
-
 (defun lem (&rest args)
   (labels ((f ()
               (handler-case

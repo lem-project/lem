@@ -148,6 +148,9 @@
                (1+ (length (buffer-undo-stack buffer)))))
         (t
          (incf (buffer-undo-size buffer))))
+  (when-interrupted-flag :undo
+                         (push :separator
+                               (buffer-undo-stack buffer)))
   (push elt (buffer-undo-stack buffer)))
 
 (defun push-redo-stack (buffer elt)
@@ -561,20 +564,38 @@
        (buffer-filename))
       (file-name-as-directory (pwd))))
 
-(defun buffer-undo (buffer)
+(defun buffer-undo-1 (buffer)
   (let ((elt (pop (buffer-undo-stack buffer))))
     (when elt
-      (decf (buffer-undo-size buffer))
-      (decf (buffer-undo-node buffer))
       (let ((*undo-mode* :undo))
-        (funcall elt)))))
+        (unless (eq elt :separator)
+          (decf (buffer-undo-size buffer))
+          (decf (buffer-undo-node buffer))
+          (funcall elt))))))
 
-(defun buffer-redo (buffer)
+(defun buffer-undo (buffer)
+  (loop while (eq :separator (car (buffer-undo-stack buffer)))
+    do (pop (buffer-undo-stack buffer)))
+  (prog1 (do ((res #1=(buffer-undo-1 buffer) #1#)
+              (pres nil res))
+             ((not res) pres))
+    (push :separator (buffer-redo-stack buffer))))
+
+(defun buffer-redo-1 (buffer)
   (let ((elt (pop (buffer-redo-stack buffer))))
     (when elt
-      (incf (buffer-undo-node buffer))
       (let ((*undo-mode* :redo))
-        (funcall elt)))))
+        (unless (eq elt :separator)
+          (incf (buffer-undo-node buffer))
+          (funcall elt))))))
+
+(defun buffer-redo (buffer)
+  (loop while (eq :separator (car (buffer-redo-stack buffer)))
+    do (pop (buffer-redo-stack buffer)))
+  (prog1 (do ((res #1=(buffer-redo-1 buffer) #1#)
+              (pres nil res))
+             ((not res) pres))
+    (push :separator (buffer-undo-stack buffer))))
 
 (defun buffer-get (buffer indicator &optional default)
   (getf (buffer-plist buffer) indicator default))

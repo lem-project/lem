@@ -4,15 +4,13 @@
   start
   end
   prop
-  value
   buffer)
 
-(defun make-overlay (start end &key prop value (buffer (current-buffer)))
+(defun make-overlay (start end &key prop (buffer (current-buffer)))
   (let ((overlay
          (make-overlay-internal :start start
                                 :end end
                                 :prop prop
-                                :value value
                                 :buffer buffer)))
     (buffer-add-overlay buffer overlay)
     overlay))

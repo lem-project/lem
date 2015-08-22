@@ -340,11 +340,10 @@
     for overlay in overlays
     for start = (overlay-start overlay)
     for end = (overlay-end overlay)
-    when (eq :face (overlay-prop overlay))
     do (cond ((and (= (point-linum start) (point-linum end))
                    (<= start-linum (point-linum start) end-linum))
               (set-prop-display-line disp-lines
-                                     (overlay-value overlay)
+                                     (overlay-prop overlay)
                                      start-linum
                                      (point-linum start)
                                      (point-column start)
@@ -352,7 +351,7 @@
              ((and (<= start-linum (point-linum start))
                    (<= (point-linum end) end-linum))
               (set-prop-display-line disp-lines
-                                     (overlay-value overlay)
+                                     (overlay-prop overlay)
                                      start-linum
                                      (point-linum start)
                                      (point-column start)
@@ -361,13 +360,13 @@
                 for linum from (1+ (point-linum start))
                 below (point-linum end) do
                 (set-prop-display-line disp-lines
-                                       (overlay-value overlay)
+                                       (overlay-prop overlay)
                                        start-linum
                                        linum
                                        0
                                        nil))
               (set-prop-display-line disp-lines
-                                     (overlay-value overlay)
+                                     (overlay-prop overlay)
                                      start-linum
                                      (point-linum end)
                                      0

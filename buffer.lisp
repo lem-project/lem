@@ -98,9 +98,9 @@
   undo-size
   undo-stack
   redo-stack
-  overlays
   undo-node
   saved-node
+  overlays
   plist)
 
 (defvar *undo-modes* '(:edit :undo :redo))
@@ -123,7 +123,7 @@
     (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
-    (setf (buffer-undo-node buffer) -1)
+    (setf (buffer-undo-node buffer) 0)
     (setf (buffer-saved-node buffer) 0)
     (push buffer *buffer-list*)
     buffer))
@@ -148,10 +148,6 @@
                (1+ (length (buffer-undo-stack buffer)))))
         (t
          (incf (buffer-undo-size buffer))))
-  (when-interrupted-flag 
-   :undo
-   (incf (buffer-undo-node buffer))
-   (push :undo-separator (buffer-undo-stack buffer)))
   (push elt (buffer-undo-stack buffer)))
 
 (defun push-redo-stack (buffer elt)
@@ -172,11 +168,12 @@
                                   (buffer-saved-node ,buffer)))))))
            (ecase *undo-mode*
              (:edit
+              (incf (buffer-undo-node ,buffer))
               (push-undo-stack ,buffer elt)
               (setf (buffer-redo-stack ,buffer) nil))
-             (:undo
-              (push-undo-stack ,buffer elt))
              (:redo
+              (push-undo-stack ,buffer elt))
+             (:undo
               (push-redo-stack ,buffer elt))))))))
 
 (defmacro buffer-read-only-guard (buffer)
@@ -547,7 +544,7 @@
     (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
-    (setf (buffer-undo-node buffer) -1)
+    (setf (buffer-undo-node buffer) 0)
     (setf (buffer-saved-node buffer) 0)
     (setf (buffer-overlays buffer) nil)))
 
@@ -564,43 +561,23 @@
        (buffer-filename))
       (file-name-as-directory (pwd))))
 
-(defun buffer-undo-1 (buffer)
+(defun buffer-undo (buffer)
   (let ((elt (pop (buffer-undo-stack buffer))))
     (when elt
       (decf (buffer-undo-size buffer))
-      (let ((*undo-mode* :redo))
-        (unless (eq elt :undo-separator)
-          (funcall elt))))))
-
-(defun buffer-undo (buffer)
-  (when (eq :undo-separator (car (buffer-undo-stack buffer)))
-    (pop (buffer-undo-stack buffer)))
-  (prog1
-      (do ((res #1=(buffer-undo-1 buffer) #1#)
-           (pres nil res))
-          ((not res) pres))
-    (decf (buffer-undo-node buffer))
-    (push :undo-separator (buffer-redo-stack buffer))))
-
-(defun buffer-redo-1 (buffer)
-  (let ((elt (pop (buffer-redo-stack buffer))))
-    (when elt
+      (decf (buffer-undo-node buffer))
       (let ((*undo-mode* :undo))
-        (unless (eq elt :undo-separator)
-          (funcall elt))))))
+        (funcall elt)))))
 
 (defun buffer-redo (buffer)
-  (when (eq :undo-separator (car (buffer-redo-stack buffer)))
-    (pop (buffer-redo-stack buffer)))
-  (prog1 (do ((res #1=(buffer-redo-1 buffer) #1#)
-              (pres nil res))
-             ((not res) pres))
-    (incf (buffer-undo-node buffer))
-    (push :undo-separator (buffer-undo-stack buffer))))
+  (let ((elt (pop (buffer-redo-stack buffer))))
+    (when elt
+      (incf (buffer-undo-node buffer))
+      (let ((*undo-mode* :redo))
+        (funcall elt)))))
 
 (defun buffer-get (buffer indicator &optional default)
   (getf (buffer-plist buffer) indicator default))
 
 (defun buffer-put (buffer indicator value)
   (setf (getf (buffer-plist buffer) indicator) value))
-

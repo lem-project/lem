@@ -21,7 +21,7 @@
 
 (defvar *getch-wait-flag* nil)
 
-(defvar *continue-command-flags* (list :kill :undo :abbrev))
+(defvar *continue-command-flags* (list :kill :abbrev))
 
 (defun make-flags ()
   (mapcar (lambda (sym)

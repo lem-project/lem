@@ -228,13 +228,7 @@
   (buffer-set-property #'line-remove-property buffer start end prop))
 
 (defun buffer-add-overlay (buffer overlay)
-  (setf (buffer-overlays buffer)
-        (merge 'list
-               (list overlay)
-               (buffer-overlays buffer)
-               #'<
-               :key #'(lambda (overlay)
-                        (point-linum (overlay-start overlay))))))
+  (push overlay (buffer-overlays buffer)))
 
 (defun buffer-delete-overlay (buffer overlay)
   (setf (buffer-overlays buffer)
@@ -333,7 +327,12 @@
       do (setf (aref disp-lines i)
                (list* (car elt)
                       (cons col propval)
-                      (cdr elt))))))
+                      (cdr elt))))
+    (let ((elt (aref disp-lines i)))
+      (setf (aref disp-lines i)
+            (cons (car elt)
+                  (sort (delete-duplicates (copy-list (cdr elt)) :key #'car)
+                        #'< :key #'car))))))
 
 (defun display-lines-set-overlays (disp-lines overlays start-linum end-linum)
   (loop

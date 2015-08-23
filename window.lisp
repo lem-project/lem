@@ -234,8 +234,6 @@
       do
       (if disp-line
           (destructuring-bind (str . props) disp-line
-            (when props
-              (setf props (sort props #'< :key #'car)))
             (let ((curx (window-refresh-line window y str props)))
               (when curx
                 (setq x curx))))

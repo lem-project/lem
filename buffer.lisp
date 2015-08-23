@@ -372,9 +372,8 @@
                                      0
                                      (point-column end))))))
 
-(defun buffer-display-lines (buffer start-linum nlines)
+(defun buffer-display-lines (buffer disp-lines start-linum nlines)
   (let ((end-linum (+ start-linum nlines))
-        (disp-lines (make-array nlines :initial-element (list "" nil)))
         (disp-nlines 0))
     (loop
       for linum from start-linum
@@ -386,6 +385,9 @@
            (incf disp-nlines)
            (setf (aref disp-lines i)
                  (cons str props))))
+    (loop
+      for i from disp-nlines below nlines
+      do (setf (aref disp-lines i) nil))
     (display-lines-set-overlays disp-lines
                                 (buffer-overlays buffer)
                                 start-linum

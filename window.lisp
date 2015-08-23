@@ -22,6 +22,7 @@
   y
   x
   buffer
+  disp-lines
   vtop-linum
   cur-linum
   cur-col
@@ -36,6 +37,7 @@
                         :y y
                         :x x
                         :buffer buffer
+                        :disp-lines (make-array (1- nlines) :initial-element nil)
                         :vtop-linum 1
                         :cur-linum 1
                         :cur-col 0
@@ -224,16 +226,20 @@
   (let ((x 0))
     (loop
       for y from 0
-      for (str . props) across (buffer-display-lines
-                                (window-buffer window)
-                                (window-vtop-linum window)
-                                (1- (window-nlines window)))
+      for disp-line across (buffer-display-lines
+                            (window-buffer window)
+                            (window-disp-lines window)
+                            (window-vtop-linum window)
+                            (1- (window-nlines window)))
       do
-      (when props
-        (setf props (sort props #'< :key #'car)))
-      (let ((curx (window-refresh-line window y str props)))
-        (when curx
-          (setq x curx))))
+      (if disp-line
+          (destructuring-bind (str . props) disp-line
+            (when props
+              (setf props (sort props #'< :key #'car)))
+            (let ((curx (window-refresh-line window y str props)))
+              (when curx
+                (setq x curx))))
+          (window-refresh-line window y "" nil)))
     (cl-charms/low-level:wmove (window-win window)
                                (- (window-cur-linum window)
                                   (window-vtop-linum window))
@@ -288,10 +294,9 @@
                       rem)
                    (window-x))))
       (decf (window-nlines) nlines)
-      (cl-charms/low-level:wresize
-       (window-win)
-       (window-nlines)
-       (window-ncols))
+      (window-set-size *current-window*
+                       (window-nlines)
+                       (window-ncols))
       (setf (window-vtop-linum newwin)
             (window-vtop-linum))
       (setf (window-cur-linum newwin)
@@ -336,7 +341,10 @@
 (defun window-set-size (window nlines ncols)
   (cl-charms/low-level:wresize (window-win window) nlines ncols)
   (setf (window-nlines window) nlines)
-  (setf (window-ncols window) ncols))
+  (setf (window-ncols window) ncols)
+  (setf (window-disp-lines window)
+        (make-array (1- nlines)
+                    :initial-element nil)))
 
 (defun window-move (window dy dx)
   (window-set-pos window

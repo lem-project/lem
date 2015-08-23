@@ -180,7 +180,9 @@
                   (setq paren-char c)
                   (setq count-flag t))
                  ((syntax-equal-paren-p paren-char c)
-                  (setq count-flag t)))
+                  (setq count-flag t))
+                 (t
+                  (sexp-step-char dir)))
            (when count-flag
              (if (eql type :open-paren)
                  (if dir

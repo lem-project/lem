@@ -315,12 +315,12 @@
 
 (define-key *global-keymap* (kbd "C-x]") 'next-page-char)
 (define-command next-page-char (&optional (n 1)) ("p")
-  (or (search-forward-aux (string #\page))
+  (or (search-forward (string #\page))
       (end-of-buffer)))
 
 (define-key *global-keymap* (kbd "C-x[") 'prev-page-char)
 (define-command prev-page-char (&optional (n 1)) ("p")
-  (or (search-backward-aux (string #\page))
+  (or (search-backward (string #\page))
       (beginning-of-buffer)))
 
 (define-key *global-keymap* (kbd "C-@") 'mark-set)

@@ -313,6 +313,10 @@
 (define-command up-list (&optional (n 1) no-errors) ("p")
   (scan-lists (- n) 1 no-errors))
 
+(defun top-of-defun ()
+  (loop while (up-list 1 t))
+  t)
+
 (define-key *global-keymap* (kbd "M-C-a") 'beginning-of-defun)
 (define-command beginning-of-defun (&optional (n 1) no-errors) ("p")
   (let ((arg (if (plusp n) 1 -1)))

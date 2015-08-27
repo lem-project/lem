@@ -225,6 +225,7 @@
     (setq n (minibuf-read-number "Line to GOTO: ")))
   (when (< 0 n (1+ (buffer-nlines (window-buffer))))
     (setf (window-cur-linum) n)
+    (beginning-of-line)
     (unless does-not-recenter-p
       (recenter))
     t))

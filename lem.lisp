@@ -216,6 +216,7 @@
               (char= char key::ctrl-m))
           (insert-newline 1)
           (insert-char char 1))))
+  (cl-charms/low-level:timeout -1)
   (window-update-all))
 
 (defun load-init-file ()

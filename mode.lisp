@@ -41,7 +41,8 @@
      (setf (get ',major-mode 'keymap) ,keymap)
      (setf (get ',major-mode 'syntax-table) ,syntax-table)
      (define-command ,major-mode () ()
-       (set-major-mode ',major-mode))))
+       (set-major-mode ',major-mode)
+       (syntax-scan-buffer (current-buffer)))))
 
 (defmacro define-minor-mode (minor-mode &key name keymap)
   `(progn

@@ -26,6 +26,7 @@
   (prev nil)
   (str "")
   (props nil)
+  stat
   (next nil))
 
 (defun make-line (prev next str)
@@ -38,6 +39,22 @@
 
 (defun line-set-str (line str)
   (setf (line-str line) str))
+
+(macrolet ((def (name stat-name)
+                `(progn
+                   (defun ,name (line)
+                     (eq ,stat-name (line-stat line)))
+                   (defun (setf ,name) (stat line)
+                     (setf (line-stat line)
+                           (if stat
+                               ,stat-name
+                               nil))))))
+  (def line-in-string-p     :in-string)
+  (def line-start-string-p  :start-string)
+  (def line-end-string-p    :end-string)
+  (def line-in-comment-p    :in-comment)
+  (def line-start-comment-p :start-comment)
+  (def line-end-comment-p   :end-comment))
 
 (defun line-put-property (line start end prop)
   (loop for pos from start below end
@@ -57,6 +74,9 @@
                        (and (<= start (car elt) (1- end))
                             (eql prop (cdr elt))))
                    (line-props line))))
+
+(defun line-get-property (line pos)
+  (cdr (find pos (line-props line) :key #'car)))
 
 (defun line-free (line)
   (when (line-prev line)
@@ -132,6 +152,14 @@
   (format stream "#<BUFFER ~a ~a>"
           (buffer-name buffer)
           (buffer-filename buffer)))
+
+(defun buffer-modify (buffer)
+  (if (buffer-modified-p buffer)
+      (incf (buffer-modified-p buffer))
+      (setf (buffer-modified-p buffer) 1)))
+
+(defun buffer-cmp-modified (mod1 mod2)
+  (- (or mod1 0) (or mod2 0)))
 
 (defun buffer-save-node (buffer)
   (setf (buffer-saved-node buffer)
@@ -212,7 +240,7 @@
                                      buffer
                                      prop
                                      end-linum
-                                     start-column
+                                     0
                                      end-column)
            (loop
              for linum from (1+ start-linum) below end-linum
@@ -282,6 +310,15 @@
       (values (line-str line)
               (line-props line)))))
 
+(defun map-buffer (fn buffer &optional start-linum)
+  (do ((line (if start-linum
+                 (buffer-get-line buffer start-linum)
+                 (buffer-head-line buffer))
+             (line-next line))
+       (linum (or start-linum 1) (1+ linum)))
+      ((null line))
+    (funcall fn line linum)))
+
 (defun map-buffer-lines (fn buffer &optional start end)
   (let ((head-line
          (if start
@@ -327,12 +364,7 @@
       do (setf (aref disp-lines i)
                (list* (car elt)
                       (cons col propval)
-                      (cdr elt))))
-    (let ((elt (aref disp-lines i)))
-      (setf (aref disp-lines i)
-            (cons (car elt)
-                  (sort (delete-duplicates (copy-list (cdr elt)) :key #'car)
-                        #'< :key #'car))))))
+                      (remove col (cdr elt) :key #'car))))))
 
 (defun display-lines-set-overlays (disp-lines overlays start-linum end-linum)
   (loop
@@ -374,16 +406,15 @@
 (defun buffer-display-lines (buffer disp-lines start-linum nlines)
   (let ((end-linum (+ start-linum nlines))
         (disp-nlines 0))
-    (loop
-      for linum from start-linum
-      for i from 0
-      while (and (<= linum (buffer-nlines buffer))
-                 (< i nlines))
-      do (multiple-value-bind (str props)
-             (buffer-line-string buffer linum)
-           (incf disp-nlines)
-           (setf (aref disp-lines i)
-                 (cons str props))))
+    (do ((line (buffer-get-line buffer start-linum)
+               (line-next line))
+         (i 0 (1+ i)))
+        ((or (null line)
+             (>= i nlines)))
+      (incf disp-nlines)
+      (setf (aref disp-lines i)
+            (cons (line-str line)
+                  (line-props line))))
     (loop
       for i from disp-nlines below nlines
       do (setf (aref disp-lines i) nil))
@@ -395,7 +426,7 @@
 
 (defun buffer-append-line (buffer str)
   (buffer-read-only-guard buffer)
-  (setf (buffer-modified-p buffer) t)
+  (buffer-modify buffer)
   (let* ((line (buffer-tail-line buffer))
          (newline (make-line line (line-next line) str)))
     (cond ((and (= 1 (buffer-nlines buffer))
@@ -415,7 +446,7 @@
          (with-push-undo (buffer)
            (buffer-delete-char buffer linum col 1)
            (make-point linum col))
-         (setf (buffer-modified-p buffer) t)
+         (buffer-modify buffer)
          (let ((line (buffer-get-line buffer linum)))
            (when (and (= linum (buffer-mark-linum buffer))
                       (<= col (buffer-mark-col buffer)))
@@ -432,7 +463,7 @@
   (with-push-undo (buffer)
     (buffer-delete-char buffer linum col 1)
     (make-point linum col))
-  (setf (buffer-modified-p buffer) t)
+  (buffer-modify buffer)
   (cond
    ((= (buffer-mark-linum buffer) linum)
     (incf (buffer-mark-linum buffer))
@@ -457,7 +488,7 @@
       (with-push-undo (buffer)
         (buffer-delete-char buffer linum col (length str))
         (make-point linum col)))
-    (setf (buffer-modified-p buffer) t)
+    (buffer-modify buffer)
     (when (and (= linum (buffer-mark-linum buffer))
                (<= col (buffer-mark-col buffer)))
       (incf (buffer-mark-col buffer) (length str)))
@@ -482,7 +513,7 @@
                 (if (> col (- (buffer-mark-col buffer) n))
                     col
                     (- (buffer-mark-col buffer) n))))
-        (setf (buffer-modified-p buffer) t)
+        (buffer-modify buffer)
         (setf (car del-lines)
               (concatenate 'string
                            (car del-lines)
@@ -510,7 +541,7 @@
           (return nil))
         (decf n (1+ (- (length (line-str line)) col)))
         (decf (buffer-nlines buffer))
-        (setf (buffer-modified-p buffer) t)
+        (buffer-modify buffer)
         (line-set-str
          line
          (concatenate 'string
@@ -536,7 +567,7 @@
 
 (defun buffer-erase (buffer)
   (buffer-read-only-guard buffer)
-  (setf (buffer-modified-p buffer) t)
+  (buffer-modify buffer)
   (let ((line (make-line nil nil "")))
     (setf (buffer-head-line buffer) line)
     (setf (buffer-tail-line buffer) line)

@@ -64,6 +64,7 @@
 
 (define-key *global-keymap* (kbd "C-l") 'recenter)
 (define-command recenter () ()
+  (syntax-scan-window *current-window*)
   (dolist (window *window-list*)
     (cl-charms/low-level:clearok (window-win window) 1))
   (window-recenter *current-window*)

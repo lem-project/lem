@@ -3,6 +3,9 @@
 (export '(syntax-table
           make-syntax-table))
 
+(defvar *string-color* *green*)
+(defvar *comment-color* *red*)
+
 (defstruct syntax-table
   (space-chars '(#\space #\tab #\newline))
   (symbol-chars '(#\_))
@@ -81,3 +84,124 @@
 
 (defun syntax-end-block-comment-p (c1 c2)
   (syntax-start-block-comment-p c2 c1))
+
+(defun syntax-scan-window (window)
+  (let* ((buffer (window-buffer window))
+         (start-linum (window-vtop-linum window))
+         (end-linum (+ start-linum (window-nlines window)))
+         (line (buffer-get-line buffer start-linum))
+         (prev (line-prev line))
+         (in-string-p (and prev
+                           (or (line-start-string-p prev)
+                               (line-in-string-p prev))))
+         (in-comment-p (and prev
+                            (or (line-start-comment-p prev)
+                                (line-in-comment-p prev)))))
+    (do ((line line (line-next line))
+         (linum start-linum (1+ linum)))
+        ((or (null line)
+             (= linum end-linum)))
+      (multiple-value-setq (in-string-p in-comment-p)
+                           (syntax-scan-line line
+                                             in-string-p
+                                             in-comment-p)))))
+
+(defun syntax-scan-string (line col)
+  (let ((str (line-str line))
+        (start-col col))
+    (do ((i col (1+ i)))
+        ((>= i (length str))
+         (line-put-property line start-col i *string-color*)
+         (return (values i nil)))
+      (let ((c (schar str i)))
+        (cond ((syntax-escape-char-p c)
+               (incf i))
+              ((syntax-string-quote-char-p c)
+               (line-put-property line
+                                  start-col
+                                  (1+ i)
+                                  *string-color*)
+               (return (values i t))))))))
+
+(defun syntax-scan-block-comment (line col)
+  (let ((str (line-str line))
+        (start-col col))
+    (do ((i1 col i2)
+         (i2 (1+ col) (1+ i2)))
+        ((>= i2 (length str))
+         (line-put-property line start-col i2 *comment-color*)
+         (values i2 nil))
+      (let ((c1 (schar str i1))
+            (c2 (schar str i2)))
+        (cond ((syntax-escape-char-p c1)
+               (incf i1)
+               (incf i2))
+              ((syntax-end-block-comment-p c1 c2)
+               (line-put-property line
+                                  start-col
+                                  (1+ i2)
+                                  *comment-color*)
+               (return (values i2 t))))))))
+
+(defun syntax-scan-line (line in-string-p in-comment-p)
+  (setf (line-props line) nil)
+  (let ((start-col 0))
+    (cond (in-string-p
+           (multiple-value-bind (i found-term-p)
+               (syntax-scan-string line 0)
+             (cond (found-term-p
+                    (setf (line-end-string-p line) t))
+                   (t
+                    (setf (line-in-string-p line) t)
+                    (return-from syntax-scan-line
+                      (values t nil))))
+             (setq start-col (1+ i))))
+          (in-comment-p
+           (multiple-value-bind (i found-term-p)
+               (syntax-scan-block-comment line 0)
+             (cond (found-term-p
+                    (setf (line-end-comment-p line) t))
+                   (t
+                    (setf (line-in-comment-p line) t)
+                    (return-from syntax-scan-line
+                      (values nil t))))
+             (setq start-col (1+ i)))))
+    (let ((str (line-str line)))
+      (do ((i start-col (1+ i)))
+          ((>= i (length str)))
+        (let ((c (schar str i)))
+          (cond ((syntax-escape-char-p c)
+                 (incf i))
+                ((syntax-string-quote-char-p c)
+                 (line-put-property line i (1+ i) *string-color*)
+                 (multiple-value-bind (j found-term-p)
+                     (syntax-scan-string line (1+ i))
+                   (setq i j)
+                   (unless found-term-p
+                     (setf (line-start-string-p line) t)
+                     (return (values t nil)))))
+                ((syntax-start-block-comment-p c (safe-aref str (1+ i)))
+                 (line-put-property line i (+ i 2) *comment-color*)
+                 (multiple-value-bind (j found-term-p)
+                     (syntax-scan-block-comment line (+ i 2))
+                   (setq i j)
+                   (unless found-term-p
+                     (setf (line-start-comment-p line) t)
+                     (return (values nil t)))))
+                ((syntax-line-comment-p c (safe-aref str (1+ i)))
+                 (line-put-property line
+                                    i
+                                    (length str)
+                                    *comment-color*)
+                 (return))))))))
+
+(defun syntax-scan-buffer (buffer)
+  (let ((in-string-p)
+        (in-comment-p))
+    (map-buffer #'(lambda (line linum)
+                    (declare (ignore linum))
+                    (multiple-value-setq (in-string-p in-comment-p)
+                                         (syntax-scan-line line
+                                                           in-string-p
+                                                           in-comment-p)))
+                buffer)))

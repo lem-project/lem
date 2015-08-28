@@ -174,14 +174,23 @@
         (list (input-char
                (char-code c))))))
 
-(defun execute (key)
-  (let* ((keymap (current-mode-keymap))
-         (cmd (mode-find-keybind key)))
-    (if cmd
-        (if (cmd-call cmd *universal-argument*)
-            t
-            (setq *macro-running-p* nil))
-        (key-undef-hook keymap key))))
+(let ((require-scanbuf (gensym)))
+  (defun execute (key)
+    (let* ((keymap (current-mode-keymap))
+           (cmd (mode-find-keybind key))
+           (buffer (window-buffer))
+           (prev-modified (buffer-modified-p buffer)))
+      (prog1 (if cmd
+                 (or (cmd-call cmd *universal-argument*)
+                     (setq *macro-running-p* nil))
+                 (key-undef-hook keymap key))
+        (when (and (not *macro-running-p*)
+                   (eq buffer (window-buffer)))
+          (syntax-scan-window *current-window*)
+;          (let ((curr-modified (buffer-modified-p (window-buffer))))
+;            (when (plusp (buffer-cmp-modified curr-modified prev-modified))
+;              (syntax-scan-window *current-window*)))
+          )))))
 
 (defun main-step ()
   (let ((key (input-key)))

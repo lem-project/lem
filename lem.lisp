@@ -32,7 +32,9 @@
                        (keys
                         (pop keys))
                        (t
-                        (cl-charms/low-level:wgetch (window-win)))))
+                        (loop for result = (cl-charms/low-level:wgetch (window-win))
+                           while (minusp result)
+                           finally (return result)))))
            (char (code-char code)))
       (when *macro-recording-p*
         (push char *macro-chars*))

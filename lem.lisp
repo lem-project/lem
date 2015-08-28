@@ -179,7 +179,8 @@
     (let* ((keymap (current-mode-keymap))
            (cmd (mode-find-keybind key))
            (buffer (window-buffer))
-           (prev-modified (buffer-modified-p buffer)))
+           (prev-modified (buffer-modified-p buffer))
+           (prev-window-vtop-linum (window-vtop-linum)))
       (prog1 (if cmd
                  (or (cmd-call cmd *universal-argument*)
                      (setq *macro-running-p* nil))
@@ -187,7 +188,12 @@
         (when (and (not *macro-running-p*)
                    (eq buffer (window-buffer)))
           (let ((curr-modified (buffer-modified-p (window-buffer))))
-            (when (plusp (buffer-cmp-modified curr-modified prev-modified))
+            (when (or (plusp (buffer-cmp-modified
+                              curr-modified
+                              prev-modified))
+                      (/= prev-window-vtop-linum
+                          (window-vtop-linum))
+                      (/= 0 (window-offset-view *current-window*)))
               (syntax-scan-window *current-window*))))))))
 
 (defun main-step ()
@@ -302,7 +308,10 @@
         (lem-init args)
         #+sbcl
         (handler-bind ((sb-sys:interactive-interrupt
-                        #'(lambda (c) (declare (ignore c))
+                        #'(lambda (c)
+                            (sb-debug:backtrace 100 out)))
+                       (error
+                        #'(lambda (c)
                             (sb-debug:backtrace 100 out))))
           (lem-main))
         #-sbcl

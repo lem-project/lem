@@ -147,7 +147,10 @@
                                           (buffer-minor-modes
                                            (window-buffer)))))
                           (window-cur-linum window)
-                          (window-cur-col window)
+                          (str-width (buffer-line-string
+                                      (window-buffer window)
+                                      (window-cur-linum window))
+                                     (window-cur-col window))
                           (window-posline window))))
     (cl-charms/low-level:mvwaddstr (window-win window)
                                    (1- (window-nlines window))

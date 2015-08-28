@@ -118,7 +118,7 @@
           (when (or (not (eq prop (line-get-property line pos)))
                     (< pos 0))
             (return-from parallel-string-quote
-              (pdebug (schar str (1+ pos))))))))))
+              (schar str (1+ pos)))))))))
 
 (defun syntax-scan-string (line col multiple-lines-p parallel-char)
   (let ((str (line-str line))

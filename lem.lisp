@@ -230,6 +230,18 @@
 
 (defun lem-init (args)
   (cl-charms/low-level:initscr)
+  (when (/= 0 (cl-charms/low-level:has-colors))
+    (cl-charms/low-level:start-color)
+    (cl-charms/low-level:use-default-colors)
+    (loop
+      for (i . color)
+      in (list (cons *yellow*  cl-charms/low-level:color_yellow)
+               (cons *green*   cl-charms/low-level:color_green)
+               (cons *blue*    cl-charms/low-level:color_blue)
+               (cons *magenta* cl-charms/low-level:color_magenta)
+               (cons *red*     cl-charms/low-level:color_red)
+               (cons *cyan*    cl-charms/low-level:color_cyan))
+      do (cl-charms/low-level:init-pair i color -1)))
   (cl-charms/low-level:noecho)
   (cl-charms/low-level:cbreak)
   (cl-charms/low-level:raw)

@@ -8,6 +8,13 @@
 
 (defvar *program-name* "Lem")
 
+(defvar *yellow* 1)
+(defvar *green* 2)
+(defvar *blue* 3)
+(defvar *magenta* 4)
+(defvar *red* 5)
+(defvar *cyan* 6)
+
 (defvar *window-list*)
 (defvar *current-window*)
 (defvar *buffer-list* nil)

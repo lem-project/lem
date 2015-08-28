@@ -120,7 +120,7 @@
             (return-from parallel-string-quote
               (pdebug (schar str (1+ pos))))))))))
 
-(defun syntax-scan-string (line col block-comment-p)
+(defun syntax-scan-string (line col multiple-lines-p parallel-char)
   (let ((str (line-str line))
         (start-col col))
     (do ((i col (1+ i)))
@@ -131,8 +131,9 @@
         (cond ((syntax-escape-char-p c)
                (incf i))
               ((and (syntax-string-quote-char-p c)
-                    (or (not block-comment-p)
-                        (eql c (parallel-string-quote line))))
+                    (eql c (if (not multiple-lines-p)
+                               parallel-char
+                               (parallel-string-quote line))))
                (line-put-property line
                                   start-col
                                   (1+ i)
@@ -164,7 +165,7 @@
   (let ((start-col 0))
     (cond (in-string-p
            (multiple-value-bind (i found-term-p)
-               (syntax-scan-string line 0 t)
+               (syntax-scan-string line 0 t nil)
              (cond (found-term-p
                     (setf (line-end-string-p line) t))
                    (t
@@ -192,7 +193,7 @@
                 ((syntax-string-quote-char-p c)
                  (line-put-property line i (1+ i) *string-color*)
                  (multiple-value-bind (j found-term-p)
-                     (syntax-scan-string line (1+ i) nil)
+                     (syntax-scan-string line (1+ i) nil c)
                    (setq i j)
                    (unless found-term-p
                      (setf (line-start-string-p line) t)

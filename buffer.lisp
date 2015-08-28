@@ -647,3 +647,6 @@
 
 (defun buffer-put (buffer indicator value)
   (setf (getf (buffer-plist buffer) indicator) value))
+
+(defun buffer-empty-plist ()
+  (setf (buffer-plist buffer) nil))

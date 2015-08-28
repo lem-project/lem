@@ -106,7 +106,21 @@
                                              in-string-p
                                              in-comment-p)))))
 
-(defun syntax-scan-string (line col)
+(defun parallel-string-quote (line)
+  (do ((line #1=(line-prev line) #1#))
+      ((null line))
+    (when (line-start-string-p line)
+      (let* ((str (line-str line))
+             (len (length str))
+             (prop (line-get-property line (1- len))))
+        (do ((pos (- len 2) (1- pos)))
+            (nil)
+          (when (or (not (eq prop (line-get-property line pos)))
+                    (< pos 0))
+            (return-from parallel-string-quote
+              (pdebug (schar str (1+ pos))))))))))
+
+(defun syntax-scan-string (line col block-comment-p)
   (let ((str (line-str line))
         (start-col col))
     (do ((i col (1+ i)))
@@ -116,7 +130,9 @@
       (let ((c (schar str i)))
         (cond ((syntax-escape-char-p c)
                (incf i))
-              ((syntax-string-quote-char-p c)
+              ((and (syntax-string-quote-char-p c)
+                    (or (not block-comment-p)
+                        (eql c (parallel-string-quote line))))
                (line-put-property line
                                   start-col
                                   (1+ i)
@@ -148,7 +164,7 @@
   (let ((start-col 0))
     (cond (in-string-p
            (multiple-value-bind (i found-term-p)
-               (syntax-scan-string line 0)
+               (syntax-scan-string line 0 t)
              (cond (found-term-p
                     (setf (line-end-string-p line) t))
                    (t
@@ -166,6 +182,7 @@
                     (return-from syntax-scan-line
                       (values nil t))))
              (setq start-col (1+ i)))))
+    (line-clear-stat line)
     (let ((str (line-str line)))
       (do ((i start-col (1+ i)))
           ((>= i (length str)))
@@ -175,7 +192,7 @@
                 ((syntax-string-quote-char-p c)
                  (line-put-property line i (1+ i) *string-color*)
                  (multiple-value-bind (j found-term-p)
-                     (syntax-scan-string line (1+ i))
+                     (syntax-scan-string line (1+ i) nil)
                    (setq i j)
                    (unless found-term-p
                      (setf (line-start-string-p line) t)

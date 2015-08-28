@@ -40,6 +40,9 @@
 (defun line-set-str (line str)
   (setf (line-str line) str))
 
+(defun line-clear-stat (line)
+  (setf (line-stat line) nil))
+
 (macrolet ((def (name stat-name)
                 `(progn
                    (defun ,name (line)

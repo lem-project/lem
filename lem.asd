@@ -44,4 +44,5 @@
                         :cl-fad
                         #+sbcl :sb-posix
                         :bordeaux-threads
-                        :trivial-gray-streams))
+                        :trivial-gray-streams
+                        :cl-ppcre))

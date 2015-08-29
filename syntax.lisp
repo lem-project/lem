@@ -6,7 +6,7 @@
 (defvar *string-color* *green*)
 (defvar *comment-color* *red*)
 
-(defstruct syntax-table
+(defstruct (syntax-table (:constructor make-syntax-table-internal))
   (space-chars '(#\space #\tab #\newline))
   (symbol-chars '(#\_))
   (paren-alist '((#\( . #\))
@@ -18,7 +18,17 @@
   line-comment-preceding-char
   line-comment-following-char
   block-comment-preceding-char
-  block-comment-following-char)
+  block-comment-following-char
+  keywords)
+
+(defun make-syntax-table (&rest args)
+  (let ((syntax-table (apply #'make-syntax-table-internal args)))
+    (setf (syntax-table-keywords syntax-table)
+          (mapcar #'(lambda (elt)
+                      (cons (cl-ppcre:create-scanner (car elt))
+                            (cdr elt)))
+                  (syntax-table-keywords syntax-table)))
+    syntax-table))
 
 (defun syntax-word-char-p (c)
   (and (characterp c)
@@ -160,6 +170,38 @@
                                   *comment-color*)
                (return (values i2 t))))))))
 
+(defun syntax-match-word (line start end)
+  (let ((elt
+         (find (subseq (line-str line) start end)
+               (syntax-table-keywords (current-syntax))
+               :test #'(lambda (a b)
+                         (cl-ppcre:scan b a))
+               :key #'car)))
+    (when elt
+      (line-put-property line start end (cdr elt)))))
+
+(defun syntax-scan-word (line start)
+  (let* ((str (line-str line))
+         (c (schar str start)))
+    (cond ((or (syntax-open-paren-char-p c)
+               (syntax-closed-paren-char-p c))
+           (syntax-match-word line start (1+ start))
+           start)
+          (t
+           (let ((end
+                  (do ((i start (1+ i)))
+                      ((>= i (length str)) i)
+                    (unless (syntax-symbol-char-p (schar str i))
+                      (return i)))))
+             (syntax-match-word line start end)
+             end)))))
+
+(defun syntax-scan-whitespaces (str i)
+  (do ((i i (1+ i)))
+      ((or (>= i (length str))
+           (not (syntax-space-char-p (schar str i))))
+       i)))
+
 (defun syntax-scan-line (line in-string-p in-comment-p)
   (setf (line-props line) nil)
   (let ((start-col 0))
@@ -187,6 +229,9 @@
     (let ((str (line-str line)))
       (do ((i start-col (1+ i)))
           ((>= i (length str)))
+        (when (<= (length str)
+                  (setq i (syntax-scan-whitespaces str i)))
+          (return))
         (let ((c (schar str i)))
           (cond ((syntax-escape-char-p c)
                  (incf i))
@@ -211,7 +256,9 @@
                                     i
                                     (length str)
                                     *comment-color*)
-                 (return))))))))
+                 (return))
+                (t
+                 (setq i (syntax-scan-word line i)))))))))
 
 (defun syntax-scan-buffer (buffer)
   (let ((in-string-p)

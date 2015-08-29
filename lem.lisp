@@ -312,6 +312,8 @@
                             (sb-debug:backtrace 100 out)))
                        (error
                         #'(lambda (c)
+                            (princ c out)
+                            (terpri out)
                             (sb-debug:backtrace 100 out))))
           (lem-main))
         #-sbcl

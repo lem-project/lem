@@ -152,12 +152,14 @@
 
 (defun skip-symbol (dir)
   (loop
-    (case (sexp-get-syntax-type dir)
-      ((:symbol :expr-prefix :escape)
-       (unless (sexp-step-char dir)
-         (return)))
-      (t
-       (return t)))))
+    (if (bobp)
+        (return t)
+        (case (sexp-get-syntax-type dir)
+          ((:symbol :expr-prefix :escape)
+           (unless (sexp-step-char dir)
+             (return)))
+          (t
+           (return t))))))
 
 (defun skip-symbol-forward ()
   (skip-symbol t))

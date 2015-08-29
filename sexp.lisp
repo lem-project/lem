@@ -152,7 +152,7 @@
 
 (defun skip-symbol (dir)
   (loop
-    (if (bobp)
+    (if (and (null dir) (bobp))
         (return t)
         (case (sexp-get-syntax-type dir)
           ((:symbol :expr-prefix :escape)

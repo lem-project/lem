@@ -3,44 +3,61 @@
 #|
 exec ros -Q -- $0 "$@"
 |#
+(load (make-pathname :defaults *load-pathname* :name "lem" :type "asd"))
+(ql:quickload :lem :silent t)
 
-(require :lem)
+#+sbcl
+(defun require-builtin-modules ()
+  (loop for i in (remove "sb-mpfr"
+                         (loop with result
+                            for i in (directory (format nil "~A/contrib/*.*" (sb-posix:getenv "SBCL_HOME")))
+                            do (pushnew (pathname-name i) result :test 'equal)
+                            finally (return (nreverse result))) :test 'string-equal)
+     do (require i)))
 
 (defun usage ()
-  (format t "usage: lem.ros [OPTION]... [FILE]...
--b --build
--db --debug-build
--d --debug
--h --help
-"))
+  (format t "~{~A~%~}" '("usage: lem.ros [OPTION]... [FILE]..."
+                         #+sbcl "-b --build"
+                         #+sbcl "-db --debug-build"
+                         "-d --debug"
+                         "-h --help")))
 
 (defun main (&rest argv)
   (let ((debug-flag)
         (filenames))
-    (dolist (arg argv)
-      (cond ((or (string= "--build" arg)
-                 (string= "-b" arg))
-             (sb-ext:save-lisp-and-die
-              "lem"
-              :toplevel #'(lambda () (apply 'lem::lem (lem::argv)))
-              :executable t))
-            ((or (string= "--debug-build" arg)
-                 (string= "-db" arg))
-             (sb-ext:save-lisp-and-die
-              "lem-dbg"
-              :toplevel #'(lambda ()
-                            (let ((lem::*program-name* "lem dbg"))
-                              (apply 'lem::lem-save-error (lem::argv))))
-              :executable t))
-            ((or (string= "--debug" arg)
-                 (string= "-d" arg))
-             (setq debug-flag t))
-            ((or (string= "--help" arg)
-                 (string= "-h" arg))
-             (usage)
-             (return-from main))
-            (t
-             (push arg filenames))))
+    (loop for arg- on argv
+       for arg = (first arg-)
+       do (cond #+sbcl
+                ((or (string= "--build" arg)
+                     (string= "-b" arg))
+                 (require-builtin-modules)
+                 (sb-ext:save-lisp-and-die
+                  (if (second arg-) (second arg-) "lem")
+                  :toplevel #'(lambda ()
+                                (sb-posix:unsetenv "SBCL_HOME")
+                                (apply 'lem::lem (lem::argv)))
+                  :executable t))
+                #+sbcl
+                ((or (string= "--debug-build" arg)
+                     (string= "-db" arg))
+                 (require-builtin-modules)
+                 (sb-ext:save-lisp-and-die
+                  (if (second arg-) (second arg-) "lem-dbg")
+                  :toplevel #'(lambda ()
+                                (sb-posix:unsetenv "SBCL_HOME")
+                                (let ((lem::*program-name* "lem dbg"))
+                                  (apply 'lem::lem-save-error (lem::argv))))
+                  :executable t)
+                 (error "build not supported."))
+                ((or (string= "--debug" arg)
+                     (string= "-d" arg))
+                 (setq debug-flag t))
+                ((or (string= "--help" arg)
+                     (string= "-h" arg))
+                 (usage)
+                 (return-from main))
+                (t
+                 (push arg filenames))))
     (setq filenames (nreverse filenames))
     (if debug-flag
         (let ((lem::*program-name* "lem dbg"))

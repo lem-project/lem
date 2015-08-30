@@ -121,15 +121,27 @@
 
 (define-key *global-keymap* (kbd "C-xe") 'execute-macro)
 (define-command execute-macro (n) ("p")
-  (let ((*macro-running-p* t)
-        (*universal-argument* nil))
-    (loop repeat n while *macro-running-p* do
-      (let ((length (getch-count-ungetch)))
-        (dolist (c *macro-chars*)
-          (ungetch c))
-        (loop while (and *macro-running-p*
-                         (< length (getch-count-ungetch)))
-          do (main-step))))))
+  (cond (*macro-recording-p*
+         (minibuf-print "Macro already active")
+         nil)
+        (*macro-running-p*
+         nil)
+        (t
+         (let ((*macro-running-p* t)
+               (*universal-argument* nil))
+           (loop
+             :named outer
+             :repeat n
+             :while *macro-running-p*
+             :do (let ((length (getch-count-ungetch)))
+                   (dolist (c *macro-chars*)
+                     (ungetch c))
+                   (loop :while (< length (getch-count-ungetch)) :do
+                     (unless *macro-running-p*
+                       (loop :while (< length (getch-count-ungetch)) :do (getch))
+                       (return-from outer nil))
+                     (main-step)))
+             :finally (return-from outer t))))))
 
 (define-command apply-macro-to-region-lines () ()
   (apply-region-lines (region-beginning)

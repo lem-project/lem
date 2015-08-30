@@ -501,7 +501,7 @@
      (insert-string string))))
 
 (defvar *scratch-mode-keymap*
-  (make-keymap "scartch" 'undefined-key *lisp-mode-keymap*))
+  (make-keymap "scratch" 'undefined-key *lisp-mode-keymap*))
 
 (define-major-mode scratch-mode
   :name "scratch-mode"

@@ -10,8 +10,7 @@
           define-minor-mode))
 
 (defun major-mode ()
-  (or (buffer-major-mode (window-buffer))
-      'fundamental-mode))
+  (buffer-major-mode (window-buffer)))
 
 (defun (setf major-mode) (new-val)
   (setf (buffer-major-mode (window-buffer)) new-val))

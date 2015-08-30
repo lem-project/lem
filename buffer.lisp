@@ -134,7 +134,8 @@
   (let ((buffer (make-instance 'buffer
                                :name name
                                :filename filename
-                               :read-only-p read-only-p))
+                               :read-only-p read-only-p
+                               :major-mode 'fundamental-mode))
         (line (make-line nil nil "")))
     (setf (buffer-head-line buffer) line)
     (setf (buffer-tail-line buffer) line)

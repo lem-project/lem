@@ -56,9 +56,20 @@
         (incf (buffer-output-stream-column stream)))))
 
 (defun %write-string-to-buffer-stream (stream string start end &key)
-  (let ((string (subseq string start end)))
-    (loop :for c :across string :do
-       (trivial-gray-streams:stream-write-char stream c))
+  (let ((strings
+         (split-string (subseq string start end)
+                       #\newline)))
+    (do ((s strings (cdr s)))
+        ((null s))
+      (buffer-insert-line (buffer-output-stream-buffer stream)
+                          (buffer-output-stream-linum stream)
+                          (buffer-output-stream-column stream)
+                          (car s))
+      (cond ((cdr s)
+             (incf (buffer-output-stream-linum stream))
+             (setf (buffer-output-stream-column stream) 0))
+            (t
+             (incf (buffer-output-stream-column stream) (length (car s))))))
     string))
 
 (defun %write-octets-to-buffer-stream (stream octets start end &key)
@@ -70,7 +81,6 @@
 (defmethod trivial-gray-streams:stream-write-sequence
     ((stream buffer-output-stream)
      sequence start end &key)
-  (print (type-of sequence))
   (etypecase sequence
     (string
      (%write-string-to-buffer-stream stream sequence start end))
@@ -81,10 +91,7 @@
     ((stream buffer-output-stream)
      (string string)
      &optional (start 0) end)
-  (map 'string
-       (lambda (c)
-         (trivial-gray-streams:stream-write-char stream c))
-       (subseq string start end)))
+  (%write-string-to-buffer-stream stream string start end))
 
 (defmethod trivial-gray-streams:stream-terpri ((stream buffer-output-stream))
   (prog1 (buffer-insert-newline (buffer-output-stream-buffer stream)

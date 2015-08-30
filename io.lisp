@@ -55,13 +55,27 @@
           (setf (buffer-output-stream-column stream) 0))
         (incf (buffer-output-stream-column stream)))))
 
+(defun %write-string-to-buffer-stream (stream string start end &key)
+  (let ((string (subseq string start end)))
+    (loop :for c :across string :do
+       (trivial-gray-streams:stream-write-char stream c))
+    string))
+
+(defun %write-octets-to-buffer-stream (stream octets start end &key)
+  (let ((octets (subseq octets start end)))
+    (loop :for c :across octets :do
+       (trivial-gray-streams:stream-write-byte stream c))
+    octets))
+
 (defmethod trivial-gray-streams:stream-write-sequence
     ((stream buffer-output-stream)
      sequence start end &key)
-  (map (type-of sequence)
-       (lambda (c)
-         (trivial-gray-streams:stream-write-byte stream c))
-       (subseq sequence start end)))
+  (print (type-of sequence))
+  (etypecase sequence
+    (string
+     (%write-string-to-buffer-stream stream sequence start end))
+    ((array (unsigned-byte 8) (*))
+     (%write-octets-to-buffer-stream stream sequence start end))))
 
 (defmethod trivial-gray-streams:stream-write-string
     ((stream buffer-output-stream)

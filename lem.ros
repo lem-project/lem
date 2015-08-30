@@ -28,7 +28,9 @@ exec ros -Q -- $0 "$@"
                  (string= "-db" arg))
              (sb-ext:save-lisp-and-die
               "lem-dbg"
-              :toplevel #'(lambda () (apply 'lem::lem-save-error (lem::argv)))
+              :toplevel #'(lambda ()
+                            (let ((lem::*program-name* "lem dbg"))
+                              (apply 'lem::lem-save-error (lem::argv))))
               :executable t))
             ((or (string= "--debug" arg)
                  (string= "-d" arg))

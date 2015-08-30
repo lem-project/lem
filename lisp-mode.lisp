@@ -489,9 +489,10 @@
     t))
 
 (defun info-pop-to-buffer (buffer &optional fn)
-  (buffer-put buffer :popup (one-window-p))
-  (setq *current-window* (popup buffer fn t nil))
-  (info-mode))
+  (let ((one-window-p (one-window-p)))
+    (setq *current-window* (popup buffer fn t nil))
+    (info-mode)
+    (buffer-put buffer :popup one-window-p)))
 
 (defun info-popup (buffer-name string)
   (info-pop-to-buffer

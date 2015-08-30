@@ -583,7 +583,8 @@
     (setf (buffer-redo-stack buffer) nil)
     (setf (buffer-undo-node buffer) 0)
     (setf (buffer-saved-node buffer) 0)
-    (setf (buffer-overlays buffer) nil)))
+    (setf (buffer-overlays buffer) nil)
+    (setf (buffer-plist buffer) nil)))
 
 (defun buffer-check-marked (buffer)
   (if (buffer-mark-linum buffer)

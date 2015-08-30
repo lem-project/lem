@@ -15,7 +15,7 @@
   (do () ((in-word-p (following-char)))
     (unless (funcall fn)
       (return)))
-  (do () ((not (in-word-p (following-char))))
+  (do () ((not (in-word-p (following-char))) t)
     (unless (funcall fn)
       (return))))
 
@@ -23,7 +23,7 @@
   (do () ((in-word-p (preceding-char)))
     (unless (funcall fn)
       (return)))
-  (do () ((not (in-word-p (preceding-char))))
+  (do () ((not (in-word-p (preceding-char))) t)
     (unless (funcall fn)
       (return))))
 

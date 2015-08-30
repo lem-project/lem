@@ -103,6 +103,8 @@
    :string-quote-chars '(#\")
    :escape-chars '(#\\)
    :expr-prefix-chars '(#\' #\, #\@ #\# #\`)
+   :expr-prefix-forward-function 'lisp-mode-skip-expr-prefix-forward
+   :expr-prefix-backward-function 'lisp-mode-skip-expr-prefix-backward
    :line-comment-preceding-char #\;
    :block-comment-preceding-char #\#
    :block-comment-following-char #\|
@@ -181,6 +183,26 @@
   :name "lisp-mode"
   :keymap *lisp-mode-keymap*
   :syntax-table *lisp-syntax-table*)
+
+(defun lisp-mode-skip-expr-prefix-forward ()
+  (let ((c1 (char-after 0))
+        (c2 (char-after 1)))
+    (when c1
+      (multiple-value-bind (_ dispatch-char-p)
+          (get-macro-character c1)
+        (when (and dispatch-char-p
+                   (get-dispatch-macro-character c1 c2))
+          (next-char 2))))))
+
+(defun lisp-mode-skip-expr-prefix-backward ()
+  (let ((c1 (char-before 2))
+        (c2 (char-before 1)))
+    (when c1
+      (multiple-value-bind (_ dispatch-char-p)
+          (get-macro-character c1)
+        (when (and dispatch-char-p
+                   (get-dispatch-macro-character c1 c2))
+          (prev-char 2))))))
 
 (defun lisp-looking-at-word ()
   (save-excursion

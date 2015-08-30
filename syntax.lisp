@@ -15,6 +15,8 @@
   (string-quote-chars '(#\" #\'))
   (escape-chars '(#\\))
   expr-prefix-chars
+  expr-prefix-forward-function
+  expr-prefix-backward-function
   line-comment-preceding-char
   line-comment-following-char
   block-comment-preceding-char
@@ -72,6 +74,14 @@
 
 (defun syntax-expr-prefix-char-p (c)
   (member c (syntax-table-expr-prefix-chars (current-syntax))))
+
+(defun syntax-skip-expr-prefix-forward ()
+  (let ((f (syntax-table-expr-prefix-forward-function (current-syntax))))
+    (if f (funcall f) t)))
+
+(defun syntax-skip-expr-prefix-backward ()
+  (let ((f (syntax-table-expr-prefix-backward-function (current-syntax))))
+    (if f (funcall f) t)))
 
 (defun equal-comment-p (a b x y)
   (and (eql a x)

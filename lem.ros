@@ -1,0 +1,46 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 "$@"
+|#
+
+(require :lem)
+
+(defun usage ()
+  (format t "usage: lem.ros [OPTION]... [FILE]...
+-b --build
+-db --debug-build
+-d --debug
+-h --help
+"))
+
+(defun main (&rest argv)
+  (let ((debug-flag)
+        (filenames))
+    (dolist (arg argv)
+      (cond ((or (string= "--build" arg)
+                 (string= "-b" arg))
+             (sb-ext:save-lisp-and-die
+              "lem"
+              :toplevel #'(lambda () (apply 'lem::lem (lem::argv)))
+              :executable t))
+            ((or (string= "--debug-build" arg)
+                 (string= "-db" arg))
+             (sb-ext:save-lisp-and-die
+              "lem-dbg"
+              :toplevel #'(lambda () (apply 'lem::lem-save-error (lem::argv)))
+              :executable t))
+            ((or (string= "--debug" arg)
+                 (string= "-d" arg))
+             (setq debug-flag t))
+            ((or (string= "--help" arg)
+                 (string= "-h" arg))
+             (usage)
+             (return-from main))
+            (t
+             (push arg filenames))))
+    (setq filenames (nreverse filenames))
+    (if debug-flag
+        (let ((lem::*program-name* "lem dbg"))
+          (apply #'lem:lem-save-error filenames))
+        (apply #'lem:lem filenames))))

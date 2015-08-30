@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(special-buffer-p
+(export '(ghost-buffer-p
+          special-buffer-p
           filter-special-buffers
           any-modified-buffer-p
           current-buffer
@@ -16,10 +17,18 @@
           next-buffer
           list-buffers))
 
-(defun special-buffer-p (buffer)
+(defun ghost-buffer-p (buffer)
   (let ((name (buffer-name buffer)))
-    (and (char= #\* (aref name 0))
+    (and (<= 3 (length name))
+         (char= #\space (aref name 0))
+         (char= #\* (aref name 1))
          (char= #\* (aref name (1- (length name)))))))
+
+(defun special-buffer-p (buffer)
+  (or (ghost-buffer-p buffer)
+      (let ((name (buffer-name buffer)))
+        (and (char= #\* (aref name 0))
+             (char= #\* (aref name (1- (length name))))))))
 
 (defun filter-special-buffers ()
   (remove-if #'special-buffer-p *buffer-list*))
@@ -141,11 +150,12 @@
                              :initial-element #\-))
                (insert-newline)
                (dolist (b *buffer-list*)
-                 (insert-string
-                  (format nil
-                          (format nil " ~a   ~a  ~a~~~dT~a~~%"
-                                  (if (buffer-modified-p b) "*" " ")
-                                  (if (buffer-read-only-p b) "*" " ")
-                                  (buffer-name b)
-                                  (+ 8 max-name-len)
-                                  (or (buffer-filename b) ""))))))))))
+                 (unless (ghost-buffer-p b)
+                   (insert-string
+                    (format nil
+                            (format nil " ~a   ~a  ~a~~~dT~a~~%"
+                                    (if (buffer-modified-p b) "*" " ")
+                                    (if (buffer-read-only-p b) "*" " ")
+                                    (buffer-name b)
+                                    (+ 8 max-name-len)
+                                    (or (buffer-filename b) "")))))))))))

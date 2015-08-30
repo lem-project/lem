@@ -108,6 +108,7 @@
   filename
   modified-p
   read-only-p
+  enable-undo-p
   major-mode
   minor-modes
   head-line
@@ -130,11 +131,12 @@
 (defvar *undo-mode* :edit)
 (defvar *undo-limit* 10000)
 
-(defun make-buffer (name &key filename read-only-p)
+(defun make-buffer (name &key filename read-only-p (enable-undo-p t))
   (let ((buffer (make-instance 'buffer
                                :name name
                                :filename filename
                                :read-only-p read-only-p
+                               :enable-undo-p enable-undo-p
                                :major-mode 'fundamental-mode))
         (line (make-line nil nil "")))
     (setf (buffer-head-line buffer) line)
@@ -156,6 +158,19 @@
   (format stream "#<BUFFER ~a ~a>"
           (buffer-name buffer)
           (buffer-filename buffer)))
+
+(defun buffer-enable-undo (buffer)
+  (setf (buffer-enable-undo-p buffer) t)
+  nil)
+
+(defun buffer-disable-undo (buffer)
+  (setf (buffer-enable-undo-p buffer) nil)
+  (setf (buffer-undo-size buffer) 0)
+  (setf (buffer-undo-stack buffer) nil)
+  (setf (buffer-redo-stack buffer) nil)
+  (setf (buffer-undo-node buffer) 0)
+  (setf (buffer-saved-node buffer) 0)
+  nil)
 
 (defun buffer-modify (buffer)
   (setf (buffer-modified-p buffer)
@@ -193,13 +208,14 @@
 (defmacro with-push-undo ((buffer) &body body)
   (let ((gmark-linum (gensym "MARK-LINUM"))
         (gmark-col (gensym "MARK-COL")))
-    `(unless (special-buffer-p ,buffer)
+    `(when (and (buffer-enable-undo-p ,buffer)
+                (not (ghost-buffer-p ,buffer)))
        (let ((,gmark-linum (buffer-mark-linum ,buffer))
              (,gmark-col (buffer-mark-col ,buffer)))
-         (let ((elt (lambda ()
-                      (setf (buffer-mark-col ,buffer) ,gmark-col)
-                      (setf (buffer-mark-linum ,buffer) ,gmark-linum)
-                      (progn ,@body))))
+         (let ((elt #'(lambda ()
+                        (setf (buffer-mark-col ,buffer) ,gmark-col)
+                        (setf (buffer-mark-linum ,buffer) ,gmark-linum)
+                        (progn ,@body))))
            (ecase *undo-mode*
              (:edit
               (when (push-undo-stack ,buffer elt)

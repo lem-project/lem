@@ -197,14 +197,14 @@
                (syntax-closed-paren-char-p c))
            (syntax-match-word line start (1+ start))
            start)
-          (t
+          ((syntax-symbol-char-p c)
            (let ((end
                   (do ((i start (1+ i)))
                       ((>= i (length str)) i)
                     (unless (syntax-symbol-char-p (schar str i))
                       (return i)))))
              (syntax-match-word line start end)
-             end)))))
+             (1- end))))))
 
 (defun syntax-scan-whitespaces (str i)
   (do ((i i (1+ i)))
@@ -268,7 +268,9 @@
                                     *comment-color*)
                  (return))
                 (t
-                 (setq i (syntax-scan-word line i)))))))))
+                 (let ((pos (syntax-scan-word line i)))
+                   (when pos
+                     (setq i pos))))))))))
 
 (defun syntax-scan-buffer (buffer)
   (let ((in-string-p)

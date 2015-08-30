@@ -188,9 +188,7 @@
         (when (and (not *macro-running-p*)
                    (eq buffer (window-buffer)))
           (let ((curr-modified (buffer-modified-p (window-buffer))))
-            (when (or (plusp (buffer-cmp-modified
-                              curr-modified
-                              prev-modified))
+            (when (or (not (eql curr-modified prev-modified))
                       (/= prev-window-vtop-linum
                           (window-vtop-linum))
                       (/= 0 (window-offset-view *current-window*)))

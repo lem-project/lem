@@ -157,12 +157,11 @@
           (buffer-filename buffer)))
 
 (defun buffer-modify (buffer)
-  (if (buffer-modified-p buffer)
-      (incf (buffer-modified-p buffer))
-      (setf (buffer-modified-p buffer) 1)))
-
-(defun buffer-cmp-modified (mod1 mod2)
-  (- (or mod1 0) (or mod2 0)))
+  (setf (buffer-modified-p buffer)
+        (if (buffer-modified-p buffer)
+            (1+ (mod (buffer-modified-p buffer)
+                     #.(floor most-positive-fixnum 2)))
+            0)))
 
 (defun buffer-save-node (buffer)
   (setf (buffer-saved-node buffer)

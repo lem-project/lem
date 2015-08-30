@@ -114,7 +114,7 @@
                         linum
                         column
                         line-pos)
-  (let ((str (format nil "~C~C ~A:~A ~A (~D, ~D)"
+  (let ((str (format nil "~C~C ~A: ~A ~A (~D, ~D)"
                      (if ronly-p #\% #\-)
                      (if modif-p #\* #\-)
                      program-name
@@ -122,14 +122,11 @@
                      modes
                      linum
                      column)))
-    (format nil "~a~v,,,va ~a ~c~c"
-            str
-            (- ncols 7 (length str))
-            bg-char
-            #\space
-            line-pos
-            bg-char
-            bg-char)))
+    (let ((n (- ncols 7 (length str))))
+      (if (minusp n)
+          (format nil "~A ~A ~C~C" str line-pos bg-char bg-char)
+          (format nil "~A~V,,,VA ~A ~C~C" str n bg-char #\space
+                  line-pos bg-char bg-char)))))
 
 (defun window-refresh-modeline (window)
   (cl-charms/low-level:wattron (window-win window)

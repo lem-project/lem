@@ -330,24 +330,22 @@
         (f))
       (lem-finallize))))
 
+#+sbcl
+(defun dump-error (condition)
+  (with-open-file (out *lem-error-file*
+                       :direction :output
+                       :if-exists :append
+                       :if-does-not-exist :create)
+    (let ((*print-circle* t))
+      (format out "~&~%~%~%~%~a~%" condition)
+      (sb-debug:backtrace 100 out))))
+
 (defun lem-save-error (&rest args)
-  (let ((*print-circle* t))
-    (with-open-file (out *lem-error-file*
-                         :direction :output
-                         :if-exists :overwrite
-                         :if-does-not-exist :create)
-      (let ((*error-output* out))
-        (lem-init args)
-        #+sbcl
-        (handler-bind ((sb-sys:interactive-interrupt
-                        #'(lambda (c)
-                            (sb-debug:backtrace 100 out)))
-                       (error
-                        #'(lambda (c)
-                            (princ c out)
-                            (terpri out)
-                            (sb-debug:backtrace 100 out))))
-          (lem-main))
-        #-sbcl
-        (lem-main)
-        (lem-finallize)))))
+  (lem-init args)
+  (unwind-protect (progn
+                    #+sbcl (handler-bind
+                               ((sb-sys:interactive-interrupt #'dump-error)
+                                (error #'dump-error))
+                             (lem-main))
+                    #-sbcl (lem-main))
+    (lem-finallize)))

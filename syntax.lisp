@@ -250,6 +250,7 @@
        i)))
 
 (defun syntax-scan-line (line in-string-p in-comment-p)
+  (declare (optimize speed))
   (setf (line-props line) nil)
   (let ((start-col 0))
     (cond (in-string-p

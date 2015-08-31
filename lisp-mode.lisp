@@ -198,6 +198,21 @@
                       :test-symbol :start-expr
                       :color *word-color*))
 
+(syntax-add-keyword *lisp-syntax-table*
+                    :string "^\\*[^*]+\\*$"
+                    :regex-p t
+                    :color *symbol-color*)
+
+(syntax-add-keyword *lisp-syntax-table*
+                    :string "^:"
+                    :regex-p t
+                    :color *keyword-color*)
+
+(syntax-add-keyword *lisp-syntax-table*
+                    :string "^&"
+                    :regex-p t
+                    :color *symbol-color*)
+
 (define-major-mode lisp-mode
   :name "lisp-mode"
   :keymap *lisp-mode-keymap*

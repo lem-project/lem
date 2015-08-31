@@ -89,10 +89,6 @@
 (defvar *lisp-mode-keymap*
   (make-keymap "lisp" 'undefined-key *global-keymap*))
 
-(defvar *word-color* *blue*)
-(defvar *symbol-color* *cyan*)
-(defvar *keyword-color* *magenta*)
-
 (defvar *lisp-syntax-table*
   (make-syntax-table
    :space-chars '(#\space #\tab #\newline)
@@ -119,10 +115,9 @@
                     :string "."
                     :regex-p t
                     :test-symbol :define-start
-                    :color *cyan*)
+                    :color *function-name-color*)
 
 (dolist (str '("defun"
-               "defvar"
                "defclass"
                "defsetf"
                "defmacro"
@@ -136,13 +131,22 @@
                       :string str
                       :regex-p nil
                       :test-symbol :start-expr
-                      :color *word-color*
+                      :color *keyword-color*
                       :matched-symbol :define-start
                       :symbol-tov 1))
+
+(syntax-add-keyword *lisp-syntax-table*
+                    :string "^define-"
+                    :regex-p t
+                    :test-symbol :start-expr
+                    :color *keyword-color*
+                    :matched-symbol :define-start
+                    :symbol-tov 1)
 
 (dolist (str '("block"
                "case"
                "ccase"
+               "defvar"
                "ecase"
                "typecase"
                "etypecase"
@@ -196,22 +200,22 @@
                       :string str
                       :regex-p nil
                       :test-symbol :start-expr
-                      :color *word-color*))
+                      :color *keyword-color*))
 
 (syntax-add-keyword *lisp-syntax-table*
                     :string "^\\*[^*]+\\*$"
                     :regex-p t
-                    :color *symbol-color*)
+                    :color *variable-color*)
 
 (syntax-add-keyword *lisp-syntax-table*
                     :string "^:"
                     :regex-p t
-                    :color *keyword-color*)
+                    :color *constant-color*)
 
 (syntax-add-keyword *lisp-syntax-table*
                     :string "^&"
                     :regex-p t
-                    :color *symbol-color*)
+                    :color *constant-color*)
 
 (define-major-mode lisp-mode
   :name "lisp-mode"

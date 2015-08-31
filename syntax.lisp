@@ -5,6 +5,10 @@
 
 (defvar *string-color* *green*)
 (defvar *comment-color* *red*)
+(defvar *keyword-color* *blue*)
+(defvar *constant-color* *magenta*)
+(defvar *function-name-color* *cyan*)
+(defvar *variable-color* *yellow*)
 
 (defstruct syntax-table
   (space-chars '(#\space #\tab #\newline))

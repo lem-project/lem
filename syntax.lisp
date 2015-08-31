@@ -12,7 +12,7 @@
   (paren-alist '((#\( . #\))
                  (#\[ . #\])
                  (#\{ . #\})))
-  (string-quote-chars '(#\" #\'))
+  (string-quote-chars '(#\"))
   (escape-chars '(#\\))
   expr-prefix-chars
   expr-prefix-forward-function

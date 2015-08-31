@@ -112,7 +112,7 @@
                     :symbol-tov 1)
 
 (syntax-add-keyword *lisp-syntax-table*
-                    :string "."
+                    :string "[^()]"
                     :regex-p t
                     :test-symbol :define-start
                     :color *function-name-color*)

@@ -121,6 +121,8 @@
 (defun syntax-end-block-comment-p (c1 c2)
   (syntax-start-block-comment-p c2 c1))
 
+(defvar *syntax-symbol-tov-list* nil)
+
 (defun syntax-scan-window (window)
   (let* ((buffer (window-buffer window))
          (start-linum (window-vtop-linum window))
@@ -132,7 +134,8 @@
                                (line-in-string-p prev))))
          (in-comment-p (and prev
                             (or (line-start-comment-p prev)
-                                (line-in-comment-p prev)))))
+                                (line-in-comment-p prev))))
+         (*syntax-symbol-tov-list*))
     (do ((line line (line-next line))
          (linum start-linum (1+ linum)))
         ((or (null line)
@@ -195,8 +198,6 @@
                                   (1+ i2)
                                   *comment-color*)
                (return (values i2 t))))))))
-
-(defvar *syntax-symbol-tov-list* nil)
 
 (defun syntax-update-symbol-tov ()
   (setq *syntax-symbol-tov-list*

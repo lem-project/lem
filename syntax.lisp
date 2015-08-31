@@ -6,7 +6,7 @@
 (defvar *string-color* *green*)
 (defvar *comment-color* *red*)
 
-(defstruct (syntax-table (:constructor make-syntax-table-internal))
+(defstruct syntax-table
   (space-chars '(#\space #\tab #\newline))
   (symbol-chars '(#\_))
   (paren-alist '((#\( . #\))
@@ -23,14 +23,26 @@
   block-comment-following-char
   keywords)
 
-(defun make-syntax-table (&rest args)
-  (let ((syntax-table (apply #'make-syntax-table-internal args)))
-    (setf (syntax-table-keywords syntax-table)
-          (mapcar #'(lambda (elt)
-                      (cons (cl-ppcre:create-scanner (car elt))
-                            (cdr elt)))
-                  (syntax-table-keywords syntax-table)))
-    syntax-table))
+(defstruct syntax-word
+  regex-p
+  test
+  test-symbol
+  color
+  matched-symbol
+  symbol-tov)
+
+(defun syntax-add-keyword (syntax-table &key
+                                        string regex-p test-symbol color
+                                        matched-symbol symbol-tov)
+  (push (make-syntax-word :test (if regex-p
+                                    (ppcre:create-scanner string)
+                                    string)
+                          :regex-p regex-p
+                          :test-symbol test-symbol
+                          :color color
+                          :matched-symbol matched-symbol
+                          :symbol-tov symbol-tov)
+        (syntax-table-keywords syntax-table)))
 
 (defun syntax-word-char-p (c)
   (and (characterp c)
@@ -180,15 +192,35 @@
                                   *comment-color*)
                (return (values i2 t))))))))
 
+(defvar *syntax-symbol-tov-list* nil)
+
+(defun syntax-update-symbol-tov ()
+  (setq *syntax-symbol-tov-list*
+        (loop :for flag-keyword :in *syntax-symbol-tov-list*
+          :if (plusp (car flag-keyword))
+          :collect (cons (1- (car flag-keyword))
+                         (cdr flag-keyword)))))
+
 (defun syntax-match-word (line start end)
   (let ((elt
          (find (subseq (line-str line) start end)
                (syntax-table-keywords (current-syntax))
-               :test #'(lambda (a b)
-                         (cl-ppcre:scan b a))
-               :key #'car)))
+               :test #'(lambda (word elt)
+                         (and (or (not (syntax-word-test-symbol elt))
+                                  (member (syntax-word-test-symbol elt)
+                                          *syntax-symbol-tov-list*
+                                          :key #'cdr))
+                              (if (syntax-word-regex-p elt)
+                                  (ppcre:scan (syntax-word-test elt) word)
+                                  (equal (syntax-word-test elt)
+                                         word)))))))
     (when elt
-      (line-put-property line start end (cdr elt)))))
+      (when (syntax-word-matched-symbol elt)
+        (push (cons (syntax-word-symbol-tov elt)
+                    (syntax-word-matched-symbol elt))
+              *syntax-symbol-tov-list*))
+      (when (syntax-word-color elt)
+        (line-put-property line start end (syntax-word-color elt))))))
 
 (defun syntax-scan-word (line start)
   (let* ((str (line-str line))
@@ -239,6 +271,7 @@
     (let ((str (line-str line)))
       (do ((i start-col (1+ i)))
           ((>= i (length str)))
+        (syntax-update-symbol-tov)
         (when (<= (length str)
                   (setq i (syntax-scan-whitespaces str i)))
           (return))

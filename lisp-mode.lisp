@@ -218,9 +218,9 @@
                     :color *constant-color*)
 
 (define-major-mode lisp-mode
-  :name "lisp-mode"
-  :keymap *lisp-mode-keymap*
-  :syntax-table *lisp-syntax-table*)
+  (:name "lisp-mode"
+   :keymap *lisp-mode-keymap*
+   :syntax-table *lisp-syntax-table*))
 
 (defun %lisp-mode-skip-expr-prefix (c1 c2 step-arg)
   (when c1
@@ -537,9 +537,10 @@
   (make-keymap "info" nil *lisp-mode-keymap*))
 
 (define-major-mode info-mode
-  :name "info-mode"
-  :keymap *info-mode-keymap*
-  :syntax-table *lisp-syntax-table*)
+  (:name "info-mode"
+   :keymap *info-mode-keymap*
+   :syntax-table *lisp-syntax-table*)
+  (buffer-disable-undo (window-buffer)))
 
 (define-key *info-mode-keymap* (kbd "q") 'info-quit)
 (define-command info-quit () ()
@@ -565,9 +566,9 @@
   (make-keymap "scratch" 'undefined-key *lisp-mode-keymap*))
 
 (define-major-mode scratch-mode
-  :name "scratch-mode"
-  :keymap *scratch-mode-keymap*
-  :syntax-table *lisp-syntax-table*)
+  (:name "scratch-mode"
+   :keymap *scratch-mode-keymap*
+   :syntax-table *lisp-syntax-table*))
 
 (define-key *scratch-mode-keymap* (kbd "C-j") 'eval-print-last-sexp)
 (define-command eval-print-last-sexp () ()

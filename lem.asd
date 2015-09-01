@@ -36,6 +36,7 @@
                         (:file "word")
                         (:file "syntax")
                         (:file "mode")
+                        (:file "info-mode")
                         (:file "sexp")
                         (:file "lisp-mode")
                         (:file "grep")

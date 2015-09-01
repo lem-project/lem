@@ -327,14 +327,6 @@
 (defun eval-from-string (str)
   (eval (string-to-exps str)))
 
-(defun lisp-error-clause (cdt)
-  (info-popup "*Error*"
-              (with-output-to-string (out)
-                (princ cdt out)
-                #+sbcl
-                (sb-debug:backtrace 100 out)))
-  cdt)
-
 (defvar *eval-thread*)
 (defvar *mi-thread*)
 

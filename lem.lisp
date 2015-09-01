@@ -318,9 +318,17 @@
        (keyboard-quit)))))
 
 (defun lem (&rest args)
-  (labels ((f ()
+  (labels ((handler (cdt)
+                    (info-popup "*Error*"
+                                (with-output-to-string (out)
+                                  (princ cdt out)
+                                  #+sbcl
+                                  (sb-debug:backtrace 100 out)))
+                    cdt)
+           (f ()
               (handler-case
-                  (handler-bind ((error #'lisp-error-clause))
+                  (handler-bind
+                      ((error #'handler))
                     (lem-main))
                 (error (cdt)
                        (f)))))

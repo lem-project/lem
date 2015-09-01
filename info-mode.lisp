@@ -17,7 +17,7 @@
     (kill-buffer (buffer-name buffer))
     t))
 
-(defun info-pop-to-buffer (buffer &optional fn)
+(defun info-popup (buffer &optional fn)
   (let ((one-window-p (one-window-p)))
     (setq *current-window*
           (popup buffer fn
@@ -26,8 +26,8 @@
     (info-mode)
     (buffer-put buffer :popup one-window-p)))
 
-(defun info-popup (buffer-name string)
-  (info-pop-to-buffer
+(defun info-popup-string (buffer-name string)
+  (info-popup
    (get-buffer-create buffer-name)
    (lambda ()
      (insert-string string))))

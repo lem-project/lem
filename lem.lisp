@@ -96,7 +96,7 @@
                  (keymap-table keymap))
         (terpri s)))
     (setf (buffer-read-only-p tmpbuf) t)
-    (info-pop-to-buffer tmpbuf)))
+    (info-popup tmpbuf)))
 
 (define-key *global-keymap* (kbd "C-x(") 'begin-macro)
 (define-command begin-macro () ()
@@ -319,11 +319,12 @@
 
 (defun lem (&rest args)
   (labels ((handler (cdt)
-                    (info-popup "*Error*"
-                                (with-output-to-string (out)
-                                  (princ cdt out)
-                                  #+sbcl
-                                  (sb-debug:backtrace 100 out)))
+                    (info-popup-string
+                     "*Error*"
+                     (with-output-to-string (out)
+                       (princ cdt out)
+                       #+sbcl
+                       (sb-debug:backtrace 100 out)))
                     cdt)
            (f ()
               (handler-case

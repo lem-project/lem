@@ -22,7 +22,7 @@
     (setq *current-window*
           (popup buffer fn
                  :goto-bob-p t
-                 :erase-p nil))
+                 :erase-p t))
     (info-mode)
     (buffer-put buffer :popup one-window-p)))
 

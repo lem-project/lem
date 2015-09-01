@@ -32,9 +32,9 @@
            (shell-command (concatenate 'string "grep -nH " str)
                           :output s))))
     (update-grep-list (split-string str #\newline))
-    (popup (get-buffer-create "*Grep*")
-           #'(lambda (out)
-               (princ str out)))))
+    (info-popup (get-buffer-create "*Grep*")
+                #'(lambda (out)
+                    (princ str out)))))
 
 (define-key *global-keymap* (kbd "M-n") 'grep-next)
 (define-command grep-next (&optional (n 1)) ("p")

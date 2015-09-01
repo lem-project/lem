@@ -92,19 +92,19 @@
       (cmd-call cmd *universal-argument*))))
 
 (define-command apropos-command (str) ("sApropos: ")
-  (popup (get-buffer-create "*Apropos*")
-         (lambda (out)
-           (dolist (name *command-names*)
-             (when (search str name)
-               (loop
-                 for (kbd keymap-name)
-                 in (search-keybind-all name)
-                 do
-                 (fresh-line out)
-                 (princ (format nil "~a~a~a~a~a"
-                                name
-                                #\tab
-                                (kbd-to-string kbd)
-                                #\tab
-                                keymap-name)
-                        out)))))))
+  (info-popup (get-buffer-create "*Apropos*")
+              (lambda (out)
+                (dolist (name *command-names*)
+                  (when (search str name)
+                    (loop
+                      for (kbd keymap-name)
+                      in (search-keybind-all name)
+                      do
+                      (fresh-line out)
+                      (princ (format nil "~a~a~a~a~a"
+                                     name
+                                     #\tab
+                                     (kbd-to-string kbd)
+                                     #\tab
+                                     keymap-name)
+                             out)))))))

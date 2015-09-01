@@ -81,7 +81,7 @@
         (keymaps (append (mapcar #'mode-keymap (buffer-minor-modes))
                          (list (mode-keymap (major-mode))
                                *global-keymap*)))
-        (tmpbuf (make-buffer "*bindings*" :read-only-p nil)))
+        (tmpbuf (get-buffer-create "*bindings*")))
     (info-popup tmpbuf
                 (lambda (s)
                   (loop :for keymap :in keymaps :do
@@ -95,8 +95,7 @@
                                          (kbd-to-string k)
                                          (symbol-name v)))
                              (keymap-table keymap))
-                    (terpri s))))
-    (setf (buffer-read-only-p tmpbuf) t)))
+                    (terpri s))))))
 
 (define-key *global-keymap* (kbd "C-x(") 'begin-macro)
 (define-command begin-macro () ()

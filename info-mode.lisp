@@ -7,7 +7,8 @@
   (:name "info-mode"
    :keymap *info-mode-keymap*
    :syntax-table (make-syntax-table))
-  (buffer-disable-undo (window-buffer)))
+  (buffer-disable-undo (window-buffer))
+  (setf (buffer-read-only-p (window-buffer)) t))
 
 (define-key *info-mode-keymap* (kbd "q") 'info-quit)
 (define-command info-quit () ()

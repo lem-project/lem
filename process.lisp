@@ -19,6 +19,6 @@
 
 (define-key *global-keymap* (kbd "C-x@") 'pipe-command)
 (define-command pipe-command (str) ("sPipe command: ")
-  (popup (get-buffer-create "*Command*")
-         #'(lambda (out)
-             (shell-command str :output out))))
+  (info-popup (get-buffer-create "*Command*")
+              #'(lambda (out)
+                  (shell-command str :output out))))

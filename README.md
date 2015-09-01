@@ -16,7 +16,7 @@ common lispで書いた小さいEmacsライクなエディタ
 sbclに対応  
 cclやeclはある程度動きますが  
 一部の機能(lisp-modeのバックトレースやevalの割り込み)に対応していません  
-依存するライブラリはcl-charms, bordeaux-threads, trivial-gray-streams
+依存するライブラリはcl-charms, bordeaux-threads, trivial-gray-streams, cl-ppcre
 
 # インストール
 quicklispの下のlocal-projects/に入れて  

@@ -9,7 +9,6 @@
           delete-current-window
           delete-window
           pop-to-buffer
-          popup-string
           grow-window
           shrink-window
           scroll-down
@@ -439,17 +438,11 @@
     (when erase-p
       (erase-buffer))
     (when output-function
-      (funcall output-function))
+      (with-open-stream (out (make-buffer-output-stream buffer))
+        (funcall output-function out)))
     (when goto-bob-p
       (beginning-of-buffer))
     (values *current-window* newwin-p)))
-
-(defun popup-string (buffer string &key (goto-bob-p t) (erase-p t))
-  (popup buffer
-         (lambda ()
-           (insert-string string))
-         :goto-bob-p goto-bob-p
-         :erase-p erase-p))
 
 (define-key *global-keymap* (kbd "C-x^") 'grow-window)
 (define-command grow-window (n) ("p")

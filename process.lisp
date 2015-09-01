@@ -19,10 +19,6 @@
 
 (define-key *global-keymap* (kbd "C-x@") 'pipe-command)
 (define-command pipe-command (str) ("sPipe command: ")
-  (let ((outstr (make-array '(0)
-                            :element-type 'character
-                            :fill-pointer t)))
-    (with-output-to-string (output outstr)
-      (shell-command str :output output))
-    (popup-string (get-buffer-create "*Command*")
-                  outstr)))
+  (popup (get-buffer-create "*Command*")
+         #'(lambda (out)
+             (shell-command str :output out))))

@@ -82,21 +82,21 @@
                          (list (mode-keymap (major-mode))
                                *global-keymap*)))
         (tmpbuf (make-buffer "*bindings*" :read-only-p nil)))
-    (with-open-stream (s (make-buffer-output-stream tmpbuf))
-      (loop :for keymap :in keymaps :do
-        (princ (lem:keymap-name keymap) s)
-        (terpri s)
-        (format s "~va~a~%" column-width "key" "binding")
-        (format s "~va~a~%" column-width "---" "-------")
-        (maphash #'(lambda (k v)
-                     (format s "~va~a~%"
-                             column-width
-                             (kbd-to-string k)
-                             (symbol-name v)))
-                 (keymap-table keymap))
-        (terpri s)))
-    (setf (buffer-read-only-p tmpbuf) t)
-    (info-popup tmpbuf)))
+    (info-popup tmpbuf
+                (lambda (s)
+                  (loop :for keymap :in keymaps :do
+                    (princ (lem:keymap-name keymap) s)
+                    (terpri s)
+                    (format s "~va~a~%" column-width "key" "binding")
+                    (format s "~va~a~%" column-width "---" "-------")
+                    (maphash #'(lambda (k v)
+                                 (format s "~va~a~%"
+                                         column-width
+                                         (kbd-to-string k)
+                                         (symbol-name v)))
+                             (keymap-table keymap))
+                    (terpri s))))
+    (setf (buffer-read-only-p tmpbuf) t)))
 
 (define-key *global-keymap* (kbd "C-x(") 'begin-macro)
 (define-command begin-macro () ()

@@ -141,22 +141,20 @@
     (let* ((buffer (get-buffer-create "*Buffers*")))
       (info-popup
        buffer
-       #'(lambda ()
-           (insert-string
-            (format nil
-                    (format nil "MOD ROL Buffer~~~dTFile~~%"
-                            (+ 8 max-name-len))))
-           (insert-string
-            (make-string (+ max-name-len max-filename-len 8)
-                         :initial-element #\-))
-           (insert-newline)
+       #'(lambda (out)
+           (format out
+                   (format nil "MOD ROL Buffer~~~dTFile~~%"
+                           (+ 8 max-name-len)))
+           (princ (make-string (+ max-name-len max-filename-len 8)
+                               :initial-element #\-)
+                  out)
+           (terpri out)
            (dolist (b *buffer-list*)
              (unless (ghost-buffer-p b)
-               (insert-string
-                (format nil
-                        (format nil " ~a   ~a  ~a~~~dT~a~~%"
-                                (if (buffer-modified-p b) "*" " ")
-                                (if (buffer-read-only-p b) "*" " ")
-                                (buffer-name b)
-                                (+ 8 max-name-len)
-                                (or (buffer-filename b) "")))))))))))
+               (format out
+                       (format nil " ~a   ~a  ~a~~~dT~a~~%"
+                               (if (buffer-modified-p b) "*" " ")
+                               (if (buffer-read-only-p b) "*" " ")
+                               (buffer-name b)
+                               (+ 8 max-name-len)
+                               (or (buffer-filename b) ""))))))))))

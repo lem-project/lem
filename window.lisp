@@ -433,22 +433,23 @@
       (set-buffer buffer)
       (values *current-window* one-p))))
 
-(defun popup (buffer &optional fn (goto-bob-p t) (erase-p t))
+(defun popup (buffer output-function &key (goto-bob-p t) (erase-p t))
   (multiple-value-bind (*current-window* newwin-p)
       (pop-to-buffer buffer)
     (when erase-p
       (erase-buffer))
-    (when fn (funcall fn))
+    (when output-function
+      (funcall output-function))
     (when goto-bob-p
       (beginning-of-buffer))
     (values *current-window* newwin-p)))
 
-(defun popup-string (buffer string)
+(defun popup-string (buffer string &key (goto-bob-p t) (erase-p t))
   (popup buffer
          (lambda ()
            (insert-string string))
-         t
-         t))
+         :goto-bob-p goto-bob-p
+         :erase-p erase-p))
 
 (define-key *global-keymap* (kbd "C-x^") 'grow-window)
 (define-command grow-window (n) ("p")

@@ -25,9 +25,3 @@
                  :erase-p t))
     (info-mode)
     (buffer-put buffer :popup one-window-p)))
-
-(defun info-popup-string (buffer-name string)
-  (info-popup
-   (get-buffer-create buffer-name)
-   (lambda ()
-     (insert-string string))))

@@ -319,12 +319,11 @@
 
 (defun lem (&rest args)
   (labels ((handler (cdt)
-                    (info-popup-string
-                     "*Error*"
-                     (with-output-to-string (out)
-                       (princ cdt out)
-                       #+sbcl
-                       (sb-debug:backtrace 100 out)))
+                    (info-popup (get-buffer-create "*Error*")
+                                (lambda (out)
+                                  (princ cdt out)
+                                  #+sbcl
+                                  (sb-debug:backtrace 100 out)))
                     cdt)
            (f ()
               (handler-case

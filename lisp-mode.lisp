@@ -243,9 +243,9 @@
 (defun lisp-looking-at-word ()
   (save-excursion
    (skip-chars-forward
-    (lambda (c)
-      (or (eq c #\space)
-          (eq c #\tab))))
+    #'(lambda (c)
+        (or (eq c #\space)
+            (eq c #\tab))))
    (let ((begin (point)))
      (forward-sexp)
      (list (region-string begin (point))
@@ -495,8 +495,8 @@
                         (string-downcase (symbol-name sym)))
                     symbols))))
         (let ((comp-str
-               (popup-completion (lambda (str)
-                                   (completion str symbols))
+               (popup-completion #'(lambda (str)
+                                     (completion str symbols))
                                  str)))
           (insert-string
            (subseq comp-str (length str)))))
@@ -510,13 +510,13 @@
      begin
      end
      (if arg
-         (lambda ()
-           (beginning-of-line)
-           (when (equal #\; (following-char))
-             (delete-char)))
-         (lambda ()
-           (beginning-of-line)
-           (insert-string ";"))))))
+         #'(lambda ()
+             (beginning-of-line)
+             (when (equal #\; (following-char))
+               (delete-char)))
+         #'(lambda ()
+             (beginning-of-line)
+             (insert-string ";"))))))
 
 (define-key *lisp-mode-keymap* (kbd "C-xz") 'popup-scratch-buffer)
 (define-key *lisp-mode-keymap* (kbd "C-xC-z") 'popup-scratch-buffer)

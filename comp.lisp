@@ -12,10 +12,10 @@
 
 (defun completion (name list)
   (let ((strings
-         (remove-if-not (lambda (elt)
-                          (and (<= (length name) (length elt))
-                               (string= name elt
-                                        :end2 (length name))))
+         (remove-if-not #'(lambda (elt)
+                            (and (<= (length name) (length elt))
+                                 (string= name elt
+                                          :end2 (length name))))
                         list)))
     (cond
      ((null strings) nil)
@@ -35,10 +35,10 @@
       (setq *completion-flag* t)
       (multiple-value-bind (win newwin-p)
           (popup (get-buffer-create *comp-buffer-name*)
-                 (lambda (out)
-                   (setq *completion-window* *current-window*)
-                   (dolist (s strings)
-                     (format out "~a~%" s))))
+                 #'(lambda (out)
+                     (setq *completion-window* *current-window*)
+                     (dolist (s strings)
+                       (format out "~a~%" s))))
         (declare (ignore win))
         (setq *comp-popup-window* newwin-p))
       (window-update-all))
@@ -61,9 +61,9 @@
   (let ((chars))
     (save-excursion
      (skip-chars-backward
-      (lambda (c)
-        (when (and c (syntax-symbol-char-p c))
-          (push c chars))))
+      #'(lambda (c)
+          (when (and c (syntax-symbol-char-p c))
+            (push c chars))))
      (coerce chars 'string))))
 
 (defun scan-line-words (str)
@@ -86,13 +86,13 @@
 (defun scan-buffer-words (buffer word)
   (let ((words))
     (map-buffer-lines
-     (lambda (str eof-p linum)
-       (declare (ignore eof-p linum))
-       (dolist (w (remove-if-not (lambda (tok)
-                                   (and (string/= word tok)
-                                        (eql 0 (search word tok))))
-                                 (scan-line-words str)))
-         (push w words)))
+     #'(lambda (str eof-p linum)
+         (declare (ignore eof-p linum))
+         (dolist (w (remove-if-not #'(lambda (tok)
+                                       (and (string/= word tok)
+                                            (eql 0 (search word tok))))
+                                   (scan-line-words str)))
+           (push w words)))
      buffer
      1)
     (nreverse words)))
@@ -100,9 +100,9 @@
 (defun scan-all-buffer-words (word)
   (remove-duplicates
    (nconc (scan-buffer-words (window-buffer) word)
-          (mapcan (lambda (buffer)
-                    (unless (eq buffer (window-buffer))
-                      (scan-buffer-words buffer word)))
+          (mapcan #'(lambda (buffer)
+                      (unless (eq buffer (window-buffer))
+                        (scan-buffer-words buffer word)))
                   *buffer-list*))
    :test #'equal))
 

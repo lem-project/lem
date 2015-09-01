@@ -44,17 +44,17 @@
 
 (defun kbd-to-string (key)
   (apply 'concatenate 'string
-         (mapcar (lambda (c)
-                   (cond
-                     ((key::ctrl-p c)
-                      (format nil "C-~c"
-                              (char-downcase
-                               (code-char
-                                (+ 64 (char-code c))))))
-                     ((char= c key::escape)
-                      "M-")
-                     (t
-                      (string c))))
+         (mapcar #'(lambda (c)
+                     (cond
+                      ((key::ctrl-p c)
+                       (format nil "C-~c"
+                               (char-downcase
+                                (code-char
+                                 (+ 64 (char-code c))))))
+                      ((char= c key::escape)
+                       "M-")
+                      (t
+                       (string c))))
                  key)))
 
 (defclass kbd ()
@@ -98,9 +98,9 @@
   (let ((name (intern (string-upcase name) :lem))
         (acc))
     (dolist (keymap *keymaps*)
-      (maphash (lambda (key val)
-                 (when (eq name val)
-                   (push (list key (keymap-name keymap)) acc)))
+      (maphash #'(lambda (key val)
+                   (when (eq name val)
+                     (push (list key (keymap-name keymap)) acc)))
                (keymap-table keymap)))
     acc))
 

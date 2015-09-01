@@ -128,15 +128,15 @@
 (defun minibuf-read-number (prompt &optional min max)
   (parse-integer
    (minibuf-read-line prompt "" nil
-                      (lambda (str)
-                        (multiple-value-bind (n len)
-                            (parse-integer str :junk-allowed t)
-                          (and
-                           n
-                           (/= 0 (length str))
-                           (= (length str) len)
-                           (if min (<= min n) t)
-                           (if max (<= n max) t)))))))
+                      #'(lambda (str)
+                          (multiple-value-bind (n len)
+                              (parse-integer str :junk-allowed t)
+                            (and
+                             n
+                             (/= 0 (length str))
+                             (= (length str) len)
+                             (if min (<= min n) t)
+                             (if max (<= n max) t)))))))
 
 (defun minibuf-read-buffer (prompt &optional default existing)
   (when default
@@ -145,11 +145,11 @@
          (result (minibuf-read-line
                   prompt
                   ""
-                  (lambda (name)
-                    (completion name buffer-names))
+                  #'(lambda (name)
+                      (completion name buffer-names))
                   (and existing
-                       (lambda (name)
-                         (member name buffer-names :test 'string=))))))
+                       #'(lambda (name)
+                           (member name buffer-names :test 'string=))))))
     (if (string= result "")
         default
         result)))

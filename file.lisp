@@ -152,11 +152,11 @@
                        :direction :output
                        :if-exists :supersede
                        :if-does-not-exist :create)
-    (map-buffer-lines (lambda (line eof-p linum)
-                        (declare (ignore linum))
-                        (princ line out)
-                        (unless eof-p
-                          (terpri out)))
+    (map-buffer-lines #'(lambda (line eof-p linum)
+                          (declare (ignore linum))
+                          (princ line out)
+                          (unless eof-p
+                            (terpri out)))
                       buffer))
   (buffer-save-node buffer))
 

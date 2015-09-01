@@ -51,7 +51,7 @@
   (if (minusp n)
       (backward-delete-word (- n))
       (dotimes (_ n t)
-        (unless (next-word-aux (lambda () (delete-char 1)))
+        (unless (next-word-aux #'(lambda () (delete-char 1)))
           (return)))))
 
 (define-key *global-keymap* (kbd "M-C-h") 'backward-delete-word)
@@ -60,7 +60,7 @@
       (delete-word (- n))
       (let ((*kill-before-p* t))
         (dotimes (_ n t)
-          (unless (prev-word-aux (lambda () (backward-delete-char 1)))
+          (unless (prev-word-aux #'(lambda () (backward-delete-char 1)))
             (return))))))
 
 (defun case-word-aux (n first-case rest-case)

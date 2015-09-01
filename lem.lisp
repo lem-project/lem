@@ -83,19 +83,19 @@
                                *global-keymap*)))
         (tmpbuf (get-buffer-create "*bindings*")))
     (info-popup tmpbuf
-                (lambda (s)
-                  (loop :for keymap :in keymaps :do
-                    (princ (lem:keymap-name keymap) s)
-                    (terpri s)
-                    (format s "~va~a~%" column-width "key" "binding")
-                    (format s "~va~a~%" column-width "---" "-------")
-                    (maphash #'(lambda (k v)
-                                 (format s "~va~a~%"
-                                         column-width
-                                         (kbd-to-string k)
-                                         (symbol-name v)))
-                             (keymap-table keymap))
-                    (terpri s))))))
+                #'(lambda (s)
+                    (loop :for keymap :in keymaps :do
+                      (princ (lem:keymap-name keymap) s)
+                      (terpri s)
+                      (format s "~va~a~%" column-width "key" "binding")
+                      (format s "~va~a~%" column-width "---" "-------")
+                      (maphash #'(lambda (k v)
+                                   (format s "~va~a~%"
+                                           column-width
+                                           (kbd-to-string k)
+                                           (symbol-name v)))
+                               (keymap-table keymap))
+                      (terpri s))))))
 
 (define-key *global-keymap* (kbd "C-x(") 'begin-macro)
 (define-command begin-macro () ()
@@ -145,8 +145,8 @@
 (define-command apply-macro-to-region-lines () ()
   (apply-region-lines (region-beginning)
                       (region-end)
-                      (lambda ()
-                        (execute-macro 1)))
+                      #'(lambda ()
+                          (execute-macro 1)))
   t)
 
 (define-key *global-keymap* (kbd "C-u") 'universal-argument)
@@ -319,10 +319,10 @@
 (defun lem (&rest args)
   (labels ((handler (cdt)
                     (info-popup (get-buffer-create "*Error*")
-                                (lambda (out)
-                                  (princ cdt out)
-                                  #+sbcl
-                                  (sb-debug:backtrace 100 out)))
+                                #'(lambda (out)
+                                    (princ cdt out)
+                                    #+sbcl
+                                    (sb-debug:backtrace 100 out)))
                     cdt)
            (f ()
               (handler-case

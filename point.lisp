@@ -30,9 +30,9 @@
   (cadr point))
 
 (defmacro with-points (binds &body body)
-  `(let ,(mapcan (lambda (b)
-                   `((,(caar b) (point-linum ,(cadr b)))
-                     (,(cadar b) (point-column ,(cadr b)))))
+  `(let ,(mapcan #'(lambda (b)
+                     `((,(caar b) (point-linum ,(cadr b)))
+                       (,(cadar b) (point-column ,(cadr b)))))
                  binds)
      ,@body))
 

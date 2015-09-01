@@ -317,8 +317,8 @@
             (window-max-col))
       (setq *window-list*
             (sort (copy-list (append *window-list* (list newwin)))
-                  (lambda (b1 b2)
-                    (< (window-y b1) (window-y b2)))))))
+                  #'(lambda (b1 b2)
+                      (< (window-y b1) (window-y b2)))))))
   t)
 
 (defun get-next-window (window)
@@ -425,8 +425,8 @@
     (when one-p
       (split-window))
     (let ((*current-window*
-           (or (find-if (lambda (window)
-                          (eq buffer (window-buffer window)))
+           (or (find-if #'(lambda (window)
+                            (eq buffer (window-buffer window)))
                         *window-list*)
                (get-next-window *current-window*))))
       (set-buffer buffer)

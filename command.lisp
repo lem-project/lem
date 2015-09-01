@@ -22,34 +22,34 @@
              (return-from ,name nil)))
        (t
         (cons 'list
-              (mapcar (lambda (arg-descripter)
-                        (cond
-                         ((char= #\s (aref arg-descripter 0))
-                          `(minibuf-read-string ,(subseq arg-descripter 1)))
-                         ((char= #\n (aref arg-descripter 0))
-                          `(minibuf-read-number ,(subseq arg-descripter 1)))
-                         ((char= #\b (aref arg-descripter 0))
-                          `(minibuf-read-buffer ,(subseq arg-descripter 1)
-                                                (buffer-name (window-buffer))
-                                                t))
-                         ((char= #\B (aref arg-descripter 0))
-                          `(minibuf-read-buffer ,(subseq arg-descripter 1)
-                                                (buffer-name (other-buffer))
-                                                nil))
-                         ((char= #\f (aref arg-descripter 0))
-                          `(minibuf-read-file
-                            ,(subseq arg-descripter 1)
-                            (buffer-directory)
-                            nil
-                            t))
-                         ((char= #\F (aref arg-descripter 0))
-                          `(minibuf-read-file
-                            ,(subseq arg-descripter 1)
-                            (buffer-directory)
-                            nil
-                            nil))
-                         (t
-                          (error "Illegal arg-descripter: ~a" arg-descripter))))
+              (mapcar #'(lambda (arg-descripter)
+                          (cond
+                           ((char= #\s (aref arg-descripter 0))
+                            `(minibuf-read-string ,(subseq arg-descripter 1)))
+                           ((char= #\n (aref arg-descripter 0))
+                            `(minibuf-read-number ,(subseq arg-descripter 1)))
+                           ((char= #\b (aref arg-descripter 0))
+                            `(minibuf-read-buffer ,(subseq arg-descripter 1)
+                                                  (buffer-name (window-buffer))
+                                                  t))
+                           ((char= #\B (aref arg-descripter 0))
+                            `(minibuf-read-buffer ,(subseq arg-descripter 1)
+                                                  (buffer-name (other-buffer))
+                                                  nil))
+                           ((char= #\f (aref arg-descripter 0))
+                            `(minibuf-read-file
+                              ,(subseq arg-descripter 1)
+                              (buffer-directory)
+                              nil
+                              t))
+                           ((char= #\F (aref arg-descripter 0))
+                            `(minibuf-read-file
+                              ,(subseq arg-descripter 1)
+                              (buffer-directory)
+                              nil
+                              nil))
+                           (t
+                            (error "Illegal arg-descripter: ~a" arg-descripter))))
                       arg-descripters)))))
     (defun define-command-gen-cmd (name parms arg-descripters body)
       `(defun ,name (,garg)
@@ -93,18 +93,18 @@
 
 (define-command apropos-command (str) ("sApropos: ")
   (info-popup (get-buffer-create "*Apropos*")
-              (lambda (out)
-                (dolist (name *command-names*)
-                  (when (search str name)
-                    (loop
-                      for (kbd keymap-name)
-                      in (search-keybind-all name)
-                      do
-                      (fresh-line out)
-                      (princ (format nil "~a~a~a~a~a"
-                                     name
-                                     #\tab
-                                     (kbd-to-string kbd)
-                                     #\tab
-                                     keymap-name)
-                             out)))))))
+              #'(lambda (out)
+                  (dolist (name *command-names*)
+                    (when (search str name)
+                      (loop
+                        for (kbd keymap-name)
+                        in (search-keybind-all name)
+                        do
+                        (fresh-line out)
+                        (princ (format nil "~a~a~a~a~a"
+                                       name
+                                       #\tab
+                                       (kbd-to-string kbd)
+                                       #\tab
+                                       keymap-name)
+                               out)))))))

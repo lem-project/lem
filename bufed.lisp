@@ -429,14 +429,14 @@
 (define-key *global-keymap* (kbd "C-xC-e") 'entab-line)
 (define-command entab-line (n) ("p")
   (tab-line-aux n
-                (lambda (n)
-                  (make-string n :initial-element #\tab))))
+                #'(lambda (n)
+                    (make-string n :initial-element #\tab))))
 
 (define-key *global-keymap* (kbd "C-xC-a") 'detab-line)
 (define-command detab-line (n) ("p")
   (tab-line-aux n
-                (lambda (n)
-                  (make-string (* n *tab-size*) :initial-element #\space))))
+                #'(lambda (n)
+                    (make-string (* n *tab-size*) :initial-element #\space))))
 
 (defun blank-line-p ()
   (save-excursion
@@ -548,7 +548,7 @@
 (define-key *global-keymap* (kbd "M-m") 'back-to-indentation)
 (define-command back-to-indentation () ()
   (beginning-of-line)
-  (skip-chars-forward (lambda (c) (member c '(#\space #\tab))))
+  (skip-chars-forward #'(lambda (c) (member c '(#\space #\tab))))
   t)
 
 (define-key *global-keymap* (kbd "C-z") 'undo)

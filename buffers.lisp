@@ -41,8 +41,8 @@
   (window-buffer))
 
 (defun get-buffer (name)
-  (find-if (lambda (buffer)
-             (string= name (buffer-name buffer)))
+  (find-if #'(lambda (buffer)
+               (string= name (buffer-name buffer)))
            *buffer-list*))
 
 (defun get-buffer-create (name)
@@ -130,13 +130,13 @@
 (define-command list-buffers () ()
   (let* ((max-name-len
           (+ 3 (apply 'max
-                      (mapcar (lambda (b)
-                                (length (buffer-name b)))
+                      (mapcar #'(lambda (b)
+                                  (length (buffer-name b)))
                               *buffer-list*))))
          (max-filename-len
           (apply 'max
-                 (mapcar (lambda (b)
-                           (length (buffer-filename b)))
+                 (mapcar #'(lambda (b)
+                             (length (buffer-filename b)))
                          *buffer-list*))))
     (let* ((buffer (get-buffer-create "*Buffers*")))
       (info-popup

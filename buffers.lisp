@@ -91,9 +91,15 @@
         (multiple-value-setq
          (vtop-linum cur-linum cur-col max-col)
          (apply 'values (buffer-keep-binfo buffer))))
-      (setf (window-vtop-linum) vtop-linum)
-      (setf (window-cur-linum) cur-linum)
-      (setf (window-cur-col) cur-col)
+      (let ((buffer-nlines (buffer-nlines)))
+        (setf (window-vtop-linum)
+              (min vtop-linum buffer-nlines))
+        (setf (window-cur-linum)
+              (min cur-linum buffer-nlines)))
+      (setf (window-cur-col)
+            (min cur-col
+                 (buffer-line-length (window-buffer)
+                                     (window-cur-linum))))
       (setf (window-max-col) max-col))))
 
 (define-key *global-keymap* (kbd "C-xb") 'select-buffer)

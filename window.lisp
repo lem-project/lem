@@ -272,7 +272,7 @@
      (t
       0))))
 
-(defun window-adjust-view (window recenter)
+(defun window-adjust-view (window &optional (recenter *scroll-recenter-p*))
   (let ((offset (window-offset-view window)))
     (unless (zerop offset)
       (if recenter
@@ -281,7 +281,7 @@
 
 (defun window-update (window)
   (cl-charms/low-level:werase (window-win window))
-  (window-adjust-view window t)
+  (window-adjust-view window)
   (window-refresh window))
 
 (defun window-update-all ()

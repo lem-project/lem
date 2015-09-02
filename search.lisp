@@ -100,51 +100,50 @@
   (unless (equal "" *isearch-string*)
     (multiple-value-bind (search-strings length)
         (split-string *isearch-string* #\newline)
-      (let ((buffer (window-buffer))
-            (start (window-vtop-linum))
-            (end (- (window-nlines) length))
-            (buffer-nlines (buffer-nlines)))
-        (loop for linum from start repeat end
-          while (< linum buffer-nlines)
-          do (let* ((buffer-strings (buffer-take-lines buffer linum length))
-                    (search-string (car search-strings))
-                    (buffer-string (car buffer-strings)))
-               (if (= 1 length)
-                   (loop with col = 0 do
-                     (setq col
-                           (search search-string
-                                   buffer-string
-                                   :start2 col))
-                     (if (null col)
-                         (return)
+      (with-window-range (start end) *current-window*
+        (let ((buffer (window-buffer))
+              (buffer-nlines (buffer-nlines)))
+          (loop for linum from start below (- end length)
+            while (< linum buffer-nlines)
+            do (let* ((buffer-strings (buffer-take-lines buffer linum length))
+                      (search-string (car search-strings))
+                      (buffer-string (car buffer-strings)))
+                 (if (= 1 length)
+                     (loop with col = 0 do
+                       (setq col
+                             (search search-string
+                                     buffer-string
+                                     :start2 col))
+                       (if (null col)
+                           (return)
+                           (let ((start (make-point linum col))
+                                 (end (make-point
+                                       linum (+ col (length search-string)))))
+                             (push (make-overlay start end :prop :highlight)
+                                   *isearch-highlight-overlays*)))
+                       (incf col (length search-string)))
+                     (let ((col
+                            (- (length buffer-string)
+                               (length search-string)))
+                           (last-search-string
+                            (car (last search-strings))))
+                       (when (and (every #'string=
+                                         (butlast (cdr search-strings))
+                                         (butlast (cdr buffer-strings)))
+                                  (<= 0 col)
+                                  (string= search-string
+                                           buffer-string
+                                           :start2 col)
+                                  (<= (length last-search-string)
+                                      (length (car (last buffer-strings))))
+                                  (string= last-search-string
+                                           (car (last buffer-strings))
+                                           :end2 (length last-search-string)))
                          (let ((start (make-point linum col))
-                               (end (make-point
-                                     linum (+ col (length search-string)))))
+                               (end (make-point (+ linum length -1)
+                                                (length last-search-string))))
                            (push (make-overlay start end :prop :highlight)
-                                 *isearch-highlight-overlays*)))
-                     (incf col (length search-string)))
-                   (let ((col
-                          (- (length buffer-string)
-                             (length search-string)))
-                         (last-search-string
-                          (car (last search-strings))))
-                     (when (and (every #'string=
-                                       (butlast (cdr search-strings))
-                                       (butlast (cdr buffer-strings)))
-                                (<= 0 col)
-                                (string= search-string
-                                         buffer-string
-                                         :start2 col)
-                                (<= (length last-search-string)
-                                    (length (car (last buffer-strings))))
-                                (string= last-search-string
-                                         (car (last buffer-strings))
-                                         :end2 (length last-search-string)))
-                       (let ((start (make-point linum col))
-                             (end (make-point (+ linum length -1)
-                                              (length last-search-string))))
-                         (push (make-overlay start end :prop :highlight)
-                               *isearch-highlight-overlays*)))))))))))
+                                 *isearch-highlight-overlays*))))))))))))
 
 (defun isearch-add-char (c)
   (setq *isearch-string*

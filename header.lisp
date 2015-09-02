@@ -75,3 +75,12 @@
     `(let ((,gpoint (point)))
        (unwind-protect (progn ,@body)
          (point-set ,gpoint)))))
+
+(defmacro with-window-range ((start-linum-var end-linum-var)
+                             window &body body)
+  (let ((gwindow (gensym "WINDOW")))
+    `(let ((,gwindow ,window))
+       (window-adjust-view ,gwindow t)
+       (let* ((,start-linum-var (window-vtop-linum ,gwindow))
+              (,end-linum-var (+ ,start-linum-var (window-nlines ,gwindow))))
+         ,@body))))

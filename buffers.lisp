@@ -98,10 +98,8 @@
 
 (define-key *global-keymap* (kbd "C-xb") 'select-buffer)
 (define-command select-buffer (name) ("BUse Buffer: ")
-  (let ((buf (or (get-buffer name)
-                 (make-buffer name))))
-    (set-buffer buf)
-    t))
+  (set-buffer (get-buffer-create name))
+  t)
 
 (defun get-next-buffer (buffer)
   (let* ((buffer-list (reverse *buffer-list*))

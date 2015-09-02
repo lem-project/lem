@@ -66,6 +66,9 @@
                           (buffer-output-stream-column stream)
                           (car s))
       (cond ((cdr s)
+             (buffer-insert-newline (buffer-output-stream-buffer stream)
+                                    (buffer-output-stream-linum stream)
+                                    (length (car s)))
              (incf (buffer-output-stream-linum stream))
              (setf (buffer-output-stream-column stream) 0))
             (t

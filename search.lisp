@@ -49,7 +49,7 @@
   t)
 
 (define-key *isearch-keymap* (kbd "C-h") 'isearch-delete-char)
-(define-key *isearch-keymap* (list key::backspace) 'isearch-delete-char)
+(define-key *isearch-keymap* (kbd "backspace") 'isearch-delete-char)
 (define-command isearch-delete-char () ()
   (when (plusp (length *isearch-string*))
     (setq *isearch-string*

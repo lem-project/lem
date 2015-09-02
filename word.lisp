@@ -28,7 +28,7 @@
       (return))))
 
 (define-key *global-keymap* (kbd "M-f") 'next-word)
-(define-key *global-keymap* (list key::ctrl-right) 'next-word)
+(define-key *global-keymap* (kbd "C-right") 'next-word)
 (define-command next-word (n) ("p")
   (if (minusp n)
       (prev-word (- n))
@@ -37,7 +37,7 @@
           (return)))))
 
 (define-key *global-keymap* (kbd "M-b") 'prev-word)
-(define-key *global-keymap* (list key::ctrl-left) 'prev-word)
+(define-key *global-keymap* (kbd "C-left") 'prev-word)
 (define-command prev-word (n) ("p")
   (if (minusp n)
       (next-word (- n))
@@ -46,7 +46,7 @@
           (return)))))
 
 (define-key *global-keymap* (kbd "M-d") 'delete-word)
-(define-key *global-keymap* (list key::ctrl-dc) 'delete-word)
+(define-key *global-keymap* (kbd "C-dc") 'delete-word)
 (define-command delete-word (n) ("p")
   (if (minusp n)
       (backward-delete-word (- n))
@@ -88,7 +88,7 @@
   (case-word-aux n 'char-upcase 'char-upcase))
 
 (define-key *global-keymap* (kbd "M-}") 'forward-paragraph)
-(define-key *global-keymap* (list key::ctrl-down) 'forward-paragraph)
+(define-key *global-keymap* (kbd "C-down") 'forward-paragraph)
 (define-command forward-paragraph (&optional (n 1)) ("p")
   (block outer
     (let ((dir (if (minusp n) -1 1)))
@@ -100,7 +100,7 @@
             (return t)))))))
 
 (define-key *global-keymap* (kbd "M-{") 'backward-paragraph)
-(define-key *global-keymap* (list key::ctrl-up) 'backward-paragraph)
+(define-key *global-keymap* (kbd "C-up") 'backward-paragraph)
 (define-command backward-paragraph (&optional (n 1)) ("p")
   (forward-paragraph (- n)))
 

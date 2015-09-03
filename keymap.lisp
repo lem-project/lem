@@ -29,7 +29,7 @@
     (push keymap *keymaps*)
     keymap))
 
-(defvar *global-keymap* (make-keymap "global" 'undefined-key))
+(defvar *global-keymap* (make-keymap "global" 'self-insert))
 
 (defclass kbd ()
   ((list :initarg :list

@@ -17,6 +17,7 @@
 (defvar *init-flag* nil)
 
 (defvar *exit*)
+(defvar *self-insert-prev-time* nil)
 
 (defvar *macro-recording-p* nil)
 (defvar *macro-chars* nil)
@@ -200,24 +201,24 @@
     char))
 
 (defun input-key ()
-  (let ((c (getch nil)))
-    (if (or (char= c C-x)
-            (char= c escape))
-        (kbd c (getch nil))
-        (kbd (input-char
-              (char-code c))))))
+  (let ((key
+         (let ((c (getch nil)))
+           (if (or (char= c C-x)
+                   (char= c escape))
+               (kbd c (getch nil))
+               (kbd (input-char
+                     (char-code c)))))))
+    (setq *last-input-key* key)))
 
 (let ((require-scanbuf (gensym)))
   (defun execute (key)
-    (let* ((keymap (current-mode-keymap))
-           (cmd (mode-find-keybind key))
+    (let* ((cmd (mode-find-keybind key))
            (buffer (window-buffer))
            (prev-modified (buffer-modified-p buffer))
            (prev-window-vtop-linum (window-vtop-linum)))
-      (prog1 (if cmd
-                 (or (cmd-call cmd *universal-argument*)
-                     (setq *macro-running-p* nil))
-                 (key-undef-hook keymap key))
+      (prog1 (and cmd
+                  (or (cmd-call cmd *universal-argument*)
+                      (setq *macro-running-p* nil)))
         (when (and (not *macro-running-p*)
                    (eq buffer (window-buffer)))
           (let ((curr-modified (buffer-modified-p (window-buffer))))
@@ -234,20 +235,21 @@
     (execute key)
     (setq *universal-argument* nil)))
 
-(let ((prev-time))
-  (defun undefined-key (key)
-    (let ((c (insertion-key-p key)))
-      (cond (c (insert-char c (or *universal-argument* 1))
-               (when (and (not *macro-running-p*)
-                          prev-time
-                          (> 10
-                             (- (get-internal-real-time)
-                                prev-time)))
-                 (exec-paste))
-               (setq prev-time (get-internal-real-time)))
-            (t (minibuf-print (format nil
-                                      "Key not found: ~a"
-                                      (kbd-to-string key))))))))
+(define-command self-insert (n) ("p")
+  (let ((c (insertion-key-p *last-input-key*)))
+    (if c
+        (progn
+          (insert-char c (or *universal-argument* 1))
+          (when (and (not *macro-running-p*)
+                     *self-insert-prev-time*
+                     (> 10
+                        (- (get-internal-real-time)
+                           *self-insert-prev-time*)))
+            (exec-paste))
+          (setq *self-insert-prev-time* (get-internal-real-time)))
+        (minibuf-print (format nil
+                               "Key not found: ~a"
+                               (kbd-to-string *last-input-key*))))))
 
 (defun exec-paste ()
   (cl-charms/low-level:timeout 10)

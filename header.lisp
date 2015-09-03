@@ -24,6 +24,8 @@
 (defvar *last-flags* nil)
 (defvar *curr-flags* nil)
 
+(defvar *last-input-key*)
+
 (defvar *scroll-recenter-p* t)
 
 (defvar *universal-argument* nil)

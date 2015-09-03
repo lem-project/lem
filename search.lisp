@@ -5,13 +5,16 @@
           isearch-backward
           query-replace))
 
-(defvar *isearch-keymap* (make-keymap "isearch" 'isearch-undef-hook))
+(defvar *isearch-keymap* (make-keymap "isearch" 'isearch-self-insert))
 (defvar *isearch-string*)
 (defvar *isearch-prev-string* "")
 (defvar *isearch-start-point*)
-(defvar *isearch-tmp-keymap*)
 (defvar *isearch-search-function*)
 (defvar *isearch-highlight-overlays* nil)
+
+(define-minor-mode isearch-mode
+  :name "isearch-mode"
+  :keymap *isearch-keymap*)
 
 (defun isearch-update-display ()
   (isearch-update-minibuf)
@@ -35,8 +38,7 @@
        (search-backward str))))
 
 (defun isearch-start (search-func)
-  (setq *isearch-tmp-keymap* (current-mode-keymap))
-  (setf (current-mode-keymap) *isearch-keymap*)
+  (isearch-mode t)
   (setq *isearch-string* "")
   (isearch-update-minibuf)
   (setq *isearch-search-function* search-func)
@@ -67,7 +69,7 @@
 (define-command isearch-end () ()
   (isearch-reset-buffer)
   (setq *isearch-prev-string* *isearch-string*)
-  (setf (current-mode-keymap) *isearch-tmp-keymap*))
+  (isearch-mode nil))
 
 (define-key *isearch-keymap* (kbd "C-s") 'isearch-next)
 (define-command isearch-next () ()
@@ -155,13 +157,14 @@
     (unless (funcall *isearch-search-function* *isearch-string*)
       (point-set point))))
 
-(defun isearch-undef-hook (key)
-  (let ((c (insertion-key-p key)))
+(define-command isearch-self-insert () ()
+  (let ((c (insertion-key-p *last-input-key*)))
     (if c
         (isearch-add-char c)
         (progn
-          (mapc 'ungetch (reverse (kbd-list key)))
-          (isearch-end)))))
+          (progn
+            (mapc 'ungetch (reverse (kbd-list *last-input-key*)))
+            (isearch-end))))))
 
 (defun search-step (str first-search search step goto-matched-pos endp)
   (let ((point (point))

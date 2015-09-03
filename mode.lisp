@@ -37,9 +37,13 @@
 (defun mode-find-keybind (key)
   (dolist (mode (buffer-minor-modes))
     (let ((result (keymap-find-command (mode-keymap mode) key)))
-      (when result
-        (return-from mode-find-keybind result))))
-  (keymap-find-command (current-mode-keymap) key))
+      (if result
+          (return-from mode-find-keybind result)
+          (let ((undef-hook (keymap-undef-hook (mode-keymap mode))))
+            (when undef-hook
+              (return-from mode-find-keybind undef-hook))))))
+  (or (keymap-find-command (current-mode-keymap) key)
+      (keymap-undef-hook (current-mode-keymap))))
 
 (defun toggle-minor-mode (minor-mode)
   (if (member minor-mode (buffer-minor-modes))
@@ -63,8 +67,14 @@
   `(progn
      (setf (mode-name ',minor-mode) ,name)
      (setf (mode-keymap ',minor-mode) ,keymap)
-     (define-command ,minor-mode () ()
-       (toggle-minor-mode ',minor-mode))))
+     (define-command ,minor-mode (&rest args) ("P")
+       (cond ((null args)
+              (toggle-minor-mode ',minor-mode))
+             ((car args)
+              (push ',minor-mode (buffer-minor-modes)))
+             (t
+              (setf (buffer-minor-modes)
+                    (delete ',minor-mode (buffer-minor-modes))))))))
 
 (define-major-mode fundamental-mode
   (:name "fundamental-mode"

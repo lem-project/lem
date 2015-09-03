@@ -35,6 +35,13 @@
   ((list :initarg :list
          :reader kbd-list)))
 
+(defvar *kbd-cache-table* (make-hash-table :test 'equal))
+
+(defun make-kbd (list)
+  (or (gethash list *kbd-cache-table*)
+      (setf (gethash list *kbd-cache-table*)
+            (make-instance 'kbd :list list))))
+
 (defun kbd-p (x)
   (typep x 'kbd))
 
@@ -42,7 +49,7 @@
   (unless (and (kbd-p key)
                (every #'characterp (kbd-list key)))
     (error "define-key: ~s is illegal key" key))
-  (setf (gethash (kbd-list key) (keymap-table keymap))
+  (setf (gethash key (keymap-table keymap))
         cmd-name))
 
 (defun kbd-to-string (key)
@@ -73,18 +80,17 @@
       (list (gethash str *string->key*))))
 
 (defun kbd-string (str)
-  (make-instance
-   'kbd
-   :list (mapcan #'(lambda (str)
-                     (if (and (< 4 (length str))
-                              (string= str "C-M-" :end1 4))
-                         (kbd-string-1 (concatenate 'string
-                                                    "M-C-" (subseq str 4)))
-                         (kbd-string-1 str)))
-                 (split-string str #\space))))
+  (make-kbd
+   (mapcan #'(lambda (str)
+               (if (and (< 4 (length str))
+                        (string= str "C-M-" :end1 4))
+                   (kbd-string-1 (concatenate 'string
+                                              "M-C-" (subseq str 4)))
+                   (kbd-string-1 str)))
+           (split-string str #\space))))
 
 (defun kbd-keys (keys)
-  (make-instance 'kbd :list keys))
+  (make-kbd keys))
 
 (defun kbd (string-or-first-key &rest keys)
   (etypecase string-or-first-key
@@ -94,7 +100,7 @@
      (kbd-keys (cons string-or-first-key keys)))))
 
 (defun keymap-find-command (keymap key)
-  (let ((cmd (gethash (kbd-list key) (keymap-table keymap))))
+  (let ((cmd (gethash key (keymap-table keymap))))
     (or cmd
         (let ((keymap (keymap-parent keymap)))
           (when keymap

@@ -104,7 +104,8 @@
     (or cmd
         (let ((keymap (keymap-parent keymap)))
           (when keymap
-            (keymap-find-command keymap key))))))
+            (keymap-find-command keymap key)))
+        (keymap-undef-hook keymap))))
 
 (defun search-keybind-all (name)
   (let ((name (intern (string-upcase name) :lem))

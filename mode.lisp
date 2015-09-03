@@ -37,13 +37,9 @@
 (defun mode-find-keybind (key)
   (dolist (mode (buffer-minor-modes))
     (let ((result (keymap-find-command (mode-keymap mode) key)))
-      (if result
-          (return-from mode-find-keybind result)
-          (let ((undef-hook (keymap-undef-hook (mode-keymap mode))))
-            (when undef-hook
-              (return-from mode-find-keybind undef-hook))))))
-  (or (keymap-find-command (current-mode-keymap) key)
-      (keymap-undef-hook (current-mode-keymap))))
+      (when result
+        (return-from mode-find-keybind result))))
+  (keymap-find-command (current-mode-keymap) key))
 
 (defun toggle-minor-mode (minor-mode)
   (if (member minor-mode (buffer-minor-modes))

@@ -2,14 +2,18 @@
 
 (defvar *string->key* (make-hash-table :test 'equal))
 (defvar *key->symbol* (make-hash-table))
-(readtable-case *readtable*)
+
 (defmacro defkeycode (name code)
   (when (integerp code)
     (setf code (code-char code)))
   `(progn
      (setf (gethash ,name *string->key*) ,code
            (gethash ,code *key->symbol*) ,name)
-     (defconstant ,(intern (string (read-from-string (format nil "#:~A" name)))) ,code)))
+     (defconstant ,(intern
+                    (string
+                     (read-from-string
+                      (format nil "#:~A" name))))
+       ,code)))
 
 (defkeycode "C-@" 0)
 (defkeycode "C-a" 1)
@@ -41,10 +45,11 @@
 (defkeycode "escape" 27)
 (defkeycode "Spc" #x20)
 
-(loop for i from #x21 below #x7F
-         for c = (code-char i)
-         do (setf (gethash (string c) *string->key*) c
-                     (gethash i *key->symbol*) (string c)))
+(loop
+  :for i :from #x21 :below #x7F
+  :for c := (code-char i)
+  :do (setf (gethash (string c) *string->key*) c
+            (gethash i *key->symbol*) (string c)))
 
 (defkeycode "[down]" #o402)
 (defkeycode "[up]" #o403)

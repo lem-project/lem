@@ -84,3 +84,12 @@
        (let* ((,start-linum-var (window-vtop-linum ,gwindow))
               (,end-linum-var (+ ,start-linum-var (window-nlines ,gwindow))))
          ,@body))))
+
+(defmacro with-buffer-read-only (buffer flag &body body)
+  (let ((gbuffer (gensym "BUFFER"))
+        (gtmp (gensym "GTMP")))
+    `(let* ((,gbuffer ,buffer)
+            (,gtmp (buffer-read-only-p ,gbuffer)))
+       (setf (buffer-read-only-p ,gbuffer) ,flag)
+       (unwind-protect (progn ,@body)
+         (setf (buffer-read-only-p ,gbuffer) ,gtmp)))))

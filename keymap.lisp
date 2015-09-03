@@ -65,7 +65,7 @@
 (defmethod print-object ((k kbd) stream)
   (format stream "(~A ~S)" 'kbd (kbd-to-string (slot-value k 'list))))
 
-(defun kbd (str)
+(defun kbd-string (str)
   (make-instance
    'kbd
    :list (let (result)
@@ -84,6 +84,16 @@
                   (setq beg (1+ i))
                 finally (f (subseq str beg i))))
            (nreverse result))))
+
+(defun kbd-keys (keys)
+  (make-instance 'kbd :list keys))
+
+(defun kbd (string-or-first-key &rest keys)
+  (etypecase string-or-first-key
+    (string
+     (kbd-string string-or-first-key))
+    (character
+     (kbd-keys (cons string-or-first-key keys)))))
 
 (defun keymap-find-command (keymap key)
   (when (typep key 'kbd)

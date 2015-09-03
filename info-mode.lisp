@@ -20,9 +20,10 @@
 
 (defun info-popup (buffer &optional fn)
   (let ((one-window-p (one-window-p)))
-    (setq *current-window*
-          (popup buffer fn
-                 :goto-bob-p t
-                 :erase-p t))
+    (with-buffer-read-only buffer nil
+      (setq *current-window*
+            (popup buffer fn
+                   :goto-bob-p t
+                   :erase-p t)))
     (info-mode)
     (buffer-put buffer :popup one-window-p)))

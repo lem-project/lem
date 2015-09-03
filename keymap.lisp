@@ -65,25 +65,23 @@
 (defmethod print-object ((k kbd) stream)
   (format stream "(~A ~S)" 'kbd (kbd-to-string (slot-value k 'list))))
 
+(defun kbd-string-1 (str)
+  (if (and (>= (length str) 2)
+           (eql (aref str 0) #\M)
+           (eql (aref str 1) #\-))
+      (cons escape (kbd-string-1 (subseq str 2)))
+      (list (gethash str *string->key*))))
+
 (defun kbd-string (str)
   (make-instance
    'kbd
-   :list (let (result)
-           (labels ((f (str)
-                      (if (and (>= (length str) 2)
-                               (eql (aref str 0) #\M)
-                               (eql (aref str 1) #\-)
-                               (push escape result))
-                          (f (subseq str 2))
-                          (push (gethash str *string->key*) result))))
-             (loop with beg = 0
-                for i from 0
-                for c across str
-                when (eql c #\space)
-                do (f (subseq str beg i))
-                  (setq beg (1+ i))
-                finally (f (subseq str beg i))))
-           (nreverse result))))
+   :list (mapcan #'(lambda (str)
+                     (if (and (< 4 (length str))
+                              (string= str "C-M-" :end1 4))
+                         (kbd-string-1 (concatenate 'string
+                                                    "M-C-" (subseq str 4)))
+                         (kbd-string-1 str)))
+                 (split-string str #\space))))
 
 (defun kbd-keys (keys)
   (make-instance 'kbd :list keys))

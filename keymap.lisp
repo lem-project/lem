@@ -43,19 +43,21 @@
         cmd-name))
 
 (defun kbd-to-string (key)
-  (apply 'concatenate 'string
-         (mapcar #'(lambda (c)
-                     (cond
-                      ((key::ctrl-p c)
-                       (format nil "C-~c"
-                               (char-downcase
-                                (code-char
-                                 (+ 64 (char-code c))))))
-                      ((char= c key::escape)
-                       "M-")
-                      (t
-                       (string c))))
-                 key)))
+  (format nil "~{~A~^~}"
+          (loop for c- on key
+             for c = (first c-)
+             collect (cond
+                       ((ctrl-p c)
+                        (format nil "C-~c"
+                                (char-downcase
+                                 (code-char
+                                  (+ 64 (char-code c))))))
+                       ((char= c escape) "M")
+                       ((gethash c *key->symbol*))
+                       (t (format nil "~A" c)))
+             collect (cond ((not (cdr c-))"")
+                           ((char= c escape) "-")
+                           (t " ")))))
 
 (defclass kbd ()
   ((list :initarg :list)))
@@ -66,24 +68,22 @@
 (defun kbd (str)
   (make-instance
    'kbd
-   :list (let ((key))
-           (do ((i 0 (1+ i)))
-               ((>= i (length str)))
-             (case (aref str i)
-               (#\C
-                (assert (char= #\- (aref str (incf i))))
-                (push (code-char
-                       (- (char-code
-                           (char-upcase
-                            (aref str (incf i))))
-                          64))
-                      key))
-               (#\M
-                (assert (char= #\- (aref str (incf i))))
-                (push key::escape key))
-               (t
-                (push (aref str i) key))))
-           (nreverse key))))
+   :list (let (result)
+           (labels ((f (str)
+                      (if (and (>= (length str) 2)
+                               (eql (aref str 0) #\M)
+                               (eql (aref str 1) #\-)
+                               (push escape result))
+                          (f (subseq str 2))
+                          (push (gethash str *string->key*) result))))
+             (loop with beg = 0
+                for i from 0
+                for c across str
+                when (eql c #\space)
+                do (f (subseq str beg i))
+                  (setq beg (1+ i))
+                finally (f (subseq str beg i))))
+           (nreverse result))))
 
 (defun keymap-find-command (keymap key)
   (when (typep key 'kbd)
@@ -114,5 +114,5 @@
   (when (typep key 'kbd)
     (setq key (slot-value key 'list)))
   (when (or (< 31 (char-code (car key)))
-            (char= key::ctrl-i (car key)))
+            (char= C-i (car key)))
     (car key)))

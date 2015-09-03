@@ -43,7 +43,7 @@
         (minibuf-resize)
         (adjust-screen-size)
         (getch))
-       ((and (char= char key::ctrl-g) abort-jump)
+       ((and (char= char C-g) abort-jump)
         (throw 'abort 'abort))
        (t char))))
   (defun ungetch (c)
@@ -61,13 +61,13 @@
   (setq *macro-recording-p* nil)
   (minibuf-print "Quit"))
 
-(define-key *global-keymap* (kbd "C-xC-c") 'exit-lem)
+(define-key *global-keymap* (kbd "C-x C-c") 'exit-lem)
 (define-command exit-lem () ()
   (when (or (not (any-modified-buffer-p))
             (minibuf-y-or-n-p "Modified buffers exist. Leave anyway"))
     (setq *exit* t)))
 
-(define-key *global-keymap* (kbd "C-x?") 'describe-key)
+(define-key *global-keymap* (kbd "C-x ?") 'describe-key)
 (define-command describe-key () ()
   (minibuf-print "describe-key: ")
   (let* ((key (input-key))
@@ -97,7 +97,7 @@
                                (keymap-table keymap))
                       (terpri s))))))
 
-(define-key *global-keymap* (kbd "C-x(") 'begin-macro)
+(define-key *global-keymap* (kbd "C-x (") 'begin-macro)
 (define-command begin-macro () ()
   (cond (*macro-recording-p*
          (minibuf-print "Macro already active")
@@ -108,7 +108,7 @@
          (setq *macro-chars* nil)
          t)))
 
-(define-key *global-keymap* (kbd "C-x)") 'end-macro)
+(define-key *global-keymap* (kbd "C-x )") 'end-macro)
 (define-command end-macro () ()
   (cond (*macro-running-p* t)
         ((not *macro-recording-p*)
@@ -118,7 +118,7 @@
          (minibuf-print "End macro")
          t)))
 
-(define-key *global-keymap* (kbd "C-xe") 'execute-macro)
+(define-key *global-keymap* (kbd "C-x e") 'execute-macro)
 (define-command execute-macro (n) ("p")
   (cond (*macro-recording-p*
          (minibuf-print "Macro already active")
@@ -158,7 +158,7 @@
              (format nil "C-u ~{~a~}" numlist))))
         (nil)
       (cond
-       ((char= c key::ctrl-u)
+       ((char= c C-u)
         (setq numlist
               (mapcar 'digit-char-p
                       (coerce
@@ -201,8 +201,8 @@
 
 (defun input-key ()
   (let ((c (getch nil)))
-    (if (or (char= c key::ctrl-x)
-            (char= c key::escape))
+    (if (or (char= c C-x)
+            (char= c escape))
         (list c (getch nil))
         (list (input-char
                (char-code c))))))
@@ -256,8 +256,8 @@
     (when *macro-recording-p*
       (push (code-char code) *macro-chars*))
     (let* ((char (input-char code)))
-      (if (or (char= char key::ctrl-j)
-              (char= char key::ctrl-m))
+      (if (or (char= char C-j)
+              (char= char C-m))
           (insert-newline 1)
           (insert-char char 1))))
   (cl-charms/low-level:timeout -1)

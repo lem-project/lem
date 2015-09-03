@@ -359,7 +359,7 @@
               ()
               (loop
                 for char = (code-char (cl-charms/low-level:getch))
-                do (if (char= key::ctrl-g char)
+                do (if (char= C-g char)
                        (bt:destroy-thread *eval-thread*)
                        (ungetch char)))))
       (setq *eval-thread* (bt:make-thread #'eval-thread-closure))
@@ -411,25 +411,25 @@
 (define-command eval-defun () ()
   (%eval-sexp #'top-of-defun))
 
-(define-key *lisp-mode-keymap* (kbd "C-xu") 'eval-last-sexp)
+(define-key *lisp-mode-keymap* (kbd "C-x u") 'eval-last-sexp)
 (define-command eval-last-sexp () ()
   (%eval-sexp #'backward-sexp))
 
-(define-key *lisp-mode-keymap* (kbd "C-xy") 'eval-buffer)
+(define-key *lisp-mode-keymap* (kbd "C-x y") 'eval-buffer)
 (define-command eval-buffer () ()
   (eval-string
    (region-string (progn (beginning-of-buffer) (point))
                   (progn (end-of-buffer) (point)))))
 
-(define-key *lisp-mode-keymap* (kbd "C-xl") 'load-file)
-(define-key *lisp-mode-keymap* (kbd "C-xC-l") 'load-file)
+(define-key *lisp-mode-keymap* (kbd "C-x l") 'load-file)
+(define-key *lisp-mode-keymap* (kbd "C-x C-l") 'load-file)
 (define-command load-file (filename) ("fLoad File: ")
   (when (and (file-exist-p filename)
              (not (file-directory-p filename)))
     (eval-string
      (format nil "(load ~s)" filename))))
 
-(define-key *lisp-mode-keymap* (kbd "C-xm") 'macroexpand-lisp)
+(define-key *lisp-mode-keymap* (kbd "C-x m") 'macroexpand-lisp)
 (define-command macroexpand-lisp (arg) ("P")
   (let ((expr
          (read-from-string
@@ -446,7 +446,7 @@
                                 (macroexpand-1 expr))
                             out)))))
 
-(define-key *lisp-mode-keymap* (kbd "C-xd") 'lisp-describe-symbol)
+(define-key *lisp-mode-keymap* (kbd "C-x d") 'lisp-describe-symbol)
 (define-command lisp-describe-symbol (name) ("sDescribe: ")
   (info-popup (get-buffer-create "*describe*")
               #'(lambda (out)
@@ -502,7 +502,7 @@
            (subseq comp-str (length str)))))
       t)))
 
-(define-key *global-keymap* (kbd "C-x;") 'lisp-comment-region)
+(define-key *global-keymap* (kbd "C-x ;") 'lisp-comment-region)
 (define-command lisp-comment-region (arg) ("P")
   (let ((begin (region-beginning))
         (end (region-end)))
@@ -518,8 +518,8 @@
              (beginning-of-line)
              (insert-string ";"))))))
 
-(define-key *lisp-mode-keymap* (kbd "C-xz") 'popup-scratch-buffer)
-(define-key *lisp-mode-keymap* (kbd "C-xC-z") 'popup-scratch-buffer)
+(define-key *lisp-mode-keymap* (kbd "C-x z") 'popup-scratch-buffer)
+(define-key *lisp-mode-keymap* (kbd "C-x C-z") 'popup-scratch-buffer)
 (define-command popup-scratch-buffer () ()
   (setq *current-window*
         (pop-to-buffer (get-buffer-create "*scratch*")))

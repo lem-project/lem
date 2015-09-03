@@ -47,16 +47,16 @@
           (loop for c- on key
              for c = (first c-)
              collect (cond
-                       ((key::ctrl-p c)
+                       ((ctrl-p c)
                         (format nil "C-~c"
                                 (char-downcase
                                  (code-char
                                   (+ 64 (char-code c))))))
-                       ((char= c key::escape) "M")
-                       ((gethash c key::*key->symbol*))
+                       ((char= c escape) "M")
+                       ((gethash c *key->symbol*))
                        (t (format nil "~A" c)))
              collect (cond ((not (cdr c-))"")
-                           ((char= c key::escape) "-")
+                           ((char= c escape) "-")
                            (t " ")))))
 
 (defclass kbd ()
@@ -73,9 +73,9 @@
                       (if (and (>= (length str) 2)
                                (eql (aref str 0) #\M)
                                (eql (aref str 1) #\-)
-                               (push key::escape result))
+                               (push escape result))
                           (f (subseq str 2))
-                          (push (cl:gethash str key::*string->key*) result))))
+                          (push (gethash str *string->key*) result))))
              (loop with beg = 0
                 for i from 0
                 for c across str
@@ -114,5 +114,5 @@
   (when (typep key 'kbd)
     (setq key (slot-value key 'list)))
   (when (or (< 31 (char-code (car key)))
-            (char= key::ctrl-i (car key)))
+            (char= C-i (car key)))
     (car key)))

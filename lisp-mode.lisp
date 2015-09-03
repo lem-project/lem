@@ -359,7 +359,7 @@
               ()
               (loop
                 for char = (code-char (cl-charms/low-level:getch))
-                do (if (char= key::ctrl-g char)
+                do (if (char= C-g char)
                        (bt:destroy-thread *eval-thread*)
                        (ungetch char)))))
       (setq *eval-thread* (bt:make-thread #'eval-thread-closure))

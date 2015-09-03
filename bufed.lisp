@@ -104,9 +104,9 @@
 (define-command quoted-insert (&optional (n 1)) ("p")
   (let ((c (getch)))
     (dotimes (_ n t)
-      (cond ((char= c key::ctrl-m)
+      (cond ((char= c C-m)
              (insert-newline 1))
-            ((char= c key::ctrl-d)
+            ((char= c C-d)
              (delete-char))
             (t
              (insert-char c 1))))))
@@ -150,7 +150,7 @@
   (prev-char n))
 
 (define-key *global-keymap* (kbd "C-d") 'delete-char)
-(define-key *global-keymap* (kbd "dc") 'delete-char)
+(define-key *global-keymap* (kbd "[dc]") 'delete-char)
 (define-command delete-char (&optional n does-not-kill-p) ("P")
   (cond
    ((and n (minusp n))
@@ -177,7 +177,7 @@
         result)))))
 
 (define-key *global-keymap* (kbd "C-h") 'backward-delete-char)
-(define-key *global-keymap* (kbd "backspace") 'backward-delete-char)
+(define-key *global-keymap* (kbd "[backspace]") 'backward-delete-char)
 (define-command backward-delete-char (&optional n does-not-kill-p) ("P")
   (cond ((null n)
          (when (prev-char)
@@ -254,7 +254,7 @@
                   (window-cur-linum))))))
 
 (define-key *global-keymap* (kbd "C-n") 'next-line)
-(define-key *global-keymap* (kbd "down") 'next-line)
+(define-key *global-keymap* (kbd "[down]") 'next-line)
 (define-command next-line (&optional n) ("P")
   (if (and n (minusp n))
       (prev-line (- n))
@@ -266,7 +266,7 @@
           (progn (end-of-line) nil))))
 
 (define-key *global-keymap* (kbd "C-p") 'prev-line)
-(define-key *global-keymap* (kbd "up") 'prev-line)
+(define-key *global-keymap* (kbd "[up]") 'prev-line)
 (define-command prev-line (&optional n) ("P")
   (if (and n (minusp n))
       (next-line (- n))
@@ -278,7 +278,7 @@
           (progn (beginning-of-line) nil))))
 
 (define-key *global-keymap* (kbd "C-f") 'next-char)
-(define-key *global-keymap* (kbd "right") 'next-char)
+(define-key *global-keymap* (kbd "[right]") 'next-char)
 (define-command next-char (&optional (n 1)) ("p")
   (if (minusp n)
       (prev-char (- n))
@@ -292,7 +292,7 @@
           (goto-column (1+ (window-cur-col))))))))
 
 (define-key *global-keymap* (kbd "C-b") 'prev-char)
-(define-key *global-keymap* (kbd "left") 'prev-char)
+(define-key *global-keymap* (kbd "[left]") 'prev-char)
 (define-command prev-char (&optional (n 1)) ("p")
   (if (minusp n)
       (next-char (- n))
@@ -505,7 +505,7 @@
   (def skip-chars-forward following-char next-char)
   (def skip-chars-backward preceding-char prev-char))
 
-(define-key *global-keymap* (kbd "M-Space") 'just-one-space)
+(define-key *global-keymap* (kbd "M-Spc") 'just-one-space)
 (define-command just-one-space () ()
   (skip-chars-backward 'syntax-space-char-p)
   (delete-while-whitespaces nil nil)

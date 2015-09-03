@@ -203,9 +203,9 @@
   (let ((c (getch nil)))
     (if (or (char= c C-x)
             (char= c escape))
-        (list c (getch nil))
-        (list (input-char
-               (char-code c))))))
+        (kbd c (getch nil))
+        (kbd (input-char
+              (char-code c))))))
 
 (let ((require-scanbuf (gensym)))
   (defun execute (key)

@@ -160,7 +160,7 @@
     (if c
         (isearch-add-char c)
         (progn
-          (mapc 'ungetch (reverse key))
+          (mapc 'ungetch (reverse (kbd-list key)))
           (isearch-end)))))
 
 (defun search-step (str first-search search step goto-matched-pos endp)

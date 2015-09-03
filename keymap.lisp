@@ -31,18 +31,23 @@
 
 (defvar *global-keymap* (make-keymap "global" 'undefined-key))
 
+(defclass kbd ()
+  ((list :initarg :list
+         :reader kbd-list)))
+
+(defun kbd-p (x)
+  (typep x 'kbd))
+
 (defun define-key (keymap key cmd-name)
-  (when (typep key 'kbd)
-    (setq key (slot-value key 'list)))
-  (unless (and (listp key)
-               (every #'characterp key))
+  (unless (and (kbd-p key)
+               (every #'characterp (kbd-list key)))
     (error "define-key: ~s is illegal key" key))
-  (setf (gethash key (keymap-table keymap))
+  (setf (gethash (kbd-list key) (keymap-table keymap))
         cmd-name))
 
 (defun kbd-to-string (key)
   (format nil "~{~A~^~}"
-          (loop for c- on key
+          (loop for c- on (kbd-list key)
              for c = (first c-)
              collect (cond
                        ((ctrl-p c)
@@ -56,9 +61,6 @@
              collect (cond ((not (cdr c-))"")
                            ((char= c escape) "-")
                            (t " ")))))
-
-(defclass kbd ()
-  ((list :initarg :list)))
 
 (defmethod print-object ((k kbd) stream)
   (format stream "(~A ~S)" 'kbd (kbd-to-string (slot-value k 'list))))
@@ -94,9 +96,7 @@
      (kbd-keys (cons string-or-first-key keys)))))
 
 (defun keymap-find-command (keymap key)
-  (when (typep key 'kbd)
-    (setq key (slot-value key 'list)))
-  (let ((cmd (gethash key (keymap-table keymap))))
+  (let ((cmd (gethash (kbd-list key) (keymap-table keymap))))
     (or cmd
         (let ((keymap (keymap-parent keymap)))
           (when keymap
@@ -113,14 +113,11 @@
     acc))
 
 (defun key-undef-hook (keymap key)
-  (when (typep key 'kbd)
-    (setq key (slot-value key 'list)))
   (when (keymap-undef-hook keymap)
     (funcall (keymap-undef-hook keymap) key)))
 
 (defun insertion-key-p (key)
-  (when (typep key 'kbd)
-    (setq key (slot-value key 'list)))
-  (when (or (< 31 (char-code (car key)))
-            (char= C-i (car key)))
-    (car key)))
+  (let ((first-key (car (kbd-list key))))
+    (when (or (< 31 (char-code first-key))
+              (char= C-i first-key))
+      first-key)))

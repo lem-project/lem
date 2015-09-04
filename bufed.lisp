@@ -232,7 +232,7 @@
 
 (define-key *global-keymap* (kbd "M-<") 'beginning-of-buffer)
 (define-command beginning-of-buffer () ()
-  (goto-line 1)
+  (goto-line 1 t)
   (goto-column 0)
   t)
 

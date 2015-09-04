@@ -77,6 +77,7 @@
 (define-key *minibuf-keymap* (kbd "C-u") 'minibuf-read-line-clear-before)
 (define-key *minibuf-keymap* (kbd "C-p") 'minibuf-read-line-prev-log)
 (define-key *minibuf-keymap* (kbd "C-n") 'minibuf-read-line-next-log)
+(define-key *minibuf-keymap* (kbd "C-g") 'minibuf-read-line-break)
 
 (defvar *minibuf-read-line-tmp-window*)
 
@@ -113,6 +114,9 @@
 
 (define-command minibuf-read-line-next-log () ()
   t)
+
+(define-command minibuf-read-line-break () ()
+  (throw 'abort 'abort))
 
 (define-command minibuf-read-line-insert-char () ()
   (let ((c (insertion-key-p *last-input-key*)))

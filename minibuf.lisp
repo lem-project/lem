@@ -10,43 +10,44 @@
           minibuf-read-buffer
           minibuf-read-file))
 
-(defvar *mb-win*)
+(defvar *minibuf-window*)
+
 (defvar *mb-print-flag* nil)
-(defvar *mb-read-log* nil)
 
 (defun minibuf-init ()
-  (setq *mb-win*
-        (cl-charms/low-level:newwin
-         1
-         cl-charms/low-level:*cols*
-         (1- cl-charms/low-level:*lines*)
-         0)))
+  (let* ((buffer (make-buffer " *minibuffer*"))
+         (window (make-window buffer
+                              1
+                              cl-charms/low-level:*cols*
+                              (1- cl-charms/low-level:*lines*)
+                              0)))
+    (setq *minibuf-window* window)))
 
 (defun minibuf-resize ()
-  (cl-charms/low-level:mvwin *mb-win*
-                             (1- cl-charms/low-level:*lines*)
-                             0)
-  (cl-charms/low-level:wresize *mb-win*
-                               1
-                               cl-charms/low-level:*cols*)
-  (cl-charms/low-level:werase *mb-win*)
-  (cl-charms/low-level:wrefresh *mb-win*))
+  (window-set-pos *minibuf-window*
+                  (1- cl-charms/low-level:*lines*)
+                  0)
+  (window-set-size *minibuf-window*
+                   1
+                   cl-charms/low-level:*cols*)
+  (cl-charms/low-level:werase (window-win *minibuf-window*))
+  (cl-charms/low-level:wrefresh (window-win *minibuf-window*)))
 
 (defun minibuf-clear ()
   (when *mb-print-flag*
-    (cl-charms/low-level:werase *mb-win*)
-    (cl-charms/low-level:wrefresh *mb-win*)
+    (cl-charms/low-level:werase (window-win *minibuf-window*))
+    (cl-charms/low-level:wrefresh (window-win *minibuf-window*))
     (setq *mb-print-flag* nil)))
 
 (defun minibuf-print (msg)
   (setq *mb-print-flag* t)
-  (cl-charms/low-level:werase *mb-win*)
+  (cl-charms/low-level:werase (window-win *minibuf-window*))
   (cl-charms/low-level:mvwaddstr
-   *mb-win*
+   (window-win *minibuf-window*)
    0
    0
    (replace-string (string #\newline) "<NL>" msg))
-  (cl-charms/low-level:wrefresh *mb-win*))
+  (cl-charms/low-level:wrefresh (window-win *minibuf-window*)))
 
 (defun minibuf-y-or-n-p (prompt)
   (setq *mb-print-flag* t)
@@ -64,63 +65,91 @@
   (minibuf-print prompt)
   (getch))
 
+(defvar *minibuf-read-line-log* nil)
+(defvar *minibuf-read-line-busy-p* nil)
+
+(defvar *minibuf-keymap*
+  (make-keymap "minibuffer" 'minibuf-read-line-insert-char *global-keymap*))
+
+(define-key *minibuf-keymap* (kbd "C-j") 'minibuf-read-line-confirm)
+(define-key *minibuf-keymap* (kbd "C-m") 'minibuf-read-line-confirm)
+(define-key *minibuf-keymap* (kbd "C-i") 'minibuf-read-line-completion)
+(define-key *minibuf-keymap* (kbd "C-u") 'minibuf-read-line-clear-before)
+(define-key *minibuf-keymap* (kbd "C-p") 'minibuf-read-line-prev-log)
+(define-key *minibuf-keymap* (kbd "C-n") 'minibuf-read-line-next-log)
+
+(defvar *minibuf-read-line-tmp-window*)
+
+(defvar *minibuf-read-line-loop*)
+(defvar *minibuf-read-line-comp-f*)
+(defvar *minibuf-read-line-existing-p*)
+
+(define-command minibuf-read-line-confirm () ()
+  (let ((str (minibuf-get-line)))
+    (when (or (string= str "")
+              (null *minibuf-read-line-existing-p*)
+              (funcall *minibuf-read-line-existing-p* str))
+      (setq *minibuf-read-line-loop* nil)))
+  t)
+
+(define-command minibuf-read-line-completion () ()
+  (when *minibuf-read-line-comp-f*
+    (let ((target-str
+           (region-string (point-min) (point))))
+      (let ((str
+             (let ((*current-window* *minibuf-read-line-tmp-window*))
+               (popup-completion *minibuf-read-line-comp-f*
+                                 target-str))))
+        (minibuf-read-line-clear-before)
+        (insert-string str))))
+  t)
+
+(define-command minibuf-read-line-clear-before () ()
+  (kill-region (point-min) (point))
+  t)
+
+(define-command minibuf-read-line-prev-log () ()
+  t)
+
+(define-command minibuf-read-line-next-log () ()
+  t)
+
+(define-command minibuf-read-line-insert-char () ()
+  (let ((c (insertion-key-p *last-input-key*)))
+    (when c
+      (insert-char c 1))))
+
+(defun minibuf-get-line ()
+  (buffer-line-string (window-buffer *minibuf-window*) 1))
+
+(defun minibuf-read-line-refresh (prompt)
+  (minibuf-print (concatenate 'string prompt (minibuf-get-line)))
+  (cl-charms/low-level:wmove (window-win *minibuf-window*)
+                             (1- (window-cur-linum *minibuf-window*))
+                             (+ (length prompt)
+                                (window-cur-col *minibuf-window*)))
+  (cl-charms/low-level:wrefresh (window-win *minibuf-window*)))
+
 (defun minibuf-read-line (prompt initial comp-f existing-p)
-  (setq *mb-print-flag* t)
-  (let ((str initial)
-        (comp-flag)
-        (one-window-p (one-window-p))
-        (prev-read-log *mb-read-log*)
-        (next-read-log))
-    (do ((break nil))
-        (break)
-      (minibuf-print (format nil "~a~a" prompt str))
-      (let ((c (getch)))
-        (cond
-         ((or (char= c C-j)
-              (char= c C-m))
-          (when (or (string= str "")
-                    (null existing-p)
-                    (funcall existing-p str))
-            (setq break t)))
-         ((char= c C-i)
-          (when comp-f
-            (setq comp-flag t)
-            (setq str
-                  (popup-completion comp-f str))))
-         ((or (char= c C-h)
-              (char= c [backspace])
-              (char= c #\rubout))
-          (when (< 0 (length str))
-            (setq str (subseq str 0 (1- (length str))))))
-         ((char= c C-u)
-          (setq str ""))
-         ((char= c C-p)
-          (when prev-read-log
-            (let ((elt (pop prev-read-log)))
-              (push elt next-read-log)
-              (setq str elt))))
-         ((char= c C-n)
-          (when next-read-log
-            (let ((elt (pop next-read-log)))
-              (push elt prev-read-log)
-              (setq str elt))))
-         ((char= c C-q)
-          (setq str (concatenate 'string str (string (getch)))))
-         ((char= c C-y)
-          (let ((str1 (kill-ring-first)))
-            (when str1
-              (setq str (concatenate 'string str str1)))))
-         (t
-          (let ((c (input-char (char-code c))))
-            (setq str (concatenate 'string str (string c))))))))
-    (cond
-     ((and comp-flag one-window-p)
-      (delete-completion-window))
-     ((and comp-flag *completion-window*)
-      (let ((*current-window* *completion-window*))
-        (set-buffer (car *buffer-list*)))))
-    (push str *mb-read-log*)
-    str))
+  (when *minibuf-read-line-busy-p*
+    (return-from minibuf-read-line nil))
+  (let ((*minibuf-read-line-tmp-window* *current-window*)
+        (*current-window* *minibuf-window*)
+        (*minibuf-read-line-busy-p* t))
+    (erase-buffer)
+    (when initial
+      (insert-string initial))
+    (do ((*minibuf-read-line-loop* t)
+         (*minibuf-read-line-existing-p* existing-p)
+         (*minibuf-read-line-comp-f* comp-f)
+         (*curr-flags* (make-flags) (make-flags))
+         (*last-flags* (make-flags) *curr-flags*))
+        ((not *minibuf-read-line-loop*)
+         (minibuf-get-line))
+      (minibuf-read-line-refresh prompt)
+      (let* ((key (input-key))
+             (cmd (keymap-find-command *minibuf-keymap* key)))
+        (cmd-call cmd 1)))))
 
 (defun minibuf-read-string (prompt &optional initial)
   (minibuf-read-line prompt (or initial "") nil nil))

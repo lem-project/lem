@@ -18,13 +18,15 @@
     (kill-buffer (buffer-name buffer))
     t))
 
-(defun info-popup (buffer &optional fn)
+(defun info-popup (buffer &optional fn (focus-set-p t))
   (let ((one-window-p (or (buffer-get buffer :popup)
                           (one-window-p))))
     (with-buffer-read-only buffer nil
-      (setq *current-window*
-            (popup buffer fn
+      (let ((window
+             (popup buffer fn
                    :goto-bob-p t
                    :erase-p t)))
+        (when focus-set-p
+          (setq *current-window* window))))
     (info-mode)
     (buffer-put buffer :popup one-window-p)))

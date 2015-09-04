@@ -34,7 +34,8 @@
     (update-grep-list (split-string str #\newline))
     (info-popup (get-buffer-create "*Grep*")
                 #'(lambda (out)
-                    (princ str out)))))
+                    (princ str out))
+                nil)))
 
 (define-key *global-keymap* (kbd "M-n") 'grep-next)
 (define-command grep-next (&optional (n 1)) ("p")

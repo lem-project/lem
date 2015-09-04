@@ -335,7 +335,7 @@
         (error-p))
     (labels ((eval-thread-closure
               ()
-              (let ((out (make-buffer-output-stream output-buffer point)))
+              (let ((out (make-buffer-output-stream output-buffer point t)))
                 (let ((*error-output* out)
                       (*trace-output* out)
                       (*debug-io* out)

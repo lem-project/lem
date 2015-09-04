@@ -14,9 +14,12 @@
     :accessor buffer-output-stream-linum)
    (column
     :initarg :column
-    :accessor buffer-output-stream-column)))
+    :accessor buffer-output-stream-column)
+   (interactive-update-p
+    :initarg :interactive-update-p
+    :accessor buffer-output-stream-interactive-update-p)))
 
-(defun make-buffer-output-stream (buffer &optional point)
+(defun make-buffer-output-stream (buffer &optional point interactive-update-p)
   (make-instance 'buffer-output-stream
                  :buffer buffer
                  :linum (if point
@@ -24,7 +27,8 @@
                             1)
                  :column (if point
                              (point-column point)
-                             0)))
+                             0)
+                 :interactive-update-p interactive-update-p))
 
 (defun buffer-output-stream-point (stream)
   (make-point (buffer-output-stream-linum stream)
@@ -100,7 +104,8 @@
   (prog1 (buffer-insert-newline (buffer-output-stream-buffer stream)
                                 (buffer-output-stream-linum stream)
                                 (buffer-output-stream-column stream))
-    (window-update-all)
+    (when (buffer-output-stream-interactive-update-p stream)
+      (window-update-all))
     (incf (buffer-output-stream-linum stream))
     (setf (buffer-output-stream-column stream) 0)))
 

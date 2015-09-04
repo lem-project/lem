@@ -217,7 +217,7 @@
                     :regex-p t
                     :color *constant-color*)
 
-(define-major-mode lisp-mode
+(define-major-mode lisp-mode nil
   (:name "lisp-mode"
    :keymap *lisp-mode-keymap*
    :syntax-table *lisp-syntax-table*))
@@ -528,7 +528,7 @@
 (defvar *scratch-mode-keymap*
   (make-keymap "scratch" 'self-insert *lisp-mode-keymap*))
 
-(define-major-mode scratch-mode
+(define-major-mode scratch-mode nil
   (:name "scratch-mode"
    :keymap *scratch-mode-keymap*
    :syntax-table *lisp-syntax-table*))

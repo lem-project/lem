@@ -47,13 +47,22 @@
             (delete minor-mode (buffer-minor-modes)))
       (push minor-mode (buffer-minor-modes))))
 
-(defmacro define-major-mode (major-mode (&key name keymap syntax-table)
-                                        &body body)
+(defmacro define-major-mode (major-mode
+                             parent-mode
+                             (&key name keymap syntax-table)
+                             &body body)
   `(progn
      (setf (mode-name ',major-mode) ,name)
-     (setf (mode-keymap ',major-mode) ,keymap)
-     (setf (mode-syntax-table ',major-mode) ,syntax-table)
+     (setf (mode-keymap ',major-mode)
+           ,(or keymap
+                (when parent-mode
+                  (mode-keymap parent-mode))))
+     (setf (mode-syntax-table ',major-mode)
+           ,(or syntax-table
+                (when parent-mode
+                  (mode-syntax-table parent-mode))))
      (define-command ,major-mode () ()
+       ,(when parent-mode `(,parent-mode))
        (setf (major-mode) ',major-mode)
        (buffer-empty-plist (current-buffer))
        (syntax-scan-buffer (current-buffer))
@@ -72,7 +81,7 @@
               (setf (buffer-minor-modes)
                     (delete ',minor-mode (buffer-minor-modes))))))))
 
-(define-major-mode fundamental-mode
+(define-major-mode fundamental-mode nil
   (:name "fundamental-mode"
    :keymap *global-keymap*
    :syntax-table (make-syntax-table)))

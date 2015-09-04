@@ -3,12 +3,9 @@
 (defvar *info-mode-keymap*
   (make-keymap "info" nil *global-keymap*))
 
-(define-major-mode info-mode
-  (:name "info-mode"
-   :keymap *info-mode-keymap*
-   :syntax-table (make-syntax-table))
-  (buffer-disable-undo (window-buffer))
-  (setf (buffer-read-only-p (window-buffer)) t))
+(define-minor-mode info-mode
+  :name "info-mode"
+  :keymap *info-mode-keymap*)
 
 (define-key *info-mode-keymap* (kbd "q") 'info-quit)
 (define-command info-quit () ()
@@ -18,17 +15,23 @@
     (kill-buffer (buffer-name buffer))
     t))
 
+(defun info-popup-closure (mode)
+  #'(lambda (buffer fn focus-set-p)
+      (let ((one-window-p (or (buffer-get buffer :popup)
+                              (one-window-p)))
+            window)
+        (with-buffer-read-only buffer nil
+          (setq window
+                (popup buffer fn
+                       :goto-bob-p t
+                       :erase-p t))
+          (when focus-set-p
+            (setq *current-window* window)))
+        (let ((*current-window* window))
+          (info-mode)
+          (when mode (funcall mode))
+          (buffer-put buffer :popup one-window-p)))))
+
 (defun info-popup (buffer &optional fn (focus-set-p t))
-  (let ((one-window-p (or (buffer-get buffer :popup)
-                          (one-window-p)))
-        window)
-    (with-buffer-read-only buffer nil
-      (setq window
-            (popup buffer fn
-                   :goto-bob-p t
-                   :erase-p t))
-      (when focus-set-p
-        (setq *current-window* window)))
-    (let ((*current-window* window))
-      (info-mode)
-      (buffer-put buffer :popup one-window-p))))
+  (funcall (info-popup-closure nil)
+           buffer fn focus-set-p))

@@ -389,7 +389,7 @@
                                            output-buffer
                                            (point-min)))))
       (when (buffer-modified-p output-buffer)
-        (info-popup output-buffer)))))
+        (lisp-info-popup output-buffer)))))
 
 (define-command eval-region (&optional begin end) ("r")
   (unless (or begin end)
@@ -439,18 +439,18 @@
                            (prog1 (point)
                              (point-set start))))
           nil)))
-    (info-popup (get-buffer-create "*macroexpand*")
-                #'(lambda (out)
-                    (pprint (if arg
-                                (macroexpand expr)
-                                (macroexpand-1 expr))
-                            out)))))
+    (lisp-info-popup (get-buffer-create "*macroexpand*")
+                     #'(lambda (out)
+                         (pprint (if arg
+                                     (macroexpand expr)
+                                     (macroexpand-1 expr))
+                                 out)))))
 
 (define-key *lisp-mode-keymap* (kbd "C-x d") 'lisp-describe-symbol)
 (define-command lisp-describe-symbol (name) ("sDescribe: ")
-  (info-popup (get-buffer-create "*describe*")
-              #'(lambda (out)
-                  (describe (read-from-string name) out))))
+  (lisp-info-popup (get-buffer-create "*describe*")
+                   #'(lambda (out)
+                       (describe (read-from-string name) out))))
 
 (define-command indent-region-lisp () ()
   (save-excursion
@@ -552,15 +552,19 @@
 (defun lisp-debugger (condition)
   (let* ((choices (compute-restarts condition))
          (n (length choices)))
-    (info-popup (get-buffer-create "*ERROR*")
-                #'(lambda (out)
-                    (format out "~a~%~%" condition)
-                    (loop
-                      for choice in choices
-                      for i from 1
-                      do (format out "~&[~d] ~a~%" i choice))
-                    (terpri out)
-                    #+sbcl (sb-debug:backtrace 100 out)))
+    (lisp-info-popup (get-buffer-create "*ERROR*")
+                     #'(lambda (out)
+                         (format out "~a~%~%" condition)
+                         (loop
+                           for choice in choices
+                           for i from 1
+                           do (format out "~&[~d] ~a~%" i choice))
+                         (terpri out)
+                         #+sbcl (sb-debug:backtrace 100 out)))
     (let ((i (minibuf-read-number "Continue: " 1 n)))
       (invoke-restart-interactively (nth i choices))))
   condition)
+
+(defun lisp-info-popup (buffer &optional fn)
+  (funcall (info-popup-closure 'lisp-mode)
+           buffer fn t))

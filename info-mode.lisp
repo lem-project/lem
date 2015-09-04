@@ -19,7 +19,8 @@
     t))
 
 (defun info-popup (buffer &optional fn)
-  (let ((one-window-p (one-window-p)))
+  (let ((one-window-p (or (buffer-get buffer :popup)
+                          (one-window-p))))
     (with-buffer-read-only buffer nil
       (setq *current-window*
             (popup buffer fn

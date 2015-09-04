@@ -42,6 +42,9 @@
       (setf (gethash list *kbd-cache-table*)
             (make-instance 'kbd :list list))))
 
+(defmethod print-object ((k kbd) stream)
+  (format stream "(~A ~S)" 'kbd (kbd-to-string k)))
+
 (defun kbd-p (x)
   (typep x 'kbd))
 
@@ -68,9 +71,6 @@
              collect (cond ((not (cdr c-))"")
                            ((char= c escape) "-")
                            (t " ")))))
-
-(defmethod print-object ((k kbd) stream)
-  (format stream "(~A ~S)" 'kbd (kbd-to-string (slot-value k 'list))))
 
 (defun kbd-string-1 (str)
   (if (and (>= (length str) 2)

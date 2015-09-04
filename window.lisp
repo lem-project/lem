@@ -214,7 +214,7 @@
         (let* ((start (wide-index str (- curx cols -4)))
                (end (window-cur-col window))
                (substr (subseq str start end)))
-          (setq offset-column start)
+          (setq offset-column (1- start))
           (setq curx (- cols 2))
           (if (wide-char-p (aref substr (- (length substr) 1)))
               (progn
@@ -225,7 +225,7 @@
               (setq str (format nil "$~a$" substr)))))
        (t
         (let ((start (- curx cols -3)))
-          (setq offset-column start)
+          (setq offset-column (- start 2))
           (setq str
                 (format nil
                         "$~a"

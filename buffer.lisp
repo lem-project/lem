@@ -151,7 +151,8 @@
     (setf (buffer-redo-stack buffer) nil)
     (setf (buffer-undo-node buffer) 0)
     (setf (buffer-saved-node buffer) 0)
-    (push buffer *buffer-list*)
+    (unless (ghost-buffer-p buffer)
+      (push buffer *buffer-list*))
     buffer))
 
 (defmethod print-object ((buffer buffer) stream)

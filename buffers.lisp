@@ -154,11 +154,10 @@
                   out)
            (terpri out)
            (dolist (b *buffer-list*)
-             (unless (ghost-buffer-p b)
-               (format out
-                       (format nil " ~a   ~a  ~a~~~dT~a~~%"
-                               (if (buffer-modified-p b) "*" " ")
-                               (if (buffer-read-only-p b) "*" " ")
-                               (buffer-name b)
-                               (+ 8 max-name-len)
-                               (or (buffer-filename b) ""))))))))))
+             (format out
+                     (format nil " ~a   ~a  ~a~~~dT~a~~%"
+                             (if (buffer-modified-p b) "*" " ")
+                             (if (buffer-read-only-p b) "*" " ")
+                             (buffer-name b)
+                             (+ 8 max-name-len)
+                             (or (buffer-filename b) "")))))))))

@@ -246,7 +246,7 @@
 (defun window-refresh-line-wrapping (window curx cury y str props)
   (let ((ncols (window-ncols window)))
     (when (= y cury)
-      (setq curx (window-cur-col window)))
+      (setq curx (str-width str (window-cur-col window))))
     (let ((strings (divide-line-width str ncols)))
       (if (null (cdr strings))
           (window-print-line window y str props 0)
@@ -257,12 +257,13 @@
             (let ((str (car rest-strings))
                   (wrapping-flag (cdr rest-strings)))
               (when wrapping-flag
-                (cond ((< y cury)
-                       (incf cury))
-                      ((and (= y cury)
-                            (< (length str) curx))
-                       (decf curx (length str))
-                       (incf cury))))
+                (if (< y cury)
+                    (incf cury)
+                    (when (= y cury)
+                      (let ((len (str-width str)))
+                        (when (< len curx)
+                          (decf curx len)
+                          (incf cury))))))
               (window-print-line window
                                  y
                                  (if wrapping-flag

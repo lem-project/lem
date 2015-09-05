@@ -21,6 +21,8 @@
 
 (defvar *tab-size* 8)
 
+(defvar *default-truncate-lines* t)
+
 (defvar *last-flags* nil)
 (defvar *curr-flags* nil)
 

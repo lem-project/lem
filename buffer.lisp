@@ -125,6 +125,7 @@
   undo-node
   saved-node
   overlays
+  truncate-lines
   plist)
 
 (defvar *undo-modes* '(:edit :undo :redo))
@@ -151,6 +152,7 @@
     (setf (buffer-redo-stack buffer) nil)
     (setf (buffer-undo-node buffer) 0)
     (setf (buffer-saved-node buffer) 0)
+    (setf (buffer-truncate-lines buffer) *default-truncate-lines*)
     (unless (ghost-buffer-p buffer)
       (push buffer *buffer-list*))
     buffer))

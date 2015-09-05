@@ -194,10 +194,8 @@
                                     (str-width str))
                                  :initial-element #\space))))))
 
-(defun window-refresh-line (window y str props)
-  (let ((cury (window-cursor-y window))
-        (curx)
-        (offset-column 0))
+(defun window-refresh-line (window curx cury y str props)
+  (let ((offset-column 0))
     (when (= cury y)
       (setq curx (str-width str (window-cur-col window))))
     (let ((width (str-width str))
@@ -234,7 +232,7 @@
                         (substring-width str start))))
         (setq curx (- cols 1))))
       (window-print-line window y str props offset-column))
-    curx))
+    (values curx cury y)))
 
 (defun divide-line-width (str ncols)
   (labels ((f (str acc)
@@ -280,7 +278,11 @@
 
 (defun window-refresh-lines (window)
   (let ((curx 0)
-        (cury (window-cursor-y window)))
+        (cury (window-cursor-y window))
+        (refresh-line
+         (if (buffer-truncate-lines (window-buffer window))
+             #'window-refresh-line-wrapping
+             #'window-refresh-line)))
     (setf (window-wrap-count window) 0)
     (loop
       :with y := 0
@@ -289,17 +291,12 @@
                               (window-disp-lines window)
                               (window-vtop-linum window)
                               (1- (window-nlines window)))
-      :while (< y (1- (window-nlines window)))
-      :do
+      :while (< y (1- (window-nlines window))) :do
       (if disp-line
           (destructuring-bind (str . props) disp-line
             (multiple-value-setq (curx cury y)
-                                 (window-refresh-line-wrapping window
-                                                               curx
-                                                               cury
-                                                               y
-                                                               str
-                                                               props)))
+                                 (funcall refresh-line
+                                          window curx cury y str props)))
           (window-print-line window y "" nil 0))
       (incf y))
     (cl-charms/low-level:wmove (window-win window)

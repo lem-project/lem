@@ -561,6 +561,7 @@
                            do (format out "~&[~d] ~a~%" i choice))
                          (terpri out)
                          #+sbcl (sb-debug:backtrace 100 out)))
+    (window-update-all)
     (let ((i (minibuf-read-number "Continue: " 1 n)))
       (invoke-restart-interactively (nth i choices))))
   condition)

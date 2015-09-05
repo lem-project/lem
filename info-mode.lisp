@@ -30,7 +30,8 @@
         (let ((*current-window* window))
           (info-mode)
           (when mode (funcall mode))
-          (buffer-put buffer :popup one-window-p)))))
+          (buffer-put buffer :popup one-window-p))
+        window)))
 
 (defun info-popup (buffer &optional fn (focus-set-p t))
   (funcall (info-popup-closure nil)

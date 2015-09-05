@@ -33,12 +33,12 @@
     (when strings
       (setq *completion-flag* t)
       (let ((buffer (get-buffer-create *comp-buffer-name*)))
-        (info-popup buffer
-                    #'(lambda (out)
-                        (setq *completion-window* *current-window*)
-                        (dolist (s strings)
-                          (format out "~a~%" s)))
-                    nil)
+        (setq *completion-window*
+              (info-popup buffer
+                          #'(lambda (out)
+                              (dolist (s strings)
+                                (format out "~a~%" s)))
+                          nil))
         (buffer-put buffer :completion-buffer-p t))
       (window-update-all))
     (or result str)))

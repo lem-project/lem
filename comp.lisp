@@ -8,7 +8,6 @@
 (defvar *comp-buffer-name* "*Completion*")
 (defvar *completion-window* nil)
 (defvar *completion-flag* nil)
-(defvar *comp-popup-window* nil)
 
 (defun completion (name list)
   (let ((strings
@@ -33,15 +32,14 @@
   (multiple-value-bind (result strings) (funcall comp-f str)
     (when strings
       (setq *completion-flag* t)
-      (multiple-value-bind (win newwin-p)
-          (info-popup (get-buffer-create *comp-buffer-name*)
-                      #'(lambda (out)
-                          (setq *completion-window* *current-window*)
-                          (dolist (s strings)
-                            (format out "~a~%" s)))
-                      nil)
-        (declare (ignore win))
-        (setq *comp-popup-window* newwin-p))
+      (let ((buffer (get-buffer-create *comp-buffer-name*)))
+        (info-popup buffer
+                    #'(lambda (out)
+                        (setq *completion-window* *current-window*)
+                        (dolist (s strings)
+                          (format out "~a~%" s)))
+                    nil)
+        (buffer-put buffer :completion-buffer-p t))
       (window-update-all))
     (or result str)))
 
@@ -49,7 +47,10 @@
   (when *completion-flag*
     (setq *completion-flag* nil)
     (let ((*current-window* (find *completion-window* *window-list*)))
-      (info-quit))))
+      (assert *current-window*)
+      (when (buffer-get (window-buffer *current-window*)
+                        :completion-buffer-p)
+        (info-quit)))))
 
 (defun preceding-word ()
   (let ((chars))

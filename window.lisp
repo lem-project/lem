@@ -25,7 +25,8 @@
   vtop-linum
   cur-linum
   cur-col
-  max-col)
+  max-col
+  wrap-count)
 
 (defun make-window (buffer nlines ncols y x)
   (let ((window
@@ -40,7 +41,8 @@
                         :vtop-linum 1
                         :cur-linum 1
                         :cur-col 0
-                        :max-col 0)))
+                        :max-col 0
+                        :wrap-count 0)))
     (cl-charms/low-level:keypad (window-win window) 1)
     window))
 
@@ -234,26 +236,75 @@
       (window-print-line window y str props offset-column))
     curx))
 
+(defun divide-line-width (str ncols)
+  (labels ((f (str acc)
+              (if (< (str-width str) ncols)
+                  (nreverse (cons str acc))
+                  (let ((i (wide-index str ncols)))
+                    (f (subseq str i)
+                       (cons (subseq str 0 i) acc))))))
+    (f str nil)))
+
+(defun window-refresh-line-wrapping (window curx cury y str props)
+  (let ((ncols (window-ncols window)))
+    (when (= y cury)
+      (setq curx (window-cur-col window)))
+    (let ((strings (divide-line-width str ncols)))
+      (if (null (cdr strings))
+          (window-print-line window y str props 0)
+          (do ((rest-strings strings (cdr rest-strings))
+               (offset-column 0))
+              ((or (null rest-strings)
+                   (>= y (1- (window-nlines window)))))
+            (let ((str (car rest-strings))
+                  (wrapping-flag (cdr rest-strings)))
+              (when wrapping-flag
+                (cond ((< y cury)
+                       (incf cury))
+                      ((and (= y cury)
+                            (< (length str) curx))
+                       (decf curx (length str))
+                       (incf cury))))
+              (window-print-line window
+                                 y
+                                 (if wrapping-flag
+                                     (concatenate 'string str "\\")
+                                     str)
+                                 props
+                                 offset-column)
+              (when wrapping-flag
+                (incf y)
+                (incf (window-wrap-count window)))
+              (incf offset-column (length str)))))))
+  (values curx cury y))
+
 (defun window-refresh-lines (window)
-  (let ((x 0))
+  (let ((curx 0)
+        (cury (window-cursor-y window)))
+    (setf (window-wrap-count window) 0)
     (loop
-      for y from 0
-      for disp-line across (buffer-display-lines
-                            (window-buffer window)
-                            (window-disp-lines window)
-                            (window-vtop-linum window)
-                            (1- (window-nlines window)))
-      do
+      :with y := 0
+      :for disp-line :across (buffer-display-lines
+                              (window-buffer window)
+                              (window-disp-lines window)
+                              (window-vtop-linum window)
+                              (1- (window-nlines window)))
+      :while (< y (1- (window-nlines window)))
+      :do
       (if disp-line
           (destructuring-bind (str . props) disp-line
-            (let ((curx (window-refresh-line window y str props)))
-              (when curx
-                (setq x curx))))
-          (window-refresh-line window y "" nil)))
+            (multiple-value-setq (curx cury y)
+                                 (window-refresh-line-wrapping window
+                                                               curx
+                                                               cury
+                                                               y
+                                                               str
+                                                               props)))
+          (window-print-line window y "" nil 0))
+      (incf y))
     (cl-charms/low-level:wmove (window-win window)
-                               (- (window-cur-linum window)
-                                  (window-vtop-linum window))
-                               x)))
+                               cury
+                               curx)))
 
 (defun window-refresh (window)
   (window-refresh-modeline window)
@@ -262,7 +313,8 @@
 
 (defun window-offset-view (window)
   (let ((vtop-linum (window-vtop-linum window))
-        (nlines (window-nlines window))
+        (nlines (- (window-nlines window)
+                   (window-wrap-count window)))
         (linum (window-cur-linum window)))
     (cond
      ((< #1=(+ vtop-linum nlines -2) linum)

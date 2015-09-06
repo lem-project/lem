@@ -28,7 +28,7 @@
           (when focus-set-p
             (setq *current-window* window)))
         (let ((*current-window* window))
-          (info-mode)
+          (info-mode t)
           (when mode (funcall mode))
           (buffer-put buffer :popup one-window-p))
         window)))

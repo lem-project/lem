@@ -76,7 +76,8 @@
        (cond ((null args)
               (toggle-minor-mode ',minor-mode))
              ((car args)
-              (push ',minor-mode (buffer-minor-modes)))
+              (unless (member ',minor-mode (buffer-minor-modes))
+                (push ',minor-mode (buffer-minor-modes))))
              (t
               (setf (buffer-minor-modes)
                     (delete ',minor-mode (buffer-minor-modes))))))))

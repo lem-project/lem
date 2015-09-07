@@ -2,9 +2,6 @@
 
 #-asdf(require :asdf)
 
-(defpackage :lem
-  (:use :cl))
-
 (defpackage :lem-asd
   (:use :cl :asdf))
 
@@ -12,7 +9,9 @@
 
 (defsystem lem
            :serial t
-           :components ((:file "wrappers")
+           :components ((:file "fatstring")
+                        (:file "package")
+                        (:file "wrappers")
                         (:file "key")
                         (:file "header")
                         (:file "util")

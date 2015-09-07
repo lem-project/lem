@@ -227,6 +227,7 @@
     (multiple-value-bind (_ dispatch-char-p)
         (get-macro-character c1)
       (when (and dispatch-char-p
+                 (not (eql c2 #\())
                  (get-dispatch-macro-character c1 c2))
         (next-char step-arg)))))
 

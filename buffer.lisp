@@ -394,7 +394,7 @@
     for start = (overlay-start overlay)
     for end = (overlay-end overlay)
     do (cond ((and (= (point-linum start) (point-linum end))
-                   (<= start-linum (point-linum start) end-linum))
+                   (<= start-linum (point-linum start) (1- end-linum)))
               (set-prop-display-line disp-lines
                                      (overlay-prop overlay)
                                      start-linum
@@ -402,7 +402,7 @@
                                      (point-column start)
                                      (point-column end)))
              ((and (<= start-linum (point-linum start))
-                   (<= (point-linum end) end-linum))
+                   (< (point-linum end) end-linum))
               (set-prop-display-line disp-lines
                                      (overlay-prop overlay)
                                      start-linum

@@ -291,7 +291,7 @@
                               (window-buffer window)
                               (window-disp-lines window)
                               (window-vtop-linum window)
-                              (1- (window-nlines window)))
+                              (- (window-nlines window) 2))
       :while (< y (1- (window-nlines window))) :do
       (if disp-line
           (destructuring-bind (str . props) disp-line

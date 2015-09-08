@@ -227,8 +227,8 @@
               (if (< (str-width (fat-string str)) ncols)
                   (nreverse (cons str acc))
                   (let ((i (wide-index (fat-string str) ncols)))
-                    (f (subseq str i)
-                       (cons (subseq str 0 i) acc))))))
+                    (f (fat-substring str i)
+                       (cons (fat-substring str 0 i) acc))))))
     (f str nil)))
 
 (defun window-refresh-line-wrapping (window curx cury y str)

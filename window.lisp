@@ -166,7 +166,7 @@
   (cl-charms/low-level:mvwaddstr win y (str-width str x) (string (schar str x)))
   (cl-charms/low-level:wattroff win attr))
 
-(defun window-print-line (window y str offset-column)
+(defun window-print-line (window y str)
   (check-type str fatstring)
   (loop
     :with x := 0 :and win := (window-win window)
@@ -237,9 +237,8 @@
       (setq curx (str-width (fat-string str) (window-cur-col window))))
     (let ((strings (divide-line-width str ncols)))
       (if (null (cdr strings))
-          (window-print-line window y str 0)
-          (do ((rest-strings strings (cdr rest-strings))
-               (offset-column 0))
+          (window-print-line window y str)
+          (do ((rest-strings strings (cdr rest-strings)))
               ((or (null rest-strings)
                    (>= y (1- (window-nlines window)))))
             (let ((str (car rest-strings))
@@ -256,12 +255,10 @@
                                  y
                                  (if wrapping-flag
 				     (fat-concat str "\\")
-                                     str)
-                                 offset-column)
+                                     str))
               (when wrapping-flag
                 (incf y)
-                (incf (window-wrap-count window)))
-              (incf offset-column (fat-length str)))))))
+                (incf (window-wrap-count window))))))))
   (values curx cury y))
 
 (defun window-refresh-lines (window)

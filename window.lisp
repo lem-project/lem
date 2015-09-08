@@ -178,47 +178,46 @@
           (cl-charms/low-level:wattroff win attr)
           (setq x (char-width char x)))))
 
-#|
-(defun window-refresh-line (window curx cury y str props)
-  (let ((offset-column 0))
-    (when (= cury y)
-      (setq curx (str-width str (window-cur-col window))))
-    (let ((width (str-width str))
-          (cols (window-ncols window)))
-      (cond
-       ((< width (window-ncols window))
-        nil)
-       ((or (/= cury y)
-            (< curx (1- cols)))
-        (let ((i (wide-index str cols)))
-          (setq str
-                (if (<= cols (str-width str i))
-                    (format nil "~a $" (subseq str 0 (1- i)))
-                    (format nil "~a$" (subseq str 0 i))))))
-       ((< (window-cur-col window) (length str))
-        (let* ((start (wide-index str (- curx cols -4)))
-               (end (window-cur-col window))
-               (substr (subseq str start end)))
-          (setq offset-column (1- start))
-          (setq curx (- cols 2))
-          (if (wide-char-p (aref substr (- (length substr) 1)))
-              (progn
-                (setq str
-                      (format nil "$~a $"
-                              (subseq substr 0 (1- (length substr)))))
-                (decf curx))
-              (setq str (format nil "$~a$" substr)))))
-       (t
-        (let ((start (- curx cols -3)))
-          (setq offset-column (- start 2))
-          (setq str
-                (format nil
-                        "$~a"
-                        (substring-width str start))))
-        (setq curx (- cols 1))))
-      (window-print-line window y str props offset-column))
-    (values curx cury y)))
-|#
+(defun window-refresh-line (window curx cury y str)
+  (check-type str fatstring)
+  (when (= cury y)
+    (setq curx (str-width (fat-string str) (window-cur-col window))))
+  (let ((width (str-width (fat-string str)))
+        (cols (window-ncols window)))
+    (cond
+     ((< width (window-ncols window))
+      nil)
+     ((or (/= cury y)
+          (< curx (1- cols)))
+      (let ((i (wide-index (fat-string str) cols)))
+        (setq str
+              (if (<= cols (str-width (fat-string str) i))
+                  (fat-concat (fat-substring str 0 (1- i)) " $")
+                  (fat-concat (fat-substring str 0 i) "$")))))
+     ((< (window-cur-col window) (fat-length str))
+      (let* ((start (wide-index (fat-string str) (- curx cols -4)))
+             (end (window-cur-col window))
+             (substr (fat-substring str start end)))
+        (setq curx (- cols 2))
+        (if (wide-char-p (fat-char substr (- (fat-length substr) 1)))
+            (progn
+              (setq str
+                    (fat-concat "$"
+                                (fat-substring
+                                 substr
+                                 0 (1- (fat-length substr)))
+                                " $"))
+              (decf curx))
+            (setq str (fat-concat "$" substr "$")))))
+     (t
+      (let ((start (- curx cols -3)))
+        (setq str
+              (fat-concat "$"
+                          (fat-substring str
+                                         (wide-index (fat-string str) start)))))
+      (setq curx (- cols 1))))
+    (window-print-line window y str))
+  (values curx cury y))
 
 (defun divide-line-width (str ncols)
   (check-type str fatstring)
@@ -265,11 +264,9 @@
   (let ((curx 0)
         (cury (window-cursor-y window))
         (refresh-line
-         #'window-refresh-line-wrapping
-;         (if (buffer-truncate-lines (window-buffer window))
-;             #'window-refresh-line-wrapping
-;             #'window-refresh-line)
-         ))
+         (if (buffer-truncate-lines (window-buffer window))
+             #'window-refresh-line-wrapping
+             #'window-refresh-line)))
     (setf (window-wrap-count window) 0)
     (loop
       :with y := 0

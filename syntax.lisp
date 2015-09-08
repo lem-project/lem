@@ -195,7 +195,9 @@
     (do ((i1 col i2)
          (i2 (1+ col) (1+ i2)))
         ((>= i2 (length str))
-         (line-put-property line start-col (1- i2) (get-attr :comment-color))
+         (when (< start-col (length str))
+           (line-put-property line start-col i2
+                              (get-attr :comment-color)))
          (values i2 nil))
       (let ((c1 (schar str i1))
             (c2 (schar str i2)))

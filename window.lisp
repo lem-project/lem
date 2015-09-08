@@ -166,36 +166,6 @@
   (cl-charms/low-level:mvwaddstr win y (str-width str x) (string (schar str x)))
   (cl-charms/low-level:wattroff win attr))
 
-#|
-(defun window-print-line (window y str props offset-column)
-  (let ((x 0)
-        (win (window-win window)))
-    (setq props
-          (sort (delete-duplicates (copy-list props) :key #'car)
-                #'<
-                :key #'car))
-    (loop for (pos . prop) in props do
-      (decf pos offset-column)
-      (unless (< -1 pos (length str))
-        (return))
-      (when (<= 0 pos (- (window-ncols window) 2))
-        (cl-charms/low-level:mvwaddstr win y (str-width str x) (subseq str x pos))
-        (cond
-         ((eq prop :highlight)
-          (window-print-char win y pos str cl-charms/low-level:a_reverse))
-         ((integerp prop)
-          (window-print-char win y pos str (cl-charms/low-level:color-pair prop))))
-        (setq x (1+ pos))))
-    (let ((rest-str (if (zerop x) str (subseq str x))))
-      (cl-charms/low-level:mvwaddstr
-       win y (str-width str x)
-       (concatenate 'string
-                    rest-str
-                    (make-string (- (window-ncols window)
-                                    (str-width str))
-                                 :initial-element #\space))))))
-|#
-
 (defun window-print-line (window y str offset-column)
   (check-type str fatstring)
   (loop
@@ -319,8 +289,7 @@
                                   (funcall refresh-line
                                            window curx cury y str)))
             (t
-             ;(window-print-line window y "" nil 0)
-             ))
+             (return)))
       (incf y))
     (cl-charms/low-level:wmove (window-win window)
                                cury

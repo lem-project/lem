@@ -9,7 +9,7 @@
           buffer-major-mode
           buffer-minor-modes
           buffer-nlines
-          buffer-put-property
+          buffer-put-attribute
           buffer-get-char
           buffer-line-length
           buffer-line-string
@@ -41,7 +41,7 @@
 (defun line-str (line)
   (fat-string (line-fatstr line)))
 
-(defun line-clear-props (line)
+(defun line-clear-attribute (line)
   (change-font (line-fatstr line) 0 :and))
 
 (defun line-clear-stat (line)
@@ -63,15 +63,15 @@
   (def line-start-comment-p :start-comment)
   (def line-end-comment-p   :end-comment))
 
-(defun line-put-property (line start end prop)
-  (change-font (line-fatstr line) prop :to start end)
+(defun line-put-attribute (line start end attr)
+  (change-font (line-fatstr line) attr :to start end)
   t)
 
-(defun line-remove-property (line start end prop)
-  (declare (ignore line start end prop))
+(defun line-remove-attribute (line start end attr)
+  (declare (ignore line start end attr))
   )
 
-(defun line-get-property (line pos)
+(defun line-get-attribute (line pos)
   (multiple-value-bind (x y) (line-fatstr line)
     (declare (ignore x))
     y))
@@ -228,49 +228,49 @@
   `(when (buffer-read-only-p ,buffer)
      (throw 'abort 'readonly)))
 
-(defun buffer-line-set-property (line-set-fn buffer prop linum
-                                 &optional start-column end-column)
+(defun buffer-line-set-attribute (line-set-fn buffer attr linum
+                                  &optional start-column end-column)
   (let ((line (buffer-get-line buffer linum)))
     (funcall line-set-fn
              line
              (or start-column 0)
              (or end-column (fat-length (line-fatstr line)))
-             prop)))
+             attr)))
 
-(defun buffer-set-property (line-set-fn buffer start end prop)
+(defun buffer-set-attribute (line-set-fn buffer start end attr)
   (with-points (((start-linum start-column) start)
                 ((end-linum end-column) end))
     (cond ((= start-linum end-linum)
-           (buffer-line-set-property line-set-fn
-                                     buffer
-                                     prop
-                                     start-linum
-                                     start-column
-                                     end-column))
+           (buffer-line-set-attribute line-set-fn
+                                      buffer
+                                      attr
+                                      start-linum
+                                      start-column
+                                      end-column))
           (t
-           (buffer-line-set-property line-set-fn
-                                     buffer
-                                     prop
-                                     start-linum
-                                     start-column)
-           (buffer-line-set-property line-set-fn
-                                     buffer
-                                     prop
-                                     end-linum
-                                     0
-                                     end-column)
+           (buffer-line-set-attribute line-set-fn
+                                      buffer
+                                      attr
+                                      start-linum
+                                      start-column)
+           (buffer-line-set-attribute line-set-fn
+                                      buffer
+                                      attr
+                                      end-linum
+                                      0
+                                      end-column)
            (loop
              for linum from (1+ start-linum) below end-linum
-             do (buffer-line-set-property line-set-fn
-                                          buffer
-                                          prop
-                                          linum))))))
+             do (buffer-line-set-attribute line-set-fn
+                                           buffer
+                                           attr
+                                           linum))))))
 
-(defun buffer-put-property (buffer start end prop)
-  (buffer-set-property #'line-put-property buffer start end prop))
+(defun buffer-put-attribute (buffer start end attr)
+  (buffer-set-attribute #'line-put-attribute buffer start end attr))
 
-(defun buffer-remove-property (buffer start end prop)
-  (buffer-set-property #'line-remove-property buffer start end prop))
+(defun buffer-remove-attribute (buffer start end attr)
+  (buffer-set-attribute #'line-remove-attribute buffer start end attr))
 
 (defun buffer-add-overlay (buffer overlay)
   (push overlay (buffer-overlays buffer)))
@@ -371,8 +371,8 @@
      (+ linum len -1))
     (nreverse strings)))
 
-(defun set-prop-display-line (disp-lines
-                              propval
+(defun set-attr-display-line (disp-lines
+                              attr
                               start-linum
                               linum
                               start-column
@@ -381,7 +381,7 @@
     (unless end-column
       (setq end-column (length (car (aref disp-lines i)))))
     (change-font (aref disp-lines i)
-                 propval
+                 attr
                  :or
                  start-column
                  end-column)))
@@ -393,16 +393,16 @@
     for end = (overlay-end overlay)
     do (cond ((and (= (point-linum start) (point-linum end))
                    (<= start-linum (point-linum start) (1- end-linum)))
-              (set-prop-display-line disp-lines
-                                     (overlay-prop overlay)
+              (set-attr-display-line disp-lines
+                                     (overlay-attr overlay)
                                      start-linum
                                      (point-linum start)
                                      (point-column start)
                                      (point-column end)))
              ((and (<= start-linum (point-linum start))
                    (< (point-linum end) end-linum))
-              (set-prop-display-line disp-lines
-                                     (overlay-prop overlay)
+              (set-attr-display-line disp-lines
+                                     (overlay-attr overlay)
                                      start-linum
                                      (point-linum start)
                                      (point-column start)
@@ -410,14 +410,14 @@
               (loop
                 for linum from (1+ (point-linum start))
                 below (point-linum end) do
-                (set-prop-display-line disp-lines
-                                       (overlay-prop overlay)
+                (set-attr-display-line disp-lines
+                                       (overlay-attr overlay)
                                        start-linum
                                        linum
                                        0
                                        nil))
-              (set-prop-display-line disp-lines
-                                     (overlay-prop overlay)
+              (set-attr-display-line disp-lines
+                                     (overlay-attr overlay)
                                      start-linum
                                      (point-linum end)
                                      0

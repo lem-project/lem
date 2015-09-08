@@ -380,12 +380,11 @@
   (let ((i (- linum start-linum)))
     (unless end-column
       (setq end-column (length (car (aref disp-lines i)))))
-    (setf (aref disp-lines i)
-          (change-font (copy-fatstring (aref disp-lines i))
-                       propval
-                       :or
-                       start-column
-                       end-column))))
+    (change-font (aref disp-lines i)
+                 propval
+                 :or
+                 start-column
+                 end-column)))
 
 (defun display-lines-set-overlays (disp-lines overlays start-linum end-linum)
   (loop
@@ -433,14 +432,15 @@
         ((or (null line)
              (>= i nlines)))
       (incf disp-nlines)
-      (setf (aref disp-lines i) (line-fatstr line)))
+      (setf (aref disp-lines i)
+            (copy-fatstring (line-fatstr line))))
     (loop
       for i from disp-nlines below nlines
       do (setf (aref disp-lines i) nil))
-;    (display-lines-set-overlays disp-lines
-;                                (buffer-overlays buffer)
-;                                start-linum
-;                                end-linum)
+    (display-lines-set-overlays disp-lines
+                                (buffer-overlays buffer)
+                                start-linum
+                                end-linum)
     disp-lines))
 
 (defun buffer-append-line (buffer str)

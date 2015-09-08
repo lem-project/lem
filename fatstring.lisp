@@ -54,6 +54,10 @@
       (setf (aref font-data i) font))
     (make-fatstring-internal str font-data)))
 
+(defun copy-fatstring (fatstring)
+  (make-fatstring-internal (fat-string fatstring)
+                           (copy-seq (fat-font-data fatstring))))
+
 (defun change-font (fatstring font op &optional (start 0) end)
   (loop
     :with f := (ecase op

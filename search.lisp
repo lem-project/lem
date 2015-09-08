@@ -121,7 +121,7 @@
                            (let ((start (make-point linum col))
                                  (end (make-point
                                        linum (+ col (length search-string)))))
-                             (push (make-overlay start end :prop :highlight)
+                             (push (make-overlay start end :prop (get-attr :highlight))
                                    *isearch-highlight-overlays*)))
                        (incf col (length search-string)))
                      (let ((col
@@ -144,7 +144,7 @@
                          (let ((start (make-point linum col))
                                (end (make-point (+ linum length -1)
                                                 (length last-search-string))))
-                           (push (make-overlay start end :prop :highlight)
+                           (push (make-overlay start end :prop (get-attr :highlight))
                                  *isearch-highlight-overlays*))))))))))))
 
 (defun isearch-add-char (c)

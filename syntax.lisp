@@ -3,12 +3,23 @@
 (export '(syntax-table
           make-syntax-table))
 
-(defvar *string-color* *green*)
-(defvar *comment-color* *red*)
-(defvar *keyword-color* *blue*)
-(defvar *constant-color* *magenta*)
-(defvar *function-name-color* *cyan*)
-(defvar *variable-color* *yellow*)
+(defvar *syntax-color-names*
+  '(:string-color
+    :comment-color
+    :keyword-color
+    :constant-color
+    :function-name-color
+    :variable-color))
+
+(defun syntax-init-attributes ()
+  (flet ((f (name1 name2)
+            (set-attr name1 (get-attr name2))))
+    (f :string-color :green)
+    (f :comment-color :red)
+    (f :keyword-color :blue)
+    (f :constant-color :magenta)
+    (f :function-name-color :cyan)
+    (f :variable-color :yellow)))
 
 (defstruct syntax-table
   (space-chars '(#\space #\tab #\newline))
@@ -163,7 +174,7 @@
         (start-col col))
     (do ((i col (1+ i)))
         ((>= i (length str))
-         (line-put-property line start-col i *string-color*)
+         (line-put-property line start-col i (get-attr :string-color))
          (return (values i nil)))
       (let ((c (schar str i)))
         (cond ((syntax-escape-char-p c)
@@ -175,7 +186,7 @@
                (line-put-property line
                                   start-col
                                   (1+ i)
-                                  *string-color*)
+                                  (get-attr :string-color))
                (return (values i t))))))))
 
 (defun syntax-scan-block-comment (line col)
@@ -184,7 +195,7 @@
     (do ((i1 col i2)
          (i2 (1+ col) (1+ i2)))
         ((>= i2 (length str))
-         (line-put-property line start-col (1- i2) *comment-color*)
+         (line-put-property line start-col (1- i2) (get-attr :comment-color))
          (values i2 nil))
       (let ((c1 (schar str i1))
             (c2 (schar str i2)))
@@ -195,7 +206,7 @@
                (line-put-property line
                                   start-col
                                   (1+ i2)
-                                  *comment-color*)
+                                  (get-attr :comment-color))
                (return (values i2 t))))))))
 
 (defun syntax-update-symbol-tov ()
@@ -224,7 +235,8 @@
                     (syntax-word-matched-symbol elt))
               *syntax-symbol-tov-list*))
       (when (syntax-word-color elt)
-        (line-put-property line start end (syntax-word-color elt))))))
+        (line-put-property line start end
+                           (get-attr (syntax-word-color elt)))))))
 
 (defun syntax-scan-word (line start)
   (let* ((str (line-str line))
@@ -284,7 +296,7 @@
           (cond ((syntax-escape-char-p c)
                  (incf i))
                 ((syntax-string-quote-char-p c)
-                 (line-put-property line i (1+ i) *string-color*)
+                 (line-put-property line i (1+ i) (get-attr :string-color))
                  (multiple-value-bind (j found-term-p)
                      (syntax-scan-string line (1+ i) nil c)
                    (setq i j)
@@ -292,7 +304,7 @@
                      (setf (line-start-string-p line) t)
                      (return (values t nil)))))
                 ((syntax-start-block-comment-p c (safe-aref str (1+ i)))
-                 (line-put-property line i (+ i 2) *comment-color*)
+                 (line-put-property line i (+ i 2) (get-attr :comment-color))
                  (multiple-value-bind (j found-term-p)
                      (syntax-scan-block-comment line (+ i 2))
                    (setq i j)
@@ -303,7 +315,7 @@
                  (line-put-property line
                                     i
                                     (length str)
-                                    *comment-color*)
+                                    (get-attr :comment-color))
                  (return))
                 (t
                  (let ((pos (syntax-scan-word line i)))

@@ -173,7 +173,6 @@
     :for i :from 0 :below (fat-length str)
     :do (multiple-value-bind (char attr)
             (fat-char str i)
-          (setq attr (cl-charms/low-level:color-pair attr))
           (cl-charms/low-level:wattron win attr)
           (cl-charms/low-level:mvwaddstr win y x (string char))
           (cl-charms/low-level:wattroff win attr)

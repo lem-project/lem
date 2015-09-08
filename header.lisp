@@ -8,13 +8,6 @@
 
 (defvar *program-name* "Lem")
 
-(defvar *yellow* 1)
-(defvar *green* 2)
-(defvar *blue* 3)
-(defvar *magenta* 4)
-(defvar *red* 5)
-(defvar *cyan* 6)
-
 (defvar *window-list*)
 (defvar *current-window*)
 (defvar *buffer-list* nil)
@@ -33,6 +26,22 @@
 (defvar *universal-argument* nil)
 
 (defvar *getch-wait-flag* nil)
+
+(defvar *color-names* '(:yellow
+                        :green
+                        :blue
+                        :magenta
+                        :red
+                        :cyan))
+
+(defvar *attribute-name-table* (make-hash-table))
+
+(defun set-attr (name attr)
+  (setf (gethash name *attribute-name-table*)
+        attr))
+
+(defun get-attr (name)
+  (gethash name *attribute-name-table*))
 
 (defvar *continue-command-flags* (list :kill :undo :abbrev))
 

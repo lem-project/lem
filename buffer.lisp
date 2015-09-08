@@ -23,22 +23,26 @@
           buffer-directory))
 
 (defstruct (line (:constructor make-line-internal))
-  (prev nil)
-  (str "")
-  (props nil)
+  prev
+  fatstr
   stat
-  (next nil))
+  next)
 
 (defun make-line (prev next str)
-  (let ((line (make-line-internal :next next :prev prev :str str)))
+  (let ((line (make-line-internal :next next
+                                  :prev prev
+                                  :fatstr (make-fatstring str 0))))
     (when next
       (setf (line-prev next) line))
     (when prev
       (setf (line-next prev) line))
     line))
 
-(defun line-set-str (line str)
-  (setf (line-str line) str))
+(defun line-str (line)
+  (fat-string (line-fatstr line)))
+
+(defun line-clear-props (line)
+  (change-font (line-fatstr line) 0 :and))
 
 (defun line-clear-stat (line)
   (setf (line-stat line) nil))
@@ -60,26 +64,17 @@
   (def line-end-comment-p   :end-comment))
 
 (defun line-put-property (line start end prop)
-  (loop for pos from start below end
-    do (setf (line-props line)
-             (merge 'list
-                    (list (cons pos prop))
-                    (line-props line)
-                    #'<
-                    :key #'car)))
-  (setf (line-props line)
-        (delete-duplicates (line-props line)
-                           :key #'car)))
+  (change-font (line-fatstr line) prop :to start end)
+  t)
 
 (defun line-remove-property (line start end prop)
-  (setf (line-props line)
-        (delete-if #'(lambda (elt)
-                       (and (<= start (car elt) (1- end))
-                            (eql prop (cdr elt))))
-                   (line-props line))))
+  (declare (ignore line start end prop))
+  )
 
 (defun line-get-property (line pos)
-  (cdr (find pos (line-props line) :key #'car)))
+  (multiple-value-bind (x y) (line-fatstr line)
+    (declare (ignore x))
+    y))
 
 (defun line-free (line)
   (when (line-prev line)
@@ -90,7 +85,7 @@
           (line-prev line)))
   (setf (line-prev line) nil
         (line-next line) nil
-        (line-str line) nil))
+        (line-fatstr line) nil))
 
 (defun line-step-n (line n step-f)
   (do ((l line (funcall step-f l))
@@ -239,7 +234,7 @@
     (funcall line-set-fn
              line
              (or start-column 0)
-             (or end-column (length (line-str line)))
+             (or end-column (fat-length (line-fatstr line)))
              prop)))
 
 (defun buffer-set-property (line-set-fn buffer start end prop)
@@ -316,21 +311,26 @@
 (defun buffer-get-char (buffer linum column)
   (let ((line (buffer-get-line buffer linum)))
     (when (line-p line)
-      (let ((str (line-str line)))
+      (let* ((str (line-fatstr line))
+             (len (fat-length str)))
         (cond
-         ((<= 0 column (1- (length str)))
-          (aref str column))
-         ((= column (length str))
+         ((<= 0 column (1- len))
+          (fat-char str column))
+         ((= column len)
           #\newline))))))
 
 (defun buffer-line-length (buffer linum)
-  (length (line-str (buffer-get-line buffer linum))))
+  (fat-length (line-fatstr (buffer-get-line buffer linum))))
 
-(defun buffer-line-string (buffer linum)
+(defun buffer-line-fatstring (buffer linum)
   (let ((line (buffer-get-line buffer linum)))
     (when (line-p line)
-      (values (line-str line)
-              (line-props line)))))
+      (line-fatstr line))))
+
+(defun buffer-line-string (buffer linum)
+  (let ((fatstr (buffer-line-fatstring buffer linum)))
+    (when fatstr
+      (fat-string fatstr))))
 
 (defun map-buffer (fn buffer &optional start-linum)
   (do ((line (if start-linum
@@ -352,7 +352,7 @@
          (i (or start 1) (1+ i)))
         ((or (null line) (< end i)))
       (funcall fn
-               (line-str line)
+               (fat-string (line-fatstr line))
                (if (line-next line) nil t)
                i))))
 
@@ -380,13 +380,12 @@
   (let ((i (- linum start-linum)))
     (unless end-column
       (setq end-column (length (car (aref disp-lines i)))))
-    (loop
-      for col from start-column below end-column
-      for elt = (aref disp-lines i)
-      do (setf (aref disp-lines i)
-               (list* (car elt)
-                      (cons col propval)
-                      (remove col (cdr elt) :key #'car))))))
+    (setf (aref disp-lines i)
+          (change-font (copy-fatstring (aref disp-lines i))
+                       propval
+                       :or
+                       start-column
+                       end-column))))
 
 (defun display-lines-set-overlays (disp-lines overlays start-linum end-linum)
   (loop
@@ -434,16 +433,14 @@
         ((or (null line)
              (>= i nlines)))
       (incf disp-nlines)
-      (setf (aref disp-lines i)
-            (cons (line-str line)
-                  (line-props line))))
+      (setf (aref disp-lines i) (line-fatstr line)))
     (loop
       for i from disp-nlines below nlines
       do (setf (aref disp-lines i) nil))
-    (display-lines-set-overlays disp-lines
-                                (buffer-overlays buffer)
-                                start-linum
-                                end-linum)
+;    (display-lines-set-overlays disp-lines
+;                                (buffer-overlays buffer)
+;                                start-linum
+;                                end-linum)
     disp-lines))
 
 (defun buffer-append-line (buffer str)
@@ -452,7 +449,7 @@
   (let* ((line (buffer-tail-line buffer))
          (newline (make-line line (line-next line) str)))
     (cond ((and (= 1 (buffer-nlines buffer))
-                (zerop (length (line-str (buffer-head-line buffer)))))
+                (zerop (fat-length (line-fatstr (buffer-head-line buffer)))))
            (setf (buffer-head-line buffer) newline)
            (setf (buffer-cache-line buffer) newline))
           (t
@@ -473,11 +470,10 @@
            (when (and (= linum (buffer-mark-linum buffer))
                       (<= col (buffer-mark-col buffer)))
              (incf (buffer-mark-col buffer)))
-           (line-set-str line
-                         (concatenate 'string
-                                      (subseq (line-str line) 0 col)
-                                      (string c)
-                                      (subseq (line-str line) col))))))
+           (setf (line-fatstr line)
+                 (fat-concat (fat-substring (line-fatstr line) 0 col)
+                             (string c)
+                             (fat-substring (line-fatstr line) col))))))
   t)
 
 (defun buffer-insert-newline (buffer linum col)
@@ -496,39 +492,38 @@
     (let ((newline
            (make-line line
                       (line-next line)
-                      (subseq (line-str line) col))))
+                      (fat-substring (line-fatstr line) col))))
       (when (eq line (buffer-tail-line buffer))
         (setf (buffer-tail-line buffer) newline))
-      (line-set-str line (subseq (line-str line) 0 col))))
+      (setf (line-fatstr line)
+            (fat-substring (line-fatstr line) 0 col))))
   (incf (buffer-nlines buffer))
   t)
 
 (defun buffer-insert-line (buffer linum col str)
   (buffer-read-only-guard buffer)
   (let ((line (buffer-get-line buffer linum)))
-    (let ((oldstr (line-str line)))
-      (with-push-undo (buffer)
-        (buffer-delete-char buffer linum col (length str))
-        (make-point linum col)))
+    (with-push-undo (buffer)
+      (buffer-delete-char buffer linum col (fat-length str))
+      (make-point linum col))
     (buffer-modify buffer)
     (when (and (= linum (buffer-mark-linum buffer))
                (<= col (buffer-mark-col buffer)))
-      (incf (buffer-mark-col buffer) (length str)))
-    (line-set-str line
-                  (concatenate 'string
-                               (subseq (line-str line) 0 col)
-                               str
-                               (subseq (line-str line) col))))
+      (incf (buffer-mark-col buffer) (fat-length str)))
+    (setf (line-fatstr line)
+          (fat-concat (fat-substring (line-fatstr line) 0 col)
+                      str
+                      (fat-substring (line-fatstr line) col))))
   t)
 
 (defun buffer-delete-char (buffer linum col n)
   (buffer-read-only-guard buffer)
   (let ((line (buffer-get-line buffer linum))
-        (del-lines (list ""))
+        (del-lines (list (make-fatstring "" 0)))
         (result t))
     (loop while (plusp n) do
       (cond
-       ((<= n (- (length (line-str line)) col))
+       ((<= n (- (fat-length (line-fatstr line)) col))
         (when (and (= linum (buffer-mark-linum buffer))
                    (< col (buffer-mark-col buffer)))
           (setf (buffer-mark-col buffer)
@@ -537,14 +532,11 @@
                     (- (buffer-mark-col buffer) n))))
         (buffer-modify buffer)
         (setf (car del-lines)
-              (concatenate 'string
-                           (car del-lines)
-                           (subseq (line-str line) col (+ col n))))
-        (line-set-str
-         line
-         (concatenate 'string
-                      (subseq (line-str line) 0 col)
-                      (subseq (line-str line) (+ col n))))
+              (fat-concat (car del-lines)
+                          (fat-substring (line-fatstr line) col (+ col n))))
+        (setf (line-fatstr line)
+              (fat-concat (fat-substring (line-fatstr line) 0 col)
+                          (fat-substring (line-fatstr line) (+ col n))))
         (setq n 0))
        (t
         (cond
@@ -554,26 +546,25 @@
          ((< linum (buffer-mark-linum buffer))
           (decf (buffer-mark-linum buffer))))
         (setf (car del-lines)
-              (concatenate 'string
-                           (car del-lines)
-                           (subseq (line-str line) col)))
-        (push "" del-lines)
+              (fat-concat (car del-lines)
+                          (fat-substring (line-fatstr line) col)))
+        (push (make-fatstring "" 0) del-lines)
         (unless (line-next line)
           (setq result nil)
           (return nil))
-        (decf n (1+ (- (length (line-str line)) col)))
+        (decf n (1+ (- (fat-length (line-fatstr line)) col)))
         (decf (buffer-nlines buffer))
         (buffer-modify buffer)
-        (line-set-str
-         line
-         (concatenate 'string
-                      (subseq (line-str line) 0 col)
-                      (line-str (line-next line))))
+        (setf (line-fatstr line)
+              (fat-concat (fat-substring (line-fatstr line) 0 col)
+                          (line-fatstr (line-next line))))
         (when (eq (line-next line)
                   (buffer-tail-line buffer))
           (setf (buffer-tail-line buffer) line))
         (line-free (line-next line)))))
-    (setq del-lines (nreverse del-lines))
+    (setq del-lines
+          (mapcar #'fat-string
+                  (nreverse del-lines)))
     (with-push-undo (buffer)
       (let ((linum linum)
             (col col))
@@ -581,7 +572,8 @@
             ((null rest))
           (buffer-insert-line buffer linum col (car rest))
           (when (cdr rest)
-            (buffer-insert-newline buffer linum (+ col (length (car rest))))
+            (buffer-insert-newline buffer linum
+                                   (+ col (length (car rest))))
             (incf linum)
             (setq col 0)))
         (make-point linum col)))

@@ -184,7 +184,7 @@
     (do ((i1 col i2)
          (i2 (1+ col) (1+ i2)))
         ((>= i2 (length str))
-         (line-put-property line start-col i2 *comment-color*)
+         (line-put-property line start-col (1- i2) *comment-color*)
          (values i2 nil))
       (let ((c1 (schar str i1))
             (c2 (schar str i2)))
@@ -250,7 +250,7 @@
 
 (defun syntax-scan-line (line in-string-p in-comment-p)
   (declare (optimize speed))
-  (setf (line-props line) nil)
+  (line-clear-props line)
   (let ((start-col 0))
     (cond (in-string-p
            (multiple-value-bind (i found-term-p)

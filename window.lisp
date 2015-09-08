@@ -166,6 +166,7 @@
   (cl-charms/low-level:mvwaddstr win y (str-width str x) (string (schar str x)))
   (cl-charms/low-level:wattroff win attr))
 
+#|
 (defun window-print-line (window y str props offset-column)
   (let ((x 0)
         (win (window-win window)))
@@ -193,7 +194,22 @@
                     (make-string (- (window-ncols window)
                                     (str-width str))
                                  :initial-element #\space))))))
+|#
 
+(defun window-print-line (window y str offset-column)
+  (check-type str fatstring)
+  (loop
+    :with x := 0 :and win := (window-win window)
+    :for i :from 0 :below (fat-length str)
+    :do (multiple-value-bind (char attr)
+            (fat-char str i)
+          (setq attr (cl-charms/low-level:color-pair attr))
+          (cl-charms/low-level:wattron win attr)
+          (cl-charms/low-level:mvwaddstr win y x (string char))
+          (cl-charms/low-level:wattroff win attr)
+          (setq x (char-width char x)))))
+
+#|
 (defun window-refresh-line (window curx cury y str props)
   (let ((offset-column 0))
     (when (= cury y)
@@ -233,23 +249,26 @@
         (setq curx (- cols 1))))
       (window-print-line window y str props offset-column))
     (values curx cury y)))
+|#
 
 (defun divide-line-width (str ncols)
+  (check-type str fatstring)
   (labels ((f (str acc)
-              (if (< (str-width str) ncols)
+              (if (< (str-width (fat-string str)) ncols)
                   (nreverse (cons str acc))
-                  (let ((i (wide-index str ncols)))
+                  (let ((i (wide-index (fat-string str) ncols)))
                     (f (subseq str i)
                        (cons (subseq str 0 i) acc))))))
     (f str nil)))
 
-(defun window-refresh-line-wrapping (window curx cury y str props)
+(defun window-refresh-line-wrapping (window curx cury y str)
+  (check-type str fatstring)
   (let ((ncols (window-ncols window)))
     (when (= y cury)
-      (setq curx (str-width str (window-cur-col window))))
+      (setq curx (str-width (fat-string str) (window-cur-col window))))
     (let ((strings (divide-line-width str ncols)))
       (if (null (cdr strings))
-          (window-print-line window y str props 0)
+          (window-print-line window y str 0)
           (do ((rest-strings strings (cdr rest-strings))
                (offset-column 0))
               ((or (null rest-strings)
@@ -260,45 +279,48 @@
                 (if (< y cury)
                     (incf cury)
                     (when (= y cury)
-                      (let ((len (str-width str)))
+                      (let ((len (str-width (fat-string str))))
                         (when (< len curx)
                           (decf curx len)
                           (incf cury))))))
               (window-print-line window
                                  y
                                  (if wrapping-flag
-                                     (concatenate 'string str "\\")
+				     (fat-concat str "\\")
                                      str)
-                                 props
                                  offset-column)
               (when wrapping-flag
                 (incf y)
                 (incf (window-wrap-count window)))
-              (incf offset-column (length str)))))))
+              (incf offset-column (fat-length str)))))))
   (values curx cury y))
 
 (defun window-refresh-lines (window)
   (let ((curx 0)
         (cury (window-cursor-y window))
         (refresh-line
-         (if (buffer-truncate-lines (window-buffer window))
-             #'window-refresh-line-wrapping
-             #'window-refresh-line)))
+         #'window-refresh-line-wrapping
+;         (if (buffer-truncate-lines (window-buffer window))
+;             #'window-refresh-line-wrapping
+;             #'window-refresh-line)
+         ))
     (setf (window-wrap-count window) 0)
     (loop
       :with y := 0
-      :for disp-line :across (buffer-display-lines
-                              (window-buffer window)
-                              (window-disp-lines window)
-                              (window-vtop-linum window)
-                              (1- (window-nlines window)))
+      :for str :across (buffer-display-lines
+                        (window-buffer window)
+                        (window-disp-lines window)
+                        (window-vtop-linum window)
+                        (1- (window-nlines window)))
       :while (< y (1- (window-nlines window))) :do
-      (if disp-line
-          (destructuring-bind (str . props) disp-line
-            (multiple-value-setq (curx cury y)
-                                 (funcall refresh-line
-                                          window curx cury y str props)))
-          (window-print-line window y "" nil 0))
+      (cond (str
+             (check-type str fatstring)
+             (multiple-value-setq (curx cury y)
+                                  (funcall refresh-line
+                                           window curx cury y str)))
+            (t
+             ;(window-print-line window y "" nil 0)
+             ))
       (incf y))
     (cl-charms/low-level:wmove (window-win window)
                                cury

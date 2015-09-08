@@ -184,8 +184,10 @@
         (nreverse (fat-font-data fatstring)))
   fatstring)
 
-(defun fat-length (fatstring)
-  (length (fat-string fatstring)))
+(defun fat-length (string)
+  (if (fatstring-p string)
+      (length (fat-string string))
+      (length string)))
 
 (defun fat-find (char fatstring &key from-end (start 0) end key test test-not)
   (let ((pos (position char (fat-string fatstring)

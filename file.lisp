@@ -104,14 +104,19 @@
   (let ((dirname (file-name-directory str)))
     (completion str (files dirname))))
 
-(defun distinguish-external-format (pathname)
-  (with-open-file (in pathname
-                      :element-type '(unsigned-byte 8))
-    (let ((inquisitor:*detecting-buffer-size* (file-length in))
-          (external-format (inquisitor:detect-external-format in :jp)))
-      (file-position in 0)
-      (values external-format
-              (inquisitor:detect-end-of-line in)))))
+(defun detect-external-format-from-file (pathname)
+  (let ((external-format)
+        (end-of-line))
+    (with-open-file (in pathname
+                        :element-type '(unsigned-byte 8))
+      (let ((inquisitor:*detecting-buffer-size* (file-length in)))
+        (setq external-format (inquisitor:detect-external-format in :jp))))
+    #+sbcl
+    (with-open-file (in pathname
+                        :element-type '(unsigned-byte 8))
+      (setq end-of-line (inquisitor:detect-end-of-line in)))
+    (values external-format
+            end-of-line)))
 
 (defun file-open (path)
   (let ((name (file-name-nondirectory path))
@@ -121,14 +126,16 @@
       (let* ((buffer (make-buffer name :filename absolute-path))
              (filename (probe-file (buffer-filename buffer))))
         (multiple-value-bind (external-format newline-type)
-            (distinguish-external-format filename)
+            (detect-external-format-from-file filename)
           (with-open-file (in filename
                               :external-format external-format)
             (loop
               :for (str eof-p) := (multiple-value-list (read-line in nil))
-              :do (when (and (eq newline-type :CRLF))
+              :do (progn
+                    #+sbcl
                     (let ((len (length str)))
-                      (when (plusp len)
+                      (when (and (eq newline-type :CRLF)
+                                 (plusp len))
                         (setq str (subseq str 0 (1- len))))))
               :if eof-p
               :do (progn

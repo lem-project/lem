@@ -136,24 +136,27 @@
 
 (defun syntax-scan-window (window)
   (with-window-range (start-linum end-linum) window
-    (let* ((buffer (window-buffer window))
-           (line (buffer-get-line buffer start-linum))
-           (prev (line-prev line))
-           (in-string-p (and prev
-                             (or (line-start-string-p prev)
-                                 (line-in-string-p prev))))
-           (in-comment-p (and prev
-                              (or (line-start-comment-p prev)
-                                  (line-in-comment-p prev))))
-           (*syntax-symbol-tov-list*))
-      (do ((line line (line-next line))
-           (linum start-linum (1+ linum)))
-          ((or (null line)
-               (= linum end-linum)))
-        (multiple-value-setq (in-string-p in-comment-p)
-                             (syntax-scan-line line
-                                               in-string-p
-                                               in-comment-p))))))
+    (syntax-scan-lines window start-linum end-linum)))
+
+(defun syntax-scan-lines (window start-linum end-linum)
+  (let* ((buffer (window-buffer window))
+         (line (buffer-get-line buffer start-linum))
+         (prev (line-prev line))
+         (in-string-p (and prev
+                           (or (line-start-string-p prev)
+                               (line-in-string-p prev))))
+         (in-comment-p (and prev
+                            (or (line-start-comment-p prev)
+                                (line-in-comment-p prev))))
+         (*syntax-symbol-tov-list*))
+    (do ((line line (line-next line))
+         (linum start-linum (1+ linum)))
+        ((or (null line)
+             (= linum end-linum)))
+      (multiple-value-setq (in-string-p in-comment-p)
+                           (syntax-scan-line line
+                                             in-string-p
+                                             in-comment-p)))))
 
 (defun parallel-string-quote (line)
   (do ((line #1=(line-prev line) #1#))

@@ -221,11 +221,21 @@
       (when (and (not *macro-running-p*)
                  (eq buffer (window-buffer)))
         (let ((curr-modified (buffer-modified-p (window-buffer))))
-          (when (or (not (eql curr-modified prev-modified))
-                    (/= prev-window-vtop-linum
-                        (window-vtop-linum))
-                    (/= 0 (window-offset-view *current-window*)))
-            (syntax-scan-window *current-window*)))))))
+          (cond ((eq :one-line (window-redraw-flag))
+                 (syntax-scan-lines *current-window*
+                                    #1=(window-cur-linum)
+                                    (1+ #1#)))
+                ((or (not (eql curr-modified prev-modified))
+                     (/= prev-window-vtop-linum
+                         (window-vtop-linum))
+                     (/= 0 (window-offset-view *current-window*)))
+                 (syntax-scan-window *current-window*))
+                ((and (eql curr-modified prev-modified)
+                      (and (= prev-window-vtop-linum
+                              (window-vtop-linum))
+                           (= 0 (window-offset-view *current-window*))))
+                 (setf (window-redraw-flag)
+                       :unnecessary))))))))
 
 (defun main-step ()
   (let ((key (input-key)))
@@ -238,6 +248,7 @@
   (let ((c (insertion-key-p *last-input-key*)))
     (if c
         (progn
+          (setf (window-redraw-flag) :one-line)
           (insert-char c (or *universal-argument* 1))
           (when (and (not *macro-running-p*)
                      *self-insert-prev-time*
@@ -317,7 +328,7 @@
        (*curr-flags* (make-flags) (make-flags))
        (*last-flags* (make-flags) *curr-flags*))
       (*exit*)
-    (window-update-all)
+    (window-require-update)
     (case (catch 'abort
             (main-step)
             nil)

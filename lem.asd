@@ -45,4 +45,5 @@
                         #+sbcl :sb-posix
                         :bordeaux-threads
                         :trivial-gray-streams
-                        :cl-ppcre))
+                        :cl-ppcre
+                        :inquisitor))

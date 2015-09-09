@@ -104,22 +104,38 @@
   (let ((dirname (file-name-directory str)))
     (completion str (files dirname))))
 
+(defun distinguish-external-format (pathname)
+  (with-open-file (in pathname
+                      :element-type '(unsigned-byte 8))
+    (let ((inquisitor:*detecting-buffer-size* (file-length in))
+          (external-format (inquisitor:detect-external-format in :jp)))
+      (file-position in 0)
+      (values external-format
+              (inquisitor:detect-end-of-line in)))))
+
 (defun file-open (path)
   (let ((name (file-name-nondirectory path))
         (absolute-path (expand-file-name path)))
     (when (and (string/= "" name)
                (not (cl-fad:directory-exists-p absolute-path)))
-      (let ((buffer (make-buffer name :filename absolute-path)))
-        (with-open-file (in (buffer-filename buffer)
-                            :if-does-not-exist nil)
-          (when in
+      (let* ((buffer (make-buffer name :filename absolute-path))
+             (filename (probe-file (buffer-filename buffer))))
+        (multiple-value-bind (external-format newline-type)
+            (distinguish-external-format filename)
+          (with-open-file (in filename
+                              :external-format external-format)
             (loop
-              (multiple-value-bind (str eof-p) (read-line in nil)
-                (if (not eof-p)
-                    (buffer-append-line buffer str)
-                    (progn
-                      (buffer-append-line buffer (or str ""))
-                      (return)))))))
+              :for (str eof-p) := (multiple-value-list (read-line in nil))
+              :do (when (and (eq newline-type :CRLF))
+                    (let ((len (length str)))
+                      (when (plusp len)
+                        (setq str (subseq str 0 (1- len))))))
+              :if eof-p
+              :do (progn
+                    (buffer-append-line buffer (or str ""))
+                    (return))
+              :else
+              :do (buffer-append-line buffer str))))
         (set-buffer buffer)
         (unmark-buffer)
         t))))

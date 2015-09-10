@@ -382,7 +382,7 @@
       (setq end-column (length (car (aref disp-lines i)))))
     (change-font (aref disp-lines i)
                  attr
-                 :or
+                 :to
                  start-column
                  end-column)))
 

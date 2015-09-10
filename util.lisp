@@ -114,46 +114,6 @@
                 t)
         (values string nil))))
 
-(declaim (inline make-tlist tlist-left
-                 tlist-right tlist-empty-p))
-
-(defun make-tlist () (cons nil nil))
-(defun tlist-left (tl) (caar tl))
-(defun tlist-right (tl) (cadr tl))
-(defun tlist-empty-p (tl) (null (car tl)))
-
-(declaim (inline tlist-add-left
-                 tlist-add-right))
-
-(defun tlist-add-left (tl it)
-  (let ((x (cons it (car tl))))
-    (if (tlist-empty-p tl)
-        (setf (cdr tl) x))
-    (setf (car tl) x)))
-
-(defun tlist-add-right (tl it)
-  (let ((x (cons it nil)))
-    (if (tlist-empty-p tl)
-        (setf (car tl) x)
-        (setf (cddr tl) x))
-    (setf (cdr tl) x)))
-
-(declaim (inline tlist-rem-left))
-
-(defun tlist-rem-left (tl)
-  (if (tlist-empty-p tl)
-      (error "Remove from empty tlist")
-      (let ((x (car tl)))
-        (setf (car tl) (cdar tl))
-        (if (tlist-empty-p tl)
-            (setf (cdr tl) nil))
-        (car x))))
-
-(declaim (inline tlist-update))
-
-(defun tlist-update (tl)
-  (setf (cdr tl) (last (car tl))))
-
 (defun random-range (min max)
   (+ min (random (1+ (- max min)))))
 

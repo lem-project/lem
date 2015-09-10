@@ -147,12 +147,15 @@
         (absolute-path (expand-file-name path)))
     (when (and (string/= "" name)
                (not (cl-fad:directory-exists-p absolute-path)))
-      (let* ((buffer (make-buffer name :filename absolute-path))
+      (let* ((buffer (make-buffer name
+                                  :filename absolute-path
+                                  :enable-undo-p nil))
              (filename (probe-file (buffer-filename buffer))))
         (set-buffer buffer)
         (when filename
           (insert-file-contents filename)
-          (unmark-buffer)))))
+          (unmark-buffer))
+        (buffer-enable-undo buffer))))
   t)
 
 (define-key *global-keymap* (kbd "C-x C-f") 'find-file)

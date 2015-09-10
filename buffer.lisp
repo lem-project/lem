@@ -379,7 +379,7 @@
                               end-column)
   (let ((i (- linum start-linum)))
     (unless end-column
-      (setq end-column (length (car (aref disp-lines i)))))
+      (setq end-column (fat-length (aref disp-lines i))))
     (change-font (aref disp-lines i)
                  attr
                  :to

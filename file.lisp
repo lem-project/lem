@@ -126,10 +126,10 @@
       (with-open-file (in filename
                           :external-format external-format)
         (loop :for (str eof-p) := (multiple-value-list (read-line in nil)) :do
-          #+sbcl (let ((len (length str)))
-                   (when (and (eq newline-type :CRLF)
-                              (plusp len))
-                     (setq str (subseq str 0 (1- len)))))
+          #+sbcl (when (and (not eof-p)
+                            (eq newline-type :CRLF)
+                            (plusp (length str)))
+                   (setq str (subseq str 0 (1- (length str)))))
           (cond (eof-p
                  (when str
                    (insert-lines (list str)))

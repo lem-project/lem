@@ -118,6 +118,30 @@
     (values external-format
             end-of-line)))
 
+(defun insert-file-contents (filename)
+  (let ((buffer (window-buffer))
+        (point (point)))
+    (multiple-value-bind (external-format newline-type)
+        (detect-external-format-from-file filename)
+      (with-open-file (in filename
+                          :external-format external-format)
+        (loop :for (str eof-p) := (multiple-value-list (read-line in nil)) :do
+          #+sbcl (let ((len (length str)))
+                   (when (and (eq newline-type :CRLF)
+                              (plusp len))
+                     (setq str (subseq str 0 (1- len)))))
+          (cond (eof-p
+                 (when str
+                   (insert-lines (list str)))
+                 (return))
+                (t
+                 (insert-lines (list str))
+                 (insert-newline)))))
+      (setf (buffer-external-format buffer)
+            (cons external-format newline-type)))
+    (point-set point)
+    t))
+
 (defun file-open (path)
   (let ((name (file-name-nondirectory path))
         (absolute-path (expand-file-name path)))
@@ -125,27 +149,11 @@
                (not (cl-fad:directory-exists-p absolute-path)))
       (let* ((buffer (make-buffer name :filename absolute-path))
              (filename (probe-file (buffer-filename buffer))))
-        (multiple-value-bind (external-format newline-type)
-            (detect-external-format-from-file filename)
-          (with-open-file (in filename
-                              :external-format external-format)
-            (loop
-              :for (str eof-p) := (multiple-value-list (read-line in nil))
-              :do (progn
-                    #+sbcl
-                    (let ((len (length str)))
-                      (when (and (eq newline-type :CRLF)
-                                 (plusp len))
-                        (setq str (subseq str 0 (1- len))))))
-              :if eof-p
-              :do (progn
-                    (buffer-append-line buffer (or str ""))
-                    (return))
-              :else
-              :do (buffer-append-line buffer str))))
         (set-buffer buffer)
-        (unmark-buffer)
-        t))))
+        (when filename
+          (insert-file-contents filename)
+          (unmark-buffer)))))
+  t)
 
 (define-key *global-keymap* (kbd "C-x C-f") 'find-file)
 (define-command find-file (filename) ("FFind File: ")
@@ -171,16 +179,33 @@
   t)
 
 (defun write-to-file (buffer filename)
-  (with-open-file (out filename
-                       :direction :output
-                       :if-exists :supersede
-                       :if-does-not-exist :create)
-    (map-buffer-lines #'(lambda (line eof-p linum)
-                          (declare (ignore linum))
-                          (princ line out)
-                          (unless eof-p
-                            (terpri out)))
-                      buffer))
+  (flet ((f (out newline-type)
+            (map-buffer-lines #'(lambda (line eof-p linum)
+                                  (declare (ignore linum))
+                                  (princ line out)
+                                  (unless eof-p
+                                    (ecase newline-type
+                                      ((:crlf)
+                                       (princ #\return out)
+                                       (princ #\newline out))
+                                      ((:lf)
+                                       (princ #\newline out)))))
+                              buffer)))
+    (if (buffer-external-format buffer)
+        (with-open-file (out filename
+                             :direction :output
+                             :if-exists :supersede
+                             :if-does-not-exist :create
+                             :external-format (car (buffer-external-format
+                                                    buffer)))
+          (f out
+             (cdr (buffer-external-format
+                   buffer))))
+        (with-open-file (out filename
+                             :direction :output
+                             :if-exists :supersede
+                             :if-does-not-exist :create)
+          (f out :lf))))
   (buffer-save-node buffer))
 
 (defun save-file-internal (buffer)
@@ -214,12 +239,7 @@
 
 (define-key *global-keymap* (kbd "C-x C-i") 'insert-file)
 (define-command insert-file (filename) ("fInsert file: ")
-  (with-open-file (in filename)
-    (do ((str #1=(read-line in nil) #1#))
-        ((null str))
-      (insert-string str)
-      (insert-newline 1))
-    t))
+  (insert-file-contents filename))
 
 (define-key *global-keymap* (kbd "C-x s") 'save-some-buffers)
 (define-command save-some-buffers (&optional save-silently-p) ("P")

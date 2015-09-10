@@ -121,6 +121,7 @@
   saved-node
   overlays
   truncate-lines
+  external-format
   plist)
 
 (defvar *undo-modes* '(:edit :undo :redo))

@@ -100,7 +100,7 @@
   (isearch-reset-buffer)
   (window-adjust-view *current-window* t)
   (unless (equal "" *isearch-string*)
-    (let ((point (point))
+    (let ((save-point (point))
           start-point
           end-point)
       (with-window-range (start end) *current-window*
@@ -115,9 +115,13 @@
                 (point1 (save-excursion
                          (prev-char (length search-string))
                          (point))))
-            (push (make-overlay point1 point2 :attr (get-attr :highlight))
+            (push (make-overlay point1 point2
+                                :attr (if (and (point<= point1 save-point)
+                                               (point<= save-point point2))
+                                          (get-attr :search-highlight)
+                                          (get-attr :highlight)))
                   *isearch-highlight-overlays*))))
-      (point-set point))))
+      (point-set save-point))))
 
 (defun isearch-add-char (c)
   (setq *isearch-string*

@@ -291,7 +291,10 @@
       (cl-charms/low-level:init-pair num color -1)
       (set-attr attr-name (cl-charms/low-level:color-pair num)))
     (syntax-init-attributes))
-  (set-attr :highlight cl-charms/low-level:a_reverse))
+  (set-attr :highlight cl-charms/low-level:a_reverse)
+  (set-attr :search-highlight
+            (logior (get-attr :highlight)
+                    (get-attr :cyan))))
 
 (defun lem-init (args)
   (cl-charms/low-level:initscr)

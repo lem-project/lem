@@ -96,56 +96,28 @@
   (mapc #'delete-overlay *isearch-highlight-overlays*)
   (setq *isearch-highlight-overlays* nil))
 
-(defun isearch-update-buffer ()
+(defun isearch-update-buffer (&optional (search-string *isearch-string*))
   (isearch-reset-buffer)
   (window-adjust-view *current-window* t)
   (unless (equal "" *isearch-string*)
-    (multiple-value-bind (search-strings length)
-        (split-string *isearch-string* #\newline)
+    (let ((point (point))
+          start-point
+          end-point)
       (with-window-range (start end) *current-window*
-        (let ((buffer (window-buffer))
-              (buffer-nlines (buffer-nlines)))
-          (loop for linum from start below (- end length)
-            while (< linum buffer-nlines)
-            do (let* ((buffer-strings (buffer-take-lines buffer linum length))
-                      (search-string (car search-strings))
-                      (buffer-string (car buffer-strings)))
-                 (if (= 1 length)
-                     (loop with col = 0 do
-                       (setq col
-                             (search search-string
-                                     buffer-string
-                                     :start2 col))
-                       (if (null col)
-                           (return)
-                           (let ((start (make-point linum col))
-                                 (end (make-point
-                                       linum (+ col (length search-string)))))
-                             (push (make-overlay start end :attr (get-attr :highlight))
-                                   *isearch-highlight-overlays*)))
-                       (incf col (length search-string)))
-                     (let ((col
-                            (- (length buffer-string)
-                               (length search-string)))
-                           (last-search-string
-                            (car (last search-strings))))
-                       (when (and (every #'string=
-                                         (butlast (cdr search-strings))
-                                         (butlast (cdr buffer-strings)))
-                                  (<= 0 col)
-                                  (string= search-string
-                                           buffer-string
-                                           :start2 col)
-                                  (<= (length last-search-string)
-                                      (length (car (last buffer-strings))))
-                                  (string= last-search-string
-                                           (car (last buffer-strings))
-                                           :end2 (length last-search-string)))
-                         (let ((start (make-point linum col))
-                               (end (make-point (+ linum length -1)
-                                                (length last-search-string))))
-                           (push (make-overlay start end :attr (get-attr :highlight))
-                                 *isearch-highlight-overlays*))))))))))))
+        (setq start-point (make-point start 0))
+        (setq end-point (make-point (1+ end) 0))
+        (point-set start-point)
+        (do ()
+            ((null
+              (search-forward search-string
+                              end-point)))
+          (let ((point2 (point))
+                (point1 (save-excursion
+                         (prev-char (length search-string))
+                         (point))))
+            (push (make-overlay point1 point2 :attr (get-attr :highlight))
+                  *isearch-highlight-overlays*))))
+      (point-set point))))
 
 (defun isearch-add-char (c)
   (setq *isearch-string*

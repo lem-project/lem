@@ -93,11 +93,12 @@
   (block outer
     (let ((dir (if (minusp n) -1 1)))
       (dotimes (_ (abs n) t)
-        (loop
+        (loop :while (blank-line-p) :do
           (unless (next-line dir)
-            (return-from outer nil))
-          (when (blank-line-p)
-            (return t)))))))
+            (return-from outer t)))
+        (loop :until (blank-line-p) :do
+          (unless (next-line dir)
+            (return-from outer t)))))))
 
 (define-key *global-keymap* (kbd "M-{") 'backward-paragraph)
 (define-key *global-keymap* (kbd "C-up") 'backward-paragraph)

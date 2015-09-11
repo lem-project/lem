@@ -3,6 +3,7 @@
 (export '(window
           one-window-p
           selected-window
+          select-window
           recenter
           split-window
           get-next-window
@@ -56,6 +57,10 @@
 
 (defun selected-window ()
   *current-window*)
+
+(defun select-window (window)
+  (check-type window window)
+  (setq *current-window* window))
 
 (defun window-init ()
   (setq *current-cols* cl-charms/low-level:*cols*)

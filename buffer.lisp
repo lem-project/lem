@@ -68,8 +68,8 @@
   t)
 
 (defun line-remove-attribute (line start end attr)
-  (declare (ignore line start end attr))
-  )
+  (change-font (line-fatstr line) (lognot attr) :and start end)
+  t)
 
 (defun line-get-attribute (line pos)
   (multiple-value-bind (x y) (line-fatstr line)

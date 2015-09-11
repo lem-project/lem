@@ -1,11 +1,13 @@
 (in-package :lem)
 
-(export '(forward-list
-          backward-list
-          forward-sexp
+(export '(forward-sexp
           backward-sexp
+          scan-lists
+          forward-list
+          backward-list
           down-list
           up-list
+          top-of-defun
           beginning-of-defun
           end-of-defun
           mark-sexp

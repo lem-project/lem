@@ -1,7 +1,25 @@
 (in-package :lem)
 
 (export '(syntax-table
-          make-syntax-table))
+          make-syntax-table
+          syntax-add-keyword
+          syntax-word-char-p
+          syntax-space-char-p
+          syntax-symbol-char-p
+          syntax-open-paren-char-p
+          syntax-closed-paren-char-p
+          syntax-pair-open-paren
+          syntax-pair-closed-paren
+          syntax-parallel-paren
+          syntax-string-quote-char-p
+          syntax-escape-char-p
+          syntax-expr-prefix-char-p
+          syntax-skip-expr-prefix-forward
+          syntax-skip-expr-prefix-backward
+          syntax-line-comment-p
+          syntax-start-block-comment-p
+          syntax-end-block-comment-p
+          syntax-scan-window))
 
 (defvar *syntax-color-names*
   '(:string-color

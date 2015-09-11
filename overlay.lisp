@@ -1,5 +1,9 @@
 (in-package :lem)
 
+(export '(overlay
+          make-overlay
+          delete-overlay))
+
 (defstruct (overlay (:constructor make-overlay-internal))
   start
   end

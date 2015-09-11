@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(one-window-p
+(export '(window
+          one-window-p
           recenter
           split-window
           get-next-window

@@ -1,9 +1,19 @@
 (in-package :lem)
 
-(export '(minibuf-clear
+(export '(*minibuf-window*
+          minibuf-clear
           minibuf-print
           minibuf-y-or-n-p
           minibuf-read-char
+          *minibuf-keymap*
+          minibuf-read-line-confirm
+          minibuf-read-line-completion
+          minibuf-read-line-clear-before
+          minibuf-read-line-prev-log
+          minibuf-read-line-next-log
+          minibuf-read-line-insert-char
+          minibuf-get-line
+          minibuf-read-line-refresh
           minibuf-read-line
           minibuf-read-string
           minibuf-read-number

@@ -6,8 +6,11 @@
           mode-syntax-table
           current-mode-keymap
           current-syntax
+          mode-find-keybind
+          toggle-minor-mode
           define-major-mode
-          define-minor-mode))
+          define-minor-mode
+          fundamental-mode))
 
 (defun major-mode ()
   (buffer-major-mode (window-buffer)))

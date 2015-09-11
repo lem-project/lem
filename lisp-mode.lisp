@@ -12,9 +12,16 @@
           eval-buffer
           load-file
           macroexpand-lisp
+          lisp-describe-symbol
           indent-region-lisp
           indent-sexp
-          complete-symbol))
+          complete-symbol
+          lisp-comment-region
+          popup-scratch-buffer
+          *scratch-mode-keymap*
+          scratch-mode
+          eval-print-last-sexp
+          lisp-info-popup))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (dolist (elt '((block . 1)

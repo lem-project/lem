@@ -7,7 +7,9 @@
           point
           point-set
           point<
+          point=
           point<=
+          point-min
           point-max))
 
 (declaim (inline make-point

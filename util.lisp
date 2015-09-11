@@ -1,5 +1,11 @@
 (in-package :lem)
 
+(export '(split-string
+          join
+          replace-string
+          random-range
+          safe-aref))
+
 (defun pdebug (x)
   (with-open-file (out "DEBUG"
                        :direction :output

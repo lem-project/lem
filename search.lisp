@@ -1,8 +1,19 @@
 (in-package :lem)
 
 (export '(*isearch-keymap*
+          isearch-mode
           isearch-forward
           isearch-backward
+          isearch-abort
+          isearch-delete-char
+          isearch-raw-insert
+          isearch-end
+          isearch-next
+          isearch-prev
+          isearch-yank
+          isearch-self-insert
+          search-forward
+          search-backward
           query-replace))
 
 (defvar *isearch-keymap* (make-keymap "isearch" 'isearch-self-insert))

@@ -2,7 +2,6 @@
 
 (export '(*program-name*
           *window-list*
-          *current-window*
           *buffer-list*
           *tab-size*
           *default-truncate-lines*

@@ -2,11 +2,13 @@
 
 (export '(unmark-buffer
           toggle-read-only
+          rename-buffer
           bolp
           eolp
           bobp
           eobp
           insert-char
+          quoted-insert
           insert-lines
           insert-string
           insert-newline
@@ -27,6 +29,8 @@
           prev-char
           next-page
           prev-page
+          next-page-char
+          prev-page-char
           mark-set
           exchange-point-mark
           following-char

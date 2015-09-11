@@ -5,6 +5,7 @@
           selected-window
           select-window
           recenter
+          redraw-screen
           split-window
           get-next-window
           other-window
@@ -334,6 +335,9 @@
       (window-update win)))
   (window-update *current-window*)
   (cl-charms/low-level:doupdate))
+
+(defun redraw-screen ()
+  (window-update-all))
 
 (define-key *global-keymap* (kbd "C-x 2") 'split-window)
 (define-command split-window () ()

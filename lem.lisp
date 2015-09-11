@@ -189,7 +189,7 @@
   (let* ((nbytes (utf8-bytes code))
          (char (if (= nbytes 1)
                    (code-char code)
-                   (aref (bytes-to-string
+                   (aref (babel:octets-to-string
                           (coerce
                            (cons code
                                  (loop repeat (1- nbytes)

@@ -48,4 +48,5 @@
                         :bordeaux-threads
                         :trivial-gray-streams
                         :cl-ppcre
-                        :inquisitor))
+                        :inquisitor
+                        :babel))

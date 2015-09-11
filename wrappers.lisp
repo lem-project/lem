@@ -8,12 +8,6 @@
   #-sbcl
   nil)
 
-(defun bytes-to-string (bytes)
-  #+sbcl
-  (sb-ext:octets-to-string bytes)
-  #-sbcl
-  (code-char (aref bytes 0)))
-
 (defun pwd ()
   #+sbcl
   (sb-posix:getcwd)

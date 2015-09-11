@@ -29,8 +29,8 @@
 (define-command grep (str) ("sgrep -nH ")
   (let ((str
          (with-output-to-string (s)
-           (shell-command (concatenate 'string "grep -nH " str)
-                          :output s))))
+           (uiop:run-program (concatenate 'string "grep -nH " str)
+                             :output s))))
     (update-grep-list (split-string str #\newline))
     (info-popup (get-buffer-create "*Grep*")
                 #'(lambda (out)

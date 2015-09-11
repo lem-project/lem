@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(export '(argv pwd files shell-command))
+(export '(argv pwd files))
 
 (defun argv ()
   #+sbcl
@@ -18,20 +18,3 @@
 
 (defun files (dirname)
   (mapcar #'namestring (cl-fad:list-directory dirname)))
-
-(defun shell-command (str &key output input)
-  #+sbcl
-  (sb-ext:run-program "/bin/sh" (list "-c" str)
-                      :output output
-                      :input input)
-  #+ecl
-  (destructuring-bind (cmd &rest args)
-      (split-string str #\space)
-    (let ((s (ext:run-program cmd args)))
-      (loop for x = (read s nil nil)
-        while x
-        do (print x output))))
-  #+ccl
-  (cl-user::run-program "/bin/sh" (list "-c" str)
-                        :output output 
-                        :input input))

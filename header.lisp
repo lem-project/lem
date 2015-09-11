@@ -45,6 +45,9 @@
 
 (defvar *continue-command-flags* (list :kill :undo :abbrev))
 
+(defun define-continue-flag (keyword)
+  (push keyword *continue-command-flags*))
+
 (defun make-flags ()
   (mapcar #'(lambda (sym)
               (cons sym nil))

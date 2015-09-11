@@ -104,25 +104,59 @@
   (let ((dirname (file-name-directory str)))
     (completion str (files dirname))))
 
+(defun detect-external-format-from-file (pathname)
+  (let ((external-format)
+        (end-of-line))
+    (with-open-file (in pathname
+                        :element-type '(unsigned-byte 8))
+      (let ((inquisitor:*detecting-buffer-size* (file-length in)))
+        (setq external-format (inquisitor:detect-external-format in :jp))))
+    #+sbcl
+    (with-open-file (in pathname
+                        :element-type '(unsigned-byte 8))
+      (setq end-of-line (inquisitor:detect-end-of-line in)))
+    (values external-format
+            end-of-line)))
+
+(defun insert-file-contents (filename)
+  (let ((buffer (window-buffer))
+        (point (point)))
+    (multiple-value-bind (external-format end-of-line)
+        (detect-external-format-from-file filename)
+      (with-open-file (in filename :external-format external-format)
+        (loop
+          (multiple-value-bind (str eof-p)
+              (read-line in nil)
+            (cond (eof-p
+                   (when str
+                     (insert-lines (list str)))
+                   (return))
+                  (t
+                   #+sbcl
+                   (when (eq end-of-line :crlf)
+                     (setq str (subseq str 0 (1- (length str)))))
+                   (insert-lines (list str))
+                   (insert-newline))))))
+      (setf (buffer-external-format buffer)
+            (cons external-format end-of-line)))
+    (point-set point)
+    t))
+
 (defun file-open (path)
   (let ((name (file-name-nondirectory path))
         (absolute-path (expand-file-name path)))
     (when (and (string/= "" name)
                (not (cl-fad:directory-exists-p absolute-path)))
-      (let ((buffer (make-buffer name :filename absolute-path)))
-        (with-open-file (in (buffer-filename buffer)
-                            :if-does-not-exist nil)
-          (when in
-            (loop
-              (multiple-value-bind (str eof-p) (read-line in nil)
-                (if (not eof-p)
-                    (buffer-append-line buffer str)
-                    (progn
-                      (buffer-append-line buffer (or str ""))
-                      (return)))))))
+      (let* ((buffer (make-buffer name
+                                  :filename absolute-path
+                                  :enable-undo-p nil))
+             (filename (probe-file (buffer-filename buffer))))
         (set-buffer buffer)
-        (unmark-buffer)
-        t))))
+        (when filename
+          (insert-file-contents filename)
+          (unmark-buffer))
+        (buffer-enable-undo buffer))))
+  t)
 
 (define-key *global-keymap* (kbd "C-x C-f") 'find-file)
 (define-command find-file (filename) ("FFind File: ")
@@ -148,16 +182,35 @@
   t)
 
 (defun write-to-file (buffer filename)
-  (with-open-file (out filename
-                       :direction :output
-                       :if-exists :supersede
-                       :if-does-not-exist :create)
-    (map-buffer-lines #'(lambda (line eof-p linum)
-                          (declare (ignore linum))
-                          (princ line out)
-                          (unless eof-p
-                            (terpri out)))
-                      buffer))
+  (flet ((f (out end-of-line)
+            (map-buffer-lines #'(lambda (line eof-p linum)
+                                  (declare (ignore linum))
+                                  (princ line out)
+                                  (unless eof-p
+                                    (ecase end-of-line
+                                      ((:crlf)
+                                       (princ #\return out)
+                                       (princ #\newline out))
+                                      ((:lf)
+                                       (princ #\newline out))
+                                      ((:cr)
+                                       (princ #\return out)))))
+                              buffer)))
+    (if (buffer-external-format buffer)
+        (with-open-file (out filename
+                             :direction :output
+                             :if-exists :supersede
+                             :if-does-not-exist :create
+                             :external-format (car (buffer-external-format
+                                                    buffer)))
+          (f out
+             (cdr (buffer-external-format
+                   buffer))))
+        (with-open-file (out filename
+                             :direction :output
+                             :if-exists :supersede
+                             :if-does-not-exist :create)
+          (f out :lf))))
   (buffer-save-node buffer))
 
 (defun save-file-internal (buffer)
@@ -191,12 +244,7 @@
 
 (define-key *global-keymap* (kbd "C-x C-i") 'insert-file)
 (define-command insert-file (filename) ("fInsert file: ")
-  (with-open-file (in filename)
-    (do ((str #1=(read-line in nil) #1#))
-        ((null str))
-      (insert-string str)
-      (insert-newline 1))
-    t))
+  (insert-file-contents filename))
 
 (define-key *global-keymap* (kbd "C-x s") 'save-some-buffers)
 (define-command save-some-buffers (&optional save-silently-p) ("P")

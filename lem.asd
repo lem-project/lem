@@ -2,6 +2,8 @@
 
 #-asdf(require :asdf)
 
+(load "inquisitor/inquisitor.asd")
+
 (defpackage :lem-asd
   (:use :cl :asdf))
 
@@ -45,4 +47,5 @@
                         #+sbcl :sb-posix
                         :bordeaux-threads
                         :trivial-gray-streams
-                        :cl-ppcre))
+                        :cl-ppcre
+                        :inquisitor))

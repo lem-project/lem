@@ -2,6 +2,8 @@
 
 #-asdf(require :asdf)
 
+(load "inquisitor/inquisitor.asd")
+
 (defpackage :lem-asd
   (:use :cl :asdf))
 

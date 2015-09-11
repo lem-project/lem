@@ -121,24 +121,24 @@
 (defun insert-file-contents (filename)
   (let ((buffer (window-buffer))
         (point (point)))
-    (multiple-value-bind (external-format newline-type)
+    (multiple-value-bind (external-format end-of-line)
         (detect-external-format-from-file filename)
-      (with-open-file (in filename
-                          :external-format external-format)
-        (loop :for (str eof-p) := (multiple-value-list (read-line in nil)) :do
-          #+sbcl (when (and (not eof-p)
-                            (eq newline-type :CRLF)
-                            (plusp (length str)))
-                   (setq str (subseq str 0 (1- (length str)))))
-          (cond (eof-p
-                 (when str
-                   (insert-lines (list str)))
-                 (return))
-                (t
-                 (insert-lines (list str))
-                 (insert-newline)))))
+      (with-open-file (in filename :external-format external-format)
+        (loop
+          (multiple-value-bind (str eof-p)
+              (read-line in nil)
+            (cond (eof-p
+                   (when str
+                     (insert-lines (list str)))
+                   (return))
+                  (t
+                   #+sbcl
+                   (when (eq end-of-line :crlf)
+                     (setq str (subseq str 0 (1- (length str)))))
+                   (insert-lines (list str))
+                   (insert-newline))))))
       (setf (buffer-external-format buffer)
-            (cons external-format newline-type)))
+            (cons external-format end-of-line)))
     (point-set point)
     t))
 
@@ -182,17 +182,19 @@
   t)
 
 (defun write-to-file (buffer filename)
-  (flet ((f (out newline-type)
+  (flet ((f (out end-of-line)
             (map-buffer-lines #'(lambda (line eof-p linum)
                                   (declare (ignore linum))
                                   (princ line out)
                                   (unless eof-p
-                                    (ecase newline-type
+                                    (ecase end-of-line
                                       ((:crlf)
                                        (princ #\return out)
                                        (princ #\newline out))
                                       ((:lf)
-                                       (princ #\newline out)))))
+                                       (princ #\newline out))
+                                      ((:cr)
+                                       (princ #\return out)))))
                               buffer)))
     (if (buffer-external-format buffer)
         (with-open-file (out filename

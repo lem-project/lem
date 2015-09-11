@@ -373,9 +373,11 @@
 
 (define-key *global-keymap* (kbd "C-x o") 'other-window)
 (define-command other-window (&optional (n 1)) ("p")
-  (dotimes (_ n t)
+  (dotimes (_ n)
     (setq *current-window*
-          (get-next-window *current-window*))))
+          (get-next-window *current-window*)))
+  (adjust-point)
+  t)
 
 (defun window-set-pos (window y x)
   (cl-charms/low-level:mvwin (window-win window) y x)

@@ -75,3 +75,6 @@
   (save-excursion
    (end-of-buffer)
    (point)))
+
+(defun adjust-point (&optional (point (point)))
+  (point-set point))

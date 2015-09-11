@@ -5,8 +5,10 @@
 (defun argv ()
   #+sbcl
   (cdr sb-ext:*posix-argv*)
-  #-sbcl
-  nil)
+  #+ccl
+  ccl:*command-line-argument-list*
+  #+ecl
+  (si:command-args))
 
 (defun pwd ()
   #+sbcl

@@ -6,7 +6,10 @@
           backward-delete-word
           case-word-capitalize
           case-word-lower
-          case-word-upper))
+          case-word-upper
+          forward-paragraph
+          backward-paragraph
+          kill-paragraph))
 
 (defun in-word-p (c)
   (and c (alphanumericp c)))

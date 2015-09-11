@@ -1,10 +1,18 @@
 (in-package :lem)
 
-(export '(*window-list*
+(export '(*program-name*
+          *window-list*
           *current-window*
           *buffer-list*
           *tab-size*
-          save-excursion))
+          *default-truncate-lines*
+          *scroll-recenter-p*
+          set-attr
+          get-attr
+          define-continue-flag
+          save-excursion
+          with-window-range
+          with-buffer-read-only))
 
 (defvar *program-name* "Lem")
 

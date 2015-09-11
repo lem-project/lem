@@ -1,15 +1,17 @@
 (in-package :lem)
 
 (export '(*lem-error-file*
+          macro-running-p
           exit-lem
           describe-key
+          describe-bindings
           begin-macro
           end-macro
           execute-macro
           apply-macro-to-region-lines
           universal-argument
           input-key
-          undefined-key
+          self-insert
           lem
           lem-save-error))
 

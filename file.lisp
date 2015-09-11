@@ -8,11 +8,11 @@
           temp-file-name
           expand-file-name
           file-completion
+          insert-file-contents
           file-open
           find-file
           read-file
           write-to-file
-          save-file-internal
           save-file
           change-file-name
           write-file

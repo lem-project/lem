@@ -4,9 +4,12 @@
           *kill-ring-yank-ptr*
           *kill-ring-max*
           *kill-new-flag*
+          *kill-before-p*
+          *kill-disable-p*
           kill-append
           kill-push
-          yank))
+          yank
+          with-kill))
 
 (defvar *kill-ring* nil)
 (defvar *kill-ring-yank-ptr* nil)

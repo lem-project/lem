@@ -1,5 +1,11 @@
 (in-package :lem)
 
+(export '(*info-mode-keymap*
+          *info-mode-keymap*
+          info-mode
+          info-popup-closure
+          info-popup))
+
 (defvar *info-mode-keymap*
   (make-keymap "info" nil *global-keymap*))
 

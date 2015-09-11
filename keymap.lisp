@@ -8,9 +8,13 @@
           keymap-table
           make-keymap
           *global-keymap*
+          kbd-p
           define-key
           kbd-to-string
-          kbd))
+          kbd
+          keymap-find-command
+          search-keybind-all
+          insertion-key-p))
 
 (defvar *keymaps* nil)
 

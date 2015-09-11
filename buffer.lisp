@@ -6,10 +6,15 @@
           buffer-filename
           buffer-modified-p
           buffer-read-only-p
+          buffer-enable-undo-p
           buffer-major-mode
           buffer-minor-modes
           buffer-nlines
+          buffer-truncate-lines
+          buffer-enable-undo
+          buffer-disable-undo
           buffer-put-attribute
+          buffer-remove-attribute
           buffer-get-char
           buffer-line-length
           buffer-line-string
@@ -20,7 +25,10 @@
           buffer-insert-line
           buffer-delete-char
           buffer-erase
-          buffer-directory))
+          buffer-directory
+          buffer-get
+          buffer-put
+          buffer-empty-plist))
 
 (defstruct (line (:constructor make-line-internal))
   prev

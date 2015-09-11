@@ -2,6 +2,7 @@
 
 (export '(buffer-output-stream
           make-buffer-output-stream
+          buffer-output-stream-point
           minibuffer-input-stream
           make-minibuffer-input-stream))
 

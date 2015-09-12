@@ -156,6 +156,7 @@
           (insert-file-contents filename)
           (unmark-buffer))
         (buffer-enable-undo buffer))))
+  (run-hooks 'find-file-hooks)
   t)
 
 (define-key *global-keymap* (kbd "C-x C-f") 'find-file)
@@ -172,8 +173,7 @@
         (file-open filename)
         (rename-buffer uniq-name)))
      (t
-      (set-buffer buf)))
-    (run-hooks 'find-file-hooks)))
+      (set-buffer buf)))))
 
 (define-key *global-keymap* (kbd "C-x C-r") 'read-file)
 (define-command read-file (filename) ("FRead File: ")

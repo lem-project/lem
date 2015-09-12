@@ -79,19 +79,20 @@
                            ,gval))))
                  slots))))
 
-(defmacro when-interrupted-flag (flag &body body)
-  (let ((gflag (gensym "FLAG")))
+(defmacro if-continue-flag (flag then &optional else)
+  (let ((gflag (gensym)))
     `(let ((,gflag ,flag))
-       (unless (cdr (assoc ,flag *last-flags*)) ,@body)
+       (if (cdr (assoc ,gflag *last-flags*))
+           ,then
+           ,else)
        (push (cons ,gflag t) *last-flags*)
        (push (cons ,gflag t) *curr-flags*))))
 
+(defmacro when-interrupted-flag (flag &body body)
+  `(if-continue-flag ,flag nil (progn ,@body)))
+
 (defmacro when-continue-flag (flag &body body)
-  (let ((gflag (gensym "FLAG")))
-    `(let ((,gflag ,flag))
-       (when (cdr (assoc ,flag *last-flags*)) ,@body)
-       (push (cons ,gflag t) *last-flags*)
-       (push (cons ,gflag t) *curr-flags*))))
+  `(if-continue-flag ,flag (progn ,@body) nil))
 
 (defmacro save-excursion (&body body)
   (let ((gpoint (gensym "POINT")))

@@ -1,3 +1,5 @@
+;; -*- mode: lisp -*-
+
 (in-package :lem)
 
 (define-command delete-trailing-whitespace () ()

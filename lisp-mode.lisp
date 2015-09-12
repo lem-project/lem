@@ -580,6 +580,5 @@
 
 (setq *auto-mode-alist*
       (append '((".lisp$" . lisp-mode)
-                (".asd$" . lisp-mode)
-                (".ros$" . lisp-mode))
+                (".asd$" . lisp-mode))
               *auto-mode-alist*))

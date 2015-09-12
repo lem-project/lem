@@ -192,7 +192,10 @@
         (start-col col))
     (do ((i col (1+ i)))
         ((>= i (length str))
-         (line-put-attribute line start-col i (get-attr :string-color))
+         (line-put-attribute line
+                             start-col
+                             (length str)
+                             (get-attr :string-color))
          (return (values i nil)))
       (let ((c (schar str i)))
         (cond ((syntax-escape-char-p c)

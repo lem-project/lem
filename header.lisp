@@ -103,7 +103,7 @@
                              window &body body)
   (let ((gwindow (gensym "WINDOW")))
     `(let ((,gwindow ,window))
-       (window-adjust-view ,gwindow t)
+       (window-adjust-view ,gwindow)
        (let* ((,start-linum-var (window-vtop-linum ,gwindow))
               (,end-linum-var (+ ,start-linum-var (window-nlines ,gwindow))))
          ,@body))))

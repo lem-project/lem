@@ -1,11 +1,10 @@
 (in-package :lem)
 
 (export '(*program-name*
-          *window-list*
-          *buffer-list*
           *tab-size*
           *default-truncate-lines*
           *scroll-recenter-p*
+          *auto-mode-alist*
           set-attr
           get-attr
           define-continue-flag
@@ -30,12 +29,13 @@
 (defvar *curr-flags* nil)
 
 (defvar *last-input-key*)
+(defvar *universal-argument* nil)
 
 (defvar *scroll-recenter-p* t)
 
-(defvar *universal-argument* nil)
-
 (defvar *getch-wait-flag* nil)
+
+(defvar *auto-mode-alist* nil)
 
 (defvar *color-names* '(:yellow
                         :green

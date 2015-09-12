@@ -577,3 +577,9 @@
 (defun lisp-info-popup (buffer &optional fn)
   (funcall (info-popup-closure 'lisp-mode)
            buffer fn t))
+
+(setq *auto-mode-alist*
+      (append '((".lisp$" . lisp-mode)
+                (".asd$" . lisp-mode)
+                (".ros$" . lisp-mode))
+              *auto-mode-alist*))

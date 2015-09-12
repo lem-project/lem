@@ -142,6 +142,14 @@
     (point-set point)
     t))
 
+(defun %auto-mode ()
+  (let* ((filename (file-name-nondirectory (buffer-filename)))
+         (elt (find-if #'(lambda (elt)
+                           (ppcre:scan (car elt) filename))
+                       *auto-mode-alist*)))
+    (when elt
+      (funcall (cdr elt)))))
+
 (defun file-open (path)
   (let ((name (file-name-nondirectory path))
         (absolute-path (expand-file-name path)))
@@ -156,6 +164,7 @@
           (insert-file-contents filename)
           (unmark-buffer))
         (buffer-enable-undo buffer))))
+  (%auto-mode)
   (run-hooks 'find-file-hooks)
   t)
 

@@ -18,13 +18,4 @@
 
 ;(add-hook 'before-save-hook 'delete-trailing-whitespace)
 
-(add-hook 'find-file-hooks
-          (lambda ()
-            (when (or (search ".lisp" (buffer-filename))
-                      (search ".asd" (buffer-filename))
-                      (search ".lemrc" (buffer-filename))
-                      (search ".stumpwmrc" (buffer-filename))
-                      (search ".sbclrc" (buffer-filename)))
-              (lisp-mode))))
-
 (scratch-mode)

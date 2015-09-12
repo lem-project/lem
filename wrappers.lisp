@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(export '(argv pwd files))
+(export '(argv pwd files shell-command))
 
 (defun argv ()
   #+sbcl
@@ -20,3 +20,9 @@
 
 (defun files (dirname)
   (mapcar #'namestring (cl-fad:list-directory dirname)))
+
+(defun shell-command (command &key input output)
+  (uiop:run-program command
+                    :input input
+                    :output output
+                    :ignore-error-status t))

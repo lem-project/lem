@@ -9,6 +9,7 @@
           kill-append
           kill-push
           yank
+          yank-pop
           with-kill))
 
 (defvar *kill-ring* nil)

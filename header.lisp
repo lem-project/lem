@@ -9,6 +9,9 @@
           set-attr
           get-attr
           define-continue-flag
+          if-continue-flag
+          when-interrupted-flag
+          when-continue-flag
           save-excursion
           with-window-range
           with-buffer-read-only))

@@ -94,7 +94,7 @@
     (setf (get (car elt) 'lisp-indent) (cdr elt))))
 
 (defvar *lisp-mode-keymap*
-  (make-keymap "lisp" 'self-insert *global-keymap*))
+  (make-keymap "lisp"))
 
 (defvar *lisp-syntax-table*
   (make-syntax-table
@@ -534,7 +534,7 @@
   t)
 
 (defvar *scratch-mode-keymap*
-  (make-keymap "scratch" 'self-insert *lisp-mode-keymap*))
+  (make-keymap "scratch" nil *lisp-mode-keymap*))
 
 (define-major-mode scratch-mode nil
   (:name "scratch-mode"

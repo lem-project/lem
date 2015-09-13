@@ -162,7 +162,7 @@
          (minibuf-get-line))
       (minibuf-read-line-refresh prompt)
       (let* ((key (input-key))
-             (cmd (keymap-find-command *minibuf-keymap* key)))
+             (cmd (keymap-find-keybind *minibuf-keymap* key)))
         (cmd-call cmd 1)))))
 
 (defun minibuf-read-string (prompt &optional initial)

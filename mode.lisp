@@ -37,12 +37,8 @@
 (defun current-syntax ()
   (mode-syntax-table (major-mode)))
 
-(defun mode-find-keybind (key)
-  (dolist (mode (buffer-minor-modes))
-    (let ((result (keymap-find-command (mode-keymap mode) key)))
-      (when result
-        (return-from mode-find-keybind result))))
-  (keymap-find-command (current-mode-keymap) key))
+(defun mode-find-keybind (mode key)
+  (keymap-find-keybind (mode-keymap mode) key))
 
 (defun toggle-minor-mode (minor-mode)
   (if (member minor-mode (buffer-minor-modes))

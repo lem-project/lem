@@ -3,6 +3,7 @@
 (export '(*lem-error-file*
           macro-running-p
           exit-lem
+          find-keybind
           describe-key
           describe-bindings
           begin-macro
@@ -70,11 +71,18 @@
             (minibuf-y-or-n-p "Modified buffers exist. Leave anyway"))
     (setq *exit* t)))
 
+(defun find-keybind (key)
+  (or (some #'(lambda (mode)
+                (mode-find-keybind mode key))
+            (buffer-minor-modes))
+      (mode-find-keybind (buffer-major-mode) key)
+      (keymap-find-keybind *global-keymap* key)))
+
 (define-key *global-keymap* (kbd "C-x ?") 'describe-key)
 (define-command describe-key () ()
   (minibuf-print "describe-key: ")
   (let* ((key (input-key))
-         (cmd (mode-find-keybind key)))
+         (cmd (find-keybind key)))
     (minibuf-print (format nil "describe-key: ~a ~a"
                            (kbd-to-string key)
                            cmd))))
@@ -213,7 +221,7 @@
     (setq *last-input-key* key)))
 
 (defun execute (key)
-  (let* ((cmd (mode-find-keybind key))
+  (let* ((cmd (find-keybind key))
          (buffer (window-buffer))
          (prev-modified (buffer-modified-p buffer))
          (prev-window-vtop-linum (window-vtop-linum)))

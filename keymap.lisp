@@ -12,7 +12,7 @@
           define-key
           kbd-to-string
           kbd
-          keymap-find-command
+          keymap-find-keybind
           search-keybind-all
           insertion-key-p))
 
@@ -103,12 +103,12 @@
     (character
      (kbd-keys (cons string-or-first-key keys)))))
 
-(defun keymap-find-command (keymap key)
+(defun keymap-find-keybind (keymap key)
   (let ((cmd (gethash key (keymap-table keymap))))
     (or cmd
         (let ((keymap (keymap-parent keymap)))
           (when keymap
-            (keymap-find-command keymap key)))
+            (keymap-find-keybind keymap key)))
         (keymap-undef-hook keymap))))
 
 (defun search-keybind-all (name)

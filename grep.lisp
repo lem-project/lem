@@ -45,7 +45,7 @@
     (destructuring-bind (filename linum)
         (aref *grep-vector* *grep-index*)
       (find-file filename)
-      (goto-line linum))
+      (goto-line linum t))
     t))
 
 (define-key *global-keymap* (kbd "M-p") 'grep-prev)
@@ -56,5 +56,5 @@
     (destructuring-bind (filename linum)
         (aref *grep-vector* *grep-index*)
       (find-file filename)
-      (goto-line linum))
+      (goto-line linum t))
     t))

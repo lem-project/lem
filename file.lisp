@@ -154,7 +154,9 @@
   (ppcre:do-register-groups (var val)
     ("([a-zA-Z0-9-_]+)\\s*:\\s*([a-zA-Z0-9-_]+);?" str)
     (cond ((string= (string-downcase var) "mode")
-           )
+           (let ((mode (find-mode-from-name val)))
+             (when mode
+               (funcall mode))))
           (t))))
 
 (defun scan-file-property-list ()

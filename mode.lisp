@@ -7,10 +7,13 @@
           current-mode-keymap
           current-syntax
           mode-find-keybind
+          find-mode-from-name
           toggle-minor-mode
           define-major-mode
           define-minor-mode
           fundamental-mode))
+
+(defvar *mode-list* nil)
 
 (defun major-mode ()
   (buffer-major-mode (window-buffer)))
@@ -40,6 +43,12 @@
 (defun mode-find-keybind (mode key)
   (keymap-find-keybind (mode-keymap mode) key))
 
+(defun find-mode-from-name (mode-name)
+  (find-if #'(lambda (mode)
+               (equal (string-downcase mode-name)
+                      (string-downcase (mode-name mode))))
+           *mode-list*))
+
 (defun toggle-minor-mode (minor-mode)
   (if (member minor-mode (buffer-minor-modes))
       (setf (buffer-minor-modes)
@@ -51,6 +60,7 @@
                              (&key name keymap syntax-table)
                              &body body)
   `(progn
+     (push ',major-mode *mode-list*)
      (setf (mode-name ',major-mode) ,name)
      (setf (mode-keymap ',major-mode)
            ,(or keymap
@@ -69,6 +79,7 @@
 
 (defmacro define-minor-mode (minor-mode &key name keymap)
   `(progn
+     (push ',minor-mode *mode-list*)
      (setf (mode-name ',minor-mode) ,name)
      (setf (mode-keymap ',minor-mode) ,keymap)
      (define-command ,minor-mode (&rest args) ("P")

@@ -17,7 +17,10 @@
           change-file-name
           write-file
           insert-file
-          save-some-buffers))
+          save-some-buffers
+          find-file-hook
+          before-save-hook
+          after-save-hook))
 
 (defun file-name-directory (filename)
   (let ((pos (position #\/ filename :from-end t)))
@@ -194,7 +197,7 @@
         (buffer-enable-undo buffer))))
   (prepare-auto-mode)
   (scan-file-property-list)
-  (run-hooks 'find-file-hooks)
+  (run-hooks 'find-file-hook)
   t)
 
 (define-key *global-keymap* (kbd "C-x C-f") 'find-file)

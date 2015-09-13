@@ -11,7 +11,6 @@
           minibuf-read-line-clear-before
           minibuf-read-line-prev-log
           minibuf-read-line-next-log
-          minibuf-read-line-insert-char
           minibuf-get-line
           minibuf-read-line-refresh
           minibuf-read-line
@@ -20,9 +19,16 @@
           minibuf-read-buffer
           minibuf-read-file))
 
+(defvar *mb-print-flag* nil)
+
 (defvar *minibuf-window*)
 
-(defvar *mb-print-flag* nil)
+(defvar *minibuf-keymap*
+  (make-keymap "minibuffer"))
+
+(define-major-mode minibuffer-mode nil
+  (:name "minibuffer"
+   :keymap *minibuf-keymap*))
 
 (defun minibuf-init ()
   (let* ((buffer (make-buffer " *minibuffer*"))
@@ -75,12 +81,6 @@
   (minibuf-print prompt)
   (getch))
 
-(defvar *minibuf-read-line-log* nil)
-(defvar *minibuf-read-line-busy-p* nil)
-
-(defvar *minibuf-keymap*
-  (make-keymap "minibuffer" 'minibuf-read-line-insert-char *global-keymap*))
-
 (define-key *minibuf-keymap* (kbd "C-j") 'minibuf-read-line-confirm)
 (define-key *minibuf-keymap* (kbd "C-m") 'minibuf-read-line-confirm)
 (define-key *minibuf-keymap* (kbd "C-i") 'minibuf-read-line-completion)
@@ -94,6 +94,9 @@
 (defvar *minibuf-read-line-loop*)
 (defvar *minibuf-read-line-comp-f*)
 (defvar *minibuf-read-line-existing-p*)
+
+(defvar *minibuf-read-line-log* nil)
+(defvar *minibuf-read-line-busy-p* nil)
 
 (define-command minibuf-read-line-confirm () ()
   (let ((str (minibuf-get-line)))
@@ -128,11 +131,6 @@
 (define-command minibuf-read-line-break () ()
   (throw 'abort 'abort))
 
-(define-command minibuf-read-line-insert-char () ()
-  (let ((c (insertion-key-p *last-input-key*)))
-    (when c
-      (insert-char c 1))))
-
 (defun minibuf-get-line ()
   (buffer-line-string (window-buffer *minibuf-window*) 1))
 
@@ -149,8 +147,10 @@
     (return-from minibuf-read-line nil))
   (let ((*minibuf-read-line-tmp-window* *current-window*)
         (*current-window* *minibuf-window*)
-        (*minibuf-read-line-busy-p* t))
+        (*minibuf-read-line-busy-p* t)
+        (*universal-argument* nil))
     (erase-buffer)
+    (minibuffer-mode)
     (when initial
       (insert-string initial))
     (do ((*minibuf-read-line-loop* t)
@@ -162,7 +162,7 @@
          (minibuf-get-line))
       (minibuf-read-line-refresh prompt)
       (let* ((key (input-key))
-             (cmd (keymap-find-keybind *minibuf-keymap* key)))
+             (cmd (find-keybind key)))
         (cmd-call cmd 1)))))
 
 (defun minibuf-read-string (prompt &optional initial)

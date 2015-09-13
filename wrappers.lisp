@@ -1,8 +1,8 @@
 (in-package :lem)
 
-(export '(argv pwd files shell-command))
+(export '(argument-list pwd files shell-command))
 
-(defun argv ()
+(defun argument-list ()
   #+sbcl
   (cdr sb-ext:*posix-argv*)
   #+ccl

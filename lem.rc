@@ -1,6 +1,6 @@
 ;; -*- mode: lisp -*-
 
-(in-package :lem)
+(use-package :lem)
 
 (define-command delete-trailing-whitespace () ()
   (save-excursion

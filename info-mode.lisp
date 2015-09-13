@@ -10,7 +10,7 @@
   (make-keymap "info"))
 
 (define-minor-mode info-mode
-  :name "info-mode"
+  :name "info"
   :keymap *info-mode-keymap*)
 
 (define-key *info-mode-keymap* (kbd "q") 'info-quit)

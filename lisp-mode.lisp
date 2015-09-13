@@ -225,7 +225,7 @@
                     :color :constant-color)
 
 (define-major-mode lisp-mode nil
-  (:name "lisp-mode"
+  (:name "lisp"
    :keymap *lisp-mode-keymap*
    :syntax-table *lisp-syntax-table*))
 
@@ -537,7 +537,7 @@
   (make-keymap "scratch" nil *lisp-mode-keymap*))
 
 (define-major-mode scratch-mode nil
-  (:name "scratch-mode"
+  (:name "scratch"
    :keymap *scratch-mode-keymap*
    :syntax-table *lisp-syntax-table*))
 

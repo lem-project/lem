@@ -82,6 +82,6 @@
                     (delete ',minor-mode (buffer-minor-modes))))))))
 
 (define-major-mode fundamental-mode nil
-  (:name "fundamental-mode"
+  (:name "fundamental"
    :keymap *global-keymap*
    :syntax-table (make-syntax-table)))

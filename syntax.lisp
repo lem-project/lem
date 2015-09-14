@@ -182,8 +182,8 @@
              (attr (line-get-attribute line (1- len))))
         (do ((pos (- len 2) (1- pos)))
             (nil)
-          (when (or (not (eq attr (line-get-attribute line pos)))
-                    (< pos 0))
+          (when (or (< pos 0)
+                    (not (line-contains-attribute line pos attr)))
             (return-from parallel-string-quote
               (schar str (1+ pos)))))))))
 

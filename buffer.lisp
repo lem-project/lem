@@ -80,9 +80,10 @@
   t)
 
 (defun line-get-attribute (line pos)
-  (multiple-value-bind (x y) (line-fatstr line)
-    (declare (ignore x))
-    y))
+  (aref (fat-font-data (line-fatstr line)) pos))
+
+(defun line-contains-attribute (line pos attr)
+  (/= 0 (logand attr (line-get-attribute line pos))))
 
 (defun line-free (line)
   (when (line-prev line)

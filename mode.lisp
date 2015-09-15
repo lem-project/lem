@@ -69,7 +69,8 @@
      (setf (mode-syntax-table ',major-mode)
            ,(or syntax-table
                 (when parent-mode
-                  (mode-syntax-table parent-mode))))
+                  (mode-syntax-table parent-mode))
+                `(make-syntax-table)))
      (define-command ,major-mode () ()
        ,(when parent-mode `(,parent-mode))
        (setf (major-mode) ',major-mode)
@@ -94,5 +95,4 @@
 
 (define-major-mode fundamental-mode nil
   (:name "fundamental"
-   :keymap *global-keymap*
-   :syntax-table (make-syntax-table)))
+   :keymap *global-keymap*))

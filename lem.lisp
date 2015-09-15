@@ -242,14 +242,7 @@
                      (/= prev-window-vtop-linum
                          (window-vtop-linum))
                      (/= 0 (window-offset-view *current-window*)))
-                 (syntax-scan-window *current-window*))
-                ((and (not (window-redraw-flag))
-                      (eql curr-modified prev-modified)
-                      (and (= prev-window-vtop-linum
-                              (window-vtop-linum))
-                           (= 0 (window-offset-view *current-window*))))
-                 (setf (window-redraw-flag)
-                       :unnecessary))))))))
+                 (syntax-scan-window *current-window*))))))))
 
 (defun main-step ()
   (let ((key (input-key)))

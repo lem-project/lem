@@ -53,11 +53,15 @@
   (typep x 'kbd))
 
 (defun define-key (keymap key cmd-name)
-  (unless (and (kbd-p key)
-               (every #'characterp (kbd-list key)))
-    (error "define-key: ~s is illegal key" key))
-  (setf (gethash key (keymap-table keymap))
-        cmd-name))
+  (let ((kbd (typecase key
+               (list (apply #'kbd key))
+               (string (kbd key))
+               (t key))))
+    (unless (and (kbd-p kbd)
+                 (every #'characterp (kbd-list kbd)))
+      (error "define-key: ~s is illegal key" key))
+    (setf (gethash kbd (keymap-table keymap))
+          cmd-name)))
 
 (defun kbd-to-string (key)
   (format nil "~{~A~^~}"

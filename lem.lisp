@@ -139,19 +139,22 @@
         (t
          (let ((*macro-running-p* t)
                (*universal-argument* nil))
-           (loop
-             :named outer
-             :repeat n
-             :while *macro-running-p*
-             :do (let ((length (getch-count-ungetch)))
-                   (dolist (c *macro-chars*)
-                     (ungetch c))
-                   (loop :while (< length (getch-count-ungetch)) :do
-                     (unless *macro-running-p*
-                       (loop :while (< length (getch-count-ungetch)) :do (getch))
-                       (return-from outer nil))
-                     (main-step)))
-             :finally (return-from outer t))))))
+           (prog1
+               (loop
+                 :named outer
+                 :repeat n
+                 :while *macro-running-p*
+                 :do (let ((length (getch-count-ungetch)))
+                       (dolist (c *macro-chars*)
+                         (ungetch c))
+                       (loop :while (< length (getch-count-ungetch)) :do
+                         (unless *macro-running-p*
+                           (loop :while (< length (getch-count-ungetch))
+                             :do (getch))
+                           (return-from outer nil))
+                         (main-step)))
+                 :finally (return-from outer t))
+             (setf (window-redraw-flag) :all))))))
 
 (define-command apply-macro-to-region-lines () ()
   (apply-region-lines (region-beginning)

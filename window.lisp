@@ -18,7 +18,7 @@
           scroll-down
           scroll-up))
 
-(defvar *redraw-flags* '(:one-line :unnecessary))
+(defvar *redraw-flags* '(:one-line :unnecessary :all))
 
 (define-class window () *current-window*
   win
@@ -387,6 +387,8 @@
     ((:unnecessary)
      (window-refresh-modeline *current-window*)
      (window-require-update-cursor))
+    ((:all)
+     (window-update-all))
     (otherwise
      (window-update-all)))
   (setf (window-redraw-flag *current-window*) nil))

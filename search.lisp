@@ -29,7 +29,8 @@
 
 (defun isearch-update-display ()
   (isearch-update-minibuf)
-  (isearch-update-buffer))
+  (isearch-update-buffer)
+  (setf (window-redraw-flag) :all))
 
 (defun isearch-update-minibuf ()
   (minibuf-print (format nil "ISearch: ~a" *isearch-string*)))
@@ -150,6 +151,7 @@
         (isearch-add-char c)
         (progn
           (progn
+            (isearch-update-display)
             (mapc 'ungetch (reverse (kbd-list *last-input-key*)))
             (isearch-end))))))
 

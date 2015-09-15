@@ -240,7 +240,8 @@
                          (window-vtop-linum))
                      (/= 0 (window-offset-view *current-window*)))
                  (syntax-scan-window *current-window*))
-                ((and (eql curr-modified prev-modified)
+                ((and (not (window-redraw-flag))
+                      (eql curr-modified prev-modified)
                       (and (= prev-window-vtop-linum
                               (window-vtop-linum))
                            (= 0 (window-offset-view *current-window*))))

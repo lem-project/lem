@@ -18,6 +18,8 @@
           scroll-down
           scroll-up))
 
+(defvar *redraw-flags* '(:one-line :unnecessary))
+
 (define-class window () *current-window*
   win
   nlines
@@ -30,7 +32,8 @@
   cur-linum
   cur-col
   max-col
-  wrap-count)
+  wrap-ylist
+  redraw-flag)
 
 (defun make-window (buffer nlines ncols y x)
   (let ((window
@@ -46,7 +49,7 @@
                         :cur-linum 1
                         :cur-col 0
                         :max-col 0
-                        :wrap-count 0)))
+                        :wrap-ylist nil)))
     (cl-charms/low-level:keypad (window-win window) 1)
     window))
 
@@ -268,7 +271,7 @@
                                      str))
               (when wrapping-flag
                 (incf y)
-                (incf (window-wrap-count window))))))))
+                (push y (window-wrap-ylist window))))))))
   (values curx cury y))
 
 (defun window-refresh-lines (window)
@@ -278,7 +281,7 @@
          (if (buffer-truncate-lines (window-buffer window))
              #'window-refresh-line-wrapping
              #'window-refresh-line)))
-    (setf (window-wrap-count window) 0)
+    (setf (window-wrap-ylist window) nil)
     (loop
       :with y := 0
       :for str :across (buffer-display-lines
@@ -295,6 +298,8 @@
             (t
              (return)))
       (incf y))
+    (setf (window-wrap-ylist window)
+          (nreverse (window-wrap-ylist window)))
     (cl-charms/low-level:wmove (window-win window)
                                cury
                                curx)))
@@ -307,7 +312,7 @@
 (defun window-offset-view (window)
   (let ((vtop-linum (window-vtop-linum window))
         (nlines (- (window-nlines window)
-                   (window-wrap-count window)))
+                   (length (window-wrap-ylist window))))
         (linum (window-cur-linum window)))
     (cond
      ((< #1=(+ vtop-linum nlines -2) linum)
@@ -338,6 +343,53 @@
 
 (defun redraw-screen ()
   (window-update-all))
+
+(defun %window-current-line (window)
+  (let* ((str (buffer-line-fatstring
+               (window-buffer window)
+               (window-cur-linum window)))
+         (curx (str-width (fat-string str)
+                          (window-cur-col)))
+         (cury (window-cursor-y window)))
+    (dolist (y (window-wrap-ylist window))
+      (when (<= y cury)
+        (incf cury)))
+    (values str curx cury)))
+
+(defun window-require-update-one-line ()
+  (let* ((window *current-window*))
+    (multiple-value-bind (str curx cury)
+        (%window-current-line window)
+      (multiple-value-bind (curx2 cury2)
+          (window-refresh-line-wrapping window 0 cury cury str)
+        (if (= cury cury2)
+            (cl-charms/low-level:wmove (window-win window) cury2 curx2)
+            (window-update-all))))))
+
+(defun window-require-update-cursor ()
+  (let* ((window *current-window*)
+         (ncols (window-ncols window)))
+    (multiple-value-bind (str curx cury)
+        (%window-current-line window)
+      (when (<= (1- ncols) curx)
+        (let ((strings (divide-line-width str ncols)))
+          (loop :for str :in strings
+            :while (<= (1- ncols) curx) :do
+            (incf cury)
+            (decf curx (str-width (fat-string str))))))
+      (cl-charms/low-level:wmove (window-win window) cury curx))))
+
+(defun window-require-update ()
+  (case (window-redraw-flag *current-window*)
+    ((:one-line)
+     (window-refresh-modeline *current-window*)
+     (window-require-update-one-line))
+    ((:unnecessary)
+     (window-refresh-modeline *current-window*)
+     (window-require-update-cursor))
+    (otherwise
+     (window-update-all)))
+  (setf (window-redraw-flag *current-window*) nil))
 
 (define-key *global-keymap* (kbd "C-x 2") 'split-window)
 (define-command split-window () ()

@@ -22,6 +22,8 @@
 (defvar *exit*)
 (defvar *self-insert-prev-time* nil)
 
+(defvar *input-history* (queue:make-queue 100))
+
 (defvar *macro-recording-p* nil)
 (defvar *macro-chars* nil)
 (defvar *macro-running-p* nil)
@@ -40,6 +42,7 @@
                            while (minusp result)
                            finally (return result)))))
            (char (code-char code)))
+      (queue:enqueue *input-history* char)
       (when *macro-recording-p*
         (push char *macro-chars*))
       (cond
@@ -376,6 +379,8 @@
                        :if-does-not-exist :create)
     (let ((*print-circle* t))
       (format out "~&~%~%~%~%~a~%" condition)
+      (format out "~s~%"
+              (queue:queue-to-list *input-history*))
       (sb-debug:backtrace 100 out))))
 
 (defun lem-save-error (&rest args)

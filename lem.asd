@@ -12,6 +12,7 @@
 (defsystem lem
            :serial t
            :components ((:file "fatstring")
+                        (:file "queue")
                         (:file "package")
                         (:file "wrappers")
                         (:file "key")

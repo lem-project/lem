@@ -100,6 +100,7 @@
             (min cur-col
                  (buffer-line-length (window-buffer)
                                      (window-cur-linum))))
+      (assert (<= 0 (window-cur-col)))
       (setf (window-max-col) max-col))))
 
 (define-key *global-keymap* (kbd "C-x b") 'select-buffer)

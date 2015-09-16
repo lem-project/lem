@@ -208,6 +208,7 @@
       (kill-line)))))
 
 (defun goto-column (col)
+  (assert (<= 0 col))
   (setf (window-cur-col) col)
   (setf (window-max-col) col))
 
@@ -249,13 +250,15 @@
   t)
 
 (defun %buffer-adjust-col (arg)
-  (if arg
-      (beginning-of-line)
-      (setf (window-cur-col)
-            (min (window-max-col)
-                 (buffer-line-length
-                  (window-buffer)
-                  (window-cur-linum))))))
+  (cond (arg
+         (beginning-of-line))
+        (t
+         (setf (window-cur-col)
+               (min (window-max-col)
+                    (buffer-line-length
+                     (window-buffer)
+                     (window-cur-linum))))
+         (assert (<= 0 (window-cur-col))))))
 
 (define-key *global-keymap* (kbd "C-n") 'next-line)
 (define-key *global-keymap* (kbd "[down]") 'next-line)
@@ -347,6 +350,7 @@
        (window-cur-col) (buffer-mark-col buffer)
        (buffer-mark-linum buffer) (window-cur-linum)
        (buffer-mark-col buffer) (window-cur-col))
+      (assert (<= 0 (window-cur-col)))
       (setf (window-max-col) (buffer-mark-col buffer))
       t)))
 

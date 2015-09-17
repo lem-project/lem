@@ -122,7 +122,7 @@
                     :string "[^() \\t]+"
                     :regex-p t
                     :test-symbol :define-start
-                    :color :function-name-color)
+                    :attr :function-name-attr)
 
 (dolist (str '("defun"
                "defclass"
@@ -139,7 +139,7 @@
                       :regex-p nil
                       :word-p t
                       :test-symbol :start-expr
-                      :color :keyword-color
+                      :attr :keyword-attr
                       :matched-symbol :define-start
                       :symbol-tov 1))
 
@@ -148,7 +148,7 @@
                     :regex-p t
                     :word-p t
                     :test-symbol :start-expr
-                    :color :keyword-color
+                    :attr :keyword-attr
                     :matched-symbol :define-start
                     :symbol-tov 1)
 
@@ -210,25 +210,25 @@
                       :regex-p nil
                       :word-p t
                       :test-symbol :start-expr
-                      :color :keyword-color))
+                      :attr :keyword-attr))
 
 (syntax-add-keyword *lisp-syntax-table*
                     :string "\\*[^*]+\\*"
                     :regex-p t
                     :word-p t
-                    :color :variable-color)
+                    :attr :variable-attr)
 
 (syntax-add-keyword *lisp-syntax-table*
                     :string ":[^() \\t]*"
                     :regex-p t
                     :word-p t
-                    :color :constant-color)
+                    :attr :constant-attr)
 
 (syntax-add-keyword *lisp-syntax-table*
                     :string "&[^() \\t]*"
                     :regex-p t
                     :word-p t
-                    :color :constant-color)
+                    :attr :constant-attr)
 
 (define-major-mode lisp-mode nil
   (:name "lisp"

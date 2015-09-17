@@ -21,23 +21,23 @@
           syntax-end-block-comment-p
           syntax-scan-window))
 
-(defvar *syntax-color-names*
-  '(:string-color
-    :comment-color
-    :keyword-color
-    :constant-color
-    :function-name-color
-    :variable-color))
+(defvar *syntax-attr-names*
+  '(:string-attr
+    :comment-attr
+    :keyword-attr
+    :constant-attr
+    :function-name-attr
+    :variable-attr))
 
 (defun syntax-init-attributes ()
   (flet ((f (name1 name2)
             (set-attr name1 (get-attr name2))))
-    (f :string-color :green)
-    (f :comment-color :red)
-    (f :keyword-color :blue)
-    (f :constant-color :magenta)
-    (f :function-name-color :cyan)
-    (f :variable-color :yellow)))
+    (f :string-attr :green)
+    (f :comment-attr :red)
+    (f :keyword-attr :blue)
+    (f :constant-attr :magenta)
+    (f :function-name-attr :cyan)
+    (f :variable-attr :yellow)))
 
 (defstruct syntax-table
   (space-chars '(#\space #\tab #\newline))
@@ -61,12 +61,12 @@
   word-p
   test
   test-symbol
-  color
+  attr
   matched-symbol
   symbol-tov)
 
 (defun syntax-add-keyword (syntax-table &key
-                                        string regex-p word-p test-symbol color
+                                        string regex-p word-p test-symbol attr
                                         matched-symbol symbol-tov)
   (push (make-syntax-keyword :test (if regex-p
                                        (ppcre:create-scanner string)
@@ -74,7 +74,7 @@
                              :regex-p regex-p
                              :word-p word-p
                              :test-symbol test-symbol
-                             :color color
+                             :attr attr
                              :matched-symbol matched-symbol
                              :symbol-tov symbol-tov)
         (syntax-table-keywords syntax-table)))
@@ -200,7 +200,7 @@
          (line-put-attribute line
                              start-col
                              (length str)
-                             (get-attr :string-color))
+                             (get-attr :string-attr))
          (return (values i nil)))
       (let ((c (schar str i)))
         (cond ((syntax-escape-char-p c)
@@ -212,7 +212,7 @@
                (line-put-attribute line
                                    start-col
                                    (1+ i)
-                                   (get-attr :string-color))
+                                   (get-attr :string-attr))
                (return (values i t))))))))
 
 (defun syntax-scan-block-comment (line col)
@@ -223,7 +223,7 @@
         ((>= i2 (length str))
          (when (< start-col (length str))
            (line-put-attribute line start-col (length str)
-                               (get-attr :comment-color)))
+                               (get-attr :comment-attr)))
          (values i2 nil))
       (let ((c1 (schar str i1))
             (c2 (schar str i2)))
@@ -234,7 +234,7 @@
                (line-put-attribute line
                                    start-col
                                    (1+ i2)
-                                   (get-attr :comment-color))
+                                   (get-attr :comment-attr))
                (return (values i2 t))))))))
 
 (defun syntax-update-symbol-tov ()
@@ -252,8 +252,8 @@
       (push (cons (syntax-keyword-symbol-tov sw)
                   (syntax-keyword-matched-symbol sw))
             *syntax-symbol-tov-list*))
-    (when (syntax-keyword-color sw)
-      (line-put-attribute line start end (get-attr (syntax-keyword-color sw))))
+    (when (syntax-keyword-attr sw)
+      (line-put-attribute line start end (get-attr (syntax-keyword-attr sw))))
     t))
 
 (defun syntax-scan-word (line start)
@@ -320,7 +320,7 @@
           (cond ((syntax-escape-char-p c)
                  (incf i))
                 ((syntax-string-quote-char-p c)
-                 (line-put-attribute line i (1+ i) (get-attr :string-color))
+                 (line-put-attribute line i (1+ i) (get-attr :string-attr))
                  (multiple-value-bind (j found-term-p)
                      (syntax-scan-string line (1+ i) nil c)
                    (setq i j)
@@ -328,7 +328,7 @@
                      (setf (line-start-string-p line) t)
                      (return (values t nil)))))
                 ((syntax-start-block-comment-p c (safe-aref str (1+ i)))
-                 (line-put-attribute line i (+ i 2) (get-attr :comment-color))
+                 (line-put-attribute line i (+ i 2) (get-attr :comment-attr))
                  (multiple-value-bind (j found-term-p)
                      (syntax-scan-block-comment line (+ i 2))
                    (setq i j)
@@ -339,7 +339,7 @@
                  (line-put-attribute line
                                      i
                                      (length str)
-                                     (get-attr :comment-color))
+                                     (get-attr :comment-attr))
                  (return))
                 (t
                  (let ((pos (syntax-scan-word line i)))

@@ -220,7 +220,7 @@
          (i2 (1+ col) (1+ i2)))
         ((>= i2 (length str))
          (when (< start-col (length str))
-           (line-put-attribute line start-col i2
+           (line-put-attribute line start-col (length str)
                                (get-attr :comment-color)))
          (values i2 nil))
       (let ((c1 (schar str i1))

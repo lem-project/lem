@@ -8,9 +8,11 @@
    :queue-empty-p
    :enqueue
    :dequeue
+   :pop
    :queue-to-list
    :queue-first-datum
-   :queue-last-datum))
+   :queue-last-datum)
+  (:shadow :pop))
 
 (in-package :queue)
 
@@ -46,6 +48,13 @@
             (mod (1+ (queue-first queue))
                  (length (queue-data queue)))))))
 
+(defun pop (queue)
+  (unless (queue-empty-p queue)
+    (setf (queue-last queue)
+          (mod (1- (queue-last queue))
+               (length (queue-data queue))))
+    (aref (queue-data queue) (queue-last queue))))
+
 (defun queue-to-list (queue)
   (let* ((data (queue-data queue))
          (size (length data))
@@ -65,4 +74,5 @@
 (defun queue-last-datum (queue)
   (unless (queue-empty-p queue)
     (aref (queue-data queue)
-          (1- (queue-last queue)))))
+          (mod (1- (queue-last queue))
+               (length (queue-data queue))))))

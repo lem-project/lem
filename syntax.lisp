@@ -246,8 +246,12 @@
 
 (defun syntax-matched-word (line sw start end)
   (when (or (not (syntax-keyword-word-p sw))
-            (<= (length (line-str line)) end)
-            (not (syntax-symbol-char-p (aref (line-str line) end))))
+            (and (or (<= (length (line-str line)) end)
+                     (not (syntax-symbol-char-p
+                           (aref (line-str line) end))))
+                 (or (zerop start)
+                     (not (syntax-symbol-char-p
+                           (aref (line-str line) (1- start)))))))
     (when (syntax-keyword-matched-symbol sw)
       (push (cons (syntax-keyword-symbol-tov sw)
                   (syntax-keyword-matched-symbol sw))
@@ -270,11 +274,10 @@
                          (syntax-matched-word line sw start end1))
                 (return-from syntax-scan-word end1)))
             (let ((end (+ start (length (syntax-keyword-test sw)))))
-              (when (and (< end (length str))
-                         (string= str
-                                  (syntax-keyword-test sw)
+              (when (and (string= str (syntax-keyword-test sw)
                                   :start1 start
-                                  :end1 end)
+                                  :end1 (when (< end (length str))
+                                          end))
                          (syntax-matched-word line sw start end))
                 (return-from syntax-scan-word (1- end)))))))))
 

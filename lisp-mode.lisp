@@ -113,13 +113,13 @@
    :block-comment-following-char #\|))
 
 (syntax-add-keyword *lisp-syntax-table*
-                    :string "("
+                    "("
                     :regex-p nil
                     :matched-symbol :start-expr
                     :symbol-tov 1)
 
 (syntax-add-keyword *lisp-syntax-table*
-                    :string "[^() \\t]+"
+                    "[^() \\t]+"
                     :regex-p t
                     :test-symbol :define-start
                     :attr :function-name-attr)
@@ -135,7 +135,7 @@
                "defparameter"
                "defconstant"))
   (syntax-add-keyword *lisp-syntax-table*
-                      :string str
+                      str
                       :regex-p nil
                       :word-p t
                       :test-symbol :start-expr
@@ -144,7 +144,7 @@
                       :symbol-tov 1))
 
 (syntax-add-keyword *lisp-syntax-table*
-                    :string "^define-[^() \\t]*"
+                    "^(:?[^: \t]+:)?define-"
                     :regex-p t
                     :word-p t
                     :test-symbol :start-expr
@@ -206,26 +206,26 @@
                "with-standard-io-syntax"
                "loop"))
   (syntax-add-keyword *lisp-syntax-table*
-                      :string str
+                      str
                       :regex-p nil
                       :word-p t
                       :test-symbol :start-expr
                       :attr :keyword-attr))
 
 (syntax-add-keyword *lisp-syntax-table*
-                    :string "\\*[^*]+\\*"
+                    "\\*[^*]+\\*"
                     :regex-p t
                     :word-p t
                     :attr :variable-attr)
 
 (syntax-add-keyword *lisp-syntax-table*
-                    :string ":[^() \\t]*"
+                    ":[^() \\t]*"
                     :regex-p t
                     :word-p t
                     :attr :constant-attr)
 
 (syntax-add-keyword *lisp-syntax-table*
-                    :string "&[^() \\t]*"
+                    "&[^() \\t]*"
                     :regex-p t
                     :word-p t
                     :attr :constant-attr)

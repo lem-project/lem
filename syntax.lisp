@@ -65,12 +65,14 @@
   matched-symbol
   symbol-tov)
 
-(defun syntax-add-keyword (syntax-table &key
-                                        string regex-p word-p test-symbol attr
-                                        matched-symbol symbol-tov)
+(defun syntax-add-keyword (syntax-table
+                           test
+                           &key
+                           regex-p word-p test-symbol attr
+                           matched-symbol symbol-tov)
   (push (make-syntax-keyword :test (if regex-p
-                                       (ppcre:create-scanner string)
-                                       string)
+                                       (ppcre:create-scanner test)
+                                       test)
                              :regex-p regex-p
                              :word-p word-p
                              :test-symbol test-symbol
@@ -267,19 +269,29 @@
                 (member (syntax-keyword-test-symbol sw)
                         *syntax-symbol-tov-list*
                         :key #'cdr))
-        (if (syntax-keyword-regex-p sw)
-            (multiple-value-bind (start1 end1)
-                (ppcre:scan (syntax-keyword-test sw) str :start start)
-              (when (and start1 (= start start1)
-                         (syntax-matched-word line sw start end1))
-                (return-from syntax-scan-word end1)))
-            (let ((end (+ start (length (syntax-keyword-test sw)))))
-              (when (and (string= str (syntax-keyword-test sw)
-                                  :start1 start
-                                  :end1 (when (< end (length str))
-                                          end))
-                         (syntax-matched-word line sw start end))
-                (return-from syntax-scan-word (1- end)))))))))
+        (cond
+         ((syntax-keyword-regex-p sw)
+          (multiple-value-bind (start1 end1)
+              (ppcre:scan (syntax-keyword-test sw) str :start start)
+            (when (and start1 (= start start1)
+                       (syntax-matched-word line sw start end1))
+              (return-from syntax-scan-word (1- end1)))))
+         ((stringp (syntax-keyword-test sw))
+          (let ((end (+ start (length (syntax-keyword-test sw)))))
+            (when (and (string= str (syntax-keyword-test sw)
+                                :start1 start
+                                :end1 (when (< end (length str))
+                                        end))
+                       (syntax-matched-word line sw start end))
+              (return-from syntax-scan-word (1- end)))))
+         ((functionp (syntax-keyword-test sw))
+          (let ((end (or (position-if (complement #'syntax-symbol-char-p)
+                                      str :start start)
+                         (length str))))
+            (when (and (funcall (syntax-keyword-test sw)
+                                (subseq str start end))
+                       (syntax-matched-word line sw start end))
+              (return-from syntax-scan-word end)))))))))
 
 (defun syntax-scan-whitespaces (str i)
   (do ((i i (1+ i)))

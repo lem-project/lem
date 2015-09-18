@@ -219,13 +219,13 @@
                     :attr :variable-attr)
 
 (syntax-add-keyword *lisp-syntax-table*
-                    ":[^() \\t]*"
+                    ":"
                     :regex-p t
                     :word-p t
                     :attr :constant-attr)
 
 (syntax-add-keyword *lisp-syntax-table*
-                    "&[^() \\t]*"
+                    "&"
                     :regex-p t
                     :word-p t
                     :attr :constant-attr)

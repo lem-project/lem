@@ -247,12 +247,16 @@
                          (cdr flag-keyword)))))
 
 (defun syntax-matched-word (line skw start end)
-  (when (syntax-keyword-matched-symbol skw)
-    (push (cons (syntax-keyword-symbol-tov skw)
-                (syntax-keyword-matched-symbol skw))
-          *syntax-symbol-tov-list*))
-  (when (syntax-keyword-attr skw)
-    (line-put-attribute line start end (get-attr (syntax-keyword-attr skw)))))
+  (when (or (not (syntax-keyword-word-p skw))
+            (zerop start)
+            (not (syntax-symbol-char-p
+                  (aref (line-str line) (1- start)))))
+    (when (syntax-keyword-matched-symbol skw)
+      (push (cons (syntax-keyword-symbol-tov skw)
+                  (syntax-keyword-matched-symbol skw))
+            *syntax-symbol-tov-list*))
+    (when (syntax-keyword-attr skw)
+      (line-put-attribute line start end (get-attr (syntax-keyword-attr skw))))))
 
 (defun syntax-position-word-end (str start)
   (or (position-if-not #'syntax-symbol-char-p str

@@ -144,7 +144,7 @@
                       :symbol-tov 1))
 
 (syntax-add-keyword *lisp-syntax-table*
-                    "^(:?[^: \t]+:)?define-"
+                    "^(:?[^: \\t]+:)?define-[^ \\t()]*$"
                     :regex-p t
                     :word-p t
                     :test-symbol :start-expr
@@ -213,19 +213,19 @@
                       :attr :keyword-attr))
 
 (syntax-add-keyword *lisp-syntax-table*
-                    "\\*[^*]+\\*"
+                    "^\\*[^*]+\\*$"
                     :regex-p t
                     :word-p t
                     :attr :variable-attr)
 
 (syntax-add-keyword *lisp-syntax-table*
-                    ":"
+                    "^:[^() \\t]+$"
                     :regex-p t
                     :word-p t
                     :attr :constant-attr)
 
 (syntax-add-keyword *lisp-syntax-table*
-                    "&"
+                    "^&[^() \\t]+$"
                     :regex-p t
                     :word-p t
                     :attr :constant-attr)

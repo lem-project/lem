@@ -353,67 +353,66 @@
 (defun eval-from-string (str)
   (eval (%string-to-exps str)))
 
-(defvar *eval-thread*)
-(defvar *mi-thread*)
+(defvar *lisp-eval-thread*)
+(defvar *lisp-mi-thread*)
+(defvar *lisp-eval-thread-values*)
+(defvar *lisp-eval-thread-error-p*)
 
-(defun safe-eval-from-string-1 (str output-buffer point update-point-p)
-  (let ((values)
-        (error-p))
-    (labels ((eval-thread-closure
-              ()
-              (let ((out (make-buffer-output-stream output-buffer point t)))
-                (let ((*error-output* out)
-                      (*trace-output* out)
-                      (*debug-io* out)
-                      (*standard-output* out)
-                      (*standard-input* (make-minibuffer-input-stream))
-                      (*getch-wait-flag* t))
-                  (handler-case
-                      (handler-bind ((error #'lisp-debugger))
-                        (setq values
-                              (unwind-protect
-                                (prog1 (multiple-value-list
-                                        (eval-from-string str))
-                                  (when update-point-p
-                                    (point-set
-                                     (buffer-output-stream-point out))))
-                                (getch-flush))))
-                    (error (cdt)
-                           (setq error-p t)
-                           (setq values (list cdt)))))))
-             (mi-thread-closure
-              ()
-              (loop
-                for char = (code-char (cl-charms/low-level:getch))
-                do (if (char= C-g char)
-                       (bt:destroy-thread *eval-thread*)
-                       (ungetch char)))))
-      (setq *eval-thread* (bt:make-thread #'eval-thread-closure))
-      (setq *mi-thread* (bt:make-thread #'mi-thread-closure))
-      (bt:join-thread *eval-thread*)
-      (bt:destroy-thread *mi-thread*))
-    (values values error-p)))
+(defun %make-eval-closure (str output-buffer point update-point-p)
+  #'(lambda ()
+      (let* ((out (make-buffer-output-stream output-buffer point t))
+             (*error-output* out)
+             (*trace-output* out)
+             (*debug-io* out)
+             (*standard-output* out)
+             (*standard-input* (make-minibuffer-input-stream))
+             (*getch-wait-flag* t))
+        (handler-case
+            (handler-bind ((error #'lisp-debugger))
+              (unwind-protect
+                (progn
+                  (setq *lisp-eval-thread-values*
+                        (multiple-value-list (eval-from-string str)))
+                  (when update-point-p
+                    (point-set
+                     (buffer-output-stream-point out))))
+                (getch-flush)))
+          (error (cdt)
+                 (setq *lisp-eval-thread-error-p* t)
+                 (setq *lisp-eval-thread-values* (list cdt)))))))
 
-(defun safe-eval-from-string (x output-buffer point &optional update-point-p)
-  (handler-case (safe-eval-from-string-1 x
-                                         output-buffer
-                                         point
-                                         update-point-p)
+(defun %lisp-mi-thread ()
+  (loop :for char := (code-char (cl-charms/low-level:getch))
+    :if (char= C-g char)
+    :do (bt:destroy-thread *lisp-eval-thread*)
+    :else
+    :do (ungetch char)))
+
+(defun eval-string (str output-buffer point &optional update-point-p)
+  (setq *lisp-eval-thread-values* nil)
+  (setq *lisp-eval-thread-error-p* nil)
+  (setq *lisp-eval-thread*
+        (bt:make-thread
+         (%make-eval-closure str
+                             output-buffer
+                             point
+                             update-point-p)))
+  (setq *lisp-mi-thread* (bt:make-thread #'%lisp-mi-thread))
+  (handler-case (bt:join-thread *lisp-eval-thread*)
     #+sbcl
-    (sb-thread:join-thread-error
-     (cdt)
-     (bt:destroy-thread *mi-thread*)
-     (minibuf-print "interrupt")
-     nil)))
+    (sb-thread:join-thread-error (cdt)
+                                 (declare (ignore cdt))
+                                 (minibuf-print "interrupt")))
+  (bt:destroy-thread *lisp-mi-thread*)
+  (values *lisp-eval-thread-values*
+          *lisp-eval-thread-error-p*))
 
 (defun lisp-eval-string (str)
   (let ((output-buffer (get-buffer-create "*OUTPUT*")))
     (setf (buffer-modified-p output-buffer) nil)
     (prog1 (minibuf-print
             (write-to-string
-             (first (safe-eval-from-string str
-                                           output-buffer
-                                           (point-min)))))
+             (first (eval-string str output-buffer (point-min)))))
       (when (buffer-modified-p output-buffer)
         (lisp-info-popup output-buffer)))))
 
@@ -557,7 +556,7 @@
         (unless (string= str "")
           (insert-newline 1)
           (multiple-value-bind (values error-p)
-              (safe-eval-from-string str (current-buffer) (point) t)
+              (eval-string str (current-buffer) (point) t)
             (unless error-p
               (dolist (v values)
                 (insert-string (write-to-string v))

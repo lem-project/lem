@@ -5,17 +5,17 @@
           lisp-mode
           lisp-indent-line
           lisp-newline-and-indent
-          eval-string
-          eval-region
-          eval-defun
-          eval-last-sexp
-          eval-buffer
-          load-file
-          macroexpand-lisp
+          lisp-eval-string
+          lisp-eval-region
+          lisp-eval-defun
+          lisp-eval-last-sexp
+          lisp-eval-buffer
+          lisp-load-file
+          lisp-macroexpand
           lisp-describe-symbol
           lisp-indent-region
           lisp-indent-sexp
-          complete-symbol
+          lisp-complete-symbol
           lisp-comment-region
           popup-scratch-buffer
           *scratch-mode-keymap*
@@ -269,7 +269,7 @@
                       (window-cur-linum)))
              (window-cur-col))))))
 
-(defun lisp-count-sexps (goal)
+(defun %count-sexps (goal)
   (do ((count 0 (1+ count)))
       ((or (not (forward-sexp 1 t))
            (eobp)
@@ -290,7 +290,7 @@
                     (last (split-string car-name-str
                                         #\:)))))
                  (car-name (intern car-symbol-name :lem))
-                 (argc (lisp-count-sexps point)))
+                 (argc (%count-sexps point)))
             (let ((num
                    (do ((val (get car-name 'lisp-indent)))
                        ((or (not val)
@@ -336,7 +336,7 @@
   (mark-sexp)
   (lisp-indent-region))
 
-(defun string-to-exps (str)
+(defun %string-to-exps (str)
   (let ((str str)
         (exps)
         (eof-value (make-symbol "eof")))
@@ -351,7 +351,7 @@
     (cons 'progn (nreverse exps))))
 
 (defun eval-from-string (str)
-  (eval (string-to-exps str)))
+  (eval (%string-to-exps str)))
 
 (defvar *eval-thread*)
 (defvar *mi-thread*)
@@ -406,7 +406,7 @@
      (minibuf-print "interrupt")
      nil)))
 
-(defun eval-string (str)
+(defun lisp-eval-string (str)
   (let ((output-buffer (get-buffer-create "*OUTPUT*")))
     (setf (buffer-modified-p output-buffer) nil)
     (prog1 (minibuf-print
@@ -417,11 +417,11 @@
       (when (buffer-modified-p output-buffer)
         (lisp-info-popup output-buffer)))))
 
-(define-command eval-region (&optional begin end) ("r")
+(define-command lisp-eval-region (&optional begin end) ("r")
   (unless (or begin end)
     (setq begin (region-beginning))
     (setq end (region-end)))
-  (eval-string (region-string begin end))
+  (lisp-eval-string (region-string begin end))
   t)
 
 (defun %eval-sexp (move-sexp)
@@ -430,33 +430,33 @@
                    (mark-sexp)
                    (region-string (region-beginning) (region-end))))))
     (when str
-      (eval-string str)
+      (lisp-eval-string str)
       t)))
 
-(define-key *lisp-mode-keymap* (kbd "M-C-x") 'eval-defun)
-(define-command eval-defun () ()
+(define-key *lisp-mode-keymap* (kbd "M-C-x") 'lisp-eval-defun)
+(define-command lisp-eval-defun () ()
   (%eval-sexp #'top-of-defun))
 
-(define-key *lisp-mode-keymap* (kbd "C-x u") 'eval-last-sexp)
-(define-command eval-last-sexp () ()
+(define-key *lisp-mode-keymap* (kbd "C-x u") 'lisp-eval-last-sexp)
+(define-command lisp-eval-last-sexp () ()
   (%eval-sexp #'backward-sexp))
 
-(define-key *lisp-mode-keymap* (kbd "C-x y") 'eval-buffer)
-(define-command eval-buffer () ()
-  (eval-string
+(define-key *lisp-mode-keymap* (kbd "C-x y") 'lisp-eval-buffer)
+(define-command lisp-eval-buffer () ()
+  (lisp-eval-string
    (region-string (progn (beginning-of-buffer) (point))
                   (progn (end-of-buffer) (point)))))
 
-(define-key *lisp-mode-keymap* (kbd "C-x l") 'load-file)
-(define-key *lisp-mode-keymap* (kbd "C-x C-l") 'load-file)
-(define-command load-file (filename) ("fLoad File: ")
+(define-key *lisp-mode-keymap* (kbd "C-x l") 'lisp-load-file)
+(define-key *lisp-mode-keymap* (kbd "C-x C-l") 'lisp-load-file)
+(define-command lisp-load-file (filename) ("fLoad File: ")
   (when (and (file-exist-p filename)
              (not (file-directory-p filename)))
-    (eval-string
+    (lisp-eval-string
      (format nil "(load ~s)" filename))))
 
-(define-key *lisp-mode-keymap* (kbd "C-x m") 'macroexpand-lisp)
-(define-command macroexpand-lisp (arg) ("P")
+(define-key *lisp-mode-keymap* (kbd "C-x m") 'lisp-macroexpand)
+(define-command lisp-macroexpand (arg) ("P")
   (let ((expr
          (read-from-string
           (region-string (point)
@@ -478,8 +478,8 @@
                    #'(lambda (out)
                        (describe (read-from-string name) out))))
 
-(define-key *lisp-mode-keymap* (kbd "M-C-i") 'complete-symbol)
-(define-command complete-symbol () ()
+(define-key *lisp-mode-keymap* (kbd "M-C-i") 'lisp-complete-symbol)
+(define-command lisp-complete-symbol () ()
   (let* ((end (point))
          (begin (prog2 (backward-sexp)
                     (point)

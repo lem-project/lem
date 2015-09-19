@@ -473,9 +473,18 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-x d") 'lisp-describe-symbol)
 (define-command lisp-describe-symbol (name) ("sDescribe: ")
-  (lisp-info-popup (get-buffer-create "*describe*")
-                   #'(lambda (out)
-                       (describe (read-from-string name) out))))
+  (multiple-value-bind (x error-p)
+      (handler-case (values (read-from-string name) nil)
+        (error (cdt)
+               (values
+                (lisp-info-popup (get-buffer-create "*ERROR*")
+                                 #'(lambda (out)
+                                     (princ cdt out)))
+                t)))
+    (unless error-p
+      (lisp-info-popup (get-buffer-create "*describe*")
+                       #'(lambda (out)
+                           (describe x out))))))
 
 (define-key *lisp-mode-keymap* (kbd "M-C-i") 'lisp-complete-symbol)
 (define-command lisp-complete-symbol () ()

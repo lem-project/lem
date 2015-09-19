@@ -13,8 +13,8 @@
           load-file
           macroexpand-lisp
           lisp-describe-symbol
-          indent-region-lisp
-          indent-sexp
+          lisp-indent-region
+          lisp-indent-sexp
           complete-symbol
           lisp-comment-region
           popup-scratch-buffer
@@ -324,6 +324,18 @@
   (insert-newline n)
   (lisp-indent-line))
 
+(define-command lisp-indent-region () ()
+  (save-excursion
+   (apply-region-lines (region-beginning)
+                       (region-end)
+                       'lisp-indent-line)
+   t))
+
+(define-key *lisp-mode-keymap* (kbd "M-C-q") 'lisp-indent-sexp)
+(define-command lisp-indent-sexp () ()
+  (mark-sexp)
+  (lisp-indent-region))
+
 (defun string-to-exps (str)
   (let ((str str)
         (exps)
@@ -465,18 +477,6 @@
   (lisp-info-popup (get-buffer-create "*describe*")
                    #'(lambda (out)
                        (describe (read-from-string name) out))))
-
-(define-command indent-region-lisp () ()
-  (save-excursion
-   (apply-region-lines (region-beginning)
-                       (region-end)
-                       'lisp-indent-line)
-   t))
-
-(define-key *lisp-mode-keymap* (kbd "M-C-q") 'indent-sexp)
-(define-command indent-sexp () ()
-  (mark-sexp)
-  (indent-region-lisp))
 
 (define-key *lisp-mode-keymap* (kbd "M-C-i") 'complete-symbol)
 (define-command complete-symbol () ()

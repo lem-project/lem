@@ -28,29 +28,47 @@
               (setq len res))))
         (values (subseq str 0 len) strings))))))
 
-(defun popup-completion (comp-f str)
-  (multiple-value-bind (result strings) (funcall comp-f str)
-    (when strings
-      (setq *completion-flag* t)
-      (let ((buffer (get-buffer-create *comp-buffer-name*)))
-        (setq *completion-window*
-              (info-popup buffer
-                          #'(lambda (out)
-                              (dolist (s strings)
-                                (format out "~a~%" s)))
-                          nil))
-        (buffer-put buffer :completion-buffer-p t))
-      (window-update-all))
-    (or result str)))
+(let ((prev-str))
+  (defun popup-completion (comp-f str)
+    (let ((comp-flag t))
+      (when *completion-window*
+        (when-continue-flag
+         :completion
+         (when (equal str prev-str)
+           (setq comp-flag nil)
+           (let ((*current-window* *completion-window*))
+             (unless (next-page 1)
+               (beginning-of-buffer))
+             (window-update-all)))))
+      (setq prev-str str)
+      (if (null comp-flag)
+          str
+          (multiple-value-bind (result strings) (funcall comp-f str)
+            (cond (strings
+                   (setq *completion-flag* t)
+                   (let ((buffer (get-buffer-create *comp-buffer-name*)))
+                     (setq *completion-window*
+                           (info-popup buffer
+                                       #'(lambda (out)
+                                           (dolist (s strings)
+                                             (format out "~a~%" s)))
+                                       nil))
+                     (buffer-put buffer :completion-buffer-p t)))
+                  (t
+                   (delete-completion-window)))
+            (window-update-all)
+            (or result str))))))
 
 (defun delete-completion-window ()
   (when *completion-flag*
     (setq *completion-flag* nil)
-    (let ((*current-window* (find *completion-window* *window-list*)))
-      (assert *current-window*)
-      (when (buffer-get (window-buffer *current-window*)
-                        :completion-buffer-p)
-        (info-quit)))))
+    (let ((window (find *completion-window* *window-list*)))
+      (when window
+        (select-window window)
+        (when (buffer-get (window-buffer window)
+                          :completion-buffer-p)
+          (info-quit))
+        (setq *completion-window* nil)))))
 
 (defun preceding-word ()
   (let ((chars))

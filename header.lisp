@@ -53,7 +53,7 @@
 (defun get-attr (name)
   (gethash name *attribute-name-table*))
 
-(defvar *continue-command-flags* (list :kill :undo :abbrev :yank))
+(defvar *continue-command-flags* (list :kill :undo :abbrev :yank :completion))
 
 (defun define-continue-flag (keyword)
   (push keyword *continue-command-flags*))

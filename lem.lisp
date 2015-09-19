@@ -66,6 +66,7 @@
 (define-command keyboard-quit () ()
   (setq *universal-argument* nil)
   (setq *macro-recording-p* nil)
+  (delete-completion-window)
   (minibuf-print "Quit"))
 
 (define-key *global-keymap* (kbd "C-x C-c") 'exit-lem)
@@ -250,7 +251,6 @@
 (defun main-step ()
   (let ((key (input-key)))
     (minibuf-clear)
-    (delete-completion-window)
     (execute key)
     (setq *universal-argument* nil)))
 

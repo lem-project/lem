@@ -96,6 +96,7 @@
 (defvar *minibuf-read-line-existing-p*)
 
 (defvar *minibuf-read-line-log* nil)
+(defvar *minibuf-read-line-prev-log* nil)
 (defvar *minibuf-read-line-busy-p* nil)
 
 (define-command minibuf-read-line-confirm () ()
@@ -124,10 +125,18 @@
   t)
 
 (define-command minibuf-read-line-prev-log () ()
-  t)
+  (when *minibuf-read-line-log*
+    (kill-region (point-min) (point-max))
+    (let ((str (pop *minibuf-read-line-log*)))
+      (push str *minibuf-read-line-prev-log*)
+      (insert-string str))))
 
 (define-command minibuf-read-line-next-log () ()
-  t)
+  (when *minibuf-read-line-prev-log*
+    (kill-region (point-min) (point-max))
+    (let ((str (pop *minibuf-read-line-prev-log*)))
+      (push str *minibuf-read-line-log*)
+      (insert-string str))))
 
 (define-command minibuf-read-line-break () ()
   (throw 'abort 'abort))
@@ -160,7 +169,9 @@
          (*curr-flags* (make-flags) (make-flags))
          (*last-flags* (make-flags) *curr-flags*))
         ((not *minibuf-read-line-loop*)
-         (minibuf-get-line))
+         (let ((str (minibuf-get-line)))
+           (push str *minibuf-read-line-log*)
+           str))
       (minibuf-read-line-refresh prompt)
       (let* ((key (input-key))
              (cmd (find-keybind key)))

@@ -42,7 +42,7 @@
              (window-update-all)))))
       (setq prev-str str)
       (if (null comp-flag)
-          str
+          (values str nil)
           (multiple-value-bind (result strings) (funcall comp-f str)
             (cond (strings
                    (setq *completion-flag* t)
@@ -57,7 +57,9 @@
                   (t
                    (delete-completion-window)))
             (window-update-all)
-            (or result str))))))
+            (if result
+                (values result t)
+                (values str nil)))))))
 
 (defun delete-completion-window ()
   (when *completion-flag*

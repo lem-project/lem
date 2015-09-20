@@ -30,14 +30,12 @@
     :variable-attr))
 
 (defun syntax-init-attributes ()
-  (flet ((f (name1 name2)
-            (set-attr name1 (get-attr name2))))
-    (f :string-attr :green)
-    (f :comment-attr :red)
-    (f :keyword-attr :blue)
-    (f :constant-attr :magenta)
-    (f :function-name-attr :cyan)
-    (f :variable-attr :yellow)))
+  (set-attr :string-attr (get-attr :green))
+  (set-attr :comment-attr (get-attr :red))
+  (set-attr :keyword-attr (get-attr :blue))
+  (set-attr :constant-attr (get-attr :magenta))
+  (set-attr :function-name-attr (get-attr :cyan))
+  (set-attr :variable-attr (get-attr :yellow)))
 
 (defstruct syntax-table
   (space-chars '(#\space #\tab #\newline))

@@ -527,21 +527,37 @@
            (subseq comp-str (length str)))))
       t)))
 
-(define-key *global-keymap* (kbd "C-x ;") 'lisp-comment-region)
-(define-command lisp-comment-region (arg) ("P")
-  (let ((begin (region-beginning))
+(define-key *global-keymap* (kbd "C-x ;") 'lisp-comment-or-uncomment-region)
+(define-command lisp-comment-or-uncomment-region (arg) ("P")
+  (if arg
+      (lisp-uncomment-region)
+      (lisp-comment-region)))
+
+(define-command lisp-comment-region () ()
+  (when (forward-sexp 1)
+    (skip-chars-forward '(#\space #\tab))
+    (unless (eolp)
+      (insert-newline 1))
+    (let (start end column)
+      (setq end (point))
+      (backward-sexp 1)
+      (setq start (point))
+      (setq column (point-column start))
+      (apply-region-lines start end
+                          #'(lambda ()
+                              (goto-column column)
+                              (insert-string ";"))))))
+
+(define-command lisp-uncomment-region () ()
+  (let ((start (region-beginning))
         (end (region-end)))
-    (apply-region-lines
-     begin
-     end
-     (if arg
-         #'(lambda ()
-             (beginning-of-line)
-             (when (equal #\; (following-char))
-               (delete-char)))
-         #'(lambda ()
-             (beginning-of-line)
-             (insert-string ";"))))))
+    (point-set start)
+    (do ()
+        ((point< end (point)))
+      (skip-chars-forward '(#\space #\tab))
+      (do () ((not (eql #\; (following-char))))
+        (delete-char 1 t))
+      (next-line 1))))
 
 (define-key *lisp-mode-keymap* (kbd "C-x z") 'popup-scratch-buffer)
 (define-key *lisp-mode-keymap* (kbd "C-x C-z") 'popup-scratch-buffer)

@@ -497,18 +497,31 @@
 (define-command lisp-macroexpand-all () ()
   (%lisp-macroexpand #'macroexpand "*macroexpand*"))
 
+(defun lisp-read-symbol (prompt)
+  (let ((name (minibuf-read-line prompt ""
+                                 'complete-symbol
+                                 nil)))
+    (with-safe-form
+      (read-from-string name))))
+
 (define-key *lisp-mode-keymap* (kbd "C-x d") 'lisp-describe-symbol)
 (define-command lisp-describe-symbol () ()
-  (let ((name
-         (minibuf-read-line "Describe: " ""
-                            'complete-symbol
-                            nil)))
-    (multiple-value-bind (str error-p)
-        (with-safe-form
-          (with-output-to-string (out)
-            (describe (read-from-string name) out)))
-      (unless error-p
-        (lisp-info-popup (get-buffer-create "*describe*")
+  (multiple-value-bind (name error-p)
+      (lisp-read-symbol "Describe: ")
+    (unless error-p
+      (lisp-info-popup (get-buffer-create "*describe*")
+                       #'(lambda (out)
+                           (describe name out))))))
+
+(define-key *lisp-mode-keymap* (kbd "C-x M-d") 'lisp-disassemble-symbol)
+(define-command lisp-disassemble-symbol () ()
+  (multiple-value-bind (name error-p)
+      (lisp-read-symbol "Disassemble: ")
+    (unless error-p
+      (let ((str
+             (with-output-to-string (out)
+               (disassemble name :stream out))))
+        (lisp-info-popup (get-buffer-create "*disassemble*")
                          #'(lambda (out)
                              (princ str out)))))))
 

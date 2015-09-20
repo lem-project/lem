@@ -5,6 +5,7 @@
           selected-window
           select-window
           deleted-window-p
+          set-window-delete-hook
           recenter
           redraw-screen
           split-window
@@ -34,7 +35,8 @@
   cur-col
   max-col
   wrap-ylist
-  redraw-flag)
+  redraw-flag
+  delete-hook)
 
 (defun make-window (buffer nlines ncols y x)
   (let ((window
@@ -69,6 +71,9 @@
 
 (defun deleted-window-p (window)
   (not (find window *window-list*)))
+
+(defun set-window-delete-hook (window fn)
+  (setf (window-delete-hook window) fn))
 
 (defun window-init ()
   (setq *current-cols* cl-charms/low-level:*cols*)
@@ -498,6 +503,8 @@
    (t
     (when (eq *current-window* window)
       (other-window))
+    (when (window-delete-hook window)
+      (funcall (window-delete-hook window)))
     (cl-charms/low-level:delwin (window-win window))
     (let ((wlist (reverse *window-list*)))
       (let ((upwin (cadr (member window wlist))))

@@ -408,7 +408,7 @@
           *lisp-eval-thread-error-p*))
 
 (defun lisp-eval-string (str)
-  (let ((output-buffer (get-buffer-create "*OUTPUT*")))
+  (let ((output-buffer (get-buffer-create "*output*")))
     (setf (buffer-modified-p output-buffer) nil)
     (prog1 (minibuf-print
             (write-to-string
@@ -472,7 +472,18 @@
                                    (point-set start))))
                 nil)))
           (setq expr
-                (funcall macroexpand-fn expr))))
+                (funcall macroexpand-fn expr))
+          (when (eq (window-buffer)
+                    (get-buffer buffer-name))
+            (let ((*kill-disable-p* t))
+              (kill-sexp))
+            (insert-string
+             (with-output-to-string (out)
+               (pprint expr out)))
+            (setq expr (read-from-string
+                        (region-string (point-min)
+                                       (point-max)))))
+          expr))
     (unless error-p
       (lisp-info-popup (get-buffer-create buffer-name)
                        #'(lambda (out)
@@ -484,7 +495,7 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-x M") 'lisp-macroexpand-all)
 (define-command lisp-macroexpand-all () ()
-  (%lisp-macroexpand #'macroexpand "*macroexpand-all*"))
+  (%lisp-macroexpand #'macroexpand "*macroexpand*"))
 
 (define-key *lisp-mode-keymap* (kbd "C-x d") 'lisp-describe-symbol)
 (define-command lisp-describe-symbol (name) ("sDescribe: ")
@@ -599,7 +610,7 @@
                 (insert-newline 1)))))))))
 
 (defun lisp-print-error (condition)
-  (lisp-info-popup (get-buffer-create "*ERROR*")
+  (lisp-info-popup (get-buffer-create "*error*")
                    #'(lambda (out)
                        (format out "~a~%~%" condition)
                        #+sbcl (sb-debug:backtrace 100 out))))
@@ -607,7 +618,7 @@
 (defun lisp-debugger (condition)
   (let* ((choices (compute-restarts condition))
          (n (length choices)))
-    (lisp-info-popup (get-buffer-create "*ERROR*")
+    (lisp-info-popup (get-buffer-create "*error*")
                      #'(lambda (out)
                          (format out "~a~%~%" condition)
                          (loop

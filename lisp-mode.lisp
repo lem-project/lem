@@ -451,37 +451,43 @@
     (lisp-eval-string
      (format nil "(load ~s)" filename))))
 
+(defmacro with-safe-form (&body body)
+  `(handler-case
+       (handler-bind ((error #'lisp-print-error))
+         (values (progn ,@body) nil))
+     (error (cdt) (values cdt t))))
+
 (define-key *lisp-mode-keymap* (kbd "C-x m") 'lisp-macroexpand)
 (define-command lisp-macroexpand (arg) ("P")
-  (let ((expr
-         (read-from-string
-          (region-string (point)
-                         (let ((start (point)))
-                           (forward-sexp)
-                           (prog1 (point)
-                             (point-set start))))
-          nil)))
-    (lisp-info-popup (get-buffer-create "*macroexpand*")
-                     #'(lambda (out)
-                         (pprint (if arg
-                                     (macroexpand expr)
-                                     (macroexpand-1 expr))
-                                 out)))))
+  (multiple-value-bind (expr error-p)
+      (with-safe-form
+        (let ((expr
+               (read-from-string
+                (region-string (point)
+                               (let ((start (point)))
+                                 (forward-sexp)
+                                 (prog1 (point)
+                                   (point-set start))))
+                nil)))
+          (setq expr
+                (if arg
+                    (macroexpand expr)
+                    (macroexpand-1 expr)))))
+    (unless error-p
+      (lisp-info-popup (get-buffer-create "*macroexpand*")
+                       #'(lambda (out)
+                           (pprint expr out))))))
 
 (define-key *lisp-mode-keymap* (kbd "C-x d") 'lisp-describe-symbol)
 (define-command lisp-describe-symbol (name) ("sDescribe: ")
-  (multiple-value-bind (x error-p)
-      (handler-case (values (read-from-string name) nil)
-        (error (cdt)
-               (values
-                (lisp-info-popup (get-buffer-create "*ERROR*")
-                                 #'(lambda (out)
-                                     (princ cdt out)))
-                t)))
+  (multiple-value-bind (str error-p)
+      (with-safe-form
+        (with-output-to-string (out)
+          (describe (read-from-string name) out)))
     (unless error-p
       (lisp-info-popup (get-buffer-create "*describe*")
                        #'(lambda (out)
-                           (describe x out))))))
+                           (princ str out))))))
 
 (define-key *lisp-mode-keymap* (kbd "M-C-i") 'lisp-complete-symbol)
 (define-command lisp-complete-symbol () ()
@@ -567,6 +573,12 @@
               (dolist (v values)
                 (insert-string (write-to-string v))
                 (insert-newline 1)))))))))
+
+(defun lisp-print-error (condition)
+  (lisp-info-popup (get-buffer-create "*ERROR*")
+                   #'(lambda (out)
+                       (format out "~a~%~%" condition)
+                       #+sbcl (sb-debug:backtrace 100 out))))
 
 (defun lisp-debugger (condition)
   (let* ((choices (compute-restarts condition))

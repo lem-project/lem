@@ -12,11 +12,14 @@
           lisp-eval-buffer
           lisp-load-file
           lisp-macroexpand
+          lisp-macroexpand-all
           lisp-describe-symbol
           lisp-indent-region
           lisp-indent-sexp
           lisp-complete-symbol
+          lisp-comment-or-uncomment-region
           lisp-comment-region
+          lisp-uncomment-region
           popup-scratch-buffer
           *scratch-mode-keymap*
           scratch-mode
@@ -457,8 +460,7 @@
          (values (progn ,@body) nil))
      (error (cdt) (values cdt t))))
 
-(define-key *lisp-mode-keymap* (kbd "C-x m") 'lisp-macroexpand)
-(define-command lisp-macroexpand (arg) ("P")
+(defun %lisp-macroexpand (macroexpand-fn buffer-name)
   (multiple-value-bind (expr error-p)
       (with-safe-form
         (let ((expr
@@ -470,13 +472,19 @@
                                    (point-set start))))
                 nil)))
           (setq expr
-                (if arg
-                    (macroexpand expr)
-                    (macroexpand-1 expr)))))
+                (funcall macroexpand-fn expr))))
     (unless error-p
-      (lisp-info-popup (get-buffer-create "*macroexpand*")
+      (lisp-info-popup (get-buffer-create buffer-name)
                        #'(lambda (out)
                            (pprint expr out))))))
+
+(define-key *lisp-mode-keymap* (kbd "C-x m") 'lisp-macroexpand)
+(define-command lisp-macroexpand () ()
+  (%lisp-macroexpand #'macroexpand-1 "*macroexpand*"))
+
+(define-key *lisp-mode-keymap* (kbd "C-x M") 'lisp-macroexpand-all)
+(define-command lisp-macroexpand-all () ()
+  (%lisp-macroexpand #'macroexpand "*macroexpand-all*"))
 
 (define-key *lisp-mode-keymap* (kbd "C-x d") 'lisp-describe-symbol)
 (define-command lisp-describe-symbol (name) ("sDescribe: ")

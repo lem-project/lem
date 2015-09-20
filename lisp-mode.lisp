@@ -14,6 +14,7 @@
           lisp-macroexpand
           lisp-macroexpand-all
           lisp-describe-symbol
+          lisp-disassemble-symbol
           lisp-indent-region
           lisp-indent-sexp
           lisp-complete-symbol

@@ -508,43 +508,62 @@
                        #'(lambda (out)
                            (princ str out))))))
 
+(defun analyze-symbol (str &optional (default-package :cl-user))
+  (let (package
+        external-p)
+    (let* ((list (split-string str #\:))
+           (len (length list)))
+      (case len
+        ((1)
+         (setq package (find-package default-package))
+         (setq str (car list)))
+        ((2 3)
+         (setq package
+               (if (equal "" (car list))
+                   (find-package :keyword)
+                   (find-package
+                    (string-readcase (car list)))))
+         (unless package
+           (return-from analyze-symbol nil))
+         (setq str (car (last list)))
+         (if (= len 2)
+             (setq external-p t)
+             (unless (equal "" (cadr list))
+               (return-from analyze-symbol nil))))
+        (otherwise
+         (return-from analyze-symbol nil))))
+    (list package str external-p)))
+
+(defun complete-symbol (str)
+  (let ((result (analyze-symbol str)))
+    (when result
+      (destructuring-bind (package symbol-name external-p) result
+        (let ((symbols))
+          (if external-p
+              (do-external-symbols (sym package)
+                (push (string-downcase (string sym)) symbols))
+              (do-symbols (sym package)
+                (push (string-downcase (string sym)) symbols)))
+          (completion symbol-name symbols))))))
+
 (define-key *lisp-mode-keymap* (kbd "M-C-i") 'lisp-complete-symbol)
 (define-command lisp-complete-symbol () ()
   (let* ((end (point))
          (begin (prog2 (backward-sexp)
                     (point)
                   (point-set end)))
-         (str (region-string begin end))
-         (pkg :cl-user))
-    (setq str
-          (string-left-trim '(#\' #\` #\,)
-                            (string-left-trim '(#\#)
-                                              str)))
-    (let ((list (split-string str #\:)))
-      (when (cdr list)
-        (setq pkg (intern (string-upcase (car list))))
-        (cond ((string= pkg "")
-               (setq pkg :keyword))
-              ((not (find-package pkg))
-               (setq pkg :cl-user))))
-      (setq str (car (last list))))
-    (when (< 0 (length str))
-      (let ((upcase-p (char<= #\A (aref str 0) #\Z))
-            (symbols))
-        (let ((str (string-upcase str)))
-          (do-symbols (sym pkg)
-            (when (eql 0 (search str (symbol-name sym)))
-              (push (if upcase-p 
-                        (symbol-name sym)
-                        (string-downcase (symbol-name sym)))
-                    symbols))))
-        (let ((comp-str
-               (popup-completion #'(lambda (str)
-                                     (completion str symbols))
-                                 str)))
+         (str (string-left-trim
+               "'`," (string-left-trim
+                      "#" (region-string begin end)))))
+    (multiple-value-bind (comp-str win)
+        (popup-completion #'complete-symbol str)
+      (when win
+        (let ((pos (position #\: str :from-end t)))
           (insert-string
-           (subseq comp-str (length str)))))
-      t)))
+           (subseq comp-str
+                   (- (length str)
+                      (if pos (1+ pos) 0))))))))
+  t)
 
 (define-key *global-keymap* (kbd "C-x ;") 'lisp-comment-or-uncomment-region)
 (define-command lisp-comment-or-uncomment-region (arg) ("P")

@@ -222,7 +222,10 @@
          (let ((c (getch nil)))
            (if (or (char= c C-x)
                    (char= c escape))
-               (kbd c (getch nil))
+               (let ((c2 (getch nil)))
+                 (if (char= c2 escape)
+                     (kbd c c2 (getch nil))
+                     (kbd c c2)))
                (kbd (input-char
                      (char-code c)))))))
     (setq *last-input-key* key)))

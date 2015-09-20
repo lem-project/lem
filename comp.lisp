@@ -64,10 +64,13 @@
     (setq *completion-flag* nil)
     (let ((window (find *completion-window* *window-list*)))
       (when window
-        (select-window window)
-        (when (buffer-get (window-buffer window)
-                          :completion-buffer-p)
-          (info-quit))
+        (let ((prev-window *current-window*))
+          (select-window window)
+          (when (buffer-get (window-buffer window)
+                            :completion-buffer-p)
+            (info-quit))
+          (unless (deleted-window-p prev-window)
+            (select-window prev-window)))
         (setq *completion-window* nil)))))
 
 (defun preceding-word ()

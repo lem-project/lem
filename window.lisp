@@ -4,6 +4,7 @@
           one-window-p
           selected-window
           select-window
+          deleted-window-p
           recenter
           redraw-screen
           split-window
@@ -65,6 +66,9 @@
 (defun select-window (window)
   (check-type window window)
   (setq *current-window* window))
+
+(defun deleted-window-p (window)
+  (not (find window *window-list*)))
 
 (defun window-init ()
   (setq *current-cols* cl-charms/low-level:*cols*)

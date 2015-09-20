@@ -498,24 +498,27 @@
   (%lisp-macroexpand #'macroexpand "*macroexpand*"))
 
 (define-key *lisp-mode-keymap* (kbd "C-x d") 'lisp-describe-symbol)
-(define-command lisp-describe-symbol (name) ("sDescribe: ")
-  (multiple-value-bind (str error-p)
-      (with-safe-form
-        (with-output-to-string (out)
-          (describe (read-from-string name) out)))
-    (unless error-p
-      (lisp-info-popup (get-buffer-create "*describe*")
-                       #'(lambda (out)
-                           (princ str out))))))
+(define-command lisp-describe-symbol () ()
+  (let ((name
+         (minibuf-read-line "Describe: " ""
+                            'complete-symbol
+                            nil)))
+    (multiple-value-bind (str error-p)
+        (with-safe-form
+          (with-output-to-string (out)
+            (describe (read-from-string name) out)))
+      (unless error-p
+        (lisp-info-popup (get-buffer-create "*describe*")
+                         #'(lambda (out)
+                             (princ str out)))))))
 
-(defun analyze-symbol (str &optional (default-package :cl-user))
+(defun analyze-symbol (str)
   (let (package
         external-p)
     (let* ((list (split-string str #\:))
            (len (length list)))
       (case len
         ((1)
-         (setq package (find-package default-package))
          (setq str (car list)))
         ((2 3)
          (setq package
@@ -534,17 +537,33 @@
          (return-from analyze-symbol nil))))
     (list package str external-p)))
 
+(defun %collect-symbols (package package-name external-p)
+  (let ((symbols))
+    (labels ((f (sym separator)
+                (push (if package
+                          (format nil "~a~a~a"
+                                  package-name
+                                  separator
+                                  (string-downcase (string sym)))
+                          (string-downcase (string sym)))
+                      symbols)))
+      (let ((pkg (or package :cl-user)))
+        (if external-p
+            (do-external-symbols (sym pkg) (f sym ":"))
+            (do-symbols (sym pkg) (f sym "::")))))
+    (nreverse symbols)))
+
 (defun complete-symbol (str)
   (let ((result (analyze-symbol str)))
     (when result
       (destructuring-bind (package symbol-name external-p) result
-        (let ((symbols))
-          (if external-p
-              (do-external-symbols (sym package)
-                (push (string-downcase (string sym)) symbols))
-              (do-symbols (sym package)
-                (push (string-downcase (string sym)) symbols)))
-          (completion symbol-name symbols))))))
+        (declare (ignore symbol-name))
+        (let ((package-name
+               (subseq str 0 (position #\: str))))
+          (completion str
+                      (%collect-symbols package
+                                        package-name
+                                        external-p)))))))
 
 (define-key *lisp-mode-keymap* (kbd "M-C-i") 'lisp-complete-symbol)
 (define-command lisp-complete-symbol () ()
@@ -558,11 +577,9 @@
     (multiple-value-bind (comp-str win)
         (popup-completion #'complete-symbol str)
       (when win
-        (let ((pos (position #\: str :from-end t)))
           (insert-string
            (subseq comp-str
-                   (- (length str)
-                      (if pos (1+ pos) 0))))))))
+                   (length str))))))
   t)
 
 (define-key *global-keymap* (kbd "C-x ;") 'lisp-comment-or-uncomment-region)

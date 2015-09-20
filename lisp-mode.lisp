@@ -350,9 +350,6 @@
         (setq str (subseq str i))))
     (cons 'progn (nreverse exps))))
 
-(defun eval-from-string (str)
-  (eval (%string-to-exps str)))
-
 (defvar *lisp-eval-thread*)
 (defvar *lisp-mi-thread*)
 (defvar *lisp-eval-thread-values*)
@@ -372,7 +369,7 @@
               (unwind-protect
                 (progn
                   (setq *lisp-eval-thread-values*
-                        (multiple-value-list (eval-from-string str)))
+                        (multiple-value-list (eval (%string-to-exps str))))
                   (when update-point-p
                     (point-set
                      (buffer-output-stream-point out))))

@@ -602,6 +602,7 @@
       (lisp-comment-region)))
 
 (define-command lisp-comment-region () ()
+  (point-set (region-beginning))
   (when (forward-sexp 1)
     (skip-chars-forward '(#\space #\tab))
     (unless (eolp)

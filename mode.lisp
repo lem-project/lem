@@ -75,7 +75,7 @@
        ,(when parent-mode `(,parent-mode))
        (setf (major-mode) ',major-mode)
        (buffer-empty-plist (current-buffer))
-       (syntax-scan-buffer (current-buffer))
+       (syntax-scan-window *current-window*)
        ,@body)))
 
 (defmacro define-minor-mode (minor-mode &key name keymap)

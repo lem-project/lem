@@ -41,10 +41,33 @@
 
 (in-package :fatstring)
 
-(defstruct (fatstring (:constructor make-fatstring-internal (string font-data))
-                      (:conc-name fat-))
-  string
-  font-data)
+(defvar *fat-mark-symbol* (gensym "FATSTRING"))
+
+(defun make-fatstring-internal (str font-data)
+  (vector *fat-mark-symbol* str font-data))
+
+(defun fatstring-p (fatstring)
+  (and (vectorp fatstring)
+       (= 3 (length fatstring))
+       (eq *fat-mark-symbol* (aref fatstring 0))))
+
+(defun fat-string (fatstring)
+  (assert (fatstring-p fatstring))
+  (aref fatstring 1))
+
+(defun (setf fat-string) (new-string fatstring)
+  (setf (aref fatstring 1) new-string))
+
+(defun fat-font-data (fatstring)
+  (assert (fatstring-p fatstring))
+  (aref fatstring 2))
+
+(defun (setf fat-font-data) (new-font-data fatstring)
+  (setf (aref fatstring 2) new-font-data))
+
+(defun copy-fatstring (fatstring)
+  (make-fatstring-internal (fat-string fatstring)
+                           (copy-seq (fat-font-data fatstring))))
 
 (defun make-fatstring (str font &optional (start 0) end)
   (when (fatstring-p str)
@@ -54,9 +77,8 @@
       (setf (aref font-data i) font))
     (make-fatstring-internal str font-data)))
 
-(defun copy-fatstring (fatstring)
-  (make-fatstring-internal (fat-string fatstring)
-                           (copy-seq (fat-font-data fatstring))))
+(deftype fatstring ()
+  `(satisfies fatstring-p))
 
 (defun change-font (fatstring font op &optional (start 0) end)
   (loop

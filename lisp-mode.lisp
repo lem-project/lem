@@ -666,7 +666,7 @@
   (lisp-info-popup (get-buffer-create "*error*")
                    #'(lambda (out)
                        (format out "~a~%~%" condition)
-                       #+sbcl (sb-debug:backtrace 100 out))))
+                       (uiop/image:print-backtrace :stream out :count 100))))
 
 (defun lisp-debugger (condition)
   (let* ((choices (compute-restarts condition))
@@ -679,7 +679,7 @@
                            for i from 1
                            do (format out "~&[~d] ~a~%" i choice))
                          (terpri out)
-                         #+sbcl (sb-debug:backtrace 100 out)))
+                         (uiop/image:print-backtrace :stream out :count 100)))
     (window-update-all)
     (let ((i (minibuf-read-number "Continue: " 1 n)))
       (invoke-restart-interactively (nth i choices))))

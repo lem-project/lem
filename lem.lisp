@@ -358,8 +358,9 @@
                     (info-popup (get-buffer-create "*Error*")
                                 #'(lambda (out)
                                     (princ cdt out)
-                                    #+sbcl
-                                    (sb-debug:backtrace 100 out)))
+                                    (fresh-line out)
+                                    (uiop/image:print-backtrace
+                                     :stream out :count 100)))
                     cdt)
            (f ()
               (handler-case
@@ -385,7 +386,7 @@
       (format out "~&~%~%~%~%~a~%" condition)
       (format out "~s~%"
               (queue:queue-to-list *input-history*))
-      (sb-debug:backtrace 100 out))))
+      (uiop/image:print-backtrace :stream out :count 100))))
 
 (defun lem-save-error (&rest args)
   (lem-init args)

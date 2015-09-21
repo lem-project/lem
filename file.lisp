@@ -228,6 +228,7 @@
                                   (declare (ignore linum))
                                   (princ line out)
                                   (unless eof-p
+                                    #+sbcl
                                     (ecase end-of-line
                                       ((:crlf)
                                        (princ #\return out)
@@ -235,23 +236,27 @@
                                       ((:lf)
                                        (princ #\newline out))
                                       ((:cr)
-                                       (princ #\return out)))))
+                                       (princ #\return out)))
+                                    #-sbcl
+                                    (princ #\newline out)))
                               buffer)))
-    (if (buffer-external-format buffer)
-        (with-open-file (out filename
-                             :direction :output
-                             :if-exists :supersede
-                             :if-does-not-exist :create
-                             :external-format (car (buffer-external-format
-                                                    buffer)))
-          (f out
-             (cdr (buffer-external-format
-                   buffer))))
-        (with-open-file (out filename
-                             :direction :output
-                             :if-exists :supersede
-                             :if-does-not-exist :create)
-          (f out :lf))))
+    (cond
+     ((buffer-external-format buffer)
+      (with-open-file (out filename
+                           :direction :output
+                           :if-exists :supersede
+                           :if-does-not-exist :create
+                           :external-format (car (buffer-external-format
+                                                  buffer)))
+        (f out
+           (cdr (buffer-external-format
+                 buffer)))))
+     (t
+      (with-open-file (out filename
+                           :direction :output
+                           :if-exists :supersede
+                           :if-does-not-exist :create)
+        (f out :lf)))))
   (buffer-save-node buffer))
 
 (defun save-file-internal (buffer)

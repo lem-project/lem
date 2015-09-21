@@ -324,7 +324,7 @@
   t)
 
 (define-key *global-keymap* (kbd "M-C-a") 'beginning-of-defun)
-(define-command beginning-of-defun (&optional (n 1) no-errors) ("p")
+(define-command beginning-of-defun (&optional (n 1)) ("p")
   (let ((arg (if (plusp n) 1 -1)))
     (dotimes (_ (abs n) t)
       (when (bolp)
@@ -337,13 +337,13 @@
           (return nil))))))
 
 (define-key *global-keymap* (kbd "M-C-e") 'end-of-defun)
-(define-command end-of-defun (&optional (n 1) no-errors) ("p")
+(define-command end-of-defun (&optional (n 1)) ("p")
   (if (minusp n)
-      (beginning-of-defun (- n) no-errors)
+      (beginning-of-defun (- n))
       (dotimes (_ n t)
         (down-list 1 t)
-        (beginning-of-defun 1 t)
-        (unless (forward-sexp 1 no-errors)
+        (beginning-of-defun 1)
+        (unless (forward-sexp 1)
           (return nil))
         (loop
           for c = (following-char)
@@ -364,9 +364,11 @@
 
 (define-key *global-keymap* (kbd "M-C-k") 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")
-  (and (mark-sexp)
-       (kill-region (region-beginning)
-                    (region-end))))
+  (dotimes (_ n t)
+    (unless (and (mark-sexp)
+                 (kill-region (region-beginning)
+                              (region-end)))
+      (return nil))))
 
 (define-key *global-keymap* (kbd "M-C-t") 'transpose-sexps)
 (define-command transpose-sexps () ()

@@ -313,7 +313,6 @@
        i)))
 
 (defun syntax-scan-line (line in-string-p in-comment-p)
-  (declare (optimize speed))
   (line-clear-attribute line)
   (let ((start-col 0))
     (cond (in-string-p

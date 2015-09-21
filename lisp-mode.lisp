@@ -241,8 +241,9 @@
 
 (defun %lisp-mode-skip-expr-prefix (c1 c2 step-arg)
   (when c1
-    (multiple-value-bind (_ dispatch-char-p)
+    (multiple-value-bind (unused-fn dispatch-char-p)
         (get-macro-character c1)
+      (declare (ignore unused-fn))
       (when (and dispatch-char-p
                  (not (eql c2 #\())
                  (get-dispatch-macro-character c1 c2))

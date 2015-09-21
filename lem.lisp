@@ -262,7 +262,7 @@
     (if c
         (progn
           (setf (window-redraw-flag) :one-line)
-          (insert-char c (or *universal-argument* 1))
+          (insert-char c n)
           (when (and (not *macro-running-p*)
                      *self-insert-prev-time*
                      (> 10
@@ -367,6 +367,7 @@
                       ((error #'handler))
                     (lem-main))
                 (error (cdt)
+                       (declare (ignore cdt))
                        (f)))))
     (unwind-protect
       (progn

@@ -39,22 +39,24 @@
 
 (define-key *global-keymap* (kbd "M-n") 'grep-next)
 (define-command grep-next (&optional (n 1)) ("p")
-  (when (and *grep-vector*
-             (< (1+ *grep-index*) (length *grep-vector*)))
+  (dotimes (_ n t)
+    (unless (and *grep-vector*
+                 (< (1+ *grep-index*) (length *grep-vector*)))
+      (return nil))
     (incf *grep-index*)
     (destructuring-bind (filename linum)
         (aref *grep-vector* *grep-index*)
       (find-file filename)
-      (goto-line linum t))
-    t))
+      (goto-line linum t))))
 
 (define-key *global-keymap* (kbd "M-p") 'grep-prev)
 (define-command grep-prev (&optional (n 1)) ("p")
-  (when (and *grep-vector*
-             (<= 0 (1- *grep-index*)))
+  (dotimes (_ n t)
+    (unless (and *grep-vector*
+                 (<= 0 (1- *grep-index*)))
+      (return))
     (decf *grep-index*)
     (destructuring-bind (filename linum)
         (aref *grep-vector* *grep-index*)
       (find-file filename)
-      (goto-line linum t))
-    t))
+      (goto-line linum t))))

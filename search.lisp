@@ -155,7 +155,7 @@
             (mapc 'ungetch (reverse (kbd-list *last-input-key*)))
             (isearch-end))))))
 
-(defun search-step (str first-search search step goto-matched-pos endp)
+(defun search-step (first-search search step goto-matched-pos endp)
   (let ((point (point))
         (result
          (let ((res (funcall first-search)))
@@ -175,15 +175,13 @@
     result))
 
 (defun search-forward (str &optional limit)
-  (multiple-value-bind (lines length)
-      (split-string str #\newline)
+  (let ((length (1+ (count #\newline str))))
     (flet ((take-string ()
                         (join (string #\newline)
                               (buffer-take-lines (window-buffer)
                                                  (window-cur-linum)
                                                  length))))
-      (search-step str
-                   #'(lambda ()
+      (search-step #'(lambda ()
                        (search str (take-string)
                                :start2 (window-cur-col)))
                    #'(lambda ()
@@ -199,8 +197,7 @@
                        #'eobp)))))
 
 (defun search-backward (str &optional limit)
-  (multiple-value-bind (lines length)
-      (split-string str #\newline)
+  (let ((length (1+ (count #\newline str))))
     (flet ((%search (&rest args)
                     (let ((linum (- (window-cur-linum) (1- length))))
                       (when (< 0 linum)
@@ -211,8 +208,7 @@
                                                         length))
                                :from-end t
                                args)))))
-      (search-step str
-                   #'(lambda ()
+      (search-step #'(lambda ()
                        (%search :end2 (window-cur-col)))
                    #'(lambda ()
                        (%search))

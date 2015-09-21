@@ -12,16 +12,6 @@
           point-min
           point-max))
 
-(declaim (inline make-point
-                 point-linum
-                 point-column
-                 point
-                 point<
-                 point=
-                 point<=
-                 point-min
-                 point-max))
-
 (defun make-point (linum column)
   (list linum column))
 

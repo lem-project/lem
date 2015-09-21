@@ -323,13 +323,17 @@
 
 (define-key *global-keymap* (kbd "C-x ]") 'next-page-char)
 (define-command next-page-char (&optional (n 1)) ("p")
-  (or (search-forward (string #\page))
-      (end-of-buffer)))
+  (dotimes (_ n t)
+    (unless (search-forward (string #\page))
+      (end-of-buffer)
+      (return nil))))
 
 (define-key *global-keymap* (kbd "C-x [") 'prev-page-char)
 (define-command prev-page-char (&optional (n 1)) ("p")
-  (or (search-backward (string #\page))
-      (beginning-of-buffer)))
+  (dotimes (_ n t)
+    (unless (search-backward (string #\page))
+      (beginning-of-buffer)
+      (return nil))))
 
 (define-key *global-keymap* (kbd "C-@") 'mark-set)
 (define-command mark-set () ()

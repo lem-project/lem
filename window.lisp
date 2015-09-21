@@ -369,6 +369,7 @@
   (let* ((window *current-window*))
     (multiple-value-bind (str curx cury)
         (%window-current-line window)
+      (declare (ignore curx))
       (multiple-value-bind (curx2 cury2)
           (window-refresh-line-wrapping window 0 cury cury str)
         (if (= cury cury2)

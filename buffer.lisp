@@ -153,7 +153,7 @@
     (setf (buffer-mark-col buffer) 0)
     (setf (buffer-nlines buffer) 1)
     (setf (buffer-undo-size buffer) 0)
-    (setf (buffer-undo-stack buffer) (queue:make-queue *undo-limit*))
+    (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
     (setf (buffer-undo-node buffer) 0)
     (setf (buffer-saved-node buffer) 0)
@@ -168,9 +168,7 @@
           (buffer-filename buffer)))
 
 (defun buffer-enable-undo (buffer)
-  (unless (buffer-enable-undo-p buffer)
-    (setf (buffer-undo-stack buffer) (queue:make-queue *undo-limit*))
-    (setf (buffer-enable-undo-p buffer) t))
+  (setf (buffer-enable-undo-p buffer) t)
   nil)
 
 (defun buffer-disable-undo (buffer)
@@ -194,12 +192,22 @@
         (buffer-undo-node buffer)))
 
 (defun push-undo-stack (buffer elt)
+  (cond ((<= (+ *undo-limit* (floor (* *undo-limit* 0.3)))
+             (buffer-undo-size buffer))
+         (setf (buffer-undo-stack buffer)
+               (subseq (buffer-undo-stack buffer)
+                       0
+                       *undo-limit*))
+         (setf (buffer-undo-size buffer)
+               (1+ (length (buffer-undo-stack buffer)))))
+        (t
+         (incf (buffer-undo-size buffer))))
   (let ((interrupt-p))
     (when-interrupted-flag :undo
                            (setq interrupt-p t)
-                           (queue:enqueue (buffer-undo-stack buffer)
-                                          :separator))
-    (queue:enqueue (buffer-undo-stack buffer) elt)
+                           (push :separator
+                                 (buffer-undo-stack buffer)))
+    (push elt (buffer-undo-stack buffer))
     interrupt-p))
 
 (defun push-redo-stack (buffer elt)
@@ -592,10 +600,7 @@
     (setf (buffer-keep-binfo buffer) nil)
     (setf (buffer-nlines buffer) 1)
     (setf (buffer-undo-size buffer) 0)
-    (setf (buffer-undo-stack buffer)
-          (if (buffer-enable-undo-p buffer)
-              (queue:make-queue *undo-limit*)
-              nil))
+    (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
     (setf (buffer-undo-node buffer) 0)
     (setf (buffer-saved-node buffer) 0)
@@ -621,7 +626,7 @@
     (setf (buffer-modified-p buffer) nil)))
 
 (defun buffer-undo-1 (buffer)
-  (let ((elt (queue:pop (buffer-undo-stack buffer))))
+  (let ((elt (pop (buffer-undo-stack buffer))))
     (when elt
       (let ((*undo-mode* :undo))
         (unless (eq elt :separator)
@@ -629,8 +634,8 @@
           (funcall elt))))))
 
 (defun buffer-undo (buffer)
-  (loop while (eq :separator (queue:queue-last-datum (buffer-undo-stack buffer)))
-    do (queue:pop (buffer-undo-stack buffer)))
+  (loop while (eq :separator (car (buffer-undo-stack buffer)))
+    do (pop (buffer-undo-stack buffer)))
   (prog1 (do ((res #1=(buffer-undo-1 buffer) #1#)
               (pres nil res))
              ((not res)
@@ -655,7 +660,7 @@
              ((not res)
               (when pres
                 (incf (buffer-undo-node buffer))
-                (queue:enqueue (buffer-undo-stack buffer) :separator)
+                (push :separator (buffer-undo-stack buffer))
                 (buffer-undo-modified buffer))
               pres))))
 

@@ -642,6 +642,9 @@
    :keymap *lisp-repl-mode-keymap*
    :syntax-table *lisp-syntax-table*))
 
+(defvar *lisp-repl-log* nil)
+(defvar *lisp-repl-prev-log* nil)
+
 (define-command run-lisp () ()
   (let ((buffer (get-buffer-create "*lisp-repl*")))
     (select-window (pop-to-buffer buffer))
@@ -651,8 +654,8 @@
 (defun lisp-repl-prompt ()
   (unless (bolp)
     (insert-newline))
-  (let ((start (point)))
-    (insert-string "> ")))
+  (insert-string "> ")
+  (buffer-put (window-buffer) :prompt-point (point)))
 
 (defun lisp-repl-paren-correspond-p ()
   (loop :with count := 0 :do
@@ -668,19 +671,39 @@
         (buffer (window-buffer)))
     (if (not (lisp-repl-paren-correspond-p))
         (insert-newline)
-        (let ((start (progn
-                       (backward-sexp 1 t)
-                       (point))))
+        (let* ((start (progn
+                        (backward-sexp 1 t)
+                        (point)))
+               (str (region-string start end)))
+          (push str *lisp-repl-log*)
           (point-set end)
           (insert-newline)
           (multiple-value-bind (values error-p)
-              (eval-string (region-string start end) buffer (point))
+              (eval-string str buffer (point))
             (select-window (pop-to-buffer buffer))
             (point-set (point-max))
             (dolist (v values)
               (insert-string (write-to-string v))
               (insert-newline))
             (lisp-repl-prompt))))))
+
+(defmacro %lisp-repl-prev-input-form (log prev-log)
+  `(when ,log
+     (let ((start (buffer-get (window-buffer) :prompt-point))
+           (end (point-max)))
+       (let ((*kill-disable-p* t))
+         (kill-region start end))
+       (let ((str (pop ,log)))
+         (push str ,prev-log)
+         (insert-string str)))))
+
+(define-key *lisp-repl-mode-keymap* (kbd "M-p") 'lisp-repl-prev-input)
+(define-command lisp-repl-prev-input () ()
+  (%lisp-repl-prev-input-form *lisp-repl-log* *lisp-repl-prev-log*))
+
+(define-key *lisp-repl-mode-keymap* (kbd "M-n") 'lisp-repl-next-input)
+(define-command lisp-repl-next-input () ()
+  (%lisp-repl-prev-input-form *lisp-repl-prev-log* *lisp-repl-log*))
 
 (define-command popup-scratch-buffer () ()
   (setq *current-window*

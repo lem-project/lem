@@ -74,7 +74,7 @@
     do (if (and (syntax-start-block-comment-p c2 c1)
                 (not (sexp-escape-p nil)))
            (progn
-             (prev-char 2)
+             (prev-char 1)
              (return))
            (unless (prev-char 1)
              (return)))))

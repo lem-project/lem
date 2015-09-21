@@ -135,7 +135,7 @@
 
 (defvar *undo-modes* '(:edit :undo :redo))
 (defvar *undo-mode* :edit)
-(defvar *undo-limit* 10000)
+(defvar *undo-limit* 100000)
 
 (defun make-buffer (name &key filename read-only-p (enable-undo-p t))
   (let ((buffer (make-instance 'buffer

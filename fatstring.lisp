@@ -139,20 +139,19 @@
       0))
 
 (defun %right-trim-pos (char-bag string)
-  (or (1+ (%trim-pos-form char-bag string t))
-      (length string)))
+  (let ((pos (%trim-pos-form char-bag string t)))
+    (if pos
+        (1+ pos)
+        nil)))
 
 (declaim (ftype function fat-substring))
 
 (defun fat-trim (char-bag fatstring)
   (let ((left-pos (%left-trim-pos char-bag (fat-string fatstring)))
         (right-pos (%right-trim-pos char-bag (fat-string fatstring))))
-    (cond ((and left-pos right-pos)
-           (fat-substring fatstring left-pos right-pos))
-          (left-pos
-           (fat-substring fatstring left-pos))
-          (right-pos
-           (fat-substring fatstring 0 right-pos)))))
+    (if (and left-pos right-pos)
+        (fat-substring fatstring left-pos right-pos)
+        (fat-substring fatstring left-pos))))
 
 (defun fat-left-trim (char-bag fatstring)
   (fat-substring fatstring (%left-trim-pos char-bag (fat-string fatstring))))

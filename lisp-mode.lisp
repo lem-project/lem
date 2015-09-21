@@ -631,8 +631,57 @@
         (delete-char 1 t))
       (next-line 1))))
 
-(define-key *lisp-mode-keymap* (kbd "C-x z") 'popup-scratch-buffer)
-(define-key *lisp-mode-keymap* (kbd "C-x C-z") 'popup-scratch-buffer)
+(define-key *lisp-mode-keymap* (kbd "C-x z") 'run-lisp)
+(define-key *lisp-mode-keymap* (kbd "C-x C-z") 'run-lisp)
+
+(defvar *lisp-repl-mode-keymap*
+  (make-keymap "lisp-repl" nil *lisp-mode-keymap*))
+
+(define-major-mode lisp-repl-mode nil
+  (:name "lisp-repl"
+   :keymap *lisp-repl-mode-keymap*
+   :syntax-table *lisp-syntax-table*))
+
+(define-command run-lisp () ()
+  (let ((buffer (get-buffer-create "*lisp-repl*")))
+    (select-window (pop-to-buffer buffer))
+    (lisp-repl-mode)
+    (lisp-repl-prompt)))
+
+(defun lisp-repl-prompt ()
+  (unless (bolp)
+    (insert-newline))
+  (let ((start (point)))
+    (insert-string "> ")))
+
+(defun lisp-repl-paren-correspond-p ()
+  (loop :with count := 0 :do
+    (insert-string ")")
+    (incf count)
+    (unless (save-excursion (backward-sexp 1 t))
+      (backward-delete-char count t)
+      (return (= 1 count)))))
+
+(define-key *lisp-repl-mode-keymap* (kbd "C-m") 'lisp-repl-return)
+(define-command lisp-repl-return () ()
+  (let ((end (point))
+        (buffer (window-buffer)))
+    (if (not (lisp-repl-paren-correspond-p))
+        (insert-newline)
+        (let ((start (progn
+                       (backward-sexp 1 t)
+                       (point))))
+          (point-set end)
+          (insert-newline)
+          (multiple-value-bind (values error-p)
+              (eval-string (region-string start end) buffer (point))
+            (select-window (pop-to-buffer buffer))
+            (point-set (point-max))
+            (dolist (v values)
+              (insert-string (write-to-string v))
+              (insert-newline))
+            (lisp-repl-prompt))))))
+
 (define-command popup-scratch-buffer () ()
   (setq *current-window*
         (pop-to-buffer (get-buffer-create "*scratch*")))

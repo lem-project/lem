@@ -4,7 +4,6 @@
           special-buffer-p
           filter-special-buffers
           any-modified-buffer-p
-          current-buffer
           get-buffer
           get-buffer-create
           uniq-buffer-name
@@ -36,9 +35,6 @@
 (defun any-modified-buffer-p ()
   (find-if 'buffer-modified-p
            (filter-special-buffers)))
-
-(defun current-buffer ()
-  (window-buffer))
 
 (defun get-buffer (name)
   (find-if #'(lambda (buffer)

@@ -65,7 +65,7 @@
   t)
 
 (define-command rename-buffer (name) ("sRename buffer: ")
-  (setf (buffer-name (current-buffer)) name)
+  (setf (buffer-name) name)
   t)
 
 (defun head-line-p (window linum)

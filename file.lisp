@@ -294,7 +294,7 @@
 
 (define-key *global-keymap* (kbd "C-x s") 'save-some-buffers)
 (define-command save-some-buffers (&optional save-silently-p) ("P")
-  (let ((buffer (current-buffer)))
+  (let ((curbuf (window-buffer)))
     (dolist (buffer *buffer-list*)
       (when (and (buffer-modified-p buffer)
                  (buffer-filename buffer))
@@ -304,4 +304,4 @@
                     (window-update-all)
                     (minibuf-y-or-n-p "Save file")))
           (save-file))))
-    (set-buffer buffer)))
+    (set-buffer curbuf)))

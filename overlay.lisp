@@ -10,7 +10,7 @@
   attr
   buffer)
 
-(defun make-overlay (start end &key attr (buffer (current-buffer)))
+(defun make-overlay (start end &key attr (buffer (window-buffer)))
   (let ((overlay
          (make-overlay-internal :start start
                                 :end end

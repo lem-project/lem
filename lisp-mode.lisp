@@ -746,7 +746,7 @@
         (unless (string= str "")
           (insert-newline 1)
           (multiple-value-bind (values error-p)
-              (eval-string str (current-buffer) (point) t)
+              (eval-string str (window-buffer) (point) t)
             (unless error-p
               (dolist (v values)
                 (insert-string (write-to-string v))

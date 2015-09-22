@@ -74,7 +74,7 @@
      (define-command ,major-mode () ()
        ,(when parent-mode `(,parent-mode))
        (setf (major-mode) ',major-mode)
-       (buffer-empty-plist (current-buffer))
+       (buffer-empty-plist (window-buffer))
        (syntax-scan-window *current-window*)
        ,@body)))
 

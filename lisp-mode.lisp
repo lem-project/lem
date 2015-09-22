@@ -679,7 +679,15 @@
         (insert-newline)
         (let* ((start (progn
                         (backward-sexp 1 t)
-                        (point)))
+                        (let ((point (point))
+                              (prompt-point
+                               (buffer-get buffer :prompt-point)))
+                          (cond ((point< end prompt-point)
+                                 point)
+                                ((point< point prompt-point)
+                                 prompt-point)
+                                (t
+                                 point)))))
                (str (region-string start end)))
           (add-history *lisp-repl-history* str)
           (point-set end)

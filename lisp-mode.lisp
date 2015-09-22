@@ -772,7 +772,7 @@
                          (uiop/image:print-backtrace :stream out :count 100)))
     (window-update-all)
     (let ((i (minibuf-read-number "Continue: " 1 n)))
-      (invoke-restart-interactively (nth i choices))))
+      (invoke-restart-interactively (nth (1- i) choices))))
   condition)
 
 (defun lisp-info-popup (buffer &optional fn)

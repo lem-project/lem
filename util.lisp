@@ -143,7 +143,7 @@
 
 (defun make-history ()
   (make-history-internal
-   :data (make-array 0 :fill-pointer 0)
+   :data (make-array 0 :fill-pointer 0 :adjustable t)
    :index 0))
 
 (defun add-history (history x)

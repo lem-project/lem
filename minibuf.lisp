@@ -9,8 +9,8 @@
           minibuf-read-line-confirm
           minibuf-read-line-completion
           minibuf-read-line-clear-before
-          minibuf-read-line-prev-log
-          minibuf-read-line-next-log
+          minibuf-read-line-prev-history
+          minibuf-read-line-next-history
           minibuf-get-line
           minibuf-read-line-refresh
           minibuf-read-line
@@ -85,8 +85,8 @@
 (define-key *minibuf-keymap* (kbd "C-m") 'minibuf-read-line-confirm)
 (define-key *minibuf-keymap* (kbd "C-i") 'minibuf-read-line-completion)
 (define-key *minibuf-keymap* (kbd "C-u") 'minibuf-read-line-clear-before)
-(define-key *minibuf-keymap* (kbd "C-p") 'minibuf-read-line-prev-log)
-(define-key *minibuf-keymap* (kbd "C-n") 'minibuf-read-line-next-log)
+(define-key *minibuf-keymap* (kbd "C-p") 'minibuf-read-line-prev-history)
+(define-key *minibuf-keymap* (kbd "C-n") 'minibuf-read-line-next-history)
 (define-key *minibuf-keymap* (kbd "C-g") 'minibuf-read-line-break)
 
 (defvar *minibuf-read-line-tmp-window*)
@@ -95,8 +95,7 @@
 (defvar *minibuf-read-line-comp-f*)
 (defvar *minibuf-read-line-existing-p*)
 
-(defvar *minibuf-read-line-log* nil)
-(defvar *minibuf-read-line-prev-log* nil)
+(defvar *minibuf-read-line-history* (make-history))
 (defvar *minibuf-read-line-busy-p* nil)
 
 (define-command minibuf-read-line-confirm () ()
@@ -124,18 +123,18 @@
   (kill-region (point-min) (point))
   t)
 
-(define-command minibuf-read-line-prev-log () ()
-  (when *minibuf-read-line-log*
-    (kill-region (point-min) (point-max))
-    (let ((str (pop *minibuf-read-line-log*)))
-      (push str *minibuf-read-line-prev-log*)
+(define-command minibuf-read-line-prev-history () ()
+  (multiple-value-bind (str win)
+      (prev-history *minibuf-read-line-history*)
+    (when win
+      (kill-region (point-min) (point-max))
       (insert-string str))))
 
-(define-command minibuf-read-line-next-log () ()
-  (when *minibuf-read-line-prev-log*
-    (kill-region (point-min) (point-max))
-    (let ((str (pop *minibuf-read-line-prev-log*)))
-      (push str *minibuf-read-line-log*)
+(define-command minibuf-read-line-next-history () ()
+  (multiple-value-bind (str win)
+      (next-history *minibuf-read-line-history*)
+    (when win
+      (kill-region (point-min) (point-max))
       (insert-string str))))
 
 (define-command minibuf-read-line-break () ()
@@ -170,7 +169,7 @@
          (*last-flags* (make-flags) *curr-flags*))
         ((not *minibuf-read-line-loop*)
          (let ((str (minibuf-get-line)))
-           (push str *minibuf-read-line-log*)
+           (add-history *minibuf-read-line-history* str)
            str))
       (minibuf-read-line-refresh prompt)
       (let* ((key (input-key))

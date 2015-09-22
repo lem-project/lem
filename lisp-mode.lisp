@@ -637,13 +637,13 @@
 (defvar *lisp-repl-mode-keymap*
   (make-keymap "lisp-repl" nil *lisp-mode-keymap*))
 
+(defvar *lisp-repl-history*)
+
 (define-major-mode lisp-repl-mode nil
   (:name "lisp-repl"
    :keymap *lisp-repl-mode-keymap*
-   :syntax-table *lisp-syntax-table*))
-
-(defvar *lisp-repl-log* nil)
-(defvar *lisp-repl-prev-log* nil)
+   :syntax-table *lisp-syntax-table*)
+  (setq *lisp-repl-history* (make-history)))
 
 (define-command run-lisp () ()
   (let ((buffer (get-buffer-create "*lisp-repl*")))
@@ -675,7 +675,7 @@
                         (backward-sexp 1 t)
                         (point)))
                (str (region-string start end)))
-          (push str *lisp-repl-log*)
+          (add-history *lisp-repl-history* str)
           (point-set end)
           (insert-newline)
           (multiple-value-bind (values error-p)
@@ -687,23 +687,27 @@
               (insert-newline))
             (lisp-repl-prompt))))))
 
-(defmacro %lisp-repl-prev-input-form (log prev-log)
-  `(when ,log
-     (let ((start (buffer-get (window-buffer) :prompt-point))
-           (end (point-max)))
-       (let ((*kill-disable-p* t))
-         (kill-region start end))
-       (let ((str (pop ,log)))
-         (push str ,prev-log)
-         (insert-string str)))))
-
 (define-key *lisp-repl-mode-keymap* (kbd "M-p") 'lisp-repl-prev-input)
 (define-command lisp-repl-prev-input () ()
-  (%lisp-repl-prev-input-form *lisp-repl-log* *lisp-repl-prev-log*))
+  (multiple-value-bind (str win)
+      (prev-history *lisp-repl-history*)
+    (when win
+      (let ((start (buffer-get (window-buffer) :prompt-point))
+            (end (point-max)))
+        (let ((*kill-disable-p* t))
+          (kill-region start end))
+        (insert-string str)))))
 
 (define-key *lisp-repl-mode-keymap* (kbd "M-n") 'lisp-repl-next-input)
 (define-command lisp-repl-next-input () ()
-  (%lisp-repl-prev-input-form *lisp-repl-prev-log* *lisp-repl-log*))
+  (multiple-value-bind (str win)
+      (next-history *lisp-repl-history*)
+    (let ((start (buffer-get (window-buffer) :prompt-point))
+          (end (point-max)))
+      (let ((*kill-disable-p*))
+        (kill-region start end))
+      (when win
+        (insert-string str)))))
 
 (define-command popup-scratch-buffer () ()
   (setq *current-window*

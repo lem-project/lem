@@ -136,3 +136,31 @@
      (string-downcase string :start start :end end))
     ((:invert :preserve)
      string)))
+
+(defstruct (history (:constructor make-history-internal))
+  data
+  index)
+
+(defun make-history ()
+  (make-history-internal
+   :data (make-array 0 :fill-pointer 0)
+   :index 0))
+
+(defun add-history (history x)
+  (vector-push-extend x (history-data history))
+  (setf (history-index history)
+        (length (history-data history)))
+  x)
+
+(defun prev-history (history)
+  (when (< 0 (history-index history))
+    (values (aref (history-data history)
+                  (decf (history-index history)))
+            t)))
+
+(defun next-history (history)
+  (when (< (history-index history)
+           (1- (length (history-data history))))
+    (values (aref (history-data history)
+                  (incf (history-index history)))
+            t)))

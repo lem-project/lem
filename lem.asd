@@ -47,6 +47,7 @@
                         :cl-fad
                         #+sbcl :sb-posix
                         :bordeaux-threads
+                        :swank-client
                         :trivial-gray-streams
                         :cl-ppcre
                         :inquisitor

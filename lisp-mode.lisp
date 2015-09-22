@@ -653,7 +653,7 @@
 
 (define-command run-lisp () ()
   (let ((buffer (get-buffer-create "*lisp-repl*")))
-    (select-window (pop-to-buffer buffer))
+    (setq *current-window* (pop-to-buffer buffer))
     (lisp-repl-mode)
     (lisp-repl-prompt)))
 
@@ -694,7 +694,7 @@
           (insert-newline)
           (multiple-value-bind (values error-p)
               (eval-string str buffer (point))
-            (select-window (pop-to-buffer buffer))
+            (setq *current-window* (pop-to-buffer buffer))
             (point-set (point-max))
             (dolist (v values)
               (insert-string (write-to-string v))

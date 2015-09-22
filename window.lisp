@@ -2,8 +2,6 @@
 
 (export '(window
           one-window-p
-          selected-window
-          select-window
           deleted-window-p
           set-window-delete-hook
           recenter
@@ -61,13 +59,6 @@
 
 (defun one-window-p ()
   (null (cdr *window-list*)))
-
-(defun selected-window ()
-  *current-window*)
-
-(defun select-window (window)
-  (check-type window window)
-  (setq *current-window* window))
 
 (defun deleted-window-p (window)
   (not (find window *window-list*)))

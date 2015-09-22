@@ -21,6 +21,12 @@
           lisp-comment-or-uncomment-region
           lisp-comment-region
           lisp-uncomment-region
+          *lisp-repl-mode-keymap*
+          lisp-repl-mode
+          run-lisp
+          lisp-repl-return
+          lisp-repl-prev-input
+          lisp-repl-next-input
           popup-scratch-buffer
           *scratch-mode-keymap*
           scratch-mode

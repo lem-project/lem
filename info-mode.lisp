@@ -30,7 +30,7 @@
           (setq window
                 (popup buffer fn
                        :goto-bob-p t
-                       :erase-p t))
+                       :erase-p (if fn t nil)))
           (when focus-set-p
             (setq *current-window* window)))
         (let ((*current-window* window))

@@ -612,10 +612,12 @@
                           :adjustable t)))
     (with-output-to-string (out fstr)
       (describe symbol out))
-    (ppcre:register-groups-bind
-     (result)
-     ("\\sLambda-list:\\s*(.*)" fstr)
-     result)))
+    (let ((pos (search "Lambda-list: " fstr)))
+      (when pos
+        (write-to-string
+         (cons symbol
+               (read-from-string
+                (subseq fstr (+ pos (length "Lambda-list: "))))))))))
 
 (define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-self-insert-then-arg-list)
 (define-command lisp-self-insert-then-arg-list (n) ("p")

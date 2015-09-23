@@ -524,15 +524,19 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-x M-d") 'lisp-disassemble-symbol)
 (define-command lisp-disassemble-symbol () ()
-  (multiple-value-bind (name error-p)
-      (lisp-read-symbol "Disassemble: ")
-    (unless error-p
-      (let ((str
-             (with-output-to-string (out)
-               (disassemble name :stream out))))
-        (lisp-info-popup (get-buffer-create "*disassemble*")
-                         #'(lambda (out)
-                             (princ str out)))))))
+  (block top
+    (multiple-value-bind (name error-p)
+        (lisp-read-symbol "Disassemble: ")
+      (unless error-p
+        (let ((str
+               (with-output-to-string (out)
+                 (handler-case (disassemble name :stream out)
+                   (error (condition)
+                          (minibuf-print (format nil "~a" condition))
+                          (return-from top nil))))))
+          (lisp-info-popup (get-buffer-create "*disassemble*")
+                           #'(lambda (out)
+                               (princ str out))))))))
 
 (defun analyze-symbol (str)
   (let (package

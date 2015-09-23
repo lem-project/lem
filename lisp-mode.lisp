@@ -391,11 +391,12 @@
                  (setq *lisp-eval-thread-values* (list cdt)))))))
 
 (defun %lisp-mi-thread ()
-  (loop :for char := (code-char (cl-charms/low-level:getch))
-    :if (char= C-g char)
-    :do (bt:destroy-thread *lisp-eval-thread*)
-    :else
-    :do (ungetch char)))
+  (loop :for char := (code-char (cl-charms/low-level:getch)) :do
+    (cond ((char= C-g char)
+           (bt:interrupt-thread *lisp-eval-thread*
+                                #'(lambda () (error "interrupt"))))
+          (t
+           (ungetch char)))))
 
 (defun eval-string (str output-buffer point &optional update-point-p)
   (setq *lisp-eval-thread-values* nil)
@@ -410,8 +411,7 @@
   (handler-case (bt:join-thread *lisp-eval-thread*)
     #+sbcl
     (sb-thread:join-thread-error (cdt)
-                                 (declare (ignore cdt))
-                                 (minibuf-print "interrupt")))
+                                 (declare (ignore cdt))))
   (bt:destroy-thread *lisp-mi-thread*)
   (values *lisp-eval-thread-values*
           *lisp-eval-thread-error-p*))

@@ -388,3 +388,12 @@
            (yank 3)
            (setq *kill-new-flag* t)
            t))))
+
+(defun sexp-goto-car () ()
+  (do* ((point (point))
+        (end-linum (point-linum point)))
+      ((not (backward-sexp 1 t)) t)
+    (let ((start-linum (point-linum (point))))
+      (when (< 100 (- end-linum start-linum))
+        (point-set point)
+        (return nil)))))

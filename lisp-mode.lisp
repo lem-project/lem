@@ -291,7 +291,7 @@
 (define-command lisp-indent-line () ()
   (beginning-of-line)
   (let ((point (point)))
-    (when (and (up-list 1 t) (down-list 1 t))
+    (when (sexp-goto-car)
       (let ((start-col (1- (window-cur-col))))
         (destructuring-bind (car-name-str arg-col)
             (lisp-looking-at-word)
@@ -621,7 +621,7 @@
 (define-command lisp-self-insert-then-arg-list (n) ("p")
   (self-insert n)
   (save-excursion
-   (when (and (up-list 1 t) (down-list 1 t))
+   (when (sexp-goto-car)
      (let* ((start (point))
             (end (progn (forward-sexp 1 t) (point))))
        (multiple-value-bind (x error-p)

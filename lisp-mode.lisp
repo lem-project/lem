@@ -614,10 +614,13 @@
       (describe symbol out))
     (let ((pos (search "Lambda-list: " fstr)))
       (when pos
-        (write-to-string
-         (cons symbol
-               (read-from-string
-                (subseq fstr (+ pos (length "Lambda-list: "))))))))))
+        (ppcre:regex-replace-all
+         "\\s+"
+         (write-to-string
+          (cons symbol
+                (read-from-string
+                 (subseq fstr (+ pos (length "Lambda-list: "))))))
+         " ")))))
 
 (define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-self-insert-then-arg-list)
 (define-command lisp-self-insert-then-arg-list (n) ("p")

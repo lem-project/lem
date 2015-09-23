@@ -369,11 +369,11 @@
 
 (defun %make-eval-closure (str output-buffer point update-point-p)
   #'(lambda ()
-      (let* ((out (make-buffer-output-stream output-buffer point t))
-             (*error-output* out)
-             (*trace-output* out)
-             (*debug-io* out)
-             (*standard-output* out)
+      (let* ((io (make-buffer-io-stream output-buffer point t))
+             (*error-output* io)
+             (*trace-output* io)
+             (*debug-io* io)
+             (*standard-output* io)
              (*standard-input* (make-minibuffer-input-stream))
              (*getch-wait-flag* t))
         (handler-case
@@ -384,7 +384,7 @@
                         (multiple-value-list (eval (%string-to-exps str))))
                   (when update-point-p
                     (point-set
-                     (buffer-output-stream-point out))))
+                     (buffer-output-stream-point io))))
                 (getch-flush)))
           (error (cdt)
                  (setq *lisp-eval-thread-error-p* t)

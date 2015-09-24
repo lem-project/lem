@@ -351,6 +351,7 @@
 
 (defvar *lisp-hostname* "localhost")
 (defvar *lisp-port* 12345)
+(defvar *lisp-package* "COMMON-LISP-USER")
 
 (define-command lisp-connection (hostname port) ("sHostname:" "nPort:")
   (setq *lisp-hostname* hostname)
@@ -376,8 +377,9 @@
 (defun eval-from-string (string)
   (swank-client:with-slime-connection (c *lisp-hostname* *lisp-port*)
     (swank-client:slime-eval `(write-to-string
-                               (eval
-                                (read-from-string ,string nil)))
+                               (progn
+                                 (in-package ,*lisp-package*)
+                                 (eval (read-from-string ,string nil))))
                              c)))
 
 (define-command lisp-eval-string (string) ("sEval: ")

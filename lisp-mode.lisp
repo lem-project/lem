@@ -357,10 +357,6 @@
   (setq *lisp-port* port)
   t)
 
-(defun lisp-eval (x)
-  (swank-client:with-slime-connection (c *lisp-hostname* *lisp-port*)
-    (swank-client:slime-eval x c)))
-
 (defun %string-to-exps (str)
   (let ((str str)
         (exps)
@@ -377,8 +373,15 @@
         (car exps)
         (cons 'progn (nreverse exps)))))
 
+(defun eval-from-string (string)
+  (swank-client:with-slime-connection (c *lisp-hostname* *lisp-port*)
+    (swank-client:slime-eval `(write-to-string
+                               (eval
+                                (read-from-string ,string nil)))
+                             c)))
+
 (define-command lisp-eval-string (string) ("sEval: ")
-  (lisp-eval (%string-to-exps string)))
+  (minibuf-print (eval-from-string string)))
 
 (define-command lisp-eval-region (&optional
                                   (begin (region-beginning))

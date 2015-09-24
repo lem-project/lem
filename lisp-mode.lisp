@@ -617,7 +617,7 @@
     (with-output-to-string (out fstr)
       (describe symbol out))
     (let* ((start (search "Lambda-list: " fstr))
-           (end (ppcre:scan "  [A-Z][ a-z]*:" fstr :start start)))
+           (end (when start (ppcre:scan "  [A-Z][ a-z]*:" fstr :start start))))
       (when (and start end)
         (ppcre:regex-replace-all
          "\\)\\s*\\)"

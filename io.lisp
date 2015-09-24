@@ -20,8 +20,11 @@
     :initarg :interactive-update-p
     :accessor buffer-output-stream-interactive-update-p)))
 
-(defun make-buffer-output-stream (buffer &optional point interactive-update-p)
-  (make-instance 'buffer-output-stream
+(defun make-buffer-stream-instance (class-name buffer
+                                               &optional
+                                               point
+                                               interactive-update-p)
+  (make-instance class-name
                  :buffer buffer
                  :linum (if point
                             (point-linum point)
@@ -30,6 +33,10 @@
                              (point-column point)
                              0)
                  :interactive-update-p interactive-update-p))
+
+(defun make-buffer-output-stream (buffer &optional point interactive-update-p)
+  (make-buffer-stream-instance 'buffer-output-stream
+                               buffer point interactive-update-p))
 
 (defun buffer-output-stream-point (stream)
   (make-point (buffer-output-stream-linum stream)
@@ -149,3 +156,10 @@
 
 (defmethod trivial-gray-streams:stream-clear-input ((stream minibuffer-input-stream))
   nil)
+
+(defclass buffer-io-stream (buffer-output-stream minibuffer-input-stream)
+  ())
+
+(defun make-buffer-io-stream (buffer &optional point interactive-update-p)
+  (make-buffer-stream-instance 'buffer-io-stream
+                               buffer point interactive-update-p))

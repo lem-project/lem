@@ -651,20 +651,25 @@
       (lisp-comment-region)))
 
 (define-command lisp-comment-region () ()
-  (point-set (region-beginning))
-  (when (forward-sexp 1)
-    (skip-chars-forward '(#\space #\tab))
-    (unless (eolp)
-      (insert-newline 1))
-    (let (start end column)
-      (setq end (point))
-      (backward-sexp 1)
-      (setq start (point))
-      (setq column (point-column start))
-      (apply-region-lines start end
-                          #'(lambda ()
-                              (goto-column column)
-                              (insert-string ";"))))))
+  (save-excursion
+   (block top
+     (let ((start (region-beginning))
+           (end (region-end)))
+       (point-set start)
+       (loop
+         (unless (forward-sexp)
+           (return-from top nil))
+         (when (point<= end (point))
+           (return t)))
+       (skip-chars-forward '(#\space #\tab))
+       (unless (eolp)
+         (insert-newline 1))
+       (setq end (point))
+       (setq column (point-column start))
+       (apply-region-lines start end
+                           #'(lambda ()
+                               (goto-column column)
+                               (insert-string ";")))))))
 
 (define-command lisp-uncomment-region () ()
   (let ((start (region-beginning))

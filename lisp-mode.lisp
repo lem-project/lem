@@ -616,15 +616,22 @@
                           :adjustable t)))
     (with-output-to-string (out fstr)
       (describe symbol out))
-    (let ((pos (search "Lambda-list: " fstr)))
-      (when pos
+    (let* ((start (search "Lambda-list: " fstr))
+           (end (ppcre:scan "  [A-Z][ a-z]*:" fstr :start start)))
+      (when (and start end)
         (ppcre:regex-replace-all
-         "\\s+"
-         (write-to-string
-          (cons symbol
-                (read-from-string
-                 (subseq fstr (+ pos (length "Lambda-list: "))))))
-         " ")))))
+         "\\)\\s*\\)"
+         (ppcre:regex-replace-all
+          "\\s+"
+          (format nil "(~a ~a)"
+                  symbol
+                  (string-right-trim
+                   '(#\space #\tab)
+                   (subseq fstr
+                           (+ start (length "Lambda-list: "))
+                           end)))
+          " ")
+         "))")))))
 
 (define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-self-insert-then-arg-list)
 (define-command lisp-self-insert-then-arg-list (n) ("p")

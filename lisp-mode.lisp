@@ -654,7 +654,8 @@
   (save-excursion
    (block top
      (let ((start (region-beginning))
-           (end (region-end)))
+           (end (region-end))
+           column)
        (point-set start)
        (loop
          (unless (forward-sexp)
@@ -739,6 +740,7 @@
           (insert-newline)
           (multiple-value-bind (values error-p)
               (eval-string str buffer (point))
+            (declare (ignore error-p))
             (setq *current-window* (pop-to-buffer buffer))
             (point-set (point-max))
             (dolist (v values)

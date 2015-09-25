@@ -34,6 +34,7 @@
 (defvar *scroll-recenter-p* t)
 
 (defvar *getch-wait-flag* nil)
+(defvar *exec-paste-flag* nil)
 
 (defvar *auto-mode-alist* nil)
 

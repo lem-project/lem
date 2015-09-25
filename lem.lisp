@@ -263,7 +263,8 @@
         (progn
           (setf (window-redraw-flag) :one-line)
           (insert-char c n)
-          (when (and (not *macro-running-p*)
+          (when (and *exec-paste-flag*
+                     (not *macro-running-p*)
                      *self-insert-prev-time*
                      (> 10
                         (- (get-internal-real-time)
@@ -341,6 +342,7 @@
 
 (defun lem-main ()
   (do ((*exit* nil)
+       (*exec-paste-flag* t)
        (*curr-flags* (make-flags) (make-flags))
        (*last-flags* (make-flags) *curr-flags*))
       (*exit*)

@@ -416,12 +416,13 @@
   (values *lisp-eval-thread-values*
           *lisp-eval-thread-error-p*))
 
-(defun lisp-eval-string (str)
+(define-key *lisp-mode-keymap* (kbd "M-:") 'lisp-eval-string)
+(define-command lisp-eval-string (string) ("sEval: ")
   (let ((output-buffer (get-buffer-create "*output*")))
     (setf (buffer-modified-p output-buffer) nil)
     (prog1 (minibuf-print
             (write-to-string
-             (first (eval-string str output-buffer (point-min)))))
+             (first (eval-string string output-buffer (point-min)))))
       (when (buffer-modified-p output-buffer)
         (lisp-info-popup output-buffer)))))
 

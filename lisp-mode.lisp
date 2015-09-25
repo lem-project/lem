@@ -616,19 +616,20 @@
                           :adjustable t)))
     (with-output-to-string (out fstr)
       (describe symbol out))
-    (let* ((start (search "Lambda-list: " fstr))
-           (end (when start (ppcre:scan "  [A-Z][ a-z]*:" fstr :start start))))
+    (let* ((start-string "Lambda-list: (")
+           (start (search start-string fstr))
+           (end (when start (ppcre:scan "\\s\\s[A-Z][ a-z]*:" fstr :start start))))
       (when (and start end)
         (ppcre:regex-replace-all
          "\\)\\s*\\)"
          (ppcre:regex-replace-all
           "\\s+"
-          (format nil "(~a ~a)"
+          (format nil "(~a ~a"
                   symbol
                   (string-right-trim
                    '(#\space #\tab)
                    (subseq fstr
-                           (+ start (length "Lambda-list: "))
+                           (+ start (length start-string))
                            end)))
           " ")
          "))")))))

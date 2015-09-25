@@ -826,9 +826,21 @@
                            do (format out "~&[~d] ~a~%" i choice))
                          (terpri out)
                          (uiop/image:print-backtrace :stream out :count 100)))
-    (window-update-all)
-    (let ((i (minibuf-read-number "Continue: " 1 n)))
-      (invoke-restart-interactively (nth (1- i) choices))))
+    (loop
+      (window-update-all)
+      (let* ((str (minibuf-read-string "Debug: "))
+             (i (parse-integer str :junk-allowed t)))
+        (cond ((and i (<= 1 i n))
+               (invoke-restart-interactively (nth (1- i) choices))
+               (return))
+              (t
+               (let ((x
+                      (handler-case (eval (read-from-string str nil))
+                        (error (cdt)
+                               (format nil "~a" cdt)))))
+                 (info-popup (get-buffer-create "*output*")
+                             #'(lambda (out)
+                                 (princ x out)))))))))
   condition)
 
 (defun lisp-info-popup (buffer &optional fn)

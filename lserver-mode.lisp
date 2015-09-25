@@ -3,14 +3,14 @@
 (export '(*lserver-hostname*
           *lserver-port*
           *lserver-package*
-          lisp-connection
+          lserver-connection
           lserver-eval-string
           lserver-eval-region
           lserver-eval-defun
           lserver-eval-last-sexp))
 
 (defvar *lserver-hostname* "localhost")
-(defvar *lserver-port* 12345)
+(defvar *lserver-port* 4005)
 (defvar *lserver-package* "COMMON-LISP-USER")
 
 (defvar *lserver-mode-keymap* (make-keymap "lserver"))
@@ -23,7 +23,7 @@
   (lisp-mode)
   (lserver-mode))
 
-(define-command lisp-connection (hostname port) ("sHostname:" "nPort:")
+(define-command lserver-connection (hostname port) ("sHostname:" "nPort:")
   (setq *lserver-hostname* hostname)
   (setq *lserver-port* port)
   t)

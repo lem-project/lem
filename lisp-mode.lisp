@@ -637,21 +637,21 @@
 
 (define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-self-insert-then-arg-list)
 (define-command lisp-self-insert-then-arg-list (n) ("p")
-  (self-insert n)
-  (save-excursion
-   (when (sexp-goto-car)
-     (let* ((start (point))
-            (end (progn (forward-sexp 1 t) (point))))
-       (multiple-value-bind (x error-p)
-           (ignore-errors
-            (values
-             (read-from-string
-              (region-string start end))))
-         (when (and (not error-p)
-                    (symbolp x))
-           (let ((arglist (lisp-get-arglist x)))
-             (when arglist
-               (minibuf-print arglist)))))))))
+  (prog1 (self-insert n)
+    (save-excursion
+     (when (sexp-goto-car)
+       (let* ((start (point))
+              (end (progn (forward-sexp 1 t) (point))))
+         (multiple-value-bind (x error-p)
+             (ignore-errors
+              (values
+               (read-from-string
+                (region-string start end))))
+           (when (and (not error-p)
+                      (symbolp x))
+             (let ((arglist (lisp-get-arglist x)))
+               (when arglist
+                 (minibuf-print arglist))))))))))
 
 (define-key *global-keymap* (kbd "C-x ;") 'lisp-comment-or-uncomment-region)
 (define-command lisp-comment-or-uncomment-region (arg) ("P")

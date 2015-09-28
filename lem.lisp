@@ -270,7 +270,8 @@
                         (- (get-internal-real-time)
                            *self-insert-prev-time*)))
             (exec-paste))
-          (setq *self-insert-prev-time* (get-internal-real-time)))
+          (setq *self-insert-prev-time* (get-internal-real-time))
+          t)
         (minibuf-print (format nil
                                "Key not found: ~a"
                                (kbd-to-string *last-input-key*))))))

@@ -23,16 +23,16 @@ quicklispの下のlocal-projects/に入れて
 
 # ビルド
 sbclは用意済み  
-`sbcl --load build.lisp`
-roswellを入れている場合
-`./lem.ros -b` または
+`sbcl --load build.lisp`  
+roswellを入れている場合  
+`./lem.ros -b` または  
 `./lem.ros --build`
 
 # 使い方
 `(lem:lem)`  
 または  
-`(lem:lem "ファイル名")`
-roswellを入れている場合
+`(lem:lem "ファイル名")`  
+roswellを入れている場合  
 `lem.ros`
 
 # License

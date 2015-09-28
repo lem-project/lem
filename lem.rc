@@ -21,3 +21,5 @@
 ;(add-hook 'before-save-hook 'delete-trailing-whitespace)
 
 (scratch-mode)
+
+(setf (get 'lem::defsystem 'lisp-indent) 1)

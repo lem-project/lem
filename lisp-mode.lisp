@@ -3,6 +3,7 @@
 (export '(*lisp-mode-keymap*
           *lisp-syntax-table*
           lisp-mode
+          lisp-indent
           lisp-indent-line
           lisp-newline-and-indent
           lisp-eval-string

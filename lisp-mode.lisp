@@ -421,8 +421,8 @@
   (let ((output-buffer (get-buffer-create "*output*")))
     (setf (buffer-modified-p output-buffer) nil)
     (prog1 (minibuf-print
-            (write-to-string
-             (first (eval-string string output-buffer (point-min)))))
+            (format nil "~{~s~^,~}"
+                    (eval-string string output-buffer (point-min))))
       (when (buffer-modified-p output-buffer)
         (lisp-info-popup output-buffer)))))
 

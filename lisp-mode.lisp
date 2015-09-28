@@ -695,6 +695,12 @@
 (define-key *lisp-mode-keymap* (kbd "C-x z") 'run-lisp)
 (define-key *lisp-mode-keymap* (kbd "C-x C-z") 'run-lisp)
 
+(defun lisp-print-values (values)
+  (let ((out (make-buffer-output-stream (window-buffer) (point))))
+    (dolist (v values)
+      (pprint v out))
+    (point-set (buffer-output-stream-point out))))
+
 (defvar *lisp-repl-mode-keymap*
   (make-keymap "lisp-repl" nil *lisp-mode-keymap*))
 
@@ -752,9 +758,7 @@
             (declare (ignore error-p))
             (setq *current-window* (pop-to-buffer buffer))
             (point-set (point-max))
-            (dolist (v values)
-              (insert-string (write-to-string v))
-              (insert-newline))
+            (lisp-print-values values)
             (lisp-repl-prompt))))))
 
 (define-key *lisp-repl-mode-keymap* (kbd "M-p") 'lisp-repl-prev-input)
@@ -804,9 +808,7 @@
           (multiple-value-bind (values error-p)
               (eval-string str (window-buffer) (point) t)
             (unless error-p
-              (dolist (v values)
-                (insert-string (write-to-string v))
-                (insert-newline 1)))))))))
+              (lisp-print-values values))))))))
 
 (defun lisp-print-error (condition)
   (lisp-info-popup (get-buffer-create "*error*")

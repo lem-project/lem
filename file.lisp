@@ -109,15 +109,15 @@
 
 (defun detect-external-format-from-file (pathname)
   (let ((external-format)
-        (end-of-line))
+        (end-of-line :lf))
     (with-open-file (in pathname
                         :element-type '(unsigned-byte 8))
       (let ((inquisitor:*detecting-buffer-size* (file-length in)))
         (setq external-format (inquisitor:detect-external-format in :jp))))
-    #+sbcl
-    (with-open-file (in pathname
-                        :element-type '(unsigned-byte 8))
-      (setq end-of-line (inquisitor:detect-end-of-line in)))
+    ;; #+sbcl
+    ;; (with-open-file (in pathname
+    ;;                     :element-type '(unsigned-byte 8))
+    ;;   (setq end-of-line (inquisitor:detect-end-of-line in)))
     (values external-format
             end-of-line)))
 

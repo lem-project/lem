@@ -213,11 +213,13 @@
   (setf (window-max-col) col))
 
 (define-key *global-keymap* (kbd "C-a") 'beginning-of-line)
+(define-key *global-keymap* (kbd "[home]") 'beginning-of-line)
 (define-command beginning-of-line () ()
   (goto-column 0)
   t)
 
 (define-key *global-keymap* (kbd "C-e") 'end-of-line)
+(define-key *global-keymap* (kbd "[end]") 'end-of-line)
 (define-command end-of-line () ()
   (goto-column (buffer-line-length
                 (window-buffer)
@@ -314,10 +316,12 @@
           (goto-column (1- (window-cur-col))))))))
 
 (define-key *global-keymap* (kbd "C-v") 'next-page)
+(define-key *global-keymap* (kbd "[npage]") 'next-page)
 (define-command next-page (&optional (n 1)) ("p")
   (scroll-down (* n (- (window-nlines) 1))))
 
 (define-key *global-keymap* (kbd "M-v") 'prev-page)
+(define-key *global-keymap* (kbd "[ppage]") 'prev-page)
 (define-command prev-page (&optional (n 1)) ("p")
   (scroll-up (* n (- (window-nlines) 1))))
 

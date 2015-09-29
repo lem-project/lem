@@ -28,7 +28,7 @@
           buffer-directory
           buffer-get
           buffer-put
-          buffer-empty-plist))
+          buffer-clear-variables))
 
 (defstruct (line (:constructor make-line-internal))
   prev
@@ -131,7 +131,7 @@
   overlays
   truncate-lines
   external-format
-  plist)
+  variables)
 
 (defvar *undo-modes* '(:edit :undo :redo))
 (defvar *undo-mode* :edit)
@@ -158,6 +158,7 @@
     (setf (buffer-undo-node buffer) 0)
     (setf (buffer-saved-node buffer) 0)
     (setf (buffer-truncate-lines buffer) *default-truncate-lines*)
+    (setf (buffer-variables buffer) (make-hash-table :test 'equal))
     (unless (ghost-buffer-p buffer)
       (push buffer *buffer-list*))
     buffer))
@@ -605,7 +606,7 @@
     (setf (buffer-undo-node buffer) 0)
     (setf (buffer-saved-node buffer) 0)
     (setf (buffer-overlays buffer) nil)
-    (setf (buffer-plist buffer) nil)))
+    (setf (buffer-variables buffer) (make-hash-table :test 'equal))))
 
 (defun buffer-check-marked (buffer)
   (if (buffer-mark-linum buffer)
@@ -665,10 +666,14 @@
               pres))))
 
 (defun buffer-get (buffer indicator &optional default)
-  (getf (buffer-plist buffer) indicator default))
+  (multiple-value-bind (value win)
+      (gethash indicator (buffer-variables buffer))
+    (if win
+        value
+        default)))
 
 (defun buffer-put (buffer indicator value)
-  (setf (getf (buffer-plist buffer) indicator) value))
+  (setf (gethash indicator (buffer-variables buffer)) value))
 
-(defun buffer-empty-plist (buffer)
-  (setf (buffer-plist buffer) nil))
+(defun buffer-clear-variables (buffer)
+  (clrhash (buffer-variables buffer)))

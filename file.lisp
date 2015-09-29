@@ -160,7 +160,12 @@
            (let ((mode (find-mode-from-name val)))
              (when mode
                (funcall mode))))
-          (t))))
+          (t
+           (buffer-put (window-buffer)
+                       :file-property-list
+                       (cons (cons (string-downcase var) val)
+                             (buffer-get (window-buffer)
+                                         :file-property-list)))))))
 
 (defun scan-file-property-list ()
   (let ((buffer (window-buffer))

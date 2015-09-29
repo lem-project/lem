@@ -817,6 +817,24 @@
                        (format out "~a~%~%" condition)
                        (uiop/image:print-backtrace :stream out :count 100))))
 
+(defun ldebug-store-value (condition)
+  (do ((x)
+       (error-p nil))
+      (nil)
+    (handler-case
+        (setq x
+              (eval
+               (read-from-string
+                (minibuf-read-string
+                 "Type a form to be evaluated: ")
+                nil)))
+      (erorr (cdt)
+             (setq error-p t)
+             (minibuf-print (format nil "~a" cdt))))
+    (unless error-p
+      (store-value x condition)
+      (return))))
+
 (defun lisp-debugger (condition)
   (let* ((choices (compute-restarts condition))
          (n (length choices)))
@@ -834,7 +852,10 @@
       (let* ((str (minibuf-read-string "Debug: "))
              (i (parse-integer str :junk-allowed t)))
         (cond ((and i (<= 1 i n))
-               (invoke-restart-interactively (nth (1- i) choices))
+               (let ((restart (nth (1- i) choices)))
+                 (cond ((eq 'store-value (restart-name restart))
+                        (ldebug-store-value condition))
+                       (t (invoke-restart-interactively restart))))
                (return))
               (t
                (let ((x

@@ -266,6 +266,17 @@
                                (char-before 1)
                                -2))
 
+(defun lisp-current-package ()
+  (find-package
+   (let ((package-name
+          (cdr (assoc "package"
+                      (buffer-get (window-buffer)
+                                  :file-property-list)
+                      :test #'equal))))
+     (if package-name
+         (string-upcase package-name)
+         "COMMON-LISP-USER"))))
+
 (defun lisp-looking-at-word ()
   (save-excursion
    (skip-chars-forward
@@ -363,12 +374,17 @@
         (setq str (subseq str i))))
     (cons 'progn (nreverse exps))))
 
+(defun lisp-eval-in-package (expr package)
+  (let* ((string (write-to-string expr))
+         (*package* (find-package package)))
+    (eval (read-from-string string))))
+
 (defvar *lisp-eval-thread*)
 (defvar *lisp-mi-thread*)
 (defvar *lisp-eval-thread-values*)
 (defvar *lisp-eval-thread-error-p*)
 
-(defun %make-eval-closure (str output-buffer point update-point-p)
+(defun %make-eval-closure (str output-buffer point update-point-p package)
   #'(lambda ()
       (let* ((io (make-buffer-io-stream output-buffer point t))
              (*error-output* io)
@@ -382,7 +398,10 @@
               (unwind-protect
                 (progn
                   (setq *lisp-eval-thread-values*
-                        (multiple-value-list (eval (%string-to-exps str))))
+                        (multiple-value-list
+                         (lisp-eval-in-package
+                          (%string-to-exps str)
+                          package)))
                   (when update-point-p
                     (point-set
                      (buffer-output-stream-point io))))
@@ -399,7 +418,10 @@
           (t
            (ungetch char)))))
 
-(defun eval-string (str output-buffer point &optional update-point-p)
+(defun eval-string (str output-buffer point
+                        &optional
+                        update-point-p
+                        (package "COMMON-LISP-USER"))
   (setq *lisp-eval-thread-values* nil)
   (setq *lisp-eval-thread-error-p* nil)
   (setq *lisp-eval-thread*
@@ -407,7 +429,8 @@
          (%make-eval-closure str
                              output-buffer
                              point
-                             update-point-p)))
+                             update-point-p
+                             package)))
   (setq *lisp-mi-thread* (bt:make-thread #'%lisp-mi-thread))
   (handler-case (bt:join-thread *lisp-eval-thread*)
     #+sbcl
@@ -423,7 +446,11 @@
     (setf (buffer-modified-p output-buffer) nil)
     (prog1 (minibuf-print
             (format nil "~{~s~^,~}"
-                    (eval-string string output-buffer (point-min))))
+                    (eval-string string
+                                 output-buffer
+                                 (point-min)
+                                 nil
+                                 (lisp-current-package))))
       (when (buffer-modified-p output-buffer)
         (lisp-info-popup output-buffer)))))
 
@@ -471,7 +498,7 @@
          (values (progn ,@body) nil))
      (error (cdt) (values cdt t))))
 
-(defun %lisp-macroexpand (macroexpand-fn buffer-name)
+(defun %lisp-macroexpand (macroexpand-symbol buffer-name)
   (multiple-value-bind (expr error-p)
       (with-safe-form
         (let ((expr
@@ -483,7 +510,8 @@
                                    (point-set start))))
                 nil)))
           (setq expr
-                (funcall macroexpand-fn expr))
+                (lisp-eval-in-package `(,macroexpand-symbol ',expr)
+                                      (lisp-current-package)))
           (when (eq (window-buffer)
                     (get-buffer buffer-name))
             (let ((*kill-disable-p* t))
@@ -502,18 +530,19 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-x m") 'lisp-macroexpand)
 (define-command lisp-macroexpand () ()
-  (%lisp-macroexpand #'macroexpand-1 "*macroexpand*"))
+  (%lisp-macroexpand 'macroexpand-1 "*macroexpand*"))
 
 (define-key *lisp-mode-keymap* (kbd "C-x M") 'lisp-macroexpand-all)
 (define-command lisp-macroexpand-all () ()
-  (%lisp-macroexpand #'macroexpand "*macroexpand*"))
+  (%lisp-macroexpand 'macroexpand "*macroexpand*"))
 
 (defun lisp-read-symbol (prompt)
   (let ((name (minibuf-read-line prompt ""
                                  'complete-symbol
                                  nil)))
     (with-safe-form
-      (read-from-string name))))
+      (let ((*package* (lisp-current-package)))
+        (read-from-string name)))))
 
 (define-key *lisp-mode-keymap* (kbd "C-x d") 'lisp-describe-symbol)
 (define-command lisp-describe-symbol () ()
@@ -575,7 +604,7 @@
                                   (string-downcase (string sym)))
                           (string-downcase (string sym)))
                       symbols)))
-      (let ((pkg (or package :cl-user)))
+      (let ((pkg (or package (lisp-current-package))))
         (if external-p
             (do-external-symbols (sym pkg) (f sym ":"))
             (do-symbols (sym pkg) (f sym "::")))))
@@ -620,7 +649,8 @@
       (describe symbol out))
     (let* ((start-string "Lambda-list: (")
            (start (search start-string fstr))
-           (end (when start (ppcre:scan "\\s\\s[A-Z][ a-z]*:" fstr :start start))))
+           (end (when start
+                  (ppcre:scan "\\s\\s[A-Z][ a-z]*:" fstr :start start))))
       (when (and start end)
         (ppcre:regex-replace-all
          "\\)\\s*\\)"
@@ -646,8 +676,9 @@
          (multiple-value-bind (x error-p)
              (ignore-errors
               (values
-               (read-from-string
-                (region-string start end))))
+               (let ((*package* (lisp-current-package)))
+                 (read-from-string
+                  (region-string start end)))))
            (when (and (not error-p)
                       (symbolp x))
              (let ((arglist (lisp-get-arglist x)))

@@ -10,6 +10,7 @@
           other-buffer
           update-prev-buffer
           set-buffer
+          bury-buffer
           select-buffer
           get-next-buffer
           kill-buffer
@@ -98,6 +99,12 @@
                                      (window-cur-linum))))
       (assert (<= 0 (window-cur-col)))
       (setf (window-max-col) max-col))))
+
+(defun bury-buffer (buffer)
+  (setq *buffer-list*
+        (append (delete buffer *buffer-list*)
+                (list buffer)))
+  (set-buffer (car *buffer-list*)))
 
 (define-key *global-keymap* (kbd "C-x b") 'select-buffer)
 (define-command select-buffer (name) ("BUse Buffer: ")

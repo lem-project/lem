@@ -265,6 +265,7 @@
   (buffer-save-node buffer))
 
 (defun save-file-internal (buffer)
+  (scan-file-property-list)
   (run-hooks 'before-save-hook)
   (write-to-file buffer (buffer-filename buffer))
   (unmark-buffer)

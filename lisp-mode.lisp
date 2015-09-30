@@ -693,25 +693,19 @@
 
 (define-command lisp-comment-region () ()
   (save-excursion
-   (block top
-     (let ((start (region-beginning))
-           (end (region-end))
-           column)
-       (point-set start)
-       (loop
-         (unless (forward-sexp)
-           (return-from top nil))
-         (when (point<= end (point))
-           (return t)))
-       (skip-chars-forward '(#\space #\tab))
-       (unless (eolp)
-         (insert-newline 1))
-       (setq end (point))
-       (setq column (point-column start))
+   (let ((start (region-beginning))
+         (end (region-end)))
+     (point-set end)
+     (skip-chars-forward '(#\space #\tab))
+     (unless (eolp)
+       (insert-newline 1))
+     (point-set start)
+     (let ((column (point-column start)))
        (apply-region-lines start end
                            #'(lambda ()
                                (goto-column column)
-                               (insert-string ";")))))))
+                               (unless (blank-line-p)
+                                 (insert-string ";; "))))))))
 
 (define-command lisp-uncomment-region () ()
   (let ((start (region-beginning))
@@ -720,7 +714,11 @@
     (do ()
         ((point< end (point)))
       (skip-chars-forward '(#\space #\tab))
-      (do () ((not (eql #\; (following-char))))
+      (do ((delete-flag nil t))
+          ((not (eql #\; (following-char)))
+           (when (and delete-flag
+                      (syntax-space-char-p (following-char)))
+             (delete-char 1 t)))
         (delete-char 1 t))
       (next-line 1))))
 

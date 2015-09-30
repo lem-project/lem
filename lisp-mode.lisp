@@ -442,13 +442,18 @@
 
 (define-key *lisp-mode-keymap* (kbd "M-:") 'lisp-eval-string)
 (define-command lisp-eval-string (string) ("sEval: ")
-  (let ((output-buffer (get-buffer-create "*output*")))
+  (let ((output-buffer (get-buffer-create "*output*"))
+        output-buffer-point)
+    (let ((buffer (window-buffer)))
+      (set-buffer output-buffer nil)
+      (setq output-buffer-point (point-max))
+      (set-buffer buffer nil))
     (setf (buffer-modified-p output-buffer) nil)
     (prog1 (minibuf-print
             (format nil "~{~s~^,~}"
                     (eval-string string
                                  output-buffer
-                                 (point-min)
+                                 output-buffer-point
                                  nil
                                  (lisp-current-package))))
       (when (buffer-modified-p output-buffer)

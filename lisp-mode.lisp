@@ -717,7 +717,7 @@
         (end (region-end)))
     (point-set start)
     (do ()
-        ((point< end (point)))
+        ((point<= end (point)))
       (skip-chars-forward '(#\space #\tab))
       (do ((delete-flag nil t))
           ((not (eql #\; (following-char)))

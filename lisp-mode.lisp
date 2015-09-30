@@ -840,10 +840,12 @@
         (point-set point)
         (unless (string= str "")
           (insert-newline 1)
-          (multiple-value-bind (values error-p)
-              (eval-string str (window-buffer) (point) t)
-            (unless error-p
-              (lisp-print-values values))))))))
+          (let ((buffer (window-buffer)))
+            (multiple-value-bind (values error-p)
+                (eval-string str (window-buffer) (point) t)
+              (unless error-p
+                (setq *current-window* (pop-to-buffer buffer))
+                (lisp-print-values values)))))))))
 
 (defun lisp-print-error (condition)
   (lisp-info-popup (get-buffer-create "*error*")

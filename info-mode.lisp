@@ -18,7 +18,7 @@
   (let ((buffer (window-buffer)))
     (when (buffer-get buffer :popup)
       (delete-current-window))
-    (kill-buffer (buffer-name buffer))
+    (bury-buffer buffer)
     t))
 
 (defun info-popup-closure (mode)

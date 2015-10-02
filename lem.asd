@@ -40,6 +40,7 @@
                         (:file "sexp")
                         (:file "lisp-mode")
                         ;;(:file "lserver-mode")
+                        (:file "c-mode")
                         (:file "grep")
                         (:file "lem"))
            :depends-on (:cl-charms

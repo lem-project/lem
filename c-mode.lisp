@@ -36,6 +36,17 @@
                       :word-p t
                       :attr :keyword-attr))
 
+(defvar *c-compile-command* "make")
+
+(define-key *c-mode-keymap* (kbd "C-c") 'c-compile)
+(define-command c-compile () ()
+  (grep-update
+   (with-output-to-string (out)
+     (shell-command (setq *c-compile-command*
+                          (minibuf-read-string "compile command: "
+                                               *c-compile-command*))
+                    :error-output out))))
+
 (setq *auto-mode-alist*
       (append '((".c$" . c-mode))
               *auto-mode-alist*))

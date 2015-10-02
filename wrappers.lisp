@@ -21,8 +21,9 @@
 (defun files (dirname)
   (mapcar #'namestring (cl-fad:list-directory dirname)))
 
-(defun shell-command (command &key input output)
+(defun shell-command (command &key input output error-output)
   (uiop:run-program command
                     :input input
                     :output output
+                    :error-output error-output
                     :ignore-error-status t))

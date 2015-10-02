@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(grep
+          grep-update
           grep-next
           grep-prev))
 
@@ -26,16 +27,18 @@
     (setq *grep-vector* (apply 'vector (nreverse list)))
     (setq *grep-index* -1)))
 
+(defun grep-update (str)
+  (update-grep-list (split-string str #\newline))
+  (info-popup (get-buffer-create "*Grep*")
+              #'(lambda (out)
+                  (princ str out))
+              nil))
+
 (define-command grep (str) ("sgrep -nH ")
-  (let ((str
-         (with-output-to-string (s)
-           (shell-command (concatenate 'string "grep -nH " str)
-                          :output s))))
-    (update-grep-list (split-string str #\newline))
-    (info-popup (get-buffer-create "*Grep*")
-                #'(lambda (out)
-                    (princ str out))
-                nil)))
+  (grep
+   (with-output-to-string (s)
+     (shell-command (concatenate 'string "grep -nH " str)
+                    :output s))))
 
 (define-key *global-keymap* (kbd "M-n") 'grep-next)
 (define-command grep-next (&optional (n 1)) ("p")

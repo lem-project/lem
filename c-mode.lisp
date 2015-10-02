@@ -36,6 +36,11 @@
                       :word-p t
                       :attr :keyword-attr))
 
+(syntax-add-keyword *c-syntax-table*
+                    "^#\\S+"
+                    :regex-p t
+                    :attr :constant-attr)
+
 (defvar *c-compile-command* "make")
 
 (define-key *c-mode-keymap* (kbd "C-c") 'c-compile)

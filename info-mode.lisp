@@ -16,9 +16,9 @@
 (define-key *info-mode-keymap* (kbd "q") 'info-quit)
 (define-command info-quit () ()
   (let ((buffer (window-buffer)))
+    (bury-buffer buffer)
     (when (buffer-get buffer :popup)
       (delete-current-window))
-    (bury-buffer buffer)
     t))
 
 (defun info-popup-closure (mode)

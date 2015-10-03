@@ -35,7 +35,7 @@
               nil))
 
 (define-command grep (str) ("sgrep -nH ")
-  (grep
+  (grep-update
    (with-output-to-string (s)
      (shell-command (concatenate 'string "grep -nH " str)
                     :output s))))

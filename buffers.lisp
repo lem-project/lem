@@ -104,7 +104,7 @@
   (setq *buffer-list*
         (append (delete buffer *buffer-list*)
                 (list buffer)))
-  (set-buffer (car *buffer-list*)))
+  (set-buffer (car *buffer-list*) nil))
 
 (define-key *global-keymap* (kbd "C-x b") 'select-buffer)
 (define-command select-buffer (name) ("BUse Buffer: ")

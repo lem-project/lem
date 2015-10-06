@@ -99,7 +99,7 @@
 
 (define-key *isearch-keymap* (kbd "C-y") 'isearch-yank)
 (define-command isearch-yank () ()
-  (let ((str (kill-ring-first)))
+  (let ((str (kill-ring-first-string)))
     (when str
       (setq *isearch-string* str)
       (isearch-update-display))))

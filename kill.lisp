@@ -10,6 +10,8 @@
           kill-push
           yank
           yank-pop
+          kill-ring-first-string
+          kill-ring-nth-string
           with-kill))
 
 (defvar *kill-ring* nil)
@@ -51,18 +53,22 @@
     (kill-append lines *kill-before-p*)))
   t)
 
-(define-key *global-keymap* (kbd "C-y") 'yank)
-(define-command yank (n) ("p")
+(defun kill-ring-nth (n)
   (do ((ptr *kill-ring-yank-ptr*
             (or (cdr ptr)
                 *kill-ring*))
        (n n (1- n)))
       ((>= 1 n)
-       (buffer-put (window-buffer) :yank-start (point))
-       (insert-lines (car ptr))
-       (buffer-put (window-buffer) :yank-end (point))
-       (when-interrupted-flag :yank)
-       t)))
+       (car ptr))))
+
+(define-key *global-keymap* (kbd "C-y") 'yank)
+(define-command yank (n) ("p")
+  (let ((lines (kill-ring-nth n)))
+    (buffer-put (window-buffer) :yank-start (point))
+    (insert-lines lines)
+    (buffer-put (window-buffer) :yank-end (point))
+    (when-interrupted-flag :yank)
+    t))
 
 (define-key *global-keymap* (kbd "M-y") 'yank-pop)
 (define-command yank-pop (&optional n) ("p")
@@ -81,9 +87,13 @@
            (minibuf-print "Previous command was not a yank")
            nil))))
 
-(defun kill-ring-first ()
+(defun kill-ring-first-string ()
   (join (string #\newline)
         (car *kill-ring-yank-ptr*)))
+
+(defun kill-ring-nth-string (n)
+  (join (string #\newline)
+        (kill-ring-nth n)))
 
 (defmacro with-kill (() &body body)
   `(unless *kill-disable-p*

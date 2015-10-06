@@ -224,7 +224,7 @@
                       :attr :keyword-attr))
 
 (syntax-add-keyword *lisp-syntax-table*
-                    "^\\*[^*]+\\*$"
+                    "^(?:[^:*]*:)?\\*[^*]+\\*$"
                     :regex-p t
                     :word-p t
                     :attr :variable-attr)

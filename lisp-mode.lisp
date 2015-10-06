@@ -267,15 +267,15 @@
                                -2))
 
 (defun lisp-current-package ()
-  (find-package
-   (let ((package-name
-          (cdr (assoc "package"
-                      (buffer-get (window-buffer)
-                                  :file-property-list)
-                      :test #'equal))))
-     (if package-name
-         (string-upcase package-name)
-         "COMMON-LISP-USER"))))
+  (let ((package-name
+         (cdr (assoc "package"
+                     (buffer-get (window-buffer)
+                                 :file-property-list)
+                     :test #'equal))))
+    (or (and package-name
+             (find-package
+              (string-upcase package-name)))
+        (find-package "COMMON-LISP-USER"))))
 
 (defun lisp-looking-at-word ()
   (save-excursion

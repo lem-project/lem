@@ -6,7 +6,7 @@
           execute-command
           apropos-command))
 
-(defvar *command-names* nil)
+(defvar *command-table* (make-hash-table :test 'equal))
 
 (eval-when (:compile-toplevel :load-toplevel)
   (let ((garg (gensym "ARG")))
@@ -66,19 +66,27 @@
 (defmacro define-command (name parms (&rest arg-descripters) &body body)
   (let ((gcmd (gensym (symbol-name name))))
     `(progn
-       (pushnew ,(string-downcase (symbol-name name)) *command-names*)
-       (setf (get ',name 'command) ',gcmd)
+       (setf (gethash ,(string-downcase (symbol-name name))
+                      *command-table*)
+             ',gcmd)
        (defun ,name ,parms ,@body)
        ,(define-command-gen-cmd gcmd parms arg-descripters body))))
 
 (defun cmd-call (cmd arg)
-  (funcall (get cmd 'command) arg))
+  (funcall (gethash (string-downcase (symbol-name cmd))
+                    *command-table*)
+           arg))
 
 (defun command-completion (str)
-  (completion str *command-names*))
+  (let ((names))
+    (maphash #'(lambda (name cmd)
+                 (declare (ignore cmd))
+                 (push name names))
+             *command-table*)
+    (completion str (nreverse names))))
 
 (defun exist-command-p (str)
-  (find str *command-names* :test 'equal))
+  (if (gethash str *command-table*) t nil))
 
 (define-key *global-keymap* (kbd "M-x") 'execute-command)
 (define-command execute-command (name)
@@ -87,24 +95,25 @@
           ""
           'command-completion
           'exist-command-p)))
-  (let ((cmd (intern (string-upcase name) :lem)))
-    (when (get cmd 'command)
-      (cmd-call cmd *universal-argument*))))
+  (let ((cmd (gethash name *command-table*)))
+    (funcall cmd *universal-argument*)))
 
 (define-command apropos-command (str) ("sApropos: ")
   (info-popup (get-buffer-create "*Apropos*")
               #'(lambda (out)
-                  (dolist (name *command-names*)
-                    (when (search str name)
-                      (loop
-                        for (kbd keymap-name)
-                        in (search-keybind-all name)
-                        do
-                        (fresh-line out)
-                        (princ (format nil "~a~a~a~a~a"
-                                       name
-                                       #\tab
-                                       (kbd-to-string kbd)
-                                       #\tab
-                                       keymap-name)
-                               out)))))))
+                  (maphash #'(lambda (name cmd)
+                               (declare (ignore cmd))
+                               (when (search str name)
+                                 (loop
+                                   for (kbd keymap-name)
+                                   in (search-keybind-all name)
+                                   do
+                                   (fresh-line out)
+                                   (princ (format nil "~a~a~a~a~a"
+                                                  name
+                                                  #\tab
+                                                  (kbd-to-string kbd)
+                                                  #\tab
+                                                  keymap-name)
+                                          out))))
+                           *command-table*))))

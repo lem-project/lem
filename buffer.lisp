@@ -619,7 +619,7 @@
   (if (buffer-filename)
       (file-name-directory
        (buffer-filename))
-      (file-name-as-directory (pwd))))
+      (file-name-as-directory (namestring (uiop:getcwd)))))
 
 (defun buffer-undo-modified (buffer)
   (when (= (buffer-undo-node buffer)

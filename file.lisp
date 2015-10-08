@@ -105,7 +105,9 @@
 (defun file-completion (str)
   (setq str (expand-file-name str))
   (let ((dirname (file-name-directory str)))
-    (completion str (files dirname))))
+    (completion str
+                (mapcar #'namestring
+                        (cl-fad:list-directory dirname)))))
 
 (defun detect-external-format-from-file (pathname)
   (let ((external-format)

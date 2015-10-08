@@ -609,7 +609,14 @@
         (if external-p
             (do-external-symbols (sym pkg) (f sym ":"))
             (do-symbols (sym pkg) (f sym "::")))))
-    (nreverse symbols)))
+    (when (null package)
+      (flet ((add (name)
+                  (push (format nil "~(~a~):" name) symbols)))
+        (dolist (p (list-all-packages))
+          (add (package-name p))
+          (dolist (p (package-nicknames p))
+            (add p)))))
+    (nreverse (remove-duplicates symbols :test #'string=))))
 
 (defun complete-symbol (str)
   (let ((result (analyze-symbol str)))

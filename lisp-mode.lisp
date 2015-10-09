@@ -757,6 +757,7 @@
     (lisp-repl-prompt)))
 
 (defun lisp-repl-prompt ()
+  (end-of-buffer)
   (unless (bolp)
     (insert-newline))
   (insert-string "> ")

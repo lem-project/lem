@@ -215,7 +215,7 @@
   (let ((result (minibuf-read-line prompt
                                    directory
                                    #'file-completion
-                                   (and existing #'file-exist-p))))
+                                   (and existing #'cl-fad:file-exists-p))))
     (if (string= result "")
         default
         result)))

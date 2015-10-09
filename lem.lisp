@@ -292,7 +292,7 @@
 
 (defun load-init-file ()
   (flet ((test (path)
-               (when (file-exist-p path)
+               (when (cl-fad:file-exists-p path)
                  (load path)
                  (minibuf-print (format nil "Load file: ~a" path))
                  t)))

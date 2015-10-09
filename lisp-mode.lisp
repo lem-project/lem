@@ -488,7 +488,7 @@
 (define-key *lisp-mode-keymap* (kbd "C-x l") 'lisp-load-file)
 (define-key *lisp-mode-keymap* (kbd "C-x C-l") 'lisp-load-file)
 (define-command lisp-load-file (filename) ("fLoad File: ")
-  (when (and (file-exist-p filename)
+  (when (and (cl-fad:file-exists-p filename)
              (not (file-directory-p filename)))
     (lisp-eval-string
      (format nil "(load ~s)" filename))))

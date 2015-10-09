@@ -4,7 +4,6 @@
           file-name-nondirectory
           file-name-as-directory
           file-directory-p
-          file-exist-p
           temp-file-name
           expand-file-name
           file-completion
@@ -41,11 +40,6 @@
 (defun file-directory-p (filename)
   (string= "" (file-name-nondirectory filename)))
 
-(defun file-exist-p (file-name)
-  (if (probe-file file-name)
-      t
-      nil))
-
 (defun temp-file-name-1 ()
   (concatenate 'string
                "/tmp/"
@@ -61,7 +55,7 @@
 (defun temp-file-name ()
   (loop
     for name = (temp-file-name-1)
-    while (file-exist-p name)
+    while (cl-fad:file-exists-p name)
     finally (return name)))
 
 (defun parse-pathname (pathname)

@@ -611,7 +611,7 @@
 
 (defun buffer-directory ()
   (if (buffer-filename)
-      (file-name-directory
+      (directory-namestring
        (buffer-filename))
       (file-name-as-directory (namestring (uiop:getcwd)))))
 

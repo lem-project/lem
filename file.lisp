@@ -1,7 +1,6 @@
 (in-package :lem)
 
-(export '(file-name-directory
-          file-name-nondirectory
+(export '(file-name-nondirectory
           file-name-as-directory
           file-directory-p
           temp-file-name
@@ -20,11 +19,6 @@
           find-file-hook
           before-save-hook
           after-save-hook))
-
-(defun file-name-directory (filename)
-  (let ((pos (position #\/ filename :from-end t)))
-    (when pos
-      (subseq filename 0 (1+ pos)))))
 
 (defun file-name-nondirectory (filename)
   (let ((pos (position #\/ filename :from-end t)))
@@ -98,7 +92,7 @@
 
 (defun file-completion (str)
   (setq str (expand-file-name str))
-  (let ((dirname (file-name-directory str)))
+  (let ((dirname (directory-namestring str)))
     (completion str
                 (mapcar #'namestring
                         (cl-fad:list-directory dirname)))))

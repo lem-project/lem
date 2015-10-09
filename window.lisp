@@ -1,6 +1,14 @@
 (in-package :lem)
 
 (export '(window
+          window-nlines
+          window-ncols
+          window-y
+          window-x
+          window-buffer
+          window-vtop-linum
+          window-cur-linum
+          window-cur-col
           one-window-p
           deleted-window-p
           set-window-delete-hook

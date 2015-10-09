@@ -1,7 +1,6 @@
 (in-package :lem)
 
-(export '(file-name-as-directory
-          file-directory-p
+(export '(file-directory-p
           temp-file-name
           expand-file-name
           file-completion
@@ -18,11 +17,6 @@
           find-file-hook
           before-save-hook
           after-save-hook))
-
-(defun file-name-as-directory (filename)
-  (if (char/= #\/ (aref filename (1- (length filename))))
-      (concatenate 'string filename "/")
-      filename))
 
 (defun file-directory-p (filename)
   (string= "" (file-namestring filename)))

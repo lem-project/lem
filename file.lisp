@@ -1,7 +1,6 @@
 (in-package :lem)
 
-(export '(file-name-nondirectory
-          file-name-as-directory
+(export '(file-name-as-directory
           file-directory-p
           temp-file-name
           expand-file-name
@@ -20,19 +19,13 @@
           before-save-hook
           after-save-hook))
 
-(defun file-name-nondirectory (filename)
-  (let ((pos (position #\/ filename :from-end t)))
-    (if pos
-        (subseq filename (1+ pos))
-        filename)))
-
 (defun file-name-as-directory (filename)
   (if (char/= #\/ (aref filename (1- (length filename))))
       (concatenate 'string filename "/")
       filename))
 
 (defun file-directory-p (filename)
-  (string= "" (file-name-nondirectory filename)))
+  (string= "" (file-namestring filename)))
 
 (defun temp-file-name-1 ()
   (concatenate 'string
@@ -136,7 +129,7 @@
     t))
 
 (defun prepare-auto-mode ()
-  (let* ((filename (file-name-nondirectory (buffer-filename)))
+  (let* ((filename (file-namestring (buffer-filename)))
          (elt (find-if #'(lambda (elt)
                            (ppcre:scan (car elt) filename))
                        *auto-mode-alist*)))
@@ -177,7 +170,7 @@
           (return-from scan-file-property-list))))))
 
 (defun file-open (path)
-  (let ((name (file-name-nondirectory path))
+  (let ((name (file-namestring path))
         (absolute-path (expand-file-name path)))
     (when (and (string/= "" name)
                (not (cl-fad:directory-exists-p absolute-path)))
@@ -197,7 +190,7 @@
 
 (define-key *global-keymap* (kbd "C-x C-f") 'find-file)
 (define-command find-file (filename) ("FFind File: ")
-  (let ((buf (get-buffer (file-name-nondirectory filename))))
+  (let ((buf (get-buffer (file-namestring filename))))
     (cond
      ((null buf)
       (file-open filename))
@@ -205,7 +198,7 @@
            (string/= (expand-file-name filename) (buffer-filename buf)))
       (let ((uniq-name
              (uniq-buffer-name
-              (file-name-nondirectory filename))))
+              (file-namestring filename))))
         (file-open filename)
         (rename-buffer uniq-name)))
      (t

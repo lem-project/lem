@@ -1,7 +1,6 @@
 (in-package :lem)
 
-(export '(file-directory-p
-          temp-file-name
+(export '(temp-file-name
           expand-file-name
           file-completion
           insert-file-contents
@@ -17,9 +16,6 @@
           find-file-hook
           before-save-hook
           after-save-hook))
-
-(defun file-directory-p (filename)
-  (string= "" (file-namestring filename)))
 
 (defun temp-file-name-1 ()
   (concatenate 'string

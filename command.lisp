@@ -9,6 +9,15 @@
 (defvar *command-table* (make-hash-table :test 'equal))
 
 (eval-when (:compile-toplevel :load-toplevel)
+  (defun collect-variables (parameters)
+    (let ((acc))
+      (dolist (parm parameters)
+        (cond ((consp parm)
+               (when (symbolp (car parm))
+                 (push (car parm) acc)))
+              ((not (char= #\& (schar (symbol-name parm) 0)))
+               (push parm acc))))
+      (nreverse acc)))
   (let ((garg (gensym "ARG")))
     (defun define-command-gen-args (name arg-descripters)
       (cond
@@ -51,17 +60,18 @@
                            (t
                             (error "Illegal arg-descripter: ~a" arg-descripter))))
                       arg-descripters)))))
-    (defun define-command-gen-cmd (name parms arg-descripters body)
-      `(defun ,name (,garg)
+    (defun define-command-gen-cmd (cmd-name fn-name parms arg-descripters)
+      `(defun ,cmd-name (,garg)
          (declare (ignorable ,garg))
          ,(if (null arg-descripters)
-              (progn (assert (null parms))
-                `(progn ,@body))
+              (progn
+                (assert (null parms))
+                `(,fn-name))
               `(destructuring-bind ,parms
                    ,(if (stringp (car arg-descripters))
-                        (define-command-gen-args name arg-descripters)
+                        (define-command-gen-args cmd-name arg-descripters)
                         (car arg-descripters))
-                 ,@body))))))
+                 (,fn-name ,@(collect-variables parms))))))))
 
 (defmacro define-command (name parms (&rest arg-descripters) &body body)
   (let ((gcmd (gensym (symbol-name name))))
@@ -70,7 +80,7 @@
                       *command-table*)
              ',gcmd)
        (defun ,name ,parms ,@body)
-       ,(define-command-gen-cmd gcmd parms arg-descripters body))))
+       ,(define-command-gen-cmd gcmd name parms arg-descripters))))
 
 (defun cmd-call (cmd arg)
   (funcall (gethash (string-downcase (symbol-name cmd))

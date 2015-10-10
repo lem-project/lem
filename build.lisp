@@ -1,3 +1,5 @@
+;; -*- Mode: Lisp; Package: Lem -*-
+
 (ql:quickload :lem)
 
 (defun main ()

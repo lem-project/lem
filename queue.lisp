@@ -1,3 +1,5 @@
+;; -*- Mode: Lisp; Package: queue -*-
+
 (defpackage :queue
   (:use :cl)
   (:export

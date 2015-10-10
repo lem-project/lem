@@ -1,3 +1,5 @@
+;; -*- Mode: Lisp; Package: fatstring -*-
+
 (defpackage :fatstring
   (:use :cl)
   (:export

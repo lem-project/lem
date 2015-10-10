@@ -650,31 +650,40 @@
   t)
 
 (defun lisp-get-arglist (symbol)
-  #+sbcl
   (let ((fstr (make-array '(0)
                           :element-type 'base-char
                           :fill-pointer 0
                           :adjustable t)))
     (with-output-to-string (out fstr)
       (describe symbol out))
-    (let* ((start-string "Lambda-list: (")
-           (start (search start-string fstr))
-           (end (when start
-                  (ppcre:scan "\\s\\s[A-Z][ a-z]*:" fstr :start start))))
-      (when (and start end)
-        (ppcre:regex-replace-all
-         "\\)\\s*\\)"
-         (ppcre:regex-replace-all
-          "\\s+"
-          (format nil "(~a ~a"
-                  symbol
-                  (string-right-trim
-                   '(#\space #\tab)
-                   (subseq fstr
-                           (+ start (length start-string))
-                           end)))
-          " ")
-         "))")))))
+    (let ((start-string)
+          (end-string))
+      #+sbcl
+      (progn
+        (setq start-string "Lambda-list: (")
+        (setq end-string "\\s\\s[A-Z][ a-z]*:"))
+      #+ccl
+      (progn
+        (setq start-string "Arglist: (")
+        (setq end-string "\\n[A-Z][a-z]*:"))
+      #+(or sbcl ccl)
+      (let* ((start (search start-string fstr))
+             (end (when start
+                    (ppcre:scan end-string fstr :start start))))
+        (when (and start end)
+          (ppcre:regex-replace-all
+           "\\)\\s*\\)"
+           (ppcre:regex-replace-all
+            "\\s+"
+            (format nil "(~a ~a"
+                    symbol
+                    (string-right-trim
+                     '(#\space #\tab)
+                     (subseq fstr
+                             (+ start (length start-string))
+                             end)))
+            " ")
+           "))"))))))
 
 (define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-self-insert-then-arg-list)
 (define-command lisp-self-insert-then-arg-list (n) ("p")

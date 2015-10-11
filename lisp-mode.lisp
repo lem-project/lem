@@ -879,7 +879,7 @@
                 (minibuf-read-string
                  "Type a form to be evaluated: ")
                 nil)))
-      (erorr (cdt)
+      (error (cdt)
              (setq error-p t)
              (minibuf-print (format nil "~a" cdt))))
     (unless error-p

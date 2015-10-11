@@ -21,6 +21,9 @@
 (defun symbolic-link-p (pathname)
   (eq :symbolic-link (osicat:file-kind (cl-fad:pathname-as-file pathname))))
 
+(defun goto-start-line ()
+  (goto-line (buffer-get (window-buffer) :start-linum)))
+
 (defun date (universal-time)
   (multiple-value-bind (second minute hour date month year day daylight-p zone)
       (decode-universal-time universal-time)
@@ -35,6 +38,9 @@
     (erase-buffer)
     (let ((dirname (buffer-get (window-buffer) :dirname))
           (files))
+      (insert-string (namestring dirname))
+      (insert-newline 2)
+      (buffer-put (window-buffer) :start-linum (window-cur-linum))
       (dolist (file (cl-fad:list-directory dirname :follow-symlinks nil))
         (push file files)
         (let ((filename (enough-namestring file dirname))
@@ -58,7 +64,7 @@
       (buffer-put (window-buffer)
                   :dired-files
                   (apply #'vector (reverse files))))
-    (beginning-of-buffer)))
+    (goto-start-line)))
 
 (defun dired-find-directory (dirname)
   (let ((buffer
@@ -89,7 +95,8 @@
     (dired-internal dirname)))
 
 (defun get-file ()
-  (let ((n (window-cur-linum))
+  (let ((n (- (window-cur-linum)
+              (1- (buffer-get (window-buffer) :start-linum))))
         (files (buffer-get (window-buffer) :dired-files)))
     (when (<= 1 n (length files))
       (aref files (1- n)))))
@@ -121,15 +128,16 @@
      (buffer-get (window-buffer) :dirname)))))
 
 (defun change-flag (char)
-  (with-buffer-read-only (window-buffer) nil
-    (beginning-of-line)
-    (insert-string (string char))
-    (delete-char)
-    (beginning-of-line)))
+  (when (get-file)
+    (with-buffer-read-only (window-buffer) nil
+      (beginning-of-line)
+      (insert-string (string char))
+      (delete-char)
+      (beginning-of-line))))
 
 (defun map-mark (test)
   (save-excursion
-   (beginning-of-buffer)
+   (goto-start-line)
    (do (flag-char)
        ((eobp))
      (let ((mark-char (following-char))
@@ -178,7 +186,7 @@
 (defun collect-files ()
   (let ((files))
     (save-excursion
-     (beginning-of-buffer)
+     (goto-start-line)
      (do ((file nil nil))
          ((eobp))
        (when (and (eql +mark+ (following-char))

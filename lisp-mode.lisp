@@ -246,7 +246,15 @@
 (define-major-mode lisp-mode nil
   (:name "lisp"
    :keymap *lisp-mode-keymap*
-   :syntax-table *lisp-syntax-table*))
+   :syntax-table *lisp-syntax-table*)
+  (buffer-put (window-buffer)
+              :modeline-format
+              (append *modeline-default-format*
+                      (list
+                       " "
+                       (lambda (window)
+                         (declare (ignore window))
+                         (package-name (lisp-current-package)))))))
 
 (defun %lisp-mode-skip-expr-prefix (c1 c2 step-arg)
   (when c1

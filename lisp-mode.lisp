@@ -8,6 +8,7 @@
           lisp-indent
           lisp-indent-line
           lisp-newline-and-indent
+          lisp-read-change-package
           lisp-eval-string
           lisp-eval-region
           lisp-eval-defun
@@ -276,17 +277,6 @@
                                (char-before 1)
                                -2))
 
-(defun lisp-current-package ()
-  (let ((package-name
-         (cdr (assoc "package"
-                     (buffer-get (window-buffer)
-                                 :file-property-list)
-                     :test #'equal))))
-    (or (and package-name
-             (find-package
-              (string-upcase package-name)))
-        (find-package "COMMON-LISP-USER"))))
-
 (defun lisp-looking-at-word ()
   (save-excursion
    (skip-chars-forward
@@ -369,6 +359,39 @@
 (define-command lisp-indent-sexp () ()
   (mark-sexp)
   (lisp-indent-region))
+
+(defun lisp-current-package ()
+  (let ((package-name
+         (cdr (assoc "package"
+                     (buffer-get (window-buffer)
+                                 :file-property-list)
+                     :test #'equal))))
+    (or (and package-name
+             (find-package
+              (string-upcase package-name)))
+        (find-package "COMMON-LISP-USER"))))
+
+(defun lisp-change-package (package)
+  (buffer-put (window-buffer)
+              :file-property-list
+              (acons "package" (package-name package)
+                     (buffer-get (window-buffer)
+                                 :file-property-list))))
+
+(define-key *lisp-mode-keymap* (kbd "C-x p") 'lisp-read-change-package)
+(define-command lisp-read-change-package () ()
+  (let* ((package-name
+          (string-upcase
+           (minibuf-read-line "Package: " ""
+                              'complete-package nil)))
+         (package (find-package package-name)))
+    (cond (package
+           (lisp-change-package package) t)
+          (t
+           (minibuf-print
+            (format nil "Package does not exist: ~a"
+                    package-name))
+           nil))))
 
 (defun %string-to-exps (str)
   (let ((str str)

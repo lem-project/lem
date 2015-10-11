@@ -2,7 +2,8 @@
 
 (in-package :lem)
 
-(export '(window
+(export '(*modeline-default-format*
+          window
           window-nlines
           window-ncols
           window-y
@@ -129,51 +130,61 @@
                 (float (/ (window-vtop-linum window)
                           (buffer-nlines (window-buffer window))))))))))
 
-(defun modeline-string (bg-char
-                        ncols
-                        ronly-p
-                        modif-p
-                        program-name
-                        buffer-name
-                        modes
-                        linum
-                        column
-                        line-pos)
-  (let ((str (format nil "~C~C ~A: ~A ~A (~D, ~D)"
-                     (if ronly-p #\% #\-)
-                     (if modif-p #\* #\-)
-                     program-name
-                     buffer-name
-                     modes
-                     linum
-                     column)))
+(defvar *modeline-default-format*
+  (list 'modeline-read-only-p
+        'modeline-modified-p
+        " "
+        *program-name*
+        ": "
+        'modeline-name
+        " ("
+        'modeline-major-mode
+        'modeline-minor-modes
+        ") "
+        "("
+        'modeline-linum
+        ", "
+        'modeline-column
+        ")"))
+
+(defun modeline-read-only-p (window)
+  (if (buffer-read-only-p (window-buffer window)) "%" "-"))
+(defun modeline-modified-p (window)
+  (if (buffer-modified-p (window-buffer window)) "*" "-"))
+(defun modeline-name (window)
+  (buffer-name (window-buffer window)))
+(defun modeline-major-mode (window)
+  (string-downcase (buffer-major-mode (window-buffer window))))
+(defun modeline-minor-modes (window)
+  (let ((modes (buffer-minor-modes (window-buffer window))))
+    (if modes
+        (format nil " ~(~{~a~^ ~}~)" modes)
+        "")))
+(defun modeline-linum (window)
+  (window-cur-linum window))
+(defun modeline-column (window)
+  (window-cur-col window))
+
+(defun modeline-string (window)
+  (let* ((line-pos (window-posline window))
+         (ncols (window-ncols window))
+         (str (with-output-to-string (out)
+                (dolist (x
+                         (buffer-get (window-buffer window)
+                                     :modeline-format
+                                     *modeline-default-format*))
+                  (if (or (symbolp x) (functionp x))
+                      (princ (funcall x window) out)
+                      (princ x out))))))
     (let ((n (- ncols 7 (length str))))
       (if (minusp n)
-          (format nil "~A ~A ~C~C" str line-pos bg-char bg-char)
-          (format nil "~A~V,,,VA ~A ~C~C" str n bg-char #\space
-                  line-pos bg-char bg-char)))))
+          (format nil "~a ~a --" str line-pos)
+          (format nil "~a~v,,,va ~a --" str n #\- #\space line-pos)))))
 
 (defun window-refresh-modeline (window)
   (cl-charms/low-level:wattron (window-win window)
                                cl-charms/low-level:a_reverse)
-  (let ((modeline-str
-         (modeline-string (if (eq window *current-window*) #\- #\space)
-                          (window-ncols window)
-                          (buffer-read-only-p (window-buffer window))
-                          (buffer-modified-p (window-buffer window))
-                          *program-name*
-                          (buffer-name (window-buffer window))
-                          (let ((*current-window* window))
-                            (mapcar 'mode-name
-                                    (cons (major-mode)
-                                          (buffer-minor-modes
-                                           (window-buffer)))))
-                          (window-cur-linum window)
-                          (str-width (buffer-line-string
-                                      (window-buffer window)
-                                      (window-cur-linum window))
-                                     (window-cur-col window))
-                          (window-posline window))))
+  (let ((modeline-str (modeline-string window)))
     (cl-charms/low-level:mvwaddstr (window-win window)
                                    (1- (window-nlines window))
                                    0

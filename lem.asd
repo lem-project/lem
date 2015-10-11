@@ -42,9 +42,11 @@
                         ;;(:file "lserver-mode")
                         (:file "c-mode")
                         (:file "grep")
-                        (:file "lem"))
+                        (:file "lem")
+                        (:file "dired"))
            :depends-on (:cl-charms
                         :cl-fad
+                        :osicat
                         #+sbcl :sb-posix
                         :bordeaux-threads
                         ;:swank-client

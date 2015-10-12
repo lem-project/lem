@@ -325,9 +325,20 @@
                                cury
                                curx)))
 
+(defun window-refresh-separator (window)
+  (cl-charms/low-level:attron cl-charms/low-level:a_reverse)
+  (when (< 0 (window-x window))
+    (loop :with x := (- (window-x window) 1)
+      :for y :from (window-y window) :repeat (window-nlines window) :do
+      (cl-charms/low-level:mvwaddch cl-charms/low-level:*stdscr*
+                                    y x #.(char-code #\|))))
+  (cl-charms/low-level:attroff cl-charms/low-level:a_reverse)
+  (cl-charms/low-level:wnoutrefresh cl-charms/low-level:*stdscr*))
+
 (defun window-refresh (window)
   (window-refresh-modeline window)
   (window-refresh-lines window)
+  (window-refresh-separator window)
   (cl-charms/low-level:wnoutrefresh (window-win window)))
 
 (defun window-offset-view (window)
@@ -428,6 +439,37 @@
                       rem)
                    (window-x))))
       (decf (window-nlines) nlines)
+      (window-set-size *current-window*
+                       (window-nlines)
+                       (window-ncols))
+      (setf (window-vtop-linum newwin)
+            (window-vtop-linum))
+      (setf (window-cur-linum newwin)
+            (window-cur-linum))
+      (setf (window-cur-col newwin)
+            (window-cur-col))
+      (setf (window-max-col newwin)
+            (window-max-col))
+      (setq *window-list*
+            (sort (copy-list (append *window-list* (list newwin)))
+                  #'(lambda (b1 b2)
+                      (< (window-y b1) (window-y b2)))))))
+  t)
+
+(define-key *global-keymap* (kbd "C-x 3") 'split-window-horizontally)
+(define-command split-window-horizontally () ()
+  (multiple-value-bind (ncols rem)
+      (floor (window-ncols) 2)
+    (let ((newwin (make-window
+                   (window-buffer)
+                   (window-nlines)
+                   (1- ncols)
+                   (window-y)
+                   (+ (window-x)
+                      ncols
+                      rem
+                      1))))
+      (decf (window-ncols) ncols)
       (window-set-size *current-window*
                        (window-nlines)
                        (window-ncols))

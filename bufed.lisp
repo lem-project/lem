@@ -184,6 +184,7 @@
 
 (define-key *global-keymap* (kbd "C-h") 'backward-delete-char)
 (define-key *global-keymap* (kbd "[backspace]") 'backward-delete-char)
+(define-key *global-keymap* (kbd "[del]") 'backward-delete-char)
 (define-command backward-delete-char (&optional n does-not-kill-p) ("P")
   (cond ((null n)
          (when (prev-char)

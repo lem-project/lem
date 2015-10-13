@@ -58,7 +58,7 @@
 
 (defun other-buffer ()
   (let ((buffer-list *buffer-list*))
-    (dolist (win *window-list*)
+    (dolist (win (window-list))
       (setq buffer-list
             (remove (window-buffer win)
                     buffer-list)))
@@ -124,7 +124,7 @@
 (define-command kill-buffer (name) ("bKill buffer: ")
   (let ((buf (get-buffer name)))
     (when (cdr *buffer-list*)
-      (dolist (win *window-list*)
+      (dolist (win (window-list))
         (when (eq buf (window-buffer win))
           (let ((*current-window* win))
             (next-buffer))))

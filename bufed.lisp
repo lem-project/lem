@@ -172,7 +172,7 @@
         (when (and (not does-not-kill-p) n)
           (with-kill ()
             (kill-push lines)))
-        (dolist (win *window-list*)
+        (dolist (win (window-list))
           (when (and (not (eq win *current-window*))
                      (eq (window-buffer win) (window-buffer))
                      (> (window-cur-linum win)

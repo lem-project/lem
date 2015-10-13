@@ -3,6 +3,7 @@
 (in-package :lem)
 
 (export '(*modeline-default-format*
+          window-list
           window
           window-nlines
           window-ncols
@@ -30,6 +31,30 @@
           scroll-up))
 
 (defvar *redraw-flags* '(:one-line :unnecessary :all))
+
+(defvar *current-cols*)
+(defvar *current-lines*)
+
+(defvar *modeline-default-format*
+  (list 'modeline-read-only-p
+        'modeline-modified-p
+        " "
+        *program-name*
+        ": "
+        'modeline-name
+        " ("
+        'modeline-major-mode
+        'modeline-minor-modes
+        ") "
+        "("
+        'modeline-linum
+        ", "
+        'modeline-column
+        ")"))
+
+(defvar *window-list*)
+
+(defun window-list () *window-list*)
 
 (define-class window () *current-window*
   win
@@ -64,9 +89,6 @@
                         :wrap-ylist nil)))
     (cl-charms/low-level:keypad (window-win window) 1)
     window))
-
-(defvar *current-cols*)
-(defvar *current-lines*)
 
 (defun one-window-p ()
   (null (cdr *window-list*)))
@@ -129,23 +151,6 @@
              (* 100
                 (float (/ (window-vtop-linum window)
                           (buffer-nlines (window-buffer window))))))))))
-
-(defvar *modeline-default-format*
-  (list 'modeline-read-only-p
-        'modeline-modified-p
-        " "
-        *program-name*
-        ": "
-        'modeline-name
-        " ("
-        'modeline-major-mode
-        'modeline-minor-modes
-        ") "
-        "("
-        'modeline-linum
-        ", "
-        'modeline-column
-        ")"))
 
 (defun modeline-read-only-p (window)
   (if (buffer-read-only-p (window-buffer window)) "%" "-"))

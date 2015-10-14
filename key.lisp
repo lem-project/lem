@@ -46,6 +46,7 @@
 (defkeycode "C-z" 26)
 (defkeycode "escape" 27)
 (defkeycode "Spc" #x20)
+(defkeycode "[del]" #x7F)
 
 (loop
   :for i :from #x21 :below #x7F

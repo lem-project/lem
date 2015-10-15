@@ -302,7 +302,7 @@
   (cl-charms/low-level:attron cl-charms/low-level:a_reverse)
   (when (< 0 (window-x window))
     (loop :with x := (- (window-x window) 1)
-      :for y :from (window-y window) :repeat (window-nlines window) :do
+      :for y :from (window-y window) :repeat (1- (window-nlines window)) :do
       (cl-charms/low-level:mvwaddch cl-charms/low-level:*stdscr*
                                     y x #.(char-code #\|))))
   (cl-charms/low-level:attroff cl-charms/low-level:a_reverse)
@@ -601,8 +601,39 @@
       (beginning-of-buffer))
     (values *current-window* newwin-p)))
 
-(defun adjust-screen-size () ;***
-  )
+(defun adjust-screen-size ()
+  (let ((delete-windows))
+    (do-window-tree (window *window-tree*)
+      (when (<= cl-charms/low-level:*lines*
+                (+ (window-y window) 2))
+        (push window delete-windows))
+      (when (<= cl-charms/low-level:*cols*
+                (+ (window-x window) 1))
+        (push window delete-windows)))
+    (mapc #'delete-window delete-windows))
+  (let ((window-list (window-tree-flatten *window-tree*)))
+    (dolist (window (collect-right-windows window-list))
+      (window-resize window
+                     0
+                     (- cl-charms/low-level:*cols*
+                        *current-cols*)))
+    (dolist (window (collect-bottom-windows window-list))
+      (window-resize window
+                     (- cl-charms/low-level:*lines*
+                        *current-lines*)
+                     0))
+    (setq *current-cols* cl-charms/low-level:*cols*)
+    (setq *current-lines* cl-charms/low-level:*lines*)
+    (window-update-all)))
+
+(defun collect-left-windows (window-list)
+  (min-if #'window-x window-list))
+
+(defun collect-right-windows (window-list)
+  (max-if #'(lambda (window)
+              (+ (window-x window)
+                 (window-ncols window)))
+          window-list))
 
 (defun collect-top-windows (window-list)
   (min-if #'window-y window-list))

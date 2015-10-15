@@ -53,7 +53,7 @@
 (defun window-tree-leaf-p (window)
   (typep window 'window))
 
-(defun window-tree-map (fn tree)
+(defun window-tree-map (tree fn)
   (labels ((f (tree)
               (cond ((window-tree-leaf-p tree)
                      (funcall fn tree))
@@ -64,20 +64,20 @@
     nil))
 
 (defmacro do-window-tree ((var tree) &body body)
-  `(window-tree-map #'(lambda (,var) ,@body) ,tree))
+  `(window-tree-map ,tree #'(lambda (,var) ,@body)))
 
 (defun window-tree-flatten (tree)
   (let ((windows))
-    (window-tree-map #'(lambda (win)
-                         (push win windows))
-                     tree)
+    (window-tree-map tree
+                     #'(lambda (win)
+                         (push win windows)))
     (nreverse windows)))
 
 (defun window-tree-find (tree window)
-  (window-tree-map #'(lambda (win)
+  (window-tree-map tree
+                   #'(lambda (win)
                        (when (eq win window)
-                         (return-from window-tree-find win)))
-                   tree))
+                         (return-from window-tree-find win)))))
 
 (defun window-tree-parent (tree node)
   (cond ((window-tree-leaf-p tree) nil)

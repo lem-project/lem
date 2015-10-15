@@ -573,7 +573,7 @@
 (define-command delete-current-window () ()
   (delete-window *current-window*))
 
-(defun pop-to-buffer (buffer) ;***
+(defun pop-to-buffer (buffer)
   (if (eq buffer (window-buffer))
       (values *current-window*
               (one-window-p))
@@ -582,14 +582,14 @@
           (split-window))
         (let ((*current-window*
                (or (window-tree-find
+                    *window-tree*
                     #'(lambda (window)
-                        (eq buffer (window-buffer window)))
-                    *window-tree*)
+                        (eq buffer (window-buffer window))))
                    (get-next-window *current-window*))))
           (set-buffer buffer)
           (values *current-window* one-p)))))
 
-(defun popup (buffer output-function &key (goto-bob-p t) (erase-p t)) ;***
+(defun popup (buffer output-function &key (goto-bob-p t) (erase-p t))
   (multiple-value-bind (*current-window* newwin-p)
       (pop-to-buffer buffer)
     (when erase-p

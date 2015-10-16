@@ -19,7 +19,6 @@
 
 (defvar *program-name* "Lem")
 
-(defvar *window-list*)
 (defvar *current-window*)
 (defvar *buffer-list* nil)
 

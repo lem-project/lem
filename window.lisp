@@ -3,6 +3,7 @@
 (in-package :lem)
 
 (export '(*modeline-default-format*
+          window-list
           window
           window-nlines
           window-ncols
@@ -26,53 +27,44 @@
           pop-to-buffer
           grow-window
           shrink-window
+          grow-window-horizontally
+          shrink-window-horizontally
           scroll-down
           scroll-up))
 
 (defvar *redraw-flags* '(:one-line :unnecessary :all))
 
-(define-class window () *current-window*
-  win
-  nlines
-  ncols
-  y
-  x
-  buffer
-  disp-lines
-  vtop-linum
-  cur-linum
-  cur-col
-  max-col
-  wrap-ylist
-  redraw-flag
-  delete-hook)
-
-(defun make-window (buffer nlines ncols y x)
-  (let ((window
-         (make-instance 'window
-                        :win (cl-charms/low-level:newwin nlines ncols y x)
-                        :nlines nlines
-                        :ncols ncols
-                        :y y
-                        :x x
-                        :buffer buffer
-                        :disp-lines (make-array (1- nlines) :initial-element nil)
-                        :vtop-linum 1
-                        :cur-linum 1
-                        :cur-col 0
-                        :max-col 0
-                        :wrap-ylist nil)))
-    (cl-charms/low-level:keypad (window-win window) 1)
-    window))
-
 (defvar *current-cols*)
 (defvar *current-lines*)
 
+(defvar *modeline-default-format*
+  (list 'modeline-read-only-p
+        'modeline-modified-p
+        " "
+        *program-name*
+        ": "
+        'modeline-name
+        " ("
+        'modeline-major-mode
+        'modeline-minor-modes
+        ") "
+        "("
+        'modeline-linum
+        ", "
+        'modeline-column
+        ")"))
+
+(defvar *window-tree*)
+
+(defun window-list ()
+  (window-tree-flatten
+   *window-tree*))
+
 (defun one-window-p ()
-  (null (cdr *window-list*)))
+  (window-tree-leaf-p *window-tree*))
 
 (defun deleted-window-p (window)
-  (not (find window *window-list*)))
+  (not (window-tree-find *window-tree* window)))
 
 (defun set-window-delete-hook (window fn)
   (setf (window-delete-hook window) fn))
@@ -86,12 +78,12 @@
                      cl-charms/low-level:*cols*
                      0
                      0))
-  (setq *window-list* (list *current-window*)))
+  (setq *window-tree* *current-window*))
 
 (define-key *global-keymap* (kbd "C-l") 'recenter)
 (define-command recenter () ()
   (syntax-scan-window *current-window*)
-  (dolist (window *window-list*)
+  (do-window-tree (window *window-tree*)
     (cl-charms/low-level:clearok (window-win window) 1))
   (window-recenter *current-window*)
   (window-update-all)
@@ -129,23 +121,6 @@
              (* 100
                 (float (/ (window-vtop-linum window)
                           (buffer-nlines (window-buffer window))))))))))
-
-(defvar *modeline-default-format*
-  (list 'modeline-read-only-p
-        'modeline-modified-p
-        " "
-        *program-name*
-        ": "
-        'modeline-name
-        " ("
-        'modeline-major-mode
-        'modeline-minor-modes
-        ") "
-        "("
-        'modeline-linum
-        ", "
-        'modeline-column
-        ")"))
 
 (defun modeline-read-only-p (window)
   (if (buffer-read-only-p (window-buffer window)) "%" "-"))
@@ -325,9 +300,20 @@
                                cury
                                curx)))
 
+(defun window-refresh-separator (window)
+  (cl-charms/low-level:attron cl-charms/low-level:a_reverse)
+  (when (< 0 (window-x window))
+    (loop :with x := (- (window-x window) 1)
+      :for y :from (window-y window) :repeat (window-nlines window) :do
+      (cl-charms/low-level:mvwaddch cl-charms/low-level:*stdscr*
+                                    y x #.(char-code #\|))))
+  (cl-charms/low-level:attroff cl-charms/low-level:a_reverse)
+  (cl-charms/low-level:wnoutrefresh cl-charms/low-level:*stdscr*))
+
 (defun window-refresh (window)
   (window-refresh-modeline window)
   (window-refresh-lines window)
+  (window-refresh-separator window)
   (cl-charms/low-level:wnoutrefresh (window-win window)))
 
 (defun window-offset-view (window)
@@ -356,7 +342,7 @@
   (window-refresh window))
 
 (defun window-update-all ()
-  (dolist (win *window-list*)
+  (do-window-tree (win *window-tree*)
     (unless (eq win *current-window*)
       (window-update win)))
   (window-update *current-window*)
@@ -415,6 +401,31 @@
      (window-update-all)))
   (setf (window-redraw-flag *current-window*) nil))
 
+(defun split-window-after (new-window split-type)
+  (window-set-size *current-window*
+                   (window-nlines)
+                   (window-ncols))
+  (setf (window-vtop-linum new-window)
+        (window-vtop-linum))
+  (setf (window-cur-linum new-window)
+        (window-cur-linum))
+  (setf (window-cur-col new-window)
+        (window-cur-col))
+  (setf (window-max-col new-window)
+        (window-max-col))
+  (multiple-value-bind (node getter setter)
+      (window-tree-parent *window-tree* *current-window*)
+    (if (null node)
+        (setq *window-tree*
+              (make-window-node split-type
+                                *current-window*
+                                new-window))
+        (funcall setter
+                 (make-window-node split-type
+                                   (funcall getter)
+                                   new-window))))
+  t)
+
 (define-key *global-keymap* (kbd "C-x 2") 'split-window)
 (define-command split-window () ()
   (multiple-value-bind (nlines rem)
@@ -428,38 +439,30 @@
                       rem)
                    (window-x))))
       (decf (window-nlines) nlines)
-      (window-set-size *current-window*
-                       (window-nlines)
-                       (window-ncols))
-      (setf (window-vtop-linum newwin)
-            (window-vtop-linum))
-      (setf (window-cur-linum newwin)
-            (window-cur-linum))
-      (setf (window-cur-col newwin)
-            (window-cur-col))
-      (setf (window-max-col newwin)
-            (window-max-col))
-      (setq *window-list*
-            (sort (copy-list (append *window-list* (list newwin)))
-                  #'(lambda (b1 b2)
-                      (< (window-y b1) (window-y b2)))))))
-  t)
+      (split-window-after newwin :vsplit))))
+
+(define-key *global-keymap* (kbd "C-x 3") 'split-window-horizontally)
+(define-command split-window-horizontally () ()
+  (multiple-value-bind (ncols rem)
+      (floor (window-ncols) 2)
+    (let ((newwin (make-window
+                   (window-buffer)
+                   (window-nlines)
+                   (1- ncols)
+                   (window-y)
+                   (+ (window-x)
+                      ncols
+                      rem
+                      1))))
+      (decf (window-ncols) ncols)
+      (split-window-after newwin :hsplit))))
 
 (defun get-next-window (window)
-  (let ((result (member window *window-list*)))
+  (let* ((window-list (window-list))
+         (result (member window window-list)))
     (if (cdr result)
         (cadr result)
-        (car *window-list*))))
-
-(defun upper-window (window)
-  (unless (one-window-p)
-    (do ((prev *window-list* (cdr prev)))
-        ((null (cdr prev)))
-      (when (eq (cadr prev) window)
-        (return (car prev))))))
-
-(defun lower-window (window)
-  (cadr (member window *window-list*)))
+        (car window-list))))
 
 (define-key *global-keymap* (kbd "C-x o") 'other-window)
 (define-command other-window (&optional (n 1)) ("p")
@@ -494,59 +497,83 @@
 
 (define-key *global-keymap* (kbd "C-x 1") 'delete-other-windows)
 (define-command delete-other-windows () ()
-  (dolist (win *window-list*)
+  (do-window-tree (win *window-tree*)
     (unless (eq win *current-window*)
       (cl-charms/low-level:delwin (window-win win))))
-  (setq *window-list* (list *current-window*))
+  (setq *window-tree* *current-window*)
   (window-set-pos *current-window* 0 0)
   (window-set-size *current-window*
                    (1- cl-charms/low-level:*lines*)
                    cl-charms/low-level:*cols*)
   t)
 
+(defun adjust-size-windows-after-delete-window (deleted-window
+                                                window-tree
+                                                horizontal-p)
+  (let ((window-list (window-tree-flatten window-tree)))
+    (if horizontal-p
+        (cond ((< (window-x deleted-window)
+                  (window-x (car window-list)))
+               (dolist (win (min-if #'window-x window-list))
+                 (window-set-pos win
+                                 (window-y win)
+                                 (window-x deleted-window))
+                 (window-set-size win
+                                  (window-nlines win)
+                                  (+ (window-ncols deleted-window)
+                                     1
+                                     (window-ncols win)))))
+              (t
+               (dolist (win (max-if #'window-x window-list))
+                 (window-set-size win
+                                  (window-nlines win)
+                                  (+ (window-ncols deleted-window)
+                                     1
+                                     (window-ncols win))))))
+        (cond ((< (window-y deleted-window)
+                  (window-y (car window-list)))
+               (dolist (win (min-if #'window-y window-list))
+                 (window-set-pos win
+                                 (window-y deleted-window)
+                                 (window-x win))
+                 (window-set-size win
+                                  (+ (window-nlines deleted-window)
+                                     (window-nlines win))
+                                  (window-ncols win))))
+              (t
+               (dolist (win (max-if #'window-y window-list))
+                 (window-set-size win
+                                  (+ (window-nlines deleted-window)
+                                     (window-nlines win))
+                                  (window-ncols win))))))))
+
+(defun delete-window (window)
+  (when (one-window-p)
+    (minibuf-print "Can not delete this window")
+    (return-from delete-window nil))
+  (when (eq *current-window* window)
+    (other-window))
+  (multiple-value-bind (node getter setter another-getter another-setter)
+      (window-tree-parent *window-tree* window)
+    (declare (ignore getter setter another-setter))
+    (adjust-size-windows-after-delete-window
+     window
+     (funcall another-getter)
+     (eq (window-node-split-type node) :hsplit))
+    (multiple-value-bind (node2 getter2 setter2)
+        (window-tree-parent *window-tree* node)
+      (declare (ignore getter2))
+      (if (null node2)
+          (setq *window-tree* (funcall another-getter))
+          (funcall setter2 (funcall another-getter)))))
+  (when (window-delete-hook window)
+    (funcall (window-delete-hook window)))
+  (cl-charms/low-level:delwin (window-win window))
+  t)
+
 (define-key *global-keymap* (kbd "C-x 0") 'delete-current-window)
 (define-command delete-current-window () ()
   (delete-window *current-window*))
-
-(defun delete-window (window)
-  (cond
-   ((one-window-p)
-    (minibuf-print "Can not delete this window")
-    nil)
-   (t
-    (when (eq *current-window* window)
-      (other-window))
-    (when (window-delete-hook window)
-      (funcall (window-delete-hook window)))
-    (cl-charms/low-level:delwin (window-win window))
-    (let ((wlist (reverse *window-list*)))
-      (let ((upwin (cadr (member window wlist))))
-        (when (null upwin)
-          (setq upwin (cadr *window-list*))
-          (window-set-pos upwin 0 (window-x upwin)))
-        (window-set-size upwin
-                         (+ (window-nlines upwin)
-                            (window-nlines window))
-                         (window-ncols upwin))))
-    (setq *window-list* (delete window *window-list*))
-    t)))
-
-(defun adjust-screen-size ()
-  (dolist (win *window-list*)
-    (window-set-size win
-                     (window-nlines win)
-                     cl-charms/low-level:*cols*))
-  (dolist (win *window-list*)
-    (when (<= cl-charms/low-level:*lines* (+ 2 (window-y win)))
-      (delete-window win)))
-  (let ((win (car (last *window-list*))))
-    (window-set-size win
-                     (+ (window-nlines win)
-                        (- cl-charms/low-level:*lines* *current-lines*))
-                     (window-ncols win)))
-  (setq *current-cols* cl-charms/low-level:*cols*)
-  (setq *current-lines* cl-charms/low-level:*lines*)
-  (window-update-all))
 
 (defun pop-to-buffer (buffer)
   (if (eq buffer (window-buffer))
@@ -556,9 +583,10 @@
         (when one-p
           (split-window))
         (let ((*current-window*
-               (or (find-if #'(lambda (window)
-                                (eq buffer (window-buffer window)))
-                            *window-list*)
+               (or (window-tree-find
+                    *window-tree*
+                    #'(lambda (window)
+                        (eq buffer (window-buffer window))))
                    (get-next-window *current-window*))))
           (set-buffer buffer)
           (values *current-window* one-p)))))
@@ -575,54 +603,213 @@
       (beginning-of-buffer))
     (values *current-window* newwin-p)))
 
+(defun adjust-screen-size ()
+  (let ((delete-windows))
+    (do-window-tree (window *window-tree*)
+      (when (<= cl-charms/low-level:*lines*
+                (+ (window-y window) 2))
+        (push window delete-windows))
+      (when (<= cl-charms/low-level:*cols*
+                (+ (window-x window) 1))
+        (push window delete-windows)))
+    (mapc #'delete-window delete-windows))
+  (let ((window-list (window-tree-flatten *window-tree*)))
+    (dolist (window (collect-right-windows window-list))
+      (window-resize window
+                     0
+                     (- cl-charms/low-level:*cols*
+                        *current-cols*)))
+    (dolist (window (collect-bottom-windows window-list))
+      (window-resize window
+                     (- cl-charms/low-level:*lines*
+                        *current-lines*)
+                     0))
+    (setq *current-cols* cl-charms/low-level:*cols*)
+    (setq *current-lines* cl-charms/low-level:*lines*)
+    (window-update-all)))
+
+(defun collect-left-windows (window-list)
+  (min-if #'window-x window-list))
+
+(defun collect-right-windows (window-list)
+  (max-if #'(lambda (window)
+              (+ (window-x window)
+                 (window-ncols window)))
+          window-list))
+
+(defun collect-top-windows (window-list)
+  (min-if #'window-y window-list))
+
+(defun collect-bottom-windows (window-list)
+  (max-if #'(lambda (window)
+              (+ (window-y window)
+                 (window-nlines window)))
+          window-list))
+
+(defun %shrink-windows (window-list
+                        collect-windows-fn
+                        check-fn
+                        diff-height
+                        diff-width
+                        shift-height
+                        shift-width)
+  (let ((shrink-window-list
+         (funcall collect-windows-fn window-list)))
+    (dolist (window shrink-window-list)
+      (when (not (funcall check-fn window))
+        (return-from %shrink-windows nil)))
+    (cond ((/= 0 diff-width)
+           (dolist (window shrink-window-list)
+             (window-resize window 0 (- diff-width))))
+          ((/= 0 diff-height)
+           (dolist (window shrink-window-list)
+             (window-resize window (- diff-height) 0))))
+    (cond ((/= 0 shift-width)
+           (dolist (window shrink-window-list)
+             (window-move window 0 shift-width)))
+          ((/= 0 shift-height)
+           (dolist (window shrink-window-list)
+             (window-move window shift-height 0)))))
+  t)
+
+(defun shrink-top-windows (window-list n)
+  (%shrink-windows window-list
+                   #'collect-top-windows
+                   #'(lambda (window)
+                       (< 2 (window-nlines window)))
+                   n 0 n 0))
+
+(defun shrink-bottom-windows (window-list n)
+  (%shrink-windows window-list
+                   #'collect-bottom-windows
+                   #'(lambda (window)
+                       (< 2 (window-nlines window)))
+                   n 0 0 0))
+
+(defun shrink-left-windows (window-list n)
+  (%shrink-windows window-list
+                   #'collect-left-windows
+                   #'(lambda (window)
+                       (< 2 (window-ncols window)))
+                   0 n 0 n))
+
+(defun shrink-right-windows (window-list n)
+  (%shrink-windows window-list
+                   #'collect-right-windows
+                   #'(lambda (window)
+                       (< 2 (window-ncols window)))
+                   0 n 0 0))
+
+(defun %grow-windows (window-list
+                      collect-windows-fn
+                      diff-height
+                      diff-width
+                      shift-height
+                      shift-width)
+  (dolist (window (funcall collect-windows-fn window-list))
+    (cond ((/= 0 shift-width)
+           (window-move window 0 shift-width))
+          ((/= 0 shift-height)
+           (window-move window shift-height 0)))
+    (cond ((/= 0 diff-width)
+           (window-resize window 0 diff-width))
+          ((/= 0 diff-height)
+           (window-resize window diff-height 0))))
+  t)
+
+(defun grow-top-windows (window-list n)
+  (%grow-windows window-list
+                 #'collect-top-windows
+                 n 0 (- n) 0))
+
+(defun grow-bottom-windows (window-list n)
+  (%grow-windows window-list
+                 #'collect-bottom-windows
+                 n 0 0 0))
+
+(defun grow-left-windows (window-list n)
+  (%grow-windows window-list
+                 #'collect-left-windows
+                 0 n 0 (- n)))
+
+(defun grow-right-windows (window-list n)
+  (%grow-windows window-list
+                 #'collect-right-windows
+                 0 n 0 0))
+
+(defun grow-window-internal (grow-window-list shrink-window-list n)
+  (if (< (window-y (car grow-window-list))
+         (window-y (car shrink-window-list)))
+      (and (shrink-top-windows shrink-window-list n)
+           (grow-bottom-windows grow-window-list n))
+      (and (shrink-bottom-windows shrink-window-list n)
+           (grow-top-windows grow-window-list n))))
+
+(defun grow-window-horizontally-internal
+    (grow-window-list shrink-window-list n)
+  (if (< (window-x (car grow-window-list))
+         (window-x (car shrink-window-list)))
+      (and (shrink-left-windows shrink-window-list n)
+           (grow-right-windows grow-window-list n))
+      (and (shrink-right-windows shrink-window-list n)
+           (grow-left-windows grow-window-list n))))
+
+(defun resize-window-recursive (node n apply-fn split-type)
+  (multiple-value-bind (parent-node
+                        getter
+                        setter
+                        another-getter
+                        another-setter)
+      (window-tree-parent *window-tree* node)
+    (declare (ignore setter another-setter))
+    (cond ((null parent-node) nil)
+          ((eq split-type (window-node-split-type parent-node))
+           (funcall apply-fn
+                    (window-tree-flatten (funcall getter))
+                    (window-tree-flatten (funcall another-getter))
+                    n))
+          (t
+           (resize-window-recursive parent-node n apply-fn split-type)))))
+
 (define-key *global-keymap* (kbd "C-x ^") 'grow-window)
 (define-command grow-window (n) ("p")
-  (if (one-window-p)
-      (progn
-        (minibuf-print "Only one window")
-        nil)
-      (let* ((lowerwin (lower-window *current-window*))
-             (upperwin (if lowerwin nil (upper-window *current-window*))))
-        (if lowerwin
-            (cond
-             ((>= 1 (- (window-nlines lowerwin) n))
-              (minibuf-print "Impossible change")
-              nil)
-             (t
-              (window-resize *current-window* n 0)
-              (window-resize lowerwin (- n) 0)
-              (window-move lowerwin n 0)
-              t))
-            (cond
-             ((>= 1 (- (window-nlines upperwin) n))
-              (minibuf-print "Impossible change")
-              nil)
-             (t
-              (window-resize *current-window* n 0)
-              (window-move *current-window* (- n) 0)
-              (window-resize upperwin (- n) 0)))))))
+  (when (one-window-p)
+    (minibuf-print "Only one window")
+    (return-from grow-window nil))
+  (resize-window-recursive *current-window* n
+                           #'(lambda (x y n)
+                               (grow-window-internal x y n))
+                           :vsplit))
 
 (define-key *global-keymap* (kbd "C-x C-z") 'shrink-window)
 (define-command shrink-window (n) ("p")
-  (cond
-   ((one-window-p)
+  (when (one-window-p)
     (minibuf-print "Only one window")
-    nil)
-   ((>= 1 (- (window-nlines *current-window*) n))
-    (minibuf-print "Impossible change")
-    nil)
-   (t
-    (let* ((lowerwin (lower-window *current-window*))
-           (upperwin (if lowerwin nil (upper-window *current-window*))))
-      (cond
-       (lowerwin
-        (window-resize *current-window* (- n) 0)
-        (window-resize lowerwin (+ n) 0)
-        (window-move lowerwin (- n) 0))
-       (t
-        (window-resize *current-window* (- n) 0)
-        (window-move *current-window* n 0)
-        (window-resize upperwin n 0)))))))
+    (return-from shrink-window nil))
+  (resize-window-recursive *current-window* n
+                           #'(lambda (x y n)
+                               (grow-window-internal y x n))
+                           :vsplit))
+
+(define-key *global-keymap* (kbd "C-x }") 'grow-window-horizontally)
+(define-command grow-window-horizontally (n) ("p")
+  (when (one-window-p)
+    (minibuf-print "Only one window")
+    (return-from grow-window-horizontally nil))
+  (resize-window-recursive *current-window* n
+                           #'(lambda (x y n)
+                               (grow-window-horizontally-internal x y n))
+                           :hsplit))
+
+(define-key *global-keymap* (kbd "C-x {") 'shrink-window-horizontally)
+(define-command shrink-window-horizontally (n) ("p")
+  (when (one-window-p)
+    (minibuf-print "Only one window")
+    (return-from shrink-window-horizontally nil))
+  (resize-window-recursive *current-window* n
+                           #'(lambda (x y n)
+                               (grow-window-horizontally-internal y x n))
+                           :hsplit))
 
 (define-key *global-keymap* (kbd "C-x C-n") 'scroll-down)
 (define-command scroll-down (n) ("p")

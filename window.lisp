@@ -270,13 +270,16 @@
                 (push y (window-wrap-ylist window))))))))
   (values curx cury y))
 
+(defun get-window-refresh-line-function (window)
+  (if (buffer-truncate-lines (window-buffer window))
+      #'window-refresh-line-wrapping
+      #'window-refresh-line))
+
 (defun window-refresh-lines (window)
   (let ((curx 0)
         (cury (window-cursor-y window))
         (refresh-line
-         (if (buffer-truncate-lines (window-buffer window))
-             #'window-refresh-line-wrapping
-             #'window-refresh-line)))
+         (get-window-refresh-line-function window)))
     (setf (window-wrap-ylist window) nil)
     (loop
       :with y := 0
@@ -369,7 +372,8 @@
         (%window-current-line window)
       (declare (ignore curx))
       (multiple-value-bind (curx2 cury2)
-          (window-refresh-line-wrapping window 0 cury cury str)
+          (funcall (get-window-refresh-line-function window)
+                   window 0 cury cury str)
         (if (= cury cury2)
             (cl-charms/low-level:wmove (window-win window) cury2 curx2)
             (window-update-all))))))

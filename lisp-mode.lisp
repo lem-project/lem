@@ -784,13 +784,14 @@
 (defvar *lisp-repl-mode-keymap*
   (make-keymap "lisp-repl" nil *lisp-mode-keymap*))
 
-(defvar *lisp-repl-history*)
+(defvar *lisp-repl-history* nil)
 
 (define-major-mode lisp-repl-mode nil
   (:name "lisp-repl"
    :keymap *lisp-repl-mode-keymap*
    :syntax-table *lisp-syntax-table*)
-  (setq *lisp-repl-history* (make-history)))
+  (unless *lisp-repl-history*
+    (setq *lisp-repl-history* (make-history))))
 
 (define-command run-lisp () ()
   (let ((buffer (get-buffer-create "*lisp-repl*")))

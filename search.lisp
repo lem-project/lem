@@ -341,7 +341,7 @@
     (setq *replace-after-string* after)
     (values before after)))
 
-;(define-key *global-keymap* (kbd "M-C-r") 'query-replace)
+(define-key *global-keymap* (kbd "M-%") 'query-replace)
 (define-command query-replace () ()
   (multiple-value-bind (before after)
       (query-replace-before-after)

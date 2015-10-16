@@ -23,6 +23,8 @@
 (defvar *isearch-prev-string* "")
 (defvar *isearch-start-point*)
 (defvar *isearch-search-function*)
+(defvar *isearch-search-forward-function*)
+(defvar *isearch-search-backward-function*)
 (defvar *isearch-highlight-overlays* nil)
 
 (define-minor-mode isearch-mode
@@ -42,21 +44,41 @@
   (isearch-start
    #'(lambda (str)
        (prev-char (length str))
-       (search-forward str))))
+       (search-forward str))
+   #'search-forward
+   #'search-backward))
 
 (define-key *global-keymap* (kbd "C-r") 'isearch-backward)
 (define-command isearch-backward () ()
   (isearch-start
    #'(lambda (str)
        (next-char (length str))
-       (search-backward str))))
+       (search-backward str))
+   #'search-forward
+   #'search-backward))
 
-(defun isearch-start (search-func)
+(define-key *global-keymap* (kbd "C-M-s") 'isearch-forward-regexp)
+(define-command isearch-forward-regexp () ()
+  (isearch-start #'re-search-forward
+                 #'re-search-forward
+                 #'re-search-backward))
+
+(define-key *global-keymap* (kbd "C-M-r") 'isearch-backward-regexp)
+(define-command isearch-backward-regexp () ()
+  (isearch-start #'re-search-backward
+                 #'re-search-forward
+                 #'re-search-backward))
+
+(defun isearch-start (search-func
+                      search-forward-function
+                      search-backward-function)
   (isearch-mode t)
   (setq *isearch-string* "")
   (isearch-update-minibuf)
   (setq *isearch-search-function* search-func)
   (setq *isearch-start-point* (point))
+  (setq *isearch-search-forward-function* search-forward-function)
+  (setq *isearch-search-backward-function* search-backward-function)
   t)
 
 (define-key *isearch-keymap* (kbd "C-g") 'isearch-abort)
@@ -90,14 +112,14 @@
 (define-command isearch-next () ()
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
-  (search-forward *isearch-string*)
+  (funcall *isearch-search-forward-function* *isearch-string*)
   (isearch-update-display))
 
 (define-key *isearch-keymap* (kbd "C-r") 'isearch-prev)
 (define-command isearch-prev () ()
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
-  (search-backward *isearch-string*)
+  (funcall *isearch-search-backward-function* *isearch-string*)
   (isearch-update-display))
 
 (define-key *isearch-keymap* (kbd "C-y") 'isearch-yank)
@@ -124,11 +146,12 @@
         (point-set start-point)
         (do ()
             ((null
-              (search-forward search-string
-                              end-point)))
+              (funcall *isearch-search-forward-function*
+                       search-string end-point)))
           (let ((point2 (point))
                 (point1 (save-excursion
-                         (prev-char (length search-string))
+                         (funcall *isearch-search-backward-function*
+                                  search-string)
                          (point))))
             (push (make-overlay point1 point2
                                 :attr (if (and (point<= point1 save-point)
@@ -177,10 +200,6 @@
       (point-set point))
     result))
 
-(defun search-forward-step ()
-  (next-line 1)
-  (beginning-of-line))
-
 (defun search-forward-endp-function (limit)
   (if limit
       #'(lambda ()
@@ -203,9 +222,15 @@
                    #'(lambda ()
                        (let ((pos (search str (take-string))))
                          (when pos (+ pos (length str)))))
-                   #'search-forward-step
+                   #'next-line
                    #'goto-column
                    (search-forward-endp-function limit)))))
+
+(defun search-backward-endp-function (limit)
+  (if limit
+      #'(lambda ()
+          (point< (point) limit))
+      #'bobp))
 
 (defun search-backward (str &optional limit)
   (let ((length (1+ (count #\newline str))))
@@ -221,17 +246,72 @@
                                args)))))
       (search-step #'(lambda ()
                        (%search :end2 (window-cur-col)))
-                   #'(lambda ()
-                       (%search))
-                   #'(lambda () (prev-line 1))
+                   #'%search
+                   #'prev-line
                    #'(lambda (i)
                        (and (prev-line (1- length))
                             (beginning-of-line)
                             (next-char i)))
-                   (if limit
-                       #'(lambda ()
-                           (point< (point) limit))
-                       #'bobp)))))
+                   (search-backward-endp-function limit)))))
+
+(defun re-search-forward (regex &optional limit)
+  (let (scanner)
+    (handler-case (setq scanner (ppcre:create-scanner regex))
+      (error () (return-from re-search-forward nil)))
+    (search-step
+     #'(lambda ()
+         (multiple-value-bind (start end)
+             (ppcre:scan scanner
+                         (buffer-line-string (window-buffer)
+                                             (window-cur-linum))
+                         :start (window-cur-col))
+           (when start end)))
+     #'(lambda ()
+         (multiple-value-bind (start end)
+             (ppcre:scan scanner
+                         (buffer-line-string (window-buffer)
+                                             (window-cur-linum)))
+           (when start end)))
+     #'next-line
+     #'goto-column
+     (search-forward-endp-function limit))))
+
+(defun re-search-backward (regex &optional limit)
+  (let (scanner)
+    (handler-case (setq scanner (ppcre:create-scanner regex))
+      (error () (return-from re-search-backward nil)))
+    (search-step
+     #'(lambda ()
+         (let (pos)
+           (ppcre:do-scans (start
+                            end
+                            reg-starts
+                            reg-ends
+                            scanner
+                            (buffer-line-string (window-buffer)
+                                                (window-cur-linum))
+                            nil
+                            :end (window-cur-col))
+             (declare (ignore end reg-starts reg-ends))
+             (setq pos start))
+           pos))
+     #'(lambda ()
+         (let (pos)
+           (ppcre:do-scans (start
+                            end
+                            reg-starts
+                            reg-ends
+                            scanner
+                            (buffer-line-string (window-buffer)
+                                                (window-cur-linum))
+                            nil
+                            :start (window-cur-col))
+             (declare (ignore end reg-starts reg-ends))
+             (setq pos start))
+           pos))
+     #'prev-line
+     #'goto-column
+     (search-backward-endp-function limit))))
 
 (defvar *replace-before-string* nil)
 (defvar *replace-after-string* nil)
@@ -261,7 +341,7 @@
     (setq *replace-after-string* after)
     (values before after)))
 
-(define-key *global-keymap* (kbd "M-C-r") 'query-replace)
+;(define-key *global-keymap* (kbd "M-C-r") 'query-replace)
 (define-command query-replace () ()
   (multiple-value-bind (before after)
       (query-replace-before-after)

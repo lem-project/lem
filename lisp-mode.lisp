@@ -772,8 +772,8 @@
         (delete-char 1 t))
       (next-line 1))))
 
-;; (define-key *lisp-mode-keymap* (kbd "C-x z") 'run-lisp)
-;; (define-key *lisp-mode-keymap* (kbd "C-x C-z") 'run-lisp)
+(define-key *lisp-mode-keymap* (kbd "C-x z") 'run-lisp)
+(define-key *lisp-mode-keymap* (kbd "C-x C-z") 'run-lisp)
 
 (defun lisp-print-values (values)
   (let ((out (make-buffer-output-stream (window-buffer) (point))))

@@ -773,6 +773,8 @@
 
 (define-key *global-keymap* (kbd "C-x ^") 'grow-window)
 (define-command grow-window (n) ("p")
+  (when (< n 0)
+    (return-from grow-window (shrink-window (- n))))
   (when (one-window-p)
     (minibuf-print "Only one window")
     (return-from grow-window nil))
@@ -783,6 +785,8 @@
 
 (define-key *global-keymap* (kbd "C-x C-z") 'shrink-window)
 (define-command shrink-window (n) ("p")
+  (when (< n 0)
+    (return-from shrink-window (grow-window (- n))))
   (when (one-window-p)
     (minibuf-print "Only one window")
     (return-from shrink-window nil))
@@ -793,6 +797,8 @@
 
 (define-key *global-keymap* (kbd "C-x }") 'grow-window-horizontally)
 (define-command grow-window-horizontally (n) ("p")
+  (when (< n 0)
+    (return-from grow-window-horizontally (shrink-window-horizontally (- n))))
   (when (one-window-p)
     (minibuf-print "Only one window")
     (return-from grow-window-horizontally nil))
@@ -803,6 +809,8 @@
 
 (define-key *global-keymap* (kbd "C-x {") 'shrink-window-horizontally)
 (define-command shrink-window-horizontally (n) ("p")
+  (when (< n 0)
+    (return-from shrink-window-horizontally (grow-window-horizontally (- n))))
   (when (one-window-p)
     (minibuf-print "Only one window")
     (return-from shrink-window-horizontally nil))

@@ -27,6 +27,8 @@
           pop-to-buffer
           grow-window
           shrink-window
+          grow-window-horizontally
+          shrink-window-horizontally
           scroll-down
           scroll-up))
 
@@ -302,7 +304,7 @@
   (cl-charms/low-level:attron cl-charms/low-level:a_reverse)
   (when (< 0 (window-x window))
     (loop :with x := (- (window-x window) 1)
-      :for y :from (window-y window) :repeat (1- (window-nlines window)) :do
+      :for y :from (window-y window) :repeat (window-nlines window) :do
       (cl-charms/low-level:mvwaddch cl-charms/low-level:*stdscr*
                                     y x #.(char-code #\|))))
   (cl-charms/low-level:attroff cl-charms/low-level:a_reverse)
@@ -644,37 +646,96 @@
                  (window-nlines window)))
           window-list))
 
-(defun %shrink-windows (window-list n collect-windows-fn shift-n)
+(defun %shrink-windows (window-list
+                        collect-windows-fn
+                        check-fn
+                        diff-height
+                        diff-width
+                        shift-height
+                        shift-width)
   (let ((shrink-window-list
          (funcall collect-windows-fn window-list)))
     (dolist (window shrink-window-list)
-      (when (>= 2 (window-nlines window))
+      (when (not (funcall check-fn window))
         (return-from %shrink-windows nil)))
-    (when (/= 0 shift-n)
-      (dolist (window shrink-window-list)
-        (window-move window shift-n 0)))
-    (dolist (window shrink-window-list)
-      (window-resize window (- n) 0))
-    t))
+    (cond ((/= 0 diff-width)
+           (dolist (window shrink-window-list)
+             (window-resize window 0 (- diff-width))))
+          ((/= 0 diff-height)
+           (dolist (window shrink-window-list)
+             (window-resize window (- diff-height) 0))))
+    (cond ((/= 0 shift-width)
+           (dolist (window shrink-window-list)
+             (window-move window 0 shift-width)))
+          ((/= 0 shift-height)
+           (dolist (window shrink-window-list)
+             (window-move window shift-height 0)))))
+  t)
 
 (defun shrink-top-windows (window-list n)
-  (%shrink-windows window-list n #'collect-top-windows n))
+  (%shrink-windows window-list
+                   #'collect-top-windows
+                   #'(lambda (window)
+                       (< 2 (window-nlines window)))
+                   n 0 n 0))
 
 (defun shrink-bottom-windows (window-list n)
-  (%shrink-windows window-list n #'collect-bottom-windows 0))
+  (%shrink-windows window-list
+                   #'collect-bottom-windows
+                   #'(lambda (window)
+                       (< 2 (window-nlines window)))
+                   n 0 0 0))
 
-(defun %grow-windows (window-list n collect-windows-fn shift-n)
+(defun shrink-left-windows (window-list n)
+  (%shrink-windows window-list
+                   #'collect-left-windows
+                   #'(lambda (window)
+                       (< 2 (window-ncols window)))
+                   0 n 0 n))
+
+(defun shrink-right-windows (window-list n)
+  (%shrink-windows window-list
+                   #'collect-right-windows
+                   #'(lambda (window)
+                       (< 2 (window-ncols window)))
+                   0 n 0 0))
+
+(defun %grow-windows (window-list
+                      collect-windows-fn
+                      diff-height
+                      diff-width
+                      shift-height
+                      shift-width)
   (dolist (window (funcall collect-windows-fn window-list))
-    (when (/= 0 shift-n)
-      (window-move window shift-n 0))
-    (window-resize window n 0))
+    (cond ((/= 0 shift-width)
+           (window-move window 0 shift-width))
+          ((/= 0 shift-height)
+           (window-move window shift-height 0)))
+    (cond ((/= 0 diff-width)
+           (window-resize window 0 diff-width))
+          ((/= 0 diff-height)
+           (window-resize window diff-height 0))))
   t)
 
 (defun grow-top-windows (window-list n)
-  (%grow-windows window-list n #'collect-top-windows (- n)))
+  (%grow-windows window-list
+                 #'collect-top-windows
+                 n 0 (- n) 0))
 
 (defun grow-bottom-windows (window-list n)
-  (%grow-windows window-list n #'collect-bottom-windows 0))
+  (%grow-windows window-list
+                 #'collect-bottom-windows
+                 n 0 0 0))
+
+(defun grow-left-windows (window-list n)
+  (%grow-windows window-list
+                 #'collect-left-windows
+                 0 n 0 (- n)))
+
+(defun grow-right-windows (window-list n)
+  (%grow-windows window-list
+                 #'collect-right-windows
+                 0 n 0 0))
 
 (defun grow-window-internal (grow-window-list shrink-window-list n)
   (if (< (window-y (car grow-window-list))
@@ -684,7 +745,16 @@
       (and (shrink-bottom-windows shrink-window-list n)
            (grow-top-windows grow-window-list n))))
 
-(defun resize-window-recursive (node n apply-fn)
+(defun grow-window-horizontally-internal
+    (grow-window-list shrink-window-list n)
+  (if (< (window-x (car grow-window-list))
+         (window-x (car shrink-window-list)))
+      (and (shrink-left-windows shrink-window-list n)
+           (grow-right-windows grow-window-list n))
+      (and (shrink-right-windows shrink-window-list n)
+           (grow-left-windows grow-window-list n))))
+
+(defun resize-window-recursive (node n apply-fn split-type)
   (multiple-value-bind (parent-node
                         getter
                         setter
@@ -693,13 +763,13 @@
       (window-tree-parent *window-tree* node)
     (declare (ignore setter another-setter))
     (cond ((null parent-node) nil)
-          ((eq :vsplit (window-node-split-type parent-node))
+          ((eq split-type (window-node-split-type parent-node))
            (funcall apply-fn
                     (window-tree-flatten (funcall getter))
                     (window-tree-flatten (funcall another-getter))
                     n))
           (t
-           (resize-window-recursive parent-node n apply-fn)))))
+           (resize-window-recursive parent-node n apply-fn split-type)))))
 
 (define-key *global-keymap* (kbd "C-x ^") 'grow-window)
 (define-command grow-window (n) ("p")
@@ -708,7 +778,8 @@
     (return-from grow-window nil))
   (resize-window-recursive *current-window* n
                            #'(lambda (x y n)
-                               (grow-window-internal x y n))))
+                               (grow-window-internal x y n))
+                           :vsplit))
 
 (define-key *global-keymap* (kbd "C-x C-z") 'shrink-window)
 (define-command shrink-window (n) ("p")
@@ -717,7 +788,28 @@
     (return-from shrink-window nil))
   (resize-window-recursive *current-window* n
                            #'(lambda (x y n)
-                               (grow-window-internal y x n))))
+                               (grow-window-internal y x n))
+                           :vsplit))
+
+(define-key *global-keymap* (kbd "C-x }") 'grow-window-horizontally)
+(define-command grow-window-horizontally (n) ("p")
+  (when (one-window-p)
+    (minibuf-print "Only one window")
+    (return-from grow-window-horizontally nil))
+  (resize-window-recursive *current-window* n
+                           #'(lambda (x y n)
+                               (grow-window-horizontally-internal x y n))
+                           :hsplit))
+
+(define-key *global-keymap* (kbd "C-x {") 'shrink-window-horizontally)
+(define-command shrink-window-horizontally (n) ("p")
+  (when (one-window-p)
+    (minibuf-print "Only one window")
+    (return-from shrink-window-horizontally nil))
+  (resize-window-recursive *current-window* n
+                           #'(lambda (x y n)
+                               (grow-window-horizontally-internal y x n))
+                           :hsplit))
 
 (define-key *global-keymap* (kbd "C-x C-n") 'scroll-down)
 (define-command scroll-down (n) ("p")

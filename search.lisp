@@ -162,20 +162,31 @@
   (let ((point (point))
         (result
          (let ((res (funcall first-search)))
-           (if res
-               (progn
-                 (funcall goto-matched-pos res)
-                 t)
-               (do () ((funcall endp))
-                 (unless (funcall step)
-                   (return nil))
-                 (let ((res (funcall search)))
-                   (when res
-                     (funcall goto-matched-pos res)
-                     (return t))))))))
+           (cond (res
+                  (funcall goto-matched-pos res)
+                  t)
+                 (t
+                  (do () ((funcall endp))
+                    (unless (funcall step)
+                      (return nil))
+                    (let ((res (funcall search)))
+                      (when res
+                        (funcall goto-matched-pos res)
+                        (return t)))))))))
     (unless result
       (point-set point))
     result))
+
+(defun search-forward-step ()
+  (next-line 1)
+  (beginning-of-line))
+
+(defun search-forward-endp-function (limit)
+  (if limit
+      #'(lambda ()
+          (or (point< limit (point))
+              (eobp)))
+      #'eobp))
 
 (defun search-forward (str &optional limit)
   (let ((length (1+ (count #\newline str))))
@@ -185,19 +196,16 @@
                                                  (window-cur-linum)
                                                  length))))
       (search-step #'(lambda ()
-                       (search str (take-string)
-                               :start2 (window-cur-col)))
+                       (let ((pos
+                              (search str (take-string)
+                                      :start2 (window-cur-col))))
+                         (when pos (+ pos (length str)))))
                    #'(lambda ()
-                       (search str (take-string)))
-                   #'(lambda () (next-line 1))
-                   #'(lambda (i)
-                       (and (beginning-of-line)
-                            (next-char (+ i (length str)))))
-                   (if limit
-                       #'(lambda ()
-                           (or (point< limit (point))
-                               (eobp)))
-                       #'eobp)))))
+                       (let ((pos (search str (take-string))))
+                         (when pos (+ pos (length str)))))
+                   #'search-forward-step
+                   #'goto-column
+                   (search-forward-endp-function limit)))))
 
 (defun search-backward (str &optional limit)
   (let ((length (1+ (count #\newline str))))

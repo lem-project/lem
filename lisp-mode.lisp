@@ -104,6 +104,7 @@
                  (defparameter . 1)
                  (defvar . 1)
                  (defconstant . 1)
+                 (defsystem . 1)
                  (loop . 0)))
     (setf (get (car elt) 'lisp-indent) (cdr elt))))
 
@@ -877,6 +878,10 @@
   (:name "scratch"
    :keymap *scratch-mode-keymap*
    :syntax-table *lisp-syntax-table*))
+
+(defun scratch ()
+  (set-buffer (get-buffer-create *scratch-buffer-name*))
+  (scratch-mode))
 
 (define-key *scratch-mode-keymap* (kbd "C-j") 'eval-print-last-sexp)
 (define-command eval-print-last-sexp () ()

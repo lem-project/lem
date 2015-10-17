@@ -19,7 +19,7 @@
   delete-hook)
 
 (defun window-p (x)
-  (typep x window))
+  (typep x 'window))
 
 (defun make-window (buffer nlines ncols y x)
   (let ((window
@@ -51,7 +51,7 @@
                              :cdr cdr))
 
 (defun window-tree-leaf-p (window)
-  (typep window 'window))
+  (window-p window))
 
 (defun window-tree-map (tree fn)
   (labels ((f (tree)

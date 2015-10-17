@@ -353,6 +353,7 @@
     (minibuf-init)
     (with-error-handler ()
       (load-init-file)))
+  (scratch)
   (dolist (arg args)
     (find-file arg)))
 

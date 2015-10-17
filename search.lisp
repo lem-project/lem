@@ -438,3 +438,6 @@
 
 (define-command query-replace-regexp () ()
   (query-replace-internal #'re-search-forward #'re-search-backward))
+
+(define-command query-replace-symbol () ()
+  (query-replace-internal #'search-symbol-forward #'search-symbol-backward))

@@ -19,6 +19,7 @@
           query-replace))
 
 (defvar *isearch-keymap* (make-keymap "isearch" 'isearch-self-insert))
+(defvar *isearch-prompt*)
 (defvar *isearch-string*)
 (defvar *isearch-prev-string* "")
 (defvar *isearch-start-point*)
@@ -37,11 +38,15 @@
   (setf (window-redraw-flag) :all))
 
 (defun isearch-update-minibuf ()
-  (minibuf-print (format nil "ISearch: ~a" *isearch-string*)))
+  (minibuf-print
+   (format nil "~a~a"
+           *isearch-prompt*
+           *isearch-string*)))
 
 (define-key *global-keymap* (kbd "C-s") 'isearch-forward)
 (define-command isearch-forward () ()
   (isearch-start
+   "ISearch: "
    #'(lambda (str)
        (prev-char (length str))
        (search-forward str))
@@ -51,6 +56,7 @@
 (define-key *global-keymap* (kbd "C-r") 'isearch-backward)
 (define-command isearch-backward () ()
   (isearch-start
+   "ISearch:"
    #'(lambda (str)
        (next-char (length str))
        (search-backward str))
@@ -59,20 +65,24 @@
 
 (define-key *global-keymap* (kbd "C-M-s") 'isearch-forward-regexp)
 (define-command isearch-forward-regexp () ()
-  (isearch-start #'re-search-forward
+  (isearch-start "ISearch Regexp: "
+                 #'re-search-forward
                  #'re-search-forward
                  #'re-search-backward))
 
 (define-key *global-keymap* (kbd "C-M-r") 'isearch-backward-regexp)
 (define-command isearch-backward-regexp () ()
-  (isearch-start #'re-search-backward
+  (isearch-start "ISearch Regexp: "
+                 #'re-search-backward
                  #'re-search-forward
                  #'re-search-backward))
 
-(defun isearch-start (search-func
+(defun isearch-start (prompt
+                      search-func
                       search-forward-function
                       search-backward-function)
   (isearch-mode t)
+  (setq *isearch-prompt* prompt)
   (setq *isearch-string* "")
   (isearch-update-minibuf)
   (setq *isearch-search-function* search-func)

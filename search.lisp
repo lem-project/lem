@@ -6,6 +6,10 @@
           isearch-mode
           isearch-forward
           isearch-backward
+          isearch-forward-regexp
+          isearch-backward-regexp
+          isearch-forward-symbol
+          isearch-backward-symbol
           isearch-abort
           isearch-delete-char
           isearch-raw-insert
@@ -16,7 +20,13 @@
           isearch-self-insert
           search-forward
           search-backward
-          query-replace))
+          search-forward-regexp
+          search-backward-regexp
+          search-forward-symbol
+          search-backward-symbol
+          query-replace
+          query-replace-regexp
+          query-replace-symbol))
 
 (defvar *isearch-keymap* (make-keymap "isearch" 'isearch-self-insert))
 (defvar *isearch-prompt*)
@@ -66,30 +76,30 @@
 (define-key *global-keymap* (kbd "C-M-s") 'isearch-forward-regexp)
 (define-command isearch-forward-regexp () ()
   (isearch-start "ISearch Regexp: "
-                 #'re-search-forward
-                 #'re-search-forward
-                 #'re-search-backward))
+                 #'search-forward-regexp
+                 #'search-forward-regexp
+                 #'search-backward-regexp))
 
 (define-key *global-keymap* (kbd "C-M-r") 'isearch-backward-regexp)
 (define-command isearch-backward-regexp () ()
   (isearch-start "ISearch Regexp: "
-                 #'re-search-backward
-                 #'re-search-forward
-                 #'re-search-backward))
+                 #'search-backward-regexp
+                 #'search-forward-regexp
+                 #'search-backward-regexp))
 
-(define-key *global-keymap* (kbd "C-x C-M-s") 'isearch-symbol-forward)
-(define-command isearch-symbol-forward () ()
+(define-key *global-keymap* (kbd "C-x C-M-s") 'isearch-forward-symbol)
+(define-command isearch-forward-symbol () ()
   (isearch-start "ISearch Symbol: "
-                 #'search-symbol-forward
-                 #'search-symbol-forward
-                 #'search-symbol-backward))
+                 #'search-forward-symbol
+                 #'search-forward-symbol
+                 #'search-backward-symbol))
 
-(define-key *global-keymap* (kbd "C-x C-M-r") 'isearch-symbol-backward)
-(define-command isearch-symbol-backward () ()
+(define-key *global-keymap* (kbd "C-x C-M-r") 'isearch-backward-symbol)
+(define-command isearch-backward-symbol () ()
   (isearch-start "ISearch Symbol: "
-                 #'search-symbol-backward
-                 #'search-symbol-forward
-                 #'search-symbol-backward))
+                 #'search-backward-symbol
+                 #'search-forward-symbol
+                 #'search-backward-symbol))
 
 (defun isearch-start (prompt
                       search-func
@@ -278,10 +288,10 @@
                             (next-char i)))
                    (search-backward-endp-function limit)))))
 
-(defun re-search-forward (regex &optional limit)
+(defun search-forward-regexp (regex &optional limit)
   (let (scanner)
     (handler-case (setq scanner (ppcre:create-scanner regex))
-      (error () (return-from re-search-forward nil)))
+      (error () (return-from search-forward-regexp nil)))
     (search-step
      #'(lambda ()
          (multiple-value-bind (start end)
@@ -300,10 +310,10 @@
      #'goto-column
      (search-forward-endp-function limit))))
 
-(defun re-search-backward (regex &optional limit)
+(defun search-backward-regexp (regex &optional limit)
   (let (scanner)
     (handler-case (setq scanner (ppcre:create-scanner regex))
-      (error () (return-from re-search-backward nil)))
+      (error () (return-from search-backward-regexp nil)))
     (search-step
      #'(lambda ()
          (let (pos)
@@ -350,7 +360,7 @@
             (push (cons start-var end-var) positions))))
       (nreverse positions))))
 
-(defun search-symbol-forward (name &optional limit)
+(defun search-forward-symbol (name &optional limit)
   (search-step
    #'(lambda ()
        (cdar (search-symbol-positions name :start (window-cur-col))))
@@ -360,7 +370,7 @@
    #'goto-column
    (search-forward-endp-function limit)))
 
-(defun search-symbol-backward (name &optional limit)
+(defun search-backward-symbol (name &optional limit)
   (search-step
    #'(lambda ()
        (caar (last (search-symbol-positions name :end (window-cur-col)))))
@@ -437,7 +447,7 @@
   (query-replace-internal #'search-forward #'search-backward))
 
 (define-command query-replace-regexp () ()
-  (query-replace-internal #'re-search-forward #'re-search-backward))
+  (query-replace-internal #'search-forward-regexp #'search-backward-regexp))
 
 (define-command query-replace-symbol () ()
-  (query-replace-internal #'search-symbol-forward #'search-symbol-backward))
+  (query-replace-internal #'search-forward-symbol #'search-backward-symbol))

@@ -3,6 +3,7 @@
 (in-package :lem)
 
 (export '(*modeline-default-format*
+          *window-sufficient-width*
           window-list
           window
           window-nlines
@@ -18,6 +19,8 @@
           set-window-delete-hook
           recenter
           redraw-screen
+          split-window-vertically
+          split-window-horizontally
           split-window
           get-next-window
           other-window
@@ -36,6 +39,8 @@
 
 (defvar *current-cols*)
 (defvar *current-lines*)
+
+(defvar *window-sufficient-width* 150)
 
 (defvar *modeline-default-format*
   (list 'modeline-read-only-p
@@ -430,8 +435,8 @@
                                    new-window))))
   t)
 
-(define-key *global-keymap* (kbd "C-x 2") 'split-window)
-(define-command split-window () ()
+(define-key *global-keymap* (kbd "C-x 2") 'split-window-vertically)
+(define-command split-window-vertically () ()
   (multiple-value-bind (nlines rem)
       (floor (window-nlines) 2)
     (let ((newwin (make-window
@@ -460,6 +465,11 @@
                       1))))
       (decf (window-ncols) ncols)
       (split-window-after newwin :hsplit))))
+
+(defun split-window ()
+  (if (< *window-sufficient-width* (window-ncols *current-window*))
+      (split-window-horizontally)
+      (split-window-vertically)))
 
 (defun get-next-window (window)
   (let* ((window-list (window-list))

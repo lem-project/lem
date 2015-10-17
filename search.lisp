@@ -326,7 +326,6 @@
                                                 (window-cur-linum))
                             nil
                             :end (window-cur-col))
-             (declare (ignore end reg-starts reg-ends))
              (setq pos start))
            pos))
      #'(lambda ()
@@ -340,7 +339,6 @@
                                                 (window-cur-linum))
                             nil
                             :start (window-cur-col))
-             (declare (ignore end reg-starts reg-ends))
              (setq pos start))
            pos))
      #'prev-line
@@ -354,7 +352,6 @@
                                    (window-cur-linum))))
       (ppcre:do-scans (start-var end-var reg-starts reg-ends scanner str nil
                                  :start start :end end)
-        (declare (ignore end-var reg-starts reg-ends))
         (let ((str (subseq str start-var end-var)))
           (when (equal str name)
             (push (cons start-var end-var) positions))))

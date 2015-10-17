@@ -345,17 +345,21 @@
      #'goto-column
      (search-backward-endp-function limit))))
 
-(let ((scanner "[a-zA-Z0-9+\\-<>/*&=.?_!$%:@\\[\\]^{}]+"))
-  (defun search-symbol-positions (name &key start end)
-    (let ((positions)
-          (str (buffer-line-string (window-buffer)
-                                   (window-cur-linum))))
-      (ppcre:do-scans (start-var end-var reg-starts reg-ends scanner str nil
-                                 :start start :end end)
-        (let ((str (subseq str start-var end-var)))
-          (when (equal str name)
-            (push (cons start-var end-var) positions))))
-      (nreverse positions))))
+(defun search-symbol-positions (name &key start end)
+  (let ((positions)
+        (str (buffer-line-string (window-buffer)
+                                 (window-cur-linum))))
+    (ppcre:do-scans (start-var
+                     end-var
+                     reg-starts
+                     reg-ends
+                     "[a-zA-Z0-9+\\-<>/*&=.?_!$%:@\\[\\]^{}]+"
+                     str nil
+                     :start start :end end)
+      (let ((str (subseq str start-var end-var)))
+        (when (equal str name)
+          (push (cons start-var end-var) positions))))
+    (nreverse positions)))
 
 (defun search-forward-symbol (name &optional limit)
   (search-step

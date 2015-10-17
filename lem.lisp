@@ -324,6 +324,21 @@
             (logior (get-attr :highlight)
                     (get-attr :cyan))))
 
+(defun toplevel-error-handler (condition)
+  (info-popup (get-buffer-create "*Error*")
+              #'(lambda (out)
+                  (princ condition out)
+                  (fresh-line out)
+                  (uiop/image:print-backtrace
+                   :stream out :count 100)))
+  condition)
+
+(defmacro with-error-handler (() &body body)
+  `(handler-case
+       (handler-bind ((error #'toplevel-error-handler))
+         ,@body)
+     (error ())))
+
 (defun lem-init (args)
   (cl-charms/low-level:initscr)
   (attr-init)
@@ -336,7 +351,8 @@
     (setq *init-flag* t)
     (window-init)
     (minibuf-init)
-    (load-init-file))
+    (with-error-handler ()
+      (load-init-file)))
   (dolist (arg args)
     (find-file arg)))
 
@@ -359,29 +375,15 @@
        (keyboard-quit)))))
 
 (defun lem (&rest args)
-  (labels ((handler (cdt)
-                    (info-popup (get-buffer-create "*Error*")
-                                #'(lambda (out)
-                                    (princ cdt out)
-                                    (fresh-line out)
-                                    (uiop/image:print-backtrace
-                                     :stream out :count 100)))
-                    cdt)
-           (f ()
-              (handler-case
-                  (handler-bind
-                      ((error #'handler))
-                    (lem-main))
-                (error (cdt)
-                       (declare (ignore cdt))
-                       (f)))))
-    (unwind-protect
-      (progn
-        (lem-init args)
-        (f))
-      (lem-finallize))))
+  (unwind-protect
+    (progn
+      (lem-init args)
+      (loop
+        (with-error-handler ()
+          (lem-main)
+          (return))))
+    (lem-finallize)))
 
-#+sbcl
 (defun dump-error (condition)
   (with-open-file (out *lem-error-file*
                        :direction :output
@@ -402,11 +404,3 @@
                              (lem-main))
                     #-sbcl (lem-main))
     (lem-finallize)))
-
-#+sbcl
-(push #'(lambda (x)
-          (if x
-              (lem x)
-              (lem))
-          t)
-      sb-ext:*ed-functions*)

@@ -77,6 +77,20 @@
                  #'re-search-forward
                  #'re-search-backward))
 
+(define-key *global-keymap* (kbd "C-x C-M-s") 'isearch-symbol-forward)
+(define-command isearch-symbol-forward () ()
+  (isearch-start "ISearch Symbol: "
+                 #'search-symbol-forward
+                 #'search-symbol-forward
+                 #'search-symbol-backward))
+
+(define-key *global-keymap* (kbd "C-x C-M-r") 'isearch-symbol-backward)
+(define-command isearch-symbol-backward () ()
+  (isearch-start "ISearch Symbol: "
+                 #'search-symbol-backward
+                 #'search-symbol-forward
+                 #'search-symbol-backward))
+
 (defun isearch-start (prompt
                       search-func
                       search-forward-function
@@ -322,6 +336,39 @@
      #'prev-line
      #'goto-column
      (search-backward-endp-function limit))))
+
+(let ((scanner "[a-zA-Z0-9+\\-<>/*&=.?_!$%:@\\[\\]^{}]+"))
+  (defun search-symbol-positions (name &key start end)
+    (let ((positions)
+          (str (buffer-line-string (window-buffer)
+                                   (window-cur-linum))))
+      (ppcre:do-scans (start-var end-var reg-starts reg-ends scanner str nil
+                                 :start start :end end)
+        (declare (ignore end-var reg-starts reg-ends))
+        (let ((str (subseq str start-var end-var)))
+          (when (equal str name)
+            (push (cons start-var end-var) positions))))
+      (nreverse positions))))
+
+(defun search-symbol-forward (name &optional limit)
+  (search-step
+   #'(lambda ()
+       (cdar (search-symbol-positions name :start (window-cur-col))))
+   #'(lambda ()
+       (cdar (search-symbol-positions name)))
+   #'next-line
+   #'goto-column
+   (search-forward-endp-function limit)))
+
+(defun search-symbol-backward (name &optional limit)
+  (search-step
+   #'(lambda ()
+       (caar (last (search-symbol-positions name :end (window-cur-col)))))
+   #'(lambda ()
+       (caar (last (search-symbol-positions name))))
+   #'prev-line
+   #'goto-column
+   (search-backward-endp-function limit)))
 
 (defvar *replace-before-string* nil)
 (defvar *replace-after-string* nil)

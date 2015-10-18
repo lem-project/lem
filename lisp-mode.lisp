@@ -344,7 +344,7 @@
                  (t
                   (setq num-insert-spaces (+ start-col 2))))
                 (insert-char #\space num-insert-spaces)
-                (when (= num-insert-spaces num-spaces)
+                (when (eql num-insert-spaces num-spaces)
                   (setf (buffer-modified-p (window-buffer))
                         old-modified-p))))))))))
 

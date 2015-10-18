@@ -744,6 +744,10 @@
 
 (define-command lisp-comment-region () ()
   (save-excursion
+   (when (/= (window-cur-linum)
+             (save-excursion (skip-chars-forward '(#\space #\tab #\newline))
+                             (window-cur-linum)))
+     (skip-chars-forward '(#\space #\tab #\newline)))
    (let ((start (region-beginning))
          (end (region-end)))
      (point-set end)

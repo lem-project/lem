@@ -40,7 +40,6 @@
                         (:file "info-mode")
                         (:file "sexp")
                         (:file "lisp-mode")
-                        ;;(:file "lserver-mode")
                         (:file "c-mode")
                         (:file "grep")
                         (:file "lem")
@@ -50,7 +49,6 @@
                         :osicat
                         #+sbcl :sb-posix
                         :bordeaux-threads
-                        ;:swank-client
                         :trivial-gray-streams
                         :cl-ppcre
                         :inquisitor

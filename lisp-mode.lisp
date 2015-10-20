@@ -21,6 +21,7 @@
           lisp-disassemble-symbol
           lisp-indent-region
           lisp-indent-sexp
+          lisp-current-package
           lisp-complete-symbol
           lisp-comment-or-uncomment-region
           lisp-comment-region
@@ -255,8 +256,8 @@
                       (list
                        " "
                        (lambda (window)
-                         (declare (ignore window))
-                         (package-name (lisp-current-package)))))))
+                         (package-name (lisp-current-package
+                                        (window-buffer window))))))))
 
 (defun %lisp-mode-skip-expr-prefix (c1 c2 step-arg)
   (when c1
@@ -366,10 +367,10 @@
   (mark-sexp)
   (lisp-indent-region))
 
-(defun lisp-current-package ()
+(defun lisp-current-package (&optional (buffer (window-buffer)))
   (let ((package-name
          (cdr (assoc "package"
-                     (buffer-get (window-buffer)
+                     (buffer-get buffer
                                  :file-property-list)
                      :test #'equal))))
     (or (and package-name

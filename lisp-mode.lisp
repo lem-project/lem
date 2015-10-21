@@ -386,13 +386,13 @@
                      (buffer-get (window-buffer)
                                  :file-property-list))))
 
-(define-key *lisp-mode-keymap* (kbd "C-x p") 'lisp-read-change-package)
-(define-command lisp-read-change-package () ()
+(defun lisp-read-change-package (find-package-function
+                                 complete-package-function)
   (let* ((package-name
           (string-upcase
            (minibuf-read-line "Package: " ""
-                              'complete-package nil)))
-         (package (find-package package-name)))
+                              complete-package-function nil)))
+         (package (funcall find-package-function package-name)))
     (cond (package
            (lisp-change-package package) t)
           (t
@@ -400,6 +400,10 @@
             (format nil "Package does not exist: ~a"
                     package-name))
            nil))))
+
+(define-key *lisp-mode-keymap* (kbd "C-x p") 'lisp-set-package)
+(define-command lisp-set-package () ()
+  (lisp-read-change-package #'find-package nil))
 
 (defun %string-to-exps (str)
   (let ((str str)
@@ -503,22 +507,22 @@
   (lisp-eval-string (region-string begin end))
   t)
 
-(defun %eval-sexp (move-sexp)
+(defun lisp-move-and-eval-sexp (move-sexp eval-string-function)
   (let ((str (save-excursion
               (and (funcall move-sexp)
                    (mark-sexp)
                    (region-string (region-beginning) (region-end))))))
     (when str
-      (lisp-eval-string str)
+      (funcall eval-string-function str)
       t)))
 
 (define-key *lisp-mode-keymap* (kbd "M-C-x") 'lisp-eval-defun)
 (define-command lisp-eval-defun () ()
-  (%eval-sexp #'top-of-defun))
+  (lisp-move-and-eval-sexp #'top-of-defun #'lisp-eval-string))
 
 (define-key *lisp-mode-keymap* (kbd "C-x u") 'lisp-eval-last-sexp)
 (define-command lisp-eval-last-sexp () ()
-  (%eval-sexp #'backward-sexp))
+  (lisp-move-and-eval-sexp #'backward-sexp #'lisp-eval-string))
 
 (define-key *lisp-mode-keymap* (kbd "C-x l") 'lisp-load-file)
 (define-key *lisp-mode-keymap* (kbd "C-x C-l") 'lisp-load-file)

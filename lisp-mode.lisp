@@ -367,16 +367,18 @@
   (mark-sexp)
   (lisp-indent-region))
 
-(defun lisp-current-package (&optional (buffer (window-buffer)))
+(defun lisp-buffer-package (buffer)
   (let ((package-name
          (cdr (assoc "package"
                      (buffer-get buffer
                                  :file-property-list)
                      :test #'equal))))
-    (or (and package-name
-             (find-package
-              (string-upcase package-name)))
-        (find-package "COMMON-LISP-USER"))))
+    (when package-name
+      (string-upcase package-name))))
+
+(defun lisp-current-package (&optional (buffer (window-buffer)))
+  (or (find-package (lisp-buffer-package buffer))
+      (find-package "COMMON-LISP-USER")))
 
 (defun lisp-change-package (package)
   (buffer-put (window-buffer)

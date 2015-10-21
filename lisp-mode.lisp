@@ -13,7 +13,6 @@
           lisp-eval-region
           lisp-eval-defun
           lisp-eval-last-sexp
-          lisp-eval-buffer
           lisp-load-file
           lisp-macroexpand
           lisp-macroexpand-all
@@ -520,12 +519,6 @@
 (define-key *lisp-mode-keymap* (kbd "C-x u") 'lisp-eval-last-sexp)
 (define-command lisp-eval-last-sexp () ()
   (%eval-sexp #'backward-sexp))
-
-(define-key *lisp-mode-keymap* (kbd "C-x y") 'lisp-eval-buffer)
-(define-command lisp-eval-buffer () ()
-  (lisp-eval-string
-   (region-string (progn (beginning-of-buffer) (point))
-                  (progn (end-of-buffer) (point)))))
 
 (define-key *lisp-mode-keymap* (kbd "C-x l") 'lisp-load-file)
 (define-key *lisp-mode-keymap* (kbd "C-x C-l") 'lisp-load-file)

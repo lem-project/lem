@@ -737,7 +737,7 @@
                (when arglist
                  (minibuf-print arglist))))))))))
 
-(define-key *global-keymap* (kbd "C-x ;") 'lisp-comment-or-uncomment-region)
+(define-key *lisp-mode-keymap* (kbd "C-x ;") 'lisp-comment-or-uncomment-region)
 (define-command lisp-comment-or-uncomment-region (arg) ("P")
   (if arg
       (lisp-uncomment-region)

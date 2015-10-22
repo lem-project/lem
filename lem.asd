@@ -40,6 +40,7 @@
                         (:file "info-mode")
                         (:file "sexp")
                         (:file "lisp-mode")
+                        (:file "leval-client")
                         (:file "c-mode")
                         (:file "grep")
                         (:file "lem")
@@ -52,4 +53,5 @@
                         :trivial-gray-streams
                         :cl-ppcre
                         :inquisitor
-                        :babel))
+                        :babel
+                        :usocket))

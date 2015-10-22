@@ -669,8 +669,7 @@
                                         package-name
                                         external-p)))))))
 
-(define-key *lisp-mode-keymap* (kbd "M-C-i") 'lisp-complete-symbol)
-(define-command lisp-complete-symbol () ()
+(defun lisp-preceding-symbol ()
   (let* ((end (point))
          (begin (prog2 (backward-sexp)
                     (point)
@@ -678,12 +677,20 @@
          (str (string-left-trim
                "'`," (string-left-trim
                       "#" (region-string begin end)))))
+    str))
+
+(defun lisp-popup-completion-symbol (complete-function)
+  (let ((str (lisp-preceding-symbol)))
     (multiple-value-bind (comp-str win)
-        (popup-completion #'complete-symbol str)
+        (popup-completion complete-function str)
       (when win
-          (insert-string
-           (subseq comp-str
-                   (length str))))))
+        (insert-string
+         (subseq comp-str
+                 (length str)))))))
+
+(define-key *lisp-mode-keymap* (kbd "M-C-i") 'lisp-complete-symbol)
+(define-command lisp-complete-symbol () ()
+  (lisp-popup-completion-symbol #'complete-symbol)
   t)
 
 (defun lisp-get-arglist (symbol)
@@ -722,24 +729,30 @@
             " ")
            "))"))))))
 
+(defun lisp-echo-arglist (get-arglist-function)
+  (save-excursion
+   (when (sexp-goto-car)
+     (let* ((start (point))
+            (end (progn (forward-sexp 1 t) (point))))
+       (multiple-value-bind (arglist)
+           (funcall get-arglist-function
+                    (region-string start end))
+         (when arglist
+           (minibuf-print arglist)))))))
+
 (define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-self-insert-then-arg-list)
 (define-command lisp-self-insert-then-arg-list (n) ("p")
   (prog1 (self-insert n)
-    (save-excursion
-     (when (sexp-goto-car)
-       (let* ((start (point))
-              (end (progn (forward-sexp 1 t) (point))))
+    (lisp-echo-arglist
+     #'(lambda (string)
          (multiple-value-bind (x error-p)
              (ignore-errors
               (values
                (let ((*package* (lisp-current-package)))
-                 (read-from-string
-                  (region-string start end)))))
+                 (read-from-string string))))
            (when (and (not error-p)
                       (symbolp x))
-             (let ((arglist (lisp-get-arglist x)))
-               (when arglist
-                 (minibuf-print arglist))))))))))
+             (lisp-get-arglist x)))))))
 
 (define-key *lisp-mode-keymap* (kbd "C-x ;") 'lisp-comment-or-uncomment-region)
 (define-command lisp-comment-or-uncomment-region (arg) ("P")

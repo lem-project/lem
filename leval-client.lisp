@@ -64,10 +64,9 @@
 (defvar *leval-mode-keymap*
   (make-keymap "leval"))
 
-(define-major-mode leval-mode nil
+(define-minor-mode leval-mode
   (:name "leval"
-   :keymap *leval-mode-keymap*
-   :syntax-table *lisp-syntax-table*)
+   :keymap *leval-mode-keymap*)
   (buffer-put (window-buffer)
               :modeline-format
               (append *modeline-default-format*

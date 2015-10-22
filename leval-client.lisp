@@ -44,6 +44,9 @@
 (defun leval-send-arglist (string package-name)
   (leval-send (list :arglist string package-name)))
 
+(defun leval-send-trace (string untrace-p package-name)
+  (leval-send (list :trace string untrace-p package-name)))
+
 (defun leval-update-package (package-name)
   (let ((prev-package-name
          (buffer-get (window-buffer)
@@ -155,13 +158,23 @@
           (insert-string expr-string))
         t))))
 
+(defun leval-read-symbol (prompt &optional default)
+  (when default
+    (setq prompt (format nil "~a(~a) " prompt default)))
+  (let ((str (minibuf-read-line prompt
+                                ""
+                                #'(lambda (str)
+                                    (leval-send-complete-symbol
+                                     str
+                                     (leval-current-package)))
+                                nil)))
+    (if (equal "" str)
+        (or default nil)
+        str)))
+
 (flet ((f (prompt send-function buffer-name)
           (let* ((name
-                  (minibuf-read-line prompt ""
-                                     #'(lambda (str)
-                                         (leval-send-complete-symbol
-                                          str (leval-current-package)))
-                                     nil))
+                  (leval-read-symbol prompt))
                  (text
                   (funcall send-function name (leval-current-package)))
                  (buffer
@@ -192,3 +205,15 @@
      #'(lambda (string)
          (leval-send-arglist string
                              (leval-current-package))))))
+
+(define-key *leval-mode-keymap* (kbd "C-x t") 'leval-trace)
+(define-command leval-trace (symbol-name)
+  ((list (leval-read-symbol "trace: ")))
+  (leval-send-trace symbol-name nil (leval-current-package))
+  t)
+
+(define-key *leval-mode-keymap* (kbd "C-x T") 'leval-untrace)
+(define-command leval-untrace (symbol-name)
+  ((list (leval-read-symbol "untrace: " nil)))
+  (leval-send-trace symbol-name t (leval-current-package))
+  t)

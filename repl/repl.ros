@@ -1,0 +1,17 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 "$@"
+|#
+
+(load "repl.asd")
+(require :repl)
+
+(defun main (&rest argv)
+  (declare (ignorable argv))
+  (case (length argv)
+    ((1)
+     (repl:server-start "localhost" (parse-integer (car argv))))
+    ((2)
+     (repl:server-start (car argv) (parse-integer (cadr argv)))))
+  (repl:repl))

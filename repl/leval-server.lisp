@@ -142,6 +142,7 @@
                    (force-output stream))))))
 
 (defun server-start (hostname port)
+  (format t "~&hostname: ~a~%port: ~a~%" hostname port)
   (bt:make-thread
    #'(lambda ()
        (usocket:with-socket-listener (socket hostname port :reuse-address t)

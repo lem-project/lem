@@ -76,13 +76,22 @@
                            (leval-current-package
                             (window-buffer window)))))))
 
-(define-command leval-connect (hostname port) ("sHost name: " "nPort: ")
-  (let ((socket (usocket:socket-connect hostname port)))
-    (setq *leval-client*
-          (make-leval-client :hostname hostname
-                             :port port
-                             :socket socket))
-    t))
+(define-command leval-connect (hostname port)
+  ((list (minibuf-read-string "Host: " "localhost")
+         (parse-integer (minibuf-read-string "Port: " "53912")
+                        :junk-allowed t)))
+  (cond ((typep port '(integer 1024 65535))
+         (let ((socket (usocket:socket-connect hostname port)))
+           (setq *leval-client*
+                 (make-leval-client :hostname hostname
+                                    :port port
+                                    :socket socket))
+           (lisp-mode)
+           (leval-mode t)
+           t))
+        (t
+         (minibuf-print (format nil "Illegal port: ~a" port))
+         nil)))
 
 (define-key *leval-mode-keymap* (kbd "C-i") 'lisp-indent-line)
 (define-key *leval-mode-keymap* (kbd "C-j") 'lisp-newline-and-indent)

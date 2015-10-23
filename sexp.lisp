@@ -359,10 +359,13 @@
                     (return t)))))))
 
 (define-key *global-keymap* (kbd "M-C-@") 'mark-sexp)
-(define-command mark-sexp () ()
-  (save-excursion
-   (and (forward-sexp 1)
-        (mark-set))))
+(define-command mark-sexp (&optional (arg t)) ("P")
+  (prog1
+      (save-excursion
+       (and (forward-sexp 1)
+            (mark-set)))
+    (when arg
+      (buffer-mark-cancel (window-buffer)))))
 
 (define-key *global-keymap* (kbd "M-C-k") 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")

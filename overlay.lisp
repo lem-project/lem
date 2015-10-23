@@ -22,4 +22,5 @@
     overlay))
 
 (defun delete-overlay (overlay)
-  (buffer-delete-overlay (overlay-buffer overlay) overlay))
+  (when (overlay-p overlay)
+    (buffer-delete-overlay (overlay-buffer overlay) overlay)))

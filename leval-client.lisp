@@ -10,7 +10,7 @@
 (defvar *leval-default-hostname* "localhost")
 (defvar *leval-default-port* 53912)
 
-(defvar *leval-client*)
+(defvar *leval-client* nil)
 (defvar *leval-connected-p* nil)
 
 (define-command leval () ()
@@ -31,9 +31,16 @@
       (return t))))
 
 (defun leval-send (event)
+  (unless *leval-client*
+    (minibuf-print "Unconnected")
+    (return-from leval-send))
   (let ((stream (usocket:socket-stream (leval-client-socket *leval-client*))))
-    (print event stream)
-    (force-output stream)
+    (handler-case (progn
+                    (print event stream)
+                    (force-output stream))
+      (error ()
+             (setq *leval-client* nil)
+             (return-from leval-send)))
     (prog1 (ignore-errors (read stream nil))
       (leval-connect-internal (leval-client-hostname *leval-client*)
                               (leval-client-port *leval-client*)))))

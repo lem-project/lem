@@ -7,16 +7,30 @@
   port
   socket)
 
+(defvar *leval-default-hostname* "localhost")
+(defvar *leval-default-port* 53912)
+
 (defvar *leval-client*)
 (defvar *leval-connected-p* nil)
+
+(define-command leval () ()
+  (uiop:run-program
+   "xterm -e ros run -s leval-server -l \"leval-server/start.lisp\" &")
+  (loop :for error-p := nil :do
+    (sleep 1)
+    (handler-case (leval-connect-internal *leval-default-hostname*
+                                          *leval-default-port*)
+      (error () (setq error-p t)))
+    (when (not error-p)
+      (return t))))
 
 (defun leval-send (event)
   (let ((stream (usocket:socket-stream (leval-client-socket *leval-client*))))
     (print event stream)
     (force-output stream)
     (prog1 (ignore-errors (read stream nil))
-      (leval-connect (leval-client-hostname *leval-client*)
-                     (leval-client-port *leval-client*)))))
+      (leval-connect-internal (leval-client-hostname *leval-client*)
+                              (leval-client-port *leval-client*)))))
 
 (defun leval-send-rex (string package-name)
   (leval-send (list :eval string package-name)))
@@ -81,23 +95,30 @@
                          (leval-current-package
                           (window-buffer window)))))))
 
-(define-command leval-connect (hostname port)
-  ((list (minibuf-read-string "Host: " "localhost")
-         (parse-integer (minibuf-read-string "Port: " "53912")
-                        :junk-allowed t)))
+(defun leval-connect-internal (hostname port)
   (cond ((typep port '(integer 1024 65535))
          (let ((socket (usocket:socket-connect hostname port)))
            (setq *leval-client*
                  (make-leval-client :hostname hostname
                                     :port port
                                     :socket socket))
-           (unless *leval-connected-p*
-             (leval-mode)
-             (define-command lisp-mode ()
-               (leval-mode))
-             (setq *leval-connected-p* t))
-           (scan-file-property-list)
            t))
+        (t nil)))
+
+(define-command leval-connect (hostname port)
+  ((list (minibuf-read-string "Host: " *leval-default-hostname*)
+         (parse-integer (minibuf-read-string
+                         "Port: "
+                         (write-to-string *leval-default-port*))
+                        :junk-allowed t)))
+  (cond ((leval-connect-internal hostname port)
+         (unless *leval-connected-p*
+           (leval-mode)
+           (define-command lisp-mode ()
+             (leval-mode))
+           (setq *leval-connected-p* t))
+         (scan-file-property-list)
+         t)
         (t
          (minibuf-print (format nil "Illegal port: ~a" port))
          nil)))

@@ -49,9 +49,11 @@
                            ,@(cdr c))))
                    cases)))))
 
-(defun safe-read-from-string (string)
+(defun safe-read-from-string (string &optional (package *package*))
   (multiple-value-bind (x condition)
-      (ignore-errors (values (read-from-string string)))
+      (ignore-errors
+       (let ((*package* package))
+         (values (read-from-string string))))
     (values x condition)))
 
 (defun read-and-macroexpand (string macroexpand-function package-name stream)
@@ -79,7 +81,7 @@
   (case-dbind event
               ((:eval string package-name)
                (multiple-value-bind (x condition)
-                   (safe-read-from-string string)
+                   (safe-read-from-string string (find-package package-name))
                  (cond (condition
                         (format stream "~&~a~%" condition)
                         (force-output stream))
@@ -143,8 +145,7 @@
               ((:arglist string package-name)
                (let ((package (find-package package-name)))
                  (multiple-value-bind (symbol condition)
-                     (let ((*package* package))
-                       (safe-read-from-string string))
+                     (safe-read-from-string string package)
                    (if condition
                        (print nil stream)
                        (let ((x (arglist symbol)))

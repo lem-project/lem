@@ -13,7 +13,7 @@
   (let ((stream (usocket:socket-stream (leval-client-socket *leval-client*))))
     (print event stream)
     (force-output stream)
-    (prog1 (read stream)
+    (prog1 (read stream nil)
       (leval-connect (leval-client-hostname *leval-client*)
                      (leval-client-port *leval-client*)))))
 
@@ -21,7 +21,7 @@
   (leval-send (list :eval string package-name)))
 
 (defun leval-send-find-package (string)
-  (leval-send (list :find-package)))
+  (leval-send (list :find-package string)))
 
 (defun leval-send-macroexpand-1 (string package-name)
   (leval-send (list :macroexpand-1 string package-name)))
@@ -61,7 +61,7 @@
         t))))
 
 (defun leval-current-package (&optional (buffer (window-buffer)))
-  (or (buffer-get buffer :leval-current-package)
+  (or (leval-send-find-package (lisp-buffer-package buffer))
       "COMMON-LISP-USER"))
 
 (defvar *leval-mode-keymap*
@@ -91,6 +91,7 @@
                                     :socket socket))
            (lisp-mode)
            (leval-mode t)
+           (scan-file-property-list)
            t))
         (t
          (minibuf-print (format nil "Illegal port: ~a" port))

@@ -504,7 +504,7 @@
              ((<= start-linum
                   (point-linum start)
                   end-linum
-                  (point-linum end))
+                  (1- (point-linum end)))
               (set-attr-display-lines disp-lines
                                       (overlay-attr overlay)
                                       start-linum

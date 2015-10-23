@@ -8,12 +8,13 @@
   socket)
 
 (defvar *leval-client*)
+(defvar *leval-connected-p* nil)
 
 (defun leval-send (event)
   (let ((stream (usocket:socket-stream (leval-client-socket *leval-client*))))
     (print event stream)
     (force-output stream)
-    (prog1 (read stream nil)
+    (prog1 (ignore-errors (read stream nil))
       (leval-connect (leval-client-hostname *leval-client*)
                      (leval-client-port *leval-client*)))))
 
@@ -67,17 +68,18 @@
 (defvar *leval-mode-keymap*
   (make-keymap "leval"))
 
-(define-minor-mode leval-mode
+(define-major-mode leval-mode nil
   (:name "leval"
-   :keymap *leval-mode-keymap*)
+   :keymap *leval-mode-keymap*
+   :syntax-table *lisp-syntax-table*)
   (buffer-put (window-buffer)
               :modeline-format
               (append *modeline-default-format*
                       (list
                        " "
-                       #'(lambda (window)
-                           (leval-current-package
-                            (window-buffer window)))))))
+                       (lambda (window)
+                         (leval-current-package
+                          (window-buffer window)))))))
 
 (define-command leval-connect (hostname port)
   ((list (minibuf-read-string "Host: " "localhost")
@@ -89,8 +91,11 @@
                  (make-leval-client :hostname hostname
                                     :port port
                                     :socket socket))
-           (lisp-mode)
-           (leval-mode t)
+           (unless *leval-connected-p*
+             (leval-mode)
+             (define-command lisp-mode ()
+               (leval-mode))
+             (setq *leval-connected-p* t))
            (scan-file-property-list)
            t))
         (t

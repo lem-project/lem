@@ -16,12 +16,18 @@
 (define-command leval () ()
   (uiop:run-program
    "xterm -e ros run -s leval-server -l \"leval-server/start.lisp\" &")
-  (loop :for error-p := nil :do
+  (loop
     (sleep 1)
-    (handler-case (leval-connect-internal *leval-default-hostname*
-                                          *leval-default-port*)
-      (error () (setq error-p t)))
-    (when (not error-p)
+    (unless (eq :refused-error
+                (leval-connect-internal
+                 *leval-default-hostname*
+                 *leval-default-port*))
+      (unless *leval-connected-p*
+        (leval-mode)
+        (define-command lisp-mode () ()
+          (leval-mode))
+        (setq *leval-connected-p* t))
+      (scan-file-property-list)
       (return t))))
 
 (defun leval-send (event)
@@ -96,14 +102,16 @@
                           (window-buffer window)))))))
 
 (defun leval-connect-internal (hostname port)
-  (cond ((typep port '(integer 1024 65535))
-         (let ((socket (usocket:socket-connect hostname port)))
-           (setq *leval-client*
-                 (make-leval-client :hostname hostname
-                                    :port port
-                                    :socket socket))
-           t))
-        (t nil)))
+  (handler-case
+      (cond ((typep port '(integer 1024 65535))
+             (let ((socket (usocket:socket-connect hostname port)))
+               (setq *leval-client*
+                     (make-leval-client :hostname hostname
+                                        :port port
+                                        :socket socket))
+               :ok))
+            (t :illegal-port))
+    (usocket:connection-refused-error () :refused-error)))
 
 (define-command leval-connect (hostname port)
   ((list (minibuf-read-string "Host: " *leval-default-hostname*)
@@ -111,17 +119,19 @@
                          "Port: "
                          (write-to-string *leval-default-port*))
                         :junk-allowed t)))
-  (cond ((leval-connect-internal hostname port)
-         (unless *leval-connected-p*
-           (leval-mode)
-           (define-command lisp-mode ()
-             (leval-mode))
-           (setq *leval-connected-p* t))
-         (scan-file-property-list)
-         t)
-        (t
-         (minibuf-print (format nil "Illegal port: ~a" port))
-         nil)))
+  (ecase (leval-connect-internal hostname port)
+    ((:ok)
+     (unless *leval-connected-p*
+       (leval-mode)
+       (define-command lisp-mode ()
+         (leval-mode))
+       (setq *leval-connected-p* t))
+     (scan-file-property-list)
+     t)
+    ((:illegal-port)
+     (minibuf-print (format nil "Illegal port: ~a" port)))
+    ((:refused-error)
+     nil)))
 
 (define-key *leval-mode-keymap* (kbd "C-i") 'lisp-indent-line)
 (define-key *leval-mode-keymap* (kbd "C-j") 'lisp-newline-and-indent)

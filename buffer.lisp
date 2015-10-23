@@ -121,6 +121,8 @@
   tail-line
   cache-line
   cache-linum
+  mark-p
+  mark-overlay
   mark-linum
   mark-col
   keep-binfo
@@ -151,6 +153,8 @@
     (setf (buffer-tail-line buffer) line)
     (setf (buffer-cache-line buffer) line)
     (setf (buffer-cache-linum buffer) 1)
+    (setf (buffer-mark-p buffer) nil)
+    (setf (buffer-mark-overlay buffer) nil)
     (setf (buffer-mark-linum buffer) 1)
     (setf (buffer-mark-col buffer) 0)
     (setf (buffer-nlines buffer) 1)
@@ -292,6 +296,28 @@
   (setf (buffer-overlays buffer)
         (delete overlay (buffer-overlays buffer))))
 
+(defun buffer-mark-cancel (buffer)
+  (when (buffer-mark-p buffer)
+    (setf (buffer-mark-p buffer) nil)
+    (delete-overlay (buffer-mark-overlay buffer))))
+
+(defun buffer-update-mark-overlay (buffer)
+  (when (buffer-mark-p buffer)
+    (let (start
+          end
+          (mark-point (make-point (buffer-mark-linum buffer)
+                                  (buffer-mark-col buffer)))
+          (cur-point (point)))
+      (if (point< mark-point cur-point)
+          (setq start mark-point
+                end cur-point)
+          (setq start cur-point
+                end mark-point))
+      (when (buffer-mark-overlay buffer)
+        (delete-overlay (buffer-mark-overlay buffer)))
+      (setf (buffer-mark-overlay buffer)
+            (make-overlay start end :attr (make-attr :color :blue :reverse-p t))))))
+
 (defun %buffer-get-line (buffer linum)
   (cond
    ((= linum (buffer-cache-linum buffer))
@@ -415,6 +441,33 @@
                  start-column
                  end-column)))
 
+(defun set-attr-display-lines (disp-lines
+                               attr
+                               top-linum
+                               start-linum
+                               start-column
+                               end-linum
+                               end-column)
+  (set-attr-display-line disp-lines
+                         attr
+                         top-linum
+                         start-linum
+                         start-column
+                         nil)
+  (loop :for linum :from (1+ start-linum) :below end-linum :do
+    (set-attr-display-line disp-lines
+                           attr
+                           top-linum
+                           linum
+                           0
+                           nil))
+  (set-attr-display-line disp-lines
+                         attr
+                         top-linum
+                         end-linum
+                         0
+                         end-column))
+
 (defun display-lines-set-overlays (disp-lines overlays start-linum end-linum)
   (loop
     for overlay in overlays
@@ -430,29 +483,38 @@
                                      (point-column end)))
              ((and (<= start-linum (point-linum start))
                    (< (point-linum end) end-linum))
-              (set-attr-display-line disp-lines
-                                     (overlay-attr overlay)
-                                     start-linum
-                                     (point-linum start)
-                                     (point-column start)
-                                     nil)
-              (loop
-                for linum from (1+ (point-linum start))
-                below (point-linum end) do
-                (set-attr-display-line disp-lines
-                                       (overlay-attr overlay)
-                                       start-linum
-                                       linum
-                                       0
-                                       nil))
-              (set-attr-display-line disp-lines
-                                     (overlay-attr overlay)
-                                     start-linum
-                                     (point-linum end)
-                                     0
-                                     (point-column end))))))
+              (set-attr-display-lines disp-lines
+                                      (overlay-attr overlay)
+                                      start-linum
+                                      (point-linum start)
+                                      (point-column start)
+                                      (point-linum end)
+                                      (point-column end)))
+             ((<= (point-linum start)
+                  start-linum
+                  (point-linum end)
+                  end-linum)
+              (set-attr-display-lines disp-lines
+                                      (overlay-attr overlay)
+                                      start-linum
+                                      start-linum
+                                      0
+                                      (point-linum end)
+                                      (point-column end)))
+             ((<= start-linum
+                  (point-linum start)
+                  end-linum
+                  (point-linum end))
+              (set-attr-display-lines disp-lines
+                                      (overlay-attr overlay)
+                                      start-linum
+                                      (point-linum start)
+                                      (point-column start)
+                                      (1- end-linum)
+                                      nil)))))
 
 (defun buffer-display-lines (buffer disp-lines start-linum nlines)
+  (buffer-update-mark-overlay buffer)
   (let ((end-linum (+ start-linum nlines))
         (disp-nlines 0))
     (do ((line (buffer-get-line buffer start-linum)
@@ -616,6 +678,10 @@
     (setf (buffer-tail-line buffer) line)
     (setf (buffer-cache-line buffer) line)
     (setf (buffer-cache-linum buffer) 1)
+    (setf (buffer-mark-p buffer) nil)
+    (setf (buffer-mark-overlay buffer) nil)
+    (setf (buffer-mark-linum buffer) 1)
+    (setf (buffer-mark-col buffer) 0)
     (setf (buffer-keep-binfo buffer) nil)
     (setf (buffer-nlines buffer) 1)
     (setf (buffer-overlays buffer) nil)))

@@ -345,6 +345,7 @@
 (define-key *global-keymap* (kbd "C-@") 'mark-set)
 (define-command mark-set () ()
   (let ((buffer (window-buffer)))
+    (setf (buffer-mark-p buffer) t)
     (setf (buffer-mark-linum buffer)
           (window-cur-linum))
     (setf (buffer-mark-col buffer)

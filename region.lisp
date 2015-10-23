@@ -76,13 +76,15 @@
   (let ((lines (region-lines begin end)))
     (with-kill ()
       (kill-push lines)))
+  (buffer-mark-cancel (window-buffer))
   (minibuf-print "region copied")
   t)
 
 (define-key *global-keymap* (kbd "C-w") 'kill-region)
 (define-command kill-region (begin end) ("r")
   (point-set begin)
-  (delete-char (region-count begin end)))
+  (prog1 (delete-char (region-count begin end))
+    (buffer-mark-cancel (window-buffer))))
 
 (defun apply-region-lines (begin end fn)
   (point-set begin)

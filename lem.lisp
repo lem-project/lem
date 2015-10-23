@@ -68,6 +68,7 @@
 (define-command keyboard-quit () ()
   (setq *universal-argument* nil)
   (setq *macro-recording-p* nil)
+  (buffer-mark-cancel (window-buffer))
   (delete-completion-window)
   (minibuf-print "Quit"))
 

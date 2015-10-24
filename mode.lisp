@@ -78,9 +78,10 @@
        (setf (major-mode) ',major-mode)
        (buffer-clear-variables (window-buffer))
        (syntax-scan-buffer (window-buffer))
+       (run-hooks ',(symb major-mode "-HOOK"))
        ,@body)))
 
-(defmacro define-minor-mode (minor-mode &key name keymap)
+(defmacro define-minor-mode (minor-mode (&key name keymap) &body body)
   `(progn
      (push ',minor-mode *mode-list*)
      (setf (mode-name ',minor-mode) ,name)

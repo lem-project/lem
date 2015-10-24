@@ -13,7 +13,6 @@
           lisp-eval-region
           lisp-eval-defun
           lisp-eval-last-sexp
-          lisp-eval-buffer
           lisp-load-file
           lisp-macroexpand
           lisp-macroexpand-all
@@ -367,16 +366,18 @@
   (mark-sexp)
   (lisp-indent-region))
 
-(defun lisp-current-package (&optional (buffer (window-buffer)))
+(defun lisp-buffer-package (buffer)
   (let ((package-name
          (cdr (assoc "package"
                      (buffer-get buffer
                                  :file-property-list)
                      :test #'equal))))
-    (or (and package-name
-             (find-package
-              (string-upcase package-name)))
-        (find-package "COMMON-LISP-USER"))))
+    (when package-name
+      (string-upcase package-name))))
+
+(defun lisp-current-package (&optional (buffer (window-buffer)))
+  (or (find-package (lisp-buffer-package buffer))
+      (find-package "COMMON-LISP-USER")))
 
 (defun lisp-change-package (package)
   (buffer-put (window-buffer)
@@ -385,13 +386,13 @@
                      (buffer-get (window-buffer)
                                  :file-property-list))))
 
-(define-key *lisp-mode-keymap* (kbd "C-x p") 'lisp-read-change-package)
-(define-command lisp-read-change-package () ()
+(defun lisp-read-change-package (find-package-function
+                                 complete-package-function)
   (let* ((package-name
           (string-upcase
            (minibuf-read-line "Package: " ""
-                              'complete-package nil)))
-         (package (find-package package-name)))
+                              complete-package-function nil)))
+         (package (funcall find-package-function package-name)))
     (cond (package
            (lisp-change-package package) t)
           (t
@@ -399,6 +400,10 @@
             (format nil "Package does not exist: ~a"
                     package-name))
            nil))))
+
+(define-key *lisp-mode-keymap* (kbd "C-x p") 'lisp-set-package)
+(define-command lisp-set-package () ()
+  (lisp-read-change-package #'find-package nil))
 
 (defun %string-to-exps (str)
   (let ((str str)
@@ -502,28 +507,22 @@
   (lisp-eval-string (region-string begin end))
   t)
 
-(defun %eval-sexp (move-sexp)
+(defun lisp-move-and-eval-sexp (move-sexp eval-string-function)
   (let ((str (save-excursion
               (and (funcall move-sexp)
                    (mark-sexp)
                    (region-string (region-beginning) (region-end))))))
     (when str
-      (lisp-eval-string str)
+      (funcall eval-string-function str)
       t)))
 
 (define-key *lisp-mode-keymap* (kbd "M-C-x") 'lisp-eval-defun)
 (define-command lisp-eval-defun () ()
-  (%eval-sexp #'top-of-defun))
+  (lisp-move-and-eval-sexp #'top-of-defun #'lisp-eval-string))
 
 (define-key *lisp-mode-keymap* (kbd "C-x u") 'lisp-eval-last-sexp)
 (define-command lisp-eval-last-sexp () ()
-  (%eval-sexp #'backward-sexp))
-
-(define-key *lisp-mode-keymap* (kbd "C-x y") 'lisp-eval-buffer)
-(define-command lisp-eval-buffer () ()
-  (lisp-eval-string
-   (region-string (progn (beginning-of-buffer) (point))
-                  (progn (end-of-buffer) (point)))))
+  (lisp-move-and-eval-sexp #'backward-sexp #'lisp-eval-string))
 
 (define-key *lisp-mode-keymap* (kbd "C-x l") 'lisp-load-file)
 (define-key *lisp-mode-keymap* (kbd "C-x C-l") 'lisp-load-file)
@@ -670,8 +669,7 @@
                                         package-name
                                         external-p)))))))
 
-(define-key *lisp-mode-keymap* (kbd "M-C-i") 'lisp-complete-symbol)
-(define-command lisp-complete-symbol () ()
+(defun lisp-preceding-symbol ()
   (let* ((end (point))
          (begin (prog2 (backward-sexp)
                     (point)
@@ -679,12 +677,20 @@
          (str (string-left-trim
                "'`," (string-left-trim
                       "#" (region-string begin end)))))
+    str))
+
+(defun lisp-popup-completion-symbol (complete-function)
+  (let ((str (lisp-preceding-symbol)))
     (multiple-value-bind (comp-str win)
-        (popup-completion #'complete-symbol str)
+        (popup-completion complete-function str)
       (when win
-          (insert-string
-           (subseq comp-str
-                   (length str))))))
+        (insert-string
+         (subseq comp-str
+                 (length str)))))))
+
+(define-key *lisp-mode-keymap* (kbd "M-C-i") 'lisp-complete-symbol)
+(define-command lisp-complete-symbol () ()
+  (lisp-popup-completion-symbol #'complete-symbol)
   t)
 
 (defun lisp-get-arglist (symbol)
@@ -723,26 +729,32 @@
             " ")
            "))"))))))
 
+(defun lisp-echo-arglist (get-arglist-function)
+  (save-excursion
+   (when (sexp-goto-car)
+     (let* ((start (point))
+            (end (progn (forward-sexp 1 t) (point))))
+       (multiple-value-bind (arglist)
+           (funcall get-arglist-function
+                    (region-string start end))
+         (when arglist
+           (minibuf-print arglist)))))))
+
 (define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-self-insert-then-arg-list)
 (define-command lisp-self-insert-then-arg-list (n) ("p")
   (prog1 (self-insert n)
-    (save-excursion
-     (when (sexp-goto-car)
-       (let* ((start (point))
-              (end (progn (forward-sexp 1 t) (point))))
+    (lisp-echo-arglist
+     #'(lambda (string)
          (multiple-value-bind (x error-p)
              (ignore-errors
               (values
                (let ((*package* (lisp-current-package)))
-                 (read-from-string
-                  (region-string start end)))))
+                 (read-from-string string))))
            (when (and (not error-p)
                       (symbolp x))
-             (let ((arglist (lisp-get-arglist x)))
-               (when arglist
-                 (minibuf-print arglist))))))))))
+             (lisp-get-arglist x)))))))
 
-(define-key *global-keymap* (kbd "C-x ;") 'lisp-comment-or-uncomment-region)
+(define-key *lisp-mode-keymap* (kbd "C-x ;") 'lisp-comment-or-uncomment-region)
 (define-command lisp-comment-or-uncomment-region (arg) ("P")
   (if arg
       (lisp-uncomment-region)

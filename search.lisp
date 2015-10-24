@@ -39,8 +39,8 @@
 (defvar *isearch-highlight-overlays* nil)
 
 (define-minor-mode isearch-mode
-  :name "isearch"
-  :keymap *isearch-keymap*)
+  (:name "isearch"
+   :keymap *isearch-keymap*))
 
 (defun isearch-update-display ()
   (isearch-update-minibuf)

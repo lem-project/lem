@@ -60,6 +60,7 @@
           (return)))))
 
 (define-key *global-keymap* (kbd "M-C-h") 'backward-delete-word)
+(define-key *global-keymap* (kbd "M-[backspace]") 'backward-delete-word)
 (define-command backward-delete-word (n) ("p")
   (if (minusp n)
       (delete-word (- n))

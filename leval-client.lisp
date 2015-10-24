@@ -168,7 +168,7 @@
 (define-key *leval-mode-keymap* (kbd "C-j") 'lisp-newline-and-indent)
 (define-key *leval-mode-keymap* (kbd "M-j") 'lisp-newline-and-indent)
 (define-key *leval-mode-keymap* (kbd "M-C-q") 'lisp-indent-sexp)
-(define-key *leval-mode-keymap* (kbd "M-C-q") 'lisp-comment-or-uncomment-region)
+(define-key *leval-mode-keymap* (kbd "C-x ;") 'lisp-comment-or-uncomment-region)
 
 (define-key *leval-mode-keymap* (kbd "C-x p") 'leval-set-package)
 (define-command leval-set-package () ()

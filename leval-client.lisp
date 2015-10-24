@@ -13,15 +13,18 @@
 (defvar *leval-client* nil)
 (defvar *leval-connected-p* nil)
 
+(defvar *leval-load-directory*)
+
 (define-command leval () ()
   (uiop:run-program
-   "xterm -e ros run -s leval-server -l \"leval-server/start.lisp\" &")
+   (format nil "xterm -e ros run -s leval-server -l '~a' &"
+           (merge-pathnames "start.lisp" *leval-load-directory*)))
   (loop
     (sleep 1)
     (unless (eq :refused-error
                 (leval-connect-internal
-                 *leval-default-hostname*
-                 *leval-default-port*))
+                  *leval-default-hostname*
+                  *leval-default-port*))
       (unless *leval-connected-p*
         (leval-mode)
         (define-command lisp-mode () ()

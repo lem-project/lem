@@ -2,6 +2,27 @@
 
 (in-package :lem)
 
+(export '(*leval-default-hostname*
+          *leval-default-port*
+          *leval-load-directory*
+          leval
+          *leval-mode-keymap*
+          leval-mode
+          leval-connect
+          leval-set-package
+          leval-eval-string
+          leval-eval-region
+          leval-eval-defun
+          leval-eval-last-sexp
+          leval-load-file
+          leval-macroexpand
+          leval-describe-symbol
+          leval-disassemble-symbol
+          leval-complete-symbol
+          leval-self-insert-then-arg-list
+          leval-trace
+          leval-untrace))
+
 (defstruct leval-client
   hostname
   port

@@ -349,6 +349,7 @@
                          linum)
                  (merge-pathnames "LEM-WARNING"
                                   (truename "./")))
+         (minibuf-print "FOUND BUG")
          (setq linum 1))
         ((< #1=(buffer-nlines buffer) linum)
          (pdebug (format nil
@@ -357,6 +358,7 @@
                          linum)
                  (merge-pathnames "LEM-WARNING"
                                   (truename "./")))
+         (minibuf-print "FOUND BUG")
          (setq linum #1#)))
   (let ((line (%buffer-get-line buffer linum)))
     (setf (buffer-cache-linum buffer) linum)

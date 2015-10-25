@@ -19,8 +19,6 @@
 
 (defvar *program-name* "Lem")
 
-(defvar *scratch-buffer-name* "*scratch*")
-
 (defvar *current-window*)
 (defvar *buffer-list* nil)
 

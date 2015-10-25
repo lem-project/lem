@@ -31,9 +31,9 @@
           lisp-repl-return
           lisp-repl-prev-input
           lisp-repl-next-input
-          popup-scratch-buffer
           *scratch-mode-keymap*
           scratch-mode
+          scratch
           eval-print-last-sexp
           lisp-info-popup))
 
@@ -888,11 +888,6 @@
       (when win
         (insert-string str)))))
 
-(define-command popup-scratch-buffer () ()
-  (setq *current-window*
-        (pop-to-buffer (get-buffer-create "*scratch*")))
-  t)
-
 (defvar *scratch-mode-keymap*
   (make-keymap "scratch" nil *lisp-mode-keymap*))
 
@@ -901,8 +896,8 @@
    :keymap *scratch-mode-keymap*
    :syntax-table *lisp-syntax-table*))
 
-(defun scratch ()
-  (set-buffer (get-buffer-create *scratch-buffer-name*))
+(define-command scratch () ()
+  (set-buffer (get-buffer-create "*scratch*"))
   (scratch-mode))
 
 (define-key *scratch-mode-keymap* (kbd "C-j") 'eval-print-last-sexp)

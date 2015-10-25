@@ -534,20 +534,6 @@
                                 end-linum)
     disp-lines))
 
-(defun buffer-append-line (buffer str)
-  (buffer-read-only-guard buffer)
-  (buffer-modify buffer)
-  (let* ((line (buffer-tail-line buffer))
-         (newline (make-line line (line-next line) str)))
-    (cond ((and (= 1 (buffer-nlines buffer))
-                (zerop (fat-length (line-fatstr (buffer-head-line buffer)))))
-           (setf (buffer-head-line buffer) newline)
-           (setf (buffer-cache-line buffer) newline))
-          (t
-           (incf (buffer-nlines buffer))))
-    (setf (buffer-tail-line buffer) newline)
-    t))
-
 (defun buffer-insert-char (buffer linum col c)
   (buffer-read-only-guard buffer)
   (cond ((char= c #\newline)

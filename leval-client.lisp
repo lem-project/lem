@@ -44,8 +44,8 @@
     (sleep 1)
     (unless (eq :refused-error
                 (leval-connect-internal
-                  *leval-default-hostname*
-                  *leval-default-port*))
+                 *leval-default-hostname*
+                 *leval-default-port*))
       (unless *leval-connected-p*
         (leval-mode)
         (define-command lisp-mode () ()
@@ -99,22 +99,13 @@
 (defun leval-send-trace (string untrace-p package-name)
   (leval-send (list :trace string untrace-p package-name)))
 
-(defun leval-update-package (package-name)
-  (let ((prev-package-name
-         (buffer-get (window-buffer)
-                     :leval-prev-package)))
-    (when (or (null prev-package-name)
-              (not (equal package-name prev-package-name)))
-      (when (leval-send-find-package package-name)
-        (buffer-put (window-buffer)
-                    :leval-current-package package-name)
-        (buffer-put (window-buffer)
-                    :leval-prev-package package-name)
-        t))))
-
-(defun leval-current-package (&optional (buffer (window-buffer)))
-  (or (leval-send-find-package (lisp-buffer-package buffer))
-      "COMMON-LISP-USER"))
+(defun leval-current-package (&optional (buffer (window-buffer))
+                                        (check-exists-package t))
+  (let ((package (lisp-buffer-package buffer)))
+    (if check-exists-package
+        (or (leval-send-find-package package)
+            "COMMON-LISP-USER")
+        package)))
 
 (defvar *leval-mode-keymap*
   (make-keymap "leval"))
@@ -130,7 +121,8 @@
                        " "
                        (lambda (window)
                          (leval-current-package
-                          (window-buffer window)))))))
+                          (window-buffer window)
+                          nil))))))
 
 (defun leval-connect-internal (hostname port)
   (handler-case

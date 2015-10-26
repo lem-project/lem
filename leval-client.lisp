@@ -36,9 +36,14 @@
 
 (defvar *leval-load-directory*)
 
+(defvar *leval-xterm-program* "xterm -e")
+(defvar *leval-lisp-program* "ros run -l")
+
 (define-command leval () ()
   (uiop:run-program
-   (format nil "xterm -e ros run -s leval-server -l '~a' &"
+   (format nil "~a '~a ~a' &"
+           *leval-xterm-program*
+           *leval-lisp-program*
            (merge-pathnames "start.lisp" *leval-load-directory*)))
   (loop
     (sleep 1)

@@ -192,3 +192,37 @@
 
 (defun symb (&rest args)
   (values (intern (apply #'mkstr args))))
+
+(defun make-growlist (&optional list)
+  (vector list (last list)))
+
+(defun grow-null-p (growlist)
+  (null (aref growlist 0)))
+
+(defun grow-left (growlist)
+  (car (aref growlist 0)))
+
+(defun grow-right (growlist)
+  (car (aref growlist 1)))
+
+(defun grow-add-left (growlist x)
+  (let ((elt (cons x (aref growlist 0))))
+    (setf (aref growlist 0) elt)
+    (when (null (aref growlist 1))
+      (setf (aref growlist 1) elt))
+    growlist))
+
+(defun grow-add-right (growlist x)
+  (nconc (aref growlist 1) (list x))
+  (setf (aref growlist 1)
+        (cdr (aref growlist 1)))
+  growlist)
+
+(defun grow-rem-left (growlist)
+  (if (grow-null-p growlist)
+      (values nil nil)
+      (let ((x (car (aref growlist 0))))
+        (when (null (setf (aref growlist 0)
+                          (cdr (aref growlist 0))))
+          (setf (aref growlist 1) nil))
+        (values x t))))

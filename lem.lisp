@@ -202,20 +202,17 @@
           (prog1 (execute (input-key))
             (setq *universal-argument* nil))))))))
 
-(defun input-char (code &optional getchar-fn)
-  (let* ((nbytes (utf8-bytes code))
-         (char (if (= nbytes 1)
-                   (code-char code)
-                   (aref (babel:octets-to-string
-                          (coerce
-                           (cons code
-                                 (loop repeat (1- nbytes)
-                                   collect (if getchar-fn
-                                               (funcall getchar-fn)
-                                               (char-code (getch)))))
-                           '(vector (unsigned-byte 8))))
-                         0))))
-    char))
+(defun input-char (code)
+  (let* ((nbytes (utf8-bytes code)))
+    (if (= nbytes 1)
+        (code-char code)
+        (aref (babel:octets-to-string
+               (coerce
+                (cons code
+                      (loop repeat (1- nbytes)
+                        collect (char-code (getch))))
+                '(vector (unsigned-byte 8))))
+              0))))
 
 (defun input-key ()
   (let ((key

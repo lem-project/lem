@@ -34,10 +34,7 @@
 
 (let ((keys nil))
   (defun getch (&optional (abort-jump t))
-    (let* ((code (cond (*getch-wait-flag*
-                        (loop while (null keys))
-                        (pop keys))
-                       (keys
+    (let* ((code (cond (keys
                         (pop keys))
                        (t
                         (loop for result = (cl-charms/low-level:wgetch (window-win))

@@ -545,29 +545,6 @@
     (just-one-space)
     t))
 
-(defun insert-paren-hilighting-aux (c n)
-  (when (insert-char c n)
-    (or (macro-running-p)
-        (save-excursion
-         (when (backward-list 1)
-           (window-update-all)
-           (cl-charms/low-level:timeout 1000)
-           (let ((c (cl-charms/low-level:getch)))
-             (unless (= -1 c)
-               (ungetch (code-char c))))
-           (cl-charms/low-level:timeout -1)
-           t)))))
-
-(macrolet ((def (name c)
-                `(progn
-                   (define-key *global-keymap* (kbd ,(string c))
-                     ',name)
-                   (define-command ,name (n) ("p")
-                     (insert-paren-hilighting-aux ,c n)))))
-  (def insert-paren-hilighting #\))
-  (def insert-brace-hilighting #\])
-  (def insert-block-hilighting #\}))
-
 (define-key *global-keymap* (kbd "M-m") 'back-to-indentation)
 (define-command back-to-indentation () ()
   (beginning-of-line)

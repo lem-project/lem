@@ -366,7 +366,7 @@
        (*curr-flags* (make-flags) (make-flags))
        (*last-flags* (make-flags) *curr-flags*))
       (*exit*)
-    (window-require-update)
+    (window-maybe-update)
     (case (catch 'abort
             (main-step)
             nil)

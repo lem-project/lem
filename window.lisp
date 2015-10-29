@@ -371,7 +371,7 @@
         (incf cury)))
     (values str curx cury)))
 
-(defun window-require-update-one-line ()
+(defun window-maybe-update-one-line ()
   (let* ((window *current-window*))
     (multiple-value-bind (str curx cury)
         (%window-current-line window)
@@ -383,7 +383,7 @@
             (cl-charms/low-level:wmove (window-win window) cury2 curx2)
             (window-update-all))))))
 
-(defun window-require-update-cursor ()
+(defun window-maybe-update-cursor ()
   (let* ((window *current-window*)
          (ncols (window-ncols window)))
     (multiple-value-bind (str curx cury)
@@ -396,14 +396,16 @@
             (decf curx (str-width (fat-string str))))))
       (cl-charms/low-level:wmove (window-win window) cury curx))))
 
-(defun window-require-update ()
+(defun window-maybe-update ()
   (case (window-redraw-flag *current-window*)
     ((:one-line)
      (window-refresh-modeline *current-window*)
-     (window-require-update-one-line))
+     (window-maybe-update-one-line)
+     (cl-charms/low-level:wnoutrefresh (window-win))
+     (cl-charms/low-level:doupdate))
     ((:unnecessary)
      (window-refresh-modeline *current-window*)
-     (window-require-update-cursor))
+     (window-maybe-update-cursor))
     ((:all)
      (window-update-all))
     (otherwise

@@ -424,66 +424,31 @@
          (*package* (find-package package)))
     (eval (read-from-string string))))
 
-(defvar *lisp-eval-thread*)
-(defvar *lisp-mi-thread*)
-(defvar *lisp-eval-thread-values*)
-(defvar *lisp-eval-thread-error-p*)
-
-(defun %make-eval-closure (str output-buffer point update-point-p package)
-  #'(lambda ()
-      (let* ((io (make-buffer-io-stream output-buffer point t))
-             (*error-output* io)
-             (*trace-output* io)
-             (*debug-io* io)
-             (*standard-output* io)
-             (*standard-input* (make-minibuffer-input-stream))
-             (*getch-wait-flag* t))
-        (handler-case
-            (handler-bind ((error #'lisp-debugger))
-              (unwind-protect
-                (progn
-                  (setq *lisp-eval-thread-values*
-                        (multiple-value-list
-                         (lisp-eval-in-package
-                          (%string-to-exps str)
-                          package)))
-                  (when update-point-p
-                    (point-set
-                     (buffer-output-stream-point io))))
-                (getch-flush)))
-          (error (cdt)
-                 (setq *lisp-eval-thread-error-p* t)
-                 (setq *lisp-eval-thread-values* (list cdt)))))))
-
-(defun %lisp-mi-thread ()
-  (loop :for char := (code-char (cl-charms/low-level:getch)) :do
-    (cond ((char= C-g char)
-           (bt:interrupt-thread *lisp-eval-thread*
-                                #'(lambda () (error "interrupt"))))
-          (t
-           (ungetch char)))))
-
-(defun eval-string (str output-buffer point
-                        &optional
-                        update-point-p
-                        (package "COMMON-LISP-USER"))
-  (setq *lisp-eval-thread-values* nil)
-  (setq *lisp-eval-thread-error-p* nil)
-  (setq *lisp-eval-thread*
-        (bt:make-thread
-         (%make-eval-closure str
-                             output-buffer
-                             point
-                             update-point-p
-                             package)))
-  (setq *lisp-mi-thread* (bt:make-thread #'%lisp-mi-thread))
-  (handler-case (bt:join-thread *lisp-eval-thread*)
-    #+sbcl
-    (sb-thread:join-thread-error (cdt)
-                                 (declare (ignore cdt))))
-  (bt:destroy-thread *lisp-mi-thread*)
-  (values *lisp-eval-thread-values*
-          *lisp-eval-thread-error-p*))
+(defun eval-string (string output-buffer point
+                           &optional
+                           update-point-p (package "COMMON-LISP-USER"))
+  (let* ((error-p)
+         (results)
+         (io (make-buffer-io-stream output-buffer point t))
+         (*error-output* io)
+         (*trace-output* io)
+         (*debug-io* io)
+         (*standard-output* io)
+         (*standard-input* (make-minibuffer-input-stream)))
+    (handler-case
+        (handler-bind ((error #'lisp-debugger))
+          (setq results
+                (multiple-value-list
+                 (lisp-eval-in-package
+                  (%string-to-exps string)
+                  package)))
+          (when update-point-p
+            (point-set
+             (buffer-output-stream-point io))))
+      (error (condition)
+             (setq error-p t)
+             (setq results (list condition))))
+    (values results error-p)))
 
 (define-key *lisp-mode-keymap* (kbd "M-:") 'lisp-eval-string)
 (define-command lisp-eval-string (string) ("sEval: ")

@@ -159,8 +159,7 @@
   (let ((*minibuf-read-line-tmp-window* *current-window*)
         (*current-window* *minibuf-window*)
         (*minibuf-read-line-busy-p* t)
-        (*universal-argument* nil)
-        (*exec-paste-flag* nil))
+        (*universal-argument* nil))
     (erase-buffer)
     (minibuffer-mode)
     (when initial

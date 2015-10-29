@@ -212,7 +212,7 @@
         (progn
           (progn
             (isearch-update-display)
-            (mapc 'ungetch (reverse (kbd-list *last-input-key*)))
+            (mapc 'input-enqueue (kbd-list *last-input-key*))
             (isearch-end))))))
 
 (defun search-step (first-search search step goto-matched-pos endp)

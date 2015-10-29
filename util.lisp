@@ -192,3 +192,42 @@
 
 (defun symb (&rest args)
   (values (intern (apply #'mkstr args))))
+
+(defstruct (growlist (:constructor make-growlist ())
+                     (:conc-name grow-))
+  list
+  last)
+
+(defun grow-null-p (growlist)
+  (null (grow-list growlist)))
+
+(defun grow-left (growlist)
+  (car (grow-list growlist)))
+
+(defun grow-right (growlist)
+  (car (grow-last growlist)))
+
+(defun grow-add-left (growlist x)
+  (let ((elt (cons x (grow-list growlist))))
+    (setf (grow-list growlist) elt)
+    (when (null (grow-last growlist))
+      (setf (grow-last growlist) elt))
+    growlist))
+
+(defun grow-add-right (growlist x)
+  (let ((elt (list x)))
+    (if (grow-null-p growlist)
+        (setf (grow-list growlist) elt)
+        (setf (cdr (grow-last growlist))
+              elt))
+    (setf (grow-last growlist) elt))
+  growlist)
+
+(defun grow-rem-left (growlist)
+  (if (grow-null-p growlist)
+      (values nil nil)
+      (let ((x (car (grow-list growlist))))
+        (when (null (setf (grow-list growlist)
+                          (cdr (grow-list growlist))))
+          (setf (grow-last growlist) nil))
+        (values x t))))

@@ -22,7 +22,6 @@
 (defvar *init-flag* nil)
 
 (defvar *exit*)
-(defvar *self-insert-prev-time* nil)
 
 (defvar *input-history* (queue:make-queue 100))
 
@@ -252,32 +251,10 @@
         (progn
           (setf (window-redraw-flag) :one-line)
           (insert-char c n)
-          (when (and *exec-paste-flag*
-                     (not *macro-running-p*)
-                     *self-insert-prev-time*
-                     (> 10
-                        (- (get-internal-real-time)
-                           *self-insert-prev-time*)))
-            (exec-paste))
-          (setq *self-insert-prev-time* (get-internal-real-time))
           t)
         (minibuf-print (format nil
                                "Key not found: ~a"
                                (kbd-to-string *last-input-key*))))))
-
-(defun exec-paste ()
-  (cl-charms/low-level:timeout 10)
-  (do ((code #1=(cl-charms/low-level:getch) #1#))
-      ((= code -1))
-    (when *macro-recording-p*
-      (push (code-char code) *macro-chars*))
-    (let* ((char (input-char code)))
-      (if (or (char= char C-j)
-              (char= char C-m))
-          (insert-newline 1)
-          (insert-char char 1))))
-  (cl-charms/low-level:timeout -1)
-  (window-update-all))
 
 (defun load-init-file ()
   (flet ((test (path)
@@ -347,8 +324,7 @@
   (cl-charms/low-level:endwin))
 
 (defun lem-mainloop-thread ()
-  (do ((*exec-paste-flag* t)
-       (*curr-flags* (make-flags) (make-flags))
+  (do ((*curr-flags* (make-flags) (make-flags))
        (*last-flags* (make-flags) *curr-flags*))
       (*exit*)
     (window-maybe-update)

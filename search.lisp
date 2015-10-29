@@ -140,7 +140,8 @@
 (define-command isearch-end () ()
   (isearch-reset-buffer)
   (setq *isearch-prev-string* *isearch-string*)
-  (isearch-mode nil))
+  (isearch-mode nil)
+  t)
 
 (define-key *isearch-keymap* (kbd "C-s") 'isearch-next)
 (define-command isearch-next () ()
@@ -203,7 +204,8 @@
   (isearch-update-display)
   (let ((point (point)))
     (unless (funcall *isearch-search-function* *isearch-string*)
-      (point-set point))))
+      (point-set point))
+    t))
 
 (define-command isearch-self-insert () ()
   (let ((c (insertion-key-p *last-input-key*)))

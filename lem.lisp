@@ -337,9 +337,7 @@
        (keyboard-quit)))))
 
 (defun lem-input-key-thread ()
-  (loop
-    :for c := (cl-charms/low-level:getch)
-    :do
+  (loop :for c := (cl-charms/low-level:getch) :do
     (unless (= -1 c)
       (input-enqueue c))
     (when *exit*
@@ -352,7 +350,7 @@
     (setq mainloop-thread (bt:make-thread #'lem-mainloop-thread))
     (setq input-key-thread (bt:make-thread #'lem-input-key-thread))
     (bt:join-thread mainloop-thread)
-    (bt:join-thread input-key-thread)))
+    (bt:destroy-thread input-key-thread)))
 
 (defun lem (&rest args)
   (unwind-protect

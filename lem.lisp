@@ -326,19 +326,24 @@
 (defun lem-finallize ()
   (cl-charms/low-level:endwin))
 
-(defun lem-mainloop-thread ()
-  (handler-bind ((error #'dump-error))
+(defun lem-mainloop-thread (debug-p)
+  (flet ((body ()
+               (window-maybe-update)
+               (case (catch 'abort
+                       (main-step)
+                       nil)
+                 (readonly
+                  (minibuf-print "Read Only"))
+                 (abort
+                  (keyboard-quit)))))
     (do ((*curr-flags* (make-flags) (make-flags))
          (*last-flags* (make-flags) *curr-flags*))
         (*exit*)
-      (window-maybe-update)
-      (case (catch 'abort
-              (main-step)
-              nil)
-        (readonly
-         (minibuf-print "Read Only"))
-        (abort
-         (keyboard-quit))))))
+      (if debug-p
+          (handler-bind ((error #'dump-error))
+            (body))
+          (with-error-handler ()
+            (body))))))
 
 (defun lem-input-key-thread ()
   (loop :for c := (cl-charms/low-level:getch) :do
@@ -347,24 +352,29 @@
     (when *exit*
       (return))))
 
-(defun lem-main ()
+(defun lem-main (&optional debug-p)
   (setq *exit* nil)
   (let (mainloop-thread
         input-key-thread)
-    (setq mainloop-thread (bt:make-thread #'lem-mainloop-thread))
+    (setq mainloop-thread
+          (bt:make-thread #'(lambda ()
+                              (lem-mainloop-thread debug-p))))
     (setq input-key-thread (bt:make-thread #'lem-input-key-thread))
     (bt:join-thread mainloop-thread)
     (bt:destroy-thread input-key-thread)))
 
-(defun lem (&rest args)
+(defun lem-internal (args debug-p)
   (unwind-protect
     (progn
       (lem-init args)
-      (loop
-        (with-error-handler ()
-          (lem-main)
-          (return))))
+      (lem-main debug-p))
     (lem-finallize)))
+
+(defun lem (&rest args)
+  (lem-internal args nil))
+
+(defun lem-save-error (&rest args)
+  (lem-internal args t))
 
 (defun dump-error (condition)
   (with-open-file (out *lem-error-file*
@@ -376,13 +386,3 @@
       (format out "~s~%"
               (queue:queue-to-list *input-history*))
       (uiop/image:print-backtrace :stream out :count 100))))
-
-(defun lem-save-error (&rest args)
-  (lem-init args)
-  (unwind-protect (progn
-                    #+sbcl (handler-bind
-                               ((sb-sys:interactive-interrupt #'dump-error)
-                                (error #'dump-error))
-                             (lem-main))
-                    #-sbcl (lem-main))
-    (lem-finallize)))

@@ -213,9 +213,12 @@
     growlist))
 
 (defun grow-add-right (growlist x)
-  (nconc (aref growlist 1) (list x))
-  (setf (aref growlist 1)
-        (cdr (aref growlist 1)))
+  (let ((elt (list x)))
+    (if (grow-null-p growlist)
+        (setf (aref growlist 0) elt)
+        (setf (cdr (aref growlist 1))
+              elt))
+    (setf (aref growlist 1) elt))
   growlist)
 
 (defun grow-rem-left (growlist)

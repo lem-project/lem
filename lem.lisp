@@ -50,8 +50,10 @@
     (when *macro-recording-p*
       (pop *macro-chars*))
     (grow-add-left queue (char-code char)))
-  (defun input-enqueue (code)
-    (grow-add-right queue code))
+  (defun input-enqueue (c)
+    (grow-add-right queue (etypecase c
+                            (character (char-code c))
+                            (fixnum c))))
   (defun input-queue-length ()
     (length (grow-list queue))))
 
@@ -142,11 +144,11 @@
                  :named outer
                  :repeat n
                  :while *macro-running-p*
-                 :do (let ((length (getch-count-ungetch)))
+                 :do (let ((length (input-queue-length)))
                        (mapc 'input-enqueue (reverse *macro-chars*))
-                       (loop :while (< length (getch-count-ungetch)) :do
+                       (loop :while (< length (input-queue-length)) :do
                          (unless *macro-running-p*
-                           (loop :while (< length (getch-count-ungetch))
+                           (loop :while (< length (input-queue-length))
                              :do (getch))
                            (return-from outer nil))
                          (main-step)))
@@ -324,17 +326,18 @@
   (cl-charms/low-level:endwin))
 
 (defun lem-mainloop-thread ()
-  (do ((*curr-flags* (make-flags) (make-flags))
-       (*last-flags* (make-flags) *curr-flags*))
-      (*exit*)
-    (window-maybe-update)
-    (case (catch 'abort
-            (main-step)
-            nil)
-      (readonly
-       (minibuf-print "Read Only"))
-      (abort
-       (keyboard-quit)))))
+  (handler-bind ((error #'dump-error))
+    (do ((*curr-flags* (make-flags) (make-flags))
+         (*last-flags* (make-flags) *curr-flags*))
+        (*exit*)
+      (window-maybe-update)
+      (case (catch 'abort
+              (main-step)
+              nil)
+        (readonly
+         (minibuf-print "Read Only"))
+        (abort
+         (keyboard-quit))))))
 
 (defun lem-input-key-thread ()
   (loop :for c := (cl-charms/low-level:getch) :do

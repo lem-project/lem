@@ -34,7 +34,8 @@
 (let ((queue (make-growlist)))
   (defun getch (&optional (abort-jump t))
     (let* ((code (do () ((not (grow-null-p queue))
-                         (grow-rem-left queue))))
+                         (grow-rem-left queue))
+                   (sleep 0.01)))
            (char (code-char code)))
       (queue:enqueue *input-history* char)
       (when *macro-recording-p*

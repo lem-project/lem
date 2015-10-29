@@ -32,34 +32,29 @@
 
 (defun macro-running-p () *macro-running-p*)
 
-(let ((keys nil))
+(let ((queue (make-growlist)))
   (defun getch (&optional (abort-jump t))
-    (let* ((code (cond (keys
-                        (pop keys))
-                       (t
-                        (loop for result = (cl-charms/low-level:wgetch (window-win))
-                           while (minusp result)
-                           finally (return result)))))
+    (let* ((code (do () ((not (grow-null-p queue))
+                         (grow-rem-left queue))))
            (char (code-char code)))
       (queue:enqueue *input-history* char)
       (when *macro-recording-p*
         (push char *macro-chars*))
-      (cond
-       ((= code 410)
-        (minibuf-resize)
-        (adjust-screen-size)
-        (getch))
-       ((and (char= char C-g) abort-jump)
-        (throw 'abort 'abort))
-       (t char))))
-  (defun ungetch (c)
+      (cond ((= code 410)
+             (minibuf-resize)
+             (adjust-screen-size)
+             (getch))
+            ((and (char= char C-g) abort-jump)
+             (throw 'abort 'abort))
+            (t char))))
+  (defun ungetch (char)
     (when *macro-recording-p*
       (pop *macro-chars*))
-    (push (char-code c) keys))
-  (defun getch-count-ungetch ()
-    (length keys))
-  (defun getch-flush ()
-    (setq keys nil)))
+    (grow-add-left queue (char-code char)))
+  (defun input-enqueue (code)
+    (grow-add-right queue code))
+  (defun input-queue-length ()
+    (length (grow-list queue))))
 
 (define-key *global-keymap* (kbd "C-g") 'keyboard-quit)
 (define-command keyboard-quit () ()
@@ -149,8 +144,7 @@
                  :repeat n
                  :while *macro-running-p*
                  :do (let ((length (getch-count-ungetch)))
-                       (dolist (c *macro-chars*)
-                         (ungetch c))
+                       (mapc 'input-enqueue (reverse *macro-chars*))
                        (loop :while (< length (getch-count-ungetch)) :do
                          (unless *macro-running-p*
                            (loop :while (< length (getch-count-ungetch))
@@ -352,9 +346,8 @@
 (defun lem-finallize ()
   (cl-charms/low-level:endwin))
 
-(defun lem-main ()
-  (do ((*exit* nil)
-       (*exec-paste-flag* t)
+(defun lem-mainloop-thread ()
+  (do ((*exec-paste-flag* t)
        (*curr-flags* (make-flags) (make-flags))
        (*last-flags* (make-flags) *curr-flags*))
       (*exit*)
@@ -366,6 +359,24 @@
        (minibuf-print "Read Only"))
       (abort
        (keyboard-quit)))))
+
+(defun lem-input-key-thread ()
+  (loop
+    :for c := (cl-charms/low-level:getch)
+    :do
+    (unless (= -1 c)
+      (input-enqueue c))
+    (when *exit*
+      (return))))
+
+(defun lem-main ()
+  (setq *exit* nil)
+  (let (mainloop-thread
+        input-key-thread)
+    (setq mainloop-thread (bt:make-thread #'lem-mainloop-thread))
+    (setq input-key-thread (bt:make-thread #'lem-input-key-thread))
+    (bt:join-thread mainloop-thread)
+    (bt:join-thread input-key-thread)))
 
 (defun lem (&rest args)
   (unwind-protect

@@ -562,7 +562,8 @@
     (make-point linum col))
   (buffer-modify buffer)
   (cond
-   ((= (buffer-mark-linum buffer) linum)
+   ((and (= (buffer-mark-linum buffer) linum)
+         (< col (buffer-mark-col buffer)))
     (incf (buffer-mark-linum buffer))
     (decf (buffer-mark-col buffer) col))
    ((< linum (buffer-mark-linum buffer))

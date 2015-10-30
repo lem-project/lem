@@ -346,7 +346,7 @@
             (body))))))
 
 (defun lem-input-key-thread ()
-  (loop :for c := (cl-charms/low-level:getch) :do
+  (loop :for c := (cl-charms/low-level:wgetch (window-win)) :do
     (unless (= -1 c)
       (input-enqueue c))
     (when *exit*

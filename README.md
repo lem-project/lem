@@ -13,9 +13,7 @@ common lispで書いた小さいEmacsライクなエディタ
 * エディタのエラー時に落ちずにバックトレースを表示して実行を継続
 
 # 必要なもの
-sbclに対応  
-cclやeclはある程度動きますが  
-一部の機能(lisp-modeのバックトレースやevalの割り込み)に対応していません  
+sbcl, clozure cl
 
 # インストール
 quicklispの下のlocal-projects/に入れて  

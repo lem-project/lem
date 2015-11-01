@@ -33,34 +33,40 @@
 
 (defun macro-running-p () *macro-running-p*)
 
-(let ((queue (make-growlist)))
-  (defun getch (&optional (abort-jump t))
-    (let* ((code (loop
-                   (bt:with-lock-held (*mainloop-lock*)
-                     (unless (grow-null-p queue)
-                       (return (grow-rem-left queue))))
-                   (sleep 0.01)))
-           (char (code-char code)))
-      (queue:enqueue *input-history* char)
-      (when *macro-recording-p*
-        (push char *macro-chars*))
-      (cond ((= code 410)
-             (minibuf-resize)
-             (adjust-screen-size)
-             (getch))
-            ((and (char= char C-g) abort-jump)
-             (throw 'abort 'abort))
-            (t char))))
-  (defun ungetch (char)
+(defvar *input-queue* (make-growlist))
+
+(defun getch (&optional (abort-jump t))
+  (let* ((code (loop
+                 (bt:with-lock-held (*mainloop-lock*)
+                   (unless (grow-null-p *input-queue*)
+                     (when (< 10 (length (grow-list *input-queue*)))
+                       (setq *exec-paste-flag* t))
+                     (return (grow-rem-left *input-queue*))))
+                 (sleep 0.01)))
+         (char (code-char code)))
+    (queue:enqueue *input-history* char)
     (when *macro-recording-p*
-      (pop *macro-chars*))
-    (grow-add-left queue (char-code char)))
-  (defun input-enqueue (c)
-    (grow-add-right queue (etypecase c
-                            (character (char-code c))
-                            (fixnum c))))
-  (defun input-queue-length ()
-    (length (grow-list queue))))
+      (push char *macro-chars*))
+    (cond ((= code 410)
+           (minibuf-resize)
+           (adjust-screen-size)
+           (getch))
+          ((and (char= char C-g) abort-jump)
+           (throw 'abort 'abort))
+          (t char))))
+
+(defun ungetch (char)
+  (when *macro-recording-p*
+    (pop *macro-chars*))
+  (grow-add-left *input-queue* (char-code char)))
+
+(defun input-enqueue (c)
+  (grow-add-right *input-queue* (etypecase c
+                                  (character (char-code c))
+                                  (fixnum c))))
+
+(defun input-queue-length ()
+  (length (grow-list *input-queue*)))
 
 (define-key *global-keymap* (kbd "C-g") 'keyboard-quit)
 (define-command keyboard-quit () ()
@@ -252,12 +258,25 @@
     (prog1 (execute key)
       (setq *universal-argument* nil))))
 
+(defun exec-paste ()
+  (bt:with-lock-held (*mainloop-lock*)
+    (loop :until (grow-null-p *input-queue*) :do
+      (let ((char (code-char (grow-rem-left *input-queue*))))
+        (insert-char (if (char= char #\return)
+                         #\newline
+                         char)
+                     1)))
+    (window-update-all)))
+
 (define-command self-insert (n) ("p")
   (let ((c (insertion-key-p *last-input-key*)))
     (if c
         (progn
           (setf (window-redraw-flag) :one-line)
           (insert-char c n)
+          (when *exec-paste-flag*
+            (exec-paste)
+            (setq *exec-paste-flag* nil))
           t)
         (minibuf-print (format nil
                                "Key not found: ~a"

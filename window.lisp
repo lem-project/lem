@@ -427,6 +427,7 @@
 
 (defun window-maybe-update ()
   (window-brackets-highlight)
+  (window-update-all)
   (case (window-redraw-flag *current-window*)
     ((:one-line)
      (window-refresh-modeline *current-window*)

@@ -396,7 +396,37 @@
             (decf curx (str-width (fat-string str))))))
       (cl-charms/low-level:wmove (window-win window) cury curx))))
 
+(defvar *brackets-overlays* nil)
+
+(defun window-brackets-highlight ()
+  (mapc #'delete-overlay *brackets-overlays*)
+  (setq *brackets-overlays* nil)
+  (let ((highlight-points))
+    (when (eql #\( (following-char))
+      (save-excursion
+       (let ((orig-point (point)))
+         (when (forward-sexp 1 t)
+           ;(push orig-point highlight-points)
+           (push (progn (prev-char 1) (point))
+                 highlight-points)))))
+    (when (eql #\) (preceding-char))
+      (save-excursion
+       (let ((orig-point (save-excursion
+                          (prev-char 1)
+                          (point))))
+         (when (backward-sexp 1 t)
+           ;(push orig-point highlight-points)
+           (push (point) highlight-points)))))
+    (let ((attr (make-attr :color :cyan :reverse-p t)))
+      (dolist (point highlight-points)
+        (push (make-overlay point
+                            (make-point (point-linum point)
+                                        (1+ (point-column point)))
+                            :attr attr)
+              *brackets-overlays*)))))
+
 (defun window-maybe-update ()
+  (window-brackets-highlight)
   (case (window-redraw-flag *current-window*)
     ((:one-line)
      (window-refresh-modeline *current-window*)

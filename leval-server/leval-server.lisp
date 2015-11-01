@@ -5,72 +5,9 @@
 (defpackage leval-server
   (:use :cl)
   (:export
-   :server-start
-   :repl))
+   :server-start))
 
 (in-package :leval-server)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-(defun common-prefix (items)
-  (subseq (car items)
-          0
-          (apply #'min
-                 (mapcar #'(lambda (item)
-                             (or (mismatch (car items) item)
-                                 (length item)))
-                         (cdr items)))))
-
-(defun package-prefix (str)
-  (cond ((let ((pos (search "::" str)))
-           (when pos
-             (list (subseq str (+ pos 2)) (subseq str 0 pos) nil))))
-        ((let ((pos (position #\: str)))
-           (when pos
-             (list (subseq str (+ pos 1))
-                   (if (zerop pos)
-                       "KEYWORD"
-                       (subseq str 0 pos))
-                   t))))
-        (t
-         (list str nil nil))))
-
-(defun symbol-complete (text)
-  (let ((text (string-upcase text))
-        (els))
-    (flet ((body (sym text prefix)
-                 (let ((name (string sym)))
-                   (when (eql 0 (search text name))
-                     (push (format nil "~(~a~a~)" prefix name)
-                           els)))))
-      (destructuring-bind (symbol-name package external-p)
-          (package-prefix text)
-        (cond ((and package external-p)
-               (do-external-symbols (sym package)
-                 (body sym symbol-name
-                       (if (equal (package-name :keyword)
-                                  (package-name package))
-                           ":"
-                           (format nil "~a:" package)))))
-              (package
-               (do-symbols (sym package)
-                 (body sym symbol-name (format nil "~a::" package))))
-              (t
-               (do-symbols (sym *package*)
-                 (body sym symbol-name ""))
-               (dolist (package (list-all-packages))
-                 (body (format nil "~a:" (package-name package))
-                       symbol-name "")
-                 (dolist (package-name (package-nicknames package))
-                   (body (format nil "~a:" package-name)
-                         symbol-name "")))))))
-    (if (cdr els)
-        (cons (common-prefix els) els)
-        els)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (defun arglist (symbol)
   (let ((fstr (make-array '(0)
@@ -238,50 +175,4 @@
                     (event (read stream)))
                (dispatch-event event stream))))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-(rl:register-function :complete #'(lambda (text start end)
-                                    (declare (ignore start end))
-                                    (symbol-complete text)))
-
-(defun add-history (str)
-  (cffi:foreign-funcall "add_history"
-                        :string str
-                        :void))
-
-(defun add-history-expr (x)
-  (add-history (string-downcase (prin1-to-string x))))
-
-(defun readline-read (prompt)
-  (let ((line (rl:readline :prompt prompt)))
-    (loop
-      :with x :and pos
-      :for error-p := nil :do
-      (handler-case (setf (values x pos)
-                          (read-from-string line nil))
-        (error () (setq error-p t)))
-      (cond (error-p
-             (setq line
-                   (concatenate 'string line " "
-                                (rl:readline :already-prompted t))))
-            (t
-             (add-history-expr x)
-             (return x))))))
-
-(let (values)
-  (defun eval-print (-)
-    (setq values
-          (multiple-value-list (eval -)))
-    (setq +++ ++ /// //     *** (car ///)
-          ++  +  //  /      **  (car //)
-          +   -  /   values *   (car /))
-    (mapc #'pprint values)
-    (terpri))
-  (defun repl ()
-    (loop
-      (restart-case (eval-print
-                     (setq - (readline-read
-                              (format nil "~&~a> "
-                                      (package-name *package*)))))
-        (restart-toplevel () :report "Restart toplevel.")))))
+(leval-server:server-start "localhost" 53912)

@@ -4,8 +4,6 @@
 
 (export '(*leval-default-hostname*
           *leval-default-port*
-          *leval-load-directory*
-          leval
           *leval-mode-keymap*
           leval-mode
           leval-connect
@@ -33,31 +31,6 @@
 
 (defvar *leval-client* nil)
 (defvar *leval-connected-p* nil)
-
-(defvar *leval-load-directory*)
-
-(defvar *leval-xterm-program* "xterm -e")
-(defvar *leval-lisp-program* "ros run -l")
-
-(define-command leval () ()
-  (uiop:run-program
-   (format nil "~a '~a ~a' &"
-           *leval-xterm-program*
-           *leval-lisp-program*
-           (merge-pathnames "start.lisp" *leval-load-directory*)))
-  (loop
-    (sleep 1)
-    (unless (eq :refused-error
-                (leval-connect-internal
-                 *leval-default-hostname*
-                 *leval-default-port*))
-      (unless *leval-connected-p*
-        (leval-mode)
-        (define-command lisp-mode () ()
-          (leval-mode))
-        (setq *leval-connected-p* t))
-      (scan-file-property-list)
-      (return t))))
 
 (defun leval-send (event)
   (unless *leval-client*
@@ -151,7 +124,7 @@
     ((:ok)
      (unless *leval-connected-p*
        (leval-mode)
-       (define-command lisp-mode ()
+       (define-command lisp-mode () ()
          (leval-mode))
        (setq *leval-connected-p* t))
      (scan-file-property-list)
@@ -159,7 +132,7 @@
     ((:illegal-port)
      (minibuf-print (format nil "Illegal port: ~a" port)))
     ((:refused-error)
-     nil)))
+     (error "refused error"))))
 
 (define-key *leval-mode-keymap* (kbd "C-i") 'lisp-indent-line)
 (define-key *leval-mode-keymap* (kbd "C-j") 'lisp-newline-and-indent)

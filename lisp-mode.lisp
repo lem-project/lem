@@ -346,7 +346,8 @@
                 (insert-char #\space num-insert-spaces)
                 (when (eql num-insert-spaces num-spaces)
                   (setf (buffer-modified-p (window-buffer))
-                        old-modified-p))))))))))
+                        old-modified-p)))))))))
+  t)
 
 (define-key *lisp-mode-keymap* (kbd "C-j") 'lisp-newline-and-indent)
 (define-key *lisp-mode-keymap* (kbd "M-j") 'lisp-newline-and-indent)

@@ -25,6 +25,8 @@
 
 (defvar *input-history* (queue:make-queue 100))
 
+(defvar *mainloop-lock* (bt:make-lock))
+
 (defvar *macro-recording-p* nil)
 (defvar *macro-chars* nil)
 (defvar *macro-running-p* nil)
@@ -33,8 +35,10 @@
 
 (let ((queue (make-growlist)))
   (defun getch (&optional (abort-jump t))
-    (let* ((code (do () ((not (grow-null-p queue))
-                         (grow-rem-left queue))
+    (let* ((code (loop
+                   (bt:with-lock-held (*mainloop-lock*)
+                     (unless (grow-null-p queue)
+                       (return (grow-rem-left queue))))
                    (sleep 0.01)))
            (char (code-char code)))
       (queue:enqueue *input-history* char)
@@ -328,7 +332,8 @@
 
 (defun lem-mainloop-thread (debug-p)
   (flet ((body ()
-               (window-maybe-update)
+               (bt:with-lock-held (*mainloop-lock*)
+                 (window-maybe-update))
                (case (catch 'abort
                        (main-step)
                        nil)
@@ -348,7 +353,8 @@
 (defun lem-input-key-thread ()
   (loop :for c := (cl-charms/low-level:wgetch (window-win)) :do
     (unless (= -1 c)
-      (input-enqueue c))
+      (bt:with-lock-held (*mainloop-lock*)
+        (input-enqueue c)))
     (when *exit*
       (return))))
 

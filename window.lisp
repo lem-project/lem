@@ -406,7 +406,6 @@
       (save-excursion
        (let ((orig-point (point)))
          (when (forward-sexp 1 t)
-           ;(push orig-point highlight-points)
            (push (progn (prev-char 1) (point))
                  highlight-points)))))
     (when (eql #\) (preceding-char))
@@ -415,7 +414,6 @@
                           (prev-char 1)
                           (point))))
          (when (backward-sexp 1 t)
-           ;(push orig-point highlight-points)
            (push (point) highlight-points)))))
     (let ((attr (make-attr :color :cyan :reverse-p t)))
       (dolist (point highlight-points)

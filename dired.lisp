@@ -86,13 +86,12 @@
          nil)))
 
 (define-key *global-keymap* (kbd "C-x C-M-d") 'dired)
-(define-command dired () ()
-  (let ((dirname
-         (cl-fad:directory-exists-p
-          (minibuf-read-file "Dired: "
-                             (buffer-directory)
-                             (buffer-directory)))))
-    (dired-internal dirname)))
+(define-command dired (dirname) ((list
+                                  (cl-fad:directory-exists-p
+                                   (minibuf-read-file "Dired: "
+                                                      (buffer-directory)
+                                                      (buffer-directory)))))
+  (dired-internal dirname))
 
 (defun get-file ()
   (let ((n (- (window-cur-linum)

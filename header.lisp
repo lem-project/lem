@@ -34,8 +34,6 @@
 
 (defvar *scroll-recenter-p* t)
 
-(defvar *exec-paste-flag* nil)
-
 (defvar *auto-mode-alist* nil)
 
 (defvar *color-names* '(:yellow

@@ -49,7 +49,6 @@
                         :cl-fad
                         :osicat
                         #+sbcl :sb-posix
-                        :bordeaux-threads
                         :trivial-gray-streams
                         :cl-ppcre
                         :inquisitor

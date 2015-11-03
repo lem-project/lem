@@ -25,8 +25,6 @@
 
 (defvar *input-history* (queue:make-queue 100))
 
-(defvar *mainloop-lock* (bt:make-lock))
-
 (defvar *macro-recording-p* nil)
 (defvar *macro-chars* nil)
 (defvar *macro-running-p* nil)
@@ -36,13 +34,9 @@
 (defvar *input-queue* (make-growlist))
 
 (defun getch (&optional (abort-jump t))
-  (let* ((code (loop
-                 (bt:with-lock-held (*mainloop-lock*)
-                   (unless (grow-null-p *input-queue*)
-                     (when (< 10 (length (grow-list *input-queue*)))
-                       (setq *exec-paste-flag* t))
-                     (return (grow-rem-left *input-queue*))))
-                 (sleep 0.01)))
+  (let* ((code (if (grow-null-p *input-queue*)
+                   (cl-charms/low-level:wgetch (window-win))
+                   (grow-rem-left *input-queue*)))
          (char (code-char code)))
     (queue:enqueue *input-history* char)
     (when *macro-recording-p*
@@ -264,28 +258,34 @@
       (setq *universal-argument* nil))))
 
 (defun exec-paste ()
-  (bt:with-lock-held (*mainloop-lock*)
-    (loop :until (grow-null-p *input-queue*) :do
-      (let ((char (code-char (grow-rem-left *input-queue*))))
-        (insert-char (if (char= char #\return)
-                         #\newline
-                         char)
-                     1)))
-    (window-update-all)))
+  (cl-charms/low-level:timeout 10)
+  (loop :for code := (cl-charms/low-level:getch) :do
+    (when (= code -1)
+      (return))
+    (when *macro-recording-p*
+      (push (code-char code) *macro-chars*))
+    (let ((char (input-char code)))
+      (if (or (char= char C-j)
+              (char= char C-m))
+          (insert-newline 1)
+          (insert-char char 1))))
+  (cl-charms/low-level:timeout -1))
 
-(define-command self-insert (n) ("p")
-  (let ((c (insertion-key-p *last-input-key*)))
-    (if c
-        (progn
-          (setf (window-redraw-flag) :one-line)
-          (insert-char c n)
-          (when *exec-paste-flag*
-            (exec-paste)
-            (setq *exec-paste-flag* nil))
-          t)
-        (minibuf-print (format nil
-                               "Key not found: ~a"
-                               (kbd-to-string *last-input-key*))))))
+(let ((last-insert-time))
+  (define-command self-insert (n) ("p")
+    (let ((c (insertion-key-p *last-input-key*)))
+      (cond (c
+             (setf (window-redraw-flag) :one-line)
+             (insert-char c n)
+             (let ((time (get-internal-real-time)))
+               (when last-insert-time
+                 (when (> 20 (- time last-insert-time))
+                   (exec-paste)))
+               (setq last-insert-time time)))
+            (t
+             (minibuf-print (format nil
+                                    "Key not found: ~a"
+                                    (kbd-to-string *last-input-key*))))))))
 
 (defun load-init-file ()
   (flet ((test (path)
@@ -354,10 +354,9 @@
 (defun lem-finallize ()
   (cl-charms/low-level:endwin))
 
-(defun lem-mainloop-thread (debug-p)
+(defun lem-mainloop (debug-p)
   (flet ((body ()
-               (bt:with-lock-held (*mainloop-lock*)
-                 (window-maybe-update))
+               (window-maybe-update)
                (case (catch 'abort
                        (main-step)
                        nil)
@@ -365,7 +364,8 @@
                   (minibuf-print "Read Only"))
                  (abort
                   (keyboard-quit)))))
-    (do ((*curr-flags* (make-flags) (make-flags))
+    (do ((*exit* nil)
+         (*curr-flags* (make-flags) (make-flags))
          (*last-flags* (make-flags) *curr-flags*))
         (*exit*)
       (if debug-p
@@ -374,24 +374,8 @@
           (with-error-handler ()
             (body))))))
 
-(defun lem-input-key-thread ()
-  (loop :for c := (cl-charms/low-level:wgetch (window-win)) :do
-    (unless (= -1 c)
-      (bt:with-lock-held (*mainloop-lock*)
-        (input-enqueue c)))
-    (when *exit*
-      (return))))
-
 (defun lem-main (&optional debug-p)
-  (setq *exit* nil)
-  (let (mainloop-thread
-        input-key-thread)
-    (setq mainloop-thread
-          (bt:make-thread #'(lambda ()
-                              (lem-mainloop-thread debug-p))))
-    (setq input-key-thread (bt:make-thread #'lem-input-key-thread))
-    (bt:join-thread mainloop-thread)
-    (bt:destroy-thread input-key-thread)))
+  (lem-mainloop debug-p))
 
 (defun lem-internal (args debug-p)
   (unwind-protect

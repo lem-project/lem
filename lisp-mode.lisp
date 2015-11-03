@@ -870,21 +870,12 @@
 
 (define-key *lisp-repl-mode-keymap* (kbd "C-m") 'lisp-repl-return)
 (define-command lisp-repl-return () ()
+  (end-of-buffer)
   (let ((end (point))
         (buffer (window-buffer)))
     (if (not (lisp-repl-paren-correspond-p))
         (insert-newline)
-        (let* ((start (progn
-                        (backward-sexp 1 t)
-                        (let ((point (point))
-                              (prompt-point
-                               (buffer-get buffer :prompt-point)))
-                          (cond ((point< end prompt-point)
-                                 point)
-                                ((point< point prompt-point)
-                                 prompt-point)
-                                (t
-                                 point)))))
+        (let* ((start (buffer-get buffer :prompt-point))
                (str (region-string start end)))
           (add-history *lisp-repl-history* str)
           (point-set end)

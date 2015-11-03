@@ -623,9 +623,10 @@
                           (list (namestring
                                  (sb-introspect:definition-source-pathname
                                   definition))
-                                (1+ (car
-                                     (sb-introspect:definition-source-form-path
-                                      definition)))))
+                                (1+
+                                 (car
+                                  (sb-introspect:definition-source-form-path
+                                   definition)))))
                         #'<
                         :key #'second))))
           (update-grep-list
@@ -634,7 +635,8 @@
                (info-popup (get-buffer-create "*Definitions*")
                            #'(lambda (out)
                                (loop :for (filename _) :in list :do
-                                 (format out "~a~%" filename)))))))))))
+                                 (format out "~a~%" filename)))
+                           nil))))))))
 
 (defun analyze-symbol (str)
   (let (package

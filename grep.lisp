@@ -17,20 +17,20 @@
           (filename (subseq line 0 i))
           (linum (parse-integer (subseq line (1+ i) j))))
      (when (and (stringp filename) (integerp linum))
-       (list filename linum)))))
+       (list filename
+             #'(lambda () (goto-line linum t)))))))
 
-(defun update-grep-list (lines)
-  (let ((list))
-    (dolist (line lines)
-      (unless (string= "" line)
-        (let ((result (grep-parse-line line)))
-          (when result
-            (push result list)))))
-    (setq *grep-vector* (apply 'vector (nreverse list)))
-    (setq *grep-index* -1)))
+(defun grep-parse-lines (lines)
+  (remove nil
+          (mapcar #'grep-parse-line
+                  (remove "" lines :test #'string=))))
+
+(defun update-grep-list (list)
+  (setq *grep-vector* (apply 'vector list))
+  (setq *grep-index* -1))
 
 (defun grep-update (str)
-  (update-grep-list (split-string str #\newline))
+  (update-grep-list (grep-parse-lines (split-string str #\newline)))
   (info-popup (get-buffer-create "*Grep*")
               #'(lambda (out)
                   (princ str out))
@@ -49,10 +49,10 @@
                  (< (1+ *grep-index*) (length *grep-vector*)))
       (return nil))
     (incf *grep-index*)
-    (destructuring-bind (filename linum)
+    (destructuring-bind (filename goto-fn)
         (aref *grep-vector* *grep-index*)
       (find-file filename)
-      (goto-line linum t))))
+      (funcall goto-fn))))
 
 (define-key *global-keymap* (kbd "M-p") 'grep-prev)
 (define-command grep-prev (&optional (n 1)) ("p")
@@ -61,7 +61,7 @@
                  (<= 0 (1- *grep-index*)))
       (return))
     (decf *grep-index*)
-    (destructuring-bind (filename linum)
+    (destructuring-bind (filename goto-fn)
         (aref *grep-vector* *grep-index*)
       (find-file filename)
-      (goto-line linum t))))
+      (funcall goto-fn))))

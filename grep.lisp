@@ -25,16 +25,18 @@
           (mapcar #'grep-parse-line
                   (remove "" lines :test #'string=))))
 
-(defun update-grep-list (list)
+(defun update-grep-list (list &optional popup-function)
   (setq *grep-vector* (apply 'vector list))
-  (setq *grep-index* -1))
+  (setq *grep-index* -1)
+  (when popup-function (funcall popup-function)))
 
 (defun grep-update (str)
-  (update-grep-list (grep-parse-lines (split-string str #\newline)))
-  (info-popup (get-buffer-create "*Grep*")
-              #'(lambda (out)
-                  (princ str out))
-              nil))
+  (update-grep-list (grep-parse-lines (split-string str #\newline))
+                    #'(lambda ()
+                        (info-popup (get-buffer-create "*Grep*")
+                                    #'(lambda (out)
+                                        (princ str out))
+                                    nil))))
 
 (define-command grep (str) ("sgrep -nH ")
   (grep-update

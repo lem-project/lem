@@ -561,19 +561,80 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-x M-d") 'lisp-disassemble-symbol)
 (define-command lisp-disassemble-symbol () ()
-  (block top
+  (multiple-value-bind (name error-p)
+      (lisp-read-symbol "Disassemble: ")
+    (unless error-p
+      (let ((str
+             (with-output-to-string (out)
+               (handler-case (disassemble name :stream out)
+                 (error (condition)
+                        (minibuf-print (format nil "~a" condition))
+                        (return-from lisp-disassemble-symbol nil))))))
+        (lisp-info-popup (get-buffer-create "*disassemble*")
+                         #'(lambda (out)
+                             (princ str out)))))))
+
+
+#+sbcl
+(progn
+  (defparameter *lisp-definition-types*
+    '(:variable
+      :constant
+      :type
+      :symbol-macro
+      :macro
+      :compiler-macro
+      :function
+      :generic-function
+      :method
+      :setf-expander
+      :structure
+      :condition
+      :class
+      :method-combination
+      :package
+      :transform
+      :optimizer
+      :vop
+      :source-transform
+      :ir1-convert
+      :declaration
+      :alien-type))
+
+  (defun collect-definitions (name)
+    (loop :for type :in *lisp-definition-types*
+      :append (sb-introspect:find-definition-sources-by-name
+               name type)))
+
+  (define-key *lisp-mode-keymap* (kbd "M-.") 'lisp-find-definitions)
+  (define-command lisp-find-definitions () ()
     (multiple-value-bind (name error-p)
-        (lisp-read-symbol "Disassemble: ")
+        (lisp-read-symbol "Find definitions: ")
       (unless error-p
-        (let ((str
-               (with-output-to-string (out)
-                 (handler-case (disassemble name :stream out)
-                   (error (condition)
-                          (minibuf-print (format nil "~a" condition))
-                          (return-from top nil))))))
-          (lisp-info-popup (get-buffer-create "*disassemble*")
+        (let ((list
+               (mapcar #'(lambda (elt)
+                           (list (first elt)
+                                 #'(lambda ()
+                                     (beginning-of-buffer)
+                                     (forward-sexp (second elt)))))
+                       (sort
+                        (loop :for definition :in (collect-definitions name)
+                          :collect
+                          (list (namestring
+                                 (sb-introspect:definition-source-pathname
+                                  definition))
+                                (1+ (car
+                                     (sb-introspect:definition-source-form-path
+                                      definition)))))
+                        #'<
+                        :key #'second))))
+          (update-grep-list
+           list
+           #'(lambda ()
+               (info-popup (get-buffer-create "*Definitions*")
                            #'(lambda (out)
-                               (princ str out))))))))
+                               (loop :for (filename _) :in list :do
+                                 (format out "~a~%" filename)))))))))))
 
 (defun analyze-symbol (str)
   (let (package

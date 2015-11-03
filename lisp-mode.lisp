@@ -616,7 +616,8 @@
                            (list (first elt)
                                  #'(lambda ()
                                      (beginning-of-buffer)
-                                     (forward-sexp (second elt)))))
+                                     (when (forward-sexp (second elt))
+                                       (backward-sexp 1)))))
                        (sort
                         (loop :for definition :in (collect-definitions name)
                           :collect

@@ -43,8 +43,8 @@
                         (:file "lisp-mode")
                         ;;(:file "leval-client")
                         (:file "c-mode")
-                        (:file "lem")
-                        (:file "dired"))
+                        (:file "dired")
+                        (:file "lem"))
            :depends-on (:cl-charms
                         :cl-fad
                         :osicat

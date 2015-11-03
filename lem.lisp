@@ -400,3 +400,6 @@
       (format out "~s~%"
               (queue:queue-to-list *input-history*))
       (uiop/image:print-backtrace :stream out :count 100))))
+
+(defun dired (filename)
+  (dired:dired filename))

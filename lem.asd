@@ -39,10 +39,10 @@
                         (:file "search")
                         (:file "info-mode")
                         (:file "sexp")
-                        (:file "lisp-mode")
-                        (:file "leval-client")
-                        (:file "c-mode")
                         (:file "grep")
+                        (:file "lisp-mode")
+                        ;;(:file "leval-client")
+                        (:file "c-mode")
                         (:file "lem")
                         (:file "dired"))
            :depends-on (:cl-charms

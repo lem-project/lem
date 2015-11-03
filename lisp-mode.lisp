@@ -440,9 +440,10 @@
         (handler-bind ((error #'lisp-debugger))
           (setq results
                 (multiple-value-list
-                 (lisp-eval-in-package
-                  (%string-to-exps string)
-                  package)))
+                 (restart-case (lisp-eval-in-package
+                                (%string-to-exps string)
+                                package)
+                   (abort () :report "Abort."))))
           (when update-point-p
             (point-set
              (buffer-output-stream-point io))))

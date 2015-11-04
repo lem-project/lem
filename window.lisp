@@ -429,7 +429,9 @@
                         (window-refresh-modeline *current-window*)
                         (window-update *current-window*)
                         (cl-charms/low-level:doupdate)))
-    (when (and *brackets-overlays*
+    (when (and (or *brackets-overlays*
+                   (buffer-overlays)
+                   (buffer-mark-overlay))
                (member (window-redraw-flag *current-window*)
                        '(:one-line :unnecessary)))
       (setf (window-redraw-flag *current-window*) :current-window))

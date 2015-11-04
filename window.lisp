@@ -430,6 +430,7 @@
                         (window-update *current-window*)
                         (cl-charms/low-level:doupdate)))
     (when (and (or *brackets-overlays*
+                   (buffer-mark-p)
                    (buffer-overlays)
                    (buffer-mark-overlay))
                (member (window-redraw-flag *current-window*)

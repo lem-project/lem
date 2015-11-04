@@ -234,7 +234,8 @@
   (let* ((cmd (find-keybind key))
          (buffer (window-buffer))
          (prev-modified (buffer-modified-p buffer))
-         (prev-window-vtop-linum (window-vtop-linum)))
+         (prev-window-vtop-linum (window-vtop-linum))
+         (prev-window-tree *window-tree*))
     (prog1 (and cmd
                 (or (cmd-call cmd *universal-argument*)
                     (setq *macro-running-p* nil)))
@@ -249,7 +250,9 @@
                      (/= prev-window-vtop-linum
                          (window-vtop-linum))
                      (/= 0 (window-offset-view *current-window*)))
-                 (syntax-scan-window *current-window*))))))))
+                 (syntax-scan-window *current-window*))
+                ((eq *window-tree* prev-window-tree)
+                 (setf (window-redraw-flag) :unnecessary))))))))
 
 (defun main-step ()
   (let ((key (input-key)))

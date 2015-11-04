@@ -724,6 +724,7 @@
   (lisp-popup-completion-symbol #'complete-symbol)
   t)
 
+#+ccl
 (defun lisp-get-arglist (symbol)
   (let ((fstr (make-array '(0)
                           :element-type 'base-char
@@ -733,15 +734,9 @@
       (describe symbol out))
     (let ((start-string)
           (end-string))
-      #+sbcl
-      (progn
-        (setq start-string "Lambda-list: (")
-        (setq end-string "\\s\\s[A-Z][ a-z]*:"))
-      #+ccl
       (progn
         (setq start-string "Arglist: (")
         (setq end-string "\\n[A-Z][a-z]*:"))
-      #+(or sbcl ccl)
       (let* ((start (search start-string fstr))
              (end (when start
                     (ppcre:scan end-string fstr :start start))))
@@ -759,6 +754,12 @@
                              end)))
             " ")
            "))"))))))
+
+#+sbcl
+(defun lisp-get-arglist (symbol)
+  (when (fboundp symbol)
+    (write-to-string
+     (sb-introspect:function-lambda-list symbol))))
 
 (defun lisp-echo-arglist (get-arglist-function)
   (save-excursion

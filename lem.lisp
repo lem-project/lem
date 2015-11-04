@@ -406,3 +406,11 @@
 
 (defun dired (filename)
   (dired:dired filename))
+
+#+sbcl
+(push #'(lambda (x)
+          (if x
+              (lem x)
+              (lem))
+          t)
+      sb-ext:*ed-functions*)

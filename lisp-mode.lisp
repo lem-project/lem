@@ -758,8 +758,11 @@
 #+sbcl
 (defun lisp-get-arglist (symbol)
   (when (fboundp symbol)
-    (write-to-string
-     (sb-introspect:function-lambda-list symbol))))
+    (ppcre:regex-replace-all
+     "\\s+"
+     (write-to-string
+      (sb-introspect:function-lambda-list symbol))
+     " ")))
 
 (defun lisp-echo-arglist (get-arglist-function)
   (save-excursion

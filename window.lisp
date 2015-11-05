@@ -15,6 +15,8 @@
           window-cur-linum
           window-cur-col
           one-window-p
+          select-window
+          selected-window
           deleted-window-p
           set-window-delete-hook
           recenter
@@ -67,6 +69,12 @@
 
 (defun one-window-p ()
   (window-tree-leaf-p *window-tree*))
+
+(defun select-window (window)
+  (setq *current-window* window))
+
+(defun selected-window (window)
+  *current-window*)
 
 (defun deleted-window-p (window)
   (not (window-tree-find *window-tree* window)))

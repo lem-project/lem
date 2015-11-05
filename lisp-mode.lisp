@@ -251,12 +251,13 @@
    :syntax-table *lisp-syntax-table*)
   (buffer-put (window-buffer)
               :modeline-format
-              (append *modeline-default-format*
-                      (list
-                       " "
-                       (lambda (window)
-                         (package-name (lisp-current-package
-                                        (window-buffer window))))))))
+              (list
+               #'(lambda (window)
+                   (append *modeline-default-format*
+                           (list
+                            " "
+                            (package-name (lisp-current-package
+                                           (window-buffer window)))))))))
 
 (defun %lisp-mode-skip-expr-prefix (c1 c2 step-arg)
   (when c1

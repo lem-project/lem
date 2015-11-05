@@ -425,42 +425,9 @@
       (if highlight-points t nil))))
 
 (defun window-maybe-update ()
-  (flet ((update-curwin ()
-                        (window-refresh-modeline *current-window*)
-                        (window-update *current-window*)
-                        (cl-charms/low-level:doupdate)))
-    (when (and (or *brackets-overlays*
-                   (buffer-mark-p)
-                   (buffer-overlays)
-                   (buffer-mark-overlay))
-               (member (window-redraw-flag *current-window*)
-                       '(:one-line :unnecessary)))
-      (setf (window-redraw-flag *current-window*) :current-window))
-    (let ((highlight-p (window-brackets-highlight)))
-      (case (window-redraw-flag *current-window*)
-        ((:current-window)
-         (update-curwin))
-        ((:one-line)
-         (cond
-          (highlight-p
-           (update-curwin))
-          (t
-           (window-refresh-modeline *current-window*)
-           (window-maybe-update-one-line)
-           (cl-charms/low-level:wnoutrefresh (window-win))
-           (cl-charms/low-level:doupdate))))
-        ((:unnecessary)
-         (cond
-          (highlight-p
-           (update-curwin))
-          (t
-           (window-refresh-modeline *current-window*)
-           (window-maybe-update-cursor))))
-        ((:all)
-         (window-update-all))
-        (otherwise
-         (window-update-all)))
-      (setf (window-redraw-flag *current-window*) nil))))
+  (window-brackets-highlight)
+  (window-update-all)
+  (setf (window-redraw-flag) nil))
 
 (defun split-window-after (new-window split-type)
   (window-set-size *current-window*

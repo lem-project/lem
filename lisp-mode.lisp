@@ -881,6 +881,14 @@
       (when win
         (insert-string str)))))
 
+(define-key *lisp-repl-mode-keymap* (kbd "M-r") 'lisp-repl-reset)
+(define-command lisp-repl-reset (arg) ("P")
+  (when arg
+    (let ((*kill-disable-p*))
+      (kill-region (point-min) (point-max))))
+  (lisp-repl-prompt)
+  t)
+
 (defvar *scratch-mode-keymap*
   (make-keymap "scratch" nil *lisp-mode-keymap*))
 

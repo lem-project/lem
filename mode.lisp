@@ -77,7 +77,8 @@
        ,(when parent-mode `(,parent-mode))
        (setf (major-mode) ',major-mode)
        (buffer-clear-variables (window-buffer))
-       (syntax-scan-buffer (window-buffer))
+       (when *enable-syntax-highlight*
+         (syntax-scan-buffer (window-buffer)))
        (run-hooks ',(symb major-mode "-HOOK"))
        ,@body)))
 

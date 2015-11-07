@@ -239,7 +239,8 @@
     (prog1 (and cmd
                 (or (cmd-call cmd *universal-argument*)
                     (setq *macro-running-p* nil)))
-      (when (and (not *macro-running-p*)
+      (when (and *enable-syntax-highlight*
+                 (not *macro-running-p*)
                  (eq buffer (window-buffer)))
         (let ((curr-modified (buffer-modified-p (window-buffer))))
           (cond ((eq :one-line (window-redraw-flag))

@@ -244,6 +244,8 @@
    :keymap *lisp-mode-keymap*
    :syntax-table *lisp-syntax-table*)
   (buffer-put (window-buffer)
+              :enable-syntax-highlight t)
+  (buffer-put (window-buffer)
               :modeline-format
               (append *modeline-default-format*
                       (list
@@ -810,7 +812,7 @@
 
 (defvar *lisp-repl-history* nil)
 
-(define-major-mode lisp-repl-mode lisp-mode
+(define-major-mode lisp-repl-mode nil
   (:name "lisp-repl"
    :keymap *lisp-repl-mode-keymap*
    :syntax-table *lisp-syntax-table*)
@@ -828,6 +830,10 @@
   (unless (bolp)
     (insert-newline))
   (insert-string (format nil "~a> " (package-name (lisp-current-package))))
+  (buffer-put-attribute (window-buffer)
+                        (make-point (window-cur-linum) 0)
+                        (make-point (window-cur-linum) (window-cur-col))
+                        (make-attr :bold-p t :color :blue))
   (buffer-put (window-buffer) :prompt-point (point))
   (buffer-undo-boundary (window-buffer)))
 

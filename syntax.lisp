@@ -157,29 +157,32 @@
 (defvar *syntax-symbol-tov-list* nil)
 
 (defun syntax-scan-window (window)
-  (when *enable-syntax-highlight*
+  (when (and *enable-syntax-highlight*
+             (buffer-get (window-buffer window) :enable-syntax-highlight))
     (with-window-range (start-linum end-linum) window
       (syntax-scan-lines window start-linum end-linum))))
 
 (defun syntax-scan-lines (window start-linum end-linum)
-  (let* ((buffer (window-buffer window))
-         (line (buffer-get-line buffer start-linum))
-         (prev (line-prev line))
-         (in-string-p (and prev
-                           (or (line-start-string-p prev)
-                               (line-in-string-p prev))))
-         (in-comment-p (and prev
-                            (or (line-start-comment-p prev)
-                                (line-in-comment-p prev))))
-         (*syntax-symbol-tov-list*))
-    (do ((line line (line-next line))
-         (linum start-linum (1+ linum)))
-        ((or (null line)
-             (= linum end-linum)))
-      (multiple-value-setq (in-string-p in-comment-p)
-                           (syntax-scan-line line
-                                             in-string-p
-                                             in-comment-p)))))
+  (when (and *enable-syntax-highlight*
+             (buffer-get (window-buffer window) :enable-syntax-highlight))
+    (let* ((buffer (window-buffer window))
+           (line (buffer-get-line buffer start-linum))
+           (prev (line-prev line))
+           (in-string-p (and prev
+                             (or (line-start-string-p prev)
+                                 (line-in-string-p prev))))
+           (in-comment-p (and prev
+                              (or (line-start-comment-p prev)
+                                  (line-in-comment-p prev))))
+           (*syntax-symbol-tov-list*))
+      (do ((line line (line-next line))
+           (linum start-linum (1+ linum)))
+          ((or (null line)
+               (= linum end-linum)))
+        (multiple-value-setq (in-string-p in-comment-p)
+                             (syntax-scan-line line
+                                               in-string-p
+                                               in-comment-p))))))
 
 (defun parallel-string-quote (line)
   (do ((line #1=(line-prev line) #1#))
@@ -377,7 +380,8 @@
                      (setq i pos))))))))))
 
 (defun syntax-scan-buffer (buffer)
-  (when *enable-syntax-highlight*
+  (when (and *enable-syntax-highlight*
+             (buffer-get buffer :enable-syntax-highlight))
     (let ((in-string-p)
           (in-comment-p))
       (map-buffer #'(lambda (line linum)

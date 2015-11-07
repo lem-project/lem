@@ -25,7 +25,8 @@
 (define-major-mode c-mode nil
   (:name "c"
    :keymap *c-mode-keymap*
-   :syntax-table *c-syntax-table*))
+   :syntax-table *c-syntax-table*)
+  (buffer-put (window-buffer) :enable-syntax-highlight t))
 
 (dolist (str '("void" "char" "short" "int" "long" "float" "double" "auto"
                "static" "const" "signed" "unsigned" "extern" "volatile"

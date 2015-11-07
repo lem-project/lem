@@ -157,8 +157,9 @@
 (defvar *syntax-symbol-tov-list* nil)
 
 (defun syntax-scan-window (window)
-  (with-window-range (start-linum end-linum) window
-    (syntax-scan-lines window start-linum end-linum)))
+  (when *enable-syntax-highlight*
+    (with-window-range (start-linum end-linum) window
+      (syntax-scan-lines window start-linum end-linum))))
 
 (defun syntax-scan-lines (window start-linum end-linum)
   (let* ((buffer (window-buffer window))
@@ -376,12 +377,13 @@
                      (setq i pos))))))))))
 
 (defun syntax-scan-buffer (buffer)
-  (let ((in-string-p)
-        (in-comment-p))
-    (map-buffer #'(lambda (line linum)
-                    (declare (ignore linum))
-                    (multiple-value-setq (in-string-p in-comment-p)
-                                         (syntax-scan-line line
-                                                           in-string-p
-                                                           in-comment-p)))
-                buffer)))
+  (when *enable-syntax-highlight*
+    (let ((in-string-p)
+          (in-comment-p))
+      (map-buffer #'(lambda (line linum)
+                      (declare (ignore linum))
+                      (multiple-value-setq (in-string-p in-comment-p)
+                                           (syntax-scan-line line
+                                                             in-string-p
+                                                             in-comment-p)))
+                  buffer))))

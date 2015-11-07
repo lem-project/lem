@@ -596,41 +596,42 @@
       :declaration
       :alien-type))
 
-  (defun collect-definitions (name)
+  (defun %collect-definitions (name)
     (loop :for type :in *lisp-definition-types*
       :append (sb-introspect:find-definition-sources-by-name
                name type)))
+
+  (defun collect-definitions (name)
+    (sort
+     (loop :for def :in (%collect-definitions name)
+       :collect
+       (list
+        (sb-introspect:definition-source-pathname def)
+        (1+
+         (car
+          (sb-introspect:definition-source-form-path
+           def)))))
+     #'< :key #'second))
 
   (define-key *lisp-mode-keymap* (kbd "M-.") 'lisp-find-definitions)
   (define-command lisp-find-definitions () ()
     (multiple-value-bind (name error-p)
         (lisp-read-symbol "Find definitions: ")
       (unless error-p
-        (let ((list
-               (mapcar #'(lambda (elt)
-                           (list (first elt)
-                                 #'(lambda ()
-                                     (beginning-of-buffer)
-                                     (when (forward-sexp (second elt))
-                                       (backward-sexp 1)))))
-                       (sort
-                        (loop :for definition :in (collect-definitions name)
-                          :collect
-                          (list (namestring
-                                 (sb-introspect:definition-source-pathname
-                                  definition))
-                                (1+
-                                 (car
-                                  (sb-introspect:definition-source-form-path
-                                   definition)))))
-                        #'<
-                        :key #'second))))
+        (let ((defs
+               (loop :for (pathname form-path)
+                 :in (collect-definitions name)
+                 :collect (list (namestring pathname)
+                                #'(lambda ()
+                                    (beginning-of-buffer)
+                                    (when (forward-sexp form-path)
+                                      (backward-sexp 1)))))))
           (update-grep-list
-           list
+           defs
            #'(lambda ()
                (info-popup (get-buffer-create "*Definitions*")
                            #'(lambda (out)
-                               (loop :for (filename _) :in list :do
+                               (loop :for (filename _) :in defs :do
                                  (format out "~a~%" filename)))
                            nil))))))))
 

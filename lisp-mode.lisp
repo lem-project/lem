@@ -721,34 +721,8 @@
 
 #+ccl
 (defun lisp-get-arglist (symbol)
-  (let ((fstr (make-array '(0)
-                          :element-type 'base-char
-                          :fill-pointer 0
-                          :adjustable t)))
-    (with-output-to-string (out fstr)
-      (describe symbol out))
-    (let ((start-string)
-          (end-string))
-      (progn
-        (setq start-string "Arglist: (")
-        (setq end-string "\\n[A-Z][a-z]*:"))
-      (let* ((start (search start-string fstr))
-             (end (when start
-                    (ppcre:scan end-string fstr :start start))))
-        (when (and start end)
-          (ppcre:regex-replace-all
-           "\\)\\s*\\)"
-           (ppcre:regex-replace-all
-            "\\s+"
-            (format nil "(~a ~a"
-                    symbol
-                    (string-right-trim
-                     '(#\space #\tab)
-                     (subseq fstr
-                             (+ start (length start-string))
-                             end)))
-            " ")
-           "))"))))))
+  (when (fboundp symbol)
+    (write-to-string (ccl:arglist symbol))))
 
 #+sbcl
 (defun lisp-get-arglist (symbol)

@@ -810,7 +810,7 @@
 
 (defvar *lisp-repl-history* nil)
 
-(define-major-mode lisp-repl-mode nil
+(define-major-mode lisp-repl-mode lisp-mode
   (:name "lisp-repl"
    :keymap *lisp-repl-mode-keymap*
    :syntax-table *lisp-syntax-table*)
@@ -827,7 +827,7 @@
   (end-of-buffer)
   (unless (bolp)
     (insert-newline))
-  (insert-string "* ")
+  (insert-string (format nil "~a> " (package-name (lisp-current-package))))
   (buffer-put (window-buffer) :prompt-point (point))
   (buffer-undo-boundary (window-buffer)))
 
@@ -852,7 +852,7 @@
           (point-set end)
           (insert-newline)
           (multiple-value-bind (values error-p)
-              (eval-string str buffer (point))
+              (eval-string str buffer (point) t (lisp-current-package))
             (declare (ignore error-p))
             (setq *current-window* (pop-to-buffer buffer))
             (point-set (point-max))

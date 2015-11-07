@@ -28,6 +28,7 @@
           buffer-delete-char
           buffer-erase
           buffer-directory
+          buffer-undo-boundary
           buffer-get
           buffer-put
           buffer-clear-variables))
@@ -731,6 +732,9 @@
                 (push :separator (buffer-undo-stack buffer))
                 (buffer-undo-modified buffer))
               pres))))
+
+(defun buffer-undo-boundary (&optional (buffer (window-buffer)))
+  (push :separator (buffer-undo-stack buffer)))
 
 (defun buffer-get (buffer indicator &optional default)
   (multiple-value-bind (value win)

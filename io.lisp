@@ -115,6 +115,10 @@
                                 (buffer-output-stream-linum stream)
                                 (buffer-output-stream-column stream))
     (when (buffer-output-stream-interactive-update-p stream)
+      (point-set
+       (make-point (buffer-output-stream-linum stream)
+                   (buffer-output-stream-column stream)))
+      (window-adjust-view *current-window* t)
       (window-update-all))
     (incf (buffer-output-stream-linum stream))
     (setf (buffer-output-stream-column stream) 0)))

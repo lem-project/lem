@@ -825,11 +825,21 @@
     (lisp-repl-mode)
     (lisp-repl-prompt)))
 
+(defun shorten-package-name (package)
+  (car
+   (sort (copy-list
+          (cons (package-name package)
+                (package-nicknames package)))
+         #'(lambda (x y)
+             (< (length x) (length y))))))
+
 (defun lisp-repl-prompt ()
   (end-of-buffer)
   (unless (bolp)
     (insert-newline))
-  (insert-string (format nil "~a> " (package-name (lisp-current-package))))
+  (insert-string (format nil "~a> "
+                         (shorten-package-name
+                          (lisp-current-package))))
   (buffer-put-attribute (window-buffer)
                         (make-point (window-cur-linum) 0)
                         (make-point (window-cur-linum) (window-cur-col))

@@ -115,7 +115,7 @@
                                 (buffer-output-stream-linum stream)
                                 (buffer-output-stream-column stream))
     (when (buffer-output-stream-interactive-update-p stream)
-      (window-update *current-window*))
+      (window-update-all))
     (incf (buffer-output-stream-linum stream))
     (setf (buffer-output-stream-column stream) 0)))
 

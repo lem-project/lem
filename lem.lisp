@@ -34,9 +34,10 @@
 (defvar *input-queue* (make-growlist))
 
 (defun getch (&optional (abort-jump t))
-  (let* ((code (if (grow-null-p *input-queue*)
-                   (cl-charms/low-level:wgetch (window-win))
-                   (grow-rem-left *input-queue*)))
+  (let* ((code (loop
+                 (unless (grow-null-p *input-queue*)
+                   (return (grow-rem-left *input-queue*)))
+                 (sleep 0.005)))
          (char (code-char code)))
     (queue:enqueue *input-history* char)
     (when *macro-recording-p*
@@ -261,35 +262,15 @@
     (prog1 (execute key)
       (setq *universal-argument* nil))))
 
-(defun exec-paste ()
-  (cl-charms/low-level:timeout 10)
-  (loop :for code := (cl-charms/low-level:getch) :do
-    (when (= code -1)
-      (return))
-    (when *macro-recording-p*
-      (push (code-char code) *macro-chars*))
-    (let ((char (input-char code)))
-      (if (or (char= char C-j)
-              (char= char C-m))
-          (insert-newline 1)
-          (insert-char char 1))))
-  (cl-charms/low-level:timeout -1))
-
-(let ((last-insert-time))
-  (define-command self-insert (n) ("p")
-    (let ((c (insertion-key-p *last-input-key*)))
-      (cond (c
-             (setf (window-redraw-flag) :one-line)
-             (insert-char c n)
-             (let ((time (get-internal-real-time)))
-               (when last-insert-time
-                 (when (> 20 (- time last-insert-time))
-                   (exec-paste)))
-               (setq last-insert-time time)))
-            (t
-             (minibuf-print (format nil
-                                    "Key not found: ~a"
-                                    (kbd-to-string *last-input-key*))))))))
+(define-command self-insert (n) ("p")
+  (let ((c (insertion-key-p *last-input-key*)))
+    (cond (c
+           (setf (window-redraw-flag) :one-line)
+           (insert-char c n))
+          (t
+           (minibuf-print (format nil
+                                  "Key not found: ~a"
+                                  (kbd-to-string *last-input-key*)))))))
 
 (defun load-init-file ()
   (flet ((test (path)
@@ -360,7 +341,8 @@
 
 (defun lem-mainloop (debug-p)
   (flet ((body ()
-               (window-maybe-update)
+               (when (< (input-queue-length) 5)
+                 (window-maybe-update))
                (case (catch 'abort
                        (main-step)
                        nil)
@@ -368,8 +350,7 @@
                   (minibuf-print "Read Only"))
                  (abort
                   (keyboard-quit)))))
-    (do ((*exit* nil)
-         (*curr-flags* (make-flags) (make-flags))
+    (do ((*curr-flags* (make-flags) (make-flags))
          (*last-flags* (make-flags) *curr-flags*))
         (*exit*)
       (if debug-p
@@ -378,8 +359,22 @@
           (with-error-handler ()
             (body))))))
 
+(defvar *input-lock* (bt:make-lock))
+(defvar *input-thread* nil)
+
 (defun lem-main (&optional debug-p)
-  (lem-mainloop debug-p))
+  (setq *exit* nil)
+  (setq *input-thread*
+        (bt:make-thread
+         #'(lambda ()
+             (cl-charms/low-level:timeout 5)
+             (loop
+               (bt:with-lock-held (*input-lock*)
+                 (let ((c (cl-charms/low-level:wgetch (window-win))))
+                   (when (/= c -1)
+                     (input-enqueue c))))))))
+  (lem-mainloop debug-p)
+  (bt:destroy-thread *input-thread*))
 
 (defun lem-internal (args debug-p)
   (unwind-protect

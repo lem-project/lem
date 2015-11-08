@@ -420,8 +420,8 @@
   (let* ((string (write-to-string expr))
          (*package* (find-package package)))
     (setq *allow-interrupt-p* t)
-    (eval (read-from-string string))
-    (setq *allow-interrupt-p* nil)))
+    (prog1 (multiple-value-list (eval (read-from-string string)))
+      (setq *allow-interrupt-p* nil))))
 
 (defun eval-string (string output-buffer point
                            &optional
@@ -437,11 +437,10 @@
     (handler-case
         (handler-bind ((error #'lisp-debugger))
           (setq results
-                (multiple-value-list
-                 (restart-case (lisp-eval-in-package
-                                (%string-to-exps string)
-                                package)
-                   (abort () :report "Abort."))))
+                (restart-case (lisp-eval-in-package
+                               (%string-to-exps string)
+                               package)
+                  (abort () :report "Abort.")))
           (when update-point-p
             (point-set
              (buffer-output-stream-point io))))
@@ -515,8 +514,9 @@
                                    (point-set start))))
                 nil)))
           (setq expr
-                (lisp-eval-in-package `(,macroexpand-symbol ',expr)
-                                      (lisp-current-package)))
+                (car
+                 (lisp-eval-in-package `(,macroexpand-symbol ',expr)
+                                       (lisp-current-package))))
           (when (eq (window-buffer)
                     (get-buffer buffer-name))
             (let ((*kill-disable-p* t))

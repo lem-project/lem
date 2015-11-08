@@ -37,7 +37,7 @@
   (let* ((code (loop
                  (unless (grow-null-p *input-queue*)
                    (return (grow-rem-left *input-queue*)))
-                 (sleep 0.005)))
+                 (sleep 0.009)))
          (char (code-char code)))
     (queue:enqueue *input-history* char)
     (when *macro-recording-p*
@@ -368,7 +368,7 @@
   (setq *input-thread*
         (bt:make-thread
          #'(lambda ()
-             (cl-charms/low-level:timeout 5)
+             (cl-charms/low-level:timeout 9)
              (loop
                (bt:with-lock-held (*editor-lock*)
                  (let ((c (cl-charms/low-level:wgetch (window-win))))

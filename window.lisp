@@ -358,11 +358,16 @@
   (window-refresh window))
 
 (defun window-update-all ()
-  (do-window-tree (win *window-tree*)
-    (unless (eq win *current-window*)
-      (window-update win)))
-  (window-update *current-window*)
-  (cl-charms/low-level:doupdate))
+  (when *allow-interrupt-p*
+    (sleep 0.001))
+  (let ((allow-interrupt-p *allow-interrupt-p*))
+    (setq *allow-interrupt-p* nil)
+    (do-window-tree (win *window-tree*)
+      (unless (eq win *current-window*)
+        (window-update win)))
+    (window-update *current-window*)
+    (cl-charms/low-level:doupdate)
+    (setq *allow-interrupt-p* allow-interrupt-p)))
 
 (defun redraw-screen ()
   (window-update-all))

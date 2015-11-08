@@ -353,14 +353,15 @@
     (do ((*curr-flags* (make-flags) (make-flags))
          (*last-flags* (make-flags) *curr-flags*))
         (*exit*)
+      (setq *allow-interrupt-p* nil)
       (if debug-p
           (handler-bind ((error #'dump-error))
             (body))
           (with-error-handler ()
             (body))))))
 
-(defvar *input-lock* (bt:make-lock))
-(defvar *input-thread* nil)
+(defvar *input-thread*)
+(defvar *main-thread*)
 
 (defun lem-main (&optional debug-p)
   (setq *exit* nil)
@@ -369,11 +370,20 @@
          #'(lambda ()
              (cl-charms/low-level:timeout 5)
              (loop
-               (bt:with-lock-held (*input-lock*)
+               (bt:with-lock-held (*editor-lock*)
                  (let ((c (cl-charms/low-level:wgetch (window-win))))
-                   (when (/= c -1)
-                     (input-enqueue c))))))))
-  (lem-mainloop debug-p)
+                   (cond ((and (= c (char-code C-g))
+                               *allow-interrupt-p*)
+                          (bt:interrupt-thread *main-thread*
+                                               #'(lambda ()
+                                                   (error "interrupt"))))
+                         ((/= c -1)
+                          (input-enqueue c)))))))))
+  (setq *main-thread*
+        (bt:make-thread
+         #'(lambda ()
+             (lem-mainloop debug-p))))
+  (bt:join-thread *main-thread*)
   (bt:destroy-thread *input-thread*))
 
 (defun lem-internal (args debug-p)

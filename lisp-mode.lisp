@@ -419,7 +419,9 @@
 (defun lisp-eval-in-package (expr package)
   (let* ((string (write-to-string expr))
          (*package* (find-package package)))
-    (eval (read-from-string string))))
+    (setq *allow-interrupt-p* t)
+    (eval (read-from-string string))
+    (setq *allow-interrupt-p* nil)))
 
 (defun eval-string (string output-buffer point
                            &optional

@@ -25,6 +25,8 @@
 
 (defvar *input-history* (queue:make-queue 100))
 
+(defvar *editor-lock* (bt:make-lock))
+
 (defvar *macro-recording-p* nil)
 (defvar *macro-chars* nil)
 (defvar *macro-running-p* nil)
@@ -35,8 +37,9 @@
 
 (defun getch (&optional (abort-jump t))
   (let* ((code (loop
-                 (unless (grow-null-p *input-queue*)
-                   (return (grow-rem-left *input-queue*)))
+                 (bt:with-lock-held (*editor-lock*)
+                   (unless (grow-null-p *input-queue*)
+                     (return (grow-rem-left *input-queue*))))
                  (sleep 0.009)))
          (char (code-char code)))
     (queue:enqueue *input-history* char)
@@ -341,8 +344,9 @@
 
 (defun lem-mainloop (debug-p)
   (flet ((body ()
-               (when (< (input-queue-length) 5)
-                 (window-maybe-update))
+               (bt:with-lock-held (*editor-lock*)
+                 (when (< (input-queue-length) 5)
+                   (window-maybe-update)))
                (case (catch 'abort
                        (main-step)
                        nil)
@@ -368,16 +372,15 @@
   (setq *input-thread*
         (bt:make-thread
          #'(lambda ()
-             (cl-charms/low-level:timeout 9)
              (loop
-               (bt:with-lock-held (*editor-lock*)
-                 (let ((c (cl-charms/low-level:wgetch (window-win))))
-                   (cond ((and (= c (char-code C-g))
-                               *allow-interrupt-p*)
-                          (bt:interrupt-thread *main-thread*
-                                               #'(lambda ()
-                                                   (error "interrupt"))))
-                         ((/= c -1)
+               (let ((c (cl-charms/low-level:wgetch (window-win))))
+                 (cond ((and (= c (char-code C-g))
+                             *allow-interrupt-p*)
+                        (bt:interrupt-thread *main-thread*
+                                             #'(lambda ()
+                                                 (error "interrupt"))))
+                       ((/= c -1)
+                        (bt:with-lock-held (*editor-lock*)
                           (input-enqueue c)))))))))
   (setq *main-thread*
         (bt:make-thread

@@ -38,7 +38,7 @@
                  (bt:with-lock-held (*editor-lock*)
                    (unless (grow-null-p *input-queue*)
                      (return (grow-rem-left *input-queue*))))
-                 (sleep 0.009)))
+                 (sleep 0.001)))
          (char (code-char code)))
     (queue:enqueue *input-history* char)
     (when *macro-recording-p*
@@ -342,9 +342,8 @@
 
 (defun lem-mainloop (debug-p)
   (flet ((body ()
-               (bt:with-lock-held (*editor-lock*)
-                 (when (< (input-queue-length) 5)
-                   (window-maybe-update)))
+               (when (< (input-queue-length) 5)
+                 (window-maybe-update))
                (case (catch 'abort
                        (main-step)
                        nil)
@@ -372,13 +371,13 @@
          #'(lambda ()
              (loop
                (let ((c (cl-charms/low-level:wgetch (window-win))))
-                 (cond ((and (= c (char-code C-g))
-                             *allow-interrupt-p*)
-                        (bt:interrupt-thread *main-thread*
-                                             #'(lambda ()
-                                                 (error "interrupt"))))
-                       ((/= c -1)
-                        (bt:with-lock-held (*editor-lock*)
+                 (bt:with-lock-held (*editor-lock*)
+                   (cond ((and (= c (char-code C-g))
+                               *allow-interrupt-p*)
+                          (bt:interrupt-thread *main-thread*
+                                               #'(lambda ()
+                                                   (error "interrupt"))))
+                         ((/= c -1)
                           (input-enqueue c)))))))))
   (setq *main-thread*
         (bt:make-thread

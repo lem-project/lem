@@ -420,7 +420,7 @@
   (let* ((string (write-to-string expr))
          (*package* (find-package package)))
     (setq *allow-interrupt-p* t)
-    (prog1 (multiple-value-list (eval (read-from-string string)))
+    (unwind-protect (multiple-value-list (eval (read-from-string string)))
       (setq *allow-interrupt-p* nil))))
 
 (defun eval-string (string output-buffer point
@@ -963,6 +963,7 @@
       (return))))
 
 (defun lisp-debugger (condition)
+  (setq *allow-interrupt-p* nil)
   (let* ((choices (compute-restarts condition))
          (n (length choices)))
     (lisp-info-popup (get-buffer-create "*error*")
@@ -978,8 +979,7 @@
       (window-update-all)
       (let* ((str (catch 'abort (minibuf-read-string "Debug: ")))
              (i (and (stringp str) (parse-integer str :junk-allowed t))))
-        (cond ((eq str 'abort)
-               (return))
+        (cond ((eq str 'abort))
               ((and i (<= 1 i n))
                (let ((restart (nth (1- i) choices)))
                  (cond ((eq 'store-value (restart-name restart))

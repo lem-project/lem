@@ -38,7 +38,7 @@
                  (bt:with-lock-held (*editor-lock*)
                    (unless (grow-null-p *input-queue*)
                      (return (grow-rem-left *input-queue*))))
-                 (sleep 0.001)))
+                 (sleep 0.01)))
          (char (code-char code)))
     (queue:enqueue *input-history* char)
     (when *macro-recording-p*

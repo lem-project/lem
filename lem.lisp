@@ -320,25 +320,6 @@
          ,@body)
      (error ())))
 
-(defun lem-init (args)
-  (cl-charms/low-level:initscr)
-  (attr-init)
-  (cl-charms/low-level:noecho)
-  (cl-charms/low-level:cbreak)
-  (cl-charms/low-level:raw)
-  (cl-charms/low-level:nonl)
-  (cl-charms/low-level:refresh)
-  (unless *init-flag*
-    (setq *init-flag* t)
-    (window-init)
-    (minibuf-init)
-    (with-error-handler ()
-      (load-init-file)))
-  (dolist (arg args)
-    (find-file arg)))
-
-(defun lem-finallize ()
-  (cl-charms/low-level:endwin))
 
 (defun lem-mainloop (debug-p)
   (flet ((body ()
@@ -385,6 +366,26 @@
              (lem-mainloop debug-p))))
   (bt:join-thread *main-thread*)
   (bt:destroy-thread *input-thread*))
+
+(defun lem-init (args)
+  (cl-charms/low-level:initscr)
+  (attr-init)
+  (cl-charms/low-level:noecho)
+  (cl-charms/low-level:cbreak)
+  (cl-charms/low-level:raw)
+  (cl-charms/low-level:nonl)
+  (cl-charms/low-level:refresh)
+  (unless *init-flag*
+    (setq *init-flag* t)
+    (window-init)
+    (minibuf-init)
+    (with-error-handler ()
+      (load-init-file)))
+  (dolist (arg args)
+    (find-file arg)))
+
+(defun lem-finallize ()
+  (cl-charms/low-level:endwin))
 
 (defun lem-internal (args debug-p)
   (unwind-protect

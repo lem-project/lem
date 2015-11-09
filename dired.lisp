@@ -1,4 +1,4 @@
-;; -*- Mode: Lisp; Package: Dired -*-
+;; -*- Mode: LISP; Package: DIRED -*-
 
 (defpackage :dired
   (:use :cl :lem)

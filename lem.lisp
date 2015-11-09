@@ -1,4 +1,4 @@
-;; -*- Mode: Lisp; Package: Lem -*-
+;; -*- Mode: LISP; Package: LEM -*-
 
 (in-package :lem)
 
@@ -319,7 +319,6 @@
        (handler-bind ((error #'toplevel-error-handler))
          ,@body)
      (error ())))
-
 
 (defun lem-mainloop (debug-p)
   (flet ((body ()

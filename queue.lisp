@@ -1,4 +1,4 @@
-;; -*- Mode: Lisp; Package: queue -*-
+;; -*- Mode: LISP; Package: QUEUE -*-
 
 (defpackage :queue
   (:use :cl)

@@ -1,4 +1,4 @@
-;; -*- Mode: Lisp; Package: Lem -*-
+;; -*- Mode: LISP; Package: LEM -*-
 
 (in-package :lem)
 

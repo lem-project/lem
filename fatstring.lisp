@@ -1,4 +1,4 @@
-;; -*- Mode: Lisp; Package: fatstring -*-
+;; -*- Mode: LISP; Package: FATSTRING -*-
 
 (defpackage :fatstring
   (:use :cl)
@@ -100,7 +100,7 @@
           (aref (fat-font-data fatstring) index)))
 
 (defun fat-upcase (fatstring &key (start 0) end)
-  (make-fatstring-internal 
+  (make-fatstring-internal
    (string-upcase (fat-string fatstring) :start start :end end)
    (fat-font-data fatstring)))
 

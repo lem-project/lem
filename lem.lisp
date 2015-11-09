@@ -25,8 +25,6 @@
 
 (defvar *input-history* (queue:make-queue 100))
 
-(defvar *editor-lock* (bt:make-lock))
-
 (defvar *macro-recording-p* nil)
 (defvar *macro-chars* nil)
 (defvar *macro-running-p* nil)

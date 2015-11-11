@@ -52,6 +52,6 @@
                         #+sbcl :sb-introspect
                         :trivial-gray-streams
                         :cl-ppcre
-                        :inquisitor
+                        ;:inquisitor
                         :babel
                         :usocket))

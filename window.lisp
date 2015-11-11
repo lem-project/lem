@@ -4,6 +4,13 @@
 
 (export '(*modeline-default-format*
           *window-sufficient-width*
+          modeline-read-only-p
+          modeline-modified-p
+          modeline-name
+          modeline-major-mode
+          modeline-minor-modes
+          modeline-linum
+          modeline-column
           window-list
           window
           window-nlines

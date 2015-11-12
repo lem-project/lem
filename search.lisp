@@ -251,15 +251,16 @@
                                                  (window-cur-linum)
                                                  length))))
       (search-step #'(lambda ()
-                       (let ((pos
-                              (search str (take-string)
-                                      :start2 (window-cur-col))))
-                         (when pos (+ pos (length str)))))
+                       (search str (take-string)
+                               :start2 (window-cur-col)))
                    #'(lambda ()
-                       (let ((pos (search str (take-string))))
-                         (when pos (+ pos (length str)))))
+                       (search str (take-string)))
                    #'next-line
-                   #'goto-column
+                   #'(lambda (result)
+                       (goto-column result)
+                       (if (< 1 length)
+                           (next-char (- (length str) (- length 2)))
+                           (next-char (length str))))
                    (search-forward-endp-function limit)))))
 
 (defun search-backward-endp-function (limit)
@@ -275,9 +276,13 @@
                       (when (< 0 linum)
                         (apply 'search str
                                (join (string #\newline)
-                                     (buffer-take-lines (window-buffer)
-                                                        linum
-                                                        length))
+                                     (buffer-take-lines
+                                      (window-buffer)
+                                      (if (and (< 1 linum)
+                                               (= length 1))
+                                          linum
+                                          (1+ linum))
+                                      length))
                                :from-end t
                                args)))))
       (search-step #'(lambda ()
@@ -285,7 +290,9 @@
                    #'%search
                    #'prev-line
                    #'(lambda (i)
-                       (and (prev-line (1- length))
+                       (and (if (< 1 length)
+                                (prev-line (- length 2))
+                                t)
                             (beginning-of-line)
                             (next-char i)))
                    (search-backward-endp-function limit)))))

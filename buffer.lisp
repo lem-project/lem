@@ -436,13 +436,14 @@
                               start-column
                               end-column)
   (let ((i (- linum start-linum)))
-    (unless end-column
-      (setq end-column (fat-length (aref disp-lines i))))
-    (change-font (aref disp-lines i)
-                 attr
-                 :to
-                 start-column
-                 end-column)))
+    (when (<= 0 i (1- (length disp-lines)))
+      (unless end-column
+        (setq end-column (fat-length (aref disp-lines i))))
+      (change-font (aref disp-lines i)
+                   attr
+                   :to
+                   start-column
+                   end-column))))
 
 (defun set-attr-display-lines (disp-lines
                                attr

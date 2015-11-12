@@ -257,10 +257,9 @@
                        (search str (take-string)))
                    #'next-line
                    #'(lambda (result)
-                       (goto-column result)
-                       (if (< 1 length)
-                           (next-char (- (length str) (- length 2)))
-                           (next-char (length str))))
+                       (beginning-of-line)
+                       (next-char result)
+                       (next-char (length str)))
                    (search-forward-endp-function limit)))))
 
 (defun search-backward-endp-function (limit)
@@ -271,27 +270,28 @@
 
 (defun search-backward (str &optional limit)
   (let ((length (1+ (count #\newline str))))
-    (flet ((%search (&rest args)
+    (flet ((%search (&optional end)
                     (let ((linum (- (window-cur-linum) (1- length))))
                       (when (< 0 linum)
-                        (apply 'search str
-                               (join (string #\newline)
-                                     (buffer-take-lines
-                                      (window-buffer)
-                                      (if (and (< 1 linum)
-                                               (= length 1))
-                                          linum
-                                          (1+ linum))
-                                      length))
-                               :from-end t
-                               args)))))
+                        (let ((lines (buffer-take-lines (window-buffer)
+                                                        linum
+                                                        length)))
+                          (search str
+                                  (join (string #\newline)
+                                        (if (and (< 1 linum) end)
+                                            (append (butlast lines)
+                                                    (list
+                                                     (subseq (car (last lines))
+                                                             0 end)))
+                                            lines))
+                                  :from-end t))))))
       (search-step #'(lambda ()
-                       (%search :end2 (window-cur-col)))
+                       (%search (window-cur-col)))
                    #'%search
                    #'prev-line
                    #'(lambda (i)
                        (and (if (< 1 length)
-                                (prev-line (- length 2))
+                                (prev-line (1- length))
                                 t)
                             (beginning-of-line)
                             (next-char i)))

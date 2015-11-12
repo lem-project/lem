@@ -336,7 +336,7 @@
         (*exit*)
       (setq *allow-interrupt-p* nil)
       (if debug-p
-          (handler-bind ((error #'dump-error))
+          (handler-bind ((error #'save-error))
             (body))
           (with-error-handler ()
             (body))))))
@@ -399,7 +399,7 @@
 (defun lem-save-error (&rest args)
   (lem-internal args t))
 
-(defun dump-error (condition)
+(defun save-error (condition)
   (with-open-file (out *lem-error-file*
                        :direction :output
                        :if-exists :append

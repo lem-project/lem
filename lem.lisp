@@ -16,7 +16,9 @@
           input-key
           self-insert
           lem
-          lem-save-error))
+          lem-save-error
+          restore
+          dump))
 
 (defvar *lem-error-file* "~/.lem-error")
 (defvar *init-flag* nil)
@@ -366,7 +368,8 @@
   (bt:join-thread *main-thread*)
   (bt:destroy-thread *input-thread*))
 
-(defun lem-init (args)
+(defun lem-init (args restore-p)
+  #-sbcl (declare (ignore restore-p))
   (cl-charms/low-level:initscr)
   (attr-init)
   (cl-charms/low-level:noecho)
@@ -374,30 +377,36 @@
   (cl-charms/low-level:raw)
   (cl-charms/low-level:nonl)
   (cl-charms/low-level:refresh)
-  (unless *init-flag*
-    (setq *init-flag* t)
-    (window-init)
-    (minibuf-init)
-    (with-error-handler ()
-      (load-init-file)))
+  (cond #+sbcl(restore-p
+               (%restore))
+        ((not *init-flag*)
+         (setq *init-flag* t)
+         (window-init)
+         (minibuf-init)
+         (with-error-handler ()
+           (load-init-file))))
   (dolist (arg args)
     (find-file arg)))
 
 (defun lem-finallize ()
   (cl-charms/low-level:endwin))
 
-(defun lem-internal (args debug-p)
+(defun lem-internal (args debug-p restore-p)
   (unwind-protect
     (progn
-      (lem-init args)
+      (lem-init args restore-p)
       (lem-main debug-p))
     (lem-finallize)))
 
 (defun lem (&rest args)
-  (lem-internal args nil))
+  (lem-internal args nil nil))
 
 (defun lem-save-error (&rest args)
-  (lem-internal args t))
+  (lem-internal args t nil))
+
+#+sbcl
+(defun restore ()
+  (lem-internal nil nil t))
 
 (defun save-error (condition)
   (with-open-file (out *lem-error-file*
@@ -409,6 +418,23 @@
       (format out "~s~%"
               (queue:queue-to-list *input-history*))
       (uiop/image:print-backtrace :stream out :count 100))))
+
+#+sbcl
+(defun %restore ()
+  (dolist (window (cons *minibuf-window* (window-list)))
+    (setf (window-win window)
+          (cl-charms/low-level:newwin (window-nlines window)
+                                      (window-ncols window)
+                                      (window-y window)
+                                      (window-x window)))
+    (cl-charms/low-level:keypad (window-win window) 1))
+  t)
+
+#+sbcl
+(defun dump (core-file-name)
+  (dolist (window (cons *minibuf-window* (window-list)))
+    (cl-charms/low-level:delwin (window-win window)))
+  (sb-ext:save-lisp-and-die core-file-name))
 
 (defun dired (filename)
   (dired:dired filename))

@@ -223,7 +223,7 @@
          (let ((res (funcall first-search)))
            (cond (res
                   (funcall goto-matched-pos res)
-                  t)
+                  (not (funcall endp)))
                  (t
                   (do () ((funcall endp))
                     (unless (funcall step)
@@ -239,7 +239,7 @@
 (defun search-forward-endp-function (limit)
   (if limit
       #'(lambda ()
-          (or (point< limit (point))
+          (or (point<= limit (point))
               (eobp)))
       #'eobp))
 

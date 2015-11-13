@@ -506,15 +506,13 @@
                                       (point-linum end)
                                       (point-column end)))
              ((<= start-linum
-                  (point-linum start)
-                  end-linum
-                  (1- (point-linum end)))
+                  (point-linum start))
               (set-attr-display-lines disp-lines
                                       (overlay-attr overlay)
                                       start-linum
                                       (point-linum start)
                                       (point-column start)
-                                      (1- end-linum)
+                                      end-linum
                                       nil)))))
 
 (defun buffer-display-lines (buffer disp-lines start-linum nlines)

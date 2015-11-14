@@ -56,7 +56,7 @@
 (defun leval-send-macroexpand-1 (string package-name)
   (leval-send (list :macroexpand-1 string package-name)))
 
-(defun leval-send-macroexpnad (string package-name)
+(defun leval-send-macroexpand (string package-name)
   (leval-send (list :macroexpand string package-name)))
 
 (defun leval-send-complete-symbol (string package-name)

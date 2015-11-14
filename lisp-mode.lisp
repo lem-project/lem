@@ -723,7 +723,7 @@
 #+ccl
 (defun lisp-get-arglist (symbol)
   (when (fboundp symbol)
-    (write-to-string (ccl:arglist symbol))))
+    (write-to-string (ccl:arglist symbol) :pretty t)))
 
 #+sbcl
 (defun lisp-get-arglist (symbol)
@@ -731,7 +731,8 @@
     (ppcre:regex-replace-all
      "\\s+"
      (write-to-string
-      (sb-introspect:function-lambda-list symbol))
+      (sb-introspect:function-lambda-list symbol)
+      :pretty t)
      " ")))
 
 (defun lisp-echo-arglist (get-arglist-function)

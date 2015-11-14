@@ -13,13 +13,13 @@
           leval-eval-defun
           leval-eval-last-sexp
           leval-load-file
+          leval-macroexpand-1
           leval-macroexpand
           leval-describe-symbol
           leval-disassemble-symbol
           leval-complete-symbol
           leval-self-insert-then-arg-list
-          leval-trace
-          leval-untrace))
+          ))
 
 (defstruct leval-client
   hostname
@@ -73,9 +73,6 @@
 
 (defun leval-send-arglist (string package-name)
   (leval-send (list :arglist string package-name)))
-
-(defun leval-send-trace (string untrace-p package-name)
-  (leval-send (list :trace string untrace-p package-name)))
 
 (defun leval-current-package (&optional (buffer (window-buffer))
                                         (check-exists-package t))
@@ -243,15 +240,3 @@
      #'(lambda (string)
          (leval-send-arglist string
                              (leval-current-package))))))
-
-(define-key *leval-mode-keymap* (kbd "C-x t") 'leval-trace)
-(define-command leval-trace (symbol-name)
-  ((list (leval-read-symbol "trace: ")))
-  (leval-send-trace symbol-name nil (leval-current-package))
-  t)
-
-(define-key *leval-mode-keymap* (kbd "C-x T") 'leval-untrace)
-(define-command leval-untrace (symbol-name)
-  ((list (leval-read-symbol "untrace: " nil)))
-  (leval-send-trace symbol-name t (leval-current-package))
-  t)

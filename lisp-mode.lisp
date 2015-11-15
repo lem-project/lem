@@ -426,11 +426,13 @@
   (let* ((error-p)
          (results)
          (io (make-buffer-io-stream output-buffer point t))
-         (*error-output* io)
-         (*trace-output* io)
-         (*debug-io* io)
+         (*terminal-io* io)
          (*standard-output* io)
-         (*standard-input* (make-minibuffer-input-stream)))
+         (*standard-input* io)
+         (*error-output* io)
+         (*query-io* io)
+         (*debug-io* io)
+         (*trace-output* io))
     (handler-case
         (handler-bind ((error #'lisp-debugger))
           (setq results

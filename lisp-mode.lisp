@@ -725,16 +725,15 @@
 #+ccl
 (defun lisp-get-arglist (symbol)
   (when (fboundp symbol)
-    (write-to-string (ccl:arglist symbol) :pretty t)))
+    (format nil "~a" (ccl:arglist symbol))))
 
 #+sbcl
 (defun lisp-get-arglist (symbol)
   (when (fboundp symbol)
     (ppcre:regex-replace-all
      "\\s+"
-     (write-to-string
-      (sb-introspect:function-lambda-list symbol)
-      :pretty t)
+     (format nil "~a"
+             (sb-introspect:function-lambda-list symbol))
      " ")))
 
 (defun lisp-echo-arglist (get-arglist-function)

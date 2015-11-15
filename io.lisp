@@ -48,7 +48,7 @@
   'line)
 
 (defmethod trivial-gray-streams:stream-line-column ((stream buffer-output-stream))
-  nil)
+  (buffer-output-stream-column stream))
 
 (defmethod trivial-gray-streams:stream-fresh-line ((stream buffer-output-stream))
   (unless (zerop (buffer-output-stream-column stream))
@@ -118,6 +118,23 @@
       (window-update-all))
     (incf (buffer-output-stream-linum stream))
     (setf (buffer-output-stream-column stream) 0)))
+
+(defun buffer-output-stream-refresh (stream)
+  (let* ((buffer (buffer-output-stream-buffer stream))
+         (window (find buffer (window-list) :key #'window-buffer)))
+    (when window
+      (window-update window t)))
+  nil)
+
+(defmethod trivial-gray-streams:stream-finish-output ((stream buffer-output-stream))
+  (buffer-output-stream-refresh stream))
+
+(defmethod trivial-gray-streams:stream-force-output ((stream buffer-output-stream))
+  (buffer-output-stream-refresh stream))
+
+#-(and)
+(defmethod trivial-gray-streams:clear-output ((stream buffer-output-stream))
+  )
 
 
 (defclass minibuffer-input-stream (trivial-gray-streams:fundamental-input-stream)

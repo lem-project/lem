@@ -359,10 +359,12 @@
           (window-recenter window)
           (window-scroll window offset)))))
 
-(defun window-update (window)
+(defun window-update (window &optional update-display-p)
   (cl-charms/low-level:werase (window-win window))
   (window-adjust-view window)
-  (window-refresh window))
+  (window-refresh window)
+  (when update-display-p
+    (cl-charms/low-level:doupdate)))
 
 (defun window-update-all ()
   (when *allow-interrupt-p*
@@ -374,8 +376,7 @@
         (unless (eq win *current-window*)
           (window-update win)))
       (window-update *current-window*)
-      (cl-charms/low-level:doupdate)
-      )
+      (cl-charms/low-level:doupdate))
     (setq *allow-interrupt-p* allow-interrupt-p)))
 
 (defun redraw-screen ()

@@ -149,8 +149,9 @@
 (defmethod trivial-gray-streams:stream-read-char ((stream minibuffer-input-stream))
   (let ((c (pop (minibuffer-input-stream-queue stream))))
     (cond ((null c)
-           (let ((string (minibuf-read-string "Read char: " "" t)))
-             (if (null string)
+           (multiple-value-bind (string eof)
+               (minibuf-read-string-simply "Read char: ")
+             (if eof
                  (progn
                    (setf (minibuffer-input-stream-queue stream) nil)
                    (return-from trivial-gray-streams:stream-read-char :eof))

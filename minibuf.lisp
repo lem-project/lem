@@ -181,6 +181,23 @@
 (defun minibuf-read-string (prompt &optional initial)
   (minibuf-read-line prompt (or initial "") nil nil))
 
+(defun minibuf-read-string-simply (prompt)
+  (let ((input ""))
+    (loop
+      (minibuf-print (format nil "~a~a" prompt input))
+      (let ((char (getch)))
+        (cond ((member char (list C-h [backspace] [del]) :test #'char=)
+               (unless (string= "" input)
+                 (setq input (subseq input 0 (1- (length input))))))
+              ((member char (list C-m C-j) :test #'char=)
+               (return (values input nil)))
+              ((char= char C-d)
+               (return (values input t)))
+              ((char= char C-u)
+               (setq input ""))
+              (t
+               (setq input (concatenate 'string input (string char)))))))))
+
 (defun minibuf-read-number (prompt &optional min max)
   (parse-integer
    (minibuf-read-line prompt "" nil

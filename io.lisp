@@ -130,11 +130,17 @@
   (make-instance 'minibuffer-input-stream :queue nil))
 
 (defmethod trivial-gray-streams:stream-read-char ((stream minibuffer-input-stream))
-  (let ((c (or (pop (minibuffer-input-stream-queue stream))
-               (minibuf-read-char "Read char: "))))
-    (if (char= c #\eot)
-        :eof
-        c)))
+  (let ((c (pop (minibuffer-input-stream-queue stream))))
+    (cond ((null c)
+           (let ((string (minibuf-read-string "Read char: ")))
+             (setf (minibuffer-input-stream-queue stream)
+                   (nconc (minibuffer-input-stream-queue stream)
+                          (coerce string 'list)
+                          (list #\newline))))
+           (trivial-gray-streams:stream-read-char stream))
+          ((eql c #\eot)
+           :eof)
+          (c))))
 
 (defmethod trivial-gray-streams:stream-unread-char ((stream minibuffer-input-stream) char)
   (push char (minibuffer-input-stream-queue stream))

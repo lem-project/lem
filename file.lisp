@@ -149,7 +149,7 @@
 
 (defun scan-line-property-list (str)
   (ppcre:do-register-groups (var val)
-    ("([a-zA-Z0-9-_]+)\\s*:\\s*([a-zA-Z0-9-_]+);?" str)
+    ("([a-zA-Z0-9-_]+)\\s*:\\s*([^ ;]+);?" str)
     (cond ((string= (string-downcase var) "mode")
            (let ((mode (find-mode-from-name val)))
              (when mode

@@ -397,7 +397,13 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-x p") 'lisp-set-package)
 (define-command lisp-set-package () ()
-  (lisp-read-change-package #'find-package nil))
+  (lisp-read-change-package
+   #'find-package
+   #'(lambda (str)
+       (completion str
+                   (mapcar #'(lambda (pkg)
+                               (string-downcase (package-name pkg)))
+                           (list-all-packages))))))
 
 (defun %string-to-exps (str)
   (let ((str str)

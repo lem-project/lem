@@ -90,6 +90,8 @@
 (define-key *minibuf-keymap* (kbd "C-p") 'minibuf-read-line-prev-history)
 (define-key *minibuf-keymap* (kbd "C-n") 'minibuf-read-line-next-history)
 (define-key *minibuf-keymap* (kbd "C-g") 'minibuf-read-line-break)
+(define-key *minibuf-keymap* (kbd "C-d") 'minibuf-read-line-delete-char)
+(define-key *minibuf-keymap* (kbd "[dc]") 'minibuf-read-line-delete-char)
 
 (defvar *minibuf-read-line-tmp-window*)
 
@@ -99,6 +101,9 @@
 
 (defvar *minibuf-read-line-history* (make-history))
 (defvar *minibuf-read-line-busy-p* nil)
+
+(defvar *minibuf-allow-eof-p*)
+(defvar *minibuf-eof-error* (gensym))
 
 (define-command minibuf-read-line-confirm () ()
   (let ((str (minibuf-get-line)))
@@ -142,6 +147,13 @@
 (define-command minibuf-read-line-break () ()
   (throw 'abort 'abort))
 
+(define-command minibuf-read-line-delete-char (n) ("P")
+  (if *minibuf-allow-eof-p*
+      (if (string= "" (region-string (point-min) (point-max)))
+          (throw *minibuf-eof-error* nil)
+          (delete-char n))
+      (delete-char n)))
+
 (defun minibuf-get-line ()
   (buffer-line-string (window-buffer *minibuf-window*) 1))
 
@@ -153,50 +165,36 @@
                                 (window-cur-col *minibuf-window*)))
   (cl-charms/low-level:wrefresh (window-win *minibuf-window*)))
 
-(defun minibuf-read-line (prompt initial comp-f existing-p)
+(defun minibuf-read-line (prompt initial comp-f existing-p
+                                 &optional allow-eof-p)
   (when *minibuf-read-line-busy-p*
     (return-from minibuf-read-line nil))
   (let ((*minibuf-read-line-tmp-window* *current-window*)
         (*current-window* *minibuf-window*)
         (*minibuf-read-line-busy-p* t)
-        (*universal-argument* nil))
+        (*universal-argument* nil)
+        (*minibuf-allow-eof-p* allow-eof-p))
     (erase-buffer)
     (minibuffer-mode)
     (when initial
       (insert-string initial))
-    (do ((*minibuf-read-line-loop* t)
-         (*minibuf-read-line-existing-p* existing-p)
-         (*minibuf-read-line-comp-f* comp-f)
-         (*curr-flags* (make-flags) (make-flags))
-         (*last-flags* (make-flags) *curr-flags*))
-        ((not *minibuf-read-line-loop*)
-         (let ((str (minibuf-get-line)))
-           (add-history *minibuf-read-line-history* str)
-           str))
-      (minibuf-read-line-refresh prompt)
-      (let* ((key (input-key))
-             (cmd (find-keybind key)))
-        (cmd-call cmd 1)))))
+    (catch *minibuf-eof-error*
+      (do ((*minibuf-read-line-loop* t)
+           (*minibuf-read-line-existing-p* existing-p)
+           (*minibuf-read-line-comp-f* comp-f)
+           (*curr-flags* (make-flags) (make-flags))
+           (*last-flags* (make-flags) *curr-flags*))
+          ((not *minibuf-read-line-loop*)
+           (let ((str (minibuf-get-line)))
+             (add-history *minibuf-read-line-history* str)
+             str))
+        (minibuf-read-line-refresh prompt)
+        (let* ((key (input-key))
+               (cmd (find-keybind key)))
+          (cmd-call cmd 1))))))
 
-(defun minibuf-read-string (prompt &optional initial)
-  (minibuf-read-line prompt (or initial "") nil nil))
-
-(defun minibuf-read-string-simply (prompt)
-  (let ((input ""))
-    (loop
-      (minibuf-print (format nil "~a~a" prompt input))
-      (let ((char (getch)))
-        (cond ((member char (list C-h [backspace] [del]) :test #'char=)
-               (unless (string= "" input)
-                 (setq input (subseq input 0 (1- (length input))))))
-              ((member char (list C-m C-j) :test #'char=)
-               (return (values input nil)))
-              ((char= char C-d)
-               (return (values input t)))
-              ((char= char C-u)
-               (setq input ""))
-              (t
-               (setq input (concatenate 'string input (string char)))))))))
+(defun minibuf-read-string (prompt &optional initial allow-eof-p)
+  (minibuf-read-line prompt (or initial "") nil nil allow-eof-p))
 
 (defun minibuf-read-number (prompt &optional min max)
   (parse-integer

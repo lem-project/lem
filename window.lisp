@@ -80,7 +80,7 @@
 (defun select-window (window)
   (setq *current-window* window))
 
-(defun selected-window (window)
+(defun selected-window ()
   *current-window*)
 
 (defun deleted-window-p (window)

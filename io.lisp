@@ -50,6 +50,18 @@
 (defmethod trivial-gray-streams:stream-line-column ((stream buffer-output-stream))
   (buffer-output-stream-column stream))
 
+(defun buffer-output-stream-refresh (stream)
+  (when (buffer-output-stream-interactive-update-p stream)
+    (let ((window (get-buffer-window (buffer-output-stream-buffer stream)))
+          (prev-buffer (window-buffer)))
+      (when window
+        (set-buffer (window-buffer window) nil)
+        (point-set (buffer-output-stream-point stream))
+        (window-adjust-view window t)
+        (window-update window t)
+        (set-buffer prev-buffer nil))))
+  nil)
+
 (defmethod trivial-gray-streams:stream-fresh-line ((stream buffer-output-stream))
   (unless (zerop (buffer-output-stream-column stream))
     (trivial-gray-streams:stream-terpri stream)))
@@ -114,17 +126,9 @@
   (prog1 (buffer-insert-newline (buffer-output-stream-buffer stream)
                                 (buffer-output-stream-linum stream)
                                 (buffer-output-stream-column stream))
-    (when (buffer-output-stream-interactive-update-p stream)
-      (window-update-all))
+    (buffer-output-stream-refresh stream)
     (incf (buffer-output-stream-linum stream))
     (setf (buffer-output-stream-column stream) 0)))
-
-(defun buffer-output-stream-refresh (stream)
-  (let* ((buffer (buffer-output-stream-buffer stream))
-         (window (find buffer (window-list) :key #'window-buffer)))
-    (when window
-      (window-update window t)))
-  nil)
 
 (defmethod trivial-gray-streams:stream-finish-output ((stream buffer-output-stream))
   (buffer-output-stream-refresh stream))

@@ -8,7 +8,10 @@
           lisp-mode
           lisp-indent-line
           lisp-newline-and-indent
-          lisp-read-change-package
+          lisp-indent-region
+          lisp-indent-sexp
+          lisp-current-package
+          lisp-set-package
           lisp-eval-string
           lisp-eval-region
           lisp-eval-defun
@@ -18,13 +21,24 @@
           lisp-macroexpand-all
           lisp-describe-symbol
           lisp-disassemble-symbol
-          lisp-indent-region
-          lisp-indent-sexp
-          lisp-current-package
+          #+sbcl lisp-find-definitions
+          complete-symbol
           lisp-complete-symbol
+          lisp-get-arglit
+          lisp-echo-arglist
+          lisp-self-insert-then-arg-list
           lisp-comment-or-uncomment-region
           lisp-comment-region
           lisp-uncomment-region
+          *lisp-repl-mode-keymap*
+          lisp-repl-mode
+          run-lisp
+          lisp-repl-prompt
+          lisp-repl-return
+          lisp-repl-prev-input
+          lisp-repl-next-input
+          lisp-repl-reset
+          lisp-repl-set-package
           *scratch-mode-keymap*
           scratch-mode
           scratch

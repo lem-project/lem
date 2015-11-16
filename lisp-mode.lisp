@@ -915,6 +915,12 @@
   (lisp-repl-prompt)
   t)
 
+(define-key *lisp-repl-mode-keymap* (kbd "C-x p") 'lisp-repl-set-package)
+(define-command lisp-repl-set-package () ()
+  (lisp-set-package)
+  (lisp-repl-prompt)
+  t)
+
 (defvar *scratch-mode-keymap*
   (make-keymap "scratch" nil *lisp-mode-keymap*))
 

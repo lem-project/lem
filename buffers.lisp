@@ -17,7 +17,8 @@
           get-next-buffer
           kill-buffer
           next-buffer
-          list-buffers))
+          list-buffers
+          get-buffer-window))
 
 (defun ghost-buffer-p (buffer)
   (let ((name (buffer-name buffer)))
@@ -167,3 +168,6 @@
                              (buffer-name b)
                              (+ 8 max-name-len)
                              (or (buffer-filename b) "")))))))))
+
+(defun get-buffer-window (buffer)
+  (find buffer (window-list) :key #'window-buffer))

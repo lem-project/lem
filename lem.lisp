@@ -285,24 +285,24 @@
         (test (merge-pathnames ".lemrc" (user-homedir-pathname))))))
 
 (defun attr-init ()
-  (when (/= 0 (cl-charms/low-level:has-colors))
-    (cl-charms/low-level:start-color)
-    (cl-charms/low-level:use-default-colors)
+  (when (/= 0 (charms/ll:has-colors))
+    (charms/ll:start-color)
+    (charms/ll:use-default-colors)
     (loop
       :for color
-      :in (list cl-charms/low-level:color_yellow
-                cl-charms/low-level:color_green
-                cl-charms/low-level:color_blue
-                cl-charms/low-level:color_magenta
-                cl-charms/low-level:color_red
-                cl-charms/low-level:color_cyan)
+      :in (list charms/ll:color_yellow
+                charms/ll:color_green
+                charms/ll:color_blue
+                charms/ll:color_magenta
+                charms/ll:color_red
+                charms/ll:color_cyan)
       :for attr-name :in *color-names*
       :for num :from 1
       :do
-      (cl-charms/low-level:init-pair num color -1)
-      (set-attr attr-name (cl-charms/low-level:color-pair num)))
+      (charms/ll:init-pair num color -1)
+      (set-attr attr-name (charms/ll:color-pair num)))
     (syntax-init-attributes))
-  (set-attr :highlight cl-charms/low-level:a_reverse)
+  (set-attr :highlight charms/ll:a_reverse)
   (set-attr :search-highlight
             (logior (get-attr :highlight)
                     (get-attr :cyan))))
@@ -352,7 +352,7 @@
         (bt:make-thread
          #'(lambda ()
              (loop
-               (let ((c (cl-charms/low-level:wgetch (window-win))))
+               (let ((c (charms/ll:wgetch (window-win))))
                  (bt:with-lock-held (*editor-lock*)
                    (cond ((and (= c (char-code C-g))
                                *allow-interrupt-p*)
@@ -370,13 +370,13 @@
 
 (defun lem-init (args restore-p)
   #-sbcl (declare (ignore restore-p))
-  (cl-charms/low-level:initscr)
+  (charms/ll:initscr)
   (attr-init)
-  (cl-charms/low-level:noecho)
-  (cl-charms/low-level:cbreak)
-  (cl-charms/low-level:raw)
-  (cl-charms/low-level:nonl)
-  (cl-charms/low-level:refresh)
+  (charms/ll:noecho)
+  (charms/ll:cbreak)
+  (charms/ll:raw)
+  (charms/ll:nonl)
+  (charms/ll:refresh)
   (cond #+sbcl(restore-p
                (%restore))
         ((not *init-flag*)
@@ -389,7 +389,7 @@
     (find-file arg)))
 
 (defun lem-finallize ()
-  (cl-charms/low-level:endwin))
+  (charms/ll:endwin))
 
 (defun lem-internal (args debug-p restore-p)
   (unwind-protect
@@ -423,17 +423,17 @@
 (defun %restore ()
   (dolist (window (cons *minibuf-window* (window-list)))
     (setf (window-win window)
-          (cl-charms/low-level:newwin (window-nlines window)
-                                      (window-ncols window)
-                                      (window-y window)
-                                      (window-x window)))
-    (cl-charms/low-level:keypad (window-win window) 1))
+          (charms/ll:newwin (window-nlines window)
+                            (window-ncols window)
+                            (window-y window)
+                            (window-x window)))
+    (charms/ll:keypad (window-win window) 1))
   t)
 
 #+sbcl
 (defun dump (core-file-name)
   (dolist (window (cons *minibuf-window* (window-list)))
-    (cl-charms/low-level:delwin (window-win window)))
+    (charms/ll:delwin (window-win window)))
   (sb-ext:save-lisp-and-die core-file-name))
 
 (defun dired (filename)

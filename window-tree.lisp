@@ -24,7 +24,7 @@
 (defun make-window (buffer nlines ncols y x)
   (let ((window
          (make-instance 'window
-                        :win (cl-charms/low-level:newwin nlines ncols y x)
+                        :win (charms/ll:newwin nlines ncols y x)
                         :nlines nlines
                         :ncols ncols
                         :y y
@@ -36,7 +36,7 @@
                         :cur-col 0
                         :max-col 0
                         :wrap-ylist nil)))
-    (cl-charms/low-level:keypad (window-win window) 1)
+    (charms/ll:keypad (window-win window) 1)
     window))
 
 (defstruct (window-node (:constructor make-window-node-internal))

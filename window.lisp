@@ -90,12 +90,12 @@
   (setf (window-delete-hook window) fn))
 
 (defun window-init ()
-  (setq *current-cols* cl-charms/low-level:*cols*)
-  (setq *current-lines* cl-charms/low-level:*lines*)
+  (setq *current-cols* charms/ll:*cols*)
+  (setq *current-lines* charms/ll:*lines*)
   (setq *current-window*
         (make-window (get-buffer-create "*tmp*")
-                     (- cl-charms/low-level:*lines* 1)
-                     cl-charms/low-level:*cols*
+                     (- charms/ll:*lines* 1)
+                     charms/ll:*cols*
                      0
                      0))
   (setq *window-tree* *current-window*))
@@ -104,7 +104,7 @@
 (define-command recenter () ()
   (syntax-scan-window *current-window*)
   (do-window-tree (window *window-tree*)
-    (cl-charms/low-level:clearok (window-win window) 1))
+    (charms/ll:clearok (window-win window) 1))
   (window-recenter *current-window*)
   (window-update-all)
   t)
@@ -177,24 +177,24 @@
           (format nil "~a~v,,,va ~a --" str n #\- #\space line-pos)))))
 
 (defun window-refresh-modeline (window)
-  (cl-charms/low-level:wattron (window-win window)
-                               cl-charms/low-level:a_reverse)
+  (charms/ll:wattron (window-win window)
+                     charms/ll:a_reverse)
   (let ((modeline-str (modeline-string window)))
-    (cl-charms/low-level:mvwaddstr (window-win window)
-                                   (1- (window-nlines window))
-                                   0
-                                   modeline-str))
-  (cl-charms/low-level:wattroff (window-win window)
-                                cl-charms/low-level:a_reverse))
+    (charms/ll:mvwaddstr (window-win window)
+                         (1- (window-nlines window))
+                         0
+                         modeline-str))
+  (charms/ll:wattroff (window-win window)
+                      charms/ll:a_reverse))
 
 (defun window-cursor-y (window)
   (- (window-cur-linum window)
      (window-vtop-linum window)))
 
 (defun window-print-char (win y x str attr)
-  (cl-charms/low-level:wattron win attr)
-  (cl-charms/low-level:mvwaddstr win y (str-width str x) (string (schar str x)))
-  (cl-charms/low-level:wattroff win attr))
+  (charms/ll:wattron win attr)
+  (charms/ll:mvwaddstr win y (str-width str x) (string (schar str x)))
+  (charms/ll:wattroff win attr))
 
 (defun window-print-line (window y str)
   (check-type str fatstring)
@@ -203,9 +203,9 @@
     :for i :from 0 :below (fat-length str)
     :do (multiple-value-bind (char attr)
             (fat-char str i)
-          (cl-charms/low-level:wattron win attr)
-          (cl-charms/low-level:mvwaddstr win y x (string char))
-          (cl-charms/low-level:wattroff win attr)
+          (charms/ll:wattron win attr)
+          (charms/ll:mvwaddstr win y x (string char))
+          (charms/ll:wattroff win attr)
           (setq x (char-width char x)))))
 
 (defun window-refresh-line (window curx cury y str)
@@ -319,25 +319,25 @@
       (incf y))
     (setf (window-wrap-ylist window)
           (nreverse (window-wrap-ylist window)))
-    (cl-charms/low-level:wmove (window-win window)
-                               cury
-                               curx)))
+    (charms/ll:wmove (window-win window)
+                     cury
+                     curx)))
 
 (defun window-refresh-separator (window)
-  (cl-charms/low-level:attron cl-charms/low-level:a_reverse)
+  (charms/ll:attron charms/ll:a_reverse)
   (when (< 0 (window-x window))
     (loop :with x := (- (window-x window) 1)
       :for y :from (window-y window) :repeat (window-nlines window) :do
-      (cl-charms/low-level:mvwaddch cl-charms/low-level:*stdscr*
-                                    y x #.(char-code #\|))))
-  (cl-charms/low-level:attroff cl-charms/low-level:a_reverse)
-  (cl-charms/low-level:wnoutrefresh cl-charms/low-level:*stdscr*))
+      (charms/ll:mvwaddch charms/ll:*stdscr*
+                          y x #.(char-code #\|))))
+  (charms/ll:attroff charms/ll:a_reverse)
+  (charms/ll:wnoutrefresh charms/ll:*stdscr*))
 
 (defun window-refresh (window)
   (window-refresh-modeline window)
   (window-refresh-lines window)
   (window-refresh-separator window)
-  (cl-charms/low-level:wnoutrefresh (window-win window)))
+  (charms/ll:wnoutrefresh (window-win window)))
 
 (defun window-offset-view (window)
   (let ((vtop-linum (window-vtop-linum window))
@@ -360,11 +360,11 @@
           (window-scroll window offset)))))
 
 (defun window-update (window &optional update-display-p)
-  (cl-charms/low-level:werase (window-win window))
+  (charms/ll:werase (window-win window))
   (window-adjust-view window)
   (window-refresh window)
   (when update-display-p
-    (cl-charms/low-level:doupdate)))
+    (charms/ll:doupdate)))
 
 (defun window-update-all ()
   (when *allow-interrupt-p*
@@ -376,7 +376,7 @@
         (unless (eq win *current-window*)
           (window-update win)))
       (window-update *current-window*)
-      (cl-charms/low-level:doupdate))
+      (charms/ll:doupdate))
     (setq *allow-interrupt-p* allow-interrupt-p)))
 
 (defun redraw-screen ()
@@ -403,7 +403,7 @@
           (funcall (get-window-refresh-line-function window)
                    window 0 cury cury str)
         (if (= cury cury2)
-            (cl-charms/low-level:wmove (window-win window) cury2 curx2)
+            (charms/ll:wmove (window-win window) cury2 curx2)
             (window-update-all))))))
 
 (defun window-maybe-update-cursor ()
@@ -417,7 +417,7 @@
             :while (<= (1- ncols) curx) :do
             (incf cury)
             (decf curx (str-width (fat-string str))))))
-      (cl-charms/low-level:wmove (window-win window) cury curx))))
+      (charms/ll:wmove (window-win window) cury curx))))
 
 (defvar *brackets-overlays* nil)
 
@@ -529,12 +529,12 @@
   t)
 
 (defun window-set-pos (window y x)
-  (cl-charms/low-level:mvwin (window-win window) y x)
+  (charms/ll:mvwin (window-win window) y x)
   (setf (window-y window) y)
   (setf (window-x window) x))
 
 (defun window-set-size (window nlines ncols)
-  (cl-charms/low-level:wresize (window-win window) nlines ncols)
+  (charms/ll:wresize (window-win window) nlines ncols)
   (setf (window-nlines window) nlines)
   (setf (window-ncols window) ncols)
   (setf (window-disp-lines window)
@@ -555,12 +555,12 @@
 (define-command delete-other-windows () ()
   (do-window-tree (win *window-tree*)
     (unless (eq win *current-window*)
-      (cl-charms/low-level:delwin (window-win win))))
+      (charms/ll:delwin (window-win win))))
   (setq *window-tree* *current-window*)
   (window-set-pos *current-window* 0 0)
   (window-set-size *current-window*
-                   (1- cl-charms/low-level:*lines*)
-                   cl-charms/low-level:*cols*)
+                   (1- charms/ll:*lines*)
+                   charms/ll:*cols*)
   t)
 
 (defun adjust-size-windows-after-delete-window (deleted-window
@@ -624,7 +624,7 @@
           (funcall setter2 (funcall another-getter)))))
   (when (window-delete-hook window)
     (funcall (window-delete-hook window)))
-  (cl-charms/low-level:delwin (window-win window))
+  (charms/ll:delwin (window-win window))
   t)
 
 (define-key *global-keymap* (kbd "C-x 0") 'delete-current-window)
@@ -662,10 +662,10 @@
 (defun adjust-screen-size ()
   (let ((delete-windows))
     (do-window-tree (window *window-tree*)
-      (when (<= cl-charms/low-level:*lines*
+      (when (<= charms/ll:*lines*
                 (+ (window-y window) 2))
         (push window delete-windows))
-      (when (<= cl-charms/low-level:*cols*
+      (when (<= charms/ll:*cols*
                 (+ (window-x window) 1))
         (push window delete-windows)))
     (mapc #'delete-window delete-windows))
@@ -673,15 +673,15 @@
     (dolist (window (collect-right-windows window-list))
       (window-resize window
                      0
-                     (- cl-charms/low-level:*cols*
+                     (- charms/ll:*cols*
                         *current-cols*)))
     (dolist (window (collect-bottom-windows window-list))
       (window-resize window
-                     (- cl-charms/low-level:*lines*
+                     (- charms/ll:*lines*
                         *current-lines*)
                      0))
-    (setq *current-cols* cl-charms/low-level:*cols*)
-    (setq *current-lines* cl-charms/low-level:*lines*)
+    (setq *current-cols* charms/ll:*cols*)
+    (setq *current-lines* charms/ll:*lines*)
     (window-update-all)))
 
 (defun collect-left-windows (window-list)

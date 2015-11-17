@@ -36,36 +36,36 @@
   (let* ((buffer (make-buffer " *minibuffer*"))
          (window (make-window buffer
                               1
-                              cl-charms/low-level:*cols*
-                              (1- cl-charms/low-level:*lines*)
+                              charms/ll:*cols*
+                              (1- charms/ll:*lines*)
                               0)))
     (setq *minibuf-window* window)))
 
 (defun minibuf-resize ()
   (window-set-pos *minibuf-window*
-                  (1- cl-charms/low-level:*lines*)
+                  (1- charms/ll:*lines*)
                   0)
   (window-set-size *minibuf-window*
                    1
-                   cl-charms/low-level:*cols*)
-  (cl-charms/low-level:werase (window-win *minibuf-window*))
-  (cl-charms/low-level:wrefresh (window-win *minibuf-window*)))
+                   charms/ll:*cols*)
+  (charms/ll:werase (window-win *minibuf-window*))
+  (charms/ll:wrefresh (window-win *minibuf-window*)))
 
 (defun minibuf-clear ()
   (when *mb-print-flag*
-    (cl-charms/low-level:werase (window-win *minibuf-window*))
-    (cl-charms/low-level:wrefresh (window-win *minibuf-window*))
+    (charms/ll:werase (window-win *minibuf-window*))
+    (charms/ll:wrefresh (window-win *minibuf-window*))
     (setq *mb-print-flag* nil)))
 
 (defun minibuf-print (msg)
   (setq *mb-print-flag* t)
-  (cl-charms/low-level:werase (window-win *minibuf-window*))
-  (cl-charms/low-level:mvwaddstr
+  (charms/ll:werase (window-win *minibuf-window*))
+  (charms/ll:mvwaddstr
    (window-win *minibuf-window*)
    0
    0
    (replace-string (string #\newline) "<NL>" msg))
-  (cl-charms/low-level:wrefresh (window-win *minibuf-window*)))
+  (charms/ll:wrefresh (window-win *minibuf-window*)))
 
 (defun minibuf-y-or-n-p (prompt)
   (setq *mb-print-flag* t)
@@ -147,11 +147,11 @@
 
 (defun minibuf-read-line-refresh (prompt)
   (minibuf-print (concatenate 'string prompt (minibuf-get-line)))
-  (cl-charms/low-level:wmove (window-win *minibuf-window*)
-                             (1- (window-cur-linum *minibuf-window*))
-                             (+ (length prompt)
-                                (window-cur-col *minibuf-window*)))
-  (cl-charms/low-level:wrefresh (window-win *minibuf-window*)))
+  (charms/ll:wmove (window-win *minibuf-window*)
+                   (1- (window-cur-linum *minibuf-window*))
+                   (+ (length prompt)
+                      (window-cur-col *minibuf-window*)))
+  (charms/ll:wrefresh (window-win *minibuf-window*)))
 
 (defun minibuf-read-line (prompt initial comp-f existing-p)
   (when *minibuf-read-line-busy-p*

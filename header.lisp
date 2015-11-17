@@ -61,13 +61,13 @@
 (defun make-attr (&key color reverse-p bold-p underline-p)
   (logior (or (get-attr color) 0)
           (if reverse-p
-              cl-charms/low-level:a_reverse
+              charms/ll:a_reverse
               0)
           (if bold-p
-              cl-charms/low-level:a_bold
+              charms/ll:a_bold
               0)
           (if underline-p
-              cl-charms/low-level:a_underline
+              charms/ll:a_underline
               0)))
 
 (defvar *continue-command-flags* (list :kill :undo :abbrev :yank :completion))

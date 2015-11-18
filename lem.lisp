@@ -12,6 +12,7 @@
           end-macro
           execute-macro
           apply-macro-to-region-lines
+          sit-for
           universal-argument
           input-key
           self-insert
@@ -182,6 +183,18 @@
                           (execute-macro 1)))
   t)
 
+(defun sit-for (seconds)
+  (window-update-all)
+  (charms/ll:timeout seconds)
+  (let ((code (charms/ll:wgetch (window-win))))
+    (charms/ll:timeout -1)
+    (cond ((= code -1)
+           t)
+          ((= code (char-code C-g))
+           (throw 'abort 'abort))
+          (t
+           nil))))
+
 (define-key *global-keymap* (kbd "C-u") 'universal-argument)
 (define-command universal-argument () ()
   (let ((numlist)
@@ -337,6 +350,7 @@
                (window-maybe-update)))
             (t
              (charms/ll:ungetch code)
+             (charms/ll:wtimeout (window-win) -1)
              (return))))))
 
 (defun lem-main (debug-p)

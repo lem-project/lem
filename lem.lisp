@@ -342,16 +342,17 @@
      (error ())))
 
 (defun idle ()
-  (charms/ll:wtimeout (window-win) 20)
-  (loop
-    (let ((code (charms/ll:wgetch (window-win))))
-      (cond ((= code -1)
-             (when (update-timer)
-               (window-maybe-update)))
-            (t
-             (charms/ll:ungetch code)
-             (charms/ll:wtimeout (window-win) -1)
-             (return))))))
+  (when (grow-null-p *input-queue*)
+    (charms/ll:wtimeout (window-win) 20)
+    (loop
+      (let ((code (charms/ll:wgetch (window-win))))
+        (cond ((= code -1)
+               (when (update-timer)
+                 (window-maybe-update)))
+              (t
+               (charms/ll:ungetch code)
+               (charms/ll:wtimeout (window-win) -1)
+               (return)))))))
 
 (defun lem-main (debug-p)
   (flet ((body ()

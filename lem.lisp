@@ -36,9 +36,17 @@
 (defvar *input-queue* (make-growlist))
 
 (defun getch (&optional (abort-jump t))
-  (let* ((code (if (grow-null-p *input-queue*)
-                   (charms/ll:wgetch (window-win))
-                   (grow-rem-left *input-queue*)))
+  (let* ((code (cond (*getch-wait-p*
+                      (loop :while (grow-null-p *input-queue*)
+                        :do (sleep 0.001))
+                      (grow-rem-left *input-queue*))
+                     ((grow-null-p *input-queue*)
+                      (loop
+                        :for code := (charms/ll:wgetch (window-win))
+                        :while (= -1 code)
+                        :finally (return code)))
+                     (t
+                      (grow-rem-left *input-queue*))))
          (char (code-char code)))
     (queue:enqueue *input-history* char)
     (when *macro-recording-p*

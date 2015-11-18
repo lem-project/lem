@@ -438,9 +438,60 @@
          (*package* (find-package package)))
     (multiple-value-list (eval (read-from-string string)))))
 
-(defun eval-string (string output-buffer point
-                           &optional
-                           update-point-p (package "COMMON-LISP-USER"))
+(defun ldebug-store-value (condition)
+  (do ((x)
+       (error-p nil))
+      (nil)
+    (handler-case
+        (setq x
+              (eval
+               (read-from-string
+                (minibuf-read-string
+                 "Type a form to be evaluated: ")
+                nil)))
+      (error (cdt)
+             (setq error-p t)
+             (minibuf-print (format nil "~a" cdt))))
+    (unless error-p
+      (store-value x condition)
+      (return))))
+
+(defun lisp-debugger (condition)
+  (let* ((choices (compute-restarts condition))
+         (n (length choices)))
+    (lisp-info-popup (get-buffer-create "*error*")
+                     #'(lambda (out)
+                         (format out "~a~%~%" condition)
+                         (loop
+                           for choice in choices
+                           for i from 1
+                           do (format out "~&[~d] ~a~%" i choice))
+                         (terpri out)
+                         (uiop/image:print-backtrace :stream out :count 100)))
+    (loop
+      (window-update-all)
+      (let* ((str (catch 'abort (minibuf-read-string "Debug: ")))
+             (i (and (stringp str) (parse-integer str :junk-allowed t))))
+        (cond ((eq str 'abort))
+              ((and i (<= 1 i n))
+               (let ((restart (nth (1- i) choices)))
+                 (cond ((eq 'store-value (restart-name restart))
+                        (ldebug-store-value condition))
+                       (t (invoke-restart-interactively restart))))
+               (return))
+              (t
+               (let ((x
+                      (handler-case (eval (read-from-string str nil))
+                        (error (cdt)
+                               (format nil "~a" cdt)))))
+                 (info-popup (get-buffer-create "*output*")
+                             #'(lambda (out)
+                                 (princ x out)))))))))
+  condition)
+
+(defun eval-string-internal (string output-buffer point
+                                  &optional
+                                  update-point-p (package "COMMON-LISP-USER"))
   (let* ((error-p)
          (results)
          (io (make-buffer-io-stream output-buffer point t))
@@ -465,6 +516,34 @@
              (setq error-p t)
              (setq results (list condition))))
     (values results error-p)))
+
+(defun eval-string (string output-buffer point
+                           &optional
+                           update-point-p (package "COMMON-LISP-USER"))
+  (setq *getch-wait-p* t)
+  (let* ((main-thread (bt:current-thread))
+         (input-thread
+          (bt:make-thread #'(lambda ()
+                              (ignore-errors
+                               (loop :for c := (charms/ll:getch) :do
+                                 (cond ((= c -1))
+                                       ((eql c (char-code C-g))
+                                        (bt:interrupt-thread
+                                         main-thread
+                                         #'(lambda ()
+                                             (error "interrupt"))))
+                                       (t
+                                        (ungetch (code-char c))))))))))
+    (multiple-value-bind (results error-p)
+        (eval-string-internal string
+                              output-buffer
+                              point
+                              update-point-p
+                              package)
+      (bt:interrupt-thread input-thread
+                           #'(lambda () (error "error")))
+      (setq *getch-wait-p* nil)
+      (values results error-p))))
 
 (define-key *lisp-mode-keymap* (kbd "M-:") 'lisp-eval-string)
 (define-command lisp-eval-string (string) ("sEval: ")
@@ -512,6 +591,12 @@
              (not (cl-fad:directory-pathname-p filename)))
     (lisp-eval-string
      (format nil "(load ~s)" filename))))
+
+(defun lisp-print-error (condition)
+  (lisp-info-popup (get-buffer-create "*error*")
+                   #'(lambda (out)
+                       (format out "~a~%~%" condition)
+                       (uiop/image:print-backtrace :stream out :count 100))))
 
 (defmacro with-safe-form (&body body)
   `(handler-case
@@ -960,63 +1045,6 @@
               (unless error-p
                 (setq *current-window* (pop-to-buffer buffer))
                 (lisp-print-values values)))))))))
-
-(defun lisp-print-error (condition)
-  (lisp-info-popup (get-buffer-create "*error*")
-                   #'(lambda (out)
-                       (format out "~a~%~%" condition)
-                       (uiop/image:print-backtrace :stream out :count 100))))
-
-(defun ldebug-store-value (condition)
-  (do ((x)
-       (error-p nil))
-      (nil)
-    (handler-case
-        (setq x
-              (eval
-               (read-from-string
-                (minibuf-read-string
-                 "Type a form to be evaluated: ")
-                nil)))
-      (error (cdt)
-             (setq error-p t)
-             (minibuf-print (format nil "~a" cdt))))
-    (unless error-p
-      (store-value x condition)
-      (return))))
-
-(defun lisp-debugger (condition)
-  (let* ((choices (compute-restarts condition))
-         (n (length choices)))
-    (lisp-info-popup (get-buffer-create "*error*")
-                     #'(lambda (out)
-                         (format out "~a~%~%" condition)
-                         (loop
-                           for choice in choices
-                           for i from 1
-                           do (format out "~&[~d] ~a~%" i choice))
-                         (terpri out)
-                         (uiop/image:print-backtrace :stream out :count 100)))
-    (loop
-      (window-update-all)
-      (let* ((str (catch 'abort (minibuf-read-string "Debug: ")))
-             (i (and (stringp str) (parse-integer str :junk-allowed t))))
-        (cond ((eq str 'abort))
-              ((and i (<= 1 i n))
-               (let ((restart (nth (1- i) choices)))
-                 (cond ((eq 'store-value (restart-name restart))
-                        (ldebug-store-value condition))
-                       (t (invoke-restart-interactively restart))))
-               (return))
-              (t
-               (let ((x
-                      (handler-case (eval (read-from-string str nil))
-                        (error (cdt)
-                               (format nil "~a" cdt)))))
-                 (info-popup (get-buffer-create "*output*")
-                             #'(lambda (out)
-                                 (princ x out)))))))))
-  condition)
 
 (defun lisp-info-popup (buffer &optional fn)
   (funcall (info-popup-closure 'lisp-mode)

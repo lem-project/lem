@@ -73,7 +73,7 @@
         ("do" . 2)
         ("do*" . 2)
         ("dolist" . 1)
-        ("dotimes" . 2)
+        ("dotimes" . 1)
         ("eval-when" . 1)
         ("flet" . 1)
         ("labels" . 1)

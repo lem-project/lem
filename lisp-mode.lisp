@@ -24,7 +24,7 @@
           #+sbcl lisp-find-definitions
           complete-symbol
           lisp-complete-symbol
-          lisp-get-arglit
+          lisp-get-arglist
           lisp-echo-arglist
           lisp-self-insert-then-arg-list
           lisp-comment-or-uncomment-region
@@ -857,9 +857,18 @@
      #'(lambda (string)
          (multiple-value-bind (x error-p)
              (ignore-errors
-              (values
-               (let ((*package* (lisp-current-package)))
-                 (read-from-string string))))
+              (destructuring-bind (package symbol-name external-p)
+                  (analyze-symbol string)
+                (declare (ignore external-p))
+                (multiple-value-bind (symbol status)
+                    (intern (string-readcase symbol-name)
+                            (or package
+                                (lisp-current-package)))
+                  (cond ((null status)
+                         (unintern symbol)
+                         nil)
+                        (t
+                         symbol)))))
            (when (and (not error-p)
                       (symbolp x))
              (lisp-get-arglist x)))))))

@@ -18,6 +18,7 @@
                         (:file "key")
                         (:file "point")
                         (:file "hooks")
+                        (:file "timer")
                         (:file "keymap")
                         (:file "command")
                         (:file "comp")

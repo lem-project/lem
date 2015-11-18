@@ -36,11 +36,9 @@
 (defvar *input-queue* (make-growlist))
 
 (defun getch (&optional (abort-jump t))
-  (let* ((code (loop
-                 (bt:with-lock-held (*editor-lock*)
-                   (unless (grow-null-p *input-queue*)
-                     (return (grow-rem-left *input-queue*))))
-                 (sleep 0.01)))
+  (let* ((code (if (grow-null-p *input-queue*)
+                   (charms/ll:wgetch (window-win))
+                   (grow-rem-left *input-queue*)))
          (char (code-char code)))
     (queue:enqueue *input-history* char)
     (when *macro-recording-p*
@@ -322,10 +320,9 @@
          ,@body)
      (error ())))
 
-(defun lem-mainloop (debug-p)
+(defun lem-main (debug-p)
   (flet ((body ()
-               (when (< (input-queue-length) 5)
-                 (window-maybe-update))
+               (window-maybe-update)
                (case (catch 'abort
                        (main-step)
                        nil)
@@ -333,40 +330,15 @@
                   (minibuf-print "Read Only"))
                  (abort
                   (keyboard-quit)))))
-    (do ((*curr-flags* (make-flags) (make-flags))
+    (do ((*exit*)
+         (*curr-flags* (make-flags) (make-flags))
          (*last-flags* (make-flags) *curr-flags*))
         (*exit*)
-      (setq *allow-interrupt-p* nil)
       (if debug-p
           (handler-bind ((error #'save-error))
             (body))
           (with-error-handler ()
             (body))))))
-
-(defvar *input-thread*)
-(defvar *main-thread*)
-
-(defun lem-main (&optional debug-p)
-  (setq *exit* nil)
-  (setq *input-thread*
-        (bt:make-thread
-         #'(lambda ()
-             (loop
-               (let ((c (charms/ll:wgetch (window-win))))
-                 (bt:with-lock-held (*editor-lock*)
-                   (cond ((and (= c (char-code C-g))
-                               *allow-interrupt-p*)
-                          (bt:interrupt-thread *main-thread*
-                                               #'(lambda ()
-                                                   (error "interrupt"))))
-                         ((/= c -1)
-                          (input-enqueue c)))))))))
-  (setq *main-thread*
-        (bt:make-thread
-         #'(lambda ()
-             (lem-mainloop debug-p))))
-  (bt:join-thread *main-thread*)
-  (bt:destroy-thread *input-thread*))
 
 (defun lem-init (args restore-p)
   #-sbcl (declare (ignore restore-p))

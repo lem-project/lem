@@ -40,7 +40,6 @@
 (defvar *auto-mode-alist* nil)
 
 (defvar *editor-lock* (bt:make-lock))
-(defvar *allow-interrupt-p* nil)
 
 (defvar *color-names* '(:yellow
                         :green

@@ -436,9 +436,7 @@
 (defun lisp-eval-in-package (expr package)
   (let* ((string (write-to-string expr))
          (*package* (find-package package)))
-    (setq *allow-interrupt-p* t)
-    (unwind-protect (multiple-value-list (eval (read-from-string string)))
-      (setq *allow-interrupt-p* nil))))
+    (multiple-value-list (eval (read-from-string string)))))
 
 (defun eval-string (string output-buffer point
                            &optional
@@ -988,7 +986,6 @@
       (return))))
 
 (defun lisp-debugger (condition)
-  (setq *allow-interrupt-p* nil)
   (let* ((choices (compute-restarts condition))
          (n (length choices)))
     (lisp-info-popup (get-buffer-create "*error*")

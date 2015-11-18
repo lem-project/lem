@@ -367,17 +367,12 @@
     (charms/ll:doupdate)))
 
 (defun window-update-all ()
-  (when *allow-interrupt-p*
-    (sleep 0.0001))
-  (let ((allow-interrupt-p *allow-interrupt-p*))
-    (bt:with-lock-held (*editor-lock*)
-      (setq *allow-interrupt-p* nil)
-      (do-window-tree (win *window-tree*)
-        (unless (eq win *current-window*)
-          (window-update win)))
-      (window-update *current-window*)
-      (charms/ll:doupdate))
-    (setq *allow-interrupt-p* allow-interrupt-p)))
+  (bt:with-lock-held (*editor-lock*)
+    (do-window-tree (win *window-tree*)
+      (unless (eq win *current-window*)
+        (window-update win)))
+    (window-update *current-window*)
+    (charms/ll:doupdate)))
 
 (defun redraw-screen ()
   (window-update-all))

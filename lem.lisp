@@ -185,8 +185,8 @@
 
 (defun sit-for (seconds)
   (window-update-all)
-  (charms/ll:timeout seconds)
-  (let ((code (charms/ll:wgetch (window-win))))
+  (charms/ll:timeout (floor (* seconds 1000)))
+  (let ((code (charms/ll:getch)))
     (charms/ll:timeout -1)
     (cond ((= code -1)
            t)

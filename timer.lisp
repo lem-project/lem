@@ -20,13 +20,12 @@
   last-time
   function)
 
-(defun start-timer (ms repeat-p function &rest args)
+(defun start-timer (ms repeat-p function)
   (let ((timer
          (%make-timer :ms ms
                       :repeat-p repeat-p
                       :last-time (get-internal-real-time)
-                      :function #'(lambda ()
-                                    (apply function args)))))
+                      :function function)))
     (push timer *timer-list*)
     timer))
 

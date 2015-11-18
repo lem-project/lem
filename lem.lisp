@@ -328,9 +328,21 @@
          ,@body)
      (error ())))
 
+(defun idle ()
+  (charms/ll:wtimeout (window-win) 20)
+  (loop
+    (let ((code (charms/ll:wgetch (window-win))))
+      (cond ((= code -1)
+             (when (update-timer)
+               (window-maybe-update)))
+            (t
+             (charms/ll:ungetch code)
+             (return))))))
+
 (defun lem-main (debug-p)
   (flet ((body ()
                (window-maybe-update)
+               (idle)
                (case (catch 'abort
                        (main-step)
                        nil)

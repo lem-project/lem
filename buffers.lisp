@@ -37,7 +37,9 @@
   (remove-if #'special-buffer-p *buffer-list*))
 
 (defun any-modified-buffer-p ()
-  (find-if 'buffer-modified-p
+  (find-if #'(lambda (buffer)
+               (and (buffer-filename buffer)
+                    (buffer-modified-p buffer)))
            (filter-special-buffers)))
 
 (defun get-buffer (name)

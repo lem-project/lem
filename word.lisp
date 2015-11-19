@@ -13,22 +13,39 @@
           backward-paragraph
           kill-paragraph))
 
-(defun in-word-p (c)
-  (and c (alphanumericp c)))
+(defun word-type (char)
+  (when (characterp char)
+    (cond ((char<= #\HIRAGANA_LETTER_A
+                   char
+                   #\HIRAGANA_LETTER_N)
+           :hiragana)
+          ((char<= #\KATAKANA_LETTER_A
+                   char
+                   #\KATAKANA_LETTER_N)
+           :katakana)
+          ((or (<= #x4E00
+                   (char-code char)
+                   #x9FFF)
+               (find char "仝々〆〇ヶ"))
+           :kanji)
+          ((alphanumericp char)
+           :alphanumeric))))
 
 (defun next-word-aux (fn)
-  (do () ((in-word-p (following-char)))
+  (do () ((word-type (following-char)))
     (unless (funcall fn)
       (return)))
-  (do () ((not (in-word-p (following-char))) t)
+  (do ((type #1=(word-type (following-char))))
+      ((not (eq type #1#)) t)
     (unless (funcall fn)
       (return))))
 
 (defun prev-word-aux (fn)
-  (do () ((in-word-p (preceding-char)))
+  (do () ((word-type (preceding-char)))
     (unless (funcall fn)
       (return)))
-  (do () ((not (in-word-p (preceding-char))) t)
+  (do ((type #1=(word-type (preceding-char))))
+      ((not (eq type #1#)) t)
     (unless (funcall fn)
       (return))))
 
@@ -69,29 +86,30 @@
           (unless (prev-word-aux #'(lambda () (backward-delete-char 1)))
             (return))))))
 
-(defun case-word-aux (n first-case rest-case)
+(defun case-word-aux (n replace-char-p first-case rest-case)
   (dotimes (_ n t)
-    (do () ((in-word-p (following-char)))
+    (do () ((word-type (following-char)))
       (unless (next-char)
         (return-from case-word-aux nil)))
     (replace-char (funcall first-case (following-char)))
-    (do () ((not (in-word-p (following-char))))
+    (do ((type #1=(word-type (following-char))))
+        ((not (eq type #1#)))
       (unless (next-char)
         (return-from case-word-aux nil))
-      (when (in-word-p (following-char))
+      (when (funcall replace-char-p (following-char))
         (replace-char (funcall rest-case (following-char)))))))
 
 (define-key *global-keymap* (kbd "M-c") 'case-word-capitalize)
 (define-command case-word-capitalize (&optional (n 1)) ("p")
-  (case-word-aux n 'char-upcase 'char-downcase))
+  (case-word-aux n #'alphanumericp #'char-upcase #'char-downcase))
 
 (define-key *global-keymap* (kbd "M-l") 'case-word-lower)
 (define-command case-word-lower (&optional (n 1)) ("p")
-  (case-word-aux n 'char-downcase 'char-downcase))
+  (case-word-aux n #'alphanumericp #'char-downcase #'char-downcase))
 
 (define-key *global-keymap* (kbd "M-u") 'case-word-upper)
 (define-command case-word-upper (&optional (n 1)) ("p")
-  (case-word-aux n 'char-upcase 'char-upcase))
+  (case-word-aux n #'alphanumericp #'char-upcase #'char-upcase))
 
 (define-key *global-keymap* (kbd "M-}") 'forward-paragraph)
 (define-key *global-keymap* (kbd "C-down") 'forward-paragraph)

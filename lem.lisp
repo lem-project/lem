@@ -17,7 +17,6 @@
           input-key
           self-insert
           lem
-          lem-save-error
           restore
           dump))
 
@@ -354,7 +353,7 @@
                (charms/ll:wtimeout (window-win) -1)
                (return)))))))
 
-(defun lem-main (debug-p)
+(defun lem-main ()
   (flet ((body ()
                (window-maybe-update)
                (idle)
@@ -369,11 +368,9 @@
          (*curr-flags* (make-flags) (make-flags))
          (*last-flags* (make-flags) *curr-flags*))
         (*exit*)
-      (if debug-p
-          (handler-bind ((error #'save-error))
-            (body))
-          (with-error-handler ()
-            (body))))))
+      (with-error-handler ()
+        (handler-bind ((error #'save-error))
+          (body))))))
 
 (defun lem-init (args restore-p)
   #-sbcl (declare (ignore restore-p))
@@ -398,22 +395,19 @@
 (defun lem-finallize ()
   (charms/ll:endwin))
 
-(defun lem-internal (args debug-p restore-p)
+(defun lem-internal (args restore-p)
   (unwind-protect
     (progn
       (lem-init args restore-p)
-      (lem-main debug-p))
+      (lem-main))
     (lem-finallize)))
 
 (defun lem (&rest args)
-  (lem-internal args nil nil))
-
-(defun lem-save-error (&rest args)
-  (lem-internal args t nil))
+  (lem-internal args nil))
 
 #+sbcl
 (defun restore ()
-  (lem-internal nil nil t))
+  (lem-internal nil t))
 
 (defun save-error (condition)
   (with-open-file (out *lem-error-file*

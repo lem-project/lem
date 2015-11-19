@@ -69,9 +69,7 @@
 (defun dired-find-directory (dirname)
   (let ((buffer
          (get-buffer-create
-          (format nil "*~a*"
-                  (file-namestring
-                   (cl-fad:pathname-as-file dirname))))))
+          (format nil "~a" dirname))))
     (set-buffer buffer)
     (dired-mode)
     (buffer-put (window-buffer) :dirname dirname)

@@ -170,7 +170,6 @@
 
 (defun isearch-update-buffer (&optional (search-string *isearch-string*))
   (isearch-reset-buffer)
-  (window-adjust-view *current-window* t)
   (unless (equal "" search-string)
     (let ((save-point (point))
           start-point

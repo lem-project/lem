@@ -57,7 +57,6 @@
       (when window
         (set-buffer (window-buffer window) nil)
         (point-set (buffer-output-stream-point stream))
-        (window-adjust-view window t)
         (window-update window t)
         (set-buffer prev-buffer nil))))
   nil)

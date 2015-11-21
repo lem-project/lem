@@ -68,19 +68,17 @@
         (t
          (+ w 1))))
 
-(defun str-width (str &optional n)
-  (when (and n (< n (length str)))
-    (setq str (subseq str 0 n)))
-  (loop
-    with width = 0
-    for c across str
-    do (setq width (char-width c width))
-    finally (return width)))
+(defun str-width (str &optional (start 0) end)
+  (loop :with width := 0
+    :for i :from start :below (or end (length str))
+    :for c := (aref str i)
+    :do (setq width (char-width c width))
+    :finally (return width)))
 
-(defun wide-index (str goal)
+(defun wide-index (str goal &key (start 0))
   (loop
     with w = 0
-    for i from 0 below (length str) by 1
+    for i from start below (length str) by 1
     for c across str do
     (setq w (char-width c w))
     (when (<= goal w)

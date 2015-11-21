@@ -102,10 +102,10 @@
 
 (define-key *global-keymap* (kbd "C-l") 'recenter)
 (define-command recenter () ()
-  (syntax-scan-window *current-window*)
   (do-window-tree (window *window-tree*)
     (charms/ll:clearok (window-win window) 1))
   (window-recenter *current-window*)
+  (syntax-scan-window *current-window*)
   (window-update-all)
   t)
 
@@ -193,14 +193,14 @@
 
 (defun window-print-char (win y x str attr)
   (charms/ll:wattron win attr)
-  (charms/ll:mvwaddstr win y (str-width str x) (string (schar str x)))
+  (charms/ll:mvwaddstr win y (str-width str 0 x) (string (schar str x)))
   (charms/ll:wattroff win attr))
 
-(defun window-print-line (window y str)
+(defun window-print-line (window y str &key (start-x 0) (string-start 0) string-end)
   (check-type str fatstring)
   (loop
-    :with x := 0 :and win := (window-win window)
-    :for i :from 0 :below (fat-length str)
+    :with x := start-x :and win := (window-win window)
+    :for i :from string-start :below (or string-end (fat-length str))
     :do (multiple-value-bind (char attr)
             (fat-char str i)
           (charms/ll:wattron win attr)
@@ -211,7 +211,7 @@
 (defun window-refresh-line (window curx cury y str)
   (check-type str fatstring)
   (when (= cury y)
-    (setq curx (str-width (fat-string str) (window-cur-col window))))
+    (setq curx (str-width (fat-string str) 0 (window-cur-col window))))
   (let ((width (str-width (fat-string str)))
         (cols (window-ncols window)))
     (cond
@@ -221,7 +221,7 @@
           (< curx (1- cols)))
       (let ((i (wide-index (fat-string str) cols)))
         (setq str
-              (if (<= cols (str-width (fat-string str) i))
+              (if (<= cols (str-width (fat-string str) 0 i))
                   (fat-concat (fat-substring str 0 (1- i)) " $")
                   (fat-concat (fat-substring str 0 i) "$")))))
      ((< (window-cur-col window) (fat-length str))
@@ -259,35 +259,31 @@
                        (cons (fat-substring str 0 i) acc))))))
     (f str nil)))
 
+
+(defvar *wrapping-fatstring* (make-fatstring "!" 0))
+
 (defun window-refresh-line-wrapping (window curx cury y str)
   (check-type str fatstring)
-  (let ((ncols (window-ncols window)))
-    (when (= y cury)
-      (setq curx (str-width (fat-string str) (window-cur-col window))))
-    (let ((strings (divide-line-width str ncols)))
-      (if (null (cdr strings))
-          (window-print-line window y str)
-          (do ((rest-strings strings (cdr rest-strings)))
-              ((or (null rest-strings)
-                   (>= y (1- (window-nlines window)))))
-            (let ((str (car rest-strings))
-                  (wrapping-flag (cdr rest-strings)))
-              (when wrapping-flag
-                (if (< y cury)
-                    (incf cury)
-                    (when (= y cury)
-                      (let ((len (str-width (fat-string str))))
+  (when (= y cury)
+    (setq curx (str-width (fat-string str) 0 (window-cur-col window))))
+  (loop :with start := 0 :and ncols := (window-ncols window)
+    :for i := (wide-index (fat-string str) ncols :start start)
+    :do (cond ((null i)
+               (window-print-line window y str :string-start start)
+               (return))
+              (t
+               (cond ((< y cury)
+                      (incf cury))
+                     ((= y cury)
+                      (let ((len (str-width (fat-string str) start i)))
                         (when (< len curx)
                           (decf curx len)
-                          (incf cury))))))
-              (window-print-line window
-                                 y
-                                 (if wrapping-flag
-				     (fat-concat str "\\")
-                                     str))
-              (when wrapping-flag
-                (incf y)
-                (push y (window-wrap-ylist window))))))))
+                          (incf cury)))))
+               (window-print-line window y str :string-start start :string-end i)
+               (window-print-line window y *wrapping-fatstring* :start-x (1- ncols))
+               (incf y)
+               (push y (window-wrap-ylist window))
+               (setq start i))))
   (values curx cury y))
 
 (defun get-window-refresh-line-function (window)
@@ -381,8 +377,7 @@
   (let* ((str (buffer-line-fatstring
                (window-buffer window)
                (window-cur-linum window)))
-         (curx (str-width (fat-string str)
-                          (window-cur-col)))
+         (curx (str-width (fat-string str) 0 (window-cur-col)))
          (cury (window-cursor-y window)))
     (dolist (y (window-wrap-ylist window))
       (when (<= y cury)

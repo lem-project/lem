@@ -268,6 +268,7 @@
     (setq curx (str-width (fat-string str) 0 (window-cur-col window))))
   (loop :with start := 0 :and ncols := (window-ncols window)
     :for i := (wide-index (fat-string str) ncols :start start)
+    :while (< y (1- (window-nlines window)))
     :do (cond ((null i)
                (window-print-line window y str :string-start start)
                (return))

@@ -310,7 +310,8 @@
           (let ((end (syntax-position-word-end str start)))
             (when (and (funcall (syntax-keyword-test skw) str start end)
                        (syntax-matched-word line skw start end))
-              (return-from syntax-scan-word end)))))))))
+              (return-from syntax-scan-word end)))))))
+    (syntax-position-word-end str start)))
 
 (defun syntax-scan-whitespaces (str i)
   (do ((i i (1+ i)))

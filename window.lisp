@@ -112,7 +112,8 @@
 (defun window-recenter (window)
   (setf (window-vtop-linum window)
         (window-cur-linum window))
-  (window-scroll window (- (floor (window-nlines window) 2))))
+  (window-scroll window (- (floor (window-nlines window) 2)))
+  (window-scroll window (window-wrapping-offset window)))
 
 (defun window-scroll (window n)
   (incf (window-vtop-linum window) n)
@@ -259,6 +260,43 @@
                        (cons (fat-substring str 0 i) acc))))))
     (f str nil)))
 
+(defun window-collect-wrap-ylist (window)
+  (when (buffer-truncate-lines (window-buffer window))
+    (let ((wrap-ylist)
+          (y 0))
+      (labels ((f (string eof-p linum)
+                  (declare (ignore eof-p linum))
+                  (loop
+                    :with start := 0
+                    :for i := (wide-index string (window-ncols window) :start start)
+                    :while (and i (< y (window-nlines window)))
+                    :do
+                    (push (incf y) wrap-ylist)
+                    (setq start i))
+                  (incf y)))
+        (map-buffer-lines #'f
+                          (window-buffer window)
+                          #1=(window-vtop-linum window)
+                          (+ #1# (window-nlines window)))
+        wrap-ylist))))
+
+(defun window-wrapping-offset (window)
+  (unless (buffer-truncate-lines (window-buffer window))
+    (return-from window-wrapping-offset 0))
+  (let ((ncols (window-ncols window))
+        (offset 0))
+    (labels ((f (string eof-p linum)
+                (declare (ignore eof-p linum))
+                (loop :with start := 0
+                  :for i := (wide-index string ncols :start start)
+                  :while i :do
+                  (incf offset)
+                  (setq start i))))
+      (map-buffer-lines #'f
+                        (window-buffer window)
+                        (window-vtop-linum window)
+                        (1- (window-cur-linum window)))
+      offset)))
 
 (defvar *wrapping-fatstring* (make-fatstring "!" 0))
 
@@ -339,7 +377,7 @@
 (defun window-offset-view (window)
   (let ((vtop-linum (window-vtop-linum window))
         (nlines (- (window-nlines window)
-                   (length (window-wrap-ylist window))))
+                   (length (window-collect-wrap-ylist window))))
         (linum (window-cur-linum window)))
     (cond
      ((< #1=(+ vtop-linum nlines -2) linum)

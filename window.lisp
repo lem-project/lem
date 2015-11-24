@@ -115,8 +115,47 @@
   (window-scroll window (- (floor (window-nlines window) 2)))
   (window-scroll window (window-wrapping-offset window)))
 
+(defun %scroll-down-if-wrapping (window)
+  (when (buffer-truncate-lines (window-buffer window))
+    (let ((vtop-column (window-vtop-column window)))
+      (setf (window-vtop-column window) 0)
+      (map-wrapping-line (buffer-line-string (window-buffer window)
+                                             (window-vtop-linum window))
+                         (window-ncols window)
+                         #'(lambda (c)
+                             (when (< vtop-column c)
+                               (setf (window-vtop-column window) c)
+                               (return-from %scroll-down-if-wrapping t)))))
+    nil))
+
+(defun window-scroll-down (window)
+  (unless (%scroll-down-if-wrapping window)
+    (incf (window-vtop-linum window))))
+
+(defun %scroll-up-if-wrapping (window)
+  (when (and (buffer-truncate-lines (window-buffer window))
+             (< 1 (window-vtop-linum window)))
+    (let ((vtop-column (window-vtop-column window)))
+      (setf (window-vtop-column window) 0)
+      (map-wrapping-line (buffer-line-string (window-buffer window)
+                                             (1- (window-vtop-linum window)))
+                         (window-ncols window)
+                         #'(lambda (c)
+                             (unless (< c vtop-column)
+                               (decf (window-vtop-linum window))
+                               (return-from %scroll-up-if-wrapping t))
+                             (setf (window-vtop-column window) c)))
+      nil)))
+
+(defun window-scroll-up (window)
+  (unless (%scroll-up-if-wrapping window)
+    (decf (window-vtop-linum window))))
+
 (defun window-scroll (window n)
-  (incf (window-vtop-linum window) n)
+  (dotimes (_ (abs n))
+    (if (plusp n)
+        (window-scroll-down window)
+        (window-scroll-up window)))
   (multiple-value-bind (outp offset)
       (head-line-p window (1+ (window-vtop-linum window)))
     (when outp
@@ -260,19 +299,26 @@
                        (cons (fat-substring str 0 i) acc))))))
     (f str nil)))
 
+(defun map-wrapping-line (string ncols fn)
+  (loop :with start := 0
+    :for i := (wide-index string ncols :start start)
+    :while i :do
+    (funcall fn i)
+    (setq start i)))
+
 (defun window-collect-wrap-ylist (window)
   (when (buffer-truncate-lines (window-buffer window))
     (let ((wrap-ylist)
           (y 0))
       (labels ((f (string eof-p linum)
                   (declare (ignore eof-p linum))
-                  (loop
-                    :with start := 0
-                    :for i := (wide-index string (window-ncols window) :start start)
-                    :while (and i (< y (window-nlines window)))
-                    :do
-                    (push (incf y) wrap-ylist)
-                    (setq start i))
+                  (map-wrapping-line string
+                                     (window-ncols window)
+                                     #'(lambda (arg)
+                                         (declare (ignore arg))
+                                         (unless (< y (window-nlines window))
+                                           (return-from f))
+                                         (push (incf y) wrap-ylist)))
                   (incf y)))
         (map-buffer-lines #'f
                           (window-buffer window)
@@ -287,11 +333,11 @@
         (offset 0))
     (labels ((f (string eof-p linum)
                 (declare (ignore eof-p linum))
-                (loop :with start := 0
-                  :for i := (wide-index string ncols :start start)
-                  :while i :do
-                  (incf offset)
-                  (setq start i))))
+                (map-wrapping-line string
+                                   (window-ncols window)
+                                   #'(lambda (arg)
+                                       (declare (ignore arg))
+                                       (incf offset)))))
       (map-buffer-lines #'f
                         (window-buffer window)
                         (window-vtop-linum window)
@@ -346,6 +392,9 @@
       :while (< y (1- (window-nlines window))) :do
       (cond (str
              (check-type str fatstring)
+             (when (and (< 0 (window-vtop-column window))
+                        (= y 0))
+               (setq str (fat-substring str (window-vtop-column window))))
              (multiple-value-setq (curx cury y)
                                   (funcall refresh-line
                                            window curx cury y str)))

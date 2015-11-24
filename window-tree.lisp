@@ -11,6 +11,7 @@
   buffer
   disp-lines
   vtop-linum
+  vtop-column
   cur-linum
   cur-col
   max-col
@@ -32,6 +33,7 @@
                         :buffer buffer
                         :disp-lines (make-array (1- nlines) :initial-element nil)
                         :vtop-linum 1
+                        :vtop-column 0
                         :cur-linum 1
                         :cur-col 0
                         :max-col 0

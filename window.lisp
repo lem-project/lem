@@ -112,8 +112,7 @@
 (defun window-recenter (window)
   (setf (window-vtop-linum window)
         (window-cur-linum window))
-  (window-scroll window (- (floor (window-nlines window) 2)))
-  (window-scroll window (window-wrapping-offset window)))
+  (window-scroll window (- (floor (window-nlines window) 2))))
 
 (defun %scroll-down-if-wrapping (window)
   (when (buffer-truncate-lines (window-buffer window))

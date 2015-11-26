@@ -319,26 +319,6 @@
     (funcall fn i)
     (setq start i)))
 
-(defun window-collect-wrap-ylist (window)
-  (when (buffer-truncate-lines (window-buffer window))
-    (let ((wrap-ylist)
-          (y 0))
-      (labels ((f (string eof-p linum)
-                  (declare (ignore eof-p linum))
-                  (map-wrapping-line string
-                                     (window-ncols window)
-                                     #'(lambda (arg)
-                                         (declare (ignore arg))
-                                         (unless (< y (window-nlines window))
-                                           (return-from f))
-                                         (push (incf y) wrap-ylist)))
-                  (incf y)))
-        (map-buffer-lines #'f
-                          (window-buffer window)
-                          #1=(window-vtop-linum window)
-                          (+ #1# (window-nlines window)))
-        wrap-ylist))))
-
 (defun window-wrapping-offset (window)
   (unless (buffer-truncate-lines (window-buffer window))
     (return-from window-wrapping-offset 0))

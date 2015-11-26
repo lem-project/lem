@@ -2,7 +2,9 @@
 
 (in-package :lem)
 
-(export '(timer
+(export '(run-hooks
+          add-hook
+          timer
           timer-p
           timer-ms
           timer-repeat-p
@@ -10,7 +12,17 @@
           timer-function
           start-timer
           stop-timer
-          alive-timer-p))
+          alive-timer-p
+          overlay
+          make-overlay
+          delete-overlay))
+
+(defun run-hooks (hook)
+  (mapc 'funcall (get hook 'hooks)))
+
+(defun add-hook (hook callback)
+  (setf (get hook 'hooks)
+        (append (get hook 'hooks) (list callback))))
 
 (defvar *timer-list* nil)
 
@@ -47,3 +59,22 @@
             (push timer promised-timers))))
     (setq *timer-list* (set-difference *timer-list* promised-timers))
     update-p))
+
+(defstruct (overlay (:constructor make-overlay-internal))
+  start
+  end
+  attr
+  buffer)
+
+(defun make-overlay (start end &key attr (buffer (window-buffer)))
+  (let ((overlay
+         (make-overlay-internal :start start
+                                :end end
+                                :attr attr
+                                :buffer buffer)))
+    (buffer-add-overlay buffer overlay)
+    overlay))
+
+(defun delete-overlay (overlay)
+  (when (overlay-p overlay)
+    (buffer-delete-overlay (overlay-buffer overlay) overlay)))

@@ -112,7 +112,6 @@
   (case-word-aux n #'alphanumericp #'char-upcase #'char-upcase))
 
 (define-key *global-keymap* (kbd "M-}") 'forward-paragraph)
-(define-key *global-keymap* (kbd "C-down") 'forward-paragraph)
 (define-command forward-paragraph (&optional (n 1)) ("p")
   (block outer
     (let ((dir (if (minusp n) -1 1)))
@@ -125,7 +124,6 @@
             (return-from outer t)))))))
 
 (define-key *global-keymap* (kbd "M-{") 'backward-paragraph)
-(define-key *global-keymap* (kbd "C-up") 'backward-paragraph)
 (define-command backward-paragraph (&optional (n 1)) ("p")
   (forward-paragraph (- n)))
 

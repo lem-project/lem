@@ -947,7 +947,7 @@
                                (grow-window-horizontally-internal y x n))
                            :hsplit))
 
-(define-key *global-keymap* (kbd "C-x C-n") 'scroll-down)
+(define-key *global-keymap* (kbd "C-down") 'scroll-down)
 (define-command scroll-down (n) ("p")
   (if (minusp n)
       (scroll-up (- n))
@@ -962,7 +962,7 @@
                      (= prev-column (window-vtop-column)))
             (return nil))))))
 
-(define-key *global-keymap* (kbd "C-x C-p") 'scroll-up)
+(define-key *global-keymap* (kbd "C-up") 'scroll-up)
 (define-command scroll-up (n) ("p")
   (if (minusp n)
       (scroll-down (- n))

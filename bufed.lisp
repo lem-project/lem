@@ -318,13 +318,17 @@
 
 (define-key *global-keymap* (kbd "C-v") 'next-page)
 (define-key *global-keymap* (kbd "[npage]") 'next-page)
-(define-command next-page (&optional (n 1)) ("p")
-  (scroll-down (* n (- (window-nlines) 1))))
+(define-command next-page (&optional n) ("P")
+  (next-line (or n (- (window-nlines) 1)))
+  (window-recenter *current-window*)
+  t)
 
 (define-key *global-keymap* (kbd "M-v") 'prev-page)
 (define-key *global-keymap* (kbd "[ppage]") 'prev-page)
-(define-command prev-page (&optional (n 1)) ("p")
-  (scroll-up (* n (- (window-nlines) 1))))
+(define-command prev-page (&optional n) ("P")
+  (prev-line (or n (- (window-nlines) 1)))
+  (window-recenter *current-window*)
+  t)
 
 (define-key *global-keymap* (kbd "C-x ]") 'next-page-char)
 (define-command next-page-char (&optional (n 1)) ("p")

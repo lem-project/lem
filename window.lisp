@@ -437,17 +437,15 @@
   (charms/ll:wnoutrefresh (window-win window)))
 
 (defun window-offset-view (window)
-  (let ((vtop-linum (window-vtop-linum window))
-        (nlines (- (window-nlines window)
-                   (length (window-collect-wrap-ylist window))))
-        (linum (window-cur-linum window)))
-    (cond
-     ((< #1=(+ vtop-linum nlines -2) linum)
-      (- linum #1#))
-     ((> vtop-linum linum)
-      (- linum vtop-linum))
-     (t
-      0))))
+  (cond ((< (window-cur-linum window)
+            (window-vtop-linum window))
+         (- (window-cur-linum window)
+            (window-vtop-linum window)))
+        ((let ((n (- (window-cursor-y-if-wrapping window)
+                     (- (window-nlines window) 2))))
+           (when (< 0 n) n)))
+        (t
+         0)))
 
 (defun window-adjust-view (window &optional (recenter *scroll-recenter-p*))
   (let ((offset (window-offset-view window)))

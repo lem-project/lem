@@ -110,6 +110,7 @@
   t)
 
 (defun window-recenter (window)
+  (setf (window-vtop-column window) 0)
   (setf (window-vtop-linum window)
         (window-cur-linum window))
   (window-scroll window (- (floor (window-nlines window) 2))))

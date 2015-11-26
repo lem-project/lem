@@ -199,13 +199,11 @@
 (define-command kill-line (&optional n) ("P")
   (cond
    ((null n)
-    (let ((size (- (buffer-line-length
-                    (window-buffer)
-                    (window-cur-linum))
-                   (window-cur-col))))
-      (if (zerop size)
-          (delete-char 1)
-          (delete-char size))))
+    (delete-char
+     (or (blank-line-p)
+         (- (buffer-line-length (window-buffer)
+                                (window-cur-linum))
+            (window-cur-col)))))
    ((plusp n)
     (dotimes (_ n)
       (kill-line)))))

@@ -464,7 +464,7 @@
   (save-excursion
    (beginning-of-line)
    (do ((count 0 (1+ count)))
-       ((eolp) (1+ count))
+       ((eolp) (if (eobp) count (1+ count)))
      (case (following-char)
        ((#\space #\tab))
        (otherwise (return nil)))

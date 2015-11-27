@@ -42,6 +42,7 @@
                         (:file "lisp-mode")
                         ;;(:file "leval-client")
                         (:file "c-mode")
+                        (:file "python-mode")
                         (:file "dired")
                         (:file "lem"))
            :depends-on (:cl-charms

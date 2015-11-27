@@ -344,6 +344,8 @@
 
 (defun window-refresh-line-wrapping (window curx cury y str)
   (check-type str fatstring)
+  (when (and (< 0 (window-vtop-column window)) (= y 0))
+    (setq str (fat-substring str (window-vtop-column window))))
   (when (= y cury)
     (setq curx (str-width (fat-string str) 0 (window-cur-col window))))
   (loop :with start := 0 :and ncols := (window-ncols window)
@@ -388,9 +390,6 @@
       :while (< y (1- (window-nlines window))) :do
       (cond (str
              (check-type str fatstring)
-             (when (and (< 0 (window-vtop-column window))
-                        (= y 0))
-               (setq str (fat-substring str (window-vtop-column window))))
              (multiple-value-setq (curx cury y)
                                   (funcall refresh-line
                                            window curx cury y str)))
@@ -424,6 +423,10 @@
             (window-vtop-linum window))
          (- (window-cur-linum window)
             (window-vtop-linum window)))
+        ((and (= (window-cur-linum window)
+                 (window-vtop-linum window))
+              (< 0 (window-vtop-column window)))
+         -1)
         ((let ((n (- (window-cursor-y-if-wrapping window)
                      (- (window-nlines window) 2))))
            (when (< 0 n) n)))

@@ -18,10 +18,13 @@ exec ros -Q -- $0 "$@"
 (defun usage ()
   (format t "~{~A~%~}" '("usage: lem.ros [OPTION]... [FILE]..."
                          #+sbcl "-b --build"
+                         #+sbcl "-db --debug-build"
+                         "-d --debug"
                          "-h --help")))
 
 (defun main (&rest argv)
-  (let ((filenames))
+  (let ((debug-flag)
+        (filenames))
     (loop for arg- on argv
        for arg = (first arg-)
        do (cond #+sbcl
@@ -34,6 +37,21 @@ exec ros -Q -- $0 "$@"
                                 (sb-posix:unsetenv "SBCL_HOME")
                                 (apply 'lem::lem (lem::argument-list)))
                   :executable t))
+                #+sbcl
+                ((or (string= "--debug-build" arg)
+                     (string= "-db" arg))
+                 (require-builtin-modules)
+                 (sb-ext:save-lisp-and-die
+                  (if (second arg-) (second arg-) "lem-dbg")
+                  :toplevel #'(lambda ()
+                                (sb-posix:unsetenv "SBCL_HOME")
+                                (let ((lem::*program-name* "lem dbg"))
+                                  (apply 'lem::lem-save-error (lem::argument-list))))
+                  :executable t)
+                 (error "build not supported."))
+                ((or (string= "--debug" arg)
+                     (string= "-d" arg))
+                 (setq debug-flag t))
                 ((or (string= "--help" arg)
                      (string= "-h" arg))
                  (usage)
@@ -41,4 +59,7 @@ exec ros -Q -- $0 "$@"
                 (t
                  (push arg filenames))))
     (setq filenames (nreverse filenames))
-    (apply #'lem:lem filenames)))
+    (if debug-flag
+        (let ((lem::*program-name* "lem dbg"))
+          (apply #'lem:lem-save-error filenames))
+        (apply #'lem:lem filenames))))

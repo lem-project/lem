@@ -10,8 +10,6 @@
           down-list
           up-list
           top-of-defun
-          beginning-of-defun
-          end-of-defun
           mark-sexp
           kill-sexp
           transpose-sexps))
@@ -325,39 +323,6 @@
   (loop while (up-list 1 t))
   t)
 
-(define-key *global-keymap* (kbd "M-C-a") 'beginning-of-defun)
-(define-command beginning-of-defun (&optional (n 1)) ("p")
-  (let ((arg (if (plusp n) 1 -1)))
-    (dotimes (_ (abs n) t)
-      (when (bolp)
-        (prev-line arg))
-      (loop
-        (beginning-of-line)
-        (when (eql #\( (following-char))
-          (return t))
-        (unless (prev-line arg)
-          (return nil))))))
-
-(define-key *global-keymap* (kbd "M-C-e") 'end-of-defun)
-(define-command end-of-defun (&optional (n 1)) ("p")
-  (if (minusp n)
-      (beginning-of-defun (- n))
-      (dotimes (_ n t)
-        (down-list 1 t)
-        (beginning-of-defun 1)
-        (unless (forward-sexp 1)
-          (return nil))
-        (loop
-          for c = (following-char)
-          do (cond ((char= c #\newline)
-                    (return (and (next-line 1)
-                                 (beginning-of-line))))
-                   ((syntax-space-char-p c)
-                    (unless (next-char 1)
-                      (return nil)))
-                   (t
-                    (return t)))))))
-
 (define-key *global-keymap* (kbd "M-C-@") 'mark-sexp)
 (define-command mark-sexp (&optional (arg t)) ("P")
   (prog1
@@ -393,16 +358,3 @@
            (yank 3)
            (setq *kill-new-flag* t)
            t))))
-
-(defun sexp-goto-car () ()
-  (let ((point (point)))
-    (do ((end-linum (point-linum point)))
-        ((let ((point (point)))
-           (if (backward-sexp 1 t)
-               (point= point (point))
-               t))
-         t)
-      (let ((start-linum (point-linum (point))))
-        (when (< 100 (- end-linum start-linum))
-          (point-set point)
-          (return nil))))))

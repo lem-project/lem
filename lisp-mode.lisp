@@ -10,6 +10,8 @@
           lisp-newline-and-indent
           lisp-indent-region
           lisp-indent-sexp
+          lisp-beginning-of-defun
+          lisp-end-of-defun
           lisp-current-package
           lisp-set-package
           lisp-eval-string
@@ -289,6 +291,19 @@
                                (char-before 1)
                                -2))
 
+(defun sexp-goto-car () ()
+  (let ((point (point)))
+    (do ((end-linum (point-linum point)))
+        ((let ((point (point)))
+           (if (backward-sexp 1 t)
+               (point= point (point))
+               t))
+         t)
+      (let ((start-linum (point-linum (point))))
+        (when (< 100 (- end-linum start-linum))
+          (point-set point)
+          (return nil))))))
+
 (defun lisp-looking-at-word ()
   (save-excursion
    (skip-chars-forward
@@ -373,6 +388,39 @@
 (define-command lisp-indent-sexp () ()
   (mark-sexp)
   (lisp-indent-region))
+
+(define-key *global-keymap* (kbd "M-C-a") 'lisp-beginning-of-defun)
+(define-command lisp-beginning-of-defun (&optional (n 1)) ("p")
+  (let ((arg (if (plusp n) 1 -1)))
+    (dotimes (_ (abs n) t)
+      (when (bolp)
+        (prev-line arg))
+      (loop
+        (beginning-of-line)
+        (when (eql #\( (following-char))
+          (return t))
+        (unless (prev-line arg)
+          (return nil))))))
+
+(define-key *global-keymap* (kbd "M-C-e") 'lisp-end-of-defun)
+(define-command lisp-end-of-defun (&optional (n 1)) ("p")
+  (if (minusp n)
+      (lisp-beginning-of-defun (- n))
+      (dotimes (_ n t)
+        (down-list 1 t)
+        (lisp-beginning-of-defun 1)
+        (unless (forward-sexp 1)
+          (return nil))
+        (loop
+          for c = (following-char)
+          do (cond ((char= c #\newline)
+                    (return (and (next-line 1)
+                                 (beginning-of-line))))
+                   ((syntax-space-char-p c)
+                    (unless (next-char 1)
+                      (return nil)))
+                   (t
+                    (return t)))))))
 
 (defun lisp-buffer-package (buffer)
   (let ((package-name

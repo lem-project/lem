@@ -4,7 +4,6 @@
 
 (export '(*program-name*
           *tab-size*
-          *default-truncate-lines*
           *enable-syntax-highlight*
           *scroll-recenter-p*
           *auto-mode-alist*
@@ -24,8 +23,6 @@
 (defvar *buffer-list* nil)
 
 (defvar *tab-size* 8)
-
-(defvar *default-truncate-lines* nil)
 
 (defvar *enable-syntax-highlight* t)
 

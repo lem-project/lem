@@ -164,7 +164,7 @@
     (setf (buffer-redo-stack buffer) nil)
     (setf (buffer-undo-node buffer) 0)
     (setf (buffer-saved-node buffer) 0)
-    (setf (buffer-truncate-lines buffer) *default-truncate-lines*)
+    (setf (buffer-truncate-lines buffer) t)
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
     (unless (ghost-buffer-p buffer)
       (push buffer *buffer-list*))

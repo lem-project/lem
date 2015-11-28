@@ -26,7 +26,8 @@
           search-backward-symbol
           query-replace
           query-replace-regexp
-          query-replace-symbol))
+          query-replace-symbol
+          looking-at))
 
 (defvar *isearch-keymap* (make-keymap "isearch" 'isearch-self-insert))
 (defvar *isearch-prompt*)
@@ -464,3 +465,8 @@
 
 (define-command query-replace-symbol () ()
   (query-replace-internal #'search-forward-symbol #'search-backward-symbol))
+
+(defun looking-at (regex)
+  (ppcre:scan regex
+              (buffer-line-string (window-buffer)
+                                  (window-cur-linum))))

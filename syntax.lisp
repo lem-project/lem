@@ -61,6 +61,7 @@
   word-p
   test
   test-symbol
+  end-symbol
   attr
   matched-symbol
   symbol-tov)
@@ -68,7 +69,7 @@
 (defun syntax-add-keyword (syntax-table
                            test
                            &key
-                           regex-p word-p test-symbol attr
+                           regex-p word-p test-symbol end-symbol attr
                            matched-symbol symbol-tov)
   (push (make-syntax-keyword :test (if regex-p
                                        (ppcre:create-scanner test)
@@ -76,6 +77,7 @@
                              :regex-p regex-p
                              :word-p word-p
                              :test-symbol test-symbol
+                             :end-symbol end-symbol
                              :attr attr
                              :matched-symbol matched-symbol
                              :symbol-tov symbol-tov)
@@ -245,10 +247,9 @@
 
 (defun syntax-update-symbol-tov ()
   (setq *syntax-symbol-tov-list*
-        (loop :for flag-keyword :in *syntax-symbol-tov-list*
-          :if (plusp (car flag-keyword))
-          :collect (cons (1- (car flag-keyword))
-                         (cdr flag-keyword)))))
+        (loop :for (symbol . tov) :in *syntax-symbol-tov-list*
+          :when (/= 0 tov)
+          :collect (cons symbol (1- tov)))))
 
 (defun syntax-matched-word (line skw start end)
   (when (or (not (syntax-keyword-word-p skw))
@@ -258,9 +259,14 @@
                  (or (<= (length (line-str line)) end)
                      (not (syntax-symbol-char-p (aref (line-str line) end))))))
     (when (syntax-keyword-matched-symbol skw)
-      (push (cons (syntax-keyword-symbol-tov skw)
-                  (syntax-keyword-matched-symbol skw))
+      (push (cons (syntax-keyword-matched-symbol skw)
+                  (syntax-keyword-symbol-tov skw))
             *syntax-symbol-tov-list*))
+    (when (syntax-keyword-end-symbol skw)
+      (setq *syntax-symbol-tov-list*
+            (remove (syntax-keyword-end-symbol skw)
+                    *syntax-symbol-tov-list*
+                    :key #'car)))
     (when (syntax-keyword-attr skw)
       (line-put-attribute line start end (get-attr (syntax-keyword-attr skw))))
     t))
@@ -274,9 +280,9 @@
   (let ((str (line-str line)))
     (dolist (skw (syntax-table-keywords (current-syntax)))
       (when (or (not (syntax-keyword-test-symbol skw))
-                (member (syntax-keyword-test-symbol skw)
-                        *syntax-symbol-tov-list*
-                        :key #'cdr))
+                (find (syntax-keyword-test-symbol skw)
+                      *syntax-symbol-tov-list*
+                      :key #'car))
         (cond
          ((syntax-keyword-regex-p skw)
           (cond ((syntax-keyword-word-p skw)

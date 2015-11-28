@@ -311,7 +311,7 @@
             (when (and (funcall (syntax-keyword-test skw) str start end)
                        (syntax-matched-word line skw start end))
               (return-from syntax-scan-word end)))))))
-    (syntax-position-word-end str start)))
+    nil))
 
 (defun syntax-scan-whitespaces (str i)
   (do ((i i (1+ i)))
@@ -353,6 +353,9 @@
         (let ((c (schar str i)))
           (cond ((syntax-escape-char-p c)
                  (incf i))
+                ((let ((pos (syntax-scan-word line i)))
+                   (when pos
+                     (setq i pos))))
                 ((syntax-string-quote-char-p c)
                  (line-put-attribute line i (1+ i) (get-attr :string-attr))
                  (multiple-value-bind (j found-term-p)
@@ -376,9 +379,11 @@
                                      (get-attr :comment-attr))
                  (return))
                 (t
-                 (let ((pos (syntax-scan-word line i)))
-                   (when pos
-                     (setq i pos))))))))))
+                 (let ((end (syntax-position-word-end (line-str line) i)))
+                   (setq i
+                         (if (<= i (1- end))
+                             (1- end)
+                             i))))))))))
 
 (defun syntax-scan-buffer (buffer)
   (when (and *enable-syntax-highlight*

@@ -67,6 +67,17 @@
           (when (plusp (- end mod))
             (backward-delete-char *python-indent-size* t)))))))
 
+(defun python-definition-line-p ()
+  (looking-at "^\\s*(def|class)\\s"))
+
+(define-key *python-mode-keymap* (kbd "C-M-a") 'python-beginning-of-defun)
+(define-command python-beginning-of-defun (n) ("p")
+  (beginning-of-defun-abstract n #'python-definition-line-p))
+
+(define-key *python-mode-keymap* (kbd "C-M-e") 'python-end-of-defun)
+(define-command python-end-of-defun (n) ("p")
+  (beginning-of-defun-abstract (- n) #'python-definition-line-p))
+
 (setq *auto-mode-alist*
       (append '(("\\.py$" . python-mode))
               *auto-mode-alist*))

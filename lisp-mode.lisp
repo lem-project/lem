@@ -391,16 +391,7 @@
 
 (define-key *global-keymap* (kbd "M-C-a") 'lisp-beginning-of-defun)
 (define-command lisp-beginning-of-defun (&optional (n 1)) ("p")
-  (let ((arg (if (plusp n) 1 -1)))
-    (dotimes (_ (abs n) t)
-      (when (bolp)
-        (prev-line arg))
-      (loop
-        (beginning-of-line)
-        (when (eql #\( (following-char))
-          (return t))
-        (unless (prev-line arg)
-          (return nil))))))
+  (beginning-of-defun-abstract n #'(lambda () (looking-at "^\\("))))
 
 (define-key *global-keymap* (kbd "M-C-e") 'lisp-end-of-defun)
 (define-command lisp-end-of-defun (&optional (n 1)) ("p")

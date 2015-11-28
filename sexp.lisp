@@ -358,3 +358,15 @@
            (yank 3)
            (setq *kill-new-flag* t)
            t))))
+
+(defun beginning-of-defun-abstract (n match-p)
+  (let ((arg (if (plusp n) 1 -1)))
+    (dotimes (_ (abs n) t)
+      (when (bolp)
+        (prev-line arg))
+      (loop
+        (beginning-of-line)
+        (when (funcall match-p)
+          (return t))
+        (unless (prev-line arg)
+          (return nil))))))

@@ -185,9 +185,7 @@
   (let ((input ""))
     (loop
       (minibuf-print (format nil "~a~a" prompt input))
-      (let ((char (loop :for code := (charms/ll:wgetch (window-win)) :do
-                    (unless (= code -1)
-                      (return (code-char code))))))
+      (let ((char (getch)))
         (cond ((member char (list C-h [backspace] [del]) :test #'char=)
                (unless (string= "" input)
                  (setq input (subseq input 0 (1- (length input))))))

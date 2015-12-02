@@ -56,5 +56,6 @@
                     :error-output out))))
 
 (setq *auto-mode-alist*
-      (append '(("\\.c$" . c-mode))
+      (append '(("\\.c$" . c-mode)
+                ("\\.h$" . c-mode))
               *auto-mode-alist*))

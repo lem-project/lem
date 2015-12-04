@@ -84,20 +84,18 @@
   (let ((strings
          (split-string (subseq string start end)
                        #\newline)))
-    (do ((s strings (cdr s)))
-        ((null s))
+    (loop :for s :on strings :do
       (buffer-insert-line (buffer-output-stream-buffer stream)
                           (buffer-output-stream-linum stream)
                           (buffer-output-stream-column stream)
                           (car s))
-      (cond ((cdr s)
-             (buffer-insert-newline (buffer-output-stream-buffer stream)
-                                    (buffer-output-stream-linum stream)
-                                    (length (car s)))
-             (incf (buffer-output-stream-linum stream))
-             (setf (buffer-output-stream-column stream) 0))
-            (t
-             (incf (buffer-output-stream-column stream) (length (car s))))))
+      (incf (buffer-output-stream-column stream) (length (car s)))
+      (when (cdr s)
+        (buffer-insert-newline (buffer-output-stream-buffer stream)
+                               (buffer-output-stream-linum stream)
+                               (buffer-output-stream-column stream))
+        (incf (buffer-output-stream-linum stream))
+        (setf (buffer-output-stream-column stream) 0)))
     string))
 
 (defun %write-octets-to-buffer-stream (stream octets start end &key)

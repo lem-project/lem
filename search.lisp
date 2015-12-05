@@ -305,7 +305,10 @@
                          (buffer-line-string (window-buffer)
                                              (window-cur-linum))
                          :start (window-cur-col))
-           (when start end)))
+           (when (and start (< (window-cur-col) start))
+             (if (= start end)
+                 (1+ end)
+                 end))))
      #'(lambda ()
          (multiple-value-bind (start end)
              (ppcre:scan scanner

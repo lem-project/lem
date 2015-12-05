@@ -448,13 +448,11 @@
     (unless (next-line 1)
       (return))))
 
-(define-key *global-keymap* (kbd "C-x C-e") 'entab-line)
 (define-command entab-line (n) ("p")
   (tab-line-aux n
                 #'(lambda (n)
                     (make-string n :initial-element #\tab))))
 
-(define-key *global-keymap* (kbd "C-x C-a") 'detab-line)
 (define-command detab-line (n) ("p")
   (tab-line-aux n
                 #'(lambda (n)

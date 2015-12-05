@@ -371,7 +371,9 @@
          (*last-flags* (make-flags) *curr-flags*))
         (*exit*)
       (if debug-p
-          (handler-bind ((error #'save-error))
+          (handler-bind ((error #'save-error)
+                         #+sbcl
+                         (sb-sys:interactive-interrupt #'save-error))
             (body))
           (with-error-handler ()
             (body))))))

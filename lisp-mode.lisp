@@ -599,10 +599,12 @@
       (when (buffer-modified-p output-buffer)
         (lisp-info-popup output-buffer)))))
 
+(define-key *lisp-mode-keymap* (kbd "C-x r") 'lisp-eval-region)
 (define-command lisp-eval-region (&optional begin end) ("r")
   (unless (or begin end)
     (setq begin (region-beginning))
     (setq end (region-end)))
+  (buffer-mark-cancel (window-buffer))
   (lisp-eval-string (region-string begin end))
   t)
 

@@ -211,7 +211,7 @@
   (let ((c (insertion-key-p *last-input-key*)))
     (cond (c (isearch-add-char c))
           (t (isearch-update-display)
-             (mapc 'input-enqueue (kbd-list *last-input-key*))
+             (uninput-key *last-input-key*)
              (isearch-end)))))
 
 (defun search-step (first-search search step goto-matched-pos endp)

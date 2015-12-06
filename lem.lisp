@@ -3,6 +3,7 @@
 (in-package :lem)
 
 (export '(*lem-error-file*
+          uninput-key
           macro-running-p
           exit-lem
           find-keybind
@@ -72,6 +73,9 @@
 
 (defun input-queue-length ()
   (length (grow-list *input-queue*)))
+
+(defun uninput-key (key)
+  (mapc 'input-enqueue (kbd-list key)))
 
 (define-key *global-keymap* (kbd "C-g") 'keyboard-quit)
 (define-command keyboard-quit () ()

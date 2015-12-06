@@ -5,6 +5,7 @@
 (export '(*program-name*
           *tab-size*
           *enable-syntax-highlight*
+          *last-input-key*
           *scroll-recenter-p*
           *auto-mode-alist*
           set-attr

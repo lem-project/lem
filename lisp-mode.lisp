@@ -291,7 +291,7 @@
                                (char-before 1)
                                -2))
 
-(defun sexp-goto-car () ()
+(defun sexp-goto-car (limit-linum)
   (let ((point (point)))
     (do ((end-linum (point-linum point)))
         ((let ((point (point)))
@@ -300,7 +300,7 @@
                t))
          t)
       (let ((start-linum (point-linum (point))))
-        (when (< 100 (- end-linum start-linum))
+        (when (< limit-linum (- end-linum start-linum))
           (point-set point)
           (return nil))))))
 
@@ -331,7 +331,7 @@
   (beginning-of-line)
   (let ((point (point))
         (old-modified-p (buffer-modified-p (window-buffer))))
-    (when (sexp-goto-car)
+    (when (sexp-goto-car 2000)
       (let ((start-col (1- (window-cur-col))))
         (destructuring-bind (car-name-str arg-col)
             (lisp-looking-at-word)
@@ -340,7 +340,6 @@
                    (car
                     (last (split-string car-name-str
                                         #\:)))))
-                 (car-name (intern car-symbol-name :lem))
                  (argc (%count-sexps point)))
             (let ((num (gethash (string-downcase car-symbol-name)
                                 *lisp-indent-table*)))
@@ -882,7 +881,7 @@
 
 (defun lisp-echo-arglist (get-arglist-function)
   (save-excursion
-   (when (sexp-goto-car)
+   (when (sexp-goto-car 100)
      (let* ((start (point))
             (end (progn (forward-sexp 1 t) (point))))
        (multiple-value-bind (arglist)

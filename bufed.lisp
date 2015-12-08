@@ -459,14 +459,11 @@
                     (make-string (* n *tab-size*) :initial-element #\space))))
 
 (defun blank-line-p ()
-  (save-excursion
-   (beginning-of-line)
-   (do ((count 0 (1+ count)))
-       ((eolp) (if (eobp) count (1+ count)))
-     (case (following-char)
-       ((#\space #\tab))
-       (otherwise (return nil)))
-     (next-char))))
+  (string=
+   ""
+   (string-trim '(#\space #\tab)
+                (buffer-line-string (window-buffer)
+                                    (window-cur-linum)))))
 
 (define-key *global-keymap* (kbd "C-x C-o") 'delete-blank-lines)
 (define-command delete-blank-lines () ()

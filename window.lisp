@@ -26,6 +26,8 @@
           selected-window
           deleted-window-p
           set-window-delete-hook
+          resize-screen
+          resize-screen-loop
           recenter
           redraw-screen
           split-window-vertically
@@ -100,8 +102,30 @@
                      0))
   (setq *window-tree* *current-window*))
 
+(define-command resize-screen (width height) ("nWidth: " "nHeight: ")
+  (assert (and (integerp width) (<= 20 width)
+               (integerp height) (<= 4 height)))
+  (charms/ll:resizeterm height width)
+  (adjust-screen-size)
+  t)
+
+(define-key *global-keymap* (kbd "[f8]") 'resize-screen-loop)
+(define-command resize-screen-loop () ()
+  (loop :for key := (input-key) :do
+    (cond ((equal key (kbd "[left]"))
+           (resize-screen (1- charms/ll:*cols*) charms/ll:*lines*))
+          ((equal key (kbd "[right]"))
+           (resize-screen (1+ charms/ll:*cols*) charms/ll:*lines*))
+          ((equal key (kbd "[up]"))
+           (resize-screen charms/ll:*cols* (1- charms/ll:*lines*)))
+          ((equal key (kbd "[down]"))
+           (resize-screen charms/ll:*cols* (1+ charms/ll:*lines*)))
+          (t
+           (return)))))
+
 (define-key *global-keymap* (kbd "C-l") 'recenter)
 (define-command recenter () ()
+  (adjust-screen-size)
   (do-window-tree (window *window-tree*)
     (charms/ll:clearok (window-win window) 1))
   (window-recenter *current-window*)

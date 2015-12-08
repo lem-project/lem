@@ -82,60 +82,44 @@
                 (mapcar #'namestring
                         (cl-fad:list-directory dirname)))))
 
-#-(and)
-(progn
-  (defun detect-external-format-from-file (pathname)
-    (let ((external-format)
-          (end-of-line :lf))
-      (with-open-file (in pathname
-                          :element-type '(unsigned-byte 8))
-        (let ((inquisitor:*detecting-buffer-size* (file-length in)))
-          (setq external-format (inquisitor:detect-external-format in :jp))))
-      #+sbcl
-      (with-open-file (in pathname
-                          :element-type '(unsigned-byte 8))
-        (setq end-of-line (inquisitor:detect-end-of-line in)))
-      (values external-format
-              end-of-line)))
-
-  (defun insert-file-contents (filename)
-    (let ((buffer (window-buffer))
-          (point (point)))
-      (multiple-value-bind (external-format end-of-line)
-          (detect-external-format-from-file filename)
-        (with-open-file (in filename :external-format external-format)
-          (loop
-            (multiple-value-bind (str eof-p)
-                (read-line in nil)
-              (cond (eof-p
-                     (when str
-                       (insert-lines (list str)))
-                     (return))
-                    (t
-                     #+sbcl
-                     (when (eq end-of-line :crlf)
-                       (setq str (subseq str 0 (1- (length str)))))
-                     (insert-lines (list str))
-                     (insert-newline))))))
-        (setf (buffer-external-format buffer)
-              (cons external-format end-of-line)))
-      (point-set point)
-      t)))
+(defun detect-external-format-from-file (pathname)
+  (let ((external-format)
+        (end-of-line :lf))
+    (with-open-file (in pathname
+                        :element-type '(unsigned-byte 8))
+      (let ((inquisitor:*detecting-buffer-size* (file-length in)))
+        (setq external-format (inquisitor:detect-external-format in :jp))))
+    #+sbcl
+    (with-open-file (in pathname
+                        :element-type '(unsigned-byte 8))
+      (let ((result (inquisitor:detect-end-of-line in)))
+        (when result
+          (setq end-of-line result))))
+    (values external-format
+            end-of-line)))
 
 (defun insert-file-contents (filename)
   (let ((buffer (window-buffer))
         (point (point)))
-    (with-open-file (in filename)
-      (loop
-        (multiple-value-bind (str eof-p)
-            (read-line in nil)
-          (cond (eof-p
-                 (when str
-                   (insert-lines (list str)))
-                 (return))
-                (t
-                 (insert-lines (list str))
-                 (insert-newline))))))
+    (multiple-value-bind (external-format end-of-line)
+        (detect-external-format-from-file filename)
+      (with-open-file (in filename :external-format external-format)
+        (loop
+          (multiple-value-bind (str eof-p)
+              (read-line in nil)
+            (cond (eof-p
+                   (when str
+                     (insert-lines (list str)))
+                   (return))
+                  (t
+                   #+sbcl
+                   (when (and (eq end-of-line :crlf)
+                              (< 0 (length str)))
+                     (setq str (subseq str 0 (1- (length str)))))
+                   (insert-lines (list str))
+                   (insert-newline))))))
+      (setf (buffer-external-format buffer)
+            (cons external-format end-of-line)))
     (point-set point)
     t))
 

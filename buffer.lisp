@@ -20,6 +20,7 @@
           buffer-get-char
           buffer-line-length
           buffer-line-string
+          buffer-end-line-p
           map-buffer-lines
           buffer-take-lines
           buffer-insert-char
@@ -390,6 +391,10 @@
     (when fatstr
       (fat-string fatstr))))
 
+(defun buffer-end-line-p (buffer linum)
+  (let ((line (buffer-get-line buffer linum)))
+    (not (line-next line))))
+
 (defun map-buffer (fn buffer &optional start-linum)
   (do ((line (if start-linum
                  (buffer-get-line buffer start-linum)
@@ -411,7 +416,7 @@
         ((or (null line) (< end i)))
       (funcall fn
                (fat-string (line-fatstr line))
-               (if (line-next line) nil t)
+               (not (line-next line))
                i))))
 
 (defun buffer-take-lines (buffer &optional linum len)

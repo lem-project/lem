@@ -428,12 +428,18 @@
   (charms/ll:initscr)
   (lem-internal args t))
 
-(defun new-xterm (width height)
+(defun new-xterm (geometry foreground background title font)
   (let ((tmpfile (temp-file-name))
         tty-name)
     (uiop:run-program
-     (format nil "xterm -title ~a -geometry ~dx~d -e 'tty > ~a && sleep 100000' &"
-             *program-name* width height tmpfile))
+     (concatenate 'string
+                  "xterm"
+                  (if title (format nil " -title ~a" title) "")
+                  (if foreground (format nil " -fg ~a" foreground) "")
+                  (if background (format nil " -bg ~a" background) "")
+                  (if font (format nil " -fn ~a" font) "")
+                  (if geometry (format nil " -geometry ~a" geometry) "")
+                  (format nil " -e 'tty > ~a && sleep 100000' &" tmpfile)))
     (loop
       (sleep 0.1)
       (multiple-value-bind (unused-value error-p)
@@ -448,17 +454,26 @@
 (cffi:defcfun "fopen" :pointer (path :string) (mode :string))
 (cffi:defcfun "fclose" :int (fp :pointer))
 
-(defun lem-new-term (&rest args)
-  (let* ((tty-name (new-xterm 80 24))
+(defun lem-new-term (&key (geometry "80x24")
+                          (foreground nil)
+                          (background nil)
+                          (title *program-name*)
+                          (font nil))
+  (let* ((tty-name (new-xterm geometry foreground background title font))
          (out (fopen tty-name "w"))
          (in (fopen tty-name "r")))
     (cffi:with-foreign-string (term "xterm")
       (charms/ll:newterm term out in))
+    (when (stringp geometry)
+      (ppcre:register-groups-bind (width height)
+                                  ("^(\\d+)x(\\d+)$" geometry)
+                                  (charms/ll:resizeterm (parse-integer height)
+                                                        (parse-integer width))))
     #+sbcl
     (sb-thread:make-thread
      #'(lambda ()
          (sb-thread:with-new-session ()
-           (unwind-protect (lem-internal args nil)
+           (unwind-protect (lem-internal nil nil)
              (fclose out)
              (fclose in)))))
     #-sbcl

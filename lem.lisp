@@ -489,7 +489,7 @@
     #-sbcl
     (bt:make-thread
      #'(lambda ()
-         (unwind-protect (lem-internal args nil)
+         (unwind-protect (lem-internal nil nil)
            (fclose io))))))
 
 (defun save-error (condition)

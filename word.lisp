@@ -15,13 +15,15 @@
 
 (defun word-type (char)
   (when (characterp char)
-    (cond ((char<= #\HIRAGANA_LETTER_A
+    (cond ((char<= (code-char 12354) ;#\HIRAGANA_LETTER_A
                    char
-                   #\HIRAGANA_LETTER_N)
+                   (code-char 12435) ;#\HIRAGANA_LETTER_N
+                   )
            :hiragana)
-          ((char<= #\KATAKANA_LETTER_A
+          ((char<= (code-char 12450) ;#\KATAKANA_LETTER_A
                    char
-                   #\KATAKANA_LETTER_N)
+                   (code-char 12531) ;#\KATAKANA_LETTER_N
+                   )
            :katakana)
           ((or (<= #x4E00
                    (char-code char)

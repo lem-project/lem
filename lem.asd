@@ -2,6 +2,15 @@
 
 #-asdf(require :asdf)
 
+#-uiop(require :uiop)
+
+(let ((dir (merge-pathnames #p"winsize"
+                            (make-pathname
+                             :directory
+                             (pathname-directory *load-truename*)))))
+  (unless (probe-file (merge-pathnames #p"winsize.so" dir))
+    (uiop:run-program (format nil "cd ~a; sh make.sh" dir))))
+
 (defpackage :lem-asd
   (:use :cl :asdf))
 
@@ -54,4 +63,5 @@
                         :cl-ppcre
                         :inquisitor
                         :babel
-                        :usocket))
+                        :usocket
+                        :lem-winsize))

@@ -19,7 +19,9 @@
           self-insert
           lem
           lem-save-error
-          lem-new-term))
+          lem-new-term
+          xterm-fd
+          run-xterm-p))
 
 (defvar *lem-error-file* "~/.lem-error")
 (defvar *init-flag* nil)
@@ -453,6 +455,15 @@
 
 (cffi:defcfun "fopen" :pointer (path :string) (mode :string))
 (cffi:defcfun "fclose" :int (fp :pointer))
+(cffi:defcfun "fileno" :int (fd :pointer))
+
+(defvar *xterm-fd* nil)
+
+(defun xterm-fd ()
+  *xterm-fd*)
+
+(defun run-xterm-p ()
+  (not (null *xterm-fd*)))
 
 (defun lem-new-term (&key (geometry "80x24")
                           (foreground nil)
@@ -460,10 +471,10 @@
                           (title *program-name*)
                           (font nil))
   (let* ((tty-name (new-xterm geometry foreground background title font))
-         (out (fopen tty-name "w"))
-         (in (fopen tty-name "r")))
+         (io (fopen tty-name "r+")))
+    (setq *xterm-fd* (fileno io))
     (cffi:with-foreign-string (term "xterm")
-      (charms/ll:newterm term out in))
+      (charms/ll:newterm term io io))
     (when (stringp geometry)
       (ppcre:register-groups-bind (width height)
                                   ("^(\\d+)x(\\d+)$" geometry)
@@ -474,14 +485,12 @@
      #'(lambda ()
          (sb-thread:with-new-session ()
            (unwind-protect (lem-internal nil nil)
-             (fclose out)
-             (fclose in)))))
+             (fclose io)))))
     #-sbcl
     (bt:make-thread
      #'(lambda ()
          (unwind-protect (lem-internal args nil)
-           (fclose out)
-           (fclose in))))))
+           (fclose io))))))
 
 (defun save-error (condition)
   (with-open-file (out *lem-error-file*

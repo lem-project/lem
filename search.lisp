@@ -3,6 +3,7 @@
 (in-package :lem)
 
 (export '(*isearch-keymap*
+          *case-fold-search*
           isearch-mode
           isearch-forward
           isearch-backward
@@ -38,6 +39,7 @@
 (defvar *isearch-search-forward-function*)
 (defvar *isearch-search-backward-function*)
 (defvar *isearch-highlight-overlays* nil)
+(defvar *case-fold-search* nil)
 
 (define-minor-mode isearch-mode
   (:name "isearch"
@@ -241,12 +243,18 @@
       #'eobp))
 
 (defun search-forward (str &optional limit)
+  (unless *case-fold-search*
+    (setq str (string-downcase str)))
   (let ((length (1+ (count #\newline str))))
     (flet ((take-string ()
-                        (join (string #\newline)
-                              (buffer-take-lines (window-buffer)
-                                                 (window-cur-linum)
-                                                 length))))
+                        (let ((string
+                               (join (string #\newline)
+                                     (buffer-take-lines (window-buffer)
+                                                        (window-cur-linum)
+                                                        length))))
+                          (unless *case-fold-search*
+                            (setq string (string-downcase string)))
+                          string)))
       (search-step #'(lambda ()
                        (search str (take-string)
                                :start2 (window-cur-col)))
@@ -266,21 +274,28 @@
       #'bobp))
 
 (defun search-backward (str &optional limit)
+  (unless *case-fold-search*
+    (setq str (string-downcase str)))
   (let ((length (1+ (count #\newline str))))
     (flet ((%search (&optional end)
                     (let ((linum (- (window-cur-linum) (1- length))))
                       (when (< 0 linum)
-                        (let ((lines (buffer-take-lines (window-buffer)
-                                                        linum
-                                                        length)))
+                        (let* ((lines
+                                (buffer-take-lines (window-buffer)
+                                                   linum
+                                                   length))
+                               (string
+                                (join (string #\newline)
+                                      (if (and (< 1 linum) end)
+                                          (append (butlast lines)
+                                                  (list
+                                                   (subseq (car (last lines))
+                                                           0 end)))
+                                          lines))))
                           (search str
-                                  (join (string #\newline)
-                                        (if (and (< 1 linum) end)
-                                            (append (butlast lines)
-                                                    (list
-                                                     (subseq (car (last lines))
-                                                             0 end)))
-                                            lines))
+                                  (if *case-fold-search*
+                                      string
+                                      (string-downcase string))
                                   :from-end t))))))
       (search-step #'(lambda ()
                        (%search (window-cur-col)))

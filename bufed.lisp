@@ -536,7 +536,7 @@
 (define-command delete-indentation () ()
   (beginning-of-line)
   (let ((point (point)))
-    (prev-line)
+    (prev-line 1)
     (end-of-line)
     (delete-char (region-count (point) point) t)
     (just-one-space)

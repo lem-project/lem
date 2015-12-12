@@ -63,13 +63,13 @@
        (or (looking-at "^{")
            (looking-at "^\\S[^{]*{"))))
   (when (looking-at "^{")
-    (prev-line))
+    (prev-line 1))
   t)
 
 (define-key *c-mode-keymap* (kbd "C-M-e") 'c-end-of-defun)
 (define-command c-end-of-defun (n) ("p")
   (beginning-of-defun-abstract (- n) #'(lambda () (looking-at "^}")))
-  (next-line))
+  (next-line 1))
 
 (setq *auto-mode-alist*
       (append '(("\\.c$" . c-mode)

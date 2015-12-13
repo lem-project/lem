@@ -25,6 +25,7 @@
 
 (defvar *lem-error-file* "~/.lem-error")
 (defvar *initialized-p* nil)
+(defvar *running-p* nil)
 
 (defvar *exit*)
 
@@ -390,6 +391,7 @@
   (charms/ll:raw)
   (charms/ll:nonl)
   (charms/ll:refresh)
+  (setq *running-p* t)
   (cond ((not *initialized-p*)
          (setq *initialized-p* t)
          (window-init)
@@ -413,7 +415,8 @@
   (charms/ll:endwin)
   (dolist (window (cons *minibuf-window* (window-list)))
     (charms/ll:delscreen (window-win window)))
-  (charms/ll:delscreen charms/ll:*stdscr*))
+  (charms/ll:delscreen charms/ll:*stdscr*)
+  (setq *running-p* nil))
 
 (defun lem-internal (args debug-p)
   (unwind-protect
@@ -423,7 +426,7 @@
     (lem-finallize)))
 
 (defun check-init ()
-  (when *initialized-p*
+  (when *running-p*
     (error "~a is already initialized" *program-name*)))
 
 (defun lem (&rest args)

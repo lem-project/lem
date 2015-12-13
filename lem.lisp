@@ -24,7 +24,7 @@
           run-xterm-p))
 
 (defvar *lem-error-file* "~/.lem-error")
-(defvar *init-flag* nil)
+(defvar *initialized-p* nil)
 
 (defvar *exit*)
 
@@ -390,8 +390,8 @@
   (charms/ll:raw)
   (charms/ll:nonl)
   (charms/ll:refresh)
-  (cond ((not *init-flag*)
-         (setq *init-flag* t)
+  (cond ((not *initialized-p*)
+         (setq *initialized-p* t)
          (window-init)
          (minibuf-init)
          (with-error-handler ()
@@ -422,11 +422,17 @@
       (lem-main debug-p))
     (lem-finallize)))
 
+(defun check-init ()
+  (when *initialized-p*
+    (error "~a is already initialized" *program-name*)))
+
 (defun lem (&rest args)
+  (check-init)
   (charms/ll:initscr)
   (lem-internal args nil))
 
 (defun lem-save-error (&rest args)
+  (check-init)
   (charms/ll:initscr)
   (lem-internal args t))
 
@@ -470,6 +476,7 @@
                           (background nil)
                           (title *program-name*)
                           (font nil))
+  (check-init)
   (let* ((tty-name (new-xterm geometry foreground background title font))
          (io (fopen tty-name "r+")))
     (setq *xterm-fd* (fileno io))

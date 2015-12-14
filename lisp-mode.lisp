@@ -993,10 +993,9 @@
   (insert-string (format nil "~a> "
                          (shorten-package-name
                           (lisp-current-package))))
-  (buffer-put-attribute (window-buffer)
-                        (make-point (window-cur-linum) 0)
-                        (make-point (window-cur-linum) (window-cur-col))
-                        (make-attr :bold-p t :color :blue))
+  (put-attribute (make-point (window-cur-linum) 0)
+                 (make-point (window-cur-linum) (window-cur-col))
+                 (make-attr :bold-p t :color :blue))
   (buffer-put (window-buffer) :prompt-point (point))
   (buffer-undo-boundary (window-buffer)))
 

@@ -3,19 +3,7 @@
 (in-package :lem)
 
 (export '(run-hooks
-          add-hook
-          timer
-          timer-p
-          timer-ms
-          timer-repeat-p
-          timer-last-time
-          timer-function
-          start-timer
-          stop-timer
-          alive-timer-p
-          overlay
-          make-overlay
-          delete-overlay))
+          add-hook))
 
 (defun run-hooks (hook)
   (mapc 'funcall (get hook 'hooks)))
@@ -23,6 +11,17 @@
 (defun add-hook (hook callback)
   (setf (get hook 'hooks)
         (append (get hook 'hooks) (list callback))))
+
+
+(export '(timer
+          timer-p
+          timer-ms
+          timer-repeat-p
+          timer-last-time
+          timer-function
+          start-timer
+          stop-timer
+          alive-timer-p))
 
 (defvar *timer-list* nil)
 
@@ -60,6 +59,11 @@
     (setq *timer-list* (set-difference *timer-list* promised-timers))
     update-p))
 
+
+(export '(overlay
+          make-overlay
+          delete-overlay))
+
 (defstruct (overlay (:constructor make-overlay-internal))
   start
   end
@@ -78,3 +82,13 @@
 (defun delete-overlay (overlay)
   (when (overlay-p overlay)
     (buffer-delete-overlay (overlay-buffer overlay) overlay)))
+
+
+(export '(put-attribute
+          remove-attribute))
+
+(defun put-attribute (start end attr)
+  (buffer-put-attribute (window-buffer) start end attr))
+
+(defun remove-attribute (start end attr)
+  (buffer-remove-attribute (window-buffer) start end attr))

@@ -10,6 +10,7 @@
           *auto-mode-alist*
           set-attr
           get-attr
+          make-attr
           define-continue-flag
           if-continue-flag
           when-interrupted-flag

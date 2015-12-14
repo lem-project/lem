@@ -364,7 +364,7 @@
 (defun lem-main (debug-p)
   (flet ((body ()
                (window-maybe-update)
-               ;(idle)
+               (idle)
                (case (catch 'abort
                        (main-step)
                        nil)

@@ -11,6 +11,9 @@
           point<
           point=
           point<=
+          point>
+          point>=
+          point-shift
           point-min
           point-max))
 
@@ -62,6 +65,18 @@
 (defun point<= (p1 p2)
   (or (point< p1 p2)
       (point= p1 p2)))
+
+(defun point> (p1 p2)
+  (point< p2 p1))
+
+(defun point>= (p1 p2)
+  (point<= p2 p1))
+
+(defun point-shift (point n)
+  (save-excursion
+   (point-set point)
+   (next-char n)
+   (point)))
 
 (defun point-min ()
   (make-point 1 0))

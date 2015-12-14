@@ -41,14 +41,7 @@
 (defvar *editor-lock* (bt:make-lock))
 (defvar *getch-wait-p* nil)
 
-(defvar *color-names* '(:yellow
-                        :green
-                        :blue
-                        :magenta
-                        :red
-                        :cyan))
-
-(defvar *attribute-name-table* (make-hash-table))
+(defvar *attribute-name-table* (make-hash-table :test 'equal))
 
 (defun set-attr (name attr)
   (setf (gethash name *attribute-name-table*)

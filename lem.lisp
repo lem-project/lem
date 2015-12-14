@@ -313,24 +313,31 @@
   (when (/= 0 (charms/ll:has-colors))
     (charms/ll:start-color)
     (charms/ll:use-default-colors)
-    (loop
-      :for color
-      :in (list charms/ll:color_yellow
-                charms/ll:color_green
-                charms/ll:color_blue
-                charms/ll:color_magenta
-                charms/ll:color_red
-                charms/ll:color_cyan)
-      :for attr-name :in *color-names*
-      :for num :from 1
-      :do
-      (charms/ll:init-pair num color -1)
-      (set-attr attr-name (charms/ll:color-pair num)))
-    (syntax-init-attributes))
-  (set-attr :highlight charms/ll:a_reverse)
-  (set-attr :search-highlight
-            (logior (get-attr :highlight)
-                    (get-attr :cyan))))
+    (let ((colors
+           (list (cons :yellow charms/ll:color_yellow)
+                 (cons :green charms/ll:color_green)
+                 (cons :blue charms/ll:color_blue)
+                 (cons :magenta charms/ll:color_magenta)
+                 (cons :red charms/ll:color_red)
+                 (cons :cyan charms/ll:color_cyan)
+                 (cons :white charms/ll:color_white)
+                 (cons :black charms/ll:color_black)))
+          (n 0))
+      (flet ((add-color (ncurses-fg ncurses-bg name)
+                        (incf n)
+                        (charms/ll:init-pair n ncurses-fg ncurses-bg)
+                        (set-attr name (charms/ll:color-pair n))))
+        (loop :for (fg . ncurses-fg) :in colors :do
+          (loop :for (bg . ncurses-bg) :in colors :do
+            (add-color ncurses-fg
+                       ncurses-bg
+                       (cons fg bg)))
+          (add-color ncurses-fg -1 fg))))
+    (syntax-init-attributes)
+    (set-attr :highlight charms/ll:a_reverse)
+    (set-attr :search-highlight
+              (logior (get-attr :highlight)
+                      (get-attr :cyan)))))
 
 (defun toplevel-error-handler (condition)
   (info-popup (get-buffer-create "*Error*")

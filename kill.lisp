@@ -79,8 +79,7 @@
         prev-yank-p)
     (when-continue-flag :yank (setq prev-yank-p t))
     (cond ((and start end prev-yank-p)
-           (let ((*kill-disable-p* t))
-             (kill-region start end))
+           (delete-region start end)
            (setq *kill-ring-yank-ptr*
                  (or (cdr *kill-ring-yank-ptr*)
                      *kill-ring*))

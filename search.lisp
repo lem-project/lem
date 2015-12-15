@@ -461,8 +461,7 @@
             (let ((c (unless pass-through (getch))))
               (cond
                ((or pass-through (char= c #\y))
-                (let ((*kill-disable-p* t))
-                  (kill-region start-point end-point))
+                (delete-region start-point end-point)
                 (insert-string after)
                 (return))
                ((char= c #\n)

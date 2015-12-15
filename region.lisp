@@ -8,6 +8,7 @@
           region-count
           copy-region
           kill-region
+          delete-region
           apply-region-lines))
 
 (defun region-beginning ()
@@ -85,6 +86,10 @@
   (point-set begin)
   (prog1 (delete-char (region-count begin end))
     (buffer-mark-cancel (window-buffer))))
+
+(defun delete-region (begin end)
+  (let ((*kill-disable-p* t))
+    (kill-region begin end)))
 
 (defun apply-region-lines (begin end fn)
   (point-set begin)

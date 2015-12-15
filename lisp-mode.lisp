@@ -1044,8 +1044,7 @@
     (when win
       (let ((start (buffer-get (window-buffer) :prompt-point))
             (end (point-max)))
-        (let ((*kill-disable-p* t))
-          (kill-region start end))
+        (delete-region start end)
         (insert-string str)))))
 
 (define-key *lisp-repl-mode-keymap* (kbd "M-n") 'lisp-repl-next-input)
@@ -1054,16 +1053,14 @@
       (next-history *lisp-repl-history*)
     (let ((start (buffer-get (window-buffer) :prompt-point))
           (end (point-max)))
-      (let ((*kill-disable-p*))
-        (kill-region start end))
+      (delete-region start end)
       (when win
         (insert-string str)))))
 
 (define-key *lisp-repl-mode-keymap* (kbd "M-r") 'lisp-repl-reset)
 (define-command lisp-repl-reset (arg) ("P")
   (when arg
-    (let ((*kill-disable-p*))
-      (kill-region (point-min) (point-max))))
+    (delete-region (point-min) (point-max)))
   (lisp-repl-prompt)
   t)
 

@@ -15,8 +15,7 @@
         (shell-command (format nil "cat ~a | ~a" temp-file-name str)
                        :output output)
         (delete-file temp-file-name)))
-    (let ((*kill-disable-p* nil))
-      (kill-region (point-min) (point-max)))
+    (delete-region (point-min) (point-max))
     (insert-string outstr)
     (beginning-of-buffer)))
 

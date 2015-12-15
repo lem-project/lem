@@ -110,6 +110,7 @@
         ("with-accessors" . 2)
         ("with-condition-restarts" . 2)
         ("with-output-to-string" . 1)
+        ("with-open-file" . 1)
         ("with-slots" . 2)
         ("with-standard-io-syntax" . 2)
         ("defparameter" . 1)
@@ -227,6 +228,7 @@
                "when"
                "with-accessors"
                "with-condition-restarts"
+               "with-open-file"
                "with-output-to-string"
                "with-slots"
                "with-standard-io-syntax"

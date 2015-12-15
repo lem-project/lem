@@ -334,7 +334,10 @@
   (let ((point (point))
         (old-modified-p (buffer-modified-p (window-buffer))))
     (when (sexp-goto-car 2000)
-      (let ((start-col (1- (window-cur-col))))
+      (let ((start-col (1- (window-cur-col)))
+            (not-list-p (save-excursion
+                         (search-backward "(")
+                         (member (preceding-char) '(#\#)))))
         (destructuring-bind (car-name-str arg-col)
             (lisp-looking-at-word)
           (let* ((car-symbol-name
@@ -349,10 +352,12 @@
               (let ((num-spaces (delete-while-whitespaces t))
                     num-insert-spaces)
                 (cond
-                 ((and (< 0 (length car-name-str))
-                       (or (char= #\( (aref car-name-str 0))
-                           (char= #\: (aref car-name-str 0))
-                           (char= #\" (aref car-name-str 0))))
+                 ((or not-list-p
+                      (and (null num)
+                           (< 0 (length car-name-str))
+                           (or (char= #\( (aref car-name-str 0))
+                               (char= #\: (aref car-name-str 0))
+                               (char= #\" (aref car-name-str 0)))))
                   (setq num-insert-spaces (+ start-col 1)))
                  ((and (null num)
                        (or (eql 0 (search "DEFINE-" car-symbol-name))

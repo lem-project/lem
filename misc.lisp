@@ -50,7 +50,10 @@
       (when (< (timer-ms timer)
                (- (get-internal-real-time)
                   (timer-last-time timer)))
-        (funcall (timer-function timer))
+        (handler-case (funcall (timer-function timer))
+          (error (condition)
+                 (minibuf-print
+                  (format nil "Error running timer: ~a" condition))))
         (setq update-p t)
         (if (timer-repeat-p timer)
             (setf (timer-last-time timer)

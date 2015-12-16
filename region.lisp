@@ -44,6 +44,8 @@
       (make-point linum1 column1)))))
 
 (defun region-lines (begin end)
+  (when (point< end begin)
+    (rotatef begin end))
   (with-points (((linum1 col1) begin)
                 ((linum2 col2) end))
     (let ((lines

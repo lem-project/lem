@@ -29,14 +29,16 @@
   ms
   repeat-p
   last-time
-  function)
+  function
+  handler-function)
 
-(defun start-timer (ms repeat-p function)
+(defun start-timer (ms repeat-p function &optional handler-function)
   (let ((timer
          (%make-timer :ms ms
                       :repeat-p repeat-p
                       :last-time (get-internal-real-time)
-                      :function function)))
+                      :function function
+                      :handler-function handler-function)))
     (push timer *timer-list*)
     timer))
 
@@ -50,7 +52,11 @@
       (when (< (timer-ms timer)
                (- (get-internal-real-time)
                   (timer-last-time timer)))
-        (handler-case (funcall (timer-function timer))
+        (handler-case
+            (if (timer-handler-function timer)
+                (handler-bind ((error (timer-handler-function timer)))
+                  (funcall (timer-function timer)))
+                (funcall (timer-function timer)))
           (error (condition)
                  (minibuf-print
                   (format nil "Error running timer: ~a" condition))))

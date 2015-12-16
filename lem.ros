@@ -46,7 +46,7 @@ exec ros -Q -- $0 "$@"
                   :toplevel #'(lambda ()
                                 (sb-posix:unsetenv "SBCL_HOME")
                                 (let ((lem::*program-name* "lem dbg"))
-                                  (apply 'lem::lem-save-error (lem::argument-list))))
+                                  (apply 'lem::lem (lem::argument-list))))
                   :executable t)
                  (error "build not supported."))
                 ((or (string= "--debug" arg)
@@ -61,5 +61,5 @@ exec ros -Q -- $0 "$@"
     (setq filenames (nreverse filenames))
     (if debug-flag
         (let ((lem::*program-name* "lem dbg"))
-          (apply #'lem:lem-save-error filenames))
+          (apply #'lem:lem filenames))
         (apply #'lem:lem filenames))))

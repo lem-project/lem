@@ -368,7 +368,7 @@
                  (return)))))
       (charms/ll:wtimeout (window-win) -1))))
 
-(defun lem-main (debug-p)
+(defun lem-main ()
   (flet ((body ()
                (window-maybe-update)
                (idle)
@@ -383,13 +383,10 @@
          (*curr-flags* (make-flags) (make-flags))
          (*last-flags* (make-flags) *curr-flags*))
         (*exit*)
-      (if debug-p
-          (handler-bind ((error #'save-error)
-                         #+sbcl
-                         (sb-sys:interactive-interrupt #'save-error))
-            (body))
-          (with-error-handler ()
-            (body))))))
+      (with-error-handler ()
+        (handler-bind ((error #'save-error)
+                       (sb-sys:interactive-interrupt #'save-error))
+          (body))))))
 
 (defun lem-init (args)
   (attr-init)
@@ -425,11 +422,11 @@
   (charms/ll:delscreen charms/ll:*stdscr*)
   (setq *running-p* nil))
 
-(defun lem-internal (args debug-p)
+(defun lem-internal (args)
   (unwind-protect
     (progn
       (lem-init args)
-      (lem-main debug-p))
+      (lem-main))
     (lem-finallize)))
 
 (defun check-init ()
@@ -439,12 +436,7 @@
 (defun lem (&rest args)
   (check-init)
   (charms/ll:initscr)
-  (lem-internal args nil))
-
-(defun lem-save-error (&rest args)
-  (check-init)
-  (charms/ll:initscr)
-  (lem-internal args t))
+  (lem-internal args))
 
 (defun new-xterm (geometry foreground background title font)
   (let ((tmpfile (temp-file-name))
@@ -501,18 +493,18 @@
     (sb-thread:make-thread
      #'(lambda ()
          (sb-thread:with-new-session ()
-           (unwind-protect (lem-internal nil nil)
+           (unwind-protect (lem-internal nil)
              (fclose io)))))
     #-sbcl
     (bt:make-thread
      #'(lambda ()
-         (unwind-protect (lem-internal nil nil)
+         (unwind-protect (lem-internal nil)
            (fclose io))))))
 
 (defun save-error (condition)
   (with-open-file (out *lem-error-file*
                        :direction :output
-                       :if-exists :append
+                       :if-exists :supersede
                        :if-does-not-exist :create)
     (let ((*print-circle* t))
       (format out "~&~%~%~%~%~a~%" condition)

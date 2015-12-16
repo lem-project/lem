@@ -17,6 +17,7 @@
           universal-argument
           input-key
           self-insert
+          popup-backtrace
           lem
           lem-save-error
           lem-new-term
@@ -339,18 +340,17 @@
               (logior (get-attr :highlight)
                       (get-attr :cyan)))))
 
-(defun toplevel-error-handler (condition)
+(defun popup-backtrace (condition)
   (info-popup (get-buffer-create "*Error*")
               #'(lambda (out)
                   (princ condition out)
                   (fresh-line out)
                   (uiop/image:print-backtrace
-                   :stream out :count 100)))
-  condition)
+                   :stream out :count 100))))
 
 (defmacro with-error-handler (() &body body)
   `(handler-case
-       (handler-bind ((error #'toplevel-error-handler))
+       (handler-bind ((error #'popup-backtrace))
          ,@body)
      (error ())))
 

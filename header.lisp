@@ -3,6 +3,7 @@
 (in-package :lem)
 
 (export '(*program-name*
+          *debug-p*
           *tab-size*
           *enable-syntax-highlight*
           *last-input-key*
@@ -20,6 +21,7 @@
           with-buffer-read-only))
 
 (defvar *program-name* "Lem")
+(defvar *debug-p* nil)
 
 (defvar *current-window*)
 (defvar *buffer-list* nil)

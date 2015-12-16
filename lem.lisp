@@ -384,9 +384,11 @@
          (*last-flags* (make-flags) *curr-flags*))
         (*exit*)
       (with-error-handler ()
-        (handler-bind ((error #'save-error)
-                       (sb-sys:interactive-interrupt #'save-error))
-          (body))))))
+        (if *debug-p*
+            (handler-bind ((error #'save-error)
+                           (sb-sys:interactive-interrupt #'save-error))
+              (body))
+            (body))))))
 
 (defun lem-init (args)
   (attr-init)

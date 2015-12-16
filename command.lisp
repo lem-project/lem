@@ -85,9 +85,13 @@
        ,(define-command-gen-cmd gcmd name parms arg-descripters))))
 
 (defun cmd-call (cmd arg)
-  (funcall (gethash (string-downcase (symbol-name cmd))
-                    *command-table*)
-           arg))
+  (cond ((fboundp cmd)
+         (funcall (gethash (string-downcase (symbol-name cmd))
+                           *command-table*)
+                  arg))
+        (t
+         (minibuf-print (format nil "undefined command: ~a" cmd))
+         nil)))
 
 (defun command-completion (str)
   (let ((names))

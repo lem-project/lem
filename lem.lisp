@@ -291,15 +291,36 @@
     (prog1 (execute key)
       (setq *universal-argument* nil))))
 
-(define-command self-insert (n) ("p")
-  (let ((c (insertion-key-p *last-input-key*)))
-    (cond (c
-           (setf (window-redraw-flag) :one-line)
-           (insert-char c n))
-          (t
-           (minibuf-print (format nil
-                                  "Key not found: ~a"
-                                  (kbd-to-string *last-input-key*)))))))
+(let ((prev-time))
+  (define-command self-insert (n) ("p")
+    (let ((c (insertion-key-p *last-input-key*)))
+      (cond (c
+             (setf (window-redraw-flag) :one-line)
+             (insert-char c n)
+             (when (and prev-time
+                        (> 10
+                           (- (get-internal-real-time)
+                              prev-time)))
+               (exec-paste))
+             (setq prev-time (get-internal-real-time)))
+            (t
+             (minibuf-print (format nil
+                                    "Key not found: ~a"
+                                    (kbd-to-string *last-input-key*))))))))
+
+(defun exec-paste ()
+  (charms/ll:timeout 10)
+  (loop :for code := (charms/ll:getch) :do
+    (when (= code -1)
+      (return))
+    (when *macro-recording-p*
+      (push (code-char code) *macro-chars*))
+    (let ((char (input-char code)))
+      (if (or (char= char C-j)
+              (char= char C-m))
+          (insert-newline)
+          (insert-char char 1))))
+  (charms/ll:timeout -1))
 
 (defun load-init-file ()
   (flet ((test (path)

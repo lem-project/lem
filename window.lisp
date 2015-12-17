@@ -213,7 +213,10 @@
 (defun modeline-linum (window)
   (window-cur-linum window))
 (defun modeline-column (window)
-  (window-cur-col window))
+  (str-width (buffer-line-string (window-buffer window)
+                                 (window-cur-linum window))
+             0
+             (window-cur-col window)))
 
 (defun modeline-string (window)
   (let* ((line-pos (window-posline window))

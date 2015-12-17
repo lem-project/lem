@@ -79,7 +79,7 @@
           make-overlay
           delete-overlay))
 
-(defstruct (overlay (:constructor make-overlay-internal))
+(defstruct (overlay (:constructor %make-overlay))
   start
   end
   attr
@@ -87,10 +87,10 @@
 
 (defun make-overlay (start end &key attr (buffer (window-buffer)))
   (let ((overlay
-         (make-overlay-internal :start start
-                                :end end
-                                :attr attr
-                                :buffer buffer)))
+         (%make-overlay :start start
+                        :end end
+                        :attr attr
+                        :buffer buffer)))
     (buffer-add-overlay buffer overlay)
     overlay))
 

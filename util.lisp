@@ -137,12 +137,12 @@
     ((:invert :preserve)
      string)))
 
-(defstruct (history (:constructor make-history-internal))
+(defstruct (history (:constructor %make-history))
   data
   index)
 
 (defun make-history ()
-  (make-history-internal
+  (%make-history
    :data (make-array 0 :fill-pointer 0 :adjustable t)
    :index 0))
 

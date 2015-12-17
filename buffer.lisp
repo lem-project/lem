@@ -34,16 +34,16 @@
           buffer-put
           buffer-clear-variables))
 
-(defstruct (line (:constructor make-line-internal))
+(defstruct (line (:constructor %make-line))
   prev
   fatstr
   stat
   next)
 
 (defun make-line (prev next str)
-  (let ((line (make-line-internal :next next
-                                  :prev prev
-                                  :fatstr (make-fatstring str 0))))
+  (let ((line (%make-line :next next
+                          :prev prev
+                          :fatstr (make-fatstring str 0))))
     (when next
       (setf (line-prev next) line))
     (when prev

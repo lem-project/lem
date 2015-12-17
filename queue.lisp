@@ -18,15 +18,15 @@
 
 (in-package :queue)
 
-(defstruct (queue (:constructor make-queue-internal))
+(defstruct (queue (:constructor %make-queue))
   data
   first
   last)
 
 (defun make-queue (size)
-  (make-queue-internal :data (make-array size)
-                       :first 0
-                       :last 0))
+  (%make-queue :data (make-array size)
+               :first 0
+               :last 0))
 
 (defun queue-empty-p (queue)
   (= (queue-first queue) (queue-last queue)))

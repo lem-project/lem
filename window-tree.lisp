@@ -41,16 +41,16 @@
     (charms/ll:keypad (window-win window) 1)
     window))
 
-(defstruct (window-node (:constructor make-window-node-internal))
+(defstruct (window-node (:constructor %make-window-node))
   split-type
   car
   cdr)
 
 (defun make-window-node (split-type car cdr)
   (assert (member split-type '(:hsplit :vsplit)))
-  (make-window-node-internal :split-type split-type
-                             :car car
-                             :cdr cdr))
+  (%make-window-node :split-type split-type
+                     :car car
+                     :cdr cdr))
 
 (defun window-tree-leaf-p (window)
   (window-p window))

@@ -20,14 +20,14 @@
 
 (defvar *keymaps* nil)
 
-(defstruct (keymap (:constructor make-keymap-internal))
+(defstruct (keymap (:constructor %make-keymap))
   name
   undef-hook
   parent
   table)
 
 (defun make-keymap (name &optional undef-hook parent)
-  (let ((keymap (make-keymap-internal
+  (let ((keymap (%make-keymap
                  :name name
                  :undef-hook undef-hook
                  :parent parent

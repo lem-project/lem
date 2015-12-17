@@ -81,7 +81,7 @@
        (prog1 (progn ,@body)
          (syntax-scan-buffer (window-buffer))))))
 
-(defmacro define-minor-mode (minor-mode (&key name keymap) &body body)
+(defmacro define-minor-mode (minor-mode &key name keymap)
   `(progn
      (push ',minor-mode *mode-list*)
      (setf (mode-name ',minor-mode) ,name)

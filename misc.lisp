@@ -16,9 +16,6 @@
 (export '(timer
           timer-p
           timer-ms
-          timer-repeat-p
-          timer-last-time
-          timer-function
           start-timer
           stop-timer
           alive-timer-p))
@@ -26,7 +23,7 @@
 (defvar *timer-list* nil)
 
 (defstruct (timer (:constructor %make-timer))
-  ms
+  _ms
   repeat-p
   last-time
   function
@@ -35,7 +32,7 @@
 
 (defun start-timer (ms repeat-p function &optional args handler-function)
   (let ((timer
-         (%make-timer :ms ms
+         (%make-timer :_ms ms
                       :repeat-p repeat-p
                       :last-time (get-internal-real-time)
                       :function function
@@ -47,11 +44,18 @@
 (defun stop-timer (timer)
   (setq *timer-list* (delete timer *timer-list*)))
 
+(defun timer-ms (timer)
+  (timer-_ms timer))
+
+(defun (setf timer-ms) (new-ms timer)
+  (check-type new-ms (integer 1 #.most-positive-fixnum))
+  (setf (timer-_ms timer) new-ms))
+
 (defun update-timer ()
   (let ((promised-timers)
         (update-p))
     (dolist (timer *timer-list*)
-      (when (< (timer-ms timer)
+      (when (< (timer-_ms timer)
                (- (get-internal-real-time)
                   (timer-last-time timer)))
         (handler-case

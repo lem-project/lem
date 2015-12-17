@@ -200,10 +200,11 @@
   (cond
    ((null n)
     (delete-char
-     (or (blank-line-p)
-         (- (buffer-line-length (window-buffer)
-                                (window-cur-linum))
-            (window-cur-col)))))
+     (cond ((eolp) 1)
+           ((blank-line-p))
+           (t (- (buffer-line-length (window-buffer)
+                                     (window-cur-linum))
+                 (window-cur-col))))))
    ((plusp n)
     (dotimes (_ n)
       (kill-line)))))

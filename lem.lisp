@@ -510,8 +510,9 @@
     (when (stringp geometry)
       (ppcre:register-groups-bind (width height)
                                   ("^(\\d+)x(\\d+)$" geometry)
-                                  (charms/ll:resizeterm (parse-integer height)
-                                                        (parse-integer width))))
+                                  (when (and width height)
+                                    (charms/ll:resizeterm (parse-integer height)
+                                                          (parse-integer width)))))
     #+sbcl
     (sb-thread:make-thread
      #'(lambda ()

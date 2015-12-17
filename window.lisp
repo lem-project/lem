@@ -256,11 +256,6 @@
          (window-wrapping-offset window))
       (window-cursor-y window)))
 
-(defun window-print-char (win y x str attr)
-  (charms/ll:wattron win attr)
-  (charms/ll:mvwaddstr win y (str-width str 0 x) (string (schar str x)))
-  (charms/ll:wattroff win attr))
-
 (defun window-print-line (window y str &key (start-x 0) (string-start 0) string-end)
   (check-type str fatstring)
   (loop

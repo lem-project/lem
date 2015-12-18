@@ -688,11 +688,9 @@
       (setf (buffer-overlays buffer) nil))))
 
 (defun buffer-check-marked (buffer)
-  (if (buffer-mark-linum buffer)
-      t
-      (progn
-        (minibuf-print "Not mark in this buffer")
-        nil)))
+  (cond ((buffer-mark-linum buffer) t)
+        (t (minibuf-print "Not mark in this buffer")
+           nil)))
 
 (defun buffer-directory ()
   (if (buffer-filename)

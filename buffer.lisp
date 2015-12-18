@@ -125,8 +125,7 @@
   cache-linum
   mark-p
   mark-overlay
-  mark-linum
-  mark-col
+  mark-marker
   keep-binfo
   nlines
   undo-size
@@ -135,6 +134,7 @@
   undo-node
   saved-node
   overlays
+  markers
   truncate-lines
   external-format
   variables)
@@ -157,14 +157,15 @@
     (setf (buffer-cache-linum buffer) 1)
     (setf (buffer-mark-p buffer) nil)
     (setf (buffer-mark-overlay buffer) nil)
-    (setf (buffer-mark-linum buffer) 1)
-    (setf (buffer-mark-col buffer) 0)
+    (setf (buffer-mark-marker buffer) nil)
     (setf (buffer-nlines buffer) 1)
     (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
     (setf (buffer-undo-node buffer) 0)
     (setf (buffer-saved-node buffer) 0)
+    (setf (buffer-overlays buffer) nil)
+    (setf (buffer-markers buffer) nil)
     (setf (buffer-truncate-lines buffer) t)
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
     (unless (ghost-buffer-p buffer)
@@ -223,16 +224,13 @@
   (push elt (buffer-redo-stack buffer)))
 
 (defmacro with-push-undo ((buffer) &body body)
-  (let ((gmark-linum (gensym "MARK-LINUM"))
-        (gmark-col (gensym "MARK-COL")))
+  (let ((gmark-marker (gensym)))
     `(when (and (buffer-enable-undo-p ,buffer)
                 (not (ghost-buffer-p ,buffer)))
-       (let ((,gmark-linum (buffer-mark-linum ,buffer))
-             (,gmark-col (buffer-mark-col ,buffer)))
+       (let ((,gmark-marker (buffer-mark-marker ,buffer)))
          (let ((elt #'(lambda ()
-                        (setf (buffer-mark-col ,buffer) ,gmark-col)
-                        (setf (buffer-mark-linum ,buffer) ,gmark-linum)
-                        (progn ,@body))))
+                        (setf (buffer-mark-marker ,buffer) ,gmark-marker)
+                        ,@body)))
            (ecase *undo-mode*
              (:edit
               (when (push-undo-stack ,buffer elt)
@@ -298,6 +296,13 @@
   (setf (buffer-overlays buffer)
         (delete overlay (buffer-overlays buffer))))
 
+(defun buffer-add-marker (buffer marker)
+  (push marker (buffer-markers buffer)))
+
+(defun buffer-delete-marker (buffer marker)
+  (setf (buffer-markers buffer)
+        (delete marker (buffer-markers buffer))))
+
 (defun buffer-mark-cancel (buffer)
   (when (buffer-mark-p buffer)
     (setf (buffer-mark-p buffer) nil)
@@ -307,8 +312,7 @@
   (when (buffer-mark-p buffer)
     (let (start
           end
-          (mark-point (make-point (buffer-mark-linum buffer)
-                                  (buffer-mark-col buffer)))
+          (mark-point (marker-point (buffer-mark-marker buffer)))
           (cur-point (point)))
       (if (point< mark-point cur-point)
           (setq start mark-point
@@ -554,9 +558,10 @@
              (make-point linum col))
            (buffer-modify buffer)
            (let ((line (buffer-get-line buffer linum)))
-             (when (and (= linum (buffer-mark-linum buffer))
-                        (<= col (buffer-mark-col buffer)))
-               (incf (buffer-mark-col buffer)))
+             (dolist (marker (buffer-markers buffer))
+               (when (and (= linum (marker-linum marker))
+                          (<= col (marker-column marker)))
+                 (incf (marker-column marker))))
              (setf (line-fatstr line)
                    (fat-concat (fat-substring (line-fatstr line) 0 col)
                                (string c)
@@ -570,13 +575,14 @@
       (buffer-delete-char buffer linum col 1)
       (make-point linum col))
     (buffer-modify buffer)
-    (cond
-     ((and (= (buffer-mark-linum buffer) linum)
-           (< col (buffer-mark-col buffer)))
-      (incf (buffer-mark-linum buffer))
-      (decf (buffer-mark-col buffer) col))
-     ((< linum (buffer-mark-linum buffer))
-      (incf (buffer-mark-linum buffer))))
+    (dolist (marker (buffer-markers buffer))
+      (cond
+       ((and (= (marker-linum marker) linum)
+             (< col (marker-column marker)))
+        (incf (marker-linum marker))
+        (decf (marker-column marker) col))
+       ((< linum (marker-linum marker))
+        (incf (marker-linum marker)))))
     (let ((line (buffer-get-line buffer linum)))
       (let ((newline
              (make-line line
@@ -597,9 +603,10 @@
         (buffer-delete-char buffer linum col (fat-length str))
         (make-point linum col))
       (buffer-modify buffer)
-      (when (and (= linum (buffer-mark-linum buffer))
-                 (<= col (buffer-mark-col buffer)))
-        (incf (buffer-mark-col buffer) (fat-length str)))
+      (dolist (marker (buffer-markers buffer))
+        (when (and (= linum (marker-linum marker))
+                   (<= col (marker-column marker)))
+          (incf (marker-column marker) (fat-length str))))
       (setf (line-fatstr line)
             (fat-concat (fat-substring (line-fatstr line) 0 col)
                         str
@@ -615,12 +622,13 @@
       (loop while (plusp n) do
         (cond
          ((<= n (- (fat-length (line-fatstr line)) col))
-          (when (and (= linum (buffer-mark-linum buffer))
-                     (< col (buffer-mark-col buffer)))
-            (setf (buffer-mark-col buffer)
-                  (if (> col (- (buffer-mark-col buffer) n))
-                      col
-                      (- (buffer-mark-col buffer) n))))
+          (dolist (marker (buffer-markers buffer))
+            (when (and (= linum (marker-linum marker))
+                       (< col (marker-column marker)))
+              (setf (marker-column marker)
+                    (if (> col (- (marker-column marker) n))
+                        col
+                        (- (marker-column marker) n)))))
           (buffer-modify buffer)
           (setf (car del-lines)
                 (fat-concat (car del-lines)
@@ -630,12 +638,13 @@
                             (fat-substring (line-fatstr line) (+ col n))))
           (setq n 0))
          (t
-          (cond
-           ((and (= linum (buffer-mark-linum buffer))
-                 (< col (buffer-mark-col buffer)))
-            (setf (buffer-mark-col buffer) col))
-           ((< linum (buffer-mark-linum buffer))
-            (decf (buffer-mark-linum buffer))))
+          (dolist (marker (buffer-markers buffer))
+            (cond
+             ((and (= linum (marker-linum marker))
+                   (< col (marker-column marker)))
+              (setf (marker-column marker) col))
+             ((< linum (marker-linum marker))
+              (decf (marker-linum marker)))))
           (setf (car del-lines)
                 (fat-concat (car del-lines)
                             (fat-substring (line-fatstr line) col)))
@@ -681,14 +690,13 @@
       (setf (buffer-cache-linum buffer) 1)
       (setf (buffer-mark-p buffer) nil)
       (setf (buffer-mark-overlay buffer) nil)
-      (setf (buffer-mark-linum buffer) 1)
-      (setf (buffer-mark-col buffer) 0)
+      (setf (buffer-mark-marker buffer) nil)
       (setf (buffer-keep-binfo buffer) nil)
       (setf (buffer-nlines buffer) 1)
       (setf (buffer-overlays buffer) nil))))
 
 (defun buffer-check-marked (buffer)
-  (cond ((buffer-mark-linum buffer) t)
+  (cond ((buffer-mark-marker buffer) t)
         (t (minibuf-print "Not mark in this buffer")
            nil)))
 

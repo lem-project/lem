@@ -99,6 +99,60 @@
     (buffer-delete-overlay (overlay-buffer overlay) overlay)))
 
 
+(export '(make-marker
+          marker-p
+          delete-marker
+          marker-buffer
+          marker-linum
+          marker-column
+          marker-point))
+
+(deftype marker ()
+  `(satisfies markerp))
+
+(let ((marker-tag (gensym "MARKER")))
+  (defun make-marker (&optional (point (point)) (buffer (window-buffer)))
+    (let ((marker (vector marker-tag
+                          buffer
+                          (point-linum point)
+                          (point-column point))))
+      (buffer-add-marker buffer marker)
+      marker))
+  (defun marker-p (x)
+    (and (vectorp x)
+         (< 0 (length x))
+         (eq marker-tag (aref x 0)))))
+
+(defun delete-marker (marker)
+  (buffer-delete-marker
+   (marker-buffer marker)
+   marker))
+
+(defun marker-buffer (marker)
+  (aref marker 1))
+
+(defun marker-linum (marker)
+  (aref marker 2))
+
+(defun (setf marker-linum) (new-linum marker)
+  (setf (aref marker 2) new-linum))
+
+(defun marker-column (marker)
+  (aref marker 3))
+
+(defun (setf marker-column) (new-column marker)
+  (setf (aref marker 3) new-column))
+
+(defun marker-point (marker)
+  (make-point (marker-linum marker)
+              (marker-column marker)))
+
+(defun (setf marker-point) (new-point marker)
+  (setf (marker-linum marker) (point-linum new-point)
+        (marker-column marker) (point-column new-point))
+  new-point)
+
+
 (export '(put-attribute
           remove-attribute))
 

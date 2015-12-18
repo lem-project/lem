@@ -12,36 +12,18 @@
           apply-region-lines))
 
 (defun region-beginning ()
-  (let* ((buffer (window-buffer))
-         (linum1 (window-cur-linum))
-         (column1 (window-cur-col))
-         (linum2 (buffer-mark-linum buffer))
-         (column2 (buffer-mark-col buffer)))
-    (cond
-     ((< linum1 linum2)
-      (make-point linum1 column1))
-     ((> linum1 linum2)
-      (make-point linum2 column2))
-     ((<= column1 column2)
-      (make-point linum1 column1))
-     (t
-      (make-point linum2 column2)))))
+  (let ((point1 (point))
+        (point2 (marker-point (buffer-mark-marker))))
+    (if (point< point1 point2)
+        point1
+        point2)))
 
 (defun region-end ()
-  (let* ((buffer (window-buffer))
-         (linum1 (window-cur-linum))
-         (column1 (window-cur-col))
-         (linum2 (buffer-mark-linum buffer))
-         (column2 (buffer-mark-col buffer)))
-    (cond
-     ((< linum1 linum2)
-      (make-point linum2 column2))
-     ((> linum1 linum2)
-      (make-point linum1 column1))
-     ((<= column1 column2)
-      (make-point linum2 column2))
-     (t
-      (make-point linum1 column1)))))
+  (let ((point1 (point))
+        (point2 (marker-point (buffer-mark-marker))))
+    (if (point< point1 point2)
+        point2
+        point1)))
 
 (defun region-lines (begin end)
   (when (point< end begin)

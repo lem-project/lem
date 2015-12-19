@@ -80,8 +80,7 @@
   disp-lines
   vtop-linum
   vtop-column
-  cur-linum
-  cur-col
+  point-marker
   wrap-ylist
   redraw-flag
   delete-hook)
@@ -101,11 +100,23 @@
                         :disp-lines (make-array (1- nlines) :initial-element nil)
                         :vtop-linum 1
                         :vtop-column 0
-                        :cur-linum 1
-                        :cur-col 0
                         :wrap-ylist nil)))
     (charms/ll:keypad (window-win window) 1)
+    (setf (window-point-marker window)
+          (make-marker (make-point 1 0) buffer))
     window))
+
+(defun window-cur-col (&optional (window *current-window*))
+  (marker-column (window-point-marker window)))
+
+(defun (setf window-cur-col) (new-col &optional (window *current-window*))
+  (setf (marker-column (window-point-marker window)) new-col))
+
+(defun window-cur-linum (&optional (window *current-window*))
+  (marker-linum (window-point-marker window)))
+
+(defun (setf window-cur-linum) (new-linum &optional (window *current-window*))
+  (setf (marker-linum (window-point-marker window)) new-linum))
 
 (defstruct (window-node (:constructor %make-window-node))
   split-type

@@ -40,7 +40,6 @@
                         (:file "buffers")
                         (:file "bufed")
                         (:file "process")
-                        (:file "window-tree")
                         (:file "window")
                         (:file "file")
                         (:file "word")

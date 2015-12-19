@@ -254,25 +254,37 @@
   t)
 
 (let ((tmp-column))
-  (defun %next-line-before ()
-    (when-interrupted-flag
-     :next-line
-     (setq tmp-column
-           (1+ (str-width (buffer-line-string
-                           (window-buffer)
-                           (window-cur-linum))
-                          0
-                          (window-cur-col))))))
+  (defun %update-tmp-column ()
+    (setq tmp-column
+          (str-width (buffer-line-string
+                      (window-buffer)
+                      (window-cur-linum))
+                     0
+                     (window-cur-col))))
+  (defun %next-line-before (arg)
+    (when (null arg)
+      (when-interrupted-flag
+       :next-line
+       (%update-tmp-column))))
+  (defun %get-goal (string width)
+    (let ((w 0))
+      (do ((i 0 (1+ i)))
+          ((>= i (length string))
+           (length string))
+        (let ((c (aref string i)))
+          (setq w (char-width c w))
+          (when (< width w)
+            (return i))))))
   (defun %next-line-after (arg)
     (cond
      (arg (beginning-of-line))
      (t
-      (setf (window-cur-col)
-            (let ((str (buffer-line-string
-                        (window-buffer)
-                        (window-cur-linum))))
-              (or (wide-index str tmp-column)
-                  (length str))))
+      (let ((col (%get-goal (buffer-line-string
+                             (window-buffer)
+                             (window-cur-linum))
+                            tmp-column)))
+        (when col
+          (setf (window-cur-col) col)))
       (check-type (window-cur-col)
                   (integer 0 #.most-positive-fixnum))))))
 
@@ -283,7 +295,7 @@
    ((and n (minusp n))
     (prev-line (- n)))
    (t
-    (%next-line-before)
+    (%next-line-before n)
     (if (dotimes (_ (or n 1) t)
           (if (tail-line-p *current-window* (window-cur-linum))
               (return nil)
@@ -298,7 +310,7 @@
    ((and n (minusp n))
     (next-line (- n)))
    (t
-    (%next-line-before)
+    (%next-line-before n)
     (if (dotimes (_ (or n 1) t)
           (if (head-line-p *current-window* (window-cur-linum))
               (return)

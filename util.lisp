@@ -84,12 +84,6 @@
     (when (<= goal w)
       (return i))))
 
-(defun substring-width (str begin &optional end)
-  (let ((wb (wide-index str begin))
-        (we (when end
-              (wide-index str end))))
-    (subseq str wb we)))
-
 (defun split-string (str delim)
   (labels ((f (str acc length)
               (let ((i (position delim str)))

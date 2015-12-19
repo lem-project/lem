@@ -111,17 +111,14 @@
 
 (defmacro save-excursion (&body body)
   (let ((gpoint (gensym))
-        (gmax-col (gensym))
         (gbuffer (gensym)))
     `(let ((,gpoint (point))
-           (,gmax-col (window-max-col))
            (,gbuffer (window-buffer)))
        (unwind-protect (progn ,@body)
          (when (find ,gbuffer *buffer-list*)
            (when (not (eq ,gbuffer (window-buffer)))
              (set-buffer ,gbuffer nil))
-           (point-set ,gpoint)
-           (setf (window-max-col) ,gmax-col))))))
+           (point-set ,gpoint))))))
 
 (defmacro with-window-range ((start-linum-var end-linum-var)
                              window &body body)

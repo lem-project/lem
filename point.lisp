@@ -46,8 +46,7 @@
         (min (buffer-line-length (window-buffer)
                                  (window-cur-linum))
              (point-column point)))
-  (assert (<= 0 (window-cur-col)))
-  (setf (window-max-col) (window-cur-col)))
+  (assert (<= 0 (window-cur-col))))
 
 (defun point< (p1 p2)
   (cond ((< (point-linum p1) (point-linum p2))

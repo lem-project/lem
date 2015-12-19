@@ -211,8 +211,7 @@
 
 (defun goto-column (col)
   (assert (<= 0 col))
-  (setf (window-cur-col) col)
-  (setf (window-max-col) col))
+  (setf (window-cur-col) col))
 
 (define-key *global-keymap* (kbd "C-a") 'beginning-of-line)
 (define-key *global-keymap* (kbd "[home]") 'beginning-of-line)
@@ -399,7 +398,6 @@
        (marker-linum (buffer-mark-marker buffer)) (window-cur-linum)
        (marker-column (buffer-mark-marker buffer)) (window-cur-col))
       (assert (<= 0 (window-cur-col)))
-      (setf (window-max-col) (marker-column (buffer-mark-marker buffer)))
       t)))
 
 (defun following-char ()

@@ -538,8 +538,6 @@
         (window-cur-linum))
   (setf (window-cur-col new-window)
         (window-cur-col))
-  (setf (window-max-col new-window)
-        (window-max-col))
   (multiple-value-bind (node getter setter)
       (window-tree-parent *window-tree* *current-window*)
     (if (null node)

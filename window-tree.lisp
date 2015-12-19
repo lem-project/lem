@@ -14,7 +14,6 @@
   vtop-column
   cur-linum
   cur-col
-  max-col
   wrap-ylist
   redraw-flag
   delete-hook)
@@ -36,7 +35,6 @@
                         :vtop-column 0
                         :cur-linum 1
                         :cur-col 0
-                        :max-col 0
                         :wrap-ylist nil)))
     (charms/ll:keypad (window-win window) 1)
     window))

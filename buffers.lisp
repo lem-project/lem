@@ -82,16 +82,14 @@
         (setf (buffer-keep-binfo old-buf)
               (list (window-vtop-linum)
                     (window-cur-linum)
-                    (window-cur-col)
-                    (window-max-col)))))
+                    (window-cur-col)))))
     (setf (window-buffer) buffer)
     (let ((vtop-linum 1)
           (cur-linum 1)
-          (cur-col 0)
-          (max-col 0))
+          (cur-col 0))
       (when (buffer-keep-binfo buffer)
         (multiple-value-setq
-         (vtop-linum cur-linum cur-col max-col)
+         (vtop-linum cur-linum cur-col)
          (apply 'values (buffer-keep-binfo buffer))))
       (let ((buffer-nlines (buffer-nlines)))
         (setf (window-vtop-linum)
@@ -102,8 +100,7 @@
             (min cur-col
                  (buffer-line-length (window-buffer)
                                      (window-cur-linum))))
-      (assert (<= 0 (window-cur-col)))
-      (setf (window-max-col) max-col))))
+      (assert (<= 0 (window-cur-col))))))
 
 (defun bury-buffer (buffer)
   (setq *buffer-list*

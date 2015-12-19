@@ -64,7 +64,8 @@
               charms/ll:a_underline
               0)))
 
-(defvar *continue-command-flags* (list :kill :undo :abbrev :yank :completion))
+(defvar *continue-command-flags*
+  (list :next-line :kill :undo :abbrev :yank :completion))
 
 (defun define-continue-flag (keyword)
   (push keyword *continue-command-flags*))

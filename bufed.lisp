@@ -253,40 +253,58 @@
                 (window-cur-linum)))
   t)
 
-(defun %buffer-adjust-col (arg)
-  (cond (arg
-         (beginning-of-line))
-        (t
-         (setf (window-cur-col)
-               (min (window-max-col)
-                    (buffer-line-length
-                     (window-buffer)
-                     (window-cur-linum))))
-         (assert (<= 0 (window-cur-col))))))
+(let ((tmp-column))
+  (defun %next-line-before ()
+    (when-interrupted-flag
+     :next-line
+     (setq tmp-column
+           (1+ (str-width (buffer-line-string
+                           (window-buffer)
+                           (window-cur-linum))
+                          0
+                          (window-cur-col))))))
+  (defun %next-line-after (arg)
+    (cond
+     (arg (beginning-of-line))
+     (t
+      (setf (window-cur-col)
+            (let ((str (buffer-line-string
+                        (window-buffer)
+                        (window-cur-linum))))
+              (or (wide-index str tmp-column)
+                  (length str))))
+      (check-type (window-cur-col)
+                  (integer 0 #.most-positive-fixnum))))))
 
 (define-key *global-keymap* (kbd "C-n") 'next-line)
 (define-key *global-keymap* (kbd "[down]") 'next-line)
 (define-command next-line (&optional n) ("P")
-  (if (and n (minusp n))
-      (prev-line (- n))
-      (if (dotimes (_ (or n 1) t)
-            (if (tail-line-p *current-window* (window-cur-linum))
-                (return nil)
-                (incf (window-cur-linum))))
-          (progn (%buffer-adjust-col n) t)
-          (progn (end-of-line) nil))))
+  (cond
+   ((and n (minusp n))
+    (prev-line (- n)))
+   (t
+    (%next-line-before)
+    (if (dotimes (_ (or n 1) t)
+          (if (tail-line-p *current-window* (window-cur-linum))
+              (return nil)
+              (incf (window-cur-linum))))
+        (progn (%next-line-after n) t)
+        (progn (end-of-line) nil)))))
 
 (define-key *global-keymap* (kbd "C-p") 'prev-line)
 (define-key *global-keymap* (kbd "[up]") 'prev-line)
 (define-command prev-line (&optional n) ("P")
-  (if (and n (minusp n))
-      (next-line (- n))
-      (if (dotimes (_ (or n 1) t)
-            (if (head-line-p *current-window* (window-cur-linum))
-                (return)
-                (decf (window-cur-linum))))
-          (progn (%buffer-adjust-col n) t)
-          (progn (beginning-of-line) nil))))
+  (cond
+   ((and n (minusp n))
+    (next-line (- n)))
+   (t
+    (%next-line-before)
+    (if (dotimes (_ (or n 1) t)
+          (if (head-line-p *current-window* (window-cur-linum))
+              (return)
+              (decf (window-cur-linum))))
+        (progn (%next-line-after n) t)
+        (progn (beginning-of-line) nil)))))
 
 (define-key *global-keymap* (kbd "C-f") 'next-char)
 (define-key *global-keymap* (kbd "[right]") 'next-char)

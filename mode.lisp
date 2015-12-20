@@ -58,10 +58,10 @@
             (delete minor-mode (buffer-minor-modes)))
       (push minor-mode (buffer-minor-modes))))
 
-(defun set-buffer-mode (buffer mode)
+(defun set-buffer-mode (buffer mode &rest args)
   (let ((prev-buffer (window-buffer)))
     (set-buffer buffer nil)
-    (funcall mode)
+    (apply mode args)
     (set-buffer prev-buffer nil)))
 
 (defmacro define-major-mode (major-mode

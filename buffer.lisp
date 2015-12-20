@@ -697,7 +697,9 @@
       (setf (buffer-mark-marker buffer) nil)
       (setf (buffer-keep-binfo buffer) nil)
       (setf (buffer-nlines buffer) 1)
-      (setf (buffer-overlays buffer) nil))))
+      (setf (buffer-overlays buffer) nil)
+      (dolist (marker (buffer-markers buffer))
+        (setf (marker-point marker) (make-point 1 0))))))
 
 (defun buffer-check-marked (buffer)
   (cond ((buffer-mark-marker buffer) t)

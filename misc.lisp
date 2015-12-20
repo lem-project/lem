@@ -120,8 +120,7 @@
       marker))
   (defun marker-p (x)
     (and (vectorp x)
-         (< 0 (length x))
-         (eq marker-tag (aref x 0)))))
+         (eq marker-tag (safe-aref x 0)))))
 
 (defun delete-marker (marker)
   (buffer-delete-marker

@@ -4,6 +4,7 @@
 
 (export '(*undo-limit*
           buffer
+          buffer-p
           buffer-name
           buffer-filename
           buffer-modified-p
@@ -171,6 +172,9 @@
     (unless (ghost-buffer-p buffer)
       (push buffer *buffer-list*))
     buffer))
+
+(defun buffer-p (x)
+  (typep x 'buffer))
 
 (defmethod print-object ((buffer buffer) stream)
   (format stream "#<BUFFER ~a ~a>"

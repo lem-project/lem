@@ -42,10 +42,13 @@
                     (buffer-modified-p buffer)))
            (filter-special-buffers)))
 
-(defun get-buffer (name)
-  (find-if #'(lambda (buffer)
-               (string= name (buffer-name buffer)))
-           *buffer-list*))
+(defun get-buffer (buffer-or-name)
+  (if (buffer-p buffer-or-name)
+      buffer-or-name
+      (find-if #'(lambda (buffer)
+                   (string= buffer-or-name
+                            (buffer-name buffer)))
+               *buffer-list*)))
 
 (defun get-buffer-create (name)
   (or (get-buffer name)
@@ -123,14 +126,14 @@
         (car buffer-list))))
 
 (define-key *global-keymap* (kbd "C-x k") 'kill-buffer)
-(define-command kill-buffer (name) ("bKill buffer: ")
-  (let ((buf (get-buffer name)))
+(define-command kill-buffer (buffer-or-name) ("bKill buffer: ")
+  (let ((buffer (get-buffer buffer-or-name)))
     (when (cdr *buffer-list*)
       (dolist (win (window-list))
-        (when (eq buf (window-buffer win))
+        (when (eq buffer (window-buffer win))
           (let ((*current-window* win))
             (next-buffer))))
-      (setq *buffer-list* (delete buf *buffer-list*))))
+      (setq *buffer-list* (delete buffer *buffer-list*))))
   t)
 
 (define-key *global-keymap* (kbd "C-x x") 'next-buffer)

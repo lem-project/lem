@@ -37,6 +37,8 @@
           delete-current-window
           delete-window
           pop-to-buffer
+          display-buffer
+          quit-window
           grow-window
           shrink-window
           grow-window-horizontally
@@ -83,7 +85,8 @@
   point-marker
   wrap-ylist
   redraw-flag
-  delete-hook)
+  delete-hook
+  parameters)
 
 (defun window-p (x)
   (typep x 'window))
@@ -117,6 +120,12 @@
 
 (defun (setf window-cur-linum) (new-linum &optional (window *current-window*))
   (setf (marker-linum (window-point-marker window)) new-linum))
+
+(defun window-parameter (window parameter)
+  (getf (window-parameters window) parameter))
+
+(defun (setf window-parameter) (value window parameter)
+  (setf (getf (window-parameters window) parameter) value))
 
 (defstruct (window-node (:constructor %make-window-node))
   split-type
@@ -825,10 +834,10 @@
 
 (defun pop-to-buffer (buffer)
   (if (eq buffer (window-buffer))
-      (values *current-window*
-              (one-window-p))
-      (let ((one-p (one-window-p)))
-        (when one-p
+      (values *current-window* nil)
+      (let ((split-p))
+        (when (one-window-p)
+          (setq split-p t)
           (split-window))
         (let ((*current-window*
                (or (window-tree-find
@@ -837,7 +846,7 @@
                         (eq buffer (window-buffer window))))
                    (get-next-window *current-window*))))
           (set-buffer buffer)
-          (values *current-window* one-p)))))
+          (values *current-window* split-p)))))
 
 (defun popup (buffer output-function &key (goto-bob-p t) (erase-p t))
   (multiple-value-bind (*current-window* newwin-p)
@@ -850,6 +859,25 @@
     (when goto-bob-p
       (beginning-of-buffer))
     (values *current-window* newwin-p)))
+
+(defun display-buffer (buffer)
+  (multiple-value-bind (window split-p)
+      (pop-to-buffer buffer)
+    (setf (window-parameter window :split-p) split-p)
+    window))
+
+(define-command quit-window (&optional window kill-buffer-p) ("P")
+  (unless window
+    (setq window *current-window*))
+  (cond
+   ((window-parameter window :split-p)
+    (when kill-buffer-p
+      (kill-buffer (window-buffer window)))
+    (delete-window window))
+   (t
+    (if kill-buffer-p
+        (kill-buffer (window-buffer window))
+        (bury-buffer (window-buffer window))))))
 
 (defun adjust-screen-size ()
   (let ((delete-windows))

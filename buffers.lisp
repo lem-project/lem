@@ -80,6 +80,7 @@
 (defun set-buffer (buffer &optional (update-prev-buffer-p t))
   (unless (eq (window-buffer) buffer)
     (when update-prev-buffer-p
+      (setf (window-parameter *current-window* :split-p) nil)
       (let ((old-buf (window-buffer)))
         (update-prev-buffer old-buf)
         (setf (buffer-keep-binfo old-buf)

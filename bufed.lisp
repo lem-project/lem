@@ -103,8 +103,7 @@
            (window-buffer)
            (window-cur-linum)
            (window-cur-col)
-           c)
-      (next-char 1))))
+           c))))
 
 (define-key *global-keymap* (kbd "C-q") 'quoted-insert)
 (define-command quoted-insert (&optional (n 1)) ("p")

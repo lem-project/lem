@@ -11,6 +11,7 @@
           mode-find-keybind
           find-mode-from-name
           toggle-minor-mode
+          set-buffer-mode
           define-major-mode
           define-minor-mode
           fundamental-mode))
@@ -56,6 +57,12 @@
       (setf (buffer-minor-modes)
             (delete minor-mode (buffer-minor-modes)))
       (push minor-mode (buffer-minor-modes))))
+
+(defun set-buffer-mode (buffer mode)
+  (let ((prev-buffer (window-buffer)))
+    (set-buffer buffer nil)
+    (funcall mode)
+    (set-buffer prev-buffer nil)))
 
 (defmacro define-major-mode (major-mode
                              parent-mode

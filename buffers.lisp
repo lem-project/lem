@@ -91,16 +91,17 @@
         (multiple-value-setq
          (vtop-linum cur-linum cur-col)
          (apply 'values (buffer-keep-binfo buffer))))
-      (setf (window-vtop-linum)
-            (min vtop-linum (buffer-nlines)))
       (delete-marker (window-point-marker))
-      (setf (window-point-marker)
-            (make-marker
-             (make-point (min cur-linum (buffer-nlines))
-                         (min cur-col
-                              (buffer-line-length (window-buffer)
-                                                  (window-cur-linum))))
-             buffer))
+      (setf (window-point-marker) (make-marker))
+      (let ((buffer-nlines (buffer-nlines)))
+        (setf (window-vtop-linum)
+              (min vtop-linum buffer-nlines))
+        (setf (window-cur-linum)
+              (min cur-linum buffer-nlines)))
+      (setf (window-cur-col)
+            (min cur-col
+                 (buffer-line-length (window-buffer)
+                                     (window-cur-linum))))
       (assert (<= 0 (window-cur-col))))))
 
 (defun bury-buffer (buffer)

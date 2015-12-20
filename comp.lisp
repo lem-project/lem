@@ -55,10 +55,9 @@
                                            (dolist (s strings)
                                              (format out "~a~%" s)))
                                        nil))
-                     (set-window-delete-hook
-                      *completion-window*
-                      #'(lambda ()
-                          (setq *completion-window* nil)))
+                     (setf (window-delete-hook *completion-window*)
+                           #'(lambda ()
+                               (setq *completion-window* nil)))
                      (buffer-put buffer :completion-buffer-p t)))
                   (t
                    (delete-completion-window)))

@@ -21,11 +21,11 @@
           window-vtop-linum
           window-cur-linum
           window-cur-col
+          window-delete-hook
           one-window-p
           select-window
           selected-window
           deleted-window-p
-          set-window-delete-hook
           recenter
           redraw-screen
           split-window-vertically
@@ -206,9 +206,6 @@
 
 (defun deleted-window-p (window)
   (not (window-tree-find *window-tree* window)))
-
-(defun set-window-delete-hook (window fn)
-  (setf (window-delete-hook window) fn))
 
 (defun window-init ()
   (setq *current-cols* charms/ll:*cols*)

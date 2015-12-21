@@ -115,26 +115,37 @@
                            (kbd-to-string key)
                            cmd))))
 
+(defun describe-bindings-internal (s name keymap &optional first-p)
+  (unless first-p
+    (princ C-L s)
+    (terpri s))
+  (let ((column-width 16))
+    (princ name s)
+    (terpri s)
+    (format s "~va~a~%" column-width "key" "binding")
+    (format s "~va~a~%" column-width "---" "-------")
+    (maphash #'(lambda (k v)
+                 (format s "~va~a~%"
+                         column-width
+                         (kbd-to-string k)
+                         (symbol-name v)))
+             (keymap-table keymap))
+    (terpri s)))
+
 (define-command describe-bindings () ()
-  (let ((column-width 16)
-        (keymaps (append (mapcar #'mode-keymap (buffer-minor-modes))
-                         (list (mode-keymap (major-mode))
-                               *global-keymap*)))
-        (tmpbuf (get-buffer-create "*bindings*")))
-    (info-popup tmpbuf
-                #'(lambda (s)
-                    (loop :for keymap :in keymaps :do
-                      (princ (lem:keymap-name keymap) s)
-                      (terpri s)
-                      (format s "~va~a~%" column-width "key" "binding")
-                      (format s "~va~a~%" column-width "---" "-------")
-                      (maphash #'(lambda (k v)
-                                   (format s "~va~a~%"
-                                           column-width
-                                           (kbd-to-string k)
-                                           (symbol-name v)))
-                               (keymap-table keymap))
-                      (terpri s))))))
+  (info-popup (get-buffer-create "*bindings*")
+              #'(lambda (s)
+                  (describe-bindings-internal s
+                                              "Major Mode Bindings"
+                                              (mode-keymap (major-mode))
+                                              t)
+                  (describe-bindings-internal s
+                                              "Global Bindings"
+                                              *global-keymap*)
+                  (dolist (mode (buffer-minor-modes))
+                    (describe-bindings-internal s
+                                                (mode-name mode)
+                                                (mode-keymap mode))))))
 
 (define-key *global-keymap* (kbd "C-x (") 'begin-macro)
 (define-command begin-macro () ()

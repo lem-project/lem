@@ -19,7 +19,8 @@
   (let ((window (display-buffer buffer)))
     (with-current-window window
       (with-buffer-read-only buffer nil
-        (erase-buffer)
+        (when output-function
+          (erase-buffer))
         (info-mode t)
         (when mode (funcall mode))
         (when output-function

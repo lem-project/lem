@@ -848,18 +848,6 @@
           (set-buffer buffer)
           (values *current-window* split-p)))))
 
-(defun popup (buffer output-function &key (goto-bob-p t) (erase-p t))
-  (multiple-value-bind (*current-window* newwin-p)
-      (pop-to-buffer buffer)
-    (when erase-p
-      (erase-buffer))
-    (when output-function
-      (with-open-stream (out (make-buffer-output-stream buffer))
-        (funcall output-function out)))
-    (when goto-bob-p
-      (beginning-of-buffer))
-    (values *current-window* newwin-p)))
-
 (defun display-buffer (buffer)
   (multiple-value-bind (window split-p)
       (pop-to-buffer buffer)

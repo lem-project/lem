@@ -521,7 +521,8 @@
                            for i from 1
                            do (format out "~&[~d] ~a~%" i choice))
                          (terpri out)
-                         (uiop/image:print-backtrace :stream out :count 100)))
+                         (uiop/image:print-backtrace :stream out :count 100))
+                     nil)
     (loop
       (window-update-all)
       (let* ((str (catch 'abort (minibuf-read-string "Debug: ")))
@@ -540,7 +541,8 @@
                                (format nil "~a" cdt)))))
                  (info-popup (get-buffer-create "*output*")
                              #'(lambda (out)
-                                 (princ x out)))))))))
+                                 (princ x out))
+                             nil)))))))
   condition)
 
 (defun eval-string-internal (string output-buffer point
@@ -612,7 +614,9 @@
                                  nil
                                  (lisp-current-package))))
       (when (buffer-modified-p output-buffer)
-        (lisp-info-popup output-buffer)))))
+        (lisp-info-popup output-buffer
+                         nil
+                         nil)))))
 
 (define-key *lisp-mode-keymap* (kbd "C-x r") 'lisp-eval-region)
 (define-command lisp-eval-region (&optional begin end) ("r")
@@ -652,7 +656,8 @@
   (lisp-info-popup (get-buffer-create "*error*")
                    #'(lambda (out)
                        (format out "~a~%~%" condition)
-                       (uiop/image:print-backtrace :stream out :count 100))))
+                       (uiop/image:print-backtrace :stream out :count 100))
+                   nil))
 
 (defmacro with-safe-form (&body body)
   `(handler-case
@@ -689,7 +694,8 @@
     (unless error-p
       (lisp-info-popup (get-buffer-create buffer-name)
                        #'(lambda (out)
-                           (pprint expr out))))))
+                           (pprint expr out))
+                       t))))
 
 (define-key *lisp-mode-keymap* (kbd "C-x m") 'lisp-macroexpand)
 (define-command lisp-macroexpand () ()
@@ -714,7 +720,8 @@
     (unless error-p
       (lisp-info-popup (get-buffer-create "*describe*")
                        #'(lambda (out)
-                           (describe name out))))))
+                           (describe name out))
+                       nil))))
 
 (define-key *lisp-mode-keymap* (kbd "C-x M-d") 'lisp-disassemble-symbol)
 (define-command lisp-disassemble-symbol () ()
@@ -729,7 +736,8 @@
                         (return-from lisp-disassemble-symbol nil))))))
         (lisp-info-popup (get-buffer-create "*disassemble*")
                          #'(lambda (out)
-                             (princ str out)))))))
+                             (princ str out))
+                         nil)))))
 
 
 #+sbcl
@@ -1107,8 +1115,8 @@
                 (setq *current-window* (pop-to-buffer buffer))
                 (lisp-print-values values)))))))))
 
-(defun lisp-info-popup (buffer &optional output-function)
-  (info-popup buffer output-function t 'lisp-mode))
+(defun lisp-info-popup (buffer &optional output-function (focus-set-p t))
+  (info-popup buffer output-function focus-set-p 'lisp-mode))
 
 (setq *auto-mode-alist*
       (append '((".lisp$" . lisp-mode)

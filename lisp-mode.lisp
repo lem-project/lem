@@ -1098,9 +1098,8 @@
                 (setq *current-window* (pop-to-buffer buffer))
                 (lisp-print-values values)))))))))
 
-(defun lisp-info-popup (buffer &optional fn)
-  (funcall (info-popup-closure 'lisp-mode)
-           buffer fn t))
+(defun lisp-info-popup (buffer &optional output-function)
+  (info-popup buffer output-function t 'lisp-mode))
 
 (setq *auto-mode-alist*
       (append '((".lisp$" . lisp-mode)

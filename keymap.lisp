@@ -119,13 +119,13 @@
 
 (defun search-keybind-all (name)
   (let ((name (intern (string-upcase name) :lem))
-        (acc))
+        (keys))
     (dolist (keymap *keymaps*)
       (maphash #'(lambda (key val)
                    (when (eq name val)
-                     (push (list key (keymap-name keymap)) acc)))
+                     (push key keys)))
                (keymap-table keymap)))
-    acc))
+    keys))
 
 (defun key-undef-hook (keymap key)
   (when (keymap-undef-hook keymap)

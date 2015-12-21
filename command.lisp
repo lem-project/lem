@@ -120,16 +120,10 @@
                   (maphash #'(lambda (name cmd)
                                (declare (ignore cmd))
                                (when (search str name)
-                                 (loop
-                                   for (kbd keymap-name)
-                                   in (search-keybind-all name)
-                                   do
-                                   (fresh-line out)
-                                   (princ (format nil "~a~a~a~a~a"
+                                 (dolist (kbd (search-keybind-all name))
+                                   (princ (format nil "~&~a~a~a"
                                                   name
                                                   #\tab
-                                                  (kbd-to-string kbd)
-                                                  #\tab
-                                                  keymap-name)
+                                                  (kbd-to-string kbd))
                                           out))))
                            *command-table*))))

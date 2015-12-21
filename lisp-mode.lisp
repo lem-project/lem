@@ -330,9 +330,10 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-i") 'lisp-indent-line)
 (define-command lisp-indent-line () ()
-  (beginning-of-line)
-  (let ((point (point))
-        (old-modified-p (buffer-modified-p (window-buffer))))
+  (let* ((old-column (window-cur-col))
+         (point (progn
+                  (beginning-of-line)
+                  (point))))
     (when (sexp-goto-car 2000)
       (let ((start-col (1- (window-cur-col)))
             (not-list-p (save-excursion
@@ -349,7 +350,10 @@
             (let ((num (gethash (string-downcase car-symbol-name)
                                 *lisp-indent-table*)))
               (point-set point)
-              (let ((num-spaces (delete-while-whitespaces t))
+              (let ((num-spaces
+                     (save-excursion
+                      (skip-chars-forward '(#\space #\tab))
+                      (window-cur-col)))
                     num-insert-spaces)
                 (cond
                  ((or not-list-p
@@ -371,10 +375,15 @@
                   (setq num-insert-spaces (+ start-col 4)))
                  (t
                   (setq num-insert-spaces (+ start-col 2))))
-                (insert-char #\space num-insert-spaces)
-                (when (eql num-insert-spaces num-spaces)
-                  (setf (buffer-modified-p (window-buffer))
-                        old-modified-p)))))))))
+                (let ((n (- num-insert-spaces num-spaces)))
+                  (cond ((plusp n)
+                         (insert-char #\space n))
+                        ((minusp n)
+                         (beginning-of-line)
+                         (delete-char (- n) t)))
+                  (if (< old-column num-spaces)
+                      (back-to-indentation)
+                      (goto-column (+ old-column n)))))))))))
   t)
 
 (define-key *lisp-mode-keymap* (kbd "C-j") 'lisp-newline-and-indent)

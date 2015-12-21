@@ -142,7 +142,7 @@
   (dotimes (_ n t)
     (set-buffer (get-next-buffer (window-buffer)))))
 
-(defvar *list-buffers-keymap* (make-keymap "list buffers"))
+(defvar *list-buffers-keymap* (make-keymap))
 
 (define-major-mode list-buffers-mode nil
   (:name "List Buffers"

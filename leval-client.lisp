@@ -83,7 +83,7 @@
         package)))
 
 (defvar *leval-mode-keymap*
-  (make-keymap "leval"))
+  (make-keymap))
 
 (define-major-mode leval-mode nil
   (:name "leval"

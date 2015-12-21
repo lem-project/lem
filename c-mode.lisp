@@ -6,7 +6,7 @@
           *c-syntax-table*
           c-mode))
 
-(defvar *c-mode-keymap* (make-keymap "c"))
+(defvar *c-mode-keymap* (make-keymap))
 
 (defvar *c-syntax-table*
   (make-syntax-table

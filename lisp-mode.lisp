@@ -121,7 +121,7 @@
   :do (setf (gethash name *lisp-indent-table*) n))
 
 (defvar *lisp-mode-keymap*
-  (make-keymap "lisp"))
+  (make-keymap))
 
 (defvar *lisp-syntax-table*
   (make-syntax-table
@@ -968,7 +968,7 @@
     (point-set (buffer-output-stream-point out))))
 
 (defvar *lisp-repl-mode-keymap*
-  (make-keymap "lisp-repl" nil *lisp-mode-keymap*))
+  (make-keymap nil *lisp-mode-keymap*))
 
 (defvar *lisp-repl-history* nil)
 
@@ -1071,7 +1071,7 @@
   t)
 
 (defvar *scratch-mode-keymap*
-  (make-keymap "scratch" nil *lisp-mode-keymap*))
+  (make-keymap nil *lisp-mode-keymap*))
 
 (define-major-mode scratch-mode nil
   (:name "scratch"

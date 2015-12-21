@@ -26,7 +26,7 @@
 (defvar *minibuf-window*)
 
 (defvar *minibuf-keymap*
-  (make-keymap "minibuffer"))
+  (make-keymap))
 
 (define-major-mode minibuffer-mode nil
   (:name "minibuffer"

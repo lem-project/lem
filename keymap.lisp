@@ -4,7 +4,6 @@
 
 (export '(*keymaps*
           keymap
-          keymap-name
           keymap-undef-hook
           keymap-parent
           keymap-table
@@ -21,21 +20,19 @@
 (defvar *keymaps* nil)
 
 (defstruct (keymap (:constructor %make-keymap))
-  name
   undef-hook
   parent
   table)
 
-(defun make-keymap (name &optional undef-hook parent)
+(defun make-keymap (&optional undef-hook parent)
   (let ((keymap (%make-keymap
-                 :name name
                  :undef-hook undef-hook
                  :parent parent
                  :table (make-hash-table :test 'equal))))
     (push keymap *keymaps*)
     keymap))
 
-(defvar *global-keymap* (make-keymap "global" 'self-insert))
+(defvar *global-keymap* (make-keymap 'self-insert))
 
 (defclass kbd ()
   ((list :initarg :list

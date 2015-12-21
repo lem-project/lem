@@ -7,7 +7,7 @@
           info-popup))
 
 (defvar *info-mode-keymap*
-  (make-keymap "info"))
+  (make-keymap))
 
 (define-minor-mode info-mode
   :name "info"

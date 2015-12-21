@@ -6,7 +6,7 @@
 
 (in-package :dired)
 
-(defvar *dired-mode-keymap* (make-keymap "dired"))
+(defvar *dired-mode-keymap* (make-keymap))
 
 (define-major-mode dired-mode nil
   (:name "dired"

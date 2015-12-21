@@ -2,7 +2,7 @@
 
 (in-package :lem)
 
-(defvar *python-mode-keymap* (make-keymap "python"))
+(defvar *python-mode-keymap* (make-keymap))
 
 (defvar *python-syntax-table*
   (make-syntax-table

@@ -30,7 +30,7 @@
           query-replace-symbol
           looking-at))
 
-(defvar *isearch-keymap* (make-keymap "isearch" 'isearch-self-insert))
+(defvar *isearch-keymap* (make-keymap 'isearch-self-insert))
 (defvar *isearch-prompt*)
 (defvar *isearch-string*)
 (defvar *isearch-prev-string* "")

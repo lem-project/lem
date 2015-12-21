@@ -564,7 +564,7 @@
            (let ((line (buffer-get-line buffer linum)))
              (dolist (marker (buffer-markers buffer))
                (when (and (= linum (marker-linum marker))
-                          (<= col (marker-column marker)))
+                          (< col (marker-column marker)))
                  (incf (marker-column marker))))
              (setf (line-fatstr line)
                    (fat-concat (fat-substring (line-fatstr line) 0 col)

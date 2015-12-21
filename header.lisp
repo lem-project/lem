@@ -18,7 +18,8 @@
           when-continue-flag
           save-excursion
           with-window-range
-          with-buffer-read-only))
+          with-buffer-read-only
+          with-current-window))
 
 (defvar *program-name* "Lem")
 (defvar *debug-p* nil)
@@ -137,3 +138,13 @@
        (setf (buffer-read-only-p ,gbuffer) ,flag)
        (unwind-protect (progn ,@body)
          (setf (buffer-read-only-p ,gbuffer) ,gtmp)))))
+
+(defmacro with-current-window (window &body body)
+  (let ((gprev-window (gensym "PREV-WINDOW"))
+        (gwindow (gensym "WINDOW")))
+    `(let ((,gprev-window (selected-window))
+           (,gwindow ,window))
+       (select-window ,gwindow)
+       (unwind-protect (progn ,@body)
+         (unless (deleted-window-p ,gprev-window)
+           (select-window ,gprev-window))))))

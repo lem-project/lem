@@ -386,10 +386,12 @@
 (defun window-print-line (window y str &key (start-x 0) (string-start 0) string-end)
   (check-type str fatstring)
   (loop
-    :with x := start-x :and win := (window-win window)
+    :with x := start-x :and win := (window-win window) :and ctrl-attr := (get-attr :red)
     :for i :from string-start :below (or string-end (fat-length str))
     :do (multiple-value-bind (char attr)
             (fat-char str i)
+          (when (ctrl-p char)
+            (setq attr ctrl-attr))
           (charms/ll:wattron win attr)
           (charms/ll:mvwaddstr win y x (string char))
           (charms/ll:wattroff win attr)

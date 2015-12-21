@@ -121,7 +121,7 @@
                                (declare (ignore cmd))
                                (when (search str name)
                                  (dolist (kbd (search-keybind-all name))
-                                   (princ (format nil "~&~a~a~a"
+                                   (princ (format nil "~a~a~a~%"
                                                   name
                                                   #\tab
                                                   (kbd-to-string kbd))

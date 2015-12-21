@@ -18,15 +18,16 @@
 (define-key *info-mode-keymap* (kbd "q") 'quit-window)
 
 (defun info-popup (buffer &optional output-function (focus-set-p t) mode)
-  (with-buffer-read-only buffer nil
-    (buffer-erase buffer)
-    (set-buffer-mode buffer 'info-mode t)
-    (when mode
-      (set-buffer-mode buffer mode))
-    (when output-function
-      (with-open-stream (out (make-buffer-output-stream buffer))
-        (funcall output-function out))))
   (let ((window (display-buffer buffer)))
+    (with-current-window window
+      (with-buffer-read-only buffer nil
+        (erase-buffer)
+        (info-mode t)
+        (when mode (funcall mode))
+        (when output-function
+          (save-excursion
+           (with-open-stream (out (make-buffer-output-stream buffer))
+             (funcall output-function out))))))
     (when focus-set-p
       (select-window window))
     window))

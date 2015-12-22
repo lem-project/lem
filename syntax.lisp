@@ -386,10 +386,8 @@
                  (return))
                 (t
                  (let ((end (syntax-position-word-end (line-str line) i)))
-                   (setq i
-                         (if (<= i (1- end))
-                             (1- end)
-                             i))))))))))
+                   (when (<= i (1- end))
+                     (setq i (1- end)))))))))))
 
 (defun syntax-scan-buffer (buffer)
   (when (and *enable-syntax-highlight*

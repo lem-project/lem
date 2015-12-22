@@ -6,18 +6,32 @@
 
 (define-key *global-keymap* (kbd "C-x #") 'filter-buffer)
 (define-command filter-buffer (str) ("sFilter buffer: ")
-  (let ((outstr (make-array '(0)
-                            :element-type 'character
-                            :fill-pointer t)))
-    (with-output-to-string (output outstr)
-      (let ((temp-file-name (temp-file-name)))
-        (write-to-file (window-buffer) temp-file-name)
-        (shell-command (format nil "cat ~a | ~a" temp-file-name str)
-                       :output output)
-        (delete-file temp-file-name)))
-    (delete-region (point-min) (point-max))
-    (insert-string outstr)
-    (beginning-of-buffer)))
+  (let (begin end)
+    (cond ((buffer-mark-p)
+           (setq begin (region-beginning))
+           (setq end (region-end)))
+          (t
+           (setq begin (point-min))
+           (setq end (point-max))))
+    (let ((input-string
+           (region-string begin end))
+          (outstr (make-array '(0)
+                              :element-type 'character
+                              :fill-pointer t))
+          output-value
+          error-output-value
+          status)
+      (with-output-to-string (output outstr)
+        (with-input-from-string (input input-string)
+          (multiple-value-setq (output-value error-output-value status)
+                               (shell-command str
+                                              :input input
+                                              :output output))))
+      (delete-region begin end)
+      (insert-string outstr)
+      (point-set begin)
+      (minibuf-print (write-to-string status))
+      (zerop status))))
 
 (define-key *global-keymap* (kbd "C-x @") 'pipe-command)
 (define-command pipe-command (str) ("sPipe command: ")

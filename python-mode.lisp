@@ -36,7 +36,6 @@
                       :regex-p nil
                       :matched-symbol symbol
                       :symbol-tov -1
-                      :word-p t
                       :attr :string-attr)
   (syntax-add-keyword *python-syntax-table*
                       "."
@@ -48,7 +47,6 @@
                       :regex-p nil
                       :test-symbol symbol
                       :end-symbol symbol
-                      :word-p t
                       :attr :string-attr))
 
 (defvar *python-indent-size* 4)

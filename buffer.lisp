@@ -38,7 +38,6 @@
 (defstruct (line (:constructor %make-line))
   prev
   fatstr
-  stat
   symbol-tov-list
   next)
 
@@ -60,25 +59,6 @@
 
 (defun line-clear-attribute (line)
   (change-font (line-fatstr line) 0 :and))
-
-(defun line-clear-stat (line)
-  (setf (line-stat line) nil))
-
-(macrolet ((def (name stat-name)
-                `(progn
-                   (defun ,name (line)
-                     (eq ,stat-name (line-stat line)))
-                   (defun (setf ,name) (stat line)
-                     (setf (line-stat line)
-                           (if stat
-                               ,stat-name
-                               nil))))))
-  (def line-in-string-p     :in-string)
-  (def line-start-string-p  :start-string)
-  (def line-end-string-p    :end-string)
-  (def line-in-comment-p    :in-comment)
-  (def line-start-comment-p :start-comment)
-  (def line-end-comment-p   :end-comment))
 
 (defun line-put-attribute (line start end attr)
   (change-font (line-fatstr line) attr :to start end)

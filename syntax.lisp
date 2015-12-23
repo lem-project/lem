@@ -239,81 +239,12 @@
     (let* ((buffer (window-buffer window))
            (line (buffer-get-line buffer start-linum))
            (prev (line-prev line))
-           (in-string-p (and prev
-                             (or (line-start-string-p prev)
-                                 (line-in-string-p prev))))
-           (in-comment-p (and prev
-                              (or (line-start-comment-p prev)
-                                  (line-in-comment-p prev))))
-           (*syntax-symbol-tov-list* (and prev
-                                          (line-symbol-tov-list prev))))
+           (*syntax-symbol-tov-list* (and prev (line-symbol-tov-list prev))))
       (do ((line line (line-next line))
            (linum start-linum (1+ linum)))
           ((or (null line)
                (= linum end-linum)))
-        (multiple-value-setq (in-string-p in-comment-p)
-                             (syntax-scan-line line
-                                               in-string-p
-                                               in-comment-p))))))
-
-(defun parallel-string-quote (line)
-  (do ((line #1=(line-prev line) #1#))
-      ((null line))
-    (when (line-start-string-p line)
-      (let* ((str (line-str line))
-             (len (length str))
-             (attr (line-get-attribute line (1- len))))
-        (do ((pos (- len 2) (1- pos)))
-            (nil)
-          (when (or (< pos 0)
-                    (not (line-contains-attribute line pos attr)))
-            (return-from parallel-string-quote
-              (schar str (1+ pos)))))))))
-
-(defun syntax-scan-string (line col multiple-lines-p parallel-char)
-  (let ((str (line-str line))
-        (start-col col))
-    (do ((i col (1+ i)))
-        ((>= i (length str))
-         (line-put-attribute line
-                             start-col
-                             (length str)
-                             (get-attr :string-attr))
-         (return (values i nil)))
-      (let ((c (schar str i)))
-        (cond ((syntax-escape-char-p c)
-               (incf i))
-              ((and (syntax-string-quote-char-p c)
-                    (eql c (if (not multiple-lines-p)
-                               parallel-char
-                               (parallel-string-quote line))))
-               (line-put-attribute line
-                                   start-col
-                                   (1+ i)
-                                   (get-attr :string-attr))
-               (return (values i t))))))))
-
-(defun syntax-scan-block-comment (line col)
-  (let ((str (line-str line))
-        (start-col col))
-    (do ((i1 col i2)
-         (i2 (1+ col) (1+ i2)))
-        ((>= i2 (length str))
-         (when (< start-col (length str))
-           (line-put-attribute line start-col (length str)
-                               (get-attr :comment-attr)))
-         (values i2 nil))
-      (let ((c1 (schar str i1))
-            (c2 (schar str i2)))
-        (cond ((syntax-escape-char-p c1)
-               (incf i1)
-               (incf i2))
-              ((syntax-end-block-comment-p c1 c2)
-               (line-put-attribute line
-                                   start-col
-                                   (1+ i2)
-                                   (get-attr :comment-attr))
-               (return (values i2 t))))))))
+        (syntax-scan-line line)))))
 
 (defun syntax-update-symbol-tov ()
   (setq *syntax-symbol-tov-list*
@@ -403,42 +334,36 @@
         (declare (ignore x))
         y)))
 
-(defun syntax-scan-line (line in-string-p in-comment-p)
+(defun syntax-scan-line (line)
   (line-clear-attribute line)
-  (let ((start-col 0))
-    (line-clear-stat line)
-    (let ((str (line-str line)))
-      (do ((i start-col (1+ i)))
-          ((>= i (length str)))
-        (syntax-update-symbol-tov)
-        (when (<= (length str)
-                  (setq i (syntax-scan-whitespaces str i)))
-          (return))
-        (let ((c (schar str i)))
-          (cond ((syntax-escape-char-p c)
-                 (line-put-attribute line
-                                     i
-                                     (min (+ i 2) (line-length line))
-                                     (%syntax-prev-attr line i))
-                 (incf i))
-                ((let ((pos (syntax-scan-word line i)))
-                   (when pos
-                     (setq i pos))))
-                (t
-                 (let ((end (syntax-position-word-end (line-str line) i)))
-                   (when (<= i (1- end))
-                     (setq i (1- end))))))))
-      (setf (line-symbol-tov-list line) *syntax-symbol-tov-list*))))
+  (let ((start-col 0)
+        (str (line-str line)))
+    (do ((i start-col (1+ i)))
+        ((>= i (length str)))
+      (syntax-update-symbol-tov)
+      (when (<= (length str)
+                (setq i (syntax-scan-whitespaces str i)))
+        (return))
+      (let ((c (schar str i)))
+        (cond ((syntax-escape-char-p c)
+               (line-put-attribute line
+                                   i
+                                   (min (+ i 2) (line-length line))
+                                   (%syntax-prev-attr line i))
+               (incf i))
+              ((let ((pos (syntax-scan-word line i)))
+                 (when pos
+                   (setq i pos))))
+              (t
+               (let ((end (syntax-position-word-end (line-str line) i)))
+                 (when (<= i (1- end))
+                   (setq i (1- end))))))))
+    (setf (line-symbol-tov-list line) *syntax-symbol-tov-list*)))
 
 (defun syntax-scan-buffer (buffer)
   (when (and *enable-syntax-highlight*
              (buffer-get buffer :enable-syntax-highlight))
-    (let ((in-string-p)
-          (in-comment-p))
-      (map-buffer #'(lambda (line linum)
-                      (declare (ignore linum))
-                      (multiple-value-setq (in-string-p in-comment-p)
-                                           (syntax-scan-line line
-                                                             in-string-p
-                                                             in-comment-p)))
-                  buffer))))
+    (map-buffer #'(lambda (line linum)
+                    (declare (ignore linum))
+                    (syntax-scan-line line))
+                buffer)))

@@ -39,6 +39,7 @@
   prev
   fatstr
   stat
+  symbol-tov-list
   next)
 
 (defun make-line (prev next str)

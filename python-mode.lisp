@@ -20,6 +20,26 @@
    :syntax-table *python-syntax-table*)
   (buffer-put (window-buffer) :enable-syntax-highlight t))
 
+(loop :for (str symbol) :in '(("\"\"\"" :start-double-quote-docstring)
+                              ("'''" :start-single-quote-docstring)) :do
+  (syntax-add-keyword-pre *python-syntax-table*
+                          str
+                          :regex-p nil
+                          :matched-symbol symbol
+                          :symbol-tov -1
+                          :attr :string-attr)
+  (syntax-add-keyword-pre *python-syntax-table*
+                          "."
+                          :regex-p t
+                          :test-symbol symbol
+                          :attr :string-attr)
+  (syntax-add-keyword-pre *python-syntax-table*
+                          str
+                          :regex-p nil
+                          :test-symbol symbol
+                          :end-symbol symbol
+                          :attr :string-attr))
+
 (dolist (str '("and" "as" "assert" "break" "class" "continue" "def" "del"
                "elif" "else" "except" "exec" "finally" "for" "from" "global"
                "if" "import" "in" "is" "lambda" "not" "or" "pass" "print"
@@ -28,26 +48,6 @@
                       :regex-p nil
                       :word-p t
                       :attr :keyword-attr))
-
-(loop :for (str symbol) :in '(("\"\"\"" :start-double-quote-docstring)
-                              ("'''" :start-single-quote-docstring)) :do
-  (syntax-add-keyword *python-syntax-table*
-                      str
-                      :regex-p nil
-                      :matched-symbol symbol
-                      :symbol-tov -1
-                      :attr :string-attr)
-  (syntax-add-keyword *python-syntax-table*
-                      "."
-                      :regex-p t
-                      :test-symbol symbol
-                      :attr :string-attr)
-  (syntax-add-keyword *python-syntax-table*
-                      str
-                      :regex-p nil
-                      :test-symbol symbol
-                      :end-symbol symbol
-                      :attr :string-attr))
 
 (defvar *python-indent-size* 4)
 

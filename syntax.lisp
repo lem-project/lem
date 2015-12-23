@@ -39,7 +39,17 @@
   (set-attr :function-name-attr (get-attr :cyan))
   (set-attr :variable-attr (get-attr :yellow)))
 
-(defstruct syntax-table
+(defstruct syntax-keyword
+  regex-p
+  word-p
+  test
+  test-symbol
+  end-symbol
+  attr
+  matched-symbol
+  symbol-tov)
+
+(defstruct (syntax-table (:constructor %make-syntax-table))
   (space-chars '(#\space #\tab #\newline))
   (symbol-chars '(#\_))
   (paren-alist '((#\( . #\))
@@ -56,32 +66,90 @@
   block-comment-following-char
   keywords)
 
-(defstruct syntax-keyword
-  regex-p
-  word-p
-  test
-  test-symbol
-  end-symbol
-  attr
-  matched-symbol
-  symbol-tov)
+(defun make-syntax-table (&rest args)
+  (let ((syntax-table (apply '%make-syntax-table args)))
+    (let ((pre (syntax-table-line-comment-preceding-char syntax-table))
+          (flw (syntax-table-line-comment-following-char syntax-table)))
+      (when pre
+        (let ((string (if flw
+                          (format nil "~c~c" pre flw)
+                          pre)))
+          (syntax-add-keyword-pre syntax-table
+                                  (format nil "~a.*$" string)
+                                  :regex-p t
+                                  :attr :comment-attr))))
+    (dolist (string-quote-char (syntax-table-string-quote-chars syntax-table))
+      (let ((string-symbol (gensym "STRING")))
+        (syntax-add-keyword-pre syntax-table
+                                (string string-quote-char)
+                                :regex-p nil
+                                :matched-symbol string-symbol
+                                :symbol-tov -1
+                                :attr :string-attr)
+        (syntax-add-keyword-pre syntax-table
+                                "."
+                                :regex-p t
+                                :test-symbol string-symbol
+                                :attr :string-attr)
+        (syntax-add-keyword-pre syntax-table
+                                (string string-quote-char)
+                                :regex-p nil
+                                :test-symbol string-symbol
+                                :end-symbol string-symbol
+                                :attr :string-attr)))
+    (let ((pre (syntax-table-block-comment-preceding-char syntax-table))
+          (flw (syntax-table-block-comment-following-char syntax-table))
+          (comment-symbol (gensym "BLOCK-COMMENT")))
+      (when (and pre flw)
+        (syntax-add-keyword-pre syntax-table
+                                (format nil "~c~c" pre flw)
+                                :regex-p nil
+                                :matched-symbol comment-symbol
+                                :symbol-tov -1
+                                :attr :comment-attr)
+        (syntax-add-keyword-pre syntax-table
+                                "."
+                                :regex-p t
+                                :test-symbol comment-symbol
+                                :attr :comment-attr)
+        (syntax-add-keyword-pre syntax-table
+                                (format nil "~c~c" flw pre)
+                                :regex-p nil
+                                :test-symbol comment-symbol
+                                :attr :comment-attr)))
+    syntax-table))
 
-(defun syntax-add-keyword (syntax-table
-                           test
-                           &key
-                           regex-p word-p test-symbol end-symbol attr
-                           matched-symbol symbol-tov)
-  (push (make-syntax-keyword :test (if regex-p
-                                       (ppcre:create-scanner test)
-                                       test)
-                             :regex-p regex-p
-                             :word-p word-p
-                             :test-symbol test-symbol
-                             :end-symbol end-symbol
-                             :attr attr
-                             :matched-symbol matched-symbol
-                             :symbol-tov symbol-tov)
-        (syntax-table-keywords syntax-table)))
+(defun %syntax-push (list x)
+  (cons x list))
+
+(defun %syntax-append (list x)
+  (append list (list x)))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defvar *syntax-add-keyword-lambda-list*
+    '(syntax-table
+      test
+      &key
+      regex-p word-p test-symbol end-symbol attr
+      matched-symbol symbol-tov)))
+
+(macrolet ((def (name add-f)
+                `(defun ,name ,*syntax-add-keyword-lambda-list*
+                   (setf (syntax-table-keywords syntax-table)
+                         (,add-f (syntax-table-keywords syntax-table)
+                                 (make-syntax-keyword
+                                  :test (if regex-p
+                                            (ppcre:create-scanner test)
+                                            test)
+                                  :regex-p regex-p
+                                  :word-p word-p
+                                  :test-symbol test-symbol
+                                  :end-symbol end-symbol
+                                  :attr attr
+                                  :matched-symbol matched-symbol
+                                  :symbol-tov symbol-tov))))))
+  (def syntax-add-keyword %syntax-append)
+  (def syntax-add-keyword-pre %syntax-push))
 
 (defun syntax-word-char-p (c)
   (and (characterp c)
@@ -176,7 +244,8 @@
            (in-comment-p (and prev
                               (or (line-start-comment-p prev)
                                   (line-in-comment-p prev))))
-           (*syntax-symbol-tov-list*))
+           (*syntax-symbol-tov-list* (and prev
+                                          (line-symbol-tov-list prev))))
       (do ((line line (line-next line))
            (linum start-linum (1+ linum)))
           ((or (null line)
@@ -328,26 +397,6 @@
 (defun syntax-scan-line (line in-string-p in-comment-p)
   (line-clear-attribute line)
   (let ((start-col 0))
-    (cond (in-string-p
-           (multiple-value-bind (i found-term-p)
-               (syntax-scan-string line 0 t nil)
-             (cond (found-term-p
-                    (setf (line-end-string-p line) t))
-                   (t
-                    (setf (line-in-string-p line) t)
-                    (return-from syntax-scan-line
-                      (values t nil))))
-             (setq start-col (1+ i))))
-          (in-comment-p
-           (multiple-value-bind (i found-term-p)
-               (syntax-scan-block-comment line 0)
-             (cond (found-term-p
-                    (setf (line-end-comment-p line) t))
-                   (t
-                    (setf (line-in-comment-p line) t)
-                    (return-from syntax-scan-line
-                      (values nil t))))
-             (setq start-col (1+ i)))))
     (line-clear-stat line)
     (let ((str (line-str line)))
       (do ((i start-col (1+ i)))
@@ -362,32 +411,11 @@
                 ((let ((pos (syntax-scan-word line i)))
                    (when pos
                      (setq i pos))))
-                ((syntax-string-quote-char-p c)
-                 (line-put-attribute line i (1+ i) (get-attr :string-attr))
-                 (multiple-value-bind (j found-term-p)
-                     (syntax-scan-string line (1+ i) nil c)
-                   (setq i j)
-                   (unless found-term-p
-                     (setf (line-start-string-p line) t)
-                     (return (values t nil)))))
-                ((syntax-start-block-comment-p c (safe-aref str (1+ i)))
-                 (line-put-attribute line i (+ i 2) (get-attr :comment-attr))
-                 (multiple-value-bind (j found-term-p)
-                     (syntax-scan-block-comment line (+ i 2))
-                   (setq i j)
-                   (unless found-term-p
-                     (setf (line-start-comment-p line) t)
-                     (return (values nil t)))))
-                ((syntax-line-comment-p c (safe-aref str (1+ i)))
-                 (line-put-attribute line
-                                     i
-                                     (length str)
-                                     (get-attr :comment-attr))
-                 (return))
                 (t
                  (let ((end (syntax-position-word-end (line-str line) i)))
                    (when (<= i (1- end))
-                     (setq i (1- end)))))))))))
+                     (setq i (1- end))))))))
+      (setf (line-symbol-tov-list line) *syntax-symbol-tov-list*))))
 
 (defun syntax-scan-buffer (buffer)
   (when (and *enable-syntax-highlight*

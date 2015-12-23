@@ -7,7 +7,7 @@
 (in-package :tetris)
 
 (defvar *tetris-mode-keymap*
-  (make-keymap "tetris"))
+  (make-keymap))
 
 (define-major-mode tetris-mode nil
   (:name "tetris"

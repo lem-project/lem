@@ -394,6 +394,14 @@
            (not (syntax-space-char-p (schar str i))))
        i)))
 
+(defun %syntax-prev-attr (line i)
+  (if (= i 0)
+      0
+      (multiple-value-bind (x y)
+          (fat-char (line-fatstr line) (1- i))
+        (declare (ignore x))
+        y)))
+
 (defun syntax-scan-line (line in-string-p in-comment-p)
   (line-clear-attribute line)
   (let ((start-col 0))
@@ -407,6 +415,10 @@
           (return))
         (let ((c (schar str i)))
           (cond ((syntax-escape-char-p c)
+                 (line-put-attribute line
+                                     i
+                                     (min (+ i 2) (line-length line))
+                                     (%syntax-prev-attr line i))
                  (incf i))
                 ((let ((pos (syntax-scan-word line i)))
                    (when pos

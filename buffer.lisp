@@ -55,6 +55,9 @@
 (defun line-str (line)
   (fat-string (line-fatstr line)))
 
+(defun line-length (line)
+  (length (line-str line)))
+
 (defun line-clear-attribute (line)
   (change-font (line-fatstr line) 0 :and))
 

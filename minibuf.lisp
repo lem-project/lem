@@ -143,7 +143,8 @@
   (throw 'abort 'abort))
 
 (defun minibuf-get-line ()
-  (buffer-line-string (window-buffer *minibuf-window*) 1))
+  (join (string #\newline)
+        (buffer-take-lines (window-buffer *minibuf-window*))))
 
 (defun minibuf-read-line-refresh (prompt)
   (minibuf-print (concatenate 'string prompt (minibuf-get-line)))

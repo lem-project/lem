@@ -116,6 +116,7 @@
                                 (format nil "~c~c" flw pre)
                                 :regex-p nil
                                 :test-symbol comment-symbol
+                                :end-symbol comment-symbol
                                 :attr :comment-attr)))
     syntax-table))
 

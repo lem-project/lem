@@ -320,7 +320,7 @@
                          (buffer-line-string (window-buffer)
                                              (window-cur-linum))
                          :start (window-cur-col))
-           (when (and start (< (window-cur-col) start))
+           (when (and start (<= (window-cur-col) start))
              (if (= start end)
                  (1+ end)
                  end))))

@@ -148,10 +148,24 @@
 
 (defun minibuf-read-line-refresh (prompt)
   (minibuf-print (concatenate 'string prompt (minibuf-get-line)))
-  (charms/ll:wmove (window-win *minibuf-window*)
-                   (1- (window-cur-linum *minibuf-window*))
-                   (+ (length prompt)
-                      (window-cur-col *minibuf-window*)))
+  (charms/ll:wmove
+   (window-win *minibuf-window*)
+   0
+   (+ (multiple-value-bind (strings nlines)
+          (split-string prompt #\newline)
+        (+ (* (length "<NL>") (1- nlines))
+           (apply #'+ (mapcar #'str-width strings))))
+      (str-width
+       (apply 'concatenate 'string
+              (buffer-take-lines (window-buffer *minibuf-window*)
+                                 1
+                                 (1- (window-cur-linum *minibuf-window*)))))
+      (* (length "<NL>") (1- (window-cur-linum *minibuf-window*)))
+      (str-width
+       (buffer-line-string (window-buffer *minibuf-window*)
+                           (window-cur-linum))
+       0
+       (window-cur-col *minibuf-window*))))
   (charms/ll:wrefresh (window-win *minibuf-window*)))
 
 (defun minibuf-read-line (prompt initial comp-f existing-p)

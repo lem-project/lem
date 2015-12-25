@@ -225,7 +225,9 @@
                      charms/ll:*cols*
                      0
                      0))
-  (setq *window-tree* *current-window*))
+  (setq *window-tree* *current-window*)
+  (set-attr :modeline (get-attr :highlight))
+  (set-attr :modeline-inactive (get-attr :highlight)))
 
 (defun resize-screen ()
   (destructuring-bind (height width)
@@ -359,18 +361,26 @@
     (let ((n (- ncols 7 (length str))))
       (if (minusp n)
           (format nil "~a ~a --" str line-pos)
-          (format nil "~a~v,,,va ~a --" str n #\- #\space line-pos)))))
+          (format nil "~a~v,,,va ~a --"
+                  str
+                  n
+                  (if (eq window *current-window*) #\- #\space)
+                  #\space
+                  line-pos)))))
 
 (defun window-refresh-modeline (window)
-  (charms/ll:wattron (window-win window)
-                     charms/ll:a_reverse)
-  (let ((modeline-str (modeline-string window)))
-    (charms/ll:mvwaddstr (window-win window)
-                         (1- (window-nlines window))
-                         0
-                         modeline-str))
-  (charms/ll:wattroff (window-win window)
-                      charms/ll:a_reverse))
+  (let ((attr
+         (if (eq window *current-window*)
+             (get-attr :modeline)
+             (get-attr :modeline-inactive))))
+    (charms/ll:wattron (window-win window) attr)
+    (let ((modeline-str (modeline-string window)))
+      (charms/ll:mvwaddstr (window-win window)
+                           (1- (window-nlines window))
+                           0
+                           modeline-str))
+    (charms/ll:wattroff (window-win window)
+                        attr)))
 
 (defun window-cursor-y (window)
   (- (window-cur-linum window)

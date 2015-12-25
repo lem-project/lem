@@ -988,6 +988,7 @@
   (make-keymap nil *lisp-mode-keymap*))
 
 (defvar *lisp-repl-history* nil)
+(defvar *lisp-repl-prompt-marker* nil)
 
 (define-major-mode lisp-repl-mode nil
   (:name "lisp-repl"
@@ -1020,8 +1021,10 @@
   (put-attribute (make-point (window-cur-linum) 0)
                  (make-point (window-cur-linum) (window-cur-col))
                  (make-attr :bold-p t :color :blue))
-  (buffer-put (window-buffer) :prompt-point (point))
-  (buffer-undo-boundary (window-buffer)))
+  (buffer-undo-boundary (window-buffer))
+  (when (not (null *lisp-repl-prompt-marker*))
+    (delete-marker *lisp-repl-prompt-marker*))
+  (setq *lisp-repl-prompt-marker* (make-marker)))
 
 (defun lisp-repl-paren-correspond-p ()
   (loop :with count := 0 :do
@@ -1038,7 +1041,7 @@
         (buffer (window-buffer)))
     (if (not (lisp-repl-paren-correspond-p))
         (insert-newline)
-        (let ((start (buffer-get buffer :prompt-point)))
+        (let ((start (marker-point *lisp-repl-prompt-marker*)))
           (unless (point< start end)
             (lisp-repl-reset nil)
             (return-from lisp-repl-return t))
@@ -1059,7 +1062,7 @@
   (multiple-value-bind (str win)
       (prev-history *lisp-repl-history*)
     (when win
-      (let ((start (buffer-get (window-buffer) :prompt-point))
+      (let ((start (marker-point *lisp-repl-prompt-marker*))
             (end (point-max)))
         (delete-region start end)
         (insert-string str)))))
@@ -1068,7 +1071,7 @@
 (define-command lisp-repl-next-input () ()
   (multiple-value-bind (str win)
       (next-history *lisp-repl-history*)
-    (let ((start (buffer-get (window-buffer) :prompt-point))
+    (let ((start (marker-point *lisp-repl-prompt-marker*))
           (end (point-max)))
       (delete-region start end)
       (when win

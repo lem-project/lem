@@ -94,7 +94,6 @@
             (minibuf-y-or-n-p "Modified buffers exist. Leave anyway"))
     (setq *exit* t)))
 
-(define-key *global-keymap* (kbd "M-z") 'quick-exit)
 (define-command quick-exit () ()
   (save-some-buffers t)
   (setq *exit* t))

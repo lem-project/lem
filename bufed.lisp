@@ -583,14 +583,14 @@
   (skip-chars-forward #'(lambda (c) (member c '(#\space #\tab))))
   t)
 
-(define-key *global-keymap* (kbd "C-z") 'undo)
+(define-key *global-keymap* (kbd "C-\\") 'undo)
 (define-command undo () ()
   (let ((point (buffer-undo (window-buffer))))
     (when point
       (point-set point)
       t)))
 
-(define-key *global-keymap* (kbd "M-C-z") 'redo)
+(define-key *global-keymap* (kbd "C-_") 'redo)
 (define-command redo () ()
   (let ((point (buffer-redo (window-buffer))))
     (when point

@@ -5,7 +5,7 @@
 (defvar *string->key* (make-hash-table :test 'equal))
 (defvar *key->symbol* (make-hash-table))
 
-(defmacro defkeycode (name code)
+(defmacro defkeycode (name code &optional (const-name name))
   (when (integerp code)
     (setf code (code-char code)))
   `(progn
@@ -14,7 +14,7 @@
      (defconstant ,(intern
                     (string
                      (read-from-string
-                      (format nil "#:~A" name))))
+                      (format nil "#:~A" const-name))))
        ,code)))
 
 (defkeycode "C-@" 0)
@@ -45,6 +45,10 @@
 (defkeycode "C-y" 25)
 (defkeycode "C-z" 26)
 (defkeycode "escape" 27)
+(defkeycode "C-\\" 28 "C-backslash")
+(defkeycode "C-]" 29)
+(defkeycode "C-^" 30)
+(defkeycode "C-_" 31)
 (defkeycode "Spc" #x20)
 (defkeycode "[del]" #x7F)
 

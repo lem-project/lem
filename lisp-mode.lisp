@@ -1065,7 +1065,8 @@
       (let ((start (marker-point *lisp-repl-prompt-marker*))
             (end (point-max)))
         (delete-region start end)
-        (insert-string str)))))
+        (insert-string str)
+        (setf (marker-point *lisp-repl-prompt-marker*) start)))))
 
 (define-key *lisp-repl-mode-keymap* (kbd "M-n") 'lisp-repl-next-input)
 (define-command lisp-repl-next-input () ()
@@ -1075,7 +1076,8 @@
           (end (point-max)))
       (delete-region start end)
       (when win
-        (insert-string str)))))
+        (insert-string str))
+      (setf (marker-point *lisp-repl-prompt-marker*) start))))
 
 (define-key *lisp-repl-mode-keymap* (kbd "M-r") 'lisp-repl-reset)
 (define-command lisp-repl-reset (arg) ("P")

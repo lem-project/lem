@@ -576,6 +576,7 @@
 (defun eval-string (string output-buffer point
                            &optional
                            update-point-p (package "COMMON-LISP-USER"))
+  (unless point (setq point (point-min)))
   (setq *getch-wait-p* t)
   (let* ((main-thread (bt:current-thread))
          (input-thread
@@ -608,10 +609,7 @@
     (setf (buffer-modified-p output-buffer) nil)
     (prog1 (minibuf-print
             (format nil "~{~s~^,~}"
-                    (eval-string string
-                                 output-buffer
-                                 (point-min)
-                                 nil
+                    (eval-string string output-buffer nil nil
                                  (lisp-current-package))))
       (when (buffer-modified-p output-buffer)
         (lisp-info-popup output-buffer
@@ -983,6 +981,22 @@
     (dolist (v values)
       (pprint v out))
     (point-set (buffer-output-stream-point out))))
+
+(define-key *lisp-mode-keymap* (kbd "C-M-j") 'lisp-eval-print-last-sexp)
+(define-command lisp-eval-print-last-sexp () ()
+  (lisp-move-and-eval-sexp
+   #'backward-sexp
+   #'(lambda (string)
+       (unless (bolp) (insert-newline))
+       (let ((output-buffer (get-buffer-create "*output*")))
+         (buffer-erase output-buffer)
+         (setf (buffer-modified-p output-buffer) nil)
+         (lisp-print-values
+          (eval-string string output-buffer nil nil
+                       (lisp-current-package)))
+         (insert-newline)
+         (when (buffer-modified-p output-buffer)
+           (lisp-info-popup output-buffer nil nil))))))
 
 (defvar *lisp-repl-mode-keymap*
   (make-keymap nil *lisp-mode-keymap*))

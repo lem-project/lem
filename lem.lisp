@@ -43,7 +43,7 @@
 (defun getch (&optional (abort-jump t))
   (let* ((code (cond (*getch-wait-p*
                       (loop :while (grow-null-p *input-queue*)
-                        :do (sleep 0.001))
+                        :do (sleep 0.01))
                       (grow-rem-left *input-queue*))
                      ((grow-null-p *input-queue*)
                       (loop

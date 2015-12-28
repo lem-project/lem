@@ -41,10 +41,7 @@
           lisp-repl-next-input
           lisp-repl-reset
           lisp-repl-set-package
-          *scratch-mode-keymap*
-          scratch-mode
-          scratch
-          eval-print-last-sexp
+          lisp-eval-print-last-sexp
           lisp-info-popup))
 
 (defvar *lisp-indent-table* (make-hash-table :test 'equal))
@@ -1105,34 +1102,6 @@
   (lisp-set-package)
   (lisp-repl-prompt)
   t)
-
-(defvar *scratch-mode-keymap*
-  (make-keymap nil *lisp-mode-keymap*))
-
-(define-major-mode scratch-mode nil
-  (:name "scratch"
-   :keymap *scratch-mode-keymap*
-   :syntax-table *lisp-syntax-table*))
-
-(define-command scratch () ()
-  (set-buffer (get-buffer-create "*scratch*"))
-  (scratch-mode))
-
-(define-key *scratch-mode-keymap* (kbd "C-j") 'eval-print-last-sexp)
-(define-command eval-print-last-sexp () ()
-  (let ((point (point)))
-    (when (backward-sexp)
-      (let ((str (string-trim '(#\newline #\tab #\space)
-                              (region-string (point) point))))
-        (point-set point)
-        (unless (string= str "")
-          (insert-newline 1)
-          (let ((buffer (window-buffer)))
-            (multiple-value-bind (values error-p)
-                (eval-string str (window-buffer) (point) t)
-              (unless error-p
-                (setq *current-window* (pop-to-buffer buffer))
-                (lisp-print-values values)))))))))
 
 (defun lisp-info-popup (buffer &optional output-function (focus-set-p t))
   (info-popup buffer output-function focus-set-p 'lisp-mode))

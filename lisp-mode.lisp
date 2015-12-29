@@ -156,6 +156,7 @@
                "defmethod"
                "defpackage"
                "defstruct"
+               "defvar"
                "defparameter"
                "defconstant"))
   (syntax-add-keyword *lisp-syntax-table*

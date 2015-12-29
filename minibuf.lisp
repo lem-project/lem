@@ -93,6 +93,7 @@
 
 (defvar *minibuf-read-line-tmp-window*)
 
+(defvar *minibuf-read-line-prompt*)
 (defvar *minibuf-read-line-loop*)
 (defvar *minibuf-read-line-comp-f*)
 (defvar *minibuf-read-line-existing-p*)
@@ -168,6 +169,9 @@
        (window-cur-col *minibuf-window*))))
   (charms/ll:wrefresh (window-win *minibuf-window*)))
 
+(defun minibuf-window-update ()
+  (minibuf-read-line-refresh *minibuf-read-line-prompt*))
+
 (defun minibuf-read-line (prompt initial comp-f existing-p)
   (when *minibuf-read-line-busy-p*
     (return-from minibuf-read-line nil))
@@ -180,6 +184,7 @@
     (when initial
       (insert-string initial))
     (do ((*minibuf-read-line-loop* t)
+         (*minibuf-read-line-prompt* prompt)
          (*minibuf-read-line-existing-p* existing-p)
          (*minibuf-read-line-comp-f* comp-f)
          (*curr-flags* (make-flags) (make-flags))
@@ -188,7 +193,7 @@
          (let ((str (minibuf-get-line)))
            (add-history *minibuf-read-line-history* str)
            str))
-      (minibuf-read-line-refresh prompt)
+      (window-maybe-update)
       (let* ((key (input-key))
              (cmd (find-keybind key)))
         (cmd-call cmd 1)))))

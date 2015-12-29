@@ -585,11 +585,15 @@
           (window-scroll window offset)))))
 
 (defun window-update (window &optional update-display-p)
-  (charms/ll:werase (window-win window))
-  (window-adjust-view window)
-  (window-refresh window)
-  (when update-display-p
-    (charms/ll:doupdate)))
+  (cond
+   ((eq *current-window* *minibuf-window*)
+    (minibuf-window-update))
+   (t
+    (charms/ll:werase (window-win window))
+    (window-adjust-view window)
+    (window-refresh window)
+    (when update-display-p
+      (charms/ll:doupdate)))))
 
 (defun window-update-all ()
   (bt:with-lock-held (*editor-lock*)
@@ -727,7 +731,10 @@
       (split-window-vertically)))
 
 (defun get-next-window (window)
-  (let* ((window-list (window-list))
+  (let* ((window-list
+          (if *minibuf-read-line-busy-p*
+              (cons *minibuf-window* (window-list))
+              (window-list)))
          (result (member window window-list)))
     (if (cdr result)
         (cadr result)

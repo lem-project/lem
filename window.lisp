@@ -696,6 +696,8 @@
 
 (define-key *global-keymap* (kbd "C-x 2") 'split-window-vertically)
 (define-command split-window-vertically () ()
+  (when (eq *current-window* *minibuf-window*)
+    (return-from split-window-vertically nil))
   (multiple-value-bind (nlines rem)
       (floor (window-nlines) 2)
     (let ((newwin (make-window
@@ -711,6 +713,8 @@
 
 (define-key *global-keymap* (kbd "C-x 3") 'split-window-horizontally)
 (define-command split-window-horizontally () ()
+  (when (eq *current-window* *minibuf-window*)
+    (return-from split-window-horizontally nil))
   (multiple-value-bind (ncols rem)
       (floor (window-ncols) 2)
     (let ((newwin (make-window

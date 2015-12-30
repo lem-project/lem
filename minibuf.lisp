@@ -8,6 +8,7 @@
           minibuf-y-or-n-p
           minibuf-read-char
           *minibuf-keymap*
+          active-minibuffer-window
           minibuf-read-line-confirm
           minibuf-read-line-completion
           minibuf-read-line-clear-before
@@ -99,9 +100,13 @@
 (defvar *minibuf-read-line-existing-p*)
 
 (defvar *minibuf-read-line-history* (make-history))
-(defvar *minibuf-read-line-busy-p* nil)
 
 (defvar *minibuf-read-line-depth* 0)
+
+(defun active-minibuffer-window ()
+  (if (/= 0 *minibuf-read-line-depth*)
+      *minibuf-window*
+      nil))
 
 (define-command minibuf-read-line-confirm () ()
   (let ((str (minibuf-get-line)))
@@ -202,7 +207,6 @@
 (defun minibuf-read-line (prompt initial comp-f existing-p)
   (let ((*minibuf-read-line-tmp-window* *current-window*)
         (*current-window* *minibuf-window*)
-        (*minibuf-read-line-busy-p* t)
         (*universal-argument* nil)
         (minibuf-buffer-prev-string
          (join "" (buffer-take-lines (window-buffer *minibuf-window*))))

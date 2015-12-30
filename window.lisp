@@ -740,9 +740,8 @@
 
 (defun get-next-window (window)
   (let* ((window-list
-          (if *minibuf-read-line-busy-p*
-              (cons *minibuf-window* (window-list))
-              (window-list)))
+          (append (list (active-minibuffer-window))
+                  (window-list)))
          (result (member window window-list)))
     (if (cdr result)
         (cadr result)

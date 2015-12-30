@@ -189,20 +189,25 @@
       (cmd-call cmd 1))))
 
 (defun minibuf-read-line (prompt initial comp-f existing-p)
-  (when *minibuf-read-line-busy-p*
-    (return-from minibuf-read-line nil))
-  (unwind-protect
-    (let ((*minibuf-read-line-tmp-window* *current-window*)
-          (*current-window* *minibuf-window*)
-          (*minibuf-read-line-busy-p* t)
-          (*universal-argument* nil))
-      (erase-buffer)
-      (minibuffer-mode)
-      (when initial
-        (insert-string initial))
-      (minibuf-read-line-loop prompt comp-f existing-p))
-    (when (deleted-window-p *current-window*)
-      (setq *current-window* (car (window-list))))))
+  (let ((*minibuf-read-line-tmp-window* *current-window*)
+        (*current-window* *minibuf-window*)
+        (*minibuf-read-line-busy-p* t)
+        (*universal-argument* nil)
+        (minibuf-buffer-prev-string
+         (join "" (buffer-take-lines (window-buffer *minibuf-window*))))
+        (minibuf-buffer-prev-point
+         (window-point *minibuf-window*)))
+    (erase-buffer)
+    (minibuffer-mode)
+    (when initial
+      (insert-string initial))
+    (unwind-protect (minibuf-read-line-loop prompt comp-f existing-p)
+      (when (deleted-window-p *current-window*)
+        (setq *current-window* (car (window-list))))
+      (with-current-window *minibuf-window*
+        (erase-buffer)
+        (insert-string minibuf-buffer-prev-string)
+        (point-set minibuf-buffer-prev-point)))))
 
 (defun minibuf-read-string (prompt &optional initial)
   (minibuf-read-line prompt (or initial "") nil nil))

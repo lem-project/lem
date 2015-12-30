@@ -13,6 +13,7 @@
           modeline-column
           window-list
           window
+          window-point
           window-nlines
           window-ncols
           window-y
@@ -108,6 +109,9 @@
     (setf (window-point-marker window)
           (make-marker (make-point 1 0) buffer))
     window))
+
+(defun window-point (&optional (window *current-window*))
+  (marker-point (window-point-marker window)))
 
 (defun window-cur-col (&optional (window *current-window*))
   (marker-column (window-point-marker window)))

@@ -101,6 +101,8 @@
 (defvar *minibuf-read-line-history* (make-history))
 (defvar *minibuf-read-line-busy-p* nil)
 
+(defvar *minibuf-read-line-depth* 0)
+
 (define-command minibuf-read-line-confirm () ()
   (let ((str (minibuf-get-line)))
     (when (or (string= str "")
@@ -141,7 +143,9 @@
       (insert-string str))))
 
 (define-command minibuf-read-line-break () ()
-  (throw 'abort 'abort))
+  (if (= *minibuf-read-line-depth* 1)
+      (throw 'abort 'abort)
+      (throw 'abort (1- *minibuf-read-line-depth*))))
 
 (defun minibuf-get-line ()
   (join (string #\newline)
@@ -185,8 +189,15 @@
          str))
     (window-maybe-update)
     (let* ((key (input-key))
-           (cmd (find-keybind key)))
-      (cmd-call cmd 1))))
+           (cmd (find-keybind key))
+           (value (catch 'abort
+                    (cmd-call cmd 1)
+                    nil)))
+      (when value
+        (cond ((eq value 'abort)
+               (throw 'abort 'abort))
+              ((not (eql value *minibuf-read-line-depth*))
+               (throw 'abort value)))))))
 
 (defun minibuf-read-line (prompt initial comp-f existing-p)
   (let ((*minibuf-read-line-tmp-window* *current-window*)
@@ -196,7 +207,9 @@
         (minibuf-buffer-prev-string
          (join "" (buffer-take-lines (window-buffer *minibuf-window*))))
         (minibuf-buffer-prev-point
-         (window-point *minibuf-window*)))
+         (window-point *minibuf-window*))
+        (*minibuf-read-line-depth*
+         (1+ *minibuf-read-line-depth*)))
     (erase-buffer)
     (minibuffer-mode)
     (when initial

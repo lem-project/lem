@@ -185,6 +185,11 @@
 (defun symb (&rest args)
   (values (intern (apply #'mkstr args))))
 
+(defun mklist (x)
+  (if (listp x)
+      x
+      (list x)))
+
 (defstruct (growlist (:constructor make-growlist ())
                      (:conc-name grow-))
   list

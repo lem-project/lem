@@ -740,7 +740,7 @@
 
 (defun get-next-window (window)
   (let* ((window-list
-          (append (list (active-minibuffer-window))
+          (append (mklist (active-minibuffer-window))
                   (window-list)))
          (result (member window window-list)))
     (if (cdr result)

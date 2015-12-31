@@ -149,16 +149,17 @@
 (defmethod trivial-gray-streams:stream-read-char ((stream minibuffer-input-stream))
   (let ((c (pop (minibuffer-input-stream-queue stream))))
     (cond ((null c)
-           (multiple-value-bind (string eof)
-               (minibuf-read-string-simply "Read char: ")
-             (if eof
-                 (progn
-                   (setf (minibuffer-input-stream-queue stream) nil)
-                   (return-from trivial-gray-streams:stream-read-char :eof))
-                 (setf (minibuffer-input-stream-queue stream)
-                       (nconc (minibuffer-input-stream-queue stream)
-                              (coerce string 'list)
-                              (list #\newline)))))
+           (multiple-value-bind (string end)
+               (catch 'abort
+                 (values (minibuf-read-string "Read char: ") t))
+             (cond (end
+                    (setf (minibuffer-input-stream-queue stream)
+                          (nconc (minibuffer-input-stream-queue stream)
+                                 (coerce string 'list)
+                                 (list #\newline))))
+                   (t
+                    (setf (minibuffer-input-stream-queue stream) nil)
+                    (return-from trivial-gray-streams:stream-read-char :eof))))
            (trivial-gray-streams:stream-read-char stream))
           ((eql c #\eot)
            :eof)

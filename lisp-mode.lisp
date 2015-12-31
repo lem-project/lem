@@ -582,7 +582,7 @@
                               (ignore-errors
                                (loop :for c := (charms/ll:getch) :do
                                  (cond ((= c -1))
-                                       ((eql c (char-code C-g))
+                                       ((eql c (char-code C-c))
                                         (bt:interrupt-thread
                                          main-thread
                                          #'(lambda ()

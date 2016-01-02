@@ -1034,9 +1034,11 @@
                  (make-point (window-cur-linum) (window-cur-col))
                  (make-attr :bold-p t :color :blue))
   (buffer-undo-boundary (window-buffer))
+  (prev-char 1)
   (when (not (null *lisp-repl-prompt-marker*))
     (delete-marker *lisp-repl-prompt-marker*))
-  (setq *lisp-repl-prompt-marker* (make-marker)))
+  (setq *lisp-repl-prompt-marker* (make-marker))
+  (next-char 1))
 
 (defun lisp-repl-paren-correspond-p ()
   (loop :with count := 0 :do

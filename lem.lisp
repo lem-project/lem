@@ -417,7 +417,7 @@
       (with-error-handler ()
         (if *debug-p*
             (handler-bind ((error #'save-error)
-                           (sb-sys:interactive-interrupt #'save-error))
+                           #+sbcl (sb-sys:interactive-interrupt #'save-error))
               (body))
             (body))))))
 

@@ -636,7 +636,7 @@
 (define-command lisp-eval-defun () ()
   (lisp-move-and-eval-sexp #'top-of-defun #'lisp-eval-string))
 
-(define-key *global-keymap* (kbd "C-x C-e") 'lisp-eval-last-sexp)
+(define-key *lisp-mode-keymap* (kbd "C-x C-e") 'lisp-eval-last-sexp)
 (define-command lisp-eval-last-sexp () ()
   (lisp-move-and-eval-sexp #'backward-sexp #'lisp-eval-string))
 

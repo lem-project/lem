@@ -738,11 +738,8 @@
       (split-window-horizontally)
       (split-window-vertically)))
 
-(defun get-next-window (window)
-  (let* ((window-list
-          (append (mklist (active-minibuffer-window))
-                  (window-list)))
-         (result (member window window-list)))
+(defun get-next-window (window &optional (window-list (window-list)))
+  (let ((result (member window window-list)))
     (if (cdr result)
         (cadr result)
         (car window-list))))
@@ -751,7 +748,9 @@
 (define-command other-window (&optional (n 1)) ("p")
   (dotimes (_ n)
     (setq *current-window*
-          (get-next-window *current-window*)))
+          (get-next-window *current-window*
+                           (append (mklist (active-minibuffer-window))
+                                   (window-list)))))
   (adjust-point)
   t)
 

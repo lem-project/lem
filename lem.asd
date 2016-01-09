@@ -54,6 +54,4 @@
                         :trivial-gray-streams
                         :cl-ppcre
                         :inquisitor
-                        :babel
-                        :usocket
-			:cffi))
+                        :babel))

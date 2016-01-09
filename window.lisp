@@ -234,9 +234,9 @@
   (set-attr :modeline-inactive (get-attr :highlight)))
 
 (defun resize-screen ()
-  (destructuring-bind (height width)
-      (lem-winsize:win-size (xterm-fd))
-    (charms/ll:resizeterm height width)))
+  (let ((winsize (lem-winsize:win-size (xterm-fd))))
+    (when winsize
+      (charms/ll:resizeterm (car winsize) (cadr winsize)))))
 
 (define-key *global-keymap* (kbd "C-l") 'recenter)
 (define-command recenter () ()

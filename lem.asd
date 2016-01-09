@@ -4,13 +4,6 @@
 
 #-uiop(require :uiop)
 
-(let ((dir (merge-pathnames #p"winsize"
-                            (make-pathname
-                             :directory
-                             (pathname-directory *load-truename*)))))
-  (unless (probe-file (merge-pathnames #p"winsize.so" dir))
-    (uiop:run-program (format nil "cd ~a; sh make.sh" dir))))
-
 (defpackage :lem-asd
   (:use :cl :asdf))
 
@@ -20,6 +13,7 @@
            :serial t
            :components ((:file "fatstring")
                         (:file "queue")
+			(:file "winsize")
                         (:file "package")
                         (:file "wrappers")
                         (:file "header")
@@ -48,7 +42,6 @@
                         (:file "sexp")
                         (:file "grep")
                         (:file "lisp-mode")
-                        ;;(:file "leval-client")
                         (:file "c-mode")
                         (:file "python-mode")
                         (:file "dired")
@@ -63,4 +56,4 @@
                         :inquisitor
                         :babel
                         :usocket
-                        :lem-winsize))
+			:cffi))

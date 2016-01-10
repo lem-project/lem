@@ -5,6 +5,7 @@
 (export '(syntax-table
           make-syntax-table
           syntax-add-keyword
+          syntax-add-keyword-pre
           syntax-word-char-p
           syntax-space-char-p
           syntax-symbol-char-p

@@ -12,7 +12,8 @@
           top-of-defun
           mark-sexp
           kill-sexp
-          transpose-sexps))
+          transpose-sexps
+          beginning-of-defun-abstract))
 
 (defun skip-block-comment-forward ()
   (loop

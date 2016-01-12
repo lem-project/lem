@@ -133,7 +133,7 @@
       test
       &key
       regex-p word-p test-symbol end-symbol attr
-      matched-symbol symbol-tov)))
+      matched-symbol (symbol-tov -1))))
 
 (macrolet ((def (name add-f)
                 `(defun ,name ,*syntax-add-keyword-lambda-list*

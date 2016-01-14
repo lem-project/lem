@@ -46,7 +46,11 @@
   word-p)
 
 (defun make-syntax-test (thing &key regex-p word-p)
-  (%make-syntax-test :thing thing :regex-p regex-p :word-p word-p))
+  (%make-syntax-test :thing (if regex-p
+                                (ppcre:create-scanner thing)
+                                thing)
+                     :regex-p regex-p
+                     :word-p word-p))
 
 (defclass syntax ()
   ((attr
@@ -66,8 +70,6 @@
     :type syntax-test)))
 
 (defstruct syntax-match
-  regex-p
-  word-p
   test
   test-symbol
   end-symbol
@@ -101,8 +103,8 @@
                           (format nil "~c~c" pre flw)
                           pre)))
           (syntax-add-keyword-pre syntax-table
-                                  (format nil "~a.*$" string)
-                                  :regex-p t
+                                  (make-syntax-test (format nil "~a.*$" string)
+                                                    :regex-p t)
                                   :attr :comment-attr))))
     (dolist (string-quote-char (syntax-table-string-quote-chars syntax-table))
       (syntax-add-region syntax-table
@@ -129,7 +131,7 @@
     '(syntax-table
       test
       &key
-      regex-p word-p test-symbol end-symbol attr
+      test-symbol end-symbol attr
       matched-symbol (symbol-tov -1))))
 
 (macrolet ((def (name add-f)
@@ -137,11 +139,7 @@
                    (setf (syntax-table-elements syntax-table)
                          (,add-f (syntax-table-elements syntax-table)
                                  (make-syntax-match
-                                  :test (if regex-p
-                                            (ppcre:create-scanner test)
-                                            test)
-                                  :regex-p regex-p
-                                  :word-p word-p
+                                  :test test
                                   :test-symbol test-symbol
                                   :end-symbol end-symbol
                                   :attr attr

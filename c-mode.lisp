@@ -34,14 +34,12 @@
                "default" "break" "for" "while" "do" "continue" "typedef"
                "struct" "enum" "union" "sizeof" "inline" "restrict"
                "_Bool" "_Complex" "Imaginary" "bool"))
-  (syntax-add-keyword *c-syntax-table* str
-                      :regex-p nil
-                      :word-p t
+  (syntax-add-keyword *c-syntax-table*
+                      (make-syntax-test str :word-p t)
                       :attr :keyword-attr))
 
 (syntax-add-keyword *c-syntax-table*
-                    "^#\\S+"
-                    :regex-p t
+                    (make-syntax-test "^#\\S+" :regex-p t)
                     :attr :constant-attr)
 
 (defvar *c-compile-command* "make")

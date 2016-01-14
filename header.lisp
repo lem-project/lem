@@ -148,3 +148,20 @@
        (unwind-protect (progn ,@body)
          (unless (deleted-window-p ,gprev-window)
            (select-window ,gprev-window))))))
+
+(defmacro with-profile (&body body)
+  `(progn
+     (sb-profile:profile "LEM")
+     ,@body
+     (with-open-file (out "PROFILE"
+                          :direction :output
+                          :if-does-not-exist :create
+                          :if-exists :supersede)
+       (let ((*terminal-io* out)
+             (*standard-output* out)
+             (*standard-input* out)
+             (*error-output* out)
+             (*query-io* out)
+             (*debug-io* out)
+             (*trace-output* out))
+         (sb-profile:report)))))

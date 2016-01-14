@@ -105,45 +105,17 @@
                                   :regex-p t
                                   :attr :comment-attr))))
     (dolist (string-quote-char (syntax-table-string-quote-chars syntax-table))
-      (let ((string-symbol (gensym "STRING")))
-        (syntax-add-keyword-pre syntax-table
-                                (string string-quote-char)
-                                :regex-p nil
-                                :matched-symbol string-symbol
-                                :symbol-tov -1
-                                :attr :string-attr)
-        (syntax-add-keyword-pre syntax-table
-                                "."
-                                :regex-p t
-                                :test-symbol string-symbol
-                                :attr :string-attr)
-        (syntax-add-keyword-pre syntax-table
-                                (string string-quote-char)
-                                :regex-p nil
-                                :test-symbol string-symbol
-                                :end-symbol string-symbol
-                                :attr :string-attr)))
+      (syntax-add-region syntax-table
+                         (make-syntax-test (string string-quote-char))
+                         (make-syntax-test (string string-quote-char))
+                         :string-attr))
     (let ((pre (syntax-table-block-comment-preceding-char syntax-table))
-          (flw (syntax-table-block-comment-following-char syntax-table))
-          (comment-symbol (gensym "BLOCK-COMMENT")))
+          (flw (syntax-table-block-comment-following-char syntax-table)))
       (when (and pre flw)
-        (syntax-add-keyword-pre syntax-table
-                                (format nil "~c~c" pre flw)
-                                :regex-p nil
-                                :matched-symbol comment-symbol
-                                :symbol-tov -1
-                                :attr :comment-attr)
-        (syntax-add-keyword-pre syntax-table
-                                "."
-                                :regex-p t
-                                :test-symbol comment-symbol
-                                :attr :comment-attr)
-        (syntax-add-keyword-pre syntax-table
-                                (format nil "~c~c" flw pre)
-                                :regex-p nil
-                                :test-symbol comment-symbol
-                                :end-symbol comment-symbol
-                                :attr :comment-attr)))
+        (syntax-add-region syntax-table
+                           (make-syntax-test (format nil "~c~c" pre flw))
+                           (make-syntax-test (format nil "~c~c" flw pre))
+                           :comment-attr)))
     syntax-table))
 
 (defun %syntax-push (list x)
@@ -177,6 +149,10 @@
                                   :symbol-tov symbol-tov))))))
   (def syntax-add-keyword %syntax-append)
   (def syntax-add-keyword-pre %syntax-push))
+
+(defun syntax-add-region (syntax-table start end attr)
+  (push (make-instance 'syntax-region :start start :end end :attr attr)
+        (syntax-table-elements syntax-table)))
 
 (defun syntax-word-char-p (c)
   (and (characterp c)

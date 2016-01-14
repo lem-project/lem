@@ -40,6 +40,31 @@
   (set-attr :function-name-attr (get-attr :cyan))
   (set-attr :variable-attr (get-attr :yellow)))
 
+(defstruct (syntax-test (:constructor %make-syntax-test))
+  test
+  regex-p
+  word-p)
+
+(defun make-syntax-test (test &key regex-p word-p)
+  (%make-syntax-test :test test :regex-p regex-p :word-p word-p))
+
+(defclass syntax ()
+  ((attr
+    :initarg :attr
+    :initform 0
+    :reader syntax-attr
+    :type fixnum)))
+
+(defclass syntax-region (syntax)
+  ((start
+    :initarg :start
+    :reader syntax-region-start
+    :type syntax-test)
+   (end
+    :initarg :end
+    :reader syntax-region-end
+    :type syntax-test)))
+
 (defstruct syntax-keyword
   regex-p
   word-p

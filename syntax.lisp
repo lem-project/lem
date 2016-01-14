@@ -248,6 +248,14 @@
                (= linum end-linum)))
         (syntax-scan-line line)))))
 
+(defun syntax-scan-buffer (buffer)
+  (when (and *enable-syntax-highlight*
+             (buffer-get buffer :enable-syntax-highlight))
+    (map-buffer #'(lambda (line linum)
+                    (declare (ignore linum))
+                    (syntax-scan-line line))
+                buffer)))
+
 (defun syntax-update-symbol-tov ()
   (setq *syntax-symbol-tov-list*
         (loop :for (symbol . tov) :in *syntax-symbol-tov-list*
@@ -369,11 +377,3 @@
                  (when (<= i (1- end))
                    (setq i (1- end))))))))
     (setf (line-symbol-tov-list line) *syntax-symbol-tov-list*)))
-
-(defun syntax-scan-buffer (buffer)
-  (when (and *enable-syntax-highlight*
-             (buffer-get buffer :enable-syntax-highlight))
-    (map-buffer #'(lambda (line linum)
-                    (declare (ignore linum))
-                    (syntax-scan-line line))
-                buffer)))

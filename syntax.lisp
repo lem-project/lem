@@ -287,6 +287,39 @@
                        :start start)
       (length str)))
 
+(defun syntax-fit-word-p (str start end word-p)
+  (or (not word-p)
+      (and (or (zerop start)
+               (not (syntax-symbol-char-p (aref str (1- start)))))
+           (or (<= (length str) end)
+               (not (syntax-symbol-char-p (aref str end)))))))
+
+(defun syntax-test-match-p (syntax-test str start)
+  (cond
+   ((syntax-test-regex-p syntax-test)
+    (if (syntax-test-word-p syntax-test)
+        (let ((end (syntax-position-word-end str start)))
+          (when (ppcre:scan (syntax-test-thing syntax-test)
+                            (subseq str start end))
+            (return-from syntax-test-match-p (values start end))))
+        (multiple-value-bind (start1 end1)
+            (ppcre:scan (syntax-test-thing syntax-test) str :start start)
+          (when (and start1 (= start start1))
+            (return-from syntax-test-match-p (values start1 end1))))))
+   ((stringp (syntax-test-thing syntax-test))
+    (let ((end (+ start (length (syntax-test-thing syntax-test)))))
+      (when (syntax-test-word-p syntax-test)
+        (setq end
+              (max end
+                   (syntax-position-word-end str start))))
+      (when (and (string= str (syntax-test-thing syntax-test)
+                          :start1 start
+                          :end1 (when (< end (length str))
+                                  end))
+                 (syntax-fit-word-p str start end
+                                    (syntax-test-word-p syntax-test)))
+        (return-from syntax-test-match-p (values start end)))))))
+
 (defgeneric syntax-scan-token-test (syntax line start))
 
 (defmethod syntax-scan-token-test ((syntax syntax-region) line start)

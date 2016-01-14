@@ -279,48 +279,56 @@
                        :start start)
       (length str)))
 
+(defgeneric syntax-scan-word-test (syntax line start))
+
+(defmethod syntax-scan-word-test ((syntax syntax-region) line start)
+  )
+
+(defmethod syntax-scan-word-test ((syntax syntax-match) line start)
+  (when (or (not (syntax-match-test-symbol syntax))
+            (find (syntax-match-test-symbol syntax)
+                  *syntax-symbol-tov-list*
+                  :key #'car))
+    (let ((str (line-str line)))
+      (cond
+       ((syntax-match-regex-p syntax)
+        (cond ((syntax-match-word-p syntax)
+               (let ((end (syntax-position-word-end str start)))
+                 (when (ppcre:scan (syntax-match-test syntax)
+                                   (subseq str start end))
+                   (syntax-matched-word line syntax start end)
+                   (return-from syntax-scan-word-test (1- end)))))
+              (t
+               (multiple-value-bind (start1 end1)
+                   (ppcre:scan (syntax-match-test syntax)
+                               str :start start)
+                 (when (and start1
+                            (= start start1)
+                            (syntax-matched-word line syntax start end1))
+                   (return-from syntax-scan-word-test (1- end1)))))))
+       ((stringp (syntax-match-test syntax))
+        (let ((end (+ start (length (syntax-match-test syntax)))))
+          (when (syntax-match-word-p syntax)
+            (setq end
+                  (max end
+                       (syntax-position-word-end str start))))
+          (when (and
+                 (string= str (syntax-match-test syntax)
+                          :start1 start
+                          :end1 (when (< end (length str))
+                                  end))
+                 (syntax-matched-word line syntax start end))
+            (return-from syntax-scan-word-test (1- end)))))
+       ((functionp (syntax-match-test syntax))
+        (let ((end (syntax-position-word-end str start)))
+          (when (and (funcall (syntax-match-test syntax) str start end)
+                     (syntax-matched-word line syntax start end))
+            (return-from syntax-scan-word-test end))))))))
+
 (defun syntax-scan-word (line start)
-  (let ((str (line-str line)))
-    (dolist (skw (syntax-table-elements (current-syntax)))
-      (when (or (not (syntax-match-test-symbol skw))
-                (find (syntax-match-test-symbol skw)
-                      *syntax-symbol-tov-list*
-                      :key #'car))
-        (cond
-         ((syntax-match-regex-p skw)
-          (cond ((syntax-match-word-p skw)
-                 (let ((end (syntax-position-word-end str start)))
-                   (when (ppcre:scan (syntax-match-test skw)
-                                     (subseq str start end))
-                     (syntax-matched-word line skw start end)
-                     (return-from syntax-scan-word (1- end)))))
-                (t
-                 (multiple-value-bind (start1 end1)
-                     (ppcre:scan (syntax-match-test skw)
-                                 str :start start)
-                   (when (and start1
-                              (= start start1)
-                              (syntax-matched-word line skw start end1))
-                     (return-from syntax-scan-word (1- end1)))))))
-         ((stringp (syntax-match-test skw))
-          (let ((end (+ start (length (syntax-match-test skw)))))
-            (when (syntax-match-word-p skw)
-              (setq end
-                    (max end
-                         (syntax-position-word-end str start))))
-            (when (and
-                   (string= str (syntax-match-test skw)
-                            :start1 start
-                            :end1 (when (< end (length str))
-                                    end))
-                   (syntax-matched-word line skw start end))
-              (return-from syntax-scan-word (1- end)))))
-         ((functionp (syntax-match-test skw))
-          (let ((end (syntax-position-word-end str start)))
-            (when (and (funcall (syntax-match-test skw) str start end)
-                       (syntax-matched-word line skw start end))
-              (return-from syntax-scan-word end)))))))
-    nil))
+  (some #'(lambda (syn)
+            (syntax-scan-word-test syn line start))
+        (syntax-table-elements (current-syntax))))
 
 (defun syntax-scan-whitespaces (str i)
   (do ((i i (1+ i)))

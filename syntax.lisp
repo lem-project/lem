@@ -65,7 +65,7 @@
   line-comment-following-char
   block-comment-preceding-char
   block-comment-following-char
-  keywords)
+  elements)
 
 (defun make-syntax-table (&rest args)
   (let ((syntax-table (apply '%make-syntax-table args)))
@@ -137,8 +137,8 @@
 
 (macrolet ((def (name add-f)
                 `(defun ,name ,*syntax-add-keyword-lambda-list*
-                   (setf (syntax-table-keywords syntax-table)
-                         (,add-f (syntax-table-keywords syntax-table)
+                   (setf (syntax-table-elements syntax-table)
+                         (,add-f (syntax-table-elements syntax-table)
                                  (make-syntax-keyword
                                   :test (if regex-p
                                             (ppcre:create-scanner test)
@@ -280,7 +280,7 @@
 
 (defun syntax-scan-word (line start)
   (let ((str (line-str line)))
-    (dolist (skw (syntax-table-keywords (current-syntax)))
+    (dolist (skw (syntax-table-elements (current-syntax)))
       (when (or (not (syntax-keyword-test-symbol skw))
                 (find (syntax-keyword-test-symbol skw)
                       *syntax-symbol-tov-list*

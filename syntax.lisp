@@ -65,7 +65,7 @@
     :reader syntax-region-end
     :type syntax-test)))
 
-(defstruct syntax-keyword
+(defstruct syntax-match
   regex-p
   word-p
   test
@@ -136,7 +136,7 @@
                 `(defun ,name ,*syntax-add-keyword-lambda-list*
                    (setf (syntax-table-elements syntax-table)
                          (,add-f (syntax-table-elements syntax-table)
-                                 (make-syntax-keyword
+                                 (make-syntax-match
                                   :test (if regex-p
                                             (ppcre:create-scanner test)
                                             test)
@@ -255,23 +255,23 @@
           :collect (cons symbol (1- tov)))))
 
 (defun syntax-matched-word (line skw start end)
-  (when (or (not (syntax-keyword-word-p skw))
+  (when (or (not (syntax-match-word-p skw))
             (and (or (zerop start)
                      (not (syntax-symbol-char-p
                            (aref (line-str line) (1- start)))))
                  (or (<= (length (line-str line)) end)
                      (not (syntax-symbol-char-p (aref (line-str line) end))))))
-    (when (syntax-keyword-matched-symbol skw)
-      (push (cons (syntax-keyword-matched-symbol skw)
-                  (syntax-keyword-symbol-tov skw))
+    (when (syntax-match-matched-symbol skw)
+      (push (cons (syntax-match-matched-symbol skw)
+                  (syntax-match-symbol-tov skw))
             *syntax-symbol-tov-list*))
-    (when (syntax-keyword-end-symbol skw)
+    (when (syntax-match-end-symbol skw)
       (setq *syntax-symbol-tov-list*
-            (remove (syntax-keyword-end-symbol skw)
+            (remove (syntax-match-end-symbol skw)
                     *syntax-symbol-tov-list*
                     :key #'car)))
-    (when (syntax-keyword-attr skw)
-      (line-put-attribute line start end (get-attr (syntax-keyword-attr skw))))
+    (when (syntax-match-attr skw)
+      (line-put-attribute line start end (get-attr (syntax-match-attr skw))))
     t))
 
 (defun syntax-position-word-end (str start)
@@ -282,42 +282,42 @@
 (defun syntax-scan-word (line start)
   (let ((str (line-str line)))
     (dolist (skw (syntax-table-elements (current-syntax)))
-      (when (or (not (syntax-keyword-test-symbol skw))
-                (find (syntax-keyword-test-symbol skw)
+      (when (or (not (syntax-match-test-symbol skw))
+                (find (syntax-match-test-symbol skw)
                       *syntax-symbol-tov-list*
                       :key #'car))
         (cond
-         ((syntax-keyword-regex-p skw)
-          (cond ((syntax-keyword-word-p skw)
+         ((syntax-match-regex-p skw)
+          (cond ((syntax-match-word-p skw)
                  (let ((end (syntax-position-word-end str start)))
-                   (when (ppcre:scan (syntax-keyword-test skw)
+                   (when (ppcre:scan (syntax-match-test skw)
                                      (subseq str start end))
                      (syntax-matched-word line skw start end)
                      (return-from syntax-scan-word (1- end)))))
                 (t
                  (multiple-value-bind (start1 end1)
-                     (ppcre:scan (syntax-keyword-test skw)
+                     (ppcre:scan (syntax-match-test skw)
                                  str :start start)
                    (when (and start1
                               (= start start1)
                               (syntax-matched-word line skw start end1))
                      (return-from syntax-scan-word (1- end1)))))))
-         ((stringp (syntax-keyword-test skw))
-          (let ((end (+ start (length (syntax-keyword-test skw)))))
-            (when (syntax-keyword-word-p skw)
+         ((stringp (syntax-match-test skw))
+          (let ((end (+ start (length (syntax-match-test skw)))))
+            (when (syntax-match-word-p skw)
               (setq end
                     (max end
                          (syntax-position-word-end str start))))
             (when (and
-                   (string= str (syntax-keyword-test skw)
+                   (string= str (syntax-match-test skw)
                             :start1 start
                             :end1 (when (< end (length str))
                                     end))
                    (syntax-matched-word line skw start end))
               (return-from syntax-scan-word (1- end)))))
-         ((functionp (syntax-keyword-test skw))
+         ((functionp (syntax-match-test skw))
           (let ((end (syntax-position-word-end str start)))
-            (when (and (funcall (syntax-keyword-test skw) str start end)
+            (when (and (funcall (syntax-match-test skw) str start end)
                        (syntax-matched-word line skw start end))
               (return-from syntax-scan-word end)))))))
     nil))

@@ -261,24 +261,18 @@
           :collect (cons symbol (1- tov)))))
 
 (defun syntax-matched-word (line skw start end)
-  (when (or (not (syntax-match-word-p skw))
-            (and (or (zerop start)
-                     (not (syntax-symbol-char-p
-                           (aref (line-str line) (1- start)))))
-                 (or (<= (length (line-str line)) end)
-                     (not (syntax-symbol-char-p (aref (line-str line) end))))))
-    (when (syntax-match-matched-symbol skw)
-      (push (cons (syntax-match-matched-symbol skw)
-                  (syntax-match-symbol-tov skw))
-            *syntax-symbol-tov-list*))
-    (when (syntax-match-end-symbol skw)
-      (setq *syntax-symbol-tov-list*
-            (remove (syntax-match-end-symbol skw)
-                    *syntax-symbol-tov-list*
-                    :key #'car)))
-    (when (syntax-match-attr skw)
-      (line-put-attribute line start end (get-attr (syntax-match-attr skw))))
-    t))
+  (when (syntax-match-matched-symbol skw)
+    (push (cons (syntax-match-matched-symbol skw)
+                (syntax-match-symbol-tov skw))
+          *syntax-symbol-tov-list*))
+  (when (syntax-match-end-symbol skw)
+    (setq *syntax-symbol-tov-list*
+          (remove (syntax-match-end-symbol skw)
+                  *syntax-symbol-tov-list*
+                  :key #'car)))
+  (when (syntax-match-attr skw)
+    (line-put-attribute line start end (get-attr (syntax-match-attr skw))))
+  t)
 
 (defun syntax-position-word-end (str start)
   (or (position-if-not #'syntax-symbol-char-p str
@@ -329,45 +323,20 @@
                   *syntax-symbol-tov-list*
                   :key #'car))
     (let ((str (line-str line)))
-      (cond
-       ((syntax-match-regex-p syntax)
-        (cond ((syntax-match-word-p syntax)
-               (let ((end (syntax-position-word-end str start)))
-                 (when (ppcre:scan (syntax-match-test syntax)
-                                   (subseq str start end))
-                   (syntax-matched-word line syntax start end)
-                   (return-from syntax-scan-token-test (values line (1- end))))))
-              (t
-               (multiple-value-bind (start1 end1)
-                   (ppcre:scan (syntax-match-test syntax)
-                               str :start start)
-                 (when (and start1
-                            (= start start1)
-                            (syntax-matched-word line syntax start end1))
-                   (return-from syntax-scan-token-test (values line (1- end1))))))))
-       ((stringp (syntax-match-test syntax))
-        (let ((end (+ start (length (syntax-match-test syntax)))))
-          (when (syntax-match-word-p syntax)
-            (setq end
-                  (max end
-                       (syntax-position-word-end str start))))
-          (when (and
-                 (string= str (syntax-match-test syntax)
-                          :start1 start
-                          :end1 (when (< end (length str))
-                                  end))
-                 (syntax-matched-word line syntax start end))
-            (return-from syntax-scan-token-test (values line (1- end))))))
-       ((functionp (syntax-match-test syntax))
-        (let ((end (syntax-position-word-end str start)))
-          (when (and (funcall (syntax-match-test syntax) str start end)
-                     (syntax-matched-word line syntax start end))
-            (return-from syntax-scan-token-test (values line end)))))))))
+      (multiple-value-bind (start1 end1)
+          (syntax-test-match-p (syntax-match-test syntax)
+                               str start)
+        (when (and start1 end1)
+          (syntax-matched-word line syntax start1 end1)
+          (return-from syntax-scan-token-test
+            (values line (1- end1))))))))
 
 (defun syntax-scan-token (line start)
-  (some #'(lambda (syn)
-            (syntax-scan-token-test syn line start))
-        (syntax-table-elements (current-syntax))))
+  (dolist (syn (syntax-table-elements (current-syntax)))
+    (multiple-value-bind (line pos)
+        (syntax-scan-token-test syn line start)
+      (when (and line pos)
+        (return-from syntax-scan-token (values line pos))))))
 
 (defun syntax-scan-whitespaces (str i)
   (do ((i i (1+ i)))

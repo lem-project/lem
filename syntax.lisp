@@ -41,12 +41,12 @@
   (set-attr :variable-attr (get-attr :yellow)))
 
 (defstruct (syntax-test (:constructor %make-syntax-test))
-  test
+  thing
   regex-p
   word-p)
 
-(defun make-syntax-test (test &key regex-p word-p)
-  (%make-syntax-test :test test :regex-p regex-p :word-p word-p))
+(defun make-syntax-test (thing &key regex-p word-p)
+  (%make-syntax-test :thing thing :regex-p regex-p :word-p word-p))
 
 (defclass syntax ()
   ((attr

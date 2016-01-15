@@ -136,15 +136,15 @@
    :block-comment-preceding-char #\#
    :block-comment-following-char #\|))
 
-(syntax-add-keyword *lisp-syntax-table*
-                    (make-syntax-test "(")
-                    :matched-symbol :start-expr
-                    :symbol-tov 1)
+(syntax-add-match *lisp-syntax-table*
+                  (make-syntax-test "(")
+                  :matched-symbol :start-expr
+                  :symbol-tov 1)
 
-(syntax-add-keyword *lisp-syntax-table*
-                    (make-syntax-test "[^() \\t]+" :regex-p t)
-                    :test-symbol :define-start
-                    :attr :function-name-attr)
+(syntax-add-match *lisp-syntax-table*
+                  (make-syntax-test "[^() \\t]+" :regex-p t)
+                  :test-symbol :define-start
+                  :attr :function-name-attr)
 
 (dolist (str '("defun"
                "defclass"
@@ -157,20 +157,20 @@
                "defvar"
                "defparameter"
                "defconstant"))
-  (syntax-add-keyword *lisp-syntax-table*
-                      (make-syntax-test str :word-p t)
-                      :test-symbol :start-expr
-                      :attr :keyword-attr
-                      :matched-symbol :define-start
-                      :symbol-tov 1))
-
-(syntax-add-keyword *lisp-syntax-table*
-                    (make-syntax-test "^(:?[^: \\t]+:)?define-[^ \\t()]*$"
-                                      :regex-p t :word-p t)
+  (syntax-add-match *lisp-syntax-table*
+                    (make-syntax-test str :word-p t)
                     :test-symbol :start-expr
                     :attr :keyword-attr
                     :matched-symbol :define-start
-                    :symbol-tov 1)
+                    :symbol-tov 1))
+
+(syntax-add-match *lisp-syntax-table*
+                  (make-syntax-test "^(:?[^: \\t]+:)?define-[^ \\t()]*$"
+                                    :regex-p t :word-p t)
+                  :test-symbol :start-expr
+                  :attr :keyword-attr
+                  :matched-symbol :define-start
+                  :symbol-tov 1)
 
 (dolist (str '("block"
                "case"
@@ -226,25 +226,25 @@
                "with-slots"
                "with-standard-io-syntax"
                "loop"))
-  (syntax-add-keyword *lisp-syntax-table*
-                      (make-syntax-test str :word-p t)
-                      :test-symbol :start-expr
-                      :attr :keyword-attr))
+  (syntax-add-match *lisp-syntax-table*
+                    (make-syntax-test str :word-p t)
+                    :test-symbol :start-expr
+                    :attr :keyword-attr))
 
-(syntax-add-keyword *lisp-syntax-table*
-                    (make-syntax-test "^(?:[^:*]*:)?\\*[^*]+\\*$"
-                                      :regex-p t :word-p t)
-                    :attr :variable-attr)
+(syntax-add-match *lisp-syntax-table*
+                  (make-syntax-test "^(?:[^:*]*:)?\\*[^*]+\\*$"
+                                    :regex-p t :word-p t)
+                  :attr :variable-attr)
 
-(syntax-add-keyword *lisp-syntax-table*
-                    (make-syntax-test "^:[^() \\t]+$"
-                                      :regex-p t :word-p t)
-                    :attr :constant-attr)
+(syntax-add-match *lisp-syntax-table*
+                  (make-syntax-test "^:[^() \\t]+$"
+                                    :regex-p t :word-p t)
+                  :attr :constant-attr)
 
-(syntax-add-keyword *lisp-syntax-table*
-                    (make-syntax-test "^&[^() \\t]+$"
-                                      :regex-p t :word-p t)
-                    :attr :constant-attr)
+(syntax-add-match *lisp-syntax-table*
+                  (make-syntax-test "^&[^() \\t]+$"
+                                    :regex-p t :word-p t)
+                  :attr :constant-attr)
 
 (define-major-mode lisp-mode nil
   (:name "lisp"

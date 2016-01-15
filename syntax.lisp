@@ -116,10 +116,10 @@
         (let ((string (if flw
                           (format nil "~c~c" pre flw)
                           pre)))
-          (syntax-add-keyword-pre syntax-table
-                                  (make-syntax-test (format nil "~a.*$" string)
-                                                    :regex-p t)
-                                  :attr :comment-attr))))
+          (syntax-add-match syntax-table
+                            (make-syntax-test (format nil "~a.*$" string)
+                                              :regex-p t)
+                            :attr :comment-attr))))
     (dolist (string-quote-char (syntax-table-string-quote-chars syntax-table))
       (syntax-add-region syntax-table
                          (make-syntax-test (string string-quote-char))
@@ -140,27 +140,17 @@
 (defun %syntax-append (list x)
   (append list (list x)))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defvar *syntax-add-keyword-lambda-list*
-    '(syntax-table
-      test
-      &key
-      test-symbol end-symbol attr
-      matched-symbol (symbol-tov -1))))
-
-(macrolet ((def (name add-f)
-                `(defun ,name ,*syntax-add-keyword-lambda-list*
-                   (setf (syntax-table-elements syntax-table)
-                         (,add-f (syntax-table-elements syntax-table)
-                                 (make-instance 'syntax-match
-                                                :test test
-                                                :test-symbol test-symbol
-                                                :end-symbol end-symbol
-                                                :attr attr
-                                                :matched-symbol matched-symbol
-                                                :symbol-tov symbol-tov))))))
-  (def syntax-add-keyword %syntax-append)
-  (def syntax-add-keyword-pre %syntax-push))
+(defun syntax-add-match (syntax-table test &key test-symbol end-symbol attr
+                                      matched-symbol (symbol-tov -1))
+  (push (make-instance 'syntax-match
+                       :test test
+                       :test-symbol test-symbol
+                       :end-symbol end-symbol
+                       :attr attr
+                       :matched-symbol matched-symbol
+                       :symbol-tov symbol-tov)
+        (syntax-table-elements syntax-table))
+  t)
 
 (defun syntax-add-region (syntax-table start end attr)
   (push (make-instance 'syntax-region :start start :end end :attr attr)

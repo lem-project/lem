@@ -22,28 +22,18 @@
 
 (loop :for (str symbol) :in '(("\"\"\"" :start-double-quote-docstring)
                               ("'''" :start-single-quote-docstring)) :do
-  (syntax-add-keyword-pre *python-syntax-table*
-                          (make-syntax-test str)
-                          :matched-symbol symbol
-                          :symbol-tov -1
-                          :attr :string-attr)
-  (syntax-add-keyword-pre *python-syntax-table*
-                          (make-syntax-test "." :regex-p t)
-                          :test-symbol symbol
-                          :attr :string-attr)
-  (syntax-add-keyword-pre *python-syntax-table*
-                          (make-syntax-test str)
-                          :test-symbol symbol
-                          :end-symbol symbol
-                          :attr :string-attr))
+  (syntax-add-region *python-syntax-table*
+                     (make-syntax-test str)
+                     (make-syntax-test str)
+                     :string-attr))
 
 (dolist (str '("and" "as" "assert" "break" "class" "continue" "def" "del"
                "elif" "else" "except" "exec" "finally" "for" "from" "global"
                "if" "import" "in" "is" "lambda" "not" "or" "pass" "print"
                "raise" "return" "try" "while" "with" "yield"))
-  (syntax-add-keyword *python-syntax-table*
-                      (make-syntax-test str :word-p t)
-                      :attr :keyword-attr))
+  (syntax-add-match *python-syntax-table*
+                    (make-syntax-test str :word-p t)
+                    :attr :keyword-attr))
 
 (defvar *python-indent-size* 4)
 

@@ -336,14 +336,13 @@
         (cond (end
                (line-put-attribute line start end
                                    (get-attr (syntax-attr syntax)))
-               (return-from syntax-scan-token-test
-                 (values line (1- end))))
+               (return-from syntax-scan-token-test (1- end)))
               (t
                (line-put-attribute line start (length (line-str line))
                                    (get-attr (syntax-attr syntax)))
                (setf (line-region line) syntax)
                (return-from syntax-scan-token-test
-                 (values line (length (line-str line))))))))))
+                 (length (line-str line)))))))))
 
 (defmethod syntax-scan-token-test ((syntax syntax-match) line start)
   (when (or (not (syntax-match-test-symbol syntax))
@@ -356,15 +355,12 @@
                                str start)
         (when (and start1 end1)
           (syntax-matched-word line syntax start1 end1)
-          (return-from syntax-scan-token-test
-            (values line (1- end1))))))))
+          (return-from syntax-scan-token-test (1- end1)))))))
 
 (defun syntax-scan-token (line start)
-  (dolist (syn (syntax-table-elements (current-syntax)))
-    (multiple-value-bind (line pos)
-        (syntax-scan-token-test syn line start)
-      (when (and line pos)
-        (return-from syntax-scan-token (values line pos))))))
+  (some #'(lambda (syn)
+            (syntax-scan-token-test syn line start))
+        (syntax-table-elements (current-syntax))))
 
 (defun syntax-scan-whitespaces (str i)
   (do ((i i (1+ i)))
@@ -417,10 +413,8 @@
                                    (min (+ i 2) (line-length line))
                                    (%syntax-prev-attr line i))
                (incf i))
-              ((multiple-value-bind (line2 pos)
-                   (syntax-scan-token line i)
-                 (when (and line2 pos)
-                   (setq i pos))))
+              ((let ((pos (syntax-scan-token line i)))
+                 (when pos (setq i pos))))
               (t
                (let ((end (syntax-position-word-end (line-str line) i)))
                  (when (<= i (1- end))

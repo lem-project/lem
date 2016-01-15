@@ -125,14 +125,14 @@
       (syntax-add-region syntax-table
                          (make-syntax-test (string string-quote-char))
                          (make-syntax-test (string string-quote-char))
-                         :string-attr))
+                         :attr :string-attr))
     (let ((pre (syntax-table-block-comment-preceding-char syntax-table))
           (flw (syntax-table-block-comment-following-char syntax-table)))
       (when (and pre flw)
         (syntax-add-region syntax-table
                            (make-syntax-test (format nil "~c~c" pre flw))
                            (make-syntax-test (format nil "~c~c" flw pre))
-                           :comment-attr)))
+                           :attr :comment-attr)))
     syntax-table))
 
 (defun %syntax-push (list x)
@@ -153,7 +153,7 @@
         (syntax-table-elements syntax-table))
   t)
 
-(defun syntax-add-region (syntax-table start end attr)
+(defun syntax-add-region (syntax-table start end &key attr)
   (push (make-instance 'syntax-region :start start :end end :attr attr)
         (syntax-table-elements syntax-table)))
 

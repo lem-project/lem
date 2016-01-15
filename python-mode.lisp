@@ -25,7 +25,7 @@
   (syntax-add-region *python-syntax-table*
                      (make-syntax-test str)
                      (make-syntax-test str)
-                     :string-attr))
+                     :attr :string-attr))
 
 (dolist (str '("and" "as" "assert" "break" "class" "continue" "def" "del"
                "elif" "else" "except" "exec" "finally" "for" "from" "global"

@@ -148,6 +148,7 @@
 
 (dolist (str '("defun"
                "defclass"
+               "defgeneric"
                "defsetf"
                "defmacro"
                "deftype"

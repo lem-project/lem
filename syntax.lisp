@@ -69,13 +69,27 @@
     :reader syntax-region-end
     :type syntax-test)))
 
-(defstruct syntax-match
-  test
-  test-symbol
-  end-symbol
-  attr
-  matched-symbol
-  symbol-tov)
+(defclass syntax-match (syntax)
+  ((test
+    :initarg :test
+    :initform nil
+    :reader syntax-match-test)
+   (test-symbol
+    :initarg :test-symbol
+    :initform nil
+    :reader syntax-match-test-symbol)
+   (end-symbol
+    :initarg :end-symbol
+    :initform nil
+    :reader syntax-match-end-symbol)
+   (matched-symbol
+    :initarg :matched-symbol
+    :initform nil
+    :reader syntax-match-matched-symbol)
+   (symbol-tov
+    :initarg :symbol-tov
+    :initform nil
+    :reader syntax-match-symbol-tov)))
 
 (defstruct (syntax-table (:constructor %make-syntax-table))
   (space-chars '(#\space #\tab #\newline))
@@ -138,13 +152,13 @@
                 `(defun ,name ,*syntax-add-keyword-lambda-list*
                    (setf (syntax-table-elements syntax-table)
                          (,add-f (syntax-table-elements syntax-table)
-                                 (make-syntax-match
-                                  :test test
-                                  :test-symbol test-symbol
-                                  :end-symbol end-symbol
-                                  :attr attr
-                                  :matched-symbol matched-symbol
-                                  :symbol-tov symbol-tov))))))
+                                 (make-instance 'syntax-match
+                                                :test test
+                                                :test-symbol test-symbol
+                                                :end-symbol end-symbol
+                                                :attr attr
+                                                :matched-symbol matched-symbol
+                                                :symbol-tov symbol-tov))))))
   (def syntax-add-keyword %syntax-append)
   (def syntax-add-keyword-pre %syntax-push))
 
@@ -270,8 +284,8 @@
           (remove (syntax-match-end-symbol skw)
                   *syntax-symbol-tov-list*
                   :key #'car)))
-  (when (syntax-match-attr skw)
-    (line-put-attribute line start end (get-attr (syntax-match-attr skw))))
+  (when (syntax-attr skw)
+    (line-put-attribute line start end (get-attr (syntax-attr skw))))
   t)
 
 (defun syntax-position-word-end (str start)

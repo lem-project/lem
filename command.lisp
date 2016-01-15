@@ -112,7 +112,9 @@
           'command-completion
           'exist-command-p)))
   (let ((cmd (gethash name *command-table*)))
-    (funcall cmd *universal-argument*)))
+    (if cmd
+        (funcall cmd *universal-argument*)
+        (minibuf-print "invalid command"))))
 
 (define-command apropos-command (str) ("sApropos: ")
   (info-popup (get-buffer-create "*Apropos*")

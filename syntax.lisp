@@ -264,18 +264,18 @@
           :when (/= 0 tov)
           :collect (cons symbol (1- tov)))))
 
-(defun syntax-matched-word (line skw start end)
-  (when (syntax-match-matched-symbol skw)
-    (push (cons (syntax-match-matched-symbol skw)
-                (syntax-match-symbol-tov skw))
+(defun syntax-matched-word (line syntax start end)
+  (when (syntax-match-matched-symbol syntax)
+    (push (cons (syntax-match-matched-symbol syntax)
+                (syntax-match-symbol-tov syntax))
           *syntax-symbol-tov-list*))
-  (when (syntax-match-end-symbol skw)
+  (when (syntax-match-end-symbol syntax)
     (setq *syntax-symbol-tov-list*
-          (remove (syntax-match-end-symbol skw)
+          (remove (syntax-match-end-symbol syntax)
                   *syntax-symbol-tov-list*
                   :key #'car)))
-  (when (syntax-attr skw)
-    (line-put-attribute line start end (get-attr (syntax-attr skw))))
+  (when (syntax-attr syntax)
+    (line-put-attribute line start end (get-attr (syntax-attr syntax))))
   t)
 
 (defun syntax-position-word-end (str start)

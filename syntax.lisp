@@ -4,8 +4,9 @@
 
 (export '(syntax-table
           make-syntax-table
-          syntax-add-keyword
-          syntax-add-keyword-pre
+          make-syntax-test
+          syntax-add-match
+          syntax-add-region
           syntax-word-char-p
           syntax-space-char-p
           syntax-symbol-char-p

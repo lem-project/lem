@@ -39,6 +39,7 @@
   prev
   fatstr
   symbol-tov-list
+  region
   next)
 
 (defun make-line (prev next str)

@@ -312,10 +312,38 @@
                                     (syntax-test-word-p syntax-test)))
         (return-from syntax-test-match-p (values start end)))))))
 
+(defun syntax-search-region-end (region str start)
+  (do ((i start (1+ i)))
+      ((>= i (length str)))
+    (if (syntax-escape-char-p (aref str i))
+        (incf i)
+        (multiple-value-bind (_start end)
+            (syntax-test-match-p (syntax-region-end region) str i)
+          (declare (ignore _start))
+          (when end
+            (return end))))))
+
 (defgeneric syntax-scan-token-test (syntax line start))
 
 (defmethod syntax-scan-token-test ((syntax syntax-region) line start)
-  )
+  (multiple-value-bind (_start end)
+      (syntax-test-match-p (syntax-region-start syntax)
+                           (line-str line)
+                           start)
+    (declare (ignore _start))
+    (when end
+      (let ((end (syntax-search-region-end syntax (line-str line) end)))
+        (cond (end
+               (line-put-attribute line start end
+                                   (get-attr (syntax-attr syntax)))
+               (return-from syntax-scan-token-test
+                 (values line (1- end))))
+              (t
+               (line-put-attribute line start (length (line-str line))
+                                   (get-attr (syntax-attr syntax)))
+               (setf (line-region line) syntax)
+               (return-from syntax-scan-token-test
+                 (values line (length (line-str line))))))))))
 
 (defmethod syntax-scan-token-test ((syntax syntax-match) line start)
   (when (or (not (syntax-match-test-symbol syntax))
@@ -352,10 +380,30 @@
         (declare (ignore x))
         y)))
 
+(defun syntax-continue-region-p (line)
+  (let ((prev (line-prev line)))
+    (and prev (line-region prev))))
+
+(defun syntax-scan-line-region (line region)
+  (when region
+    (let ((end (syntax-search-region-end region (line-str line) 0)))
+      (cond (end
+             (setf (line-region line) nil)
+             (line-put-attribute line 0 end (get-attr (syntax-attr region)))
+             end)
+            (t
+             (setf (line-region line) region)
+             (line-put-attribute line 0 (length (line-str line))
+                                 (get-attr (syntax-attr region)))
+             (length (line-str line)))))))
+
 (defun syntax-scan-line (line)
   (line-clear-attribute line)
-  (let ((start-col 0)
-        (str (line-str line)))
+  (let* ((region (syntax-continue-region-p line))
+         (start-col (or (syntax-scan-line-region line region) 0))
+         (str (line-str line)))
+    (unless region
+      (setf (line-region line) nil))
     (do ((i start-col (1+ i)))
         ((>= i (length str)))
       (syntax-update-symbol-tov)

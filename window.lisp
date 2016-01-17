@@ -652,12 +652,12 @@
   (mapc #'delete-overlay *brackets-overlays*)
   (setq *brackets-overlays* nil)
   (let ((highlight-points))
-    (when (eql #\( (following-char))
+    (when (syntax-open-paren-char-p (following-char))
       (save-excursion
        (when (forward-sexp 1 t)
          (push (progn (prev-char 1) (point))
                highlight-points))))
-    (when (eql #\) (preceding-char))
+    (when (syntax-closed-paren-char-p (preceding-char))
       (save-excursion
        (when (backward-sexp 1 t)
          (push (point) highlight-points))))

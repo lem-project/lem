@@ -185,21 +185,24 @@
 
 (define-key *global-keymap* (kbd "C-x C-f") 'find-file)
 (define-command find-file (filename) ("FFind File: ")
+  (setq filename (expand-file-name filename))
   (if (cl-fad:directory-exists-p filename)
       (dired filename)
-      (let ((buf (get-buffer (file-namestring filename))))
-        (cond
-         ((null buf)
-          (file-open filename))
-         ((and (buffer-filename buf)
-               (string/= (expand-file-name filename) (buffer-filename buf)))
-          (let ((uniq-name
-                 (uniq-buffer-name
-                  (file-namestring filename))))
-            (file-open filename)
-            (rename-buffer uniq-name)))
-         (t
-          (set-buffer buf))))))
+      (let* ((name (file-namestring filename))
+             (dupbuf-p (find-if #'(lambda (b)
+                                    (and (not (equal filename (buffer-filename b)))
+                                         (equal name (buffer-name b))))
+                                *buffer-list*))
+             (buf (find-if #'(lambda (b)
+                               (equal filename (buffer-filename b)))
+                           *buffer-list*)))
+        (cond (buf (set-buffer buf))
+              (dupbuf-p
+               (let ((uniq-name (uniq-buffer-name name)))
+                 (file-open filename)
+                 (rename-buffer uniq-name)))
+              (t
+               (file-open filename))))))
 
 (define-key *global-keymap* (kbd "C-x C-r") 'read-file)
 (define-command read-file (filename) ("FRead File: ")

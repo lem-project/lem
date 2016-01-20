@@ -153,10 +153,35 @@
 
 
 (export '(put-attribute
-          remove-attribute))
+          remove-attribute
+          current-column
+          move-to-column))
 
 (defun put-attribute (start end attr)
   (buffer-put-attribute (window-buffer) start end attr))
 
 (defun remove-attribute (start end attr)
   (buffer-remove-attribute (window-buffer) start end attr))
+
+(defun current-column ()
+  (str-width (buffer-line-string (window-buffer)
+                                 (window-cur-linum))
+             0
+             (window-cur-col)))
+
+(defun move-to-column (column &optional force)
+  (end-of-line)
+  (let ((current-column (current-column)))
+    (cond ((< column current-column)
+           (goto-column (wide-index (buffer-line-string
+                                     (window-buffer)
+                                     (window-cur-linum))
+                                    (1+ column)))
+           column)
+          (force
+           (insert-char #\space (- column current-column))
+           (end-of-line)
+           column)
+          (t
+           (end-of-line)
+           current-column))))

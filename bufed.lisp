@@ -52,6 +52,7 @@
           just-one-space
           delete-indentation
           back-to-indentation
+          indent-line
           undo
           redo))
 
@@ -581,6 +582,38 @@
 (define-command back-to-indentation () ()
   (beginning-of-line)
   (skip-chars-forward #'(lambda (c) (member c '(#\space #\tab))))
+  t)
+
+(defun indent-line (column)
+  (let* ((indented-column)
+         (old-column
+          (current-column))
+         (old-indent-string
+          (let ((point (progn
+                         (beginning-of-line)
+                         (point))))
+            (back-to-indentation)
+            (region-string point (point))))
+         (new-indent-string
+          (if (buffer-get (window-buffer) :indent-tabs-mode t)
+              (multiple-value-bind (div mod)
+                  (floor column *tab-size*)
+                (concatenate 'string
+                             (make-string div :initial-element #\tab)
+                             (make-string mod :initial-element #\space)))
+              (make-string column :initial-element #\space))))
+    (when (string/= old-indent-string new-indent-string)
+      (beginning-of-line)
+      (delete-char (length old-indent-string) t)
+      (insert-string new-indent-string)
+      (setq indented-column
+            (+ old-column
+               (- (str-width new-indent-string)
+                  (str-width old-indent-string)))))
+    (back-to-indentation)
+    (when (and indented-column
+               (< (current-column) indented-column))
+      (move-to-column indented-column)))
   t)
 
 (define-key *global-keymap* (kbd "C-\\") 'undo)

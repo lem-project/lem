@@ -254,6 +254,8 @@
   (buffer-put (window-buffer)
               :enable-syntax-highlight t)
   (buffer-put (window-buffer)
+              :indent-tabs-mode nil)
+  (buffer-put (window-buffer)
               :modeline-format
               (append *modeline-default-format*
                       (list
@@ -319,60 +321,49 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-i") 'lisp-indent-line)
 (define-command lisp-indent-line () ()
-  (let* ((old-column (window-cur-col))
-         (point (progn
-                  (beginning-of-line)
-                  (point))))
-    (when (sexp-goto-car 2000)
-      (let ((start-col (1- (window-cur-col)))
-            (not-list-p (save-excursion
-                         (search-backward "(")
-                         (member (preceding-char) '(#\#)))))
-        (destructuring-bind (car-name-str arg-col)
-            (lisp-looking-at-word)
-          (let* ((car-symbol-name
-                  (string-upcase
-                   (car
-                    (last (split-string car-name-str
-                                        #\:)))))
-                 (argc (%count-sexps point)))
-            (let ((num (gethash (string-downcase car-symbol-name)
-                                *lisp-indent-table*)))
-              (point-set point)
-              (let ((num-spaces
-                     (save-excursion
-                      (skip-chars-forward '(#\space #\tab))
-                      (window-cur-col)))
-                    num-insert-spaces)
-                (cond
-                 ((or not-list-p
-                      (and (null num)
-                           (< 0 (length car-name-str))
-                           (or (char= #\( (aref car-name-str 0))
-                               (char= #\: (aref car-name-str 0))
-                               (char= #\" (aref car-name-str 0)))))
-                  (setq num-insert-spaces (+ start-col 1)))
-                 ((and (null num)
-                       (or (eql 0 (search "DEFINE-" car-symbol-name))
-                           (eql 0 (search "WITH-" car-symbol-name))
-                           (eql 0 (search "DO-" car-symbol-name))))
-                  (setq num-insert-spaces (+ start-col 2)))
-                 ((null num)
-                  (setq num-insert-spaces
-                        (or arg-col (+ start-col 1))))
-                 ((< (1- argc) num)
-                  (setq num-insert-spaces (+ start-col 4)))
-                 (t
-                  (setq num-insert-spaces (+ start-col 2))))
-                (let ((n (- num-insert-spaces num-spaces)))
-                  (cond ((plusp n)
-                         (insert-char #\space n))
-                        ((minusp n)
-                         (beginning-of-line)
-                         (delete-char (- n) t)))
-                  (if (< old-column num-spaces)
-                      (back-to-indentation)
-                      (goto-column (+ old-column n)))))))))))
+  (let (num-insert-spaces)
+    (save-excursion
+     (let ((point (progn
+                    (beginning-of-line)
+                    (point))))
+       (when (sexp-goto-car 2000)
+         (let ((start-col (1- (window-cur-col)))
+               (not-list-p (save-excursion
+                            (search-backward "(")
+                            (member (preceding-char) '(#\#)))))
+           (destructuring-bind (car-name-str arg-col)
+               (lisp-looking-at-word)
+             (let* ((car-symbol-name
+                     (string-upcase
+                      (car
+                       (last (split-string car-name-str
+                                           #\:)))))
+                    (argc (%count-sexps point)))
+               (let ((num (gethash (string-downcase car-symbol-name)
+                                   *lisp-indent-table*)))
+                 (point-set point)
+                 (cond
+                  ((or not-list-p
+                       (and (null num)
+                            (< 0 (length car-name-str))
+                            (or (char= #\( (aref car-name-str 0))
+                                (char= #\: (aref car-name-str 0))
+                                (char= #\" (aref car-name-str 0)))))
+                   (setq num-insert-spaces (+ start-col 1)))
+                  ((and (null num)
+                        (or (eql 0 (search "DEFINE-" car-symbol-name))
+                            (eql 0 (search "WITH-" car-symbol-name))
+                            (eql 0 (search "DO-" car-symbol-name))))
+                   (setq num-insert-spaces (+ start-col 2)))
+                  ((null num)
+                   (setq num-insert-spaces
+                         (or arg-col (+ start-col 1))))
+                  ((< (1- argc) num)
+                   (setq num-insert-spaces (+ start-col 4)))
+                  (t
+                   (setq num-insert-spaces (+ start-col 2)))))))))))
+    (when num-insert-spaces
+      (indent-line num-insert-spaces)))
   t)
 
 (define-key *lisp-mode-keymap* (kbd "C-j") 'lisp-newline-and-indent)

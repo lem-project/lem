@@ -2,7 +2,8 @@
 
 (in-package :lem)
 
-(export '(forward-sexp
+(export '(raw-forward-sexp
+          forward-sexp
           backward-sexp
           scan-lists
           forward-list
@@ -271,8 +272,7 @@
           finally (return t))
         (syntax-skip-expr-prefix-backward))))
 
-(define-key *global-keymap* (kbd "M-C-f") 'forward-sexp)
-(define-command forward-sexp (&optional (n 1) no-errors) ("p")
+(defun raw-forward-sexp (n)
   (let ((skip-space
          (if (plusp n)
              #'skip-space-forward
@@ -286,9 +286,20 @@
         (funcall skip-space)
         (unless (funcall skip-sexp)
           (point-set point)
-          (unless no-errors
-            (minibuf-print "scan error"))
           (return nil))))))
+
+(define-key *global-keymap* (kbd "M-C-f") 'forward-sexp)
+(define-command forward-sexp (&optional (n 1) no-errors) ("p")
+  (let* ((f (buffer-get (window-buffer) :forward-sexp-function))
+         (res (if f
+                  (funcall f n)
+                  (raw-forward-sexp n))))
+    (or res
+        (if no-errors
+            nil
+            (progn
+              (minibuf-print "scan error")
+              nil)))))
 
 (define-key *global-keymap* (kbd "M-C-b") 'backward-sexp)
 (define-command backward-sexp (&optional (n 1) no-errors) ("p")

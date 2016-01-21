@@ -64,19 +64,19 @@
   `(progn
      (push ',major-mode *mode-list*)
      (setf (mode-name ',major-mode) ,name)
-     (setf (mode-keymap ',major-mode)
-           ,(or keymap
-                (when parent-mode
-                  (mode-keymap parent-mode))))
+     (when (setf (mode-keymap ',major-mode) ,keymap)
+       ,(when parent-mode
+          `(setf (keymap-parent (mode-keymap ',major-mode))
+                 (mode-keymap ',parent-mode))))
      (setf (mode-syntax-table ',major-mode)
            ,(or syntax-table
                 (when parent-mode
                   (mode-syntax-table parent-mode))
                 `(make-syntax-table)))
      (define-command ,major-mode () ()
+       (buffer-clear-variables (window-buffer))
        ,(when parent-mode `(,parent-mode))
        (setf (major-mode) ',major-mode)
-       (buffer-clear-variables (window-buffer))
        (run-hooks ',(symb major-mode "-HOOK"))
        (prog1 (progn ,@body)
          (syntax-scan-buffer (window-buffer))))))

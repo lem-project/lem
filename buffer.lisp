@@ -38,6 +38,7 @@
 (defstruct (line (:constructor %make-line))
   prev
   fatstr
+  tags
   symbol-tov-list
   region
   next)
@@ -74,6 +75,15 @@
 
 (defun line-contains-attribute (line pos attr)
   (/= 0 (logand attr (line-get-attribute line pos))))
+
+(defun line-add-tag (line start end tag)
+  (when tag
+    (push (list start end tag) (line-tags line))
+    t))
+
+(defun line-clear-tags (line)
+  (setf (line-tags line) nil)
+  t)
 
 (defun line-free (line)
   (when (line-prev line)

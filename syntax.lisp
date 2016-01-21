@@ -58,7 +58,12 @@
     :initarg :attr
     :initform 0
     :reader syntax-attr
-    :type fixnum)))
+    :type fixnum)
+   (tag
+    :initarg :tag
+    :initform nil
+    :reader syntax-tag
+    :type symbol)))
 
 (defclass syntax-region (syntax)
   ((start
@@ -136,19 +141,20 @@
     syntax-table))
 
 (defun syntax-add-match (syntax-table test &key test-symbol end-symbol attr
-                                      matched-symbol (symbol-tov -1))
+                                      matched-symbol (symbol-tov -1) tag)
   (push (make-instance 'syntax-match
                        :test test
                        :test-symbol test-symbol
                        :end-symbol end-symbol
                        :attr attr
                        :matched-symbol matched-symbol
-                       :symbol-tov symbol-tov)
+                       :symbol-tov symbol-tov
+                       :tag tag)
         (syntax-table-elements syntax-table))
   t)
 
-(defun syntax-add-region (syntax-table start end &key attr)
-  (push (make-instance 'syntax-region :start start :end end :attr attr)
+(defun syntax-add-region (syntax-table start end &key attr tag)
+  (push (make-instance 'syntax-region :start start :end end :attr attr :tag tag)
         (syntax-table-elements syntax-table)))
 
 (defun syntax-word-char-p (c)
@@ -271,6 +277,7 @@
                   :key #'car)))
   (when (syntax-attr syntax)
     (line-put-attribute line start end (get-attr (syntax-attr syntax))))
+  (line-add-tag line start end (syntax-tag syntax))
   t)
 
 (defun syntax-position-word-end (str start)
@@ -335,10 +342,13 @@
         (cond (end
                (line-put-attribute line start end
                                    (get-attr (syntax-attr syntax)))
+               (line-add-tag line start end (syntax-tag syntax))
                (return-from syntax-scan-token-test (1- end)))
               (t
                (line-put-attribute line start (length (line-str line))
                                    (get-attr (syntax-attr syntax)))
+               (line-add-tag line start (length (line-str line))
+                             (syntax-tag syntax))
                (setf (line-region line) syntax)
                (return-from syntax-scan-token-test
                  (length (line-str line)))))))))
@@ -385,15 +395,18 @@
       (cond (end
              (setf (line-region line) nil)
              (line-put-attribute line 0 end (get-attr (syntax-attr region)))
+             (line-add-tag line 0 end (syntax-tag region))
              end)
             (t
              (setf (line-region line) region)
              (line-put-attribute line 0 (length (line-str line))
                                  (get-attr (syntax-attr region)))
+             (line-add-tag line 0 (length (line-str line)) (syntax-tag region))
              (length (line-str line)))))))
 
 (defun syntax-scan-line (line)
   (line-clear-attribute line)
+  (line-clear-tags line)
   (let* ((region (syntax-continue-region-p line))
          (start-col (or (syntax-scan-line-region line region) 0))
          (str (line-str line)))

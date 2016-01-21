@@ -23,7 +23,13 @@
           syntax-line-comment-p
           syntax-start-block-comment-p
           syntax-end-block-comment-p
-          syntax-scan-window))
+          syntax-scan-window
+          syntax-after-tag
+          syntax-before-tag
+          syntax-following-tag
+          syntax-preceding-tag
+          syntax-forward-search-tag-end
+          syntax-backward-search-tag-start))
 
 (defvar *syntax-attr-names*
   '(:string-attr
@@ -432,3 +438,78 @@
                  (when (<= i (1- end))
                    (setq i (1- end))))))))
     (setf (line-symbol-tov-list line) *syntax-symbol-tov-list*)))
+
+(defun %syntax-col-tag (col)
+  (let ((line (buffer-get-line (window-buffer) (window-cur-linum))))
+    (when (= 0 col)
+      (unless (setq line (line-prev line))
+        (return-from %syntax-col-tag nil))
+      (setq col (length (line-str line))))
+    (loop :for (start end tag) :in (line-tags line) :do
+      (when (<= start col (1- end))
+        (return tag)))))
+
+(defun syntax-after-tag (&optional (n 1))
+  (save-excursion
+   (next-char n)
+   (%syntax-col-tag (window-cur-col))))
+
+(defun syntax-before-tag (&optional (n 1))
+  (save-excursion
+   (prev-char (1- n))
+   (%syntax-col-tag (window-cur-col))))
+
+(defun syntax-following-tag ()
+  (%syntax-col-tag (1+ (window-cur-col))))
+
+(defun syntax-preceding-tag ()
+  (%syntax-col-tag (window-cur-col)))
+
+(defun syntax-forward-search-tag-end (tag0)
+  (do ((line (buffer-get-line (window-buffer) (window-cur-linum))
+             (line-next line))
+       (linum (window-cur-linum) (1+ linum))
+       (column (window-cur-col) 0)
+       (straddle-p))
+      ((null line))
+    (let ((found-tag-p nil))
+      (loop :with tags := (sort (copy-list (line-tags line)) #'< :key #'car)
+        :for (start end tag) :in tags
+        :do (when (eq tag0 tag)
+              (cond ((= start column)
+                     (when (/= end (line-length line))
+                       (point-set (make-point linum end))
+                       (return-from syntax-forward-search-tag-end t))
+                     (setq straddle-p t)
+                     (setq found-tag-p t)
+                     (return))
+                    (t
+                     (return-from syntax-forward-search-tag-end nil)))))
+      (when (and (not found-tag-p) straddle-p)
+        (point-set (make-point (1- linum) (line-length (line-prev line))))
+        (return t)))))
+
+(defun syntax-backward-search-tag-start (tag0)
+  (do* ((line (buffer-get-line (window-buffer) (window-cur-linum))
+              (line-prev line))
+        (linum (window-cur-linum) (1- linum))
+        (column (window-cur-col)
+                (and (line-p line) (line-length line)))
+        (straddle-p))
+      ((null line))
+    (let ((found-tag-p nil))
+      (loop :with tags := (line-tags line)
+        :for (start end tag) :in tags
+        :do (when (eq tag0 tag)
+              (cond ((= column end)
+                     (when (/= start 0)
+                       (point-set (make-point linum start))
+                       (return-from syntax-backward-search-tag-start t))
+                     (setq straddle-p t)
+                     (setq found-tag-p t)
+                     (return))
+                    (t
+                     (return-from syntax-backward-search-tag-start nil)))))
+      (when (and (not found-tag-p) straddle-p)
+        (point-set (make-point (1+ linum) 0))
+        (return t)))))

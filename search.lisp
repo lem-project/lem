@@ -484,9 +484,17 @@
 (define-command query-replace-symbol () ()
   (query-replace-internal #'search-forward-symbol #'search-backward-symbol))
 
-(defun looking-at-line (regex &key start end)
-  (ppcre:scan regex
-              (buffer-line-string (window-buffer)
-                                  (window-cur-linum))
-              :start start
-              :end end))
+(defun looking-at-line (regex &key (start nil startp) (end nil endp))
+  (macrolet ((m (&rest args)
+                `(ppcre:scan regex
+                             (buffer-line-string (window-buffer)
+                                                 (window-cur-linum))
+                             ,@args)))
+    (cond ((and startp endp)
+           (m :start start :end end))
+          (startp
+           (m :start start))
+          (endp
+           (m :end end))
+          (t
+           (m)))))

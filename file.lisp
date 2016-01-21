@@ -142,8 +142,7 @@
            (buffer-put (window-buffer)
                        :file-property-list
                        (cons (cons (string-downcase var) val)
-                             (buffer-get (window-buffer)
-                                         :file-property-list)))))))
+                             (get-bvar :file-property-list)))))))
 
 (defun scan-file-property-list ()
   (let ((buffer (window-buffer))

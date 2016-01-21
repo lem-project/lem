@@ -398,8 +398,8 @@
 (defun lisp-buffer-package (buffer)
   (let ((package-name
          (cdr (assoc "package"
-                     (buffer-get buffer
-                                 :file-property-list)
+                     (get-bvar :file-property-list
+                               :buffer buffer)
                      :test #'equal))))
     (when package-name
       (string-upcase package-name))))
@@ -412,8 +412,7 @@
   (buffer-put (window-buffer)
               :file-property-list
               (acons "package" (package-name package)
-                     (buffer-get (window-buffer)
-                                 :file-property-list))))
+                     (get-bvar :file-property-list))))
 
 (defun lisp-read-change-package (find-package-function
                                  complete-package-function)

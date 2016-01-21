@@ -73,7 +73,7 @@
       (let ((prev-window *current-window*))
         (setq *current-window* *completion-window*)
         (let ((buffer (window-buffer *completion-window*)))
-          (when (buffer-get buffer :completion-buffer-p)
+          (when (get-bvar :completion-buffer-p :buffer buffer)
             (quit-window)))
         (unless (deleted-window-p prev-window)
           (setq *current-window* prev-window)))

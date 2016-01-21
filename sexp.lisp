@@ -290,7 +290,7 @@
 
 (define-key *global-keymap* (kbd "M-C-f") 'forward-sexp)
 (define-command forward-sexp (&optional (n 1) no-errors) ("p")
-  (let* ((f (buffer-get (window-buffer) :forward-sexp-function))
+  (let* ((f (get-bvar :forward-sexp-function))
          (res (if f
                   (funcall f n)
                   (raw-forward-sexp n))))

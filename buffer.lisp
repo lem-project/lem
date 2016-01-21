@@ -31,7 +31,7 @@
           buffer-erase
           buffer-directory
           buffer-undo-boundary
-          buffer-get
+          get-bvar
           buffer-put
           buffer-clear-variables))
 
@@ -755,12 +755,10 @@
 (defun buffer-undo-boundary (&optional (buffer (window-buffer)))
   (push :separator (buffer-undo-stack buffer)))
 
-(defun buffer-get (buffer indicator &optional default)
-  (multiple-value-bind (value win)
-      (gethash indicator (buffer-variables buffer))
-    (if win
-        value
-        default)))
+(defun get-bvar (name &key (buffer (window-buffer)) default)
+  (multiple-value-bind (value foundp)
+      (gethash name (buffer-variables buffer))
+    (if foundp value default)))
 
 (defun buffer-put (buffer indicator value)
   (setf (gethash indicator (buffer-variables buffer)) value))

@@ -74,8 +74,8 @@
 
 (define-key *global-keymap* (kbd "M-y") 'yank-pop)
 (define-command yank-pop (&optional n) ("p")
-  (let ((start (buffer-get (window-buffer) :yank-start))
-        (end (buffer-get (window-buffer) :yank-end))
+  (let ((start (get-bvar :yank-start))
+        (end (get-bvar :yank-end))
         prev-yank-p)
     (when-continue-flag :yank (setq prev-yank-p t))
     (cond ((and start end prev-yank-p)

@@ -595,7 +595,7 @@
             (back-to-indentation)
             (region-string point (point))))
          (new-indent-string
-          (if (buffer-get (window-buffer) :indent-tabs-mode t)
+          (if (get-bvar :indent-tabs-mode :default t)
               (multiple-value-bind (div mod)
                   (floor column *tab-size*)
                 (concatenate 'string

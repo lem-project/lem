@@ -22,7 +22,7 @@
   (eq :symbolic-link (osicat:file-kind (cl-fad:pathname-as-file pathname))))
 
 (defun goto-start-line ()
-  (goto-line (buffer-get (window-buffer) :start-linum)))
+  (goto-line (get-bvar :start-linum)))
 
 (defun date (universal-time)
   (multiple-value-bind (second minute hour date month year day daylight-p zone)
@@ -36,7 +36,7 @@
 (defun update ()
   (with-buffer-read-only (window-buffer) nil
     (erase-buffer)
-    (let ((dirname (buffer-get (window-buffer) :dirname))
+    (let ((dirname (get-bvar :dirname))
           (files))
       (insert-string (namestring dirname))
       (insert-newline 2)
@@ -93,8 +93,8 @@
 
 (defun get-file ()
   (let ((n (- (window-cur-linum)
-              (1- (buffer-get (window-buffer) :start-linum))))
-        (files (buffer-get (window-buffer) :dired-files)))
+              (1- (get-bvar :start-linum))))
+        (files (get-bvar :dired-files)))
     (when (<= 1 n (length files))
       (aref files (1- n)))))
 
@@ -122,7 +122,7 @@
   (dired-find-directory
    (namestring
     (cl-fad:pathname-parent-directory
-     (buffer-get (window-buffer) :dirname)))))
+     (get-bvar :dirname)))))
 
 (defun change-flag (char)
   (when (get-file)

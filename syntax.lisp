@@ -240,13 +240,13 @@
 
 (defun syntax-scan-window (window)
   (when (and *enable-syntax-highlight*
-             (buffer-get (window-buffer window) :enable-syntax-highlight))
+             (get-bvar :enable-syntax-highlight :buffer (window-buffer window)))
     (with-window-range (start-linum end-linum) window
       (syntax-scan-lines window start-linum end-linum))))
 
 (defun syntax-scan-lines (window start-linum end-linum)
   (when (and *enable-syntax-highlight*
-             (buffer-get (window-buffer window) :enable-syntax-highlight))
+             (get-bvar :enable-syntax-highlight :buffer (window-buffer window)))
     (let* ((buffer (window-buffer window))
            (line (buffer-get-line buffer start-linum))
            (prev (line-prev line))
@@ -259,7 +259,7 @@
 
 (defun syntax-scan-buffer (buffer)
   (when (and *enable-syntax-highlight*
-             (buffer-get buffer :enable-syntax-highlight))
+             (get-bvar :enable-syntax-highlight :buffer buffer))
     (map-buffer #'(lambda (line linum)
                     (declare (ignore linum))
                     (syntax-scan-line line))

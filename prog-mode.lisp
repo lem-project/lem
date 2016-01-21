@@ -18,7 +18,7 @@
 
 (define-key *prog-mode-keymap* (kbd "C-i") 'prog-indent-line)
 (define-command prog-indent-line () ()
-  (let* ((f (buffer-get (window-buffer) :calc-indent-function))
+  (let* ((f (get-bvar :calc-indent-function))
          (n (and f (funcall f))))
     (if n
         (indent-line n)

@@ -356,9 +356,9 @@
          (ncols (window-ncols window))
          (str (with-output-to-string (out)
                 (dolist (x
-                         (buffer-get (window-buffer window)
-                                     :modeline-format
-                                     *modeline-default-format*))
+                         (get-bvar :modeline-format
+                                   :buffer (window-buffer window)
+                                   :default *modeline-default-format*))
                   (if (or (symbolp x) (functionp x))
                       (princ (funcall x window) out)
                       (princ x out))))))

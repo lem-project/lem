@@ -135,12 +135,6 @@
                            :attr :comment-attr)))
     syntax-table))
 
-(defun %syntax-push (list x)
-  (cons x list))
-
-(defun %syntax-append (list x)
-  (append list (list x)))
-
 (defun syntax-add-match (syntax-table test &key test-symbol end-symbol attr
                                       matched-symbol (symbol-tov -1))
   (push (make-instance 'syntax-match

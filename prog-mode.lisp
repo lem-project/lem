@@ -27,3 +27,10 @@
 (define-command prog-newline-and-indent (n) ("p")
   (insert-newline n)
   (prog-indent-line))
+
+(define-key *prog-mode-keymap* (kbd "C-M-\\") 'prog-indent-region)
+(define-command prog-indent-region () ()
+  (save-excursion
+   (apply-region-lines (region-beginning)
+                       (region-end)
+                       'prog-indent-line)))

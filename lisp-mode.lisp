@@ -7,7 +7,6 @@
           *lisp-syntax-table*
           lisp-mode
           lisp-newline-and-indent
-          lisp-indent-region
           lisp-indent-sexp
           lisp-beginning-of-defun
           lisp-end-of-defun
@@ -365,17 +364,10 @@
                    (setq num-insert-spaces (+ start-col 2)))))))))))
     num-insert-spaces))
 
-(define-command lisp-indent-region () ()
-  (save-excursion
-   (apply-region-lines (region-beginning)
-                       (region-end)
-                       'prog-indent-line)
-   t))
-
 (define-key *lisp-mode-keymap* (kbd "M-C-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()
   (mark-sexp)
-  (lisp-indent-region))
+  (prog-indent-region))
 
 (define-key *global-keymap* (kbd "M-C-a") 'lisp-beginning-of-defun)
 (define-command lisp-beginning-of-defun (&optional (n 1)) ("p")

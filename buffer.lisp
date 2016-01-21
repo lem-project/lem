@@ -759,9 +759,9 @@
       (gethash name (buffer-variables buffer))
     (if foundp value default)))
 
-(defun (setf buffer-get) (value name &key (buffer (window-buffer)) default)
+(defun (setf get-bvar) (value name &key (buffer (window-buffer)) default)
   (declare (ignore default))
-  (setf (gethash indicator (buffer-variables buffer)) value))
+  (setf (gethash name (buffer-variables buffer)) value))
 
 (defun clear-buffer-variables (&key (buffer (window-buffer)))
   (clrhash (buffer-variables buffer)))

@@ -249,21 +249,17 @@
   (:name "lisp"
    :keymap *lisp-mode-keymap*
    :syntax-table *lisp-syntax-table*)
-  (buffer-put (window-buffer)
-              :enable-syntax-highlight t)
-  (buffer-put (window-buffer)
-              :indent-tabs-mode nil)
-  (buffer-put (window-buffer)
-              :modeline-format
-              (append *modeline-default-format*
-                      (list
-                       " "
-                       (lambda (window)
-                         (package-name (lisp-current-package
-                                        (window-buffer window)))))))
-  (buffer-put (window-buffer)
-              :calc-indent-function
-              'lisp-calc-indent))
+  (setf (get-bvar :enable-syntax-highlight) t)
+  (setf (get-bvar :indent-tabs-mode) nil)
+  (setf (get-bvar :modeline-format)
+        (append *modeline-default-format*
+                (list
+                 " "
+                 (lambda (window)
+                   (package-name (lisp-current-package
+                                  (window-buffer window)))))))
+  (setf (get-bvar :calc-indent-function)
+        'lisp-calc-indent))
 
 (defun %lisp-mode-skip-expr-prefix (c1 c2 step-arg)
   (when c1
@@ -409,10 +405,9 @@
       (find-package "COMMON-LISP-USER")))
 
 (defun lisp-change-package (package)
-  (buffer-put (window-buffer)
-              :file-property-list
-              (acons "package" (package-name package)
-                     (get-bvar :file-property-list))))
+  (setf (get-bvar :file-property-list)
+        (acons "package" (package-name package)
+               (get-bvar :file-property-list))))
 
 (defun lisp-read-change-package (find-package-function
                                  complete-package-function)
@@ -972,8 +967,7 @@
 (define-major-mode lisp-repl-mode lisp-mode
   (:name "lisp-repl"
    :keymap *lisp-repl-mode-keymap*)
-  (buffer-put (window-buffer)
-              :enable-syntax-highlight nil)
+  (setf (get-bvar :enable-syntax-highlight) nil)
   (unless *lisp-repl-history*
     (setq *lisp-repl-history* (make-history))))
 

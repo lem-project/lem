@@ -89,15 +89,14 @@
   (:name "leval"
    :keymap *leval-mode-keymap*
    :syntax-table *lisp-syntax-table*)
-  (buffer-put (window-buffer)
-              :modeline-format
-              (append *modeline-default-format*
-                      (list
-                       " "
-                       (lambda (window)
-                         (leval-current-package
-                          (window-buffer window)
-                          nil))))))
+  (setf (get-bvar :modeline-format)
+        (append *modeline-default-format*
+                (list
+                 " "
+                 (lambda (window)
+                   (leval-current-package
+                    (window-buffer window)
+                    nil))))))
 
 (defun leval-connect-internal (hostname port)
   (handler-case

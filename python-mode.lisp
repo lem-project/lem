@@ -18,7 +18,7 @@
   (:name "python"
    :keymap *python-mode-keymap*
    :syntax-table *python-syntax-table*)
-  (buffer-put (window-buffer) :enable-syntax-highlight t))
+  (setf (get-bvar :enable-syntax-highlight) t))
 
 (loop :for (str symbol) :in '(("\"\"\"" :start-double-quote-docstring)
                               ("'''" :start-single-quote-docstring)) :do

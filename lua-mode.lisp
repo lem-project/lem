@@ -22,9 +22,9 @@
   (:name "lua"
    :keymap *lua-mode-keymap*
    :syntax-table *lua-syntax-table*)
-  (buffer-put (window-buffer) :enable-syntax-highlight t)
-  (buffer-put (window-buffer) :calc-indent-function 'lua-calc-indent)
-  (buffer-put (window-buffer) :forward-sexp-function 'lua-forward-sexp))
+  (setf (get-bvar :enable-syntax-highlight) t)
+  (setf (get-bvar :calc-indent-function) 'lua-calc-indent)
+  (setf (get-bvar :forward-sexp-function) 'lua-forward-sexp))
 
 (dolist (str '("and" "break" "do" "else" "elseif" "end" "false" "for"
                "goto" "if" "in" "local" "nil" "not" "or"

@@ -32,7 +32,6 @@
           buffer-directory
           buffer-undo-boundary
           get-bvar
-          buffer-put
           buffer-clear-variables))
 
 (defstruct (line (:constructor %make-line))
@@ -760,7 +759,8 @@
       (gethash name (buffer-variables buffer))
     (if foundp value default)))
 
-(defun buffer-put (buffer indicator value)
+(defun (setf buffer-get) (value name &key (buffer (window-buffer)) default)
+  (declare (ignore default))
   (setf (gethash indicator (buffer-variables buffer)) value))
 
 (defun buffer-clear-variables (buffer)

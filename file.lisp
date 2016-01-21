@@ -139,10 +139,9 @@
              (when mode
                (funcall mode))))
           (t
-           (buffer-put (window-buffer)
-                       :file-property-list
-                       (cons (cons (string-downcase var) val)
-                             (get-bvar :file-property-list)))))))
+           (setf (get-bvar :file-property-list)
+                 (cons (cons (string-downcase var) val)
+                       (get-bvar :file-property-list)))))))
 
 (defun scan-file-property-list ()
   (let ((buffer (window-buffer))

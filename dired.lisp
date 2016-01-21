@@ -40,7 +40,7 @@
           (files))
       (insert-string (namestring dirname))
       (insert-newline 2)
-      (buffer-put (window-buffer) :start-linum (window-cur-linum))
+      (setf (get-bvar :start-linum) (window-cur-linum))
       (dolist (file (cl-fad:list-directory dirname :follow-symlinks nil))
         (push file files)
         (let ((filename (enough-namestring file dirname))
@@ -61,9 +61,8 @@
                      (format nil "~10d" (file-length in)))
                    (date (file-write-date file))
                    filename))))
-      (buffer-put (window-buffer)
-                  :dired-files
-                  (apply #'vector (reverse files))))
+      (setf (get-bvar :dired-files)
+            (apply #'vector (reverse files))))
     (goto-start-line)))
 
 (defun dired-find-directory (dirname)
@@ -72,7 +71,7 @@
           (format nil "~a" dirname))))
     (set-buffer buffer)
     (dired-mode)
-    (buffer-put (window-buffer) :dirname dirname)
+    (setf (get-bvar :dirname) dirname)
     (setf (buffer-read-only-p buffer) t)
     (update)))
 

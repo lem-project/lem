@@ -58,7 +58,7 @@
                      (setf (window-delete-hook *completion-window*)
                            #'(lambda ()
                                (setq *completion-window* nil)))
-                     (buffer-put buffer :completion-buffer-p t)))
+                     (setf (get-bvar :completion-buffer-p :buffer buffer) t)))
                   (t
                    (delete-completion-window)))
             (window-update-all)

@@ -74,7 +74,7 @@
             (backward-delete-char *python-indent-size* t)))))))
 
 (defun python-definition-line-p ()
-  (looking-at "^\\s*(def|class)\\s"))
+  (looking-at-line "^\\s*(def|class)\\s"))
 
 (define-key *python-mode-keymap* (kbd "C-M-a") 'python-beginning-of-defun)
 (define-command python-beginning-of-defun (n) ("p")

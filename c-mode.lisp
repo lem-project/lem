@@ -58,15 +58,15 @@
   (beginning-of-defun-abstract
    n
    #'(lambda ()
-       (or (looking-at "^{")
-           (looking-at "^\\S[^{]*{"))))
-  (when (looking-at "^{")
+       (or (looking-at-line "^{")
+           (looking-at-line "^\\S[^{]*{"))))
+  (when (looking-at-line "^{")
     (prev-line 1))
   t)
 
 (define-key *c-mode-keymap* (kbd "C-M-e") 'c-end-of-defun)
 (define-command c-end-of-defun (n) ("p")
-  (beginning-of-defun-abstract (- n) #'(lambda () (looking-at "^}")))
+  (beginning-of-defun-abstract (- n) #'(lambda () (looking-at-line "^}")))
   (next-line 1))
 
 (setq *auto-mode-alist*

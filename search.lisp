@@ -28,7 +28,7 @@
           query-replace
           query-replace-regexp
           query-replace-symbol
-          looking-at))
+          looking-at-line))
 
 (defvar *isearch-keymap* (make-keymap 'isearch-self-insert))
 (defvar *isearch-prompt*)
@@ -484,7 +484,9 @@
 (define-command query-replace-symbol () ()
   (query-replace-internal #'search-forward-symbol #'search-backward-symbol))
 
-(defun looking-at (regex)
+(defun looking-at-line (regex &key start end)
   (ppcre:scan regex
               (buffer-line-string (window-buffer)
-                                  (window-cur-linum))))
+                                  (window-cur-linum))
+              :start start
+              :end end))

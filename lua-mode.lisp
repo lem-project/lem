@@ -105,7 +105,7 @@
         (return nil)))))
 
 (defun lua-definition-line-p ()
-  (looking-at "^(function|local)\\s"))
+  (looking-at-line "^(function|local)\\s"))
 
 (define-key *lua-mode-keymap* (kbd "C-M-a") 'lua-beginning-of-defun)
 (define-command lua-beginning-of-defun (n) ("p")
@@ -151,7 +151,7 @@
            ((unfinished-line-p)
             (loop :repeat 100 :while (backward-sexp 1 t))
             (current-column))
-           ((looking-at ".*?;\\s*$")
+           ((looking-at-line ".*?;\\s*$")
             (back-to-indentation)
             (current-column))
            ((or (contains-word-p "do" "then" "else")

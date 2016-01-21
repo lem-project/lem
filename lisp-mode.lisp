@@ -373,7 +373,7 @@
 
 (define-key *global-keymap* (kbd "M-C-a") 'lisp-beginning-of-defun)
 (define-command lisp-beginning-of-defun (&optional (n 1)) ("p")
-  (beginning-of-defun-abstract n #'(lambda () (looking-at "^\\("))))
+  (beginning-of-defun-abstract n #'(lambda () (looking-at-line "^\\("))))
 
 (define-key *global-keymap* (kbd "M-C-e") 'lisp-end-of-defun)
 (define-command lisp-end-of-defun (&optional (n 1)) ("p")

@@ -74,7 +74,7 @@
                   (mode-syntax-table parent-mode))
                 `(make-syntax-table)))
      (define-command ,major-mode () ()
-       (buffer-clear-variables (window-buffer))
+       (clear-buffer-variables)
        ,(when parent-mode `(,parent-mode))
        (setf (major-mode) ',major-mode)
        (run-hooks ',(symb major-mode "-HOOK"))

@@ -326,6 +326,8 @@
      (let ((point (progn
                     (beginning-of-line)
                     (point))))
+       (when (save-excursion (and (backward-sexp 1 t) (bolp)))
+         (return-from lisp-calc-indent 0))
        (when (sexp-goto-car 2000)
          (let ((start-col (1- (window-cur-col)))
                (not-list-p (save-excursion

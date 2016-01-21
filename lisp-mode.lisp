@@ -6,7 +6,6 @@
           *lisp-mode-keymap*
           *lisp-syntax-table*
           lisp-mode
-          lisp-indent-line
           lisp-newline-and-indent
           lisp-indent-region
           lisp-indent-sexp
@@ -247,7 +246,7 @@
                                     :regex-p t :word-p t)
                   :attr :constant-attr)
 
-(define-major-mode lisp-mode nil
+(define-major-mode lisp-mode prog-mode
   (:name "lisp"
    :keymap *lisp-mode-keymap*
    :syntax-table *lisp-syntax-table*)
@@ -262,7 +261,10 @@
                        " "
                        (lambda (window)
                          (package-name (lisp-current-package
-                                        (window-buffer window))))))))
+                                        (window-buffer window)))))))
+  (buffer-put (window-buffer)
+              :calc-indent-function
+              'lisp-calc-indent))
 
 (defun %lisp-mode-skip-expr-prefix (c1 c2 step-arg)
   (when c1
@@ -319,8 +321,7 @@
            (point< goal (point)))
        count)))
 
-(define-key *lisp-mode-keymap* (kbd "C-i") 'lisp-indent-line)
-(define-command lisp-indent-line () ()
+(defun lisp-calc-indent ()
   (let (num-insert-spaces)
     (save-excursion
      (let ((point (progn
@@ -362,21 +363,13 @@
                    (setq num-insert-spaces (+ start-col 4)))
                   (t
                    (setq num-insert-spaces (+ start-col 2)))))))))))
-    (when num-insert-spaces
-      (indent-line num-insert-spaces)))
-  t)
-
-(define-key *lisp-mode-keymap* (kbd "C-j") 'lisp-newline-and-indent)
-(define-key *lisp-mode-keymap* (kbd "M-j") 'lisp-newline-and-indent)
-(define-command lisp-newline-and-indent (n) ("p")
-  (insert-newline n)
-  (lisp-indent-line))
+    num-insert-spaces))
 
 (define-command lisp-indent-region () ()
   (save-excursion
    (apply-region-lines (region-beginning)
                        (region-end)
-                       'lisp-indent-line)
+                       'prog-indent-line)
    t))
 
 (define-key *lisp-mode-keymap* (kbd "M-C-q") 'lisp-indent-sexp)
@@ -978,16 +971,16 @@
          (when (buffer-modified-p output-buffer)
            (lisp-info-popup output-buffer nil nil))))))
 
-(defvar *lisp-repl-mode-keymap*
-  (make-keymap nil *lisp-mode-keymap*))
+(defvar *lisp-repl-mode-keymap* (make-keymap))
 
 (defvar *lisp-repl-history* nil)
 (defvar *lisp-repl-prompt-marker* nil)
 
-(define-major-mode lisp-repl-mode nil
+(define-major-mode lisp-repl-mode lisp-mode
   (:name "lisp-repl"
-   :keymap *lisp-repl-mode-keymap*
-   :syntax-table *lisp-syntax-table*)
+   :keymap *lisp-repl-mode-keymap*)
+  (buffer-put (window-buffer)
+              :enable-syntax-highlight nil)
   (unless *lisp-repl-history*
     (setq *lisp-repl-history* (make-history))))
 

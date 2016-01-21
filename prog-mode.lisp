@@ -4,7 +4,9 @@
 
 (export '(*prog-mode-keymap*
           prog-mode
-          prog-indent-line))
+          prog-indent-line
+          prog-newline-and-indent
+          prog-indent-region))
 
 (defvar *prog-mode-keymap* (make-keymap))
 

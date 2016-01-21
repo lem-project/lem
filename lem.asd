@@ -45,6 +45,7 @@
                         (:file "lisp-mode")
                         (:file "c-mode")
                         (:file "python-mode")
+                        (:file "lua-mode")
                         (:file "dired")
                         (:file "lem"))
            :depends-on (:cl-charms

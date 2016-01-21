@@ -13,7 +13,6 @@
    :space-chars '(#\space #\tab #\newline)
    :symbol-chars '(#\_)
    :paren-alist '((#\( . #\))
-                  (#\[ . #\])
                   (#\{ . #\}))
    :string-quote-chars '(#\" #\')
    :line-comment-preceding-char #\-
@@ -24,7 +23,8 @@
    :keymap *lua-mode-keymap*
    :syntax-table *lua-syntax-table*)
   (buffer-put (window-buffer) :enable-syntax-highlight t)
-  (buffer-put (window-buffer) :calc-indent-function 'lua-calc-indent))
+  (buffer-put (window-buffer) :calc-indent-function 'lua-calc-indent)
+  (buffer-put (window-buffer) :forward-sexp-function 'lua-forward-sexp))
 
 (dolist (str '("and" "break" "do" "else" "elseif" "end" "false" "for"
                "goto" "if" "in" "local" "nil" "not" "or"
@@ -52,7 +52,8 @@
   (syntax-add-region *lua-syntax-table*
                      (make-syntax-test str1)
                      (make-syntax-test str2)
-                     :attr :string-attr))
+                     :attr :string-attr
+                     :tag :long-string))
 
 (loop
   :for n :from 0 :to 10
@@ -62,7 +63,46 @@
   (syntax-add-region *lua-syntax-table*
                      (make-syntax-test str1)
                      (make-syntax-test str2)
-                     :attr :comment-attr))
+                     :attr :comment-attr
+                     :tag :comment))
+
+(defun skip-space-forward ()
+  (loop
+    (skip-chars-forward '(#\space #\tab #\newline))
+    (unless (and (not (eq :comment (syntax-preceding-tag)))
+                 (eq :comment (syntax-following-tag))
+                 (syntax-forward-search-tag-end :comment))
+      (return t))))
+
+(defun skip-space-backward ()
+  (loop
+    (skip-chars-backward '(#\space #\tab #\newline))
+    (unless (and (not (eq :comment (syntax-before-tag 1)))
+                 (eq :comment (syntax-before-tag 2))
+                 (syntax-backward-search-tag-start :comment))
+      (return t))))
+
+(defun lua-forward-sexp-1 (n)
+  (cond ((and (= n 1)
+              (not (eq :long-string (syntax-preceding-tag)))
+              (eq :long-string (syntax-following-tag)))
+         (syntax-forward-search-tag-end :long-string))
+        ((and (= n -1)
+              (not (eq :long-string (syntax-before-tag 1)))
+              (eq :long-string (syntax-before-tag 2)))
+         (syntax-backward-search-tag-start :long-string))
+        (t
+         (raw-forward-sexp n))))
+
+(defun lua-forward-sexp (n)
+  (let ((point (point)))
+    (dotimes (_ (abs n) t)
+      (unless (and (if (plusp n)
+                       (skip-space-forward)
+                       (skip-space-backward))
+                   (lua-forward-sexp-1 (if (plusp n) 1 -1)))
+        (point-set point)
+        (return nil)))))
 
 (defun lua-definition-line-p ()
   (looking-at "^(function|local)\\s"))

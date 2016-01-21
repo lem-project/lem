@@ -120,13 +120,9 @@
 
 (defun unfinished-line-p ()
   (save-excursion
-   (let ((max-point (progn (end-of-line) (point))))
-     (beginning-of-line)
-     (loop
-       (unless (forward-sexp 1 t)
-         (return t))
-       (when (point<= max-point (point))
-         (return nil))))))
+   (end-of-line)
+   (skip-chars-backward '(#\space #\tab))
+   (eql #\, (preceding-char))))
 
 (defun scan-line ()
   (let ((string (region-string (progn (beginning-of-line) (point))
@@ -148,13 +144,12 @@
   (let ((end-line-p (or (contains-word-p "end" "else"))))
     (save-excursion
      (beginning-of-line)
-     (cond ((not (skip-backward-comment-and-space))
-            0)
-           (end-line-p
+     (skip-backward-comment-and-space)
+     (cond (end-line-p
             (back-to-indentation)
             (- (current-column) 8))
            ((unfinished-line-p)
-            (loop :while (backward-sexp 1 t))
+            (loop :repeat 100 :while (backward-sexp 1 t))
             (current-column))
            ((looking-at ".*?;\\s*$")
             (back-to-indentation)

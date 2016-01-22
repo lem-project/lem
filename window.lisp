@@ -881,7 +881,7 @@
     window))
 
 (define-command quit-window (&optional window kill-buffer-p) ("P")
-  (unless window
+  (unless (window-p window)
     (setq window *current-window*))
   (cond
    ((window-parameter window :split-p)

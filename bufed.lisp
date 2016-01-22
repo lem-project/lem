@@ -586,15 +586,11 @@
 
 (defun indent-line (column)
   (when (minusp column) (setq column 0))
-  (let* ((indented-column)
-         (old-column
-          (current-column))
+  (let* ((old-column (current-column))
          (old-indent-string
-          (let ((point (progn
-                         (beginning-of-line)
-                         (point))))
-            (back-to-indentation)
-            (region-string point (point))))
+          (save-excursion
+           (region-string (progn (beginning-of-line) (point))
+                          (progn (back-to-indentation) (point)))))
          (new-indent-string
           (if (get-bvar :indent-tabs-mode :default t)
               (multiple-value-bind (div mod)
@@ -603,19 +599,19 @@
                              (make-string div :initial-element #\tab)
                              (make-string mod :initial-element #\space)))
               (make-string column :initial-element #\space))))
-    (when (string/= old-indent-string new-indent-string)
-      (beginning-of-line)
-      (delete-char (length old-indent-string) t)
-      (insert-string new-indent-string)
-      (setq indented-column
-            (+ old-column
-               (- (str-width new-indent-string)
-                  (str-width old-indent-string)))))
-    (back-to-indentation)
-    (when (and indented-column
-               (< (current-column) indented-column))
-      (move-to-column indented-column)))
-  t)
+    (cond ((string/= old-indent-string new-indent-string)
+           (beginning-of-line)
+           (delete-char (length old-indent-string) t)
+           (insert-string new-indent-string)
+           (if (< old-column column)
+               (back-to-indentation)
+               (move-to-column
+                (+ old-column
+                   (- (str-width new-indent-string)
+                      (str-width old-indent-string))))))
+          ((< old-column column)
+           (back-to-indentation)))
+    t))
 
 (define-key *global-keymap* (kbd "C-\\") 'undo)
 (define-command undo () ()

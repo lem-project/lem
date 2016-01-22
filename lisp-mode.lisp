@@ -479,6 +479,7 @@
 
 (defun lambda-interrupting-thread (main-thread)
   (lambda ()
+    ;#+sbcl
     (ignore-errors
      (loop :for c := (charms/ll:getch) :do
        (cond ((= c -1))
@@ -493,12 +494,14 @@
 (defun make-interrupting-thread ()
   (unless *getch-wait-p*
     (setq *getch-wait-p* t)
+    #+sbcl
     (setq *interrupting-thread*
           (bt:make-thread *interrupting-thread-function*))))
 
 (defun delete-interrupting-thread ()
   (when *getch-wait-p*
     (setq *getch-wait-p* nil)
+    #+sbcl
     (bt:interrupt-thread *interrupting-thread*
                          #'(lambda () (error "error")))))
 

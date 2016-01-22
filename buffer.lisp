@@ -723,12 +723,12 @@
 (defun buffer-undo (buffer)
   (loop while (eq :separator (car (buffer-undo-stack buffer)))
     do (pop (buffer-undo-stack buffer)))
+  (push :separator (buffer-redo-stack buffer))
   (prog1 (do ((res #1=(buffer-undo-1 buffer) #1#)
               (pres nil res))
              ((not res)
               (when pres
                 (decf (buffer-undo-node buffer))
-                (push :separator (buffer-redo-stack buffer))
                 (buffer-undo-modified buffer))
               pres))))
 
@@ -742,12 +742,12 @@
 (defun buffer-redo (buffer)
   (loop while (eq :separator (car (buffer-redo-stack buffer)))
     do (pop (buffer-redo-stack buffer)))
+  (push :separator (buffer-undo-stack buffer))
   (prog1 (do ((res #1=(buffer-redo-1 buffer) #1#)
               (pres nil res))
              ((not res)
               (when pres
                 (incf (buffer-undo-node buffer))
-                (push :separator (buffer-undo-stack buffer))
                 (buffer-undo-modified buffer))
               pres))))
 

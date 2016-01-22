@@ -479,7 +479,7 @@
 
 (defun lambda-interrupting-thread (main-thread)
   (lambda ()
-    ;#+sbcl
+    #+sbcl
     (ignore-errors
      (loop :for c := (charms/ll:getch) :do
        (cond ((= c -1))

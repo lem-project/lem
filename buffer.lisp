@@ -721,8 +721,6 @@
           (funcall elt))))))
 
 (defun buffer-undo (buffer)
-  (loop while (eq :separator (car (buffer-undo-stack buffer)))
-    do (pop (buffer-undo-stack buffer)))
   (push :separator (buffer-redo-stack buffer))
   (prog1 (do ((res #1=(buffer-undo-1 buffer) #1#)
               (pres nil res))
@@ -731,6 +729,8 @@
                      (decf (buffer-undo-node buffer))
                      (buffer-undo-modified buffer))
                     (t
+                     (assert (eq :separator (car (buffer-redo-stack buffer))))
+                     (pop (buffer-redo-stack buffer))
                      (minibuf-print "Undo Error")))
               pres))))
 
@@ -742,8 +742,6 @@
           (funcall elt))))))
 
 (defun buffer-redo (buffer)
-  (loop while (eq :separator (car (buffer-redo-stack buffer)))
-    do (pop (buffer-redo-stack buffer)))
   (push :separator (buffer-undo-stack buffer))
   (prog1 (do ((res #1=(buffer-redo-1 buffer) #1#)
               (pres nil res))
@@ -752,6 +750,8 @@
                      (incf (buffer-undo-node buffer))
                      (buffer-undo-modified buffer))
                     (t
+                     (assert (eq :separator (car (buffer-undo-stack buffer))))
+                     (pop (buffer-undo-stack buffer))
                      (minibuf-print "Redo Error")))
               pres))))
 

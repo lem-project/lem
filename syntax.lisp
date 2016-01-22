@@ -64,7 +64,7 @@
     :initarg :attr
     :initform 0
     :reader syntax-attr
-    :type fixnum)
+    :type symbol)
    (tag
     :initarg :tag
     :initform nil

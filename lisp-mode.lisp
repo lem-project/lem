@@ -474,7 +474,34 @@
       (store-value x condition)
       (return))))
 
+(defvar *interrupting-thread*)
+(defvar *interrupting-thread-function*)
+
+(defun lambda-interrupting-thread (main-thread)
+  (lambda ()
+    (ignore-errors
+     (loop :for c := (charms/ll:getch) :do
+       (cond ((= c -1))
+             ((eql c (char-code C-c))
+              (bt:interrupt-thread
+               main-thread
+               #'(lambda ()
+                   (error "interrupt"))))
+             (t
+              (ungetch (code-char c))))))))
+
+(defun make-interrupting-thread ()
+  (setq *getch-wait-p* t)
+  (setq *interrupting-thread*
+        (bt:make-thread *interrupting-thread-function*)))
+
+(defun delete-interrupting-thread ()
+  (setq *getch-wait-p* nil)
+  (bt:interrupt-thread *interrupting-thread*
+                       #'(lambda () (error "error"))))
+
 (defun lisp-debugger (condition)
+  (delete-interrupting-thread)
   (let* ((choices (compute-restarts condition))
          (n (length choices)))
     (lisp-info-popup (get-buffer-create "*error*")
@@ -494,19 +521,22 @@
         (cond ((eq str 'abort))
               ((and i (<= 1 i n))
                (let ((restart (nth (1- i) choices)))
+                 (make-interrupting-thread)
                  (cond ((eq 'store-value (restart-name restart))
                         (ldebug-store-value condition))
-                       (t (invoke-restart-interactively restart))))
+                       (t
+                        (invoke-restart-interactively restart))))
                (return))
               (t
+               (make-interrupting-thread)
                (let ((x
                       (handler-case (eval (read-from-string str nil))
-                        (error (cdt)
-                               (format nil "~a" cdt)))))
+                        (error (cdt) (format nil "~a" cdt)))))
                  (info-popup (get-buffer-create "*output*")
                              #'(lambda (out)
                                  (princ x out))
-                             nil)))))))
+                             nil))
+               (delete-interrupting-thread))))))
   condition)
 
 (defun eval-string-internal (string output-buffer point
@@ -541,29 +571,17 @@
                            &optional
                            update-point-p (package "COMMON-LISP-USER"))
   (unless point (setq point (point-min)))
-  (setq *getch-wait-p* t)
   (let* ((main-thread (bt:current-thread))
-         (input-thread
-          (bt:make-thread #'(lambda ()
-                              (ignore-errors
-                               (loop :for c := (charms/ll:getch) :do
-                                 (cond ((= c -1))
-                                       ((eql c (char-code C-c))
-                                        (bt:interrupt-thread
-                                         main-thread
-                                         #'(lambda ()
-                                             (error "interrupt"))))
-                                       (t
-                                        (ungetch (code-char c))))))))))
+         (*interrupting-thread-function*
+          (lambda-interrupting-thread main-thread)))
+    (make-interrupting-thread)
     (multiple-value-bind (results error-p)
         (eval-string-internal string
                               output-buffer
                               point
                               update-point-p
                               package)
-      (bt:interrupt-thread input-thread
-                           #'(lambda () (error "error")))
-      (setq *getch-wait-p* nil)
+      (delete-interrupting-thread)
       (values results error-p))))
 
 (define-key *lisp-mode-keymap* (kbd "M-:") 'lisp-eval-string)
@@ -700,7 +718,6 @@
                          #'(lambda (out)
                              (princ str out))
                          nil)))))
-
 
 #+sbcl
 (progn

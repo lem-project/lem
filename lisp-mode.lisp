@@ -946,7 +946,7 @@
       (pprint v out))
     (point-set (buffer-output-stream-point out))))
 
-(define-key *lisp-mode-keymap* (kbd "C-M-j") 'lisp-eval-print-last-sexp)
+(define-key *lisp-mode-keymap* (kbd "C-x C-M-j") 'lisp-eval-print-last-sexp)
 (define-command lisp-eval-print-last-sexp () ()
   (lisp-move-and-eval-sexp
    #'backward-sexp

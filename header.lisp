@@ -152,6 +152,7 @@
          (unless (deleted-window-p ,gprev-window)
            (select-window ,gprev-window))))))
 
+#+sbcl
 (defmacro with-profile (&body body)
   `(progn
      (sb-profile:profile "LEM")

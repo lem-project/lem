@@ -488,7 +488,7 @@
                #'(lambda ()
                    (error "interrupt"))))
              (t
-              (ungetch (code-char c))))))))
+              (input-enqueue (code-char c))))))))
 
 (defun make-interrupting-thread ()
   (unless *getch-wait-p*

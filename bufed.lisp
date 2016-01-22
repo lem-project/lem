@@ -585,6 +585,7 @@
   t)
 
 (defun indent-line (column)
+  (when (minusp column) (setq column 0))
   (let* ((indented-column)
          (old-column
           (current-column))

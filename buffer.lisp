@@ -727,9 +727,11 @@
   (prog1 (do ((res #1=(buffer-undo-1 buffer) #1#)
               (pres nil res))
              ((not res)
-              (when pres
-                (decf (buffer-undo-node buffer))
-                (buffer-undo-modified buffer))
+              (cond (pres
+                     (decf (buffer-undo-node buffer))
+                     (buffer-undo-modified buffer))
+                    (t
+                     (minibuf-print "Undo Error")))
               pres))))
 
 (defun buffer-redo-1 (buffer)
@@ -746,9 +748,11 @@
   (prog1 (do ((res #1=(buffer-redo-1 buffer) #1#)
               (pres nil res))
              ((not res)
-              (when pres
-                (incf (buffer-undo-node buffer))
-                (buffer-undo-modified buffer))
+              (cond (pres
+                     (incf (buffer-undo-node buffer))
+                     (buffer-undo-modified buffer))
+                    (t
+                     (minibuf-print "Redo Error")))
               pres))))
 
 (defun buffer-undo-boundary (&optional (buffer (window-buffer)))

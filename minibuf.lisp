@@ -24,8 +24,6 @@
 
 (defvar *mb-print-flag* nil)
 
-(defvar *minibuf-window*)
-
 (defvar *minibuf-keymap*
   (make-keymap))
 

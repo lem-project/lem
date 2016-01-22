@@ -25,6 +25,7 @@
 (defvar *debug-p* nil)
 
 (defvar *current-window*)
+(defvar *minibuf-window*)
 (defvar *buffer-list* nil)
 
 (defvar *tab-size* 8)

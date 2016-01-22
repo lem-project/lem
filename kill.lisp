@@ -68,7 +68,7 @@
   (let ((lines (kill-ring-nth n)))
     (setf (get-bvar :yank-start) (point))
     (insert-lines lines)
-    (setf (get-bvar (window-buffer) :yank-end) (point))
+    (setf (get-bvar :yank-end) (point))
     (when-interrupted-flag :yank)
     t))
 

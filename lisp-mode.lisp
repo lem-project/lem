@@ -491,14 +491,16 @@
               (ungetch (code-char c))))))))
 
 (defun make-interrupting-thread ()
-  (setq *getch-wait-p* t)
-  (setq *interrupting-thread*
-        (bt:make-thread *interrupting-thread-function*)))
+  (unless *getch-wait-p*
+    (setq *getch-wait-p* t)
+    (setq *interrupting-thread*
+          (bt:make-thread *interrupting-thread-function*))))
 
 (defun delete-interrupting-thread ()
-  (setq *getch-wait-p* nil)
-  (bt:interrupt-thread *interrupting-thread*
-                       #'(lambda () (error "error"))))
+  (when *getch-wait-p*
+    (setq *getch-wait-p* nil)
+    (bt:interrupt-thread *interrupting-thread*
+                         #'(lambda () (error "error")))))
 
 (defun lisp-debugger (condition)
   (delete-interrupting-thread)
@@ -575,14 +577,15 @@
          (*interrupting-thread-function*
           (lambda-interrupting-thread main-thread)))
     (make-interrupting-thread)
-    (multiple-value-bind (results error-p)
-        (eval-string-internal string
-                              output-buffer
-                              point
-                              update-point-p
-                              package)
-      (delete-interrupting-thread)
-      (values results error-p))))
+    (unwind-protect
+      (multiple-value-bind (results error-p)
+          (eval-string-internal string
+                                output-buffer
+                                point
+                                update-point-p
+                                package)
+        (values results error-p))
+      (delete-interrupting-thread))))
 
 (define-key *lisp-mode-keymap* (kbd "M-:") 'lisp-eval-string)
 (define-command lisp-eval-string (string) ("sEval: ")

@@ -125,8 +125,9 @@
    (eql #\, (preceding-char))))
 
 (defun scan-line ()
-  (let ((string (region-string (progn (beginning-of-line) (point))
-                               (progn (end-of-line) (point))))
+  (let ((string (save-excursion
+                 (region-string (progn (beginning-of-line) (point))
+                                (progn (end-of-line) (point)))))
         (tokens))
     (ppcre:do-matches-as-strings (tok "\\w+|;|\".*?[^\\\\]?\"|'.*?[^\\\\]'" string)
       (if (equal tok ";")
@@ -140,31 +141,34 @@
       (when (find word tokens :test #'equal)
         (return t)))))
 
+(defun lua-calc-indent-1 ()
+  (cond ((unfinished-line-p)
+         (loop :repeat 100 :while (backward-sexp 1 t))
+         (current-column))
+        ((looking-at-line ".*?;\\s*$")
+         (back-to-indentation)
+         (current-column))
+        ((or (contains-word-p "do" "then" "else")
+             (and (not (contains-word-p "end"))
+                  (contains-word-p "function")))
+         (back-to-indentation)
+         (+ (current-column) 8))
+        ((or (contains-word-p "return"))
+         (back-to-indentation)
+         (current-column))
+        (t
+         (back-to-indentation)
+         (current-column))))
+
 (defun lua-calc-indent ()
-  (let ((end-line-p (or (contains-word-p "end" "else"))))
-    (save-excursion
-     (beginning-of-line)
-     (skip-backward-comment-and-space)
-     (cond (end-line-p
-            (back-to-indentation)
-            (- (current-column) 8))
-           ((unfinished-line-p)
-            (loop :repeat 100 :while (backward-sexp 1 t))
-            (current-column))
-           ((looking-at-line ".*?;\\s*$")
-            (back-to-indentation)
-            (current-column))
-           ((or (contains-word-p "do" "then" "else")
-                (and (not (contains-word-p "end"))
-                     (contains-word-p "function")))
-            (back-to-indentation)
-            (+ (current-column) 8))
-           ((or (contains-word-p "return"))
-            (back-to-indentation)
-            (current-column))
-           (t
-            (back-to-indentation)
-            (current-column))))))
+  (let ((end-line-p (contains-word-p "end" "else"))
+        (n (save-excursion
+            (beginning-of-line)
+            (skip-backward-comment-and-space)
+            (lua-calc-indent-1))))
+    (if end-line-p
+        (- n 8)
+        n)))
 
 (setq *auto-mode-alist*
       (append '(("\\.lua$" . lua-mode))

@@ -224,7 +224,10 @@
                "with-output-to-string"
                "with-slots"
                "with-standard-io-syntax"
-               "loop"))
+               "loop"
+               "declare"
+               "declaim"
+               "proclaim"))
   (syntax-add-match *lisp-syntax-table*
                     (make-syntax-test str :word-p t)
                     :test-symbol :start-expr

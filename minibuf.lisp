@@ -194,7 +194,7 @@
     (let* ((key (input-key))
            (cmd (find-keybind key))
            (value (catch 'abort
-                    (cmd-call cmd 1)
+                    (cmd-call cmd nil)
                     nil)))
       (when value
         (cond ((eq value 'abort)

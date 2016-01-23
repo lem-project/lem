@@ -437,14 +437,15 @@
                                (string-downcase (package-name pkg)))
                            (list-all-packages))))))
 
-(defun %string-to-exps (str)
+(defun %string-to-exps (str package)
   (let ((str str)
         (exps)
         (eof-value (make-symbol "eof")))
     (do ()
         ((string= "" str))
       (multiple-value-bind (expr i)
-          (read-from-string str nil eof-value)
+          (let ((*package* package))
+            (read-from-string str nil eof-value))
         (when (eq expr eof-value)
           (return))
         (push expr exps)
@@ -560,9 +561,8 @@
     (handler-case
         (handler-bind ((error #'lisp-debugger))
           (setq results
-                (restart-case (lisp-eval-in-package
-                               (%string-to-exps string)
-                               package)
+                (restart-case (multiple-value-list
+                               (eval (%string-to-exps string package)))
                   (abort () :report "Abort.")))
           (when update-point-p
             (point-set

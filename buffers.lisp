@@ -102,6 +102,7 @@
               (min vtop-linum buffer-nlines))
         (setf (window-cur-linum)
               (min cur-linum buffer-nlines)))
+      (setf (window-vtop-column) 0)
       (setf (window-cur-col)
             (min cur-col
                  (buffer-line-length (window-buffer)

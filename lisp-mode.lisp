@@ -561,20 +561,18 @@
          (*query-io* io)
          (*debug-io* io)
          (*trace-output* io))
-    (handler-case
-        (handler-bind ((error #'lisp-debugger)
-                       #+sbcl (sb-sys:interactive-interrupt #'lisp-debugger))
-          (setq results
-                (restart-case (multiple-value-list
-                               (eval (%string-to-exps string package)))
-                  (abort () :report "Abort.")))
-          (when update-point-p
-            (point-set
-             (buffer-output-stream-point io))))
-      ((or error #+sbcl (sb-sys:interactive-interrupt #'lisp-debugger))
-       (condition)
-       (setq error-p t)
-       (setq results (list condition))))
+    (handler-case-bind (#'lisp-debugger
+                        (setq results
+                              (restart-case
+                                  (multiple-value-list
+                                   (eval (%string-to-exps string package)))
+                                (abort () :report "Abort.")))
+                        (when update-point-p
+                          (point-set
+                           (buffer-output-stream-point io))))
+                       ((condition)
+                        (setq error-p t)
+                        (setq results (list condition))))
     (values results error-p)))
 
 (defun eval-string (string output-buffer point

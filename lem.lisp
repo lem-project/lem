@@ -380,9 +380,7 @@
                    :stream out :count 100))))
 
 (defmacro with-error-handler (() &body body)
-  `(handler-case
-       (handler-bind ((error
-                       #'(lambda (condition)
+  `(handler-case-bind (#'(lambda (condition)
                            (handler-case (popup-backtrace condition)
                              (error (condition)
                                     (throw 'serious-error
@@ -390,9 +388,9 @@
                                         (princ condition stream)
                                         (uiop/image:print-backtrace
                                          :stream stream
-                                         :condition condition))))))))
-         ,@body)
-     (error ())))
+                                         :condition condition))))))
+                       ,@body)
+                      ((condition) (declare (ignore condition)))))
 
 (defun idle ()
   (when (grow-null-p *input-queue*)

@@ -480,29 +480,32 @@
 
 (defun lambda-interrupting-thread (main-thread)
   (lambda ()
-    #+sbcl
+    #+lem-use-interrupted-thread
     (ignore-errors
-     (loop :for c := (charms/ll:getch) :do
-       (cond ((= c -1))
-             ((eql c (char-code C-c))
-              (bt:interrupt-thread
-               main-thread
-               #'(lambda ()
-                   (error "interrupt"))))
-             (t
-              (input-enqueue (code-char c))))))))
+     (charms/ll:timeout 10)
+     (unwind-protect
+       (loop :for c := (charms/ll:getch) :do
+         (cond ((= c -1))
+               ((eql c (char-code C-c))
+                (bt:interrupt-thread
+                 main-thread
+                 #'(lambda ()
+                     (error "interrupt"))))
+               (t
+                (input-enqueue (code-char c)))))
+       (charms/ll:timeout -1)))))
 
 (defun make-interrupting-thread ()
   (unless *getch-wait-p*
     (setq *getch-wait-p* t)
-    #+sbcl
+    #+lem-use-interrupted-thread
     (setq *interrupting-thread*
           (bt:make-thread *interrupting-thread-function*))))
 
 (defun delete-interrupting-thread ()
   (when *getch-wait-p*
     (setq *getch-wait-p* nil)
-    #+sbcl
+    #+lem-use-interrupted-thread
     (bt:interrupt-thread *interrupting-thread*
                          #'(lambda () (error "error")))))
 

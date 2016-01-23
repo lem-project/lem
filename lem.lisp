@@ -381,7 +381,16 @@
 
 (defmacro with-error-handler (() &body body)
   `(handler-case
-       (handler-bind ((error #'popup-backtrace))
+       (handler-bind ((error
+                       #'(lambda (condition)
+                           (handler-case (popup-backtrace condition)
+                             (error (condition)
+                                    (throw 'serious-error
+                                      (with-output-to-string (stream)
+                                        (princ condition stream)
+                                        (uiop/image:print-backtrace
+                                         :stream stream
+                                         :condition condition))))))))
          ,@body)
      (error ())))
 
@@ -456,11 +465,15 @@
   (setq *running-p* nil))
 
 (defun lem-internal (args)
-  (unwind-protect
-    (progn
-      (lem-init args)
-      (lem-main))
-    (lem-finallize)))
+  (let ((error-report
+         (catch 'serious-error
+           (unwind-protect
+             (progn
+               (lem-init args)
+               (lem-main))
+             (lem-finallize)))))
+    (when error-report
+      (format t "~&~a~%" error-report))))
 
 (defun check-init ()
   (when *running-p*

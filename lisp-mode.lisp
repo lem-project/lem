@@ -549,8 +549,8 @@
   condition)
 
 (defun eval-string-internal (string output-buffer point
-                                  &optional
-                                  update-point-p (package "COMMON-LISP-USER"))
+                                    &optional
+                                    update-point-p (package "COMMON-LISP-USER"))
   (let* ((error-p)
          (results)
          (io (make-buffer-io-stream output-buffer point t))
@@ -562,7 +562,8 @@
          (*debug-io* io)
          (*trace-output* io))
     (handler-case
-        (handler-bind ((error #'lisp-debugger))
+        (handler-bind ((error #'lisp-debugger)
+                       #+sbcl (sb-sys:interactive-interrupt #'lisp-debugger))
           (setq results
                 (restart-case (multiple-value-list
                                (eval (%string-to-exps string package)))
@@ -570,9 +571,10 @@
           (when update-point-p
             (point-set
              (buffer-output-stream-point io))))
-      (error (condition)
-             (setq error-p t)
-             (setq results (list condition))))
+      ((or error #+sbcl (sb-sys:interactive-interrupt #'lisp-debugger))
+       (condition)
+       (setq error-p t)
+       (setq results (list condition))))
     (values results error-p)))
 
 (defun eval-string (string output-buffer point

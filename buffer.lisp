@@ -346,26 +346,8 @@
          (- (buffer-cache-linum buffer) linum))))))
 
 (defun buffer-get-line (buffer linum)
-  (cond ((< linum 1)
-         (when *debug-p*
-           (pdebug (format nil
-                           "~&line number < 1: ~a ~a~%"
-                           buffer
-                           linum)
-                   (merge-pathnames "LEM-WARNING"
-                                    (truename "./")))
-           (minibuf-print "FOUND BUG"))
-         (setq linum 1))
-        ((< #1=(buffer-nlines buffer) linum)
-         (when *debug-p*
-           (pdebug (format nil
-                           "~&buffer nlines < line number: ~a ~a~%"
-                           buffer
-                           linum)
-                   (merge-pathnames "LEM-WARNING"
-                                    (truename "./")))
-           (minibuf-print "FOUND BUG"))
-         (setq linum #1#)))
+  (assert (<= 1 linum))
+  (assert (<= linum (buffer-nlines buffer)))
   (let ((line (%buffer-get-line buffer linum)))
     (setf (buffer-cache-linum buffer) linum)
     (setf (buffer-cache-line buffer) line)

@@ -264,7 +264,7 @@
   (setf (get-bvar :calc-indent-function)
         'lisp-calc-indent))
 
-(defun %lisp-mode-skip-expr-prefix (c1 c2 step-arg)
+(defun %lisp-mode-skip-expr-prefix (c1 c2 step-fn)
   (when c1
     (multiple-value-bind (unused-fn dispatch-char-p)
         (get-macro-character c1)
@@ -272,17 +272,30 @@
       (when (and dispatch-char-p
                  (not (eql c2 #\())
                  (get-dispatch-macro-character c1 c2))
-        (next-char step-arg)))))
+        (funcall step-fn c1 c2)))))
+
+(defvar *lisp-mode-skip-features-sharp-macro-p* nil)
 
 (defun lisp-mode-skip-expr-prefix-forward ()
-  (%lisp-mode-skip-expr-prefix (char-after 0)
-                               (char-after 1)
-                               2))
+  (%lisp-mode-skip-expr-prefix
+   (char-after 0) (char-after 1)
+   #'(lambda (c1 c2)
+       (cond (*lisp-mode-skip-features-sharp-macro-p*
+              (when (and (eql c1 #\#) (member c2 '(#\+ #\-)))
+                (next-char 2))
+              (if (eql #\( (following-char))
+                  (skip-list-forward 0)
+                  (skip-symbol-forward))
+              (skip-chars-forward '(#\space #\tab #\newline)))
+             (t
+              (next-char 2))))))
 
 (defun lisp-mode-skip-expr-prefix-backward ()
   (%lisp-mode-skip-expr-prefix (char-before 2)
                                (char-before 1)
-                               -2))
+                               #'(lambda (c1 c2)
+                                   (declare (ignore c1 c2))
+                                   (prev-char 2))))
 
 (defun sexp-goto-car (limit-linum)
   (let ((point (point)))
@@ -742,11 +755,15 @@
         (let ((defs
                (loop :for (pathname form-path)
                  :in (collect-definitions name)
-                 :collect (list (namestring pathname)
-                                #'(lambda ()
-                                    (beginning-of-buffer)
-                                    (when (forward-sexp form-path)
-                                      (backward-sexp 1)))))))
+                 :collect
+                 (list
+                  (namestring pathname)
+                  (let ((form-path-1 form-path))
+                    #'(lambda ()
+                        (beginning-of-buffer)
+                        (when (let ((*lisp-mode-skip-features-sharp-macro-p* t))
+                                (forward-sexp form-path-1))
+                          (backward-sexp 1))))))))
           (update-grep-list
            defs
            #'(lambda ()

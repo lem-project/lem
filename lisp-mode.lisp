@@ -636,10 +636,8 @@
         (let ((expr
                (read-from-string
                 (region-string (point)
-                               (let ((start (point)))
-                                 (forward-sexp)
-                                 (prog1 (point)
-                                   (point-set start))))
+                               (save-excursion (forward-sexp)
+                                               (point)))
                 nil)))
           (setq expr
                 (car

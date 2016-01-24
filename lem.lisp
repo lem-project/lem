@@ -428,7 +428,7 @@
   (attr-init)
   (charms/ll:noecho)
   (charms/ll:cbreak)
-  (charms/ll:raw)
+  (raw)
   (charms/ll:nonl)
   (charms/ll:refresh)
   (setq *running-p* t)

@@ -151,7 +151,8 @@
     (cond ((null c)
            (multiple-value-bind (string end)
                (catch 'abort
-                 (values (minibuf-read-string "Read char: ") t))
+                 (with-raw t
+                   (values (minibuf-read-string "Read char: ") t)))
              (cond (end
                     (setf (minibuffer-input-stream-queue stream)
                           (nconc (minibuffer-input-stream-queue stream)
@@ -183,7 +184,8 @@
       (trivial-gray-streams:stream-unread-char stream c))))
 
 (defmethod trivial-gray-streams:stream-read-line ((stream minibuffer-input-stream))
-  (minibuf-read-string "Read line: "))
+  (with-raw t
+    (minibuf-read-string "Read line: ")))
 
 (defmethod trivial-gray-streams:stream-clear-input ((stream minibuffer-input-stream))
   nil)

@@ -476,7 +476,7 @@
       (return))))
 
 (defun lisp-debugger (condition)
-  (charms/ll:raw)
+  (raw)
   (let* ((choices (compute-restarts condition))
          (n (length choices)))
     (lisp-info-popup (get-buffer-create "*error*")
@@ -496,14 +496,14 @@
         (cond ((eq str 'abort))
               ((and i (<= 1 i n))
                (let ((restart (nth (1- i) choices)))
-                 (charms/ll:noraw)
+                 (noraw)
                  (cond ((eq 'store-value (restart-name restart))
                         (ldebug-store-value condition))
                        (t
                         (invoke-restart-interactively restart))))
                (return))
               (t
-               (charms/ll:noraw)
+               (noraw)
                (let ((x
                       (handler-case (eval (read-from-string str nil))
                         (error (cdt) (format nil "~a" cdt)))))
@@ -511,7 +511,7 @@
                              #'(lambda (out)
                                  (princ x out))
                              nil))
-               (charms/ll:raw))))))
+               (raw))))))
   condition)
 
 (defun eval-string-internal (string output-buffer point
@@ -545,7 +545,7 @@
                            &optional
                            update-point-p (package "COMMON-LISP-USER"))
   (unless point (setq point (point-min)))
-  (charms/ll:noraw)
+  (noraw)
   (unwind-protect
     (multiple-value-bind (results error-p)
         (eval-string-internal string
@@ -554,7 +554,7 @@
                               update-point-p
                               package)
       (values results error-p))
-    (charms/ll:raw)))
+    (raw)))
 
 (define-key *lisp-mode-keymap* (kbd "M-:") 'lisp-eval-string)
 (define-command lisp-eval-string (string) ("sEval: ")

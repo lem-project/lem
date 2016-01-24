@@ -612,8 +612,7 @@
 (defun buffer-delete-char (buffer linum col n)
   (buffer-read-only-guard buffer)
   (let ((line (buffer-get-line buffer linum))
-        (del-lines (list (make-fatstring "" 0)))
-        (result t))
+        (del-lines (list (make-fatstring "" 0))))
     (loop while (plusp n) do
       (cond
        ((<= n (- (fat-length (line-fatstr line)) col))
@@ -643,10 +642,9 @@
         (setf (car del-lines)
               (fat-concat (car del-lines)
                           (fat-substring (line-fatstr line) col)))
-        (push (make-fatstring "" 0) del-lines)
         (unless (line-next line)
-          (setq result nil)
           (return nil))
+        (push (make-fatstring "" 0) del-lines)
         (decf n (1+ (- (fat-length (line-fatstr line)) col)))
         (decf (buffer-nlines buffer))
         (buffer-modify buffer)
@@ -672,7 +670,7 @@
             (incf linum)
             (setq col 0)))
         (make-point linum col)))
-    (values result del-lines)))
+    del-lines))
 
 (defun buffer-erase (buffer)
   (buffer-read-only-guard buffer)

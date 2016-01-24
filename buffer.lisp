@@ -595,9 +595,10 @@
   (buffer-read-only-guard buffer)
   (let ((line (buffer-get-line buffer linum))
         (del-lines (list (make-fatstring "" 0))))
-    (loop while (plusp n) do
+    (loop while (or (eq n t) (plusp n)) do
       (cond
-       ((<= n (- (fat-length (line-fatstr line)) col))
+       ((and (not (eq n t))
+             (<= n (- (fat-length (line-fatstr line)) col)))
         (dolist (marker (buffer-markers buffer))
           (when (and (= linum (marker-linum marker))
                      (< col (marker-column marker)))
@@ -627,7 +628,8 @@
         (unless (line-next line)
           (return nil))
         (push (make-fatstring "" 0) del-lines)
-        (decf n (1+ (- (fat-length (line-fatstr line)) col)))
+        (unless (eq n t)
+          (decf n (1+ (- (fat-length (line-fatstr line)) col))))
         (decf (buffer-nlines buffer))
         (buffer-modify buffer)
         (setf (line-fatstr line)
@@ -655,8 +657,7 @@
     del-lines))
 
 (defun buffer-erase (buffer)
-  (buffer-read-only-guard buffer)
-  (buffer-modify buffer)
+  (buffer-delete-char buffer 1 0 t)
   (let ((line (make-line nil nil "")))
     (setf (buffer-head-line buffer) line)
     (setf (buffer-tail-line buffer) line)

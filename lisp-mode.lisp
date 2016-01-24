@@ -764,12 +764,16 @@
                         (when (let ((*lisp-mode-skip-features-sharp-macro-p* t))
                                 (forward-sexp form-path-1))
                           (backward-sexp 1))))))))
-          (grep-apply
-           defs
-           "*Definitions*"
-           #'(lambda (out)
-               (loop :for (filename _) :in defs :do
-                 (format out "~a~%" filename)))))))))
+          (if (= 1 (length defs))
+              (destructuring-bind (pathname move-fn) (car defs)
+                (find-file pathname)
+                (funcall move-fn))
+              (grep-apply
+               defs
+               "*Definitions*"
+               #'(lambda (out)
+                   (loop :for (filename _) :in defs :do
+                     (format out "~a~%" filename))))))))))
 
 (defun analyze-symbol (str)
   (let (package

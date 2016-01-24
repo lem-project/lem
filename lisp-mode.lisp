@@ -670,13 +670,27 @@
 (define-command lisp-macroexpand-all () ()
   (%lisp-macroexpand 'macroexpand "*macroexpand*"))
 
-(defun lisp-read-symbol (prompt)
-  (let ((name (minibuf-read-line prompt ""
-                                 'complete-symbol
-                                 nil)))
-    (with-safe-form
-      (let ((*package* (lisp-current-package)))
-        (read-from-string name)))))
+(defun lisp-looking-at-symbol-name ()
+  (let ((not-symbol-elements '(#\( #\) #\space #\tab #\newline)))
+    (flet ((symbol-char-p (c) (not (member c not-symbol-elements))))
+      (when (or (symbol-char-p (following-char))
+                (symbol-char-p (preceding-char)))
+        (save-excursion
+         (skip-chars-backward not-symbol-elements t)
+         (mark-sexp)
+         (region-string (region-beginning) (region-end)))))))
+
+(defun lisp-read-symbol (prompt &optional (confirm-p t))
+  (let ((default-name (or (lisp-looking-at-symbol-name) "")))
+    (let ((name (if confirm-p
+                    (minibuf-read-line prompt
+                                       default-name
+                                       'complete-symbol
+                                       nil)
+                    default-name)))
+      (with-safe-form
+        (let ((*package* (lisp-current-package)))
+          (read-from-string name))))))
 
 (define-key *lisp-mode-keymap* (kbd "C-x d") 'lisp-describe-symbol)
 (define-command lisp-describe-symbol () ()

@@ -3,7 +3,7 @@
 (in-package :lem)
 
 (export '(grep
-          grep-update
+          grep-apply
           grep-next
           grep-prev))
 
@@ -25,18 +25,18 @@
           (mapcar #'grep-parse-line
                   (remove "" lines :test #'string=))))
 
-(defun update-grep-list (list &optional popup-function)
+(defun grep-apply (list output-buffer-name output-function)
   (setq *grep-vector* (apply 'vector list))
   (setq *grep-index* -1)
-  (when popup-function (funcall popup-function)))
+  (when output-function
+    (info-popup (get-buffer-create output-buffer-name)
+                output-function
+                nil)))
 
 (defun grep-update (str)
-  (update-grep-list (grep-parse-lines (split-string str #\newline))
-                    #'(lambda ()
-                        (info-popup (get-buffer-create "*Grep*")
-                                    #'(lambda (out)
-                                        (princ str out))
-                                    nil))))
+  (grep-apply (grep-parse-lines (split-string str #\newline))
+              "*Grep*"
+              #'(lambda (out) (princ str out))))
 
 (define-command grep (str) ("sgrep -nH ")
   (grep-update

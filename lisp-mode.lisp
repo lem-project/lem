@@ -718,6 +718,8 @@
                              (princ str out))
                          nil)))))
 
+(defvar *lisp-find-definition-stack* nil)
+
 #+sbcl
 (progn
   (defparameter *lisp-definition-types*
@@ -779,15 +781,26 @@
                                 (forward-sexp form-path-1))
                           (backward-sexp 1))))))))
           (if (= 1 (length defs))
-              (destructuring-bind (pathname move-fn) (car defs)
-                (find-file pathname)
+              (destructuring-bind (filename move-fn) (car defs)
+                (push (cons (window-buffer) (point))
+                      *lisp-find-definition-stack*)
+                (find-file filename)
                 (funcall move-fn))
               (grep-apply
                defs
                "*Definitions*"
                #'(lambda (out)
                    (loop :for (filename _) :in defs :do
-                     (format out "~a~%" filename))))))))))
+                     (format out "~a~%" filename)))))))))
+
+  (define-key *lisp-mode-keymap* (kbd "M-,") 'lisp-pop-find-definition-stack)
+  (define-command lisp-pop-find-definition-stack () ()
+    (let ((elt (pop *lisp-find-definition-stack*)))
+      (when (null elt)
+        (return-from lisp-pop-find-definition-stack nil))
+      (destructuring-bind (buffer . point) elt
+        (select-buffer buffer)
+        (point-set point)))))
 
 (defun analyze-symbol (str)
   (let (package

@@ -43,7 +43,6 @@
 (defvar *auto-mode-alist* nil)
 
 (defvar *editor-lock* (bt:make-lock))
-(defvar *getch-wait-p* nil)
 
 (defvar *attribute-name-table* (make-hash-table :test 'equal))
 

@@ -42,8 +42,6 @@
 
 (defvar *auto-mode-alist* nil)
 
-(defvar *editor-lock* (bt:make-lock))
-
 (defvar *attribute-name-table* (make-hash-table :test 'equal))
 
 (defun set-attr (name attr)

@@ -600,12 +600,11 @@
       (charms/ll:doupdate)))))
 
 (defun window-update-all ()
-  (bt:with-lock-held (*editor-lock*)
-    (do-window-tree (win *window-tree*)
-      (unless (eq win *current-window*)
-        (window-update win)))
-    (window-update *current-window*)
-    (charms/ll:doupdate)))
+  (do-window-tree (win *window-tree*)
+    (unless (eq win *current-window*)
+      (window-update win)))
+  (window-update *current-window*)
+  (charms/ll:doupdate))
 
 (defun redraw-screen ()
   (window-update-all))

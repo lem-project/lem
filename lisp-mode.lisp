@@ -630,34 +630,39 @@
          (values (progn ,@body) nil))
      (error (cdt) (values cdt t))))
 
+(defun %lisp-macroexpand-at-point (macroexpand-symbol)
+  (car (lisp-eval-in-package
+        `(,macroexpand-symbol
+          (let ((*package* (lisp-current-package)))
+            (read-from-string
+             (region-string
+              (point)
+              (save-excursion (forward-sexp 1)
+                              (point))))))
+        (lisp-current-package))))
+
+(defun %lisp-macroexpand-replace-expr (expr)
+  (let ((*kill-disable-p* t))
+    (kill-sexp))
+  (insert-string
+   (with-output-to-string (out)
+     (pprint expr out)))
+  (read-from-string
+   (region-string (point-min)
+                  (point-max))))
+
 (defun %lisp-macroexpand (macroexpand-symbol buffer-name)
   (multiple-value-bind (expr error-p)
       (with-safe-form
-        (let ((expr
-               (read-from-string
-                (region-string (point)
-                               (save-excursion (forward-sexp)
-                                               (point)))
-                nil)))
-          (setq expr
-                (car
-                 (lisp-eval-in-package `(,macroexpand-symbol ',expr)
-                                       (lisp-current-package))))
-          (when (eq (window-buffer)
-                    (get-buffer buffer-name))
-            (let ((*kill-disable-p* t))
-              (kill-sexp))
-            (insert-string
-             (with-output-to-string (out)
-               (pprint expr out)))
-            (setq expr (read-from-string
-                        (region-string (point-min)
-                                       (point-max)))))
-          expr))
+        (let ((expr (%lisp-macroexpand-at-point macroexpand-symbol)))
+          (cond ((eq (window-buffer)
+                     (get-buffer buffer-name))
+                 (%lisp-macroexpand-replace-expr expr))
+                (t
+                 expr))))
     (unless error-p
       (lisp-info-popup (get-buffer-create buffer-name)
-                       #'(lambda (out)
-                           (pprint expr out))
+                       #'(lambda (out) (pprint expr out))
                        t))))
 
 (define-key *lisp-mode-keymap* (kbd "C-x m") 'lisp-macroexpand)

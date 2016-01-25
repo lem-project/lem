@@ -36,7 +36,9 @@
                              0)
                  :interactive-update-p interactive-update-p))
 
-(defun make-buffer-output-stream (buffer &optional point interactive-update-p)
+(defun make-buffer-output-stream (&optional (buffer (window-buffer))
+                                            (point (point))
+                                            interactive-update-p)
   (make-buffer-stream-instance 'buffer-output-stream
                                buffer point interactive-update-p))
 

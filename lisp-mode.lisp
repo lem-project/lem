@@ -644,9 +644,7 @@
 (defun %lisp-macroexpand-replace-expr (expr)
   (let ((*kill-disable-p* t))
     (kill-sexp))
-  (insert-string
-   (with-output-to-string (out)
-     (pprint expr out)))
+  (pprint expr (make-buffer-output-stream))
   (read-from-string
    (region-string (point-min)
                   (point-max))))
@@ -979,7 +977,7 @@
       (next-line 1))))
 
 (defun lisp-print-values (values)
-  (let ((out (make-buffer-output-stream (window-buffer) (point))))
+  (with-open-stream (out (make-buffer-output-stream))
     (dolist (v values)
       (pprint v out))
     (point-set (buffer-output-stream-point out))))

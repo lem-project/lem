@@ -161,7 +161,7 @@
          (current-column))))
 
 (defun lua-calc-indent ()
-  (let ((end-line-p (contains-word-p "end" "else" "elseif"))
+  (let ((end-line-p (contains-word-p "end" "else" "elseif" "until"))
         (n (save-excursion
             (beginning-of-line)
             (skip-backward-comment-and-space)

@@ -554,9 +554,9 @@
                         (setq results (list condition))))
     (values results error-p)))
 
-(defun eval-string (string output-buffer point
-                           &optional
-                           update-point-p (package "COMMON-LISP-USER"))
+(defun %lisp-eval-string (string output-buffer point
+                                 &optional
+                                 update-point-p (package "COMMON-LISP-USER"))
   (unless point (setq point (point-min)))
   (noraw)
   (unwind-protect
@@ -576,8 +576,8 @@
     (setf (buffer-modified-p output-buffer) nil)
     (prog1 (minibuf-print
             (format nil "~{~s~^,~}"
-                    (eval-string string output-buffer nil nil
-                                 (lisp-current-package))))
+                    (%lisp-eval-string string output-buffer nil nil
+                                       (lisp-current-package))))
       (when (buffer-modified-p output-buffer)
         (lisp-info-popup output-buffer
                          nil
@@ -992,8 +992,8 @@
          (buffer-erase output-buffer)
          (setf (buffer-modified-p output-buffer) nil)
          (lisp-print-values
-          (eval-string string output-buffer nil nil
-                       (lisp-current-package)))
+          (%lisp-eval-string string output-buffer nil nil
+                             (lisp-current-package)))
          (insert-newline)
          (when (buffer-modified-p output-buffer)
            (lisp-info-popup output-buffer nil nil))))))
@@ -1065,7 +1065,7 @@
             (point-set end)
             (insert-newline)
             (multiple-value-bind (values error-p)
-                (eval-string str buffer (point) t (lisp-current-package))
+                (%lisp-eval-string str buffer (point) t (lisp-current-package))
               (declare (ignore error-p))
               (setq *current-window* (pop-to-buffer buffer))
               (point-set (point-max))

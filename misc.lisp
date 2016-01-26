@@ -74,6 +74,9 @@
     (setq *timer-list* (set-difference *timer-list* promised-timers))
     update-p))
 
+(defun exist-running-timer-p ()
+  (not (null *timer-list*)))
+
 
 (export '(overlay
           make-overlay

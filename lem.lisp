@@ -390,17 +390,19 @@
 
 (defun idle ()
   (when (grow-null-p *input-queue*)
-    (charms/ll:wtimeout (window-win) 20)
-    (unwind-protect
-      (loop
-        (let ((code (charms/ll:wgetch (window-win))))
-          (cond ((= code -1)
-                 (when (update-timer)
-                   (window-maybe-update)))
-                (t
-                 (charms/ll:ungetch code)
-                 (return)))))
-      (charms/ll:wtimeout (window-win) -1))))
+    (run-hooks 'idle-hook)
+    (cond ((exist-running-timer-p)
+           (charms/ll:wtimeout (window-win) 20)
+           (unwind-protect
+             (loop
+               (let ((code (charms/ll:wgetch (window-win))))
+                 (cond ((= code -1)
+                        (when (update-timer)
+                          (window-maybe-update)))
+                       (t
+                        (charms/ll:ungetch code)
+                        (return)))))
+             (charms/ll:wtimeout (window-win) -1))))))
 
 (defun lem-main ()
   (flet ((body ()

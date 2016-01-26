@@ -73,6 +73,7 @@
                 (when parent-mode
                   (mode-syntax-table parent-mode))
                 `(make-syntax-table)))
+     (export '(,(symb major-mode "-HOOK")))
      (define-command ,major-mode () ()
        (clear-buffer-variables)
        ,(when parent-mode `(,parent-mode))

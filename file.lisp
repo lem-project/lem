@@ -14,10 +14,7 @@
           change-file-name
           write-file
           insert-file
-          save-some-buffers
-          find-file-hook
-          before-save-hook
-          after-save-hook))
+          save-some-buffers))
 
 (defun temp-file-name-1 ()
   (concatenate 'string

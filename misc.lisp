@@ -3,7 +3,11 @@
 (in-package :lem)
 
 (export '(run-hooks
-          add-hook))
+          add-hook
+          find-file-hook
+          before-save-hook
+          after-save-hook
+          idle-hook))
 
 (defun run-hooks (hook)
   (mapc 'funcall (get hook 'hooks)))

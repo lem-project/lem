@@ -990,7 +990,7 @@
          (when (buffer-modified-p output-buffer)
            (lisp-info-popup output-buffer nil nil))))))
 
-(define-major-mode lisp-repl-mode listener-mode
+(define-major-mode lisp-repl-mode lisp-mode
   (:name "lisp-repl"
    :keymap-var *lisp-repl-mode-keymap*
    :syntax-table *lisp-syntax-table*)
@@ -1001,7 +1001,8 @@
   (setf (get-bvar :listener-check-confirm-function)
         'lisp-repl-paren-correspond-p)
   (setf (get-bvar :listener-confirm-function)
-        'lisp-repl-confirm))
+        'lisp-repl-confirm)
+  (listener-mode t))
 
 (define-command start-lisp-repl () ()
   (listener-start "*lisp-repl*" 'lisp-repl-mode))

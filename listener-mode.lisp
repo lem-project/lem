@@ -19,7 +19,7 @@
 (defmacro %listener-history ()
   `(get-bvar %listener-history-indicator))
 
-(define-major-mode listener-mode nil
+(define-minor-mode listener-mode
   (:name "listener"
    :keymap-var *listener-mode-keymap*)
   (setf (get-bvar :enable-syntax-highlight) nil)

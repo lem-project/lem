@@ -42,8 +42,8 @@
 (defvar *case-fold-search* nil)
 
 (define-minor-mode isearch-mode
-  :name "isearch"
-  :keymap-var *isearch-keymap*)
+  (:name "isearch"
+   :keymap-var *isearch-keymap*))
 
 (defun isearch-update-display ()
   (isearch-update-minibuf)

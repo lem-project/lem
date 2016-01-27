@@ -24,12 +24,9 @@
 
 (defvar *mb-print-flag* nil)
 
-(defvar *minibuf-keymap*
-  (make-keymap))
-
 (define-major-mode minibuffer-mode nil
   (:name "minibuffer"
-   :keymap *minibuf-keymap*))
+   :keymap-var *minibuf-keymap*))
 
 (defun minibuf-init ()
   (let* ((buffer (make-buffer " *minibuffer*"))

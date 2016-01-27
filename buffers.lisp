@@ -143,11 +143,9 @@
   (dotimes (_ n t)
     (set-buffer (get-next-buffer (window-buffer)))))
 
-(defvar *list-buffers-keymap* (make-keymap))
-
 (define-major-mode list-buffers-mode nil
   (:name "List Buffers"
-   :keymap *list-buffers-keymap*))
+   :keymap-var *list-buffers-keymap*))
 
 (define-key *list-buffers-keymap* (kbd "q") 'quit-window)
 

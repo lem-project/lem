@@ -6,11 +6,9 @@
 
 (in-package :dired)
 
-(defvar *dired-mode-keymap* (make-keymap))
-
 (define-major-mode dired-mode nil
   (:name "dired"
-   :keymap *dired-mode-keymap*))
+   :keymap-var *dired-mode-keymap*))
 
 (define-key *dired-mode-keymap* (kbd "n") 'next-line)
 (define-key *dired-mode-keymap* (kbd "p") 'prev-line)

@@ -2,8 +2,6 @@
 
 (in-package :lem)
 
-(defvar *python-mode-keymap* (make-keymap))
-
 (defvar *python-syntax-table*
   (make-syntax-table
    :space-chars '(#\space #\tab #\newline)
@@ -16,7 +14,7 @@
 
 (define-major-mode python-mode nil
   (:name "python"
-   :keymap *python-mode-keymap*
+   :keymap-var *python-mode-keymap*
    :syntax-table *python-syntax-table*)
   (setf (get-bvar :enable-syntax-highlight) t))
 

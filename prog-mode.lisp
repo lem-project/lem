@@ -8,11 +8,9 @@
           prog-newline-and-indent
           prog-indent-region))
 
-(defvar *prog-mode-keymap* (make-keymap))
-
 (define-major-mode prog-mode nil
   (:name "prog"
-   :keymap *prog-mode-keymap*)
+   :keymap-var *prog-mode-keymap*)
   (setf (get-bvar :indent-tabs-mode) t))
 
 (define-key *prog-mode-keymap* (kbd "C-i") 'prog-indent-line)

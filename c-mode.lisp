@@ -6,8 +6,6 @@
           *c-syntax-table*
           c-mode))
 
-(defvar *c-mode-keymap* (make-keymap))
-
 (defvar *c-syntax-table*
   (make-syntax-table
    :space-chars '(#\space #\tab #\newline)
@@ -24,7 +22,7 @@
 
 (define-major-mode c-mode nil
   (:name "c"
-   :keymap *c-mode-keymap*
+   :keymap-var *c-mode-keymap*
    :syntax-table *c-syntax-table*)
   (setf (get-bvar :enable-syntax-highlight) t))
 

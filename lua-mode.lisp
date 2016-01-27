@@ -6,8 +6,6 @@
 
 (in-package :lem.lua-mode)
 
-(defvar *lua-mode-keymap* (make-keymap))
-
 (defvar *lua-syntax-table*
   (make-syntax-table
    :space-chars '(#\space #\tab #\newline)
@@ -20,7 +18,7 @@
 
 (define-major-mode lua-mode prog-mode
   (:name "lua"
-   :keymap *lua-mode-keymap*
+   :keymap-var *lua-mode-keymap*
    :syntax-table *lua-syntax-table*)
   (setf (get-bvar :enable-syntax-highlight) t)
   (setf (get-bvar :calc-indent-function) 'lua-calc-indent)

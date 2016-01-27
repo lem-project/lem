@@ -115,9 +115,6 @@
         ("loop" . 0))
   :do (setf (gethash name *lisp-indent-table*) n))
 
-(defvar *lisp-mode-keymap*
-  (make-keymap))
-
 (defvar *lisp-syntax-table*
   (make-syntax-table
    :space-chars '(#\space #\tab #\newline)
@@ -250,7 +247,7 @@
 
 (define-major-mode lisp-mode prog-mode
   (:name "lisp"
-   :keymap *lisp-mode-keymap*
+   :keymap-var *lisp-mode-keymap*
    :syntax-table *lisp-syntax-table*)
   (setf (get-bvar :enable-syntax-highlight) t)
   (setf (get-bvar :indent-tabs-mode) nil)
@@ -998,14 +995,12 @@
          (when (buffer-modified-p output-buffer)
            (lisp-info-popup output-buffer nil nil))))))
 
-(defvar *lisp-repl-mode-keymap* (make-keymap))
-
 (defvar *lisp-repl-history* nil)
 (defvar *lisp-repl-prompt-marker* nil)
 
 (define-major-mode lisp-repl-mode lisp-mode
   (:name "lisp-repl"
-   :keymap *lisp-repl-mode-keymap*)
+   :keymap-var *lisp-repl-mode-keymap*)
   (setf (get-bvar :enable-syntax-highlight) nil)
   (unless *lisp-repl-history*
     (setq *lisp-repl-history* (make-history))))

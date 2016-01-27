@@ -6,12 +6,9 @@
           info-mode
           info-popup))
 
-(defvar *info-mode-keymap*
-  (make-keymap))
-
 (define-minor-mode info-mode
   :name "info"
-  :keymap *info-mode-keymap*)
+  :keymap-var *info-mode-keymap*)
 
 (define-key *info-mode-keymap* (kbd "q") 'quit-window)
 

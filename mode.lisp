@@ -64,17 +64,27 @@
   `(progn
      (push ',major-mode *mode-list*)
      (setf (mode-name ',major-mode) ,name)
-     (defvar ,keymap-var (make-keymap))
-     (when (setf (mode-keymap ',major-mode) ,keymap-var)
-       ,(when parent-mode
-          `(setf (keymap-parent ,keymap-var)
-                 (mode-keymap ',parent-mode))))
-     (setf (mode-syntax-table ',major-mode)
-           ,(or syntax-table
-                (when parent-mode
-                  (mode-syntax-table parent-mode))
-                `(make-syntax-table)))
      (export '(,(symb major-mode "-HOOK")))
+     ,@(cond (keymap-var
+              `((defvar ,keymap-var (make-keymap))
+                (setf (mode-keymap ',major-mode) ,keymap-var)
+                ,(when parent-mode
+                   `(setf (keymap-parent ,keymap-var)
+                          (mode-keymap ',parent-mode)))))
+             (parent-mode
+              `((setf (mode-keymap ',major-mode)
+                      (mode-keymap ',parent-mode))))
+             (t
+              `((setf (mode-keymap ',major-mode) nil))))
+     ,(cond (syntax-table
+             `(setf (mode-syntax-table ',major-mode)
+                    ,syntax-table))
+            (parent-mode
+             `(setf (mode-syntax-table ',major-mode)
+                    (mode-syntax-table ',parent-mode)))
+            (t
+             `(setf (mode-syntax-table ',major-mode)
+                    (make-syntax-table))))
      (define-command ,major-mode () ()
        (clear-buffer-variables)
        ,(when parent-mode `(,parent-mode))

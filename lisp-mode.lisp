@@ -32,7 +32,7 @@
           lisp-uncomment-region
           *lisp-repl-mode-keymap*
           lisp-repl-mode
-          run-lisp
+          start-lisp-repl
           lisp-repl-prompt
           lisp-repl-return
           lisp-repl-prev-input
@@ -1010,7 +1010,7 @@
   (unless *lisp-repl-history*
     (setq *lisp-repl-history* (make-history))))
 
-(define-command run-lisp () ()
+(define-command start-lisp-repl () ()
   (let ((buffer (get-buffer-create "*lisp-repl*")))
     (setq *current-window* (pop-to-buffer buffer))
     (lisp-repl-mode)

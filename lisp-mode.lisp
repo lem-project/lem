@@ -30,16 +30,11 @@
           lisp-comment-or-uncomment-region
           lisp-comment-region
           lisp-uncomment-region
+          lisp-eval-print-last-sexp
           *lisp-repl-mode-keymap*
           lisp-repl-mode
           start-lisp-repl
-          lisp-repl-prompt
-          lisp-repl-return
-          lisp-repl-prev-input
-          lisp-repl-next-input
-          lisp-repl-reset
           lisp-repl-set-package
-          lisp-eval-print-last-sexp
           lisp-info-popup))
 
 (defvar *lisp-indent-table* (make-hash-table :test 'equal))
@@ -995,21 +990,21 @@
          (when (buffer-modified-p output-buffer)
            (lisp-info-popup output-buffer nil nil))))))
 
-(defvar *lisp-repl-history* nil)
-(defvar *lisp-repl-prompt-marker* nil)
-
-(define-major-mode lisp-repl-mode lisp-mode
+(define-major-mode lisp-repl-mode listener-mode
   (:name "lisp-repl"
-   :keymap-var *lisp-repl-mode-keymap*)
-  (setf (get-bvar :enable-syntax-highlight) nil)
-  (unless *lisp-repl-history*
-    (setq *lisp-repl-history* (make-history))))
+   :keymap-var *lisp-repl-mode-keymap*
+   :syntax-table *lisp-syntax-table*)
+  (setf (get-bvar :listener-get-prompt-function)
+        #'(lambda ()
+            (shorten-package-name
+             (lisp-current-package))))
+  (setf (get-bvar :listener-check-confirm-function)
+        'lisp-repl-paren-correspond-p)
+  (setf (get-bvar :listener-confirm-function)
+        'lisp-repl-confirm))
 
 (define-command start-lisp-repl () ()
-  (let ((buffer (get-buffer-create "*lisp-repl*")))
-    (setq *current-window* (pop-to-buffer buffer))
-    (lisp-repl-mode)
-    (lisp-repl-prompt)))
+  (listener-start "*lisp-repl*" 'lisp-repl-mode))
 
 (defun shorten-package-name (package)
   (car
@@ -1019,23 +1014,6 @@
          #'(lambda (x y)
              (< (length x) (length y))))))
 
-(defun lisp-repl-prompt ()
-  (end-of-buffer)
-  (unless (bolp)
-    (insert-newline))
-  (insert-string (format nil "~a> "
-                         (shorten-package-name
-                          (lisp-current-package))))
-  (put-attribute (make-point (window-cur-linum) 0)
-                 (make-point (window-cur-linum) (window-cur-col))
-                 (make-attr :bold-p t :color :blue))
-  (buffer-undo-boundary (window-buffer))
-  (prev-char 1)
-  (when (not (null *lisp-repl-prompt-marker*))
-    (delete-marker *lisp-repl-prompt-marker*))
-  (setq *lisp-repl-prompt-marker* (make-marker))
-  (next-char 1))
-
 (defun lisp-repl-paren-correspond-p ()
   (loop :with count := 0 :do
     (insert-string ")")
@@ -1044,62 +1022,21 @@
       (backward-delete-char count t)
       (return (= 1 count)))))
 
-(define-key *lisp-repl-mode-keymap* (kbd "C-m") 'lisp-repl-return)
-(define-command lisp-repl-return () ()
-  (end-of-buffer)
-  (let ((end (point))
-        (buffer (window-buffer)))
-    (if (not (lisp-repl-paren-correspond-p))
-        (insert-newline)
-        (let ((start (marker-point *lisp-repl-prompt-marker*)))
-          (unless (point< start end)
-            (lisp-repl-reset nil)
-            (return-from lisp-repl-return t))
-          (let ((str (region-string start end)))
-            (add-history *lisp-repl-history* str)
-            (point-set end)
-            (insert-newline)
-            (multiple-value-bind (values error-p)
-                (%lisp-eval-string str buffer (point) t (lisp-current-package))
-              (declare (ignore error-p))
-              (setq *current-window* (pop-to-buffer buffer))
-              (point-set (point-max))
-              (lisp-print-values values))
-            (lisp-repl-prompt))))))
-
-(define-key *lisp-repl-mode-keymap* (kbd "M-p") 'lisp-repl-prev-input)
-(define-command lisp-repl-prev-input () ()
-  (multiple-value-bind (str win)
-      (prev-history *lisp-repl-history*)
-    (when win
-      (let ((start (marker-point *lisp-repl-prompt-marker*))
-            (end (point-max)))
-        (delete-region start end)
-        (insert-string str)
-        (setf (marker-point *lisp-repl-prompt-marker*) start)))))
-
-(define-key *lisp-repl-mode-keymap* (kbd "M-n") 'lisp-repl-next-input)
-(define-command lisp-repl-next-input () ()
-  (multiple-value-bind (str win)
-      (next-history *lisp-repl-history*)
-    (let ((start (marker-point *lisp-repl-prompt-marker*))
-          (end (point-max)))
-      (delete-region start end)
-      (when win
-        (insert-string str))
-      (setf (marker-point *lisp-repl-prompt-marker*) start))))
-
-(define-key *lisp-repl-mode-keymap* (kbd "M-r") 'lisp-repl-reset)
-(define-command lisp-repl-reset (arg) ("P")
-  (when arg
-    (delete-region (point-min) (point-max)))
-  (lisp-repl-prompt)
-  t)
+(defun lisp-repl-confirm (string)
+  (multiple-value-bind (values error-p)
+      (%lisp-eval-string string
+                         (window-buffer)
+                         (point)
+                         t
+                         (lisp-current-package))
+    (declare (ignore error-p))
+    (end-of-buffer)
+    (lisp-print-values values)))
 
 (define-key *lisp-repl-mode-keymap* (kbd "C-x p") 'lisp-repl-set-package)
 (define-command lisp-repl-set-package () ()
   (lisp-set-package)
-  (lisp-repl-prompt)
+  (listener-reset-prompt)
   t)
 
 (defun lisp-info-popup (buffer &optional output-function (focus-set-p t))

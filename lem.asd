@@ -42,6 +42,7 @@
                         (:file "sexp")
                         (:file "grep")
                         (:file "prog-mode")
+                        (:file "listener-mode")
                         (:file "lisp-mode")
                         (:file "c-mode")
                         (:file "python-mode")

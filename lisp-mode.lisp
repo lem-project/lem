@@ -34,6 +34,9 @@
           *lisp-repl-mode-keymap*
           lisp-repl-mode
           start-lisp-repl
+          lisp-repl-get-prompt
+          lisp-repl-paren-correspond-p
+          lisp-repl-confirm
           lisp-repl-set-package
           lisp-info-popup))
 
@@ -995,9 +998,7 @@
    :keymap-var *lisp-repl-mode-keymap*
    :syntax-table *lisp-syntax-table*)
   (setf (get-bvar :listener-get-prompt-function)
-        #'(lambda ()
-            (shorten-package-name
-             (lisp-current-package))))
+        'lisp-repl-get-prompt)
   (setf (get-bvar :listener-check-confirm-function)
         'lisp-repl-paren-correspond-p)
   (setf (get-bvar :listener-confirm-function)
@@ -1014,6 +1015,9 @@
                 (package-nicknames package)))
          #'(lambda (x y)
              (< (length x) (length y))))))
+
+(defun lisp-repl-get-prompt ()
+  (shorten-package-name (lisp-current-package)))
 
 (defun lisp-repl-paren-correspond-p ()
   (loop :with count := 0 :do
@@ -1032,7 +1036,8 @@
                          (lisp-current-package))
     (declare (ignore error-p))
     (end-of-buffer)
-    (lisp-print-values values)))
+    (lisp-print-values values)
+    (listener-reset-prompt)))
 
 (define-key *lisp-repl-mode-keymap* (kbd "C-x p") 'lisp-repl-set-package)
 (define-command lisp-repl-set-package () ()

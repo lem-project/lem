@@ -64,8 +64,7 @@
             (add-history (%listener-history) str)
             (end-of-buffer)
             (insert-newline)
-            (funcall (get-bvar :listener-confirm-function) str)
-            (listener-reset-prompt)))))
+            (funcall (get-bvar :listener-confirm-function) str)))))
   t)
 
 (define-key *listener-mode-keymap* (kbd "M-p") 'listener-prev-input)

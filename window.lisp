@@ -107,7 +107,7 @@
                         :wrap-ylist nil)))
     (charms/ll:keypad (window-win window) 1)
     (setf (window-point-marker window)
-          (make-marker (make-point 1 0) buffer))
+          (make-marker buffer (make-point 1 0)))
     window))
 
 (defun window-point (&optional (window *current-window*))

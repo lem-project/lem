@@ -96,7 +96,7 @@
          (vtop-linum cur-linum cur-col)
          (apply 'values (buffer-keep-binfo buffer))))
       (delete-marker (window-point-marker))
-      (setf (window-point-marker) (make-marker))
+      (setf (window-point-marker) (make-marker-current-point))
       (let ((buffer-nlines (buffer-nlines)))
         (setf (window-vtop-linum)
               (min vtop-linum buffer-nlines))

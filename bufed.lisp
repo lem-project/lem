@@ -386,7 +386,7 @@
         (setf (marker-point (buffer-mark-marker buffer))
               (point))
         (setf (buffer-mark-marker buffer)
-              (make-marker)))
+              (make-marker-current-point)))
     (minibuf-print "Mark set")
     t))
 

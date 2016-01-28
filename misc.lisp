@@ -107,27 +107,33 @@
 
 
 (export '(make-marker
+          make-marker-current-point
           marker-p
           delete-marker
           marker-buffer
           marker-linum
           marker-column
-          marker-point))
+          marker-point
+          marker-insertion-type))
 
 (deftype marker ()
   `(satisfies markerp))
 
 (let ((marker-tag (gensym "MARKER")))
-  (defun make-marker (&optional (point (point)) (buffer (window-buffer)))
+  (defun marker-p (x)
+    (and (vectorp x)
+         (eq marker-tag (safe-aref x 0))))
+  (defun make-marker (buffer point &optional insertion-type)
     (let ((marker (vector marker-tag
                           buffer
                           (point-linum point)
-                          (point-column point))))
+                          (point-column point)
+                          insertion-type)))
       (buffer-add-marker buffer marker)
-      marker))
-  (defun marker-p (x)
-    (and (vectorp x)
-         (eq marker-tag (safe-aref x 0)))))
+      marker)))
+
+(defun make-marker-current-point (&optional insertion-type)
+  (make-marker (window-buffer) (point) insertion-type))
 
 (defun delete-marker (marker)
   (buffer-delete-marker
@@ -148,6 +154,12 @@
 
 (defun (setf marker-column) (new-column marker)
   (setf (aref marker 3) new-column))
+
+(defun marker-insertion-type (marker)
+  (aref marker 4))
+
+(defun (setf marker-insertion-type) (new-insertion-type marker)
+  (setf (aref marker 4) new-insertion-type))
 
 (defun marker-point (marker)
   (make-point (marker-linum marker)

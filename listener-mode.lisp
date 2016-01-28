@@ -47,7 +47,7 @@
   (prev-char 1)
   (when (%listener-marker)
     (delete-marker (%listener-marker)))
-  (setf (%listener-marker) (make-marker))
+  (setf (%listener-marker) (make-marker-current-point))
   (next-char 1))
 
 (define-key *listener-mode-keymap* (kbd "C-m") 'listener-return)

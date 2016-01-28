@@ -126,6 +126,7 @@
      (window-cur-linum)
      (window-cur-col)
      (car rest))
+    (next-char (length (car rest)))
     (when (cdr rest)
       (insert-newline 1))))
 

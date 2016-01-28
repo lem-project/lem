@@ -33,6 +33,11 @@
     (funcall mode)
     (listener-reset-prompt)))
 
+(defun listener-update-marker ()
+  (when (%listener-marker)
+    (delete-marker (%listener-marker)))
+  (setf (%listener-marker) (make-marker-current-point)))
+
 (defun listener-reset-prompt ()
   (end-of-buffer)
   (unless (bolp)
@@ -44,11 +49,7 @@
                  (make-point (window-cur-linum) (window-cur-col))
                  (make-attr :bold-p t :color :blue))
   (buffer-undo-boundary (window-buffer))
-  (prev-char 1)
-  (when (%listener-marker)
-    (delete-marker (%listener-marker)))
-  (setf (%listener-marker) (make-marker-current-point))
-  (next-char 1))
+  (listener-update-marker))
 
 (define-key *listener-mode-keymap* (kbd "C-m") 'listener-return)
 (define-command listener-return () ()
@@ -64,6 +65,7 @@
             (add-history (%listener-history) str)
             (end-of-buffer)
             (insert-newline)
+            (listener-update-marker)
             (funcall (get-bvar :listener-confirm-function) str)))))
   t)
 

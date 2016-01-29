@@ -39,7 +39,7 @@
          (when (equal str prev-str)
            (setq comp-flag nil)
            (let ((*current-window* *completion-window*))
-             (unless (next-page 1)
+             (unless (next-page)
                (beginning-of-buffer))
              (window-update-all)))))
       (setq prev-str str)

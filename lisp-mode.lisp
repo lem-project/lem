@@ -458,7 +458,7 @@
           (return))
         (push expr exps)
         (setq str (subseq str i))))
-    (cons 'progn (nreverse exps))))
+    (nreverse exps)))
 
 (defun lisp-eval-in-package (expr package)
   (let* ((string (write-to-string expr))
@@ -522,9 +522,7 @@
                (raw))))))
   condition)
 
-(defun eval-string-internal (string output-buffer point
-                                    &optional
-                                    update-point-p (package "COMMON-LISP-USER"))
+(defun %lisp-eval-internal (x output-buffer point &optional update-point-p)
   (let* ((error-p)
          (results)
          (io (make-buffer-io-stream output-buffer point t))
@@ -538,8 +536,7 @@
     (handler-case-bind (#'lisp-debugger
                         (setq results
                               (restart-case
-                                  (multiple-value-list
-                                   (eval (%string-to-exps string package)))
+                                  (multiple-value-list (eval x))
                                 (abort () :report "Abort.")))
                         (when update-point-p
                           (point-set
@@ -549,20 +546,26 @@
                         (setq results (list condition))))
     (values results error-p)))
 
-(defun %lisp-eval-string (string output-buffer point
-                                 &optional
-                                 update-point-p (package "COMMON-LISP-USER"))
+(defun %lisp-eval (x output-buffer point
+                     &optional update-point-p)
   (unless point (setq point (point-min)))
   (noraw)
   (unwind-protect
     (multiple-value-bind (results error-p)
-        (eval-string-internal string
-                              output-buffer
-                              point
-                              update-point-p
-                              package)
+        (%lisp-eval-internal x
+                             output-buffer
+                             point
+                             update-point-p)
       (values results error-p))
     (raw)))
+
+(defun %lisp-eval-string (string output-buffer point
+                                 &optional
+                                 update-point-p (package "COMMON-LISP-USER"))
+  (%lisp-eval `(cl:progn ,@(%string-to-exps string package))
+              output-buffer
+              point
+              update-point-p))
 
 (define-key *lisp-mode-keymap* (kbd "M-:") 'lisp-eval-string)
 (define-command lisp-eval-string (string) ("sEval: ")
@@ -1028,13 +1031,13 @@
       (return (= 1 count)))))
 
 (defun lisp-repl-confirm (string)
+  (setq - (car (%string-to-exps string (lisp-current-package))))
   (multiple-value-bind (values error-p)
-      (%lisp-eval-string string
-                         (window-buffer)
-                         (point)
-                         t
-                         (lisp-current-package))
+      (%lisp-eval - (window-buffer) (point) t)
     (declare (ignore error-p))
+    (setq +++ ++ /// //     *** (car ///)
+          ++  +  //  /      **  (car //)
+          +   -  /   values *   (car /))
     (end-of-buffer)
     (lisp-print-values values)
     (listener-reset-prompt)))

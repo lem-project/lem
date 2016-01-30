@@ -30,7 +30,7 @@
 
 (defvar *exit*)
 
-(defvar *input-history* (queue:make-queue 100))
+(defvar *input-history* (lem.queue:make-queue 100))
 
 (defvar *macro-recording-p* nil)
 (defvar *macro-chars* nil)
@@ -49,7 +49,7 @@
                      (t
                       (grow-rem-left *input-queue*))))
          (char (code-char code)))
-    (queue:enqueue *input-history* char)
+    (lem.queue:enqueue *input-history* char)
     (when *macro-recording-p*
       (push char *macro-chars*))
     (cond ((= code 410)
@@ -552,7 +552,7 @@
     (let ((*print-circle* t))
       (format out "~&~%~%~%~%~a~%" condition)
       (format out "~s~%"
-              (queue:queue-to-list *input-history*))
+              (lem.queue:queue-to-list *input-history*))
       (uiop/image:print-backtrace :stream out :count 100))))
 
 (defun dired (filename)

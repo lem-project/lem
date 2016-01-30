@@ -118,7 +118,8 @@
   line-comment-following-char
   block-comment-preceding-char
   block-comment-following-char
-  elements)
+  region-list
+  match-list)
 
 (defun make-syntax-table (&rest args)
   (let ((syntax-table (apply '%make-syntax-table args)))
@@ -156,12 +157,12 @@
                        :matched-symbol matched-symbol
                        :symbol-tov symbol-tov
                        :tag tag)
-        (syntax-table-elements syntax-table))
+        (syntax-table-match-list syntax-table))
   t)
 
 (defun syntax-add-region (syntax-table start end &key attr tag)
   (push (make-instance 'syntax-region :start start :end end :attr attr :tag tag)
-        (syntax-table-elements syntax-table)))
+        (syntax-table-region-list syntax-table)))
 
 (defun syntax-word-char-p (c)
   (and (characterp c)
@@ -373,9 +374,9 @@
           (return-from syntax-scan-token-test (1- end1)))))))
 
 (defun syntax-scan-token (line start)
-  (some #'(lambda (syn)
-            (syntax-scan-token-test syn line start))
-        (syntax-table-elements (current-syntax))))
+  (flet ((f (syn) (syntax-scan-token-test syn line start)))
+    (or (some #'f (syntax-table-region-list (current-syntax)))
+        (some #'f (syntax-table-match-list (current-syntax))))))
 
 (defun syntax-scan-whitespaces (str i)
   (do ((i i (1+ i)))

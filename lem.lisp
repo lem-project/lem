@@ -556,7 +556,7 @@
       (uiop/image:print-backtrace :stream out :count 100))))
 
 (defun dired (filename)
-  (dired:dired filename))
+  (lem.dired:dired filename))
 
 #+sbcl
 (push #'(lambda (x)

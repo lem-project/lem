@@ -189,6 +189,7 @@
              (window-cur-col)))
 
 (defun move-to-column (column &optional force)
+  (check-type column (integer 0 #.most-positive-fixnum))
   (end-of-line)
   (let ((current-column (current-column)))
     (cond ((< column current-column)

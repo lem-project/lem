@@ -619,9 +619,10 @@
            (if (< old-column column)
                (back-to-indentation)
                (move-to-column
-                (+ old-column
-                   (- (str-width new-indent-string)
-                      (str-width old-indent-string))))))
+                (max 0
+                     (+ old-column
+                        (- (str-width new-indent-string)
+                           (str-width old-indent-string)))))))
           ((< old-column column)
            (back-to-indentation)))
     t))

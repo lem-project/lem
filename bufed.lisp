@@ -351,7 +351,7 @@
   (if n
       (scroll-down n)
       (let ((point (point)))
-        (cond ((next-line (1- (window-nlines)))
+        (cond ((next-line (1- (window-height)))
                (window-recenter *current-window*)
                t)
               ((and (point-set point) nil))
@@ -366,7 +366,7 @@
   (if n
       (scroll-up n)
       (let ((point (point)))
-        (cond ((prev-line (1- (window-nlines)))
+        (cond ((prev-line (1- (window-height)))
                (window-recenter *current-window*)
                t)
               ((and (point-set point) nil))

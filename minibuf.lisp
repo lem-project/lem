@@ -156,9 +156,9 @@
   (charms/ll:wmove
    (window-win *minibuf-window*)
    0
-   (+ (multiple-value-bind (strings nlines)
+   (+ (multiple-value-bind (strings len)
           (split-string prompt #\newline)
-        (+ (* (length "<NL>") (1- nlines))
+        (+ (* (length "<NL>") (1- len))
            (apply #'+ (mapcar #'str-width strings))))
       (str-width
        (apply 'concatenate 'string

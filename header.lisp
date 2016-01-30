@@ -127,7 +127,7 @@
     `(let ((,gwindow ,window))
        (window-adjust-view ,gwindow)
        (let* ((,start-linum-var (window-vtop-linum ,gwindow))
-              (,end-linum-var (+ ,start-linum-var (window-nlines ,gwindow))))
+              (,end-linum-var (+ ,start-linum-var (window-height ,gwindow))))
          ,@body))))
 
 (defmacro with-buffer-read-only (buffer flag &body body)

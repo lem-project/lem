@@ -14,7 +14,7 @@
           window-list
           window
           window-point
-          window-nlines
+          window-height
           window-width
           window-y
           window-x
@@ -75,7 +75,7 @@
 
 (define-class window () *current-window*
   win
-  nlines
+  height
   width
   y
   x
@@ -92,16 +92,16 @@
 (defun window-p (x)
   (typep x 'window))
 
-(defun make-window (buffer nlines winwidth y x)
+(defun make-window (buffer winheight winwidth y x)
   (let ((window
          (make-instance 'window
-                        :win (charms/ll:newwin nlines winwidth y x)
-                        :nlines nlines
+                        :win (charms/ll:newwin winheight winwidth y x)
+                        :height winheight
                         :width winwidth
                         :y y
                         :x x
                         :buffer buffer
-                        :disp-lines (make-array (1- nlines) :initial-element nil)
+                        :disp-lines (make-array (1- winheight) :initial-element nil)
                         :vtop-linum 1
                         :vtop-column 0
                         :wrap-ylist nil)))
@@ -254,7 +254,7 @@
   (setf (window-vtop-column window) 0)
   (setf (window-vtop-linum window)
         (window-cur-linum window))
-  (window-scroll window (- (floor (window-nlines window) 2))))
+  (window-scroll window (- (floor (window-height window) 2))))
 
 (defun %scroll-down-if-wrapping (window)
   (when (buffer-truncate-lines (window-buffer window))
@@ -316,12 +316,12 @@
 (defun window-posline (window)
   (cond
    ((<= (buffer-nlines (window-buffer window))
-        (window-nlines window))
+        (window-height window))
     "All")
    ((= 1 (window-vtop-linum window))
     "Top")
    ((<= (buffer-nlines (window-buffer window))
-        (+ (window-vtop-linum window) (window-nlines window)))
+        (+ (window-vtop-linum window) (window-height window)))
     "Bot")
    (t
     (format nil "~2d%"
@@ -380,7 +380,7 @@
     (charms/ll:wattron (window-win window) attr)
     (let ((modeline-str (modeline-string window)))
       (charms/ll:mvwaddstr (window-win window)
-                           (1- (window-nlines window))
+                           (1- (window-height window))
                            0
                            modeline-str))
     (charms/ll:wattroff (window-win window)
@@ -498,7 +498,7 @@
     (setq curx (str-width (fat-string str) 0 (window-cur-col window))))
   (loop :with start := 0 :and winwidth := (window-width window)
     :for i := (wide-index (fat-string str) winwidth :start start)
-    :while (< y (1- (window-nlines window)))
+    :while (< y (1- (window-height window)))
     :do (cond ((null i)
                (window-print-line window y str :string-start start)
                (return))
@@ -534,8 +534,8 @@
                         (window-buffer window)
                         (window-disp-lines window)
                         (window-vtop-linum window)
-                        (1- (window-nlines window)))
-      :while (< y (1- (window-nlines window))) :do
+                        (1- (window-height window)))
+      :while (< y (1- (window-height window))) :do
       (cond (str
              (check-type str fatstring)
              (multiple-value-setq (curx cury y)
@@ -554,7 +554,7 @@
   (charms/ll:attron charms/ll:a_reverse)
   (when (< 0 (window-x window))
     (loop :with x := (- (window-x window) 1)
-      :for y :from (window-y window) :repeat (window-nlines window) :do
+      :for y :from (window-y window) :repeat (window-height window) :do
       (charms/ll:mvwaddch charms/ll:*stdscr*
                           y x #.(char-code #\|))))
   (charms/ll:attroff charms/ll:a_reverse)
@@ -576,7 +576,7 @@
               (< 0 (window-vtop-column window)))
          -1)
         ((let ((n (- (window-cursor-y-if-wrapping window)
-                     (- (window-nlines window) 2))))
+                     (- (window-height window) 2))))
            (when (< 0 n) n)))
         (t
          0)))
@@ -677,7 +677,7 @@
 
 (defun split-window-after (new-window split-type)
   (window-set-size *current-window*
-                   (window-nlines)
+                   (window-height)
                    (window-width))
   (setf (window-vtop-linum new-window)
         (window-vtop-linum))
@@ -702,17 +702,17 @@
 (define-command split-window-vertically () ()
   (when (eq *current-window* *minibuf-window*)
     (return-from split-window-vertically nil))
-  (multiple-value-bind (nlines rem)
-      (floor (window-nlines) 2)
+  (multiple-value-bind (winheight rem)
+      (floor (window-height) 2)
     (let ((newwin (make-window
                    (window-buffer)
-                   nlines
+                   winheight
                    (window-width)
                    (+ (window-y)
-                      nlines
+                      winheight
                       rem)
                    (window-x))))
-      (decf (window-nlines) nlines)
+      (decf (window-height) winheight)
       (split-window-after newwin :vsplit))))
 
 (define-key *global-keymap* (kbd "C-x 3") 'split-window-horizontally)
@@ -723,7 +723,7 @@
       (floor (window-width) 2)
     (let ((newwin (make-window
                    (window-buffer)
-                   (window-nlines)
+                   (window-height)
                    (1- winwidth)
                    (window-y)
                    (+ (window-x)
@@ -759,12 +759,12 @@
   (setf (window-y window) y)
   (setf (window-x window) x))
 
-(defun window-set-size (window nlines winwidth)
-  (charms/ll:wresize (window-win window) nlines winwidth)
-  (setf (window-nlines window) nlines)
+(defun window-set-size (window winheight winwidth)
+  (charms/ll:wresize (window-win window) winheight winwidth)
+  (setf (window-height window) winheight)
   (setf (window-width window) winwidth)
   (setf (window-disp-lines window)
-        (make-array (1- nlines)
+        (make-array (1- winheight)
                     :initial-element nil)))
 
 (defun window-move (window dy dx)
@@ -774,7 +774,7 @@
 
 (defun window-resize (window dl dc)
   (window-set-size window
-                   (+ (window-nlines window) dl)
+                   (+ (window-height window) dl)
                    (+ (window-width window) dc)))
 
 (define-key *global-keymap* (kbd "C-x 1") 'delete-other-windows)
@@ -801,14 +801,14 @@
                                  (window-y win)
                                  (window-x deleted-window))
                  (window-set-size win
-                                  (window-nlines win)
+                                  (window-height win)
                                   (+ (window-width deleted-window)
                                      1
                                      (window-width win)))))
               (t
                (dolist (win (max-if #'window-x window-list))
                  (window-set-size win
-                                  (window-nlines win)
+                                  (window-height win)
                                   (+ (window-width deleted-window)
                                      1
                                      (window-width win))))))
@@ -819,14 +819,14 @@
                                  (window-y deleted-window)
                                  (window-x win))
                  (window-set-size win
-                                  (+ (window-nlines deleted-window)
-                                     (window-nlines win))
+                                  (+ (window-height deleted-window)
+                                     (window-height win))
                                   (window-width win))))
               (t
                (dolist (win (max-if #'window-y window-list))
                  (window-set-size win
-                                  (+ (window-nlines deleted-window)
-                                     (window-nlines win))
+                                  (+ (window-height deleted-window)
+                                     (window-height win))
                                   (window-width win))))))))
 
 (defun delete-window (window)
@@ -932,7 +932,7 @@
 (defun collect-bottom-windows (window-list)
   (max-if #'(lambda (window)
               (+ (window-y window)
-                 (window-nlines window)))
+                 (window-height window)))
           window-list))
 
 (defun %shrink-windows (window-list
@@ -965,14 +965,14 @@
   (%shrink-windows window-list
                    #'collect-top-windows
                    #'(lambda (window)
-                       (< 2 (window-nlines window)))
+                       (< 2 (window-height window)))
                    n 0 n 0))
 
 (defun shrink-bottom-windows (window-list n)
   (%shrink-windows window-list
                    #'collect-bottom-windows
                    #'(lambda (window)
-                       (< 2 (window-nlines window)))
+                       (< 2 (window-height window)))
                    n 0 0 0))
 
 (defun shrink-left-windows (window-list n)
@@ -1129,7 +1129,7 @@
       (scroll-down (- n))
       (dotimes (_ n t)
         (when (and (= (window-cursor-y-if-wrapping *current-window*)
-                      (- (window-nlines) 2))
+                      (- (window-height) 2))
                    (/= 1 (window-vtop-linum)))
           (unless (prev-line n)
             (return nil)))

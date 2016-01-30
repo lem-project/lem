@@ -443,7 +443,7 @@
         (t
          (dolist (window (cons *minibuf-window* (window-list)))
            (setf (window-win window)
-                 (charms/ll:newwin (window-nlines window)
+                 (charms/ll:newwin (window-height window)
                                    (window-width window)
                                    (window-y window)
                                    (window-x window)))

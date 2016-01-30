@@ -39,7 +39,7 @@
          (when (equal str prev-str)
            (setq comp-flag nil)
            (let ((*current-window* *completion-window*))
-             (unless (scroll-down (1- (window-nlines)))
+             (unless (scroll-down (1- (window-height)))
                (beginning-of-buffer))
              (window-update-all)))))
       (setq prev-str str)

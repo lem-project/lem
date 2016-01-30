@@ -1,5 +1,5 @@
 (defpackage :lem
-  (:use :cl :fatstring))
+  (:use :cl :lem.fatstring))
 
 (defpackage :lem-user
   (:use :cl :lem))

@@ -15,7 +15,7 @@
           window
           window-point
           window-nlines
-          window-ncols
+          window-width
           window-y
           window-x
           window-buffer
@@ -76,7 +76,7 @@
 (define-class window () *current-window*
   win
   nlines
-  ncols
+  width
   y
   x
   buffer
@@ -92,12 +92,12 @@
 (defun window-p (x)
   (typep x 'window))
 
-(defun make-window (buffer nlines ncols y x)
+(defun make-window (buffer nlines winwidth y x)
   (let ((window
          (make-instance 'window
-                        :win (charms/ll:newwin nlines ncols y x)
+                        :win (charms/ll:newwin nlines winwidth y x)
                         :nlines nlines
-                        :ncols ncols
+                        :width winwidth
                         :y y
                         :x x
                         :buffer buffer
@@ -262,7 +262,7 @@
       (setf (window-vtop-column window) 0)
       (map-wrapping-line (buffer-line-string (window-buffer window)
                                              (window-vtop-linum window))
-                         (window-ncols window)
+                         (window-width window)
                          #'(lambda (c)
                              (when (< vtop-column c)
                                (setf (window-vtop-column window) c)
@@ -281,7 +281,7 @@
                           (window-buffer window)
                           (- (window-vtop-linum window)
                              (if (= 0 (window-vtop-column window)) 1 0)))
-                         (window-ncols window)
+                         (window-width window)
                          #'(lambda (c)
                              (push c columns)))
       (cond ((and columns (= 0 (window-vtop-column window)))
@@ -353,7 +353,7 @@
 
 (defun modeline-string (window)
   (let* ((line-pos (window-posline window))
-         (ncols (window-ncols window))
+         (winwidth (window-width window))
          (str (with-output-to-string (out)
                 (dolist (x
                          (get-bvar :modeline-format
@@ -362,7 +362,7 @@
                   (if (or (symbolp x) (functionp x))
                       (princ (funcall x window) out)
                       (princ x out))))))
-    (let ((n (- ncols 7 (length str))))
+    (let ((n (- winwidth 7 (length str))))
       (if (minusp n)
           (format nil "~a ~a --" str line-pos)
           (format nil "~a~v,,,va ~a --"
@@ -416,9 +416,9 @@
   (when (= cury y)
     (setq curx (str-width (fat-string str) 0 (window-cur-col window))))
   (let ((width (str-width (fat-string str)))
-        (cols (window-ncols window)))
+        (cols (window-width window)))
     (cond
-     ((< width (window-ncols window))
+     ((< width (window-width window))
       nil)
      ((or (/= cury y)
           (< curx (1- cols)))
@@ -452,19 +452,19 @@
     (window-print-line window y str))
   (values curx cury y))
 
-(defun divide-line-width (str ncols)
+(defun divide-line-width (str winwidth)
   (check-type str fatstring)
   (labels ((f (str acc)
-              (if (< (str-width (fat-string str)) ncols)
+              (if (< (str-width (fat-string str)) winwidth)
                   (nreverse (cons str acc))
-                  (let ((i (wide-index (fat-string str) ncols)))
+                  (let ((i (wide-index (fat-string str) winwidth)))
                     (f (fat-substring str i)
                        (cons (fat-substring str 0 i) acc))))))
     (f str nil)))
 
-(defun map-wrapping-line (string ncols fn)
+(defun map-wrapping-line (string winwidth fn)
   (loop :with start := 0
-    :for i := (wide-index string ncols :start start)
+    :for i := (wide-index string winwidth :start start)
     :while i :do
     (funcall fn i)
     (setq start i)))
@@ -478,7 +478,7 @@
                 (map-wrapping-line (if (= (window-vtop-linum window) linum)
                                        (subseq string (window-vtop-column window))
                                        string)
-                                   (window-ncols window)
+                                   (window-width window)
                                    #'(lambda (arg)
                                        (declare (ignore arg))
                                        (incf offset)))))
@@ -496,8 +496,8 @@
     (setq str (fat-substring str (window-vtop-column window))))
   (when (= y cury)
     (setq curx (str-width (fat-string str) 0 (window-cur-col window))))
-  (loop :with start := 0 :and ncols := (window-ncols window)
-    :for i := (wide-index (fat-string str) ncols :start start)
+  (loop :with start := 0 :and winwidth := (window-width window)
+    :for i := (wide-index (fat-string str) winwidth :start start)
     :while (< y (1- (window-nlines window)))
     :do (cond ((null i)
                (window-print-line window y str :string-start start)
@@ -511,7 +511,7 @@
                           (decf curx len)
                           (incf cury)))))
                (window-print-line window y str :string-start start :string-end i)
-               (window-print-line window y *wrapping-fatstring* :start-x (1- ncols))
+               (window-print-line window y *wrapping-fatstring* :start-x (1- winwidth))
                (incf y)
                (push y (window-wrap-ylist window))
                (setq start i))))
@@ -634,13 +634,13 @@
 
 (defun window-maybe-update-cursor ()
   (let* ((window *current-window*)
-         (ncols (window-ncols window)))
+         (winwidth (window-width window)))
     (multiple-value-bind (str curx cury)
         (%window-current-line window)
-      (when (<= (1- ncols) curx)
-        (let ((strings (divide-line-width str ncols)))
+      (when (<= (1- winwidth) curx)
+        (let ((strings (divide-line-width str winwidth)))
           (loop :for str :in strings
-            :while (<= (1- ncols) curx) :do
+            :while (<= (1- winwidth) curx) :do
             (incf cury)
             (decf curx (str-width (fat-string str))))))
       (charms/ll:wmove (window-win window) cury curx))))
@@ -678,7 +678,7 @@
 (defun split-window-after (new-window split-type)
   (window-set-size *current-window*
                    (window-nlines)
-                   (window-ncols))
+                   (window-width))
   (setf (window-vtop-linum new-window)
         (window-vtop-linum))
   (setf (window-cur-linum new-window)
@@ -707,7 +707,7 @@
     (let ((newwin (make-window
                    (window-buffer)
                    nlines
-                   (window-ncols)
+                   (window-width)
                    (+ (window-y)
                       nlines
                       rem)
@@ -719,22 +719,22 @@
 (define-command split-window-horizontally () ()
   (when (eq *current-window* *minibuf-window*)
     (return-from split-window-horizontally nil))
-  (multiple-value-bind (ncols rem)
-      (floor (window-ncols) 2)
+  (multiple-value-bind (winwidth rem)
+      (floor (window-width) 2)
     (let ((newwin (make-window
                    (window-buffer)
                    (window-nlines)
-                   (1- ncols)
+                   (1- winwidth)
                    (window-y)
                    (+ (window-x)
-                      ncols
+                      winwidth
                       rem
                       1))))
-      (decf (window-ncols) ncols)
+      (decf (window-width) winwidth)
       (split-window-after newwin :hsplit))))
 
 (defun split-window ()
-  (if (< *window-sufficient-width* (window-ncols *current-window*))
+  (if (< *window-sufficient-width* (window-width *current-window*))
       (split-window-horizontally)
       (split-window-vertically)))
 
@@ -759,10 +759,10 @@
   (setf (window-y window) y)
   (setf (window-x window) x))
 
-(defun window-set-size (window nlines ncols)
-  (charms/ll:wresize (window-win window) nlines ncols)
+(defun window-set-size (window nlines winwidth)
+  (charms/ll:wresize (window-win window) nlines winwidth)
   (setf (window-nlines window) nlines)
-  (setf (window-ncols window) ncols)
+  (setf (window-width window) winwidth)
   (setf (window-disp-lines window)
         (make-array (1- nlines)
                     :initial-element nil)))
@@ -775,7 +775,7 @@
 (defun window-resize (window dl dc)
   (window-set-size window
                    (+ (window-nlines window) dl)
-                   (+ (window-ncols window) dc)))
+                   (+ (window-width window) dc)))
 
 (define-key *global-keymap* (kbd "C-x 1") 'delete-other-windows)
 (define-command delete-other-windows () ()
@@ -802,16 +802,16 @@
                                  (window-x deleted-window))
                  (window-set-size win
                                   (window-nlines win)
-                                  (+ (window-ncols deleted-window)
+                                  (+ (window-width deleted-window)
                                      1
-                                     (window-ncols win)))))
+                                     (window-width win)))))
               (t
                (dolist (win (max-if #'window-x window-list))
                  (window-set-size win
                                   (window-nlines win)
-                                  (+ (window-ncols deleted-window)
+                                  (+ (window-width deleted-window)
                                      1
-                                     (window-ncols win))))))
+                                     (window-width win))))))
         (cond ((< (window-y deleted-window)
                   (window-y (car window-list)))
                (dolist (win (min-if #'window-y window-list))
@@ -821,13 +821,13 @@
                  (window-set-size win
                                   (+ (window-nlines deleted-window)
                                      (window-nlines win))
-                                  (window-ncols win))))
+                                  (window-width win))))
               (t
                (dolist (win (max-if #'window-y window-list))
                  (window-set-size win
                                   (+ (window-nlines deleted-window)
                                      (window-nlines win))
-                                  (window-ncols win))))))))
+                                  (window-width win))))))))
 
 (defun delete-window (window)
   (when (one-window-p)
@@ -923,7 +923,7 @@
 (defun collect-right-windows (window-list)
   (max-if #'(lambda (window)
               (+ (window-x window)
-                 (window-ncols window)))
+                 (window-width window)))
           window-list))
 
 (defun collect-top-windows (window-list)
@@ -979,14 +979,14 @@
   (%shrink-windows window-list
                    #'collect-left-windows
                    #'(lambda (window)
-                       (< 2 (window-ncols window)))
+                       (< 2 (window-width window)))
                    0 n 0 n))
 
 (defun shrink-right-windows (window-list n)
   (%shrink-windows window-list
                    #'collect-right-windows
                    #'(lambda (window)
-                       (< 2 (window-ncols window)))
+                       (< 2 (window-width window)))
                    0 n 0 0))
 
 (defun %grow-windows (window-list

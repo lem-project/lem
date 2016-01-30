@@ -444,7 +444,7 @@
          (dolist (window (cons *minibuf-window* (window-list)))
            (setf (window-win window)
                  (charms/ll:newwin (window-nlines window)
-                                   (window-ncols window)
+                                   (window-width window)
                                    (window-y window)
                                    (window-x window)))
            (charms/ll:keypad (window-win window) 1))))

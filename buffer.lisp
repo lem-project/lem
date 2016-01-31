@@ -38,7 +38,7 @@
   prev
   fatstr
   tags
-  symbol-tov-list
+  symbol-lifetimes
   region
   next)
 

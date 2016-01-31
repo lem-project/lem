@@ -98,10 +98,10 @@
     :initarg :matched-symbol
     :initform nil
     :reader syntax-match-matched-symbol)
-   (symbol-tov
-    :initarg :symbol-tov
+   (symbol-lifetime
+    :initarg :symbol-lifetime
     :initform nil
-    :reader syntax-match-symbol-tov)))
+    :reader syntax-match-symbol-lifetime)))
 
 (defstruct (syntax-table (:constructor %make-syntax-table))
   (space-chars '(#\space #\tab #\newline))
@@ -148,14 +148,14 @@
     syntax-table))
 
 (defun syntax-add-match (syntax-table test &key test-symbol end-symbol attr
-                                      matched-symbol (symbol-tov -1) tag)
+                                      matched-symbol (symbol-lifetime -1) tag)
   (push (make-instance 'syntax-match
                        :test test
                        :test-symbol test-symbol
                        :end-symbol end-symbol
                        :attr attr
                        :matched-symbol matched-symbol
-                       :symbol-tov symbol-tov
+                       :symbol-lifetime symbol-lifetime
                        :tag tag)
         (syntax-table-match-list syntax-table))
   t)
@@ -237,7 +237,7 @@
 (defun syntax-end-block-comment-p (c1 c2)
   (syntax-start-block-comment-p c2 c1))
 
-(defvar *syntax-symbol-tov-list* nil)
+(defvar *syntax-symbol-lifetimes* nil)
 
 (defun syntax-scan-window (window)
   (when (and *enable-syntax-highlight*
@@ -251,7 +251,7 @@
     (let* ((buffer (window-buffer window))
            (line (buffer-get-line buffer start-linum))
            (prev (line-prev line))
-           (*syntax-symbol-tov-list* (and prev (line-symbol-tov-list prev))))
+           (*syntax-symbol-lifetimes* (and prev (line-symbol-lifetimes prev))))
       (do ((line line (line-next line))
            (linum start-linum (1+ linum)))
           ((or (null line)
@@ -266,21 +266,21 @@
                     (syntax-scan-line line))
                 buffer)))
 
-(defun syntax-update-symbol-tov ()
-  (setq *syntax-symbol-tov-list*
-        (loop :for (symbol . tov) :in *syntax-symbol-tov-list*
-          :when (/= 0 tov)
-          :collect (cons symbol (1- tov)))))
+(defun syntax-update-symbol-lifetimes ()
+  (setq *syntax-symbol-lifetimes*
+        (loop :for (symbol . lifetime) :in *syntax-symbol-lifetimes*
+          :when (/= 0 lifetime)
+          :collect (cons symbol (1- lifetime)))))
 
 (defun syntax-matched-word (line syntax start end)
   (when (syntax-match-matched-symbol syntax)
     (push (cons (syntax-match-matched-symbol syntax)
-                (syntax-match-symbol-tov syntax))
-          *syntax-symbol-tov-list*))
+                (syntax-match-symbol-lifetime syntax))
+          *syntax-symbol-lifetimes*))
   (when (syntax-match-end-symbol syntax)
-    (setq *syntax-symbol-tov-list*
+    (setq *syntax-symbol-lifetimes*
           (remove (syntax-match-end-symbol syntax)
-                  *syntax-symbol-tov-list*
+                  *syntax-symbol-lifetimes*
                   :key #'car)))
   (when (syntax-attr syntax)
     (line-put-attribute line start end (get-attr (syntax-attr syntax))))
@@ -363,7 +363,7 @@
 (defmethod syntax-scan-token-test ((syntax syntax-match) line start)
   (when (or (not (syntax-match-test-symbol syntax))
             (find (syntax-match-test-symbol syntax)
-                  *syntax-symbol-tov-list*
+                  *syntax-symbol-lifetimes*
                   :key #'car))
     (let ((str (line-str line)))
       (multiple-value-bind (start1 end1)
@@ -421,7 +421,7 @@
       (setf (line-region line) nil))
     (do ((i start-col (1+ i)))
         ((>= i (length str)))
-      (syntax-update-symbol-tov)
+      (syntax-update-symbol-lifetimes)
       (when (<= (length str)
                 (setq i (syntax-scan-whitespaces str i)))
         (return))
@@ -438,7 +438,7 @@
                (let ((end (syntax-position-word-end (line-str line) i)))
                  (when (<= i (1- end))
                    (setq i (1- end))))))))
-    (setf (line-symbol-tov-list line) *syntax-symbol-tov-list*)))
+    (setf (line-symbol-lifetimes line) *syntax-symbol-lifetimes*)))
 
 (defun %syntax-col-tag (col)
   (let ((line (buffer-get-line (window-buffer) (window-cur-linum))))

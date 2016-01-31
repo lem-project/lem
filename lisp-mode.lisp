@@ -132,7 +132,7 @@
 (syntax-add-match *lisp-syntax-table*
                   (make-syntax-test "(")
                   :matched-symbol :start-expr
-                  :symbol-tov 1)
+                  :symbol-lifetime 1)
 
 (syntax-add-match *lisp-syntax-table*
                   (make-syntax-test "[^() \\t]+" :regex-p t)
@@ -156,7 +156,7 @@
                     :test-symbol :start-expr
                     :attr :keyword-attr
                     :matched-symbol :define-start
-                    :symbol-tov 1))
+                    :symbol-lifetime 1))
 
 (syntax-add-match *lisp-syntax-table*
                   (make-syntax-test "^(:?[^: \\t]+:)?define-[^ \\t()]*$"
@@ -164,7 +164,7 @@
                   :test-symbol :start-expr
                   :attr :keyword-attr
                   :matched-symbol :define-start
-                  :symbol-tov 1)
+                  :symbol-lifetime 1)
 
 (dolist (str '("block"
                "case"

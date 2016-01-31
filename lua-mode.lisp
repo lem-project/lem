@@ -35,7 +35,7 @@
                   (make-syntax-test "function" :word-p t)
                   :attr :keyword-attr
                   :matched-symbol :function-start
-                  :symbol-tov 1)
+                  :symbol-lifetime 1)
 
 (syntax-add-match *lua-syntax-table*
                   (make-syntax-test "[a-zA-Z0-9_\\.:]+" :regex-p t)

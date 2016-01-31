@@ -36,11 +36,11 @@
 
 (defstruct (line (:constructor %make-line))
   prev
+  next
   fatstr
-  tags
-  symbol-lifetimes
-  region
-  next)
+  %tags
+  %symbol-lifetimes
+  %region)
 
 (defun make-line (prev next str)
   (let ((line (%make-line :next next
@@ -77,11 +77,11 @@
 
 (defun line-add-tag (line start end tag)
   (when tag
-    (push (list start end tag) (line-tags line))
+    (push (list start end tag) (line-%tags line))
     t))
 
 (defun line-clear-tags (line)
-  (setf (line-tags line) nil)
+  (setf (line-%tags line) nil)
   t)
 
 (defun line-free (line)

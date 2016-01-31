@@ -251,7 +251,7 @@
     (let* ((buffer (window-buffer window))
            (line (buffer-get-line buffer start-linum))
            (prev (line-prev line))
-           (*syntax-symbol-lifetimes* (and prev (line-symbol-lifetimes prev))))
+           (*syntax-symbol-lifetimes* (and prev (line-%symbol-lifetimes prev))))
       (do ((line line (line-next line))
            (linum start-linum (1+ linum)))
           ((or (null line)
@@ -356,7 +356,7 @@
                                    (get-attr (syntax-attr syntax)))
                (line-add-tag line start (length (line-str line))
                              (syntax-tag syntax))
-               (setf (line-region line) syntax)
+               (setf (line-%region line) syntax)
                (return-from syntax-scan-token-test
                  (length (line-str line)))))))))
 
@@ -394,18 +394,18 @@
 
 (defun syntax-continue-region-p (line)
   (let ((prev (line-prev line)))
-    (and prev (line-region prev))))
+    (and prev (line-%region prev))))
 
 (defun syntax-scan-line-region (line region)
   (when region
     (let ((end (syntax-search-region-end region (line-str line) 0)))
       (cond (end
-             (setf (line-region line) nil)
+             (setf (line-%region line) nil)
              (line-put-attribute line 0 end (get-attr (syntax-attr region)))
              (line-add-tag line 0 end (syntax-tag region))
              end)
             (t
-             (setf (line-region line) region)
+             (setf (line-%region line) region)
              (line-put-attribute line 0 (length (line-str line))
                                  (get-attr (syntax-attr region)))
              (line-add-tag line 0 (length (line-str line)) (syntax-tag region))
@@ -418,7 +418,7 @@
          (start-col (or (syntax-scan-line-region line region) 0))
          (str (line-str line)))
     (unless region
-      (setf (line-region line) nil))
+      (setf (line-%region line) nil))
     (do ((i start-col (1+ i)))
         ((>= i (length str)))
       (syntax-update-symbol-lifetimes)
@@ -438,7 +438,7 @@
                (let ((end (syntax-position-word-end (line-str line) i)))
                  (when (<= i (1- end))
                    (setq i (1- end))))))))
-    (setf (line-symbol-lifetimes line) *syntax-symbol-lifetimes*)))
+    (setf (line-%symbol-lifetimes line) *syntax-symbol-lifetimes*)))
 
 (defun %syntax-col-tag (col)
   (let ((line (buffer-get-line (window-buffer) (window-cur-linum))))
@@ -446,7 +446,7 @@
       (unless (setq line (line-prev line))
         (return-from %syntax-col-tag nil))
       (setq col (length (line-str line))))
-    (loop :for (start end tag) :in (line-tags line) :do
+    (loop :for (start end tag) :in (line-%tags line) :do
       (when (<= start col (1- end))
         (return tag)))))
 
@@ -474,7 +474,7 @@
        (straddle-p))
       ((null line))
     (let ((found-tag-p nil))
-      (loop :with tags := (sort (copy-list (line-tags line)) #'< :key #'car)
+      (loop :with tags := (sort (copy-list (line-%tags line)) #'< :key #'car)
         :for (start end tag) :in tags
         :do (when (eq tag0 tag)
               (cond ((= start column)
@@ -499,7 +499,7 @@
         (straddle-p))
       ((null line))
     (let ((found-tag-p nil))
-      (loop :with tags := (line-tags line)
+      (loop :with tags := (line-%tags line)
         :for (start end tag) :in tags
         :do (when (eq tag0 tag)
               (cond ((= column end)

@@ -45,8 +45,10 @@
 (defvar *attribute-name-table* (make-hash-table :test 'equal))
 
 (defun set-attr (name attr)
-  (setf (gethash name *attribute-name-table*)
-        attr))
+  (unless (integerp attr)
+    (setq attr (get-attr)))
+  (check-type attr integer)
+  (setf (gethash name *attribute-name-table*) attr))
 
 (defun get-attr (name)
   (gethash name *attribute-name-table*))

@@ -364,8 +364,7 @@
     (syntax-init-attributes)
     (set-attr :highlight charms/ll:a_reverse)
     (set-attr :search-highlight
-              (logior (get-attr :highlight)
-                      (get-attr :cyan)))))
+              (make-attr :color :cyan :reverse-p t))))
 
 (defun popup-backtrace (condition)
   (info-popup (get-buffer-create "*Error*")

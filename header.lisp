@@ -44,14 +44,14 @@
 
 (defvar *attribute-name-table* (make-hash-table :test 'equal))
 
-(defun set-attr (name attr)
-  (unless (integerp attr)
-    (setq attr (get-attr)))
-  (check-type attr integer)
-  (setf (gethash name *attribute-name-table*) attr))
-
 (defun get-attr (name)
   (gethash name *attribute-name-table*))
+
+(defun set-attr (name attr)
+  (unless (integerp attr)
+    (setq attr (get-attr name)))
+  (check-type attr integer)
+  (setf (gethash name *attribute-name-table*) attr))
 
 (defun make-attr (&key color reverse-p bold-p underline-p)
   (logior (or (get-attr color) 0)

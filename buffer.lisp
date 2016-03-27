@@ -239,7 +239,7 @@
              (:undo
               (push-redo-stack ,buffer elt))))))))
 
-(defun buffer-read-only-guard (buffer)
+(defun check-read-only (buffer)
   (when (buffer-read-only-p buffer)
     (error 'readonly)))
 
@@ -532,7 +532,7 @@
   (cond ((char= c #\newline)
          (buffer-insert-newline buffer linum col))
         (t
-         (buffer-read-only-guard buffer)
+         (check-read-only buffer)
          (with-push-undo (buffer)
            (buffer-delete-char buffer linum col 1)
            (make-point linum col))
@@ -551,7 +551,7 @@
   t)
 
 (defun buffer-insert-newline (buffer linum col)
-  (buffer-read-only-guard buffer)
+  (check-read-only buffer)
   (with-push-undo (buffer)
     (buffer-delete-char buffer linum col 1)
     (make-point linum col))
@@ -579,7 +579,7 @@
   t)
 
 (defun buffer-insert-line (buffer linum col str)
-  (buffer-read-only-guard buffer)
+  (check-read-only buffer)
   (let ((line (buffer-get-line buffer linum)))
     (with-push-undo (buffer)
       (buffer-delete-char buffer linum col (fat-length str))
@@ -598,7 +598,7 @@
   t)
 
 (defun buffer-delete-char (buffer linum col n)
-  (buffer-read-only-guard buffer)
+  (check-read-only buffer)
   (let ((line (buffer-get-line buffer linum))
         (del-lines (list (make-fatstring "" 0))))
     (loop while (or (eq n t) (plusp n)) do

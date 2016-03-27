@@ -16,6 +16,7 @@
 			(:file "winsize")
                         (:file "package")
                         (:file "wrappers")
+                        (:file "errors")
                         (:file "header")
                         (:file "util")
                         (:file "key")

@@ -57,7 +57,7 @@
            (adjust-screen-size)
            (getch))
           ((and (char= char C-g) abort-jump)
-           (throw 'abort 'abort))
+           (error 'editor-abort))
           (t char))))
 
 (defun ungetch (char)
@@ -204,7 +204,7 @@
     (cond ((= code -1)
            t)
           ((= code (char-code C-g))
-           (throw 'abort 'abort))
+           (error 'editor-abort))
           (t
            nil))))
 
@@ -407,13 +407,9 @@
   (flet ((body ()
                (window-maybe-update)
                (idle)
-               (case (catch 'abort
-                       (main-step)
-                       nil)
-                 (readonly
-                  (minibuf-print "Read Only"))
-                 (abort
-                  (keyboard-quit)))))
+               (handler-case (main-step)
+                 (editor-abort () (keyboard-quit))
+                 (readonly () (minibuf-print "Read Only")))))
     (do ((*exit*)
          (*curr-flags* (make-flags) (make-flags))
          (*last-flags* (make-flags) *curr-flags*))

@@ -499,27 +499,28 @@
                      nil)
     (loop
       (window-update-all)
-      (let* ((str (catch 'abort (minibuf-read-string "Debug: ")))
-             (i (and (stringp str) (parse-integer str :junk-allowed t))))
-        (cond ((eq str 'abort))
-              ((and i (<= 1 i n))
-               (let ((restart (nth (1- i) choices)))
-                 (noraw)
-                 (cond ((eq 'store-value (restart-name restart))
-                        (ldebug-store-value condition))
-                       (t
-                        (invoke-restart-interactively restart))))
-               (return))
-              (t
-               (noraw)
-               (let ((x
-                      (handler-case (eval (read-from-string str nil))
-                        (error (cdt) (format nil "~a" cdt)))))
-                 (info-popup (get-buffer-create "*output*")
-                             #'(lambda (out)
-                                 (princ x out))
-                             nil))
-               (raw))))))
+      (handler-case
+          (let* ((str (minibuf-read-string "Debug: "))
+                 (i (and (stringp str) (parse-integer str :junk-allowed t))))
+            (cond ((and i (<= 1 i n))
+                   (let ((restart (nth (1- i) choices)))
+                     (noraw)
+                     (cond ((eq 'store-value (restart-name restart))
+                            (ldebug-store-value condition))
+                           (t
+                            (invoke-restart-interactively restart))))
+                   (return))
+                  (t
+                   (noraw)
+                   (let ((x
+                          (handler-case (eval (read-from-string str nil))
+                            (error (cdt) (format nil "~a" cdt)))))
+                     (info-popup (get-buffer-create "*output*")
+                                 #'(lambda (out)
+                                     (princ x out))
+                                 nil))
+                   (raw))))
+        (editor-abort ()))))
   condition)
 
 (defun %lisp-eval-internal (x output-buffer point &optional update-point-p)
@@ -537,7 +538,7 @@
                         (setq results
                               (restart-case
                                   (multiple-value-list (eval x))
-                                (abort () :report "Abort.")))
+                                (editor-abort () :report "Abort.")))
                         (when update-point-p
                           (point-set
                            (buffer-output-stream-point io))))

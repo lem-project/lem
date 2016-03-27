@@ -143,9 +143,7 @@
       (insert-string str))))
 
 (define-command minibuf-read-line-break () ()
-  (if (= *minibuf-read-line-depth* 1)
-      (throw 'abort 'abort)
-      (throw 'abort (1- *minibuf-read-line-depth*))))
+  (error 'editor-abort :depth (1- *minibuf-read-line-depth*)))
 
 (defun minibuf-get-line ()
   (join (string #\newline)
@@ -189,15 +187,12 @@
          str))
     (window-maybe-update)
     (let* ((key (input-key))
-           (cmd (find-keybind key))
-           (value (catch 'abort
-                    (cmd-call cmd nil)
-                    nil)))
-      (when value
-        (cond ((eq value 'abort)
-               (throw 'abort 'abort))
-              ((not (eql value *minibuf-read-line-depth*))
-               (throw 'abort value)))))))
+           (cmd (find-keybind key)))
+      (handler-case (cmd-call cmd nil)
+        (editor-abort (c)
+                      (if (/= (editor-abort-depth c)
+                              *minibuf-read-line-depth*)
+                          (error c)))))))
 
 (defun minibuf-read-line (prompt initial comp-f existing-p)
   (let ((*minibuf-read-line-tmp-window* *current-window*)

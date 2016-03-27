@@ -239,9 +239,9 @@
              (:undo
               (push-redo-stack ,buffer elt))))))))
 
-(defmacro buffer-read-only-guard (buffer)
-  `(when (buffer-read-only-p ,buffer)
-     (error 'readonly)))
+(defun buffer-read-only-guard (buffer)
+  (when (buffer-read-only-p buffer)
+    (error 'readonly)))
 
 (defun buffer-line-set-attribute (line-set-fn buffer attr linum
                                   &optional start-column end-column)

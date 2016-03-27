@@ -9,6 +9,7 @@
           minibuf-read-char
           *minibuf-keymap*
           active-minibuffer-window
+          check-switch-minibuffer-window
           minibuf-read-line-confirm
           minibuf-read-line-completion
           minibuf-read-line-clear-before

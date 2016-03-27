@@ -375,8 +375,8 @@
 
 (define-key *lisp-mode-keymap* (kbd "M-C-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()
-  (mark-sexp)
-  (prog-indent-region))
+  (and (mark-sexp)
+       (prog-indent-region)))
 
 (define-key *global-keymap* (kbd "M-C-a") 'lisp-beginning-of-defun)
 (define-command lisp-beginning-of-defun (&optional (n 1)) ("p")

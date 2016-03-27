@@ -78,6 +78,7 @@
               (delete buffer *buffer-list*))))
 
 (defun set-buffer (buffer &optional (update-prev-buffer-p t))
+  (check-switch-minibuffer-window)
   (unless (eq (window-buffer) buffer)
     (when update-prev-buffer-p
       (setf (window-parameter *current-window* :split-p) nil)
@@ -110,6 +111,7 @@
       (assert (<= 0 (window-cur-col))))))
 
 (defun bury-buffer (buffer)
+  (check-switch-minibuffer-window)
   (setq *buffer-list*
         (append (delete buffer *buffer-list*)
                 (list buffer)))
@@ -117,6 +119,7 @@
 
 (define-key *global-keymap* (kbd "C-x b") 'select-buffer)
 (define-command select-buffer (name) ("BUse Buffer: ")
+  (check-switch-minibuffer-window)
   (set-buffer (get-buffer-create name))
   t)
 
@@ -140,6 +143,7 @@
 
 (define-key *global-keymap* (kbd "C-x x") 'next-buffer)
 (define-command next-buffer (&optional (n 1)) ("p")
+  (check-switch-minibuffer-window)
   (dotimes (_ n t)
     (set-buffer (get-next-buffer (window-buffer)))))
 

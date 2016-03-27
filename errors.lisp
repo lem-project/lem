@@ -13,3 +13,6 @@
 
 (define-condition readonly (lem-error)
   ())
+
+(define-condition switch-minibuffer-window (lem-error)
+  ())

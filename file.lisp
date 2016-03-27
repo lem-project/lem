@@ -6,7 +6,6 @@
           expand-file-name
           file-completion
           insert-file-contents
-          file-open
           find-file
           read-file
           write-to-file
@@ -160,6 +159,7 @@
           (return-from scan-file-property-list))))))
 
 (defun file-open (path)
+  (check-switch-minibuffer-window)
   (let ((name (file-namestring path))
         (absolute-path (expand-file-name path)))
     (when (and (string/= "" name)
@@ -180,6 +180,7 @@
 
 (define-key *global-keymap* (kbd "C-x C-f") 'find-file)
 (define-command find-file (filename) ("FFind File: ")
+  (check-switch-minibuffer-window)
   (setq filename (expand-file-name filename))
   (if (cl-fad:directory-exists-p filename)
       (dired filename)
@@ -278,6 +279,7 @@
 
 (define-key *global-keymap* (kbd "C-x s") 'save-some-buffers)
 (define-command save-some-buffers (&optional save-silently-p) ("P")
+  (check-switch-minibuffer-window)
   (let ((curbuf (window-buffer)))
     (dolist (buffer *buffer-list*)
       (when (and (buffer-modified-p buffer)

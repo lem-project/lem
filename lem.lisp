@@ -196,8 +196,8 @@
                           (execute-macro 1)))
   t)
 
-(defun sit-for (seconds)
-  (window-update-all)
+(defun sit-for (seconds &optional (update-window-p t))
+  (when update-window-p (window-update-all))
   (charms/ll:timeout (floor (* seconds 1000)))
   (let ((code (charms/ll:getch)))
     (charms/ll:timeout -1)

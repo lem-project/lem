@@ -858,6 +858,7 @@
   (delete-window *current-window*))
 
 (defun pop-to-buffer (buffer)
+  (check-switch-minibuffer-window)
   (if (eq buffer (window-buffer))
       (values *current-window* nil)
       (let ((split-p))

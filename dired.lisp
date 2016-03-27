@@ -64,6 +64,7 @@
     (goto-start-line)))
 
 (defun dired-find-directory (dirname)
+  (check-switch-minibuffer-window)
   (let ((buffer
          (get-buffer-create
           (format nil "~a" dirname))))

@@ -63,6 +63,10 @@
    (replace-string (string #\newline) "<NL>" msg))
   (charms/ll:wrefresh (window-win *minibuf-window*)))
 
+(defun minibuf-print-sit-for (msg seconds)
+  (minibuf-print msg)
+  (sit-for seconds nil))
+
 (defun minibuf-y-or-n-p (prompt)
   (setq *mb-print-flag* t)
   (do () (nil)
@@ -97,6 +101,10 @@
 (defvar *minibuf-read-line-history* (make-history))
 
 (defvar *minibuf-read-line-depth* 0)
+
+(defun check-switch-minibuffer-window ()
+  (when (eq *current-window* *minibuf-window*)
+    (error 'switch-minibuffer-window)))
 
 (defun active-minibuffer-window ()
   (if (/= 0 *minibuf-read-line-depth*)
@@ -192,7 +200,10 @@
         (editor-abort (c)
                       (if (/= (editor-abort-depth c)
                               *minibuf-read-line-depth*)
-                          (error c)))))))
+                          (error c)))
+        (switch-minibuffer-window ()
+                                  (minibuf-print-sit-for "Cannot switch buffer in minibuffer window"
+                                                         1))))))
 
 (defun minibuf-read-line (prompt initial comp-f existing-p)
   (let ((*minibuf-read-line-tmp-window* *current-window*)

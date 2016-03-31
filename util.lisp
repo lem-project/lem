@@ -96,11 +96,11 @@
     (f str nil 0)))
 
 (defun join (str strings)
-  (do ((rest strings (cdr rest))
-       (acc ""))
-      ((null (cdr rest))
-       (concatenate 'string acc (car rest)))
-    (setq acc (concatenate 'string acc (car rest) str))))
+  (format nil "~{~A~}"
+          (loop :for rest :on strings
+                :collect (car rest)
+                :if (cdr rest)
+                  :collect str)))
 
 (defun replace-string (before after string)
   (let ((i (search before string)))

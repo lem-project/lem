@@ -38,16 +38,16 @@
 
 (defun macro-running-p () *macro-running-p*)
 
-(defvar *input-queue* (make-growlist))
+(defvar *input-queue* nil)
 
 (defun getch (&optional (abort-jump t))
-  (let* ((code (cond ((grow-null-p *input-queue*)
+  (let* ((code (cond ((null *input-queue*)
                       (loop
                         :for code := (charms/ll:wgetch (window-win))
                         :while (= -1 code)
                         :finally (return code)))
                      (t
-                      (grow-rem-left *input-queue*))))
+                      (pop *input-queue*))))
          (char (code-char code)))
     (lem.queue:enqueue *input-history* char)
     (when *macro-recording-p*
@@ -63,15 +63,17 @@
 (defun ungetch (char)
   (when *macro-recording-p*
     (pop *macro-chars*))
-  (grow-add-left *input-queue* (char-code char)))
+  (push (char-code char) *input-queue*))
 
 (defun input-enqueue (c)
-  (grow-add-right *input-queue* (etypecase c
-                                  (character (char-code c))
-                                  (fixnum c))))
+  (setf *input-queue*
+        (nconc *input-queue*
+               (list (etypecase c
+                       (character (char-code c))
+                       (fixnum c))))))
 
 (defun input-queue-length ()
-  (length (grow-list *input-queue*)))
+  (length *input-queue*))
 
 (defun uninput-key (key)
   (mapc 'input-enqueue (kbd-list key)))
@@ -388,7 +390,7 @@
                       ((condition) (declare (ignore condition)))))
 
 (defun idle ()
-  (when (grow-null-p *input-queue*)
+  (when (null *input-queue*)
     (run-hooks 'idle-hook)
     (cond ((exist-running-timer-p)
            (charms/ll:wtimeout (window-win) 20)

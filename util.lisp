@@ -1,6 +1,6 @@
-;; -*- Mode: LISP; Package: LEM -*-
+;; -*- Mode: LISP; Package: LEM-INTERNAL -*-
 
-(in-package :lem)
+(in-package :lem-internal)
 
 (export '(shell-command
           pdebug

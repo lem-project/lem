@@ -22,6 +22,7 @@
                         (:file "key")
                         (:file "point")
                         (:file "misc")
+                        (:file "marker")
                         (:file "keymap")
                         (:file "command")
                         (:file "comp")

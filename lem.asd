@@ -19,6 +19,7 @@
                         (:file "errors")
                         (:file "header")
                         (:file "util")
+                        (:file "wide")
                         (:file "key")
                         (:file "point")
                         (:file "misc")

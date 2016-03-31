@@ -1,3 +1,3 @@
 (require :asdf)
 (require :lem)
-(apply 'lem:lem (lem:argument-list))
+(apply 'lem:lem (uiop:command-line-arguments))

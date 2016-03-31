@@ -2,15 +2,7 @@
 
 (in-package :lem)
 
-(export '(argument-list shell-command))
-
-(defun argument-list ()
-  #+sbcl
-  (cdr sb-ext:*posix-argv*)
-  #+ccl
-  ccl:*command-line-argument-list*
-  #+ecl
-  (si:command-args))
+(export '(shell-command))
 
 (defun shell-command (command &key input output error-output)
   (uiop:run-program command

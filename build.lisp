@@ -9,12 +9,12 @@
                          finally (return (nreverse result))) :test 'string-equal)
   do (require i))
 
-(if (equal "--debug" (car (lem:argument-list)))
+(if (equal "--debug" (car (uiop:command-line-arguments)))
     (defun main ()
       (let ((lem:*debug-p* t))
-        (apply 'lem:lem (lem:argument-list))))
+        (apply 'lem:lem (uiop:command-line-arguments))))
     (defun main ()
-      (apply 'lem:lem (lem:argument-list))))
+      (apply 'lem:lem (uiop:command-line-arguments))))
 
 #+sb-core-compression
 (sb-ext:save-lisp-and-die "lem"

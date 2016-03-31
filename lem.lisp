@@ -457,7 +457,7 @@
   (charms/ll:delscreen charms/ll:*stdscr*)
   (setq *running-p* nil))
 
-(defun lem-internal (args)
+(defun lem-1 (args)
   (let ((error-report
          (catch 'serious-error
            (unwind-protect
@@ -475,7 +475,7 @@
 (defun lem (&rest args)
   (check-init)
   (charms/ll:initscr)
-  (lem-internal args))
+  (lem-1 args))
 
 (defun new-xterm (geometry foreground background title font)
   (let ((tmpfile (temp-file-name))
@@ -533,12 +533,12 @@
     (sb-thread:make-thread
      #'(lambda ()
          (sb-thread:with-new-session ()
-           (unwind-protect (lem-internal nil)
+           (unwind-protect (lem-1 nil)
              (fclose io)))))
     #-sbcl
     (bt:make-thread
      #'(lambda ()
-         (unwind-protect (lem-internal nil)
+         (unwind-protect (lem-1 nil)
            (fclose io))))))
 
 (defun save-error (condition)

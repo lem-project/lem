@@ -460,6 +460,15 @@
         (setq str (subseq str i))))
     (nreverse exps)))
 
+(defun string-readcase (string &key (start 0) end)
+  (ecase (readtable-case *readtable*)
+    ((:upcase)
+     (string-upcase string :start start :end end))
+    ((:downcase)
+     (string-downcase string :start start :end end))
+    ((:invert :preserve)
+     string)))
+
 (defun lisp-eval-in-package (expr package)
   (let* ((string (write-to-string expr))
          (*package* (find-package package)))

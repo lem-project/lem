@@ -254,40 +254,33 @@
       (beginning-of-line))))
 
 (let ((tmp-column))
-  (defun %update-tmp-column ()
-    (setq tmp-column
-          (str-width (buffer-line-string
-                      (window-buffer)
-                      (window-current-linum))
-                     0
-                     (window-current-charpos))))
-  (defun %next-line-before (arg)
-    (when (null arg)
-      (when-interrupted-flag
-       :next-line
-       (%update-tmp-column))))
-  (defun %next-line-after (arg)
-    (cond
-     (arg (beginning-of-line))
-     (t
-      (let ((col (or (wide-index (buffer-line-string
-                                  (window-buffer)
-                                  (window-current-linum))
-                                 tmp-column)
-                     (buffer-line-length
-                      (window-buffer)
-                      (window-current-linum)))))
-        (when col
-          (setf (window-current-charpos) col)))
-      (check-type (window-current-charpos)
-                  (integer 0 #.most-positive-fixnum))))))
+  (defun %next-line-before ()
+    (when-interrupted-flag :next-line
+      (setq tmp-column
+            (str-width (buffer-line-string
+                        (window-buffer)
+                        (window-current-linum))
+                       0
+                       (window-current-charpos)))))
+  (defun %next-line-after ()
+    (let ((col (or (wide-index (buffer-line-string
+                                (window-buffer)
+                                (window-current-linum))
+                               tmp-column)
+                   (buffer-line-length
+                    (window-buffer)
+                    (window-current-linum)))))
+      (when col
+        (setf (window-current-charpos) col)))
+    (check-type (window-current-charpos)
+                (integer 0 #.most-positive-fixnum))))
 
 (define-key *global-keymap* (kbd "C-n") 'next-line)
 (define-key *global-keymap* (kbd "[down]") 'next-line)
 (define-command next-line (&optional n) ("p")
-  (%next-line-before nil)
+  (%next-line-before)
   (unless (prog1 (forward-line n)
-          (%next-line-after nil))
+            (%next-line-after))
     (cond ((plusp n)
            (end-of-buffer)
            (editor-error "End of buffer"))

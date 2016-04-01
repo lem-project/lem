@@ -46,7 +46,7 @@
              (t
               (return t)))))
 
-(defun line-comment-column ()
+(defun line-comment-charpos ()
   (labels ((f (str i in-string-p)
               (if (>= i (length str))
                   nil
@@ -85,9 +85,9 @@
   (loop
     (if (bolp)
         (if (forward-line -1)
-            (let ((col (line-comment-column)))
-              (if col
-                  (set-charpos col)
+            (let ((pos (line-comment-charpos)))
+              (if pos
+                  (set-charpos pos)
                   (end-of-line)))
             (return nil))
         (let ((c1 (preceding-char))

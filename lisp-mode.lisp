@@ -336,11 +336,11 @@
        (when (save-excursion (and (backward-sexp 1 t) (bolp)))
          (return-from lisp-calc-indent 0))
        (when (sexp-goto-car 2000)
-         (let ((start-col (1- (window-current-charpos)))
+         (let ((start-pos (1- (window-current-charpos)))
                (not-list-p (save-excursion
                             (search-backward "(")
                             (member (preceding-char) '(#\#)))))
-           (destructuring-bind (car-name-str arg-col)
+           (destructuring-bind (car-name-str arg-pos)
                (lisp-looking-at-word)
              (let* ((car-symbol-name
                      (string-upcase
@@ -358,19 +358,19 @@
                             (or (char= #\( (aref car-name-str 0))
                                 (char= #\: (aref car-name-str 0))
                                 (char= #\" (aref car-name-str 0)))))
-                   (setq num-insert-spaces (+ start-col 1)))
+                   (setq num-insert-spaces (+ start-pos 1)))
                   ((and (null num)
                         (or (eql 0 (search "DEFINE-" car-symbol-name))
                             (eql 0 (search "WITH-" car-symbol-name))
                             (eql 0 (search "DO-" car-symbol-name))))
-                   (setq num-insert-spaces (+ start-col 2)))
+                   (setq num-insert-spaces (+ start-pos 2)))
                   ((null num)
                    (setq num-insert-spaces
-                         (or arg-col (+ start-col 1))))
+                         (or arg-pos (+ start-pos 1))))
                   ((< (1- argc) num)
-                   (setq num-insert-spaces (+ start-col 4)))
+                   (setq num-insert-spaces (+ start-pos 4)))
                   (t
-                   (setq num-insert-spaces (+ start-col 2)))))))))))
+                   (setq num-insert-spaces (+ start-pos 2)))))))))))
     num-insert-spaces))
 
 (define-key *lisp-mode-keymap* (kbd "M-C-q") 'lisp-indent-sexp)
@@ -962,10 +962,10 @@
      (unless (eolp)
        (insert-newline 1))
      (point-set start)
-     (let ((column (point-column start)))
+     (let ((charpos (point-charpos start)))
        (apply-region-lines start end
                            #'(lambda ()
-                               (set-charpos column)
+                               (set-charpos charpos)
                                (unless (blank-line-p)
                                  (insert-string ";; "))))))))
 

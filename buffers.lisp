@@ -91,10 +91,10 @@
     (setf (window-buffer) buffer)
     (let ((vtop-linum 1)
           (cur-linum 1)
-          (cur-col 0))
+          (cur-pos 0))
       (when (buffer-keep-binfo buffer)
         (multiple-value-setq
-         (vtop-linum cur-linum cur-col)
+         (vtop-linum cur-linum cur-pos)
          (apply 'values (buffer-keep-binfo buffer))))
       (delete-marker (window-point-marker))
       (setf (window-point-marker) (make-marker-current-point))
@@ -103,9 +103,9 @@
               (min vtop-linum buffer-nlines))
         (setf (window-current-linum)
               (min cur-linum buffer-nlines)))
-      (setf (window-vtop-column) 0)
+      (setf (window-vtop-charpos) 0)
       (setf (window-current-charpos)
-            (min cur-col
+            (min cur-pos
                  (buffer-line-length (window-buffer)
                                      (window-current-linum))))
       (assert (<= 0 (window-current-charpos))))))

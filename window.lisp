@@ -82,7 +82,7 @@
   buffer
   disp-lines
   vtop-linum
-  vtop-column
+  vtop-charpos
   point-marker
   wrap-ylist
   redraw-flag
@@ -103,7 +103,7 @@
                         :buffer buffer
                         :disp-lines (make-array (1- winheight) :initial-element nil)
                         :vtop-linum 1
-                        :vtop-column 0
+                        :vtop-charpos 0
                         :wrap-ylist nil)))
     (charms/ll:keypad (window-win window) 1)
     (setf (window-point-marker window)
@@ -114,10 +114,10 @@
   (marker-point (window-point-marker window)))
 
 (defun window-current-charpos (&optional (window *current-window*))
-  (marker-column (window-point-marker window)))
+  (marker-charpos (window-point-marker window)))
 
-(defun (setf window-current-charpos) (new-col &optional (window *current-window*))
-  (setf (marker-column (window-point-marker window)) new-col))
+(defun (setf window-current-charpos) (new-pos &optional (window *current-window*))
+  (setf (marker-charpos (window-point-marker window)) new-pos))
 
 (defun window-current-linum (&optional (window *current-window*))
   (marker-linum (window-point-marker window)))
@@ -251,21 +251,21 @@
   t)
 
 (defun window-recenter (window)
-  (setf (window-vtop-column window) 0)
+  (setf (window-vtop-charpos window) 0)
   (setf (window-vtop-linum window)
         (window-current-linum window))
   (window-scroll window (- (floor (window-height window) 2))))
 
 (defun %scroll-down-if-wrapping (window)
   (when (buffer-truncate-lines (window-buffer window))
-    (let ((vtop-column (window-vtop-column window)))
-      (setf (window-vtop-column window) 0)
+    (let ((vtop-charpos (window-vtop-charpos window)))
+      (setf (window-vtop-charpos window) 0)
       (map-wrapping-line (buffer-line-string (window-buffer window)
                                              (window-vtop-linum window))
                          (window-width window)
                          #'(lambda (c)
-                             (when (< vtop-column c)
-                               (setf (window-vtop-column window) c)
+                             (when (< vtop-charpos c)
+                               (setf (window-vtop-charpos window) c)
                                (return-from %scroll-down-if-wrapping t)))))
     nil))
 
@@ -276,24 +276,24 @@
 (defun %scroll-up-if-wrapping (window)
   (when (and (buffer-truncate-lines (window-buffer window))
              (< 1 (window-vtop-linum window)))
-    (let ((columns))
+    (let ((charpos-list))
       (map-wrapping-line (buffer-line-string
                           (window-buffer window)
                           (- (window-vtop-linum window)
-                             (if (= 0 (window-vtop-column window)) 1 0)))
+                             (if (= 0 (window-vtop-charpos window)) 1 0)))
                          (window-width window)
                          #'(lambda (c)
-                             (push c columns)))
-      (cond ((and columns (= 0 (window-vtop-column window)))
+                             (push c charpos-list)))
+      (cond ((and charpos-list (= 0 (window-vtop-charpos window)))
              (decf (window-vtop-linum window))
-             (setf (window-vtop-column window)
+             (setf (window-vtop-charpos window)
                    most-positive-fixnum)))
-      (dolist (c columns)
-        (when (< c (window-vtop-column window))
-          (setf (window-vtop-column window) c)
+      (dolist (c charpos-list)
+        (when (< c (window-vtop-charpos window))
+          (setf (window-vtop-charpos window) c)
           (return-from %scroll-up-if-wrapping t)))
-      (setf (window-vtop-column window) 0)
-      (not (null columns)))))
+      (setf (window-vtop-charpos window) 0)
+      (not (null charpos-list)))))
 
 (defun window-scroll-up (window)
   (unless (%scroll-up-if-wrapping window)
@@ -474,7 +474,7 @@
     (labels ((f (string eof-p linum)
                 (declare (ignore eof-p))
                 (map-wrapping-line (if (= (window-vtop-linum window) linum)
-                                       (subseq string (window-vtop-column window))
+                                       (subseq string (window-vtop-charpos window))
                                        string)
                                    (window-width window)
                                    #'(lambda (arg)
@@ -490,8 +490,8 @@
 
 (defun window-refresh-line-wrapping (window curx cury y str)
   (check-type str fatstring)
-  (when (and (< 0 (window-vtop-column window)) (= y 0))
-    (setq str (fat-substring str (window-vtop-column window))))
+  (when (and (< 0 (window-vtop-charpos window)) (= y 0))
+    (setq str (fat-substring str (window-vtop-charpos window))))
   (when (= y cury)
     (setq curx (str-width (fat-string str) 0 (window-current-charpos window))))
   (loop :with start := 0 :and winwidth := (window-width window)
@@ -571,7 +571,7 @@
             (window-vtop-linum window)))
         ((and (= (window-current-linum window)
                  (window-vtop-linum window))
-              (< 0 (window-vtop-column window)))
+              (< 0 (window-vtop-charpos window)))
          -1)
         ((let ((n (- (window-cursor-y-if-wrapping window)
                      (- (window-height window) 2))))
@@ -627,7 +627,7 @@
         (dolist (point highlight-points)
           (push (make-overlay point
                               (make-point (point-linum point)
-                                          (1+ (point-column point)))
+                                          (1+ (point-charpos point)))
                               :attr attr)
                 *brackets-overlays*))
         (if highlight-points t nil)))))
@@ -1080,10 +1080,10 @@
           (unless (forward-line n)
             (return nil)))
         (let ((prev-linum (window-vtop-linum))
-              (prev-column (window-vtop-column)))
+              (prev-charpos (window-vtop-charpos)))
           (window-scroll *current-window* 1)
           (when (and (= prev-linum (window-vtop-linum))
-                     (= prev-column (window-vtop-column)))
+                     (= prev-charpos (window-vtop-charpos)))
             (return nil))))))
 
 (define-key *global-keymap* (kbd "C-up") 'scroll-up)
@@ -1097,8 +1097,8 @@
           (unless (forward-line (- n))
             (return nil)))
         (let ((prev-linum (window-vtop-linum))
-              (prev-column (window-vtop-column)))
+              (prev-charpos (window-vtop-charpos)))
           (window-scroll *current-window* -1)
           (when (and (= prev-linum (window-vtop-linum))
-                     (= prev-column (window-vtop-column)))
+                     (= prev-charpos (window-vtop-charpos)))
             (return nil))))))

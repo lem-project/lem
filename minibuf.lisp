@@ -161,7 +161,7 @@
 (defun minibuf-point-linum ()
   (window-current-linum *minibuf-window*))
 
-(defun minibuf-point-column ()
+(defun minibuf-point-charpos ()
   (window-current-charpos *minibuf-window*))
 
 (defun minibuf-read-line-refresh (prompt)
@@ -183,7 +183,7 @@
        (buffer-line-string (window-buffer *minibuf-window*)
                            (minibuf-point-linum))
        0
-       (minibuf-point-column))))
+       (minibuf-point-charpos))))
   (charms/ll:wrefresh (window-win *minibuf-window*)))
 
 (defun minibuf-window-update ()

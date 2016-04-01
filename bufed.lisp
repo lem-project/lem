@@ -199,9 +199,9 @@
     (dotimes (_ n)
       (kill-line)))))
 
-(defun set-charpos (col)
-  (assert (<= 0 col))
-  (setf (window-current-charpos) col))
+(defun set-charpos (pos)
+  (assert (<= 0 pos))
+  (setf (window-current-charpos) pos))
 
 (define-key *global-keymap* (kbd "C-a") 'beginning-of-line)
 (define-key *global-keymap* (kbd "[home]") 'beginning-of-line)
@@ -263,15 +263,15 @@
                        0
                        (window-current-charpos)))))
   (defun %next-line-after ()
-    (let ((col (or (wide-index (buffer-line-string
+    (let ((pos (or (wide-index (buffer-line-string
                                 (window-buffer)
                                 (window-current-linum))
                                tmp-column)
                    (buffer-line-length
                     (window-buffer)
                     (window-current-linum)))))
-      (when col
-        (setf (window-current-charpos) col)))
+      (when pos
+        (setf (window-current-charpos) pos)))
     (check-type (window-current-charpos)
                 (integer 0 #.most-positive-fixnum))))
 
@@ -389,9 +389,9 @@
     (when (buffer-check-marked buffer)
       (psetf
        (window-current-linum) (marker-linum (buffer-mark-marker buffer))
-       (window-current-charpos) (marker-column (buffer-mark-marker buffer))
+       (window-current-charpos) (marker-charpos (buffer-mark-marker buffer))
        (marker-linum (buffer-mark-marker buffer)) (window-current-linum)
-       (marker-column (buffer-mark-marker buffer)) (window-current-charpos))
+       (marker-charpos (buffer-mark-marker buffer)) (window-current-charpos))
       (assert (<= 0 (window-current-charpos)))
       t)))
 

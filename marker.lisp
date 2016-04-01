@@ -6,7 +6,7 @@
           delete-marker
           marker-buffer
           marker-linum
-          marker-column
+          marker-charpos
           marker-point
           marker-insertion-type))
 
@@ -21,7 +21,7 @@
     (let ((marker (vector marker-tag
                           buffer
                           (point-linum point)
-                          (point-column point)
+                          (point-charpos point)
                           insertion-type)))
       (buffer-add-marker buffer marker)
       marker)))
@@ -43,11 +43,11 @@
 (defun (setf marker-linum) (new-linum marker)
   (setf (aref marker 2) new-linum))
 
-(defun marker-column (marker)
+(defun marker-charpos (marker)
   (aref marker 3))
 
-(defun (setf marker-column) (new-column marker)
-  (setf (aref marker 3) new-column))
+(defun (setf marker-charpos) (new-charpos marker)
+  (setf (aref marker 3) new-charpos))
 
 (defun marker-insertion-type (marker)
   (aref marker 4))
@@ -57,9 +57,9 @@
 
 (defun marker-point (marker)
   (make-point (marker-linum marker)
-              (marker-column marker)))
+              (marker-charpos marker)))
 
 (defun (setf marker-point) (new-point marker)
   (setf (marker-linum marker) (point-linum new-point)
-        (marker-column marker) (point-column new-point))
+        (marker-charpos marker) (point-charpos new-point))
   new-point)

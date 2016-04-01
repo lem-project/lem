@@ -4,7 +4,7 @@
 
 (export '(make-point
           point-linum
-          point-column
+          point-charpos
           with-points
           current-point
           point-set
@@ -17,19 +17,19 @@
           point-min
           point-max))
 
-(defun make-point (linum column)
-  (list linum column))
+(defun make-point (linum charpos)
+  (list linum charpos))
 
 (defun point-linum (point)
   (car point))
 
-(defun point-column (point)
+(defun point-charpos (point)
   (cadr point))
 
 (defmacro with-points (binds &body body)
   `(let ,(mapcan #'(lambda (b)
                      `((,(caar b) (point-linum ,(cadr b)))
-                       (,(cadar b) (point-column ,(cadr b)))))
+                       (,(cadar b) (point-charpos ,(cadr b)))))
                  binds)
      ,@body))
 
@@ -45,7 +45,7 @@
   (setf (window-current-charpos window)
         (min (buffer-line-length (window-buffer window)
                                  (window-current-linum window))
-             (point-column point)))
+             (point-charpos point)))
   (assert (<= 0 (window-current-charpos window))))
 
 (defun point< (p1 p2)
@@ -53,7 +53,7 @@
          t)
         ((> (point-linum p1) (point-linum p2))
          nil)
-        ((< (point-column p1) (point-column p2))
+        ((< (point-charpos p1) (point-charpos p2))
          t)
         (t
          nil)))

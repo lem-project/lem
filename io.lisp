@@ -15,9 +15,9 @@
    (linum
     :initarg :linum
     :accessor buffer-output-stream-linum)
-   (column
-    :initarg :column
-    :accessor buffer-output-stream-column)
+   (charpos
+    :initarg :charpos
+    :accessor buffer-output-stream-charpos)
    (interactive-update-p
     :initarg :interactive-update-p
     :accessor buffer-output-stream-interactive-update-p)))
@@ -31,8 +31,8 @@
                  :linum (if point
                             (point-linum point)
                             1)
-                 :column (if point
-                             (point-column point)
+                 :charpos (if point
+                             (point-charpos point)
                              0)
                  :interactive-update-p interactive-update-p))
 
@@ -44,13 +44,13 @@
 
 (defun buffer-output-stream-point (stream)
   (make-point (buffer-output-stream-linum stream)
-              (buffer-output-stream-column stream)))
+              (buffer-output-stream-charpos stream)))
 
 (defmethod stream-element-type ((stream buffer-output-stream))
   'line)
 
 (defmethod trivial-gray-streams:stream-line-column ((stream buffer-output-stream))
-  (buffer-output-stream-column stream))
+  (buffer-output-stream-charpos stream))
 
 (defun buffer-output-stream-refresh (stream)
   (when (buffer-output-stream-interactive-update-p stream)
@@ -63,7 +63,7 @@
   nil)
 
 (defmethod trivial-gray-streams:stream-fresh-line ((stream buffer-output-stream))
-  (unless (zerop (buffer-output-stream-column stream))
+  (unless (zerop (buffer-output-stream-charpos stream))
     (trivial-gray-streams:stream-terpri stream)))
 
 (defmethod trivial-gray-streams:stream-write-byte ((stream buffer-output-stream) byte)
@@ -73,13 +73,13 @@
   (prog1 char
     (buffer-insert-char (buffer-output-stream-buffer stream)
                         (buffer-output-stream-linum stream)
-                        (buffer-output-stream-column stream)
+                        (buffer-output-stream-charpos stream)
                         char)
     (if (char= char #\newline)
         (progn
           (incf (buffer-output-stream-linum stream))
-          (setf (buffer-output-stream-column stream) 0))
-        (incf (buffer-output-stream-column stream)))))
+          (setf (buffer-output-stream-charpos stream) 0))
+        (incf (buffer-output-stream-charpos stream)))))
 
 (defun %write-string-to-buffer-stream (stream string start end &key)
   (let ((strings
@@ -88,15 +88,15 @@
     (loop :for s :on strings :do
       (buffer-insert-line (buffer-output-stream-buffer stream)
                           (buffer-output-stream-linum stream)
-                          (buffer-output-stream-column stream)
+                          (buffer-output-stream-charpos stream)
                           (car s))
-      (incf (buffer-output-stream-column stream) (length (car s)))
+      (incf (buffer-output-stream-charpos stream) (length (car s)))
       (when (cdr s)
         (buffer-insert-newline (buffer-output-stream-buffer stream)
                                (buffer-output-stream-linum stream)
-                               (buffer-output-stream-column stream))
+                               (buffer-output-stream-charpos stream))
         (incf (buffer-output-stream-linum stream))
-        (setf (buffer-output-stream-column stream) 0)))
+        (setf (buffer-output-stream-charpos stream) 0)))
     string))
 
 (defun %write-octets-to-buffer-stream (stream octets start end &key)
@@ -123,10 +123,10 @@
 (defmethod trivial-gray-streams:stream-terpri ((stream buffer-output-stream))
   (prog1 (buffer-insert-newline (buffer-output-stream-buffer stream)
                                 (buffer-output-stream-linum stream)
-                                (buffer-output-stream-column stream))
+                                (buffer-output-stream-charpos stream))
     (buffer-output-stream-refresh stream)
     (incf (buffer-output-stream-linum stream))
-    (setf (buffer-output-stream-column stream) 0)))
+    (setf (buffer-output-stream-charpos stream) 0)))
 
 (defmethod trivial-gray-streams:stream-finish-output ((stream buffer-output-stream))
   (buffer-output-stream-refresh stream))

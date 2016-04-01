@@ -241,6 +241,20 @@
                 (window-current-linum)))
   t)
 
+(defun forward-line (&optional n)
+  (unless n (setq n 1))
+  (let ((dir (if (plusp n) 1 -1))
+        (moved 0))
+    (dotimes (_ (abs n))
+      (when (if (plusp n)
+                (tail-line-p (window-buffer) (window-current-linum))
+                (head-line-p (window-current-linum)))
+        (return))
+      (incf (window-current-linum) dir)
+      (incf moved))
+    (beginning-of-line)
+    (- (abs n) moved)))
+
 (let ((tmp-column))
   (defun %update-tmp-column ()
     (setq tmp-column

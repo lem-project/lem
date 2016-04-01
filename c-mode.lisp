@@ -59,7 +59,7 @@
        (or (looking-at-line "^{")
            (looking-at-line "^\\S[^{]*{"))))
   (when (looking-at-line "^{")
-    (prev-line 1))
+    (forward-line -1))
   t)
 
 (define-key *c-mode-keymap* (kbd "C-M-e") 'c-end-of-defun)

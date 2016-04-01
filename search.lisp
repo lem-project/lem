@@ -300,10 +300,10 @@
       (search-step #'(lambda ()
                        (%search (window-current-charpos)))
                    #'%search
-                   #'prev-line
+                   #'(lambda () (forward-line -1))
                    #'(lambda (i)
                        (and (if (< 1 length)
-                                (prev-line (1- length))
+                                (forward-line (- (1- length)))
                                 t)
                             (beginning-of-line)
                             (next-char i)))
@@ -365,7 +365,7 @@
                             :start (window-current-charpos))
              (setq pos start))
            pos))
-     #'prev-line
+     #'(lambda () (forward-line -1))
      #'goto-column
      (search-backward-endp-function limit))))
 
@@ -401,7 +401,7 @@
        (caar (last (search-symbol-positions name :end (window-current-charpos)))))
    #'(lambda ()
        (caar (last (search-symbol-positions name))))
-   #'prev-line
+   #'(lambda () (forward-line -1))
    #'goto-column
    (search-backward-endp-function limit)))
 

@@ -163,7 +163,7 @@
 
 (define-key *dired-mode-keymap* (kbd "U") 'dired-unmark-prev-line)
 (define-command dired-unmark-prev-line () ()
-  (prev-line 1)
+  (forward-line -1)
   (change-flag +unmark+))
 
 (define-key *dired-mode-keymap* (kbd "!") 'dired-unmark-all)

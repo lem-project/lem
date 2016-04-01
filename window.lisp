@@ -1094,7 +1094,7 @@
         (when (and (= (window-cursor-y-if-wrapping *current-window*)
                       (- (window-height) 2))
                    (/= 1 (window-vtop-linum)))
-          (unless (prev-line n)
+          (unless (forward-line (- n))
             (return nil)))
         (let ((prev-linum (window-vtop-linum))
               (prev-column (window-vtop-column)))

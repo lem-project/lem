@@ -84,7 +84,7 @@
 (defun skip-space-backward ()
   (loop
     (if (bolp)
-        (if (prev-line 1)
+        (if (forward-line -1)
             (let ((col (line-comment-column)))
               (if col
                   (goto-column col)
@@ -375,10 +375,10 @@
   (let ((arg (if (plusp n) 1 -1)))
     (dotimes (_ (abs n) t)
       (when (bolp)
-        (prev-line arg))
+        (forward-line (- arg)))
       (loop
         (beginning-of-line)
         (when (funcall match-p)
           (return t))
-        (unless (prev-line arg)
+        (unless (forward-line (- arg))
           (return nil))))))

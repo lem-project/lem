@@ -256,23 +256,17 @@
       (when-interrupted-flag
        :next-line
        (%update-tmp-column))))
-  (defun %get-goal (string width)
-    (let ((w 0))
-      (do ((i 0 (1+ i)))
-          ((>= i (length string))
-           (length string))
-        (let ((c (aref string i)))
-          (setq w (char-width c w))
-          (when (< width w)
-            (return i))))))
   (defun %next-line-after (arg)
     (cond
      (arg (beginning-of-line))
      (t
-      (let ((col (%get-goal (buffer-line-string
-                             (window-buffer)
-                             (window-current-linum))
-                            tmp-column)))
+      (let ((col (or (wide-index (buffer-line-string
+                                  (window-buffer)
+                                  (window-current-linum))
+                                 tmp-column)
+                     (buffer-line-length
+                      (window-buffer)
+                      (window-current-linum)))))
         (when col
           (setf (window-current-charpos) col)))
       (check-type (window-current-charpos)

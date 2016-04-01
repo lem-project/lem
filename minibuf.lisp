@@ -158,6 +158,12 @@
   (join (string #\newline)
         (buffer-take-lines (window-buffer *minibuf-window*))))
 
+(defun minibuf-point-linum ()
+  (window-cur-linum *minibuf-window*))
+
+(defun minibuf-point-column ()
+  (window-cur-col *minibuf-window*))
+
 (defun minibuf-read-line-refresh (prompt)
   (minibuf-print (concatenate 'string prompt (minibuf-get-line)))
   (charms/ll:wmove
@@ -171,13 +177,13 @@
        (apply 'concatenate 'string
               (buffer-take-lines (window-buffer *minibuf-window*)
                                  1
-                                 (1- (window-cur-linum *minibuf-window*)))))
-      (* (length "<NL>") (1- (window-cur-linum *minibuf-window*)))
+                                 (1- (minibuf-point-linum)))))
+      (* (length "<NL>") (1- (minibuf-point-linum)))
       (str-width
        (buffer-line-string (window-buffer *minibuf-window*)
-                           (window-cur-linum))
+                           (minibuf-point-linum))
        0
-       (window-cur-col *minibuf-window*))))
+       (minibuf-point-column))))
   (charms/ll:wrefresh (window-win *minibuf-window*)))
 
 (defun minibuf-window-update ()

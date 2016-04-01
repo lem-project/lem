@@ -394,7 +394,7 @@
         (loop
           for c = (following-char)
           do (cond ((char= c #\newline)
-                    (return (and (next-line 1)
+                    (return (and (forward-line 1)
                                  (beginning-of-line))))
                    ((syntax-space-char-p c)
                     (unless (next-char 1)
@@ -982,7 +982,7 @@
                       (syntax-space-char-p (following-char)))
              (delete-char 1 t)))
         (delete-char 1 t))
-      (next-line 1))))
+      (forward-line 1))))
 
 (defun lisp-print-values (values)
   (with-open-stream (out (make-buffer-output-stream))

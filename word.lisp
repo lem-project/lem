@@ -119,10 +119,10 @@
     (let ((dir (if (minusp n) -1 1)))
       (dotimes (_ (abs n) t)
         (loop :while (blank-line-p) :do
-          (unless (next-line dir)
+          (unless (forward-line dir)
             (return-from outer t)))
         (loop :until (blank-line-p) :do
-          (unless (next-line dir)
+          (unless (forward-line dir)
             (return-from outer t)))))))
 
 (define-key *global-keymap* (kbd "M-{") 'backward-paragraph)

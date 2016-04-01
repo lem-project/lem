@@ -65,7 +65,7 @@
 (define-key *c-mode-keymap* (kbd "C-M-e") 'c-end-of-defun)
 (define-command c-end-of-defun (n) ("p")
   (beginning-of-defun-abstract (- n) #'(lambda () (looking-at-line "^}")))
-  (next-line 1))
+  (forward-line 1))
 
 (setq *auto-mode-alist*
       (append '(("\\.c$" . c-mode)

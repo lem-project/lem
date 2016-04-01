@@ -260,7 +260,7 @@
                                :start2 (window-current-charpos)))
                    #'(lambda ()
                        (search str (take-string)))
-                   #'next-line
+                   #'forward-line
                    #'(lambda (result)
                        (beginning-of-line)
                        (next-char result)
@@ -330,7 +330,7 @@
                          (buffer-line-string (window-buffer)
                                              (window-current-linum)))
            (when start end)))
-     #'next-line
+     #'forward-line
      #'goto-column
      (search-forward-endp-function limit))))
 
@@ -391,7 +391,7 @@
        (cdar (search-symbol-positions name :start (window-current-charpos))))
    #'(lambda ()
        (cdar (search-symbol-positions name)))
-   #'next-line
+   #'forward-line
    #'goto-column
    (search-forward-endp-function limit)))
 

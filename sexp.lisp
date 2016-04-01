@@ -37,7 +37,7 @@
                 (return nil)))
              ((and (syntax-line-comment-p c1 c2)
                    (not (sexp-escape-p t)))
-              (unless (next-line 1)
+              (unless (forward-line 1)
                 (return nil))
               (beginning-of-line))
              ((and (syntax-start-block-comment-p c1 c2)

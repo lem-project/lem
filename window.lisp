@@ -1077,7 +1077,7 @@
       (scroll-up (- n))
       (dotimes (_ n t)
         (when (= (window-cursor-y-if-wrapping *current-window*) 0)
-          (unless (next-line n)
+          (unless (forward-line n)
             (return nil)))
         (let ((prev-linum (window-vtop-linum))
               (prev-column (window-vtop-column)))

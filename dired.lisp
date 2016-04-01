@@ -141,12 +141,12 @@
                   mark-char
                   (setq flag-char (funcall test (file-namestring file) mark-char)))
          (change-flag flag-char))
-       (next-line 1)))))
+       (forward-line 1)))))
 
 (define-key *dired-mode-keymap* (kbd "m") 'dired-mark)
 (define-command dired-mark () ()
   (change-flag +mark+)
-  (next-line 1))
+  (forward-line 1))
 
 (define-key *dired-mode-keymap* (kbd "*") 'dired-mark-with-pattern)
 (define-command dired-mark-with-pattern (regex) ("sRegex: ")
@@ -159,7 +159,7 @@
 (define-key *dired-mode-keymap* (kbd "u") 'dired-unmark)
 (define-command dired-unmark () ()
   (change-flag +unmark+)
-  (next-line 1))
+  (forward-line 1))
 
 (define-key *dired-mode-keymap* (kbd "U") 'dired-unmark-prev-line)
 (define-command dired-unmark-prev-line () ()
@@ -187,7 +187,7 @@
        (when (and (eql +mark+ (following-char))
                   (setq file (get-file)))
          (push file files))
-       (next-line 1)))
+       (forward-line 1)))
     (if (null files)
         (let ((file (get-file)))
           (when file

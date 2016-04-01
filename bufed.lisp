@@ -25,6 +25,7 @@
           goto-line
           beginning-of-buffer
           end-of-buffer
+          forward-line
           next-line
           prev-line
           next-char
@@ -137,7 +138,7 @@
     (buffer-insert-newline (window-buffer)
                            (window-current-linum)
                            (window-current-charpos))
-    (next-line 1)))
+    (forward-line 1)))
 
 (define-key *global-keymap* (kbd "C-j") 'newline-and-indent)
 (define-command newline-and-indent (n) ("p")
@@ -285,7 +286,7 @@
 (define-key *global-keymap* (kbd "[down]") 'next-line-new)
 (define-command next-line-new (&optional n) ("p")
   (%next-line-before nil)
-  (when (prog1 (forward-line n)
+  (unless (prog1 (forward-line n)
           (%next-line-after nil))
     (cond ((plusp n)
            (end-of-buffer)
@@ -336,7 +337,7 @@
          ((eobp)
           (return nil))
          ((eolp)
-          (next-line 1))
+          (forward-line 1))
          (t
           (goto-column (1+ (window-current-charpos))))))))
 
@@ -361,7 +362,7 @@
   (if n
       (scroll-down n)
       (let ((point (current-point)))
-        (cond ((next-line (1- (window-height)))
+        (cond ((forward-line (1- (window-height)))
                (window-recenter *current-window*)
                t)
               ((and (point-set point) nil))
@@ -504,7 +505,7 @@
         (delete-while-whitespaces t nil)
         (insert-string (funcall make-space-str div))
         (insert-char #\space mod)))
-    (unless (next-line 1)
+    (unless (forward-line 1)
       (return))))
 
 (define-command entab-line (n) ("p")
@@ -528,7 +529,7 @@
 (define-command delete-blank-lines () ()
   (do ()
       ((not (blank-line-p))
-       (next-line 1))
+       (forward-line 1))
     (unless (prev-line 1)
       (return)))
   (do () ((eobp))

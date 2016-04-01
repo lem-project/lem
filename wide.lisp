@@ -58,5 +58,5 @@
     for i from start below (length str) by 1
     for c across str do
     (setq w (char-width c w))
-    (when (<= goal w)
+    (when (< goal w)
       (return i))))

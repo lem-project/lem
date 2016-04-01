@@ -131,7 +131,7 @@
            (goto-column (wide-index (buffer-line-string
                                      (window-buffer)
                                      (window-current-linum))
-                                    (1+ column)))
+                                    column))
            column)
           (force
            (insert-char #\space (- column current-column))

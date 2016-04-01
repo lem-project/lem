@@ -422,13 +422,13 @@
       nil)
      ((or (/= cury y)
           (< curx (1- cols)))
-      (let ((i (wide-index (fat-string str) cols)))
+      (let ((i (wide-index (fat-string str) (1- cols))))
         (setq str
               (if (<= cols (str-width (fat-string str) 0 i))
                   (fat-concat (fat-substring str 0 (1- i)) " $")
                   (fat-concat (fat-substring str 0 i) "$")))))
      ((< (window-current-charpos window) (fat-length str))
-      (let* ((start (wide-index (fat-string str) (- curx cols -4)))
+      (let* ((start (wide-index (fat-string str) (- curx cols -3)))
              (end (window-current-charpos window))
              (substr (fat-substring str start end)))
         (setq curx (- cols 2))
@@ -443,7 +443,7 @@
               (decf curx))
             (setq str (fat-concat "$" substr "$")))))
      (t
-      (let ((start (- curx cols -3)))
+      (let ((start (- curx cols -2)))
         (setq str
               (fat-concat "$"
                           (fat-substring str
@@ -457,14 +457,14 @@
   (labels ((f (str acc)
               (if (< (str-width (fat-string str)) winwidth)
                   (nreverse (cons str acc))
-                  (let ((i (wide-index (fat-string str) winwidth)))
+                  (let ((i (wide-index (fat-string str) (1- winwidth))))
                     (f (fat-substring str i)
                        (cons (fat-substring str 0 i) acc))))))
     (f str nil)))
 
 (defun map-wrapping-line (string winwidth fn)
   (loop :with start := 0
-    :for i := (wide-index string winwidth :start start)
+    :for i := (wide-index string (1- winwidth) :start start)
     :while i :do
     (funcall fn i)
     (setq start i)))
@@ -497,7 +497,7 @@
   (when (= y cury)
     (setq curx (str-width (fat-string str) 0 (window-current-charpos window))))
   (loop :with start := 0 :and winwidth := (window-width window)
-    :for i := (wide-index (fat-string str) winwidth :start start)
+    :for i := (wide-index (fat-string str) (1- winwidth) :start start)
     :while (< y (1- (window-height window)))
     :do (cond ((null i)
                (window-print-line window y str :string-start start)

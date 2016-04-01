@@ -71,13 +71,11 @@
   (setf (buffer-name) name)
   t)
 
-(defun head-line-p (window linum)
-  (declare (ignore window))
-  (values (<= linum 1) (- 2 linum)))
+(defun head-line-p (linum)
+  (<= linum 1))
 
-(defun tail-line-p (window linum)
-  (let ((nlines (buffer-nlines (window-buffer window))))
-    (values (<= nlines linum) (- nlines linum))))
+(defun tail-line-p (buffer linum)
+  (<= (buffer-nlines buffer) linum))
 
 (defun bolp ()
   (zerop (window-current-charpos)))
@@ -89,12 +87,12 @@
       (window-current-linum))))
 
 (defun bobp ()
-  (and (head-line-p *current-window* (window-current-linum))
+  (and (head-line-p (window-current-linum))
        (bolp)))
 
 (defun eobp ()
   (and (tail-line-p
-        *current-window*
+        (window-buffer)
         (window-current-linum))
        (eolp)))
 
@@ -281,7 +279,7 @@
    (t
     (%next-line-before n)
     (if (dotimes (_ (or n 1) t)
-          (if (tail-line-p *current-window* (window-current-linum))
+          (if (tail-line-p (window-buffer) (window-current-linum))
               (return nil)
               (incf (window-current-linum))))
         (progn (%next-line-after n) t)
@@ -296,7 +294,7 @@
    (t
     (%next-line-before n)
     (if (dotimes (_ (or n 1) t)
-          (if (head-line-p *current-window* (window-current-linum))
+          (if (head-line-p (window-current-linum))
               (return)
               (decf (window-current-linum))))
         (progn (%next-line-after n) t)

@@ -113,7 +113,7 @@
 (defmacro save-excursion (&body body)
   (let ((gpoint (gensym))
         (gbuffer (gensym)))
-    `(let ((,gpoint (point))
+    `(let ((,gpoint (current-point))
            (,gbuffer (window-buffer)))
        (unwind-protect (progn ,@body)
          (cond ((find ,gbuffer *buffer-list*)

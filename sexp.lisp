@@ -281,7 +281,7 @@
          (if (plusp n)
              #'skip-sexp-forward
              #'skip-sexp-backward)))
-    (let ((point (point)))
+    (let ((point (current-point)))
       (dotimes (_ (abs n) t)
         (funcall skip-space)
         (unless (funcall skip-sexp)
@@ -307,7 +307,7 @@
 
 (defun scan-lists (n depth &optional no-errors)
   (let ((dir (plusp n))
-        (point (point)))
+        (point (current-point)))
     (dotimes (_ (abs n) t)
       (unless (skip-list depth dir)
         (point-set point)
@@ -354,7 +354,7 @@
 
 (define-key *global-keymap* (kbd "M-C-t") 'transpose-sexps)
 (define-command transpose-sexps () ()
-  (let ((point (point)))
+  (let ((point (current-point)))
     (cond ((not (and (forward-sexp 1)
                      (backward-sexp 2)))
            (point-set point)

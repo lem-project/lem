@@ -96,7 +96,7 @@
 
 (defun insert-file-contents (filename)
   (let ((buffer (window-buffer))
-        (point (point)))
+        (point (current-point)))
     (multiple-value-bind (external-format end-of-line)
         (detect-external-format-from-file filename)
       (with-open-file (in filename :external-format external-format)

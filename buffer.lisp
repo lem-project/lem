@@ -315,7 +315,7 @@
     (let (start
           end
           (mark-point (marker-point (buffer-mark-marker buffer)))
-          (cur-point (point)))
+          (cur-point (current-point)))
       (if (point< mark-point cur-point)
           (setq start mark-point
                 end cur-point)

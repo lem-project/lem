@@ -6,7 +6,7 @@
           point-linum
           point-column
           with-points
-          point
+          current-point
           point-set
           point<
           point=
@@ -33,7 +33,7 @@
                  binds)
      ,@body))
 
-(defun point ()
+(defun current-point ()
   (make-point
    (window-cur-linum)
    (window-cur-col)))
@@ -75,7 +75,7 @@
   (save-excursion
    (point-set point)
    (next-char n)
-   (point)))
+   (current-point)))
 
 (defun point-min ()
   (make-point 1 0))
@@ -83,7 +83,7 @@
 (defun point-max ()
   (save-excursion
    (end-of-buffer)
-   (point)))
+   (current-point)))
 
-(defun adjust-point (&optional (point (point)))
+(defun adjust-point (&optional (point (current-point)))
   (point-set point))

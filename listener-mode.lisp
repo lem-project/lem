@@ -54,7 +54,7 @@
 (define-key *listener-mode-keymap* (kbd "C-m") 'listener-return)
 (define-command listener-return () ()
   (end-of-buffer)
-  (let ((end (point)))
+  (let ((end (current-point)))
     (if (not (funcall (get-bvar :listener-check-confirm-function)))
         (insert-newline)
         (let ((start (marker-point (%listener-marker))))

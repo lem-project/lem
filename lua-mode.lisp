@@ -93,7 +93,7 @@
          (raw-forward-sexp n))))
 
 (defun lua-forward-sexp (n)
-  (let ((point (point)))
+  (let ((point (current-point)))
     (dotimes (_ (abs n) t)
       (unless (and (if (plusp n)
                        (skip-space-forward)
@@ -124,8 +124,8 @@
 
 (defun scan-line ()
   (let ((string (save-excursion
-                 (region-string (progn (beginning-of-line) (point))
-                                (progn (end-of-line) (point)))))
+                 (region-string (progn (beginning-of-line) (current-point))
+                                (progn (end-of-line) (current-point)))))
         (tokens))
     (ppcre:do-matches-as-strings (tok "\\w+|;|\".*?[^\\\\]?\"|'.*?[^\\\\]'" string)
       (if (equal tok ";")

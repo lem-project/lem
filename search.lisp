@@ -113,7 +113,7 @@
   (setq *isearch-string* "")
   (isearch-update-minibuf)
   (setq *isearch-search-function* search-func)
-  (setq *isearch-start-point* (point))
+  (setq *isearch-start-point* (current-point))
   (setq *isearch-search-forward-function* search-forward-function)
   (setq *isearch-search-backward-function* search-backward-function)
   t)
@@ -174,7 +174,7 @@
 (defun isearch-update-buffer (&optional (search-string *isearch-string*))
   (isearch-reset-buffer)
   (unless (equal "" search-string)
-    (let ((save-point (point))
+    (let ((save-point (current-point))
           start-point
           end-point)
       (with-window-range (start end) *current-window*
@@ -185,11 +185,11 @@
             ((null
               (funcall *isearch-search-forward-function*
                        search-string end-point)))
-          (let ((point2 (point))
+          (let ((point2 (current-point))
                 (point1 (save-excursion
                          (funcall *isearch-search-backward-function*
                                   search-string)
-                         (point))))
+                         (current-point))))
             (push (make-overlay point1 point2
                                 :attr (if (and (point<= point1 save-point)
                                                (point<= save-point point2))
@@ -204,7 +204,7 @@
                      *isearch-string*
                      (string c)))
   (isearch-update-display)
-  (let ((point (point)))
+  (let ((point (current-point)))
     (unless (funcall *isearch-search-function* *isearch-string*)
       (point-set point))
     t))
@@ -217,7 +217,7 @@
              (isearch-end)))))
 
 (defun search-step (first-search search step goto-matched-pos endp)
-  (let ((point (point))
+  (let ((point (current-point))
         (result
          (let ((res (funcall first-search)))
            (cond (res
@@ -238,7 +238,7 @@
 (defun search-forward-endp-function (limit)
   (if limit
       #'(lambda ()
-          (or (point<= limit (point))
+          (or (point<= limit (current-point))
               (eobp)))
       #'eobp))
 
@@ -270,7 +270,7 @@
 (defun search-backward-endp-function (limit)
   (if limit
       #'(lambda ()
-          (point< (point) limit))
+          (point< (current-point) limit))
       #'bobp))
 
 (defun search-backward (str &optional limit)
@@ -449,14 +449,14 @@
                (end-point)
                (pass-through nil))
               ((or (null (funcall search-forward-function before))
-                   (and goal-point (point< goal-point (point))))
+                   (and goal-point (point< goal-point (current-point))))
                (when goal-point
                  (point-set goal-point)))
-            (setq end-point (point))
+            (setq end-point (current-point))
             (isearch-update-buffer before)
             (minibuf-print (format nil "Replace ~s with ~s" before after))
             (funcall search-backward-function before)
-            (setq start-point (point))
+            (setq start-point (current-point))
             (unless pass-through (window-update-all))
             (do () (nil)
               (let ((c (unless pass-through (getch))))

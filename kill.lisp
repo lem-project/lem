@@ -66,9 +66,9 @@
 (define-key *global-keymap* (kbd "C-y") 'yank)
 (define-command yank (n) ("p")
   (let ((lines (kill-ring-nth n)))
-    (setf (get-bvar :yank-start) (point))
+    (setf (get-bvar :yank-start) (current-point))
     (insert-lines lines)
-    (setf (get-bvar :yank-end) (point))
+    (setf (get-bvar :yank-end) (current-point))
     (when-interrupted-flag :yank)
     t))
 

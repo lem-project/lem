@@ -350,7 +350,7 @@
 (define-command next-page (&optional n) ("P")
   (if n
       (scroll-down n)
-      (let ((point (point)))
+      (let ((point (current-point)))
         (cond ((next-line (1- (window-height)))
                (window-recenter *current-window*)
                t)
@@ -365,7 +365,7 @@
 (define-command prev-page (&optional n) ("P")
   (if n
       (scroll-up n)
-      (let ((point (point)))
+      (let ((point (current-point)))
         (cond ((prev-line (1- (window-height)))
                (window-recenter *current-window*)
                t)
@@ -399,7 +399,7 @@
     (setf (buffer-mark-p buffer) t)
     (if (buffer-mark-marker)
         (setf (marker-point (buffer-mark-marker buffer))
-              (point))
+              (current-point))
         (setf (buffer-mark-marker buffer)
               (make-marker-current-point)))
     (minibuf-print "Mark set")
@@ -439,7 +439,7 @@
 (defun char-after (&optional (n 0))
   (if (zerop n)
       (following-char)
-      (let ((point (point)))
+      (let ((point (current-point)))
         (if (next-char n)
             (prog1 (following-char)
               (prev-char n))
@@ -450,7 +450,7 @@
 (defun char-before (&optional (n 1))
   (if (= n 1)
       (preceding-char)
-      (let ((point (point)))
+      (let ((point (current-point)))
         (if (prev-char (1- n))
             (prog1 (preceding-char)
               (next-char (1- n)))
@@ -584,10 +584,10 @@
 (define-key *global-keymap* (kbd "M-^") 'delete-indentation)
 (define-command delete-indentation () ()
   (beginning-of-line)
-  (let ((point (point)))
+  (let ((point (current-point)))
     (prev-line 1)
     (end-of-line)
-    (delete-char (region-count (point) point) t)
+    (delete-char (region-count (current-point) point) t)
     (just-one-space)
     t))
 
@@ -602,8 +602,8 @@
   (let* ((old-column (current-column))
          (old-indent-string
           (save-excursion
-           (region-string (progn (beginning-of-line) (point))
-                          (progn (back-to-indentation) (point)))))
+           (region-string (progn (beginning-of-line) (current-point))
+                          (progn (back-to-indentation) (current-point)))))
          (new-indent-string
           (if (get-bvar :indent-tabs-mode :default t)
               (multiple-value-bind (div mod)

@@ -124,7 +124,7 @@
 (define-command minibuf-read-line-completion () ()
   (when *minibuf-read-line-comp-f*
     (let ((target-str
-           (region-string (point-min) (point))))
+           (region-string (point-min) (current-point))))
       (let ((str
              (let ((*current-window* *minibuf-read-line-tmp-window*))
                (popup-completion *minibuf-read-line-comp-f*
@@ -134,7 +134,7 @@
   t)
 
 (define-command minibuf-read-line-clear-before () ()
-  (kill-region (point-min) (point))
+  (kill-region (point-min) (current-point))
   t)
 
 (define-command minibuf-read-line-prev-history () ()

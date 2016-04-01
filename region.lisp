@@ -12,14 +12,14 @@
           apply-region-lines))
 
 (defun region-beginning ()
-  (let ((point1 (point))
+  (let ((point1 (current-point))
         (point2 (marker-point (buffer-mark-marker))))
     (if (point< point1 point2)
         point1
         point2)))
 
 (defun region-end ()
-  (let ((point1 (point))
+  (let ((point1 (current-point))
         (point2 (marker-point (buffer-mark-marker))))
     (if (point< point1 point2)
         point2
@@ -77,7 +77,7 @@
 
 (defun apply-region-lines (begin end fn)
   (point-set begin)
-  (do () ((point<= end (point)))
+  (do () ((point<= end (current-point)))
     (let ((linum (window-cur-linum)))
       (beginning-of-line)
       (funcall fn)

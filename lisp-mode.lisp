@@ -293,14 +293,14 @@
                                    (prev-char 2))))
 
 (defun sexp-goto-car (limit-linum)
-  (let ((point (point)))
+  (let ((point (current-point)))
     (do ((end-linum (point-linum point)))
-        ((let ((point (point)))
+        ((let ((point (current-point)))
            (if (backward-sexp 1 t)
-               (point= point (point))
+               (point= point (current-point))
                t))
          t)
-      (let ((start-linum (point-linum (point))))
+      (let ((start-linum (point-linum (current-point))))
         (when (< limit-linum (- end-linum start-linum))
           (point-set point)
           (return nil))))))
@@ -311,9 +311,9 @@
     #'(lambda (c)
         (or (eq c #\space)
             (eq c #\tab))))
-   (let ((begin (point)))
+   (let ((begin (current-point)))
      (forward-sexp)
-     (list (region-string begin (point))
+     (list (region-string begin (current-point))
            (when (= (window-cur-linum)
                     (progn
                       (skip-chars-forward 'syntax-space-char-p)
@@ -324,7 +324,7 @@
   (do ((count 0 (1+ count)))
       ((or (not (forward-sexp 1 t))
            (eobp)
-           (point< goal (point)))
+           (point< goal (current-point)))
        count)))
 
 (defun lisp-calc-indent ()
@@ -332,7 +332,7 @@
     (save-excursion
      (let ((point (progn
                     (beginning-of-line)
-                    (point))))
+                    (current-point))))
        (when (save-excursion (and (backward-sexp 1 t) (bolp)))
          (return-from lisp-calc-indent 0))
        (when (sexp-goto-car 2000)
@@ -644,9 +644,9 @@
           (let ((*package* (lisp-current-package)))
             (read-from-string
              (region-string
-              (point)
+              (current-point)
               (save-excursion (forward-sexp 1)
-                              (point))))))
+                              (current-point))))))
         (lisp-current-package))))
 
 (defun %lisp-macroexpand-replace-expr (expr)
@@ -791,7 +791,7 @@
                           (backward-sexp 1))))))))
           (if (= 1 (length defs))
               (destructuring-bind (filename move-fn) (car defs)
-                (push (cons (window-buffer) (point))
+                (push (cons (window-buffer) (current-point))
                       *lisp-find-definition-stack*)
                 (find-file filename)
                 (funcall move-fn))
@@ -872,9 +872,9 @@
                                         external-p)))))))
 
 (defun lisp-preceding-symbol ()
-  (let* ((end (point))
+  (let* ((end (current-point))
          (begin (prog2 (backward-sexp)
-                    (point)
+                    (current-point)
                   (point-set end)))
          (str (string-left-trim
                "'`," (string-left-trim
@@ -912,8 +912,8 @@
 (defun lisp-echo-arglist (get-arglist-function)
   (save-excursion
    (when (sexp-goto-car 100)
-     (let* ((start (point))
-            (end (progn (forward-sexp 1 t) (point))))
+     (let* ((start (current-point))
+            (end (progn (forward-sexp 1 t) (current-point))))
        (multiple-value-bind (arglist)
            (funcall get-arglist-function
                     (region-string start end))
@@ -974,7 +974,7 @@
         (end (region-end)))
     (point-set start)
     (do ()
-        ((point<= end (point)))
+        ((point<= end (current-point)))
       (skip-chars-forward '(#\space #\tab))
       (do ((delete-flag nil t))
           ((not (eql #\; (following-char)))
@@ -1043,7 +1043,7 @@
 (defun lisp-repl-confirm (string)
   (setq - (car (%string-to-exps string (lisp-current-package))))
   (multiple-value-bind (values error-p)
-      (%lisp-eval - (window-buffer) (point) t)
+      (%lisp-eval - (window-buffer) (current-point) t)
     (declare (ignore error-p))
     (setq +++ ++ /// //     *** (car ///)
           ++  +  //  /      **  (car //)

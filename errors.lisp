@@ -2,17 +2,27 @@
 
 (in-package :lem)
 
-(define-condition lem-error (simple-error)
+(define-condition editor-condition (simple-error)
   ())
 
-(define-condition editor-abort (lem-error)
+(define-condition editor-abort (editor-condition)
   ((depth
     :initarg :depth
     :reader editor-abort-depth
     :initform 0)))
 
-(define-condition readonly (lem-error)
+(define-condition readonly (editor-condition)
   ())
 
-(define-condition switch-minibuffer-window (lem-error)
+(define-condition switch-minibuffer-window (editor-condition)
   ())
+
+(define-condition editor-error (editor-condition)
+  ((message
+    :initarg :message
+    :reader editor-error-message))
+  (:report
+   (lambda (condition stream)
+     (format stream
+             "Editor Error: ~A"
+             (editor-error-message condition)))))

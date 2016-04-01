@@ -441,7 +441,7 @@
     (setf (line-%symbol-lifetimes line) *syntax-symbol-lifetimes*)))
 
 (defun %syntax-col-tag (col)
-  (let ((line (buffer-get-line (window-buffer) (window-cur-linum))))
+  (let ((line (buffer-get-line (window-buffer) (window-current-linum))))
     (when (= 0 col)
       (unless (setq line (line-prev line))
         (return-from %syntax-col-tag nil))
@@ -453,24 +453,24 @@
 (defun syntax-after-tag (&optional (n 1))
   (save-excursion
    (next-char n)
-   (%syntax-col-tag (window-cur-col))))
+   (%syntax-col-tag (window-current-charpos))))
 
 (defun syntax-before-tag (&optional (n 1))
   (save-excursion
    (prev-char (1- n))
-   (%syntax-col-tag (window-cur-col))))
+   (%syntax-col-tag (window-current-charpos))))
 
 (defun syntax-following-tag ()
-  (%syntax-col-tag (1+ (window-cur-col))))
+  (%syntax-col-tag (1+ (window-current-charpos))))
 
 (defun syntax-preceding-tag ()
-  (%syntax-col-tag (window-cur-col)))
+  (%syntax-col-tag (window-current-charpos)))
 
 (defun syntax-forward-search-tag-end (tag0)
-  (do ((line (buffer-get-line (window-buffer) (window-cur-linum))
+  (do ((line (buffer-get-line (window-buffer) (window-current-linum))
              (line-next line))
-       (linum (window-cur-linum) (1+ linum))
-       (column (window-cur-col) 0)
+       (linum (window-current-linum) (1+ linum))
+       (column (window-current-charpos) 0)
        (straddle-p))
       ((null line))
     (let ((found-tag-p nil))
@@ -491,10 +491,10 @@
         (return t)))))
 
 (defun syntax-backward-search-tag-start (tag0)
-  (do* ((line (buffer-get-line (window-buffer) (window-cur-linum))
+  (do* ((line (buffer-get-line (window-buffer) (window-current-linum))
               (line-prev line))
-        (linum (window-cur-linum) (1- linum))
-        (column (window-cur-col)
+        (linum (window-current-linum) (1- linum))
+        (column (window-current-charpos)
                 (and (line-p line) (line-length line)))
         (straddle-p))
       ((null line))

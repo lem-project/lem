@@ -20,8 +20,8 @@
           window-x
           window-buffer
           window-vtop-linum
-          window-cur-linum
-          window-cur-col
+          window-current-linum
+          window-current-charpos
           window-delete-hook
           one-window-p
           select-window
@@ -113,16 +113,16 @@
 (defun window-point (&optional (window *current-window*))
   (marker-point (window-point-marker window)))
 
-(defun window-cur-col (&optional (window *current-window*))
+(defun window-current-charpos (&optional (window *current-window*))
   (marker-column (window-point-marker window)))
 
-(defun (setf window-cur-col) (new-col &optional (window *current-window*))
+(defun (setf window-current-charpos) (new-col &optional (window *current-window*))
   (setf (marker-column (window-point-marker window)) new-col))
 
-(defun window-cur-linum (&optional (window *current-window*))
+(defun window-current-linum (&optional (window *current-window*))
   (marker-linum (window-point-marker window)))
 
-(defun (setf window-cur-linum) (new-linum &optional (window *current-window*))
+(defun (setf window-current-linum) (new-linum &optional (window *current-window*))
   (setf (marker-linum (window-point-marker window)) new-linum))
 
 (defun window-parameter (window parameter)
@@ -253,7 +253,7 @@
 (defun window-recenter (window)
   (setf (window-vtop-column window) 0)
   (setf (window-vtop-linum window)
-        (window-cur-linum window))
+        (window-current-linum window))
   (window-scroll window (- (floor (window-height window) 2))))
 
 (defun %scroll-down-if-wrapping (window)
@@ -344,12 +344,12 @@
         (format nil " ~(~{~a~^ ~}~)" modes)
         "")))
 (defun modeline-linum (window)
-  (window-cur-linum window))
+  (window-current-linum window))
 (defun modeline-column (window)
   (str-width (buffer-line-string (window-buffer window)
-                                 (window-cur-linum window))
+                                 (window-current-linum window))
              0
-             (window-cur-col window)))
+             (window-current-charpos window)))
 
 (defun modeline-string (window)
   (let* ((line-pos (window-posline window))
@@ -387,12 +387,12 @@
                         attr)))
 
 (defun window-cursor-y (window)
-  (- (window-cur-linum window)
+  (- (window-current-linum window)
      (window-vtop-linum window)))
 
 (defun window-cursor-y-if-wrapping (window)
   (if (buffer-truncate-lines (window-buffer window))
-      (+ (- (window-cur-linum window)
+      (+ (- (window-current-linum window)
             (window-vtop-linum window))
          (window-wrapping-offset window))
       (window-cursor-y window)))
@@ -414,7 +414,7 @@
 (defun window-refresh-line (window curx cury y str)
   (check-type str fatstring)
   (when (= cury y)
-    (setq curx (str-width (fat-string str) 0 (window-cur-col window))))
+    (setq curx (str-width (fat-string str) 0 (window-current-charpos window))))
   (let ((width (str-width (fat-string str)))
         (cols (window-width window)))
     (cond
@@ -427,9 +427,9 @@
               (if (<= cols (str-width (fat-string str) 0 i))
                   (fat-concat (fat-substring str 0 (1- i)) " $")
                   (fat-concat (fat-substring str 0 i) "$")))))
-     ((< (window-cur-col window) (fat-length str))
+     ((< (window-current-charpos window) (fat-length str))
       (let* ((start (wide-index (fat-string str) (- curx cols -4)))
-             (end (window-cur-col window))
+             (end (window-current-charpos window))
              (substr (fat-substring str start end)))
         (setq curx (- cols 2))
         (if (wide-char-p (fat-char substr (- (fat-length substr) 1)))
@@ -485,7 +485,7 @@
       (map-buffer-lines #'f
                         (window-buffer window)
                         (window-vtop-linum window)
-                        (1- (window-cur-linum window)))
+                        (1- (window-current-linum window)))
       offset)))
 
 (defvar *wrapping-fatstring* (make-fatstring "!" 0))
@@ -495,7 +495,7 @@
   (when (and (< 0 (window-vtop-column window)) (= y 0))
     (setq str (fat-substring str (window-vtop-column window))))
   (when (= y cury)
-    (setq curx (str-width (fat-string str) 0 (window-cur-col window))))
+    (setq curx (str-width (fat-string str) 0 (window-current-charpos window))))
   (loop :with start := 0 :and winwidth := (window-width window)
     :for i := (wide-index (fat-string str) winwidth :start start)
     :while (< y (1- (window-height window)))
@@ -567,11 +567,11 @@
   (charms/ll:wnoutrefresh (window-win window)))
 
 (defun window-offset-view (window)
-  (cond ((< (window-cur-linum window)
+  (cond ((< (window-current-linum window)
             (window-vtop-linum window))
-         (- (window-cur-linum window)
+         (- (window-current-linum window)
             (window-vtop-linum window)))
-        ((and (= (window-cur-linum window)
+        ((and (= (window-current-linum window)
                  (window-vtop-linum window))
               (< 0 (window-vtop-column window)))
          -1)
@@ -645,10 +645,10 @@
                    (window-width))
   (setf (window-vtop-linum new-window)
         (window-vtop-linum))
-  (setf (window-cur-linum new-window)
-        (window-cur-linum))
-  (setf (window-cur-col new-window)
-        (window-cur-col))
+  (setf (window-current-linum new-window)
+        (window-current-linum))
+  (setf (window-current-charpos new-window)
+        (window-current-charpos))
   (multiple-value-bind (node getter setter)
       (window-tree-parent *window-tree* *current-window*)
     (if (null node)

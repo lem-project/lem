@@ -80,30 +80,30 @@
     (values (<= nlines linum) (- nlines linum))))
 
 (defun bolp ()
-  (zerop (window-cur-col)))
+  (zerop (window-current-charpos)))
 
 (defun eolp ()
-  (= (window-cur-col)
+  (= (window-current-charpos)
      (buffer-line-length
       (window-buffer)
-      (window-cur-linum))))
+      (window-current-linum))))
 
 (defun bobp ()
-  (and (head-line-p *current-window* (window-cur-linum))
+  (and (head-line-p *current-window* (window-current-linum))
        (bolp)))
 
 (defun eobp ()
   (and (tail-line-p
         *current-window*
-        (window-cur-linum))
+        (window-current-linum))
        (eolp)))
 
 (defun insert-char (c n)
   (dotimes (_ n t)
     (when (buffer-insert-char
            (window-buffer)
-           (window-cur-linum)
-           (window-cur-col)
+           (window-current-linum)
+           (window-current-charpos)
            c)
       (next-char 1))))
 
@@ -123,8 +123,8 @@
       ((null rest))
     (buffer-insert-line
      (window-buffer)
-     (window-cur-linum)
-     (window-cur-col)
+     (window-current-linum)
+     (window-current-charpos)
      (car rest))
     (next-char (length (car rest)))
     (when (cdr rest)
@@ -137,8 +137,8 @@
 (define-command insert-newline (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (buffer-insert-newline (window-buffer)
-                           (window-cur-linum)
-                           (window-cur-col))
+                           (window-current-linum)
+                           (window-current-charpos))
     (next-line 1)))
 
 (define-key *global-keymap* (kbd "C-j") 'newline-and-indent)
@@ -165,8 +165,8 @@
    (t
     (let ((lines
            (buffer-delete-char (window-buffer)
-                               (window-cur-linum)
-                               (window-cur-col)
+                               (window-current-linum)
+                               (window-current-charpos)
                                (or n 1))))
       (when (and (not does-not-kill-p) n)
         (with-kill ()
@@ -194,15 +194,15 @@
      (cond ((eolp) 1)
            ((blank-line-p))
            (t (- (buffer-line-length (window-buffer)
-                                     (window-cur-linum))
-                 (window-cur-col))))))
+                                     (window-current-linum))
+                 (window-current-charpos))))))
    ((plusp n)
     (dotimes (_ n)
       (kill-line)))))
 
 (defun goto-column (col)
   (assert (<= 0 col))
-  (setf (window-cur-col) col))
+  (setf (window-current-charpos) col))
 
 (define-key *global-keymap* (kbd "C-a") 'beginning-of-line)
 (define-key *global-keymap* (kbd "[home]") 'beginning-of-line)
@@ -215,7 +215,7 @@
 (define-command end-of-line () ()
   (goto-column (buffer-line-length
                 (window-buffer)
-                (window-cur-linum)))
+                (window-current-linum)))
   t)
 
 (define-key *global-keymap* (kbd "M-g") 'goto-line)
@@ -223,7 +223,7 @@
   (unless n
     (setq n (minibuf-read-number "Line to GOTO: ")))
   (when (< 0 n (1+ (buffer-nlines (window-buffer))))
-    (setf (window-cur-linum) n)
+    (setf (window-current-linum) n)
     (beginning-of-line)
     (unless does-not-recenter-p
       (recenter))
@@ -240,7 +240,7 @@
   (goto-line (buffer-nlines (window-buffer)) t)
   (goto-column (buffer-line-length
                 (window-buffer)
-                (window-cur-linum)))
+                (window-current-linum)))
   t)
 
 (let ((tmp-column))
@@ -248,9 +248,9 @@
     (setq tmp-column
           (str-width (buffer-line-string
                       (window-buffer)
-                      (window-cur-linum))
+                      (window-current-linum))
                      0
-                     (window-cur-col))))
+                     (window-current-charpos))))
   (defun %next-line-before (arg)
     (when (null arg)
       (when-interrupted-flag
@@ -271,11 +271,11 @@
      (t
       (let ((col (%get-goal (buffer-line-string
                              (window-buffer)
-                             (window-cur-linum))
+                             (window-current-linum))
                             tmp-column)))
         (when col
-          (setf (window-cur-col) col)))
-      (check-type (window-cur-col)
+          (setf (window-current-charpos) col)))
+      (check-type (window-current-charpos)
                   (integer 0 #.most-positive-fixnum))))))
 
 (define-key *global-keymap* (kbd "C-n") 'next-line)
@@ -287,9 +287,9 @@
    (t
     (%next-line-before n)
     (if (dotimes (_ (or n 1) t)
-          (if (tail-line-p *current-window* (window-cur-linum))
+          (if (tail-line-p *current-window* (window-current-linum))
               (return nil)
-              (incf (window-cur-linum))))
+              (incf (window-current-linum))))
         (progn (%next-line-after n) t)
         (progn (end-of-line) nil)))))
 
@@ -302,9 +302,9 @@
    (t
     (%next-line-before n)
     (if (dotimes (_ (or n 1) t)
-          (if (head-line-p *current-window* (window-cur-linum))
+          (if (head-line-p *current-window* (window-current-linum))
               (return)
-              (decf (window-cur-linum))))
+              (decf (window-current-linum))))
         (progn (%next-line-after n) t)
         (progn (beginning-of-line) nil)))))
 
@@ -320,7 +320,7 @@
          ((eolp)
           (next-line 1))
          (t
-          (goto-column (1+ (window-cur-col))))))))
+          (goto-column (1+ (window-current-charpos))))))))
 
 (define-key *global-keymap* (kbd "C-b") 'prev-char)
 (define-key *global-keymap* (kbd "[left]") 'prev-char)
@@ -335,7 +335,7 @@
           (prev-line 1)
           (end-of-line))
          (t
-          (goto-column (1- (window-cur-col))))))))
+          (goto-column (1- (window-current-charpos))))))))
 
 (define-key *global-keymap* (kbd "C-v") 'next-page)
 (define-key *global-keymap* (kbd "[npage]") 'next-page)
@@ -402,17 +402,17 @@
   (let ((buffer (window-buffer)))
     (when (buffer-check-marked buffer)
       (psetf
-       (window-cur-linum) (marker-linum (buffer-mark-marker buffer))
-       (window-cur-col) (marker-column (buffer-mark-marker buffer))
-       (marker-linum (buffer-mark-marker buffer)) (window-cur-linum)
-       (marker-column (buffer-mark-marker buffer)) (window-cur-col))
-      (assert (<= 0 (window-cur-col)))
+       (window-current-linum) (marker-linum (buffer-mark-marker buffer))
+       (window-current-charpos) (marker-column (buffer-mark-marker buffer))
+       (marker-linum (buffer-mark-marker buffer)) (window-current-linum)
+       (marker-column (buffer-mark-marker buffer)) (window-current-charpos))
+      (assert (<= 0 (window-current-charpos)))
       t)))
 
 (defun following-char ()
   (buffer-get-char (window-buffer)
-                   (window-cur-linum)
-                   (window-cur-col)))
+                   (window-current-linum)
+                   (window-current-charpos)))
 
 (defun preceding-char ()
   (cond
@@ -420,13 +420,13 @@
     nil)
    ((bolp)
     (buffer-get-char (window-buffer)
-                     (1- (window-cur-linum))
+                     (1- (window-current-linum))
                      (buffer-line-length (window-buffer)
-                                         (1- (window-cur-linum)))))
+                                         (1- (window-current-linum)))))
    (t
     (buffer-get-char (window-buffer)
-                     (window-cur-linum)
-                     (1- (window-cur-col))))))
+                     (window-current-linum)
+                     (1- (window-current-charpos))))))
 
 (defun char-after (&optional (n 0))
   (if (zerop n)
@@ -454,8 +454,8 @@
   (delete-char)
   (buffer-insert-char
    (window-buffer)
-   (window-cur-linum)
-   (window-cur-col)
+   (window-current-linum)
+   (window-current-charpos)
    c))
 
 (defun count-indent ()
@@ -500,8 +500,8 @@
                     (make-string (* n *tab-size*) :initial-element #\space))))
 
 (defun blank-line-p ()
-  (let ((string (buffer-line-string (window-buffer) (window-cur-linum)))
-        (eof-p (buffer-end-line-p (window-buffer) (window-cur-linum))))
+  (let ((string (buffer-line-string (window-buffer) (window-current-linum)))
+        (eof-p (buffer-end-line-p (window-buffer) (window-current-linum))))
     (when (string= "" (string-trim '(#\space #\tab) string))
       (+ (length string)
          (if eof-p 0 1)))))

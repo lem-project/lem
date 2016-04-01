@@ -38,7 +38,7 @@
           (files))
       (insert-string (namestring dirname))
       (insert-newline 2)
-      (setf (get-bvar :start-linum) (window-cur-linum))
+      (setf (get-bvar :start-linum) (window-current-linum))
       (dolist (file (cl-fad:list-directory dirname :follow-symlinks nil))
         (push file files)
         (let ((filename (enough-namestring file dirname))
@@ -90,7 +90,7 @@
   (dired-internal dirname))
 
 (defun get-file ()
-  (let ((n (- (window-cur-linum)
+  (let ((n (- (window-current-linum)
               (1- (get-bvar :start-linum))))
         (files (get-bvar :dired-files)))
     (when (<= 1 n (length files))

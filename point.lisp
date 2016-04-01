@@ -35,18 +35,18 @@
 
 (defun current-point ()
   (make-point
-   (window-cur-linum)
-   (window-cur-col)))
+   (window-current-linum)
+   (window-current-charpos)))
 
 (defun point-set (point &optional (window *current-window*))
-  (setf (window-cur-linum window)
+  (setf (window-current-linum window)
         (min (buffer-nlines (window-buffer window))
              (point-linum point)))
-  (setf (window-cur-col window)
+  (setf (window-current-charpos window)
         (min (buffer-line-length (window-buffer window)
-                                 (window-cur-linum window))
+                                 (window-current-linum window))
              (point-column point)))
-  (assert (<= 0 (window-cur-col window))))
+  (assert (<= 0 (window-current-charpos window))))
 
 (defun point< (p1 p2)
   (cond ((< (point-linum p1) (point-linum p2))

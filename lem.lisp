@@ -283,7 +283,7 @@
         (let ((curr-modified (buffer-modified-p (window-buffer))))
           (cond ((eq :one-line (window-redraw-flag))
                  (syntax-scan-lines *current-window*
-                                    #1=(window-cur-linum)
+                                    #1=(window-current-linum)
                                     (1+ #1#)))
                 ((or (not (eql curr-modified prev-modified))
                      (/= prev-window-vtop-linum

@@ -159,10 +159,10 @@
         (buffer-take-lines (window-buffer *minibuf-window*))))
 
 (defun minibuf-point-linum ()
-  (window-cur-linum *minibuf-window*))
+  (window-current-linum *minibuf-window*))
 
 (defun minibuf-point-column ()
-  (window-cur-col *minibuf-window*))
+  (window-current-charpos *minibuf-window*))
 
 (defun minibuf-read-line-refresh (prompt)
   (minibuf-print (concatenate 'string prompt (minibuf-get-line)))

@@ -609,42 +609,6 @@
 (defun redraw-screen ()
   (window-update-all))
 
-(defun %window-current-line (window)
-  (let* ((str (buffer-line-fatstring
-               (window-buffer window)
-               (window-cur-linum window)))
-         (curx (str-width (fat-string str) 0 (window-cur-col)))
-         (cury (window-cursor-y window)))
-    (dolist (y (window-wrap-ylist window))
-      (when (<= y cury)
-        (incf cury)))
-    (values str curx cury)))
-
-(defun window-maybe-update-one-line ()
-  (let* ((window *current-window*))
-    (multiple-value-bind (str curx cury)
-        (%window-current-line window)
-      (declare (ignore curx))
-      (multiple-value-bind (curx2 cury2)
-          (funcall (get-window-refresh-line-function window)
-                   window 0 cury cury str)
-        (if (= cury cury2)
-            (charms/ll:wmove (window-win window) cury2 curx2)
-            (window-update-all))))))
-
-(defun window-maybe-update-cursor ()
-  (let* ((window *current-window*)
-         (winwidth (window-width window)))
-    (multiple-value-bind (str curx cury)
-        (%window-current-line window)
-      (when (<= (1- winwidth) curx)
-        (let ((strings (divide-line-width str winwidth)))
-          (loop :for str :in strings
-            :while (<= (1- winwidth) curx) :do
-            (incf cury)
-            (decf curx (str-width (fat-string str))))))
-      (charms/ll:wmove (window-win window) cury curx))))
-
 (defvar *brackets-overlays* nil)
 
 (defun window-brackets-highlight ()

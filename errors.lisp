@@ -26,3 +26,6 @@
      (format stream
              "Editor Error: ~A"
              (editor-error-message condition)))))
+
+(defun editor-error (message)
+  (error 'editor-error :message message))

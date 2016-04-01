@@ -19,7 +19,7 @@
           delete-char
           backward-delete-char
           kill-line
-          goto-column
+          set-charpos
           beginning-of-line
           end-of-line
           goto-line
@@ -199,20 +199,20 @@
     (dotimes (_ n)
       (kill-line)))))
 
-(defun goto-column (col)
+(defun set-charpos (col)
   (assert (<= 0 col))
   (setf (window-current-charpos) col))
 
 (define-key *global-keymap* (kbd "C-a") 'beginning-of-line)
 (define-key *global-keymap* (kbd "[home]") 'beginning-of-line)
 (define-command beginning-of-line () ()
-  (goto-column 0)
+  (set-charpos 0)
   t)
 
 (define-key *global-keymap* (kbd "C-e") 'end-of-line)
 (define-key *global-keymap* (kbd "[end]") 'end-of-line)
 (define-command end-of-line () ()
-  (goto-column (buffer-line-length
+  (set-charpos (buffer-line-length
                 (window-buffer)
                 (window-current-linum)))
   t)
@@ -231,13 +231,13 @@
 (define-key *global-keymap* (kbd "M-<") 'beginning-of-buffer)
 (define-command beginning-of-buffer () ()
   (goto-line 1 t)
-  (goto-column 0)
+  (set-charpos 0)
   t)
 
 (define-key *global-keymap* (kbd "M->") 'end-of-buffer)
 (define-command end-of-buffer () ()
   (goto-line (buffer-nlines (window-buffer)) t)
-  (goto-column (buffer-line-length
+  (set-charpos (buffer-line-length
                 (window-buffer)
                 (window-current-linum)))
   t)
@@ -306,7 +306,7 @@
          ((eolp)
           (forward-line 1))
          (t
-          (goto-column (1+ (window-current-charpos))))))))
+          (set-charpos (1+ (window-current-charpos))))))))
 
 (define-key *global-keymap* (kbd "C-b") 'prev-char)
 (define-key *global-keymap* (kbd "[left]") 'prev-char)
@@ -321,7 +321,7 @@
           (forward-line -1)
           (end-of-line))
          (t
-          (goto-column (1- (window-current-charpos))))))))
+          (set-charpos (1- (window-current-charpos))))))))
 
 (define-key *global-keymap* (kbd "C-v") 'next-page)
 (define-key *global-keymap* (kbd "[npage]") 'next-page)

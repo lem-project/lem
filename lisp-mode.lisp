@@ -965,7 +965,7 @@
      (let ((column (point-column start)))
        (apply-region-lines start end
                            #'(lambda ()
-                               (goto-column column)
+                               (set-charpos column)
                                (unless (blank-line-p)
                                  (insert-string ";; "))))))))
 

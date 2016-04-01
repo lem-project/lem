@@ -128,7 +128,7 @@
   (end-of-line)
   (let ((current-column (current-column)))
     (cond ((< column current-column)
-           (goto-column (wide-index (buffer-line-string
+           (set-charpos (wide-index (buffer-line-string
                                      (window-buffer)
                                      (window-current-linum))
                                     column))

@@ -331,7 +331,7 @@
                                              (window-current-linum)))
            (when start end)))
      #'forward-line
-     #'goto-column
+     #'set-charpos
      (search-forward-endp-function limit))))
 
 (defun search-backward-regexp (regex &optional limit)
@@ -366,7 +366,7 @@
              (setq pos start))
            pos))
      #'(lambda () (forward-line -1))
-     #'goto-column
+     #'set-charpos
      (search-backward-endp-function limit))))
 
 (defun search-symbol-positions (name &key start end)
@@ -392,7 +392,7 @@
    #'(lambda ()
        (cdar (search-symbol-positions name)))
    #'forward-line
-   #'goto-column
+   #'set-charpos
    (search-forward-endp-function limit)))
 
 (defun search-backward-symbol (name &optional limit)
@@ -402,7 +402,7 @@
    #'(lambda ()
        (caar (last (search-symbol-positions name))))
    #'(lambda () (forward-line -1))
-   #'goto-column
+   #'set-charpos
    (search-backward-endp-function limit)))
 
 (defvar *replace-before-string* nil)

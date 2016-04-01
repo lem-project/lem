@@ -87,7 +87,7 @@
         (if (forward-line -1)
             (let ((col (line-comment-column)))
               (if col
-                  (goto-column col)
+                  (set-charpos col)
                   (end-of-line)))
             (return nil))
         (let ((c1 (preceding-char))

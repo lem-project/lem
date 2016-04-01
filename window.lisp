@@ -304,14 +304,12 @@
     (if (plusp n)
         (window-scroll-down window)
         (window-scroll-up window)))
-  (multiple-value-bind (outp offset)
-      (head-line-p window (1+ (window-vtop-linum window)))
-    (when outp
-      (incf (window-vtop-linum window) offset)))
-  (multiple-value-bind (outp offset)
-      (tail-line-p window (window-vtop-linum window))
-    (when outp
-      (incf (window-vtop-linum window) offset))))
+  (when (< (window-vtop-linum window) 1)
+    (setf (window-vtop-linum window) 1))
+  (when (< (buffer-nlines (window-buffer window))
+           (window-vtop-linum window))
+    (setf (window-vtop-linum window)
+          (buffer-nlines (window-buffer window)))))
 
 (defun window-posline (window)
   (cond

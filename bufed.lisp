@@ -282,9 +282,9 @@
       (check-type (window-current-charpos)
                   (integer 0 #.most-positive-fixnum))))))
 
-(define-key *global-keymap* (kbd "C-n") 'next-line-new)
-(define-key *global-keymap* (kbd "[down]") 'next-line-new)
-(define-command next-line-new (&optional n) ("p")
+(define-key *global-keymap* (kbd "C-n") 'next-line)
+(define-key *global-keymap* (kbd "[down]") 'next-line)
+(define-command next-line (&optional n) ("p")
   (%next-line-before nil)
   (unless (prog1 (forward-line n)
           (%next-line-after nil))
@@ -296,36 +296,10 @@
            (editor-error "Beginning of buffer"))))
   t)
 
-(define-key *global-keymap* (kbd "C-p") 'prev-line-new)
-(define-key *global-keymap* (kbd "[up]") 'prev-line-new)
-(define-command prev-line-new (&optional n) ("p")
-  (next-line-new (- n)))
-
-(define-command next-line (&optional n) ("P")
-  (cond
-   ((and n (minusp n))
-    (prev-line (- n)))
-   (t
-    (%next-line-before n)
-    (if (dotimes (_ (or n 1) t)
-          (if (tail-line-p (window-buffer) (window-current-linum))
-              (return nil)
-              (incf (window-current-linum))))
-        (progn (%next-line-after n) t)
-        (progn (end-of-line) nil)))))
-
-(define-command prev-line (&optional n) ("P")
-  (cond
-   ((and n (minusp n))
-    (next-line (- n)))
-   (t
-    (%next-line-before n)
-    (if (dotimes (_ (or n 1) t)
-          (if (head-line-p (window-current-linum))
-              (return)
-              (decf (window-current-linum))))
-        (progn (%next-line-after n) t)
-        (progn (beginning-of-line) nil)))))
+(define-key *global-keymap* (kbd "C-p") 'prev-line)
+(define-key *global-keymap* (kbd "[up]") 'prev-line)
+(define-command prev-line (&optional n) ("p")
+  (next-line (- n)))
 
 (define-key *global-keymap* (kbd "C-f") 'next-char)
 (define-key *global-keymap* (kbd "[right]") 'next-char)

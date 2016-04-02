@@ -126,7 +126,7 @@
     (let ((target-str
            (region-string (point-min) (current-point))))
       (let ((str
-             (let ((*current-window* *minibuf-read-line-tmp-window*))
+             (with-current-window *minibuf-read-line-tmp-window*
                (popup-completion *minibuf-read-line-comp-f*
                                  target-str))))
         (minibuf-read-line-clear-before)
@@ -213,26 +213,26 @@
                                                          1))))))
 
 (defun minibuf-read-line (prompt initial comp-f existing-p)
-  (let ((*minibuf-read-line-tmp-window* (current-window))
-        (*current-window* *minibuf-window*)
-        (*universal-argument* nil)
-        (minibuf-buffer-prev-string
-         (join "" (buffer-take-lines (window-buffer *minibuf-window*))))
-        (minibuf-buffer-prev-point
-         (window-point *minibuf-window*))
-        (*minibuf-read-line-depth*
-         (1+ *minibuf-read-line-depth*)))
-    (erase-buffer)
-    (minibuffer-mode)
-    (when initial
-      (insert-string initial))
-    (unwind-protect (minibuf-read-line-loop prompt comp-f existing-p)
-      (when (deleted-window-p (current-window))
-        (setf (current-window) (car (window-list))))
-      (with-current-window *minibuf-window*
+  (let ((*minibuf-read-line-tmp-window* (current-window)))
+    (with-current-window *minibuf-window*
+      (let ((*universal-argument* nil)
+            (minibuf-buffer-prev-string
+             (join "" (buffer-take-lines (window-buffer *minibuf-window*))))
+            (minibuf-buffer-prev-point
+             (window-point *minibuf-window*))
+            (*minibuf-read-line-depth*
+             (1+ *minibuf-read-line-depth*)))
         (erase-buffer)
-        (insert-string minibuf-buffer-prev-string)
-        (point-set minibuf-buffer-prev-point)))))
+        (minibuffer-mode)
+        (when initial
+          (insert-string initial))
+        (unwind-protect (minibuf-read-line-loop prompt comp-f existing-p)
+          (when (deleted-window-p (current-window))
+            (setf (current-window) (car (window-list))))
+          (with-current-window *minibuf-window*
+            (erase-buffer)
+            (insert-string minibuf-buffer-prev-string)
+            (point-set minibuf-buffer-prev-point)))))))
 
 (defun minibuf-read-string (prompt &optional initial)
   (minibuf-read-line prompt (or initial "") nil nil))

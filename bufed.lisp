@@ -161,6 +161,7 @@
   (cond
    ((and n (minusp n))
     (backward-delete-char (- n)))
+   ((eobp) nil)
    (t
     (let ((lines
            (buffer-delete-char (window-buffer)

@@ -73,7 +73,7 @@
 
 (defvar *window-tree*)
 
-(define-class window () *current-window*
+(define-class window () (current-window)
   win
   height
   width
@@ -110,19 +110,19 @@
           (make-marker buffer (make-point 1 0)))
     window))
 
-(defun window-point (&optional (window *current-window*))
+(defun window-point (&optional (window (current-window)))
   (marker-point (window-point-marker window)))
 
-(defun window-current-charpos (&optional (window *current-window*))
+(defun window-current-charpos (&optional (window (current-window)))
   (marker-charpos (window-point-marker window)))
 
-(defun (setf window-current-charpos) (new-pos &optional (window *current-window*))
+(defun (setf window-current-charpos) (new-pos &optional (window (current-window)))
   (setf (marker-charpos (window-point-marker window)) new-pos))
 
-(defun window-current-linum (&optional (window *current-window*))
+(defun window-current-linum (&optional (window (current-window)))
   (marker-linum (window-point-marker window)))
 
-(defun (setf window-current-linum) (new-linum &optional (window *current-window*))
+(defun (setf window-current-linum) (new-linum &optional (window (current-window)))
   (setf (marker-linum (window-point-marker window)) new-linum))
 
 (defun window-parameter (window parameter)
@@ -229,7 +229,7 @@
                      charms/ll:*cols*
                      0
                      0))
-  (setq *window-tree* *current-window*)
+  (setq *window-tree* (current-window))
   (set-attr :modeline (get-attr :highlight))
   (set-attr :modeline-inactive (get-attr :highlight)))
 
@@ -245,8 +245,8 @@
   (adjust-screen-size)
   (do-window-tree (window *window-tree*)
     (charms/ll:clearok (window-win window) 1))
-  (window-recenter *current-window*)
-  (syntax-scan-window *current-window*)
+  (window-recenter (current-window))
+  (syntax-scan-window (current-window))
   (window-update-all)
   t)
 
@@ -366,13 +366,13 @@
           (format nil "~a~v,,,va ~a --"
                   str
                   n
-                  (if (eq window *current-window*) #\- #\space)
+                  (if (eq window (current-window)) #\- #\space)
                   #\space
                   line-pos)))))
 
 (defun window-refresh-modeline (window)
   (let ((attr
-         (if (eq window *current-window*)
+         (if (eq window (current-window))
              (get-attr :modeline)
              (get-attr :modeline-inactive))))
     (charms/ll:wattron (window-win window) attr)
@@ -588,7 +588,7 @@
 
 (defun window-update (window &optional update-display-p)
   (cond
-   ((eq *current-window* *minibuf-window*)
+   ((eq (current-window) *minibuf-window*)
     (minibuf-window-update))
    (t
     (charms/ll:werase (window-win window))
@@ -599,9 +599,9 @@
 
 (defun window-update-all ()
   (do-window-tree (win *window-tree*)
-    (unless (eq win *current-window*)
+    (unless (eq win (current-window))
       (window-update win)))
-  (window-update *current-window*)
+  (window-update (current-window))
   (charms/ll:doupdate))
 
 (defun redraw-screen ()
@@ -610,7 +610,7 @@
 (defvar *brackets-overlays* nil)
 
 (defun window-brackets-highlight ()
-  (unless (eq *current-window* *minibuf-window*)
+  (unless (eq (current-window) *minibuf-window*)
     (mapc #'delete-overlay *brackets-overlays*)
     (setq *brackets-overlays* nil)
     (let ((highlight-points))
@@ -638,7 +638,7 @@
   (setf (window-redraw-flag) nil))
 
 (defun split-window-after (new-window split-type)
-  (window-set-size *current-window*
+  (window-set-size (current-window)
                    (window-height)
                    (window-width))
   (setf (window-vtop-linum new-window)
@@ -648,11 +648,11 @@
   (setf (window-current-charpos new-window)
         (window-current-charpos))
   (multiple-value-bind (node getter setter)
-      (window-tree-parent *window-tree* *current-window*)
+      (window-tree-parent *window-tree* (current-window))
     (if (null node)
         (setq *window-tree*
               (make-window-node split-type
-                                *current-window*
+                                (current-window)
                                 new-window))
         (funcall setter
                  (make-window-node split-type
@@ -662,7 +662,7 @@
 
 (define-key *global-keymap* (kbd "C-x 2") 'split-window-vertically)
 (define-command split-window-vertically () ()
-  (when (eq *current-window* *minibuf-window*)
+  (when (eq (current-window) *minibuf-window*)
     (return-from split-window-vertically nil))
   (multiple-value-bind (winheight rem)
       (floor (window-height) 2)
@@ -679,7 +679,7 @@
 
 (define-key *global-keymap* (kbd "C-x 3") 'split-window-horizontally)
 (define-command split-window-horizontally () ()
-  (when (eq *current-window* *minibuf-window*)
+  (when (eq (current-window) *minibuf-window*)
     (return-from split-window-horizontally nil))
   (multiple-value-bind (winwidth rem)
       (floor (window-width) 2)
@@ -696,7 +696,7 @@
       (split-window-after newwin :hsplit))))
 
 (defun split-window ()
-  (if (< *window-sufficient-width* (window-width *current-window*))
+  (if (< *window-sufficient-width* (window-width (current-window)))
       (split-window-horizontally)
       (split-window-vertically)))
 
@@ -710,7 +710,7 @@
 (define-command other-window (&optional (n 1)) ("p")
   (dotimes (_ n)
     (setq *current-window*
-          (get-next-window *current-window*
+          (get-next-window (current-window)
                            (append (mklist (active-minibuffer-window))
                                    (window-list)))))
   (adjust-point)
@@ -742,11 +742,11 @@
 (define-key *global-keymap* (kbd "C-x 1") 'delete-other-windows)
 (define-command delete-other-windows () ()
   (do-window-tree (win *window-tree*)
-    (unless (eq win *current-window*)
+    (unless (eq win (current-window))
       (charms/ll:delwin (window-win win))))
-  (setq *window-tree* *current-window*)
-  (window-set-pos *current-window* 0 0)
-  (window-set-size *current-window*
+  (setq *window-tree* (current-window))
+  (window-set-pos (current-window) 0 0)
+  (window-set-size (current-window)
                    (1- charms/ll:*lines*)
                    charms/ll:*cols*)
   t)
@@ -795,7 +795,7 @@
   (when (one-window-p)
     (minibuf-print "Can not delete this window")
     (return-from delete-window nil))
-  (when (eq *current-window* window)
+  (when (eq (current-window) window)
     (other-window))
   (multiple-value-bind (node getter setter another-getter another-setter)
       (window-tree-parent *window-tree* window)
@@ -817,12 +817,12 @@
 
 (define-key *global-keymap* (kbd "C-x 0") 'delete-current-window)
 (define-command delete-current-window () ()
-  (delete-window *current-window*))
+  (delete-window (current-window)))
 
 (defun pop-to-buffer (buffer)
   (check-switch-minibuffer-window)
   (if (eq buffer (window-buffer))
-      (values *current-window* nil)
+      (values (current-window) nil)
       (let ((split-p))
         (when (one-window-p)
           (setq split-p t)
@@ -832,9 +832,9 @@
                     *window-tree*
                     #'(lambda (window)
                         (eq buffer (window-buffer window))))
-                   (get-next-window *current-window*))))
+                   (get-next-window (current-window)))))
           (set-buffer buffer)
-          (values *current-window* split-p)))))
+          (values (current-window) split-p)))))
 
 (defun display-buffer (buffer)
   (multiple-value-bind (window split-p)
@@ -844,7 +844,7 @@
 
 (define-command quit-window (&optional window kill-buffer-p) ("P")
   (unless (window-p window)
-    (setq window *current-window*))
+    (setq window (current-window)))
   (cond
    ((window-parameter window :split-p)
     (when kill-buffer-p
@@ -1030,7 +1030,7 @@
   (when (one-window-p)
     (minibuf-print "Only one window")
     (return-from grow-window nil))
-  (resize-window-recursive *current-window* n
+  (resize-window-recursive (current-window) n
                            #'(lambda (x y n)
                                (grow-window-internal x y n))
                            :vsplit))
@@ -1042,7 +1042,7 @@
   (when (one-window-p)
     (minibuf-print "Only one window")
     (return-from shrink-window nil))
-  (resize-window-recursive *current-window* n
+  (resize-window-recursive (current-window) n
                            #'(lambda (x y n)
                                (grow-window-internal y x n))
                            :vsplit))
@@ -1054,7 +1054,7 @@
   (when (one-window-p)
     (minibuf-print "Only one window")
     (return-from grow-window-horizontally nil))
-  (resize-window-recursive *current-window* n
+  (resize-window-recursive (current-window) n
                            #'(lambda (x y n)
                                (grow-window-horizontally-internal x y n))
                            :hsplit))
@@ -1066,7 +1066,7 @@
   (when (one-window-p)
     (minibuf-print "Only one window")
     (return-from shrink-window-horizontally nil))
-  (resize-window-recursive *current-window* n
+  (resize-window-recursive (current-window) n
                            #'(lambda (x y n)
                                (grow-window-horizontally-internal y x n))
                            :hsplit))
@@ -1076,12 +1076,12 @@
   (if (minusp n)
       (scroll-up (- n))
       (dotimes (_ n t)
-        (when (= (window-cursor-y-if-wrapping *current-window*) 0)
+        (when (= (window-cursor-y-if-wrapping (current-window)) 0)
           (unless (forward-line n)
             (return nil)))
         (let ((prev-linum (window-vtop-linum))
               (prev-charpos (window-vtop-charpos)))
-          (window-scroll *current-window* 1)
+          (window-scroll (current-window) 1)
           (when (and (= prev-linum (window-vtop-linum))
                      (= prev-charpos (window-vtop-charpos)))
             (return nil))))))
@@ -1091,14 +1091,14 @@
   (if (minusp n)
       (scroll-down (- n))
       (dotimes (_ n t)
-        (when (and (= (window-cursor-y-if-wrapping *current-window*)
+        (when (and (= (window-cursor-y-if-wrapping (current-window))
                       (- (window-height) 2))
                    (/= 1 (window-vtop-linum)))
           (unless (forward-line (- n))
             (return nil)))
         (let ((prev-linum (window-vtop-linum))
               (prev-charpos (window-vtop-charpos)))
-          (window-scroll *current-window* -1)
+          (window-scroll (current-window) -1)
           (when (and (= prev-linum (window-vtop-linum))
                      (= prev-charpos (window-vtop-charpos)))
             (return nil))))))

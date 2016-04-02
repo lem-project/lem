@@ -282,14 +282,14 @@
                  (eq buffer (window-buffer)))
         (let ((curr-modified (buffer-modified-p (window-buffer))))
           (cond ((eq :one-line (window-redraw-flag))
-                 (syntax-scan-lines *current-window*
+                 (syntax-scan-lines (current-window)
                                     #1=(window-current-linum)
                                     (1+ #1#)))
                 ((or (not (eql curr-modified prev-modified))
                      (/= prev-window-vtop-linum
                          (window-vtop-linum))
-                     (/= 0 (window-offset-view *current-window*)))
-                 (syntax-scan-window *current-window*))
+                     (/= 0 (window-offset-view (current-window))))
+                 (syntax-scan-window (current-window)))
                 ((eq *window-tree* prev-window-tree)
                  (setf (window-redraw-flag) :unnecessary))))))))
 

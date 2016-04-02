@@ -59,7 +59,7 @@
       (when window
         (with-current-window window
           (point-set (buffer-output-stream-point stream))
-          (window-update *current-window* t)))))
+          (window-update (current-window) t)))))
   nil)
 
 (defmethod trivial-gray-streams:stream-fresh-line ((stream buffer-output-stream))

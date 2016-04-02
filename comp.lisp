@@ -70,7 +70,7 @@
   (when *completion-flag*
     (setq *completion-flag* nil)
     (unless (deleted-window-p *completion-window*)
-      (let ((prev-window *current-window*))
+      (let ((prev-window (current-window)))
         (setq *current-window* *completion-window*)
         (let ((buffer (window-buffer *completion-window*)))
           (when (get-bvar :completion-buffer-p :buffer buffer)

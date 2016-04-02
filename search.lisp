@@ -177,7 +177,7 @@
     (let ((save-point (current-point))
           start-point
           end-point)
-      (with-window-range (start end) *current-window*
+      (with-window-range (start end) (current-window)
         (setq start-point (make-point start 0))
         (setq end-point (make-point (1+ end) 0))
         (point-set start-point)

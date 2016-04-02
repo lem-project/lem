@@ -104,7 +104,7 @@
 (defvar *minibuf-read-line-depth* 0)
 
 (defun check-switch-minibuffer-window ()
-  (when (eq *current-window* *minibuf-window*)
+  (when (eq (current-window) *minibuf-window*)
     (error 'switch-minibuffer-window)))
 
 (defun active-minibuffer-window ()
@@ -213,7 +213,7 @@
                                                          1))))))
 
 (defun minibuf-read-line (prompt initial comp-f existing-p)
-  (let ((*minibuf-read-line-tmp-window* *current-window*)
+  (let ((*minibuf-read-line-tmp-window* (current-window))
         (*current-window* *minibuf-window*)
         (*universal-argument* nil)
         (minibuf-buffer-prev-string
@@ -227,7 +227,7 @@
     (when initial
       (insert-string initial))
     (unwind-protect (minibuf-read-line-loop prompt comp-f existing-p)
-      (when (deleted-window-p *current-window*)
+      (when (deleted-window-p (current-window))
         (setq *current-window* (car (window-list))))
       (with-current-window *minibuf-window*
         (erase-buffer)

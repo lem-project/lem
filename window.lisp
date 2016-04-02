@@ -219,7 +219,7 @@
   (window-tree-leaf-p *window-tree*))
 
 (defun deleted-window-p (window)
-  (cond ((eq window *minibuf-window*)
+  (cond ((minibuffer-window-p window)
          nil)
         ((window-tree-find *window-tree* window)
          nil)
@@ -593,7 +593,7 @@
 
 (defun window-update (window &optional update-display-p)
   (cond
-   ((eq (current-window) *minibuf-window*)
+   ((minibuffer-window-active-p)
     (minibuf-window-update))
    (t
     (charms/ll:werase (window-win window))
@@ -615,7 +615,7 @@
 (defvar *brackets-overlays* nil)
 
 (defun window-brackets-highlight ()
-  (unless (eq (current-window) *minibuf-window*)
+  (unless (minibuffer-window-active-p)
     (mapc #'delete-overlay *brackets-overlays*)
     (setq *brackets-overlays* nil)
     (let ((highlight-points))
@@ -667,7 +667,7 @@
 
 (define-key *global-keymap* (kbd "C-x 2") 'split-window-vertically)
 (define-command split-window-vertically () ()
-  (when (eq (current-window) *minibuf-window*)
+  (when (minibuffer-window-active-p)
     (return-from split-window-vertically nil))
   (multiple-value-bind (winheight rem)
       (floor (window-height) 2)
@@ -684,7 +684,7 @@
 
 (define-key *global-keymap* (kbd "C-x 3") 'split-window-horizontally)
 (define-command split-window-horizontally () ()
-  (when (eq (current-window) *minibuf-window*)
+  (when (minibuffer-window-active-p)
     (return-from split-window-horizontally nil))
   (multiple-value-bind (winwidth rem)
       (floor (window-width) 2)

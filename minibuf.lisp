@@ -2,8 +2,7 @@
 
 (in-package :lem)
 
-(export '(*minibuf-window*
-          minibuf-clear
+(export '(minibuf-clear
           minibuf-print
           minibuf-y-or-n-p
           minibuf-read-char
@@ -24,6 +23,10 @@
           minibuf-read-file))
 
 (defvar *mb-print-flag* nil)
+
+(defun minibuffer-window () *minibuf-window*)
+(defun minibuffer-window-p (window) (eq window (minibuffer-window)))
+(defun minibuffer-window-active-p () (eq (current-window) (minibuffer-window)))
 
 (define-major-mode minibuffer-mode nil
   (:name "minibuffer"
@@ -104,7 +107,7 @@
 (defvar *minibuf-read-line-depth* 0)
 
 (defun check-switch-minibuffer-window ()
-  (when (eq (current-window) *minibuf-window*)
+  (when (minibuffer-window-active-p)
     (error 'switch-minibuffer-window)))
 
 (defun active-minibuffer-window ()

@@ -223,7 +223,7 @@
          nil)
         ((window-tree-find *window-tree* window)
          nil)
-        (t nil)))
+        (t t)))
 
 (defun window-init ()
   (setq *current-cols* charms/ll:*cols*)

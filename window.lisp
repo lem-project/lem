@@ -25,7 +25,6 @@
           window-delete-hook
           current-window
           one-window-p
-          select-window
           deleted-window-p
           recenter
           redraw-screen
@@ -134,6 +133,9 @@
 (defun current-window ()
   *current-window*)
 
+(defun (setf current-window) (new-window)
+  (setf *current-window* new-window))
+
 (defstruct (window-node (:constructor %make-window-node))
   split-type
   car
@@ -213,9 +215,6 @@
 
 (defun one-window-p ()
   (window-tree-leaf-p *window-tree*))
-
-(defun select-window (window)
-  (setq *current-window* window))
 
 (defun deleted-window-p (window)
   (not (window-tree-find *window-tree* window)))

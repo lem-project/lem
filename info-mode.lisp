@@ -25,5 +25,5 @@
            (with-open-stream (out (make-buffer-output-stream buffer))
              (funcall output-function out))))))
     (when focus-set-p
-      (select-window window))
+      (setf (current-window) window))
     window))

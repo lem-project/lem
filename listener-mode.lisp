@@ -29,7 +29,7 @@
 
 (defun listener-start (buffer-name mode)
   (let ((buffer (get-buffer-create buffer-name)))
-    (select-window (pop-to-buffer buffer))
+    (setf (current-window) (pop-to-buffer buffer))
     (funcall mode)
     (listener-reset-prompt)))
 

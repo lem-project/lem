@@ -147,10 +147,10 @@
         (gwindow (gensym "WINDOW")))
     `(let ((,gprev-window (current-window))
            (,gwindow ,window))
-       (select-window ,gwindow)
+       (setf (current-window) ,gwindow)
        (unwind-protect (progn ,@body)
          (unless (deleted-window-p ,gprev-window)
-           (select-window ,gprev-window))))))
+           (setf (current-window) ,gprev-window))))))
 
 #+sbcl
 (defmacro with-profile (&body body)

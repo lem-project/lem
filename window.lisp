@@ -217,7 +217,11 @@
   (window-tree-leaf-p *window-tree*))
 
 (defun deleted-window-p (window)
-  (not (window-tree-find *window-tree* window)))
+  (cond ((eq window *minibuf-window*)
+         nil)
+        ((window-tree-find *window-tree* window)
+         nil)
+        (t nil)))
 
 (defun window-init ()
   (setq *current-cols* charms/ll:*cols*)

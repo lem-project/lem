@@ -24,7 +24,6 @@
 (defvar *program-name* "Lem")
 (defvar *debug-p* nil)
 
-(defvar *minibuf-window*)
 (defvar *buffer-list* nil)
 
 (defvar *tab-size* 8)
@@ -119,8 +118,8 @@
                 (when (not (eq ,gbuffer (window-buffer)))
                   (set-buffer ,gbuffer nil))
                 (point-set ,gpoint))
-               ((eq ,gbuffer (window-buffer *minibuf-window*))
-                (point-set ,gpoint *minibuf-window*)))))))
+               ((minibufferp ,gbuffer)
+                (point-set ,gpoint (minibuffer-window))))))))
 
 (defmacro with-window-range ((start-linum-var end-linum-var)
                              window &body body)

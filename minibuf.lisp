@@ -24,9 +24,13 @@
 
 (defvar *mb-print-flag* nil)
 
+(defvar *minibuf-window*)
+
 (defun minibuffer-window () *minibuf-window*)
 (defun minibuffer-window-p (window) (eq window (minibuffer-window)))
 (defun minibuffer-window-active-p () (eq (current-window) (minibuffer-window)))
+(defun minibuffer () (window-buffer (minibuffer-window)))
+(defun minibufferp (buffer) (eq buffer (minibuffer)))
 
 (define-major-mode minibuffer-mode nil
   (:name "minibuffer"
@@ -42,30 +46,30 @@
     (setq *minibuf-window* window)))
 
 (defun minibuf-resize ()
-  (window-set-pos *minibuf-window*
+  (window-set-pos (minibuffer-window)
                   (1- charms/ll:*lines*)
                   0)
-  (window-set-size *minibuf-window*
+  (window-set-size (minibuffer-window)
                    1
                    charms/ll:*cols*)
-  (charms/ll:werase (window-win *minibuf-window*))
-  (charms/ll:wrefresh (window-win *minibuf-window*)))
+  (charms/ll:werase (window-win (minibuffer-window)))
+  (charms/ll:wrefresh (window-win (minibuffer-window))))
 
 (defun minibuf-clear ()
   (when *mb-print-flag*
-    (charms/ll:werase (window-win *minibuf-window*))
-    (charms/ll:wrefresh (window-win *minibuf-window*))
+    (charms/ll:werase (window-win (minibuffer-window)))
+    (charms/ll:wrefresh (window-win (minibuffer-window)))
     (setq *mb-print-flag* nil)))
 
 (defun minibuf-print (msg)
   (setq *mb-print-flag* t)
-  (charms/ll:werase (window-win *minibuf-window*))
+  (charms/ll:werase (window-win (minibuffer-window)))
   (charms/ll:mvwaddstr
-   (window-win *minibuf-window*)
+   (window-win (minibuffer-window))
    0
    0
    (replace-string (string #\newline) "<NL>" msg))
-  (charms/ll:wrefresh (window-win *minibuf-window*)))
+  (charms/ll:wrefresh (window-win (minibuffer-window))))
 
 (defun minibuf-print-sit-for (msg seconds)
   (minibuf-print msg)
@@ -112,7 +116,7 @@
 
 (defun active-minibuffer-window ()
   (if (/= 0 *minibuf-read-line-depth*)
-      *minibuf-window*
+      (minibuffer-window)
       nil))
 
 (define-command minibuf-read-line-confirm () ()
@@ -159,18 +163,18 @@
 
 (defun minibuf-get-line ()
   (join (string #\newline)
-        (buffer-take-lines (window-buffer *minibuf-window*))))
+        (buffer-take-lines (minibuffer))))
 
 (defun minibuf-point-linum ()
-  (window-current-linum *minibuf-window*))
+  (window-current-linum (minibuffer-window)))
 
 (defun minibuf-point-charpos ()
-  (window-current-charpos *minibuf-window*))
+  (window-current-charpos (minibuffer-window)))
 
 (defun minibuf-read-line-refresh (prompt)
   (minibuf-print (concatenate 'string prompt (minibuf-get-line)))
   (charms/ll:wmove
-   (window-win *minibuf-window*)
+   (window-win (minibuffer-window))
    0
    (+ (multiple-value-bind (strings len)
           (split-string prompt #\newline)
@@ -178,16 +182,16 @@
            (apply #'+ (mapcar #'str-width strings))))
       (str-width
        (apply 'concatenate 'string
-              (buffer-take-lines (window-buffer *minibuf-window*)
+              (buffer-take-lines (minibuffer)
                                  1
                                  (1- (minibuf-point-linum)))))
       (* (length "<NL>") (1- (minibuf-point-linum)))
       (str-width
-       (buffer-line-string (window-buffer *minibuf-window*)
+       (buffer-line-string (minibuffer)
                            (minibuf-point-linum))
        0
        (minibuf-point-charpos))))
-  (charms/ll:wrefresh (window-win *minibuf-window*)))
+  (charms/ll:wrefresh (window-win (minibuffer-window))))
 
 (defun minibuf-window-update ()
   (minibuf-read-line-refresh *minibuf-read-line-prompt*))
@@ -217,12 +221,12 @@
 
 (defun minibuf-read-line (prompt initial comp-f existing-p)
   (let ((*minibuf-read-line-tmp-window* (current-window)))
-    (with-current-window *minibuf-window*
+    (with-current-window (minibuffer-window)
       (let ((*universal-argument* nil)
             (minibuf-buffer-prev-string
-             (join "" (buffer-take-lines (window-buffer *minibuf-window*))))
+             (join "" (buffer-take-lines (minibuffer))))
             (minibuf-buffer-prev-point
-             (window-point *minibuf-window*))
+             (window-point (minibuffer-window)))
             (*minibuf-read-line-depth*
              (1+ *minibuf-read-line-depth*)))
         (erase-buffer)
@@ -232,7 +236,7 @@
         (unwind-protect (minibuf-read-line-loop prompt comp-f existing-p)
           (when (deleted-window-p (current-window))
             (setf (current-window) (car (window-list))))
-          (with-current-window *minibuf-window*
+          (with-current-window (minibuffer-window)
             (erase-buffer)
             (insert-string minibuf-buffer-prev-string)
             (point-set minibuf-buffer-prev-point)))))))

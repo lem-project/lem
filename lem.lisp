@@ -440,7 +440,7 @@
          (with-error-handler ()
            (load-init-file)))
         (t
-         (dolist (window (cons *minibuf-window* (window-list)))
+         (dolist (window (cons (minibuffer-window) (window-list)))
            (setf (window-win window)
                  (charms/ll:newwin (window-height window)
                                    (window-width window)
@@ -451,10 +451,10 @@
     (find-file arg)))
 
 (defun lem-finallize ()
-  (dolist (window (cons *minibuf-window* (window-list)))
+  (dolist (window (cons (minibuffer-window) (window-list)))
     (charms/ll:delwin (window-win window)))
   (charms/ll:endwin)
-  (dolist (window (cons *minibuf-window* (window-list)))
+  (dolist (window (cons (minibuffer-window) (window-list)))
     (charms/ll:delscreen (window-win window)))
   (charms/ll:delscreen charms/ll:*stdscr*)
   (setq *running-p* nil))

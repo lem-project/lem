@@ -25,6 +25,7 @@
 (defvar *debug-p* nil)
 
 (defvar *current-window*)
+
 (defvar *minibuf-window*)
 (defvar *buffer-list* nil)
 
@@ -144,7 +145,7 @@
 (defmacro with-current-window (window &body body)
   (let ((gprev-window (gensym "PREV-WINDOW"))
         (gwindow (gensym "WINDOW")))
-    `(let ((,gprev-window (selected-window))
+    `(let ((,gprev-window (current-window))
            (,gwindow ,window))
        (select-window ,gwindow)
        (unwind-protect (progn ,@body)

@@ -23,9 +23,9 @@
           window-current-linum
           window-current-charpos
           window-delete-hook
+          current-window
           one-window-p
           select-window
-          selected-window
           deleted-window-p
           recenter
           redraw-screen
@@ -131,6 +131,9 @@
 (defun (setf window-parameter) (value window parameter)
   (setf (getf (window-parameters window) parameter) value))
 
+(defun current-window ()
+  *current-window*)
+
 (defstruct (window-node (:constructor %make-window-node))
   split-type
   car
@@ -213,9 +216,6 @@
 
 (defun select-window (window)
   (setq *current-window* window))
-
-(defun selected-window ()
-  *current-window*)
 
 (defun deleted-window-p (window)
   (not (window-tree-find *window-tree* window)))

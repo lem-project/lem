@@ -24,8 +24,6 @@
 (defvar *program-name* "Lem")
 (defvar *debug-p* nil)
 
-(defvar *current-window*)
-
 (defvar *minibuf-window*)
 (defvar *buffer-list* nil)
 

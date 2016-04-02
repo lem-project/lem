@@ -72,6 +72,8 @@
 
 (defvar *window-tree*)
 
+(defvar *current-window*)
+
 (define-class window () (current-window)
   win
   height

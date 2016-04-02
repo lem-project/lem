@@ -228,7 +228,7 @@
       (insert-string initial))
     (unwind-protect (minibuf-read-line-loop prompt comp-f existing-p)
       (when (deleted-window-p (current-window))
-        (setq *current-window* (car (window-list))))
+        (setf (current-window) (car (window-list))))
       (with-current-window *minibuf-window*
         (erase-buffer)
         (insert-string minibuf-buffer-prev-string)

@@ -222,7 +222,7 @@
 (defun window-init ()
   (setq *current-cols* charms/ll:*cols*)
   (setq *current-lines* charms/ll:*lines*)
-  (setq *current-window*
+  (setf (current-window)
         (make-window (get-buffer-create "*tmp*")
                      (- charms/ll:*lines* 1)
                      charms/ll:*cols*
@@ -708,7 +708,7 @@
 (define-key *global-keymap* (kbd "C-x o") 'other-window)
 (define-command other-window (&optional (n 1)) ("p")
   (dotimes (_ n)
-    (setq *current-window*
+    (setf (current-window)
           (get-next-window (current-window)
                            (append (mklist (active-minibuffer-window))
                                    (window-list)))))
@@ -826,12 +826,11 @@
         (when (one-window-p)
           (setq split-p t)
           (split-window))
-        (let ((*current-window*
-               (or (window-tree-find
-                    *window-tree*
-                    #'(lambda (window)
-                        (eq buffer (window-buffer window))))
-                   (get-next-window (current-window)))))
+        (with-current-window (or (window-tree-find
+                                  *window-tree*
+                                  #'(lambda (window)
+                                      (eq buffer (window-buffer window))))
+                                 (get-next-window (current-window)))
           (set-buffer buffer)
           (values (current-window) split-p)))))
 

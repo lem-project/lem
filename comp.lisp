@@ -38,7 +38,7 @@
          :completion
          (when (equal str prev-str)
            (setq comp-flag nil)
-           (let ((*current-window* *completion-window*))
+           (with-current-window *completion-window*
              (unless (scroll-down (1- (window-height)))
                (beginning-of-buffer))
              (window-update-all)))))
@@ -71,12 +71,12 @@
     (setq *completion-flag* nil)
     (unless (deleted-window-p *completion-window*)
       (let ((prev-window (current-window)))
-        (setq *current-window* *completion-window*)
+        (setf (current-window) *completion-window*)
         (let ((buffer (window-buffer *completion-window*)))
           (when (get-bvar :completion-buffer-p :buffer buffer)
             (quit-window)))
         (unless (deleted-window-p prev-window)
-          (setq *current-window* prev-window)))
+          (setf (current-window) prev-window)))
       (setq *completion-window* nil))))
 
 (defun preceding-word ()

@@ -136,7 +136,7 @@
     (when (cdr *buffer-list*)
       (dolist (win (window-list))
         (when (eq buffer (window-buffer win))
-          (let ((*current-window* win))
+          (with-current-window win
             (next-buffer))))
       (setq *buffer-list* (delete buffer *buffer-list*))))
   t)

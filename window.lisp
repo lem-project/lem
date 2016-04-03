@@ -419,7 +419,7 @@
   (- (window-current-linum window)
      (window-vtop-linum window)))
 
-(defun window-cursor-y-if-wrapping (window)
+(defun window-cursor-y (window)
   (+ (window-cursor-y-not-wrapping window)
      (window-wrapping-offset window)))
 
@@ -565,7 +565,7 @@
                  (window-vtop-linum window))
               (< 0 (window-vtop-charpos window)))
          -1)
-        ((let ((n (- (window-cursor-y-if-wrapping window)
+        ((let ((n (- (window-cursor-y window)
                      (- (window-height window) 2))))
            (when (< 0 n) n)))
         (t
@@ -1067,7 +1067,7 @@
   (if (minusp n)
       (scroll-up (- n))
       (dotimes (_ n t)
-        (when (= (window-cursor-y-if-wrapping (current-window)) 0)
+        (when (= (window-cursor-y (current-window)) 0)
           (unless (forward-line n)
             (return nil)))
         (let ((prev-linum (window-vtop-linum))
@@ -1082,7 +1082,7 @@
   (if (minusp n)
       (scroll-down (- n))
       (dotimes (_ n t)
-        (when (and (= (window-cursor-y-if-wrapping (current-window))
+        (when (and (= (window-cursor-y (current-window))
                       (- (window-height) 2))
                    (/= 1 (window-vtop-linum)))
           (unless (forward-line (- n))

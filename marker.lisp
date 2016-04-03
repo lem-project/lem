@@ -1,8 +1,8 @@
 (in-package :lem)
 
-(export '(make-marker
+(export '(markerp
+          make-marker
           make-marker-current-point
-          marker-p
           delete-marker
           marker-buffer
           marker-linum
@@ -10,50 +10,42 @@
           marker-point
           marker-insertion-type))
 
-(deftype marker ()
-  `(satisfies markerp))
+(defclass marker ()
+  ((buffer
+    :initarg :buffer
+    :reader marker-buffer
+    :type buffer)
+   (linum
+    :initarg :linum
+    :accessor marker-linum
+    :type fixnum)
+   (charpos
+    :initarg :charpos
+    :accessor marker-charpos
+    :type fixnum)
+   (insertion-type
+    :initarg :insertion-type
+    :accessor marker-insertion-type
+    :type boolean)))
 
-(let ((marker-tag (gensym "MARKER")))
-  (defun marker-p (x)
-    (and (vectorp x)
-         (eq marker-tag (safe-aref x 0))))
-  (defun make-marker (buffer point &optional insertion-type)
-    (let ((marker (vector marker-tag
-                          buffer
-                          (point-linum point)
-                          (point-charpos point)
-                          insertion-type)))
-      (buffer-add-marker buffer marker)
-      marker)))
+(defun marker-p (x)
+  (typep x 'marker))
+
+(defun make-marker (buffer point &optional insertion-type)
+  (let ((marker (make-instance 'marker
+                               :buffer buffer
+                               :linum (point-linum point)
+                               :charpos (point-charpos point)
+                               :insertion-type insertion-type)))
+    (buffer-add-marker buffer marker)
+    marker))
 
 (defun make-marker-current-point (&optional insertion-type)
   (make-marker (window-buffer) (current-point) insertion-type))
 
 (defun delete-marker (marker)
-  (buffer-delete-marker
-   (marker-buffer marker)
-   marker))
-
-(defun marker-buffer (marker)
-  (aref marker 1))
-
-(defun marker-linum (marker)
-  (aref marker 2))
-
-(defun (setf marker-linum) (new-linum marker)
-  (setf (aref marker 2) new-linum))
-
-(defun marker-charpos (marker)
-  (aref marker 3))
-
-(defun (setf marker-charpos) (new-charpos marker)
-  (setf (aref marker 3) new-charpos))
-
-(defun marker-insertion-type (marker)
-  (aref marker 4))
-
-(defun (setf marker-insertion-type) (new-insertion-type marker)
-  (setf (aref marker 4) new-insertion-type))
+  (buffer-delete-marker (marker-buffer marker)
+                        marker))
 
 (defun marker-point (marker)
   (make-point (marker-linum marker)

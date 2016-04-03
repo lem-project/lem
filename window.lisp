@@ -455,16 +455,6 @@
     (window-print-line window y str))
   (values curx cury y))
 
-(defun divide-line-width (str winwidth)
-  (check-type str fatstring)
-  (labels ((f (str acc)
-              (if (< (str-width (fat-string str)) winwidth)
-                  (nreverse (cons str acc))
-                  (let ((i (wide-index (fat-string str) (1- winwidth))))
-                    (f (fat-substring str i)
-                       (cons (fat-substring str 0 i) acc))))))
-    (f str nil)))
-
 (defun map-wrapping-line (string winwidth fn)
   (loop :with start := 0
     :for i := (wide-index string (1- winwidth) :start start)

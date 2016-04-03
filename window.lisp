@@ -415,12 +415,12 @@
                         (1- (window-current-linum window)))
       offset)))
 
-(defun window-cursor-y (window)
+(defun window-cursor-y-not-wrapping (window)
   (- (window-current-linum window)
      (window-vtop-linum window)))
 
 (defun window-cursor-y-if-wrapping (window)
-  (+ (window-cursor-y window)
+  (+ (window-cursor-y-not-wrapping window)
      (window-wrapping-offset window)))
 
 (defun window-print-line (window y str &key (start-x 0) (string-start 0) string-end)
@@ -514,7 +514,7 @@
 
 (defun window-refresh-lines (window)
   (let ((curx 0)
-        (cury (window-cursor-y window))
+        (cury (window-cursor-y-not-wrapping window))
         (refresh-line
          (get-window-refresh-line-function window)))
     (setf (window-wrap-ylist window) nil)

@@ -420,11 +420,8 @@
      (window-vtop-linum window)))
 
 (defun window-cursor-y-if-wrapping (window)
-  (if (buffer-truncate-lines (window-buffer window))
-      (+ (- (window-current-linum window)
-            (window-vtop-linum window))
-         (window-wrapping-offset window))
-      (window-cursor-y window)))
+  (+ (window-cursor-y window)
+     (window-wrapping-offset window)))
 
 (defun window-print-line (window y str &key (start-x 0) (string-start 0) string-end)
   (check-type str fatstring)

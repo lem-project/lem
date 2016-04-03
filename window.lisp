@@ -389,6 +389,32 @@
     (charms/ll:wattroff (window-win window)
                         attr)))
 
+(defun map-wrapping-line (string winwidth fn)
+  (loop :with start := 0
+    :for i := (wide-index string (1- winwidth) :start start)
+    :while i :do
+    (funcall fn i)
+    (setq start i)))
+
+(defun window-wrapping-offset (window)
+  (unless (buffer-truncate-lines (window-buffer window))
+    (return-from window-wrapping-offset 0))
+  (let ((offset 0))
+    (labels ((f (string eof-p linum)
+                (declare (ignore eof-p))
+                (map-wrapping-line (if (= (window-vtop-linum window) linum)
+                                       (subseq string (window-vtop-charpos window))
+                                       string)
+                                   (window-width window)
+                                   #'(lambda (arg)
+                                       (declare (ignore arg))
+                                       (incf offset)))))
+      (map-buffer-lines #'f
+                        (window-buffer window)
+                        (window-vtop-linum window)
+                        (1- (window-current-linum window)))
+      offset)))
+
 (defun window-cursor-y (window)
   (- (window-current-linum window)
      (window-vtop-linum window)))
@@ -454,32 +480,6 @@
       (setq curx (- cols 1))))
     (window-print-line window y str))
   (values curx cury y))
-
-(defun map-wrapping-line (string winwidth fn)
-  (loop :with start := 0
-    :for i := (wide-index string (1- winwidth) :start start)
-    :while i :do
-    (funcall fn i)
-    (setq start i)))
-
-(defun window-wrapping-offset (window)
-  (unless (buffer-truncate-lines (window-buffer window))
-    (return-from window-wrapping-offset 0))
-  (let ((offset 0))
-    (labels ((f (string eof-p linum)
-                (declare (ignore eof-p))
-                (map-wrapping-line (if (= (window-vtop-linum window) linum)
-                                       (subseq string (window-vtop-charpos window))
-                                       string)
-                                   (window-width window)
-                                   #'(lambda (arg)
-                                       (declare (ignore arg))
-                                       (incf offset)))))
-      (map-buffer-lines #'f
-                        (window-buffer window)
-                        (window-vtop-linum window)
-                        (1- (window-current-linum window)))
-      offset)))
 
 (defvar *wrapping-fatstring* (make-fatstring "!" 0))
 

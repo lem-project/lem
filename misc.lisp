@@ -8,13 +8,13 @@
           move-to-column))
 
 (defun put-attribute (start end attr)
-  (buffer-put-attribute (window-buffer) start end attr))
+  (buffer-put-attribute (current-buffer) start end attr))
 
 (defun remove-attribute (start end attr)
-  (buffer-remove-attribute (window-buffer) start end attr))
+  (buffer-remove-attribute (current-buffer) start end attr))
 
 (defun current-column ()
-  (str-width (buffer-line-string (window-buffer)
+  (str-width (buffer-line-string (current-buffer)
                                  (window-current-linum))
              0
              (window-current-charpos)))
@@ -25,7 +25,7 @@
   (let ((current-column (current-column)))
     (cond ((< column current-column)
            (set-charpos (wide-index (buffer-line-string
-                                     (window-buffer)
+                                     (current-buffer)
                                      (window-current-linum))
                                     column))
            column)

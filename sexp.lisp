@@ -64,7 +64,7 @@
                            i)
                           (t
                            (f str (1+ i) in-string-p)))))))
-    (f (buffer-line-string (window-buffer) (window-current-linum))
+    (f (buffer-line-string (current-buffer) (window-current-linum))
        0
        nil)))
 
@@ -342,7 +342,7 @@
        (and (forward-sexp 1)
             (mark-set)))
     (when arg
-      (buffer-mark-cancel (window-buffer)))))
+      (buffer-mark-cancel (current-buffer)))))
 
 (define-key *global-keymap* (kbd "M-C-k") 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")

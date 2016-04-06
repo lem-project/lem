@@ -249,7 +249,7 @@
     (flet ((take-string ()
                         (let ((string
                                (join (string #\newline)
-                                     (buffer-take-lines (window-buffer)
+                                     (buffer-take-lines (current-buffer)
                                                         (window-current-linum)
                                                         length))))
                           (unless *case-fold-search*
@@ -281,7 +281,7 @@
                     (let ((linum (- (window-current-linum) (1- length))))
                       (when (< 0 linum)
                         (let* ((lines
-                                (buffer-take-lines (window-buffer)
+                                (buffer-take-lines (current-buffer)
                                                    linum
                                                    length))
                                (string
@@ -317,7 +317,7 @@
      #'(lambda ()
          (multiple-value-bind (start end)
              (ppcre:scan scanner
-                         (buffer-line-string (window-buffer)
+                         (buffer-line-string (current-buffer)
                                              (window-current-linum))
                          :start (window-current-charpos))
            (when (and start (<= (window-current-charpos) start))
@@ -327,7 +327,7 @@
      #'(lambda ()
          (multiple-value-bind (start end)
              (ppcre:scan scanner
-                         (buffer-line-string (window-buffer)
+                         (buffer-line-string (current-buffer)
                                              (window-current-linum)))
            (when start end)))
      #'forward-line
@@ -346,7 +346,7 @@
                             reg-starts
                             reg-ends
                             scanner
-                            (buffer-line-string (window-buffer)
+                            (buffer-line-string (current-buffer)
                                                 (window-current-linum))
                             nil
                             :end (window-current-charpos))
@@ -359,7 +359,7 @@
                             reg-starts
                             reg-ends
                             scanner
-                            (buffer-line-string (window-buffer)
+                            (buffer-line-string (current-buffer)
                                                 (window-current-linum))
                             nil
                             :start (window-current-charpos))
@@ -371,7 +371,7 @@
 
 (defun search-symbol-positions (name &key start end)
   (let ((positions)
-        (str (buffer-line-string (window-buffer)
+        (str (buffer-line-string (current-buffer)
                                  (window-current-linum))))
     (ppcre:do-scans (start-var
                      end-var
@@ -487,7 +487,7 @@
 (defun looking-at-line (regex &key (start nil startp) (end nil endp))
   (macrolet ((m (&rest args)
                 `(ppcre:scan regex
-                             (buffer-line-string (window-buffer)
+                             (buffer-line-string (current-buffer)
                                                  (window-current-linum))
                              ,@args)))
     (cond ((and startp endp)

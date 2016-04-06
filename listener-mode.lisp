@@ -48,7 +48,7 @@
   (put-attribute (make-point (window-current-linum) 0)
                  (make-point (window-current-linum) (window-current-charpos))
                  (make-attr :bold-p t :color :blue))
-  (buffer-undo-boundary (window-buffer))
+  (buffer-undo-boundary (current-buffer))
   (listener-update-marker))
 
 (define-key *listener-mode-keymap* (kbd "C-m") 'listener-return)

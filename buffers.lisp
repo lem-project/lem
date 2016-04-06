@@ -2,7 +2,8 @@
 
 (in-package :lem)
 
-(export '(ghost-buffer-p
+(export '(current-buffer
+          ghost-buffer-p
           special-buffer-p
           filter-special-buffers
           any-modified-buffer-p
@@ -19,6 +20,12 @@
           next-buffer
           list-buffers
           get-buffer-window))
+
+(defun current-buffer ()
+  (window-buffer (current-window)))
+
+(defun (setf current-buffer) (new-buffer)
+  (setf (window-buffer (current-window)) new-buffer))
 
 (defun ghost-buffer-p (buffer)
   (let ((name (buffer-name buffer)))
@@ -79,16 +86,16 @@
 
 (defun set-buffer (buffer &optional (update-prev-buffer-p t))
   (check-switch-minibuffer-window)
-  (unless (eq (window-buffer) buffer)
+  (unless (eq (current-buffer) buffer)
     (when update-prev-buffer-p
       (setf (window-parameter (current-window) :split-p) nil)
-      (let ((old-buf (window-buffer)))
+      (let ((old-buf (current-buffer)))
         (update-prev-buffer old-buf)
         (setf (buffer-keep-binfo old-buf)
               (list (window-vtop-linum)
                     (window-current-linum)
                     (window-current-charpos)))))
-    (setf (window-buffer) buffer)
+    (setf (current-buffer) buffer)
     (let ((vtop-linum 1)
           (cur-linum 1)
           (cur-pos 0))
@@ -106,7 +113,7 @@
       (setf (window-vtop-charpos) 0)
       (setf (window-current-charpos)
             (min cur-pos
-                 (buffer-line-length (window-buffer)
+                 (buffer-line-length (current-buffer)
                                      (window-current-linum))))
       (assert (<= 0 (window-current-charpos))))))
 
@@ -145,7 +152,7 @@
 (define-command next-buffer (&optional (n 1)) ("p")
   (check-switch-minibuffer-window)
   (dotimes (_ n t)
-    (set-buffer (get-next-buffer (window-buffer)))))
+    (set-buffer (get-next-buffer (current-buffer)))))
 
 (define-major-mode list-buffers-mode nil
   (:name "List Buffers"

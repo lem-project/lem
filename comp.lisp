@@ -121,9 +121,9 @@
 
 (defun scan-all-buffer-words (word)
   (remove-duplicates
-   (nconc (scan-buffer-words (window-buffer) word)
+   (nconc (scan-buffer-words (current-buffer) word)
           (mapcan #'(lambda (buffer)
-                      (unless (eq buffer (window-buffer))
+                      (unless (eq buffer (current-buffer))
                         (scan-buffer-words buffer word)))
                   *buffer-list*))
    :test #'equal))

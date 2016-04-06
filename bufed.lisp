@@ -59,13 +59,13 @@
 
 (define-key *global-keymap* (kbd "M-~") 'unmark-buffer)
 (define-command unmark-buffer () ()
-  (setf (buffer-modified-p (window-buffer)) nil)
+  (setf (buffer-modified-p (current-buffer)) nil)
   t)
 
 (define-key *global-keymap* (kbd "C-x C-q") 'toggle-read-only)
 (define-command toggle-read-only () ()
-  (setf (buffer-read-only-p (window-buffer))
-        (not (buffer-read-only-p (window-buffer))))
+  (setf (buffer-read-only-p (current-buffer))
+        (not (buffer-read-only-p (current-buffer))))
   t)
 
 (define-command rename-buffer (name) ("sRename buffer: ")
@@ -84,7 +84,7 @@
 (defun eolp ()
   (= (window-current-charpos)
      (buffer-line-length
-      (window-buffer)
+      (current-buffer)
       (window-current-linum))))
 
 (defun bobp ()
@@ -93,14 +93,14 @@
 
 (defun eobp ()
   (and (tail-line-p
-        (window-buffer)
+        (current-buffer)
         (window-current-linum))
        (eolp)))
 
 (defun insert-char (c n)
   (dotimes (_ n t)
     (when (buffer-insert-char
-           (window-buffer)
+           (current-buffer)
            (window-current-linum)
            (window-current-charpos)
            c)
@@ -121,7 +121,7 @@
   (do ((rest lines (cdr rest)))
       ((null rest))
     (buffer-insert-line
-     (window-buffer)
+     (current-buffer)
      (window-current-linum)
      (window-current-charpos)
      (car rest))
@@ -135,7 +135,7 @@
 (define-key *global-keymap* (kbd "C-m") 'insert-newline)
 (define-command insert-newline (&optional (n 1)) ("p")
   (dotimes (_ n t)
-    (buffer-insert-newline (window-buffer)
+    (buffer-insert-newline (current-buffer)
                            (window-current-linum)
                            (window-current-charpos))
     (forward-line 1)))
@@ -164,7 +164,7 @@
    ((eobp) nil)
    (t
     (let ((lines
-           (buffer-delete-char (window-buffer)
+           (buffer-delete-char (current-buffer)
                                (window-current-linum)
                                (window-current-charpos)
                                (or n 1))))
@@ -193,7 +193,7 @@
     (delete-char
      (cond ((eolp) 1)
            ((blank-line-p))
-           (t (- (buffer-line-length (window-buffer)
+           (t (- (buffer-line-length (current-buffer)
                                      (window-current-linum))
                  (window-current-charpos))))))
    ((plusp n)
@@ -214,7 +214,7 @@
 (define-key *global-keymap* (kbd "[end]") 'end-of-line)
 (define-command end-of-line () ()
   (set-charpos (buffer-line-length
-                (window-buffer)
+                (current-buffer)
                 (window-current-linum)))
   t)
 
@@ -222,7 +222,7 @@
 (define-command goto-line (n &optional does-not-recenter-p) ("P")
   (unless n
     (setq n (minibuf-read-number "Line to GOTO: ")))
-  (when (< 0 n (1+ (buffer-nlines (window-buffer))))
+  (when (< 0 n (1+ (buffer-nlines (current-buffer))))
     (setf (window-current-linum) n)
     (beginning-of-line)
     (unless does-not-recenter-p
@@ -237,9 +237,9 @@
 
 (define-key *global-keymap* (kbd "M->") 'end-of-buffer)
 (define-command end-of-buffer () ()
-  (goto-line (buffer-nlines (window-buffer)) t)
+  (goto-line (buffer-nlines (current-buffer)) t)
   (set-charpos (buffer-line-length
-                (window-buffer)
+                (current-buffer)
                 (window-current-linum)))
   t)
 
@@ -248,7 +248,7 @@
   (let ((dir (if (plusp n) 1 -1)))
     (prog1 (dotimes (_ (abs n) t)
              (when (if (plusp n)
-                       (tail-line-p (window-buffer) (window-current-linum))
+                       (tail-line-p (current-buffer) (window-current-linum))
                        (head-line-p (window-current-linum)))
                (return nil))
              (incf (window-current-linum) dir))
@@ -259,17 +259,17 @@
     (when-interrupted-flag :next-line
       (setq tmp-column
             (str-width (buffer-line-string
-                        (window-buffer)
+                        (current-buffer)
                         (window-current-linum))
                        0
                        (window-current-charpos)))))
   (defun %next-line-after ()
     (let ((pos (or (wide-index (buffer-line-string
-                                (window-buffer)
+                                (current-buffer)
                                 (window-current-linum))
                                tmp-column)
                    (buffer-line-length
-                    (window-buffer)
+                    (current-buffer)
                     (window-current-linum)))))
       (when pos
         (setf (window-current-charpos) pos)))
@@ -374,7 +374,7 @@
 
 (define-key *global-keymap* (kbd "C-@") 'mark-set)
 (define-command mark-set () ()
-  (let ((buffer (window-buffer)))
+  (let ((buffer (current-buffer)))
     (setf (buffer-mark-p buffer) t)
     (if (buffer-mark-marker)
         (setf (marker-point (buffer-mark-marker buffer))
@@ -386,7 +386,7 @@
 
 (define-key *global-keymap* (kbd "C-x C-x") 'exchange-point-mark)
 (define-command exchange-point-mark () ()
-  (let ((buffer (window-buffer)))
+  (let ((buffer (current-buffer)))
     (when (buffer-check-marked buffer)
       (psetf
        (window-current-linum) (marker-linum (buffer-mark-marker buffer))
@@ -397,7 +397,7 @@
       t)))
 
 (defun following-char ()
-  (buffer-get-char (window-buffer)
+  (buffer-get-char (current-buffer)
                    (window-current-linum)
                    (window-current-charpos)))
 
@@ -406,12 +406,12 @@
    ((bobp)
     nil)
    ((bolp)
-    (buffer-get-char (window-buffer)
+    (buffer-get-char (current-buffer)
                      (1- (window-current-linum))
-                     (buffer-line-length (window-buffer)
+                     (buffer-line-length (current-buffer)
                                          (1- (window-current-linum)))))
    (t
-    (buffer-get-char (window-buffer)
+    (buffer-get-char (current-buffer)
                      (window-current-linum)
                      (1- (window-current-charpos))))))
 
@@ -440,7 +440,7 @@
 (defun replace-char (c)
   (delete-char)
   (buffer-insert-char
-   (window-buffer)
+   (current-buffer)
    (window-current-linum)
    (window-current-charpos)
    c))
@@ -487,8 +487,8 @@
                     (make-string (* n *tab-size*) :initial-element #\space))))
 
 (defun blank-line-p ()
-  (let ((string (buffer-line-string (window-buffer) (window-current-linum)))
-        (eof-p (buffer-end-line-p (window-buffer) (window-current-linum))))
+  (let ((string (buffer-line-string (current-buffer) (window-current-linum)))
+        (eof-p (buffer-end-line-p (current-buffer) (window-current-linum))))
     (when (string= "" (string-trim '(#\space #\tab) string))
       (+ (length string)
          (if eof-p 0 1)))))
@@ -526,7 +526,7 @@
 
 (define-command erase-buffer () ()
   (beginning-of-buffer)
-  (buffer-erase (window-buffer))
+  (buffer-erase (current-buffer))
   (beginning-of-buffer)
   t)
 
@@ -608,14 +608,14 @@
 
 (define-key *global-keymap* (kbd "C-\\") 'undo)
 (define-command undo () ()
-  (let ((point (buffer-undo (window-buffer))))
+  (let ((point (buffer-undo (current-buffer))))
     (when point
       (point-set point)
       t)))
 
 (define-key *global-keymap* (kbd "C-_") 'redo)
 (define-command redo () ()
-  (let ((point (buffer-redo (window-buffer))))
+  (let ((point (buffer-redo (current-buffer))))
     (when point
       (point-set point)
       t)))

@@ -659,7 +659,7 @@
   (multiple-value-bind (winheight rem)
       (floor (window-height) 2)
     (let ((newwin (make-window
-                   (window-buffer)
+                   (current-buffer)
                    winheight
                    (window-width)
                    (+ (window-y)
@@ -676,7 +676,7 @@
   (multiple-value-bind (winwidth rem)
       (floor (window-width) 2)
     (let ((newwin (make-window
-                   (window-buffer)
+                   (current-buffer)
                    (window-height)
                    (1- winwidth)
                    (window-y)
@@ -813,7 +813,7 @@
 
 (defun pop-to-buffer (buffer)
   (check-switch-minibuffer-window)
-  (if (eq buffer (window-buffer))
+  (if (eq buffer (current-buffer))
       (values (current-window) nil)
       (let ((split-p))
         (when (one-window-p)

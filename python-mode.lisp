@@ -43,7 +43,7 @@
   (dotimes (_ n t)
     (multiple-value-bind (start end)
         (ppcre:scan "^\\s*"
-                    (buffer-line-string (window-buffer)
+                    (buffer-line-string (current-buffer)
                                         (window-current-linum)))
       (when start
         (save-excursion (detab-line 1))
@@ -61,7 +61,7 @@
   (dotimes (_ n t)
     (multiple-value-bind (start end)
         (ppcre:scan "^\\s*"
-                    (buffer-line-string (window-buffer)
+                    (buffer-line-string (current-buffer)
                                         (window-current-linum)))
       (when start
         (save-excursion (detab-line 1))

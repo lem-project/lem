@@ -18,10 +18,10 @@
 (defvar *mode-list* nil)
 
 (defun major-mode ()
-  (buffer-major-mode (window-buffer)))
+  (buffer-major-mode (current-buffer)))
 
 (defun (setf major-mode) (new-val)
-  (setf (buffer-major-mode (window-buffer)) new-val))
+  (setf (buffer-major-mode (current-buffer)) new-val))
 
 (macrolet ((def (name)
                 `(progn
@@ -91,7 +91,7 @@
        (setf (major-mode) ',major-mode)
        (run-hooks ',(symb major-mode "-HOOK"))
        (prog1 (progn ,@body)
-         (syntax-scan-buffer (window-buffer))))))
+         (syntax-scan-buffer (current-buffer))))))
 
 (defmacro define-minor-mode (minor-mode (&key name keymap-var) &body body)
   `(progn

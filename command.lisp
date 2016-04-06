@@ -28,7 +28,7 @@
        ((string= "P" (car arg-descripters))
         `(list ,garg))
        ((string= "r" (car arg-descripters))
-        `(if (buffer-check-marked (window-buffer))
+        `(if (buffer-check-marked (current-buffer))
              (list (region-beginning) (region-end))
              (return-from ,name nil)))
        (t
@@ -41,7 +41,7 @@
                             `(minibuf-read-number ,(subseq arg-descripter 1)))
                            ((char= #\b (aref arg-descripter 0))
                             `(minibuf-read-buffer ,(subseq arg-descripter 1)
-                                                  (buffer-name (window-buffer))
+                                                  (buffer-name (current-buffer))
                                                   t))
                            ((char= #\B (aref arg-descripter 0))
                             `(minibuf-read-buffer ,(subseq arg-descripter 1)

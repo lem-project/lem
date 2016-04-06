@@ -82,7 +82,7 @@
 (define-command keyboard-quit () ()
   (setq *universal-argument* nil)
   (setq *macro-recording-p* nil)
-  (buffer-mark-cancel (window-buffer))
+  (buffer-mark-cancel (current-buffer))
   (delete-completion-window)
   (minibuf-print "Quit"))
 
@@ -270,7 +270,7 @@
 
 (defun execute (key)
   (let* ((cmd (find-keybind key))
-         (buffer (window-buffer))
+         (buffer (current-buffer))
          (prev-modified (buffer-modified-p buffer))
          (prev-window-vtop-linum (window-vtop-linum))
          (prev-window-tree *window-tree*))
@@ -279,8 +279,8 @@
                     (setq *macro-running-p* nil)))
       (when (and *enable-syntax-highlight*
                  (not *macro-running-p*)
-                 (eq buffer (window-buffer)))
-        (let ((curr-modified (buffer-modified-p (window-buffer))))
+                 (eq buffer (current-buffer)))
+        (let ((curr-modified (buffer-modified-p (current-buffer))))
           (cond ((eq :one-line (window-redraw-flag))
                  (syntax-scan-lines (current-window)
                                     #1=(window-current-linum)

@@ -95,7 +95,7 @@
             end-of-line)))
 
 (defun insert-file-contents (filename)
-  (let ((buffer (window-buffer))
+  (let ((buffer (current-buffer))
         (point (current-point)))
     (multiple-value-bind (external-format end-of-line)
         (detect-external-format-from-file filename)
@@ -140,7 +140,7 @@
                        (get-bvar :file-property-list)))))))
 
 (defun scan-file-property-list ()
-  (let ((buffer (window-buffer))
+  (let ((buffer (current-buffer))
         (start-linum 1))
     (let ((str (buffer-line-string buffer 1)))
       (when (and (< 2 (length str))
@@ -203,7 +203,7 @@
 (define-key *global-keymap* (kbd "C-x C-r") 'read-file)
 (define-command read-file (filename) ("FRead File: ")
   (find-file filename)
-  (setf (buffer-read-only-p (window-buffer)) t)
+  (setf (buffer-read-only-p (current-buffer)) t)
   t)
 
 (defun write-to-file (buffer filename)
@@ -254,7 +254,7 @@
 
 (define-key *global-keymap* (kbd "C-x C-s") 'save-file)
 (define-command save-file () ()
-  (let ((buffer (window-buffer)))
+  (let ((buffer (current-buffer)))
     (cond
      ((null (buffer-modified-p buffer))
       nil)
@@ -265,13 +265,13 @@
       (save-file-internal buffer)))))
 
 (define-command change-file-name (filename) ("sChange file name: ")
-  (setf (buffer-filename (window-buffer)) filename)
+  (setf (buffer-filename (current-buffer)) filename)
   t)
 
 (define-key *global-keymap* (kbd "C-x C-w") 'write-file)
 (define-command write-file (filename) ("FWrite File: ")
   (change-file-name filename)
-  (save-file-internal (window-buffer)))
+  (save-file-internal (current-buffer)))
 
 (define-key *global-keymap* (kbd "C-x C-i") 'insert-file)
 (define-command insert-file (filename) ("fInsert file: ")
@@ -280,7 +280,7 @@
 (define-key *global-keymap* (kbd "C-x s") 'save-some-buffers)
 (define-command save-some-buffers (&optional save-silently-p) ("P")
   (check-switch-minibuffer-window)
-  (let ((curbuf (window-buffer)))
+  (let ((curbuf (current-buffer)))
     (dolist (buffer *buffer-list*)
       (when (and (buffer-modified-p buffer)
                  (buffer-filename buffer))

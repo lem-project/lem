@@ -31,7 +31,7 @@
   (with-points (((linum1 col1) begin)
                 ((linum2 col2) end))
     (let ((lines
-           (buffer-take-lines (window-buffer)
+           (buffer-take-lines (current-buffer)
                               linum1
                               (1+ (- linum2 linum1)))))
       (if (= linum1 linum2)
@@ -61,7 +61,7 @@
   (let ((lines (region-lines begin end)))
     (with-kill ()
       (kill-push lines)))
-  (buffer-mark-cancel (window-buffer))
+  (buffer-mark-cancel (current-buffer))
   (minibuf-print "region copied")
   t)
 
@@ -69,7 +69,7 @@
 (define-command kill-region (begin end) ("r")
   (point-set begin)
   (prog1 (delete-char (region-count begin end))
-    (buffer-mark-cancel (window-buffer))))
+    (buffer-mark-cancel (current-buffer))))
 
 (defun delete-region (begin end)
   (let ((*kill-disable-p* t))

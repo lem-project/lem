@@ -411,7 +411,7 @@
     (when package-name
       (string-upcase package-name))))
 
-(defun lisp-current-package (&optional (buffer (window-buffer)))
+(defun lisp-current-package (&optional (buffer (current-buffer)))
   (or (find-package (lisp-buffer-package buffer))
       (find-package "COMMON-LISP-USER")))
 
@@ -596,7 +596,7 @@
   (unless (or begin end)
     (setq begin (region-beginning))
     (setq end (region-end)))
-  (buffer-mark-cancel (window-buffer))
+  (buffer-mark-cancel (current-buffer))
   (lisp-eval-string (region-string begin end))
   t)
 
@@ -661,7 +661,7 @@
   (multiple-value-bind (expr error-p)
       (with-safe-form
         (let ((expr (%lisp-macroexpand-at-point macroexpand-symbol)))
-          (cond ((eq (window-buffer)
+          (cond ((eq (current-buffer)
                      (get-buffer buffer-name))
                  (%lisp-macroexpand-replace-expr expr))
                 (t
@@ -761,7 +761,7 @@
                           (next-char filepos)
                           (window-update-all)))
                   defs)))
-        (push (cons (window-buffer) (current-point))
+        (push (cons (current-buffer) (current-point))
               *lisp-find-definition-stack*)
         (cond ((= 1 (length defs))
                (funcall (second (car defs))))
@@ -1013,7 +1013,7 @@
 (defun lisp-repl-confirm (string)
   (setq - (car (%string-to-exps string (lisp-current-package))))
   (multiple-value-bind (values error-p)
-      (%lisp-eval - (window-buffer) (current-point) t)
+      (%lisp-eval - (current-buffer) (current-point) t)
     (declare (ignore error-p))
     (setq +++ ++ /// //     *** (car ///)
           ++  +  //  /      **  (car //)

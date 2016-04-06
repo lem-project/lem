@@ -41,7 +41,7 @@
     marker))
 
 (defun make-marker-current-point (&optional insertion-type)
-  (make-marker (window-buffer) (current-point) insertion-type))
+  (make-marker (current-buffer) (current-point) insertion-type))
 
 (defun delete-marker (marker)
   (buffer-delete-marker (marker-buffer marker)

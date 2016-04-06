@@ -106,7 +106,7 @@
 (defun line-backward-n (line n)
   (line-step-n line n 'line-prev))
 
-(define-class buffer () (window-buffer)
+(define-class buffer () (current-buffer)
   name
   filename
   modified-p
@@ -731,17 +731,17 @@
                      (minibuf-print "Redo Error")))
               pres))))
 
-(defun buffer-undo-boundary (&optional (buffer (window-buffer)))
+(defun buffer-undo-boundary (&optional (buffer (current-buffer)))
   (push :separator (buffer-undo-stack buffer)))
 
-(defun get-bvar (name &key (buffer (window-buffer)) default)
+(defun get-bvar (name &key (buffer (current-buffer)) default)
   (multiple-value-bind (value foundp)
       (gethash name (buffer-variables buffer))
     (if foundp value default)))
 
-(defun (setf get-bvar) (value name &key (buffer (window-buffer)) default)
+(defun (setf get-bvar) (value name &key (buffer (current-buffer)) default)
   (declare (ignore default))
   (setf (gethash name (buffer-variables buffer)) value))
 
-(defun clear-buffer-variables (&key (buffer (window-buffer)))
+(defun clear-buffer-variables (&key (buffer (current-buffer)))
   (clrhash (buffer-variables buffer)))

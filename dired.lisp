@@ -32,7 +32,7 @@
             hour minute second)))
 
 (defun update ()
-  (with-buffer-read-only (window-buffer) nil
+  (with-buffer-read-only (current-buffer) nil
     (erase-buffer)
     (let ((dirname (get-bvar :dirname))
           (files))
@@ -124,7 +124,7 @@
 
 (defun change-flag (char)
   (when (get-file)
-    (with-buffer-read-only (window-buffer) nil
+    (with-buffer-read-only (current-buffer) nil
       (beginning-of-line)
       (insert-string (string char))
       (delete-char)

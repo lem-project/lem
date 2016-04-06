@@ -1,25 +1,28 @@
-;; -*- Mode: LISP; Package: LEM-INTERNAL -*-
+;; -*- Mode: LISP; Package: LEM.UTIL  -*-
 
-(in-package :lem-internal)
-
-(export '(shell-command
-          pdebug
-          utf8-bytes
-          split-string
-          join
-          replace-string
-          random-range
-          safe-aref
-          make-history
-          add-history
-          prev-history
-          next-history
-          bests-if
-          max-if
-          min-if
-          mkstr
-          symb
-          mklist))
+(in-package :cl-user)
+(defpackage :lem.util
+  (:use :cl)
+  (:export
+   :shell-command
+   :pdebug
+   :utf8-bytes
+   :split-string
+   :join
+   :replace-string
+   :random-range
+   :safe-aref
+   :make-history
+   :add-history
+   :prev-history
+   :next-history
+   :bests-if
+   :max-if
+   :min-if
+   :mkstr
+   :symb
+   :mklist))
+(in-package :lem.util)
 
 (defun shell-command (command &key input output error-output)
   (uiop:run-program command

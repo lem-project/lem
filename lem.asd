@@ -11,13 +11,13 @@
 
 (defsystem lem
            :serial t
-           :components ((:file "fatstring")
+           :components ((:file "winsize")
+                        (:file "fatstring")
                         (:file "queue")
-			(:file "winsize")
+                        (:file "util")
                         (:file "package")
                         (:file "errors")
                         (:file "header")
-                        (:file "util")
                         (:file "wide")
                         (:file "key")
                         (:file "point")

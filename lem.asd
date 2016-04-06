@@ -56,6 +56,7 @@
                         :osicat
                         #+sbcl :sb-posix
                         #+sbcl :sb-introspect
+                        :swank
                         :trivial-gray-streams
                         :cl-ppcre
                         :inquisitor

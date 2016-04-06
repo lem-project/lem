@@ -21,7 +21,7 @@
           lisp-macroexpand-all
           lisp-describe-symbol
           lisp-disassemble-symbol
-          #+sbcl lisp-find-definitions
+          lisp-find-definitions
           complete-symbol
           lisp-complete-symbol
           lisp-get-arglist
@@ -729,87 +729,57 @@
 
 (defvar *lisp-find-definition-stack* nil)
 
-#+sbcl
-(progn
-  (defparameter *lisp-definition-types*
-    '(:variable
-      :constant
-      :type
-      :symbol-macro
-      :macro
-      :compiler-macro
-      :function
-      :generic-function
-      :method
-      :setf-expander
-      :structure
-      :condition
-      :class
-      :method-combination
-      :package
-      :transform
-      :optimizer
-      :vop
-      :source-transform
-      :ir1-convert
-      :declaration
-      :alien-type))
+(defun find-definitions (name)
+  (let ((swank::*buffer-package* (lisp-current-package))
+        (swank::*buffer-readtable* *readtable*))
+    (swank::find-definitions name)))
 
-  (defun %collect-definitions (name)
-    (loop :for type :in *lisp-definition-types*
-      :append (sb-introspect:find-definition-sources-by-name
-               name type)))
+(defun lisp-find-definitions-internal (symbol)
+  (let ((moves))
+    (dolist (definition (find-definitions symbol))
+      (destructuring-bind (head &rest alist) definition
+        (let ((location (cdr (assoc :location alist))))
+          (when location
+            (let ((file (second (assoc :file location)))
+                  (position (second (assoc :position location))))
+              (push (list head file position) moves))))))
+    (nreverse moves)))
 
-  (defun collect-definitions (name)
-    (sort
-     (loop :for def :in (%collect-definitions name)
-       :collect
-       (list
-        (sb-introspect:definition-source-pathname def)
-        (1+
-         (car
-          (sb-introspect:definition-source-form-path
-           def)))))
-     #'< :key #'second))
+(define-key *lisp-mode-keymap* (kbd "M-.") 'lisp-find-definitions)
+(define-command lisp-find-definitions () ()
+  (multiple-value-bind (name error-p)
+      (lisp-read-symbol "Find definitions: ")
+    (unless error-p
+      (let ((defs))
+        (dolist (def (lisp-find-definitions-internal name))
+          (destructuring-bind (head file filepos) def
+            (declare (ignore head))
+            (push (list file
+                        (lambda ()
+                          (find-file file)
+                          (beginning-of-buffer)
+                          (next-char filepos)
+                          (window-update-all)))
+                  defs)))
+        (push (cons (window-buffer) (current-point))
+              *lisp-find-definition-stack*)
+        (cond ((= 1 (length defs))
+               (funcall (second (car defs))))
+              (t
+               (grep-apply defs
+                           "*Definitions*"
+                           (lambda (out)
+                             (dolist (elt defs)
+                               (format out "~A~%" (car elt)))))))))))
 
-  (define-key *lisp-mode-keymap* (kbd "M-.") 'lisp-find-definitions)
-  (define-command lisp-find-definitions () ()
-    (multiple-value-bind (name error-p)
-        (lisp-read-symbol "Find definitions: ")
-      (unless error-p
-        (let ((defs
-               (loop :for (pathname form-path)
-                 :in (collect-definitions name)
-                 :collect
-                 (list
-                  (namestring pathname)
-                  (let ((form-path-1 form-path))
-                    #'(lambda ()
-                        (beginning-of-buffer)
-                        (when (let ((*lisp-mode-skip-features-sharp-macro-p* t))
-                                (forward-sexp form-path-1))
-                          (backward-sexp 1))))))))
-          (if (= 1 (length defs))
-              (destructuring-bind (filename move-fn) (car defs)
-                (push (cons (window-buffer) (current-point))
-                      *lisp-find-definition-stack*)
-                (find-file filename)
-                (funcall move-fn))
-              (grep-apply
-               defs
-               "*Definitions*"
-               #'(lambda (out)
-                   (loop :for (filename _) :in defs :do
-                     (format out "~a~%" filename)))))))))
-
-  (define-key *lisp-mode-keymap* (kbd "M-,") 'lisp-pop-find-definition-stack)
-  (define-command lisp-pop-find-definition-stack () ()
-    (let ((elt (pop *lisp-find-definition-stack*)))
-      (when (null elt)
-        (return-from lisp-pop-find-definition-stack nil))
-      (destructuring-bind (buffer . point) elt
-        (select-buffer buffer)
-        (point-set point)))))
+(define-key *lisp-mode-keymap* (kbd "M-,") 'lisp-pop-find-definition-stack)
+(define-command lisp-pop-find-definition-stack () ()
+  (let ((elt (pop *lisp-find-definition-stack*)))
+    (when (null elt)
+      (return-from lisp-pop-find-definition-stack nil))
+    (destructuring-bind (buffer . point) elt
+      (select-buffer buffer)
+      (point-set point))))
 
 (defun analyze-symbol (str)
   (let (package

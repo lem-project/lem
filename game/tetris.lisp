@@ -6,12 +6,9 @@
 
 (in-package :tetris)
 
-(defvar *tetris-mode-keymap*
-  (make-keymap))
-
 (define-major-mode tetris-mode nil
   (:name "tetris"
-   :keymap *tetris-mode-keymap*))
+   :keymap-var *tetris-mode-keymap*))
 
 (defconstant +field-width+ 12)
 (defconstant +field-height+ 21)
@@ -104,8 +101,8 @@
 
 (defun insert-block (attr)
   (insert-string "  ")
-  (put-attribute (point-shift (point) -2)
-                 (point)
+  (put-attribute (point-shift (current-point) -2)
+                 (current-point)
                  (make-attr :color (cons attr attr))))
 
 (defun draw-field-internal (field)

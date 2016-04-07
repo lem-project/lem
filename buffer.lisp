@@ -200,45 +200,8 @@
   (setf (buffer-modified-p buffer) nil)
   (buffer-save-node buffer))
 
-(defun push-undo-stack (buffer elt)
-  (cond ((<= (+ *undo-limit* (floor (* *undo-limit* 0.3)))
-             (buffer-undo-size buffer))
-         (setf (buffer-undo-stack buffer)
-               (subseq (buffer-undo-stack buffer)
-                       0
-                       *undo-limit*))
-         (setf (buffer-undo-size buffer)
-               (1+ (length (buffer-undo-stack buffer)))))
-        (t
-         (incf (buffer-undo-size buffer))))
-  (let ((interrupt-p))
-    (when-interrupted-flag :undo
-                           (setq interrupt-p t)
-                           (push :separator
-                                 (buffer-undo-stack buffer)))
-    (push elt (buffer-undo-stack buffer))
-    interrupt-p))
-
 (defun push-redo-stack (buffer elt)
   (push elt (buffer-redo-stack buffer)))
-
-(defmacro with-push-undo ((buffer) &body body)
-  (let ((gmark-marker (gensym)))
-    `(when (and (buffer-enable-undo-p ,buffer)
-                (not (ghost-buffer-p ,buffer)))
-       (let ((,gmark-marker (buffer-mark-marker ,buffer)))
-         (let ((elt #'(lambda ()
-                        (setf (buffer-mark-marker ,buffer) ,gmark-marker)
-                        ,@body)))
-           (ecase *undo-mode*
-             (:edit
-              (when (push-undo-stack ,buffer elt)
-                (incf (buffer-undo-node ,buffer)))
-              (setf (buffer-redo-stack ,buffer) nil))
-             (:redo
-              (push-undo-stack ,buffer elt))
-             (:undo
-              (push-redo-stack ,buffer elt))))))))
 
 (defun buffer-line-set-attribute (line-set-fn buffer attr linum
                                   &optional start-charpos end-charpos)
@@ -541,6 +504,43 @@
      (check-read-only ,buffer)
      (prog1 (progn ,@body)
        (buffer-modify ,buffer))))
+
+(defun push-undo-stack (buffer elt)
+  (cond ((<= (+ *undo-limit* (floor (* *undo-limit* 0.3)))
+             (buffer-undo-size buffer))
+         (setf (buffer-undo-stack buffer)
+               (subseq (buffer-undo-stack buffer)
+                       0
+                       *undo-limit*))
+         (setf (buffer-undo-size buffer)
+               (1+ (length (buffer-undo-stack buffer)))))
+        (t
+         (incf (buffer-undo-size buffer))))
+  (let ((interrupt-p))
+    (when-interrupted-flag :undo
+                           (setq interrupt-p t)
+                           (push :separator
+                                 (buffer-undo-stack buffer)))
+    (push elt (buffer-undo-stack buffer))
+    interrupt-p))
+
+(defmacro with-push-undo ((buffer) &body body)
+  (let ((gmark-marker (gensym)))
+    `(when (and (buffer-enable-undo-p ,buffer)
+                (not (ghost-buffer-p ,buffer)))
+       (let ((,gmark-marker (buffer-mark-marker ,buffer)))
+         (let ((elt #'(lambda ()
+                        (setf (buffer-mark-marker ,buffer) ,gmark-marker)
+                        ,@body)))
+           (ecase *undo-mode*
+             (:edit
+              (when (push-undo-stack ,buffer elt)
+                (incf (buffer-undo-node ,buffer)))
+              (setf (buffer-redo-stack ,buffer) nil))
+             (:redo
+              (push-undo-stack ,buffer elt))
+             (:undo
+              (push-redo-stack ,buffer elt))))))))
 
 (defun buffer-insert-char (buffer linum pos c)
   (cond ((char= c #\newline)

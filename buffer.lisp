@@ -607,7 +607,7 @@
 (defun buffer-delete-char (buffer linum pos n)
   (with-buffer-modify buffer
     (let ((line (buffer-get-line buffer linum))
-          (del-lines (list (make-fatstring "" 0))))
+          (del-lines (list "")))
       (loop while (or (eq n t) (plusp n)) do
         (cond
           ((and (not (eq n t))
@@ -620,8 +620,9 @@
                          pos
                          (- (marker-charpos marker) n)))))
            (setf (car del-lines)
-                 (fat-concat (car del-lines)
-                             (fat-substring (line-fatstr line) pos (+ pos n))))
+                 (concatenate 'string
+                              (car del-lines)
+                              (subseq (line-str line) pos (+ pos n))))
            (setf (line-fatstr line)
                  (fat-concat (fat-substring (line-fatstr line) 0 pos)
                              (fat-substring (line-fatstr line) (+ pos n))))
@@ -635,11 +636,12 @@
                ((< linum (marker-linum marker))
                 (decf (marker-linum marker)))))
            (setf (car del-lines)
-                 (fat-concat (car del-lines)
-                             (fat-substring (line-fatstr line) pos)))
+                 (concatenate 'string
+                              (car del-lines)
+                              (subseq (line-str line) pos)))
            (unless (line-next line)
              (return))
-           (push (make-fatstring "" 0) del-lines)
+           (push "" del-lines)
            (unless (eq n t)
              (decf n (1+ (- (fat-length (line-fatstr line)) pos))))
            (decf (buffer-nlines buffer))
@@ -650,9 +652,7 @@
                      (buffer-tail-line buffer))
              (setf (buffer-tail-line buffer) line))
            (line-free (line-next line)))))
-      (setq del-lines
-            (mapcar #'fat-string
-                    (nreverse del-lines)))
+      (setq del-lines (nreverse del-lines))
       (with-push-undo (buffer)
         (let ((linum linum)
               (pos pos))

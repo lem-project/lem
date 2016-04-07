@@ -241,13 +241,12 @@
                            :if-exists :supersede
                            :if-does-not-exist :create)
         (f out :lf)))))
-  (buffer-save-node buffer))
+  (unmark-buffer))
 
 (defun save-file-internal (buffer)
   (scan-file-property-list)
   (run-hooks 'before-save-hook)
   (write-to-file buffer (buffer-filename buffer))
-  (unmark-buffer)
   (minibuf-print "Wrote")
   (run-hooks 'after-save-hook)
   t)

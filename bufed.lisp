@@ -59,7 +59,7 @@
 
 (define-key *global-keymap* (kbd "M-~") 'unmark-buffer)
 (define-command unmark-buffer () ()
-  (setf (buffer-modified-p (current-buffer)) nil)
+  (buffer-unmark (current-buffer))
   t)
 
 (define-key *global-keymap* (kbd "C-x C-q") 'toggle-read-only)

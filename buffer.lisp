@@ -196,6 +196,10 @@
   (setf (buffer-saved-node buffer)
         (buffer-undo-node buffer)))
 
+(defun buffer-unmark (buffer)
+  (setf (buffer-modified-p buffer) nil)
+  (buffer-save-node buffer))
+
 (defun push-undo-stack (buffer elt)
   (cond ((<= (+ *undo-limit* (floor (* *undo-limit* 0.3)))
              (buffer-undo-size buffer))

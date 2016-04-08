@@ -101,7 +101,7 @@
                         :y y
                         :x x
                         :buffer buffer
-                        :display (make-display (1- winheight))
+                        :display (make-display winwidth (1- winheight))
                         :vtop-linum 1
                         :vtop-charpos 0)))
     (charms/ll:keypad (window-win window) 1)
@@ -709,8 +709,9 @@
   (charms/ll:wresize (window-win window) winheight winwidth)
   (setf (window-height window) winheight)
   (setf (window-width window) winwidth)
-  (disp-set-height (window-display window)
-                   (1- winheight)))
+  (disp-set-size (window-display window)
+                 winwidth
+                 (1- winheight)))
 
 (defun window-move (window dy dx)
   (window-set-pos window

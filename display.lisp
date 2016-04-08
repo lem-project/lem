@@ -124,9 +124,66 @@
     (disp-set-overlays disp-lines
                        (buffer-overlays buffer)
                        start-linum
-                       end-linum)
-    disp-lines))
+                       end-linum)))
 
-(defun disp-lines (display buffer start-linum)
+(defun disp-print-line (display y str &key (start-x 0) (string-start 0) string-end)
+  (let ((x start-x)
+        (win (display-screen display))
+        (ctrl-attr (get-attr :red)))
+    (loop :for i :from string-start :below (or string-end (fat-length str)) :do
+      (multiple-value-bind (char attr)
+          (fat-char str i)
+        (when (ctrl-p char)
+          (setq attr ctrl-attr))
+        (charms/ll:wattron win attr)
+        (charms/ll:mvwaddstr win y x (string char))
+        (charms/ll:wattroff win attr)
+        (setq x (char-width char x))))))
+
+(defun disp-line-wrapping (display start-charpos curx cury pos-x y str)
+  (when (and (< 0 start-charpos) (= y 0))
+    (setq str (fat-substring str start-charpos)))
+  (when (= y cury)
+    (setq curx (str-width (fat-string str) 0 pos-x)))
+  (loop :with start := 0 :and width := (display-width display)
+        :for i := (wide-index (fat-string str) (1- width) :start start)
+        :while (< y (display-height display))
+        :do (cond ((null i)
+                   (disp-print-line display y str :string-start start)
+                   (return))
+                  (t
+                   (cond ((< y cury)
+                          (incf cury))
+                         ((= y cury)
+                          (let ((len (str-width (fat-string str) start i)))
+                            (when (< len curx)
+                              (decf curx len)
+                              (incf cury)))))
+                   (disp-print-line display y str :string-start start :string-end i)
+                   (disp-print-line display y (load-time-value (make-fatstring "!" 0)) :start-x (1- width))
+                   (incf y)
+                   (setq start i))))
+  (values curx cury y))
+
+(defun disp-lines (display buffer start-charpos start-linum pos-x pos-y)
   (disp-reset-lines (display-lines display) buffer start-linum)
-  (display-lines display))
+  (let ((curx 0)
+        (cury (- pos-y start-linum))
+        (disp-line-fun
+          #'disp-line-wrapping
+          ;; (if (buffer-truncate-lines buffer)
+          ;;     #'disp-line-wrapping
+          ;;     #'disp-line)
+          ))
+    (loop
+      :with y := 0
+      :for str :across (display-lines display)
+      :while (< y (display-height display))
+      :do (cond (str
+                 (multiple-value-setq (curx cury y)
+                   (funcall disp-line-fun
+                            display start-charpos curx cury pos-x y str))
+                 (incf y))
+                (t
+                 (return))))
+    (charms/ll:wmove (display-screen display) cury curx)))

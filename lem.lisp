@@ -552,7 +552,14 @@
       (format out "~&~%~%~%~%~a~%" condition)
       (format out "~s~%"
               (lem.queue:queue-to-list *input-history*))
-      (uiop/image:print-backtrace :stream out :count 100))))
+      (uiop/image:print-backtrace :stream out :count 100)
+      (throw 'serious-error
+        (with-output-to-string (stream)
+          (princ condition stream)
+          (uiop/image:print-backtrace
+           :stream stream
+           :condition condition)))
+      )))
 
 (defun dired (filename)
   (lem.dired:dired filename))

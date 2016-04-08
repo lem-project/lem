@@ -104,6 +104,7 @@
                         :display (make-display winwidth (1- winheight))
                         :vtop-linum 1
                         :vtop-charpos 0)))
+    (setf (display-screen (window-display window)) (window-win window)) ;!!!
     (charms/ll:keypad (window-win window) 1)
     (setf (window-point-marker window)
           (make-marker buffer (make-point 1 0)))
@@ -476,61 +477,13 @@
     (window-print-line window y str))
   (values curx cury y))
 
-(defvar *wrapping-fatstring* (make-fatstring "!" 0))
-
-(defun window-refresh-line-wrapping (window curx cury y str)
-  (check-type str fatstring)
-  (when (and (< 0 (window-vtop-charpos window)) (= y 0))
-    (setq str (fat-substring str (window-vtop-charpos window))))
-  (when (= y cury)
-    (setq curx (str-width (fat-string str) 0 (window-current-charpos window))))
-  (loop :with start := 0 :and winwidth := (window-width window)
-    :for i := (wide-index (fat-string str) (1- winwidth) :start start)
-    :while (< y (1- (window-height window)))
-    :do (cond ((null i)
-               (window-print-line window y str :string-start start)
-               (return))
-              (t
-               (cond ((< y cury)
-                      (incf cury))
-                     ((= y cury)
-                      (let ((len (str-width (fat-string str) start i)))
-                        (when (< len curx)
-                          (decf curx len)
-                          (incf cury)))))
-               (window-print-line window y str :string-start start :string-end i)
-               (window-print-line window y *wrapping-fatstring* :start-x (1- winwidth))
-               (incf y)
-               (setq start i))))
-  (values curx cury y))
-
-(defun get-window-refresh-line-function (window)
-  (if (buffer-truncate-lines (window-buffer window))
-      #'window-refresh-line-wrapping
-      #'window-refresh-line))
-
 (defun window-refresh-lines (window)
-  (let ((curx 0)
-        (cury (window-cursor-y-not-wrapping window))
-        (refresh-line
-         (get-window-refresh-line-function window)))
-    (loop
-      :with y := 0
-      :for str :across (disp-lines (window-display window)
-                                   (window-buffer window)
-                                   (window-vtop-linum window))
-      :while (< y (1- (window-height window))) :do
-      (cond (str
-             (check-type str fatstring)
-             (multiple-value-setq (curx cury y)
-                                  (funcall refresh-line
-                                           window curx cury y str)))
-            (t
-             (return)))
-      (incf y))
-    (charms/ll:wmove (window-win window)
-                     cury
-                     curx)))
+  (disp-lines (window-display window)
+              (window-buffer window)
+              (window-vtop-charpos window)
+              (window-vtop-linum window)
+              (window-current-charpos window)
+              (window-current-linum window)))
 
 (defun window-refresh-separator (window)
   (charms/ll:attron charms/ll:a_reverse)

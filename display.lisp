@@ -4,16 +4,13 @@
 
 (defstruct (display (:constructor %make-display))
   screen
-  height
   lines
   )
 
 (defun make-display (height)
-  (%make-display :height height
-                 :lines (make-array height :initial-element nil)))
+  (%make-display :lines (make-array height :initial-element nil)))
 
 (defun disp-set-height (display height)
-  (setf (display-height display) height)
   (setf (display-lines display)
         (make-array height :initial-element nil)))
 
@@ -104,21 +101,21 @@
                                       end-linum
                                       nil)))))
 
-(defun disp-reset-lines (buffer disp-lines start-linum nlines)
+(defun disp-reset-lines (disp-lines buffer start-linum)
   (buffer-update-mark-overlay buffer)
-  (let ((end-linum (+ start-linum nlines))
-        (disp-nlines 0))
+  (let ((end-linum (+ start-linum (length disp-lines)))
+        (disp-index 0))
     (do ((line (buffer-get-line buffer start-linum)
                (line-next line))
          (i 0 (1+ i)))
         ((or (null line)
-             (>= i nlines)))
-      (incf disp-nlines)
+             (>= i (length disp-lines))))
+      (incf disp-index)
       (setf (aref disp-lines i)
             (copy-fatstring (line-fatstr line))))
     (loop
-      for i from disp-nlines below nlines
-      do (setf (aref disp-lines i) nil))
+      :for i :from disp-index :below (length disp-lines)
+      :do (setf (aref disp-lines i) nil))
     (display-lines-set-overlays disp-lines
                                 (buffer-overlays buffer)
                                 start-linum
@@ -126,5 +123,5 @@
     disp-lines))
 
 (defun disp-lines (display buffer start-linum)
-  (disp-reset-lines buffer (display-lines display) start-linum (display-height display))
+  (disp-reset-lines (display-lines display) buffer start-linum)
   (display-lines display))

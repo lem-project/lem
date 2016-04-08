@@ -85,7 +85,6 @@
   vtop-linum
   vtop-charpos
   point-marker
-  wrap-ylist
   redraw-flag
   delete-hook
   parameters)
@@ -104,8 +103,7 @@
                         :buffer buffer
                         :disp-lines (make-array (1- winheight) :initial-element nil)
                         :vtop-linum 1
-                        :vtop-charpos 0
-                        :wrap-ylist nil)))
+                        :vtop-charpos 0)))
     (charms/ll:keypad (window-win window) 1)
     (setf (window-point-marker window)
           (make-marker buffer (make-point 1 0)))
@@ -503,7 +501,6 @@
                (window-print-line window y str :string-start start :string-end i)
                (window-print-line window y *wrapping-fatstring* :start-x (1- winwidth))
                (incf y)
-               (push y (window-wrap-ylist window))
                (setq start i))))
   (values curx cury y))
 
@@ -517,7 +514,6 @@
         (cury (window-cursor-y-not-wrapping window))
         (refresh-line
          (get-window-refresh-line-function window)))
-    (setf (window-wrap-ylist window) nil)
     (loop
       :with y := 0
       :for str :across (buffer-display-lines
@@ -534,8 +530,6 @@
             (t
              (return)))
       (incf y))
-    (setf (window-wrap-ylist window)
-          (nreverse (window-wrap-ylist window)))
     (charms/ll:wmove (window-win window)
                      cury
                      curx)))

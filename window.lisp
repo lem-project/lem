@@ -75,7 +75,6 @@
 (defvar *current-window*)
 
 (define-class window () (current-window)
-  win
   height
   width
   y
@@ -92,22 +91,28 @@
 (defun window-p (x)
   (typep x 'window))
 
-(defun make-window (buffer winheight winwidth y x)
-  (let ((window
-         (make-instance 'window
-                        :win (charms/ll:newwin winheight winwidth y x)
-                        :height winheight
-                        :width winwidth
-                        :y y
-                        :x x
-                        :buffer buffer
-                        :display (make-display winwidth (1- winheight))
-                        :vtop-linum 1
-                        :vtop-charpos 0)))
-    (setf (display-screen (window-display window)) (window-win window)) ;!!!
+(defun make-window (buffer height width y x)
+  (let* ((screen
+          (charms/ll:newwin height width y x))
+         (window
+          (make-instance 'window
+                         :height height
+                         :width width
+                         :y y
+                         :x x
+                         :buffer buffer
+                         :display (make-display screen width (1- height))
+                         :vtop-linum 1
+                         :vtop-charpos 0)))
     (setf (window-point-marker window)
           (make-marker buffer (make-point 1 0)))
     window))
+
+(defun window-win (&optional (window (current-window)))
+  (display-screen (window-display window)))
+
+(defun (setf window-win) (new-win &optional (window (current-window)))
+  (setf (display-screen (window-display window)) new-win))
 
 (defun window-point (&optional (window (current-window)))
   (marker-point (window-point-marker window)))

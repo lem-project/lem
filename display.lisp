@@ -5,11 +5,11 @@
 (defstruct (display (:constructor %make-display))
   screen
   lines
-  width
-  )
+  width)
 
-(defun make-display (width height)
-  (%make-display :width width
+(defun make-display (screen width height)
+  (%make-display :screen screen
+                 :width width
                  :lines (make-array height :initial-element nil)))
 
 (defun display-height (display)

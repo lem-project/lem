@@ -58,48 +58,48 @@
                          0
                          end-charpos))
 
-(defun display-lines-set-overlays (disp-lines overlays start-linum end-linum)
+(defun disp-set-overlays (disp-lines overlays start-linum end-linum)
   (loop
-    for overlay in overlays
-    for start = (overlay-start overlay)
-    for end = (overlay-end overlay)
-    do (cond ((and (= (point-linum start) (point-linum end))
-                   (<= start-linum (point-linum start) (1- end-linum)))
-              (set-attr-display-line disp-lines
-                                     (overlay-attr overlay)
-                                     start-linum
-                                     (point-linum start)
-                                     (point-charpos start)
-                                     (point-charpos end)))
-             ((and (<= start-linum (point-linum start))
-                   (< (point-linum end) end-linum))
-              (set-attr-display-lines disp-lines
+    :for overlay :in overlays
+    :for start := (overlay-start overlay)
+    :for end := (overlay-end overlay)
+    :do (cond ((and (= (point-linum start) (point-linum end))
+                    (<= start-linum (point-linum start) (1- end-linum)))
+               (set-attr-display-line disp-lines
                                       (overlay-attr overlay)
                                       start-linum
                                       (point-linum start)
                                       (point-charpos start)
-                                      (point-linum end)
                                       (point-charpos end)))
-             ((<= (point-linum start)
-                  start-linum
-                  (point-linum end)
-                  end-linum)
-              (set-attr-display-lines disp-lines
-                                      (overlay-attr overlay)
-                                      start-linum
-                                      start-linum
-                                      0
-                                      (point-linum end)
-                                      (point-charpos end)))
-             ((<= start-linum
-                  (point-linum start))
-              (set-attr-display-lines disp-lines
-                                      (overlay-attr overlay)
-                                      start-linum
-                                      (point-linum start)
-                                      (point-charpos start)
-                                      end-linum
-                                      nil)))))
+              ((and (<= start-linum (point-linum start))
+                    (< (point-linum end) end-linum))
+               (set-attr-display-lines disp-lines
+                                       (overlay-attr overlay)
+                                       start-linum
+                                       (point-linum start)
+                                       (point-charpos start)
+                                       (point-linum end)
+                                       (point-charpos end)))
+              ((<= (point-linum start)
+                   start-linum
+                   (point-linum end)
+                   end-linum)
+               (set-attr-display-lines disp-lines
+                                       (overlay-attr overlay)
+                                       start-linum
+                                       start-linum
+                                       0
+                                       (point-linum end)
+                                       (point-charpos end)))
+              ((<= start-linum
+                   (point-linum start))
+               (set-attr-display-lines disp-lines
+                                       (overlay-attr overlay)
+                                       start-linum
+                                       (point-linum start)
+                                       (point-charpos start)
+                                       end-linum
+                                       nil)))))
 
 (defun disp-reset-lines (disp-lines buffer start-linum)
   (buffer-update-mark-overlay buffer)
@@ -107,18 +107,17 @@
         (disp-index 0))
     (loop
       :for linum :from start-linum :to (buffer-nlines buffer)
-      :while (< disp-index (length disp-lines))
-      :do
+      :while (< disp-index (length disp-lines)) :do
       (setf (aref disp-lines disp-index)
             (copy-fatstring (buffer-line-fatstring buffer linum)))
       (incf disp-index))
     (loop
       :for i :from disp-index :below (length disp-lines)
       :do (setf (aref disp-lines i) nil))
-    (display-lines-set-overlays disp-lines
-                                (buffer-overlays buffer)
-                                start-linum
-                                end-linum)
+    (disp-set-overlays disp-lines
+                       (buffer-overlays buffer)
+                       start-linum
+                       end-linum)
     disp-lines))
 
 (defun disp-lines (display buffer start-linum)

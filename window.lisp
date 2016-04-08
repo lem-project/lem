@@ -81,6 +81,7 @@
   y
   x
   buffer
+  display
   disp-lines
   vtop-linum
   vtop-charpos
@@ -101,7 +102,7 @@
                         :y y
                         :x x
                         :buffer buffer
-                        :disp-lines (make-array (1- winheight) :initial-element nil)
+                        :display (make-display (1- winheight))
                         :vtop-linum 1
                         :vtop-charpos 0)))
     (charms/ll:keypad (window-win window) 1)
@@ -516,11 +517,9 @@
          (get-window-refresh-line-function window)))
     (loop
       :with y := 0
-      :for str :across (buffer-display-lines
-                        (window-buffer window)
-                        (window-disp-lines window)
-                        (window-vtop-linum window)
-                        (1- (window-height window)))
+      :for str :across (disp-lines (window-display window)
+                                   (window-buffer window)
+                                   (window-vtop-linum window))
       :while (< y (1- (window-height window))) :do
       (cond (str
              (check-type str fatstring)
@@ -711,9 +710,8 @@
   (charms/ll:wresize (window-win window) winheight winwidth)
   (setf (window-height window) winheight)
   (setf (window-width window) winwidth)
-  (setf (window-disp-lines window)
-        (make-array (1- winheight)
-                    :initial-element nil)))
+  (disp-set-height (window-display window)
+                   (1- winheight)))
 
 (defun window-move (window dy dx)
   (window-set-pos window

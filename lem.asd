@@ -39,6 +39,7 @@
                         (:file "buffers")
                         (:file "bufed")
                         (:file "process")
+                        (:file "display")
                         (:file "window")
                         (:file "file")
                         (:file "word")

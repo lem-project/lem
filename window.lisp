@@ -422,61 +422,6 @@
   (+ (window-cursor-y-not-wrapping window)
      (window-wrapping-offset window)))
 
-(defun window-print-line (window y str &key (start-x 0) (string-start 0) string-end)
-  (check-type str fatstring)
-  (loop
-    :with x := start-x :and win := (window-win window) :and ctrl-attr := (get-attr :red)
-    :for i :from string-start :below (or string-end (fat-length str))
-    :do (multiple-value-bind (char attr)
-            (fat-char str i)
-          (when (ctrl-p char)
-            (setq attr ctrl-attr))
-          (charms/ll:wattron win attr)
-          (charms/ll:mvwaddstr win y x (string char))
-          (charms/ll:wattroff win attr)
-          (setq x (char-width char x)))))
-
-(defun window-refresh-line (window curx cury y str)
-  (check-type str fatstring)
-  (when (= cury y)
-    (setq curx (str-width (fat-string str) 0 (window-current-charpos window))))
-  (let ((width (str-width (fat-string str)))
-        (cols (window-width window)))
-    (cond
-     ((< width (window-width window))
-      nil)
-     ((or (/= cury y)
-          (< curx (1- cols)))
-      (let ((i (wide-index (fat-string str) (1- cols))))
-        (setq str
-              (if (<= cols (str-width (fat-string str) 0 i))
-                  (fat-concat (fat-substring str 0 (1- i)) " $")
-                  (fat-concat (fat-substring str 0 i) "$")))))
-     ((< (window-current-charpos window) (fat-length str))
-      (let* ((start (wide-index (fat-string str) (- curx cols -3)))
-             (end (window-current-charpos window))
-             (substr (fat-substring str start end)))
-        (setq curx (- cols 2))
-        (if (wide-char-p (fat-char substr (- (fat-length substr) 1)))
-            (progn
-              (setq str
-                    (fat-concat "$"
-                                (fat-substring
-                                 substr
-                                 0 (1- (fat-length substr)))
-                                " $"))
-              (decf curx))
-            (setq str (fat-concat "$" substr "$")))))
-     (t
-      (let ((start (- curx cols -2)))
-        (setq str
-              (fat-concat "$"
-                          (fat-substring str
-                                         (wide-index (fat-string str) start)))))
-      (setq curx (- cols 1))))
-    (window-print-line window y str))
-  (values curx cury y))
-
 (defun window-refresh-lines (window)
   (disp-lines (window-display window)
               (window-buffer window)

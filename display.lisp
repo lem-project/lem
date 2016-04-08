@@ -165,16 +165,56 @@
                    (setq start i))))
   (values curx cury y))
 
+(defun disp-line (display start-charpos curx cury pos-x y str)
+  (declare (ignore start-charpos))
+  (check-type str fatstring)
+  (when (= cury y)
+    (setq curx (str-width (fat-string str) 0 pos-x)))
+  (let ((width (str-width (fat-string str)))
+        (cols (display-width display)))
+    (cond
+      ((< width (display-width display))
+       nil)
+      ((or (/= cury y)
+           (< curx (1- cols)))
+       (let ((i (wide-index (fat-string str) (1- cols))))
+         (setq str
+               (if (<= cols (str-width (fat-string str) 0 i))
+                   (fat-concat (fat-substring str 0 (1- i)) " $")
+                   (fat-concat (fat-substring str 0 i) "$")))))
+      ((< pos-x (fat-length str))
+       (let* ((start (wide-index (fat-string str) (- curx cols -3)))
+              (end pos-x)
+              (substr (fat-substring str start end)))
+         (setq curx (- cols 2))
+         (if (wide-char-p (fat-char substr (- (fat-length substr) 1)))
+             (progn
+               (setq str
+                     (fat-concat "$"
+                                 (fat-substring
+                                  substr
+                                  0 (1- (fat-length substr)))
+                                 " $"))
+               (decf curx))
+             (setq str (fat-concat "$" substr "$")))))
+      (t
+       (let ((start (- curx cols -2)))
+         (setq str
+               (fat-concat "$"
+                           (fat-substring str
+                                          (wide-index (fat-string str) start)))))
+       (setq curx (- cols 1))))
+    (disp-print-line display y str))
+  (values curx cury y))
+
 (defun disp-lines (display buffer start-charpos start-linum pos-x pos-y)
   (disp-reset-lines (display-lines display) buffer start-linum)
   (let ((curx 0)
         (cury (- pos-y start-linum))
         (disp-line-fun
-          #'disp-line-wrapping
-          ;; (if (buffer-truncate-lines buffer)
-          ;;     #'disp-line-wrapping
-          ;;     #'disp-line)
-          ))
+          (if (buffer-truncate-lines buffer)
+              #'disp-line-wrapping
+              #'disp-line)))
     (loop
       :with y := 0
       :for str :across (display-lines display)

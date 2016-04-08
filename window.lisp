@@ -82,7 +82,6 @@
   x
   buffer
   display
-  disp-lines
   vtop-linum
   vtop-charpos
   point-marker

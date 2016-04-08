@@ -105,14 +105,13 @@
   (buffer-update-mark-overlay buffer)
   (let ((end-linum (+ start-linum (length disp-lines)))
         (disp-index 0))
-    (do ((line (buffer-get-line buffer start-linum)
-               (line-next line))
-         (i 0 (1+ i)))
-        ((or (null line)
-             (>= i (length disp-lines))))
-      (incf disp-index)
-      (setf (aref disp-lines i)
-            (copy-fatstring (line-fatstr line))))
+    (loop
+      :for linum :from start-linum :to (buffer-nlines buffer)
+      :while (< disp-index (length disp-lines))
+      :do
+      (setf (aref disp-lines disp-index)
+            (copy-fatstring (buffer-line-fatstring buffer linum)))
+      (incf disp-index))
     (loop
       :for i :from disp-index :below (length disp-lines)
       :do (setf (aref disp-lines i) nil))

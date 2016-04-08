@@ -266,22 +266,6 @@
     (setf (buffer-mark-p buffer) nil)
     (delete-overlay (buffer-mark-overlay buffer))))
 
-(defun buffer-update-mark-overlay (buffer)
-  (when (buffer-mark-p buffer)
-    (let (start
-          end
-          (mark-point (marker-point (buffer-mark-marker buffer)))
-          (cur-point (current-point)))
-      (if (point< mark-point cur-point)
-          (setq start mark-point
-                end cur-point)
-          (setq start cur-point
-                end mark-point))
-      (when (buffer-mark-overlay buffer)
-        (delete-overlay (buffer-mark-overlay buffer)))
-      (setf (buffer-mark-overlay buffer)
-            (make-overlay start end :attr (make-attr :color :blue :reverse-p t))))))
-
 (defun %buffer-get-line (buffer linum)
   (cond
    ((= linum (buffer-cache-linum buffer))
@@ -466,6 +450,22 @@
                                       (point-charpos start)
                                       end-linum
                                       nil)))))
+
+(defun buffer-update-mark-overlay (buffer)
+  (when (buffer-mark-p buffer)
+    (let (start
+          end
+          (mark-point (marker-point (buffer-mark-marker buffer)))
+          (cur-point (current-point)))
+      (if (point< mark-point cur-point)
+          (setq start mark-point
+                end cur-point)
+          (setq start cur-point
+                end mark-point))
+      (when (buffer-mark-overlay buffer)
+        (delete-overlay (buffer-mark-overlay buffer)))
+      (setf (buffer-mark-overlay buffer)
+            (make-overlay start end :attr (make-attr :color :blue :reverse-p t))))))
 
 (defun buffer-display-lines (buffer disp-lines start-linum nlines)
   (buffer-update-mark-overlay buffer)

@@ -105,7 +105,6 @@
                         :vtop-linum 1
                         :vtop-charpos 0)))
     (setf (display-screen (window-display window)) (window-win window)) ;!!!
-    (charms/ll:keypad (window-win window) 1)
     (setf (window-point-marker window)
           (make-marker buffer (make-point 1 0)))
     window))

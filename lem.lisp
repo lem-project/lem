@@ -43,7 +43,7 @@
 (defun getch (&optional (abort-jump t))
   (let* ((code (cond ((null *input-queue*)
                       (loop
-                        :for code := (charms/ll:wgetch (window-win))
+                        :for code := (charms/ll:getch)
                         :while (= -1 code)
                         :finally (return code)))
                      (t
@@ -393,17 +393,17 @@
   (when (null *input-queue*)
     (run-hooks 'idle-hook)
     (cond ((exist-running-timer-p)
-           (charms/ll:wtimeout (window-win) 20)
+           (charms/ll:timeout 20)
            (unwind-protect
              (loop
-               (let ((code (charms/ll:wgetch (window-win))))
+               (let ((code (charms/ll:getch)))
                  (cond ((= code -1)
                         (when (update-timer)
                           (window-maybe-update)))
                        (t
                         (charms/ll:ungetch code)
                         (return)))))
-             (charms/ll:wtimeout (window-win) -1))))))
+             (charms/ll:timeout -1))))))
 
 (defun lem-main ()
   (flet ((body ()
@@ -432,6 +432,7 @@
   (raw)
   (charms/ll:nonl)
   (charms/ll:refresh)
+  (charms/ll:keypad charms/ll:*stdscr* 1)
   (setq *running-p* t)
   (cond ((not *initialized-p*)
          (setq *initialized-p* t)
@@ -445,8 +446,7 @@
                  (charms/ll:newwin (window-height window)
                                    (window-width window)
                                    (window-y window)
-                                   (window-x window)))
-           (charms/ll:keypad (window-win window) 1))))
+                                   (window-x window))))))
   (dolist (arg args)
     (find-file arg)))
 

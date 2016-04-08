@@ -108,10 +108,10 @@
           (make-marker buffer (make-point 1 0)))
     window))
 
-(defun window-win (&optional (window (current-window)))
+(defun window-screen (window)
   (display-screen (window-display window)))
 
-(defun (setf window-win) (new-win &optional (window (current-window)))
+(defun (setf window-screen) (new-win window)
   (setf (display-screen (window-display window)) new-win))
 
 (defun window-point (&optional (window (current-window)))
@@ -252,7 +252,7 @@
     (resize-screen))
   (adjust-screen-size)
   (do-window-tree (window *window-tree*)
-    (charms/ll:clearok (window-win window) 1))
+    (charms/ll:clearok (window-screen window) 1))
   (window-recenter (current-window))
   (syntax-scan-window (current-window))
   (window-update-all)
@@ -383,13 +383,13 @@
          (if (eq window (current-window))
              (get-attr :modeline)
              (get-attr :modeline-inactive))))
-    (charms/ll:wattron (window-win window) attr)
+    (charms/ll:wattron (window-screen window) attr)
     (let ((modeline-str (modeline-string window)))
-      (charms/ll:mvwaddstr (window-win window)
+      (charms/ll:mvwaddstr (window-screen window)
                            (1- (window-height window))
                            0
                            modeline-str))
-    (charms/ll:wattroff (window-win window)
+    (charms/ll:wattroff (window-screen window)
                         attr)))
 
 (defun map-wrapping-line (string winwidth fn)
@@ -448,7 +448,7 @@
   (window-refresh-modeline window)
   (window-refresh-lines window)
   (window-refresh-separator window)
-  (charms/ll:wnoutrefresh (window-win window)))
+  (charms/ll:wnoutrefresh (window-screen window)))
 
 (defun window-offset-view (window)
   (cond ((< (window-current-linum window)
@@ -477,7 +477,7 @@
    ((minibuffer-window-active-p)
     (minibuf-window-update))
    (t
-    (charms/ll:werase (window-win window))
+    (charms/ll:werase (window-screen window))
     (window-adjust-view window)
     (window-refresh window)
     (when update-display-p
@@ -603,12 +603,12 @@
   t)
 
 (defun window-set-pos (window y x)
-  (charms/ll:mvwin (window-win window) y x)
+  (charms/ll:mvwin (window-screen window) y x)
   (setf (window-y window) y)
   (setf (window-x window) x))
 
 (defun window-set-size (window winheight winwidth)
-  (charms/ll:wresize (window-win window) winheight winwidth)
+  (charms/ll:wresize (window-screen window) winheight winwidth)
   (setf (window-height window) winheight)
   (setf (window-width window) winwidth)
   (disp-set-size (window-display window)
@@ -629,7 +629,7 @@
 (define-command delete-other-windows () ()
   (do-window-tree (win *window-tree*)
     (unless (eq win (current-window))
-      (charms/ll:delwin (window-win win))))
+      (charms/ll:delwin (window-screen win))))
   (setq *window-tree* (current-window))
   (window-set-pos (current-window) 0 0)
   (window-set-size (current-window)
@@ -698,7 +698,7 @@
           (funcall setter2 (funcall another-getter)))))
   (when (window-delete-hook window)
     (funcall (window-delete-hook window)))
-  (charms/ll:delwin (window-win window))
+  (charms/ll:delwin (window-screen window))
   t)
 
 (define-key *global-keymap* (kbd "C-x 0") 'delete-current-window)

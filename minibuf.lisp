@@ -52,24 +52,24 @@
   (window-set-size (minibuffer-window)
                    1
                    charms/ll:*cols*)
-  (charms/ll:werase (window-win (minibuffer-window)))
-  (charms/ll:wrefresh (window-win (minibuffer-window))))
+  (charms/ll:werase (window-screen (minibuffer-window)))
+  (charms/ll:wrefresh (window-screen (minibuffer-window))))
 
 (defun minibuf-clear ()
   (when *mb-print-flag*
-    (charms/ll:werase (window-win (minibuffer-window)))
-    (charms/ll:wrefresh (window-win (minibuffer-window)))
+    (charms/ll:werase (window-screen (minibuffer-window)))
+    (charms/ll:wrefresh (window-screen (minibuffer-window)))
     (setq *mb-print-flag* nil)))
 
 (defun minibuf-print (msg)
   (setq *mb-print-flag* t)
-  (charms/ll:werase (window-win (minibuffer-window)))
+  (charms/ll:werase (window-screen (minibuffer-window)))
   (charms/ll:mvwaddstr
-   (window-win (minibuffer-window))
+   (window-screen (minibuffer-window))
    0
    0
    (replace-string (string #\newline) "<NL>" msg))
-  (charms/ll:wrefresh (window-win (minibuffer-window))))
+  (charms/ll:wrefresh (window-screen (minibuffer-window))))
 
 (defun minibuf-print-sit-for (msg seconds)
   (minibuf-print msg)
@@ -174,7 +174,7 @@
 (defun minibuf-read-line-refresh (prompt)
   (minibuf-print (concatenate 'string prompt (minibuf-get-line)))
   (charms/ll:wmove
-   (window-win (minibuffer-window))
+   (window-screen (minibuffer-window))
    0
    (+ (multiple-value-bind (strings len)
           (split-string prompt #\newline)
@@ -191,7 +191,7 @@
                            (minibuf-point-linum))
        0
        (minibuf-point-charpos))))
-  (charms/ll:wrefresh (window-win (minibuffer-window))))
+  (charms/ll:wrefresh (window-screen (minibuffer-window))))
 
 (defun minibuf-window-update ()
   (minibuf-read-line-refresh *minibuf-read-line-prompt*))

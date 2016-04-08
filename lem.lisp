@@ -442,7 +442,7 @@
            (load-init-file)))
         (t
          (dolist (window (cons (minibuffer-window) (window-list)))
-           (setf (window-win window)
+           (setf (window-screen window)
                  (charms/ll:newwin (window-height window)
                                    (window-width window)
                                    (window-y window)
@@ -452,10 +452,10 @@
 
 (defun lem-finallize ()
   (dolist (window (cons (minibuffer-window) (window-list)))
-    (charms/ll:delwin (window-win window)))
+    (charms/ll:delwin (window-screen window)))
   (charms/ll:endwin)
   (dolist (window (cons (minibuffer-window) (window-list)))
-    (charms/ll:delscreen (window-win window)))
+    (charms/ll:delscreen (window-screen window)))
   (charms/ll:delscreen charms/ll:*stdscr*)
   (setq *running-p* nil))
 

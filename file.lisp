@@ -171,7 +171,7 @@
         (set-buffer buffer)
         (when filename
           (insert-file-contents filename)
-          (unmark-buffer))
+          (buffer-unmark (current-buffer)))
         (buffer-enable-undo buffer))))
   (prepare-auto-mode)
   (scan-file-property-list)
@@ -241,7 +241,7 @@
                            :if-exists :supersede
                            :if-does-not-exist :create)
         (f out :lf)))))
-  (unmark-buffer))
+  (buffer-unmark (current-buffer)))
 
 (defun save-file-internal (buffer)
   (scan-file-property-list)

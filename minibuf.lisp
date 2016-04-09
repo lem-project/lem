@@ -53,12 +53,12 @@
                    1
                    charms/ll:*cols*)
   (charms/ll:werase (window-screen (minibuffer-window)))
-  (charms/ll:wrefresh (window-screen (minibuffer-window))))
+  (charms/ll:wnoutrefresh (window-screen (minibuffer-window))))
 
 (defun minibuf-clear ()
   (when *mb-print-flag*
     (charms/ll:werase (window-screen (minibuffer-window)))
-    (charms/ll:wrefresh (window-screen (minibuffer-window)))
+    (charms/ll:wnoutrefresh (window-screen (minibuffer-window)))
     (setq *mb-print-flag* nil)))
 
 (defun minibuf-print (msg)
@@ -69,7 +69,7 @@
    0
    0
    (replace-string (string #\newline) "<NL>" msg))
-  (charms/ll:wrefresh (window-screen (minibuffer-window))))
+  (charms/ll:wnoutrefresh (window-screen (minibuffer-window))))
 
 (defun minibuf-print-sit-for (msg seconds)
   (minibuf-print msg)

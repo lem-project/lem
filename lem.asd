@@ -27,7 +27,7 @@
                         (:file "misc")
                         (:file "marker")
                         (:file "keymap")
-                        (:file "command")
+                        (:file "defcommand")
                         (:file "comp")
                         (:file "buffer")
                         (:file "syntax")

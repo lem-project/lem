@@ -156,7 +156,7 @@
                           (incf cury))
                          ((= y cury)
                           (let ((len (str-width (fat-string str) start i)))
-                            (when (< len curx)
+                            (when (<= len curx)
                               (decf curx len)
                               (incf cury)))))
                    (disp-print-line display y str :string-start start :string-end i)

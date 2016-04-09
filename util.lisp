@@ -11,6 +11,7 @@
    :join
    :replace-string
    :random-range
+   :temp-file-name
    :safe-aref
    :make-history
    :add-history
@@ -78,6 +79,23 @@
 
 (defun random-range (min max)
   (+ min (random (1+ (- max min)))))
+
+(defun temp-file-name (prefix-name)
+  (labels ((random-name ()
+             (concatenate 'string
+                          "/tmp/"
+                          prefix-name
+                          "-"
+                          (coerce (loop repeat 8
+                                        collect (code-char
+                                                 (random-range
+                                                  (char-code #\a)
+                                                  (char-code #\z))))
+                                  'string))))
+    (loop
+      for name = (random-name)
+      while (cl-fad:file-exists-p name)
+      finally (return name))))
 
 (defun safe-aref (seq i &optional default)
   (if (< -1 i (length seq))

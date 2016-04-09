@@ -2,8 +2,7 @@
 
 (in-package :lem)
 
-(export '(temp-file-name
-          expand-file-name
+(export '(expand-file-name
           file-completion
           insert-file-contents
           find-file
@@ -14,24 +13,6 @@
           write-file
           insert-file
           save-some-buffers))
-
-(defun temp-file-name-1 ()
-  (concatenate 'string
-               "/tmp/"
-               *program-name*
-               "-"
-               (coerce (loop repeat 8
-                         collect (code-char
-                                  (random-range
-                                   (char-code #\a)
-                                   (char-code #\z))))
-                       'string)))
-
-(defun temp-file-name ()
-  (loop
-    for name = (temp-file-name-1)
-    while (cl-fad:file-exists-p name)
-    finally (return name)))
 
 (defun parse-pathname (pathname)
   (let ((path))

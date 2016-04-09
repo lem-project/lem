@@ -480,7 +480,7 @@
   (lem-1 args))
 
 (defun new-xterm (geometry foreground background title font)
-  (let ((tmpfile (temp-file-name))
+  (let ((tmpfile (temp-file-name *program-name*))
         tty-name)
     (uiop:run-program
      (concatenate 'string

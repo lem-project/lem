@@ -480,7 +480,7 @@
           (window-recenter window)
           (window-scroll window offset)))))
 
-(defun window-update (window &optional update-display-p)
+(defun window-update (window &optional (update-display-p t))
   (cond
    ((minibuffer-window-active-p)
     (minibuf-window-update))
@@ -494,8 +494,8 @@
 (defun window-update-all ()
   (do-window-tree (win *window-tree*)
     (unless (eq win (current-window))
-      (window-update win)))
-  (window-update (current-window))
+      (window-update win nil)))
+  (window-update (current-window) nil)
   (charms/ll:doupdate))
 
 (defun redraw-screen ()

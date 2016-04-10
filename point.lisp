@@ -82,10 +82,7 @@
   (make-point 1 0))
 
 (defun point-max (&optional (buffer (current-buffer)))
-  (save-excursion
-    (set-buffer buffer nil)
-    (end-of-buffer)
-    (current-point)))
+  (buffer-end-point buffer))
 
 (defun adjust-point (&optional (point (current-point)))
   (point-set point))

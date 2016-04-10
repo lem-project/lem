@@ -266,6 +266,10 @@
     (setf (buffer-mark-p buffer) nil)
     (delete-overlay (buffer-mark-overlay buffer))))
 
+(defun buffer-end-point (buffer)
+  (make-point (buffer-nlines buffer)
+              (line-length (buffer-tail-line buffer))))
+
 (defun %buffer-get-line (buffer linum)
   (cond
    ((= linum (buffer-cache-linum buffer))

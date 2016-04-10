@@ -237,10 +237,7 @@
 
 (define-key *global-keymap* (kbd "M->") 'end-of-buffer)
 (define-command end-of-buffer () ()
-  (goto-line (buffer-nlines (current-buffer)) t)
-  (set-charpos (buffer-line-length
-                (current-buffer)
-                (window-current-linum)))
+  (point-set (buffer-end-point (current-buffer)))
   t)
 
 (defun forward-line (&optional n)

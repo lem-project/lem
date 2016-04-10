@@ -72,37 +72,36 @@
   (setf (buffer-name) name)
   t)
 
-(defun head-line-p (linum)
-  (<= linum 1))
+(defun head-line-p ()
+  (<= (current-linum) 1))
 
-(defun tail-line-p (buffer linum)
-  (<= (buffer-nlines buffer) linum))
+(defun tail-line-p ()
+  (<= (buffer-nlines (current-buffer))
+      (current-linum)))
 
 (defun bolp ()
-  (zerop (window-current-charpos)))
+  (zerop (current-charpos)))
 
 (defun eolp ()
-  (= (window-current-charpos)
+  (= (current-charpos)
      (buffer-line-length
       (current-buffer)
-      (window-current-linum))))
+      (current-linum))))
 
 (defun bobp ()
-  (and (head-line-p (window-current-linum))
+  (and (head-line-p)
        (bolp)))
 
 (defun eobp ()
-  (and (tail-line-p
-        (current-buffer)
-        (window-current-linum))
+  (and (tail-line-p)
        (eolp)))
 
 (defun insert-char (c n)
   (dotimes (_ n t)
     (when (buffer-insert-char
            (current-buffer)
-           (window-current-linum)
-           (window-current-charpos)
+           (current-linum)
+           (current-charpos)
            c)
       (next-char 1))))
 
@@ -122,8 +121,8 @@
       ((null rest))
     (buffer-insert-line
      (current-buffer)
-     (window-current-linum)
-     (window-current-charpos)
+     (current-linum)
+     (current-charpos)
      (car rest))
     (next-char (length (car rest)))
     (when (cdr rest)
@@ -136,8 +135,8 @@
 (define-command insert-newline (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (buffer-insert-newline (current-buffer)
-                           (window-current-linum)
-                           (window-current-charpos))
+                           (current-linum)
+                           (current-charpos))
     (forward-line 1)))
 
 (define-key *global-keymap* (kbd "C-j") 'newline-and-indent)
@@ -159,19 +158,19 @@
 (define-key *global-keymap* (kbd "[dc]") 'delete-char)
 (define-command delete-char (&optional n does-not-kill-p) ("P")
   (cond
-   ((and n (minusp n))
-    (backward-delete-char (- n)))
-   ((eobp) nil)
-   (t
-    (let ((lines
-           (buffer-delete-char (current-buffer)
-                               (window-current-linum)
-                               (window-current-charpos)
-                               (or n 1))))
-      (when (and (not does-not-kill-p) n)
-        (with-kill ()
-          (kill-push lines)))
-      t))))
+    ((and n (minusp n))
+     (backward-delete-char (- n)))
+    ((eobp) nil)
+    (t
+     (let ((lines
+             (buffer-delete-char (current-buffer)
+                                 (current-linum)
+                                 (current-charpos)
+                                 (or n 1))))
+       (when (and (not does-not-kill-p) n)
+         (with-kill ()
+           (kill-push lines)))
+       t))))
 
 (define-key *global-keymap* (kbd "C-h") 'backward-delete-char)
 (define-key *global-keymap* (kbd "[backspace]") 'backward-delete-char)
@@ -189,20 +188,20 @@
 (define-key *global-keymap* (kbd "C-k") 'kill-line)
 (define-command kill-line (&optional n) ("P")
   (cond
-   ((null n)
-    (delete-char
-     (cond ((eolp) 1)
-           ((blank-line-p))
-           (t (- (buffer-line-length (current-buffer)
-                                     (window-current-linum))
-                 (window-current-charpos))))))
-   ((plusp n)
-    (dotimes (_ n)
-      (kill-line)))))
+    ((null n)
+     (delete-char
+      (cond ((eolp) 1)
+            ((blank-line-p))
+            (t (- (buffer-line-length (current-buffer)
+                                      (current-linum))
+                  (current-charpos))))))
+    ((plusp n)
+     (dotimes (_ n)
+       (kill-line)))))
 
 (defun set-charpos (pos)
   (assert (<= 0 pos))
-  (setf (window-current-charpos) pos))
+  (setf (current-charpos) pos))
 
 (define-key *global-keymap* (kbd "C-a") 'beginning-of-line)
 (define-key *global-keymap* (kbd "[home]") 'beginning-of-line)
@@ -215,7 +214,7 @@
 (define-command end-of-line () ()
   (set-charpos (buffer-line-length
                 (current-buffer)
-                (window-current-linum)))
+                (current-linum)))
   t)
 
 (define-key *global-keymap* (kbd "M-g") 'goto-line)
@@ -223,7 +222,7 @@
   (unless n
     (setq n (minibuf-read-number "Line to GOTO: ")))
   (when (< 0 n (1+ (buffer-nlines (current-buffer))))
-    (setf (window-current-linum) n)
+    (setf (current-linum) n)
     (beginning-of-line)
     (unless does-not-recenter-p
       (recenter))
@@ -244,36 +243,35 @@
   (beginning-of-line)
   (if (plusp n)
       (dotimes (_ n t)
-        (when (tail-line-p (current-buffer)
-                           (window-current-linum))
+        (when (tail-line-p)
           (end-of-line)
           (return))
-        (incf (window-current-linum)))
+        (incf (current-linum)))
       (dotimes (_ (- n) t)
-        (when (head-line-p (window-current-linum))
+        (when (head-line-p)
           (return))
-        (decf (window-current-linum)))))
+        (decf (current-linum)))))
 
 (let ((tmp-column))
   (defun %next-line-before ()
     (when-interrupted-flag :next-line
-      (setq tmp-column
-            (str-width (buffer-line-string
-                        (current-buffer)
-                        (window-current-linum))
-                       0
-                       (window-current-charpos)))))
+                           (setq tmp-column
+                                 (str-width (buffer-line-string
+                                             (current-buffer)
+                                             (current-linum))
+                                            0
+                                            (current-charpos)))))
   (defun %next-line-after ()
     (let ((pos (or (wide-index (buffer-line-string
                                 (current-buffer)
-                                (window-current-linum))
+                                (current-linum))
                                tmp-column)
                    (buffer-line-length
                     (current-buffer)
-                    (window-current-linum)))))
+                    (current-linum)))))
       (when pos
-        (setf (window-current-charpos) pos)))
-    (check-type (window-current-charpos)
+        (setf (current-charpos) pos)))
+    (check-type (current-charpos)
                 (integer 0 #.most-positive-fixnum))))
 
 (define-key *global-keymap* (kbd "C-n") 'next-line)
@@ -302,12 +300,12 @@
       (prev-char (- n))
       (dotimes (_ n t)
         (cond
-         ((eobp)
-          (return nil))
-         ((eolp)
-          (forward-line 1))
-         (t
-          (set-charpos (1+ (window-current-charpos))))))))
+          ((eobp)
+           (return nil))
+          ((eolp)
+           (forward-line 1))
+          (t
+           (set-charpos (1+ (current-charpos))))))))
 
 (define-key *global-keymap* (kbd "C-b") 'prev-char)
 (define-key *global-keymap* (kbd "[left]") 'prev-char)
@@ -316,13 +314,13 @@
       (next-char (- n))
       (dotimes (_ n t)
         (cond
-         ((bobp)
-          (return nil))
-         ((bolp)
-          (forward-line -1)
-          (end-of-line))
-         (t
-          (set-charpos (1- (window-current-charpos))))))))
+          ((bobp)
+           (return nil))
+          ((bolp)
+           (forward-line -1)
+           (end-of-line))
+          (t
+           (set-charpos (1- (current-charpos))))))))
 
 (define-key *global-keymap* (kbd "C-v") 'next-page)
 (define-key *global-keymap* (kbd "[npage]") 'next-page)
@@ -389,31 +387,31 @@
   (let ((buffer (current-buffer)))
     (when (buffer-check-marked buffer)
       (psetf
-       (window-current-linum) (marker-linum (buffer-mark-marker buffer))
-       (window-current-charpos) (marker-charpos (buffer-mark-marker buffer))
-       (marker-linum (buffer-mark-marker buffer)) (window-current-linum)
-       (marker-charpos (buffer-mark-marker buffer)) (window-current-charpos))
-      (assert (<= 0 (window-current-charpos)))
+       (current-linum) (marker-linum (buffer-mark-marker buffer))
+       (current-charpos) (marker-charpos (buffer-mark-marker buffer))
+       (marker-linum (buffer-mark-marker buffer)) (current-linum)
+       (marker-charpos (buffer-mark-marker buffer)) (current-charpos))
+      (assert (<= 0 (current-charpos)))
       t)))
 
 (defun following-char ()
   (buffer-get-char (current-buffer)
-                   (window-current-linum)
-                   (window-current-charpos)))
+                   (current-linum)
+                   (current-charpos)))
 
 (defun preceding-char ()
   (cond
-   ((bobp)
-    nil)
-   ((bolp)
-    (buffer-get-char (current-buffer)
-                     (1- (window-current-linum))
-                     (buffer-line-length (current-buffer)
-                                         (1- (window-current-linum)))))
-   (t
-    (buffer-get-char (current-buffer)
-                     (window-current-linum)
-                     (1- (window-current-charpos))))))
+    ((bobp)
+     nil)
+    ((bolp)
+     (buffer-get-char (current-buffer)
+                      (1- (current-linum))
+                      (buffer-line-length (current-buffer)
+                                          (1- (current-linum)))))
+    (t
+     (buffer-get-char (current-buffer)
+                      (current-linum)
+                      (1- (current-charpos))))))
 
 (defun char-after (&optional (n 0))
   (if (zerop n)
@@ -441,8 +439,8 @@
   (delete-char)
   (buffer-insert-char
    (current-buffer)
-   (window-current-linum)
-   (window-current-charpos)
+   (current-linum)
+   (current-charpos)
    c))
 
 (defun count-indent ()
@@ -487,8 +485,8 @@
                     (make-string (* n *tab-size*) :initial-element #\space))))
 
 (defun blank-line-p ()
-  (let ((string (buffer-line-string (current-buffer) (window-current-linum)))
-        (eof-p (buffer-end-line-p (current-buffer) (window-current-linum))))
+  (let ((string (buffer-line-string (current-buffer) (current-linum)))
+        (eof-p (buffer-end-line-p (current-buffer) (current-linum))))
     (when (string= "" (string-trim '(#\space #\tab) string))
       (+ (length string)
          (if eof-p 0 1)))))
@@ -539,17 +537,17 @@
           (delete-char 1 (not use-kill-ring))))))
 
 (macrolet ((def (name at-char step-char)
-                `(defun ,name (pred &optional not-p)
-                   (do ()
-                       ((not (if (if (or (functionp pred)
-                                         (symbolp pred))
-                                     (funcall pred (,at-char))
-                                     (find (,at-char) pred))
-                                 (not not-p)
-                                 not-p))
-                        t)
-                     (unless (,step-char)
-                       (return))))))
+             `(defun ,name (pred &optional not-p)
+                (do ()
+                    ((not (if (if (or (functionp pred)
+                                      (symbolp pred))
+                                  (funcall pred (,at-char))
+                                  (find (,at-char) pred))
+                              (not not-p)
+                              not-p))
+                     t)
+                  (unless (,step-char)
+                    (return))))))
   (def skip-chars-forward following-char next-char)
   (def skip-chars-backward preceding-char prev-char))
 
@@ -580,17 +578,17 @@
   (when (minusp column) (setq column 0))
   (let* ((old-column (current-column))
          (old-indent-string
-          (save-excursion
-           (region-string (progn (beginning-of-line) (current-point))
-                          (progn (back-to-indentation) (current-point)))))
+           (save-excursion
+            (region-string (progn (beginning-of-line) (current-point))
+                           (progn (back-to-indentation) (current-point)))))
          (new-indent-string
-          (if (get-bvar :indent-tabs-mode :default t)
-              (multiple-value-bind (div mod)
-                  (floor column *tab-size*)
-                (concatenate 'string
-                             (make-string div :initial-element #\tab)
-                             (make-string mod :initial-element #\space)))
-              (make-string column :initial-element #\space))))
+           (if (get-bvar :indent-tabs-mode :default t)
+               (multiple-value-bind (div mod)
+                   (floor column *tab-size*)
+                 (concatenate 'string
+                              (make-string div :initial-element #\tab)
+                              (make-string mod :initial-element #\space)))
+               (make-string column :initial-element #\space))))
     (cond ((string/= old-indent-string new-indent-string)
            (beginning-of-line)
            (delete-char (length old-indent-string) t)

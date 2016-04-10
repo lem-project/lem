@@ -128,7 +128,7 @@
     (when (cdr rest)
       (insert-newline 1))))
 
-(define-command insert-string (str) ("sInsert string: ")
+(defun insert-string (str)
   (insert-lines (split-string str #\newline)))
 
 (define-key *global-keymap* (kbd "C-m") 'insert-newline)

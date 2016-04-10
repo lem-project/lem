@@ -138,47 +138,41 @@
         (when (not (ppcre:scan "^\\s*$" str))
           (return-from scan-file-property-list))))))
 
-(defun file-open (path)
-  (check-switch-minibuffer-window)
-  (let ((name (file-namestring path))
-        (absolute-path (expand-file-name path)))
-    (when (and (string/= "" name)
-               (not (cl-fad:directory-exists-p absolute-path)))
-      (let* ((buffer (make-buffer name
-                                  :filename absolute-path
-                                  :enable-undo-p nil))
-             (filename (probe-file (buffer-filename buffer))))
-        (set-buffer buffer)
-        (when filename
-          (insert-file-contents (current-buffer) (point-min) filename)
-          (buffer-unmark (current-buffer)))
-        (buffer-enable-undo buffer))))
-  (prepare-auto-mode)
-  (scan-file-property-list)
-  (run-hooks 'find-file-hook)
-  t)
+(defun file-open-create-buffer (buffer-name filename)
+  (setf filename (expand-file-name filename))
+  (let ((buffer (make-buffer buffer-name
+                             :filename filename
+                             :enable-undo-p nil)))
+    (when (probe-file filename)
+      (insert-file-contents buffer
+                            (point-min buffer)
+                            filename)
+      (buffer-unmark buffer))
+    (buffer-enable-undo buffer)
+    buffer))
 
 (define-key *global-keymap* (kbd "C-x C-f") 'find-file)
 (define-command find-file (filename) ("FFind File: ")
   (check-switch-minibuffer-window)
-  (setq filename (expand-file-name filename))
-  (if (cl-fad:directory-exists-p filename)
-      (dired filename)
-      (let* ((name (file-namestring filename))
-             (dupbuf-p (find-if #'(lambda (b)
-                                    (and (not (equal filename (buffer-filename b)))
-                                         (equal name (buffer-name b))))
-                                *buffer-list*))
-             (buf (find-if #'(lambda (b)
-                               (equal filename (buffer-filename b)))
-                           *buffer-list*)))
-        (cond (buf (set-buffer buf))
-              (dupbuf-p
-               (let ((uniq-name (uniq-buffer-name name)))
-                 (file-open filename)
-                 (rename-buffer uniq-name)))
-              (t
-               (file-open filename))))))
+  (setf filename (expand-file-name filename))
+  (cond
+    ((cl-fad:directory-exists-p filename)
+     (dired filename))
+    ((dolist (buffer *buffer-list*)
+       (when (equal filename (buffer-filename buffer))
+         (set-buffer buffer)
+         (return t))))
+    (t
+     (set-buffer
+      (file-open-create-buffer
+       (if (get-buffer (file-namestring filename))
+           (uniq-buffer-name name)
+           (file-namestring filename))
+       filename))
+     (prepare-auto-mode)
+     (scan-file-property-list)
+     (run-hooks 'find-file-hook)
+     t)))
 
 (define-key *global-keymap* (kbd "C-x C-r") 'read-file)
 (define-command read-file (filename) ("FRead File: ")

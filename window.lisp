@@ -532,27 +532,28 @@
   (setf (window-redraw-flag) nil))
 
 (defun split-window-after (new-window split-type)
-  (window-set-size (current-window)
-                   (window-height)
-                   (window-width))
-  (setf (window-vtop-linum new-window)
-        (window-vtop-linum))
-  (setf (window-current-linum new-window)
-        (window-current-linum))
-  (setf (window-current-charpos new-window)
-        (window-current-charpos))
-  (multiple-value-bind (node getter setter)
-      (window-tree-parent *window-tree* (current-window))
-    (if (null node)
-        (setq *window-tree*
-              (make-window-node split-type
-                                (current-window)
-                                new-window))
-        (funcall setter
-                 (make-window-node split-type
-                                   (funcall getter)
-                                   new-window))))
-  t)
+  (let ((current-window (current-window)))
+    (window-set-size current-window
+                     (window-height)
+                     (window-width))
+    (setf (window-vtop-linum new-window)
+          (window-vtop-linum current-window))
+    (setf (window-current-linum new-window)
+          (window-current-linum current-window))
+    (setf (window-current-charpos new-window)
+          (window-current-charpos current-window))
+    (multiple-value-bind (node getter setter)
+        (window-tree-parent *window-tree* current-window)
+      (if (null node)
+          (setq *window-tree*
+                (make-window-node split-type
+                                  current-window
+                                  new-window))
+          (funcall setter
+                   (make-window-node split-type
+                                     (funcall getter)
+                                     new-window))))
+    t))
 
 (define-key *global-keymap* (kbd "C-x 2") 'split-window-vertically)
 (define-command split-window-vertically () ()

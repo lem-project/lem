@@ -77,13 +77,15 @@
    (next-char n)
    (current-point)))
 
-(defun point-min ()
+(defun point-min (&optional (buffer (current-buffer)))
+  (declare (ignore buffer))
   (make-point 1 0))
 
-(defun point-max ()
+(defun point-max (&optional (buffer (current-buffer)))
   (save-excursion
-   (end-of-buffer)
-   (current-point)))
+    (set-buffer buffer nil)
+    (end-of-buffer)
+    (current-point)))
 
 (defun adjust-point (&optional (point (current-point)))
   (point-set point))

@@ -75,21 +75,21 @@
   (minibuf-print msg)
   (sit-for seconds nil))
 
+(defun minibuf-read-char (prompt)
+  (setq *mb-print-flag* t)
+  (minibuf-print prompt)
+  (charms/ll:doupdate)
+  (getch))
+
 (defun minibuf-y-or-n-p (prompt)
   (setq *mb-print-flag* t)
   (do () (nil)
-    (minibuf-print (format nil "~a [y/n]? " prompt))
-    (let ((c (getch)))
+    (let ((c (minibuf-read-char (format nil "~a [y/n]? " prompt))))
       (cond
        ((char= #\y c)
         (return t))
        ((char= #\n c)
         (return nil))))))
-
-(defun minibuf-read-char (prompt)
-  (setq *mb-print-flag* t)
-  (minibuf-print prompt)
-  (getch))
 
 (define-key *minibuf-keymap* (kbd "C-j") 'minibuf-read-line-confirm)
 (define-key *minibuf-keymap* (kbd "C-m") 'minibuf-read-line-confirm)

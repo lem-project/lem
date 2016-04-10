@@ -574,36 +574,6 @@
   (skip-chars-forward #'(lambda (c) (member c '(#\space #\tab))))
   t)
 
-(defun indent-line (column)
-  (when (minusp column) (setq column 0))
-  (let* ((old-column (current-column))
-         (old-indent-string
-           (save-excursion
-            (region-string (progn (beginning-of-line) (current-point))
-                           (progn (back-to-indentation) (current-point)))))
-         (new-indent-string
-           (if (get-bvar :indent-tabs-mode :default t)
-               (multiple-value-bind (div mod)
-                   (floor column *tab-size*)
-                 (concatenate 'string
-                              (make-string div :initial-element #\tab)
-                              (make-string mod :initial-element #\space)))
-               (make-string column :initial-element #\space))))
-    (cond ((string/= old-indent-string new-indent-string)
-           (beginning-of-line)
-           (delete-char (length old-indent-string) t)
-           (insert-string new-indent-string)
-           (if (< old-column column)
-               (back-to-indentation)
-               (move-to-column
-                (max 0
-                     (+ old-column
-                        (- (str-width new-indent-string)
-                           (str-width old-indent-string)))))))
-          ((< old-column column)
-           (back-to-indentation)))
-    t))
-
 (define-key *global-keymap* (kbd "C-\\") 'undo)
 (define-command undo () ()
   (let ((point (buffer-undo (current-buffer))))

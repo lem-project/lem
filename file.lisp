@@ -163,12 +163,13 @@
          (set-buffer buffer)
          (return t))))
     (t
-     (set-buffer
-      (file-open-create-buffer
-       (if (get-buffer (file-namestring filename))
-           (uniq-buffer-name name)
-           (file-namestring filename))
-       filename))
+     (let ((name (file-namestring filename)))
+       (set-buffer
+        (file-open-create-buffer
+         (if (get-buffer name)
+             (uniq-buffer-name name)
+             name)
+         filename)))
      (prepare-auto-mode)
      (scan-file-property-list)
      (run-hooks 'find-file-hook)

@@ -75,30 +75,29 @@
     (values external-format
             end-of-line)))
 
-(defun insert-file-contents (filename)
-  (let ((buffer (current-buffer))
-        (point (current-point)))
-    (multiple-value-bind (external-format end-of-line)
-        (detect-external-format-from-file filename)
+(defun insert-file-contents (buffer point filename)
+  (multiple-value-bind (external-format end-of-line)
+      (detect-external-format-from-file filename)
+    (let ((output (make-buffer-output-stream buffer point nil)))
       (with-open-file (in filename :external-format external-format)
         (loop
           (multiple-value-bind (str eof-p)
               (read-line in nil)
-            (cond (eof-p
-                   (when str
-                     (insert-lines (list str)))
-                   (return))
-                  (t
-                   #+sbcl
-                   (when (and (eq end-of-line :crlf)
-                              (< 0 (length str)))
-                     (setq str (subseq str 0 (1- (length str)))))
-                   (insert-lines (list str))
-                   (insert-newline))))))
+            (cond
+              (eof-p
+               (when str
+                 (write-string str output))
+               (return))
+              (t
+               (let ((end nil))
+                 #+sbcl
+                 (when (and (eq end-of-line :crlf)
+                            (< 0 (length str)))
+                   (setf end (1- (length str))))
+                 (write-line str output :end end)))))))
       (setf (buffer-external-format buffer)
-            (cons external-format end-of-line)))
-    (point-set point)
-    t))
+            (cons external-format end-of-line))
+      (buffer-output-stream-point output))))
 
 (defun prepare-auto-mode ()
   (let* ((filename (file-namestring (buffer-filename)))
@@ -151,7 +150,7 @@
              (filename (probe-file (buffer-filename buffer))))
         (set-buffer buffer)
         (when filename
-          (insert-file-contents filename)
+          (insert-file-contents (current-buffer) (point-min) filename)
           (buffer-unmark (current-buffer)))
         (buffer-enable-undo buffer))))
   (prepare-auto-mode)
@@ -255,7 +254,10 @@
 
 (define-key *global-keymap* (kbd "C-x C-i") 'insert-file)
 (define-command insert-file (filename) ("fInsert file: ")
-  (insert-file-contents filename))
+  (point-set (insert-file-contents (current-buffer)
+                                   (current-point)
+                                   filename))
+  t)
 
 (define-key *global-keymap* (kbd "C-x s") 'save-some-buffers)
 (define-command save-some-buffers (&optional save-silently-p) ("P")

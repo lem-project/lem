@@ -7,6 +7,8 @@
           point-charpos
           with-points
           current-point
+          current-linum
+          current-charpos
           point-set
           point<
           point=
@@ -33,10 +35,22 @@
                  binds)
      ,@body))
 
+(defun current-linum ()
+  (window-current-linum))
+
+(defun (setf current-linum) (new-linum)
+  (setf (window-current-linum) new-linum))
+
+(defun current-charpos ()
+  (window-current-charpos))
+
+(defun (setf current-charpos) (new-charpos)
+  (setf (window-current-charpos) new-charpos))
+
 (defun current-point ()
   (make-point
-   (window-current-linum)
-   (window-current-charpos)))
+   (current-linum)
+   (current-charpos)))
 
 (defun point-set (point &optional (window (current-window)))
   (setf (window-current-linum window)

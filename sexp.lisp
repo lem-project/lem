@@ -297,9 +297,7 @@
     (or res
         (if no-errors
             nil
-            (progn
-              (minibuf-print "scan error")
-              nil)))))
+            (editor-error "scan error")))))
 
 (define-key *global-keymap* (kbd "M-C-b") 'backward-sexp)
 (define-command backward-sexp (&optional (n 1) no-errors) ("p")
@@ -312,7 +310,7 @@
       (unless (skip-list depth dir)
         (point-set point)
         (unless no-errors
-          (minibuf-print "scan error"))
+          (editor-error "scan error"))
         (return)))))
 
 (define-key *global-keymap* (kbd "M-C-n") 'forward-list)

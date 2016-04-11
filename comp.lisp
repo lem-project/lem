@@ -125,7 +125,7 @@
           (mapcan #'(lambda (buffer)
                       (unless (eq buffer (current-buffer))
                         (scan-buffer-words buffer word)))
-                  *buffer-list*))
+                  (buffer-list)))
    :test #'equal))
 
 (define-key *global-keymap* (kbd "M-/") 'abbrev)

@@ -21,8 +21,6 @@
 (defvar *program-name* "Lem")
 (defvar *debug-p* nil)
 
-(defvar *buffer-list* nil)
-
 (defvar *tab-size* 8)
 
 (defvar *enable-syntax-highlight* t)
@@ -88,7 +86,7 @@
     `(let ((,gpoint (current-point))
            (,gbuffer (current-buffer)))
        (unwind-protect (progn ,@body)
-         (cond ((find ,gbuffer *buffer-list*)
+         (cond ((find ,gbuffer (buffer-list))
                 (when (not (eq ,gbuffer (current-buffer)))
                   (set-buffer ,gbuffer nil))
                 (point-set ,gpoint))

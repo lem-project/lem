@@ -154,8 +154,7 @@
     (setf (buffer-markers buffer) nil)
     (setf (buffer-truncate-lines buffer) t)
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
-    (unless (ghost-buffer-p buffer)
-      (push buffer *buffer-list*))
+    (add-buffer buffer)
     buffer))
 
 (defun buffer-reset (buffer)

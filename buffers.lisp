@@ -21,6 +21,14 @@
           list-buffers
           get-buffer-window))
 
+(defvar *buffer-list* nil)
+
+(defun add-buffer (buffer)
+  (unless (ghost-buffer-p buffer)
+    (push buffer *buffer-list*)))
+
+(defun buffer-list () *buffer-list*)
+
 (defun current-buffer ()
   (window-buffer (current-window)))
 
@@ -41,7 +49,7 @@
              (char= #\* (aref name (1- (length name))))))))
 
 (defun filter-special-buffers ()
-  (remove-if #'special-buffer-p *buffer-list*))
+  (remove-if #'special-buffer-p (buffer-list)))
 
 (defun any-modified-buffer-p ()
   (find-if #'(lambda (buffer)
@@ -55,7 +63,7 @@
       (find-if #'(lambda (buffer)
                    (string= buffer-or-name
                             (buffer-name buffer)))
-               *buffer-list*)))
+               (buffer-list))))
 
 (defun get-buffer-create (name)
   (or (get-buffer name)
@@ -70,19 +78,19 @@
             (return name))))))
 
 (defun other-buffer ()
-  (let ((buffer-list *buffer-list*))
+  (let ((buffer-list (buffer-list)))
     (dolist (win (window-list))
       (setq buffer-list
             (remove (window-buffer win)
                     buffer-list)))
     (if (null buffer-list)
-        (car *buffer-list*)
+        (car (buffer-list))
         (car buffer-list))))
 
 (defun update-prev-buffer (buffer)
   (setq *buffer-list*
         (cons buffer
-              (delete buffer *buffer-list*))))
+              (delete buffer (buffer-list)))))
 
 (defun set-buffer (buffer &optional (update-prev-buffer-p t))
   (check-switch-minibuffer-window)
@@ -120,9 +128,9 @@
 (defun bury-buffer (buffer)
   (check-switch-minibuffer-window)
   (setq *buffer-list*
-        (append (delete buffer *buffer-list*)
+        (append (delete buffer (buffer-list))
                 (list buffer)))
-  (set-buffer (car *buffer-list*) nil))
+  (set-buffer (car (buffer-list)) nil))
 
 (define-key *global-keymap* (kbd "C-x b") 'select-buffer)
 (define-command select-buffer (name) ("BUse Buffer: ")
@@ -131,7 +139,7 @@
   t)
 
 (defun get-next-buffer (buffer)
-  (let* ((buffer-list (reverse *buffer-list*))
+  (let* ((buffer-list (reverse (buffer-list)))
          (res (member buffer buffer-list)))
     (if (cdr res)
         (cadr res)
@@ -140,12 +148,12 @@
 (define-key *global-keymap* (kbd "C-x k") 'kill-buffer)
 (define-command kill-buffer (buffer-or-name) ("bKill buffer: ")
   (let ((buffer (get-buffer buffer-or-name)))
-    (when (cdr *buffer-list*)
+    (when (cdr (buffer-list))
       (dolist (win (window-list))
         (when (eq buffer (window-buffer win))
           (with-current-window win
             (next-buffer))))
-      (setq *buffer-list* (delete buffer *buffer-list*))))
+      (setq *buffer-list* (delete buffer (buffer-list)))))
   t)
 
 (define-key *global-keymap* (kbd "C-x x") 'next-buffer)
@@ -168,12 +176,12 @@
                           (+ 3 (apply 'max
                                       (mapcar #'(lambda (b)
                                                   (length (buffer-name b)))
-                                              *buffer-list*))))
+                                              (buffer-list)))))
                          (max-filename-len
                           (apply 'max
                                  (mapcar #'(lambda (b)
                                              (length (buffer-filename b)))
-                                         *buffer-list*))))
+                                         (buffer-list)))))
                     (format out
                             (format nil "MOD ROL Buffer~~~dTFile~~%"
                                     (+ 8 max-name-len)))
@@ -181,7 +189,7 @@
                                         :initial-element #\-)
                            out)
                     (terpri out)
-                    (dolist (b *buffer-list*)
+                    (dolist (b (buffer-list))
                       (format out
                               (format nil " ~a   ~a  ~a~~~dT~a~~%"
                                       (if (buffer-modified-p b) "*" " ")

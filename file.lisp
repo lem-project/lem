@@ -158,7 +158,7 @@
   (cond
     ((cl-fad:directory-exists-p filename)
      (dired filename))
-    ((dolist (buffer *buffer-list*)
+    ((dolist (buffer (buffer-list))
        (when (equal filename (buffer-filename buffer))
          (set-buffer buffer)
          (return t))))
@@ -258,7 +258,7 @@
 (define-command save-some-buffers (&optional save-silently-p) ("P")
   (check-switch-minibuffer-window)
   (let ((curbuf (current-buffer)))
-    (dolist (buffer *buffer-list*)
+    (dolist (buffer (buffer-list))
       (when (and (buffer-modified-p buffer)
                  (buffer-filename buffer))
         (set-buffer buffer nil)

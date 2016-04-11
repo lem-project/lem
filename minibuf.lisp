@@ -260,7 +260,7 @@
 (defun minibuf-read-buffer (prompt &optional default existing)
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))
-  (let* ((buffer-names (mapcar 'buffer-name *buffer-list*))
+  (let* ((buffer-names (mapcar 'buffer-name (buffer-list)))
          (result (minibuf-read-line
                   prompt
                   ""

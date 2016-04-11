@@ -385,14 +385,14 @@
 (define-key *global-keymap* (kbd "C-x C-x") 'exchange-point-mark)
 (define-command exchange-point-mark () ()
   (let ((buffer (current-buffer)))
-    (when (buffer-check-marked buffer)
-      (psetf
-       (current-linum) (marker-linum (buffer-mark-marker buffer))
-       (current-charpos) (marker-charpos (buffer-mark-marker buffer))
-       (marker-linum (buffer-mark-marker buffer)) (current-linum)
-       (marker-charpos (buffer-mark-marker buffer)) (current-charpos))
-      (assert (<= 0 (current-charpos)))
-      t)))
+    (buffer-check-marked buffer)
+    (psetf
+     (current-linum) (marker-linum (buffer-mark-marker buffer))
+     (current-charpos) (marker-charpos (buffer-mark-marker buffer))
+     (marker-linum (buffer-mark-marker buffer)) (current-linum)
+     (marker-charpos (buffer-mark-marker buffer)) (current-charpos))
+    (assert (<= 0 (current-charpos)))
+    t))
 
 (defun following-char ()
   (buffer-get-char (current-buffer)

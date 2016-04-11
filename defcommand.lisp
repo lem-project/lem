@@ -22,15 +22,16 @@
       (nreverse acc)))
   (let ((garg (gensym "ARG")))
     (defun define-command-gen-args (name arg-descripters)
+      (declare (ignorable name))
       (cond
        ((string= "p" (car arg-descripters))
         `(list (or ,garg 1)))
        ((string= "P" (car arg-descripters))
         `(list ,garg))
        ((string= "r" (car arg-descripters))
-        `(if (buffer-check-marked (current-buffer))
-             (list (region-beginning) (region-end))
-             (return-from ,name nil)))
+        `(progn
+           (buffer-check-marked (current-buffer))
+           (list (region-beginning) (region-end))))
        (t
         (cons 'list
               (mapcar #'(lambda (arg-descripter)

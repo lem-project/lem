@@ -574,9 +574,8 @@
     (setf (marker-point marker) (make-point 1 0))))
 
 (defun buffer-check-marked (buffer)
-  (cond ((buffer-mark-marker buffer) t)
-        (t (minibuf-print "Not mark in this buffer")
-           nil)))
+  (unless (buffer-mark-marker buffer)
+    (editor-error "Not mark in this buffer")))
 
 (defun buffer-directory ()
   (if (buffer-filename)

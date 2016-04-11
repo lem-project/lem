@@ -64,7 +64,6 @@
   `(progn
      (push ',major-mode *mode-list*)
      (setf (mode-name ',major-mode) ,name)
-     (export '(,(symb major-mode "-HOOK")))
      ,@(cond (keymap
               `((defvar ,keymap (make-keymap))
                 (setf (mode-keymap ',major-mode) ,keymap)

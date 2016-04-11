@@ -25,6 +25,7 @@
 
 (defun add-buffer (buffer)
   (unless (ghost-buffer-p buffer)
+    (assert (not (get-buffer (buffer-name buffer))))
     (push buffer *buffer-list*)))
 
 (defun buffer-list () *buffer-list*)

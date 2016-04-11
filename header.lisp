@@ -9,9 +9,6 @@
           *last-input-key*
           *scroll-recenter-p*
           *auto-mode-alist*
-          set-attr
-          get-attr
-          make-attr
           define-continue-flag
           if-continue-flag
           when-interrupted-flag
@@ -39,29 +36,6 @@
 (defvar *scroll-recenter-p* t)
 
 (defvar *auto-mode-alist* nil)
-
-(defvar *attribute-name-table* (make-hash-table :test 'equal))
-
-(defun get-attr (name)
-  (gethash name *attribute-name-table*))
-
-(defun set-attr (name attr)
-  (unless (integerp attr)
-    (setq attr (get-attr name)))
-  (check-type attr integer)
-  (setf (gethash name *attribute-name-table*) attr))
-
-(defun make-attr (&key color reverse-p bold-p underline-p)
-  (logior (or (get-attr color) 0)
-          (if reverse-p
-              charms/ll:a_reverse
-              0)
-          (if bold-p
-              charms/ll:a_bold
-              0)
-          (if underline-p
-              charms/ll:a_underline
-              0)))
 
 (defvar *continue-command-flags*
   (list :next-line :kill :undo :abbrev :yank :completion))

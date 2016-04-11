@@ -18,6 +18,7 @@
                         (:file "package")
                         (:file "errors")
                         (:file "header")
+                        (:file "attribute")
                         (:file "wide")
                         (:file "key")
                         (:file "point")

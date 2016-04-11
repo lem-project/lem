@@ -14,7 +14,7 @@
 
 (define-major-mode python-mode nil
   (:name "python"
-   :keymap-var *python-mode-keymap*
+   :keymap *python-mode-keymap*
    :syntax-table *python-syntax-table*)
   (setf (get-bvar :enable-syntax-highlight) t))
 

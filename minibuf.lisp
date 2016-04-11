@@ -34,7 +34,7 @@
 
 (define-major-mode minibuffer-mode nil
   (:name "minibuffer"
-   :keymap-var *minibuf-keymap*))
+   :keymap *minibuf-keymap*))
 
 (defun minibuf-init ()
   (let* ((buffer (make-buffer " *minibuffer*"))

@@ -22,7 +22,7 @@
 
 (define-major-mode c-mode nil
   (:name "c"
-   :keymap-var *c-mode-keymap*
+   :keymap *c-mode-keymap*
    :syntax-table *c-syntax-table*)
   (setf (get-bvar :enable-syntax-highlight) t))
 

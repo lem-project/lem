@@ -8,7 +8,7 @@
 
 (define-major-mode dired-mode nil
   (:name "dired"
-   :keymap-var *dired-mode-keymap*))
+   :keymap *dired-mode-keymap*))
 
 (define-key *dired-mode-keymap* (kbd "n") 'next-line)
 (define-key *dired-mode-keymap* (kbd "p") 'prev-line)

@@ -245,7 +245,7 @@
 
 (define-major-mode lisp-mode prog-mode
   (:name "lisp"
-   :keymap-var *lisp-mode-keymap*
+   :keymap *lisp-mode-keymap*
    :syntax-table *lisp-syntax-table*)
   (setf (get-bvar :enable-syntax-highlight) t)
   (setf (get-bvar :indent-tabs-mode) nil)
@@ -978,7 +978,7 @@
 
 (define-major-mode lisp-repl-mode lisp-mode
   (:name "lisp-repl"
-   :keymap-var *lisp-repl-mode-keymap*
+   :keymap *lisp-repl-mode-keymap*
    :syntax-table *lisp-syntax-table*)
   (setf (get-bvar :listener-get-prompt-function)
         'lisp-repl-get-prompt)

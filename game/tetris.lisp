@@ -8,7 +8,7 @@
 
 (define-major-mode tetris-mode nil
   (:name "tetris"
-   :keymap-var *tetris-mode-keymap*))
+   :keymap *tetris-mode-keymap*))
 
 (defconstant +field-width+ 12)
 (defconstant +field-height+ 21)

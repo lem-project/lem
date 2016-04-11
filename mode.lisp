@@ -59,17 +59,17 @@
 
 (defmacro define-major-mode (major-mode
                              parent-mode
-                             (&key name keymap-var syntax-table)
+                             (&key name keymap syntax-table)
                              &body body)
   `(progn
      (push ',major-mode *mode-list*)
      (setf (mode-name ',major-mode) ,name)
      (export '(,(symb major-mode "-HOOK")))
-     ,@(cond (keymap-var
-              `((defvar ,keymap-var (make-keymap))
-                (setf (mode-keymap ',major-mode) ,keymap-var)
+     ,@(cond (keymap
+              `((defvar ,keymap (make-keymap))
+                (setf (mode-keymap ',major-mode) ,keymap)
                 ,(when parent-mode
-                   `(setf (keymap-parent ,keymap-var)
+                   `(setf (keymap-parent ,keymap)
                           (mode-keymap ',parent-mode)))))
              (parent-mode
               `((setf (mode-keymap ',major-mode)
@@ -93,12 +93,12 @@
        (prog1 (progn ,@body)
          (syntax-scan-buffer (current-buffer))))))
 
-(defmacro define-minor-mode (minor-mode (&key name keymap-var) &body body)
+(defmacro define-minor-mode (minor-mode (&key name keymap) &body body)
   `(progn
      (push ',minor-mode *mode-list*)
      (setf (mode-name ',minor-mode) ,name)
-     (defvar ,keymap-var (make-keymap))
-     (setf (mode-keymap ',minor-mode) ,keymap-var)
+     (defvar ,keymap (make-keymap))
+     (setf (mode-keymap ',minor-mode) ,keymap)
      (define-command ,minor-mode (&rest args) ("P")
        (cond ((null args)
               (toggle-minor-mode ',minor-mode))
@@ -112,4 +112,4 @@
 
 (define-major-mode fundamental-mode nil
   (:name "fundamental"
-   :keymap-var *global-keymap*))
+   :keymap *global-keymap*))

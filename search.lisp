@@ -43,7 +43,7 @@
 
 (define-minor-mode isearch-mode
   (:name "isearch"
-   :keymap-var *isearch-keymap*))
+   :keymap *isearch-keymap*))
 
 (defun isearch-update-display ()
   (isearch-update-minibuf)

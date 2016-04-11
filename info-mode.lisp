@@ -8,7 +8,7 @@
 
 (define-minor-mode info-mode
   (:name "info"
-   :keymap-var *info-mode-keymap*))
+   :keymap *info-mode-keymap*))
 
 (define-key *info-mode-keymap* (kbd "q") 'quit-window)
 

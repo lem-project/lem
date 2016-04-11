@@ -10,7 +10,7 @@
 
 (define-major-mode prog-mode nil
   (:name "prog"
-   :keymap-var *prog-mode-keymap*)
+   :keymap *prog-mode-keymap*)
   (setf (get-bvar :indent-tabs-mode) t))
 
 (defun indent-line (column)

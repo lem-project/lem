@@ -18,7 +18,7 @@
 
 (define-major-mode lua-mode prog-mode
   (:name "lua"
-   :keymap-var *lua-mode-keymap*
+   :keymap *lua-mode-keymap*
    :syntax-table *lua-syntax-table*)
   (setf (get-bvar :enable-syntax-highlight) t)
   (setf (get-bvar :calc-indent-function) 'lua-calc-indent)

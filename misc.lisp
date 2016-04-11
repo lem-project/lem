@@ -15,9 +15,9 @@
 
 (defun current-column ()
   (str-width (buffer-line-string (current-buffer)
-                                 (window-current-linum))
+                                 (current-linum))
              0
-             (window-current-charpos)))
+             (current-charpos)))
 
 (defun move-to-column (column &optional force)
   (check-type column (integer 0 #.most-positive-fixnum))
@@ -26,7 +26,7 @@
     (cond ((< column current-column)
            (set-charpos (wide-index (buffer-line-string
                                      (current-buffer)
-                                     (window-current-linum))
+                                     (current-linum))
                                     column))
            column)
           (force

@@ -250,14 +250,14 @@
                         (let ((string
                                (join (string #\newline)
                                      (buffer-take-lines (current-buffer)
-                                                        (window-current-linum)
+                                                        (current-linum)
                                                         length))))
                           (unless *case-fold-search*
                             (setq string (string-downcase string)))
                           string)))
       (search-step #'(lambda ()
                        (search str (take-string)
-                               :start2 (window-current-charpos)))
+                               :start2 (current-charpos)))
                    #'(lambda ()
                        (search str (take-string)))
                    #'forward-line
@@ -278,7 +278,7 @@
     (setq str (string-downcase str)))
   (let ((length (1+ (count #\newline str))))
     (flet ((%search (&optional end)
-                    (let ((linum (- (window-current-linum) (1- length))))
+                    (let ((linum (- (current-linum) (1- length))))
                       (when (< 0 linum)
                         (let* ((lines
                                 (buffer-take-lines (current-buffer)
@@ -298,7 +298,7 @@
                                       (string-downcase string))
                                   :from-end t))))))
       (search-step #'(lambda ()
-                       (%search (window-current-charpos)))
+                       (%search (current-charpos)))
                    #'%search
                    #'(lambda () (forward-line -1))
                    #'(lambda (i)
@@ -318,9 +318,9 @@
          (multiple-value-bind (start end)
              (ppcre:scan scanner
                          (buffer-line-string (current-buffer)
-                                             (window-current-linum))
-                         :start (window-current-charpos))
-           (when (and start (<= (window-current-charpos) start))
+                                             (current-linum))
+                         :start (current-charpos))
+           (when (and start (<= (current-charpos) start))
              (if (= start end)
                  (1+ end)
                  end))))
@@ -328,7 +328,7 @@
          (multiple-value-bind (start end)
              (ppcre:scan scanner
                          (buffer-line-string (current-buffer)
-                                             (window-current-linum)))
+                                             (current-linum)))
            (when start end)))
      #'forward-line
      #'set-charpos
@@ -347,9 +347,9 @@
                             reg-ends
                             scanner
                             (buffer-line-string (current-buffer)
-                                                (window-current-linum))
+                                                (current-linum))
                             nil
-                            :end (window-current-charpos))
+                            :end (current-charpos))
              (setq pos start))
            pos))
      #'(lambda ()
@@ -360,9 +360,9 @@
                             reg-ends
                             scanner
                             (buffer-line-string (current-buffer)
-                                                (window-current-linum))
+                                                (current-linum))
                             nil
-                            :start (window-current-charpos))
+                            :start (current-charpos))
              (setq pos start))
            pos))
      #'(lambda () (forward-line -1))
@@ -372,7 +372,7 @@
 (defun search-symbol-positions (name &key start end)
   (let ((positions)
         (str (buffer-line-string (current-buffer)
-                                 (window-current-linum))))
+                                 (current-linum))))
     (ppcre:do-scans (start-var
                      end-var
                      reg-starts
@@ -388,7 +388,7 @@
 (defun search-forward-symbol (name &optional limit)
   (search-step
    #'(lambda ()
-       (cdar (search-symbol-positions name :start (window-current-charpos))))
+       (cdar (search-symbol-positions name :start (current-charpos))))
    #'(lambda ()
        (cdar (search-symbol-positions name)))
    #'forward-line
@@ -398,7 +398,7 @@
 (defun search-backward-symbol (name &optional limit)
   (search-step
    #'(lambda ()
-       (caar (last (search-symbol-positions name :end (window-current-charpos)))))
+       (caar (last (search-symbol-positions name :end (current-charpos)))))
    #'(lambda ()
        (caar (last (search-symbol-positions name))))
    #'(lambda () (forward-line -1))
@@ -488,7 +488,7 @@
   (macrolet ((m (&rest args)
                 `(ppcre:scan regex
                              (buffer-line-string (current-buffer)
-                                                 (window-current-linum))
+                                                 (current-linum))
                              ,@args)))
     (cond ((and startp endp)
            (m :start start :end end))

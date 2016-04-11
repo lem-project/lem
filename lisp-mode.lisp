@@ -314,11 +314,11 @@
    (let ((begin (current-point)))
      (forward-sexp)
      (list (region-string begin (current-point))
-           (when (= (window-current-linum)
+           (when (= (current-linum)
                     (progn
                       (skip-chars-forward 'syntax-space-char-p)
-                      (window-current-linum)))
-             (window-current-charpos))))))
+                      (current-linum)))
+             (current-charpos))))))
 
 (defun %count-sexps (goal)
   (do ((count 0 (1+ count)))
@@ -336,7 +336,7 @@
        (when (save-excursion (and (backward-sexp 1 t) (bolp)))
          (return-from lisp-calc-indent 0))
        (when (sexp-goto-car 2000)
-         (let ((start-pos (1- (window-current-charpos)))
+         (let ((start-pos (1- (current-charpos)))
                (not-list-p (save-excursion
                             (search-backward "(")
                             (member (preceding-char) '(#\#)))))
@@ -921,9 +921,9 @@
 
 (define-command lisp-comment-region () ()
   (save-excursion
-   (when (/= (window-current-linum)
+   (when (/= (current-linum)
              (save-excursion (skip-chars-forward '(#\space #\tab #\newline))
-                             (window-current-linum)))
+                             (current-linum)))
      (skip-chars-forward '(#\space #\tab #\newline)))
    (let ((start (region-beginning))
          (end (region-end)))

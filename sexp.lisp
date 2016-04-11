@@ -64,7 +64,7 @@
                            i)
                           (t
                            (f str (1+ i) in-string-p)))))))
-    (f (buffer-line-string (current-buffer) (window-current-linum))
+    (f (buffer-line-string (current-buffer) (current-linum))
        0
        nil)))
 

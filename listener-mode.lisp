@@ -45,8 +45,8 @@
   (insert-string
    (format nil "~a> "
            (funcall (get-bvar :listener-get-prompt-function))))
-  (put-attribute (make-point (window-current-linum) 0)
-                 (make-point (window-current-linum) (window-current-charpos))
+  (put-attribute (make-point (current-linum) 0)
+                 (make-point (current-linum) (current-charpos))
                  (make-attr :bold-p t :color :blue))
   (buffer-undo-boundary (current-buffer))
   (listener-update-marker))

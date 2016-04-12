@@ -53,6 +53,7 @@
                         (:file "listener-mode")
                         (:file "dired")
                         (:file "lem")
+                        (:file "list-buffers")
                         (:file "lisp-mode")
                         (:file "c-mode")
                         (:file "python-mode")

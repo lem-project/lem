@@ -15,7 +15,6 @@
           point<=
           point>
           point>=
-          point-shift
           point-min
           point-max))
 
@@ -84,12 +83,6 @@
 
 (defun point>= (p1 p2)
   (point<= p2 p1))
-
-(defun point-shift (point n)
-  (save-excursion
-   (point-set point)
-   (next-char n)
-   (current-point)))
 
 (defun point-min (&optional (buffer (current-buffer)))
   (declare (ignore buffer))

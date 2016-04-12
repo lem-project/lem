@@ -101,7 +101,7 @@
 
 (defun insert-block (attr)
   (insert-string "  ")
-  (put-attribute (point-shift (current-point) -2)
+  (put-attribute (save-excursion (next-char -2) (current-point))
                  (current-point)
                  (make-attr :color (cons attr attr))))
 

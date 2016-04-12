@@ -44,12 +44,14 @@
 
 (define-key *c-mode-keymap* (kbd "C-c") 'c-compile)
 (define-command c-compile () ()
-  (grep-update
+  (grep-with-string
+   "*compilation*"
    (with-output-to-string (out)
-     (shell-command (setq *c-compile-command*
-                          (minibuf-read-string "compile command: "
-                                               *c-compile-command*))
-                    :error-output out))))
+     (uiop:run-program (setq *c-compile-command*
+                             (minibuf-read-string "compile command: "
+                                                  *c-compile-command*))
+                       :error-output out
+                       :ignore-error-status t))))
 
 (define-key *c-mode-keymap* (kbd "C-M-a") 'c-beginning-of-defun)
 (define-command c-beginning-of-defun (n) ("p")

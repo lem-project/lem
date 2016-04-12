@@ -766,11 +766,10 @@
         (cond ((= 1 (length defs))
                (funcall (second (car defs))))
               (t
-               (grep-apply defs
-                           "*Definitions*"
-                           (lambda (out)
-                             (dolist (elt defs)
-                               (format out "~A~%" (car elt)))))))))))
+               (let ((grep (make-grep "*Definitions*")))
+                 (loop :for (file jump-fun) :in defs :do
+                   (grep-append grep file jump-fun))
+                 (grep-update grep))))))))
 
 (define-key *lisp-mode-keymap* (kbd "M-,") 'lisp-pop-find-definition-stack)
 (define-command lisp-pop-find-definition-stack () ()

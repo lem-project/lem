@@ -2,14 +2,51 @@
 
 (in-package :lem)
 
-(export '(grep
-          grep-apply
+(export '(make-grep
+          grep-append
+          grep-update
+          grep-with-string
+          grep-with-string
+          grep
           grep-next
           grep-prev))
 
-(defvar *grep-vector* nil)
-(defvar *grep-index* -1)
+(defvar *current-grep* nil)
 
+(defclass grep ()
+  ((buffer-name
+    :initarg :buffer-name
+    :reader grep-buffer-name)
+   (contents
+    :initform (make-array 0 :adjustable t :fill-pointer 0)
+    :reader grep-contents)
+   (index
+    :initform -1
+    :accessor grep-index)))
+
+(defun grep-content-item (content) (car content))
+(defun grep-content-jump-function (content) (cdr content))
+
+(defun make-grep (buffer-name)
+  (make-instance 'grep :buffer-name buffer-name))
+
+(defun grep-append (grep item jump-function)
+  (vector-push-extend (cons item jump-function)
+                      (grep-contents grep))
+  (values))
+
+(defun grep-update (grep)
+  (setf (grep-index grep) -1)
+  (info-popup (get-buffer-create (grep-buffer-name grep))
+              (lambda (out)
+                (loop :for content :across (grep-contents grep) :do
+                  (princ (grep-content-item content) out)
+                  (terpri out)))
+              nil)
+  (setf *current-grep* grep))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun grep-parse-line (line)
   (ignore-errors
    (let* ((i (position #\: line))
@@ -17,53 +54,47 @@
           (filename (subseq line 0 i))
           (linum (parse-integer (subseq line (1+ i) j))))
      (when (and (stringp filename) (integerp linum))
-       (list filename
-             #'(lambda () (goto-line linum t)))))))
+       (cons line
+             (lambda ()
+               (find-file filename)
+               (goto-line linum t)))))))
 
 (defun grep-parse-lines (lines)
   (remove nil
           (mapcar #'grep-parse-line
                   (remove "" lines :test #'string=))))
 
-(defun grep-apply (list output-buffer-name output-function)
-  (setq *grep-vector* (apply 'vector list))
-  (setq *grep-index* -1)
-  (when output-function
-    (info-popup (get-buffer-create output-buffer-name)
-                output-function
-                nil)))
+(defun grep-parse (string)
+  (grep-parse-lines (uiop:split-string string :separator '(#\newline))))
 
-(defun grep-update (str)
-  (grep-apply (grep-parse-lines (split-string str #\newline))
-              "*Grep*"
-              #'(lambda (out) (princ str out))))
+(defun grep-with-string (buffer-name string)
+  (let ((grep (make-grep buffer-name)))
+    (loop :for (item . jump-function) :in (grep-parse string) :do
+      (grep-append grep item jump-function))
+    (grep-update grep)))
 
-(define-command grep (str) ("sgrep -nH ")
-  (grep-update
-   (with-output-to-string (s)
-     (shell-command (concatenate 'string "grep -nH " str)
-                    :output s))))
+(define-command grep (string) ("sgrep -nH ")
+  (grep-with-string "*grep*"
+                    (with-output-to-string (s)
+                      (shell-command (concatenate 'string "grep -nH " string)
+                                     :output s))))
+
+(defun grep-jump-current-content ()
+  (let ((content (aref (grep-contents *current-grep*)
+                       (grep-index *current-grep*))))
+    (funcall (grep-content-jump-function content))))
 
 (define-key *global-keymap* (kbd "M-n") 'grep-next)
-(define-command grep-next (&optional (n 1)) ("p")
-  (dotimes (_ n t)
-    (unless (and *grep-vector*
-                 (< (1+ *grep-index*) (length *grep-vector*)))
-      (return nil))
-    (incf *grep-index*)
-    (destructuring-bind (filename goto-fn)
-        (aref *grep-vector* *grep-index*)
-      (find-file filename)
-      (funcall goto-fn))))
+(define-command grep-next () ()
+  (when *current-grep*
+    (when (< (1+ (grep-index *current-grep*))
+             (length (grep-contents *current-grep*)))
+      (incf (grep-index *current-grep*))
+      (grep-jump-current-content))))
 
 (define-key *global-keymap* (kbd "M-p") 'grep-prev)
-(define-command grep-prev (&optional (n 1)) ("p")
-  (dotimes (_ n t)
-    (unless (and *grep-vector*
-                 (<= 0 (1- *grep-index*)))
-      (return))
-    (decf *grep-index*)
-    (destructuring-bind (filename goto-fn)
-        (aref *grep-vector* *grep-index*)
-      (find-file filename)
-      (funcall goto-fn))))
+(define-command grep-prev () ()
+  (when *current-grep*
+    (when (<= 0 (1- (grep-index *current-grep*)))
+      (decf (grep-index *current-grep*))
+      (grep-jump-current-content))))

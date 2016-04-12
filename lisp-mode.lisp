@@ -785,7 +785,7 @@
 (defun analyze-symbol (str)
   (let (package
         external-p)
-    (let* ((list (uiop:split-string str ":"))
+    (let* ((list (uiop:split-string str :separator ":"))
            (len (length list)))
       (case len
         ((1)

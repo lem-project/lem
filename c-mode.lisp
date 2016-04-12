@@ -1,10 +1,13 @@
 ;; -*- Mode: LISP; Package: LEM -*-
 
-(in-package :lem)
-
-(export '(*c-mode-keymap*
-          *c-syntax-table*
-          c-mode))
+(in-package :cl-user)
+(defpackage :lem.c-mode
+  (:use :cl :lem)
+  (:export
+   :*c-mode-keymap*
+   :*c-syntax-table*
+   :c-mode))
+(in-package :lem.c-mode)
 
 (defvar *c-syntax-table*
   (make-syntax-table
@@ -40,18 +43,11 @@
                   (make-syntax-test "^#\\S+" :regex-p t)
                   :attr :constant-attr)
 
-(defvar *c-compile-command* "make")
+;; (defvar *c-compile-command* "make")
 
-(define-key *c-mode-keymap* (kbd "C-c") 'c-compile)
-(define-command c-compile () ()
-  (grep-with-string
-   "*compilation*"
-   (with-output-to-string (out)
-     (uiop:run-program (setq *c-compile-command*
-                             (minibuf-read-string "compile command: "
-                                                  *c-compile-command*))
-                       :error-output out
-                       :ignore-error-status t))))
+;; (define-key *c-mode-keymap* (kbd "C-c") 'c-compile)
+;; (define-command c-compile () ()
+;;   )
 
 (define-key *c-mode-keymap* (kbd "C-M-a") 'c-beginning-of-defun)
 (define-command c-beginning-of-defun (n) ("p")

@@ -147,12 +147,12 @@
 
 (define-key *global-keymap* (kbd "C-x k") 'kill-buffer)
 (define-command kill-buffer (buffer-or-name) ("bKill buffer: ")
+  (check-switch-minibuffer-window)
   (let ((buffer (get-buffer buffer-or-name)))
     (when (cdr (buffer-list))
-      (dolist (win (window-list))
-        (when (eq buffer (window-buffer win))
-          (with-current-window win
-            (next-buffer))))
+      (dolist (window (get-buffer-windows buffer))
+        (with-current-window window
+          (next-buffer)))
       (setq *buffer-list* (delete buffer (buffer-list)))))
   t)
 

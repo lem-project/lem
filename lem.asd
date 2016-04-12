@@ -48,6 +48,7 @@
                         (:file "info-mode")
                         (:file "sexp")
                         (:file "grep")
+                        (:file "abbrev")
                         (:file "prog-mode")
                         (:file "listener-mode")
                         (:file "lisp-mode")

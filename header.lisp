@@ -16,7 +16,8 @@
           save-excursion
           with-window-range
           with-buffer-read-only
-          with-current-window))
+          with-current-window
+          handler-case-bind))
 
 (defvar *program-name* "Lem")
 (defvar *debug-p* nil)

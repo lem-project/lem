@@ -30,7 +30,7 @@
                (make-string column :initial-element #\space))))
     (cond ((string/= old-indent-string new-indent-string)
            (beginning-of-line)
-           (delete-char (length old-indent-string) t)
+           (delete-char (length old-indent-string) nil)
            (insert-string new-indent-string)
            (if (< old-column column)
                (back-to-indentation)

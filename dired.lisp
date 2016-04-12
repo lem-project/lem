@@ -127,7 +127,7 @@
     (with-buffer-read-only (current-buffer) nil
       (beginning-of-line)
       (insert-string (string char))
-      (delete-char)
+      (delete-char 1 nil)
       (beginning-of-line))))
 
 (defun map-mark (test)

@@ -68,7 +68,7 @@
 (define-key *global-keymap* (kbd "C-w") 'kill-region)
 (define-command kill-region (begin end) ("r")
   (point-set begin)
-  (prog1 (delete-char (region-count begin end))
+  (prog1 (delete-char (region-count begin end) t)
     (buffer-mark-cancel (current-buffer))))
 
 (defun delete-region (begin end)

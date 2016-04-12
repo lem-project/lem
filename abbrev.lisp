@@ -67,7 +67,7 @@
             (unless save-words
               (setq *abbrev-words* (list src-word))
               (setq save-words *abbrev-words*))
-            (backward-delete-char (length src-word) t)
+            (backward-delete-char (length src-word) nil)
             (insert-string (pop save-words)))
           (let ((src-word (preceding-word)))
             (unless save-words

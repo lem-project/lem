@@ -156,7 +156,7 @@
 
 (define-key *global-keymap* (kbd "C-d") 'delete-char)
 (define-key *global-keymap* (kbd "[dc]") 'delete-char)
-(define-command delete-char (&optional n does-not-kill-p) ("P")
+(define-command delete-char (&optional n (killp t)) ("P")
   (cond
     ((and n (minusp n))
      (backward-delete-char (- n)))
@@ -167,7 +167,7 @@
                                  (current-linum)
                                  (current-charpos)
                                  (or n 1))))
-       (when (and (not does-not-kill-p) n)
+       (when (and killp n)
          (with-kill ()
            (kill-push lines)))
        t))))
@@ -175,15 +175,15 @@
 (define-key *global-keymap* (kbd "C-h") 'backward-delete-char)
 (define-key *global-keymap* (kbd "[backspace]") 'backward-delete-char)
 (define-key *global-keymap* (kbd "[del]") 'backward-delete-char)
-(define-command backward-delete-char (&optional n does-not-kill-p) ("P")
+(define-command backward-delete-char (&optional n (killp t)) ("P")
   (cond ((null n)
          (when (prev-char)
            (delete-char)))
         ((minusp n)
-         (delete-char (- n) does-not-kill-p))
+         (delete-char (- n) killp))
         (t
          (when (prev-char n)
-           (delete-char n does-not-kill-p)))))
+           (delete-char n killp)))))
 
 (define-key *global-keymap* (kbd "C-k") 'kill-line)
 (define-command kill-line (&optional n) ("P")
@@ -436,7 +436,7 @@
               nil)))))
 
 (defun replace-char (c)
-  (delete-char)
+  (delete-char 1 nil)
   (buffer-insert-char
    (current-buffer)
    (current-linum)
@@ -500,7 +500,7 @@
       (return)))
   (do () ((eobp))
     (let ((result (blank-line-p)))
-      (unless (and result (delete-char result t))
+      (unless (and result (delete-char result nil))
         (return)))))
 
 (define-key *global-keymap* (kbd "C-t") 'transpose-characters)
@@ -510,14 +510,14 @@
          (let* ((c1 (char-before 1))
                 (c2 (char-before 2)))
            (unless (eql c2 #\newline)
-             (backward-delete-char)
-             (backward-delete-char)
+             (backward-delete-char 1 nil)
+             (backward-delete-char 1 nil)
              (insert-char c1 1)
              (insert-char c2 1))))
         (t
          (let* ((c1 (following-char))
                 (c2 (preceding-char)))
-           (delete-char)
+           (delete-char 1 nil)
            (backward-delete-char)
            (insert-char c1 1)
            (insert-char c2 1)))))
@@ -534,7 +534,7 @@
       (if (or (and ignore-newline-p (char= c #\newline))
               (not (syntax-space-char-p c)))
           (return n)
-          (delete-char 1 (not use-kill-ring))))))
+          (delete-char 1 use-kill-ring)))))
 
 (macrolet ((def (name at-char step-char)
              `(defun ,name (pred &optional not-p)
@@ -564,7 +564,7 @@
   (let ((point (current-point)))
     (forward-line -1)
     (end-of-line)
-    (delete-char (region-count (current-point) point) t)
+    (delete-char (region-count (current-point) point) nil)
     (just-one-space)
     t))
 

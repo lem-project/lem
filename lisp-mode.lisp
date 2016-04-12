@@ -950,8 +950,8 @@
           ((not (eql #\; (following-char)))
            (when (and delete-flag
                       (syntax-space-char-p (following-char)))
-             (delete-char 1 t)))
-        (delete-char 1 t))
+             (delete-char 1 nil)))
+        (delete-char 1 nil))
       (forward-line 1))))
 
 (defun lisp-print-values (values)
@@ -1007,7 +1007,7 @@
     (insert-string ")")
     (incf count)
     (unless (save-excursion (backward-sexp 1 t))
-      (backward-delete-char count t)
+      (backward-delete-char count nil)
       (return (= 1 count)))))
 
 (defun lisp-repl-confirm (string)

@@ -67,7 +67,7 @@
         (save-excursion (detab-line 1))
         (let ((mod (mod end *python-indent-size*)))
           (set-charpos end)
-          (backward-delete-char mod t)
+          (backward-delete-char mod nil)
           (when (plusp (- end mod))
             (backward-delete-char *python-indent-size* t)))))))
 

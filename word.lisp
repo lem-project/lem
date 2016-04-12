@@ -74,9 +74,14 @@
 (define-command delete-word (n) ("p")
   (if (minusp n)
       (backward-delete-word (- n))
-      (dotimes (_ n t)
-        (unless (next-word-aux #'(lambda () (delete-char 1)))
-          (return)))))
+      (let ((begin (current-point))
+            (end (progn (next-word n) (current-point))))
+        (cond
+          ((point= begin end)
+           nil)
+          (t
+           (kill-region begin end)
+           t)))))
 
 (define-key *global-keymap* (kbd "M-C-h") 'backward-delete-word)
 (define-key *global-keymap* (kbd "M-[backspace]") 'backward-delete-word)
@@ -84,9 +89,14 @@
   (if (minusp n)
       (delete-word (- n))
       (let ((*kill-before-p* t))
-        (dotimes (_ n t)
-          (unless (prev-word-aux #'(lambda () (backward-delete-char 1)))
-            (return))))))
+        (let ((end (current-point))
+              (begin (progn (prev-word n) (current-point))))
+          (cond
+            ((point= begin end)
+             nil)
+            (t
+             (kill-region begin end)
+             t))))))
 
 (defun case-word-aux (n replace-char-p first-case rest-case)
   (dotimes (_ n t)

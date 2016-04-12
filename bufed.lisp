@@ -53,7 +53,6 @@
           just-one-space
           delete-indentation
           back-to-indentation
-          indent-line
           undo
           redo))
 

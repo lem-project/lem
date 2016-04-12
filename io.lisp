@@ -6,7 +6,9 @@
           make-buffer-output-stream
           buffer-output-stream-point
           minibuffer-input-stream
-          make-minibuffer-input-stream))
+          make-minibuffer-input-stream
+          editor-io-stream
+          make-editor-io-stream))
 
 (defclass buffer-output-stream (trivial-gray-streams:fundamental-output-stream)
   ((buffer
@@ -190,9 +192,9 @@
 (defmethod trivial-gray-streams:stream-clear-input ((stream minibuffer-input-stream))
   nil)
 
-(defclass buffer-io-stream (buffer-output-stream minibuffer-input-stream)
+(defclass editor-io-stream (buffer-output-stream minibuffer-input-stream)
   ())
 
-(defun make-buffer-io-stream (buffer &optional point interactive-update-p)
-  (make-buffer-stream-instance 'buffer-io-stream
+(defun make-editor-io-stream (buffer &optional point interactive-update-p)
+  (make-buffer-stream-instance 'editor-io-stream
                                buffer point interactive-update-p))

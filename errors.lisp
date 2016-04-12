@@ -2,6 +2,11 @@
 
 (in-package :lem)
 
+(export '(editor-condition
+          editor-abort
+          readonly
+          editor-error))
+
 (define-condition editor-condition (simple-error)
   ())
 

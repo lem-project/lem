@@ -51,12 +51,12 @@
                         (:file "abbrev")
                         (:file "prog-mode")
                         (:file "listener-mode")
+                        (:file "dired")
+                        (:file "lem")
                         (:file "lisp-mode")
                         (:file "c-mode")
                         (:file "python-mode")
-                        (:file "lua-mode")
-                        (:file "dired")
-                        (:file "lem"))
+                        (:file "lua-mode"))
            :depends-on (:cl-charms
                         :cl-fad
                         :osicat

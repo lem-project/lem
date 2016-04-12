@@ -1,44 +1,47 @@
-;; -*- Mode: LISP; Package: LEM -*-
+;; -*- Mode: LISP; Package: LEM.LISP-MODE -*-
 
-(in-package :lem)
-
-(export '(*lisp-indent-table*
-          *lisp-mode-keymap*
-          *lisp-syntax-table*
-          lisp-mode
-          lisp-newline-and-indent
-          lisp-indent-sexp
-          lisp-beginning-of-defun
-          lisp-end-of-defun
-          lisp-current-package
-          lisp-set-package
-          lisp-eval-string
-          lisp-eval-region
-          lisp-eval-defun
-          lisp-eval-last-sexp
-          lisp-load-file
-          lisp-macroexpand
-          lisp-macroexpand-all
-          lisp-describe-symbol
-          lisp-disassemble-symbol
-          lisp-find-definitions
-          complete-symbol
-          lisp-complete-symbol
-          lisp-get-arglist
-          lisp-echo-arglist
-          lisp-self-insert-then-arg-list
-          lisp-comment-or-uncomment-region
-          lisp-comment-region
-          lisp-uncomment-region
-          lisp-eval-print-last-sexp
-          *lisp-repl-mode-keymap*
-          lisp-repl-mode
-          start-lisp-repl
-          lisp-repl-get-prompt
-          lisp-repl-paren-correspond-p
-          lisp-repl-confirm
-          lisp-repl-set-package
-          lisp-info-popup))
+(in-package :cl-user)
+(defpackage :lem.lisp-mode
+  (:use :cl :lem)
+  (:export
+   :*lisp-indent-table*
+   :*lisp-mode-keymap*
+   :*lisp-syntax-table*
+   :lisp-mode
+   :lisp-newline-and-indent
+   :lisp-indent-sexp
+   :lisp-beginning-of-defun
+   :lisp-end-of-defun
+   :lisp-current-package
+   :lisp-set-package
+   :lisp-eval-string
+   :lisp-eval-region
+   :lisp-eval-defun
+   :lisp-eval-last-sexp
+   :lisp-load-file
+   :lisp-macroexpand
+   :lisp-macroexpand-all
+   :lisp-describe-symbol
+   :lisp-disassemble-symbol
+   :lisp-find-definitions
+   :complete-symbol
+   :lisp-complete-symbol
+   :lisp-get-arglist
+   :lisp-echo-arglist
+   :lisp-self-insert-then-arg-list
+   :lisp-comment-or-uncomment-region
+   :lisp-comment-region
+   :lisp-uncomment-region
+   :lisp-eval-print-last-sexp
+   :*lisp-repl-mode-keymap*
+   :lisp-repl-mode
+   :start-lisp-repl
+   :lisp-repl-get-prompt
+   :lisp-repl-paren-correspond-p
+   :lisp-repl-confirm
+   :lisp-repl-set-package
+   :lisp-info-popup))
+(in-package :lem.lisp-mode)
 
 (defvar *lisp-indent-table* (make-hash-table :test 'equal))
 
@@ -275,13 +278,14 @@
   (%lisp-mode-skip-expr-prefix
    (char-after 0) (char-after 1)
    #'(lambda (c1 c2)
-       (cond (*lisp-mode-skip-features-sharp-macro-p*
-              (when (and (eql c1 #\#) (member c2 '(#\+ #\-)))
-                (next-char 2))
-              (if (eql #\( (following-char))
-                  (skip-list-forward 0)
-                  (skip-symbol-forward))
-              (skip-chars-forward '(#\space #\tab #\newline)))
+       (declare (ignore c1 c2))
+       (cond ;; (*lisp-mode-skip-features-sharp-macro-p*
+             ;;  (when (and (eql c1 #\#) (member c2 '(#\+ #\-)))
+             ;;    (next-char 2))
+             ;;  (if (eql #\( (following-char))
+             ;;      (skip-list-forward 0)
+             ;;      (skip-symbol-forward))
+             ;;  (skip-chars-forward '(#\space #\tab #\newline)))
              (t
               (next-char 2))))))
 
@@ -345,8 +349,7 @@
              (let* ((car-symbol-name
                      (string-upcase
                       (car
-                       (last (split-string car-name-str
-                                           #\:)))))
+                       (last (uiop:split-string car-name-str :separator ":")))))
                     (argc (%count-sexps point)))
                (let ((num (gethash (string-downcase car-symbol-name)
                                    *lisp-indent-table*)))
@@ -493,7 +496,7 @@
       (return))))
 
 (defun lisp-debugger (condition)
-  (raw)
+  (lem::raw)
   (let* ((choices (compute-restarts condition))
          (n (length choices)))
     (lisp-info-popup (get-buffer-create "*error*")
@@ -507,20 +510,20 @@
                          (uiop/image:print-backtrace :stream out :count 100))
                      nil)
     (loop
-      (window-update-all)
+      (redraw-screen)
       (handler-case
           (let* ((str (minibuf-read-string "Debug: "))
                  (i (and (stringp str) (parse-integer str :junk-allowed t))))
             (cond ((and i (<= 1 i n))
                    (let ((restart (nth (1- i) choices)))
-                     (noraw)
+                     (lem::noraw)
                      (cond ((eq 'store-value (restart-name restart))
                             (ldebug-store-value condition))
                            (t
                             (invoke-restart-interactively restart))))
                    (return))
                   (t
-                   (noraw)
+                   (lem::noraw)
                    (let ((x
                           (handler-case (eval (read-from-string str nil))
                             (error (cdt) (format nil "~a" cdt)))))
@@ -528,14 +531,14 @@
                                  #'(lambda (out)
                                      (princ x out))
                                  nil))
-                   (raw))))
+                   (lem::raw))))
         (editor-abort ()))))
   condition)
 
 (defun %lisp-eval-internal (x output-buffer point &optional update-point-p)
   (let* ((error-p)
          (results)
-         (io (make-buffer-io-stream output-buffer point t))
+         (io (make-editor-io-stream output-buffer point t))
          (*terminal-io* io)
          (*standard-output* io)
          (*standard-input* io)
@@ -543,23 +546,23 @@
          (*query-io* io)
          (*debug-io* io)
          (*trace-output* io))
-    (handler-case-bind (#'lisp-debugger
-                        (setq results
-                              (restart-case
-                                  (multiple-value-list (eval x))
-                                (editor-abort () :report "Abort.")))
-                        (when update-point-p
-                          (point-set
-                           (buffer-output-stream-point io))))
-                       ((condition)
-                        (setq error-p t)
-                        (setq results (list condition))))
+    (lem::handler-case-bind (#'lisp-debugger
+                             (setq results
+                                   (restart-case
+                                       (multiple-value-list (eval x))
+                                     (editor-abort () :report "Abort.")))
+                             (when update-point-p
+                               (point-set
+                                (buffer-output-stream-point io))))
+                            ((condition)
+                             (setq error-p t)
+                             (setq results (list condition))))
     (values results error-p)))
 
 (defun %lisp-eval (x output-buffer point
                      &optional update-point-p)
   (unless point (setq point (point-min)))
-  (noraw)
+  (lem::noraw)
   (unwind-protect
     (multiple-value-bind (results error-p)
         (%lisp-eval-internal x
@@ -567,7 +570,7 @@
                              point
                              update-point-p)
       (values results error-p))
-    (raw)))
+    (lem::raw)))
 
 (defun %lisp-eval-string (string output-buffer point
                                  &optional
@@ -596,7 +599,6 @@
   (unless (or begin end)
     (setq begin (region-beginning))
     (setq end (region-end)))
-  (buffer-mark-cancel (current-buffer))
   (lisp-eval-string (region-string begin end))
   t)
 
@@ -759,7 +761,7 @@
                           (find-file file)
                           (beginning-of-buffer)
                           (next-char filepos)
-                          (window-update-all)))
+                          (redraw-screen)))
                   defs)))
         (push (cons (current-buffer) (current-point))
               *lisp-find-definition-stack*)
@@ -783,7 +785,7 @@
 (defun analyze-symbol (str)
   (let (package
         external-p)
-    (let* ((list (split-string str #\:))
+    (let* ((list (uiop:split-string str ":"))
            (len (length list)))
       (case len
         ((1)

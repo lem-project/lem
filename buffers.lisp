@@ -19,7 +19,7 @@
           kill-buffer
           next-buffer
           list-buffers
-          get-buffer-window))
+          get-buffer-windows))
 
 (defvar *buffer-list* nil)
 
@@ -201,5 +201,7 @@
               nil
               'list-buffers-mode))
 
-(defun get-buffer-window (buffer)
-  (find buffer (window-list) :key #'window-buffer))
+(defun get-buffer-windows (buffer)
+  (loop :for window :in (window-list)
+    :when (eq buffer (window-buffer window))
+    :collect window))

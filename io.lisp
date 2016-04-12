@@ -56,12 +56,9 @@
 
 (defun buffer-output-stream-refresh (stream)
   (when (buffer-output-stream-interactive-update-p stream)
-    (let ((window (get-buffer-window
-                   (buffer-output-stream-buffer stream))))
-      (when window
-        (with-current-window window
-          (point-set (buffer-output-stream-point stream))
-          (window-update (current-window))))))
+    (dolist (window (get-buffer-windows (buffer-output-stream-buffer stream)))
+      (point-set (buffer-output-stream-point stream) window)
+      (window-update window)))
   nil)
 
 (defmethod trivial-gray-streams:stream-fresh-line ((stream buffer-output-stream))

@@ -125,18 +125,8 @@
                                      (window-current-linum (current-window)))))
       (assert (<= 0 (window-current-charpos (current-window)))))))
 
-(defun bury-buffer (buffer)
-  (check-switch-minibuffer-window)
-  (setq *buffer-list*
-        (append (delete buffer (buffer-list))
-                (list buffer)))
-  (set-buffer (car (buffer-list)) nil))
-
-(define-key *global-keymap* (kbd "C-x b") 'select-buffer)
-(define-command select-buffer (name) ("BUse Buffer: ")
-  (check-switch-minibuffer-window)
-  (set-buffer (get-buffer-create name))
-  t)
+(defun delete-buffer (buffer)
+  (setf *buffer-list* (delete buffer (buffer-list))))
 
 (defun get-next-buffer (buffer)
   (let* ((buffer-list (reverse (buffer-list)))
@@ -145,6 +135,18 @@
         (cadr res)
         (car buffer-list))))
 
+(defun bury-buffer (buffer)
+  (setf *buffer-list*
+        (append (delete buffer (buffer-list))
+                (list buffer)))
+  (car (buffer-list)))
+
+(define-key *global-keymap* (kbd "C-x b") 'select-buffer)
+(define-command select-buffer (name) ("BUse Buffer: ")
+  (check-switch-minibuffer-window)
+  (set-buffer (get-buffer-create name))
+  t)
+
 (define-key *global-keymap* (kbd "C-x k") 'kill-buffer)
 (define-command kill-buffer (buffer-or-name) ("bKill buffer: ")
   (check-switch-minibuffer-window)
@@ -152,8 +154,8 @@
     (when (cdr (buffer-list))
       (dolist (window (get-buffer-windows buffer))
         (with-current-window window
-          (next-buffer)))
-      (setq *buffer-list* (delete buffer (buffer-list)))))
+          (set-buffer (get-next-buffer (current-buffer)))))
+      (delete-buffer buffer)))
   t)
 
 (define-key *global-keymap* (kbd "C-x x") 'next-buffer)

@@ -747,7 +747,8 @@
    (t
     (if kill-buffer-p
         (kill-buffer (window-buffer window))
-        (bury-buffer (window-buffer window))))))
+        (set-buffer (bury-buffer (window-buffer window))
+                    nil)))))
 
 (defun adjust-screen-size ()
   (let ((delete-windows))

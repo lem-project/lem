@@ -1,15 +1,18 @@
-;; -*- Mode: LISP; Package: LEM -*-
+;; -*- Mode: LISP; Package: LEM.GREP -*-
 
-(in-package :lem)
-
-(export '(make-grep
-          grep-append
-          grep-update
-          grep-with-string
-          grep-with-string
-          grep
-          grep-next
-          grep-prev))
+(in-package :cl-user)
+(defpackage :lem.grep
+  (:use :cl :lem)
+  (:export
+   :make-grep
+   :grep-append
+   :grep-update
+   :grep-with-string
+   :grep-with-string
+   :grep
+   :grep-next
+   :grep-prev))
+(in-package :lem.grep)
 
 (defvar *current-grep* nil)
 
@@ -76,8 +79,9 @@
 (define-command grep (string) ("sgrep -nH ")
   (grep-with-string "*grep*"
                     (with-output-to-string (s)
-                      (shell-command (concatenate 'string "grep -nH " string)
-                                     :output s))))
+                      (uiop:run-program (concatenate 'string "grep -nH " string)
+                                        :output s
+                                        :ignore-error-status t))))
 
 (defun grep-jump-current-content ()
   (let ((content (aref (grep-contents *current-grep*)

@@ -2,7 +2,7 @@
 
 (in-package :cl-user)
 (defpackage :lem.lisp-mode
-  (:use :cl :lem)
+  (:use :cl :lem :lem.grep)
   (:export
    :*lisp-indent-table*
    :*lisp-mode-keymap*

@@ -1,6 +1,10 @@
-;; -*- Mode: LISP; Package: LEM -*-
+;; -*- Mode: LISP; Package: LEM.PYTHON -*-
 
-(in-package :lem)
+(in-package :cl-user)
+(defpackage :lem.python
+  (:use :cl :lem)
+  (:export))
+(in-package :lem.python)
 
 (defvar *python-syntax-table*
   (make-syntax-table

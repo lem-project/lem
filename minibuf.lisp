@@ -135,7 +135,7 @@
              (with-current-window *minibuf-read-line-tmp-window*
                (popup-completion *minibuf-read-line-comp-f*
                                  target-str))))
-        (minibuf-read-line-clear-before)
+        (delete-region (point-min) (current-point))
         (insert-string str))))
   t)
 

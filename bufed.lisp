@@ -88,12 +88,10 @@
       (current-linum))))
 
 (defun bobp ()
-  (and (head-line-p)
-       (bolp)))
+  (and (head-line-p) (bolp)))
 
 (defun eobp ()
-  (and (tail-line-p)
-       (eolp)))
+  (and (tail-line-p) (eolp)))
 
 (defun insert-char (c n)
   (dotimes (_ n t)

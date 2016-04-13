@@ -70,6 +70,8 @@
         'modeline-column
         ")"))
 
+(defvar *modified-window-tree-p* nil)
+
 (defvar *window-tree*)
 
 (defvar *current-window*)
@@ -140,6 +142,13 @@
 
 (defun (setf current-window) (new-window)
   (setf *current-window* new-window))
+
+(defun window-tree ()
+  *window-tree*)
+
+(defun (setf window-tree) (new-window-tree)
+  (setf *modified-window-tree-p* t)
+  (setf *window-tree* new-window-tree))
 
 (defstruct (window-node (:constructor %make-window-node))
   split-type
@@ -216,15 +225,15 @@
 
 (defun window-list ()
   (window-tree-flatten
-   *window-tree*))
+   (window-tree)))
 
 (defun one-window-p ()
-  (window-tree-leaf-p *window-tree*))
+  (window-tree-leaf-p (window-tree)))
 
 (defun deleted-window-p (window)
   (cond ((minibuffer-window-p window)
          nil)
-        ((window-tree-find *window-tree* window)
+        ((window-tree-find (window-tree) window)
          nil)
         (t t)))
 
@@ -251,7 +260,7 @@
     (f window-tree)))
 
 (defun load-window-tree (dumped-tree)
-  (do-window-tree (window *window-tree*)
+  (do-window-tree (window (window-tree))
     (charms/ll:delwin (window-screen window)))
   (let ((current-window nil))
     (labels ((f (dumped-tree)
@@ -283,15 +292,17 @@
                       (make-window-node split-type
                                         (f car-window)
                                         (f cdr-window))))))
-      (setf *window-tree* (f dumped-tree))
+      (setf (window-tree) (f dumped-tree))
       (setf (current-window)
             (or current-window
                 (car (window-list)))))))
 
 (defun call-with-save-windows (current-window function)
-  (let ((dumped-tree (dump-window-tree *window-tree* current-window)))
+  (let ((dumped-tree (dump-window-tree (window-tree) current-window))
+        (*modified-window-tree-p* nil))
     (unwind-protect (funcall function)
-      (load-window-tree dumped-tree))))
+      (when (pdebug *modified-window-tree-p*)
+        (load-window-tree dumped-tree)))))
 
 (defun window-init ()
   (setq *current-cols* charms/ll:*cols*)
@@ -302,7 +313,7 @@
                      charms/ll:*cols*
                      0
                      0))
-  (setq *window-tree* (current-window))
+  (setf (window-tree) (current-window))
   (set-attr :modeline (get-attr :highlight))
   (set-attr :modeline-inactive (get-attr :highlight)))
 
@@ -316,7 +327,7 @@
   (when (run-xterm-p)
     (resize-screen))
   (adjust-screen-size)
-  (do-window-tree (window *window-tree*)
+  (do-window-tree (window (window-tree))
     (charms/ll:clearok (window-screen window) 1))
   (window-recenter (current-window))
   (syntax-scan-window (current-window))
@@ -557,7 +568,7 @@
       (charms/ll:doupdate)))))
 
 (defun window-update-all ()
-  (do-window-tree (win *window-tree*)
+  (do-window-tree (win (window-tree))
     (unless (eq win (current-window))
       (window-update win nil)))
   (window-update (current-window) nil)
@@ -608,9 +619,9 @@
     (setf (window-current-charpos new-window)
           (window-current-charpos current-window))
     (multiple-value-bind (node getter setter)
-        (window-tree-parent *window-tree* current-window)
+        (window-tree-parent (window-tree) current-window)
       (if (null node)
-          (setq *window-tree*
+          (setf (window-tree)
                 (make-window-node split-type
                                   current-window
                                   new-window))
@@ -701,10 +712,10 @@
 
 (define-key *global-keymap* (kbd "C-x 1") 'delete-other-windows)
 (define-command delete-other-windows () ()
-  (do-window-tree (win *window-tree*)
+  (do-window-tree (win (window-tree))
     (unless (eq win (current-window))
       (charms/ll:delwin (window-screen win))))
-  (setq *window-tree* (current-window))
+  (setf (window-tree) (current-window))
   (window-set-pos (current-window) 0 0)
   (window-set-size (current-window)
                    (1- charms/ll:*lines*)
@@ -758,17 +769,17 @@
   (when (eq (current-window) window)
     (other-window))
   (multiple-value-bind (node getter setter another-getter another-setter)
-      (window-tree-parent *window-tree* window)
+      (window-tree-parent (window-tree) window)
     (declare (ignore getter setter another-setter))
     (adjust-size-windows-after-delete-window
      window
      (funcall another-getter)
      (eq (window-node-split-type node) :hsplit))
     (multiple-value-bind (node2 getter2 setter2)
-        (window-tree-parent *window-tree* node)
+        (window-tree-parent (window-tree) node)
       (declare (ignore getter2))
       (if (null node2)
-          (setq *window-tree* (funcall another-getter))
+          (setf (window-tree) (funcall another-getter))
           (funcall setter2 (funcall another-getter)))))
   (when (window-delete-hook window)
     (funcall (window-delete-hook window)))
@@ -788,7 +799,7 @@
           (setq split-p t)
           (split-window))
         (with-current-window (or (window-tree-find
-                                  *window-tree*
+                                  (window-tree)
                                   #'(lambda (window)
                                       (eq buffer (window-buffer window))))
                                  (get-next-window (current-window)))
@@ -817,7 +828,7 @@
 
 (defun adjust-screen-size ()
   (let ((delete-windows))
-    (do-window-tree (window *window-tree*)
+    (do-window-tree (window (window-tree))
       (when (<= charms/ll:*lines*
                 (+ (window-y window) 2))
         (push window delete-windows))
@@ -825,7 +836,7 @@
                 (+ (window-x window) 1))
         (push window delete-windows)))
     (mapc #'delete-window delete-windows))
-  (let ((window-list (window-tree-flatten *window-tree*)))
+  (let ((window-list (window-tree-flatten (window-tree))))
     (dolist (window (collect-right-windows window-list))
       (window-resize window
                      0
@@ -972,7 +983,7 @@
                         setter
                         another-getter
                         another-setter)
-      (window-tree-parent *window-tree* node)
+      (window-tree-parent (window-tree) node)
     (declare (ignore setter another-setter))
     (cond ((null parent-node) nil)
           ((eq split-type (window-node-split-type parent-node))

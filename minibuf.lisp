@@ -233,9 +233,9 @@
         (minibuffer-mode)
         (when initial
           (insert-string initial))
-        (unwind-protect (minibuf-read-line-loop prompt comp-f existing-p)
-          (when (deleted-window-p (current-window))
-            (setf (current-window) (car (window-list))))
+        (unwind-protect (call-with-save-windows
+                         (lambda ()
+                           (minibuf-read-line-loop prompt comp-f existing-p)))
           (with-current-window (minibuffer-window)
             (erase-buffer)
             (insert-string minibuf-buffer-prev-string)

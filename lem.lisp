@@ -83,7 +83,6 @@
   (setq *universal-argument* nil)
   (setq *macro-recording-p* nil)
   (buffer-mark-cancel (current-buffer))
-  (delete-completion-window)
   (minibuf-print "Quit"))
 
 (define-key *global-keymap* (kbd "C-x C-c") 'exit-lem)

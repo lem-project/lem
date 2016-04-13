@@ -124,7 +124,6 @@
     (when (or (string= str "")
               (null *minibuf-read-line-existing-p*)
               (funcall *minibuf-read-line-existing-p* str))
-      (delete-completion-window)
       (setq *minibuf-read-line-loop* nil)))
   t)
 

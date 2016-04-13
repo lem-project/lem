@@ -3,6 +3,9 @@
 (in-package :cl-user)
 (defpackage :lem.lisp-mode
   (:use :cl :lem :lem.grep)
+  (:import-from
+   :lem.util
+   :completion)
   (:export
    :*lisp-indent-table*
    :*lisp-mode-keymap*

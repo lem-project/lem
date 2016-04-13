@@ -228,51 +228,68 @@
          nil)
         (t t)))
 
-(defun dump-window-tree (window-tree)
-  (if (window-tree-leaf-p window-tree)
-      (list
-       :window
-       (buffer-name (window-buffer window-tree))
-       (window-x window-tree)
-       (window-y window-tree)
-       (window-width window-tree)
-       (window-height window-tree)
-       (window-vtop-linum window-tree)
-       (window-vtop-charpos window-tree)
-       (marker-point (window-point-marker window-tree))
-       (window-delete-hook window-tree)
-       (window-parameters window-tree))
-      (list
-       (window-node-split-type window-tree)
-       (dump-window-tree (window-node-car window-tree))
-       (dump-window-tree (window-node-cdr window-tree)))))
+(defun dump-window-tree (window-tree current-window)
+  (labels ((f (window-tree)
+              (if (window-tree-leaf-p window-tree)
+                  (list
+                   :window
+                   (eq current-window window-tree)
+                   (buffer-name (window-buffer window-tree))
+                   (window-x window-tree)
+                   (window-y window-tree)
+                   (window-width window-tree)
+                   (window-height window-tree)
+                   (window-vtop-linum window-tree)
+                   (window-vtop-charpos window-tree)
+                   (marker-point (window-point-marker window-tree))
+                   (window-delete-hook window-tree)
+                   (window-parameters window-tree))
+                  (list
+                   (window-node-split-type window-tree)
+                   (f (window-node-car window-tree))
+                   (f (window-node-cdr window-tree))))))
+    (f window-tree)))
 
 (defun load-window-tree (dumped-tree)
   (do-window-tree (window *window-tree*)
     (charms/ll:delwin (window-screen window)))
-  (labels ((f (dumped-tree)
-             (if (eq :window (car dumped-tree))
-                 (destructuring-bind
-                     (buffer-name x y width height vtop-linum vtop-charpos point delete-hook parameters)
-                     (cdr dumped-tree)
-                   (let ((window (make-window (get-buffer-create buffer-name)
-                                              height width y x)))
-                     (setf (window-vtop-charpos window) vtop-charpos)
-                     (setf (window-vtop-linum window) vtop-linum)
-                     (setf (window-delete-hook window) delete-hook)
-                     (setf (window-parameters window) parameters)
-                     (point-set point window)
-                     window))
-                 (destructuring-bind (split-type car-window cdr-window)
-                     dumped-tree
-                   (make-window-node split-type
-                                     (f car-window)
-                                     (f cdr-window))))))
-    (setf *window-tree* (f dumped-tree))
-    (setf (current-window) (car (window-list)))))
+  (let ((current-window nil))
+    (labels ((f (dumped-tree)
+                (if (eq :window (car dumped-tree))
+                    (destructuring-bind (current-window-p
+                                         buffer-name
+                                         x
+                                         y
+                                         width
+                                         height
+                                         vtop-linum
+                                         vtop-charpos
+                                         point
+                                         delete-hook
+                                         parameters)
+                        (cdr dumped-tree)
+                      (let ((window (make-window (get-buffer-create buffer-name)
+                                                 height width y x)))
+                        (setf (window-vtop-charpos window) vtop-charpos)
+                        (setf (window-vtop-linum window) vtop-linum)
+                        (setf (window-delete-hook window) delete-hook)
+                        (setf (window-parameters window) parameters)
+                        (point-set point window)
+                        (when current-window-p
+                          (setf current-window window))
+                        window))
+                    (destructuring-bind (split-type car-window cdr-window)
+                        dumped-tree
+                      (make-window-node split-type
+                                        (f car-window)
+                                        (f cdr-window))))))
+      (setf *window-tree* (f dumped-tree))
+      (setf (current-window)
+            (or current-window
+                (car (window-list)))))))
 
-(defun call-with-save-windows (function)
-  (let ((dumped-tree (dump-window-tree *window-tree*)))
+(defun call-with-save-windows (current-window function)
+  (let ((dumped-tree (dump-window-tree *window-tree* current-window)))
     (unwind-protect (funcall function)
       (load-window-tree dumped-tree))))
 

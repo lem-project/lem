@@ -233,6 +233,7 @@
         (when initial
           (insert-string initial))
         (unwind-protect (call-with-save-windows
+                         *minibuf-read-line-tmp-window*
                          (lambda ()
                            (minibuf-read-line-loop prompt comp-f existing-p)))
           (with-current-window (minibuffer-window)

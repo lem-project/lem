@@ -301,7 +301,7 @@
   (let ((dumped-tree (dump-window-tree (window-tree) current-window))
         (*modified-window-tree-p* nil))
     (unwind-protect (funcall function)
-      (when (pdebug *modified-window-tree-p*)
+      (when *modified-window-tree-p*
         (load-window-tree dumped-tree)))))
 
 (defun window-init ()

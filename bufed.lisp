@@ -12,7 +12,6 @@
           insert-newline
           newline-and-indent
           delete-char
-          backward-delete-char
           kill-line
           set-charpos
           beginning-of-line
@@ -114,36 +113,22 @@
                    (insert-string spaces))
         (return nil)))))
 
-(define-key *global-keymap* (kbd "C-d") 'delete-char)
-(define-key *global-keymap* (kbd "[dc]") 'delete-char)
-(define-command delete-char (&optional n (killp t)) ("P")
-  (cond
-    ((and n (minusp n))
-     (backward-delete-char (- n)))
-    ((eobp) nil)
-    (t
-     (let ((lines
-             (buffer-delete-char (current-buffer)
-                                 (current-linum)
-                                 (current-charpos)
-                                 (or n 1))))
-       (when (and killp n)
-         (with-kill ()
-           (kill-push lines)))
-       t))))
-
-(define-key *global-keymap* (kbd "C-h") 'backward-delete-char)
-(define-key *global-keymap* (kbd "[backspace]") 'backward-delete-char)
-(define-key *global-keymap* (kbd "[del]") 'backward-delete-char)
-(define-command backward-delete-char (&optional n (killp t)) ("P")
-  (cond ((null n)
-         (when (prev-char)
-           (delete-char)))
-        ((minusp n)
-         (delete-char (- n) killp))
-        (t
-         (when (prev-char n)
-           (delete-char n killp)))))
+(defun delete-char (n &optional killp)
+  (when (minusp n)
+    (setf n (- n))
+    (unless (prev-char n)
+      (return-from delete-char nil)))
+  (if (eobp)
+      nil
+      (let ((lines
+              (buffer-delete-char (current-buffer)
+                                  (current-linum)
+                                  (current-charpos)
+                                  n)))
+        (when killp
+          (with-kill ()
+            (kill-push lines)))
+        t)))
 
 (define-key *global-keymap* (kbd "C-k") 'kill-line)
 (define-command kill-line (&optional (n 1)) ("p")

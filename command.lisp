@@ -24,7 +24,7 @@
       (cond ((char= c C-m)
              (insert-newline 1))
             ((char= c C-d)
-             (delete-char))
+             (delete-char 1 nil))
             (t
              (insert-char c 1))))))
 
@@ -36,3 +36,16 @@
 (define-command open-line (n) ("p")
   (insert-newline n)
   (prev-char n))
+
+(define-key *global-keymap* (kbd "C-d") 'delete-next-char)
+(define-key *global-keymap* (kbd "[dc]") 'delete-next-char)
+(define-command delete-next-char (&optional n) ("P")
+  (delete-char (or n 1)
+               (if n t nil)))
+
+(define-key *global-keymap* (kbd "C-h") 'delete-previous-char)
+(define-key *global-keymap* (kbd "[backspace]") 'delete-previous-char)
+(define-key *global-keymap* (kbd "[del]") 'delete-previous-char)
+(define-command delete-previous-char (&optional n) ("P")
+  (delete-char (if n (- n) -1)
+               (if n t nil)))

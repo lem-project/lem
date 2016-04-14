@@ -21,8 +21,6 @@
           forward-line
           next-char
           prev-char
-          next-page-char
-          prev-page-char
           mark-set
           exchange-point-mark
           following-char
@@ -199,24 +197,6 @@
            (end-of-line))
           (t
            (set-charpos (1- (current-charpos))))))))
-
-(define-key *global-keymap* (kbd "C-x ]") 'next-page-char)
-(define-command next-page-char (&optional (n 1)) ("p")
-  (dotimes (_ n t)
-    (when (eq C-L (following-char))
-      (next-char 1))
-    (unless (search-forward (string #\page))
-      (end-of-buffer)
-      (return nil))))
-
-(define-key *global-keymap* (kbd "C-x [") 'prev-page-char)
-(define-command prev-page-char (&optional (n 1)) ("p")
-  (dotimes (_ n t)
-    (when (eq C-L (preceding-char))
-      (prev-char 1))
-    (unless (search-backward (string #\page))
-      (beginning-of-buffer)
-      (return nil))))
 
 (define-key *global-keymap* (kbd "C-@") 'mark-set)
 (define-command mark-set () ()

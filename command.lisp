@@ -17,7 +17,9 @@
           prev-page
           entab-line
           detab-line
-          newline-and-indent))
+          newline-and-indent
+          next-page-char
+          prev-page-char))
 
 (define-key *global-keymap* (kbd "M-~") 'unmark-buffer)
 (define-command unmark-buffer () ()
@@ -163,3 +165,21 @@
       (unless (and (newline)
                    (insert-string spaces))
         (return nil)))))
+
+(define-key *global-keymap* (kbd "C-x ]") 'next-page-char)
+(define-command next-page-char (&optional (n 1)) ("p")
+  (dotimes (_ n t)
+    (when (eql (char-code #\page) (following-char))
+      (next-char 1))
+    (unless (search-forward (string #\page))
+      (end-of-buffer)
+      (return nil))))
+
+(define-key *global-keymap* (kbd "C-x [") 'prev-page-char)
+(define-command prev-page-char (&optional (n 1)) ("p")
+  (dotimes (_ n t)
+    (when (eql (char-code #\page) (preceding-char))
+      (prev-char 1))
+    (unless (search-backward (string #\page))
+      (beginning-of-buffer)
+      (return nil))))

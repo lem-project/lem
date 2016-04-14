@@ -104,6 +104,6 @@
                                  (save-excursion
                                    (back-to-indentation)
                                    (current-point)))))
-      (unless (and (insert-newline 1)
+      (unless (and (newline)
                    (insert-string spaces))
         (return nil)))))

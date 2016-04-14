@@ -149,13 +149,12 @@
 
 (define-key *global-keymap* (kbd "M-<") 'beginning-of-buffer)
 (define-command beginning-of-buffer () ()
-  (goto-line 1 t)
-  (set-charpos 0)
+  (point-set (point-min))
   t)
 
 (define-key *global-keymap* (kbd "M->") 'end-of-buffer)
 (define-command end-of-buffer () ()
-  (point-set (buffer-end-point (current-buffer)))
+  (point-set (point-max))
   t)
 
 (defun forward-line (&optional (n 1))
@@ -400,9 +399,8 @@
            (insert-char c2 1)))))
 
 (define-command erase-buffer () ()
-  (beginning-of-buffer)
+  (point-set (point-max))
   (buffer-erase (current-buffer))
-  (beginning-of-buffer)
   t)
 
 (defun delete-while-whitespaces (&optional ignore-newline-p use-kill-ring)

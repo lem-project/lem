@@ -1011,7 +1011,7 @@
     (insert-string ")")
     (incf count)
     (unless (save-excursion (backward-sexp 1 t))
-      (backward-delete-char count nil)
+      (delete-char (- count) nil)
       (return (= 1 count)))))
 
 (defun lisp-repl-confirm (string)

@@ -71,9 +71,9 @@
         (save-excursion (detab-line 1))
         (let ((mod (mod end *python-indent-size*)))
           (set-charpos end)
-          (backward-delete-char mod nil)
+          (delete-char (- mod) nil)
           (when (plusp (- end mod))
-            (backward-delete-char *python-indent-size* t)))))))
+            (delete-char (- *python-indent-size*) nil)))))))
 
 (defun python-definition-line-p ()
   (looking-at-line "^\\s*(def|class)\\s"))

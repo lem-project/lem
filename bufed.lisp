@@ -466,15 +466,14 @@
          (let* ((c1 (char-before 1))
                 (c2 (char-before 2)))
            (unless (eql c2 #\newline)
-             (backward-delete-char 1 nil)
-             (backward-delete-char 1 nil)
+             (delete-char -2 nil)
              (insert-char c1 1)
              (insert-char c2 1))))
         (t
          (let* ((c1 (following-char))
                 (c2 (preceding-char)))
            (delete-char 1 nil)
-           (backward-delete-char)
+           (delete-char -1 nil)
            (insert-char c1 1)
            (insert-char c2 1)))))
 

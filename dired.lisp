@@ -10,8 +10,14 @@
   (:name "dired"
    :keymap *dired-mode-keymap*))
 
-(define-key *dired-mode-keymap* (kbd "n") 'next-line)
-(define-key *dired-mode-keymap* (kbd "p") 'prev-line)
+(define-key *dired-mode-keymap* (kbd "n") 'dired-next-line)
+(define-key *dired-mode-keymap* (kbd "p") 'dired-previous-line)
+
+(define-command dired-next-line (&optional (n 1)) ("p")
+  (forward-line n))
+
+(define-command dired-previous-line (&optional (n 1)) ("p")
+  (forward-line (- n)))
 
 (defparameter +mark+ #\*)
 (defparameter +unmark+ #\space)

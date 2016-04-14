@@ -21,8 +21,6 @@
           forward-line
           next-char
           prev-char
-          next-page
-          prev-page
           next-page-char
           prev-page-char
           mark-set
@@ -201,36 +199,6 @@
            (end-of-line))
           (t
            (set-charpos (1- (current-charpos))))))))
-
-(define-key *global-keymap* (kbd "C-v") 'next-page)
-(define-key *global-keymap* (kbd "[npage]") 'next-page)
-(define-command next-page (&optional n) ("P")
-  (if n
-      (scroll-down n)
-      (let ((point (current-point)))
-        (cond ((forward-line (1- (window-height)))
-               (window-recenter (current-window))
-               t)
-              ((and (point-set point) nil))
-              ((not (eobp))
-               (end-of-buffer)
-               (window-recenter (current-window))
-               t)))))
-
-(define-key *global-keymap* (kbd "M-v") 'prev-page)
-(define-key *global-keymap* (kbd "[ppage]") 'prev-page)
-(define-command prev-page (&optional n) ("P")
-  (if n
-      (scroll-up n)
-      (let ((point (current-point)))
-        (cond ((forward-line (- (1- (window-height))))
-               (window-recenter (current-window))
-               t)
-              ((and (point-set point) nil))
-              ((not (bobp))
-               (beginning-of-buffer)
-               (window-recenter (current-window))
-               t)))))
 
 (define-key *global-keymap* (kbd "C-x ]") 'next-page-char)
 (define-command next-page-char (&optional (n 1)) ("p")

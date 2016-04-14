@@ -13,6 +13,8 @@
           kill-line
           next-line
           prev-line
+          next-page
+          prev-page
           entab-line
           detab-line
           newline-and-indent))
@@ -75,7 +77,6 @@
                        (t
                         (end-of-line))))))
 
-
 (let ((tmp-column))
   (defun %next-line-before ()
     (when-interrupted-flag :next-line
@@ -116,6 +117,36 @@
 (define-key *global-keymap* (kbd "[up]") 'prev-line)
 (define-command prev-line (&optional n) ("p")
   (next-line (- n)))
+
+(define-key *global-keymap* (kbd "C-v") 'next-page)
+(define-key *global-keymap* (kbd "[npage]") 'next-page)
+(define-command next-page (&optional n) ("P")
+  (if n
+      (scroll-down n)
+      (let ((point (current-point)))
+        (cond ((forward-line (1- (window-height)))
+               (window-recenter (current-window))
+               t)
+              ((and (point-set point) nil))
+              ((not (eobp))
+               (end-of-buffer)
+               (window-recenter (current-window))
+               t)))))
+
+(define-key *global-keymap* (kbd "M-v") 'prev-page)
+(define-key *global-keymap* (kbd "[ppage]") 'prev-page)
+(define-command prev-page (&optional n) ("P")
+  (if n
+      (scroll-up n)
+      (let ((point (current-point)))
+        (cond ((forward-line (- (1- (window-height))))
+               (window-recenter (current-window))
+               t)
+              ((and (point-set point) nil))
+              ((not (bobp))
+               (beginning-of-buffer)
+               (window-recenter (current-window))
+               t)))))
 
 (defun tab-line-aux (n make-space-str)
   (dotimes (_ n t)

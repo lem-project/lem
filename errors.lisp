@@ -32,5 +32,5 @@
              "Editor Error: ~A"
              (editor-error-message condition)))))
 
-(defun editor-error (message)
-  (error 'editor-error :message message))
+(defun editor-error (message &rest args)
+  (error 'editor-error :message (apply #'format nil message args)))

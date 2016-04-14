@@ -40,7 +40,6 @@
                         (:file "buffers")
                         (:file "bufed")
                         (:file "command")
-                        (:file "process")
                         (:file "display")
                         (:file "window")
                         (:file "file")

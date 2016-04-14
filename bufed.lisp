@@ -19,8 +19,6 @@
           end-of-buffer
           goto-position
           forward-line
-          next-line
-          prev-line
           next-char
           prev-char
           next-page
@@ -174,47 +172,6 @@
         (when (head-line-p)
           (return))
         (decf (current-linum)))))
-
-(let ((tmp-column))
-  (defun %next-line-before ()
-    (when-interrupted-flag :next-line
-                           (setq tmp-column
-                                 (str-width (buffer-line-string
-                                             (current-buffer)
-                                             (current-linum))
-                                            0
-                                            (current-charpos)))))
-  (defun %next-line-after ()
-    (let ((pos (or (wide-index (buffer-line-string
-                                (current-buffer)
-                                (current-linum))
-                               tmp-column)
-                   (buffer-line-length
-                    (current-buffer)
-                    (current-linum)))))
-      (when pos
-        (setf (current-charpos) pos)))
-    (check-type (current-charpos)
-                (integer 0 #.most-positive-fixnum))))
-
-(define-key *global-keymap* (kbd "C-n") 'next-line)
-(define-key *global-keymap* (kbd "[down]") 'next-line)
-(define-command next-line (&optional n) ("p")
-  (%next-line-before)
-  (unless (prog1 (forward-line n)
-            (%next-line-after))
-    (cond ((plusp n)
-           (end-of-buffer)
-           (editor-error "End of buffer"))
-          (t
-           (beginning-of-buffer)
-           (editor-error "Beginning of buffer"))))
-  t)
-
-(define-key *global-keymap* (kbd "C-p") 'prev-line)
-(define-key *global-keymap* (kbd "[up]") 'prev-line)
-(define-command prev-line (&optional n) ("p")
-  (next-line (- n)))
 
 (define-key *global-keymap* (kbd "C-f") 'next-char)
 (define-key *global-keymap* (kbd "[right]") 'next-char)

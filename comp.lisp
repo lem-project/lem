@@ -19,7 +19,7 @@
            (setq comp-flag nil)
            (with-current-window *completion-window*
              (unless (scroll-down (1- (window-height)))
-               (beginning-of-buffer))
+               (point-set (point-min)))
              (window-update-all)))))
       (setq prev-str str)
       (if (null comp-flag)

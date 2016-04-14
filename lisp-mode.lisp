@@ -1020,7 +1020,7 @@
     (setq +++ ++ /// //     *** (car ///)
           ++  +  //  /      **  (car //)
           +   -  /   values *   (car /))
-    (end-of-buffer)
+    (point-set (point-max))
     (lisp-print-values values)
     (listener-reset-prompt)))
 

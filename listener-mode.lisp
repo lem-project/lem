@@ -39,7 +39,7 @@
   (setf (%listener-marker) (make-marker-current-point)))
 
 (defun listener-reset-prompt ()
-  (end-of-buffer)
+  (point-set (point-max))
   (unless (bolp)
     (insert-newline 1))
   (insert-string
@@ -53,7 +53,7 @@
 
 (define-key *listener-mode-keymap* (kbd "C-m") 'listener-return)
 (define-command listener-return () ()
-  (end-of-buffer)
+  (point-set (point-max))
   (let ((end (current-point)))
     (if (not (funcall (get-bvar :listener-check-confirm-function)))
         (insert-newline)
@@ -63,7 +63,7 @@
             (return-from listener-return t))
           (let ((str (region-string start end)))
             (add-history (%listener-history) str)
-            (end-of-buffer)
+            (point-set (point-max))
             (insert-newline)
             (listener-update-marker)
             (funcall (get-bvar :listener-confirm-function) str)))))

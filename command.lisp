@@ -2,6 +2,19 @@
 
 (in-package :lem)
 
+(export '(unmark-buffer
+          toggle-read-only
+          rename-buffer
+          quoted-insert
+          newline
+          open-line
+          delete-next-char
+          delete-previous-char
+          kill-line
+          entab-line
+          detab-line
+          newline-and-indent))
+
 (define-key *global-keymap* (kbd "M-~") 'unmark-buffer)
 (define-command unmark-buffer () ()
   (buffer-unmark (current-buffer))
@@ -59,3 +72,38 @@
                         (beginning-of-line))
                        (t
                         (end-of-line))))))
+
+(defun tab-line-aux (n make-space-str)
+  (dotimes (_ n t)
+    (let ((count (save-excursion
+                   (back-to-indentation)
+                   (current-column))))
+      (multiple-value-bind (div mod)
+          (floor count *tab-size*)
+        (beginning-of-line)
+        (delete-while-whitespaces t nil)
+        (insert-string (funcall make-space-str div))
+        (insert-char #\space mod)))
+    (unless (forward-line 1)
+      (return))))
+
+(define-command entab-line (n) ("p")
+  (tab-line-aux n
+                #'(lambda (n)
+                    (make-string n :initial-element #\tab))))
+
+(define-command detab-line (n) ("p")
+  (tab-line-aux n
+                #'(lambda (n)
+                    (make-string (* n *tab-size*) :initial-element #\space))))
+
+(define-key *global-keymap* (kbd "C-j") 'newline-and-indent)
+(define-command newline-and-indent (n) ("p")
+  (dotimes (_ n t)
+    (let ((spaces (region-string (make-point (current-linum) 0)
+                                 (save-excursion
+                                   (back-to-indentation)
+                                   (current-point)))))
+      (unless (and (insert-newline 1)
+                   (insert-string spaces))
+        (return nil)))))

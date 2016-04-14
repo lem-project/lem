@@ -10,7 +10,6 @@
           insert-lines
           insert-string
           insert-newline
-          newline-and-indent
           delete-char
           set-charpos
           beginning-of-line
@@ -34,8 +33,6 @@
           char-after
           char-before
           replace-char
-          entab-line
-          detab-line
           blank-line-p
           delete-blank-lines
           transpose-characters
@@ -101,17 +98,6 @@
                            (current-linum)
                            (current-charpos)))
   (forward-line n))
-
-(define-key *global-keymap* (kbd "C-j") 'newline-and-indent)
-(define-command newline-and-indent (n) ("p")
-  (dotimes (_ n t)
-    (let ((spaces (region-string (make-point (current-linum) 0)
-                                 (save-excursion
-                                   (back-to-indentation)
-                                   (current-point)))))
-      (unless (and (insert-newline 1)
-                   (insert-string spaces))
-        (return nil)))))
 
 (defun delete-char (n &optional killp)
   (when (minusp n)
@@ -376,30 +362,6 @@
    (current-charpos)
    c))
 
-(defun tab-line-aux (n make-space-str)
-  (dotimes (_ n t)
-    (let ((count (save-excursion
-                   (back-to-indentation)
-                   (current-column))))
-      (multiple-value-bind (div mod)
-          (floor count *tab-size*)
-        (beginning-of-line)
-        (delete-while-whitespaces t nil)
-        (insert-string (funcall make-space-str div))
-        (insert-char #\space mod)))
-    (unless (forward-line 1)
-      (return))))
-
-(define-command entab-line (n) ("p")
-  (tab-line-aux n
-                #'(lambda (n)
-                    (make-string n :initial-element #\tab))))
-
-(define-command detab-line (n) ("p")
-  (tab-line-aux n
-                #'(lambda (n)
-                    (make-string (* n *tab-size*) :initial-element #\space))))
-
 (defun blank-line-p ()
   (let ((string (buffer-line-string (current-buffer) (current-linum)))
         (eof-p (buffer-end-line-p (current-buffer) (current-linum))))
@@ -486,7 +448,7 @@
 (define-key *global-keymap* (kbd "M-m") 'back-to-indentation)
 (define-command back-to-indentation () ()
   (beginning-of-line)
-  (skip-chars-forward #'(lambda (c) (member c '(#\space #\tab))))
+  (skip-chars-forward '(#\space #\tab))
   t)
 
 (define-key *global-keymap* (kbd "C-\\") 'undo)

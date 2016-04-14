@@ -68,7 +68,7 @@
   t)
 
 (define-command rename-buffer (name) ("sRename buffer: ")
-  (setf (buffer-name) name)
+  (buffer-rename (current-buffer) name)
   t)
 
 (defun head-line-p ()
@@ -128,13 +128,16 @@
 (defun insert-string (str)
   (insert-lines (split-string str #\newline)))
 
-(define-key *global-keymap* (kbd "C-m") 'insert-newline)
-(define-command insert-newline (&optional (n 1)) ("p")
-  (dotimes (_ n t)
+(defun insert-newline (&optional (n 1))
+  (dotimes (_ n)
     (buffer-insert-newline (current-buffer)
                            (current-linum)
-                           (current-charpos))
-    (forward-line 1)))
+                           (current-charpos)))
+  (forward-line n))
+
+(define-key *global-keymap* (kbd "C-m") 'newline)
+(define-command newline (&optional (n 1)) ("p")
+  (insert-newline n))
 
 (define-key *global-keymap* (kbd "C-j") 'newline-and-indent)
 (define-command newline-and-indent (n) ("p")
@@ -183,18 +186,14 @@
            (delete-char n killp)))))
 
 (define-key *global-keymap* (kbd "C-k") 'kill-line)
-(define-command kill-line (&optional n) ("P")
-  (cond
-    ((null n)
-     (delete-char
-      (cond ((eolp) 1)
-            ((blank-line-p))
-            (t (- (buffer-line-length (current-buffer)
-                                      (current-linum))
-                  (current-charpos))))))
-    ((plusp n)
-     (dotimes (_ n)
-       (kill-line)))))
+(define-command kill-line (&optional (n 1)) ("p")
+  (kill-region (current-point)
+               (dotimes (_ n (current-point))
+                 (cond ((eolp)
+                        (next-line 1)
+                        (beginning-of-line))
+                       (t
+                        (end-of-line))))))
 
 (defun set-charpos (pos)
   (assert (<= 0 pos))

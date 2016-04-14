@@ -130,7 +130,9 @@
         t)))
 
 (defun set-charpos (pos)
-  (assert (<= 0 pos))
+  (assert (<= 0
+              pos
+              (buffer-line-length (current-buffer) (current-linum))))
   (setf (current-charpos) pos))
 
 (define-key *global-keymap* (kbd "C-a") 'beginning-of-line)

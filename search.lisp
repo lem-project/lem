@@ -263,8 +263,7 @@
                    #'forward-line
                    #'(lambda (result)
                        (beginning-of-line)
-                       (next-char result)
-                       (next-char (length str)))
+                       (next-char (+ result (length str))))
                    (search-forward-endp-function limit)))))
 
 (defun search-backward-endp-function (limit)

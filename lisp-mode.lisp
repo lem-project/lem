@@ -400,8 +400,7 @@
         (loop
           for c = (following-char)
           do (cond ((char= c #\newline)
-                    (return (and (forward-line 1)
-                                 (beginning-of-line))))
+                    (return (forward-line 1)))
                    ((syntax-space-char-p c)
                     (unless (next-char 1)
                       (return nil)))

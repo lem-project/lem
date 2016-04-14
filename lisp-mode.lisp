@@ -761,8 +761,7 @@
             (push (list file
                         (lambda ()
                           (find-file file)
-                          (beginning-of-buffer)
-                          (next-char filepos)
+                          (goto-position filepos)
                           (redraw-screen)))
                   defs)))
         (push (cons (current-buffer) (current-point))

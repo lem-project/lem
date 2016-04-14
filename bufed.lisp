@@ -17,6 +17,7 @@
           goto-line
           beginning-of-buffer
           end-of-buffer
+          goto-position
           forward-line
           next-line
           prev-line
@@ -156,6 +157,10 @@
 (define-command end-of-buffer () ()
   (point-set (point-max))
   t)
+
+(defun goto-position (position)
+  (check-type position (integer 1 *))
+  (point-set (buffer-position-to-point (current-buffer) position)))
 
 (defun forward-line (&optional (n 1))
   (beginning-of-line)

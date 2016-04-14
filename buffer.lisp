@@ -29,6 +29,7 @@
           buffer-insert-line
           buffer-delete-char
           buffer-erase
+          buffer-rename
           buffer-directory
           buffer-undo-boundary
           get-bvar
@@ -571,6 +572,13 @@
   (buffer-reset buffer)
   (dolist (marker (buffer-markers buffer))
     (setf (marker-point marker) (make-point 1 0))))
+
+(defun buffer-rename (buffer name)
+  (check-type buffer buffer)
+  (check-type name string)
+  (when (get-buffer name)
+    (editor-error "Buffer name `~A' is in use" name))
+  (setf (buffer-name buffer) name))
 
 (defun buffer-check-marked (buffer)
   (unless (buffer-mark-marker buffer)

@@ -4,7 +4,6 @@
 (defpackage :lem.util
   (:use :cl)
   (:export
-   :shell-command
    :pdebug
    :utf8-bytes
    :split-string
@@ -25,13 +24,6 @@
    :mklist
    :completion))
 (in-package :lem.util)
-
-(defun shell-command (command &key input output error-output)
-  (uiop:run-program command
-                    :input input
-                    :output output
-                    :error-output error-output
-                    :ignore-error-status t))
 
 (defun pdebug (x &optional (file "DEBUG"))
   (with-open-file (out file

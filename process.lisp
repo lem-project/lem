@@ -24,17 +24,20 @@
       (with-output-to-string (output outstr)
         (with-input-from-string (input input-string)
           (multiple-value-setq (output-value error-output-value status)
-                               (shell-command str
-                                              :input input
-                                              :output output))))
+                               (uiop:run-program str
+                                                 :input input
+                                                 :output output
+                                                 :ignore-error-status t))))
       (delete-region begin end)
       (insert-string outstr)
       (point-set begin)
-      (minibuf-print (write-to-string status))
+      (minibuf-print (format nil "~D ~A" (write-to-string status) error-output-value))
       (zerop status))))
 
 (define-key *global-keymap* (kbd "C-x @") 'pipe-command)
 (define-command pipe-command (str) ("sPipe command: ")
   (info-popup (get-buffer-create "*Command*")
               #'(lambda (out)
-                  (shell-command str :output out))))
+                  (uiop:run-program str
+                                    :output out
+                                    :ignore-error-status t))))

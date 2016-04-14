@@ -12,6 +12,8 @@
           delete-previous-char
           kill-line
           next-line
+          beginning-of-buffer
+          end-of-buffer
           prev-line
           next-page
           prev-page
@@ -100,6 +102,16 @@
 (define-key *global-keymap* (kbd "[up]") 'prev-line)
 (define-command prev-line (&optional n) ("p")
   (next-line (- n)))
+
+(define-key *global-keymap* (kbd "M-<") 'beginning-of-buffer)
+(define-command beginning-of-buffer () ()
+  (point-set (point-min))
+  t)
+
+(define-key *global-keymap* (kbd "M->") 'end-of-buffer)
+(define-command end-of-buffer () ()
+  (point-set (point-max))
+  t)
 
 (define-key *global-keymap* (kbd "C-v") 'next-page)
 (define-key *global-keymap* (kbd "[npage]") 'next-page)

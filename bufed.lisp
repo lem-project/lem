@@ -15,8 +15,6 @@
           beginning-of-line
           end-of-line
           goto-line
-          beginning-of-buffer
-          end-of-buffer
           goto-position
           forward-line
           next-char
@@ -141,16 +139,6 @@
     (unless does-not-recenter-p
       (recenter))
     t))
-
-(define-key *global-keymap* (kbd "M-<") 'beginning-of-buffer)
-(define-command beginning-of-buffer () ()
-  (point-set (point-min))
-  t)
-
-(define-key *global-keymap* (kbd "M->") 'end-of-buffer)
-(define-command end-of-buffer () ()
-  (point-set (point-max))
-  t)
 
 (defun goto-position (position)
   (check-type position (integer 1 *))

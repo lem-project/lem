@@ -105,9 +105,10 @@
 (define-key *global-keymap* (kbd "C-j") 'newline-and-indent)
 (define-command newline-and-indent (n) ("p")
   (dotimes (_ n t)
-    (let ((spaces (second
-                   (multiple-value-list
-                    (count-indent)))))
+    (let ((spaces (region-string (make-point (current-linum) 0)
+                                 (save-excursion
+                                   (back-to-indentation)
+                                   (current-point)))))
       (unless (and (insert-newline 1)
                    (insert-string spaces))
         (return nil)))))
@@ -375,28 +376,11 @@
    (current-charpos)
    c))
 
-(defun count-indent ()
-  (save-excursion
-   (beginning-of-line)
-   (let ((count 0)
-         (chars))
-     (do () ((eolp))
-       (let ((c (following-char)))
-         (case c
-           (#\space
-            (incf count))
-           (#\tab
-            (setq count (char-width #\tab count)))
-           (otherwise
-            (return)))
-         (push c chars)
-         (next-char 1)))
-     (values count
-             (coerce (nreverse chars) 'string)))))
-
 (defun tab-line-aux (n make-space-str)
   (dotimes (_ n t)
-    (let ((count (count-indent)))
+    (let ((count (save-excursion
+                   (back-to-indentation)
+                   (current-column))))
       (multiple-value-bind (div mod)
           (floor count *tab-size*)
         (beginning-of-line)

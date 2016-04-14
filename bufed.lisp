@@ -12,7 +12,6 @@
           insert-newline
           newline-and-indent
           delete-char
-          kill-line
           set-charpos
           beginning-of-line
           end-of-line
@@ -129,16 +128,6 @@
           (with-kill ()
             (kill-push lines)))
         t)))
-
-(define-key *global-keymap* (kbd "C-k") 'kill-line)
-(define-command kill-line (&optional (n 1)) ("p")
-  (kill-region (current-point)
-               (dotimes (_ n (current-point))
-                 (cond ((eolp)
-                        (next-line 1)
-                        (beginning-of-line))
-                       (t
-                        (end-of-line))))))
 
 (defun set-charpos (pos)
   (assert (<= 0 pos))

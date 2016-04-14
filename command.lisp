@@ -49,3 +49,13 @@
 (define-command delete-previous-char (&optional n) ("P")
   (delete-char (if n (- n) -1)
                (if n t nil)))
+
+(define-key *global-keymap* (kbd "C-k") 'kill-line)
+(define-command kill-line (&optional (n 1)) ("p")
+  (kill-region (current-point)
+               (dotimes (_ n (current-point))
+                 (cond ((eolp)
+                        (next-line 1)
+                        (beginning-of-line))
+                       (t
+                        (end-of-line))))))

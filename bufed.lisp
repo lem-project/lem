@@ -302,8 +302,8 @@
 
 (define-key *global-keymap* (kbd "M-Spc") 'just-one-space)
 (define-command just-one-space () ()
-  (skip-chars-backward 'syntax-space-char-p)
-  (delete-while-whitespaces nil nil)
+  (skip-chars-backward '(#\space #\tab))
+  (delete-while-whitespaces t nil)
   (insert-char #\space 1)
   t)
 

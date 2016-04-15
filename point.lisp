@@ -51,6 +51,9 @@
    (current-linum)
    (current-charpos)))
 
+(defun (setf current-point) (new-point)
+  (point-set new-point))
+
 (defun point-set (point &optional (window (current-window)))
   (setf (window-current-linum window)
         (min (buffer-nlines (window-buffer window))

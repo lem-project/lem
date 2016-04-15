@@ -206,11 +206,8 @@
   (let ((buffer (current-buffer)))
     (buffer-check-marked buffer)
     (psetf
-     (current-linum) (marker-linum (buffer-mark-marker buffer))
-     (current-charpos) (marker-charpos (buffer-mark-marker buffer))
-     (marker-linum (buffer-mark-marker buffer)) (current-linum)
-     (marker-charpos (buffer-mark-marker buffer)) (current-charpos))
-    (assert (<= 0 (current-charpos)))
+     (current-point)                            (marker-point (buffer-mark-marker buffer))
+     (marker-point (buffer-mark-marker buffer)) (current-point))
     t))
 
 (defun following-char ()

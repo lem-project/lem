@@ -658,8 +658,7 @@
         (lisp-current-package))))
 
 (defun %lisp-macroexpand-replace-expr (expr)
-  (let ((*kill-disable-p* t))
-    (kill-sexp))
+  (kill-sexp 1 nil)
   (pprint expr (make-buffer-output-stream))
   (read-from-string
    (region-string (point-min)

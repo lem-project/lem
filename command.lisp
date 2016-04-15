@@ -22,6 +22,7 @@
           newline-and-indent
           next-page-char
           prev-page-char
+          delete-blank-lines
           filter-buffer
           pipe-command))
 
@@ -197,6 +198,18 @@
     (unless (search-backward (string #\page))
       (beginning-of-buffer)
       (return nil))))
+
+(define-key *global-keymap* (kbd "C-x C-o") 'delete-blank-lines)
+(define-command delete-blank-lines () ()
+  (do ()
+      ((not (blank-line-p))
+       (forward-line 1))
+    (unless (forward-line -1)
+      (return)))
+  (do () ((eobp))
+    (let ((result (blank-line-p)))
+      (unless (and result (delete-char result nil))
+        (return)))))
 
 (define-key *global-keymap* (kbd "C-x #") 'filter-buffer)
 (define-command filter-buffer (str) ("sFilter buffer: ")

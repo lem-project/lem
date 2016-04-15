@@ -7,7 +7,6 @@
           *kill-ring-max*
           *kill-new-flag*
           *kill-before-p*
-          *kill-disable-p*
           kill-append
           kill-push
           yank
@@ -22,7 +21,6 @@
 
 (defvar *kill-new-flag* t)
 (defvar *kill-before-p* nil)
-(defvar *kill-disable-p* nil)
 
 (defun kill-append (lines before-p)
   (setf (car *kill-ring*)
@@ -97,7 +95,7 @@
         (kill-ring-nth n)))
 
 (defmacro with-kill (() &body body)
-  `(unless *kill-disable-p*
+  `(progn
      (when-interrupted-flag :kill
                             (setq *kill-new-flag* t))
      ,@body))

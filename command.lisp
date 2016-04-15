@@ -23,6 +23,7 @@
           next-page-char
           prev-page-char
           delete-blank-lines
+          transpose-characters
           filter-buffer
           pipe-command))
 
@@ -210,6 +211,24 @@
     (let ((result (blank-line-p)))
       (unless (and result (delete-char result nil))
         (return)))))
+
+(define-key *global-keymap* (kbd "C-t") 'transpose-characters)
+(define-command transpose-characters () ()
+  (cond ((bolp))
+        ((eolp)
+         (let* ((c1 (char-before 1))
+                (c2 (char-before 2)))
+           (unless (eql c2 #\newline)
+             (delete-char -2 nil)
+             (insert-char c1 1)
+             (insert-char c2 1))))
+        (t
+         (let* ((c1 (following-char))
+                (c2 (preceding-char)))
+           (delete-char 1 nil)
+           (delete-char -1 nil)
+           (insert-char c1 1)
+           (insert-char c2 1)))))
 
 (define-key *global-keymap* (kbd "C-x #") 'filter-buffer)
 (define-command filter-buffer (str) ("sFilter buffer: ")

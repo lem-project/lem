@@ -27,7 +27,6 @@
           char-before
           replace-char
           blank-line-p
-          transpose-characters
           erase-buffer
           delete-while-whitespaces
           skip-chars-forward
@@ -264,24 +263,6 @@
     (when (string= "" (string-trim '(#\space #\tab) string))
       (+ (length string)
          (if eof-p 0 1)))))
-
-(define-key *global-keymap* (kbd "C-t") 'transpose-characters)
-(define-command transpose-characters () ()
-  (cond ((bolp))
-        ((eolp)
-         (let* ((c1 (char-before 1))
-                (c2 (char-before 2)))
-           (unless (eql c2 #\newline)
-             (delete-char -2 nil)
-             (insert-char c1 1)
-             (insert-char c2 1))))
-        (t
-         (let* ((c1 (following-char))
-                (c2 (preceding-char)))
-           (delete-char 1 nil)
-           (delete-char -1 nil)
-           (insert-char c1 1)
-           (insert-char c2 1)))))
 
 (define-command erase-buffer () ()
   (point-set (point-max))

@@ -25,6 +25,8 @@
           next-page-char
           prev-page-char
           delete-blank-lines
+          just-one-space
+          delete-indentation
           transpose-characters
           filter-buffer
           pipe-command))
@@ -225,6 +227,23 @@
     (let ((result (blank-line-p)))
       (unless (and result (delete-char result nil))
         (return)))))
+
+(define-key *global-keymap* (kbd "M-Spc") 'just-one-space)
+(define-command just-one-space () ()
+  (skip-chars-backward '(#\space #\tab))
+  (delete-while-whitespaces t nil)
+  (insert-char #\space 1)
+  t)
+
+(define-key *global-keymap* (kbd "M-^") 'delete-indentation)
+(define-command delete-indentation () ()
+  (beginning-of-line)
+  (let ((point (current-point)))
+    (forward-line -1)
+    (end-of-line)
+    (delete-char (region-count (current-point) point) nil)
+    (just-one-space)
+    t))
 
 (define-key *global-keymap* (kbd "C-t") 'transpose-characters)
 (define-command transpose-characters () ()

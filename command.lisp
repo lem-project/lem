@@ -12,11 +12,13 @@
           delete-previous-char
           kill-line
           next-line
+          prev-line
+          next-char
+          prev-char
           move-to-beginning-of-buffer
           move-to-end-of-buffer
           move-to-beginning-of-line
           move-to-end-of-line
-          prev-line
           next-page
           prev-page
           entab-line
@@ -112,6 +114,18 @@
 (define-key *global-keymap* (kbd "[up]") 'prev-line)
 (define-command prev-line (&optional n) ("p")
   (next-line (- n)))
+
+(define-key *global-keymap* (kbd "C-f") 'next-char)
+(define-key *global-keymap* (kbd "[right]") 'next-char)
+(define-command next-char (&optional (n 1)) ("p")
+  (or (shift-position n)
+      (editor-error "End of buffer")))
+
+(define-key *global-keymap* (kbd "C-b") 'prev-char)
+(define-key *global-keymap* (kbd "[left]") 'prev-char)
+(define-command prev-char (&optional (n 1)) ("p")
+  (or (shift-position (- n))
+      (editor-error "Beginning of buffer")))
 
 (define-key *global-keymap* (kbd "M-<") 'move-to-beginning-of-buffer)
 (define-command move-to-beginning-of-buffer () ()

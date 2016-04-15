@@ -20,8 +20,6 @@
           goto-position
           forward-line
           shift-position
-          next-char
-          prev-char
           mark-set
           exchange-point-mark
           following-char
@@ -156,44 +154,40 @@
           (return))
         (decf (current-linum)))))
 
+(defun %shift-position-positive (n)
+  (loop
+    (when (< n 0)
+      (return nil))
+    (let* ((length (1+ (buffer-line-length (current-buffer) (current-linum))))
+           (w (- length (current-charpos))))
+      (when (< n w)
+        (set-charpos (+ n (current-charpos)))
+        (return t))
+      (decf n w)
+      (unless (forward-line 1)
+        (return nil)))))
+
+(defun %shift-position-negative (n)
+  (loop
+    (when (< n 0)
+      (return nil))
+    (when (<= n (current-charpos))
+      (set-charpos (- (current-charpos) n))
+      (return t))
+    (decf n (1+ (current-charpos)))
+    (cond ((head-line-p)
+           (beginning-of-line)
+           (return nil))
+          (t
+           (forward-line -1)
+           (end-of-line)))))
+
 (defun shift-position (n)
   (cond ((< 0 n)
-         (loop
-           (when (< n 0)
-             (return nil))
-           (let* ((length (1+ (buffer-line-length (current-buffer) (current-linum))))
-                  (w (- length (current-charpos))))
-             (when (< n w)
-               (set-charpos (+ n (current-charpos)))
-               (return t))
-             (decf n w)
-             (unless (forward-line 1)
-               (return nil)))))
+         (%shift-position-positive n))
         (t
          (setf n (- n))
-         (loop
-           (when (< n 0)
-             (return nil))
-           (when (<= n (current-charpos))
-             (set-charpos (- (current-charpos) n))
-             (return t))
-           (decf n (1+ (current-charpos)))
-           (cond ((head-line-p)
-                  (beginning-of-line)
-                  (return nil))
-                 (t
-                  (forward-line -1)
-                  (end-of-line)))))))
-
-(define-key *global-keymap* (kbd "C-f") 'next-char)
-(define-key *global-keymap* (kbd "[right]") 'next-char)
-(define-command next-char (&optional (n 1)) ("p")
-  (shift-position n))
-
-(define-key *global-keymap* (kbd "C-b") 'prev-char)
-(define-key *global-keymap* (kbd "[left]") 'prev-char)
-(define-command prev-char (&optional (n 1)) ("p")
-  (shift-position (- n)))
+         (%shift-position-negative n))))
 
 (define-key *global-keymap* (kbd "C-@") 'mark-set)
 (define-command mark-set () ()

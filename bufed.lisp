@@ -20,7 +20,7 @@
           goto-position
           forward-line
           shift-position
-          mark-set
+          mark-point
           exchange-point-mark
           following-char
           preceding-char
@@ -189,26 +189,22 @@
          (setf n (- n))
          (%shift-position-negative n))))
 
-(define-key *global-keymap* (kbd "C-@") 'mark-set)
-(define-command mark-set () ()
+(defun check-marked ()
+  (unless (buffer-mark-marker (current-buffer))
+    (editor-error "Not mark in this buffer")))
+
+(defun mark-point ()
+  (when (buffer-mark-marker (current-buffer))
+    (marker-point (buffer-mark-marker (current-buffer)))))
+
+(defun (setf mark-point) (point)
   (let ((buffer (current-buffer)))
     (setf (buffer-mark-p buffer) t)
-    (if (buffer-mark-marker)
+    (if (buffer-mark-marker buffer)
         (setf (marker-point (buffer-mark-marker buffer))
-              (current-point))
+              point)
         (setf (buffer-mark-marker buffer)
-              (make-marker-current-point)))
-    (minibuf-print "Mark set")
-    t))
-
-(define-key *global-keymap* (kbd "C-x C-x") 'exchange-point-mark)
-(define-command exchange-point-mark () ()
-  (let ((buffer (current-buffer)))
-    (buffer-check-marked buffer)
-    (psetf
-     (current-point)                            (marker-point (buffer-mark-marker buffer))
-     (marker-point (buffer-mark-marker buffer)) (current-point))
-    t))
+              (make-marker buffer point)))))
 
 (defun following-char ()
   (buffer-get-char (current-buffer)

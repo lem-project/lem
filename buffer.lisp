@@ -580,10 +580,6 @@
     (editor-error "Buffer name `~A' is in use" name))
   (setf (buffer-name buffer) name))
 
-(defun buffer-check-marked (buffer)
-  (unless (buffer-mark-marker buffer)
-    (editor-error "Not mark in this buffer")))
-
 (defun buffer-directory ()
   (if (buffer-filename)
       (directory-namestring

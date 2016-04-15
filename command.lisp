@@ -32,6 +32,8 @@
           transpose-characters
           undo
           redo
+          mark-set
+          exchange-point-mark
           filter-buffer
           pipe-command))
 
@@ -298,6 +300,19 @@
     (when point
       (point-set point)
       t)))
+
+(define-key *global-keymap* (kbd "C-@") 'mark-set)
+(define-command mark-set () ()
+  (setf (mark-point) (current-point))
+  (minibuf-print "Mark set"))
+
+(define-key *global-keymap* (kbd "C-x C-x") 'exchange-point-mark)
+(define-command exchange-point-mark () ()
+  (check-marked)
+  (let ((mark-point (mark-point)))
+    (setf (mark-point) (current-point))
+    (point-set mark-point))
+  t)
 
 (define-key *global-keymap* (kbd "C-x #") 'filter-buffer)
 (define-command filter-buffer (str) ("sFilter buffer: ")

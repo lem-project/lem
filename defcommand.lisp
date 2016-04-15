@@ -30,7 +30,7 @@
         `(list ,garg))
        ((string= "r" (car arg-descripters))
         `(progn
-           (buffer-check-marked (current-buffer))
+           (check-marked)
            (list (region-beginning) (region-end))))
        (t
         (cons 'list

@@ -38,7 +38,7 @@
                         (:file "region")
                         (:file "io")
                         (:file "buffers")
-                        (:file "bufed")
+                        (:file "basic")
                         (:file "command")
                         (:file "display")
                         (:file "window")

@@ -25,7 +25,6 @@
                         (:file "overlay")
                         (:file "hooks")
                         (:file "timer")
-                        (:file "misc")
                         (:file "marker")
                         (:file "keymap")
                         (:file "defcommand")

@@ -30,6 +30,7 @@
           just-one-space
           delete-indentation
           transpose-characters
+          back-to-indentation
           undo
           redo
           mark-set

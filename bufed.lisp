@@ -137,9 +137,10 @@
   (beginning-of-line)
   t)
 
-(defun goto-position (position &optional (buffer (current-buffer)))
+(defun goto-position (position)
   (check-type position (integer 1 *))
-  (point-set (buffer-position-to-point buffer position)))
+  (beginning-of-buffer)
+  (shift-position position))
 
 (defun forward-line (&optional (n 1))
   (beginning-of-line)
@@ -154,34 +155,44 @@
           (return))
         (decf (current-linum)))))
 
+(defun shift-position (n)
+  (cond ((< 0 n)
+         (loop
+           (when (< n 0)
+             (return nil))
+           (let* ((length (1+ (buffer-line-length (current-buffer) (current-linum))))
+                  (w (- length (current-charpos))))
+             (when (< n w)
+               (set-charpos (+ n (current-charpos)))
+               (return t))
+             (decf n w)
+             (unless (forward-line 1)
+               (return nil)))))
+        (t
+         (setf n (- n))
+         (loop
+           (when (< n 0)
+             (return nil))
+           (when (<= n (current-charpos))
+             (set-charpos (- (current-charpos) n))
+             (return t))
+           (decf n (1+ (current-charpos)))
+           (cond ((head-line-p)
+                  (beginning-of-line)
+                  (return nil))
+                 (t
+                  (forward-line -1)
+                  (end-of-line)))))))
+
 (define-key *global-keymap* (kbd "C-f") 'next-char)
 (define-key *global-keymap* (kbd "[right]") 'next-char)
 (define-command next-char (&optional (n 1)) ("p")
-  (if (minusp n)
-      (prev-char (- n))
-      (dotimes (_ n t)
-        (cond
-          ((eobp)
-           (return nil))
-          ((eolp)
-           (forward-line 1))
-          (t
-           (set-charpos (1+ (current-charpos))))))))
+  (shift-position n))
 
 (define-key *global-keymap* (kbd "C-b") 'prev-char)
 (define-key *global-keymap* (kbd "[left]") 'prev-char)
 (define-command prev-char (&optional (n 1)) ("p")
-  (if (minusp n)
-      (next-char (- n))
-      (dotimes (_ n t)
-        (cond
-          ((bobp)
-           (return nil))
-          ((bolp)
-           (forward-line -1)
-           (end-of-line))
-          (t
-           (set-charpos (1- (current-charpos))))))))
+  (shift-position (- n)))
 
 (define-key *global-keymap* (kbd "C-@") 'mark-set)
 (define-command mark-set () ()

@@ -270,18 +270,6 @@
   (make-point (buffer-nlines buffer)
               (line-length (buffer-tail-line buffer))))
 
-(defun buffer-position-to-point (buffer position)
-  (let ((line (buffer-head-line buffer))
-        (linum 1))
-    (loop
-      (let ((length (1+ (line-length line))))
-        (when (< position length)
-          (return (make-point linum (1- position))))
-        (unless (setf line (line-next line))
-          (return (buffer-end-point buffer)))
-        (decf position length)
-        (incf linum)))))
-
 (defun %buffer-get-line (buffer linum)
   (cond
    ((= linum (buffer-cache-linum buffer))

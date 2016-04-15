@@ -452,12 +452,12 @@
 
 (defun syntax-after-tag (&optional (n 1))
   (save-excursion
-   (next-char n)
+   (shift-position n)
    (%syntax-pos-tag (current-charpos))))
 
 (defun syntax-before-tag (&optional (n 1))
   (save-excursion
-   (prev-char (1- n))
+   (shift-position (- (1- n)))
    (%syntax-pos-tag (current-charpos))))
 
 (defun syntax-following-tag ()

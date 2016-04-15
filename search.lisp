@@ -61,7 +61,7 @@
   (isearch-start
    "ISearch: "
    #'(lambda (str)
-       (prev-char (length str))
+       (shift-position (- (length str)))
        (search-forward str))
    #'search-forward
    #'search-backward))
@@ -71,7 +71,7 @@
   (isearch-start
    "ISearch:"
    #'(lambda (str)
-       (next-char (length str))
+       (shift-position (length str))
        (search-backward str))
    #'search-forward
    #'search-backward))
@@ -263,7 +263,7 @@
                    #'forward-line
                    #'(lambda (result)
                        (beginning-of-line)
-                       (next-char (+ result (length str))))
+                       (shift-position (+ result (length str))))
                    (search-forward-endp-function limit)))))
 
 (defun search-backward-endp-function (limit)
@@ -305,7 +305,7 @@
                                 (forward-line (- (1- length)))
                                 t)
                             (beginning-of-line)
-                            (next-char i)))
+                            (shift-position i)))
                    (search-backward-endp-function limit)))))
 
 (defun search-forward-regexp (regex &optional limit)

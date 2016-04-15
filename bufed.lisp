@@ -19,6 +19,7 @@
           goto-line
           goto-position
           forward-line
+          shift-position
           next-char
           prev-char
           mark-set
@@ -64,7 +65,7 @@
            (current-linum)
            (current-charpos)
            c)
-      (next-char 1))))
+      (shift-position 1))))
 
 (defun insert-lines (lines)
   (do ((rest lines (cdr rest)))
@@ -74,7 +75,7 @@
      (current-linum)
      (current-charpos)
      (car rest))
-    (next-char (length (car rest)))
+    (shift-position (length (car rest)))
     (when (cdr rest)
       (insert-newline 1))))
 
@@ -91,7 +92,7 @@
 (defun delete-char (n &optional killp)
   (when (minusp n)
     (setf n (- n))
-    (unless (prev-char n)
+    (unless (shift-position (- n))
       (return-from delete-char nil)))
   (if (eobp)
       nil
@@ -241,9 +242,9 @@
   (if (zerop n)
       (following-char)
       (let ((point (current-point)))
-        (if (next-char n)
+        (if (shift-position n)
             (prog1 (following-char)
-              (prev-char n))
+              (shift-position (- n)))
             (progn
               (point-set point)
               nil)))))
@@ -252,9 +253,9 @@
   (if (= n 1)
       (preceding-char)
       (let ((point (current-point)))
-        (if (prev-char (1- n))
+        (if (shift-position (- (1- n)))
             (prog1 (preceding-char)
-              (next-char (1- n)))
+              (shift-position (1- n)))
             (progn
               (point-set point)
               nil)))))
@@ -302,7 +303,13 @@
             (return count))))))
 
 (defun skip-chars-forward (pred &optional not-p)
-  (skip-chars-aux pred not-p #'next-char #'following-char))
+  (skip-chars-aux pred
+                  not-p
+                  (lambda () (shift-position 1))
+                  #'following-char))
 
 (defun skip-chars-backward (pred &optional not-p)
-  (skip-chars-aux pred not-p #'prev-char #'preceding-char))
+  (skip-chars-aux pred
+                  not-p
+                  (lambda () (shift-position -1))
+                  #'preceding-char))

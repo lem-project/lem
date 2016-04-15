@@ -23,9 +23,9 @@
     do (if (and (syntax-end-block-comment-p c1 c2)
                 (not (sexp-escape-p t)))
            (progn
-             (next-char 2)
+             (shift-position 2)
              (return))
-           (unless (next-char 1)
+           (unless (shift-position 1)
              (return)))))
 
 (defun skip-space-forward ()
@@ -33,7 +33,7 @@
     for c1 = (following-char)
     for c2 = (char-after 1)
     do (cond ((syntax-space-char-p c1)
-              (unless (next-char 1)
+              (unless (shift-position 1)
                 (return nil)))
              ((and (syntax-line-comment-p c1 c2)
                    (not (sexp-escape-p t)))
@@ -76,9 +76,9 @@
     do (if (and (syntax-start-block-comment-p c2 c1)
                 (not (sexp-escape-p nil)))
            (progn
-             (prev-char 1)
+             (shift-position -1)
              (return))
-           (unless (prev-char 1)
+           (unless (shift-position -1)
              (return)))))
 
 (defun skip-space-backward ()
@@ -95,12 +95,12 @@
           (cond ((or (syntax-space-char-p c1)
                      (and (syntax-line-comment-p c1 nil)
                           (not (sexp-escape-p nil))))
-                 (unless (prev-char 1)
+                 (unless (shift-position -1)
                    (return nil)))
                 ((and (not (syntax-line-comment-p c2 nil))
                       (syntax-line-comment-p c2 c1)
                       (not (sexp-escape-p nil 1)))
-                 (unless (prev-char 2)
+                 (unless (shift-position -2)
                    (return nil)))
                 ((or ;; (and (syntax-end-block-comment-p c1 nil)
                      ;;      (not (sexp-escape-p nil)))
@@ -150,9 +150,7 @@
               (t :symbol)))))
 
 (defun sexp-step-char (dir)
-  (if dir
-      (next-char 1)
-      (prev-char 1)))
+  (shift-position (if dir 1 -1)))
 
 (defun skip-symbol (dir)
   (loop
@@ -243,7 +241,7 @@
       ((:symbol :escape)
        (return (skip-symbol-forward)))
       ((:expr-prefix)
-       (unless (next-char 1)
+       (unless (shift-position 1)
          (return)))
       ((:open-paren)
        (return (skip-list-forward 0)))
@@ -267,7 +265,7 @@
                ((:string-quote)
                 (skip-string-backward)))
         (loop while (eq :expr-prefix (sexp-get-syntax-type nil))
-          do (unless (prev-char 1)
+          do (unless (shift-position -1)
                (return))
           finally (return t))
         (syntax-skip-expr-prefix-backward))))

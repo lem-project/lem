@@ -587,7 +587,7 @@
       (when (syntax-open-paren-char-p (following-char))
         (save-excursion
          (when (forward-sexp 1 t)
-           (push (progn (prev-char 1) (current-point))
+           (push (progn (shift-position -1) (current-point))
                  highlight-points))))
       (when (syntax-closed-paren-char-p (preceding-char))
         (save-excursion

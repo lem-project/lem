@@ -284,20 +284,20 @@
        (declare (ignore c1 c2))
        (cond ;; (*lisp-mode-skip-features-sharp-macro-p*
              ;;  (when (and (eql c1 #\#) (member c2 '(#\+ #\-)))
-             ;;    (next-char 2))
+             ;;    (shift-position 2))
              ;;  (if (eql #\( (following-char))
              ;;      (skip-list-forward 0)
              ;;      (skip-symbol-forward))
              ;;  (skip-chars-forward '(#\space #\tab #\newline)))
              (t
-              (next-char 2))))))
+              (shift-position 2))))))
 
 (defun lisp-mode-skip-expr-prefix-backward ()
   (%lisp-mode-skip-expr-prefix (char-before 2)
                                (char-before 1)
                                #'(lambda (c1 c2)
                                    (declare (ignore c1 c2))
-                                   (prev-char 2))))
+                                   (shift-position -2))))
 
 (defun sexp-goto-car (limit-linum)
   (let ((point (current-point)))
@@ -402,7 +402,7 @@
           do (cond ((char= c #\newline)
                     (return (forward-line 1)))
                    ((syntax-space-char-p c)
-                    (unless (next-char 1)
+                    (unless (shift-position 1)
                       (return nil)))
                    (t
                     (return t)))))))

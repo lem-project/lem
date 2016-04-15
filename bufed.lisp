@@ -257,25 +257,24 @@
    (current-charpos)
    c))
 
-(defun blank-line-p ()
-  (let ((string (buffer-line-string (current-buffer) (current-linum)))
-        (eof-p (buffer-end-line-p (current-buffer) (current-linum))))
-    (when (string= "" (string-trim '(#\space #\tab) string))
-      (+ (length string)
-         (if eof-p 0 1)))))
-
 (define-command erase-buffer () ()
   (point-set (point-max))
   (buffer-erase (current-buffer))
   t)
 
 (defun delete-while-whitespaces (&optional ignore-newline-p use-kill-ring)
-  (do ((n 0 (1+ n))) ((eobp))
-    (let ((c (following-char)))
-      (if (or (and ignore-newline-p (char= c #\newline))
-              (not (syntax-space-char-p c)))
-          (return n)
-          (delete-char 1 use-kill-ring)))))
+  (let ((n (skip-chars-forward
+            (if ignore-newline-p
+                '(#\space #\tab)
+                '(#\space #\tab #\newline)))))
+    (delete-char (- n) use-kill-ring)))
+
+(defun blank-line-p ()
+  (let ((string (buffer-line-string (current-buffer) (current-linum)))
+        (eof-p (buffer-end-line-p (current-buffer) (current-linum))))
+    (when (string= "" (string-trim '(#\space #\tab) string))
+      (+ (length string)
+         (if eof-p 0 1)))))
 
 (defun %skip-test (pred not-p char)
   (if (if (consp pred)
@@ -284,19 +283,20 @@
       (not not-p)
       not-p))
 
+(defun skip-chars-aux (pred not-p step-char at-char)
+  (let ((count 0))
+    (loop
+      (unless (%skip-test pred not-p (funcall at-char))
+        (return count))
+      (if (funcall step-char)
+          (incf count)
+          (return count)))))
+
 (defun skip-chars-forward (pred &optional not-p)
-  (loop
-    (unless (%skip-test pred not-p (following-char))
-      (return))
-    (unless (next-char 1)
-      (return))))
+  (skip-chars-aux pred not-p #'next-char #'following-char))
 
 (defun skip-chars-backward (pred &optional not-p)
-  (loop
-    (unless (%skip-test pred not-p (preceding-char))
-      (return))
-    (unless (prev-char 1)
-      (return))))
+  (skip-chars-aux pred not-p #'prev-char #'preceding-char))
 
 (define-key *global-keymap* (kbd "M-Spc") 'just-one-space)
 (define-command just-one-space () ()

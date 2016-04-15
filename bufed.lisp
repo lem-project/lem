@@ -141,9 +141,9 @@
   (beginning-of-line)
   t)
 
-(defun goto-position (position)
+(defun goto-position (position &optional (buffer (current-buffer)))
   (check-type position (integer 1 *))
-  (point-set (buffer-position-to-point (current-buffer) position)))
+  (point-set (buffer-position-to-point buffer position)))
 
 (defun forward-line (&optional (n 1))
   (beginning-of-line)
@@ -279,21 +279,20 @@
       (+ (length string)
          (if eof-p 0 1)))))
 
-(defun %skip-test (pred not-p char)
-  (if (if (consp pred)
-          (member char pred)
-          (funcall pred char))
-      (not not-p)
-      not-p))
-
 (defun skip-chars-aux (pred not-p step-char at-char)
-  (let ((count 0))
-    (loop
-      (unless (%skip-test pred not-p (funcall at-char))
-        (return count))
-      (if (funcall step-char)
-          (incf count)
-          (return count)))))
+  (flet ((test (pred not-p char)
+           (if (if (consp pred)
+                   (member char pred)
+                   (funcall pred char))
+               (not not-p)
+               not-p)))
+    (let ((count 0))
+      (loop
+        (unless (test pred not-p (funcall at-char))
+          (return count))
+        (if (funcall step-char)
+            (incf count)
+            (return count))))))
 
 (defun skip-chars-forward (pred &optional not-p)
   (skip-chars-aux pred not-p #'next-char #'following-char))

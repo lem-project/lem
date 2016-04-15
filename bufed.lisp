@@ -33,9 +33,7 @@
           delete-while-whitespaces
           skip-chars-forward
           skip-chars-backward
-          back-to-indentation
-          undo
-          redo))
+          back-to-indentation))
 
 (defun head-line-p ()
   (<= (current-linum) 1))
@@ -297,23 +295,3 @@
 
 (defun skip-chars-backward (pred &optional not-p)
   (skip-chars-aux pred not-p #'prev-char #'preceding-char))
-
-(define-key *global-keymap* (kbd "M-m") 'back-to-indentation)
-(define-command back-to-indentation () ()
-  (beginning-of-line)
-  (skip-chars-forward '(#\space #\tab))
-  t)
-
-(define-key *global-keymap* (kbd "C-\\") 'undo)
-(define-command undo () ()
-  (let ((point (buffer-undo (current-buffer))))
-    (when point
-      (point-set point)
-      t)))
-
-(define-key *global-keymap* (kbd "C-_") 'redo)
-(define-command redo () ()
-  (let ((point (buffer-redo (current-buffer))))
-    (when point
-      (point-set point)
-      t)))

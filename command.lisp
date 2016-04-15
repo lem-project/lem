@@ -28,6 +28,8 @@
           just-one-space
           delete-indentation
           transpose-characters
+          undo
+          redo
           filter-buffer
           pipe-command))
 
@@ -262,6 +264,26 @@
            (delete-char -1 nil)
            (insert-char c1 1)
            (insert-char c2 1)))))
+
+(define-key *global-keymap* (kbd "M-m") 'back-to-indentation)
+(define-command back-to-indentation () ()
+  (beginning-of-line)
+  (skip-chars-forward '(#\space #\tab))
+  t)
+
+(define-key *global-keymap* (kbd "C-\\") 'undo)
+(define-command undo () ()
+  (let ((point (buffer-undo (current-buffer))))
+    (when point
+      (point-set point)
+      t)))
+
+(define-key *global-keymap* (kbd "C-_") 'redo)
+(define-command redo () ()
+  (let ((point (buffer-redo (current-buffer))))
+    (when point
+      (point-set point)
+      t)))
 
 (define-key *global-keymap* (kbd "C-x #") 'filter-buffer)
 (define-command filter-buffer (str) ("sFilter buffer: ")

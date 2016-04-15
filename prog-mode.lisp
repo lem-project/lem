@@ -58,8 +58,8 @@
   (prog-indent-line))
 
 (define-key *prog-mode-keymap* (kbd "C-M-\\") 'prog-indent-region)
-(define-command prog-indent-region () ()
+(define-command prog-indent-region (begin end) ("r")
   (save-excursion
-   (apply-region-lines (region-beginning)
-                       (region-end)
-                       'prog-indent-line)))
+    (apply-region-lines begin
+                        end
+                        'prog-indent-line)))

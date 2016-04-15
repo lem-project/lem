@@ -332,20 +332,18 @@
   t)
 
 (define-key *global-keymap* (kbd "M-C-@") 'mark-sexp)
-(define-command mark-sexp (&optional (arg t)) ("P")
-  (prog1
-      (save-excursion
-       (and (forward-sexp 1)
-            (mark-set)))
-    (when arg
-      (buffer-mark-cancel (current-buffer)))))
+(define-command mark-sexp () ()
+  (save-excursion
+   (and (forward-sexp 1)
+        (mark-set))))
 
 (define-key *global-keymap* (kbd "M-C-k") 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")
   (dotimes (_ n t)
-    (unless (and (mark-sexp)
-                 (kill-region (region-beginning)
-                              (region-end)))
+    (when (kill-region (current-point)
+                       (progn
+                         (forward-sexp 1)
+                         (current-point)))
       (return nil))))
 
 (define-key *global-keymap* (kbd "M-C-t") 'transpose-sexps)

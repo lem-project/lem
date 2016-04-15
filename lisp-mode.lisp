@@ -381,8 +381,10 @@
 
 (define-key *lisp-mode-keymap* (kbd "M-C-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()
-  (and (mark-sexp)
-       (prog-indent-region)))
+  (prog-indent-region (current-point)
+                      (save-excursion
+                        (forward-sexp 1)
+                        (current-point))))
 
 (define-key *global-keymap* (kbd "M-C-a") 'lisp-beginning-of-defun)
 (define-command lisp-beginning-of-defun (&optional (n 1)) ("p")
@@ -607,8 +609,10 @@
 (defun lisp-move-and-eval-sexp (move-sexp eval-string-function)
   (let ((str (save-excursion
               (and (funcall move-sexp)
-                   (mark-sexp)
-                   (region-string (region-beginning) (region-end))))))
+                   (region-string (current-point)
+                                  (progn
+                                    (forward-sexp 1)
+                                    (current-point)))))))
     (when str
       (funcall eval-string-function str)
       t)))
@@ -689,9 +693,11 @@
       (when (or (symbol-char-p (following-char))
                 (symbol-char-p (preceding-char)))
         (save-excursion
-         (skip-chars-backward not-symbol-elements t)
-         (mark-sexp)
-         (region-string (region-beginning) (region-end)))))))
+          (skip-chars-backward not-symbol-elements t)
+          (region-string (current-point)
+                         (progn
+                           (forward-sexp 1)
+                           (current-point))))))))
 
 (defun lisp-read-symbol (prompt &optional (confirm-p t))
   (let ((default-name (or (lisp-looking-at-symbol-name) "")))

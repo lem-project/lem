@@ -132,15 +132,14 @@
   t)
 
 (define-key *global-keymap* (kbd "M-g") 'goto-line)
-(define-command goto-line (n &optional does-not-recenter-p) ("P")
-  (unless n
-    (setq n (minibuf-read-number "Line to GOTO: ")))
-  (when (< 0 n (1+ (buffer-nlines (current-buffer))))
-    (setf (current-linum) n)
-    (beginning-of-line)
-    (unless does-not-recenter-p
-      (recenter))
-    t))
+(define-command goto-line (n) ("nLine to GOTO: ")
+  (setf n
+        (if (< n 1)
+            1
+            (min n (buffer-nlines (current-buffer)))))
+  (setf (current-linum) n)
+  (beginning-of-line)
+  t)
 
 (defun goto-position (position)
   (check-type position (integer 1 *))

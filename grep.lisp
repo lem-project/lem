@@ -60,7 +60,7 @@
        (cons line
              (lambda ()
                (find-file filename)
-               (goto-line linum t)))))))
+               (goto-line linum)))))))
 
 (defun grep-parse-lines (lines)
   (remove nil

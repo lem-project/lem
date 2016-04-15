@@ -12,8 +12,10 @@
           delete-previous-char
           kill-line
           next-line
-          beginning-of-buffer
-          end-of-buffer
+          move-to-beginning-of-buffer
+          move-to-end-of-buffer
+          move-to-beginning-of-line
+          move-to-end-of-line
           prev-line
           next-page
           prev-page
@@ -107,14 +109,26 @@
 (define-command prev-line (&optional n) ("p")
   (next-line (- n)))
 
-(define-key *global-keymap* (kbd "M-<") 'beginning-of-buffer)
-(define-command beginning-of-buffer () ()
-  (point-set (point-min))
+(define-key *global-keymap* (kbd "M-<") 'move-to-beginning-of-buffer)
+(define-command move-to-beginning-of-buffer () ()
+  (beginning-of-buffer)
   t)
 
-(define-key *global-keymap* (kbd "M->") 'end-of-buffer)
-(define-command end-of-buffer () ()
-  (point-set (point-max))
+(define-key *global-keymap* (kbd "M->") 'move-to-end-of-buffer)
+(define-command move-to-end-of-buffer () ()
+  (end-of-buffer)
+  t)
+
+(define-key *global-keymap* (kbd "C-a") 'move-to-beginning-of-line)
+(define-key *global-keymap* (kbd "[home]") 'move-to-beginning-of-line)
+(define-command move-to-beginning-of-line () ()
+  (beginning-of-line)
+  t)
+
+(define-key *global-keymap* (kbd "C-e") 'move-to-end-of-line)
+(define-key *global-keymap* (kbd "[end]") 'move-to-end-of-line)
+(define-command move-to-end-of-line () ()
+  (end-of-line)
   t)
 
 (define-key *global-keymap* (kbd "C-v") 'next-page)

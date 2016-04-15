@@ -12,6 +12,8 @@
           insert-newline
           delete-char
           set-charpos
+          beginning-of-buffer
+          end-of-buffer
           beginning-of-line
           end-of-line
           goto-line
@@ -113,15 +115,17 @@
               (buffer-line-length (current-buffer) (current-linum))))
   (setf (current-charpos) pos))
 
-(define-key *global-keymap* (kbd "C-a") 'beginning-of-line)
-(define-key *global-keymap* (kbd "[home]") 'beginning-of-line)
-(define-command beginning-of-line () ()
+(defun beginning-of-buffer ()
+  (point-set (point-min)))
+
+(defun end-of-buffer ()
+  (point-set (point-max)))
+
+(defun beginning-of-line ()
   (set-charpos 0)
   t)
 
-(define-key *global-keymap* (kbd "C-e") 'end-of-line)
-(define-key *global-keymap* (kbd "[end]") 'end-of-line)
-(define-command end-of-line () ()
+(defun end-of-line ()
   (set-charpos (buffer-line-length
                 (current-buffer)
                 (current-linum)))

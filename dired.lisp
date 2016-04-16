@@ -26,7 +26,7 @@
   (eq :symbolic-link (osicat:file-kind (cl-fad:pathname-as-file pathname))))
 
 (defun goto-start-line ()
-  (goto-line (get-bvar :start-linum)))
+  (point-set (get-bvar :start-point)))
 
 (defun date (universal-time)
   (multiple-value-bind (second minute hour date month year day daylight-p zone)
@@ -44,7 +44,7 @@
           (files))
       (insert-string (namestring dirname))
       (insert-newline 2)
-      (setf (get-bvar :start-linum) (current-linum))
+      (setf (get-bvar :start-point) (current-point))
       (dolist (file (cl-fad:list-directory dirname :follow-symlinks nil))
         (push file files)
         (let ((filename (enough-namestring file dirname))
@@ -96,11 +96,12 @@
   (dired-internal dirname))
 
 (defun get-file ()
-  (let ((n (- (current-linum)
-              (1- (get-bvar :start-linum))))
-        (files (get-bvar :dired-files)))
-    (when (<= 1 n (length files))
-      (aref files (1- n)))))
+  (let* ((point (get-bvar :start-point))
+         (n (- (current-linum)
+               (1- (point-linum point)))))
+    (let ((files (get-bvar :dired-files)))
+      (when (<= 1 n (length files))
+        (aref files (1- n))))))
 
 (defun select-file (open-file-fn)
   (let ((pathname (get-file)))

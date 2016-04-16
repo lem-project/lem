@@ -6,21 +6,19 @@
           region-end
           region-string
           region-count
-          copy-region
-          kill-region
           delete-region
           apply-region-lines))
 
 (defun region-beginning ()
   (let ((point1 (current-point))
-        (point2 (marker-point (buffer-mark-marker))))
+        (point2 (mark-point)))
     (if (point< point1 point2)
         point1
         point2)))
 
 (defun region-end ()
   (let ((point1 (current-point))
-        (point2 (marker-point (buffer-mark-marker))))
+        (point2 (mark-point)))
     (if (point< point1 point2)
         point2
         point1)))
@@ -56,23 +54,10 @@
       (incf count (1+ (length (car lines)))))
     count))
 
-(define-key *global-keymap* (kbd "M-w") 'copy-region)
-(define-command copy-region (begin end) ("r")
-  (let ((lines (region-lines begin end)))
-    (with-kill ()
-      (kill-push lines)))
-  (buffer-mark-cancel (current-buffer))
-  (minibuf-print "region copied")
-  t)
-
 (defun %delete-region (begin end killp)
   (point-set begin)
   (prog1 (delete-char (region-count begin end) killp)
     (buffer-mark-cancel (current-buffer))))
-
-(define-key *global-keymap* (kbd "C-w") 'kill-region)
-(define-command kill-region (begin end) ("r")
-  (%delete-region begin end t))
 
 (defun delete-region (begin end)
   (%delete-region begin end nil))

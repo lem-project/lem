@@ -2,18 +2,14 @@
 
 (in-package :lem)
 
-(export '(*kill-ring*
-          *kill-ring-yank-ptr*
-          *kill-ring-max*
-          *kill-new-flag*
+(export '(*kill-ring-max*
           *kill-before-p*
           kill-append
           kill-push
           yank
           yank-pop
           kill-ring-first-string
-          kill-ring-nth-string
-          with-kill))
+          kill-ring-nth-string))
 
 (defvar *kill-ring* nil)
 (defvar *kill-ring-yank-ptr* nil)
@@ -22,35 +18,27 @@
 (defvar *kill-new-flag* t)
 (defvar *kill-before-p* nil)
 
-(defun kill-append (lines before-p)
+(defun kill-append (string before-p)
   (setf (car *kill-ring*)
         (if before-p
-            (append
-             (butlast lines)
-             (list
-              (concatenate 'string
-                           (car (last lines))
-                           (first (car *kill-ring*))))
-             (rest (car *kill-ring*)))
-            (append
-             (butlast (car *kill-ring*))
-             (list
-              (concatenate 'string
-                           (car (last (car *kill-ring*)))
-                           (first lines)))
-             (rest lines)))))
+            (concatenate 'string
+                         string
+                         (car *kill-ring*))
+            (concatenate 'string
+                         (car *kill-ring*)
+                         string))))
 
-(defun kill-push (lines)
+(defun kill-push (string)
   (cond
    (*kill-new-flag*
-    (push lines *kill-ring*)
+    (push string *kill-ring*)
     (when (nthcdr *kill-ring-max* *kill-ring*)
       (setq *kill-ring*
             (subseq *kill-ring* 0 *kill-ring-max*)))
     (setq *kill-ring-yank-ptr* *kill-ring*)
     (setq *kill-new-flag* nil))
    (t
-    (kill-append lines *kill-before-p*)))
+    (kill-append string *kill-before-p*)))
   t)
 
 (defun kill-ring-nth (n)
@@ -63,9 +51,9 @@
 
 (define-key *global-keymap* (kbd "C-y") 'yank)
 (define-command yank (n) ("p")
-  (let ((lines (kill-ring-nth n)))
+  (let ((string (kill-ring-nth n)))
     (setf (get-bvar :yank-start) (current-point))
-    (insert-lines lines)
+    (insert-string string)
     (setf (get-bvar :yank-end) (current-point))
     (when-interrupted-flag :yank)
     t))
@@ -87,15 +75,10 @@
            nil))))
 
 (defun kill-ring-first-string ()
-  (join (string #\newline)
-        (car *kill-ring-yank-ptr*)))
+  (car *kill-ring-yank-ptr*))
 
 (defun kill-ring-nth-string (n)
-  (join (string #\newline)
-        (kill-ring-nth n)))
+  (kill-ring-nth n))
 
-(defmacro with-kill (() &body body)
-  `(progn
-     (when-interrupted-flag :kill
-                            (setq *kill-new-flag* t))
-     ,@body))
+(defun kill-ring-new ()
+  (setf *kill-new-flag* t))

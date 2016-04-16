@@ -99,8 +99,7 @@
                                   (current-charpos)
                                   n)))
         (when killp
-          (with-kill ()
-            (kill-push lines)))
+          (kill-push (join (string #\newline) lines)))
         t)))
 
 (defun set-charpos (pos)

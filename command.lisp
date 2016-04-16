@@ -10,6 +10,8 @@
           open-line
           delete-next-char
           delete-previous-char
+          copy-region
+          kill-region
           kill-line
           next-line
           prev-line
@@ -77,6 +79,11 @@
 (define-key *global-keymap* (kbd "C-d") 'delete-next-char)
 (define-key *global-keymap* (kbd "[dc]") 'delete-next-char)
 (define-command delete-next-char (&optional n) ("P")
+  (when (eobp)
+    (editor-error "End of buffer"))
+  (when n
+    (when-interrupted-flag :kill
+      (kill-ring-new)))
   (delete-char (or n 1)
                (if n t nil)))
 
@@ -84,8 +91,24 @@
 (define-key *global-keymap* (kbd "[backspace]") 'delete-previous-char)
 (define-key *global-keymap* (kbd "[del]") 'delete-previous-char)
 (define-command delete-previous-char (&optional n) ("P")
-  (delete-char (if n (- n) -1)
-               (if n t nil)))
+  (prev-char (or n 1))
+  (delete-next-char n))
+
+(define-key *global-keymap* (kbd "M-w") 'copy-region)
+(define-command copy-region (begin end) ("r")
+  (when-interrupted-flag :kill
+    (kill-ring-new))
+  (kill-push (region-string begin end))
+  (buffer-mark-cancel (current-buffer))
+  t)
+
+(define-key *global-keymap* (kbd "C-w") 'kill-region)
+(define-command kill-region (begin end) ("r")
+  (when-interrupted-flag :kill
+    (kill-ring-new))
+  (point-set begin)
+  (delete-char (region-count begin end) t)
+  t)
 
 (define-key *global-keymap* (kbd "C-k") 'kill-line)
 (define-command kill-line (&optional (n 1)) ("p")

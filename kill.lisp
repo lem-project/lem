@@ -6,8 +6,7 @@
           *kill-before-p*
           kill-append
           kill-push
-          yank
-          yank-pop
+          kill-ring-rotate
           kill-ring-first-string
           kill-ring-nth-string))
 
@@ -49,30 +48,10 @@
       ((>= 1 n)
        (car ptr))))
 
-(define-key *global-keymap* (kbd "C-y") 'yank)
-(define-command yank (n) ("p")
-  (let ((string (kill-ring-nth n)))
-    (setf (get-bvar :yank-start) (current-point))
-    (insert-string string)
-    (setf (get-bvar :yank-end) (current-point))
-    (when-interrupted-flag :yank)
-    t))
-
-(define-key *global-keymap* (kbd "M-y") 'yank-pop)
-(define-command yank-pop (&optional n) ("p")
-  (let ((start (get-bvar :yank-start))
-        (end (get-bvar :yank-end))
-        prev-yank-p)
-    (when-continue-flag :yank (setq prev-yank-p t))
-    (cond ((and start end prev-yank-p)
-           (delete-region start end)
-           (setq *kill-ring-yank-ptr*
-                 (or (cdr *kill-ring-yank-ptr*)
-                     *kill-ring*))
-           (yank n))
-          (t
-           (minibuf-print "Previous command was not a yank")
-           nil))))
+(defun kill-ring-rotate ()
+  (setf *kill-ring-yank-ptr*
+        (or (cdr *kill-ring-yank-ptr*)
+            *kill-ring*)))
 
 (defun kill-ring-first-string ()
   (car *kill-ring-yank-ptr*))

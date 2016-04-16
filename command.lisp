@@ -13,6 +13,8 @@
           copy-region
           kill-region
           kill-line
+          yank
+          yank-pop
           next-line
           prev-line
           next-char
@@ -119,6 +121,29 @@
                         (beginning-of-line))
                        (t
                         (end-of-line))))))
+
+(define-key *global-keymap* (kbd "C-y") 'yank)
+(define-command yank (n) ("p")
+  (let ((string (kill-ring-nth n)))
+    (setf (get-bvar :yank-start) (current-point))
+    (insert-string string)
+    (setf (get-bvar :yank-end) (current-point))
+    (when-interrupted-flag :yank)
+    t))
+
+(define-key *global-keymap* (kbd "M-y") 'yank-pop)
+(define-command yank-pop (&optional n) ("p")
+  (let ((start (get-bvar :yank-start))
+        (end (get-bvar :yank-end))
+        prev-yank-p)
+    (when-continue-flag :yank (setq prev-yank-p t))
+    (cond ((and start end prev-yank-p)
+           (delete-region start end)
+           (kill-ring-rotate)
+           (yank n))
+          (t
+           (minibuf-print "Previous command was not a yank")
+           nil))))
 
 (defvar *next-line-prev-column* nil)
 

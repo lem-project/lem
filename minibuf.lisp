@@ -11,7 +11,6 @@
           check-switch-minibuffer-window
           minibuf-read-line-confirm
           minibuf-read-line-completion
-          minibuf-read-line-clear-before
           minibuf-read-line-prev-history
           minibuf-read-line-next-history
           minibuf-get-line
@@ -94,7 +93,6 @@
 (define-key *minibuf-keymap* (kbd "C-j") 'minibuf-read-line-confirm)
 (define-key *minibuf-keymap* (kbd "C-m") 'minibuf-read-line-confirm)
 (define-key *minibuf-keymap* (kbd "C-i") 'minibuf-read-line-completion)
-(define-key *minibuf-keymap* (kbd "C-u") 'minibuf-read-line-clear-before)
 (define-key *minibuf-keymap* (kbd "C-p") 'minibuf-read-line-prev-history)
 (define-key *minibuf-keymap* (kbd "C-n") 'minibuf-read-line-next-history)
 (define-key *minibuf-keymap* (kbd "C-g") 'minibuf-read-line-break)
@@ -139,22 +137,18 @@
         (insert-string str))))
   t)
 
-(define-command minibuf-read-line-clear-before () ()
-  (kill-region (point-min) (current-point))
-  t)
-
 (define-command minibuf-read-line-prev-history () ()
   (multiple-value-bind (str win)
       (prev-history *minibuf-read-line-history*)
     (when win
-      (kill-region (point-min) (point-max))
+      (buffer-erase)
       (insert-string str))))
 
 (define-command minibuf-read-line-next-history () ()
   (multiple-value-bind (str win)
       (next-history *minibuf-read-line-history*)
     (when win
-      (kill-region (point-min) (point-max))
+      (buffer-erase)
       (insert-string str))))
 
 (define-command minibuf-read-line-break () ()

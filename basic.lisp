@@ -21,12 +21,10 @@
           forward-line
           shift-position
           mark-point
-          exchange-point-mark
           following-char
           preceding-char
           char-after
           char-before
-          replace-char
           blank-line-p
           erase-buffer
           delete-while-whitespaces
@@ -249,14 +247,6 @@
             (progn
               (point-set point)
               nil)))))
-
-(defun replace-char (c)
-  (delete-char 1 nil)
-  (buffer-insert-char
-   (current-buffer)
-   (current-linum)
-   (current-charpos)
-   c))
 
 (define-command erase-buffer () ()
   (point-set (point-max))

@@ -71,8 +71,8 @@
     (buffer-mark-cancel (current-buffer))))
 
 (define-key *global-keymap* (kbd "C-w") 'kill-region)
-(define-command kill-region (begin end &optional (killp t)) ("r")
-  (%delete-region begin end killp))
+(define-command kill-region (begin end) ("r")
+  (%delete-region begin end t))
 
 (defun delete-region (begin end)
   (%delete-region begin end nil))

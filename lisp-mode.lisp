@@ -658,7 +658,10 @@
         (lisp-current-package))))
 
 (defun %lisp-macroexpand-replace-expr (expr)
-  (kill-sexp 1 nil)
+  (delete-region (current-point)
+                 (progn
+                   (forward-sexp 1)
+                   (current-point)))
   (pprint expr (make-buffer-output-stream))
   (read-from-string
    (region-string (point-min)

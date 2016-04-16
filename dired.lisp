@@ -39,7 +39,7 @@
 
 (defun update ()
   (with-buffer-read-only (current-buffer) nil
-    (erase-buffer)
+    (buffer-erase)
     (let ((dirname (get-bvar :dirname))
           (files))
       (insert-string (namestring dirname))

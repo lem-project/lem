@@ -549,11 +549,12 @@
           (make-point linum pos)))
       del-lines)))
 
-(defun buffer-erase (buffer)
+(defun buffer-erase (&optional (buffer (current-buffer)))
+  (dolist (marker (buffer-markers buffer))
+    (setf (marker-point marker) (make-point 1 0)))
   (buffer-delete-char buffer 1 0 t)
   (buffer-reset buffer)
-  (dolist (marker (buffer-markers buffer))
-    (setf (marker-point marker) (make-point 1 0))))
+  t)
 
 (defun buffer-rename (buffer name)
   (check-type buffer buffer)

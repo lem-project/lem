@@ -228,7 +228,7 @@
              (window-point (minibuffer-window)))
             (*minibuf-read-line-depth*
              (1+ *minibuf-read-line-depth*)))
-        (erase-buffer)
+        (buffer-erase)
         (minibuffer-mode)
         (when initial
           (insert-string initial))
@@ -237,7 +237,7 @@
                          (lambda ()
                            (minibuf-read-line-loop prompt comp-f existing-p)))
           (with-current-window (minibuffer-window)
-            (erase-buffer)
+            (buffer-erase)
             (insert-string minibuf-buffer-prev-string)
             (point-set minibuf-buffer-prev-point)))))))
 

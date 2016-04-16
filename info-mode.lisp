@@ -17,7 +17,7 @@
     (with-current-window window
       (with-buffer-read-only buffer nil
         (when output-function
-          (erase-buffer))
+          (buffer-erase))
         (info-mode t)
         (when mode (funcall mode))
         (when output-function

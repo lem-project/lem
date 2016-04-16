@@ -25,7 +25,6 @@
           char-after
           char-before
           blank-line-p
-          erase-buffer
           delete-while-whitespaces
           skip-chars-forward
           skip-chars-backward
@@ -233,11 +232,6 @@
             (progn
               (point-set point)
               nil)))))
-
-(defun erase-buffer () ()
-  (point-set (point-max))
-  (buffer-erase (current-buffer))
-  t)
 
 (defun delete-while-whitespaces (&optional ignore-newline-p use-kill-ring)
   (let ((n (skip-chars-forward

@@ -35,6 +35,7 @@
           redo
           mark-set
           exchange-point-mark
+          goto-line
           filter-buffer
           pipe-command))
 
@@ -319,6 +320,16 @@
   (let ((mark-point (mark-point)))
     (setf (mark-point) (current-point))
     (point-set mark-point))
+  t)
+
+(define-key *global-keymap* (kbd "M-g") 'goto-line)
+(define-command goto-line (n) ("nLine to GOTO: ")
+  (setf n
+        (if (< n 1)
+            1
+            (min n (buffer-nlines (current-buffer)))))
+  (setf (current-linum) n)
+  (beginning-of-line)
   t)
 
 (define-key *global-keymap* (kbd "C-x #") 'filter-buffer)

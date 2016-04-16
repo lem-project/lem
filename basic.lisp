@@ -16,7 +16,6 @@
           end-of-buffer
           beginning-of-line
           end-of-line
-          goto-line
           goto-position
           forward-line
           shift-position
@@ -122,16 +121,6 @@
   (set-charpos (buffer-line-length
                 (current-buffer)
                 (current-linum)))
-  t)
-
-(define-key *global-keymap* (kbd "M-g") 'goto-line)
-(define-command goto-line (n) ("nLine to GOTO: ")
-  (setf n
-        (if (< n 1)
-            1
-            (min n (buffer-nlines (current-buffer)))))
-  (setf (current-linum) n)
-  (beginning-of-line)
   t)
 
 (defun goto-position (position)
@@ -245,7 +234,7 @@
               (point-set point)
               nil)))))
 
-(define-command erase-buffer () ()
+(defun erase-buffer () ()
   (point-set (point-max))
   (buffer-erase (current-buffer))
   t)

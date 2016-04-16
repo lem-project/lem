@@ -127,8 +127,6 @@
   undo-size
   undo-stack
   redo-stack
-  undo-node
-  saved-node
   overlays
   markers
   truncate-lines
@@ -150,8 +148,6 @@
     (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
-    (setf (buffer-undo-node buffer) 0)
-    (setf (buffer-saved-node buffer) 0)
     (setf (buffer-markers buffer) nil)
     (setf (buffer-truncate-lines buffer) t)
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
@@ -188,20 +184,10 @@
   (setf (buffer-undo-size buffer) 0)
   (setf (buffer-undo-stack buffer) nil)
   (setf (buffer-redo-stack buffer) nil)
-  (setf (buffer-undo-node buffer) 0)
-  (setf (buffer-saved-node buffer) 0)
   nil)
 
-(defun buffer-save-node (buffer)
-  (setf (buffer-saved-node buffer)
-        (buffer-undo-node buffer)))
-
 (defun buffer-unmark (buffer)
-  (setf (buffer-modified-p buffer) nil)
-  (buffer-save-node buffer))
-
-(defun push-redo-stack (buffer elt)
-  (push elt (buffer-redo-stack buffer)))
+  (setf (buffer-modified-p buffer) nil))
 
 (defun buffer-line-set-attribute (line-set-fn buffer attr linum
                                   &optional start-charpos end-charpos)
@@ -412,13 +398,10 @@
                (1+ (length (buffer-undo-stack buffer)))))
         (t
          (incf (buffer-undo-size buffer))))
-  (let ((interrupt-p))
-    (when-interrupted-flag :undo
-                           (setq interrupt-p t)
-                           (push :separator
-                                 (buffer-undo-stack buffer)))
-    (push elt (buffer-undo-stack buffer))
-    interrupt-p))
+  (push elt (buffer-undo-stack buffer)))
+
+(defun push-redo-stack (buffer elt)
+  (push elt (buffer-redo-stack buffer)))
 
 (defmacro with-push-undo ((buffer) &body body)
   (let ((gmark-marker (gensym)))
@@ -430,8 +413,7 @@
                         ,@body)))
            (ecase *undo-mode*
              (:edit
-              (when (push-undo-stack ,buffer elt)
-                (incf (buffer-undo-node ,buffer)))
+              (push-undo-stack ,buffer elt)
               (setf (buffer-redo-stack ,buffer) nil))
              (:redo
               (push-undo-stack ,buffer elt))
@@ -586,11 +568,6 @@
        (buffer-filename))
       (namestring (uiop:getcwd))))
 
-(defun buffer-undo-modified (buffer)
-  (when (= (buffer-undo-node buffer)
-           (buffer-saved-node buffer))
-    (setf (buffer-modified-p buffer) nil)))
-
 (defun buffer-undo-1 (buffer)
   (let ((elt (pop (buffer-undo-stack buffer))))
     (when elt
@@ -601,17 +578,16 @@
 
 (defun buffer-undo (buffer)
   (push :separator (buffer-redo-stack buffer))
-  (prog1 (do ((res #1=(buffer-undo-1 buffer) #1#)
-              (pres nil res))
-             ((not res)
-              (cond (pres
-                     (decf (buffer-undo-node buffer))
-                     (buffer-undo-modified buffer))
-                    (t
-                     (assert (eq :separator (car (buffer-redo-stack buffer))))
-                     (pop (buffer-redo-stack buffer))
-                     (minibuf-print "Undo Error")))
-              pres))))
+  (when (eq :separator (car (buffer-undo-stack buffer)))
+    (pop (buffer-undo-stack buffer)))
+  (let ((point nil))
+    (loop :for result := (buffer-undo-1 buffer)
+          :while result
+          :do (setf point result))
+    (unless point
+      (assert (eq :separator (car (buffer-redo-stack buffer))))
+      (pop (buffer-redo-stack buffer)))
+    point))
 
 (defun buffer-redo-1 (buffer)
   (let ((elt (pop (buffer-redo-stack buffer))))
@@ -622,20 +598,18 @@
 
 (defun buffer-redo (buffer)
   (push :separator (buffer-undo-stack buffer))
-  (prog1 (do ((res #1=(buffer-redo-1 buffer) #1#)
-              (pres nil res))
-             ((not res)
-              (cond (pres
-                     (incf (buffer-undo-node buffer))
-                     (buffer-undo-modified buffer))
-                    (t
-                     (assert (eq :separator (car (buffer-undo-stack buffer))))
-                     (pop (buffer-undo-stack buffer))
-                     (minibuf-print "Redo Error")))
-              pres))))
+  (let ((point nil))
+    (loop :for result := (buffer-redo-1 buffer)
+          :while result
+          :do (setf point result))
+    (unless point
+      (assert (eq :separator (car (buffer-undo-stack buffer))))
+      (pop (buffer-undo-stack buffer)))
+    point))
 
 (defun buffer-undo-boundary (&optional (buffer (current-buffer)))
-  (push :separator (buffer-undo-stack buffer)))
+  (unless (eq :separator (car (buffer-undo-stack buffer)))
+    (push :separator (buffer-undo-stack buffer))))
 
 (defun get-bvar (name &key (buffer (current-buffer)) default)
   (multiple-value-bind (value foundp)

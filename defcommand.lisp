@@ -87,9 +87,11 @@
 
 (defun cmd-call (cmd arg)
   (cond ((fboundp cmd)
-         (funcall (gethash (string-downcase (symbol-name cmd))
-                           *command-table*)
-                  arg))
+         (prog1 (funcall (gethash (string-downcase (symbol-name cmd))
+                                  *command-table*)
+                         arg)
+           (buffer-undo-boundary)       ;!!!
+           ))
         (t
          (minibuf-print (format nil "undefined command: ~a" cmd))
          nil)))

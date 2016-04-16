@@ -54,13 +54,12 @@
       (incf count (1+ (length (car lines)))))
     count))
 
-(defun %delete-region (begin end killp)
-  (point-set begin)
-  (prog1 (delete-char (region-count begin end) killp)
-    (buffer-mark-cancel (current-buffer))))
-
 (defun delete-region (begin end)
-  (%delete-region begin end nil))
+  (when (point< end begin)
+    (rotatef begin end))
+  (point-set begin)
+  (prog1 (delete-char (region-count begin end) nil)
+    (buffer-mark-cancel (current-buffer))))
 
 (defun apply-region-lines (begin end fn)
   (point-set begin)

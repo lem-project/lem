@@ -684,7 +684,6 @@
           (get-next-window (current-window)
                            (append (mklist (active-minibuffer-window))
                                    (window-list)))))
-  (adjust-point)
   t)
 
 (defun window-set-pos (window y x)

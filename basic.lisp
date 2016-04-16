@@ -106,9 +106,6 @@
         t)))
 
 (defun set-charpos (pos)
-  (assert (<= 0
-              pos
-              (buffer-line-length (current-buffer) (current-linum))))
   (setf (current-charpos) pos))
 
 (defun beginning-of-buffer ()

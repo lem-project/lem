@@ -38,12 +38,14 @@
   (window-current-linum))
 
 (defun (setf current-linum) (new-linum)
+  (assert (<= 1 new-linum (buffer-nlines (current-buffer))))
   (setf (window-current-linum) new-linum))
 
 (defun current-charpos ()
   (window-current-charpos))
 
 (defun (setf current-charpos) (new-charpos)
+  (assert (<= 0 new-charpos (buffer-line-length (current-buffer) (current-linum))))
   (setf (window-current-charpos) new-charpos))
 
 (defun current-point ()
@@ -52,7 +54,8 @@
    (current-charpos)))
 
 (defun (setf current-point) (new-point)
-  (point-set new-point))
+  (point-set new-point)
+  new-point)
 
 (defun point-set (point &optional (window (current-window)))
   (setf (window-current-linum window)
@@ -93,6 +96,3 @@
 
 (defun point-max (&optional (buffer (current-buffer)))
   (buffer-end-point buffer))
-
-(defun adjust-point (&optional (point (current-point)))
-  (point-set point))

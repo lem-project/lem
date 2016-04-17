@@ -20,6 +20,7 @@
           forward-line
           shift-position
           mark-point
+          current-line-string
           following-char
           preceding-char
           char-after
@@ -190,6 +191,10 @@
               point)
         (setf (buffer-mark-marker buffer)
               (make-marker buffer point)))))
+
+(defun current-line-string ()
+  (buffer-line-string (current-buffer)
+                      (current-linum)))
 
 (defun following-char ()
   (buffer-get-char (current-buffer)

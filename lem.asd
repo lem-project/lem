@@ -42,6 +42,7 @@
                         (:file "display")
                         (:file "window")
                         (:file "file")
+                        (:file "file-command")
                         (:file "word")
                         (:file "search")
                         (:file "info-mode")

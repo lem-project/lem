@@ -5,14 +5,8 @@
 (export '(expand-file-name
           file-completion
           insert-file-contents
-          find-file
-          read-file
-          write-to-file
-          save-file
-          change-file-name
-          write-file
-          insert-file
-          save-some-buffers))
+          get-file-buffer
+          write-to-file))
 
 (defun parse-pathname (pathname)
   (let ((path))
@@ -99,45 +93,6 @@
             (cons external-format end-of-line))
       (buffer-output-stream-point output))))
 
-(defun prepare-auto-mode ()
-  (let* ((filename (file-namestring (buffer-filename)))
-         (elt (find-if #'(lambda (elt)
-                           (ppcre:scan (car elt) filename))
-                       *auto-mode-alist*)))
-    (when elt
-      (funcall (cdr elt)))))
-
-(defun scan-line-property-list (str)
-  (ppcre:do-register-groups (var val)
-    ("([a-zA-Z0-9-_]+)\\s*:\\s*([^ ;]+);?" str)
-    (cond ((string= (string-downcase var) "mode")
-           (let ((mode (find-mode-from-name val)))
-             (when mode
-               (funcall mode))))
-          (t
-           (setf (get-bvar :file-property-list)
-                 (cons (cons (string-downcase var) val)
-                       (get-bvar :file-property-list)))))))
-
-(defun scan-file-property-list ()
-  (let ((buffer (current-buffer))
-        (start-linum 1))
-    (let ((str (buffer-line-string buffer 1)))
-      (when (and (< 2 (length str))
-                 (string= str "#!" :end1 2))
-        (incf start-linum)))
-    (do ((linum start-linum (1+ linum))
-         (nlines (buffer-nlines buffer)))
-        ((< nlines linum))
-      (let ((str (buffer-line-string buffer linum)))
-        (ppcre:register-groups-bind
-         (match-str)
-         ("-\\*-(.*)-\\*-" str)
-         (scan-line-property-list match-str)
-         (return-from scan-file-property-list))
-        (when (not (ppcre:scan "^\\s*$" str))
-          (return-from scan-file-property-list))))))
-
 (defun file-open-create-buffer (buffer-name filename)
   (setf filename (expand-file-name filename))
   (let ((buffer (make-buffer buffer-name
@@ -151,35 +106,19 @@
     (buffer-enable-undo buffer)
     buffer))
 
-(define-key *global-keymap* (kbd "C-x C-f") 'find-file)
-(define-command find-file (filename) ("FFind File: ")
-  (check-switch-minibuffer-window)
+(defun get-file-buffer (filename)
   (setf filename (expand-file-name filename))
-  (cond
-    ((cl-fad:directory-exists-p filename)
-     (dired filename))
-    ((dolist (buffer (buffer-list))
-       (when (equal filename (buffer-filename buffer))
-         (set-buffer buffer)
-         (return t))))
-    (t
-     (let ((name (file-namestring filename)))
-       (set-buffer
-        (file-open-create-buffer
-         (if (get-buffer name)
-             (uniq-buffer-name name)
-             name)
-         filename)))
-     (prepare-auto-mode)
-     (scan-file-property-list)
-     (run-hooks 'find-file-hook)
-     t)))
-
-(define-key *global-keymap* (kbd "C-x C-r") 'read-file)
-(define-command read-file (filename) ("FRead File: ")
-  (find-file filename)
-  (setf (buffer-read-only-p (current-buffer)) t)
-  t)
+  (cond ((uiop:directory-exists-p filename)
+         ;;(dired-buffer filename) ;!!!
+         )
+        ((find filename (buffer-list) :key #'buffer-filename :test #'equal))
+        (t
+         (let* ((name (file-namestring filename))
+                (buffer (file-open-create-buffer (if (get-buffer name)
+                                                     (uniq-buffer-name name)
+                                                     name)
+                                                 filename)))
+           (values buffer t)))))
 
 (defun write-to-file (buffer filename)
   (flet ((f (out end-of-line)
@@ -217,54 +156,3 @@
                            :if-does-not-exist :create)
         (f out :lf)))))
   (buffer-unmark (current-buffer)))
-
-(defun save-file-internal (buffer)
-  (scan-file-property-list)
-  (run-hooks 'before-save-hook)
-  (write-to-file buffer (buffer-filename buffer))
-  (minibuf-print "Wrote")
-  (run-hooks 'after-save-hook)
-  t)
-
-(define-key *global-keymap* (kbd "C-x C-s") 'save-file)
-(define-command save-file () ()
-  (let ((buffer (current-buffer)))
-    (cond
-     ((null (buffer-modified-p buffer))
-      nil)
-     ((null (buffer-filename buffer))
-      (minibuf-print "No file name")
-      nil)
-     (t
-      (save-file-internal buffer)))))
-
-(define-command change-file-name (filename) ("sChange file name: ")
-  (setf (buffer-filename (current-buffer)) filename)
-  t)
-
-(define-key *global-keymap* (kbd "C-x C-w") 'write-file)
-(define-command write-file (filename) ("FWrite File: ")
-  (change-file-name filename)
-  (save-file-internal (current-buffer)))
-
-(define-key *global-keymap* (kbd "C-x C-i") 'insert-file)
-(define-command insert-file (filename) ("fInsert file: ")
-  (point-set (insert-file-contents (current-buffer)
-                                   (current-point)
-                                   filename))
-  t)
-
-(define-key *global-keymap* (kbd "C-x s") 'save-some-buffers)
-(define-command save-some-buffers (&optional save-silently-p) ("P")
-  (check-switch-minibuffer-window)
-  (let ((curbuf (current-buffer)))
-    (dolist (buffer (buffer-list))
-      (when (and (buffer-modified-p buffer)
-                 (buffer-filename buffer))
-        (set-buffer buffer nil)
-        (when (or save-silently-p
-                  (progn
-                    (window-update-all)
-                    (minibuf-y-or-n-p "Save file")))
-          (save-file))))
-    (set-buffer curbuf)))

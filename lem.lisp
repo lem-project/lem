@@ -565,8 +565,10 @@
            :condition condition)))
       )))
 
-(defun dired (filename)
-  (lem.dired:dired filename))
+(defun dired-buffer (filename)
+  (save-excursion
+    (lem.dired:dired filename)
+    (current-buffer)))
 
 #+sbcl
 (push #'(lambda (x)

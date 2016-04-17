@@ -379,7 +379,8 @@
         (if (buffer-modified-p buffer)
             (1+ (mod (buffer-modified-p buffer)
                      #.(floor most-positive-fixnum 2)))
-            0)))
+            0))
+  (buffer-mark-cancel buffer))
 
 (defmacro with-buffer-modify (buffer &body body)
   `(progn

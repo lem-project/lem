@@ -46,6 +46,9 @@
           scroll-down
           scroll-up))
 
+(define-attribute :modeline :reverse-p t)
+(define-attribute :modeline-inactive :reverse-p t)
+
 (defvar *redraw-flags* '(:one-line :unnecessary :all))
 
 (defvar *current-cols*)
@@ -313,9 +316,7 @@
                      charms/ll:*cols*
                      0
                      0))
-  (setf (window-tree) (current-window))
-  (set-attr :modeline (get-attr :highlight))
-  (set-attr :modeline-inactive (get-attr :highlight)))
+  (setf (window-tree) (current-window)))
 
 (defun resize-screen ()
   (let ((winsize (lem-winsize:win-size (xterm-fd))))
@@ -593,7 +594,7 @@
         (save-excursion
          (when (backward-sexp 1 t)
            (push (current-point) highlight-points))))
-      (let ((attr (make-attr :color :cyan :reverse-p t)))
+      (let ((attr (make-attr :color "cyan" :reverse-p t)))
         (dolist (point highlight-points)
           (push (make-overlay point
                               (make-point (point-linum point)

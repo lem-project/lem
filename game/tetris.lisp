@@ -20,7 +20,7 @@
 (defconstant +num-blocks+ 7)
 
 (defvar *block-colors*
-  #(nil :cyan :yellow :green :red :blue :white :magenta))
+  #(nil "cyan" "yellow" "green" "red" "blue" "white" "magenta"))
 
 (defvar *tetrimino-table*
   #(#(0 0 0 0
@@ -67,7 +67,7 @@
 (defvar *level*)
 
 (defun block-color (b)
-  (cond ((= b +wall+) :white)
+  (cond ((= b +wall+) "white")
         ((< 0 b (length *block-colors*))
          (aref *block-colors* b))))
 
@@ -111,7 +111,7 @@
       (let ((b (aref field x y)))
         (insert-block
          (cond ((= +void+ b)
-                :black)
+                "black")
                (t
                 (block-color b))))))
     (insert-newline)))

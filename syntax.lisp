@@ -31,21 +31,12 @@
           syntax-forward-search-tag-end
           syntax-backward-search-tag-start))
 
-(defvar *syntax-attr-names*
-  '(:string-attr
-    :comment-attr
-    :keyword-attr
-    :constant-attr
-    :function-name-attr
-    :variable-attr))
-
-(defun syntax-init-attributes ()
-  (set-attr :string-attr (get-attr :green))
-  (set-attr :comment-attr (get-attr :red))
-  (set-attr :keyword-attr (get-attr :blue))
-  (set-attr :constant-attr (get-attr :magenta))
-  (set-attr :function-name-attr (get-attr :cyan))
-  (set-attr :variable-attr (get-attr :yellow)))
+(define-attribute :string-attr :color "green")
+(define-attribute :comment-attr :color "red")
+(define-attribute :keyword-attr :color "blue")
+(define-attribute :constant-attr :color "magenta")
+(define-attribute :function-name-attr :color "cyan")
+(define-attribute :variable-attr :color "yellow")
 
 (defstruct (syntax-test (:constructor %make-syntax-test))
   thing

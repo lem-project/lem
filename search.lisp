@@ -45,6 +45,9 @@
   (:name "isearch"
    :keymap *isearch-keymap*))
 
+(define-attribute :isearch-highlight :reverse-p t)
+(define-attribute :isearch-highlight-active :color "cyan" :reverse-p t)
+
 (defun isearch-update-display ()
   (isearch-update-minibuf)
   (isearch-update-buffer)
@@ -193,8 +196,8 @@
             (push (make-overlay point1 point2
                                 :attr (if (and (point<= point1 save-point)
                                                (point<= save-point point2))
-                                          (get-attr :search-highlight)
-                                          (get-attr :highlight)))
+                                          (get-attr :isearch-highlight-active)
+                                          (get-attr :isearch-highlight)))
                   *isearch-highlight-overlays*))))
       (point-set save-point))))
 

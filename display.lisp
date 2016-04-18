@@ -128,13 +128,12 @@
 
 (defun disp-print-line (display y str &key (start-x 0) (string-start 0) string-end)
   (let ((x start-x)
-        (win (display-screen display))
-        (ctrl-attr (get-attr :red)))
+        (win (display-screen display)))
     (loop :for i :from string-start :below (or string-end (fat-length str)) :do
       (multiple-value-bind (char attr)
           (fat-char str i)
         (when (ctrl-p char)
-          (setq attr ctrl-attr))
+          (setq attr (make-attr :color "red")))
         (charms/ll:wattron win attr)
         (charms/ll:mvwaddstr win y x (string char))
         (charms/ll:wattroff win attr)

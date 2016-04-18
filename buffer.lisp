@@ -368,7 +368,7 @@
       (when (buffer-mark-overlay buffer)
         (delete-overlay (buffer-mark-overlay buffer)))
       (setf (buffer-mark-overlay buffer)
-            (make-overlay start end :attr (make-attr :color "blue" :reverse-p t))))))
+            (make-overlay start end (make-attr :color "blue" :reverse-p t))))))
 
 (defun check-read-only (buffer)
   (when (buffer-read-only-p buffer)

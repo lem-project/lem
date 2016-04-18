@@ -599,7 +599,7 @@
           (push (make-overlay point
                               (make-point (point-linum point)
                                           (1+ (point-charpos point)))
-                              :attr attr)
+                              attr)
                 *brackets-overlays*))
         (if highlight-points t nil)))))
 

@@ -194,10 +194,10 @@
                                   search-string)
                          (current-point))))
             (push (make-overlay point1 point2
-                                :attr (if (and (point<= point1 save-point)
-                                               (point<= save-point point2))
-                                          (get-attr :isearch-highlight-active)
-                                          (get-attr :isearch-highlight)))
+                                (if (and (point<= point1 save-point)
+                                         (point<= save-point point2))
+                                    (get-attr :isearch-highlight-active)
+                                    (get-attr :isearch-highlight)))
                   *isearch-highlight-overlays*))))
       (point-set save-point))))
 

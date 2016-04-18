@@ -5,8 +5,6 @@
 (export '(make-attribute))
 
 (defvar *color-name-table* (make-hash-table :test 'equal))
-(defvar *color-initialized-p* nil)
-(defvar *init-color-hooks* nil)
 
 (defun get-color (color)
   (if (null color)
@@ -15,8 +13,7 @@
           (editor-error "Unknown color name: ~A" color))))
 
 (defun init-colors ()
-  (when (and (/= 0 (charms/ll:has-colors))
-             (not *color-initialized-p*))
+  (when (/= 0 (charms/ll:has-colors))
     (charms/ll:start-color)
     (charms/ll:use-default-colors)
     (let ((n 0))
@@ -32,17 +29,13 @@
         (add-color "cyan" charms/ll:color_cyan)
         (add-color "white" charms/ll:color_white)
         (add-color "black" charms/ll:color_black)))
-    (setf *color-initialized-p* t)
-    (mapc #'funcall *init-color-hooks*)
-    (setf *init-color-hooks* nil)
     t))
 
 (defstruct (attribute (:constructor %make-attribute))
   color
   reverse-p
   bold-p
-  underline-p
-  bits)
+  underline-p)
 
 (defun make-attribute (color &key reverse-p bold-p underline-p)
   (%make-attribute :color color

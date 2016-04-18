@@ -338,24 +338,20 @@
   t)
 
 (define-key *global-keymap* (kbd "C-\\") 'undo)
-(define-command undo () ()
-  (let ((point (buffer-undo (current-buffer))))
-    (cond
-      (point
-       (point-set point)
-       t)
-      (t
-       (editor-error "Undo Error")))))
+(define-command undo (n) ("p")
+  (dotimes (_ n t)
+    (let ((point (buffer-undo (current-buffer))))
+      (if point
+          (point-set point)
+          (editor-error "Undo Error")))))
 
 (define-key *global-keymap* (kbd "C-_") 'redo)
-(define-command redo () ()
-  (let ((point (buffer-redo (current-buffer))))
-    (cond
-      (point
-       (point-set point)
-       t)
-      (t
-       (editor-error "Redo Error")))))
+(define-command redo (n) ("p")
+  (dotimes (_ n t)
+    (let ((point (buffer-redo (current-buffer))))
+      (if point
+          (point-set point)
+          (editor-error "Redo Error")))))
 
 (define-key *global-keymap* (kbd "C-@") 'mark-set)
 (define-command mark-set () ()

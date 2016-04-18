@@ -99,11 +99,11 @@
     (setf (aref *field* x (1- +field-height+)) +wall+))
   *field*)
 
-(defun insert-block (attr)
+(defun insert-block (color)
   (insert-string "  ")
   (put-attribute (save-excursion (next-char -2) (current-point))
                  (current-point)
-                 (make-attr :color (cons attr attr))))
+                 (make-attr :color color :reverse-p t)))
 
 (defun draw-field-internal (field)
   (dotimes (y +field-height+)

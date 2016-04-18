@@ -6,9 +6,10 @@
           get-attr
           make-attr))
 
-(defvar *attribute-name-table* (make-hash-table :test 'equal))
+(defvar *attribute-name-table* (make-hash-table))
 
 (defun get-attr (name)
+  (check-type name symbol)
   (gethash name *attribute-name-table*))
 
 (defun set-attr (name attr)

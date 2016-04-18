@@ -12,11 +12,12 @@
   attr
   buffer)
 
-(defun make-overlay (start end attr &optional (buffer (current-buffer)))
+(defun make-overlay (start end attribute &optional (buffer (current-buffer)))
+  (check-type attribute attribute)
   (let ((overlay
          (%make-overlay :start start
                         :end end
-                        :attr attr
+                        :attr (attribute-to-bits attribute)
                         :buffer buffer)))
     (buffer-add-overlay buffer overlay)
     overlay))

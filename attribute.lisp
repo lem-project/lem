@@ -2,24 +2,7 @@
 
 (in-package :lem)
 
-(export '(set-attr
-          get-attr
-          make-attr))
-
-(defvar *attribute-name-table* (make-hash-table))
-
-(defun get-attr (name)
-  (check-type name symbol)
-  (multiple-value-bind (value found)
-      (gethash name *attribute-name-table*)
-    (assert found)
-    value))
-
-(defun set-attr (name attr)
-  (unless (integerp attr)
-    (setq attr (get-attr name)))
-  (check-type attr integer)
-  (setf (gethash name *attribute-name-table*) attr))
+(export '(make-attribute))
 
 (defvar *color-name-table* (make-hash-table :test 'equal))
 (defvar *color-initialized-p* nil)
@@ -54,27 +37,27 @@
     (setf *init-color-hooks* nil)
     t))
 
-(defmacro define-attribute (name &key color reverse-p bold-p underline-p)
-  (check-type name symbol)
-  (let ((make-attr-form
-          `(make-attr :color ,color
-                      :reverse-p ,reverse-p
-                      :bold-p ,bold-p
-                      :underline-p ,underline-p)))
-    `(if *color-initialized-p*
-         (set-attr ',name ,make-attr-form)
-         (push (lambda ()
-                 (set-attr ',name ,make-attr-form))
-               *init-color-hooks*))))
+(defstruct (attribute (:constructor %make-attribute))
+  color
+  reverse-p
+  bold-p
+  underline-p
+  bits)
 
-(defun make-attr (&key color reverse-p bold-p underline-p)
-  (logior (get-color color)
-          (if reverse-p
+(defun make-attribute (color &key reverse-p bold-p underline-p)
+  (%make-attribute :color color
+                   :reverse-p reverse-p
+                   :bold-p bold-p
+                   :underline-p underline-p))
+
+(defun attribute-to-bits (attribute)
+  (logior (get-color (attribute-color attribute))
+          (if (attribute-reverse-p attribute)
               charms/ll:a_reverse
               0)
-          (if bold-p
+          (if (attribute-bold-p attribute)
               charms/ll:a_bold
               0)
-          (if underline-p
+          (if (attribute-underline-p attribute)
               charms/ll:a_underline
               0)))

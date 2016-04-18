@@ -143,7 +143,7 @@
 (syntax-add-match *lisp-syntax-table*
                   (make-syntax-test "[^() \\t]+" :regex-p t)
                   :test-symbol :define-start
-                  :attr :function-name-attr)
+                  :attr *syntax-function-name-attribute*)
 
 (dolist (str '("defun"
                "defclass"
@@ -160,7 +160,7 @@
   (syntax-add-match *lisp-syntax-table*
                     (make-syntax-test str :word-p t)
                     :test-symbol :start-expr
-                    :attr :keyword-attr
+                    :attr *syntax-keyword-attribute*
                     :matched-symbol :define-start
                     :symbol-lifetime 1))
 
@@ -168,7 +168,7 @@
                   (make-syntax-test "^(:?[^: \\t]+:)?define-[^ \\t()]*$"
                                     :regex-p t :word-p t)
                   :test-symbol :start-expr
-                  :attr :keyword-attr
+                  :attr *syntax-keyword-attribute*
                   :matched-symbol :define-start
                   :symbol-lifetime 1)
 
@@ -232,22 +232,22 @@
   (syntax-add-match *lisp-syntax-table*
                     (make-syntax-test str :word-p t)
                     :test-symbol :start-expr
-                    :attr :keyword-attr))
+                    :attr *syntax-keyword-attribute*))
 
 (syntax-add-match *lisp-syntax-table*
                   (make-syntax-test "^(?:[^:*]*:)?\\*[^*]+\\*$"
                                     :regex-p t :word-p t)
-                  :attr :variable-attr)
+                  :attr *syntax-variable-attribute*)
 
 (syntax-add-match *lisp-syntax-table*
                   (make-syntax-test "^:[^() \\t]+$"
                                     :regex-p t :word-p t)
-                  :attr :constant-attr)
+                  :attr *syntax-constant-attribute*)
 
 (syntax-add-match *lisp-syntax-table*
                   (make-syntax-test "^&[^() \\t]+$"
                                     :regex-p t :word-p t)
-                  :attr :constant-attr)
+                  :attr *syntax-constant-attribute*)
 
 (define-major-mode lisp-mode prog-mode
   (:name "lisp"

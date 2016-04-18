@@ -132,8 +132,6 @@
     (loop :for i :from string-start :below (or string-end (fat-length str)) :do
       (multiple-value-bind (char attr)
           (fat-char str i)
-        (when (ctrl-p char)
-          (setq attr (make-attr :color "red")))
         (charms/ll:wattron win attr)
         (charms/ll:mvwaddstr win y x (string char))
         (charms/ll:wattroff win attr)

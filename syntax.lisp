@@ -2,7 +2,13 @@
 
 (in-package :lem)
 
-(export '(syntax-table
+(export '(*syntax-string-attribute*
+          *syntax-comment-attribute*
+          *syntax-keyword-attribute*
+          *syntax-constant-attribute*
+          *syntax-function-name-attribute*
+          *syntax-variable-attribute*
+          syntax-table
           make-syntax-table
           make-syntax-test
           syntax-add-match
@@ -31,12 +37,12 @@
           syntax-forward-search-tag-end
           syntax-backward-search-tag-start))
 
-(define-attribute :string-attr :color "green")
-(define-attribute :comment-attr :color "red")
-(define-attribute :keyword-attr :color "blue")
-(define-attribute :constant-attr :color "magenta")
-(define-attribute :function-name-attr :color "cyan")
-(define-attribute :variable-attr :color "yellow")
+(defvar *syntax-string-attribute* (make-attribute "green"))
+(defvar *syntax-comment-attribute* (make-attribute "red"))
+(defvar *syntax-keyword-attribute* (make-attribute "blue"))
+(defvar *syntax-constant-attribute* (make-attribute "magenta"))
+(defvar *syntax-function-name-attribute* (make-attribute "cyan"))
+(defvar *syntax-variable-attribute* (make-attribute "yellow"))
 
 (defstruct (syntax-test (:constructor %make-syntax-test))
   thing
@@ -123,19 +129,19 @@
           (syntax-add-match syntax-table
                             (make-syntax-test (format nil "~a.*$" string)
                                               :regex-p t)
-                            :attr :comment-attr))))
+                            :attr *syntax-comment-attribute*))))
     (dolist (string-quote-char (syntax-table-string-quote-chars syntax-table))
       (syntax-add-region syntax-table
                          (make-syntax-test (string string-quote-char))
                          (make-syntax-test (string string-quote-char))
-                         :attr :string-attr))
+                         :attr *syntax-string-attribute*))
     (let ((pre (syntax-table-block-comment-preceding-char syntax-table))
           (flw (syntax-table-block-comment-following-char syntax-table)))
       (when (and pre flw)
         (syntax-add-region syntax-table
                            (make-syntax-test (format nil "~c~c" pre flw))
                            (make-syntax-test (format nil "~c~c" flw pre))
-                           :attr :comment-attr)))
+                           :attr *syntax-comment-attribute*)))
     syntax-table))
 
 (defun syntax-add-match (syntax-table test &key test-symbol end-symbol attr
@@ -274,7 +280,7 @@
                   *syntax-symbol-lifetimes*
                   :key #'car)))
   (when (syntax-attr syntax)
-    (line-put-attribute line start end (get-attr (syntax-attr syntax))))
+    (line-put-attribute line start end (syntax-attr syntax)))
   (line-add-tag line start end (syntax-tag syntax))
   t)
 
@@ -339,12 +345,12 @@
       (let ((end (syntax-search-region-end syntax (line-str line) end)))
         (cond (end
                (line-put-attribute line start end
-                                   (get-attr (syntax-attr syntax)))
+                                   (syntax-attr syntax))
                (line-add-tag line start end (syntax-tag syntax))
                (return-from syntax-scan-token-test (1- end)))
               (t
                (line-put-attribute line start (length (line-str line))
-                                   (get-attr (syntax-attr syntax)))
+                                   (syntax-attr syntax))
                (line-add-tag line start (length (line-str line))
                              (syntax-tag syntax))
                (setf (line-%region line) syntax)
@@ -384,13 +390,13 @@
     (let ((end (syntax-search-region-end region (line-str line) 0)))
       (cond (end
              (setf (line-%region line) nil)
-             (line-put-attribute line 0 end (get-attr (syntax-attr region)))
+             (line-put-attribute line 0 end (syntax-attr region))
              (line-add-tag line 0 end (syntax-tag region))
              end)
             (t
              (setf (line-%region line) region)
              (line-put-attribute line 0 (length (line-str line))
-                                 (get-attr (syntax-attr region)))
+                                 (syntax-attr region))
              (line-add-tag line 0 (length (line-str line)) (syntax-tag region))
              (length (line-str line)))))))
 

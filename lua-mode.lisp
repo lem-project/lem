@@ -29,18 +29,18 @@
                "repeat" "return" "then" "true" "until" "while"))
   (syntax-add-match *lua-syntax-table*
                     (make-syntax-test str :word-p t)
-                    :attr :keyword-attr))
+                    :attr *syntax-keyword-attribute*))
 
 (syntax-add-match *lua-syntax-table*
                   (make-syntax-test "function" :word-p t)
-                  :attr :keyword-attr
+                  :attr *syntax-keyword-attribute*
                   :matched-symbol :function-start
                   :symbol-lifetime 1)
 
 (syntax-add-match *lua-syntax-table*
                   (make-syntax-test "[a-zA-Z0-9_\\.:]+" :regex-p t)
                   :test-symbol :function-start
-                  :attr :function-name-attr)
+                  :attr *syntax-function-name-attribute*)
 
 (loop
   :for n :from 0 :to 10
@@ -50,7 +50,7 @@
   (syntax-add-region *lua-syntax-table*
                      (make-syntax-test str1)
                      (make-syntax-test str2)
-                     :attr :string-attr
+                     :attr *syntax-string-attribute*
                      :tag :long-string))
 
 (loop
@@ -61,7 +61,7 @@
   (syntax-add-region *lua-syntax-table*
                      (make-syntax-test str1)
                      (make-syntax-test str2)
-                     :attr :comment-attr
+                     :attr *syntax-comment-attribute*
                      :tag :comment))
 
 (defun skip-space-forward ()

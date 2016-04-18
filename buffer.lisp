@@ -63,11 +63,11 @@
   (change-font (line-fatstr line) 0 :and))
 
 (defun line-put-attribute (line start end attr)
-  (change-font (line-fatstr line) attr :to start end)
+  (change-font (line-fatstr line) (attribute-to-bits attr) :to start end)
   t)
 
 (defun line-remove-attribute (line start end attr)
-  (change-font (line-fatstr line) (lognot attr) :and start end)
+  (change-font (line-fatstr line) (lognot (attribute-to-bits attr)) :and start end)
   t)
 
 (defun line-add-tag (line start end tag)
@@ -362,7 +362,7 @@
       (when (buffer-mark-overlay buffer)
         (delete-overlay (buffer-mark-overlay buffer)))
       (setf (buffer-mark-overlay buffer)
-            (make-overlay start end (make-attr :color "blue" :reverse-p t))))))
+            (make-overlay start end (make-attribute "blue" :reverse-p t))))))
 
 (defun check-read-only (buffer)
   (when (buffer-read-only-p buffer)

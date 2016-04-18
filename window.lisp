@@ -46,8 +46,8 @@
           scroll-down
           scroll-up))
 
-(define-attribute :modeline :reverse-p t)
-(define-attribute :modeline-inactive :reverse-p t)
+(defvar *modeline-attribute* (make-attribute nil :reverse-p t))
+(defvar *modeline-inactive-attribute* (make-attribute nil :reverse-p t))
 
 (defvar *redraw-flags* '(:one-line :unnecessary :all))
 
@@ -402,9 +402,10 @@
 
 (defun window-refresh-modeline (window)
   (let ((attr
-         (if (eq window (current-window))
-             (get-attr :modeline)
-             (get-attr :modeline-inactive))))
+          (attribute-to-bits
+           (if (eq window (current-window))
+               *modeline-attribute*
+               *modeline-inactive-attribute*))))
     (charms/ll:wattron (window-screen window) attr)
     (let ((modeline-str (modeline-string window)))
       (charms/ll:mvwaddstr (window-screen window)
@@ -594,7 +595,7 @@
         (save-excursion
          (when (backward-sexp 1 t)
            (push (current-point) highlight-points))))
-      (let ((attr (make-attr :color "cyan" :reverse-p t)))
+      (let ((attr (make-attribute "cyan" :reverse-p t)))
         (dolist (point highlight-points)
           (push (make-overlay point
                               (make-point (point-linum point)

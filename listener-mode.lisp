@@ -47,7 +47,7 @@
            (funcall (get-bvar :listener-get-prompt-function))))
   (put-attribute (make-point (current-linum) 0)
                  (make-point (current-linum) (current-charpos))
-                 (make-attr :bold-p t :color "blue"))
+                 (make-attribute "blue" :bold-p t))
   (buffer-undo-boundary (current-buffer))
   (listener-update-marker))
 

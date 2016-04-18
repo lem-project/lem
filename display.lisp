@@ -31,6 +31,8 @@
     (when (<= 0 i (1- (length disp-lines)))
       (unless end-charpos
         (setq end-charpos (fat-length (aref disp-lines i))))
+      (setf (aref disp-lines i)
+            (copy-fatstring (aref disp-lines i)))
       (let ((fatstr (aref disp-lines i)))
         (change-font fatstr
                      attr
@@ -115,9 +117,9 @@
     (loop
       :for linum :from start-linum :to (buffer-nlines buffer)
       :while (< disp-index (length disp-lines)) :do
-      (setf (aref disp-lines disp-index)
-            (copy-fatstring (buffer-line-fatstring buffer linum)))
-      (incf disp-index))
+        (setf (aref disp-lines disp-index)
+              (buffer-line-fatstring buffer linum))
+        (incf disp-index))
     (loop
       :for i :from disp-index :below (length disp-lines)
       :do (setf (aref disp-lines i) nil))

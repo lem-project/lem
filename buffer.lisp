@@ -70,12 +70,6 @@
   (change-font (line-fatstr line) (lognot attr) :and start end)
   t)
 
-(defun line-get-attribute (line pos)
-  (aref (fat-font-data (line-fatstr line)) pos))
-
-(defun line-contains-attribute (line pos attr)
-  (/= 0 (logand attr (line-get-attribute line pos))))
-
 (defun line-add-tag (line start end tag)
   (when tag
     (push (list start end tag) (line-%tags line))

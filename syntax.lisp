@@ -375,14 +375,6 @@
            (not (syntax-space-char-p (schar str i))))
        i)))
 
-(defun %syntax-prev-attr (line i)
-  (if (= i 0)
-      0
-      (multiple-value-bind (x y)
-          (fat-char (line-fatstr line) (1- i))
-        (declare (ignore x))
-        y)))
-
 (defun syntax-continue-region-p (line)
   (let ((prev (line-prev line)))
     (and prev (line-%region prev))))
@@ -418,10 +410,6 @@
         (return))
       (let ((c (schar str i)))
         (cond ((syntax-escape-char-p c)
-               (line-put-attribute line
-                                   i
-                                   (min (+ i 2) (line-length line))
-                                   (%syntax-prev-attr line i))
                (incf i))
               ((let ((pos (syntax-scan-token line i)))
                  (when pos (setq i pos))))

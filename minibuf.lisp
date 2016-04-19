@@ -219,26 +219,27 @@
 (defun minibuf-read-line (prompt initial comp-f existing-p)
   (let ((*minibuf-read-line-tmp-window* (current-window)))
     (handler-case
-        (with-current-window (minibuffer-window)
-          (let ((*universal-argument* nil)
-                (minibuf-buffer-prev-string
-                 (join "" (buffer-take-lines (minibuffer))))
-                (minibuf-buffer-prev-point
-                 (window-point (minibuffer-window)))
-                (*minibuf-read-line-depth*
-                 (1+ *minibuf-read-line-depth*)))
-            (buffer-erase)
-            (minibuffer-mode)
-            (when initial
-              (insert-string initial))
-            (unwind-protect (call-with-save-windows
-                             *minibuf-read-line-tmp-window*
-                             (lambda ()
-                               (minibuf-read-line-loop prompt comp-f existing-p)))
-              (with-current-window (minibuffer-window)
-                (buffer-erase)
-                (insert-string minibuf-buffer-prev-string)
-                (point-set minibuf-buffer-prev-point)))))
+        (with-raw t
+          (with-current-window (minibuffer-window)
+            (let ((*universal-argument* nil)
+                  (minibuf-buffer-prev-string
+                   (join "" (buffer-take-lines (minibuffer))))
+                  (minibuf-buffer-prev-point
+                   (window-point (minibuffer-window)))
+                  (*minibuf-read-line-depth*
+                   (1+ *minibuf-read-line-depth*)))
+              (buffer-erase)
+              (minibuffer-mode)
+              (when initial
+                (insert-string initial))
+              (unwind-protect (call-with-save-windows
+                               *minibuf-read-line-tmp-window*
+                               (lambda ()
+                                 (minibuf-read-line-loop prompt comp-f existing-p)))
+                (with-current-window (minibuffer-window)
+                  (buffer-erase)
+                  (insert-string minibuf-buffer-prev-string)
+                  (point-set minibuf-buffer-prev-point))))))
       (editor-abort (c)
                     (error c)))))
 

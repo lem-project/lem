@@ -500,7 +500,6 @@
       (return))))
 
 (defun lisp-debugger (condition)
-  (lem::raw)
   (let* ((choices (compute-restarts condition))
          (n (length choices)))
     (lisp-info-popup (get-buffer-create "*error*")
@@ -520,22 +519,19 @@
                  (i (and (stringp str) (parse-integer str :junk-allowed t))))
             (cond ((and i (<= 1 i n))
                    (let ((restart (nth (1- i) choices)))
-                     (lem::noraw)
                      (cond ((eq 'store-value (restart-name restart))
                             (ldebug-store-value condition))
                            (t
                             (invoke-restart-interactively restart))))
                    (return))
                   (t
-                   (lem::noraw)
                    (let ((x
                           (handler-case (eval (read-from-string str nil))
                             (error (cdt) (format nil "~a" cdt)))))
                      (info-popup (get-buffer-create "*output*")
                                  #'(lambda (out)
                                      (princ x out))
-                                 nil))
-                   (lem::raw))))
+                                 nil)))))
         (editor-abort ()))))
   condition)
 
@@ -566,15 +562,13 @@
 (defun %lisp-eval (x output-buffer point
                      &optional update-point-p)
   (unless point (setq point (point-min)))
-  (lem::noraw)
-  (unwind-protect
+  (lem::with-raw nil
     (multiple-value-bind (results error-p)
         (%lisp-eval-internal x
                              output-buffer
                              point
                              update-point-p)
-      (values results error-p))
-    (lem::raw)))
+      (values results error-p))))
 
 (defun %lisp-eval-string (string output-buffer point
                                  &optional

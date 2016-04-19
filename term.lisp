@@ -1,4 +1,4 @@
-;; -*- mode:lisp; package:lem-internal -*-
+;; -*- mode:lisp; package:lem -*-
 
 (in-package :lem)
 
@@ -133,7 +133,9 @@
 (defun term-finallize ()
   (when *term-io*
     (fclose *term-io*)
-    (setf *term-io* nil)))
+    (setf *term-io* nil))
+  (charms/ll:endwin)
+  (charms/ll:delscreen charms/ll:*stdscr*))
 
 ;;;
 

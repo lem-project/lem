@@ -411,8 +411,7 @@
     (find-file arg)))
 
 (defun lem-finallize ()
-  (charms/ll:endwin)
-  (charms/ll:delscreen charms/ll:*stdscr*)
+  (term-finallize)
   (setq *running-p* nil))
 
 (defun lem-1 (args)

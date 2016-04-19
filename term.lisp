@@ -1,4 +1,4 @@
-;; -*- mode:lisp; package:lem -*-
+;; -*- mode:lisp; package:lem-internal -*-
 
 (in-package :lem)
 

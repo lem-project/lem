@@ -81,6 +81,11 @@
 (defmacro with-allow-interrupt (flag &body body)
   `(with-raw (not ,flag) ,@body))
 
+(defun resize-screen ()
+  (let ((winsize (lem-winsize:win-size (xterm-fd))))
+    (when winsize
+      (charms/ll:resizeterm (car winsize) (cadr winsize)))))
+
 (defun term-init (&optional fd)
   (if fd
       nil

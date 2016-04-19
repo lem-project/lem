@@ -318,11 +318,6 @@
                      0))
   (setf (window-tree) (current-window)))
 
-(defun resize-screen ()
-  (let ((winsize (lem-winsize:win-size (xterm-fd))))
-    (when winsize
-      (charms/ll:resizeterm (car winsize) (cadr winsize)))))
-
 (define-key *global-keymap* (kbd "C-l") 'recenter)
 (define-command recenter () ()
   (do-window-tree (window (window-tree))

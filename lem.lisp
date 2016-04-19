@@ -447,7 +447,7 @@
   (check-init)
   (lem-1 args))
 
-(defun new-xterm (geometry foreground background title font)
+(defun run-xterm (&key (geometry "80x24") foreground background title font)
   (let ((tmpfile (temp-file-name *program-name*))
         tty-name)
     (uiop:run-program
@@ -482,14 +482,9 @@
 (defun run-xterm-p ()
   (not (null *xterm-fd*)))
 
-(defun lem-new-term (&key (geometry "80x24")
-                          (foreground nil)
-                          (background nil)
-                          (title *program-name*)
-                          (font nil))
+(defun lem-new-term (tty-name)
   (check-init)
-  (let* ((tty-name (new-xterm geometry foreground background title font))
-         (io (fopen tty-name "r+")))
+  (let* ((io (fopen tty-name "r+")))
     (setq *xterm-fd* (fileno io))
     (cffi:with-foreign-string (term "xterm")
       (charms/ll:newterm term io io))

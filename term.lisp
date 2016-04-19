@@ -80,3 +80,15 @@
 
 (defmacro with-allow-interrupt (flag &body body)
   `(with-raw (not ,flag) ,@body))
+
+(defun term-init (&optional fd)
+  (if fd
+      nil
+      (charms/ll:initscr))
+  (init-colors)
+  (charms/ll:noecho)
+  (charms/ll:cbreak)
+  (raw)
+  (charms/ll:nonl)
+  (charms/ll:refresh)
+  (charms/ll:keypad charms/ll:*stdscr* 1))

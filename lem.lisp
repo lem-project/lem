@@ -401,13 +401,7 @@
             (body))))))
 
 (defun lem-init (args)
-  (init-colors)
-  (charms/ll:noecho)
-  (charms/ll:cbreak)
-  (raw)
-  (charms/ll:nonl)
-  (charms/ll:refresh)
-  (charms/ll:keypad charms/ll:*stdscr* 1)
+  (term-init *xterm-fd*)
   (setq *running-p* t)
   (cond ((not *initialized-p*)
          (setq *initialized-p* t)
@@ -451,7 +445,6 @@
 
 (defun lem (&rest args)
   (check-init)
-  (charms/ll:initscr)
   (lem-1 args))
 
 (defun new-xterm (geometry foreground background title font)
@@ -500,12 +493,6 @@
     (setq *xterm-fd* (fileno io))
     (cffi:with-foreign-string (term "xterm")
       (charms/ll:newterm term io io))
-    (when (stringp geometry)
-      (ppcre:register-groups-bind (width height)
-                                  ("^(\\d+)x(\\d+)$" geometry)
-                                  (when (and width height)
-                                    (charms/ll:resizeterm (parse-integer height)
-                                                          (parse-integer width)))))
     #+sbcl
     (sb-thread:make-thread
      #'(lambda ()

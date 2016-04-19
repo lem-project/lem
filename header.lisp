@@ -161,29 +161,3 @@
               #+ccl ccl:interrupt-signal-condition)
           (,condition)
           ,@protected-form)))))
-
-(let ((raw-mode))
-  (defun raw-p ()
-    raw-mode)
-  (defun raw ()
-    (setq raw-mode t)
-    (charms/ll:raw))
-  (defun noraw ()
-    (setq raw-mode nil)
-    (charms/ll:noraw)))
-
-(defmacro with-raw (raw-p &body body)
-  (let ((g-old-raw (gensym))
-        (g-new-raw (gensym)))
-    `(let ((,g-old-raw (raw-p))
-           (,g-new-raw ,raw-p))
-       (if ,g-new-raw
-           (raw)
-           (noraw))
-       (unwind-protect (progn ,@body)
-         (if ,g-old-raw
-             (raw)
-             (noraw))))))
-
-(defmacro with-allow-interrupt (flag &body body)
-  `(with-raw (not ,flag) ,@body))

@@ -20,9 +20,7 @@
           popup-backtrace
           lem
           lem-save-error
-          lem-new-term
-          xterm-fd
-          run-xterm-p))
+          lem-new-term))
 
 (defvar *lem-error-file* "~/.lem-error")
 (defvar *initialized-p* nil)
@@ -401,7 +399,7 @@
             (body))))))
 
 (defun lem-init (args)
-  (term-init *xterm-fd*)
+  (term-init)
   (setq *running-p* t)
   (cond ((not *initialized-p*)
          (setq *initialized-p* t)
@@ -446,59 +444,6 @@
 (defun lem (&rest args)
   (check-init)
   (lem-1 args))
-
-(defun run-xterm (&key (geometry "80x24") foreground background title font)
-  (let ((tmpfile (temp-file-name *program-name*))
-        tty-name)
-    (uiop:run-program
-     (concatenate 'string
-                  "xterm"
-                  (if title (format nil " -title ~a" title) "")
-                  (if foreground (format nil " -fg ~a" foreground) "")
-                  (if background (format nil " -bg ~a" background) "")
-                  (if font (format nil " -fn ~a" font) "")
-                  (if geometry (format nil " -geometry ~a" geometry) "")
-                  (format nil " -e 'tty > ~a && sleep 100000' &" tmpfile)))
-    (loop
-      (sleep 0.1)
-      (multiple-value-bind (unused-value error-p)
-          (ignore-errors
-           (with-open-file (in tmpfile)
-             (setq tty-name (read-line in))))
-        (declare (ignore unused-value))
-        (unless error-p (return))))
-    (delete-file tmpfile)
-    tty-name))
-
-(cffi:defcfun "fopen" :pointer (path :string) (mode :string))
-(cffi:defcfun "fclose" :int (fp :pointer))
-(cffi:defcfun "fileno" :int (fd :pointer))
-
-(defvar *xterm-fd* nil)
-
-(defun xterm-fd ()
-  *xterm-fd*)
-
-(defun run-xterm-p ()
-  (not (null *xterm-fd*)))
-
-(defun lem-new-term (tty-name)
-  (check-init)
-  (let* ((io (fopen tty-name "r+")))
-    (setq *xterm-fd* (fileno io))
-    (cffi:with-foreign-string (term "xterm")
-      (charms/ll:newterm term io io))
-    #+sbcl
-    (sb-thread:make-thread
-     #'(lambda ()
-         (sb-thread:with-new-session ()
-           (unwind-protect (lem-1 nil)
-             (fclose io)))))
-    #-sbcl
-    (bt:make-thread
-     #'(lambda ()
-         (unwind-protect (lem-1 nil)
-           (fclose io))))))
 
 (defun save-error (condition)
   (with-open-file (out *lem-error-file*

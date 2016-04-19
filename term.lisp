@@ -88,31 +88,39 @@
 
 ;;;
 
+(cffi:defcfun "fopen" :pointer (path :string) (mode :string))
+(cffi:defcfun "fclose" :int (fp :pointer))
+(cffi:defcfun "fileno" :int (fd :pointer))
 
-(defcstruct winsize
+(cffi:defcstruct winsize
   (ws-row :unsigned-short)
   (ws-col :unsigned-short)
   (ws-xpixel :unsigned-short)
   (ws-ypixel :unsigned-short))
 
-(defcfun ioctl :int
+(cffi:defcfun ioctl :int
   (fd :int)
   (cmd :int)
   &rest)
 
-(defun resize-screen ()
-  (with-foreign-object (ws '(:struct winsize))
-    (when (= 0 (ioctl fd 21523 :pointer ws))
-      (with-foreign-slots ((ws-row ws-col) ws (:struct winsize))
-        (list ws-row ws-col)
-        (charms/ll:resizeterm ws-row ws-col)))))
+(defvar *term-io* nil)
 
-;;;
-
+(defun resize-term ()
+  (when *term-io*
+    (cffi:with-foreign-object (ws '(:struct winsize))
+      (when (= 0 (ioctl (fileno *term-io*) 21523 :pointer ws))
+        (cffi:with-foreign-slots ((ws-row ws-col) ws (:struct winsize))
+          (charms/ll:resizeterm ws-row ws-col))))))
 
-(defun term-init (&optional fd)
-  (if fd
-      nil
+(defun term-init-tty (tty-name)
+  (let* ((io (fopen tty-name "r+")))
+    (setf *term-io* io)
+    (cffi:with-foreign-string (term "xterm")
+      (charms/ll:newterm term io io))))
+
+(defun term-init (&optional tty-name)
+  (if tty-name
+      (term-init-tty tty-name)
       (charms/ll:initscr))
   (init-colors)
   (charms/ll:noecho)
@@ -121,3 +129,8 @@
   (charms/ll:nonl)
   (charms/ll:refresh)
   (charms/ll:keypad charms/ll:*stdscr* 1))
+
+(defun term-finallize ()
+  (when *term-io*
+    (fclose *term-io*)
+    (setf *term-io* nil)))

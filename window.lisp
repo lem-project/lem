@@ -325,9 +325,6 @@
 
 (define-key *global-keymap* (kbd "C-l") 'recenter)
 (define-command recenter () ()
-  (when (run-xterm-p)
-    (resize-screen))
-  (adjust-screen-size)
   (do-window-tree (window (window-tree))
     (charms/ll:clearok (window-screen window) 1))
   (window-recenter (current-window))

@@ -3,7 +3,6 @@
 (in-package :lem)
 
 (export '(*lem-error-file*
-          uninput-key
           macro-running-p
           exit-lem
           find-keybind
@@ -17,10 +16,7 @@
           universal-argument
           input-key
           self-insert
-          popup-backtrace
-          lem
-          lem-save-error
-          lem-new-term))
+          lem))
 
 (defvar *lem-error-file* "~/.lem-error")
 (defvar *initialized-p* nil)

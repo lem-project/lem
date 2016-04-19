@@ -107,9 +107,11 @@
     (delete-char 1 nil)
     (do ((type #1=(word-type (following-char))))
         ((not (eq type #1#)))
-      (when (funcall replace-char-p (following-char))
-        (insert-char (funcall rest-case (following-char)) 1)
-        (delete-char 1 nil)))))
+      (cond ((funcall replace-char-p (following-char))
+             (insert-char (funcall rest-case (following-char)) 1)
+             (delete-char 1 nil))
+            (t
+             (shift-position 1))))))
 
 (define-key *global-keymap* (kbd "M-c") 'case-word-capitalize)
 (define-command case-word-capitalize (&optional (n 1)) ("p")

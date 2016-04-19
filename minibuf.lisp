@@ -210,7 +210,11 @@
                         (error c)))
         (switch-minibuffer-window ()
                                   (minibuf-print-sit-for "Cannot switch buffer in minibuffer window"
-                                                         1))))))
+                                                         1))
+        (editor-error (c)
+                      (minibuf-print-sit-for
+                       (editor-error-message c)
+                       1))))))
 
 (defun minibuf-read-line (prompt initial comp-f existing-p)
   (let ((*minibuf-read-line-tmp-window* (current-window)))

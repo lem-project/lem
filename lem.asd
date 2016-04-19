@@ -11,8 +11,7 @@
 
 (defsystem lem
            :serial t
-           :components ((:file "winsize")
-                        (:file "fatstring")
+           :components ((:file "fatstring")
                         (:file "queue")
                         (:file "util")
                         (:file "package")

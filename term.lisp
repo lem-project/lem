@@ -31,6 +31,9 @@
         (add-color "black" charms/ll:color_black)))
     t))
 
+;;;
+
+
 (defstruct (attribute (:constructor %make-attribute))
   color
   reverse-p
@@ -54,6 +57,8 @@
           (if (attribute-underline-p attribute)
               charms/ll:a_underline
               0)))
+;;;
+
 
 (let ((raw-mode))
   (defun raw-p ()
@@ -81,10 +86,29 @@
 (defmacro with-allow-interrupt (flag &body body)
   `(with-raw (not ,flag) ,@body))
 
+;;;
+
+
+(defcstruct winsize
+  (ws-row :unsigned-short)
+  (ws-col :unsigned-short)
+  (ws-xpixel :unsigned-short)
+  (ws-ypixel :unsigned-short))
+
+(defcfun ioctl :int
+  (fd :int)
+  (cmd :int)
+  &rest)
+
 (defun resize-screen ()
-  (let ((winsize (lem-winsize:win-size (xterm-fd))))
-    (when winsize
-      (charms/ll:resizeterm (car winsize) (cadr winsize)))))
+  (with-foreign-object (ws '(:struct winsize))
+    (when (= 0 (ioctl fd 21523 :pointer ws))
+      (with-foreign-slots ((ws-row ws-col) ws (:struct winsize))
+        (list ws-row ws-col)
+        (charms/ll:resizeterm ws-row ws-col)))))
+
+;;;
+
 
 (defun term-init (&optional fd)
   (if fd

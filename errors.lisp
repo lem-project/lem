@@ -14,7 +14,11 @@
   ((depth
     :initarg :depth
     :reader editor-abort-depth
-    :initform 0)))
+    :initform 0))
+  (:report
+   (lambda (condition stream)
+     (declare (ignore condition))
+     (format stream "Abort"))))
 
 (define-condition readonly (editor-condition)
   ())

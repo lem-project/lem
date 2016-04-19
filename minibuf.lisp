@@ -37,11 +37,7 @@
 
 (defun minibuf-init ()
   (let* ((buffer (make-buffer " *minibuffer*"))
-         (window (make-window buffer
-                              1
-                              charms/ll:*cols*
-                              (1- charms/ll:*lines*)
-                              0)))
+         (window (make-window buffer 0 (1- charms/ll:*lines*) charms/ll:*cols* 1)))
     (setq *minibuf-window* window)))
 
 (defun minibuf-resize ()

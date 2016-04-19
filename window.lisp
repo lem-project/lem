@@ -96,7 +96,7 @@
 (defun window-p (x)
   (typep x 'window))
 
-(defun make-window (buffer height width y x)
+(defun make-window (buffer x y width height)
   (let* ((screen
           (charms/ll:newwin height width y x))
          (window
@@ -281,7 +281,7 @@
                                          parameters)
                         (cdr dumped-tree)
                       (let ((window (make-window (get-buffer-create buffer-name)
-                                                 height width y x)))
+                                                 x y width height)))
                         (setf (window-vtop-charpos window) vtop-charpos)
                         (setf (window-vtop-linum window) vtop-linum)
                         (setf (window-delete-hook window) delete-hook)
@@ -312,10 +312,10 @@
   (setq *current-lines* charms/ll:*lines*)
   (setf (current-window)
         (make-window (get-buffer-create "*tmp*")
-                     (- charms/ll:*lines* 1)
-                     charms/ll:*cols*
                      0
-                     0))
+                     0
+                     charms/ll:*cols*
+                     (- charms/ll:*lines* 1)))
   (setf (window-tree) (current-window)))
 
 (define-key *global-keymap* (kbd "C-l") 'recenter)
@@ -631,14 +631,11 @@
     (return-from split-window-vertically nil))
   (multiple-value-bind (winheight rem)
       (floor (window-height) 2)
-    (let ((newwin (make-window
-                   (current-buffer)
-                   winheight
-                   (window-width)
-                   (+ (window-y)
-                      winheight
-                      rem)
-                   (window-x))))
+    (let ((newwin (make-window (current-buffer)
+                               (window-x)
+                               (+ (window-y) winheight rem)
+                               (window-width)
+                               winheight)))
       (decf (window-height) winheight)
       (split-window-after newwin :vsplit))))
 
@@ -648,15 +645,14 @@
     (return-from split-window-horizontally nil))
   (multiple-value-bind (winwidth rem)
       (floor (window-width) 2)
-    (let ((newwin (make-window
-                   (current-buffer)
-                   (window-height)
-                   (1- winwidth)
-                   (window-y)
-                   (+ (window-x)
-                      winwidth
-                      rem
-                      1))))
+    (let ((newwin (make-window (current-buffer)
+                               (+ (window-x)
+                                  winwidth
+                                  rem
+                                  1)
+                               (window-y)
+                               (1- winwidth)
+                               (window-height))))
       (decf (window-width) winwidth)
       (split-window-after newwin :hsplit))))
 

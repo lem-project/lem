@@ -184,3 +184,6 @@
          (if ,g-old-raw
              (raw)
              (noraw))))))
+
+(defmacro with-allow-interrupt (flag &body body)
+  `(with-raw (not ,flag) ,@body))

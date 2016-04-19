@@ -562,7 +562,7 @@
 (defun %lisp-eval (x output-buffer point
                      &optional update-point-p)
   (unless point (setq point (point-min)))
-  (lem::with-raw nil
+  (lem::with-allow-interrupt t
     (multiple-value-bind (results error-p)
         (%lisp-eval-internal x
                              output-buffer

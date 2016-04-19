@@ -219,7 +219,7 @@
 (defun minibuf-read-line (prompt initial comp-f existing-p)
   (let ((*minibuf-read-line-tmp-window* (current-window)))
     (handler-case
-        (with-raw t
+        (with-allow-interrupt nil
           (with-current-window (minibuffer-window)
             (let ((*universal-argument* nil)
                   (minibuf-buffer-prev-string

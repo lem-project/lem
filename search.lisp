@@ -51,7 +51,7 @@
 (defun isearch-update-display ()
   (isearch-update-minibuf)
   (isearch-update-buffer)
-  (setf (window-redraw-flag) :all))
+  (setf (window-redraw-flag (current-window)) :all))
 
 (defun isearch-update-minibuf ()
   (minibuf-print

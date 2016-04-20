@@ -182,7 +182,7 @@
                            (return-from outer nil))
                          (main-step)))
                  :finally (return-from outer t))
-             (setf (window-redraw-flag) :all))))))
+             (setf (window-redraw-flag (current-window)) :all))))))
 
 (define-command apply-macro-to-region-lines () ()
   (apply-region-lines (region-beginning)
@@ -265,7 +265,7 @@
   (let* ((cmd (find-keybind key))
          (buffer (current-buffer))
          (prev-modified (buffer-modified-p buffer))
-         (prev-window-vtop-linum (window-vtop-linum))
+         (prev-window-vtop-linum (window-vtop-linum (current-window)))
          (prev-window-tree *window-tree*))
     (prog1 (and cmd
                 (or (handler-case (cmd-call cmd *universal-argument*)
@@ -283,17 +283,17 @@
                  (not *macro-running-p*)
                  (eq buffer (current-buffer)))
         (let ((curr-modified (buffer-modified-p (current-buffer))))
-          (cond ((eq :one-line (window-redraw-flag))
+          (cond ((eq :one-line (window-redraw-flag (current-window)))
                  (syntax-scan-lines (current-window)
                                     #1=(window-current-linum)
                                     (1+ #1#)))
                 ((or (not (eql curr-modified prev-modified))
                      (/= prev-window-vtop-linum
-                         (window-vtop-linum))
+                         (window-vtop-linum (current-window)))
                      (/= 0 (window-offset-view (current-window))))
                  (syntax-scan-window (current-window)))
                 ((eq *window-tree* prev-window-tree)
-                 (setf (window-redraw-flag) :unnecessary))))))))
+                 (setf (window-redraw-flag (current-window)) :unnecessary))))))))
 
 (defun main-step ()
   (let ((key (input-key)))
@@ -305,7 +305,7 @@
   (define-command self-insert (n) ("p")
     (let ((c (insertion-key-p *last-input-key*)))
       (cond (c
-             (setf (window-redraw-flag) :one-line)
+             (setf (window-redraw-flag (current-window)) :one-line)
              (insert-char c n)
              (when (and prev-time
                         (> 10

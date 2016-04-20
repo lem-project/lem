@@ -288,7 +288,7 @@
 (define-key *tetris-mode-keymap* (kbd "q") 'tetris-quit)
 
 (defun update (tetris-buffer)
-  (when (and (eq (window-buffer) tetris-buffer)
+  (when (and (eq (current-buffer) tetris-buffer)
              *playing-p*)
     (cond ((ride-p)
            (fix)

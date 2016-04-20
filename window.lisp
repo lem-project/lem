@@ -79,11 +79,11 @@
 
 (defvar *current-window*)
 
-(define-class window () (current-window)
-  height
-  width
-  y
+(defstruct (window (:constructor %make-window))
   x
+  y
+  width
+  height
   buffer
   display
   vtop-linum
@@ -93,22 +93,19 @@
   delete-hook
   parameters)
 
-(defun window-p (x)
-  (typep x 'window))
-
 (defun make-window (buffer x y width height)
   (let* ((screen
           (charms/ll:newwin height width y x))
          (window
-          (make-instance 'window
-                         :height height
-                         :width width
-                         :y y
-                         :x x
-                         :buffer buffer
-                         :display (make-display screen width (1- height))
-                         :vtop-linum 1
-                         :vtop-charpos 0)))
+          (%make-window
+           :x x
+           :y y
+           :width width
+           :height height
+           :buffer buffer
+           :display (make-display screen width (1- height))
+           :vtop-linum 1
+           :vtop-charpos 0)))
     (setf (window-point-marker window)
           (make-marker buffer (make-point 1 0)))
     window))
@@ -599,13 +596,13 @@
 (defun window-maybe-update ()
   (window-brackets-highlight)
   (window-update-all)
-  (setf (window-redraw-flag) nil))
+  (setf (window-redraw-flag (current-window)) nil))
 
 (defun split-window-after (new-window split-type)
   (let ((current-window (current-window)))
     (window-set-size current-window
-                     (window-height)
-                     (window-width))
+                     (window-height (current-window))
+                     (window-width (current-window)))
     (setf (window-vtop-linum new-window)
           (window-vtop-linum current-window))
     (setf (window-current-linum new-window)
@@ -630,13 +627,13 @@
   (when (minibuffer-window-active-p)
     (return-from split-window-vertically nil))
   (multiple-value-bind (winheight rem)
-      (floor (window-height) 2)
+      (floor (window-height (current-window)) 2)
     (let ((newwin (make-window (current-buffer)
-                               (window-x)
-                               (+ (window-y) winheight rem)
-                               (window-width)
+                               (window-x (current-window))
+                               (+ (window-y (current-window)) winheight rem)
+                               (window-width (current-window))
                                winheight)))
-      (decf (window-height) winheight)
+      (decf (window-height (current-window)) winheight)
       (split-window-after newwin :vsplit))))
 
 (define-key *global-keymap* (kbd "C-x 3") 'split-window-horizontally)
@@ -644,16 +641,16 @@
   (when (minibuffer-window-active-p)
     (return-from split-window-horizontally nil))
   (multiple-value-bind (winwidth rem)
-      (floor (window-width) 2)
+      (floor (window-width (current-window)) 2)
     (let ((newwin (make-window (current-buffer)
-                               (+ (window-x)
+                               (+ (window-x (current-window))
                                   winwidth
                                   rem
                                   1)
-                               (window-y)
+                               (window-y (current-window))
                                (1- winwidth)
-                               (window-height))))
-      (decf (window-width) winwidth)
+                               (window-height (current-window)))))
+      (decf (window-width (current-window)) winwidth)
       (split-window-after newwin :hsplit))))
 
 (defun split-window ()
@@ -1039,11 +1036,11 @@
         (when (= (window-cursor-y (current-window)) 0)
           (unless (forward-line n)
             (return nil)))
-        (let ((prev-linum (window-vtop-linum))
-              (prev-charpos (window-vtop-charpos)))
+        (let ((prev-linum (window-vtop-linum (current-window)))
+              (prev-charpos (window-vtop-charpos (current-window))))
           (window-scroll (current-window) 1)
-          (when (and (= prev-linum (window-vtop-linum))
-                     (= prev-charpos (window-vtop-charpos)))
+          (when (and (= prev-linum (window-vtop-linum (current-window)))
+                     (= prev-charpos (window-vtop-charpos (current-window))))
             (return nil))))))
 
 (define-key *global-keymap* (kbd "C-up") 'scroll-up)
@@ -1052,13 +1049,13 @@
       (scroll-down (- n))
       (dotimes (_ n t)
         (when (and (= (window-cursor-y (current-window))
-                      (- (window-height) 2))
-                   (/= 1 (window-vtop-linum)))
+                      (- (window-height (current-window)) 2))
+                   (/= 1 (window-vtop-linum (current-window))))
           (unless (forward-line (- n))
             (return nil)))
-        (let ((prev-linum (window-vtop-linum))
-              (prev-charpos (window-vtop-charpos)))
+        (let ((prev-linum (window-vtop-linum (current-window)))
+              (prev-charpos (window-vtop-charpos (current-window))))
           (window-scroll (current-window) -1)
-          (when (and (= prev-linum (window-vtop-linum))
-                     (= prev-charpos (window-vtop-charpos)))
+          (when (and (= prev-linum (window-vtop-linum (current-window)))
+                     (= prev-charpos (window-vtop-charpos (current-window))))
             (return nil))))))

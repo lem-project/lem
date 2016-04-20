@@ -18,7 +18,7 @@
          (when (equal str prev-str)
            (setq comp-flag nil)
            (with-current-window *completion-window*
-             (unless (scroll-down (1- (window-height)))
+             (unless (scroll-down (1- (window-height (current-window))))
                (point-set (point-min)))
              (window-update-all)))))
       (setq prev-str str)

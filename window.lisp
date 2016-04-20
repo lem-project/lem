@@ -753,9 +753,9 @@
                                   (window-width win))))))))
 
 (defun delete-window (window)
-  (when (one-window-p)
-    (minibuf-print "Can not delete this window")
-    (return-from delete-window nil))
+  (when (or (one-window-p)
+            (minibuffer-window-p window))
+    (editor-error "Can not delete this window"))
   (when (eq (current-window) window)
     (other-window))
   (multiple-value-bind (node getter setter another-getter another-setter)

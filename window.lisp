@@ -657,10 +657,10 @@
 (define-command split-window-horizontally () ()
   (window-split-horizontally (current-window)))
 
-(defun split-window ()
-  (if (< *window-sufficient-width* (window-width (current-window)))
-      (split-window-horizontally)
-      (split-window-vertically)))
+(defun window-split-sensibly (window)
+  (if (< *window-sufficient-width* (window-width window))
+      (window-split-horizontally window)
+      (window-split-vertically window)))
 
 (defun get-next-window (window &optional (window-list (window-list)))
   (let ((result (member window window-list)))
@@ -787,7 +787,7 @@
       (let ((split-p))
         (when (one-window-p)
           (setq split-p t)
-          (split-window))
+          (window-split-sensibly (current-window)))
         (with-current-window (or (window-tree-find
                                   (window-tree)
                                   #'(lambda (window)

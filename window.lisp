@@ -670,12 +670,15 @@
 
 (define-key *global-keymap* (kbd "C-x o") 'other-window)
 (define-command other-window (&optional (n 1)) ("p")
-  (dotimes (_ n)
-    (setf (current-window)
-          (get-next-window (current-window)
-                           (append (mklist (active-minibuffer-window))
-                                   (window-list)))))
-  t)
+  (let ((window-list
+          (append (mklist (active-minibuffer-window))
+                  (window-list))))
+    (when (minusp n)
+      (setf n (- (length window-list) (abs n))))
+    (dotimes (_ n t)
+      (setf (current-window)
+            (get-next-window (current-window)
+                             window-list)))))
 
 (defun window-set-pos (window y x)
   (charms/ll:mvwin (window-screen window) y x)

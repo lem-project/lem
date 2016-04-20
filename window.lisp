@@ -622,7 +622,7 @@
                                      new-window))))
     t))
 
-(defun window-split-vertically (window)
+(defun split-window-vertically (window)
   (unless (minibuffer-window-p window)
     (multiple-value-bind (winheight rem)
         (floor (window-height window) 2)
@@ -634,11 +634,11 @@
         (decf (window-height window) winheight)
         (split-window-after newwin :vsplit)))))
 
-(define-key *global-keymap* (kbd "C-x 2") 'split-window-vertically)
-(define-command split-window-vertically () ()
-  (window-split-vertically (current-window)))
+(define-key *global-keymap* (kbd "C-x 2") 'split-active-window-vertically)
+(define-command split-active-window-vertically () ()
+  (split-window-vertically (current-window)))
 
-(defun window-split-horizontally (window)
+(defun split-window-horizontally (window)
   (unless (minibuffer-window-active-p)
     (multiple-value-bind (winwidth rem)
         (floor (window-width window) 2)
@@ -653,14 +653,14 @@
         (decf (window-width window) winwidth)
         (split-window-after newwin :hsplit)))))
 
-(define-key *global-keymap* (kbd "C-x 3") 'split-window-horizontally)
-(define-command split-window-horizontally () ()
-  (window-split-horizontally (current-window)))
+(define-key *global-keymap* (kbd "C-x 3") 'split-active-window-horizontally)
+(define-command split-active-window-horizontally () ()
+  (split-window-horizontally (current-window)))
 
-(defun window-split-sensibly (window)
+(defun split-window-sensibly (window)
   (if (< *window-sufficient-width* (window-width window))
-      (window-split-horizontally window)
-      (window-split-vertically window)))
+      (split-window-horizontally window)
+      (split-window-vertically window)))
 
 (defun get-next-window (window &optional (window-list (window-list)))
   (let ((result (member window window-list)))
@@ -787,7 +787,7 @@
       (let ((split-p))
         (when (one-window-p)
           (setq split-p t)
-          (window-split-sensibly (current-window)))
+          (split-window-sensibly (current-window)))
         (with-current-window (or (window-tree-find
                                   (window-tree)
                                   #'(lambda (window)

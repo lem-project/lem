@@ -174,9 +174,6 @@
     (f tree)
     nil))
 
-(defmacro do-window-tree ((var tree) &body body)
-  `(window-tree-map ,tree #'(lambda (,var) ,@body)))
-
 (defun window-tree-flatten (tree)
   (let ((windows))
     (window-tree-map tree
@@ -260,7 +257,7 @@
     (f window-tree)))
 
 (defun load-window-tree (dumped-tree)
-  (do-window-tree (window (window-tree))
+  (dolist (window (window-list))
     (charms/ll:delwin (window-screen window)))
   (let ((current-window nil))
     (labels ((f (dumped-tree)
@@ -317,7 +314,7 @@
 
 (define-key *global-keymap* (kbd "C-l") 'recenter)
 (define-command recenter () ()
-  (do-window-tree (window (window-tree))
+  (dolist (window (window-list))
     (charms/ll:clearok (window-screen window) 1))
   (window-recenter (current-window))
   (syntax-scan-window (current-window))
@@ -559,7 +556,7 @@
       (charms/ll:doupdate)))))
 
 (defun window-update-all ()
-  (do-window-tree (win (window-tree))
+  (dolist (win (window-list))
     (unless (eq win (current-window))
       (window-update win nil)))
   (window-update (current-window) nil)
@@ -705,7 +702,7 @@
 
 (define-key *global-keymap* (kbd "C-x 1") 'delete-other-windows)
 (define-command delete-other-windows () ()
-  (do-window-tree (win (window-tree))
+  (dolist (win (window-list))
     (unless (eq win (current-window))
       (charms/ll:delwin (window-screen win))))
   (setf (window-tree) (current-window))
@@ -821,7 +818,7 @@
 
 (defun adjust-screen-size ()
   (let ((delete-windows))
-    (do-window-tree (window (window-tree))
+    (dolist (window (window-list))
       (when (<= charms/ll:*lines*
                 (+ (window-y window) 2))
         (push window delete-windows))

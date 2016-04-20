@@ -702,15 +702,15 @@
 
 (define-key *global-keymap* (kbd "C-x 1") 'delete-other-windows)
 (define-command delete-other-windows () ()
-  (dolist (win (window-list))
-    (unless (eq win (current-window))
-      (charms/ll:delwin (window-screen win))))
-  (setf (window-tree) (current-window))
-  (window-set-pos (current-window) 0 0)
-  (window-set-size (current-window)
-                   (1- charms/ll:*lines*)
-                   charms/ll:*cols*)
-  t)
+  (unless (minibuffer-window-active-p)
+    (dolist (win (window-list))
+      (unless (eq win (current-window))
+        (delete-window win)))
+    (window-set-pos (current-window) 0 0)
+    (window-set-size (current-window)
+                     (1- charms/ll:*lines*)
+                     charms/ll:*cols*)
+    t))
 
 (defun adjust-size-windows-after-delete-window (deleted-window
                                                 window-tree

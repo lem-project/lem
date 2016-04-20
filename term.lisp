@@ -1,16 +1,13 @@
-;; -*- mode:lisp; package:lem -*-
+;; -*- mode:lisp; package:lem.term -*-
 
-(in-package :lem)
-
-(export '(make-attribute))
+(in-package :lem.term)
 
 (defvar *color-name-table* (make-hash-table :test 'equal))
 
 (defun get-color (color)
   (if (null color)
       0
-      (or (gethash color *color-name-table*)
-          (editor-error "Unknown color name: ~A" color))))
+      (gethash color *color-name-table* 0)))
 
 (defun init-colors ()
   (when (/= 0 (charms/ll:has-colors))
@@ -136,6 +133,3 @@
     (setf *term-io* nil))
   (charms/ll:endwin)
   (charms/ll:delscreen charms/ll:*stdscr*))
-
-;;;
-

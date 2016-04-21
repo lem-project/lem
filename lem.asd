@@ -38,7 +38,7 @@
                         (:file "buffers")
                         (:file "basic")
                         (:file "command")
-                        (:file "display")
+                        (:file "screen")
                         (:file "window")
                         (:file "file")
                         (:file "file-command")

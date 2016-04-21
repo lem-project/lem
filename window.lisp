@@ -85,7 +85,7 @@
   width
   height
   buffer
-  display
+  %screen
   vtop-linum
   vtop-charpos
   point-marker
@@ -94,16 +94,14 @@
   parameters)
 
 (defun make-window (buffer x y width height)
-  (let* ((screen
-          (charms/ll:newwin height width y x))
-         (window
+  (let* ((window
           (%make-window
            :x x
            :y y
            :width width
            :height height
            :buffer buffer
-           :display (make-display screen width (1- height))
+           :%screen (make-screen x y width height)
            :vtop-linum 1
            :vtop-charpos 0)))
     (setf (window-point-marker window)
@@ -111,10 +109,10 @@
     window))
 
 (defun window-screen (window)
-  (display-screen (window-display window)))
+  (screen-%scrwin (window-%screen window)))
 
 (defun (setf window-screen) (new-win window)
-  (setf (display-screen (window-display window)) new-win))
+  (setf (screen-%scrwin (window-%screen window)) new-win))
 
 (defun window-point (&optional (window (current-window)))
   (marker-point (window-point-marker window)))
@@ -499,7 +497,7 @@
      (window-wrapping-offset window)))
 
 (defun window-refresh-lines (window)
-  (disp-lines (window-display window)
+  (disp-lines (window-%screen window)
               (window-buffer window)
               (window-vtop-charpos window)
               (window-vtop-linum window)
@@ -683,12 +681,11 @@
   (setf (window-x window) x))
 
 (defun window-set-size (window winheight winwidth)
-  (charms/ll:wresize (window-screen window) winheight winwidth)
   (setf (window-height window) winheight)
   (setf (window-width window) winwidth)
-  (disp-set-size (window-display window)
-                 winwidth
-                 (1- winheight)))
+  (screen-set-size (window-%screen window)
+                   winwidth
+                   winheight))
 
 (defun window-move (window dy dx)
   (window-set-pos window

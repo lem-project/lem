@@ -25,6 +25,9 @@
   (setf (screen-width screen)
         width))
 
+(defun screen-set-pos (screen x y)
+  (charms/ll:mvwin (screen-%scrwin screen) y x))
+
 (defun screen-print-string (screen x y string attr)
   (charms/ll:wattron (screen-%scrwin screen) attr)
   (charms/ll:mvwaddstr (screen-%scrwin screen) y x string)

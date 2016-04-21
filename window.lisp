@@ -633,7 +633,7 @@
                              window-list)))))
 
 (defun window-set-pos (window y x)
-  (charms/ll:mvwin (window-screen window) y x)
+  (screen-set-pos (window-%screen window) x y)
   (setf (window-y window) y)
   (setf (window-x window) x))
 

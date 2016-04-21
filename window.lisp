@@ -385,19 +385,14 @@
                   line-pos)))))
 
 (defun window-refresh-modeline (window)
-  (let ((attr
-          (attribute-to-bits
-           (if (eq window (current-window))
-               *modeline-attribute*
-               *modeline-inactive-attribute*))))
-    (charms/ll:wattron (window-screen window) attr)
-    (let ((modeline-str (modeline-string window)))
-      (charms/ll:mvwaddstr (window-screen window)
-                           (1- (window-height window))
-                           0
-                           modeline-str))
-    (charms/ll:wattroff (window-screen window)
-                        attr)))
+  (screen-print-string (window-%screen window)
+                       0
+                       (1- (window-height window))
+                       (modeline-string window)
+                       (attribute-to-bits
+                        (if (eq window (current-window))
+                            *modeline-attribute*
+                            *modeline-inactive-attribute*))))
 
 (defun map-wrapping-line (string winwidth fn)
   (loop :with start := 0

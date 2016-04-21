@@ -22,6 +22,14 @@
   (setf (screen-width screen)
         width))
 
+(defun screen-print-string (screen x y string attr)
+  (charms/ll:wattron (screen-%scrwin screen) attr)
+  (charms/ll:mvwaddstr (screen-%scrwin screen) y x string)
+  (charms/ll:wattroff (screen-%scrwin screen) attr))
+
+(defun screen-move-cursor (screen x y)
+  (charms/ll:wmove (screen-%scrwin screen) y x))
+
 (defun set-attr-display-line (disp-lines
                               attr
                               start-linum
@@ -135,9 +143,7 @@
     (loop :for i :from string-start :below (or string-end (fat-length str)) :do
       (multiple-value-bind (char attr)
           (fat-char str i)
-        (charms/ll:wattron %scrwin attr)
-        (charms/ll:mvwaddstr %scrwin y x (string char))
-        (charms/ll:wattroff %scrwin attr)
+        (screen-print-string screen x y (string char) attr)
         (setq x (char-width char x))))))
 
 (defun disp-line-wrapping (screen start-charpos curx cury pos-x y str)
@@ -226,4 +232,4 @@
                  (incf y))
                 (t
                  (return))))
-    (charms/ll:wmove (screen-%scrwin screen) cury curx)))
+    (screen-move-cursor screen curx cury)))

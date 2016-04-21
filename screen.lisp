@@ -213,7 +213,7 @@
     (disp-print-line screen y str))
   (values curx cury y))
 
-(defun disp-lines (screen buffer start-charpos start-linum pos-x pos-y)
+(defun screen-display-lines (screen buffer start-charpos start-linum pos-x pos-y)
   (disp-reset-lines (screen-lines screen) buffer start-linum)
   (let ((curx 0)
         (cury (- pos-y start-linum))

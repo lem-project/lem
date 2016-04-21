@@ -492,12 +492,12 @@
      (window-wrapping-offset window)))
 
 (defun window-refresh-lines (window)
-  (disp-lines (window-%screen window)
-              (window-buffer window)
-              (window-vtop-charpos window)
-              (window-vtop-linum window)
-              (window-current-charpos window)
-              (window-current-linum window)))
+  (screen-display-lines (window-%screen window)
+                        (window-buffer window)
+                        (window-vtop-charpos window)
+                        (window-vtop-linum window)
+                        (window-current-charpos window)
+                        (window-current-linum window)))
 
 (defun window-refresh-separator (window)
   (charms/ll:attron charms/ll:a_reverse)

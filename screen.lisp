@@ -18,6 +18,9 @@
 (defun screen-delete (screen)
   (charms/ll:delwin (screen-%scrwin screen)))
 
+(defun screen-clear (screen)
+  (charms/ll:clearok (screen-%scrwin screen) 1))
+
 (defun screen-height (screen)
   (length (screen-lines screen)))
 
@@ -263,7 +266,7 @@
                             *modeline-inactive-attribute*))))
 
 (defun screen-display-window (window)
-  (charms/ll:werase (window-screen window))
+  (charms/ll:werase (screen-%scrwin (window-%screen window)))
   (screen-display-modeline window)
   (screen-display-lines (window-%screen window)
                         (window-buffer window)
@@ -272,4 +275,4 @@
                         (window-current-charpos window)
                         (window-current-linum window))
   (screen-refresh-separator window)
-  (charms/ll:wnoutrefresh (window-screen window)))
+  (charms/ll:wnoutrefresh (screen-%scrwin (window-%screen window))))

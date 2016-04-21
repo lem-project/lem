@@ -310,7 +310,7 @@
 (define-key *global-keymap* (kbd "C-l") 'recenter)
 (define-command recenter () ()
   (dolist (window (window-list))
-    (charms/ll:clearok (window-screen window) 1))
+    (screen-clear (window-%screen window)))
   (window-recenter (current-window))
   (syntax-scan-window (current-window))
   (window-update-all)

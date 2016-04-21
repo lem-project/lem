@@ -15,6 +15,9 @@
                 :width width
                 :lines (make-array (1- height) :initial-element nil)))
 
+(defun screen-delete (screen)
+  (charms/ll:delwin (screen-%scrwin screen)))
+
 (defun screen-height (screen)
   (length (screen-lines screen)))
 

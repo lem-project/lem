@@ -253,7 +253,7 @@
 
 (defun load-window-tree (dumped-tree)
   (dolist (window (window-list))
-    (charms/ll:delwin (window-screen window)))
+    (screen-delete (window-%screen window)))
   (let ((current-window nil))
     (labels ((f (dumped-tree)
                 (if (eq :window (car dumped-tree))
@@ -727,7 +727,7 @@
           (funcall setter2 (funcall another-getter)))))
   (when (window-delete-hook window)
     (funcall (window-delete-hook window)))
-  (charms/ll:delwin (window-screen window))
+  (screen-delete (window-%screen window))
   t)
 
 (define-key *global-keymap* (kbd "C-x 0") 'delete-current-window)

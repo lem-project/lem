@@ -46,9 +46,6 @@
           scroll-down
           scroll-up))
 
-(defvar *modeline-attribute* (make-attribute nil :reverse-p t))
-(defvar *modeline-inactive-attribute* (make-attribute nil :reverse-p t))
-
 (defvar *redraw-flags* '(:one-line :unnecessary :all))
 
 (defvar *current-cols*)
@@ -384,16 +381,6 @@
                   #\space
                   line-pos)))))
 
-(defun window-refresh-modeline (window)
-  (screen-print-string (window-%screen window)
-                       0
-                       (1- (window-height window))
-                       (modeline-string window)
-                       (attribute-to-bits
-                        (if (eq window (current-window))
-                            *modeline-attribute*
-                            *modeline-inactive-attribute*))))
-
 (defun map-wrapping-line (string winwidth fn)
   (loop :with start := 0
     :for i := (wide-index string (1- winwidth) :start start)
@@ -491,30 +478,6 @@
   (+ (window-cursor-y-not-wrapping window)
      (window-wrapping-offset window)))
 
-(defun window-refresh-lines (window)
-  (screen-display-lines (window-%screen window)
-                        (window-buffer window)
-                        (window-vtop-charpos window)
-                        (window-vtop-linum window)
-                        (window-current-charpos window)
-                        (window-current-linum window)))
-
-(defun window-refresh-separator (window)
-  (charms/ll:attron charms/ll:a_reverse)
-  (when (< 0 (window-x window))
-    (loop :with x := (- (window-x window) 1)
-      :for y :from (window-y window) :repeat (window-height window) :do
-      (charms/ll:mvwaddch charms/ll:*stdscr*
-                          y x #.(char-code #\|))))
-  (charms/ll:attroff charms/ll:a_reverse)
-  (charms/ll:wnoutrefresh charms/ll:*stdscr*))
-
-(defun window-refresh (window)
-  (window-refresh-modeline window)
-  (window-refresh-lines window)
-  (window-refresh-separator window)
-  (charms/ll:wnoutrefresh (window-screen window)))
-
 (defun window-offset-view (window)
   (cond ((< (window-current-linum window)
             (window-vtop-linum window))
@@ -542,9 +505,8 @@
    ((minibuffer-window-active-p)
     (minibuf-window-update))
    (t
-    (charms/ll:werase (window-screen window))
     (window-adjust-view window)
-    (window-refresh window)
+    (screen-display-window window)
     (when update-display-p
       (charms/ll:doupdate)))))
 

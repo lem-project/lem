@@ -2,6 +2,9 @@
 
 (in-package :lem)
 
+(defvar *modeline-attribute* (make-attribute nil :reverse-p t))
+(defvar *modeline-inactive-attribute* (make-attribute nil :reverse-p t))
+
 (defstruct (screen (:constructor %make-screen))
   %scrwin
   lines
@@ -138,8 +141,7 @@
                        end-linum)))
 
 (defun disp-print-line (screen y str &key (start-x 0) (string-start 0) string-end)
-  (let ((x start-x)
-        (%scrwin (screen-%scrwin screen)))
+  (let ((x start-x))
     (loop :for i :from string-start :below (or string-end (fat-length str)) :do
       (multiple-value-bind (char attr)
           (fat-char str i)
@@ -233,3 +235,35 @@
                 (t
                  (return))))
     (screen-move-cursor screen curx cury)))
+
+(defun screen-refresh-separator (window)
+  (charms/ll:attron charms/ll:a_reverse)
+  (when (< 0 (window-x window))
+    (loop :with x := (- (window-x window) 1)
+      :for y :from (window-y window) :repeat (window-height window) :do
+      (charms/ll:mvwaddch charms/ll:*stdscr*
+                          y x #.(char-code #\|))))
+  (charms/ll:attroff charms/ll:a_reverse)
+  (charms/ll:wnoutrefresh charms/ll:*stdscr*))
+
+(defun screen-display-modeline (window)
+  (screen-print-string (window-%screen window)
+                       0
+                       (1- (window-height window))
+                       (modeline-string window)
+                       (attribute-to-bits
+                        (if (eq window (current-window))
+                            *modeline-attribute*
+                            *modeline-inactive-attribute*))))
+
+(defun screen-display-window (window)
+  (charms/ll:werase (window-screen window))
+  (screen-display-modeline window)
+  (screen-display-lines (window-%screen window)
+                        (window-buffer window)
+                        (window-vtop-charpos window)
+                        (window-vtop-linum window)
+                        (window-current-charpos window)
+                        (window-current-linum window))
+  (screen-refresh-separator window)
+  (charms/ll:wnoutrefresh (window-screen window)))

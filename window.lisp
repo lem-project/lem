@@ -594,10 +594,10 @@
                   (+ (window-x window) dx)
                   (+ (window-y window) dy)))
 
-(defun window-resize (window dl dc)
+(defun window-resize (window dw dh)
   (window-set-size window
-                   (+ (window-width window) dc)
-                   (+ (window-height window) dl)))
+                   (+ (window-width window) dw)
+                   (+ (window-height window) dh)))
 
 (define-key *global-keymap* (kbd "C-x 1") 'delete-other-windows)
 (define-command delete-other-windows () ()
@@ -747,10 +747,10 @@
         (return-from %shrink-windows nil)))
     (cond ((/= 0 diff-width)
            (dolist (window shrink-window-list)
-             (window-resize window 0 (- diff-width))))
+             (window-resize window (- diff-width) 0)))
           ((/= 0 diff-height)
            (dolist (window shrink-window-list)
-             (window-resize window (- diff-height) 0))))
+             (window-resize window 0 (- diff-height)))))
     (cond ((/= 0 shift-width)
            (dolist (window shrink-window-list)
              (window-move window shift-width 0)))
@@ -799,9 +799,9 @@
           ((/= 0 shift-height)
            (window-move window 0 shift-height)))
     (cond ((/= 0 diff-width)
-           (window-resize window 0 diff-width))
+           (window-resize window diff-width 0))
           ((/= 0 diff-height)
-           (window-resize window diff-height 0))))
+           (window-resize window 0 diff-height))))
   t)
 
 (defun grow-top-windows (window-list n)

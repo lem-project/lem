@@ -313,14 +313,14 @@
   (let ((window-list (window-tree-flatten (window-tree))))
     (dolist (window (collect-right-windows window-list))
       (window-resize window
-                     0
                      (- (display-width)
-                        *old-display-width*)))
+                        *old-display-width*)
+                     0))
     (dolist (window (collect-bottom-windows window-list))
       (window-resize window
+                     0
                      (- (display-height)
-                        *old-display-height*)
-                     0))
+                        *old-display-height*)))
     (setq *old-display-width* (display-width))
     (setq *old-display-height* (display-height))
     (redraw-display)))

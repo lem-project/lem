@@ -376,6 +376,7 @@
   (setq *running-p* t)
   (when (not *initialized-p*)
     (setq *initialized-p* t)
+    (screen-init)
     (window-init)
     (minibuf-init)
     (with-error-handler ()

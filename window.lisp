@@ -48,9 +48,6 @@
 
 (defvar *redraw-flags* '(:one-line :unnecessary :all))
 
-(defvar *current-cols*)
-(defvar *current-lines*)
-
 (defvar *window-sufficient-width* 150)
 
 (defvar *modeline-default-format*
@@ -297,8 +294,6 @@
         (load-window-tree dumped-tree)))))
 
 (defun window-init ()
-  (setq *current-cols* charms/ll:*cols*)
-  (setq *current-lines* charms/ll:*lines*)
   (setf (current-window)
         (make-window (get-buffer-create "*tmp*")
                      0

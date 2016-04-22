@@ -5,6 +5,13 @@
 (defvar *modeline-attribute* (make-attribute nil :reverse-p t))
 (defvar *modeline-inactive-attribute* (make-attribute nil :reverse-p t))
 
+(defvar *current-cols*)
+(defvar *current-lines*)
+
+(defun screen-init ()
+  (setq *current-cols* charms/ll:*cols*)
+  (setq *current-lines* charms/ll:*lines*))
+
 (defstruct (screen (:constructor %make-screen))
   %scrwin
   lines

@@ -269,7 +269,7 @@
   (cond ((minibuffer-window-p window)
          (minibuf-window-update))
         (t
-         (window-adjust-view window)
+         (window-see window)
          (charms/ll:werase (screen-%scrwin (window-%screen window)))
          (screen-redraw-modeline window)
          (screen-display-lines (window-%screen window)

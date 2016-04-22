@@ -493,7 +493,7 @@
         (t
          0)))
 
-(defun window-adjust-view (window &optional (recenter *scroll-recenter-p*))
+(defun window-see (window &optional (recenter *scroll-recenter-p*))
   (let ((offset (window-offset-view window)))
     (unless (zerop offset)
       (if recenter

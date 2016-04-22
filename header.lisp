@@ -98,7 +98,7 @@
                              window &body body)
   (let ((gwindow (gensym "WINDOW")))
     `(let ((,gwindow ,window))
-       (window-adjust-view ,gwindow)
+       (window-see ,gwindow)
        (let* ((,start-linum-var (window-vtop-linum ,gwindow))
               (,end-linum-var (+ ,start-linum-var (window-height ,gwindow))))
          ,@body))))

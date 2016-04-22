@@ -5,12 +5,12 @@
 (defvar *modeline-attribute* (make-attribute nil :reverse-p t))
 (defvar *modeline-inactive-attribute* (make-attribute nil :reverse-p t))
 
-(defvar *current-cols*)
-(defvar *current-lines*)
+(defvar *old-screen-width*)
+(defvar *old-screen-height*)
 
 (defun screen-init ()
-  (setq *current-cols* charms/ll:*cols*)
-  (setq *current-lines* charms/ll:*lines*))
+  (setq *old-screen-width* charms/ll:*cols*)
+  (setq *old-screen-height* charms/ll:*lines*))
 
 (defstruct (screen (:constructor %make-screen))
   %scrwin
@@ -312,12 +312,12 @@
       (window-resize window
                      0
                      (- charms/ll:*cols*
-                        *current-cols*)))
+                        *old-screen-width*)))
     (dolist (window (collect-bottom-windows window-list))
       (window-resize window
                      (- charms/ll:*lines*
-                        *current-lines*)
+                        *old-screen-height*)
                      0))
-    (setq *current-cols* charms/ll:*cols*)
-    (setq *current-lines* charms/ll:*lines*)
+    (setq *old-screen-width* charms/ll:*cols*)
+    (setq *old-screen-height* charms/ll:*lines*)
     (redraw-screen)))

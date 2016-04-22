@@ -20,7 +20,7 @@
            (with-current-window *completion-window*
              (unless (scroll-down (1- (window-height (current-window))))
                (point-set (point-min)))
-             (redraw-screen)))))
+             (redraw-display)))))
       (setq prev-str str)
       (if (null comp-flag)
           (values str nil)
@@ -40,7 +40,7 @@
                      (setf (get-bvar :completion-buffer-p :buffer buffer) t)))
                   (t
                    (delete-completion-window)))
-            (redraw-screen)
+            (redraw-display)
             (if result
                 (values result t)
                 (values str nil)))))))

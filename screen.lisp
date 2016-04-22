@@ -5,12 +5,12 @@
 (defvar *modeline-attribute* (make-attribute nil :reverse-p t))
 (defvar *modeline-inactive-attribute* (make-attribute nil :reverse-p t))
 
-(defvar *old-screen-width*)
-(defvar *old-screen-height*)
+(defvar *old-display-width*)
+(defvar *old-display-height*)
 
-(defun screen-init ()
-  (setq *old-screen-width* charms/ll:*cols*)
-  (setq *old-screen-height* charms/ll:*lines*))
+(defun display-init ()
+  (setq *old-display-width* charms/ll:*cols*)
+  (setq *old-display-height* charms/ll:*lines*))
 
 (defstruct (screen (:constructor %make-screen))
   %scrwin
@@ -272,7 +272,7 @@
                             *modeline-attribute*
                             *modeline-inactive-attribute*))))
 
-(defun redraw-screen-window (window doupdate-p)
+(defun redraw-display-window (window doupdate-p)
   (cond ((minibuffer-window-p window)
          (minibuf-window-update))
         (t
@@ -290,14 +290,14 @@
          (when doupdate-p
            (charms/ll:doupdate)))))
 
-(defun redraw-screen ()
+(defun redraw-display ()
   (dolist (window (window-list))
     (unless (eq window (current-window))
-      (redraw-screen-window window nil)))
-  (redraw-screen-window (current-window) nil)
+      (redraw-display-window window nil)))
+  (redraw-display-window (current-window) nil)
   (charms/ll:doupdate))
 
-(defun update-screen-size ()
+(defun update-display-size ()
   (let ((delete-windows))
     (dolist (window (window-list))
       (when (<= charms/ll:*lines*
@@ -312,12 +312,12 @@
       (window-resize window
                      0
                      (- charms/ll:*cols*
-                        *old-screen-width*)))
+                        *old-display-width*)))
     (dolist (window (collect-bottom-windows window-list))
       (window-resize window
                      (- charms/ll:*lines*
-                        *old-screen-height*)
+                        *old-display-height*)
                      0))
-    (setq *old-screen-width* charms/ll:*cols*)
-    (setq *old-screen-height* charms/ll:*lines*)
-    (redraw-screen)))
+    (setq *old-display-width* charms/ll:*cols*)
+    (setq *old-display-height* charms/ll:*lines*)
+    (redraw-display)))

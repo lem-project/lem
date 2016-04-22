@@ -196,7 +196,7 @@
        (let ((str (minibuf-get-line)))
          (add-history *minibuf-read-line-history* str)
          str))
-    (redraw-screen)
+    (redraw-display)
     (let* ((key (input-key))
            (cmd (find-keybind key)))
       (handler-case (cmd-call cmd nil)

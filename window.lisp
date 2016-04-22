@@ -27,7 +27,7 @@
           one-window-p
           deleted-window-p
           recenter
-          redraw-screen
+          redraw-display
           split-window-vertically
           split-window-horizontally
           split-window
@@ -308,7 +308,7 @@
     (screen-clear (window-%screen window)))
   (window-recenter (current-window))
   (syntax-scan-window (current-window))
-  (redraw-screen)
+  (redraw-display)
   t)
 
 (defun window-recenter (window)

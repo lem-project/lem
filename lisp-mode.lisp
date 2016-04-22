@@ -513,7 +513,7 @@
                          (uiop/image:print-backtrace :stream out :count 100))
                      nil)
     (loop
-      (redraw-screen)
+      (redraw-display)
       (handler-case
           (let* ((str (minibuf-read-string "Debug: "))
                  (i (and (stringp str) (parse-integer str :junk-allowed t))))
@@ -764,7 +764,7 @@
                         (lambda ()
                           (find-file file)
                           (goto-position filepos)
-                          (redraw-screen)))
+                          (redraw-display)))
                   defs)))
         (push (cons (current-buffer) (current-point))
               *lisp-find-definition-stack*)

@@ -87,10 +87,12 @@
 
 (defun cmd-call (cmd arg)
   (cond ((fboundp cmd)
+         (run-hooks 'pre-command-hook) ;!!!
          (prog1 (funcall (gethash (string-downcase (symbol-name cmd))
                                   *command-table*)
                          arg)
            (buffer-undo-boundary)       ;!!!
+           (run-hooks 'post-command-hook) ;!!!
            ))
         (t
          (minibuf-print (format nil "undefined command: ~a" cmd))

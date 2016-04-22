@@ -52,6 +52,7 @@
                         (:file "listener-mode")
                         (:file "dired")
                         (:file "lem")
+                        (:file "showparen")
                         (:file "list-buffers")
                         (:file "lisp-mode")
                         (:file "c-mode")

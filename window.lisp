@@ -577,7 +577,7 @@
             (get-next-window (current-window)
                              window-list)))))
 
-(defun window-set-pos (window y x)
+(defun window-set-pos (window x y)
   (screen-set-pos (window-%screen window) x y)
   (setf (window-y window) y)
   (setf (window-x window) x))
@@ -591,8 +591,8 @@
 
 (defun window-move (window dy dx)
   (window-set-pos window
-                  (+ (window-y window) dy)
-                  (+ (window-x window) dx)))
+                  (+ (window-x window) dx)
+                  (+ (window-y window) dy)))
 
 (defun window-resize (window dl dc)
   (window-set-size window
@@ -620,8 +620,8 @@
                   (window-x (car window-list)))
                (dolist (win (min-if #'window-x window-list))
                  (window-set-pos win
-                                 (window-y win)
-                                 (window-x deleted-window))
+                                 (window-x deleted-window)
+                                 (window-y win))
                  (window-set-size win
                                   (window-height win)
                                   (+ (window-width deleted-window)
@@ -638,8 +638,8 @@
                   (window-y (car window-list)))
                (dolist (win (min-if #'window-y window-list))
                  (window-set-pos win
-                                 (window-y deleted-window)
-                                 (window-x win))
+                                 (window-x win)
+                                 (window-y deleted-window))
                  (window-set-size win
                                   (+ (window-height deleted-window)
                                      (window-height win))

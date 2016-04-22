@@ -42,8 +42,8 @@
 
 (defun minibuf-resize ()
   (window-set-pos (minibuffer-window)
-                  (1- charms/ll:*lines*)
-                  0)
+                  0
+                  (1- charms/ll:*lines*))
   (window-set-size (minibuffer-window)
                    1
                    charms/ll:*cols*)

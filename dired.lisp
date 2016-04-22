@@ -84,7 +84,7 @@
   (cond (dirname
          (dired-find-directory dirname))
         (t
-         (minibuf-print "No such directory")
+         (message "No such directory")
          nil)))
 
 (define-key *global-keymap* (kbd "C-x C-M-d") 'dired)

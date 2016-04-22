@@ -437,9 +437,7 @@
     (cond (package
            (lisp-change-package package) t)
           (t
-           (minibuf-print
-            (format nil "Package does not exist: ~a"
-                    package-name))
+           (message "Package does not exist: ~a" package-name)
            nil))))
 
 (define-key *lisp-mode-keymap* (kbd "C-x p") 'lisp-set-package)
@@ -494,7 +492,7 @@
                 nil)))
       (error (cdt)
              (setq error-p t)
-             (minibuf-print (format nil "~a" cdt))))
+             (message "~a" cdt)))
     (unless error-p
       (store-value x condition)
       (return))))
@@ -583,10 +581,9 @@
   (let ((output-buffer (get-buffer-create "*output*")))
     (buffer-erase output-buffer)
     (setf (buffer-modified-p output-buffer) nil)
-    (prog1 (minibuf-print
-            (format nil "~{~s~^,~}"
+    (prog1 (message "~{~s~^,~}"
                     (%lisp-eval-string string output-buffer nil nil
-                                       (lisp-current-package))))
+                                       (lisp-current-package)))
       (when (buffer-modified-p output-buffer)
         (lisp-info-popup output-buffer
                          nil
@@ -726,7 +723,7 @@
              (with-output-to-string (out)
                (handler-case (disassemble name :stream out)
                  (error (condition)
-                        (minibuf-print (format nil "~a" condition))
+                        (message "~a" condition)
                         (return-from lisp-disassemble-symbol nil))))))
         (lisp-info-popup (get-buffer-create "*disassemble*")
                          #'(lambda (out)
@@ -892,7 +889,7 @@
            (funcall get-arglist-function
                     (region-string start end))
          (when arglist
-           (minibuf-print arglist)))))))
+           (message "~A" arglist)))))))
 
 (define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-self-insert-then-arg-list)
 (define-command lisp-self-insert-then-arg-list (n) ("p")

@@ -2,7 +2,7 @@
 
 (in-package :lem)
 
-(export '(minibuf-print
+(export '(message
           minibuf-y-or-n-p
           minibuf-read-char
           *minibuf-keymap*
@@ -19,8 +19,6 @@
           minibuf-read-number
           minibuf-read-buffer
           minibuf-read-file))
-
-(defvar *mb-print-flag* nil)
 
 (defvar *minibuf-window*)
 
@@ -39,44 +37,21 @@
          (window (make-window buffer 0 (1- charms/ll:*lines*) charms/ll:*cols* 1)))
     (setq *minibuf-window* window)))
 
-(defun minibuf-resize ()
-  (window-set-pos (minibuffer-window)
-                  0
-                  (1- charms/ll:*lines*))
-  (window-set-size (minibuffer-window)
-                   charms/ll:*cols*
-                   1)
-  (charms/ll:werase (window-screen (minibuffer-window)))
-  (charms/ll:wnoutrefresh (window-screen (minibuffer-window))))
-
-(defun minibuf-clear ()
-  (when *mb-print-flag*
-    (charms/ll:werase (window-screen (minibuffer-window)))
-    (charms/ll:wnoutrefresh (window-screen (minibuffer-window)))
-    (setq *mb-print-flag* nil)))
-
-(defun minibuf-print (msg)
-  (setq *mb-print-flag* t)
-  (charms/ll:werase (window-screen (minibuffer-window)))
-  (charms/ll:mvwaddstr
-   (window-screen (minibuffer-window))
-   0
-   0
-   (replace-string (string #\newline) "<NL>" msg))
-  (charms/ll:wnoutrefresh (window-screen (minibuffer-window))))
+(defun message (string &rest args)
+  (message-internal (if (null string)
+                        nil
+                        (apply #'format nil string args))))
 
 (defun minibuf-print-sit-for (msg seconds)
-  (minibuf-print msg)
+  (message msg)
   (sit-for seconds nil))
 
 (defun minibuf-read-char (prompt)
-  (setq *mb-print-flag* t)
-  (minibuf-print prompt)
+  (message prompt)
   (charms/ll:doupdate)
   (getch))
 
 (defun minibuf-y-or-n-p (prompt)
-  (setq *mb-print-flag* t)
   (do () (nil)
     (let ((c (minibuf-read-char (format nil "~a [y/n]? " prompt))))
       (cond
@@ -160,7 +135,7 @@
   (window-current-charpos (minibuffer-window)))
 
 (defun minibuf-read-line-refresh (prompt)
-  (minibuf-print (concatenate 'string prompt (minibuf-get-line)))
+  (message "~A~A" prompt (minibuf-get-line))
   (charms/ll:wmove
    (window-screen (minibuffer-window))
    0

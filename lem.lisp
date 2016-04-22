@@ -47,7 +47,6 @@
     (when *macro-recording-p*
       (push char *macro-chars*))
     (cond ((= code 410)
-           (minibuf-resize)
            (update-display-size)
            (getch))
           ((and (char= char C-g) abort-jump)
@@ -77,7 +76,7 @@
   (setq *universal-argument* nil)
   (setq *macro-recording-p* nil)
   (buffer-mark-cancel (current-buffer))
-  (minibuf-print "Quit"))
+  (message "Quit"))
 
 (define-key *global-keymap* (kbd "C-x C-c") 'exit-lem)
 (define-command exit-lem () ()
@@ -98,12 +97,12 @@
 
 (define-key *global-keymap* (kbd "C-x ?") 'describe-key)
 (define-command describe-key () ()
-  (minibuf-print "describe-key: ")
+  (message "describe-key: ")
   (let* ((key (input-key))
          (cmd (find-keybind key)))
-    (minibuf-print (format nil "describe-key: ~a ~a"
-                           (kbd-to-string key)
-                           cmd))))
+    (message "describe-key: ~a ~a"
+             (kbd-to-string key)
+             cmd)))
 
 (defun describe-bindings-internal (s name keymap &optional first-p)
   (unless first-p
@@ -140,10 +139,10 @@
 (define-key *global-keymap* (kbd "C-x (") 'begin-macro)
 (define-command begin-macro () ()
   (cond (*macro-recording-p*
-         (minibuf-print "Macro already active")
+         (message "Macro already active")
          nil)
         (t
-         (minibuf-print "Start macro")
+         (message "Start macro")
          (setq *macro-recording-p* t)
          (setq *macro-chars* nil)
          t)))
@@ -152,16 +151,16 @@
 (define-command end-macro () ()
   (cond (*macro-running-p* t)
         ((not *macro-recording-p*)
-         (minibuf-print "Macro not active"))
+         (message "Macro not active"))
         (t
          (setq *macro-recording-p* nil)
-         (minibuf-print "End macro")
+         (message "End macro")
          t)))
 
 (define-key *global-keymap* (kbd "C-x e") 'execute-macro)
 (define-command execute-macro (n) ("p")
   (cond (*macro-recording-p*
-         (minibuf-print "Macro already active")
+         (message "Macro already active")
          nil)
         (*macro-running-p*
          nil)
@@ -272,10 +271,10 @@
                         (keyboard-quit)
                         nil)
                       (readonly ()
-                        (minibuf-print "Read Only")
+                        (message "Read Only")
                         nil)
                       (editor-error (c)
-                        (minibuf-print (editor-error-message c))
+                        (message (editor-error-message c))
                         nil))
                     (setq *macro-running-p* nil)))
       (when (and *enable-syntax-highlight*
@@ -304,15 +303,15 @@
     (cond (c
            (insert-char c n))
           (t
-           (minibuf-print (format nil
-                                  "Key not found: ~a"
-                                  (kbd-to-string *last-input-key*)))))))
+           (message
+            "Key not found: ~a"
+            (kbd-to-string *last-input-key*))))))
 
 (defun load-init-file ()
   (flet ((test (path)
                (when (cl-fad:file-exists-p path)
                  (load path)
-                 (minibuf-print (format nil "Load file: ~a" path))
+                 (message "Load file: ~a" path)
                  t)))
     (or (test (merge-pathnames "lem.rc" (truename ".")))
         (test (merge-pathnames ".lemrc" (user-homedir-pathname))))))

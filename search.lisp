@@ -53,10 +53,9 @@
   (isearch-update-buffer))
 
 (defun isearch-update-minibuf ()
-  (minibuf-print
-   (format nil "~a~a"
+  (message "~a~a"
            *isearch-prompt*
-           *isearch-string*)))
+           *isearch-string*))
 
 (define-key *global-keymap* (kbd "C-s") 'isearch-forward)
 (define-command isearch-forward () ()
@@ -426,7 +425,7 @@
              (return-from query-replace-before-after
                (values before after)))
             (t
-             (minibuf-print "Before string is empty")
+             (message "Before string is empty")
              (return-from query-replace-before-after
                (values nil nil)))))
     (setq after (minibuf-read-string "After: "))
@@ -455,7 +454,7 @@
                  (point-set goal-point)))
             (setq end-point (current-point))
             (isearch-update-buffer before)
-            (minibuf-print (format nil "Replace ~s with ~s" before after))
+            (message "Replace ~s with ~s" before after)
             (funcall search-backward-function before)
             (setq start-point (current-point))
             (unless pass-through (redraw-display))

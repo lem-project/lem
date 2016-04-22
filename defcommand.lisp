@@ -95,7 +95,7 @@
            (run-hooks 'post-command-hook) ;!!!
            ))
         (t
-         (minibuf-print (format nil "undefined command: ~a" cmd))
+         (message "undefined command: ~a" cmd)
          nil)))
 
 (defun command-completion (str)
@@ -119,7 +119,7 @@
   (let ((cmd (gethash name *command-table*)))
     (if cmd
         (funcall cmd *universal-argument*)
-        (minibuf-print "invalid command"))))
+        (message "invalid command"))))
 
 (define-command apropos-command (str) ("sApropos: ")
   (info-popup (get-buffer-create "*Apropos*")

@@ -142,7 +142,7 @@
            (kill-ring-rotate)
            (yank n))
           (t
-           (minibuf-print "Previous command was not a yank")
+           (message "Previous command was not a yank")
            nil))))
 
 (defvar *next-line-prev-column* nil)
@@ -356,7 +356,7 @@
 (define-key *global-keymap* (kbd "C-@") 'mark-set)
 (define-command mark-set () ()
   (setf (mark-point) (current-point))
-  (minibuf-print "Mark set"))
+  (message "Mark set"))
 
 (define-key *global-keymap* (kbd "C-x C-x") 'exchange-point-mark)
 (define-command exchange-point-mark () ()
@@ -403,7 +403,7 @@
       (delete-region begin end)
       (insert-string outstr)
       (point-set begin)
-      (minibuf-print (format nil "~D ~A" (write-to-string status) error-output-value))
+      (message "~D ~A" (write-to-string status) error-output-value)
       (zerop status))))
 
 (define-key *global-keymap* (kbd "C-x @") 'pipe-command)

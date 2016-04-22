@@ -53,8 +53,7 @@
                   (apply (timer-function timer) (timer-args timer)))
                 (apply (timer-function timer) (timer-args timer)))
           (error (condition)
-                 (minibuf-print
-                  (format nil "Error running timer: ~a" condition))))
+                 (message "Error running timer: ~a" condition)))
         (setq update-p t)
         (if (timer-repeat-p timer)
             (setf (timer-last-time timer)

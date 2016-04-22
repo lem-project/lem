@@ -69,7 +69,7 @@
   (scan-file-property-list)
   (run-hooks 'before-save-hook)
   (write-to-file (current-buffer) (buffer-filename))
-  (minibuf-print (format nil "Wrote ~A" (buffer-filename)))
+  (message "Wrote ~A" (buffer-filename))
   (run-hooks 'after-save-hook)
   t)
 
@@ -80,7 +80,7 @@
      ((null (buffer-modified-p buffer))
       nil)
      ((null (buffer-filename buffer))
-      (minibuf-print "No file name")
+      (message "No file name")
       nil)
      (t
       (save-file-1)))))

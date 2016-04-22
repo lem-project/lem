@@ -5,12 +5,15 @@
 (defvar *modeline-attribute* (make-attribute nil :reverse-p t))
 (defvar *modeline-inactive-attribute* (make-attribute nil :reverse-p t))
 
+(defvar *echo-area-scrwin*)
+
 (defvar *old-display-width*)
 (defvar *old-display-height*)
 
 (defun display-init ()
   (setq *old-display-width* charms/ll:*cols*)
-  (setq *old-display-height* charms/ll:*lines*))
+  (setq *old-display-height* charms/ll:*lines*)
+  (setf *echo-area-scrwin* (charms/ll:newwin 1 (display-width) (1- (display-height)) 0)))
 
 (defun display-width () charms/ll:*cols*)
 (defun display-height () charms/ll:*lines*)
@@ -299,7 +302,7 @@
       (redraw-display-window window nil)))
   (redraw-display-window (current-window) nil)
   (charms/ll:doupdate)
-  (minibuf-clear))
+  (message nil))
 
 (defun update-display-size ()
   (let ((delete-windows))
@@ -324,4 +327,15 @@
                         *old-display-height*)))
     (setq *old-display-width* (display-width))
     (setq *old-display-height* (display-height))
+    (charms/ll:mvwin *echo-area-scrwin* (1- (display-height)) 0)
+    (charms/ll:wresize *echo-area-scrwin* 1 (display-width))
     (redraw-display)))
+
+(defun message-internal (string)
+  (charms/ll:werase *echo-area-scrwin*)
+  (unless (null string)
+    (charms/ll:mvwaddstr *echo-area-scrwin* 0 0
+                         (replace-string (string #\newline)
+                                         "<NL>"
+                                         string)))
+  (charms/ll:wnoutrefresh *echo-area-scrwin*))

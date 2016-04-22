@@ -866,7 +866,7 @@
   (when (< n 0)
     (return-from grow-window (shrink-window (- n))))
   (when (one-window-p)
-    (minibuf-print "Only one window")
+    (message "Only one window")
     (return-from grow-window nil))
   (resize-window-recursive (current-window) n
                            #'(lambda (x y n)
@@ -878,7 +878,7 @@
   (when (< n 0)
     (return-from shrink-window (grow-window (- n))))
   (when (one-window-p)
-    (minibuf-print "Only one window")
+    (message "Only one window")
     (return-from shrink-window nil))
   (resize-window-recursive (current-window) n
                            #'(lambda (x y n)
@@ -890,7 +890,7 @@
   (when (< n 0)
     (return-from grow-window-horizontally (shrink-window-horizontally (- n))))
   (when (one-window-p)
-    (minibuf-print "Only one window")
+    (message "Only one window")
     (return-from grow-window-horizontally nil))
   (resize-window-recursive (current-window) n
                            #'(lambda (x y n)
@@ -902,7 +902,7 @@
   (when (< n 0)
     (return-from shrink-window-horizontally (grow-window-horizontally (- n))))
   (when (one-window-p)
-    (minibuf-print "Only one window")
+    (message "Only one window")
     (return-from shrink-window-horizontally nil))
   (resize-window-recursive (current-window) n
                            #'(lambda (x y n)

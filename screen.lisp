@@ -12,6 +12,9 @@
   (setq *old-display-width* charms/ll:*cols*)
   (setq *old-display-height* charms/ll:*lines*))
 
+(defun display-width () charms/ll:*cols*)
+(defun display-height () charms/ll:*lines*)
+
 (defstruct (screen (:constructor %make-screen))
   %scrwin
   lines
@@ -300,10 +303,10 @@
 (defun update-display-size ()
   (let ((delete-windows))
     (dolist (window (window-list))
-      (when (<= charms/ll:*lines*
+      (when (<= (display-height)
                 (+ (window-y window) 2))
         (push window delete-windows))
-      (when (<= charms/ll:*cols*
+      (when (<= (display-width)
                 (+ (window-x window) 1))
         (push window delete-windows)))
     (mapc #'delete-window delete-windows))
@@ -311,13 +314,13 @@
     (dolist (window (collect-right-windows window-list))
       (window-resize window
                      0
-                     (- charms/ll:*cols*
+                     (- (display-width)
                         *old-display-width*)))
     (dolist (window (collect-bottom-windows window-list))
       (window-resize window
-                     (- charms/ll:*lines*
+                     (- (display-height)
                         *old-display-height*)
                      0))
-    (setq *old-display-width* charms/ll:*cols*)
-    (setq *old-display-height* charms/ll:*lines*)
+    (setq *old-display-width* (display-width))
+    (setq *old-display-height* (display-height))
     (redraw-display)))

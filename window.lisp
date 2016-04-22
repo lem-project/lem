@@ -293,13 +293,16 @@
       (when *modified-window-tree-p*
         (load-window-tree dumped-tree)))))
 
+(defun window-max-width () (display-width))
+(defun window-max-height () (1- (display-height)))
+
 (defun window-init ()
   (setf (current-window)
         (make-window (get-buffer-create "*tmp*")
                      0
                      0
-                     charms/ll:*cols*
-                     (- charms/ll:*lines* 1)))
+                     (window-max-width)
+                     (window-max-height)))
   (setf (window-tree) (current-window)))
 
 (define-key *global-keymap* (kbd "C-l") 'recenter)
@@ -607,8 +610,8 @@
         (delete-window win)))
     (window-set-pos (current-window) 0 0)
     (window-set-size (current-window)
-                     charms/ll:*cols*
-                     (1- charms/ll:*lines*))
+                     (window-max-width)
+                     (window-max-height))
     t))
 
 (defun adjust-size-windows-after-delete-window (deleted-window

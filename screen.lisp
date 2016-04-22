@@ -298,7 +298,8 @@
     (unless (eq window (current-window))
       (redraw-display-window window nil)))
   (redraw-display-window (current-window) nil)
-  (charms/ll:doupdate))
+  (charms/ll:doupdate)
+  (minibuf-clear))
 
 (defun update-display-size ()
   (let ((delete-windows))

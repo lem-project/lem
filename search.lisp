@@ -470,8 +470,7 @@
                   (point-set end-point)
                   (return))
                  ((char= c #\!)
-                  (setq pass-through t))))))
-          (minibuf-clear))
+                  (setq pass-through t)))))))
         t))
     (isearch-reset-buffer)))
 

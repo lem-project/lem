@@ -296,7 +296,6 @@
 
 (defun main-step ()
   (let ((key (input-key)))
-    (minibuf-clear)
     (prog1 (execute key)
       (setq *universal-argument* nil))))
 

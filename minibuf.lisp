@@ -2,8 +2,7 @@
 
 (in-package :lem)
 
-(export '(minibuf-clear
-          minibuf-print
+(export '(minibuf-print
           minibuf-y-or-n-p
           minibuf-read-char
           *minibuf-keymap*

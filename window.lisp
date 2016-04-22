@@ -589,7 +589,7 @@
                    width
                    height))
 
-(defun window-move (window dy dx)
+(defun window-move (window dx dy)
   (window-set-pos window
                   (+ (window-x window) dx)
                   (+ (window-y window) dy)))
@@ -753,10 +753,10 @@
              (window-resize window (- diff-height) 0))))
     (cond ((/= 0 shift-width)
            (dolist (window shrink-window-list)
-             (window-move window 0 shift-width)))
+             (window-move window shift-width 0)))
           ((/= 0 shift-height)
            (dolist (window shrink-window-list)
-             (window-move window shift-height 0)))))
+             (window-move window 0 shift-height)))))
   t)
 
 (defun shrink-top-windows (window-list n)
@@ -795,9 +795,9 @@
                       shift-width)
   (dolist (window (funcall collect-windows-fn window-list))
     (cond ((/= 0 shift-width)
-           (window-move window 0 shift-width))
+           (window-move window shift-width 0))
           ((/= 0 shift-height)
-           (window-move window shift-height 0)))
+           (window-move window 0 shift-height)))
     (cond ((/= 0 diff-width)
            (window-resize window 0 diff-width))
           ((/= 0 diff-height)

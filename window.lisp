@@ -500,10 +500,6 @@
           (window-recenter window)
           (window-scroll window offset)))))
 
-(defun window-maybe-update ()
-  (redraw-screen)
-  (setf (window-redraw-flag (current-window)) nil))
-
 (defun split-window-after (new-window split-type)
   (let ((current-window (current-window)))
     (window-set-size current-window

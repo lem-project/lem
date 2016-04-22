@@ -181,8 +181,7 @@
                              :do (getch))
                            (return-from outer nil))
                          (main-step)))
-                 :finally (return-from outer t))
-             (setf (window-redraw-flag (current-window)) :all))))))
+                 :finally (return-from outer t)))))))
 
 (define-command apply-macro-to-region-lines () ()
   (apply-region-lines (region-beginning)
@@ -293,7 +292,7 @@
                      (/= 0 (window-offset-view (current-window))))
                  (syntax-scan-window (current-window)))
                 ((eq *window-tree* prev-window-tree)
-                 (setf (window-redraw-flag (current-window)) :unnecessary))))))))
+                 )))))))
 
 (defun main-step ()
   (let ((key (input-key)))
@@ -304,7 +303,6 @@
 (define-command self-insert (n) ("p")
   (let ((c (insertion-key-p *last-input-key*)))
     (cond (c
-           (setf (window-redraw-flag (current-window)) :one-line)
            (insert-char c n))
           (t
            (minibuf-print (format nil
@@ -351,7 +349,7 @@
                (let ((code (charms/ll:getch)))
                  (cond ((= code -1)
                         (when (update-timer)
-                          (window-maybe-update)))
+                          (redraw-screen)))
                        (t
                         (charms/ll:ungetch code)
                         (return)))))
@@ -359,7 +357,7 @@
 
 (defun lem-main ()
   (flet ((body ()
-           (window-maybe-update)
+           (redraw-screen)
            (idle)
            (main-step)))
     (do ((*exit*)

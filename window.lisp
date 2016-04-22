@@ -498,8 +498,8 @@
 (defun split-window-after (new-window split-type)
   (let ((current-window (current-window)))
     (window-set-size current-window
-                     (window-height (current-window))
-                     (window-width (current-window)))
+                     (window-width (current-window))
+                     (window-height (current-window)))
     (setf (window-vtop-linum new-window)
           (window-vtop-linum current-window))
     (setf (window-current-linum new-window)
@@ -582,12 +582,12 @@
   (setf (window-y window) y)
   (setf (window-x window) x))
 
-(defun window-set-size (window winheight winwidth)
-  (setf (window-height window) winheight)
-  (setf (window-width window) winwidth)
+(defun window-set-size (window width height)
+  (setf (window-height window) height)
+  (setf (window-width window) width)
   (screen-set-size (window-%screen window)
-                   winwidth
-                   winheight))
+                   width
+                   height))
 
 (defun window-move (window dy dx)
   (window-set-pos window
@@ -596,8 +596,8 @@
 
 (defun window-resize (window dl dc)
   (window-set-size window
-                   (+ (window-height window) dl)
-                   (+ (window-width window) dc)))
+                   (+ (window-width window) dc)
+                   (+ (window-height window) dl)))
 
 (define-key *global-keymap* (kbd "C-x 1") 'delete-other-windows)
 (define-command delete-other-windows () ()
@@ -607,8 +607,8 @@
         (delete-window win)))
     (window-set-pos (current-window) 0 0)
     (window-set-size (current-window)
-                     (1- charms/ll:*lines*)
-                     charms/ll:*cols*)
+                     charms/ll:*cols*
+                     (1- charms/ll:*lines*))
     t))
 
 (defun adjust-size-windows-after-delete-window (deleted-window
@@ -623,17 +623,17 @@
                                  (window-x deleted-window)
                                  (window-y win))
                  (window-set-size win
-                                  (window-height win)
                                   (+ (window-width deleted-window)
                                      1
-                                     (window-width win)))))
+                                     (window-width win))
+                                  (window-height win))))
               (t
                (dolist (win (max-if #'window-x window-list))
                  (window-set-size win
-                                  (window-height win)
                                   (+ (window-width deleted-window)
                                      1
-                                     (window-width win))))))
+                                     (window-width win))
+                                  (window-height win)))))
         (cond ((< (window-y deleted-window)
                   (window-y (car window-list)))
                (dolist (win (min-if #'window-y window-list))
@@ -641,15 +641,15 @@
                                  (window-x win)
                                  (window-y deleted-window))
                  (window-set-size win
+                                  (window-width win)
                                   (+ (window-height deleted-window)
-                                     (window-height win))
-                                  (window-width win))))
+                                     (window-height win)))))
               (t
                (dolist (win (max-if #'window-y window-list))
                  (window-set-size win
+                                  (window-width win)
                                   (+ (window-height deleted-window)
-                                     (window-height win))
-                                  (window-width win))))))))
+                                     (window-height win)))))))))
 
 (defun delete-window (window)
   (when (or (one-window-p)

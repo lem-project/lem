@@ -45,8 +45,8 @@
                   0
                   (1- charms/ll:*lines*))
   (window-set-size (minibuffer-window)
-                   1
-                   charms/ll:*cols*)
+                   charms/ll:*cols*
+                   1)
   (charms/ll:werase (window-screen (minibuffer-window)))
   (charms/ll:wnoutrefresh (window-screen (minibuffer-window))))
 

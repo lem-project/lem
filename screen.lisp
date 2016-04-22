@@ -289,3 +289,28 @@
       (redraw-screen-window window nil)))
   (redraw-screen-window (current-window) nil)
   (charms/ll:doupdate))
+
+(defun update-screen-size ()
+  (let ((delete-windows))
+    (dolist (window (window-list))
+      (when (<= charms/ll:*lines*
+                (+ (window-y window) 2))
+        (push window delete-windows))
+      (when (<= charms/ll:*cols*
+                (+ (window-x window) 1))
+        (push window delete-windows)))
+    (mapc #'delete-window delete-windows))
+  (let ((window-list (window-tree-flatten (window-tree))))
+    (dolist (window (collect-right-windows window-list))
+      (window-resize window
+                     0
+                     (- charms/ll:*cols*
+                        *current-cols*)))
+    (dolist (window (collect-bottom-windows window-list))
+      (window-resize window
+                     (- charms/ll:*lines*
+                        *current-lines*)
+                     0))
+    (setq *current-cols* charms/ll:*cols*)
+    (setq *current-lines* charms/ll:*lines*)
+    (redraw-screen)))

@@ -48,7 +48,7 @@
       (push char *macro-chars*))
     (cond ((= code 410)
            (minibuf-resize)
-           (adjust-screen-size)
+           (update-screen-size)
            (getch))
           ((and (char= char C-g) abort-jump)
            (error 'editor-abort))

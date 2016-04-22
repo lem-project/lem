@@ -192,7 +192,7 @@
   t)
 
 (defun sit-for (seconds &optional (update-window-p t))
-  (when update-window-p (window-update-all))
+  (when update-window-p (redraw-screen))
   (charms/ll:timeout (floor (* seconds 1000)))
   (let ((code (charms/ll:getch)))
     (charms/ll:timeout -1)

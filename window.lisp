@@ -313,7 +313,7 @@
     (screen-clear (window-%screen window)))
   (window-recenter (current-window))
   (syntax-scan-window (current-window))
-  (window-update-all)
+  (redraw-screen)
   t)
 
 (defun window-recenter (window)
@@ -500,26 +500,6 @@
           (window-recenter window)
           (window-scroll window offset)))))
 
-(defun window-update (window &optional (update-display-p t))
-  (cond
-   ((minibuffer-window-active-p)
-    (minibuf-window-update))
-   (t
-    (window-adjust-view window)
-    (screen-display-window window)
-    (when update-display-p
-      (charms/ll:doupdate)))))
-
-(defun window-update-all ()
-  (dolist (win (window-list))
-    (unless (eq win (current-window))
-      (window-update win nil)))
-  (window-update (current-window) nil)
-  (charms/ll:doupdate))
-
-(defun redraw-screen ()
-  (window-update-all))
-
 (defvar *brackets-overlays* nil)
 
 (defun window-brackets-highlight ()
@@ -547,7 +527,7 @@
 
 (defun window-maybe-update ()
   (window-brackets-highlight)
-  (window-update-all)
+  (redraw-screen)
   (setf (window-redraw-flag (current-window)) nil))
 
 (defun split-window-after (new-window split-type)
@@ -793,7 +773,7 @@
                      0))
     (setq *current-cols* charms/ll:*cols*)
     (setq *current-lines* charms/ll:*lines*)
-    (window-update-all)))
+    (redraw-screen)))
 
 (defun collect-left-windows (window-list)
   (min-if #'window-x window-list))

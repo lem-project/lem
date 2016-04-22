@@ -459,7 +459,7 @@
             (minibuf-print (format nil "Replace ~s with ~s" before after))
             (funcall search-backward-function before)
             (setq start-point (current-point))
-            (unless pass-through (window-update-all))
+            (unless pass-through (redraw-screen))
             (do () (nil)
               (let ((c (unless pass-through (getch))))
                 (cond

@@ -111,6 +111,6 @@
         (set-buffer buffer nil)
         (when (or save-silently-p
                   (progn
-                    (window-update-all)
+                    (redraw-screen)
                     (minibuf-y-or-n-p "Save file")))
           (save-file))))))

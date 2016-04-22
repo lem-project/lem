@@ -245,7 +245,7 @@
                  (return))))
     (screen-move-cursor screen curx cury)))
 
-(defun screen-refresh-separator (window)
+(defun screen-redraw-separator (window)
   (charms/ll:attron charms/ll:a_reverse)
   (when (< 0 (window-x window))
     (loop :with x := (- (window-x window) 1)
@@ -255,7 +255,7 @@
   (charms/ll:attroff charms/ll:a_reverse)
   (charms/ll:wnoutrefresh charms/ll:*stdscr*))
 
-(defun screen-display-modeline (window)
+(defun screen-redraw-modeline (window)
   (screen-print-string (window-%screen window)
                        0
                        (1- (window-height window))
@@ -265,14 +265,27 @@
                             *modeline-attribute*
                             *modeline-inactive-attribute*))))
 
-(defun screen-display-window (window)
-  (charms/ll:werase (screen-%scrwin (window-%screen window)))
-  (screen-display-modeline window)
-  (screen-display-lines (window-%screen window)
-                        (window-buffer window)
-                        (window-vtop-charpos window)
-                        (window-vtop-linum window)
-                        (window-current-charpos window)
-                        (window-current-linum window))
-  (screen-refresh-separator window)
-  (charms/ll:wnoutrefresh (screen-%scrwin (window-%screen window))))
+(defun redraw-screen-window (window doupdate-p)
+  (cond ((minibuffer-window-p window)
+         (minibuf-window-update))
+        (t
+         (window-adjust-view window)
+         (charms/ll:werase (screen-%scrwin (window-%screen window)))
+         (screen-redraw-modeline window)
+         (screen-display-lines (window-%screen window)
+                               (window-buffer window)
+                               (window-vtop-charpos window)
+                               (window-vtop-linum window)
+                               (window-current-charpos window)
+                               (window-current-linum window))
+         (screen-redraw-separator window)
+         (charms/ll:wnoutrefresh (screen-%scrwin (window-%screen window)))
+         (when doupdate-p
+           (charms/ll:doupdate)))))
+
+(defun redraw-screen ()
+  (dolist (window (window-list))
+    (unless (eq window (current-window))
+      (redraw-screen-window window nil)))
+  (redraw-screen-window (current-window) nil)
+  (charms/ll:doupdate))

@@ -58,7 +58,7 @@
   (when (buffer-output-stream-interactive-update-p stream)
     (dolist (window (get-buffer-windows (buffer-output-stream-buffer stream)))
       (point-set (buffer-output-stream-point stream) window)
-      (window-update window)))
+      (redraw-screen-window window t)))
   nil)
 
 (defmethod trivial-gray-streams:stream-fresh-line ((stream buffer-output-stream))

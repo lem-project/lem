@@ -184,7 +184,8 @@
       (get-char (floor (* seconds 1000)))
     (cond (timeout-p t)
           ((char= char C-g) (error 'editor-abort)) ;???
-          (t nil))))
+          (t (ungetch char)
+             nil))))
 
 (define-key *global-keymap* (kbd "C-u") 'universal-argument)
 (define-command universal-argument () ()

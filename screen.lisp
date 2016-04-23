@@ -352,9 +352,11 @@
   (etypecase timeout
     (integer
      (charms/ll:timeout timeout)
-     (prog1 (let ((c (get-char-1)))
-              (values (code-char 0) (if (= -1 c) nil t)))
-       (charms/ll:timeout -1)))
+     (let ((c (get-char-1)))
+       (charms/ll:timeout -1)
+       (if (= -1 c)
+           (values #\nul t)
+           (values (code-char c) nil))))
     (null
      (loop :for code := (get-char-1) :do
        (when (/= code -1)

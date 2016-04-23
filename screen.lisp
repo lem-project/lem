@@ -48,6 +48,10 @@
   (charms/ll:mvwin (screen-%scrwin screen) y x))
 
 (defun screen-print-string (screen x y string attr)
+  (cond ((null attr)
+         (setf attr 0))
+        ((lem.term::attribute-p attr)
+         (setf attr (attribute-to-bits attr))))
   (charms/ll:wattron (screen-%scrwin screen) attr)
   (charms/ll:mvwaddstr (screen-%scrwin screen) y x string)
   (charms/ll:wattroff (screen-%scrwin screen) attr))
@@ -273,10 +277,9 @@
                        0
                        (1- (window-height window))
                        (modeline-string window)
-                       (attribute-to-bits
-                        (if (eq window (current-window))
-                            *modeline-attribute*
-                            *modeline-inactive-attribute*))))
+                       (if (eq window (current-window))
+                           *modeline-attribute*
+                           *modeline-inactive-attribute*)))
 
 (defun redraw-display-window (window doupdate-p)
   (cond ((minibuffer-window-p window)
@@ -291,12 +294,13 @@
                                (window-vtop-linum window)
                                (window-current-charpos window)
                                (window-current-linum window))
-         (screen-redraw-separator window)
-         (charms/ll:wnoutrefresh (screen-%scrwin (window-%screen window)))
-         (when doupdate-p
-           (charms/ll:doupdate)))))
+         (screen-redraw-separator window)))
+  (charms/ll:wnoutrefresh (screen-%scrwin (window-%screen window)))
+  (when doupdate-p
+    (charms/ll:doupdate)))
 
 (defun redraw-display ()
+  (charms/ll:wnoutrefresh *echo-area-scrwin*)
   (dolist (window (window-list))
     (unless (eq window (current-window))
       (redraw-display-window window nil)))
@@ -329,6 +333,7 @@
     (setq *old-display-height* (display-height))
     (charms/ll:mvwin *echo-area-scrwin* (1- (display-height)) 0)
     (charms/ll:wresize *echo-area-scrwin* 1 (display-width))
+    (minibuf-update-size)
     (redraw-display)))
 
 (defun message-internal (string)

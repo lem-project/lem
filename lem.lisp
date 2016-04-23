@@ -189,15 +189,11 @@
 
 (defun sit-for (seconds &optional (update-window-p t))
   (when update-window-p (redraw-display))
-  (charms/ll:timeout (floor (* seconds 1000)))
-  (let ((code (charms/ll:getch)))
-    (charms/ll:timeout -1)
-    (cond ((= code -1)
-           t)
-          ((= code (char-code C-g))
-           (error 'editor-abort))
-          (t
-           nil))))
+  (multiple-value-bind (char timeout-p)
+      (get-char (floor (* seconds 1000)))
+    (cond (timeout-p t)
+          ((char= char C-g) (error 'editor-abort)) ;???
+          (t nil))))
 
 (define-key *global-keymap* (kbd "C-u") 'universal-argument)
 (define-command universal-argument () ()

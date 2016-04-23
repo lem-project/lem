@@ -133,23 +133,3 @@
     (setf *term-io* nil))
   (charms/ll:endwin)
   (charms/ll:delscreen charms/ll:*stdscr*))
-
-(defun term-resize ()
-  )
-
-(defun term-get-char-1 ()
-  (loop :for code := (charms/ll:getch) :do
-    (if (= code 410)
-        (term-resize)
-        (return code))))
-
-(defun term-get-char (timeout)
-  (charms/ll:doupdate)
-  (etypecase timeout
-    (integer
-     (charms/ll:timeout timeout)
-     (prog1 (let ((c (term-get-char-1)))
-              (if (= -1 c) nil c))
-       (charms/ll:timeout -1)))
-    (null
-     (term-get-char-1))))

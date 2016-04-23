@@ -339,3 +339,31 @@
                                          "<NL>"
                                          string)))
   (charms/ll:wnoutrefresh *echo-area-scrwin*))
+
+(defun get-char-1 ()
+  (loop :for code := (charms/ll:getch) :do
+    (if (= code 410)
+        (update-display-size)
+        (return code))))
+
+(defun get-char (timeout)
+  (charms/ll:doupdate)
+  (etypecase timeout
+    (integer
+     (charms/ll:timeout timeout)
+     (prog1 (let ((c (get-char-1)))
+              (values (code-char 0) (if (= -1 c) nil t)))
+       (charms/ll:timeout -1)))
+    (null
+     (loop :for code := (get-char-1) :do
+       (when (/= code -1)
+         (return
+           (let ((nbytes (utf8-bytes code)))
+             (if (= nbytes 1)
+                 (code-char code)
+                 (aref (babel:octets-to-string
+                        (coerce (cons code
+                                      (loop :repeat (1- nbytes)
+                                        :collect (get-char-1)))
+                                '(vector (unsigned-byte 8))))
+                       0)))))))))

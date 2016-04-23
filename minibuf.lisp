@@ -45,16 +45,15 @@
                         nil
                         (replace-string (string #\newline)
                                         "<NL>"
-                                        (apply #'format nil string args))))
+                                        (apply #'format nil string args)))
+                    t)
   (when (minibuffer-window-active-p)
-    (charms/ll:doupdate)
     (sit-for 1 nil)
-    (message-internal nil))
+    (message-internal nil nil))
   t)
 
 (defun minibuf-read-char (prompt)
   (message prompt)
-  (charms/ll:doupdate)
   (getch))
 
 (defun minibuf-y-or-n-p (prompt)

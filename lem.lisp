@@ -34,7 +34,7 @@
 
 (defvar *input-queue* nil)
 
-(defun getch (&optional (abort-jump t))
+(defun getch ()
   (let* ((code (cond ((null *input-queue*)
                       (loop
                         :for code := (charms/ll:getch)
@@ -49,8 +49,6 @@
     (cond ((= code 410)
            (update-display-size)
            (getch))
-          ((and (char= char C-g) abort-jump)
-           (error 'editor-abort))
           (t char))))
 
 (defun ungetch (char)
@@ -248,12 +246,12 @@
 
 (defun input-key ()
   (let ((key
-         (let ((c (getch nil)))
+         (let ((c (getch)))
            (if (or (char= c C-x)
                    (char= c escape))
-               (let ((c2 (getch nil)))
+               (let ((c2 (getch)))
                  (if (char= c2 escape)
-                     (kbd c c2 (getch nil))
+                     (kbd c c2 (getch))
                      (kbd c c2)))
                (kbd (input-char
                      (char-code c)))))))

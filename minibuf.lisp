@@ -2,8 +2,7 @@
 
 (in-package :lem)
 
-(export '(message
-          minibuf-y-or-n-p
+(export '(minibuf-y-or-n-p
           minibuf-read-char
           *minibuf-keymap*
           active-minibuffer-window
@@ -39,11 +38,6 @@
 (defun minibuf-update-size ()
   (window-set-pos (minibuffer-window) 0 (1- (display-height)))
   (window-set-size (minibuffer-window) (display-width) 1))
-
-(defun message (string &rest args)
-  (message-internal (if (null string)
-                        nil
-                        (apply #'format nil string args))))
 
 (defun minibuf-print-sit-for (msg seconds)
   (message msg)

@@ -2,6 +2,8 @@
 
 (in-package :lem)
 
+(export '(message))
+
 (defvar *modeline-attribute* (make-attribute nil :reverse-p t))
 (defvar *modeline-inactive-attribute* (make-attribute nil :reverse-p t))
 
@@ -336,13 +338,13 @@
     (minibuf-update-size)
     (redraw-display)))
 
-(defun message-internal (string)
+(defun message (string &rest args)
   (charms/ll:werase *echo-area-scrwin*)
   (unless (null string)
     (charms/ll:mvwaddstr *echo-area-scrwin* 0 0
                          (replace-string (string #\newline)
                                          "<NL>"
-                                         string)))
+                                         (apply #'format nil string args))))
   (charms/ll:wnoutrefresh *echo-area-scrwin*))
 
 (defun get-char-1 ()

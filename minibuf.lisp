@@ -13,7 +13,6 @@
           minibuf-read-line-prev-history
           minibuf-read-line-next-history
           minibuf-get-line
-          minibuf-read-line-refresh
           minibuf-read-line
           minibuf-read-string
           minibuf-read-number
@@ -34,7 +33,7 @@
 
 (defun minibuf-init ()
   (let* ((buffer (make-buffer " *minibuffer*"))
-         (window (make-window buffer 0 (1- charms/ll:*lines*) charms/ll:*cols* 1)))
+         (window (make-window buffer 0 (1- (display-height)) (display-width) 1)))
     (setq *minibuf-window* window)))
 
 (defun message (string &rest args)
@@ -134,30 +133,27 @@
 (defun minibuf-point-charpos ()
   (window-current-charpos (minibuffer-window)))
 
-(defun minibuf-read-line-refresh (prompt)
-  (message "~A~A" prompt (minibuf-get-line))
-  (charms/ll:wmove
-   (window-screen (minibuffer-window))
-   0
-   (+ (multiple-value-bind (strings len)
-          (split-string prompt #\newline)
-        (+ (* (length "<NL>") (1- len))
-           (apply #'+ (mapcar #'str-width strings))))
-      (str-width
-       (apply 'concatenate 'string
-              (buffer-take-lines (minibuffer)
-                                 1
-                                 (1- (minibuf-point-linum)))))
-      (* (length "<NL>") (1- (minibuf-point-linum)))
-      (str-width
-       (buffer-line-string (minibuffer)
-                           (minibuf-point-linum))
-       0
-       (minibuf-point-charpos))))
-  (charms/ll:wrefresh (window-screen (minibuffer-window))))
-
 (defun minibuf-window-update ()
-  (minibuf-read-line-refresh *minibuf-read-line-prompt*))
+  (let ((prompt *minibuf-read-line-prompt*))
+    (message "~A~A" prompt (minibuf-get-line))
+    (screen-move-cursor (window-%screen (minibuffer-window))
+                        (+ (multiple-value-bind (strings len)
+                               (split-string prompt #\newline)
+                             (+ (* (length "<NL>") (1- len))
+                                (reduce #'+ (mapcar #'str-width strings))))
+                           (str-width
+                            (join ""
+                                  (buffer-take-lines (minibuffer)
+                                                     1
+                                                     (1- (minibuf-point-linum)))))
+                           (* (length "<NL>") (1- (minibuf-point-linum)))
+                           (str-width
+                            (buffer-line-string (minibuffer)
+                                                (minibuf-point-linum))
+                            0
+                            (minibuf-point-charpos)))
+                        0)
+    (charms/ll:wnoutrefresh (window-screen (minibuffer-window)))))
 
 (defun minibuf-read-line-loop (prompt comp-f existing-p)
   (do ((*minibuf-read-line-loop* t)

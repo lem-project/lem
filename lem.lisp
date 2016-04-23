@@ -331,26 +331,9 @@
                        ,@body)
                       ((condition) (declare (ignore condition)))))
 
-(defun idle ()
-  (when (null *input-queue*)
-    (run-hooks 'idle-hook)
-    (cond ((exist-running-timer-p)
-           (charms/ll:timeout 20)
-           (unwind-protect
-             (loop
-               (let ((code (charms/ll:getch)))
-                 (cond ((= code -1)
-                        (when (update-timer)
-                          (redraw-display)))
-                       (t
-                        (charms/ll:ungetch code)
-                        (return)))))
-             (charms/ll:timeout -1))))))
-
 (defun lem-main ()
   (flet ((body ()
            (redraw-display)
-           (idle)
            (main-step)))
     (do ((*exit*)
          (*curr-flags* (make-flags) (make-flags))

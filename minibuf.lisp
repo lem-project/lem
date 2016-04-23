@@ -45,11 +45,12 @@
                         nil
                         (replace-string (string #\newline)
                                         "<NL>"
-                                        (apply #'format nil string args)))))
-
-(defun minibuf-print-sit-for (msg seconds)
-  (message msg)
-  (sit-for seconds nil))
+                                        (apply #'format nil string args))))
+  (when (minibuffer-window-active-p)
+    (charms/ll:doupdate)
+    (sit-for 1 nil)
+    (message-internal nil))
+  t)
 
 (defun minibuf-read-char (prompt)
   (message prompt)
@@ -183,13 +184,8 @@
                       (when (/= (editor-abort-depth c)
                                 *minibuf-read-line-depth*)
                         (error c)))
-        (switch-minibuffer-window ()
-                                  (minibuf-print-sit-for "Cannot switch buffer in minibuffer window"
-                                                         1))
-        (editor-error (c)
-                      (minibuf-print-sit-for
-                       (editor-error-message c)
-                       1))))))
+        (switch-minibuffer-window () (message "Cannot switch buffer in minibuffer window"))
+        (editor-error (c) (message (editor-error-message c)))))))
 
 (defun minibuf-read-line (prompt initial comp-f existing-p)
   (let ((*minibuf-read-line-tmp-window* (current-window)))

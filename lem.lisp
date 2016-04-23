@@ -35,21 +35,13 @@
 (defvar *input-queue* nil)
 
 (defun getch ()
-  (let* ((code (cond ((null *input-queue*)
-                      (loop
-                        :for code := (charms/ll:getch)
-                        :while (= -1 code)
-                        :finally (return code)))
-                     (t
-                      (pop *input-queue*))))
-         (char (code-char code)))
+  (let ((char (if (null *input-queue*)
+                  (get-char nil)
+                  (pop *input-queue*))))
     (lem.queue:enqueue *input-history* char)
     (when *macro-recording-p*
       (push char *macro-chars*))
-    (cond ((= code 410)
-           (update-display-size)
-           (getch))
-          (t char))))
+    char))
 
 (defun ungetch (char)
   (when *macro-recording-p*

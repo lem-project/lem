@@ -347,7 +347,6 @@
         (return code))))
 
 (defun get-char (timeout)
-  (charms/ll:doupdate)
   (etypecase timeout
     (integer
      (charms/ll:timeout timeout)

@@ -306,7 +306,7 @@
       (redraw-display-window window nil)))
   (redraw-display-window (current-window) nil)
   (charms/ll:doupdate)
-  (message nil))
+  (message-internal nil))
 
 (defun update-display-size ()
   (let ((delete-windows))
@@ -339,10 +339,7 @@
 (defun message-internal (string)
   (charms/ll:werase *echo-area-scrwin*)
   (unless (null string)
-    (charms/ll:mvwaddstr *echo-area-scrwin* 0 0
-                         (replace-string (string #\newline)
-                                         "<NL>"
-                                         string)))
+    (charms/ll:mvwaddstr *echo-area-scrwin* 0 0 string))
   (charms/ll:wnoutrefresh *echo-area-scrwin*))
 
 (defun get-char-1 ()

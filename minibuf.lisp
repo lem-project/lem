@@ -43,7 +43,9 @@
 (defun message (string &rest args)
   (message-internal (if (null string)
                         nil
-                        (apply #'format nil string args))))
+                        (replace-string (string #\newline)
+                                        "<NL>"
+                                        (apply #'format nil string args)))))
 
 (defun minibuf-print-sit-for (msg seconds)
   (message msg)

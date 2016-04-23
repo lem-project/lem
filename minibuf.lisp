@@ -136,24 +136,24 @@
 (defun minibuf-window-update ()
   (let ((prompt *minibuf-read-line-prompt*))
     (message "~A~A" prompt (minibuf-get-line))
-    (screen-move-cursor (window-%screen (minibuffer-window))
-                        (+ (multiple-value-bind (strings len)
-                               (split-string prompt #\newline)
-                             (+ (* (length "<NL>") (1- len))
-                                (reduce #'+ (mapcar #'str-width strings))))
-                           (str-width
-                            (join ""
-                                  (buffer-take-lines (minibuffer)
-                                                     1
-                                                     (1- (minibuf-point-linum)))))
-                           (* (length "<NL>") (1- (minibuf-point-linum)))
-                           (str-width
-                            (buffer-line-string (minibuffer)
-                                                (minibuf-point-linum))
-                            0
-                            (minibuf-point-charpos)))
-                        0)
-    (charms/ll:wnoutrefresh (window-screen (minibuffer-window)))))
+    (charms/ll:wmove *echo-area-scrwin*
+                     0
+                     (+ (multiple-value-bind (strings len)
+                            (split-string prompt #\newline)
+                          (+ (* (length "<NL>") (1- len))
+                             (reduce #'+ (mapcar #'str-width strings))))
+                        (str-width
+                         (join ""
+                               (buffer-take-lines (minibuffer)
+                                                  1
+                                                  (1- (minibuf-point-linum)))))
+                        (* (length "<NL>") (1- (minibuf-point-linum)))
+                        (str-width
+                         (buffer-line-string (minibuffer)
+                                             (minibuf-point-linum))
+                         0
+                         (minibuf-point-charpos))))
+    (charms/ll:wnoutrefresh *echo-area-scrwin*)))
 
 (defun minibuf-read-line-loop (prompt comp-f existing-p)
   (do ((*minibuf-read-line-loop* t)

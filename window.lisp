@@ -79,7 +79,7 @@
   width
   height
   buffer
-  %screen
+  screen
   vtop-linum
   vtop-charpos
   point-marker
@@ -95,18 +95,12 @@
            :width width
            :height height
            :buffer buffer
-           :%screen (make-screen x y width height)
+           :screen (make-screen x y width height)
            :vtop-linum 1
            :vtop-charpos 0)))
     (setf (window-point-marker window)
           (make-marker buffer (make-point 1 0)))
     window))
-
-(defun window-screen (window)
-  (screen-%scrwin (window-%screen window)))
-
-(defun (setf window-screen) (new-win window)
-  (setf (screen-%scrwin (window-%screen window)) new-win))
 
 (defun window-point (&optional (window (current-window)))
   (marker-point (window-point-marker window)))
@@ -250,7 +244,7 @@
 
 (defun load-window-tree (dumped-tree)
   (dolist (window (window-list))
-    (screen-delete (window-%screen window)))
+    (screen-delete (window-screen window)))
   (let ((current-window nil))
     (labels ((f (dumped-tree)
                 (if (eq :window (car dumped-tree))
@@ -308,7 +302,7 @@
 (define-key *global-keymap* (kbd "C-l") 'recenter)
 (define-command recenter () ()
   (dolist (window (window-list))
-    (screen-clear (window-%screen window)))
+    (screen-clear (window-screen window)))
   (window-recenter (current-window))
   (syntax-scan-window (current-window))
   (redraw-display)
@@ -581,14 +575,14 @@
                              window-list)))))
 
 (defun window-set-pos (window x y)
-  (screen-set-pos (window-%screen window) x y)
+  (screen-set-pos (window-screen window) x y)
   (setf (window-y window) y)
   (setf (window-x window) x))
 
 (defun window-set-size (window width height)
   (setf (window-height window) height)
   (setf (window-width window) width)
-  (screen-set-size (window-%screen window)
+  (screen-set-size (window-screen window)
                    width
                    height))
 
@@ -675,7 +669,7 @@
           (funcall setter2 (funcall another-getter)))))
   (when (window-delete-hook window)
     (funcall (window-delete-hook window)))
-  (screen-delete (window-%screen window))
+  (screen-delete (window-screen window))
   t)
 
 (define-key *global-keymap* (kbd "C-x 0") 'delete-current-window)

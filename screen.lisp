@@ -273,7 +273,7 @@
   (charms/ll:wnoutrefresh charms/ll:*stdscr*))
 
 (defun screen-redraw-modeline (window)
-  (screen-print-string (window-%screen window)
+  (screen-print-string (window-screen window)
                        0
                        (1- (window-height window))
                        (modeline-string window)
@@ -286,16 +286,16 @@
          (minibuf-window-update))
         (t
          (window-see window)
-         (charms/ll:werase (screen-%scrwin (window-%screen window)))
+         (charms/ll:werase (screen-%scrwin (window-screen window)))
          (screen-redraw-modeline window)
-         (screen-display-lines (window-%screen window)
+         (screen-display-lines (window-screen window)
                                (window-buffer window)
                                (window-vtop-charpos window)
                                (window-vtop-linum window)
                                (window-current-charpos window)
                                (window-current-linum window))
          (screen-redraw-separator window)))
-  (charms/ll:wnoutrefresh (screen-%scrwin (window-%screen window)))
+  (charms/ll:wnoutrefresh (screen-%scrwin (window-screen window)))
   (when doupdate-p
     (charms/ll:doupdate)))
 

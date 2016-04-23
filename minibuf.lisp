@@ -139,12 +139,12 @@
 
 (defun minibuf-window-update ()
   (let ((prompt *minibuf-read-line-prompt*))
-    (screen-print-string (window-%screen (minibuffer-window)) 0 0
+    (screen-print-string (window-screen (minibuffer-window)) 0 0
                          (concatenate 'string
                                       prompt
                                       (replace-string (string #\newline) "<NL>" (minibuf-get-line)))
                          nil)
-    (screen-move-cursor (window-%screen (minibuffer-window))
+    (screen-move-cursor (window-screen (minibuffer-window))
                         (+ (multiple-value-bind (strings len)
                                (split-string prompt #\newline)
                              (+ (* (length "<NL>") (1- len))

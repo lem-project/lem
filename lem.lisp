@@ -219,18 +219,6 @@
                   4))
         (return (main-step)))))))
 
-(defun input-char (code)
-  (let* ((nbytes (utf8-bytes code)))
-    (if (= nbytes 1)
-        (code-char code)
-        (aref (babel:octets-to-string
-               (coerce
-                (cons code
-                      (loop repeat (1- nbytes)
-                        collect (char-code (getch))))
-                '(vector (unsigned-byte 8))))
-              0))))
-
 (defun input-key ()
   (let ((key
          (let ((c (getch)))
@@ -240,8 +228,7 @@
                  (if (char= c2 escape)
                      (kbd c c2 (getch))
                      (kbd c c2)))
-               (kbd (input-char
-                     (char-code c)))))))
+               (kbd c)))))
     (setq *last-input-key* key)))
 
 (defun execute (key)

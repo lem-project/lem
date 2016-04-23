@@ -46,14 +46,13 @@
 (defun ungetch (char)
   (when *macro-recording-p*
     (pop *macro-chars*))
-  (push (char-code char) *input-queue*))
+  (push char *input-queue*))
 
 (defun input-enqueue (c)
+  (check-type c character)
   (setf *input-queue*
         (nconc *input-queue*
-               (list (etypecase c
-                       (character (char-code c))
-                       (fixnum c))))))
+               (list c))))
 
 (defun input-queue-length ()
   (length *input-queue*))

@@ -26,7 +26,8 @@
   lines
   old-lines
   wrap-lines
-  width)
+  width
+  modified-p)
 
 (defun make-screen (x y width height use-modeline-p)
   (when use-modeline-p
@@ -51,6 +52,7 @@
   (length (screen-lines screen)))
 
 (defun screen-set-size (screen width height)
+  (setf (screen-modified-p screen) t)
   (when (screen-%modeline-scrwin screen)
     (decf height))
   (charms/ll:wresize (screen-%scrwin screen)
@@ -70,6 +72,7 @@
         width))
 
 (defun screen-set-pos (screen x y)
+  (setf (screen-modified-p screen) t)
   (setf (screen-x screen) x)
   (setf (screen-y screen) y)
   (charms/ll:mvwin (screen-%scrwin screen) y x)
@@ -274,7 +277,7 @@
     (disp-print-line screen y str))
   (values curx cury y))
 
-(defun screen-display-lines (screen buffer start-charpos start-linum pos-x pos-y)
+(defun screen-display-lines (screen redraw-flag buffer start-charpos start-linum pos-x pos-y)
   (disp-reset-lines screen buffer start-linum)
   (let ((curx 0)
         (cury (- pos-y start-linum))
@@ -283,7 +286,7 @@
              #'disp-line-wrapping
              #'disp-line)))
     (let ((wrap-lines (screen-wrap-lines screen))
-          (flag nil))
+          (flag redraw-flag))
       (setf (screen-wrap-lines screen) nil)
       (loop
         :with y := 0
@@ -317,8 +320,7 @@
                      (dotimes (_ offset)
                        (push i (screen-wrap-lines screen)))))
                  (setf y y2)
-                 (incf y))
-               )
+                 (incf y)))
               (t
                (charms/ll:wmove (screen-%scrwin screen) y 0)
                (charms/ll:wclrtobot (screen-%scrwin screen))
@@ -351,6 +353,7 @@
         (t
          (window-see window)
          (screen-display-lines (window-screen window)
+                               (screen-modified-p (window-screen window))
                                (window-buffer window)
                                (window-vtop-charpos window)
                                (window-vtop-linum window)
@@ -359,6 +362,7 @@
          (screen-redraw-separator window)
          (screen-redraw-modeline window)))
   (charms/ll:wnoutrefresh (screen-%scrwin (window-screen window)))
+  (setf (screen-modified-p (window-screen window)) nil)
   (when doupdate-p
     (charms/ll:doupdate)))
 

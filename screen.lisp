@@ -208,7 +208,8 @@
       (multiple-value-bind (char attr)
           (fat-char str i)
         (screen-print-string screen x y (string char) attr)
-        (setq x (char-width char x))))))
+        (setq x (char-width char x))))
+    (charms/ll:wclrtoeol (screen-%scrwin screen))))
 
 (defun disp-line-wrapping (screen start-charpos curx cury pos-x y str)
   (when (and (< 0 start-charpos) (= y 0))
@@ -278,6 +279,8 @@
   (values curx cury y))
 
 (defun screen-display-lines (screen redraw-flag buffer start-charpos start-linum pos-x pos-y)
+  (when redraw-flag
+    (charms/ll:werase (screen-%scrwin screen)))
   (disp-reset-lines screen buffer start-linum)
   (let ((curx 0)
         (cury (- pos-y start-linum))
@@ -307,18 +310,21 @@
                  (dotimes (_ n)
                    (push i (screen-wrap-lines screen)))))
               (str
-               (charms/ll:wmove (screen-%scrwin screen) y 0)
-               (charms/ll:wclrtoeol (screen-%scrwin screen))
+               (when (zerop (fat-length str))
+                 (charms/ll:wmove (screen-%scrwin screen) y 0)
+                 (charms/ll:wclrtoeol (screen-%scrwin screen)))
                (setf (aref (screen-old-lines screen) i) str)
                (let (y2)
                  (multiple-value-setq (curx cury y2)
                                       (funcall disp-line-fun
                                                screen start-charpos curx cury pos-x y str))
                  (let ((offset (- y2 y)))
-                   (when (< 0 offset)
-                     (setq flag t)
-                     (dotimes (_ offset)
-                       (push i (screen-wrap-lines screen)))))
+                   (cond ((< 0 offset)
+                          (setq flag t)
+                          (dotimes (_ offset)
+                            (push i (screen-wrap-lines screen))))
+                         ((and (= offset 0) (find i wrap-lines))
+                          (setq flag t))))
                  (setf y y2)
                  (incf y)))
               (t

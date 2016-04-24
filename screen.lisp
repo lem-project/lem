@@ -22,6 +22,7 @@
   %scrwin
   lines
   old-lines
+  wrap-lines
   width)
 
 (defun make-screen (x y width height)
@@ -250,20 +251,44 @@
   (let ((curx 0)
         (cury (- pos-y start-linum))
         (disp-line-fun
-          (if (buffer-truncate-lines buffer)
-              #'disp-line-wrapping
-              #'disp-line)))
-    (loop
-      :with y := 0
-      :for str :across (screen-lines screen)
-      :while (< y (screen-height screen))
-      :do (cond (str
-                 (multiple-value-setq (curx cury y)
-                   (funcall disp-line-fun
-                            screen start-charpos curx cury pos-x y str))
+         (if (buffer-truncate-lines buffer)
+             #'disp-line-wrapping
+             #'disp-line)))
+    (let ((wrap-lines (screen-wrap-lines screen))
+          (flag nil))
+      (setf (screen-wrap-lines screen) nil)
+      (loop
+        :with y := 0
+        :for i :from 0
+        :for str :across (screen-lines screen)
+        :while (< y (screen-height screen))
+        :do
+        (cond ((and (not flag)
+                    (aref (screen-old-lines screen) i)
+                    (fat-equalp str (aref (screen-old-lines screen) i))
+                    (/= (- pos-y start-linum) i))
+               (let ((n (count i wrap-lines)))
+                 (when (and (< 0 n) (<= y cury))
+                   (incf cury n))
+                 (incf y (1+ n))
+                 (dotimes (_ n)
+                   (push i (screen-wrap-lines screen)))))
+              (str
+               (setf (aref (screen-old-lines screen) i) str)
+               (let (y2)
+                 (multiple-value-setq (curx cury y2)
+                                      (funcall disp-line-fun
+                                               screen start-charpos curx cury pos-x y str))
+                 (let ((offset (- y2 y)))
+                   (when (< 0 offset)
+                     (setq flag t)
+                     (dotimes (_ offset)
+                       (push i (screen-wrap-lines screen)))))
+                 (setf y y2)
                  (incf y))
-                (t
-                 (return))))
+               (charms/ll:wclrtoeol (screen-%scrwin screen)))
+              (t
+               (return)))))
     (screen-move-cursor screen curx cury)))
 
 (defun screen-redraw-separator (window)
@@ -290,7 +315,7 @@
          (minibuf-window-update))
         (t
          (window-see window)
-         (charms/ll:werase (screen-%scrwin (window-screen window)))
+         ;(charms/ll:werase (screen-%scrwin (window-screen window)))
          (screen-redraw-modeline window)
          (screen-display-lines (window-screen window)
                                (window-buffer window)

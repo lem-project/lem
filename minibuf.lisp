@@ -41,19 +41,21 @@
   (window-set-size (minibuffer-window) (display-width) 1))
 
 (defun message (string &rest args)
-  (message-internal (if (null string)
-                        nil
-                        (replace-string (string #\newline)
-                                        "<NL>"
-                                        (apply #'format nil string args)))
-                    t)
-  (when (minibuffer-window-active-p)
-    (sit-for 1 nil)
-    (message-internal nil nil))
+  (let ((flag (minibuffer-window-active-p)))
+    (message-internal (if (null string)
+                          nil
+                          (replace-string (string #\newline)
+                                          "<NL>"
+                                          (apply #'format nil string args)))
+                      flag)
+    (when flag
+      (sit-for 1 nil)
+      (message-internal nil nil)))
   t)
 
 (defun minibuf-read-char (prompt)
   (message prompt)
+  (redraw-display)
   (getch))
 
 (defun minibuf-y-or-n-p (prompt)

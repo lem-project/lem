@@ -51,8 +51,11 @@
 (defun screen-height (screen)
   (length (screen-lines screen)))
 
+(defun screen-modify (screen)
+  (setf (screen-modified-p screen) t))
+
 (defun screen-set-size (screen width height)
-  (setf (screen-modified-p screen) t)
+  (screen-modify screen)
   (when (screen-%modeline-scrwin screen)
     (decf height))
   (charms/ll:wresize (screen-%scrwin screen)
@@ -72,7 +75,7 @@
         width))
 
 (defun screen-set-pos (screen x y)
-  (setf (screen-modified-p screen) t)
+  (screen-modify screen)
   (setf (screen-x screen) x)
   (setf (screen-y screen) y)
   (charms/ll:mvwin (screen-%scrwin screen) y x)

@@ -78,7 +78,7 @@
   y
   width
   height
-  buffer
+  %buffer
   screen
   vtop-linum
   vtop-charpos
@@ -94,13 +94,20 @@
            :y y
            :width width
            :height height
-           :buffer buffer
+           :%buffer buffer
            :screen (make-screen x y width height t)
            :vtop-linum 1
            :vtop-charpos 0)))
     (setf (window-point-marker window)
           (make-marker buffer (make-point 1 0)))
     window))
+
+(defun window-buffer (window)
+  (window-%buffer window))
+
+(defun (setf window-buffer) (buffer window)
+  (screen-modify (window-screen window))
+  (setf (window-%buffer window) buffer))
 
 (defun window-point (&optional (window (current-window)))
   (marker-point (window-point-marker window)))

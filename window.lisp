@@ -78,7 +78,7 @@
   y
   width
   height
-  buffer
+  %buffer
   screen
   vtop-linum
   vtop-charpos
@@ -94,13 +94,20 @@
            :y y
            :width width
            :height height
-           :buffer buffer
-           :screen (make-screen x y width height)
+           :%buffer buffer
+           :screen (make-screen x y width height t)
            :vtop-linum 1
            :vtop-charpos 0)))
     (setf (window-point-marker window)
           (make-marker buffer (make-point 1 0)))
     window))
+
+(defun window-buffer (window)
+  (window-%buffer window))
+
+(defun (setf window-buffer) (buffer window)
+  (screen-modify (window-screen window))
+  (setf (window-%buffer window) buffer))
 
 (defun window-point (&optional (window (current-window)))
   (marker-point (window-point-marker window)))
@@ -492,29 +499,30 @@
           (window-recenter window)
           (window-scroll window offset)))))
 
-(defun split-window-after (new-window split-type)
-  (let ((current-window (current-window)))
-    (window-set-size current-window
-                     (window-width (current-window))
-                     (window-height (current-window)))
-    (setf (window-vtop-linum new-window)
-          (window-vtop-linum current-window))
-    (setf (window-current-linum new-window)
-          (window-current-linum current-window))
-    (setf (window-current-charpos new-window)
-          (window-current-charpos current-window))
-    (multiple-value-bind (node getter setter)
-        (window-tree-parent (window-tree) current-window)
-      (if (null node)
-          (setf (window-tree)
-                (make-window-node split-type
-                                  current-window
-                                  new-window))
-          (funcall setter
-                   (make-window-node split-type
-                                     (funcall getter)
-                                     new-window))))
-    t))
+(defun split-window-after (current-window new-window split-type)
+  (window-set-size current-window
+                   (window-width (current-window))
+                   (window-height (current-window)))
+  (setf (window-vtop-linum new-window)
+        (window-vtop-linum current-window))
+  (setf (window-vtop-charpos new-window)
+        (window-vtop-charpos current-window))
+  (setf (window-current-linum new-window)
+        (window-current-linum current-window))
+  (setf (window-current-charpos new-window)
+        (window-current-charpos current-window))
+  (multiple-value-bind (node getter setter)
+      (window-tree-parent (window-tree) current-window)
+    (if (null node)
+        (setf (window-tree)
+              (make-window-node split-type
+                                current-window
+                                new-window))
+        (funcall setter
+                 (make-window-node split-type
+                                   (funcall getter)
+                                   new-window))))
+  t)
 
 (defun split-window-vertically (window)
   (unless (minibuffer-window-p window)
@@ -526,7 +534,7 @@
                                  (window-width window)
                                  winheight)))
         (decf (window-height window) winheight)
-        (split-window-after newwin :vsplit)))))
+        (split-window-after window newwin :vsplit)))))
 
 (define-key *global-keymap* (kbd "C-x 2") 'split-active-window-vertically)
 (define-command split-active-window-vertically () ()
@@ -545,7 +553,7 @@
                                  (1- winwidth)
                                  (window-height window))))
         (decf (window-width window) winwidth)
-        (split-window-after newwin :hsplit)))))
+        (split-window-after window newwin :hsplit)))))
 
 (define-key *global-keymap* (kbd "C-x 3") 'split-active-window-horizontally)
 (define-command split-active-window-horizontally () ()

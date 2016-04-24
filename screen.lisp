@@ -45,6 +45,7 @@
   (charms/ll:delwin (screen-%modeline-scrwin screen)))
 
 (defun screen-clear (screen)
+  (screen-modify screen)
   (charms/ll:clearok (screen-%scrwin screen) 1)
   (charms/ll:clearok (screen-%modeline-scrwin screen) 1))
 

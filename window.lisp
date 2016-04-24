@@ -547,12 +547,11 @@
       (let ((newwin (make-window (window-buffer window)
                                  (+ (window-x window)
                                     winwidth
-                                    rem
-                                    1)
+                                    rem)
                                  (window-y window)
-                                 (1- winwidth)
+                                 winwidth
                                  (window-height window))))
-        (decf (window-width window) winwidth)
+        (decf (window-width window) (1+ winwidth))
         (split-window-after window newwin :hsplit)))))
 
 (define-key *global-keymap* (kbd "C-x 3") 'split-active-window-horizontally)

@@ -330,10 +330,8 @@
 (defun screen-redraw-separator (window)
   (charms/ll:attron charms/ll:a_reverse)
   (when (< 0 (window-x window))
-    (loop :with x := (- (window-x window) 1)
-      :for y :from (window-y window) :repeat (window-height window) :do
-      (charms/ll:mvwaddch charms/ll:*stdscr*
-                          y x #.(char-code #\|))))
+    (charms/ll:move (window-y window) (1- (window-x window)))
+    (charms/ll:vline (char-code #\|) (window-height window)))
   (charms/ll:attroff charms/ll:a_reverse)
   (charms/ll:wnoutrefresh charms/ll:*stdscr*))
 

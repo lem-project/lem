@@ -20,46 +20,74 @@
 
 (defstruct (screen (:constructor %make-screen))
   %scrwin
+  %modeline-scrwin
+  x
+  y
   lines
   old-lines
   wrap-lines
   width)
 
-(defun make-screen (x y width height)
+(defun make-screen (x y width height use-modeline-p)
+  (when use-modeline-p
+    (decf height))
   (%make-screen :%scrwin (charms/ll:newwin height width y x)
+                :%modeline-scrwin (when use-modeline-p (charms/ll:newwin 1 width (+ y height) x))
+                :x x
+                :y y
                 :width width
-                :lines (make-array (1- height) :initial-element nil)
-                :old-lines (make-array (1- height) :initial-element nil)))
+                :lines (make-array height :initial-element nil)
+                :old-lines (make-array height :initial-element nil)))
 
 (defun screen-delete (screen)
-  (charms/ll:delwin (screen-%scrwin screen)))
+  (charms/ll:delwin (screen-%scrwin screen))
+  (charms/ll:delwin (screen-%modeline-scrwin screen)))
 
 (defun screen-clear (screen)
-  (charms/ll:clearok (screen-%scrwin screen) 1))
+  (charms/ll:clearok (screen-%scrwin screen) 1)
+  (charms/ll:clearok (screen-%modeline-scrwin screen) 1))
 
 (defun screen-height (screen)
   (length (screen-lines screen)))
 
 (defun screen-set-size (screen width height)
-  (charms/ll:wresize (screen-%scrwin screen) height width)
+  (when (screen-%modeline-scrwin screen)
+    (decf height))
+  (charms/ll:wresize (screen-%scrwin screen)
+                     height
+                     width)
+  (charms/ll:mvwin (screen-%modeline-scrwin screen)
+                   (+ (screen-y screen) height)
+                   (screen-x screen))
+  (charms/ll:wresize (screen-%modeline-scrwin screen)
+                     1
+                     width)
   (setf (screen-lines screen)
-        (make-array (1- height) :initial-element nil))
+        (make-array height :initial-element nil))
   (setf (screen-old-lines screen)
-        (make-array (1- height) :initial-element nil))
+        (make-array height :initial-element nil))
   (setf (screen-width screen)
         width))
 
 (defun screen-set-pos (screen x y)
-  (charms/ll:mvwin (screen-%scrwin screen) y x))
+  (setf (screen-x screen) x)
+  (setf (screen-y screen) y)
+  (charms/ll:mvwin (screen-%scrwin screen) y x)
+  (charms/ll:mvwin (screen-%modeline-scrwin screen)
+                   (+ y (screen-height screen))
+                   x))
 
-(defun screen-print-string (screen x y string attr)
+(defun scrwin-print-string (scrwin x y string attr)
   (cond ((null attr)
          (setf attr 0))
         ((lem.term::attribute-p attr)
          (setf attr (attribute-to-bits attr))))
-  (charms/ll:wattron (screen-%scrwin screen) attr)
-  (charms/ll:mvwaddstr (screen-%scrwin screen) y x string)
-  (charms/ll:wattroff (screen-%scrwin screen) attr))
+  (charms/ll:wattron scrwin attr)
+  (charms/ll:mvwaddstr scrwin y x string)
+  (charms/ll:wattroff scrwin attr))
+
+(defun screen-print-string (screen x y string attr)
+  (scrwin-print-string (screen-%scrwin screen) x y string attr))
 
 (defun screen-move-cursor (screen x y)
   (charms/ll:wmove (screen-%scrwin screen) y x))
@@ -265,6 +293,7 @@
         :do
         (cond ((and (not flag)
                     (aref (screen-old-lines screen) i)
+                    str
                     (fat-equalp str (aref (screen-old-lines screen) i))
                     (/= (- pos-y start-linum) i))
                (let ((n (count i wrap-lines)))
@@ -288,6 +317,7 @@
                  (incf y))
                (charms/ll:wclrtoeol (screen-%scrwin screen)))
               (t
+               (charms/ll:wclrtobot (screen-%scrwin screen))
                (return)))))
     (screen-move-cursor screen curx cury)))
 
@@ -302,13 +332,14 @@
   (charms/ll:wnoutrefresh charms/ll:*stdscr*))
 
 (defun screen-redraw-modeline (window)
-  (screen-print-string (window-screen window)
+  (scrwin-print-string (screen-%modeline-scrwin (window-screen window))
                        0
-                       (1- (window-height window))
+                       0
                        (modeline-string window)
                        (if (eq window (current-window))
                            *modeline-attribute*
-                           *modeline-inactive-attribute*)))
+                           *modeline-inactive-attribute*))
+  (charms/ll:wnoutrefresh (screen-%modeline-scrwin (window-screen window))))
 
 (defun redraw-display-window (window doupdate-p)
   (cond ((minibuffer-window-p window)
@@ -316,14 +347,15 @@
         (t
          (window-see window)
          ;(charms/ll:werase (screen-%scrwin (window-screen window)))
-         (screen-redraw-modeline window)
          (screen-display-lines (window-screen window)
                                (window-buffer window)
                                (window-vtop-charpos window)
                                (window-vtop-linum window)
                                (window-current-charpos window)
                                (window-current-linum window))
-         (screen-redraw-separator window)))
+         (screen-redraw-separator window)
+         (screen-redraw-modeline window)
+         ))
   (charms/ll:wnoutrefresh (screen-%scrwin (window-screen window)))
   (when doupdate-p
     (charms/ll:doupdate)))

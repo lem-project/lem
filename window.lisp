@@ -95,7 +95,7 @@
            :width width
            :height height
            :buffer buffer
-           :screen (make-screen x y width height)
+           :screen (make-screen x y width height t)
            :vtop-linum 1
            :vtop-charpos 0)))
     (setf (window-point-marker window)

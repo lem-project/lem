@@ -296,6 +296,7 @@
                     str
                     (fat-equalp str (aref (screen-old-lines screen) i))
                     (/= (- pos-y start-linum) i))
+               (setf (aref (screen-old-lines screen) i) str)
                (let ((n (count i wrap-lines)))
                  (when (and (< 0 n) (<= y cury))
                    (incf cury n))
@@ -303,6 +304,8 @@
                  (dotimes (_ n)
                    (push i (screen-wrap-lines screen)))))
               (str
+               (charms/ll:wmove (screen-%scrwin screen) y 0)
+               (charms/ll:wclrtoeol (screen-%scrwin screen))
                (setf (aref (screen-old-lines screen) i) str)
                (let (y2)
                  (multiple-value-setq (curx cury y2)
@@ -315,8 +318,9 @@
                        (push i (screen-wrap-lines screen)))))
                  (setf y y2)
                  (incf y))
-               (charms/ll:wclrtoeol (screen-%scrwin screen)))
+               )
               (t
+               (charms/ll:wmove (screen-%scrwin screen) y 0)
                (charms/ll:wclrtobot (screen-%scrwin screen))
                (return)))))
     (screen-move-cursor screen curx cury)))
@@ -346,7 +350,6 @@
          (minibuf-window-update))
         (t
          (window-see window)
-         ;(charms/ll:werase (screen-%scrwin (window-screen window)))
          (screen-display-lines (window-screen window)
                                (window-buffer window)
                                (window-vtop-charpos window)
@@ -354,8 +357,7 @@
                                (window-current-charpos window)
                                (window-current-linum window))
          (screen-redraw-separator window)
-         (screen-redraw-modeline window)
-         ))
+         (screen-redraw-modeline window)))
   (charms/ll:wnoutrefresh (screen-%scrwin (window-screen window)))
   (when doupdate-p
     (charms/ll:doupdate)))

@@ -21,12 +21,14 @@
 (defstruct (screen (:constructor %make-screen))
   %scrwin
   lines
+  old-lines
   width)
 
 (defun make-screen (x y width height)
   (%make-screen :%scrwin (charms/ll:newwin height width y x)
                 :width width
-                :lines (make-array (1- height) :initial-element nil)))
+                :lines (make-array (1- height) :initial-element nil)
+                :old-lines (make-array (1- height) :initial-element nil)))
 
 (defun screen-delete (screen)
   (charms/ll:delwin (screen-%scrwin screen)))
@@ -40,6 +42,8 @@
 (defun screen-set-size (screen width height)
   (charms/ll:wresize (screen-%scrwin screen) height width)
   (setf (screen-lines screen)
+        (make-array (1- height) :initial-element nil))
+  (setf (screen-old-lines screen)
         (make-array (1- height) :initial-element nil))
   (setf (screen-width screen)
         width))
@@ -59,60 +63,60 @@
 (defun screen-move-cursor (screen x y)
   (charms/ll:wmove (screen-%scrwin screen) y x))
 
-(defun set-attr-display-line (disp-lines
+(defun set-attr-display-line (screen
                               attr
                               start-linum
                               linum
                               start-charpos
                               end-charpos)
   (let ((i (- linum start-linum)))
-    (when (<= 0 i (1- (length disp-lines)))
+    (when (<= 0 i (1- (screen-height screen)))
       (unless end-charpos
-        (setq end-charpos (fat-length (aref disp-lines i))))
-      (setf (aref disp-lines i)
-            (copy-fatstring (aref disp-lines i)))
-      (let ((fatstr (aref disp-lines i)))
+        (setq end-charpos (fat-length (aref (screen-lines screen) i))))
+      (setf (aref (screen-lines screen) i)
+            (copy-fatstring (aref (screen-lines screen) i)))
+      (let ((fatstr (aref (screen-lines screen) i)))
         (change-font fatstr
                      attr
                      :to
                      start-charpos
                      (min end-charpos (fat-length fatstr)))))))
 
-(defun set-attr-display-lines (disp-lines
+(defun set-attr-display-lines (screen
                                attr
                                top-linum
                                start-linum
                                start-charpos
                                end-linum
                                end-charpos)
-  (set-attr-display-line disp-lines
+  (set-attr-display-line screen
                          attr
                          top-linum
                          start-linum
                          start-charpos
                          nil)
   (loop :for linum :from (1+ start-linum) :below end-linum :do
-    (set-attr-display-line disp-lines
+    (set-attr-display-line screen
                            attr
                            top-linum
                            linum
                            0
                            nil))
-  (set-attr-display-line disp-lines
+  (set-attr-display-line screen
                          attr
                          top-linum
                          end-linum
                          0
                          end-charpos))
 
-(defun disp-set-overlays (disp-lines overlays start-linum end-linum)
+(defun disp-set-overlays (screen overlays start-linum end-linum)
   (loop
     :for overlay :in overlays
     :for start := (overlay-start overlay)
     :for end := (overlay-end overlay)
     :do (cond ((and (= (point-linum start) (point-linum end))
                     (<= start-linum (point-linum start) (1- end-linum)))
-               (set-attr-display-line disp-lines
+               (set-attr-display-line screen
                                       (overlay-attr overlay)
                                       start-linum
                                       (point-linum start)
@@ -120,7 +124,7 @@
                                       (point-charpos end)))
               ((and (<= start-linum (point-linum start))
                     (< (point-linum end) end-linum))
-               (set-attr-display-lines disp-lines
+               (set-attr-display-lines screen
                                        (overlay-attr overlay)
                                        start-linum
                                        (point-linum start)
@@ -131,7 +135,7 @@
                    start-linum
                    (point-linum end)
                    end-linum)
-               (set-attr-display-lines disp-lines
+               (set-attr-display-lines screen
                                        (overlay-attr overlay)
                                        start-linum
                                        start-linum
@@ -140,7 +144,7 @@
                                        (point-charpos end)))
               ((<= start-linum
                    (point-linum start))
-               (set-attr-display-lines disp-lines
+               (set-attr-display-lines screen
                                        (overlay-attr overlay)
                                        start-linum
                                        (point-linum start)
@@ -148,20 +152,20 @@
                                        end-linum
                                        nil)))))
 
-(defun disp-reset-lines (disp-lines buffer start-linum)
+(defun disp-reset-lines (screen buffer start-linum)
   (buffer-update-mark-overlay buffer)
-  (let ((end-linum (+ start-linum (length disp-lines)))
+  (let ((end-linum (+ start-linum (screen-height screen)))
         (disp-index 0))
     (loop
       :for linum :from start-linum :to (buffer-nlines buffer)
-      :while (< disp-index (length disp-lines)) :do
-        (setf (aref disp-lines disp-index)
+      :while (< disp-index (screen-height screen)) :do
+        (setf (aref (screen-lines screen) disp-index)
               (buffer-line-fatstring buffer linum))
         (incf disp-index))
     (loop
-      :for i :from disp-index :below (length disp-lines)
-      :do (setf (aref disp-lines i) nil))
-    (disp-set-overlays disp-lines
+      :for i :from disp-index :below (screen-height screen)
+      :do (setf (aref (screen-lines screen) i) nil))
+    (disp-set-overlays screen
                        (buffer-overlays buffer)
                        start-linum
                        end-linum)))
@@ -242,7 +246,7 @@
   (values curx cury y))
 
 (defun screen-display-lines (screen buffer start-charpos start-linum pos-x pos-y)
-  (disp-reset-lines (screen-lines screen) buffer start-linum)
+  (disp-reset-lines screen buffer start-linum)
   (let ((curx 0)
         (cury (- pos-y start-linum))
         (disp-line-fun

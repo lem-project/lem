@@ -21,8 +21,7 @@
 (defvar *lem-error-file* "~/.lem-error")
 (defvar *initialized-p* nil)
 (defvar *running-p* nil)
-
-(defvar *exit*)
+(defvar +exit-tag+ (gensym "EXIT"))
 
 (defvar *input-history* (lem.queue:make-queue 100))
 
@@ -71,11 +70,11 @@
 (define-command exit-lem () ()
   (when (or (not (any-modified-buffer-p))
             (minibuf-y-or-n-p "Modified buffers exist. Leave anyway"))
-    (setq *exit* t)))
+    (exit-editor)))
 
 (define-command quick-exit () ()
   (save-some-buffers t)
-  (setq *exit* t))
+  (exit-editor))
 
 (defun find-keybind (key)
   (or (some #'(lambda (mode)
@@ -279,24 +278,23 @@
   `(handler-case-bind (#'(lambda (condition)
                            (handler-case (popup-backtrace condition)
                              (error (condition)
-                                    (throw 'serious-error
-                                      (with-output-to-string (stream)
-                                        (princ condition stream)
-                                        (uiop/image:print-backtrace
-                                         :stream stream
-                                         :condition condition))))))
+                                    (exit-editor
+                                     (with-output-to-string (stream)
+                                       (princ condition stream)
+                                       (uiop/image:print-backtrace
+                                        :stream stream
+                                        :condition condition))))))
                        ,@body)
                       ((condition) (declare (ignore condition)))))
 
 (defun lem-main ()
   (flet ((body ()
-           (redraw-display)
-           (message nil)
-           (main-step)))
-    (do ((*exit*)
-         (*curr-flags* (make-flags) (make-flags))
+               (redraw-display)
+               (message nil)
+               (main-step)))
+    (do ((*curr-flags* (make-flags) (make-flags))
          (*last-flags* (make-flags) *curr-flags*))
-        (*exit*)
+        (nil)
       (with-error-handler ()
         (if *debug-p*
             (handler-bind ((error #'save-error)
@@ -321,16 +319,19 @@
   (term-finallize)
   (setq *running-p* nil))
 
+(defun exit-editor (&optional report)
+  (throw +exit-tag+ report))
+
 (defun lem-1 (args)
-  (let ((error-report
-         (catch 'serious-error
+  (let ((report
+         (catch +exit-tag+
            (unwind-protect
              (progn
                (lem-init args)
                (lem-main))
              (lem-finallize)))))
-    (when error-report
-      (format t "~&~a~%" error-report))))
+    (when report
+      (format t "~&~a~%" report))))
 
 (defun check-init ()
   (when *running-p*
@@ -350,13 +351,12 @@
       (format out "~s~%"
               (lem.queue:queue-to-list *input-history*))
       (uiop/image:print-backtrace :stream out :count 100)
-      (throw 'serious-error
-        (with-output-to-string (stream)
-          (princ condition stream)
-          (uiop/image:print-backtrace
-           :stream stream
-           :condition condition)))
-      )))
+      (exit-editor
+       (with-output-to-string (stream)
+         (princ condition stream)
+         (uiop/image:print-backtrace
+          :stream stream
+          :condition condition))))))
 
 (defun dired-buffer (filename)
   (save-excursion

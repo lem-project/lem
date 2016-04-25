@@ -17,7 +17,7 @@
   (let ((overlay
          (%make-overlay :start start
                         :end end
-                        :attr (attribute-to-bits attribute)
+                        :attr attribute
                         :buffer buffer)))
     (buffer-add-overlay buffer overlay)
     overlay))

@@ -116,7 +116,7 @@
             (copy-fatstring (aref (screen-lines screen) i)))
       (let ((fatstr (aref (screen-lines screen) i)))
         (change-font fatstr
-                     attr
+                     (attribute-to-bits attr)
                      :to
                      start-charpos
                      (min end-charpos (fat-length fatstr)))))))

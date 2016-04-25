@@ -18,7 +18,6 @@
           lem))
 
 (defvar *running-p* nil)
-(defvar +exit-tag+ (gensym "EXIT"))
 
 (defvar *input-history* (lem.queue:make-queue 100))
 
@@ -279,19 +278,21 @@
                       ((condition) (declare (ignore condition)))))
 
 (defun lem-main ()
-  (flet ((body ()
-               (redraw-display)
-               (message nil)
-               (main-step)))
+  (macrolet ((form (&body body)
+                   `(cond (*debug-p*
+                           (handler-bind ((error #'bailout)
+                                          #+sbcl (sb-sys:interactive-interrupt #'bailout))
+                             ,@body))
+                          (t
+                           ,@body))))
     (do ((*curr-flags* (make-flags) (make-flags))
          (*last-flags* (make-flags) *curr-flags*))
         (nil)
       (with-error-handler ()
-        (if *debug-p*
-            (handler-bind ((error #'bailout)
-                           #+sbcl (sb-sys:interactive-interrupt #'bailout))
-              (body))
-            (body))))))
+        (form
+         (redraw-display)
+         (message nil)
+         (main-step))))))
 
 (let ((passed nil))
   (defun lem-init (args)
@@ -310,6 +311,8 @@
 (defun lem-finallize ()
   (term-finallize)
   (setq *running-p* nil))
+
+(defvar +exit-tag+ (gensym "EXIT"))
 
 (defun exit-editor (&optional report)
   (throw +exit-tag+ report))

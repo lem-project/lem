@@ -143,6 +143,7 @@
 
 (defun minibuf-window-update ()
   (let ((prompt *minibuf-read-line-prompt*))
+    (screen-erase (window-screen (minibuffer-window)))
     (screen-print-string (window-screen (minibuffer-window)) 0 0
                          (concatenate 'string
                                       prompt

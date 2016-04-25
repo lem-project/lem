@@ -313,6 +313,7 @@
 (defun lem-main ()
   (flet ((body ()
            (redraw-display)
+           (message nil)
            (main-step)))
     (do ((*exit*)
          (*curr-flags* (make-flags) (make-flags))

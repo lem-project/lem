@@ -49,6 +49,9 @@
   (charms/ll:clearok (screen-%scrwin screen) 1)
   (charms/ll:clearok (screen-%modeline-scrwin screen) 1))
 
+(defun screen-erase (screen)
+  (charms/ll:werase (screen-%scrwin screen)))
+
 (defun screen-height (screen)
   (length (screen-lines screen)))
 
@@ -381,8 +384,7 @@
     (unless (eq window (current-window))
       (redraw-display-window window nil)))
   (redraw-display-window (current-window) nil)
-  (charms/ll:doupdate)
-  (message-internal nil nil))
+  (charms/ll:doupdate))
 
 (defun update-display-size ()
   (let ((delete-windows))

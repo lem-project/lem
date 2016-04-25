@@ -2,8 +2,7 @@
 
 (in-package :lem)
 
-(export '(*lem-error-file*
-          macro-running-p
+(export '(macro-running-p
           exit-lem
           find-keybind
           describe-key
@@ -18,7 +17,6 @@
           self-insert
           lem))
 
-(defvar *lem-error-file* "~/.lem-error")
 (defvar *running-p* nil)
 (defvar +exit-tag+ (gensym "EXIT"))
 
@@ -275,14 +273,8 @@
 
 (defmacro with-error-handler (() &body body)
   `(handler-case-bind (#'(lambda (condition)
-                           (handler-case (popup-backtrace condition)
-                             (error (condition)
-                                    (exit-editor
-                                     (with-output-to-string (stream)
-                                       (princ condition stream)
-                                       (uiop/image:print-backtrace
-                                        :stream stream
-                                        :condition condition))))))
+                           (handler-bind ((error #'bailout))
+                             (popup-backtrace condition)))
                        ,@body)
                       ((condition) (declare (ignore condition)))))
 
@@ -296,8 +288,8 @@
         (nil)
       (with-error-handler ()
         (if *debug-p*
-            (handler-bind ((error #'save-error)
-                           #+sbcl (sb-sys:interactive-interrupt #'save-error))
+            (handler-bind ((error #'bailout)
+                           #+sbcl (sb-sys:interactive-interrupt #'bailout))
               (body))
             (body))))))
 
@@ -341,22 +333,13 @@
   (check-init)
   (lem-1 args))
 
-(defun save-error (condition)
-  (with-open-file (out *lem-error-file*
-                       :direction :output
-                       :if-exists :supersede
-                       :if-does-not-exist :create)
-    (let ((*print-circle* t))
-      (format out "~&~%~%~%~%~a~%" condition)
-      (format out "~s~%"
-              (lem.queue:queue-to-list *input-history*))
-      (uiop/image:print-backtrace :stream out :count 100)
-      (exit-editor
-       (with-output-to-string (stream)
-         (princ condition stream)
-         (uiop/image:print-backtrace
-          :stream stream
-          :condition condition))))))
+(defun bailout (condition)
+  (exit-editor
+   (with-output-to-string (stream)
+     (princ condition stream)
+     (uiop/image:print-backtrace
+      :stream stream
+      :condition condition))))
 
 (defun dired-buffer (filename)
   (save-excursion

@@ -332,6 +332,7 @@
                  (setf y y2)
                  (incf y)))
               (t
+               (fill (screen-old-lines screen) nil :start i)
                (charms/ll:wmove (screen-%scrwin screen) y 0)
                (charms/ll:wclrtobot (screen-%scrwin screen))
                (return)))))

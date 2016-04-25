@@ -89,8 +89,7 @@
        ,(when parent-mode `(,parent-mode))
        (setf (major-mode) ',major-mode)
        (run-hooks ',(symb major-mode "-HOOK"))
-       (prog1 (progn ,@body)
-         (syntax-scan-buffer (current-buffer))))))
+       ,@body)))
 
 (defmacro define-minor-mode (minor-mode (&key name keymap) &body body)
   `(progn

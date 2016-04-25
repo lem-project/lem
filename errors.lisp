@@ -1,11 +1,6 @@
-;; -*- Mode: LISP; Package: LEM -*-
+;; -*- Mode: LISP; Package: LEM-INTERNAL -*-
 
-(in-package :lem)
-
-(export '(editor-condition
-          editor-abort
-          readonly
-          editor-error))
+(in-package :lem-internal)
 
 (define-condition editor-condition (simple-error)
   ())

@@ -530,7 +530,7 @@
                                  #'(lambda (out)
                                      (princ x out))
                                  nil)))))
-        (editor-abort ()))))
+        (lem::editor-abort ()))))
   condition)
 
 (defun %lisp-eval-internal (x output-buffer point &optional update-point-p)
@@ -548,7 +548,7 @@
                         (setq results
                               (restart-case
                                   (multiple-value-list (eval x))
-                                (editor-abort () :report "Abort.")))
+                                (lem::editor-abort () :report "Abort.")))
                         (when update-point-p
                           (point-set
                            (buffer-output-stream-point io))))

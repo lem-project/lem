@@ -2,13 +2,16 @@
 
 (in-package :lem)
 
-(export '(find-file
+(export '(*auto-mode-alist*
+          find-file
           read-file
           save-file
           changefile-name
           write-file
           insert-file
           save-some-buffers))
+
+(defvar *auto-mode-alist* nil)
 
 (defun prepare-auto-mode ()
   (let* ((filename (file-namestring (buffer-filename)))

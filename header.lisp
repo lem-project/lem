@@ -8,7 +8,6 @@
           *enable-syntax-highlight*
           *last-input-key*
           *scroll-recenter-p*
-          *auto-mode-alist*
           define-continue-flag
           if-continue-flag
           when-interrupted-flag
@@ -33,8 +32,6 @@
 (defvar *universal-argument* nil)
 
 (defvar *scroll-recenter-p* t)
-
-(defvar *auto-mode-alist* nil)
 
 (defvar *continue-command-flags*
   (list :next-line :kill :undo :abbrev :yank :completion))

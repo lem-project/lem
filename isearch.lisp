@@ -1,4 +1,7 @@
-(in-package :lem)
+(in-package :cl-user)
+(defpackage :lem.isearch
+  (:use :cl :lem))
+(in-package :lem.isearch)
 
 (export '(*isearch-keymap*
           isearch-mode
@@ -203,7 +206,7 @@
   (let ((c (insertion-key-p *last-input-key*)))
     (cond (c (isearch-add-char c))
           (t (isearch-update-display)
-             (uninput-key *last-input-key*)
+             (lem::uninput-key *last-input-key*)
              (isearch-end)))))
 
 (defvar *replace-before-string* nil)

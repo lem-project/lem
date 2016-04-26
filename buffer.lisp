@@ -10,6 +10,7 @@
           buffer-enable-undo-p
           buffer-major-mode
           buffer-minor-modes
+          buffer-mark-p
           buffer-nlines
           buffer-truncate-lines
           buffer-enable-undo

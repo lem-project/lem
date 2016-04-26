@@ -1,6 +1,8 @@
 (in-package :lem)
 
 (export '(macro-running-p
+          read-key
+          unread-key
           find-keybind
           describe-key
           describe-bindings

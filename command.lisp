@@ -1,6 +1,8 @@
 (in-package :lem)
 
-(export '(unmark-buffer
+(export '(exit-lem
+          quick-exit
+          unmark-buffer
           toggle-read-only
           rename-buffer
           quoted-insert
@@ -40,6 +42,16 @@
           goto-line
           filter-buffer
           pipe-command))
+
+(define-key *global-keymap* (kbd "C-x C-c") 'exit-lem)
+(define-command exit-lem () ()
+  (when (or (not (any-modified-buffer-p))
+            (minibuf-y-or-n-p "Modified buffers exist. Leave anyway"))
+    (exit-editor)))
+
+(define-command quick-exit () ()
+  (save-some-buffers t)
+  (exit-editor))
 
 (define-key *global-keymap* (kbd "M-~") 'unmark-buffer)
 (define-command unmark-buffer () ()

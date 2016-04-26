@@ -1,7 +1,6 @@
 (in-package :lem)
 
 (export '(macro-running-p
-          exit-lem
           find-keybind
           describe-key
           describe-bindings
@@ -59,16 +58,6 @@
   (setq *macro-recording-p* nil)
   (buffer-mark-cancel (current-buffer))
   (message "Quit"))
-
-(define-key *global-keymap* (kbd "C-x C-c") 'exit-lem)
-(define-command exit-lem () ()
-  (when (or (not (any-modified-buffer-p))
-            (minibuf-y-or-n-p "Modified buffers exist. Leave anyway"))
-    (exit-editor)))
-
-(define-command quick-exit () ()
-  (save-some-buffers t)
-  (exit-editor))
 
 (defun find-keybind (key)
   (or (some #'(lambda (mode)

@@ -12,7 +12,8 @@
           apply-macro-to-region-lines
           sit-for
           universal-argument
-          input-key
+          unread-key-sequence
+          read-key-sequence
           self-insert
           lem))
 
@@ -51,7 +52,7 @@
 (defun input-queue-length ()
   (length *input-queue*))
 
-(defun uninput-key (key)
+(defun unread-key-sequence (key)
   (mapc 'input-enqueue (kbd-list key)))
 
 (define-key *global-keymap* (kbd "C-g") 'keyboard-quit)
@@ -71,7 +72,7 @@
 (define-key *global-keymap* (kbd "C-x ?") 'describe-key)
 (define-command describe-key () ()
   (message "describe-key: ")
-  (let* ((key (input-key))
+  (let* ((key (read-key-sequence))
          (cmd (find-keybind key)))
     (message "describe-key: ~a ~a"
              (kbd-to-string key)
@@ -204,7 +205,7 @@
                   4))
         (return (main-step)))))))
 
-(defun input-key ()
+(defun read-key-sequence ()
   (let ((key
          (let ((c (read-key)))
            (if (or (char= c C-x)
@@ -217,7 +218,7 @@
     (setq *last-input-key* key)))
 
 (defun main-step ()
-  (let ((key (input-key)))
+  (let ((key (read-key-sequence)))
     (prog1 (let ((cmd (find-keybind key)))
              (and cmd
                   (or (handler-case (cmd-call cmd *universal-argument*)

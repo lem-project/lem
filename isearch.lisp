@@ -206,7 +206,7 @@
   (let ((c (insertion-key-p *last-input-key*)))
     (cond (c (isearch-add-char c))
           (t (isearch-update-display)
-             (lem::uninput-key *last-input-key*)
+             (unread-key-sequence *last-input-key*)
              (isearch-end)))))
 
 (defvar *replace-before-string* nil)

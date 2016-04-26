@@ -177,7 +177,7 @@
            (add-history *minibuf-read-line-history* str)
            str))
       (redraw-display)
-      (let* ((key (input-key))
+      (let* ((key (read-key-sequence))
              (cmd (find-keybind key)))
         (handler-case (cmd-call cmd nil)
           (editor-abort (c)

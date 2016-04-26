@@ -341,11 +341,3 @@
      (uiop/image:print-backtrace
       :stream stream
       :condition condition))))
-
-#+sbcl
-(push #'(lambda (x)
-          (if x
-              (lem x)
-              (lem))
-          t)
-      sb-ext:*ed-functions*)

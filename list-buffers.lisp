@@ -1,6 +1,8 @@
-(in-package :lem)
-
-(export '(list-buffers))
+(in-package :cl-user)
+(defpackage :lem.list-buffers
+  (:use :cl :lem)
+  (:export :list-buffers))
+(in-package :lem.list-buffers)
 
 (define-major-mode list-buffers-mode nil
   (:name "List Buffers"

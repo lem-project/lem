@@ -6,7 +6,6 @@
           editor-abort
           editor-abort-depth
           readonly
-          switch-minibuffer-window
           editor-error
           editor-error-message))
 
@@ -24,9 +23,6 @@
      (format stream "Abort"))))
 
 (define-condition readonly (editor-condition)
-  ())
-
-(define-condition switch-minibuffer-window (editor-condition)
   ())
 
 (define-condition editor-error (editor-condition)

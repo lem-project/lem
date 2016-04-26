@@ -85,7 +85,7 @@
 
 (defun check-switch-minibuffer-window ()
   (when (minibuffer-window-active-p)
-    (error 'switch-minibuffer-window)))
+    (editor-error "Cannot switch buffer in minibuffer window")))
 
 (defun active-minibuffer-window ()
   (if (/= 0 *minibuf-read-line-depth*)
@@ -184,7 +184,6 @@
                         (when (/= (editor-abort-depth c)
                                   *minibuf-read-line-depth*)
                           (error c)))
-          (switch-minibuffer-window () (message "Cannot switch buffer in minibuffer window"))
           (editor-error (c) (message (editor-error-message c))))))))
 
 (defun minibuf-read-line (prompt initial comp-f existing-p)

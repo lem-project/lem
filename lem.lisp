@@ -75,6 +75,7 @@
 (define-key *global-keymap* (kbd "C-x ?") 'describe-key)
 (define-command describe-key () ()
   (message "describe-key: ")
+  (redraw-display)
   (let* ((key (read-key-sequence))
          (cmd (find-keybind key)))
     (message "describe-key: ~a ~a"

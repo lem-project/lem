@@ -1,6 +1,14 @@
-;; -*- Mode: LISP; Package: LEM-INTERNAL -*-
+;; -*- Mode: LISP; Package: LEM -*-
 
-(in-package :lem-internal)
+(in-package :lem)
+
+(export '(editor-condition
+          editor-abort
+          editor-abort-depth
+          readonly
+          switch-minibuffer-window
+          editor-error
+          editor-error-message))
 
 (define-condition editor-condition (simple-error)
   ())

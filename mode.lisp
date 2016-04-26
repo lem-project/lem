@@ -6,7 +6,6 @@
           mode-syntax-table
           current-mode-keymap
           current-syntax
-          mode-find-keybind
           find-mode-from-name
           toggle-minor-mode
           define-major-mode
@@ -40,13 +39,9 @@
 (defun current-syntax ()
   (mode-syntax-table (major-mode)))
 
-(defun mode-find-keybind (mode key)
-  (keymap-find-keybind (mode-keymap mode) key))
-
 (defun find-mode-from-name (mode-name)
   (find-if #'(lambda (mode)
-               (equal (string-downcase mode-name)
-                      (string-downcase (mode-name mode))))
+               (string-equal mode-name (mode-name mode)))
            *mode-list*))
 
 (defun toggle-minor-mode (minor-mode)

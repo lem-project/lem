@@ -63,9 +63,9 @@
 
 (defun find-keybind (key)
   (or (some #'(lambda (mode)
-                (mode-find-keybind mode key))
+                (keymap-find-keybind (mode-keymap mode) key))
             (buffer-minor-modes))
-      (mode-find-keybind (buffer-major-mode) key)
+      (keymap-find-keybind (mode-keymap (buffer-major-mode)) key)
       (keymap-find-keybind *global-keymap* key)))
 
 (define-key *global-keymap* (kbd "C-x ?") 'describe-key)

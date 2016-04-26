@@ -46,18 +46,19 @@
                         (:file "search")
                         (:file "info-mode")
                         (:file "sexp")
-                        (:file "grep")
                         (:file "prog-mode")
                         (:file "listener-mode")
-                        (:file "dired")
                         (:file "lem")
-                        (:file "abbrev")
+
                         (:file "showparen")
                         (:file "list-buffers")
+                        (:file "grep")
                         (:file "lisp-mode")
                         (:file "c-mode")
                         (:file "python-mode")
                         (:file "lua-mode")
+                        (:file "dired")
+                        (:file "abbrev")
 
                         (:file "init"))
            :depends-on (:cl-charms

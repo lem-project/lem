@@ -1,6 +1,8 @@
-(in-package :lem)
-
-(export '(abbrev))
+(in-package :cl-user)
+(defpackage :lem.abbrev
+  (:use :cl :lem)
+  (:export :abbrev))
+(in-package :lem.abbrev)
 
 (defun preceding-word ()
   (let ((chars))

@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(current-buffer
+          buffer-list
           ghost-buffer-p
           special-buffer-p
           filter-special-buffers

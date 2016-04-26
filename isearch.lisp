@@ -126,7 +126,7 @@
 
 (define-key *isearch-keymap* (kbd "C-q") 'isearch-raw-insert)
 (define-command isearch-raw-insert () ()
-  (isearch-add-char (getch)))
+  (isearch-add-char (read-key)))
 
 (define-key *isearch-keymap* (kbd "C-j") 'isearch-end)
 (define-key *isearch-keymap* (kbd "C-m") 'isearch-end)
@@ -260,7 +260,7 @@
             (setq start-point (current-point))
             (unless pass-through (redraw-display))
             (do () (nil)
-              (let ((c (unless pass-through (getch))))
+              (let ((c (unless pass-through (read-key))))
                 (cond
                  ((or pass-through (char= c #\y))
                   (delete-region start-point end-point)

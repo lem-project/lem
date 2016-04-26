@@ -54,7 +54,7 @@
 (defun minibuf-read-char (prompt)
   (message prompt)
   (redraw-display)
-  (getch))
+  (read-key))
 
 (defun minibuf-y-or-n-p (prompt)
   (do () (nil)

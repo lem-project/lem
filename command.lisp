@@ -70,7 +70,7 @@
 
 (define-key *global-keymap* (kbd "C-q") 'quoted-insert)
 (define-command quoted-insert (&optional (n 1)) ("p")
-  (let ((c (getch)))
+  (let ((c (read-key)))
     (dotimes (_ n t)
       (cond ((char= c C-m)
              (insert-newline 1))

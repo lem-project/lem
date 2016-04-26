@@ -26,7 +26,7 @@
 
 (defvar *input-queue* nil)
 
-(defun getch ()
+(defun read-key ()
   (let ((char (if (null *input-queue*)
                   (get-char nil)
                   (pop *input-queue*))))
@@ -35,7 +35,7 @@
       (push char *macro-chars*))
     char))
 
-(defun ungetch (char)
+(defun unread-key (char)
   (when *macro-recording-p*
     (pop *macro-chars*))
   (push char *input-queue*))
@@ -148,7 +148,7 @@
                        (loop :while (< length (input-queue-length)) :do
                          (unless *macro-running-p*
                            (loop :while (< length (input-queue-length))
-                             :do (getch))
+                             :do (read-key))
                            (return-from outer nil))
                          (main-step)))
                  :finally (return-from outer t)))))))
@@ -166,7 +166,7 @@
       (get-char (floor (* seconds 1000)))
     (cond (timeout-p t)
           ((char= char C-g) (error 'editor-abort)) ;???
-          (t (ungetch char)
+          (t (unread-key char)
              nil))))
 
 (define-key *global-keymap* (kbd "C-u") 'universal-argument)
@@ -195,7 +195,7 @@
         (setq numlist
               (append numlist (list n))))
        (t
-        (ungetch c)
+        (unread-key c)
         (setq *universal-argument*
               (if numlist
                   (parse-integer (format nil "~{~a~}" numlist))
@@ -204,12 +204,12 @@
 
 (defun input-key ()
   (let ((key
-         (let ((c (getch)))
+         (let ((c (read-key)))
            (if (or (char= c C-x)
                    (char= c escape))
-               (let ((c2 (getch)))
+               (let ((c2 (read-key)))
                  (if (char= c2 escape)
-                     (kbd c c2 (getch))
+                     (kbd c c2 (read-key))
                      (kbd c c2)))
                (kbd c)))))
     (setq *last-input-key* key)))

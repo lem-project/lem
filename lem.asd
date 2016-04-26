@@ -44,6 +44,7 @@
                         (:file "file-command")
                         (:file "word")
                         (:file "search")
+                        (:file "isearch")
                         (:file "info-mode")
                         (:file "sexp")
                         (:file "prog-mode")

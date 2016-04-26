@@ -1,5 +1,3 @@
-;; -*- Mode: LISP; Package: LEM.UTIL  -*-
-
 (in-package :cl-user)
 (defpackage :lem.util
   (:use :cl)

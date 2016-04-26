@@ -1,5 +1,13 @@
-;; -*- mode:lisp; package:lem.term -*-
-
+(in-package :cl-user)
+(defpackage :lem.term
+  (:use :cl)
+  (:export
+   :make-attribute
+   :attribute
+   :attribute-to-bits
+   :with-allow-interrupt
+   :term-init
+   :term-finallize))
 (in-package :lem.term)
 
 (defvar *color-name-table* (make-hash-table :test 'equal))

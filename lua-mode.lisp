@@ -1,9 +1,7 @@
-;; -*- Mode: LISP; Package: LEM.LUA-MODE -*-
-
+(in-package :cl-user)
 (defpackage :lem.lua-mode
   (:use :cl :lem)
   (:export))
-
 (in-package :lem.lua-mode)
 
 (defvar *lua-syntax-table*

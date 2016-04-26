@@ -1,5 +1,3 @@
-;; -*- mode:lisp; package:lem -*-
-
 (in-package :lem)
 
 (export '(listener-mode

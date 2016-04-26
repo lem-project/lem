@@ -1,5 +1,3 @@
-;; -*- Mode: LISP; Package: LEM -*-
-
 (in-package :cl-user)
 (defpackage :lem.c-mode
   (:use :cl :lem)

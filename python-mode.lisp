@@ -1,5 +1,3 @@
-;; -*- Mode: LISP; Package: LEM.PYTHON -*-
-
 (in-package :cl-user)
 (defpackage :lem.python
   (:use :cl :lem)

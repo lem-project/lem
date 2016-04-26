@@ -1,9 +1,7 @@
-;; -*- Mode: LISP; Package: LEM.DIRED -*-
-
+(in-package :cl-user)
 (defpackage :lem.dired
   (:use :cl :lem)
   (:export :dired))
-
 (in-package :lem.dired)
 
 (define-major-mode dired-mode nil

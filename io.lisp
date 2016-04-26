@@ -1,5 +1,3 @@
-;; -*- Mode: LISP; Package: LEM -*-
-
 (in-package :lem)
 
 (export '(buffer-output-stream

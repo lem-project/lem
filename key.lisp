@@ -1,5 +1,3 @@
-;; -*- Mode: LISP; Package: LEM -*-
-
 (in-package :lem)
 
 (defvar *string->key* (make-hash-table :test 'equal))

@@ -1,5 +1,3 @@
-;; -*- mode:lisp; packag:lem -*-
-
 (in-package :lem)
 
 (defvar *brackets-overlays* nil)

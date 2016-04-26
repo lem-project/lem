@@ -1,5 +1,3 @@
-;; -*- Mode: LISP; Package: LEM -*-
-
 (in-package :lem)
 
 (defvar *modeline-attribute* (make-attribute nil :reverse-p t))

@@ -1,5 +1,3 @@
-;; -*- Mode: LISP; Package: LEM.GREP -*-
-
 (in-package :cl-user)
 (defpackage :lem.grep
   (:use :cl :lem)

@@ -1,5 +1,4 @@
-;; -*- Mode: LISP; Package: LEM.QUEUE -*-
-
+(in-package :cl-user)
 (defpackage :lem.queue
   (:use :cl)
   (:export
@@ -15,7 +14,6 @@
    :queue-first-datum
    :queue-last-datum)
   (:shadow :pop))
-
 (in-package :lem.queue)
 
 (defstruct (queue (:constructor %make-queue))

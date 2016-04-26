@@ -1,5 +1,4 @@
-;; -*- Mode: LISP; Package: LEM.FATSTRING -*-
-
+(in-package :cl-user)
 (defpackage :lem.fatstring
   (:use :cl)
   (:export
@@ -40,7 +39,6 @@
    :fat-mismatch
    :fat-replace
    :fat-concat))
-
 (in-package :lem.fatstring)
 
 (defvar *fat-mark-symbol* (gensym "FATSTRING"))

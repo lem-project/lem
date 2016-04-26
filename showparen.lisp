@@ -1,4 +1,7 @@
-(in-package :lem)
+(in-package :cl-user)
+(defpackage :lem.show-paren
+  (:use :cl :lem))
+(in-package :lem.show-paren)
 
 (defvar *brackets-overlays* nil)
 

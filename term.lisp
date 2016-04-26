@@ -2,9 +2,7 @@
 (defpackage :lem.term
   (:use :cl)
   (:export
-   :make-attribute
-   :attribute
-   :attribute-to-bits
+   :get-color
    :with-allow-interrupt
    :term-init
    :term-finallize))
@@ -36,32 +34,6 @@
         (add-color "black" charms/ll:color_black)))
     t))
 
-;;;
-
-
-(defstruct (attribute (:constructor %make-attribute))
-  color
-  reverse-p
-  bold-p
-  underline-p)
-
-(defun make-attribute (color &key reverse-p bold-p underline-p)
-  (%make-attribute :color color
-                   :reverse-p reverse-p
-                   :bold-p bold-p
-                   :underline-p underline-p))
-
-(defun attribute-to-bits (attribute)
-  (logior (get-color (attribute-color attribute))
-          (if (attribute-reverse-p attribute)
-              charms/ll:a_reverse
-              0)
-          (if (attribute-bold-p attribute)
-              charms/ll:a_bold
-              0)
-          (if (attribute-underline-p attribute)
-              charms/ll:a_underline
-              0)))
 ;;;
 
 

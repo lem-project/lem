@@ -1,12 +1,38 @@
 (in-package :lem)
 
-(defvar *modeline-attribute* (make-attribute nil :reverse-p t))
-(defvar *modeline-inactive-attribute* (make-attribute nil :reverse-p t))
+(export '(make-attribute))
 
 (defvar *echo-area-scrwin*)
 
 (defvar *old-display-width*)
 (defvar *old-display-height*)
+
+(defstruct (attribute (:constructor %make-attribute))
+  color
+  reverse-p
+  bold-p
+  underline-p)
+
+(defun make-attribute (color &key reverse-p bold-p underline-p)
+  (%make-attribute :color color
+                   :reverse-p reverse-p
+                   :bold-p bold-p
+                   :underline-p underline-p))
+
+(defun attribute-to-bits (attribute)
+  (logior (get-color (attribute-color attribute))
+          (if (attribute-reverse-p attribute)
+              charms/ll:a_reverse
+              0)
+          (if (attribute-bold-p attribute)
+              charms/ll:a_bold
+              0)
+          (if (attribute-underline-p attribute)
+              charms/ll:a_underline
+              0)))
+
+(defvar *modeline-attribute* (make-attribute nil :reverse-p t))
+(defvar *modeline-inactive-attribute* (make-attribute nil :reverse-p t))
 
 (defun display-init ()
   (setq *old-display-width* charms/ll:*cols*)
@@ -88,7 +114,7 @@
 (defun scrwin-print-string (scrwin x y string attr)
   (cond ((null attr)
          (setf attr 0))
-        ((lem.term::attribute-p attr)
+        ((attribute-p attr)
          (setf attr (attribute-to-bits attr))))
   (charms/ll:wattron scrwin attr)
   (charms/ll:mvwaddstr scrwin y x string)

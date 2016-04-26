@@ -4,7 +4,9 @@
           add-hook
           find-file-hook
           before-save-hook
-          after-save-hook))
+          after-save-hook
+          pre-command-hook
+          post-command-hook))
 
 (defun run-hooks (hook)
   (mapc 'funcall (get hook 'hooks)))

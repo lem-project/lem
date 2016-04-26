@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(macro-running-p
+(export '(*last-read-key-sequence*
+          macro-running-p
           read-key
           unread-key
           find-keybind
@@ -18,6 +19,8 @@
           lem))
 
 (defvar *running-p* nil)
+
+(defvar *last-read-key-sequence*)
 
 (defvar *input-history* (lem.queue:make-queue 100))
 
@@ -215,7 +218,7 @@
                      (kbd c c2 (read-key))
                      (kbd c c2)))
                (kbd c)))))
-    (setq *last-input-key* key)))
+    (setq *last-read-key-sequence* key)))
 
 (defun main-step ()
   (let ((key (read-key-sequence)))
@@ -235,13 +238,13 @@
       (setq *universal-argument* nil))))
 
 (define-command self-insert (n) ("p")
-  (let ((c (insertion-key-p *last-input-key*)))
+  (let ((c (insertion-key-p *last-read-key-sequence*)))
     (cond (c
            (insert-char c n))
           (t
            (message
             "Key not found: ~a"
-            (kbd-to-string *last-input-key*))))))
+            (kbd-to-string *last-read-key-sequence*))))))
 
 (defun load-init-file ()
   (flet ((test (path)

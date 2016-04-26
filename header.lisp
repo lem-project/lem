@@ -4,7 +4,6 @@
           *debug-p*
           *tab-size*
           *enable-syntax-highlight*
-          *last-input-key*
           *scroll-recenter-p*
           define-continue-flag
           continue-flag
@@ -24,7 +23,6 @@
 (defvar *last-flags* nil)
 (defvar *curr-flags* nil)
 
-(defvar *last-input-key*)
 (defvar *universal-argument* nil)
 
 (defvar *scroll-recenter-p* t)

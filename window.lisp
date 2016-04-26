@@ -44,8 +44,6 @@
           scroll-down
           scroll-up))
 
-(defvar *redraw-flags* '(:one-line :unnecessary :all))
-
 (defvar *window-sufficient-width* 150)
 
 (defvar *modeline-default-format*
@@ -81,7 +79,6 @@
   vtop-linum
   vtop-charpos
   point-marker
-  redraw-flag
   delete-hook
   parameters)
 

@@ -7,9 +7,7 @@
           *last-input-key*
           *scroll-recenter-p*
           define-continue-flag
-          if-continue-flag
-          when-interrupted-flag
-          when-continue-flag
+          continue-flag
           save-excursion
           with-window-range
           with-buffer-read-only
@@ -61,20 +59,10 @@
                            ,gval))))
                  slots))))
 
-(defmacro if-continue-flag (flag then &optional else)
-  (let ((gflag (gensym)))
-    `(let ((,gflag ,flag))
-       (if (cdr (assoc ,gflag *last-flags*))
-           ,then
-           ,else)
-       (push (cons ,gflag t) *last-flags*)
-       (push (cons ,gflag t) *curr-flags*))))
-
-(defmacro when-interrupted-flag (flag &body body)
-  `(if-continue-flag ,flag nil (progn ,@body)))
-
-(defmacro when-continue-flag (flag &body body)
-  `(if-continue-flag ,flag (progn ,@body) nil))
+(defun continue-flag (flag)
+  (prog1 (cdr (assoc flag *last-flags*))
+    (push (cons flag t) *last-flags*)
+    (push (cons flag t) *curr-flags*)))
 
 (defmacro save-excursion (&body body)
   (let ((gpoint (gensym))

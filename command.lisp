@@ -82,7 +82,7 @@
   (when (eobp)
     (editor-error "End of buffer"))
   (when n
-    (when-interrupted-flag :kill
+    (unless (continue-flag :kill)
       (kill-ring-new)))
   (delete-char (or n 1)
                (if n t nil)))
@@ -96,7 +96,7 @@
 
 (define-key *global-keymap* (kbd "M-w") 'copy-region)
 (define-command copy-region (begin end) ("r")
-  (when-interrupted-flag :kill
+  (unless (continue-flag :kill)
     (kill-ring-new))
   (kill-push (region-string begin end))
   (buffer-mark-cancel (current-buffer))
@@ -104,7 +104,7 @@
 
 (define-key *global-keymap* (kbd "C-w") 'kill-region)
 (define-command kill-region (begin end) ("r")
-  (when-interrupted-flag :kill
+  (unless (continue-flag :kill)
     (kill-ring-new))
   (point-set begin)
   (delete-char (region-count begin end) t)
@@ -126,7 +126,7 @@
     (setf (get-bvar :yank-start) (current-point))
     (insert-string string)
     (setf (get-bvar :yank-end) (current-point))
-    (when-interrupted-flag :yank)
+    (continue-flag :yank)
     t))
 
 (define-key *global-keymap* (kbd "M-y") 'yank-pop)
@@ -134,7 +134,7 @@
   (let ((start (get-bvar :yank-start))
         (end (get-bvar :yank-end))
         prev-yank-p)
-    (when-continue-flag :yank (setq prev-yank-p t))
+    (when (continue-flag :yank) (setq prev-yank-p t))
     (cond ((and start end prev-yank-p)
            (delete-region start end)
            (kill-ring-rotate)
@@ -148,7 +148,7 @@
 (define-key *global-keymap* (kbd "C-n") 'next-line)
 (define-key *global-keymap* (kbd "[down]") 'next-line)
 (define-command next-line (&optional n) ("p")
-  (when-interrupted-flag :next-line
+  (unless (continue-flag :next-line)
     (setq *next-line-prev-column* (current-column)))
   (unless (prog1 (forward-line n)
             (move-to-column *next-line-prev-column*))

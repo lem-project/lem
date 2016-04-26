@@ -55,7 +55,7 @@
 (let ((save-words))
   (define-command abbrev () ()
     (let ((first nil))
-      (when-interrupted-flag :abbrev (setq first t))
+      (unless (continue-flag :abbrev) (setq first t))
       (if first
           (let ((src-word (preceding-word)))
             (setq *abbrev-save-word* src-word)

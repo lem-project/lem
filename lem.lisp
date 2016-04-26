@@ -328,7 +328,7 @@
 
 (defun check-init ()
   (when *running-p*
-    (error "~a is already initialized" *program-name*)))
+    (error "~A is already running" *program-name*)))
 
 (defun lem (&rest args)
   (check-init)

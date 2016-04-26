@@ -11,14 +11,13 @@
   (defun popup-completion (comp-f str)
     (let ((comp-flag t))
       (when *completion-window*
-        (when-continue-flag
-         :completion
-         (when (equal str prev-str)
-           (setq comp-flag nil)
-           (with-current-window *completion-window*
-             (unless (scroll-down (1- (window-height (current-window))))
-               (point-set (point-min)))
-             (redraw-display)))))
+        (when (continue-flag :completion)
+          (when (equal str prev-str)
+            (setq comp-flag nil)
+            (with-current-window *completion-window*
+              (unless (scroll-down (1- (window-height (current-window))))
+                (point-set (point-min)))
+              (redraw-display)))))
       (setq prev-str str)
       (if (null comp-flag)
           (values str nil)

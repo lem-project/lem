@@ -1,7 +1,9 @@
 (in-package :cl-user)
 (defpackage :lem.dired
   (:use :cl :lem)
-  (:export :dired))
+  (:export
+   :dired
+   :dired-buffer))
 (in-package :lem.dired)
 
 (define-major-mode dired-mode nil
@@ -373,3 +375,8 @@
                             (buffer-directory))))
     (and (copy-files copy-files to-pathname)
          (delete-files copy-files))))
+
+(defun dired-buffer (filename)
+  (save-excursion
+    (dired filename)
+    (current-buffer)))

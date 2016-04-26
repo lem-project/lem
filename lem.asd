@@ -47,17 +47,19 @@
                         (:file "info-mode")
                         (:file "sexp")
                         (:file "grep")
-                        (:file "abbrev")
                         (:file "prog-mode")
                         (:file "listener-mode")
                         (:file "dired")
                         (:file "lem")
+                        (:file "abbrev")
                         (:file "showparen")
                         (:file "list-buffers")
                         (:file "lisp-mode")
                         (:file "c-mode")
                         (:file "python-mode")
-                        (:file "lua-mode"))
+                        (:file "lua-mode")
+
+                        (:file "init"))
            :depends-on (:cl-charms
                         :cl-fad
                         :osicat

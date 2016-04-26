@@ -1,12 +1,13 @@
 (in-package :lem)
 
-(export '(expand-file-name
+(export '(*find-directory-function*
+          expand-file-name
           file-completion
           insert-file-contents
           get-file-buffer
           write-to-file))
 
-(defvar *get-directory-buffer-function* nil)
+(defvar *find-directory-function* nil)
 
 (defun parse-pathname (pathname)
   (let ((path))
@@ -109,8 +110,8 @@
 (defun get-file-buffer (filename)
   (setf filename (expand-file-name filename))
   (cond ((uiop:directory-pathname-p filename)
-         (if *get-directory-buffer-function*
-             (funcall *get-directory-buffer-function* filename)
+         (if *find-directory-function*
+             (funcall *find-directory-function* filename)
              (editor-error "~A is a directory" filename)))
         ((find filename (buffer-list) :key #'buffer-filename :test #'equal))
         (t

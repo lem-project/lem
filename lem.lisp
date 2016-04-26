@@ -342,11 +342,6 @@
       :stream stream
       :condition condition))))
 
-(defun dired-buffer (filename)
-  (save-excursion
-    (lem.dired:dired filename)
-    (current-buffer)))
-
 #+sbcl
 (push #'(lambda (x)
           (if x

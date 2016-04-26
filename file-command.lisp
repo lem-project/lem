@@ -49,15 +49,14 @@
 (define-key *global-keymap* (kbd "C-x C-f") 'find-file)
 (define-command find-file (filename) ("FFind File: ")
   (check-switch-minibuffer-window)
-  (let ((*get-directory-buffer-function* 'dired-buffer))
-    (multiple-value-bind (buffer new-buffer-p)
-        (get-file-buffer filename)
-      (set-buffer buffer)
-      (when (and new-buffer-p
-                 (uiop:file-pathname-p (buffer-filename buffer)))
-        (prepare-auto-mode)
-        (scan-file-property-list)
-        (run-hooks 'find-file-hook)))))
+  (multiple-value-bind (buffer new-buffer-p)
+      (get-file-buffer filename)
+    (set-buffer buffer)
+    (when (and new-buffer-p
+               (uiop:file-pathname-p (buffer-filename buffer)))
+      (prepare-auto-mode)
+      (scan-file-property-list)
+      (run-hooks 'find-file-hook))))
 
 (define-key *global-keymap* (kbd "C-x C-r") 'read-file)
 (define-command read-file (filename) ("FRead File: ")

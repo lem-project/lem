@@ -16,7 +16,6 @@
           select-buffer
           get-next-buffer
           kill-buffer
-          next-buffer
           get-buffer-windows))
 
 (defvar *buffer-list* nil)
@@ -156,12 +155,6 @@
           (set-buffer (get-next-buffer (current-buffer)))))
       (delete-buffer buffer)))
   t)
-
-(define-key *global-keymap* (kbd "C-x x") 'next-buffer)
-(define-command next-buffer (&optional (n 1)) ("p")
-  (check-switch-minibuffer-window)
-  (dotimes (_ n t)
-    (set-buffer (get-next-buffer (current-buffer)))))
 
 (defun get-buffer-windows (buffer)
   (loop :for window :in (window-list)

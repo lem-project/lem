@@ -66,11 +66,12 @@
   (message "Quit"))
 
 (defun find-keybind (key)
-  (or (some #'(lambda (mode)
-                (keymap-find-keybind (mode-keymap mode) key))
-            (buffer-minor-modes))
-      (keymap-find-keybind (mode-keymap (buffer-major-mode)) key)
-      (keymap-find-keybind *global-keymap* key)))
+  (let ((cmd (or (some #'(lambda (mode)
+                           (keymap-find-keybind (mode-keymap mode) key))
+                       (buffer-minor-modes))
+                 (keymap-find-keybind (mode-keymap (buffer-major-mode)) key)
+                 (keymap-find-keybind *global-keymap* key))))
+    (function-to-command cmd)))
 
 (define-key *global-keymap* (kbd "C-x ?") 'describe-key)
 (define-command describe-key () ()
@@ -80,7 +81,7 @@
          (cmd (find-keybind key)))
     (message "describe-key: ~a ~a"
              (kbd-to-string key)
-             cmd)))
+             (command-name cmd))))
 
 (defun describe-bindings-internal (s name keymap &optional first-p)
   (unless first-p

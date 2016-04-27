@@ -74,27 +74,36 @@
                         (car arg-descripters))
                  (,fn-name ,@(collect-variables parms))))))))
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun function-to-command-name (f)
+    (check-type f symbol)
+    (string-downcase f)))
+
+(defun find-command (name)
+  (gethash name *command-table*))
+
+(defun function-to-command (f)
+  (find-command (function-to-command-name f)))
+
+(defun command-name (command)
+  (get command 'name))
+
 (defmacro define-command (name parms (&rest arg-descripters) &body body)
   (let ((gcmd (gensym (symbol-name name))))
     `(progn
-       (setf (gethash ,(string-downcase (symbol-name name))
+       (setf (get ',gcmd 'name) (string-downcase ',name))
+       (setf (gethash ,(function-to-command-name name)
                       *command-table*)
              ',gcmd)
        (defun ,name ,parms ,@body)
        ,(define-command-gen-cmd gcmd name parms arg-descripters))))
 
 (defun cmd-call (cmd arg)
-  (cond ((fboundp cmd)
-         (run-hooks 'pre-command-hook) ;!!!
-         (prog1 (funcall (gethash (string-downcase (symbol-name cmd))
-                                  *command-table*)
-                         arg)
-           (buffer-undo-boundary)       ;!!!
-           (run-hooks 'post-command-hook) ;!!!
-           ))
-        (t
-         (message "undefined command: ~a" cmd)
-         nil)))
+  (run-hooks 'pre-command-hook)         ;!!!
+  (prog1 (funcall cmd arg)
+    (buffer-undo-boundary)              ;!!!
+    (run-hooks 'post-command-hook)      ;!!!
+    ))
 
 (defun command-completion (str)
   (let ((names))
@@ -105,7 +114,7 @@
     (completion str (nreverse names))))
 
 (defun exist-command-p (str)
-  (if (gethash str *command-table*) t nil))
+  (if (find-command str) t nil))
 
 (define-key *global-keymap* (kbd "M-x") 'execute-command)
 (define-command execute-command (name)

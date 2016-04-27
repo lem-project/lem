@@ -117,15 +117,17 @@
   (if (find-command str) t nil))
 
 (define-key *global-keymap* (kbd "M-x") 'execute-command)
-(define-command execute-command (name)
-  ((list (minibuf-read-line
-          "M-x "
-          ""
-          'command-completion
-          'exist-command-p)))
-  (let ((cmd (gethash name *command-table*)))
+(define-command execute-command (arg) ("P")
+  (let* ((name (minibuf-read-line
+                (if arg
+                    (format nil "~D M-x " arg)
+                    "M-x ")
+                ""
+                'command-completion
+                'exist-command-p))
+         (cmd (find-command name)))
     (if cmd
-        (funcall cmd *universal-argument*)
+        (funcall cmd arg)
         (message "invalid command"))))
 
 (define-command apropos-command (str) ("sApropos: ")

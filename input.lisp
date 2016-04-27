@@ -15,7 +15,8 @@
 (defvar *last-read-key-sequence*)
 
 (defvar *macro-recording-p* nil)
-(defvar *macro-chars* nil)
+(defvar *temp-macro-chars* nil)
+(defvar *last-macro-chars* nil)
 (defvar *macro-running-p* nil)
 
 (defun macro-running-p () *macro-running-p*)
@@ -27,12 +28,12 @@
                   (get-char nil)
                   (pop *unread-keys*))))
     (when *macro-recording-p*
-      (push char *macro-chars*))
+      (push char *temp-macro-chars*))
     char))
 
 (defun unread-key (char)
   (when *macro-recording-p*
-    (pop *macro-chars*))
+    (pop *temp-macro-chars*))
   (push char *unread-keys*))
 
 (defun input-enqueue (c)
@@ -42,7 +43,8 @@
                (list c))))
 
 (defun unread-key-sequence (key)
-  (mapc 'input-enqueue (kbd-list key)))
+  (mapc 'input-enqueue
+        (if (listp key) key (kbd-list key)))) ;!!!
 
 (defun read-key-sequence ()
   (let ((key
@@ -64,7 +66,7 @@
         (t
          (message "Start macro")
          (setq *macro-recording-p* t)
-         (setq *macro-chars* nil)
+         (setq *temp-macro-chars* nil)
          t)))
 
 (define-key *global-keymap* (kbd "C-x )") 'end-macro)
@@ -74,8 +76,21 @@
          (message "Macro not active"))
         (t
          (setq *macro-recording-p* nil)
+         (setq *last-macro-chars* (nreverse *temp-macro-chars*))
          (message "End macro")
          t)))
+
+(defun execute-key-sequence (key-sequence)
+  (let ((prev-unread-keys-length (length *unread-keys*)))
+    (unread-key-sequence key-sequence)
+    (do ()
+        ((>= prev-unread-keys-length
+             (length *unread-keys*))
+         t)
+      (handler-case (funcall (find-keybind (read-key-sequence)) nil)
+        (editor-condition ()
+          (setf *unread-keys* prev-unread-keys-length)
+          (return nil))))))
 
 (define-key *global-keymap* (kbd "C-x e") 'execute-macro)
 (define-command execute-macro (n) ("p")
@@ -87,21 +102,9 @@
         (t
          (let ((*macro-running-p* t))
            (loop
-             :named outer
              :repeat n
-             :while *macro-running-p*
-             :do (let ((length (length *unread-keys*)))
-                   (mapc 'input-enqueue (reverse *macro-chars*))
-                   (loop :while (< length (length *unread-keys*)) :do
-                     (unless *macro-running-p*
-                       (loop :while (< length (length *unread-keys*))
-                             :do (read-key))
-                       (return-from outer nil))
-                     (handler-case (funcall (find-keybind (read-key-sequence)) nil)
-                       (editor-condition ()
-                         (setf *unread-keys* nil)
-                         (return-from outer nil)))))
-             :finally (return-from outer t))))))
+             :while (execute-key-sequence *last-macro-chars*)
+             :finally (return t))))))
 
 (define-command apply-macro-to-region-lines () ()
   (apply-region-lines (region-beginning)

@@ -452,15 +452,29 @@
         (update-display-size)
         (return code))))
 
+
 (defun get-char (timeout)
   (etypecase timeout
     (integer
-     (charms/ll:timeout timeout)
-     (let ((c (get-char-1)))
-       (charms/ll:timeout -1)
-       (if (= -1 c)
-           (values #\nul t)
-           (values (code-char c) nil))))
+     (let ((num 100000))
+       (cond ((< num timeout)
+              (multiple-value-bind (div mod)
+                  (floor timeout num)
+                (loop :repeat div :do
+                  (multiple-value-bind (char timeout-p)
+                      (get-char num)
+                    (unless timeout-p
+                      (return char))))
+                (if (zerop mod)
+                    (values #\nul t)
+                    (get-char mod))))
+             (t
+              (charms/ll:timeout timeout)
+              (let ((c (get-char-1)))
+                (charms/ll:timeout -1)
+                (if (= -1 c)
+                    (values #\nul t)
+                    (values (code-char c) nil)))))))
     (null
      (loop :for code := (get-char-1) :do
        (when (/= code -1)

@@ -295,7 +295,8 @@
            (reset-player)
            (draw))
           (t
-           (tetris-move-down)))))
+           (tetris-move-down)))
+    (redraw-display)))
 
 (define-command tetris () ()
   (let ((buffer (get-buffer-create "*tetris*")))

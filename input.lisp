@@ -29,9 +29,22 @@
 (defun key-recording-p ()
   *key-recording-p*)
 
+(defun read-key-with-timer ()
+  (loop
+    (let ((ms (shortest-wait-timers)))
+      (if (null ms)
+          (return (get-char nil))
+          (if (minusp ms)
+              (update-timer)
+              (multiple-value-bind (char timeout-p)
+                  (get-char ms)
+                (if timeout-p
+                    (update-timer)
+                    (return char))))))))
+
 (defun read-key ()
   (let ((char (if (null *unread-keys*)
-                  (get-char nil)
+                  (read-key-with-timer)
                   (pop *unread-keys*))))
     (when *key-recording-p*
       (push char *temp-macro-chars*))

@@ -60,5 +60,15 @@
     (setq *timer-list* (set-difference *timer-list* promised-timers))
     update-p))
 
+(defun shortest-wait-timers ()
+  (let ((list (mapcar (lambda (timer)
+                        (- (timer-_ms timer)
+                           (- (get-internal-real-time)
+                              (timer-last-time timer))))
+                      *timer-list*)))
+    (if (null list)
+        nil
+        (reduce #'min list))))
+
 (defun exist-running-timer-p ()
   (not (null *timer-list*)))

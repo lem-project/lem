@@ -22,8 +22,6 @@
 
 (defvar *last-read-key-sequence*)
 
-(defvar *input-history* (lem.queue:make-queue 100))
-
 (defvar *macro-recording-p* nil)
 (defvar *macro-chars* nil)
 (defvar *macro-running-p* nil)
@@ -36,7 +34,6 @@
   (let ((char (if (null *input-queue*)
                   (get-char nil)
                   (pop *input-queue*))))
-    (lem.queue:enqueue *input-history* char)
     (when *macro-recording-p*
       (push char *macro-chars*))
     char))

@@ -11,9 +11,7 @@
 
 (define-key *global-keymap* (kbd "C-g") 'keyboard-quit)
 (define-command keyboard-quit () ()
-  (setq *macro-recording-p* nil)
-  (buffer-mark-cancel (current-buffer))
-  (message "Quit"))
+  (error 'editor-abort))
 
 (defun find-keybind (key)
   (let ((cmd (or (some #'(lambda (mode)
@@ -132,12 +130,12 @@
 
 (defun lem-main ()
   (macrolet ((form (&body body)
-                   `(cond (*debug-p*
-                           (handler-bind ((error #'bailout)
-                                          #+sbcl (sb-sys:interactive-interrupt #'bailout))
-                             ,@body))
-                          (t
-                           ,@body))))
+               `(cond (*debug-p*
+                       (handler-bind ((error #'bailout)
+                                      #+sbcl (sb-sys:interactive-interrupt #'bailout))
+                         ,@body))
+                      (t
+                       ,@body))))
     (do ((*curr-flags* (make-flags) (make-flags))
          (*last-flags* (make-flags) *curr-flags*))
         (nil)
@@ -147,9 +145,15 @@
          (message nil)
          (let* ((key (read-key-sequence))
                 (cmd (find-keybind key)))
-           (handler-case (cmd-call cmd nil)
+           (handler-case
+               (handler-bind ((editor-condition
+                                (lambda (c)
+                                  (declare (ignore c))
+                                  (stop-record-key))))
+                 (cmd-call cmd nil))
              (editor-abort ()
-               (keyboard-quit))
+               (buffer-mark-cancel (current-buffer))
+               (message "Quit"))
              (readonly ()
                (message "Read Only"))
              (editor-error (c)

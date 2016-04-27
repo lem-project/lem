@@ -50,6 +50,7 @@
                         (:file "input")
                         (:file "lem")
 
+                        (:file "kbdmacro")
                         (:file "isearch")
                         (:file "showparen")
                         (:file "list-buffers")

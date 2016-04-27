@@ -1,50 +1,51 @@
 (in-package :lem)
 
 (export '(*last-read-key-sequence*
-          macro-running-p
+          start-record-key
+          stop-record-key
+          key-recording-p
           read-key
           unread-key
-          begin-macro
-          end-macro
-          execute-macro
-          apply-macro-to-region-lines
           read-key-sequence
           unread-key-sequence
+          execute-key-sequence
           sit-for))
 
 (defvar *last-read-key-sequence*)
 
-(defvar *macro-recording-p* nil)
+(defvar *key-recording-p* nil)
 (defvar *temp-macro-chars* nil)
-(defvar *last-macro-chars* nil)
-(defvar *macro-running-p* nil)
-
-(defun macro-running-p () *macro-running-p*)
 
 (defvar *unread-keys* nil)
+
+(defun start-record-key ()
+  (setq *key-recording-p* t)
+  (setq *temp-macro-chars* nil))
+
+(defun stop-record-key ()
+  (setq *key-recording-p* nil)
+  (nreverse *temp-macro-chars*))
+
+(defun key-recording-p ()
+  *key-recording-p*)
 
 (defun read-key ()
   (let ((char (if (null *unread-keys*)
                   (get-char nil)
                   (pop *unread-keys*))))
-    (when *macro-recording-p*
+    (when *key-recording-p*
       (push char *temp-macro-chars*))
     char))
 
 (defun unread-key (char)
-  (when *macro-recording-p*
+  (when *key-recording-p*
     (pop *temp-macro-chars*))
   (push char *unread-keys*))
 
-(defun input-enqueue (c)
-  (check-type c character)
+(defun unread-key-sequence (key)
   (setf *unread-keys*
         (nconc *unread-keys*
-               (list c))))
-
-(defun unread-key-sequence (key)
-  (mapc 'input-enqueue
-        (if (listp key) key (kbd-list key)))) ;!!!
+               (if (listp key) key (kbd-list key))))) ;!!!
 
 (defun read-key-sequence ()
   (let ((key
@@ -58,30 +59,9 @@
                (kbd c)))))
     (setq *last-read-key-sequence* key)))
 
-(define-key *global-keymap* (kbd "C-x (") 'begin-macro)
-(define-command begin-macro () ()
-  (cond (*macro-recording-p*
-         (message "Macro already active")
-         nil)
-        (t
-         (message "Start macro")
-         (setq *macro-recording-p* t)
-         (setq *temp-macro-chars* nil)
-         t)))
-
-(define-key *global-keymap* (kbd "C-x )") 'end-macro)
-(define-command end-macro () ()
-  (cond (*macro-running-p* t)
-        ((not *macro-recording-p*)
-         (message "Macro not active"))
-        (t
-         (setq *macro-recording-p* nil)
-         (setq *last-macro-chars* (nreverse *temp-macro-chars*))
-         (message "End macro")
-         t)))
-
 (defun execute-key-sequence (key-sequence)
-  (let ((prev-unread-keys-length (length *unread-keys*)))
+  (let ((prev-unread-keys-length (length *unread-keys*))
+        (prev-unread-keys (copy-list *unread-keys*)))
     (unread-key-sequence key-sequence)
     (do ()
         ((>= prev-unread-keys-length
@@ -89,29 +69,8 @@
          t)
       (handler-case (funcall (find-keybind (read-key-sequence)) nil)
         (editor-condition ()
-          (setf *unread-keys* prev-unread-keys-length)
+          (setf *unread-keys* prev-unread-keys)
           (return nil))))))
-
-(define-key *global-keymap* (kbd "C-x e") 'execute-macro)
-(define-command execute-macro (n) ("p")
-  (cond (*macro-recording-p*
-         (message "Macro already active")
-         nil)
-        (*macro-running-p*
-         nil)
-        (t
-         (let ((*macro-running-p* t))
-           (loop
-             :repeat n
-             :while (execute-key-sequence *last-macro-chars*)
-             :finally (return t))))))
-
-(define-command apply-macro-to-region-lines () ()
-  (apply-region-lines (region-beginning)
-                      (region-end)
-                      #'(lambda ()
-                          (execute-macro 1)))
-  t)
 
 (defun sit-for (seconds &optional (update-window-p t))
   (when update-window-p (redraw-display))

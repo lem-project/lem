@@ -191,8 +191,7 @@
     (handler-case
         (with-allow-interrupt nil
           (with-current-window (minibuffer-window)
-            (let ((*universal-argument* nil)
-                  (minibuf-buffer-prev-string
+            (let ((minibuf-buffer-prev-string
                    (join "" (buffer-take-lines (minibuffer))))
                   (minibuf-buffer-prev-point
                    (window-point (minibuffer-window)))

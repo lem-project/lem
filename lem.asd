@@ -47,6 +47,7 @@
                         (:file "sexp")
                         (:file "prog-mode")
                         (:file "listener-mode")
+                        (:file "input")
                         (:file "lem")
 
                         (:file "isearch")

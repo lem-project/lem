@@ -181,9 +181,9 @@
              (cmd (find-keybind key)))
         (handler-case (cmd-call cmd nil)
           (editor-abort (c)
-                        (when (/= (editor-abort-depth c)
-                                  *minibuf-read-line-depth*)
-                          (error c)))
+            (when (/= (editor-abort-depth c)
+                      *minibuf-read-line-depth*)
+              (error c)))
           (editor-error (c) (message (editor-error-message c))))))))
 
 (defun minibuf-read-line (prompt initial comp-f existing-p)

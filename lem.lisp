@@ -223,22 +223,6 @@
                (kbd c)))))
     (setq *last-read-key-sequence* key)))
 
-(defun main-step ()
-  (let ((key (read-key-sequence)))
-    (prog1 (let ((cmd (find-keybind key)))
-             (and cmd
-                  (or (handler-case (cmd-call cmd nil)
-                        (editor-abort ()
-                          (keyboard-quit)
-                          nil)
-                        (readonly ()
-                          (message "Read Only")
-                          nil)
-                        (editor-error (c)
-                          (message (editor-error-message c))
-                          nil))
-                      (setq *macro-running-p* nil)))))))
-
 (define-command self-insert (n) ("p")
   (let ((c (insertion-key-p *last-read-key-sequence*)))
     (cond (c
@@ -286,7 +270,15 @@
         (form
          (redraw-display)
          (message nil)
-         (main-step))))))
+         (let* ((key (read-key-sequence))
+                (cmd (find-keybind key)))
+           (handler-case (cmd-call cmd nil)
+             (editor-abort ()
+               (keyboard-quit))
+             (readonly ()
+               (message "Read Only"))
+             (editor-error (c)
+               (message (editor-error-message c))))))))))
 
 (let ((passed nil))
   (defun lem-init (args)

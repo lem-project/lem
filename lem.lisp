@@ -156,7 +156,10 @@
                            (loop :while (< length (input-queue-length))
                              :do (read-key))
                            (return-from outer nil))
-                         (main-step)))
+                         (handler-case (funcall (find-keybind (read-key-sequence)) nil)
+                           (editor-condition ()
+                             (setf *input-queue* nil)
+                             (return-from outer nil)))))
                  :finally (return-from outer t)))))))
 
 (define-command apply-macro-to-region-lines () ()

@@ -2,6 +2,7 @@
 
 (export '(*modeline-default-format*
           *window-sufficient-width*
+          *scroll-recenter-p*
           modeline-read-only-p
           modeline-modified-p
           modeline-name
@@ -32,6 +33,7 @@
           delete-window))
 
 (defvar *window-sufficient-width* 150)
+(defvar *scroll-recenter-p* t)
 
 (defvar *modeline-default-format*
   (list 'modeline-read-only-p

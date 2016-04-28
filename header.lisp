@@ -4,7 +4,6 @@
           *debug-p*
           *tab-size*
           *enable-syntax-highlight*
-          *scroll-recenter-p*
           define-continue-flag
           continue-flag
           save-excursion
@@ -22,8 +21,6 @@
 
 (defvar *last-flags* nil)
 (defvar *curr-flags* nil)
-
-(defvar *scroll-recenter-p* t)
 
 (defvar *continue-command-flags*
   (list :next-line :kill :undo :abbrev :yank :completion))

@@ -5,7 +5,6 @@
           bobp
           eobp
           insert-char
-          insert-lines
           insert-string
           insert-newline
           delete-char
@@ -54,7 +53,7 @@
 (defun eobp ()
   (and (tail-line-p) (eolp)))
 
-(defun insert-char (c n)
+(defun insert-char (c &optional (n 1))
   (dotimes (_ n t)
     (when (buffer-insert-char
            (current-buffer)

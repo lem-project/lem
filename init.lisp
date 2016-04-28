@@ -1,5 +1,9 @@
 (setf lem:*find-directory-function* 'lem.dired:dired-buffer)
 
+(lem:add-hook 'lem:find-file-hook
+              (lambda ()
+                (lem:syntax-scan-buffer (lem:current-buffer))))
+
 ;;; !!!
 (progn
   (defvar *syntax-timer* nil)
@@ -15,7 +19,7 @@
                   (when (lem::timer-p *syntax-timer*)
                     (lem:stop-timer *syntax-timer*))
                   (setq *syntax-timer*
-                        (lem:start-timer 100
+                        (lem:start-timer 500
                                          nil
                                          (lambda ()
                                            (unless (lem:active-minibuffer-window)

@@ -29,6 +29,7 @@
           syntax-start-block-comment-p
           syntax-end-block-comment-p
           syntax-scan-window
+          syntax-scan-buffer
           syntax-after-tag
           syntax-before-tag
           syntax-following-tag

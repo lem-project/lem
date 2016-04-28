@@ -4,8 +4,6 @@
           *debug-p*
           *tab-size*
           *enable-syntax-highlight*
-          define-continue-flag
-          continue-flag
           save-excursion
           with-window-range
           with-buffer-read-only
@@ -18,20 +16,6 @@
 (defvar *tab-size* 8)
 
 (defvar *enable-syntax-highlight* t)
-
-(defvar *last-flags* nil)
-(defvar *curr-flags* nil)
-
-(defvar *continue-command-flags*
-  (list :next-line :kill :undo :abbrev :yank :completion))
-
-(defun define-continue-flag (keyword)
-  (push keyword *continue-command-flags*))
-
-(defun make-flags ()
-  (mapcar #'(lambda (sym)
-              (cons sym nil))
-          *continue-command-flags*))
 
 (defmacro define-class (name () default-arg-expr &body slots)
   (let ((garg (gensym "ARG"))
@@ -51,11 +35,6 @@
                            (setf (slot-value ,garg ',slot) ,gval)
                            ,gval))))
                  slots))))
-
-(defun continue-flag (flag)
-  (prog1 (cdr (assoc flag *last-flags*))
-    (push (cons flag t) *last-flags*)
-    (push (cons flag t) *curr-flags*)))
 
 (defmacro save-excursion (&body body)
   (let ((gpoint (gensym))

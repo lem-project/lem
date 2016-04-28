@@ -4,6 +4,8 @@
   (:export :abbrev))
 (in-package :lem.abbrev)
 
+(add-continue-flag :abbrev)
+
 (defun preceding-word ()
   (let ((chars))
     (save-excursion

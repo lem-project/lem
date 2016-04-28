@@ -169,9 +169,7 @@
         (*minibuf-read-line-existing-p* existing-p)
         (*minibuf-read-line-comp-f* comp-f))
     (catch 'minibuf-read-line-end
-      (do ((*curr-flags* (make-flags) (make-flags))
-           (*last-flags* (make-flags) *curr-flags*))
-          (nil)
+      (do-commandloop ()
         (redraw-display)
         (let* ((key (read-key-sequence))
                (cmd (find-keybind key)))
@@ -184,9 +182,9 @@
               (message "Read Only"))
             (editor-error (c)
               (message (editor-error-message c)))))))
-      (let ((str (minibuf-get-line)))
-        (add-history *minibuf-read-line-history* str)
-        str)))
+    (let ((str (minibuf-get-line)))
+      (add-history *minibuf-read-line-history* str)
+      str)))
 
 (defun minibuf-read-line (prompt initial comp-f existing-p)
   (let ((*minibuf-read-line-tmp-window* (current-window)))

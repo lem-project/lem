@@ -18,6 +18,7 @@
                         (:file "errors")
                         (:file "hooks")
                         (:file "header")
+                        (:file "commandloop")
                         (:file "screen")
                         (:file "wide")
                         (:file "key")

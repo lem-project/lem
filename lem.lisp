@@ -45,9 +45,7 @@
                          ,@body))
                       (t
                        ,@body))))
-    (do ((*curr-flags* (make-flags) (make-flags))
-         (*last-flags* (make-flags) *curr-flags*))
-        (nil)
+    (do-commandloop ()
       (with-error-handler ()
         (form
          (redraw-display)

@@ -142,9 +142,9 @@
       (with-error-handler ()
         (form
          (redraw-display)
-         (message nil)
          (let* ((key (read-key-sequence))
                 (cmd (find-keybind key)))
+           (message nil)
            (handler-case
                (handler-bind ((editor-condition
                                 (lambda (c)

@@ -403,7 +403,6 @@
     (charms/ll:doupdate)))
 
 (defun redraw-display ()
-  (charms/ll:wnoutrefresh *echo-area-scrwin*)
   (dolist (window (window-list))
     (unless (eq window (current-window))
       (redraw-display-window window nil)))
@@ -451,7 +450,6 @@
     (if (= code 410)
         (update-display-size)
         (return code))))
-
 
 (defun get-char (timeout)
   (etypecase timeout

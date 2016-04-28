@@ -242,8 +242,8 @@
     (delete-char (- n) use-kill-ring)))
 
 (defun blank-line-p ()
-  (let ((string (buffer-line-string (current-buffer) (current-linum)))
-        (eof-p (buffer-end-line-p (current-buffer) (current-linum))))
+  (let ((string (current-line-string))
+        (eof-p (tail-line-p)))
     (when (string= "" (string-trim '(#\space #\tab) string))
       (+ (length string)
          (if eof-p 0 1)))))
@@ -282,8 +282,7 @@
   (buffer-remove-attribute (current-buffer) start end attr))
 
 (defun current-column ()
-  (str-width (buffer-line-string (current-buffer)
-                                 (current-linum))
+  (str-width (current-line-string)
              0
              (current-charpos)))
 
@@ -292,10 +291,7 @@
   (end-of-line)
   (let ((current-column (current-column)))
     (cond ((< column current-column)
-           (set-charpos (wide-index (buffer-line-string
-                                     (current-buffer)
-                                     (current-linum))
-                                    column))
+           (set-charpos (wide-index (current-line-string) column))
            column)
           (force
            (insert-char #\space (- column current-column))

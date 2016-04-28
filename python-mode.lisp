@@ -44,9 +44,7 @@
       (python-unindent (- n))))
   (dotimes (_ n t)
     (multiple-value-bind (start end)
-        (ppcre:scan "^\\s*"
-                    (buffer-line-string (current-buffer)
-                                        (current-linum)))
+        (ppcre:scan "^\\s*" (current-line-string))
       (when start
         (save-excursion (detab-line 1))
         (let ((mod (mod end *python-indent-size*)))
@@ -62,9 +60,7 @@
       (python-indent (- n))))
   (dotimes (_ n t)
     (multiple-value-bind (start end)
-        (ppcre:scan "^\\s*"
-                    (buffer-line-string (current-buffer)
-                                        (current-linum)))
+        (ppcre:scan "^\\s*" (current-line-string))
       (when start
         (save-excursion (detab-line 1))
         (let ((mod (mod end *python-indent-size*)))

@@ -111,8 +111,7 @@
      #'(lambda ()
          (multiple-value-bind (start end)
              (ppcre:scan scanner
-                         (buffer-line-string (current-buffer)
-                                             (current-linum))
+                         (current-line-string)
                          :start (current-charpos))
            (when (and start (<= (current-charpos) start))
              (if (= start end)
@@ -121,8 +120,7 @@
      #'(lambda ()
          (multiple-value-bind (start end)
              (ppcre:scan scanner
-                         (buffer-line-string (current-buffer)
-                                             (current-linum)))
+                         (current-line-string))
            (when start end)))
      #'forward-line
      #'set-charpos
@@ -140,8 +138,7 @@
                             reg-starts
                             reg-ends
                             scanner
-                            (buffer-line-string (current-buffer)
-                                                (current-linum))
+                            (current-line-string)
                             nil
                             :end (current-charpos))
              (setq pos start))
@@ -153,8 +150,7 @@
                             reg-starts
                             reg-ends
                             scanner
-                            (buffer-line-string (current-buffer)
-                                                (current-linum))
+                            (current-line-string)
                             nil
                             :start (current-charpos))
              (setq pos start))
@@ -165,8 +161,7 @@
 
 (defun search-symbol-positions (name &key start end)
   (let ((positions)
-        (str (buffer-line-string (current-buffer)
-                                 (current-linum))))
+        (str (current-line-string)))
     (ppcre:do-scans (start-var
                      end-var
                      reg-starts
@@ -202,8 +197,7 @@
 (defun looking-at-line (regex &key (start nil startp) (end nil endp))
   (macrolet ((m (&rest args)
                 `(ppcre:scan regex
-                             (buffer-line-string (current-buffer)
-                                                 (current-linum))
+                             (current-line-string)
                              ,@args)))
     (cond ((and startp endp)
            (m :start start :end end))

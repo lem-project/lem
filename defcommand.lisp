@@ -2,9 +2,7 @@
 
 (export '(command-completion
           define-command
-          exist-command-p
-          execute-command
-          apropos-command))
+          exist-command-p))
 
 (defvar *command-table* (make-hash-table :test 'equal))
 
@@ -116,30 +114,10 @@
 (defun exist-command-p (str)
   (if (find-command str) t nil))
 
-(define-key *global-keymap* (kbd "M-x") 'execute-command)
-(define-command execute-command (arg) ("P")
-  (let* ((name (minibuf-read-line
-                (if arg
-                    (format nil "~D M-x " arg)
-                    "M-x ")
-                ""
-                'command-completion
-                'exist-command-p))
-         (cmd (find-command name)))
-    (if cmd
-        (funcall cmd arg)
-        (message "invalid command"))))
-
-(define-command apropos-command (str) ("sApropos: ")
-  (info-popup (get-buffer-create "*Apropos*")
-              #'(lambda (out)
-                  (maphash #'(lambda (name cmd)
-                               (declare (ignore cmd))
-                               (when (search str name)
-                                 (dolist (kbd (search-keybind-all name))
-                                   (princ (format nil "~a~a~a~%"
-                                                  name
-                                                  #\tab
-                                                  (kbd-to-string kbd))
-                                          out))))
-                           *command-table*))))
+(defun all-command-names ()
+  (let ((names))
+    (maphash (lambda (name cmd)
+               (declare (ignore cmd))
+               (push name names))
+             *command-table*)
+    (nreverse names)))

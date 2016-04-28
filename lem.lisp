@@ -1,8 +1,6 @@
 (in-package :lem)
 
 (export '(find-keybind
-          describe-key
-          describe-bindings
           universal-argument
           self-insert
           lem))
@@ -20,48 +18,6 @@
                  (keymap-find-keybind (mode-keymap (buffer-major-mode)) key)
                  (keymap-find-keybind *global-keymap* key))))
     (function-to-command cmd)))
-
-(define-key *global-keymap* (kbd "C-x ?") 'describe-key)
-(define-command describe-key () ()
-  (message "describe-key: ")
-  (redraw-display)
-  (let* ((key (read-key-sequence))
-         (cmd (find-keybind key)))
-    (message "describe-key: ~a ~a"
-             (kbd-to-string key)
-             (command-name cmd))))
-
-(defun describe-bindings-internal (s name keymap &optional first-p)
-  (unless first-p
-    (princ C-L s)
-    (terpri s))
-  (let ((column-width 16))
-    (princ name s)
-    (terpri s)
-    (format s "~va~a~%" column-width "key" "binding")
-    (format s "~va~a~%" column-width "---" "-------")
-    (maphash #'(lambda (k v)
-                 (format s "~va~a~%"
-                         column-width
-                         (kbd-to-string k)
-                         (symbol-name v)))
-             (keymap-table keymap))
-    (terpri s)))
-
-(define-command describe-bindings () ()
-  (info-popup (get-buffer-create "*bindings*")
-              #'(lambda (s)
-                  (describe-bindings-internal s
-                                              "Major Mode Bindings"
-                                              (mode-keymap (major-mode))
-                                              t)
-                  (describe-bindings-internal s
-                                              "Global Bindings"
-                                              *global-keymap*)
-                  (dolist (mode (buffer-minor-modes))
-                    (describe-bindings-internal s
-                                                (mode-name mode)
-                                                (mode-keymap mode))))))
 
 (define-key *global-keymap* (kbd "C-u") 'universal-argument)
 (define-command universal-argument () ()

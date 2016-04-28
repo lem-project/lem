@@ -50,6 +50,7 @@
                         (:file "listener-mode")
                         (:file "input")
                         (:file "lem")
+                        (:file "help-command")
 
                         (:file "kbdmacro")
                         (:file "isearch")

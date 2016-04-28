@@ -448,9 +448,21 @@
 
 (defun get-char-1 ()
   (loop :for code := (charms/ll:getch) :do
-    (if (= code 410)
-        (update-display-size)
-        (return code))))
+    (cond ((= code 410)
+           (update-display-size))
+          ((= code -1)
+           (return nil))
+          (t
+           (return
+             (let ((nbytes (utf8-bytes code)))
+               (if (= nbytes 1)
+                   (code-char code)
+                   (aref (babel:octets-to-string
+                          (coerce (cons code
+                                        (loop :repeat (1- nbytes)
+                                          :collect (charms/ll:getch)))
+                                  '(vector (unsigned-byte 8))))
+                         0))))))))
 
 (defun get-char (timeout)
   (etypecase timeout
@@ -469,21 +481,12 @@
                     (get-char mod))))
              (t
               (charms/ll:timeout timeout)
-              (let ((c (get-char-1)))
+              (let ((char (get-char-1)))
                 (charms/ll:timeout -1)
-                (if (= -1 c)
+                (if (null char)
                     (values #\nul t)
-                    (values (code-char c) nil)))))))
+                    (values char nil)))))))
     (null
-     (loop :for code := (get-char-1) :do
-       (when (/= code -1)
-         (return
-           (let ((nbytes (utf8-bytes code)))
-             (if (= nbytes 1)
-                 (code-char code)
-                 (aref (babel:octets-to-string
-                        (coerce (cons code
-                                      (loop :repeat (1- nbytes)
-                                        :collect (get-char-1)))
-                                '(vector (unsigned-byte 8))))
-                       0)))))))))
+     (loop :for char := (get-char-1) :do
+       (unless (null char)
+         (return char))))))

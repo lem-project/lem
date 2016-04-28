@@ -136,8 +136,3 @@
         (append (delete buffer (buffer-list))
                 (list buffer)))
   (car (buffer-list)))
-
-(defun get-buffer-windows (buffer)
-  (loop :for window :in (window-list)
-    :when (eq buffer (window-buffer window))
-    :collect window))

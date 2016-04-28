@@ -792,3 +792,8 @@
                     n))
           (t
            (resize-window-recursive parent-node n apply-fn split-type)))))
+
+(defun get-buffer-windows (buffer)
+  (loop :for window :in (window-list)
+    :when (eq buffer (window-buffer window))
+    :collect window))

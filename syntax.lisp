@@ -6,6 +6,7 @@
           *syntax-constant-attribute*
           *syntax-function-name-attribute*
           *syntax-variable-attribute*
+          *enable-syntax-highlight*
           syntax-table
           make-syntax-table
           make-syntax-test
@@ -41,6 +42,8 @@
 (defvar *syntax-constant-attribute* (make-attribute "magenta"))
 (defvar *syntax-function-name-attribute* (make-attribute "cyan"))
 (defvar *syntax-variable-attribute* (make-attribute "yellow"))
+
+(defvar *enable-syntax-highlight* t)
 
 (defstruct (syntax-test (:constructor %make-syntax-test))
   thing

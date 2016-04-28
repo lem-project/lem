@@ -3,7 +3,6 @@
 (export '(*program-name*
           *debug-p*
           *tab-size*
-          *enable-syntax-highlight*
           save-excursion
           with-window-range
           with-buffer-read-only
@@ -14,8 +13,6 @@
 (defvar *debug-p* nil)
 
 (defvar *tab-size* 8)
-
-(defvar *enable-syntax-highlight* t)
 
 (defmacro define-class (name () default-arg-expr &body slots)
   (let ((garg (gensym "ARG"))

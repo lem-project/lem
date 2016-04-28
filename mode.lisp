@@ -9,8 +9,7 @@
           find-mode-from-name
           toggle-minor-mode
           define-major-mode
-          define-minor-mode
-          fundamental-mode))
+          define-minor-mode))
 
 (defvar *mode-list* nil)
 
@@ -100,8 +99,3 @@
               (setf (buffer-minor-modes)
                     (delete ',minor-mode (buffer-minor-modes)))))
        ,@body)))
-
-(defvar *global-keymap* (make-keymap 'self-insert))
-(define-major-mode fundamental-mode nil
-  (:name "fundamental"
-   :keymap *global-keymap*))

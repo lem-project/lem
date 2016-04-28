@@ -96,17 +96,6 @@
        (defun ,name ,parms ,@body)
        ,(define-command-gen-cmd gcmd name parms arg-descripters))))
 
-(defun command-completion (str)
-  (let ((names))
-    (maphash #'(lambda (name cmd)
-                 (declare (ignore cmd))
-                 (push name names))
-             *command-table*)
-    (completion str (nreverse names))))
-
-(defun exist-command-p (str)
-  (if (find-command str) t nil))
-
 (defun all-command-names ()
   (let ((names))
     (maphash (lambda (name cmd)
@@ -114,3 +103,9 @@
                (push name names))
              *command-table*)
     (nreverse names)))
+
+(defun command-completion (str)
+  (completion str (all-command-names)))
+
+(defun exist-command-p (str)
+  (if (find-command str) t nil))

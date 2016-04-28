@@ -4,19 +4,31 @@
           make-overlay
           delete-overlay))
 
-(defstruct (overlay (:constructor %make-overlay))
-  start
-  end
-  attr
-  buffer)
+(defclass overlay ()
+  ((start
+    :initarg :start
+    :reader overlay-start)
+   (end
+    :initarg :end
+    :reader overlay-end)
+   (attr
+    :initarg :attr
+    :reader overlay-attr)
+   (buffer
+    :initarg :buffer
+    :reader overlay-buffer)))
+
+(defun overlay-p (x)
+  (typep x 'overlay))
 
 (defun make-overlay (start end attribute &optional (buffer (current-buffer)))
   (check-type attribute attribute)
   (let ((overlay
-         (%make-overlay :start start
-                        :end end
-                        :attr attribute
-                        :buffer buffer)))
+          (make-instance 'overlay
+                         :start start
+                         :end end
+                         :attr attribute
+                         :buffer buffer)))
     (buffer-add-overlay buffer overlay)
     overlay))
 

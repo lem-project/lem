@@ -30,8 +30,6 @@
     (push keymap *keymaps*)
     keymap))
 
-(defvar *global-keymap* (make-keymap 'self-insert))
-
 (defclass kbd ()
   ((list :initarg :list
          :reader kbd-list)))

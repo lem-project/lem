@@ -203,10 +203,10 @@
     t))
 
 (define-command isearch-self-insert () ()
-  (let ((c (insertion-key-p *last-read-key-sequence*)))
+  (let ((c (insertion-key-p (last-read-key-sequence))))
     (cond (c (isearch-add-char c))
           (t (isearch-update-display)
-             (unread-key-sequence *last-read-key-sequence*)
+             (unread-key-sequence (last-read-key-sequence))
              (isearch-end)))))
 
 (defvar *replace-before-string* nil)

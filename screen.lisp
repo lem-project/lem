@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(make-attribute))
+(export '(make-attribute
+          redraw-display))
 
 (defvar *echo-area-scrwin*)
 

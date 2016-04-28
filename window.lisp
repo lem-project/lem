@@ -25,7 +25,6 @@
           current-window
           one-window-p
           deleted-window-p
-          redraw-display
           split-window-vertically
           split-window-horizontally
           split-window

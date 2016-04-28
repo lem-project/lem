@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(export '(overlay
+(export '(overlay-p
           make-overlay
           delete-overlay))
 

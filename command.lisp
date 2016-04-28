@@ -94,12 +94,12 @@
                             arg))))))))
 
 (define-command self-insert (n) ("p")
-  (let ((c (insertion-key-p *last-read-key-sequence*)))
+  (let ((c (insertion-key-p (last-read-key-sequence))))
     (cond (c
            (insert-char c n))
           (t
            (editor-error "Key not found: ~a"
-                         (kbd-to-string *last-read-key-sequence*))))))
+                         (kbd-to-string (last-read-key-sequence)))))))
 
 (define-key *global-keymap* (kbd "M-~") 'unmark-buffer)
 (define-command unmark-buffer () ()

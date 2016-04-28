@@ -101,6 +101,7 @@
                     (delete ',minor-mode (buffer-minor-modes)))))
        ,@body)))
 
+(defvar *global-keymap* (make-keymap 'self-insert))
 (define-major-mode fundamental-mode nil
   (:name "fundamental"
    :keymap *global-keymap*))

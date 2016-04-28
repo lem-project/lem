@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(export '(*last-read-key-sequence*
+(export '(last-read-key-sequence
           start-record-key
           stop-record-key
           key-recording-p
@@ -17,6 +17,9 @@
 (defvar *temp-macro-chars* nil)
 
 (defvar *unread-keys* nil)
+
+(defun last-read-key-sequence ()
+  *last-read-key-sequence*)
 
 (defun start-record-key ()
   (setq *key-recording-p* t)
@@ -55,11 +58,6 @@
     (pop *temp-macro-chars*))
   (push char *unread-keys*))
 
-(defun unread-key-sequence (key)
-  (setf *unread-keys*
-        (nconc *unread-keys*
-               (if (listp key) key (kbd-list key))))) ;!!!
-
 (defun read-key-sequence ()
   (let ((key
          (let ((c (read-key)))
@@ -71,6 +69,12 @@
                      (kbd c c2)))
                (kbd c)))))
     (setq *last-read-key-sequence* key)))
+
+(defun unread-key-sequence (key)
+  (setf *unread-keys*
+        (nconc *unread-keys*
+               (if (listp key) key (kbd-list key)) ;!!!
+               )))
 
 (defun execute-key-sequence (key-sequence)
   (let ((prev-unread-keys-length (length *unread-keys*))

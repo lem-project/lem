@@ -1,15 +1,9 @@
 (in-package :lem)
 
 (export '(find-keybind
-          universal-argument
-          self-insert
           lem))
 
 (defvar *running-p* nil)
-
-(define-key *global-keymap* (kbd "C-g") 'keyboard-quit)
-(define-command keyboard-quit () ()
-  (error 'editor-abort))
 
 (defun find-keybind (key)
   (let ((cmd (or (some #'(lambda (mode)
@@ -18,47 +12,6 @@
                  (keymap-find-keybind (mode-keymap (buffer-major-mode)) key)
                  (keymap-find-keybind *global-keymap* key))))
     (function-to-command cmd)))
-
-(define-key *global-keymap* (kbd "C-u") 'universal-argument)
-(define-command universal-argument () ()
-  (let ((numlist)
-        n)
-    (do ((c (minibuf-read-char "C-u 4")
-            (minibuf-read-char
-             (format nil "C-u ~{~a~}" numlist))))
-        (nil)
-      (cond
-        ((char= c C-u)
-         (setq numlist
-               (mapcar 'digit-char-p
-                       (coerce
-                        (format nil "~a"
-                                (* 4
-                                   (if numlist
-                                       (parse-integer
-                                        (format nil "~{~a~}" numlist))
-                                       4)))
-                        'list))))
-        ((and (char= c #\-) (null numlist))
-         (setq numlist (append numlist (list #\-))))
-        ((setq n (digit-char-p c))
-         (setq numlist
-               (append numlist (list n))))
-        (t
-         (unread-key c)
-         (let ((arg (if numlist
-                        (parse-integer (format nil "~{~a~}" numlist))
-                        4)))
-           (return (funcall (find-keybind (read-key-sequence))
-                            arg))))))))
-
-(define-command self-insert (n) ("p")
-  (let ((c (insertion-key-p *last-read-key-sequence*)))
-    (cond (c
-           (insert-char c n))
-          (t
-           (editor-error "Key not found: ~a"
-                         (kbd-to-string *last-read-key-sequence*))))))
 
 (defun load-init-file ()
   (flet ((test (path)

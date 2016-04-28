@@ -13,9 +13,7 @@
           update-prev-buffer
           set-buffer
           bury-buffer
-          select-buffer
           get-next-buffer
-          kill-buffer
           get-buffer-windows))
 
 (defvar *buffer-list* nil)
@@ -138,23 +136,6 @@
         (append (delete buffer (buffer-list))
                 (list buffer)))
   (car (buffer-list)))
-
-(define-key *global-keymap* (kbd "C-x b") 'select-buffer)
-(define-command select-buffer (name) ("BUse Buffer: ")
-  (check-switch-minibuffer-window)
-  (set-buffer (get-buffer-create name))
-  t)
-
-(define-key *global-keymap* (kbd "C-x k") 'kill-buffer)
-(define-command kill-buffer (buffer-or-name) ("bKill buffer: ")
-  (check-switch-minibuffer-window)
-  (let ((buffer (get-buffer buffer-or-name)))
-    (when (cdr (buffer-list))
-      (dolist (window (get-buffer-windows buffer))
-        (with-current-window window
-          (set-buffer (get-next-buffer (current-buffer)))))
-      (delete-buffer buffer)))
-  t)
 
 (defun get-buffer-windows (buffer)
   (loop :for window :in (window-list)

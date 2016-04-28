@@ -39,6 +39,7 @@
                         (:file "basic")
                         (:file "command")
                         (:file "window")
+                        (:file "window-command")
                         (:file "file")
                         (:file "file-command")
                         (:file "word")

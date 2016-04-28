@@ -22,6 +22,12 @@
     (push (cons flag t) *last-flags*)
     (push (cons flag t) *curr-flags*)))
 
+(defun cmd-call (cmd arg)
+  (run-hooks 'pre-command-hook)
+  (prog1 (funcall cmd arg)
+    (buffer-undo-boundary)
+    (run-hooks 'post-command-hook)))
+
 (defmacro do-commandloop (() &body body)
   `(do ((*curr-flags* (%make-flags) (%make-flags))
         (*last-flags* (%make-flags) *curr-flags*))

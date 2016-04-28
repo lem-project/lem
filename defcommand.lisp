@@ -96,13 +96,6 @@
        (defun ,name ,parms ,@body)
        ,(define-command-gen-cmd gcmd name parms arg-descripters))))
 
-(defun cmd-call (cmd arg)
-  (run-hooks 'pre-command-hook)         ;!!!
-  (prog1 (funcall cmd arg)
-    (buffer-undo-boundary)              ;!!!
-    (run-hooks 'post-command-hook)      ;!!!
-    ))
-
 (defun command-completion (str)
   (let ((names))
     (maphash #'(lambda (name cmd)

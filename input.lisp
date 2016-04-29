@@ -80,15 +80,16 @@
   (let ((prev-unread-keys-length (length *unread-keys*))
         (prev-unread-keys (copy-list *unread-keys*)))
     (unread-key-sequence key-sequence)
-    (do ()
-        ((>= prev-unread-keys-length
-             (length *unread-keys*))
-         t)
-      (handler-case (let ((*interactive-p* nil))
-                      (funcall (find-keybind (read-key-sequence)) nil))
-        (editor-condition ()
-          (setf *unread-keys* prev-unread-keys)
-          (return nil))))))
+    (block nil
+      (do-commandloop ()
+        (when (>= prev-unread-keys-length
+                  (length *unread-keys*))
+          (return t))
+        (handler-case (let ((*interactive-p* nil))
+                        (funcall (find-keybind (read-key-sequence)) nil))
+          (editor-condition ()
+                            (setf *unread-keys* prev-unread-keys)
+                            (return nil)))))))
 
 (defun sit-for (seconds &optional (update-window-p t))
   (when update-window-p (redraw-display))

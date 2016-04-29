@@ -1,5 +1,17 @@
 (setf lem:*find-directory-function* 'lem.dired:dired-buffer)
 
+(defun load-init-file ()
+  (flet ((test (path)
+               (when (cl-fad:file-exists-p path)
+                 (lem.lisp-mode:lisp-load-file path)
+                 (lem:message "Load file: ~a" path)
+                 t)))
+    (or (test (merge-pathnames "lem.rc" (truename ".")))
+        (test (merge-pathnames ".lemrc" (user-homedir-pathname))))))
+
+(lem:add-hook 'lem:after-init-hook
+              'load-init-file)
+
 (lem:add-hook 'lem:find-file-hook
               (lambda ()
                 (lem:syntax-scan-buffer (lem:current-buffer))))

@@ -4,15 +4,6 @@
 
 (defvar *running-p* nil)
 
-(defun load-init-file ()
-  (flet ((test (path)
-               (when (cl-fad:file-exists-p path)
-                 (load path)
-                 (message "Load file: ~a" path)
-                 t)))
-    (or (test (merge-pathnames "lem.rc" (truename ".")))
-        (test (merge-pathnames ".lemrc" (user-homedir-pathname))))))
-
 (defun popup-backtrace (condition)
   (info-popup (get-buffer-create "*Error*")
               #'(lambda (out)
@@ -66,8 +57,7 @@
       (display-init)
       (window-init)
       (minibuf-init)
-      (with-error-handler ()
-        (load-init-file)))
+      (run-hooks 'after-init-hook))
     (dolist (arg args)
       (find-file arg))))
 

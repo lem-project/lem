@@ -6,7 +6,8 @@
           before-save-hook
           after-save-hook
           pre-command-hook
-          post-command-hook))
+          post-command-hook
+          after-init-hook))
 
 (defun run-hooks (hook)
   (mapc 'funcall (get hook 'hooks)))

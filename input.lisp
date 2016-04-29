@@ -84,7 +84,8 @@
         ((>= prev-unread-keys-length
              (length *unread-keys*))
          t)
-      (handler-case (funcall (find-keybind (read-key-sequence)) nil)
+      (handler-case (let ((*interactive-p* nil))
+                      (funcall (find-keybind (read-key-sequence)) nil))
         (editor-condition ()
           (setf *unread-keys* prev-unread-keys)
           (return nil))))))

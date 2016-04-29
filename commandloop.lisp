@@ -1,7 +1,11 @@
 (in-package :lem)
 
-(export '(add-continue-flag
+(export '(interactive-p
+          add-continue-flag
           continue-flag))
+
+(defvar *interactive-p* nil)
+(defun interactive-p () *interactive-p*)
 
 (defvar *last-flags* nil)
 (defvar *curr-flags* nil)
@@ -32,4 +36,5 @@
   `(do ((*curr-flags* (%make-flags) (%make-flags))
         (*last-flags* (%make-flags) *curr-flags*))
        (nil)
-     ,@body))
+     (let ((*interactive-p* t))
+       ,@body)))

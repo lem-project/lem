@@ -62,8 +62,8 @@
                 :x x
                 :y y
                 :width width
-                :lines (make-array height :initial-element nil)
-                :old-lines (make-array height :initial-element nil)))
+                :lines (make-array (max 0 height) :initial-element nil)
+                :old-lines (make-array (max 0 height) :initial-element nil)))
 
 (defun screen-delete (screen)
   (charms/ll:delwin (screen-%scrwin screen))

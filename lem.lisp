@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(lem))
+(export '(with-editor
+          lem))
 
 (defvar *running-p* nil)
 
@@ -48,30 +49,31 @@
              (editor-error (c)
                (message (editor-error-message c))))))))))
 
-(let ((passed nil))
-  (defun lem-init (args)
-    (term-init)
-    (setq *running-p* t)
-    (when (not passed)
-      (setq passed t)
-      (display-init)
-      (window-init)
-      (minibuf-init)
-      (run-hooks 'after-init-hook))
-    (dolist (arg args)
-      (find-file arg))))
-
 (defun lem-finallize ()
   (term-finallize)
   (setq *running-p* nil))
 
+(let ((passed nil))
+  (defun call-with-editor (function)
+    (let ((*running-p* t))
+      (unless passed
+        (setq passed t)
+        (display-init)
+        (window-init)
+        (minibuf-init)
+        (run-hooks 'after-init-hook))
+      (funcall function))))
+
+(defmacro with-editor (() &body body)
+  `(call-with-editor (lambda () ,@body)))
+
 (defun lem-1 (args)
-  (let ((report
-         (unwind-protect
-           (progn
-             (lem-init args)
-             (lem-main))
-           (lem-finallize))))
+  (term-init)
+  (let ((report (unwind-protect
+                  (with-editor ()
+                    (mapc 'find-file args)
+                    (lem-main))
+                  (term-finallize))))
     (when report
       (format t "~&~a~%" report))))
 

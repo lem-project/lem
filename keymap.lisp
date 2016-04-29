@@ -13,6 +13,7 @@
           kbd
           keymap-find-keybind
           search-keybind-all
+          find-keybind
           insertion-key-p))
 
 (defvar *keymaps* nil)
@@ -275,3 +276,11 @@
 (define-key *global-keymap* "[mouse]" 'undefined-key)
 (define-key *global-keymap* "[resize]" 'undefined-key)
 (define-key *global-keymap* "[event]" 'undefined-key)
+
+(defun find-keybind (key)
+  (let ((cmd (or (some #'(lambda (mode)
+                           (keymap-find-keybind (mode-keymap mode) key))
+                       (buffer-minor-modes))
+                 (keymap-find-keybind (mode-keymap (buffer-major-mode)) key)
+                 (keymap-find-keybind *global-keymap* key))))
+    (function-to-command cmd)))

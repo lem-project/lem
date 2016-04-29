@@ -1,17 +1,8 @@
 (in-package :lem)
 
-(export '(find-keybind
-          lem))
+(export '(lem))
 
 (defvar *running-p* nil)
-
-(defun find-keybind (key)
-  (let ((cmd (or (some #'(lambda (mode)
-                           (keymap-find-keybind (mode-keymap mode) key))
-                       (buffer-minor-modes))
-                 (keymap-find-keybind (mode-keymap (buffer-major-mode)) key)
-                 (keymap-find-keybind *global-keymap* key))))
-    (function-to-command cmd)))
 
 (defun load-init-file ()
   (flet ((test (path)

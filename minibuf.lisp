@@ -54,7 +54,10 @@
 (defun minibuf-read-char (prompt)
   (message prompt)
   (redraw-display)
-  (read-key))
+  (let ((c (read-key)))
+    (if (char= c C-g)
+        (error 'editor-abort)
+        c)))
 
 (defun minibuf-y-or-n-p (prompt)
   (do () (nil)

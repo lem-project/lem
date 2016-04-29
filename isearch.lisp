@@ -258,12 +258,13 @@
                  (point-set goal-point)))
             (setq end-point (current-point))
             (isearch-update-buffer before)
-            (message "Replace ~s with ~s" before after)
             (funcall search-backward-function before)
             (setq start-point (current-point))
-            (unless pass-through (redraw-display))
-            (do () (nil)
-              (let ((c (unless pass-through (read-key))))
+            ;(unless pass-through (redraw-display))
+            (loop
+              (let ((c (unless pass-through
+                         (minibuf-read-char
+                          (format nil "Replace ~s with ~s" before after)))))
                 (cond
                  ((or pass-through (char= c #\y))
                   (delete-region start-point end-point)

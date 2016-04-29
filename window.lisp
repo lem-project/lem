@@ -58,42 +58,18 @@
 
 (defvar *current-window*)
 
-(defclass window ()
-  ((x
-    :initarg :x
-    :accessor window-x)
-   (y
-    :initarg :y
-    :accessor window-y)
-   (width
-    :initarg :width
-    :accessor window-width)
-   (height
-    :initarg :height
-    :accessor window-height)
-   (buffer
-    :initarg :buffer
-    :accessor %window-buffer)
-   (screen
-    :initarg :screen
-    :accessor window-screen)
-   (vtop-linum
-    :initarg :vtop-linum
-    :accessor window-vtop-linum)
-   (vtop-charpos
-    :initarg :vtop-charpos
-    :accessor window-vtop-charpos)
-   (point-marker
-    :initarg :point-marker
-    :accessor window-point-marker)
-   (delete-hook
-    :initarg :delete-hook
-    :initform nil
-    :accessor window-delete-hook)
-   (parameters
-    :initarg :parameters
-    :initform nil
-    :accessor window-parameters)))
+(define-class window () (current-window)
+  x
+  y
+  width
+  height
+  %buffer
+  screen
+  vtop-linum
+  vtop-charpos
+  point-marker
+  delete-hook
+  parameters)
 
 (defun window-p (x)
   (typep x 'window))
@@ -105,7 +81,7 @@
                           :y y
                           :width width
                           :height height
-                          :buffer buffer
+                          :%buffer buffer
                           :screen (make-screen x y width height t)
                           :vtop-linum 1
                           :vtop-charpos 0)))
@@ -113,12 +89,12 @@
           (make-marker buffer (make-point 1 0)))
     window))
 
-(defun window-buffer (window)
-  (%window-buffer window))
+(defun window-buffer (&optional (window (current-window)))
+  (window-%buffer window))
 
-(defun (setf window-buffer) (buffer window)
+(defun (setf window-buffer) (buffer &optional (window (current-window)))
   (screen-modify (window-screen window))
-  (setf (%window-buffer window) buffer))
+  (setf (window-%buffer window) buffer))
 
 (defun window-point (&optional (window (current-window)))
   (marker-point (window-point-marker window)))

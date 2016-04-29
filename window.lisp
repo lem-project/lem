@@ -73,7 +73,7 @@
     :accessor window-height)
    (buffer
     :initarg :buffer
-    :accessor window-buffer)
+    :accessor %window-buffer)
    (screen
     :initarg :screen
     :accessor window-screen)
@@ -113,8 +113,12 @@
           (make-marker buffer (make-point 1 0)))
     window))
 
-(defmethod window-buffer :before ((window window))
-  (screen-modify (window-screen window)))
+(defun window-buffer (window)
+  (%window-buffer window))
+
+(defun (setf window-buffer) (buffer window)
+  (screen-modify (window-screen window))
+  (setf (%window-buffer window) buffer))
 
 (defun window-point (&optional (window (current-window)))
   (marker-point (window-point-marker window)))

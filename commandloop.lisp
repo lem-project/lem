@@ -32,9 +32,20 @@
     (buffer-undo-boundary)
     (run-hooks 'post-command-hook)))
 
-(defmacro do-commandloop (() &body body)
-  `(do ((*curr-flags* (%make-flags) (%make-flags))
-        (*last-flags* (%make-flags) *curr-flags*))
-       (nil)
-     (let ((*interactive-p* t))
-       ,@body)))
+(defun do-commandloop-function (function)
+  (do ((*curr-flags* (%make-flags) (%make-flags))
+       (*last-flags* (%make-flags) *curr-flags*))
+      (nil)
+    (let ((*interactive-p* t))
+      (funcall function))))
+
+(defvar +exit-tag+ (gensym "EXIT"))
+
+(defmacro do-commandloop ((&key toplevel) &body body)
+  (if toplevel
+      `(catch +exit-tag+
+         (do-commandloop-function (lambda () ,@body)))
+      `(do-commandloop-function (lambda () ,@body))))
+
+(defun exit-editor (&optional report)
+  (throw +exit-tag+ report))

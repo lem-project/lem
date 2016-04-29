@@ -36,7 +36,7 @@
                          ,@body))
                       (t
                        ,@body))))
-    (do-commandloop ()
+    (do-commandloop (:toplevel t)
       (with-error-handler ()
         (form
          (redraw-display)
@@ -75,19 +75,13 @@
   (term-finallize)
   (setq *running-p* nil))
 
-(defvar +exit-tag+ (gensym "EXIT"))
-
-(defun exit-editor (&optional report)
-  (throw +exit-tag+ report))
-
 (defun lem-1 (args)
   (let ((report
-         (catch +exit-tag+
-           (unwind-protect
-             (progn
-               (lem-init args)
-               (lem-main))
-             (lem-finallize)))))
+         (unwind-protect
+           (progn
+             (lem-init args)
+             (lem-main))
+           (lem-finallize))))
     (when report
       (format t "~&~a~%" report))))
 

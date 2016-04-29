@@ -49,10 +49,6 @@
              (editor-error (c)
                (message (editor-error-message c))))))))))
 
-(defun lem-finallize ()
-  (term-finallize)
-  (setq *running-p* nil))
-
 (let ((passed nil))
   (defun call-with-editor (function)
     (let ((*running-p* t))

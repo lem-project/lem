@@ -338,10 +338,10 @@
 (define-key *global-keymap* (kbd "M-C-k") 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")
   (dotimes (_ n t)
-    (when (kill-region (current-point)
-                       (progn
-                         (forward-sexp 1)
-                         (current-point)))
+    (unless (kill-region (current-point)
+                         (progn
+                           (forward-sexp 1)
+                           (current-point)))
       (return nil))))
 
 (define-key *global-keymap* (kbd "M-C-t") 'transpose-sexps)

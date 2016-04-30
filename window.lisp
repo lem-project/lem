@@ -44,7 +44,6 @@
         " ("
         'modeline-major-mode
         'modeline-minor-modes
-        'modeline-key-recording
         ") "
         "("
         'modeline-linum
@@ -326,12 +325,11 @@
   (string-downcase (buffer-major-mode (window-buffer window))))
 (defun modeline-minor-modes (window)
   (let ((modes (buffer-minor-modes (window-buffer window))))
+    (when (key-recording-p)
+      (setf modes (append modes (list "Def"))))
     (if modes
         (format nil " ~(~{~a~^ ~}~)" modes)
         "")))
-(defun modeline-key-recording (window)
-  (declare (ignore window))
-  (if (key-recording-p) " Def" ""))
 (defun modeline-linum (window)
   (window-current-linum window))
 (defun modeline-column (window)

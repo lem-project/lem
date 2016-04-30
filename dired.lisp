@@ -12,12 +12,18 @@
 
 (define-key *dired-mode-keymap* (kbd "n") 'dired-next-line)
 (define-key *dired-mode-keymap* (kbd "p") 'dired-previous-line)
+(define-key *dired-mode-keymap* (kbd "q") 'dired-quit)
 
 (define-command dired-next-line (&optional (n 1)) ("p")
-  (forward-line n))
+  (forward-line n)
+  (move-to-column (get-bvar :dired-cursor-column)))
 
 (define-command dired-previous-line (&optional (n 1)) ("p")
-  (forward-line (- n)))
+  (forward-line (- n))
+  (move-to-column (get-bvar :dired-cursor-column)))
+
+(define-command dired-quit () ()
+  (quit-window))
 
 (defparameter +mark+ #\*)
 (defparameter +unmark+ #\space)
@@ -57,14 +63,18 @@
                                " -> "
                                (namestring (probe-file file)))))
           (insert-string
-           (format nil "  ~a ~a ~23a ~a~%"
+           (format nil "  ~a ~a ~23a "
                    (cond (symlink-p "l")
                          ((pathname-name file) "-")
                          (t "d"))
                    (with-open-file (in file)
                      (format nil "~10d" (file-length in)))
-                   (date (file-write-date file))
-                   filename))))
+                   (date (file-write-date file))))
+          (unless (get-bvar :dired-cursor-column)
+            (setf (get-bvar :dired-cursor-column)
+                  (current-column)))
+          (insert-string filename)
+          (insert-newline)))
       (setf (get-bvar :dired-files)
             (apply #'vector (reverse files))))
     (goto-start-line)))

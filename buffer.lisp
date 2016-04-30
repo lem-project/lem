@@ -364,7 +364,7 @@
       (when (buffer-mark-overlay buffer)
         (delete-overlay (buffer-mark-overlay buffer)))
       (setf (buffer-mark-overlay buffer)
-            *mark-overlay-attribute*))))
+            (make-overlay start end *mark-overlay-attribute*)))))
 
 (defun check-read-only (buffer)
   (when (buffer-read-only-p buffer)

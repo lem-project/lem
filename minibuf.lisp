@@ -256,7 +256,12 @@
     (setq prompt (format nil "~a(~a) " prompt default)))
   (let ((result (minibuf-read-line prompt
                                    directory
-                                   #'file-completion
+                                   #'(lambda (str)
+                                       (setq str (expand-file-name str))
+                                       (let ((dirname (directory-namestring str)))
+                                         (completion str
+                                                     (mapcar #'namestring
+                                                             (cl-fad:list-directory dirname)))))
                                    (and existing #'cl-fad:file-exists-p))))
     (if (string= result "")
         default

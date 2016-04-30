@@ -2,7 +2,6 @@
 
 (export '(*find-directory-function*
           expand-file-name
-          file-completion
           insert-file-contents
           get-file-buffer
           write-to-file))
@@ -46,13 +45,6 @@
                                   (or directory (buffer-directory))
                                   pathname)
                           pathname)))))
-
-(defun file-completion (str)
-  (setq str (expand-file-name str))
-  (let ((dirname (directory-namestring str)))
-    (completion str
-                (mapcar #'namestring
-                        (cl-fad:list-directory dirname)))))
 
 (defun detect-external-format-from-file (pathname)
   (let ((external-format)

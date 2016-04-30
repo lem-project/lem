@@ -1,48 +1,50 @@
-(setf lem:*find-directory-function* 'lem.dired:dired-buffer)
+(in-package :lem)
+
+(setf *find-directory-function* 'lem.dired:dired-buffer)
 
 (defun load-init-file ()
   (flet ((test (path)
                (when (cl-fad:file-exists-p path)
                  (lem.lisp-mode:lisp-load-file path)
-                 (lem:message "Load file: ~a" path)
+                 (message "Load file: ~a" path)
                  t)))
     (or (test (merge-pathnames "lem.rc" (truename ".")))
         (test (merge-pathnames ".lemrc" (user-homedir-pathname))))))
 
-(lem:add-hook 'lem:after-init-hook
-              'load-init-file)
+(add-hook 'after-init-hook
+          'load-init-file)
 
-(lem:add-hook 'lem:find-file-hook
-              (lambda ()
-                (lem:syntax-scan-buffer (lem:current-buffer))))
+(add-hook 'find-file-hook
+          (lambda ()
+            (syntax-scan-buffer (current-buffer))))
 
 ;;; !!!
 (progn
   (defvar *syntax-timer* nil)
 
-  (lem:add-hook 'lem:post-command-hook
-                (lambda ()
-                  (lem::syntax-scan-lines (lem:current-window)
-                                          (lem:current-linum)
-                                          (1+ (lem:current-linum)))))
+  (add-hook 'post-command-hook
+            (lambda ()
+              (syntax-scan-lines (current-window)
+                                 (current-linum)
+                                 (1+ (current-linum)))))
 
-  (lem:add-hook 'lem:pre-command-hook
-                (lambda ()
-                  (when (lem::timer-p *syntax-timer*)
-                    (lem:stop-timer *syntax-timer*))
-                  (setq *syntax-timer*
-                        (lem:start-timer 500
-                                         nil
-                                         (lambda ()
-                                           (unless (lem:active-minibuffer-window)
-                                             (lem:syntax-scan-window (lem:current-window))
-                                             (lem:redraw-display)))))))
+  (add-hook 'pre-command-hook
+            (lambda ()
+              (when (timer-p *syntax-timer*)
+                (stop-timer *syntax-timer*))
+              (setq *syntax-timer*
+                    (start-timer 500
+                                 nil
+                                 (lambda ()
+                                   (unless (active-minibuffer-window)
+                                     (syntax-scan-window (current-window))
+                                     (redraw-display)))))))
   )
 
 #+sbcl
 (push #'(lambda (x)
           (if x
-              (lem:lem x)
-              (lem:lem))
+              (lem x)
+              (lem))
           t)
       sb-ext:*ed-functions*)

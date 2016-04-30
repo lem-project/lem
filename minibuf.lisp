@@ -27,7 +27,9 @@
 
 (define-major-mode minibuffer-mode nil
   (:name "minibuffer"
-   :keymap *minibuf-keymap*))
+   :keymap *minibuf-keymap*
+   :syntax-table (make-syntax-table
+                  :symbol-chars '(#\_ #\-))))
 
 (defun minibuf-init ()
   (let* ((buffer (make-buffer " *minibuffer*"))

@@ -5,6 +5,8 @@
 
 (defvar *brackets-overlays* nil)
 
+(defvar *paren-attribute* (make-attribute "cyan" nil :reverse-p t))
+
 (add-hook 'post-command-hook
           (lambda ()
             (mapc #'delete-overlay *brackets-overlays*)
@@ -19,7 +21,7 @@
                 (save-excursion
                  (when (backward-sexp 1 t)
                    (push (current-point) highlight-points))))
-              (let ((attr (make-attribute "cyan" nil :reverse-p t)))
+              (let ((attr *paren-attribute*))
                 (dolist (point highlight-points)
                   (push (make-overlay point
                                       (make-point (point-linum point)

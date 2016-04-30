@@ -21,6 +21,7 @@
                         (:file "wide")
                         (:file "hooks")
                         (:file "screen")
+                        (:file "attributes")
                         (:file "point")
                         (:file "window")
                         (:file "buffer")

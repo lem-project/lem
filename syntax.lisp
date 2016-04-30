@@ -1,12 +1,6 @@
 (in-package :lem)
 
-(export '(*syntax-string-attribute*
-          *syntax-comment-attribute*
-          *syntax-keyword-attribute*
-          *syntax-constant-attribute*
-          *syntax-function-name-attribute*
-          *syntax-variable-attribute*
-          *enable-syntax-highlight*
+(export '(*enable-syntax-highlight*
           syntax-table
           make-syntax-table
           make-syntax-test
@@ -36,13 +30,6 @@
           syntax-preceding-tag
           syntax-forward-search-tag-end
           syntax-backward-search-tag-start))
-
-(defvar *syntax-string-attribute* (make-attribute "green" nil))
-(defvar *syntax-comment-attribute* (make-attribute "red" nil))
-(defvar *syntax-keyword-attribute* (make-attribute "blue" nil))
-(defvar *syntax-constant-attribute* (make-attribute "magenta" nil))
-(defvar *syntax-function-name-attribute* (make-attribute "cyan" nil))
-(defvar *syntax-variable-attribute* (make-attribute "yellow" nil))
 
 (defvar *enable-syntax-highlight* t)
 

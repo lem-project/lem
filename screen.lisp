@@ -39,9 +39,6 @@
         (setf (attribute-cached-bits attribute) bits)
         bits)))
 
-(defvar *modeline-attribute* (make-attribute nil nil :reverse-p t))
-(defvar *modeline-inactive-attribute* (make-attribute nil nil :reverse-p t))
-
 (defun display-init ()
   (setq *old-display-width* charms/ll:*cols*)
   (setq *old-display-height* charms/ll:*lines*)

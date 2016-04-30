@@ -17,13 +17,13 @@
           point-max))
 
 (defun make-point (linum charpos)
-  (list linum charpos))
+  (cons linum charpos))
 
 (defun point-linum (point)
   (car point))
 
 (defun point-charpos (point)
-  (cadr point))
+  (cdr point))
 
 (defmacro with-points (binds &body body)
   `(let ,(mapcan #'(lambda (b)

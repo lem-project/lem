@@ -74,10 +74,10 @@
       (grep-append grep item jump-function))
     (grep-update grep)))
 
-(define-command grep (string) ("sgrep -nH ")
+(define-command grep (string) ((list (minibuf-read-string ": " "grep -nH ")))
   (grep-with-string "*grep*"
                     (with-output-to-string (s)
-                      (uiop:run-program (concatenate 'string "grep -nH " string)
+                      (uiop:run-program string
                                         :output s
                                         :ignore-error-status t))))
 

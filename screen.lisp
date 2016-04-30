@@ -137,8 +137,9 @@
     (when (<= 0 i (1- (screen-height screen)))
       (unless end-charpos
         (setq end-charpos (fat-length (aref (screen-lines screen) i))))
-      (setf (aref (screen-lines screen) i)
-            (copy-fatstring (aref (screen-lines screen) i)))
+      (when (aref (screen-lines screen) i)
+        (setf (aref (screen-lines screen) i)
+              (copy-fatstring (aref (screen-lines screen) i))))
       (let ((fatstr (aref (screen-lines screen) i)))
         (change-font fatstr
                      (attribute-to-bits attr)

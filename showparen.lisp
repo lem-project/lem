@@ -19,7 +19,7 @@
                 (save-excursion
                  (when (backward-sexp 1 t)
                    (push (current-point) highlight-points))))
-              (let ((attr (make-attribute "cyan" :reverse-p t)))
+              (let ((attr (make-attribute "cyan" nil :reverse-p t)))
                 (dolist (point highlight-points)
                   (push (make-overlay point
                                       (make-point (point-linum point)

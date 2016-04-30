@@ -37,8 +37,8 @@
   (:name "isearch"
    :keymap *isearch-keymap*))
 
-(defvar *isearch-highlight-attribute* (make-attribute nil :reverse-p t))
-(defvar *isearch-highlight-active-attribute* (make-attribute "cyan" :reverse-p t))
+(defvar *isearch-highlight-attribute* (make-attribute nil nil :reverse-p t))
+(defvar *isearch-highlight-active-attribute* (make-attribute "cyan" nil :reverse-p t))
 
 (defun isearch-update-display ()
   (isearch-update-minibuf)

@@ -9,31 +9,38 @@
 (defvar *old-display-height*)
 
 (defstruct (attribute (:constructor %make-attribute))
-  color
+  fg-color
+  bg-color
   reverse-p
   bold-p
-  underline-p)
+  underline-p
+  cached-bits)
 
-(defun make-attribute (color &key reverse-p bold-p underline-p)
-  (%make-attribute :color color
+(defun make-attribute (fg-color bg-color &key reverse-p bold-p underline-p)
+  (%make-attribute :fg-color fg-color
+                   :bg-color bg-color
                    :reverse-p reverse-p
                    :bold-p bold-p
                    :underline-p underline-p))
 
 (defun attribute-to-bits (attribute)
-  (logior (get-color (attribute-color attribute))
-          (if (attribute-reverse-p attribute)
-              charms/ll:a_reverse
-              0)
-          (if (attribute-bold-p attribute)
-              charms/ll:a_bold
-              0)
-          (if (attribute-underline-p attribute)
-              charms/ll:a_underline
-              0)))
+  (or (attribute-cached-bits attribute)
+      (let ((bits (logior (get-color-pair (attribute-fg-color attribute)
+                                          (attribute-bg-color attribute))
+                          (if (attribute-reverse-p attribute)
+                              charms/ll:a_reverse
+                              0)
+                          (if (attribute-bold-p attribute)
+                              charms/ll:a_bold
+                              0)
+                          (if (attribute-underline-p attribute)
+                              charms/ll:a_underline
+                              0))))
+        (setf (attribute-cached-bits attribute) bits)
+        bits)))
 
-(defvar *modeline-attribute* (make-attribute nil :reverse-p t))
-(defvar *modeline-inactive-attribute* (make-attribute nil :reverse-p t))
+(defvar *modeline-attribute* (make-attribute nil nil :reverse-p t))
+(defvar *modeline-inactive-attribute* (make-attribute nil nil :reverse-p t))
 
 (defun display-init ()
   (setq *old-display-width* charms/ll:*cols*)

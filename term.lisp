@@ -2,36 +2,100 @@
 (defpackage :lem.term
   (:use :cl)
   (:export
-   :get-color
+   :get-color-pair
    :with-allow-interrupt
    :term-init
    :term-finallize))
 (in-package :lem.term)
 
-(defvar *color-name-table* (make-hash-table :test 'equal))
+(defvar *colors* nil)
+(defvar *color-pair-table* (make-hash-table :test 'equal))
 
-(defun get-color (color)
-  (if (null color)
-      0
-      (gethash color *color-name-table* 0)))
+(defstruct color
+  number
+  name
+  r
+  g
+  b)
+
+(defun get-color (string)
+  (let ((string (string-trim " " string)))
+    (cond ((zerop (length string))
+           nil)
+          ((and (char= #\# (aref string 0))
+                (= 6 (length string)))
+           (let ((r (parse-integer string :start 0 :end 2 :radix 16 :junk-allowed t))
+                 (g (parse-integer string :start 2 :end 4 :radix 16 :junk-allowed t))
+                 (b (parse-integer string :start 4 :end 6 :radix 16 :junk-allowed t)))
+             (if (not (and r g b))
+                 nil
+                 (let (found-color
+                       (min most-positive-fixnum))
+                   (dolist (color *colors*)
+                     (let ((dr (- (color-r color) r))
+                           (dg (- (color-g color) g))
+                           (db (- (color-b color) b)))
+                       (let ((dist (+ (* dr dr) (* dg dg) (* db db))))
+                         (when (< dist min)
+                           (setf min dist)
+                           (setf found-color color)))))
+                   (assert (not (null found-color)))
+                   found-color))))
+          (t
+           (dolist (color *colors* nil)
+             (when (string= string (color-name color))
+               (return (color-number color))))))))
+
+(defun get-color-pair (fg-color-name bg-color-name)
+  (let ((fg-color (if (null fg-color-name) -1 (get-color fg-color-name)))
+        (bg-color (if (null bg-color-name) -1 (get-color bg-color-name))))
+    (if (and fg-color bg-color)
+        (gethash (cons fg-color bg-color)
+                 *color-pair-table*
+                 0)
+        0)))
 
 (defun init-colors ()
   (when (/= 0 (charms/ll:has-colors))
     (charms/ll:start-color)
     (charms/ll:use-default-colors)
-    (let ((n 0))
-      (flet ((add-color (name color)
-               (incf n)
-               (charms/ll:init-pair n color -1)
-               (setf (gethash name *color-name-table*) (charms/ll:color-pair n))))
-        (add-color "yellow" charms/ll:color_yellow)
-        (add-color "green" charms/ll:color_green)
-        (add-color "blue" charms/ll:color_blue)
-        (add-color "magenta" charms/ll:color_magenta)
-        (add-color "red" charms/ll:color_red)
-        (add-color "cyan" charms/ll:color_cyan)
-        (add-color "white" charms/ll:color_white)
-        (add-color "black" charms/ll:color_black)))
+
+    (setf *colors* nil)
+    (flet ((add-color (color-number color-name r g b &optional builtin)
+                      (unless builtin
+                        (charms/ll:init-color color-number r g b))
+                      (push (make-color :number color-number
+                                        :name color-name
+                                        :r r
+                                        :g g
+                                        :b b)
+                            *colors*)))
+      (add-color charms/ll:color_black "black" #x00 #x00 #x00 t)
+      (add-color charms/ll:color_red "red" #xcd #x00 #x00 t)
+      (add-color charms/ll:color_green "green" #x00 #xcd #x00 t)
+      (add-color charms/ll:color_yellow "yellow" #xcd #xcd #x00 t)
+      (add-color charms/ll:color_blue "blue" #x00 #x00 #xee t)
+      (add-color charms/ll:color_magenta "magenta" #xcd #x00 #xcd t)
+      (add-color charms/ll:color_cyan "cyan" #x00 #xcd #xcd t)
+      (add-color charms/ll:color_white "white" #xe5 #xe5 #xe5 t))
+    (setf *colors* (nreverse *colors*))
+
+    (clrhash *color-pair-table*)
+    (let ((pair 0))
+      (flet ((add-pair (fg-color-number bg-color-number)
+                       (incf pair)
+                       (charms/ll:init-pair pair
+                                            fg-color-number
+                                            bg-color-number)
+                       (setf (gethash (cons fg-color-number bg-color-number)
+                                      *color-pair-table*)
+                             (charms/ll:color-pair pair))))
+        (dolist (fg-color *colors*)
+          (dolist (bg-color *colors*)
+            (add-pair (color-number fg-color)
+                      (color-number bg-color)))
+          (add-pair (color-number fg-color) -1)
+          (add-pair -1 (color-number fg-color)))))
     t))
 
 ;;;

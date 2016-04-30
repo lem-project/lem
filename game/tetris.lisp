@@ -103,7 +103,7 @@
   (insert-string "  ")
   (put-attribute (save-excursion (next-char -2) (current-point))
                  (current-point)
-                 (lem::make-attribute color :reverse-p t)))
+                 (lem::make-attribute color nil :reverse-p t)))
 
 (defun draw-field-internal (field)
   (dotimes (y +field-height+)

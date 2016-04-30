@@ -54,7 +54,8 @@
                     (format nil "~D M-x " arg)
                     "M-x ")
                 ""
-                'command-completion
+                (lambda (str)
+                  (completion str (all-command-names)))
                 'exist-command-p))
          (cmd (find-command name)))
     (if cmd

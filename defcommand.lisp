@@ -1,7 +1,6 @@
 (in-package :lem)
 
-(export '(command-completion
-          define-command
+(export '(define-command
           exist-command-p))
 
 (defvar *command-table* (make-hash-table :test 'equal))
@@ -103,9 +102,6 @@
                (push name names))
              *command-table*)
     (nreverse names)))
-
-(defun command-completion (str)
-  (completion str (all-command-names)))
 
 (defun exist-command-p (str)
   (if (find-command str) t nil))

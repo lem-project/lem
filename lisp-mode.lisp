@@ -877,39 +877,38 @@
              (sb-introspect:function-lambda-list symbol))
      " ")))
 
-(defun lisp-echo-arglist (get-arglist-function)
+(defun lisp-search-arglist (string)
+  (multiple-value-bind (x error-p)
+      (ignore-errors
+       (destructuring-bind (package symbol-name external-p)
+           (analyze-symbol string)
+         (declare (ignore external-p))
+         (multiple-value-bind (symbol status)
+             (find-symbol (string-readcase symbol-name)
+                          (or package
+                              (lisp-current-package)))
+           (if (null status)
+               nil
+               symbol))))
+    (when (and (not error-p)
+               (symbolp x))
+      (lisp-get-arglist x))))
+
+(define-key *lisp-mode-keymap* (kbd "M-h") 'lisp-echo-arglist)
+(define-command lisp-echo-arglist () ()
   (save-excursion
    (when (sexp-goto-car 100)
      (let* ((start (current-point))
             (end (progn (forward-sexp 1 t) (current-point))))
        (multiple-value-bind (arglist)
-           (funcall get-arglist-function
-                    (region-string start end))
+           (lisp-search-arglist (region-string start end))
          (when arglist
            (message "~A" arglist)))))))
 
 (define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-self-insert-then-arg-list)
 (define-command lisp-self-insert-then-arg-list (n) ("p")
   (prog1 (self-insert n)
-    (lisp-echo-arglist
-     #'(lambda (string)
-         (multiple-value-bind (x error-p)
-             (ignore-errors
-              (destructuring-bind (package symbol-name external-p)
-                  (analyze-symbol string)
-                (declare (ignore external-p))
-                (multiple-value-bind (symbol status)
-                    (intern (string-readcase symbol-name)
-                            (or package
-                                (lisp-current-package)))
-                  (cond ((null status)
-                         (unintern symbol)
-                         nil)
-                        (t
-                         symbol)))))
-           (when (and (not error-p)
-                      (symbolp x))
-             (lisp-get-arglist x)))))))
+    (lisp-echo-arglist)))
 
 (define-key *lisp-mode-keymap* (kbd "C-x ;") 'lisp-comment-or-uncomment-region)
 (define-command lisp-comment-or-uncomment-region (arg) ("P")

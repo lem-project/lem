@@ -16,7 +16,7 @@
 
 (add-hook 'find-file-hook
           (lambda ()
-            (syntax-scan-buffer (current-buffer))))
+            (syntax-scan-window (current-window))))
 
 ;;; !!!
 (progn
@@ -33,7 +33,7 @@
               (when (timer-p *syntax-timer*)
                 (stop-timer *syntax-timer*))
               (setq *syntax-timer*
-                    (start-timer 500
+                    (start-timer 50
                                  nil
                                  (lambda ()
                                    (unless (active-minibuffer-window)

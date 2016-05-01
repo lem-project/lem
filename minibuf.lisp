@@ -18,12 +18,14 @@
           minibuf-read-file))
 
 (defvar *minibuf-window*)
+(defvar *minibuffer-calls-window*)
 
 (defun minibuffer-window () *minibuf-window*)
 (defun minibuffer-window-p (window) (eq window (minibuffer-window)))
 (defun minibuffer-window-active-p () (eq (current-window) (minibuffer-window)))
 (defun minibuffer () (window-buffer (minibuffer-window)))
 (defun minibufferp (buffer) (eq buffer (minibuffer)))
+(defun minibuffer-calls-window () *minibuffer-calls-window*)
 
 (define-major-mode minibuffer-mode nil
   (:name "minibuffer"
@@ -79,8 +81,6 @@
 (define-key *minibuf-keymap* (kbd "M-n") 'minibuf-read-line-next-history)
 (define-key *minibuf-keymap* (kbd "C-g") 'minibuf-read-line-break)
 
-(defvar *minibuf-read-line-tmp-window*)
-
 (defvar *minibuf-read-line-prompt*)
 (defvar *minibuf-read-line-comp-f*)
 (defvar *minibuf-read-line-existing-p*)
@@ -111,9 +111,8 @@
     (let ((target-str
            (region-string (point-min) (current-point))))
       (let ((str
-             (with-current-window *minibuf-read-line-tmp-window*
-               (popup-completion *minibuf-read-line-comp-f*
-                                 target-str))))
+             (popup-completion *minibuf-read-line-comp-f*
+                               target-str)))
         (delete-region (point-min) (current-point))
         (insert-string str))))
   t)
@@ -194,7 +193,7 @@
       str)))
 
 (defun minibuf-read-line (prompt initial comp-f existing-p)
-  (let ((*minibuf-read-line-tmp-window* (current-window)))
+  (let ((*minibuffer-calls-window* (current-window)))
     (handler-case
         (with-allow-interrupt nil
           (with-current-window (minibuffer-window)
@@ -209,7 +208,7 @@
               (when initial
                 (insert-string initial))
               (unwind-protect (call-with-save-windows
-                               *minibuf-read-line-tmp-window*
+                               (minibuffer-calls-window)
                                (lambda ()
                                  (minibuf-read-line-loop prompt comp-f existing-p)))
                 (with-current-window (minibuffer-window)

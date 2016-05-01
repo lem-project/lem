@@ -83,7 +83,7 @@
   (unless (window-p window)
     (setq window (current-window)))
   (cond
-   ((window-parameter window :split-p)
+   ((and (window-parameter window :split-p) (not (one-window-p)))
     (when kill-buffer-p
       (kill-buffer (window-buffer window)))
     (delete-window window))

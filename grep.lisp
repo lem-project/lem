@@ -55,10 +55,7 @@
           (filename (subseq line 0 i))
           (linum (parse-integer (subseq line (1+ i) j))))
      (when (and (stringp filename) (integerp linum))
-       (cons line
-             (lambda ()
-               (find-file filename)
-               (goto-line linum)))))))
+       (list line filename linum)))))
 
 (defun grep-parse-lines (lines)
   (remove nil
@@ -69,9 +66,16 @@
   (grep-parse-lines (uiop:split-string string :separator '(#\newline))))
 
 (defun grep-with-string (buffer-name string)
-  (let ((grep (make-grep buffer-name)))
-    (loop :for (item . jump-function) :in (grep-parse string) :do
-      (grep-append grep item jump-function))
+  (let ((grep (make-grep buffer-name))
+        (current-directory (buffer-directory)))
+    (dolist (elt (grep-parse string))
+      (destructuring-bind (item filename linum) elt
+        (setf filename (expand-file-name filename current-directory))
+        (grep-append grep
+                     item
+                     (lambda ()
+                       (find-file filename)
+                       (goto-line linum)))))
     (grep-update grep)))
 
 (define-command grep (string) ((list (minibuf-read-string ": " "grep -nH ")))

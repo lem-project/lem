@@ -158,7 +158,8 @@
 (defun display-buffer (buffer)
   (multiple-value-bind (window split-p)
       (pop-to-buffer buffer)
-    (setf (window-parameter window :split-p) split-p)
+    (unless (window-parameter window :split-p)
+      (setf (window-parameter window :split-p) split-p))
     window))
 
 (define-key *global-keymap* (kbd "C-down") 'scroll-down)

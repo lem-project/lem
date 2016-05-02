@@ -1,10 +1,7 @@
 (in-package :lem)
 
 (export '(completion
-          start-completion
-          delete-completion-window))
-
-(defvar *completion-window* nil)
+          start-completion))
 
 (defun completion (name list)
   (let ((strings
@@ -26,13 +23,13 @@
         (values (subseq str 0 len) strings))))))
 
 (defvar *completion-mode-keymap* (make-keymap 'completion-self-insert))
+(defvar *completion-window* nil)
+(defvar *completion-overlay* nil)
+(defvar *completion-overlay-attribute* (make-attribute "blue" nil :reverse-p t))
 
 (define-minor-mode completion-mode
   (:name "completion"
    :keymap *completion-mode-keymap*))
-
-(defvar *completion-overlay* nil)
-(defvar *completion-overlay-attribute* (make-attribute "blue" nil :reverse-p t))
 
 (defun completion-update-overlay ()
   (when *completion-overlay*

@@ -849,13 +849,10 @@
                       "#" (region-string begin end)))))
     str))
 
-(defun lisp-popup-completion-symbol (complete-function)
-  (let ((str (lisp-preceding-symbol)))
-    (start-completion complete-function str)))
-
 (define-key *lisp-mode-keymap* (kbd "M-C-i") 'lisp-complete-symbol)
 (define-command lisp-complete-symbol () ()
-  (lisp-popup-completion-symbol #'complete-symbol)
+  (start-completion #'complete-symbol
+                    (lisp-preceding-symbol))
   t)
 
 #+ccl

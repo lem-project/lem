@@ -59,7 +59,10 @@
 
 (defun completion-end ()
   (completion-mode nil)
-  (delete-completion-window))
+  (delete-completion-window)
+  (setf *completion-last-string* nil)
+  (setf *completion-last-function* nil)
+  t)
 
 (define-key *completion-mode-keymap* (kbd "C-m") 'completion-select)
 (define-key *completion-mode-keymap* (kbd "C-i") 'completion-select)
@@ -68,6 +71,7 @@
     (with-current-window *completion-window*
       (setf str (current-line-string)))
     (delete-char (- (length *completion-last-string*)) nil)
+    (setf *completion-last-string* str)
     (insert-string str)
     (completion-end))
   t)

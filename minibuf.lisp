@@ -251,11 +251,15 @@
   (let ((result (minibuf-read-line prompt
                                    directory
                                    #'(lambda (str)
-                                       (setq str (expand-file-name str))
-                                       (let ((dirname (directory-namestring str)))
-                                         (completion str
-                                                     (mapcar #'namestring
-                                                             (cl-fad:list-directory dirname)))))
+                                       (setf str (expand-file-name str))
+                                       (let* ((dirname (directory-namestring str))
+                                              (files (mapcar #'namestring (cl-fad:list-directory dirname))))
+                                         (completion (enough-namestring str dirname)
+                                                     files
+                                                     :test (lambda (str path)
+                                                             (when (search str
+                                                                           (enough-namestring path dirname))
+                                                               str)))))
                                    (and existing #'cl-fad:file-exists-p))))
     (if (string= result "")
         default

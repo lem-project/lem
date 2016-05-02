@@ -3,12 +3,10 @@
 (export '(completion
           start-completion))
 
-(defun completion (name list)
+(defun completion (name list &key (test #'search))
   (let ((strings
          (remove-if-not #'(lambda (elt)
-                            (and (<= (length name) (length elt))
-                                 (string= name elt
-                                          :end2 (length name))))
+                            (funcall test name elt))
                         list)))
     (cond
      ((null strings) nil)

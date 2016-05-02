@@ -834,10 +834,10 @@
         (declare (ignore symbol-name))
         (let ((package-name
                (subseq str 0 (position #\: str))))
-          (completion str
-                      (%collect-symbols package
-                                        package-name
-                                        external-p)))))))
+          (completion-hypheen str
+                              (%collect-symbols package
+                                                package-name
+                                                external-p)))))))
 
 (defun lisp-preceding-symbol ()
   (let* ((end (current-point))
@@ -849,18 +849,10 @@
                       "#" (region-string begin end)))))
     str))
 
-(defun lisp-popup-completion-symbol (complete-function)
-  (let ((str (lisp-preceding-symbol)))
-    (multiple-value-bind (comp-str win)
-        (popup-completion complete-function str)
-      (when win
-        (insert-string
-         (subseq comp-str
-                 (length str)))))))
-
 (define-key *lisp-mode-keymap* (kbd "M-C-i") 'lisp-complete-symbol)
 (define-command lisp-complete-symbol () ()
-  (lisp-popup-completion-symbol #'complete-symbol)
+  (start-completion #'complete-symbol
+                    (lisp-preceding-symbol))
   t)
 
 #+ccl

@@ -1,6 +1,8 @@
 (in-package :lem)
 
-(export '(bolp
+(export '(head-line-p
+          tail-line-p
+          bolp
           eolp
           bobp
           eobp

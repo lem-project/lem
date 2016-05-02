@@ -1,17 +1,32 @@
 (in-package :lem)
 
 (export '(completion
-          popup-completion
-          delete-completion-window))
+          completion-hypheen
+          start-completion))
 
-(defvar *completion-window* nil)
+(defun completion-test (x y)
+  (and (<= (length x) (length y))
+       (string= x y :end2 (length x))))
 
-(defun completion (name list)
+(defun completion (name list &key (test #'search) separator key)
   (let ((strings
-         (remove-if-not #'(lambda (elt)
-                            (and (<= (length name) (length elt))
-                                 (string= name elt
-                                          :end2 (length name))))
+         (remove-if-not (if separator
+                            (multiple-value-bind (parts1 parts1-length)
+                                (split-string name separator)
+                              (lambda (elt)
+                                (when key
+                                  (setf elt (funcall key elt)))
+                                (multiple-value-bind (parts2 parts2-length)
+                                    (split-string elt separator)
+                                  (and (<= parts1-length parts2-length)
+                                       (loop
+                                         :for p1 :in parts1
+                                         :for p2 :in parts2
+                                         :unless (funcall test p1 p2)
+                                         :do (return nil)
+                                         :finally (return t))))))
+                            (lambda (elt)
+                              (funcall test name elt)))
                         list)))
     (cond
      ((null strings) nil)
@@ -25,42 +40,122 @@
               (setq len res))))
         (values (subseq str 0 len) strings))))))
 
-(let ((state :first))
-  (defun popup-completion (comp-f str)
-    (unless (continue-flag :completion)
-      (setf state :first))
-    (case state
-      (:first
-       (setf state :rest)
-       (multiple-value-bind (result strings) (funcall comp-f str)
-         (cond (strings
-                (let ((buffer (get-buffer-create "*Completions*")))
-                  (setf *completion-window*
-                        (info-popup buffer
-                                    (lambda (out)
-                                      (format out "~{~A~%~}" strings))
-                                    nil))
-                  (setf (window-delete-hook *completion-window*)
-                        (lambda () (setf *completion-window* nil)))
-                  (setf (get-bvar :completion-buffer-p :buffer buffer) t)))
-               (t
-                (delete-completion-window)))
-         (if result
-             (values result t)
-             (values str nil))))
-      (:rest
-       (with-current-window *completion-window*
-         (unless (scroll-down (1- (window-height (current-window))))
-           (point-set (point-min)))
-         (redraw-display))
-       str)))
+(defun completion-hypheen (name list &key key)
+  (completion name list :test #'completion-test :separator #\- :key key))
 
-  (defun delete-completion-window ()
-    (setf state :first)
-    (when (and (window-p *completion-window*)
-               (not (deleted-window-p *completion-window*)))
-      (with-current-window *completion-window*
-        (when (get-bvar :completion-buffer-p
-                        :buffer (window-buffer *completion-window*))
-          (quit-window)))
-      (setf *completion-window* nil))))
+(defvar *completion-mode-keymap* (make-keymap 'completion-self-insert))
+(defvar *completion-window* nil)
+(defvar *completion-overlay* nil)
+(defvar *completion-overlay-attribute* (make-attribute "blue" nil :reverse-p t))
+
+(define-minor-mode completion-mode
+  (:name "completion"
+   :keymap *completion-mode-keymap*))
+
+(defun completion-update-overlay ()
+  (when *completion-overlay*
+    (delete-overlay *completion-overlay*))
+  (setf *completion-overlay*
+        (make-overlay (progn (beginning-of-line) (current-point))
+                      (progn (end-of-line) (current-point))
+                      *completion-overlay-attribute*)))
+
+(define-key *completion-mode-keymap* (kbd "M-n") 'completion-next-line)
+(define-key *completion-mode-keymap* (kbd "C-i") 'completion-next-line)
+(define-command completion-next-line (n) ("p")
+  (with-current-window *completion-window*
+    (if (eobp)
+        (beginning-of-buffer)
+        (forward-line n))
+    (completion-update-overlay)))
+
+(define-key *completion-mode-keymap* (kbd "M-p") 'completion-previous-line)
+(define-command completion-previous-line (n) ("p")
+  (with-current-window *completion-window*
+    (if (head-line-p)
+        (end-of-buffer)
+        (forward-line (- n)))
+    (completion-update-overlay)))
+
+(defvar *completion-last-string* nil)
+(defvar *completion-last-function* nil)
+
+(defun completion-end ()
+  (completion-mode nil)
+  (delete-completion-window)
+  (setf *completion-last-string* nil)
+  (setf *completion-last-function* nil)
+  t)
+
+(define-key *completion-mode-keymap* (kbd "C-m") 'completion-select)
+(define-command completion-select () ()
+  (let (str)
+    (with-current-window *completion-window*
+      (setf str (current-line-string)))
+    (delete-char (- (length *completion-last-string*)) nil)
+    (setf *completion-last-string* str)
+    (insert-string str)
+    (completion-end))
+  t)
+
+(define-key *completion-mode-keymap* (kbd "C-h") 'completion-delete-previous-char)
+(define-key *completion-mode-keymap* (kbd "[backspace]") 'completion-delete-previous-char)
+(define-command completion-delete-previous-char (n) ("p")
+  (delete-char (- n) nil)
+  (update-completion *completion-last-function*
+                    (subseq *completion-last-string* 0 (- (length *completion-last-string*) n))))
+
+(define-command completion-self-insert (n) ("p")
+  (let ((c (insertion-key-p (last-read-key-sequence))))
+    (cond (c (insert-char c n)
+             (update-completion *completion-last-function*
+                               (concatenate 'string
+                                            *completion-last-string*
+                                            (string c))))
+          (t (unread-key-sequence (last-read-key-sequence))
+             (completion-end)))))
+
+(defun update-completion (comp-f str)
+  (setf *completion-last-function* comp-f)
+  (setf *completion-last-string* str)
+  (multiple-value-bind (result strings) (funcall comp-f str)
+    (let ((confirm-p (and result (null strings))))
+      (when confirm-p
+        (setf strings (list result)))
+      (cond (strings
+             (let ((buffer (get-buffer-create "*Completions*")))
+               (setf *completion-window*
+                     (info-popup buffer
+                                 (lambda (out)
+                                   (format out "~{~A~^~%~}" strings))
+                                 nil))
+               (setf (window-delete-hook *completion-window*)
+                     (lambda () (setf *completion-window* nil)))
+               (setf (get-bvar :completion-buffer-p :buffer buffer) t)
+               (with-current-window *completion-window*
+                 (completion-update-overlay))))
+            ((null result)
+             (completion-end)))
+      (if result
+          (values result t confirm-p)
+          (values str nil)))))
+
+(defun start-completion (comp-f str)
+  (completion-mode t)
+  (multiple-value-bind (str result confirm-p)
+      (update-completion comp-f str)
+    (declare (ignore result))
+    (when confirm-p
+      (delete-char (- (length *completion-last-string*)) nil)
+      (insert-string str)
+      (completion-end)))
+  t)
+
+(defun delete-completion-window ()
+  (when (and (window-p *completion-window*)
+             (not (deleted-window-p *completion-window*)))
+    (with-current-window *completion-window*
+      (when (get-bvar :completion-buffer-p
+                      :buffer (window-buffer *completion-window*))
+        (quit-window)))
+    (setf *completion-window* nil)))

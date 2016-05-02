@@ -11,7 +11,7 @@
 (defvar *curr-flags* nil)
 
 (defvar *continue-command-flags*
-  (list :next-line :kill :undo :yank :completion))
+  (list :next-line :kill :undo :yank))
 
 (defun add-continue-flag (keyword)
   (pushnew keyword *continue-command-flags*))

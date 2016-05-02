@@ -834,10 +834,10 @@
         (declare (ignore symbol-name))
         (let ((package-name
                (subseq str 0 (position #\: str))))
-          (completion str
-                      (%collect-symbols package
-                                        package-name
-                                        external-p)))))))
+          (completion-hypheen str
+                              (%collect-symbols package
+                                                package-name
+                                                external-p)))))))
 
 (defun lisp-preceding-symbol ()
   (let* ((end (current-point))

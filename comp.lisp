@@ -1,12 +1,32 @@
 (in-package :lem)
 
 (export '(completion
+          completion-hypheen
           start-completion))
 
-(defun completion (name list &key (test #'search))
+(defun completion-test (x y)
+  (and (<= (length x) (length y))
+       (string= x y :end2 (length x))))
+
+(defun completion (name list &key (test #'search) separator key)
   (let ((strings
-         (remove-if-not #'(lambda (elt)
-                            (funcall test name elt))
+         (remove-if-not (if separator
+                            (multiple-value-bind (parts1 parts1-length)
+                                (split-string name separator)
+                              (lambda (elt)
+                                (when key
+                                  (setf elt (funcall key elt)))
+                                (multiple-value-bind (parts2 parts2-length)
+                                    (split-string elt separator)
+                                  (and (<= parts1-length parts2-length)
+                                       (loop
+                                         :for p1 :in parts1
+                                         :for p2 :in parts2
+                                         :unless (funcall test p1 p2)
+                                         :do (return nil)
+                                         :finally (return t))))))
+                            (lambda (elt)
+                              (funcall test name elt)))
                         list)))
     (cond
      ((null strings) nil)
@@ -19,6 +39,9 @@
             (when res
               (setq len res))))
         (values (subseq str 0 len) strings))))))
+
+(defun completion-hypheen (name list &key key)
+  (completion name list :test #'completion-test :separator #\- :key key))
 
 (defvar *completion-mode-keymap* (make-keymap 'completion-self-insert))
 (defvar *completion-window* nil)

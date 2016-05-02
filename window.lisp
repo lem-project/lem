@@ -480,8 +480,8 @@
 
 (defun split-window-after (current-window new-window split-type)
   (window-set-size current-window
-                   (window-width (current-window))
-                   (window-height (current-window)))
+                   (window-width current-window)
+                   (window-height current-window))
   (setf (window-vtop-linum new-window)
         (window-vtop-linum current-window))
   (setf (window-vtop-charpos new-window)
@@ -516,7 +516,7 @@
         (split-window-after window newwin :vsplit)))))
 
 (defun split-window-horizontally (window)
-  (unless (minibuffer-window-active-p)
+  (unless (minibuffer-window-p window)
     (multiple-value-bind (winwidth rem)
         (floor (window-width window) 2)
       (let ((newwin (make-window (window-buffer window)

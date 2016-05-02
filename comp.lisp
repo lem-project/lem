@@ -1,7 +1,7 @@
 (in-package :lem)
 
 (export '(completion
-          popup-completion
+          start-completion
           delete-completion-window))
 
 (defvar *completion-window* nil)
@@ -80,20 +80,20 @@
 (define-key *completion-mode-keymap* (kbd "[backspace]") 'completion-delete-previous-char)
 (define-command completion-delete-previous-char (n) ("p")
   (delete-char (- n) nil)
-  (popup-completion *completion-last-function*
+  (update-completion *completion-last-function*
                     (subseq *completion-last-string* 0 (- (length *completion-last-string*) n))))
 
 (define-command completion-self-insert (n) ("p")
   (let ((c (insertion-key-p (last-read-key-sequence))))
     (cond (c (insert-char c n)
-             (popup-completion *completion-last-function*
+             (update-completion *completion-last-function*
                                (concatenate 'string
                                             *completion-last-string*
                                             (string c))))
           (t (unread-key-sequence (last-read-key-sequence))
              (completion-end)))))
 
-(defun popup-completion (comp-f str)
+(defun update-completion (comp-f str)
   (setf *completion-last-function* comp-f)
   (setf *completion-last-string* str)
   (multiple-value-bind (result strings) (funcall comp-f str)
@@ -109,7 +109,6 @@
              (setf (window-delete-hook *completion-window*)
                    (lambda () (setf *completion-window* nil)))
              (setf (get-bvar :completion-buffer-p :buffer buffer) t)
-             (completion-mode t)
              (with-current-window *completion-window*
                (completion-update-overlay))))
           ((null result)
@@ -117,6 +116,10 @@
     (if result
         (values result t)
         (values str nil))))
+
+(defun start-completion (comp-f str)
+  (completion-mode t)
+  (update-completion comp-f str))
 
 (defun delete-completion-window ()
   (when (and (window-p *completion-window*)

@@ -851,7 +851,7 @@
 
 (defun lisp-popup-completion-symbol (complete-function)
   (let ((str (lisp-preceding-symbol)))
-    (popup-completion complete-function str)))
+    (start-completion complete-function str)))
 
 (define-key *lisp-mode-keymap* (kbd "M-C-i") 'lisp-complete-symbol)
 (define-command lisp-complete-symbol () ()

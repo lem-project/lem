@@ -255,10 +255,12 @@
                    (setf str (expand-file-name str))
                    (let* ((dirname (directory-namestring str))
                           (files (mapcar #'namestring (cl-fad:list-directory dirname))))
-                     (completion-hypheen (enough-namestring str dirname)
-                                         files
-                                         :key #'(lambda (path)
-                                                  (enough-namestring path dirname)))))
+                     (completion (enough-namestring str dirname)
+                                 files
+                                 :test #'completion-test
+                                 :separator "-."
+                                 :key #'(lambda (path)
+                                          (enough-namestring path dirname)))))
                  (and existing #'cl-fad:file-exists-p))))
     (if (string= result "")
         default

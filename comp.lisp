@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(completion
+          completion-test
           completion-hypheen
           start-completion))
 
@@ -8,16 +9,28 @@
   (and (<= (length x) (length y))
        (string= x y :end2 (length x))))
 
+(defun %comp-split (string separator)
+  (let ((list nil) (words 0) (end (length string)))
+    (when (zerop end) (return-from %comp-split nil))
+    (flet ((separatorp (char) (find char separator))
+           (done () (return-from %comp-split (cons (subseq string 0 end) list))))
+      (loop :for start = (position-if #'separatorp string :end end :from-end t) :do
+        (when (null start) (done))
+        (push (subseq string (1+ start) end) list)
+        (push (string (aref string start)) list)
+        (incf words)
+        (setf end start)))))
+
 (defun completion (name list &key (test #'search) separator key)
   (let ((strings
          (remove-if-not (if separator
-                            (multiple-value-bind (parts1 parts1-length)
-                                (split-string name separator)
+                            (let* ((parts1 (%comp-split name separator))
+                                   (parts1-length (length parts1)))
                               (lambda (elt)
                                 (when key
                                   (setf elt (funcall key elt)))
-                                (multiple-value-bind (parts2 parts2-length)
-                                    (split-string elt separator)
+                                (let* ((parts2 (%comp-split elt separator))
+                                       (parts2-length (length parts2)))
                                   (and (<= parts1-length parts2-length)
                                        (loop
                                          :for p1 :in parts1
@@ -41,7 +54,7 @@
         (values (subseq str 0 len) strings))))))
 
 (defun completion-hypheen (name list &key key)
-  (completion name list :test #'completion-test :separator #\- :key key))
+  (completion name list :test #'completion-test :separator "-" :key key))
 
 (defvar *completion-mode-keymap* (make-keymap 'completion-self-insert))
 (defvar *completion-window* nil)

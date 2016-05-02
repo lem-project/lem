@@ -43,15 +43,20 @@
                       *completion-overlay-attribute*)))
 
 (define-key *completion-mode-keymap* (kbd "M-n") 'completion-next-line)
+(define-key *completion-mode-keymap* (kbd "C-i") 'completion-next-line)
 (define-command completion-next-line (n) ("p")
   (with-current-window *completion-window*
-    (forward-line n)
+    (if (eobp)
+        (beginning-of-buffer)
+        (forward-line n))
     (completion-update-overlay)))
 
 (define-key *completion-mode-keymap* (kbd "M-p") 'completion-previous-line)
 (define-command completion-previous-line (n) ("p")
   (with-current-window *completion-window*
-    (forward-line (- n))
+    (if (head-line-p)
+        (end-of-buffer)
+        (forward-line (- n)))
     (completion-update-overlay)))
 
 (defvar *completion-last-string* nil)
@@ -65,7 +70,6 @@
   t)
 
 (define-key *completion-mode-keymap* (kbd "C-m") 'completion-select)
-(define-key *completion-mode-keymap* (kbd "C-i") 'completion-select)
 (define-command completion-select () ()
   (let (str)
     (with-current-window *completion-window*
@@ -104,7 +108,7 @@
              (setf *completion-window*
                    (info-popup buffer
                                (lambda (out)
-                                 (format out "~{~A~%~}" strings))
+                                 (format out "~{~A~^~%~}" strings))
                                nil))
              (setf (window-delete-hook *completion-window*)
                    (lambda () (setf *completion-window* nil)))

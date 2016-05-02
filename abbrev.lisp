@@ -4,8 +4,6 @@
   (:export :abbrev))
 (in-package :lem.abbrev)
 
-(add-continue-flag :abbrev)
-
 (defun preceding-word ()
   (let ((chars))
     (save-excursion
@@ -28,9 +26,6 @@
                            j)))
               words)))
     (nreverse words)))
-
-(defvar *abbrev-words* nil)
-(defvar *abbrev-save-word* nil)
 
 (defun scan-buffer-words (buffer word)
   (let ((words))
@@ -56,24 +51,9 @@
    :test #'equal))
 
 (define-key *global-keymap* (kbd "M-/") 'abbrev)
-(let ((save-words))
-  (define-command abbrev () ()
-    (let ((first nil))
-      (unless (continue-flag :abbrev) (setq first t))
-      (if first
-          (let ((src-word (preceding-word)))
-            (setq *abbrev-save-word* src-word)
-            (setq save-words
-                  (setq *abbrev-words*
-                        (scan-all-buffer-words src-word)))
-            (unless save-words
-              (setq *abbrev-words* (list src-word))
-              (setq save-words *abbrev-words*))
-            (delete-char (- (length src-word)) nil)
-            (insert-string (pop save-words)))
-          (let ((src-word (preceding-word)))
-            (unless save-words
-              (setq save-words *abbrev-words*))
-            (let ((dst-word (pop save-words)))
-              (delete-char (- (length src-word)) t)
-              (insert-string dst-word)))))))
+(define-command abbrev () ()
+  (let ((src-word (preceding-word)))
+    (let ((words (scan-all-buffer-words src-word)))
+      (start-completion (lambda (str)
+                          (completion str words))
+                        src-word))))

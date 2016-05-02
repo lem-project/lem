@@ -119,29 +119,37 @@
   (setf *completion-last-function* comp-f)
   (setf *completion-last-string* str)
   (multiple-value-bind (result strings) (funcall comp-f str)
-    (when (and result (null strings))
-      (setf strings (list result)))
-    (cond (strings
-           (let ((buffer (get-buffer-create "*Completions*")))
-             (setf *completion-window*
-                   (info-popup buffer
-                               (lambda (out)
-                                 (format out "~{~A~^~%~}" strings))
-                               nil))
-             (setf (window-delete-hook *completion-window*)
-                   (lambda () (setf *completion-window* nil)))
-             (setf (get-bvar :completion-buffer-p :buffer buffer) t)
-             (with-current-window *completion-window*
-               (completion-update-overlay))))
-          ((null result)
-           (completion-end)))
-    (if result
-        (values result t)
-        (values str nil))))
+    (let ((confirm-p (and result (null strings))))
+      (when confirm-p
+        (setf strings (list result)))
+      (cond (strings
+             (let ((buffer (get-buffer-create "*Completions*")))
+               (setf *completion-window*
+                     (info-popup buffer
+                                 (lambda (out)
+                                   (format out "~{~A~^~%~}" strings))
+                                 nil))
+               (setf (window-delete-hook *completion-window*)
+                     (lambda () (setf *completion-window* nil)))
+               (setf (get-bvar :completion-buffer-p :buffer buffer) t)
+               (with-current-window *completion-window*
+                 (completion-update-overlay))))
+            ((null result)
+             (completion-end)))
+      (if result
+          (values result t confirm-p)
+          (values str nil)))))
 
 (defun start-completion (comp-f str)
   (completion-mode t)
-  (update-completion comp-f str))
+  (multiple-value-bind (str result confirm-p)
+      (update-completion comp-f str)
+    (declare (ignore result))
+    (when confirm-p
+      (delete-char (- (length *completion-last-string*)) nil)
+      (insert-string str)
+      (completion-end)))
+  t)
 
 (defun delete-completion-window ()
   (when (and (window-p *completion-window*)

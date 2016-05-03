@@ -35,6 +35,15 @@
 
 (push #'syntax-scan-window *window-scroll-functions*)
 
+(defun ask-revert-buffer ()
+  (if (minibuf-y-or-n-p (format nil
+                                "~A changed on disk; revert buffer?"
+                                (buffer-filename)))
+      (revert-buffer t)
+      (update-changed-disk-date (current-buffer)))
+  (redraw-display)
+  (message nil))
+
 (defun lem-mainloop ()
   (macrolet ((form (&body body)
                    `(cond (*debug-p*
@@ -59,15 +68,7 @@
                 (key (read-key-sequence)))
            (stop-timer timer)
            (if (and wait-p (changed-disk-p (current-buffer)))
-               (progn
-                 (if (minibuf-y-or-n-p
-                      (format nil
-                              "~A changed on disk; update the buffer?"
-                              (buffer-filename)))
-                     (revert-buffer t)
-                     (update-changed-disk-date (current-buffer)))
-                 (redraw-display)
-                 (message nil))
+               (ask-revert-buffer)
                (let ((cmd (find-keybind key)))
                  (message nil)
                  (handler-case

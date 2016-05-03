@@ -44,6 +44,15 @@
   (redraw-display)
   (message nil))
 
+(defvar *mainloop-waited-for-enough*)
+
+(start-idle-timer 200
+                  t
+                  (lambda ()
+                    (syntax-scan-window (current-window))
+                    (redraw-display)
+                    (setq *mainloop-waited-for-enough* t)))
+
 (defun lem-mainloop ()
   (macrolet ((form (&body body)
                    `(cond (*debug-p*
@@ -59,31 +68,27 @@
                             (current-linum)
                             (1+ (current-linum)))
          (redraw-display)
-         (let* ((wait-p nil)
-                (timer (start-timer 200 nil
-                                    (lambda ()
-                                      (syntax-scan-window (current-window))
-                                      (redraw-display)
-                                      (setq wait-p t))))
-                (key (read-key-sequence)))
-           (stop-timer timer)
-           (if (and wait-p (changed-disk-p (current-buffer)))
-               (ask-revert-buffer)
-               (let ((cmd (find-keybind key)))
-                 (message nil)
-                 (handler-case
-                     (handler-bind ((editor-condition
-                                     (lambda (c)
-                                       (declare (ignore c))
-                                       (stop-record-key))))
-                       (cmd-call cmd nil))
-                   (editor-abort ()
-                                 (buffer-mark-cancel (current-buffer))
-                                 (message "Quit"))
-                   (readonly ()
-                             (message "Read Only"))
-                   (editor-error (c)
-                                 (message (editor-error-message c))))))))))))
+         (let ((*mainloop-waited-for-enough* nil))
+           (start-idle-timers)
+           (let ((key (read-key-sequence)))
+             (stop-idle-timers)
+             (if (and *mainloop-waited-for-enough* (changed-disk-p (current-buffer)))
+                 (ask-revert-buffer)
+                 (let ((cmd (find-keybind key)))
+                   (message nil)
+                   (handler-case
+                       (handler-bind ((editor-condition
+                                       (lambda (c)
+                                         (declare (ignore c))
+                                         (stop-record-key))))
+                         (cmd-call cmd nil))
+                     (editor-abort ()
+                                   (buffer-mark-cancel (current-buffer))
+                                   (message "Quit"))
+                     (readonly ()
+                               (message "Read Only"))
+                     (editor-error (c)
+                                   (message (editor-error-message c)))))))))))))
 
 (let ((passed nil))
   (defun call-with-editor (function)

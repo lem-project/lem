@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(with-editor
+(export '(popup-backtrace
+          with-editor
           lem))
 
 (defvar *running-p* nil)

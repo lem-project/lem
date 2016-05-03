@@ -8,46 +8,61 @@
           alive-timer-p))
 
 (defvar *timer-list* nil)
+(defvar *idle-timer-list* nil)
 
-(defstruct (timer (:constructor %make-timer))
-  _ms
-  repeat-p
-  last-time
-  function
-  args
-  handler-function)
+(defclass timer ()
+  ((ms
+    :initarg :ms
+    :reader timer-ms
+    :type (integer 1 *))
+   (repeat-p
+    :initarg :repeat-p
+    :reader timer-repeat-p
+    :type boolean)
+   (last-time
+    :initarg :last-time
+    :accessor timer-last-time
+    :type (integer 1 *))
+   (function
+    :initarg :function
+    :reader timer-function
+    :type function)
+   (args
+    :initarg :args
+    :reader timer-args
+    :type list)
+   (handle-function
+    :initarg :handle-function
+    :reader timer-handle-function
+    :type (or null function))))
 
-(defun start-timer (ms repeat-p function &optional args handler-function)
-  (let ((timer
-         (%make-timer :_ms ms
-                      :repeat-p repeat-p
-                      :last-time (get-internal-real-time)
-                      :function function
-                      :args args
-                      :handler-function handler-function)))
+(defun timer-p (x)
+  (typep x 'timer))
+
+(defun start-timer (ms repeat-p function &optional args handle-function)
+  (let ((timer (make-instance 'timer
+                              :ms ms
+                              :repeat-p repeat-p
+                              :last-time (get-internal-real-time)
+                              :function function
+                              :args args
+                              :handle-function handle-function)))
     (push timer *timer-list*)
     timer))
 
 (defun stop-timer (timer)
   (setq *timer-list* (delete timer *timer-list*)))
 
-(defun timer-ms (timer)
-  (timer-_ms timer))
-
-(defun (setf timer-ms) (new-ms timer)
-  (check-type new-ms (integer 1 #.most-positive-fixnum))
-  (setf (timer-_ms timer) new-ms))
-
 (defun update-timer ()
   (let ((promised-timers)
         (update-p))
     (dolist (timer *timer-list*)
-      (when (< (timer-_ms timer)
+      (when (< (timer-ms timer)
                (- (get-internal-real-time)
                   (timer-last-time timer)))
         (handler-case
-            (if (timer-handler-function timer)
-                (handler-bind ((error (timer-handler-function timer)))
+            (if (timer-handle-function timer)
+                (handler-bind ((error (timer-handle-function timer)))
                   (apply (timer-function timer) (timer-args timer)))
                 (apply (timer-function timer) (timer-args timer)))
           (error (condition)
@@ -62,7 +77,7 @@
 
 (defun shortest-wait-timers ()
   (let ((list (mapcar (lambda (timer)
-                        (- (timer-_ms timer)
+                        (- (timer-ms timer)
                            (- (get-internal-real-time)
                               (timer-last-time timer))))
                       *timer-list*)))

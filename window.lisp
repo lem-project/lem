@@ -3,6 +3,7 @@
 (export '(*modeline-default-format*
           *window-sufficient-width*
           *scroll-recenter-p*
+          *window-scroll-functions*
           modeline-read-only-p
           modeline-modified-p
           modeline-name
@@ -33,6 +34,7 @@
 
 (defvar *window-sufficient-width* 150)
 (defvar *scroll-recenter-p* t)
+(defvar *window-scroll-functions* nil)
 
 (defvar *modeline-default-format*
   (list 'modeline-read-only-p
@@ -419,7 +421,9 @@
   (when (< (buffer-nlines (window-buffer window))
            (window-vtop-linum window))
     (setf (window-vtop-linum window)
-          (buffer-nlines (window-buffer window)))))
+          (buffer-nlines (window-buffer window))))
+  (dolist (fun *window-scroll-functions*)
+    (funcall fun window)))
 
 (defun window-wrapping-offset (window)
   (unless (buffer-truncate-lines (window-buffer window))

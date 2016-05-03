@@ -125,5 +125,6 @@
     (insert-file-contents (current-buffer)
                           (current-point)
                           (buffer-filename))
+    (buffer-unmark (current-buffer))
     (update-changed-disk-date (current-buffer))
     t))

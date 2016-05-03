@@ -127,6 +127,7 @@
   markers
   truncate-lines
   external-format
+  last-write-date
   variables)
 
 (defvar *undo-modes* '(:edit :undo :redo))

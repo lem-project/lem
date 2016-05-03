@@ -7,7 +7,8 @@
           changefile-name
           write-file
           insert-file
-          save-some-buffers))
+          save-some-buffers
+          revert-buffer))
 
 (defvar *auto-mode-alist* nil)
 
@@ -114,3 +115,15 @@
                     (redraw-display)
                     (minibuf-y-or-n-p "Save file")))
           (save-file))))))
+
+(define-command revert-buffer (does-not-ask-p) ("P")
+  (when (and (or (buffer-modified-p (current-buffer))
+                 (changed-disk-p (current-buffer)))
+             (or does-not-ask-p
+                 (minibuf-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))))
+    (buffer-erase)
+    (insert-file-contents (current-buffer)
+                          (current-point)
+                          (buffer-filename))
+    (update-changed-disk-date (current-buffer))
+    t))

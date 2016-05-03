@@ -4,7 +4,8 @@
           expand-file-name
           insert-file-contents
           get-file-buffer
-          write-to-file))
+          write-to-file
+          changed-disk-p))
 
 (defvar *find-directory-function* nil)
 
@@ -97,6 +98,7 @@
                             filename)
       (buffer-unmark buffer))
     (buffer-enable-undo buffer)
+    (update-changed-disk-date buffer)
     buffer))
 
 (defun get-file-buffer (filename)
@@ -149,4 +151,14 @@
                            :if-exists :supersede
                            :if-does-not-exist :create)
         (f out :lf)))))
-  (buffer-unmark (current-buffer)))
+  (buffer-unmark buffer)
+  (update-changed-disk-date buffer))
+
+(defun update-changed-disk-date (buffer)
+  (setf (buffer-last-write-date buffer)
+        (file-write-date (buffer-filename buffer))))
+
+(defun changed-disk-p (buffer)
+  (and (buffer-filename buffer)
+       (not (eql (buffer-last-write-date buffer)
+                 (file-write-date (buffer-filename buffer))))))

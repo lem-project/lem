@@ -4,11 +4,11 @@
           timer-p
           timer-ms
           start-timer
+          start-idle-timer
           stop-timer
           alive-timer-p))
 
 (defvar *timer-list* nil)
-(defvar *idle-timer-list* nil)
 
 (defclass timer ()
   ((ms
@@ -34,7 +34,11 @@
    (handle-function
     :initarg :handle-function
     :reader timer-handle-function
-    :type (or null function))))
+    :type (or null function))
+   (alive-p
+    :initarg :alive-p
+    :accessor timer-alive-p
+    :type boolean)))
 
 (defun timer-p (x)
   (typep x 'timer))
@@ -46,11 +50,13 @@
                               :last-time (get-internal-real-time)
                               :function function
                               :args args
-                              :handle-function handle-function)))
+                              :handle-function handle-function
+                              :alive-p t)))
     (push timer *timer-list*)
     timer))
 
 (defun stop-timer (timer)
+  (setf (timer-alive-p timer) nil)
   (setq *timer-list* (delete timer *timer-list*)))
 
 (defun update-timer ()
@@ -61,10 +67,12 @@
                (- (get-internal-real-time)
                   (timer-last-time timer)))
         (push timer update-timers)
-        (if (timer-repeat-p timer)
-            (setf (timer-last-time timer)
-                  (get-internal-real-time))
-            (push timer promised-timers))))
+        (cond ((timer-repeat-p timer)
+               (setf (timer-last-time timer)
+                     (get-internal-real-time)))
+              (t
+               (setf (timer-alive-p timer) nil)
+               (push timer promised-timers)))))
     (setq *timer-list* (set-difference *timer-list* promised-timers))
     (dolist (timer update-timers)
       (handler-case
@@ -88,3 +96,34 @@
 
 (defun exist-running-timer-p ()
   (not (null *timer-list*)))
+
+(defvar *idle-timer-list* nil)
+(defvar *running-idle-timers* nil)
+
+(defun start-idle-timer (ms repeat-p function &optional args handle-function)
+  (push (cons (make-instance 'timer
+                             :ms ms
+                             :repeat-p nil
+                             :function function
+                             :args args
+                             :handle-function handle-function
+                             :alive-p t)
+              repeat-p)
+        *idle-timer-list*))
+
+(defun start-idle-timers ()
+  (dolist (elt *idle-timer-list*)
+    (let ((timer (car elt)))
+      (setf (timer-last-time timer) (get-internal-real-time))
+      (setf (timer-alive-p timer) t)
+      (push timer *timer-list*))))
+
+(defun stop-idle-timers ()
+  (let ((new-idle-timers))
+    (dolist (elt *idle-timer-list*)
+      (destructuring-bind (timer . repeat-p) elt
+        (stop-timer timer)
+        (unless (and (not (timer-alive-p timer))
+                     (not repeat-p))
+          (push elt new-idle-timers))))
+    (setf *idle-timer-list* new-idle-timers)))

@@ -11,12 +11,9 @@
     (or (test (merge-pathnames "lem.rc" (truename ".")))
         (test (merge-pathnames ".lemrc" (user-homedir-pathname))))))
 
-(add-hook 'after-init-hook
-          'load-init-file)
+(add-hook 'after-init-hook 'load-init-file)
 
-(add-hook 'find-file-hook
-          (lambda ()
-            (syntax-scan-window (current-window))))
+(push #'syntax-scan-window *window-scroll-functions*)
 
 ;;; !!!
 (progn
@@ -24,7 +21,7 @@
 
   (add-hook 'post-command-hook
             (lambda ()
-              (syntax-scan-lines (current-window)
+              (syntax-scan-lines (current-buffer)
                                  (current-linum)
                                  (1+ (current-linum)))))
 

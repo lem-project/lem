@@ -229,13 +229,12 @@
   (when (and *enable-syntax-highlight*
              (get-bvar :enable-syntax-highlight :buffer (window-buffer window)))
     (with-window-range (start-linum end-linum) window
-      (syntax-scan-lines window start-linum end-linum))))
+      (syntax-scan-lines (window-buffer window) start-linum end-linum))))
 
-(defun syntax-scan-lines (window start-linum end-linum)
+(defun syntax-scan-lines (buffer start-linum end-linum)
   (when (and *enable-syntax-highlight*
-             (get-bvar :enable-syntax-highlight :buffer (window-buffer window)))
-    (let* ((buffer (window-buffer window))
-           (line (buffer-get-line buffer start-linum))
+             (get-bvar :enable-syntax-highlight :buffer buffer))
+    (let* ((line (buffer-get-line buffer start-linum))
            (prev (line-prev line))
            (*syntax-symbol-lifetimes* (and prev (line-%symbol-lifetimes prev))))
       (do ((line line (line-next line))

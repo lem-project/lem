@@ -13,6 +13,10 @@
 
 (add-hook 'after-init-hook 'load-init-file)
 
+(add-hook 'find-file-hook
+          (lambda ()
+            (syntax-scan-window (current-window))))
+
 (push #'syntax-scan-window *window-scroll-functions*)
 
 ;;; !!!

@@ -63,12 +63,12 @@
   (change-font (line-fatstr line) 0 :and))
 
 (defun line-put-attribute (line start end attr)
-  (setf (line-fatstr line) (copy-fatstring (line-fatstr line)))
+  ;(setf (line-fatstr line) (copy-fatstring (line-fatstr line)))
   (change-font (line-fatstr line) (attribute-to-bits attr) :to start end)
   t)
 
 (defun line-remove-attribute (line start end attr)
-  (setf (line-fatstr line) (copy-fatstring (line-fatstr line)))
+  ;(setf (line-fatstr line) (copy-fatstring (line-fatstr line)))
   (change-font (line-fatstr line) (lognot (attribute-to-bits attr)) :and start end)
   t)
 

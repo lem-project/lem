@@ -50,7 +50,7 @@
     :initarg :attr
     :initform 0
     :reader syntax-attr
-    :type symbol)
+    :type (or null attribute))
    (tag
     :initarg :tag
     :initform nil

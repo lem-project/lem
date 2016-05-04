@@ -21,6 +21,15 @@
         (incf words)
         (setf end start)))))
 
+(defun logand-strings (strings)
+  (let* ((str (car strings))
+         (len (length str)))
+    (dolist (s (cdr strings))
+      (let ((res (mismatch str s :end1 len)))
+        (when res
+          (setq len res))))
+    (subseq str 0 len)))
+
 (defun completion (name list &key (test #'search) separator key)
   (let ((strings
          (remove-if-not (if separator
@@ -43,15 +52,11 @@
                         list)))
     (cond
      ((null strings) nil)
-     ((null (cdr strings)) (car strings))
+     ((null (cdr strings))
+      (values (car strings)
+              strings))
      (t
-      (let* ((str (car strings))
-             (len (length str)))
-        (dolist (s (cdr strings))
-          (let ((res (mismatch str s :end1 len)))
-            (when res
-              (setq len res))))
-        (values (subseq str 0 len) strings))))))
+      (values (logand-strings strings) strings)))))
 
 (defun completion-hypheen (name list &key key)
   (completion name list :test #'completion-test :separator "-" :key key))
@@ -132,26 +137,23 @@
   (setf *completion-last-function* comp-f)
   (setf *completion-last-string* str)
   (multiple-value-bind (result strings) (funcall comp-f str)
-    (let ((confirm-p (and result (null strings))))
-      (when confirm-p
-        (setf strings (list result)))
-      (cond (strings
-             (let ((buffer (get-buffer-create "*Completions*")))
-               (setf *completion-window*
-                     (info-popup buffer
-                                 (lambda (out)
-                                   (format out "~{~A~^~%~}" strings))
-                                 nil))
-               (setf (window-delete-hook *completion-window*)
-                     (lambda () (setf *completion-window* nil)))
-               (setf (get-bvar :completion-buffer-p :buffer buffer) t)
-               (with-current-window *completion-window*
-                 (completion-update-overlay))))
-            ((null result)
-             (completion-end)))
-      (if result
-          (values result t confirm-p)
-          (values str nil)))))
+    (cond (strings
+           (let ((buffer (get-buffer-create "*Completions*")))
+             (setf *completion-window*
+                   (info-popup buffer
+                               (lambda (out)
+                                 (format out "~{~A~^~%~}" strings))
+                               nil))
+             (setf (window-delete-hook *completion-window*)
+                   (lambda () (setf *completion-window* nil)))
+             (setf (get-bvar :completion-buffer-p :buffer buffer) t)
+             (with-current-window *completion-window*
+               (completion-update-overlay))))
+          ((null result)
+           (completion-end)))
+    (if result
+        (values result t (and (consp strings) (null (cdr strings))))
+        (values str nil))))
 
 (defun start-completion (comp-f str)
   (completion-mode t)

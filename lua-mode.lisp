@@ -121,9 +121,7 @@
    (eql #\, (preceding-char))))
 
 (defun scan-line ()
-  (let ((string (save-excursion
-                 (region-string (progn (beginning-of-line) (current-point))
-                                (progn (end-of-line) (current-point)))))
+  (let ((string (current-line-string))
         (tokens))
     (ppcre:do-matches-as-strings (tok "\\w+|;|\".*?[^\\\\]?\"|'.*?[^\\\\]'" string)
       (if (equal tok ";")

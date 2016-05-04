@@ -20,7 +20,8 @@
    :syntax-table *lua-syntax-table*)
   (setf (get-bvar :enable-syntax-highlight) t)
   (setf (get-bvar :calc-indent-function) 'lua-calc-indent)
-  (setf (get-bvar :forward-sexp-function) 'lua-forward-sexp))
+  (setf (get-bvar :forward-sexp-function) 'lua-forward-sexp)
+  (setf (get-bvar :beginning-of-defun-function) 'lua-beginning-of-defun))
 
 (dolist (str '("and" "break" "do" "else" "elseif" "end" "false" "for"
                "goto" "if" "in" "local" "nil" "not" "or"
@@ -103,13 +104,8 @@
 (defun lua-definition-line-p ()
   (looking-at-line "^(function|local)\\s"))
 
-(define-key *lua-mode-keymap* (kbd "C-M-a") 'lua-beginning-of-defun)
 (define-command lua-beginning-of-defun (n) ("p")
   (beginning-of-defun-abstract n #'lua-definition-line-p))
-
-(define-key *lua-mode-keymap* (kbd "C-M-e") 'lua-end-of-defun)
-(define-command lua-end-of-defun (n) ("p")
-  (beginning-of-defun-abstract (- n) #'lua-definition-line-p))
 
 (defun skip-backward-comment-and-space ()
   (backward-sexp 1 t))

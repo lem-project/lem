@@ -260,7 +260,11 @@
                    (package-name (lisp-current-package
                                   (window-buffer window)))))))
   (setf (get-bvar :calc-indent-function)
-        'lisp-calc-indent))
+        'lisp-calc-indent)
+  (setf (get-bvar :beginning-of-defun-function)
+        'lisp-beginning-of-defun)
+  (setf (get-bvar :end-of-defun-function)
+        'lisp-end-of-defun))
 
 (defun %lisp-mode-skip-expr-prefix (c1 c2 step-fn)
   (when c1
@@ -378,16 +382,14 @@
 
 (define-key *lisp-mode-keymap* (kbd "M-C-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()
-  (prog-indent-region (current-point)
-                      (save-excursion
-                        (forward-sexp 1)
-                        (current-point))))
+  (indent-region (current-point)
+                 (save-excursion
+                  (forward-sexp 1)
+                  (current-point))))
 
-(define-key *global-keymap* (kbd "M-C-a") 'lisp-beginning-of-defun)
 (define-command lisp-beginning-of-defun (&optional (n 1)) ("p")
   (beginning-of-defun-abstract n #'(lambda () (looking-at-line "^\\("))))
 
-(define-key *global-keymap* (kbd "M-C-e") 'lisp-end-of-defun)
 (define-command lisp-end-of-defun (&optional (n 1)) ("p")
   (if (minusp n)
       (lisp-beginning-of-defun (- n))

@@ -21,11 +21,15 @@
    :block-comment-preceding-char #\/
    :block-comment-following-char #\*))
 
-(define-major-mode c-mode nil
+(define-major-mode c-mode prog-mode
   (:name "c"
    :keymap *c-mode-keymap*
    :syntax-table *c-syntax-table*)
-  (setf (get-bvar :enable-syntax-highlight) t))
+  (setf (get-bvar :enable-syntax-highlight) t)
+  (setf (get-bvar :beginning-of-defun-function)
+        'c-beginning-of-defun)
+  (setf (get-bvar :end-of-defun-function)
+        'c-end-of-defun))
 
 (dolist (str '("void" "char" "short" "int" "long" "float" "double" "auto"
                "static" "const" "signed" "unsigned" "extern" "volatile"
@@ -47,7 +51,6 @@
 ;; (define-command c-compile () ()
 ;;   )
 
-(define-key *c-mode-keymap* (kbd "C-M-a") 'c-beginning-of-defun)
 (define-command c-beginning-of-defun (n) ("p")
   (beginning-of-defun-abstract
    n
@@ -58,7 +61,6 @@
     (forward-line -1))
   t)
 
-(define-key *c-mode-keymap* (kbd "C-M-e") 'c-end-of-defun)
 (define-command c-end-of-defun (n) ("p")
   (beginning-of-defun-abstract (- n) #'(lambda () (looking-at-line "^}")))
   (forward-line 1))

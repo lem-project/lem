@@ -14,11 +14,13 @@
    :string-quote-chars '(#\" #\')
    :line-comment-preceding-char #\#))
 
-(define-major-mode python-mode nil
+(define-major-mode python-mode prog-mode
   (:name "python"
    :keymap *python-mode-keymap*
    :syntax-table *python-syntax-table*)
-  (setf (get-bvar :enable-syntax-highlight) t))
+  (setf (get-bvar :enable-syntax-highlight) t)
+  (setf (get-bvar :beginning-of-defun-function)
+        'python-beginning-of-defun))
 
 (loop :for (str symbol) :in '(("\"\"\"" :start-double-quote-docstring)
                               ("'''" :start-single-quote-docstring)) :do
@@ -72,13 +74,8 @@
 (defun python-definition-line-p ()
   (looking-at-line "^\\s*(def|class)\\s"))
 
-(define-key *python-mode-keymap* (kbd "C-M-a") 'python-beginning-of-defun)
 (define-command python-beginning-of-defun (n) ("p")
   (beginning-of-defun-abstract n #'python-definition-line-p))
-
-(define-key *python-mode-keymap* (kbd "C-M-e") 'python-end-of-defun)
-(define-command python-end-of-defun (n) ("p")
-  (beginning-of-defun-abstract (- n) #'python-definition-line-p))
 
 (setq *auto-mode-alist*
       (append '(("\\.py$" . python-mode))

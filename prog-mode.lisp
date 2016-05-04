@@ -2,16 +2,16 @@
 
 (export '(*prog-mode-keymap*
           prog-mode
-          prog-indent-line
-          prog-newline-and-indent
-          prog-indent-region))
+          indent-line
+          newline-and-indent
+          indent-region))
 
 (define-major-mode prog-mode nil
   (:name "prog"
    :keymap *prog-mode-keymap*)
   (setf (get-bvar :indent-tabs-mode) t))
 
-(defun indent-line (column)
+(defun indent-line-internal (column)
   (when (minusp column) (setq column 0))
   (let* ((old-column (current-column))
          (old-indent-string
@@ -41,23 +41,40 @@
            (back-to-indentation)))
     t))
 
-(define-key *prog-mode-keymap* (kbd "C-i") 'prog-indent-line)
-(define-command prog-indent-line () ()
-  (let* ((f (get-bvar :calc-indent-function))
+(defun calc-indent-default ()
+  (save-excursion
+   (forward-line -1)
+   (back-to-indentation)
+   (current-column)))
+
+(define-key *global-keymap* (kbd "C-i") 'indent-line)
+(define-command indent-line () ()
+  (let* ((f (get-bvar :calc-indent-function :default #'calc-indent-default))
          (n (and f (funcall f))))
     (if n
-        (indent-line n)
+        (indent-line-internal n)
         (insert-char #\tab 1))))
 
-(define-key *prog-mode-keymap* (kbd "C-j") 'prog-newline-and-indent)
-(define-key *prog-mode-keymap* (kbd "M-j") 'prog-newline-and-indent)
-(define-command prog-newline-and-indent (n) ("p")
+(define-key *global-keymap* (kbd "C-j") 'newline-and-indent)
+(define-key *global-keymap* (kbd "M-j") 'newline-and-indent)
+(define-command newline-and-indent (n) ("p")
   (insert-newline n)
-  (prog-indent-line))
+  (indent-line))
 
-(define-key *prog-mode-keymap* (kbd "C-M-\\") 'prog-indent-region)
-(define-command prog-indent-region (begin end) ("r")
+(define-key *global-keymap* (kbd "C-M-\\") 'indent-region)
+(define-command indent-region (begin end) ("r")
   (save-excursion
     (apply-region-lines begin
                         end
-                        'prog-indent-line)))
+                        'indent-line)))
+
+(define-key *prog-mode-keymap* (kbd "C-M-a") 'beginning-of-defun)
+(define-command beginning-of-defun (&optional (n 1)) ("p")
+  (when (get-bvar :beginning-of-defun-function)
+    (funcall (get-bvar :beginning-of-defun-function) n)))
+
+(define-key *prog-mode-keymap* (kbd "C-M-e") 'end-of-defun)
+(define-command end-of-defun (&optional (n 1)) ("p")
+  (if (get-bvar :end-of-defun-function)
+      (funcall (get-bvar :end-of-defun-function) n)
+      (beginning-of-defun (- n))))

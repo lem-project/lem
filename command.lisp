@@ -311,17 +311,6 @@
                 #'(lambda (n)
                     (make-string (* n *tab-size*) :initial-element #\space))))
 
-(define-key *global-keymap* (kbd "C-j") 'newline-and-indent)
-(define-command newline-and-indent (n) ("p")
-  (dotimes (_ n t)
-    (let ((spaces (region-string (make-point (current-linum) 0)
-                                 (save-excursion
-                                   (back-to-indentation)
-                                   (current-point)))))
-      (unless (and (newline)
-                   (insert-string spaces))
-        (return nil)))))
-
 (define-key *global-keymap* (kbd "C-x ]") 'next-page-char)
 (define-command next-page-char (&optional (n 1)) ("p")
   (dotimes (_ n t)

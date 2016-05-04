@@ -169,9 +169,10 @@
 
 (defun skip-list (depth dir)
   (loop with paren-char = nil do
-    (unless (if dir
-                (skip-space-forward)
-                (skip-space-backward))
+    (if dir
+        (skip-space-and-comment-forward)
+        (skip-space-and-comment-backward))
+    (when (if dir (eobp) (bobp))
       (return nil))
     (let ((type (sexp-get-syntax-type dir)))
       (case type
@@ -271,8 +272,8 @@
 (defun raw-forward-sexp (n)
   (let ((skip-space
          (if (plusp n)
-             #'skip-space-forward
-             #'skip-space-backward))
+             #'skip-space-and-comment-forward
+             #'skip-space-and-comment-backward))
         (skip-sexp
          (if (plusp n)
              #'skip-sexp-forward

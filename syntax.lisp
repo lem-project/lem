@@ -1,6 +1,8 @@
 (in-package :lem)
 
 (export '(*enable-syntax-highlight*
+          +syntax-string-tag+
+          +syntax-comment-tag+
           syntax-table
           make-syntax-table
           make-syntax-test
@@ -29,7 +31,9 @@
           syntax-following-tag
           syntax-preceding-tag
           syntax-forward-search-tag-end
-          syntax-backward-search-tag-start))
+          syntax-backward-search-tag-start
+          skip-space-and-comment-forward
+          skip-space-and-comment-backward))
 
 (defvar *enable-syntax-highlight* t)
 
@@ -107,6 +111,9 @@
   region-list
   match-list)
 
+(defparameter +syntax-comment-tag+ (make-symbol "COMMENT"))
+(defparameter +syntax-string-tag+ (make-symbol "STRING"))
+
 (defun make-syntax-table (&rest args)
   (let ((syntax-table (apply '%make-syntax-table args)))
     (let ((pre (syntax-table-line-comment-preceding-char syntax-table))
@@ -118,19 +125,22 @@
           (syntax-add-match syntax-table
                             (make-syntax-test (format nil "~a.*$" string)
                                               :regex-p t)
-                            :attr *syntax-comment-attribute*))))
+                            :attr *syntax-comment-attribute*
+                            :tag +syntax-comment-tag+))))
     (dolist (string-quote-char (syntax-table-string-quote-chars syntax-table))
       (syntax-add-region syntax-table
                          (make-syntax-test (string string-quote-char))
                          (make-syntax-test (string string-quote-char))
-                         :attr *syntax-string-attribute*))
+                         :attr *syntax-string-attribute*
+                         :tag +syntax-string-tag+))
     (let ((pre (syntax-table-block-comment-preceding-char syntax-table))
           (flw (syntax-table-block-comment-following-char syntax-table)))
       (when (and pre flw)
         (syntax-add-region syntax-table
                            (make-syntax-test (format nil "~c~c" pre flw))
                            (make-syntax-test (format nil "~c~c" flw pre))
-                           :attr *syntax-comment-attribute*)))
+                           :attr *syntax-comment-attribute*
+                           :tag +syntax-comment-tag+)))
     syntax-table))
 
 (defun syntax-add-match (syntax-table test &key test-symbol end-symbol attr
@@ -339,7 +349,7 @@
               (t
                (line-put-attribute line start (length (line-str line))
                                    (syntax-attr syntax))
-               (line-add-tag line start (length (line-str line))
+               (line-add-tag line start (1+ (length (line-str line)))
                              (syntax-tag syntax))
                (setf (line-%region line) syntax)
                (return-from syntax-scan-token-test
@@ -385,7 +395,7 @@
              (setf (line-%region line) region)
              (line-put-attribute line 0 (length (line-str line))
                                  (syntax-attr region))
-             (line-add-tag line 0 (length (line-str line)) (syntax-tag region))
+             (line-add-tag line 0 (1+ (length (line-str line))) (syntax-tag region))
              (length (line-str line)))))))
 
 (defun syntax-scan-line (line)
@@ -415,10 +425,6 @@
 
 (defun %syntax-pos-tag (pos)
   (let ((line (buffer-get-line (current-buffer) (current-linum))))
-    (when (= 0 pos)
-      (unless (setq line (line-prev line))
-        (return-from %syntax-pos-tag nil))
-      (setq pos (length (line-str line))))
     (loop :for (start end tag) :in (line-%tags line) :do
       (when (<= start pos (1- end))
         (return tag)))))
@@ -434,56 +440,37 @@
    (%syntax-pos-tag (current-charpos))))
 
 (defun syntax-following-tag ()
-  (%syntax-pos-tag (1+ (current-charpos))))
-
-(defun syntax-preceding-tag ()
   (%syntax-pos-tag (current-charpos)))
 
+(defun syntax-preceding-tag ()
+  (save-excursion
+   (shift-position -1)
+   (%syntax-pos-tag (current-charpos))))
+
 (defun syntax-forward-search-tag-end (tag0)
-  (do ((line (buffer-get-line (current-buffer) (current-linum))
-             (line-next line))
-       (linum (current-linum) (1+ linum))
-       (charpos (current-charpos) 0)
-       (straddle-p))
-      ((null line))
-    (let ((found-tag-p nil))
-      (loop :with tags := (sort (copy-list (line-%tags line)) #'< :key #'car)
-        :for (start end tag) :in tags
-        :do (when (eq tag0 tag)
-              (cond ((= start charpos)
-                     (when (/= end (line-length line))
-                       (point-set (make-point linum end))
-                       (return-from syntax-forward-search-tag-end t))
-                     (setq straddle-p t)
-                     (setq found-tag-p t)
-                     (return))
-                    (t
-                     (return-from syntax-forward-search-tag-end nil)))))
-      (when (and (not found-tag-p) straddle-p)
-        (point-set (make-point (1- linum) (line-length (line-prev line))))
-        (return t)))))
+  (loop
+    (unless (eq tag0 (syntax-following-tag))
+      (return t))
+    (shift-position 1)))
 
 (defun syntax-backward-search-tag-start (tag0)
-  (do* ((line (buffer-get-line (current-buffer) (current-linum))
-              (line-prev line))
-        (linum (current-linum) (1- linum))
-        (charpos (current-charpos)
-                (and (line-p line) (line-length line)))
-        (straddle-p))
-      ((null line))
-    (let ((found-tag-p nil))
-      (loop :with tags := (line-%tags line)
-        :for (start end tag) :in tags
-        :do (when (eq tag0 tag)
-              (cond ((= charpos end)
-                     (when (/= start 0)
-                       (point-set (make-point linum start))
-                       (return-from syntax-backward-search-tag-start t))
-                     (setq straddle-p t)
-                     (setq found-tag-p t)
-                     (return))
-                    (t
-                     (return-from syntax-backward-search-tag-start nil)))))
-      (when (and (not found-tag-p) straddle-p)
-        (point-set (make-point (1+ linum) 0))
-        (return t)))))
+  (loop
+    (unless (eq tag0 (syntax-preceding-tag))
+      (return t))
+    (shift-position -1)))
+
+(defun skip-space-and-comment-forward ()
+  (loop
+    (skip-chars-forward #'syntax-space-char-p)
+    (unless (and (not (eq +syntax-comment-tag+ (syntax-preceding-tag)))
+                 (eq +syntax-comment-tag+ (syntax-following-tag)))
+      (return t))
+    (syntax-forward-search-tag-end +syntax-comment-tag+)))
+
+(defun skip-space-and-comment-backward ()
+  (loop
+    (skip-chars-backward #'syntax-space-char-p)
+    (unless (and (not (eq +syntax-comment-tag+ (syntax-following-tag)))
+                 (eq +syntax-comment-tag+ (syntax-preceding-tag)))
+      (return t))
+    (syntax-backward-search-tag-start +syntax-comment-tag+)))

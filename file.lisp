@@ -154,11 +154,15 @@
   (buffer-unmark buffer)
   (update-changed-disk-date buffer))
 
+(defun file-write-date* (buffer)
+  (if (probe-file (buffer-filename buffer))
+      (file-write-date (buffer-filename buffer))))
+
 (defun update-changed-disk-date (buffer)
   (setf (buffer-last-write-date buffer)
-        (file-write-date (buffer-filename buffer))))
+        (file-write-date* buffer)))
 
 (defun changed-disk-p (buffer)
   (and (buffer-filename buffer)
        (not (eql (buffer-last-write-date buffer)
-                 (file-write-date (buffer-filename buffer))))))
+                 (file-write-date* buffer)))))

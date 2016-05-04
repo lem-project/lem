@@ -685,11 +685,12 @@
       (when (or (symbol-char-p (following-char))
                 (symbol-char-p (preceding-char)))
         (save-excursion
-          (skip-chars-backward not-symbol-elements t)
-          (region-string (current-point)
-                         (progn
-                           (forward-sexp 1)
-                           (current-point))))))))
+         (skip-chars-backward not-symbol-elements t)
+         (string-left-trim "'#`@,"
+                           (region-string (current-point)
+                                          (progn
+                                            (forward-sexp 1)
+                                            (current-point)))))))))
 
 (defun lisp-read-symbol (prompt &optional (confirm-p t))
   (let ((default-name (or (lisp-looking-at-symbol-name) "")))

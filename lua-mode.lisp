@@ -60,7 +60,7 @@
                      (make-syntax-test str1)
                      (make-syntax-test str2)
                      :attr *syntax-comment-attribute*
-                     :tag :comment))
+                     :tag +syntax-comment-tag+))
 
 (defun skip-space-forward ()
   (loop

@@ -14,6 +14,7 @@
           transpose-sexps
           beginning-of-defun-abstract))
 
+#|
 (defun skip-block-comment-forward ()
   (loop
     for c1 = (following-char)
@@ -107,6 +108,7 @@
                  (skip-block-comment-backward))
                 (t
                  (return t)))))))
+|#
 
 (defparameter *converted-char-types*
   '(:space

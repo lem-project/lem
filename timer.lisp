@@ -122,8 +122,13 @@
   (let ((new-idle-timers))
     (dolist (elt *idle-timer-list*)
       (destructuring-bind (timer . repeat-p) elt
-        (stop-timer timer)
-        (unless (and (not (timer-alive-p timer))
-                     (not repeat-p))
-          (push elt new-idle-timers))))
+        (when (or repeat-p
+                  ;; !!!
+                  ;; repeat-pがnilのidle-timerが生きている期間を
+                  ;; トップレベルの入力待ち一回の間だけにするかはこの式で決まる。
+                  ;; emacsでは一度は必ず実行されるが、そうでないほうが都合が良いことがある。
+                  ;; (timer-alive-p timer)
+                  )
+          (push elt new-idle-timers))
+        (stop-timer timer)))
     (setf *idle-timer-list* new-idle-timers)))

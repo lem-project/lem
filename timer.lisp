@@ -13,7 +13,7 @@
 (defclass timer ()
   ((ms
     :initarg :ms
-    :reader timer-ms
+    :accessor timer-ms
     :type (integer 1 *))
    (repeat-p
     :initarg :repeat-p

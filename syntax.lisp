@@ -452,14 +452,22 @@
     (unless (eq tag0 (syntax-following-tag))
       (return t))
     (unless (shift-position 1)
-      (return nil))))
+      (return nil))
+    (when (bolp)
+      (syntax-scan-lines (current-buffer)
+                         (current-linum)
+                         (1+ (current-linum))))))
 
 (defun syntax-backward-search-tag-start (tag0)
   (loop
     (unless (eq tag0 (syntax-preceding-tag))
       (return t))
     (unless (shift-position -1)
-      (return nil))))
+      (return nil))
+    (when (eolp)
+      (syntax-scan-lines (current-buffer)
+                         (current-linum)
+                         (1+ (current-linum))))))
 
 (defun skip-space-and-comment-forward ()
   (loop

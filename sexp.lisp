@@ -171,9 +171,10 @@
 
 (defun skip-list (depth dir)
   (loop with paren-char = nil do
-    (if dir
-        (skip-space-and-comment-forward)
-        (skip-space-and-comment-backward))
+    (unless (if dir
+                (skip-space-and-comment-forward)
+                (skip-space-and-comment-backward))
+      (return nil))
     (when (if dir (eobp) (bobp))
       (return nil))
     (let ((type (sexp-get-syntax-type dir)))

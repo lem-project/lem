@@ -451,13 +451,15 @@
   (loop
     (unless (eq tag0 (syntax-following-tag))
       (return t))
-    (shift-position 1)))
+    (unless (shift-position 1)
+      (return nil))))
 
 (defun syntax-backward-search-tag-start (tag0)
   (loop
     (unless (eq tag0 (syntax-preceding-tag))
       (return t))
-    (shift-position -1)))
+    (unless (shift-position -1)
+      (return nil))))
 
 (defun skip-space-and-comment-forward ()
   (loop
@@ -465,7 +467,8 @@
     (unless (and (not (eq +syntax-comment-tag+ (syntax-preceding-tag)))
                  (eq +syntax-comment-tag+ (syntax-following-tag)))
       (return t))
-    (syntax-forward-search-tag-end +syntax-comment-tag+)))
+    (unless (syntax-forward-search-tag-end +syntax-comment-tag+)
+      (return nil))))
 
 (defun skip-space-and-comment-backward ()
   (loop
@@ -473,4 +476,5 @@
     (unless (and (not (eq +syntax-comment-tag+ (syntax-following-tag)))
                  (eq +syntax-comment-tag+ (syntax-preceding-tag)))
       (return t))
-    (syntax-backward-search-tag-start +syntax-comment-tag+)))
+    (unless (syntax-backward-search-tag-start +syntax-comment-tag+)
+      (return nil))))

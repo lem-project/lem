@@ -299,10 +299,15 @@
 (define-key *global-keymap* "[resize]" 'undefined-key)
 (define-key *global-keymap* "[event]" 'undefined-key)
 
+(defun lookup-keybind (key)
+  (or (some #'(lambda (mode)
+                (keymap-find-keybind (mode-keymap mode) key))
+            (buffer-minor-modes))
+      (keymap-find-keybind (mode-keymap (buffer-major-mode)) key)
+      (keymap-find-keybind *global-keymap* key)))
+
 (defun find-keybind (key)
-  (let ((cmd (or (some #'(lambda (mode)
-                           (keymap-find-keybind (mode-keymap mode) key))
-                       (buffer-minor-modes))
-                 (keymap-find-keybind (mode-keymap (buffer-major-mode)) key)
-                 (keymap-find-keybind *global-keymap* key))))
-    (function-to-command (or cmd 'undefined-key))))
+  (let ((cmd (lookup-keybind key)))
+    (when (or (symbolp cmd) (functionp cmd))
+      (function-to-command cmd))))
+

@@ -54,7 +54,7 @@
                              (&key name keymap syntax-table)
                              &body body)
   `(progn
-     (push ',major-mode *mode-list*)
+     (pushnew ',major-mode *mode-list*)
      (setf (mode-name ',major-mode) ,name)
      ,@(cond (keymap
               `((defvar ,keymap (make-keymap))
@@ -85,7 +85,7 @@
 
 (defmacro define-minor-mode (minor-mode (&key name keymap) &body body)
   `(progn
-     (push ',minor-mode *mode-list*)
+     (pushnew ',minor-mode *mode-list*)
      (setf (mode-name ',minor-mode) ,name)
      (defvar ,keymap (make-keymap))
      (setf (mode-keymap ',minor-mode) ,keymap)
@@ -93,8 +93,7 @@
        (cond ((null args)
               (toggle-minor-mode ',minor-mode))
              ((car args)
-              (unless (member ',minor-mode (buffer-minor-modes))
-                (push ',minor-mode (buffer-minor-modes))))
+              (pushnew ',minor-mode (buffer-minor-modes)))
              (t
               (setf (buffer-minor-modes)
                     (delete ',minor-mode (buffer-minor-modes)))))

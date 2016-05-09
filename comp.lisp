@@ -78,6 +78,7 @@
                       (progn (end-of-line) (current-point))
                       *completion-overlay-attribute*)))
 
+(define-key *completion-mode-keymap* (kbd "C-n") 'completion-next-line)
 (define-key *completion-mode-keymap* (kbd "M-n") 'completion-next-line)
 (define-key *completion-mode-keymap* (kbd "C-i") 'completion-next-line)
 (define-command completion-next-line (n) ("p")
@@ -87,12 +88,39 @@
         (forward-line n))
     (completion-update-overlay)))
 
+(define-key *completion-mode-keymap* (kbd "C-p") 'completion-previous-line)
 (define-key *completion-mode-keymap* (kbd "M-p") 'completion-previous-line)
 (define-command completion-previous-line (n) ("p")
   (with-current-window *completion-window*
     (if (head-line-p)
         (end-of-buffer)
         (forward-line (- n)))
+    (completion-update-overlay)))
+
+(define-key *completion-mode-keymap* (kbd "C-v") 'completion-next-page)
+(define-command completion-next-page () ()
+  (with-current-window *completion-window*
+    (unless (next-page)
+      (end-of-buffer))
+    (completion-update-overlay)))
+
+(define-key *completion-mode-keymap* (kbd "M-v") 'completion-previous-page)
+(define-command completion-previous-page () ()
+  (with-current-window *completion-window*
+    (unless (prev-page)
+      (beginning-of-buffer))
+    (completion-update-overlay)))
+
+(define-key *completion-mode-keymap* (kbd "M->") 'completion-end-of-buffer)
+(define-command completion-end-of-buffer () ()
+  (with-current-window *completion-window*
+    (end-of-buffer)
+    (completion-update-overlay)))
+
+(define-key *completion-mode-keymap* (kbd "M-<") 'completion-beginning-of-buffer)
+(define-command completion-beginning-of-buffer () ()
+  (with-current-window *completion-window*
+    (beginning-of-buffer)
     (completion-update-overlay)))
 
 (defvar *completion-last-string* nil)

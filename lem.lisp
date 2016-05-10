@@ -70,11 +70,11 @@
          (redraw-display)
          (let ((*mainloop-waited-for-enough* nil))
            (start-idle-timers)
-           (let ((key (read-key-sequence)))
+           (let ((cmd (read-key-command)))
              (stop-idle-timers)
              (if (and *mainloop-waited-for-enough* (changed-disk-p (current-buffer)))
                  (ask-revert-buffer)
-                 (let ((cmd (find-keybind key)))
+                 (progn
                    (message nil)
                    (handler-case
                        (handler-bind ((editor-condition

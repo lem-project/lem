@@ -172,8 +172,7 @@
     (catch 'minibuf-read-line-end
       (do-commandloop ()
         (redraw-display)
-        (let* ((key (read-key-sequence))
-               (cmd (find-keybind key)))
+        (let ((cmd (read-key-command)))
           (handler-case (cmd-call cmd nil)
             (editor-abort (c)
               (when (/= (editor-abort-depth c)

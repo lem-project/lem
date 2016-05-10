@@ -19,7 +19,12 @@
 (defvar *unread-keys* nil)
 
 (defun last-read-key-sequence ()
-  *last-read-key-sequence*)
+  (if (kbd-p *last-read-key-sequence*)
+      *last-read-key-sequence*
+      (setf *last-read-key-sequence* (make-kbd *last-read-key-sequence*))))
+
+(defun set-last-read-key-sequence (key-sequence)
+  (setf *last-read-key-sequence* key-sequence))
 
 (defun start-record-key ()
   (setq *key-recording-p* t)
@@ -59,16 +64,8 @@
   (push char *unread-keys*))
 
 (defun read-key-sequence ()
-  (let ((key
-         (let ((c (read-key)))
-           (if (or (char= c C-x)
-                   (char= c escape))
-               (let ((c2 (read-key)))
-                 (if (char= c2 escape)
-                     (kbd c c2 (read-key))
-                     (kbd c c2)))
-               (kbd c)))))
-    (setq *last-read-key-sequence* key)))
+  (read-key-command)
+  (last-read-key-sequence))
 
 (defun unread-key-sequence (key)
   (setf *unread-keys*

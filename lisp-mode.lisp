@@ -380,7 +380,7 @@
                    (setq num-insert-spaces (+ start-pos 2)))))))))))
     num-insert-spaces))
 
-(define-key *lisp-mode-keymap* (kbd "M-C-q") 'lisp-indent-sexp)
+(define-key *lisp-mode-keymap* (kbd "C-M-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()
   (indent-region (current-point)
                  (save-excursion
@@ -439,7 +439,7 @@
            (message "Package does not exist: ~a" package-name)
            nil))))
 
-(define-key *lisp-mode-keymap* (kbd "C-x p") 'lisp-set-package)
+(define-key *lisp-mode-keymap* (kbd "C-c M-p") 'lisp-set-package)
 (define-command lisp-set-package () ()
   (lisp-read-change-package
    #'find-package
@@ -575,7 +575,7 @@
               point
               update-point-p))
 
-(define-key *lisp-mode-keymap* (kbd "M-:") 'lisp-eval-string)
+(define-key *global-keymap* (kbd "M-:") 'lisp-eval-string)
 (define-command lisp-eval-string (string) ("sEval: ")
   (let ((output-buffer (get-buffer-create "*output*")))
     (buffer-erase output-buffer)
@@ -588,7 +588,7 @@
                          nil
                          nil)))))
 
-(define-key *lisp-mode-keymap* (kbd "C-x r") 'lisp-eval-region)
+(define-key *lisp-mode-keymap* (kbd "C-c C-r") 'lisp-eval-region)
 (define-command lisp-eval-region (&optional begin end) ("r")
   (unless (or begin end)
     (setq begin (region-beginning))
@@ -611,12 +611,12 @@
 (define-command lisp-eval-defun () ()
   (lisp-move-and-eval-sexp #'top-of-defun #'lisp-eval-string))
 
-(define-key *lisp-mode-keymap* (kbd "C-x C-e") 'lisp-eval-last-sexp)
+(define-key *lisp-mode-keymap* (kbd "C-c C-e") 'lisp-eval-last-sexp)
 (define-command lisp-eval-last-sexp () ()
   (lisp-move-and-eval-sexp #'backward-sexp #'lisp-eval-string))
 
-(define-key *lisp-mode-keymap* (kbd "C-x l") 'lisp-load-file)
-(define-key *lisp-mode-keymap* (kbd "C-x C-l") 'lisp-load-file)
+(define-key *lisp-mode-keymap* (kbd "C-c l") 'lisp-load-file)
+(define-key *lisp-mode-keymap* (kbd "C-c C-l") 'lisp-load-file)
 (define-command lisp-load-file (filename) ("fLoad File: ")
   (when (and (cl-fad:file-exists-p filename)
              (not (cl-fad:directory-pathname-p filename)))
@@ -671,11 +671,12 @@
                        #'(lambda (out) (pprint expr out))
                        t))))
 
-(define-key *lisp-mode-keymap* (kbd "C-x m") 'lisp-macroexpand)
+(define-key *lisp-mode-keymap* (kbd "C-c m") 'lisp-macroexpand)
+(define-key *lisp-mode-keymap* (kbd "C-c C-m") 'lisp-macroexpand)
 (define-command lisp-macroexpand () ()
   (%lisp-macroexpand 'macroexpand-1 "*macroexpand*"))
 
-(define-key *lisp-mode-keymap* (kbd "C-x M") 'lisp-macroexpand-all)
+(define-key *lisp-mode-keymap* (kbd "C-c M") 'lisp-macroexpand-all)
 (define-command lisp-macroexpand-all () ()
   (%lisp-macroexpand 'macroexpand "*macroexpand*"))
 
@@ -704,7 +705,7 @@
         (let ((*package* (lisp-current-package)))
           (read-from-string name))))))
 
-(define-key *lisp-mode-keymap* (kbd "C-x d") 'lisp-describe-symbol)
+(define-key *lisp-mode-keymap* (kbd "C-c C-d") 'lisp-describe-symbol)
 (define-command lisp-describe-symbol () ()
   (multiple-value-bind (name error-p)
       (lisp-read-symbol "Describe: ")
@@ -714,7 +715,7 @@
                            (describe name out))
                        nil))))
 
-(define-key *lisp-mode-keymap* (kbd "C-x M-d") 'lisp-disassemble-symbol)
+(define-key *lisp-mode-keymap* (kbd "C-c M-d") 'lisp-disassemble-symbol)
 (define-command lisp-disassemble-symbol () ()
   (multiple-value-bind (name error-p)
       (lisp-read-symbol "Disassemble: ")
@@ -889,7 +890,7 @@
                (symbolp x))
       (lisp-get-arglist x))))
 
-(define-key *lisp-mode-keymap* (kbd "M-h") 'lisp-echo-arglist)
+(define-key *lisp-mode-keymap* (kbd "C-c M-h") 'lisp-echo-arglist)
 (define-command lisp-echo-arglist () ()
   (save-excursion
    (when (sexp-goto-car 100)
@@ -907,7 +908,7 @@
                       nil
                       (lambda () (lisp-echo-arglist)))))
 
-(define-key *lisp-mode-keymap* (kbd "C-x ;") 'lisp-comment-or-uncomment-region)
+(define-key *lisp-mode-keymap* (kbd "C-c ;") 'lisp-comment-or-uncomment-region)
 (define-command lisp-comment-or-uncomment-region (arg) ("P")
   (if arg
       (lisp-uncomment-region)
@@ -923,13 +924,14 @@
          (end (region-end)))
      (point-set end)
      (skip-chars-forward '(#\space #\tab))
-     (unless (eolp)
-       (insert-newline 1))
      (point-set start)
      (let ((charpos (point-charpos start)))
        (apply-region-lines start end
                            #'(lambda ()
-                               (set-charpos charpos)
+                               (end-of-line)
+                               (if (< charpos (current-charpos))
+                                   (set-charpos charpos)
+                                   (beginning-of-line))
                                (unless (blank-line-p)
                                  (insert-string ";; "))))))))
 
@@ -954,7 +956,7 @@
       (pprint v out))
     (point-set (buffer-output-stream-point out))))
 
-(define-key *lisp-mode-keymap* (kbd "C-x C-M-j") 'lisp-eval-print-last-sexp)
+(define-key *lisp-mode-keymap* (kbd "C-c C-j") 'lisp-eval-print-last-sexp)
 (define-command lisp-eval-print-last-sexp () ()
   (lisp-move-and-eval-sexp
    #'backward-sexp
@@ -1016,7 +1018,7 @@
     (lisp-print-values values)
     (listener-reset-prompt)))
 
-(define-key *lisp-repl-mode-keymap* (kbd "C-x p") 'lisp-repl-set-package)
+(define-key *lisp-repl-mode-keymap* (kbd "C-c M-p") 'lisp-repl-set-package)
 (define-command lisp-repl-set-package () ()
   (lisp-set-package)
   (listener-reset-prompt)

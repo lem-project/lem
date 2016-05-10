@@ -170,50 +170,37 @@
   (skip-symbol nil))
 
 (defun skip-list (depth dir)
-  (loop with paren-char = nil do
-    (unless (if dir
-                (skip-space-and-comment-forward)
-                (skip-space-and-comment-backward))
-      (return nil))
-    (when (if dir (eobp) (bobp))
-      (return nil))
-    (let ((type (sexp-get-syntax-type dir)))
-      (case type
-        ((:open-paren :closed-paren)
-         (let ((c (sexp-get-char dir))
-               (count-flag))
-           (cond ((not paren-char)
-                  (setq paren-char c)
-                  (setq count-flag t))
-                 ((syntax-equal-paren-p paren-char c)
-                  (setq count-flag t))
-                 (t
-                  (sexp-step-char dir)))
-           (when count-flag
-             (if (eql type :open-paren)
-                 (if dir
-                     (incf depth)
-                     (decf depth))
-                 (if dir
-                     (decf depth)
-                     (incf depth)))
-             (when (and dir
-                        (eq type :closed-paren)
-                        (minusp depth))
-               (return nil))
-             (when (and (not dir)
-                        (eq type :open-paren)
-                        (minusp depth))
-               (return nil))
+  (let ((paren-stack))
+    (loop
+      (unless (if dir
+                  (skip-space-and-comment-forward)
+                  (skip-space-and-comment-backward))
+        (return nil))
+      (when (if dir (eobp) (bobp))
+        (return nil))
+      (let ((type (sexp-get-syntax-type dir)))
+        (case type
+          ((:open-paren :closed-paren)
+           (let ((c (sexp-get-char dir)))
+             (cond ((or (and (eq type :open-paren) dir)
+                        (and (eq type :closed-paren) (not dir)))
+                    (push c paren-stack)
+                    (incf depth))
+                   ((or (null paren-stack)
+                        (syntax-equal-paren-p c (car paren-stack)))
+                    (pop paren-stack)
+                    (decf depth))
+                   (t
+                    (return nil)))
              (sexp-step-char dir)
              (when (zerop depth)
-               (return t)))))
-        ((:string-quote)
-         (skip-string dir))
-        ((:symbol)
-         (skip-symbol dir))
-        (otherwise
-         (sexp-step-char dir))))))
+               (return t))))
+          ((:string-quote)
+           (skip-string dir))
+          ((:symbol)
+           (skip-symbol dir))
+          (otherwise
+           (sexp-step-char dir)))))))
 
 (defun skip-list-forward (depth)
   (skip-list depth t))

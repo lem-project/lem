@@ -238,6 +238,9 @@
        (return))
       ((:string-quote)
        (return (skip-string-forward)))
+      ((:line-comment)
+       (end-of-line)
+       (shift-position 1))
       (otherwise
        (return t)))))
 
@@ -252,7 +255,11 @@
                ((:open-paren)
                 nil)
                ((:string-quote)
-                (skip-string-backward)))
+                (skip-string-backward))
+               ((:line-comment)
+                (loop :while (eq :line-comment (sexp-get-syntax-type nil)) :do
+                  (shift-position -1))
+                t))
         (loop while (eq :expr-prefix (sexp-get-syntax-type nil))
           do (unless (shift-position -1)
                (return))

@@ -341,6 +341,8 @@
      (let ((point (progn
                     (beginning-of-line)
                     (current-point))))
+       (when (eq +syntax-string-tag+ (syntax-preceding-tag))
+         (return-from lisp-calc-indent 0))
        (when (save-excursion (and (backward-sexp 1 t) (bolp)))
          (return-from lisp-calc-indent 0))
        (when (sexp-goto-car 2000)

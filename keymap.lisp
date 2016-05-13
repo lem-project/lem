@@ -156,6 +156,15 @@
               (char= C-i first-key))
       first-key)))
 
+(defun keymap-flatten-map (keymap fun)
+  (labels ((f (keymap prefix)
+              (maphash (lambda (k v)
+                         (if (keymap-p v)
+                             (f v (cons k prefix))
+                             (funcall fun (make-kbd (reverse (cons k prefix))) v)))
+                       (keymap-table keymap))))
+    (f keymap nil)))
+
 (defvar *global-keymap* (make-keymap 'self-insert))
 
 (define-command undefined-key () ()

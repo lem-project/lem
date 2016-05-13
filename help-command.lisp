@@ -24,12 +24,12 @@
     (terpri s)
     (format s "~va~a~%" column-width "key" "binding")
     (format s "~va~a~%" column-width "---" "-------")
-    (maphash #'(lambda (k v)
-                 (format s "~va~a~%"
-                         column-width
-                         (kbd-to-string k)
-                         (symbol-name v)))
-             (keymap-table keymap))
+    (keymap-flatten-map keymap
+                        (lambda (kbd command)
+                          (format s "~va~a~%"
+                                  column-width
+                                  (kbd-to-string kbd)
+                                  (symbol-name command))))
     (terpri s)))
 
 (define-command describe-bindings () ()

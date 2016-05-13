@@ -47,11 +47,11 @@
    (back-to-indentation)
    (current-column)))
 
-(define-key *global-keymap* (kbd "C-i") 'indent-line)
+(define-key *prog-mode-keymap* (kbd "C-i") 'indent-line)
 (define-command indent-line () ()
   (let* ((f (get-bvar :calc-indent-function :default #'calc-indent-default))
          (n (and f (funcall f))))
-    (if n
+    (if (and f n)
         (indent-line-internal n)
         (insert-char #\tab 1))))
 

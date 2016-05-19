@@ -75,8 +75,8 @@
   (dolist (pathname (expand-files* filename))
     (multiple-value-bind (buffer new-buffer-p)
         (get-file-buffer (namestring pathname))
-      (setf (buffer-read-only-p (current-buffer)) t)
-      (find-file-1 buffer new-buffer-p)))
+      (find-file-1 buffer new-buffer-p)
+      (setf (buffer-read-only-p buffer) t)))
   t)
 
 (defun save-file-1 ()

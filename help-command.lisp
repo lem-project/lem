@@ -55,7 +55,9 @@
                     "M-x ")
                 ""
                 (lambda (str)
-                  (completion-hypheen str (all-command-names)))
+                  (if (find #\- str)
+                      (completion-hypheen str (all-command-names))
+                      (completion str (all-command-names))))
                 'exist-command-p))
          (cmd (find-command name)))
     (if cmd

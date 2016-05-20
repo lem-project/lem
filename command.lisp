@@ -444,6 +444,7 @@
                                (uiop:run-program str
                                                  :input input
                                                  :output output
+                                                 :error-output output
                                                  :ignore-error-status t))))
       (delete-region begin end)
       (insert-string outstr)
@@ -457,4 +458,5 @@
               #'(lambda (out)
                   (uiop:run-program str
                                     :output out
+                                    :error-output out
                                     :ignore-error-status t))))

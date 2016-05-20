@@ -28,7 +28,7 @@
           deleted-window-p
           split-window-vertically
           split-window-horizontally
-          split-window
+          split-window-sensibly
           get-next-window
           delete-window))
 

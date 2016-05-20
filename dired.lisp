@@ -128,6 +128,14 @@
 (define-command dired-view-file () ()
   (select-file 'read-file))
 
+(define-key *dired-mode-keymap* (kbd "o") 'dired-find-file-other-window)
+(define-command dired-find-file-other-window () ()
+  (select-file (lambda (file)
+                 (when (one-window-p)
+                   (split-window-sensibly (current-window)))
+                 (other-window 1)
+                 (find-file file))))
+
 (define-key *dired-mode-keymap* (kbd "g") 'dired-update-buffer)
 (define-command dired-update-buffer () ()
   (update))

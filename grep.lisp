@@ -83,6 +83,7 @@
                     (with-output-to-string (s)
                       (uiop:run-program string
                                         :output s
+                                        :error-output s
                                         :ignore-error-status t))))
 
 (defun grep-jump-current-content ()

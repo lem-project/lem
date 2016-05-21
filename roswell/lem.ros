@@ -1,0 +1,38 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#| lem simple emacs clone.
+exec ros -Q -m roswell -L sbcl-bin -- $0 "$@"
+|#
+(progn
+  (unless (find-package :lem)
+    (ql:quickload :lem)))
+
+(defpackage :ros.script.lem.3672618460
+  (:use :cl))
+(in-package :ros.script.lem.3672618460)
+
+(defun usage ()
+  (format t "~{~A~%~}" `(,(format nil "usage: ~A [OPTION]... [FILE]..." (ros:opt "wargv0"))
+                         "-d --debug"
+                         "-h --help")))
+
+(defun main (&rest argv)
+  (let ((debug-flag)
+        (filenames))
+    (loop for arg- on argv
+          for arg = (first arg-)
+          do (cond ((or (string= "--debug" arg)
+                        (string= "-d" arg))
+                    (setq debug-flag t))
+                   ((or (string= "--help" arg)
+                        (string= "-h" arg))
+                    (usage)
+                    (return-from main))
+                   (t
+                    (push arg filenames))))
+    (setq filenames (nreverse filenames))
+    (if debug-flag
+        (let ((lem::*program-name* "lem dbg"))
+          (apply #'lem:lem filenames))
+        (apply #'lem:lem filenames))))
+;;; vim: set ft=lisp lisp:

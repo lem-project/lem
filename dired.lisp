@@ -83,6 +83,13 @@
             (apply #'vector (reverse files))))
     (goto-start-line)))
 
+(defun update-all ()
+  (dolist (buffer (buffer-list))
+    (when (eq 'dired-mode (buffer-major-mode buffer))
+      (save-excursion
+       (set-buffer buffer nil)
+       (update)))))
+
 (defun dired-find-directory (dirname)
   (check-switch-minibuffer-window)
   (let ((buffer (get-buffer-create (princ-to-string dirname))))
@@ -393,7 +400,8 @@
         (to-pathname
          (minibuf-read-file "Destination Filename: "
                             (get-dest-directory))))
-    (copy-files copy-files to-pathname)))
+    (copy-files copy-files to-pathname)
+    (update-all)))
 
 (define-key *dired-mode-keymap* (kbd "R") 'dired-rename-files)
 (define-command dired-rename-files () ()
@@ -403,7 +411,8 @@
          (minibuf-read-file "Destination Filename: "
                             (get-dest-directory))))
     (and (copy-files copy-files to-pathname)
-         (delete-files copy-files))))
+         (delete-files copy-files))
+    (update-all)))
 
 (define-key *dired-mode-keymap* (kbd "+") 'dired-mkdir)
 (define-command dired-mkdir (buffer-name) ("smkdir:")

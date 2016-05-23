@@ -93,7 +93,7 @@
     (cond
      ((null (buffer-modified-p buffer))
       nil)
-     ((null (buffer-filename buffer))
+     ((not (buffer-have-file-p buffer))
       (message "No file name")
       nil)
      (t
@@ -121,7 +121,7 @@
   (save-excursion
     (dolist (buffer (buffer-list))
       (when (and (buffer-modified-p buffer)
-                 (buffer-filename buffer))
+                 (buffer-have-file-p buffer))
         (set-buffer buffer nil)
         (when (or save-silently-p
                   (progn

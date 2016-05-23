@@ -46,7 +46,7 @@
 (defun update ()
   (with-buffer-read-only (current-buffer) nil
     (buffer-erase)
-    (let ((dirname (get-bvar :dirname))
+    (let ((dirname (buffer-filename))
           (files))
       (insert-string (namestring dirname))
       (insert-newline 2)
@@ -81,12 +81,10 @@
 
 (defun dired-find-directory (dirname)
   (check-switch-minibuffer-window)
-  (let ((buffer
-         (get-buffer-create
-          (format nil "~a" dirname))))
+  (let ((buffer (get-buffer-create (princ-to-string dirname))))
     (set-buffer buffer)
     (dired-mode)
-    (setf (get-bvar :dirname) dirname)
+    (setf (buffer-filename buffer) dirname)
     (setf (buffer-read-only-p buffer) t)
     (update)))
 
@@ -145,7 +143,7 @@
   (dired-find-directory
    (namestring
     (cl-fad:pathname-parent-directory
-     (get-bvar :dirname)))))
+     (buffer-filename)))))
 
 (defun change-flag (char)
   (when (get-file)

@@ -49,7 +49,7 @@
 
 (defun any-modified-buffer-p ()
   (find-if #'(lambda (buffer)
-               (and (buffer-filename buffer)
+               (and (buffer-have-file-p buffer)
                     (buffer-modified-p buffer)))
            (filter-special-buffers)))
 

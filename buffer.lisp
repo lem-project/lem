@@ -561,6 +561,10 @@
     (editor-error "Buffer name `~A' is in use" name))
   (setf (buffer-name buffer) name))
 
+(defun buffer-have-file-p (buffer)
+  (and (buffer-filename buffer)
+       (uiop:file-pathname-p (buffer-filename buffer))))
+
 (defun buffer-directory ()
   (if (buffer-filename)
       (directory-namestring

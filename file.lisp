@@ -163,6 +163,6 @@
         (file-write-date* buffer)))
 
 (defun changed-disk-p (buffer)
-  (and (buffer-filename buffer)
+  (and (buffer-have-file-p buffer)
        (not (eql (buffer-last-write-date buffer)
                  (file-write-date* buffer)))))

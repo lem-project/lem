@@ -399,6 +399,17 @@
     (and (copy-files copy-files to-pathname)
          (delete-files copy-files))))
 
+(define-key *dired-mode-keymap* (kbd "+") 'dired-mkdir)
+(define-command dired-mkdir (buffer-name) ("smkdir:")
+  (multiple-value-bind (pathname make-p)
+      (ensure-directories-exist
+       (uiop:ensure-directory-pathname
+        (merge-pathnames buffer-name (buffer-directory))))
+    (unless make-p
+      (editor-error "failed mkdir: ~A" pathname))
+    (message "mkdir: ~A" pathname)
+    (update)))
+
 (defun dired-buffer (filename)
   (save-excursion
     (dired filename)

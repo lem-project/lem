@@ -565,10 +565,10 @@
   (and (buffer-filename buffer)
        (uiop:file-pathname-p (buffer-filename buffer))))
 
-(defun buffer-directory ()
-  (if (buffer-filename)
+(defun buffer-directory (&optional (buffer (current-buffer)))
+  (if (buffer-filename buffer)
       (directory-namestring
-       (buffer-filename))
+       (buffer-filename buffer))
       (namestring (uiop:getcwd))))
 
 (defun buffer-undo-1 (buffer)

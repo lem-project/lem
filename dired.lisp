@@ -380,13 +380,19 @@
     (copy-file from-file to-pathname))
   t)
 
+(defun get-dest-directory ()
+  (dolist (window (window-list) (buffer-directory))
+    (when (and (not (eq window (current-window)))
+               (eq 'dired-mode (buffer-major-mode (window-buffer window))))
+      (return (buffer-directory (window-buffer window))))))
+
 (define-key *dired-mode-keymap* (kbd "C") 'dired-copy-files)
 (define-command dired-copy-files () ()
   (let ((copy-files
          (collect-files))
         (to-pathname
          (minibuf-read-file "Destination Filename: "
-                            (buffer-directory))))
+                            (get-dest-directory))))
     (copy-files copy-files to-pathname)))
 
 (define-key *dired-mode-keymap* (kbd "R") 'dired-rename-files)
@@ -395,7 +401,7 @@
          (collect-files))
         (to-pathname
          (minibuf-read-file "Destination Filename: "
-                            (buffer-directory))))
+                            (get-dest-directory))))
     (and (copy-files copy-files to-pathname)
          (delete-files copy-files))))
 

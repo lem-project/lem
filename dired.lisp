@@ -14,13 +14,16 @@
 (define-key *dired-mode-keymap* (kbd "p") 'dired-previous-line)
 (define-key *dired-mode-keymap* (kbd "q") 'dired-quit)
 
+(defun dired-cursor-column ()
+  (get-bvar :dired-cursor-column :default 0))
+
 (define-command dired-next-line (&optional (n 1)) ("p")
   (forward-line n)
-  (move-to-column (get-bvar :dired-cursor-column)))
+  (move-to-column (dired-cursor-column)))
 
 (define-command dired-previous-line (&optional (n 1)) ("p")
   (forward-line (- n))
-  (move-to-column (get-bvar :dired-cursor-column)))
+  (move-to-column (dired-cursor-column)))
 
 (define-command dired-quit () ()
   (quit-window))
@@ -32,7 +35,8 @@
   (eq :symbolic-link (osicat:file-kind (cl-fad:pathname-as-file pathname))))
 
 (defun goto-start-line ()
-  (point-set (get-bvar :start-point)))
+  (point-set (get-bvar :start-point))
+  (move-to-column (dired-cursor-column)))
 
 (defun date (universal-time)
   (multiple-value-bind (second minute hour date month year day daylight-p zone)
@@ -48,8 +52,8 @@
     (buffer-erase)
     (let ((dirname (buffer-filename))
           (files))
-      (insert-string (namestring dirname))
-      (insert-newline 2)
+      ;(insert-string (namestring dirname))
+      ;(insert-newline 2)
       (setf (get-bvar :start-point) (current-point))
       (dolist (file (cl-fad:list-directory dirname :follow-symlinks nil))
         (push file files)
@@ -101,7 +105,8 @@
                                    (minibuf-read-file "Dired: "
                                                       (buffer-directory)
                                                       (buffer-directory)))))
-  (dired-internal dirname))
+  (dired-internal dirname)
+  (goto-start-line))
 
 (defun get-file ()
   (let* ((point (get-bvar :start-point))
@@ -113,10 +118,11 @@
 
 (defun select-file (open-file-fn)
   (let ((pathname (get-file)))
-    (cond ((cl-fad:directory-exists-p pathname)
-           (dired-internal pathname))
-          (pathname
-           (funcall open-file-fn (namestring pathname))))))
+    (when pathname
+      (cond ((cl-fad:directory-exists-p pathname)
+             (dired-internal pathname))
+            (pathname
+             (funcall open-file-fn (namestring pathname)))))))
 
 (define-key *dired-mode-keymap* (kbd "C-m") 'dired-find-file)
 (define-command dired-find-file () ()
@@ -205,6 +211,7 @@
   (let ((files))
     (save-excursion
      (goto-start-line)
+     (beginning-of-line)
      (do ((file nil nil))
          ((eobp))
        (when (and (eql +mark+ (following-char))
@@ -322,8 +329,8 @@
                                to-pathname))
              to-pathname)))
     (when (subdirectory-p to-pathname from-pathname)
-      (error "Cannot copy `~a' into its subdirectory `~a'"
-             from-pathname to-pathname))
+      (editor-error "Cannot copy `~a' into its subdirectory `~a'"
+                    from-pathname to-pathname))
     (multiple-value-bind (to-dir-pathname made-directory-p)
         (ensure-directories-exist to-dir-pathname)
       (assert made-directory-p)
@@ -364,11 +371,11 @@
                     (cl-fad:directory-exists-p (car copy-files))
                     (not (or (not (probe-file to-pathname))
                              (cl-fad:directory-exists-p to-pathname)))))
-           (error "Target must be a directory"))
+           (editor-error "Target must be a directory"))
           ((and (not (and (= 1 num-copy-files)
                           (cl-fad:directory-pathname-p (car copy-files))))
                 (not (pathname-directory-exists-p to-pathname)))
-           (error "No such file or directory"))))
+           (editor-error "No such file or directory"))))
   (dolist (from-file copy-files)
     (copy-file from-file to-pathname))
   t)

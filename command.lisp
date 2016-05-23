@@ -441,7 +441,7 @@
       (with-output-to-string (output outstr)
         (with-input-from-string (input input-string)
           (multiple-value-setq (output-value error-output-value status)
-                               (uiop:run-program str
+                               (uiop:run-program (format nil "cd ~A; ~A" (buffer-directory) str)
                                                  :input input
                                                  :output output
                                                  :error-output output
@@ -454,9 +454,10 @@
 
 (define-key *global-keymap* (kbd "C-x @") 'pipe-command)
 (define-command pipe-command (str) ("sPipe command: ")
-  (info-popup (get-buffer-create "*Command*")
-              #'(lambda (out)
-                  (uiop:run-program str
-                                    :output out
-                                    :error-output out
-                                    :ignore-error-status t))))
+  (let ((directory (buffer-directory)))
+    (info-popup (get-buffer-create "*Command*")
+                #'(lambda (out)
+                    (uiop:run-program (format nil "cd ~A; ~A" directory str)
+                                      :output out
+                                      :error-output out
+                                      :ignore-error-status t)))))

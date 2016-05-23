@@ -108,8 +108,8 @@
       (cond ((funcall replace-char-p (following-char))
              (insert-char (funcall rest-case (following-char)) 1)
              (delete-char 1 nil))
-            (t
-             (shift-position 1))))))
+            ((not (shift-position 1))
+             (return))))))
 
 (define-key *global-keymap* (kbd "M-c") 'case-word-capitalize)
 (define-command case-word-capitalize (&optional (n 1)) ("p")

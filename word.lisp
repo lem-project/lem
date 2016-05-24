@@ -4,6 +4,8 @@
           prev-word
           delete-word
           backward-delete-word
+          downcase-region
+          uppercase-region
           capitalize-word
           lowercase-word
           uppercase-word
@@ -95,6 +97,24 @@
             (t
              (kill-region begin end)
              t))))))
+
+(defun case-region-aux (begin end case-fun)
+  (save-excursion
+   (point-set begin)
+   (loop :while (and (point< (current-point) end)
+                     (not (eobp)))
+     :do (let ((c (following-char)))
+           (progn
+             (delete-char 1 nil)
+             (insert-char (funcall case-fun c)))))))
+
+(define-key *global-keymap* (kbd "C-x C-l") 'downcase-region)
+(define-command downcase-region (begin end) ("r")
+  (case-region-aux begin end #'char-downcase))
+
+(define-key *global-keymap* (kbd "C-x C-u") 'uppercase-region)
+(define-command uppercase-region (begin end) ("r")
+  (case-region-aux begin end #'char-upcase))
 
 (defun case-word-aux (n replace-char-p first-case rest-case)
   (dotimes (_ n t)

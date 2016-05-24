@@ -92,7 +92,7 @@
 
 (defun dired-find-directory (dirname)
   (check-switch-minibuffer-window)
-  (let ((buffer (get-buffer-create (princ-to-string dirname))))
+  (let ((buffer (get-buffer-create dirname)))
     (set-buffer buffer)
     (dired-mode)
     (setf (buffer-filename buffer) dirname)
@@ -127,7 +127,7 @@
   (let ((pathname (get-file)))
     (when pathname
       (cond ((cl-fad:directory-exists-p pathname)
-             (dired-internal pathname))
+             (dired-internal (namestring pathname)))
             (pathname
              (funcall open-file-fn (namestring pathname)))))))
 

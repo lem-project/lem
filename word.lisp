@@ -4,9 +4,9 @@
           prev-word
           delete-word
           backward-delete-word
-          case-word-capitalize
-          case-word-lower
-          case-word-upper
+          capitalize-word
+          lowercase-word
+          uppercase-word
           forward-paragraph
           backward-paragraph
           kill-paragraph))
@@ -111,16 +111,16 @@
             ((not (shift-position 1))
              (return))))))
 
-(define-key *global-keymap* (kbd "M-c") 'case-word-capitalize)
-(define-command case-word-capitalize (&optional (n 1)) ("p")
+(define-key *global-keymap* (kbd "M-c") 'capitalize-word)
+(define-command capitalize-word (&optional (n 1)) ("p")
   (case-word-aux n #'alphanumericp #'char-upcase #'char-downcase))
 
-(define-key *global-keymap* (kbd "M-l") 'case-word-lower)
-(define-command case-word-lower (&optional (n 1)) ("p")
+(define-key *global-keymap* (kbd "M-l") 'lowercase-word)
+(define-command lowercase-word (&optional (n 1)) ("p")
   (case-word-aux n #'alphanumericp #'char-downcase #'char-downcase))
 
-(define-key *global-keymap* (kbd "M-u") 'case-word-upper)
-(define-command case-word-upper (&optional (n 1)) ("p")
+(define-key *global-keymap* (kbd "M-u") 'uppercase-word)
+(define-command uppercase-word (&optional (n 1)) ("p")
   (case-word-aux n #'alphanumericp #'char-upcase #'char-upcase))
 
 (define-key *global-keymap* (kbd "M-}") 'forward-paragraph)

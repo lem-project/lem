@@ -109,14 +109,18 @@
       (error () (return-from search-forward-regexp nil)))
     (search-step
      #'(lambda ()
-         (multiple-value-bind (start end)
-             (ppcre:scan scanner
-                         (current-line-string)
-                         :start (current-charpos))
-           (when (and start (<= (current-charpos) start))
-             (if (= start end)
-                 (1+ end)
-                 end))))
+         (let ((str (current-line-string)))
+           (multiple-value-bind (start end)
+               (ppcre:scan scanner
+                           str
+                           :start (current-charpos))
+             (when (and start
+                        (if (= start end)
+                            (< (current-charpos) start)
+                            (<= (current-charpos) start)))
+               (if (= start end)
+                   (1+ end)
+                   end)))))
      #'(lambda ()
          (multiple-value-bind (start end)
              (ppcre:scan scanner

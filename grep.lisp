@@ -79,12 +79,13 @@
     (grep-update grep)))
 
 (define-command grep (string) ((list (minibuf-read-string ": " "grep -nH ")))
-  (grep-with-string "*grep*"
-                    (with-output-to-string (s)
-                      (uiop:run-program string
-                                        :output s
-                                        :error-output s
-                                        :ignore-error-status t))))
+  (let ((directory (buffer-directory)))
+    (grep-with-string "*grep*"
+                      (with-output-to-string (s)
+                        (uiop:run-program (format nil "cd ~A; ~A" directory string)
+                                          :output s
+                                          :error-output s
+                                          :ignore-error-status t)))))
 
 (defun grep-jump-current-content ()
   (let ((content (aref (grep-contents *current-grep*)

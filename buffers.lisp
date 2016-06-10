@@ -110,11 +110,12 @@
       (delete-marker (window-point-marker (current-window)))
       (setf (window-point-marker (current-window)) (make-marker-current-point))
       (let ((buffer-nlines (buffer-nlines)))
-        (setf (window-view-linum (current-window))
-              (min view-linum buffer-nlines))
+        (setf (window-view-marker (current-window))
+              (make-marker buffer
+                           (make-point (min view-linum buffer-nlines)
+                                       0)))
         (setf (window-current-linum (current-window))
               (min cur-linum buffer-nlines)))
-      (setf (window-view-charpos (current-window)) 0)
       (setf (window-current-charpos (current-window))
             (min cur-pos
                  (buffer-line-length (current-buffer)

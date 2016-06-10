@@ -163,27 +163,24 @@
      #'set-charpos
      (search-backward-endp-function limit))))
 
-(defun search-symbol-positions (name &key start end)
-  (let ((positions)
-        (str (current-line-string)))
-    (ppcre:do-scans (start-var
-                     end-var
-                     reg-starts
-                     reg-ends
-                     "[a-zA-Z0-9+\\-<>/*&=.?_!$%:@\\[\\]^{}]+"
-                     str nil
-                     :start start :end end)
-      (let ((str (subseq str start-var end-var)))
-        (when (equal str name)
-          (push (cons start-var end-var) positions))))
-    (nreverse positions)))
+(defun search-symbol (string name &key (start 0) (end (length string)))
+  (loop :while (< start end) :do
+    (let ((pos (search name string :start2 start :end2 end)))
+      (when pos
+        (let ((pos2 (+ pos (length name))))
+          (when (and (or (zerop pos)
+                         (not (syntax-symbol-char-p (aref string (1- pos)))))
+                     (or (>= pos2 (length string))
+                         (not (syntax-symbol-char-p (aref string pos2)))))
+            (return (cons pos pos2)))))
+      (setf start (1+ (or pos start))))))
 
 (defun search-forward-symbol (name &optional limit)
   (search-step
    #'(lambda ()
-       (cdar (search-symbol-positions name :start (current-charpos))))
+       (cdr (search-symbol (current-line-string) name :start (current-charpos))))
    #'(lambda ()
-       (cdar (search-symbol-positions name)))
+       (cdr (search-symbol (current-line-string) name)))
    #'forward-line
    #'set-charpos
    (search-forward-endp-function limit)))
@@ -191,9 +188,9 @@
 (defun search-backward-symbol (name &optional limit)
   (search-step
    #'(lambda ()
-       (caar (last (search-symbol-positions name :end (current-charpos)))))
+       (car (last (search-symbol (current-line-string) name :end (current-charpos)))))
    #'(lambda ()
-       (caar (last (search-symbol-positions name))))
+       (car (last (search-symbol (current-line-string) name))))
    #'(lambda () (forward-line -1))
    #'set-charpos
    (search-backward-endp-function limit)))

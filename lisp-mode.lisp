@@ -119,7 +119,7 @@
 (defvar *lisp-syntax-table*
   (make-syntax-table
    :space-chars '(#\space #\tab #\newline)
-   :symbol-chars '(#\$ #\& #\* #\+ #\- #\_ #\< #\> #\= #\/ #\: #\.)
+   :symbol-chars '(#\$ #\& #\* #\+ #\- #\_ #\< #\> #\= #\/ #\: #\. #\%)
    :paren-alist '((#\( . #\))
                   (#\[ . #\])
                   (#\{ . #\}))

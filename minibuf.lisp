@@ -61,6 +61,8 @@
     (message prompt)
     (redraw-display))
   (let ((c (read-key)))
+    (when (interactive-p)
+      (message nil))
     (if (char= c C-g)
         (error 'editor-abort)
         c)))

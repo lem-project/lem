@@ -19,7 +19,6 @@
           window-y
           window-x
           window-buffer
-          window-vtop-linum
           window-current-linum
           window-current-charpos
           window-delete-hook
@@ -66,8 +65,7 @@
   height
   %buffer
   screen
-  vtop-linum
-  vtop-charpos
+  view-marker
   point-marker
   delete-hook
   parameters)
@@ -84,8 +82,7 @@
                           :height height
                           :%buffer buffer
                           :screen (make-screen x y width height t)
-                          :vtop-linum 1
-                          :vtop-charpos 0)))
+                          :view-marker (make-marker buffer (make-point 1 0)))))
     (setf (window-point-marker window)
           (make-marker buffer (make-point 1 0)))
     window))
@@ -111,6 +108,18 @@
 
 (defun (setf window-current-linum) (new-linum &optional (window (current-window)))
   (setf (marker-linum (window-point-marker window)) new-linum))
+
+(defun window-view-linum (&optional (window (current-window)))
+  (marker-linum (window-view-marker window)))
+
+(defun (setf window-view-linum) (new-linum &optional (window (current-window)))
+  (setf (marker-linum (window-view-marker window)) new-linum))
+
+(defun window-view-charpos (&optional (window (current-window)))
+  (marker-charpos (window-view-marker window)))
+
+(defun (setf window-view-charpos) (new-charpos &optional (window (current-window)))
+  (setf (marker-charpos (window-view-marker window)) new-charpos))
 
 (defun window-parameter (window parameter)
   (getf (window-parameters window) parameter))
@@ -226,8 +235,7 @@
                    (window-y window-tree)
                    (window-width window-tree)
                    (window-height window-tree)
-                   (window-vtop-linum window-tree)
-                   (window-vtop-charpos window-tree)
+                   (window-view-marker window-tree)
                    (marker-point (window-point-marker window-tree))
                    (window-delete-hook window-tree)
                    (window-parameters window-tree))
@@ -249,16 +257,14 @@
                                          y
                                          width
                                          height
-                                         vtop-linum
-                                         vtop-charpos
+                                         view-marker
                                          point
                                          delete-hook
                                          parameters)
                         (cdr dumped-tree)
                       (let ((window (make-window (get-buffer-create buffer-name)
                                                  x y width height)))
-                        (setf (window-vtop-charpos window) vtop-charpos)
-                        (setf (window-vtop-linum window) vtop-linum)
+                        (setf (window-view-marker window) view-marker)
                         (setf (window-delete-hook window) delete-hook)
                         (setf (window-parameters window) parameters)
                         (point-set point window)
@@ -295,9 +301,8 @@
   (setf (window-tree) (current-window)))
 
 (defun window-recenter (window)
-  (setf (window-vtop-charpos window) 0)
-  (setf (window-vtop-linum window)
-        (window-current-linum window))
+  (setf (marker-point (window-view-marker window))
+        (make-point (window-current-linum window) 0))
   (window-scroll window (- (floor (window-height window) 2))))
 
 (defun window-posline (window)
@@ -305,16 +310,16 @@
    ((<= (buffer-nlines (window-buffer window))
         (window-height window))
     "All")
-   ((= 1 (window-vtop-linum window))
+   ((= 1 (window-view-linum window))
     "Top")
    ((<= (buffer-nlines (window-buffer window))
-        (+ (window-vtop-linum window) (window-height window)))
+        (+ (window-view-linum window) (window-height window)))
     "Bot")
    (t
     (format nil "~2d%"
             (floor
              (* 100
-                (float (/ (window-vtop-linum window)
+                (float (/ (window-view-linum window)
                           (buffer-nlines (window-buffer window))))))))))
 
 (defun modeline-read-only-p (window)
@@ -370,57 +375,57 @@
 
 (defun %scroll-down-if-wrapping (window)
   (when (buffer-truncate-lines (window-buffer window))
-    (let ((vtop-charpos (window-vtop-charpos window)))
-      (setf (window-vtop-charpos window) 0)
+    (let ((view-charpos (window-view-charpos window)))
+      (setf (window-view-charpos window) 0)
       (map-wrapping-line (buffer-line-string (window-buffer window)
-                                             (window-vtop-linum window))
+                                             (window-view-linum window))
                          (window-width window)
                          #'(lambda (c)
-                             (when (< vtop-charpos c)
-                               (setf (window-vtop-charpos window) c)
+                             (when (< view-charpos c)
+                               (setf (window-view-charpos window) c)
                                (return-from %scroll-down-if-wrapping t)))))
     nil))
 
 (defun window-scroll-down (window)
   (unless (%scroll-down-if-wrapping window)
-    (incf (window-vtop-linum window))))
+    (incf (window-view-linum window))))
 
 (defun %scroll-up-if-wrapping (window)
   (when (and (buffer-truncate-lines (window-buffer window))
-             (< 1 (window-vtop-linum window)))
+             (< 1 (window-view-linum window)))
     (let ((charpos-list))
       (map-wrapping-line (buffer-line-string
                           (window-buffer window)
-                          (- (window-vtop-linum window)
-                             (if (= 0 (window-vtop-charpos window)) 1 0)))
+                          (- (window-view-linum window)
+                             (if (= 0 (window-view-charpos window)) 1 0)))
                          (window-width window)
                          #'(lambda (c)
                              (push c charpos-list)))
-      (cond ((and charpos-list (= 0 (window-vtop-charpos window)))
-             (decf (window-vtop-linum window))
-             (setf (window-vtop-charpos window)
+      (cond ((and charpos-list (= 0 (window-view-charpos window)))
+             (decf (window-view-linum window))
+             (setf (window-view-charpos window)
                    most-positive-fixnum)))
       (dolist (c charpos-list)
-        (when (< c (window-vtop-charpos window))
-          (setf (window-vtop-charpos window) c)
+        (when (< c (window-view-charpos window))
+          (setf (window-view-charpos window) c)
           (return-from %scroll-up-if-wrapping t)))
-      (setf (window-vtop-charpos window) 0)
+      (setf (window-view-charpos window) 0)
       (not (null charpos-list)))))
 
 (defun window-scroll-up (window)
   (unless (%scroll-up-if-wrapping window)
-    (decf (window-vtop-linum window))))
+    (decf (window-view-linum window))))
 
 (defun window-scroll (window n)
   (dotimes (_ (abs n))
     (if (plusp n)
         (window-scroll-down window)
         (window-scroll-up window)))
-  (when (< (window-vtop-linum window) 1)
-    (setf (window-vtop-linum window) 1))
+  (when (< (window-view-linum window) 1)
+    (setf (window-view-linum window) 1))
   (when (< (buffer-nlines (window-buffer window))
-           (window-vtop-linum window))
-    (setf (window-vtop-linum window)
+           (window-view-linum window))
+    (setf (window-view-linum window)
           (buffer-nlines (window-buffer window))))
   (dolist (fun *window-scroll-functions*)
     (funcall fun window)))
@@ -441,20 +446,20 @@
                                                     (1+ (window-current-charpos window))))
                                        (window-width window)
                                        #'inc)
-                    (map-wrapping-line (if (= (window-vtop-linum window) linum)
-                                           (subseq string (window-vtop-charpos window))
+                    (map-wrapping-line (if (= (window-view-linum window) linum)
+                                           (subseq string (window-view-charpos window))
                                            string)
                                        (window-width window)
                                        #'inc))))
       (map-buffer-lines #'f
                         (window-buffer window)
-                        (window-vtop-linum window)
+                        (window-view-linum window)
                         (window-current-linum window))
       offset)))
 
 (defun window-cursor-y-not-wrapping (window)
   (- (window-current-linum window)
-     (window-vtop-linum window)))
+     (window-view-linum window)))
 
 (defun window-cursor-y (window)
   (+ (window-cursor-y-not-wrapping window)
@@ -462,12 +467,12 @@
 
 (defun window-offset-view (window)
   (cond ((< (window-current-linum window)
-            (window-vtop-linum window))
+            (window-view-linum window))
          (- (window-current-linum window)
-            (window-vtop-linum window)))
+            (window-view-linum window)))
         ((and (= (window-current-linum window)
-                 (window-vtop-linum window))
-              (< 0 (window-vtop-charpos window)))
+                 (window-view-linum window))
+              (< 0 (window-view-charpos window)))
          -1)
         ((let ((n (- (window-cursor-y window)
                      (- (window-height window) 2))))
@@ -486,10 +491,8 @@
   (window-set-size current-window
                    (window-width current-window)
                    (window-height current-window))
-  (setf (window-vtop-linum new-window)
-        (window-vtop-linum current-window))
-  (setf (window-vtop-charpos new-window)
-        (window-vtop-charpos current-window))
+  (setf (marker-point (window-view-marker new-window))
+        (marker-point (window-view-marker current-window)))
   (setf (window-current-linum new-window)
         (window-current-linum current-window))
   (setf (window-current-charpos new-window)

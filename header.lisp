@@ -51,7 +51,7 @@
   (let ((gwindow (gensym "WINDOW")))
     `(let ((,gwindow ,window))
        (window-see ,gwindow)
-       (let* ((,start-linum-var (window-vtop-linum ,gwindow))
+       (let* ((,start-linum-var (window-view-linum ,gwindow))
               (,end-linum-var (+ ,start-linum-var (window-height ,gwindow))))
          ,@body))))
 

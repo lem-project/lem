@@ -163,9 +163,9 @@
      #'set-charpos
      (search-backward-endp-function limit))))
 
-(defun search-symbol (string name &key (start 0) (end (length string)))
+(defun search-symbol (string name &key (start 0) (end (length string)) from-end)
   (loop :while (< start end) :do
-    (let ((pos (search name string :start2 start :end2 end)))
+    (let ((pos (search name string :start2 start :end2 end :from-end from-end)))
       (when pos
         (let ((pos2 (+ pos (length name))))
           (when (and (or (zerop pos)
@@ -188,9 +188,9 @@
 (defun search-backward-symbol (name &optional limit)
   (search-step
    #'(lambda ()
-       (car (last (search-symbol (current-line-string) name :end (current-charpos)))))
+       (car (last (search-symbol (current-line-string) name :end (current-charpos) :from-end t))))
    #'(lambda ()
-       (car (last (search-symbol (current-line-string) name))))
+       (car (last (search-symbol (current-line-string) name :from-end t))))
    #'(lambda () (forward-line -1))
    #'set-charpos
    (search-backward-endp-function limit)))

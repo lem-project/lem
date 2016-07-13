@@ -623,7 +623,7 @@
   (when (and (cl-fad:file-exists-p filename)
              (not (cl-fad:directory-pathname-p filename)))
     (lisp-eval-string
-     (format nil "(load ~s)" filename))))
+     (format nil "(cl:load ~s)" filename))))
 
 (defun lisp-print-error (condition)
   (lisp-info-popup (get-buffer-create "*error*")

@@ -10,6 +10,7 @@
           *syntax-function-name-attribute*
           *syntax-variable-attribute*
           make-attribute
+          attribute-set
           redraw-display))
 
 (defvar *echo-area-scrwin*)
@@ -47,6 +48,14 @@
                               0))))
         (setf (attribute-cached-bits attribute) bits)
         bits)))
+
+(defun attribute-set (attribute fg-color bg-color &key reverse-p bold-p underline-p)
+  (setf (attribute-fg-color attribute) fg-color)
+  (setf (attribute-bg-color attribute) bg-color)
+  (setf (attribute-reverse-p attribute) reverse-p)
+  (setf (attribute-bold-p attribute) bold-p)
+  (setf (attribute-underline-p attribute) underline-p)
+  (setf (attribute-cached-bits attribute) nil))
 
 (defvar *mark-overlay-attribute* (make-attribute "blue" nil :reverse-p t))
 (defvar *modeline-attribute* (make-attribute nil nil :reverse-p t))

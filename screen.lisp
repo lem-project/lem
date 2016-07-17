@@ -3,6 +3,7 @@
 (export '(*mark-overlay-attribute*
           *modeline-attribute*
           *modeline-inactive-attribute*
+          *control-char-attribute*
           *syntax-string-attribute*
           *syntax-comment-attribute*
           *syntax-keyword-attribute*
@@ -60,6 +61,7 @@
 (defvar *mark-overlay-attribute* (make-attribute "blue" nil :reverse-p t))
 (defvar *modeline-attribute* (make-attribute nil nil :reverse-p t))
 (defvar *modeline-inactive-attribute* (make-attribute nil nil :reverse-p t))
+(defvar *control-char-attribute* (make-attribute nil nil :reverse-p t))
 (defvar *syntax-string-attribute* (make-attribute "green" nil))
 (defvar *syntax-comment-attribute* (make-attribute "red" nil))
 (defvar *syntax-keyword-attribute* (make-attribute "blue" nil))
@@ -267,12 +269,16 @@
                        start-linum
                        end-linum)))
 
+
 (defun disp-print-line (screen y str &key (start-x 0) (string-start 0) string-end)
   (let ((x start-x))
     (loop :for i :from string-start :below (or string-end (fat-length str)) :do
       (multiple-value-bind (char attr)
           (fat-char str i)
-        (screen-print-string screen x y (string char) attr)
+        (screen-print-string screen x y (string char)
+                             (if (and (ctrl-p char) (char/= char #\tab))
+                                 *control-char-attribute*
+                                 attr))
         (setq x (char-width char x))))
     (charms/ll:wclrtoeol (screen-%scrwin screen))))
 

@@ -169,10 +169,12 @@
 (defun map-mark (test)
   (save-excursion
    (goto-start-line)
-   (do (flag-char)
+   (do ()
        ((eobp))
+     (beginning-of-line)
      (let ((mark-char (following-char))
-           (file (get-file)))
+           (file (get-file))
+           flag-char)
        (when (and file
                   mark-char
                   (setq flag-char (funcall test (file-namestring file) mark-char)))

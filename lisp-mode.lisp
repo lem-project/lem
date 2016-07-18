@@ -346,7 +346,7 @@
        (when (save-excursion (and (backward-sexp 1 t) (bolp)))
          (return-from lisp-calc-indent 0))
        (when (sexp-goto-car 2000)
-         (let ((start-pos (1- (current-charpos)))
+         (let ((start-pos (1- (current-column)))
                (not-list-p (save-excursion
                             (search-backward "(")
                             (member (preceding-char) '(#\#)))))
@@ -377,7 +377,7 @@
                    (setq num-insert-spaces
                          (or arg-pos (+ start-pos 1))))
                   ((< (1- argc) num)
-                   (setq num-insert-spaces (+ start-pos 4)))
+                   (setq num-insert-spaces (+ start-pos 2 (length car-symbol-name))))
                   (t
                    (setq num-insert-spaces (+ start-pos 2)))))))))))
     num-insert-spaces))

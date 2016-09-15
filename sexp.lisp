@@ -186,7 +186,7 @@
                         (and (eq type :closed-paren) (not dir)))
                     (push c paren-stack)
                     (incf depth))
-                   ((or (and (not (zerop depth)) (null paren-stack))
+                   ((or (and (not (>= 0 depth)) (null paren-stack))
                         (syntax-equal-paren-p c (car paren-stack)))
                     (pop paren-stack)
                     (decf depth))

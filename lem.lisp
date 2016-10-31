@@ -34,6 +34,7 @@
             (syntax-scan-window (current-window))))
 
 (push #'syntax-scan-window *window-scroll-functions*)
+(push #'syntax-scan-window *window-size-change-functions*)
 
 (defun ask-revert-buffer ()
   (if (minibuf-y-or-n-p (format nil

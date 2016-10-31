@@ -4,6 +4,7 @@
           *window-sufficient-width*
           *scroll-recenter-p*
           *window-scroll-functions*
+          *window-size-change-functions*
           modeline-read-only-p
           modeline-modified-p
           modeline-name
@@ -34,6 +35,7 @@
 (defvar *window-sufficient-width* 150)
 (defvar *scroll-recenter-p* t)
 (defvar *window-scroll-functions* nil)
+(defvar *window-size-change-functions* nil)
 
 (defvar *modeline-default-format*
   (list 'modeline-read-only-p
@@ -567,7 +569,9 @@
 (defun window-resize (window dw dh)
   (window-set-size window
                    (+ (window-width window) dw)
-                   (+ (window-height window) dh)))
+                   (+ (window-height window) dh))
+  (dolist (fun *window-size-change-functions*)
+    (funcall fun window)))
 
 (defun adjust-size-windows-after-delete-window (deleted-window
                                                 window-tree

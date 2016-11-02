@@ -401,6 +401,7 @@
 (defun syntax-scan-line (line)
   (line-clear-attribute line)
   (line-clear-tags line)
+  (setf (line-%tags-cached line) t)
   (let* ((region (syntax-continue-region-p line))
          (start-pos (or (syntax-scan-line-region line region) 0))
          (str (line-str line)))
@@ -425,6 +426,8 @@
 
 (defun %syntax-pos-tag (pos)
   (let ((line (buffer-get-line (current-buffer) (current-linum))))
+    (unless (line-%tags-cached line)
+      (syntax-scan-line line))
     (loop :for (start end tag) :in (line-%tags line) :do
       (when (<= start pos (1- end))
         (return tag)))))

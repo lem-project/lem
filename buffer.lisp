@@ -39,6 +39,7 @@
   next
   fatstr
   %tags
+  %tags-cached
   %symbol-lifetimes
   %region)
 
@@ -427,6 +428,7 @@
              (buffer-delete-char buffer linum pos 1)
              (make-point linum pos))
            (let ((line (buffer-get-line buffer linum)))
+             (setf (line-%tags-cached line) nil)
              (dolist (marker (buffer-markers buffer))
                (when (and (= linum (marker-linum marker))
                           (if (marker-insertion-type marker)
@@ -455,6 +457,7 @@
         ((< linum (marker-linum marker))
          (incf (marker-linum marker)))))
     (let ((line (buffer-get-line buffer linum)))
+      (setf (line-%tags-cached line) nil)
       (let ((newline
               (make-line line
                          (line-next line)
@@ -469,6 +472,7 @@
 (defun buffer-insert-line (buffer linum pos str)
   (with-buffer-modify buffer
     (let ((line (buffer-get-line buffer linum)))
+      (setf (line-%tags-cached line) nil)
       (with-push-undo (buffer)
         (buffer-delete-char buffer linum pos (fat-length str))
         (make-point linum pos))
@@ -488,6 +492,7 @@
   (with-buffer-modify buffer
     (let ((line (buffer-get-line buffer linum))
           (del-lines (list "")))
+      (setf (line-%tags-cached line) nil)
       (loop while (or (eq n t) (plusp n)) do
         (cond
           ((and (not (eq n t))

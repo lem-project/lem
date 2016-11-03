@@ -476,10 +476,12 @@
       (store-value x condition)
       (return))))
 
+(defvar *error-buffer-name* "*error*")
+
 (defun lisp-debugger (condition)
   (let* ((choices (compute-restarts condition))
          (n (length choices)))
-    (lisp-info-popup (get-buffer-create "*error*")
+    (lisp-info-popup (get-buffer-create *error-buffer-name*)
                      #'(lambda (out)
                          (format out "~a~%~%" condition)
                          (loop
@@ -604,7 +606,7 @@
      (format nil "(cl:load ~s)" filename))))
 
 (defun lisp-print-error (condition)
-  (lisp-info-popup (get-buffer-create "*error*")
+  (lisp-info-popup (get-buffer-create *error-buffer-name*)
                    #'(lambda (out)
                        (format out "~a~%~%" condition)
                        (uiop/image:print-backtrace :stream out :count 100))

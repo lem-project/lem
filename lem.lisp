@@ -7,7 +7,7 @@
 (defvar *running-p* nil)
 
 (defun popup-backtrace (condition)
-  (info-popup (get-buffer-create "*Error*")
+  (info-popup (get-buffer-create "*INTERNAL ERROR*")
               #'(lambda (out)
                   (princ condition out)
                   (fresh-line out)

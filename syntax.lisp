@@ -235,15 +235,17 @@
 
 (defvar *syntax-symbol-lifetimes* nil)
 
+(defun enable-syntax-highlight-p (buffer)
+  (and *enable-syntax-highlight*
+       (get-bvar :enable-syntax-highlight :buffer buffer)))
+
 (defun syntax-scan-window (window)
-  (when (and *enable-syntax-highlight*
-             (get-bvar :enable-syntax-highlight :buffer (window-buffer window)))
+  (when (enable-syntax-highlight-p (window-buffer window))
     (with-window-range (start-linum end-linum) window
       (syntax-scan-lines (window-buffer window) start-linum end-linum))))
 
 (defun syntax-scan-lines (buffer start-linum end-linum)
-  (when (and *enable-syntax-highlight*
-             (get-bvar :enable-syntax-highlight :buffer buffer))
+  (when (enable-syntax-highlight-p buffer)
     (let* ((line (buffer-get-line buffer start-linum))
            (prev (line-prev line))
            (*syntax-symbol-lifetimes* (and prev (line-%symbol-lifetimes prev))))
@@ -254,8 +256,7 @@
         (syntax-scan-line line)))))
 
 (defun syntax-scan-buffer (buffer)
-  (when (and *enable-syntax-highlight*
-             (get-bvar :enable-syntax-highlight :buffer buffer))
+  (when (enable-syntax-highlight-p buffer)
     (map-buffer #'(lambda (line linum)
                     (declare (ignore linum))
                     (syntax-scan-line line))
@@ -426,7 +427,8 @@
 
 (defun %syntax-pos-tag (pos)
   (let ((line (buffer-get-line (current-buffer) (current-linum))))
-    (unless (line-%tags-cached line)
+    (when (and (not (line-%tags-cached line))
+               (enable-syntax-highlight-p (current-buffer)))
       (syntax-scan-line line))
     (loop :for (start end tag) :in (line-%tags line) :do
       (when (<= start pos (1- end))

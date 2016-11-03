@@ -226,6 +226,8 @@
 (defun skip-sexp-forward ()
   (syntax-skip-expr-prefix-forward)
   (loop
+    (when (eobp)
+      (return))
     (case (sexp-get-syntax-type t)
       ((:symbol :escape)
        (return (skip-symbol-forward)))
@@ -246,7 +248,7 @@
 
 (defun skip-sexp-backward ()
   (if (bobp)
-      t
+      nil
       (prog1 (ecase (sexp-get-syntax-type nil)
                ((:symbol :expr-prefix :escape)
                 (skip-symbol-backward))

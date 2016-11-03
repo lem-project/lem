@@ -300,19 +300,6 @@
                                    (declare (ignore c1 c2))
                                    (shift-position -2))))
 
-(defun sexp-goto-car (limit-linum)
-  (let ((point (current-point)))
-    (do ((end-linum (point-linum point)))
-        ((let ((point (current-point)))
-           (if (backward-sexp 1 t)
-               (point= point (current-point))
-               t))
-         t)
-      (let ((start-linum (point-linum (current-point))))
-        (when (< limit-linum (- end-linum start-linum))
-          (point-set point)
-          (return nil))))))
-
 (defun looking-at-indent-spec ()
   (let* ((string (lisp-looking-at-symbol-name))
          (pos (and string (position #\: string :from-end t)))
@@ -883,16 +870,24 @@
                (symbolp x))
       (lisp-get-arglist x))))
 
+(defun search-backward-arglist ()
+  (save-excursion
+   (loop
+     (go-to-car)
+     (let ((name (lisp-looking-at-symbol-name)))
+       (multiple-value-bind (arglist)
+           (lisp-search-arglist name)
+         (cond (arglist
+                (return (values (format nil "~A: ~A" name arglist) t)))
+               ((not (up-list 1 t))
+                (return nil))))))))
+
 (define-key *lisp-mode-keymap* (kbd "C-c M-h") 'lisp-echo-arglist)
 (define-command lisp-echo-arglist () ()
-  (save-excursion
-   (when (sexp-goto-car 100)
-     (let* ((start (current-point))
-            (end (progn (forward-sexp 1 t) (current-point))))
-       (multiple-value-bind (arglist)
-           (lisp-search-arglist (region-string start end))
-         (when arglist
-           (message "~A" arglist)))))))
+  (multiple-value-bind (arglist foundp)
+      (search-backward-arglist)
+    (when foundp
+      (message "~A" arglist))))
 
 (define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-self-insert-then-arg-list)
 (define-command lisp-self-insert-then-arg-list (n) ("p")

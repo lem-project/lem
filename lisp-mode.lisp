@@ -429,6 +429,17 @@
                                (string-downcase (package-name pkg)))
                            (list-all-packages))))))
 
+(defun scan-current-package ()
+  (save-excursion
+   (loop (multiple-value-bind (result groups)
+             (looking-at-line "\\(in-package (?:#?:|')([^\)]*)\\)")
+           (when result
+             (let ((package (find-package (string-upcase (aref groups 0)))))
+               (when package
+                 (return package))))
+           (unless (forward-line -1)
+             (return (find-package :cl-user)))))))
+
 (defun %string-to-exps (str package)
   (let ((str str)
         (exps)
@@ -932,6 +943,14 @@
              (delete-char 1 nil)))
         (delete-char 1 nil))
       (forward-line 1))))
+
+(defun lisp-idle-timer-function ()
+  (when (eq 'lisp-mode (major-mode))
+    (lisp-change-package (scan-current-package))
+    (lisp-echo-arglist)
+    (redraw-display)))
+
+(start-idle-timer 500 t 'lisp-idle-timer-function)
 
 (defun lisp-print-values (values)
   (with-open-stream (out (make-buffer-output-stream))

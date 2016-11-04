@@ -305,7 +305,7 @@
          (pos (and string (position #\: string :from-end t)))
          (name (if pos (subseq string (1+ pos)) string)))
     (cond ((and name (gethash name *indent-table*)))
-          ((ppcre:scan "^(?:def|with-)" name)
+          ((ppcre:scan "^(?:def|with-|do-)" name)
            0))))
 
 (defun go-to-car ()

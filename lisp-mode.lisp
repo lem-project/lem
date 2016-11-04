@@ -683,7 +683,7 @@
          (string-left-trim "'#`@,"
                            (region-string (current-point)
                                           (progn
-                                            (forward-sexp 1)
+                                            (forward-sexp 1 t)
                                             (current-point)))))))))
 
 (defun lisp-read-symbol (prompt &optional (confirm-p t))
@@ -950,7 +950,14 @@
     (lisp-echo-arglist)
     (redraw-display)))
 
-(start-idle-timer "lisp" 500 t 'lisp-idle-timer-function)
+(defvar *lisp-timer*)
+(when (or (not (boundp '*lisp-timer*))
+          (not (timer-alive-p *lisp-timer*)))
+  (setf *lisp-timer*
+        (start-idle-timer "lisp" 500 t 'lisp-idle-timer-function nil
+                          (lambda (condition)
+                            (popup-backtrace condition)
+                            (stop-timer *lisp-timer*)))))
 
 (defun lisp-print-values (values)
   (with-open-stream (out (make-buffer-output-stream))

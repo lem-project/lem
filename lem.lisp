@@ -7,12 +7,16 @@
 (defvar *running-p* nil)
 
 (defun popup-backtrace (condition)
-  (info-popup (get-buffer-create "*INTERNAL ERROR*")
-              #'(lambda (out)
-                  (princ condition out)
-                  (fresh-line out)
-                  (uiop/image:print-backtrace
-                   :stream out :count 100))))
+  (let ((buffer (get-buffer-create "*EDITOR ERROR*")))
+    (display-buffer buffer)
+    (set-buffer buffer)
+    (buffer-erase)
+    (with-open-stream (stream (make-buffer-output-stream buffer))
+      (princ condition stream)
+      (fresh-line stream)
+      (uiop/image:print-backtrace
+       :stream stream
+       :count 100))))
 
 (defun bailout (condition)
   (exit-editor

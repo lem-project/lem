@@ -9,7 +9,8 @@
           find-mode-from-name
           toggle-minor-mode
           define-major-mode
-          define-minor-mode))
+          define-minor-mode
+          set-buffer-mode))
 
 (defvar *mode-list* nil)
 
@@ -98,3 +99,9 @@
               (setf (buffer-minor-modes)
                     (delete ',minor-mode (buffer-minor-modes)))))
        ,@body)))
+
+(defun set-buffer-mode (buffer mode)
+  (save-excursion
+   (set-buffer buffer nil)
+   (funcall mode))
+  buffer)

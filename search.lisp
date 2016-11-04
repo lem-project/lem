@@ -197,9 +197,9 @@
 
 (defun looking-at-line (regex &key (start nil startp) (end nil endp))
   (macrolet ((m (&rest args)
-                `(ppcre:scan regex
-                             (current-line-string)
-                             ,@args)))
+                `(ppcre:scan-to-strings regex
+                                        (current-line-string)
+                                        ,@args)))
     (cond ((and startp endp)
            (m :start start :end end))
           (startp

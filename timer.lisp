@@ -11,7 +11,11 @@
 (defvar *timer-list* nil)
 
 (defclass timer ()
-  ((ms
+  ((name
+    :initarg :name
+    :reader timer-name
+    :type simple-string)
+   (ms
     :initarg :ms
     :accessor timer-ms
     :type (integer 1 *))
@@ -47,8 +51,9 @@
 (defun timer-p (x)
   (typep x 'timer))
 
-(defun start-timer (ms repeat-p function &optional args handle-function)
+(defun start-timer (name ms repeat-p function &optional args handle-function)
   (let ((timer (make-instance 'timer
+                              :name name
                               :ms ms
                               :repeat-p repeat-p
                               :last-time (get-internal-real-time)
@@ -86,7 +91,8 @@
                 (apply (timer-function timer) (timer-args timer)))
               (apply (timer-function timer) (timer-args timer)))
         (error (condition)
-               (message "Error running timer: ~a" condition))))
+               (message "Error running timer ~S: ~A" (timer-name timer) condition)
+               (redraw-display))))
     (not (null update-timers))))
 
 (defun shortest-wait-timers ()
@@ -105,8 +111,9 @@
 (defvar *idle-timer-list* nil)
 (defvar *running-idle-timers* nil)
 
-(defun start-idle-timer (ms repeat-p function &optional args handle-function)
+(defun start-idle-timer (name ms repeat-p function &optional args handle-function)
   (push (make-instance 'timer
+                       :name name
                        :ms ms
                        :repeat-p repeat-p
                        :function function

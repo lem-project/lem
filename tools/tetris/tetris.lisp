@@ -306,7 +306,8 @@
     (init-player)
     (draw)
     (setq *playing-p* t)
-    (setq *timer* (start-timer 1000
+    (setq *timer* (start-timer "tetris"
+                               1000
                                t
                                #'update (list buffer)
                                #'(lambda (condition)

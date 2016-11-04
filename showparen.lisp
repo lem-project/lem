@@ -7,8 +7,7 @@
 
 (defvar *paren-attribute* (make-attribute "cyan" nil :reverse-p t))
 
-(start-idle-timer 100
-                  t
+(start-idle-timer "show-paren" 100 t
                   (lambda ()
                     (mapc #'delete-overlay *brackets-overlays*)
                     (setq *brackets-overlays* nil)

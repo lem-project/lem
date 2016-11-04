@@ -950,7 +950,7 @@
     (lisp-echo-arglist)
     (redraw-display)))
 
-(start-idle-timer 500 t 'lisp-idle-timer-function)
+(start-idle-timer "lisp" 500 t 'lisp-idle-timer-function)
 
 (defun lisp-print-values (values)
   (with-open-stream (out (make-buffer-output-stream))

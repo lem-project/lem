@@ -47,8 +47,7 @@
 
 (defvar *mainloop-waited-for-enough*)
 
-(start-idle-timer 200
-                  t
+(start-idle-timer "mainloop" 200 t
                   (lambda ()
                     (syntax-scan-window (current-window))
                     (redraw-display)

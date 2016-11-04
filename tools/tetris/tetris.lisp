@@ -1,10 +1,10 @@
 ;; -*- mode:lisp; package:tetris -*-
 
-(defpackage :tetris
+(defpackage :lem.tetris
   (:use :cl :lem)
   (:export))
 
-(in-package :tetris)
+(in-package :lem.tetris)
 
 (define-major-mode tetris-mode nil
   (:name "tetris"

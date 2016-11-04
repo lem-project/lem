@@ -113,7 +113,8 @@
               ("defvar" . 1)
               ("defconstant" . 1)
               ("defsystem" . 1)
-              ("loop" . progn))
+              ("loop" . progn)
+              (":method" . 1))
       :do (setf (gethash name *indent-table*) n))
 
 (defvar *lisp-syntax-table*
@@ -303,7 +304,9 @@
 (defun looking-at-indent-spec ()
   (let* ((string (lisp-looking-at-symbol-name))
          (pos (and string (position #\: string :from-end t)))
-         (name (if pos (subseq string (1+ pos)) string)))
+         (name (if (and pos (plusp pos))
+                   (subseq string (1+ pos))
+                   string)))
     (cond ((and name (gethash name *indent-table*)))
           ((ppcre:scan "^(?:def|with-|do-)" name)
            0))))

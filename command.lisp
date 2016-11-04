@@ -44,7 +44,8 @@
           exchange-point-mark
           goto-line
           filter-buffer
-          pipe-command))
+          pipe-command
+          delete-trailing-whitespace))
 
 (define-key *global-keymap* (kbd "C-x C-c") 'exit-lem)
 (define-command exit-lem () ()
@@ -461,3 +462,18 @@
                                       :output out
                                       :error-output out
                                       :ignore-error-status t)))))
+
+(define-command delete-trailing-whitespace () ()
+  (save-excursion
+   (beginning-of-buffer)
+   (loop until (eobp) do
+     (loop
+       (end-of-line)
+       (let ((c (preceding-char)))
+         (if (or (equal c #\space)
+                 (equal c #\tab))
+             (delete-char -1 nil)
+             (return))))
+     (forward-line 1))
+   (end-of-buffer)
+   (delete-blank-lines)))

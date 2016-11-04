@@ -38,6 +38,10 @@
    (alive-p
     :initarg :alive-p
     :accessor timer-alive-p
+    :type boolean)
+   (idle-p
+    :initarg :idle-p
+    :accessor timer-idle-p
     :type boolean)))
 
 (defun timer-p (x)
@@ -67,7 +71,8 @@
                (- (get-internal-real-time)
                   (timer-last-time timer)))
         (push timer update-timers)
-        (cond ((timer-repeat-p timer)
+        (cond ((and (timer-repeat-p timer)
+                    (not (timer-idle-p timer)))
                (setf (timer-last-time timer)
                      (get-internal-real-time)))
               (t
@@ -101,34 +106,26 @@
 (defvar *running-idle-timers* nil)
 
 (defun start-idle-timer (ms repeat-p function &optional args handle-function)
-  (push (cons (make-instance 'timer
-                             :ms ms
-                             :repeat-p nil
-                             :function function
-                             :args args
-                             :handle-function handle-function
-                             :alive-p t)
-              repeat-p)
+  (push (make-instance 'timer
+                       :ms ms
+                       :repeat-p repeat-p
+                       :function function
+                       :args args
+                       :handle-function handle-function
+                       :alive-p t
+                       :idle-p t)
         *idle-timer-list*))
 
 (defun start-idle-timers ()
-  (dolist (elt *idle-timer-list*)
-    (let ((timer (car elt)))
-      (setf (timer-last-time timer) (get-internal-real-time))
-      (setf (timer-alive-p timer) t)
-      (push timer *timer-list*))))
+  (dolist (timer *idle-timer-list*)
+    (setf (timer-last-time timer) (get-internal-real-time))
+    (setf (timer-alive-p timer) t)
+    (push timer *timer-list*)))
 
 (defun stop-idle-timers ()
   (let ((new-idle-timers))
-    (dolist (elt *idle-timer-list*)
-      (destructuring-bind (timer . repeat-p) elt
-        (when (or repeat-p
-                  ;; !!!
-                  ;; repeat-pがnilのidle-timerが生きている期間を
-                  ;; トップレベルの入力待ち一回の間だけにするかはこの式で決まる。
-                  ;; emacsでは一度は必ず実行されるが、そうでないほうが都合が良いことがある。
-                  ;; (timer-alive-p timer)
-                  )
-          (push elt new-idle-timers))
-        (stop-timer timer)))
+    (dolist (timer *idle-timer-list*)
+      (when (timer-repeat-p timer)
+        (push timer new-idle-timers))
+      (stop-timer timer))
     (setf *idle-timer-list* new-idle-timers)))

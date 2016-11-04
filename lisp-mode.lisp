@@ -891,13 +891,6 @@
     (when foundp
       (message "~A" arglist))))
 
-(define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-self-insert-then-arg-list)
-(define-command lisp-self-insert-then-arg-list (n) ("p")
-  (prog1 (self-insert n)
-    (start-idle-timer 100
-                      nil
-                      (lambda () (lisp-echo-arglist)))))
-
 (define-key *lisp-mode-keymap* (kbd "C-c ;") 'lisp-comment-or-uncomment-region)
 (define-command lisp-comment-or-uncomment-region (arg) ("P")
   (if arg

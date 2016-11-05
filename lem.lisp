@@ -108,7 +108,12 @@
 (defmacro with-editor (() &body body)
   `(call-with-editor (lambda () ,@body)))
 
-(defun lem-1 (args)
+(defun check-init ()
+  (when *running-p*
+    (error "~A is already running" *program-name*)))
+
+(defun lem (&rest args)
+  (check-init)
   (term-init)
   (let ((report (unwind-protect
                   (with-editor ()
@@ -117,11 +122,3 @@
                   (term-finallize))))
     (when report
       (format t "~&~a~%" report))))
-
-(defun check-init ()
-  (when *running-p*
-    (error "~A is already running" *program-name*)))
-
-(defun lem (&rest args)
-  (check-init)
-  (lem-1 args))

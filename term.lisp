@@ -5,7 +5,8 @@
    :get-color-pair
    :with-allow-interrupt
    :term-init
-   :term-finallize))
+   :term-finallize
+   :term-set-tty))
 (in-package :lem.term)
 
 (defvar *colors* nil)
@@ -144,6 +145,7 @@
   (cmd :int)
   &rest)
 
+(defvar *tty-name* nil)
 (defvar *term-io* nil)
 
 (defun resize-term ()
@@ -159,9 +161,9 @@
     (cffi:with-foreign-string (term "xterm")
       (charms/ll:newterm term io io))))
 
-(defun term-init (&optional tty-name)
-  (if tty-name
-      (term-init-tty tty-name)
+(defun term-init ()
+  (if *tty-name*
+      (term-init-tty *tty-name*)
       (charms/ll:initscr))
   (init-colors)
   (charms/ll:noecho)
@@ -170,6 +172,9 @@
   (charms/ll:nonl)
   (charms/ll:refresh)
   (charms/ll:keypad charms/ll:*stdscr* 1))
+
+(defun term-set-tty (tty-name)
+  (setf *tty-name* tty-name))
 
 (defun term-finallize ()
   (when *term-io*

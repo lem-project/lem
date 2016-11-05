@@ -308,10 +308,15 @@
          (pos (and string (position #\: string :from-end t)))
          (name (if (and pos (plusp pos))
                    (subseq string (1+ pos))
-                   string)))
-    (cond ((and name (gethash name *indent-table*)))
-          ((ppcre:scan "^(?:def|with-|do-)" name)
-           0))))
+                   string))
+         result)
+    (when (and name (setf result (gethash name *indent-table*)))
+      (return-from looking-at-indent-spec result))
+    (let ((arglist (lisp-search-arglist string #'lisp-get-arglist)))
+      (when (and arglist (setf result (position '&body arglist)))
+        (return-from looking-at-indent-spec result)))
+    (when (ppcre:scan "^(?:def|with-|do-)" name)
+      0)))
 
 (defun go-to-car ()
   (loop :while (backward-sexp 1 t) :count t))
@@ -867,18 +872,27 @@
 #+ccl
 (defun lisp-get-arglist (symbol)
   (when (fboundp symbol)
-    (format nil "~a" (ccl:arglist symbol))))
+    (ccl:arglist symbol)))
+
+#+ccl
+(defun lisp-get-arglist-string (symbol)
+  (let ((arglist (lisp-get-arglist symbol)))
+    (when arglist
+      (princ-to-string arglist))))
 
 #+sbcl
 (defun lisp-get-arglist (symbol)
   (when (fboundp symbol)
-    (ppcre:regex-replace-all
-     "\\s+"
-     (format nil "~a"
-             (sb-introspect:function-lambda-list symbol))
-     " ")))
+    (sb-introspect:function-lambda-list symbol)))
 
-(defun lisp-search-arglist (string)
+#+sbcl
+(defun lisp-get-arglist-string (symbol)
+  (let ((arglist (lisp-get-arglist symbol)))
+    (when arglist
+      (ppcre:regex-replace-all
+       "\\s+" (princ-to-string arglist) " "))))
+
+(defun lisp-search-arglist (string arglist-fn)
   (multiple-value-bind (x error-p)
       (ignore-errors
        (destructuring-bind (package symbol-name external-p)
@@ -893,7 +907,7 @@
                symbol))))
     (when (and (not error-p)
                (symbolp x))
-      (lisp-get-arglist x))))
+      (funcall arglist-fn x))))
 
 (defun search-backward-arglist ()
   (save-excursion
@@ -901,7 +915,7 @@
      (go-to-car)
      (let ((name (lisp-looking-at-symbol-name)))
        (multiple-value-bind (arglist)
-           (lisp-search-arglist name)
+           (lisp-search-arglist name #'lisp-get-arglist-string)
          (cond (arglist
                 (return (values (format nil "~A: ~A" name arglist) t)))
                ((not (up-list 1 t))

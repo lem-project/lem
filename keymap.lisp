@@ -136,16 +136,6 @@
               (keymap-find-keybind parent key)))
           (keymap-undef-hook keymap0)))))
 
-(defun search-keybind-all (name)
-  (let ((name (intern (string-upcase name) :lem))
-        (keys))
-    (dolist (keymap *keymaps*)
-      (maphash #'(lambda (key val)
-                   (when (eq name val)
-                     (push key keys)))
-               (keymap-table keymap)))
-    keys))
-
 (defun key-undef-hook (keymap key)
   (when (keymap-undef-hook keymap)
     (funcall (keymap-undef-hook keymap) key)))

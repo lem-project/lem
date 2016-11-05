@@ -69,9 +69,4 @@
               #'(lambda (out)
                   (dolist (name (all-command-names))
                     (when (search str name)
-                      (dolist (kbd (search-keybind-all name))
-                        (princ (format nil "~a~a~a~%"
-                                       name
-                                       #\tab
-                                       (kbd-to-string kbd))
-                               out)))))))
+                      (describe (string-to-command name) out))))))

@@ -85,6 +85,9 @@
 (defun command-name (command)
   (get command 'name))
 
+(defun string-to-command (str)
+  (intern (string-upcase str) :lem))
+
 (defmacro define-command (name parms (&rest arg-descripters) &body body)
   (let ((gcmd (gensym (symbol-name name))))
     `(progn

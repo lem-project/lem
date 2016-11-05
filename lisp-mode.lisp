@@ -577,13 +577,11 @@
     (buffer-erase output-buffer)
     (set-buffer-mode output-buffer 'lisp-mode)
     (setf (buffer-modified-p output-buffer) nil)
-    (prog1 (message "~{~s~^,~}"
-                    (%lisp-eval-string string output-buffer nil nil
-                                       (lisp-current-package)))
-      (when (buffer-modified-p output-buffer)
-        (info-popup output-buffer
-                    nil
-                    nil)))))
+    (message "~{~s~^,~}"
+             (%lisp-eval-string string output-buffer nil nil
+                                (lisp-current-package)))
+    (when (buffer-modified-p output-buffer)
+      (info-popup output-buffer nil nil))))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-r") 'lisp-eval-region)
 (define-command lisp-eval-region (&optional begin end) ("r")
@@ -970,8 +968,9 @@
 
 (defun lisp-print-values (values)
   (with-open-stream (out (make-buffer-output-stream))
-    (dolist (v values)
-      (pprint v out))
+    (let ((*package* (lisp-current-package)))
+      (dolist (v values)
+        (pprint v out)))
     (point-set (buffer-output-stream-point out))))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-j") 'lisp-eval-print-last-sexp)
@@ -986,9 +985,7 @@
          (lisp-print-values
           (%lisp-eval-string string output-buffer nil nil
                              (lisp-current-package)))
-         (insert-newline)
-         (when (buffer-modified-p output-buffer)
-           (info-popup output-buffer nil))))))
+         (insert-newline)))))
 
 (define-major-mode lisp-repl-mode lisp-mode
   (:name "lisp-repl"

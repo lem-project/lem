@@ -54,7 +54,7 @@
 
 (defun buffer-output-stream-refresh (stream)
   (when (buffer-output-stream-interactive-update-p stream)
-    (set-buffer (buffer-output-stream-buffer stream))
+    (display-buffer (buffer-output-stream-buffer stream))
     (dolist (window (get-buffer-windows (buffer-output-stream-buffer stream)))
       (point-set (buffer-output-stream-point stream) window)
       (redraw-display-window window t)))

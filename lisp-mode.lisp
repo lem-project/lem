@@ -440,7 +440,7 @@
                (when package
                  (return package))))
            (unless (forward-line -1)
-             (return (find-package :cl-user)))))))
+             (return))))))
 
 (defun %string-to-exps (str package)
   (let ((str str)
@@ -953,7 +953,9 @@
 
 (defun lisp-idle-timer-function ()
   (when (eq 'lisp-mode (major-mode))
-    (lisp-change-package (scan-current-package))
+    (let ((package (scan-current-package)))
+      (when package
+        (lisp-change-package package)))
     (lisp-echo-arglist)
     (redraw-display)))
 

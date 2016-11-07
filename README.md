@@ -1,12 +1,14 @@
 # lem
 ![lem simple emacs clone.](./screenshots/screenshot.png)
 
-## インストール
+## Installation
 `$ ros install cxxxr/lem`
 
-## 使い方
+## Usage
 `$ lem`  
-`CL-USER> (lem:lem)`
+
+    CL-USER> (ql:quickload :lem)
+    CL-USER> (ed)
 
 # License
 [MIT](https://github.com/cxxxr/lem/blob/master/LICENCE)

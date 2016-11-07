@@ -108,10 +108,11 @@
 
 (define-key *global-keymap* (kbd "C-x C-M-d") 'dired)
 (define-command dired (dirname) ((list
-                                  (cl-fad:directory-exists-p
-                                   (minibuf-read-file "Dired: "
-                                                      (buffer-directory)
-                                                      (buffer-directory)))))
+                                  (namestring
+                                   (cl-fad:directory-exists-p
+                                    (minibuf-read-file "Dired: "
+                                                       (buffer-directory)
+                                                       (buffer-directory))))))
   (dired-internal dirname)
   (goto-start-line))
 

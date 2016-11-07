@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(make-point
+          make-min-point
           point-linum
           point-charpos
           with-points
@@ -18,6 +19,9 @@
 
 (defun make-point (linum charpos)
   (cons linum charpos))
+
+(defun make-min-point ()
+  (make-point 1 0))
 
 (defun point-linum (point)
   (car point))

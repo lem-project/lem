@@ -86,7 +86,7 @@
                           :screen (make-screen x y width height t)
                           :view-marker (make-marker buffer (make-point 1 0)))))
     (setf (window-point-marker window)
-          (make-marker buffer (make-point 1 0)))
+          (make-marker buffer (make-min-point)))
     window))
 
 (defun window-buffer (&optional (window (current-window)))

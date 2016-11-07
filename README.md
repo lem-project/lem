@@ -2,10 +2,10 @@
 ![lem simple emacs clone.](./screenshots/screenshot.png)
 
 ## インストール
-`ros install cxxxr/lem`
+`$ ros install cxxxr/lem`
 
 ## 使い方
-`$ lem`
+`$ lem`  
 `CL-USER> (lem:lem)`
 
 # License

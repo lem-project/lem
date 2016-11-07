@@ -94,10 +94,14 @@
   (check-switch-minibuffer-window)
   (let ((buffer (get-buffer-create dirname)))
     (set-buffer buffer)
-    (dired-mode)
-    (setf (buffer-filename buffer) dirname)
-    (setf (buffer-read-only-p buffer) t)
-    (update)))
+    (cond ((eq 'dired-mode (buffer-major-mode buffer))
+           (setf (buffer-filename buffer) dirname)
+           (setf (buffer-read-only-p buffer) t))
+          (t
+           (dired-mode)
+           (setf (buffer-filename buffer) dirname)
+           (setf (buffer-read-only-p buffer) t)
+           (update)))))
 
 (defun dired-internal (dirname)
   (cond (dirname
@@ -430,5 +434,5 @@
 
 (defun dired-buffer (filename)
   (save-excursion
-    (dired filename)
+    (dired-internal filename)
     (current-buffer)))

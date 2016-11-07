@@ -683,9 +683,7 @@
 (define-key *lisp-mode-keymap* (kbd "C-c M") 'lisp-macroexpand-all)
 (define-key *lisp-mode-keymap* (kbd "C-c M-m") 'lisp-macroexpand-all)
 (define-command lisp-macroexpand-all () ()
-  (%lisp-macroexpand (progn
-                       #+sbcl 'sb-cltl2:macroexpand-all
-                       #-sbcl 'macroexpand)
+  (%lisp-macroexpand 'swank/backend:macroexpand-all
                      "*macroexpand*"))
 
 (defun lisp-looking-at-symbol-name ()

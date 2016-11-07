@@ -33,7 +33,7 @@
    (function
     :initarg :function
     :reader timer-function
-    :type function)
+    :type (or symbol function))
    (args
     :initarg :args
     :reader timer-args

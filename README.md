@@ -1,37 +1,12 @@
 # lem
-common lispで書いた小さいEmacsライクなエディタ
+![lem simple emacs clone.](./screenshots/screenshot.png)
 
-# 特徴
-* emacsに似たバッファ, ウィンドウ, ミニバッファ,
-  ミニバッファの補完, ミニバッファの履歴, インクリメンタルサーチ,
-  キーボードマクロ, 数引数, undo, redo, キルリング, リージョン, grep, abbrev,
-  メジャーモード, マイナーモード, フック等
-* UTF-8のサポート, 東アジアの文字幅に対応
-* lisp-mode: 単語ハイライト, S式単位の移動と編集, S式のインデント,  
-  シンボルの補完, エディタ内でのmacroexpand, シンボルのdescribe, disassemble,  
-  S式の評価, バックトレース, デバッガ等に対応
-* エディタのエラー時に落ちずにバックトレースを表示して実行を継続
+## インストール
+`ros install cxxxr/lem`
 
-# 必要なもの
-sbcl, clozure cl
-
-# インストール
-quicklispの下のlocal-projects/に入れて  
-`(ql:quickload :lem)`
-
-# ビルド
-sbclは用意済み  
-`sbcl --load build.lisp`  
-roswellを入れている場合  
-`./lem.ros -b` または  
-`./lem.ros --build`
-
-# 使い方
-`(lem:lem)`  
-または  
-`(lem:lem "ファイル名")`  
-roswellを入れている場合  
-`lem.ros`
+## 使い方
+`$ lem`
+`CL-USER> (lem:lem)`
 
 # License
 [MIT](https://github.com/cxxxr/lem/blob/master/LICENCE)

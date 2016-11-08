@@ -655,7 +655,7 @@
                  (progn
                    (forward-sexp 1)
                    (current-point)))
-  (pprint expr (make-buffer-output-stream))
+  (pprint expr (make-buffer-output-stream (current-buffer) (current-point)))
   (read-from-string
    (region-string (point-min)
                   (point-max))))
@@ -987,7 +987,7 @@
                             (stop-timer *lisp-timer*)))))
 
 (defun lisp-print-values (values)
-  (with-open-stream (out (make-buffer-output-stream))
+  (with-open-stream (out (make-buffer-output-stream (current-buffer) (current-point)))
     (let ((*package* (lisp-current-package)))
       (dolist (v values)
         (pprint v out)))

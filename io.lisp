@@ -37,7 +37,7 @@
                  :interactive-update-p interactive-update-p))
 
 (defun make-buffer-output-stream (&optional (buffer (current-buffer))
-                                            (point (current-point))
+                                            (point (make-min-point))
                                             interactive-update-p)
   (make-buffer-stream-instance 'buffer-output-stream
                                buffer point interactive-update-p))

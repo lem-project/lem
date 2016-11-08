@@ -20,7 +20,7 @@
         (when mode (funcall mode))
         (when output-function
           (save-excursion
-           (with-open-stream (out (make-buffer-output-stream buffer))
+           (with-open-stream (out (make-buffer-output-stream buffer (current-point)))
              (funcall output-function out))))))
     (when focus-set-p
       (setf (current-window) window))

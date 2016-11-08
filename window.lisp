@@ -633,6 +633,8 @@
       (if (null node2)
           (setf (window-tree) (funcall another-getter))
           (funcall setter2 (funcall another-getter)))))
+  (delete-marker (window-view-marker window))
+  (delete-marker (window-point-marker window))
   (when (window-delete-hook window)
     (funcall (window-delete-hook window)))
   (screen-delete (window-screen window))

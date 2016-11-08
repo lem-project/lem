@@ -102,24 +102,20 @@
     (setf (current-buffer) buffer)
     (let ((view-linum 1)
           (cur-linum 1)
-          (cur-pos 0))
+          (cur-charpos 0))
       (when (buffer-keep-binfo buffer)
         (multiple-value-setq
-            (view-linum cur-linum cur-pos)
+            (view-linum cur-linum cur-charpos)
           (apply 'values (buffer-keep-binfo buffer))))
-      (delete-marker (window-point-marker (current-window)))
-      (setf (window-point-marker (current-window)) (make-marker-current-point))
+      (marker-change-buffer (window-point-marker (current-window)) buffer)
       (let ((buffer-nlines (buffer-nlines)))
-        (when (window-view-marker (current-window))
-          (delete-marker (window-view-marker (current-window))))
-        (setf (window-view-marker (current-window))
-              (make-marker buffer
-                           (make-point (min view-linum buffer-nlines)
-                                       0)))
+        (marker-change-buffer (window-view-marker (current-window))
+                              buffer
+                              (make-point (min view-linum buffer-nlines) 0))
         (setf (window-current-linum (current-window))
               (min cur-linum buffer-nlines)))
       (setf (window-current-charpos (current-window))
-            (min cur-pos
+            (min cur-charpos
                  (buffer-line-length (current-buffer)
                                      (window-current-linum (current-window)))))
       (assert (<= 0 (window-current-charpos (current-window)))))))

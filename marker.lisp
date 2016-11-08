@@ -13,7 +13,7 @@
 (defclass marker ()
   ((buffer
     :initarg :buffer
-    :reader marker-buffer
+    :accessor marker-buffer
     :type buffer)
    (linum
     :initarg :linum
@@ -68,3 +68,11 @@
   (setf (marker-linum marker) (point-linum new-point)
         (marker-charpos marker) (point-charpos new-point))
   new-point)
+
+(defun marker-change-buffer (marker buffer &optional (point nil pointp))
+  (delete-marker marker)
+  (buffer-add-marker buffer marker)
+  (setf (marker-buffer marker) buffer)
+  (when pointp
+    (setf (marker-point marker) point))
+  t)

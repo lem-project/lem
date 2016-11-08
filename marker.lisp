@@ -26,22 +26,35 @@
    (insertion-type
     :initarg :insertion-type
     :accessor marker-insertion-type
-    :type boolean)))
+    :type boolean)
+   (name
+    :initarg :name
+    :accessor marker-name
+    :type (or null string))))
+
+(defmethod print-object ((object marker) stream)
+  (print-unreadable-object (object stream :identity t)
+    (format stream "MARKER ~A"
+            (marker-name object))))
 
 (defun marker-p (x)
   (typep x 'marker))
 
-(defun make-marker (buffer point &optional insertion-type)
+(defun make-marker (buffer point &key insertion-type name)
   (let ((marker (make-instance 'marker
                                :buffer buffer
                                :linum (point-linum point)
                                :charpos (point-charpos point)
-                               :insertion-type insertion-type)))
+                               :insertion-type insertion-type
+                               :name name)))
     (buffer-add-marker buffer marker)
     marker))
 
-(defun make-marker-current-point (&optional insertion-type)
-  (make-marker (current-buffer) (current-point) insertion-type))
+(defun make-marker-current-point (&key insertion-type name)
+  (make-marker (current-buffer)
+               (current-point)
+               :insertion-type insertion-type
+               :name name))
 
 (defun delete-marker (marker)
   (buffer-delete-marker (marker-buffer marker)

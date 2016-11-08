@@ -34,7 +34,7 @@
 (defun listener-update-marker ()
   (when (%listener-marker)
     (delete-marker (%listener-marker)))
-  (setf (%listener-marker) (make-marker-current-point)))
+  (setf (%listener-marker) (make-marker-current-point :name "listener")))
 
 (defun listener-reset-prompt ()
   (point-set (point-max))

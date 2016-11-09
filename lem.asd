@@ -31,7 +31,7 @@
                         (:file "timer")
                         (:file "input")
                         (:file "syntax")
-                        (:file "io")
+                        (:file "streams")
                         (:file "kill")
                         (:file "region")
                         (:file "basic")

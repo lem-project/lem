@@ -47,6 +47,7 @@
                                   pathname)
                           pathname)))))
 
+#+lem-use-inquisitor
 (defun detect-external-format-from-file (pathname)
   (let ((external-format)
         (end-of-line :lf))
@@ -62,6 +63,11 @@
           (setq end-of-line result))))
     (values external-format
             end-of-line)))
+
+#-lem-use-inquisitor
+(defun detect-external-format-from-file (pathname)
+  (declare (ignore pathnaem))
+  (values :utf-8 :lf))
 
 (defun insert-file-contents (buffer point filename)
   (multiple-value-bind (external-format end-of-line)

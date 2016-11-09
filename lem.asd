@@ -9,6 +9,8 @@
 
 (in-package :lem-asd)
 
+(pushnew :lem-use-inquisitor *features*)
+
 (defsystem lem
   :version "0.1"
   :serial t
@@ -81,5 +83,5 @@
                :swank
                :trivial-gray-streams
                :cl-ppcre
-               :inquisitor
+               #+lem-use-inquisitor :inquisitor
                :babel))

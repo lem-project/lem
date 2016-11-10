@@ -278,9 +278,7 @@
           (remove (syntax-match-end-symbol syntax)
                   *syntax-symbol-lifetimes*
                   :key #'car)))
-  (when (syntax-attr syntax)
-    (line-put-attribute line start end (syntax-attr syntax)))
-  (line-add-tag line start end (syntax-tag syntax))
+  (line-add-property line start end 'tag (syntax-tag syntax))
   t)
 
 (defun syntax-position-word-end (str start)
@@ -343,15 +341,13 @@
     (when end
       (let ((end (syntax-search-region-end syntax (line-str line) end)))
         (cond (end
-               (line-put-attribute line start end
-                                   (syntax-attr syntax))
-               (line-add-tag line start end (syntax-tag syntax))
+               (line-add-property line start end 'tag (syntax-tag syntax))
                (return-from syntax-scan-token-test (1- end)))
               (t
-               (line-put-attribute line start (length (line-str line))
-                                   (syntax-attr syntax))
-               (line-add-tag line start (1+ (length (line-str line)))
-                             (syntax-tag syntax))
+               (line-add-property line  start
+                                  (length (line-str line))
+                                  'tag
+                                  (syntax-tag syntax))
                (setf (line-%region line) syntax)
                (return-from syntax-scan-token-test
                  (length (line-str line)))))))))
@@ -389,20 +385,19 @@
     (let ((end (syntax-search-region-end region (line-str line) 0)))
       (cond (end
              (setf (line-%region line) nil)
-             (line-put-attribute line 0 end (syntax-attr region))
-             (line-add-tag line 0 end (syntax-tag region))
+             (line-add-property line 0 end 'tag (syntax-tag region))
              end)
             (t
              (setf (line-%region line) region)
-             (line-put-attribute line 0 (length (line-str line))
-                                 (syntax-attr region))
-             (line-add-tag line 0 (1+ (length (line-str line))) (syntax-tag region))
+             (line-add-property line 0
+                                (length (line-str line))
+                                'tag
+                                (syntax-tag region))
              (length (line-str line)))))))
 
 (defun syntax-scan-line (line)
-  (line-clear-attribute line)
-  (line-clear-tags line)
   (setf (line-%tags-cached line) t)
+  (line-clear-property line 'tag)
   (let* ((region (syntax-continue-region-p line))
          (start-pos (or (syntax-scan-line-region line region) 0))
          (str (line-str line)))
@@ -430,9 +425,7 @@
     (when (and (not (line-%tags-cached line))
                (enable-syntax-highlight-p (current-buffer)))
       (syntax-scan-line line))
-    (loop :for (start end tag) :in (line-%tags line) :do
-      (when (<= start pos (1- end))
-        (return tag)))))
+    (line-search-property line 'tag pos)))
 
 (defun syntax-after-tag (&optional (n 1))
   (save-excursion

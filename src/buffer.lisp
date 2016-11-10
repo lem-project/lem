@@ -38,7 +38,7 @@
   prev
   next
   fatstr
-  %tags
+  plist
   %tags-cached
   %symbol-lifetimes
   %region)
@@ -79,14 +79,90 @@
   (change-font (line-fatstr line) (lognot (attribute-to-bits attr)) :and start end)
   t)
 
-(defun line-add-tag (line start end tag)
-  (when tag
-    (push (list start end tag) (line-%tags line))
-    t))
+(defun line-add-property (line start end key value)
+  (push (list start end value)
+        (getf (line-plist line) key)))
 
-(defun line-clear-tags (line)
-  (setf (line-%tags line) nil)
-  t)
+(defun line-clear-property (line key)
+  (setf (getf (line-plist line) key) nil))
+
+(defun line-search-property (line key pos)
+  (loop :for (start end value) :in (getf (line-plist line) key)
+        :do (when (<= start pos end)
+              (return value))))
+
+(defun line-property-insert-pos (line pos offset)
+  (loop :for values :in (cdr (line-plist line)) :by #'cddr
+        :do (dolist (v values)
+              (destructuring-bind (start end value) v
+                (declare (ignore value))
+                (cond ((<= pos start)
+                       (incf (first v) offset)
+                       (incf (second v) offset))
+                      ((<= pos end)
+                       (incf (second v) offset)))))) )
+
+(defun line-property-insert-newline (line next-line pos)
+  (let ((new-plist '()))
+    (loop :for plist-rest :on (line-plist line) :by #'cddr
+          :do (let ((new-values '()))
+                (loop :for prev-elements-rest := nil :then elements-rest
+                      :for elements-rest :on (cadr plist-rest)
+                      :do (destructuring-bind (start end value)
+                              (car elements-rest)
+                            (cond ((<= pos start)
+                                   (push (car elements-rest) new-values)
+                                   (if (null prev-elements-rest)
+                                       (setf (cadr plist-rest)
+                                             (cdr elements-rest))
+                                       (setf (cdr prev-elements-rest)
+                                             (cdr elements-rest))))
+                                  ((<= pos end)
+                                   (push (car elements-rest) new-values)
+                                   (setf (car elements-rest)
+                                         (list start pos value))))))
+                (unless (null new-values)
+                  (setf (getf new-plist (car plist-rest)) new-values))))
+    (setf (line-plist next-line)
+          new-plist)))
+
+(defun line-property-delete-pos (line pos n)
+  (loop :for plist-rest :on (line-plist line) :by #'cddr
+        :do (loop :for prev-elements-rest := nil :then elements-rest
+                  :for elements-rest :on (cadr plist-rest)
+                  :do (destructuring-bind (start end value)
+                          (car elements-rest)
+                        (cond ((<= pos start end (+ pos n))
+                               (if (null prev-elements-rest)
+                                   (setf (cadr plist-rest)
+                                         (cdr elements-rest))
+                                   (setf (cdr prev-elements-rest)
+                                         (cdr elements-rest))))
+                              ((< pos start (+ pos n))
+                               (setf (car elements-rest)
+                                     (list pos (- end n) value)))
+                              ((<= start pos (+ pos n) end)
+                               (setf (car elements-rest)
+                                     (list start (- end n))))
+                              ((<= start pos end (+ pos n))
+                               (setf (car elements-rest)
+                                     (list start pos))))))))
+
+(defun line-property-delete-line (line pos)
+  (loop :for plist-rest :on (line-plist line) :by #'cddr
+        :do (loop :for prev-elements-rest := nil :then elements-rest
+                  :for elements-rest :on (cadr plist-rest)
+                  :do (destructuring-bind (start end value)
+                          (car elements-rest)
+                        (cond ((<= pos start)
+                               (if (null prev-elements-rest)
+                                   (setf (cadr plist-rest)
+                                         (cdr elements-rest))
+                                   (setf (cdr prev-elements-rest)
+                                         (cdr elements-rest))))
+                              ((<= pos end)
+                               (setf (car elements-rest)
+                                     (list start pos value))))))))
 
 (defun line-free (line)
   (when (line-prev line)
@@ -308,12 +384,15 @@
 (defun buffer-line-fatstring (buffer linum)
   (let ((line (buffer-get-line buffer linum)))
     (when (line-p line)
-      (line-fatstr line))))
+      (let ((fatstr (line-fatstr line)))
+        ;; (loop :for (start end value) :in (getf (line-plist line) 'tag)
+        ;;       :do (change-font fatstr ... :to))
+        fatstr))))
 
 (defun buffer-line-string (buffer linum)
-  (let ((fatstr (buffer-line-fatstring buffer linum)))
-    (when fatstr
-      (fat-string fatstr))))
+  (let ((line (buffer-get-line buffer linum)))
+    (when (line-p line)
+      (fat-string (line-fatstr line)))))
 
 (defun buffer-end-line-p (buffer linum)
   (let ((line (buffer-get-line buffer linum)))
@@ -435,6 +514,7 @@
              (make-point linum pos))
            (let ((line (buffer-get-line buffer linum)))
              (setf (line-%tags-cached line) nil)
+             (line-property-insert-pos line pos 1)
              (dolist (marker (buffer-markers buffer))
                (when (and (= linum (marker-linum marker))
                           (if (marker-insertion-type marker)
@@ -470,6 +550,7 @@
                          (fat-substring (line-fatstr line) pos))))
         (when (eq line (buffer-tail-line buffer))
           (setf (buffer-tail-line buffer) newline))
+        (line-property-insert-newline line (line-next line) pos)
         (setf (line-fatstr line)
               (fat-substring (line-fatstr line) 0 pos))))
     (incf (buffer-nlines buffer)))
@@ -479,6 +560,7 @@
   (with-buffer-modify buffer
     (let ((line (buffer-get-line buffer linum)))
       (setf (line-%tags-cached line) nil)
+      (line-property-insert-pos line pos (length str))
       (with-push-undo (buffer)
         (buffer-delete-char buffer linum pos (fat-length str))
         (make-point linum pos))
@@ -503,6 +585,7 @@
         (cond
           ((and (not (eq n t))
                 (<= n (- (fat-length (line-fatstr line)) pos)))
+           (line-property-delete-pos line pos n)
            (dolist (marker (buffer-markers buffer))
              (when (and (= linum (marker-linum marker))
                         (< pos (marker-charpos marker)))
@@ -519,6 +602,7 @@
                              (fat-substring (line-fatstr line) (+ pos n))))
            (return))
           (t
+           (line-property-delete-line line pos)
            (dolist (marker (buffer-markers buffer))
              (cond
                ((and (= linum (marker-linum marker))

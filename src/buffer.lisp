@@ -43,6 +43,12 @@
   %symbol-lifetimes
   %region)
 
+(defmethod print-object ((object line) stream)
+  (print-unreadable-object (object stream :identity t)
+    (format stream "LINE: string: ~S, plist: ~S"
+            (fat-string (line-fatstr object))
+            (line-plist object))))
+
 (defun make-line (prev next str)
   (let ((line (%make-line :next next
                           :prev prev

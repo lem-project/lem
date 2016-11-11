@@ -216,7 +216,7 @@
     :do (cond ((and (= (point-linum start) (point-linum end))
                     (<= start-linum (point-linum start) (1- end-linum)))
                (set-attr-display-line screen
-                                      (overlay-attr overlay)
+                                      (overlay-attribute overlay)
                                       start-linum
                                       (point-linum start)
                                       (point-charpos start)
@@ -224,7 +224,7 @@
               ((and (<= start-linum (point-linum start))
                     (< (point-linum end) end-linum))
                (set-attr-display-lines screen
-                                       (overlay-attr overlay)
+                                       (overlay-attribute overlay)
                                        start-linum
                                        (point-linum start)
                                        (point-charpos start)
@@ -235,7 +235,7 @@
                    (point-linum end)
                    end-linum)
                (set-attr-display-lines screen
-                                       (overlay-attr overlay)
+                                       (overlay-attribute overlay)
                                        start-linum
                                        start-linum
                                        0
@@ -244,7 +244,7 @@
               ((<= start-linum
                    (point-linum start))
                (set-attr-display-lines screen
-                                       (overlay-attr overlay)
+                                       (overlay-attribute overlay)
                                        start-linum
                                        (point-linum start)
                                        (point-charpos start)

@@ -46,17 +46,17 @@
 (dolist (k *go-keywords*)
   (syntax-add-match *go-syntax-table*
                     (make-syntax-test k :word-p t)
-                    :attr *syntax-keyword-attribute*))
+                    :attribute *syntax-keyword-attribute*))
 
 (dolist (k *go-builtin*)
   (syntax-add-match *go-syntax-table*
                     (make-syntax-test k :word-p t)
-                    :attr *syntax-keyword-attribute*))
+                    :attribute *syntax-keyword-attribute*))
 
 (dolist (k *go-constants*)
   (syntax-add-match *go-syntax-table*
                     (make-syntax-test k :word-p t)
-                    :attr *syntax-constant-attribute*))
+                    :attribute *syntax-constant-attribute*))
 
 (defun following-word ()
   (region-string (current-point)

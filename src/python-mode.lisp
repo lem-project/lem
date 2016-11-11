@@ -27,7 +27,7 @@
   (syntax-add-region *python-syntax-table*
                      (make-syntax-test str)
                      (make-syntax-test str)
-                     :attr *syntax-string-attribute*))
+                     :attribute *syntax-string-attribute*))
 
 (dolist (str '("and" "as" "assert" "break" "class" "continue" "def" "del"
                "elif" "else" "except" "exec" "finally" "for" "from" "global"
@@ -35,7 +35,7 @@
                "raise" "return" "try" "while" "with" "yield"))
   (syntax-add-match *python-syntax-table*
                     (make-syntax-test str :word-p t)
-                    :attr *syntax-keyword-attribute*))
+                    :attribute *syntax-keyword-attribute*))
 
 (defvar *python-indent-size* 4)
 

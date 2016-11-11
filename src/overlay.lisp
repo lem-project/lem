@@ -11,9 +11,9 @@
    (end
     :initarg :end
     :reader overlay-end)
-   (attr
-    :initarg :attr
-    :reader overlay-attr)
+   (attribute
+    :initarg :attribute
+    :reader overlay-attribute)
    (buffer
     :initarg :buffer
     :reader overlay-buffer)))
@@ -27,7 +27,7 @@
           (make-instance 'overlay
                          :start start
                          :end end
-                         :attr attribute
+                         :attribute attribute
                          :buffer buffer)))
     (buffer-add-overlay buffer overlay)
     overlay))

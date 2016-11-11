@@ -39,11 +39,11 @@
                "_Bool" "_Complex" "Imaginary" "bool"))
   (syntax-add-match *c-syntax-table*
                     (make-syntax-test str :word-p t)
-                    :attr *syntax-keyword-attribute*))
+                    :attribute *syntax-keyword-attribute*))
 
 (syntax-add-match *c-syntax-table*
                   (make-syntax-test "^#\\S+" :regex-p t)
-                  :attr *syntax-constant-attribute*)
+                  :attribute *syntax-constant-attribute*)
 
 ;; (defvar *c-compile-command* "make")
 

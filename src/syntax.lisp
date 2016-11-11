@@ -50,10 +50,10 @@
                      :word-p word-p))
 
 (defclass syntax ()
-  ((attr
-    :initarg :attr
+  ((attribute
+    :initarg :attribute
     :initform 0
-    :reader syntax-attr
+    :reader syntax-attribute
     :type (or null attribute))
    (tag
     :initarg :tag
@@ -125,13 +125,13 @@
           (syntax-add-match syntax-table
                             (make-syntax-test (format nil "~a.*$" string)
                                               :regex-p t)
-                            :attr *syntax-comment-attribute*
+                            :attribute *syntax-comment-attribute*
                             :tag +syntax-comment-tag+))))
     (dolist (string-quote-char (syntax-table-string-quote-chars syntax-table))
       (syntax-add-region syntax-table
                          (make-syntax-test (string string-quote-char))
                          (make-syntax-test (string string-quote-char))
-                         :attr *syntax-string-attribute*
+                         :attribute *syntax-string-attribute*
                          :tag +syntax-string-tag+))
     (let ((pre (syntax-table-block-comment-preceding-char syntax-table))
           (flw (syntax-table-block-comment-following-char syntax-table)))
@@ -139,25 +139,25 @@
         (syntax-add-region syntax-table
                            (make-syntax-test (format nil "~c~c" pre flw))
                            (make-syntax-test (format nil "~c~c" flw pre))
-                           :attr *syntax-comment-attribute*
+                           :attribute *syntax-comment-attribute*
                            :tag +syntax-comment-tag+)))
     syntax-table))
 
-(defun syntax-add-match (syntax-table test &key test-symbol end-symbol attr
+(defun syntax-add-match (syntax-table test &key test-symbol end-symbol attribute
                                       matched-symbol (symbol-lifetime -1) tag)
   (push (make-instance 'syntax-match
                        :test test
                        :test-symbol test-symbol
                        :end-symbol end-symbol
-                       :attr attr
+                       :attribute attribute
                        :matched-symbol matched-symbol
                        :symbol-lifetime symbol-lifetime
                        :tag tag)
         (syntax-table-match-list syntax-table))
   t)
 
-(defun syntax-add-region (syntax-table start end &key attr tag)
-  (push (make-instance 'syntax-region :start start :end end :attr attr :tag tag)
+(defun syntax-add-region (syntax-table start end &key attribute tag)
+  (push (make-instance 'syntax-region :start start :end end :attribute attribute :tag tag)
         (syntax-table-region-list syntax-table)))
 
 (defun syntax-word-char-p (c)
@@ -278,7 +278,7 @@
           (remove (syntax-match-end-symbol syntax)
                   *syntax-symbol-lifetimes*
                   :key #'car)))
-  (line-add-property line start end 'attribute (syntax-attr syntax))
+  (line-add-property line start end 'attribute (syntax-attribute syntax))
   t)
 
 (defun syntax-position-word-end (str start)
@@ -341,13 +341,13 @@
     (when end
       (let ((end (syntax-search-region-end syntax (line-str line) end)))
         (cond (end
-               (line-add-property line start end 'attribute (syntax-attr syntax))
+               (line-add-property line start end 'attribute (syntax-attribute syntax))
                (return-from syntax-scan-token-test (1- end)))
               (t
                (line-add-property line  start
                                   (length (line-str line))
                                   'attribute
-                                  (syntax-attr syntax))
+                                  (syntax-attribute syntax))
                (setf (line-%region line) syntax)
                (return-from syntax-scan-token-test
                  (length (line-str line)))))))))
@@ -385,14 +385,14 @@
     (let ((end (syntax-search-region-end region (line-str line) 0)))
       (cond (end
              (setf (line-%region line) nil)
-             (line-add-property line 0 end 'attribute (syntax-attr region))
+             (line-add-property line 0 end 'attribute (syntax-attribute region))
              end)
             (t
              (setf (line-%region line) region)
              (line-add-property line 0
                                 (length (line-str line))
                                 'attribute
-                                (syntax-attr region))
+                                (syntax-attribute region))
              (length (line-str line)))))))
 
 (defun syntax-scan-line (line)

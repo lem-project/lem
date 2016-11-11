@@ -512,17 +512,17 @@
          (decf (marker-charpos marker) pos))
         ((< linum (marker-linum marker))
          (incf (marker-linum marker)))))
-    (let ((line (buffer-get-line buffer linum)))
-      (setf (line-%scan-cached-p line) nil)
-      (let ((newline
-              (make-line line
-                         (line-next line)
-                         (subseq (line-str line) pos))))
+    (let* ((line (buffer-get-line buffer linum))
+           (newline
+            (make-line line
+                       (line-next line)
+                       (subseq (line-str line) pos))))
+        (setf (line-%scan-cached-p line) nil)
+        (line-property-insert-newline line newline pos)
         (when (eq line (buffer-tail-line buffer))
           (setf (buffer-tail-line buffer) newline))
-        (line-property-insert-newline line (line-next line) pos)
         (setf (line-str line)
-              (subseq (line-str line) 0 pos))))
+              (subseq (line-str line) 0 pos)))
     (incf (buffer-nlines buffer)))
   t)
 

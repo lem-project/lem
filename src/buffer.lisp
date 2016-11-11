@@ -390,8 +390,12 @@
   (let ((line (buffer-get-line buffer linum)))
     (when (line-p line)
       (let ((fatstr (line-fatstr line)))
-        ;; (loop :for (start end value) :in (getf (line-plist line) 'tag)
-        ;;       :do (change-font fatstr ... :to))
+        (loop :for (start end value) :in (getf (line-plist line) 'attribute)
+              :do (when value
+                    (change-font fatstr
+                                 (attribute-to-bits value)
+                                 :to
+                                 start end)))
         fatstr))))
 
 (defun buffer-line-string (buffer linum)

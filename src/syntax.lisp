@@ -278,7 +278,7 @@
           (remove (syntax-match-end-symbol syntax)
                   *syntax-symbol-lifetimes*
                   :key #'car)))
-  (line-add-property line start end 'tag (syntax-tag syntax))
+  (line-add-property line start end 'attribute (syntax-attr syntax))
   t)
 
 (defun syntax-position-word-end (str start)
@@ -341,13 +341,13 @@
     (when end
       (let ((end (syntax-search-region-end syntax (line-str line) end)))
         (cond (end
-               (line-add-property line start end 'tag (syntax-tag syntax))
+               (line-add-property line start end 'attribute (syntax-attr syntax))
                (return-from syntax-scan-token-test (1- end)))
               (t
                (line-add-property line  start
                                   (length (line-str line))
-                                  'tag
-                                  (syntax-tag syntax))
+                                  'attribute
+                                  (syntax-attr syntax))
                (setf (line-%region line) syntax)
                (return-from syntax-scan-token-test
                  (length (line-str line)))))))))
@@ -385,19 +385,19 @@
     (let ((end (syntax-search-region-end region (line-str line) 0)))
       (cond (end
              (setf (line-%region line) nil)
-             (line-add-property line 0 end 'tag (syntax-tag region))
+             (line-add-property line 0 end 'attribute (syntax-attr region))
              end)
             (t
              (setf (line-%region line) region)
              (line-add-property line 0
                                 (length (line-str line))
-                                'tag
-                                (syntax-tag region))
+                                'attribute
+                                (syntax-attr region))
              (length (line-str line)))))))
 
 (defun syntax-scan-line (line)
   (setf (line-%tags-cached line) t)
-  (line-clear-property line 'tag)
+  (line-clear-property line 'attribute)
   (let* ((region (syntax-continue-region-p line))
          (start-pos (or (syntax-scan-line-region line region) 0))
          (str (line-str line)))
@@ -425,7 +425,7 @@
     (when (and (not (line-%tags-cached line))
                (enable-syntax-highlight-p (current-buffer)))
       (syntax-scan-line line))
-    (line-search-property line 'tag pos)))
+    (line-search-property line 'attribute pos)))
 
 (defun syntax-after-tag (&optional (n 1))
   (save-excursion

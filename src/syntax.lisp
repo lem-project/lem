@@ -396,7 +396,7 @@
              (length (line-str line)))))))
 
 (defun syntax-scan-line (line)
-  (setf (line-%tags-cached line) t)
+  (setf (line-%scan-cached-p line) t)
   (line-clear-property line 'attribute)
   (let* ((region (syntax-continue-region-p line))
          (start-pos (or (syntax-scan-line-region line region) 0))
@@ -422,7 +422,7 @@
 
 (defun %syntax-pos-tag (pos)
   (let ((line (buffer-get-line (current-buffer) (current-linum))))
-    (when (and (not (line-%tags-cached line))
+    (when (and (not (line-%scan-cached-p line))
                (enable-syntax-highlight-p (current-buffer)))
       (syntax-scan-line line))
     (line-search-property line 'attribute pos)))

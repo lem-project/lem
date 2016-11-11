@@ -15,8 +15,7 @@
           buffer-truncate-lines
           buffer-enable-undo
           buffer-disable-undo
-          buffer-put-attribute
-          buffer-remove-attribute
+          buffer-put-property
           buffer-get-char
           buffer-line-length
           buffer-line-string
@@ -64,20 +63,6 @@
 
 (defun line-length (line)
   (length (line-str line)))
-
-(defun line-clear-attribute (line)
-  (setf (line-fatstr line) (copy-fatstring (line-fatstr line)))
-  (change-font (line-fatstr line) 0 :and))
-
-(defun line-put-attribute (line start end attr)
-  ;(setf (line-fatstr line) (copy-fatstring (line-fatstr line)))
-  (change-font (line-fatstr line) (attribute-to-bits attr) :to start end)
-  t)
-
-(defun line-remove-attribute (line start end attr)
-  ;(setf (line-fatstr line) (copy-fatstring (line-fatstr line)))
-  (change-font (line-fatstr line) (lognot (attribute-to-bits attr)) :and start end)
-  t)
 
 (defun line-add-property (line start end key value)
   (push (list start end value)
@@ -293,11 +278,8 @@
            (loop :for linum :from (1+ start-linum) :below end-linum
                  :do (buffer-apply-line apply-fn buffer linum nil nil args))))))
 
-(defun buffer-put-attribute (buffer start end attr)
-  (buffer-apply-lines #'line-put-attribute buffer start end attr))
-
-(defun buffer-remove-attribute (buffer start end attr)
-  (buffer-apply-lines #'line-remove-attribute buffer start end attr))
+(defun buffer-put-property (buffer start end key value)
+  (buffer-apply-lines #'line-add-property buffer start end key value))
 
 (defun buffer-add-overlay (buffer overlay)
   (push overlay (buffer-overlays buffer)))

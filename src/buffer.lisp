@@ -274,49 +274,30 @@
 (defun buffer-unmark (buffer)
   (setf (buffer-modified-p buffer) nil))
 
-(defun buffer-line-set-attribute (line-set-fn buffer attr linum
-                                  &optional start-charpos end-charpos)
+(defun buffer-apply-line (apply-fn buffer linum start-charpos end-charpos args)
   (let ((line (buffer-get-line buffer linum)))
-    (funcall line-set-fn
-             line
-             (or start-charpos 0)
-             (or end-charpos (fat-length (line-fatstr line)))
-             attr)))
+    (apply apply-fn
+           line
+           (or start-charpos 0)
+           (or end-charpos (fat-length (line-fatstr line)))
+           args)))
 
-(defun buffer-set-attribute (line-set-fn buffer start end attr)
+(defun buffer-apply-lines (apply-fn buffer start end &rest args)
   (with-points (((start-linum start-charpos) start)
                 ((end-linum end-charpos) end))
     (cond ((= start-linum end-linum)
-           (buffer-line-set-attribute line-set-fn
-                                      buffer
-                                      attr
-                                      start-linum
-                                      start-charpos
-                                      end-charpos))
+           (buffer-apply-line apply-fn buffer start-linum start-charpos end-charpos args))
           (t
-           (buffer-line-set-attribute line-set-fn
-                                      buffer
-                                      attr
-                                      start-linum
-                                      start-charpos)
-           (buffer-line-set-attribute line-set-fn
-                                      buffer
-                                      attr
-                                      end-linum
-                                      0
-                                      end-charpos)
-           (loop
-             for linum from (1+ start-linum) below end-linum
-             do (buffer-line-set-attribute line-set-fn
-                                           buffer
-                                           attr
-                                           linum))))))
+           (buffer-apply-line apply-fn buffer start-linum start-charpos nil args)
+           (buffer-apply-line apply-fn buffer end-linum 0 end-charpos args)
+           (loop :for linum :from (1+ start-linum) :below end-linum
+                 :do (buffer-apply-line apply-fn buffer linum nil nil args))))))
 
 (defun buffer-put-attribute (buffer start end attr)
-  (buffer-set-attribute #'line-put-attribute buffer start end attr))
+  (buffer-apply-lines #'line-put-attribute buffer start end attr))
 
 (defun buffer-remove-attribute (buffer start end attr)
-  (buffer-set-attribute #'line-remove-attribute buffer start end attr))
+  (buffer-apply-lines #'line-remove-attribute buffer start end attr))
 
 (defun buffer-add-overlay (buffer overlay)
   (push overlay (buffer-overlays buffer)))

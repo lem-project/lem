@@ -36,6 +36,7 @@
                              (:file "header")
                              (:file "wide")
                              (:file "hooks")
+                             (:file "attribute")
                              (:file "screen")
                              (:file "point")
                              (:file "window")

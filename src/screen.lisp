@@ -1,41 +1,14 @@
 (in-package :lem)
 
-(export '(*mark-overlay-attribute*
-          *modeline-attribute*
-          *modeline-inactive-attribute*
-          *control-char-attribute*
-          *syntax-string-attribute*
-          *syntax-comment-attribute*
-          *syntax-keyword-attribute*
-          *syntax-constant-attribute*
-          *syntax-function-name-attribute*
-          *syntax-variable-attribute*
-          make-attribute
-          attribute-set
-          redraw-display))
+(export '(redraw-display))
 
 (defvar *echo-area-scrwin*)
 
 (defvar *old-display-width*)
 (defvar *old-display-height*)
 
-(defstruct (attribute (:constructor %make-attribute))
-  fg-color
-  bg-color
-  reverse-p
-  bold-p
-  underline-p
-  cached-bits)
-
-(defun make-attribute (fg-color bg-color &key reverse-p bold-p underline-p)
-  (%make-attribute :fg-color fg-color
-                   :bg-color bg-color
-                   :reverse-p reverse-p
-                   :bold-p bold-p
-                   :underline-p underline-p))
-
-(defun attribute-to-bits (attribute)
-  (or (attribute-cached-bits attribute)
+(defun %attribute-to-bits (attribute)
+  (or (attribute-%internal-value attribute)
       (let ((bits (logior (get-color-pair (attribute-fg-color attribute)
                                           (attribute-bg-color attribute))
                           (if (attribute-reverse-p attribute)
@@ -47,27 +20,8 @@
                           (if (attribute-underline-p attribute)
                               charms/ll:a_underline
                               0))))
-        (setf (attribute-cached-bits attribute) bits)
+        (setf (attribute-%internal-value attribute) bits)
         bits)))
-
-(defun attribute-set (attribute fg-color bg-color &key reverse-p bold-p underline-p)
-  (setf (attribute-fg-color attribute) fg-color)
-  (setf (attribute-bg-color attribute) bg-color)
-  (setf (attribute-reverse-p attribute) reverse-p)
-  (setf (attribute-bold-p attribute) bold-p)
-  (setf (attribute-underline-p attribute) underline-p)
-  (setf (attribute-cached-bits attribute) nil))
-
-(defvar *mark-overlay-attribute* (make-attribute "blue" nil :reverse-p t))
-(defvar *modeline-attribute* (make-attribute nil nil :reverse-p t))
-(defvar *modeline-inactive-attribute* (make-attribute nil nil :reverse-p t))
-(defvar *control-char-attribute* (make-attribute nil nil :reverse-p t))
-(defvar *syntax-string-attribute* (make-attribute "green" nil))
-(defvar *syntax-comment-attribute* (make-attribute "red" nil))
-(defvar *syntax-keyword-attribute* (make-attribute "blue" nil))
-(defvar *syntax-constant-attribute* (make-attribute "magenta" nil))
-(defvar *syntax-function-name-attribute* (make-attribute "cyan" nil))
-(defvar *syntax-variable-attribute* (make-attribute "yellow" nil))
 
 (defun display-init ()
   (setq *old-display-width* charms/ll:*cols*)
@@ -150,7 +104,7 @@
   (cond ((null attr)
          (setf attr 0))
         ((attribute-p attr)
-         (setf attr (attribute-to-bits attr))))
+         (setf attr (%attribute-to-bits attr))))
   (charms/ll:wattron scrwin attr)
   (charms/ll:mvwaddstr scrwin y x string)
   (charms/ll:wattroff scrwin attr))
@@ -176,7 +130,7 @@
               (copy-fatstring (aref (screen-lines screen) i))))
       (let ((fatstr (aref (screen-lines screen) i)))
         (change-font fatstr
-                     (attribute-to-bits attr)
+                     (%attribute-to-bits attr)
                      :to
                      start-charpos
                      (min end-charpos (fat-length fatstr)))))))

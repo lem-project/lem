@@ -331,7 +331,7 @@
         (loop :for (start end value) :in (getf (line-plist line) 'attribute)
               :do (when value
                     (change-font fatstr
-                                 (attribute-to-bits value)
+                                 (%attribute-to-bits value)
                                  :to
                                  start end)))
         fatstr))))

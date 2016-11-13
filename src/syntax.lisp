@@ -26,12 +26,12 @@
           syntax-end-block-comment-p
           syntax-scan-window
           syntax-scan-buffer
-          syntax-after-tag
-          syntax-before-tag
-          syntax-following-tag
-          syntax-preceding-tag
-          syntax-forward-search-tag-end
-          syntax-backward-search-tag-start
+          syntax-after-property
+          syntax-before-property
+          syntax-following-property
+          syntax-preceding-property
+          syntax-forward-search-property-end
+          syntax-backward-search-property-start
           skip-space-and-comment-forward
           skip-space-and-comment-backward))
 
@@ -420,67 +420,64 @@
                    (setq i (1- end))))))))
     (setf (line-%symbol-lifetimes line) *syntax-symbol-lifetimes*)))
 
-(defun %syntax-pos-tag (pos)
+(defun %syntax-pos-property (pos property-name)
   (let ((line (buffer-get-line (current-buffer) (current-linum))))
-    (when (and (not (line-%scan-cached-p line))
+    (when (and (eq property-name 'attribute)
+               (not (line-%scan-cached-p line))
                (enable-syntax-highlight-p (current-buffer)))
       (syntax-scan-line line))
-    (line-search-property line 'attribute pos)))
+    (line-search-property line property-name pos)))
 
-(defun syntax-after-tag (&optional (n 1))
+(defun syntax-after-property (property-name &optional (n 1))
   (save-excursion
-   (shift-position n)
-   (%syntax-pos-tag (current-charpos))))
+    (shift-position n)
+    (%syntax-pos-property (current-charpos) property-name)))
 
-(defun syntax-before-tag (&optional (n 1))
+(defun syntax-before-property (property-name &optional (n 1))
   (save-excursion
-   (shift-position (- (1- n)))
-   (%syntax-pos-tag (current-charpos))))
+    (shift-position (- (1- n)))
+    (%syntax-pos-property (current-charpos) property-name)))
 
-(defun syntax-following-tag ()
-  (%syntax-pos-tag (current-charpos)))
+(defun syntax-following-property (property-name)
+  (%syntax-pos-property (current-charpos) property-name))
 
-(defun syntax-preceding-tag ()
+(defun syntax-preceding-property (property-name)
   (save-excursion
-   (shift-position -1)
-   (%syntax-pos-tag (current-charpos))))
+    (shift-position -1)
+    (%syntax-pos-property (current-charpos) property-name)))
 
-(defun syntax-forward-search-tag-end (tag0)
+(defun syntax-forward-search-property-end (property-name property-value)
   (loop
-    (unless (eq tag0 (syntax-following-tag))
-      (return t))
+    (unless (eq property-value (syntax-following-property property-name))
+      (return property-value))
     (unless (shift-position 1)
-      (return nil))
-    (when (bolp)
-      (syntax-scan-lines (current-buffer)
-                         (current-linum)
-                         (1+ (current-linum))))))
+      (return nil))))
 
-(defun syntax-backward-search-tag-start (tag0)
+(defun syntax-backward-search-property-start (property-name property-value)
   (loop
-    (unless (eq tag0 (syntax-preceding-tag))
-      (return t))
+    (unless (eq property-value (syntax-preceding-property property-name))
+      (return property-value))
     (unless (shift-position -1)
-      (return nil))
-    (when (eolp)
-      (syntax-scan-lines (current-buffer)
-                         (current-linum)
-                         (1+ (current-linum))))))
+      (return nil))))
 
 (defun skip-space-and-comment-forward ()
   (loop
     (skip-chars-forward #'syntax-space-char-p)
-    (unless (and (not (eq +syntax-comment-tag+ (syntax-preceding-tag)))
-                 (eq +syntax-comment-tag+ (syntax-following-tag)))
+    (unless (and (not (eq *syntax-comment-attribute* (syntax-preceding-property 'attribute)))
+                 (eq *syntax-comment-attribute* (syntax-following-property 'attribute)))
       (return t))
-    (unless (syntax-forward-search-tag-end +syntax-comment-tag+)
+    (unless (syntax-forward-search-property-end
+             'attribute
+             *syntax-comment-attribute*)
       (return nil))))
 
 (defun skip-space-and-comment-backward ()
   (loop
     (skip-chars-backward #'syntax-space-char-p)
-    (unless (and (not (eq +syntax-comment-tag+ (syntax-following-tag)))
-                 (eq +syntax-comment-tag+ (syntax-preceding-tag)))
+    (unless (and (not (eq *syntax-comment-attribute* (syntax-preceding-property 'attribute)))
+                 (eq *syntax-comment-attribute* (syntax-following-property 'attribute)))
       (return t))
-    (unless (syntax-backward-search-tag-start +syntax-comment-tag+)
+    (unless (syntax-backward-search-property-start
+             'attribute
+             *syntax-comment-attribute*)
       (return nil))))

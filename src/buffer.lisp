@@ -328,7 +328,7 @@
   (let ((line (buffer-get-line buffer linum)))
     (when (line-p line)
       (let ((fatstr (make-fatstring (line-str line) 0)))
-        (loop :for (start end value) :in (getf (line-plist line) 'attribute)
+        (loop :for (start end value) :in (getf (line-plist line) :attribute)
               :do (when value
                     (change-font fatstr
                                  (%attribute-to-bits value)

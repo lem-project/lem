@@ -281,7 +281,7 @@
   (buffer-put-property (current-buffer) start end key value))
 
 (defun put-attribute (start end attribute)
-  (buffer-put-property (current-buffer) start end 'attribute attribute))
+  (buffer-put-property (current-buffer) start end :attribute attribute))
 
 (defun current-column ()
   (str-width (current-line-string)

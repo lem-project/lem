@@ -278,7 +278,7 @@
           (remove (syntax-match-end-symbol syntax)
                   *syntax-symbol-lifetimes*
                   :key #'car)))
-  (line-add-property line start end 'attribute (syntax-attribute syntax))
+  (line-add-property line start end :attribute (syntax-attribute syntax))
   t)
 
 (defun syntax-position-word-end (str start)
@@ -341,12 +341,12 @@
     (when end
       (let ((end (syntax-search-region-end syntax (line-str line) end)))
         (cond (end
-               (line-add-property line start end 'attribute (syntax-attribute syntax))
+               (line-add-property line start end :attribute (syntax-attribute syntax))
                (return-from syntax-scan-token-test (1- end)))
               (t
                (line-add-property line  start
                                   (length (line-str line))
-                                  'attribute
+                                  :attribute
                                   (syntax-attribute syntax))
                (setf (line-%region line) syntax)
                (return-from syntax-scan-token-test
@@ -385,19 +385,19 @@
     (let ((end (syntax-search-region-end region (line-str line) 0)))
       (cond (end
              (setf (line-%region line) nil)
-             (line-add-property line 0 end 'attribute (syntax-attribute region))
+             (line-add-property line 0 end :attribute (syntax-attribute region))
              end)
             (t
              (setf (line-%region line) region)
              (line-add-property line 0
                                 (length (line-str line))
-                                'attribute
+                                :attribute
                                 (syntax-attribute region))
              (length (line-str line)))))))
 
 (defun syntax-scan-line (line)
   (setf (line-%scan-cached-p line) t)
-  (line-clear-property line 'attribute)
+  (line-clear-property line :attribute)
   (let* ((region (syntax-continue-region-p line))
          (start-pos (or (syntax-scan-line-region line region) 0))
          (str (line-str line)))
@@ -422,7 +422,7 @@
 
 (defun %syntax-pos-property (pos property-name)
   (let ((line (buffer-get-line (current-buffer) (current-linum))))
-    (when (and (eq property-name 'attribute)
+    (when (and (eq property-name :attribute)
                (not (line-%scan-cached-p line))
                (enable-syntax-highlight-p (current-buffer)))
       (syntax-scan-line line))
@@ -463,21 +463,21 @@
 (defun skip-space-and-comment-forward ()
   (loop
     (skip-chars-forward #'syntax-space-char-p)
-    (unless (and (not (eq *syntax-comment-attribute* (syntax-preceding-property 'attribute)))
-                 (eq *syntax-comment-attribute* (syntax-following-property 'attribute)))
+    (unless (and (not (eq *syntax-comment-attribute* (syntax-preceding-property :attribute)))
+                 (eq *syntax-comment-attribute* (syntax-following-property :attribute)))
       (return t))
     (unless (syntax-forward-search-property-end
-             'attribute
+             :attribute
              *syntax-comment-attribute*)
       (return nil))))
 
 (defun skip-space-and-comment-backward ()
   (loop
     (skip-chars-backward #'syntax-space-char-p)
-    (unless (and (not (eq *syntax-comment-attribute* (syntax-preceding-property 'attribute)))
-                 (eq *syntax-comment-attribute* (syntax-following-property 'attribute)))
+    (unless (and (not (eq *syntax-comment-attribute* (syntax-preceding-property :attribute)))
+                 (eq *syntax-comment-attribute* (syntax-following-property :attribute)))
       (return t))
     (unless (syntax-backward-search-property-start
-             'attribute
+             :attribute
              *syntax-comment-attribute*)
       (return nil))))

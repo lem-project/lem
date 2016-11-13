@@ -45,15 +45,15 @@
 (defun message (string &rest args)
   (when (interactive-p)
     (let ((flag (minibuffer-window-active-p)))
-      (message-internal (if (null string)
-                            nil
-                            (replace-string (string #\newline)
-                                            "<NL>"
-                                            (apply #'format nil string args)))
-                        flag)
+      (print-echoarea (if (null string)
+                          nil
+                          (replace-string (string #\newline)
+                                          "<NL>"
+                                          (apply #'format nil string args)))
+                      flag)
       (when flag
         (sit-for 1 nil)
-        (message-internal nil nil))))
+        (print-echoarea nil nil))))
   t)
 
 (defun minibuf-read-char (prompt)

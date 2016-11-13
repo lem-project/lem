@@ -431,7 +431,7 @@
     (minibuf-update-size)
     (redraw-display)))
 
-(defun message-internal (string doupdate-p)
+(defun print-echoarea (string doupdate-p)
   (charms/ll:werase *echo-area-scrwin*)
   (unless (null string)
     (charms/ll:mvwaddstr *echo-area-scrwin* 0 0 string))

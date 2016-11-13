@@ -26,6 +26,16 @@
         'modeline-column
         ")"))
 
+(defvar *modeline-status-list* nil)
+
+(defun modeline-add-status-list (x)
+  (push x *modeline-status-list*)
+  (values))
+
+(defun modeline-remove-status-list (x)
+  (setf *modeline-status-list*
+        (remove x *modeline-status-list*)))
+
 (defun posline (window)
   (cond
     ((<= (buffer-nlines (window-buffer window))
@@ -56,12 +66,9 @@
   (string-downcase (buffer-major-mode (window-buffer window))))
 
 (defun modeline-minor-modes (window)
-  (let ((modes (buffer-minor-modes (window-buffer window))))
-    (when (key-recording-p)
-      (setf modes (append modes (list "Def"))))
-    (if modes
-        (format nil " ~(~{~a~^ ~}~)" modes)
-        "")))
+  (format nil "~(~{~^ ~A~}~)~{~^ ~A~}"
+          (buffer-minor-modes (window-buffer window))
+          *modeline-status-list*))
 
 (defun modeline-linum (window)
   (window-current-linum window))

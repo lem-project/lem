@@ -18,6 +18,8 @@
 
 (defvar *unread-keys* nil)
 
+(defvar *key-recording-status-name* (make-symbol "Def"))
+
 (defun last-read-key-sequence ()
   (if (kbd-p *last-read-key-sequence*)
       *last-read-key-sequence*
@@ -27,10 +29,12 @@
   (setf *last-read-key-sequence* key-sequence))
 
 (defun start-record-key ()
+  (modeline-add-status-list *key-recording-status-name*)
   (setq *key-recording-p* t)
   (setq *temp-macro-chars* nil))
 
 (defun stop-record-key ()
+  (modeline-remove-status-list *key-recording-status-name*)
   (setq *key-recording-p* nil)
   (nreverse *temp-macro-chars*))
 

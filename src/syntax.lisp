@@ -1,8 +1,6 @@
 (in-package :lem)
 
 (export '(*enable-syntax-highlight*
-          +syntax-string-tag+
-          +syntax-comment-tag+
           syntax-table
           make-syntax-table
           make-syntax-test
@@ -54,12 +52,7 @@
     :initarg :attribute
     :initform 0
     :reader syntax-attribute
-    :type (or null attribute))
-   (tag
-    :initarg :tag
-    :initform nil
-    :reader syntax-tag
-    :type symbol)))
+    :type (or null attribute))))
 
 (defclass syntax-region (syntax)
   ((start
@@ -111,9 +104,6 @@
   region-list
   match-list)
 
-(defparameter +syntax-comment-tag+ (make-symbol "COMMENT"))
-(defparameter +syntax-string-tag+ (make-symbol "STRING"))
-
 (defun make-syntax-table (&rest args)
   (let ((syntax-table (apply '%make-syntax-table args)))
     (let ((pre (syntax-table-line-comment-preceding-char syntax-table))
@@ -125,39 +115,35 @@
           (syntax-add-match syntax-table
                             (make-syntax-test (format nil "~a.*$" string)
                                               :regex-p t)
-                            :attribute *syntax-comment-attribute*
-                            :tag +syntax-comment-tag+))))
+                            :attribute *syntax-comment-attribute*))))
     (dolist (string-quote-char (syntax-table-string-quote-chars syntax-table))
       (syntax-add-region syntax-table
                          (make-syntax-test (string string-quote-char))
                          (make-syntax-test (string string-quote-char))
-                         :attribute *syntax-string-attribute*
-                         :tag +syntax-string-tag+))
+                         :attribute *syntax-string-attribute*))
     (let ((pre (syntax-table-block-comment-preceding-char syntax-table))
           (flw (syntax-table-block-comment-following-char syntax-table)))
       (when (and pre flw)
         (syntax-add-region syntax-table
                            (make-syntax-test (format nil "~c~c" pre flw))
                            (make-syntax-test (format nil "~c~c" flw pre))
-                           :attribute *syntax-comment-attribute*
-                           :tag +syntax-comment-tag+)))
+                           :attribute *syntax-comment-attribute*)))
     syntax-table))
 
 (defun syntax-add-match (syntax-table test &key test-symbol end-symbol attribute
-                                      matched-symbol (symbol-lifetime -1) tag)
+                                      matched-symbol (symbol-lifetime -1))
   (push (make-instance 'syntax-match
                        :test test
                        :test-symbol test-symbol
                        :end-symbol end-symbol
                        :attribute attribute
                        :matched-symbol matched-symbol
-                       :symbol-lifetime symbol-lifetime
-                       :tag tag)
+                       :symbol-lifetime symbol-lifetime)
         (syntax-table-match-list syntax-table))
   t)
 
-(defun syntax-add-region (syntax-table start end &key attribute tag)
-  (push (make-instance 'syntax-region :start start :end end :attribute attribute :tag tag)
+(defun syntax-add-region (syntax-table start end &key attribute)
+  (push (make-instance 'syntax-region :start start :end end :attribute attribute)
         (syntax-table-region-list syntax-table)))
 
 (defun syntax-word-char-p (c)

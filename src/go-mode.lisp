@@ -82,11 +82,11 @@
 (defun go-calc-indent ()
   (save-excursion
    (back-to-indentation)
-   (let ((tag (syntax-preceding-tag)))
-     (cond ((eq +syntax-comment-tag+ tag)
-            (syntax-backward-search-tag-start +syntax-comment-tag+)
+   (let ((attribute (syntax-preceding-property :attribute)))
+     (cond ((eq attribute *syntax-comment-attribute*)
+            (syntax-backward-search-property-start :attribute *syntax-comment-attribute*)
             (1+ (current-column)))
-           ((eq +syntax-string-tag+ tag)
+           ((eq attribute *syntax-string-attribute*)
             nil)
            (t
             (let ((inside-indenting-paren nil)

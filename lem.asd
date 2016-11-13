@@ -40,6 +40,7 @@
                              (:file "screen")
                              (:file "point")
                              (:file "window")
+                             (:file "modeline")
                              (:file "buffer")
                              (:file "buffers")
                              (:file "marker")

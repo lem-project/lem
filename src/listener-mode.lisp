@@ -1,13 +1,15 @@
-(in-package :lem)
-
-(export '(listener-mode
-          *listener-mode-kemap*
-          listener-start
-          listener-reset-prompt
-          listener-return
-          listener-prev-input
-          listener-next-input
-          listener-reset-interactive))
+(in-package :cl-user)
+(defpackage :lem.listener-mode
+  (:use :cl :lem :lem.util)
+  (:export :listener-mode
+           :*listener-mode-kemap*
+           :listener-start
+           :listener-reset-prompt
+           :listener-return
+           :listener-prev-input
+           :listener-next-input
+           :listener-reset-interactive))
+(in-package :lem.listener-mode)
 
 (defvar %listener-marker-indicator (gensym))
 (defmacro %listener-marker ()

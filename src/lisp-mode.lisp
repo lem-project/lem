@@ -1,6 +1,6 @@
 (in-package :cl-user)
 (defpackage :lem.lisp-mode
-  (:use :cl :lem :lem.grep :lem.prog-mode)
+  (:use :cl :lem :lem.grep :lem.prog-mode :lem.listener-mode)
   (:import-from
    :lem.util)
   (:export

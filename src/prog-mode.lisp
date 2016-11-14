@@ -21,7 +21,7 @@
          (new-indent-string
            (if (get-bvar :indent-tabs-mode :default t)
                (multiple-value-bind (div mod)
-                   (floor column *tab-size*)
+                   (floor column (tab-size))
                  (concatenate 'string
                               (make-string div :initial-element #\tab)
                               (make-string mod :initial-element #\space)))

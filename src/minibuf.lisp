@@ -147,8 +147,7 @@
     (screen-print-string (window-screen (minibuffer-window)) 0 0
                          (concatenate 'string
                                       prompt
-                                      (replace-string (string #\newline) "<NL>" (minibuf-get-line)))
-                         nil)
+                                      (replace-string (string #\newline) "<NL>" (minibuf-get-line))))
     (screen-move-cursor (window-screen (minibuffer-window))
                         (+ (multiple-value-bind (strings len)
                                (split-string prompt #\newline)

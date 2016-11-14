@@ -109,7 +109,10 @@
   (charms/ll:mvwaddstr scrwin y x string)
   (charms/ll:wattroff scrwin attr))
 
-(defun screen-print-string (screen x y string attr)
+(defun screen-print-string (screen x y string)
+  (scrwin-print-string (screen-%scrwin screen) x y string nil))
+
+(defun screen-print-string-attr (screen x y string attr)
   (scrwin-print-string (screen-%scrwin screen) x y string attr))
 
 (defun screen-move-cursor (screen x y)
@@ -229,10 +232,10 @@
     (loop :for i :from string-start :below (or string-end (fat-length str)) :do
       (multiple-value-bind (char attr)
           (fat-char str i)
-        (screen-print-string screen x y (string char)
-                             (if (and (ctrl-p char) (char/= char #\tab))
-                                 *control-char-attribute*
-                                 attr))
+        (screen-print-string-attr screen x y (string char)
+                                  (if (and (ctrl-p char) (char/= char #\tab))
+                                      *control-char-attribute*
+                                      attr))
         (setq x (char-width char x))))
     (charms/ll:wclrtoeol (screen-%scrwin screen))))
 

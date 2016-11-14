@@ -1,6 +1,6 @@
 (in-package :cl-user)
 (defpackage :lem.python
-  (:use :cl :lem)
+  (:use :cl :lem :lem.prog-mode)
   (:export))
 (in-package :lem.python)
 

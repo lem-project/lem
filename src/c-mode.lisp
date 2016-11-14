@@ -1,6 +1,6 @@
 (in-package :cl-user)
 (defpackage :lem.c-mode
-  (:use :cl :lem)
+  (:use :cl :lem :lem.prog-mode)
   (:export
    :*c-mode-keymap*
    :*c-syntax-table*

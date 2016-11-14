@@ -1,10 +1,12 @@
-(in-package :lem)
-
-(export '(*prog-mode-keymap*
-          prog-mode
-          indent-line
-          newline-and-indent
-          indent-region))
+(in-package :cl-user)
+(defpackage :lem.prog-mode
+  (:use :cl :lem)
+  (:export :*prog-mode-keymap*
+           :prog-mode
+           :indent-line
+           :newline-and-indent
+           :indent-region))
+(in-package :lem.prog-mode)
 
 (define-major-mode prog-mode nil
   (:name "prog"

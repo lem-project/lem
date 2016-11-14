@@ -94,7 +94,7 @@
                       (loop :for elt :in (cadr plist-rest)
                             :for (start end value) := elt
                             :if (<= pos start)
-                            :do (push elt new-values)
+                            :do (push (list (- start pos) (- end pos) value) new-values)
                             :else :if (<= pos end)
                             :collect (list start pos value)
                             :else

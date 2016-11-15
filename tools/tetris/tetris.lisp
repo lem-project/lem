@@ -19,8 +19,13 @@
 
 (defconstant +num-blocks+ 7)
 
-(defvar *block-colors*
-  #(nil "cyan" "yellow" "green" "red" "blue" "white" "magenta"))
+(defparameter *wall-attribute*
+  (make-attribute "white" nil :reverse-p t))
+
+(defparameter *block-attributes*
+  (map 'vector (lambda (color-name)
+                 (make-attribute color-name nil :reverse-p t))
+       '("black" "cyan" "yellow" "green" "red" "blue" "white" "magenta")))
 
 (defvar *tetrimino-table*
   #(#(0 0 0 0
@@ -66,10 +71,10 @@
 (defvar *delete-nlines*)
 (defvar *level*)
 
-(defun block-color (b)
-  (cond ((= b +wall+) "white")
-        ((< 0 b (length *block-colors*))
-         (aref *block-colors* b))))
+(defun block-attribute (b)
+  (cond ((= b +wall+) *wall-attribute*)
+        ((<= 0 b (1- (length *block-attributes*)))
+         (aref *block-attributes* b))))
 
 (defun random-tetrimino ()
   (aref *tetrimino-table* (random +num-blocks+)))
@@ -99,21 +104,17 @@
     (setf (aref *field* x (1- +field-height+)) +wall+))
   *field*)
 
-(defun insert-block (color)
+(defun insert-block (attribute)
   (insert-string "  ")
   (put-attribute (save-excursion (next-char -2) (current-point))
                  (current-point)
-                 (make-attribute nil color)))
+                 attribute))
 
 (defun draw-field-internal (field)
   (dotimes (y +field-height+)
     (dotimes (x +field-width+)
       (let ((b (aref field x y)))
-        (insert-block
-         (cond ((= +void+ b)
-                "black")
-               (t
-                (block-color b))))))
+        (insert-block (block-attribute b))))
     (insert-newline)))
 
 (defun draw-field ()
@@ -129,7 +130,7 @@
 (defun draw-next ()
   (dotimes (y +tetrimino-size+)
     (dotimes (x +tetrimino-size+)
-      (insert-block (block-color (aref *next-tetrimino* (2d->1d x y)))))
+      (insert-block (block-attribute (aref *next-tetrimino* (2d->1d x y)))))
     (insert-newline)))
 
 (defun draw-score ()

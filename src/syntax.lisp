@@ -460,8 +460,8 @@
 (defun skip-space-and-comment-backward ()
   (loop
     (skip-chars-backward #'syntax-space-char-p)
-    (unless (and (not (eq *syntax-comment-attribute* (syntax-preceding-property :attribute)))
-                 (eq *syntax-comment-attribute* (syntax-following-property :attribute)))
+    (unless (and (not (eq *syntax-comment-attribute* (syntax-following-property :attribute)))
+                 (eq *syntax-comment-attribute* (syntax-preceding-property :attribute)))
       (return t))
     (unless (syntax-backward-search-property-start
              :attribute

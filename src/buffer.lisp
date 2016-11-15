@@ -117,7 +117,9 @@
                         :else :if (<= start pos (+ pos n) end)
                         :collect (list start (- end n) value)
                         :else :if (<= start pos end (+ pos n))
-                        :collect (list start pos value)))))
+                        :collect (list start pos value)
+                        :else
+                        :collect elt))))
 
 (defun line-property-delete-line (line pos)
   (loop :for plist-rest :on (line-plist line) :by #'cddr

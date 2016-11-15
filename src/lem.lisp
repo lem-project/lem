@@ -96,14 +96,16 @@
 
 (let ((passed nil))
   (defun call-with-editor (function)
-    (let ((*running-p* t))
-      (unless passed
-        (setq passed t)
-        (display-init)
-        (window-init)
-        (minibuf-init)
-        (run-hooks 'after-init-hook))
-      (funcall function))))
+    (unwind-protect
+        (let ((*running-p* t))
+          (unless passed
+            (setq passed t)
+            (display-init)
+            (window-init)
+            (minibuf-init)
+            (run-hooks 'after-init-hook))
+          (funcall function))
+      (display-finalize))))
 
 (defmacro with-editor (() &body body)
   `(call-with-editor (lambda () ,@body)))
@@ -114,11 +116,8 @@
 
 (defun lem (&rest args)
   (check-init)
-  (term-init)
-  (let ((report (unwind-protect
-                  (with-editor ()
-                    (mapc 'find-file args)
-                    (lem-mainloop))
-                  (term-finallize))))
+  (let ((report (with-editor ()
+                  (mapc 'find-file args)
+                  (lem-mainloop))))
     (when report
       (format t "~&~a~%" report))))

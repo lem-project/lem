@@ -3,6 +3,7 @@
 (defpackage :lem-interface
   (:use :cl :lem.fatstring :lem.term :lem.util)
   (:export :display-init
+           :display-finalize
            :make-screen
            :screen-delete
            :screen-modify
@@ -17,10 +18,21 @@
            :screen-move-cursor
            :print-echoarea
            :get-char
-           :redraw-display))
+           :redraw-display
+           :call-with-allow-interrupt))
+
+;; (defpackage :lem-interface.ncurses
+;;   (:use :cl :lem.fatstring :lem.term :lem.util)
+;;   (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-interface)
+;;                      :collect sym)))
+
+;; (defpackage :lem-interface.null
+;;   (:use :cl)
+;;   (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-interface)
+;;                      :collect sym)))
 
 (defpackage :lem
-  (:use :cl :lem.util :lem.term :lem-interface))
+  (:use :cl :lem.util :lem-interface))
 
 (defpackage :lem-user
   (:use :cl :lem))

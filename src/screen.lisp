@@ -22,9 +22,13 @@
         bits)))
 
 (defun display-init ()
+  (term-init)
   (setq *old-display-width* charms/ll:*cols*)
   (setq *old-display-height* charms/ll:*lines*)
   (setf *echo-area-scrwin* (charms/ll:newwin 1 (display-width) (1- (display-height)) 0)))
+
+(defun display-finalize ()
+  (term-finalize))
 
 (defun display-width () charms/ll:*cols*)
 (defun display-height () charms/ll:*lines*)
@@ -496,3 +500,7 @@
      (loop :for char := (get-char-1) :do
        (unless (null char)
          (return char))))))
+
+(defun call-with-allow-interrupt (flag fn)
+  (with-raw (not flag)
+    (funcall fn)))

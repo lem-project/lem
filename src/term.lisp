@@ -1,12 +1,11 @@
 (in-package :cl-user)
 (defpackage :lem.term
   (:use :cl)
-  (:export
-   :get-color-pair
-   :with-allow-interrupt
-   :term-init
-   :term-finallize
-   :term-set-tty))
+  (:export :with-raw
+           :get-color-pair
+           :term-init
+           :term-finalize
+           :term-set-tty))
 (in-package :lem.term)
 
 (defvar *colors* nil)
@@ -125,9 +124,6 @@
              (raw)
              (noraw))))))
 
-(defmacro with-allow-interrupt (flag &body body)
-  `(with-raw (not ,flag) ,@body))
-
 ;;;
 
 (cffi:defcfun "fopen" :pointer (path :string) (mode :string))
@@ -176,7 +172,7 @@
 (defun term-set-tty (tty-name)
   (setf *tty-name* tty-name))
 
-(defun term-finallize ()
+(defun term-finalize ()
   (when *term-io*
     (fclose *term-io*)
     (setf *term-io* nil))

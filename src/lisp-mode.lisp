@@ -100,7 +100,7 @@
             ("tagbody" . 0)
             ("throw" . 1)
             ("unless" . 1)
-            ("unwind-protect" . 0)
+            ("unwind-protect" . 1)
             ("when" . 1)
             ("with-accessors" . 2)
             ("with-condition-restarts" . 2)

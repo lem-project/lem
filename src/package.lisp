@@ -32,13 +32,11 @@
 ;;                      :collect sym)))
 
 (defpackage :lem
-  (:use :cl :lem.util :lem-interface))
+  (:use :cl :lem.util :lem-interface)
+  (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-interface)
+                     :collect (make-symbol (string sym)))))
 
 (defpackage :lem-user
   (:use :cl :lem))
 
 (use-package :lem :lem-interface)
-
-(export '#.(loop :for sym :being :the :external-symbols :of (find-package :lem-interface)
-                 :collect sym)
-        :lem)

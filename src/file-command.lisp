@@ -134,10 +134,11 @@
                  (changed-disk-p (current-buffer)))
              (or does-not-ask-p
                  (minibuf-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))))
-    (buffer-erase)
-    (insert-file-contents (current-buffer)
-                          (current-point)
-                          (buffer-filename))
-    (buffer-unmark (current-buffer))
-    (update-changed-disk-date (current-buffer))
-    t))
+    (with-buffer-read-only (current-buffer) nil
+      (buffer-erase)
+      (insert-file-contents (current-buffer)
+                            (current-point)
+                            (buffer-filename))
+      (buffer-unmark (current-buffer))
+      (update-changed-disk-date (current-buffer))
+      t)))

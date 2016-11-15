@@ -129,8 +129,11 @@
                         :for (start end value) := elt
                         :if (<= pos start)
                         :do (progn)
+                        :else :if (<= pos end)
+                        :collect (list start pos value)
                         :else
-                        :collect (list start pos value)))))
+                        :collect elt
+                        ))))
 
 (defun line-free (line)
   (when (line-prev line)

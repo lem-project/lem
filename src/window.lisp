@@ -6,6 +6,7 @@
           *window-size-change-functions*
           window-list
           window
+          window-screen
           window-point
           window-height
           window-width
@@ -18,6 +19,7 @@
           current-window
           one-window-p
           deleted-window-p
+          window-see
           split-window-vertically
           split-window-horizontally
           split-window-sensibly

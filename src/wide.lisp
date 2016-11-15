@@ -1,7 +1,10 @@
 (in-package :lem)
 
 (export '(tab-size
-          string-width))
+          wide-char-p
+          char-width
+          string-width
+          wide-index))
 
 (defvar *tab-size* 8)
 

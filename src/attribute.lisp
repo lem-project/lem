@@ -10,6 +10,14 @@
           *syntax-constant-attribute*
           *syntax-function-name-attribute*
           *syntax-variable-attribute*
+          attribute-p
+          attribute-name
+          attribute-fg-color
+          attribute-bg-color
+          attribute-reverse-p
+          attribute-bold-p
+          attribute-underline-p
+          attribute-%internal-value
           make-attribute))
 
 (defstruct (attribute (:constructor %make-attribute))

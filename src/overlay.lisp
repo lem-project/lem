@@ -1,6 +1,10 @@
 (in-package :lem)
 
 (export '(overlay-p
+          overlay-start
+          overlay-end
+          overlay-attribute
+          overlay-buffer
           make-overlay
           delete-overlay))
 

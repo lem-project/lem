@@ -1,6 +1,4 @@
-(in-package :lem)
-
-(export '(redraw-display))
+(in-package :lem-interface)
 
 (defvar *echo-area-scrwin*)
 
@@ -221,7 +219,7 @@
       fatstr)))
 
 (defun disp-reset-lines (screen buffer start-linum)
-  (buffer-update-mark-overlay buffer)
+  (lem::buffer-update-mark-overlay buffer)
   (let ((end-linum (+ start-linum (screen-height screen)))
         (disp-index 0))
     (loop
@@ -245,7 +243,7 @@
       (multiple-value-bind (char attr)
           (fat-char str i)
         (screen-print-string-attr screen x y (string char)
-                                  (if (and (ctrl-p char) (char/= char #\tab))
+                                  (if (and (lem::ctrl-p char) (char/= char #\tab))
                                       *control-char-attribute*
                                       attr))
         (setq x (char-width char x))))
@@ -394,14 +392,14 @@
 
 (defun redraw-display-window (window doupdate-p)
   (cond ((minibuffer-window-p window)
-         (minibuf-window-update))
+         (lem::minibuf-window-update))
         (t
          (window-see window)
          (screen-display-lines (window-screen window)
                                (screen-modified-p (window-screen window))
                                (window-buffer window)
-                               (window-view-charpos window)
-                               (window-view-linum window)
+                               (lem::window-view-charpos window)
+                               (lem::window-view-linum window)
                                (window-current-charpos window)
                                (window-current-linum window))
          (screen-redraw-separator window)
@@ -428,22 +426,22 @@
                 (+ (window-x window) 1))
         (push window delete-windows)))
     (mapc #'delete-window delete-windows))
-  (let ((window-list (window-tree-flatten (window-tree))))
-    (dolist (window (collect-right-windows window-list))
-      (window-resize window
-                     (- (display-width)
-                        *old-display-width*)
-                     0))
-    (dolist (window (collect-bottom-windows window-list))
-      (window-resize window
-                     0
-                     (- (display-height)
-                        *old-display-height*)))
+  (let ((window-list (window-list)))
+    (dolist (window (lem::collect-right-windows window-list))
+      (lem::window-resize window
+                          (- (display-width)
+                             *old-display-width*)
+                          0))
+    (dolist (window (lem::collect-bottom-windows window-list))
+      (lem::window-resize window
+                          0
+                          (- (display-height)
+                             *old-display-height*)))
     (setq *old-display-width* (display-width))
     (setq *old-display-height* (display-height))
     (charms/ll:mvwin *echo-area-scrwin* (1- (display-height)) 0)
     (charms/ll:wresize *echo-area-scrwin* 1 (display-width))
-    (minibuf-update-size)
+    (lem::minibuf-update-size)
     (redraw-display)))
 
 (defun print-echoarea (string doupdate-p)

@@ -7,7 +7,8 @@
           modeline-major-mode
           modeline-minor-modes
           modeline-linum
-          modeline-column))
+          modeline-column
+          modeline-string))
 
 (defvar *modeline-default-format*
   (list 'modeline-read-only-p

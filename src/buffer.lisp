@@ -12,6 +12,7 @@
           buffer-minor-modes
           buffer-mark-p
           buffer-nlines
+          buffer-overlays
           buffer-truncate-lines
           buffer-enable-undo
           buffer-disable-undo

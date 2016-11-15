@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(message
+(export '(minibuffer-window-p
+          message
           minibuf-y-or-n-p
           minibuf-read-char
           *minibuf-keymap*

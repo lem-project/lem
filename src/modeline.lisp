@@ -74,10 +74,10 @@
   (window-current-linum window))
 
 (defun modeline-column (window)
-  (str-width (buffer-line-string (window-buffer window)
-                                 (window-current-linum window))
-             0
-             (window-current-charpos window)))
+  (string-width (buffer-line-string (window-buffer window)
+                                    (window-current-linum window))
+                0
+                (window-current-charpos window)))
 
 (defun modeline-string (window)
   (let* ((line-pos (posline window))

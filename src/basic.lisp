@@ -284,9 +284,9 @@
   (buffer-put-property (current-buffer) start end :attribute attribute))
 
 (defun current-column ()
-  (str-width (current-line-string)
-             0
-             (current-charpos)))
+  (string-width (current-line-string)
+                0
+                (current-charpos)))
 
 (defun move-to-column (column &optional force)
   (check-type column (integer 0 #.most-positive-fixnum))

@@ -152,14 +152,14 @@
                         (+ (multiple-value-bind (strings len)
                                (split-string prompt #\newline)
                              (+ (* (length "<NL>") (1- len))
-                                (reduce #'+ (mapcar #'str-width strings))))
-                           (str-width
+                                (reduce #'+ (mapcar #'string-width strings))))
+                           (string-width
                             (join ""
                                   (buffer-take-lines (minibuffer)
                                                      1
                                                      (1- (minibuf-point-linum)))))
                            (* (length "<NL>") (1- (minibuf-point-linum)))
-                           (str-width
+                           (string-width
                             (buffer-line-string (minibuffer)
                                                 (minibuf-point-linum))
                             0

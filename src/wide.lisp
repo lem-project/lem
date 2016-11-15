@@ -59,7 +59,7 @@
         (t
          (+ w 1))))
 
-(defun str-width (str &optional (start 0) end)
+(defun string-width (str &optional (start 0) end)
   (loop :with width := 0
     :for i :from start :below (or end (length str))
     :for c := (aref str i)

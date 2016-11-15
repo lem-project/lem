@@ -1,5 +1,19 @@
 (in-package :lem)
 
+(export '(tab-size
+          wide-char-p
+          char-width
+          string-width
+          wide-index))
+
+(defvar *tab-size* 8)
+
+(defun tab-size ()
+  *tab-size*)
+
+(defun (setf tab-size) (tab-size)
+  (setf *tab-size* tab-size))
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *eastasian-full*
     (vector
@@ -45,13 +59,13 @@
 (defun char-width (c w)
   (declare (character c) (fixnum w))
   (cond ((char= c #\tab)
-         (+ (* (floor w *tab-size*) *tab-size*) *tab-size*))
+         (+ (* (floor w (tab-size)) (tab-size)) (tab-size)))
         ((or (wide-char-p c) (ctrl-p c))
          (+ w 2))
         (t
          (+ w 1))))
 
-(defun str-width (str &optional (start 0) end)
+(defun string-width (str &optional (start 0) end)
   (loop :with width := 0
     :for i :from start :below (or end (length str))
     :for c := (aref str i)

@@ -1,10 +1,12 @@
-(in-package :lem)
-
-(export '(*prog-mode-keymap*
-          prog-mode
-          indent-line
-          newline-and-indent
-          indent-region))
+(in-package :cl-user)
+(defpackage :lem.prog-mode
+  (:use :cl :lem)
+  (:export :*prog-mode-keymap*
+           :prog-mode
+           :indent-line
+           :newline-and-indent
+           :indent-region))
+(in-package :lem.prog-mode)
 
 (define-major-mode prog-mode nil
   (:name "prog"
@@ -21,7 +23,7 @@
          (new-indent-string
            (if (get-bvar :indent-tabs-mode :default t)
                (multiple-value-bind (div mod)
-                   (floor column *tab-size*)
+                   (floor column (tab-size))
                  (concatenate 'string
                               (make-string div :initial-element #\tab)
                               (make-string mod :initial-element #\space)))
@@ -35,8 +37,8 @@
                (move-to-column
                 (max 0
                      (+ old-column
-                        (- (str-width new-indent-string)
-                           (str-width old-indent-string)))))))
+                        (- (string-width new-indent-string)
+                           (string-width old-indent-string)))))))
           ((< old-column column)
            (back-to-indentation)))
     t))

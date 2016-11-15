@@ -36,9 +36,10 @@
                              (:file "header")
                              (:file "wide")
                              (:file "hooks")
-                             (:file "screen")
+                             (:file "attribute")
                              (:file "point")
                              (:file "window")
+                             (:file "modeline")
                              (:file "buffer")
                              (:file "buffers")
                              (:file "marker")
@@ -86,4 +87,6 @@
                              (:file "dired")
                              (:file "abbrev")
 
-                             (:file "init")))))
+                             (:file "init")
+
+                             (:file "screen")))))

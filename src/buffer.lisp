@@ -12,13 +12,14 @@
           buffer-minor-modes
           buffer-mark-p
           buffer-nlines
+          buffer-overlays
           buffer-truncate-lines
           buffer-enable-undo
           buffer-disable-undo
-          buffer-put-attribute
-          buffer-remove-attribute
+          buffer-put-property
           buffer-get-char
           buffer-line-length
+          buffer-line-string-with-attributes
           buffer-line-string
           buffer-end-line-p
           map-buffer-lines
@@ -37,50 +38,103 @@
 (defstruct (line (:constructor %make-line))
   prev
   next
-  fatstr
-  %tags
-  %tags-cached
+  str
+  plist
+  %scan-cached-p
   %symbol-lifetimes
   %region)
+
+(defmethod print-object ((object line) stream)
+  (print-unreadable-object (object stream :identity t)
+    (format stream "LINE: string: ~S, plist: ~S"
+            (line-str object)
+            (line-plist object))))
 
 (defun make-line (prev next str)
   (let ((line (%make-line :next next
                           :prev prev
-                          :fatstr (make-fatstring str 0))))
+                          :str str)))
     (when next
       (setf (line-prev next) line))
     (when prev
       (setf (line-next prev) line))
     line))
 
-(defun line-str (line)
-  (fat-string (line-fatstr line)))
-
 (defun line-length (line)
   (length (line-str line)))
 
-(defun line-clear-attribute (line)
-  (setf (line-fatstr line) (copy-fatstring (line-fatstr line)))
-  (change-font (line-fatstr line) 0 :and))
+(defun line-add-property (line start end key value)
+  (push (list start end value)
+        (getf (line-plist line) key)))
 
-(defun line-put-attribute (line start end attr)
-  ;(setf (line-fatstr line) (copy-fatstring (line-fatstr line)))
-  (change-font (line-fatstr line) (attribute-to-bits attr) :to start end)
-  t)
+(defun line-clear-property (line key)
+  (setf (getf (line-plist line) key) nil))
 
-(defun line-remove-attribute (line start end attr)
-  ;(setf (line-fatstr line) (copy-fatstring (line-fatstr line)))
-  (change-font (line-fatstr line) (lognot (attribute-to-bits attr)) :and start end)
-  t)
+(defun line-search-property (line key pos)
+  (loop :for (start end value) :in (getf (line-plist line) key)
+        :do (when (<= start pos (1- end))
+              (return value))))
 
-(defun line-add-tag (line start end tag)
-  (when tag
-    (push (list start end tag) (line-%tags line))
-    t))
+(defun line-property-insert-pos (line pos offset)
+  (loop :for values :in (cdr (line-plist line)) :by #'cddr
+        :do (dolist (v values)
+              (destructuring-bind (start end value) v
+                (declare (ignore value))
+                (cond ((<= pos start)
+                       (incf (first v) offset)
+                       (incf (second v) offset))
+                      ((< start pos end)
+                       (incf (second v) offset))
+                      ((< pos end)
+                       (incf (second v) offset)))))))
 
-(defun line-clear-tags (line)
-  (setf (line-%tags line) nil)
-  t)
+(defun line-property-insert-newline (line next-line pos)
+  (let ((new-plist '()))
+    (loop :for plist-rest :on (line-plist line) :by #'cddr
+          :do (let ((new-values '()))
+                (setf (cadr plist-rest)
+                      (loop :for elt :in (cadr plist-rest)
+                            :for (start end value) := elt
+                            :if (<= pos start)
+                            :do (push (list (- start pos) (- end pos) value) new-values)
+                            :else :if (<= pos end)
+                            :collect (list start pos value)
+                            :else
+                            :collect elt))
+                (unless (null new-values)
+                  (setf (getf new-plist (car plist-rest)) new-values))))
+    (setf (line-plist next-line) new-plist)))
+
+(defun line-property-delete-pos (line pos n)
+  (loop :for plist-rest :on (line-plist line) :by #'cddr
+        :do (setf (cadr plist-rest)
+                  (loop :for elt :in (cadr plist-rest)
+                        :for (start end value) := elt
+                        :if (<= pos start end (+ pos n))
+                        :do (progn)
+                        :else :if (<= pos (+ pos n) start)
+                        :collect (list (- start n) (- end n) value)
+                        :else :if (< pos start (+ pos n))
+                        :collect (list pos (- end n) value)
+                        :else :if (<= start pos (+ pos n) end)
+                        :collect (list start (- end n) value)
+                        :else :if (<= start pos end (+ pos n))
+                        :collect (list start pos value)
+                        :else
+                        :collect elt))))
+
+(defun line-property-delete-line (line pos)
+  (loop :for plist-rest :on (line-plist line) :by #'cddr
+        :do (setf (cadr plist-rest)
+                  (loop :for elt :in (cadr plist-rest)
+                        :for (start end value) := elt
+                        :if (<= pos start)
+                        :do (progn)
+                        :else :if (<= pos end)
+                        :collect (list start pos value)
+                        :else
+                        :collect elt
+                        ))))
 
 (defun line-free (line)
   (when (line-prev line)
@@ -91,7 +145,7 @@
           (line-prev line)))
   (setf (line-prev line) nil
         (line-next line) nil
-        (line-fatstr line) nil))
+        (line-str line) nil))
 
 (defun line-step-n (line n step-f)
   (do ((l line (funcall step-f l))
@@ -187,49 +241,27 @@
 (defun buffer-unmark (buffer)
   (setf (buffer-modified-p buffer) nil))
 
-(defun buffer-line-set-attribute (line-set-fn buffer attr linum
-                                  &optional start-charpos end-charpos)
+(defun buffer-apply-line (apply-fn buffer linum start-charpos end-charpos args)
   (let ((line (buffer-get-line buffer linum)))
-    (funcall line-set-fn
-             line
-             (or start-charpos 0)
-             (or end-charpos (fat-length (line-fatstr line)))
-             attr)))
+    (apply apply-fn
+           line
+           (or start-charpos 0)
+           (or end-charpos (line-length line))
+           args)))
 
-(defun buffer-set-attribute (line-set-fn buffer start end attr)
+(defun buffer-apply-lines (apply-fn buffer start end &rest args)
   (with-points (((start-linum start-charpos) start)
                 ((end-linum end-charpos) end))
     (cond ((= start-linum end-linum)
-           (buffer-line-set-attribute line-set-fn
-                                      buffer
-                                      attr
-                                      start-linum
-                                      start-charpos
-                                      end-charpos))
+           (buffer-apply-line apply-fn buffer start-linum start-charpos end-charpos args))
           (t
-           (buffer-line-set-attribute line-set-fn
-                                      buffer
-                                      attr
-                                      start-linum
-                                      start-charpos)
-           (buffer-line-set-attribute line-set-fn
-                                      buffer
-                                      attr
-                                      end-linum
-                                      0
-                                      end-charpos)
-           (loop
-             for linum from (1+ start-linum) below end-linum
-             do (buffer-line-set-attribute line-set-fn
-                                           buffer
-                                           attr
-                                           linum))))))
+           (buffer-apply-line apply-fn buffer start-linum start-charpos nil args)
+           (buffer-apply-line apply-fn buffer end-linum 0 end-charpos args)
+           (loop :for linum :from (1+ start-linum) :below end-linum
+                 :do (buffer-apply-line apply-fn buffer linum nil nil args))))))
 
-(defun buffer-put-attribute (buffer start end attr)
-  (buffer-set-attribute #'line-put-attribute buffer start end attr))
-
-(defun buffer-remove-attribute (buffer start end attr)
-  (buffer-set-attribute #'line-remove-attribute buffer start end attr))
+(defun buffer-put-property (buffer start end key value)
+  (buffer-apply-lines #'line-add-property buffer start end key value))
 
 (defun buffer-add-overlay (buffer overlay)
   (push overlay (buffer-overlays buffer)))
@@ -288,26 +320,27 @@
 (defun buffer-get-char (buffer linum charpos)
   (let ((line (buffer-get-line buffer linum)))
     (when (line-p line)
-      (let* ((str (line-fatstr line))
-             (len (fat-length str)))
+      (let* ((str (line-str line))
+             (len (length str)))
         (cond
-         ((<= 0 charpos (1- len))
-          (fat-char str charpos))
-         ((= charpos len)
-          #\newline))))))
+          ((<= 0 charpos (1- len))
+           (char str charpos))
+          ((= charpos len)
+           #\newline))))))
 
 (defun buffer-line-length (buffer linum)
-  (fat-length (line-fatstr (buffer-get-line buffer linum))))
+  (line-length (buffer-get-line buffer linum)))
 
-(defun buffer-line-fatstring (buffer linum)
+(defun buffer-line-string-with-attributes (buffer linum)
   (let ((line (buffer-get-line buffer linum)))
     (when (line-p line)
-      (line-fatstr line))))
+      (values (line-str line)
+              (getf (line-plist line) :attribute)))))
 
 (defun buffer-line-string (buffer linum)
-  (let ((fatstr (buffer-line-fatstring buffer linum)))
-    (when fatstr
-      (fat-string fatstr))))
+  (let ((line (buffer-get-line buffer linum)))
+    (when (line-p line)
+      (line-str line))))
 
 (defun buffer-end-line-p (buffer linum)
   (let ((line (buffer-get-line buffer linum)))
@@ -333,7 +366,7 @@
          (i (or start 1) (1+ i)))
         ((or (null line) (< end i)))
       (funcall fn
-               (fat-string (line-fatstr line))
+               (line-str line)
                (not (line-next line))
                i))))
 
@@ -428,17 +461,19 @@
              (buffer-delete-char buffer linum pos 1)
              (make-point linum pos))
            (let ((line (buffer-get-line buffer linum)))
-             (setf (line-%tags-cached line) nil)
+             (setf (line-%scan-cached-p line) nil)
+             (line-property-insert-pos line pos 1)
              (dolist (marker (buffer-markers buffer))
                (when (and (= linum (marker-linum marker))
                           (if (marker-insertion-type marker)
                               (<= pos (marker-charpos marker))
                               (< pos (marker-charpos marker))))
                  (incf (marker-charpos marker))))
-             (setf (line-fatstr line)
-                   (fat-concat (fat-substring (line-fatstr line) 0 pos)
-                               (string c)
-                               (fat-substring (line-fatstr line) pos)))))))
+             (setf (line-str line)
+                   (concatenate 'string
+                                (subseq (line-str line) 0 pos)
+                                (string c)
+                                (subseq (line-str line) pos)))))))
   t)
 
 (defun buffer-insert-newline (buffer linum pos)
@@ -456,47 +491,51 @@
          (decf (marker-charpos marker) pos))
         ((< linum (marker-linum marker))
          (incf (marker-linum marker)))))
-    (let ((line (buffer-get-line buffer linum)))
-      (setf (line-%tags-cached line) nil)
-      (let ((newline
-              (make-line line
-                         (line-next line)
-                         (fat-substring (line-fatstr line) pos))))
+    (let* ((line (buffer-get-line buffer linum))
+           (newline
+            (make-line line
+                       (line-next line)
+                       (subseq (line-str line) pos))))
+        (setf (line-%scan-cached-p line) nil)
+        (line-property-insert-newline line newline pos)
         (when (eq line (buffer-tail-line buffer))
           (setf (buffer-tail-line buffer) newline))
-        (setf (line-fatstr line)
-              (fat-substring (line-fatstr line) 0 pos))))
+        (setf (line-str line)
+              (subseq (line-str line) 0 pos)))
     (incf (buffer-nlines buffer)))
   t)
 
 (defun buffer-insert-line (buffer linum pos str)
   (with-buffer-modify buffer
     (let ((line (buffer-get-line buffer linum)))
-      (setf (line-%tags-cached line) nil)
+      (setf (line-%scan-cached-p line) nil)
+      (line-property-insert-pos line pos (length str))
       (with-push-undo (buffer)
-        (buffer-delete-char buffer linum pos (fat-length str))
+        (buffer-delete-char buffer linum pos (length str))
         (make-point linum pos))
       (dolist (marker (buffer-markers buffer))
         (when (and (= linum (marker-linum marker))
                    (if (marker-insertion-type marker)
                        (<= pos (marker-charpos marker))
                        (< pos (marker-charpos marker))))
-          (incf (marker-charpos marker) (fat-length str))))
-      (setf (line-fatstr line)
-            (fat-concat (fat-substring (line-fatstr line) 0 pos)
-                        str
-                        (fat-substring (line-fatstr line) pos)))))
+          (incf (marker-charpos marker) (length str))))
+      (setf (line-str line)
+            (concatenate 'string
+                         (subseq (line-str line) 0 pos)
+                         str
+                         (subseq (line-str line) pos)))))
   t)
 
 (defun buffer-delete-char (buffer linum pos n)
   (with-buffer-modify buffer
     (let ((line (buffer-get-line buffer linum))
           (del-lines (list "")))
-      (setf (line-%tags-cached line) nil)
+      (setf (line-%scan-cached-p line) nil)
       (loop while (or (eq n t) (plusp n)) do
         (cond
           ((and (not (eq n t))
-                (<= n (- (fat-length (line-fatstr line)) pos)))
+                (<= n (- (length (line-str line)) pos)))
+           (line-property-delete-pos line pos n)
            (dolist (marker (buffer-markers buffer))
              (when (and (= linum (marker-linum marker))
                         (< pos (marker-charpos marker)))
@@ -508,11 +547,13 @@
                  (concatenate 'string
                               (car del-lines)
                               (subseq (line-str line) pos (+ pos n))))
-           (setf (line-fatstr line)
-                 (fat-concat (fat-substring (line-fatstr line) 0 pos)
-                             (fat-substring (line-fatstr line) (+ pos n))))
+           (setf (line-str line)
+                 (concatenate 'string
+                              (subseq (line-str line) 0 pos)
+                              (subseq (line-str line) (+ pos n))))
            (return))
           (t
+           (line-property-delete-line line pos)
            (dolist (marker (buffer-markers buffer))
              (cond
                ((and (= linum (marker-linum marker))
@@ -528,11 +569,12 @@
              (return))
            (push "" del-lines)
            (unless (eq n t)
-             (decf n (1+ (- (fat-length (line-fatstr line)) pos))))
+             (decf n (1+ (- (length (line-str line)) pos))))
            (decf (buffer-nlines buffer))
-           (setf (line-fatstr line)
-                 (fat-concat (fat-substring (line-fatstr line) 0 pos)
-                             (line-fatstr (line-next line))))
+           (setf (line-str line)
+                 (concatenate 'string
+                              (subseq (line-str line) 0 pos)
+                              (line-str (line-next line))))
            (when (eq (line-next line)
                      (buffer-tail-line buffer))
              (setf (buffer-tail-line buffer) line))

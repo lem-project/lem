@@ -1,6 +1,6 @@
 (in-package :cl-user)
 (defpackage :lem.c-mode
-  (:use :cl :lem)
+  (:use :cl :lem :lem.prog-mode)
   (:export
    :*c-mode-keymap*
    :*c-syntax-table*
@@ -39,11 +39,11 @@
                "_Bool" "_Complex" "Imaginary" "bool"))
   (syntax-add-match *c-syntax-table*
                     (make-syntax-test str :word-p t)
-                    :attr *syntax-keyword-attribute*))
+                    :attribute *syntax-keyword-attribute*))
 
 (syntax-add-match *c-syntax-table*
                   (make-syntax-test "^#\\S+" :regex-p t)
-                  :attr *syntax-constant-attribute*)
+                  :attribute *syntax-constant-attribute*)
 
 ;; (defvar *c-compile-command* "make")
 

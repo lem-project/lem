@@ -28,8 +28,8 @@
           delete-while-whitespaces
           skip-chars-forward
           skip-chars-backward
+          put-property
           put-attribute
-          remove-attribute
           current-column
           move-to-column))
 
@@ -277,16 +277,16 @@
                   (lambda () (shift-position -1))
                   #'preceding-char))
 
-(defun put-attribute (start end attr)
-  (buffer-put-attribute (current-buffer) start end attr))
+(defun put-property (start end key value)
+  (buffer-put-property (current-buffer) start end key value))
 
-(defun remove-attribute (start end attr)
-  (buffer-remove-attribute (current-buffer) start end attr))
+(defun put-attribute (start end attribute)
+  (buffer-put-property (current-buffer) start end :attribute attribute))
 
 (defun current-column ()
-  (str-width (current-line-string)
-             0
-             (current-charpos)))
+  (string-width (current-line-string)
+                0
+                (current-charpos)))
 
 (defun move-to-column (column &optional force)
   (check-type column (integer 0 #.most-positive-fixnum))

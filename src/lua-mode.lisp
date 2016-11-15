@@ -1,6 +1,6 @@
 (in-package :cl-user)
 (defpackage :lem.lua-mode
-  (:use :cl :lem)
+  (:use :cl :lem :lem.prog-mode)
   (:export))
 (in-package :lem.lua-mode)
 
@@ -28,18 +28,18 @@
                "repeat" "return" "then" "true" "until" "while"))
   (syntax-add-match *lua-syntax-table*
                     (make-syntax-test str :word-p t)
-                    :attr *syntax-keyword-attribute*))
+                    :attribute *syntax-keyword-attribute*))
 
 (syntax-add-match *lua-syntax-table*
                   (make-syntax-test "function" :word-p t)
-                  :attr *syntax-keyword-attribute*
+                  :attribute *syntax-keyword-attribute*
                   :matched-symbol :function-start
                   :symbol-lifetime 1)
 
 (syntax-add-match *lua-syntax-table*
                   (make-syntax-test "[a-zA-Z0-9_\\.:]+" :regex-p t)
                   :test-symbol :function-start
-                  :attr *syntax-function-name-attribute*)
+                  :attribute *syntax-function-name-attribute*)
 
 (loop
   :for n :from 0 :to 10
@@ -49,45 +49,41 @@
   (syntax-add-region *lua-syntax-table*
                      (make-syntax-test str1)
                      (make-syntax-test str2)
-                     :attr *syntax-string-attribute*
-                     :tag :long-string))
+                     :attribute *syntax-string-attribute*))
 
-(loop
-  :for n :from 0 :to 10
-  :for str1 := (format nil "--[~a[" (make-string n :initial-element #\=))
-  :for str2 := (format nil "]~a]" (make-string n :initial-element #\=))
-  :do
-  (syntax-add-region *lua-syntax-table*
-                     (make-syntax-test str1)
-                     (make-syntax-test str2)
-                     :attr *syntax-comment-attribute*
-                     :tag +syntax-comment-tag+))
+(loop :for n :from 0 :to 10
+      :for str1 := (format nil "--[~a[" (make-string n :initial-element #\=))
+      :for str2 := (format nil "]~a]" (make-string n :initial-element #\=))
+      :do (syntax-add-region *lua-syntax-table*
+                             (make-syntax-test str1)
+                             (make-syntax-test str2)
+                             :attribute *syntax-comment-attribute*))
 
 (defun skip-space-forward ()
   (loop
     (skip-chars-forward '(#\space #\tab #\newline))
-    (unless (and (not (eq :comment (syntax-preceding-tag)))
-                 (eq :comment (syntax-following-tag))
-                 (syntax-forward-search-tag-end :comment))
+    (unless (and (not (eq *syntax-comment-attribute* (syntax-preceding-property :attribute)))
+                 (eq *syntax-comment-attribute* (syntax-following-property :attribute))
+                 (syntax-forward-search-property-end :attribute *syntax-comment-attribute*))
       (return t))))
 
 (defun skip-space-backward ()
   (loop
     (skip-chars-backward '(#\space #\tab #\newline))
-    (unless (and (not (eq :comment (syntax-before-tag 1)))
-                 (eq :comment (syntax-before-tag 2))
-                 (syntax-backward-search-tag-start :comment))
+    (unless (and (not (eq :comment (syntax-before-property :attribute 1)))
+                 (eq :comment (syntax-before-property :attribute 2))
+                 (syntax-backward-search-property-start :attribute *syntax-comment-attribute*))
       (return t))))
 
 (defun lua-forward-sexp-1 (n)
   (cond ((and (= n 1)
-              (not (eq :long-string (syntax-preceding-tag)))
-              (eq :long-string (syntax-following-tag)))
-         (syntax-forward-search-tag-end :long-string))
+              (not (eq *syntax-string-attribute* (syntax-preceding-property :attribute)))
+              (eq *syntax-string-attribute* (syntax-following-property :attribute)))
+         (syntax-forward-search-property-end :attribute *syntax-string-attribute*))
         ((and (= n -1)
-              (not (eq :long-string (syntax-before-tag 1)))
-              (eq :long-string (syntax-before-tag 2)))
-         (syntax-backward-search-tag-start :long-string))
+              (not (eq *syntax-string-attribute* (syntax-before-property :attribute 1)))
+              (eq *syntax-string-attribute* (syntax-before-property :attribute 2)))
+         (syntax-backward-search-property-start :attribute *syntax-string-attribute*))
         (t
          (raw-forward-sexp n))))
 

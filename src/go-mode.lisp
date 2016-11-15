@@ -1,6 +1,6 @@
 (in-package :cl-user)
 (defpackage :lem.go-mode
-  (:use :cl :lem)
+  (:use :cl :lem :lem.prog-mode)
   (:export))
 (in-package :lem.go-mode)
 
@@ -46,17 +46,17 @@
 (dolist (k *go-keywords*)
   (syntax-add-match *go-syntax-table*
                     (make-syntax-test k :word-p t)
-                    :attr *syntax-keyword-attribute*))
+                    :attribute *syntax-keyword-attribute*))
 
 (dolist (k *go-builtin*)
   (syntax-add-match *go-syntax-table*
                     (make-syntax-test k :word-p t)
-                    :attr *syntax-keyword-attribute*))
+                    :attribute *syntax-keyword-attribute*))
 
 (dolist (k *go-constants*)
   (syntax-add-match *go-syntax-table*
                     (make-syntax-test k :word-p t)
-                    :attr *syntax-constant-attribute*))
+                    :attribute *syntax-constant-attribute*))
 
 (defun following-word ()
   (region-string (current-point)
@@ -82,11 +82,11 @@
 (defun go-calc-indent ()
   (save-excursion
    (back-to-indentation)
-   (let ((tag (syntax-preceding-tag)))
-     (cond ((eq +syntax-comment-tag+ tag)
-            (syntax-backward-search-tag-start +syntax-comment-tag+)
+   (let ((attribute (syntax-preceding-property :attribute)))
+     (cond ((eq attribute *syntax-comment-attribute*)
+            (syntax-backward-search-property-start :attribute *syntax-comment-attribute*)
             (1+ (current-column)))
-           ((eq +syntax-string-tag+ tag)
+           ((eq attribute *syntax-string-attribute*)
             nil)
            (t
             (let ((inside-indenting-paren nil)

@@ -37,8 +37,8 @@
           (lambda ()
             (syntax-scan-window (current-window))))
 
-(push #'syntax-scan-window *window-scroll-functions*)
-(push #'syntax-scan-window *window-size-change-functions*)
+(pushnew #'syntax-scan-window *window-scroll-functions*)
+(pushnew #'syntax-scan-window *window-size-change-functions*)
 
 (defun ask-revert-buffer ()
   (if (minibuf-y-or-n-p (format nil
@@ -51,11 +51,12 @@
 
 (defvar *mainloop-waited-for-enough*)
 
-(start-idle-timer "mainloop" 200 t
-                  (lambda ()
-                    (syntax-scan-window (current-window))
-                    (redraw-display)
-                    (setq *mainloop-waited-for-enough* t)))
+(defvar *mainloop-timer*
+  (start-idle-timer "mainloop" 200 t
+                    (lambda ()
+                      (syntax-scan-window (current-window))
+                      (redraw-display)
+                      (setq *mainloop-waited-for-enough* t))))
 
 (defun lem-mainloop ()
   (macrolet ((form (&body body)
@@ -96,14 +97,16 @@
 
 (let ((passed nil))
   (defun call-with-editor (function)
-    (let ((*running-p* t))
-      (unless passed
-        (setq passed t)
-        (display-init)
-        (window-init)
-        (minibuf-init)
-        (run-hooks 'after-init-hook))
-      (funcall function))))
+    (unwind-protect
+        (let ((*running-p* t))
+          (unless passed
+            (setq passed t)
+            (display-init)
+            (window-init)
+            (minibuf-init)
+            (run-hooks 'after-init-hook))
+          (funcall function))
+      (display-finalize))))
 
 (defmacro with-editor (() &body body)
   `(call-with-editor (lambda () ,@body)))
@@ -114,11 +117,8 @@
 
 (defun lem (&rest args)
   (check-init)
-  (term-init)
-  (let ((report (unwind-protect
-                  (with-editor ()
-                    (mapc 'find-file args)
-                    (lem-mainloop))
-                  (term-finallize))))
+  (let ((report (with-editor ()
+                  (mapc 'find-file args)
+                  (lem-mainloop))))
     (when report
       (format t "~&~a~%" report))))

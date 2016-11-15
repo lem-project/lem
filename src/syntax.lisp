@@ -1,8 +1,6 @@
 (in-package :lem)
 
 (export '(*enable-syntax-highlight*
-          +syntax-string-tag+
-          +syntax-comment-tag+
           syntax-table
           make-syntax-table
           make-syntax-test
@@ -26,12 +24,12 @@
           syntax-end-block-comment-p
           syntax-scan-window
           syntax-scan-buffer
-          syntax-after-tag
-          syntax-before-tag
-          syntax-following-tag
-          syntax-preceding-tag
-          syntax-forward-search-tag-end
-          syntax-backward-search-tag-start
+          syntax-after-property
+          syntax-before-property
+          syntax-following-property
+          syntax-preceding-property
+          syntax-forward-search-property-end
+          syntax-backward-search-property-start
           skip-space-and-comment-forward
           skip-space-and-comment-backward))
 
@@ -50,16 +48,11 @@
                      :word-p word-p))
 
 (defclass syntax ()
-  ((attr
-    :initarg :attr
+  ((attribute
+    :initarg :attribute
     :initform 0
-    :reader syntax-attr
-    :type (or null attribute))
-   (tag
-    :initarg :tag
-    :initform nil
-    :reader syntax-tag
-    :type symbol)))
+    :reader syntax-attribute
+    :type (or null attribute))))
 
 (defclass syntax-region (syntax)
   ((start
@@ -111,9 +104,6 @@
   region-list
   match-list)
 
-(defparameter +syntax-comment-tag+ (make-symbol "COMMENT"))
-(defparameter +syntax-string-tag+ (make-symbol "STRING"))
-
 (defun make-syntax-table (&rest args)
   (let ((syntax-table (apply '%make-syntax-table args)))
     (let ((pre (syntax-table-line-comment-preceding-char syntax-table))
@@ -125,39 +115,35 @@
           (syntax-add-match syntax-table
                             (make-syntax-test (format nil "~a.*$" string)
                                               :regex-p t)
-                            :attr *syntax-comment-attribute*
-                            :tag +syntax-comment-tag+))))
+                            :attribute *syntax-comment-attribute*))))
     (dolist (string-quote-char (syntax-table-string-quote-chars syntax-table))
       (syntax-add-region syntax-table
                          (make-syntax-test (string string-quote-char))
                          (make-syntax-test (string string-quote-char))
-                         :attr *syntax-string-attribute*
-                         :tag +syntax-string-tag+))
+                         :attribute *syntax-string-attribute*))
     (let ((pre (syntax-table-block-comment-preceding-char syntax-table))
           (flw (syntax-table-block-comment-following-char syntax-table)))
       (when (and pre flw)
         (syntax-add-region syntax-table
                            (make-syntax-test (format nil "~c~c" pre flw))
                            (make-syntax-test (format nil "~c~c" flw pre))
-                           :attr *syntax-comment-attribute*
-                           :tag +syntax-comment-tag+)))
+                           :attribute *syntax-comment-attribute*)))
     syntax-table))
 
-(defun syntax-add-match (syntax-table test &key test-symbol end-symbol attr
-                                      matched-symbol (symbol-lifetime -1) tag)
+(defun syntax-add-match (syntax-table test &key test-symbol end-symbol attribute
+                                      matched-symbol (symbol-lifetime -1))
   (push (make-instance 'syntax-match
                        :test test
                        :test-symbol test-symbol
                        :end-symbol end-symbol
-                       :attr attr
+                       :attribute attribute
                        :matched-symbol matched-symbol
-                       :symbol-lifetime symbol-lifetime
-                       :tag tag)
+                       :symbol-lifetime symbol-lifetime)
         (syntax-table-match-list syntax-table))
   t)
 
-(defun syntax-add-region (syntax-table start end &key attr tag)
-  (push (make-instance 'syntax-region :start start :end end :attr attr :tag tag)
+(defun syntax-add-region (syntax-table start end &key attribute)
+  (push (make-instance 'syntax-region :start start :end end :attribute attribute)
         (syntax-table-region-list syntax-table)))
 
 (defun syntax-word-char-p (c)
@@ -278,9 +264,7 @@
           (remove (syntax-match-end-symbol syntax)
                   *syntax-symbol-lifetimes*
                   :key #'car)))
-  (when (syntax-attr syntax)
-    (line-put-attribute line start end (syntax-attr syntax)))
-  (line-add-tag line start end (syntax-tag syntax))
+  (line-add-property line start end :attribute (syntax-attribute syntax))
   t)
 
 (defun syntax-position-word-end (str start)
@@ -343,15 +327,13 @@
     (when end
       (let ((end (syntax-search-region-end syntax (line-str line) end)))
         (cond (end
-               (line-put-attribute line start end
-                                   (syntax-attr syntax))
-               (line-add-tag line start end (syntax-tag syntax))
+               (line-add-property line start end :attribute (syntax-attribute syntax))
                (return-from syntax-scan-token-test (1- end)))
               (t
-               (line-put-attribute line start (length (line-str line))
-                                   (syntax-attr syntax))
-               (line-add-tag line start (1+ (length (line-str line)))
-                             (syntax-tag syntax))
+               (line-add-property line  start
+                                  (length (line-str line))
+                                  :attribute
+                                  (syntax-attribute syntax))
                (setf (line-%region line) syntax)
                (return-from syntax-scan-token-test
                  (length (line-str line)))))))))
@@ -389,20 +371,19 @@
     (let ((end (syntax-search-region-end region (line-str line) 0)))
       (cond (end
              (setf (line-%region line) nil)
-             (line-put-attribute line 0 end (syntax-attr region))
-             (line-add-tag line 0 end (syntax-tag region))
+             (line-add-property line 0 end :attribute (syntax-attribute region))
              end)
             (t
              (setf (line-%region line) region)
-             (line-put-attribute line 0 (length (line-str line))
-                                 (syntax-attr region))
-             (line-add-tag line 0 (1+ (length (line-str line))) (syntax-tag region))
+             (line-add-property line 0
+                                (length (line-str line))
+                                :attribute
+                                (syntax-attribute region))
              (length (line-str line)))))))
 
 (defun syntax-scan-line (line)
-  (line-clear-attribute line)
-  (line-clear-tags line)
-  (setf (line-%tags-cached line) t)
+  (setf (line-%scan-cached-p line) t)
+  (line-clear-property line :attribute)
   (let* ((region (syntax-continue-region-p line))
          (start-pos (or (syntax-scan-line-region line region) 0))
          (str (line-str line)))
@@ -425,69 +406,64 @@
                    (setq i (1- end))))))))
     (setf (line-%symbol-lifetimes line) *syntax-symbol-lifetimes*)))
 
-(defun %syntax-pos-tag (pos)
+(defun %syntax-pos-property (pos property-name)
   (let ((line (buffer-get-line (current-buffer) (current-linum))))
-    (when (and (not (line-%tags-cached line))
+    (when (and (eq property-name :attribute)
+               (not (line-%scan-cached-p line))
                (enable-syntax-highlight-p (current-buffer)))
       (syntax-scan-line line))
-    (loop :for (start end tag) :in (line-%tags line) :do
-      (when (<= start pos (1- end))
-        (return tag)))))
+    (line-search-property line property-name pos)))
 
-(defun syntax-after-tag (&optional (n 1))
+(defun syntax-after-property (property-name &optional (n 1))
   (save-excursion
-   (shift-position n)
-   (%syntax-pos-tag (current-charpos))))
+    (shift-position n)
+    (%syntax-pos-property (current-charpos) property-name)))
 
-(defun syntax-before-tag (&optional (n 1))
+(defun syntax-before-property (property-name &optional (n 1))
   (save-excursion
-   (shift-position (- (1- n)))
-   (%syntax-pos-tag (current-charpos))))
+    (shift-position (- (1- n)))
+    (%syntax-pos-property (current-charpos) property-name)))
 
-(defun syntax-following-tag ()
-  (%syntax-pos-tag (current-charpos)))
+(defun syntax-following-property (property-name)
+  (%syntax-pos-property (current-charpos) property-name))
 
-(defun syntax-preceding-tag ()
+(defun syntax-preceding-property (property-name)
   (save-excursion
-   (shift-position -1)
-   (%syntax-pos-tag (current-charpos))))
+    (shift-position -1)
+    (%syntax-pos-property (current-charpos) property-name)))
 
-(defun syntax-forward-search-tag-end (tag0)
+(defun syntax-forward-search-property-end (property-name property-value)
   (loop
-    (unless (eq tag0 (syntax-following-tag))
-      (return t))
+    (unless (eq property-value (syntax-following-property property-name))
+      (return property-value))
     (unless (shift-position 1)
-      (return nil))
-    (when (bolp)
-      (syntax-scan-lines (current-buffer)
-                         (current-linum)
-                         (1+ (current-linum))))))
+      (return nil))))
 
-(defun syntax-backward-search-tag-start (tag0)
+(defun syntax-backward-search-property-start (property-name property-value)
   (loop
-    (unless (eq tag0 (syntax-preceding-tag))
-      (return t))
+    (unless (eq property-value (syntax-preceding-property property-name))
+      (return property-value))
     (unless (shift-position -1)
-      (return nil))
-    (when (eolp)
-      (syntax-scan-lines (current-buffer)
-                         (current-linum)
-                         (1+ (current-linum))))))
+      (return nil))))
 
 (defun skip-space-and-comment-forward ()
   (loop
     (skip-chars-forward #'syntax-space-char-p)
-    (unless (and (not (eq +syntax-comment-tag+ (syntax-preceding-tag)))
-                 (eq +syntax-comment-tag+ (syntax-following-tag)))
+    (unless (and (not (eq *syntax-comment-attribute* (syntax-preceding-property :attribute)))
+                 (eq *syntax-comment-attribute* (syntax-following-property :attribute)))
       (return t))
-    (unless (syntax-forward-search-tag-end +syntax-comment-tag+)
+    (unless (syntax-forward-search-property-end
+             :attribute
+             *syntax-comment-attribute*)
       (return nil))))
 
 (defun skip-space-and-comment-backward ()
   (loop
     (skip-chars-backward #'syntax-space-char-p)
-    (unless (and (not (eq +syntax-comment-tag+ (syntax-following-tag)))
-                 (eq +syntax-comment-tag+ (syntax-preceding-tag)))
+    (unless (and (not (eq *syntax-comment-attribute* (syntax-preceding-property :attribute)))
+                 (eq *syntax-comment-attribute* (syntax-following-property :attribute)))
       (return t))
-    (unless (syntax-backward-search-tag-start +syntax-comment-tag+)
+    (unless (syntax-backward-search-property-start
+             :attribute
+             *syntax-comment-attribute*)
       (return nil))))

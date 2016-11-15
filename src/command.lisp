@@ -294,7 +294,7 @@
                    (back-to-indentation)
                    (current-column))))
       (multiple-value-bind (div mod)
-          (floor count *tab-size*)
+          (floor count (tab-size))
         (beginning-of-line)
         (delete-while-whitespaces t nil)
         (insert-string (funcall make-space-str div))
@@ -310,7 +310,7 @@
 (define-command detab-line (n) ("p")
   (tab-line-aux n
                 #'(lambda (n)
-                    (make-string (* n *tab-size*) :initial-element #\space))))
+                    (make-string (* n (tab-size)) :initial-element #\space))))
 
 (define-key *global-keymap* (kbd "C-x ]") 'next-page-char)
 (define-command next-page-char (&optional (n 1)) ("p")

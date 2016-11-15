@@ -1,41 +1,12 @@
-(in-package :lem)
-
-(export '(*mark-overlay-attribute*
-          *modeline-attribute*
-          *modeline-inactive-attribute*
-          *control-char-attribute*
-          *syntax-string-attribute*
-          *syntax-comment-attribute*
-          *syntax-keyword-attribute*
-          *syntax-constant-attribute*
-          *syntax-function-name-attribute*
-          *syntax-variable-attribute*
-          make-attribute
-          attribute-set
-          redraw-display))
+(in-package :lem-interface)
 
 (defvar *echo-area-scrwin*)
 
 (defvar *old-display-width*)
 (defvar *old-display-height*)
 
-(defstruct (attribute (:constructor %make-attribute))
-  fg-color
-  bg-color
-  reverse-p
-  bold-p
-  underline-p
-  cached-bits)
-
-(defun make-attribute (fg-color bg-color &key reverse-p bold-p underline-p)
-  (%make-attribute :fg-color fg-color
-                   :bg-color bg-color
-                   :reverse-p reverse-p
-                   :bold-p bold-p
-                   :underline-p underline-p))
-
-(defun attribute-to-bits (attribute)
-  (or (attribute-cached-bits attribute)
+(defun %attribute-to-bits (attribute)
+  (or (attribute-%internal-value attribute)
       (let ((bits (logior (get-color-pair (attribute-fg-color attribute)
                                           (attribute-bg-color attribute))
                           (if (attribute-reverse-p attribute)
@@ -47,32 +18,17 @@
                           (if (attribute-underline-p attribute)
                               charms/ll:a_underline
                               0))))
-        (setf (attribute-cached-bits attribute) bits)
+        (setf (attribute-%internal-value attribute) bits)
         bits)))
 
-(defun attribute-set (attribute fg-color bg-color &key reverse-p bold-p underline-p)
-  (setf (attribute-fg-color attribute) fg-color)
-  (setf (attribute-bg-color attribute) bg-color)
-  (setf (attribute-reverse-p attribute) reverse-p)
-  (setf (attribute-bold-p attribute) bold-p)
-  (setf (attribute-underline-p attribute) underline-p)
-  (setf (attribute-cached-bits attribute) nil))
-
-(defvar *mark-overlay-attribute* (make-attribute "blue" nil :reverse-p t))
-(defvar *modeline-attribute* (make-attribute nil nil :reverse-p t))
-(defvar *modeline-inactive-attribute* (make-attribute nil nil :reverse-p t))
-(defvar *control-char-attribute* (make-attribute nil nil :reverse-p t))
-(defvar *syntax-string-attribute* (make-attribute "green" nil))
-(defvar *syntax-comment-attribute* (make-attribute "red" nil))
-(defvar *syntax-keyword-attribute* (make-attribute "blue" nil))
-(defvar *syntax-constant-attribute* (make-attribute "magenta" nil))
-(defvar *syntax-function-name-attribute* (make-attribute "cyan" nil))
-(defvar *syntax-variable-attribute* (make-attribute "yellow" nil))
-
 (defun display-init ()
+  (term-init)
   (setq *old-display-width* charms/ll:*cols*)
   (setq *old-display-height* charms/ll:*lines*)
   (setf *echo-area-scrwin* (charms/ll:newwin 1 (display-width) (1- (display-height)) 0)))
+
+(defun display-finalize ()
+  (term-finalize))
 
 (defun display-width () charms/ll:*cols*)
 (defun display-height () charms/ll:*lines*)
@@ -150,12 +106,15 @@
   (cond ((null attr)
          (setf attr 0))
         ((attribute-p attr)
-         (setf attr (attribute-to-bits attr))))
+         (setf attr (%attribute-to-bits attr))))
   (charms/ll:wattron scrwin attr)
   (charms/ll:mvwaddstr scrwin y x string)
   (charms/ll:wattroff scrwin attr))
 
-(defun screen-print-string (screen x y string attr)
+(defun screen-print-string (screen x y string)
+  (scrwin-print-string (screen-%scrwin screen) x y string nil))
+
+(defun screen-print-string-attr (screen x y string attr)
   (scrwin-print-string (screen-%scrwin screen) x y string attr))
 
 (defun screen-move-cursor (screen x y)
@@ -176,7 +135,7 @@
               (copy-fatstring (aref (screen-lines screen) i))))
       (let ((fatstr (aref (screen-lines screen) i)))
         (change-font fatstr
-                     (attribute-to-bits attr)
+                     (%attribute-to-bits attr)
                      :to
                      start-charpos
                      (min end-charpos (fat-length fatstr)))))))
@@ -216,7 +175,7 @@
     :do (cond ((and (= (point-linum start) (point-linum end))
                     (<= start-linum (point-linum start) (1- end-linum)))
                (set-attr-display-line screen
-                                      (overlay-attr overlay)
+                                      (overlay-attribute overlay)
                                       start-linum
                                       (point-linum start)
                                       (point-charpos start)
@@ -224,7 +183,7 @@
               ((and (<= start-linum (point-linum start))
                     (< (point-linum end) end-linum))
                (set-attr-display-lines screen
-                                       (overlay-attr overlay)
+                                       (overlay-attribute overlay)
                                        start-linum
                                        (point-linum start)
                                        (point-charpos start)
@@ -235,7 +194,7 @@
                    (point-linum end)
                    end-linum)
                (set-attr-display-lines screen
-                                       (overlay-attr overlay)
+                                       (overlay-attribute overlay)
                                        start-linum
                                        start-linum
                                        0
@@ -244,22 +203,34 @@
               ((<= start-linum
                    (point-linum start))
                (set-attr-display-lines screen
-                                       (overlay-attr overlay)
+                                       (overlay-attribute overlay)
                                        start-linum
                                        (point-linum start)
                                        (point-charpos start)
                                        end-linum
                                        nil)))))
 
+(defun disp-line-fatstring (buffer linum)
+  (multiple-value-bind (string attributes)
+      (buffer-line-string-with-attributes buffer linum)
+    (let ((fatstr (make-fatstring string 0)))
+      (loop :for (start end value) :in attributes
+            :do (when value
+                  (change-font fatstr
+                               (%attribute-to-bits value)
+                               :to
+                               start end)))
+      fatstr)))
+
 (defun disp-reset-lines (screen buffer start-linum)
-  (buffer-update-mark-overlay buffer)
+  (lem::buffer-update-mark-overlay buffer)
   (let ((end-linum (+ start-linum (screen-height screen)))
         (disp-index 0))
     (loop
       :for linum :from start-linum :to (buffer-nlines buffer)
       :while (< disp-index (screen-height screen)) :do
         (setf (aref (screen-lines screen) disp-index)
-              (buffer-line-fatstring buffer linum))
+              (disp-line-fatstring buffer linum))
         (incf disp-index))
     (loop
       :for i :from disp-index :below (screen-height screen)
@@ -275,10 +246,10 @@
     (loop :for i :from string-start :below (or string-end (fat-length str)) :do
       (multiple-value-bind (char attr)
           (fat-char str i)
-        (screen-print-string screen x y (string char)
-                             (if (and (ctrl-p char) (char/= char #\tab))
-                                 *control-char-attribute*
-                                 attr))
+        (screen-print-string-attr screen x y (string char)
+                                  (if (and (lem::ctrl-p char) (char/= char #\tab))
+                                      *control-char-attribute*
+                                      attr))
         (setq x (char-width char x))))
     (charms/ll:wclrtoeol (screen-%scrwin screen))))
 
@@ -286,7 +257,7 @@
   (when (and (< 0 start-charpos) (= y 0))
     (setq str (fat-substring str start-charpos)))
   (when (= y cury)
-    (setq curx (str-width (fat-string str) 0 pos-x)))
+    (setq curx (string-width (fat-string str) 0 pos-x)))
   (loop :with start := 0 :and width := (screen-width screen)
         :for i := (wide-index (fat-string str) (1- width) :start start)
         :while (< y (screen-height screen))
@@ -297,7 +268,7 @@
                    (cond ((< y cury)
                           (incf cury))
                          ((= y cury)
-                          (let ((len (str-width (fat-string str) start i)))
+                          (let ((len (string-width (fat-string str) start i)))
                             (when (<= len curx)
                               (decf curx len)
                               (incf cury)))))
@@ -311,8 +282,8 @@
   (declare (ignore start-charpos))
   (check-type str fatstring)
   (when (= cury y)
-    (setq curx (str-width (fat-string str) 0 pos-x)))
-  (let ((width (str-width (fat-string str)))
+    (setq curx (string-width (fat-string str) 0 pos-x)))
+  (let ((width (string-width (fat-string str)))
         (cols (screen-width screen)))
     (cond
       ((< width (screen-width screen))
@@ -321,7 +292,7 @@
            (< curx (1- cols)))
        (let ((i (wide-index (fat-string str) (1- cols))))
          (setq str
-               (if (<= cols (str-width (fat-string str) 0 i))
+               (if (<= cols (string-width (fat-string str) 0 i))
                    (fat-concat (fat-substring str 0 (1- i)) " $")
                    (fat-concat (fat-substring str 0 i) "$")))))
       ((< pos-x (fat-length str))
@@ -425,14 +396,14 @@
 
 (defun redraw-display-window (window doupdate-p)
   (cond ((minibuffer-window-p window)
-         (minibuf-window-update))
+         (lem::minibuf-window-update))
         (t
          (window-see window)
          (screen-display-lines (window-screen window)
                                (screen-modified-p (window-screen window))
                                (window-buffer window)
-                               (window-view-charpos window)
-                               (window-view-linum window)
+                               (lem::window-view-charpos window)
+                               (lem::window-view-linum window)
                                (window-current-charpos window)
                                (window-current-linum window))
          (screen-redraw-separator window)
@@ -459,25 +430,25 @@
                 (+ (window-x window) 1))
         (push window delete-windows)))
     (mapc #'delete-window delete-windows))
-  (let ((window-list (window-tree-flatten (window-tree))))
-    (dolist (window (collect-right-windows window-list))
-      (window-resize window
-                     (- (display-width)
-                        *old-display-width*)
-                     0))
-    (dolist (window (collect-bottom-windows window-list))
-      (window-resize window
-                     0
-                     (- (display-height)
-                        *old-display-height*)))
+  (let ((window-list (window-list)))
+    (dolist (window (lem::collect-right-windows window-list))
+      (lem::window-resize window
+                          (- (display-width)
+                             *old-display-width*)
+                          0))
+    (dolist (window (lem::collect-bottom-windows window-list))
+      (lem::window-resize window
+                          0
+                          (- (display-height)
+                             *old-display-height*)))
     (setq *old-display-width* (display-width))
     (setq *old-display-height* (display-height))
     (charms/ll:mvwin *echo-area-scrwin* (1- (display-height)) 0)
     (charms/ll:wresize *echo-area-scrwin* 1 (display-width))
-    (minibuf-update-size)
+    (lem::minibuf-update-size)
     (redraw-display)))
 
-(defun message-internal (string doupdate-p)
+(defun print-echoarea (string doupdate-p)
   (charms/ll:werase *echo-area-scrwin*)
   (unless (null string)
     (charms/ll:mvwaddstr *echo-area-scrwin* 0 0 string))
@@ -529,3 +500,7 @@
      (loop :for char := (get-char-1) :do
        (unless (null char)
          (return char))))))
+
+(defun call-with-allow-interrupt (flag fn)
+  (with-raw (not flag)
+    (funcall fn)))

@@ -970,14 +970,19 @@
         (delete-char 1 nil))
       (forward-line 1))))
 
-(defun lisp-idle-timer-function ()
-  (when (eq (major-mode) 'lisp-mode)
-    (let ((package (scan-current-package)))
-      (when package
-        (lisp-change-package package))))
-  (when (member (major-mode) '(lisp-mode lisp-repl-mode))
-    (lisp-echo-arglist)
-    (redraw-display)))
+(let ((prev-point nil))
+  (defun lisp-idle-timer-function ()
+    (when (eq (major-mode) 'lisp-mode)
+      (let ((package (scan-current-package)))
+        (when package
+          (lisp-change-package package))))
+    (let ((curr-point (current-point)))
+      (when (or (null prev-point)
+                (not (point= prev-point curr-point)))
+        (when (member (major-mode) '(lisp-mode lisp-repl-mode))
+          (setf prev-point curr-point)
+          (lisp-echo-arglist)
+          (redraw-display))))))
 
 (defvar *lisp-timer*)
 (when (or (not (boundp '*lisp-timer*))

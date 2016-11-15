@@ -208,6 +208,18 @@
                                        end-linum
                                        nil)))))
 
+(defun disp-line-fatstring (buffer linum)
+  (multiple-value-bind (string attributes)
+      (buffer-line-string-with-attributes buffer linum)
+    (let ((fatstr (make-fatstring string 0)))
+      (loop :for (start end value) :in attributes
+            :do (when value
+                  (change-font fatstr
+                               (%attribute-to-bits value)
+                               :to
+                               start end)))
+      fatstr)))
+
 (defun disp-reset-lines (screen buffer start-linum)
   (buffer-update-mark-overlay buffer)
   (let ((end-linum (+ start-linum (screen-height screen)))
@@ -216,7 +228,7 @@
       :for linum :from start-linum :to (buffer-nlines buffer)
       :while (< disp-index (screen-height screen)) :do
         (setf (aref (screen-lines screen) disp-index)
-              (buffer-line-fatstring buffer linum))
+              (disp-line-fatstring buffer linum))
         (incf disp-index))
     (loop
       :for i :from disp-index :below (screen-height screen)

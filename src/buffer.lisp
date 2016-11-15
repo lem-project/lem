@@ -18,6 +18,7 @@
           buffer-put-property
           buffer-get-char
           buffer-line-length
+          buffer-line-string-with-attributes
           buffer-line-string
           buffer-end-line-p
           map-buffer-lines
@@ -326,17 +327,11 @@
 (defun buffer-line-length (buffer linum)
   (line-length (buffer-get-line buffer linum)))
 
-(defun buffer-line-fatstring (buffer linum)
+(defun buffer-line-string-with-attributes (buffer linum)
   (let ((line (buffer-get-line buffer linum)))
     (when (line-p line)
-      (let ((fatstr (make-fatstring (line-str line) 0)))
-        (loop :for (start end value) :in (getf (line-plist line) :attribute)
-              :do (when value
-                    (change-font fatstr
-                                 (%attribute-to-bits value)
-                                 :to
-                                 start end)))
-        fatstr))))
+      (values (line-str line)
+              (getf (line-plist line) :attribute)))))
 
 (defun buffer-line-string (buffer linum)
   (let ((line (buffer-get-line buffer linum)))

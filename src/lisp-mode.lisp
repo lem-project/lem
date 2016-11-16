@@ -1038,7 +1038,7 @@
              (< (length x) (length y))))))
 
 (defun lisp-repl-get-prompt ()
-  (shorten-package-name (lisp-current-package)))
+  (format nil "~A> " (shorten-package-name (lisp-current-package))))
 
 (defun lisp-repl-paren-correspond-p ()
   (loop :with count := 0 :do

@@ -43,8 +43,8 @@
   (unless (bolp)
     (insert-newline 1))
   (insert-string
-   (format nil "~a> "
-           (funcall (get-bvar :listener-get-prompt-function))))
+   (princ-to-string
+    (funcall (get-bvar :listener-get-prompt-function))))
   (put-attribute (make-point (current-linum) 0)
                  (make-point (current-linum) (current-charpos))
                  (make-attribute "blue" nil :bold-p t))

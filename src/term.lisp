@@ -23,10 +23,10 @@
     (cond ((zerop (length string))
            nil)
           ((and (char= #\# (aref string 0))
-                (= 6 (length string)))
-           (let ((r (parse-integer string :start 0 :end 2 :radix 16 :junk-allowed t))
-                 (g (parse-integer string :start 2 :end 4 :radix 16 :junk-allowed t))
-                 (b (parse-integer string :start 4 :end 6 :radix 16 :junk-allowed t)))
+                (= 7 (length string)))
+           (let ((r (parse-integer string :start 1 :end 3 :radix 16 :junk-allowed t))
+                 (g (parse-integer string :start 3 :end 5 :radix 16 :junk-allowed t))
+                 (b (parse-integer string :start 5 :end 7 :radix 16 :junk-allowed t)))
              (if (not (and r g b))
                  nil
                  (let (found-color
@@ -40,7 +40,7 @@
                            (setf min dist)
                            (setf found-color color)))))
                    (assert (not (null found-color)))
-                   found-color))))
+                   (color-number found-color)))))
           (t
            (dolist (color *colors* nil)
              (when (string= string (color-name color))

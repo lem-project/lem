@@ -373,7 +373,7 @@
     (let ((end (syntax-search-region-end region (line-str line) 0)))
       (cond (end
              (setf (line-%region line) nil)
-             (line-add-property line 0 end :attribute (syntax-attribute region))
+             (line-add-property line 0 (1- end) :attribute (syntax-attribute region))
              end)
             (t
              (setf (line-%region line) region)

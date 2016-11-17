@@ -869,23 +869,10 @@
                     (lisp-preceding-symbol))
   t)
 
-#+ccl
 (defun lisp-get-arglist (symbol)
   (when (fboundp symbol)
-    (ccl:arglist symbol)))
+    (swank/backend:arglist symbol)))
 
-#+ccl
-(defun lisp-get-arglist-string (symbol)
-  (let ((arglist (lisp-get-arglist symbol)))
-    (when arglist
-      (princ-to-string arglist))))
-
-#+sbcl
-(defun lisp-get-arglist (symbol)
-  (when (fboundp symbol)
-    (sb-introspect:function-lambda-list symbol)))
-
-#+sbcl
 (defun lisp-get-arglist-string (symbol)
   (let ((arglist (lisp-get-arglist symbol)))
     (when arglist

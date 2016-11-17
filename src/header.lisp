@@ -103,7 +103,8 @@
        (handler-case
            (handler-bind ((error ,gerror-bind)
                           #+sbcl (sb-sys:interactive-interrupt ,gerror-bind)
-                          #+ccl (ccl:interrupt-signal-condition ,gerror-bind))
+                          #+ccl (ccl:interrupt-signal-condition ,gerror-bind)
+                          #+ecl (ext:interactive-interrupt ,gerror-bind))
              #+ccl
              (let ((ccl:*break-hook*
                     #'(lambda (condition hook)

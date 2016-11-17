@@ -30,6 +30,8 @@
           syntax-preceding-property
           syntax-forward-search-property-end
           syntax-backward-search-property-start
+          skip-whitespace-forward
+          skip-whitespace-backward
           skip-space-and-comment-forward
           skip-space-and-comment-backward))
 
@@ -446,9 +448,15 @@
     (unless (shift-position -1)
       (return nil))))
 
+(defun skip-whitespace-forward ()
+  (skip-chars-forward #'syntax-space-char-p))
+
+(defun skip-whitespace-backward ()
+  (skip-chars-backward #'syntax-space-char-p))
+
 (defun skip-space-and-comment-forward ()
   (loop
-    (skip-chars-forward #'syntax-space-char-p)
+    (skip-whitespace-forward)
     (unless (and (not (eq *syntax-comment-attribute* (syntax-preceding-property :attribute)))
                  (eq *syntax-comment-attribute* (syntax-following-property :attribute)))
       (return t))
@@ -459,7 +467,7 @@
 
 (defun skip-space-and-comment-backward ()
   (loop
-    (skip-chars-backward #'syntax-space-char-p)
+    (skip-whitespace-backward)
     (unless (and (not (eq *syntax-comment-attribute* (syntax-following-property :attribute)))
                  (eq *syntax-comment-attribute* (syntax-preceding-property :attribute)))
       (return t))

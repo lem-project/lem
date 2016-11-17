@@ -319,12 +319,12 @@
     (when end
       (let ((end (syntax-search-region-end syntax (line-str line) end)))
         (cond (end
-               (decf end)
                (line-add-property line start end :attribute (syntax-attribute syntax))
                (return-from syntax-scan-token-test end))
               (t
-               (line-add-property line  start
-                                  (length (line-str line))
+               (line-add-property line
+                                  start
+                                  (1+ (length (line-str line)))
                                   :attribute
                                   (syntax-attribute syntax))
                (setf (line-%region line) syntax)
@@ -364,12 +364,12 @@
     (let ((end (syntax-search-region-end region (line-str line) 0)))
       (cond (end
              (setf (line-%region line) nil)
-             (line-add-property line 0 (1- end) :attribute (syntax-attribute region))
+             (line-add-property line 0 end :attribute (syntax-attribute region))
              end)
             (t
              (setf (line-%region line) region)
              (line-add-property line 0
-                                (length (line-str line))
+                                (1+ (length (line-str line)))
                                 :attribute
                                 (syntax-attribute region))
              (length (line-str line)))))))

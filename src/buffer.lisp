@@ -72,7 +72,7 @@
 
 (defun line-search-property (line key pos)
   (loop :for (start end value) :in (getf (line-plist line) key)
-        :do (when (<= start pos end)
+        :do (when (<= start pos (1- end))
               (return value))))
 
 (defun line-property-insert-pos (line pos offset)

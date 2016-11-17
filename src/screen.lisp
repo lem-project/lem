@@ -219,7 +219,8 @@
                   (change-font fatstr
                                (%attribute-to-bits value)
                                :to
-                               start end)))
+                               start
+                               (min (fat-length fatstr) end))))
       fatstr)))
 
 (defun disp-reset-lines (screen buffer start-linum)

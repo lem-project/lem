@@ -30,6 +30,16 @@
           skip-chars-backward
           put-property
           put-attribute
+          after-property
+          before-property
+          following-property
+          preceding-property
+          forward-search-property-end
+          backward-search-property-start
+          skip-whitespace-forward
+          skip-whitespace-backward
+          skip-space-and-comment-forward
+          skip-space-and-comment-backward
           current-column
           move-to-column))
 
@@ -282,6 +292,75 @@
 
 (defun put-attribute (start end attribute)
   (buffer-put-property (current-buffer) start end :attribute attribute))
+
+
+(defun %syntax-pos-property (pos property-name)
+  (let ((line (buffer-get-line (current-buffer) (current-linum))))
+    (when (and (eq property-name :attribute)
+               (not (line-%scan-cached-p line))
+               (enable-syntax-highlight-p (current-buffer)))
+      (syntax-scan-line line))
+    (line-search-property line property-name pos)))
+
+(defun after-property (property-name &optional (n 1))
+  (save-excursion
+    (shift-position n)
+    (%syntax-pos-property (current-charpos) property-name)))
+
+(defun before-property (property-name &optional (n 1))
+  (save-excursion
+    (shift-position (- (1- n)))
+    (%syntax-pos-property (current-charpos) property-name)))
+
+(defun following-property (property-name)
+  (%syntax-pos-property (current-charpos) property-name))
+
+(defun preceding-property (property-name)
+  (save-excursion
+    (shift-position -1)
+    (%syntax-pos-property (current-charpos) property-name)))
+
+(defun forward-search-property-end (property-name property-value)
+  (loop
+    (unless (eq property-value (following-property property-name))
+      (return property-value))
+    (unless (shift-position 1)
+      (return nil))))
+
+(defun backward-search-property-start (property-name property-value)
+  (loop
+    (unless (eq property-value (preceding-property property-name))
+      (return property-value))
+    (unless (shift-position -1)
+      (return nil))))
+
+(defun skip-whitespace-forward ()
+  (skip-chars-forward #'syntax-space-char-p))
+
+(defun skip-whitespace-backward ()
+  (skip-chars-backward #'syntax-space-char-p))
+
+(defun skip-space-and-comment-forward ()
+  (loop
+    (skip-whitespace-forward)
+    (unless (and (not (eq *syntax-comment-attribute* (preceding-property :attribute)))
+                 (eq *syntax-comment-attribute* (following-property :attribute)))
+      (return t))
+    (unless (forward-search-property-end
+             :attribute
+             *syntax-comment-attribute*)
+      (return nil))))
+
+(defun skip-space-and-comment-backward ()
+  (loop
+    (skip-whitespace-backward)
+    (unless (and (not (eq *syntax-comment-attribute* (following-property :attribute)))
+                 (eq *syntax-comment-attribute* (preceding-property :attribute)))
+      (return t))
+    (unless (backward-search-property-start
+             :attribute
+             *syntax-comment-attribute*)
+      (return nil))))
 
 (defun current-column ()
   (string-width (current-line-string)

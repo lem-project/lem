@@ -364,7 +364,7 @@
   (save-excursion
     (beginning-of-line)
     (when (eq *syntax-string-attribute*
-              (syntax-preceding-property :attribute))
+              (preceding-property :attribute))
       (return-from lisp-calc-indent 0))
     (when (save-excursion (and (backward-sexp 1 t) (bolp)))
       (return-from lisp-calc-indent 0))

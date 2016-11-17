@@ -23,17 +23,7 @@
           syntax-start-block-comment-p
           syntax-end-block-comment-p
           syntax-scan-window
-          syntax-scan-buffer
-          syntax-after-property
-          syntax-before-property
-          syntax-following-property
-          syntax-preceding-property
-          syntax-forward-search-property-end
-          syntax-backward-search-property-start
-          skip-whitespace-forward
-          skip-whitespace-backward
-          skip-space-and-comment-forward
-          skip-space-and-comment-backward))
+          syntax-scan-buffer))
 
 (defvar *enable-syntax-highlight* t)
 
@@ -408,71 +398,3 @@
                  (when (<= i (1- end))
                    (setq i (1- end))))))))
     (setf (line-%symbol-lifetimes line) *syntax-symbol-lifetimes*)))
-
-(defun %syntax-pos-property (pos property-name)
-  (let ((line (buffer-get-line (current-buffer) (current-linum))))
-    (when (and (eq property-name :attribute)
-               (not (line-%scan-cached-p line))
-               (enable-syntax-highlight-p (current-buffer)))
-      (syntax-scan-line line))
-    (line-search-property line property-name pos)))
-
-(defun syntax-after-property (property-name &optional (n 1))
-  (save-excursion
-    (shift-position n)
-    (%syntax-pos-property (current-charpos) property-name)))
-
-(defun syntax-before-property (property-name &optional (n 1))
-  (save-excursion
-    (shift-position (- (1- n)))
-    (%syntax-pos-property (current-charpos) property-name)))
-
-(defun syntax-following-property (property-name)
-  (%syntax-pos-property (current-charpos) property-name))
-
-(defun syntax-preceding-property (property-name)
-  (save-excursion
-    (shift-position -1)
-    (%syntax-pos-property (current-charpos) property-name)))
-
-(defun syntax-forward-search-property-end (property-name property-value)
-  (loop
-    (unless (eq property-value (syntax-following-property property-name))
-      (return property-value))
-    (unless (shift-position 1)
-      (return nil))))
-
-(defun syntax-backward-search-property-start (property-name property-value)
-  (loop
-    (unless (eq property-value (syntax-preceding-property property-name))
-      (return property-value))
-    (unless (shift-position -1)
-      (return nil))))
-
-(defun skip-whitespace-forward ()
-  (skip-chars-forward #'syntax-space-char-p))
-
-(defun skip-whitespace-backward ()
-  (skip-chars-backward #'syntax-space-char-p))
-
-(defun skip-space-and-comment-forward ()
-  (loop
-    (skip-whitespace-forward)
-    (unless (and (not (eq *syntax-comment-attribute* (syntax-preceding-property :attribute)))
-                 (eq *syntax-comment-attribute* (syntax-following-property :attribute)))
-      (return t))
-    (unless (syntax-forward-search-property-end
-             :attribute
-             *syntax-comment-attribute*)
-      (return nil))))
-
-(defun skip-space-and-comment-backward ()
-  (loop
-    (skip-whitespace-backward)
-    (unless (and (not (eq *syntax-comment-attribute* (syntax-following-property :attribute)))
-                 (eq *syntax-comment-attribute* (syntax-preceding-property :attribute)))
-      (return t))
-    (unless (syntax-backward-search-property-start
-             :attribute
-             *syntax-comment-attribute*)
-      (return nil))))

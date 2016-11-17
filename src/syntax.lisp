@@ -329,8 +329,9 @@
     (when end
       (let ((end (syntax-search-region-end syntax (line-str line) end)))
         (cond (end
+               (decf end)
                (line-add-property line start end :attribute (syntax-attribute syntax))
-               (return-from syntax-scan-token-test (1- end)))
+               (return-from syntax-scan-token-test end))
               (t
                (line-add-property line  start
                                   (length (line-str line))

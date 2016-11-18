@@ -31,25 +31,31 @@
   (let ((buffer (get-buffer-create buffer-name)))
     (setf (current-window) (pop-to-buffer buffer))
     (funcall mode)
-    (listener-reset-prompt)))
+    (listener-reset-prompt buffer)))
 
 (defun listener-update-marker ()
   (when (%listener-marker)
     (delete-marker (%listener-marker)))
   (setf (%listener-marker) (make-marker-current-point :name "listener")))
 
-(defun listener-reset-prompt ()
-  (point-set (point-max))
-  (unless (bolp)
-    (insert-newline 1))
-  (insert-string
-   (princ-to-string
-    (funcall (get-bvar :listener-get-prompt-function))))
-  (put-attribute (make-point (current-linum) 0)
-                 (make-point (current-linum) (current-charpos))
-                 (make-attribute "blue" nil :bold-p t))
-  (buffer-undo-boundary (current-buffer))
-  (listener-update-marker))
+(defun listener-reset-prompt (&optional (buffer (current-buffer)))
+  (flet ((body ()
+           (point-set (point-max))
+           (unless (bolp)
+             (insert-newline 1))
+           (insert-string
+            (princ-to-string
+             (funcall (get-bvar :listener-get-prompt-function))))
+           (put-attribute (make-point (current-linum) 0)
+                          (make-point (current-linum) (current-charpos))
+                          (make-attribute "blue" nil :bold-p t))
+           (buffer-undo-boundary (current-buffer))
+           (listener-update-marker)))
+    (if (eq buffer (current-buffer))
+        (body)
+        (save-excursion
+          (set-buffer buffer nil)
+          (body)))))
 
 (define-key *listener-mode-keymap* (kbd "C-m") 'listener-return)
 (define-command listener-return () ()

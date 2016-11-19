@@ -871,13 +871,15 @@
 
 (defun lisp-get-arglist (symbol)
   (when (fboundp symbol)
-    (swank/backend:arglist symbol)))
+    (values (swank/backend:arglist symbol) t)))
 
 (defun lisp-get-arglist-string (symbol)
-  (let ((arglist (lisp-get-arglist symbol)))
-    (when arglist
-      (ppcre:regex-replace-all
-       "\\s+" (princ-to-string arglist) " "))))
+  (multiple-value-bind (arglist foundp)
+      (lisp-get-arglist symbol)
+    (when foundp
+      (if (null arglist)
+          "()"
+          (ppcre:regex-replace-all "\\s+" (princ-to-string arglist) " ")))))
 
 (defun lisp-search-arglist (string arglist-fn)
   (multiple-value-bind (x error-p)

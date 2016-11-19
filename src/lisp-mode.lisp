@@ -623,10 +623,13 @@
 (define-key *lisp-mode-keymap* (kbd "C-c l") 'lisp-load-file)
 (define-key *lisp-mode-keymap* (kbd "C-c C-l") 'lisp-load-file)
 (define-command lisp-load-file (filename) ("fLoad File: ")
+  (when (uiop:pathname-equal filename (buffer-directory))
+    (setf filename (buffer-filename (current-buffer))))
   (when (and (cl-fad:file-exists-p filename)
              (not (cl-fad:directory-pathname-p filename)))
     (lisp-eval-string
-     (format nil "(cl:load ~s)" filename))))
+     (format nil "(cl:load ~s)" filename))
+    (message "load: ~A" filename)))
 
 (defun lisp-print-error (condition)
   (info-popup (set-buffer-mode (get-buffer-create *error-buffer-name*) 'lisp-mode)

@@ -121,6 +121,7 @@
       (assert (<= 0 (window-current-charpos (current-window)))))))
 
 (defun delete-buffer (buffer)
+  (mapc #'funcall (buffer-delete-hooks buffer))
   (setf *buffer-list* (delete buffer (buffer-list))))
 
 (defun get-next-buffer (buffer)

@@ -33,7 +33,8 @@
           buffer-directory
           buffer-undo-boundary
           get-bvar
-          clear-buffer-variables))
+          clear-buffer-variables
+          buffer-add-delete-hook))
 
 (defstruct (line (:constructor %make-line))
   prev
@@ -183,6 +184,7 @@
   truncate-lines
   external-format
   last-write-date
+  delete-hooks
   variables)
 
 (defvar *undo-modes* '(:edit :undo :redo))
@@ -672,3 +674,7 @@
 
 (defun clear-buffer-variables (&key (buffer (current-buffer)))
   (clrhash (buffer-variables buffer)))
+
+(defun buffer-add-delete-hook (buffer fn)
+  (push fn (buffer-delete-hooks buffer))
+  fn)

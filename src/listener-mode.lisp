@@ -33,10 +33,13 @@
     (funcall mode)
     (listener-reset-prompt buffer)))
 
-(defun listener-update-marker ()
+(defun listener-update-marker (&optional point)
   (when (%listener-marker)
     (delete-marker (%listener-marker)))
-  (setf (%listener-marker) (make-marker-current-point :name "listener")))
+  (setf (%listener-marker)
+        (if point
+            (make-marker (current-buffer) point :name "listener")
+            (make-marker-current-point :name "listener"))))
 
 (defun listener-reset-prompt (&optional (buffer (current-buffer)))
   (flet ((body ()

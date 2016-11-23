@@ -284,7 +284,7 @@
           (point-set point)
           (return nil))))))
 
-(define-key *global-keymap* (kbd "M-C-f") 'forward-sexp)
+(define-key *global-keymap* (kbd "C-M-f") 'forward-sexp)
 (define-command forward-sexp (&optional (n 1) no-errors) ("p")
   (let* ((f (get-bvar :forward-sexp-function))
          (res (if f
@@ -295,7 +295,7 @@
             nil
             (editor-error "scan error")))))
 
-(define-key *global-keymap* (kbd "M-C-b") 'backward-sexp)
+(define-key *global-keymap* (kbd "C-M-b") 'backward-sexp)
 (define-command backward-sexp (&optional (n 1) no-errors) ("p")
   (forward-sexp (- n) no-errors))
 
@@ -309,19 +309,19 @@
           (editor-error "scan error"))
         (return)))))
 
-(define-key *global-keymap* (kbd "M-C-n") 'forward-list)
+(define-key *global-keymap* (kbd "C-M-n") 'forward-list)
 (define-command forward-list (&optional (n 1) no-errors) ("p")
   (scan-lists n 0 no-errors))
 
-(define-key *global-keymap* (kbd "M-C-p") 'backward-list)
+(define-key *global-keymap* (kbd "C-M-p") 'backward-list)
 (define-command backward-list (&optional (n 1) no-errors) ("p")
   (scan-lists (- n) 0 no-errors))
 
-(define-key *global-keymap* (kbd "M-C-d") 'down-list)
+(define-key *global-keymap* (kbd "C-M-d") 'down-list)
 (define-command down-list (&optional (n 1) no-errors) ("p")
   (scan-lists n -1 no-errors))
 
-(define-key *global-keymap* (kbd "M-C-u") 'up-list)
+(define-key *global-keymap* (kbd "C-M-u") 'up-list)
 (define-command up-list (&optional (n 1) no-errors) ("p")
   (scan-lists (- n) 1 no-errors))
 
@@ -329,13 +329,13 @@
   (loop while (up-list 1 t))
   t)
 
-(define-key *global-keymap* (kbd "M-C-@") 'mark-sexp)
+(define-key *global-keymap* (kbd "C-M-@") 'mark-sexp)
 (define-command mark-sexp () ()
   (save-excursion
    (and (forward-sexp 1)
         (mark-set))))
 
-(define-key *global-keymap* (kbd "M-C-k") 'kill-sexp)
+(define-key *global-keymap* (kbd "C-M-k") 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (unless (kill-region (current-point)
@@ -344,7 +344,7 @@
                            (current-point)))
       (return nil))))
 
-(define-key *global-keymap* (kbd "M-C-t") 'transpose-sexps)
+(define-key *global-keymap* (kbd "C-M-t") 'transpose-sexps)
 (define-command transpose-sexps () ()
   (backward-sexp 1)
   (kill-sexp 1)

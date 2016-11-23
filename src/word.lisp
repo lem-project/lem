@@ -83,7 +83,7 @@
            (kill-region begin end)
            t)))))
 
-(define-key *global-keymap* (kbd "M-C-h") 'backward-delete-word)
+(define-key *global-keymap* (kbd "C-M-h") 'backward-delete-word)
 (define-key *global-keymap* (kbd "M-[backspace]") 'backward-delete-word)
 (define-command backward-delete-word (n) ("p")
   (if (minusp n)

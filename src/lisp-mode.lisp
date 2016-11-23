@@ -612,7 +612,7 @@
       (funcall eval-string-function str)
       t)))
 
-(define-key *lisp-mode-keymap* (kbd "M-C-x") 'lisp-eval-defun)
+(define-key *lisp-mode-keymap* (kbd "C-M-x") 'lisp-eval-defun)
 (define-command lisp-eval-defun () ()
   (lisp-move-and-eval-sexp #'top-of-defun #'lisp-eval-string))
 
@@ -854,7 +854,7 @@
                       "#" (region-string begin end)))))
     str))
 
-(define-key *lisp-mode-keymap* (kbd "M-C-i") 'lisp-complete-symbol)
+(define-key *lisp-mode-keymap* (kbd "C-M-i") 'lisp-complete-symbol)
 (define-command lisp-complete-symbol () ()
   (start-completion #'complete-symbol
                     (lisp-preceding-symbol))

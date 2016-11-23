@@ -28,7 +28,8 @@
           skip-whitespace-forward
           skip-whitespace-backward
           skip-space-and-comment-forward
-          skip-space-and-comment-backward))
+          skip-space-and-comment-backward
+          symbol-string-at-point))
 
 (defvar *enable-syntax-highlight* t)
 
@@ -431,3 +432,12 @@
              :attribute
              *syntax-comment-attribute*)
       (return nil))))
+
+(defun symbol-string-at-point ()
+  (save-excursion
+    (skip-chars-backward #'syntax-symbol-char-p)
+    (unless (syntax-symbol-char-p (following-char))
+      (return-from symbol-string-at-point nil))
+    (let ((start (current-point)))
+      (skip-chars-forward #'syntax-symbol-char-p)
+      (region-string start (current-point)))))

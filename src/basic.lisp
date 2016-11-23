@@ -36,10 +36,6 @@
           preceding-property
           forward-search-property-end
           backward-search-property-start
-          skip-whitespace-forward
-          skip-whitespace-backward
-          skip-space-and-comment-forward
-          skip-space-and-comment-backward
           current-column
           move-to-column))
 
@@ -332,34 +328,6 @@
     (unless (eq property-value (preceding-property property-name))
       (return property-value))
     (unless (shift-position -1)
-      (return nil))))
-
-(defun skip-whitespace-forward ()
-  (skip-chars-forward #'syntax-space-char-p))
-
-(defun skip-whitespace-backward ()
-  (skip-chars-backward #'syntax-space-char-p))
-
-(defun skip-space-and-comment-forward ()
-  (loop
-    (skip-whitespace-forward)
-    (unless (and (not (eq *syntax-comment-attribute* (preceding-property :attribute)))
-                 (eq *syntax-comment-attribute* (following-property :attribute)))
-      (return t))
-    (unless (forward-search-property-end
-             :attribute
-             *syntax-comment-attribute*)
-      (return nil))))
-
-(defun skip-space-and-comment-backward ()
-  (loop
-    (skip-whitespace-backward)
-    (unless (and (not (eq *syntax-comment-attribute* (following-property :attribute)))
-                 (eq *syntax-comment-attribute* (preceding-property :attribute)))
-      (return t))
-    (unless (backward-search-property-start
-             :attribute
-             *syntax-comment-attribute*)
       (return nil))))
 
 (defun current-column ()

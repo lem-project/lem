@@ -23,7 +23,12 @@
           syntax-start-block-comment-p
           syntax-end-block-comment-p
           syntax-scan-window
-          syntax-scan-buffer))
+          syntax-scan-buffer
+
+          skip-whitespace-forward
+          skip-whitespace-backward
+          skip-space-and-comment-forward
+          skip-space-and-comment-backward))
 
 (defvar *enable-syntax-highlight* t)
 
@@ -398,3 +403,31 @@
                  (when (<= i (1- end))
                    (setq i (1- end))))))))
     (setf (line-%symbol-lifetimes line) *syntax-symbol-lifetimes*)))
+
+(defun skip-whitespace-forward ()
+  (skip-chars-forward #'syntax-space-char-p))
+
+(defun skip-whitespace-backward ()
+  (skip-chars-backward #'syntax-space-char-p))
+
+(defun skip-space-and-comment-forward ()
+  (loop
+    (skip-whitespace-forward)
+    (unless (and (not (eq *syntax-comment-attribute* (preceding-property :attribute)))
+                 (eq *syntax-comment-attribute* (following-property :attribute)))
+      (return t))
+    (unless (forward-search-property-end
+             :attribute
+             *syntax-comment-attribute*)
+      (return nil))))
+
+(defun skip-space-and-comment-backward ()
+  (loop
+    (skip-whitespace-backward)
+    (unless (and (not (eq *syntax-comment-attribute* (following-property :attribute)))
+                 (eq *syntax-comment-attribute* (preceding-property :attribute)))
+      (return t))
+    (unless (backward-search-property-start
+             :attribute
+             *syntax-comment-attribute*)
+      (return nil))))

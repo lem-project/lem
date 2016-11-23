@@ -699,6 +699,7 @@
                                        'complete-symbol
                                        nil)
                     default-name)))
+      (setq name (string-right-trim ":" name))
       (with-safe-form
         (let ((*package* (lisp-current-package)))
           (read-from-string name))))))

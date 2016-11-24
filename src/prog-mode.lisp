@@ -52,9 +52,10 @@
 (defun indent-line-1 (default-indent-function)
   (let* ((f (get-bvar :calc-indent-function :default default-indent-function))
          (n (and f (funcall f))))
-    (if (and f n)
-        (indent-line-internal n)
-        (insert-char #\tab 1))))
+    (cond ((null f)
+           (insert-char #\tab 1))
+          (n
+           (indent-line-internal n)))))
 
 (define-key *prog-mode-keymap* (kbd "C-i") 'indent-line)
 (define-command indent-line () ()

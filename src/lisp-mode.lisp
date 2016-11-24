@@ -365,7 +365,7 @@
     (beginning-of-line)
     (when (eq *syntax-string-attribute*
               (preceding-property :attribute))
-      (return-from lisp-calc-indent 0))
+      (return-from lisp-calc-indent nil))
     (when (save-excursion (and (backward-sexp 1 t) (bolp)))
       (return-from lisp-calc-indent 0))
     (calc-indent-1)))

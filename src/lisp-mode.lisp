@@ -4,6 +4,7 @@
   (:import-from
    :lem.util)
   (:export
+   :*indent-spec-function*
    :*lisp-indent-table*
    :*lisp-mode-keymap*
    :*lisp-syntax-table*
@@ -43,6 +44,7 @@
 (in-package :lem.lisp-mode)
 
 (defvar *indent-table* (make-hash-table :test 'equal))
+(defvar *indent-spec-function* nil)
 
 (loop :for (name . n)
       :in '(("block" . 1)
@@ -310,6 +312,9 @@
                    (subseq string (1+ pos))
                    string))
          result)
+    (when (and *indent-spec-function*
+               (setf result (funcall *indent-spec-function* string)))
+      (return-from looking-at-indent-spec result))
     (when (and name (setf result (gethash name *indent-table*)))
       (return-from looking-at-indent-spec result))
     (let ((arglist (lisp-search-arglist string #'lisp-get-arglist)))

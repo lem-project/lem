@@ -1,6 +1,6 @@
 (in-package :cl-user)
 (defpackage :lem.lisp-mode
-  (:use :cl :lem :lem.grep :lem.prog-mode :lem.listener-mode)
+  (:use :cl :lem :lem.prog-mode :lem.listener-mode)
   (:import-from
    :lem.util)
   (:export
@@ -775,10 +775,19 @@
         (cond ((= 1 (length defs))
                (funcall (second (car defs))))
               (t
-               (let ((grep (make-grep "*Definitions*")))
-                 (loop :for (file jump-fun) :in defs :do
-                   (grep-append grep file jump-fun))
-                 (grep-update grep))))))))
+               (let ((grep (lem.grep:make-grep "*Definitions*")))
+                 (loop :for (file jump-fun) :in defs
+                       :do (lem.grep:append-entry
+                            grep
+                            (lambda ()
+                              (insert-string file)
+                              (lem.grep:put-entry-property
+                               grep
+                               (progn (beginning-of-line) (current-point))
+                               (progn (end-of-line) (current-point))
+                               jump-fun)
+                              (insert-newline 1))))
+                 (lem.grep:update grep))))))))
 
 (define-key *lisp-mode-keymap* (kbd "M-,") 'lisp-pop-find-definition-stack)
 (define-command lisp-pop-find-definition-stack () ()

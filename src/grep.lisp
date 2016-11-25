@@ -3,9 +3,9 @@
   (:use :cl :lem)
   (:export
    :make-grep
-   :grep-append
-   :grep-update
-   :grep-with-string
+   :put-entry-property
+   :append-entry
+   :update
    :grep-with-string
    :grep
    :grep-next
@@ -23,27 +23,35 @@
     :reader grep-contents)
    (index
     :initform -1
-    :accessor grep-index)))
+    :accessor grep-index)
+   (firstp
+    :initform t
+    :accessor grep-firstp)))
 
-(defun grep-content-item (content) (car content))
-(defun grep-content-jump-function (content) (cdr content))
+(defun grep-content-start-point (content) (first content))
+(defun grep-content-end-point (content) (second content))
+(defun grep-content-jump-function (content) (third content))
 
 (defun make-grep (buffer-name)
   (make-instance 'grep :buffer-name buffer-name))
 
-(defun grep-append (grep item jump-function)
-  (vector-push-extend (cons item jump-function)
-                      (grep-contents grep))
-  (values))
+(defun put-entry-property (grep start end jump-function)
+  (vector-push-extend (list start end jump-function) (grep-contents grep))
+  (put-property start end 'entry jump-function))
 
-(defun grep-update (grep)
+(defun append-entry (grep function)
+  (let ((buffer (get-buffer-create (grep-buffer-name grep))))
+    (when (grep-firstp grep)
+      (setf (grep-firstp grep) nil)
+      (buffer-erase buffer))
+    (save-excursion
+      (set-buffer buffer nil)
+      (point-set (point-max))
+      (funcall function))))
+
+(defun update (grep)
   (setf (grep-index grep) -1)
-  (info-popup (get-buffer-create (grep-buffer-name grep))
-              (lambda (out)
-                (loop :for content :across (grep-contents grep) :do
-                  (princ (grep-content-item content) out)
-                  (terpri out)))
-              nil)
+  (display-buffer (set-buffer-mode (get-buffer-create (grep-buffer-name grep)) 'grep-mode))
   (setf *current-grep* grep))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -70,13 +78,19 @@
         (current-directory (buffer-directory)))
     (dolist (elt (grep-parse string))
       (destructuring-bind (item filename linum) elt
-        (setf filename (expand-file-name filename current-directory))
-        (grep-append grep
-                     item
-                     (lambda ()
-                       (find-file filename)
-                       (goto-line linum)))))
-    (grep-update grep)))
+        (let* ((filename (expand-file-name filename current-directory))
+               (jump-fun (lambda ()
+                           (find-file filename)
+                           (goto-line linum))))
+          (append-entry grep
+                        (lambda ()
+                          (insert-string item)
+                          (put-entry-property grep
+                                              (progn (beginning-of-line) (current-point))
+                                              (progn (end-of-line) (current-point))
+                                              jump-fun)
+                          (insert-newline 1))))))
+    (update grep)))
 
 (define-command grep (string) ((list (minibuf-read-string ": " "grep -nH ")))
   (let ((directory (buffer-directory)))
@@ -106,3 +120,15 @@
     (when (<= 0 (1- (grep-index *current-grep*)))
       (decf (grep-index *current-grep*))
       (grep-jump-current-content))))
+
+(define-minor-mode grep-mode
+    (:name "grep"
+     :keymap *grep-mode-keymap*))
+
+(define-key *grep-mode-keymap* "C-m" 'grep-jump)
+(define-key *grep-mode-keymap* "q" 'quit-window)
+
+(define-command grep-jump () ()
+  (let ((jump-function (get-property (current-point) 'entry)))
+    (when jump-function
+      (funcall jump-function))))

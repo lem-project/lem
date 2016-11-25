@@ -20,7 +20,8 @@
 (sb-ext:save-lisp-and-die "lem"
 	                  :toplevel #'main
                           :executable t
-                          :compression t)
+                          ;:compression t
+                          )
 
 #-sb-core-compression
 (sb-ext:save-lisp-and-die "lem"

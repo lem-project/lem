@@ -86,8 +86,8 @@
                         (lambda ()
                           (insert-string item)
                           (put-entry-property grep
-                                              (progn (beginning-of-line) (current-point))
-                                              (progn (end-of-line) (current-point))
+                                              (beginning-of-line-point)
+                                              (end-of-line-point)
                                               jump-fun)
                           (insert-newline 1))))))
     (update grep)))

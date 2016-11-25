@@ -252,18 +252,15 @@
                   :attribute *syntax-constant-attribute*)
 
 (define-major-mode lisp-mode prog-mode
-  (:name "lisp"
-   :keymap *lisp-mode-keymap*
-   :syntax-table *lisp-syntax-table*)
+    (:name "lisp"
+     :keymap *lisp-mode-keymap*
+     :syntax-table *lisp-syntax-table*)
   (setf (get-bvar :enable-syntax-highlight) t)
   (setf (get-bvar :indent-tabs-mode) nil)
-  (setf (get-bvar :modeline-format)
-        (append *modeline-default-format*
-                (list
-                 " "
-                 (lambda (window)
-                   (package-name (lisp-current-package
-                                  (window-buffer window)))))))
+  (modeline-add-status-list (lambda (window)
+                              (package-name (lisp-current-package
+                                             (window-buffer window))))
+                            (current-buffer))
   (setf (get-bvar :calc-indent-function)
         'lisp-calc-indent)
   (setf (get-bvar :beginning-of-defun-function)

@@ -1,6 +1,8 @@
 (in-package :lem)
 
 (export '(*modeline-default-format*
+          modeline-add-status-list
+          modeline-remove-status-list
           modeline-read-only-p
           modeline-modified-p
           modeline-name
@@ -29,13 +31,18 @@
 
 (defvar *modeline-status-list* nil)
 
-(defun modeline-add-status-list (x)
-  (push x *modeline-status-list*)
+(defun modeline-add-status-list (x &optional (buffer nil bufferp))
+  (if bufferp
+      (push x (get-bvar :modeline-status-list :buffer buffer))
+      (push x *modeline-status-list*))
   (values))
 
-(defun modeline-remove-status-list (x)
-  (setf *modeline-status-list*
-        (remove x *modeline-status-list*)))
+(defun modeline-remove-status-list (x &optional (buffer nil bufferp))
+  (if bufferp
+      (setf (get-bvar :modeline-status-list :buffer buffer)
+            (remove x (get-bvar :modeline-status-list :buffer buffer)))
+      (setf *modeline-status-list*
+            (remove x *modeline-status-list*))))
 
 (defun posline (window)
   (cond
@@ -67,9 +74,16 @@
   (string-downcase (buffer-major-mode (window-buffer window))))
 
 (defun modeline-minor-modes (window)
-  (format nil "~(~{~^ ~A~}~)~{~^ ~A~}"
-          (buffer-minor-modes (window-buffer window))
-          *modeline-status-list*))
+  (with-output-to-string (*standard-output*)
+    (let ((firstp t))
+      (dolist (x (append (buffer-minor-modes (window-buffer window))
+                         (or (get-bvar :modeline-status-list :buffer (window-buffer window))
+                             *modeline-status-list*)))
+        (princ " ")
+        (if (functionp x)
+            (princ (funcall x window))
+            (let ((*print-case* :downcase)) (princ x)))
+        (setf firstp t)))))
 
 (defun modeline-linum (window)
   (window-current-linum window))

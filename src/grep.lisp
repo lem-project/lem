@@ -4,13 +4,16 @@
   (:export
    :make-grep
    :put-entry-property
-   :append-entry
+   :call-with-writer
    :update
    :grep-with-string
    :grep
    :grep-next
    :grep-prev))
 (in-package :lem.grep)
+
+(defvar *attribute-1* (make-attribute "blue" nil))
+(defvar *attribute-2* (make-attribute "red" nil))
 
 (defvar *current-grep* nil)
 
@@ -28,18 +31,16 @@
     :initform t
     :accessor grep-firstp)))
 
-(defun grep-content-start-point (content) (first content))
-(defun grep-content-end-point (content) (second content))
-(defun grep-content-jump-function (content) (third content))
+(defun grep-content (content) (first content))
 
 (defun make-grep (buffer-name)
   (make-instance 'grep :buffer-name buffer-name))
 
 (defun put-entry-property (grep start end jump-function)
-  (vector-push-extend (list start end jump-function) (grep-contents grep))
+  (vector-push-extend (list jump-function) (grep-contents grep))
   (put-property start end 'entry jump-function))
 
-(defun append-entry (grep function)
+(defun call-with-writer (grep function)
   (let ((buffer (get-buffer-create (grep-buffer-name grep))))
     (when (grep-firstp grep)
       (setf (grep-firstp grep) nil)
@@ -51,7 +52,8 @@
 
 (defun update (grep)
   (setf (grep-index grep) -1)
-  (display-buffer (set-buffer-mode (get-buffer-create (grep-buffer-name grep)) 'grep-mode))
+  (display-buffer (set-buffer-mode (get-buffer-create (grep-buffer-name grep))
+                                   (lambda () (grep-mode t))))
   (setf *current-grep* grep))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -63,7 +65,7 @@
           (filename (subseq line 0 i))
           (linum (parse-integer (subseq line (1+ i) j))))
      (when (and (stringp filename) (integerp linum))
-       (list line filename linum)))))
+       (list filename linum (subseq line j))))))
 
 (defun grep-parse-lines (lines)
   (remove nil
@@ -77,19 +79,22 @@
   (let ((grep (make-grep buffer-name))
         (current-directory (buffer-directory)))
     (dolist (elt (grep-parse string))
-      (destructuring-bind (item filename linum) elt
+      (destructuring-bind (filename linum thing) elt
         (let* ((filename (expand-file-name filename current-directory))
                (jump-fun (lambda ()
                            (find-file filename)
                            (goto-line linum))))
-          (append-entry grep
-                        (lambda ()
-                          (insert-string item)
-                          (put-entry-property grep
-                                              (beginning-of-line-point)
-                                              (end-of-line-point)
-                                              jump-fun)
-                          (insert-newline 1))))))
+          (call-with-writer grep
+                            (lambda ()
+                              (insert-string-with-attribute filename *attribute-1*)
+                              (insert-string ":")
+                              (insert-string-with-attribute (princ-to-string linum) *attribute-2*)
+                              (insert-string thing)
+                              (put-entry-property grep
+                                                  (beginning-of-line-point)
+                                                  (end-of-line-point)
+                                                  jump-fun)
+                              (insert-newline 1))))))
     (update grep)))
 
 (define-command grep (string) ((list (minibuf-read-string ": " "grep -nH ")))
@@ -104,7 +109,7 @@
 (defun grep-jump-current-content ()
   (let ((content (aref (grep-contents *current-grep*)
                        (grep-index *current-grep*))))
-    (funcall (grep-content-jump-function content))))
+    (funcall (grep-content content))))
 
 (define-key *global-keymap* (kbd "M-n") 'grep-next)
 (define-command grep-next () ()

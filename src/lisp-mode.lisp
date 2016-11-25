@@ -777,7 +777,7 @@
               (t
                (let ((grep (lem.grep:make-grep "*Definitions*")))
                  (loop :for (file jump-fun) :in defs
-                       :do (lem.grep:append-entry
+                       :do (lem.grep:call-with-writer
                             grep
                             (lambda ()
                               (insert-string file)

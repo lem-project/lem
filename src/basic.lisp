@@ -33,6 +33,7 @@
           get-property
           put-property
           put-attribute
+          insert-string-with-attribute
           after-property
           before-property
           following-property
@@ -304,6 +305,10 @@
 (defun put-attribute (start end attribute)
   (buffer-put-property (current-buffer) start end :attribute attribute))
 
+(defun insert-string-with-attribute (string attribute)
+  (let ((start (current-point)))
+    (insert-string string)
+    (put-attribute start (current-point) attribute)))
 
 (defun %syntax-pos-property (pos property-name)
   (let ((line (buffer-get-line (current-buffer) (current-linum))))

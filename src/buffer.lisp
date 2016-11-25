@@ -265,6 +265,10 @@
 (defun buffer-put-property (buffer start end key value)
   (buffer-apply-lines #'line-add-property buffer start end key value))
 
+(defun buffer-get-property (buffer point key)
+  (let ((line (buffer-get-line buffer (point-linum point))))
+    (line-search-property line key (point-charpos point))))
+
 (defun buffer-add-overlay (buffer overlay)
   (push overlay (buffer-overlays buffer)))
 

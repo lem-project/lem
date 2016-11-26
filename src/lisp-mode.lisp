@@ -416,7 +416,9 @@
 (defun lisp-change-package (package)
   (setf (get-bvar :file-property-list)
         (acons "package" (package-name package)
-               (get-bvar :file-property-list))))
+               (remove "package" (get-bvar :file-property-list)
+                       :test #'equal
+                       :key #'car))))
 
 (defun lisp-read-change-package (find-package-function
                                  complete-package-function)
@@ -441,16 +443,16 @@
                                (string-downcase (package-name pkg)))
                            (list-all-packages))))))
 
-(defun scan-current-package ()
+(defun scan-current-package (check-package-fn)
   (save-excursion
-   (loop (multiple-value-bind (result groups)
-             (looking-at-line "\\(in-package (?:#?:|')([^\)]*)\\)")
-           (when result
-             (let ((package (find-package (string-upcase (aref groups 0)))))
-               (when package
-                 (return package))))
-           (unless (forward-line -1)
-             (return))))))
+    (loop (multiple-value-bind (result groups)
+              (looking-at-line "\\(in-package (?:#?:|')([^\)]*)\\)")
+            (when result
+              (let ((package (funcall check-package-fn (aref groups 0))))
+                (when package
+                  (return package))))
+            (unless (forward-line -1)
+              (return))))))
 
 (defun %string-to-exps (str package)
   (let ((str str)
@@ -961,10 +963,13 @@
         (delete-char 1 nil))
       (forward-line 1))))
 
+(defun check-package (package-name)
+  (find-package (string-upcase package-name)))
+
 (let ((prev-point nil))
   (defun lisp-idle-timer-function ()
     (when (eq (major-mode) 'lisp-mode)
-      (let ((package (scan-current-package)))
+      (let ((package (scan-current-package #'check-package)))
         (when package
           (lisp-change-package package))))
     (let ((curr-point (current-point)))

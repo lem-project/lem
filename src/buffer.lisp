@@ -76,6 +76,14 @@
         :do (when (<= start pos (1- end))
               (return value))))
 
+(defun line-search-property-range (line key pos-start pos-end)
+  (when (null pos-end)
+    (setq pos-end most-positive-fixnum))
+  (loop :for (start end value) :in (getf (line-plist line) key)
+        :do (when (or (<= pos-start start pos-end)
+                      (<= start pos-start (1- end)))
+              (return value))))
+
 (defun line-property-insert-pos (line pos offset)
   (loop :for values :in (cdr (line-plist line)) :by #'cddr
         :do (dolist (v values)
@@ -463,10 +471,12 @@
          (buffer-insert-newline buffer linum pos))
         (t
          (with-buffer-modify buffer
-           (with-push-undo (buffer)
-             (buffer-delete-char buffer linum pos 1)
-             (make-point linum pos))
            (let ((line (buffer-get-line buffer linum)))
+             (when (line-search-property line 'read-only pos)
+               (error 'readonly))
+             (with-push-undo (buffer)
+               (buffer-delete-char buffer linum pos 1)
+               (make-point linum pos))
              (setf (line-%scan-cached-p line) nil)
              (line-property-insert-pos line pos 1)
              (dolist (marker (buffer-markers buffer))
@@ -484,6 +494,9 @@
 
 (defun buffer-insert-newline (buffer linum pos)
   (with-buffer-modify buffer
+    (let ((line (buffer-get-line buffer linum)))
+      (when (line-search-property line 'read-only pos)
+        (error 'readonly)))
     (with-push-undo (buffer)
       (buffer-delete-char buffer linum pos 1)
       (make-point linum pos))
@@ -514,6 +527,8 @@
 (defun buffer-insert-line (buffer linum pos str)
   (with-buffer-modify buffer
     (let ((line (buffer-get-line buffer linum)))
+      (when (line-search-property line 'read-only pos)
+        (error 'readonly))
       (setf (line-%scan-cached-p line) nil)
       (line-property-insert-pos line pos (length str))
       (with-push-undo (buffer)
@@ -532,12 +547,24 @@
                          (subseq (line-str line) pos)))))
   t)
 
+(defun merge-plist (plist1 plist2)
+  (let ((new-plist '()))
+    (flet ((f (plist)
+             (loop :for (k v) :on plist :by #'cddr
+                   :do (setf (getf new-plist k)
+                             (nconc (getf new-plist k) v)))))
+      (f plist1)
+      (f plist2))
+    new-plist))
+
 (defun buffer-delete-char (buffer linum pos n)
   (with-buffer-modify buffer
     (let ((line (buffer-get-line buffer linum))
           (del-lines (list "")))
       (setf (line-%scan-cached-p line) nil)
       (loop while (or (eq n t) (plusp n)) do
+        (when (line-search-property-range line 'read-only pos (if (eq n t) nil (+ pos n)))
+          (error 'readonly))
         (cond
           ((and (not (eq n t))
                 (<= n (- (length (line-str line)) pos)))
@@ -581,6 +608,17 @@
                  (concatenate 'string
                               (subseq (line-str line) 0 pos)
                               (line-str (line-next line))))
+           (setf (line-plist line)
+                 (merge-plist
+                  (line-plist line)
+                  (loop :for (key elements) :on (line-plist (line-next line)) :by #'cddr
+                        :append (let ((new-elements
+                                       (loop :for (start end value) :in elements
+                                             :collect (list (+ start pos)
+                                                            (+ end pos)
+                                                            value))))
+                                  (when new-elements
+                                    (list key new-elements))))))
            (when (eq (line-next line)
                      (buffer-tail-line buffer))
              (setf (buffer-tail-line buffer) line))

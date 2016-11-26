@@ -11,6 +11,8 @@
            :listener-reset-interactive))
 (in-package :lem.listener-mode)
 
+(defvar *prompt-attribute* (make-attribute "blue" nil :bold-p t))
+
 (defvar %listener-marker-indicator (gensym))
 (defmacro %listener-marker ()
   `(get-bvar %listener-marker-indicator))
@@ -49,9 +51,10 @@
            (insert-string
             (princ-to-string
              (funcall (get-bvar :listener-get-prompt-function))))
-           (put-attribute (make-point (current-linum) 0)
-                          (make-point (current-linum) (current-charpos))
-                          (make-attribute "blue" nil :bold-p t))
+           (let ((start (make-point (current-linum) 0))
+                 (end (make-point (current-linum) (current-charpos))))
+             (put-attribute start end *prompt-attribute*)
+             (put-property start end 'lem::read-only t))
            (buffer-undo-boundary (current-buffer))
            (listener-update-marker)))
     (if (eq buffer (current-buffer))

@@ -275,22 +275,22 @@
     (point-set (point-min))
     (loop :while (forward-sexp 1 t))
     (skip-whitespace-forward)
-    (unless (eobp)
-      (error "unmatched paren"))))
+    (eobp)))
 
 (defun compilation-finished (result)
   (stop-eval-timer)
   (setf *last-compilation-result* result)
-  (check-parens)
-  (destructuring-bind (notes successp duration loadp fastfile)
-      (rest result)
-    (show-compile-result notes duration
-                         (if (not loadp)
-                             successp
-                             (and fastfile successp)))
-    (highlight-notes notes)
-    (when (and loadp fastfile successp)
-      (eval-async `(swank:load-file ,fastfile) nil t))))
+  (if (not (check-parens))
+      (message "unmatched paren")
+      (destructuring-bind (notes successp duration loadp fastfile)
+          (rest result)
+        (show-compile-result notes duration
+                             (if (not loadp)
+                                 successp
+                                 (and fastfile successp)))
+        (highlight-notes notes)
+        (when (and loadp fastfile successp)
+          (eval-async `(swank:load-file ,fastfile) nil t)))))
 
 (defun show-compile-result (notes secs successp)
   (message (format nil "~{~A~^ ~}"

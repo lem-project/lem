@@ -43,7 +43,18 @@
   (window-set-pos (minibuffer-window) 0 (1- (display-height)))
   (window-set-size (minibuffer-window) (display-width) 1))
 
+(defun log-message (string args)
+  (when string
+    (let ((msg (apply #'format nil string args)))
+      (let ((buffer (get-buffer-create "*Messages*")))
+        (with-open-stream (stream (make-buffer-output-stream
+                                   buffer
+                                   (point-max buffer)))
+          (fresh-line stream)
+          (princ msg stream))))))
+
 (defun message (string &rest args)
+  (log-message string args)
   (when (interactive-p)
     (let ((flag (minibuffer-window-active-p)))
       (print-echoarea (if (null string)

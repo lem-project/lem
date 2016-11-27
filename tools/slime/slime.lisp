@@ -143,7 +143,7 @@
   (defun slime-eval-internal (sexp &optional (package (current-package)))
     (m swank-protocol:emacs-rex sexp)))
 
-(defun eval-async (form &optional cont thread)
+(defun eval-async (form &optional cont thread package)
   (swank-protocol:emacs-rex
    *connection*
    form
@@ -154,7 +154,8 @@
                         (funcall cont result)))
                      ((:abort condition)
                       (message "Evaluation aborted on ~A." condition))))
-   :thread thread))
+   :thread thread
+   :package package))
 
 (defun eval-with-transcript (form)
   (swank-protocol:emacs-rex
@@ -181,6 +182,7 @@
   t)
 
 (defun read-package-name ()
+  (check-connection)
   (let ((package-names (mapcar #'string-downcase
                                (slime-eval-internal
                                 '(swank:list-all-package-names t)))))
@@ -382,7 +384,8 @@
     (refresh-output-buffer)
     (eval-async `(swank:compile-file-for-emacs ,file t)
                 #'compilation-finished
-                t)
+                t
+                (buffer-package (current-buffer)))
     (start-eval-timer)))
 
 (define-command slime-compile-region (start end) ("r")
@@ -397,7 +400,8 @@
                                                  ,(buffer-filename (current-buffer))
                                                  nil)
                 #'compilation-finished
-                t)
+                t
+                (buffer-package (current-buffer)))
     (start-eval-timer)))
 
 (define-command slime-compile-defun () ()

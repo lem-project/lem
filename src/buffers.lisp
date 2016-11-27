@@ -19,6 +19,7 @@
 (defvar *buffer-list* nil)
 
 (defun add-buffer (buffer)
+  (check-type buffer buffer)
   (unless (ghost-buffer-p buffer)
     (assert (not (get-buffer (buffer-name buffer))))
     (push buffer *buffer-list*)))
@@ -84,11 +85,13 @@
         (car buffer-list))))
 
 (defun update-prev-buffer (buffer)
+  (check-type buffer buffer)
   (setq *buffer-list*
         (cons buffer
               (delete buffer (buffer-list)))))
 
 (defun set-buffer (buffer &optional (update-prev-buffer-p t))
+  (check-type buffer buffer)
   (check-switch-minibuffer-window)
   (unless (eq (current-buffer) buffer)
     (when update-prev-buffer-p
@@ -121,10 +124,12 @@
       (assert (<= 0 (window-current-charpos (current-window)))))))
 
 (defun delete-buffer (buffer)
+  (check-type buffer buffer)
   (mapc #'funcall (buffer-delete-hooks buffer))
   (setf *buffer-list* (delete buffer (buffer-list))))
 
 (defun get-next-buffer (buffer)
+  (check-type buffer buffer)
   (let* ((buffer-list (reverse (buffer-list)))
          (res (member buffer buffer-list)))
     (if (cdr res)
@@ -132,6 +137,7 @@
         (car buffer-list))))
 
 (defun bury-buffer (buffer)
+  (check-type buffer buffer)
   (setf *buffer-list*
         (append (delete buffer (buffer-list))
                 (list buffer)))

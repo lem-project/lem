@@ -129,8 +129,9 @@
                                    ((:abort condition)
                                     (declare (ignore condition))
                                     (editor-error "Synchronous Lisp Evaluation aborted"))))
-                 :package package)
-                (cond ((swank-protocol:message-waiting-p *connection* :timeout 10)
+                 :package package
+                 :thread t)
+                (cond ((swank-protocol:message-waiting-p *connection* :timeout 2)
                        (pull-events)
                        result-value)
                       (t

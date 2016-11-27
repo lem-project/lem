@@ -106,3 +106,8 @@
   (when arg (delete-region (point-min) (point-max)))
   (listener-reset-prompt)
   t)
+
+(define-key *listener-mode-keymap* (kbd "C-c C-u") 'listener-clear-input)
+(define-command listener-clear-input () ()
+  (delete-region (marker-point (%listener-marker))
+                 (point-max)))

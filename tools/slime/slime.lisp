@@ -422,13 +422,14 @@
   (macroexpand-internal 'swank:swank-macroexpand-all "*slime-macroexpand-all*"))
 
 (defun symbol-completion (str)
-  (destructuring-bind (completions timeout-p)
-      (slime-eval-string-internal
-       (format nil "(swank:fuzzy-completions ~S ~S)"
-               str
-               (current-package)))
-    (declare (ignore timeout-p))
-    (completion-hypheen str (mapcar #'first completions))))
+  (let ((result (slime-eval-string-internal
+                 (format nil "(swank:fuzzy-completions ~S ~S)"
+                         str
+                         (current-package)))))
+    (when result
+      (destructuring-bind (completions timeout-p) result
+        (declare (ignore timeout-p))
+        (completion-hypheen str (mapcar #'first completions))))))
 
 (defun read-symbol-name (prompt &optional (initial ""))
   (minibuf-read-line prompt initial #'symbol-completion nil))

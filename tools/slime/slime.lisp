@@ -307,11 +307,12 @@
   (save-excursion
     (set-buffer buffer nil)
     (goto-position pos)
+    (skip-chars-backward #'syntax-symbol-char-p)
     (let ((start (current-point)))
-      (forward-sexp 1)
+      (forward-sexp 1 t)
       (make-overlay start (current-point) *note-attribute*))))
 
-(defun append-note-entry (grep name pos source-context jump-fun)
+(defun append-note-entry (grep name pos message source-context jump-fun)
   (lem.grep:call-with-writer
    grep
    (lambda ()
@@ -324,6 +325,8 @@
                                   (end-of-line-point)
                                   jump-fun)
      (insert-newline 1)
+     (insert-string message)
+     (insert-newline 1)
      (insert-string source-context))))
 
 (defun highlight-notes (notes)
@@ -332,32 +335,37 @@
         (grep (lem.grep:make-grep "*slime-compilations*")))
     (dolist (note notes)
       (optima:match note
-        ((optima.extra:plist :location
-                             (list :location
-                                   (list :buffer buffer-name)
-                                   (list :offset pos _)
-                                   _)
-                             :source-context source-context)
-         (let ((jump-fun (lambda ()
-                           (let ((buffer (get-buffer buffer-name)))
-                             (when buffer
-                               (setf (current-window) (pop-to-buffer buffer))
-                               (goto-position pos))))))
-           (append-note-entry grep buffer-name pos source-context jump-fun))
-         (push (make-highlight-overlay pos (get-buffer buffer-name))
-               overlays))
-        ((optima.extra:plist :location
-                             (list :location
-                                   (list :file file)
-                                   (list :position pos)
-                                   _)
-                             :source-context source-context)
-         (let ((jump-fun (lambda ()
-                           (find-file file)
-                           (goto-position pos))))
-           (append-note-entry grep file pos source-context jump-fun))
-         (push (make-highlight-overlay pos (get-buffer-from-file file))
-               overlays))))
+        ((and (optima:property :location
+                               (or (list :location
+                                         (list :buffer buffer-name)
+                                         (list :offset pos _)
+                                         _)
+                                   (list :location
+                                         (list :file file)
+                                         (list :position pos)
+                                         _)))
+              (or (optima:property :message message) (and))
+              (or (optima:property :source-context source-context) (and)))
+         (let ((jump-fun (if buffer-name
+                             (lambda ()
+                               (let ((buffer (get-buffer buffer-name)))
+                                 (when buffer
+                                   (setf (current-window) (pop-to-buffer buffer))
+                                   (goto-position pos))))
+                             (lambda ()
+                               (find-file file)
+                               (goto-position pos)))))
+           (append-note-entry grep
+                              (or buffer-name file)
+                              pos
+                              message
+                              source-context
+                              jump-fun)
+           (push (make-highlight-overlay pos
+                                         (if buffer-name
+                                             (get-buffer buffer-name)
+                                             (get-buffer-from-file file)))
+                 overlays)))))
     (when overlays
       (lem.grep:update grep)
       (setf (get-bvar 'overlays) overlays))))

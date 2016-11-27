@@ -270,9 +270,18 @@
   (insert-char #\space n)
   (slime-echo-arglist))
 
+(defun check-parens ()
+  (save-excursion
+    (point-set (point-min))
+    (loop :while (forward-sexp 1 t))
+    (skip-whitespace-forward)
+    (unless (eobp)
+      (error "unmatched paren"))))
+
 (defun compilation-finished (result)
   (stop-eval-timer)
   (setf *last-compilation-result* result)
+  (check-parens)
   (destructuring-bind (notes successp duration loadp fastfile)
       (rest result)
     (show-compile-result notes duration

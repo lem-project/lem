@@ -669,8 +669,11 @@
   (and (timer-p *eval-timer*)
        (timer-alive-p *eval-timer*)))
 
+(defvar *modeline-eval-flag* "During-Evalation")
+
 (defun start-eval-timer ()
   (unless (eval-timer-alive-p)
+    (modeline-add-status-list *modeline-eval-flag*)
     (setf *eval-timer*
           (start-timer nil 20 t
                        (lambda ()
@@ -683,6 +686,7 @@
 
 (defun stop-eval-timer ()
   (when (eval-timer-alive-p)
+    (modeline-remove-status-list *modeline-eval-flag*)
     (stop-timer *eval-timer*)))
 
 (defun repl-confirm (string)

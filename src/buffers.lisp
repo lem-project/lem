@@ -1,7 +1,6 @@
 (in-package :lem)
 
-(export '(current-buffer
-          buffer-list
+(export '(buffer-list
           ghost-buffer-p
           special-buffer-p
           filter-special-buffers
@@ -25,12 +24,6 @@
     (push buffer *buffer-list*)))
 
 (defun buffer-list () *buffer-list*)
-
-(defun current-buffer ()
-  (window-buffer (current-window)))
-
-(defun (setf current-buffer) (new-buffer)
-  (setf (window-buffer (current-window)) new-buffer))
 
 (defun ghost-buffer-p (buffer)
   (let ((name (buffer-name buffer)))

@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(*undo-limit*
+          current-buffer
           buffer
           buffer-p
           buffer-name
@@ -195,6 +196,14 @@
   last-write-date
   delete-hooks
   variables)
+
+(defvar *current-buffer*)
+
+(defun current-buffer () *current-buffer*)
+
+(defun (setf current-buffer) (buffer)
+  (check-type buffer buffer)
+  (setf *current-buffer* buffer))
 
 (defvar *undo-modes* '(:edit :undo :redo))
 (defvar *undo-mode* :edit)

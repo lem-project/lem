@@ -69,14 +69,14 @@
   (point-set new-point)
   new-point)
 
-(defun point-set (point &optional (window (current-window)))
-  ;; この関数はwindowではなくbufferにしないといけない
-  (setf (buffer-marker-point (window-buffer window))
-        (make-point (min (buffer-nlines (window-buffer window))
+(defun point-set (point &optional (buffer (current-buffer)))
+  (setf (buffer-marker-point buffer)
+        (make-point (min (buffer-nlines buffer)
                          (point-linum point))
                     (max 0
-                         (min (buffer-line-length (window-buffer window)
-                                                  (window-current-linum window))
+                         (min (buffer-line-length
+                               buffer
+                               (marker-linum (buffer-point-marker buffer)))
                               (point-charpos point))))))
 
 (defun point< (p1 p2)

@@ -109,8 +109,9 @@
 (defun current-window ()
   *current-window*)
 
-(defun (setf current-window) (new-window)
-  (setf *current-window* new-window))
+(defun (setf current-window) (window)
+  (check-type window window)
+  (setf *current-window* window))
 
 (defun window-tree ()
   *window-tree*)

@@ -63,9 +63,7 @@
   (setf (window-current-charpos) new-charpos))
 
 (defun current-point ()
-  (make-point
-   (current-linum)
-   (current-charpos)))
+  (window-point (current-window)))
 
 (defun (setf current-point) (new-point)
   (point-set new-point)

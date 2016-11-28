@@ -332,6 +332,8 @@
      (insert-newline 1)
      (insert-string source-context))))
 
+(defvar *note-overlays* nil)
+
 (defun highlight-notes (notes)
   (slime-remove-notes)
   (let ((overlays '())
@@ -371,10 +373,10 @@
                  overlays)))))
     (when overlays
       (lem.grep:update grep)
-      (setf (get-bvar 'overlays) overlays))))
+      (setf *note-overlays* overlays))))
 
 (define-command slime-remove-notes () ()
-  (mapc #'delete-overlay (get-bvar 'overlays)))
+  (mapc #'delete-overlay *note-overlays*))
 
 (define-command slime-compile-and-load-file () ()
   (check-connection)

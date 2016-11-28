@@ -106,7 +106,7 @@
 
 (defun point-min (&optional (buffer (current-buffer)))
   (declare (ignore buffer))
-  (make-point 1 0))
+  (make-min-point))
 
 (defun point-max (&optional (buffer (current-buffer)))
   (buffer-end-point buffer))

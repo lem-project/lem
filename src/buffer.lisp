@@ -640,7 +640,7 @@
 
 (defun buffer-erase (&optional (buffer (current-buffer)))
   (dolist (marker (buffer-markers buffer))
-    (setf (marker-point marker) (make-point 1 0)))
+    (setf (marker-point marker) (make-min-point)))
   (buffer-delete-char buffer 1 0 t)
   (buffer-reset buffer)
   t)

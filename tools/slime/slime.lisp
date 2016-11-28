@@ -163,12 +163,14 @@
    *connection*
    form
    :continuation (lambda (value)
+                   (stop-eval-timer)
                    (alexandria:destructuring-case value
                      ((:ok x)
                       (message "~A" x))
                      ((:abort condition)
                       (message "Evaluation aborted on ~A." condition))))
-   :package (current-package))
+   :package (current-package)
+   :thread t)
   (start-eval-timer))
 
 (defun re-eval-defvar (string)

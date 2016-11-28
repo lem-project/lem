@@ -940,30 +940,31 @@
   (declare (ignore level stepping))
   (let ((buffer (get-debug-buffer thread)))
     (when buffer
-      (when (eq buffer (window-buffer (current-window)))
-        (quit-window (current-window))
-        (let* ((repl-buffer (repl-buffer))
-               (repl-window (when repl-buffer
-                              (first (get-buffer-windows repl-buffer)))))
-          (when repl-window
-            (setf (current-window) repl-window)))))))
+      (cond ((eq buffer (window-buffer (current-window)))
+             (quit-window (current-window) t)
+             (let* ((repl-buffer (repl-buffer))
+                    (repl-window (when repl-buffer
+                                   (first (get-buffer-windows repl-buffer)))))
+               (when repl-window
+                 (setf (current-window) repl-window))))
+            (t
+             (kill-buffer buffer))))))
 
 (defun start-debugger (thread level condition restarts frames conts)
   (let ((buffer (get-debug-buffer-create thread)))
     (setf (current-window) (display-buffer buffer))
-    (unless (= level (get-bvar 'level :buffer buffer :default -1))
-      (slime-debug-mode)
-      (setf (swank-protocol:connection-thread *connection*) thread)
-      (setf (get-bvar 'thread :buffer buffer)
-            thread
-            (get-bvar 'level :buffer buffer)
-            level
-            (get-bvar 'condition :buffer buffer)
-            condition
-            (get-bvar 'restarts :buffer buffer)
-            restarts
-            (get-bvar 'continuations :buffer buffer)
-            conts))
+    (slime-debug-mode)
+    (setf (swank-protocol:connection-thread *connection*) thread)
+    (setf (get-bvar 'thread :buffer buffer)
+          thread
+          (get-bvar 'level :buffer buffer)
+          level
+          (get-bvar 'condition :buffer buffer)
+          condition
+          (get-bvar 'restarts :buffer buffer)
+          restarts
+          (get-bvar 'continuations :buffer buffer)
+          conts)
     (buffer-erase buffer)
     (buffer-add-delete-hook buffer 'slime-quit-debugger)
     (dolist (str condition)

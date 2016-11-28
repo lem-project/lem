@@ -1,6 +1,8 @@
 (in-package :lem)
 
-(export '(make-point
+(export '(point-p
+          point
+          make-point
           make-min-point
           point-linum
           point-charpos
@@ -16,6 +18,16 @@
           point>=
           point-min
           point-max))
+
+(defun point-p (point)
+  (and (consp point)
+       (integerp (car point))
+       (<= 1 (car point))
+       (integerp (cdr point))
+       (<= 0 (car point))))
+
+(deftype point ()
+  `(satisfies point-p))
 
 (defun make-point (linum charpos)
   (cons linum charpos))

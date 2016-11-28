@@ -125,7 +125,7 @@
 
 (defun delete-buffer (buffer)
   (check-type buffer buffer)
-  (mapc #'funcall (buffer-delete-hooks buffer))
+  (call-buffer-delete-hooks buffer)
   (setf *buffer-list* (delete buffer (buffer-list))))
 
 (defun get-next-buffer (buffer)

@@ -418,8 +418,8 @@
         (if (< n 1)
             1
             (min n (buffer-nlines (current-buffer)))))
-  (setf (current-linum) n)
-  (beginning-of-line)
+  (point-set (point-min))
+  (forward-line (1- n))
   t)
 
 (define-key *global-keymap* (kbd "C-x #") 'filter-buffer)

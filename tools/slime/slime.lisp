@@ -136,10 +136,7 @@
                        result-value)
                       (t
                        (editor-error "timeout"))))))
-  (defun slime-eval-string-internal (string
-                                     &optional (package
-                                                (swank-protocol:connection-package
-                                                 *connection*)))
+  (defun slime-eval-string-internal (string &optional (package (current-package)))
     (m swank-protocol:emacs-rex-string string))
   (defun slime-eval-internal (sexp &optional (package (current-package)))
     (m swank-protocol:emacs-rex sexp)))
@@ -438,18 +435,24 @@
   (check-connection)
   (macroexpand-internal 'swank:swank-macroexpand-all "*slime-macroexpand-all*"))
 
-(defun symbol-completion (str)
+(defun symbol-completion (str &optional (package (current-package)))
   (let ((result (slime-eval-string-internal
                  (format nil "(swank:fuzzy-completions ~S ~S)"
                          str
-                         (current-package)))))
+                         package)
+                 "COMMON-LISP")))
     (when result
       (destructuring-bind (completions timeout-p) result
         (declare (ignore timeout-p))
         (completion-hypheen str (mapcar #'first completions))))))
 
 (defun read-symbol-name (prompt &optional (initial ""))
-  (minibuf-read-line prompt initial #'symbol-completion nil))
+  (let ((package (current-package)))
+    (minibuf-read-line prompt
+                       initial
+                       (lambda (str)
+                         (symbol-completion str package))
+                       nil)))
 
 (defvar *edit-definition-stack* nil)
 

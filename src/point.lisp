@@ -38,8 +38,14 @@
 (defun point-linum (point)
   (car point))
 
+(defun (setf point-linum) (linum point)
+  (setf (car point) linum))
+
 (defun point-charpos (point)
   (cdr point))
+
+(defun (setf point-charpos) (charpos point)
+  (setf (cdr point) charpos))
 
 (defmacro with-points (binds &body body)
   `(let ,(mapcan #'(lambda (b)
@@ -63,7 +69,7 @@
   (setf (marker-charpos (buffer-point-marker (current-buffer))) new-charpos))
 
 (defun current-point ()
-  (buffer-point-marker (current-buffer)))
+  (marker-point (buffer-point-marker (current-buffer))))
 
 (defun (setf current-point) (new-point)
   (point-set new-point)

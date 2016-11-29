@@ -97,6 +97,7 @@
                     (window-view-charpos (current-window))
                     (window-current-linum (current-window))
                     (window-current-charpos (current-window))))))
+    (setf (window-buffer (current-window)) buffer)
     (setf (current-buffer) buffer)
     (let ((view-linum 1)
           (view-charpos 0)

@@ -74,22 +74,26 @@
   (setf (window-%buffer window) buffer))
 
 (defun window-point (&optional (window (current-window)))
-  (marker-point (window-point-marker window)))
+  (if (eq window (current-window))
+      (marker-point (buffer-point-marker (window-buffer window)))
+      (marker-point (window-point-marker window))))
 
 (defun (setf window-point) (new-point &optional (window (current-window)))
-  (setf (marker-point (window-point-marker window)) new-point))
+  (if (eq window (current-window))
+      (setf (marker-point (buffer-point-marker (window-buffer window))) new-point)
+      (setf (marker-point (window-point-marker window)) new-point)))
 
 (defun window-current-charpos (&optional (window (current-window)))
-  (marker-charpos (window-point-marker window)))
+  (point-charpos (window-point window)))
 
 (defun (setf window-current-charpos) (new-pos &optional (window (current-window)))
-  (setf (marker-charpos (window-point-marker window)) new-pos))
+  (setf (point-charpos (window-point window)) new-pos))
 
 (defun window-current-linum (&optional (window (current-window)))
-  (marker-linum (window-point-marker window)))
+  (point-linum (window-point window)))
 
 (defun (setf window-current-linum) (new-linum &optional (window (current-window)))
-  (setf (marker-linum (window-point-marker window)) new-linum))
+  (setf (point-linum (window-point window)) new-linum))
 
 (defun window-view-linum (&optional (window (current-window)))
   (marker-linum (window-view-marker window)))

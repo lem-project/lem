@@ -77,13 +77,12 @@
 
 (defun point-set (point &optional (buffer (current-buffer)))
   (setf (marker-point (buffer-point-marker buffer))
-        (make-point (min (buffer-nlines buffer)
-                         (point-linum point))
-                    (max 0
-                         (min (buffer-line-length
-                               buffer
-                               (marker-linum (buffer-point-marker buffer)))
-                              (point-charpos point))))))
+        (let ((linum (min (buffer-nlines buffer)
+                          (point-linum point))))
+          (make-point linum
+                      (max 0
+                           (min (buffer-line-length buffer linum)
+                                (point-charpos point)))))))
 
 (defun point< (p1 p2)
   (cond ((< (point-linum p1) (point-linum p2))

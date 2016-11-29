@@ -980,8 +980,10 @@
           conts)
     (buffer-erase buffer)
     (buffer-add-delete-hook buffer 'slime-quit-debugger)
-    (dolist (str condition)
-      (insert-string str)
+    (dolist (c condition)
+      (insert-string (if (stringp c)
+                         c
+                         (prin1-to-string c)))
       (insert-newline 1))
     (insert-string (format nil "~%Restarts:~%"))
     (loop :for n :from 0

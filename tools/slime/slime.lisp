@@ -610,14 +610,18 @@
 
 (define-command slime-describe-symbol () ()
   (check-connection)
-  (let ((symbol-name (read-symbol-name "Describe symbol: ")))
+  (let ((symbol-name
+         (read-symbol-name "Describe symbol: "
+                           (or (symbol-string-at-point) ""))))
     (when (string= "" symbol-name)
       (editor-error "No symbol given"))
     (show-description (slime-eval-internal `(swank:describe-symbol ,symbol-name)))))
 
 (define-command slime-documentation-lookup () ()
   (check-connection)
-  (let ((symbol-name (read-symbol-name "Describe symbol: ")))
+  (let ((symbol-name
+         (read-symbol-name "Describe symbol: "
+                           (or (symbol-string-at-point) ""))))
     (when (string= "" symbol-name)
       (editor-error "No symbol given"))
     (lem-slime.clhs:main symbol-name)))

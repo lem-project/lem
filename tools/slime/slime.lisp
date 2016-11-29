@@ -307,7 +307,7 @@
 
 (defun make-highlight-overlay (pos buffer)
   (save-excursion
-    (set-buffer buffer nil)
+    (set-buffer buffer)
     (goto-position pos)
     (skip-chars-backward #'syntax-symbol-char-p)
     (let ((start (current-point)))

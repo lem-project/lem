@@ -76,6 +76,9 @@
 (defun window-point (&optional (window (current-window)))
   (marker-point (window-point-marker window)))
 
+(defun (setf window-point) (new-point &optional (window (current-window)))
+  (setf (marker-point (window-point-marker window)) new-point))
+
 (defun window-current-charpos (&optional (window (current-window)))
   (marker-charpos (window-point-marker window)))
 

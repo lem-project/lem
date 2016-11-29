@@ -70,7 +70,7 @@
   new-point)
 
 (defun point-set (point &optional (buffer (current-buffer)))
-  (setf (buffer-marker-point buffer)
+  (setf (marker-point (buffer-point-marker buffer))
         (make-point (min (buffer-nlines buffer)
                          (point-linum point))
                     (max 0

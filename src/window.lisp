@@ -111,6 +111,10 @@
 
 (defun (setf current-window) (window)
   (check-type window window)
+  (let ((buffer (window-buffer window)))
+    (setf (current-buffer) buffer)
+    (setf (marker-point (buffer-point-marker buffer))
+          (marker-point (window-point-marker window))))
   (setf *current-window* window))
 
 (defun window-tree ()

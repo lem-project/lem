@@ -63,7 +63,7 @@
   (setf (marker-charpos (buffer-point-marker (current-buffer))) new-charpos))
 
 (defun current-point ()
-  (buffer-marker-point (current-buffer)))
+  (buffer-point-marker (current-buffer)))
 
 (defun (setf current-point) (new-point)
   (point-set new-point)

@@ -1,5 +1,5 @@
 (cl:defpackage :lem-sblint
-  (:use :cl :lem :lem.grep)
+  (:use :cl :lem)
   (:export
    :sblint-load))
 (in-package :lem-sblint)
@@ -9,18 +9,34 @@
          (with-output-to-string (stream)
            (funcall fn arg stream)))
         (grep
-         (make-grep (format nil "*sblint ~A*" arg))))
+         (lem.grep:make-grep (format nil "*sblint ~A*" arg))))
     (dolist (line (uiop:split-string text :separator '(#\newline)))
-      (ppcre:do-register-groups (file linum charpos) ("^(\\S+):(\\d+):(\\d+):\\s*(.*)" line)
+      (ppcre:do-register-groups (file linum charpos rest-text) ("^(\\S+):(\\d+):(\\d+):\\s*(.*)" line)
         (setf linum (parse-integer linum)
               charpos (parse-integer charpos))
-        (grep-append grep
-                     line
-                     (lambda ()
-                       (funcall find-file-fn arg file)
-                       (goto-line linum)
-                       (shift-position charpos)))))
-    (grep-update grep)))
+        (let ((jump-fn
+               (lambda ()
+                 (funcall find-file-fn arg file)
+                 (goto-line linum)
+                 (shift-position charpos))))
+          (lem.grep:call-with-writer grep
+                                     (lambda ()
+                                       (insert-string-with-attribute file
+                                                                     lem.grep::*attribute-1*)
+                                       (insert-string ":")
+                                       (insert-string-with-attribute (princ-to-string linum)
+                                                                     lem.grep::*attribute-2*)
+                                       (insert-string ":")
+                                       (insert-string-with-attribute (princ-to-string charpos)
+                                                                     lem.grep::*attribute-2*)
+                                       (insert-string ":")
+                                       (insert-string rest-text)
+                                       (lem.grep:put-entry-property grep
+                                                                    (beginning-of-line-point)
+                                                                    (end-of-line-point)
+                                                                    jump-fn)
+                                       (insert-newline 1))))))
+    (lem.grep:update grep)))
 
 (define-key lem.lisp-mode:*lisp-mode-keymap* "C-c C-l" 'sblint-load-file)
 (define-command sblint-load-file (filename) ("fsblnt file: ")

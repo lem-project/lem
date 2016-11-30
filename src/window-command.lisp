@@ -13,7 +13,6 @@
           shrink-window
           grow-window-horizontally
           shrink-window-horizontally
-          pop-to-buffer
           display-buffer
           scroll-down
           scroll-up))
@@ -136,24 +135,6 @@
                            #'(lambda (x y n)
                                (grow-window-horizontally-internal y x n))
                            :hsplit))
-
-(defun pop-to-buffer (buffer)
-  (if (eq buffer (current-buffer))
-      (values (current-window) nil)
-      (let ((split-p))
-        (when (one-window-p)
-          (setq split-p t)
-          (split-window-sensibly (if (minibuffer-window-active-p)
-                                     (minibuffer-calls-window)
-                                     (current-window))))
-        (with-current-window (or (window-tree-find (window-tree)
-                                                   (lambda (window)
-                                                     (eq buffer (window-buffer window))))
-                                 (get-next-window (if (minibuffer-window-active-p)
-                                                      (minibuffer-calls-window)
-                                                      (current-window))))
-          (switch-to-buffer buffer)
-          (values (current-window) split-p)))))
 
 (defun display-buffer (buffer)
   (multiple-value-bind (window split-p)

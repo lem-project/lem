@@ -25,7 +25,8 @@
           split-window-sensibly
           get-next-window
           delete-window
-          switch-to-buffer))
+          switch-to-buffer
+          pop-to-buffer))
 
 (defvar *window-sufficient-width* 150)
 (defvar *scroll-recenter-p* t)
@@ -767,3 +768,21 @@
                                       (buffer-line-length buffer
                                                           linum)))))))))
   buffer)
+
+(defun pop-to-buffer (buffer)
+  (if (eq buffer (current-buffer))
+      (values (current-window) nil)
+      (let ((split-p))
+        (when (one-window-p)
+          (setq split-p t)
+          (split-window-sensibly (if (minibuffer-window-active-p)
+                                     (minibuffer-calls-window)
+                                     (current-window))))
+        (with-current-window (or (window-tree-find (window-tree)
+                                                   (lambda (window)
+                                                     (eq buffer (window-buffer window))))
+                                 (get-next-window (if (minibuffer-window-active-p)
+                                                      (minibuffer-calls-window)
+                                                      (current-window))))
+          (switch-to-buffer buffer)
+          (values (current-window) split-p)))))

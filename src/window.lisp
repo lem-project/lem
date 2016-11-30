@@ -66,6 +66,7 @@
                           :view-marker (make-marker buffer (make-min-point) :name "view"))))
     (setf (window-point-marker window)
           (make-marker buffer (make-min-point) :name "point"))
+    (setf *modified-window-tree-p* t)
     window))
 
 (defun window-buffer (&optional (window (current-window)))
@@ -269,13 +270,7 @@
                         (setf (marker-point (window-view-marker window)) (marker-point view-marker))
                         (setf (window-delete-hook window) delete-hook)
                         (setf (window-parameters window) parameters)
-                        (setf (window-current-linum window)
-                              (min (buffer-nlines (window-buffer window))
-                                   (point-linum point)))
-                        (setf (window-current-charpos window)
-                              (min (buffer-line-length (window-buffer window)
-                                                       (window-current-linum window))
-                                   (point-charpos point)))
+                        (setf (marker-point (window-point-marker window)) point)
                         (when current-window-p
                           (setf current-window window))
                         window))

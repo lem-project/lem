@@ -10,7 +10,7 @@
           uniq-buffer-name
           other-buffer
           update-prev-buffer
-          set-buffer-with-window
+          switch-to-buffer
           set-buffer
           bury-buffer
           get-next-buffer
@@ -84,7 +84,7 @@
         (cons buffer
               (delete buffer (buffer-list)))))
 
-(defun set-buffer-with-window (buffer &optional (update-prev-buffer-p t))
+(defun switch-to-buffer (buffer &optional (update-prev-buffer-p t))
   (check-type buffer buffer)
   (check-switch-minibuffer-window)
   (unless (eq (current-buffer) buffer)

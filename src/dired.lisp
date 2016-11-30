@@ -93,7 +93,7 @@
 (defun dired-find-directory (dirname)
   (check-switch-minibuffer-window)
   (let ((buffer (get-buffer-create dirname)))
-    (set-buffer-with-window buffer)
+    (switch-to-buffer buffer)
     (cond ((eq 'dired-mode (buffer-major-mode buffer))
            (setf (buffer-filename buffer) dirname)
            (setf (buffer-read-only-p buffer) t))

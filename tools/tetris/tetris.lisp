@@ -301,7 +301,7 @@
 
 (define-command tetris () ()
   (let ((buffer (get-buffer-create "*tetris*")))
-    (set-buffer-with-window buffer)
+    (switch-to-buffer buffer)
     (tetris-mode)
     (init-field)
     (init-player)

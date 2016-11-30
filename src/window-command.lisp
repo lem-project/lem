@@ -21,7 +21,7 @@
 (define-key *global-keymap* (kbd "C-x b") 'select-buffer)
 (define-command select-buffer (name) ("BUse Buffer: ")
   (check-switch-minibuffer-window)
-  (set-buffer-with-window (get-buffer-create name))
+  (switch-to-buffer (get-buffer-create name))
   t)
 
 (define-key *global-keymap* (kbd "C-x k") 'kill-buffer)
@@ -31,7 +31,7 @@
     (when (cdr (buffer-list))
       (dolist (window (get-buffer-windows buffer))
         (with-current-window window
-          (set-buffer-with-window (get-next-buffer (current-buffer)))))
+          (switch-to-buffer (get-next-buffer (current-buffer)))))
       (delete-buffer buffer)))
   t)
 
@@ -90,8 +90,8 @@
     (t
      (if kill-buffer-p
          (kill-buffer (window-buffer window))
-         (set-buffer-with-window (bury-buffer (window-buffer window))
-                                 nil)))))
+         (switch-to-buffer (bury-buffer (window-buffer window))
+                           nil)))))
 
 (define-key *global-keymap* (kbd "C-x ^") 'grow-window)
 (define-command grow-window (n) ("p")
@@ -152,7 +152,7 @@
                                  (get-next-window (if (minibuffer-window-active-p)
                                                       (minibuffer-calls-window)
                                                       (current-window))))
-          (set-buffer-with-window buffer)
+          (switch-to-buffer buffer)
           (values (current-window) split-p)))))
 
 (defun display-buffer (buffer)

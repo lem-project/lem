@@ -40,7 +40,7 @@
        (unwind-protect (progn ,@body)
          (cond ((find ,gbuffer (buffer-list))
                 (when (not (eq ,gbuffer (current-buffer)))
-                  (set-buffer ,gbuffer nil))
+                  (set-buffer ,gbuffer))
                 (setf (marker-point (window-view-marker (current-window)))
                       (let ((point-max (point-max (window-buffer (current-window)))))
                         (if (point< ,gview-point point-max)
@@ -48,7 +48,8 @@
                             point-max)))
                 (point-set ,gpoint))
                ((minibufferp ,gbuffer)
-                (point-set ,gpoint (minibuffer-window))))))))
+                (setf (current-buffer) ,gbuffer)
+                (point-set ,gpoint (minibuffer))))))))
 
 (defmacro with-window-range ((start-linum-var end-linum-var)
                              window &body body)

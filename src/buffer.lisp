@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(*undo-limit*
+          current-buffer
           buffer
           buffer-p
           buffer-name
@@ -182,6 +183,7 @@
   mark-p
   mark-overlay
   mark-marker
+  point-marker
   keep-binfo
   nlines
   undo-size
@@ -194,6 +196,14 @@
   last-write-date
   delete-hooks
   variables)
+
+(defvar *current-buffer*)
+
+(defun current-buffer () *current-buffer*)
+
+(defun (setf current-buffer) (buffer)
+  (check-type buffer buffer)
+  (setf *current-buffer* buffer))
 
 (defvar *undo-modes* '(:edit :undo :redo))
 (defvar *undo-mode* :edit)
@@ -213,6 +223,9 @@
     (setf (buffer-markers buffer) nil)
     (setf (buffer-truncate-lines buffer) t)
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
+    (setf (buffer-point-marker buffer)
+          (make-marker buffer (make-min-point)
+                       :name "buffer-point"))
     (add-buffer buffer)
     buffer))
 
@@ -236,6 +249,10 @@
   (format stream "#<BUFFER ~a ~a>"
           (buffer-name buffer)
           (buffer-filename buffer)))
+
+(defun call-buffer-delete-hooks (buffer)
+  (mapc #'funcall (buffer-delete-hooks buffer))
+  (delete-marker (buffer-point-marker buffer)))
 
 (defun buffer-enable-undo (buffer)
   (setf (buffer-enable-undo-p buffer) t)

@@ -1,7 +1,6 @@
 (in-package :lem)
 
-(export '(current-buffer
-          buffer-list
+(export '(buffer-list
           ghost-buffer-p
           special-buffer-p
           filter-special-buffers
@@ -11,6 +10,7 @@
           uniq-buffer-name
           other-buffer
           update-prev-buffer
+          set-buffer-with-window
           set-buffer
           bury-buffer
           get-next-buffer
@@ -25,12 +25,6 @@
     (push buffer *buffer-list*)))
 
 (defun buffer-list () *buffer-list*)
-
-(defun current-buffer ()
-  (window-buffer (current-window)))
-
-(defun (setf current-buffer) (new-buffer)
-  (setf (window-buffer (current-window)) new-buffer))
 
 (defun ghost-buffer-p (buffer)
   (let ((name (buffer-name buffer)))
@@ -90,42 +84,51 @@
         (cons buffer
               (delete buffer (buffer-list)))))
 
-(defun set-buffer (buffer &optional (update-prev-buffer-p t))
+(defun set-buffer-with-window (buffer &optional (update-prev-buffer-p t))
   (check-type buffer buffer)
   (check-switch-minibuffer-window)
   (unless (eq (current-buffer) buffer)
     (when update-prev-buffer-p
       (setf (window-parameter (current-window) :split-p) nil)
-      (let ((old-buf (current-buffer)))
-        (update-prev-buffer old-buf)
-        (setf (buffer-keep-binfo old-buf)
+      (let ((old-buffer (current-buffer)))
+        (update-prev-buffer old-buffer)
+        (setf (buffer-keep-binfo old-buffer)
               (list (window-view-linum (current-window))
+                    (window-view-charpos (current-window))
                     (window-current-linum (current-window))
                     (window-current-charpos (current-window))))))
+    (setf (window-buffer (current-window)) buffer)
     (setf (current-buffer) buffer)
     (let ((view-linum 1)
-          (cur-linum 1)
-          (cur-charpos 0))
+          (view-charpos 0)
+          (current-linum 1)
+          (current-charpos 0))
+      (declare (ignorable view-charpos))
       (when (buffer-keep-binfo buffer)
-        (multiple-value-setq
-            (view-linum cur-linum cur-charpos)
-          (apply 'values (buffer-keep-binfo buffer))))
+        (setf (values view-linum view-charpos current-linum current-charpos)
+              (apply #'values (buffer-keep-binfo buffer))))
       (marker-change-buffer (window-point-marker (current-window)) buffer)
-      (let ((buffer-nlines (buffer-nlines)))
+      (let ((nlines (buffer-nlines buffer)))
         (marker-change-buffer (window-view-marker (current-window))
                               buffer
-                              (make-point (min view-linum buffer-nlines) 0))
-        (setf (window-current-linum (current-window))
-              (min cur-linum buffer-nlines)))
-      (setf (window-current-charpos (current-window))
-            (min cur-charpos
-                 (buffer-line-length (current-buffer)
-                                     (window-current-linum (current-window)))))
-      (assert (<= 0 (window-current-charpos (current-window)))))))
+                              (make-point (max 1 (min view-linum nlines))
+                                          0))
+        (setf (window-point (current-window))
+              (let ((linum (min current-linum nlines)))
+                (make-point linum
+                            (max 0
+                                 (min current-charpos
+                                      (buffer-line-length buffer
+                                                          linum)))))))))
+  buffer)
+
+(defun set-buffer (buffer)
+  (check-type buffer buffer)
+  (setf (current-buffer) buffer))
 
 (defun delete-buffer (buffer)
   (check-type buffer buffer)
-  (mapc #'funcall (buffer-delete-hooks buffer))
+  (call-buffer-delete-hooks buffer)
   (setf *buffer-list* (delete buffer (buffer-list))))
 
 (defun get-next-buffer (buffer)

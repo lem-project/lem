@@ -102,6 +102,6 @@
 
 (defun set-buffer-mode (buffer mode)
   (save-excursion
-   (set-buffer buffer nil)
+   (set-buffer buffer)
    (funcall mode))
   buffer)

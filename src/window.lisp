@@ -74,19 +74,26 @@
   (setf (window-%buffer window) buffer))
 
 (defun window-point (&optional (window (current-window)))
-  (marker-point (window-point-marker window)))
+  (if (eq window (current-window))
+      (marker-point (buffer-point-marker (window-buffer window)))
+      (marker-point (window-point-marker window))))
+
+(defun (setf window-point) (new-point &optional (window (current-window)))
+  (if (eq window (current-window))
+      (setf (marker-point (buffer-point-marker (window-buffer window))) new-point)
+      (setf (marker-point (window-point-marker window)) new-point)))
 
 (defun window-current-charpos (&optional (window (current-window)))
-  (marker-charpos (window-point-marker window)))
+  (point-charpos (window-point window)))
 
 (defun (setf window-current-charpos) (new-pos &optional (window (current-window)))
-  (setf (marker-charpos (window-point-marker window)) new-pos))
+  (setf (point-charpos (window-point window)) new-pos))
 
 (defun window-current-linum (&optional (window (current-window)))
-  (marker-linum (window-point-marker window)))
+  (point-linum (window-point window)))
 
 (defun (setf window-current-linum) (new-linum &optional (window (current-window)))
-  (setf (marker-linum (window-point-marker window)) new-linum))
+  (setf (point-linum (window-point window)) new-linum))
 
 (defun window-view-linum (&optional (window (current-window)))
   (marker-linum (window-view-marker window)))
@@ -110,6 +117,15 @@
   *current-window*)
 
 (defun (setf current-window) (new-window)
+  (check-type new-window window)
+  (when (boundp '*current-window*)
+    (let ((old-window (current-window)))
+      (setf (marker-point (window-point-marker old-window))
+            (marker-point (buffer-point-marker (window-buffer old-window))))))
+  (let ((buffer (window-buffer new-window)))
+    (setf (current-buffer) buffer)
+    (setf (marker-point (buffer-point-marker buffer))
+          (marker-point (window-point-marker new-window))))
   (setf *current-window* new-window))
 
 (defun window-tree ()
@@ -246,7 +262,13 @@
                         (setf (window-view-marker window) view-marker)
                         (setf (window-delete-hook window) delete-hook)
                         (setf (window-parameters window) parameters)
-                        (point-set point window)
+                        (setf (window-current-linum window)
+                              (min (buffer-nlines (window-buffer window))
+                                   (point-linum point)))
+                        (setf (window-current-charpos window)
+                              (min (buffer-line-length (window-buffer window)
+                                                       (window-current-linum window))
+                                   (point-charpos point)))
                         (when current-window-p
                           (setf current-window window))
                         window))

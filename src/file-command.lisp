@@ -48,7 +48,7 @@
           (return)))))
 
 (defun find-file-1 (buffer new-buffer-p)
-  (set-buffer buffer)
+  (set-buffer-with-window buffer)
   (when (and new-buffer-p
              (uiop:file-pathname-p (buffer-filename buffer)))
     (prepare-auto-mode)
@@ -122,7 +122,7 @@
     (dolist (buffer (buffer-list))
       (when (and (buffer-modified-p buffer)
                  (buffer-have-file-p buffer))
-        (set-buffer buffer nil)
+        (set-buffer-with-window buffer nil)
         (when (or save-silently-p
                   (progn
                     (redraw-display)

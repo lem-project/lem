@@ -38,8 +38,14 @@
 (defun point-linum (point)
   (car point))
 
+(defun (setf point-linum) (linum point)
+  (setf (car point) linum))
+
 (defun point-charpos (point)
   (cdr point))
+
+(defun (setf point-charpos) (charpos point)
+  (setf (cdr point) charpos))
 
 (defmacro with-points (binds &body body)
   `(let ,(mapcan #'(lambda (b)
@@ -49,35 +55,34 @@
      ,@body))
 
 (defun current-linum ()
-  (window-current-linum))
+  (marker-linum (buffer-point-marker (current-buffer))))
 
 (defun (setf current-linum) (new-linum)
   (assert (<= 1 new-linum (buffer-nlines (current-buffer))))
-  (setf (window-current-linum) new-linum))
+  (setf (marker-linum (buffer-point-marker (current-buffer))) new-linum))
 
 (defun current-charpos ()
-  (window-current-charpos))
+  (marker-charpos (buffer-point-marker (current-buffer))))
 
 (defun (setf current-charpos) (new-charpos)
   (assert (<= 0 new-charpos (buffer-line-length (current-buffer) (current-linum))))
-  (setf (window-current-charpos) new-charpos))
+  (setf (marker-charpos (buffer-point-marker (current-buffer))) new-charpos))
 
 (defun current-point ()
-  (window-point (current-window)))
+  (marker-point (buffer-point-marker (current-buffer))))
 
 (defun (setf current-point) (new-point)
   (point-set new-point)
   new-point)
 
-(defun point-set (point &optional (window (current-window)))
-  (setf (window-current-linum window)
-        (min (buffer-nlines (window-buffer window))
-             (point-linum point)))
-  (setf (window-current-charpos window)
-        (min (buffer-line-length (window-buffer window)
-                                 (window-current-linum window))
-             (point-charpos point)))
-  (assert (<= 0 (window-current-charpos window))))
+(defun point-set (point &optional (buffer (current-buffer)))
+  (setf (marker-point (buffer-point-marker buffer))
+        (let ((linum (min (buffer-nlines buffer)
+                          (point-linum point))))
+          (make-point linum
+                      (max 0
+                           (min (buffer-line-length buffer linum)
+                                (point-charpos point)))))))
 
 (defun point< (p1 p2)
   (cond ((< (point-linum p1) (point-linum p2))

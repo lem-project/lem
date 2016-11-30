@@ -46,7 +46,7 @@
       (setf (grep-firstp grep) nil)
       (buffer-erase buffer))
     (save-excursion
-      (set-buffer buffer nil)
+      (set-buffer buffer)
       (point-set (point-max))
       (funcall function))))
 

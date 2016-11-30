@@ -24,7 +24,8 @@
           split-window-horizontally
           split-window-sensibly
           get-next-window
-          delete-window))
+          delete-window
+          switch-to-buffer))
 
 (defvar *window-sufficient-width* 150)
 (defvar *scroll-recenter-p* t)
@@ -728,3 +729,41 @@
   (loop :for window :in (window-list)
     :when (eq buffer (window-buffer window))
     :collect window))
+
+(defun switch-to-buffer (buffer &optional (update-prev-buffer-p t))
+  (check-type buffer buffer)
+  (check-switch-minibuffer-window)
+  (unless (eq (current-buffer) buffer)
+    (when update-prev-buffer-p
+      (setf (window-parameter (current-window) :split-p) nil)
+      (let ((old-buffer (current-buffer)))
+        (update-prev-buffer old-buffer)
+        (setf (buffer-keep-binfo old-buffer)
+              (list (window-view-linum (current-window))
+                    (window-view-charpos (current-window))
+                    (window-current-linum (current-window))
+                    (window-current-charpos (current-window))))))
+    (setf (window-buffer (current-window)) buffer)
+    (setf (current-buffer) buffer)
+    (let ((view-linum 1)
+          (view-charpos 0)
+          (current-linum 1)
+          (current-charpos 0))
+      (declare (ignorable view-charpos))
+      (when (buffer-keep-binfo buffer)
+        (setf (values view-linum view-charpos current-linum current-charpos)
+              (apply #'values (buffer-keep-binfo buffer))))
+      (marker-change-buffer (window-point-marker (current-window)) buffer)
+      (let ((nlines (buffer-nlines buffer)))
+        (marker-change-buffer (window-view-marker (current-window))
+                              buffer
+                              (make-point (max 1 (min view-linum nlines))
+                                          0))
+        (setf (window-point (current-window))
+              (let ((linum (min current-linum nlines)))
+                (make-point linum
+                            (max 0
+                                 (min current-charpos
+                                      (buffer-line-length buffer
+                                                          linum)))))))))
+  buffer)

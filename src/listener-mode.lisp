@@ -60,7 +60,7 @@
     (if (eq buffer (current-buffer))
         (body)
         (save-excursion
-          (set-buffer buffer)
+          (setf (current-buffer) buffer)
           (body)))))
 
 (define-key *listener-mode-keymap* (kbd "C-m") 'listener-return)

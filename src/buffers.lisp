@@ -11,7 +11,6 @@
           other-buffer
           update-prev-buffer
           switch-to-buffer
-          set-buffer
           bury-buffer
           get-next-buffer
           get-buffer-windows))
@@ -121,10 +120,6 @@
                                       (buffer-line-length buffer
                                                           linum)))))))))
   buffer)
-
-(defun set-buffer (buffer)
-  (check-type buffer buffer)
-  (setf (current-buffer) buffer))
 
 (defun delete-buffer (buffer)
   (check-type buffer buffer)

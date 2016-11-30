@@ -102,6 +102,6 @@
 
 (defun set-buffer-mode (buffer mode)
   (save-excursion
-   (set-buffer buffer)
+   (setf (current-buffer) buffer)
    (funcall mode))
   buffer)

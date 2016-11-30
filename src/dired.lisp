@@ -87,8 +87,8 @@
   (dolist (buffer (buffer-list))
     (when (eq 'dired-mode (buffer-major-mode buffer))
       (save-excursion
-       (set-buffer buffer)
-       (update)))))
+        (setf (current-buffer) buffer)
+        (update)))))
 
 (defun dired-find-directory (dirname)
   (check-switch-minibuffer-window)

@@ -48,7 +48,8 @@
                             point-max)))
                 (point-set ,gpoint))
                ((minibufferp ,gbuffer)
-                (point-set ,gpoint (minibuffer-window))))))))
+                (setf (current-buffer) ,gbuffer)
+                (point-set ,gpoint (minibuffer))))))))
 
 (defmacro with-window-range ((start-linum-var end-linum-var)
                              window &body body)

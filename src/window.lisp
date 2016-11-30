@@ -219,6 +219,11 @@
          nil)
         (t t)))
 
+(defun %free-window (window)
+  (delete-marker (window-view-marker window))
+  (delete-marker (window-point-marker window))
+  (screen-delete (window-screen window)))
+
 (defun dump-window-tree (window-tree current-window)
   (labels ((f (window-tree)
               (if (window-tree-leaf-p window-tree)
@@ -242,7 +247,7 @@
 
 (defun load-window-tree (dumped-tree)
   (dolist (window (window-list))
-    (screen-delete (window-screen window)))
+    (%free-window window))
   (let ((current-window nil))
     (labels ((f (dumped-tree)
                 (if (eq :window (car dumped-tree))
@@ -259,7 +264,7 @@
                         (cdr dumped-tree)
                       (let ((window (make-window (get-buffer-create buffer-name)
                                                  x y width height)))
-                        (setf (window-view-marker window) view-marker)
+                        (setf (marker-point (window-view-marker window)) (marker-point view-marker))
                         (setf (window-delete-hook window) delete-hook)
                         (setf (window-parameters window) parameters)
                         (setf (window-current-linum window)
@@ -571,11 +576,9 @@
       (if (null node2)
           (setf (window-tree) (funcall another-getter))
           (funcall setter2 (funcall another-getter)))))
-  (delete-marker (window-view-marker window))
-  (delete-marker (window-point-marker window))
   (when (window-delete-hook window)
     (funcall (window-delete-hook window)))
-  (screen-delete (window-screen window))
+  (%free-window window)
   t)
 
 (defun collect-left-windows (window-list)

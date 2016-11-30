@@ -305,8 +305,10 @@
   (push marker (buffer-markers buffer)))
 
 (defun buffer-delete-marker (buffer marker)
-  (setf (buffer-markers buffer)
-        (delete marker (buffer-markers buffer))))
+  (let ((length (length (buffer-markers buffer))))
+    (prog1 (setf (buffer-markers buffer)
+                 (delete marker (buffer-markers buffer)))
+      (assert (/= length (length (buffer-markers buffer)))))))
 
 (defun buffer-mark-cancel (buffer)
   (when (buffer-mark-p buffer)

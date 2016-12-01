@@ -19,16 +19,11 @@
           buffer-disable-undo
           buffer-put-property
           buffer-get-char
-          buffer-line-length
           buffer-line-string-with-attributes
           buffer-line-string
           buffer-end-line-p
           map-buffer-lines
           buffer-take-lines
-          buffer-insert-char
-          buffer-insert-newline
-          buffer-insert-line
-          buffer-delete-char
           buffer-erase
           buffer-rename
           buffer-directory

@@ -495,9 +495,11 @@
              (line-property-insert-pos line pos 1)
              (dolist (marker (buffer-markers buffer))
                (when (and (= linum (marker-linum marker))
-                          (if (marker-insertion-type marker)
-                              (<= pos (marker-charpos marker))
-                              (< pos (marker-charpos marker))))
+                          (case (marker-kind marker)
+                            (:left-inserting
+                             (<= pos (marker-charpos marker)))
+                            (:right-inserting
+                             (< pos (marker-charpos marker)))))
                  (incf (marker-charpos marker))))
              (setf (line-str line)
                    (concatenate 'string
@@ -517,9 +519,11 @@
     (dolist (marker (buffer-markers buffer))
       (cond
         ((and (= (marker-linum marker) linum)
-              (if (marker-insertion-type marker)
-                  (<= pos (marker-charpos marker))
-                  (< pos (marker-charpos marker))))
+              (case (marker-kind marker)
+                (:left-inserting
+                 (<= pos (marker-charpos marker)))
+                (:right-inserting
+                 (< pos (marker-charpos marker)))))
          (incf (marker-linum marker))
          (decf (marker-charpos marker) pos))
         ((< linum (marker-linum marker))
@@ -550,9 +554,11 @@
         (make-point linum pos))
       (dolist (marker (buffer-markers buffer))
         (when (and (= linum (marker-linum marker))
-                   (if (marker-insertion-type marker)
-                       (<= pos (marker-charpos marker))
-                       (< pos (marker-charpos marker))))
+                   (case (marker-kind marker)
+                     (:left-inserting
+                      (<= pos (marker-charpos marker)))
+                     (:right-inserting
+                      (< pos (marker-charpos marker)))))
           (incf (marker-charpos marker) (length str))))
       (setf (line-str line)
             (concatenate 'string

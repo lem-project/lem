@@ -8,7 +8,7 @@
           marker-linum
           marker-charpos
           marker-point
-          marker-insertion-type))
+          marker-kind))
 
 (defclass marker ()
   ((buffer
@@ -23,10 +23,10 @@
     :initarg :charpos
     :accessor marker-charpos
     :type fixnum)
-   (insertion-type
-    :initarg :insertion-type
-    :accessor marker-insertion-type
-    :type boolean)
+   (kind
+    :initarg :kind
+    :accessor marker-kind
+    :type (or null (eql :left-inserting) (eql :right-inserting)))
    (name
     :initarg :name
     :accessor marker-name
@@ -40,25 +40,27 @@
 (defun marker-p (x)
   (typep x 'marker))
 
-(defun make-marker (buffer point &key insertion-type name)
+(defun make-marker (buffer point &key (kind :right-inserting) name)
   (let ((marker (make-instance 'marker
                                :buffer buffer
                                :linum (point-linum point)
                                :charpos (point-charpos point)
-                               :insertion-type insertion-type
+                               :kind kind
                                :name name)))
-    (buffer-add-marker buffer marker)
+    (unless (null kind)
+      (buffer-add-marker buffer marker))
     marker))
 
-(defun make-marker-current-point (&key insertion-type name)
+(defun make-marker-current-point (&key (kind :right-inserting) name)
   (make-marker (current-buffer)
                (current-point)
-               :insertion-type insertion-type
+               :kind kind
                :name name))
 
 (defun delete-marker (marker)
-  (buffer-delete-marker (marker-buffer marker)
-                        marker))
+  (unless (null (marker-kind marker))
+    (buffer-delete-marker (marker-buffer marker)
+                          marker)))
 
 (defun marker-point (marker)
   (make-point (marker-linum marker)
@@ -71,7 +73,8 @@
 
 (defun marker-change-buffer (marker buffer &optional (point nil pointp))
   (delete-marker marker)
-  (buffer-add-marker buffer marker)
+  (unless (null (marker-kind marker))
+    (buffer-add-marker buffer marker))
   (setf (marker-buffer marker) buffer)
   (when pointp
     (setf (marker-point marker) point))

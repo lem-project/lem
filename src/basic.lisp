@@ -41,7 +41,8 @@
           forward-search-property-end
           backward-search-property-start
           current-column
-          move-to-column))
+          move-to-column
+          point-to-offset))
 
 (defun head-line-p ()
   (<= (current-linum) 1))
@@ -369,3 +370,20 @@
           (t
            (end-of-line)
            current-column))))
+
+(defun point-to-offset (point &optional (buffer (current-buffer) bufferp))
+  (check-type point point)
+  (check-type buffer buffer)
+  (save-excursion
+    (when bufferp
+      (setf (current-buffer) buffer))
+    (point-set (point-min))
+    (let ((end-linum (point-linum point))
+          (end-charpos (point-charpos point))
+          (offset 0))
+      (loop :repeat (1- end-linum)
+            :for linum :from 1
+            :do (incf offset
+                      (1+ (buffer-line-length (current-buffer)
+                                              linum))))
+      (+ offset end-charpos))))

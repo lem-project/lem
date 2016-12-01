@@ -99,19 +99,6 @@
   (let ((lem.lisp-mode:*indent-spec-function* #'indent-spec))
     (lem.lisp-mode::lisp-calc-indent)))
 
-(defun point-to-offset (point)
-  (save-excursion
-    (point-set (point-min))
-    (let ((end-linum (point-linum point))
-          (end-charpos (point-charpos point))
-          (offset 0))
-      (loop :repeat (1- end-linum)
-            :for linum :from 1
-            :do (incf offset
-                      (1+ (buffer-line-length (current-buffer)
-                                              linum))))
-      (+ offset end-charpos))))
-
 (defun get-buffer-from-file (file)
   (dolist (buffer (buffer-list))
     (when (uiop:pathname-equal file (buffer-filename buffer))

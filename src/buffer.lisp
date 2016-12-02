@@ -429,7 +429,7 @@
       (setf (buffer-mark-overlay buffer)
             (make-overlay start end *mark-overlay-attribute*)))))
 
-(defun check-read-only (buffer)
+(defun check-read-only-buffer (buffer)
   (when (buffer-read-only-p buffer)
     (error 'readonly)))
 
@@ -443,7 +443,7 @@
 
 (defmacro with-buffer-modify (buffer &body body)
   `(progn
-     (check-read-only ,buffer)
+     (check-read-only-buffer ,buffer)
      (prog1 (progn ,@body)
        (buffer-modify ,buffer))))
 

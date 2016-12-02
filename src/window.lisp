@@ -90,13 +90,17 @@
   (point-charpos (window-point window)))
 
 (defun (setf window-current-charpos) (new-pos &optional (window (current-window)))
-  (setf (point-charpos (window-point window)) new-pos))
+  (setf (window-point window)
+        (make-point (window-current-linum window)
+                    new-pos)))
 
 (defun window-current-linum (&optional (window (current-window)))
   (point-linum (window-point window)))
 
 (defun (setf window-current-linum) (new-linum &optional (window (current-window)))
-  (setf (point-linum (window-point window)) new-linum))
+  (setf (window-point window)
+        (make-point new-linum
+                    (window-current-charpos window))))
 
 (defun window-view-linum (&optional (window (current-window)))
   (marker-linum (window-view-marker window)))

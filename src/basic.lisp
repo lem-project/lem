@@ -88,13 +88,12 @@
       (return-from delete-char nil)))
   (if (eobp)
       nil
-      (let ((lines
-              (buffer-delete-char (current-buffer)
-                                  (current-linum)
-                                  (current-charpos)
-                                  n)))
+      (let ((string (marker/delete-char
+                     (buffer-point-marker
+                      (current-buffer))
+                     n)))
         (when killp
-          (kill-push (join (string #\newline) lines)))
+          (kill-push string))
         t)))
 
 (defun set-charpos (pos)

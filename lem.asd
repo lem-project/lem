@@ -41,6 +41,7 @@
                              (:file "window")
                              (:file "modeline")
                              (:file "buffer")
+                             (:file "buf")
                              (:file "buffers")
                              (:file "marker")
                              (:file "overlay")

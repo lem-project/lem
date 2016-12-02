@@ -68,12 +68,8 @@
 
 (defun insert-char (c &optional (n 1))
   (dotimes (_ n t)
-    (when (buffer-insert-char
-           (current-buffer)
-           (current-linum)
-           (current-charpos)
-           c)
-      (shift-position 1))))
+    (marker/insert-char (buffer-point-marker (current-buffer)) c)
+    (shift-position 1)))
 
 (defun insert-lines (lines)
   (do ((rest lines (cdr rest)))
@@ -92,9 +88,8 @@
 
 (defun insert-newline (&optional (n 1))
   (dotimes (_ n)
-    (buffer-insert-newline (current-buffer)
-                           (current-linum)
-                           (current-charpos)))
+    (marker/insert-char (buffer-point-marker (current-buffer))
+                        #\newline))
   (forward-line n))
 
 (defun delete-char (n &optional killp)

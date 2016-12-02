@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(export '(head-line-p
+(export '(start-line-p
           tail-line-p
           bolp
           eolp
@@ -44,7 +44,7 @@
           move-to-column
           point-to-offset))
 
-(defun head-line-p ()
+(defun start-line-p ()
   (<= (current-linum) 1))
 
 (defun tail-line-p ()
@@ -61,7 +61,7 @@
       (current-linum))))
 
 (defun bobp ()
-  (and (head-line-p) (bolp)))
+  (and (start-line-p) (bolp)))
 
 (defun eobp ()
   (and (tail-line-p) (eolp)))
@@ -138,7 +138,7 @@
           (return))
         (incf (current-linum)))
       (dotimes (_ (- n) t)
-        (when (head-line-p)
+        (when (start-line-p)
           (return))
         (decf (current-linum)))))
 
@@ -163,7 +163,7 @@
       (set-charpos (- (current-charpos) n))
       (return t))
     (decf n (1+ (current-charpos)))
-    (cond ((head-line-p)
+    (cond ((start-line-p)
            (beginning-of-line)
            (return nil))
           (t

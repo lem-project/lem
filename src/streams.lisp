@@ -9,15 +9,9 @@
           make-editor-io-stream))
 
 (defclass buffer-output-stream (trivial-gray-streams:fundamental-output-stream)
-  ((buffer
-    :initarg :buffer
-    :accessor buffer-output-stream-buffer)
-   (linum
-    :initarg :linum
-    :accessor buffer-output-stream-linum)
-   (charpos
-    :initarg :charpos
-    :accessor buffer-output-stream-charpos)
+  ((marker
+    :initarg :marker
+    :accessor buffer-output-stream-marker)
    (interactive-update-p
     :initarg :interactive-update-p
     :accessor buffer-output-stream-interactive-update-p)))
@@ -27,13 +21,7 @@
                                                point
                                                interactive-update-p)
   (make-instance class-name
-                 :buffer buffer
-                 :linum (if point
-                            (point-linum point)
-                            1)
-                 :charpos (if point
-                             (point-charpos point)
-                             0)
+                 :marker (make-marker buffer point :kind :left-inserting)
                  :interactive-update-p interactive-update-p))
 
 (defun make-buffer-output-stream (&optional (buffer (current-buffer))
@@ -42,26 +30,32 @@
   (make-buffer-stream-instance 'buffer-output-stream
                                buffer point interactive-update-p))
 
+(defmethod trivial-gray-streams::close ((stream buffer-output-stream) &key abort)
+  (declare (ignore abort))
+  (delete-marker (buffer-output-stream-marker stream))
+  t)
+
 (defun buffer-output-stream-point (stream)
-  (make-point (buffer-output-stream-linum stream)
-              (buffer-output-stream-charpos stream)))
+  (marker-point (buffer-output-stream-marker stream)))
 
 (defmethod stream-element-type ((stream buffer-output-stream))
   'line)
 
 (defmethod trivial-gray-streams:stream-line-column ((stream buffer-output-stream))
-  (buffer-output-stream-charpos stream))
+  (marker-charpos (buffer-output-stream-marker stream)))
 
 (defun buffer-output-stream-refresh (stream)
   (when (buffer-output-stream-interactive-update-p stream)
-    (display-buffer (buffer-output-stream-buffer stream))
-    (dolist (window (get-buffer-windows (buffer-output-stream-buffer stream)))
-      (point-set (buffer-output-stream-point stream) (window-buffer window))
-      (redraw-display-window window t)))
+    (let ((buffer (marker-buffer (buffer-output-stream-marker stream)))
+          (point (marker-point (buffer-output-stream-marker stream))))
+      (display-buffer buffer)
+      (dolist (window (get-buffer-windows buffer))
+        (point-set point (window-buffer window))
+        (redraw-display-window window t))))
   nil)
 
 (defmethod trivial-gray-streams:stream-fresh-line ((stream buffer-output-stream))
-  (unless (zerop (buffer-output-stream-charpos stream))
+  (unless (zerop (marker-charpos (buffer-output-stream-marker stream)))
     (trivial-gray-streams:stream-terpri stream)))
 
 (defmethod trivial-gray-streams:stream-write-byte ((stream buffer-output-stream) byte)
@@ -69,33 +63,13 @@
 
 (defmethod trivial-gray-streams:stream-write-char ((stream buffer-output-stream) char)
   (prog1 char
-    (buffer-insert-char (buffer-output-stream-buffer stream)
-                        (buffer-output-stream-linum stream)
-                        (buffer-output-stream-charpos stream)
-                        char)
-    (if (char= char #\newline)
-        (progn
-          (incf (buffer-output-stream-linum stream))
-          (setf (buffer-output-stream-charpos stream) 0))
-        (incf (buffer-output-stream-charpos stream)))))
+    (marker/insert-char (buffer-output-stream-marker stream)
+                        char)))
 
 (defun %write-string-to-buffer-stream (stream string start end &key)
-  (let ((strings
-         (split-string (subseq string start end)
-                       #\newline)))
-    (loop :for s :on strings :do
-      (buffer-insert-line (buffer-output-stream-buffer stream)
-                          (buffer-output-stream-linum stream)
-                          (buffer-output-stream-charpos stream)
-                          (car s))
-      (incf (buffer-output-stream-charpos stream) (length (car s)))
-      (when (cdr s)
-        (buffer-insert-newline (buffer-output-stream-buffer stream)
-                               (buffer-output-stream-linum stream)
-                               (buffer-output-stream-charpos stream))
-        (incf (buffer-output-stream-linum stream))
-        (setf (buffer-output-stream-charpos stream) 0)))
-    string))
+  (marker/insert-string (buffer-output-stream-marker stream)
+                        (subseq string start end))
+  string)
 
 (defun %write-octets-to-buffer-stream (stream octets start end &key)
   (let ((octets (subseq octets start end)))
@@ -119,12 +93,9 @@
   (%write-string-to-buffer-stream stream string start end))
 
 (defmethod trivial-gray-streams:stream-terpri ((stream buffer-output-stream))
-  (prog1 (buffer-insert-newline (buffer-output-stream-buffer stream)
-                                (buffer-output-stream-linum stream)
-                                (buffer-output-stream-charpos stream))
-    (buffer-output-stream-refresh stream)
-    (incf (buffer-output-stream-linum stream))
-    (setf (buffer-output-stream-charpos stream) 0)))
+  (prog1 (marker/insert-char (buffer-output-stream-marker stream)
+                             #\newline)
+    (buffer-output-stream-refresh stream)))
 
 (defmethod trivial-gray-streams:stream-finish-output ((stream buffer-output-stream))
   (buffer-output-stream-refresh stream))

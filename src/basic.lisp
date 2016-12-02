@@ -71,20 +71,9 @@
     (marker/insert-char (buffer-point-marker (current-buffer)) c)
     (shift-position 1)))
 
-(defun insert-lines (lines)
-  (do ((rest lines (cdr rest)))
-      ((null rest))
-    (buffer-insert-line
-     (current-buffer)
-     (current-linum)
-     (current-charpos)
-     (car rest))
-    (shift-position (length (car rest)))
-    (when (cdr rest)
-      (insert-newline 1))))
-
 (defun insert-string (str)
-  (insert-lines (split-string str #\newline)))
+  (marker/insert-string (buffer-point-marker (current-buffer)) str)
+  (shift-position (length str)))
 
 (defun insert-newline (&optional (n 1))
   (dotimes (_ n)

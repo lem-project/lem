@@ -1,7 +1,7 @@
 (in-package :lem)
 
 (export '(start-line-p
-          tail-line-p
+          end-line-p
           bolp
           eolp
           bobp
@@ -47,7 +47,7 @@
 (defun start-line-p ()
   (<= (current-linum) 1))
 
-(defun tail-line-p ()
+(defun end-line-p ()
   (<= (buffer-nlines (current-buffer))
       (current-linum)))
 
@@ -64,7 +64,7 @@
   (and (start-line-p) (bolp)))
 
 (defun eobp ()
-  (and (tail-line-p) (eolp)))
+  (and (end-line-p) (eolp)))
 
 (defun insert-char (c &optional (n 1))
   (dotimes (_ n t)
@@ -133,7 +133,7 @@
   (beginning-of-line)
   (if (plusp n)
       (dotimes (_ n t)
-        (when (tail-line-p)
+        (when (end-line-p)
           (end-of-line)
           (return))
         (incf (current-linum)))
@@ -248,7 +248,7 @@
 
 (defun blank-line-p ()
   (let ((string (current-line-string))
-        (eof-p (tail-line-p)))
+        (eof-p (end-line-p)))
     (when (string= "" (string-trim '(#\space #\tab) string))
       (+ (length string)
          (if eof-p 0 1)))))

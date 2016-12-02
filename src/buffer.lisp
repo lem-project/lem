@@ -464,21 +464,19 @@
   (push elt (buffer-redo-stack buffer)))
 
 (defmacro with-push-undo ((buffer) &body body)
-  (let ((gmark-marker (gensym)))
-    `(when (and (buffer-enable-undo-p ,buffer)
-                (not (ghost-buffer-p ,buffer)))
-       (let ((,gmark-marker (buffer-mark-marker ,buffer)))
-         (let ((elt #'(lambda ()
-                        (setf (buffer-mark-marker ,buffer) ,gmark-marker)
-                        ,@body)))
-           (ecase *undo-mode*
-             (:edit
-              (push-undo-stack ,buffer elt)
-              (setf (buffer-redo-stack ,buffer) nil))
-             (:redo
-              (push-undo-stack ,buffer elt))
-             (:undo
-              (push-redo-stack ,buffer elt))))))))
+  `(when (and (buffer-enable-undo-p ,buffer)
+              (not (ghost-buffer-p ,buffer)))
+     (let ((elt #'(lambda ()
+                    (buffer-mark-cancel buffer)
+                    ,@body)))
+       (ecase *undo-mode*
+         (:edit
+          (push-undo-stack ,buffer elt)
+          (setf (buffer-redo-stack ,buffer) nil))
+         (:redo
+          (push-undo-stack ,buffer elt))
+         (:undo
+          (push-redo-stack ,buffer elt))))))
 
 (defun buffer-insert-char (buffer linum pos c)
   (cond ((char= c #\newline)
@@ -659,6 +657,7 @@
       del-lines)))
 
 (defun buffer-erase (&optional (buffer (current-buffer)))
+  (buffer-mark-cancel buffer)
   (dolist (marker (buffer-markers buffer))
     (setf (marker-point marker) (make-min-point)))
   (buffer-delete-char buffer 1 0 t)

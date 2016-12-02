@@ -664,7 +664,8 @@
                  (progn
                    (forward-sexp 1)
                    (current-point)))
-  (pprint expr (make-buffer-output-stream (current-buffer) (current-point)))
+  (with-open-stream (stream (make-buffer-output-stream (current-buffer) (current-point)))
+    (pprint expr stream))
   (read-from-string
    (region-string (point-min)
                   (point-max))))

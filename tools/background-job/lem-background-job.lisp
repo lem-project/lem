@@ -46,7 +46,7 @@
                        (lambda ()
                          (unless (bt:thread-alive-p thread)
                            (display-buffer buffer)
-                           (let ((output (make-buffer-output-stream buffer (point-max buffer))))
+                           (with-output-stream (output (make-buffer-output-stream buffer (point-max buffer)))
                              (fresh-line output)
                              (princ #\Page output)
                              (terpri output)

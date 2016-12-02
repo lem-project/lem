@@ -541,28 +541,28 @@
   condition)
 
 (defun %lisp-eval-internal (x output-buffer point &optional update-point-p)
-  (let* ((error-p)
-         (results)
-         (io (make-editor-io-stream output-buffer point t))
-         (*terminal-io* io)
-         (*standard-output* io)
-         (*standard-input* io)
-         (*error-output* io)
-         (*query-io* io)
-         (*debug-io* io)
-         (*trace-output* io))
-    (handler-case-bind (#'lisp-debugger
-                        (setq results
-                              (restart-case
-                                  (multiple-value-list (eval x))
-                                (lem::editor-abort () :report "Abort.")))
-                        (when update-point-p
-                          (point-set
-                           (buffer-output-stream-point io))))
-                       ((condition)
-                        (setq error-p t)
-                        (setq results (list condition))))
-    (values results error-p)))
+  (with-open-stream (io (make-editor-io-stream output-buffer point t))
+    (let* ((error-p)
+           (results)
+           (*terminal-io* io)
+           (*standard-output* io)
+           (*standard-input* io)
+           (*error-output* io)
+           (*query-io* io)
+           (*debug-io* io)
+           (*trace-output* io))
+      (handler-case-bind (#'lisp-debugger
+                          (setq results
+                                (restart-case
+                                    (multiple-value-list (eval x))
+                                  (lem::editor-abort () :report "Abort.")))
+                          (when update-point-p
+                            (point-set
+                             (buffer-output-stream-point io))))
+                         ((condition)
+                          (setq error-p t)
+                          (setq results (list condition))))
+      (values results error-p))))
 
 (defun %lisp-eval (x output-buffer point
                      &optional update-point-p)

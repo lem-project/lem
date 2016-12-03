@@ -15,7 +15,7 @@
                       (when (syntax-open-paren-char-p (following-char))
                         (save-excursion
                          (when (forward-sexp 1 t)
-                           (push (progn (shift-position -1) (current-point))
+                           (push (shift-point (current-point) -1)
                                  highlight-points))))
                       (when (syntax-closed-paren-char-p (preceding-char))
                         (save-excursion
@@ -24,7 +24,7 @@
                       (let ((attr *paren-attribute*))
                         (dolist (point highlight-points)
                           (push (make-overlay point
-                                              (shift-point (current-buffer) point 1)
+                                              (shift-point point 1)
                                               attr)
                                 *brackets-overlays*))
                         (when highlight-points

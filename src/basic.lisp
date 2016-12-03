@@ -368,7 +368,7 @@
                                               linum))))
       (+ offset end-charpos))))
 
-(defun shift-point (buffer point offset)
+(defun shift-point (point offset &optional (buffer (current-buffer)))
   (with-current-buffer (buffer point)
     (shift-position offset)
     (current-point)))

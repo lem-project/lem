@@ -189,28 +189,23 @@
 (defun isearch-update-buffer (&optional (search-string *isearch-string*))
   (isearch-reset-buffer)
   (unless (equal "" search-string)
-    (let ((save-point (current-point))
-          start-point
-          end-point)
-      (with-window-range (start end) (current-window)
-        (setq start-point (make-point start 0))
-        (setq end-point (make-point (1+ end) 0))
-        (point-set start-point)
-        (do ()
-            ((null
-              (funcall *isearch-search-forward-function*
-                       search-string end-point)))
-          (let ((point2 (current-point))
-                (point1 (save-excursion
-                         (funcall *isearch-search-backward-function*
-                                  search-string)
-                         (current-point))))
-            (push (make-overlay point1 point2
-                                (if (and (point<= point1 save-point)
-                                         (point<= save-point point2))
-                                    *isearch-highlight-active-attribute*
-                                    *isearch-highlight-attribute*))
-                  *isearch-highlight-overlays*))))
+    (let ((save-point (current-point)))
+      (with-window-range (start-linum end-linum) (current-window)
+        (point-set (beginning-of-line-point start-linum))
+        (loop :while (funcall *isearch-search-forward-function*
+                              search-string
+                              (beginning-of-line-point (1+ end-linum)))
+              :do (let ((point2 (current-point))
+                        (point1 (save-excursion
+                                  (funcall *isearch-search-backward-function*
+                                           search-string)
+                                  (current-point))))
+                    (push (make-overlay point1 point2
+                                        (if (and (point<= point1 save-point)
+                                                 (point<= save-point point2))
+                                            *isearch-highlight-active-attribute*
+                                            *isearch-highlight-attribute*))
+                          *isearch-highlight-overlays*))))
       (point-set save-point))))
 
 (defun isearch-add-char (c)

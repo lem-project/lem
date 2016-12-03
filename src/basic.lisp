@@ -116,14 +116,18 @@
                 (current-linum)))
   t)
 
-(defun beginning-of-line-point ()
-  (make-point (current-linum) 0))
+(defun beginning-of-line-point (&optional (linum (current-linum) linump))
+  (when linump
+    (check-linum (current-buffer) linum))
+  (make-point linum 0))
 
-(defun end-of-line-point ()
+(defun end-of-line-point (&optional (linum (current-linum) linump))
+  (when linump
+    (check-linum (current-buffer) linum))
   (make-point (current-linum)
               (buffer-line-length
                (current-buffer)
-               (current-linum))))
+               linum)))
 
 (defun goto-position (position)
   (check-type position (integer 1 *))

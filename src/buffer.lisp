@@ -336,9 +336,17 @@
          (buffer-cache-line buffer)
          (- (buffer-cache-linum buffer) linum))))))
 
+(defun check-linum (buffer linum)
+  (unless (<= 1 linum (buffer-nlines buffer))
+    (editor-error "invalid line number: ~A" linum)))
+
+(defun check-point (buffer linum charpos)
+  (check-linum buffer linum)
+  (unless (<= 0 charpos (buffer-line-length buffer linum))
+    (editor-error "invalid character position: ~A" charpos)))
+
 (defun buffer-get-line (buffer linum)
-  (assert (<= 1 linum))
-  (assert (<= linum (buffer-nlines buffer)))
+  (check-linum buffer linum)
   (let ((line (%buffer-get-line buffer linum)))
     (setf (buffer-cache-linum buffer) linum)
     (setf (buffer-cache-line buffer) line)

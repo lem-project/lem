@@ -58,14 +58,14 @@
   (marker-linum (buffer-point-marker (current-buffer))))
 
 (defun (setf current-linum) (new-linum)
-  (assert (<= 1 new-linum (buffer-nlines (current-buffer))))
+  (check-linum (current-buffer) new-linum)
   (setf (marker-linum (buffer-point-marker (current-buffer))) new-linum))
 
 (defun current-charpos ()
   (marker-charpos (buffer-point-marker (current-buffer))))
 
 (defun (setf current-charpos) (new-charpos)
-  (assert (<= 0 new-charpos (buffer-line-length (current-buffer) (current-linum))))
+  (check-point (current-buffer) (current-linum) new-charpos)
   (setf (marker-charpos (buffer-point-marker (current-buffer))) new-charpos))
 
 (defun current-point ()

@@ -51,8 +51,8 @@
            (insert-string
             (princ-to-string
              (funcall (get-bvar :listener-get-prompt-function))))
-           (let ((start (make-point (current-linum) 0))
-                 (end (make-point (current-linum) (current-charpos))))
+           (let ((start (beginning-of-line-point))
+                 (end (current-point)))
              (put-attribute start end *prompt-attribute*)
              (put-property start end 'lem::read-only t))
            (buffer-undo-boundary (current-buffer))

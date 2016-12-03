@@ -96,6 +96,16 @@
                   charpos
                   (- (marker-charpos m) n)))))))
 
+(defun merge-plist (plist1 plist2)
+  (let ((new-plist '()))
+    (flet ((f (plist)
+             (loop :for (k v) :on plist :by #'cddr
+                   :do (setf (getf new-plist k)
+                             (nconc (getf new-plist k) v)))))
+      (f plist1)
+      (f plist2))
+    new-plist))
+
 (defun shift-sticky-objects-subtract-line (marker nextp)
   (let ((line (marker-line marker))
         (linum (marker-linum marker))

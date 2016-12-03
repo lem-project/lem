@@ -75,6 +75,13 @@
   (point-set new-point)
   new-point)
 
+(defun round-linum (buffer linum)
+  (cond ((minusp linum) 1)
+        ((<= linum (buffer-nlines buffer))
+         linum)
+        (t
+         (buffer-nlines buffer))))
+
 (defun point-set (point &optional (buffer (current-buffer)))
   (setf (marker-point (buffer-point-marker buffer))
         (let ((linum (min (buffer-nlines buffer)

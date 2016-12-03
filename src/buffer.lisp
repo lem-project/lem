@@ -338,12 +338,12 @@
 
 (defun check-linum (buffer linum)
   (unless (<= 1 linum (buffer-nlines buffer))
-    (editor-error "invalid line number: ~A" linum)))
+    (error "invalid line number: ~A" linum)))
 
 (defun check-point (buffer linum charpos)
   (check-linum buffer linum)
   (unless (<= 0 charpos (buffer-line-length buffer linum))
-    (editor-error "invalid character position: ~A" charpos)))
+    (error "invalid character position: ~A" charpos)))
 
 (defun buffer-get-line (buffer linum)
   (check-linum buffer linum)

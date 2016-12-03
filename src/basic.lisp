@@ -116,14 +116,12 @@
                 (current-linum)))
   t)
 
-(defun beginning-of-line-point (&optional (linum (current-linum) linump))
-  (when linump
-    (check-linum (current-buffer) linum))
+(defun beginning-of-line-point (&optional (linum (current-linum)))
+  (setf linum (round-linum (current-buffer) linum))
   (make-point linum 0))
 
-(defun end-of-line-point (&optional (linum (current-linum) linump))
-  (when linump
-    (check-linum (current-buffer) linum))
+(defun end-of-line-point (&optional (linum (current-linum)))
+  (setf linum (round-linum (current-buffer) linum))
   (make-point (current-linum)
               (buffer-line-length
                (current-buffer)

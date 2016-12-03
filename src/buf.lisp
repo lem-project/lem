@@ -1,15 +1,11 @@
 (in-package :lem)
 
-(defgeneric insert-char/marker (marker char))
-(defgeneric insert-string/marker (marker string))
-(defgeneric delete-char/marker (marker n))
-
-(defun marker-line (marker)
+(defun get-line/marker (marker)
   (buffer-get-line (marker-buffer marker)
                    (marker-linum marker)))
 
 (defun check-read-only-at-point (marker offset)
-  (let ((line (marker-line marker))
+  (let ((line (get-line/marker marker))
         (charpos (marker-charpos marker)))
     (when (if (eql offset 0)
               (line-search-property line 'read-only charpos)
@@ -30,7 +26,7 @@
 
 (defun shift-sticky-objects (marker n)
   (let ((buffer (marker-buffer marker))
-        (line (marker-line marker))
+        (line (get-line/marker marker))
         (linum (marker-linum marker))
         (charpos (marker-charpos marker)))
     (line-property-insert-pos line charpos n)
@@ -49,7 +45,7 @@
   (let ((linum (marker-linum marker))
         (charpos (marker-charpos marker))
         (buffer (marker-buffer marker))
-        (line (marker-line marker)))
+        (line (get-line/marker marker)))
     (line-property-insert-newline line (line-next line) charpos)
     (dolist (m (buffer-markers buffer))
       (cond ((and (= (marker-linum m) linum)
@@ -66,7 +62,7 @@
              (incf (marker-linum m)))))))
 
 (defun shift-sticky-objects-subtract (marker n)
-  (let ((line (marker-line marker))
+  (let ((line (get-line/marker marker))
         (linum (marker-linum marker))
         (charpos (marker-charpos marker))
         (buffer (marker-buffer marker)))
@@ -90,7 +86,7 @@
     new-plist))
 
 (defun shift-sticky-objects-subtract-line (marker nextp)
-  (let ((line (marker-line marker))
+  (let ((line (get-line/marker marker))
         (linum (marker-linum marker))
         (charpos (marker-charpos marker))
         (buffer (marker-buffer marker)))
@@ -127,24 +123,25 @@
       (setf (line-str line)
             (subseq (line-str line) 0 charpos)))))
 
-(defmethod insert-char/marker (marker char)
-  (with-modify-buffer (marker-buffer marker)
-    (check-read-only-at-point marker 0)
-    (cond
-      ((char= char #\newline)
-       (%insert-newline/marker marker
-                               (marker-linum marker)
-                               (marker-charpos marker)))
-      (t
-       (let ((line (marker-line marker))
-             (charpos (marker-charpos marker)))
-         (shift-sticky-objects marker 1)
-         (setf (line-str line)
-               (concatenate 'string
-                            (subseq (line-str line) 0 charpos)
-                            (string char)
-                            (subseq (line-str line) charpos))))))
-    char))
+(defgeneric insert-char/marker (marker char)
+  (:method (marker char)
+    (with-modify-buffer (marker-buffer marker)
+      (check-read-only-at-point marker 0)
+      (cond
+        ((char= char #\newline)
+         (%insert-newline/marker marker
+                                 (marker-linum marker)
+                                 (marker-charpos marker)))
+        (t
+         (let ((line (get-line/marker marker))
+               (charpos (marker-charpos marker)))
+           (shift-sticky-objects marker 1)
+           (setf (line-str line)
+                 (concatenate 'string
+                              (subseq (line-str line) 0 charpos)
+                              (string char)
+                              (subseq (line-str line) charpos))))))
+      char)))
 
 (defun %insert-line-string/marker (marker linum charpos string)
   (check-read-only-at-point marker 0)
@@ -158,21 +155,22 @@
                        string
                        (subseq (line-str line) charpos)))))
 
-(defmethod insert-string/marker (marker string)
-  (with-modify-buffer (marker-buffer marker)
-    (loop :with start := 0
-          :for pos := (position #\newline string :start start)
-          :for linum :from (marker-linum marker) :by 1
-          :for charpos := (marker-charpos marker) :then 0
-          :do (if (null pos)
-                  (progn
-                    (%insert-line-string/marker marker linum charpos (subseq string start))
-                    (return))
-                  (let ((substr (subseq string start pos)))
-                    (%insert-line-string/marker marker linum charpos substr)
-                    (%insert-newline/marker marker linum (+ charpos (length substr)))
-                    (setf start (1+ pos))))))
-  string)
+(defgeneric insert-string/marker (marker string)
+  (:method (marker string)
+    (with-modify-buffer (marker-buffer marker)
+      (loop :with start := 0
+            :for pos := (position #\newline string :start start)
+            :for linum :from (marker-linum marker) :by 1
+            :for charpos := (marker-charpos marker) :then 0
+            :do (if (null pos)
+                    (progn
+                      (%insert-line-string/marker marker linum charpos (subseq string start))
+                      (return))
+                    (let ((substr (subseq string start pos)))
+                      (%insert-line-string/marker marker linum charpos substr)
+                      (%insert-newline/marker marker linum (+ charpos (length substr)))
+                      (setf start (1+ pos))))))
+    string))
 
 (defun %delete-line-between/marker (marker start end)
   (declare (special killring-stream line))
@@ -209,28 +207,29 @@
                      (line-str (line-next line))))
   (line-free (line-next line)))
 
-(defmethod delete-char/marker (marker n)
-  (declare (special n))
-  (with-modify-buffer (marker-buffer marker)
-    (with-output-to-string (killring-stream)
-      (declare (special killring-stream))
-      (let ((charpos (marker-charpos marker))
-            (buffer (marker-buffer marker))
-            (line (marker-line marker)))
-        (declare (special buffer line))
-        (loop :while (or (eq n 'T) (plusp n))
-              :for eolp := (or (eq n 'T)
-                               (> n (- (line-length line) charpos)))
-              :do (check-read-only-at-point marker (if (eq n 'T) nil (if eolp n nil)))
-              :do (cond
-                    ((not eolp)
-                     (%delete-line-between/marker marker charpos (+ charpos n))
-                     (return))
-                    ((null (line-next line))
-                     (%delete-line-eol/marker marker charpos)
-                     (return))
-                    (t
-                     (%delete-line/marker marker charpos))))))))
+(defgeneric delete-char/marker (marker n)
+  (:method (marker n)
+    (declare (special n))
+    (with-modify-buffer (marker-buffer marker)
+      (with-output-to-string (killring-stream)
+        (declare (special killring-stream))
+        (let ((charpos (marker-charpos marker))
+              (buffer (marker-buffer marker))
+              (line (get-line/marker marker)))
+          (declare (special buffer line))
+          (loop :while (or (eq n 'T) (plusp n))
+                :for eolp := (or (eq n 'T)
+                                 (> n (- (line-length line) charpos)))
+                :do (check-read-only-at-point marker (if (eq n 'T) nil (if eolp n nil)))
+                :do (cond
+                      ((not eolp)
+                       (%delete-line-between/marker marker charpos (+ charpos n))
+                       (return))
+                      ((null (line-next line))
+                       (%delete-line-eol/marker marker charpos)
+                       (return))
+                      (t
+                       (%delete-line/marker marker charpos)))))))))
 
 (defmethod insert-char/marker :around (marker char)
   (let ((point (marker-point marker)))

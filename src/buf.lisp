@@ -8,23 +8,6 @@
   (buffer-get-line (marker-buffer marker)
                    (marker-linum marker)))
 
-(defun push-undo (marker fn)
-  (let ((buffer (marker-buffer marker)))
-    (when (and (buffer-enable-undo-p buffer)
-               (not (ghost-buffer-p buffer)))
-      (let* ((point (marker-point marker))
-             (elt (lambda ()
-                    (funcall fn)
-                    point)))
-        (ecase *undo-mode*
-          (:edit
-           (push-undo-stack buffer elt)
-           (setf (buffer-redo-stack buffer) nil))
-          (:redo
-           (push-undo-stack buffer elt))
-          (:undo
-           (push-redo-stack buffer elt)))))))
-
 (defun check-read-only-at-point (marker offset)
   (let ((line (marker-line marker))
         (charpos (marker-charpos marker)))

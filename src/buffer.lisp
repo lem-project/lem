@@ -21,7 +21,6 @@
           buffer-get-char
           buffer-line-string-with-attributes
           buffer-line-string
-          buffer-end-line-p
           map-buffer-lines
           buffer-take-lines
           buffer-erase
@@ -370,10 +369,6 @@
     (when (line-p line)
       (line-str line))))
 
-(defun buffer-end-line-p (buffer linum)
-  (let ((line (buffer-get-line buffer linum)))
-    (not (line-next line))))
-
 (defun map-buffer (fn buffer &optional start-linum)
   (do ((line (if start-linum
                  (buffer-get-line buffer start-linum)
@@ -441,12 +436,6 @@
             0))
   (buffer-mark-cancel buffer))
 
-(defmacro with-buffer-modify (buffer &body body)
-  `(progn
-     (check-read-only-buffer ,buffer)
-     (prog1 (progn ,@body)
-       (buffer-modify ,buffer))))
-
 (defun push-undo-stack (buffer elt)
   (cond ((<= (+ *undo-limit* (floor (* *undo-limit* 0.3)))
              (buffer-undo-size buffer))
@@ -463,20 +452,22 @@
 (defun push-redo-stack (buffer elt)
   (push elt (buffer-redo-stack buffer)))
 
-(defmacro with-push-undo ((buffer) &body body)
-  `(when (and (buffer-enable-undo-p ,buffer)
-              (not (ghost-buffer-p ,buffer)))
-     (let ((elt #'(lambda ()
-                    (buffer-mark-cancel buffer)
-                    ,@body)))
-       (ecase *undo-mode*
-         (:edit
-          (push-undo-stack ,buffer elt)
-          (setf (buffer-redo-stack ,buffer) nil))
-         (:redo
-          (push-undo-stack ,buffer elt))
-         (:undo
-          (push-redo-stack ,buffer elt))))))
+(defun push-undo (marker fn)
+  (let ((buffer (marker-buffer marker)))
+    (when (and (buffer-enable-undo-p buffer)
+               (not (ghost-buffer-p buffer)))
+      (let* ((point (marker-point marker))
+             (elt (lambda ()
+                    (funcall fn)
+                    point)))
+        (ecase *undo-mode*
+          (:edit
+           (push-undo-stack buffer elt)
+           (setf (buffer-redo-stack buffer) nil))
+          (:redo
+           (push-undo-stack buffer elt))
+          (:undo
+           (push-redo-stack buffer elt)))))))
 
 (defun buffer-erase (&optional (buffer (current-buffer)))
   (buffer-mark-cancel buffer)

@@ -3,6 +3,7 @@
 (export '(*program-name*
           *debug-p*
           save-excursion
+          with-current-buffer
           with-window-range
           with-buffer-read-only
           with-current-window
@@ -54,6 +55,12 @@
                ((minibufferp ,gbuffer)
                 (setf (current-buffer) ,gbuffer)
                 (point-set ,gpoint (minibuffer))))))))
+
+(defmacro with-current-buffer ((buffer point) &body body)
+  `(save-excursion
+     (setf (current-buffer) ,buffer)
+     (setf (current-point) ,point)
+     ,@body))
 
 (defmacro with-window-range ((start-linum-var end-linum-var)
                              window &body body)

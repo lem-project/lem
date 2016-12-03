@@ -24,8 +24,7 @@
                       (let ((attr *paren-attribute*))
                         (dolist (point highlight-points)
                           (push (make-overlay point
-                                              (make-point (point-linum point)
-                                                          (1+ (point-charpos point)))
+                                              (shift-point (current-buffer) point 1)
                                               attr)
                                 *brackets-overlays*))
                         (when highlight-points

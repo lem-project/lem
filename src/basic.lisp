@@ -42,7 +42,8 @@
           backward-search-property-start
           current-column
           move-to-column
-          point-to-offset))
+          point-to-offset
+          shift-point))
 
 (defun start-line-p ()
   (<= (current-linum) 1))
@@ -362,3 +363,8 @@
                       (1+ (buffer-line-length (current-buffer)
                                               linum))))
       (+ offset end-charpos))))
+
+(defun shift-point (buffer point offset)
+  (with-current-buffer (buffer point)
+    (shift-position offset)
+    (current-point)))

@@ -405,6 +405,14 @@
                    (setq i (1- end))))))))
     (setf (line-%symbol-lifetimes line) *syntax-symbol-lifetimes*)))
 
+(defun %syntax-pos-property (pos property-name)
+  (let ((line (buffer-get-line (current-buffer) (current-linum))))
+    (when (and (eq property-name :attribute)
+               (not (line-%scan-cached-p line))
+               (enable-syntax-highlight-p (current-buffer)))
+      (syntax-scan-line line))
+    (line-search-property line property-name pos)))
+
 (defun skip-whitespace-forward ()
   (skip-chars-forward #'syntax-space-char-p))
 

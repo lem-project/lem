@@ -294,14 +294,6 @@
     (insert-string string)
     (put-attribute start (current-point) attribute)))
 
-(defun %syntax-pos-property (pos property-name)
-  (let ((line (buffer-get-line (current-buffer) (current-linum))))
-    (when (and (eq property-name :attribute)
-               (not (line-%scan-cached-p line))
-               (enable-syntax-highlight-p (current-buffer)))
-      (syntax-scan-line line))
-    (line-search-property line property-name pos)))
-
 (defun after-property (property-name &optional (n 1))
   (save-excursion
     (shift-position n)

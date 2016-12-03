@@ -63,11 +63,11 @@
 
 (defmethod trivial-gray-streams:stream-write-char ((stream buffer-output-stream) char)
   (prog1 char
-    (marker/insert-char (buffer-output-stream-marker stream)
+    (insert-char/marker (buffer-output-stream-marker stream)
                         char)))
 
 (defun %write-string-to-buffer-stream (stream string start end &key)
-  (marker/insert-string (buffer-output-stream-marker stream)
+  (insert-string/marker (buffer-output-stream-marker stream)
                         (subseq string start end))
   string)
 
@@ -93,7 +93,7 @@
   (%write-string-to-buffer-stream stream string start end))
 
 (defmethod trivial-gray-streams:stream-terpri ((stream buffer-output-stream))
-  (prog1 (marker/insert-char (buffer-output-stream-marker stream)
+  (prog1 (insert-char/marker (buffer-output-stream-marker stream)
                              #\newline)
     (buffer-output-stream-refresh stream)))
 

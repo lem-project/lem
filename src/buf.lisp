@@ -1,8 +1,8 @@
 (in-package :lem)
 
-(defgeneric marker/insert-char (marker char))
-(defgeneric marker/insert-string (marker string))
-(defgeneric marker/delete-char (marker n))
+(defgeneric insert-char/marker (marker char))
+(defgeneric insert-string/marker (marker string))
+(defgeneric delete-char/marker (marker n))
 
 (defun marker-line (marker)
   (buffer-get-line (marker-buffer marker)
@@ -121,7 +121,7 @@
                              (when new-elements
                                (list key new-elements)))))))))
 
-(defun %marker/insert-newline (marker linum charpos)
+(defun %insert-newline/marker (marker linum charpos)
   (let* ((buffer (marker-buffer marker))
          (line (buffer-get-line buffer linum)))
     (let ((newline (make-line line
@@ -134,14 +134,14 @@
       (setf (line-str line)
             (subseq (line-str line) 0 charpos)))))
 
-(defmethod marker/insert-char (marker char)
+(defmethod insert-char/marker (marker char)
   (check-type marker marker)
   (check-type char character)
   (with-modify-buffer (marker-buffer marker)
     (check-read-only-at-point marker 0)
     (cond
       ((char= char #\newline)
-       (%marker/insert-newline marker
+       (%insert-newline/marker marker
                                (marker-linum marker)
                                (marker-charpos marker)))
       (t
@@ -155,7 +155,7 @@
                             (subseq (line-str line) charpos))))))
     char))
 
-(defun %marker/insert-line-string (marker linum charpos string)
+(defun %insert-line-string/marker (marker linum charpos string)
   (check-read-only-at-point marker 0)
   (shift-sticky-objects marker (length string))
   (let ((line
@@ -167,7 +167,7 @@
                        string
                        (subseq (line-str line) charpos)))))
 
-(defmethod marker/insert-string (marker string)
+(defmethod insert-string/marker (marker string)
   (check-type marker marker)
   (check-type string string)
   (with-modify-buffer (marker-buffer marker)
@@ -177,15 +177,15 @@
           :for charpos := (marker-charpos marker) :then 0
           :do (if (null pos)
                   (progn
-                    (%marker/insert-line-string marker linum charpos (subseq string start))
+                    (%insert-line-string/marker marker linum charpos (subseq string start))
                     (return))
                   (let ((substr (subseq string start pos)))
-                    (%marker/insert-line-string marker linum charpos substr)
-                    (%marker/insert-newline marker linum (+ charpos (length substr)))
+                    (%insert-line-string/marker marker linum charpos substr)
+                    (%insert-newline/marker marker linum (+ charpos (length substr)))
                     (setf start (1+ pos))))))
   string)
 
-(defun %marker/delete-line-between (marker start end)
+(defun %delete-line-between/marker (marker start end)
   (declare (special killring-stream line))
   (shift-sticky-objects-subtract marker (- end start))
   (write-string (line-str line) killring-stream
@@ -196,14 +196,14 @@
                      (subseq (line-str line) 0 start)
                      (subseq (line-str line) end))))
 
-(defun %marker/delete-line-eol (marker start)
+(defun %delete-line-eol/marker (marker start)
   (declare (special killring-stream line))
   (shift-sticky-objects-subtract-line marker nil)
   (write-string (line-str line) killring-stream :start start)
   (setf (line-str line)
         (subseq (line-str line) 0 start)))
 
-(defun %marker/delete-line (marker start)
+(defun %delete-line/marker (marker start)
   (declare (special killring-stream line buffer n))
   (shift-sticky-objects-subtract-line marker t)
   (write-string (line-str line) killring-stream :start start)
@@ -219,7 +219,7 @@
                      (line-str (line-next line))))
   (line-free (line-next line)))
 
-(defmethod marker/delete-char (marker n)
+(defmethod delete-char/marker (marker n)
   (declare (special n))
   (check-type marker marker)
   (check-type n integer)
@@ -235,35 +235,35 @@
               :do (check-read-only-at-point marker (if eolp n nil))
               :do (cond
                     ((not eolp)
-                     (%marker/delete-line-between marker charpos (+ charpos n))
+                     (%delete-line-between/marker marker charpos (+ charpos n))
                      (return))
                     ((null (line-next line))
-                     (%marker/delete-line-eol marker charpos)
+                     (%delete-line-eol/marker marker charpos)
                      (return))
                     (t
-                     (%marker/delete-line marker charpos))))))))
+                     (%delete-line/marker marker charpos))))))))
 
-(defmethod marker/insert-char :around (marker char)
+(defmethod insert-char/marker :around (marker char)
   (let ((point (marker-point marker)))
     (prog1 (call-next-method)
       (push-undo marker
                  (lambda ()
                    (setf (marker-point marker) point)
-                   (marker/delete-char marker 1))))))
+                   (delete-char/marker marker 1))))))
 
-(defmethod marker/insert-string :around (marker string)
+(defmethod insert-string/marker :around (marker string)
   (let ((point (marker-point marker)))
     (prog1 (call-next-method)
       (push-undo marker
                  (lambda ()
                    (setf (marker-point marker) point)
-                   (marker/delete-char marker (length string)))))))
+                   (delete-char/marker marker (length string)))))))
 
-(defmethod marker/delete-char :around (marker n)
+(defmethod delete-char/marker :around (marker n)
   (let* ((point (marker-point marker))
          (string (call-next-method)))
     (push-undo marker
                (lambda ()
                  (setf (marker-point marker) point)
-                 (marker/insert-string marker string)))
+                 (insert-string/marker marker string)))
     string))

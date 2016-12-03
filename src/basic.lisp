@@ -68,16 +68,16 @@
 
 (defun insert-char (c &optional (n 1))
   (dotimes (_ n t)
-    (marker/insert-char (buffer-point-marker (current-buffer)) c)
+    (insert-char/marker (buffer-point-marker (current-buffer)) c)
     (shift-position 1)))
 
 (defun insert-string (str)
-  (marker/insert-string (buffer-point-marker (current-buffer)) str)
+  (insert-string/marker (buffer-point-marker (current-buffer)) str)
   (shift-position (length str)))
 
 (defun insert-newline (&optional (n 1))
   (dotimes (_ n)
-    (marker/insert-char (buffer-point-marker (current-buffer))
+    (insert-char/marker (buffer-point-marker (current-buffer))
                         #\newline))
   (forward-line n))
 
@@ -88,7 +88,7 @@
       (return-from delete-char nil)))
   (if (eobp)
       nil
-      (let ((string (marker/delete-char
+      (let ((string (delete-char/marker
                      (buffer-point-marker
                       (current-buffer))
                      n)))

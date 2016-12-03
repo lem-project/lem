@@ -1,7 +1,5 @@
 (in-package :lem)
 
-(declaim (optimize (speed 0) (safety 3) (debug 3)))
-
 (defgeneric marker/insert-char (marker char))
 (defgeneric marker/insert-string (marker string))
 (defgeneric marker/delete-char (marker n))
@@ -60,7 +58,7 @@
                     (<= charpos (marker-charpos m)))
                    ((eql :right-inserting)
                     (< charpos (marker-charpos m)))
-                   (null
+                   ((eql :temporary)
                     nil)))
         (incf (marker-charpos m) n)))))
 
@@ -77,7 +75,7 @@
                      (<= charpos (marker-charpos m)))
                     ((eql :right-inserting)
                      (< charpos (marker-charpos m)))
-                    (null
+                    ((eql :temporary)
                      nil)))
              (incf (marker-linum m))
              (decf (marker-charpos m) charpos))

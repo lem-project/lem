@@ -26,7 +26,7 @@
    (kind
     :initarg :kind
     :accessor marker-kind
-    :type (or null (eql :left-inserting) (eql :right-inserting)))
+    :type (or (eql :temporary) (eql :left-inserting) (eql :right-inserting)))
    (name
     :initarg :name
     :accessor marker-name
@@ -47,7 +47,7 @@
                                :charpos (point-charpos point)
                                :kind kind
                                :name name)))
-    (unless (null kind)
+    (unless (eq :temporary kind)
       (buffer-add-marker buffer marker))
     marker))
 
@@ -58,7 +58,7 @@
                :name name))
 
 (defun delete-marker (marker)
-  (unless (null (marker-kind marker))
+  (unless (eq :temporary (marker-kind marker))
     (buffer-delete-marker (marker-buffer marker)
                           marker)))
 
@@ -73,7 +73,7 @@
 
 (defun marker-change-buffer (marker buffer &optional (point nil pointp))
   (delete-marker marker)
-  (unless (null (marker-kind marker))
+  (unless (eq :tempoorary (marker-kind marker))
     (buffer-add-marker buffer marker))
   (setf (marker-buffer marker) buffer)
   (when pointp

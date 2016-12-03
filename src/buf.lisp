@@ -135,8 +135,6 @@
             (subseq (line-str line) 0 charpos)))))
 
 (defmethod insert-char/marker (marker char)
-  (check-type marker marker)
-  (check-type char character)
   (with-modify-buffer (marker-buffer marker)
     (check-read-only-at-point marker 0)
     (cond
@@ -168,8 +166,6 @@
                        (subseq (line-str line) charpos)))))
 
 (defmethod insert-string/marker (marker string)
-  (check-type marker marker)
-  (check-type string string)
   (with-modify-buffer (marker-buffer marker)
     (loop :with start := 0
           :for pos := (position #\newline string :start start)
@@ -208,7 +204,8 @@
   (shift-sticky-objects-subtract-line marker t)
   (write-string (line-str line) killring-stream :start start)
   (write-char #\newline killring-stream)
-  (decf n (1+ (- (line-length line) start)))
+  (unless (eq n 'T)
+    (decf n (1+ (- (line-length line) start))))
   (decf (buffer-nlines buffer))
   (when (eq (line-next line)
             (buffer-tail-line buffer))
@@ -221,8 +218,6 @@
 
 (defmethod delete-char/marker (marker n)
   (declare (special n))
-  (check-type marker marker)
-  (check-type n integer)
   (with-modify-buffer (marker-buffer marker)
     (with-output-to-string (killring-stream)
       (declare (special killring-stream))
@@ -230,9 +225,10 @@
             (buffer (marker-buffer marker))
             (line (marker-line marker)))
         (declare (special buffer line))
-        (loop :while (plusp n)
-              :for eolp := (> n (- (line-length line) charpos))
-              :do (check-read-only-at-point marker (if eolp n nil))
+        (loop :while (or (eq n 'T) (plusp n))
+              :for eolp := (or (eq n 'T)
+                               (> n (- (line-length line) charpos)))
+              :do (check-read-only-at-point marker (if (eq n 'T) nil (if eolp n nil)))
               :do (cond
                     ((not eolp)
                      (%delete-line-between/marker marker charpos (+ charpos n))

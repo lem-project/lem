@@ -660,7 +660,7 @@
   (buffer-mark-cancel buffer)
   (dolist (marker (buffer-markers buffer))
     (setf (marker-point marker) (make-min-point)))
-  (buffer-delete-char buffer 1 0 t)
+  (delete-char/marker (buffer-point-marker buffer) t)
   (buffer-reset buffer)
   t)
 

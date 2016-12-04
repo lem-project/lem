@@ -19,6 +19,7 @@
    :isearch-prev
    :isearch-yank
    :isearch-self-insert
+   :read-query-replace-args
    :query-replace
    :query-replace-regexp
    :query-replace-symbol))
@@ -229,7 +230,7 @@
 (defvar *replace-before-string* nil)
 (defvar *replace-after-string* nil)
 
-(defun query-replace-before-after ()
+(defun read-query-replace-args ()
   (let ((before)
         (after))
     (setq before
@@ -243,25 +244,25 @@
       (cond (*replace-before-string*
              (setq before *replace-before-string*)
              (setq after *replace-after-string*)
-             (return-from query-replace-before-after
-               (values before after)))
+             (return-from read-query-replace-args
+               (list before after)))
             (t
              (message "Before string is empty")
-             (return-from query-replace-before-after
-               (values nil nil)))))
+             (return-from read-query-replace-args
+               (list nil nil)))))
     (setq after (minibuf-read-string "After: "))
     (setq *replace-before-string* before)
     (setq *replace-after-string* after)
-    (values before after)))
+    (list before after)))
 
-(defun query-replace-internal (search-forward-function
+(defun query-replace-internal (before
+                               after
+                               search-forward-function
                                search-backward-function)
   (unwind-protect
-    (let ((*isearch-search-forward-function* search-forward-function)
-          (*isearch-search-backward-function* search-backward-function)
-          goal-point)
-      (multiple-value-bind (before after)
-          (query-replace-before-after)
+      (let ((*isearch-search-forward-function* search-forward-function)
+            (*isearch-search-backward-function* search-backward-function)
+            goal-point)
         (when (and before after)
           (when (buffer-mark-p)
             (let ((begin (region-beginning))
@@ -285,24 +286,36 @@
                          (minibuf-read-char
                           (format nil "Replace ~s with ~s" before after)))))
                 (cond
-                 ((or pass-through (char= c #\y))
-                  (delete-region start-point end-point)
-                  (insert-string after)
-                  (return))
-                 ((char= c #\n)
-                  (point-set end-point)
-                  (return))
-                 ((char= c #\!)
-                  (setq pass-through t)))))))
-        t))
+                  ((or pass-through (char= c #\y))
+                   (delete-region start-point end-point)
+                   (insert-string after)
+                   (return))
+                  ((char= c #\n)
+                   (point-set end-point)
+                   (return))
+                  ((char= c #\!)
+                   (setq pass-through t)))))))
+        t)
     (isearch-reset-buffer)))
 
 (define-key *global-keymap* (kbd "M-%") 'query-replace)
-(define-command query-replace () ()
-  (query-replace-internal #'search-forward #'search-backward))
+(define-command query-replace (before after)
+    ((read-query-replace-args))
+  (query-replace-internal before
+                          after
+                          #'search-forward
+                          #'search-backward))
 
-(define-command query-replace-regexp () ()
-  (query-replace-internal #'search-forward-regexp #'search-backward-regexp))
+(define-command query-replace-regexp (before after)
+    ((read-query-replace-args))
+  (query-replace-internal before
+                          after
+                          #'search-forward-regexp
+                          #'search-backward-regexp))
 
-(define-command query-replace-symbol () ()
-  (query-replace-internal #'search-forward-symbol #'search-backward-symbol))
+(define-command query-replace-symbol (before after)
+    ((read-query-replace-args))
+  (query-replace-internal before
+                          after
+                          #'search-forward-symbol
+                          #'search-backward-symbol))

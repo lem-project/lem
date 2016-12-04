@@ -129,6 +129,13 @@
   (mark-lines (constantly t)
               (constantly nil)))
 
+(define-command dired-mark-regexp (regex) ("sRegex: ")
+  (mark-lines (lambda (flag)
+                (declare (ignore flag))
+                (let ((file (get-property (current-point) 'file)))
+                  (and file (ppcre:scan regex (namestring file)))))
+              (constantly t)))
+
 (defun run-command (string &rest args)
   (let ((error-string
          (with-output-to-string (error-output)

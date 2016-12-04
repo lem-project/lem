@@ -282,7 +282,7 @@
 
 (defun dired-buffer (filename)
   (setf filename (uiop:directory-exists-p (expand-file-name (namestring filename))))
-  (let ((buffer (get-buffer-create (namestring filename))))
+  (let ((buffer (get-buffer-create (format nil "DIRED \"~A\"" filename))))
     (with-current-buffer (buffer (make-min-point))
       (dired-mode)
       (setf (buffer-filename buffer) (namestring filename))

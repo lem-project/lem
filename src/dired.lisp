@@ -34,6 +34,8 @@
 (define-key *dired-mode-keymap* "* !" 'dired-unmark-all)
 (define-key *dired-mode-keymap* "* %" 'dired-mark-regexp)
 
+(define-key *dired-mode-keymap* "Q" 'dired-query-replace)
+
 (define-key *dired-mode-keymap* "D" 'dired-delete-files)
 (define-key *dired-mode-keymap* "C" 'dired-copy-files)
 (define-key *dired-mode-keymap* "R" 'dired-rename-files)
@@ -135,6 +137,23 @@
                 (let ((file (get-property (current-point) 'file)))
                   (and file (ppcre:scan regex (namestring file)))))
               (constantly t)))
+
+(defun dired-query-replace-internal (query-function)
+  (destructuring-bind (before after)
+      (lem.isearch:read-query-replace-args)
+    (dolist (file (selected-files))
+      (find-file file)
+      (beginning-of-buffer)
+      (funcall query-function before after))))
+
+(define-command dired-query-replace () ()
+  (dired-query-replace-internal 'lem.isearch:query-replace))
+
+(define-command dired-query-replace-regexp () ()
+  (dired-query-replace-internal 'lem.isearch:query-replace-regexp))
+
+(define-command dired-query-replace-symbol () ()
+  (dired-query-replace-internal 'lem.isearch:query-replace-symbol))
 
 (defun run-command (string &rest args)
   (let ((error-string

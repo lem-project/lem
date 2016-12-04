@@ -134,7 +134,7 @@
 (define-command dired-mark-regexp (regex) ("sRegex: ")
   (mark-lines (lambda (flag)
                 (declare (ignore flag))
-                (let ((file (get-property (beginning-of-line-point) 'file)))
+                (let ((file (get-file)))
                   (and file (ppcre:scan regex (namestring file)))))
               (constantly t)))
 
@@ -199,7 +199,7 @@
     (update-all)))
 
 (defun select-file (open-file)
-  (let ((file (get-property (beginning-of-line-point) 'file)))
+  (let ((file (get-file)))
     (when file
       (funcall open-file file))))
 
@@ -234,13 +234,17 @@
         (let ((flag (char= (following-char) #\*)))
           (when flag
             (move-to-file-column)
-            (push (get-property (current-point) 'file)
-                  files)))
+            (push (get-file) files)))
         (unless (forward-line 1)
           (return))))
     (if (null files)
-        (list (get-property (current-point) 'file))
+        (list (get-file))
         (nreverse files))))
+
+(defun get-file ()
+  (get-property (shift-point (beginning-of-line-point)
+                             (get-bvar 'start-file-column :default 0))
+                'file))
 
 (defun ls-output-string (filename)
   (with-output-to-string (stream)

@@ -2,7 +2,6 @@
 
 (export '(point-p
           point
-          make-point
           make-min-point
           point-linum
           point-charpos

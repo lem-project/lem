@@ -759,13 +759,14 @@
                               buffer
                               (make-point (max 1 (min view-linum nlines))
                                           0))
-        (setf (window-point (current-window))
-              (let ((linum (min current-linum nlines)))
-                (make-point linum
-                            (max 0
-                                 (min current-charpos
-                                      (buffer-line-length buffer
-                                                          linum)))))))))
+        (when (buffer-keep-binfo buffer)
+          (setf (window-point (current-window))
+                (let ((linum (min current-linum nlines)))
+                  (make-point linum
+                              (max 0
+                                   (min current-charpos
+                                        (buffer-line-length buffer
+                                                            linum))))))))))
   buffer)
 
 (defun pop-to-buffer (buffer)

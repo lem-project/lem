@@ -10,6 +10,7 @@
 
 (defvar *colors* nil)
 (defvar *color-pair-table* (make-hash-table :test 'equal))
+(defvar *use-bg-color*)
 
 (defstruct color
   number
@@ -47,11 +48,14 @@
                (return (color-number color))))))))
 
 (defun get-color-pair (fg-color-name bg-color-name)
-  (declare (ignore bg-color-name))
   (let ((fg-color (if (null fg-color-name) -1 (get-color fg-color-name)))
-        (bg-color -1))
+        (bg-color (if *use-bg-color*
+                      (if (null bg-color-name) -1 (get-color bg-color-name))
+                      -1)))
     (if (and fg-color bg-color)
-        (gethash fg-color
+        (gethash (if *use-bg-color*
+                     (cons fg-color bg-color)
+                     fg-color)
                  *color-pair-table*
                  0)
         0)))
@@ -337,15 +341,32 @@
       (add-color 254 "color-255" #xee #xee #xee))
 
     (clrhash *color-pair-table*)
-    (loop :for pair :from 1 :to 255
-          :for fg-color :in *colors*
-          :do
-          (charms/ll:init-pair pair
-                               (color-number fg-color)
-                               -1)
-          (setf (gethash (color-number fg-color)
-                         *color-pair-table*)
-                (charms/ll:color-pair pair)))
+    (if (setf *use-bg-color* (= 8 charms/ll:*colors*))
+
+        (let ((pair 1))
+          (flet ((add-pair (fg-color-number bg-color-number)
+                   (charms/ll:init-pair pair
+                                        fg-color-number
+                                        bg-color-number)
+                   (setf (gethash (cons fg-color-number bg-color-number)
+                                  *color-pair-table*)
+                         (charms/ll:color-pair pair))
+                   (incf pair)))
+            (dolist (fg-color *colors*)
+              (dolist (bg-color *colors*)
+                (add-pair (color-number fg-color)
+                          (color-number bg-color)))
+              (add-pair (color-number fg-color) -1)
+              (add-pair -1 (color-number fg-color)))))
+
+        (loop :for pair :from 1 :to 255
+              :for fg-color :in *colors*
+              :do (charms/ll:init-pair pair
+                                       (color-number fg-color)
+                                       -1)
+              :do (setf (gethash (color-number fg-color)
+                                 *color-pair-table*)
+                        (charms/ll:color-pair pair))))
     t))
 
 ;;;

@@ -167,7 +167,7 @@
   filename
   modified-p
   read-only-p
-  enable-undo-p
+  %enable-undo-p
   major-mode
   minor-modes
   head-line
@@ -208,7 +208,7 @@
                                :name name
                                :filename filename
                                :read-only-p read-only-p
-                               :enable-undo-p enable-undo-p
+                               :%enable-undo-p enable-undo-p
                                :major-mode 'fundamental-mode)))
     (buffer-reset buffer)
     (setf (buffer-undo-size buffer) 0)
@@ -222,6 +222,9 @@
                        :name "buffer-point"))
     (add-buffer buffer)
     buffer))
+
+(defun buffer-enable-undo-p (&optional (buffer (current-buffer)))
+  (buffer-%enable-undo-p buffer))
 
 (defun buffer-reset (buffer)
   (let ((line (make-line nil nil "")))
@@ -249,11 +252,11 @@
   (delete-marker (buffer-point-marker buffer)))
 
 (defun buffer-enable-undo (buffer)
-  (setf (buffer-enable-undo-p buffer) t)
+  (setf (buffer-%enable-undo-p buffer) t)
   nil)
 
 (defun buffer-disable-undo (buffer)
-  (setf (buffer-enable-undo-p buffer) nil)
+  (setf (buffer-%enable-undo-p buffer) nil)
   (setf (buffer-undo-size buffer) 0)
   (setf (buffer-undo-stack buffer) nil)
   (setf (buffer-redo-stack buffer) nil)

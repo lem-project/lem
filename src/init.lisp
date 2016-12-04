@@ -1,7 +1,5 @@
 (in-package :lem)
 
-(setf *find-directory-function* 'lem.dired:dired-buffer)
-
 (defun load-init-file ()
   (flet ((test (path)
                (when (cl-fad:file-exists-p path)

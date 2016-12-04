@@ -16,7 +16,6 @@
   :depends-on (:uiop
                :cl-charms
                :cl-fad
-               :osicat
                #+sbcl :sb-posix
                #+sbcl :sb-introspect
                :swank

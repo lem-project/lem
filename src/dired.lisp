@@ -134,7 +134,7 @@
 (define-command dired-mark-regexp (regex) ("sRegex: ")
   (mark-lines (lambda (flag)
                 (declare (ignore flag))
-                (let ((file (get-property (current-point) 'file)))
+                (let ((file (get-property (beginning-of-line-point) 'file)))
                   (and file (ppcre:scan regex (namestring file)))))
               (constantly t)))
 
@@ -216,7 +216,7 @@
 
 (defun mark-lines (test get-flag)
   (save-excursion
-    (setf (current-linum) *start-line-number*)
+    (setf (current-linum) (+ 2 *start-line-number*))
     (loop
       (beginning-of-line)
       (let ((flag (char= (following-char) #\*)))

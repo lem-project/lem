@@ -17,6 +17,7 @@
           buffer-truncate-lines
           buffer-enable-undo
           buffer-disable-undo
+          buffer-unmark
           buffer-put-property
           buffer-get-char
           buffer-line-string-with-attributes
@@ -165,7 +166,7 @@
 (define-class buffer () (current-buffer)
   name
   filename
-  modified-p
+  %modified-p
   read-only-p
   %enable-undo-p
   major-mode
@@ -211,6 +212,7 @@
                                :%enable-undo-p enable-undo-p
                                :major-mode 'fundamental-mode)))
     (buffer-reset buffer)
+    (setf (buffer-%modified-p buffer) 0)
     (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
@@ -225,6 +227,9 @@
 
 (defun buffer-enable-undo-p (&optional (buffer (current-buffer)))
   (buffer-%enable-undo-p buffer))
+
+(defun buffer-modified-p (&optional (buffer (current-buffer)))
+  (/= 0 (buffer-%modified-p buffer)))
 
 (defun buffer-reset (buffer)
   (let ((line (make-line nil nil "")))
@@ -263,7 +268,7 @@
   nil)
 
 (defun buffer-unmark (buffer)
-  (setf (buffer-modified-p buffer) nil))
+  (setf (buffer-%modified-p buffer) 0))
 
 (defun buffer-apply-line (apply-fn buffer linum start-charpos end-charpos args)
   (let ((line (buffer-get-line buffer linum)))
@@ -440,11 +445,11 @@
     (error 'readonly)))
 
 (defun buffer-modify (buffer)
-  (setf (buffer-modified-p buffer)
-        (if (buffer-modified-p buffer)
-            (1+ (mod (buffer-modified-p buffer)
-                     #.(floor most-positive-fixnum 2)))
-            0))
+  (ecase *undo-mode*
+    ((:edit :redo)
+     (incf (buffer-%modified-p buffer)))
+    ((:undo)
+     (decf (buffer-%modified-p buffer))))
   (buffer-mark-cancel buffer))
 
 (defun push-undo-stack (buffer elt)

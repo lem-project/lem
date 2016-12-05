@@ -590,7 +590,7 @@
   (let ((output-buffer (get-buffer-create "*output*")))
     (buffer-erase output-buffer)
     (set-buffer-mode output-buffer 'lisp-mode)
-    (setf (buffer-modified-p output-buffer) nil)
+    (buffer-unmark output-buffer)
     (message "~{~s~^,~}"
              (%lisp-eval-string string output-buffer nil nil
                                 (lisp-current-package)))

@@ -122,7 +122,7 @@
 
 (defun end-of-line-point (&optional (linum (current-linum)))
   (setf linum (round-linum (current-buffer) linum))
-  (make-point (current-linum)
+  (make-point linum
               (buffer-line-length
                (current-buffer)
                linum)))

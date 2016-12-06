@@ -10,6 +10,7 @@
           *syntax-constant-attribute*
           *syntax-function-name-attribute*
           *syntax-variable-attribute*
+          copy-attribute
           attribute-p
           attribute-name
           attribute-fg-color

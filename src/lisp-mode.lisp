@@ -251,6 +251,41 @@
                                     :regex-p t :word-p t)
                   :attribute *syntax-constant-attribute*)
 
+(defun featurep (form positivep)
+  (cond ((atom form)
+         (if positivep
+             (find (find-symbol (princ-to-string form)
+                                :keyword)
+                   *features*)
+             (not (find (find-symbol (princ-to-string form)
+                                     :keyword)
+                        *features*))))
+        ((eq 'and (car form))
+         (every (lambda (form) (featurep form positivep))
+                (cdr form)))
+        ((eq 'or (car form))
+         (every (lambda (form) (featurep form positivep))
+                (cdr form)))
+        (t)))
+
+(defvar *feature-attribute* (lem::copy-attribute *syntax-comment-attribute*))
+
+(syntax-add-match *lisp-syntax-table*
+                  (make-syntax-test "#[+-]" :regex-p t)
+                  :move-action (lambda ()
+                                 (ignore-errors
+                                  (let ((positivep (eql #\+ (char-after 1))))
+                                    (shift-position 2)
+                                    (let ((prev-point (current-point)))
+                                      (when (forward-sexp 1 t)
+                                        (unless (featurep (read-from-string
+                                                           (region-string prev-point
+                                                                          (current-point)))
+                                                          positivep)
+                                          (forward-sexp 1 t)
+                                          (current-point)))))))
+                  :attribute *feature-attribute*)
+
 (define-major-mode lisp-mode prog-mode
     (:name "lisp"
      :keymap *lisp-mode-keymap*

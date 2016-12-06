@@ -82,7 +82,11 @@
    (symbol-lifetime
     :initarg :symbol-lifetime
     :initform nil
-    :reader syntax-match-symbol-lifetime)))
+    :reader syntax-match-symbol-lifetime)
+   (move-action
+    :initarg :move-action
+    :initform nil
+    :reader syntax-match-move-action)))
 
 (defstruct (syntax-table (:constructor %make-syntax-table))
   (space-chars '(#\space #\tab #\newline))
@@ -129,14 +133,15 @@
     syntax-table))
 
 (defun syntax-add-match (syntax-table test &key test-symbol end-symbol attribute
-                                      matched-symbol (symbol-lifetime -1))
+                                      matched-symbol (symbol-lifetime -1) move-action)
   (push (make-instance 'syntax-match
                        :test test
                        :test-symbol test-symbol
                        :end-symbol end-symbol
                        :attribute attribute
                        :matched-symbol matched-symbol
-                       :symbol-lifetime symbol-lifetime)
+                       :symbol-lifetime symbol-lifetime
+                       :move-action move-action)
         (syntax-table-match-list syntax-table))
   t)
 
@@ -224,46 +229,21 @@
        (get-bvar :enable-syntax-highlight :buffer buffer)))
 
 (defun syntax-scan-window (window)
+  (check-type window window)
   (when (enable-syntax-highlight-p (window-buffer window))
     (with-window-range (start-linum end-linum) window
       (syntax-scan-lines (window-buffer window) start-linum end-linum))))
 
-(defun syntax-scan-lines (buffer start-linum end-linum)
-  (when (enable-syntax-highlight-p buffer)
-    (let* ((line (buffer-get-line buffer start-linum))
-           (prev (line-prev line))
-           (*syntax-symbol-lifetimes* (and prev (line-%symbol-lifetimes prev))))
-      (do ((line line (line-next line))
-           (linum start-linum (1+ linum)))
-          ((or (null line)
-               (= linum end-linum)))
-        (syntax-scan-line line)))))
-
 (defun syntax-scan-buffer (buffer)
+  (check-type buffer buffer)
   (when (enable-syntax-highlight-p buffer)
-    (map-buffer #'(lambda (line linum)
-                    (declare (ignore linum))
-                    (syntax-scan-line line))
-                buffer)))
+    (syntax-scan-lines buffer 1 (point-linum (point-max buffer)))))
 
 (defun syntax-update-symbol-lifetimes ()
   (setq *syntax-symbol-lifetimes*
         (loop :for (symbol . lifetime) :in *syntax-symbol-lifetimes*
           :when (/= 0 lifetime)
           :collect (cons symbol (1- lifetime)))))
-
-(defun syntax-matched-word (line syntax start end)
-  (when (syntax-match-matched-symbol syntax)
-    (push (cons (syntax-match-matched-symbol syntax)
-                (syntax-match-symbol-lifetime syntax))
-          *syntax-symbol-lifetimes*))
-  (when (syntax-match-end-symbol syntax)
-    (setq *syntax-symbol-lifetimes*
-          (remove (syntax-match-end-symbol syntax)
-                  *syntax-symbol-lifetimes*
-                  :key #'car)))
-  (line-add-property line start end :attribute (syntax-attribute syntax))
-  t)
 
 (defun syntax-position-word-end (str start)
   (or (position-if-not #'syntax-symbol-char-p str
@@ -347,8 +327,36 @@
           (syntax-test-match-p (syntax-match-test syntax)
                                str start)
         (when (and start1 end1)
-          (syntax-matched-word line syntax start1 end1)
-          (return-from syntax-scan-token-test (1- end1)))))))
+          (when (syntax-match-matched-symbol syntax)
+            (push (cons (syntax-match-matched-symbol syntax)
+                        (syntax-match-symbol-lifetime syntax))
+                  *syntax-symbol-lifetimes*))
+          (when (syntax-match-end-symbol syntax)
+            (setq *syntax-symbol-lifetimes*
+                  (remove (syntax-match-end-symbol syntax)
+                          *syntax-symbol-lifetimes*
+                          :key #'car)))
+          (cond
+            ((syntax-match-move-action syntax)
+             (let* ((start-point (current-point))
+                    (end-point (funcall (syntax-match-move-action syntax))))
+               (when (and end-point
+                          (point< start-point end-point))
+                 (loop :for i :from 0 :below (- (point-linum end-point)
+                                                (point-linum start-point))
+                       :do (progn
+                             (setf (line-%scan-cached-p line) t)
+                             (line-clear-property line :attribute)
+                             (setf (line-%region line) syntax)
+                             (setf line (line-next line))))
+                 (setf (line-%region line) nil)
+                 (put-attribute start-point
+                                end-point
+                                (syntax-attribute syntax))
+                 (cons (point-charpos end-point) line))))
+            (t
+             (line-add-property line start1 end1 :attribute (syntax-attribute syntax))
+             (1- end1))))))))
 
 (defun syntax-scan-token (line start)
   (flet ((f (syn) (syntax-scan-token-test syn line start)))
@@ -367,18 +375,26 @@
 
 (defun syntax-scan-line-region (line region)
   (when region
-    (let ((end (syntax-search-region-end region (line-str line) 0)))
-      (cond (end
-             (setf (line-%region line) nil)
-             (line-add-property line 0 end :attribute (syntax-attribute region))
-             end)
-            (t
-             (setf (line-%region line) region)
-             (line-add-property line 0
-                                (1+ (length (line-str line)))
-                                :attribute
-                                (syntax-attribute region))
-             (length (line-str line)))))))
+    (typecase region
+      (syntax-region
+       (let ((end (syntax-search-region-end region (line-str line) 0)))
+         (cond (end
+                (setf (line-%region line) nil)
+                (line-add-property line 0 end :attribute (syntax-attribute region))
+                end)
+               (t
+                (setf (line-%region line) region)
+                (line-add-property line 0
+                                   (1+ (length (line-str line)))
+                                   :attribute
+                                   (syntax-attribute region))
+                (length (line-str line))))))
+      (otherwise
+       (line-add-property line 0
+                          (1+ (length (line-str line)))
+                          :attribute
+                          (syntax-attribute region))
+       (length (line-str line))))))
 
 (defun syntax-scan-line (line)
   (setf (line-%scan-cached-p line) t)
@@ -397,13 +413,38 @@
       (let ((c (schar str i)))
         (cond ((syntax-escape-char-p c)
                (incf i))
-              ((let ((pos (syntax-scan-token line i)))
-                 (when pos (setq i pos))))
+              ((let ((result (syntax-scan-token line i)))
+                 (cond
+                   ((null result) nil)
+                   ((consp result)
+                    (destructuring-bind (pos . new-line) result
+                      (setf line new-line)
+                      (setf str (line-str line))
+                      (setf i pos)))
+                   (t
+                    (setf i result)))))
               (t
                (let ((end (syntax-position-word-end (line-str line) i)))
                  (when (<= i (1- end))
                    (setq i (1- end))))))))
-    (setf (line-%symbol-lifetimes line) *syntax-symbol-lifetimes*)))
+    (setf (line-%symbol-lifetimes line) *syntax-symbol-lifetimes*)
+    line))
+
+(defun syntax-scan-lines (buffer start-linum end-linum)
+  (when (enable-syntax-highlight-p buffer)
+    (let* ((line (buffer-get-line buffer start-linum))
+           (prev (line-prev line))
+           (*syntax-symbol-lifetimes* (and prev (line-%symbol-lifetimes prev)))
+           (start-point (current-point)))
+      (setf (current-linum) start-linum)
+      (beginning-of-line)
+      (loop :until (or (null line)
+                       (<= end-linum (current-linum)))
+            :do (setf line (syntax-scan-line line))
+            :do (unless (forward-line 1)
+                  (return))
+            :do (setf line (line-next line)))
+      (setf (current-point) start-point))))
 
 (defun %syntax-pos-property (pos property-name)
   (let ((line (buffer-get-line (current-buffer) (current-linum))))

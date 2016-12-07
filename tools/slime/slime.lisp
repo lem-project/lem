@@ -251,7 +251,7 @@
                     (lambda (arglist)
                       (stop-eval-timer)
                       (when arglist
-                        (message "~A" arglist)))
+                        (message "~A" (ppcre:regex-replace-all "\\s+" arglist " "))))
                     t)
         (start-eval-timer)))))
 

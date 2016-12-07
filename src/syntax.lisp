@@ -346,6 +346,7 @@
                           :key #'car)))
           (cond
             ((syntax-match-move-action syntax)
+             (setf (current-charpos) start1)
              (let* ((start-point (current-point))
                     (end-point (funcall (syntax-match-move-action syntax))))
                (when (and end-point

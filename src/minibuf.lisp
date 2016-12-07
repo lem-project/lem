@@ -215,10 +215,10 @@
                (let ((start-point (current-point)))
                  (insert-string prompt)
                  (put-attribute start-point (current-point) *minibuffer-prompt-attribute*)
-                 (put-property start-point (current-point) 'lem::read-only t)
+                 (put-property start-point (current-point) 'lem.property:read-only t)
                  (put-property (shift-point (current-point) -1)
                                (current-point)
-                               'lem::separator t))
+                               'lem.property:field-separator t))
                (let ((*minibuffer-start-point* (current-point)))
                  (when initial
                  (insert-string initial))

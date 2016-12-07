@@ -250,8 +250,8 @@
 (define-key *global-keymap* (kbd "[home]") 'move-to-beginning-of-line)
 (define-command move-to-beginning-of-line () ()
   (let ((bol-point (beginning-of-line-point)))
-    (or (preceding-property 'lem::separator)
-        (backward-search-property-start 'lem::separator bol-point)
+    (or (preceding-property 'lem.property:field-separator)
+        (backward-search-property-start 'lem.property:field-separator bol-point)
         (setf (current-point) bol-point)))
   t)
 

@@ -13,9 +13,9 @@
     (let ((line (get-line/marker marker))
           (charpos (marker-charpos marker)))
       (when (if (eql offset 0)
-                (line-search-property line 'read-only charpos)
+                (line-search-property line 'lem.property:read-only charpos)
                 (line-search-property-range line
-                                            'read-only
+                                            'lem.property:read-only
                                             charpos
                                             (if (null offset)
                                                 nil

@@ -30,6 +30,7 @@
                              (:file "util")
                              (:file "term")
                              (:file "package")
+                             (:file "property")
                              (:file "key")
                              (:file "errors")
                              (:file "header")

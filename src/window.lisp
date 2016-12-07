@@ -7,6 +7,7 @@
           window-list
           window
           window-screen
+          window-use-modeline-p
           window-point
           window-height
           window-width
@@ -50,6 +51,7 @@
   view-marker
   point-marker
   delete-hook
+  use-modeline-p
   parameters)
 
 (defun window-p (x)
@@ -64,7 +66,8 @@
                           :height height
                           :%buffer buffer
                           :screen (make-screen x y width height use-modeline-p)
-                          :view-marker (make-marker buffer (make-min-point) :name "view"))))
+                          :view-marker (make-marker buffer (make-min-point) :name "view")
+                          :use-modeline-p use-modeline-p)))
     (setf (window-point-marker window)
           (make-marker buffer (make-min-point) :name "point"))
     (setf *modified-window-tree-p* t)

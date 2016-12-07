@@ -414,7 +414,7 @@
                         (lem::window-view-linum window)
                         (window-current-charpos window)
                         (window-current-linum window))
-  (unless (minibuffer-window-p window)
+  (when (window-use-modeline-p window)
     (screen-redraw-separator window)
     (screen-redraw-modeline window))
   (charms/ll:wnoutrefresh (screen-%scrwin (window-screen window)))

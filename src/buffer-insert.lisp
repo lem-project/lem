@@ -1,26 +1,32 @@
 (in-package :lem)
 
+(export '(*inhibit-read-only*))
+
+(defvar *inhibit-read-only* nil)
+
 (defun get-line/marker (marker)
   (buffer-get-line (marker-buffer marker)
                    (marker-linum marker)))
 
 (defun check-read-only-at-point (marker offset)
-  (let ((line (get-line/marker marker))
-        (charpos (marker-charpos marker)))
-    (when (if (eql offset 0)
-              (line-search-property line 'read-only charpos)
-              (line-search-property-range line
-                                          'read-only
-                                          charpos
-                                          (if (null offset)
-                                              nil
-                                              (+ charpos offset))))
-      (error 'read-only-error))))
+  (unless *inhibit-read-only*
+    (let ((line (get-line/marker marker))
+          (charpos (marker-charpos marker)))
+      (when (if (eql offset 0)
+                (line-search-property line 'read-only charpos)
+                (line-search-property-range line
+                                            'read-only
+                                            charpos
+                                            (if (null offset)
+                                                nil
+                                                (+ charpos offset))))
+        (error 'read-only-error)))))
 
 (defmacro with-modify-buffer (buffer &body body)
   (alexandria:once-only (buffer)
     `(progn
-       (check-read-only-buffer ,buffer)
+       (unless *inhibit-read-only*
+         (check-read-only-buffer ,buffer))
        (prog1 (progn ,@body)
          (buffer-modify ,buffer)))))
 

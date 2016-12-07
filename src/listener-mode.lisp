@@ -103,7 +103,9 @@
 
 (define-key *listener-mode-keymap* (kbd "M-r") 'listener-reset-interactive)
 (define-command listener-reset-interactive (arg) ("P")
-  (when arg (delete-region (point-min) (point-max)))
+  (when arg
+    (let ((*inhibit-read-only* t))
+      (delete-region (point-min) (point-max))))
   (listener-reset-prompt)
   t)
 

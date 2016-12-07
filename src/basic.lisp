@@ -315,19 +315,31 @@
     (shift-position -1)
     (%syntax-pos-property (current-charpos) property-name)))
 
-(defun forward-search-property-end (property-name property-value)
-  (loop
-    (unless (eq property-value (following-property property-name))
-      (return property-value))
-    (unless (shift-position 1)
-      (return nil))))
+(defun forward-search-property-end (property-name &optional limit)
+  (let ((first-value (following-property property-name))
+        (first-point (current-point)))
+    (loop
+      (unless (eq first-value (following-property property-name))
+        (return t))
+      (unless (shift-position 1)
+        (setf (current-point) first-point)
+        (return nil))
+      (when (and limit (point<= limit (current-point)))
+        (setf (current-point) first-point)
+        (return nil)))))
 
-(defun backward-search-property-start (property-name property-value)
-  (loop
-    (unless (eq property-value (preceding-property property-name))
-      (return property-value))
-    (unless (shift-position -1)
-      (return nil))))
+(defun backward-search-property-start (property-name &optional limit)
+  (let ((first-value (preceding-property property-name))
+        (first-point (current-point)))
+    (loop
+      (unless (eq first-value (preceding-property property-name))
+        (return t))
+      (unless (shift-position -1)
+        (setf (current-point) first-point)
+        (return nil))
+      (when (and limit (point<= (current-point) limit))
+        (setf (current-point) first-point)
+        (return nil)))))
 
 (defun current-column ()
   (string-width (current-line-string)

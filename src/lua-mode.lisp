@@ -64,7 +64,7 @@
     (skip-chars-forward '(#\space #\tab #\newline))
     (unless (and (not (eq *syntax-comment-attribute* (preceding-property :attribute)))
                  (eq *syntax-comment-attribute* (following-property :attribute))
-                 (forward-search-property-end :attribute *syntax-comment-attribute*))
+                 (forward-search-property-end :attribute))
       (return t))))
 
 (defun skip-space-backward ()
@@ -72,18 +72,18 @@
     (skip-chars-backward '(#\space #\tab #\newline))
     (unless (and (not (eq :comment (before-property :attribute 1)))
                  (eq :comment (before-property :attribute 2))
-                 (backward-search-property-start :attribute *syntax-comment-attribute*))
+                 (backward-search-property-start :attribute))
       (return t))))
 
 (defun lua-forward-sexp-1 (n)
   (cond ((and (= n 1)
               (not (eq *syntax-string-attribute* (preceding-property :attribute)))
               (eq *syntax-string-attribute* (following-property :attribute)))
-         (forward-search-property-end :attribute *syntax-string-attribute*))
+         (forward-search-property-end :attribute))
         ((and (= n -1)
               (not (eq *syntax-string-attribute* (before-property :attribute 1)))
               (eq *syntax-string-attribute* (before-property :attribute 2)))
-         (backward-search-property-start :attribute *syntax-string-attribute*))
+         (backward-search-property-start :attribute))
         (t
          (raw-forward-sexp n))))
 

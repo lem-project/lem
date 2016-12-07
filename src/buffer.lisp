@@ -441,7 +441,7 @@
 
 (defun check-read-only-buffer (buffer)
   (when (buffer-read-only-p buffer)
-    (error 'readonly)))
+    (error 'read-only-error)))
 
 (defun buffer-modify (buffer)
   (ecase *undo-mode*

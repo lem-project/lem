@@ -15,7 +15,7 @@
                                           (if (null offset)
                                               nil
                                               (+ charpos offset))))
-      (error 'readonly))))
+      (error 'read-only-error))))
 
 (defmacro with-modify-buffer (buffer &body body)
   (alexandria:once-only (buffer)

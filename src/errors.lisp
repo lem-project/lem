@@ -3,7 +3,7 @@
 (export '(editor-condition
           editor-abort
           editor-abort-depth
-          readonly
+          read-only-error
           editor-error
           editor-error-message))
 
@@ -20,7 +20,7 @@
      (declare (ignore condition))
      (format stream "Abort"))))
 
-(define-condition readonly (editor-condition)
+(define-condition read-only-error (editor-condition)
   ())
 
 (define-condition editor-error (editor-condition)

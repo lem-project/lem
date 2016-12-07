@@ -99,7 +99,7 @@
                      (editor-abort ()
                                    (buffer-mark-cancel (current-buffer))
                                    (message "Quit"))
-                     (readonly ()
+                     (read-only-error ()
                                (message "Read Only"))
                      (editor-error (c)
                                    (message (editor-error-message c)))))))))))))

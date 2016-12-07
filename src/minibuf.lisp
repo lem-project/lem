@@ -181,7 +181,7 @@
                           (when (/= (editor-abort-depth c)
                                     *minibuf-read-line-depth*)
                             (error c)))
-            (readonly ()
+            (read-only-error ()
                       (message "Read Only"))
             (editor-error (c)
                           (message (editor-error-message c)))))))

@@ -25,7 +25,11 @@
   (term-init)
   (setq *old-display-width* charms/ll:*cols*)
   (setq *old-display-height* charms/ll:*lines*)
-  (setf *echo-area-scrwin* (charms/ll:newwin 1 (display-width) (1- (display-height)) 0)))
+  (setf *echo-area-scrwin*
+        (charms/ll:newwin lem::*minibuffer-window-height*
+                          (display-width)
+                          (- (display-height) lem::*minibuffer-window-height*)
+                          0)))
 
 (defun display-finalize ()
   (term-finalize))
@@ -48,7 +52,8 @@
   (when use-modeline-p
     (decf height))
   (%make-screen :%scrwin (charms/ll:newwin height width y x)
-                :%modeline-scrwin (when use-modeline-p (charms/ll:newwin 1 width (+ y height) x))
+                :%modeline-scrwin (when use-modeline-p
+                                    (charms/ll:newwin 1 width (+ y height) x))
                 :x x
                 :y y
                 :width width
@@ -84,7 +89,7 @@
                    (+ (screen-y screen) height)
                    (screen-x screen))
   (charms/ll:wresize (screen-%modeline-scrwin screen)
-                     1
+                     lem::*minibuffer-window-height*
                      width)
   (setf (screen-lines screen)
         (make-array height :initial-element nil))
@@ -445,8 +450,13 @@
                              *old-display-height*)))
     (setq *old-display-width* (display-width))
     (setq *old-display-height* (display-height))
-    (charms/ll:mvwin *echo-area-scrwin* (1- (display-height)) 0)
-    (charms/ll:wresize *echo-area-scrwin* 1 (display-width))
+    (charms/ll:mvwin *echo-area-scrwin*
+                     (- (display-height)
+                        lem::*minibuffer-window-height*)
+                     0)
+    (charms/ll:wresize *echo-area-scrwin*
+                       lem::*minibuffer-window-height*
+                       (display-width))
     (lem::minibuf-update-size)
     (redraw-display)))
 

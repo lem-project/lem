@@ -18,6 +18,8 @@
           minibuf-read-buffer
           minibuf-read-file))
 
+(defparameter *minibuffer-window-height* 3)
+
 (defvar *minibuf-window*)
 (defvar *minibuffer-calls-window*)
 
@@ -36,7 +38,12 @@
 
 (defun minibuf-init ()
   (let* ((buffer (make-buffer " *minibuffer*"))
-         (window (make-window buffer 0 (1- (display-height)) (display-width) 1)))
+         (window (make-window buffer
+                              0
+                              (- (display-height)
+                                 *minibuffer-window-height*)
+                              (display-width)
+                              *minibuffer-window-height*)))
     (setq *minibuf-window* window)))
 
 (defun minibuf-update-size ()

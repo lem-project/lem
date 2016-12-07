@@ -37,7 +37,6 @@
   next
   str
   plist
-  %scan-cached-p
   %symbol-lifetimes
   %region)
 

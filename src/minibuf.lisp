@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(minibuffer-window-p
+          minibuffer-window-height
           message
           minibuf-y-or-n-p
           minibuf-read-char
@@ -17,7 +18,7 @@
           minibuf-read-buffer
           minibuf-read-file))
 
-(defparameter *minibuffer-window-height* 3)
+(defparameter *minibuffer-window-height* 1)
 
 (defvar *minibuf-window*)
 (defvar *minibuffer-calls-window*)
@@ -27,6 +28,7 @@
 (defun minibuffer-window () *minibuf-window*)
 (defun minibuffer-window-p (window) (eq window (minibuffer-window)))
 (defun minibuffer-window-active-p () (eq (current-window) (minibuffer-window)))
+(defun minibuffer-window-height () *minibuffer-window-height*)
 (defun minibuffer () (window-buffer (minibuffer-window)))
 (defun minibufferp (buffer) (eq buffer (minibuffer)))
 (defun minibuffer-calls-window () *minibuffer-calls-window*)
@@ -42,9 +44,9 @@
          (window (make-window buffer
                               0
                               (- (display-height)
-                                 *minibuffer-window-height*)
+                                 (minibuffer-window-height))
                               (display-width)
-                              *minibuffer-window-height*
+                              (minibuffer-window-height)
                               nil)))
     (setq *minibuf-window* window)))
 

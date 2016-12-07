@@ -297,7 +297,7 @@
         (load-window-tree dumped-tree)))))
 
 (defun window-max-width () (display-width))
-(defun window-max-height () (- (display-height) *minibuffer-window-height*))
+(defun window-max-height () (- (display-height) (minibuffer-window-height)))
 
 (defun window-init ()
   (setf (current-window)

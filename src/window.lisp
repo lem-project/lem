@@ -55,7 +55,7 @@
 (defun window-p (x)
   (typep x 'window))
 
-(defun make-window (buffer x y width height)
+(defun make-window (buffer x y width height use-modeline-p)
   (let* ((window
            (make-instance 'window
                           :x x
@@ -63,7 +63,7 @@
                           :width width
                           :height height
                           :%buffer buffer
-                          :screen (make-screen x y width height t)
+                          :screen (make-screen x y width height use-modeline-p)
                           :view-marker (make-marker buffer (make-min-point) :name "view"))))
     (setf (window-point-marker window)
           (make-marker buffer (make-min-point) :name "point"))
@@ -271,7 +271,7 @@
                                          parameters)
                         (cdr dumped-tree)
                       (let ((window (make-window (get-buffer-create buffer-name)
-                                                 x y width height)))
+                                                 x y width height t)))
                         (setf (marker-point (window-view-marker window)) (marker-point view-marker))
                         (setf (window-delete-hook window) delete-hook)
                         (setf (window-parameters window) parameters)
@@ -305,7 +305,8 @@
                      0
                      0
                      (window-max-width)
-                     (window-max-height)))
+                     (window-max-height)
+                     t))
   (setf (window-tree) (current-window)))
 
 (defun window-recenter (window)
@@ -465,7 +466,8 @@
                                  (window-x window)
                                  (+ (window-y window) winheight rem)
                                  (window-width window)
-                                 winheight)))
+                                 winheight
+                                 t)))
         (decf (window-height window) winheight)
         (split-window-after window newwin :vsplit)))))
 
@@ -479,7 +481,8 @@
                                     rem)
                                  (window-y window)
                                  winwidth
-                                 (window-height window))))
+                                 (window-height window)
+                                 t)))
         (decf (window-width window) (1+ winwidth))
         (split-window-after window newwin :hsplit)))))
 

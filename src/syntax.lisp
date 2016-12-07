@@ -239,6 +239,14 @@
   (when (enable-syntax-highlight-p buffer)
     (syntax-scan-lines buffer 1 (point-linum (point-max buffer)))))
 
+(defun syntax-scan-current-view ()
+  (cond
+    ((get-bvar 'already-visited)
+     (syntax-scan-window (current-window)))
+    (t
+     (setf (get-bvar 'already-visited) t)
+     (syntax-scan-buffer (current-buffer)))))
+
 (defun syntax-update-symbol-lifetimes ()
   (setq *syntax-symbol-lifetimes*
         (loop :for (symbol . lifetime) :in *syntax-symbol-lifetimes*
@@ -433,16 +441,18 @@
     (let* ((line (buffer-get-line buffer start-linum))
            (prev (line-prev line))
            (*syntax-symbol-lifetimes* (and prev (line-%symbol-lifetimes prev)))
-           (start-point (current-point)))
-      (setf (current-linum) start-linum)
-      (beginning-of-line)
+           (prev-point (current-point))
+           (prev-buffer (current-buffer)))
+      (setf (current-buffer) buffer)
+      (setf (current-point) (make-point start-linum 0))
       (loop :until (or (null line)
                        (<= end-linum (current-linum)))
             :do (setf line (syntax-scan-line line))
             :do (unless (forward-line 1)
                   (return))
             :do (setf line (line-next line)))
-      (setf (current-point) start-point))))
+      (setf (current-buffer) prev-buffer)
+      (setf (current-point) prev-point))))
 
 (defun %syntax-pos-property (pos property-name)
   (let ((line (buffer-get-line (current-buffer) (current-linum))))

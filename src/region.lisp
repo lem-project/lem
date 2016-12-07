@@ -55,9 +55,10 @@
 (defun delete-region (begin end &optional (buffer (current-buffer)))
   (when (point< end begin)
     (rotatef begin end))
-  (point-set begin)
-  (prog1 (delete-char (region-count begin end) nil)
-    (buffer-mark-cancel (current-buffer))))
+  (point-set begin buffer)
+  (prog1 (delete-char/marker (buffer-point-marker buffer)
+                             (region-count begin end buffer))
+    (buffer-mark-cancel buffer)))
 
 (defun apply-region-lines (begin end fn)
   (point-set begin)

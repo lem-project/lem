@@ -32,6 +32,7 @@
 (defvar *scroll-recenter-p* t)
 (defvar *window-scroll-functions* nil)
 (defvar *window-size-change-functions* nil)
+(defvar *window-show-buffer-functions* nil)
 
 (defvar *modified-window-tree-p* nil)
 
@@ -730,6 +731,12 @@
     :when (eq buffer (window-buffer window))
     :collect window))
 
+(defun window-prompt-display (window)
+  (when (window-parameter window 'change-buffer)
+    (setf (window-parameter window 'change-buffer) nil)
+    (dolist (fun *window-show-buffer-functions*)
+      (funcall fun window))))
+
 (defun switch-to-buffer (buffer &optional (update-prev-buffer-p t))
   (check-type buffer buffer)
   (check-switch-minibuffer-window)
@@ -767,6 +774,7 @@
                                    (min current-charpos
                                         (buffer-line-length buffer
                                                             linum))))))))))
+  (setf (window-parameter (current-window) 'change-buffer) t)
   buffer)
 
 (defun pop-to-buffer (buffer)

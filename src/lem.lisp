@@ -33,12 +33,23 @@
                        ,@body)
                       ((condition) (declare (ignore condition)))))
 
-(add-hook 'find-file-hook
-          (lambda ()
-            (syntax-scan-window (current-window))))
+;; (add-hook 'find-file-hook
+;;           (lambda ()
+;;             (syntax-scan-buffer (current-buffer))))
 
-(pushnew #'syntax-scan-window *window-scroll-functions*)
-(pushnew #'syntax-scan-window *window-size-change-functions*)
+(pushnew #'(lambda (window)
+             (declare (ignore window))
+             (syntax-scan-current-view))
+         *window-scroll-functions*)
+
+(pushnew #'(lambda (window)
+             (declare (ignore window))
+             (syntax-scan-current-view))
+         *window-size-change-functions*)
+
+(pushnew #'(lambda (window)
+             (syntax-scan-window window))
+         *window-show-buffer-functions*)
 
 (defun ask-revert-buffer ()
   (if (minibuf-y-or-n-p (format nil
@@ -49,14 +60,12 @@
   (redraw-display)
   (message nil))
 
-(defvar *mainloop-waited-for-enough*)
-
 (defvar *mainloop-timer*
   (start-idle-timer "mainloop" 200 t
                     (lambda ()
-                      (syntax-scan-window (current-window))
+                      (syntax-scan-current-view)
                       (redraw-display)
-                      (setq *mainloop-waited-for-enough* t))))
+                      )))
 
 (defun lem-mainloop ()
   (macrolet ((form (&body body)
@@ -73,11 +82,11 @@
                             (current-linum)
                             (1+ (current-linum)))
          (redraw-display)
-         (let ((*mainloop-waited-for-enough* nil))
+         (let ()
            (start-idle-timers)
            (let ((cmd (read-key-command)))
              (stop-idle-timers)
-             (if (and *mainloop-waited-for-enough* (changed-disk-p (current-buffer)))
+             (if (changed-disk-p (current-buffer))
                  (ask-revert-buffer)
                  (progn
                    (message nil)

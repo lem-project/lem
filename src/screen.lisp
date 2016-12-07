@@ -400,6 +400,7 @@
          (lem::minibuf-window-update))
         (t
          (window-see window)
+         (lem::window-prompt-display window)
          (screen-display-lines (window-screen window)
                                (screen-modified-p (window-screen window))
                                (window-buffer window)

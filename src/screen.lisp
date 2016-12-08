@@ -251,7 +251,8 @@
                        end-linum)))
 
 
-(defun disp-print-line (screen y str &key (start-x 0) (string-start 0) string-end)
+(defun disp-print-line (screen y str do-clrtoeol
+                               &key (start-x 0) (string-start 0) string-end)
   (let ((x start-x))
     (loop :for i :from string-start :below (or string-end (fat-length str)) :do
       (multiple-value-bind (char attr)
@@ -261,7 +262,8 @@
                                       *control-char-attribute*
                                       attr))
         (setq x (char-width char x))))
-    (charms/ll:wclrtoeol (screen-%scrwin screen))))
+    (when do-clrtoeol
+      (charms/ll:wclrtoeol (screen-%scrwin screen)))))
 
 (defun disp-line-wrapping (screen start-charpos curx cury pos-x y str)
   (when (and (< 0 start-charpos) (= y 0))
@@ -272,7 +274,7 @@
         :for i := (wide-index (fat-string str) (1- width) :start start)
         :while (< y (screen-height screen))
         :do (cond ((null i)
-                   (disp-print-line screen y str :string-start start)
+                   (disp-print-line screen y str t :string-start start)
                    (return))
                   (t
                    (cond ((< y cury)
@@ -282,8 +284,8 @@
                             (when (<= len curx)
                               (decf curx len)
                               (incf cury)))))
-                   (disp-print-line screen y str :string-start start :string-end i)
-                   (disp-print-line screen y (load-time-value (make-fatstring "!" 0)) :start-x (1- width))
+                   (disp-print-line screen y str t :string-start start :string-end i)
+                   (disp-print-line screen y (load-time-value (make-fatstring "!" 0)) t :start-x (1- width))
                    (incf y)
                    (setq start i))))
   (values curx cury y))
@@ -294,18 +296,22 @@
   (when (= cury y)
     (setq curx (string-width (fat-string str) 0 pos-x)))
   (let ((width (string-width (fat-string str)))
-        (cols (screen-width screen)))
+        (cols (screen-width screen))
+        do-clrtoeol)
     (cond
       ((< width (screen-width screen))
+       (setf do-clrtoeol t)
        nil)
       ((or (/= cury y)
            (< curx (1- cols)))
+       (setf do-clrtoeol nil)
        (let ((i (wide-index (fat-string str) (1- cols))))
          (setq str
                (if (<= cols (string-width (fat-string str) 0 i))
                    (fat-concat (fat-substring str 0 (1- i)) " $")
                    (fat-concat (fat-substring str 0 i) "$")))))
       ((< pos-x (fat-length str))
+       (setf do-clrtoeol nil)
        (let* ((start (wide-index (fat-string str) (- curx cols -3)))
               (end pos-x)
               (substr (fat-substring str start end)))
@@ -321,14 +327,15 @@
                (decf curx))
              (setq str (fat-concat "$" substr "$")))))
       (t
+       (setf do-clrtoeol t)
        (let ((start (- curx cols -2)))
          (setq str
                (fat-concat "$"
                            (fat-substring str
                                           (wide-index (fat-string str) start)))))
        (setq curx (- cols 1))))
-    (disp-print-line screen y str))
-  (values curx cury y))
+    (disp-print-line screen y str do-clrtoeol)
+    (values curx cury y)))
 
 (defun screen-display-lines (screen redraw-flag buffer start-charpos start-linum pos-x pos-y)
   ;; (when redraw-flag

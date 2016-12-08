@@ -172,8 +172,8 @@
                                (lambda (out)
                                  (format out "~{~A~^~%~}" strings))
                                nil))
-             (setf (window-delete-hook *completion-window*)
-                   (lambda () (setf *completion-window* nil)))
+             (set-window-delete-hook (lambda () (setf *completion-window* nil))
+                                     *completion-window*)
              (setf (get-bvar :completion-buffer-p :buffer buffer) t)
              (with-current-window *completion-window*
                (completion-update-overlay))))

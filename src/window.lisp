@@ -41,37 +41,80 @@
 
 (defvar *current-window*)
 
-(define-class window () (current-window)
-  x
-  y
-  width
-  height
-  %buffer
-  screen
-  view-marker
-  point-marker
-  delete-hook
-  use-modeline-p
-  parameters)
+(defclass window ()
+  ((x
+    :initarg :x
+    :accessor window-%x
+    :type fixnum)
+   (y
+    :initarg :y
+    :accessor window-%y
+    :type fixnum)
+   (width
+    :initarg :width
+    :accessor window-%width
+    :type fixnum)
+   (height
+    :initarg :height
+    :accessor window-%height
+    :type fixnum)
+   (%buffer
+    :initarg :%buffer
+    :accessor window-%buffer
+    :type buffer)
+   (screen
+    :initarg :screen
+    :reader window-screen)
+   (view-marker
+    :initarg :view-marker
+    :reader window-view-marker
+    :writer set-window-view-marker
+    :type marker)
+   (point-marker
+    :initarg :point-marker
+    :reader window-point-marker
+    :writer set-window-point-marker
+    :type marker)
+   (delete-hook
+    :initform nil
+    :reader window-delete-hook
+    :writer set-window-delete-hook
+    :type (or null function))
+   (use-modeline-p
+    :initarg :use-modeline-p
+    :reader window-use-modeline-p
+    :type boolean)
+   (parameters
+    :initform nil
+    :accessor window-parameters)))
 
 (defun window-p (x)
   (typep x 'window))
 
 (defun make-window (buffer x y width height use-modeline-p)
-  (let* ((window
-           (make-instance 'window
-                          :x x
-                          :y y
-                          :width width
-                          :height height
-                          :%buffer buffer
-                          :screen (make-screen x y width height use-modeline-p)
-                          :view-marker (make-marker buffer (make-min-point) :name "view")
-                          :use-modeline-p use-modeline-p)))
-    (setf (window-point-marker window)
-          (make-marker buffer (make-min-point) :name "point"))
-    (setf *modified-window-tree-p* t)
-    window))
+  (setf *modified-window-tree-p* t)
+  (make-instance 'window
+                 :x x
+                 :y y
+                 :width width
+                 :height height
+                 :%buffer buffer
+                 :screen (make-screen x y width height use-modeline-p)
+                 :view-marker (make-marker buffer (make-min-point) :name "view")
+                 :use-modeline-p use-modeline-p
+                 :point-marker (make-marker buffer (make-min-point) :name "point")))
+
+(defun window-x (&optional (window (current-window)))
+  (window-%x window))
+
+(defun window-y (&optional (window (current-window)))
+  (window-%y window))
+
+(defun window-width (&optional (window (current-window)))
+  (window-%width window))
+
+(defun window-height (&optional (window (current-window)))
+  (window-%height window))
 
 (defun window-buffer (&optional (window (current-window)))
   (window-%buffer window))
@@ -242,10 +285,10 @@
                    :window
                    (eq current-window window-tree)
                    (buffer-name (window-buffer window-tree))
-                   (window-x window-tree)
-                   (window-y window-tree)
-                   (window-width window-tree)
-                   (window-height window-tree)
+                   (window-%x window-tree)
+                   (window-%y window-tree)
+                   (window-%width window-tree)
+                   (window-%height window-tree)
                    (window-view-marker window-tree)
                    (marker-point (window-point-marker window-tree))
                    (window-delete-hook window-tree)
@@ -276,7 +319,7 @@
                       (let ((window (make-window (get-buffer-create buffer-name)
                                                  x y width height t)))
                         (setf (marker-point (window-view-marker window)) (marker-point view-marker))
-                        (setf (window-delete-hook window) delete-hook)
+                        (set-window-delete-hook delete-hook window)
                         (setf (window-parameters window) parameters)
                         (setf (marker-point (window-point-marker window)) point)
                         (when current-window-p
@@ -315,7 +358,7 @@
 (defun window-recenter (window)
   (setf (marker-point (window-view-marker window))
         (make-point (window-current-linum window) 0))
-  (window-scroll window (- (floor (window-height window) 2))))
+  (window-scroll window (- (floor (window-%height window) 2))))
 
 (defun map-wrapping-line (string winwidth fn)
   (loop :with start := 0
@@ -330,7 +373,7 @@
       (setf (window-view-charpos window) 0)
       (map-wrapping-line (buffer-line-string (window-buffer window)
                                              (window-view-linum window))
-                         (window-width window)
+                         (window-%width window)
                          #'(lambda (c)
                              (when (< view-charpos c)
                                (setf (window-view-charpos window) c)
@@ -349,7 +392,7 @@
                           (window-buffer window)
                           (- (window-view-linum window)
                              (if (= 0 (window-view-charpos window)) 1 0)))
-                         (window-width window)
+                         (window-%width window)
                          #'(lambda (c)
                              (push c charpos-list)))
       (cond ((and charpos-list (= 0 (window-view-charpos window)))
@@ -395,12 +438,12 @@
                                                0
                                                (min (length string)
                                                     (1+ (window-current-charpos window))))
-                                       (window-width window)
+                                       (window-%width window)
                                        #'inc)
                     (map-wrapping-line (if (= (window-view-linum window) linum)
                                            (subseq string (window-view-charpos window))
                                            string)
-                                       (window-width window)
+                                       (window-%width window)
                                        #'inc))))
       (map-buffer-lines #'f
                         (window-buffer window)
@@ -426,7 +469,7 @@
               (< 0 (window-view-charpos window)))
          -1)
         ((let ((n (- (window-cursor-y window)
-                     (- (window-height window) 2))))
+                     (- (window-%height window) 2))))
            (when (< 0 n) n)))
         (t
          0)))
@@ -440,8 +483,8 @@
 
 (defun split-window-after (current-window new-window split-type)
   (window-set-size current-window
-                   (window-width current-window)
-                   (window-height current-window))
+                   (window-%width current-window)
+                   (window-%height current-window))
   (setf (marker-point (window-view-marker new-window))
         (marker-point (window-view-marker current-window)))
   (setf (window-current-linum new-window)
@@ -464,33 +507,33 @@
 (defun split-window-vertically (window)
   (unless (minibuffer-window-p window)
     (multiple-value-bind (winheight rem)
-        (floor (window-height window) 2)
+        (floor (window-%height window) 2)
       (let ((newwin (make-window (window-buffer window)
-                                 (window-x window)
-                                 (+ (window-y window) winheight rem)
-                                 (window-width window)
+                                 (window-%x window)
+                                 (+ (window-%y window) winheight rem)
+                                 (window-%width window)
                                  winheight
                                  t)))
-        (decf (window-height window) winheight)
+        (decf (window-%height window) winheight)
         (split-window-after window newwin :vsplit)))))
 
 (defun split-window-horizontally (window)
   (unless (minibuffer-window-p window)
     (multiple-value-bind (winwidth rem)
-        (floor (window-width window) 2)
+        (floor (window-%width window) 2)
       (let ((newwin (make-window (window-buffer window)
-                                 (+ (window-x window)
+                                 (+ (window-%x window)
                                     winwidth
                                     rem)
-                                 (window-y window)
+                                 (window-%y window)
                                  winwidth
-                                 (window-height window)
+                                 (window-%height window)
                                  t)))
-        (decf (window-width window) (1+ winwidth))
+        (decf (window-%width window) (1+ winwidth))
         (split-window-after window newwin :hsplit)))))
 
 (defun split-window-sensibly (window)
-  (if (< *window-sufficient-width* (window-width window))
+  (if (< *window-sufficient-width* (window-%width window))
       (split-window-horizontally window)
       (split-window-vertically window)))
 
@@ -502,25 +545,25 @@
 
 (defun window-set-pos (window x y)
   (screen-set-pos (window-screen window) x y)
-  (setf (window-y window) y)
-  (setf (window-x window) x))
+  (setf (window-%x window) x)
+  (setf (window-%y window) y))
 
 (defun window-set-size (window width height)
-  (setf (window-height window) height)
-  (setf (window-width window) width)
+  (setf (window-%width window) width)
+  (setf (window-%height window) height)
   (screen-set-size (window-screen window)
                    width
                    height))
 
 (defun window-move (window dx dy)
   (window-set-pos window
-                  (+ (window-x window) dx)
-                  (+ (window-y window) dy)))
+                  (+ (window-%x window) dx)
+                  (+ (window-%y window) dy)))
 
 (defun window-resize (window dw dh)
   (window-set-size window
-                   (+ (window-width window) dw)
-                   (+ (window-height window) dh))
+                   (+ (window-%width window) dw)
+                   (+ (window-%height window) dh))
   (dolist (fun *window-size-change-functions*)
     (funcall fun window)))
 
@@ -529,40 +572,40 @@
                                                 horizontal-p)
   (let ((window-list (window-tree-flatten window-tree)))
     (if horizontal-p
-        (cond ((< (window-x deleted-window)
-                  (window-x (car window-list)))
-               (dolist (win (min-if #'window-x window-list))
+        (cond ((< (window-%x deleted-window)
+                  (window-%x (car window-list)))
+               (dolist (win (min-if #'window-%x window-list))
                  (window-set-pos win
-                                 (window-x deleted-window)
-                                 (window-y win))
+                                 (window-%x deleted-window)
+                                 (window-%y win))
                  (window-set-size win
-                                  (+ (window-width deleted-window)
+                                  (+ (window-%width deleted-window)
                                      1
-                                     (window-width win))
-                                  (window-height win))))
+                                     (window-%width win))
+                                  (window-%height win))))
               (t
-               (dolist (win (max-if #'window-x window-list))
+               (dolist (win (max-if #'window-%x window-list))
                  (window-set-size win
-                                  (+ (window-width deleted-window)
+                                  (+ (window-%width deleted-window)
                                      1
-                                     (window-width win))
-                                  (window-height win)))))
-        (cond ((< (window-y deleted-window)
-                  (window-y (car window-list)))
-               (dolist (win (min-if #'window-y window-list))
+                                     (window-%width win))
+                                  (window-%height win)))))
+        (cond ((< (window-%y deleted-window)
+                  (window-%y (car window-list)))
+               (dolist (win (min-if #'window-%y window-list))
                  (window-set-pos win
-                                 (window-x win)
-                                 (window-y deleted-window))
+                                 (window-%x win)
+                                 (window-%y deleted-window))
                  (window-set-size win
-                                  (window-width win)
-                                  (+ (window-height deleted-window)
-                                     (window-height win)))))
+                                  (window-%width win)
+                                  (+ (window-%height deleted-window)
+                                     (window-%height win)))))
               (t
-               (dolist (win (max-if #'window-y window-list))
+               (dolist (win (max-if #'window-%y window-list))
                  (window-set-size win
-                                  (window-width win)
-                                  (+ (window-height deleted-window)
-                                     (window-height win)))))))))
+                                  (window-%width win)
+                                  (+ (window-%height deleted-window)
+                                     (window-%height win)))))))))
 
 (defun delete-window (window)
   (when (or (one-window-p)
@@ -590,21 +633,21 @@
   t)
 
 (defun collect-left-windows (window-list)
-  (min-if #'window-x window-list))
+  (min-if #'window-%x window-list))
 
 (defun collect-right-windows (window-list)
   (max-if #'(lambda (window)
-              (+ (window-x window)
-                 (window-width window)))
+              (+ (window-%x window)
+                 (window-%width window)))
           window-list))
 
 (defun collect-top-windows (window-list)
-  (min-if #'window-y window-list))
+  (min-if #'window-%y window-list))
 
 (defun collect-bottom-windows (window-list)
   (max-if #'(lambda (window)
-              (+ (window-y window)
-                 (window-height window)))
+              (+ (window-%y window)
+                 (window-%height window)))
           window-list))
 
 (defun %shrink-windows (window-list
@@ -637,28 +680,28 @@
   (%shrink-windows window-list
                    #'collect-top-windows
                    #'(lambda (window)
-                       (< 2 (window-height window)))
+                       (< 2 (window-%height window)))
                    n 0 n 0))
 
 (defun shrink-bottom-windows (window-list n)
   (%shrink-windows window-list
                    #'collect-bottom-windows
                    #'(lambda (window)
-                       (< 2 (window-height window)))
+                       (< 2 (window-%height window)))
                    n 0 0 0))
 
 (defun shrink-left-windows (window-list n)
   (%shrink-windows window-list
                    #'collect-left-windows
                    #'(lambda (window)
-                       (< 2 (window-width window)))
+                       (< 2 (window-%width window)))
                    0 n 0 n))
 
 (defun shrink-right-windows (window-list n)
   (%shrink-windows window-list
                    #'collect-right-windows
                    #'(lambda (window)
-                       (< 2 (window-width window)))
+                       (< 2 (window-%width window)))
                    0 n 0 0))
 
 (defun %grow-windows (window-list
@@ -699,8 +742,8 @@
                  0 n 0 0))
 
 (defun grow-window-internal (grow-window-list shrink-window-list n)
-  (if (< (window-y (car grow-window-list))
-         (window-y (car shrink-window-list)))
+  (if (< (window-%y (car grow-window-list))
+         (window-%y (car shrink-window-list)))
       (and (shrink-top-windows shrink-window-list n)
            (grow-bottom-windows grow-window-list n))
       (and (shrink-bottom-windows shrink-window-list n)
@@ -708,8 +751,8 @@
 
 (defun grow-window-horizontally-internal
     (grow-window-list shrink-window-list n)
-  (if (< (window-x (car grow-window-list))
-         (window-x (car shrink-window-list)))
+  (if (< (window-%x (car grow-window-list))
+         (window-%x (car shrink-window-list)))
       (and (shrink-left-windows shrink-window-list n)
            (grow-right-windows grow-window-list n))
       (and (shrink-right-windows shrink-window-list n)

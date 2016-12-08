@@ -331,8 +331,8 @@
   (values curx cury y))
 
 (defun screen-display-lines (screen redraw-flag buffer start-charpos start-linum pos-x pos-y)
-  (when redraw-flag
-    (charms/ll:werase (screen-%scrwin screen)))
+  ;; (when redraw-flag
+  ;;   (charms/ll:werase (screen-%scrwin screen)))
   (disp-reset-lines screen buffer start-linum)
   (let ((curx 0)
         (cury (- pos-y start-linum))
@@ -340,26 +340,31 @@
          (if (buffer-truncate-lines buffer)
              #'disp-line-wrapping
              #'disp-line)))
-    (let ((wrap-lines (screen-wrap-lines screen)))
+    (let ((wrap-lines (screen-wrap-lines screen))
+          ;; wrap-linesという変数は物理行の単位でどの行が折り返されたかを覚えておくためのもの
+          )
       (setf (screen-wrap-lines screen) nil)
       (loop
-        :with y := 0
-        :for i :from 0
+        ;; 物理行の単位でループする
+        :for y :from 0 ; 論理行
+        :for i :from 0 ; 物理行
         :for str :across (screen-lines screen)
         :while (< y (screen-height screen))
         :do
-        (cond ((and (not redraw-flag)
-                    (aref (screen-old-lines screen) i)
-                    str
-                    (fat-equalp str (aref (screen-old-lines screen) i))
-                    (/= (- pos-y start-linum) i))
-               (setf (aref (screen-old-lines screen) i) str)
-               (let ((n (count i wrap-lines)))
-                 (when (and (< 0 n) (<= y cury))
-                   (incf cury n))
-                 (incf y (1+ n))
-                 (dotimes (_ n)
-                   (push i (screen-wrap-lines screen)))))
+        (cond ((and ;; 表示回数を減らすための節
+                    (not redraw-flag)                     ; 再描画フラグが偽で
+                    (not (null str))                      ; その行に表示する行文字列があり
+                    #1=(aref (screen-old-lines screen) i) ; 以前にその行に文字列を表示しており
+                    (fat-equalp str #1#)                  ; 表示しようとしている文字列が以前に表示する行と内容が同じで
+                    (/= (- pos-y start-linum) i)          ; その行がカーソルの位置ではないなら真
+                    )
+               (if (buffer-truncate-lines buffer)
+                   (let ((n (count i wrap-lines)))
+                     (when (and (< 0 n) (<= y cury))
+                       (incf cury n))
+                     (incf y n)
+                     (dotimes (_ n)
+                       (push i (screen-wrap-lines screen))))))
               (str
                (when (zerop (fat-length str))
                  (charms/ll:wmove (screen-%scrwin screen) y 0)
@@ -369,15 +374,16 @@
                  (multiple-value-setq (curx cury y2)
                                       (funcall disp-line-fun
                                                screen start-charpos curx cury pos-x y str))
-                 (let ((offset (- y2 y)))
-                   (cond ((< 0 offset)
-                          (setq redraw-flag t)
-                          (dotimes (_ offset)
-                            (push i (screen-wrap-lines screen))))
-                         ((and (= offset 0) (find i wrap-lines))
-                          (setq redraw-flag t))))
-                 (setf y y2)
-                 (incf y)))
+                 (when (buffer-truncate-lines buffer)
+                   (charms/ll:wclrtoeol (screen-%scrwin screen))
+                   (let ((offset (- y2 y)))
+                     (cond ((< 0 offset)
+                            (setq redraw-flag t)
+                            (dotimes (_ offset)
+                              (push i (screen-wrap-lines screen))))
+                           ((and (= offset 0) (find i wrap-lines))
+                            (setq redraw-flag t))))
+                   (setf y y2))))
               (t
                (fill (screen-old-lines screen) nil :start i)
                (charms/ll:wmove (screen-%scrwin screen) y 0)

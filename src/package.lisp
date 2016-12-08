@@ -10,7 +10,6 @@
            :screen-set-size
            :screen-set-pos
            :screen-clear
-           :redraw-display-window
            :display-width
            :display-height
            :screen-erase

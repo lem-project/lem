@@ -50,8 +50,8 @@
           (point (marker-point (buffer-output-stream-marker stream))))
       (display-buffer buffer)
       (dolist (window (get-buffer-windows buffer))
-        (point-set point (window-buffer window))
-        (redraw-display-window window t))))
+        (point-set point (window-buffer window)))
+      (redraw-display)))
   nil)
 
 (defmethod trivial-gray-streams:stream-fresh-line ((stream buffer-output-stream))

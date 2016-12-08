@@ -340,8 +340,7 @@
          (if (buffer-truncate-lines buffer)
              #'disp-line-wrapping
              #'disp-line)))
-    (let ((wrap-lines (screen-wrap-lines screen))
-          (flag redraw-flag))
+    (let ((wrap-lines (screen-wrap-lines screen)))
       (setf (screen-wrap-lines screen) nil)
       (loop
         :with y := 0
@@ -349,7 +348,7 @@
         :for str :across (screen-lines screen)
         :while (< y (screen-height screen))
         :do
-        (cond ((and (not flag)
+        (cond ((and (not redraw-flag)
                     (aref (screen-old-lines screen) i)
                     str
                     (fat-equalp str (aref (screen-old-lines screen) i))
@@ -372,11 +371,11 @@
                                                screen start-charpos curx cury pos-x y str))
                  (let ((offset (- y2 y)))
                    (cond ((< 0 offset)
-                          (setq flag t)
+                          (setq redraw-flag t)
                           (dotimes (_ offset)
                             (push i (screen-wrap-lines screen))))
                          ((and (= offset 0) (find i wrap-lines))
-                          (setq flag t))))
+                          (setq redraw-flag t))))
                  (setf y y2)
                  (incf y)))
               (t

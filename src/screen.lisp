@@ -139,9 +139,10 @@
     (when (<= 0 i (1- (screen-height screen)))
       (unless end-charpos
         (setq end-charpos (fat-length (aref (screen-lines screen) i))))
-      (when (aref (screen-lines screen) i)
-        (setf (aref (screen-lines screen) i)
-              (copy-fatstring (aref (screen-lines screen) i))))
+      ;; disp-line-fatsringで毎回新しいものを作ってるのでコピーせずに破壊的に変更しても大丈夫かも
+      ;; (when (aref (screen-lines screen) i)
+      ;;   (setf (aref (screen-lines screen) i)
+      ;;         (copy-fatstring (aref (screen-lines screen) i))))
       (let ((fatstr (aref (screen-lines screen) i)))
         (change-font fatstr
                      (%attribute-to-bits attr)
@@ -349,6 +350,7 @@
              #'disp-line)))
     (let ((wrap-lines (screen-wrap-lines screen))
           ;; wrap-linesという変数は物理行の単位でどの行が折り返されたかを覚えておくためのもの
+          ;; 以前折り返した位置はwrap-linesから探して、今から折り返す位置はscreen-wrap-linesに記録していく
           )
       (setf (screen-wrap-lines screen) nil)
       (loop
@@ -365,25 +367,27 @@
                     (fat-equalp str #1#)                  ; 表示しようとしている文字列が以前に表示する行と内容が同じで
                     (/= (- pos-y start-linum) i)          ; その行がカーソルの位置ではないなら真
                     )
-               (if (buffer-truncate-lines buffer)
-                   (let ((n (count i wrap-lines)))
-                     (when (and (< 0 n) (<= y cury))
-                       (incf cury n))
-                     (incf y n)
-                     (dotimes (_ n)
-                       (push i (screen-wrap-lines screen))))))
+               (when (buffer-truncate-lines buffer)
+                 ;; 折り返した回数分、論理行の位置を下にずらす
+                 (let ((n (count i wrap-lines)))
+                   (when (and (< 0 n) (<= y cury))
+                     (incf cury n))
+                   (incf y n)
+                   (dotimes (_ n)
+                     (push i (screen-wrap-lines screen))))))
               (str
+               (setf (aref (screen-old-lines screen) i) str)
                (when (zerop (fat-length str))
+                 ;; 表示する文字列が無い場合は行を表示する関数まで辿りつかないのでここでしておく
                  (charms/ll:wmove (screen-%scrwin screen) y 0)
                  (charms/ll:wclrtoeol (screen-%scrwin screen)))
-               (setf (aref (screen-old-lines screen) i) str)
                (let (y2)
                  (multiple-value-setq (curx cury y2)
                                       (funcall disp-line-fun
                                                screen start-charpos curx cury pos-x y str))
                  (when (buffer-truncate-lines buffer)
-                   (charms/ll:wclrtoeol (screen-%scrwin screen))
-                   (let ((offset (- y2 y)))
+                   (let ((offset (- y2 y))) ; offsetはその行の折り返し回数を表す
+                     ;; 折り返しがあったらそれより下は表示をやりなおす必要があるのでredraw-flagをtにする
                      (cond ((< 0 offset)
                             (setq redraw-flag t)
                             (dotimes (_ offset)
@@ -392,6 +396,7 @@
                             (setq redraw-flag t))))
                    (setf y y2))))
               (t
+               ;; バッファの末尾まできたときの処理
                (fill (screen-old-lines screen) nil :start i)
                (charms/ll:wmove (screen-%scrwin screen) y 0)
                (charms/ll:wclrtobot (screen-%scrwin screen))

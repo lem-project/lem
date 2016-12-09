@@ -273,17 +273,19 @@
 (syntax-add-match *lisp-syntax-table*
                   (make-syntax-test "#[+-]" :regex-p t)
                   :move-action (lambda ()
-                                 (ignore-errors
-                                  (let ((positivep (eql #\+ (char-after 1))))
-                                    (shift-position 2)
-                                    (let ((prev-point (current-point)))
-                                      (when (forward-sexp 1 t)
-                                        (unless (featurep (read-from-string
-                                                           (region-string prev-point
-                                                                          (current-point)))
-                                                          positivep)
-                                          (forward-sexp 1 t)
-                                          (current-point)))))))
+                                 (let ((positivep (eql #\+ (char-after 1))))
+                                   (shift-position 2)
+                                   (let ((prev-point (current-point)))
+                                     (when (forward-sexp 1 t)
+                                       (cond ((featurep (read-from-string
+                                                         (region-string prev-point
+                                                                        (current-point)))
+                                                        positivep)
+                                              (setf (current-point) prev-point)
+                                              nil)
+                                             (t
+                                              (forward-sexp 1 t)
+                                              (current-point)))))))
                   :attribute *feature-attribute*)
 
 (define-major-mode lisp-mode prog-mode

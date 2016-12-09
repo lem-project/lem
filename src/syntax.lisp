@@ -349,19 +349,24 @@
              (setf (current-charpos) start1)
              (let* ((start-point (current-point))
                     (end-point (funcall (syntax-match-move-action syntax))))
-               (when (and end-point
-                          (point< start-point end-point))
-                 (loop :for i :from 0 :below (- (point-linum end-point)
-                                                (point-linum start-point))
-                       :do (progn
-                             (line-clear-property line :attribute)
-                             (setf (line-%region line) syntax)
-                             (setf line (line-next line))))
-                 (setf (line-%region line) nil)
-                 (put-attribute start-point
-                                end-point
-                                (syntax-attribute syntax))
-                 (cons (point-charpos end-point) line))))
+               (cond ((and end-point
+                           (point< start-point end-point))
+                      (loop :repeat (- (point-linum end-point)
+                                       (point-linum start-point))
+                            :do (progn
+                                  (line-clear-property line :attribute)
+                                  (setf (line-%region line) syntax)
+                                  (setf line (line-next line))))
+                      (setf (line-%region line) nil)
+                      (put-attribute start-point
+                                     end-point
+                                     (syntax-attribute syntax))
+                      (cons (point-charpos end-point) line))
+                     ((point< start-point (current-point))
+                      (loop :repeat (- (point-linum (current-point))
+                                       (point-linum start-point))
+                            :do (setf line (line-next line)))
+                      (cons (point-charpos (current-point)) line)))))
             (t
              (line-add-property line start1 end1 :attribute (syntax-attribute syntax))
              (1- end1))))))))

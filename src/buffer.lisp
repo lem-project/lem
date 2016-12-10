@@ -158,16 +158,25 @@
 (defun line-property-insert-newline (line next-line pos)
   (let ((new-plist '()))
     (loop :for plist-rest :on (line-plist line) :by #'cddr
-          :do (let ((new-values '()))
+          :do (let ((new-values '())
+                    (new-values-last nil))
                 (setf (cadr plist-rest)
-                      (loop :for elt :in (cadr plist-rest)
-                            :for (start end value) := elt
-                            :if (<= pos start)
-                            :do (push (list (- start pos) (- end pos) value) new-values)
-                            :else :if (<= pos end)
-                            :collect (list start pos value)
-                            :else
-                            :collect elt))
+                      (iter:iter
+                        (iter:for elt iter:in (cadr plist-rest))
+                        (iter:for (start end value) iter:next elt)
+                        (cond ((<= pos start)
+                               (let ((new-elt (list (list (- start pos) (- end pos) value))))
+                                 (cond
+                                   (new-values-last
+                                    (setf (cdr new-values-last) new-elt)
+                                    (setf new-values-last (cdr new-values-last)))
+                                   (t
+                                    (setf new-values new-elt)
+                                    (setf new-values-last new-elt)))))
+                              ((<= pos end)
+                               (iter:collect (list start pos value)))
+                              (t
+                               (iter:collect elt)))))
                 (unless (null new-values)
                   (setf (getf new-plist (car plist-rest)) new-values))))
     (setf (line-plist next-line) new-plist)))

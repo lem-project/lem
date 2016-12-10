@@ -129,6 +129,12 @@
 (defun screen-move-cursor (screen x y)
   (charms/ll:wmove (screen-%scrwin screen) y x))
 
+(defun aref-screen-line-string (screen i)
+  (car (aref (screen-lines screen) i)))
+
+(defun aref-screen-line-attributes (screen i)
+  (cdr (aref (screen-lines screen) i)))
+
 (defun set-attr-display-line (screen
                               attr
                               start-linum
@@ -138,17 +144,13 @@
   (let ((i (- linum start-linum)))
     (when (<= 0 i (1- (screen-height screen)))
       (unless end-charpos
-        (setq end-charpos (fat-length (aref (screen-lines screen) i))))
-      ;; disp-line-fatsringで毎回新しいものを作ってるのでコピーせずに破壊的に変更しても大丈夫かも
-      ;; (when (aref (screen-lines screen) i)
-      ;;   (setf (aref (screen-lines screen) i)
-      ;;         (copy-fatstring (aref (screen-lines screen) i))))
-      (let ((fatstr (aref (screen-lines screen) i)))
-        (change-font fatstr
-                     (%attribute-to-bits attr)
-                     :to
-                     start-charpos
-                     (min end-charpos (fat-length fatstr)))))))
+        (setq end-charpos (length (aref-screen-line-string screen i))))
+      (destructuring-bind (string . attributes) (aref (screen-lines screen) i)
+        (setf (cdr (aref (screen-lines screen) i))
+              (lem::put-elements attributes
+                                 start-charpos
+                                 (min end-charpos (length string))
+                                 attr))))))
 
 (defun set-attr-display-lines (screen
                                attr
@@ -220,19 +222,6 @@
                                        end-linum
                                        nil)))))
 
-(defun disp-line-fatstring (buffer linum)
-  (multiple-value-bind (string attributes)
-      (buffer-line-string-with-attributes buffer linum)
-    (let ((fatstr (make-fatstring string 0)))
-      (loop :for (start end value) :in attributes
-            :do (when value
-                  (change-font fatstr
-                               (%attribute-to-bits value)
-                               :to
-                               start
-                               (min (fat-length fatstr) end))))
-      fatstr)))
-
 (defun disp-reset-lines (screen buffer start-linum)
   (lem::buffer-update-mark-overlay buffer)
   (let ((end-linum (+ start-linum (screen-height screen)))
@@ -240,9 +229,11 @@
     (loop
       :for linum :from start-linum :to (buffer-nlines buffer)
       :while (< disp-index (screen-height screen)) :do
-        (setf (aref (screen-lines screen) disp-index)
-              (disp-line-fatstring buffer linum))
-        (incf disp-index))
+      (setf (aref (screen-lines screen) disp-index)
+            (multiple-value-bind (string attributes)
+                (buffer-line-string-with-attributes buffer linum)
+              (cons string attributes)))
+      (incf disp-index))
     (loop
       :for i :from disp-index :below (screen-height screen)
       :do (setf (aref (screen-lines screen) i) nil))
@@ -252,45 +243,66 @@
                        end-linum)))
 
 
-(defun disp-print-line (screen y str do-clrtoeol
+(defun disp-print-line (screen y str/attributes do-clrtoeol
                                &key (start-x 0) (string-start 0) string-end)
-  (let ((x start-x))
-    (loop :for i :from string-start :below (or string-end (fat-length str)) :do
-      (multiple-value-bind (char attr)
-          (fat-char str i)
-        (screen-print-string-attr screen x y (string char)
-                                  (if (and (lem::ctrl-p char) (char/= char #\tab))
-                                      *control-char-attribute*
-                                      attr))
-        (setq x (char-width char x))))
+  (declare (optimize (speed 0) (safety 3) (debug 3)))
+  (destructuring-bind (str . attributes)
+      str/attributes
+    (unless (and (= 0 string-start) (null string-end))
+      (setf str (subseq str
+                        string-start
+                        (if (null string-end)
+                            nil
+                            (min (length str) string-end))))
+      (setf attributes (lem::subseq-elements attributes string-start string-end)))
+    (let ((prev-end 0)
+          (x start-x))
+      (loop :for (start end attr) :in attributes
+            :do (setf end (min (length str) end))
+            :do (progn
+                  (screen-print-string-attr screen x y (subseq str prev-end start) nil)
+                  (incf x (string-width str prev-end start)))
+            :do (progn
+                  (screen-print-string-attr screen x y (subseq str start end) attr)
+                  (incf x (string-width str start end)))
+            :do (setf prev-end end))
+      (screen-print-string-attr screen x y
+                                (if (= prev-end 0)
+                                    str
+                                    (subseq str prev-end))
+                                nil))
     (when do-clrtoeol
       (charms/ll:wclrtoeol (screen-%scrwin screen)))))
 
-(defun disp-line-wrapping (screen start-charpos curx cury pos-x y str)
-  (when (and (< 0 start-charpos) (= y 0))
-    (setq str (fat-substring str start-charpos)))
-  (when (= y cury)
-    (setq curx (string-width (fat-string str) 0 pos-x)))
-  (loop :with start := 0 :and width := (screen-width screen)
-        :for i := (wide-index (fat-string str) (1- width) :start start)
-        :while (< y (screen-height screen))
-        :do (cond ((null i)
-                   (disp-print-line screen y str t :string-start start)
-                   (return))
-                  (t
-                   (cond ((< y cury)
-                          (incf cury))
-                         ((= y cury)
-                          (let ((len (string-width (fat-string str) start i)))
-                            (when (<= len curx)
-                              (decf curx len)
-                              (incf cury)))))
-                   (disp-print-line screen y str t :string-start start :string-end i)
-                   (disp-print-line screen y (load-time-value (make-fatstring "!" 0)) t :start-x (1- width))
-                   (incf y)
-                   (setq start i))))
-  (values curx cury y))
+(defun disp-line-wrapping (screen start-charpos curx cury pos-x y str/attributes)
+  (let ((start (if (and (< 0 start-charpos) (= y 0))
+                   start-charpos
+                   0)))
+    (when (= y cury)
+      (setf curx (string-width (car str/attributes) start pos-x)))
+    (loop :for i := (wide-index (car str/attributes)
+                                (1- (screen-width screen))
+                                :start start)
+          :while (< y (screen-height screen))
+          :do (cond
+                ((null i)
+                 (disp-print-line screen y str/attributes t :string-start start)
+                 (return))
+                (t
+                 (cond ((< y cury)
+                        (incf cury))
+                       ((= y cury)
+                        (let ((len (string-width (car str/attributes) start i)))
+                          (when (<= len curx)
+                            (decf curx len)
+                            (incf cury)))))
+                 (disp-print-line screen y str/attributes t :string-start start :string-end i)
+                 (disp-print-line screen y (cons "!" nil) t :start-x (1- (screen-width screen)))
+                 (incf y)
+                 (setf start i))))
+    (values curx cury y)))
 
+#+nil
 (defun disp-line (screen start-charpos curx cury pos-x y str)
   (declare (ignore start-charpos))
   (check-type str fatstring)
@@ -345,6 +357,8 @@
   (let ((curx 0)
         (cury (- pos-y start-linum))
         (disp-line-fun
+         #'disp-line-wrapping
+         #+nil
          (if (buffer-truncate-lines buffer)
              #'disp-line-wrapping
              #'disp-line)))
@@ -357,14 +371,14 @@
         ;; 物理行の単位でループする
         :for y :from 0 ; 論理行
         :for i :from 0 ; 物理行
-        :for str :across (screen-lines screen)
+        :for str/attributes :across (screen-lines screen)
         :while (< y (screen-height screen))
         :do
         (cond ((and ;; 表示回数を減らすための節
                     (not redraw-flag)                     ; 再描画フラグが偽で
-                    (not (null str))                      ; その行に表示する行文字列があり
+                    (not (null str/attributes))           ; その行に表示する行文字列があり
                     #1=(aref (screen-old-lines screen) i) ; 以前にその行に文字列を表示しており
-                    (fat-equalp str #1#)                  ; 表示しようとしている文字列が以前に表示する行と内容が同じで
+                    (equal str/attributes #1#)            ; 表示しようとしている文字列が以前に表示する行と内容が同じで
                     (/= (- pos-y start-linum) i)          ; その行がカーソルの位置ではないなら真
                     )
                (when (buffer-truncate-lines buffer)
@@ -375,16 +389,16 @@
                    (incf y n)
                    (dotimes (_ n)
                      (push i (screen-wrap-lines screen))))))
-              (str
-               (setf (aref (screen-old-lines screen) i) str)
-               (when (zerop (fat-length str))
+              (str/attributes
+               (setf (aref (screen-old-lines screen) i) str/attributes)
+               (when (zerop (length (car str/attributes)))
                  ;; 表示する文字列が無い場合は行を表示する関数まで辿りつかないのでここでしておく
                  (charms/ll:wmove (screen-%scrwin screen) y 0)
                  (charms/ll:wclrtoeol (screen-%scrwin screen)))
                (let (y2)
                  (multiple-value-setq (curx cury y2)
                                       (funcall disp-line-fun
-                                               screen start-charpos curx cury pos-x y str))
+                                               screen start-charpos curx cury pos-x y str/attributes))
                  (when (buffer-truncate-lines buffer)
                    (let ((offset (- y2 y))) ; offsetはその行の折り返し回数を表す
                      ;; 折り返しがあったらそれより下は表示をやりなおす必要があるのでredraw-flagをtにする

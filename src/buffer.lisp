@@ -105,7 +105,7 @@
       ((<= start1 start end1 end)
        (iter:collect (list (- start start) (- end1 start) value1)))
       ((<= start1 start end end1)
-       (iter:collect (list (- start start) (- start end) value1))))))
+       (iter:collect (list (- start start) (- end start) value1))))))
 
 (defun put-elements (elements start end value)
   (normalization-elements

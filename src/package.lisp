@@ -1,7 +1,7 @@
 (in-package :cl-user)
 
 (defpackage :lem-interface
-  (:use :cl :lem.fatstring :lem.term :lem.util)
+  (:use :cl :lem.term :lem.util)
   (:export :display-init
            :display-finalize
            :make-screen

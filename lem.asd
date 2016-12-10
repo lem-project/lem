@@ -27,8 +27,7 @@
   :serial t
   :components ((:module "src"
                 :serial t
-                :components ((:file "fatstring")
-                             (:file "util")
+                :components ((:file "util")
                              (:file "term")
                              (:file "package")
                              (:file "property")

@@ -305,52 +305,42 @@
                  (setf start i))))
     (values curx cury y)))
 
-#+nil
-(defun disp-line (screen start-charpos curx cury pos-x y str)
+(defun disp-line (screen start-charpos curx cury pos-x y str/attributes)
   (declare (ignore start-charpos))
-  (check-type str fatstring)
   (when (= cury y)
-    (setq curx (string-width (fat-string str) 0 pos-x)))
-  (let ((width (string-width (fat-string str)))
-        (cols (screen-width screen))
-        do-clrtoeol)
+    (setq curx (string-width (car str/attributes) 0 pos-x)))
+  (let ((cols (screen-width screen)))
     (cond
-      ((< width (screen-width screen))
-       (setf do-clrtoeol t)
-       nil)
+      ((< (string-width (car str/attributes))
+          (screen-width screen))
+       (disp-print-line screen y str/attributes t))
       ((or (/= cury y)
            (< curx (1- cols)))
-       (setf do-clrtoeol nil)
-       (let ((i (wide-index (fat-string str) (1- cols))))
-         (setq str
-               (if (<= cols (string-width (fat-string str) 0 i))
-                   (fat-concat (fat-substring str 0 (1- i)) " $")
-                   (fat-concat (fat-substring str 0 i) "$")))))
-      ((< pos-x (fat-length str))
-       (setf do-clrtoeol nil)
-       (let* ((start (wide-index (fat-string str) (- curx cols -3)))
-              (end pos-x)
-              (substr (fat-substring str start end)))
-         (setq curx (- cols 2))
-         (if (wide-char-p (fat-char substr (- (fat-length substr) 1)))
-             (progn
-               (setq str
-                     (fat-concat "$"
-                                 (fat-substring
-                                  substr
-                                  0 (1- (fat-length substr)))
-                                 " $"))
-               (decf curx))
-             (setq str (fat-concat "$" substr "$")))))
+       (let ((i (wide-index (car str/attributes) (1- cols))))
+         (cond ((<= cols (string-width (car str/attributes) 0 i))
+                (disp-print-line screen y str/attributes nil :string-end (1- i))
+                (disp-print-line screen y (cons " $" nil) nil :start-x (1- i)))
+               (t
+                (disp-print-line screen y str/attributes nil :string-end i)
+                (disp-print-line screen y (cons "$" nil) nil :start-x i)))))
+      ((< pos-x (length (car str/attributes)))
+       (let ((start (wide-index (car str/attributes) (- curx cols -3)))
+             (end pos-x))
+         (setf curx (- cols 2))
+         (cond ((wide-char-p (char (car str/attributes) end))
+                (disp-print-line screen y (cons "$" nil) nil)
+                (disp-print-line screen y str/attributes nil :start-x 1 :string-start start :string-end (1- end))
+                (disp-print-line screen y (cons " $" nil) nil :start-x (1- end))
+                (decf curx))
+               (t
+                (disp-print-line screen y (cons "$" nil) nil)
+                (disp-print-line screen y str/attributes nil :start-x 1 :string-start start :string-end end)
+                (disp-print-line screen y (cons "$" nil) nil :start-x (1+ end))))))
       (t
-       (setf do-clrtoeol t)
        (let ((start (- curx cols -2)))
-         (setq str
-               (fat-concat "$"
-                           (fat-substring str
-                                          (wide-index (fat-string str) start)))))
+         (disp-print-line screen y (cons "$" nil) nil)
+         (disp-print-line screen y str/attributes t :start-x 1 :string-start (wide-index (car str/attributes) start)))
        (setq curx (- cols 1))))
-    (disp-print-line screen y str do-clrtoeol)
     (values curx cury y)))
 
 (defun screen-display-lines (screen redraw-flag buffer start-charpos start-linum pos-x pos-y)
@@ -360,8 +350,6 @@
   (let ((curx 0)
         (cury (- pos-y start-linum))
         (disp-line-fun
-         #'disp-line-wrapping
-         #+nil
          (if (buffer-truncate-lines buffer)
              #'disp-line-wrapping
              #'disp-line)))
@@ -378,6 +366,7 @@
         :while (< y (screen-height screen))
         :do
         (cond ((and ;; 表示回数を減らすための節
+                    (buffer-truncate-lines buffer)
                     (not redraw-flag)                     ; 再描画フラグが偽で
                     (not (null str/attributes))           ; その行に表示する行文字列があり
                     #1=(aref (screen-old-lines screen) i) ; 以前にその行に文字列を表示しており

@@ -14,6 +14,7 @@
 (defsystem lem
   :version "0.1"
   :depends-on (:uiop
+               :iterate
                :cl-charms
                :cl-fad
                #+sbcl :sb-posix

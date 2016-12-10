@@ -32,6 +32,7 @@
           skip-chars-backward
           get-property
           put-property
+          remove-property
           put-attribute
           insert-string-with-attribute
           after-property
@@ -288,6 +289,9 @@
 
 (defun put-property (start end key value)
   (buffer-put-property (current-buffer) start end key value))
+
+(defun remove-property (start end key)
+  (buffer-remove-property (current-buffer) start end key))
 
 (defun put-attribute (start end attribute)
   (buffer-put-property (current-buffer) start end :attribute attribute))

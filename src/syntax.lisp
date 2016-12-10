@@ -318,7 +318,7 @@
               (t
                (line-add-property line
                                   start
-                                  (1+ (length (line-str line)))
+                                  most-positive-fixnum
                                   :attribute
                                   (syntax-attribute syntax))
                (setf (line-%region line) syntax)
@@ -398,13 +398,13 @@
                (t
                 (setf (line-%region line) region)
                 (line-add-property line 0
-                                   (1+ (length (line-str line)))
+                                   most-positive-fixnum
                                    :attribute
                                    (syntax-attribute region))
                 (length (line-str line))))))
       (otherwise
        (line-add-property line 0
-                          (1+ (length (line-str line)))
+                          most-positive-fixnum
                           :attribute
                           (syntax-attribute region))
        (length (line-str line))))))

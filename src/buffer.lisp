@@ -59,9 +59,72 @@
 (defun line-length (line)
   (length (line-str line)))
 
+(defun remove-elements (elements start end)
+  (unless end (setf end most-positive-fixnum))
+  (iter:iter (iter:for (start1 end1 value1) iter:in elements)
+    (cond
+      ((<= start start1 end1 end)
+       nil)
+      ((<= start start1 end end1)
+       (iter:collect (list end end1 value1)))
+      ((<= start1 start end1 end)
+       (iter:collect (list start1 start value1)))
+      ((<= start1 start end end1)
+       (iter:collect (list start1 start value1))
+       (iter:collect (list end end1 value1)))
+      (t
+       (iter:collect (list start1 end1 value1))))))
+
+(defun normalization-elements (elements)
+  (flet ((start (elt) (first elt))
+         (end (elt) (second elt))
+         (value (elt) (third elt)))
+    (setf elements (sort elements #'< :key #'first))
+    (iter:iter (iter:until (null elements))
+      (cond
+        ((and (eql (end (first elements))
+                   (start (second elements)))
+              (equal (value (first elements))
+                     (value (second elements))))
+         (iter:collect (list (start (first elements))
+                             (end (second elements))
+                             (value (first elements))))
+         (setf elements (cddr elements)))
+        (t
+         (iter:collect (first elements))
+         (setf elements (cdr elements)))))))
+
+(defun subseq-elements (elements start end)
+  (unless end (setf end most-positive-fixnum))
+  (iter:iter (iter:for (start1 end1 value1) iter:in elements)
+    (cond
+      ((<= start start1 end1 end)
+       (iter:collect (list (- start1 start) (- end1 start) value1)))
+      ((<= start start1 end end1)
+       (iter:collect (list (- start1 start) (- end start) value1)))
+      ((<= start1 start end1 end)
+       (iter:collect (list (- start start) (- end1 start) value1)))
+      ((<= start1 start end end1)
+       (iter:collect (list (- start start) (- start end) value1))))))
+
+(defun put-elements (elements start end value)
+  (normalization-elements
+   (cons (list start end value)
+         (remove-elements elements
+                          start end))))
+
+(defun line-normalization-plist (line)
+  (loop :for (key elements) :on (line-plist line) :by #'cddr
+        :collect (cons key (normalization-elements elements))))
+
+(defun line-remove-property (line start end key)
+  (setf (getf (line-plist line) key)
+        (normalization-elements (remove-elements (getf (line-plist line) key) start end))))
+
 (defun line-add-property (line start end key value)
-  (push (list start end value)
-        (getf (line-plist line) key)))
+  (setf (getf (line-plist line) key)
+        (put-elements (getf (line-plist line) key)
+                      start end value)))
 
 (defun line-clear-property (line key)
   (setf (getf (line-plist line) key) nil))
@@ -274,7 +337,7 @@
     (apply apply-fn
            line
            (or start-charpos 0)
-           (or end-charpos (line-length line))
+           (or end-charpos most-positive-fixnum)
            args)))
 
 (defun buffer-apply-lines (apply-fn buffer start end &rest args)
@@ -290,6 +353,9 @@
 
 (defun buffer-put-property (buffer start end key value)
   (buffer-apply-lines #'line-add-property buffer start end key value))
+
+(defun buffer-remove-property (buffer start end key)
+  (buffer-apply-lines #'line-remove-property buffer start end key))
 
 (defun buffer-get-property (buffer point key)
   (let ((line (buffer-get-line buffer (point-linum point))))

@@ -194,7 +194,8 @@
             (editor-error (c)
                           (message (editor-error-message c)))))))
     (let ((str (get-minibuffer-string)))
-      (add-history *minibuf-read-line-history* str)
+      (unless (equal str (last-history *minibuf-read-line-history*))
+        (add-history *minibuf-read-line-history* str))
       str)))
 
 (defun minibuf-read-line (prompt initial comp-f existing-p history-name)

@@ -11,6 +11,7 @@
    :temp-file-name
    :safe-aref
    :make-history
+   :last-history
    :add-history
    :prev-history
    :next-history
@@ -100,6 +101,11 @@
   (%make-history
    :data (make-array 0 :fill-pointer 0 :adjustable t)
    :index 0))
+
+(defun last-history (history)
+  (when (< 0 (length (history-data history)))
+    (aref (history-data history)
+          (1- (length (history-data history))))))
 
 (defun add-history (history x)
   (vector-push-extend x (history-data history))

@@ -487,6 +487,7 @@
                        (minibuffer-window-height)
                        (display-width))
     (lem::minibuf-update-size)
+    (print-echoarea nil nil)
     (redraw-display)))
 
 (defun print-echoarea (string doupdate-p)

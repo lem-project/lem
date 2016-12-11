@@ -251,7 +251,10 @@
   (declare (optimize (speed 0) (safety 3) (debug 3)))
   (destructuring-bind (str . attributes)
       str/attributes
-    (unless (and (= 0 string-start) (null string-end))
+    (when (null string-end)
+      (setf string-end (length str)))
+    (unless (and (= 0 string-start)
+                 (= (length str) string-end))
       (setf str (subseq str
                         string-start
                         (if (null string-end)

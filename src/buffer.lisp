@@ -60,7 +60,6 @@
   (length (line-str line)))
 
 (defun remove-elements (elements start end)
-  (unless end (setf end most-positive-fixnum))
   (iter:iter (iter:for (start1 end1 value1) iter:in elements)
     (cond
       ((<= start start1 end1 end)
@@ -95,7 +94,6 @@
          (setf elements (cdr elements)))))))
 
 (defun subseq-elements (elements start end)
-  (unless end (setf end most-positive-fixnum))
   (iter:iter (iter:for (start1 end1 value1) iter:in elements)
     (cond
       ((<= start start1 end1 end)
@@ -107,11 +105,10 @@
       ((<= start1 start end end1)
        (iter:collect (list (- start start) (- end start) value1))))))
 
-(defun put-elements (elements start end value)
+(defun put-elements (elements start end value &optional contp)
   (normalization-elements
-   (cons (list start end value)
-         (remove-elements elements
-                          start end))))
+   (cons (list start end value contp)
+         (remove-elements elements start end))))
 
 (defun line-normalization-plist (line)
   (loop :for (key elements) :on (line-plist line) :by #'cddr
@@ -121,39 +118,42 @@
   (setf (getf (line-plist line) key)
         (normalization-elements (remove-elements (getf (line-plist line) key) start end))))
 
-(defun line-add-property (line start end key value)
+(defun line-add-property (line start end key value contp)
   (setf (getf (line-plist line) key)
         (put-elements (getf (line-plist line) key)
-                      start end value)))
+                      start end value contp)))
 
 (defun line-clear-property (line key)
   (setf (getf (line-plist line) key) nil))
 
 (defun line-search-property (line key pos)
-  (loop :for (start end value) :in (getf (line-plist line) key)
-        :do (when (<= start pos (1- end))
+  (loop :for (start end value contp) :in (getf (line-plist line) key)
+        :do (when (if contp
+                      (<= start pos end)
+                      (<= start pos (1- end)))
               (return value))))
 
 (defun line-search-property-range (line key pos-start pos-end)
   (when (null pos-end)
     (setq pos-end most-positive-fixnum))
-  (loop :for (start end value) :in (getf (line-plist line) key)
+  (loop :for (start end value contp) :in (getf (line-plist line) key)
         :do (when (or (<= pos-start start pos-end)
-                      (<= start pos-start (1- end)))
+                      (if contp
+                          (<= start pos-start end)
+                          (<= start pos-start (1- end))))
               (return value))))
 
 (defun line-property-insert-pos (line pos offset)
   (loop :for values :in (cdr (line-plist line)) :by #'cddr
-        :do (dolist (v values)
-              (destructuring-bind (start end value) v
-                (declare (ignore value))
-                (cond ((<= pos start)
-                       (incf (first v) offset)
-                       (incf (second v) offset))
-                      ((< start pos end)
-                       (incf (second v) offset))
-                      ((< pos end)
-                       (incf (second v) offset)))))))
+        :do (loop :for v :in values
+                  :for (start end) := v
+                  :do (cond ((<= pos start)
+                             (incf (first v) offset)
+                             (incf (second v) offset))
+                            ((< start pos end)
+                             (incf (second v) offset))
+                            ((< pos end)
+                             (incf (second v) offset))))))
 
 (defun line-property-insert-newline (line next-line pos)
   (let ((new-plist '()))
@@ -341,30 +341,33 @@
 (defun buffer-unmark (buffer)
   (setf (buffer-%modified-p buffer) 0))
 
-(defun buffer-apply-line (apply-fn buffer linum start-charpos end-charpos args)
-  (let ((line (buffer-get-line buffer linum)))
-    (apply apply-fn
-           line
-           (or start-charpos 0)
-           (or end-charpos most-positive-fixnum)
-           args)))
-
-(defun buffer-apply-lines (apply-fn buffer start end &rest args)
+(defun buffer-put-property (buffer start end key value)
   (with-points (((start-linum start-charpos) start)
                 ((end-linum end-charpos) end))
-    (cond ((= start-linum end-linum)
-           (buffer-apply-line apply-fn buffer start-linum start-charpos end-charpos args))
-          (t
-           (buffer-apply-line apply-fn buffer start-linum start-charpos nil args)
-           (buffer-apply-line apply-fn buffer end-linum 0 end-charpos args)
-           (loop :for linum :from (1+ start-linum) :below end-linum
-                 :do (buffer-apply-line apply-fn buffer linum nil nil args))))))
-
-(defun buffer-put-property (buffer start end key value)
-  (buffer-apply-lines #'line-add-property buffer start end key value))
+    (let ((line (buffer-get-line buffer start-linum)))
+      (cond ((= start-linum end-linum)
+             (line-add-property line start-charpos end-charpos key value nil))
+            (t
+             (line-add-property line start-charpos (line-length line) key value t)
+             (loop :for linum :from (1+ start-linum) :to end-linum
+                   :do (setf line (line-next line))
+                   :do (if (= linum end-linum)
+                           (line-add-property line 0 end-charpos key value nil)
+                           (line-add-property line 0 (line-length line) key value t))))))))
 
 (defun buffer-remove-property (buffer start end key)
-  (buffer-apply-lines #'line-remove-property buffer start end key))
+  (with-points (((start-linum start-charpos) start)
+                ((end-linum end-charpos) end))
+    (let ((line (buffer-get-line buffer start-linum)))
+      (cond ((= start-linum end-linum)
+             (line-remove-property line start-charpos end-charpos key))
+            (t
+             (line-remove-property line start-charpos (line-length line) key)
+             (loop :for linum :from (1+ start-linum) :to end-linum
+                   :for line := (line-next line)
+                   :do (if (= linum end-linum)
+                           (line-remove-property line 0 end-charpos key)
+                           (line-remove-property line 0 (line-length line) key))))))))
 
 (defun buffer-get-property (buffer point key)
   (let ((line (buffer-get-line buffer (point-linum point))))

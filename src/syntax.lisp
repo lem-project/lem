@@ -313,14 +313,15 @@
     (when end
       (let ((end (syntax-search-region-end syntax (line-str line) end)))
         (cond (end
-               (line-add-property line start end :attribute (syntax-attribute syntax))
+               (line-add-property line start end :attribute (syntax-attribute syntax) nil)
                (return-from syntax-scan-token-test end))
               (t
                (line-add-property line
                                   start
-                                  most-positive-fixnum
+                                  (line-length line)
                                   :attribute
-                                  (syntax-attribute syntax))
+                                  (syntax-attribute syntax)
+                                  t)
                (setf (line-%region line) syntax)
                (return-from syntax-scan-token-test
                  (length (line-str line)))))))))
@@ -368,7 +369,7 @@
                             :do (setf line (line-next line)))
                       (cons (point-charpos (current-point)) line)))))
             (t
-             (line-add-property line start1 end1 :attribute (syntax-attribute syntax))
+             (line-add-property line start1 end1 :attribute (syntax-attribute syntax) nil)
              (1- end1))))))))
 
 (defun syntax-scan-token (line start)
@@ -393,20 +394,22 @@
        (let ((end (syntax-search-region-end region (line-str line) 0)))
          (cond (end
                 (setf (line-%region line) nil)
-                (line-add-property line 0 end :attribute (syntax-attribute region))
+                (line-add-property line 0 end :attribute (syntax-attribute region) nil)
                 end)
                (t
                 (setf (line-%region line) region)
                 (line-add-property line 0
-                                   most-positive-fixnum
+                                   (line-length line)
                                    :attribute
-                                   (syntax-attribute region))
+                                   (syntax-attribute region)
+                                   t)
                 (length (line-str line))))))
       (otherwise
        (line-add-property line 0
-                          most-positive-fixnum
+                          (line-length line)
                           :attribute
-                          (syntax-attribute region))
+                          (syntax-attribute region)
+                          t)
        (length (line-str line))))))
 
 (defun syntax-scan-line (line)

@@ -145,15 +145,16 @@
     (when (<= 0 i (1- (screen-height screen)))
       (unless end-charpos
         (setq end-charpos (length (aref-screen-line-string screen i))))
-      (destructuring-bind (string . attributes) (aref (screen-lines screen) i)
-        (let ((start start-charpos)
-              (end (min end-charpos (length string))))
-          (when (< start end)
-            (setf (cdr (aref (screen-lines screen) i))
-                  (lem::put-elements attributes
-                                     start-charpos
-                                     (min end-charpos (length string))
-                                     attr))))))))
+      (when (aref (screen-lines screen) i)
+        (destructuring-bind (string . attributes) (aref (screen-lines screen) i)
+          (let ((start start-charpos)
+                (end (min end-charpos (length string))))
+            (when (< start end)
+              (setf (cdr (aref (screen-lines screen) i))
+                    (lem::put-elements attributes
+                                       start-charpos
+                                       (min end-charpos (length string))
+                                       attr)))))))))
 
 (defun set-attr-display-lines (screen
                                attr

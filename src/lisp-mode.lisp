@@ -462,7 +462,8 @@
   (let* ((package-name
           (string-upcase
            (minibuf-read-line "Package: " ""
-                              complete-package-function nil)))
+                              complete-package-function nil
+                              'mh-lisp-package)))
          (package (funcall find-package-function package-name)))
     (cond (package
            (lisp-change-package package) t)
@@ -623,7 +624,8 @@
               update-point-p))
 
 (define-key *global-keymap* (kbd "M-:") 'lisp-eval-string)
-(define-command lisp-eval-string (string) ("sEval: ")
+(define-command lisp-eval-string (string)
+    ((list (minibuf-read-line "Eval: " "" nil nil 'mh-lisp-eval)))
   (let ((output-buffer (get-buffer-create "*output*")))
     (buffer-erase output-buffer)
     (set-buffer-mode output-buffer 'lisp-mode)
@@ -733,14 +735,13 @@
   (%lisp-macroexpand 'swank/backend:macroexpand-all
                      "*macroexpand*"))
 
-(defun lisp-read-symbol (prompt &optional (confirm-p t))
+(defun lisp-read-symbol (prompt history-name)
   (let ((default-name (or (symbol-string-at-point) "")))
-    (let ((name (if confirm-p
-                    (minibuf-read-line prompt
-                                       default-name
-                                       'complete-symbol
-                                       nil)
-                    default-name)))
+    (let ((name (minibuf-read-line prompt
+                                   default-name
+                                   'complete-symbol
+                                   nil
+                                   history-name)))
       (setq name (string-right-trim ":" name))
       (with-safe-form
         (let ((*package* (lisp-current-package)))
@@ -749,7 +750,7 @@
 (define-key *lisp-mode-keymap* (kbd "C-c C-d") 'lisp-describe-symbol)
 (define-command lisp-describe-symbol () ()
   (multiple-value-bind (name error-p)
-      (lisp-read-symbol "Describe: ")
+      (lisp-read-symbol "Describe: " 'mh-describe)
     (unless error-p
       (info-popup (set-buffer-mode (get-buffer-create "*describe*")
                                    'lisp-mode)
@@ -760,7 +761,7 @@
 (define-key *lisp-mode-keymap* (kbd "C-c M-d") 'lisp-disassemble-symbol)
 (define-command lisp-disassemble-symbol () ()
   (multiple-value-bind (name error-p)
-      (lisp-read-symbol "Disassemble: ")
+      (lisp-read-symbol "Disassemble: " 'mh-disassemble)
     (unless error-p
       (let ((str
              (with-output-to-string (out)
@@ -795,7 +796,7 @@
 (define-key *lisp-mode-keymap* (kbd "M-.") 'lisp-find-definitions)
 (define-command lisp-find-definitions () ()
   (multiple-value-bind (name error-p)
-      (lisp-read-symbol "Find definitions: ")
+      (lisp-read-symbol "Find definitions: " 'mh-find-definitions)
     (unless error-p
       (let ((defs))
         (dolist (def (lisp-find-definitions-internal name))

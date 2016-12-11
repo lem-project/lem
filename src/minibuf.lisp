@@ -108,7 +108,8 @@
 (defvar *minibuf-read-line-comp-f*)
 (defvar *minibuf-read-line-existing-p*)
 
-(defvar *minibuf-read-line-history* (make-history))
+(defvar *minibuf-read-line-history-table* (make-hash-table))
+(defvar *minibuf-read-line-history*)
 
 (defvar *minibuf-read-line-depth* 0)
 
@@ -196,8 +197,12 @@
       (add-history *minibuf-read-line-history* str)
       str)))
 
-(defun minibuf-read-line (prompt initial comp-f existing-p)
-  (let ((*minibuffer-calls-window* (current-window)))
+(defun minibuf-read-line (prompt initial comp-f existing-p history-name)
+  (let ((*minibuffer-calls-window* (current-window))
+        (*minibuf-read-line-history* (let ((table (gethash history-name *minibuf-read-line-history-table*)))
+                                       (or table
+                                           (setf (gethash history-name *minibuf-read-line-history-table*)
+                                                 (make-history))))))
     (handler-case
         (call-with-allow-interrupt
          nil
@@ -221,7 +226,7 @@
                                'lem.property:field-separator t))
                (let ((*minibuffer-start-point* (current-point)))
                  (when initial
-                 (insert-string initial))
+                   (insert-string initial))
                  (unwind-protect (call-with-save-windows
                                   (minibuffer-calls-window)
                                   (lambda ()
@@ -235,7 +240,7 @@
                     (error c)))))
 
 (defun minibuf-read-string (prompt &optional initial)
-  (minibuf-read-line prompt (or initial "") nil nil))
+  (minibuf-read-line prompt (or initial "") nil nil 'mh-read-string))
 
 (defun minibuf-read-number (prompt &optional min max)
   (parse-integer
@@ -248,7 +253,8 @@
                              (/= 0 (length str))
                              (= (length str) len)
                              (if min (<= min n) t)
-                             (if max (<= n max) t)))))))
+                             (if max (<= n max) t))))
+                      'mh-read-number)))
 
 (defun minibuf-read-buffer (prompt &optional default existing)
   (when default
@@ -261,7 +267,8 @@
                       (completion name buffer-names))
                   (and existing
                        #'(lambda (name)
-                           (member name buffer-names :test 'string=))))))
+                           (member name buffer-names :test 'string=)))
+                  'mh-read-buffer)))
     (if (string= result "")
         default
         result)))
@@ -290,7 +297,8 @@
                                                                   (enough-namestring path dirname)))
                                            (when andstr strings)))))
                                   (values (logand-strings strings) strings))))
-                            (and existing #'cl-fad:file-exists-p))))
+                            (and existing #'cl-fad:file-exists-p)
+                            'mh-read-file)))
     (if (string= result "")
         default
         result)))

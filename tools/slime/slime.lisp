@@ -178,7 +178,8 @@
                     (lambda (str)
                       (completion str package-names))
                     (lambda (str)
-                      (find str package-names :test #'string=))))))
+                      (find str package-names :test #'string=))
+                    'mh-slime-package))))
 
 (define-command slime-indent-sexp () ()
   (lem.prog-mode:indent-region (current-point)
@@ -439,7 +440,8 @@
                        initial
                        (lambda (str)
                          (symbol-completion str package))
-                       nil)))
+                       nil
+                       'mh-read-symbol)))
 
 (defvar *edit-definition-stack* nil)
 

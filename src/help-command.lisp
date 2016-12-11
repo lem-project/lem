@@ -58,7 +58,8 @@
                   (if (find #\- str)
                       (completion-hypheen str (all-command-names))
                       (completion str (all-command-names))))
-                'exist-command-p))
+                'exist-command-p
+                'mh-execute-command))
          (cmd (find-command name)))
     (if cmd
         (funcall cmd arg)

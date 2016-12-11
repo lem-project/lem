@@ -55,9 +55,8 @@
 (define-command dired-up-directory () ()
   (switch-to-buffer
    (dired-buffer
-    (namestring
-     (uiop:pathname-parent-directory-pathname
-      (buffer-filename))))))
+    (uiop:pathname-parent-directory-pathname
+     (buffer-directory)))))
 
 (define-command dired-find-file () ()
   (select-file 'find-file))
@@ -253,7 +252,7 @@
 (defun update ()
   (with-buffer-read-only (current-buffer) nil
     (buffer-erase)
-    (let ((dirname (probe-file (buffer-filename))))
+    (let ((dirname (probe-file (buffer-directory))))
       (insert-string-with-attribute (namestring dirname) *header-attribute*)
       (insert-newline 2)
       (let ((output-string (ls-output-string dirname)))
@@ -308,7 +307,7 @@
   (let ((buffer (get-buffer-create (format nil "DIRED \"~A\"" filename))))
     (with-current-buffer (buffer (make-min-point))
       (dired-mode)
-      (setf (buffer-filename buffer) (namestring filename))
+      (setf (buffer-directory buffer) filename)
       (setf (buffer-read-only-p buffer) t)
       (buffer-disable-undo buffer)
       (update))

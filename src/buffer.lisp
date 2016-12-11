@@ -236,7 +236,8 @@
 
 (define-class buffer () (current-buffer)
   name
-  filename
+  %filename
+  %directory
   %modified-p
   read-only-p
   %enable-undo-p
@@ -278,7 +279,8 @@
 (defun make-buffer (name &key filename read-only-p (enable-undo-p t))
   (let ((buffer (make-instance 'buffer
                                :name name
-                               :filename filename
+                               :%filename filename
+                               :%directory (when filename (directory-namestring filename))
                                :read-only-p read-only-p
                                :%enable-undo-p enable-undo-p
                                :major-mode 'fundamental-mode)))
@@ -337,6 +339,26 @@
   (setf (buffer-undo-stack buffer) nil)
   (setf (buffer-redo-stack buffer) nil)
   nil)
+
+(defun buffer-filename (&optional (buffer (current-buffer)))
+  (buffer-%filename buffer))
+
+(defun (setf buffer-filename) (filename &optional (buffer (current-buffer)))
+  (let ((result (probe-file filename)))
+    (unless result
+      (error "file does not exist: ~A" filename))
+    (setf (buffer-%filename buffer) (namestring result))))
+
+(defun buffer-directory (&optional (buffer (current-buffer)))
+  (or (buffer-%directory buffer)
+      (namestring (uiop:getcwd))))
+
+(defun (setf buffer-directory) (directory &optional (buffer (current-buffer)))
+  (let ((result (uiop:directory-exists-p directory)))
+    (unless result
+      (error "directory does not exist: ~A" directory))
+    (setf (buffer-%directory buffer)
+          (namestring result))))
 
 (defun buffer-unmark (buffer)
   (setf (buffer-%modified-p buffer) 0))
@@ -580,12 +602,6 @@
 (defun buffer-have-file-p (buffer)
   (and (buffer-filename buffer)
        (uiop:file-pathname-p (buffer-filename buffer))))
-
-(defun buffer-directory (&optional (buffer (current-buffer)))
-  (if (buffer-filename buffer)
-      (directory-namestring
-       (buffer-filename buffer))
-      (namestring (uiop:getcwd))))
 
 (defun buffer-undo-1 (buffer)
   (let ((elt (pop (buffer-undo-stack buffer))))

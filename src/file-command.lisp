@@ -8,7 +8,8 @@
           write-file
           insert-file
           save-some-buffers
-          revert-buffer))
+          revert-buffer
+          change-directory))
 
 (defvar *auto-mode-alist* nil)
 
@@ -103,13 +104,9 @@
      (t
       (save-file-1)))))
 
-(define-command change-file-name (filename) ("sChange file name: ")
-  (setf (buffer-filename (current-buffer)) filename)
-  t)
-
 (define-key *global-keymap* (kbd "C-x C-w") 'write-file)
 (define-command write-file (filename) ("FWrite File: ")
-  (change-file-name filename)
+  (setf (buffer-%filename (current-buffer)) filename)
   (save-file-1))
 
 (define-key *global-keymap* (kbd "C-x C-i") 'insert-file)
@@ -146,3 +143,8 @@
       (buffer-unmark (current-buffer))
       (update-changed-disk-date (current-buffer))
       t)))
+
+(define-command change-directory (directory)
+    ((list (minibuf-read-file "change directory: " (buffer-directory))))
+  (setf (buffer-directory) (expand-file-name directory))
+  t)

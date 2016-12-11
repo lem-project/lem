@@ -3,6 +3,8 @@
 (export '(completion
           completion-test
           completion-hypheen
+          completion-file
+          completion-buffer-name
           start-completion))
 
 (defun completion-test (x y)
@@ -60,6 +62,28 @@
 
 (defun completion-hypheen (name list &key key)
   (completion name list :test #'completion-test :separator "-" :key key))
+
+(defun completion-file (str)
+  (setf str (expand-file-name str))
+  (let* ((dirname (directory-namestring str))
+         (files (mapcar #'namestring (cl-fad:list-directory dirname))))
+    (let ((strings
+           (loop
+             :for pathname :in (or (directory str) (list str))
+             :for str := (namestring pathname)
+             :append
+             (multiple-value-bind (andstr strings)
+                 (completion (enough-namestring str dirname)
+                             files
+                             :test #'completion-test
+                             :separator "-."
+                             :key #'(lambda (path)
+                                      (enough-namestring path dirname)))
+               (when andstr strings)))))
+      (values (logand-strings strings) strings))))
+
+(defun completion-buffer-name (str)
+  (completion str (mapcar #'buffer-name (buffer-list))))
 
 (defvar *completion-mode-keymap* (make-keymap 'completion-self-insert))
 (defvar *completion-window* nil)

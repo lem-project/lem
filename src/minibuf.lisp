@@ -260,16 +260,14 @@
 (defun minibuf-read-buffer (prompt &optional default existing)
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))
-  (let* ((buffer-names (mapcar 'buffer-name (buffer-list)))
-         (result (minibuf-read-line
-                  prompt
-                  ""
-                  #'(lambda (name)
-                      (completion name buffer-names))
-                  (and existing
-                       #'(lambda (name)
-                           (member name buffer-names :test 'string=)))
-                  'mh-read-buffer)))
+  (let ((result (minibuf-read-line
+                 prompt
+                 ""
+                 'completion-buffer-name
+                 (and existing
+                      (lambda (name)
+                        (member name (buffer-list) :test #'string= :key #'buffer-name)))
+                 'mh-read-buffer)))
     (if (string= result "")
         default
         result)))
@@ -280,24 +278,7 @@
   (let ((result
          (minibuf-read-line prompt
                             directory
-                            (lambda (str)
-                              (setf str (expand-file-name str))
-                              (let* ((dirname (directory-namestring str))
-                                     (files (mapcar #'namestring (cl-fad:list-directory dirname))))
-                                (let ((strings
-                                       (loop
-                                         :for pathname :in (or (directory str) (list str))
-                                         :for str := (namestring pathname)
-                                         :append
-                                         (multiple-value-bind (andstr strings)
-                                             (completion (enough-namestring str dirname)
-                                                         files
-                                                         :test #'completion-test
-                                                         :separator "-."
-                                                         :key #'(lambda (path)
-                                                                  (enough-namestring path dirname)))
-                                           (when andstr strings)))))
-                                  (values (logand-strings strings) strings))))
+                            'completion-file
                             (and existing #'cl-fad:file-exists-p)
                             'mh-read-file)))
     (if (string= result "")

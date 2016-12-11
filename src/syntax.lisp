@@ -228,11 +228,15 @@
   (and *enable-syntax-highlight*
        (get-bvar :enable-syntax-highlight :buffer buffer)))
 
+(defvar *syntax-scan-window-recursive-p* nil)
+
 (defun syntax-scan-window (window)
   (check-type window window)
-  (when (enable-syntax-highlight-p (window-buffer window))
-    (with-window-range (start-linum end-linum) window
-      (syntax-scan-lines (window-buffer window) start-linum end-linum))))
+  (when (and (enable-syntax-highlight-p (window-buffer window))
+             (null *syntax-scan-window-recursive-p*))
+    (let ((*syntax-scan-window-recursive-p* t))
+      (with-window-range (start-linum end-linum) window
+        (syntax-scan-lines (window-buffer window) start-linum end-linum)))))
 
 (defun syntax-scan-buffer (buffer)
   (check-type buffer buffer)

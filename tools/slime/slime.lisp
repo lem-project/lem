@@ -115,6 +115,7 @@
                                     (setq result-value value))
                                    ((:abort condition)
                                     (declare (ignore condition))
+                                    (stop-eval-timer)
                                     (editor-error "Synchronous Lisp Evaluation aborted"))))
                  :package package
                  :thread t)
@@ -450,8 +451,7 @@
   (let* ((name (read-symbol-name "Edit Definition of: "
                                  (or (symbol-string-at-point) "")))
          (definitions (slime-eval-internal `(swank:find-definitions-for-emacs ,name)))
-         (grep (lem.grep:make-grep "*slime-definitions*"))
-         (prev-file nil))
+         (found-list '()))
     (dolist (def definitions)
       (optima:match def
         ((list title
@@ -459,28 +459,39 @@
                      (list :file file)
                      (list :position offset)
                      (list :snippet _)))
-         (lem.grep:call-with-writer
-          grep
-          (lambda ()
-            (unless (and prev-file (string= prev-file file))
-              (insert-string-with-attribute file
-                                            *headline-attribute*)
-              (insert-newline 1))
-            (let ((start (current-point)))
-              (insert-string-with-attribute (format nil "  ~A" title)
-                                            *entry-attribute*)
-              (lem.grep:put-entry-property grep
-                                           start
-                                           (end-of-line-point)
-                                           (lambda ()
-                                             (find-file file)
-                                             (goto-position offset))))
-            (insert-newline 1)))
-         (setf prev-file file))))
-    (when prev-file
-      (lem.grep:update grep)
+         (push (list title file offset) found-list))))
+    (when found-list
       (push (list (current-buffer) (current-point))
-            *edit-definition-stack*))))
+            *edit-definition-stack*)
+      (if (null (rest found-list))
+          (destructuring-bind (title file offset)
+              (first found-list)
+            (declare (ignore title))
+            (find-file file)
+            (goto-position offset))
+          (let ((prev-file nil)
+                (grep (lem.grep:make-grep "*slime-definitions*")))
+            (dolist (elt found-list)
+              (destructuring-bind (title file offset) elt
+                (lem.grep:call-with-writer
+                 grep
+                 (lambda ()
+                   (unless (and prev-file (string= prev-file file))
+                     (insert-string-with-attribute file
+                                                   *headline-attribute*)
+                     (insert-newline 1))
+                   (let ((start (current-point)))
+                     (insert-string-with-attribute (format nil "  ~A" title)
+                                                   *entry-attribute*)
+                     (lem.grep:put-entry-property grep
+                                                  start
+                                                  (end-of-line-point)
+                                                  (lambda ()
+                                                    (find-file file)
+                                                    (goto-position offset))))
+                   (insert-newline 1)))
+                (setf prev-file file)))
+            (lem.grep:update grep))))))
 
 (define-command slime-pop-find-definition-stack () ()
   (let ((elt (pop *edit-definition-stack*)))
@@ -495,35 +506,47 @@
          (result (slime-eval-internal `(swank:xrefs '(:calls :macroexpands :binds
                                                       :references :sets :specializes)
                                                     ,symbol)))
-         (grep (lem.grep:make-grep "*slime-xrefs*")))
+         (grep (lem.grep:make-grep "*slime-xrefs*"))
+         (found nil))
     (loop :for (type . definitions) :in result
-          :do (lem.grep:call-with-writer
-               grep
-               (lambda ()
-                 (insert-string-with-attribute (princ-to-string type) *headline-attribute*)
-                 (insert-newline 1)))
-          :do (dolist (def definitions)
-                (optima:match def
-                  ((list name
-                         (list :location
-                               (list :file file)
-                               (list :position offset)
-                               (list :snippet _)))
-                   (lem.grep:call-with-writer
-                    grep
-                    (lambda ()
-                      (insert-string-with-attribute (format nil "  ~A" name)
-                                                    *entry-attribute*)
-                      (lem.grep:put-entry-property grep
-                                                   (beginning-of-line-point)
-                                                   (end-of-line-point)
-                                                   (lambda ()
-                                                     (find-file file)
-                                                     (goto-position offset)))
-                      (insert-newline 1)))))))
-    (lem.grep:update grep)
-    (push (list (current-buffer) (current-point))
-          *edit-definition-stack*)))
+          :for defs := (loop :for def :in definitions
+                             :collect (optima:match def
+                                        ((list name
+                                               (list :location
+                                                     (list :file file)
+                                                     (list :position offset)
+                                                     (list :snippet snippet)))
+                                         (list name file offset snippet))))
+          :do (when defs
+                (setf found t)
+                (lem.grep:call-with-writer
+                 grep
+                 (lambda ()
+                   (insert-string-with-attribute (princ-to-string type)
+                                                 *headline-attribute*)
+                   (insert-newline 1)))
+                (loop :for def :in defs
+                      :do (destructuring-bind (name file offset snippet) def
+                            (declare (ignore snippet))
+                            (lem.grep:call-with-writer
+                             grep
+                             (lambda ()
+                               (insert-string-with-attribute (format nil "  ~A" name)
+                                                             *entry-attribute*)
+                               (lem.grep:put-entry-property grep
+                                                            (beginning-of-line-point)
+                                                            (end-of-line-point)
+                                                            (lambda ()
+                                                              (find-file file)
+                                                              (goto-position offset)))
+                               (insert-newline 1)))))))
+    (cond
+      (found
+       (lem.grep:update grep)
+       (push (list (current-buffer) (current-point))
+             *edit-definition-stack*))
+      (t
+       (message "No xref information found for ~A" symbol)))))
 
 (define-command slime-complete-symbol () ()
   (check-connection)

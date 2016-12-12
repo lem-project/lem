@@ -5,14 +5,30 @@
 (in-package :lem.python)
 
 (defvar *python-syntax-table*
-  (make-syntax-table
-   :space-chars '(#\space #\tab #\newline)
-   :symbol-chars '(#\_)
-   :paren-alist '((#\( . #\))
-                  (#\[ . #\])
-                  (#\{ . #\}))
-   :string-quote-chars '(#\" #\')
-   :line-comment-preceding-char #\#))
+  (let ((table (make-syntax-table
+                :space-chars '(#\space #\tab #\newline)
+                :symbol-chars '(#\_)
+                :paren-alist '((#\( . #\))
+                               (#\[ . #\])
+                               (#\{ . #\}))
+                :string-quote-chars '(#\" #\')
+                :line-comment-preceding-char #\#)))
+
+    (loop :for (str symbol) :in '(("\"\"\"" :start-double-quote-docstring)
+                                  ("'''" :start-single-quote-docstring)) :do
+          (syntax-add-region table
+                             (make-syntax-test str)
+                             (make-syntax-test str)
+                             :attribute *syntax-string-attribute*))
+
+    (dolist (str '("and" "as" "assert" "break" "class" "continue" "def" "del"
+                         "elif" "else" "except" "exec" "finally" "for" "from" "global"
+                         "if" "import" "in" "is" "lambda" "not" "or" "pass" "print"
+                         "raise" "return" "try" "while" "with" "yield"))
+      (syntax-add-match table
+                        (make-syntax-test str :word-p t)
+                        :attribute *syntax-keyword-attribute*))
+    table))
 
 (define-major-mode python-mode prog-mode
   (:name "python"
@@ -21,21 +37,6 @@
   (setf (get-bvar :enable-syntax-highlight) t)
   (setf (get-bvar :beginning-of-defun-function)
         'python-beginning-of-defun))
-
-(loop :for (str symbol) :in '(("\"\"\"" :start-double-quote-docstring)
-                              ("'''" :start-single-quote-docstring)) :do
-  (syntax-add-region *python-syntax-table*
-                     (make-syntax-test str)
-                     (make-syntax-test str)
-                     :attribute *syntax-string-attribute*))
-
-(dolist (str '("and" "as" "assert" "break" "class" "continue" "def" "del"
-               "elif" "else" "except" "exec" "finally" "for" "from" "global"
-               "if" "import" "in" "is" "lambda" "not" "or" "pass" "print"
-               "raise" "return" "try" "while" "with" "yield"))
-  (syntax-add-match *python-syntax-table*
-                    (make-syntax-test str :word-p t)
-                    :attribute *syntax-keyword-attribute*))
 
 (defvar *python-indent-size* 4)
 
@@ -77,6 +78,4 @@
 (define-command python-beginning-of-defun (n) ("p")
   (beginning-of-defun-abstract n #'python-definition-line-p))
 
-(setq *auto-mode-alist*
-      (append '(("\\.py$" . python-mode))
-              *auto-mode-alist*))
+(pushnew (cons "\\.py$" 'python-mode) *auto-mode-alist*)

@@ -5,14 +5,51 @@
 (in-package :lem.lua-mode)
 
 (defvar *lua-syntax-table*
-  (make-syntax-table
-   :space-chars '(#\space #\tab #\newline)
-   :symbol-chars '(#\_)
-   :paren-alist '((#\( . #\))
-                  (#\{ . #\}))
-   :string-quote-chars '(#\" #\')
-   :line-comment-preceding-char #\-
-   :line-comment-following-char #\-))
+  (let ((table (make-syntax-table
+                :space-chars '(#\space #\tab #\newline)
+                :symbol-chars '(#\_)
+                :paren-alist '((#\( . #\))
+                               (#\{ . #\}))
+                :string-quote-chars '(#\" #\')
+                :line-comment-preceding-char #\-
+                :line-comment-following-char #\-)))
+
+    (dolist (str '("and" "break" "do" "else" "elseif" "end" "false" "for"
+                         "goto" "if" "in" "local" "nil" "not" "or"
+                         "repeat" "return" "then" "true" "until" "while"))
+      (syntax-add-match table
+                        (make-syntax-test str :word-p t)
+                        :attribute *syntax-keyword-attribute*))
+
+    (syntax-add-match table
+                      (make-syntax-test "function" :word-p t)
+                      :attribute *syntax-keyword-attribute*
+                      :matched-symbol :function-start
+                      :symbol-lifetime 1)
+
+    (syntax-add-match table
+                      (make-syntax-test "[a-zA-Z0-9_\\.:]+" :regex-p t)
+                      :test-symbol :function-start
+                      :attribute *syntax-function-name-attribute*)
+
+    (loop
+      :for n :from 0 :to 10
+      :for str1 := (format nil "[~a[" (make-string n :initial-element #\=))
+      :for str2 := (format nil "]~a]" (make-string n :initial-element #\=))
+      :do
+      (syntax-add-region table
+                         (make-syntax-test str1)
+                         (make-syntax-test str2)
+                         :attribute *syntax-string-attribute*))
+
+    (loop :for n :from 0 :to 10
+          :for str1 := (format nil "--[~a[" (make-string n :initial-element #\=))
+          :for str2 := (format nil "]~a]" (make-string n :initial-element #\=))
+          :do (syntax-add-region table
+                                 (make-syntax-test str1)
+                                 (make-syntax-test str2)
+                                 :attribute *syntax-comment-attribute*))
+    table))
 
 (define-major-mode lua-mode prog-mode
   (:name "lua"
@@ -22,42 +59,6 @@
   (setf (get-bvar :calc-indent-function) 'lua-calc-indent)
   (setf (get-bvar :forward-sexp-function) 'lua-forward-sexp)
   (setf (get-bvar :beginning-of-defun-function) 'lua-beginning-of-defun))
-
-(dolist (str '("and" "break" "do" "else" "elseif" "end" "false" "for"
-               "goto" "if" "in" "local" "nil" "not" "or"
-               "repeat" "return" "then" "true" "until" "while"))
-  (syntax-add-match *lua-syntax-table*
-                    (make-syntax-test str :word-p t)
-                    :attribute *syntax-keyword-attribute*))
-
-(syntax-add-match *lua-syntax-table*
-                  (make-syntax-test "function" :word-p t)
-                  :attribute *syntax-keyword-attribute*
-                  :matched-symbol :function-start
-                  :symbol-lifetime 1)
-
-(syntax-add-match *lua-syntax-table*
-                  (make-syntax-test "[a-zA-Z0-9_\\.:]+" :regex-p t)
-                  :test-symbol :function-start
-                  :attribute *syntax-function-name-attribute*)
-
-(loop
-  :for n :from 0 :to 10
-  :for str1 := (format nil "[~a[" (make-string n :initial-element #\=))
-  :for str2 := (format nil "]~a]" (make-string n :initial-element #\=))
-  :do
-  (syntax-add-region *lua-syntax-table*
-                     (make-syntax-test str1)
-                     (make-syntax-test str2)
-                     :attribute *syntax-string-attribute*))
-
-(loop :for n :from 0 :to 10
-      :for str1 := (format nil "--[~a[" (make-string n :initial-element #\=))
-      :for str2 := (format nil "]~a]" (make-string n :initial-element #\=))
-      :do (syntax-add-region *lua-syntax-table*
-                             (make-syntax-test str1)
-                             (make-syntax-test str2)
-                             :attribute *syntax-comment-attribute*))
 
 (defun skip-space-forward ()
   (loop
@@ -156,6 +157,4 @@
         (- n 8)
         n)))
 
-(setq *auto-mode-alist*
-      (append '(("\\.lua$" . lua-mode))
-              *auto-mode-alist*))
+(pushnew (cons "\\.lua$" 'lua-mode) *auto-mode-alist* :test #'equal)

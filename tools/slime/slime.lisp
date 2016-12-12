@@ -1042,7 +1042,5 @@
                             (popup-backtrace condition)
                             (stop-timer *idle-timer*)))))
 
-(setq *auto-mode-alist*
-      (append '((".lisp$" . slime-mode)
-                (".asd$" . slime-mode))
-              *auto-mode-alist*))
+(pushnew (cons ".lisp$" 'slime-mode) *auto-mode-alist* :test #'equal)
+(pushnew (cons ".asd$" 'slime-mode) *auto-mode-alist* :test #'equal)

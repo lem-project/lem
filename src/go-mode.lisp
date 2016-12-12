@@ -4,28 +4,6 @@
   (:export))
 (in-package :lem.go-mode)
 
-(defparameter *go-syntax-table*
-  (make-syntax-table
-   :space-chars '(#\space #\tab #\newline)
-   :symbol-chars '(#\_)
-   :paren-alist '((#\( . #\))
-                  (#\{ . #\})
-                  (#\[ . #\]))
-   :string-quote-chars '(#\" #\' #\`)
-   :line-comment-preceding-char #\/
-   :line-comment-following-char #\/
-   :block-comment-preceding-char #\/
-   :block-comment-following-char #\*))
-
-(define-major-mode go-mode prog-mode
-  (:name "go"
-   :keymap *go-mode-keymap*
-   :syntax-table *go-syntax-table*)
-  (setf (get-bvar :enable-syntax-highlight) t)
-  (setf (get-bvar :calc-indent-function) 'go-calc-indent)
-  (setf (get-bvar :beginning-of-defun-function) 'go-beginning-of-defun)
-  (setf (get-bvar :end-of-defun-function) 'go-end-of-defun))
-
 (defvar *go-tab-width* 8)
 
 (defvar *go-builtin*
@@ -43,20 +21,43 @@
 (defvar *go-constants*
   '("nil" "true" "false" "iota"))
 
-(dolist (k *go-keywords*)
-  (syntax-add-match *go-syntax-table*
-                    (make-syntax-test k :word-p t)
-                    :attribute *syntax-keyword-attribute*))
+(defvar *go-syntax-table*
+  (let ((table (make-syntax-table
+                :space-chars '(#\space #\tab #\newline)
+                :symbol-chars '(#\_)
+                :paren-alist '((#\( . #\))
+                               (#\{ . #\})
+                               (#\[ . #\]))
+                :string-quote-chars '(#\" #\' #\`)
+                :line-comment-preceding-char #\/
+                :line-comment-following-char #\/
+                :block-comment-preceding-char #\/
+                :block-comment-following-char #\*)))
 
-(dolist (k *go-builtin*)
-  (syntax-add-match *go-syntax-table*
-                    (make-syntax-test k :word-p t)
-                    :attribute *syntax-keyword-attribute*))
+    (dolist (k *go-keywords*)
+      (syntax-add-match table
+                        (make-syntax-test k :word-p t)
+                        :attribute *syntax-keyword-attribute*))
 
-(dolist (k *go-constants*)
-  (syntax-add-match *go-syntax-table*
-                    (make-syntax-test k :word-p t)
-                    :attribute *syntax-constant-attribute*))
+    (dolist (k *go-builtin*)
+      (syntax-add-match table
+                        (make-syntax-test k :word-p t)
+                        :attribute *syntax-keyword-attribute*))
+
+    (dolist (k *go-constants*)
+      (syntax-add-match table
+                        (make-syntax-test k :word-p t)
+                        :attribute *syntax-constant-attribute*))
+    table))
+
+(define-major-mode go-mode prog-mode
+  (:name "go"
+   :keymap *go-mode-keymap*
+   :syntax-table *go-syntax-table*)
+  (setf (get-bvar :enable-syntax-highlight) t)
+  (setf (get-bvar :calc-indent-function) 'go-calc-indent)
+  (setf (get-bvar :beginning-of-defun-function) 'go-beginning-of-defun)
+  (setf (get-bvar :end-of-defun-function) 'go-end-of-defun))
 
 (defun following-word ()
   (region-string (current-point)
@@ -153,5 +154,4 @@
 (define-command gofmt () ()
   (filter-buffer "gofmt"))
 
-(setf *auto-mode-alist*
-      (acons "\\.go$" 'go-mode *auto-mode-alist*))
+(pushnew (cons "\\.go$" 'go-mode) *auto-mode-alist* :test #'equal)

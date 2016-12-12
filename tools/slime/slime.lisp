@@ -1008,11 +1008,13 @@
 
 (define-command slime () ()
   (setf *process*
-        (sb-ext:run-program "/bin/sh"
-                            `("-c" ,(format nil
-                                            "ros -s swank -e \'(swank:create-server :port ~D :dont-close t)\' wait"
-                                            *default-port*))
-                            :wait nil))
+        (sb-ext:run-program "ros"
+                            `("-s" "swank" "-e"
+                                   ,(format nil "(swank:create-server :port ~D :dont-close t)"
+                                            *default-port*)
+                                   "wait")
+                            :wait nil
+                            :search t))
   (sleep 1)
   (slime-connect "localhost" *default-port*))
 

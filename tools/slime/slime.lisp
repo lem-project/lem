@@ -6,6 +6,8 @@
    (:swank-protocol :lem-slime.swank-protocol)))
 (in-package :lem-slime)
 
+(defparameter *default-port* 4005)
+
 (defvar *slime-prompt-string*)
 (defvar *connection* nil)
 (defvar *eval-timer* nil)
@@ -792,7 +794,7 @@
 
 (define-command slime-connect (hostname port)
     ((list (minibuf-read-string "Hostname: " "localhost")
-           (parse-integer (minibuf-read-string "Port: " "10000"))))
+           (parse-integer (minibuf-read-string "Port: " (princ-to-string *default-port*)))))
   (setf *connection* (lime:make-connection hostname port))
   (message "Connecting...")
   (handler-case (lime:connect *connection*)
@@ -1027,7 +1029,6 @@
 
 
 (defvar *process* nil)
-(defvar *default-port* 4005)
 
 (define-command slime () ()
   (setf *process*

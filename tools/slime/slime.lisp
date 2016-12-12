@@ -561,20 +561,22 @@
 
 (define-major-mode slime-apropos-mode ()
     (:name "slime-apropos"
-     :keymap *slime-apropos-mode-keymap*))
+     :keymap *slime-apropos-mode-keymap*
+     :syntax-table lem.lisp-mode:*lisp-syntax-table*))
 
 (defun show-apropos (data)
   (let ((buffer (get-buffer-create "*slime-apropos*")))
     (setf (current-window) (display-buffer buffer))
     (slime-apropos-mode)
     (buffer-erase buffer)
-    (loop :for plist :in data
-          :do (let ((designator (cadr plist))
-                    (plist1 (cddr plist)))
-                (insert-string-with-attribute designator *headline-attribute*)
-                (loop :for (k v) :on plist1 :by #'cddr
-                      :do (insert-string (format nil "~%  ~A: ~A" k v)))
-                (insert-newline 2)))))
+    (save-excursion
+      (loop :for plist :in data
+            :do (let ((designator (cadr plist))
+                      (plist1 (cddr plist)))
+                  (insert-string-with-attribute designator *headline-attribute*)
+                  (loop :for (k v) :on plist1 :by #'cddr
+                        :do (insert-string (format nil "~%  ~A: ~A" k v)))
+                  (insert-newline 2))))))
 
 (defun slime-apropos-internal (string only-external-p package case-sensitive-p)
   (show-apropos (slime-eval-internal

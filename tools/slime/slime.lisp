@@ -1003,6 +1003,29 @@
    :thread thread))
 
 
+(defvar *process* nil)
+(defvar *default-port* 4005)
+
+(define-command slime () ()
+  (setf *process*
+        (sb-ext:run-program "/bin/sh"
+                            `("-c" ,(format nil
+                                            "ros -s swank -e \'(swank:create-server :port ~D :dont-close t)\' wait"
+                                            *default-port*))
+                            :wait nil))
+  (sleep 1)
+  (slime-connect "localhost" *default-port*))
+
+(define-command slime-quit () ()
+  (when (and *process* (sb-ext:process-alive-p *process*))
+    (sb-ext:process-kill *process* 9)))
+
+(define-command slime-restart () ()
+  (slime-quit)
+  (sleep 1)
+  (slime))
+
+
 (defun idle-timer-function ()
   (when (and (eq (major-mode) 'slime-mode)
              (connected-p))

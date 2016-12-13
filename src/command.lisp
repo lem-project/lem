@@ -459,12 +459,11 @@
 (define-key *global-keymap* (kbd "C-x @") 'pipe-command)
 (define-command pipe-command (str) ("sPipe command: ")
   (let ((directory (buffer-directory)))
-    (info-popup (get-buffer-create "*Command*")
-                #'(lambda (out)
-                    (uiop:run-program (format nil "cd ~A; ~A" directory str)
-                                      :output out
-                                      :error-output out
-                                      :ignore-error-status t)))))
+    (with-pop-up-typeout-window (out (get-buffer-create "*Command*") :focus t :erase t)
+      (uiop:run-program (format nil "cd ~A; ~A" directory str)
+                        :output out
+                        :error-output out
+                        :ignore-error-status t))))
 
 (define-command delete-trailing-whitespace () ()
   (save-excursion

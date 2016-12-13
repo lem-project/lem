@@ -7,6 +7,7 @@
           with-window-range
           with-buffer-read-only
           with-current-window
+          with-pop-up-typeout-window
           handler-case-bind))
 
 (defvar *program-name* "Lem")
@@ -89,6 +90,12 @@
        (unwind-protect (progn ,@body)
          (unless (deleted-window-p ,gprev-window)
            (setf (current-window) ,gprev-window))))))
+
+(defmacro with-pop-up-typeout-window ((stream-var buffer &key focus erase) &body body)
+  `(pop-up-typeout-window ,buffer
+                          (lambda (,stream-var) ,@body)
+                          :focus ,focus
+                          :erase ,erase))
 
 #+sbcl
 (defmacro with-profile (&body body)

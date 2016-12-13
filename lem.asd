@@ -61,7 +61,7 @@
                              (:file "fundamental-mode")
                              (:file "comp")
                              (:file "minibuf")
-                             (:file "info-mode")
+                             (:file "typeout")
                              (:file "lem")
 
                              (:file "file-command")

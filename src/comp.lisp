@@ -192,10 +192,8 @@
     (cond (strings
            (let ((buffer (get-buffer-create "*Completions*")))
              (setf *completion-window*
-                   (info-popup buffer
-                               (lambda (out)
-                                 (format out "~{~A~^~%~}" strings))
-                               nil))
+                   (with-pop-up-typeout-window (out buffer :erase t)
+                     (format out "~{~A~^~%~}" strings)))
              (set-window-delete-hook (lambda () (setf *completion-window* nil))
                                      *completion-window*)
              (setf (get-bvar :completion-buffer-p :buffer buffer) t)

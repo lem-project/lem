@@ -547,17 +547,14 @@
 (defun lisp-debugger (condition)
   (let* ((choices (compute-restarts condition))
          (n (length choices)))
-    (info-popup (set-buffer-mode (get-buffer-create *error-buffer-name*)
-                                 'lisp-mode)
-                #'(lambda (out)
-                    (format out "~a~%~%" condition)
-                    (loop
-                      for choice in choices
-                      for i from 1
-                      do (format out "~&[~d] ~a~%" i choice))
-                    (terpri out)
-                    (uiop/image:print-backtrace :stream out :count 100))
-                nil)
+    (with-pop-up-typeout-window (out (get-buffer-create *error-buffer-name*) :erase t)
+      (format out "~a~%~%" condition)
+      (loop
+        for choice in choices
+        for i from 1
+        do (format out "~&[~d] ~a~%" i choice))
+      (terpri out)
+      (uiop/image:print-backtrace :stream out :count 100))
     (loop
       (redraw-display)
       (handler-case
@@ -574,10 +571,8 @@
                    (let ((x
                           (handler-case (eval (read-from-string str nil))
                             (error (cdt) (format nil "~a" cdt)))))
-                     (info-popup (get-buffer-create "*output*")
-                                 #'(lambda (out)
-                                     (princ x out))
-                                 nil)))))
+                     (with-pop-up-typeout-window (out (get-buffer-create "*output*") :erase t)
+                       (princ x out))))))
         (lem::editor-abort ()))))
   condition)
 
@@ -637,7 +632,7 @@
              (%lisp-eval-string string output-buffer nil nil
                                 (lisp-current-package)))
     (when (buffer-modified-p output-buffer)
-      (info-popup output-buffer nil nil))))
+      (pop-up-typeout-window output-buffer nil))))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-r") 'lisp-eval-region)
 (define-command lisp-eval-region (&optional begin end) ("r")
@@ -678,11 +673,9 @@
     (message "load: ~A" filename)))
 
 (defun lisp-print-error (condition)
-  (info-popup (set-buffer-mode (get-buffer-create *error-buffer-name*) 'lisp-mode)
-              #'(lambda (out)
-                  (format out "~a~%~%" condition)
-                  (uiop/image:print-backtrace :stream out :count 100))
-              nil))
+  (with-pop-up-typeout-window (out (get-buffer-create *error-buffer-name*) :erase t)
+    (format out "~a~%~%" condition)
+    (uiop/image:print-backtrace :stream out :count 100)))
 
 (defmacro with-safe-form (&body body)
   `(handler-case
@@ -722,10 +715,11 @@
                 (t
                  expr))))
     (unless error-p
-      (info-popup (set-buffer-mode (get-buffer-create buffer-name)
-                                   'lisp-mode)
-                  #'(lambda (out) (pprint expr out))
-                  t))))
+      (with-pop-up-typeout-window (out (set-buffer-mode (get-buffer-create buffer-name)
+                                                        'lisp-mode)
+                                       :focus nil
+                                       :erase t)
+        (pprint expr out)))))
 
 (define-key *lisp-mode-keymap* (kbd "C-c m") 'lisp-macroexpand)
 (define-key *lisp-mode-keymap* (kbd "C-c C-m") 'lisp-macroexpand)
@@ -755,11 +749,9 @@
   (multiple-value-bind (name error-p)
       (lisp-read-symbol "Describe: " 'mh-describe)
     (unless error-p
-      (info-popup (set-buffer-mode (get-buffer-create "*describe*")
-                                   'lisp-mode)
-                  #'(lambda (out)
-                      (describe name out))
-                  nil))))
+      (with-pop-up-typeout-window (out (set-buffer-mode (get-buffer-create "*describe*")
+                                                        'lisp-mode))
+        (describe name out)))))
 
 (define-key *lisp-mode-keymap* (kbd "C-c M-d") 'lisp-disassemble-symbol)
 (define-command lisp-disassemble-symbol () ()
@@ -772,11 +764,9 @@
                  (error (condition)
                         (message "~a" condition)
                         (return-from lisp-disassemble-symbol nil))))))
-        (info-popup (set-buffer-mode (get-buffer-create "*disassemble*")
-                                     'lisp-mode)
-                    #'(lambda (out)
-                        (princ str out))
-                    nil)))))
+        (with-pop-up-typeout-window (out (set-buffer-mode (get-buffer-create "*disassemble*")
+                                                          'lisp-mode))
+          (princ str out))))))
 
 (defvar *lisp-find-definition-stack* nil)
 

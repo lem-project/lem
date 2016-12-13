@@ -420,9 +420,8 @@
 
 (defun macroexpand-internal (expander buffer-name)
   (let ((string (slime-eval-internal `(,expander ,(form-string-at-point)))))
-    (info-popup (get-buffer-create buffer-name)
-                (lambda (out) (princ string out))
-                t)))
+    (with-pop-up-typeout-window (out (get-buffer-create buffer-name) :focus t :erase t)
+      (princ string out))))
 
 (define-command slime-macroexpand () ()
   (check-connection)
@@ -625,10 +624,8 @@
 
 (defun show-description (string)
   (let ((buffer (get-buffer-create "*slime description*")))
-    (info-popup buffer
-                (lambda (stream)
-                  (princ string stream))
-                nil)))
+    (with-pop-up-typeout-window (stream buffer :erase t)
+      (princ string stream))))
 
 (define-command slime-describe-symbol () ()
   (check-connection)
@@ -783,19 +780,13 @@
 (defparameter *fresh-output-buffer-p* t)
 
 (defun write-string-to-output-buffer (string)
-  (let ((buffer (get-buffer-create "*slime-output*")))
-    (set-buffer-mode buffer 'info-mode t)
-    (with-open-stream (stream (make-buffer-output-stream buffer
-                                                         (point-max buffer)
-                                                         t))
-      (when *fresh-output-buffer-p*
-        (setq *fresh-output-buffer-p* nil)
-        (fresh-line stream)
-        (terpri stream)
-        (princ '*** stream)
-        (terpri stream))
-      (princ string stream))
-    (info-popup buffer nil nil)))
+  (with-pop-up-typeout-window (stream (get-buffer-create "*slime-output*"))
+    (when *fresh-output-buffer-p*
+      (setq *fresh-output-buffer-p* nil)
+      (fresh-line stream)
+      (terpri stream)
+      (princ '*** stream)
+      (terpri stream))))
 
 (defun refresh-output-buffer ()
   (setq *fresh-output-buffer-p* t))

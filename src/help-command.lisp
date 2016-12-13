@@ -33,19 +33,18 @@
     (terpri s)))
 
 (define-command describe-bindings () ()
-  (info-popup (get-buffer-create "*bindings*")
-              #'(lambda (s)
-                  (describe-bindings-internal s
-                                              "Major Mode Bindings"
-                                              (mode-keymap (major-mode))
-                                              t)
-                  (describe-bindings-internal s
-                                              "Global Bindings"
-                                              *global-keymap*)
-                  (dolist (mode (buffer-minor-modes))
-                    (describe-bindings-internal s
-                                                (mode-name mode)
-                                                (mode-keymap mode))))))
+  (with-pop-up-typeout-window (s (get-buffer-create "*bindings*") :focus t :erase t)
+    (describe-bindings-internal s
+                                "Major Mode Bindings"
+                                (mode-keymap (major-mode))
+                                t)
+    (describe-bindings-internal s
+                                "Global Bindings"
+                                *global-keymap*)
+    (dolist (mode (buffer-minor-modes))
+      (describe-bindings-internal s
+                                  (mode-name mode)
+                                  (mode-keymap mode)))))
 
 (define-key *global-keymap* (kbd "M-x") 'execute-command)
 (define-command execute-command (arg) ("P")
@@ -66,8 +65,7 @@
         (message "invalid command"))))
 
 (define-command apropos-command (str) ("sApropos: ")
-  (info-popup (get-buffer-create "*Apropos*")
-              #'(lambda (out)
-                  (dolist (name (all-command-names))
-                    (when (search str name)
-                      (describe (string-to-command name) out))))))
+  (with-pop-up-typeout-window (out (get-buffer-create "*Apropos*") :focus t :erase t)
+    (dolist (name (all-command-names))
+      (when (search str name)
+        (describe (string-to-command name) out)))))

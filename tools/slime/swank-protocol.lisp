@@ -5,7 +5,6 @@
                 :disconnected)
   (:export :disconnected)
   (:export :connection
-           :make-connection
            :connection-hostname
            :connection-port
            :connection-request-count
@@ -112,13 +111,6 @@ Parses length information to determine how many characters to read."
                    :type stream
                    :documentation "The stream to log to."))
   (:documentation "A connection to a remote Lisp."))
-
-(defun make-connection (hostname port &key (logp nil))
-  "Create a connection to a remote Swank server."
-  (make-instance 'connection
-                 :hostname hostname
-                 :port port
-                 :logp logp))
 
 (defmethod connect ((connection connection))
   "Connect to the remote server. Returns t."

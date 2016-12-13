@@ -797,7 +797,7 @@
 (define-command slime-connect (hostname port)
     ((list (minibuf-read-string "Hostname: " "localhost")
            (parse-integer (minibuf-read-string "Port: " (princ-to-string *default-port*)))))
-  (setf *connection* (lime:make-connection hostname port))
+  (setf *connection* (make-instance 'lime:connection :hostname hostname :port port))
   (message "Connecting...")
   (handler-case (lime:connect *connection*)
     (usocket:connection-refused-error (c) (editor-error "~A" c)))

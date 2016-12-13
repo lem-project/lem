@@ -20,8 +20,7 @@
            :connection-machine-version
            :connection-swank-version)
   ;; Functions and methods
-  (:export :make-connection
-           :connect
+  (:export :connect
            :pull-all-events
            :debuggerp)
   (:local-nicknames (:swank-protocol :lem-slime.swank-protocol))
@@ -85,13 +84,6 @@ of event, or return NIL."
   message)
 
 ;;; Functions and methods
-
-(defun make-connection (hostname port &key logp)
-  "Create a connection object."
-  (make-instance 'connection
-                 :hostname hostname
-                 :port port
-                 :logp logp))
 
 (defmethod connect :after ((connection connection))
   "After connecting, query the Swank server for connection information and

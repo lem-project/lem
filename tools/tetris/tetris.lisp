@@ -312,5 +312,5 @@
                                t
                                #'update (list buffer)
                                #'(lambda (condition)
-                                   (popup-backtrace condition)
+                                   (pop-up-backtrace condition)
                                    (stop-timer *timer*))))))

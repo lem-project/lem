@@ -57,6 +57,6 @@
                              (stop-timer timer))))
                        nil
                        (lambda (condition)
-                         (popup-backtrace condition)
+                         (pop-up-backtrace condition)
                          (stop-timer timer))))
     (make-job :name name :timer timer :thread thread)))

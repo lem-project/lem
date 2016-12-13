@@ -1018,7 +1018,7 @@
   (setf *lisp-timer*
         (start-idle-timer "lisp" 500 t 'lisp-idle-timer-function nil
                           (lambda (condition)
-                            (popup-backtrace condition)
+                            (pop-up-backtrace condition)
                             (stop-timer *lisp-timer*)))))
 
 (defun lisp-print-values (values)

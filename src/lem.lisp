@@ -1,12 +1,12 @@
 (in-package :lem)
 
-(export '(popup-backtrace
+(export '(pop-up-backtrace
           with-editor
           lem))
 
 (defvar *running-p* nil)
 
-(defun popup-backtrace (condition)
+(defun pop-up-backtrace (condition)
   (let ((buffer (get-buffer-create "*EDITOR ERROR*")))
     (display-buffer buffer)
     (switch-to-buffer buffer)
@@ -29,7 +29,7 @@
 (defmacro with-error-handler (() &body body)
   `(handler-case-bind (#'(lambda (condition)
                            (handler-bind ((error #'bailout))
-                             (popup-backtrace condition)))
+                             (pop-up-backtrace condition)))
                        ,@body)
                       ((condition) (declare (ignore condition)))))
 

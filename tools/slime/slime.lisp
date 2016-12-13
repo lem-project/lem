@@ -709,7 +709,7 @@
                          (pull-events))
                        nil
                        (lambda (condition)
-                         (popup-backtrace condition)
+                         (pop-up-backtrace condition)
                          (stop-timer *eval-timer*))))))
 
 (defun stop-eval-timer ()
@@ -1064,7 +1064,7 @@
   (setf *idle-timer*
         (start-idle-timer "slime" 200 t 'idle-timer-function nil
                           (lambda (condition)
-                            (popup-backtrace condition)
+                            (pop-up-backtrace condition)
                             (stop-timer *idle-timer*)))))
 
 (pushnew (cons ".lisp$" 'slime-mode) *auto-mode-alist* :test #'equal)

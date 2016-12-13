@@ -3,6 +3,9 @@
   (:use :cl)
   (:import-from :lem-slime.errors
                 :disconnected)
+  (:import-from :trivial-types
+                :association-list
+                :proper-list)
   (:export :disconnected)
   (:export :connection
            :connection-hostname
@@ -26,6 +29,17 @@
            :request-listener-eval
            :read-message
            :read-all-messages)
+  (:export :connection-package
+           :connection-pid
+           :connection-implementation-name
+           :connection-implementation-version
+           :connection-machine-type
+           :connection-machine-version
+           :connection-swank-version
+
+           :debuggerp
+           :debugger-in
+           :debugger-out)
   (:documentation "Low-level implementation of a client for the Swank protocol."))
 (in-package :lem-slime.swank-protocol)
 
@@ -109,7 +123,33 @@ Parses length information to determine how many characters to read."
                    :initarg :logging-stream
                    :initform *error-output*
                    :type stream
-                   :documentation "The stream to log to."))
+                   :documentation "The stream to log to.")
+
+   (debug-level :accessor connection-debug-level
+                :initform 0
+                :type integer
+                :documentation "The depth at which the debugger is called.")
+   (pid :accessor connection-pid
+        :type integer
+        :documentation "The PID of the Swank server process.")
+   (implementation-name :accessor connection-implementation-name
+                        :type string
+                        :documentation "The name of the implementation running
+ the Swank server.")
+   (implementation-version :accessor connection-implementation-version
+                           :type string
+                           :documentation "The version string of the
+ implementation running the Swank server.")
+   (machine-type :accessor connection-machine-type
+                 :type string
+                 :documentation "The server machine's architecture.")
+   (machine-version :accessor connection-machine-version
+                    :type string
+                    :documentation "The server machine's processor type.")
+   (swank-version :accessor connection-swank-version
+                  :type string
+                  :documentation "The server's Swank version.")
+   (info :accessor connection-info))
   (:documentation "A connection to a remote Lisp."))
 
 (defmethod connect ((connection connection))
@@ -120,6 +160,54 @@ Parses length information to determine how many characters to read."
                                           :element-type 'character)))
       (setf (connection-socket connection) socket)))
   t)
+
+(defmethod connect :after ((connection connection))
+  "After connecting, query the Swank server for connection information and
+create a REPL."
+  ;; Issue every request
+  (request-connection-info connection)
+  ;; Read the connection information message
+  (let* ((info (read-message connection))
+         (data (getf (getf info :return) :ok))
+         (impl (getf data :lisp-implementation))
+         (machine (getf data :machine)))
+    (setf (connection-info connection) info)
+    (setf (connection-pid connection)
+          (getf data :pid)
+
+          (connection-implementation-name connection)
+          (getf impl :name)
+
+          (connection-implementation-version connection)
+          (getf impl :version)
+
+          (connection-machine-type connection)
+          (getf machine :type)
+
+          (connection-machine-version connection)
+          (getf machine :version)
+
+          (connection-swank-version connection)
+          (getf data :version)))
+  ;; Require some Swank modules
+  (request-swank-require
+   connection
+   '(swank-trace-dialog
+     swank-package-fu
+     swank-presentations
+     swank-fuzzy
+     swank-fancy-inspector
+     swank-c-p-c
+     swank-arglists
+     swank-repl))
+  (read-message connection)
+  ;; Start it up
+  (request-init-presentations connection)
+  (request-create-repl connection)
+  ;; Wait for startup
+  (read-message connection)
+  ;; Read all the other messages, dumping them
+  (read-all-messages connection))
 
 (defun log-message (connection format-string &rest arguments)
   "Log a message."
@@ -236,3 +324,15 @@ to check if input is available."
 (defun read-all-messages (connection)
   (loop while (message-waiting-p connection) collecting
     (read-message connection)))
+
+;;;
+
+(defun debuggerp (connection)
+  "T if the connection is in the debugger, NIL otherwise."
+  (> (connection-debug-level connection) 0))
+
+(defun debugger-in (connection)
+  (incf (connection-debug-level connection)))
+
+(defun debugger-out (connection)
+  (decf (connection-debug-level connection)))

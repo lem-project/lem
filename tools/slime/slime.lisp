@@ -4,7 +4,6 @@
   (:import-from :lem-slime.errors
                 :disconnected)
   (:local-nicknames
-   (:lime :lem-slime.lime)
    (:swank-protocol :lem-slime.swank-protocol)))
 (in-package :lem-slime)
 
@@ -797,15 +796,15 @@
 (define-command slime-connect (hostname port)
     ((list (minibuf-read-string "Hostname: " "localhost")
            (parse-integer (minibuf-read-string "Port: " (princ-to-string *default-port*)))))
-  (setf *connection* (make-instance 'lime:connection :hostname hostname :port port))
+  (setf *connection* (make-instance 'swank-protocol:connection :hostname hostname :port port))
   (message "Connecting...")
-  (handler-case (lime:connect *connection*)
+  (handler-case (swank-protocol:connect *connection*)
     (usocket:connection-refused-error (c) (editor-error "~A" c)))
   (message "Swank server running on ~A ~A"
-           (lime:connection-implementation-name *connection*)
-           (lime:connection-implementation-version *connection*))
+           (swank-protocol:connection-implementation-name *connection*)
+           (swank-protocol:connection-implementation-version *connection*))
   (setf *slime-prompt-string*
-        (getf (getf (getf (getf (lime::connection-info *connection*)
+        (getf (getf (getf (getf (swank-protocol::connection-info *connection*)
                                 :return)
                           :ok)
                     :package)
@@ -846,13 +845,13 @@
                   ((:return value id)
                    (swank-protocol:finish-evaluated *connection* value id))
                   ((:debug-activate thread level &optional select)
-                   (lime:debugger-in *connection*)
+                   (swank-protocol:debugger-in *connection*)
                    (active-debugger thread level select))
                   ((:debug thread level condition restarts frames conts)
                    (stop-eval-timer)
                    (start-debugger thread level condition restarts frames conts))
                   ((:debug-return thread level stepping)
-                   (lime:debugger-out *connection*)
+                   (swank-protocol:debugger-out *connection*)
                    (exit-debugger thread level stepping))
                   ;; ((:channel-send id msg)
                   ;;  )
@@ -916,7 +915,7 @@
 (define-key *slime-debugger-keymap* "9" 'slime-invoke-restart-9)
 
 (define-command slime-quit-debugger () ()
-  (when (lime:debuggerp *connection*)
+  (when (swank-protocol:debuggerp *connection*)
     (swank-protocol:emacs-rex *connection* `(swank:throw-to-toplevel))
     (start-eval-timer)))
 
@@ -932,7 +931,7 @@
   (start-eval-timer))
 
 (define-command slime-abort () ()
-  (when (lime:debuggerp *connection*)
+  (when (swank-protocol:debuggerp *connection*)
     (eval-async '(swank:sldb-abort)
                 (lambda (v)
                   (message "Restart returned: ~A" v)))
@@ -940,7 +939,7 @@
 
 (defun slime-invoke-restart (n)
   (check-type n integer)
-  (when (lime:debuggerp *connection*)
+  (when (swank-protocol:debuggerp *connection*)
     (swank-protocol:emacs-rex *connection*
                               `(swank:invoke-nth-restart-for-emacs
                                 ,(get-bvar 'level :default -1)

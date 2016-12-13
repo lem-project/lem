@@ -48,4 +48,5 @@
       `(do-commandloop-function (lambda () ,@body))))
 
 (defun exit-editor (&optional report)
+  (run-hooks 'exit-editor-hook)
   (throw +exit-tag+ report))

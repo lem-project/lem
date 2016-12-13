@@ -7,7 +7,8 @@
           after-save-hook
           pre-command-hook
           post-command-hook
-          after-init-hook))
+          after-init-hook
+          exit-editor-hook))
 
 (defun run-hooks (hook)
   (mapc 'funcall (get hook 'hooks)))

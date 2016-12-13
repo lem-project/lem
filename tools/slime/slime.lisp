@@ -107,13 +107,15 @@
       (return buffer))))
 
 (macrolet ((m (emacs-rex x)
-             `(let (result-value)
+             `(let (result-value
+                    result-value-p)
                 (,emacs-rex
                  *connection*
                  ,x
                  :continuation (lambda (result)
                                  (alexandria:destructuring-case result
                                    ((:ok value)
+                                    (setq result-value-p t)
                                     (setq result-value value))
                                    ((:abort condition)
                                     (declare (ignore condition))
@@ -122,7 +124,11 @@
                  :package package
                  :thread t)
                 (cond ((swank-protocol:message-waiting-p *connection* :timeout 2)
-                       (pull-events)
+                       (loop :repeat 10 :do
+                             (pull-events)
+                             (when result-value-p
+                               (return))
+                             (sleep 0.01))
                        result-value)
                       (t
                        (editor-error "timeout"))))))

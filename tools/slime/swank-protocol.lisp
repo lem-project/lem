@@ -181,12 +181,11 @@ to check if input is available."
                          (connection-package connection))
                      (or thread
                          (connection-thread connection))
-                     (connection-request-count connection))))
+                     (incf (connection-request-count connection)))))
     (when continuation
       (push (cons (connection-request-count connection)
                   continuation)
             (connection-continuations connection)))
-    (incf (connection-request-count connection))
     (send-message-string connection msg)
     t))
 

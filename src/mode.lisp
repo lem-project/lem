@@ -100,8 +100,8 @@
                     (delete ',minor-mode (buffer-minor-modes)))))
        ,@body)))
 
-(defun set-buffer-mode (buffer mode)
+(defun set-buffer-mode (buffer mode &rest args)
   (save-excursion
    (setf (current-buffer) buffer)
-   (funcall mode))
+   (apply mode args))
   buffer)

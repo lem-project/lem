@@ -784,7 +784,7 @@
 
 (defun write-string-to-output-buffer (string)
   (let ((buffer (get-buffer-create "*slime-output*")))
-    (set-buffer-mode buffer (lambda () (info-mode t)))
+    (set-buffer-mode buffer 'info-mode t)
     (with-open-stream (stream (make-buffer-output-stream buffer
                                                          (point-max buffer)
                                                          t))

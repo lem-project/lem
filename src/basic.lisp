@@ -1,7 +1,7 @@
 (in-package :lem)
 
-(export '(start-line-p
-          end-line-p
+(export '(first-line-p
+          last-line-p
           bolp
           eolp
           bobp
@@ -46,10 +46,10 @@
           point-to-offset
           shift-point))
 
-(defun start-line-p ()
+(defun first-line-p ()
   (<= (current-linum) 1))
 
-(defun end-line-p ()
+(defun last-line-p ()
   (<= (buffer-nlines (current-buffer))
       (current-linum)))
 
@@ -63,10 +63,10 @@
       (current-linum))))
 
 (defun bobp ()
-  (and (start-line-p) (bolp)))
+  (and (first-line-p) (bolp)))
 
 (defun eobp ()
-  (and (end-line-p) (eolp)))
+  (and (last-line-p) (eolp)))
 
 (defun insert-char (c &optional (n 1))
   (dotimes (_ n t)
@@ -137,12 +137,12 @@
   (beginning-of-line)
   (if (plusp n)
       (dotimes (_ n t)
-        (when (end-line-p)
+        (when (last-line-p)
           (end-of-line)
           (return))
         (incf (current-linum)))
       (dotimes (_ (- n) t)
-        (when (start-line-p)
+        (when (first-line-p)
           (return))
         (decf (current-linum)))))
 
@@ -167,7 +167,7 @@
       (set-charpos (- (current-charpos) n))
       (return t))
     (decf n (1+ (current-charpos)))
-    (cond ((start-line-p)
+    (cond ((first-line-p)
            (beginning-of-line)
            (return nil))
           (t
@@ -252,7 +252,7 @@
 
 (defun blank-line-p ()
   (let ((string (current-line-string))
-        (eof-p (end-line-p)))
+        (eof-p (last-line-p)))
     (when (string= "" (string-trim '(#\space #\tab) string))
       (+ (length string)
          (if eof-p 0 1)))))

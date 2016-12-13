@@ -75,7 +75,7 @@
   (forward-line n)
   (when (> *start-line-number* (current-linum))
     (setf (current-linum) *start-line-number*))
-  (when (end-line-p)
+  (when (last-line-p)
     (forward-line -1))
   (move-to-file-column))
 
@@ -204,7 +204,7 @@
 
 (defun mark-current-line (flag)
   (when (and (<= *start-line-number* (current-linum))
-             (not (end-line-p)))
+             (not (last-line-p)))
     (save-excursion
       (beginning-of-line)
       (with-buffer-read-only (current-buffer) nil

@@ -10,7 +10,7 @@
           toggle-minor-mode
           define-major-mode
           define-minor-mode
-          set-buffer-mode))
+          change-buffer-mode))
 
 (defvar *mode-list* nil)
 
@@ -100,7 +100,7 @@
                     (delete ',minor-mode (buffer-minor-modes)))))
        ,@body)))
 
-(defun set-buffer-mode (buffer mode &rest args)
+(defun change-buffer-mode (buffer mode &rest args)
   (save-excursion
    (setf (current-buffer) buffer)
    (apply mode args))

@@ -53,8 +53,8 @@
 (defun update (grep)
   (setf (grep-index grep) -1)
   (unless (grep-firstp grep)
-    (display-buffer (set-buffer-mode (get-buffer-create (grep-buffer-name grep))
-                                     'grep-mode t)))
+    (display-buffer (change-buffer-mode (get-buffer-create (grep-buffer-name grep))
+                                        'grep-mode t)))
   (setf *current-grep* grep))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

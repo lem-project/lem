@@ -626,7 +626,7 @@
     ((list (minibuf-read-line "Eval: " "" nil nil 'mh-lisp-eval)))
   (let ((output-buffer (get-buffer-create "*output*")))
     (buffer-erase output-buffer)
-    (set-buffer-mode output-buffer 'lisp-mode)
+    (change-buffer-mode output-buffer 'lisp-mode)
     (buffer-unmark output-buffer)
     (message "~{~s~^,~}"
              (%lisp-eval-string string output-buffer nil nil
@@ -715,8 +715,8 @@
                 (t
                  expr))))
     (unless error-p
-      (with-pop-up-typeout-window (out (set-buffer-mode (get-buffer-create buffer-name)
-                                                        'lisp-mode)
+      (with-pop-up-typeout-window (out (change-buffer-mode (get-buffer-create buffer-name)
+                                                           'lisp-mode)
                                        :focus nil
                                        :erase t)
         (pprint expr out)))))
@@ -749,8 +749,8 @@
   (multiple-value-bind (name error-p)
       (lisp-read-symbol "Describe: " 'mh-describe)
     (unless error-p
-      (with-pop-up-typeout-window (out (set-buffer-mode (get-buffer-create "*describe*")
-                                                        'lisp-mode))
+      (with-pop-up-typeout-window (out (change-buffer-mode (get-buffer-create "*describe*")
+                                                           'lisp-mode))
         (describe name out)))))
 
 (define-key *lisp-mode-keymap* (kbd "C-c M-d") 'lisp-disassemble-symbol)
@@ -764,8 +764,8 @@
                  (error (condition)
                         (message "~a" condition)
                         (return-from lisp-disassemble-symbol nil))))))
-        (with-pop-up-typeout-window (out (set-buffer-mode (get-buffer-create "*disassemble*")
-                                                          'lisp-mode))
+        (with-pop-up-typeout-window (out (change-buffer-mode (get-buffer-create "*disassemble*")
+                                                             'lisp-mode))
           (princ str out))))))
 
 (defvar *lisp-find-definition-stack* nil)

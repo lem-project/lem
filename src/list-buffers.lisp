@@ -14,7 +14,7 @@
 (define-command list-buffers () ()
   (let ((buffer (get-buffer-create "*Buffers*")))
     (setf (buffer-truncate-lines buffer) nil)
-    (set-buffer-mode buffer 'list-buffers-mode)
+    (change-buffer-mode buffer 'list-buffers-mode)
     (with-pop-up-typeout-window (out buffer :erase t)
       (let* ((max-name-len
               (+ 3 (apply 'max

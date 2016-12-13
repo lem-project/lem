@@ -9,7 +9,9 @@
 
 (defparameter *default-port* 4005)
 
-(defvar *slime-prompt-string*)
+;; (1)とコメントで印を付けているところはコネクションを複数管理するときに今のやり方ではまずいところ
+
+(defvar *slime-prompt-string*) ;(1)
 (defvar *connection* nil)
 (defvar *eval-timer* nil)
 (defvar *write-string-function* 'write-string-to-output-buffer)
@@ -653,8 +655,8 @@
   (repl-reset-input)
   (lem.listener-mode:listener-mode t))
 
-(defvar *read-string-thread-stack* nil)
-(defvar *read-string-tag-stack* nil)
+(defvar *read-string-thread-stack* nil) ;(1)
+(defvar *read-string-tag-stack* nil) ;(1)
 
 (define-key *slime-repl-mode-keymap* "C-c C-c" 'slime-repl-interrupt)
 

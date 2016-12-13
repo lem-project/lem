@@ -1039,7 +1039,10 @@
                             :wait nil
                             :search t))
   (sleep 1)
-  (slime-connect "localhost" *default-port*))
+  (slime-connect "localhost" *default-port*)
+  (add-hook 'exit-editor-hook
+            (lambda ()
+              (slime-quit))))
 
 (define-command slime-quit () ()
   (when (and *process* (sb-ext:process-alive-p *process*))

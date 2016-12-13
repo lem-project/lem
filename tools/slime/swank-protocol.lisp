@@ -100,10 +100,6 @@ Parses length information to determine how many characters to read."
                   :initform 0
                   :type integer
                   :documentation "A number that is increased and sent along with every request.")
-   (read-count :accessor connection-read-count
-               :initform 0
-               :type integer
-               :documentation "Counter of the number of times read is called in the server's REPL.")
    (package :accessor connection-package
             :initform "COMMON-LISP-USER"
             :type string
@@ -113,6 +109,7 @@ Parses length information to determine how many characters to read."
            :documentation "The current thread.")
    (continuations :accessor connection-continuations
                   :initform nil)
+
    ;; Logging
    (logp :accessor connection-log-p
          :initarg :logp

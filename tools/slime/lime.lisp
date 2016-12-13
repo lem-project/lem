@@ -11,7 +11,6 @@
   (:export :connection)
   ;; Accessors
   (:export :connection-package
-           :connection-debug-level
            :connection-pid
            :connection-implementation-name
            :connection-implementation-version
@@ -20,7 +19,9 @@
            :connection-swank-version)
   ;; Functions and methods
   (:export :connect
-           :debuggerp)
+           :debuggerp
+           :debugger-in
+           :debugger-out)
   (:local-nicknames (:swank-protocol :lem-slime.swank-protocol))
   (:documentation "A high-level Swank client."))
 (in-package :lem-slime.lime)
@@ -108,3 +109,9 @@ create a REPL."
 (defun debuggerp (connection)
   "T if the connection is in the debugger, NIL otherwise."
   (> (connection-debug-level connection) 0))
+
+(defun debugger-in (connection)
+  (incf (connection-debug-level connection)))
+
+(defun debugger-out (connection)
+  (decf (connection-debug-level connection)))

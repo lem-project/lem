@@ -12,7 +12,6 @@
   ;; Accessors
   (:export :connection-package
            :connection-debug-level
-           :connection-reader-waiting-p
            :connection-pid
            :connection-implementation-name
            :connection-implementation-version
@@ -21,7 +20,6 @@
            :connection-swank-version)
   ;; Functions and methods
   (:export :connect
-           :pull-all-events
            :debuggerp)
   (:local-nicknames (:swank-protocol :lem-slime.swank-protocol))
   (:documentation "A high-level Swank client."))
@@ -34,11 +32,6 @@
                 :initform 0
                 :type integer
                 :documentation "The depth at which the debugger is called.")
-   (reader-waiting :accessor connection-reader-waiting-p
-                   :initform nil
-                   :type boolean
-                   :documentation "Whether or not the server is waiting for
- input on standard input.")
    (pid :accessor connection-pid
         :type integer
         :documentation "The PID of the Swank server process.")
@@ -61,27 +54,6 @@
                   :documentation "The server's Swank version.")
    (info :accessor connection-info))
   (:documentation "A connection to a Swank server."))
-
-;;; Parsing messages into events
-
-(defun parse-event (connection message)
-  "Parse a swank-protocol message S-expression into a an instance of a subclass
-of event, or return NIL."
-  (alexandria:destructuring-case message
-    ;; Debugger
-    ((:debug-activate &rest rest)
-     ;; Entered the debugger
-     (declare (ignore rest))
-     (incf (connection-debug-level connection)))
-    ((:debug-return &rest rest)
-     ;; Left the debugger
-     (declare (ignore rest))
-     (decf (connection-debug-level connection)))
-    ;; Standard input reading
-    ((:read-string &rest rest)
-     (declare (ignore rest))
-     (setf (connection-reader-waiting-p connection) t)))
-  message)
 
 ;;; Functions and methods
 
@@ -132,13 +104,6 @@ create a REPL."
   (swank-protocol:read-message connection)
   ;; Read all the other messages, dumping them
   (swank-protocol:read-all-messages connection))
-
-(defun pull-all-events (connection)
-  "Return a list of all events from the connection."
-  (let ((messages (swank-protocol:read-all-messages connection)))
-    (remove-if #'null
-               (loop for message in messages collecting
-                 (parse-event connection message)))))
 
 (defun debuggerp (connection)
   "T if the connection is in the debugger, NIL otherwise."

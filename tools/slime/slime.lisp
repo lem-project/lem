@@ -795,7 +795,7 @@
         (princ '*** stream)
         (terpri stream))
       (princ string stream))
-    (pop-to-buffer buffer)))
+    (info-popup buffer nil nil)))
 
 (defun refresh-output-buffer ()
   (setq *fresh-output-buffer-p* t))

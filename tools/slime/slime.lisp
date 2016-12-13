@@ -786,7 +786,8 @@
       (fresh-line stream)
       (terpri stream)
       (princ '*** stream)
-      (terpri stream))))
+      (terpri stream))
+    (princ string stream)))
 
 (defun refresh-output-buffer ()
   (setq *fresh-output-buffer-p* t))

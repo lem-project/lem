@@ -116,7 +116,8 @@
                        (grep-index *current-grep*))))
     (funcall (grep-content content))))
 
-(define-key *global-keymap* (kbd "M-n") 'grep-next)
+(define-key *global-keymap* (kbd "C-x n") 'grep-next)
+(define-key *global-keymap* (kbd "C-x C-n") 'grep-next)
 (define-command grep-next () ()
   (when *current-grep*
     (when (< (1+ (grep-index *current-grep*))
@@ -124,7 +125,8 @@
       (incf (grep-index *current-grep*))
       (grep-jump-current-content))))
 
-(define-key *global-keymap* (kbd "M-p") 'grep-prev)
+(define-key *global-keymap* (kbd "C-x p") 'grep-prev)
+(define-key *global-keymap* (kbd "C-x C-p") 'grep-prev)
 (define-command grep-prev () ()
   (when *current-grep*
     (when (<= 0 (1- (grep-index *current-grep*)))

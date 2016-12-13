@@ -13,6 +13,7 @@
                :uiop)
   :serial t
   :components ((:file "clhs")
+               (:file "errors")
                (:file "swank-protocol")
                (:file "lime")
                (:file "slime")

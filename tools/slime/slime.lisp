@@ -1,6 +1,8 @@
 (in-package :cl-user)
 (defpackage :lem-slime
   (:use :cl :lem)
+  (:import-from :lem-slime.errors
+                :disconnected)
   (:local-nicknames
    (:lime :lem-slime.lime)
    (:swank-protocol :lem-slime.swank-protocol)))
@@ -822,7 +824,7 @@
              (not (null *connection*)))
     (let (messages)
       (handler-case (setq messages (lime:pull-all-events *connection*))
-        (swank-protocol:disconnected
+        (disconnected
          (c)
          (declare (ignore c))
          (stop-eval-timer)
@@ -861,7 +863,7 @@
                   ;; ((:emacs-return-string thread tag string)
                   ;;  )
                   ;; ((:new-features features)
-                  ;;  )
+                  ;; )
                   ((:indentation-update info)
                    (indentation-update info))
                   ;; ((:eval-no-wait form)

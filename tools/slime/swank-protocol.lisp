@@ -1,6 +1,8 @@
 (in-package :cl-user)
 (defpackage lem-slime.swank-protocol
   (:use :cl)
+  (:import-from :lem-slime.errors
+                :disconnected)
   (:export :disconnected)
   (:export :connection
            :make-connection
@@ -27,9 +29,6 @@
            :read-all-messages)
   (:documentation "Low-level implementation of a client for the Swank protocol."))
 (in-package :lem-slime.swank-protocol)
-
-(define-condition disconnected (simple-condition)
-  ())
 
 ;;; Prevent reader errors
 

@@ -52,8 +52,9 @@
 
 (defun update (grep)
   (setf (grep-index grep) -1)
-  (display-buffer (set-buffer-mode (get-buffer-create (grep-buffer-name grep))
-                                   'grep-mode t))
+  (unless (grep-firstp grep)
+    (display-buffer (set-buffer-mode (get-buffer-create (grep-buffer-name grep))
+                                     'grep-mode t)))
   (setf *current-grep* grep))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -95,6 +96,10 @@
                                                   (end-of-line-point)
                                                   jump-fun)
                               (insert-newline 1))))))
+    (when (grep-firstp grep)
+      (let ((buffer (get-buffer (grep-buffer-name grep))))
+        (buffer-erase buffer))
+      (message "grep did not match"))
     (update grep)))
 
 (define-command grep (string) ((list (minibuf-read-string ": " "grep -nH ")))

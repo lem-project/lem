@@ -750,7 +750,8 @@
       (lisp-read-symbol "Describe: " 'mh-describe)
     (unless error-p
       (with-pop-up-typeout-window (out (change-buffer-mode (get-buffer-create "*describe*")
-                                                           'lisp-mode))
+                                                           'lisp-mode)
+                                       :erase t)
         (describe name out)))))
 
 (define-key *lisp-mode-keymap* (kbd "C-c M-d") 'lisp-disassemble-symbol)

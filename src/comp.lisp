@@ -116,7 +116,7 @@
 (define-key *completion-mode-keymap* (kbd "M-p") 'completion-previous-line)
 (define-command completion-previous-line (n) ("p")
   (with-current-window *completion-window*
-    (if (first-line-p)
+    (if (first-line-p (current-marker))
         (end-of-buffer)
         (forward-line (- n)))
     (completion-update-overlay)))

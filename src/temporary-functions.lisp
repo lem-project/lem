@@ -21,13 +21,6 @@
                             (marker-linum marker)))
   marker)
 
-(defun first-line-p/marker (marker)
-  (<= (marker-linum marker) 1))
-
-(defun last-line-p/marker (marker)
-  (<= (buffer-nlines (marker-buffer marker))
-      (marker-linum marker)))
-
 (defun eobp/marker (marker)
   (marker= marker
            (buffer-end (marker-buffer marker))))
@@ -36,11 +29,11 @@
   (line-start marker)
   (if (plusp n)
       (dotimes (_ n (values marker t))
-        (when (last-line-p/marker marker)
+        (when (last-line-p marker)
           (return (values (line-end marker) nil)))
         (incf (marker-linum marker)))
       (dotimes (_ (- n) (values marker t))
-        (when (first-line-p/marker marker)
+        (when (first-line-p marker)
           (return (values marker nil)))
         (decf (marker-linum marker)))))
 
@@ -66,7 +59,7 @@
       (decf (marker-charpos marker) n)
       (return (values marker t)))
     (decf n (1+ (marker-charpos marker)))
-    (cond ((first-line-p/marker marker)
+    (cond ((first-line-p marker)
            (return (values (line-start marker) nil)))
           (t
            (line-offset marker -1)

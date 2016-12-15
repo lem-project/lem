@@ -46,12 +46,12 @@
           point-to-offset
           shift-point))
 
-(defun first-line-p ()
-  (<= (current-linum) 1))
+(defun first-line-p (marker)
+  (<= (marker-linum marker) 1))
 
-(defun last-line-p ()
-  (<= (buffer-nlines (current-buffer))
-      (current-linum)))
+(defun last-line-p (marker)
+  (<= (buffer-nlines (marker-buffer marker))
+      (marker-linum marker)))
 
 (defun bolp ()
   (zerop (current-charpos)))
@@ -63,10 +63,10 @@
       (current-linum))))
 
 (defun bobp ()
-  (and (first-line-p) (bolp)))
+  (and (first-line-p (current-marker)) (bolp)))
 
 (defun eobp ()
-  (and (last-line-p) (eolp)))
+  (and (last-line-p (current-marker)) (eolp)))
 
 (defun insert-char (c &optional (n 1))
   (dotimes (_ n t)
@@ -137,12 +137,12 @@
   (beginning-of-line)
   (if (plusp n)
       (dotimes (_ n t)
-        (when (last-line-p)
+        (when (last-line-p (current-marker))
           (end-of-line)
           (return))
         (incf (current-linum)))
       (dotimes (_ (- n) t)
-        (when (first-line-p)
+        (when (first-line-p (current-marker))
           (return))
         (decf (current-linum)))))
 
@@ -167,7 +167,7 @@
       (set-charpos (- (current-charpos) n))
       (return t))
     (decf n (1+ (current-charpos)))
-    (cond ((first-line-p)
+    (cond ((first-line-p (current-marker))
            (beginning-of-line)
            (return nil))
           (t
@@ -252,7 +252,7 @@
 
 (defun blank-line-p ()
   (let ((string (current-line-string))
-        (eof-p (last-line-p)))
+        (eof-p (last-line-p (current-marker))))
     (when (string= "" (string-trim '(#\space #\tab) string))
       (+ (length string)
          (if eof-p 0 1)))))

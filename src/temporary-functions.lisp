@@ -76,3 +76,7 @@
   (if (plusp n)
       (%character-offset-positive marker n)
       (%character-offset-negative marker (- n))))
+
+(defun points-to-string (start-marker end-marker)
+  (region-string (marker-point start-marker)
+                 (marker-point end-marker)))

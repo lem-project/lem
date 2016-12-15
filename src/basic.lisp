@@ -108,6 +108,11 @@
       (%character-offset-positive marker n)
       (%character-offset-negative marker (- n))))
 
+(defun character-at (marker)
+  (buffer-get-char (marker-buffer marker)
+                   (marker-linum marker)
+                   (marker-charpos marker)))
+
 (defun bolp ()
   (start-line-p (current-marker)))
 
@@ -221,9 +226,7 @@
                       (current-linum)))
 
 (defun following-char ()
-  (buffer-get-char (current-buffer)
-                   (current-linum)
-                   (current-charpos)))
+  (character-at (current-marker)))
 
 (defun preceding-char ()
   (cond

@@ -53,6 +53,14 @@
   (<= (buffer-nlines (marker-buffer marker))
       (marker-linum marker)))
 
+(defun start-line-p (marker)
+  (zerop (marker-charpos marker)))
+
+(defun end-line-p (marker)
+  (= (marker-charpos marker)
+     (buffer-line-length (marker-buffer)
+                         (marekr-linum marker))))
+
 (defun line-start (marker)
   (setf (marker-charpos marker) 0)
   marker)
@@ -63,14 +71,15 @@
                             (marker-linum marker)))
   marker)
 
+(defun move-point (marker new-marker)
+  (setf (marker-point marker)
+        (marker-point new-marker)))
+
 (defun bolp ()
-  (zerop (current-charpos)))
+  (start-line-p (current-marker)))
 
 (defun eolp ()
-  (= (current-charpos)
-     (buffer-line-length
-      (current-buffer)
-      (current-linum))))
+  (end-line-p (current-marker)))
 
 (defun bobp ()
   (and (first-line-p (current-marker)) (bolp)))

@@ -67,7 +67,7 @@
 
 (defun copy-marker (marker &optional kind)
   (make-marker (marker-buffer marker)
-               (marker-point marker)
+               (copy-list (marker-point marker))
                :kind (or kind (marker-kind marker))
                :name (marker-name marker)))
 

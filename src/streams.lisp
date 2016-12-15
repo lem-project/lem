@@ -54,8 +54,12 @@
   (not (eobp/marker (buffer-stream-marker stream))))
 
 (defmethod trivial-gray-streams:stream-read-line ((stream buffer-input-stream))
-  (points-to-string (copy-marker (buffer-stream-marker stream) :temporary)
-                    (line-end (buffer-stream-marker stream))))
+  (let ((start (copy-marker (buffer-stream-marker stream) :temporary)))
+    (let ((string (points-to-string
+                   start
+                   (line-end (buffer-stream-marker stream)))))
+      (values string
+              (not (nth-value 1 (line-offset (buffer-stream-marker stream) 1)))))))
 
 (defmethod trivial-gray-streams:stream-clear-input ((stream buffer-input-stream))
   nil)

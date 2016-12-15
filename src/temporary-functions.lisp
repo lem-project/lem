@@ -27,39 +27,6 @@
           (return (values marker nil)))
         (decf (marker-linum marker)))))
 
-(defun %character-offset-positive (marker n)
-  (loop
-    (when (minusp n)
-      (return (values marker nil)))
-    (let* ((length (1+ (buffer-line-length (marker-buffer marker)
-                                           (marker-linum marker))))
-           (w (- length (marker-charpos marker))))
-      (when (< n w)
-        (incf (marker-charpos marker) n)
-        (return (values marker t)))
-      (decf n w)
-      (unless (nth-value 1 (line-offset marker 1))
-        (return (values marker nil))))))
-
-(defun %character-offset-negative (marker n)
-  (loop
-    (when (minusp n)
-      (return (values marker nil)))
-    (when (<= n (marker-charpos marker))
-      (decf (marker-charpos marker) n)
-      (return (values marker t)))
-    (decf n (1+ (marker-charpos marker)))
-    (cond ((first-line-p marker)
-           (return (values (line-start marker) nil)))
-          (t
-           (line-offset marker -1)
-           (line-end marker)))))
-
-(defun character-offset (marker n)
-  (if (plusp n)
-      (%character-offset-positive marker n)
-      (%character-offset-negative marker (- n))))
-
 (defun points-to-string (start-marker end-marker)
   (region-string (marker-point start-marker)
                  (marker-point end-marker)))

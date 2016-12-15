@@ -58,8 +58,8 @@
 
 (defun end-line-p (marker)
   (= (marker-charpos marker)
-     (buffer-line-length (marker-buffer)
-                         (marekr-linum marker))))
+     (buffer-line-length (marker-buffer marker)
+                         (marker-linum marker))))
 
 (defun line-start (marker)
   (setf (marker-charpos marker) 0)
@@ -74,6 +74,39 @@
 (defun move-point (marker new-marker)
   (setf (marker-point marker)
         (marker-point new-marker)))
+
+(defun %character-offset-positive (marker n)
+  (loop
+    (when (minusp n)
+      (return (values marker nil)))
+    (let* ((length (1+ (buffer-line-length (marker-buffer marker)
+                                           (marker-linum marker))))
+           (w (- length (marker-charpos marker))))
+      (when (< n w)
+        (incf (marker-charpos marker) n)
+        (return (values marker t)))
+      (decf n w)
+      (unless (nth-value 1 (line-offset marker 1))
+        (return (values marker nil))))))
+
+(defun %character-offset-negative (marker n)
+  (loop
+    (when (minusp n)
+      (return (values marker nil)))
+    (when (<= n (marker-charpos marker))
+      (decf (marker-charpos marker) n)
+      (return (values marker t)))
+    (decf n (1+ (marker-charpos marker)))
+    (cond ((first-line-p marker)
+           (return (values (line-start marker) nil)))
+          (t
+           (line-offset marker -1)
+           (line-end marker)))))
+
+(defun character-offset (marker n)
+  (if (plusp n)
+      (%character-offset-positive marker n)
+      (%character-offset-negative marker (- n))))
 
 (defun bolp ()
   (start-line-p (current-marker)))
@@ -163,40 +196,8 @@
           (return))
         (decf (current-linum)))))
 
-(defun %shift-position-positive (n)
-  (loop
-    (when (< n 0)
-      (return nil))
-    (let* ((length (1+ (buffer-line-length (current-buffer) (current-linum))))
-           (w (- length (current-charpos))))
-      (when (< n w)
-        (set-charpos (+ n (current-charpos)))
-        (return t))
-      (decf n w)
-      (unless (forward-line 1)
-        (return nil)))))
-
-(defun %shift-position-negative (n)
-  (loop
-    (when (< n 0)
-      (return nil))
-    (when (<= n (current-charpos))
-      (set-charpos (- (current-charpos) n))
-      (return t))
-    (decf n (1+ (current-charpos)))
-    (cond ((first-line-p (current-marker))
-           (beginning-of-line)
-           (return nil))
-          (t
-           (forward-line -1)
-           (end-of-line)))))
-
 (defun shift-position (n)
-  (cond ((< 0 n)
-         (%shift-position-positive n))
-        (t
-         (setf n (- n))
-         (%shift-position-negative n))))
+  (nth-value 1 (character-offset (current-marker) n)))
 
 (defun check-marked ()
   (unless (buffer-mark-marker (current-buffer))

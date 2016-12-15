@@ -11,16 +11,6 @@
                    (marker-linum marker)
                    (marker-charpos marker)))
 
-(defun line-start (marker)
-  (setf (marker-charpos marker) 0)
-  marker)
-
-(defun line-end (marker)
-  (setf (marker-charpos marker)
-        (buffer-line-length (marker-buffer marker)
-                            (marker-linum marker)))
-  marker)
-
 (defun eobp/marker (marker)
   (marker= marker
            (buffer-end (marker-buffer marker))))

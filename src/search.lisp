@@ -43,10 +43,8 @@
   (let ((length (1+ (count #\newline str))))
     (flet ((take-string ()
                         (let ((string
-                               (join (string #\newline)
-                                     (buffer-take-lines (current-buffer)
-                                                        (current-linum)
-                                                        length))))
+                               (region-string (beginning-of-line-point)
+                                              (end-of-line-point (+ length (current-linum) -1)))))
                           (unless *case-fold-search*
                             (setq string (string-downcase string)))
                           string)))
@@ -74,18 +72,12 @@
     (flet ((%search (&optional end)
                     (let ((linum (- (current-linum) (1- length))))
                       (when (< 0 linum)
-                        (let* ((lines
-                                (buffer-take-lines (current-buffer)
-                                                   linum
-                                                   length))
-                               (string
-                                (join (string #\newline)
-                                      (if (and (< 1 linum) end)
-                                          (append (butlast lines)
-                                                  (list
-                                                   (subseq (car (last lines))
-                                                           0 end)))
-                                          lines))))
+                        (let* ((string
+                                (if (and (< 1 linum) end)
+                                    (region-string (beginning-of-line-point linum)
+                                                   (make-point (+ linum length -1) end))
+                                    (region-string (beginning-of-line-point linum)
+                                                   (end-of-line-point (+ linum length -1))))))
                           (search str
                                   (if *case-fold-search*
                                       string

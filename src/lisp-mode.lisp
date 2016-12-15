@@ -274,19 +274,20 @@
     (syntax-add-match table
                       (make-syntax-test "#[+-]" :regex-p t)
                       :move-action (lambda ()
-                                     (let ((positivep (eql #\+ (char-after 1))))
-                                       (shift-position 2)
-                                       (let ((prev-point (current-point)))
-                                         (when (forward-sexp 1 t)
-                                           (cond ((featurep (read-from-string
-                                                             (region-string prev-point
-                                                                            (current-point)))
-                                                            positivep)
-                                                  (setf (current-point) prev-point)
-                                                  nil)
-                                                 (t
-                                                  (forward-sexp 1 t)
-                                                  (current-point)))))))
+                                     (ignore-errors
+                                      (let ((positivep (eql #\+ (char-after 1))))
+                                        (shift-position 2)
+                                        (let ((prev-point (current-point)))
+                                          (when (forward-sexp 1 t)
+                                            (cond ((featurep (read-from-string
+                                                              (region-string prev-point
+                                                                             (current-point)))
+                                                             positivep)
+                                                   (setf (current-point) prev-point)
+                                                   nil)
+                                                  (t
+                                                   (forward-sexp 1 t)
+                                                   (current-point))))))))
                       :attribute *feature-attribute*)
 
     table))

@@ -80,7 +80,7 @@
 
 (defun marker-change-buffer (marker buffer &optional (point nil pointp))
   (delete-marker marker)
-  (unless (eq :tempoorary (marker-kind marker))
+  (unless (eq :temporary (marker-kind marker))
     (buffer-add-marker buffer marker))
   (setf (marker-buffer marker) buffer)
   (when pointp

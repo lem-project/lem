@@ -3,6 +3,7 @@
 (export '(markerp
           make-marker
           make-marker-current-point
+          copy-marker
           delete-marker
           marker-buffer
           marker-linum
@@ -56,6 +57,12 @@
                (current-point)
                :kind kind
                :name name))
+
+(defun copy-marker (marker &optional kind)
+  (make-marker (marker-buffer marker)
+               (marker-point marker)
+               :kind (or kind (marker-kind marker))
+               :name (marker-name marker)))
 
 (defun delete-marker (marker)
   (unless (eq :temporary (marker-kind marker))

@@ -484,15 +484,6 @@
     (when (line-p line)
       (line-str line))))
 
-(defun map-buffer (fn buffer &optional start-linum)
-  (do ((line (if start-linum
-                 (buffer-get-line buffer start-linum)
-                 (buffer-head-line buffer))
-             (line-next line))
-       (linum (or start-linum 1) (1+ linum)))
-      ((null line))
-    (funcall fn line linum)))
-
 (defun map-buffer-lines (fn buffer &optional start end)
   (let ((head-line
          (if start

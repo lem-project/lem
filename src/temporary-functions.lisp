@@ -1,5 +1,11 @@
 (in-package :lem)
 
+(defun buffer-end (buffer)
+  (make-marker buffer
+               (point-max buffer)
+               :kind :temporary))
+
+
 (defun character-at (marker)
   (buffer-get-char (marker-buffer marker)
                    (marker-linum marker)
@@ -21,6 +27,10 @@
 (defun last-line-p/marker (marker)
   (<= (buffer-nlines (marker-buffer marker))
       (marker-linum marker)))
+
+(defun eobp/marker (marker)
+  (marker= marker
+           (buffer-end (marker-buffer marker))))
 
 (defun line-offset (marker n)
   (line-start marker)

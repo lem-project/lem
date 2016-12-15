@@ -1,6 +1,8 @@
 (in-package :lem)
 
-(export '(buffer-output-stream
+(export '(buffer-input-stream
+          make-buffer-input-stream
+          buffer-output-stream
           make-buffer-output-stream
           buffer-output-stream-point
           minibuffer-input-stream
@@ -8,11 +10,58 @@
           editor-io-stream
           make-editor-io-stream))
 
-(defclass buffer-output-stream (trivial-gray-streams:fundamental-output-stream)
+(defclass buffer-stream (trivial-gray-streams:fundamental-stream)
   ((marker
     :initarg :marker
-    :accessor buffer-output-stream-marker)
-   (interactive-update-p
+    :accessor buffer-stream-marker)))
+
+(defclass buffer-input-stream (buffer-stream)
+  ((unread-char
+    :initform nil
+    :accessor buffer-input-stream-unread-char)))
+
+(defun make-buffer-input-stream (&optional (buffer (current-buffer)))
+  (make-instance 'buffer-input-stream
+                 :marker (make-marker buffer (make-min-point))))
+
+(defmethod trivial-gray-streams::close ((stream buffer-input-stream) &key abort)
+  (declare (ignore abort))
+  (delete-marker (buffer-stream-marker stream))
+  t)
+
+(defmethod trivial-gray-streams:stream-read-char ((stream buffer-input-stream))
+  (let ((character (buffer-input-stream-unread-char stream)))
+    (prog1 (cond (character
+                  (setf (buffer-input-stream-unread-char stream) nil)
+                  character)
+                 (t
+                  (character-at (buffer-stream-marker stream))))
+      (character-offset (buffer-stream-marker stream) 1))))
+
+(defmethod trivial-gray-streams:stream-unread-char ((stream buffer-input-stream) character)
+  (setf (buffer-input-stream-unread-char stream) character)
+  (character-offset (buffer-stream-marker stream) -1)
+  nil)
+
+#+nil
+(defmethod trivial-gray-streams:stream-read-char-no-hang ((stream buffer-input-stream))
+  )
+
+(defmethod trivial-gray-streams:stream-peek-char ((stream buffer-input-stream))
+  (character-at (buffer-stream-marker stream)))
+
+(defmethod trivial-gray-streams:stream-listen ((stream buffer-input-stream))
+  (not (eobp/marker (buffer-stream-marker stream))))
+
+(defmethod trivial-gray-streams:stream-read-line ((stream buffer-input-stream))
+  (points-to-string (copy-marker (buffer-stream-marker stream) :temporary)
+                    (line-end (buffer-stream-marker stream))))
+
+(defmethod trivial-gray-streams:stream-clear-input ((stream buffer-input-stream))
+  nil)
+
+(defclass buffer-output-stream (buffer-stream)
+  ((interactive-update-p
     :initarg :interactive-update-p
     :accessor buffer-output-stream-interactive-update-p)))
 
@@ -32,22 +81,22 @@
 
 (defmethod trivial-gray-streams::close ((stream buffer-output-stream) &key abort)
   (declare (ignore abort))
-  (delete-marker (buffer-output-stream-marker stream))
+  (delete-marker (buffer-stream-marker stream))
   t)
 
 (defun buffer-output-stream-point (stream)
-  (marker-point (buffer-output-stream-marker stream)))
+  (marker-point (buffer-stream-marker stream)))
 
 (defmethod stream-element-type ((stream buffer-output-stream))
   'line)
 
 (defmethod trivial-gray-streams:stream-line-column ((stream buffer-output-stream))
-  (marker-charpos (buffer-output-stream-marker stream)))
+  (marker-charpos (buffer-stream-marker stream)))
 
 (defun buffer-output-stream-refresh (stream)
   (when (buffer-output-stream-interactive-update-p stream)
-    (let ((buffer (marker-buffer (buffer-output-stream-marker stream)))
-          (point (marker-point (buffer-output-stream-marker stream))))
+    (let ((buffer (marker-buffer (buffer-stream-marker stream)))
+          (point (marker-point (buffer-stream-marker stream))))
       (display-buffer buffer)
       (dolist (window (get-buffer-windows buffer))
         (point-set point (window-buffer window)))
@@ -55,7 +104,7 @@
   nil)
 
 (defmethod trivial-gray-streams:stream-fresh-line ((stream buffer-output-stream))
-  (unless (zerop (marker-charpos (buffer-output-stream-marker stream)))
+  (unless (zerop (marker-charpos (buffer-stream-marker stream)))
     (trivial-gray-streams:stream-terpri stream)))
 
 (defmethod trivial-gray-streams:stream-write-byte ((stream buffer-output-stream) byte)
@@ -63,11 +112,11 @@
 
 (defmethod trivial-gray-streams:stream-write-char ((stream buffer-output-stream) char)
   (prog1 char
-    (insert-char/marker (buffer-output-stream-marker stream)
+    (insert-char/marker (buffer-stream-marker stream)
                         char)))
 
 (defun %write-string-to-buffer-stream (stream string start end &key)
-  (insert-string/marker (buffer-output-stream-marker stream)
+  (insert-string/marker (buffer-stream-marker stream)
                         (subseq string start end))
   string)
 
@@ -93,7 +142,7 @@
   (%write-string-to-buffer-stream stream string start end))
 
 (defmethod trivial-gray-streams:stream-terpri ((stream buffer-output-stream))
-  (prog1 (insert-char/marker (buffer-output-stream-marker stream)
+  (prog1 (insert-char/marker (buffer-stream-marker stream)
                              #\newline)
     (buffer-output-stream-refresh stream)))
 
@@ -103,7 +152,7 @@
 (defmethod trivial-gray-streams:stream-force-output ((stream buffer-output-stream))
   (buffer-output-stream-refresh stream))
 
-#-(and)
+#+nil
 (defmethod trivial-gray-streams:clear-output ((stream buffer-output-stream))
   )
 

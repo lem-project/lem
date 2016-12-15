@@ -9,7 +9,14 @@
           marker-linum
           marker-charpos
           marker-point
-          marker-kind))
+          marker-kind
+
+          marker=
+          marker/=
+          marker<
+          marker<=
+          marker>
+          marker>=))
 
 (defclass marker ()
   ((buffer
@@ -86,3 +93,30 @@
   (when pointp
     (setf (marker-point marker) point))
   t)
+
+
+;;; 同じバッファ同士かの比較は保留
+
+(defun marker= (marker1 marker2)
+  (point= (marker-point marker1)
+          (marker-point marker2)))
+
+(defun marker/= (marker1 marker2)
+  (not (point= (marker-point marker1)
+               (marker-point marker2))))
+
+(defun marker< (marker1 marker2)
+  (point< (marker-point marker1)
+          (marker-point marker2)))
+
+(defun marker<= (marker1 marker2)
+  (point<= (marker-point marker1)
+           (marker-point marker2)))
+
+(defun marker> (marker1 marker2)
+  (point> (marker-point marker1)
+          (marker-point marker2)))
+
+(defun marker>= (marker1 marker2)
+  (point>= (marker-point marker1)
+           (marker-point marker2)))

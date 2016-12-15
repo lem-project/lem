@@ -124,39 +124,42 @@
 
 (defun write-to-file (buffer filename)
   (flet ((f (out end-of-line)
-            (map-buffer-lines #'(lambda (line eof-p linum)
-                                  (declare (ignore linum))
-                                  (princ line out)
-                                  (unless eof-p
-                                    #+sbcl
-                                    (ecase end-of-line
-                                      ((:crlf)
-                                       (princ #\return out)
-                                       (princ #\newline out))
-                                      ((:lf)
-                                       (princ #\newline out))
-                                      ((:cr)
-                                       (princ #\return out)))
-                                    #-sbcl
-                                    (princ #\newline out)))
-                              buffer)))
+           (with-open-stream (in (make-buffer-input-stream buffer))
+             (loop
+               (multiple-value-bind (str eof-p)
+                   (read-line in nil)
+                 (unless str (return))
+                 (princ str out)
+                 (unless eof-p
+                   #+sbcl
+                   (ecase end-of-line
+                     ((:crlf)
+                      (princ #\return out)
+                      (princ #\newline out))
+                     ((:lf)
+                      (princ #\newline out))
+                     ((:cr)
+                      (princ #\return out)))
+                   #-sbcl
+                   (princ #\newline out)
+                   ))))))
     (cond
-     ((buffer-external-format buffer)
-      (with-open-file (out filename
-                           :direction :output
-                           :if-exists :supersede
-                           :if-does-not-exist :create
-                           :external-format (car (buffer-external-format
-                                                  buffer)))
-        (f out
-           (cdr (buffer-external-format
-                 buffer)))))
-     (t
-      (with-open-file (out filename
-                           :direction :output
-                           :if-exists :supersede
-                           :if-does-not-exist :create)
-        (f out :lf)))))
+      ((buffer-external-format buffer)
+       (with-open-file (out filename
+                            :direction :output
+                            :if-exists :supersede
+                            :if-does-not-exist :create
+                            :external-format (car (buffer-external-format
+                                                   buffer)))
+         (f out
+            (cdr (buffer-external-format
+                  buffer)))))
+      (t
+       (with-open-file (out filename
+                            :direction :output
+                            :if-exists :supersede
+                            :if-does-not-exist :create)
+         (f out :lf)))))
   (buffer-unmark buffer)
   (update-changed-disk-date buffer))
 

@@ -52,6 +52,7 @@
                              (:file "streams")
                              (:file "kill")
                              (:file "region")
+                             (:file "temporary-functions")
                              (:file "basic")
                              (:file "file")
                              (:file "search")

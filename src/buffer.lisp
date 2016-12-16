@@ -482,36 +482,6 @@
     (when (line-p line)
       (line-str line))))
 
-(defun map-buffer-lines (fn buffer &optional start end)
-  (let ((head-line
-         (if start
-             (buffer-get-line buffer start)
-             (buffer-head-line buffer))))
-    (unless end
-      (setq end (buffer-nlines buffer)))
-    (do ((line head-line (line-next line))
-         (i (or start 1) (1+ i)))
-        ((or (null line) (< end i)))
-      (funcall fn
-               (line-str line)
-               (not (line-next line))
-               i))))
-
-(defun buffer-take-lines (buffer &optional linum len)
-  (unless linum
-    (setq linum 1))
-  (unless len
-    (setq len (buffer-nlines buffer)))
-  (let ((strings))
-    (map-buffer-lines
-     #'(lambda (str eof-p linum)
-         (declare (ignore eof-p linum))
-         (push str strings))
-     buffer
-     linum
-     (+ linum len -1))
-    (nreverse strings)))
-
 (defun buffer-update-mark-overlay (buffer)
   (when (buffer-mark-p buffer)
     (let (start

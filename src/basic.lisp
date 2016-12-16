@@ -35,8 +35,6 @@
           remove-property
           put-attribute
           insert-string-with-attribute
-          after-property
-          before-property
           following-property
           preceding-property
           forward-search-property-end
@@ -167,6 +165,32 @@
       (when killp
         (kill-push string))
       t)))
+
+(defun text-property-at (marker key &optional (offset 0))
+  (if (zerop offset)
+      (buffer-get-property (marker-buffer marker)
+                           (marker-point marker)
+                           key)
+      (with-marker ((temp-marker marker))
+        (when (nth-value 1 (character-offset temp-marker offset))
+          (text-property-at marker key 0)))))
+
+(defun put-text-property (start-marker end-marker key value)
+  (assert (eq (marker-buffer start-marker)
+              (marker-buffer end-marker)))
+  (buffer-put-property (marker-buffer start-marker)
+                       (marker-point start-marker)
+                       (marker-point end-marker)
+                       key
+                       value))
+
+(defun remove-text-property (start-marker end-marker key)
+  (assert (eq (marker-buffer start-marker)
+              (marker-buffer end-marker)))
+  (buffer-remove-property (marker-buffer start-marker)
+                          (marker-point start-marker)
+                          (marker-point end-marker)
+                          key))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -356,16 +380,6 @@
   (let ((start (current-point)))
     (insert-string string)
     (put-attribute start (current-point) attribute)))
-
-(defun after-property (property-name &optional (n 1))
-  (save-excursion
-    (shift-position n)
-    (%syntax-pos-property (current-charpos) property-name)))
-
-(defun before-property (property-name &optional (n 1))
-  (save-excursion
-    (shift-position (- (1- n)))
-    (%syntax-pos-property (current-charpos) property-name)))
 
 (defun following-property (property-name)
   (%syntax-pos-property (current-charpos) property-name))

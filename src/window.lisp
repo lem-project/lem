@@ -431,13 +431,12 @@
     (labels ((inc (arg)
                (declare (ignore arg))
                (incf offset)))
-      (mapc (lambda (string)
-              (map-wrapping-line string
-                                 (window-%width window)
-                                 #'inc))
-            (split-string (points-to-string (window-view-marker window)
-                                            (window-point-marker window))
-                          #\newline))
+      (map-region (window-view-marker window)
+                  (window-point-marker window)
+                  (lambda (string)
+                    (map-wrapping-line string
+                                       (window-%width window)
+                                       #'inc)))
       offset)))
 
 (defun window-cursor-y-not-wrapping (window)

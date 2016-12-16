@@ -28,3 +28,18 @@
   (region-string (marker-point start-marker)
                  (marker-point end-marker)
                  (marker-buffer start-marker)))
+
+(defun map-region (start-marker end-marker function)
+  (let ((start-line (buffer-get-line (marker-buffer start-marker)
+                                    (marker-linum start-marker))))
+    (loop :for line := start-line :then (line-next line)
+          :for linum :from (marker-linum start-marker) :to (marker-linum end-marker)
+          :do (funcall function
+                       (subseq (line-str line)
+                               (if (eq line start-line)
+                                   (marker-charpos start-marker)
+                                   0)
+                               (if (= linum (marker-linum end-marker))
+                                   (marker-charpos end-marker)
+                                   nil)))))
+  (values))

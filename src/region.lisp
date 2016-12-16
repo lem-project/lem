@@ -36,7 +36,7 @@
                 (make-marker buffer end :kind :temporary)
                 (lambda (string lastp)
                   (incf count (length string))
-                  (when lastp
+                  (unless lastp
                     (incf count))))
     count))
 

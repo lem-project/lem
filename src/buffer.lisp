@@ -22,8 +22,6 @@
           buffer-get-char
           buffer-line-string-with-attributes
           buffer-line-string
-          map-buffer-lines
-          buffer-take-lines
           buffer-erase
           buffer-rename
           buffer-directory

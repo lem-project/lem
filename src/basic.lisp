@@ -61,6 +61,14 @@
      (buffer-line-length (marker-buffer marker)
                          (marker-linum marker))))
 
+(defun start-buffer-p (marker)
+  (and (first-line-p marker)
+       (start-line-p marker)))
+
+(defun end-buffer-p (marker)
+  (and (last-line-p marker)
+       (end-line-p marker)))
+
 (defun line-start (marker)
   (setf (marker-charpos marker) 0)
   marker)
@@ -126,10 +134,10 @@
   (end-line-p (current-marker)))
 
 (defun bobp ()
-  (and (first-line-p (current-marker)) (bolp)))
+  (start-buffer-p (current-marker)))
 
 (defun eobp ()
-  (and (last-line-p (current-marker)) (eolp)))
+  (end-buffer-p (current-marker)))
 
 (defun insert-char (c &optional (n 1))
   (dotimes (_ n t)

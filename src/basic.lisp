@@ -128,10 +128,17 @@
       (%character-offset-positive marker n)
       (%character-offset-negative marker (- n))))
 
-(defun character-at (marker)
-  (buffer-get-char (marker-buffer marker)
-                   (marker-linum marker)
-                   (marker-charpos marker)))
+(defun character-at (marker &optional (offset 0))
+  (if (zerop offset)
+      (buffer-get-char (marker-buffer marker)
+                       (marker-linum marker)
+                       (marker-charpos marker))
+      (with-marker ((temp-marker marker))
+        (when (nth-value 1 (character-offset temp-marker offset))
+          (character-at temp-marker 0)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (defun bolp ()
   (start-line-p (current-marker)))

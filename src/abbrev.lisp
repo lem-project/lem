@@ -29,16 +29,14 @@
 
 (defun scan-buffer-words (buffer word)
   (let ((words))
-    (map-buffer-lines
-     #'(lambda (str eof-p linum)
-         (declare (ignore eof-p linum))
-         (dolist (w (remove-if-not #'(lambda (tok)
-                                       (and (string/= word tok)
-                                            (eql 0 (search word tok))))
-                                   (scan-line-words str)))
-           (push w words)))
-     buffer
-     1)
+    (with-open-stream (in (make-buffer-input-stream buffer))
+      (loop :for str := (lem::pdebug (read-line in nil))
+            :while str
+            :do (dolist (w (remove-if-not #'(lambda (tok)
+                                              (and (string/= word tok)
+                                                   (eql 0 (search word tok))))
+                                          (scan-line-words str)))
+                  (push w words))))
     (nreverse words)))
 
 (defun scan-all-buffer-words (word)

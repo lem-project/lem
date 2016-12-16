@@ -95,6 +95,18 @@
   (= (marker-linum marker1)
      (marker-linum marker2)))
 
+(defun line-offset (marker n)
+  (line-start marker)
+  (if (plusp n)
+      (dotimes (_ n (values marker t))
+        (when (last-line-p marker)
+          (return (values (line-end marker) nil)))
+        (incf (marker-linum marker)))
+      (dotimes (_ (- n) (values marker t))
+        (when (first-line-p marker)
+          (return (values marker nil)))
+        (decf (marker-linum marker)))))
+
 (defun %character-offset-positive (marker n)
   (loop
     (when (minusp n)
@@ -137,6 +149,25 @@
         (when (nth-value 1 (character-offset temp-marker offset))
           (character-at temp-marker 0)))))
 
+(defun insert-char-at (marker char &optional (n 1))
+  (loop :repeat n :do (insert-char/marker marker char))
+  t)
+
+(defun insert-string-at (marker string)
+  (insert-string/marker marker string)
+  t)
+
+(defun delete-char-at (marker &optional (n 1) killp)
+  (when (minusp n)
+    (unless (nth-value 1 (character-offset marker n))
+      (return-from delete-char-at nil))
+    (setf n (- n)))
+  (unless (end-buffer-p marker)
+    (let ((string (delete-char/marker marker n)))
+      (when killp
+        (kill-push string))
+      t)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -153,34 +184,21 @@
   (end-buffer-p (current-marker)))
 
 (defun insert-char (c &optional (n 1))
-  (dotimes (_ n t)
-    (insert-char/marker (buffer-point-marker (current-buffer)) c)
-    (shift-position 1)))
-
-(defun insert-string (str)
-  (insert-string/marker (buffer-point-marker (current-buffer)) str)
-  (shift-position (length str)))
+  (insert-char-at (current-marker) c n)
+  (shift-position n)
+  t)
 
 (defun insert-newline (&optional (n 1))
-  (dotimes (_ n)
-    (insert-char/marker (buffer-point-marker (current-buffer))
-                        #\newline))
-  (forward-line n))
+  (insert-char-at (current-marker) #\newline n)
+  (forward-line n)
+  t)
+
+(defun insert-string (string)
+  (insert-string-at (current-marker) string)
+  (shift-position (length string)))
 
 (defun delete-char (n &optional killp)
-  (when (minusp n)
-    (setf n (- n))
-    (unless (shift-position (- n))
-      (return-from delete-char nil)))
-  (if (eobp)
-      nil
-      (let ((string (delete-char/marker
-                     (buffer-point-marker
-                      (current-buffer))
-                     n)))
-        (when killp
-          (kill-push string))
-        t)))
+  (delete-char-at (current-marker) n killp))
 
 (defun set-charpos (pos)
   (setf (current-charpos) pos))
@@ -216,17 +234,7 @@
   (shift-position position))
 
 (defun forward-line (&optional (n 1))
-  (beginning-of-line)
-  (if (plusp n)
-      (dotimes (_ n t)
-        (when (last-line-p (current-marker))
-          (end-of-line)
-          (return))
-        (incf (current-linum)))
-      (dotimes (_ (- n) t)
-        (when (first-line-p (current-marker))
-          (return))
-        (decf (current-linum)))))
+  (nth-value 1 (line-offset (current-marker) n)))
 
 (defun shift-position (n)
   (nth-value 1 (character-offset (current-marker) n)))

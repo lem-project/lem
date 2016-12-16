@@ -10,15 +10,13 @@
           editor-io-stream
           make-editor-io-stream))
 
-(defclass buffer-stream (trivial-gray-streams:fundamental-stream)
-  ((marker
-    :initarg :marker
-    :accessor buffer-stream-marker)))
-
-(defclass buffer-input-stream (buffer-stream)
+(defclass buffer-input-stream (trivial-gray-streams:fundamental-input-stream)
   ((unread-char
     :initform nil
-    :accessor buffer-input-stream-unread-char)))
+    :accessor buffer-input-stream-unread-char)
+   (marker
+    :initarg :marker
+    :accessor buffer-stream-marker)))
 
 (defun make-buffer-input-stream (&optional (marker (current-marker)))
   (make-instance 'buffer-input-stream
@@ -65,10 +63,13 @@
 (defmethod trivial-gray-streams:stream-clear-input ((stream buffer-input-stream))
   nil)
 
-(defclass buffer-output-stream (buffer-stream)
+(defclass buffer-output-stream (trivial-gray-streams:fundamental-output-stream)
   ((interactive-update-p
     :initarg :interactive-update-p
-    :accessor buffer-output-stream-interactive-update-p)))
+    :accessor buffer-output-stream-interactive-update-p)
+   (marker
+    :initarg :marker
+    :accessor buffer-stream-marker)))
 
 (defun make-buffer-stream-instance (class-name buffer
                                                &optional

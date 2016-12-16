@@ -124,7 +124,7 @@
 
 (defun write-to-file (buffer filename)
   (flet ((f (out end-of-line)
-           (with-open-stream (in (make-buffer-input-stream buffer))
+           (with-open-stream (in (make-buffer-input-stream (buffer-start buffer)))
              (loop
                (multiple-value-bind (str eof-p)
                    (read-line in nil)

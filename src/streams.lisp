@@ -20,10 +20,11 @@
     :initform nil
     :accessor buffer-input-stream-unread-char)))
 
-(defun make-buffer-input-stream (&optional (buffer (current-buffer)))
+(defun make-buffer-input-stream (&optional (marker (current-marker)))
   (make-instance 'buffer-input-stream
-                 :marker (make-marker buffer (make-min-point))))
+                 :marker (copy-marker marker :temporary)))
 
+#+nil
 (defmethod trivial-gray-streams::close ((stream buffer-input-stream) &key abort)
   (declare (ignore abort))
   (delete-marker (buffer-stream-marker stream))

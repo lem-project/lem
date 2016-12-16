@@ -84,7 +84,6 @@
                              (:file "lisp-mode")
                              (:file "c-mode")
                              (:file "python-mode")
-                             (:file "lua-mode")
                              (:file "go-mode")
                              (:file "dired")
                              (:file "abbrev")

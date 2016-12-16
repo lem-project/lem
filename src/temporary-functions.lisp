@@ -22,5 +22,8 @@
         (decf (marker-linum marker)))))
 
 (defun points-to-string (start-marker end-marker)
+  (assert (eq (marker-buffer start-marker)
+              (marker-buffer end-marker)))
   (region-string (marker-point start-marker)
-                 (marker-point end-marker)))
+                 (marker-point end-marker)
+                 (marker-buffer start-marker)))

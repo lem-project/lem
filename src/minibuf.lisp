@@ -209,7 +209,10 @@
          (lambda ()
            (with-current-window (minibuffer-window)
              (let ((minibuf-buffer-prev-string
-                    (join "" (buffer-take-lines (minibuffer))))
+                    (let ((buffer (minibuffer)))
+                      (region-string (point-min buffer)
+                                     (point-max buffer)
+                                     buffer)))
                    (minibuf-buffer-prev-point
                     (window-point (minibuffer-window)))
                    (*minibuf-read-line-depth*

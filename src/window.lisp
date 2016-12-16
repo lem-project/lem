@@ -433,7 +433,8 @@
                (incf offset)))
       (map-region (window-view-marker window)
                   (window-point-marker window)
-                  (lambda (string)
+                  (lambda (string lastp)
+                    (declare (ignore lastp))
                     (map-wrapping-line string
                                        (window-%width window)
                                        #'inc)))

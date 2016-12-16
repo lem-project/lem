@@ -72,8 +72,7 @@
     :type marker)
    (point-marker
     :initarg :point-marker
-    :reader window-point-marker
-    :writer set-window-point-marker
+    :reader %window-point-marker
     :type marker)
    (delete-hook
     :initform nil
@@ -123,15 +122,16 @@
   (screen-modify (window-screen window))
   (setf (window-%buffer window) buffer))
 
-(defun window-point (&optional (window (current-window)))
+(defun window-point-marker (window)
   (if (eq window (current-window))
-      (marker-point (buffer-point-marker (window-buffer window)))
-      (marker-point (window-point-marker window))))
+      (buffer-point-marker (window-buffer window))
+      (%window-point-marker window)))
+
+(defun window-point (&optional (window (current-window)))
+  (marker-point (window-point-marker window)))
 
 (defun (setf window-point) (new-point &optional (window (current-window)))
-  (if (eq window (current-window))
-      (setf (marker-point (buffer-point-marker (window-buffer window))) new-point)
-      (setf (marker-point (window-point-marker window)) new-point)))
+  (setf (marker-point (window-point-marker window)) new-point))
 
 (defun window-current-charpos (&optional (window (current-window)))
   (point-charpos (window-point window)))
@@ -174,12 +174,12 @@
   (check-type new-window window)
   (when (boundp '*current-window*)
     (let ((old-window (current-window)))
-      (setf (marker-point (window-point-marker old-window))
+      (setf (marker-point (%window-point-marker old-window))
             (marker-point (buffer-point-marker (window-buffer old-window))))))
   (let ((buffer (window-buffer new-window)))
     (setf (current-buffer) buffer)
     (setf (marker-point (buffer-point-marker buffer))
-          (marker-point (window-point-marker new-window))))
+          (marker-point (%window-point-marker new-window))))
   (setf *current-window* new-window))
 
 (defun window-tree ()
@@ -275,7 +275,7 @@
 
 (defun %free-window (window)
   (delete-marker (window-view-marker window))
-  (delete-marker (window-point-marker window))
+  (delete-marker (%window-point-marker window))
   (screen-delete (window-screen window)))
 
 (defun dump-window-tree (window-tree current-window)
@@ -290,7 +290,7 @@
                    (window-%width window-tree)
                    (window-%height window-tree)
                    (window-view-marker window-tree)
-                   (marker-point (window-point-marker window-tree))
+                   (marker-point (%window-point-marker window-tree))
                    (window-delete-hook window-tree)
                    (window-parameters window-tree))
                   (list
@@ -321,7 +321,7 @@
                         (setf (marker-point (window-view-marker window)) (marker-point view-marker))
                         (set-window-delete-hook delete-hook window)
                         (setf (window-parameters window) parameters)
-                        (setf (marker-point (window-point-marker window)) point)
+                        (setf (marker-point (%window-point-marker window)) point)
                         (when current-window-p
                           (setf current-window window))
                         window))
@@ -356,8 +356,8 @@
   (setf (window-tree) (current-window)))
 
 (defun window-recenter (window)
-  (setf (marker-point (window-view-marker window))
-        (make-point (window-current-linum window) 0))
+  (move-point (window-view-marker window)
+              (line-start (copy-marker (window-point-marker window) :temporary)))
   (window-scroll window (- (floor (window-%height window) 2))))
 
 (defun map-wrapping-line (string winwidth fn)
@@ -436,9 +436,7 @@
                                  (window-%width window)
                                  #'inc))
             (split-string (points-to-string (window-view-marker window)
-                                            (if (eq window (current-window))
-                                                (buffer-point-marker (window-buffer window))
-                                                (window-point-marker window)))
+                                            (window-point-marker window))
                           #\newline))
       offset)))
 
@@ -800,7 +798,7 @@
       (when (buffer-keep-binfo buffer)
         (setf (values view-linum view-charpos current-linum current-charpos)
               (apply #'values (buffer-keep-binfo buffer))))
-      (marker-change-buffer (window-point-marker (current-window)) buffer)
+      (marker-change-buffer (%window-point-marker (current-window)) buffer)
       (let ((nlines (buffer-nlines buffer)))
         (marker-change-buffer (window-view-marker (current-window))
                               buffer

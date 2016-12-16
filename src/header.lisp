@@ -57,6 +57,23 @@
                 (setf (current-buffer) ,gbuffer)
                 (point-set ,gpoint (minibuffer))))))))
 
+(defmacro with-marker (bindings &body body)
+  (let ((cleanups
+         (mapcan (lambda (b)
+                   (destructuring-bind (var marker &optional (kind :temporary)) b
+                     (declare (ignore marker))
+                     (unless (eq :temporary kind)
+                       `((delete-marker ,var)))))
+                 bindings)))
+    `(let ,(mapcar (lambda (b)
+                     (destructuring-bind (var marker &optional (kind :temporary)) b
+                       `(,var (copy-marker ,marker ,kind))))
+                   bindings)
+       ,(if cleanups
+            `(unwind-protect (progn ,@body)
+               ,@cleanups)
+            `(progn ,@body)))))
+
 (defmacro with-current-buffer ((buffer point) &body body)
   `(save-excursion
      (setf (current-buffer) ,buffer)

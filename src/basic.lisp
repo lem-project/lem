@@ -75,6 +75,12 @@
   (setf (marker-point marker)
         (marker-point new-marker)))
 
+(defun same-line-p (marker1 marker2)
+  (assert (eq (marker-buffer marker1)
+              (marker-buffer marker2)))
+  (= (marker-linum marker1)
+     (marker-linum marker2)))
+
 (defun %character-offset-positive (marker n)
   (loop
     (when (minusp n)

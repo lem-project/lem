@@ -52,7 +52,7 @@
   (character-at (buffer-stream-marker stream)))
 
 (defmethod trivial-gray-streams:stream-listen ((stream buffer-input-stream))
-  (not (eobp/marker (buffer-stream-marker stream))))
+  (end-buffer-p (buffer-stream-marker stream)))
 
 (defmethod trivial-gray-streams:stream-read-line ((stream buffer-input-stream))
   (let ((start (copy-marker (buffer-stream-marker stream) :temporary)))

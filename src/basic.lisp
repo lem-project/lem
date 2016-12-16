@@ -79,6 +79,12 @@
                             (marker-linum marker)))
   marker)
 
+(defun buffer-start (marker)
+  (move-point marker (buffer-start-marker (marker-buffer marker))))
+
+(defun buffer-end (marker)
+  (move-point marker (buffer-end-marker (marker-buffer marker))))
+
 (defun move-point (marker new-marker)
   (setf (marker-point marker)
         (marker-point new-marker)))

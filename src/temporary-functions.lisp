@@ -1,18 +1,14 @@
 (in-package :lem)
 
-(defun buffer-start (buffer)
+(defun buffer-start-marker (buffer)
   (make-marker buffer
                (point-min buffer)
                :kind :temporary))
 
-(defun buffer-end (buffer)
+(defun buffer-end-marker (buffer)
   (make-marker buffer
                (point-max buffer)
                :kind :temporary))
-
-(defun eobp/marker (marker)
-  (marker= marker
-           (buffer-end (marker-buffer marker))))
 
 (defun line-offset (marker n)
   (line-start marker)

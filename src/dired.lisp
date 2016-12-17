@@ -42,15 +42,15 @@
 (define-key *dired-mode-keymap* "+" 'dired-mkdir)
 
 (defun move-to-file-column ()
-  (move-to-column (get-bvar 'start-file-column :default 0)))
+  (lem::line-start (current-marker)))
 
 (defun move-to-start-point ()
-  (setf (current-linum) *start-line-number*)
-  (move-to-file-column))
+  (lem::line-offset (lem::buffer-start (current-marker))
+                    (1- *start-line-number*)))
 
 (define-command dired-update-buffer () ()
   (save-excursion
-    (update)))
+    (update (current-buffer))))
 
 (define-command dired-up-directory () ()
   (switch-to-buffer
@@ -240,66 +240,73 @@
         (list (get-file))
         (nreverse files))))
 
+(defun get-line-property (property-name)
+  (lem::text-property-at (lem::character-offset (lem::line-start (copy-marker (current-marker)
+                                                                              :temporary))
+                                                1)
+                         property-name))
+
 (defun get-file ()
-  (get-property (shift-point (beginning-of-line-point)
-                             (get-bvar 'start-file-column :default 0))
-                'file))
+  (get-line-property 'file))
+
+(defun get-type ()
+  (get-line-property 'type))
 
 (defun ls-output-string (filename)
   (with-output-to-string (stream)
     (uiop:run-program (format nil "ls -al ~A" filename) :output stream)))
 
-(defun update ()
-  (with-buffer-read-only (current-buffer) nil
-    (buffer-erase)
-    (let ((dirname (probe-file (buffer-directory))))
-      (insert-string-with-attribute (namestring dirname) *header-attribute*)
-      (insert-newline 2)
-      (let ((output-string (ls-output-string dirname)))
-        (insert-string output-string)
-        (beginning-of-buffer)
-        (forward-line (1- *start-line-number*))
-        (setf (get-bvar 'start-point) (current-point))
-        (loop
-          (let ((string (current-line-string)))
-            (multiple-value-bind (start end start-groups end-groups)
-                (ppcre:scan "^(\\S*)\\s+(\\d+)\\s+(\\S*)\\s+(\\S*)\\s+(\\d+)\\s+(\\S+\\s+\\S+\\s+\\S+)\\s+(.*?)(?: -> .*)?$"
-                            string)
-              (declare (ignorable start end start-groups end-groups))
-              (when start
-                (save-excursion
-                  (beginning-of-line)
-                  (insert-string "  "))
-                (let* ((index (1- (length start-groups)))
-                       (filename (merge-pathnames
-                                  (subseq string
-                                          (aref start-groups index)
-                                          (aref end-groups index))
-                                  dirname))
-                       (start-file-charpos (+ 2 (aref start-groups index))))
-                  (save-excursion
-                    (move-to-column start-file-charpos)
-                    (setf (get-bvar 'start-file-column) (1+ (current-column))))
-                  (case (char string 0)
-                    (#\l
-                     (put-property (beginning-of-line-point) (end-of-line-point) 'type :link)
-                     (shift-position start-file-charpos)
-                     (put-attribute (current-point) (end-of-line-point) *link-attribute*))
-                    (#\d
-                     (put-property (beginning-of-line-point) (end-of-line-point) 'type :directory)
-                     (shift-position start-file-charpos)
-                     (put-attribute (current-point) (end-of-line-point) *directory-attribute*))
-                    (#\-
-                     (put-property (beginning-of-line-point) (end-of-line-point) 'type :file)))
-                  (put-property (beginning-of-line-point) (end-of-line-point) 'file filename)))
-              (unless (forward-line 1)
-                (return)))))))))
+(defun update (buffer)
+  (with-buffer-read-only buffer nil
+    (buffer-erase buffer)
+    (let ((dirname (probe-file (buffer-directory buffer))))
+      (lem::with-marker ((cur-marker (lem::buffer-point-marker buffer) :left-inserting))
+        (lem::insert-string-at cur-marker
+                               (lem.text-property::make-text-property
+                                (namestring dirname)
+                                :attribute *header-attribute*))
+        (lem::insert-char-at cur-marker #\newline 2)
+        (let ((output-string (ls-output-string dirname)))
+          (lem::insert-string-at cur-marker output-string)
+          (lem::buffer-start cur-marker)
+          (lem::line-offset cur-marker (1- *start-line-number*))
+          (loop
+            (let ((string (lem::line-string-at cur-marker)))
+              (multiple-value-bind (start end start-groups end-groups)
+                  (ppcre:scan "^(\\S*)\\s+(\\d+)\\s+(\\S*)\\s+(\\S*)\\s+(\\d+)\\s+(\\S+\\s+\\S+\\s+\\S+)\\s+(.*?)(?: -> .*)?$"
+                              string)
+                (declare (ignorable start end start-groups end-groups))
+                (when start
+                  (lem::insert-string-at cur-marker "  ")
+                  (let* ((index (1- (length start-groups)))
+                         (filename (merge-pathnames
+                                    (subseq string
+                                            (aref start-groups index)
+                                            (aref end-groups index))
+                                    dirname))
+                         (start-file-charpos (+ 2 (aref start-groups index))))
+                    (lem::with-marker ((start-marker (lem::line-start cur-marker))
+                                       (end-marker (lem::line-end cur-marker)))
+                      (case (char string 0)
+                        (#\l
+                         (lem::put-text-property start-marker end-marker 'type :link)
+                         (lem::character-offset (lem::line-start cur-marker) start-file-charpos)
+                         (lem::put-text-property cur-marker end-marker :attribute *link-attribute*))
+                        (#\d
+                         (lem::put-text-property start-marker end-marker 'type :directory)
+                         (lem::character-offset (lem::line-start cur-marker) start-file-charpos)
+                         (lem::put-text-property cur-marker end-marker :attribute *directory-attribute*))
+                        (#\-
+                         (lem::put-text-property start-marker end-marker 'type :file)))
+                      (lem::put-text-property start-marker end-marker 'file filename)))
+                  (lem::line-offset cur-marker 1)
+                  (when (lem::end-line-p cur-marker)
+                    (return)))))))))))
 
 (defun update-all ()
   (dolist (buffer (buffer-list))
     (when (eq 'dired-mode (buffer-major-mode buffer))
-      (with-current-buffer (buffer (make-min-point))
-        (update))))
+      (update buffer)))
   (redraw-display))
 
 (defun dired-buffer (filename)
@@ -310,7 +317,7 @@
       (setf (buffer-directory buffer) filename)
       (setf (buffer-read-only-p buffer) t)
       (buffer-disable-undo buffer)
-      (update))
+      (update buffer))
     (let ((prev-buffer (current-buffer)))
       (setf (current-buffer) buffer)
       (move-to-start-point)

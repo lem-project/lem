@@ -288,40 +288,15 @@
   (character-at (current-marker)))
 
 (defun preceding-char ()
-  (cond
-    ((bobp)
-     nil)
-    ((bolp)
-     (buffer-get-char (current-buffer)
-                      (1- (current-linum))
-                      (buffer-line-length (current-buffer)
-                                          (1- (current-linum)))))
-    (t
-     (buffer-get-char (current-buffer)
-                      (current-linum)
-                      (1- (current-charpos))))))
+  (character-at (current-marker) -1))
 
+;; char-after, char-beforeは引数がemacsと違っていて紛らわしいので変えるつもり
 (defun char-after (&optional (n 0))
-  (if (zerop n)
-      (following-char)
-      (let ((point (current-point)))
-        (if (shift-position n)
-            (prog1 (following-char)
-              (shift-position (- n)))
-            (progn
-              (point-set point)
-              nil)))))
+  (character-at (current-marker) n))
 
 (defun char-before (&optional (n 1))
-  (if (= n 1)
-      (preceding-char)
-      (let ((point (current-point)))
-        (if (shift-position (- (1- n)))
-            (prog1 (preceding-char)
-              (shift-position (1- n)))
-            (progn
-              (point-set point)
-              nil)))))
+  (character-at (current-marker)
+                (- n)))
 
 (defun delete-while-whitespaces (&optional ignore-newline-p use-kill-ring)
   (let ((n (skip-chars-forward

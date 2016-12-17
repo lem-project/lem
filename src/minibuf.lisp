@@ -220,13 +220,18 @@
                (let ((*inhibit-read-only* t))
                  (buffer-erase))
                (minibuffer-mode)
-               (let ((start-point (current-point)))
-                 (insert-string prompt)
-                 (put-attribute start-point (current-point) *minibuffer-prompt-attribute*)
-                 (put-property start-point (current-point) 'lem.property:read-only t)
-                 (put-property (shift-point (current-point) -1)
-                               (current-point)
-                               'lem.property:field-separator t))
+               (progn
+                 (with-marker ((start-marker (current-marker))
+                               (cur-marker (current-marker) :left-inserting))
+                   (insert-string-at cur-marker prompt)
+                   (put-text-property start-marker cur-marker
+                                      :attribute *minibuffer-prompt-attribute*)
+                   (put-text-property start-marker cur-marker
+                                      'lem.property:read-only t)
+                   (put-text-property (character-offset (copy-marker cur-marker :temporary) -1)
+                                      cur-marker
+                                      'lem.property:field-separator t))
+                 (character-offset (current-marker) (length prompt)))
                (let ((*minibuffer-start-point* (current-point)))
                  (when initial
                    (insert-string initial))

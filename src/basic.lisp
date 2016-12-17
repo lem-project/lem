@@ -200,6 +200,10 @@
                           (marker-point end-marker)
                           key))
 
+(defun line-string-at (marker)
+  (buffer-line-string (marker-buffer marker)
+                      (marker-linum marker)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 

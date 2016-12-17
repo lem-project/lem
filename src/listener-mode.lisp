@@ -54,16 +54,14 @@
       (lem::insert-char-at cur-marker #\newline 1)
       (lem::buffer-end cur-marker))
     (lem::insert-string-at cur-marker
-                           (princ-to-string
-                            (funcall
-                             (get-bvar :listener-get-prompt-function))))
-    (lem::with-marker ((start-marker cur-marker)
-                       (end-marker (lem::line-end cur-marker)))
-      (lem::put-text-property start-marker end-marker :attribute *prompt-attribute*)
-      (lem::put-text-property start-marker end-marker 'lem.property:read-only t)
-      (lem::put-text-property (lem::character-offset (copy-marker end-marker :temporary) -1)
-                              end-marker
-                              'lem.property:field-separator t))
+                           (lem.text-property:make-text-property
+                            (princ-to-string
+                             (funcall
+                              (get-bvar :listener-get-prompt-function)))
+                            :attribute *prompt-attribute*
+                            'lem.property:read-only t
+                            'lem.property:field-separator t))
+    (lem::buffer-end cur-marker)
     (buffer-undo-boundary buffer)
     (listener-update-marker)))
 

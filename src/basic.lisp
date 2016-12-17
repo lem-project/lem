@@ -152,7 +152,15 @@
   t)
 
 (defun insert-string-at (marker string)
-  (insert-string/marker marker string)
+  (cond ((lem.text-property:text-property-p string)
+         (let ((str (lem.text-property:text-property-string string)))
+           (insert-string/marker marker str)
+           (let ((end-marker (character-offset (copy-marker marker :temporary)
+                                               (length str))))
+             (loop :for (k v) :on (lem.text-property:text-property-plist string) :by #'cddr
+                   :do (put-text-property marker end-marker k v)))))
+        (t
+         (insert-string/marker marker string)))
   t)
 
 (defun delete-char-at (marker &optional (n 1) killp)

@@ -31,6 +31,7 @@
                              (:file "term")
                              (:file "package")
                              (:file "property")
+                             (:file "text-property")
                              (:file "key")
                              (:file "errors")
                              (:file "header")

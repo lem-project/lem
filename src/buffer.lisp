@@ -496,7 +496,9 @@
       (when (buffer-mark-overlay buffer)
         (delete-overlay (buffer-mark-overlay buffer)))
       (setf (buffer-mark-overlay buffer)
-            (make-overlay start end *mark-overlay-attribute*)))))
+            (make-overlay (make-marker buffer start :kind :temporary)
+                          (make-marker buffer end :kind :temporary)
+                          *mark-overlay-attribute*)))))
 
 (defun check-read-only-buffer (buffer)
   (when (buffer-read-only-p buffer)

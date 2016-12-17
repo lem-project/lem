@@ -190,24 +190,25 @@
 (defun isearch-update-buffer (&optional (search-string *isearch-string*))
   (isearch-reset-buffer)
   (unless (equal "" search-string)
-    (let ((save-point (current-point)))
+    (let ((save-marker (copy-marker (current-marker) :temporary)))
       (with-window-range (start-linum end-linum) (current-window)
         (point-set (beginning-of-line-point start-linum))
         (loop :while (funcall *isearch-search-forward-function*
                               search-string
                               (beginning-of-line-point (1+ end-linum)))
-              :do (let ((point2 (current-point))
-                        (point1 (save-excursion
-                                  (funcall *isearch-search-backward-function*
-                                           search-string)
-                                  (current-point))))
-                    (push (make-overlay point1 point2
-                                        (if (and (point<= point1 save-point)
-                                                 (point<= save-point point2))
+              :do (let ((end-marker (copy-marker (current-marker) :temporary))
+                        (start-marker (save-excursion
+                                        (funcall *isearch-search-backward-function*
+                                                 search-string)
+                                        (copy-marker (current-marker) :temporary))))
+                    (push (make-overlay start-marker
+                                        end-marker
+                                        (if (and (marker<= start-marker save-marker)
+                                                 (marker<= save-marker end-marker))
                                             *isearch-highlight-active-attribute*
                                             *isearch-highlight-attribute*))
                           *isearch-highlight-overlays*))))
-      (point-set save-point))))
+      (lem::move-point (current-marker) save-marker))))
 
 (defun isearch-add-char (c)
   (setq *isearch-string*

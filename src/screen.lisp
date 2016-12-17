@@ -186,8 +186,8 @@
 (defun disp-set-overlays (screen overlays start-linum end-linum)
   (loop
     :for overlay :in overlays
-    :for start := (overlay-start overlay)
-    :for end := (overlay-end overlay)
+    :for start := (marker-point (overlay-start overlay))
+    :for end := (marker-point (overlay-end overlay))
     :do (cond ((and (= (point-linum start) (point-linum end))
                     (<= start-linum (point-linum start) (1- end-linum)))
                (set-attr-display-line screen

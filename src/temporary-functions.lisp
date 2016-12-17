@@ -36,3 +36,14 @@
                                    nil))
                        lastp)))
   (values))
+
+(defun form-offset (marker n)
+  (let ((new-point
+         (save-excursion
+           (setf (current-buffer) (marker-buffer marker))
+           (point-set (marker-point (current-marker)))
+           (and (forward-sexp n t)
+                (current-point)))))
+    (when new-point
+      (setf (marker-point marker) new-point)
+      marker)))

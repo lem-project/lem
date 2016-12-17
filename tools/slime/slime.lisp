@@ -310,9 +310,9 @@
     (setf (current-buffer) buffer)
     (goto-position pos)
     (skip-chars-backward #'syntax-symbol-char-p)
-    (let ((start (current-point)))
-      (forward-sexp 1 t)
-      (make-overlay start (current-point) *note-attribute*))))
+    (make-overlay (copy-marker (current-marker) :temporary)
+                  (lem::form-offset (copy-marker (current-marker) :temporary) 1)
+                  *note-attribute*)))
 
 (defun append-note-entry (grep name pos message source-context jump-fun)
   (lem.grep:call-with-writer

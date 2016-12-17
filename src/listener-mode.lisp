@@ -48,25 +48,24 @@
             (make-marker-current-point :name "listener"))))
 
 (defun listener-reset-prompt (&optional (buffer (current-buffer)))
-  (flet ((body ()
-           (point-set (point-max))
-           (unless (bolp)
-             (insert-newline 1))
-           (insert-string
-            (princ-to-string
-             (funcall (get-bvar :listener-get-prompt-function))))
-           (let ((start (beginning-of-line-point))
-                 (end (current-point)))
-             (put-attribute start end *prompt-attribute*)
-             (put-property start end 'lem.property:read-only t)
-             (put-property (shift-point end -1) end 'lem.property:field-separator t))
-           (buffer-undo-boundary (current-buffer))
-           (listener-update-marker)))
-    (if (eq buffer (current-buffer))
-        (body)
-        (save-excursion
-          (setf (current-buffer) buffer)
-          (body)))))
+  (let ((cur-marker (lem::buffer-point-marker buffer)))
+    (lem::buffer-end cur-marker)
+    (unless (lem::start-line-p cur-marker)
+      (lem::insert-char-at cur-marker #\newline 1)
+      (lem::buffer-end cur-marker))
+    (lem::insert-string-at cur-marker
+                           (princ-to-string
+                            (funcall
+                             (get-bvar :listener-get-prompt-function))))
+    (lem::with-marker ((start-marker cur-marker)
+                       (end-marker (lem::line-end cur-marker)))
+      (lem::put-text-property start-marker end-marker :attribute *prompt-attribute*)
+      (lem::put-text-property start-marker end-marker 'lem.property:read-only t)
+      (lem::put-text-property (lem::character-offset (copy-marker end-marker :temporary) -1)
+                              end-marker
+                              'lem.property:field-separator t))
+    (buffer-undo-boundary buffer)
+    (listener-update-marker)))
 
 (define-key *listener-mode-keymap* (kbd "C-m") 'listener-return)
 (define-command listener-return () ()

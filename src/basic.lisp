@@ -85,7 +85,8 @@
 
 (defun move-point (marker new-marker)
   (setf (marker-point marker)
-        (marker-point new-marker)))
+        (marker-point new-marker))
+  marker)
 
 (defun same-line-p (marker1 marker2)
   (assert (eq (marker-buffer marker1)

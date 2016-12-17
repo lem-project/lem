@@ -42,7 +42,7 @@
           current-column
           move-to-column
           point-to-offset
-          shift-point))
+          ))
 
 (defun first-line-p (marker)
   (<= (marker-linum marker) 1))
@@ -439,8 +439,3 @@
                       (1+ (buffer-line-length (current-buffer)
                                               linum))))
       (+ offset end-charpos))))
-
-(defun shift-point (point offset &optional (buffer (current-buffer)))
-  (with-current-buffer (buffer point)
-    (shift-position offset)
-    (current-point)))

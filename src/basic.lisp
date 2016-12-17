@@ -291,7 +291,7 @@
         (setf (marker-point (buffer-mark-marker buffer))
               point)
         (setf (buffer-mark-marker buffer)
-              (make-marker buffer point :name "mark")))))
+              (make-marker buffer point :name "mark" :kind :right-inserting)))))
 
 (defun current-line-string ()
   (buffer-line-string (current-buffer)

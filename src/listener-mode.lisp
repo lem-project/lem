@@ -44,8 +44,8 @@
     (delete-marker (%listener-marker)))
   (setf (%listener-marker)
         (if point
-            (make-marker (current-buffer) point :name "listener")
-            (make-marker-current-point :name "listener"))))
+            (make-marker (current-buffer) point :name "listener" :kind :right-inserting)
+            (make-marker-current-point :name "listener" :kind :right-inserting))))
 
 (defun listener-reset-prompt (&optional (buffer (current-buffer)))
   (let ((cur-marker (lem::buffer-point-marker buffer)))

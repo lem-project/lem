@@ -292,7 +292,8 @@
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
     (setf (buffer-point-marker buffer)
           (make-marker buffer (make-min-point)
-                       :name "buffer-point"))
+                       :name "buffer-point"
+                       :kind :right-inserting))
     (add-buffer buffer)
     buffer))
 

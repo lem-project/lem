@@ -15,8 +15,6 @@
           end-of-buffer
           beginning-of-line
           end-of-line
-          beginning-of-line-point
-          end-of-line-point
           goto-position
           forward-line
           shift-position
@@ -284,17 +282,6 @@
 (defun end-of-line ()
   (line-end (current-marker))
   t)
-
-(defun beginning-of-line-point (&optional (linum (current-linum)))
-  (setf linum (round-linum (current-buffer) linum))
-  (make-point linum 0))
-
-(defun end-of-line-point (&optional (linum (current-linum)))
-  (setf linum (round-linum (current-buffer) linum))
-  (make-point linum
-              (buffer-line-length
-               (current-buffer)
-               linum)))
 
 (defun goto-position (position)
   (check-type position (integer 1 *))

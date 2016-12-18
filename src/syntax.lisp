@@ -480,8 +480,8 @@
 (defun skip-space-and-comment-forward ()
   (loop
     (skip-whitespace-forward)
-    (unless (and (not (eq *syntax-comment-attribute* (preceding-property :attribute)))
-                 (eq *syntax-comment-attribute* (following-property :attribute)))
+    (unless (and (not (eq *syntax-comment-attribute* (text-property-at (current-marker) :attribute -1)))
+                 (eq *syntax-comment-attribute* (text-property-at (current-marker) :attribute)))
       (return t))
     (unless (next-single-property-change (current-marker) :attribute)
       (return nil))))
@@ -489,8 +489,8 @@
 (defun skip-space-and-comment-backward ()
   (loop
     (skip-whitespace-backward)
-    (unless (and (not (eq *syntax-comment-attribute* (following-property :attribute)))
-                 (eq *syntax-comment-attribute* (preceding-property :attribute)))
+    (unless (and (not (eq *syntax-comment-attribute* (text-property-at (current-marker) :attribute)))
+                 (eq *syntax-comment-attribute* (text-property-at (current-marker) :attribute -1)))
       (return t))
     (unless (previous-single-property-change (current-marker) :attribute)
       (return nil))))

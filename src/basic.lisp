@@ -33,8 +33,6 @@
           remove-property
           put-attribute
           insert-string-with-attribute
-          following-property
-          preceding-property
           current-column
           move-to-column
           point-to-offset
@@ -384,14 +382,6 @@
   (let ((start (current-point)))
     (insert-string string)
     (put-attribute start (current-point) attribute)))
-
-(defun following-property (property-name)
-  (%syntax-pos-property (current-charpos) property-name))
-
-(defun preceding-property (property-name)
-  (save-excursion
-    (shift-position -1)
-    (%syntax-pos-property (current-charpos) property-name)))
 
 (defun current-column ()
   (string-width (current-line-string)

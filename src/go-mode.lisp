@@ -83,7 +83,7 @@
 (defun go-calc-indent ()
   (save-excursion
    (back-to-indentation)
-   (let ((attribute (preceding-property :attribute)))
+   (let ((attribute (text-property-at (current-marker) :attribute -1)))
      (cond ((eq attribute *syntax-comment-attribute*)
             (lem::previous-single-property-change (current-marker) :attribute)
             (1+ (current-column)))

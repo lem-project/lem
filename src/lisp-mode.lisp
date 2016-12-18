@@ -808,19 +808,13 @@
         (cond ((= 1 (length defs))
                (funcall (second (car defs))))
               (t
-               (let ((grep (lem.grep:make-grep "*Definitions*")))
+               (lem.sourcelist:with-sourcelist (sourcelist "*Definitions*")
                  (loop :for (file jump-fun) :in defs
-                       :do (lem.grep:call-with-writer
-                            grep
-                            (lambda ()
-                              (insert-string file)
-                              (lem.grep:put-entry-property
-                               grep
-                               (beginning-of-line-point)
-                               (end-of-line-point)
-                               jump-fun)
-                              (insert-newline 1))))
-                 (lem.grep:update grep))))))))
+                       :do (lem.sourcelist:append-sourcelist
+                            sourcelist
+                            (lambda (cur-marker)
+                              (lem::insert-string-at cur-marker file))
+                            jump-fun)))))))))
 
 (define-key *lisp-mode-keymap* (kbd "M-,") 'lisp-pop-find-definition-stack)
 (define-command lisp-pop-find-definition-stack () ()

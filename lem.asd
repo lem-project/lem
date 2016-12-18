@@ -81,6 +81,7 @@
                              (:file "isearch")
                              (:file "showparen")
                              (:file "list-buffers")
+                             (:file "sourcelist")
                              (:file "grep")
                              (:file "lisp-mode")
                              (:file "c-mode")

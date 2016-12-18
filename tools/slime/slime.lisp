@@ -314,64 +314,57 @@
                   (lem::form-offset (copy-marker (current-marker) :temporary) 1)
                   *note-attribute*)))
 
-(defun append-note-entry (grep name pos message source-context jump-fun)
-  (lem.grep:call-with-writer
-   grep
-   (lambda ()
-     (insert-string-with-attribute name lem.grep::*attribute-1*)
-     (insert-string ":")
-     (insert-string-with-attribute (princ-to-string pos) lem.grep::*attribute-2*)
-     (insert-string ":")
-     (lem.grep:put-entry-property grep
-                                  (beginning-of-line-point)
-                                  (end-of-line-point)
-                                  jump-fun)
-     (insert-newline 1)
-     (insert-string message)
-     (insert-newline 1)
-     (insert-string source-context))))
-
 (defvar *note-overlays* nil)
 
 (defun highlight-notes (notes)
   (slime-remove-notes)
-  (let ((overlays '())
-        (grep (lem.grep:make-grep "*slime-compilations*")))
-    (dolist (note notes)
-      (optima:match note
-        ((and (optima:property :location
-                               (or (list :location
-                                         (list :buffer buffer-name)
-                                         (list :offset pos _)
-                                         _)
-                                   (list :location
-                                         (list :file file)
-                                         (list :position pos)
-                                         _)))
-              (or (optima:property :message message) (and))
-              (or (optima:property :source-context source-context) (and)))
-         (let ((jump-fun (if buffer-name
-                             (lambda ()
-                               (let ((buffer (get-buffer buffer-name)))
-                                 (when buffer
-                                   (setf (current-window) (pop-to-buffer buffer))
-                                   (goto-position pos))))
-                             (lambda ()
-                               (find-file file)
-                               (goto-position pos)))))
-           (append-note-entry grep
-                              (or buffer-name file)
-                              pos
-                              message
-                              source-context
-                              jump-fun)
-           (push (make-highlight-overlay pos
-                                         (if buffer-name
-                                             (get-buffer buffer-name)
-                                             (get-buffer-from-file file)))
-                 overlays)))))
+  (let ((overlays '()))
+    (lem.sourcelist:with-sourcelist (sourcelist "*slime-compilations*")
+      (dolist (note notes)
+        (optima:match note
+          ((and (optima:property :location
+                                 (or (list :location
+                                           (list :buffer buffer-name)
+                                           (list :offset pos _)
+                                           _)
+                                     (list :location
+                                           (list :file file)
+                                           (list :position pos)
+                                           _)))
+                (or (optima:property :message message) (and))
+                (or (optima:property :source-context source-context) (and)))
+           (let ((jump-fun (if buffer-name
+                               (lambda ()
+                                 (let ((buffer (get-buffer buffer-name)))
+                                   (when buffer
+                                     (setf (current-window) (pop-to-buffer buffer))
+                                     (goto-position pos))))
+                               (lambda ()
+                                 (find-file file)
+                                 (goto-position pos)))))
+             (lem.sourcelist:append-sourcelist
+              sourcelist
+              (let ((name (or buffer-name file)))
+                (lambda (cur-marker)
+                  (lem::insert-string-at cur-marker
+                                         (lem.text-property:make-text-property
+                                          name :attribute lem.grep::*attribute-1*))
+                  (lem::insert-string-at cur-marker ":")
+                  (lem::insert-string-at cur-marker
+                                         (lem.text-property:make-text-property
+                                          (princ-to-string pos) :attribute lem.grep::*attribute-2*))
+                  (lem::insert-string-at cur-marker ":")
+                  (lem::insert-char-at cur-marker #\newline)
+                  (lem::insert-string-at cur-marker message)
+                  (lem::insert-char-at cur-marker #\newline)
+                  (lem::insert-string-at cur-marker source-context)))
+              jump-fun)
+             (push (make-highlight-overlay pos
+                                           (if buffer-name
+                                               (get-buffer buffer-name)
+                                               (get-buffer-from-file file)))
+                   overlays))))))
     (when overlays
-      (lem.grep:update grep)
       (setf *note-overlays* overlays))))
 
 (define-command slime-remove-notes () ()
@@ -479,29 +472,26 @@
             (declare (ignore title))
             (find-file file)
             (goto-position offset))
-          (let ((prev-file nil)
-                (grep (lem.grep:make-grep "*slime-definitions*")))
-            (dolist (elt found-list)
-              (destructuring-bind (title file offset) elt
-                (lem.grep:call-with-writer
-                 grep
-                 (lambda ()
-                   (unless (and prev-file (string= prev-file file))
-                     (insert-string-with-attribute file
-                                                   *headline-attribute*)
-                     (insert-newline 1))
-                   (let ((start (current-point)))
-                     (insert-string-with-attribute (format nil "  ~A" title)
-                                                   *entry-attribute*)
-                     (lem.grep:put-entry-property grep
-                                                  start
-                                                  (end-of-line-point)
-                                                  (lambda ()
-                                                    (find-file file)
-                                                    (goto-position offset))))
-                   (insert-newline 1)))
-                (setf prev-file file)))
-            (lem.grep:update grep))))))
+          (let ((prev-file nil))
+            (lem.sourcelist:with-sourcelist (sourcelist "*slime-definitions*")
+              (dolist (elt found-list)
+                (destructuring-bind (title file offset) elt
+                  (lem.sourcelist:append-sourcelist
+                   sourcelist
+                   (lambda (cur-marker)
+                     (unless (and prev-file (string= prev-file file))
+                       (lem::insert-string-at cur-marker
+                                              (lem.text-property:make-text-property
+                                               file :attribute *headline-attribute*))
+                       (lem::insert-char-at cur-marker #\newline))
+                     (lem::insert-string-at cur-marker
+                                            (lem.text-property:make-text-property
+                                             (format nil "  ~A" title)
+                                             :attribute *entry-attribute*)))
+                   (lambda ()
+                     (find-file file)
+                     (goto-position offset)))
+                  (setf prev-file file)))))))))
 
 (define-command slime-pop-find-definition-stack () ()
   (let ((elt (pop *edit-definition-stack*)))
@@ -516,43 +506,41 @@
          (result (slime-eval-internal `(swank:xrefs '(:calls :macroexpands :binds
                                                       :references :sets :specializes)
                                                     ,symbol)))
-         (grep (lem.grep:make-grep "*slime-xrefs*"))
          (found nil))
-    (loop :for (type . definitions) :in result
-          :for defs := (loop :for def :in definitions
-                             :collect (optima:match def
-                                        ((list name
-                                               (list :location
-                                                     (list :file file)
-                                                     (list :position offset)
-                                                     (list :snippet snippet)))
-                                         (list name file offset snippet))))
-          :do (when defs
-                (setf found t)
-                (lem.grep:call-with-writer
-                 grep
-                 (lambda ()
-                   (insert-string-with-attribute (princ-to-string type)
-                                                 *headline-attribute*)
-                   (insert-newline 1)))
-                (loop :for def :in defs
-                      :do (destructuring-bind (name file offset snippet) def
-                            (declare (ignore snippet))
-                            (lem.grep:call-with-writer
-                             grep
-                             (lambda ()
-                               (insert-string-with-attribute (format nil "  ~A" name)
-                                                             *entry-attribute*)
-                               (lem.grep:put-entry-property grep
-                                                            (beginning-of-line-point)
-                                                            (end-of-line-point)
-                                                            (lambda ()
-                                                              (find-file file)
-                                                              (goto-position offset)))
-                               (insert-newline 1)))))))
+    (lem.sourcelist:with-sourcelist (sourcelist "*slime-xrefs*")
+      (loop :for (type . definitions) :in result
+            :for defs := (loop :for def :in definitions
+                               :collect (optima:match def
+                                          ((list name
+                                                 (list :location
+                                                       (list :file file)
+                                                       (list :position offset)
+                                                       (list :snippet snippet)))
+                                           (list name file offset snippet))))
+            :do (when defs
+                  (setf found t)
+                  (lem.sourcelist:append-sourcelist
+                   sourcelist
+                   (lambda (cur-marker)
+                     (lem::insert-string-at cur-marker
+                                            (lem.text-property:make-text-property
+                                             (princ-to-string type) :attribute *headline-attribute*)))
+                   nil)
+                  (loop :for def :in defs
+                        :do (destructuring-bind (name file offset snippet) def
+                              (declare (ignore snippet))
+                              (lem.sourcelist:append-sourcelist
+                               sourcelist
+                               (lambda (cur-marker)
+                                 (lem::insert-string-at cur-marker
+                                                        (lem.text-property:make-text-property
+                                                         (format nil "  ~A" name)
+                                                         :attribute *entry-attribute*)))
+                               (lambda ()
+                                 (find-file file)
+                                 (goto-position offset))))))))
     (cond
       (found
-       (lem.grep:update grep)
        (push (list (current-buffer) (current-point))
              *edit-definition-stack*))
       (t

@@ -44,7 +44,7 @@
 
 (defun isearch-update-display ()
   (isearch-update-minibuf)
-  (isearch-update-buffer))
+  (isearch-update-buffer (current-marker)))
 
 (defun isearch-update-minibuf ()
   (message "~a~a"
@@ -55,9 +55,10 @@
 (define-command isearch-forward () ()
   (isearch-start
    "ISearch: "
-   #'(lambda (str)
-       (shift-position (- (length str)))
-       (search-forward str))
+   (lambda (marker str)
+     (search-forward (lem::character-offset
+                      marker (- (length str)))
+                     str))
    #'search-forward
    #'search-backward
    ""))
@@ -66,9 +67,9 @@
 (define-command isearch-backward () ()
   (isearch-start
    "ISearch:"
-   #'(lambda (str)
-       (shift-position (length str))
-       (search-backward str))
+   (lambda (marker str)
+     (search-backward (lem::character-offset marker (length str))
+                      str))
    #'search-forward
    #'search-backward
    ""))
@@ -166,14 +167,14 @@
 (define-command isearch-next () ()
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
-  (funcall *isearch-search-forward-function* *isearch-string*)
+  (funcall *isearch-search-forward-function* (current-marker) *isearch-string*)
   (isearch-update-display))
 
 (define-key *isearch-keymap* (kbd "C-r") 'isearch-prev)
 (define-command isearch-prev () ()
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
-  (funcall *isearch-search-backward-function* *isearch-string*)
+  (funcall *isearch-search-backward-function* (current-marker) *isearch-string*)
   (isearch-update-display))
 
 (define-key *isearch-keymap* (kbd "C-y") 'isearch-yank)
@@ -187,28 +188,31 @@
   (mapc #'delete-overlay *isearch-highlight-overlays*)
   (setq *isearch-highlight-overlays* nil))
 
-(defun isearch-update-buffer (&optional (search-string *isearch-string*))
+(defun isearch-update-buffer (marker &optional (search-string *isearch-string*))
   (isearch-reset-buffer)
-  (unless (equal "" search-string)
-    (let ((save-marker (copy-marker (current-marker) :temporary)))
-      (with-window-range (start-linum end-linum) (current-window)
-        (point-set (beginning-of-line-point start-linum))
-        (loop :while (funcall *isearch-search-forward-function*
-                              search-string
-                              (beginning-of-line-point (1+ end-linum)))
-              :do (let ((end-marker (copy-marker (current-marker) :temporary))
-                        (start-marker (save-excursion
-                                        (funcall *isearch-search-backward-function*
-                                                 search-string)
-                                        (copy-marker (current-marker) :temporary))))
-                    (push (make-overlay start-marker
-                                        end-marker
-                                        (if (and (marker<= start-marker save-marker)
-                                                 (marker<= save-marker end-marker))
-                                            *isearch-highlight-active-attribute*
-                                            *isearch-highlight-attribute*))
-                          *isearch-highlight-overlays*))))
-      (lem::move-point (current-marker) save-marker))))
+  (unless (equal search-string "")
+    (window-see (current-window))
+    (let ((cur-marker (copy-marker (lem::window-view-marker (current-window)) :temporary))
+          (limit-marker (lem::line-offset
+                         (copy-marker (lem::window-view-marker (current-window))
+                                      :temporary)
+                         (window-height (current-window)))))
+      (loop :while (funcall *isearch-search-forward-function*
+                            cur-marker
+                            search-string
+                            limit-marker)
+            :do (let ((start-marker (lem::with-marker ((temp-marker cur-marker :temporary))
+                                      (funcall *isearch-search-backward-function*
+                                               temp-marker
+                                               search-string)
+                                      temp-marker)))
+                  (push (make-overlay start-marker
+                                      (copy-marker cur-marker :temporary)
+                                      (if (and (marker<= start-marker marker)
+                                               (marker<= marker cur-marker))
+                                          *isearch-highlight-active-attribute*
+                                          *isearch-highlight-attribute*))
+                        *isearch-highlight-overlays*))))))
 
 (defun isearch-add-char (c)
   (setq *isearch-string*
@@ -216,10 +220,10 @@
                      *isearch-string*
                      (string c)))
   (isearch-update-display)
-  (let ((point (current-point)))
-    (unless (funcall *isearch-search-function* *isearch-string*)
-      (point-set point))
-    t))
+  (lem::with-marker ((start-marker (current-marker)))
+    (unless (funcall *isearch-search-function* (current-marker) *isearch-string*)
+      (lem::move-point (current-marker) start-marker)))
+  t)
 
 (define-command isearch-self-insert () ()
   (let ((c (insertion-key-p (last-read-key-sequence))))
@@ -273,13 +277,13 @@
           (do ((start-point)
                (end-point)
                (pass-through nil))
-              ((or (null (funcall search-forward-function before))
+              ((or (null (funcall search-forward-function (current-marker) before))
                    (and goal-point (point< goal-point (current-point))))
                (when goal-point
                  (point-set goal-point)))
             (setq end-point (current-point))
-            (isearch-update-buffer before)
-            (funcall search-backward-function before)
+            (isearch-update-buffer (current-marker) before)
+            (funcall search-backward-function (current-marker) before)
             (setq start-point (current-point))
             ;(unless pass-through (redraw-display))
             (loop

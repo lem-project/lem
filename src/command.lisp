@@ -320,7 +320,7 @@
   (dotimes (_ n t)
     (when (eql (char-code #\page) (following-char))
       (shift-position 1))
-    (unless (search-forward (string #\page))
+    (unless (search-forward (current-marker) (string #\page))
       (end-of-buffer)
       (return nil))))
 
@@ -329,7 +329,7 @@
   (dotimes (_ n t)
     (when (eql (char-code #\page) (preceding-char))
       (shift-position -1))
-    (unless (search-backward (string #\page))
+    (unless (search-backward (current-marker) (string #\page))
       (beginning-of-buffer)
       (return nil))))
 

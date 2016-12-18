@@ -183,7 +183,7 @@
                            key)
       (with-marker ((temp-marker marker))
         (when (nth-value 1 (character-offset temp-marker offset))
-          (text-property-at marker key 0)))))
+          (text-property-at temp-marker key 0)))))
 
 (defun put-text-property (start-marker end-marker key value)
   (assert (eq (marker-buffer start-marker)
@@ -201,6 +201,36 @@
                           (marker-point start-marker)
                           (marker-point end-marker)
                           key))
+
+(defun next-single-property-change (marker property-name &optional limit-marker)
+  (let ((first-value (text-property-at marker property-name))
+        (start-marker (copy-marker marker :temporary))
+        moved)
+    (loop
+      (multiple-value-setq (marker moved) (character-offset marker 1))
+      (unless moved
+        (move-point marker start-marker)
+        (return nil))
+      (unless (eq first-value (text-property-at marker property-name))
+        (return marker))
+      (when (and limit-marker (marker<= limit-marker marker))
+        (move-point marker start-marker)
+        (return nil)))))
+
+(defun previous-single-property-change (marker property-name &optional limit-marker)
+  (let ((first-value (text-property-at marker property-name -1))
+        (start-marker (copy-marker marker :temporary))
+        moved)
+    (loop
+      (unless (eq first-value (text-property-at marker property-name -1))
+        (return marker))
+      (multiple-value-setq (marker moved) (character-offset marker -1))
+      (unless moved
+        (move-point marker start-marker)
+        (return nil))
+      (when (and limit-marker (marker>= limit-marker marker))
+        (move-point marker start-marker)
+        (return nil)))))
 
 (defun line-string-at (marker)
   (buffer-line-string (marker-buffer marker)

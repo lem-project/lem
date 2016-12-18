@@ -293,7 +293,7 @@
     (setf (buffer-point-marker buffer)
           (make-marker buffer (make-min-point)
                        :name "buffer-point"
-                       :kind :left-inserting))
+                       :kind :right-inserting))
     (add-buffer buffer)
     buffer))
 

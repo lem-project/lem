@@ -85,7 +85,7 @@
    (back-to-indentation)
    (let ((attribute (preceding-property :attribute)))
      (cond ((eq attribute *syntax-comment-attribute*)
-            (backward-search-property-start :attribute)
+            (lem::previous-single-property-change (current-marker) :attribute)
             (1+ (current-column)))
            ((eq attribute *syntax-string-attribute*)
             nil)

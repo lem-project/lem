@@ -35,8 +35,6 @@
           insert-string-with-attribute
           following-property
           preceding-property
-          forward-search-property-end
-          backward-search-property-start
           current-column
           move-to-column
           point-to-offset
@@ -394,32 +392,6 @@
   (save-excursion
     (shift-position -1)
     (%syntax-pos-property (current-charpos) property-name)))
-
-(defun forward-search-property-end (property-name &optional limit)
-  (let ((first-value (following-property property-name))
-        (first-point (current-point)))
-    (loop
-      (unless (eq first-value (following-property property-name))
-        (return t))
-      (unless (shift-position 1)
-        (setf (current-point) first-point)
-        (return nil))
-      (when (and limit (point<= limit (current-point)))
-        (setf (current-point) first-point)
-        (return nil)))))
-
-(defun backward-search-property-start (property-name &optional limit)
-  (let ((first-value (preceding-property property-name))
-        (first-point (current-point)))
-    (loop
-      (unless (eq first-value (preceding-property property-name))
-        (return t))
-      (unless (shift-position -1)
-        (setf (current-point) first-point)
-        (return nil))
-      (when (and limit (point<= (current-point) limit))
-        (setf (current-point) first-point)
-        (return nil)))))
 
 (defun current-column ()
   (string-width (current-line-string)

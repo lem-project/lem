@@ -483,7 +483,7 @@
     (unless (and (not (eq *syntax-comment-attribute* (preceding-property :attribute)))
                  (eq *syntax-comment-attribute* (following-property :attribute)))
       (return t))
-    (unless (forward-search-property-end :attribute)
+    (unless (next-single-property-change (current-marker) :attribute)
       (return nil))))
 
 (defun skip-space-and-comment-backward ()
@@ -492,8 +492,7 @@
     (unless (and (not (eq *syntax-comment-attribute* (following-property :attribute)))
                  (eq *syntax-comment-attribute* (preceding-property :attribute)))
       (return t))
-    (unless (backward-search-property-start
-             :attribute)
+    (unless (previous-single-property-change (current-marker) :attribute)
       (return nil))))
 
 (defun symbol-string-at-point ()

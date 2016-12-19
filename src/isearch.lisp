@@ -111,14 +111,14 @@
   (skip-chars-forward #'syntax-symbol-char-p)
   (skip-chars-backward #'syntax-symbol-char-p t)
   (skip-chars-backward #'syntax-symbol-char-p)
-  (let ((start (current-point)))
+  (lem::with-marker ((start (current-marker)))
     (skip-chars-forward #'syntax-symbol-char-p)
-    (let ((end (current-point)))
+    (lem::with-marker ((end (current-marker)))
       (isearch-start "ISearch Symbol: "
                      #'search-forward-symbol
                      #'search-forward-symbol
                      #'search-backward-symbol
-                     (region-string start end)))))
+                     (lem::points-to-string start end)))))
 
 (defun isearch-start (prompt
                       search-func
@@ -129,7 +129,7 @@
   (setq *isearch-prompt* prompt)
   (setq *isearch-string* initial-string)
   (setq *isearch-search-function* search-func)
-  (setq *isearch-start-point* (current-point))
+  (setq *isearch-start-point* (copy-marker (current-marker) :temporary))
   (setq *isearch-search-forward-function* search-forward-function)
   (setq *isearch-search-backward-function* search-backward-function)
   (isearch-update-display)
@@ -137,7 +137,8 @@
 
 (define-key *isearch-keymap* (kbd "C-g") 'isearch-abort)
 (define-command isearch-abort () ()
-  (point-set *isearch-start-point*)
+  (lem::move-point (current-marker) *isearch-start-point*)
+  (isearch-reset-buffer)
   t)
 
 (define-key *isearch-keymap* (kbd "C-h") 'isearch-delete-char)

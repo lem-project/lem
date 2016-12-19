@@ -3,7 +3,7 @@
 (export '(*find-directory-function*
           expand-file-name
           insert-file-contents
-          get-file-buffer
+          find-file-buffer
           write-to-file
           changed-disk-p))
 
@@ -93,20 +93,9 @@
             (cons external-format end-of-line))
       marker)))
 
-(defun file-open-create-buffer (buffer-name filename)
-  (setf filename (expand-file-name filename))
-  (let ((buffer (make-buffer buffer-name
-                             :filename filename
-                             :enable-undo-p nil)))
-    (when (probe-file filename)
-      (insert-file-contents (buffers-start buffer)
-                            filename)
-      (buffer-unmark buffer))
-    (buffer-enable-undo buffer)
-    (update-changed-disk-date buffer)
-    buffer))
-
-(defun get-file-buffer (filename)
+(defun find-file-buffer (filename)
+  (when (pathnamep filename)
+    (setf filename (namestring filename)))
   (setf filename (expand-file-name filename))
   (cond ((uiop:directory-pathname-p filename)
          (if *find-directory-function*
@@ -115,10 +104,17 @@
         ((find filename (buffer-list) :key #'buffer-filename :test #'equal))
         (t
          (let* ((name (file-namestring filename))
-                (buffer (file-open-create-buffer (if (get-buffer name)
-                                                     (uniq-buffer-name name)
-                                                     name)
-                                                 filename)))
+                (buffer (make-buffer name
+                                     :filename (if (get-buffer name)
+                                                   (uniq-buffer-name name)
+                                                   filename)
+                                     :enable-undo-p nil)))
+           (when (probe-file filename)
+             (insert-file-contents (buffers-start buffer)
+                                   filename)
+             (buffer-unmark buffer))
+           (buffer-enable-undo buffer)
+           (update-changed-disk-date buffer)
            (values buffer t)))))
 
 (defun write-to-file (buffer filename)

@@ -12,7 +12,7 @@
   buffer-name
   temp-marker
   (elements (make-array 0 :adjustable t :fill-pointer 0))
-  (index 0))
+  (index -1))
 
 (defun call-with-sourcelist (buffer-name function)
   (let ((buffer (get-buffer-create buffer-name))

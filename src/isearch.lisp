@@ -261,47 +261,46 @@
     (setq *replace-after-string* after)
     (list before after)))
 
-(defun query-replace-internal (before
-                               after
-                               search-forward-function
-                               search-backward-function)
+(defun query-replace-internal-body (cur-marker goal-marker before after)
+  (let ((pass-through nil))
+    (loop
+      (when (or (not (funcall *isearch-search-forward-function* cur-marker before))
+                (and goal-marker (marker< goal-marker cur-marker)))
+        (when goal-marker
+          (lem::move-point (current-marker) goal-marker))
+        (return))
+      (lem::with-marker ((end cur-marker))
+        (isearch-update-buffer cur-marker before)
+        (funcall *isearch-search-backward-function* cur-marker before)
+        (lem::with-marker ((start cur-marker))
+          (loop :for c := (unless pass-through
+                            (minibuf-read-char (format nil "Replace ~s with ~s" before after)))
+                :do (cond
+                      ((or pass-through (char= c #\y))
+                       (lem::delete-between-points start end)
+                       (lem::insert-string-at cur-marker after)
+                       (return))
+                      ((char= c #\n)
+                       (lem::move-point cur-marker end)
+                       (return))
+                      ((char= c #\!)
+                       (setf pass-through t)))))))))
+
+(defun query-replace-internal (before after search-forward-function search-backward-function)
   (unwind-protect
       (let ((*isearch-search-forward-function* search-forward-function)
             (*isearch-search-backward-function* search-backward-function)
-            goal-point)
+            (buffer (current-buffer)))
         (when (and before after)
-          (when (buffer-mark-p)
-            (let ((begin (region-beginning))
-                  (end (region-end)))
-              (setq goal-point end)
-              (point-set begin)))
-          (do ((start-point)
-               (end-point)
-               (pass-through nil))
-              ((or (null (funcall search-forward-function (current-marker) before))
-                   (and goal-point (point< goal-point (current-point))))
-               (when goal-point
-                 (point-set goal-point)))
-            (setq end-point (current-point))
-            (isearch-update-buffer (current-marker) before)
-            (funcall search-backward-function (current-marker) before)
-            (setq start-point (current-point))
-            ;(unless pass-through (redraw-display))
-            (loop
-              (let ((c (unless pass-through
-                         (minibuf-read-char
-                          (format nil "Replace ~s with ~s" before after)))))
-                (cond
-                  ((or pass-through (char= c #\y))
-                   (delete-region start-point end-point)
-                   (insert-string after)
-                   (return))
-                  ((char= c #\n)
-                   (point-set end-point)
-                   (return))
-                  ((char= c #\!)
-                   (setq pass-through t)))))))
-        t)
+          (if (buffer-mark-p buffer)
+              (lem::with-marker ((start (lem::buffer-point-marker buffer) :right-inserting)
+                                 (end (lem::buffer-mark-marker buffer) :right-inserting))
+                (when (marker< end start)
+                  (rotatef start end))
+                (query-replace-internal-body start end before after))
+              (query-replace-internal-body (lem::buffer-point-marker buffer)
+                                           nil
+                                           before after))))
     (isearch-reset-buffer)))
 
 (define-key *global-keymap* (kbd "M-%") 'query-replace)

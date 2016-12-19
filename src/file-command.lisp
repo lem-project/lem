@@ -1,7 +1,6 @@
 (in-package :lem)
 
-(export '(*auto-mode-alist*
-          find-file
+(export '(find-file
           read-file
           save-file
           changefile-name
@@ -10,51 +9,6 @@
           save-some-buffers
           revert-buffer
           change-directory))
-
-(defvar *auto-mode-alist* nil)
-
-(defun prepare-auto-mode ()
-  (let* ((filename (file-namestring (buffer-filename)))
-         (elt (find-if #'(lambda (elt)
-                           (ppcre:scan (car elt) filename))
-                       *auto-mode-alist*)))
-    (when elt
-      (funcall (cdr elt)))))
-
-(defun scan-line-property-list (str)
-  (ppcre:do-register-groups (var val)
-    ("([a-zA-Z0-9-_]+)\\s*:\\s*([^ ;]+);?" str)
-    (cond ((string= (string-downcase var) "mode")
-           (let ((mode (find-mode-from-name val)))
-             (when mode
-               (funcall mode))))
-          (t
-           (setf (get-bvar :file-property-list)
-                 (cons (cons (string-downcase var) val)
-                       (get-bvar :file-property-list)))))))
-
-(defun scan-file-property-list ()
-  (save-excursion
-    (beginning-of-buffer)
-    (when (looking-at-line "#!")
-      (forward-line 1))
-    (loop :until (eobp) :do
-      (multiple-value-bind (result group-strings)
-          (ppcre:scan-to-strings "-\\*-(.*)-\\*-" (current-line-string))
-        (when result
-          (scan-line-property-list (aref group-strings 0))
-          (return)))
-      (if (blank-line-p)
-          (forward-line 1)
-          (return)))))
-
-(defun find-file-1 (buffer new-buffer-p)
-  (switch-to-buffer buffer)
-  (when (and new-buffer-p
-             (uiop:file-pathname-p (buffer-filename buffer)))
-    (prepare-auto-mode)
-    (scan-file-property-list)
-    (run-hooks 'find-file-hook)))
 
 (defun expand-files* (filename)
   (setf filename (expand-file-name filename))
@@ -67,9 +21,7 @@
   (when (pathnamep filename)
     (setf filename (namestring filename)))
   (dolist (pathname (expand-files* filename))
-    (multiple-value-bind (buffer new-buffer-p)
-        (find-file-buffer (namestring pathname))
-      (find-file-1 buffer new-buffer-p)))
+    (switch-to-buffer (find-file-buffer (namestring pathname))))
   t)
 
 (define-key *global-keymap* (kbd "C-x C-r") 'read-file)
@@ -78,14 +30,11 @@
   (when (pathnamep filename)
     (setf filename (namestring filename)))
   (dolist (pathname (expand-files* filename))
-    (multiple-value-bind (buffer new-buffer-p)
-        (find-file-buffer (namestring pathname))
-      (find-file-1 buffer new-buffer-p)
-      (setf (buffer-read-only-p buffer) t)))
+    (switch-to-buffer (find-file-buffer (namestring pathname))))
   t)
 
 (defun save-file-1 ()
-  (scan-file-property-list)
+  (scan-file-property-list (current-buffer))
   (run-hooks 'before-save-hook)
   (write-to-file (current-buffer) (buffer-filename))
   (message "Wrote ~A" (buffer-filename))

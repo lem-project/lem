@@ -57,18 +57,18 @@
                (points-to-string (line-start start-marker)
                                  (line-end (line-offset end-marker nlines))))))
       (search-step marker
-                    (lambda (marker)
-                      (search* string
-                               (take-string marker)
-                               :start2 (marker-charpos marker)))
-                    (lambda (marker)
-                      (search* string (take-string marker)))
-                    (lambda (marker)
-                      (line-offset marker 1))
-                    (lambda (marker charpos)
-                      (character-offset (line-start marker)
-                                        (+ charpos (length string))))
-                    (search-forward-endp-function limit-marker)))))
+                   (lambda (marker)
+                     (search* string
+                              (take-string marker)
+                              :start2 (marker-charpos marker)))
+                   (lambda (marker)
+                     (search* string (take-string marker)))
+                   (lambda (marker)
+                     (nth-value 1 (line-offset marker 1)))
+                   (lambda (marker charpos)
+                     (character-offset (line-start marker)
+                                       (+ charpos (length string))))
+                   (search-forward-endp-function limit-marker)))))
 
 (defun search-backward (marker string &optional limit-marker)
   (let ((nlines (count #\newline string)))
@@ -91,7 +91,7 @@
                      (lambda (marker)
                        (search-from-end marker nil))
                      (lambda (marker)
-                       (line-offset marker -1))
+                       (nth-value 1 (line-offset marker -1)))
                      (lambda (marker charpos)
                        (unless (zerop nlines)
                          (line-offset marker (- nlines)))
@@ -102,51 +102,51 @@
   (let ((scanner (ignore-errors (ppcre:create-scanner regex))))
     (when scanner
       (search-step marker
-                    (lambda (marker)
-                      (multiple-value-bind (start end)
-                          (ppcre:scan scanner
-                                      (line-string-at marker)
-                                      :start (marker-charpos marker))
-                        (when (and start
-                                   (if (= start end)
-                                       (< (marker-charpos marker) start)
-                                       (<= (marker-charpos marker) start)))
-                          (if (= start end)
-                              (1+ end)
-                              end))))
-                    (lambda (marker)
-                      (nth-value 1
-                                 (ppcre:scan scanner
-                                             (line-string-at marker))))
-                    (lambda (marker)
-                      (line-offset marker 1))
-                    (lambda (marker charpos)
-                      (character-offset (line-start marker) charpos))
-                    (search-forward-endp-function limit-marker)))))
+                   (lambda (marker)
+                     (multiple-value-bind (start end)
+                         (ppcre:scan scanner
+                                     (line-string-at marker)
+                                     :start (marker-charpos marker))
+                       (when (and start
+                                  (if (= start end)
+                                      (< (marker-charpos marker) start)
+                                      (<= (marker-charpos marker) start)))
+                         (if (= start end)
+                             (1+ end)
+                             end))))
+                   (lambda (marker)
+                     (nth-value 1
+                                (ppcre:scan scanner
+                                            (line-string-at marker))))
+                   (lambda (marker)
+                     (nth-value 1 (line-offset marker 1)))
+                   (lambda (marker charpos)
+                     (character-offset (line-start marker) charpos))
+                   (search-forward-endp-function limit-marker)))))
 
 (defun search-backward-regexp (marker regex &optional limit-marker)
   (let ((scanner (ignore-errors (ppcre:create-scanner regex))))
     (when scanner
       (search-step marker
-                    (lambda (marker)
-                      (let (pos)
-                        (ppcre:do-scans (start end reg-starts reg-ends scanner
-                                               (line-string-at marker) nil
-                                               :end (marker-charpos marker))
-                          (setf pos start))
-                        pos))
-                    (lambda (marker)
-                      (let (pos)
-                        (ppcre:do-scans (start end reg-starts reg-ends scanner
-                                               (line-string-at marker) nil
-                                               :start (marker-charpos marker))
-                          (setf pos start))
-                        pos))
-                    (lambda (marker)
-                      (line-offset marker -1))
-                    (lambda (marker charpos)
-                      (character-offset (line-start marker) charpos))
-                    (search-backward-endp-function limit-marker)))))
+                   (lambda (marker)
+                     (let (pos)
+                       (ppcre:do-scans (start end reg-starts reg-ends scanner
+                                              (line-string-at marker) nil
+                                              :end (marker-charpos marker))
+                         (setf pos start))
+                       pos))
+                   (lambda (marker)
+                     (let (pos)
+                       (ppcre:do-scans (start end reg-starts reg-ends scanner
+                                              (line-string-at marker) nil
+                                              :start (marker-charpos marker))
+                         (setf pos start))
+                       pos))
+                   (lambda (marker)
+                     (nth-value 1 (line-offset marker -1)))
+                   (lambda (marker charpos)
+                     (character-offset (line-start marker) charpos))
+                   (search-backward-endp-function limit-marker)))))
 
 (defun search-symbol (string name &key (start 0) (end (length string)) from-end)
   (loop :while (< start end)
@@ -161,33 +161,34 @@
               (setf start (1+ (or pos start))))))
 
 (defun search-forward-symbol (marker name &optional limit-marker)
-  (search-step marker
-                (lambda (marker)
-                  (cdr (search-symbol (line-string-at marker) name :start (marker-charpos marker))))
-                (lambda (marker)
-                  (cdr (search-symbol (line-string-at marker) name)))
-                (lambda (marker)
-                  (line-offset marker 1))
-                (lambda (marker charpos)
-                  (character-offset (line-start marker) charpos))
-                (search-forward-endp-function limit-marker)))
+  (let ((charpos (marker-charpos marker)))
+    (search-step marker
+                 (lambda (marker)
+                   (cdr (search-symbol (line-string-at marker) name :start charpos)))
+                 (lambda (marker)
+                   (cdr (search-symbol (line-string-at marker) name)))
+                 (lambda (marker)
+                   (nth-value 1 (line-offset marker 1)))
+                 (lambda (marker charpos)
+                   (line-offset marker 0 charpos))
+                 (search-forward-endp-function limit-marker))))
 
 (defun search-backward-symbol (marker name &optional limit-marker)
   (search-step marker
-                (lambda (marker)
-                  (car (last (search-symbol (line-string-at marker)
-                                             name
-                                             :end (marker-charpos marker)
-                                             :from-end t))))
-                (lambda (marker)
-                  (car (last (search-symbol (line-string-at marker)
-                                             name
-                                             :from-end t))))
-                (lambda (marker)
-                  (line-offset marker -1))
-                (lambda (marker charpos)
-                  (character-offset (line-start marker) charpos))
-                (search-backward-endp-function limit-marker)))
+               (lambda (marker)
+                 (car (search-symbol (line-string-at marker)
+                                     name
+                                     :end (marker-charpos marker)
+                                     :from-end t)))
+               (lambda (marker)
+                 (car (search-symbol (line-string-at marker)
+                                     name
+                                     :from-end t)))
+               (lambda (marker)
+                 (nth-value 1 (line-offset marker -1)))
+               (lambda (marker charpos)
+                 (line-offset marker 0 charpos))
+               (search-backward-endp-function limit-marker)))
 
 (defun looking-at-line (regex &key (start nil startp) (end nil endp))
   (macrolet ((m (&rest args)

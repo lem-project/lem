@@ -407,7 +407,7 @@
   (save-excursion
     (beginning-of-line)
     (when (eq *syntax-string-attribute*
-              (text-property-at (current-marker) :attribute -1))
+              (lem::text-property-at (current-marker) :attribute -1))
       (return-from lisp-calc-indent nil))
     (when (save-excursion (and (backward-sexp 1 t) (bolp)))
       (return-from lisp-calc-indent 0))

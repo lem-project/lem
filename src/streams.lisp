@@ -4,7 +4,6 @@
           make-buffer-input-stream
           buffer-output-stream
           make-buffer-output-stream
-          buffer-output-stream-point
           minibuffer-input-stream
           make-minibuffer-input-stream
           editor-io-stream
@@ -87,9 +86,6 @@
   (declare (ignore abort))
   (delete-marker (buffer-stream-marker stream))
   t)
-
-(defun buffer-output-stream-point (stream)
-  (marker-point (buffer-stream-marker stream)))
 
 (defmethod stream-element-type ((stream buffer-output-stream))
   'line)

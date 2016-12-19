@@ -578,28 +578,31 @@
   condition)
 
 (defun %lisp-eval-internal (x marker &optional update-point-p)
-  (with-open-stream (io (make-editor-io-stream marker t))
-    (let* ((error-p)
-           (results)
-           (*terminal-io* io)
-           (*standard-output* io)
-           (*standard-input* io)
-           (*error-output* io)
-           (*query-io* io)
-           (*debug-io* io)
-           (*trace-output* io))
-      (handler-case-bind (#'lisp-debugger
-                          (setq results
-                                (restart-case
-                                    (multiple-value-list (eval x))
-                                  (lem::editor-abort () :report "Abort.")))
-                          (when update-point-p
-                            (point-set
-                             (buffer-output-stream-point io))))
-                         ((condition)
-                          (setq error-p t)
-                          (setq results (list condition))))
-      (values results error-p))))
+  (lem::with-marker ((cur-marker marker
+                                 (if update-point-p
+                                     :left-inserting
+                                     :right-inserting)))
+    (with-open-stream (io (make-editor-io-stream cur-marker t))
+      (let* ((error-p)
+             (results)
+             (*terminal-io* io)
+             (*standard-output* io)
+             (*standard-input* io)
+             (*error-output* io)
+             (*query-io* io)
+             (*debug-io* io)
+             (*trace-output* io))
+        (handler-case-bind (#'lisp-debugger
+                            (setq results
+                                  (restart-case
+                                      (multiple-value-list (eval x))
+                                    (lem::editor-abort () :report "Abort.")))
+                            (when update-point-p
+                              (lem::move-point marker cur-marker)))
+                           ((condition)
+                            (setq error-p t)
+                            (setq results (list condition))))
+        (values results error-p)))))
 
 (defun %lisp-eval (x marker
                      &optional update-point-p)
@@ -1016,11 +1019,12 @@
                             (stop-timer *lisp-timer*)))))
 
 (defun lisp-print-values (values)
-  (with-open-stream (out (make-buffer-output-stream (current-marker)))
-    (let ((*package* (lisp-current-package)))
-      (dolist (v values)
-        (pprint v out)))
-    (point-set (buffer-output-stream-point out))))
+  (lem::with-marker ((marker (current-marker) :left-inserting))
+    (with-open-stream (out (make-buffer-output-stream marker))
+      (let ((*package* (lisp-current-package)))
+        (dolist (v values)
+          (pprint v out))))
+    (lem::move-point (current-marker) marker)))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-j") 'lisp-eval-print-last-sexp)
 (define-command lisp-eval-print-last-sexp () ()

@@ -227,7 +227,8 @@
                                        nil)))))
 
 (defun disp-reset-lines (screen buffer start-linum)
-  (lem::buffer-update-mark-overlay buffer)
+  (when (eq buffer (current-buffer))
+    (lem::buffer-update-mark-overlay buffer))
   (let ((end-linum (+ start-linum (screen-height screen)))
         (disp-index 0))
     (loop

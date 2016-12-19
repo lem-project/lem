@@ -485,21 +485,14 @@
 
 (defun buffer-update-mark-overlay (buffer)
   (when (buffer-mark-p buffer)
-    (let (start
-          end
-          (mark-point (marker-point (buffer-mark-marker buffer)))
-          (cur-point (current-point)))
-      (if (point< mark-point cur-point)
-          (setq start mark-point
-                end cur-point)
-          (setq start cur-point
-                end mark-point))
+    (with-marker ((start (buffer-point-marker buffer))
+                  (end (buffer-mark-marker buffer)))
+      (when (marker< end start)
+        (rotatef start end))
       (when (buffer-mark-overlay buffer)
         (delete-overlay (buffer-mark-overlay buffer)))
       (setf (buffer-mark-overlay buffer)
-            (make-overlay (make-marker buffer start :kind :temporary)
-                          (make-marker buffer end :kind :temporary)
-                          *mark-overlay-attribute*)))))
+            (make-overlay start end *mark-overlay-attribute*)))))
 
 (defun check-read-only-buffer (buffer)
   (when (buffer-read-only-p buffer)

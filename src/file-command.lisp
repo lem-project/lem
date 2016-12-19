@@ -111,9 +111,8 @@
 
 (define-key *global-keymap* (kbd "C-x C-i") 'insert-file)
 (define-command insert-file (filename) ("fInsert file: ")
-  (point-set (insert-file-contents (current-buffer)
-                                   (current-point)
-                                   filename))
+  (insert-file-contents (current-marker)
+                        filename)
   t)
 
 (define-key *global-keymap* (kbd "C-x s") 'save-some-buffers)
@@ -137,8 +136,7 @@
                  (minibuf-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))))
     (with-buffer-read-only (current-buffer) nil
       (buffer-erase)
-      (insert-file-contents (current-buffer)
-                            (current-point)
+      (insert-file-contents (current-marker)
                             (buffer-filename))
       (buffer-unmark (current-buffer))
       (update-changed-disk-date (current-buffer))

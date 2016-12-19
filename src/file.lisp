@@ -69,10 +69,10 @@
   (declare (ignore pathnaem))
   (values :utf-8 :lf))
 
-(defun insert-file-contents (buffer point filename)
+(defun insert-file-contents (marker filename)
   (multiple-value-bind (external-format end-of-line)
       (detect-external-format-from-file filename)
-    (with-open-stream (output (make-buffer-output-stream (make-marker buffer point :kind :temporary) nil))
+    (with-open-stream (output (make-buffer-output-stream marker nil))
       (with-open-file (in filename :external-format external-format)
         (loop
           (multiple-value-bind (str eof-p)
@@ -89,9 +89,9 @@
                             (< 0 (length str)))
                    (setf end (1- (length str))))
                  (write-line str output :end end)))))))
-      (setf (buffer-external-format buffer)
+      (setf (buffer-external-format (marker-buffer marker))
             (cons external-format end-of-line))
-      (buffer-output-stream-point output))))
+      marker)))
 
 (defun file-open-create-buffer (buffer-name filename)
   (setf filename (expand-file-name filename))
@@ -99,8 +99,7 @@
                              :filename filename
                              :enable-undo-p nil)))
     (when (probe-file filename)
-      (insert-file-contents buffer
-                            (point-min buffer)
+      (insert-file-contents (buffers-start buffer)
                             filename)
       (buffer-unmark buffer))
     (buffer-enable-undo buffer)

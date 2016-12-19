@@ -103,25 +103,37 @@
 ;;; 同じバッファ同士かの比較は保留
 
 (defun marker= (marker1 marker2)
+  (assert (eq (marker-buffer marker1)
+              (marker-buffer marker2)))
   (point= (marker-point marker1)
           (marker-point marker2)))
 
 (defun marker/= (marker1 marker2)
+  (assert (eq (marker-buffer marker1)
+              (marker-buffer marker2)))
   (not (point= (marker-point marker1)
                (marker-point marker2))))
 
 (defun marker< (marker1 marker2)
+  (assert (eq (marker-buffer marker1)
+              (marker-buffer marker2)))
   (point< (marker-point marker1)
           (marker-point marker2)))
 
 (defun marker<= (marker1 marker2)
+  (assert (eq (marker-buffer marker1)
+              (marker-buffer marker2)))
   (point<= (marker-point marker1)
            (marker-point marker2)))
 
 (defun marker> (marker1 marker2)
+  (assert (eq (marker-buffer marker1)
+              (marker-buffer marker2)))
   (point> (marker-point marker1)
           (marker-point marker2)))
 
 (defun marker>= (marker1 marker2)
+  (assert (eq (marker-buffer marker1)
+              (marker-buffer marker2)))
   (point>= (marker-point marker1)
            (marker-point marker2)))

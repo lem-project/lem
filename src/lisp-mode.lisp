@@ -577,8 +577,8 @@
         (lem::editor-abort ()))))
   condition)
 
-(defun %lisp-eval-internal (x output-buffer point &optional update-point-p)
-  (with-open-stream (io (make-editor-io-stream output-buffer point t))
+(defun %lisp-eval-internal (x marker &optional update-point-p)
+  (with-open-stream (io (make-editor-io-stream marker t))
     (let* ((error-p)
            (results)
            (*terminal-io* io)
@@ -601,25 +601,22 @@
                           (setq results (list condition))))
       (values results error-p))))
 
-(defun %lisp-eval (x output-buffer point
+(defun %lisp-eval (x marker
                      &optional update-point-p)
-  (unless point (setq point (point-min)))
   (lem::call-with-allow-interrupt
    t
    (lambda ()
      (multiple-value-bind (results error-p)
          (%lisp-eval-internal x
-                              output-buffer
-                              point
+                              marker
                               update-point-p)
        (values results error-p)))))
 
-(defun %lisp-eval-string (string output-buffer point
+(defun %lisp-eval-string (string marker
                                  &optional
                                  update-point-p (package "COMMON-LISP-USER"))
   (%lisp-eval `(cl:progn ,@(%string-to-exps string package))
-              output-buffer
-              point
+              marker
               update-point-p))
 
 (define-key *global-keymap* (kbd "M-:") 'lisp-eval-string)
@@ -630,7 +627,8 @@
     (change-buffer-mode output-buffer 'lisp-mode)
     (buffer-unmark output-buffer)
     (message "~{~s~^,~}"
-             (%lisp-eval-string string output-buffer nil nil
+             (%lisp-eval-string string (lem::buffers-start output-buffer)
+                                nil
                                 (lisp-current-package)))
     (when (buffer-modified-p output-buffer)
       (pop-up-typeout-window output-buffer nil))))
@@ -700,7 +698,7 @@
                  (progn
                    (forward-sexp 1)
                    (current-point)))
-  (with-open-stream (stream (make-buffer-output-stream (current-buffer) (current-point)))
+  (with-open-stream (stream (make-buffer-output-stream (current-marker)))
     (pprint expr stream))
   (read-from-string
    (region-string (point-min)
@@ -1018,7 +1016,7 @@
                             (stop-timer *lisp-timer*)))))
 
 (defun lisp-print-values (values)
-  (with-open-stream (out (make-buffer-output-stream (current-buffer) (current-point)))
+  (with-open-stream (out (make-buffer-output-stream (current-marker)))
     (let ((*package* (lisp-current-package)))
       (dolist (v values)
         (pprint v out)))
@@ -1031,7 +1029,7 @@
    #'(lambda (string)
        (unless (bolp) (insert-newline))
        (setq - (first (%string-to-exps string (lisp-current-package))))
-       (let ((values (%lisp-eval - (current-buffer) (current-point) t)))
+       (let ((values (%lisp-eval - (current-marker) t)))
          (setq +++ ++ /// //     *** (car ///)
                ++  +  //  /      **  (car //)
                +   -  /   values *   (car /))
@@ -1075,7 +1073,7 @@
 (defun lisp-repl-confirm (string)
   (setq - (car (%string-to-exps string (lisp-current-package))))
   (multiple-value-bind (values error-p)
-      (%lisp-eval - (current-buffer) (current-point) t)
+      (%lisp-eval - (current-marker) t)
     (declare (ignore error-p))
     (setq +++ ++ /// //     *** (car ///)
           ++  +  //  /      **  (car //)

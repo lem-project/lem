@@ -760,8 +760,7 @@
 (defun write-string-to-repl (string)
   (let ((buffer (repl-buffer)))
     (when buffer
-      (with-open-stream (stream (make-buffer-output-stream buffer
-                                                           (point-max buffer)))
+      (with-open-stream (stream (make-buffer-output-stream (buffers-end buffer)))
         (princ string stream))
       (lem.listener-mode::listener-update-marker (point-max buffer))
       (when (eq buffer (current-buffer))
@@ -803,8 +802,7 @@
 
 (defun log-message (message)
   (let ((buffer (get-buffer-create "*slime-events*")))
-    (with-open-stream (stream (make-buffer-output-stream buffer
-                                                         (point-max buffer)))
+    (with-open-stream (stream (make-buffer-output-stream (buffers-end buffer)))
       (print message stream))))
 
 (defvar *unknown-keywords* nil)

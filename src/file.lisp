@@ -72,7 +72,7 @@
 (defun insert-file-contents (buffer point filename)
   (multiple-value-bind (external-format end-of-line)
       (detect-external-format-from-file filename)
-    (with-open-stream (output (make-buffer-output-stream buffer point nil))
+    (with-open-stream (output (make-buffer-output-stream (make-marker buffer point :kind :temporary) nil))
       (with-open-file (in filename :external-format external-format)
         (loop
           (multiple-value-bind (str eof-p)

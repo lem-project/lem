@@ -21,7 +21,7 @@
           (buffer-erase buffer))
         (typeout-mode t)
         (when fn
-          (with-open-stream (out (make-buffer-output-stream buffer (current-point)))
+          (with-open-stream (out (make-buffer-output-stream (buffer-point-marker buffer)))
             (funcall fn out)))))
     (when focus
       (setf (current-window) window))

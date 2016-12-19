@@ -59,8 +59,7 @@
     (let ((msg (apply #'format nil string args)))
       (let ((buffer (get-buffer-create "*Messages*")))
         (with-open-stream (stream (make-buffer-output-stream
-                                   buffer
-                                   (point-max buffer)))
+                                   (buffers-end buffer)))
           (fresh-line stream)
           (princ msg stream))))))
 

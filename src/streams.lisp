@@ -71,19 +71,17 @@
     :initarg :marker
     :accessor buffer-stream-marker)))
 
-(defun make-buffer-stream-instance (class-name buffer
+(defun make-buffer-stream-instance (class-name marker
                                                &optional
-                                               point
                                                interactive-update-p)
   (make-instance class-name
-                 :marker (make-marker buffer point :kind :left-inserting)
+                 :marker (copy-marker marker :left-inserting)
                  :interactive-update-p interactive-update-p))
 
-(defun make-buffer-output-stream (&optional (buffer (current-buffer))
-                                            (point (make-min-point))
+(defun make-buffer-output-stream (&optional (marker (current-marker))
                                             interactive-update-p)
   (make-buffer-stream-instance 'buffer-output-stream
-                               buffer point interactive-update-p))
+                               marker interactive-update-p))
 
 (defmethod trivial-gray-streams::close ((stream buffer-output-stream) &key abort)
   (declare (ignore abort))
@@ -215,6 +213,6 @@
 (defclass editor-io-stream (buffer-output-stream minibuffer-input-stream)
   ())
 
-(defun make-editor-io-stream (buffer &optional point interactive-update-p)
+(defun make-editor-io-stream (marker &optional interactive-update-p)
   (make-buffer-stream-instance 'editor-io-stream
-                               buffer point interactive-update-p))
+                               marker interactive-update-p))

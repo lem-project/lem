@@ -293,11 +293,14 @@
             (buffer (current-buffer)))
         (when (and before after)
           (if (buffer-mark-p buffer)
-              (lem::with-marker ((start (lem::buffer-point-marker buffer) :right-inserting)
-                                 (end (lem::buffer-mark-marker buffer) :right-inserting))
-                (when (marker< end start)
-                  (rotatef start end))
-                (query-replace-internal-body start end before after))
+              (lem::with-marker ((mark-marker (lem::buffer-mark-marker buffer) :right-inserting))
+                (if (marker< mark-marker (lem::buffer-point-marker buffer))
+                    (query-replace-internal-body mark-marker
+                                                 (lem::buffer-point-marker buffer)
+                                                 before after)
+                    (query-replace-internal-body (lem::buffer-point-marker buffer)
+                                                 mark-marker
+                                                 before after)))
               (query-replace-internal-body (lem::buffer-point-marker buffer)
                                            nil
                                            before after))))

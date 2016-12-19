@@ -159,9 +159,10 @@
 
 (define-key *completion-mode-keymap* (kbd "C-m") 'completion-select)
 (define-command completion-select () ()
-  (let (str)
-    (with-current-window *completion-window*
-      (setf str (current-line-string)))
+  (let ((str
+         (line-string-at
+          (buffer-point-marker
+           (window-buffer *completion-window*)))))
     (delete-char (- (length *completion-last-string*)) nil)
     (setf *completion-last-string* str)
     (insert-string str)

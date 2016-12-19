@@ -374,7 +374,7 @@
   (check-connection)
   (when (buffer-modified-p (current-buffer))
     (when (minibuf-y-or-n-p "Save file")
-      (save-file)))
+      (save-buffer)))
   (let ((file (buffer-filename (current-buffer))))
     (refresh-output-buffer)
     (eval-async `(swank:compile-file-for-emacs ,file t)

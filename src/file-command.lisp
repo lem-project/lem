@@ -2,7 +2,7 @@
 
 (export '(find-file
           read-file
-          save-file
+          save-buffer
           changefile-name
           write-file
           insert-file
@@ -33,30 +33,24 @@
     (switch-to-buffer (find-file-buffer (namestring pathname))))
   t)
 
-(defun save-file-1 ()
-  (scan-file-property-list (current-buffer))
-  (run-hooks 'before-save-hook)
-  (write-to-file (current-buffer) (buffer-filename))
-  (message "Wrote ~A" (buffer-filename))
-  (run-hooks 'after-save-hook)
-  t)
-
-(define-key *global-keymap* (kbd "C-x C-s") 'save-file)
-(define-command save-file () ()
+(define-key *global-keymap* (kbd "C-x C-s") 'save-buffer)
+(define-command save-buffer () ()
   (let ((buffer (current-buffer)))
     (cond
-     ((null (buffer-modified-p buffer))
-      nil)
-     ((not (buffer-have-file-p buffer))
-      (message "No file name")
-      nil)
-     (t
-      (save-file-1)))))
+      ((null (buffer-modified-p buffer))
+       nil)
+      ((not (buffer-have-file-p buffer))
+       (message "No file name")
+       nil)
+      (t
+       (save-buffer-internal)
+       (message "Wrote ~A" (buffer-filename))))))
 
 (define-key *global-keymap* (kbd "C-x C-w") 'write-file)
 (define-command write-file (filename) ("FWrite File: ")
   (setf (buffer-%filename (current-buffer)) filename)
-  (save-file-1))
+  (save-buffer-internal)
+  (message "Wrote ~A" (buffer-filename)))
 
 (define-key *global-keymap* (kbd "C-x C-i") 'insert-file)
 (define-command insert-file (filename) ("fInsert file: ")
@@ -76,7 +70,7 @@
                   (progn
                     (redraw-display)
                     (minibuf-y-or-n-p "Save file")))
-          (save-file))))))
+          (save-buffer))))))
 
 (define-command revert-buffer (does-not-ask-p) ("P")
   (when (and (or (buffer-modified-p (current-buffer))

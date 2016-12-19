@@ -1,11 +1,11 @@
 (in-package :lem)
 
-(defun buffer-start-marker (buffer)
+(defun buffers-start (buffer)
   (make-marker buffer
                (point-min buffer)
                :kind :temporary))
 
-(defun buffer-end-marker (buffer)
+(defun buffers-end (buffer)
   (make-marker buffer
                (point-max buffer)
                :kind :temporary))

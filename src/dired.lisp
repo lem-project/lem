@@ -9,7 +9,7 @@
 (defvar *directory-attribute* (make-attribute "blue" nil :bold-p t))
 (defvar *link-attribute* (make-attribute "green" nil))
 
-(defparameter *start-line-number* 4)
+(defvar *start-marker*)
 
 (define-major-mode dired-mode ()
   (:name "dired"
@@ -41,12 +41,11 @@
 (define-key *dired-mode-keymap* "R" 'dired-rename-files)
 (define-key *dired-mode-keymap* "+" 'dired-mkdir)
 
-(defun move-to-file-column ()
-  (lem::line-start (current-marker)))
+(defun dired-first-line-p (marker)
+  (lem::same-line-p *start-marker* marker))
 
-(defun move-to-start-point ()
-  (lem::line-offset (lem::buffer-start (current-marker))
-                    (1- *start-line-number*)))
+(defun dired-last-line-p (marker)
+  (lem::last-line-p marker))
 
 (define-command dired-update-buffer () ()
   (save-excursion
@@ -73,38 +72,38 @@
 
 (define-command dired-next-line (n) ("p")
   (forward-line n)
-  (when (> *start-line-number* (current-linum))
-    (setf (current-linum) *start-line-number*))
+  (when (marker<= (current-marker) *start-marker*)
+    (lem::move-point (current-marker) *start-marker*))
   (when (last-line-p (current-marker))
     (forward-line -1))
-  (move-to-file-column))
+  (lem::line-start (current-marker)))
 
 (define-command dired-previous-line (n) ("p")
   (forward-line (- n))
-  (setf (current-linum)
-        (max *start-line-number* (current-linum)))
-  (move-to-file-column))
+  (when (marker<= (current-marker) *start-marker*)
+    (lem::move-point (current-marker) *start-marker*))
+  (lem::line-start (current-marker)))
 
 (define-command dired-next-directory-line (n) ("p")
-  (let ((point (current-point)))
+  (lem::with-marker ((cur-marker (current-marker)))
     (loop
-      (unless (forward-line 1)
-        (setf (current-point) point)
+      (when (dired-last-line-p cur-marker)
         (return))
-      (when (and (eq :directory (get-property (current-point) 'type))
+      (lem::line-offset cur-marker 1)
+      (when (and (eq :directory (lem::text-property-at cur-marker 'type))
                  (>= 0 (decf n)))
-        (move-to-file-column)
+        (lem::move-point (current-marker) cur-marker)
         (return)))))
 
 (define-command dired-previous-directory-line (n) ("p")
-  (let ((point (current-point)))
+  (lem::with-marker ((cur-marker (current-marker)))
     (loop
-      (unless (forward-line -1)
-        (setf (current-point) point)
+      (when (dired-first-line-p cur-marker)
         (return))
-      (when (and (eq :directory (get-property (current-point) 'type))
+      (lem::line-offset cur-marker -1)
+      (when (and (eq :directory (lem::text-property-at cur-marker 'type))
                  (>= 0 (decf n)))
-        (move-to-file-column)
+        (lem::move-point (current-marker) cur-marker)
         (return)))))
 
 (define-command dired-mark-and-next-line (n) ("p")
@@ -203,7 +202,7 @@
       (funcall open-file file))))
 
 (defun mark-current-line (flag)
-  (when (and (<= *start-line-number* (current-linum))
+  (when (and (marker<= *start-marker* (current-marker))
              (not (last-line-p (current-marker))))
     (save-excursion
       (beginning-of-line)
@@ -215,7 +214,8 @@
 
 (defun mark-lines (test get-flag)
   (save-excursion
-    (setf (current-linum) (+ 2 *start-line-number*))
+    (lem::move-point (current-marker) *start-marker*)
+    (lem::line-offset (current-marker) 2)
     (loop
       (beginning-of-line)
       (let ((flag (char= (following-char) #\*)))
@@ -227,12 +227,12 @@
 (defun selected-files ()
   (let ((files '()))
     (save-excursion
-      (setf (current-linum) *start-line-number*)
+      (lem::move-point (current-marker) *start-marker*)
       (loop
         (beginning-of-line)
         (let ((flag (char= (following-char) #\*)))
           (when flag
-            (move-to-file-column)
+            (lem::line-start (current-marker))
             (push (get-file) files)))
         (unless (forward-line 1)
           (return))))
@@ -269,7 +269,8 @@
         (let ((output-string (ls-output-string dirname)))
           (lem::insert-string-at cur-marker output-string)
           (lem::buffer-start cur-marker)
-          (lem::line-offset cur-marker (1- *start-line-number*))
+          (lem::line-offset cur-marker 3)
+          (setf *start-marker* (copy-marker cur-marker :temporary))
           (loop
             (let ((string (lem::line-string-at cur-marker)))
               (multiple-value-bind (start end start-groups end-groups)
@@ -318,10 +319,8 @@
       (setf (buffer-read-only-p buffer) t)
       (buffer-disable-undo buffer)
       (update buffer))
-    (let ((prev-buffer (current-buffer)))
-      (setf (current-buffer) buffer)
-      (move-to-start-point)
-      (setf (current-buffer) prev-buffer))
+    (lem::move-point (lem::buffer-point-marker buffer)
+                     *start-marker*)
     buffer))
 
 (setf *find-directory-function* 'dired-buffer)

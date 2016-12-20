@@ -230,6 +230,24 @@
   (buffer-line-string (marker-buffer marker)
                       (marker-linum marker)))
 
+(defun point-column (marker)
+  (string-width (line-string-at marker)
+                0
+                (marker-charpos marker)))
+
+(defun move-to-column (marker column &optional force)
+  (line-end marker)
+  (let ((cur-column (point-column marker)))
+    (cond ((< column cur-column)
+           (setf (marker-charpos marker)
+                 (wide-index (line-string-at marker) column))
+           marker)
+          (force
+           (insert-char-at marker #\space (- column cur-column))
+           (line-end marker))
+          (t
+           (line-end marker)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -367,24 +385,7 @@
                   #'preceding-char))
 
 (defun current-column ()
-  (string-width (current-line-string)
-                0
-                (current-charpos)))
-
-(defun move-to-column (column &optional force)
-  (check-type column (integer 0 #.most-positive-fixnum))
-  (end-of-line)
-  (let ((current-column (current-column)))
-    (cond ((< column current-column)
-           (set-charpos (wide-index (current-line-string) column))
-           column)
-          (force
-           (insert-char #\space (- column current-column))
-           (end-of-line)
-           column)
-          (t
-           (end-of-line)
-           current-column))))
+  (point-column (current-marker)))
 
 (defun point-to-offset (point &optional (buffer (current-buffer) bufferp))
   (check-type point point)

@@ -210,7 +210,7 @@
   (unless (continue-flag :next-line)
     (setq *next-line-prev-column* (current-column)))
   (unless (prog1 (forward-line n)
-            (move-to-column *next-line-prev-column*))
+            (move-to-column (current-marker) *next-line-prev-column*))
     (cond ((plusp n)
            (end-of-buffer)
            (editor-error "End of buffer"))

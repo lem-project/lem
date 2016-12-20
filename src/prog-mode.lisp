@@ -35,6 +35,7 @@
            (if (< old-column column)
                (back-to-indentation)
                (move-to-column
+                (current-marker)
                 (max 0
                      (+ old-column
                         (- (string-width new-indent-string)

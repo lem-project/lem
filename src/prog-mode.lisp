@@ -71,9 +71,7 @@
 (define-key *global-keymap* (kbd "C-M-\\") 'indent-region)
 (define-command indent-region (start end) ("r")
   (save-excursion
-    (apply-region-lines (marker-point start)
-                        (marker-point end)
-                        'indent-line)))
+    (apply-region-lines start end 'indent-line)))
 
 (define-key *prog-mode-keymap* (kbd "C-M-a") 'beginning-of-defun)
 (define-command beginning-of-defun (&optional (n 1)) ("p")

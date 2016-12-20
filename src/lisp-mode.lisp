@@ -271,24 +271,26 @@
                                         :regex-p t :word-p t)
                       :attribute *syntax-constant-attribute*)
 
-    (syntax-add-match table
-                      (make-syntax-test "#[+-]" :regex-p t)
-                      :move-action (lambda ()
-                                     (ignore-errors
-                                      (let ((positivep (eql #\+ (char-after 1))))
-                                        (shift-position 2)
-                                        (let ((prev-point (current-point)))
-                                          (when (forward-sexp 1 t)
-                                            (cond ((featurep (read-from-string
-                                                              (region-string prev-point
-                                                                             (current-point)))
-                                                             positivep)
-                                                   (setf (current-point) prev-point)
-                                                   nil)
-                                                  (t
-                                                   (forward-sexp 1 t)
-                                                   (current-point))))))))
-                      :attribute *feature-attribute*)
+    (syntax-add-match
+     table
+     (make-syntax-test "#[+-]" :regex-p t)
+     :move-action (lambda (cur-marker)
+                    (ignore-errors
+                     (let ((positivep (eql #\+ (lem::character-at cur-marker 1))))
+                       (lem::character-offset cur-marker 2)
+                       (lem::with-marker ((prev cur-marker))
+                         (when (lem::form-offset cur-marker 1)
+                           (cond
+                             ((featurep (read-from-string
+                                         (lem::points-to-string
+                                          prev cur-marker))
+                                        positivep)
+                              (lem::move-point cur-marker prev)
+                              nil)
+                             (t
+                              (lem::form-offset cur-marker 1)
+                              cur-marker)))))))
+     :attribute *feature-attribute*)
 
     table))
 

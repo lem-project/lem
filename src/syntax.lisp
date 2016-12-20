@@ -351,27 +351,24 @@
                           :key #'car)))
           (cond
             ((syntax-match-move-action syntax)
-             (setf (current-charpos) start1)
-             (let* ((start-point (current-point))
-                    (end-point (funcall (syntax-match-move-action syntax))))
-               (cond ((and end-point
-                           (point< start-point end-point))
-                      (loop :repeat (- (point-linum end-point)
-                                       (point-linum start-point))
-                            :do (progn
-                                  (line-clear-property line :attribute)
-                                  (setf (line-%region line) syntax)
-                                  (setf line (line-next line))))
+             (line-offset (current-marker) 0 start1)
+             (let ((start (copy-marker (current-marker) :temporary))
+                   (end (funcall (syntax-match-move-action syntax)
+                                 (current-marker))))
+               (cond ((and end (marker< start end))
+                      (with-marker ((cur start))
+                        (loop :until (same-line-p cur end) :do
+                              (line-clear-property line :attribute)
+                              (setf (line-%region line) syntax)
+                              (setf line (line-next line))
+                              (line-offset cur 1)))
                       (setf (line-%region line) nil)
-                      (put-attribute start-point
-                                     end-point
-                                     (syntax-attribute syntax))
-                      (cons (point-charpos end-point) line))
-                     ((point< start-point (current-point))
-                      (loop :repeat (- (point-linum (current-point))
-                                       (point-linum start-point))
+                      (put-text-property start end :attribute (syntax-attribute syntax))
+                      (cons (marker-charpos end) line))
+                     ((marker< start (current-marker))
+                      (loop :until (same-line-p (current-marker) start)
                             :do (setf line (line-next line)))
-                      (cons (point-charpos (current-point)) line)))))
+                      (cons (marker-charpos (current-marker)) line)))))
             (t
              (line-add-property line start1 end1 :attribute (syntax-attribute syntax) nil)
              (1- end1))))))))

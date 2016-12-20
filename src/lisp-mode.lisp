@@ -338,7 +338,7 @@
                                    (shift-position -2))))
 
 (defun looking-at-indent-spec ()
-  (let* ((string (symbol-string-at-point))
+  (let* ((string (symbol-string-at-point (current-marker)))
          (pos (and string (position #\: string :from-end t)))
          (name (if (and pos (plusp pos))
                    (subseq string (1+ pos))
@@ -732,7 +732,7 @@
                      "*macroexpand*"))
 
 (defun lisp-read-symbol (prompt history-name)
-  (let ((default-name (or (symbol-string-at-point) "")))
+  (let ((default-name (or (symbol-string-at-point (current-marker)) "")))
     (let ((name (minibuf-read-line prompt
                                    default-name
                                    'complete-symbol
@@ -930,7 +930,7 @@
   (save-excursion
    (loop
      (go-to-car)
-     (let ((name (symbol-string-at-point)))
+     (let ((name (symbol-string-at-point (current-marker))))
        (multiple-value-bind (arglist)
            (lisp-search-arglist name #'lisp-get-arglist-string)
          (cond (arglist

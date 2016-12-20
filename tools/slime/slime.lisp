@@ -250,7 +250,7 @@
 (defun get-operator-name ()
   (save-excursion
     (lem.lisp-mode::go-to-car)
-    (symbol-string-at-point)))
+    (symbol-string-at-point (current-marker))))
 
 (define-command slime-echo-arglist () ()
   (check-connection)
@@ -450,7 +450,7 @@
 (define-command slime-edit-definition () ()
   (check-connection)
   (let* ((name (read-symbol-name "Edit Definition of: "
-                                 (or (symbol-string-at-point) "")))
+                                 (or (symbol-string-at-point (current-marker)) "")))
          (definitions (slime-eval-internal `(swank:find-definitions-for-emacs ,name)))
          (found-list '()))
     (dolist (def definitions)
@@ -500,7 +500,7 @@
 
 (define-command slime-edit-uses () ()
   (check-connection)
-  (let* ((symbol (read-symbol-name "Edit uses of: " (or (symbol-string-at-point) "")))
+  (let* ((symbol (read-symbol-name "Edit uses of: " (or (symbol-string-at-point (current-marker)) "")))
          (result (slime-eval-internal `(swank:xrefs '(:calls :macroexpands :binds
                                                       :references :sets :specializes)
                                                     ,symbol)))
@@ -622,7 +622,7 @@
   (check-connection)
   (let ((symbol-name
          (read-symbol-name "Describe symbol: "
-                           (or (symbol-string-at-point) ""))))
+                           (or (symbol-string-at-point (current-marker)) ""))))
     (when (string= "" symbol-name)
       (editor-error "No symbol given"))
     (show-description (slime-eval-internal `(swank:describe-symbol ,symbol-name)))))
@@ -631,7 +631,7 @@
   (check-connection)
   (let ((symbol-name
          (read-symbol-name "Describe symbol: "
-                           (or (symbol-string-at-point) ""))))
+                           (or (symbol-string-at-point (current-marker)) ""))))
     (when (string= "" symbol-name)
       (editor-error "No symbol given"))
     (lem-slime.clhs:main symbol-name)))

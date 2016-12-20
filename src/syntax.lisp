@@ -492,11 +492,11 @@
     (unless (previous-single-property-change (current-marker) :attribute)
       (return nil))))
 
-(defun symbol-string-at-point ()
-  (save-excursion
-    (skip-chars-backward (current-marker) #'syntax-symbol-char-p)
-    (unless (syntax-symbol-char-p (following-char))
+(defun symbol-string-at-point (point)
+  (with-marker ((point point))
+    (skip-chars-backward point #'syntax-symbol-char-p)
+    (unless (syntax-symbol-char-p (character-at point))
       (return-from symbol-string-at-point nil))
-    (let ((start (current-point)))
-      (skip-chars-forward (current-marker) #'syntax-symbol-char-p)
-      (region-string start (current-point)))))
+    (with-marker ((start point))
+      (skip-chars-forward point #'syntax-symbol-char-p)
+      (points-to-string start point))))

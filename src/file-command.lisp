@@ -61,7 +61,7 @@
 (define-key *global-keymap* (kbd "C-x s") 'save-some-buffers)
 (define-command save-some-buffers (&optional save-silently-p) ("P")
   (check-switch-minibuffer-window)
-  (save-excursion
+  (let ((prev-buffer (current-buffer)))
     (dolist (buffer (buffer-list))
       (when (and (buffer-modified-p buffer)
                  (buffer-have-file-p buffer))
@@ -69,8 +69,9 @@
         (when (or save-silently-p
                   (progn
                     (redraw-display)
-                    (minibuf-y-or-n-p "Save file")))
-          (save-buffer))))))
+                    (minibuf-y-or-n-p (format nil "Save file ~A" (buffer-filename buffer)))))
+          (save-buffer))))
+    (switch-to-buffer prev-buffer nil)))
 
 (define-command revert-buffer (does-not-ask-p) ("P")
   (when (and (or (buffer-modified-p (current-buffer))

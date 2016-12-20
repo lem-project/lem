@@ -428,35 +428,33 @@
   t)
 
 (define-key *global-keymap* (kbd "C-x #") 'filter-buffer)
-(define-command filter-buffer (str) ("sFilter buffer: ")
-  (let (begin end)
-    (cond ((buffer-mark-p)
-           (setq begin (marker-point (region-beginning)))
-           (setq end (marker-point (region-end))))
-          (t
-           (setq begin (point-min))
-           (setq end (point-max))))
-    (let ((input-string
-           (region-string begin end))
-          (outstr (make-array '(0)
-                              :element-type 'character
-                              :fill-pointer t))
-          output-value
-          error-output-value
-          status)
-      (with-output-to-string (output outstr)
-        (with-input-from-string (input input-string)
-          (multiple-value-setq (output-value error-output-value status)
-                               (uiop:run-program (format nil "cd ~A; ~A" (buffer-directory) str)
-                                                 :input input
-                                                 :output output
-                                                 :error-output output
-                                                 :ignore-error-status t))))
-      (delete-region begin end)
-      (insert-string outstr)
-      (point-set begin)
-      (message "~D ~A" (write-to-string status) error-output-value)
-      (zerop status))))
+(define-command filter-buffer (cmd) ("sFilter buffer: ")
+  (let ((buffer (current-buffer)))
+    (multiple-value-bind (start end)
+        (cond ((buffer-mark-p buffer)
+               (values (region-beginning buffer)
+                       (region-end buffer)))
+              (t
+               (values (buffers-start buffer)
+                       (buffers-end buffer))))
+      (let ((string (points-to-string start end))
+            output-value
+            error-output-value
+            status)
+        (let ((output-string
+               (with-output-to-string (output)
+                 (with-input-from-string (input string)
+                   (multiple-value-setq
+                    (output-value error-output-value status)
+                    (uiop:run-program (format nil "cd ~A; ~A" (buffer-directory buffer) cmd)
+                                      :input input
+                                      :output output
+                                      :error-output output
+                                      :ignore-error-status t))))))
+          (delete-between-points start end)
+          (insert-string-at start output-string)
+          (message "~D ~A" status error-output-value)
+          (zerop status))))))
 
 (define-key *global-keymap* (kbd "C-x @") 'pipe-command)
 (define-command pipe-command (str) ("sPipe command: ")

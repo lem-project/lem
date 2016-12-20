@@ -54,3 +54,10 @@
     (when new-point
       (setf (marker-point marker) new-point)
       marker)))
+
+(defun invoke-save-excursion (function)
+  ;; マーク位置の保存は後で考える
+  (with-marker ((point (current-marker)))
+    (unwind-protect (funcall function)
+      (setf (current-buffer) (marker-buffer point))
+      (move-point (current-marker) point))))

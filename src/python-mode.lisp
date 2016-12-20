@@ -51,7 +51,7 @@
       (when start
         (save-excursion (detab-line 1))
         (let ((mod (mod end *python-indent-size*)))
-          (set-charpos end)
+          (lem::line-offset (current-marker) 0 end)
           (insert-string
            (make-string (- *python-indent-size* mod)
                         :initial-element #\space)))))))
@@ -67,7 +67,7 @@
       (when start
         (save-excursion (detab-line 1))
         (let ((mod (mod end *python-indent-size*)))
-          (set-charpos end)
+          (lem::line-offset (current-marker) 0 end)
           (delete-char (- mod) nil)
           (when (plusp (- end mod))
             (delete-char (- *python-indent-size*) nil)))))))

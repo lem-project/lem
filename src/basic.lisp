@@ -10,7 +10,6 @@
           insert-string
           insert-newline
           delete-char
-          set-charpos
           beginning-of-buffer
           end-of-buffer
           beginning-of-line
@@ -279,9 +278,6 @@
 
 (defun delete-char (n &optional killp)
   (delete-char-at (current-marker) n killp))
-
-(defun set-charpos (pos)
-  (setf (current-charpos) pos))
 
 (defun beginning-of-buffer ()
   (point-set (point-min)))

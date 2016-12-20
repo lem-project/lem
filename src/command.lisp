@@ -406,15 +406,16 @@
 
 (define-key *global-keymap* (kbd "C-@") 'mark-set)
 (define-command mark-set () ()
-  (setf (mark-point) (current-point))
+  (set-current-mark (current-marker))
   (message "Mark set"))
 
 (define-key *global-keymap* (kbd "C-x C-x") 'exchange-point-mark)
 (define-command exchange-point-mark () ()
   (check-marked)
-  (let ((mark-point (mark-point)))
-    (setf (mark-point) (current-point))
-    (point-set mark-point))
+  (let ((mark (buffer-mark-marker (current-buffer)))
+        (point (buffer-point-marker (current-buffer))))
+    (set-current-mark point)
+    (move-point point mark))
   t)
 
 (define-key *global-keymap* (kbd "M-g") 'goto-line)

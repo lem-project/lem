@@ -312,18 +312,16 @@
   (unless (buffer-mark-p (current-buffer))
     (editor-error "Not mark in this buffer")))
 
-(defun mark-point ()
-  (when (buffer-mark-marker (current-buffer))
-    (marker-point (buffer-mark-marker (current-buffer)))))
-
-(defun (setf mark-point) (point)
-  (let ((buffer (current-buffer)))
-    (setf (buffer-mark-p buffer) t)
-    (if (buffer-mark-marker buffer)
-        (setf (marker-point (buffer-mark-marker buffer))
-              point)
-        (setf (buffer-mark-marker buffer)
-              (make-marker buffer point :name "mark" :kind :right-inserting)))))
+(defun set-current-mark (marker)
+  (let ((buffer (marker-buffer marker)))
+    (cond ((buffer-mark-p buffer)
+           (move-point (buffer-mark-marker buffer)
+                       marker))
+          (t
+           (setf (buffer-mark-p buffer) t)
+           (setf (buffer-mark-marker buffer)
+                 (copy-marker marker :right-inserting)))))
+  marker)
 
 (defun current-line-string ()
   (buffer-line-string (current-buffer)

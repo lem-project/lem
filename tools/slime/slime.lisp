@@ -195,7 +195,7 @@
 
 (define-command slime-indent-sexp () ()
   (lem.prog-mode:indent-region (current-marker)
-                               (form-offset (copy-marker (current-marker) :temporary) 1)))
+                               (lem::form-offset (copy-marker (current-marker) :temporary) 1)))
 
 (define-command slime-set-package (package-name) ((list (read-package-name)))
   (check-connection)
@@ -760,7 +760,7 @@
 (defun write-string-to-repl (string)
   (let ((buffer (repl-buffer)))
     (when buffer
-      (with-open-stream (stream (make-buffer-output-stream (buffers-end buffer)))
+      (with-open-stream (stream (make-buffer-output-stream (lem::buffers-end buffer)))
         (princ string stream))
       (lem.listener-mode::listener-update-marker (lem::buffers-end buffer))
       (when (eq buffer (current-buffer))
@@ -802,7 +802,7 @@
 
 (defun log-message (message)
   (let ((buffer (get-buffer-create "*slime-events*")))
-    (with-open-stream (stream (make-buffer-output-stream (buffers-end buffer)))
+    (with-open-stream (stream (make-buffer-output-stream (lem::buffers-end buffer)))
       (print message stream))))
 
 (defvar *unknown-keywords* nil)

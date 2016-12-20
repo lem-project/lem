@@ -22,7 +22,7 @@
 
 (defvar *minibuf-window*)
 (defvar *minibuffer-calls-window*)
-(defvar *minibuffer-start-point* (make-min-point))
+(defvar *minibuffer-start-point*)
 (defvar *minibuffer-prompt-attribute* (make-attribute "blue" nil :bold-p t))
 
 (defun minibuffer-window () *minibuf-window*)
@@ -122,12 +122,12 @@
       nil))
 
 (defun get-minibuffer-string ()
-  (region-string *minibuffer-start-point*
-                 (point-max (minibuffer))
-                 (minibuffer)))
+  (points-to-string *minibuffer-start-point*
+                    (buffers-end (minibuffer))))
 
 (defun minibuffer-clear-input ()
-  (delete-region *minibuffer-start-point* (point-max (minibuffer))))
+  (delete-between-points *minibuffer-start-point*
+                         (buffers-end (minibuffer))))
 
 (define-command minibuf-read-line-confirm () ()
   (let ((str (get-minibuffer-string)))
@@ -169,9 +169,8 @@
 (defun minibuf-window-update ()
   (screen-erase (window-screen (minibuffer-window)))
   (screen-print-string (window-screen (minibuffer-window)) 0 0
-                       (region-string (point-min (minibuffer))
-                                      (point-max (minibuffer))
-                                      (minibuffer)))
+                       (points-to-string (buffers-start (minibuffer))
+                                         (buffers-end (minibuffer))))
   (screen-move-cursor (window-screen (minibuffer-window))
                       (minibuf-point-charpos)
                       (1- (minibuf-point-linum))))
@@ -208,10 +207,8 @@
          (lambda ()
            (with-current-window (minibuffer-window)
              (let ((minibuf-buffer-prev-string
-                    (let ((buffer (minibuffer)))
-                      (region-string (point-min buffer)
-                                     (point-max buffer)
-                                     buffer)))
+                    (points-to-string (buffers-start (minibuffer))
+                                      (buffers-end (minibuffer))))
                    (minibuf-buffer-prev-point
                     (window-point (minibuffer-window)))
                    (*minibuf-read-line-depth*
@@ -231,7 +228,7 @@
                                       cur-marker
                                       'lem.property:field-separator t))
                  (character-offset (current-marker) (length prompt)))
-               (let ((*minibuffer-start-point* (current-point)))
+               (let ((*minibuffer-start-point* (copy-marker (current-marker) :temporary)))
                  (when initial
                    (insert-string initial))
                  (unwind-protect (call-with-save-windows

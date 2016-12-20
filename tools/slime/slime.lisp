@@ -194,10 +194,8 @@
                     'mh-slime-package))))
 
 (define-command slime-indent-sexp () ()
-  (lem.prog-mode:indent-region (current-point)
-                               (save-excursion
-                                 (forward-sexp 1)
-                                 (current-point))))
+  (lem.prog-mode:indent-region (current-marker)
+                               (form-offset (copy-marker (current-marker) :temporary) 1)))
 
 (define-command slime-set-package (package-name) ((list (read-package-name)))
   (check-connection)

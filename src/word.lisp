@@ -80,7 +80,8 @@
           ((point= begin end)
            nil)
           (t
-           (kill-region begin end)
+           (kill-region (make-marker (current-buffer) begin :kind :temporary)
+                        (make-marker (current-buffer) end :kind :temporary))
            t)))))
 
 (define-key *global-keymap* (kbd "C-M-h") 'backward-delete-word)
@@ -95,7 +96,8 @@
             ((point= begin end)
              nil)
             (t
-             (kill-region begin end)
+             (kill-region (make-marker (current-buffer) begin :kind :temporary)
+                          (make-marker (current-buffer) end :kind :temporary))
              t))))))
 
 (defun case-region-aux (begin end case-fun)
@@ -164,5 +166,6 @@
   (dotimes (_ n t)
     (let ((point (current-point)))
       (unless (and (forward-paragraph)
-                   (kill-region point (current-point)))
+                   (kill-region (make-marker (current-buffer) point :kind :temporary)
+                                (current-marker)))
         (return)))))

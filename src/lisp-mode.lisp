@@ -417,10 +417,10 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-M-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()
-  (indent-region (current-point)
-                 (save-excursion
-                  (forward-sexp 1)
-                  (current-point))))
+  (indent-region (current-marker)
+                 (lem::form-offset (copy-marker (current-marker)
+                                                :temporary)
+                                   1)))
 
 (define-command lisp-beginning-of-defun (&optional (n 1)) ("p")
   (beginning-of-defun-abstract n #'(lambda () (looking-at-line "^\\("))))

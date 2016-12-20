@@ -132,8 +132,7 @@
 
 (define-key *global-keymap* (kbd "C-o") 'open-line)
 (define-command open-line (n) ("p")
-  (insert-newline n)
-  (shift-position (- n)))
+  (insert-char-at (current-marker) #\newline n))
 
 (define-key *global-keymap* (kbd "C-d") 'delete-next-char)
 (define-key *global-keymap* (kbd "[dc]") 'delete-next-char)
@@ -183,9 +182,9 @@
 (define-key *global-keymap* (kbd "C-y") 'yank)
 (define-command yank (n) ("p")
   (let ((string (kill-ring-nth n)))
-    (setf (get-bvar :yank-start) (current-point))
+    (setf (get-bvar :yank-start) (copy-marker (current-marker) :temporary))
     (insert-string string)
-    (setf (get-bvar :yank-end) (current-point))
+    (setf (get-bvar :yank-end) (copy-marker (current-marker) :temporary))
     (continue-flag :yank)
     t))
 
@@ -196,7 +195,7 @@
         prev-yank-p)
     (when (continue-flag :yank) (setq prev-yank-p t))
     (cond ((and start end prev-yank-p)
-           (delete-region start end)
+           (delete-between-points start end)
            (kill-ring-rotate)
            (yank n))
           (t

@@ -60,10 +60,8 @@
   (setf (get-bvar :end-of-defun-function) 'go-end-of-defun))
 
 (defun following-word ()
-  (region-string (current-point)
-                 (save-excursion
-                  (forward-sexp 1 t)
-                  (current-point))))
+  (lem::points-to-string (current-marker)
+                         (lem::form-offset (copy-marker (current-marker) :temporary) 1)))
 
 (defun semicolon-p ()
   (let ((c (preceding-char)))

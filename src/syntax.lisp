@@ -469,10 +469,10 @@
     (line-search-property line property-name pos)))
 
 (defun skip-whitespace-forward ()
-  (skip-chars-forward #'syntax-space-char-p))
+  (skip-chars-forward (current-marker) #'syntax-space-char-p))
 
 (defun skip-whitespace-backward ()
-  (skip-chars-backward #'syntax-space-char-p))
+  (skip-chars-backward (current-marker) #'syntax-space-char-p))
 
 (defun skip-space-and-comment-forward ()
   (loop
@@ -494,9 +494,9 @@
 
 (defun symbol-string-at-point ()
   (save-excursion
-    (skip-chars-backward #'syntax-symbol-char-p)
+    (skip-chars-backward (current-marker) #'syntax-symbol-char-p)
     (unless (syntax-symbol-char-p (following-char))
       (return-from symbol-string-at-point nil))
     (let ((start (current-point)))
-      (skip-chars-forward #'syntax-symbol-char-p)
+      (skip-chars-forward (current-marker) #'syntax-symbol-char-p)
       (region-string start (current-point)))))

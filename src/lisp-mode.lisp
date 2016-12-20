@@ -328,15 +328,7 @@
    (char-after 0) (char-after 1)
    #'(lambda (c1 c2)
        (declare (ignore c1 c2))
-       (cond ;; (*lisp-mode-skip-features-sharp-macro-p*
-             ;;  (when (and (eql c1 #\#) (member c2 '(#\+ #\-)))
-             ;;    (shift-position 2))
-             ;;  (if (eql #\( (following-char))
-             ;;      (skip-list-forward 0)
-             ;;      (skip-symbol-forward))
-             ;;  (skip-chars-forward '(#\space #\tab #\newline)))
-             (t
-              (shift-position 2))))))
+       (shift-position 2))))
 
 (defun lisp-mode-skip-expr-prefix-backward ()
   (%lisp-mode-skip-expr-prefix (char-before 2)
@@ -377,9 +369,10 @@
             (eq 'flet (looking-at-indent-spec)))))))
 
 (defun arg1-first-line-p ()
-  (when (forward-sexp 1 t)
-    (skip-chars-forward '(#\space #\tab))
-    (not (eolp))))
+  (let ((point (current-marker)))
+    (when (lem::form-offset point 1)
+      (skip-chars-forward point '(#\space #\tab))
+      (not (lem::end-line-p point)))))
 
 (defun calc-indent-1 ()
   (let* ((arg-count (go-to-car))

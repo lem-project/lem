@@ -8,6 +8,7 @@
   (let ((chars))
     (save-excursion
      (skip-chars-backward
+      (current-marker)
       #'(lambda (c)
           (when (and c (syntax-symbol-char-p c))
             (push c chars))))

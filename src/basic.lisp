@@ -342,10 +342,10 @@
                 (- n)))
 
 (defun delete-while-whitespaces (&optional ignore-newline-p use-kill-ring)
-  (let ((n (skip-chars-forward
-            (if ignore-newline-p
-                '(#\space #\tab)
-                '(#\space #\tab #\newline)))))
+  (let ((n (skip-chars-forward (current-marker)
+                               (if ignore-newline-p
+                                   '(#\space #\tab)
+                                   '(#\space #\tab #\newline)))))
     (delete-char (- n) use-kill-ring)))
 
 (defun blank-line-p ()
@@ -355,32 +355,23 @@
       (+ (length string)
          (if eof-p 0 1)))))
 
-(defun skip-chars-aux (pred not-p step-char at-char)
-  (flet ((test (pred not-p char)
-           (if (if (consp pred)
-                   (member char pred)
-                   (funcall pred char))
-               (not not-p)
-               not-p)))
-    (let ((count 0))
-      (loop
-        (unless (test pred not-p (funcall at-char))
+(defun skip-chars-internal (point test not-p dir)
+  (loop :for count :from 0
+        :for c := (character-at point (if dir 0 -1))
+        :do
+        (unless (if (if (consp test)
+                        (member c test)
+                        (funcall test c))
+                    (not not-p)
+                    not-p)
           (return count))
-        (if (funcall step-char)
-            (incf count)
-            (return count))))))
+        (character-offset point (if dir 1 -1))))
 
-(defun skip-chars-forward (pred &optional not-p)
-  (skip-chars-aux pred
-                  not-p
-                  (lambda () (shift-position 1))
-                  #'following-char))
+(defun skip-chars-forward (point test &optional not-p)
+  (skip-chars-internal point test not-p t))
 
-(defun skip-chars-backward (pred &optional not-p)
-  (skip-chars-aux pred
-                  not-p
-                  (lambda () (shift-position -1))
-                  #'preceding-char))
+(defun skip-chars-backward (point test &optional not-p)
+  (skip-chars-internal point test not-p nil))
 
 (defun current-column ()
   (point-column (current-marker)))

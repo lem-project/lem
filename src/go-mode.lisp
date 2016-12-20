@@ -73,7 +73,7 @@
        (eql c (preceding-char)))
       ((#\) #\] #\}) t)
       (t
-       (and (/= 0 (skip-chars-backward #'syntax-word-char-p))
+       (and (/= 0 (skip-chars-backward (current-marker) #'syntax-word-char-p))
             #-(and)(not (member (following-word)
                          '("break" "continue" "fallthrough" "return")
                          :test #'string=)))))))
@@ -115,7 +115,7 @@
                     ((looking-at-line "\\s*}")
                      (save-excursion
                       (end-of-line)
-                      (skip-chars-backward '(#\)))
+                      (skip-chars-backward (current-marker) '(#\)))
                       (backward-sexp 1 t)
                       (back-to-indentation)
                       (setf indent (current-column)))))

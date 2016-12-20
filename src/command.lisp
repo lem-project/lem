@@ -351,7 +351,7 @@
 
 (define-key *global-keymap* (kbd "M-Spc") 'just-one-space)
 (define-command just-one-space () ()
-  (skip-chars-backward '(#\space #\tab))
+  (skip-chars-backward (current-marker) '(#\space #\tab))
   (delete-while-whitespaces t nil)
   (insert-char #\space 1)
   t)
@@ -384,8 +384,9 @@
 
 (define-key *global-keymap* (kbd "M-m") 'back-to-indentation)
 (define-command back-to-indentation () ()
-  (beginning-of-line)
-  (skip-chars-forward '(#\space #\tab))
+  (let ((point (current-marker)))
+    (skip-chars-forward (line-start point)
+                        '(#\space #\tab)))
   t)
 
 (define-key *global-keymap* (kbd "C-\\") 'undo)

@@ -108,17 +108,18 @@
 
 (define-key *global-keymap* (kbd "C-x .") 'isearch-forward-symbol-at-point)
 (define-command isearch-forward-symbol-at-point () ()
-  (skip-chars-forward #'syntax-symbol-char-p)
-  (skip-chars-backward #'syntax-symbol-char-p t)
-  (skip-chars-backward #'syntax-symbol-char-p)
-  (lem::with-marker ((start (current-marker)))
-    (skip-chars-forward #'syntax-symbol-char-p)
-    (lem::with-marker ((end (current-marker)))
-      (isearch-start "ISearch Symbol: "
-                     #'search-forward-symbol
-                     #'search-forward-symbol
-                     #'search-backward-symbol
-                     (lem::points-to-string start end)))))
+  (let ((point (current-marker)))
+    (skip-chars-forward point #'syntax-symbol-char-p)
+    (skip-chars-backward point #'syntax-symbol-char-p t)
+    (skip-chars-backward point #'syntax-symbol-char-p)
+    (lem::with-marker ((start point))
+      (skip-chars-forward point #'syntax-symbol-char-p)
+      (lem::with-marker ((end point))
+        (isearch-start "ISearch Symbol: "
+                       #'search-forward-symbol
+                       #'search-forward-symbol
+                       #'search-backward-symbol
+                       (lem::points-to-string start end))))))
 
 (defun isearch-start (prompt
                       search-func

@@ -307,7 +307,7 @@
   (save-excursion
     (setf (current-buffer) buffer)
     (goto-position pos)
-    (skip-chars-backward #'syntax-symbol-char-p)
+    (skip-chars-backward (current-marker) #'syntax-symbol-char-p)
     (make-overlay (copy-marker (current-marker) :temporary)
                   (lem::form-offset (copy-marker (current-marker) :temporary) 1)
                   *note-attribute*)))
@@ -406,7 +406,7 @@
 
 (defun form-string-at-point ()
   (region-string (save-excursion
-                   (skip-chars-backward #'syntax-symbol-char-p)
+                   (skip-chars-backward (current-marker) #'syntax-symbol-char-p)
                    (current-point))
                  (save-excursion
                    (forward-sexp 1)

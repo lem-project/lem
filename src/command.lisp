@@ -420,12 +420,11 @@
 
 (define-key *global-keymap* (kbd "M-g") 'goto-line)
 (define-command goto-line (n) ("nLine to GOTO: ")
-  (setf n
-        (if (< n 1)
-            1
-            (min n (buffer-nlines (current-buffer)))))
-  (point-set (point-min))
-  (forward-line (1- n))
+  (cond ((< n 1)
+         (setf n 1))
+        ((< #1=(buffer-nlines (current-buffer)) n)
+         (setf n #1#)))
+  (line-offset (buffer-start (current-marker)) (1- n))
   t)
 
 (define-key *global-keymap* (kbd "C-x #") 'filter-buffer)

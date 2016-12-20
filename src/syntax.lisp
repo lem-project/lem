@@ -354,7 +354,7 @@
              (line-offset (current-marker) 0 start1)
              (let ((start (copy-marker (current-marker) :temporary))
                    (end (funcall (syntax-match-move-action syntax)
-                                 (current-marker))))
+                                 (copy-marker (current-marker) :temporary))))
                (cond ((and end (marker< start end))
                       (with-marker ((cur start))
                         (loop :until (same-line-p cur end) :do
@@ -364,11 +364,8 @@
                               (line-offset cur 1)))
                       (setf (line-%region line) nil)
                       (put-text-property start end :attribute (syntax-attribute syntax))
-                      (cons (marker-charpos end) line))
-                     ((marker< start (current-marker))
-                      (loop :until (same-line-p (current-marker) start)
-                            :do (setf line (line-next line)))
-                      (cons (marker-charpos (current-marker)) line)))))
+                      (move-point (current-marker) end)
+                      (cons (marker-charpos end) line)))))
             (t
              (line-add-property line start1 end1 :attribute (syntax-attribute syntax) nil)
              (1- end1))))))))

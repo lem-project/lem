@@ -55,10 +55,10 @@
     count))
 
 (defun form-offset (marker n)
-  (let ((new-point
+ (let ((new-point
          (save-excursion
            (setf (current-buffer) (marker-buffer marker))
-           (point-set (marker-point (current-marker)))
+           (point-set (marker-point marker))
            (and (forward-sexp n t)
                 (current-point)))))
     (when new-point

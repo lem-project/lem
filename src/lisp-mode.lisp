@@ -121,21 +121,15 @@
             (":import-from" . progn))
       :do (setf (gethash name *indent-table*) n))
 
-(defun featurep (form positivep)
+(defun featurep (form)
   (cond ((atom form)
-         (if positivep
-             (find (find-symbol (princ-to-string form)
-                                :keyword)
-                   *features*)
-             (not (find (find-symbol (princ-to-string form)
-                                     :keyword)
-                        *features*))))
-        ((eq 'and (car form))
-         (every (lambda (form) (featurep form positivep))
-                (cdr form)))
-        ((eq 'or (car form))
-         (every (lambda (form) (featurep form positivep))
-                (cdr form)))
+         (find (find-symbol (princ-to-string form)
+                            :keyword)
+               *features*))
+        ((string-equal 'and (car form))
+         (every #'featurep (cdr form)))
+        ((string-equal 'or (car form))
+         (some #'featurep (cdr form)))
         (t)))
 
 (defvar *feature-attribute* (lem::copy-attribute *syntax-comment-attribute*))
@@ -281,15 +275,14 @@
                        (lem::with-marker ((prev cur-marker))
                          (when (lem::form-offset cur-marker 1)
                            (cond
-                             ((featurep (read-from-string
-                                         (lem::points-to-string
-                                          prev cur-marker))
-                                        positivep)
-                              (lem::move-point cur-marker prev)
+                             ((if (featurep (read-from-string
+                                             (lem::points-to-string
+                                              prev cur-marker)))
+                                  positivep
+                                  (not positivep))
                               nil)
                              (t
-                              (lem::form-offset cur-marker 1)
-                              cur-marker)))))))
+                              (lem::form-offset cur-marker 1))))))))
      :attribute *feature-attribute*)
 
     table))

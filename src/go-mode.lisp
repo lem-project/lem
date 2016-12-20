@@ -75,8 +75,8 @@
       (t
        (and (/= 0 (skip-chars-backward (current-marker) #'syntax-word-char-p))
             #-(and)(not (member (following-word)
-                         '("break" "continue" "fallthrough" "return")
-                         :test #'string=)))))))
+                                '("break" "continue" "fallthrough" "return")
+                                :test #'string=)))))))
 
 (defun go-calc-indent ()
   (save-excursion

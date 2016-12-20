@@ -107,9 +107,9 @@
 (define-key *completion-mode-keymap* (kbd "C-i") 'completion-next-line)
 (define-command completion-next-line (n) ("p")
   (with-current-window *completion-window*
-    (if (eobp)
-        (beginning-of-buffer)
-        (forward-line n))
+    (if (last-line-p (current-marker))
+        (buffer-start (current-marker))
+        (line-offset (current-marker) n))
     (completion-update-overlay)))
 
 (define-key *completion-mode-keymap* (kbd "C-p") 'completion-previous-line)

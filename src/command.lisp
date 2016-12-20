@@ -163,6 +163,7 @@
 
 (define-key *global-keymap* (kbd "C-w") 'kill-region)
 (define-command kill-region (start end) ("r")
+  (setf end (copy-marker end :temporary))
   (unless (continue-flag :kill)
     (kill-ring-new))
   (move-point (current-marker) start)
@@ -413,9 +414,9 @@
 (define-command exchange-point-mark () ()
   (check-marked)
   (let ((mark (buffer-mark-marker (current-buffer)))
-        (point (buffer-point-marker (current-buffer))))
-    (set-current-mark point)
-    (move-point point mark))
+        (point (copy-marker (buffer-point-marker (current-buffer)) :temporary)))
+    (move-point (current-marker) mark)
+    (set-current-mark point))
   t)
 
 (define-key *global-keymap* (kbd "M-g") 'goto-line)

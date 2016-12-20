@@ -164,8 +164,8 @@
 (define-key *global-keymap* (kbd "M-k") 'kill-paragraph)
 (define-command kill-paragraph (&optional (n 1)) ("p")
   (dotimes (_ n t)
-    (let ((point (current-point)))
-      (unless (and (forward-paragraph)
-                   (kill-region (make-marker (current-buffer) point :kind :temporary)
-                                (current-marker)))
-        (return)))))
+    (with-marker ((start (current-marker)))
+      (unless (forward-paragraph)
+        (return))
+      (kill-region start
+                   (current-marker)))))

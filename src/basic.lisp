@@ -361,7 +361,8 @@
                     (not not-p)
                     not-p)
           (return count))
-        (character-offset point (if dir 1 -1))))
+        (unless (nth-value 1 (character-offset point (if dir 1 -1)))
+          (return count))))
 
 (defun skip-chars-forward (point test &optional not-p)
   (skip-chars-internal point test not-p t))

@@ -268,30 +268,32 @@
 (define-command next-page (&optional n) ("P")
   (if n
       (scroll-down n)
-      (let ((point (current-point)))
-        (cond ((forward-line (1- (window-height (current-window))))
-               (window-recenter (current-window))
-               t)
-              ((and (point-set point) nil))
-              ((not (eobp))
-               (end-of-buffer)
-               (window-recenter (current-window))
-               t)))))
+      (cond
+        ((nth-value 1
+                    (line-offset (current-marker)
+                                 (1- (window-height (current-window)))))
+         (window-recenter (current-window))
+         t)
+        (t
+         (buffer-end (current-marker))
+         (window-recenter (current-window))
+         t))))
 
 (define-key *global-keymap* (kbd "M-v") 'prev-page)
 (define-key *global-keymap* (kbd "[ppage]") 'prev-page)
 (define-command prev-page (&optional n) ("P")
   (if n
       (scroll-up n)
-      (let ((point (current-point)))
-        (cond ((forward-line (- (1- (window-height (current-window)))))
-               (window-recenter (current-window))
-               t)
-              ((and (point-set point) nil))
-              ((not (bobp))
-               (beginning-of-buffer)
-               (window-recenter (current-window))
-               t)))))
+      (cond
+        ((nth-value 1
+                    (line-offset (current-marker)
+                                 (- (1- (window-height (current-window))))))
+         (window-recenter (current-window))
+         t)
+        (t
+         (buffer-start (current-marker))
+         (window-recenter (current-window))
+         t))))
 
 (defun tab-line-aux (n make-space-str)
   (dotimes (_ n t)
@@ -356,11 +358,9 @@
 
 (define-key *global-keymap* (kbd "M-^") 'delete-indentation)
 (define-command delete-indentation () ()
-  (beginning-of-line)
-  (let ((point (current-point)))
-    (forward-line -1)
-    (end-of-line)
-    (delete-char (region-count (current-point) point) nil)
+  (let* ((cur (current-marker))
+         (prev (copy-marker (line-start cur) :temporary)))
+    (delete-between-points (line-end (line-offset cur -1)) prev)
     (just-one-space)
     t))
 

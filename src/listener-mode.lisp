@@ -3,7 +3,6 @@
   (:use :cl :lem :lem.util)
   (:export :listener-mode
            :*listener-mode-keymap*
-           :listener-start-point
            :listener-start
            :listener-reset-prompt
            :listener-return
@@ -31,7 +30,7 @@
           (make-history))))
 
 (defun listener-start-point ()
-  (marker-point (%listener-marker)))
+  (copy-marker (%listener-marker) :temporary))
 
 (defun listener-start (buffer-name mode)
   (let ((buffer (get-buffer-create buffer-name)))
@@ -39,13 +38,13 @@
     (funcall mode)
     (listener-reset-prompt buffer)))
 
-(defun listener-update-marker (&optional point)
+(defun listener-update-marker (&optional (point (current-marker)))
   (when (%listener-marker)
     (delete-marker (%listener-marker)))
   (setf (%listener-marker)
         (if point
-            (make-marker (current-buffer) point :name "listener" :kind :right-inserting)
-            (make-marker-current-point :name "listener" :kind :right-inserting))))
+            (copy-marker point :right-inserting)
+            (copy-marker (current-marker) :right-inserting))))
 
 (defun listener-reset-prompt (&optional (buffer (current-buffer)))
   (let ((cur-marker (lem::buffer-point-marker buffer)))
@@ -67,17 +66,16 @@
 
 (define-key *listener-mode-keymap* (kbd "C-m") 'listener-return)
 (define-command listener-return () ()
-  (point-set (point-max))
-  (let ((end (current-point)))
+  (let ((end (lem::buffer-end (current-marker))))
     (if (not (funcall (get-bvar :listener-check-confirm-function)))
         (insert-newline)
         (let ((start (listener-start-point)))
-          (unless (point< start end)
+          (unless (marker< start end)
             (listener-reset-prompt)
             (return-from listener-return t))
-          (let ((str (region-string start end)))
+          (let ((str (lem::points-to-string start end)))
             (add-history (%listener-history) str)
-            (point-set (point-max))
+            (lem::buffer-end (current-marker))
             (insert-newline)
             (listener-update-marker)
             (funcall (get-bvar :listener-confirm-function) str)))))
@@ -88,30 +86,30 @@
   (multiple-value-bind (str win)
       (prev-history (%listener-history))
     (let ((start (listener-start-point))
-          (end (point-max)))
-      (delete-region start end)
+          (end (lem::buffers-end (current-buffer))))
+      (lem::delete-between-points start end)
       (when win (insert-string str))
-      (setf (marker-point (%listener-marker)) start))))
+      (lem::move-point (%listener-marker) start))))
 
 (define-key *listener-mode-keymap* (kbd "M-n") 'listener-next-input)
 (define-command listener-next-input () ()
   (multiple-value-bind (str win)
       (next-history (%listener-history))
     (let ((start (listener-start-point))
-          (end (point-max)))
-      (delete-region start end)
+          (end (lem::buffers-end (current-marker))))
+      (lem::delete-between-points start end)
       (when win (insert-string str))
-      (setf (marker-point (%listener-marker)) start))))
+      (lem::move-point (%listener-marker) start))))
 
 (define-key *listener-mode-keymap* (kbd "M-r") 'listener-reset-interactive)
 (define-command listener-reset-interactive (arg) ("P")
   (when arg
     (let ((*inhibit-read-only* t))
-      (delete-region (point-min) (point-max))))
+      (buffer-erase (current-buffer))))
   (listener-reset-prompt)
   t)
 
 (define-key *listener-mode-keymap* (kbd "C-c C-u") 'listener-clear-input)
 (define-command listener-clear-input () ()
-  (delete-region (listener-start-point)
-                 (point-max)))
+  (lem::delete-between-points (listener-start-point)
+                              (lem::buffers-end (current-buffer))))

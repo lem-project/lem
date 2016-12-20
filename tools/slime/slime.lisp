@@ -762,7 +762,7 @@
     (when buffer
       (with-open-stream (stream (make-buffer-output-stream (buffers-end buffer)))
         (princ string stream))
-      (lem.listener-mode::listener-update-marker (point-max buffer))
+      (lem.listener-mode::listener-update-marker (lem::buffers-end buffer))
       (when (eq buffer (current-buffer))
         (point-set (point-max)))
       (redraw-display))))

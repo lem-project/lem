@@ -66,8 +66,12 @@
       marker)))
 
 (defun invoke-save-excursion (function)
-  ;; マーク位置の保存は後で考える
-  (with-marker ((point (current-marker)))
+  (let ((point (copy-marker (current-marker) :temporary))
+        (mark (when (buffer-mark-p (current-buffer))
+                (copy-marker (buffer-mark-marker (current-buffer))
+                             :temporary))))
     (unwind-protect (funcall function)
       (setf (current-buffer) (marker-buffer point))
-      (move-point (current-marker) point))))
+      (move-point (current-marker) point)
+      (when mark
+        (set-current-mark mark)))))

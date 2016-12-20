@@ -648,11 +648,12 @@
 
 (defun lisp-move-and-eval-sexp (move-sexp eval-string-function)
   (let ((str (save-excursion
-              (and (funcall move-sexp)
-                   (region-string (current-point)
-                                  (progn
-                                    (forward-sexp 1)
-                                    (current-point)))))))
+               (and (funcall move-sexp)
+                    (lem::points-to-string
+                     (current-marker)
+                     (lem::form-offset (copy-marker (current-marker)
+                                                    :temporary)
+                                       1))))))
     (when str
       (funcall eval-string-function str)
       t)))
@@ -692,10 +693,11 @@
         `(,macroexpand-symbol
           (let ((*package* (lisp-current-package)))
             (read-from-string
-             (region-string
-              (current-point)
-              (save-excursion (forward-sexp 1)
-                              (current-point))))))
+             (lem::points-to-string
+              (current-marker)
+              (lem::form-offset (copy-marker (current-marker)
+                                             :temporary)
+                                1)))))
         (lisp-current-package))))
 
 (defun %lisp-macroexpand-replace-expr (expr)
@@ -706,8 +708,8 @@
   (with-open-stream (stream (make-buffer-output-stream (current-marker)))
     (pprint expr stream))
   (read-from-string
-   (region-string (point-min)
-                  (point-max))))
+   (lem::points-to-string (lem::buffers-start (current-buffer))
+                          (lem::buffers-end (current-buffer)))))
 
 (defun %lisp-macroexpand (macroexpand-symbol buffer-name)
   (multiple-value-bind (expr error-p)
@@ -889,14 +891,12 @@
                                                 external-p)))))))
 
 (defun lisp-preceding-symbol ()
-  (let* ((end (current-point))
-         (begin (prog2 (backward-sexp)
-                    (current-point)
-                  (point-set end)))
-         (str (string-left-trim
-               "'`," (string-left-trim
-                      "#" (region-string begin end)))))
-    str))
+  (let* ((end (current-marker))
+         (start (lem::form-offset (copy-marker end :temporary) -1)))
+    (when (and start end)
+      (string-left-trim
+       "'`," (string-left-trim
+              "#" (lem::points-to-string start end))))))
 
 (define-key *lisp-mode-keymap* (kbd "C-M-i") 'lisp-complete-symbol)
 (define-command lisp-complete-symbol () ()

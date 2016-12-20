@@ -28,8 +28,6 @@
           delete-while-whitespaces
           skip-chars-forward
           skip-chars-backward
-          get-property
-          put-property
           remove-property
           put-attribute
           insert-string-with-attribute
@@ -370,12 +368,6 @@
                   not-p
                   (lambda () (shift-position -1))
                   #'preceding-char))
-
-(defun get-property (point key)
-  (buffer-get-property (current-buffer) point key))
-
-(defun put-property (start end key value)
-  (buffer-put-property (current-buffer) start end key value))
 
 (defun remove-property (start end key)
   (buffer-remove-property (current-buffer) start end key))

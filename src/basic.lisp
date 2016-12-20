@@ -309,7 +309,7 @@
   (nth-value 1 (character-offset (current-marker) n)))
 
 (defun check-marked ()
-  (unless (buffer-mark-marker (current-buffer))
+  (unless (buffer-mark-p (current-buffer))
     (editor-error "Not mark in this buffer")))
 
 (defun mark-point ()

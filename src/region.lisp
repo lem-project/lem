@@ -7,19 +7,19 @@
           delete-region
           apply-region-lines))
 
-(defun region-beginning ()
-  (let ((point1 (current-point))
-        (point2 (mark-point)))
-    (if (point< point1 point2)
-        point1
-        point2)))
+(defun region-beginning (&optional (buffer (current-buffer)))
+  (let ((start (buffer-point-marker buffer))
+        (end (buffer-mark-marker buffer)))
+    (if (marker< start end)
+        start
+        end)))
 
-(defun region-end ()
-  (let ((point1 (current-point))
-        (point2 (mark-point)))
-    (if (point< point1 point2)
-        point2
-        point1)))
+(defun region-end (&optional (buffer (current-buffer)))
+  (let ((start (buffer-point-marker buffer))
+        (end (buffer-mark-marker buffer)))
+    (if (marker< start end)
+        end
+        start)))
 
 (defun region-string (begin end &optional (buffer (current-buffer)))
   (with-output-to-string (out)

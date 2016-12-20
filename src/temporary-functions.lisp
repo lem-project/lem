@@ -44,6 +44,16 @@
                        lastp)))
   (values))
 
+(defun count-characters (start-marker end-marker)
+  (let ((count 0))
+    (map-region start-marker
+                end-marker
+                (lambda (string lastp)
+                  (incf count (length string))
+                  (unless lastp
+                    (incf count))))
+    count))
+
 (defun form-offset (marker n)
   (let ((new-point
          (save-excursion

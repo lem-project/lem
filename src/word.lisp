@@ -109,12 +109,12 @@
              (insert-char (funcall case-fun c)))))))
 
 (define-key *global-keymap* (kbd "C-x C-l") 'downcase-region)
-(define-command downcase-region (begin end) ("r")
-  (case-region-aux begin end #'char-downcase))
+(define-command downcase-region (start end) ("r")
+  (case-region-aux (marker-point start) (marker-point end) #'char-downcase))
 
 (define-key *global-keymap* (kbd "C-x C-u") 'uppercase-region)
-(define-command uppercase-region (begin end) ("r")
-  (case-region-aux begin end #'char-upcase))
+(define-command uppercase-region (start end) ("r")
+  (case-region-aux (marker-point start) (marker-point end) #'char-upcase))
 
 (defun case-word-aux (n replace-char-p first-case rest-case)
   (dotimes (_ n t)

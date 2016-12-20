@@ -28,9 +28,6 @@
           delete-while-whitespaces
           skip-chars-forward
           skip-chars-backward
-          remove-property
-          put-attribute
-          insert-string-with-attribute
           current-column
           move-to-column
           point-to-offset
@@ -368,17 +365,6 @@
                   not-p
                   (lambda () (shift-position -1))
                   #'preceding-char))
-
-(defun remove-property (start end key)
-  (buffer-remove-property (current-buffer) start end key))
-
-(defun put-attribute (start end attribute)
-  (buffer-put-property (current-buffer) start end :attribute attribute))
-
-(defun insert-string-with-attribute (string attribute)
-  (let ((start (current-point)))
-    (insert-string string)
-    (put-attribute start (current-point) attribute)))
 
 (defun current-column ()
   (string-width (current-line-string)

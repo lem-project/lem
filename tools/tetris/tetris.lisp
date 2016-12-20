@@ -106,9 +106,11 @@
 
 (defun insert-block (attribute)
   (insert-string "  ")
-  (put-attribute (save-excursion (next-char -2) (current-point))
-                 (current-point)
-                 attribute))
+  (lem::put-text-property (character-offset (copy-marker (current-marker)
+                                                         :temporary)
+                                            -2)
+                          (current-marker)
+                          :attribute attribute))
 
 (defun draw-field-internal (field)
   (dotimes (y +field-height+)

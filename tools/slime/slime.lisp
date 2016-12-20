@@ -569,7 +569,9 @@
       (loop :for plist :in data
             :do (let ((designator (cadr plist))
                       (plist1 (cddr plist)))
-                  (insert-string-with-attribute designator *headline-attribute*)
+                  (lem::insert-string-at (current-marker)
+                                         (lem.text-property:make-text-property
+                                          designator :attribute *headline-attribute*))
                   (loop :for (k v) :on plist1 :by #'cddr
                         :do (insert-string (format nil "~%  ~A: ~A" k v)))
                   (insert-newline 2))))))

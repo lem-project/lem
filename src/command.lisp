@@ -341,15 +341,20 @@
 
 (define-key *global-keymap* (kbd "C-x C-o") 'delete-blank-lines)
 (define-command delete-blank-lines () ()
-  (do ()
-      ((not (blank-line-p))
-       (forward-line 1))
-    (unless (forward-line -1)
-      (return)))
-  (do () ((eobp))
-    (let ((result (blank-line-p)))
-      (unless (and result (delete-char result nil))
-        (return)))))
+  (let ((point (current-marker)))
+    (loop
+      (unless (blank-line-p point)
+        (line-offset point 1)
+        (return))
+      (unless (nth-value 1 (line-offset point -1))
+        (return)))
+    (loop
+      (when (end-buffer-p point)
+        (return))
+      (let ((nblanks (blank-line-p point)))
+        (if nblanks
+            (delete-char-at point nblanks)
+            (return))))))
 
 (define-key *global-keymap* (kbd "M-Spc") 'just-one-space)
 (define-command just-one-space () ()

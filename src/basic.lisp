@@ -341,12 +341,18 @@
                                    '(#\space #\tab #\newline)))))
     (delete-char (- n) use-kill-ring)))
 
-(defun blank-line-p ()
-  (let ((string (current-line-string))
-        (eof-p (last-line-p (current-marker))))
-    (when (string= "" (string-trim '(#\space #\tab) string))
-      (+ (length string)
-         (if eof-p 0 1)))))
+(defun blank-line-p (point)
+  (let ((string (line-string-at point))
+        (eof-p (last-line-p point))
+        (count 0))
+    (loop :for c :across string :do
+          (unless (or (char= c #\space)
+                      (char= c #\tab))
+            (return-from blank-line-p nil))
+          (incf count))
+    (if eof-p
+        count
+        (1+ count))))
 
 (defun skip-chars-internal (point test not-p dir)
   (loop :for count :from 0

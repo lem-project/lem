@@ -128,7 +128,7 @@
   (skip-string nil))
 
 (defun skip-sexp-forward ()
-  (syntax-skip-expr-prefix-forward)
+  (syntax-skip-expr-prefix-forward (current-marker))
   (loop
     (when (eobp)
       (return))
@@ -170,7 +170,7 @@
           do (unless (shift-position -1)
                (return))
           finally (return t))
-        (syntax-skip-expr-prefix-backward))))
+        (syntax-skip-expr-prefix-backward (current-marker)))))
 
 (defun raw-forward-sexp (n)
   (let ((skip-space

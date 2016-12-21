@@ -314,21 +314,21 @@
                  (get-dispatch-macro-character c1 c2))
         (funcall step-fn c1 c2)))))
 
-(defvar *lisp-mode-skip-features-sharp-macro-p* nil)
-
-(defun lisp-mode-skip-expr-prefix-forward ()
+(defun lisp-mode-skip-expr-prefix-forward (point)
   (%lisp-mode-skip-expr-prefix
-   (char-after 0) (char-after 1)
-   #'(lambda (c1 c2)
-       (declare (ignore c1 c2))
-       (shift-position 2))))
+   (lem::character-at point 0)
+   (lem::character-at point 1)
+   (lambda (c1 c2)
+     (declare (ignore c1 c2))
+     (lem::character-offset point 2))))
 
-(defun lisp-mode-skip-expr-prefix-backward ()
-  (%lisp-mode-skip-expr-prefix (char-before 2)
-                               (char-before 1)
-                               #'(lambda (c1 c2)
-                                   (declare (ignore c1 c2))
-                                   (shift-position -2))))
+(defun lisp-mode-skip-expr-prefix-backward (point)
+  (%lisp-mode-skip-expr-prefix
+   (lem::character-at point -2)
+   (lem::character-at point -1)
+   (lambda (c1 c2)
+     (declare (ignore c1 c2))
+     (lem::character-offset point -2))))
 
 (defun looking-at-indent-spec ()
   (let* ((string (symbol-string-at-point (current-marker)))

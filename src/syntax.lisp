@@ -192,13 +192,13 @@
 (defun syntax-expr-prefix-char-p (c)
   (member c (syntax-table-expr-prefix-chars (current-syntax))))
 
-(defun syntax-skip-expr-prefix-forward ()
+(defun syntax-skip-expr-prefix-forward (point)
   (let ((f (syntax-table-expr-prefix-forward-function (current-syntax))))
-    (if f (funcall f) t)))
+    (if f (funcall f point) t)))
 
-(defun syntax-skip-expr-prefix-backward ()
+(defun syntax-skip-expr-prefix-backward (point)
   (let ((f (syntax-table-expr-prefix-backward-function (current-syntax))))
-    (if f (funcall f) t)))
+    (if f (funcall f point) t)))
 
 (defun equal-comment-p (a b x y)
   (and (eql a x)

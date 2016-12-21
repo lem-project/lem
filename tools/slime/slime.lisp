@@ -669,12 +669,9 @@
       (setf (get-bvar :listener-get-prompt-function :buffer buffer)
             'repl-get-prompt
             (get-bvar :listener-check-confirm-function :buffer buffer)
-            'repl-paren-correspond-p
+            'lem.lisp-mode:lisp-repl-paren-correspond-p
             (get-bvar :listener-confirm-function :buffer buffer)
             'repl-confirm))))
-
-(defun repl-paren-correspond-p ()
-  (lem.lisp-mode:lisp-repl-paren-correspond-p))
 
 (defun repl-change-read-line-input ()
   (setf (get-bvar :listener-get-prompt-function)
@@ -708,7 +705,8 @@
     (modeline-remove-status-list *modeline-eval-flag*)
     (stop-timer *eval-timer*)))
 
-(defun repl-confirm (string)
+(defun repl-confirm (point string)
+  (declare (ignore point))
   (check-connection)
   (let ((prev-write-string-function *write-string-function*))
     (swank-protocol:request-listener-eval
@@ -744,7 +742,8 @@
   (pop *read-string-tag-stack*)
   (message "Read aborted"))
 
-(defun repl-read-line (string)
+(defun repl-read-line (point string)
+  (declare (ignore point))
   (let ((thread (pop *read-string-thread-stack*))
         (tag (pop *read-string-tag-stack*)))
     (swank-protocol:send-message-string

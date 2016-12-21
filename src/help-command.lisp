@@ -36,7 +36,7 @@
   (with-pop-up-typeout-window (s (get-buffer-create "*bindings*") :focus t :erase t)
     (describe-bindings-internal s
                                 "Major Mode Bindings"
-                                (mode-keymap (major-mode))
+                                (mode-keymap (buffer-major-mode))
                                 t)
     (describe-bindings-internal s
                                 "Global Bindings"

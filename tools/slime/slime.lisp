@@ -1046,7 +1046,7 @@
 
 
 (defun idle-timer-function ()
-  (when (and (eq (major-mode) 'slime-mode)
+  (when (and (eq (buffer-major-mode) 'slime-mode)
              (connected-p))
     (let ((package (lem.lisp-mode::scan-current-package #'identity)))
       (when package

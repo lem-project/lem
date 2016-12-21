@@ -151,6 +151,7 @@
              (insert-file-contents (buffers-start buffer)
                                    filename)
              (buffer-unmark buffer))
+           (move-point (buffer-point-marker buffer) (buffers-start buffer))
            (buffer-enable-undo buffer)
            (update-changed-disk-date buffer)
            (prepare-auto-mode buffer)

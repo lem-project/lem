@@ -264,17 +264,14 @@
 
 (defun insert-char (c &optional (n 1))
   (insert-char-at (current-marker) c n)
-  (shift-position n)
   t)
 
 (defun insert-newline (&optional (n 1))
   (insert-char-at (current-marker) #\newline n)
-  (forward-line n)
   t)
 
 (defun insert-string (string)
-  (insert-string-at (current-marker) string)
-  (shift-position (length string)))
+  (insert-string-at (current-marker) string))
 
 (defun delete-char (n &optional killp)
   (delete-char-at (current-marker) n killp))

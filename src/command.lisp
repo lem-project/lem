@@ -132,7 +132,9 @@
 
 (define-key *global-keymap* (kbd "C-o") 'open-line)
 (define-command open-line (n) ("p")
-  (insert-char-at (current-marker) #\newline n))
+  (let ((point (current-marker)))
+    (insert-char-at (current-marker) #\newline n)
+    (character-offset point (- n))))
 
 (define-key *global-keymap* (kbd "C-d") 'delete-next-char)
 (define-key *global-keymap* (kbd "[dc]") 'delete-next-char)
@@ -394,7 +396,7 @@
   (dotimes (_ n t)
     (let ((point (buffer-undo (current-buffer))))
       (if point
-          (point-set point)
+          (move-point (current-marker) point)
           (editor-error "Undo Error")))))
 
 (define-key *global-keymap* (kbd "C-_") 'redo)
@@ -402,7 +404,7 @@
   (dotimes (_ n t)
     (let ((point (buffer-redo (current-buffer))))
       (if point
-          (point-set point)
+          (move-point (current-marker) point)
           (editor-error "Redo Error")))))
 
 (define-key *global-keymap* (kbd "C-@") 'mark-set)

@@ -293,7 +293,7 @@
     (setf (buffer-point-marker buffer)
           (make-marker buffer (make-min-point)
                        :name "buffer-point"
-                       :kind :right-inserting))
+                       :kind :left-inserting))
     (add-buffer buffer)
     buffer))
 
@@ -526,18 +526,14 @@
   (let ((buffer (marker-buffer marker)))
     (when (and (buffer-enable-undo-p buffer)
                (not (ghost-buffer-p buffer)))
-      (let* ((point (marker-point marker))
-             (elt (lambda ()
-                    (funcall fn)
-                    point)))
-        (ecase *undo-mode*
-          (:edit
-           (push-undo-stack buffer elt)
-           (setf (buffer-redo-stack buffer) nil))
-          (:redo
-           (push-undo-stack buffer elt))
-          (:undo
-           (push-redo-stack buffer elt)))))))
+      (ecase *undo-mode*
+        (:edit
+         (push-undo-stack buffer fn)
+         (setf (buffer-redo-stack buffer) nil))
+        (:redo
+         (push-undo-stack buffer fn))
+        (:undo
+         (push-redo-stack buffer fn))))))
 
 (defun buffer-erase (&optional (buffer (current-buffer)))
   (buffer-mark-cancel buffer)

@@ -1035,7 +1035,7 @@
     (setq +++ ++ /// //     *** (car ///)
           ++  +  //  /      **  (car //)
           +   -  /   values *   (car /))
-    (point-set (point-max))
+    (lem::buffer-end (current-buffer))
     (lisp-print-values values)
     (listener-reset-prompt)))
 

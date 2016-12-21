@@ -65,10 +65,7 @@
 
 (define-command dired-find-file-other-window () ()
   (select-file (lambda (file)
-                 (when (one-window-p)
-                   (split-window-sensibly (current-window)))
-                 (other-window 1)
-                 (find-file file))))
+                 (pop-to-buffer (find-file-buffer file)))))
 
 (define-command dired-next-line (n) ("p")
   (forward-line n)

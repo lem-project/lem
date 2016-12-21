@@ -242,9 +242,10 @@
 (define-key *global-keymap* (kbd "C-M-k") 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")
   (dotimes (_ n t)
-    (unless (kill-region (current-marker)
-                         (form-offset (copy-marker (current-marker) :temporary) 1))
-      (return nil))))
+    (let ((end (form-offset (copy-marker (current-marker) :temporary) 1)))
+      (if end
+          (kill-region (current-marker) end)
+          (editor-error "scan error")))))
 
 (define-key *global-keymap* (kbd "C-M-t") 'transpose-sexps)
 (define-command transpose-sexps () ()

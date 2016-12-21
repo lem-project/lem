@@ -465,28 +465,28 @@
   (let ((line (buffer-get-line (current-buffer) (current-linum))))
     (line-search-property line property-name pos)))
 
-(defun skip-whitespace-forward ()
-  (skip-chars-forward (current-marker) #'syntax-space-char-p))
+(defun skip-whitespace-forward (point)
+  (skip-chars-forward point #'syntax-space-char-p))
 
-(defun skip-whitespace-backward ()
-  (skip-chars-backward (current-marker) #'syntax-space-char-p))
+(defun skip-whitespace-backward (point)
+  (skip-chars-backward point #'syntax-space-char-p))
 
-(defun skip-space-and-comment-forward ()
+(defun skip-space-and-comment-forward (point)
   (loop
-    (skip-whitespace-forward)
-    (unless (and (not (eq *syntax-comment-attribute* (text-property-at (current-marker) :attribute -1)))
-                 (eq *syntax-comment-attribute* (text-property-at (current-marker) :attribute)))
+    (skip-whitespace-forward point)
+    (unless (and (not (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
+                 (eq *syntax-comment-attribute* (text-property-at point :attribute)))
       (return t))
-    (unless (next-single-property-change (current-marker) :attribute)
+    (unless (next-single-property-change point :attribute)
       (return nil))))
 
-(defun skip-space-and-comment-backward ()
+(defun skip-space-and-comment-backward (point)
   (loop
-    (skip-whitespace-backward)
-    (unless (and (not (eq *syntax-comment-attribute* (text-property-at (current-marker) :attribute)))
-                 (eq *syntax-comment-attribute* (text-property-at (current-marker) :attribute -1)))
+    (skip-whitespace-backward point)
+    (unless (and (not (eq *syntax-comment-attribute* (text-property-at point :attribute)))
+                 (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
       (return t))
-    (unless (previous-single-property-change (current-marker) :attribute)
+    (unless (previous-single-property-change point :attribute)
       (return nil))))
 
 (defun symbol-string-at-point (point)

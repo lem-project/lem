@@ -121,7 +121,7 @@
                       (setf indent (current-column)))))
               (save-excursion
                (beginning-of-line)
-               (skip-space-and-comment-backward)
+               (skip-space-and-comment-backward (current-marker))
                (when (case (preceding-char)
                        ((nil #\{ #\:)
                         nil)

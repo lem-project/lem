@@ -77,8 +77,8 @@
   (let ((paren-stack))
     (loop
       (unless (if dir
-                  (skip-space-and-comment-forward)
-                  (skip-space-and-comment-backward))
+                  (skip-space-and-comment-forward (current-marker))
+                  (skip-space-and-comment-backward (current-marker)))
         (return nil))
       (when (if dir (eobp) (bobp))
         (return nil))
@@ -183,7 +183,7 @@
              #'skip-sexp-backward)))
     (let ((point (current-point)))
       (dotimes (_ (abs n) t)
-        (funcall skip-space)
+        (funcall skip-space (current-marker))
         (unless (funcall skip-sexp)
           (point-set point)
           (return nil))))))

@@ -274,7 +274,7 @@
   (save-excursion
     (point-set (point-min))
     (loop :while (forward-sexp 1 t))
-    (skip-whitespace-forward)
+    (skip-whitespace-forward (current-marker))
     (eobp)))
 
 (defun compilation-finished (result)

@@ -687,10 +687,9 @@
         (lisp-current-package))))
 
 (defun %lisp-macroexpand-replace-expr (expr)
-  (delete-region (current-point)
-                 (progn
-                   (forward-sexp 1)
-                   (current-point)))
+  (lem::delete-between-points
+   (current-marker)
+   (lem::form-offset (copy-marker (current-marker) :temporary) 1))
   (with-open-stream (stream (make-buffer-output-stream (current-marker)))
     (pprint expr stream))
   (read-from-string
@@ -794,7 +793,7 @@
                           (goto-position filepos)
                           (redraw-display)))
                   defs)))
-        (push (cons (current-buffer) (current-point))
+        (push (copy-marker (current-marker) :temporary)
               *lisp-find-definition-stack*)
         (cond ((= 1 (length defs))
                (funcall (second (car defs))))
@@ -809,12 +808,11 @@
 
 (define-key *lisp-mode-keymap* (kbd "M-,") 'lisp-pop-find-definition-stack)
 (define-command lisp-pop-find-definition-stack () ()
-  (let ((elt (pop *lisp-find-definition-stack*)))
-    (when (null elt)
+  (let ((cur-marker (pop *lisp-find-definition-stack*)))
+    (unless cur-marker
       (return-from lisp-pop-find-definition-stack nil))
-    (destructuring-bind (buffer . point) elt
-      (select-buffer buffer)
-      (point-set point))))
+    (switch-to-buffer (marker-buffer cur-marker))
+    (lem::move-point (current-marker) cur-marker)))
 
 (defun analyze-symbol (str)
   (let (package
@@ -931,12 +929,17 @@
                ((not (up-list 1 t))
                 (return nil))))))))
 
-(define-key *lisp-mode-keymap* (kbd "C-c M-h") 'lisp-echo-arglist)
+(define-key *lisp-mode-keymap* (kbd "C-c C-a") 'lisp-echo-arglist)
 (define-command lisp-echo-arglist () ()
   (multiple-value-bind (arglist foundp)
       (search-backward-arglist)
     (when foundp
       (message "~A" arglist))))
+
+(define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-insert-space-and-echo-arglist)
+(define-command lisp-insert-space-and-echo-arglist (n) ("p")
+  (lem::insert-char-at (current-marker) #\space n)
+  (lisp-echo-arglist))
 
 (define-key *lisp-mode-keymap* (kbd "C-c ;") 'lisp-comment-or-uncomment-region)
 (define-command lisp-comment-or-uncomment-region (arg) ("P")
@@ -953,19 +956,11 @@
 (defun check-package (package-name)
   (find-package (string-upcase package-name)))
 
-(let ((prev-point nil))
-  (defun lisp-idle-timer-function ()
-    (when (eq (major-mode) 'lisp-mode)
-      (let ((package (scan-current-package #'check-package)))
-        (when package
-          (lisp-change-package package))))
-    (let ((curr-point (current-point)))
-      (when (or (null prev-point)
-                (not (point= prev-point curr-point)))
-        (when (member (major-mode) '(lisp-mode lisp-repl-mode))
-          (setf prev-point curr-point)
-          (lisp-echo-arglist)
-          (redraw-display))))))
+(defun lisp-idle-timer-function ()
+  (when (eq (major-mode) 'lisp-mode)
+    (let ((package (scan-current-package #'check-package)))
+      (when package
+        (lisp-change-package package)))))
 
 (defvar *lisp-timer*)
 (when (or (not (boundp '*lisp-timer*))

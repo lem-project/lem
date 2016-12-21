@@ -68,18 +68,20 @@
                  (pop-to-buffer (find-file-buffer file)))))
 
 (define-command dired-next-line (n) ("p")
-  (forward-line n)
-  (when (marker<= (current-marker) *start-marker*)
-    (lem::move-point (current-marker) *start-marker*))
-  (when (last-line-p (current-marker))
-    (forward-line -1))
-  (lem::line-start (current-marker)))
+  (let ((point (current-marker)))
+    (lem::line-offset point n)
+    (when (marker<= point *start-marker*)
+      (lem::move-point point *start-marker*))
+    (when (last-line-p point)
+      (lem::line-offset point -1))
+    (lem::line-start point)))
 
 (define-command dired-previous-line (n) ("p")
-  (forward-line (- n))
-  (when (marker<= (current-marker) *start-marker*)
-    (lem::move-point (current-marker) *start-marker*))
-  (lem::line-start (current-marker)))
+  (let ((point (current-marker)))
+    (lem::line-offset point (- n))
+    (when (marker<= point *start-marker*)
+      (lem::move-point point *start-marker*))
+    (lem::line-start point)))
 
 (define-command dired-next-directory-line (n) ("p")
   (lem::with-marker ((cur-marker (current-marker)))
@@ -199,15 +201,16 @@
       (funcall open-file file))))
 
 (defun mark-current-line (flag)
-  (when (and (marker<= *start-marker* (current-marker))
-             (not (last-line-p (current-marker))))
-    (save-excursion
-      (beginning-of-line)
-      (with-buffer-read-only (current-buffer) nil
-        (delete-char 1)
-        (if flag
-            (insert-char #\*)
-            (insert-char #\space))))))
+  (let ((point (current-marker)))
+    (when (and (marker<= *start-marker* point)
+               (not (last-line-p point)))
+      (lem::line-start point)
+      (with-buffer-read-only (marker-buffer point) nil
+        (save-excursion
+          (lem::delete-char-at point 1)
+          (if flag
+              (lem::insert-char-at point #\*)
+              (lem::insert-char-at point #\space)))))))
 
 (defun mark-lines (test get-flag)
   (save-excursion

@@ -64,6 +64,7 @@
                              (:file "comp")
                              (:file "minibuf")
                              (:file "typeout")
+                             (:file "indent")
                              (:file "lem")
 
                              (:file "file-command")
@@ -74,7 +75,6 @@
                              (:file "word")
                              (:file "sexp")
 
-                             (:file "prog-mode")
                              (:file "listener-mode")
 
                              (:file "kbdmacro")

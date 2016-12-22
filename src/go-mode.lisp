@@ -1,6 +1,6 @@
 (in-package :cl-user)
 (defpackage :lem.go-mode
-  (:use :cl :lem :lem.prog-mode)
+  (:use :cl :lem)
   (:export))
 (in-package :lem.go-mode)
 
@@ -50,7 +50,7 @@
                         :attribute *syntax-constant-attribute*))
     table))
 
-(define-major-mode go-mode prog-mode
+(define-major-mode go-mode nil
   (:name "go"
    :keymap *go-mode-keymap*
    :syntax-table *go-syntax-table*)
@@ -140,7 +140,7 @@
 (define-key *go-mode-keymap* "}" 'go-electric-close)
 (define-command go-electric-close (n) ("p")
   (self-insert n)
-  (indent-line))
+  (indent))
 
 (define-command gofmt () ()
   (filter-buffer "gofmt"))

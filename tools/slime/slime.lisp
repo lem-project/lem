@@ -22,7 +22,7 @@
 (defvar *entry-attribute* (make-attribute "blue" nil :bold-p t))
 (defvar *headline-attribute* (make-attribute nil nil :bold-p t))
 
-(define-major-mode slime-mode lem.prog-mode:prog-mode
+(define-major-mode slime-mode nil
     (:name "slime"
      :keymap *slime-mode-keymap*
      :syntax-table lem.lisp-mode:*lisp-syntax-table*)
@@ -190,8 +190,8 @@
                     'mh-slime-package))))
 
 (define-command slime-indent-sexp () ()
-  (lem.prog-mode:indent-region (current-marker)
-                               (lem::form-offset (copy-marker (current-marker) :temporary) 1)))
+  (indent-region (current-marker)
+                 (lem::form-offset (copy-marker (current-marker) :temporary) 1)))
 
 (define-command slime-set-package (package-name) ((list (read-package-name)))
   (check-connection)

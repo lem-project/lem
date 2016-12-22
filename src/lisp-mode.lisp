@@ -1,6 +1,6 @@
 (in-package :cl-user)
 (defpackage :lem.lisp-mode
-  (:use :cl :lem :lem.prog-mode :lem.listener-mode)
+  (:use :cl :lem :lem.listener-mode)
   (:import-from
    :lem.util)
   (:export
@@ -287,7 +287,7 @@
 
     table))
 
-(define-major-mode lisp-mode prog-mode
+(define-major-mode lisp-mode nil
     (:name "lisp"
      :keymap *lisp-mode-keymap*
      :syntax-table *lisp-syntax-table*)

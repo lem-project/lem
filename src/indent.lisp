@@ -39,9 +39,10 @@
 
 (defun calc-indent-default (point)
   (with-marker ((point point))
-    (skip-chars-forward (line-offset point -1)
-                        '(#\space #\tab))
-    (point-column point)))
+    (cond ((line-offset point -1)
+           (skip-chars-forward point '(#\space #\tab))
+           (point-column point))
+          (t 0))))
 
 (defun indent-line (point)
   (indent-line-1 point

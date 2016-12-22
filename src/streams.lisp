@@ -57,7 +57,7 @@
                    start
                    (line-end (buffer-stream-marker stream)))))
       (values string
-              (not (nth-value 1 (line-offset (buffer-stream-marker stream) 1)))))))
+              (not (line-offset (buffer-stream-marker stream) 1))))))
 
 (defmethod trivial-gray-streams:stream-clear-input ((stream buffer-input-stream))
   nil)

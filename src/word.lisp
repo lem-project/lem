@@ -133,10 +133,10 @@
         (dir (if (plusp n) 1 -1)))
     (dotimes (_ (abs n))
       (loop :while (blank-line-p point)
-            :do (unless (nth-value 1 (line-offset point dir))
+            :do (unless (line-offset point dir)
                   (return-from forward-paragraph)))
       (loop :until (blank-line-p point)
-            :do (unless (nth-value 1 (line-offset point dir))
+            :do (unless (line-offset point dir)
                   (return-from forward-paragraph))))))
 
 (define-key *global-keymap* (kbd "M-{") 'backward-paragraph)

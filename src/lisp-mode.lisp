@@ -422,7 +422,7 @@
           (loop
             (when (char= #\( (lem::character-at point 0))
               (return))
-            (unless (nth-value 1 (lem::line-offset point -1))
+            (unless (lem::line-offset point -1)
               (return)))))))
 
 (define-key *lisp-mode-keymap* (kbd "C-M-e") 'lisp-end-of-defun)

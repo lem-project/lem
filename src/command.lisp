@@ -271,9 +271,8 @@
   (if n
       (scroll-down n)
       (cond
-        ((nth-value 1
-                    (line-offset (current-marker)
-                                 (1- (window-height (current-window)))))
+        ((line-offset (current-marker)
+                      (1- (window-height (current-window))))
          (window-recenter (current-window))
          t)
         (t
@@ -287,9 +286,8 @@
   (if n
       (scroll-up n)
       (cond
-        ((nth-value 1
-                    (line-offset (current-marker)
-                                 (- (1- (window-height (current-window))))))
+        ((line-offset (current-marker)
+                      (- (1- (window-height (current-window)))))
          (window-recenter (current-window))
          t)
         (t
@@ -346,7 +344,7 @@
       (unless (blank-line-p point)
         (line-offset point 1)
         (return))
-      (unless (nth-value 1 (line-offset point -1))
+      (unless (line-offset point -1)
         (return)))
     (loop
       (when (end-buffer-p point)
@@ -367,8 +365,9 @@
 (define-command delete-indentation () ()
   (let* ((cur (current-marker))
          (prev (copy-marker (line-start cur) :temporary)))
-    (delete-between-points (line-end (line-offset cur -1)) prev)
-    (just-one-space)
+    (when (line-offset cur -1)
+      (delete-between-points (line-end cur) prev)
+      (just-one-space))
     t))
 
 (define-key *global-keymap* (kbd "C-t") 'transpose-characters)

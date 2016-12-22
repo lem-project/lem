@@ -56,5 +56,5 @@
           (with-marker ((prev (line-start (current-marker))))
             (funcall function)
             (when (same-line-p (current-marker) prev)
-              (unless (nth-value 1 (line-offset (current-marker) 1))
+              (unless (line-offset (current-marker) 1)
                 (return)))))))

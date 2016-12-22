@@ -194,11 +194,12 @@
   (isearch-reset-buffer)
   (unless (equal search-string "")
     (window-see (current-window))
-    (let ((cur-marker (copy-marker (lem::window-view-marker (current-window)) :temporary))
-          (limit-marker (lem::line-offset
-                         (copy-marker (lem::window-view-marker (current-window))
-                                      :temporary)
-                         (window-height (current-window)))))
+    (lem::with-marker ((cur-marker (lem::window-view-marker (current-window)))
+                       (limit-marker (or (lem::line-offset
+                                          (copy-marker (lem::window-view-marker (current-window))
+                                                       :temporary)
+                                          (window-height (current-window)))
+                                         (lem::buffers-end (window-buffer (current-window))))))
       (loop :while (funcall *isearch-search-forward-function*
                             cur-marker
                             search-string

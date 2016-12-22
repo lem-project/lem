@@ -83,21 +83,23 @@
      (marker-linum marker2)))
 
 (defun line-offset (marker n &optional (charpos 0))
-  (if (plusp n)
-      (dotimes (_ n)
-        (when (last-line-p marker)
-          (return-from line-offset (values (line-end marker) nil)))
-        (incf (marker-linum marker)))
-      (dotimes (_ (- n))
-        (when (first-line-p marker)
-          (return-from line-offset (values (line-start marker) nil)))
-        (decf (marker-linum marker))))
+  (let ((linum (marker-linum marker)))
+    (if (plusp n)
+        (dotimes (_ n)
+          (when (<= (buffer-nlines (marker-buffer marker)) linum)
+            (return-from line-offset nil))
+          (incf linum))
+        (dotimes (_ (- n))
+          (when (= linum 1)
+            (return-from line-offset nil))
+          (decf linum)))
+    (setf (marker-linum marker) linum))
   (setf (marker-charpos marker)
         (if (< 0 charpos)
             (min charpos
                  (length (line-string-at marker)))
             0))
-  (values marker t))
+  marker)
 
 (defun %character-offset-positive (marker n)
   (loop
@@ -110,7 +112,7 @@
         (incf (marker-charpos marker) n)
         (return (values marker t)))
       (decf n w)
-      (unless (nth-value 1 (line-offset marker 1))
+      (unless (line-offset marker 1)
         (return (values marker nil))))))
 
 (defun %character-offset-negative (marker n)
@@ -296,7 +298,7 @@
   (shift-position position))
 
 (defun forward-line (&optional (n 1))
-  (nth-value 1 (line-offset (current-marker) n)))
+  (line-offset (current-marker) n))
 
 (defun shift-position (n)
   (nth-value 1 (character-offset (current-marker) n)))

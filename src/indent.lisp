@@ -1,10 +1,11 @@
 (in-package :lem)
 
-(export '(indent
+(export '(indent-line
+          indent
           newline-and-indent
           indent-region))
 
-(defun indent-line (point column)
+(defun indent-line-1 (point column)
   (when (minusp column)
     (setf column 0))
   (let ((old-column (point-column point))
@@ -42,12 +43,16 @@
                         '(#\space #\tab))
     (point-column point)))
 
+(defun indent-line (point)
+  (indent-line-1 point
+                 (funcall (get-bvar :calc-indent-function
+                                    :default #'calc-indent-default
+                                    :buffer (marker-buffer point))
+                          point)))
+
 (define-key *global-keymap* (kbd "C-i") 'indent)
 (define-command indent () ()
-  (indent-line (current-marker)
-               (funcall (get-bvar :calc-indent-function
-                                  :default #'calc-indent-default)
-                        (current-marker))))
+  (indent-line (current-marker)))
 
 (define-key *global-keymap* (kbd "C-j") 'newline-and-indent)
 (define-key *global-keymap* (kbd "M-j") 'newline-and-indent)

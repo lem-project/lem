@@ -957,10 +957,32 @@
       (lisp-comment-region)))
 
 (define-command lisp-comment-region () ()
-  )
+  (save-excursion
+    (lem::with-marker ((start (region-beginning) :right-inserting)
+                       (end (region-end) :left-inserting))
+      (skip-chars-forward end '(#\space #\tab))
+      (unless (lem::end-line-p end)
+        (lem::with-marker ((prev end))
+          (lem::insert-char-at end #\newline)
+          (indent-line end)
+          (lem::move-point end prev)))
+      (let ((charpos (marker-charpos start)))
+        (loop
+          (lem::insert-string-at start ";")
+          (when (lem::same-line-p start end)
+            (return))
+          (lem::line-offset start 1 charpos))))))
 
 (define-command lisp-uncomment-region () ()
-  )
+  (lem::with-marker ((start (region-beginning))
+                     (end (region-end)))
+    (let ((charpos (marker-charpos start)))
+      (loop
+        (unless (marker< start end) (return))
+        (loop (if (char= #\; (lem::character-at start))
+                  (lem::delete-char-at start 1)
+                  (return)))
+        (lem::line-offset start 1 charpos)))))
 
 (defun check-package (package-name)
   (find-package (string-upcase package-name)))

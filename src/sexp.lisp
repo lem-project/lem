@@ -244,15 +244,3 @@
                (delete-between-points start end)))))
       (insert-string-at point1 form-string2)
       (insert-string-at point2 form-string1))))
-
-(defun beginning-of-defun-abstract (n match-p)
-  (let ((arg (if (plusp n) 1 -1)))
-    (dotimes (_ (abs n) t)
-      (when (bolp)
-        (forward-line (- arg)))
-      (loop
-        (beginning-of-line)
-        (when (funcall match-p)
-          (return t))
-        (unless (forward-line (- arg))
-          (return nil))))))

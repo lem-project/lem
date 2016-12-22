@@ -54,17 +54,6 @@
                     (incf count))))
     count))
 
-(defun form-offset (marker n)
- (let ((new-point
-         (save-excursion
-           (setf (current-buffer) (marker-buffer marker))
-           (point-set (marker-point marker))
-           (and (forward-sexp n t)
-                (current-point)))))
-    (when new-point
-      (setf (marker-point marker) new-point)
-      marker)))
-
 (defun invoke-save-excursion (function)
   (let ((point (copy-marker (current-marker) :temporary))
         (mark (when (buffer-mark-p (current-buffer))

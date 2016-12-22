@@ -156,28 +156,34 @@
       (syntax-skip-expr-prefix-backward point))))
 
 (defun form-offset (point n)
-  (cond ((plusp n)
-         (dotimes (_ n point)
-           (unless (%form-offset-positive point)
-             (return nil))))
-        (t
-         (dotimes (_ (- n) point)
-           (unless (%form-offset-negative point)
-             (return nil))))))
+  (with-marker ((prev point))
+    (cond ((plusp n)
+           (dotimes (_ n point)
+             (move-point point prev)
+             (unless (%form-offset-positive point)
+               (return nil))))
+          (t
+           (dotimes (_ (- n) point)
+             (move-point point prev)
+             (unless (%form-offset-negative point)
+               (return nil)))))))
 
 (defun scan-lists (point n depth &optional no-errors)
-  (cond ((plusp n)
-         (dotimes (_ n point)
-           (unless (%skip-list-forward point depth)
-             (if no-errors
-                 (return nil)
-                 (sexp-scan-error point)))))
-        (t
-         (dotimes (_ (- n) point)
-           (unless (%skip-list-backward point depth)
-             (if no-errors
-                 (return nil)
-                 (sexp-scan-error point)))))))
+  (with-marker ((prev point))
+    (cond ((plusp n)
+           (dotimes (_ n point)
+             (unless (%skip-list-forward point depth)
+               (move-point point prev)
+               (if no-errors
+                   (return nil)
+                   (sexp-scan-error point)))))
+          (t
+           (dotimes (_ (- n) point)
+             (unless (%skip-list-backward point depth)
+               (move-point point prev)
+               (if no-errors
+                   (return nil)
+                   (sexp-scan-error point))))))))
 
 (define-key *global-keymap* (kbd "C-M-f") 'forward-sexp)
 (define-command forward-sexp (&optional (n 1) no-errors) ("p")

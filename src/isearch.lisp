@@ -56,8 +56,8 @@
   (isearch-start
    "ISearch: "
    (lambda (marker str)
-     (search-forward (lem::character-offset
-                      marker (- (length str)))
+     (search-forward (or (lem::character-offset marker (- (length str)))
+                         marker)
                      str))
    #'search-forward
    #'search-backward
@@ -68,7 +68,8 @@
   (isearch-start
    "ISearch:"
    (lambda (marker str)
-     (search-backward (lem::character-offset marker (length str))
+     (search-backward (or (lem::character-offset marker (length str))
+                          marker)
                       str))
    #'search-forward
    #'search-backward

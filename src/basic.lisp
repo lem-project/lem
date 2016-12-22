@@ -102,32 +102,44 @@
   marker)
 
 (defun %character-offset-positive (marker n)
-  (loop
-    (when (minusp n)
-      (return (values marker nil)))
-    (let* ((length (1+ (buffer-line-length (marker-buffer marker)
-                                           (marker-linum marker))))
-           (w (- length (marker-charpos marker))))
-      (when (< n w)
-        (incf (marker-charpos marker) n)
-        (return (values marker t)))
-      (decf n w)
-      (unless (line-offset marker 1)
-        (return (values marker nil))))))
+  (let ((charpos (marker-charpos marker))
+        (linum (marker-linum marker)))
+    (loop
+      (when (minusp n)
+        (setf (marker-charpos marker) charpos)
+        (setf (marker-linum marker) linum)
+        (return nil))
+      (let* ((length (1+ (buffer-line-length (marker-buffer marker)
+                                             (marker-linum marker))))
+             (w (- length (marker-charpos marker))))
+        (when (< n w)
+          (incf (marker-charpos marker) n)
+          (return marker))
+        (decf n w)
+        (unless (line-offset marker 1)
+          (setf (marker-charpos marker) charpos)
+          (setf (marker-linum marker) linum)
+          (return nil))))))
 
 (defun %character-offset-negative (marker n)
-  (loop
-    (when (minusp n)
-      (return (values marker nil)))
-    (when (<= n (marker-charpos marker))
-      (decf (marker-charpos marker) n)
-      (return (values marker t)))
-    (decf n (1+ (marker-charpos marker)))
-    (cond ((first-line-p marker)
-           (return (values (line-start marker) nil)))
-          (t
-           (line-offset marker -1)
-           (line-end marker)))))
+  (let ((charpos (marker-charpos marker))
+        (linum (marker-linum marker)))
+    (loop
+      (when (minusp n)
+        (setf (marker-charpos marker) charpos)
+        (setf (marker-linum marker) linum)
+        (return nil))
+      (when (<= n (marker-charpos marker))
+        (decf (marker-charpos marker) n)
+        (return marker))
+      (decf n (1+ (marker-charpos marker)))
+      (cond ((first-line-p marker)
+             (setf (marker-charpos marker) charpos)
+             (setf (marker-linum marker) linum)
+             (return nil))
+            (t
+             (line-offset marker -1)
+             (line-end marker))))))
 
 (defun character-offset (marker n)
   (if (plusp n)
@@ -140,7 +152,7 @@
                        (marker-linum marker)
                        (marker-charpos marker))
       (with-marker ((temp-marker marker))
-        (when (nth-value 1 (character-offset temp-marker offset))
+        (when (character-offset temp-marker offset)
           (character-at temp-marker 0)))))
 
 (defun insert-char-at (marker char &optional (n 1))
@@ -162,7 +174,7 @@
 
 (defun delete-char-at (marker &optional (n 1) killp)
   (when (minusp n)
-    (unless (nth-value 1 (character-offset marker n))
+    (unless (character-offset marker n)
       (return-from delete-char-at nil))
     (setf n (- n)))
   (unless (end-buffer-p marker)
@@ -177,7 +189,7 @@
                            (marker-point marker)
                            key)
       (with-marker ((temp-marker marker))
-        (when (nth-value 1 (character-offset temp-marker offset))
+        (when (character-offset temp-marker offset)
           (text-property-at temp-marker key 0)))))
 
 (defun put-text-property (start-marker end-marker key value)
@@ -199,11 +211,9 @@
 
 (defun next-single-property-change (marker property-name &optional limit-marker)
   (let ((first-value (text-property-at marker property-name))
-        (start-marker (copy-marker marker :temporary))
-        moved)
+        (start-marker (copy-marker marker :temporary)))
     (loop
-      (multiple-value-setq (marker moved) (character-offset marker 1))
-      (unless moved
+      (unless (character-offset marker 1)
         (move-point marker start-marker)
         (return nil))
       (unless (eq first-value (text-property-at marker property-name))
@@ -214,13 +224,11 @@
 
 (defun previous-single-property-change (marker property-name &optional limit-marker)
   (let ((first-value (text-property-at marker property-name -1))
-        (start-marker (copy-marker marker :temporary))
-        moved)
+        (start-marker (copy-marker marker :temporary)))
     (loop
       (unless (eq first-value (text-property-at marker property-name -1))
         (return marker))
-      (multiple-value-setq (marker moved) (character-offset marker -1))
-      (unless moved
+      (unless (character-offset marker -1)
         (move-point marker start-marker)
         (return nil))
       (when (and limit-marker (marker>= limit-marker marker))
@@ -301,7 +309,7 @@
   (line-offset (current-marker) n))
 
 (defun shift-position (n)
-  (nth-value 1 (character-offset (current-marker) n)))
+  (character-offset (current-marker) n))
 
 (defun check-marked ()
   (unless (buffer-mark-p (current-buffer))
@@ -366,7 +374,7 @@
                     (not not-p)
                     not-p)
           (return count))
-        (unless (nth-value 1 (character-offset point (if dir 1 -1)))
+        (unless (character-offset point (if dir 1 -1))
           (return count))))
 
 (defun skip-chars-forward (point test &optional not-p)

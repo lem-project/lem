@@ -38,7 +38,7 @@
 
 (defun %skip-string-forward (point)
   (loop :with quote-char := (character-at point 0) :do
-        (unless (nth-value 1 (character-offset point 1))
+        (unless (character-offset point 1)
           (return nil))
         (let ((c (character-at point)))
           (cond ((syntax-escape-char-p c)
@@ -51,7 +51,7 @@
 (defun %skip-string-backward (point)
   (character-offset point -1)
   (loop :with quote-char := (character-at point) :do
-        (unless (nth-value 1 (character-offset point -1))
+        (unless (character-offset point -1)
           (return nil))
         (if (%sexp-escape-p point 0)
             (character-offset point -1)
@@ -126,10 +126,7 @@
                  (syntax-escape-char-p c))
              (%skip-symbol-forward point))
             ((syntax-expr-prefix-char-p c)
-             (multiple-value-bind (point moved)
-                 (character-offset point 1)
-               (when moved
-                 point)))
+             (character-offset point 1))
             ((syntax-open-paren-char-p c)
              (%skip-list-forward point 0))
             ((syntax-closed-paren-char-p c)

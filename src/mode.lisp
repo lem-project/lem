@@ -5,7 +5,6 @@
           mode-keymap
           mode-syntax-table
           current-mode-keymap
-          current-syntax
           find-mode-from-name
           toggle-minor-mode
           define-major-mode
@@ -29,9 +28,6 @@
 
 (defun (setf current-mode-keymap) (new-keymap)
   (setf (mode-keymap (buffer-major-mode)) new-keymap))
-
-(defun current-syntax ()
-  (mode-syntax-table (buffer-major-mode)))
 
 (defun find-mode-from-name (mode-name)
   (find-if #'(lambda (mode)

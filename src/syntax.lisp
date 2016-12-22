@@ -149,6 +149,12 @@
   (push (make-instance 'syntax-region :start start :end end :attribute attribute)
         (syntax-table-region-list syntax-table)))
 
+(defvar *current-syntax* nil)
+
+(defun current-syntax ()
+  (or *current-syntax*
+      (mode-syntax-table (buffer-major-mode))))
+
 (defun syntax-word-char-p (c)
   (and (characterp c)
        (alphanumericp c)))

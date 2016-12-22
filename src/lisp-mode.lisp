@@ -401,10 +401,9 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-M-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()
-  (indent-region (current-marker)
-                 (lem::form-offset (copy-marker (current-marker)
-                                                :temporary)
-                                   1)))
+  (lem::with-marker ((end (current-marker)))
+    (when (lem::form-offset end 1)
+      (indent-region (current-marker) end))))
 
 (defun top-of-defun (point)
   (loop :while (scan-lists point -1 1 t))

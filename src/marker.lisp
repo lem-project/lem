@@ -3,7 +3,6 @@
 (export '(current-marker
           markerp
           make-marker
-          make-marker-current-point
           copy-marker
           delete-marker
           marker-buffer
@@ -64,12 +63,6 @@
       (buffer-add-marker buffer marker))
     marker))
 
-(defun make-marker-current-point (&key (kind :right-inserting) name)
-  (make-marker (current-buffer)
-               (current-point)
-               :kind kind
-               :name name))
-
 (defun copy-marker (marker &optional kind)
   (make-marker (marker-buffer marker)
                (copy-list (marker-point marker))
@@ -98,9 +91,6 @@
   (when pointp
     (setf (marker-point marker) point))
   t)
-
-
-;;; 同じバッファ同士かの比較は保留
 
 (defun marker= (marker1 marker2)
   (assert (eq (marker-buffer marker1)

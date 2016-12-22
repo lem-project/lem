@@ -42,6 +42,7 @@
                          '(#\space #\tab))
     (point-column point)))
 
+(define-key *global-keymap* (kbd "C-i") 'indent)
 (define-command indent () ()
   (funcall (get-bvar :calc-indent-function
                      :default #'calc-indent-default)
@@ -53,6 +54,7 @@
   (newline n)
   (indent))
 
+(define-key *global-keymap* (kbd "C-M-\\") 'indent-region)
 (define-command indent-region (start end) ("r")
   (save-excursion
     (apply-region-lines start end 'indent)))

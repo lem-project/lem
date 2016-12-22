@@ -2,7 +2,6 @@
 
 (export '(region-beginning
           region-end
-          region-string
           region-count
           delete-region
           apply-region-lines))
@@ -20,15 +19,6 @@
     (if (marker< start end)
         end
         start)))
-
-(defun region-string (begin end &optional (buffer (current-buffer)))
-  (with-output-to-string (out)
-    (map-region (make-marker buffer begin :kind :temporary)
-                (make-marker buffer end :kind :temporary)
-                (lambda (string lastp)
-                  (write-string string out)
-                  (unless lastp
-                    (write-char #\newline out))))))
 
 (defun region-count (begin end &optional (buffer (current-buffer)))
   (let ((count 0))

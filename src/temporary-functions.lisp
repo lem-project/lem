@@ -13,9 +13,12 @@
 (defun points-to-string (start-marker end-marker)
   (assert (eq (marker-buffer start-marker)
               (marker-buffer end-marker)))
-  (region-string (marker-point start-marker)
-                 (marker-point end-marker)
-                 (marker-buffer start-marker)))
+  (with-output-to-string (out)
+    (map-region start-marker end-marker
+                (lambda (string lastp)
+                  (write-string string out)
+                  (unless lastp
+                    (write-char #\newline out))))))
 
 (defun delete-between-points (start-marker end-marker)
   (assert (eq (marker-buffer start-marker)

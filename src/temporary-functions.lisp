@@ -10,48 +10,48 @@
                (point-max buffer)
                :kind :temporary))
 
-(defun points-to-string (start-marker end-marker)
-  (assert (eq (marker-buffer start-marker)
-              (marker-buffer end-marker)))
+(defun points-to-string (start end)
+  (assert (eq (marker-buffer start)
+              (marker-buffer end)))
   (with-output-to-string (out)
-    (map-region start-marker end-marker
+    (map-region start end
                 (lambda (string lastp)
                   (write-string string out)
                   (unless lastp
                     (write-char #\newline out))))))
 
-(defun delete-between-points (start-marker end-marker)
-  (assert (eq (marker-buffer start-marker)
-              (marker-buffer end-marker)))
-  (unless (marker< start-marker end-marker)
-    (rotatef start-marker end-marker))
-  (delete-char/marker (marker-buffer start-marker)
-                      (count-characters start-marker end-marker)))
+(defun delete-between-points (start end)
+  (assert (eq (marker-buffer start)
+              (marker-buffer end)))
+  (unless (marker< start end)
+    (rotatef start end))
+  (delete-char/marker start
+                      (count-characters start end)))
 
-(defun map-region (start-marker end-marker function)
-  (when (marker< end-marker start-marker)
-    (rotatef start-marker end-marker))
-  (let ((start-line (buffer-get-line (marker-buffer start-marker)
-                                     (marker-linum start-marker))))
+(defun map-region (start end function)
+  (when (marker< end start)
+    (rotatef start end))
+  (let ((start-line (buffer-get-line (marker-buffer start)
+                                     (marker-linum start))))
     (loop :for line := start-line :then (line-next line)
-          :for linum :from (marker-linum start-marker) :to (marker-linum end-marker)
+          :for linum :from (marker-linum start) :to (marker-linum end)
           :for firstp := (eq line start-line)
-          :for lastp := (= linum (marker-linum end-marker))
+          :for lastp := (= linum (marker-linum end))
           :do (funcall function
                        (subseq (line-str line)
                                (if firstp
-                                   (marker-charpos start-marker)
+                                   (marker-charpos start)
                                    0)
                                (if lastp
-                                   (marker-charpos end-marker)
+                                   (marker-charpos end)
                                    nil))
                        lastp)))
   (values))
 
-(defun count-characters (start-marker end-marker)
+(defun count-characters (start end)
   (let ((count 0))
-    (map-region start-marker
-                end-marker
+    (map-region start
+                end
                 (lambda (string lastp)
                   (incf count (length string))
                   (unless lastp

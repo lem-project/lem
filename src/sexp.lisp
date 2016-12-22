@@ -157,13 +157,13 @@
   (with-marker ((prev point))
     (cond ((plusp n)
            (dotimes (_ n point)
-             (move-point point prev)
              (unless (%form-offset-positive point)
+               (move-point point prev)
                (return nil))))
           (t
            (dotimes (_ (- n) point)
-             (move-point point prev)
              (unless (%form-offset-negative point)
+               (move-point point prev)
                (return nil)))))))
 
 (defun scan-lists (point n depth &optional no-errors)

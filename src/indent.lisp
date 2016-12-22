@@ -38,15 +38,16 @@
 
 (defun calc-indent-default (point)
   (with-marker ((point point))
-     (skip-chars-forward (line-offset point -1)
-                         '(#\space #\tab))
+    (skip-chars-forward (line-offset point -1)
+                        '(#\space #\tab))
     (point-column point)))
 
 (define-key *global-keymap* (kbd "C-i") 'indent)
 (define-command indent () ()
-  (funcall (get-bvar :calc-indent-function
-                     :default #'calc-indent-default)
-           (current-marker)))
+  (indent-line (current-marker)
+               (funcall (get-bvar :calc-indent-function
+                                  :default #'calc-indent-default)
+                        (current-marker))))
 
 (define-key *global-keymap* (kbd "C-j") 'newline-and-indent)
 (define-key *global-keymap* (kbd "M-j") 'newline-and-indent)

@@ -132,7 +132,9 @@
             ((syntax-closed-paren-char-p c)
              nil)
             ((syntax-string-quote-char-p c)
-             (%skip-string-forward point))))))
+             (%skip-string-forward point))
+            (t
+             (character-offset point 1))))))
 
 (defun %form-offset-negative (point)
   (skip-space-and-comment-backward point)
@@ -146,7 +148,9 @@
                  ((syntax-open-paren-char-p c)
                   nil)
                  ((syntax-string-quote-char-p c)
-                  (%skip-string-backward point)))
+                  (%skip-string-backward point))
+                 (t
+                  (character-offset point -1)))
       (skip-chars-backward point #'syntax-expr-prefix-char-p)
       (syntax-skip-expr-prefix-backward point))))
 

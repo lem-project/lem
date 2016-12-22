@@ -464,10 +464,6 @@
                     (return))
               :do (setf line (line-next line)))))))
 
-(defun %syntax-pos-property (pos property-name)
-  (let ((line (buffer-get-line (current-buffer) (current-linum))))
-    (line-search-property line property-name pos)))
-
 (defun skip-whitespace-forward (point)
   (skip-chars-forward point #'syntax-space-char-p))
 

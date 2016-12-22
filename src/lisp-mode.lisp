@@ -391,8 +391,10 @@
                (current-column)
                (1+ car-column))))))
 
-(defun lisp-calc-indent ()
+(defun lisp-calc-indent (point)
   (save-excursion
+    (setf (current-buffer) (marker-buffer point))
+    (lem::move-point (current-marker) point)
     (beginning-of-line)
     (when (eq *syntax-string-attribute*
               (lem::text-property-at (current-marker) :attribute -1))

@@ -100,9 +100,9 @@
         (when table
           (values (gethash (first (last parts)) table)))))))
 
-(defun calc-indent ()
+(defun calc-indent (point)
   (let ((lem.lisp-mode:*indent-spec-function* #'indent-spec))
-    (lem.lisp-mode::lisp-calc-indent)))
+    (lem.lisp-mode::lisp-calc-indent point)))
 
 (defun get-buffer-from-file (file)
   (dolist (buffer (buffer-list))

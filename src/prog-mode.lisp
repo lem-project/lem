@@ -44,7 +44,8 @@
            (back-to-indentation)))
     t))
 
-(defun calc-indent-default ()
+(defun calc-indent-default (point)
+  (declare (ignore point))
   (save-excursion
    (forward-line -1)
    (back-to-indentation)
@@ -52,7 +53,7 @@
 
 (defun indent-line-1 (default-indent-function)
   (let* ((f (get-bvar :calc-indent-function :default default-indent-function))
-         (n (and f (funcall f))))
+         (n (and f (funcall f (current-marker)))))
     (cond ((null f)
            (insert-char #\tab 1))
           (n

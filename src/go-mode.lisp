@@ -78,8 +78,10 @@
                                 '("break" "continue" "fallthrough" "return")
                                 :test #'string=)))))))
 
-(defun go-calc-indent ()
+(defun go-calc-indent (point)
   (save-excursion
+    (setf (current-buffer) (marker-buffer point))
+    (lem::move-point (current-marker) point)
    (back-to-indentation)
    (let ((attribute (lem::text-property-at (current-marker) :attribute -1)))
      (cond ((eq attribute *syntax-comment-attribute*)

@@ -379,7 +379,7 @@
 
 (define-command slime-compile-region (start end) ("r")
   (check-connection)
-  (let ((string (region-string start end))
+  (let ((string (lem::points-to-string start end))
         (position `((:position ,(point-to-offset start))
                     (:line ,(current-linum) ,(current-charpos)))))
     (refresh-output-buffer)

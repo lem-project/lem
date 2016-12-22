@@ -287,10 +287,10 @@
   (delete-char-at (current-marker) n killp))
 
 (defun beginning-of-buffer ()
-  (point-set (point-min)))
+  (buffer-start (current-marker)))
 
 (defun end-of-buffer ()
-  (point-set (point-max)))
+  (buffer-end (current-marker)))
 
 (defun beginning-of-line ()
   (line-start (current-marker))
@@ -386,19 +386,13 @@
 (defun current-column ()
   (point-column (current-marker)))
 
-(defun point-to-offset (point &optional (buffer (current-buffer) bufferp))
-  (check-type point point)
-  (check-type buffer buffer)
-  (save-excursion
-    (when bufferp
-      (setf (current-buffer) buffer))
-    (point-set (point-min))
-    (let ((end-linum (point-linum point))
-          (end-charpos (point-charpos point))
-          (offset 0))
-      (loop :repeat (1- end-linum)
-            :for linum :from 1
-            :do (incf offset
-                      (1+ (buffer-line-length (current-buffer)
-                                              linum))))
-      (+ offset end-charpos))))
+(defun point-to-offset (point)
+  (let ((end-linum (marker-linum point))
+        (end-charpos (marker-charpos point))
+        (buffer (marker-buffer point))
+        (offset 0))
+    (loop :repeat (1- end-linum)
+          :for linum :from 1
+          :do (incf offset
+                    (1+ (buffer-line-length buffer linum))))
+    (+ offset end-charpos)))

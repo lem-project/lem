@@ -7,11 +7,9 @@
           backward-list
           down-list
           up-list
-          top-of-defun
           mark-sexp
           kill-sexp
-          transpose-sexps
-          beginning-of-defun-abstract))
+          transpose-sexps))
 
 (defun sexp-scan-error (point)
   (editor-error "scan error ~A" point))
@@ -215,10 +213,6 @@
 (define-key *global-keymap* (kbd "C-M-u") 'up-list)
 (define-command up-list (&optional (n 1) no-errors) ("p")
   (scan-lists (current-marker) (- n) 1 no-errors))
-
-(defun top-of-defun ()
-  (loop while (up-list 1 t))
-  t)
 
 (define-key *global-keymap* (kbd "C-M-@") 'mark-sexp)
 (define-command mark-sexp () ()

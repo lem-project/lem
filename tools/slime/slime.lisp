@@ -32,11 +32,7 @@
   (setf (get-bvar :enable-syntax-highlight) t)
   (setf (get-bvar :indent-tabs-mode) nil)
   (setf (get-bvar :calc-indent-function)
-        'calc-indent)
-  (setf (get-bvar :beginning-of-defun-function)
-        'lem.lisp-mode:lisp-beginning-of-defun)
-  (setf (get-bvar :end-of-defun-function)
-        'lem.lisp-mode:lisp-end-of-defun))
+        'calc-indent))
 
 (define-key *slime-mode-keymap* "C-M-q" 'slime-indent-sexp)
 (define-key *slime-mode-keymap* "C-c M-p" 'slime-set-package)
@@ -223,7 +219,7 @@
 (define-command slime-eval-defun () ()
   (check-connection)
   (save-excursion
-    (top-of-defun)
+    (lem.lisp-mode::top-of-defun (current-marker))
     (let ((string
            (region-string (current-point)
                           (progn (forward-sexp 1)
@@ -400,7 +396,7 @@
 (define-command slime-compile-defun () ()
   (check-connection)
   (save-excursion
-    (let* ((start (progn (top-of-defun) (current-point)))
+    (let* ((start (progn (lem.lisp-mode::top-of-defun (current-marker)) (current-point)))
            (end (progn (forward-sexp 1) (current-point))))
       (slime-compile-region start end))))
 

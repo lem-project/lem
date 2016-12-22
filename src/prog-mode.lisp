@@ -73,14 +73,3 @@
 (define-command indent-region (start end) ("r")
   (save-excursion
     (apply-region-lines start end 'indent-line)))
-
-(define-key *prog-mode-keymap* (kbd "C-M-a") 'beginning-of-defun)
-(define-command beginning-of-defun (&optional (n 1)) ("p")
-  (when (get-bvar :beginning-of-defun-function)
-    (funcall (get-bvar :beginning-of-defun-function) n)))
-
-(define-key *prog-mode-keymap* (kbd "C-M-e") 'end-of-defun)
-(define-command end-of-defun (&optional (n 1)) ("p")
-  (if (get-bvar :end-of-defun-function)
-      (funcall (get-bvar :end-of-defun-function) n)
-      (beginning-of-defun (- n))))

@@ -298,11 +298,7 @@
                                              (window-buffer window))))
                             (current-buffer))
   (setf (get-bvar :calc-indent-function)
-        'lisp-calc-indent)
-  (setf (get-bvar :beginning-of-defun-function)
-        'lisp-beginning-of-defun)
-  (setf (get-bvar :end-of-defun-function)
-        'lisp-end-of-defun))
+        'lisp-calc-indent))
 
 (defun %lisp-mode-skip-expr-prefix (c1 c2 step-fn)
   (when c1
@@ -410,26 +406,36 @@
                                                 :temporary)
                                    1)))
 
-(define-command lisp-beginning-of-defun (&optional (n 1)) ("p")
-  (beginning-of-defun-abstract n #'(lambda () (looking-at-line "^\\("))))
+(defun top-of-defun (point)
+  (loop :while (scan-lists point -1 1 t))
+  t)
 
-(define-command lisp-end-of-defun (&optional (n 1)) ("p")
+(define-key *lisp-mode-keymap* (kbd "C-M-a") 'lisp-beginning-of-defun)
+(define-command lisp-beginning-of-defun (n) ("p")
+  (if (minusp n)
+      (lisp-end-of-defun (- n))
+      (let ((point (current-marker)))
+        (dotimes (_ n)
+          (if (lem::start-line-p point)
+              (lem::line-offset point -1)
+              (lem::line-start point))
+          (loop
+            (when (char= #\( (lem::character-at point 0))
+              (return))
+            (unless (nth-value 1 (lem::line-offset point -1))
+              (return)))))))
+
+(define-key *lisp-mode-keymap* (kbd "C-M-e") 'lisp-end-of-defun)
+(define-command lisp-end-of-defun (n) ("p")
   (if (minusp n)
       (lisp-beginning-of-defun (- n))
-      (dotimes (_ n t)
-        (down-list 1 t)
-        (lisp-beginning-of-defun 1)
-        (unless (forward-sexp 1)
-          (return nil))
-        (loop
-          for c = (following-char)
-          do (cond ((char= c #\newline)
-                    (return (forward-line 1)))
-                   ((syntax-space-char-p c)
-                    (unless (shift-position 1)
-                      (return nil)))
-                   (t
-                    (return t)))))))
+      (let ((point (current-marker)))
+        (dotimes (_ n)
+          (top-of-defun point)
+          (lem::form-offset point 1)
+          (skip-chars-forward point '(#\space #\tab))
+          (when (char= #\newline (lem::character-at point))
+            (lem::character-offset point 1))))))
 
 (defun lisp-buffer-package (buffer)
   (let ((package-name
@@ -648,7 +654,8 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-M-x") 'lisp-eval-defun)
 (define-command lisp-eval-defun () ()
-  (lisp-move-and-eval-sexp #'top-of-defun #'lisp-eval-string))
+  (lisp-move-and-eval-sexp (lambda () (top-of-defun (current-marker)))
+                           #'lisp-eval-string))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-e") 'lisp-eval-last-sexp)
 (define-command lisp-eval-last-sexp () ()

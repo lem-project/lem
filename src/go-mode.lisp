@@ -55,9 +55,7 @@
    :keymap *go-mode-keymap*
    :syntax-table *go-syntax-table*)
   (setf (get-bvar :enable-syntax-highlight) t)
-  (setf (get-bvar :calc-indent-function) 'go-calc-indent)
-  (setf (get-bvar :beginning-of-defun-function) 'go-beginning-of-defun)
-  (setf (get-bvar :end-of-defun-function) 'go-end-of-defun))
+  (setf (get-bvar :calc-indent-function) 'go-calc-indent))
 
 (defun following-word ()
   (lem::points-to-string (current-marker)
@@ -143,13 +141,6 @@
 (define-command go-electric-close (n) ("p")
   (self-insert n)
   (indent-line))
-
-(defun go-beginning-of-defun (n)
-  (beginning-of-defun-abstract n #'(lambda () (looking-at-line "^\\w"))))
-
-(defun go-end-of-defun (n)
-  (beginning-of-defun-abstract (- n) #'(lambda () (looking-at-line "^[)}]")))
-  (forward-line 1))
 
 (define-command gofmt () ()
   (filter-buffer "gofmt"))

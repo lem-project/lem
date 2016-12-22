@@ -96,10 +96,10 @@
 (defun buffer-output-stream-refresh (stream)
   (when (buffer-output-stream-interactive-update-p stream)
     (let ((buffer (marker-buffer (buffer-stream-marker stream)))
-          (point (marker-point (buffer-stream-marker stream))))
+          (point (buffer-stream-marker stream)))
       (display-buffer buffer)
       (dolist (window (get-buffer-windows buffer))
-        (point-set point (window-buffer window)))
+        (move-point (buffer-point-marker (window-buffer window)) point))
       (redraw-display)))
   nil)
 

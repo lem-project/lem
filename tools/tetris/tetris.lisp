@@ -156,7 +156,7 @@
         (incf i)))))
 
 (defun draw ()
-  (delete-region (point-min) (point-max))
+  (buffer-erase)
   (draw-next)
   (draw-field)
   (draw-score))

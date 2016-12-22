@@ -210,7 +210,7 @@
                     (points-to-string (buffers-start (minibuffer))
                                       (buffers-end (minibuffer))))
                    (minibuf-buffer-prev-point
-                    (window-point (minibuffer-window)))
+                    (window-point-marker (minibuffer-window)))
                    (*minibuf-read-line-depth*
                     (1+ *minibuf-read-line-depth*)))
                (let ((*inhibit-read-only* t))
@@ -239,7 +239,7 @@
                      (let ((*inhibit-read-only* t))
                        (buffer-erase))
                      (insert-string minibuf-buffer-prev-string)
-                     (point-set minibuf-buffer-prev-point))))))))
+                     (move-point (current-marker) minibuf-buffer-prev-point))))))))
       (editor-abort (c)
                     (error c)))))
 

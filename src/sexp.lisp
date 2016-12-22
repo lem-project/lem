@@ -11,8 +11,8 @@
           kill-sexp
           transpose-sexps))
 
-(defun sexp-scan-error (point)
-  (editor-error "scan error ~A" point))
+(defun sexp-scan-error ()
+  (editor-error "scan error"))
 
 (defun %sexp-escape-p (point offset)
   (let ((count 0))
@@ -174,14 +174,14 @@
                (move-point point prev)
                (if no-errors
                    (return nil)
-                   (sexp-scan-error point)))))
+                   (sexp-scan-error)))))
           (t
            (dotimes (_ (- n) point)
              (unless (%skip-list-backward point depth)
                (move-point point prev)
                (if no-errors
                    (return nil)
-                   (sexp-scan-error point))))))))
+                   (sexp-scan-error))))))))
 
 (define-key *global-keymap* (kbd "C-M-f") 'forward-sexp)
 (define-command forward-sexp (&optional (n 1) no-errors) ("p")
@@ -192,7 +192,7 @@
             (move-point (current-marker) prev)
             (if no-errors
                 nil
-                (sexp-scan-error point)))))))
+                (sexp-scan-error)))))))
 
 (define-key *global-keymap* (kbd "C-M-b") 'backward-sexp)
 (define-command backward-sexp (&optional (n 1) no-errors) ("p")
@@ -226,7 +226,7 @@
     (let ((end (form-offset (copy-marker (current-marker) :temporary) 1)))
       (if end
           (kill-region (current-marker) end)
-          (sexp-scan-error end)))))
+          (sexp-scan-error)))))
 
 (define-key *global-keymap* (kbd "C-M-t") 'transpose-sexps)
 (define-command transpose-sexps () ()

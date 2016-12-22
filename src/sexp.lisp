@@ -190,10 +190,11 @@
   (with-marker ((prev (current-marker)))
     (let ((point (form-offset (current-marker) n)))
       (or point
-          (prog1 (if no-errors
-                     nil
-                     (sexp-scan-error point))
-            (move-point (current-marker) prev))))))
+          (progn
+            (move-point (current-marker) prev)
+            (if no-errors
+                nil
+                (sexp-scan-error point)))))))
 
 (define-key *global-keymap* (kbd "C-M-b") 'backward-sexp)
 (define-command backward-sexp (&optional (n 1) no-errors) ("p")

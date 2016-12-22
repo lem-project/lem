@@ -2,8 +2,6 @@
 
 (export '(region-beginning
           region-end
-          region-count
-          delete-region
           apply-region-lines))
 
 (defun region-beginning (&optional (buffer (current-buffer)))
@@ -19,24 +17,6 @@
     (if (marker< start end)
         end
         start)))
-
-(defun region-count (begin end &optional (buffer (current-buffer)))
-  (let ((count 0))
-    (map-region (make-marker buffer begin :kind :temporary)
-                (make-marker buffer end :kind :temporary)
-                (lambda (string lastp)
-                  (incf count (length string))
-                  (unless lastp
-                    (incf count))))
-    count))
-
-(defun delete-region (begin end &optional (buffer (current-buffer)))
-  (when (point< end begin)
-    (rotatef begin end))
-  (point-set begin buffer)
-  (prog1 (delete-char/marker (buffer-point-marker buffer)
-                             (region-count begin end buffer))
-    (buffer-mark-cancel buffer)))
 
 (defun apply-region-lines (start end function)
   (with-marker ((start start :right-inserting)

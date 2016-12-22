@@ -23,9 +23,10 @@
 (defun delete-between-points (start-marker end-marker)
   (assert (eq (marker-buffer start-marker)
               (marker-buffer end-marker)))
-  (delete-region (marker-point start-marker)
-                 (marker-point end-marker)
-                 (marker-buffer start-marker)))
+  (unless (marker< start-marker end-marker)
+    (rotatef start-marker end-marker))
+  (delete-char/marker (marker-buffer start-marker)
+                      (count-characters start-marker end-marker)))
 
 (defun map-region (start-marker end-marker function)
   (when (marker< end-marker start-marker)

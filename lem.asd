@@ -84,8 +84,6 @@
                              (:file "sourcelist")
                              (:file "grep")
                              (:file "lisp-mode")
-                             (:file "c-mode")
-                             (:file "python-mode")
                              (:file "go-mode")
                              (:file "dired")
                              (:file "abbrev")

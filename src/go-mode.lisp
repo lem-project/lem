@@ -110,7 +110,7 @@
                             (+ (current-column) n)))))))
               (when (null indent)
                 (return-from go-calc-indent 0))
-              (cond ((looking-at-line "case\\W|default\\W" :start (current-charpos))
+              (cond ((looking-at-line "case\\W|default\\W" :start (marker-charpos (current-marker)))
                      (decf indent *go-tab-width*))
                     ((looking-at-line "\\s*}")
                      (save-excursion

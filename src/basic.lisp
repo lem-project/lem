@@ -327,8 +327,7 @@
   marker)
 
 (defun current-line-string ()
-  (buffer-line-string (current-buffer)
-                      (current-linum)))
+  (line-string-at (current-marker)))
 
 (defun following-char ()
   (character-at (current-marker)))

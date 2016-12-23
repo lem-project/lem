@@ -411,6 +411,7 @@
     (decf (window-view-linum window))))
 
 (defun window-scroll (window n)
+  (screen-modify (window-screen window))
   (dotimes (_ (abs n))
     (if (plusp n)
         (window-scroll-down window)

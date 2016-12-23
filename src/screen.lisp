@@ -250,7 +250,6 @@
 
 (defun disp-print-line (screen y str/attributes do-clrtoeol
                                &key (start-x 0) (string-start 0) string-end)
-  (declare (optimize (speed 0) (safety 3) (debug 3)))
   (destructuring-bind (str . attributes)
       str/attributes
     (when (null string-end)
@@ -283,9 +282,13 @@
       (charms/ll:wclrtoeol (screen-%scrwin screen)))))
 
 (defun disp-line-wrapping (screen start-charpos curx cury pos-x y str/attributes)
-  (let ((start (if (and (< 0 start-charpos) (= y 0))
-                   start-charpos
-                   0)))
+  (when (and (< 0 start-charpos) (= y 0))
+    (setf str/attributes
+          (cons (subseq (car str/attributes) start-charpos)
+                (lem::subseq-elements (cdr str/attributes)
+                                      start-charpos
+                                      (length (car str/attributes))))))
+  (let ((start 0))
     (when (= y cury)
       (setf curx (string-width (car str/attributes) start pos-x)))
     (loop :for i := (wide-index (car str/attributes)
@@ -349,8 +352,6 @@
     (values curx cury y)))
 
 (defun screen-display-lines (screen redraw-flag buffer start-charpos start-linum pos-x pos-y)
-  ;; (when redraw-flag
-  ;;   (charms/ll:werase (screen-%scrwin screen)))
   (disp-reset-lines screen buffer start-linum)
   (let ((curx 0)
         (cury (- pos-y start-linum))

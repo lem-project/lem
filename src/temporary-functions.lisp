@@ -58,6 +58,21 @@
                     (incf count))))
     count))
 
+(defun count-lines (start end)
+  (assert (eq (marker-buffer start)
+              (marker-buffer end)))
+  (when (marker< end start)
+    (rotatef start end))
+  (with-marker ((point start))
+    (loop :for count :from 0 :do
+          (when (marker< end point)
+            (return count))
+          (unless (line-offset point 1)
+            (return (1+ count))))))
+
+(defun line-number-at-point (point)
+  (count-lines (buffers-start (marker-buffer point)) point))
+
 (defun invoke-save-excursion (function)
   (let ((point (copy-marker (current-marker) :temporary))
         (mark (when (buffer-mark-p (current-buffer))

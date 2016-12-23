@@ -163,17 +163,15 @@
 (defun minibuf-point-linum ()
   (window-current-linum (minibuffer-window)))
 
-(defun minibuf-point-charpos ()
-  (window-current-charpos (minibuffer-window)))
-
 (defun minibuf-window-update ()
   (screen-erase (window-screen (minibuffer-window)))
   (screen-print-string (window-screen (minibuffer-window)) 0 0
                        (points-to-string (buffers-start (minibuffer))
                                          (buffers-end (minibuffer))))
-  (screen-move-cursor (window-screen (minibuffer-window))
-                      (minibuf-point-charpos)
-                      (1- (minibuf-point-linum))))
+  (let ((point (buffer-point-marker (minibuffer))))
+    (screen-move-cursor (window-screen (minibuffer-window))
+                        (marker-charpos point)
+                        (line-number-at-point point))))
 
 (defun minibuf-read-line-loop (comp-f existing-p)
   (let ((*minibuf-read-line-existing-p* existing-p)

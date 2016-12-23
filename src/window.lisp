@@ -784,22 +784,15 @@
                                  :temporary)))))
     (setf (window-buffer (current-window)) buffer)
     (setf (current-buffer) buffer)
+    (marker-change-buffer (%window-point-marker (current-window)) buffer)
+    (marker-change-buffer (window-view-marker (current-window)) buffer)
     (cond ((buffer-keep-binfo buffer)
            (destructuring-bind (view-point cursor-point)
                (buffer-keep-binfo buffer)
-             (marker-change-buffer (window-view-marker (current-window))
-                                   buffer
-                                   view-point)
-             (marker-change-buffer (%window-point-marker (current-window))
-                                   buffer
-                                   cursor-point)))
+             (move-point (window-view-marker (current-window)) view-point)
+             (move-point (window-point-marker (current-window)) cursor-point)))
           (t
-           (marker-change-buffer (window-view-marker (current-window))
-                                 buffer
-                                 (buffers-start buffer))
-           (marker-change-buffer (%window-point-marker (current-window))
-                                 buffer
-                                 (buffer-point-marker buffer)))))
+           (move-point (window-view-marker (current-window)) (buffers-start buffer)))))
   (setf (window-parameter (current-window) 'change-buffer) t)
   buffer)
 

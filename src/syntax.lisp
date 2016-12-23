@@ -459,7 +459,10 @@
            (*syntax-symbol-lifetimes* (and prev (line-%symbol-lifetimes prev))))
       (save-excursion
         (setf (current-buffer) buffer)
-        (setf (current-point) (make-point start-linum 0))
+        (move-point (current-marker)
+                    (make-marker buffer
+                                 (make-point start-linum 0)
+                                 :kind :temporary))
         (loop :until (or (null line)
                          (<= end-linum (current-linum)))
               :do (setf line (%syntax-scan-line line))

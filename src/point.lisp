@@ -5,7 +5,6 @@
           point-linum
           point-charpos
           with-points
-          current-point
           current-linum
           point-set
           point<
@@ -50,13 +49,6 @@
 (defun (setf current-linum) (new-linum)
   (check-linum (current-buffer) new-linum)
   (setf (marker-linum (buffer-point-marker (current-buffer))) new-linum))
-
-(defun current-point ()
-  (marker-point (buffer-point-marker (current-buffer))))
-
-(defun (setf current-point) (new-point)
-  (point-set new-point)
-  new-point)
 
 (defun round-linum (buffer linum)
   (cond ((minusp linum) 1)

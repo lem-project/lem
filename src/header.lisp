@@ -3,7 +3,6 @@
 (export '(*program-name*
           *debug-p*
           save-excursion
-          with-window-range
           with-buffer-read-only
           with-current-window
           with-pop-up-typeout-window
@@ -50,15 +49,6 @@
             `(unwind-protect (progn ,@body)
                ,@cleanups)
             `(progn ,@body)))))
-
-(defmacro with-window-range ((start-linum-var end-linum-var)
-                             window &body body)
-  (let ((gwindow (gensym "WINDOW")))
-    `(let ((,gwindow ,window))
-       (window-see ,gwindow)
-       (let* ((,start-linum-var (window-view-linum ,gwindow))
-              (,end-linum-var (+ ,start-linum-var (window-height ,gwindow))))
-         ,@body))))
 
 (defmacro with-buffer-read-only (buffer flag &body body)
   (let ((gbuffer (gensym "BUFFER"))

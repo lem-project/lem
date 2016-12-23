@@ -241,8 +241,11 @@
   (when (and (enable-syntax-highlight-p (window-buffer window))
              (null *syntax-scan-window-recursive-p*))
     (let ((*syntax-scan-window-recursive-p* t))
-      (with-window-range (start-linum end-linum) window
-        (syntax-scan-lines (window-buffer window) start-linum end-linum)))))
+      (window-see window)
+      (syntax-scan-lines (window-buffer window)
+                         (window-view-linum window)
+                         (+ (window-view-linum window)
+                            (window-height window))))))
 
 (defun syntax-scan-buffer (buffer)
   (check-type buffer buffer)

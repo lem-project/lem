@@ -129,12 +129,6 @@
 (defun screen-move-cursor (screen x y)
   (charms/ll:wmove (screen-%scrwin screen) y x))
 
-(defun aref-screen-line-string (screen i)
-  (car (aref (screen-lines screen) i)))
-
-(defun aref-screen-line-attributes (screen i)
-  (cdr (aref (screen-lines screen) i)))
-
 (defun set-attr-display-line (screen
                               attr
                               start-linum
@@ -144,7 +138,7 @@
   (let ((i (- linum start-linum)))
     (when (<= 0 i (1- (screen-height screen)))
       (unless end-charpos
-        (setq end-charpos (length (aref-screen-line-string screen i))))
+        (setq end-charpos (length (car (aref (screen-lines screen) i)))))
       (when (aref (screen-lines screen) i)
         (destructuring-bind (string . attributes) (aref (screen-lines screen) i)
           (let ((start start-charpos)

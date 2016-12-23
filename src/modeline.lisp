@@ -86,13 +86,10 @@
         (setf firstp t)))))
 
 (defun modeline-linum (window)
-  (window-current-linum window))
+  (marker-linum (window-point-marker window)))
 
 (defun modeline-column (window)
-  (string-width (buffer-line-string (window-buffer window)
-                                    (window-current-linum window))
-                0
-                (window-current-charpos window)))
+  (point-column (window-point-marker window)))
 
 (defun modeline-string (window)
   (let* ((line-pos (posline window))

@@ -6,7 +6,6 @@
           point-charpos
           with-points
           current-linum
-          point-set
           point<
           point=
           point<=
@@ -49,22 +48,6 @@
 (defun (setf current-linum) (new-linum)
   (check-linum (current-buffer) new-linum)
   (setf (marker-linum (buffer-point-marker (current-buffer))) new-linum))
-
-(defun round-linum (buffer linum)
-  (cond ((minusp linum) 1)
-        ((<= linum (buffer-nlines buffer))
-         linum)
-        (t
-         (buffer-nlines buffer))))
-
-(defun point-set (point &optional (buffer (current-buffer)))
-  (setf (marker-point (buffer-point-marker buffer))
-        (let ((linum (min (buffer-nlines buffer)
-                          (point-linum point))))
-          (make-point linum
-                      (max 0
-                           (min (buffer-line-length buffer linum)
-                                (point-charpos point)))))))
 
 (defun point< (p1 p2)
   (cond ((< (point-linum p1) (point-linum p2))

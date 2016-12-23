@@ -78,9 +78,7 @@
 (define-command delete-current-window () ()
   (delete-window (current-window)))
 
-(define-command quit-window (&optional window kill-buffer-p) ("P")
-  (unless (window-p window)
-    (setq window (current-window)))
+(define-command quit-window (&optional (window (current-window)) kill-buffer-p) ("P")
   (cond
     ((and (window-parameter window :split-p) (not (one-window-p)))
      (when kill-buffer-p

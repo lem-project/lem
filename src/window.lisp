@@ -778,34 +778,28 @@
       (let ((old-buffer (current-buffer)))
         (update-prev-buffer old-buffer)
         (setf (buffer-keep-binfo old-buffer)
-              (list (window-view-linum (current-window))
-                    (window-view-charpos (current-window))
-                    (window-current-linum (current-window))
-                    (window-current-charpos (current-window))))))
+              (list (copy-marker (window-view-marker (current-window))
+                                 :temporary)
+                    (copy-marker (window-point-marker (current-window))
+                                 :temporary)))))
     (setf (window-buffer (current-window)) buffer)
     (setf (current-buffer) buffer)
-    (let ((view-linum 1)
-          (view-charpos 0)
-          (current-linum 1)
-          (current-charpos 0))
-      (declare (ignorable view-charpos))
-      (when (buffer-keep-binfo buffer)
-        (setf (values view-linum view-charpos current-linum current-charpos)
-              (apply #'values (buffer-keep-binfo buffer))))
-      (marker-change-buffer (%window-point-marker (current-window)) buffer)
-      (let ((nlines (buffer-nlines buffer)))
-        (marker-change-buffer (window-view-marker (current-window))
-                              buffer
-                              (make-point (max 1 (min view-linum nlines))
-                                          0))
-        (when (buffer-keep-binfo buffer)
-          (setf (window-point (current-window))
-                (let ((linum (min current-linum nlines)))
-                  (make-point linum
-                              (max 0
-                                   (min current-charpos
-                                        (buffer-line-length buffer
-                                                            linum))))))))))
+    (cond ((buffer-keep-binfo buffer)
+           (destructuring-bind (view-point cursor-point)
+               (buffer-keep-binfo buffer)
+             (marker-change-buffer (window-view-marker (current-window))
+                                   buffer
+                                   view-point)
+             (marker-change-buffer (%window-point-marker (current-window))
+                                   buffer
+                                   cursor-point)))
+          (t
+           (marker-change-buffer (window-view-marker (current-window))
+                                 buffer
+                                 (buffers-start buffer))
+           (marker-change-buffer (%window-point-marker (current-window))
+                                 buffer
+                                 (buffer-point-marker buffer)))))
   (setf (window-parameter (current-window) 'change-buffer) t)
   buffer)
 

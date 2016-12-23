@@ -79,8 +79,13 @@
               (marker-charpos marker)))
 
 (defun (setf marker-point) (new-point marker)
-  (setf (marker-linum marker) (point-linum new-point)
-        (marker-charpos marker) (point-charpos new-point))
+  (let ((buffer (marker-buffer marker)))
+    (setf (marker-linum marker)
+          (min (point-linum new-point)
+               (buffer-nlines buffer)))
+    (setf (marker-charpos marker)
+          (min (buffer-line-length buffer (marker-linum marker))
+               (point-charpos new-point))))
   new-point)
 
 (defun marker-change-buffer (marker buffer &optional (point nil pointp))
@@ -89,7 +94,7 @@
     (buffer-add-marker buffer marker))
   (setf (marker-buffer marker) buffer)
   (when pointp
-    (setf (marker-point marker) point))
+    (move-point marker point))
   t)
 
 (defun marker= (marker1 marker2)

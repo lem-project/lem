@@ -49,16 +49,17 @@
     ((<= (buffer-nlines (window-buffer window))
          (window-height window))
      "All")
-    ((= 1 (window-view-linum window))
+    ((first-line-p (window-view-marker window))
      "Top")
-    ((<= (buffer-nlines (window-buffer window))
-         (+ (window-view-linum window) (window-height window)))
+    ((null (line-offset (copy-marker (window-view-marker window)
+                                     :temporary)
+                        (window-height window)))
      "Bot")
     (t
      (format nil "~2d%"
              (floor
               (* 100
-                 (float (/ (window-view-linum window)
+                 (float (/ (marker-linum (window-view-marker window))
                            (buffer-nlines (window-buffer window))))))))))
 
 (defun modeline-read-only-p (window)

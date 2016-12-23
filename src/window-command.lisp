@@ -160,7 +160,7 @@
       (dotimes (_ n)
         (when (and (= (window-cursor-y (current-window))
                       (- (window-height (current-window)) 2))
-                   (/= 1 (window-view-linum (current-window))))
+                   (not (first-line-p (window-view-marker (current-window)))))
           (unless (forward-line (- n))
             (return)))
         (window-scroll (current-window) -1))))

@@ -160,9 +160,6 @@
 (define-command minibuf-read-line-break () ()
   (error 'editor-abort :depth (1- *minibuf-read-line-depth*)))
 
-(defun minibuf-point-linum ()
-  (window-current-linum (minibuffer-window)))
-
 (defun minibuf-window-update ()
   (screen-erase (window-screen (minibuffer-window)))
   (screen-print-string (window-screen (minibuffer-window)) 0 0

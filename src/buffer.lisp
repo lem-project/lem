@@ -327,8 +327,16 @@
           (buffer-name buffer)
           (buffer-filename buffer)))
 
+(defun buffer-clear-keep-binfo (buffer)
+  (when (buffer-keep-binfo buffer)
+    (destructuring-bind (view-marker point-marker)
+        (buffer-keep-binfo buffer)
+      (delete-marker view-marker)
+      (delete-marker point-marker))))
+
 (defun call-buffer-delete-hooks (buffer)
   (mapc #'funcall (buffer-delete-hooks buffer))
+  (buffer-clear-keep-binfo buffer)
   (delete-marker (buffer-point-marker buffer)))
 
 (defun buffer-enable-undo (buffer)

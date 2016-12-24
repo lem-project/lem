@@ -33,10 +33,6 @@
                        ,@body)
                       ((condition) (declare (ignore condition)))))
 
-;; (add-hook 'find-file-hook
-;;           (lambda ()
-;;             (syntax-scan-buffer (current-buffer))))
-
 (pushnew #'(lambda (window)
              (declare (ignore window))
              (syntax-scan-current-view))
@@ -79,31 +75,31 @@
   (do-commandloop (:toplevel t)
     (with-error-handler ()
       (cockpit
-       (syntax-scan-lines (current-buffer)
-                          (current-linum)
-                          (1+ (current-linum)))
-       (redraw-display)
-       (let ()
-         (start-idle-timers)
-         (let ((cmd (read-key-command)))
-           (stop-idle-timers)
-           (if (changed-disk-p (current-buffer))
-               (ask-revert-buffer)
-               (progn
-                 (message nil)
-                 (handler-case
-                     (handler-bind ((editor-condition
-                                     (lambda (c)
-                                       (declare (ignore c))
-                                       (stop-record-key))))
-                       (cmd-call cmd nil))
-                   (editor-abort ()
-                                 (buffer-mark-cancel (current-buffer))
-                                 (message "Quit"))
-                   (read-only-error ()
-                                    (message "Read Only"))
-                   (editor-error (c)
-                                 (message (editor-error-message c))))))))))))
+        (with-marker ((end (current-marker)))
+          (when (line-offset end 1)
+            (syntax-scan-lines (current-marker) end)))
+        (redraw-display)
+        (let ()
+          (start-idle-timers)
+          (let ((cmd (read-key-command)))
+            (stop-idle-timers)
+            (if (changed-disk-p (current-buffer))
+                (ask-revert-buffer)
+                (progn
+                  (message nil)
+                  (handler-case
+                      (handler-bind ((editor-condition
+                                      (lambda (c)
+                                        (declare (ignore c))
+                                        (stop-record-key))))
+                        (cmd-call cmd nil))
+                    (editor-abort ()
+                                  (buffer-mark-cancel (current-buffer))
+                                  (message "Quit"))
+                    (read-only-error ()
+                                     (message "Read Only"))
+                    (editor-error (c)
+                                  (message (editor-error-message c))))))))))))
 
 (let ((passed nil))
   (defun call-with-editor (function)

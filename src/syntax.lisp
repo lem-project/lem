@@ -242,15 +242,15 @@
              (null *syntax-scan-window-recursive-p*))
     (let ((*syntax-scan-window-recursive-p* t))
       (window-see window)
-      (syntax-scan-lines (window-buffer window)
-                         (window-view-linum window)
-                         (+ (window-view-linum window)
-                            (window-height window))))))
+      (syntax-scan-lines (window-view-marker window)
+                         (or (line-offset (copy-marker (window-view-marker window) :temporary)
+                                          (window-height window))
+                             (buffers-end (window-buffer window)))))))
 
 (defun syntax-scan-buffer (buffer)
   (check-type buffer buffer)
   (when (enable-syntax-highlight-p buffer)
-    (syntax-scan-lines buffer 1 (point-linum (point-max buffer)))))
+    (syntax-scan-lines (buffers-start buffer) (buffers-end buffer))))
 
 (defun syntax-scan-current-view ()
   (cond
@@ -259,6 +259,27 @@
     (t
      (setf (get-bvar 'already-visited) t)
      (syntax-scan-buffer (current-buffer)))))
+
+(defun syntax-scan-lines (start end)
+  (assert (eq (marker-buffer start)
+              (marker-buffer end)))
+  (let ((buffer (marker-buffer start)))
+    (when (enable-syntax-highlight-p buffer)
+      (let* ((line (get-line/marker start))
+             (prev (line-prev line))
+             (*syntax-symbol-lifetimes* (and prev (line-%symbol-lifetimes prev)))
+             (*current-syntax* (mode-syntax-table (buffer-major-mode buffer))))
+        (save-excursion
+          (setf (current-buffer) buffer)
+          (move-point (current-marker) start)
+          (with-marker ((point start))
+            (loop :until (or (null line)
+                             (marker<= end point))
+                  :do
+                  (setf line (%syntax-scan-line line))
+                  (unless (line-offset point 1)
+                    (return))
+                  (setf line (line-next line)))))))))
 
 (defun syntax-update-symbol-lifetimes ()
   (setq *syntax-symbol-lifetimes*
@@ -451,24 +472,6 @@
                    (setq i (1- end))))))))
     (setf (line-%symbol-lifetimes line) *syntax-symbol-lifetimes*)
     line))
-
-(defun syntax-scan-lines (buffer start-linum end-linum)
-  (when (enable-syntax-highlight-p buffer)
-    (let* ((line (buffer-get-line buffer start-linum))
-           (prev (line-prev line))
-           (*syntax-symbol-lifetimes* (and prev (line-%symbol-lifetimes prev))))
-      (save-excursion
-        (setf (current-buffer) buffer)
-        (move-point (current-marker)
-                    (make-marker buffer
-                                 (make-point start-linum 0)
-                                 :kind :temporary))
-        (loop :until (or (null line)
-                         (<= end-linum (current-linum)))
-              :do (setf line (%syntax-scan-line line))
-              :do (unless (forward-line 1)
-                    (return))
-              :do (setf line (line-next line)))))))
 
 (defun skip-whitespace-forward (point)
   (skip-chars-forward point #'syntax-space-char-p))

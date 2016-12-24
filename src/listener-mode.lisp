@@ -105,7 +105,7 @@
 (define-command listener-reset-interactive (arg) ("P")
   (when arg
     (let ((*inhibit-read-only* t))
-      (buffer-erase (current-buffer))))
+      (erase-buffer (current-buffer))))
   (listener-reset-prompt)
   t)
 

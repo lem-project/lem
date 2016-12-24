@@ -79,7 +79,7 @@
              (or does-not-ask-p
                  (minibuf-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))))
     (with-buffer-read-only (current-buffer) nil
-      (buffer-erase)
+      (erase-buffer)
       (insert-file-contents (current-marker)
                             (buffer-filename))
       (buffer-unmark (current-buffer))

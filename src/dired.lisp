@@ -258,7 +258,7 @@
 
 (defun update (buffer)
   (with-buffer-read-only buffer nil
-    (buffer-erase buffer)
+    (erase-buffer buffer)
     (let ((dirname (probe-file (buffer-directory buffer))))
       (lem::with-marker ((cur-marker (lem::buffer-point-marker buffer) :left-inserting))
         (lem::insert-string-at cur-marker

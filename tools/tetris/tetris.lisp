@@ -156,7 +156,7 @@
         (incf i)))))
 
 (defun draw ()
-  (buffer-erase)
+  (erase-buffer)
   (draw-next)
   (draw-field)
   (draw-score))

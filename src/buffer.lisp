@@ -21,7 +21,6 @@
           buffer-put-property
           buffer-get-char
           buffer-line-string
-          buffer-erase
           buffer-rename
           buffer-directory
           buffer-undo-boundary
@@ -317,7 +316,8 @@
     (setf (buffer-mark-marker buffer) nil)
     (setf (buffer-keep-binfo buffer) nil)
     (setf (buffer-nlines buffer) 1)
-    (setf (buffer-overlays buffer) nil)))
+    ;(setf (buffer-overlays buffer) nil)
+    ))
 
 (defun buffer-p (x)
   (typep x 'buffer))
@@ -541,14 +541,6 @@
          (push-undo-stack buffer fn))
         (:undo
          (push-redo-stack buffer fn))))))
-
-(defun buffer-erase (&optional (buffer (current-buffer)))
-  (buffer-mark-cancel buffer)
-  (dolist (marker (buffer-markers buffer))
-    (buffer-start marker))
-  (delete-char/marker (buffer-point-marker buffer) t)
-  (buffer-reset buffer)
-  t)
 
 (defun buffer-rename (buffer name)
   (check-type buffer buffer)

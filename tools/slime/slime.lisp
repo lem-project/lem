@@ -558,7 +558,7 @@
   (let ((buffer (get-buffer-create "*slime-apropos*")))
     (setf (current-window) (display-buffer buffer))
     (slime-apropos-mode)
-    (buffer-erase buffer)
+    (erase-buffer buffer)
     (save-excursion
       (loop :for plist :in data
             :do (let ((designator (cadr plist))
@@ -978,7 +978,7 @@
           restarts
           (get-bvar 'continuations :buffer buffer)
           conts)
-    (buffer-erase buffer)
+    (erase-buffer buffer)
     (buffer-add-delete-hook buffer 'slime-quit-debugger)
     (dolist (c condition)
       (insert-string (if (stringp c)

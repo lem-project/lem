@@ -18,7 +18,7 @@
     (with-current-window window
       (with-buffer-read-only buffer nil
         (when erase
-          (buffer-erase buffer))
+          (erase-buffer buffer))
         (typeout-mode t)
         (when fn
           (save-excursion

@@ -30,6 +30,7 @@
           current-column
           move-to-column
           point-to-offset
+          erase-buffer
           ))
 
 (defun first-line-p (marker)
@@ -182,6 +183,11 @@
       (when killp
         (kill-push string))
       t)))
+
+(defun erase-buffer (&optional (buffer (current-buffer)))
+  (buffer-start (current-marker))
+  (buffer-mark-cancel buffer)
+  (delete-char/marker (buffer-point-marker buffer) t))
 
 (defun text-property-at (marker key &optional (offset 0))
   (if (zerop offset)

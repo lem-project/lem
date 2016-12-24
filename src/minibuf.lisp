@@ -209,7 +209,7 @@
                    (*minibuf-read-line-depth*
                     (1+ *minibuf-read-line-depth*)))
                (let ((*inhibit-read-only* t))
-                 (buffer-erase))
+                 (erase-buffer))
                (minibuffer-mode)
                (progn
                  (with-marker ((start-marker (current-marker))
@@ -232,7 +232,7 @@
                                     (minibuf-read-line-loop comp-f existing-p)))
                    (with-current-window (minibuffer-window)
                      (let ((*inhibit-read-only* t))
-                       (buffer-erase))
+                       (erase-buffer))
                      (insert-string minibuf-buffer-prev-string)
                      (move-point (current-marker) minibuf-buffer-prev-point))))))))
       (editor-abort (c)

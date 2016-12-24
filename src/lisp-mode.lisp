@@ -621,7 +621,7 @@
 (define-command lisp-eval-string (string)
     ((list (minibuf-read-line "Eval: " "" nil nil 'mh-lisp-eval)))
   (let ((output-buffer (get-buffer-create "*output*")))
-    (buffer-erase output-buffer)
+    (erase-buffer output-buffer)
     (change-buffer-mode output-buffer 'lisp-mode)
     (buffer-unmark output-buffer)
     (message "~{~s~^,~}"

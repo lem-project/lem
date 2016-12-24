@@ -17,7 +17,7 @@
 (defun call-with-sourcelist (buffer-name function)
   (let ((buffer (get-buffer-create buffer-name))
         (sourcelist (make-sourcelist :buffer-name buffer-name)))
-    (buffer-erase buffer)
+    (erase-buffer buffer)
     (lem::with-marker ((*sourcelist-marker* (lem::buffer-point-marker buffer) :left-inserting))
       (funcall function sourcelist))
     (change-buffer-mode buffer 'sourcelist-mode t)

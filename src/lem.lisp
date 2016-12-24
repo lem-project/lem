@@ -10,7 +10,7 @@
   (let ((buffer (get-buffer-create "*EDITOR ERROR*")))
     (display-buffer buffer)
     (switch-to-buffer buffer)
-    (buffer-erase)
+    (erase-buffer)
     (with-open-stream (stream (make-buffer-output-stream (buffer-point-marker buffer)))
       (princ condition stream)
       (fresh-line stream)

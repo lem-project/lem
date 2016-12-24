@@ -29,15 +29,15 @@
 (defun overlay-p (x)
   (typep x 'overlay))
 
-(defun make-overlay (start-marker end-marker attribute)
+(defun make-overlay (start end attribute)
   (check-type attribute attribute)
-  (assert (eq (marker-buffer start-marker)
-              (marker-buffer end-marker)))
-  (let* ((buffer (marker-buffer start-marker))
+  (assert (eq (marker-buffer start)
+              (marker-buffer end)))
+  (let* ((buffer (marker-buffer start))
          (overlay
           (make-instance 'overlay
-                         :start start-marker
-                         :end end-marker
+                         :start (copy-marker start :right-inserting)
+                         :end (copy-marker end :right-inserting)
                          :attribute attribute
                          :buffer buffer)))
     (buffer-add-overlay buffer overlay)

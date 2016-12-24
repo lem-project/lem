@@ -416,7 +416,9 @@
 (defun buffer-mark-cancel (buffer)
   (when (buffer-mark-p buffer)
     (setf (buffer-mark-p buffer) nil)
-    (delete-overlay (buffer-mark-overlay buffer))))
+    (delete-marker (buffer-mark-marker buffer))
+    (delete-overlay (buffer-mark-overlay buffer))
+    (setf (buffer-mark-overlay buffer) nil)))
 
 (defun buffer-end-point (buffer)
   (make-point (buffer-nlines buffer)

@@ -124,12 +124,6 @@
       (buffer-point-marker (window-buffer window))
       (%window-point-marker window)))
 
-(defun window-view-linum (&optional (window (current-window)))
-  (marker-linum (window-view-marker window)))
-
-(defun (setf window-view-linum) (new-linum &optional (window (current-window)))
-  (setf (marker-linum (window-view-marker window)) new-linum))
-
 (defun window-parameter (window parameter)
   (getf (window-parameters window) parameter))
 

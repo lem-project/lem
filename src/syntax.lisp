@@ -272,14 +272,13 @@
         (save-excursion
           (setf (current-buffer) buffer)
           (move-point (current-marker) start)
-          (with-marker ((point start))
-            (loop :until (or (null line)
-                             (marker<= end point))
-                  :do
-                  (setf line (%syntax-scan-line line))
-                  (unless (line-offset point 1)
-                    (return))
-                  (setf line (line-next line)))))))))
+          (loop :until (or (null line)
+                           (marker<= end (current-marker)))
+                :do
+                (setf line (%syntax-scan-line line))
+                (unless (line-offset (current-marker) 1)
+                  (return))
+                (setf line (line-next line))))))))
 
 (defun syntax-update-symbol-lifetimes ()
   (setq *syntax-symbol-lifetimes*

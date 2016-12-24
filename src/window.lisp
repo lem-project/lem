@@ -253,9 +253,10 @@
                    (window-%width window-tree)
                    (window-%height window-tree)
                    (window-view-marker window-tree)
-                   (marker-point (%window-point-marker window-tree))
+                   (%window-point-marker window-tree)
                    (window-delete-hook window-tree)
-                   (window-parameters window-tree))
+                   (window-parameters window-tree)
+                   (window-use-modeline-p window-tree))
                   (list
                    (window-node-split-type window-tree)
                    (f (window-node-car window-tree))
@@ -275,16 +276,17 @@
                                          width
                                          height
                                          view-marker
-                                         point
+                                         point-marker
                                          delete-hook
-                                         parameters)
+                                         parameters
+                                         use-modeline-p)
                         (cdr dumped-tree)
                       (let ((window (make-window (get-buffer-create buffer-name)
-                                                 x y width height t)))
-                        (setf (marker-point (window-view-marker window)) (marker-point view-marker))
+                                                 x y width height use-modeline-p)))
+                        (move-point (window-view-marker window) view-marker)
+                        (move-point (%window-point-marker window) point-marker)
                         (set-window-delete-hook delete-hook window)
                         (setf (window-parameters window) parameters)
-                        (setf (marker-point (%window-point-marker window)) point)
                         (when current-window-p
                           (setf current-window window))
                         window))

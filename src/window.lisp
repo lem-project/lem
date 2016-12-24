@@ -14,8 +14,6 @@
           window-y
           window-x
           window-buffer
-          window-current-linum
-          window-current-charpos
           window-delete-hook
           current-window
           one-window-p
@@ -127,39 +125,11 @@
       (buffer-point-marker (window-buffer window))
       (%window-point-marker window)))
 
-(defun window-point (&optional (window (current-window)))
-  (marker-point (window-point-marker window)))
-
-(defun (setf window-point) (new-point &optional (window (current-window)))
-  (setf (marker-point (window-point-marker window)) new-point))
-
-(defun window-current-charpos (&optional (window (current-window)))
-  (point-charpos (window-point window)))
-
-(defun (setf window-current-charpos) (new-pos &optional (window (current-window)))
-  (setf (window-point window)
-        (make-point (window-current-linum window)
-                    new-pos)))
-
-(defun window-current-linum (&optional (window (current-window)))
-  (point-linum (window-point window)))
-
-(defun (setf window-current-linum) (new-linum &optional (window (current-window)))
-  (setf (window-point window)
-        (make-point new-linum
-                    (window-current-charpos window))))
-
 (defun window-view-linum (&optional (window (current-window)))
   (marker-linum (window-view-marker window)))
 
 (defun (setf window-view-linum) (new-linum &optional (window (current-window)))
   (setf (marker-linum (window-view-marker window)) new-linum))
-
-(defun window-view-charpos (&optional (window (current-window)))
-  (marker-charpos (window-view-marker window)))
-
-(defun (setf window-view-charpos) (new-charpos &optional (window (current-window)))
-  (setf (marker-charpos (window-view-marker window)) new-charpos))
 
 (defun window-parameter (window parameter)
   (getf (window-parameters window) parameter))

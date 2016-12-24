@@ -129,118 +129,6 @@
 (defun screen-move-cursor (screen x y)
   (charms/ll:wmove (screen-%scrwin screen) y x))
 
-(defun set-attr-display-line (screen
-                              attr
-                              start-linum
-                              linum
-                              start-charpos
-                              end-charpos)
-  (let ((i (- linum start-linum)))
-    (when (<= 0 i (1- (screen-height screen)))
-      (unless end-charpos
-        (setq end-charpos (length (car (aref (screen-lines screen) i)))))
-      (when (aref (screen-lines screen) i)
-        (destructuring-bind (string . attributes) (aref (screen-lines screen) i)
-          (let ((start start-charpos)
-                (end (min end-charpos (length string))))
-            (when (< start end)
-              (setf (cdr (aref (screen-lines screen) i))
-                    (lem::put-elements attributes
-                                       start-charpos
-                                       (min end-charpos (length string))
-                                       attr)))))))))
-
-(defun set-attr-display-lines (screen
-                               attr
-                               top-linum
-                               start-linum
-                               start-charpos
-                               end-linum
-                               end-charpos)
-  (set-attr-display-line screen
-                         attr
-                         top-linum
-                         start-linum
-                         start-charpos
-                         nil)
-  (loop :for linum :from (1+ start-linum) :below end-linum :do
-    (set-attr-display-line screen
-                           attr
-                           top-linum
-                           linum
-                           0
-                           nil))
-  (set-attr-display-line screen
-                         attr
-                         top-linum
-                         end-linum
-                         0
-                         end-charpos))
-
-(defun disp-set-overlays (screen overlays start-linum end-linum)
-  (loop
-    :for overlay :in overlays
-    :for start := (marker-point (overlay-start overlay))
-    :for end := (marker-point (overlay-end overlay))
-    :do (cond ((and (= (point-linum start) (point-linum end))
-                    (<= start-linum (point-linum start) (1- end-linum)))
-               (set-attr-display-line screen
-                                      (overlay-attribute overlay)
-                                      start-linum
-                                      (point-linum start)
-                                      (point-charpos start)
-                                      (point-charpos end)))
-              ((and (<= start-linum (point-linum start))
-                    (< (point-linum end) end-linum))
-               (set-attr-display-lines screen
-                                       (overlay-attribute overlay)
-                                       start-linum
-                                       (point-linum start)
-                                       (point-charpos start)
-                                       (point-linum end)
-                                       (point-charpos end)))
-              ((<= (point-linum start)
-                   start-linum
-                   (point-linum end)
-                   end-linum)
-               (set-attr-display-lines screen
-                                       (overlay-attribute overlay)
-                                       start-linum
-                                       start-linum
-                                       0
-                                       (point-linum end)
-                                       (point-charpos end)))
-              ((<= start-linum
-                   (point-linum start))
-               (set-attr-display-lines screen
-                                       (overlay-attribute overlay)
-                                       start-linum
-                                       (point-linum start)
-                                       (point-charpos start)
-                                       end-linum
-                                       nil)))))
-
-(defun disp-reset-lines (screen buffer start-linum)
-  (when (eq buffer (current-buffer))
-    (lem::buffer-update-mark-overlay buffer))
-  (let ((end-linum (+ start-linum (screen-height screen)))
-        (disp-index 0))
-    (loop
-      :for linum :from start-linum :to (buffer-nlines buffer)
-      :while (< disp-index (screen-height screen)) :do
-      (setf (aref (screen-lines screen) disp-index)
-            (multiple-value-bind (string attributes)
-                (buffer-line-string-with-attributes buffer linum)
-              (cons string attributes)))
-      (incf disp-index))
-    (loop
-      :for i :from disp-index :below (screen-height screen)
-      :do (setf (aref (screen-lines screen) i) nil))
-    (disp-set-overlays screen
-                       (buffer-overlays buffer)
-                       start-linum
-                       end-linum)))
-
 
 (defun disp-print-line (screen y str/attributes do-clrtoeol
                                &key (start-x 0) (string-start 0) string-end)
@@ -346,7 +234,6 @@
     (values curx cury y)))
 
 (defun screen-display-lines (screen redraw-flag buffer start-charpos start-linum pos-x pos-y)
-  (disp-reset-lines screen buffer start-linum)
   (let ((curx 0)
         (cury (- pos-y start-linum))
         (disp-line-fun
@@ -409,6 +296,94 @@
                (return)))))
     (screen-move-cursor screen curx cury)))
 
+(defun disp-set-line (screen attribute screen-row start-charpos end-charpos)
+  (when (and (<= 0 screen-row)
+             (< screen-row (screen-height screen))
+             (not (null (aref (screen-lines screen) screen-row)))
+             (or (null end-charpos)
+                 (< start-charpos end-charpos)))
+    (destructuring-bind (string . attributes)
+        (aref (screen-lines screen) screen-row)
+      (setf (cdr (aref (screen-lines screen) screen-row))
+            (lem::put-elements attributes
+                               start-charpos
+                               (or end-charpos
+                                   (length string))
+                               attribute)))))
+
+(defun disp-set-overlay (screen attribute view-point start end)
+  (let ((screen-row (1- (lem::count-lines view-point start))))
+    (disp-set-line screen attribute screen-row (marker-charpos start) nil)
+    (lem::with-marker ((point start))
+      (lem::line-offset point 1)
+      (loop :for i :from (1+ screen-row)
+            :do
+            (when (lem::same-line-p point end)
+              (disp-set-line screen attribute i 0 (marker-charpos end))
+              (return))
+            (disp-set-line screen attribute i 0 nil)
+            (unless (lem::line-offset point 1)
+              (return-from disp-set-overlay))))))
+
+(defun disp-set-overlays (screen overlays view-point)
+  (let ((view-end-point
+         (lem::with-marker ((view-point view-point))
+           (or (lem::line-offset view-point (screen-height screen))
+               (lem::buffer-end view-point)))))
+    (loop :for overlay :in overlays
+          :for start := (overlay-start overlay)
+          :for end := (overlay-end overlay)
+          :do (cond
+                ((and (lem::same-line-p start end)
+                      (marker<= view-point start)
+                      (marker< start view-end-point))
+                 (disp-set-line screen
+                                (overlay-attribute overlay)
+                                (1- (lem::count-lines view-point start))
+                                (marker-charpos start)
+                                (marker-charpos end)))
+                ((and (marker<= view-point start)
+                      (marker< end view-end-point))
+                 (disp-set-overlay screen
+                                   (overlay-attribute overlay)
+                                   view-point
+                                   start
+                                   end))
+                ((and (marker<= start view-point)
+                      (marker<= view-point end)
+                      (marker<= end view-end-point))
+                 (disp-set-overlay screen
+                                   (overlay-attribute overlay)
+                                   view-point
+                                   view-point
+                                   end))
+                ((marker<= view-point start)
+                 (disp-set-overlay screen
+                                   (overlay-attribute overlay)
+                                   view-point
+                                   start
+                                   view-end-point))))))
+
+(defun disp-reset-lines (screen buffer view-point)
+  (when (eq buffer (current-buffer))
+    (lem::buffer-update-mark-overlay buffer))
+  (lem::with-marker ((point view-point))
+    (loop :for i :from 0 :below (screen-height screen)
+          :do
+          (let ((line (lem::get-line/marker point)))
+            (setf (aref (screen-lines screen) i)
+                  (lem::line-string/attributes line)))
+          (unless (lem::line-offset point 1)
+            (fill (screen-lines screen) nil :start (1+ i))
+            (return))))
+  (disp-set-overlays screen
+                     (buffer-overlays buffer)
+                     view-point))
+
+;(defun screen-display-lines* (screen redraw-flag buffer view-point cursor-point)
+;  (disp-reset-lines* screen buffer view-point)
+;  )
+
 (defun screen-redraw-separator (window)
   (charms/ll:attron charms/ll:a_reverse)
   (when (< 0 (window-x window))
@@ -430,6 +405,9 @@
 (defun redraw-display-window (window doupdate-p)
   (window-see window)
   (lem::window-prompt-display window)
+  (disp-reset-lines (window-screen window)
+                    (window-buffer window)
+                    (lem::window-view-marker window))
   (screen-display-lines (window-screen window)
                         (screen-modified-p (window-screen window))
                         (window-buffer window)

@@ -20,7 +20,6 @@
           buffer-unmark
           buffer-put-property
           buffer-get-char
-          buffer-line-string-with-attributes
           buffer-line-string
           buffer-erase
           buffer-rename
@@ -209,6 +208,10 @@
                         :else
                         :collect elt
                         ))))
+
+(defun line-string/attributes (line)
+  (cons (line-str line)
+        (getf (line-plist line) :attribute)))
 
 (defun line-free (line)
   (when (line-prev line)
@@ -471,12 +474,6 @@
 
 (defun buffer-line-length (buffer linum)
   (line-length (buffer-get-line buffer linum)))
-
-(defun buffer-line-string-with-attributes (buffer linum)
-  (let ((line (buffer-get-line buffer linum)))
-    (when (line-p line)
-      (values (line-str line)
-              (getf (line-plist line) :attribute)))))
 
 (defun buffer-line-string (buffer linum)
   (let ((line (buffer-get-line buffer linum)))

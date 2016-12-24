@@ -8,7 +8,6 @@
           window
           window-screen
           window-use-modeline-p
-          window-point
           window-height
           window-width
           window-y

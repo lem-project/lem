@@ -5,7 +5,6 @@
           point-linum
           point-charpos
           with-points
-          current-linum
           point<
           point=
           point<=
@@ -41,13 +40,6 @@
                        (,(cadar b) (point-charpos ,(cadr b)))))
                  binds)
      ,@body))
-
-(defun current-linum ()
-  (marker-linum (buffer-point-marker (current-buffer))))
-
-(defun (setf current-linum) (new-linum)
-  (check-linum (current-buffer) new-linum)
-  (setf (marker-linum (buffer-point-marker (current-buffer))) new-linum))
 
 (defun point< (p1 p2)
   (cond ((< (point-linum p1) (point-linum p2))

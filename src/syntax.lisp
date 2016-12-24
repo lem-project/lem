@@ -273,7 +273,7 @@
           (setf (current-buffer) buffer)
           (move-point (current-marker) start)
           (loop :until (or (null line)
-                           (marker<= end (current-marker)))
+                           (marker< end (current-marker)))
                 :do
                 (setf line (%syntax-scan-line line))
                 (unless (line-offset (current-marker) 1)

@@ -76,8 +76,9 @@
     (with-error-handler ()
       (cockpit
         (with-marker ((end (current-marker)))
-          (when (line-offset end 1)
-            (syntax-scan-lines (current-marker) end)))
+          (unless (line-offset end 1)
+            (buffer-end end))
+          (syntax-scan-lines (current-marker) end))
         (redraw-display)
         (let ()
           (start-idle-timers)

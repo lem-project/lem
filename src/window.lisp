@@ -780,7 +780,7 @@
         (setf (buffer-keep-binfo old-buffer)
               (list (copy-marker (window-view-marker (current-window))
                                  :temporary)
-                    (copy-marker (window-point-marker (current-window))
+                    (copy-marker (%window-point-marker (current-window))
                                  :temporary)))))
     (setf (window-buffer (current-window)) buffer)
     (setf (current-buffer) buffer)

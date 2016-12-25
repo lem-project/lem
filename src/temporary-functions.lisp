@@ -27,7 +27,7 @@
   (delete-char/marker start
                       (count-characters start end)))
 
-(defun map-region (start end function)
+(defun %map-region (start end function)
   (when (marker< end start)
     (rotatef start end))
   (let ((start-line (buffer-get-line (marker-buffer start)
@@ -37,15 +37,21 @@
           :for firstp := (eq line start-line)
           :for lastp := (= linum (marker-linum end))
           :do (funcall function
-                       (subseq (line-str line)
-                               (if firstp
-                                   (marker-charpos start)
-                                   0)
-                               (if lastp
-                                   (marker-charpos end)
-                                   nil))
-                       lastp)))
+                       line
+                       (if firstp
+                           (marker-charpos start)
+                           0)
+                       (if lastp
+                           (marker-charpos end)
+                           nil))))
   (values))
+
+(defun map-region (start end function)
+  (%map-region start end
+               (lambda (line start end)
+                 (funcall function
+                          (subseq (line-str line) start end)
+                          (not (null end))))))
 
 (defun count-characters (start end)
   (let ((count 0))

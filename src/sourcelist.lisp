@@ -5,12 +5,12 @@
            :append-sourcelist))
 (in-package :lem.sourcelist)
 
-(defvar *sourcelist-marker*)
+(defvar *sourcelist-point*)
 (defvar *current-sourcelist* nil)
 
 (defstruct sourcelist
   buffer-name
-  temp-marker
+  temp-point
   (elements (make-array 0 :adjustable t :fill-pointer 0))
   (index -1))
 
@@ -18,7 +18,7 @@
   (let ((buffer (get-buffer-create buffer-name))
         (sourcelist (make-sourcelist :buffer-name buffer-name)))
     (erase-buffer buffer)
-    (lem::with-point ((*sourcelist-marker* (lem::buffer-point buffer) :left-inserting))
+    (lem::with-point ((*sourcelist-point* (lem::buffer-point buffer) :left-inserting))
       (funcall function sourcelist))
     (change-buffer-mode buffer 'sourcelist-mode t)
     (display-buffer buffer)
@@ -31,13 +31,13 @@
                            ,@body)))
 
 (defun append-sourcelist (sourcelist write-function jump-function)
-  (let ((marker *sourcelist-marker*))
-    (lem::with-point ((start-marker marker))
-      (funcall write-function marker)
-      (lem::insert-char-at marker #\newline)
+  (let ((point *sourcelist-point*))
+    (lem::with-point ((start-point point))
+      (funcall write-function point)
+      (lem::insert-char-at point #\newline)
       (when jump-function
-        (lem::put-text-property start-marker
-                                marker
+        (lem::put-text-property start-point
+                                point
                                 'sourcelist
                                 jump-function)
         (vector-push-extend jump-function

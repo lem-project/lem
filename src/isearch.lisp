@@ -55,9 +55,9 @@
 (define-command isearch-forward () ()
   (isearch-start
    "ISearch: "
-   (lambda (marker str)
-     (search-forward (or (lem::character-offset marker (- (length str)))
-                         marker)
+   (lambda (point str)
+     (search-forward (or (lem::character-offset point (- (length str)))
+                         point)
                      str))
    #'search-forward
    #'search-backward
@@ -67,9 +67,9 @@
 (define-command isearch-backward () ()
   (isearch-start
    "ISearch:"
-   (lambda (marker str)
-     (search-backward (or (lem::character-offset marker (length str))
-                          marker)
+   (lambda (point str)
+     (search-backward (or (lem::character-offset point (length str))
+                          point)
                       str))
    #'search-forward
    #'search-backward
@@ -191,29 +191,29 @@
   (mapc #'delete-overlay *isearch-highlight-overlays*)
   (setq *isearch-highlight-overlays* nil))
 
-(defun isearch-update-buffer (marker &optional (search-string *isearch-string*))
+(defun isearch-update-buffer (point &optional (search-string *isearch-string*))
   (isearch-reset-buffer)
   (unless (equal search-string "")
     (window-see (current-window))
-    (lem::with-point ((cur-marker (lem::window-view-point (current-window)))
-                       (limit-marker (or (lem::line-offset
-                                          (copy-point (lem::window-view-point (current-window))
-                                                       :temporary)
-                                          (window-height (current-window)))
-                                         (lem::buffers-end (window-buffer (current-window))))))
+    (lem::with-point ((cur-point (lem::window-view-point (current-window)))
+                      (limit-point (or (lem::line-offset
+                                        (copy-point (lem::window-view-point (current-window))
+                                                    :temporary)
+                                        (window-height (current-window)))
+                                       (lem::buffers-end (window-buffer (current-window))))))
       (loop :while (funcall *isearch-search-forward-function*
-                            cur-marker
+                            cur-point
                             search-string
-                            limit-marker)
-            :do (let ((start-marker (lem::with-point ((temp-marker cur-marker :temporary))
-                                      (funcall *isearch-search-backward-function*
-                                               temp-marker
-                                               search-string)
-                                      temp-marker)))
-                  (push (make-overlay start-marker
-                                      (copy-point cur-marker :temporary)
-                                      (if (and (point<= start-marker marker)
-                                               (point<= marker cur-marker))
+                            limit-point)
+            :do (let ((start-point (lem::with-point ((temp-point cur-point :temporary))
+                                     (funcall *isearch-search-backward-function*
+                                              temp-point
+                                              search-string)
+                                     temp-point)))
+                  (push (make-overlay start-point
+                                      (copy-point cur-point :temporary)
+                                      (if (and (point<= start-point point)
+                                               (point<= point cur-point))
                                           *isearch-highlight-active-attribute*
                                           *isearch-highlight-attribute*))
                         *isearch-highlight-overlays*))))))
@@ -224,9 +224,9 @@
                      *isearch-string*
                      (string c)))
   (isearch-update-display)
-  (lem::with-point ((start-marker (current-point)))
+  (lem::with-point ((start-point (current-point)))
     (unless (funcall *isearch-search-function* (current-point) *isearch-string*)
-      (lem::move-point (current-point) start-marker)))
+      (lem::move-point (current-point) start-point)))
   t)
 
 (define-command isearch-self-insert () ()
@@ -264,27 +264,27 @@
     (setq *replace-after-string* after)
     (list before after)))
 
-(defun query-replace-internal-body (cur-marker goal-marker before after)
+(defun query-replace-internal-body (cur-point goal-point before after)
   (let ((pass-through nil))
     (loop
-      (when (or (not (funcall *isearch-search-forward-function* cur-marker before))
-                (and goal-marker (point< goal-marker cur-marker)))
-        (when goal-marker
-          (lem::move-point (current-point) goal-marker))
+      (when (or (not (funcall *isearch-search-forward-function* cur-point before))
+                (and goal-point (point< goal-point cur-point)))
+        (when goal-point
+          (lem::move-point (current-point) goal-point))
         (return))
-      (lem::with-point ((end cur-marker))
-        (isearch-update-buffer cur-marker before)
-        (funcall *isearch-search-backward-function* cur-marker before)
-        (lem::with-point ((start cur-marker))
+      (lem::with-point ((end cur-point))
+        (isearch-update-buffer cur-point before)
+        (funcall *isearch-search-backward-function* cur-point before)
+        (lem::with-point ((start cur-point))
           (loop :for c := (unless pass-through
                             (minibuf-read-char (format nil "Replace ~s with ~s" before after)))
                 :do (cond
                       ((or pass-through (char= c #\y))
                        (lem::delete-between-points start end)
-                       (lem::insert-string-at cur-marker after)
+                       (lem::insert-string-at cur-point after)
                        (return))
                       ((char= c #\n)
-                       (lem::move-point cur-marker end)
+                       (lem::move-point cur-point end)
                        (return))
                       ((char= c #\!)
                        (setf pass-through t)))))))))
@@ -296,13 +296,13 @@
             (buffer (current-buffer)))
         (when (and before after)
           (if (buffer-mark-p buffer)
-              (lem::with-point ((mark-marker (lem::buffer-mark buffer) :right-inserting))
-                (if (point< mark-marker (lem::buffer-point buffer))
-                    (query-replace-internal-body mark-marker
+              (lem::with-point ((mark-point (lem::buffer-mark buffer) :right-inserting))
+                (if (point< mark-point (lem::buffer-point buffer))
+                    (query-replace-internal-body mark-point
                                                  (lem::buffer-point buffer)
                                                  before after)
                     (query-replace-internal-body (lem::buffer-point buffer)
-                                                 mark-marker
+                                                 mark-point
                                                  before after)))
               (query-replace-internal-body (lem::buffer-point buffer)
                                            nil

@@ -1,13 +1,12 @@
 (in-package :lem)
 
 (defun buffers-start (buffer)
-  (make-marker buffer
-               (point-min buffer)
-               :kind :temporary))
+  (make-marker buffer 1 0 :kind :temporary))
 
 (defun buffers-end (buffer)
   (make-marker buffer
-               (point-max buffer)
+               (buffer-nlines buffer)
+               (line-length (buffer-tail-line buffer))
                :kind :temporary))
 
 (defun points-to-string (start end)

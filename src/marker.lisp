@@ -52,11 +52,11 @@
 (defun marker-p (x)
   (typep x 'marker))
 
-(defun make-marker (buffer point &key (kind :right-inserting) name)
+(defun make-marker (buffer linum charpos &key (kind :right-inserting) name)
   (let ((marker (make-instance 'marker
                                :buffer buffer
-                               :linum (point-linum point)
-                               :charpos (point-charpos point)
+                               :linum linum
+                               :charpos charpos
                                :kind kind
                                :name name)))
     (unless (eq :temporary kind)
@@ -65,7 +65,8 @@
 
 (defun copy-marker (marker &optional kind)
   (make-marker (marker-buffer marker)
-               (copy-list (marker-point marker))
+               (marker-linum marker)
+               (marker-charpos marker)
                :kind (or kind (marker-kind marker))
                :name (marker-name marker)))
 

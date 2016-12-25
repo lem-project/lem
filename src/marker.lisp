@@ -75,7 +75,7 @@
     (buffer-delete-marker (marker-buffer marker)
                           marker)))
 
-(defun marker-change-buffer (marker buffer &optional (point nil pointp))
+(defun point-change-buffer (marker buffer &optional (point nil pointp))
   (delete-marker marker)
   (unless (eq :temporary (marker-kind marker))
     (buffer-add-marker buffer marker))

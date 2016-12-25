@@ -296,7 +296,7 @@
             (buffer (current-buffer)))
         (when (and before after)
           (if (buffer-mark-p buffer)
-              (lem::with-point ((mark-marker (lem::buffer-mark-marker buffer) :right-inserting))
+              (lem::with-point ((mark-marker (lem::buffer-mark buffer) :right-inserting))
                 (if (point< mark-marker (lem::buffer-point buffer))
                     (query-replace-internal-body mark-marker
                                                  (lem::buffer-point buffer)

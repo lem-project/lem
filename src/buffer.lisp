@@ -248,7 +248,7 @@
   cache-linum
   mark-p
   mark-overlay
-  mark-marker
+  mark
   point
   keep-binfo
   nlines
@@ -291,7 +291,7 @@
     (setf (buffer-cache-linum buffer) 1)
     (setf (buffer-mark-p buffer) nil)
     (setf (buffer-mark-overlay buffer) nil)
-    (setf (buffer-mark-marker buffer) nil)
+    (setf (buffer-mark buffer) nil)
     (setf (buffer-keep-binfo buffer) nil)
     (setf (buffer-nlines buffer) 1)
 
@@ -388,7 +388,7 @@
 (defun buffer-mark-cancel (buffer)
   (when (buffer-mark-p buffer)
     (setf (buffer-mark-p buffer) nil)
-    (delete-point (buffer-mark-marker buffer))
+    (delete-point (buffer-mark buffer))
     (delete-overlay (buffer-mark-overlay buffer))
     (setf (buffer-mark-overlay buffer) nil)))
 
@@ -453,7 +453,7 @@
 (defun buffer-update-mark-overlay (buffer)
   (when (buffer-mark-p buffer)
     (with-point ((start (buffer-point buffer))
-                  (end (buffer-mark-marker buffer)))
+                  (end (buffer-mark buffer)))
       (when (point< end start)
         (rotatef start end))
       (when (buffer-mark-overlay buffer)

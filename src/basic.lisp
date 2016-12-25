@@ -339,11 +339,11 @@
 (defun set-current-mark (marker)
   (let ((buffer (point-buffer marker)))
     (cond ((buffer-mark-p buffer)
-           (move-point (buffer-mark-marker buffer)
+           (move-point (buffer-mark buffer)
                        marker))
           (t
            (setf (buffer-mark-p buffer) t)
-           (setf (buffer-mark-marker buffer)
+           (setf (buffer-mark buffer)
                  (copy-point marker :right-inserting)))))
   marker)
 
@@ -420,14 +420,14 @@
 
 (defun region-beginning (&optional (buffer (current-buffer)))
   (let ((start (buffer-point buffer))
-        (end (buffer-mark-marker buffer)))
+        (end (buffer-mark buffer)))
     (if (point< start end)
         start
         end)))
 
 (defun region-end (&optional (buffer (current-buffer)))
   (let ((start (buffer-point buffer))
-        (end (buffer-mark-marker buffer)))
+        (end (buffer-mark buffer)))
     (if (point< start end)
         end
         start)))

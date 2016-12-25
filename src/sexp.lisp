@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(forward-sexp
+(export '(form-offset
+          forward-sexp
           backward-sexp
           scan-lists
           forward-list

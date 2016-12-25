@@ -221,7 +221,7 @@
         (let ((end-point (character-offset (copy-point start-point :temporary)
                                            (length string))))
           (loop :for (k v) :on plist :by #'cddr
-                :do (put-text-property start-point end-point k v)))))
+	     :do (put-text-property start-point end-point k v)))))
   t)
 
 (defun delete-character (point &optional (n 1) killp)

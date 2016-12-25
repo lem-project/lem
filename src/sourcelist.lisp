@@ -18,7 +18,7 @@
   (let ((buffer (get-buffer-create buffer-name))
         (sourcelist (make-sourcelist :buffer-name buffer-name)))
     (erase-buffer buffer)
-    (lem::with-point ((*sourcelist-point* (lem::buffer-point buffer) :left-inserting))
+    (with-point ((*sourcelist-point* (buffer-point buffer) :left-inserting))
       (funcall function sourcelist))
     (change-buffer-mode buffer 'sourcelist-mode t)
     (display-buffer buffer)
@@ -32,14 +32,14 @@
 
 (defun append-sourcelist (sourcelist write-function jump-function)
   (let ((point *sourcelist-point*))
-    (lem::with-point ((start-point point))
+    (with-point ((start-point point))
       (funcall write-function point)
-      (lem::insert-character point #\newline)
+      (insert-character point #\newline)
       (when jump-function
-        (lem::put-text-property start-point
-                                point
-                                'sourcelist
-                                jump-function)
+        (put-text-property start-point
+			   point
+			   'sourcelist
+			   jump-function)
         (vector-push-extend jump-function
                             (sourcelist-elements sourcelist))))))
 
@@ -72,6 +72,6 @@
 (define-key *sourcelist-mode-keymap* "q" 'quit-window)
 
 (define-command sourcelist-jump () ()
-  (let ((jump-function (lem::text-property-at (current-point) 'sourcelist)))
+  (let ((jump-function (text-property-at (current-point) 'sourcelist)))
     (when jump-function
       (funcall jump-function))))

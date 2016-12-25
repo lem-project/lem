@@ -58,8 +58,8 @@
   (setf (get-bvar :calc-indent-function) 'go-calc-indent))
 
 (defun following-word ()
-  (lem::points-to-string (current-point)
-                         (lem::form-offset (copy-point (current-point) :temporary) 1)))
+  (points-to-string (current-point)
+		    (form-offset (copy-point (current-point) :temporary) 1)))
 
 (defun semicolon-p ()
   (let ((c (preceding-char)))
@@ -79,11 +79,11 @@
 (defun go-calc-indent (point)
   (save-excursion
     (setf (current-buffer) (point-buffer point))
-    (lem::move-point (current-point) point)
+    (move-point (current-point) point)
     (back-to-indentation)
-    (let ((attribute (lem::text-property-at (current-point) :attribute -1)))
+    (let ((attribute (text-property-at (current-point) :attribute -1)))
       (cond ((eq attribute *syntax-comment-attribute*)
-	     (lem::previous-single-property-change (current-point) :attribute)
+	     (previous-single-property-change (current-point) :attribute)
 	     (1+ (current-column)))
 	    ((eq attribute *syntax-string-attribute*)
 	     nil)

@@ -4,25 +4,27 @@
           *scroll-recenter-p*
           *window-scroll-functions*
           *window-size-change-functions*
-          window-list
-          window
-          window-screen
-          window-use-modeline-p
-          window-height
-          window-width
-          window-y
+          window-view-point
+          windowp
           window-x
+          window-y
+          window-width
+          window-height
           window-buffer
-          window-delete-hook
+          window-parameter
           current-window
+          window-list
           one-window-p
           deleted-window-p
+          window-recenter
+          window-scroll
           window-see
           split-window-vertically
           split-window-horizontally
           split-window-sensibly
           get-next-window
           delete-window
+          get-buffer-windows
           switch-to-buffer
           pop-to-buffer))
 
@@ -84,7 +86,7 @@
     :initform nil
     :accessor window-parameters)))
 
-(defun window-p (x)
+(defun windowp (x)
   (typep x 'window))
 
 (defun make-window (buffer x y width height use-modeline-p)
@@ -115,7 +117,7 @@
 (defun window-buffer (&optional (window (current-window)))
   (window-%buffer window))
 
-(defun (setf window-buffer) (buffer &optional (window (current-window)))
+(defun set-window-buffer (window buffer)
   (screen-modify (window-screen window))
   (setf (window-%buffer window) buffer))
 
@@ -164,7 +166,7 @@
                      :cdr cdr))
 
 (defun window-tree-leaf-p (window)
-  (window-p window))
+  (windowp window))
 
 (defun window-tree-map (tree fn)
   (labels ((f (tree)
@@ -746,7 +748,7 @@
         (setf (buffer-keep-binfo old-buffer)
               (list (copy-point (window-view-point (current-window)))
                     (copy-point (buffer-point (window-buffer (current-window))))))))
-    (setf (window-buffer (current-window)) buffer)
+    (set-window-buffer (current-window) buffer)
     (setf (current-buffer) buffer)
     (point-change-buffer (%window-point (current-window)) buffer)
     (point-change-buffer (window-view-point (current-window)) buffer)

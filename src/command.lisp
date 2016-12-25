@@ -145,8 +145,8 @@
     (unless (continue-flag :kill)
       (kill-ring-new)))
   (delete-character (current-point)
-                  (or n 1)
-                  (if n t nil)))
+		    (or n 1)
+		    (if n t nil)))
 
 (define-key *global-keymap* (kbd "C-h") 'delete-previous-char)
 (define-key *global-keymap* (kbd "[backspace]") 'delete-previous-char)

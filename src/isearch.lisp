@@ -56,7 +56,7 @@
   (isearch-start
    "ISearch: "
    (lambda (point str)
-     (search-forward (or (lem::character-offset point (- (length str)))
+     (search-forward (or (character-offset point (- (length str)))
                          point)
                      str))
    #'search-forward
@@ -68,7 +68,7 @@
   (isearch-start
    "ISearch:"
    (lambda (point str)
-     (search-backward (or (lem::character-offset point (length str))
+     (search-backward (or (character-offset point (length str))
                           point)
                       str))
    #'search-forward
@@ -113,14 +113,14 @@
     (skip-chars-forward point #'syntax-symbol-char-p)
     (skip-chars-backward point #'syntax-symbol-char-p t)
     (skip-chars-backward point #'syntax-symbol-char-p)
-    (lem::with-point ((start point))
+    (with-point ((start point))
       (skip-chars-forward point #'syntax-symbol-char-p)
-      (lem::with-point ((end point))
+      (with-point ((end point))
         (isearch-start "ISearch Symbol: "
                        #'search-forward-symbol
                        #'search-forward-symbol
                        #'search-backward-symbol
-                       (lem::points-to-string start end))))))
+                       (points-to-string start end))))))
 
 (defun isearch-start (prompt
                       search-func
@@ -139,7 +139,7 @@
 
 (define-key *isearch-keymap* (kbd "C-g") 'isearch-abort)
 (define-command isearch-abort () ()
-  (lem::move-point (current-point) *isearch-start-point*)
+  (move-point (current-point) *isearch-start-point*)
   (isearch-reset-buffer)
   t)
 
@@ -195,17 +195,17 @@
   (isearch-reset-buffer)
   (unless (equal search-string "")
     (window-see (current-window))
-    (lem::with-point ((cur-point (lem::window-view-point (current-window)))
-                      (limit-point (or (lem::line-offset
-                                        (copy-point (lem::window-view-point (current-window))
-                                                    :temporary)
-                                        (window-height (current-window)))
-                                       (lem::buffers-end (window-buffer (current-window))))))
+    (with-point ((cur-point (window-view-point (current-window)))
+                 (limit-point (or (line-offset
+                                   (copy-point (window-view-point (current-window))
+                                               :temporary)
+                                   (window-height (current-window)))
+                                  (buffers-end (window-buffer (current-window))))))
       (loop :while (funcall *isearch-search-forward-function*
                             cur-point
                             search-string
                             limit-point)
-	 :do (let ((start-point (lem::with-point ((temp-point cur-point :temporary))
+	 :do (let ((start-point (with-point ((temp-point cur-point :temporary))
 				  (funcall *isearch-search-backward-function*
 					   temp-point
 					   search-string)
@@ -224,9 +224,9 @@
                      *isearch-string*
                      (string c)))
   (isearch-update-display)
-  (lem::with-point ((start-point (current-point)))
+  (with-point ((start-point (current-point)))
     (unless (funcall *isearch-search-function* (current-point) *isearch-string*)
-      (lem::move-point (current-point) start-point)))
+      (move-point (current-point) start-point)))
   t)
 
 (define-command isearch-self-insert () ()
@@ -270,21 +270,21 @@
        (when (or (not (funcall *isearch-search-forward-function* cur-point before))
 		 (and goal-point (point< goal-point cur-point)))
 	 (when goal-point
-	   (lem::move-point (current-point) goal-point))
+	   (move-point (current-point) goal-point))
 	 (return))
-       (lem::with-point ((end cur-point))
+       (with-point ((end cur-point))
 	 (isearch-update-buffer cur-point before)
 	 (funcall *isearch-search-backward-function* cur-point before)
-	 (lem::with-point ((start cur-point))
+	 (with-point ((start cur-point))
 	   (loop :for c := (unless pass-through
 			     (minibuf-read-char (format nil "Replace ~s with ~s" before after)))
 	      :do (cond
 		    ((or pass-through (char= c #\y))
-		     (lem::delete-between-points start end)
-		     (lem::insert-string cur-point after)
+		     (delete-between-points start end)
+		     (insert-string cur-point after)
 		     (return))
 		    ((char= c #\n)
-		     (lem::move-point cur-point end)
+		     (move-point cur-point end)
 		     (return))
 		    ((char= c #\!)
 		     (setf pass-through t)))))))))
@@ -296,15 +296,15 @@
 	     (buffer (current-buffer)))
 	 (when (and before after)
 	   (if (buffer-mark-p buffer)
-	       (lem::with-point ((mark-point (lem::buffer-mark buffer) :right-inserting))
-		 (if (point< mark-point (lem::buffer-point buffer))
+	       (with-point ((mark-point (buffer-mark buffer) :right-inserting))
+		 (if (point< mark-point (buffer-point buffer))
 		     (query-replace-internal-body mark-point
-						  (lem::buffer-point buffer)
+						  (buffer-point buffer)
 						  before after)
-		     (query-replace-internal-body (lem::buffer-point buffer)
+		     (query-replace-internal-body (buffer-point buffer)
 						  mark-point
 						  before after)))
-	       (query-replace-internal-body (lem::buffer-point buffer)
+	       (query-replace-internal-body (buffer-point buffer)
 					    nil
 					    before after))))
     (isearch-reset-buffer)))

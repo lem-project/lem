@@ -3,6 +3,7 @@
 (export '(*program-name*
           *debug-p*
           save-excursion
+          with-point
           with-buffer-read-only
           with-current-window
           with-pop-up-typeout-window

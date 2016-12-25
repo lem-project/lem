@@ -218,7 +218,7 @@
   t)
 
 (defun delete-completion-window ()
-  (when (and (window-p *completion-window*)
+  (when (and (windowp *completion-window*)
              (not (deleted-window-p *completion-window*)))
     (with-current-window *completion-window*
       (when (get-bvar :completion-buffer-p

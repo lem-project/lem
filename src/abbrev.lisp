@@ -5,10 +5,10 @@
 (in-package :lem.abbrev)
 
 (defun preceding-word (point)
-  (lem::with-point ((cur point)
-		    (end point))
+  (with-point ((cur point)
+               (end point))
     (skip-chars-backward cur #'syntax-symbol-char-p)
-    (lem::points-to-string cur end)))
+    (points-to-string cur end)))
 
 (defun scan-line-words (str)
   (let ((words))
@@ -26,7 +26,7 @@
 
 (defun scan-buffer-words (buffer word)
   (let ((words))
-    (with-open-stream (in (make-buffer-input-stream (lem::buffers-start buffer)))
+    (with-open-stream (in (make-buffer-input-stream (buffers-start buffer)))
       (loop :for str := (read-line in nil)
 	 :while str
 	 :do (dolist (w (remove-if-not #'(lambda (tok)
@@ -63,14 +63,14 @@
     (cond ((continue-flag :abbrev)
            (when (null *rest-words*)
              (setf *rest-words* *all-words*))
-           (lem::delete-between-points *start-point* point)
-           (lem::insert-string point (first *rest-words*))
+           (delete-between-points *start-point* point)
+           (insert-string point (first *rest-words*))
            (setf *rest-words* (rest *rest-words*)))
           (t
            (let* ((src-word (preceding-word point))
                   (words (scan-all-buffer-words src-word)))
-             (lem::delete-character point (- (length src-word)) nil)
+             (delete-character point (- (length src-word)) nil)
              (setf *rest-words* (rest words))
              (setf *all-words* words)
              (setf *start-point* (copy-point point :temporary))
-             (lem::insert-string point (first words)))))))
+             (insert-string point (first words)))))))

@@ -132,7 +132,7 @@
          (some #'featurep (cdr form)))
         (t)))
 
-(defvar *feature-attribute* (lem::copy-attribute *syntax-comment-attribute*))
+(defvar *feature-attribute* (copy-attribute *syntax-comment-attribute*))
 
 (defvar *lisp-syntax-table*
   (let ((table
@@ -270,19 +270,19 @@
      (make-syntax-test "#[+-]" :regex-p t)
      :move-action (lambda (cur-point)
                     (ignore-errors
-		      (let ((positivep (eql #\+ (lem::character-at cur-point 1))))
-			(lem::character-offset cur-point 2)
-			(lem::with-point ((prev cur-point))
-			  (when (lem::form-offset cur-point 1)
+		      (let ((positivep (eql #\+ (character-at cur-point 1))))
+			(character-offset cur-point 2)
+			(with-point ((prev cur-point))
+			  (when (form-offset cur-point 1)
 			    (cond
 			      ((if (featurep (read-from-string
-					      (lem::points-to-string
+					      (points-to-string
 					       prev cur-point)))
 				   positivep
 				   (not positivep))
 			       nil)
 			      (t
-			       (lem::form-offset cur-point 1))))))))
+			       (form-offset cur-point 1))))))))
      :attribute *feature-attribute*)
 
     table))
@@ -312,19 +312,19 @@
 
 (defun lisp-mode-skip-expr-prefix-forward (point)
   (%lisp-mode-skip-expr-prefix
-   (lem::character-at point 0)
-   (lem::character-at point 1)
+   (character-at point 0)
+   (character-at point 1)
    (lambda (c1 c2)
      (declare (ignore c1 c2))
-     (lem::character-offset point 2))))
+     (character-offset point 2))))
 
 (defun lisp-mode-skip-expr-prefix-backward (point)
   (%lisp-mode-skip-expr-prefix
-   (lem::character-at point -2)
-   (lem::character-at point -1)
+   (character-at point -2)
+   (character-at point -1)
    (lambda (c1 c2)
      (declare (ignore c1 c2))
-     (lem::character-offset point -2))))
+     (character-offset point -2))))
 
 (defun looking-at-indent-spec ()
   (let* ((string (symbol-string-at-point (current-point)))
@@ -359,9 +359,9 @@
 
 (defun arg1-first-line-p ()
   (let ((point (current-point)))
-    (when (lem::form-offset point 1)
+    (when (form-offset point 1)
       (skip-chars-forward point '(#\space #\tab))
-      (not (lem::end-line-p point)))))
+      (not (end-line-p point)))))
 
 (defun calc-indent-1 ()
   (let* ((arg-count (go-to-car))
@@ -390,10 +390,10 @@
 (defun lisp-calc-indent (point)
   (save-excursion
     (setf (current-buffer) (point-buffer point))
-    (lem::move-point (current-point) point)
+    (move-point (current-point) point)
     (beginning-of-line)
     (when (eq *syntax-string-attribute*
-              (lem::text-property-at (current-point) :attribute -1))
+              (text-property-at (current-point) :attribute -1))
       (return-from lisp-calc-indent nil))
     (when (save-excursion (and (backward-sexp 1 t) (bolp)))
       (return-from lisp-calc-indent 0))
@@ -401,8 +401,8 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-M-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()
-  (lem::with-point ((end (current-point)))
-    (when (lem::form-offset end 1)
+  (with-point ((end (current-point)))
+    (when (form-offset end 1)
       (indent-region (current-point) end))))
 
 (defun top-of-defun (point)
@@ -415,13 +415,13 @@
       (lisp-end-of-defun (- n))
       (let ((point (current-point)))
         (dotimes (_ n)
-          (if (lem::start-line-p point)
-              (lem::line-offset point -1)
-              (lem::line-start point))
+          (if (start-line-p point)
+              (line-offset point -1)
+              (line-start point))
           (loop
-	     (when (char= #\( (lem::character-at point 0))
+	     (when (char= #\( (character-at point 0))
 	       (return))
-	     (unless (lem::line-offset point -1)
+	     (unless (line-offset point -1)
 	       (return)))))))
 
 (define-key *lisp-mode-keymap* (kbd "C-M-e") 'lisp-end-of-defun)
@@ -431,10 +431,10 @@
       (let ((point (current-point)))
         (dotimes (_ n)
           (top-of-defun point)
-          (lem::form-offset point 1)
+          (form-offset point 1)
           (skip-chars-forward point '(#\space #\tab))
-          (when (char= #\newline (lem::character-at point))
-            (lem::character-offset point 1))))))
+          (when (char= #\newline (character-at point))
+            (character-offset point 1))))))
 
 (defun lisp-buffer-package (buffer)
   (let ((package-name
@@ -569,14 +569,14 @@
 			     (error (cdt) (format nil "~a" cdt)))))
 		      (with-pop-up-typeout-window (out (get-buffer-create "*output*") :erase t)
 			(princ x out))))))
-	 (lem::editor-abort ()))))
+	 (editor-abort ()))))
   condition)
 
 (defun %lisp-eval-internal (x point &optional update-point-p)
-  (lem::with-point ((cur-point point
-                               (if update-point-p
-                                   :left-inserting
-                                   :right-inserting)))
+  (with-point ((cur-point point
+			  (if update-point-p
+			      :left-inserting
+			      :right-inserting)))
     (with-open-stream (io (make-editor-io-stream cur-point t))
       (let* ((error-p)
              (results)
@@ -591,9 +591,9 @@
                             (setq results
                                   (restart-case
                                       (multiple-value-list (eval x))
-                                    (lem::editor-abort () :report "Abort.")))
+                                    (editor-abort () :report "Abort.")))
                             (when update-point-p
-                              (lem::move-point point cur-point)))
+                              (move-point point cur-point)))
                            ((condition)
                             (setq error-p t)
                             (setq results (list condition))))
@@ -601,7 +601,7 @@
 
 (defun %lisp-eval (x point
 		   &optional update-point-p)
-  (lem::call-with-allow-interrupt
+  (call-with-allow-interrupt
    t
    (lambda ()
      (multiple-value-bind (results error-p)
@@ -625,7 +625,7 @@
     (change-buffer-mode output-buffer 'lisp-mode)
     (buffer-unmark output-buffer)
     (message "~{~s~^,~}"
-             (%lisp-eval-string string (lem::buffers-start output-buffer)
+             (%lisp-eval-string string (buffers-start output-buffer)
                                 nil
                                 (lisp-current-package)))
     (when (buffer-modified-p output-buffer)
@@ -636,17 +636,17 @@
   (unless (or start end)
     (setq start (region-beginning))
     (setq end (region-end)))
-  (lisp-eval-string (lem::points-to-string start end))
+  (lisp-eval-string (points-to-string start end))
   t)
 
 (defun lisp-move-and-eval-sexp (move-sexp eval-string-function)
   (let ((str (save-excursion
                (and (funcall move-sexp)
-                    (lem::points-to-string
+                    (points-to-string
                      (current-point)
-                     (lem::form-offset (copy-point (current-point)
-						   :temporary)
-                                       1))))))
+                     (form-offset (copy-point (current-point)
+					      :temporary)
+				  1))))))
     (when str
       (funcall eval-string-function str)
       t)))
@@ -687,22 +687,22 @@
         `(,macroexpand-symbol
           (let ((*package* (lisp-current-package)))
             (read-from-string
-             (lem::points-to-string
+             (points-to-string
               (current-point)
-              (lem::form-offset (copy-point (current-point)
-					    :temporary)
-                                1)))))
+              (form-offset (copy-point (current-point)
+				       :temporary)
+			   1)))))
         (lisp-current-package))))
 
 (defun %lisp-macroexpand-replace-expr (expr)
-  (lem::delete-between-points
+  (delete-between-points
    (current-point)
-   (lem::form-offset (copy-point (current-point) :temporary) 1))
+   (form-offset (copy-point (current-point) :temporary) 1))
   (with-open-stream (stream (make-buffer-output-stream (current-point)))
     (pprint expr stream))
   (read-from-string
-   (lem::points-to-string (lem::buffers-start (current-buffer))
-                          (lem::buffers-end (current-buffer)))))
+   (points-to-string (buffers-start (current-buffer))
+		     (buffers-end (current-buffer)))))
 
 (defun %lisp-macroexpand (macroexpand-symbol buffer-name)
   (multiple-value-bind (expr error-p)
@@ -811,7 +811,7 @@
 		    :do (lem.sourcelist:append-sourcelist
 			 sourcelist
 			 (lambda (cur-point)
-			   (lem::insert-string cur-point file))
+			   (insert-string cur-point file))
 			 jump-fun)))))))))
 
 (define-key *lisp-mode-keymap* (kbd "M-,") 'lisp-pop-find-definition-stack)
@@ -820,7 +820,7 @@
     (unless cur-point
       (return-from lisp-pop-find-definition-stack nil))
     (switch-to-buffer (point-buffer cur-point))
-    (lem::move-point (current-point) cur-point)))
+    (move-point (current-point) cur-point)))
 
 (defun analyze-symbol (str)
   (let (package
@@ -884,11 +884,11 @@
 
 (defun lisp-preceding-symbol ()
   (let* ((end (current-point))
-         (start (lem::form-offset (copy-point end :temporary) -1)))
+         (start (form-offset (copy-point end :temporary) -1)))
     (when (and start end)
       (string-left-trim
        "'`," (string-left-trim
-              "#" (lem::points-to-string start end))))))
+              "#" (points-to-string start end))))))
 
 (define-key *lisp-mode-keymap* (kbd "C-M-i") 'lisp-complete-symbol)
 (define-command lisp-complete-symbol () ()
@@ -946,7 +946,7 @@
 
 (define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-insert-space-and-echo-arglist)
 (define-command lisp-insert-space-and-echo-arglist (n) ("p")
-  (lem::insert-character (current-point) #\space n)
+  (insert-character (current-point) #\space n)
   (lisp-echo-arglist))
 
 (define-key *lisp-mode-keymap* (kbd "C-c ;") 'lisp-comment-or-uncomment-region)
@@ -957,31 +957,31 @@
 
 (define-command lisp-comment-region () ()
   (save-excursion
-    (lem::with-point ((start (region-beginning) :right-inserting)
-		      (end (region-end) :left-inserting))
+    (with-point ((start (region-beginning) :right-inserting)
+		 (end (region-end) :left-inserting))
       (skip-chars-forward end '(#\space #\tab))
-      (unless (lem::end-line-p end)
-        (lem::with-point ((prev end))
-          (lem::insert-character end #\newline)
+      (unless (end-line-p end)
+        (with-point ((prev end))
+          (insert-character end #\newline)
           (indent-line end)
-          (lem::move-point end prev)))
+          (move-point end prev)))
       (let ((charpos (point-charpos start)))
         (loop
-	   (lem::insert-string start ";")
-	   (when (lem::same-line-p start end)
+	   (insert-string start ";")
+	   (when (same-line-p start end)
 	     (return))
-	   (lem::line-offset start 1 charpos))))))
+	   (line-offset start 1 charpos))))))
 
 (define-command lisp-uncomment-region () ()
-  (lem::with-point ((start (region-beginning))
-		    (end (region-end)))
+  (with-point ((start (region-beginning))
+	       (end (region-end)))
     (let ((charpos (point-charpos start)))
       (loop
 	 (unless (point< start end) (return))
-	 (loop (if (char= #\; (lem::character-at start))
-		   (lem::delete-character start 1)
+	 (loop (if (char= #\; (character-at start))
+		   (delete-character start 1)
 		   (return)))
-	 (lem::line-offset start 1 charpos)))))
+	 (line-offset start 1 charpos)))))
 
 (defun check-package (package-name)
   (find-package (string-upcase package-name)))
@@ -1002,26 +1002,26 @@
                             (stop-timer *lisp-timer*)))))
 
 (defun lisp-print-values (values)
-  (lem::with-point ((point (current-point) :left-inserting))
+  (with-point ((point (current-point) :left-inserting))
     (with-open-stream (out (make-buffer-output-stream point))
       (let ((*package* (lisp-current-package)))
         (dolist (v values)
           (pprint v out))))
-    (lem::move-point (current-point) point)))
+    (move-point (current-point) point)))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-j") 'lisp-eval-print-last-sexp)
 (define-command lisp-eval-print-last-sexp () ()
   (lisp-move-and-eval-sexp
    #'backward-sexp
    #'(lambda (string)
-       (unless (bolp) (lem::insert-character (current-point) #\newline))
+       (unless (bolp) (insert-character (current-point) #\newline))
        (setq - (first (%string-to-exps string (lisp-current-package))))
        (let ((values (%lisp-eval - (current-point) t)))
          (setq +++ ++ /// //     *** (car ///)
                ++  +  //  /      **  (car //)
                +   -  /   values *   (car /))
          (lisp-print-values values)
-         (lem::insert-character (current-point) #\newline)))))
+         (insert-character (current-point) #\newline)))))
 
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "lisp-repl"
@@ -1051,10 +1051,10 @@
 
 (defun lisp-repl-paren-correspond-p (point)
   (loop :with count := 0 :do
-     (lem::insert-character point #\))
+     (insert-character point #\))
      (incf count)
-     (unless (lem::form-offset (copy-point point :temporary) -1)
-       (lem::delete-character point (- count) nil)
+     (unless (form-offset (copy-point point :temporary) -1)
+       (delete-character point (- count) nil)
        (return (= 1 count)))))
 
 (defun lisp-repl-confirm (point string)
@@ -1065,7 +1065,7 @@
     (setq +++ ++ /// //     *** (car ///)
           ++  +  //  /      **  (car //)
           +   -  /   values *   (car /))
-    (lem::buffer-end point)
+    (buffer-end point)
     (lisp-print-values values)
     (listener-reset-prompt)))
 

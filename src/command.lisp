@@ -133,7 +133,7 @@
 (define-key *global-keymap* (kbd "C-o") 'open-line)
 (define-command open-line (n) ("p")
   (let ((point (current-point)))
-    (insert-char-at (current-point) #\newline n)
+    (insert-character (current-point) #\newline n)
     (character-offset point (- n))))
 
 (define-key *global-keymap* (kbd "C-d") 'delete-next-char)

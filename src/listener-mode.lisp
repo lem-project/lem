@@ -50,7 +50,7 @@
   (let ((cur-point (lem::buffer-point buffer)))
     (lem::buffer-end cur-point)
     (unless (lem::start-line-p cur-point)
-      (lem::insert-char-at cur-point #\newline 1)
+      (lem::insert-character cur-point #\newline 1)
       (lem::buffer-end cur-point))
     (lem::insert-string-at cur-point
                            (lem.text-property:make-text-property
@@ -68,7 +68,7 @@
 (define-command listener-return () ()
   (lem::with-point ((point (lem::buffer-end (current-point)) :left-inserting))
     (if (not (funcall (get-bvar :listener-check-confirm-function) point))
-        (lem::insert-char-at point #\newline)
+        (lem::insert-character point #\newline)
         (let ((start (listener-start-point)))
           (unless (point< start point)
             (listener-reset-prompt)
@@ -76,7 +76,7 @@
           (let ((str (lem::points-to-string start point)))
             (add-history (%listener-history) str)
             (lem::buffer-end point)
-            (lem::insert-char-at point #\newline)
+            (lem::insert-character point #\newline)
             (listener-update-point)
             (funcall (get-bvar :listener-confirm-function) point str)))))
   t)

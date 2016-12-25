@@ -34,7 +34,7 @@
   (let ((point *sourcelist-point*))
     (lem::with-point ((start-point point))
       (funcall write-function point)
-      (lem::insert-char-at point #\newline)
+      (lem::insert-character point #\newline)
       (when jump-function
         (lem::put-text-property start-point
                                 point

@@ -184,7 +184,7 @@
         (when (character-offset temp-point offset)
           (character-at temp-point 0)))))
 
-(defun insert-char-at (point char &optional (n 1))
+(defun insert-character (point char &optional (n 1))
   (loop :repeat n :do (insert-char/point point char))
   t)
 
@@ -387,7 +387,7 @@
                  (wide-index (line-string-at point) column))
            point)
           (force
-           (insert-char-at point #\space (- column cur-column))
+           (insert-character point #\space (- column cur-column))
            (line-end point))
           (t
            (line-end point)))))
@@ -408,11 +408,11 @@
   (end-buffer-p (current-point)))
 
 (defun insert-char (c &optional (n 1))
-  (insert-char-at (current-point) c n)
+  (insert-character (current-point) c n)
   t)
 
 (defun insert-newline (&optional (n 1))
-  (insert-char-at (current-point) #\newline n)
+  (insert-character (current-point) #\newline n)
   t)
 
 (defun insert-string (string)

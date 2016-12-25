@@ -209,8 +209,8 @@
         (save-excursion
           (lem::delete-char-at point 1)
           (if flag
-              (lem::insert-char-at point #\*)
-              (lem::insert-char-at point #\space)))))))
+              (lem::insert-character point #\*)
+              (lem::insert-character point #\space)))))))
 
 (defun mark-lines (test get-flag)
   (save-excursion
@@ -269,7 +269,7 @@
                                (lem.text-property::make-text-property
                                 (namestring dirname)
                                 :attribute *header-attribute*))
-        (lem::insert-char-at cur-point #\newline 2)
+        (lem::insert-character cur-point #\newline 2)
         (let ((output-string (ls-output-string dirname)))
           (lem::insert-string-at cur-point output-string)
           (lem::buffer-start cur-point)

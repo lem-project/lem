@@ -946,7 +946,7 @@
 
 (define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-insert-space-and-echo-arglist)
 (define-command lisp-insert-space-and-echo-arglist (n) ("p")
-  (lem::insert-char-at (current-point) #\space n)
+  (lem::insert-character (current-point) #\space n)
   (lisp-echo-arglist))
 
 (define-key *lisp-mode-keymap* (kbd "C-c ;") 'lisp-comment-or-uncomment-region)
@@ -962,7 +962,7 @@
       (skip-chars-forward end '(#\space #\tab))
       (unless (lem::end-line-p end)
         (lem::with-point ((prev end))
-          (lem::insert-char-at end #\newline)
+          (lem::insert-character end #\newline)
           (indent-line end)
           (lem::move-point end prev)))
       (let ((charpos (point-charpos start)))
@@ -1051,7 +1051,7 @@
 
 (defun lisp-repl-paren-correspond-p (point)
   (loop :with count := 0 :do
-     (lem::insert-char-at point #\))
+     (lem::insert-character point #\))
      (incf count)
      (unless (lem::form-offset (copy-point point :temporary) -1)
        (lem::delete-char-at point (- count) nil)

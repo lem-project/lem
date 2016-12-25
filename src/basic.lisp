@@ -14,7 +14,6 @@
           forward-line
           shift-position
           mark-point
-          current-line-string
           following-char
           preceding-char
           char-after
@@ -442,9 +441,6 @@
            (setf (buffer-mark buffer)
                  (copy-point point :right-inserting)))))
   point)
-
-(defun current-line-string ()
-  (line-string-at (current-point)))
 
 (defun following-char ()
   (character-at (current-point)))

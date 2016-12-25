@@ -3,7 +3,7 @@
 (export '(*undo-limit*
           current-buffer
           buffer
-          buffer-p
+          bufferp
           buffer-name
           buffer-filename
           buffer-modified-p
@@ -315,7 +315,7 @@
 (defun buffer-modified-p (&optional (buffer (current-buffer)))
   (/= 0 (buffer-%modified-p buffer)))
 
-(defun buffer-p (x)
+(defun bufferp (x)
   (typep x 'buffer))
 
 (defmethod print-object ((buffer buffer) stream)

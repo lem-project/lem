@@ -47,7 +47,7 @@
            (filter-special-buffers)))
 
 (defun get-buffer (buffer-or-name)
-  (if (buffer-p buffer-or-name)
+  (if (bufferp buffer-or-name)
       buffer-or-name
       (find-if #'(lambda (buffer)
                    (string= buffer-or-name

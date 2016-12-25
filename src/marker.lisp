@@ -60,7 +60,7 @@
                               :kind kind
                               :name name)))
     (unless (eq :temporary kind)
-      (buffer-add-marker buffer point))
+      (buffer-add-point buffer point))
     point))
 
 (defun copy-point (marker &optional kind)
@@ -72,13 +72,13 @@
 
 (defun delete-point (marker)
   (unless (eq :temporary (point-kind marker))
-    (buffer-delete-marker (point-buffer marker)
+    (buffer-delete-point (point-buffer marker)
                           marker)))
 
 (defun point-change-buffer (marker buffer &optional (point nil pointp))
   (delete-point marker)
   (unless (eq :temporary (point-kind marker))
-    (buffer-add-marker buffer marker))
+    (buffer-add-point buffer marker))
   (setf (point-buffer marker) buffer)
   (when pointp
     (move-point marker point))

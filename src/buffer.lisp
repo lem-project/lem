@@ -376,10 +376,10 @@
   (setf (buffer-overlays buffer)
         (delete overlay (buffer-overlays buffer))))
 
-(defun buffer-add-marker (buffer marker)
+(defun buffer-add-point (buffer marker)
   (push marker (buffer-points buffer)))
 
-(defun buffer-delete-marker (buffer marker)
+(defun buffer-delete-point (buffer marker)
   (let ((length (length (buffer-points buffer))))
     (prog1 (setf (buffer-points buffer)
                  (delete marker (buffer-points buffer)))

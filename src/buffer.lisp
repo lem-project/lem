@@ -303,7 +303,7 @@
     (setf (buffer-truncate-lines buffer) t)
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
     (setf (buffer-point-marker buffer)
-          (make-marker buffer 1 0
+          (make-point buffer 1 0
                        :name "buffer-point"
                        :kind :left-inserting))
     (add-buffer buffer)

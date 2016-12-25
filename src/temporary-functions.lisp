@@ -1,10 +1,10 @@
 (in-package :lem)
 
 (defun buffers-start (buffer)
-  (make-marker buffer 1 0 :kind :temporary))
+  (make-point buffer 1 0 :kind :temporary))
 
 (defun buffers-end (buffer)
-  (make-marker buffer
+  (make-point buffer
                (buffer-nlines buffer)
                (line-length (buffer-tail-line buffer))
                :kind :temporary))

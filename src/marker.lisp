@@ -2,7 +2,7 @@
 
 (export '(current-marker
           markerp
-          make-marker
+          make-point
           copy-point
           delete-point
           marker-buffer
@@ -49,10 +49,10 @@
             (marker-linum object)
             (marker-charpos object))))
 
-(defun marker-p (x)
+(defun pointp (x)
   (typep x 'marker))
 
-(defun make-marker (buffer linum charpos &key (kind :right-inserting) name)
+(defun make-point (buffer linum charpos &key (kind :right-inserting) name)
   (let ((marker (make-instance 'marker
                                :buffer buffer
                                :linum linum
@@ -64,7 +64,7 @@
     marker))
 
 (defun copy-point (marker &optional kind)
-  (make-marker (marker-buffer marker)
+  (make-point (marker-buffer marker)
                (marker-linum marker)
                (marker-charpos marker)
                :kind (or kind (marker-kind marker))

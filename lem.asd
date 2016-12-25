@@ -51,7 +51,6 @@
                              (:file "syntax")
                              (:file "streams")
                              (:file "kill")
-                             (:file "temporary-functions")
                              (:file "basic")
                              (:file "file")
                              (:file "search")

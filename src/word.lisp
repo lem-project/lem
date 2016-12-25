@@ -83,14 +83,14 @@
     (with-point ((point start :left-inserting))
       (loop :while (and (point< point end)
                         (not (end-buffer-p point)))
-	 :do (let ((c (character-at point 0)))
-	       (cond ((char= c #\newline)
-		      (character-offset point 1))
-		     ((funcall replace-char-p c)
-		      (delete-char-at point)
-		      (insert-char-at point (funcall case-fun c)))
-		     (t
-		      (character-offset point 1))))))))
+            :do (let ((c (character-at point 0)))
+                  (cond ((char= c #\newline)
+                         (character-offset point 1))
+                        ((funcall replace-char-p c)
+                         (delete-char-at point)
+                         (insert-char-at point (funcall case-fun c)))
+                        (t
+                         (character-offset point 1))))))))
 
 (define-key *global-keymap* (kbd "C-x C-l") 'downcase-region)
 (define-command downcase-region (start end) ("r")

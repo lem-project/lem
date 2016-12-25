@@ -178,7 +178,7 @@
 
 (define-command completion-self-insert (n) ("p")
   (let ((c (insertion-key-p (last-read-key-sequence))))
-    (cond (c (insert-char c n)
+    (cond (c (insert-character (current-point) c n)
              (update-completion *completion-last-function*
 				(concatenate 'string
 					     *completion-last-string*

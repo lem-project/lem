@@ -407,10 +407,6 @@
 (defun eobp ()
   (end-buffer-p (current-point)))
 
-(defun insert-char (c &optional (n 1))
-  (insert-character (current-point) c n)
-  t)
-
 (defun insert-newline (&optional (n 1))
   (insert-character (current-point) #\newline n)
   t)

@@ -97,7 +97,7 @@
 (define-command self-insert (n) ("p")
   (let ((c (insertion-key-p (last-read-key-sequence))))
     (if c
-        (insert-char c n)
+        (insert-character (current-point) c n)
         (undefined-key))))
 
 (define-key *global-keymap* (kbd "M-~") 'unmark-buffer)
@@ -124,7 +124,7 @@
             ((char= c C-d)
              (delete-char 1 nil))
             (t
-             (insert-char c 1))))))
+             (insert-character (current-point) c 1))))))
 
 (define-key *global-keymap* (kbd "C-m") 'newline)
 (define-command newline (&optional (n 1)) ("p")
@@ -305,7 +305,7 @@
         (beginning-of-line)
         (delete-while-whitespaces t nil)
         (insert-string (funcall make-space-str div))
-        (insert-char #\space mod)))
+        (insert-character (current-point) #\space mod)))
     (unless (forward-line 1)
       (return))))
 
@@ -358,7 +358,7 @@
 (define-command just-one-space () ()
   (skip-chars-backward (current-point) '(#\space #\tab))
   (delete-while-whitespaces t nil)
-  (insert-char #\space 1)
+  (insert-character (current-point) #\space 1)
   t)
 
 (define-key *global-keymap* (kbd "M-^") 'delete-indentation)

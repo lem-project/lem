@@ -1,7 +1,42 @@
 (in-package :lem)
 
-(export '(first-line-p
+(export '(buffers-start
+          buffers-end
+          first-line-p
           last-line-p
+          start-line-p
+          end-line-p
+          start-buffer-p
+          end-buffer-p
+          same-line-p
+          line-start
+          line-end
+          buffer-start
+          buffer-end
+          move-point
+          line-offset
+          character-offset
+          character-at
+          insert-character
+          insert-string
+          delete-character
+          erase-buffer
+          region-beginning
+          region-end
+          apply-region-lines
+          points-to-string
+          count-characters
+          delete-between-points
+          count-lines
+          line-number-at-point
+          text-property-at
+          put-text-property
+          remove-text-property
+          next-single-property-change
+          previous-single-property-change
+          line-string-at
+          point-column
+          move-to-column
           bolp
           eolp
           bobp
@@ -13,23 +48,18 @@
           goto-position
           forward-line
           shift-position
-          mark-point
+          check-marked
+          set-current-mark
           following-char
           preceding-char
           char-after
           char-before
-          blank-line-p
           delete-while-whitespaces
+          blank-line-p
           skip-chars-forward
           skip-chars-backward
           current-column
-          move-to-column
-          point-to-offset
-          erase-buffer
-
-          region-beginning
-          region-end
-          apply-region-lines))
+          point-to-offset))
 
 (defun invoke-save-excursion (function)
   (let ((point (copy-point (current-point) :temporary))

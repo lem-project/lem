@@ -237,14 +237,18 @@
         (unless (forward-line 1)
           (return))))
     (if (null files)
-        (list (get-file))
+        (let ((file (get-file)))
+          (when file
+            (list file)))
         (nreverse files))))
 
 (defun get-line-property (property-name)
-  (lem::text-property-at (lem::character-offset (lem::line-start (copy-point (current-marker)
-                                                                              :temporary))
-                                                1)
-                         property-name))
+  (let ((point
+         (lem::character-offset (lem::line-start (copy-point (current-marker)
+                                                             :temporary))
+                                1)))
+    (when point
+      (lem::text-property-at point property-name))))
 
 (defun get-file ()
   (get-line-property 'file))

@@ -10,22 +10,22 @@
 (defun show-paren-timer-function ()
   (mapc #'delete-overlay *brackets-overlays*)
   (setq *brackets-overlays* nil)
-  (let ((highlight-markers '()))
+  (let ((highlight-points '()))
     (when (syntax-open-paren-char-p (following-char))
       (let ((goal-marker (lem::form-offset (copy-point (current-point) :temporary) 1)))
         (when goal-marker
           (push (lem::character-offset goal-marker -1)
-                highlight-markers))))
+                highlight-points))))
     (when (syntax-closed-paren-char-p (preceding-char))
       (let ((goal-marker (lem::form-offset (copy-point (current-point) :temporary) -1)))
         (when goal-marker
-          (push goal-marker highlight-markers))))
-    (dolist (marker highlight-markers)
+          (push goal-marker highlight-points))))
+    (dolist (marker highlight-points)
       (push (make-overlay marker
                           (lem::character-offset (copy-point marker :temporary) 1)
                           *paren-attribute*)
             *brackets-overlays*))
-    (when highlight-markers
+    (when highlight-points
       (redraw-display))))
 
 (start-idle-timer "show-paren" 100 t

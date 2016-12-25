@@ -256,7 +256,7 @@
   undo-stack
   redo-stack
   overlays
-  markers
+  points
   truncate-lines
   external-format
   last-write-date
@@ -299,7 +299,7 @@
     (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
-    (setf (buffer-markers buffer) nil)
+    (setf (buffer-points buffer) nil)
     (setf (buffer-truncate-lines buffer) t)
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
     (setf (buffer-point buffer)
@@ -377,13 +377,13 @@
         (delete overlay (buffer-overlays buffer))))
 
 (defun buffer-add-marker (buffer marker)
-  (push marker (buffer-markers buffer)))
+  (push marker (buffer-points buffer)))
 
 (defun buffer-delete-marker (buffer marker)
-  (let ((length (length (buffer-markers buffer))))
-    (prog1 (setf (buffer-markers buffer)
-                 (delete marker (buffer-markers buffer)))
-      (assert (/= length (length (buffer-markers buffer)))))))
+  (let ((length (length (buffer-points buffer))))
+    (prog1 (setf (buffer-points buffer)
+                 (delete marker (buffer-points buffer)))
+      (assert (/= length (length (buffer-points buffer)))))))
 
 (defun buffer-mark-cancel (buffer)
   (when (buffer-mark-p buffer)

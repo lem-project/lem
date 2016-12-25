@@ -282,8 +282,19 @@
                                :%directory (when filename (directory-namestring filename))
                                :read-only-p read-only-p
                                :%enable-undo-p enable-undo-p
-                               :major-mode 'fundamental-mode)))
-    (buffer-reset buffer)
+                               :major-mode 'fundamental-mode))
+        (line (make-line nil nil "")))
+    (setf (buffer-head-line buffer) line)
+    (setf (buffer-tail-line buffer) line)
+    (setf (buffer-cache-line buffer) line)
+
+    (setf (buffer-cache-linum buffer) 1)
+    (setf (buffer-mark-p buffer) nil)
+    (setf (buffer-mark-overlay buffer) nil)
+    (setf (buffer-mark-marker buffer) nil)
+    (setf (buffer-keep-binfo buffer) nil)
+    (setf (buffer-nlines buffer) 1)
+
     (setf (buffer-%modified-p buffer) 0)
     (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) nil)
@@ -303,20 +314,6 @@
 
 (defun buffer-modified-p (&optional (buffer (current-buffer)))
   (/= 0 (buffer-%modified-p buffer)))
-
-(defun buffer-reset (buffer)
-  (let ((line (make-line nil nil "")))
-    (setf (buffer-head-line buffer) line)
-    (setf (buffer-tail-line buffer) line)
-    (setf (buffer-cache-line buffer) line)
-    (setf (buffer-cache-linum buffer) 1)
-    (setf (buffer-mark-p buffer) nil)
-    (setf (buffer-mark-overlay buffer) nil)
-    (setf (buffer-mark-marker buffer) nil)
-    (setf (buffer-keep-binfo buffer) nil)
-    (setf (buffer-nlines buffer) 1)
-    ;(setf (buffer-overlays buffer) nil)
-    ))
 
 (defun buffer-p (x)
   (typep x 'buffer))

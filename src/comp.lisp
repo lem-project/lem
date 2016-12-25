@@ -165,7 +165,7 @@
            (window-buffer *completion-window*)))))
     (delete-char-at (current-point) (- (length *completion-last-string*)) nil)
     (setf *completion-last-string* str)
-    (insert-string-at (current-point) str)
+    (insert-string (current-point) str)
     (completion-end))
   t)
 
@@ -213,7 +213,7 @@
     (declare (ignore result))
     (when confirm-p
       (delete-char-at (current-point) (- (length *completion-last-string*)) nil)
-      (insert-string-at (current-point) str)
+      (insert-string (current-point) str)
       (completion-end)))
   t)
 

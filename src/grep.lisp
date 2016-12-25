@@ -36,14 +36,14 @@
             (lem.sourcelist:append-sourcelist
              sourcelist
              (lambda (cur-point)
-               (lem::insert-string-at cur-point
+               (lem::insert-string cur-point
                                       filename
                                       :attribute *attribute-1*)
-               (lem::insert-string-at cur-point ":")
-               (lem::insert-string-at cur-point
+               (lem::insert-string cur-point ":")
+               (lem::insert-string cur-point
                                       (princ-to-string linum)
                                       :attribute *attribute-2*)
-               (lem::insert-string-at cur-point thing))
+               (lem::insert-string cur-point thing))
              jump-fun)))))))
 
 (define-command grep (string) ((list (minibuf-read-string ": " "grep -nH ")))

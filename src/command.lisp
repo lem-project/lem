@@ -186,7 +186,7 @@
 (define-command yank (n) ("p")
   (let ((string (kill-ring-nth n)))
     (setf (get-bvar :yank-start) (copy-point (current-point) :temporary))
-    (insert-string-at (current-point) string)
+    (insert-string (current-point) string)
     (setf (get-bvar :yank-end) (copy-point (current-point) :temporary))
     (continue-flag :yank)
     t))
@@ -305,7 +305,7 @@
           (floor count (tab-size))
         (beginning-of-line)
         (delete-while-whitespaces t nil)
-        (insert-string-at (current-point) (funcall make-space-str div))
+        (insert-string (current-point) (funcall make-space-str div))
         (insert-character (current-point) #\space mod)))
     (unless (forward-line 1)
       (return))))
@@ -380,13 +380,13 @@
                  (c2 (character-at point -2)))
              (unless (eql c2 #\newline)
                (delete-char-at point -2)
-               (insert-string-at point (format nil "~C~C" c1 c2)))))
+               (insert-string point (format nil "~C~C" c1 c2)))))
           (t
            (let ((c1 (character-at point 0))
                  (c2 (character-at point -1)))
              (delete-char-at point 1)
              (delete-char-at point -1)
-             (insert-string-at point (format nil "~C~C" c1 c2)))))))
+             (insert-string point (format nil "~C~C" c1 c2)))))))
 
 (define-key *global-keymap* (kbd "M-m") 'back-to-indentation)
 (define-command back-to-indentation () ()
@@ -459,7 +459,7 @@
 				       :error-output output
 				       :ignore-error-status t))))))
           (delete-between-points start end)
-          (insert-string-at start output-string)
+          (insert-string start output-string)
           (message "~D ~A" status error-output-value)
           (zerop status))))))
 

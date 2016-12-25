@@ -183,7 +183,7 @@
   (loop :repeat n :do (insert-char/point point char))
   t)
 
-(defun insert-string-at (point string &rest plist)
+(defun insert-string (point string &rest plist)
   (if (null plist)
       (insert-string/point point string)
       (with-point ((start-point point))

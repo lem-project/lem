@@ -26,7 +26,7 @@
     (cond ((string/= old-indent-string new-indent-string)
            (line-start point)
            (delete-char-at point (length old-indent-string) nil)
-           (insert-string-at point new-indent-string)
+           (insert-string point new-indent-string)
            (if (< old-column column)
                (skip-chars-forward (line-start point) '(#\space #\tab))
                (move-to-column point

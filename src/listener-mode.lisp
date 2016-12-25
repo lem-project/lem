@@ -52,7 +52,7 @@
     (unless (lem::start-line-p cur-point)
       (lem::insert-character cur-point #\newline 1)
       (lem::buffer-end cur-point))
-    (lem::insert-string-at cur-point
+    (lem::insert-string cur-point
                            (princ-to-string
                             (funcall
                              (get-bvar :listener-get-prompt-function)))
@@ -87,7 +87,7 @@
     (let ((start (listener-start-point))
           (end (lem::buffers-end (current-buffer))))
       (lem::delete-between-points start end)
-      (when win (lem::insert-string-at start str))
+      (when win (lem::insert-string start str))
       (lem::move-point (%listener-point) start))))
 
 (define-key *listener-mode-keymap* (kbd "M-n") 'listener-next-input)
@@ -97,7 +97,7 @@
     (let ((start (listener-start-point))
           (end (lem::buffers-end (current-point))))
       (lem::delete-between-points start end)
-      (when win (lem::insert-string-at start str))
+      (when win (lem::insert-string start str))
       (lem::move-point (%listener-point) start))))
 
 (define-key *listener-mode-keymap* (kbd "M-r") 'listener-reset-interactive)

@@ -64,7 +64,7 @@
            (when (null *rest-words*)
              (setf *rest-words* *all-words*))
            (lem::delete-between-points *start-point* point)
-           (lem::insert-string-at point (first *rest-words*))
+           (lem::insert-string point (first *rest-words*))
            (setf *rest-words* (rest *rest-words*)))
           (t
            (let* ((src-word (preceding-word point))
@@ -73,4 +73,4 @@
              (setf *rest-words* (rest words))
              (setf *all-words* words)
              (setf *start-point* (copy-point point :temporary))
-             (lem::insert-string-at point (first words)))))))
+             (lem::insert-string point (first words)))))))

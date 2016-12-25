@@ -251,5 +251,5 @@
                  (start (form-offset (copy-point point2 :temporary) -1)))
              (prog1 (points-to-string start end)
                (delete-between-points start end)))))
-      (insert-string-at point1 form-string2)
-      (insert-string-at point2 form-string1))))
+      (insert-string point1 form-string2)
+      (insert-string point2 form-string1))))

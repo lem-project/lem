@@ -281,7 +281,7 @@
 	      :do (cond
 		    ((or pass-through (char= c #\y))
 		     (lem::delete-between-points start end)
-		     (lem::insert-string-at cur-point after)
+		     (lem::insert-string cur-point after)
 		     (return))
 		    ((char= c #\n)
 		     (lem::move-point cur-point end)

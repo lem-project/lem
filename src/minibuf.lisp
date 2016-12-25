@@ -148,14 +148,14 @@
       (prev-history *minibuf-read-line-history*)
     (when win
       (minibuffer-clear-input)
-      (insert-string-at (current-point) str))))
+      (insert-string (current-point) str))))
 
 (define-command minibuf-read-line-next-history () ()
   (multiple-value-bind (str win)
       (next-history *minibuf-read-line-history*)
     (when win
       (minibuffer-clear-input)
-      (insert-string-at (current-point) str))))
+      (insert-string (current-point) str))))
 
 (define-command minibuf-read-line-break () ()
   (error 'editor-abort :depth (1- *minibuf-read-line-depth*)))
@@ -214,7 +214,7 @@
                (progn
                  (with-point ((start-point (current-point))
                               (cur-point (current-point) :left-inserting))
-                   (insert-string-at cur-point prompt)
+                   (insert-string cur-point prompt)
                    (put-text-property start-point cur-point
                                       :attribute *minibuffer-prompt-attribute*)
                    (put-text-property start-point cur-point
@@ -225,7 +225,7 @@
                  (character-offset (current-point) (length prompt)))
                (let ((*minibuffer-start-point* (copy-point (current-point) :temporary)))
                  (when initial
-                   (insert-string-at (current-point) initial))
+                   (insert-string (current-point) initial))
                  (unwind-protect (call-with-save-windows
                                   (minibuffer-calls-window)
                                   (lambda ()
@@ -233,7 +233,7 @@
                    (with-current-window (minibuffer-window)
                      (let ((*inhibit-read-only* t))
                        (erase-buffer))
-                     (insert-string-at (current-point) minibuf-buffer-prev-string)
+                     (insert-string (current-point) minibuf-buffer-prev-string)
                      (move-point (current-point) minibuf-buffer-prev-point))))))))
       (editor-abort (c)
 	(error c)))))

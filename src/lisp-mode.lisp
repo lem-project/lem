@@ -811,7 +811,7 @@
 		    :do (lem.sourcelist:append-sourcelist
 			 sourcelist
 			 (lambda (cur-point)
-			   (lem::insert-string-at cur-point file))
+			   (lem::insert-string cur-point file))
 			 jump-fun)))))))))
 
 (define-key *lisp-mode-keymap* (kbd "M-,") 'lisp-pop-find-definition-stack)
@@ -967,7 +967,7 @@
           (lem::move-point end prev)))
       (let ((charpos (point-charpos start)))
         (loop
-	   (lem::insert-string-at start ";")
+	   (lem::insert-string start ";")
 	   (when (lem::same-line-p start end)
 	     (return))
 	   (lem::line-offset start 1 charpos))))))

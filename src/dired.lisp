@@ -265,12 +265,12 @@
     (erase-buffer buffer)
     (let ((dirname (probe-file (buffer-directory buffer))))
       (lem::with-point ((cur-point (lem::buffer-point buffer) :left-inserting))
-        (lem::insert-string-at cur-point
+        (lem::insert-string cur-point
                                (namestring dirname)
                                :attribute *header-attribute*)
         (lem::insert-character cur-point #\newline 2)
         (let ((output-string (ls-output-string dirname)))
-          (lem::insert-string-at cur-point output-string)
+          (lem::insert-string cur-point output-string)
           (lem::buffer-start cur-point)
           (lem::line-offset cur-point 3)
           (setf *start-point* (copy-point cur-point :temporary))
@@ -281,7 +281,7 @@
 			       string)
 		 (declare (ignorable start end start-groups end-groups))
 		 (when start
-		   (lem::insert-string-at cur-point "  ")
+		   (lem::insert-string cur-point "  ")
 		   (let* ((index (1- (length start-groups)))
 			  (filename (merge-pathnames
 				     (subseq string

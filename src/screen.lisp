@@ -240,29 +240,29 @@
           :for end := (overlay-end overlay)
           :do (cond
                 ((and (lem::same-line-p start end)
-                      (marker<= view-point start)
-                      (marker< start view-end-point))
+                      (point<= view-point start)
+                      (point< start view-end-point))
                  (disp-set-line screen
                                 (overlay-attribute overlay)
                                 (1- (lem::count-lines view-point start))
                                 (marker-charpos start)
                                 (marker-charpos end)))
-                ((and (marker<= view-point start)
-                      (marker< end view-end-point))
+                ((and (point<= view-point start)
+                      (point< end view-end-point))
                  (disp-set-overlay screen
                                    (overlay-attribute overlay)
                                    view-point
                                    start
                                    end))
-                ((and (marker<= start view-point)
-                      (marker<= view-point end)
-                      (marker<= end view-end-point))
+                ((and (point<= start view-point)
+                      (point<= view-point end)
+                      (point<= end view-end-point))
                  (disp-set-overlay screen
                                    (overlay-attribute overlay)
                                    view-point
                                    view-point
                                    end))
-                ((marker<= view-point start)
+                ((point<= view-point start)
                  (disp-set-overlay screen
                                    (overlay-attribute overlay)
                                    view-point

@@ -273,7 +273,7 @@
           (setf (current-buffer) buffer)
           (move-point (current-marker) start)
           (loop :until (or (null line)
-                           (marker< end (current-marker)))
+                           (point< end (current-marker)))
                 :do
                 (setf line (%syntax-scan-line line))
                 (unless (line-offset (current-marker) 1)
@@ -384,7 +384,7 @@
              (let ((start (copy-marker (current-marker) :temporary))
                    (end (funcall (syntax-match-move-action syntax)
                                  (copy-marker (current-marker) :temporary))))
-               (cond ((and end (marker< start end))
+               (cond ((and end (point< start end))
                       (with-marker ((cur start))
                         (loop :until (same-line-p cur end) :do
                               (line-clear-property line :attribute)

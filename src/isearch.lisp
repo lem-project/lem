@@ -212,8 +212,8 @@
                                       temp-marker)))
                   (push (make-overlay start-marker
                                       (copy-marker cur-marker :temporary)
-                                      (if (and (marker<= start-marker marker)
-                                               (marker<= marker cur-marker))
+                                      (if (and (point<= start-marker marker)
+                                               (point<= marker cur-marker))
                                           *isearch-highlight-active-attribute*
                                           *isearch-highlight-attribute*))
                         *isearch-highlight-overlays*))))))
@@ -268,7 +268,7 @@
   (let ((pass-through nil))
     (loop
       (when (or (not (funcall *isearch-search-forward-function* cur-marker before))
-                (and goal-marker (marker< goal-marker cur-marker)))
+                (and goal-marker (point< goal-marker cur-marker)))
         (when goal-marker
           (lem::move-point (current-marker) goal-marker))
         (return))
@@ -297,7 +297,7 @@
         (when (and before after)
           (if (buffer-mark-p buffer)
               (lem::with-marker ((mark-marker (lem::buffer-mark-marker buffer) :right-inserting))
-                (if (marker< mark-marker (lem::buffer-point-marker buffer))
+                (if (point< mark-marker (lem::buffer-point-marker buffer))
                     (query-replace-internal-body mark-marker
                                                  (lem::buffer-point-marker buffer)
                                                  before after)

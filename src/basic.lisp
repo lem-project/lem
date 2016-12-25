@@ -239,7 +239,7 @@
         (return nil))
       (unless (eq first-value (text-property-at marker property-name))
         (return marker))
-      (when (and limit-marker (marker<= limit-marker marker))
+      (when (and limit-marker (point<= limit-marker marker))
         (move-point marker start-marker)
         (return nil)))))
 
@@ -252,7 +252,7 @@
       (unless (character-offset marker -1)
         (move-point marker start-marker)
         (return nil))
-      (when (and limit-marker (marker>= limit-marker marker))
+      (when (and limit-marker (point>= limit-marker marker))
         (move-point marker start-marker)
         (return nil)))))
 
@@ -421,14 +421,14 @@
 (defun region-beginning (&optional (buffer (current-buffer)))
   (let ((start (buffer-point-marker buffer))
         (end (buffer-mark-marker buffer)))
-    (if (marker< start end)
+    (if (point< start end)
         start
         end)))
 
 (defun region-end (&optional (buffer (current-buffer)))
   (let ((start (buffer-point-marker buffer))
         (end (buffer-mark-marker buffer)))
-    (if (marker< start end)
+    (if (point< start end)
         end
         start)))
 
@@ -436,7 +436,7 @@
   (with-marker ((start start :right-inserting)
                 (end end :right-inserting))
     (move-point (current-marker) start)
-    (loop :while (marker< (current-marker) end) :do
+    (loop :while (point< (current-marker) end) :do
           (with-marker ((prev (line-start (current-marker))))
             (funcall function)
             (when (same-line-p (current-marker) prev)

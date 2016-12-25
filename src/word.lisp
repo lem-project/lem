@@ -69,7 +69,7 @@
   (with-marker ((point (current-marker)))
     (let ((start (current-marker))
           (end (word-offset point n)))
-      (if (marker< start end)
+      (if (point< start end)
           (kill-region start end)
           (kill-region end start)))))
 
@@ -81,7 +81,7 @@
 (defun case-region-aux (start end case-fun replace-char-p)
   (save-excursion
     (with-marker ((point start :left-inserting))
-      (loop :while (and (marker< point end)
+      (loop :while (and (point< point end)
                         (not (end-buffer-p point)))
             :do (let ((c (character-at point 0)))
                   (cond ((char= c #\newline)

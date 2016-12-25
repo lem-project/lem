@@ -408,7 +408,7 @@
      (window-wrapping-offset window)))
 
 (defun window-offset-view (window)
-  (cond ((and (marker< (window-point-marker window)
+  (cond ((and (point< (window-point-marker window)
                        (window-view-marker window))
               (not (same-line-p (window-point-marker window)
                                 (window-view-marker window))))

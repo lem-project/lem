@@ -454,7 +454,7 @@
   (when (buffer-mark-p buffer)
     (with-marker ((start (buffer-point-marker buffer))
                   (end (buffer-mark-marker buffer)))
-      (when (marker< end start)
+      (when (point< end start)
         (rotatef start end))
       (when (buffer-mark-overlay buffer)
         (delete-overlay (buffer-mark-overlay buffer)))

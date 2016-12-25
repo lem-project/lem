@@ -70,7 +70,7 @@
     (if (not (funcall (get-bvar :listener-check-confirm-function) point))
         (lem::insert-char-at point #\newline)
         (let ((start (listener-start-point)))
-          (unless (marker< start point)
+          (unless (point< start point)
             (listener-reset-prompt)
             (return-from listener-return t))
           (let ((str (lem::points-to-string start point)))

@@ -10,12 +10,12 @@
           marker-charpos
           marker-kind
 
-          marker=
-          marker/=
-          marker<
-          marker<=
-          marker>
-          marker>=))
+          point=
+          point/=
+          point<
+          point<=
+          point>
+          point>=))
 
 (defclass marker ()
   ((buffer
@@ -84,7 +84,7 @@
     (move-point marker point))
   t)
 
-(defun marker= (marker1 marker2)
+(defun point= (marker1 marker2)
   (assert (eq (marker-buffer marker1)
               (marker-buffer marker2)))
   (and (= (marker-linum marker1)
@@ -92,12 +92,12 @@
        (= (marker-charpos marker1)
           (marker-charpos marker2))))
 
-(defun marker/= (marker1 marker2)
+(defun point/= (marker1 marker2)
   (assert (eq (marker-buffer marker1)
               (marker-buffer marker2)))
-  (not (marker= marker1 marker2)))
+  (not (point= marker1 marker2)))
 
-(defun marker< (marker1 marker2)
+(defun point< (marker1 marker2)
   (assert (eq (marker-buffer marker1)
               (marker-buffer marker2)))
   (cond ((< (marker-linum marker1) (marker-linum marker2))
@@ -109,18 +109,18 @@
         (t
          nil)))
 
-(defun marker<= (marker1 marker2)
+(defun point<= (marker1 marker2)
   (assert (eq (marker-buffer marker1)
               (marker-buffer marker2)))
-  (or (marker< marker1 marker2)
-      (marker= marker1 marker2)))
+  (or (point< marker1 marker2)
+      (point= marker1 marker2)))
 
-(defun marker> (marker1 marker2)
+(defun point> (marker1 marker2)
   (assert (eq (marker-buffer marker1)
               (marker-buffer marker2)))
-  (marker< marker2 marker1))
+  (point< marker2 marker1))
 
-(defun marker>= (marker1 marker2)
+(defun point>= (marker1 marker2)
   (assert (eq (marker-buffer marker1)
               (marker-buffer marker2)))
-  (marker<= marker2 marker1))
+  (point<= marker2 marker1))

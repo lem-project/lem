@@ -977,7 +977,7 @@
                      (end (region-end)))
     (let ((charpos (marker-charpos start)))
       (loop
-        (unless (marker< start end) (return))
+        (unless (point< start end) (return))
         (loop (if (char= #\; (lem::character-at start))
                   (lem::delete-char-at start 1)
                   (return)))

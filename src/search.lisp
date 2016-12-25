@@ -33,14 +33,14 @@
 (defun search-forward-endp-function (limit-marker)
   (if limit-marker
       (lambda (marker)
-        (or (marker<= limit-marker marker)
+        (or (point<= limit-marker marker)
             (end-buffer-p marker)))
       #'end-buffer-p))
 
 (defun search-backward-endp-function (limit-marker)
   (if limit-marker
       (lambda (marker)
-        (marker< marker limit-marker))
+        (point< marker limit-marker))
       #'start-buffer-p))
 
 (defmacro search* (&rest args)

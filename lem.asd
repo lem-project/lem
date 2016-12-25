@@ -43,7 +43,7 @@
                              (:file "buffer")
                              (:file "buffer-insert")
                              (:file "buffers")
-                             (:file "marker")
+                             (:file "point")
                              (:file "overlay")
                              (:file "commandloop")
                              (:file "timer")

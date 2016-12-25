@@ -6,8 +6,6 @@
           eolp
           bobp
           eobp
-          insert-char
-          insert-string
           insert-newline
           delete-char
           beginning-of-buffer
@@ -410,9 +408,6 @@
 (defun insert-newline (&optional (n 1))
   (insert-character (current-point) #\newline n)
   t)
-
-(defun insert-string (string)
-  (insert-string-at (current-point) string))
 
 (defun delete-char (n &optional killp)
   (delete-char-at (current-point) n killp))

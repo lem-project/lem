@@ -1,27 +1,23 @@
 (in-package :lem)
 
-(export '(*undo-limit*
-          current-buffer
-          buffer
+(export '(current-buffer
           bufferp
           buffer-name
-          buffer-filename
           buffer-modified-p
           buffer-read-only-p
-          buffer-enable-undo-p
           buffer-major-mode
           buffer-minor-modes
           buffer-mark-p
+          buffer-mark
+          buffer-point
           buffer-nlines
-          buffer-overlays
           buffer-truncate-lines
+          buffer-enable-undo-p
           buffer-enable-undo
           buffer-disable-undo
-          buffer-unmark
-          buffer-get-char
-          buffer-line-string
-          buffer-rename
+          buffer-filename
           buffer-directory
+          buffer-unmark
           buffer-undo-boundary
           get-bvar
           clear-buffer-variables

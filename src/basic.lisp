@@ -185,7 +185,7 @@
       t)))
 
 (defun erase-buffer (&optional (buffer (current-buffer)))
-  (buffer-start (current-marker))
+  (buffer-start (buffer-point-marker buffer))
   (buffer-mark-cancel buffer)
   (delete-char/marker (buffer-point-marker buffer) t))
 

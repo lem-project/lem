@@ -207,7 +207,7 @@
       (lem::line-start point)
       (with-buffer-read-only (point-buffer point) nil
         (save-excursion
-          (lem::delete-char-at point 1)
+          (lem::delete-character point 1)
           (if flag
               (lem::insert-character point #\*)
               (lem::insert-character point #\space)))))))

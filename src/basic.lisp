@@ -194,10 +194,10 @@
                 :do (put-text-property start-point end-point k v)))))
   t)
 
-(defun delete-char-at (point &optional (n 1) killp)
+(defun delete-character (point &optional (n 1) killp)
   (when (minusp n)
     (unless (character-offset point n)
-      (return-from delete-char-at nil))
+      (return-from delete-character nil))
     (setf n (- n)))
   (unless (end-buffer-p point)
     (let ((string (delete-char/point point n)))
@@ -457,7 +457,7 @@
                                (if ignore-newline-p
                                    '(#\space #\tab)
                                    '(#\space #\tab #\newline)))))
-    (delete-char-at (current-point) (- n) use-kill-ring)))
+    (delete-character (current-point) (- n) use-kill-ring)))
 
 (defun blank-line-p (point)
   (let ((string (line-string-at point))

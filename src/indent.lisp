@@ -25,7 +25,7 @@
              (make-string column :initial-element #\space))))
     (cond ((string/= old-indent-string new-indent-string)
            (line-start point)
-           (delete-char-at point (length old-indent-string) nil)
+           (delete-character point (length old-indent-string) nil)
            (insert-string point new-indent-string)
            (if (< old-column column)
                (skip-chars-forward (line-start point) '(#\space #\tab))

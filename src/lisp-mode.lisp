@@ -979,7 +979,7 @@
       (loop
 	 (unless (point< start end) (return))
 	 (loop (if (char= #\; (lem::character-at start))
-		   (lem::delete-char-at start 1)
+		   (lem::delete-character start 1)
 		   (return)))
 	 (lem::line-offset start 1 charpos)))))
 
@@ -1054,7 +1054,7 @@
      (lem::insert-character point #\))
      (incf count)
      (unless (lem::form-offset (copy-point point :temporary) -1)
-       (lem::delete-char-at point (- count) nil)
+       (lem::delete-character point (- count) nil)
        (return (= 1 count)))))
 
 (defun lisp-repl-confirm (point string)

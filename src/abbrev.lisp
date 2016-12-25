@@ -69,7 +69,7 @@
           (t
            (let* ((src-word (preceding-word point))
                   (words (scan-all-buffer-words src-word)))
-             (lem::delete-char-at point (- (length src-word)) nil)
+             (lem::delete-character point (- (length src-word)) nil)
              (setf *rest-words* (rest words))
              (setf *all-words* words)
              (setf *start-point* (copy-point point :temporary))

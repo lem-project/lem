@@ -122,7 +122,7 @@
       (cond ((char= c C-m)
              (insert-character (current-point) #\newline 1))
             ((char= c C-d)
-             (delete-char-at (current-point) 1 nil))
+             (delete-character (current-point) 1 nil))
             (t
              (insert-character (current-point) c 1))))))
 
@@ -144,7 +144,7 @@
   (when n
     (unless (continue-flag :kill)
       (kill-ring-new)))
-  (delete-char-at (current-point)
+  (delete-character (current-point)
                   (or n 1)
                   (if n t nil)))
 
@@ -169,7 +169,7 @@
   (unless (continue-flag :kill)
     (kill-ring-new))
   (move-point (current-point) start)
-  (delete-char-at (current-point) (count-characters start end) t)
+  (delete-character (current-point) (count-characters start end) t)
   t)
 
 (define-key *global-keymap* (kbd "C-k") 'kill-line)
@@ -352,7 +352,7 @@
 	 (return))
        (let ((nblanks (blank-line-p point)))
 	 (if nblanks
-	     (delete-char-at point nblanks)
+	     (delete-character point nblanks)
 	     (return))))))
 
 (define-key *global-keymap* (kbd "M-Spc") 'just-one-space)
@@ -379,13 +379,13 @@
            (let ((c1 (character-at point -1))
                  (c2 (character-at point -2)))
              (unless (eql c2 #\newline)
-               (delete-char-at point -2)
+               (delete-character point -2)
                (insert-string point (format nil "~C~C" c1 c2)))))
           (t
            (let ((c1 (character-at point 0))
                  (c2 (character-at point -1)))
-             (delete-char-at point 1)
-             (delete-char-at point -1)
+             (delete-character point 1)
+             (delete-character point -1)
              (insert-string point (format nil "~C~C" c1 c2)))))))
 
 (define-key *global-keymap* (kbd "M-m") 'back-to-indentation)
@@ -481,7 +481,7 @@
 	    (let ((c (preceding-char)))
 	      (if (or (equal c #\space)
 		      (equal c #\tab))
-		  (delete-char-at (current-point) -1 nil)
+		  (delete-character (current-point) -1 nil)
 		  (return))))
 	 (forward-line 1))
     (end-of-buffer)

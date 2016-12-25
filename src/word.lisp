@@ -87,7 +87,7 @@
                   (cond ((char= c #\newline)
                          (character-offset point 1))
                         ((funcall replace-char-p c)
-                         (delete-char-at point)
+                         (delete-character point)
                          (insert-character point (funcall case-fun c)))
                         (t
                          (character-offset point 1))))))))
@@ -106,7 +106,7 @@
     (when (end-buffer-p point)
       (return))
     (let ((c (character-at point)))
-      (delete-char-at point)
+      (delete-character point)
       (insert-character point (funcall first-case c))
       (with-point ((end (word-offset (copy-point point :temporary) 1)))
         (case-region-aux point

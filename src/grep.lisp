@@ -35,17 +35,17 @@
                              (goto-line linum))))
             (lem.sourcelist:append-sourcelist
              sourcelist
-             (lambda (cur-marker)
-               (lem::insert-string-at cur-marker
+             (lambda (cur-point)
+               (lem::insert-string-at cur-point
                                       (lem.text-property:make-text-property
                                        filename
                                        :attribute *attribute-1*))
-               (lem::insert-string-at cur-marker ":")
-               (lem::insert-string-at cur-marker
+               (lem::insert-string-at cur-point ":")
+               (lem::insert-string-at cur-point
                                       (lem.text-property:make-text-property
                                        (princ-to-string linum)
                                        :attribute *attribute-2*))
-               (lem::insert-string-at cur-marker thing))
+               (lem::insert-string-at cur-point thing))
              jump-fun)))))))
 
 (define-command grep (string) ((list (minibuf-read-string ": " "grep -nH ")))

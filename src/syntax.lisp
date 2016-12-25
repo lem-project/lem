@@ -261,9 +261,9 @@
      (syntax-scan-buffer (current-buffer)))))
 
 (defun syntax-scan-lines (start end)
-  (assert (eq (marker-buffer start)
-              (marker-buffer end)))
-  (let ((buffer (marker-buffer start)))
+  (assert (eq (point-buffer start)
+              (point-buffer end)))
+  (let ((buffer (point-buffer start)))
     (when (enable-syntax-highlight-p buffer)
       (let* ((line (get-line/marker start))
              (prev (line-prev line))

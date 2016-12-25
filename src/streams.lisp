@@ -95,7 +95,7 @@
 
 (defun buffer-output-stream-refresh (stream)
   (when (buffer-output-stream-interactive-update-p stream)
-    (let ((buffer (marker-buffer (buffer-stream-marker stream)))
+    (let ((buffer (point-buffer (buffer-stream-marker stream)))
           (point (buffer-stream-marker stream)))
       (display-buffer buffer)
       (dolist (window (get-buffer-windows buffer))

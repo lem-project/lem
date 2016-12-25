@@ -5,7 +5,7 @@
 (defvar *inhibit-read-only* nil)
 
 (defun get-line/marker (marker)
-  (buffer-get-line (marker-buffer marker)
+  (buffer-get-line (point-buffer marker)
                    (point-linum marker)))
 
 (defun check-read-only-at-point (marker offset)
@@ -31,14 +31,14 @@
          (buffer-modify ,buffer)))))
 
 (defun shift-sticky-objects (marker n)
-  (let ((buffer (marker-buffer marker))
+  (let ((buffer (point-buffer marker))
         (line (get-line/marker marker))
         (linum (point-linum marker))
         (charpos (point-charpos marker)))
     (line-property-insert-pos line charpos n)
     (dolist (m (buffer-markers buffer))
       (when (and (= linum (point-linum m))
-                 (etypecase (marker-kind m)
+                 (etypecase (point-kind m)
                    ((eql :left-inserting)
                     (<= charpos (point-charpos m)))
                    ((eql :right-inserting)
@@ -50,12 +50,12 @@
 (defun shift-sticky-objects-newline (marker)
   (let ((linum (point-linum marker))
         (charpos (point-charpos marker))
-        (buffer (marker-buffer marker))
+        (buffer (point-buffer marker))
         (line (get-line/marker marker)))
     (line-property-insert-newline line (line-next line) charpos)
     (dolist (m (buffer-markers buffer))
       (cond ((and (= (point-linum m) linum)
-                  (etypecase (marker-kind m)
+                  (etypecase (point-kind m)
                     ((eql :left-inserting)
                      (<= charpos (point-charpos m)))
                     ((eql :right-inserting)
@@ -71,7 +71,7 @@
   (let ((line (get-line/marker marker))
         (linum (point-linum marker))
         (charpos (point-charpos marker))
-        (buffer (marker-buffer marker)))
+        (buffer (point-buffer marker)))
     (line-property-delete-pos line charpos n)
     (dolist (m (buffer-markers buffer))
       (when (and (= linum (point-linum m))
@@ -95,7 +95,7 @@
   (let ((line (get-line/marker marker))
         (linum (point-linum marker))
         (charpos (point-charpos marker))
-        (buffer (marker-buffer marker)))
+        (buffer (point-buffer marker)))
     (line-property-delete-line line charpos)
     (dolist (m (buffer-markers buffer))
       (cond ((and (= linum (point-linum m))
@@ -117,7 +117,7 @@
                                (list key new-elements)))))))))
 
 (defun %insert-newline/marker (marker linum charpos)
-  (let* ((buffer (marker-buffer marker))
+  (let* ((buffer (point-buffer marker))
          (line (buffer-get-line buffer linum)))
     (let ((newline (make-line line
                               (line-next line)
@@ -131,7 +131,7 @@
 
 (defgeneric insert-char/marker (marker char)
   (:method (marker char)
-    (with-modify-buffer (marker-buffer marker)
+    (with-modify-buffer (point-buffer marker)
       (check-read-only-at-point marker 0)
       (cond
         ((char= char #\newline)
@@ -153,7 +153,7 @@
   (check-read-only-at-point marker 0)
   (shift-sticky-objects marker (length string))
   (let ((line
-         (buffer-get-line (marker-buffer marker)
+         (buffer-get-line (point-buffer marker)
                           linum)))
     (setf (line-str line)
           (concatenate 'string
@@ -163,7 +163,7 @@
 
 (defgeneric insert-string/marker (marker string)
   (:method (marker string)
-    (with-modify-buffer (marker-buffer marker)
+    (with-modify-buffer (point-buffer marker)
       (loop :with start := 0
             :for pos := (position #\newline string :start start)
             :for linum :from (point-linum marker) :by 1
@@ -216,11 +216,11 @@
 (defgeneric delete-char/marker (marker n)
   (:method (marker n)
     (declare (special n))
-    (with-modify-buffer (marker-buffer marker)
+    (with-modify-buffer (point-buffer marker)
       (with-output-to-string (killring-stream)
         (declare (special killring-stream))
         (let ((charpos (point-charpos marker))
-              (buffer (marker-buffer marker))
+              (buffer (point-buffer marker))
               (line (get-line/marker marker)))
           (declare (special buffer line))
           (loop :while (or (eq n 'T) (plusp n))

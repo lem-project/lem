@@ -31,9 +31,9 @@
 
 (defun make-overlay (start end attribute)
   (check-type attribute attribute)
-  (assert (eq (marker-buffer start)
-              (marker-buffer end)))
-  (let* ((buffer (marker-buffer start))
+  (assert (eq (point-buffer start)
+              (point-buffer end)))
+  (let* ((buffer (point-buffer start))
          (overlay
           (make-instance 'overlay
                          :start (copy-point start :right-inserting)

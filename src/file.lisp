@@ -91,7 +91,7 @@
                             (< 0 (length str)))
                    (setf end (1- (length str))))
                  (write-line str output :end end)))))))
-      (setf (buffer-external-format (marker-buffer marker))
+      (setf (buffer-external-format (point-buffer marker))
             (cons external-format end-of-line))
       marker)))
 

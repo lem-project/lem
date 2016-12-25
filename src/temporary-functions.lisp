@@ -10,8 +10,8 @@
                :kind :temporary))
 
 (defun points-to-string (start end)
-  (assert (eq (marker-buffer start)
-              (marker-buffer end)))
+  (assert (eq (point-buffer start)
+              (point-buffer end)))
   (with-output-to-string (out)
     (map-region start end
                 (lambda (string lastp)
@@ -20,8 +20,8 @@
                     (write-char #\newline out))))))
 
 (defun delete-between-points (start end)
-  (assert (eq (marker-buffer start)
-              (marker-buffer end)))
+  (assert (eq (point-buffer start)
+              (point-buffer end)))
   (unless (point< start end)
     (rotatef start end))
   (delete-char/marker start
@@ -30,7 +30,7 @@
 (defun %map-region (start end function)
   (when (point< end start)
     (rotatef start end))
-  (let ((start-line (buffer-get-line (marker-buffer start)
+  (let ((start-line (buffer-get-line (point-buffer start)
                                      (point-linum start))))
     (loop :for line := start-line :then (line-next line)
           :for linum :from (point-linum start) :to (point-linum end)
@@ -64,8 +64,8 @@
     count))
 
 (defun count-lines (start end)
-  (assert (eq (marker-buffer start)
-              (marker-buffer end)))
+  (assert (eq (point-buffer start)
+              (point-buffer end)))
   (when (point< end start)
     (rotatef start end))
   (with-marker ((point start))
@@ -76,7 +76,7 @@
             (return (1+ count))))))
 
 (defun line-number-at-point (point)
-  (count-lines (buffers-start (marker-buffer point)) point))
+  (count-lines (buffers-start (point-buffer point)) point))
 
 (defun invoke-save-excursion (function)
   (let ((point (copy-point (current-point) :temporary))
@@ -84,7 +84,7 @@
                 (copy-point (buffer-mark-marker (current-buffer))
                              :temporary))))
     (unwind-protect (funcall function)
-      (setf (current-buffer) (marker-buffer point))
+      (setf (current-buffer) (point-buffer point))
       (move-point (current-point) point)
       (when mark
         (set-current-mark mark)))))

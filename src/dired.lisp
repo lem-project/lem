@@ -205,7 +205,7 @@
     (when (and (point<= *start-marker* point)
                (not (last-line-p point)))
       (lem::line-start point)
-      (with-buffer-read-only (marker-buffer point) nil
+      (with-buffer-read-only (point-buffer point) nil
         (save-excursion
           (lem::delete-char-at point 1)
           (if flag

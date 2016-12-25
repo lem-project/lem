@@ -490,7 +490,7 @@
   (push elt (buffer-redo-stack buffer)))
 
 (defun push-undo (marker fn)
-  (let ((buffer (marker-buffer marker)))
+  (let ((buffer (point-buffer marker)))
     (when (and (buffer-enable-undo-p buffer)
                (not (ghost-buffer-p buffer)))
       (ecase *undo-mode*

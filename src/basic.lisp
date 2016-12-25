@@ -40,7 +40,7 @@
   (<= (point-linum marker) 1))
 
 (defun last-line-p (marker)
-  (<= (buffer-nlines (marker-buffer marker))
+  (<= (buffer-nlines (point-buffer marker))
       (point-linum marker)))
 
 (defun start-line-p (marker)
@@ -48,7 +48,7 @@
 
 (defun end-line-p (marker)
   (= (point-charpos marker)
-     (buffer-line-length (marker-buffer marker)
+     (buffer-line-length (point-buffer marker)
                          (point-linum marker))))
 
 (defun start-buffer-p (marker)
@@ -65,18 +65,18 @@
 
 (defun line-end (marker)
   (setf (point-charpos marker)
-        (buffer-line-length (marker-buffer marker)
+        (buffer-line-length (point-buffer marker)
                             (point-linum marker)))
   marker)
 
 (defun buffer-start (marker)
-  (move-point marker (buffers-start (marker-buffer marker))))
+  (move-point marker (buffers-start (point-buffer marker))))
 
 (defun buffer-end (marker)
-  (move-point marker (buffers-end (marker-buffer marker))))
+  (move-point marker (buffers-end (point-buffer marker))))
 
 (defun move-point (marker new-marker)
-  (let ((buffer (marker-buffer marker)))
+  (let ((buffer (point-buffer marker)))
     (setf (point-linum marker)
           (min (point-linum new-marker)
                (buffer-nlines buffer)))
@@ -86,8 +86,8 @@
   marker)
 
 (defun same-line-p (marker1 marker2)
-  (assert (eq (marker-buffer marker1)
-              (marker-buffer marker2)))
+  (assert (eq (point-buffer marker1)
+              (point-buffer marker2)))
   (= (point-linum marker1)
      (point-linum marker2)))
 
@@ -95,7 +95,7 @@
   (let ((linum (point-linum marker)))
     (if (plusp n)
         (dotimes (_ n)
-          (when (<= (buffer-nlines (marker-buffer marker)) linum)
+          (when (<= (buffer-nlines (point-buffer marker)) linum)
             (return-from line-offset nil))
           (incf linum))
         (dotimes (_ (- n))
@@ -118,7 +118,7 @@
         (setf (point-charpos marker) charpos)
         (setf (point-linum marker) linum)
         (return nil))
-      (let* ((length (1+ (buffer-line-length (marker-buffer marker)
+      (let* ((length (1+ (buffer-line-length (point-buffer marker)
                                              (point-linum marker))))
              (w (- length (point-charpos marker))))
         (when (< n w)
@@ -157,7 +157,7 @@
 
 (defun character-at (marker &optional (offset 0))
   (if (zerop offset)
-      (buffer-get-char (marker-buffer marker)
+      (buffer-get-char (point-buffer marker)
                        (point-linum marker)
                        (point-charpos marker))
       (with-marker ((temp-marker marker))
@@ -205,8 +205,8 @@
           (text-property-at temp-marker key 0)))))
 
 (defun put-text-property (start-marker end-marker key value)
-  (assert (eq (marker-buffer start-marker)
-              (marker-buffer end-marker)))
+  (assert (eq (point-buffer start-marker)
+              (point-buffer end-marker)))
   (%map-region start-marker end-marker
                (lambda (line start end)
                  (line-add-property line
@@ -219,8 +219,8 @@
                                     (null end)))))
 
 (defun remove-text-property (start-marker end-marker key)
-  (assert (eq (marker-buffer start-marker)
-              (marker-buffer end-marker)))
+  (assert (eq (point-buffer start-marker)
+              (point-buffer end-marker)))
   (%map-region start-marker end-marker
                (lambda (line start end)
                  (line-remove-property line
@@ -257,7 +257,7 @@
         (return nil)))))
 
 (defun line-string-at (marker)
-  (buffer-line-string (marker-buffer marker)
+  (buffer-line-string (point-buffer marker)
                       (point-linum marker)))
 
 (defun point-column (marker)
@@ -337,7 +337,7 @@
     (editor-error "Not mark in this buffer")))
 
 (defun set-current-mark (marker)
-  (let ((buffer (marker-buffer marker)))
+  (let ((buffer (point-buffer marker)))
     (cond ((buffer-mark-p buffer)
            (move-point (buffer-mark-marker buffer)
                        marker))
@@ -407,7 +407,7 @@
 (defun point-to-offset (point)
   (let ((end-linum (point-linum point))
         (end-charpos (point-charpos point))
-        (buffer (marker-buffer point))
+        (buffer (point-buffer point))
         (offset 0))
     (loop :repeat (1- end-linum)
           :for linum :from 1

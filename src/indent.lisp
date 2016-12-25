@@ -16,7 +16,7 @@
                                                  '(#\space #\tab))
                              point)))
         (new-indent-string
-         (if (get-bvar :indent-tabs-mode :default t :buffer (marker-buffer point))
+         (if (get-bvar :indent-tabs-mode :default t :buffer (point-buffer point))
              (multiple-value-bind (div mod)
                  (floor column (tab-size))
                (concatenate 'string
@@ -48,7 +48,7 @@
   (indent-line-1 point
                  (funcall (get-bvar :calc-indent-function
                                     :default #'calc-indent-default
-                                    :buffer (marker-buffer point))
+                                    :buffer (point-buffer point))
                           point)))
 
 (define-key *global-keymap* (kbd "C-i") 'indent)

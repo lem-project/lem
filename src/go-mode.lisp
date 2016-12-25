@@ -78,7 +78,7 @@
 
 (defun go-calc-indent (point)
   (save-excursion
-    (setf (current-buffer) (marker-buffer point))
+    (setf (current-buffer) (point-buffer point))
     (lem::move-point (current-point) point)
    (back-to-indentation)
    (let ((attribute (lem::text-property-at (current-point) :attribute -1)))

@@ -389,7 +389,7 @@
 
 (defun lisp-calc-indent (point)
   (save-excursion
-    (setf (current-buffer) (marker-buffer point))
+    (setf (current-buffer) (point-buffer point))
     (lem::move-point (current-point) point)
     (beginning-of-line)
     (when (eq *syntax-string-attribute*
@@ -819,7 +819,7 @@
   (let ((cur-marker (pop *lisp-find-definition-stack*)))
     (unless cur-marker
       (return-from lisp-pop-find-definition-stack nil))
-    (switch-to-buffer (marker-buffer cur-marker))
+    (switch-to-buffer (point-buffer cur-marker))
     (lem::move-point (current-point) cur-marker)))
 
 (defun analyze-symbol (str)

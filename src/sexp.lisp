@@ -158,7 +158,7 @@
   (let ((*current-syntax*
          (mode-syntax-table
           (buffer-major-mode
-           (marker-buffer point)))))
+           (point-buffer point)))))
     (with-marker ((prev point))
       (cond ((plusp n)
              (dotimes (_ n point)
@@ -175,7 +175,7 @@
   (let ((*current-syntax*
          (mode-syntax-table
           (buffer-major-mode
-           (marker-buffer point)))))
+           (point-buffer point)))))
     (with-marker ((prev point))
       (cond ((plusp n)
              (dotimes (_ n point)

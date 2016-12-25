@@ -183,17 +183,15 @@
   (loop :repeat n :do (insert-char/point point char))
   t)
 
-(defun insert-string-at (point string)
-  (cond ((lem.text-property:text-property-p string)
-         (let ((str (lem.text-property:text-property-string string)))
-           (with-point ((start-point point))
-             (insert-string/point point str)
-             (let ((end-point (character-offset (copy-point start-point :temporary)
-						(length str))))
-               (loop :for (k v) :on (lem.text-property:text-property-plist string) :by #'cddr
-		  :do (put-text-property start-point end-point k v))))))
-        (t
-         (insert-string/point point string)))
+(defun insert-string-at (point string &rest plist)
+  (if (null plist)
+      (insert-string/point point string)
+      (with-point ((start-point point))
+        (insert-string/point point string)
+        (let ((end-point (character-offset (copy-point start-point :temporary)
+                                           (length string))))
+          (loop :for (k v) :on plist :by #'cddr
+                :do (put-text-property start-point end-point k v)))))
   t)
 
 (defun delete-char-at (point &optional (n 1) killp)

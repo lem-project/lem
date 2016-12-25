@@ -266,9 +266,8 @@
     (let ((dirname (probe-file (buffer-directory buffer))))
       (lem::with-point ((cur-point (lem::buffer-point buffer) :left-inserting))
         (lem::insert-string-at cur-point
-                               (lem.text-property::make-text-property
-                                (namestring dirname)
-                                :attribute *header-attribute*))
+                               (namestring dirname)
+                               :attribute *header-attribute*)
         (lem::insert-character cur-point #\newline 2)
         (let ((output-string (ls-output-string dirname)))
           (lem::insert-string-at cur-point output-string)

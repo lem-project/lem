@@ -37,14 +37,12 @@
              sourcelist
              (lambda (cur-point)
                (lem::insert-string-at cur-point
-                                      (lem.text-property:make-text-property
-                                       filename
-                                       :attribute *attribute-1*))
+                                      filename
+                                      :attribute *attribute-1*)
                (lem::insert-string-at cur-point ":")
                (lem::insert-string-at cur-point
-                                      (lem.text-property:make-text-property
-                                       (princ-to-string linum)
-                                       :attribute *attribute-2*))
+                                      (princ-to-string linum)
+                                      :attribute *attribute-2*)
                (lem::insert-string-at cur-point thing))
              jump-fun)))))))
 

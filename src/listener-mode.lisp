@@ -53,13 +53,12 @@
       (lem::insert-character cur-point #\newline 1)
       (lem::buffer-end cur-point))
     (lem::insert-string-at cur-point
-                           (lem.text-property:make-text-property
-                            (princ-to-string
-                             (funcall
-                              (get-bvar :listener-get-prompt-function)))
-                            :attribute *prompt-attribute*
-                            'lem.property:read-only t
-                            'lem.property:field-separator t))
+                           (princ-to-string
+                            (funcall
+                             (get-bvar :listener-get-prompt-function)))
+                           :attribute *prompt-attribute*
+                           'lem.property:read-only t
+                           'lem.property:field-separator t)
     (lem::buffer-end cur-point)
     (buffer-undo-boundary buffer)
     (listener-update-point)))

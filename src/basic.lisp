@@ -6,7 +6,6 @@
           eolp
           bobp
           eobp
-          delete-char
           beginning-of-buffer
           end-of-buffer
           beginning-of-line
@@ -404,9 +403,6 @@
 (defun eobp ()
   (end-buffer-p (current-point)))
 
-(defun delete-char (n &optional killp)
-  (delete-char-at (current-point) n killp))
-
 (defun beginning-of-buffer ()
   (buffer-start (current-point)))
 
@@ -467,7 +463,7 @@
                                (if ignore-newline-p
                                    '(#\space #\tab)
                                    '(#\space #\tab #\newline)))))
-    (delete-char (- n) use-kill-ring)))
+    (delete-char-at (current-point) (- n) use-kill-ring)))
 
 (defun blank-line-p (point)
   (let ((string (line-string-at point))

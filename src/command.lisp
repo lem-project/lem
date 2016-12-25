@@ -122,7 +122,7 @@
       (cond ((char= c C-m)
              (insert-character (current-point) #\newline 1))
             ((char= c C-d)
-             (delete-char 1 nil))
+             (delete-char-at (current-point) 1 nil))
             (t
              (insert-character (current-point) c 1))))))
 
@@ -144,8 +144,9 @@
   (when n
     (unless (continue-flag :kill)
       (kill-ring-new)))
-  (delete-char (or n 1)
-               (if n t nil)))
+  (delete-char-at (current-point)
+                  (or n 1)
+                  (if n t nil)))
 
 (define-key *global-keymap* (kbd "C-h") 'delete-previous-char)
 (define-key *global-keymap* (kbd "[backspace]") 'delete-previous-char)
@@ -168,7 +169,7 @@
   (unless (continue-flag :kill)
     (kill-ring-new))
   (move-point (current-point) start)
-  (delete-char (count-characters start end) t)
+  (delete-char-at (current-point) (count-characters start end) t)
   t)
 
 (define-key *global-keymap* (kbd "C-k") 'kill-line)
@@ -480,7 +481,7 @@
 	    (let ((c (preceding-char)))
 	      (if (or (equal c #\space)
 		      (equal c #\tab))
-		  (delete-char -1 nil)
+		  (delete-char-at (current-point) -1 nil)
 		  (return))))
 	 (forward-line 1))
     (end-of-buffer)

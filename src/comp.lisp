@@ -163,7 +163,7 @@
          (line-string-at
           (buffer-point
            (window-buffer *completion-window*)))))
-    (delete-char (- (length *completion-last-string*)) nil)
+    (delete-char-at (current-point) (- (length *completion-last-string*)) nil)
     (setf *completion-last-string* str)
     (insert-string-at (current-point) str)
     (completion-end))
@@ -172,7 +172,7 @@
 (define-key *completion-mode-keymap* (kbd "C-h") 'completion-delete-previous-char)
 (define-key *completion-mode-keymap* (kbd "[backspace]") 'completion-delete-previous-char)
 (define-command completion-delete-previous-char (n) ("p")
-  (delete-char (- n) nil)
+  (delete-char-at (current-point) (- n) nil)
   (update-completion *completion-last-function*
 		     (subseq *completion-last-string* 0 (- (length *completion-last-string*) n))))
 
@@ -212,7 +212,7 @@
       (update-completion comp-f str)
     (declare (ignore result))
     (when confirm-p
-      (delete-char (- (length *completion-last-string*)) nil)
+      (delete-char-at (current-point) (- (length *completion-last-string*)) nil)
       (insert-string-at (current-point) str)
       (completion-end)))
   t)

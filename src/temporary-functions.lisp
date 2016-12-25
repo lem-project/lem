@@ -5,9 +5,9 @@
 
 (defun buffers-end (buffer)
   (make-point buffer
-               (buffer-nlines buffer)
-               (line-length (buffer-tail-line buffer))
-               :kind :temporary))
+	      (buffer-nlines buffer)
+	      (line-length (buffer-tail-line buffer))
+	      :kind :temporary))
 
 (defun points-to-string (start end)
   (assert (eq (point-buffer start)
@@ -25,7 +25,7 @@
   (unless (point< start end)
     (rotatef start end))
   (delete-char/point start
-                      (count-characters start end)))
+		     (count-characters start end)))
 
 (defun %map-region (start end function)
   (when (point< end start)
@@ -33,17 +33,17 @@
   (let ((start-line (buffer-get-line (point-buffer start)
                                      (point-linum start))))
     (loop :for line := start-line :then (line-next line)
-          :for linum :from (point-linum start) :to (point-linum end)
-          :for firstp := (eq line start-line)
-          :for lastp := (= linum (point-linum end))
-          :do (funcall function
-                       line
-                       (if firstp
-                           (point-charpos start)
-                           0)
-                       (if lastp
-                           (point-charpos end)
-                           nil))))
+       :for linum :from (point-linum start) :to (point-linum end)
+       :for firstp := (eq line start-line)
+       :for lastp := (= linum (point-linum end))
+       :do (funcall function
+		    line
+		    (if firstp
+			(point-charpos start)
+			0)
+		    (if lastp
+			(point-charpos end)
+			nil))))
   (values))
 
 (defun map-region (start end function)
@@ -70,10 +70,10 @@
     (rotatef start end))
   (with-point ((point start))
     (loop :for count :from 0 :do
-          (when (point< end point)
-            (return count))
-          (unless (line-offset point 1)
-            (return (1+ count))))))
+       (when (point< end point)
+	 (return count))
+       (unless (line-offset point 1)
+	 (return (1+ count))))))
 
 (defun line-number-at-point (point)
   (count-lines (buffers-start (point-buffer point)) point))
@@ -82,7 +82,7 @@
   (let ((point (copy-point (current-point) :temporary))
         (mark (when (buffer-mark-p (current-buffer))
                 (copy-point (buffer-mark (current-buffer))
-                             :temporary))))
+			    :temporary))))
     (unwind-protect (funcall function)
       (setf (current-buffer) (point-buffer point))
       (move-point (current-point) point)

@@ -168,11 +168,11 @@
 
 (defun window-tree-map (tree fn)
   (labels ((f (tree)
-              (cond ((window-tree-leaf-p tree)
-                     (funcall fn tree))
-                    (t
-                     (f (window-node-car tree))
-                     (f (window-node-cdr tree))))))
+	     (cond ((window-tree-leaf-p tree)
+		    (funcall fn tree))
+		   (t
+		    (f (window-node-car tree))
+		    (f (window-node-cdr tree))))))
     (f tree)
     nil))
 
@@ -243,24 +243,24 @@
 
 (defun dump-window-tree (window-tree current-window)
   (labels ((f (window-tree)
-              (if (window-tree-leaf-p window-tree)
-                  (list
-                   :window
-                   (eq current-window window-tree)
-                   (buffer-name (window-buffer window-tree))
-                   (window-%x window-tree)
-                   (window-%y window-tree)
-                   (window-%width window-tree)
-                   (window-%height window-tree)
-                   (window-view-point window-tree)
-                   (%window-point window-tree)
-                   (window-delete-hook window-tree)
-                   (window-parameters window-tree)
-                   (window-use-modeline-p window-tree))
-                  (list
-                   (window-node-split-type window-tree)
-                   (f (window-node-car window-tree))
-                   (f (window-node-cdr window-tree))))))
+	     (if (window-tree-leaf-p window-tree)
+		 (list
+		  :window
+		  (eq current-window window-tree)
+		  (buffer-name (window-buffer window-tree))
+		  (window-%x window-tree)
+		  (window-%y window-tree)
+		  (window-%width window-tree)
+		  (window-%height window-tree)
+		  (window-view-point window-tree)
+		  (%window-point window-tree)
+		  (window-delete-hook window-tree)
+		  (window-parameters window-tree)
+		  (window-use-modeline-p window-tree))
+		 (list
+		  (window-node-split-type window-tree)
+		  (f (window-node-car window-tree))
+		  (f (window-node-cdr window-tree))))))
     (f window-tree)))
 
 (defun load-window-tree (dumped-tree)
@@ -268,33 +268,33 @@
     (%free-window window))
   (let ((current-window nil))
     (labels ((f (dumped-tree)
-                (if (eq :window (car dumped-tree))
-                    (destructuring-bind (current-window-p
-                                         buffer-name
-                                         x
-                                         y
-                                         width
-                                         height
-                                         view-point
-                                         point
-                                         delete-hook
-                                         parameters
-                                         use-modeline-p)
-                        (cdr dumped-tree)
-                      (let ((window (make-window (get-buffer-create buffer-name)
-                                                 x y width height use-modeline-p)))
-                        (move-point (window-view-point window) view-point)
-                        (move-point (%window-point window) point)
-                        (set-window-delete-hook delete-hook window)
-                        (setf (window-parameters window) parameters)
-                        (when current-window-p
-                          (setf current-window window))
-                        window))
-                    (destructuring-bind (split-type car-window cdr-window)
-                        dumped-tree
-                      (make-window-node split-type
-                                        (f car-window)
-                                        (f cdr-window))))))
+	       (if (eq :window (car dumped-tree))
+		   (destructuring-bind (current-window-p
+					buffer-name
+					x
+					y
+					width
+					height
+					view-point
+					point
+					delete-hook
+					parameters
+					use-modeline-p)
+		       (cdr dumped-tree)
+		     (let ((window (make-window (get-buffer-create buffer-name)
+						x y width height use-modeline-p)))
+		       (move-point (window-view-point window) view-point)
+		       (move-point (%window-point window) point)
+		       (set-window-delete-hook delete-hook window)
+		       (setf (window-parameters window) parameters)
+		       (when current-window-p
+			 (setf current-window window))
+		       window))
+		   (destructuring-bind (split-type car-window cdr-window)
+		       dumped-tree
+		     (make-window-node split-type
+				       (f car-window)
+				       (f cdr-window))))))
       (setf (window-tree) (f dumped-tree))
       (setf (current-window)
             (or current-window
@@ -327,10 +327,10 @@
 
 (defun map-wrapping-line (string winwidth fn)
   (loop :with start := 0
-        :for i := (wide-index string (1- winwidth) :start start)
-        :while i :do
-        (funcall fn i)
-        (setq start i)))
+     :for i := (wide-index string (1- winwidth) :start start)
+     :while i :do
+     (funcall fn i)
+     (setq start i)))
 
 (defun %scroll-down-if-wrapping (window)
   (when (buffer-truncate-lines (window-buffer window))
@@ -354,7 +354,7 @@
     (let ((charpos-list))
       (map-wrapping-line (line-string-at (if (start-line-p (window-view-point window))
                                              (line-offset (copy-point (window-view-point window)
-                                                                       :temporary)
+								      :temporary)
                                                           -1)
                                              (window-view-point window)))
                          (window-%width window)
@@ -409,7 +409,7 @@
 
 (defun window-offset-view (window)
   (cond ((and (point< (window-point window)
-                       (window-view-point window))
+		      (window-view-point window))
               (not (same-line-p (window-point window)
                                 (window-view-point window))))
          (1- (count-lines (window-point window)
@@ -725,8 +725,8 @@
 
 (defun get-buffer-windows (buffer)
   (loop :for window :in (window-list)
-    :when (eq buffer (window-buffer window))
-    :collect window))
+     :when (eq buffer (window-buffer window))
+     :collect window))
 
 (defun window-prompt-display (window)
   (when (window-parameter window 'change-buffer)

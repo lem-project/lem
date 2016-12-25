@@ -2,10 +2,10 @@
 
 (defun load-init-file ()
   (flet ((test (path)
-               (when (cl-fad:file-exists-p path)
-                 (lem.lisp-mode:lisp-load-file path)
-                 (message "Load file: ~a" path)
-                 t)))
+	   (when (cl-fad:file-exists-p path)
+	     (lem.lisp-mode:lisp-load-file path)
+	     (message "Load file: ~a" path)
+	     t)))
     (or (test (merge-pathnames "lem.rc" (truename ".")))
         (test (merge-pathnames ".lemrc" (user-homedir-pathname))))))
 

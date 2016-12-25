@@ -65,15 +65,15 @@
 
 (defun copy-point (point &optional kind)
   (make-point (point-buffer point)
-               (point-linum point)
-               (point-charpos point)
-               :kind (or kind (point-kind point))
-               :name (point-name point)))
+	      (point-linum point)
+	      (point-charpos point)
+	      :kind (or kind (point-kind point))
+	      :name (point-name point)))
 
 (defun delete-point (point)
   (unless (eq :temporary (point-kind point))
     (buffer-delete-point (point-buffer point)
-                          point)))
+			 point)))
 
 (defun point-change-buffer (point buffer)
   (delete-point point)

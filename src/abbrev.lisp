@@ -6,7 +6,7 @@
 
 (defun preceding-word (point)
   (lem::with-point ((cur point)
-                     (end point))
+		    (end point))
     (skip-chars-backward cur #'syntax-symbol-char-p)
     (lem::points-to-string cur end)))
 
@@ -28,12 +28,12 @@
   (let ((words))
     (with-open-stream (in (make-buffer-input-stream (lem::buffers-start buffer)))
       (loop :for str := (read-line in nil)
-            :while str
-            :do (dolist (w (remove-if-not #'(lambda (tok)
-                                              (and (string/= word tok)
-                                                   (eql 0 (search word tok))))
-                                          (scan-line-words str)))
-                  (push w words))))
+	 :while str
+	 :do (dolist (w (remove-if-not #'(lambda (tok)
+					   (and (string/= word tok)
+						(eql 0 (search word tok))))
+				       (scan-line-words str)))
+	       (push w words))))
     (nreverse words)))
 
 (defun scan-all-buffer-words (word)

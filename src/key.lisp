@@ -51,10 +51,10 @@
 (defkeycode "[del]" #x7F)
 
 (loop
-  :for i :from #x21 :below #x7F
-  :for c := (code-char i)
-  :do (setf (gethash (string c) *string->key*) c
-            (gethash i *key->symbol*) (string c)))
+   :for i :from #x21 :below #x7F
+   :for c := (code-char i)
+   :do (setf (gethash (string c) *string->key*) c
+	     (gethash i *key->symbol*) (string c)))
 
 (defkeycode "[down]" #o402)
 (defkeycode "[up]" #o403)

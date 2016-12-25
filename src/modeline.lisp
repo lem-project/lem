@@ -62,9 +62,9 @@
 (defun modeline-string (window)
   (let ((str (with-output-to-string (out)
                (dolist (x
-                        (get-bvar :modeline-format
-                                  :buffer (window-buffer window)
-                                  :default *modeline-default-format*))
+			 (get-bvar :modeline-format
+				   :buffer (window-buffer window)
+				   :default *modeline-default-format*))
                  (if (or (symbolp x) (functionp x))
                      (princ (funcall x window) out)
                      (princ x out)))))

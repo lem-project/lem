@@ -36,8 +36,8 @@
 (defvar *isearch-highlight-overlays* nil)
 
 (define-minor-mode isearch-mode
-  (:name "isearch"
-   :keymap *isearch-keymap*))
+    (:name "isearch"
+	   :keymap *isearch-keymap*))
 
 (defvar *isearch-highlight-attribute* (make-attribute nil nil :reverse-p t))
 (defvar *isearch-highlight-active-attribute* (make-attribute "cyan" nil :reverse-p t))
@@ -205,18 +205,18 @@
                             cur-point
                             search-string
                             limit-point)
-            :do (let ((start-point (lem::with-point ((temp-point cur-point :temporary))
-                                     (funcall *isearch-search-backward-function*
-                                              temp-point
-                                              search-string)
-                                     temp-point)))
-                  (push (make-overlay start-point
-                                      (copy-point cur-point :temporary)
-                                      (if (and (point<= start-point point)
-                                               (point<= point cur-point))
-                                          *isearch-highlight-active-attribute*
-                                          *isearch-highlight-attribute*))
-                        *isearch-highlight-overlays*))))))
+	 :do (let ((start-point (lem::with-point ((temp-point cur-point :temporary))
+				  (funcall *isearch-search-backward-function*
+					   temp-point
+					   search-string)
+				  temp-point)))
+	       (push (make-overlay start-point
+				   (copy-point cur-point :temporary)
+				   (if (and (point<= start-point point)
+					    (point<= point cur-point))
+				       *isearch-highlight-active-attribute*
+				       *isearch-highlight-attribute*))
+		     *isearch-highlight-overlays*))))))
 
 (defun isearch-add-char (c)
   (setq *isearch-string*
@@ -267,46 +267,46 @@
 (defun query-replace-internal-body (cur-point goal-point before after)
   (let ((pass-through nil))
     (loop
-      (when (or (not (funcall *isearch-search-forward-function* cur-point before))
-                (and goal-point (point< goal-point cur-point)))
-        (when goal-point
-          (lem::move-point (current-point) goal-point))
-        (return))
-      (lem::with-point ((end cur-point))
-        (isearch-update-buffer cur-point before)
-        (funcall *isearch-search-backward-function* cur-point before)
-        (lem::with-point ((start cur-point))
-          (loop :for c := (unless pass-through
-                            (minibuf-read-char (format nil "Replace ~s with ~s" before after)))
-                :do (cond
-                      ((or pass-through (char= c #\y))
-                       (lem::delete-between-points start end)
-                       (lem::insert-string-at cur-point after)
-                       (return))
-                      ((char= c #\n)
-                       (lem::move-point cur-point end)
-                       (return))
-                      ((char= c #\!)
-                       (setf pass-through t)))))))))
+       (when (or (not (funcall *isearch-search-forward-function* cur-point before))
+		 (and goal-point (point< goal-point cur-point)))
+	 (when goal-point
+	   (lem::move-point (current-point) goal-point))
+	 (return))
+       (lem::with-point ((end cur-point))
+	 (isearch-update-buffer cur-point before)
+	 (funcall *isearch-search-backward-function* cur-point before)
+	 (lem::with-point ((start cur-point))
+	   (loop :for c := (unless pass-through
+			     (minibuf-read-char (format nil "Replace ~s with ~s" before after)))
+	      :do (cond
+		    ((or pass-through (char= c #\y))
+		     (lem::delete-between-points start end)
+		     (lem::insert-string-at cur-point after)
+		     (return))
+		    ((char= c #\n)
+		     (lem::move-point cur-point end)
+		     (return))
+		    ((char= c #\!)
+		     (setf pass-through t)))))))))
 
 (defun query-replace-internal (before after search-forward-function search-backward-function)
   (unwind-protect
-      (let ((*isearch-search-forward-function* search-forward-function)
-            (*isearch-search-backward-function* search-backward-function)
-            (buffer (current-buffer)))
-        (when (and before after)
-          (if (buffer-mark-p buffer)
-              (lem::with-point ((mark-point (lem::buffer-mark buffer) :right-inserting))
-                (if (point< mark-point (lem::buffer-point buffer))
-                    (query-replace-internal-body mark-point
-                                                 (lem::buffer-point buffer)
-                                                 before after)
-                    (query-replace-internal-body (lem::buffer-point buffer)
-                                                 mark-point
-                                                 before after)))
-              (query-replace-internal-body (lem::buffer-point buffer)
-                                           nil
-                                           before after))))
+       (let ((*isearch-search-forward-function* search-forward-function)
+	     (*isearch-search-backward-function* search-backward-function)
+	     (buffer (current-buffer)))
+	 (when (and before after)
+	   (if (buffer-mark-p buffer)
+	       (lem::with-point ((mark-point (lem::buffer-mark buffer) :right-inserting))
+		 (if (point< mark-point (lem::buffer-point buffer))
+		     (query-replace-internal-body mark-point
+						  (lem::buffer-point buffer)
+						  before after)
+		     (query-replace-internal-body (lem::buffer-point buffer)
+						  mark-point
+						  before after)))
+	       (query-replace-internal-body (lem::buffer-point buffer)
+					    nil
+					    before after))))
     (isearch-reset-buffer)))
 
 (define-key *global-keymap* (kbd "M-%") 'query-replace)

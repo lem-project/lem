@@ -44,12 +44,12 @@
                    :underline-p underline-p))
 
 (defun set-attribute (attribute &key
-                                (fg-color nil fg-color-p)
-                                (bg-color nil bg-color-p)
-                                (reverse-p nil reverse-p-p)
-                                (bold-p nil bold-p-p)
-                                (underline-p nil underline-p-p)
-                                (name nil name-p))
+				  (fg-color nil fg-color-p)
+				  (bg-color nil bg-color-p)
+				  (reverse-p nil reverse-p-p)
+				  (bold-p nil bold-p-p)
+				  (underline-p nil underline-p-p)
+				  (name nil name-p))
   (setf (attribute-%internal-value attribute) nil) ; これをnilにするのはncurses依存かもしれないのであまりよくない
   (when fg-color-p
     (setf (attribute-fg-color attribute) fg-color))

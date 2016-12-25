@@ -30,7 +30,7 @@
   `(handler-case-bind (#'(lambda (condition)
                            (handler-bind ((error #'bailout))
                              (pop-up-backtrace condition)))
-                       ,@body)
+			 ,@body)
                       ((condition) (declare (ignore condition)))))
 
 (pushnew #'(lambda (window)
@@ -95,27 +95,27 @@
                                         (stop-record-key))))
                         (cmd-call cmd nil))
                     (editor-abort ()
-                                  (buffer-mark-cancel (current-buffer))
-                                  (message "Quit"))
+		      (buffer-mark-cancel (current-buffer))
+		      (message "Quit"))
                     (read-only-error ()
-                                     (message "Read Only"))
+		      (message "Read Only"))
                     (editor-error (c)
-                                  (message (editor-error-message c))))))))))))
+		      (message (editor-error-message c))))))))))))
 
 (let ((passed nil))
   (defun call-with-editor (function)
     (unwind-protect
-        (catch 'toplevel
-          (let ((*running-p* t))
-            (unless passed
-              (setq passed t)
-              (let ((*debug-p* t))
-                (cockpit
-                 (display-init)
-                 (window-init)
-                 (minibuf-init)
-                 (run-hooks 'after-init-hook))))
-            (funcall function)))
+	 (catch 'toplevel
+	   (let ((*running-p* t))
+	     (unless passed
+	       (setq passed t)
+	       (let ((*debug-p* t))
+		 (cockpit
+		   (display-init)
+		   (window-init)
+		   (minibuf-init)
+		   (run-hooks 'after-init-hook))))
+	     (funcall function)))
       (display-finalize))))
 
 (defmacro with-editor (() &body body)

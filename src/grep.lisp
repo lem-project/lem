@@ -9,12 +9,12 @@
 
 (defun grep-parse-line (line)
   (ignore-errors
-   (let* ((i (position #\: line))
-          (j (position #\: line :start (1+ i)))
-          (filename (subseq line 0 i))
-          (linum (parse-integer (subseq line (1+ i) j))))
-     (when (and (stringp filename) (integerp linum))
-       (list filename linum (subseq line j))))))
+    (let* ((i (position #\: line))
+	   (j (position #\: line :start (1+ i)))
+	   (filename (subseq line 0 i))
+	   (linum (parse-integer (subseq line (1+ i) j))))
+      (when (and (stringp filename) (integerp linum))
+	(list filename linum (subseq line j))))))
 
 (defun grep-parse-lines (lines)
   (remove nil

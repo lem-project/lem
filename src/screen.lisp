@@ -131,7 +131,7 @@
 
 
 (defun disp-print-line (screen y str/attributes do-clrtoeol
-                               &key (start-x 0) (string-start 0) string-end)
+			&key (start-x 0) (string-start 0) string-end)
   (destructuring-bind (str . attributes)
       str/attributes
     (when (null string-end)
@@ -147,14 +147,14 @@
     (let ((prev-end 0)
           (x start-x))
       (loop :for (start end attr) :in attributes
-            :do (setf end (min (length str) end))
-            :do (progn
-                  (screen-print-string-attr screen x y (subseq str prev-end start) nil)
-                  (incf x (string-width str prev-end start)))
-            :do (progn
-                  (screen-print-string-attr screen x y (subseq str start end) attr)
-                  (incf x (string-width str start end)))
-            :do (setf prev-end end))
+	 :do (setf end (min (length str) end))
+	 :do (progn
+	       (screen-print-string-attr screen x y (subseq str prev-end start) nil)
+	       (incf x (string-width str prev-end start)))
+	 :do (progn
+	       (screen-print-string-attr screen x y (subseq str start end) attr)
+	       (incf x (string-width str start end)))
+	 :do (setf prev-end end))
       (screen-print-string-attr screen x y
                                 (if (= prev-end 0)
                                     str
@@ -222,13 +222,13 @@
     (lem::with-point ((point start))
       (lem::line-offset point 1)
       (loop :for i :from (1+ screen-row)
-            :do
-            (when (lem::same-line-p point end)
-              (disp-set-line screen attribute i 0 (point-charpos end))
-              (return))
-            (disp-set-line screen attribute i 0 nil)
-            (unless (lem::line-offset point 1)
-              (return-from disp-set-overlay))))))
+	 :do
+	 (when (lem::same-line-p point end)
+	   (disp-set-line screen attribute i 0 (point-charpos end))
+	   (return))
+	 (disp-set-line screen attribute i 0 nil)
+	 (unless (lem::line-offset point 1)
+	   (return-from disp-set-overlay))))))
 
 (defun disp-set-overlays (screen overlays view-point)
   (let ((view-end-point
@@ -236,58 +236,58 @@
            (or (lem::line-offset view-point (screen-height screen))
                (lem::buffer-end view-point)))))
     (loop :for overlay :in overlays
-          :for start := (overlay-start overlay)
-          :for end := (overlay-end overlay)
-          :do (cond
-                ((and (lem::same-line-p start end)
-                      (point<= view-point start)
-                      (point< start view-end-point))
-                 (disp-set-line screen
-                                (overlay-attribute overlay)
-                                (1- (lem::count-lines view-point start))
-                                (point-charpos start)
-                                (point-charpos end)))
-                ((and (point<= view-point start)
-                      (point< end view-end-point))
-                 (disp-set-overlay screen
-                                   (overlay-attribute overlay)
-                                   view-point
-                                   start
-                                   end))
-                ((and (point<= start view-point)
-                      (point<= view-point end)
-                      (point<= end view-end-point))
-                 (disp-set-overlay screen
-                                   (overlay-attribute overlay)
-                                   view-point
-                                   view-point
-                                   end))
-                ((point<= view-point start)
-                 (disp-set-overlay screen
-                                   (overlay-attribute overlay)
-                                   view-point
-                                   start
-                                   view-end-point))))))
+       :for start := (overlay-start overlay)
+       :for end := (overlay-end overlay)
+       :do (cond
+	     ((and (lem::same-line-p start end)
+		   (point<= view-point start)
+		   (point< start view-end-point))
+	      (disp-set-line screen
+			     (overlay-attribute overlay)
+			     (1- (lem::count-lines view-point start))
+			     (point-charpos start)
+			     (point-charpos end)))
+	     ((and (point<= view-point start)
+		   (point< end view-end-point))
+	      (disp-set-overlay screen
+				(overlay-attribute overlay)
+				view-point
+				start
+				end))
+	     ((and (point<= start view-point)
+		   (point<= view-point end)
+		   (point<= end view-end-point))
+	      (disp-set-overlay screen
+				(overlay-attribute overlay)
+				view-point
+				view-point
+				end))
+	     ((point<= view-point start)
+	      (disp-set-overlay screen
+				(overlay-attribute overlay)
+				view-point
+				start
+				view-end-point))))))
 
 (defun disp-reset-lines (screen buffer view-point)
   (when (eq buffer (current-buffer))
     (lem::buffer-update-mark-overlay buffer))
   (lem::with-point ((point view-point))
     (loop :for i :from 0 :below (screen-height screen)
-          :do
-          (let ((line (lem::get-line/point point)))
-            (setf (aref (screen-lines screen) i)
-                  (lem::line-string/attributes line)))
-          (unless (lem::line-offset point 1)
-            (fill (screen-lines screen) nil :start (1+ i))
-            (return))))
+       :do
+       (let ((line (lem::get-line/point point)))
+	 (setf (aref (screen-lines screen) i)
+	       (lem::line-string/attributes line)))
+       (unless (lem::line-offset point 1)
+	 (fill (screen-lines screen) nil :start (1+ i))
+	 (return))))
   (disp-set-overlays screen
                      (buffer-overlays buffer)
                      view-point))
 
 (defun screen-display-line-wrapping (screen view-charpos
-                                            visual-cursor-x visual-cursor-y
-                                            point-x point-y str/attributes)
+				     visual-cursor-x visual-cursor-y
+				     point-x point-y str/attributes)
   (when (and (< 0 view-charpos) (= point-y 0))
     (setf str/attributes
           (cons (subseq (car str/attributes) view-charpos)
@@ -300,27 +300,27 @@
     (loop :for i := (wide-index (car str/attributes)
                                 (1- (screen-width screen))
                                 :start start)
-          :while (< point-y (screen-height screen))
-          :do (cond ((null i)
-                     (disp-print-line screen point-y str/attributes t :string-start start)
-                     (return))
-                    (t
-                     (cond ((< point-y visual-cursor-y)
-                            (incf visual-cursor-y))
-                           ((= point-y visual-cursor-y)
-                            (let ((len (string-width (car str/attributes) start i)))
-                              (when (<= len visual-cursor-x)
-                                (decf visual-cursor-x len)
-                                (incf visual-cursor-y)))))
-                     (disp-print-line screen point-y str/attributes t :string-start start :string-end i)
-                     (disp-print-line screen point-y (cons "!" nil) t :start-x (1- (screen-width screen)))
-                     (incf point-y)
-                     (setf start i))))
+       :while (< point-y (screen-height screen))
+       :do (cond ((null i)
+		  (disp-print-line screen point-y str/attributes t :string-start start)
+		  (return))
+		 (t
+		  (cond ((< point-y visual-cursor-y)
+			 (incf visual-cursor-y))
+			((= point-y visual-cursor-y)
+			 (let ((len (string-width (car str/attributes) start i)))
+			   (when (<= len visual-cursor-x)
+			     (decf visual-cursor-x len)
+			     (incf visual-cursor-y)))))
+		  (disp-print-line screen point-y str/attributes t :string-start start :string-end i)
+		  (disp-print-line screen point-y (cons "!" nil) t :start-x (1- (screen-width screen)))
+		  (incf point-y)
+		  (setf start i))))
     (values visual-cursor-x visual-cursor-y point-y)))
 
 (defun screen-display-line (screen view-charpos
-                                   visual-cursor-x visual-cursor-y
-                                   point-x point-y str/attributes)
+			    visual-cursor-x visual-cursor-y
+			    point-x point-y str/attributes)
   (declare (ignore view-charpos))
   (when (= visual-cursor-y point-y)
     (setf visual-cursor-x (string-width (car str/attributes) 0 point-x)))
@@ -373,51 +373,51 @@
            (view-charpos (point-charpos view-point))
            (point-x (point-charpos cursor-point)))
       (loop :for y :from 0
-            :for i :from 0
-            :for str/attributes :across (screen-lines screen)
-            :while (< y (screen-height screen))
-            :do (cond
-                  ((and (buffer-truncate-lines buffer)
-                        (not redraw-flag)
-                        (not (null str/attributes))
-                        #1=(aref (screen-old-lines screen) i)
-                        (equal str/attributes #1#)
-                        (/= cursor-y i))
-                   (let ((n (count i wrap-lines)))
-                     (when (and (< 0 n) (<= y visual-cursor-y))
-                       (incf visual-cursor-y n))
-                     (incf y n)
-                     (dotimes (_ n)
-                       (push i (screen-wrap-lines screen)))))
-                  (str/attributes
-                   (setf (aref (screen-old-lines screen) i) str/attributes)
-                   (when (zerop (length (car str/attributes)))
-                     (charms/ll:wmove (screen-%scrwin screen) y 0)
-                     (charms/ll:wclrtoeol (screen-%scrwin screen)))
-                   (let (y2)
-                     (multiple-value-setq (visual-cursor-x visual-cursor-y y2)
-                                          (funcall disp-line-function
-                                                   screen
-                                                   view-charpos
-                                                   visual-cursor-x
-                                                   visual-cursor-y
-                                                   point-x
-                                                   y
-                                                   str/attributes))
-                     (when (buffer-truncate-lines buffer)
-                       (let ((offset (- y2 y)))
-                         (cond ((< 0 offset)
-                                (setf redraw-flag t)
-                                (dotimes (_ offset)
-                                  (push i (screen-wrap-lines screen))))
-                               ((and (= offset 0) (find i wrap-lines))
-                                (setf redraw-flag t))))
-                       (setf y y2))))
-                  (t
-                   (fill (screen-old-lines screen) nil :start i)
-                   (charms/ll:wmove (screen-%scrwin screen) y 0)
-                   (charms/ll:wclrtobot (screen-%scrwin screen))
-                   (return))))
+	 :for i :from 0
+	 :for str/attributes :across (screen-lines screen)
+	 :while (< y (screen-height screen))
+	 :do (cond
+	       ((and (buffer-truncate-lines buffer)
+		     (not redraw-flag)
+		     (not (null str/attributes))
+		     #1=(aref (screen-old-lines screen) i)
+		     (equal str/attributes #1#)
+		     (/= cursor-y i))
+		(let ((n (count i wrap-lines)))
+		  (when (and (< 0 n) (<= y visual-cursor-y))
+		    (incf visual-cursor-y n))
+		  (incf y n)
+		  (dotimes (_ n)
+		    (push i (screen-wrap-lines screen)))))
+	       (str/attributes
+		(setf (aref (screen-old-lines screen) i) str/attributes)
+		(when (zerop (length (car str/attributes)))
+		  (charms/ll:wmove (screen-%scrwin screen) y 0)
+		  (charms/ll:wclrtoeol (screen-%scrwin screen)))
+		(let (y2)
+		  (multiple-value-setq (visual-cursor-x visual-cursor-y y2)
+		    (funcall disp-line-function
+			     screen
+			     view-charpos
+			     visual-cursor-x
+			     visual-cursor-y
+			     point-x
+			     y
+			     str/attributes))
+		  (when (buffer-truncate-lines buffer)
+		    (let ((offset (- y2 y)))
+		      (cond ((< 0 offset)
+			     (setf redraw-flag t)
+			     (dotimes (_ offset)
+			       (push i (screen-wrap-lines screen))))
+			    ((and (= offset 0) (find i wrap-lines))
+			     (setf redraw-flag t))))
+		    (setf y y2))))
+	       (t
+		(fill (screen-old-lines screen) nil :start i)
+		(charms/ll:wmove (screen-%scrwin screen) y 0)
+		(charms/ll:wclrtobot (screen-%scrwin screen))
+		(return))))
       (screen-move-cursor screen visual-cursor-x visual-cursor-y))))
 
 (defun screen-redraw-separator (window)
@@ -508,21 +508,21 @@
 
 (defun get-char-1 ()
   (loop :for code := (charms/ll:getch) :do
-    (cond ((= code 410)
-           (update-display-size))
-          ((= code -1)
-           (return nil))
-          (t
-           (return
-             (let ((nbytes (utf8-bytes code)))
-               (if (= nbytes 1)
-                   (code-char code)
-                   (aref (babel:octets-to-string
-                          (coerce (cons code
-                                        (loop :repeat (1- nbytes)
-                                          :collect (charms/ll:getch)))
-                                  '(vector (unsigned-byte 8))))
-                         0))))))))
+     (cond ((= code 410)
+	    (update-display-size))
+	   ((= code -1)
+	    (return nil))
+	   (t
+	    (return
+	      (let ((nbytes (utf8-bytes code)))
+		(if (= nbytes 1)
+		    (code-char code)
+		    (aref (babel:octets-to-string
+			   (coerce (cons code
+					 (loop :repeat (1- nbytes)
+					    :collect (charms/ll:getch)))
+				   '(vector (unsigned-byte 8))))
+			  0))))))))
 
 (defun get-char (timeout)
   (etypecase timeout
@@ -532,10 +532,10 @@
               (multiple-value-bind (div mod)
                   (floor timeout num)
                 (loop :repeat div :do
-                  (multiple-value-bind (char timeout-p)
-                      (get-char num)
-                    (unless timeout-p
-                      (return char))))
+		   (multiple-value-bind (char timeout-p)
+		       (get-char num)
+		     (unless timeout-p
+		       (return char))))
                 (if (zerop mod)
                     (values #\nul t)
                     (get-char mod))))
@@ -548,8 +548,8 @@
                     (values char nil)))))))
     (null
      (loop :for char := (get-char-1) :do
-       (unless (null char)
-         (return char))))))
+	(unless (null char)
+	  (return char))))))
 
 (defun call-with-allow-interrupt (flag fn)
   (with-raw (not flag)

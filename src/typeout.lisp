@@ -5,8 +5,8 @@
           pop-up-typeout-window))
 
 (define-minor-mode typeout-mode
-  (:name "typeout"
-   :keymap *typeout-mode-keymap*))
+    (:name "typeout"
+	   :keymap *typeout-mode-keymap*))
 
 (define-key *typeout-mode-keymap* (kbd "q") 'dismiss-typeout-window)
 

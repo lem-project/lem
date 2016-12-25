@@ -34,10 +34,10 @@
 (defun minibuffer-calls-window () *minibuffer-calls-window*)
 
 (define-major-mode minibuffer-mode nil
-  (:name "minibuffer"
-   :keymap *minibuf-keymap*
-   :syntax-table (make-syntax-table
-                  :symbol-chars '(#\_ #\-))))
+    (:name "minibuffer"
+	   :keymap *minibuf-keymap*
+	   :syntax-table (make-syntax-table
+			  :symbol-chars '(#\_ #\-))))
 
 (defun minibuf-init ()
   (let* ((buffer (make-buffer " *minibuffer*"))
@@ -91,10 +91,10 @@
   (do () (nil)
     (let ((c (minibuf-read-char (format nil "~a [y/n]? " prompt))))
       (cond
-       ((char= #\y c)
-        (return t))
-       ((char= #\n c)
-        (return nil))))))
+	((char= #\y c)
+	 (return t))
+	((char= #\n c)
+	 (return nil))))))
 
 (define-key *minibuf-keymap* (kbd "C-j") 'minibuf-read-line-confirm)
 (define-key *minibuf-keymap* (kbd "C-m") 'minibuf-read-line-confirm)
@@ -179,13 +179,13 @@
         (let ((cmd (read-key-command)))
           (handler-case (cmd-call cmd nil)
             (editor-abort (c)
-                          (when (/= (editor-abort-depth c)
-                                    *minibuf-read-line-depth*)
-                            (error c)))
+	      (when (/= (editor-abort-depth c)
+			*minibuf-read-line-depth*)
+		(error c)))
             (read-only-error ()
-                      (message "Read Only"))
+	      (message "Read Only"))
             (editor-error (c)
-                          (message (editor-error-message c)))))))
+	      (message (editor-error-message c)))))))
     (let ((str (get-minibuffer-string)))
       (add-history *minibuf-read-line-history* str)
       str)))
@@ -236,7 +236,7 @@
                      (insert-string minibuf-buffer-prev-string)
                      (move-point (current-point) minibuf-buffer-prev-point))))))))
       (editor-abort (c)
-                    (error c)))))
+	(error c)))))
 
 (defun minibuf-read-string (prompt &optional initial)
   (minibuf-read-line prompt (or initial "") nil nil 'mh-read-string))

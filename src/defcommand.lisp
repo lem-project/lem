@@ -19,45 +19,45 @@
     (defun define-command-gen-args (name arg-descripters)
       (declare (ignorable name))
       (cond
-       ((string= "p" (car arg-descripters))
-        `(list (or ,garg 1)))
-       ((string= "P" (car arg-descripters))
-        `(list ,garg))
-       ((string= "r" (car arg-descripters))
-        `(progn
-           (check-marked)
-           (list (region-beginning) (region-end))))
-       (t
-        (cons 'list
-              (mapcar #'(lambda (arg-descripter)
-                          (cond
-                           ((char= #\s (aref arg-descripter 0))
-                            `(minibuf-read-string ,(subseq arg-descripter 1)))
-                           ((char= #\n (aref arg-descripter 0))
-                            `(minibuf-read-number ,(subseq arg-descripter 1)))
-                           ((char= #\b (aref arg-descripter 0))
-                            `(minibuf-read-buffer ,(subseq arg-descripter 1)
-                                                  (buffer-name (current-buffer))
-                                                  t))
-                           ((char= #\B (aref arg-descripter 0))
-                            `(minibuf-read-buffer ,(subseq arg-descripter 1)
-                                                  (buffer-name (other-buffer))
-                                                  nil))
-                           ((char= #\f (aref arg-descripter 0))
-                            `(minibuf-read-file
-                              ,(subseq arg-descripter 1)
-                              (buffer-directory)
-                              nil
-                              t))
-                           ((char= #\F (aref arg-descripter 0))
-                            `(minibuf-read-file
-                              ,(subseq arg-descripter 1)
-                              (buffer-directory)
-                              nil
-                              nil))
-                           (t
-                            (error "Illegal arg-descripter: ~a" arg-descripter))))
-                      arg-descripters)))))
+	((string= "p" (car arg-descripters))
+	 `(list (or ,garg 1)))
+	((string= "P" (car arg-descripters))
+	 `(list ,garg))
+	((string= "r" (car arg-descripters))
+	 `(progn
+	    (check-marked)
+	    (list (region-beginning) (region-end))))
+	(t
+	 (cons 'list
+	       (mapcar #'(lambda (arg-descripter)
+			   (cond
+			     ((char= #\s (aref arg-descripter 0))
+			      `(minibuf-read-string ,(subseq arg-descripter 1)))
+			     ((char= #\n (aref arg-descripter 0))
+			      `(minibuf-read-number ,(subseq arg-descripter 1)))
+			     ((char= #\b (aref arg-descripter 0))
+			      `(minibuf-read-buffer ,(subseq arg-descripter 1)
+						    (buffer-name (current-buffer))
+						    t))
+			     ((char= #\B (aref arg-descripter 0))
+			      `(minibuf-read-buffer ,(subseq arg-descripter 1)
+						    (buffer-name (other-buffer))
+						    nil))
+			     ((char= #\f (aref arg-descripter 0))
+			      `(minibuf-read-file
+				,(subseq arg-descripter 1)
+				(buffer-directory)
+				nil
+				t))
+			     ((char= #\F (aref arg-descripter 0))
+			      `(minibuf-read-file
+				,(subseq arg-descripter 1)
+				(buffer-directory)
+				nil
+				nil))
+			     (t
+			      (error "Illegal arg-descripter: ~a" arg-descripter))))
+		       arg-descripters)))))
     (defun define-command-gen-cmd (cmd-name fn-name parms arg-descripters)
       `(defun ,cmd-name (,garg)
          (declare (ignorable ,garg))

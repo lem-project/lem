@@ -341,18 +341,18 @@
 (define-command delete-blank-lines () ()
   (let ((point (current-point)))
     (loop
-      (unless (blank-line-p point)
-        (line-offset point 1)
-        (return))
-      (unless (line-offset point -1)
-        (return)))
+       (unless (blank-line-p point)
+	 (line-offset point 1)
+	 (return))
+       (unless (line-offset point -1)
+	 (return)))
     (loop
-      (when (end-buffer-p point)
-        (return))
-      (let ((nblanks (blank-line-p point)))
-        (if nblanks
-            (delete-char-at point nblanks)
-            (return))))))
+       (when (end-buffer-p point)
+	 (return))
+       (let ((nblanks (blank-line-p point)))
+	 (if nblanks
+	     (delete-char-at point nblanks)
+	     (return))))))
 
 (define-key *global-keymap* (kbd "M-Spc") 'just-one-space)
 (define-command just-one-space () ()
@@ -451,12 +451,12 @@
                (with-output-to-string (output)
                  (with-input-from-string (input string)
                    (multiple-value-setq
-                    (output-value error-output-value status)
-                    (uiop:run-program (format nil "cd ~A; ~A" (buffer-directory buffer) cmd)
-                                      :input input
-                                      :output output
-                                      :error-output output
-                                      :ignore-error-status t))))))
+		       (output-value error-output-value status)
+		     (uiop:run-program (format nil "cd ~A; ~A" (buffer-directory buffer) cmd)
+				       :input input
+				       :output output
+				       :error-output output
+				       :ignore-error-status t))))))
           (delete-between-points start end)
           (insert-string-at start output-string)
           (message "~D ~A" status error-output-value)
@@ -473,15 +473,15 @@
 
 (define-command delete-trailing-whitespace () ()
   (save-excursion
-   (beginning-of-buffer)
-   (loop until (eobp) do
-     (loop
-       (end-of-line)
-       (let ((c (preceding-char)))
-         (if (or (equal c #\space)
-                 (equal c #\tab))
-             (delete-char -1 nil)
-             (return))))
-     (forward-line 1))
-   (end-of-buffer)
-   (delete-blank-lines)))
+    (beginning-of-buffer)
+    (loop until (eobp) do
+	 (loop
+	    (end-of-line)
+	    (let ((c (preceding-char)))
+	      (if (or (equal c #\space)
+		      (equal c #\tab))
+		  (delete-char -1 nil)
+		  (return))))
+	 (forward-line 1))
+    (end-of-buffer)
+    (delete-blank-lines)))

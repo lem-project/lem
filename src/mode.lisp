@@ -14,11 +14,11 @@
 (defvar *mode-list* nil)
 
 (macrolet ((def (name)
-                `(progn
-                   (defun ,name (mode)
-                     (get mode ',name))
-                   (defun (setf ,name) (new-val mode)
-                     (setf (get mode ',name) new-val)))))
+	     `(progn
+		(defun ,name (mode)
+		  (get mode ',name))
+		(defun (setf ,name) (new-val mode)
+		  (setf (get mode ',name) new-val)))))
   (def mode-name)
   (def mode-keymap)
   (def mode-syntax-table))
@@ -92,6 +92,6 @@
 
 (defun change-buffer-mode (buffer mode &rest args)
   (save-excursion
-   (setf (current-buffer) buffer)
-   (apply mode args))
+    (setf (current-buffer) buffer)
+    (apply mode args))
   buffer)

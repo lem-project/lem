@@ -20,12 +20,12 @@
                     (not (funcall endp point)))
                    (t
                     (loop :until (funcall endp point) :do
-                          (unless (funcall step point)
-                            (return nil))
-                          (let ((res (funcall search point)))
-                            (when res
-                              (funcall move-matched point res)
-                              (return t)))))))))
+		       (unless (funcall step point)
+			 (return nil))
+		       (let ((res (funcall search point)))
+			 (when res
+			   (funcall move-matched point res)
+			   (return t)))))))))
       (unless result
         (move-point point start-point))
       result)))
@@ -53,7 +53,7 @@
   (let ((nlines (count #\newline string)))
     (flet ((take-string (point)
              (with-point ((start-point point)
-                           (end-point point))
+			  (end-point point))
                (points-to-string (line-start start-point)
                                  (line-end (or (line-offset end-point nlines)
                                                (buffer-end end-point)))))))
@@ -152,15 +152,15 @@
 
 (defun search-symbol (string name &key (start 0) (end (length string)) from-end)
   (loop :while (< start end)
-        :do (let ((pos (search name string :start2 start :end2 end :from-end from-end)))
-              (when pos
-                (let ((pos2 (+ pos (length name))))
-                  (when (and (or (zerop pos)
-                                 (not (syntax-symbol-char-p (aref string (1- pos)))))
-                             (or (>= pos2 (length string))
-                                 (not (syntax-symbol-char-p (aref string pos2)))))
-                    (return (cons pos pos2)))))
-              (setf start (1+ (or pos start))))))
+     :do (let ((pos (search name string :start2 start :end2 end :from-end from-end)))
+	   (when pos
+	     (let ((pos2 (+ pos (length name))))
+	       (when (and (or (zerop pos)
+			      (not (syntax-symbol-char-p (aref string (1- pos)))))
+			  (or (>= pos2 (length string))
+			      (not (syntax-symbol-char-p (aref string pos2)))))
+		 (return (cons pos pos2)))))
+	   (setf start (1+ (or pos start))))))
 
 (defun search-forward-symbol (point name &optional limit-point)
   (let ((charpos (point-charpos point)))
@@ -194,9 +194,9 @@
 
 (defun looking-at-line (regex &key (start nil startp) (end nil endp))
   (macrolet ((m (&rest args)
-                `(ppcre:scan-to-strings regex
-                                        (line-string-at (current-point))
-                                        ,@args)))
+	       `(ppcre:scan-to-strings regex
+				       (line-string-at (current-point))
+				       ,@args)))
     (cond ((and startp endp)
            (m :start start :end end))
           (startp

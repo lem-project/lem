@@ -360,13 +360,13 @@
               (add-pair -1 (color-number fg-color)))))
 
         (loop :for pair :from 1 :to 255
-              :for fg-color :in *colors*
-              :do (charms/ll:init-pair pair
-                                       (color-number fg-color)
-                                       -1)
-              :do (setf (gethash (color-number fg-color)
-                                 *color-pair-table*)
-                        (charms/ll:color-pair pair))))
+	   :for fg-color :in *colors*
+	   :do (charms/ll:init-pair pair
+				    (color-number fg-color)
+				    -1)
+	   :do (setf (gethash (color-number fg-color)
+			      *color-pair-table*)
+		     (charms/ll:color-pair pair))))
     t))
 
 ;;;

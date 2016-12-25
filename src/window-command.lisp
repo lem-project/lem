@@ -53,8 +53,8 @@
 (define-key *global-keymap* (kbd "C-x o") 'other-window)
 (define-command other-window (&optional (n 1)) ("p")
   (let ((window-list
-          (append (mklist (active-minibuffer-window))
-                  (window-list))))
+	 (append (mklist (active-minibuffer-window))
+		 (window-list))))
     (when (minusp n)
       (setf n (- (length window-list) (abs n))))
     (dotimes (_ n t)

@@ -27,15 +27,15 @@
 
 (defun kill-push (string)
   (cond
-   (*kill-new-flag*
-    (push string *kill-ring*)
-    (when (nthcdr *kill-ring-max* *kill-ring*)
-      (setq *kill-ring*
-            (subseq *kill-ring* 0 *kill-ring-max*)))
-    (setq *kill-ring-yank-ptr* *kill-ring*)
-    (setq *kill-new-flag* nil))
-   (t
-    (kill-append string *kill-before-p*)))
+    (*kill-new-flag*
+     (push string *kill-ring*)
+     (when (nthcdr *kill-ring-max* *kill-ring*)
+       (setq *kill-ring*
+	     (subseq *kill-ring* 0 *kill-ring-max*)))
+     (setq *kill-ring-yank-ptr* *kill-ring*)
+     (setq *kill-new-flag* nil))
+    (t
+     (kill-append string *kill-before-p*)))
   t)
 
 (defun kill-ring-nth (n)

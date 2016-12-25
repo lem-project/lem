@@ -71,14 +71,14 @@
     :accessor buffer-stream-point)))
 
 (defun make-buffer-stream-instance (class-name point
-                                               &optional
-                                               interactive-update-p)
+				    &optional
+				      interactive-update-p)
   (make-instance class-name
                  :point (copy-point point :left-inserting)
                  :interactive-update-p interactive-update-p))
 
 (defun make-buffer-output-stream (&optional (point (current-point))
-                                            interactive-update-p)
+				    interactive-update-p)
   (make-buffer-stream-instance 'buffer-output-stream
                                point interactive-update-p))
 
@@ -113,11 +113,11 @@
 (defmethod trivial-gray-streams:stream-write-char ((stream buffer-output-stream) char)
   (prog1 char
     (insert-char/point (buffer-stream-point stream)
-                        char)))
+		       char)))
 
 (defun %write-string-to-buffer-stream (stream string start end &key)
   (insert-string/point (buffer-stream-point stream)
-                        (subseq string start end))
+		       (subseq string start end))
   string)
 
 (defun %write-octets-to-buffer-stream (stream octets start end &key)
@@ -143,7 +143,7 @@
 
 (defmethod trivial-gray-streams:stream-terpri ((stream buffer-output-stream))
   (prog1 (insert-char/point (buffer-stream-point stream)
-                             #\newline)
+			    #\newline)
     (buffer-output-stream-refresh stream)))
 
 (defmethod trivial-gray-streams:stream-finish-output ((stream buffer-output-stream))
@@ -172,8 +172,8 @@
            (let ((string
                   (handler-case (values (minibuf-read-string "") t)
                     (editor-abort ()
-                                  (setf (minibuffer-input-stream-queue stream) nil)
-                                  (return-from trivial-gray-streams:stream-read-char :eof)))))
+		      (setf (minibuffer-input-stream-queue stream) nil)
+		      (return-from trivial-gray-streams:stream-read-char :eof)))))
              (setf (minibuffer-input-stream-queue stream)
                    (nconc (minibuffer-input-stream-queue stream)
                           (coerce string 'list)

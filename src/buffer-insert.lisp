@@ -85,8 +85,8 @@
   (let ((new-plist '()))
     (flet ((f (plist)
              (loop :for (k v) :on plist :by #'cddr
-                   :do (setf (getf new-plist k)
-                             (nconc (getf new-plist k) v)))))
+		:do (setf (getf new-plist k)
+			  (nconc (getf new-plist k) v)))))
       (f plist1)
       (f plist2))
     new-plist))
@@ -108,13 +108,13 @@
             (merge-plist
              (line-plist line)
              (loop :for (key elements) :on (line-plist (line-next line)) :by #'cddr
-                   :append (let ((new-elements
-                                  (loop :for (start end value) :in elements
-                                        :collect (list (+ start charpos)
-                                                       (+ end charpos)
-                                                       value))))
-                             (when new-elements
-                               (list key new-elements)))))))))
+		:append (let ((new-elements
+			       (loop :for (start end value) :in elements
+				  :collect (list (+ start charpos)
+						 (+ end charpos)
+						 value))))
+			  (when new-elements
+			    (list key new-elements)))))))))
 
 (defun %insert-newline/point (point linum charpos)
   (let* ((buffer (point-buffer point))
@@ -136,8 +136,8 @@
       (cond
         ((char= char #\newline)
          (%insert-newline/point point
-                                 (point-linum point)
-                                 (point-charpos point)))
+				(point-linum point)
+				(point-charpos point)))
         (t
          (let ((line (get-line/point point))
                (charpos (point-charpos point)))
@@ -165,17 +165,17 @@
   (:method (point string)
     (with-modify-buffer (point-buffer point)
       (loop :with start := 0
-            :for pos := (position #\newline string :start start)
-            :for linum :from (point-linum point) :by 1
-            :for charpos := (point-charpos point) :then 0
-            :do (if (null pos)
-                    (progn
-                      (%insert-line-string/point point linum charpos (subseq string start))
-                      (return))
-                    (let ((substr (subseq string start pos)))
-                      (%insert-line-string/point point linum charpos substr)
-                      (%insert-newline/point point linum (+ charpos (length substr)))
-                      (setf start (1+ pos))))))
+	 :for pos := (position #\newline string :start start)
+	 :for linum :from (point-linum point) :by 1
+	 :for charpos := (point-charpos point) :then 0
+	 :do (if (null pos)
+		 (progn
+		   (%insert-line-string/point point linum charpos (subseq string start))
+		   (return))
+		 (let ((substr (subseq string start pos)))
+		   (%insert-line-string/point point linum charpos substr)
+		   (%insert-newline/point point linum (+ charpos (length substr)))
+		   (setf start (1+ pos))))))
     string))
 
 (defun %delete-line-between/point (point start end)
@@ -224,18 +224,18 @@
               (line (get-line/point point)))
           (declare (special buffer line))
           (loop :while (or (eq n 'T) (plusp n))
-                :for eolp := (or (eq n 'T)
-                                 (> n (- (line-length line) charpos)))
-                :do (check-read-only-at-point point (if (eq n 'T) nil (if eolp n nil)))
-                :do (cond
-                      ((not eolp)
-                       (%delete-line-between/point point charpos (+ charpos n))
-                       (return))
-                      ((null (line-next line))
-                       (%delete-line-eol/point point charpos)
-                       (return))
-                      (t
-                       (%delete-line/point point charpos)))))))))
+	     :for eolp := (or (eq n 'T)
+			      (> n (- (line-length line) charpos)))
+	     :do (check-read-only-at-point point (if (eq n 'T) nil (if eolp n nil)))
+	     :do (cond
+		   ((not eolp)
+		    (%delete-line-between/point point charpos (+ charpos n))
+		    (return))
+		   ((null (line-next line))
+		    (%delete-line-eol/point point charpos)
+		    (return))
+		   (t
+		    (%delete-line/point point charpos)))))))))
 
 (defmethod insert-char/point :around (point char)
   (let ((save-point (copy-point point :temporary)))

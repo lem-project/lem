@@ -14,27 +14,27 @@
 (defun parse-pathname (pathname)
   (let ((path))
     (loop
-      (let ((pos (position #\/ pathname)))
-        (when (null pos)
-          (push pathname path)
-          (return))
-        (let ((str (subseq pathname 0 pos)))
-          (setq pathname (subseq pathname (1+ pos)))
-          (cond ((string= str "."))
-                ((string= str "..")
-                 (pop path))
-                ((string= str "~")
-                 (setq path
-                       (nreverse
-                        (parse-pathname
-                         (string-right-trim
-                          '(#\/)
-                          (namestring
-                           (user-homedir-pathname)))))))
-                ((string= str "")
-                 (setq path nil))
-                (t
-                 (push str path))))))
+       (let ((pos (position #\/ pathname)))
+	 (when (null pos)
+	   (push pathname path)
+	   (return))
+	 (let ((str (subseq pathname 0 pos)))
+	   (setq pathname (subseq pathname (1+ pos)))
+	   (cond ((string= str "."))
+		 ((string= str "..")
+		  (pop path))
+		 ((string= str "~")
+		  (setq path
+			(nreverse
+			 (parse-pathname
+			  (string-right-trim
+			   '(#\/)
+			   (namestring
+			    (user-homedir-pathname)))))))
+		 ((string= str "")
+		  (setq path nil))
+		 (t
+		  (push str path))))))
     (nreverse path)))
 
 (defun expand-file-name (pathname &optional directory)
@@ -77,20 +77,20 @@
     (with-open-stream (output (make-buffer-output-stream point nil))
       (with-open-file (in filename :external-format external-format)
         (loop
-          (multiple-value-bind (str eof-p)
-              (read-line in nil)
-            (cond
-              (eof-p
-               (when str
-                 (write-string str output))
-               (return))
-              (t
-               (let ((end nil))
-                 #+sbcl
-                 (when (and (eq end-of-line :crlf)
-                            (< 0 (length str)))
-                   (setf end (1- (length str))))
-                 (write-line str output :end end)))))))
+	   (multiple-value-bind (str eof-p)
+	       (read-line in nil)
+	     (cond
+	       (eof-p
+		(when str
+		  (write-string str output))
+		(return))
+	       (t
+		(let ((end nil))
+		  #+sbcl
+		  (when (and (eq end-of-line :crlf)
+			     (< 0 (length str)))
+		    (setf end (1- (length str))))
+		  (write-line str output :end end)))))))
       (setf (buffer-external-format (point-buffer point))
             (cons external-format end-of-line))
       point)))
@@ -121,15 +121,15 @@
     (when (ppcre:scan "^#!" (line-string-at cur-point))
       (line-offset cur-point 1))
     (loop :until (end-line-p cur-point)
-          :for string := (line-string-at cur-point)
-          :do (ppcre:register-groups-bind (result)
-                  ("-\\*-(.*)-\\*-" string)
-                (when result
-                  (scan-line-property-list buffer result)
-                  (return)))
-          :do (if (string= "" (string-trim '(#\space #\tab) string))
-                  (line-offset cur-point 1)
-                  (return)))))
+       :for string := (line-string-at cur-point)
+       :do (ppcre:register-groups-bind (result)
+	       ("-\\*-(.*)-\\*-" string)
+	     (when result
+	       (scan-line-property-list buffer result)
+	       (return)))
+       :do (if (string= "" (string-trim '(#\space #\tab) string))
+	       (line-offset cur-point 1)
+	       (return)))))
 
 (defun find-file-buffer (filename)
   (when (pathnamep filename)
@@ -165,23 +165,23 @@
   (flet ((f (out end-of-line)
            (with-open-stream (in (make-buffer-input-stream (buffers-start buffer)))
              (loop
-               (multiple-value-bind (str eof-p)
-                   (read-line in nil)
-                 (unless str (return))
-                 (princ str out)
-                 (unless eof-p
-                   #+sbcl
-                   (ecase end-of-line
-                     ((:crlf)
-                      (princ #\return out)
-                      (princ #\newline out))
-                     ((:lf)
-                      (princ #\newline out))
-                     ((:cr)
-                      (princ #\return out)))
-                   #-sbcl
-                   (princ #\newline out)
-                   ))))))
+		(multiple-value-bind (str eof-p)
+		    (read-line in nil)
+		  (unless str (return))
+		  (princ str out)
+		  (unless eof-p
+		    #+sbcl
+		    (ecase end-of-line
+		      ((:crlf)
+		       (princ #\return out)
+		       (princ #\newline out))
+		      ((:lf)
+		       (princ #\newline out))
+		      ((:cr)
+		       (princ #\return out)))
+		    #-sbcl
+		    (princ #\newline out)
+		    ))))))
     (cond
       ((buffer-external-format buffer)
        (with-open-file (out filename

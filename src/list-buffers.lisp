@@ -5,8 +5,8 @@
 (in-package :lem.list-buffers)
 
 (define-major-mode list-buffers-mode nil
-  (:name "List Buffers"
-   :keymap *list-buffers-keymap*))
+    (:name "List Buffers"
+	   :keymap *list-buffers-keymap*))
 
 (define-key *list-buffers-keymap* (kbd "q") 'quit-window)
 

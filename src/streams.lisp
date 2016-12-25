@@ -13,18 +13,18 @@
   ((unread-char
     :initform nil
     :accessor buffer-input-stream-unread-char)
-   (marker
-    :initarg :marker
-    :accessor buffer-stream-marker)))
+   (point
+    :initarg :point
+    :accessor buffer-stream-point)))
 
-(defun make-buffer-input-stream (&optional (marker (current-point)))
+(defun make-buffer-input-stream (&optional (point (current-point)))
   (make-instance 'buffer-input-stream
-                 :marker (copy-point marker :temporary)))
+                 :point (copy-point point :temporary)))
 
 #+nil
 (defmethod trivial-gray-streams::close ((stream buffer-input-stream) &key abort)
   (declare (ignore abort))
-  (delete-point (buffer-stream-marker stream))
+  (delete-point (buffer-stream-point stream))
   t)
 
 (defmethod trivial-gray-streams:stream-read-char ((stream buffer-input-stream))
@@ -33,12 +33,12 @@
                   (setf (buffer-input-stream-unread-char stream) nil)
                   character)
                  (t
-                  (character-at (buffer-stream-marker stream))))
-      (character-offset (buffer-stream-marker stream) 1))))
+                  (character-at (buffer-stream-point stream))))
+      (character-offset (buffer-stream-point stream) 1))))
 
 (defmethod trivial-gray-streams:stream-unread-char ((stream buffer-input-stream) character)
   (setf (buffer-input-stream-unread-char stream) character)
-  (character-offset (buffer-stream-marker stream) -1)
+  (character-offset (buffer-stream-point stream) -1)
   nil)
 
 #+nil
@@ -46,18 +46,18 @@
   )
 
 (defmethod trivial-gray-streams:stream-peek-char ((stream buffer-input-stream))
-  (character-at (buffer-stream-marker stream)))
+  (character-at (buffer-stream-point stream)))
 
 (defmethod trivial-gray-streams:stream-listen ((stream buffer-input-stream))
-  (end-buffer-p (buffer-stream-marker stream)))
+  (end-buffer-p (buffer-stream-point stream)))
 
 (defmethod trivial-gray-streams:stream-read-line ((stream buffer-input-stream))
-  (let ((start (copy-point (buffer-stream-marker stream) :temporary)))
+  (let ((start (copy-point (buffer-stream-point stream) :temporary)))
     (let ((string (points-to-string
                    start
-                   (line-end (buffer-stream-marker stream)))))
+                   (line-end (buffer-stream-point stream)))))
       (values string
-              (not (line-offset (buffer-stream-marker stream) 1))))))
+              (not (line-offset (buffer-stream-point stream) 1))))))
 
 (defmethod trivial-gray-streams:stream-clear-input ((stream buffer-input-stream))
   nil)
@@ -66,37 +66,37 @@
   ((interactive-update-p
     :initarg :interactive-update-p
     :accessor buffer-output-stream-interactive-update-p)
-   (marker
-    :initarg :marker
-    :accessor buffer-stream-marker)))
+   (point
+    :initarg :point
+    :accessor buffer-stream-point)))
 
-(defun make-buffer-stream-instance (class-name marker
+(defun make-buffer-stream-instance (class-name point
                                                &optional
                                                interactive-update-p)
   (make-instance class-name
-                 :marker (copy-point marker :left-inserting)
+                 :point (copy-point point :left-inserting)
                  :interactive-update-p interactive-update-p))
 
-(defun make-buffer-output-stream (&optional (marker (current-point))
+(defun make-buffer-output-stream (&optional (point (current-point))
                                             interactive-update-p)
   (make-buffer-stream-instance 'buffer-output-stream
-                               marker interactive-update-p))
+                               point interactive-update-p))
 
 (defmethod trivial-gray-streams::close ((stream buffer-output-stream) &key abort)
   (declare (ignore abort))
-  (delete-point (buffer-stream-marker stream))
+  (delete-point (buffer-stream-point stream))
   t)
 
 (defmethod stream-element-type ((stream buffer-output-stream))
   'line)
 
 (defmethod trivial-gray-streams:stream-line-column ((stream buffer-output-stream))
-  (point-charpos (buffer-stream-marker stream)))
+  (point-charpos (buffer-stream-point stream)))
 
 (defun buffer-output-stream-refresh (stream)
   (when (buffer-output-stream-interactive-update-p stream)
-    (let ((buffer (point-buffer (buffer-stream-marker stream)))
-          (point (buffer-stream-marker stream)))
+    (let ((buffer (point-buffer (buffer-stream-point stream)))
+          (point (buffer-stream-point stream)))
       (display-buffer buffer)
       (dolist (window (get-buffer-windows buffer))
         (move-point (buffer-point (window-buffer window)) point))
@@ -104,7 +104,7 @@
   nil)
 
 (defmethod trivial-gray-streams:stream-fresh-line ((stream buffer-output-stream))
-  (unless (zerop (point-charpos (buffer-stream-marker stream)))
+  (unless (zerop (point-charpos (buffer-stream-point stream)))
     (trivial-gray-streams:stream-terpri stream)))
 
 (defmethod trivial-gray-streams:stream-write-byte ((stream buffer-output-stream) byte)
@@ -112,11 +112,11 @@
 
 (defmethod trivial-gray-streams:stream-write-char ((stream buffer-output-stream) char)
   (prog1 char
-    (insert-char/point (buffer-stream-marker stream)
+    (insert-char/point (buffer-stream-point stream)
                         char)))
 
 (defun %write-string-to-buffer-stream (stream string start end &key)
-  (insert-string/point (buffer-stream-marker stream)
+  (insert-string/point (buffer-stream-point stream)
                         (subseq string start end))
   string)
 
@@ -142,7 +142,7 @@
   (%write-string-to-buffer-stream stream string start end))
 
 (defmethod trivial-gray-streams:stream-terpri ((stream buffer-output-stream))
-  (prog1 (insert-char/point (buffer-stream-marker stream)
+  (prog1 (insert-char/point (buffer-stream-point stream)
                              #\newline)
     (buffer-output-stream-refresh stream)))
 
@@ -209,6 +209,6 @@
 (defclass editor-io-stream (buffer-output-stream minibuffer-input-stream)
   ())
 
-(defun make-editor-io-stream (marker &optional interactive-update-p)
+(defun make-editor-io-stream (point &optional interactive-update-p)
   (make-buffer-stream-instance 'editor-io-stream
-                               marker interactive-update-p))
+                               point interactive-update-p))

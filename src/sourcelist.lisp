@@ -18,7 +18,7 @@
   (let ((buffer (get-buffer-create buffer-name))
         (sourcelist (make-sourcelist :buffer-name buffer-name)))
     (erase-buffer buffer)
-    (lem::with-marker ((*sourcelist-marker* (lem::buffer-point-marker buffer) :left-inserting))
+    (lem::with-point ((*sourcelist-marker* (lem::buffer-point-marker buffer) :left-inserting))
       (funcall function sourcelist))
     (change-buffer-mode buffer 'sourcelist-mode t)
     (display-buffer buffer)
@@ -32,7 +32,7 @@
 
 (defun append-sourcelist (sourcelist write-function jump-function)
   (let ((marker *sourcelist-marker*))
-    (lem::with-marker ((start-marker marker))
+    (lem::with-point ((start-marker marker))
       (funcall write-function marker)
       (lem::insert-char-at marker #\newline)
       (when jump-function

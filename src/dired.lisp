@@ -84,7 +84,7 @@
     (lem::line-start point)))
 
 (define-command dired-next-directory-line (n) ("p")
-  (lem::with-marker ((cur-marker (current-point)))
+  (lem::with-point ((cur-marker (current-point)))
     (loop
       (when (dired-last-line-p cur-marker)
         (return))
@@ -95,7 +95,7 @@
         (return)))))
 
 (define-command dired-previous-directory-line (n) ("p")
-  (lem::with-marker ((cur-marker (current-point)))
+  (lem::with-point ((cur-marker (current-point)))
     (loop
       (when (dired-first-line-p cur-marker)
         (return))
@@ -264,7 +264,7 @@
   (with-buffer-read-only buffer nil
     (erase-buffer buffer)
     (let ((dirname (probe-file (buffer-directory buffer))))
-      (lem::with-marker ((cur-marker (lem::buffer-point-marker buffer) :left-inserting))
+      (lem::with-point ((cur-marker (lem::buffer-point-marker buffer) :left-inserting))
         (lem::insert-string-at cur-marker
                                (lem.text-property::make-text-property
                                 (namestring dirname)
@@ -290,7 +290,7 @@
                                             (aref end-groups index))
                                     dirname))
                          (start-file-charpos (+ 2 (aref start-groups index))))
-                    (lem::with-marker ((start-marker (lem::line-start cur-marker))
+                    (lem::with-point ((start-marker (lem::line-start cur-marker))
                                        (end-marker (lem::line-end cur-marker)))
                       (case (char string 0)
                         (#\l

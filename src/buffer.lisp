@@ -452,7 +452,7 @@
 
 (defun buffer-update-mark-overlay (buffer)
   (when (buffer-mark-p buffer)
-    (with-marker ((start (buffer-point-marker buffer))
+    (with-point ((start (buffer-point-marker buffer))
                   (end (buffer-mark-marker buffer)))
       (when (point< end start)
         (rotatef start end))

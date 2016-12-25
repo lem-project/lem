@@ -159,7 +159,7 @@
          (mode-syntax-table
           (buffer-major-mode
            (point-buffer point)))))
-    (with-marker ((prev point))
+    (with-point ((prev point))
       (cond ((plusp n)
              (dotimes (_ n point)
                (unless (%form-offset-positive point)
@@ -176,7 +176,7 @@
          (mode-syntax-table
           (buffer-major-mode
            (point-buffer point)))))
-    (with-marker ((prev point))
+    (with-point ((prev point))
       (cond ((plusp n)
              (dotimes (_ n point)
                (unless (%skip-list-forward point depth)
@@ -194,7 +194,7 @@
 
 (define-key *global-keymap* (kbd "C-M-f") 'forward-sexp)
 (define-command forward-sexp (&optional (n 1) no-errors) ("p")
-  (with-marker ((prev (current-point)))
+  (with-point ((prev (current-point)))
     (let ((point (form-offset (current-point) n)))
       (or point
           (progn
@@ -239,7 +239,7 @@
 
 (define-key *global-keymap* (kbd "C-M-t") 'transpose-sexps)
 (define-command transpose-sexps () ()
-  (with-marker ((point1 (current-point) :left-inserting)
+  (with-point ((point1 (current-point) :left-inserting)
                 (point2 (current-point) :left-inserting))
     (let ((form-string1
            (let ((start (form-offset point1 -1))

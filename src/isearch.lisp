@@ -113,9 +113,9 @@
     (skip-chars-forward point #'syntax-symbol-char-p)
     (skip-chars-backward point #'syntax-symbol-char-p t)
     (skip-chars-backward point #'syntax-symbol-char-p)
-    (lem::with-marker ((start point))
+    (lem::with-point ((start point))
       (skip-chars-forward point #'syntax-symbol-char-p)
-      (lem::with-marker ((end point))
+      (lem::with-point ((end point))
         (isearch-start "ISearch Symbol: "
                        #'search-forward-symbol
                        #'search-forward-symbol
@@ -195,7 +195,7 @@
   (isearch-reset-buffer)
   (unless (equal search-string "")
     (window-see (current-window))
-    (lem::with-marker ((cur-marker (lem::window-view-marker (current-window)))
+    (lem::with-point ((cur-marker (lem::window-view-marker (current-window)))
                        (limit-marker (or (lem::line-offset
                                           (copy-point (lem::window-view-marker (current-window))
                                                        :temporary)
@@ -205,7 +205,7 @@
                             cur-marker
                             search-string
                             limit-marker)
-            :do (let ((start-marker (lem::with-marker ((temp-marker cur-marker :temporary))
+            :do (let ((start-marker (lem::with-point ((temp-marker cur-marker :temporary))
                                       (funcall *isearch-search-backward-function*
                                                temp-marker
                                                search-string)
@@ -224,7 +224,7 @@
                      *isearch-string*
                      (string c)))
   (isearch-update-display)
-  (lem::with-marker ((start-marker (current-point)))
+  (lem::with-point ((start-marker (current-point)))
     (unless (funcall *isearch-search-function* (current-point) *isearch-string*)
       (lem::move-point (current-point) start-marker)))
   t)
@@ -272,10 +272,10 @@
         (when goal-marker
           (lem::move-point (current-point) goal-marker))
         (return))
-      (lem::with-marker ((end cur-marker))
+      (lem::with-point ((end cur-marker))
         (isearch-update-buffer cur-marker before)
         (funcall *isearch-search-backward-function* cur-marker before)
-        (lem::with-marker ((start cur-marker))
+        (lem::with-point ((start cur-marker))
           (loop :for c := (unless pass-through
                             (minibuf-read-char (format nil "Replace ~s with ~s" before after)))
                 :do (cond
@@ -296,7 +296,7 @@
             (buffer (current-buffer)))
         (when (and before after)
           (if (buffer-mark-p buffer)
-              (lem::with-marker ((mark-marker (lem::buffer-mark-marker buffer) :right-inserting))
+              (lem::with-point ((mark-marker (lem::buffer-mark-marker buffer) :right-inserting))
                 (if (point< mark-marker (lem::buffer-point-marker buffer))
                     (query-replace-internal-body mark-marker
                                                  (lem::buffer-point-marker buffer)

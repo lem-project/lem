@@ -385,7 +385,7 @@
                    (end (funcall (syntax-match-move-action syntax)
                                  (copy-point (current-point) :temporary))))
                (cond ((and end (point< start end))
-                      (with-marker ((cur start))
+                      (with-point ((cur start))
                         (loop :until (same-line-p cur end) :do
                               (line-clear-property line :attribute)
                               (setf (line-%region line) syntax)
@@ -497,10 +497,10 @@
       (return nil))))
 
 (defun symbol-string-at-point (point)
-  (with-marker ((point point))
+  (with-point ((point point))
     (skip-chars-backward point #'syntax-symbol-char-p)
     (unless (syntax-symbol-char-p (character-at point))
       (return-from symbol-string-at-point nil))
-    (with-marker ((start point))
+    (with-point ((start point))
       (skip-chars-forward point #'syntax-symbol-char-p)
       (points-to-string start point))))

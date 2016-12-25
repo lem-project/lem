@@ -212,7 +212,7 @@
                  (erase-buffer))
                (minibuffer-mode)
                (progn
-                 (with-marker ((start-marker (current-point))
+                 (with-point ((start-marker (current-point))
                                (cur-marker (current-point) :left-inserting))
                    (insert-string-at cur-marker prompt)
                    (put-text-property start-marker cur-marker

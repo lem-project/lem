@@ -66,7 +66,7 @@
 (define-key *global-keymap* (kbd "M-d") 'delete-word)
 (define-key *global-keymap* (kbd "C-dc") 'delete-word)
 (define-command delete-word (n) ("p")
-  (with-marker ((point (current-point)))
+  (with-point ((point (current-point)))
     (let ((start (current-point))
           (end (word-offset point n)))
       (if (point< start end)
@@ -80,7 +80,7 @@
 
 (defun case-region-aux (start end case-fun replace-char-p)
   (save-excursion
-    (with-marker ((point start :left-inserting))
+    (with-point ((point start :left-inserting))
       (loop :while (and (point< point end)
                         (not (end-buffer-p point)))
             :do (let ((c (character-at point 0)))
@@ -108,7 +108,7 @@
     (let ((c (character-at point)))
       (delete-char-at point)
       (insert-char-at point (funcall first-case c))
-      (with-marker ((end (word-offset (copy-point point :temporary) 1)))
+      (with-point ((end (word-offset (copy-point point :temporary) 1)))
         (case-region-aux point
                          end
                          rest-case
@@ -146,7 +146,7 @@
 (define-key *global-keymap* (kbd "M-k") 'kill-paragraph)
 (define-command kill-paragraph (&optional (n 1)) ("p")
   (dotimes (_ n t)
-    (with-marker ((start (current-point)))
+    (with-point ((start (current-point)))
       (forward-paragraph)
       (kill-region start
                    (current-point)))))

@@ -75,7 +75,7 @@
   (do-commandloop (:toplevel t)
     (with-error-handler ()
       (cockpit
-        (with-marker ((end (current-point)))
+        (with-point ((end (current-point)))
           (unless (line-offset end 1)
             (buffer-end end))
           (syntax-scan-lines (current-point) end))

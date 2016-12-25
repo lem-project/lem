@@ -66,7 +66,7 @@
 
 (define-key *listener-mode-keymap* (kbd "C-m") 'listener-return)
 (define-command listener-return () ()
-  (lem::with-marker ((point (lem::buffer-end (current-point)) :left-inserting))
+  (lem::with-point ((point (lem::buffer-end (current-point)) :left-inserting))
     (if (not (funcall (get-bvar :listener-check-confirm-function) point))
         (lem::insert-char-at point #\newline)
         (let ((start (listener-start-point)))

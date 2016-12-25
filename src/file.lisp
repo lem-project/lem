@@ -116,7 +116,7 @@
                        (get-bvar :file-property-list :buffer buffer)))))))
 
 (defun scan-file-property-list (buffer)
-  (with-marker ((cur-marker (buffer-point-marker buffer)))
+  (with-point ((cur-marker (buffer-point-marker buffer)))
     (buffer-start cur-marker)
     (when (ppcre:scan "^#!" (line-string-at cur-marker))
       (line-offset cur-marker 1))

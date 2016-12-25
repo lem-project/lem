@@ -160,7 +160,7 @@
       (buffer-get-char (point-buffer marker)
                        (point-linum marker)
                        (point-charpos marker))
-      (with-marker ((temp-marker marker))
+      (with-point ((temp-marker marker))
         (when (character-offset temp-marker offset)
           (character-at temp-marker 0)))))
 
@@ -171,7 +171,7 @@
 (defun insert-string-at (marker string)
   (cond ((lem.text-property:text-property-p string)
          (let ((str (lem.text-property:text-property-string string)))
-           (with-marker ((start-marker marker))
+           (with-point ((start-marker marker))
              (insert-string/marker marker str)
              (let ((end-marker (character-offset (copy-point start-marker :temporary)
                                                  (length str))))
@@ -200,7 +200,7 @@
 (defun text-property-at (marker key &optional (offset 0))
   (if (zerop offset)
       (line-search-property (get-line/marker marker) key (point-charpos marker))
-      (with-marker ((temp-marker marker))
+      (with-point ((temp-marker marker))
         (when (character-offset temp-marker offset)
           (text-property-at temp-marker key 0)))))
 
@@ -433,11 +433,11 @@
         start)))
 
 (defun apply-region-lines (start end function)
-  (with-marker ((start start :right-inserting)
+  (with-point ((start start :right-inserting)
                 (end end :right-inserting))
     (move-point (current-point) start)
     (loop :while (point< (current-point) end) :do
-          (with-marker ((prev (line-start (current-point))))
+          (with-point ((prev (line-start (current-point))))
             (funcall function)
             (when (same-line-p (current-point) prev)
               (unless (line-offset (current-point) 1)

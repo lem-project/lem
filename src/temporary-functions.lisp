@@ -68,7 +68,7 @@
               (point-buffer end)))
   (when (point< end start)
     (rotatef start end))
-  (with-marker ((point start))
+  (with-point ((point start))
     (loop :for count :from 0 :do
           (when (point< end point)
             (return count))

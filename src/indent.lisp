@@ -11,7 +11,7 @@
   (let ((old-column (point-column point))
         (old-indent-string
          (points-to-string (line-start (copy-point point :temporary))
-                           (with-marker ((point point))
+                           (with-point ((point point))
                              (skip-chars-forward (line-start point)
                                                  '(#\space #\tab))
                              point)))
@@ -38,7 +38,7 @@
   t)
 
 (defun calc-indent-default (point)
-  (with-marker ((point point))
+  (with-point ((point point))
     (cond ((line-offset point -1)
            (skip-chars-forward point '(#\space #\tab))
            (point-column point))

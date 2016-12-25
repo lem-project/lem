@@ -272,7 +272,7 @@
                     (ignore-errors
                      (let ((positivep (eql #\+ (lem::character-at cur-marker 1))))
                        (lem::character-offset cur-marker 2)
-                       (lem::with-marker ((prev cur-marker))
+                       (lem::with-point ((prev cur-marker))
                          (when (lem::form-offset cur-marker 1)
                            (cond
                              ((if (featurep (read-from-string
@@ -401,7 +401,7 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-M-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()
-  (lem::with-marker ((end (current-point)))
+  (lem::with-point ((end (current-point)))
     (when (lem::form-offset end 1)
       (indent-region (current-point) end))))
 
@@ -573,7 +573,7 @@
   condition)
 
 (defun %lisp-eval-internal (x marker &optional update-point-p)
-  (lem::with-marker ((cur-marker marker
+  (lem::with-point ((cur-marker marker
                                  (if update-point-p
                                      :left-inserting
                                      :right-inserting)))
@@ -957,11 +957,11 @@
 
 (define-command lisp-comment-region () ()
   (save-excursion
-    (lem::with-marker ((start (region-beginning) :right-inserting)
+    (lem::with-point ((start (region-beginning) :right-inserting)
                        (end (region-end) :left-inserting))
       (skip-chars-forward end '(#\space #\tab))
       (unless (lem::end-line-p end)
-        (lem::with-marker ((prev end))
+        (lem::with-point ((prev end))
           (lem::insert-char-at end #\newline)
           (indent-line end)
           (lem::move-point end prev)))
@@ -973,7 +973,7 @@
           (lem::line-offset start 1 charpos))))))
 
 (define-command lisp-uncomment-region () ()
-  (lem::with-marker ((start (region-beginning))
+  (lem::with-point ((start (region-beginning))
                      (end (region-end)))
     (let ((charpos (point-charpos start)))
       (loop
@@ -1002,7 +1002,7 @@
                             (stop-timer *lisp-timer*)))))
 
 (defun lisp-print-values (values)
-  (lem::with-marker ((marker (current-point) :left-inserting))
+  (lem::with-point ((marker (current-point) :left-inserting))
     (with-open-stream (out (make-buffer-output-stream marker))
       (let ((*package* (lisp-current-package)))
         (dolist (v values)

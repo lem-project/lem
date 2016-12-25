@@ -5,7 +5,7 @@
 (in-package :lem.abbrev)
 
 (defun preceding-word (point)
-  (lem::with-marker ((cur point)
+  (lem::with-point ((cur point)
                      (end point))
     (skip-chars-backward cur #'syntax-symbol-char-p)
     (lem::points-to-string cur end)))

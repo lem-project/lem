@@ -33,7 +33,7 @@
 (defmacro save-excursion (&body body)
   `(invoke-save-excursion (lambda () ,@body)))
 
-(defmacro with-marker (bindings &body body)
+(defmacro with-point (bindings &body body)
   (let ((cleanups
          (mapcan (lambda (b)
                    (destructuring-bind (var marker &optional (kind :temporary)) b

@@ -12,7 +12,7 @@
 (defvar *case-fold-search* nil)
 
 (defun search-step (marker first-search search step move-matched endp)
-  (with-marker ((start-marker marker))
+  (with-point ((start-marker marker))
     (let ((result
            (let ((res (funcall first-search marker)))
              (cond (res
@@ -52,7 +52,7 @@
 (defun search-forward (marker string &optional limit-marker)
   (let ((nlines (count #\newline string)))
     (flet ((take-string (marker)
-             (with-marker ((start-marker marker)
+             (with-point ((start-marker marker)
                            (end-marker marker))
                (points-to-string (line-start start-marker)
                                  (line-end (or (line-offset end-marker nlines)
@@ -74,12 +74,12 @@
 (defun search-backward (marker string &optional limit-marker)
   (let ((nlines (count #\newline string)))
     (flet ((search-from-end (marker end-charpos)
-             (with-marker ((marker marker))
+             (with-point ((marker marker))
                (when (line-offset marker (- nlines))
                  (search* string
                           (points-to-string
                            (line-start (copy-point marker :temporary))
-                           (with-marker ((point marker))
+                           (with-point ((point marker))
                              (unless (line-offset point nlines)
                                (buffer-end point))
                              (if end-charpos

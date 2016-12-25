@@ -6,8 +6,8 @@
           copy-point
           delete-point
           marker-buffer
-          marker-linum
-          marker-charpos
+          point-linum
+          point-charpos
           marker-kind
 
           point=
@@ -24,11 +24,11 @@
     :type buffer)
    (linum
     :initarg :linum
-    :accessor marker-linum
+    :accessor point-linum
     :type fixnum)
    (charpos
     :initarg :charpos
-    :accessor marker-charpos
+    :accessor point-charpos
     :type fixnum)
    (kind
     :initarg :kind
@@ -46,8 +46,8 @@
   (print-unreadable-object (object stream :identity t)
     (format stream "MARKER ~A (~A ~A)"
             (marker-name object)
-            (marker-linum object)
-            (marker-charpos object))))
+            (point-linum object)
+            (point-charpos object))))
 
 (defun pointp (x)
   (typep x 'marker))
@@ -65,8 +65,8 @@
 
 (defun copy-point (marker &optional kind)
   (make-point (marker-buffer marker)
-               (marker-linum marker)
-               (marker-charpos marker)
+               (point-linum marker)
+               (point-charpos marker)
                :kind (or kind (marker-kind marker))
                :name (marker-name marker)))
 
@@ -87,10 +87,10 @@
 (defun point= (marker1 marker2)
   (assert (eq (marker-buffer marker1)
               (marker-buffer marker2)))
-  (and (= (marker-linum marker1)
-          (marker-linum marker2))
-       (= (marker-charpos marker1)
-          (marker-charpos marker2))))
+  (and (= (point-linum marker1)
+          (point-linum marker2))
+       (= (point-charpos marker1)
+          (point-charpos marker2))))
 
 (defun point/= (marker1 marker2)
   (assert (eq (marker-buffer marker1)
@@ -100,11 +100,11 @@
 (defun point< (marker1 marker2)
   (assert (eq (marker-buffer marker1)
               (marker-buffer marker2)))
-  (cond ((< (marker-linum marker1) (marker-linum marker2))
+  (cond ((< (point-linum marker1) (point-linum marker2))
          t)
-        ((> (marker-linum marker1) (marker-linum marker2))
+        ((> (point-linum marker1) (point-linum marker2))
          nil)
-        ((< (marker-charpos marker1) (marker-charpos marker2))
+        ((< (point-charpos marker1) (point-charpos marker2))
          t)
         (t
          nil)))

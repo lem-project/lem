@@ -91,7 +91,7 @@
   'line)
 
 (defmethod trivial-gray-streams:stream-line-column ((stream buffer-output-stream))
-  (marker-charpos (buffer-stream-marker stream)))
+  (point-charpos (buffer-stream-marker stream)))
 
 (defun buffer-output-stream-refresh (stream)
   (when (buffer-output-stream-interactive-update-p stream)
@@ -104,7 +104,7 @@
   nil)
 
 (defmethod trivial-gray-streams:stream-fresh-line ((stream buffer-output-stream))
-  (unless (zerop (marker-charpos (buffer-stream-marker stream)))
+  (unless (zerop (point-charpos (buffer-stream-marker stream)))
     (trivial-gray-streams:stream-terpri stream)))
 
 (defmethod trivial-gray-streams:stream-write-byte ((stream buffer-output-stream) byte)

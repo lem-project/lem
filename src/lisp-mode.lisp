@@ -965,7 +965,7 @@
           (lem::insert-char-at end #\newline)
           (indent-line end)
           (lem::move-point end prev)))
-      (let ((charpos (marker-charpos start)))
+      (let ((charpos (point-charpos start)))
         (loop
           (lem::insert-string-at start ";")
           (when (lem::same-line-p start end)
@@ -975,7 +975,7 @@
 (define-command lisp-uncomment-region () ()
   (lem::with-marker ((start (region-beginning))
                      (end (region-end)))
-    (let ((charpos (marker-charpos start)))
+    (let ((charpos (point-charpos start)))
       (loop
         (unless (point< start end) (return))
         (loop (if (char= #\; (lem::character-at start))

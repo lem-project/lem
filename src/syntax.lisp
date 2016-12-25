@@ -394,7 +394,7 @@
                       (setf (line-%region line) nil)
                       (put-text-property start end :attribute (syntax-attribute syntax))
                       (move-point (current-point) end)
-                      (cons (marker-charpos end) line)))))
+                      (cons (point-charpos end) line)))))
             (t
              (line-add-property line start1 end1 :attribute (syntax-attribute syntax) nil)
              (1- end1))))))))

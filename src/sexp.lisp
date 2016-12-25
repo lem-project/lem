@@ -17,7 +17,7 @@
 (defun %sexp-escape-p (point offset)
   (let ((count 0))
     (loop :with string := (line-string-at point)
-          :for i :downfrom (+ (1- (marker-charpos point)) offset) :to 0
+          :for i :downfrom (+ (1- (point-charpos point)) offset) :to 0
           :do (if (syntax-escape-char-p (schar string i))
                   (incf count)
                   (return)))

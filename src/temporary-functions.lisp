@@ -31,18 +31,18 @@
   (when (point< end start)
     (rotatef start end))
   (let ((start-line (buffer-get-line (marker-buffer start)
-                                     (marker-linum start))))
+                                     (point-linum start))))
     (loop :for line := start-line :then (line-next line)
-          :for linum :from (marker-linum start) :to (marker-linum end)
+          :for linum :from (point-linum start) :to (point-linum end)
           :for firstp := (eq line start-line)
-          :for lastp := (= linum (marker-linum end))
+          :for lastp := (= linum (point-linum end))
           :do (funcall function
                        line
                        (if firstp
-                           (marker-charpos start)
+                           (point-charpos start)
                            0)
                        (if lastp
-                           (marker-charpos end)
+                           (point-charpos end)
                            nil))))
   (values))
 

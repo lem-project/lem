@@ -334,7 +334,7 @@
 
 (defun %scroll-down-if-wrapping (window)
   (when (buffer-truncate-lines (window-buffer window))
-    (let ((view-charpos (marker-charpos (window-view-marker window))))
+    (let ((view-charpos (point-charpos (window-view-marker window))))
       (line-start (window-view-marker window))
       (map-wrapping-line (line-string-at (window-view-marker window))
                          (window-%width window)
@@ -364,7 +364,7 @@
              (line-offset (window-view-marker window) -1)
              (line-end (window-view-marker window))))
       (dolist (c charpos-list)
-        (when (< c (marker-charpos (window-view-marker window)))
+        (when (< c (point-charpos (window-view-marker window)))
           (line-offset (window-view-marker window) 0 c)
           (return-from %scroll-up-if-wrapping t)))
       (line-start (window-view-marker window))

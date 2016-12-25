@@ -167,7 +167,7 @@
                                          (buffers-end (minibuffer))))
   (let ((point (buffer-point-marker (minibuffer))))
     (screen-move-cursor (window-screen (minibuffer-window))
-                        (marker-charpos point)
+                        (point-charpos point)
                         (line-number-at-point point))))
 
 (defun minibuf-read-line-loop (comp-f existing-p)

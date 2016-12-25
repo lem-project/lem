@@ -218,13 +218,13 @@
 
 (defun disp-set-overlay (screen attribute view-point start end)
   (let ((screen-row (1- (lem::count-lines view-point start))))
-    (disp-set-line screen attribute screen-row (marker-charpos start) nil)
+    (disp-set-line screen attribute screen-row (point-charpos start) nil)
     (lem::with-marker ((point start))
       (lem::line-offset point 1)
       (loop :for i :from (1+ screen-row)
             :do
             (when (lem::same-line-p point end)
-              (disp-set-line screen attribute i 0 (marker-charpos end))
+              (disp-set-line screen attribute i 0 (point-charpos end))
               (return))
             (disp-set-line screen attribute i 0 nil)
             (unless (lem::line-offset point 1)
@@ -245,8 +245,8 @@
                  (disp-set-line screen
                                 (overlay-attribute overlay)
                                 (1- (lem::count-lines view-point start))
-                                (marker-charpos start)
-                                (marker-charpos end)))
+                                (point-charpos start)
+                                (point-charpos end)))
                 ((and (point<= view-point start)
                       (point< end view-end-point))
                  (disp-set-overlay screen
@@ -370,8 +370,8 @@
     (let* ((visual-cursor-x 0)
            (visual-cursor-y (1- (lem::count-lines view-point cursor-point)))
            (cursor-y visual-cursor-y)
-           (view-charpos (marker-charpos view-point))
-           (point-x (marker-charpos cursor-point)))
+           (view-charpos (point-charpos view-point))
+           (point-x (point-charpos cursor-point)))
       (loop :for y :from 0
             :for i :from 0
             :for str/attributes :across (screen-lines screen)

@@ -61,7 +61,7 @@
                    (lambda (marker)
                      (search* string
                               (take-string marker)
-                              :start2 (marker-charpos marker)))
+                              :start2 (point-charpos marker)))
                    (lambda (marker)
                      (search* string (take-string marker)))
                    (lambda (marker)
@@ -86,7 +86,7 @@
                                  (character-offset point end-charpos)
                                  (line-end point))))
                           :from-end t)))))
-      (let ((end-charpos (marker-charpos marker)))
+      (let ((end-charpos (point-charpos marker)))
         (search-step marker
                      (lambda (marker)
                        (search-from-end marker end-charpos))
@@ -108,11 +108,11 @@
                      (multiple-value-bind (start end)
                          (ppcre:scan scanner
                                      (line-string-at marker)
-                                     :start (marker-charpos marker))
+                                     :start (point-charpos marker))
                        (when (and start
                                   (if (= start end)
-                                      (< (marker-charpos marker) start)
-                                      (<= (marker-charpos marker) start)))
+                                      (< (point-charpos marker) start)
+                                      (<= (point-charpos marker) start)))
                          (if (= start end)
                              (1+ end)
                              end))))
@@ -134,14 +134,14 @@
                      (let (pos)
                        (ppcre:do-scans (start end reg-starts reg-ends scanner
                                               (line-string-at marker) nil
-                                              :end (marker-charpos marker))
+                                              :end (point-charpos marker))
                          (setf pos start))
                        pos))
                    (lambda (marker)
                      (let (pos)
                        (ppcre:do-scans (start end reg-starts reg-ends scanner
                                               (line-string-at marker) nil
-                                              :start (marker-charpos marker))
+                                              :start (point-charpos marker))
                          (setf pos start))
                        pos))
                    (lambda (marker)
@@ -163,7 +163,7 @@
               (setf start (1+ (or pos start))))))
 
 (defun search-forward-symbol (marker name &optional limit-marker)
-  (let ((charpos (marker-charpos marker)))
+  (let ((charpos (point-charpos marker)))
     (search-step marker
                  (lambda (marker)
                    (cdr (search-symbol (line-string-at marker) name :start charpos)))
@@ -180,7 +180,7 @@
                (lambda (marker)
                  (car (search-symbol (line-string-at marker)
                                      name
-                                     :end (marker-charpos marker)
+                                     :end (point-charpos marker)
                                      :from-end t)))
                (lambda (marker)
                  (car (search-symbol (line-string-at marker)

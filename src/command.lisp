@@ -120,7 +120,7 @@
   (let ((c (read-key)))
     (dotimes (_ n t)
       (cond ((char= c C-m)
-             (insert-newline 1))
+             (insert-character (current-point) #\newline 1))
             ((char= c C-d)
              (delete-char 1 nil))
             (t
@@ -128,7 +128,7 @@
 
 (define-key *global-keymap* (kbd "C-m") 'newline)
 (define-command newline (&optional (n 1)) ("p")
-  (insert-newline n))
+  (insert-character (current-point) #\newline n))
 
 (define-key *global-keymap* (kbd "C-o") 'open-line)
 (define-command open-line (n) ("p")

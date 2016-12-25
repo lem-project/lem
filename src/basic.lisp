@@ -6,7 +6,6 @@
           eolp
           bobp
           eobp
-          insert-newline
           delete-char
           beginning-of-buffer
           end-of-buffer
@@ -404,10 +403,6 @@
 
 (defun eobp ()
   (end-buffer-p (current-point)))
-
-(defun insert-newline (&optional (n 1))
-  (insert-character (current-point) #\newline n)
-  t)
 
 (defun delete-char (n &optional killp)
   (delete-char-at (current-point) n killp))

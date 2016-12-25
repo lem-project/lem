@@ -1014,14 +1014,14 @@
   (lisp-move-and-eval-sexp
    #'backward-sexp
    #'(lambda (string)
-       (unless (bolp) (insert-newline))
+       (unless (bolp) (lem::insert-character (current-point) #\newline))
        (setq - (first (%string-to-exps string (lisp-current-package))))
        (let ((values (%lisp-eval - (current-point) t)))
          (setq +++ ++ /// //     *** (car ///)
                ++  +  //  /      **  (car //)
                +   -  /   values *   (car /))
          (lisp-print-values values)
-         (insert-newline)))))
+         (lem::insert-character (current-point) #\newline)))))
 
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "lisp-repl"

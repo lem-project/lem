@@ -205,7 +205,7 @@
                     (points-to-string (buffers-start (minibuffer))
                                       (buffers-end (minibuffer))))
                    (minibuf-buffer-prev-point
-                    (window-point-marker (minibuffer-window)))
+                    (window-point (minibuffer-window)))
                    (*minibuf-read-line-depth*
                     (1+ *minibuf-read-line-depth*)))
                (let ((*inhibit-read-only* t))

@@ -325,10 +325,10 @@
 
 (defun buffer-clear-keep-binfo (buffer)
   (when (buffer-keep-binfo buffer)
-    (destructuring-bind (view-point point-marker)
+    (destructuring-bind (view-point point)
         (buffer-keep-binfo buffer)
       (delete-point view-point)
-      (delete-point point-marker))))
+      (delete-point point))))
 
 (defun call-buffer-delete-hooks (buffer)
   (mapc #'funcall (buffer-delete-hooks buffer))

@@ -448,7 +448,7 @@
                         (screen-modified-p (window-screen window))
                         (window-buffer window)
                         (lem::window-view-point window)
-                        (lem::window-point-marker window))
+                        (lem::window-point window))
   (when (window-use-modeline-p window)
     (screen-redraw-separator window)
     (screen-redraw-modeline window))

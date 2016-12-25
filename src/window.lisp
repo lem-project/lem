@@ -96,9 +96,9 @@
                  :height height
                  :%buffer buffer
                  :screen (make-screen x y width height use-modeline-p)
-                 :view-marker (make-marker buffer (make-min-point) :name "view" :kind :right-inserting)
+                 :view-marker (copy-marker (buffer-point-marker buffer) :right-inserting)
                  :use-modeline-p use-modeline-p
-                 :point-marker (make-marker buffer (make-min-point) :name "point" :kind :right-inserting)))
+                 :point-marker (copy-marker (buffers-start buffer) :right-inserting)))
 
 (defun window-x (&optional (window (current-window)))
   (window-%x window))

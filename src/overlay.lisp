@@ -12,11 +12,11 @@
   ((start
     :initarg :start
     :reader overlay-start
-    :type marker)
+    :type point)
    (end
     :initarg :end
     :reader overlay-end
-    :type marker)
+    :type point)
    (attribute
     :initarg :attribute
     :reader overlay-attribute

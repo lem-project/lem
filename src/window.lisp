@@ -66,11 +66,11 @@
     :initarg :view-point
     :reader window-view-point
     :writer set-window-view-point
-    :type marker)
+    :type point)
    (point
     :initarg :point
     :reader %window-point
-    :type marker)
+    :type point)
    (delete-hook
     :initform nil
     :reader window-delete-hook

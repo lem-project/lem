@@ -17,7 +17,7 @@
           point>
           point>=))
 
-(defclass marker ()
+(defclass point ()
   ((buffer
     :initarg :buffer
     :accessor point-buffer
@@ -42,26 +42,26 @@
 (defun current-point ()
   (buffer-point (current-buffer)))
 
-(defmethod print-object ((object marker) stream)
+(defmethod print-object ((object point) stream)
   (print-unreadable-object (object stream :identity t)
-    (format stream "MARKER ~A (~A ~A)"
+    (format stream "POINT ~A (~A ~A)"
             (point-name object)
             (point-linum object)
             (point-charpos object))))
 
 (defun pointp (x)
-  (typep x 'marker))
+  (typep x 'point))
 
 (defun make-point (buffer linum charpos &key (kind :right-inserting) name)
-  (let ((marker (make-instance 'marker
-                               :buffer buffer
-                               :linum linum
-                               :charpos charpos
-                               :kind kind
-                               :name name)))
+  (let ((point (make-instance 'point
+                              :buffer buffer
+                              :linum linum
+                              :charpos charpos
+                              :kind kind
+                              :name name)))
     (unless (eq :temporary kind)
-      (buffer-add-marker buffer marker))
-    marker))
+      (buffer-add-marker buffer point))
+    point))
 
 (defun copy-point (marker &optional kind)
   (make-point (point-buffer marker)

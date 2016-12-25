@@ -161,7 +161,7 @@
 (define-command completion-select () ()
   (let ((str
          (line-string-at
-          (buffer-point-marker
+          (buffer-point
            (window-buffer *completion-window*)))))
     (delete-char (- (length *completion-last-string*)) nil)
     (setf *completion-last-string* str)

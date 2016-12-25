@@ -99,7 +99,7 @@
           (point (buffer-stream-marker stream)))
       (display-buffer buffer)
       (dolist (window (get-buffer-windows buffer))
-        (move-point (buffer-point-marker (window-buffer window)) point))
+        (move-point (buffer-point (window-buffer window)) point))
       (redraw-display)))
   nil)
 

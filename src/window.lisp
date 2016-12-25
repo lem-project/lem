@@ -96,7 +96,7 @@
                  :height height
                  :%buffer buffer
                  :screen (make-screen x y width height use-modeline-p)
-                 :view-marker (copy-point (buffer-point-marker buffer) :right-inserting)
+                 :view-marker (copy-point (buffer-point buffer) :right-inserting)
                  :use-modeline-p use-modeline-p
                  :point-marker (copy-point (buffers-start buffer) :right-inserting)))
 
@@ -121,7 +121,7 @@
 
 (defun window-point-marker (window)
   (if (eq window (current-window))
-      (buffer-point-marker (window-buffer window))
+      (buffer-point (window-buffer window))
       (%window-point-marker window)))
 
 (defun window-parameter (window parameter)
@@ -138,10 +138,10 @@
   (when (boundp '*current-window*)
     (let ((old-window (current-window)))
       (move-point (%window-point-marker old-window)
-                  (buffer-point-marker (window-buffer old-window)))))
+                  (buffer-point (window-buffer old-window)))))
   (let ((buffer (window-buffer new-window)))
     (setf (current-buffer) buffer)
-    (move-point (buffer-point-marker buffer)
+    (move-point (buffer-point buffer)
                 (%window-point-marker new-window)))
   (setf *current-window* new-window))
 
@@ -745,7 +745,7 @@
         (buffer-clear-keep-binfo old-buffer)
         (setf (buffer-keep-binfo old-buffer)
               (list (copy-point (window-view-marker (current-window)))
-                    (copy-point (buffer-point-marker (window-buffer (current-window))))))))
+                    (copy-point (buffer-point (window-buffer (current-window))))))))
     (setf (window-buffer (current-window)) buffer)
     (setf (current-buffer) buffer)
     (point-change-buffer (%window-point-marker (current-window)) buffer)

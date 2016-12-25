@@ -249,7 +249,7 @@
   mark-p
   mark-overlay
   mark-marker
-  point-marker
+  point
   keep-binfo
   nlines
   undo-size
@@ -302,7 +302,7 @@
     (setf (buffer-markers buffer) nil)
     (setf (buffer-truncate-lines buffer) t)
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
-    (setf (buffer-point-marker buffer)
+    (setf (buffer-point buffer)
           (make-point buffer 1 0
                        :name "buffer-point"
                        :kind :left-inserting))
@@ -333,7 +333,7 @@
 (defun call-buffer-delete-hooks (buffer)
   (mapc #'funcall (buffer-delete-hooks buffer))
   (buffer-clear-keep-binfo buffer)
-  (delete-point (buffer-point-marker buffer)))
+  (delete-point (buffer-point buffer)))
 
 (defun buffer-enable-undo (buffer)
   (setf (buffer-%enable-undo-p buffer) t)
@@ -452,7 +452,7 @@
 
 (defun buffer-update-mark-overlay (buffer)
   (when (buffer-mark-p buffer)
-    (with-point ((start (buffer-point-marker buffer))
+    (with-point ((start (buffer-point buffer))
                   (end (buffer-mark-marker buffer)))
       (when (point< end start)
         (rotatef start end))

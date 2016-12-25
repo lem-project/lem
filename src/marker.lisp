@@ -40,7 +40,7 @@
     :type (or null string))))
 
 (defun current-point ()
-  (buffer-point-marker (current-buffer)))
+  (buffer-point (current-buffer)))
 
 (defmethod print-object ((object marker) stream)
   (print-unreadable-object (object stream :identity t)

@@ -419,7 +419,7 @@
 (define-command exchange-point-mark () ()
   (check-marked)
   (let ((mark (buffer-mark-marker (current-buffer)))
-        (point (copy-point (buffer-point-marker (current-buffer)) :temporary)))
+        (point (copy-point (buffer-point (current-buffer)) :temporary)))
     (move-point (current-point) mark)
     (set-current-mark point))
   t)

@@ -297,14 +297,14 @@
         (when (and before after)
           (if (buffer-mark-p buffer)
               (lem::with-point ((mark-marker (lem::buffer-mark-marker buffer) :right-inserting))
-                (if (point< mark-marker (lem::buffer-point-marker buffer))
+                (if (point< mark-marker (lem::buffer-point buffer))
                     (query-replace-internal-body mark-marker
-                                                 (lem::buffer-point-marker buffer)
+                                                 (lem::buffer-point buffer)
                                                  before after)
-                    (query-replace-internal-body (lem::buffer-point-marker buffer)
+                    (query-replace-internal-body (lem::buffer-point buffer)
                                                  mark-marker
                                                  before after)))
-              (query-replace-internal-body (lem::buffer-point-marker buffer)
+              (query-replace-internal-body (lem::buffer-point buffer)
                                            nil
                                            before after))))
     (isearch-reset-buffer)))

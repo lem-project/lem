@@ -47,7 +47,7 @@
             (copy-point (current-point) :right-inserting))))
 
 (defun listener-reset-prompt (&optional (buffer (current-buffer)))
-  (let ((cur-marker (lem::buffer-point-marker buffer)))
+  (let ((cur-marker (lem::buffer-point buffer)))
     (lem::buffer-end cur-marker)
     (unless (lem::start-line-p cur-marker)
       (lem::insert-char-at cur-marker #\newline 1)

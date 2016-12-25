@@ -193,9 +193,9 @@
       t)))
 
 (defun erase-buffer (&optional (buffer (current-buffer)))
-  (buffer-start (buffer-point-marker buffer))
+  (buffer-start (buffer-point buffer))
   (buffer-mark-cancel buffer)
-  (delete-char/marker (buffer-point-marker buffer) t))
+  (delete-char/marker (buffer-point buffer) t))
 
 (defun text-property-at (marker key &optional (offset 0))
   (if (zerop offset)
@@ -419,14 +419,14 @@
 
 
 (defun region-beginning (&optional (buffer (current-buffer)))
-  (let ((start (buffer-point-marker buffer))
+  (let ((start (buffer-point buffer))
         (end (buffer-mark-marker buffer)))
     (if (point< start end)
         start
         end)))
 
 (defun region-end (&optional (buffer (current-buffer)))
-  (let ((start (buffer-point-marker buffer))
+  (let ((start (buffer-point buffer))
         (end (buffer-mark-marker buffer)))
     (if (point< start end)
         end

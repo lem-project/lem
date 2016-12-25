@@ -116,7 +116,7 @@
                        (get-bvar :file-property-list :buffer buffer)))))))
 
 (defun scan-file-property-list (buffer)
-  (with-point ((cur-marker (buffer-point-marker buffer)))
+  (with-point ((cur-marker (buffer-point buffer)))
     (buffer-start cur-marker)
     (when (ppcre:scan "^#!" (line-string-at cur-marker))
       (line-offset cur-marker 1))
@@ -151,7 +151,7 @@
              (insert-file-contents (buffers-start buffer)
                                    filename)
              (buffer-unmark buffer))
-           (move-point (buffer-point-marker buffer) (buffers-start buffer))
+           (move-point (buffer-point buffer) (buffers-start buffer))
            (buffer-enable-undo buffer)
            (update-changed-disk-date buffer)
            (prepare-auto-mode buffer)

@@ -165,7 +165,7 @@
   (screen-print-string (window-screen (minibuffer-window)) 0 0
                        (points-to-string (buffers-start (minibuffer))
                                          (buffers-end (minibuffer))))
-  (let ((point (buffer-point-marker (minibuffer))))
+  (let ((point (buffer-point (minibuffer))))
     (screen-move-cursor (window-screen (minibuffer-window))
                         (point-charpos point)
                         (line-number-at-point point))))

@@ -11,7 +11,7 @@
     (display-buffer buffer)
     (switch-to-buffer buffer)
     (erase-buffer)
-    (with-open-stream (stream (make-buffer-output-stream (buffer-point-marker buffer)))
+    (with-open-stream (stream (make-buffer-output-stream (buffer-point buffer)))
       (princ condition stream)
       (fresh-line stream)
       (uiop/image:print-backtrace

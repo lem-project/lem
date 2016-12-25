@@ -264,7 +264,7 @@
   (with-buffer-read-only buffer nil
     (erase-buffer buffer)
     (let ((dirname (probe-file (buffer-directory buffer))))
-      (lem::with-point ((cur-marker (lem::buffer-point-marker buffer) :left-inserting))
+      (lem::with-point ((cur-marker (lem::buffer-point buffer) :left-inserting))
         (lem::insert-string-at cur-marker
                                (lem.text-property::make-text-property
                                 (namestring dirname)
@@ -322,7 +322,7 @@
     (setf (buffer-read-only-p buffer) t)
     (buffer-disable-undo buffer)
     (update buffer)
-    (lem::move-point (lem::buffer-point-marker buffer)
+    (lem::move-point (lem::buffer-point buffer)
                      *start-marker*)
     buffer))
 

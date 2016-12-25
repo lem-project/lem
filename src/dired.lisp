@@ -41,11 +41,11 @@
 (define-key *dired-mode-keymap* "R" 'dired-rename-files)
 (define-key *dired-mode-keymap* "+" 'dired-mkdir)
 
-(defun dired-first-line-p (marker)
-  (lem::same-line-p *start-point* marker))
+(defun dired-first-line-p (point)
+  (lem::same-line-p *start-point* point))
 
-(defun dired-last-line-p (marker)
-  (lem::last-line-p marker))
+(defun dired-last-line-p (point)
+  (lem::last-line-p point))
 
 (define-command dired-update-buffer () ()
   (save-excursion
@@ -84,25 +84,25 @@
     (lem::line-start point)))
 
 (define-command dired-next-directory-line (n) ("p")
-  (lem::with-point ((cur-marker (current-point)))
+  (lem::with-point ((cur-point (current-point)))
     (loop
-      (when (dired-last-line-p cur-marker)
+      (when (dired-last-line-p cur-point)
         (return))
-      (lem::line-offset cur-marker 1)
-      (when (and (eq :directory (lem::text-property-at cur-marker 'type))
+      (lem::line-offset cur-point 1)
+      (when (and (eq :directory (lem::text-property-at cur-point 'type))
                  (>= 0 (decf n)))
-        (lem::move-point (current-point) cur-marker)
+        (lem::move-point (current-point) cur-point)
         (return)))))
 
 (define-command dired-previous-directory-line (n) ("p")
-  (lem::with-point ((cur-marker (current-point)))
+  (lem::with-point ((cur-point (current-point)))
     (loop
-      (when (dired-first-line-p cur-marker)
+      (when (dired-first-line-p cur-point)
         (return))
-      (lem::line-offset cur-marker -1)
-      (when (and (eq :directory (lem::text-property-at cur-marker 'type))
+      (lem::line-offset cur-point -1)
+      (when (and (eq :directory (lem::text-property-at cur-point 'type))
                  (>= 0 (decf n)))
-        (lem::move-point (current-point) cur-marker)
+        (lem::move-point (current-point) cur-point)
         (return)))))
 
 (define-command dired-mark-and-next-line (n) ("p")
@@ -264,25 +264,25 @@
   (with-buffer-read-only buffer nil
     (erase-buffer buffer)
     (let ((dirname (probe-file (buffer-directory buffer))))
-      (lem::with-point ((cur-marker (lem::buffer-point buffer) :left-inserting))
-        (lem::insert-string-at cur-marker
+      (lem::with-point ((cur-point (lem::buffer-point buffer) :left-inserting))
+        (lem::insert-string-at cur-point
                                (lem.text-property::make-text-property
                                 (namestring dirname)
                                 :attribute *header-attribute*))
-        (lem::insert-char-at cur-marker #\newline 2)
+        (lem::insert-char-at cur-point #\newline 2)
         (let ((output-string (ls-output-string dirname)))
-          (lem::insert-string-at cur-marker output-string)
-          (lem::buffer-start cur-marker)
-          (lem::line-offset cur-marker 3)
-          (setf *start-point* (copy-point cur-marker :temporary))
+          (lem::insert-string-at cur-point output-string)
+          (lem::buffer-start cur-point)
+          (lem::line-offset cur-point 3)
+          (setf *start-point* (copy-point cur-point :temporary))
           (loop
-            (let ((string (lem::line-string-at cur-marker)))
+            (let ((string (lem::line-string-at cur-point)))
               (multiple-value-bind (start end start-groups end-groups)
                   (ppcre:scan "^(\\S*)\\s+(\\d+)\\s+(\\S*)\\s+(\\S*)\\s+(\\d+)\\s+(\\S+\\s+\\S+\\s+\\S+)\\s+(.*?)(?: -> .*)?$"
                               string)
                 (declare (ignorable start end start-groups end-groups))
                 (when start
-                  (lem::insert-string-at cur-marker "  ")
+                  (lem::insert-string-at cur-point "  ")
                   (let* ((index (1- (length start-groups)))
                          (filename (merge-pathnames
                                     (subseq string
@@ -290,22 +290,22 @@
                                             (aref end-groups index))
                                     dirname))
                          (start-file-charpos (+ 2 (aref start-groups index))))
-                    (lem::with-point ((start-marker (lem::line-start cur-marker))
-                                       (end-marker (lem::line-end cur-marker)))
+                    (lem::with-point ((start-point (lem::line-start cur-point))
+                                      (end-point (lem::line-end cur-point)))
                       (case (char string 0)
                         (#\l
-                         (lem::put-text-property start-marker end-marker 'type :link)
-                         (lem::character-offset (lem::line-start cur-marker) start-file-charpos)
-                         (lem::put-text-property cur-marker end-marker :attribute *link-attribute*))
+                         (lem::put-text-property start-point end-point 'type :link)
+                         (lem::character-offset (lem::line-start cur-point) start-file-charpos)
+                         (lem::put-text-property cur-point end-point :attribute *link-attribute*))
                         (#\d
-                         (lem::put-text-property start-marker end-marker 'type :directory)
-                         (lem::character-offset (lem::line-start cur-marker) start-file-charpos)
-                         (lem::put-text-property cur-marker end-marker :attribute *directory-attribute*))
+                         (lem::put-text-property start-point end-point 'type :directory)
+                         (lem::character-offset (lem::line-start cur-point) start-file-charpos)
+                         (lem::put-text-property cur-point end-point :attribute *directory-attribute*))
                         (#\-
-                         (lem::put-text-property start-marker end-marker 'type :file)))
-                      (lem::put-text-property start-marker end-marker 'file filename)))
-                  (lem::line-offset cur-marker 1)
-                  (when (lem::end-line-p cur-marker)
+                         (lem::put-text-property start-point end-point 'type :file)))
+                      (lem::put-text-property start-point end-point 'file filename)))
+                  (lem::line-offset cur-point 1)
+                  (when (lem::end-line-p cur-point)
                     (return)))))))))))
 
 (defun update-all ()

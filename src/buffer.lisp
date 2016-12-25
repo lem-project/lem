@@ -376,13 +376,13 @@
   (setf (buffer-overlays buffer)
         (delete overlay (buffer-overlays buffer))))
 
-(defun buffer-add-point (buffer marker)
-  (push marker (buffer-points buffer)))
+(defun buffer-add-point (buffer point)
+  (push point (buffer-points buffer)))
 
-(defun buffer-delete-point (buffer marker)
+(defun buffer-delete-point (buffer point)
   (let ((length (length (buffer-points buffer))))
     (prog1 (setf (buffer-points buffer)
-                 (delete marker (buffer-points buffer)))
+                 (delete point (buffer-points buffer)))
       (assert (/= length (length (buffer-points buffer)))))))
 
 (defun buffer-mark-cancel (buffer)
@@ -489,8 +489,8 @@
 (defun push-redo-stack (buffer elt)
   (push elt (buffer-redo-stack buffer)))
 
-(defun push-undo (marker fn)
-  (let ((buffer (point-buffer marker)))
+(defun push-undo (point fn)
+  (let ((buffer (point-buffer point)))
     (when (and (buffer-enable-undo-p buffer)
                (not (ghost-buffer-p buffer)))
       (ecase *undo-mode*

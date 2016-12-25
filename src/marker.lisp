@@ -45,9 +45,10 @@
 
 (defmethod print-object ((object marker) stream)
   (print-unreadable-object (object stream :identity t)
-    (format stream "MARKER ~A ~A"
+    (format stream "MARKER ~A (~A ~A)"
             (marker-name object)
-            (marker-point object))))
+            (marker-linum object)
+            (marker-charpos object))))
 
 (defun marker-p (x)
   (typep x 'marker))
@@ -76,8 +77,8 @@
                           marker)))
 
 (defun marker-point (marker)
-  (make-point (marker-linum marker)
-              (marker-charpos marker)))
+  (cons (marker-linum marker)
+        (marker-charpos marker)))
 
 (defun (setf marker-point) (new-point marker)
   (let ((buffer (marker-buffer marker)))

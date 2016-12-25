@@ -401,10 +401,6 @@
                            (line-remove-property line 0 end-charpos key)
                            (line-remove-property line 0 (line-length line) key))))))))
 
-(defun buffer-get-property (buffer point key)
-  (let ((line (buffer-get-line buffer (point-linum point))))
-    (line-search-property line key (point-charpos point))))
-
 (defun buffer-add-overlay (buffer overlay)
   (push overlay (buffer-overlays buffer)))
 
@@ -427,10 +423,6 @@
     (delete-marker (buffer-mark-marker buffer))
     (delete-overlay (buffer-mark-overlay buffer))
     (setf (buffer-mark-overlay buffer) nil)))
-
-(defun buffer-end-point (buffer)
-  (make-point (buffer-nlines buffer)
-              (line-length (buffer-tail-line buffer))))
 
 (defun %buffer-get-line (buffer linum)
   (cond

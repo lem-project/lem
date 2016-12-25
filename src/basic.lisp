@@ -191,9 +191,7 @@
 
 (defun text-property-at (marker key &optional (offset 0))
   (if (zerop offset)
-      (buffer-get-property (marker-buffer marker)
-                           (marker-point marker)
-                           key)
+      (line-search-property (get-line/marker marker) key (marker-charpos marker))
       (with-marker ((temp-marker marker))
         (when (character-offset temp-marker offset)
           (text-property-at temp-marker key 0)))))

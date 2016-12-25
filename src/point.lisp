@@ -1,26 +1,13 @@
 (in-package :lem)
 
-(export '(point
-          make-min-point
-          point-linum
+(export '(point-linum
           point-charpos
           with-points
           point<
           point=
           point<=
           point>
-          point>=
-          point-min
-          point-max))
-
-(deftype point ()
-  `(satisfies point-p))
-
-(defun make-point (linum charpos)
-  (cons linum charpos))
-
-(defun make-min-point ()
-  (make-point 1 0))
+          point>=))
 
 (defun point-linum (point)
   (car point))
@@ -57,10 +44,3 @@
 
 (defun point>= (p1 p2)
   (point<= p2 p1))
-
-(defun point-min (&optional (buffer (current-buffer)))
-  (declare (ignore buffer))
-  (make-min-point))
-
-(defun point-max (&optional (buffer (current-buffer)))
-  (buffer-end-point buffer))

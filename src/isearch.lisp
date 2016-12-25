@@ -131,7 +131,7 @@
   (setq *isearch-prompt* prompt)
   (setq *isearch-string* initial-string)
   (setq *isearch-search-function* search-func)
-  (setq *isearch-start-point* (copy-marker (current-marker) :temporary))
+  (setq *isearch-start-point* (copy-point (current-marker) :temporary))
   (setq *isearch-search-forward-function* search-forward-function)
   (setq *isearch-search-backward-function* search-backward-function)
   (isearch-update-display)
@@ -197,7 +197,7 @@
     (window-see (current-window))
     (lem::with-marker ((cur-marker (lem::window-view-marker (current-window)))
                        (limit-marker (or (lem::line-offset
-                                          (copy-marker (lem::window-view-marker (current-window))
+                                          (copy-point (lem::window-view-marker (current-window))
                                                        :temporary)
                                           (window-height (current-window)))
                                          (lem::buffers-end (window-buffer (current-window))))))
@@ -211,7 +211,7 @@
                                                search-string)
                                       temp-marker)))
                   (push (make-overlay start-marker
-                                      (copy-marker cur-marker :temporary)
+                                      (copy-point cur-marker :temporary)
                                       (if (and (point<= start-marker marker)
                                                (point<= marker cur-marker))
                                           *isearch-highlight-active-attribute*

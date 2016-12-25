@@ -173,7 +173,7 @@
          (let ((str (lem.text-property:text-property-string string)))
            (with-marker ((start-marker marker))
              (insert-string/marker marker str)
-             (let ((end-marker (character-offset (copy-marker start-marker :temporary)
+             (let ((end-marker (character-offset (copy-point start-marker :temporary)
                                                  (length str))))
                (loop :for (k v) :on (lem.text-property:text-property-plist string) :by #'cddr
                      :do (put-text-property start-marker end-marker k v))))))
@@ -232,7 +232,7 @@
 
 (defun next-single-property-change (marker property-name &optional limit-marker)
   (let ((first-value (text-property-at marker property-name))
-        (start-marker (copy-marker marker :temporary)))
+        (start-marker (copy-point marker :temporary)))
     (loop
       (unless (character-offset marker 1)
         (move-point marker start-marker)
@@ -245,7 +245,7 @@
 
 (defun previous-single-property-change (marker property-name &optional limit-marker)
   (let ((first-value (text-property-at marker property-name -1))
-        (start-marker (copy-marker marker :temporary)))
+        (start-marker (copy-point marker :temporary)))
     (loop
       (unless (eq first-value (text-property-at marker property-name -1))
         (return marker))
@@ -344,7 +344,7 @@
           (t
            (setf (buffer-mark-p buffer) t)
            (setf (buffer-mark-marker buffer)
-                 (copy-marker marker :right-inserting)))))
+                 (copy-point marker :right-inserting)))))
   marker)
 
 (defun current-line-string ()

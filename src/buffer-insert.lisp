@@ -238,7 +238,7 @@
                        (%delete-line/marker marker charpos)))))))))
 
 (defmethod insert-char/marker :around (marker char)
-  (let ((point (copy-marker marker :temporary)))
+  (let ((point (copy-point marker :temporary)))
     (prog1 (call-next-method)
       (push-undo marker
                  (lambda ()
@@ -247,7 +247,7 @@
                    point)))))
 
 (defmethod insert-string/marker :around (marker string)
-  (let ((point (copy-marker marker :temporary)))
+  (let ((point (copy-point marker :temporary)))
     (prog1 (call-next-method)
       (push-undo marker
                  (lambda ()
@@ -256,7 +256,7 @@
                    point)))))
 
 (defmethod delete-char/marker :around (marker n)
-  (let ((point (copy-marker marker :temporary))
+  (let ((point (copy-point marker :temporary))
         (string (call-next-method)))
     (push-undo marker
                (lambda ()

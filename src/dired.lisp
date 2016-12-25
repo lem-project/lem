@@ -241,7 +241,7 @@
         (nreverse files))))
 
 (defun get-line-property (property-name)
-  (lem::text-property-at (lem::character-offset (lem::line-start (copy-marker (current-marker)
+  (lem::text-property-at (lem::character-offset (lem::line-start (copy-point (current-marker)
                                                                               :temporary))
                                                 1)
                          property-name))
@@ -270,7 +270,7 @@
           (lem::insert-string-at cur-marker output-string)
           (lem::buffer-start cur-marker)
           (lem::line-offset cur-marker 3)
-          (setf *start-marker* (copy-marker cur-marker :temporary))
+          (setf *start-marker* (copy-point cur-marker :temporary))
           (loop
             (let ((string (lem::line-string-at cur-marker)))
               (multiple-value-bind (start end start-groups end-groups)

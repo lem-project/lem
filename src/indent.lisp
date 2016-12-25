@@ -10,7 +10,7 @@
     (setf column 0))
   (let ((old-column (point-column point))
         (old-indent-string
-         (points-to-string (line-start (copy-marker point :temporary))
+         (points-to-string (line-start (copy-point point :temporary))
                            (with-marker ((point point))
                              (skip-chars-forward (line-start point)
                                                  '(#\space #\tab))

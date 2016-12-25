@@ -59,7 +59,7 @@
 
 (defun following-word ()
   (lem::points-to-string (current-marker)
-                         (lem::form-offset (copy-marker (current-marker) :temporary) 1)))
+                         (lem::form-offset (copy-point (current-marker) :temporary) 1)))
 
 (defun semicolon-p ()
   (let ((c (preceding-char)))

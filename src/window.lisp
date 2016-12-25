@@ -96,9 +96,9 @@
                  :height height
                  :%buffer buffer
                  :screen (make-screen x y width height use-modeline-p)
-                 :view-marker (copy-marker (buffer-point-marker buffer) :right-inserting)
+                 :view-marker (copy-point (buffer-point-marker buffer) :right-inserting)
                  :use-modeline-p use-modeline-p
-                 :point-marker (copy-marker (buffers-start buffer) :right-inserting)))
+                 :point-marker (copy-point (buffers-start buffer) :right-inserting)))
 
 (defun window-x (&optional (window (current-window)))
   (window-%x window))
@@ -322,7 +322,7 @@
 
 (defun window-recenter (window)
   (move-point (window-view-marker window)
-              (line-start (copy-marker (window-point-marker window) :temporary)))
+              (line-start (copy-point (window-point-marker window) :temporary)))
   (window-scroll window (- (floor (window-%height window) 2))))
 
 (defun map-wrapping-line (string winwidth fn)
@@ -353,7 +353,7 @@
              (not (first-line-p (window-view-marker window))))
     (let ((charpos-list))
       (map-wrapping-line (line-string-at (if (start-line-p (window-view-marker window))
-                                             (line-offset (copy-marker (window-view-marker window)
+                                             (line-offset (copy-point (window-view-marker window)
                                                                        :temporary)
                                                           -1)
                                              (window-view-marker window)))
@@ -744,8 +744,8 @@
         (update-prev-buffer old-buffer)
         (buffer-clear-keep-binfo old-buffer)
         (setf (buffer-keep-binfo old-buffer)
-              (list (copy-marker (window-view-marker (current-window)))
-                    (copy-marker (buffer-point-marker (window-buffer (current-window))))))))
+              (list (copy-point (window-view-marker (current-window)))
+                    (copy-point (buffer-point-marker (window-buffer (current-window))))))))
     (setf (window-buffer (current-window)) buffer)
     (setf (current-buffer) buffer)
     (point-change-buffer (%window-point-marker (current-window)) buffer)

@@ -78,7 +78,7 @@
                (when (line-offset marker (- nlines))
                  (search* string
                           (points-to-string
-                           (line-start (copy-marker marker :temporary))
+                           (line-start (copy-point marker :temporary))
                            (with-marker ((point marker))
                              (unless (line-offset point nlines)
                                (buffer-end point))

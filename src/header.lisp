@@ -43,7 +43,7 @@
                  bindings)))
     `(let ,(mapcar (lambda (b)
                      (destructuring-bind (var marker &optional (kind :temporary)) b
-                       `(,var (copy-marker ,marker ,kind))))
+                       `(,var (copy-point ,marker ,kind))))
                    bindings)
        ,(if cleanups
             `(unwind-protect (progn ,@body)

@@ -36,8 +36,8 @@
   (let* ((buffer (marker-buffer start))
          (overlay
           (make-instance 'overlay
-                         :start (copy-marker start :right-inserting)
-                         :end (copy-marker end :right-inserting)
+                         :start (copy-point start :right-inserting)
+                         :end (copy-point end :right-inserting)
                          :attribute attribute
                          :buffer buffer)))
     (buffer-add-overlay buffer overlay)

@@ -232,7 +232,7 @@
 (define-key *global-keymap* (kbd "C-M-k") 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")
   (dotimes (_ n t)
-    (let ((end (form-offset (copy-marker (current-marker) :temporary) 1)))
+    (let ((end (form-offset (copy-point (current-marker) :temporary) 1)))
       (if end
           (kill-region (current-marker) end)
           (sexp-scan-error)))))
@@ -243,12 +243,12 @@
                 (point2 (current-marker) :left-inserting))
     (let ((form-string1
            (let ((start (form-offset point1 -1))
-                 (end (form-offset (copy-marker point1 :temporary) 1)))
+                 (end (form-offset (copy-point point1 :temporary) 1)))
              (prog1 (points-to-string start end)
                (delete-between-points start end))))
           (form-string2
            (let ((end (form-offset point2 1))
-                 (start (form-offset (copy-marker point2 :temporary) -1)))
+                 (start (form-offset (copy-point point2 :temporary) -1)))
              (prog1 (points-to-string start end)
                (delete-between-points start end)))))
       (insert-string-at point1 form-string2)

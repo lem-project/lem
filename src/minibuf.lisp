@@ -219,11 +219,11 @@
                                       :attribute *minibuffer-prompt-attribute*)
                    (put-text-property start-marker cur-marker
                                       'lem.property:read-only t)
-                   (put-text-property (character-offset (copy-marker cur-marker :temporary) -1)
+                   (put-text-property (character-offset (copy-point cur-marker :temporary) -1)
                                       cur-marker
                                       'lem.property:field-separator t))
                  (character-offset (current-marker) (length prompt)))
-               (let ((*minibuffer-start-point* (copy-marker (current-marker) :temporary)))
+               (let ((*minibuffer-start-point* (copy-point (current-marker) :temporary)))
                  (when initial
                    (insert-string initial))
                  (unwind-protect (call-with-save-windows

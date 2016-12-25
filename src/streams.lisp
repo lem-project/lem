@@ -19,7 +19,7 @@
 
 (defun make-buffer-input-stream (&optional (marker (current-marker)))
   (make-instance 'buffer-input-stream
-                 :marker (copy-marker marker :temporary)))
+                 :marker (copy-point marker :temporary)))
 
 #+nil
 (defmethod trivial-gray-streams::close ((stream buffer-input-stream) &key abort)
@@ -52,7 +52,7 @@
   (end-buffer-p (buffer-stream-marker stream)))
 
 (defmethod trivial-gray-streams:stream-read-line ((stream buffer-input-stream))
-  (let ((start (copy-marker (buffer-stream-marker stream) :temporary)))
+  (let ((start (copy-point (buffer-stream-marker stream) :temporary)))
     (let ((string (points-to-string
                    start
                    (line-end (buffer-stream-marker stream)))))
@@ -74,7 +74,7 @@
                                                &optional
                                                interactive-update-p)
   (make-instance class-name
-                 :marker (copy-marker marker :left-inserting)
+                 :marker (copy-point marker :left-inserting)
                  :interactive-update-p interactive-update-p))
 
 (defun make-buffer-output-stream (&optional (marker (current-marker))

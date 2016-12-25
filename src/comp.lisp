@@ -98,8 +98,8 @@
   (when *completion-overlay*
     (delete-overlay *completion-overlay*))
   (setf *completion-overlay*
-        (make-overlay (line-start (copy-marker (current-marker) :temporary))
-                      (line-end (copy-marker (current-marker) :temporary))
+        (make-overlay (line-start (copy-point (current-marker) :temporary))
+                      (line-end (copy-point (current-marker) :temporary))
                       *completion-overlay-attribute*)))
 
 (define-key *completion-mode-keymap* (kbd "C-n") 'completion-next-line)

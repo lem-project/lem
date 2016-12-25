@@ -30,7 +30,7 @@
           (make-history))))
 
 (defun listener-start-point ()
-  (copy-marker (%listener-marker) :temporary))
+  (copy-point (%listener-marker) :temporary))
 
 (defun listener-start (buffer-name mode)
   (let ((buffer (get-buffer-create buffer-name)))
@@ -43,8 +43,8 @@
     (delete-point (%listener-marker)))
   (setf (%listener-marker)
         (if point
-            (copy-marker point :right-inserting)
-            (copy-marker (current-marker) :right-inserting))))
+            (copy-point point :right-inserting)
+            (copy-point (current-marker) :right-inserting))))
 
 (defun listener-reset-prompt (&optional (buffer (current-buffer)))
   (let ((cur-marker (lem::buffer-point-marker buffer)))

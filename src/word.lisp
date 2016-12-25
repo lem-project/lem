@@ -108,7 +108,7 @@
     (let ((c (character-at point)))
       (delete-char-at point)
       (insert-char-at point (funcall first-case c))
-      (with-marker ((end (word-offset (copy-marker point :temporary) 1)))
+      (with-marker ((end (word-offset (copy-point point :temporary) 1)))
         (case-region-aux point
                          end
                          rest-case

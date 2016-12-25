@@ -3,7 +3,7 @@
 (export '(current-marker
           markerp
           make-marker
-          copy-marker
+          copy-point
           delete-point
           marker-buffer
           marker-linum
@@ -63,7 +63,7 @@
       (buffer-add-marker buffer marker))
     marker))
 
-(defun copy-marker (marker &optional kind)
+(defun copy-point (marker &optional kind)
   (make-marker (marker-buffer marker)
                (marker-linum marker)
                (marker-charpos marker)

@@ -243,7 +243,7 @@
     (let ((*syntax-scan-window-recursive-p* t))
       (window-see window)
       (syntax-scan-lines (window-view-marker window)
-                         (or (line-offset (copy-marker (window-view-marker window) :temporary)
+                         (or (line-offset (copy-point (window-view-marker window) :temporary)
                                           (window-height window))
                              (buffers-end (window-buffer window)))))))
 
@@ -381,9 +381,9 @@
           (cond
             ((syntax-match-move-action syntax)
              (line-offset (current-marker) 0 start1)
-             (let ((start (copy-marker (current-marker) :temporary))
+             (let ((start (copy-point (current-marker) :temporary))
                    (end (funcall (syntax-match-move-action syntax)
-                                 (copy-marker (current-marker) :temporary))))
+                                 (copy-point (current-marker) :temporary))))
                (cond ((and end (point< start end))
                       (with-marker ((cur start))
                         (loop :until (same-line-p cur end) :do

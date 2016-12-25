@@ -72,5 +72,5 @@
              (lem::delete-char-at point (- (length src-word)) nil)
              (setf *rest-words* (rest words))
              (setf *all-words* words)
-             (setf *start-point* (copy-marker point :temporary))
+             (setf *start-point* (copy-point point :temporary))
              (lem::insert-string-at point (first words)))))))

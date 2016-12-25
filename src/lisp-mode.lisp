@@ -644,7 +644,7 @@
                (and (funcall move-sexp)
                     (lem::points-to-string
                      (current-marker)
-                     (lem::form-offset (copy-marker (current-marker)
+                     (lem::form-offset (copy-point (current-marker)
                                                     :temporary)
                                        1))))))
     (when str
@@ -689,7 +689,7 @@
             (read-from-string
              (lem::points-to-string
               (current-marker)
-              (lem::form-offset (copy-marker (current-marker)
+              (lem::form-offset (copy-point (current-marker)
                                              :temporary)
                                 1)))))
         (lisp-current-package))))
@@ -697,7 +697,7 @@
 (defun %lisp-macroexpand-replace-expr (expr)
   (lem::delete-between-points
    (current-marker)
-   (lem::form-offset (copy-marker (current-marker) :temporary) 1))
+   (lem::form-offset (copy-point (current-marker) :temporary) 1))
   (with-open-stream (stream (make-buffer-output-stream (current-marker)))
     (pprint expr stream))
   (read-from-string
@@ -801,7 +801,7 @@
                           (goto-position filepos)
                           (redraw-display)))
                   defs)))
-        (push (copy-marker (current-marker) :temporary)
+        (push (copy-point (current-marker) :temporary)
               *lisp-find-definition-stack*)
         (cond ((= 1 (length defs))
                (funcall (second (car defs))))
@@ -884,7 +884,7 @@
 
 (defun lisp-preceding-symbol ()
   (let* ((end (current-marker))
-         (start (lem::form-offset (copy-marker end :temporary) -1)))
+         (start (lem::form-offset (copy-point end :temporary) -1)))
     (when (and start end)
       (string-left-trim
        "'`," (string-left-trim
@@ -1053,7 +1053,7 @@
   (loop :with count := 0 :do
         (lem::insert-char-at point #\))
         (incf count)
-        (unless (lem::form-offset (copy-marker point :temporary) -1)
+        (unless (lem::form-offset (copy-point point :temporary) -1)
           (lem::delete-char-at point (- count) nil)
           (return (= 1 count)))))
 

@@ -237,8 +237,8 @@
         (t t)))
 
 (defun %free-window (window)
-  (delete-marker (window-view-marker window))
-  (delete-marker (%window-point-marker window))
+  (delete-point (window-view-marker window))
+  (delete-point (%window-point-marker window))
   (screen-delete (window-screen window)))
 
 (defun dump-window-tree (window-tree current-window)

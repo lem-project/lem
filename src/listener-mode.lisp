@@ -40,7 +40,7 @@
 
 (defun listener-update-marker (&optional (point (current-marker)))
   (when (%listener-marker)
-    (delete-marker (%listener-marker)))
+    (delete-point (%listener-marker)))
   (setf (%listener-marker)
         (if point
             (copy-marker point :right-inserting)

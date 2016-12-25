@@ -327,13 +327,13 @@
   (when (buffer-keep-binfo buffer)
     (destructuring-bind (view-marker point-marker)
         (buffer-keep-binfo buffer)
-      (delete-marker view-marker)
-      (delete-marker point-marker))))
+      (delete-point view-marker)
+      (delete-point point-marker))))
 
 (defun call-buffer-delete-hooks (buffer)
   (mapc #'funcall (buffer-delete-hooks buffer))
   (buffer-clear-keep-binfo buffer)
-  (delete-marker (buffer-point-marker buffer)))
+  (delete-point (buffer-point-marker buffer)))
 
 (defun buffer-enable-undo (buffer)
   (setf (buffer-%enable-undo-p buffer) t)
@@ -388,7 +388,7 @@
 (defun buffer-mark-cancel (buffer)
   (when (buffer-mark-p buffer)
     (setf (buffer-mark-p buffer) nil)
-    (delete-marker (buffer-mark-marker buffer))
+    (delete-point (buffer-mark-marker buffer))
     (delete-overlay (buffer-mark-overlay buffer))
     (setf (buffer-mark-overlay buffer) nil)))
 

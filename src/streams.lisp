@@ -24,7 +24,7 @@
 #+nil
 (defmethod trivial-gray-streams::close ((stream buffer-input-stream) &key abort)
   (declare (ignore abort))
-  (delete-marker (buffer-stream-marker stream))
+  (delete-point (buffer-stream-marker stream))
   t)
 
 (defmethod trivial-gray-streams:stream-read-char ((stream buffer-input-stream))
@@ -84,7 +84,7 @@
 
 (defmethod trivial-gray-streams::close ((stream buffer-output-stream) &key abort)
   (declare (ignore abort))
-  (delete-marker (buffer-stream-marker stream))
+  (delete-point (buffer-stream-marker stream))
   t)
 
 (defmethod stream-element-type ((stream buffer-output-stream))

@@ -39,7 +39,7 @@
                    (destructuring-bind (var marker &optional (kind :temporary)) b
                      (declare (ignore marker))
                      (unless (eq :temporary kind)
-                       `((delete-marker ,var)))))
+                       `((delete-point ,var)))))
                  bindings)))
     `(let ,(mapcar (lambda (b)
                      (destructuring-bind (var marker &optional (kind :temporary)) b

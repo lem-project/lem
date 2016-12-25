@@ -45,6 +45,6 @@
 
 (defun delete-overlay (overlay)
   (when (overlay-p overlay)
-    (delete-marker (overlay-start overlay))
-    (delete-marker (overlay-end overlay))
+    (delete-point (overlay-start overlay))
+    (delete-point (overlay-end overlay))
     (buffer-delete-overlay (overlay-buffer overlay) overlay)))

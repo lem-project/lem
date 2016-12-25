@@ -4,7 +4,7 @@
           markerp
           make-marker
           copy-marker
-          delete-marker
+          delete-point
           marker-buffer
           marker-linum
           marker-charpos
@@ -70,13 +70,13 @@
                :kind (or kind (marker-kind marker))
                :name (marker-name marker)))
 
-(defun delete-marker (marker)
+(defun delete-point (marker)
   (unless (eq :temporary (marker-kind marker))
     (buffer-delete-marker (marker-buffer marker)
                           marker)))
 
 (defun point-change-buffer (marker buffer &optional (point nil pointp))
-  (delete-marker marker)
+  (delete-point marker)
   (unless (eq :temporary (marker-kind marker))
     (buffer-add-marker buffer marker))
   (setf (marker-buffer marker) buffer)

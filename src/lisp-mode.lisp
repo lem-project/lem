@@ -268,21 +268,21 @@
     (syntax-add-match
      table
      (make-syntax-test "#[+-]" :regex-p t)
-     :move-action (lambda (cur-marker)
+     :move-action (lambda (cur-point)
                     (ignore-errors
-                     (let ((positivep (eql #\+ (lem::character-at cur-marker 1))))
-                       (lem::character-offset cur-marker 2)
-                       (lem::with-point ((prev cur-marker))
-                         (when (lem::form-offset cur-marker 1)
+                     (let ((positivep (eql #\+ (lem::character-at cur-point 1))))
+                       (lem::character-offset cur-point 2)
+                       (lem::with-point ((prev cur-point))
+                         (when (lem::form-offset cur-point 1)
                            (cond
                              ((if (featurep (read-from-string
                                              (lem::points-to-string
-                                              prev cur-marker)))
+                                              prev cur-point)))
                                   positivep
                                   (not positivep))
                               nil)
                              (t
-                              (lem::form-offset cur-marker 1))))))))
+                              (lem::form-offset cur-point 1))))))))
      :attribute *feature-attribute*)
 
     table))
@@ -572,12 +572,12 @@
         (lem::editor-abort ()))))
   condition)
 
-(defun %lisp-eval-internal (x marker &optional update-point-p)
-  (lem::with-point ((cur-marker marker
-                                 (if update-point-p
-                                     :left-inserting
-                                     :right-inserting)))
-    (with-open-stream (io (make-editor-io-stream cur-marker t))
+(defun %lisp-eval-internal (x point &optional update-point-p)
+  (lem::with-point ((cur-point point
+                               (if update-point-p
+                                   :left-inserting
+                                   :right-inserting)))
+    (with-open-stream (io (make-editor-io-stream cur-point t))
       (let* ((error-p)
              (results)
              (*terminal-io* io)
@@ -593,28 +593,28 @@
                                       (multiple-value-list (eval x))
                                     (lem::editor-abort () :report "Abort.")))
                             (when update-point-p
-                              (lem::move-point marker cur-marker)))
+                              (lem::move-point point cur-point)))
                            ((condition)
                             (setq error-p t)
                             (setq results (list condition))))
         (values results error-p)))))
 
-(defun %lisp-eval (x marker
+(defun %lisp-eval (x point
                      &optional update-point-p)
   (lem::call-with-allow-interrupt
    t
    (lambda ()
      (multiple-value-bind (results error-p)
          (%lisp-eval-internal x
-                              marker
+                              point
                               update-point-p)
        (values results error-p)))))
 
-(defun %lisp-eval-string (string marker
+(defun %lisp-eval-string (string point
                                  &optional
                                  update-point-p (package "COMMON-LISP-USER"))
   (%lisp-eval `(cl:progn ,@(%string-to-exps string package))
-              marker
+              point
               update-point-p))
 
 (define-key *global-keymap* (kbd "M-:") 'lisp-eval-string)
@@ -810,17 +810,17 @@
                  (loop :for (file jump-fun) :in defs
                        :do (lem.sourcelist:append-sourcelist
                             sourcelist
-                            (lambda (cur-marker)
-                              (lem::insert-string-at cur-marker file))
+                            (lambda (cur-point)
+                              (lem::insert-string-at cur-point file))
                             jump-fun)))))))))
 
 (define-key *lisp-mode-keymap* (kbd "M-,") 'lisp-pop-find-definition-stack)
 (define-command lisp-pop-find-definition-stack () ()
-  (let ((cur-marker (pop *lisp-find-definition-stack*)))
-    (unless cur-marker
+  (let ((cur-point (pop *lisp-find-definition-stack*)))
+    (unless cur-point
       (return-from lisp-pop-find-definition-stack nil))
-    (switch-to-buffer (point-buffer cur-marker))
-    (lem::move-point (current-point) cur-marker)))
+    (switch-to-buffer (point-buffer cur-point))
+    (lem::move-point (current-point) cur-point)))
 
 (defun analyze-symbol (str)
   (let (package
@@ -1002,12 +1002,12 @@
                             (stop-timer *lisp-timer*)))))
 
 (defun lisp-print-values (values)
-  (lem::with-point ((marker (current-point) :left-inserting))
-    (with-open-stream (out (make-buffer-output-stream marker))
+  (lem::with-point ((point (current-point) :left-inserting))
+    (with-open-stream (out (make-buffer-output-stream point))
       (let ((*package* (lisp-current-package)))
         (dolist (v values)
           (pprint v out))))
-    (lem::move-point (current-point) marker)))
+    (lem::move-point (current-point) point)))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-j") 'lisp-eval-print-last-sexp)
 (define-command lisp-eval-print-last-sexp () ()

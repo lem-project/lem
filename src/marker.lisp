@@ -75,10 +75,6 @@
     (buffer-delete-marker (marker-buffer marker)
                           marker)))
 
-(defun marker-point (marker)
-  (cons (marker-linum marker)
-        (marker-charpos marker)))
-
 (defun marker-change-buffer (marker buffer &optional (point nil pointp))
   (delete-marker marker)
   (unless (eq :temporary (marker-kind marker))
@@ -91,14 +87,15 @@
 (defun marker= (marker1 marker2)
   (assert (eq (marker-buffer marker1)
               (marker-buffer marker2)))
-  (equal (marker-point marker1)
-         (marker-point marker2)))
+  (and (= (marker-linum marker1)
+          (marker-linum marker2))
+       (= (marker-charpos marker1)
+          (marker-charpos marker2))))
 
 (defun marker/= (marker1 marker2)
   (assert (eq (marker-buffer marker1)
               (marker-buffer marker2)))
-  (not (equal (marker-point marker1)
-              (marker-point marker2))))
+  (not (marker= marker1 marker2)))
 
 (defun marker< (marker1 marker2)
   (assert (eq (marker-buffer marker1)

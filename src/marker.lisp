@@ -8,7 +8,6 @@
           marker-buffer
           marker-linum
           marker-charpos
-          marker-point
           marker-kind
 
           marker=
@@ -34,7 +33,7 @@
    (kind
     :initarg :kind
     :accessor marker-kind
-    :type (or (eql :temporary) (eql :left-inserting) (eql :right-inserting)))
+    :type (member :temporary :left-inserting :right-inserting))
    (name
     :initarg :name
     :accessor marker-name

@@ -13,9 +13,9 @@
 
 (defvar *prompt-attribute* (make-attribute "blue" nil :bold-p t))
 
-(defvar %listener-marker-indicator (gensym))
-(defmacro %listener-marker ()
-  `(get-bvar %listener-marker-indicator))
+(defvar %listener-point-indicator (gensym))
+(defmacro %listener-point ()
+  `(get-bvar %listener-point-indicator))
 
 (defvar %listener-history-indicator (gensym))
 (defmacro %listener-history ()
@@ -30,7 +30,7 @@
           (make-history))))
 
 (defun listener-start-point ()
-  (copy-point (%listener-marker) :temporary))
+  (copy-point (%listener-point) :temporary))
 
 (defun listener-start (buffer-name mode)
   (let ((buffer (get-buffer-create buffer-name)))
@@ -38,21 +38,21 @@
     (funcall mode)
     (listener-reset-prompt buffer)))
 
-(defun listener-update-marker (&optional (point (current-point)))
-  (when (%listener-marker)
-    (delete-point (%listener-marker)))
-  (setf (%listener-marker)
+(defun listener-update-point (&optional (point (current-point)))
+  (when (%listener-point)
+    (delete-point (%listener-point)))
+  (setf (%listener-point)
         (if point
             (copy-point point :right-inserting)
             (copy-point (current-point) :right-inserting))))
 
 (defun listener-reset-prompt (&optional (buffer (current-buffer)))
-  (let ((cur-marker (lem::buffer-point buffer)))
-    (lem::buffer-end cur-marker)
-    (unless (lem::start-line-p cur-marker)
-      (lem::insert-char-at cur-marker #\newline 1)
-      (lem::buffer-end cur-marker))
-    (lem::insert-string-at cur-marker
+  (let ((cur-point (lem::buffer-point buffer)))
+    (lem::buffer-end cur-point)
+    (unless (lem::start-line-p cur-point)
+      (lem::insert-char-at cur-point #\newline 1)
+      (lem::buffer-end cur-point))
+    (lem::insert-string-at cur-point
                            (lem.text-property:make-text-property
                             (princ-to-string
                              (funcall
@@ -60,9 +60,9 @@
                             :attribute *prompt-attribute*
                             'lem.property:read-only t
                             'lem.property:field-separator t))
-    (lem::buffer-end cur-marker)
+    (lem::buffer-end cur-point)
     (buffer-undo-boundary buffer)
-    (listener-update-marker)))
+    (listener-update-point)))
 
 (define-key *listener-mode-keymap* (kbd "C-m") 'listener-return)
 (define-command listener-return () ()
@@ -77,7 +77,7 @@
             (add-history (%listener-history) str)
             (lem::buffer-end point)
             (lem::insert-char-at point #\newline)
-            (listener-update-marker)
+            (listener-update-point)
             (funcall (get-bvar :listener-confirm-function) point str)))))
   t)
 
@@ -89,7 +89,7 @@
           (end (lem::buffers-end (current-buffer))))
       (lem::delete-between-points start end)
       (when win (lem::insert-string-at start str))
-      (lem::move-point (%listener-marker) start))))
+      (lem::move-point (%listener-point) start))))
 
 (define-key *listener-mode-keymap* (kbd "M-n") 'listener-next-input)
 (define-command listener-next-input () ()
@@ -99,7 +99,7 @@
           (end (lem::buffers-end (current-point))))
       (lem::delete-between-points start end)
       (when win (lem::insert-string-at start str))
-      (lem::move-point (%listener-marker) start))))
+      (lem::move-point (%listener-point) start))))
 
 (define-key *listener-mode-keymap* (kbd "M-r") 'listener-reset-interactive)
 (define-command listener-reset-interactive (arg) ("P")

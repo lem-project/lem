@@ -36,14 +36,14 @@
 (defmacro with-point (bindings &body body)
   (let ((cleanups
          (mapcan (lambda (b)
-                   (destructuring-bind (var marker &optional (kind :temporary)) b
-                     (declare (ignore marker))
+                   (destructuring-bind (var point &optional (kind :temporary)) b
+                     (declare (ignore point))
                      (unless (eq :temporary kind)
                        `((delete-point ,var)))))
                  bindings)))
     `(let ,(mapcar (lambda (b)
-                     (destructuring-bind (var marker &optional (kind :temporary)) b
-                       `(,var (copy-point ,marker ,kind))))
+                     (destructuring-bind (var point &optional (kind :temporary)) b
+                       `(,var (copy-point ,point ,kind))))
                    bindings)
        ,(if cleanups
             `(unwind-protect (progn ,@body)

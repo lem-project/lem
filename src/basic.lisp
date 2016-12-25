@@ -356,13 +356,11 @@
 (defun preceding-char ()
   (character-at (current-marker) -1))
 
-;; char-after, char-beforeは引数がemacsと違っていて紛らわしいので変えるつもり
-(defun char-after (&optional (n 0))
-  (character-at (current-marker) n))
+(defun char-after (&optional (point (current-marker)))
+  (character-at point 0))
 
-(defun char-before (&optional (n 1))
-  (character-at (current-marker)
-                (- n)))
+(defun char-before (&optional (point (current-marker)))
+  (character-at point -1))
 
 (defun delete-while-whitespaces (&optional ignore-newline-p use-kill-ring)
   (let ((n (skip-chars-forward (current-marker)

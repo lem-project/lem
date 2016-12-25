@@ -202,19 +202,28 @@
 (defun put-text-property (start-marker end-marker key value)
   (assert (eq (marker-buffer start-marker)
               (marker-buffer end-marker)))
-  (buffer-put-property (marker-buffer start-marker)
-                       (marker-point start-marker)
-                       (marker-point end-marker)
-                       key
-                       value))
+  (%map-region start-marker end-marker
+               (lambda (line start end)
+                 (line-add-property line
+                                    start
+                                    (if (null end)
+                                        (line-length line)
+                                        end)
+                                    key
+                                    value
+                                    (null end)))))
 
 (defun remove-text-property (start-marker end-marker key)
   (assert (eq (marker-buffer start-marker)
               (marker-buffer end-marker)))
-  (buffer-remove-property (marker-buffer start-marker)
-                          (marker-point start-marker)
-                          (marker-point end-marker)
-                          key))
+  (%map-region start-marker end-marker
+               (lambda (line start end)
+                 (line-remove-property line
+                                       start
+                                       (if (null end)
+                                           (line-length line)
+                                           end)
+                                       key))))
 
 (defun next-single-property-change (marker property-name &optional limit-marker)
   (let ((first-value (text-property-at marker property-name))

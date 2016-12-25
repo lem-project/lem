@@ -18,7 +18,6 @@
           buffer-enable-undo
           buffer-disable-undo
           buffer-unmark
-          buffer-put-property
           buffer-get-char
           buffer-line-string
           buffer-rename
@@ -372,34 +371,6 @@
 
 (defun buffer-unmark (buffer)
   (setf (buffer-%modified-p buffer) 0))
-
-(defun buffer-put-property (buffer start end key value)
-  (with-points (((start-linum start-charpos) start)
-                ((end-linum end-charpos) end))
-    (let ((line (buffer-get-line buffer start-linum)))
-      (cond ((= start-linum end-linum)
-             (line-add-property line start-charpos end-charpos key value nil))
-            (t
-             (line-add-property line start-charpos (line-length line) key value t)
-             (loop :for linum :from (1+ start-linum) :to end-linum
-                   :do (setf line (line-next line))
-                   :do (if (= linum end-linum)
-                           (line-add-property line 0 end-charpos key value nil)
-                           (line-add-property line 0 (line-length line) key value t))))))))
-
-(defun buffer-remove-property (buffer start end key)
-  (with-points (((start-linum start-charpos) start)
-                ((end-linum end-charpos) end))
-    (let ((line (buffer-get-line buffer start-linum)))
-      (cond ((= start-linum end-linum)
-             (line-remove-property line start-charpos end-charpos key))
-            (t
-             (line-remove-property line start-charpos (line-length line) key)
-             (loop :for linum :from (1+ start-linum) :to end-linum
-                   :for line := (line-next line)
-                   :do (if (= linum end-linum)
-                           (line-remove-property line 0 end-charpos key)
-                           (line-remove-property line 0 (line-length line) key))))))))
 
 (defun buffer-add-overlay (buffer overlay)
   (push overlay (buffer-overlays buffer)))

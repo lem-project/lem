@@ -38,7 +38,6 @@
                              (:file "wide")
                              (:file "hooks")
                              (:file "attribute")
-                             (:file "point")
                              (:file "window")
                              (:file "modeline")
                              (:file "buffer")

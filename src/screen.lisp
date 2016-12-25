@@ -275,7 +275,7 @@
   (lem::with-point ((point view-point))
     (loop :for i :from 0 :below (screen-height screen)
           :do
-          (let ((line (lem::get-line/marker point)))
+          (let ((line (lem::get-line/point point)))
             (setf (aref (screen-lines screen) i)
                   (lem::line-string/attributes line)))
           (unless (lem::line-offset point 1)

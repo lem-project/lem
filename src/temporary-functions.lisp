@@ -24,7 +24,7 @@
               (point-buffer end)))
   (unless (point< start end)
     (rotatef start end))
-  (delete-char/marker start
+  (delete-char/point start
                       (count-characters start end)))
 
 (defun %map-region (start end function)

@@ -265,7 +265,7 @@
               (point-buffer end)))
   (let ((buffer (point-buffer start)))
     (when (enable-syntax-highlight-p buffer)
-      (let* ((line (get-line/marker start))
+      (let* ((line (get-line/point start))
              (prev (line-prev line))
              (*syntax-symbol-lifetimes* (and prev (line-%symbol-lifetimes prev)))
              (*current-syntax* (mode-syntax-table (buffer-major-mode buffer))))

@@ -165,20 +165,20 @@
           (character-at temp-point 0)))))
 
 (defun insert-char-at (point char &optional (n 1))
-  (loop :repeat n :do (insert-char/marker point char))
+  (loop :repeat n :do (insert-char/point point char))
   t)
 
 (defun insert-string-at (point string)
   (cond ((lem.text-property:text-property-p string)
          (let ((str (lem.text-property:text-property-string string)))
            (with-point ((start-point point))
-             (insert-string/marker point str)
+             (insert-string/point point str)
              (let ((end-point (character-offset (copy-point start-point :temporary)
                                                  (length str))))
                (loop :for (k v) :on (lem.text-property:text-property-plist string) :by #'cddr
                      :do (put-text-property start-point end-point k v))))))
         (t
-         (insert-string/marker point string)))
+         (insert-string/point point string)))
   t)
 
 (defun delete-char-at (point &optional (n 1) killp)
@@ -187,7 +187,7 @@
       (return-from delete-char-at nil))
     (setf n (- n)))
   (unless (end-buffer-p point)
-    (let ((string (delete-char/marker point n)))
+    (let ((string (delete-char/point point n)))
       (when killp
         (kill-push string))
       t)))
@@ -195,11 +195,11 @@
 (defun erase-buffer (&optional (buffer (current-buffer)))
   (buffer-start (buffer-point buffer))
   (buffer-mark-cancel buffer)
-  (delete-char/marker (buffer-point buffer) t))
+  (delete-char/point (buffer-point buffer) t))
 
 (defun text-property-at (point key &optional (offset 0))
   (if (zerop offset)
-      (line-search-property (get-line/marker point) key (point-charpos point))
+      (line-search-property (get-line/point point) key (point-charpos point))
       (with-point ((temp-point point))
         (when (character-offset temp-point offset)
           (text-property-at temp-point key 0)))))

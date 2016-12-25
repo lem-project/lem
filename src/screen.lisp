@@ -282,7 +282,7 @@
 	 (fill (screen-lines screen) nil :start (1+ i))
 	 (return))))
   (disp-set-overlays screen
-                     (buffer-overlays buffer)
+                     (lem::buffer-overlays buffer)
                      view-point))
 
 (defun screen-display-line-wrapping (screen view-charpos

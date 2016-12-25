@@ -325,9 +325,9 @@
 
 (defun buffer-clear-keep-binfo (buffer)
   (when (buffer-keep-binfo buffer)
-    (destructuring-bind (view-marker point-marker)
+    (destructuring-bind (view-point point-marker)
         (buffer-keep-binfo buffer)
-      (delete-point view-marker)
+      (delete-point view-point)
       (delete-point point-marker))))
 
 (defun call-buffer-delete-hooks (buffer)

@@ -242,8 +242,8 @@
              (null *syntax-scan-window-recursive-p*))
     (let ((*syntax-scan-window-recursive-p* t))
       (window-see window)
-      (syntax-scan-lines (window-view-marker window)
-                         (or (line-offset (copy-point (window-view-marker window) :temporary)
+      (syntax-scan-lines (window-view-point window)
+                         (or (line-offset (copy-point (window-view-point window) :temporary)
                                           (window-height window))
                              (buffers-end (window-buffer window)))))))
 

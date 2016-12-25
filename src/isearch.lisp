@@ -195,9 +195,9 @@
   (isearch-reset-buffer)
   (unless (equal search-string "")
     (window-see (current-window))
-    (lem::with-point ((cur-marker (lem::window-view-marker (current-window)))
+    (lem::with-point ((cur-marker (lem::window-view-point (current-window)))
                        (limit-marker (or (lem::line-offset
-                                          (copy-point (lem::window-view-marker (current-window))
+                                          (copy-point (lem::window-view-point (current-window))
                                                        :temporary)
                                           (window-height (current-window)))
                                          (lem::buffers-end (window-buffer (current-window))))))

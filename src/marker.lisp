@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(export '(current-marker
+(export '(current-point
           markerp
           make-point
           copy-point
@@ -39,7 +39,7 @@
     :accessor marker-name
     :type (or null string))))
 
-(defun current-marker ()
+(defun current-point ()
   (buffer-point-marker (current-buffer)))
 
 (defmethod print-object ((object marker) stream)

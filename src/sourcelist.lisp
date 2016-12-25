@@ -72,6 +72,6 @@
 (define-key *sourcelist-mode-keymap* "q" 'quit-window)
 
 (define-command sourcelist-jump () ()
-  (let ((jump-function (lem::text-property-at (current-marker) 'sourcelist)))
+  (let ((jump-function (lem::text-property-at (current-point) 'sourcelist)))
     (when jump-function
       (funcall jump-function))))

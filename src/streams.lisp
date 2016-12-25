@@ -17,7 +17,7 @@
     :initarg :marker
     :accessor buffer-stream-marker)))
 
-(defun make-buffer-input-stream (&optional (marker (current-marker)))
+(defun make-buffer-input-stream (&optional (marker (current-point)))
   (make-instance 'buffer-input-stream
                  :marker (copy-point marker :temporary)))
 
@@ -77,7 +77,7 @@
                  :marker (copy-point marker :left-inserting)
                  :interactive-update-p interactive-update-p))
 
-(defun make-buffer-output-stream (&optional (marker (current-marker))
+(defun make-buffer-output-stream (&optional (marker (current-point))
                                             interactive-update-p)
   (make-buffer-stream-instance 'buffer-output-stream
                                marker interactive-update-p))

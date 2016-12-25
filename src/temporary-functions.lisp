@@ -79,12 +79,12 @@
   (count-lines (buffers-start (marker-buffer point)) point))
 
 (defun invoke-save-excursion (function)
-  (let ((point (copy-point (current-marker) :temporary))
+  (let ((point (copy-point (current-point) :temporary))
         (mark (when (buffer-mark-p (current-buffer))
                 (copy-point (buffer-mark-marker (current-buffer))
                              :temporary))))
     (unwind-protect (funcall function)
       (setf (current-buffer) (marker-buffer point))
-      (move-point (current-marker) point)
+      (move-point (current-point) point)
       (when mark
         (set-current-mark mark)))))

@@ -327,7 +327,7 @@
      (lem::character-offset point -2))))
 
 (defun looking-at-indent-spec ()
-  (let* ((string (symbol-string-at-point (current-marker)))
+  (let* ((string (symbol-string-at-point (current-point)))
          (pos (and string (position #\: string :from-end t)))
          (name (if (and pos (plusp pos))
                    (subseq string (1+ pos))
@@ -358,7 +358,7 @@
             (eq 'flet (looking-at-indent-spec)))))))
 
 (defun arg1-first-line-p ()
-  (let ((point (current-marker)))
+  (let ((point (current-point)))
     (when (lem::form-offset point 1)
       (skip-chars-forward point '(#\space #\tab))
       (not (lem::end-line-p point)))))
@@ -390,10 +390,10 @@
 (defun lisp-calc-indent (point)
   (save-excursion
     (setf (current-buffer) (marker-buffer point))
-    (lem::move-point (current-marker) point)
+    (lem::move-point (current-point) point)
     (beginning-of-line)
     (when (eq *syntax-string-attribute*
-              (lem::text-property-at (current-marker) :attribute -1))
+              (lem::text-property-at (current-point) :attribute -1))
       (return-from lisp-calc-indent nil))
     (when (save-excursion (and (backward-sexp 1 t) (bolp)))
       (return-from lisp-calc-indent 0))
@@ -401,9 +401,9 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-M-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()
-  (lem::with-marker ((end (current-marker)))
+  (lem::with-marker ((end (current-point)))
     (when (lem::form-offset end 1)
-      (indent-region (current-marker) end))))
+      (indent-region (current-point) end))))
 
 (defun top-of-defun (point)
   (loop :while (scan-lists point -1 1 t))
@@ -413,7 +413,7 @@
 (define-command lisp-beginning-of-defun (n) ("p")
   (if (minusp n)
       (lisp-end-of-defun (- n))
-      (let ((point (current-marker)))
+      (let ((point (current-point)))
         (dotimes (_ n)
           (if (lem::start-line-p point)
               (lem::line-offset point -1)
@@ -428,7 +428,7 @@
 (define-command lisp-end-of-defun (n) ("p")
   (if (minusp n)
       (lisp-beginning-of-defun (- n))
-      (let ((point (current-marker)))
+      (let ((point (current-point)))
         (dotimes (_ n)
           (top-of-defun point)
           (lem::form-offset point 1)
@@ -643,8 +643,8 @@
   (let ((str (save-excursion
                (and (funcall move-sexp)
                     (lem::points-to-string
-                     (current-marker)
-                     (lem::form-offset (copy-point (current-marker)
+                     (current-point)
+                     (lem::form-offset (copy-point (current-point)
                                                     :temporary)
                                        1))))))
     (when str
@@ -653,7 +653,7 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-M-x") 'lisp-eval-defun)
 (define-command lisp-eval-defun () ()
-  (lisp-move-and-eval-sexp (lambda () (top-of-defun (current-marker)))
+  (lisp-move-and-eval-sexp (lambda () (top-of-defun (current-point)))
                            #'lisp-eval-string))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-e") 'lisp-eval-last-sexp)
@@ -688,17 +688,17 @@
           (let ((*package* (lisp-current-package)))
             (read-from-string
              (lem::points-to-string
-              (current-marker)
-              (lem::form-offset (copy-point (current-marker)
+              (current-point)
+              (lem::form-offset (copy-point (current-point)
                                              :temporary)
                                 1)))))
         (lisp-current-package))))
 
 (defun %lisp-macroexpand-replace-expr (expr)
   (lem::delete-between-points
-   (current-marker)
-   (lem::form-offset (copy-point (current-marker) :temporary) 1))
-  (with-open-stream (stream (make-buffer-output-stream (current-marker)))
+   (current-point)
+   (lem::form-offset (copy-point (current-point) :temporary) 1))
+  (with-open-stream (stream (make-buffer-output-stream (current-point)))
     (pprint expr stream))
   (read-from-string
    (lem::points-to-string (lem::buffers-start (current-buffer))
@@ -732,7 +732,7 @@
                      "*macroexpand*"))
 
 (defun lisp-read-symbol (prompt history-name)
-  (let ((default-name (or (symbol-string-at-point (current-marker)) "")))
+  (let ((default-name (or (symbol-string-at-point (current-point)) "")))
     (let ((name (minibuf-read-line prompt
                                    default-name
                                    'complete-symbol
@@ -801,7 +801,7 @@
                           (goto-position filepos)
                           (redraw-display)))
                   defs)))
-        (push (copy-point (current-marker) :temporary)
+        (push (copy-point (current-point) :temporary)
               *lisp-find-definition-stack*)
         (cond ((= 1 (length defs))
                (funcall (second (car defs))))
@@ -820,7 +820,7 @@
     (unless cur-marker
       (return-from lisp-pop-find-definition-stack nil))
     (switch-to-buffer (marker-buffer cur-marker))
-    (lem::move-point (current-marker) cur-marker)))
+    (lem::move-point (current-point) cur-marker)))
 
 (defun analyze-symbol (str)
   (let (package
@@ -883,7 +883,7 @@
                                                 external-p)))))))
 
 (defun lisp-preceding-symbol ()
-  (let* ((end (current-marker))
+  (let* ((end (current-point))
          (start (lem::form-offset (copy-point end :temporary) -1)))
     (when (and start end)
       (string-left-trim
@@ -929,7 +929,7 @@
   (save-excursion
    (loop
      (go-to-car)
-     (let ((name (symbol-string-at-point (current-marker))))
+     (let ((name (symbol-string-at-point (current-point))))
        (multiple-value-bind (arglist)
            (lisp-search-arglist name #'lisp-get-arglist-string)
          (cond (arglist
@@ -946,7 +946,7 @@
 
 (define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-insert-space-and-echo-arglist)
 (define-command lisp-insert-space-and-echo-arglist (n) ("p")
-  (lem::insert-char-at (current-marker) #\space n)
+  (lem::insert-char-at (current-point) #\space n)
   (lisp-echo-arglist))
 
 (define-key *lisp-mode-keymap* (kbd "C-c ;") 'lisp-comment-or-uncomment-region)
@@ -1002,12 +1002,12 @@
                             (stop-timer *lisp-timer*)))))
 
 (defun lisp-print-values (values)
-  (lem::with-marker ((marker (current-marker) :left-inserting))
+  (lem::with-marker ((marker (current-point) :left-inserting))
     (with-open-stream (out (make-buffer-output-stream marker))
       (let ((*package* (lisp-current-package)))
         (dolist (v values)
           (pprint v out))))
-    (lem::move-point (current-marker) marker)))
+    (lem::move-point (current-point) marker)))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-j") 'lisp-eval-print-last-sexp)
 (define-command lisp-eval-print-last-sexp () ()
@@ -1016,7 +1016,7 @@
    #'(lambda (string)
        (unless (bolp) (insert-newline))
        (setq - (first (%string-to-exps string (lisp-current-package))))
-       (let ((values (%lisp-eval - (current-marker) t)))
+       (let ((values (%lisp-eval - (current-point) t)))
          (setq +++ ++ /// //     *** (car ///)
                ++  +  //  /      **  (car //)
                +   -  /   values *   (car /))

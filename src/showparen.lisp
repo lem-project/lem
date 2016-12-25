@@ -12,12 +12,12 @@
   (setq *brackets-overlays* nil)
   (let ((highlight-markers '()))
     (when (syntax-open-paren-char-p (following-char))
-      (let ((goal-marker (lem::form-offset (copy-point (current-marker) :temporary) 1)))
+      (let ((goal-marker (lem::form-offset (copy-point (current-point) :temporary) 1)))
         (when goal-marker
           (push (lem::character-offset goal-marker -1)
                 highlight-markers))))
     (when (syntax-closed-paren-char-p (preceding-char))
-      (let ((goal-marker (lem::form-offset (copy-point (current-marker) :temporary) -1)))
+      (let ((goal-marker (lem::form-offset (copy-point (current-point) :temporary) -1)))
         (when goal-marker
           (push goal-marker highlight-markers))))
     (dolist (marker highlight-markers)

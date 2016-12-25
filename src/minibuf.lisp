@@ -212,8 +212,8 @@
                  (erase-buffer))
                (minibuffer-mode)
                (progn
-                 (with-marker ((start-marker (current-marker))
-                               (cur-marker (current-marker) :left-inserting))
+                 (with-marker ((start-marker (current-point))
+                               (cur-marker (current-point) :left-inserting))
                    (insert-string-at cur-marker prompt)
                    (put-text-property start-marker cur-marker
                                       :attribute *minibuffer-prompt-attribute*)
@@ -222,8 +222,8 @@
                    (put-text-property (character-offset (copy-point cur-marker :temporary) -1)
                                       cur-marker
                                       'lem.property:field-separator t))
-                 (character-offset (current-marker) (length prompt)))
-               (let ((*minibuffer-start-point* (copy-point (current-marker) :temporary)))
+                 (character-offset (current-point) (length prompt)))
+               (let ((*minibuffer-start-point* (copy-point (current-point) :temporary)))
                  (when initial
                    (insert-string initial))
                  (unwind-protect (call-with-save-windows
@@ -234,7 +234,7 @@
                      (let ((*inhibit-read-only* t))
                        (erase-buffer))
                      (insert-string minibuf-buffer-prev-string)
-                     (move-point (current-marker) minibuf-buffer-prev-point))))))))
+                     (move-point (current-point) minibuf-buffer-prev-point))))))))
       (editor-abort (c)
                     (error c)))))
 

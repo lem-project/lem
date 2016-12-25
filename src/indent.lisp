@@ -53,7 +53,7 @@
 
 (define-key *global-keymap* (kbd "C-i") 'indent)
 (define-command indent () ()
-  (indent-line (current-marker)))
+  (indent-line (current-point)))
 
 (define-key *global-keymap* (kbd "C-j") 'newline-and-indent)
 (define-key *global-keymap* (kbd "M-j") 'newline-and-indent)

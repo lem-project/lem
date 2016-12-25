@@ -271,12 +271,12 @@
              (*current-syntax* (mode-syntax-table (buffer-major-mode buffer))))
         (save-excursion
           (setf (current-buffer) buffer)
-          (move-point (current-marker) start)
+          (move-point (current-point) start)
           (loop :until (or (null line)
-                           (point< end (current-marker)))
+                           (point< end (current-point)))
                 :do
                 (setf line (%syntax-scan-line line))
-                (unless (line-offset (current-marker) 1)
+                (unless (line-offset (current-point) 1)
                   (return))
                 (setf line (line-next line))))))))
 
@@ -380,10 +380,10 @@
                           :key #'car)))
           (cond
             ((syntax-match-move-action syntax)
-             (line-offset (current-marker) 0 start1)
-             (let ((start (copy-point (current-marker) :temporary))
+             (line-offset (current-point) 0 start1)
+             (let ((start (copy-point (current-point) :temporary))
                    (end (funcall (syntax-match-move-action syntax)
-                                 (copy-point (current-marker) :temporary))))
+                                 (copy-point (current-point) :temporary))))
                (cond ((and end (point< start end))
                       (with-marker ((cur start))
                         (loop :until (same-line-p cur end) :do
@@ -393,7 +393,7 @@
                               (line-offset cur 1)))
                       (setf (line-%region line) nil)
                       (put-text-property start end :attribute (syntax-attribute syntax))
-                      (move-point (current-marker) end)
+                      (move-point (current-point) end)
                       (cons (marker-charpos end) line)))))
             (t
              (line-add-property line start1 end1 :attribute (syntax-attribute syntax) nil)

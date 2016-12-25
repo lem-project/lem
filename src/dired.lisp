@@ -68,7 +68,7 @@
                  (pop-to-buffer (find-file-buffer file)))))
 
 (define-command dired-next-line (n) ("p")
-  (let ((point (current-marker)))
+  (let ((point (current-point)))
     (lem::line-offset point n)
     (when (point<= point *start-marker*)
       (lem::move-point point *start-marker*))
@@ -77,32 +77,32 @@
     (lem::line-start point)))
 
 (define-command dired-previous-line (n) ("p")
-  (let ((point (current-marker)))
+  (let ((point (current-point)))
     (lem::line-offset point (- n))
     (when (point<= point *start-marker*)
       (lem::move-point point *start-marker*))
     (lem::line-start point)))
 
 (define-command dired-next-directory-line (n) ("p")
-  (lem::with-marker ((cur-marker (current-marker)))
+  (lem::with-marker ((cur-marker (current-point)))
     (loop
       (when (dired-last-line-p cur-marker)
         (return))
       (lem::line-offset cur-marker 1)
       (when (and (eq :directory (lem::text-property-at cur-marker 'type))
                  (>= 0 (decf n)))
-        (lem::move-point (current-marker) cur-marker)
+        (lem::move-point (current-point) cur-marker)
         (return)))))
 
 (define-command dired-previous-directory-line (n) ("p")
-  (lem::with-marker ((cur-marker (current-marker)))
+  (lem::with-marker ((cur-marker (current-point)))
     (loop
       (when (dired-first-line-p cur-marker)
         (return))
       (lem::line-offset cur-marker -1)
       (when (and (eq :directory (lem::text-property-at cur-marker 'type))
                  (>= 0 (decf n)))
-        (lem::move-point (current-marker) cur-marker)
+        (lem::move-point (current-point) cur-marker)
         (return)))))
 
 (define-command dired-mark-and-next-line (n) ("p")
@@ -201,7 +201,7 @@
       (funcall open-file file))))
 
 (defun mark-current-line (flag)
-  (let ((point (current-marker)))
+  (let ((point (current-point)))
     (when (and (point<= *start-marker* point)
                (not (last-line-p point)))
       (lem::line-start point)
@@ -214,8 +214,8 @@
 
 (defun mark-lines (test get-flag)
   (save-excursion
-    (lem::move-point (current-marker) *start-marker*)
-    (lem::line-offset (current-marker) 2)
+    (lem::move-point (current-point) *start-marker*)
+    (lem::line-offset (current-point) 2)
     (loop
       (beginning-of-line)
       (let ((flag (char= (following-char) #\*)))
@@ -227,12 +227,12 @@
 (defun selected-files ()
   (let ((files '()))
     (save-excursion
-      (lem::move-point (current-marker) *start-marker*)
+      (lem::move-point (current-point) *start-marker*)
       (loop
         (beginning-of-line)
         (let ((flag (char= (following-char) #\*)))
           (when flag
-            (lem::line-start (current-marker))
+            (lem::line-start (current-point))
             (push (get-file) files)))
         (unless (forward-line 1)
           (return))))
@@ -244,7 +244,7 @@
 
 (defun get-line-property (property-name)
   (let ((point
-         (lem::character-offset (lem::line-start (copy-point (current-marker)
+         (lem::character-offset (lem::line-start (copy-point (current-point)
                                                              :temporary))
                                 1)))
     (when point

@@ -75,10 +75,10 @@
   (do-commandloop (:toplevel t)
     (with-error-handler ()
       (cockpit
-        (with-marker ((end (current-marker)))
+        (with-marker ((end (current-point)))
           (unless (line-offset end 1)
             (buffer-end end))
-          (syntax-scan-lines (current-marker) end))
+          (syntax-scan-lines (current-point) end))
         (redraw-display)
         (let ()
           (start-idle-timers)

@@ -98,8 +98,8 @@
   (when *completion-overlay*
     (delete-overlay *completion-overlay*))
   (setf *completion-overlay*
-        (make-overlay (line-start (copy-point (current-marker) :temporary))
-                      (line-end (copy-point (current-marker) :temporary))
+        (make-overlay (line-start (copy-point (current-point) :temporary))
+                      (line-end (copy-point (current-point) :temporary))
                       *completion-overlay-attribute*)))
 
 (define-key *completion-mode-keymap* (kbd "C-n") 'completion-next-line)
@@ -107,16 +107,16 @@
 (define-key *completion-mode-keymap* (kbd "C-i") 'completion-next-line)
 (define-command completion-next-line (n) ("p")
   (with-current-window *completion-window*
-    (if (last-line-p (current-marker))
-        (buffer-start (current-marker))
-        (line-offset (current-marker) n))
+    (if (last-line-p (current-point))
+        (buffer-start (current-point))
+        (line-offset (current-point) n))
     (completion-update-overlay)))
 
 (define-key *completion-mode-keymap* (kbd "C-p") 'completion-previous-line)
 (define-key *completion-mode-keymap* (kbd "M-p") 'completion-previous-line)
 (define-command completion-previous-line (n) ("p")
   (with-current-window *completion-window*
-    (if (first-line-p (current-marker))
+    (if (first-line-p (current-point))
         (end-of-buffer)
         (forward-line (- n)))
     (completion-update-overlay)))

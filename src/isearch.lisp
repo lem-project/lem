@@ -44,7 +44,7 @@
 
 (defun isearch-update-display ()
   (isearch-update-minibuf)
-  (isearch-update-buffer (current-marker)))
+  (isearch-update-buffer (current-point)))
 
 (defun isearch-update-minibuf ()
   (message "~a~a"
@@ -109,7 +109,7 @@
 
 (define-key *global-keymap* (kbd "C-x .") 'isearch-forward-symbol-at-point)
 (define-command isearch-forward-symbol-at-point () ()
-  (let ((point (current-marker)))
+  (let ((point (current-point)))
     (skip-chars-forward point #'syntax-symbol-char-p)
     (skip-chars-backward point #'syntax-symbol-char-p t)
     (skip-chars-backward point #'syntax-symbol-char-p)
@@ -131,7 +131,7 @@
   (setq *isearch-prompt* prompt)
   (setq *isearch-string* initial-string)
   (setq *isearch-search-function* search-func)
-  (setq *isearch-start-point* (copy-point (current-marker) :temporary))
+  (setq *isearch-start-point* (copy-point (current-point) :temporary))
   (setq *isearch-search-forward-function* search-forward-function)
   (setq *isearch-search-backward-function* search-backward-function)
   (isearch-update-display)
@@ -139,7 +139,7 @@
 
 (define-key *isearch-keymap* (kbd "C-g") 'isearch-abort)
 (define-command isearch-abort () ()
-  (lem::move-point (current-marker) *isearch-start-point*)
+  (lem::move-point (current-point) *isearch-start-point*)
   (isearch-reset-buffer)
   t)
 
@@ -170,14 +170,14 @@
 (define-command isearch-next () ()
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
-  (funcall *isearch-search-forward-function* (current-marker) *isearch-string*)
+  (funcall *isearch-search-forward-function* (current-point) *isearch-string*)
   (isearch-update-display))
 
 (define-key *isearch-keymap* (kbd "C-r") 'isearch-prev)
 (define-command isearch-prev () ()
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
-  (funcall *isearch-search-backward-function* (current-marker) *isearch-string*)
+  (funcall *isearch-search-backward-function* (current-point) *isearch-string*)
   (isearch-update-display))
 
 (define-key *isearch-keymap* (kbd "C-y") 'isearch-yank)
@@ -224,9 +224,9 @@
                      *isearch-string*
                      (string c)))
   (isearch-update-display)
-  (lem::with-marker ((start-marker (current-marker)))
-    (unless (funcall *isearch-search-function* (current-marker) *isearch-string*)
-      (lem::move-point (current-marker) start-marker)))
+  (lem::with-marker ((start-marker (current-point)))
+    (unless (funcall *isearch-search-function* (current-point) *isearch-string*)
+      (lem::move-point (current-point) start-marker)))
   t)
 
 (define-command isearch-self-insert () ()
@@ -270,7 +270,7 @@
       (when (or (not (funcall *isearch-search-forward-function* cur-marker before))
                 (and goal-marker (point< goal-marker cur-marker)))
         (when goal-marker
-          (lem::move-point (current-marker) goal-marker))
+          (lem::move-point (current-point) goal-marker))
         (return))
       (lem::with-marker ((end cur-marker))
         (isearch-update-buffer cur-marker before)

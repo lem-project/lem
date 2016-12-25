@@ -132,8 +132,8 @@
 
 (define-key *global-keymap* (kbd "C-o") 'open-line)
 (define-command open-line (n) ("p")
-  (let ((point (current-marker)))
-    (insert-char-at (current-marker) #\newline n)
+  (let ((point (current-point)))
+    (insert-char-at (current-point) #\newline n)
     (character-offset point (- n))))
 
 (define-key *global-keymap* (kbd "C-d") 'delete-next-char)
@@ -167,14 +167,14 @@
   (setf end (copy-point end :temporary))
   (unless (continue-flag :kill)
     (kill-ring-new))
-  (move-point (current-marker) start)
+  (move-point (current-point) start)
   (delete-char (count-characters start end) t)
   t)
 
 (define-key *global-keymap* (kbd "C-k") 'kill-line)
 (define-command kill-line (&optional (n 1)) ("p")
-  (kill-region (copy-point (current-marker) :temporary)
-               (dotimes (_ n (current-marker))
+  (kill-region (copy-point (current-point) :temporary)
+               (dotimes (_ n (current-point))
                  (cond ((eolp)
                         (next-line 1)
                         (beginning-of-line))
@@ -184,9 +184,9 @@
 (define-key *global-keymap* (kbd "C-y") 'yank)
 (define-command yank (n) ("p")
   (let ((string (kill-ring-nth n)))
-    (setf (get-bvar :yank-start) (copy-point (current-marker) :temporary))
+    (setf (get-bvar :yank-start) (copy-point (current-point) :temporary))
     (insert-string string)
-    (setf (get-bvar :yank-end) (copy-point (current-marker) :temporary))
+    (setf (get-bvar :yank-end) (copy-point (current-point) :temporary))
     (continue-flag :yank)
     t))
 
@@ -212,7 +212,7 @@
   (unless (continue-flag :next-line)
     (setq *next-line-prev-column* (current-column)))
   (unless (prog1 (forward-line n)
-            (move-to-column (current-marker) *next-line-prev-column*))
+            (move-to-column (current-point) *next-line-prev-column*))
     (cond ((plusp n)
            (end-of-buffer)
            (editor-error "End of buffer"))
@@ -251,12 +251,12 @@
 (define-key *global-keymap* (kbd "C-a") 'move-to-beginning-of-line)
 (define-key *global-keymap* (kbd "[home]") 'move-to-beginning-of-line)
 (define-command move-to-beginning-of-line () ()
-  (let ((bol (line-start (copy-point (current-marker) :temporary))))
-    (or (text-property-at (current-marker) 'lem.property:field-separator -1)
-        (previous-single-property-change (current-marker)
+  (let ((bol (line-start (copy-point (current-point) :temporary))))
+    (or (text-property-at (current-point) 'lem.property:field-separator -1)
+        (previous-single-property-change (current-point)
                                          'lem.property:field-separator
                                          bol)
-        (move-point (current-marker) bol)))
+        (move-point (current-point) bol)))
   t)
 
 (define-key *global-keymap* (kbd "C-e") 'move-to-end-of-line)
@@ -271,12 +271,12 @@
   (if n
       (scroll-down n)
       (cond
-        ((line-offset (current-marker)
+        ((line-offset (current-point)
                       (1- (window-height (current-window))))
          (window-recenter (current-window))
          t)
         (t
-         (buffer-end (current-marker))
+         (buffer-end (current-point))
          (window-recenter (current-window))
          t))))
 
@@ -286,12 +286,12 @@
   (if n
       (scroll-up n)
       (cond
-        ((line-offset (current-marker)
+        ((line-offset (current-point)
                       (- (1- (window-height (current-window)))))
          (window-recenter (current-window))
          t)
         (t
-         (buffer-start (current-marker))
+         (buffer-start (current-point))
          (window-recenter (current-window))
          t))))
 
@@ -324,7 +324,7 @@
   (dotimes (_ n t)
     (when (eql (char-code #\page) (following-char))
       (shift-position 1))
-    (unless (search-forward (current-marker) (string #\page))
+    (unless (search-forward (current-point) (string #\page))
       (end-of-buffer)
       (return nil))))
 
@@ -333,13 +333,13 @@
   (dotimes (_ n t)
     (when (eql (char-code #\page) (preceding-char))
       (shift-position -1))
-    (unless (search-backward (current-marker) (string #\page))
+    (unless (search-backward (current-point) (string #\page))
       (beginning-of-buffer)
       (return nil))))
 
 (define-key *global-keymap* (kbd "C-x C-o") 'delete-blank-lines)
 (define-command delete-blank-lines () ()
-  (let ((point (current-marker)))
+  (let ((point (current-point)))
     (loop
       (unless (blank-line-p point)
         (line-offset point 1)
@@ -356,14 +356,14 @@
 
 (define-key *global-keymap* (kbd "M-Spc") 'just-one-space)
 (define-command just-one-space () ()
-  (skip-chars-backward (current-marker) '(#\space #\tab))
+  (skip-chars-backward (current-point) '(#\space #\tab))
   (delete-while-whitespaces t nil)
   (insert-char #\space 1)
   t)
 
 (define-key *global-keymap* (kbd "M-^") 'delete-indentation)
 (define-command delete-indentation () ()
-  (let* ((cur (current-marker))
+  (let* ((cur (current-point))
          (prev (copy-point (line-start cur) :temporary)))
     (when (line-offset cur -1)
       (delete-between-points (line-end cur) prev)
@@ -372,7 +372,7 @@
 
 (define-key *global-keymap* (kbd "C-t") 'transpose-characters)
 (define-command transpose-characters () ()
-  (let ((point (current-marker)))
+  (let ((point (current-point)))
     (cond ((start-line-p point))
           ((end-line-p point)
            (let ((c1 (character-at point -1))
@@ -389,7 +389,7 @@
 
 (define-key *global-keymap* (kbd "M-m") 'back-to-indentation)
 (define-command back-to-indentation () ()
-  (let ((point (current-marker)))
+  (let ((point (current-point)))
     (skip-chars-forward (line-start point)
                         '(#\space #\tab)))
   t)
@@ -399,7 +399,7 @@
   (dotimes (_ n t)
     (let ((point (buffer-undo (current-buffer))))
       (if point
-          (move-point (current-marker) point)
+          (move-point (current-point) point)
           (editor-error "Undo Error")))))
 
 (define-key *global-keymap* (kbd "C-_") 'redo)
@@ -407,12 +407,12 @@
   (dotimes (_ n t)
     (let ((point (buffer-redo (current-buffer))))
       (if point
-          (move-point (current-marker) point)
+          (move-point (current-point) point)
           (editor-error "Redo Error")))))
 
 (define-key *global-keymap* (kbd "C-@") 'mark-set)
 (define-command mark-set () ()
-  (set-current-mark (current-marker))
+  (set-current-mark (current-point))
   (message "Mark set"))
 
 (define-key *global-keymap* (kbd "C-x C-x") 'exchange-point-mark)
@@ -420,7 +420,7 @@
   (check-marked)
   (let ((mark (buffer-mark-marker (current-buffer)))
         (point (copy-point (buffer-point-marker (current-buffer)) :temporary)))
-    (move-point (current-marker) mark)
+    (move-point (current-point) mark)
     (set-current-mark point))
   t)
 
@@ -430,7 +430,7 @@
          (setf n 1))
         ((< #1=(buffer-nlines (current-buffer)) n)
          (setf n #1#)))
-  (line-offset (buffer-start (current-marker)) (1- n))
+  (line-offset (buffer-start (current-point)) (1- n))
   t)
 
 (define-key *global-keymap* (kbd "C-x #") 'filter-buffer)

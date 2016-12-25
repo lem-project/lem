@@ -194,11 +194,11 @@
 
 (define-key *global-keymap* (kbd "C-M-f") 'forward-sexp)
 (define-command forward-sexp (&optional (n 1) no-errors) ("p")
-  (with-marker ((prev (current-marker)))
-    (let ((point (form-offset (current-marker) n)))
+  (with-marker ((prev (current-point)))
+    (let ((point (form-offset (current-point) n)))
       (or point
           (progn
-            (move-point (current-marker) prev)
+            (move-point (current-point) prev)
             (if no-errors
                 nil
                 (sexp-scan-error)))))))
@@ -209,19 +209,19 @@
 
 (define-key *global-keymap* (kbd "C-M-n") 'forward-list)
 (define-command forward-list (&optional (n 1) no-errors) ("p")
-  (scan-lists (current-marker) n 0 no-errors))
+  (scan-lists (current-point) n 0 no-errors))
 
 (define-key *global-keymap* (kbd "C-M-p") 'backward-list)
 (define-command backward-list (&optional (n 1) no-errors) ("p")
-  (scan-lists (current-marker) (- n) 0 no-errors))
+  (scan-lists (current-point) (- n) 0 no-errors))
 
 (define-key *global-keymap* (kbd "C-M-d") 'down-list)
 (define-command down-list (&optional (n 1) no-errors) ("p")
-  (scan-lists (current-marker) n -1 no-errors))
+  (scan-lists (current-point) n -1 no-errors))
 
 (define-key *global-keymap* (kbd "C-M-u") 'up-list)
 (define-command up-list (&optional (n 1) no-errors) ("p")
-  (scan-lists (current-marker) (- n) 1 no-errors))
+  (scan-lists (current-point) (- n) 1 no-errors))
 
 (define-key *global-keymap* (kbd "C-M-@") 'mark-sexp)
 (define-command mark-sexp () ()
@@ -232,15 +232,15 @@
 (define-key *global-keymap* (kbd "C-M-k") 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")
   (dotimes (_ n t)
-    (let ((end (form-offset (copy-point (current-marker) :temporary) 1)))
+    (let ((end (form-offset (copy-point (current-point) :temporary) 1)))
       (if end
-          (kill-region (current-marker) end)
+          (kill-region (current-point) end)
           (sexp-scan-error)))))
 
 (define-key *global-keymap* (kbd "C-M-t") 'transpose-sexps)
 (define-command transpose-sexps () ()
-  (with-marker ((point1 (current-marker) :left-inserting)
-                (point2 (current-marker) :left-inserting))
+  (with-marker ((point1 (current-point) :left-inserting)
+                (point2 (current-point) :left-inserting))
     (let ((form-string1
            (let ((start (form-offset point1 -1))
                  (end (form-offset (copy-point point1 :temporary) 1)))

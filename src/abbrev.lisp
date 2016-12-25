@@ -47,7 +47,7 @@
 
 (define-key *global-keymap* (kbd "C-x /") 'abbrev-with-pop-up-window)
 (define-command abbrev-with-pop-up-window () ()
-  (let* ((src-word (preceding-word (current-marker)))
+  (let* ((src-word (preceding-word (current-point)))
          (words (scan-all-buffer-words src-word)))
     (start-completion (lambda (str)
                         (completion str words))
@@ -59,7 +59,7 @@
 
 (define-key *global-keymap* (kbd "M-/") 'abbrev)
 (define-command abbrev () ()
-  (let ((point (current-marker)))
+  (let ((point (current-point)))
     (cond ((continue-flag :abbrev)
            (when (null *rest-words*)
              (setf *rest-words* *all-words*))

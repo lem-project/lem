@@ -282,43 +282,43 @@
 
 
 (defun bolp ()
-  (start-line-p (current-marker)))
+  (start-line-p (current-point)))
 
 (defun eolp ()
-  (end-line-p (current-marker)))
+  (end-line-p (current-point)))
 
 (defun bobp ()
-  (start-buffer-p (current-marker)))
+  (start-buffer-p (current-point)))
 
 (defun eobp ()
-  (end-buffer-p (current-marker)))
+  (end-buffer-p (current-point)))
 
 (defun insert-char (c &optional (n 1))
-  (insert-char-at (current-marker) c n)
+  (insert-char-at (current-point) c n)
   t)
 
 (defun insert-newline (&optional (n 1))
-  (insert-char-at (current-marker) #\newline n)
+  (insert-char-at (current-point) #\newline n)
   t)
 
 (defun insert-string (string)
-  (insert-string-at (current-marker) string))
+  (insert-string-at (current-point) string))
 
 (defun delete-char (n &optional killp)
-  (delete-char-at (current-marker) n killp))
+  (delete-char-at (current-point) n killp))
 
 (defun beginning-of-buffer ()
-  (buffer-start (current-marker)))
+  (buffer-start (current-point)))
 
 (defun end-of-buffer ()
-  (buffer-end (current-marker)))
+  (buffer-end (current-point)))
 
 (defun beginning-of-line ()
-  (line-start (current-marker))
+  (line-start (current-point))
   t)
 
 (defun end-of-line ()
-  (line-end (current-marker))
+  (line-end (current-point))
   t)
 
 (defun goto-position (position)
@@ -327,10 +327,10 @@
   (shift-position position))
 
 (defun forward-line (&optional (n 1))
-  (line-offset (current-marker) n))
+  (line-offset (current-point) n))
 
 (defun shift-position (n)
-  (character-offset (current-marker) n))
+  (character-offset (current-point) n))
 
 (defun check-marked ()
   (unless (buffer-mark-p (current-buffer))
@@ -348,22 +348,22 @@
   marker)
 
 (defun current-line-string ()
-  (line-string-at (current-marker)))
+  (line-string-at (current-point)))
 
 (defun following-char ()
-  (character-at (current-marker)))
+  (character-at (current-point)))
 
 (defun preceding-char ()
-  (character-at (current-marker) -1))
+  (character-at (current-point) -1))
 
-(defun char-after (&optional (point (current-marker)))
+(defun char-after (&optional (point (current-point)))
   (character-at point 0))
 
-(defun char-before (&optional (point (current-marker)))
+(defun char-before (&optional (point (current-point)))
   (character-at point -1))
 
 (defun delete-while-whitespaces (&optional ignore-newline-p use-kill-ring)
-  (let ((n (skip-chars-forward (current-marker)
+  (let ((n (skip-chars-forward (current-point)
                                (if ignore-newline-p
                                    '(#\space #\tab)
                                    '(#\space #\tab #\newline)))))
@@ -402,7 +402,7 @@
   (skip-chars-internal point test not-p nil))
 
 (defun current-column ()
-  (point-column (current-marker)))
+  (point-column (current-point)))
 
 (defun point-to-offset (point)
   (let ((end-linum (marker-linum point))
@@ -435,10 +435,10 @@
 (defun apply-region-lines (start end function)
   (with-marker ((start start :right-inserting)
                 (end end :right-inserting))
-    (move-point (current-marker) start)
-    (loop :while (point< (current-marker) end) :do
-          (with-marker ((prev (line-start (current-marker))))
+    (move-point (current-point) start)
+    (loop :while (point< (current-point) end) :do
+          (with-marker ((prev (line-start (current-point))))
             (funcall function)
-            (when (same-line-p (current-marker) prev)
-              (unless (line-offset (current-marker) 1)
+            (when (same-line-p (current-point) prev)
+              (unless (line-offset (current-point) 1)
                 (return)))))))

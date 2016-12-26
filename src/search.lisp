@@ -161,7 +161,9 @@
 			  (or (>= pos2 (length string))
 			      (not (syntax-symbol-char-p (aref string pos2)))))
 		 (return (cons pos pos2)))))
-	   (setf start (1+ (or pos start))))))
+           (if from-end
+               (setf end (1- (or pos end)))
+               (setf start (1+ (or pos start)))))))
 
 (defun search-forward-symbol (point name &optional limit-point)
   (let ((charpos (point-charpos point)))

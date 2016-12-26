@@ -5,7 +5,6 @@
           mode-keymap
           mode-syntax-table
           current-mode-keymap
-          current-syntax
           find-mode-from-name
           toggle-minor-mode
           define-major-mode
@@ -14,30 +13,21 @@
 
 (defvar *mode-list* nil)
 
-(defun major-mode ()
-  (buffer-major-mode (current-buffer)))
-
-(defun (setf major-mode) (new-val)
-  (setf (buffer-major-mode (current-buffer)) new-val))
-
 (macrolet ((def (name)
-                `(progn
-                   (defun ,name (mode)
-                     (get mode ',name))
-                   (defun (setf ,name) (new-val mode)
-                     (setf (get mode ',name) new-val)))))
+	     `(progn
+		(defun ,name (mode)
+		  (get mode ',name))
+		(defun (setf ,name) (new-val mode)
+		  (setf (get mode ',name) new-val)))))
   (def mode-name)
   (def mode-keymap)
   (def mode-syntax-table))
 
 (defun current-mode-keymap ()
-  (mode-keymap (major-mode)))
+  (mode-keymap (buffer-major-mode)))
 
 (defun (setf current-mode-keymap) (new-keymap)
-  (setf (mode-keymap (major-mode)) new-keymap))
-
-(defun current-syntax ()
-  (mode-syntax-table (major-mode)))
+  (setf (mode-keymap (buffer-major-mode)) new-keymap))
 
 (defun find-mode-from-name (mode-name)
   (find-if #'(lambda (mode)
@@ -80,7 +70,7 @@
      (define-command ,major-mode () ()
        (clear-buffer-variables)
        ,(when parent-mode `(,parent-mode))
-       (setf (major-mode) ',major-mode)
+       (setf (buffer-major-mode) ',major-mode)
        (run-hooks ',(symb major-mode "-HOOK"))
        ,@body)))
 
@@ -102,6 +92,6 @@
 
 (defun change-buffer-mode (buffer mode &rest args)
   (save-excursion
-   (setf (current-buffer) buffer)
-   (apply mode args))
+    (setf (current-buffer) buffer)
+    (apply mode args))
   buffer)

@@ -5,8 +5,8 @@
           pop-up-typeout-window))
 
 (define-minor-mode typeout-mode
-  (:name "typeout"
-   :keymap *typeout-mode-keymap*))
+    (:name "typeout"
+	   :keymap *typeout-mode-keymap*))
 
 (define-key *typeout-mode-keymap* (kbd "q") 'dismiss-typeout-window)
 
@@ -18,11 +18,12 @@
     (with-current-window window
       (with-buffer-read-only buffer nil
         (when erase
-          (buffer-erase buffer))
+          (erase-buffer buffer))
         (typeout-mode t)
         (when fn
-          (with-open-stream (out (make-buffer-output-stream buffer (current-point)))
-            (funcall fn out)))))
+          (save-excursion
+            (with-open-stream (out (make-buffer-output-stream (buffer-point buffer)))
+              (funcall fn out))))))
     (when focus
       (setf (current-window) window))
     window))

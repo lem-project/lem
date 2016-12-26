@@ -17,11 +17,11 @@
     (flet ((separatorp (char) (find char separator))
            (done () (return-from %comp-split (cons (subseq string 0 end) list))))
       (loop :for start = (position-if #'separatorp string :end end :from-end t) :do
-        (when (null start) (done))
-        (push (subseq string (1+ start) end) list)
-        (push (string (aref string start)) list)
-        (incf words)
-        (setf end start)))))
+	 (when (null start) (done))
+	 (push (subseq string (1+ start) end) list)
+	 (push (string (aref string start)) list)
+	 (incf words)
+	 (setf end start)))))
 
 (defun logand-strings (strings)
   (let* ((str (car strings))
@@ -44,21 +44,21 @@
                                        (parts2-length (length parts2)))
                                   (and (<= parts1-length parts2-length)
                                        (loop
-                                         :for p1 :in parts1
-                                         :for p2 :in parts2
-                                         :unless (funcall test p1 p2)
-                                         :do (return nil)
-                                         :finally (return t))))))
+					  :for p1 :in parts1
+					  :for p2 :in parts2
+					  :unless (funcall test p1 p2)
+					  :do (return nil)
+					  :finally (return t))))))
                             (lambda (elt)
                               (funcall test name elt)))
                         list)))
     (cond
-     ((null strings) nil)
-     ((null (cdr strings))
-      (values (car strings)
-              strings))
-     (t
-      (values (logand-strings strings) strings)))))
+      ((null strings) nil)
+      ((null (cdr strings))
+       (values (car strings)
+	       strings))
+      (t
+       (values (logand-strings strings) strings)))))
 
 (defun completion-hypheen (name list &key key)
   (completion name list :test #'completion-test :separator "-" :key key))
@@ -69,17 +69,17 @@
          (files (mapcar #'namestring (cl-fad:list-directory dirname))))
     (let ((strings
            (loop
-             :for pathname :in (or (directory str) (list str))
-             :for str := (namestring pathname)
-             :append
-             (multiple-value-bind (andstr strings)
-                 (completion (enough-namestring str dirname)
-                             files
-                             :test #'completion-test
-                             :separator "-."
-                             :key #'(lambda (path)
-                                      (enough-namestring path dirname)))
-               (when andstr strings)))))
+	      :for pathname :in (or (directory str) (list str))
+	      :for str := (namestring pathname)
+	      :append
+	      (multiple-value-bind (andstr strings)
+		  (completion (enough-namestring str dirname)
+			      files
+			      :test #'completion-test
+			      :separator "-."
+			      :key #'(lambda (path)
+				       (enough-namestring path dirname)))
+		(when andstr strings)))))
       (values (logand-strings strings) strings))))
 
 (defun completion-buffer-name (str)
@@ -91,15 +91,15 @@
 (defvar *completion-overlay-attribute* (make-attribute "blue" nil :reverse-p t))
 
 (define-minor-mode completion-mode
-  (:name "completion"
-   :keymap *completion-mode-keymap*))
+    (:name "completion"
+	   :keymap *completion-mode-keymap*))
 
 (defun completion-update-overlay ()
   (when *completion-overlay*
     (delete-overlay *completion-overlay*))
   (setf *completion-overlay*
-        (make-overlay (progn (beginning-of-line) (current-point))
-                      (progn (end-of-line) (current-point))
+        (make-overlay (line-start (copy-point (current-point) :temporary))
+                      (line-end (copy-point (current-point) :temporary))
                       *completion-overlay-attribute*)))
 
 (define-key *completion-mode-keymap* (kbd "C-n") 'completion-next-line)
@@ -107,16 +107,16 @@
 (define-key *completion-mode-keymap* (kbd "C-i") 'completion-next-line)
 (define-command completion-next-line (n) ("p")
   (with-current-window *completion-window*
-    (if (eobp)
-        (beginning-of-buffer)
-        (forward-line n))
+    (if (last-line-p (current-point))
+        (buffer-start (current-point))
+        (line-offset (current-point) n))
     (completion-update-overlay)))
 
 (define-key *completion-mode-keymap* (kbd "C-p") 'completion-previous-line)
 (define-key *completion-mode-keymap* (kbd "M-p") 'completion-previous-line)
 (define-command completion-previous-line (n) ("p")
   (with-current-window *completion-window*
-    (if (first-line-p)
+    (if (first-line-p (current-point))
         (end-of-buffer)
         (forward-line (- n)))
     (completion-update-overlay)))
@@ -159,29 +159,30 @@
 
 (define-key *completion-mode-keymap* (kbd "C-m") 'completion-select)
 (define-command completion-select () ()
-  (let (str)
-    (with-current-window *completion-window*
-      (setf str (current-line-string)))
-    (delete-char (- (length *completion-last-string*)) nil)
+  (let ((str
+         (line-string-at
+          (buffer-point
+           (window-buffer *completion-window*)))))
+    (delete-character (current-point) (- (length *completion-last-string*)) nil)
     (setf *completion-last-string* str)
-    (insert-string str)
+    (insert-string (current-point) str)
     (completion-end))
   t)
 
 (define-key *completion-mode-keymap* (kbd "C-h") 'completion-delete-previous-char)
 (define-key *completion-mode-keymap* (kbd "[backspace]") 'completion-delete-previous-char)
 (define-command completion-delete-previous-char (n) ("p")
-  (delete-char (- n) nil)
+  (delete-character (current-point) (- n) nil)
   (update-completion *completion-last-function*
-                    (subseq *completion-last-string* 0 (- (length *completion-last-string*) n))))
+		     (subseq *completion-last-string* 0 (- (length *completion-last-string*) n))))
 
 (define-command completion-self-insert (n) ("p")
   (let ((c (insertion-key-p (last-read-key-sequence))))
-    (cond (c (insert-char c n)
+    (cond (c (insert-character (current-point) c n)
              (update-completion *completion-last-function*
-                               (concatenate 'string
-                                            *completion-last-string*
-                                            (string c))))
+				(concatenate 'string
+					     *completion-last-string*
+					     (string c))))
           (t (unread-key-sequence (last-read-key-sequence))
              (completion-end)))))
 
@@ -211,13 +212,13 @@
       (update-completion comp-f str)
     (declare (ignore result))
     (when confirm-p
-      (delete-char (- (length *completion-last-string*)) nil)
-      (insert-string str)
+      (delete-character (current-point) (- (length *completion-last-string*)) nil)
+      (insert-string (current-point) str)
       (completion-end)))
   t)
 
 (defun delete-completion-window ()
-  (when (and (window-p *completion-window*)
+  (when (and (windowp *completion-window*)
              (not (deleted-window-p *completion-window*)))
     (with-current-window *completion-window*
       (when (get-bvar :completion-buffer-p

@@ -7,25 +7,26 @@
 
 (defvar *paren-attribute* (make-attribute "cyan" nil :reverse-p t))
 
+(defun show-paren-timer-function ()
+  (mapc #'delete-overlay *brackets-overlays*)
+  (setq *brackets-overlays* nil)
+  (let ((highlight-points '()))
+    (when (syntax-open-paren-char-p (following-char))
+      (let ((goal-point (form-offset (copy-point (current-point) :temporary) 1)))
+        (when goal-point
+          (push (character-offset goal-point -1)
+                highlight-points))))
+    (when (syntax-closed-paren-char-p (preceding-char))
+      (let ((goal-point (form-offset (copy-point (current-point) :temporary) -1)))
+        (when goal-point
+          (push goal-point highlight-points))))
+    (dolist (point highlight-points)
+      (push (make-overlay point
+                          (character-offset (copy-point point :temporary) 1)
+                          *paren-attribute*)
+            *brackets-overlays*))
+    (when highlight-points
+      (redraw-display))))
+
 (start-idle-timer "show-paren" 100 t
-                  (lambda ()
-                    (mapc #'delete-overlay *brackets-overlays*)
-                    (setq *brackets-overlays* nil)
-                    (let ((highlight-points))
-                      (when (syntax-open-paren-char-p (following-char))
-                        (save-excursion
-                         (when (forward-sexp 1 t)
-                           (push (shift-point (current-point) -1)
-                                 highlight-points))))
-                      (when (syntax-closed-paren-char-p (preceding-char))
-                        (save-excursion
-                         (when (backward-sexp 1 t)
-                           (push (current-point) highlight-points))))
-                      (let ((attr *paren-attribute*))
-                        (dolist (point highlight-points)
-                          (push (make-overlay point
-                                              (shift-point point 1)
-                                              attr)
-                                *brackets-overlays*))
-                        (when highlight-points
-                          (redraw-display))))))
+                  'show-paren-timer-function)

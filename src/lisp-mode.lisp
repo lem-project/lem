@@ -1,6 +1,6 @@
 (in-package :cl-user)
 (defpackage :lem.lisp-mode
-  (:use :cl :lem :lem.prog-mode :lem.listener-mode)
+  (:use :cl :lem :lem.listener-mode)
   (:import-from
    :lem.util)
   (:export
@@ -47,98 +47,92 @@
 (defvar *indent-spec-function* nil)
 
 (loop :for (name . n)
-      :in '(("block" . 1)
-            ("cond" . progn)
-            ("case" . 1)
-            ("ccase" . 1)
-            ("ecase" . 1)
-            ("typecase" . 1)
-            ("etypecase" . 1)
-            ("ctypecase" . 1)
-            ("catch" . 1)
-            ("defclass" . 2)
-            ("define-condition" . 2)
-            ("define-modify-macro" . 1)
-            ("defsetf" . 2)
-            ("defun" . 2)
-            ("define-setf-method" . 2)
-            ("define-setf-expander" . 2)
-            ("defmacro" . 2)
-            ("deftype" . 2)
-            ("defmethod" . 2)
-            ("defpackage" . 1)
-            ("defstruct" . 1)
-            ("destructuring-bind" . 2)
-            ("do" . 2)
-            ("do*" . 2)
-            ("dolist" . 1)
-            ("dotimes" . 1)
-            ("eval-when" . 1)
-            ("flet" . flet)
-            ("labels" . flet)
-            ("macrolet" . flet)
-            ("generic-flet" . flet)
-            ("generic-labels" . flet)
-            ("handler-case" . 1)
-            ("restart-case" . 1)
-            ("lambda" . 1)
-            ("let" . 1)
-            ("let*" . 1)
-            ("handler-bind" . 1)
-            ("restart-bind" . 1)
-            ("locally" . 0)
-            ("multiple-value-bind" . 2)
-            ("multiple-value-call" . 1)
-            ("multiple-value-prog1" . 1)
-            ("prog" . 1)
-            ("prog*" . 1)
-            ("prog1" . 1)
-            ("prog2" . 2)
-            ("progn" . progn)
-            ("progv" . 2)
-            ("return" . 0)
-            ("return-from" . 1)
-            ("symbol-macrolet" . 1)
-            ("tagbody" . 0)
-            ("throw" . 1)
-            ("unless" . 1)
-            ("unwind-protect" . 1)
-            ("when" . 1)
-            ("with-accessors" . 2)
-            ("with-condition-restarts" . 2)
-            ("with-output-to-string" . 1)
-            ("with-open-file" . 1)
-            ("with-slots" . 2)
-            ("with-standard-io-syntax" . 2)
-            ("defparameter" . 1)
-            ("defvar" . 1)
-            ("defconstant" . 1)
-            ("defsystem" . 1)
-            ("loop" . progn)
-            (":method" . 1)
-            (":use" . progn)
-            (":export" . progn)
-            (":import-from" . progn))
-      :do (setf (gethash name *indent-table*) n))
+   :in '(("block" . 1)
+	 ("cond" . progn)
+	 ("case" . 1)
+	 ("ccase" . 1)
+	 ("ecase" . 1)
+	 ("typecase" . 1)
+	 ("etypecase" . 1)
+	 ("ctypecase" . 1)
+	 ("catch" . 1)
+	 ("defclass" . 2)
+	 ("define-condition" . 2)
+	 ("define-modify-macro" . 1)
+	 ("defsetf" . 2)
+	 ("defun" . 2)
+	 ("define-setf-method" . 2)
+	 ("define-setf-expander" . 2)
+	 ("defmacro" . 2)
+	 ("deftype" . 2)
+	 ("defmethod" . 2)
+	 ("defpackage" . 1)
+	 ("defstruct" . 1)
+	 ("destructuring-bind" . 2)
+	 ("do" . 2)
+	 ("do*" . 2)
+	 ("dolist" . 1)
+	 ("dotimes" . 1)
+	 ("eval-when" . 1)
+	 ("flet" . flet)
+	 ("labels" . flet)
+	 ("macrolet" . flet)
+	 ("generic-flet" . flet)
+	 ("generic-labels" . flet)
+	 ("handler-case" . 1)
+	 ("restart-case" . 1)
+	 ("lambda" . 1)
+	 ("let" . 1)
+	 ("let*" . 1)
+	 ("handler-bind" . 1)
+	 ("restart-bind" . 1)
+	 ("locally" . 0)
+	 ("multiple-value-bind" . 2)
+	 ("multiple-value-call" . 1)
+	 ("multiple-value-prog1" . 1)
+	 ("prog" . 1)
+	 ("prog*" . 1)
+	 ("prog1" . 1)
+	 ("prog2" . 2)
+	 ("progn" . progn)
+	 ("progv" . 2)
+	 ("return" . 0)
+	 ("return-from" . 1)
+	 ("symbol-macrolet" . 1)
+	 ("tagbody" . 0)
+	 ("throw" . 1)
+	 ("unless" . 1)
+	 ("unwind-protect" . 1)
+	 ("when" . 1)
+	 ("with-accessors" . 2)
+	 ("with-condition-restarts" . 2)
+	 ("with-output-to-string" . 1)
+	 ("with-open-file" . 1)
+	 ("with-slots" . 2)
+	 ("with-standard-io-syntax" . 2)
+	 ("defparameter" . 1)
+	 ("defvar" . 1)
+	 ("defconstant" . 1)
+	 ("defsystem" . 1)
+	 ("loop" . progn)
+	 (":method" . 1)
+	 (":use" . progn)
+	 (":export" . progn)
+	 (":import-from" . progn))
+   :do (setf (gethash name *indent-table*) n))
 
-(defun featurep (form positivep)
+(defun featurep (form)
   (cond ((atom form)
-         (if positivep
-             (find (find-symbol (princ-to-string form)
-                                :keyword)
-                   *features*)
-             (not (find (find-symbol (princ-to-string form)
-                                     :keyword)
-                        *features*))))
-        ((eq 'and (car form))
-         (every (lambda (form) (featurep form positivep))
-                (cdr form)))
-        ((eq 'or (car form))
-         (every (lambda (form) (featurep form positivep))
-                (cdr form)))
+         (find (find-symbol (princ-to-string form)
+                            :keyword)
+               *features*))
+        ((string-equal 'and (car form))
+         (every #'featurep (cdr form)))
+        ((string-equal 'or (car form))
+         (some #'featurep (cdr form)))
         (t)))
 
-(defvar *feature-attribute* (lem::copy-attribute *syntax-comment-attribute*))
+(defvar *feature-attribute* (copy-attribute *syntax-comment-attribute*))
 
 (defvar *lisp-syntax-table*
   (let ((table
@@ -271,31 +265,32 @@
                                         :regex-p t :word-p t)
                       :attribute *syntax-constant-attribute*)
 
-    (syntax-add-match table
-                      (make-syntax-test "#[+-]" :regex-p t)
-                      :move-action (lambda ()
-                                     (ignore-errors
-                                      (let ((positivep (eql #\+ (char-after 1))))
-                                        (shift-position 2)
-                                        (let ((prev-point (current-point)))
-                                          (when (forward-sexp 1 t)
-                                            (cond ((featurep (read-from-string
-                                                              (region-string prev-point
-                                                                             (current-point)))
-                                                             positivep)
-                                                   (setf (current-point) prev-point)
-                                                   nil)
-                                                  (t
-                                                   (forward-sexp 1 t)
-                                                   (current-point))))))))
-                      :attribute *feature-attribute*)
+    (syntax-add-match
+     table
+     (make-syntax-test "#[+-]" :regex-p t)
+     :move-action (lambda (cur-point)
+                    (ignore-errors
+		      (let ((positivep (eql #\+ (character-at cur-point 1))))
+			(character-offset cur-point 2)
+			(with-point ((prev cur-point))
+			  (when (form-offset cur-point 1)
+			    (cond
+			      ((if (featurep (read-from-string
+					      (points-to-string
+					       prev cur-point)))
+				   positivep
+				   (not positivep))
+			       nil)
+			      (t
+			       (form-offset cur-point 1))))))))
+     :attribute *feature-attribute*)
 
     table))
 
-(define-major-mode lisp-mode prog-mode
+(define-major-mode lisp-mode nil
     (:name "lisp"
-     :keymap *lisp-mode-keymap*
-     :syntax-table *lisp-syntax-table*)
+	   :keymap *lisp-mode-keymap*
+	   :syntax-table *lisp-syntax-table*)
   (setf (get-bvar :enable-syntax-highlight) t)
   (setf (get-bvar :indent-tabs-mode) nil)
   (modeline-add-status-list (lambda (window)
@@ -303,11 +298,7 @@
                                              (window-buffer window))))
                             (current-buffer))
   (setf (get-bvar :calc-indent-function)
-        'lisp-calc-indent)
-  (setf (get-bvar :beginning-of-defun-function)
-        'lisp-beginning-of-defun)
-  (setf (get-bvar :end-of-defun-function)
-        'lisp-end-of-defun))
+        'lisp-calc-indent))
 
 (defun %lisp-mode-skip-expr-prefix (c1 c2 step-fn)
   (when c1
@@ -319,32 +310,24 @@
                  (get-dispatch-macro-character c1 c2))
         (funcall step-fn c1 c2)))))
 
-(defvar *lisp-mode-skip-features-sharp-macro-p* nil)
-
-(defun lisp-mode-skip-expr-prefix-forward ()
+(defun lisp-mode-skip-expr-prefix-forward (point)
   (%lisp-mode-skip-expr-prefix
-   (char-after 0) (char-after 1)
-   #'(lambda (c1 c2)
-       (declare (ignore c1 c2))
-       (cond ;; (*lisp-mode-skip-features-sharp-macro-p*
-             ;;  (when (and (eql c1 #\#) (member c2 '(#\+ #\-)))
-             ;;    (shift-position 2))
-             ;;  (if (eql #\( (following-char))
-             ;;      (skip-list-forward 0)
-             ;;      (skip-symbol-forward))
-             ;;  (skip-chars-forward '(#\space #\tab #\newline)))
-             (t
-              (shift-position 2))))))
+   (character-at point 0)
+   (character-at point 1)
+   (lambda (c1 c2)
+     (declare (ignore c1 c2))
+     (character-offset point 2))))
 
-(defun lisp-mode-skip-expr-prefix-backward ()
-  (%lisp-mode-skip-expr-prefix (char-before 2)
-                               (char-before 1)
-                               #'(lambda (c1 c2)
-                                   (declare (ignore c1 c2))
-                                   (shift-position -2))))
+(defun lisp-mode-skip-expr-prefix-backward (point)
+  (%lisp-mode-skip-expr-prefix
+   (character-at point -2)
+   (character-at point -1)
+   (lambda (c1 c2)
+     (declare (ignore c1 c2))
+     (character-offset point -2))))
 
 (defun looking-at-indent-spec ()
-  (let* ((string (symbol-string-at-point))
+  (let* ((string (symbol-string-at-point (current-point)))
          (pos (and string (position #\: string :from-end t)))
          (name (if (and pos (plusp pos))
                    (subseq string (1+ pos))
@@ -366,18 +349,19 @@
 
 (defun flet-indent-p ()
   (save-excursion
-   (when (up-list 1 t)
-     (go-to-car)
-     (and (eql #\( (following-char))
-          (up-list 1 t)
-          (progn
-            (go-to-car)
-            (eq 'flet (looking-at-indent-spec)))))))
+    (when (up-list 1 t)
+      (go-to-car)
+      (and (eql #\( (following-char))
+	   (up-list 1 t)
+	   (progn
+	     (go-to-car)
+	     (eq 'flet (looking-at-indent-spec)))))))
 
 (defun arg1-first-line-p ()
-  (when (forward-sexp 1 t)
-    (skip-chars-forward '(#\space #\tab))
-    (not (eolp))))
+  (let ((point (current-point)))
+    (when (form-offset point 1)
+      (skip-chars-forward point '(#\space #\tab))
+      (not (end-line-p point)))))
 
 (defun calc-indent-1 ()
   (let* ((arg-count (go-to-car))
@@ -403,11 +387,13 @@
                (current-column)
                (1+ car-column))))))
 
-(defun lisp-calc-indent ()
+(defun lisp-calc-indent (point)
   (save-excursion
+    (setf (current-buffer) (point-buffer point))
+    (move-point (current-point) point)
     (beginning-of-line)
     (when (eq *syntax-string-attribute*
-              (preceding-property :attribute))
+              (text-property-at (current-point) :attribute -1))
       (return-from lisp-calc-indent nil))
     (when (save-excursion (and (backward-sexp 1 t) (bolp)))
       (return-from lisp-calc-indent 0))
@@ -415,31 +401,59 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-M-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()
-  (indent-region (current-point)
-                 (save-excursion
-                  (forward-sexp 1)
-                  (current-point))))
+  (with-point ((end (current-point)))
+    (when (form-offset end 1)
+      (indent-region (current-point) end))))
 
-(define-command lisp-beginning-of-defun (&optional (n 1)) ("p")
-  (beginning-of-defun-abstract n #'(lambda () (looking-at-line "^\\("))))
+(defun top-of-defun (point)
+  (loop :while (scan-lists point -1 1 t))
+  t)
 
-(define-command lisp-end-of-defun (&optional (n 1)) ("p")
+(defun beginning-of-defun (point n)
+  (with-point ((start point))
+    (if (minusp n)
+        (dotimes (_ (- n) point)
+          (if (start-line-p point)
+              (line-offset point -1)
+              (line-start point))
+          (loop
+            (when (char= #\( (character-at point 0))
+              (return))
+            (unless (line-offset point -1)
+              (move-point point start)
+              (return-from beginning-of-defun nil))))
+        (dotimes (_ n point)
+          (loop
+            (unless (line-offset point 1)
+              (move-point point start)
+              (return-from beginning-of-defun nil))
+            (when (char= #\( (character-at point 0))
+              (return)))))))
+
+(define-key *lisp-mode-keymap* (kbd "C-M-a") 'lisp-beginning-of-defun)
+(define-command lisp-beginning-of-defun (n) ("p")
+  (beginning-of-defun (current-point) (- n)))
+
+(define-key *lisp-mode-keymap* (kbd "C-M-e") 'lisp-end-of-defun)
+(define-command lisp-end-of-defun (n) ("p")
   (if (minusp n)
       (lisp-beginning-of-defun (- n))
-      (dotimes (_ n t)
-        (down-list 1 t)
-        (lisp-beginning-of-defun 1)
-        (unless (forward-sexp 1)
-          (return nil))
-        (loop
-          for c = (following-char)
-          do (cond ((char= c #\newline)
-                    (return (forward-line 1)))
-                   ((syntax-space-char-p c)
-                    (unless (shift-position 1)
-                      (return nil)))
-                   (t
-                    (return t)))))))
+      (let ((point (current-point)))
+        (dotimes (_ n)
+          (skip-chars-forward point '(#\space #\tab))
+          (with-point ((prev point))
+            (beginning-of-defun point -1)
+            (form-offset point 1)
+            (if (point< point prev)
+                (if (beginning-of-defun prev 1)
+                    (move-point point prev)
+                    (progn
+                      (move-point point prev)
+                      (return-from lisp-end-of-defun nil)))
+                point))
+          (skip-chars-forward point '(#\space #\tab))
+          (when (char= #\newline (character-at point))
+            (character-offset point 1))))))
 
 (defun lisp-buffer-package (buffer)
   (let ((package-name
@@ -537,8 +551,8 @@
                  "Type a form to be evaluated: ")
                 nil)))
       (error (cdt)
-             (setq error-p t)
-             (message "~a" cdt)))
+	(setq error-p t)
+	(message "~a" cdt)))
     (unless error-p
       (store-value x condition)
       (return))))
@@ -551,74 +565,74 @@
     (with-pop-up-typeout-window (out (get-buffer-create *error-buffer-name*) :erase t)
       (format out "~a~%~%" condition)
       (loop
-        for choice in choices
-        for i from 1
-        do (format out "~&[~d] ~a~%" i choice))
+	 for choice in choices
+	 for i from 1
+	 do (format out "~&[~d] ~a~%" i choice))
       (terpri out)
       (uiop/image:print-backtrace :stream out :count 100))
     (loop
-      (redraw-display)
-      (handler-case
-          (let* ((str (minibuf-read-string "Debug: "))
-                 (i (and (stringp str) (parse-integer str :junk-allowed t))))
-            (cond ((and i (<= 1 i n))
-                   (let ((restart (nth (1- i) choices)))
-                     (cond ((eq 'store-value (restart-name restart))
-                            (ldebug-store-value condition))
-                           (t
-                            (invoke-restart-interactively restart))))
-                   (return))
-                  (t
-                   (let ((x
-                          (handler-case (eval (read-from-string str nil))
-                            (error (cdt) (format nil "~a" cdt)))))
-                     (with-pop-up-typeout-window (out (get-buffer-create "*output*") :erase t)
-                       (princ x out))))))
-        (lem::editor-abort ()))))
+       (redraw-display)
+       (handler-case
+	   (let* ((str (minibuf-read-string "Debug: "))
+		  (i (and (stringp str) (parse-integer str :junk-allowed t))))
+	     (cond ((and i (<= 1 i n))
+		    (let ((restart (nth (1- i) choices)))
+		      (cond ((eq 'store-value (restart-name restart))
+			     (ldebug-store-value condition))
+			    (t
+			     (invoke-restart-interactively restart))))
+		    (return))
+		   (t
+		    (let ((x
+			   (handler-case (eval (read-from-string str nil))
+			     (error (cdt) (format nil "~a" cdt)))))
+		      (with-pop-up-typeout-window (out (get-buffer-create "*output*") :erase t)
+			(princ x out))))))
+	 (editor-abort ()))))
   condition)
 
-(defun %lisp-eval-internal (x output-buffer point &optional update-point-p)
-  (with-open-stream (io (make-editor-io-stream output-buffer point t))
-    (let* ((error-p)
-           (results)
-           (*terminal-io* io)
-           (*standard-output* io)
-           (*standard-input* io)
-           (*error-output* io)
-           (*query-io* io)
-           (*debug-io* io)
-           (*trace-output* io))
-      (handler-case-bind (#'lisp-debugger
-                          (setq results
-                                (restart-case
-                                    (multiple-value-list (eval x))
-                                  (lem::editor-abort () :report "Abort.")))
-                          (when update-point-p
-                            (point-set
-                             (buffer-output-stream-point io))))
-                         ((condition)
-                          (setq error-p t)
-                          (setq results (list condition))))
-      (values results error-p))))
+(defun %lisp-eval-internal (x point &optional update-point-p)
+  (with-point ((cur-point point
+			  (if update-point-p
+			      :left-inserting
+			      :right-inserting)))
+    (with-open-stream (io (make-editor-io-stream cur-point t))
+      (let* ((error-p)
+             (results)
+             (*terminal-io* io)
+             (*standard-output* io)
+             (*standard-input* io)
+             (*error-output* io)
+             (*query-io* io)
+             (*debug-io* io)
+             (*trace-output* io))
+        (handler-case-bind (#'lisp-debugger
+                            (setq results
+                                  (restart-case
+                                      (multiple-value-list (eval x))
+                                    (editor-abort () :report "Abort.")))
+                            (when update-point-p
+                              (move-point point cur-point)))
+                           ((condition)
+                            (setq error-p t)
+                            (setq results (list condition))))
+        (values results error-p)))))
 
-(defun %lisp-eval (x output-buffer point
-                     &optional update-point-p)
-  (unless point (setq point (point-min)))
-  (lem::call-with-allow-interrupt
+(defun %lisp-eval (x point
+		   &optional update-point-p)
+  (call-with-allow-interrupt
    t
    (lambda ()
      (multiple-value-bind (results error-p)
          (%lisp-eval-internal x
-                              output-buffer
                               point
                               update-point-p)
        (values results error-p)))))
 
-(defun %lisp-eval-string (string output-buffer point
-                                 &optional
-                                 update-point-p (package "COMMON-LISP-USER"))
+(defun %lisp-eval-string (string point
+			  &optional
+			    update-point-p (package "COMMON-LISP-USER"))
   (%lisp-eval `(cl:progn ,@(%string-to-exps string package))
-              output-buffer
               point
               update-point-p))
 
@@ -626,37 +640,40 @@
 (define-command lisp-eval-string (string)
     ((list (minibuf-read-line "Eval: " "" nil nil 'mh-lisp-eval)))
   (let ((output-buffer (get-buffer-create "*output*")))
-    (buffer-erase output-buffer)
+    (erase-buffer output-buffer)
     (change-buffer-mode output-buffer 'lisp-mode)
     (buffer-unmark output-buffer)
     (message "~{~s~^,~}"
-             (%lisp-eval-string string output-buffer nil nil
+             (%lisp-eval-string string (buffers-start output-buffer)
+                                nil
                                 (lisp-current-package)))
     (when (buffer-modified-p output-buffer)
       (pop-up-typeout-window output-buffer nil))))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-r") 'lisp-eval-region)
-(define-command lisp-eval-region (&optional begin end) ("r")
-  (unless (or begin end)
-    (setq begin (region-beginning))
+(define-command lisp-eval-region (&optional start end) ("r")
+  (unless (or start end)
+    (setq start (region-beginning))
     (setq end (region-end)))
-  (lisp-eval-string (region-string begin end))
+  (lisp-eval-string (points-to-string start end))
   t)
 
 (defun lisp-move-and-eval-sexp (move-sexp eval-string-function)
   (let ((str (save-excursion
-              (and (funcall move-sexp)
-                   (region-string (current-point)
-                                  (progn
-                                    (forward-sexp 1)
-                                    (current-point)))))))
+               (and (funcall move-sexp)
+                    (points-to-string
+                     (current-point)
+                     (form-offset (copy-point (current-point)
+					      :temporary)
+				  1))))))
     (when str
       (funcall eval-string-function str)
       t)))
 
 (define-key *lisp-mode-keymap* (kbd "C-M-x") 'lisp-eval-defun)
 (define-command lisp-eval-defun () ()
-  (lisp-move-and-eval-sexp #'top-of-defun #'lisp-eval-string))
+  (lisp-move-and-eval-sexp (lambda () (top-of-defun (current-point)))
+                           #'lisp-eval-string))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-e") 'lisp-eval-last-sexp)
 (define-command lisp-eval-last-sexp () ()
@@ -689,22 +706,22 @@
         `(,macroexpand-symbol
           (let ((*package* (lisp-current-package)))
             (read-from-string
-             (region-string
+             (points-to-string
               (current-point)
-              (save-excursion (forward-sexp 1)
-                              (current-point))))))
+              (form-offset (copy-point (current-point)
+				       :temporary)
+			   1)))))
         (lisp-current-package))))
 
 (defun %lisp-macroexpand-replace-expr (expr)
-  (delete-region (current-point)
-                 (progn
-                   (forward-sexp 1)
-                   (current-point)))
-  (with-open-stream (stream (make-buffer-output-stream (current-buffer) (current-point)))
+  (delete-between-points
+   (current-point)
+   (form-offset (copy-point (current-point) :temporary) 1))
+  (with-open-stream (stream (make-buffer-output-stream (current-point)))
     (pprint expr stream))
   (read-from-string
-   (region-string (point-min)
-                  (point-max))))
+   (points-to-string (buffers-start (current-buffer))
+		     (buffers-end (current-buffer)))))
 
 (defun %lisp-macroexpand (macroexpand-symbol buffer-name)
   (multiple-value-bind (expr error-p)
@@ -734,7 +751,7 @@
                      "*macroexpand*"))
 
 (defun lisp-read-symbol (prompt history-name)
-  (let ((default-name (or (symbol-string-at-point) "")))
+  (let ((default-name (or (symbol-string-at-point (current-point)) "")))
     (let ((name (minibuf-read-line prompt
                                    default-name
                                    'complete-symbol
@@ -764,8 +781,8 @@
              (with-output-to-string (out)
                (handler-case (disassemble name :stream out)
                  (error (condition)
-                        (message "~a" condition)
-                        (return-from lisp-disassemble-symbol nil))))))
+		   (message "~a" condition)
+		   (return-from lisp-disassemble-symbol nil))))))
         (with-pop-up-typeout-window (out (change-buffer-mode (get-buffer-create "*disassemble*")
                                                              'lisp-mode))
           (princ str out))))))
@@ -803,33 +820,26 @@
                           (goto-position filepos)
                           (redraw-display)))
                   defs)))
-        (push (cons (current-buffer) (current-point))
+        (push (copy-point (current-point) :temporary)
               *lisp-find-definition-stack*)
         (cond ((= 1 (length defs))
                (funcall (second (car defs))))
               (t
-               (let ((grep (lem.grep:make-grep "*Definitions*")))
+               (lem.sourcelist:with-sourcelist (sourcelist "*Definitions*")
                  (loop :for (file jump-fun) :in defs
-                       :do (lem.grep:call-with-writer
-                            grep
-                            (lambda ()
-                              (insert-string file)
-                              (lem.grep:put-entry-property
-                               grep
-                               (beginning-of-line-point)
-                               (end-of-line-point)
-                               jump-fun)
-                              (insert-newline 1))))
-                 (lem.grep:update grep))))))))
+		    :do (lem.sourcelist:append-sourcelist
+			 sourcelist
+			 (lambda (cur-point)
+			   (insert-string cur-point file))
+			 jump-fun)))))))))
 
 (define-key *lisp-mode-keymap* (kbd "M-,") 'lisp-pop-find-definition-stack)
 (define-command lisp-pop-find-definition-stack () ()
-  (let ((elt (pop *lisp-find-definition-stack*)))
-    (when (null elt)
+  (let ((cur-point (pop *lisp-find-definition-stack*)))
+    (unless cur-point
       (return-from lisp-pop-find-definition-stack nil))
-    (destructuring-bind (buffer . point) elt
-      (select-buffer buffer)
-      (point-set point))))
+    (switch-to-buffer (point-buffer cur-point))
+    (move-point (current-point) cur-point)))
 
 (defun analyze-symbol (str)
   (let (package
@@ -859,20 +869,20 @@
 (defun %collect-symbols (package package-name external-p)
   (let ((symbols))
     (labels ((f (sym separator)
-                (push (if package
-                          (format nil "~a~a~a"
-                                  package-name
-                                  separator
-                                  (string-downcase (string sym)))
-                          (string-downcase (string sym)))
-                      symbols)))
+	       (push (if package
+			 (format nil "~a~a~a"
+				 package-name
+				 separator
+				 (string-downcase (string sym)))
+			 (string-downcase (string sym)))
+		     symbols)))
       (let ((pkg (or package (lisp-current-package))))
         (if external-p
             (do-external-symbols (sym pkg) (f sym ":"))
             (do-symbols (sym pkg) (f sym "::")))))
     (when (null package)
       (flet ((add (name)
-                  (push (format nil "~(~a~):" name) symbols)))
+	       (push (format nil "~(~a~):" name) symbols)))
         (dolist (p (list-all-packages))
           (add (package-name p))
           (dolist (p (package-nicknames p))
@@ -893,13 +903,11 @@
 
 (defun lisp-preceding-symbol ()
   (let* ((end (current-point))
-         (begin (prog2 (backward-sexp)
-                    (current-point)
-                  (point-set end)))
-         (str (string-left-trim
-               "'`," (string-left-trim
-                      "#" (region-string begin end)))))
-    str))
+         (start (form-offset (copy-point end :temporary) -1)))
+    (when (and start end)
+      (string-left-trim
+       "'`," (string-left-trim
+              "#" (points-to-string start end))))))
 
 (define-key *lisp-mode-keymap* (kbd "C-M-i") 'lisp-complete-symbol)
 (define-command lisp-complete-symbol () ()
@@ -922,38 +930,43 @@
 (defun lisp-search-arglist (string arglist-fn)
   (multiple-value-bind (x error-p)
       (ignore-errors
-       (destructuring-bind (package symbol-name external-p)
-           (analyze-symbol string)
-         (declare (ignore external-p))
-         (multiple-value-bind (symbol status)
-             (find-symbol (string-readcase symbol-name)
-                          (or package
-                              (lisp-current-package)))
-           (if (null status)
-               nil
-               symbol))))
+	(destructuring-bind (package symbol-name external-p)
+	    (analyze-symbol string)
+	  (declare (ignore external-p))
+	  (multiple-value-bind (symbol status)
+	      (find-symbol (string-readcase symbol-name)
+			   (or package
+			       (lisp-current-package)))
+	    (if (null status)
+		nil
+		symbol))))
     (when (and (not error-p)
                (symbolp x))
       (funcall arglist-fn x))))
 
 (defun search-backward-arglist ()
   (save-excursion
-   (loop
-     (go-to-car)
-     (let ((name (symbol-string-at-point)))
-       (multiple-value-bind (arglist)
-           (lisp-search-arglist name #'lisp-get-arglist-string)
-         (cond (arglist
-                (return (values (format nil "~A: ~A" name arglist) t)))
-               ((not (up-list 1 t))
-                (return nil))))))))
+    (loop
+       (go-to-car)
+       (let ((name (symbol-string-at-point (current-point))))
+	 (multiple-value-bind (arglist)
+	     (lisp-search-arglist name #'lisp-get-arglist-string)
+	   (cond (arglist
+		  (return (values (format nil "~A: ~A" name arglist) t)))
+		 ((not (up-list 1 t))
+		  (return nil))))))))
 
-(define-key *lisp-mode-keymap* (kbd "C-c M-h") 'lisp-echo-arglist)
+(define-key *lisp-mode-keymap* (kbd "C-c C-a") 'lisp-echo-arglist)
 (define-command lisp-echo-arglist () ()
   (multiple-value-bind (arglist foundp)
       (search-backward-arglist)
     (when foundp
       (message "~A" arglist))))
+
+(define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-insert-space-and-echo-arglist)
+(define-command lisp-insert-space-and-echo-arglist (n) ("p")
+  (insert-character (current-point) #\space n)
+  (lisp-echo-arglist))
 
 (define-key *lisp-mode-keymap* (kbd "C-c ;") 'lisp-comment-or-uncomment-region)
 (define-command lisp-comment-or-uncomment-region (arg) ("P")
@@ -961,58 +974,51 @@
       (lisp-uncomment-region)
       (lisp-comment-region)))
 
+(defun space*-p (point)
+  (with-point ((point point))
+    (skip-chars-forward point '(#\space #\tab))
+    (end-line-p point)))
+
 (define-command lisp-comment-region () ()
   (save-excursion
-   (when (/= (current-linum)
-             (save-excursion (skip-chars-forward '(#\space #\tab #\newline))
-                             (current-linum)))
-     (skip-chars-forward '(#\space #\tab #\newline)))
-   (let ((start (region-beginning))
-         (end (region-end)))
-     (point-set end)
-     (skip-chars-forward '(#\space #\tab))
-     (point-set start)
-     (let ((charpos (point-charpos start)))
-       (apply-region-lines start end
-                           #'(lambda ()
-                               (end-of-line)
-                               (if (< charpos (current-charpos))
-                                   (set-charpos charpos)
-                                   (beginning-of-line))
-                               (unless (blank-line-p)
-                                 (insert-string ";; "))))))))
+    (with-point ((start (region-beginning) :right-inserting)
+                 (end (region-end) :left-inserting))
+      (let ((charpos (point-charpos start)))
+        (loop
+          (when (same-line-p start end)
+            (cond ((space*-p start))
+                  (t
+                   (insert-string start ";; ")
+                   (unless (space*-p end)
+                     (insert-character end #\newline))))
+            (return))
+          (unless (space*-p start)
+            (insert-string start ";; "))
+          (line-offset start 1 charpos))))))
 
 (define-command lisp-uncomment-region () ()
-  (let ((start (region-beginning))
-        (end (region-end)))
-    (point-set start)
-    (do ()
-        ((point<= end (current-point)))
-      (skip-chars-forward '(#\space #\tab))
-      (do ((delete-flag nil t))
-          ((not (eql #\; (following-char)))
-           (when (and delete-flag
-                      (syntax-space-char-p (following-char)))
-             (delete-char 1 nil)))
-        (delete-char 1 nil))
-      (forward-line 1))))
+  (with-point ((start (region-beginning))
+               (end (region-end)))
+    (move-point start (character-offset (copy-point start :temporary) -1))
+    (loop
+      ;; ここを実行中は構文走査がされないのでテキストプロパティが更新されず、ずれていくので後ろから探していく
+      (unless (previous-single-property-change end :attribute start)
+        (return))
+      (when (and (eq *syntax-comment-attribute* (text-property-at end :attribute 0))
+                 (not (eq *syntax-comment-attribute* (text-property-at end :attribute -1))))
+        (if (looking-at end ";; ")
+            (delete-character end 3)
+            (loop :while (char= #\; (character-at end 0))
+                  :do (delete-character end 1)))))))
 
 (defun check-package (package-name)
   (find-package (string-upcase package-name)))
 
-(let ((prev-point nil))
-  (defun lisp-idle-timer-function ()
-    (when (eq (major-mode) 'lisp-mode)
-      (let ((package (scan-current-package #'check-package)))
-        (when package
-          (lisp-change-package package))))
-    (let ((curr-point (current-point)))
-      (when (or (null prev-point)
-                (not (point= prev-point curr-point)))
-        (when (member (major-mode) '(lisp-mode lisp-repl-mode))
-          (setf prev-point curr-point)
-          (lisp-echo-arglist)
-          (redraw-display))))))
+(defun lisp-idle-timer-function ()
+  (when (eq (buffer-major-mode) 'lisp-mode)
+    (let ((package (scan-current-package #'check-package)))
+      (when package
+        (lisp-change-package package)))))
 
 (defvar *lisp-timer*)
 (when (or (not (boundp '*lisp-timer*))
@@ -1024,30 +1030,31 @@
                             (stop-timer *lisp-timer*)))))
 
 (defun lisp-print-values (values)
-  (with-open-stream (out (make-buffer-output-stream (current-buffer) (current-point)))
-    (let ((*package* (lisp-current-package)))
-      (dolist (v values)
-        (pprint v out)))
-    (point-set (buffer-output-stream-point out))))
+  (with-point ((point (current-point) :left-inserting))
+    (with-open-stream (out (make-buffer-output-stream point))
+      (let ((*package* (lisp-current-package)))
+        (dolist (v values)
+          (pprint v out))))
+    (move-point (current-point) point)))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-j") 'lisp-eval-print-last-sexp)
 (define-command lisp-eval-print-last-sexp () ()
   (lisp-move-and-eval-sexp
    #'backward-sexp
    #'(lambda (string)
-       (unless (bolp) (insert-newline))
+       (unless (bolp) (insert-character (current-point) #\newline))
        (setq - (first (%string-to-exps string (lisp-current-package))))
-       (let ((values (%lisp-eval - (current-buffer) (current-point) t)))
+       (let ((values (%lisp-eval - (current-point) t)))
          (setq +++ ++ /// //     *** (car ///)
                ++  +  //  /      **  (car //)
                +   -  /   values *   (car /))
          (lisp-print-values values)
-         (insert-newline)))))
+         (insert-character (current-point) #\newline)))))
 
 (define-major-mode lisp-repl-mode lisp-mode
-  (:name "lisp-repl"
-   :keymap *lisp-repl-mode-keymap*
-   :syntax-table *lisp-syntax-table*)
+    (:name "lisp-repl"
+	   :keymap *lisp-repl-mode-keymap*
+	   :syntax-table *lisp-syntax-table*)
   (setf (get-bvar :listener-get-prompt-function)
         'lisp-repl-get-prompt)
   (setf (get-bvar :listener-check-confirm-function)
@@ -1070,23 +1077,23 @@
 (defun lisp-repl-get-prompt ()
   (format nil "~A> " (shorten-package-name (lisp-current-package))))
 
-(defun lisp-repl-paren-correspond-p ()
+(defun lisp-repl-paren-correspond-p (point)
   (loop :with count := 0 :do
-    (insert-string ")")
-    (incf count)
-    (unless (save-excursion (backward-sexp 1 t))
-      (delete-char (- count) nil)
-      (return (= 1 count)))))
+     (insert-character point #\))
+     (incf count)
+     (unless (form-offset (copy-point point :temporary) -1)
+       (delete-character point (- count) nil)
+       (return (= 1 count)))))
 
-(defun lisp-repl-confirm (string)
+(defun lisp-repl-confirm (point string)
   (setq - (car (%string-to-exps string (lisp-current-package))))
   (multiple-value-bind (values error-p)
-      (%lisp-eval - (current-buffer) (current-point) t)
+      (%lisp-eval - point t)
     (declare (ignore error-p))
     (setq +++ ++ /// //     *** (car ///)
           ++  +  //  /      **  (car //)
           +   -  /   values *   (car /))
-    (point-set (point-max))
+    (buffer-end point)
     (lisp-print-values values)
     (listener-reset-prompt)))
 

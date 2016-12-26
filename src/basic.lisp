@@ -1,132 +1,448 @@
 (in-package :lem)
 
-(export '(first-line-p
+(export '(buffers-start
+          buffers-end
+          first-line-p
           last-line-p
+          start-line-p
+          end-line-p
+          start-buffer-p
+          end-buffer-p
+          same-line-p
+          line-start
+          line-end
+          buffer-start
+          buffer-end
+          move-point
+          line-offset
+          character-offset
+          character-at
+          insert-character
+          insert-string
+          delete-character
+          erase-buffer
+          region-beginning
+          region-end
+          apply-region-lines
+          points-to-string
+          count-characters
+          delete-between-points
+          count-lines
+          line-number-at-point
+          text-property-at
+          put-text-property
+          remove-text-property
+          next-single-property-change
+          previous-single-property-change
+          line-string-at
+          point-column
+          move-to-column
           bolp
           eolp
           bobp
           eobp
-          insert-char
-          insert-string
-          insert-newline
-          delete-char
-          set-charpos
           beginning-of-buffer
           end-of-buffer
           beginning-of-line
           end-of-line
-          beginning-of-line-point
-          end-of-line-point
           goto-position
           forward-line
           shift-position
-          mark-point
-          current-line-string
+          check-marked
+          set-current-mark
           following-char
           preceding-char
           char-after
           char-before
-          blank-line-p
           delete-while-whitespaces
+          blank-line-p
           skip-chars-forward
           skip-chars-backward
-          get-property
-          put-property
-          remove-property
-          put-attribute
-          insert-string-with-attribute
-          after-property
-          before-property
-          following-property
-          preceding-property
-          forward-search-property-end
-          backward-search-property-start
           current-column
-          move-to-column
-          point-to-offset
-          shift-point))
+          point-to-offset))
 
-(defun first-line-p ()
-  (<= (current-linum) 1))
+(defun invoke-save-excursion (function)
+  (let ((point (copy-point (current-point) :temporary))
+        (mark (when (buffer-mark-p (current-buffer))
+                (copy-point (buffer-mark (current-buffer))
+			    :temporary))))
+    (unwind-protect (funcall function)
+      (setf (current-buffer) (point-buffer point))
+      (move-point (current-point) point)
+      (when mark
+        (set-current-mark mark)))))
 
-(defun last-line-p ()
-  (<= (buffer-nlines (current-buffer))
-      (current-linum)))
+(defun buffers-start (buffer)
+  (make-point buffer 1 0 :kind :temporary))
+
+(defun buffers-end (buffer)
+  (make-point buffer
+	      (buffer-nlines buffer)
+	      (line-length (buffer-tail-line buffer))
+	      :kind :temporary))
+
+(defun first-line-p (point)
+  (<= (point-linum point) 1))
+
+(defun last-line-p (point)
+  (<= (buffer-nlines (point-buffer point))
+      (point-linum point)))
+
+(defun start-line-p (point)
+  (zerop (point-charpos point)))
+
+(defun end-line-p (point)
+  (= (point-charpos point)
+     (buffer-line-length (point-buffer point)
+                         (point-linum point))))
+
+(defun start-buffer-p (point)
+  (and (first-line-p point)
+       (start-line-p point)))
+
+(defun end-buffer-p (point)
+  (and (last-line-p point)
+       (end-line-p point)))
+
+(defun same-line-p (point1 point2)
+  (assert (eq (point-buffer point1)
+              (point-buffer point2)))
+  (= (point-linum point1)
+     (point-linum point2)))
+
+(defun line-start (point)
+  (setf (point-charpos point) 0)
+  point)
+
+(defun line-end (point)
+  (setf (point-charpos point)
+        (buffer-line-length (point-buffer point)
+                            (point-linum point)))
+  point)
+
+(defun buffer-start (point)
+  (move-point point (buffers-start (point-buffer point))))
+
+(defun buffer-end (point)
+  (move-point point (buffers-end (point-buffer point))))
+
+(defun move-point (point new-point)
+  (let ((buffer (point-buffer point)))
+    (setf (point-linum point)
+          (min (point-linum new-point)
+               (buffer-nlines buffer)))
+    (setf (point-charpos point)
+          (min (buffer-line-length buffer (point-linum point))
+               (point-charpos new-point))))
+  point)
+
+(defun line-offset (point n &optional (charpos 0))
+  (let ((linum (point-linum point)))
+    (if (plusp n)
+        (dotimes (_ n)
+          (when (<= (buffer-nlines (point-buffer point)) linum)
+            (return-from line-offset nil))
+          (incf linum))
+        (dotimes (_ (- n))
+          (when (= linum 1)
+            (return-from line-offset nil))
+          (decf linum)))
+    (setf (point-linum point) linum))
+  (setf (point-charpos point)
+        (if (< 0 charpos)
+            (min charpos
+                 (length (line-string-at point)))
+            0))
+  point)
+
+(defun %character-offset-positive (point n)
+  (let ((charpos (point-charpos point))
+        (linum (point-linum point)))
+    (loop
+       (when (minusp n)
+	 (setf (point-charpos point) charpos)
+	 (setf (point-linum point) linum)
+	 (return nil))
+       (let* ((length (1+ (buffer-line-length (point-buffer point)
+					      (point-linum point))))
+	      (w (- length (point-charpos point))))
+	 (when (< n w)
+	   (incf (point-charpos point) n)
+	   (return point))
+	 (decf n w)
+	 (unless (line-offset point 1)
+	   (setf (point-charpos point) charpos)
+	   (setf (point-linum point) linum)
+	   (return nil))))))
+
+(defun %character-offset-negative (point n)
+  (let ((charpos (point-charpos point))
+        (linum (point-linum point)))
+    (loop
+       (when (minusp n)
+	 (setf (point-charpos point) charpos)
+	 (setf (point-linum point) linum)
+	 (return nil))
+       (when (<= n (point-charpos point))
+	 (decf (point-charpos point) n)
+	 (return point))
+       (decf n (1+ (point-charpos point)))
+       (cond ((first-line-p point)
+	      (setf (point-charpos point) charpos)
+	      (setf (point-linum point) linum)
+	      (return nil))
+	     (t
+	      (line-offset point -1)
+	      (line-end point))))))
+
+(defun character-offset (point n)
+  (if (plusp n)
+      (%character-offset-positive point n)
+      (%character-offset-negative point (- n))))
+
+(defun character-at (point &optional (offset 0))
+  (if (zerop offset)
+      (buffer-get-char (point-buffer point)
+                       (point-linum point)
+                       (point-charpos point))
+      (with-point ((temp-point point))
+        (when (character-offset temp-point offset)
+          (character-at temp-point 0)))))
+
+(defun insert-character (point char &optional (n 1))
+  (loop :repeat n :do (insert-char/point point char))
+  t)
+
+(defun insert-string (point string &rest plist)
+  (if (null plist)
+      (insert-string/point point string)
+      (with-point ((start-point point))
+        (insert-string/point point string)
+        (let ((end-point (character-offset (copy-point start-point :temporary)
+                                           (length string))))
+          (loop :for (k v) :on plist :by #'cddr
+	     :do (put-text-property start-point end-point k v)))))
+  t)
+
+(defun delete-character (point &optional (n 1) killp)
+  (when (minusp n)
+    (unless (character-offset point n)
+      (return-from delete-character nil))
+    (setf n (- n)))
+  (unless (end-buffer-p point)
+    (let ((string (delete-char/point point n)))
+      (when killp
+        (kill-push string))
+      t)))
+
+(defun erase-buffer (&optional (buffer (current-buffer)))
+  (buffer-start (buffer-point buffer))
+  (buffer-mark-cancel buffer)
+  (delete-char/point (buffer-point buffer) t))
+
+(defun region-beginning (&optional (buffer (current-buffer)))
+  (let ((start (buffer-point buffer))
+        (end (buffer-mark buffer)))
+    (if (point< start end)
+        start
+        end)))
+
+(defun region-end (&optional (buffer (current-buffer)))
+  (let ((start (buffer-point buffer))
+        (end (buffer-mark buffer)))
+    (if (point< start end)
+        end
+        start)))
+
+(defun apply-region-lines (start end function)
+  (with-point ((start start :right-inserting)
+	       (end end :right-inserting))
+    (move-point (current-point) start)
+    (loop :while (point< (current-point) end) :do
+       (with-point ((prev (line-start (current-point))))
+	 (funcall function)
+	 (when (same-line-p (current-point) prev)
+	   (unless (line-offset (current-point) 1)
+	     (return)))))))
+
+(defun %map-region (start end function)
+  (when (point< end start)
+    (rotatef start end))
+  (let ((start-line (buffer-get-line (point-buffer start)
+                                     (point-linum start))))
+    (loop :for line := start-line :then (line-next line)
+       :for linum :from (point-linum start) :to (point-linum end)
+       :for firstp := (eq line start-line)
+       :for lastp := (= linum (point-linum end))
+       :do (funcall function
+		    line
+		    (if firstp
+			(point-charpos start)
+			0)
+		    (if lastp
+			(point-charpos end)
+			nil))))
+  (values))
+
+(defun map-region (start end function)
+  (%map-region start end
+               (lambda (line start end)
+                 (funcall function
+                          (subseq (line-str line) start end)
+                          (not (null end))))))
+
+(defun points-to-string (start end)
+  (assert (eq (point-buffer start)
+              (point-buffer end)))
+  (with-output-to-string (out)
+    (map-region start end
+                (lambda (string lastp)
+                  (write-string string out)
+                  (unless lastp
+                    (write-char #\newline out))))))
+
+(defun count-characters (start end)
+  (let ((count 0))
+    (map-region start
+                end
+                (lambda (string lastp)
+                  (incf count (length string))
+                  (unless lastp
+                    (incf count))))
+    count))
+
+(defun delete-between-points (start end)
+  (assert (eq (point-buffer start)
+              (point-buffer end)))
+  (unless (point< start end)
+    (rotatef start end))
+  (delete-char/point start
+		     (count-characters start end)))
+
+(defun count-lines (start end)
+  (assert (eq (point-buffer start)
+              (point-buffer end)))
+  (when (point< end start)
+    (rotatef start end))
+  (with-point ((point start))
+    (loop :for count :from 0 :do
+       (when (point< end point)
+	 (return count))
+       (unless (line-offset point 1)
+	 (return (1+ count))))))
+
+(defun line-number-at-point (point)
+  (count-lines (buffers-start (point-buffer point)) point))
+
+(defun text-property-at (point key &optional (offset 0))
+  (if (zerop offset)
+      (line-search-property (get-line/point point) key (point-charpos point))
+      (with-point ((temp-point point))
+        (when (character-offset temp-point offset)
+          (text-property-at temp-point key 0)))))
+
+(defun put-text-property (start-point end-point key value)
+  (assert (eq (point-buffer start-point)
+              (point-buffer end-point)))
+  (%map-region start-point end-point
+               (lambda (line start end)
+                 (line-add-property line
+                                    start
+                                    (if (null end)
+                                        (line-length line)
+                                        end)
+                                    key
+                                    value
+                                    (null end)))))
+
+(defun remove-text-property (start-point end-point key)
+  (assert (eq (point-buffer start-point)
+              (point-buffer end-point)))
+  (%map-region start-point end-point
+               (lambda (line start end)
+                 (line-remove-property line
+                                       start
+                                       (if (null end)
+                                           (line-length line)
+                                           end)
+                                       key))))
+
+(defun next-single-property-change (point property-name &optional limit-point)
+  (let ((first-value (text-property-at point property-name))
+        (start-point (copy-point point :temporary)))
+    (loop
+       (unless (character-offset point 1)
+	 (move-point point start-point)
+	 (return nil))
+       (unless (eq first-value (text-property-at point property-name))
+	 (return point))
+       (when (and limit-point (point<= limit-point point))
+	 (move-point point start-point)
+	 (return nil)))))
+
+(defun previous-single-property-change (point property-name &optional limit-point)
+  (let ((first-value (text-property-at point property-name -1))
+        (start-point (copy-point point :temporary)))
+    (loop
+       (unless (eq first-value (text-property-at point property-name -1))
+	 (return point))
+       (unless (character-offset point -1)
+	 (move-point point start-point)
+	 (return nil))
+       (when (and limit-point (point>= limit-point point))
+	 (move-point point start-point)
+	 (return nil)))))
+
+(defun line-string-at (point)
+  (buffer-line-string (point-buffer point)
+                      (point-linum point)))
+
+(defun point-column (point)
+  (string-width (line-string-at point)
+                0
+                (point-charpos point)))
+
+(defun move-to-column (point column &optional force)
+  (line-end point)
+  (let ((cur-column (point-column point)))
+    (cond ((< column cur-column)
+           (setf (point-charpos point)
+                 (wide-index (line-string-at point) column))
+           point)
+          (force
+           (insert-character point #\space (- column cur-column))
+           (line-end point))
+          (t
+           (line-end point)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (defun bolp ()
-  (zerop (current-charpos)))
+  (start-line-p (current-point)))
 
 (defun eolp ()
-  (= (current-charpos)
-     (buffer-line-length
-      (current-buffer)
-      (current-linum))))
+  (end-line-p (current-point)))
 
 (defun bobp ()
-  (and (first-line-p) (bolp)))
+  (start-buffer-p (current-point)))
 
 (defun eobp ()
-  (and (last-line-p) (eolp)))
-
-(defun insert-char (c &optional (n 1))
-  (dotimes (_ n t)
-    (insert-char/marker (buffer-point-marker (current-buffer)) c)
-    (shift-position 1)))
-
-(defun insert-string (str)
-  (insert-string/marker (buffer-point-marker (current-buffer)) str)
-  (shift-position (length str)))
-
-(defun insert-newline (&optional (n 1))
-  (dotimes (_ n)
-    (insert-char/marker (buffer-point-marker (current-buffer))
-                        #\newline))
-  (forward-line n))
-
-(defun delete-char (n &optional killp)
-  (when (minusp n)
-    (setf n (- n))
-    (unless (shift-position (- n))
-      (return-from delete-char nil)))
-  (if (eobp)
-      nil
-      (let ((string (delete-char/marker
-                     (buffer-point-marker
-                      (current-buffer))
-                     n)))
-        (when killp
-          (kill-push string))
-        t)))
-
-(defun set-charpos (pos)
-  (setf (current-charpos) pos))
+  (end-buffer-p (current-point)))
 
 (defun beginning-of-buffer ()
-  (point-set (point-min)))
+  (buffer-start (current-point)))
 
 (defun end-of-buffer ()
-  (point-set (point-max)))
+  (buffer-end (current-point)))
 
 (defun beginning-of-line ()
-  (set-charpos 0)
+  (line-start (current-point))
   t)
 
 (defun end-of-line ()
-  (set-charpos (buffer-line-length
-                (current-buffer)
-                (current-linum)))
+  (line-end (current-point))
   t)
-
-(defun beginning-of-line-point (&optional (linum (current-linum)))
-  (setf linum (round-linum (current-buffer) linum))
-  (make-point linum 0))
-
-(defun end-of-line-point (&optional (linum (current-linum)))
-  (setf linum (round-linum (current-buffer) linum))
-  (make-point linum
-              (buffer-line-length
-               (current-buffer)
-               linum)))
 
 (defun goto-position (position)
   (check-type position (integer 1 *))
@@ -134,255 +450,87 @@
   (shift-position position))
 
 (defun forward-line (&optional (n 1))
-  (beginning-of-line)
-  (if (plusp n)
-      (dotimes (_ n t)
-        (when (last-line-p)
-          (end-of-line)
-          (return))
-        (incf (current-linum)))
-      (dotimes (_ (- n) t)
-        (when (first-line-p)
-          (return))
-        (decf (current-linum)))))
-
-(defun %shift-position-positive (n)
-  (loop
-    (when (< n 0)
-      (return nil))
-    (let* ((length (1+ (buffer-line-length (current-buffer) (current-linum))))
-           (w (- length (current-charpos))))
-      (when (< n w)
-        (set-charpos (+ n (current-charpos)))
-        (return t))
-      (decf n w)
-      (unless (forward-line 1)
-        (return nil)))))
-
-(defun %shift-position-negative (n)
-  (loop
-    (when (< n 0)
-      (return nil))
-    (when (<= n (current-charpos))
-      (set-charpos (- (current-charpos) n))
-      (return t))
-    (decf n (1+ (current-charpos)))
-    (cond ((first-line-p)
-           (beginning-of-line)
-           (return nil))
-          (t
-           (forward-line -1)
-           (end-of-line)))))
+  (line-offset (current-point) n))
 
 (defun shift-position (n)
-  (cond ((< 0 n)
-         (%shift-position-positive n))
-        (t
-         (setf n (- n))
-         (%shift-position-negative n))))
+  (character-offset (current-point) n))
 
 (defun check-marked ()
-  (unless (buffer-mark-marker (current-buffer))
+  (unless (buffer-mark-p (current-buffer))
     (editor-error "Not mark in this buffer")))
 
-(defun mark-point ()
-  (when (buffer-mark-marker (current-buffer))
-    (marker-point (buffer-mark-marker (current-buffer)))))
-
-(defun (setf mark-point) (point)
-  (let ((buffer (current-buffer)))
-    (setf (buffer-mark-p buffer) t)
-    (if (buffer-mark-marker buffer)
-        (setf (marker-point (buffer-mark-marker buffer))
-              point)
-        (setf (buffer-mark-marker buffer)
-              (make-marker buffer point :name "mark")))))
-
-(defun current-line-string ()
-  (buffer-line-string (current-buffer)
-                      (current-linum)))
+(defun set-current-mark (point)
+  (let ((buffer (point-buffer point)))
+    (cond ((buffer-mark-p buffer)
+           (move-point (buffer-mark buffer)
+                       point))
+          (t
+           (setf (buffer-mark-p buffer) t)
+           (setf (buffer-mark buffer)
+                 (copy-point point :right-inserting)))))
+  point)
 
 (defun following-char ()
-  (buffer-get-char (current-buffer)
-                   (current-linum)
-                   (current-charpos)))
+  (character-at (current-point)))
 
 (defun preceding-char ()
-  (cond
-    ((bobp)
-     nil)
-    ((bolp)
-     (buffer-get-char (current-buffer)
-                      (1- (current-linum))
-                      (buffer-line-length (current-buffer)
-                                          (1- (current-linum)))))
-    (t
-     (buffer-get-char (current-buffer)
-                      (current-linum)
-                      (1- (current-charpos))))))
+  (character-at (current-point) -1))
 
-(defun char-after (&optional (n 0))
-  (if (zerop n)
-      (following-char)
-      (let ((point (current-point)))
-        (if (shift-position n)
-            (prog1 (following-char)
-              (shift-position (- n)))
-            (progn
-              (point-set point)
-              nil)))))
+(defun char-after (&optional (point (current-point)))
+  (character-at point 0))
 
-(defun char-before (&optional (n 1))
-  (if (= n 1)
-      (preceding-char)
-      (let ((point (current-point)))
-        (if (shift-position (- (1- n)))
-            (prog1 (preceding-char)
-              (shift-position (1- n)))
-            (progn
-              (point-set point)
-              nil)))))
+(defun char-before (&optional (point (current-point)))
+  (character-at point -1))
 
 (defun delete-while-whitespaces (&optional ignore-newline-p use-kill-ring)
-  (let ((n (skip-chars-forward
-            (if ignore-newline-p
-                '(#\space #\tab)
-                '(#\space #\tab #\newline)))))
-    (delete-char (- n) use-kill-ring)))
+  (let ((n (skip-chars-forward (current-point)
+                               (if ignore-newline-p
+                                   '(#\space #\tab)
+                                   '(#\space #\tab #\newline)))))
+    (delete-character (current-point) (- n) use-kill-ring)))
 
-(defun blank-line-p ()
-  (let ((string (current-line-string))
-        (eof-p (last-line-p)))
-    (when (string= "" (string-trim '(#\space #\tab) string))
-      (+ (length string)
-         (if eof-p 0 1)))))
+(defun blank-line-p (point)
+  (let ((string (line-string-at point))
+        (eof-p (last-line-p point))
+        (count 0))
+    (loop :for c :across string :do
+       (unless (or (char= c #\space)
+		   (char= c #\tab))
+	 (return-from blank-line-p nil))
+       (incf count))
+    (if eof-p
+        count
+        (1+ count))))
 
-(defun skip-chars-aux (pred not-p step-char at-char)
-  (flet ((test (pred not-p char)
-           (if (if (consp pred)
-                   (member char pred)
-                   (funcall pred char))
-               (not not-p)
-               not-p)))
-    (let ((count 0))
-      (loop
-        (unless (test pred not-p (funcall at-char))
-          (return count))
-        (if (funcall step-char)
-            (incf count)
-            (return count))))))
+(defun skip-chars-internal (point test not-p dir)
+  (loop :for count :from 0
+     :for c := (character-at point (if dir 0 -1))
+     :do
+     (unless (if (if (consp test)
+		     (member c test)
+		     (funcall test c))
+		 (not not-p)
+		 not-p)
+       (return count))
+     (unless (character-offset point (if dir 1 -1))
+       (return count))))
 
-(defun skip-chars-forward (pred &optional not-p)
-  (skip-chars-aux pred
-                  not-p
-                  (lambda () (shift-position 1))
-                  #'following-char))
+(defun skip-chars-forward (point test &optional not-p)
+  (skip-chars-internal point test not-p t))
 
-(defun skip-chars-backward (pred &optional not-p)
-  (skip-chars-aux pred
-                  not-p
-                  (lambda () (shift-position -1))
-                  #'preceding-char))
-
-(defun get-property (point key)
-  (buffer-get-property (current-buffer) point key))
-
-(defun put-property (start end key value)
-  (buffer-put-property (current-buffer) start end key value))
-
-(defun remove-property (start end key)
-  (buffer-remove-property (current-buffer) start end key))
-
-(defun put-attribute (start end attribute)
-  (buffer-put-property (current-buffer) start end :attribute attribute))
-
-(defun insert-string-with-attribute (string attribute)
-  (let ((start (current-point)))
-    (insert-string string)
-    (put-attribute start (current-point) attribute)))
-
-(defun after-property (property-name &optional (n 1))
-  (save-excursion
-    (shift-position n)
-    (%syntax-pos-property (current-charpos) property-name)))
-
-(defun before-property (property-name &optional (n 1))
-  (save-excursion
-    (shift-position (- (1- n)))
-    (%syntax-pos-property (current-charpos) property-name)))
-
-(defun following-property (property-name)
-  (%syntax-pos-property (current-charpos) property-name))
-
-(defun preceding-property (property-name)
-  (save-excursion
-    (shift-position -1)
-    (%syntax-pos-property (current-charpos) property-name)))
-
-(defun forward-search-property-end (property-name &optional limit)
-  (let ((first-value (following-property property-name))
-        (first-point (current-point)))
-    (loop
-      (unless (eq first-value (following-property property-name))
-        (return t))
-      (unless (shift-position 1)
-        (setf (current-point) first-point)
-        (return nil))
-      (when (and limit (point<= limit (current-point)))
-        (setf (current-point) first-point)
-        (return nil)))))
-
-(defun backward-search-property-start (property-name &optional limit)
-  (let ((first-value (preceding-property property-name))
-        (first-point (current-point)))
-    (loop
-      (unless (eq first-value (preceding-property property-name))
-        (return t))
-      (unless (shift-position -1)
-        (setf (current-point) first-point)
-        (return nil))
-      (when (and limit (point<= (current-point) limit))
-        (setf (current-point) first-point)
-        (return nil)))))
+(defun skip-chars-backward (point test &optional not-p)
+  (skip-chars-internal point test not-p nil))
 
 (defun current-column ()
-  (string-width (current-line-string)
-                0
-                (current-charpos)))
+  (point-column (current-point)))
 
-(defun move-to-column (column &optional force)
-  (check-type column (integer 0 #.most-positive-fixnum))
-  (end-of-line)
-  (let ((current-column (current-column)))
-    (cond ((< column current-column)
-           (set-charpos (wide-index (current-line-string) column))
-           column)
-          (force
-           (insert-char #\space (- column current-column))
-           (end-of-line)
-           column)
-          (t
-           (end-of-line)
-           current-column))))
-
-(defun point-to-offset (point &optional (buffer (current-buffer) bufferp))
-  (check-type point point)
-  (check-type buffer buffer)
-  (save-excursion
-    (when bufferp
-      (setf (current-buffer) buffer))
-    (point-set (point-min))
-    (let ((end-linum (point-linum point))
-          (end-charpos (point-charpos point))
-          (offset 0))
-      (loop :repeat (1- end-linum)
-            :for linum :from 1
-            :do (incf offset
-                      (1+ (buffer-line-length (current-buffer)
-                                              linum))))
-      (+ offset end-charpos))))
-
-(defun shift-point (point offset &optional (buffer (current-buffer)))
-  (with-current-buffer (buffer point)
-    (shift-position offset)
-    (current-point)))
+(defun point-to-offset (point)
+  (let ((end-linum (point-linum point))
+        (end-charpos (point-charpos point))
+        (buffer (point-buffer point))
+        (offset 0))
+    (loop :repeat (1- end-linum)
+       :for linum :from 1
+       :do (incf offset
+		 (1+ (buffer-line-length buffer linum))))
+    (+ offset end-charpos)))

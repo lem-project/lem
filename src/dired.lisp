@@ -9,11 +9,11 @@
 (defvar *directory-attribute* (make-attribute "blue" nil :bold-p t))
 (defvar *link-attribute* (make-attribute "green" nil))
 
-(defparameter *start-line-number* 4)
+(defvar *start-point*)
 
 (define-major-mode dired-mode ()
-  (:name "dired"
-   :keymap *dired-mode-keymap*))
+    (:name "dired"
+	   :keymap *dired-mode-keymap*))
 
 (define-key *dired-mode-keymap* "q" 'quit-window)
 (define-key *dired-mode-keymap* "g" 'dired-update-buffer)
@@ -41,16 +41,15 @@
 (define-key *dired-mode-keymap* "R" 'dired-rename-files)
 (define-key *dired-mode-keymap* "+" 'dired-mkdir)
 
-(defun move-to-file-column ()
-  (move-to-column (get-bvar 'start-file-column :default 0)))
+(defun dired-first-line-p (point)
+  (same-line-p *start-point* point))
 
-(defun move-to-start-point ()
-  (setf (current-linum) *start-line-number*)
-  (move-to-file-column))
+(defun dired-last-line-p (point)
+  (last-line-p point))
 
 (define-command dired-update-buffer () ()
   (save-excursion
-    (update)))
+    (update (current-buffer))))
 
 (define-command dired-up-directory () ()
   (switch-to-buffer
@@ -66,61 +65,60 @@
 
 (define-command dired-find-file-other-window () ()
   (select-file (lambda (file)
-                 (when (one-window-p)
-                   (split-window-sensibly (current-window)))
-                 (other-window 1)
-                 (find-file file))))
+                 (pop-to-buffer (find-file-buffer file)))))
 
 (define-command dired-next-line (n) ("p")
-  (forward-line n)
-  (when (> *start-line-number* (current-linum))
-    (setf (current-linum) *start-line-number*))
-  (when (last-line-p)
-    (forward-line -1))
-  (move-to-file-column))
+  (let ((point (current-point)))
+    (line-offset point n)
+    (when (point<= point *start-point*)
+      (move-point point *start-point*))
+    (when (last-line-p point)
+      (line-offset point -1))
+    (line-start point)))
 
 (define-command dired-previous-line (n) ("p")
-  (forward-line (- n))
-  (setf (current-linum)
-        (max *start-line-number* (current-linum)))
-  (move-to-file-column))
+  (let ((point (current-point)))
+    (line-offset point (- n))
+    (when (point<= point *start-point*)
+      (move-point point *start-point*))
+    (line-start point)))
 
 (define-command dired-next-directory-line (n) ("p")
-  (let ((point (current-point)))
+  (with-point ((cur-point (current-point)))
     (loop
-      (unless (forward-line 1)
-        (setf (current-point) point)
-        (return))
-      (when (and (eq :directory (get-property (current-point) 'type))
-                 (>= 0 (decf n)))
-        (move-to-file-column)
-        (return)))))
+       (when (dired-last-line-p cur-point)
+	 (return))
+       (line-offset cur-point 1)
+       (when (and (eq :directory (text-property-at cur-point 'type))
+		  (>= 0 (decf n)))
+	 (move-point (current-point) cur-point)
+	 (return)))))
 
 (define-command dired-previous-directory-line (n) ("p")
-  (let ((point (current-point)))
+  (with-point ((cur-point (current-point)))
     (loop
-      (unless (forward-line -1)
-        (setf (current-point) point)
-        (return))
-      (when (and (eq :directory (get-property (current-point) 'type))
-                 (>= 0 (decf n)))
-        (move-to-file-column)
-        (return)))))
+       (when (dired-first-line-p cur-point)
+	 (return))
+       (line-offset cur-point -1)
+       (when (and (eq :directory (text-property-at cur-point 'type))
+		  (>= 0 (decf n)))
+	 (move-point (current-point) cur-point)
+	 (return)))))
 
 (define-command dired-mark-and-next-line (n) ("p")
   (loop :repeat n :do
-        (mark-current-line t)
-        (dired-next-line 1)))
+     (mark-current-line t)
+     (dired-next-line 1)))
 
 (define-command dired-unmark-and-next-line (n) ("p")
   (loop :repeat n :do
-        (mark-current-line nil)
-        (dired-next-line 1)))
+     (mark-current-line nil)
+     (dired-next-line 1)))
 
 (define-command dired-unmark-and-previous-line (n) ("p")
   (loop :repeat n :do
-        (dired-previous-line 1)
-        (mark-current-line nil)))
+     (dired-previous-line 1)
+     (mark-current-line nil)))
 
 (define-command dired-toggle-marks () ()
   (mark-lines (constantly t)
@@ -203,118 +201,128 @@
       (funcall open-file file))))
 
 (defun mark-current-line (flag)
-  (when (and (<= *start-line-number* (current-linum))
-             (not (last-line-p)))
-    (save-excursion
-      (beginning-of-line)
-      (with-buffer-read-only (current-buffer) nil
-        (delete-char 1)
-        (if flag
-            (insert-char #\*)
-            (insert-char #\space))))))
+  (let ((point (current-point)))
+    (when (and (point<= *start-point* point)
+               (not (last-line-p point)))
+      (line-start point)
+      (with-buffer-read-only (point-buffer point) nil
+        (save-excursion
+          (delete-character point 1)
+          (if flag
+              (insert-character point #\*)
+              (insert-character point #\space)))))))
 
 (defun mark-lines (test get-flag)
   (save-excursion
-    (setf (current-linum) (+ 2 *start-line-number*))
+    (move-point (current-point) *start-point*)
+    (line-offset (current-point) 2)
     (loop
-      (beginning-of-line)
-      (let ((flag (char= (following-char) #\*)))
-        (when (funcall test flag)
-          (mark-current-line (funcall get-flag flag))))
-      (unless (forward-line 1)
-        (return)))))
+       (beginning-of-line)
+       (let ((flag (char= (following-char) #\*)))
+	 (when (funcall test flag)
+	   (mark-current-line (funcall get-flag flag))))
+       (unless (forward-line 1)
+	 (return)))))
 
 (defun selected-files ()
   (let ((files '()))
     (save-excursion
-      (setf (current-linum) *start-line-number*)
+      (move-point (current-point) *start-point*)
       (loop
-        (beginning-of-line)
-        (let ((flag (char= (following-char) #\*)))
-          (when flag
-            (move-to-file-column)
-            (push (get-file) files)))
-        (unless (forward-line 1)
-          (return))))
+	 (beginning-of-line)
+	 (let ((flag (char= (following-char) #\*)))
+	   (when flag
+	     (line-start (current-point))
+	     (push (get-file) files)))
+	 (unless (forward-line 1)
+	   (return))))
     (if (null files)
-        (list (get-file))
+        (let ((file (get-file)))
+          (when file
+            (list file)))
         (nreverse files))))
 
+(defun get-line-property (property-name)
+  (let ((point
+         (character-offset (line-start (copy-point (current-point)
+						   :temporary))
+			   1)))
+    (when point
+      (text-property-at point property-name))))
+
 (defun get-file ()
-  (get-property (shift-point (beginning-of-line-point)
-                             (get-bvar 'start-file-column :default 0))
-                'file))
+  (get-line-property 'file))
+
+(defun get-type ()
+  (get-line-property 'type))
 
 (defun ls-output-string (filename)
   (with-output-to-string (stream)
-    (uiop:run-program (format nil "ls -al ~A" filename) :output stream)))
+    (uiop:run-program (format nil "LANG=COMMONLISP; ls -al ~A" filename) :output stream)))
 
-(defun update ()
-  (with-buffer-read-only (current-buffer) nil
-    (buffer-erase)
-    (let ((dirname (probe-file (buffer-directory))))
-      (insert-string-with-attribute (namestring dirname) *header-attribute*)
-      (insert-newline 2)
-      (let ((output-string (ls-output-string dirname)))
-        (insert-string output-string)
-        (beginning-of-buffer)
-        (forward-line (1- *start-line-number*))
-        (setf (get-bvar 'start-point) (current-point))
-        (loop
-          (let ((string (current-line-string)))
-            (multiple-value-bind (start end start-groups end-groups)
-                (ppcre:scan "^(\\S*)\\s+(\\d+)\\s+(\\S*)\\s+(\\S*)\\s+(\\d+)\\s+(\\S+\\s+\\S+\\s+\\S+)\\s+(.*?)(?: -> .*)?$"
-                            string)
-              (declare (ignorable start end start-groups end-groups))
-              (when start
-                (save-excursion
-                  (beginning-of-line)
-                  (insert-string "  "))
-                (let* ((index (1- (length start-groups)))
-                       (filename (merge-pathnames
-                                  (subseq string
-                                          (aref start-groups index)
-                                          (aref end-groups index))
-                                  dirname))
-                       (start-file-charpos (+ 2 (aref start-groups index))))
-                  (save-excursion
-                    (move-to-column start-file-charpos)
-                    (setf (get-bvar 'start-file-column) (1+ (current-column))))
-                  (case (char string 0)
-                    (#\l
-                     (put-property (beginning-of-line-point) (end-of-line-point) 'type :link)
-                     (shift-position start-file-charpos)
-                     (put-attribute (current-point) (end-of-line-point) *link-attribute*))
-                    (#\d
-                     (put-property (beginning-of-line-point) (end-of-line-point) 'type :directory)
-                     (shift-position start-file-charpos)
-                     (put-attribute (current-point) (end-of-line-point) *directory-attribute*))
-                    (#\-
-                     (put-property (beginning-of-line-point) (end-of-line-point) 'type :file)))
-                  (put-property (beginning-of-line-point) (end-of-line-point) 'file filename)))
-              (unless (forward-line 1)
-                (return)))))))))
+(defun update (buffer)
+  (with-buffer-read-only buffer nil
+    (erase-buffer buffer)
+    (let ((dirname (probe-file (buffer-directory buffer))))
+      (with-point ((cur-point (buffer-point buffer) :left-inserting))
+        (insert-string cur-point
+		       (namestring dirname)
+		       :attribute *header-attribute*)
+        (insert-character cur-point #\newline 2)
+        (let ((output-string (ls-output-string dirname)))
+          (insert-string cur-point output-string)
+          (buffer-start cur-point)
+          (line-offset cur-point 3)
+          (setf *start-point* (copy-point cur-point :temporary))
+          (loop
+	     (let ((string (line-string-at cur-point)))
+	       (multiple-value-bind (start end start-groups end-groups)
+		   (ppcre:scan "^(\\S*)\\s+(\\d+)\\s+(\\S*)\\s+(\\S*)\\s+(\\d+)\\s+(\\S+\\s+\\S+\\s+\\S+)\\s+(.*?)(?: -> .*)?$"
+			       string)
+		 (declare (ignorable start end start-groups end-groups))
+		 (when start
+		   (insert-string cur-point "  ")
+		   (let* ((index (1- (length start-groups)))
+			  (filename (merge-pathnames
+				     (subseq string
+					     (aref start-groups index)
+					     (aref end-groups index))
+				     dirname))
+			  (start-file-charpos (+ 2 (aref start-groups index))))
+		     (with-point ((start-point (line-start cur-point))
+				  (end-point (line-end cur-point)))
+		       (case (char string 0)
+			 (#\l
+			  (put-text-property start-point end-point 'type :link)
+			  (character-offset (line-start cur-point) start-file-charpos)
+			  (put-text-property cur-point end-point :attribute *link-attribute*))
+			 (#\d
+			  (put-text-property start-point end-point 'type :directory)
+			  (character-offset (line-start cur-point) start-file-charpos)
+			  (put-text-property cur-point end-point :attribute *directory-attribute*))
+			 (#\-
+			  (put-text-property start-point end-point 'type :file)))
+		       (put-text-property start-point end-point 'file filename)))
+		   (line-offset cur-point 1)
+		   (when (end-line-p cur-point)
+		     (return)))))))))))
 
 (defun update-all ()
   (dolist (buffer (buffer-list))
     (when (eq 'dired-mode (buffer-major-mode buffer))
-      (with-current-buffer (buffer (make-min-point))
-        (update))))
+      (update buffer)))
   (redraw-display))
 
 (defun dired-buffer (filename)
   (setf filename (uiop:directory-exists-p (expand-file-name (namestring filename))))
   (let ((buffer (get-buffer-create (format nil "DIRED \"~A\"" filename))))
-    (with-current-buffer (buffer (make-min-point))
-      (dired-mode)
-      (setf (buffer-directory buffer) filename)
-      (setf (buffer-read-only-p buffer) t)
-      (buffer-disable-undo buffer)
-      (update))
-    (let ((prev-buffer (current-buffer)))
-      (setf (current-buffer) buffer)
-      (move-to-start-point)
-      (setf (current-buffer) prev-buffer))
+    (change-buffer-mode buffer 'dired-mode)
+    (setf (buffer-directory buffer) filename)
+    (setf (buffer-read-only-p buffer) t)
+    (buffer-disable-undo buffer)
+    (update buffer)
+    (move-point (buffer-point buffer)
+		*start-point*)
     buffer))
 
 (setf *find-directory-function* 'dired-buffer)

@@ -3,7 +3,6 @@
   (:use :cl :lem :lem.util)
   (:export :listener-mode
            :*listener-mode-keymap*
-           :listener-start-point
            :listener-start
            :listener-reset-prompt
            :listener-return
@@ -14,24 +13,24 @@
 
 (defvar *prompt-attribute* (make-attribute "blue" nil :bold-p t))
 
-(defvar %listener-marker-indicator (gensym))
-(defmacro %listener-marker ()
-  `(get-bvar %listener-marker-indicator))
+(defvar %listener-point-indicator (gensym))
+(defmacro %listener-point ()
+  `(get-bvar %listener-point-indicator))
 
 (defvar %listener-history-indicator (gensym))
 (defmacro %listener-history ()
   `(get-bvar %listener-history-indicator))
 
 (define-minor-mode listener-mode
-  (:name "listener"
-   :keymap *listener-mode-keymap*)
+    (:name "listener"
+	   :keymap *listener-mode-keymap*)
   (setf (get-bvar :enable-syntax-highlight) nil)
   (unless (%listener-history)
     (setf (%listener-history)
           (make-history))))
 
 (defun listener-start-point ()
-  (marker-point (%listener-marker)))
+  (copy-point (%listener-point) :temporary))
 
 (defun listener-start (buffer-name mode)
   (let ((buffer (get-buffer-create buffer-name)))
@@ -39,51 +38,46 @@
     (funcall mode)
     (listener-reset-prompt buffer)))
 
-(defun listener-update-marker (&optional point)
-  (when (%listener-marker)
-    (delete-marker (%listener-marker)))
-  (setf (%listener-marker)
+(defun listener-update-point (&optional (point (current-point)))
+  (when (%listener-point)
+    (delete-point (%listener-point)))
+  (setf (%listener-point)
         (if point
-            (make-marker (current-buffer) point :name "listener")
-            (make-marker-current-point :name "listener"))))
+            (copy-point point :right-inserting)
+            (copy-point (current-point) :right-inserting))))
 
 (defun listener-reset-prompt (&optional (buffer (current-buffer)))
-  (flet ((body ()
-           (point-set (point-max))
-           (unless (bolp)
-             (insert-newline 1))
-           (insert-string
-            (princ-to-string
-             (funcall (get-bvar :listener-get-prompt-function))))
-           (let ((start (beginning-of-line-point))
-                 (end (current-point)))
-             (put-attribute start end *prompt-attribute*)
-             (put-property start end 'lem.property:read-only t)
-             (put-property (shift-point end -1) end 'lem.property:field-separator t))
-           (buffer-undo-boundary (current-buffer))
-           (listener-update-marker)))
-    (if (eq buffer (current-buffer))
-        (body)
-        (save-excursion
-          (setf (current-buffer) buffer)
-          (body)))))
+  (let ((cur-point (buffer-point buffer)))
+    (buffer-end cur-point)
+    (unless (start-line-p cur-point)
+      (insert-character cur-point #\newline 1)
+      (buffer-end cur-point))
+    (insert-string cur-point
+		   (princ-to-string
+		    (funcall
+		     (get-bvar :listener-get-prompt-function)))
+		   :attribute *prompt-attribute*
+		   'lem.property:read-only t
+		   'lem.property:field-separator t)
+    (buffer-end cur-point)
+    (buffer-undo-boundary buffer)
+    (listener-update-point)))
 
 (define-key *listener-mode-keymap* (kbd "C-m") 'listener-return)
 (define-command listener-return () ()
-  (point-set (point-max))
-  (let ((end (current-point)))
-    (if (not (funcall (get-bvar :listener-check-confirm-function)))
-        (insert-newline)
+  (with-point ((point (buffer-end (current-point)) :left-inserting))
+    (if (not (funcall (get-bvar :listener-check-confirm-function) point))
+        (insert-character point #\newline)
         (let ((start (listener-start-point)))
-          (unless (point< start end)
+          (unless (point< start point)
             (listener-reset-prompt)
             (return-from listener-return t))
-          (let ((str (region-string start end)))
+          (let ((str (points-to-string start point)))
             (add-history (%listener-history) str)
-            (point-set (point-max))
-            (insert-newline)
-            (listener-update-marker)
-            (funcall (get-bvar :listener-confirm-function) str)))))
+            (buffer-end point)
+            (insert-character point #\newline)
+            (listener-update-point)
+            (funcall (get-bvar :listener-confirm-function) point str)))))
   t)
 
 (define-key *listener-mode-keymap* (kbd "M-p") 'listener-prev-input)
@@ -91,30 +85,30 @@
   (multiple-value-bind (str win)
       (prev-history (%listener-history))
     (let ((start (listener-start-point))
-          (end (point-max)))
-      (delete-region start end)
-      (when win (insert-string str))
-      (setf (marker-point (%listener-marker)) start))))
+          (end (buffers-end (current-buffer))))
+      (delete-between-points start end)
+      (when win (insert-string start str))
+      (move-point (%listener-point) start))))
 
 (define-key *listener-mode-keymap* (kbd "M-n") 'listener-next-input)
 (define-command listener-next-input () ()
   (multiple-value-bind (str win)
       (next-history (%listener-history))
     (let ((start (listener-start-point))
-          (end (point-max)))
-      (delete-region start end)
-      (when win (insert-string str))
-      (setf (marker-point (%listener-marker)) start))))
+          (end (buffers-end (current-point))))
+      (delete-between-points start end)
+      (when win (insert-string start str))
+      (move-point (%listener-point) start))))
 
 (define-key *listener-mode-keymap* (kbd "M-r") 'listener-reset-interactive)
 (define-command listener-reset-interactive (arg) ("P")
   (when arg
     (let ((*inhibit-read-only* t))
-      (delete-region (point-min) (point-max))))
+      (erase-buffer (current-buffer))))
   (listener-reset-prompt)
   t)
 
 (define-key *listener-mode-keymap* (kbd "C-c C-u") 'listener-clear-input)
 (define-command listener-clear-input () ()
-  (delete-region (listener-start-point)
-                 (point-max)))
+  (delete-between-points (listener-start-point)
+			 (buffers-end (current-buffer))))

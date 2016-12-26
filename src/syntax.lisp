@@ -133,7 +133,7 @@
     syntax-table))
 
 (defun syntax-add-match (syntax-table test &key test-symbol end-symbol attribute
-                                      matched-symbol (symbol-lifetime -1) move-action)
+					     matched-symbol (symbol-lifetime -1) move-action)
   (push (make-instance 'syntax-match
                        :test test
                        :test-symbol test-symbol
@@ -148,6 +148,12 @@
 (defun syntax-add-region (syntax-table start end &key attribute)
   (push (make-instance 'syntax-region :start start :end end :attribute attribute)
         (syntax-table-region-list syntax-table)))
+
+(defvar *current-syntax* nil)
+
+(defun current-syntax ()
+  (or *current-syntax*
+      (mode-syntax-table (buffer-major-mode))))
 
 (defun syntax-word-char-p (c)
   (and (characterp c)
@@ -178,9 +184,9 @@
 
 (defun syntax-equal-paren-p (x y)
   (flet ((f (c)
-            (if (syntax-open-paren-char-p c)
-                c
-                (syntax-pair-open-paren c))))
+	   (if (syntax-open-paren-char-p c)
+	       c
+	       (syntax-pair-open-paren c))))
     (eql (f x) (f y))))
 
 (defun syntax-string-quote-char-p (c)
@@ -192,13 +198,13 @@
 (defun syntax-expr-prefix-char-p (c)
   (member c (syntax-table-expr-prefix-chars (current-syntax))))
 
-(defun syntax-skip-expr-prefix-forward ()
+(defun syntax-skip-expr-prefix-forward (point)
   (let ((f (syntax-table-expr-prefix-forward-function (current-syntax))))
-    (if f (funcall f) t)))
+    (if f (funcall f point) t)))
 
-(defun syntax-skip-expr-prefix-backward ()
+(defun syntax-skip-expr-prefix-backward (point)
   (let ((f (syntax-table-expr-prefix-backward-function (current-syntax))))
-    (if f (funcall f) t)))
+    (if f (funcall f point) t)))
 
 (defun equal-comment-p (a b x y)
   (and (eql a x)
@@ -235,13 +241,16 @@
   (when (and (enable-syntax-highlight-p (window-buffer window))
              (null *syntax-scan-window-recursive-p*))
     (let ((*syntax-scan-window-recursive-p* t))
-      (with-window-range (start-linum end-linum) window
-        (syntax-scan-lines (window-buffer window) start-linum end-linum)))))
+      (window-see window)
+      (syntax-scan-lines (window-view-point window)
+                         (or (line-offset (copy-point (window-view-point window) :temporary)
+                                          (window-height window))
+                             (buffers-end (window-buffer window)))))))
 
 (defun syntax-scan-buffer (buffer)
   (check-type buffer buffer)
   (when (enable-syntax-highlight-p buffer)
-    (syntax-scan-lines buffer 1 (point-linum (point-max buffer)))))
+    (syntax-scan-lines (buffers-start buffer) (buffers-end buffer))))
 
 (defun syntax-scan-current-view ()
   (cond
@@ -251,11 +260,31 @@
      (setf (get-bvar 'already-visited) t)
      (syntax-scan-buffer (current-buffer)))))
 
+(defun syntax-scan-lines (start end)
+  (assert (eq (point-buffer start)
+              (point-buffer end)))
+  (let ((buffer (point-buffer start)))
+    (when (enable-syntax-highlight-p buffer)
+      (let* ((line (get-line/point start))
+             (prev (line-prev line))
+             (*syntax-symbol-lifetimes* (and prev (line-%symbol-lifetimes prev)))
+             (*current-syntax* (mode-syntax-table (buffer-major-mode buffer))))
+        (save-excursion
+          (setf (current-buffer) buffer)
+          (move-point (current-point) start)
+          (loop :until (or (null line)
+                           (point< end (current-point)))
+	     :do
+	     (setf line (%syntax-scan-line line))
+	     (unless (line-offset (current-point) 1)
+	       (return))
+	     (setf line (line-next line))))))))
+
 (defun syntax-update-symbol-lifetimes ()
   (setq *syntax-symbol-lifetimes*
         (loop :for (symbol . lifetime) :in *syntax-symbol-lifetimes*
-          :when (/= 0 lifetime)
-          :collect (cons symbol (1- lifetime)))))
+	   :when (/= 0 lifetime)
+	   :collect (cons symbol (1- lifetime)))))
 
 (defun syntax-position-word-end (str start)
   (or (position-if-not #'syntax-symbol-char-p str
@@ -271,29 +300,29 @@
 
 (defun syntax-test-match-p (syntax-test str start)
   (cond
-   ((syntax-test-regex-p syntax-test)
-    (if (syntax-test-word-p syntax-test)
-        (let ((end (syntax-position-word-end str start)))
-          (when (ppcre:scan (syntax-test-thing syntax-test)
-                            (subseq str start end))
-            (return-from syntax-test-match-p (values start end))))
-        (multiple-value-bind (start1 end1)
-            (ppcre:scan (syntax-test-thing syntax-test) str :start start)
-          (when (and start1 (= start start1))
-            (return-from syntax-test-match-p (values start1 end1))))))
-   ((stringp (syntax-test-thing syntax-test))
-    (let ((end (+ start (length (syntax-test-thing syntax-test)))))
-      (when (syntax-test-word-p syntax-test)
-        (setq end
-              (max end
-                   (syntax-position-word-end str start))))
-      (when (and (string= str (syntax-test-thing syntax-test)
-                          :start1 start
-                          :end1 (when (< end (length str))
-                                  end))
-                 (syntax-fit-word-p str start end
-                                    (syntax-test-word-p syntax-test)))
-        (return-from syntax-test-match-p (values start end)))))))
+    ((syntax-test-regex-p syntax-test)
+     (if (syntax-test-word-p syntax-test)
+	 (let ((end (syntax-position-word-end str start)))
+	   (when (ppcre:scan (syntax-test-thing syntax-test)
+			     (subseq str start end))
+	     (return-from syntax-test-match-p (values start end))))
+	 (multiple-value-bind (start1 end1)
+	     (ppcre:scan (syntax-test-thing syntax-test) str :start start)
+	   (when (and start1 (= start start1))
+	     (return-from syntax-test-match-p (values start1 end1))))))
+    ((stringp (syntax-test-thing syntax-test))
+     (let ((end (+ start (length (syntax-test-thing syntax-test)))))
+       (when (syntax-test-word-p syntax-test)
+	 (setq end
+	       (max end
+		    (syntax-position-word-end str start))))
+       (when (and (string= str (syntax-test-thing syntax-test)
+			   :start1 start
+			   :end1 (when (< end (length str))
+				   end))
+		  (syntax-fit-word-p str start end
+				     (syntax-test-word-p syntax-test)))
+	 (return-from syntax-test-match-p (values start end)))))))
 
 (defun syntax-search-region-end (region str start)
   (do ((i start (1+ i)))
@@ -351,27 +380,21 @@
                           :key #'car)))
           (cond
             ((syntax-match-move-action syntax)
-             (setf (current-charpos) start1)
-             (let* ((start-point (current-point))
-                    (end-point (funcall (syntax-match-move-action syntax))))
-               (cond ((and end-point
-                           (point< start-point end-point))
-                      (loop :repeat (- (point-linum end-point)
-                                       (point-linum start-point))
-                            :do (progn
-                                  (line-clear-property line :attribute)
-                                  (setf (line-%region line) syntax)
-                                  (setf line (line-next line))))
+             (line-offset (current-point) 0 start1)
+             (let ((start (copy-point (current-point) :temporary))
+                   (end (funcall (syntax-match-move-action syntax)
+                                 (copy-point (current-point) :temporary))))
+               (cond ((and end (point< start end))
+                      (with-point ((cur start))
+                        (loop :until (same-line-p cur end) :do
+			   (line-clear-property line :attribute)
+			   (setf (line-%region line) syntax)
+			   (setf line (line-next line))
+			   (line-offset cur 1)))
                       (setf (line-%region line) nil)
-                      (put-attribute start-point
-                                     end-point
-                                     (syntax-attribute syntax))
-                      (cons (point-charpos end-point) line))
-                     ((point< start-point (current-point))
-                      (loop :repeat (- (point-linum (current-point))
-                                       (point-linum start-point))
-                            :do (setf line (line-next line)))
-                      (cons (point-charpos (current-point)) line)))))
+                      (put-text-property start end :attribute (syntax-attribute syntax))
+                      (move-point (current-point) end)
+                      (cons (point-charpos end) line)))))
             (t
              (line-add-property line start1 end1 :attribute (syntax-attribute syntax) nil)
              (1- end1))))))))
@@ -416,7 +439,7 @@
                           t)
        (length (line-str line))))))
 
-(defun syntax-scan-line (line)
+(defun %syntax-scan-line (line)
   (line-clear-property line :attribute)
   (let* ((region (syntax-continue-region-p line))
          (start-pos (or (syntax-scan-line-region line region) 0))
@@ -449,58 +472,35 @@
     (setf (line-%symbol-lifetimes line) *syntax-symbol-lifetimes*)
     line))
 
-(defun syntax-scan-lines (buffer start-linum end-linum)
-  (when (enable-syntax-highlight-p buffer)
-    (let* ((line (buffer-get-line buffer start-linum))
-           (prev (line-prev line))
-           (*syntax-symbol-lifetimes* (and prev (line-%symbol-lifetimes prev)))
-           (prev-point (current-point))
-           (prev-buffer (current-buffer)))
-      (setf (current-buffer) buffer)
-      (setf (current-point) (make-point start-linum 0))
-      (loop :until (or (null line)
-                       (<= end-linum (current-linum)))
-            :do (setf line (syntax-scan-line line))
-            :do (unless (forward-line 1)
-                  (return))
-            :do (setf line (line-next line)))
-      (setf (current-buffer) prev-buffer)
-      (setf (current-point) prev-point))))
+(defun skip-whitespace-forward (point)
+  (skip-chars-forward point #'syntax-space-char-p))
 
-(defun %syntax-pos-property (pos property-name)
-  (let ((line (buffer-get-line (current-buffer) (current-linum))))
-    (line-search-property line property-name pos)))
+(defun skip-whitespace-backward (point)
+  (skip-chars-backward point #'syntax-space-char-p))
 
-(defun skip-whitespace-forward ()
-  (skip-chars-forward #'syntax-space-char-p))
-
-(defun skip-whitespace-backward ()
-  (skip-chars-backward #'syntax-space-char-p))
-
-(defun skip-space-and-comment-forward ()
+(defun skip-space-and-comment-forward (point)
   (loop
-    (skip-whitespace-forward)
-    (unless (and (not (eq *syntax-comment-attribute* (preceding-property :attribute)))
-                 (eq *syntax-comment-attribute* (following-property :attribute)))
-      (return t))
-    (unless (forward-search-property-end :attribute)
-      (return nil))))
+     (skip-whitespace-forward point)
+     (unless (and (not (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
+		  (eq *syntax-comment-attribute* (text-property-at point :attribute)))
+       (return t))
+     (unless (next-single-property-change point :attribute)
+       (return nil))))
 
-(defun skip-space-and-comment-backward ()
+(defun skip-space-and-comment-backward (point)
   (loop
-    (skip-whitespace-backward)
-    (unless (and (not (eq *syntax-comment-attribute* (following-property :attribute)))
-                 (eq *syntax-comment-attribute* (preceding-property :attribute)))
-      (return t))
-    (unless (backward-search-property-start
-             :attribute)
-      (return nil))))
+     (skip-whitespace-backward point)
+     (unless (and (not (eq *syntax-comment-attribute* (text-property-at point :attribute)))
+		  (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
+       (return t))
+     (unless (previous-single-property-change point :attribute)
+       (return nil))))
 
-(defun symbol-string-at-point ()
-  (save-excursion
-    (skip-chars-backward #'syntax-symbol-char-p)
-    (unless (syntax-symbol-char-p (following-char))
+(defun symbol-string-at-point (point)
+  (with-point ((point point))
+    (skip-chars-backward point #'syntax-symbol-char-p)
+    (unless (syntax-symbol-char-p (character-at point))
       (return-from symbol-string-at-point nil))
-    (let ((start (current-point)))
-      (skip-chars-forward #'syntax-symbol-char-p)
-      (region-string start (current-point)))))
+    (with-point ((start point))
+      (skip-chars-forward point #'syntax-symbol-char-p)
+      (points-to-string start point))))

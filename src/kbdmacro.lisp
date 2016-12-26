@@ -38,9 +38,9 @@
         (t
          (let ((*macro-running-p* t))
            (loop
-             :repeat n
-             :while (execute-key-sequence *last-macro-chars*)
-             :finally (return t))))))
+	      :repeat n
+	      :while (execute-key-sequence *last-macro-chars*)
+	      :finally (return t))))))
 
 (define-command apply-macro-to-region-lines () ()
   (apply-region-lines (region-beginning)

@@ -4,14 +4,11 @@
   (:export :abbrev))
 (in-package :lem.abbrev)
 
-(defun preceding-word ()
-  (let ((chars))
-    (save-excursion
-     (skip-chars-backward
-      #'(lambda (c)
-          (when (and c (syntax-symbol-char-p c))
-            (push c chars))))
-     (coerce chars 'string))))
+(defun preceding-word (point)
+  (with-point ((cur point)
+               (end point))
+    (skip-chars-backward cur #'syntax-symbol-char-p)
+    (points-to-string cur end)))
 
 (defun scan-line-words (str)
   (let ((words))
@@ -29,16 +26,14 @@
 
 (defun scan-buffer-words (buffer word)
   (let ((words))
-    (map-buffer-lines
-     #'(lambda (str eof-p linum)
-         (declare (ignore eof-p linum))
-         (dolist (w (remove-if-not #'(lambda (tok)
-                                       (and (string/= word tok)
-                                            (eql 0 (search word tok))))
-                                   (scan-line-words str)))
-           (push w words)))
-     buffer
-     1)
+    (with-open-stream (in (make-buffer-input-stream (buffers-start buffer)))
+      (loop :for str := (read-line in nil)
+	 :while str
+	 :do (dolist (w (remove-if-not #'(lambda (tok)
+					   (and (string/= word tok)
+						(eql 0 (search word tok))))
+				       (scan-line-words str)))
+	       (push w words))))
     (nreverse words)))
 
 (defun scan-all-buffer-words (word)
@@ -50,10 +45,32 @@
                   (buffer-list)))
    :test #'equal))
 
+(define-key *global-keymap* (kbd "C-x /") 'abbrev-with-pop-up-window)
+(define-command abbrev-with-pop-up-window () ()
+  (let* ((src-word (preceding-word (current-point)))
+         (words (scan-all-buffer-words src-word)))
+    (start-completion (lambda (str)
+                        (completion str words))
+                      src-word)))
+
+(defvar *rest-words* nil)
+(defvar *all-words* nil)
+(defvar *start-point* nil)
+
 (define-key *global-keymap* (kbd "M-/") 'abbrev)
 (define-command abbrev () ()
-  (let ((src-word (preceding-word)))
-    (let ((words (scan-all-buffer-words src-word)))
-      (start-completion (lambda (str)
-                          (completion str words))
-                        src-word))))
+  (let ((point (current-point)))
+    (cond ((continue-flag :abbrev)
+           (when (null *rest-words*)
+             (setf *rest-words* *all-words*))
+           (delete-between-points *start-point* point)
+           (insert-string point (first *rest-words*))
+           (setf *rest-words* (rest *rest-words*)))
+          (t
+           (let* ((src-word (preceding-word point))
+                  (words (scan-all-buffer-words src-word)))
+             (delete-character point (- (length src-word)) nil)
+             (setf *rest-words* (rest words))
+             (setf *all-words* words)
+             (setf *start-point* (copy-point point :temporary))
+             (insert-string point (first words)))))))

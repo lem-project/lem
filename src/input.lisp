@@ -43,16 +43,16 @@
 
 (defun read-key-with-timer ()
   (loop
-    (let ((ms (shortest-wait-timers)))
-      (if (null ms)
-          (return (get-char nil))
-          (if (minusp ms)
-              (update-timer)
-              (multiple-value-bind (char timeout-p)
-                  (get-char ms)
-                (if timeout-p
-                    (update-timer)
-                    (return char))))))))
+     (let ((ms (shortest-wait-timers)))
+       (if (null ms)
+	   (return (get-char nil))
+	   (if (minusp ms)
+	       (update-timer)
+	       (multiple-value-bind (char timeout-p)
+		   (get-char ms)
+		 (if timeout-p
+		     (update-timer)
+		     (return char))))))))
 
 (defun read-key ()
   (let ((char (if (null *unread-keys*)
@@ -89,8 +89,8 @@
         (handler-case (let ((*interactive-p* nil))
                         (funcall (find-keybind (read-key-sequence)) nil))
           (editor-condition ()
-                            (setf *unread-keys* prev-unread-keys)
-                            (return nil)))))))
+	    (setf *unread-keys* prev-unread-keys)
+	    (return nil)))))))
 
 (defun sit-for (seconds &optional (update-window-p t))
   (when update-window-p (redraw-display))

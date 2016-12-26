@@ -11,26 +11,33 @@
 (defclass overlay ()
   ((start
     :initarg :start
-    :reader overlay-start)
+    :reader overlay-start
+    :type point)
    (end
     :initarg :end
-    :reader overlay-end)
+    :reader overlay-end
+    :type point)
    (attribute
     :initarg :attribute
-    :reader overlay-attribute)
+    :reader overlay-attribute
+    :type attribute)
    (buffer
     :initarg :buffer
-    :reader overlay-buffer)))
+    :reader overlay-buffer
+    :type buffer)))
 
 (defun overlay-p (x)
   (typep x 'overlay))
 
-(defun make-overlay (start end attribute &optional (buffer (current-buffer)))
+(defun make-overlay (start end attribute)
   (check-type attribute attribute)
-  (let ((overlay
+  (assert (eq (point-buffer start)
+              (point-buffer end)))
+  (let* ((buffer (point-buffer start))
+         (overlay
           (make-instance 'overlay
-                         :start start
-                         :end end
+                         :start (copy-point start :right-inserting)
+                         :end (copy-point end :right-inserting)
                          :attribute attribute
                          :buffer buffer)))
     (buffer-add-overlay buffer overlay)
@@ -38,4 +45,6 @@
 
 (defun delete-overlay (overlay)
   (when (overlay-p overlay)
+    (delete-point (overlay-start overlay))
+    (delete-point (overlay-end overlay))
     (buffer-delete-overlay (overlay-buffer overlay) overlay)))

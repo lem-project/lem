@@ -53,7 +53,7 @@
 
 (defmethod print-object ((object timer) stream)
   (print-unreadable-object (object stream :identity t)
-                           (format stream "TIMER: ~S" (timer-name object))))
+    (format stream "TIMER: ~S" (timer-name object))))
 
 (defun timer-p (x)
   (typep x 'timer))
@@ -106,8 +106,8 @@
                 (apply (timer-function timer) (timer-args timer)))
               (apply (timer-function timer) (timer-args timer)))
         (error (condition)
-               (message "Error running timer ~S: ~A" (timer-name timer) condition)
-               (redraw-display))))
+	  (message "Error running timer ~S: ~A" (timer-name timer) condition)
+	  (redraw-display))))
     (not (null update-timers))))
 
 (defun shortest-wait-timers ()

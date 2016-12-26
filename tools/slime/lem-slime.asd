@@ -4,8 +4,7 @@
 (in-package :lem-slime-asd)
 
 (defsystem lem-slime
-  :depends-on (:lem
-               :alexandria
+  :depends-on (:alexandria
                :trivial-types
                :usocket
                :swank

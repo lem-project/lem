@@ -1,6 +1,6 @@
 (in-package :cl-user)
 (defpackage :lem.go-mode
-  (:use :cl :lem :lem.prog-mode)
+  (:use :cl :lem)
   (:export))
 (in-package :lem.go-mode)
 
@@ -50,20 +50,16 @@
                         :attribute *syntax-constant-attribute*))
     table))
 
-(define-major-mode go-mode prog-mode
-  (:name "go"
-   :keymap *go-mode-keymap*
-   :syntax-table *go-syntax-table*)
+(define-major-mode go-mode nil
+    (:name "go"
+	   :keymap *go-mode-keymap*
+	   :syntax-table *go-syntax-table*)
   (setf (get-bvar :enable-syntax-highlight) t)
-  (setf (get-bvar :calc-indent-function) 'go-calc-indent)
-  (setf (get-bvar :beginning-of-defun-function) 'go-beginning-of-defun)
-  (setf (get-bvar :end-of-defun-function) 'go-end-of-defun))
+  (setf (get-bvar :calc-indent-function) 'go-calc-indent))
 
 (defun following-word ()
-  (region-string (current-point)
-                 (save-excursion
-                  (forward-sexp 1 t)
-                  (current-point))))
+  (points-to-string (current-point)
+		    (form-offset (copy-point (current-point) :temporary) 1)))
 
 (defun semicolon-p ()
   (let ((c (preceding-char)))
@@ -75,81 +71,76 @@
        (eql c (preceding-char)))
       ((#\) #\] #\}) t)
       (t
-       (and (/= 0 (skip-chars-backward #'syntax-word-char-p))
+       (and (/= 0 (skip-chars-backward (current-point) #'syntax-word-char-p))
             #-(and)(not (member (following-word)
-                         '("break" "continue" "fallthrough" "return")
-                         :test #'string=)))))))
+                                '("break" "continue" "fallthrough" "return")
+                                :test #'string=)))))))
 
-(defun go-calc-indent ()
+(defun go-calc-indent (point)
   (save-excursion
-   (back-to-indentation)
-   (let ((attribute (preceding-property :attribute)))
-     (cond ((eq attribute *syntax-comment-attribute*)
-            (backward-search-property-start :attribute)
-            (1+ (current-column)))
-           ((eq attribute *syntax-string-attribute*)
-            nil)
-           (t
-            (let ((inside-indenting-paren nil)
-                  (indent))
-              (setf indent
-                    (save-excursion
-                     (when (up-list 1 t)
-                       (case (following-char)
-                         (#\{
-                          (back-to-indentation)
-                          (+ *go-tab-width* (current-column)))
-                         (#\(
-                          (let ((n 0))
-                            (when (save-excursion
-                                   (backward-sexp 1 t)
-                                   (member (following-word)
-                                           '("import" "const" "var" "type" "package")
-                                           :test #'string=))
-                              (setf inside-indenting-paren t)
-                              (incf n *go-tab-width*))
-                            (back-to-indentation)
-                            (+ (current-column) n)))))))
-              (when (null indent)
-                (return-from go-calc-indent 0))
-              (cond ((looking-at-line "case\\W|default\\W" :start (current-charpos))
-                     (decf indent *go-tab-width*))
-                    ((looking-at-line "\\s*}")
-                     (save-excursion
-                      (end-of-line)
-                      (skip-chars-backward '(#\)))
-                      (backward-sexp 1 t)
-                      (back-to-indentation)
-                      (setf indent (current-column)))))
-              (save-excursion
-               (beginning-of-line)
-               (skip-space-and-comment-backward)
-               (when (case (preceding-char)
-                       ((nil #\{ #\:)
-                        nil)
-                       (#\(
-                        (not inside-indenting-paren))
-                       (#\,
-                        (and (up-list 1 t)
-                             (not (eql #\{ (following-char)))))
-                       (t
-                        (not (semicolon-p))))
-                 (incf indent *go-tab-width*)))
-              (when (and (looking-at-line "^\\s*\\)\\s*$") inside-indenting-paren)
-                (decf indent *go-tab-width*))
-              indent))))))
+    (setf (current-buffer) (point-buffer point))
+    (move-point (current-point) point)
+    (back-to-indentation)
+    (let ((attribute (text-property-at (current-point) :attribute -1)))
+      (cond ((eq attribute *syntax-comment-attribute*)
+	     (previous-single-property-change (current-point) :attribute)
+	     (1+ (current-column)))
+	    ((eq attribute *syntax-string-attribute*)
+	     nil)
+	    (t
+	     (let ((inside-indenting-paren nil)
+		   (indent))
+	       (setf indent
+		     (save-excursion
+		       (when (up-list 1 t)
+			 (case (following-char)
+			   (#\{
+			    (back-to-indentation)
+			    (+ *go-tab-width* (current-column)))
+			   (#\(
+			    (let ((n 0))
+			      (when (save-excursion
+				      (backward-sexp 1 t)
+				      (member (following-word)
+					      '("import" "const" "var" "type" "package")
+					      :test #'string=))
+				(setf inside-indenting-paren t)
+				(incf n *go-tab-width*))
+			      (back-to-indentation)
+			      (+ (current-column) n)))))))
+	       (when (null indent)
+		 (return-from go-calc-indent 0))
+	       (cond ((looking-at-line "case\\W|default\\W" :start (point-charpos (current-point)))
+		      (decf indent *go-tab-width*))
+		     ((looking-at-line "\\s*}")
+		      (save-excursion
+			(end-of-line)
+			(skip-chars-backward (current-point) '(#\)))
+			(backward-sexp 1 t)
+			(back-to-indentation)
+			(setf indent (current-column)))))
+	       (save-excursion
+		 (beginning-of-line)
+		 (skip-space-and-comment-backward (current-point))
+		 (when (case (preceding-char)
+			 ((nil #\{ #\:)
+			  nil)
+			 (#\(
+			  (not inside-indenting-paren))
+			 (#\,
+			  (and (up-list 1 t)
+			       (not (eql #\{ (following-char)))))
+			 (t
+			  (not (semicolon-p))))
+		   (incf indent *go-tab-width*)))
+	       (when (and (looking-at-line "^\\s*\\)\\s*$") inside-indenting-paren)
+		 (decf indent *go-tab-width*))
+	       indent))))))
 
 (define-key *go-mode-keymap* "}" 'go-electric-close)
 (define-command go-electric-close (n) ("p")
   (self-insert n)
-  (indent-line))
-
-(defun go-beginning-of-defun (n)
-  (beginning-of-defun-abstract n #'(lambda () (looking-at-line "^\\w"))))
-
-(defun go-end-of-defun (n)
-  (beginning-of-defun-abstract (- n) #'(lambda () (looking-at-line "^[)}]")))
-  (forward-line 1))
+  (indent))
 
 (define-command gofmt () ()
   (filter-buffer "gofmt"))

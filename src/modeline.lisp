@@ -49,16 +49,17 @@
     ((<= (buffer-nlines (window-buffer window))
          (window-height window))
      "All")
-    ((= 1 (window-view-linum window))
+    ((first-line-p (window-view-point window))
      "Top")
-    ((<= (buffer-nlines (window-buffer window))
-         (+ (window-view-linum window) (window-height window)))
+    ((null (line-offset (copy-point (window-view-point window)
+                                    :temporary)
+                        (window-height window)))
      "Bot")
     (t
      (format nil "~2d%"
              (floor
               (* 100
-                 (float (/ (window-view-linum window)
+                 (float (/ (point-linum (window-view-point window))
                            (buffer-nlines (window-buffer window))))))))))
 
 (defun modeline-read-only-p (window)
@@ -86,17 +87,13 @@
         (setf firstp t)))))
 
 (defun modeline-linum (window)
-  (window-current-linum window))
+  (point-linum (window-point window)))
 
 (defun modeline-column (window)
-  (string-width (buffer-line-string (window-buffer window)
-                                    (window-current-linum window))
-                0
-                (window-current-charpos window)))
+  (point-column (window-point window)))
 
 (defun modeline-string (window)
-  (let* ((line-pos (posline window))
-         (winwidth (window-width window))
+  (let* ((posline (posline window))
          (str (with-output-to-string (out)
                 (dolist (x
                          (get-bvar :modeline-format
@@ -104,13 +101,8 @@
                                    :default *modeline-default-format*))
                   (if (or (symbolp x) (functionp x))
                       (princ (funcall x window) out)
-                      (princ x out))))))
-    (let ((n (- winwidth 7 (length str))))
-      (if (minusp n)
-          (format nil "~a ~a --" str line-pos)
-          (format nil "~a~v,,,va ~a --"
-                  str
-                  n
-                  (if (eq window (current-window)) #\- #\space)
-                  #\space
-                  line-pos)))))
+                      (princ x out)))))
+         (mdstr (make-string (window-width window)
+                             :initial-element #\space)))
+    (replace mdstr str)
+    (replace mdstr posline :start1 (- (length mdstr) 5))))

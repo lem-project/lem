@@ -3,8 +3,7 @@
 (export '(*program-name*
           *debug-p*
           save-excursion
-          with-current-buffer
-          with-window-range
+          with-point
           with-buffer-read-only
           with-current-window
           with-pop-up-typeout-window
@@ -33,44 +32,24 @@
                  slots))))
 
 (defmacro save-excursion (&body body)
-  (let ((gpoint (gensym))
-        (gbuffer (gensym))
-        (gview-point (gensym))
-        (gwindow-buffer (gensym)))
-    `(let ((,gpoint (current-point))
-           (,gbuffer (current-buffer))
-           (,gview-point (marker-point (window-view-marker (current-window))))
-           (,gwindow-buffer (window-buffer (current-window))))
-       (unwind-protect (progn ,@body)
-         (cond ((find ,gbuffer (buffer-list))
-                (unless (eq ,gbuffer (current-buffer))
-                  (setf (current-buffer) ,gbuffer))
-                (setf (marker-point (window-view-marker (current-window)))
-                      (let ((point-max (point-max (window-buffer (current-window)))))
-                        (if (point< ,gview-point point-max)
-                            ,gview-point
-                            point-max)))
-                (point-set ,gpoint)
-                (unless (eq ,gwindow-buffer (window-buffer (current-window)))
-                  (setf (window-buffer (current-window)) ,gwindow-buffer)))
-               ((minibufferp ,gbuffer)
-                (setf (current-buffer) ,gbuffer)
-                (point-set ,gpoint (minibuffer))))))))
+  `(invoke-save-excursion (lambda () ,@body)))
 
-(defmacro with-current-buffer ((buffer point) &body body)
-  `(save-excursion
-     (setf (current-buffer) ,buffer)
-     (setf (current-point) ,point)
-     ,@body))
-
-(defmacro with-window-range ((start-linum-var end-linum-var)
-                             window &body body)
-  (let ((gwindow (gensym "WINDOW")))
-    `(let ((,gwindow ,window))
-       (window-see ,gwindow)
-       (let* ((,start-linum-var (window-view-linum ,gwindow))
-              (,end-linum-var (+ ,start-linum-var (window-height ,gwindow))))
-         ,@body))))
+(defmacro with-point (bindings &body body)
+  (let ((cleanups
+         (mapcan (lambda (b)
+                   (destructuring-bind (var point &optional (kind :temporary)) b
+                     (declare (ignore point))
+                     (unless (eq :temporary kind)
+                       `((delete-point ,var)))))
+                 bindings)))
+    `(let ,(mapcar (lambda (b)
+                     (destructuring-bind (var point &optional (kind :temporary)) b
+                       `(,var (copy-point ,point ,kind))))
+                   bindings)
+       ,(if cleanups
+            `(unwind-protect (progn ,@body)
+               ,@cleanups)
+            `(progn ,@body)))))
 
 (defmacro with-buffer-read-only (buffer flag &body body)
   (let ((gbuffer (gensym "BUFFER"))
@@ -116,7 +95,7 @@
          (sb-profile:report)))))
 
 (defmacro handler-case-bind ((error-bind &body body)
-                             ((condition) &body protected-form))
+					   ((condition) &body protected-form))
   (let ((gerror-bind (gensym "ERROR-BIND")))
     `(let ((,gerror-bind ,error-bind))
        (handler-case
@@ -133,7 +112,7 @@
              #-ccl
              (progn ,@body))
          ((or error
-              #+sbcl sb-sys:interactive-interrupt
-              #+ccl ccl:interrupt-signal-condition)
-          (,condition)
-          ,@protected-form)))))
+	   #+sbcl sb-sys:interactive-interrupt
+	   #+ccl ccl:interrupt-signal-condition)
+	     (,condition)
+	   ,@protected-form)))))

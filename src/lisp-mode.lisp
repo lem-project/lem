@@ -998,14 +998,18 @@
 
 (define-command lisp-uncomment-region () ()
   (with-point ((start (region-beginning))
-	       (end (region-end)))
-    (let ((charpos (point-charpos start)))
-      (loop
-	 (unless (point< start end) (return))
-	 (loop (if (char= #\; (character-at start))
-		   (delete-character start 1)
-		   (return)))
-	 (line-offset start 1 charpos)))))
+               (end (region-end)))
+    (move-point start (character-offset (copy-point start :temporary) -1))
+    (loop
+      ;; ここを実行中は構文走査がされないのでテキストプロパティが更新されず、ずれていくので後ろから探していく
+      (unless (previous-single-property-change end :attribute start)
+        (return))
+      (when (and (eq *syntax-comment-attribute* (text-property-at end :attribute 0))
+                 (not (eq *syntax-comment-attribute* (text-property-at end :attribute -1))))
+        (if (looking-at end ";; ")
+            (delete-character end 3)
+            (loop :while (char= #\; (character-at end 0))
+                  :do (delete-character end 1)))))))
 
 (defun check-package (package-name)
   (find-package (string-upcase package-name)))

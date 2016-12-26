@@ -258,7 +258,7 @@
 
 (defun ls-output-string (filename)
   (with-output-to-string (stream)
-    (uiop:run-program (format nil "LANG=COMMONLISP; ls -al ~A" filename) :output stream)))
+    (uiop:run-program (format nil "LANG=en; ls -al ~A" filename) :output stream)))
 
 (defun update (buffer)
   (with-buffer-read-only buffer nil

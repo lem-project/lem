@@ -174,13 +174,13 @@
       (return (buffer-directory (window-buffer window))))))
 
 (define-command dired-copy-files () ()
-  (let ((to-pathname (minibuf-read-file "Destination Filename: " (get-dest-directory))))
+  (let ((to-pathname (prompt-for-file "Destination Filename: " (get-dest-directory))))
     (dolist (file (selected-files))
       (run-command "cp -r '~A' '~A'" file to-pathname)))
   (update-all))
 
 (define-command dired-rename-files () ()
-  (let ((to-pathname (minibuf-read-file "Destination Filename: " (get-dest-directory))))
+  (let ((to-pathname (prompt-for-file "Destination Filename: " (get-dest-directory))))
     (dolist (file (selected-files))
       (run-command "mv '~A' '~A'" file to-pathname)))
   (update-all))

@@ -243,7 +243,7 @@
   (let ((before)
         (after))
     (setq before
-          (minibuf-read-string
+          (prompt-for-string
            (if *replace-before-string*
                (format nil "Before (~a with ~a): "
                        *replace-before-string*
@@ -259,7 +259,7 @@
              (message "Before string is empty")
              (return-from read-query-replace-args
                (list nil nil)))))
-    (setq after (minibuf-read-string "After: "))
+    (setq after (prompt-for-string "After: "))
     (setq *replace-before-string* before)
     (setq *replace-after-string* after)
     (list before after)))

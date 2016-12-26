@@ -46,7 +46,7 @@
                (insert-string cur-point thing))
              jump-fun)))))))
 
-(define-command grep (string) ((list (minibuf-read-string ": " "grep -nH ")))
+(define-command grep (string) ((list (prompt-for-string ": " "grep -nH ")))
   (let ((directory (buffer-directory)))
     (grep-with-string "*grep*"
                       (with-output-to-string (s)

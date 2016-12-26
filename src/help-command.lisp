@@ -48,7 +48,7 @@
 
 (define-key *global-keymap* (kbd "M-x") 'execute-command)
 (define-command execute-command (arg) ("P")
-  (let* ((name (minibuf-read-line
+  (let* ((name (prompt-for-line
                 (if arg
                     (format nil "~D M-x " arg)
                     "M-x ")

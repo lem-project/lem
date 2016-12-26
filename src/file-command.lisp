@@ -87,6 +87,6 @@
       t)))
 
 (define-command change-directory (directory)
-    ((list (minibuf-read-file "change directory: " (buffer-directory))))
+    ((list (prompt-for-file "change directory: " (buffer-directory))))
   (setf (buffer-directory) (expand-file-name directory))
   t)

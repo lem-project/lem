@@ -12,11 +12,11 @@
           minibuf-read-line-completion
           minibuf-read-line-prev-history
           minibuf-read-line-next-history
-          minibuf-read-line
-          minibuf-read-string
-          minibuf-read-number
-          minibuf-read-buffer
-          minibuf-read-file))
+          prompt-for-line
+          prompt-for-string
+          prompt-for-integer
+          prompt-for-buffer
+          prompt-for-file))
 
 (defparameter *minibuffer-window-height* 1)
 
@@ -179,18 +179,18 @@
         (let ((cmd (read-key-command)))
           (handler-case (cmd-call cmd nil)
             (editor-abort (c)
-	      (when (/= (editor-abort-depth c)
-			*minibuf-read-line-depth*)
-		(error c)))
+                          (when (/= (editor-abort-depth c)
+                                    *minibuf-read-line-depth*)
+                            (error c)))
             (read-only-error ()
-	      (message "Read Only"))
+                             (message "Read Only"))
             (editor-error (c)
-	      (message (editor-error-message c)))))))
+                          (message (editor-error-message c)))))))
     (let ((str (get-minibuffer-string)))
       (add-history *minibuf-read-line-history* str)
       str)))
 
-(defun minibuf-read-line (prompt initial comp-f existing-p history-name)
+(defun prompt-for-line (prompt initial comp-f existing-p history-name)
   (let ((*minibuffer-calls-window* (current-window))
         (*minibuf-read-line-history* (let ((table (gethash history-name *minibuf-read-line-history-table*)))
                                        (or table
@@ -236,29 +236,29 @@
                      (insert-string (current-point) minibuf-buffer-prev-string)
                      (move-point (current-point) minibuf-buffer-prev-point))))))))
       (editor-abort (c)
-	(error c)))))
+                    (error c)))))
 
-(defun minibuf-read-string (prompt &optional initial)
-  (minibuf-read-line prompt (or initial "") nil nil 'mh-read-string))
+(defun prompt-for-string (prompt &optional initial)
+  (prompt-for-line prompt (or initial "") nil nil 'mh-read-string))
 
-(defun minibuf-read-number (prompt &optional min max)
+(defun prompt-for-integer (prompt &optional min max)
   (parse-integer
-   (minibuf-read-line prompt "" nil
-                      #'(lambda (str)
-                          (multiple-value-bind (n len)
-                              (parse-integer str :junk-allowed t)
-                            (and
-                             n
-                             (/= 0 (length str))
-                             (= (length str) len)
-                             (if min (<= min n) t)
-                             (if max (<= n max) t))))
-                      'mh-read-number)))
+   (prompt-for-line prompt "" nil
+                    #'(lambda (str)
+                        (multiple-value-bind (n len)
+                            (parse-integer str :junk-allowed t)
+                          (and
+                           n
+                           (/= 0 (length str))
+                           (= (length str) len)
+                           (if min (<= min n) t)
+                           (if max (<= n max) t))))
+                    'mh-read-number)))
 
-(defun minibuf-read-buffer (prompt &optional default existing)
+(defun prompt-for-buffer (prompt &optional default existing)
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))
-  (let ((result (minibuf-read-line
+  (let ((result (prompt-for-line
                  prompt
                  ""
                  'completion-buffer-name
@@ -270,15 +270,15 @@
         default
         result)))
 
-(defun minibuf-read-file (prompt &optional directory default existing)
+(defun prompt-for-file (prompt &optional directory default existing)
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))
   (let ((result
-         (minibuf-read-line prompt
-                            directory
-                            'completion-file
-                            (and existing #'cl-fad:file-exists-p)
-                            'mh-read-file)))
+         (prompt-for-line prompt
+                          directory
+                          'completion-file
+                          (and existing #'cl-fad:file-exists-p)
+                          'mh-read-file)))
     (if (string= result "")
         default
         result)))

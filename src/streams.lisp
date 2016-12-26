@@ -170,7 +170,7 @@
   (let ((c (pop (minibuffer-input-stream-queue stream))))
     (cond ((null c)
            (let ((string
-                  (handler-case (values (minibuf-read-string "") t)
+                  (handler-case (values (prompt-for-string "") t)
                     (editor-abort ()
 		      (setf (minibuffer-input-stream-queue stream) nil)
 		      (return-from trivial-gray-streams:stream-read-char :eof)))))
@@ -201,7 +201,7 @@
       (trivial-gray-streams:stream-unread-char stream c))))
 
 (defmethod trivial-gray-streams:stream-read-line ((stream minibuffer-input-stream))
-  (minibuf-read-string ""))
+  (prompt-for-string ""))
 
 (defmethod trivial-gray-streams:stream-clear-input ((stream minibuffer-input-stream))
   nil)

@@ -479,9 +479,9 @@
                                  complete-package-function)
   (let* ((package-name
           (string-upcase
-           (minibuf-read-line "Package: " ""
-                              complete-package-function nil
-                              'mh-lisp-package)))
+           (prompt-for-line "Package: " ""
+                            complete-package-function nil
+                            'mh-lisp-package)))
          (package (funcall find-package-function package-name)))
     (cond (package
            (lisp-change-package package) t)
@@ -547,7 +547,7 @@
         (setq x
               (eval
                (read-from-string
-                (minibuf-read-string
+                (prompt-for-string
                  "Type a form to be evaluated: ")
                 nil)))
       (error (cdt)
@@ -573,7 +573,7 @@
     (loop
        (redraw-display)
        (handler-case
-	   (let* ((str (minibuf-read-string "Debug: "))
+	   (let* ((str (prompt-for-string "Debug: "))
 		  (i (and (stringp str) (parse-integer str :junk-allowed t))))
 	     (cond ((and i (<= 1 i n))
 		    (let ((restart (nth (1- i) choices)))
@@ -638,7 +638,7 @@
 
 (define-key *global-keymap* (kbd "M-:") 'lisp-eval-string)
 (define-command lisp-eval-string (string)
-    ((list (minibuf-read-line "Eval: " "" nil nil 'mh-lisp-eval)))
+    ((list (prompt-for-line "Eval: " "" nil nil 'mh-lisp-eval)))
   (let ((output-buffer (get-buffer-create "*output*")))
     (erase-buffer output-buffer)
     (change-buffer-mode output-buffer 'lisp-mode)
@@ -752,11 +752,11 @@
 
 (defun lisp-read-symbol (prompt history-name)
   (let ((default-name (or (symbol-string-at-point (current-point)) "")))
-    (let ((name (minibuf-read-line prompt
-                                   default-name
-                                   'complete-symbol
-                                   nil
-                                   history-name)))
+    (let ((name (prompt-for-line prompt
+                                 default-name
+                                 'complete-symbol
+                                 nil
+                                 history-name)))
       (setq name (string-right-trim ":" name))
       (with-safe-form
         (let ((*package* (lisp-current-package)))

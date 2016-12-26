@@ -974,22 +974,27 @@
       (lisp-uncomment-region)
       (lisp-comment-region)))
 
+(defun space*-p (point)
+  (with-point ((point point))
+    (skip-chars-forward point '(#\space #\tab))
+    (end-line-p point)))
+
 (define-command lisp-comment-region () ()
   (save-excursion
     (with-point ((start (region-beginning) :right-inserting)
-		 (end (region-end) :left-inserting))
-      (skip-chars-forward end '(#\space #\tab))
-      (unless (end-line-p end)
-        (with-point ((prev end))
-          (insert-character end #\newline)
-          (indent-line end)
-          (move-point end prev)))
+                 (end (region-end) :left-inserting))
       (let ((charpos (point-charpos start)))
         (loop
-	   (insert-string start ";")
-	   (when (same-line-p start end)
-	     (return))
-	   (line-offset start 1 charpos))))))
+          (when (same-line-p start end)
+            (cond ((space*-p start))
+                  (t
+                   (insert-string start ";; ")
+                   (unless (space*-p end)
+                     (insert-character end #\newline))))
+            (return))
+          (unless (space*-p start)
+            (insert-string start ";; "))
+          (line-offset start 1 charpos))))))
 
 (define-command lisp-uncomment-region () ()
   (with-point ((start (region-beginning))

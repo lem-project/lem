@@ -7,7 +7,8 @@
           search-backward-regexp
           search-forward-symbol
           search-backward-symbol
-          looking-at-line))
+          looking-at-line
+          looking-at))
 
 (defvar *case-fold-search* nil)
 
@@ -205,3 +206,9 @@
            (m :end end))
           (t
            (m)))))
+
+(defun looking-at (point regex)
+  (let ((start (point-charpos point)))
+    (eql start (ppcre:scan regex
+                           (line-string-at point)
+                           :start start))))

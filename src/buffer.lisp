@@ -23,35 +23,118 @@
           clear-buffer-variables
           buffer-add-delete-hook))
 
-(define-class buffer () (current-buffer)
-  name
-  %filename
-  %directory
-  %modified-p
-  read-only-p
-  %enable-undo-p
-  major-mode
-  minor-modes
-  head-line
-  tail-line
-  cache-line
-  cache-linum
-  mark-p
-  mark-overlay
-  mark
-  point
-  keep-binfo
-  nlines
-  undo-size
-  undo-stack
-  redo-stack
-  overlays
-  points
-  truncate-lines
-  external-format
-  last-write-date
-  delete-hooks
-  variables)
+(defclass buffer ()
+  ((name
+    :initform nil
+    :initarg :name
+    :accessor buffer-name)
+   (%filename
+    :initform nil
+    :initarg :%filename
+    :accessor buffer-%filename)
+   (%directory
+    :initform nil
+    :initarg :%directory
+    :accessor buffer-%directory)
+   (%modified-p
+    :initform nil
+    :accessor buffer-%modified-p)
+   (%enable-undo-p
+    :initform nil
+    :initarg :%enable-undo-p
+    :accessor buffer-%enable-undo-p)
+   (read-only-p
+    :initform nil
+    :initarg :read-only-p
+    :accessor buffer-read-only-p)
+   (major-mode
+    :initform nil
+    :initarg :major-mode
+    :accessor buffer-major-mode)
+   (minor-modes
+    :initform nil
+    :initarg :minor-modes
+    :accessor buffer-minor-modes)
+   (head-line
+    :initform nil
+    :initarg :head-line
+    :accessor buffer-head-line)
+   (tail-line
+    :initform nil
+    :initarg :tail-line
+    :accessor buffer-tail-line)
+   (cache-line
+    :initform nil
+    :initarg :cache-line
+    :accessor buffer-cache-line)
+   (cache-linum
+    :initform nil
+    :initarg :cache-linum
+    :accessor buffer-cache-linum)
+   (mark-p
+    :initform nil
+    :initarg :mark-p
+    :accessor buffer-mark-p)
+   (mark-overlay
+    :initform nil
+    :initarg :mark-overlay
+    :accessor buffer-mark-overlay)
+   (mark
+    :initform nil
+    :initarg :mark
+    :accessor buffer-mark)
+   (point
+    :initform nil
+    :initarg :point
+    :accessor buffer-point)
+   (keep-binfo
+    :initform nil
+    :initarg :keep-binfo
+    :accessor buffer-keep-binfo)
+   (nlines
+    :initform nil
+    :initarg :nlines
+    :accessor buffer-nlines)
+   (undo-size
+    :initform nil
+    :initarg :undo-size
+    :accessor buffer-undo-size)
+   (undo-stack
+    :initform nil
+    :initarg :undo-stack
+    :accessor buffer-undo-stack)
+   (redo-stack
+    :initform nil
+    :initarg :redo-stack
+    :accessor buffer-redo-stack)
+   (overlays
+    :initform nil
+    :initarg :overlays
+    :accessor buffer-overlays)
+   (points
+    :initform nil
+    :initarg :points
+    :accessor buffer-points)
+   (truncate-lines
+    :initform nil
+    :initarg :truncate-lines
+    :accessor buffer-truncate-lines)
+   (external-format
+    :initform nil
+    :initarg :external-format
+    :accessor buffer-external-format)
+   (last-write-date
+    :initform nil
+    :initarg :last-write-date
+    :accessor buffer-last-write-date)
+   (delete-hooks
+    :initform nil
+    :initarg :delete-hooks
+    :accessor buffer-delete-hooks)
+   (variables
+    :initform nil
+    :initarg :variables
+    :accessor buffer-variables)))
 
 (defvar *current-buffer*)
 

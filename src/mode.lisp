@@ -24,10 +24,10 @@
   (def mode-syntax-table))
 
 (defun current-mode-keymap ()
-  (mode-keymap (buffer-major-mode)))
+  (mode-keymap (buffer-major-mode (current-buffer))))
 
 (defun (setf current-mode-keymap) (new-keymap)
-  (setf (mode-keymap (buffer-major-mode)) new-keymap))
+  (setf (mode-keymap (buffer-major-mode (current-buffer))) new-keymap))
 
 (defun find-mode-from-name (mode-name)
   (find-if #'(lambda (mode)
@@ -35,10 +35,11 @@
            *mode-list*))
 
 (defun toggle-minor-mode (minor-mode)
-  (if (member minor-mode (buffer-minor-modes))
-      (setf (buffer-minor-modes)
-            (delete minor-mode (buffer-minor-modes)))
-      (push minor-mode (buffer-minor-modes))))
+  (let ((buffer (current-buffer)))
+    (if (member minor-mode (buffer-minor-modes buffer))
+        (setf (buffer-minor-modes buffer)
+              (delete minor-mode (buffer-minor-modes buffer)))
+        (push minor-mode (buffer-minor-modes buffer)))))
 
 (defmacro define-major-mode (major-mode
                              parent-mode
@@ -70,7 +71,7 @@
      (define-command ,major-mode () ()
        (clear-buffer-variables)
        ,(when parent-mode `(,parent-mode))
-       (setf (buffer-major-mode) ',major-mode)
+       (setf (buffer-major-mode (current-buffer)) ',major-mode)
        (run-hooks ',(symb major-mode "-HOOK"))
        ,@body)))
 
@@ -84,10 +85,10 @@
        (cond ((null args)
               (toggle-minor-mode ',minor-mode))
              ((car args)
-              (pushnew ',minor-mode (buffer-minor-modes)))
+              (pushnew ',minor-mode (buffer-minor-modes (current-buffer))))
              (t
-              (setf (buffer-minor-modes)
-                    (delete ',minor-mode (buffer-minor-modes)))))
+              (setf (buffer-minor-modes (current-buffer))
+                    (delete ',minor-mode (buffer-minor-modes (current-buffer))))))
        ,@body)))
 
 (defun change-buffer-mode (buffer mode &rest args)

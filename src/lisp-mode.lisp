@@ -1015,7 +1015,7 @@
   (find-package (string-upcase package-name)))
 
 (defun lisp-idle-timer-function ()
-  (when (eq (buffer-major-mode) 'lisp-mode)
+  (when (eq (buffer-major-mode (current-buffer)) 'lisp-mode)
     (let ((package (scan-current-package #'check-package)))
       (when package
         (lisp-change-package package)))))

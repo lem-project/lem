@@ -153,7 +153,7 @@
 
 (defun current-syntax ()
   (or *current-syntax*
-      (mode-syntax-table (buffer-major-mode))))
+      (mode-syntax-table (buffer-major-mode (current-buffer)))))
 
 (defun syntax-word-char-p (c)
   (and (characterp c)

@@ -303,11 +303,12 @@
 (define-key *global-keymap* "[event]" 'undefined-key)
 
 (defun lookup-keybind (key)
-  (or (some #'(lambda (mode)
-                (keymap-find-keybind (mode-keymap mode) key))
-            (buffer-minor-modes))
-      (keymap-find-keybind (mode-keymap (buffer-major-mode)) key)
-      (keymap-find-keybind *global-keymap* key)))
+  (let ((buffer (current-buffer)))
+    (or (some #'(lambda (mode)
+                  (keymap-find-keybind (mode-keymap mode) key))
+              (buffer-minor-modes buffer))
+        (keymap-find-keybind (mode-keymap (buffer-major-mode buffer)) key)
+        (keymap-find-keybind *global-keymap* key))))
 
 (defun find-keybind (key)
   (let ((cmd (lookup-keybind key)))

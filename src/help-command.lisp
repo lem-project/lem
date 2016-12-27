@@ -33,18 +33,19 @@
     (terpri s)))
 
 (define-command describe-bindings () ()
-  (with-pop-up-typeout-window (s (get-buffer-create "*bindings*") :focus t :erase t)
-    (describe-bindings-internal s
-                                "Major Mode Bindings"
-                                (mode-keymap (buffer-major-mode))
-                                t)
-    (describe-bindings-internal s
-                                "Global Bindings"
-                                *global-keymap*)
-    (dolist (mode (buffer-minor-modes))
+  (let ((buffer (current-buffer)))
+    (with-pop-up-typeout-window (s (get-buffer-create "*bindings*") :focus t :erase t)
       (describe-bindings-internal s
-                                  (mode-name mode)
-                                  (mode-keymap mode)))))
+                                  "Major Mode Bindings"
+                                  (mode-keymap (buffer-major-mode buffer))
+                                  t)
+      (describe-bindings-internal s
+                                  "Global Bindings"
+                                  *global-keymap*)
+      (dolist (mode (buffer-minor-modes buffer))
+        (describe-bindings-internal s
+                                    (mode-name mode)
+                                    (mode-keymap mode))))))
 
 (define-key *global-keymap* (kbd "M-x") 'execute-command)
 (define-command execute-command (arg) ("P")

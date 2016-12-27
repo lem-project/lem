@@ -191,6 +191,10 @@
       str)))
 
 (defun prompt-for-line (prompt initial comp-f existing-p history-name)
+  (when (< 0 *minibuf-read-line-depth*)
+    ;; 再帰的にミニバッファを使うと、深さを一つ戻すときにそのミニバッファのテキストプロパティも戻す必要があって
+    ;; それがうまくできていないから、とりあえず再帰的なミニバッファの仕様を禁止している
+    (editor-error "ERROR: recursive use of minibuffer"))
   (let ((*minibuffer-calls-window* (current-window))
         (*minibuf-read-line-history* (let ((table (gethash history-name *minibuf-read-line-history-table*)))
                                        (or table

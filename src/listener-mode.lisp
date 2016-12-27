@@ -95,7 +95,7 @@
   (multiple-value-bind (str win)
       (next-history (%listener-history))
     (let ((start (listener-start-point))
-          (end (buffers-end (current-point))))
+          (end (buffers-end (current-buffer))))
       (delete-between-points start end)
       (when win (insert-string start str))
       (move-point (%listener-point) start))))

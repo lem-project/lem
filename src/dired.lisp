@@ -9,7 +9,7 @@
 (defvar *directory-attribute* (make-attribute "blue" nil :bold-p t))
 (defvar *link-attribute* (make-attribute "green" nil))
 
-(defvar *start-point*)
+(defvar *start-line-number*)
 
 (define-major-mode dired-mode ()
     (:name "dired"
@@ -41,8 +41,11 @@
 (define-key *dired-mode-keymap* "R" 'dired-rename-files)
 (define-key *dired-mode-keymap* "+" 'dired-mkdir)
 
+(defun move-to-start-point (point)
+  (line-offset (buffer-start point) (1- *start-line-number*)))
+
 (defun dired-first-line-p (point)
-  (same-line-p *start-point* point))
+  (>= *start-line-number* (point-linum point)))
 
 (defun dired-last-line-p (point)
   (last-line-p point))
@@ -70,8 +73,8 @@
 (define-command dired-next-line (n) ("p")
   (let ((point (current-point)))
     (line-offset point n)
-    (when (point<= point *start-point*)
-      (move-point point *start-point*))
+    (when (<= (point-linum point) *start-line-number*)
+      (move-to-start-point point))
     (when (last-line-p point)
       (line-offset point -1))
     (line-start point)))
@@ -79,8 +82,8 @@
 (define-command dired-previous-line (n) ("p")
   (let ((point (current-point)))
     (line-offset point (- n))
-    (when (point<= point *start-point*)
-      (move-point point *start-point*))
+    (when (<= (point-linum point) *start-line-number*)
+      (move-to-start-point point))
     (line-start point)))
 
 (define-command dired-next-directory-line (n) ("p")
@@ -202,7 +205,7 @@
 
 (defun mark-current-line (flag)
   (let ((point (current-point)))
-    (when (and (point<= *start-point* point)
+    (when (and (<= *start-line-number* (point-linum point))
                (not (last-line-p point)))
       (line-start point)
       (with-buffer-read-only (point-buffer point) nil
@@ -214,7 +217,7 @@
 
 (defun mark-lines (test get-flag)
   (save-excursion
-    (move-point (current-point) *start-point*)
+    (move-to-start-point (current-point))
     (line-offset (current-point) 2)
     (loop
        (beginning-of-line)
@@ -227,7 +230,7 @@
 (defun selected-files ()
   (let ((files '()))
     (save-excursion
-      (move-point (current-point) *start-point*)
+      (move-to-start-point (current-point))
       (loop
 	 (beginning-of-line)
 	 (let ((flag (char= (following-char) #\*)))
@@ -273,7 +276,7 @@
           (insert-string cur-point output-string)
           (buffer-start cur-point)
           (line-offset cur-point 3)
-          (setf *start-point* (copy-point cur-point :temporary))
+          (setf *start-line-number* (point-linum cur-point))
           (loop
 	     (let ((string (line-string-at cur-point)))
 	       (multiple-value-bind (start end start-groups end-groups)
@@ -321,8 +324,7 @@
     (setf (buffer-read-only-p buffer) t)
     (buffer-disable-undo buffer)
     (update buffer)
-    (move-point (buffer-point buffer)
-		*start-point*)
+    (move-to-start-point (buffer-point buffer))
     buffer))
 
 (setf *find-directory-function* 'dired-buffer)

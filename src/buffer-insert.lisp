@@ -81,16 +81,6 @@
                   charpos
                   (- (point-charpos m) n)))))))
 
-(defun merge-plist (plist1 plist2)
-  (let ((new-plist '()))
-    (flet ((f (plist)
-             (loop :for (k v) :on plist :by #'cddr
-		:do (setf (getf new-plist k)
-			  (nconc (getf new-plist k) v)))))
-      (f plist1)
-      (f plist2))
-    new-plist))
-
 (defun shift-sticky-objects-subtract-line (point nextp)
   (let ((line (get-line/point point))
         (linum (point-linum point))
@@ -104,17 +94,7 @@
             ((< linum (point-linum m))
              (decf (point-linum m)))))
     (when nextp
-      (setf (line-plist line)
-            (merge-plist
-             (line-plist line)
-             (loop :for (key elements) :on (line-plist (line-next line)) :by #'cddr
-		:append (let ((new-elements
-			       (loop :for (start end value) :in elements
-				  :collect (list (+ start charpos)
-						 (+ end charpos)
-						 value))))
-			  (when new-elements
-			    (list key new-elements)))))))))
+      (line-merge line (line-next line) charpos))))
 
 (defun %insert-newline/point (point linum charpos)
   (let* ((buffer (point-buffer point))

@@ -39,6 +39,7 @@
                              (:file "attribute")
                              (:file "window")
                              (:file "modeline")
+                             (:file "line")
                              (:file "buffer")
                              (:file "buffer-insert")
                              (:file "buffers")

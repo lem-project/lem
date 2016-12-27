@@ -12,25 +12,6 @@
 (defvar *program-name* "Lem")
 (defvar *debug-p* nil)
 
-(defmacro define-class (name () default-arg-expr &body slots)
-  (let ((garg (gensym "ARG"))
-        (gval (gensym "VAL")))
-    `(progn
-       (defclass ,name ()
-         ,(mapcar #'(lambda (slot)
-                      `(,slot :initarg ,(intern (symbol-name slot) :keyword)
-                              :initform nil))
-                  slots))
-       ,@(mapcan #'(lambda (slot)
-                     (let ((name (intern (format nil "~a-~a" name slot))))
-                       `((defun ,name (&optional (,garg ,default-arg-expr))
-                           (slot-value ,garg ',slot))
-                         (defun (setf ,name)
-                             (,gval &optional (,garg ,default-arg-expr))
-                           (setf (slot-value ,garg ',slot) ,gval)
-                           ,gval))))
-                 slots))))
-
 (defmacro save-excursion (&body body)
   `(invoke-save-excursion (lambda () ,@body)))
 

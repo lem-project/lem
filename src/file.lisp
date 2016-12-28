@@ -142,10 +142,10 @@
         ((find filename (buffer-list) :key #'buffer-filename :test #'equal))
         (t
          (let* ((name (file-namestring filename))
-                (buffer (make-buffer name
-                                     :filename (if (get-buffer name)
-                                                   (uniq-buffer-name name)
-                                                   filename)
+                (buffer (make-buffer (if (get-buffer name)
+                                         (uniq-buffer-name name)
+                                         name)
+                                     :filename filename
                                      :enable-undo-p nil)))
            (when (probe-file filename)
              (insert-file-contents (buffers-start buffer)

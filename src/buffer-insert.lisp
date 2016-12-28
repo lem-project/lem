@@ -4,6 +4,9 @@
 
 (defvar *inhibit-read-only* nil)
 
+(define-buffer-local-and-global-hook before-change-functions)
+(define-buffer-local-and-global-hook after-change-functions)
+
 (defun get-line/point (point)
   (buffer-get-line (point-buffer point)
                    (point-linum point)))
@@ -244,3 +247,40 @@
                  (insert-string/point point string)
                  save-point))
     string))
+
+(defmethod insert-char/point :before (point char)
+  (when (before-change-functions)
+    (with-point ((point point))
+      (dolist (hook (before-change-functions))
+        (funcall hook point 1)))))
+
+(defmethod insert-string/point :before (point string)
+  (when (before-change-functions)
+    (with-point ((point point))
+      (let ((length (length string)))
+        (dolist (hook (before-change-functions))
+          (funcall hook point length))))))
+
+(defmethod delete-char/point :before (point n)
+  (when (before-change-functions)
+    (with-point ((point point))
+      (dolist (hook (before-change-functions))
+        (funcall hook point (- n))))))
+
+(defmethod insert-char/point :after (point char)
+  (when (after-change-functions)
+    (with-point ((point point))
+      (dolist (hook (after-change-functions))
+        (funcall hook point)))))
+
+(defmethod insert-string/point :after (point string)
+  (when (after-change-functions)
+    (with-point ((point point))
+      (dolist (hook (after-change-functions))
+        (funcall hook point)))))
+
+(defmethod delete-char/point :after (point n)
+  (when (after-change-functions)
+    (with-point ((point point))
+      (dolist (hook (after-change-functions))
+        (funcall hook point)))))

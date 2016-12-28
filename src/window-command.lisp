@@ -27,6 +27,8 @@
 (define-command kill-buffer (buffer-or-name) ("bKill buffer: ")
   (check-switch-minibuffer-window)
   (let ((buffer (get-buffer buffer-or-name)))
+    (unless buffer
+      (editor-error "buffer does not exist: ~A" buffer-or-name))
     (when (cdr (buffer-list))
       (dolist (window (get-buffer-windows buffer))
         (with-current-window window

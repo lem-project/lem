@@ -57,7 +57,7 @@
   (message nil))
 
 (defvar *mainloop-timer*
-  (start-idle-timer "mainloop" 200 t
+  (start-idle-timer "mainloop" 1000 t
                     (lambda ()
                       (syntax-scan-current-view)
                       (redraw-display)
@@ -71,14 +71,20 @@
          (t
           ,@body)))
 
+(defun syntax-scan-point (point)
+  (with-point ((end point))
+    (unless (line-offset end 1)
+      (buffer-end end))
+    (syntax-scan-lines point end)))
+
+(add-hook 'after-init-hook
+          (lambda ()
+            (pushnew 'syntax-scan-point (after-change-functions))))
+
 (defun lem-mainloop ()
   (do-commandloop (:toplevel t)
     (with-error-handler ()
       (cockpit
-        (with-point ((end (current-point)))
-          (unless (line-offset end 1)
-            (buffer-end end))
-          (syntax-scan-lines (current-point) end))
         (redraw-display)
         (let ()
           (start-idle-timers)

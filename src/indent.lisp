@@ -52,8 +52,10 @@
                           point)))
 
 (define-key *global-keymap* (kbd "C-i") 'indent)
-(define-command indent () ()
-  (indent-line (current-point)))
+(define-command indent (&optional (n 1)) ("p")
+  (if (get-bvar :calc-indent-function :buffer (current-buffer))
+      (indent-line (current-point))
+      (self-insert n)))
 
 (define-key *global-keymap* (kbd "C-j") 'newline-and-indent)
 (define-key *global-keymap* (kbd "M-j") 'newline-and-indent)

@@ -56,12 +56,14 @@
   (redraw-display)
   (message nil))
 
-(defvar *mainloop-timer*
-  (start-idle-timer "mainloop" 1000 t
-                    (lambda ()
-                      (syntax-scan-current-view)
-                      (redraw-display)
-                      )))
+(start-idle-timer "mainloop" 200 t
+                  (lambda ()
+                    (redraw-display)))
+
+(start-idle-timer "lazy-syntax-scan" 500 t
+                  (lambda ()
+                    (syntax-scan-current-view)
+                    (redraw-display)))
 
 (defmacro cockpit (&body body)
   `(cond (*debug-p*

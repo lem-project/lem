@@ -43,13 +43,13 @@
        (message "No file name")
        nil)
       (t
-       (save-buffer-internal)
+       (save-buffer-internal buffer)
        (message "Wrote ~A" (buffer-filename))))))
 
 (define-key *global-keymap* (kbd "C-x C-w") 'write-file)
 (define-command write-file (filename) ("FWrite File: ")
   (setf (buffer-%filename (current-buffer)) filename)
-  (save-buffer-internal)
+  (save-buffer-internal (current-buffer))
   (message "Wrote ~A" (buffer-filename)))
 
 (define-key *global-keymap* (kbd "C-x C-i") 'insert-file)

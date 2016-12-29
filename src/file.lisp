@@ -202,11 +202,11 @@
   (buffer-unmark buffer)
   (update-changed-disk-date buffer))
 
-(defun save-buffer-internal ()
-  (scan-file-property-list (current-buffer))
-  (run-hooks 'before-save-hook)
-  (write-to-file (current-buffer) (buffer-filename))
-  (run-hooks 'after-save-hook)
+(defun save-buffer-internal (buffer)
+  (scan-file-property-list buffer)
+  (run-hooks 'before-save-hook buffer)
+  (write-to-file buffer (buffer-filename buffer))
+  (run-hooks 'after-save-hook buffer)
   t)
 
 (defun file-write-date* (buffer)

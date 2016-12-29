@@ -158,7 +158,7 @@
            (scan-file-property-list buffer)
            (save-excursion
              (setf (current-buffer) buffer)
-             (run-hooks 'find-file-hook))
+             (run-hooks 'find-file-hook buffer))
            (values buffer t)))))
 
 (defun write-to-file (buffer filename)

@@ -10,8 +10,9 @@
           after-init-hook
           exit-editor-hook))
 
-(defun run-hooks (hook)
-  (mapc 'funcall (get hook 'hooks)))
+(defun run-hooks (hook &rest args)
+  (dolist (fn (get hook 'hooks))
+    (apply fn args)))
 
 (defun add-hook (hook callback)
   (setf (get hook 'hooks)

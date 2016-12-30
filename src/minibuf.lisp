@@ -215,7 +215,7 @@
                (let ((*inhibit-read-only* t))
                  (erase-buffer))
                (minibuffer-mode)
-               (progn
+               (unless (string= "" prompt)
                  (with-point ((start-point (current-point))
                               (cur-point (current-point) :left-inserting))
                    (insert-string cur-point prompt)

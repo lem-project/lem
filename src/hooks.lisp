@@ -5,6 +5,7 @@
           find-file-hook
           before-save-hook
           after-save-hook
+          kill-buffer-hook
           pre-command-hook
           post-command-hook
           after-init-hook

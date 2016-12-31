@@ -86,9 +86,10 @@
       (prev-history (%listener-history))
     (let ((start (listener-start-point))
           (end (buffers-end (current-buffer))))
-      (delete-between-points start end)
-      (when win (insert-string start str))
-      (move-point (%listener-point) start))))
+      (save-excursion
+        (delete-between-points start end)
+        (when win (insert-string start str))
+        (move-point (%listener-point) start)))))
 
 (define-key *listener-mode-keymap* (kbd "M-n") 'listener-next-input)
 (define-command listener-next-input () ()
@@ -96,9 +97,10 @@
       (next-history (%listener-history))
     (let ((start (listener-start-point))
           (end (buffers-end (current-buffer))))
-      (delete-between-points start end)
-      (when win (insert-string start str))
-      (move-point (%listener-point) start))))
+      (save-excursion
+        (delete-between-points start end)
+        (when win (insert-string start str))
+        (move-point (%listener-point) start)))))
 
 (define-key *listener-mode-keymap* (kbd "M-r") 'listener-reset-interactive)
 (define-command listener-reset-interactive (arg) ("P")

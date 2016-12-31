@@ -605,7 +605,8 @@
              (*error-output* io)
              (*query-io* io)
              (*debug-io* io)
-             (*trace-output* io))
+             (*trace-output* io)
+             (*package* (lisp-current-package)))
         (handler-case-bind (#'lisp-debugger
                             (setq results
                                   (restart-case
@@ -719,9 +720,10 @@
    (form-offset (copy-point (current-point) :temporary) 1))
   (with-open-stream (stream (make-buffer-output-stream (current-point)))
     (pprint expr stream))
-  (read-from-string
-   (points-to-string (buffers-start (current-buffer))
-		     (buffers-end (current-buffer)))))
+  (let ((*package* (lisp-current-package)))
+    (read-from-string
+     (points-to-string (buffers-start (current-buffer))
+                       (buffers-end (current-buffer))))))
 
 (defun %lisp-macroexpand (macroexpand-symbol buffer-name)
   (multiple-value-bind (expr error-p)

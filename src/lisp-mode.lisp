@@ -662,11 +662,9 @@
 (defun lisp-move-and-eval-sexp (move-sexp eval-string-function)
   (let ((str (save-excursion
                (and (funcall move-sexp)
-                    (points-to-string
-                     (current-point)
-                     (form-offset (copy-point (current-point)
-					      :temporary)
-				  1))))))
+                    (let ((end (form-offset (copy-point (current-point) :temporary) 1)))
+                      (when end
+                        (points-to-string (current-point) end)))))))
     (when str
       (funcall eval-string-function str)
       t)))

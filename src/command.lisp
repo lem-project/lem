@@ -45,6 +45,9 @@
           goto-line
           filter-buffer
           pipe-command
+          indent
+          newline-and-indent
+          indent-region
           delete-trailing-whitespace))
 
 (define-key *global-keymap* (kbd "C-x C-c") 'exit-lem)
@@ -471,6 +474,23 @@
                         :output out
                         :error-output out
                         :ignore-error-status t))))
+
+(define-key *global-keymap* (kbd "C-i") 'indent)
+(define-command indent (&optional (n 1)) ("p")
+  (if (get-bvar :calc-indent-function :buffer (current-buffer))
+      (indent-line (current-point))
+      (self-insert n)))
+
+(define-key *global-keymap* (kbd "C-j") 'newline-and-indent)
+(define-key *global-keymap* (kbd "M-j") 'newline-and-indent)
+(define-command newline-and-indent (n) ("p")
+  (newline n)
+  (indent))
+
+(define-key *global-keymap* (kbd "C-M-\\") 'indent-region)
+(define-command indent-region (start end) ("r")
+  (save-excursion
+    (apply-region-lines start end 'indent)))
 
 (define-command delete-trailing-whitespace () ()
   (save-excursion

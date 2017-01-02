@@ -57,8 +57,8 @@
 		    (funcall
 		     (get-bvar :listener-get-prompt-function)))
 		   :attribute *prompt-attribute*
-		   'lem.property:read-only t
-		   'lem.property:field-separator t)
+		   :read-only t
+		   :field t)
     (buffer-end cur-point)
     (buffer-undo-boundary buffer)
     (listener-update-point)))

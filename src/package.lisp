@@ -33,7 +33,7 @@
 (defpackage :lem
   (:use :cl :lem.util :lem-interface)
   (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-interface)
-		  :collect (make-symbol (string sym)))))
+                     :collect (make-symbol (string sym)))))
 
 (defpackage :lem-user
   (:use :cl :lem))

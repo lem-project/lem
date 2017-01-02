@@ -256,9 +256,9 @@
 (define-key *global-keymap* (kbd "[home]") 'move-to-beginning-of-line)
 (define-command move-to-beginning-of-line () ()
   (let ((bol (line-start (copy-point (current-point) :temporary))))
-    (or (text-property-at (current-point) 'lem.property:field-separator -1)
+    (or (text-property-at (current-point) :field -1)
         (previous-single-property-change (current-point)
-                                         'lem.property:field-separator
+                                         :field
                                          bol)
         (move-point (current-point) bol)))
   t)

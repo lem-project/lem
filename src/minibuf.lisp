@@ -216,16 +216,10 @@
                  (erase-buffer))
                (minibuffer-mode)
                (unless (string= "" prompt)
-                 (with-point ((start-point (current-point))
-                              (cur-point (current-point) :left-inserting))
-                   (insert-string cur-point prompt)
-                   (put-text-property start-point cur-point
-                                      :attribute *minibuffer-prompt-attribute*)
-                   (put-text-property start-point cur-point
-                                      'lem.property:read-only t)
-                   (put-text-property (character-offset (copy-point cur-point :temporary) -1)
-                                      cur-point
-                                      'lem.property:field-separator t))
+                 (insert-string (current-point) prompt
+                                :attribute *minibuffer-prompt-attribute*
+                                :read-only t
+                                :field t)
                  (character-offset (current-point) (length prompt)))
                (let ((*minibuffer-start-point* (copy-point (current-point) :temporary)))
                  (when initial

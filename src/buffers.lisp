@@ -8,11 +8,9 @@
           get-buffer
           get-buffer-create
           uniq-buffer-name
-          other-buffer
           update-prev-buffer
           bury-buffer
-          get-next-buffer
-          get-buffer-windows))
+          get-next-buffer))
 
 (defvar *buffer-list* nil)
 
@@ -65,16 +63,6 @@
         (let ((name (format nil "~a<~d>" name n)))
           (unless (get-buffer name)
             (return name))))))
-
-(defun other-buffer ()
-  (let ((buffer-list (buffer-list)))
-    (dolist (win (window-list))
-      (setq buffer-list
-            (remove (window-buffer win)
-                    buffer-list)))
-    (if (null buffer-list)
-        (car (buffer-list))
-        (car buffer-list))))
 
 (defun update-prev-buffer (buffer)
   (check-type buffer buffer)

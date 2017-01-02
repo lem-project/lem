@@ -25,6 +25,7 @@
           get-next-window
           delete-window
           get-buffer-windows
+          other-buffer
           switch-to-buffer
           pop-to-buffer))
 
@@ -729,6 +730,16 @@
   (loop :for window :in (window-list)
      :when (eq buffer (window-buffer window))
      :collect window))
+
+(defun other-buffer ()
+  (let ((buffer-list (buffer-list)))
+    (dolist (win (window-list))
+      (setq buffer-list
+            (remove (window-buffer win)
+                    buffer-list)))
+    (if (null buffer-list)
+        (car (buffer-list))
+        (car buffer-list))))
 
 (defun window-prompt-display (window)
   (when (window-parameter window 'change-buffer)

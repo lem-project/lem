@@ -456,7 +456,7 @@
   (character-offset (current-point) n))
 
 (defun check-marked ()
-  (unless (buffer-mark-p (current-buffer))
+  (unless (buffer-mark (current-buffer))
     (editor-error "Not mark in this buffer")))
 
 (defun set-current-mark (point)

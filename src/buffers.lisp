@@ -72,7 +72,6 @@
 
 (defun delete-buffer (buffer)
   (check-type buffer buffer)
-  (run-hooks 'kill-buffer-hook buffer)
   (call-buffer-delete-hooks buffer)
   (setf *buffer-list* (delete buffer (buffer-list))))
 

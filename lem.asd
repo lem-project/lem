@@ -69,7 +69,7 @@
                              (:file "help-command")
                              (:file "command")
 
-                             (:file "word")
+                             (:file "word-command")
                              (:file "sexp")
 
                              (:file "listener-mode")

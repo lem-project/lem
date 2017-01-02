@@ -29,7 +29,10 @@
           skip-whitespace-backward
           skip-space-and-comment-forward
           skip-space-and-comment-backward
-          symbol-string-at-point))
+          symbol-string-at-point
+
+          form-offset
+          scan-lists))
 
 (defvar *enable-syntax-highlight* t)
 
@@ -504,3 +507,184 @@
     (with-point ((start point))
       (skip-chars-forward point #'syntax-symbol-char-p)
       (points-to-string start point))))
+
+(defun sexp-scan-error ()
+  (editor-error "scan error"))
+
+(defun %sexp-escape-p (point offset)
+  (let ((count 0))
+    (loop :with string := (line-string-at point)
+       :for i :downfrom (+ (1- (point-charpos point)) offset) :to 0
+       :do (if (syntax-escape-char-p (schar string i))
+	       (incf count)
+	       (return)))
+    (oddp count)))
+
+(defun %sexp-symbol-p (c)
+  (or (syntax-symbol-char-p c)
+      (syntax-escape-char-p c)
+      (syntax-expr-prefix-char-p c)))
+
+(defun %skip-symbol-forward (point)
+  (skip-chars-forward point #'%sexp-symbol-p)
+  point)
+
+(defun %skip-symbol-backward (point)
+  (skip-chars-backward point #'%sexp-symbol-p)
+  point)
+
+(defun %skip-string-forward (point)
+  (loop :with quote-char := (character-at point 0) :do
+     (unless (character-offset point 1)
+       (return nil))
+     (let ((c (character-at point)))
+       (cond ((syntax-escape-char-p c)
+	      (character-offset point 1))
+	     ((and (syntax-string-quote-char-p c)
+		   (char= c quote-char))
+	      (character-offset point 1)
+	      (return point))))))
+
+(defun %skip-string-backward (point)
+  (character-offset point -1)
+  (loop :with quote-char := (character-at point) :do
+     (unless (character-offset point -1)
+       (return nil))
+     (if (%sexp-escape-p point 0)
+	 (character-offset point -1)
+	 (let ((c (character-at point)))
+	   (cond ((and (syntax-string-quote-char-p c)
+		       (char= c quote-char))
+		  (return point)))))))
+
+(defun %skip-list-forward (point depth)
+  (loop :with paren-stack := '() :do
+     (unless (skip-space-and-comment-forward point)
+       (return nil))
+     (when (end-buffer-p point)
+       (return nil))
+     (let ((c (character-at point 0)))
+       (cond ((syntax-open-paren-char-p c)
+	      (push c paren-stack)
+	      (character-offset point 1)
+	      (when (zerop (incf depth))
+		(return point)))
+	     ((syntax-closed-paren-char-p c)
+	      (unless (or (and (< 0 depth)
+			       (null paren-stack))
+			  (syntax-equal-paren-p c (car paren-stack)))
+		(return nil))
+	      (pop paren-stack)
+	      (character-offset point 1)
+	      (when (zerop (decf depth))
+		(return point)))
+	     ((syntax-string-quote-char-p c)
+	      (%skip-string-forward point))
+	     ((syntax-escape-char-p c)
+	      (character-offset point 2))
+	     (t
+	      (character-offset point 1))))))
+
+(defun %skip-list-backward (point depth)
+  (loop :with paren-stack := '() :do
+     (unless (skip-space-and-comment-backward point)
+       (return nil))
+     (when (start-buffer-p point)
+       (return nil))
+     (let ((c (character-at point -1)))
+       (cond ((%sexp-escape-p point -1)
+	      (character-offset point -1))
+	     ((syntax-closed-paren-char-p c)
+	      (push c paren-stack)
+	      (character-offset point -1)
+	      (when (zerop (incf depth))
+		(return point)))
+	     ((syntax-open-paren-char-p c)
+	      (unless (or (and (< 0 depth)
+			       (null paren-stack))
+			  (syntax-equal-paren-p c (car paren-stack)))
+		(return nil))
+	      (pop paren-stack)
+	      (character-offset point -1)
+	      (when (zerop (decf depth))
+		(return point)))
+	     ((syntax-string-quote-char-p c)
+	      (%skip-string-backward point))
+	     (t
+	      (character-offset point -1))))))
+
+(defun %form-offset-positive (point)
+  (skip-space-and-comment-forward point)
+  (syntax-skip-expr-prefix-forward point)
+  (skip-chars-forward point #'syntax-expr-prefix-char-p)
+  (unless (end-buffer-p point)
+    (let ((c (character-at point)))
+      (cond ((or (syntax-symbol-char-p c)
+                 (syntax-escape-char-p c))
+             (%skip-symbol-forward point))
+            ((syntax-expr-prefix-char-p c)
+             (character-offset point 1))
+            ((syntax-open-paren-char-p c)
+             (%skip-list-forward point 0))
+            ((syntax-closed-paren-char-p c)
+             nil)
+            ((syntax-string-quote-char-p c)
+             (%skip-string-forward point))
+            (t
+             (character-offset point 1))))))
+
+(defun %form-offset-negative (point)
+  (skip-space-and-comment-backward point)
+  (let ((c (character-at point -1)))
+    (prog1 (cond ((or (syntax-symbol-char-p c)
+                      (syntax-escape-char-p c)
+                      (syntax-expr-prefix-char-p c))
+                  (%skip-symbol-backward point))
+                 ((syntax-closed-paren-char-p c)
+                  (%skip-list-backward point 0))
+                 ((syntax-open-paren-char-p c)
+                  nil)
+                 ((syntax-string-quote-char-p c)
+                  (%skip-string-backward point))
+                 (t
+                  (character-offset point -1)))
+      (skip-chars-backward point #'syntax-expr-prefix-char-p)
+      (syntax-skip-expr-prefix-backward point))))
+
+(defun form-offset (point n)
+  (let ((*current-syntax*
+         (mode-syntax-table
+          (buffer-major-mode
+           (point-buffer point)))))
+    (with-point ((prev point))
+      (cond ((plusp n)
+             (dotimes (_ n point)
+               (unless (%form-offset-positive point)
+                 (move-point point prev)
+                 (return nil))))
+            (t
+             (dotimes (_ (- n) point)
+               (unless (%form-offset-negative point)
+                 (move-point point prev)
+                 (return nil))))))))
+
+(defun scan-lists (point n depth &optional no-errors)
+  (let ((*current-syntax*
+         (mode-syntax-table
+          (buffer-major-mode
+           (point-buffer point)))))
+    (with-point ((prev point))
+      (cond ((plusp n)
+             (dotimes (_ n point)
+               (unless (%skip-list-forward point depth)
+                 (move-point point prev)
+                 (if no-errors
+                     (return nil)
+                     (sexp-scan-error)))))
+            (t
+             (dotimes (_ (- n) point)
+               (unless (%skip-list-backward point depth)
+                 (move-point point prev)
+                 (if no-errors
+                     (return nil)
+                     (sexp-scan-error)))))))))

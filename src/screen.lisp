@@ -269,21 +269,33 @@
 				start
 				view-end-point))))))
 
+(defun maybe-make-mark-overlay (buffer)
+  (when (and (eq buffer (current-buffer))
+             (buffer-mark-p buffer))
+    (let ((start (buffer-point buffer))
+          (end (buffer-mark buffer)))
+      (when (point< end start)
+        (rotatef start end))
+      (make-overlay start end *mark-overlay-attribute*))))
+
 (defun disp-reset-lines (screen buffer view-point)
-  (when (eq buffer (current-buffer))
-    (lem::buffer-update-mark-overlay buffer))
   (with-point ((point view-point))
     (loop :for i :from 0 :below (screen-height screen)
-       :do
-       (let ((line (lem::get-line/point point)))
-	 (setf (aref (screen-lines screen) i)
-	       (lem::line-string/attributes line)))
-       (unless (line-offset point 1)
-	 (fill (screen-lines screen) nil :start (1+ i))
-	 (return))))
-  (disp-set-overlays screen
-                     (lem::buffer-overlays buffer)
-                     view-point))
+          :do
+          (let ((line (lem::get-line/point point)))
+            (setf (aref (screen-lines screen) i)
+                  (lem::line-string/attributes line)))
+          (unless (line-offset point 1)
+            (fill (screen-lines screen) nil :start (1+ i))
+            (return))))
+  (let ((mark-overlay (maybe-make-mark-overlay buffer)))
+    (disp-set-overlays screen
+                       (if mark-overlay
+                           (cons mark-overlay (lem::buffer-overlays buffer))
+                           (lem::buffer-overlays buffer))
+                       view-point)
+    (when mark-overlay
+      (delete-overlay mark-overlay))))
 
 (defun screen-display-line-wrapping (screen view-charpos
 				     visual-cursor-x visual-cursor-y

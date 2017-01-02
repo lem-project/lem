@@ -75,10 +75,6 @@
     :initform nil
     :initarg :mark-p
     :accessor buffer-mark-p)
-   (mark-overlay
-    :initform nil
-    :initarg :mark-overlay
-    :accessor buffer-mark-overlay)
    (mark
     :initform nil
     :initarg :mark
@@ -163,7 +159,6 @@
 
     (setf (buffer-cache-linum buffer) 1)
     (setf (buffer-mark-p buffer) nil)
-    (setf (buffer-mark-overlay buffer) nil)
     (setf (buffer-mark buffer) nil)
     (setf (buffer-keep-binfo buffer) nil)
     (setf (buffer-nlines buffer) 1)
@@ -261,9 +256,7 @@
 (defun buffer-mark-cancel (buffer)
   (when (buffer-mark-p buffer)
     (setf (buffer-mark-p buffer) nil)
-    (delete-point (buffer-mark buffer))
-    (delete-overlay (buffer-mark-overlay buffer))
-    (setf (buffer-mark-overlay buffer) nil)))
+    t))
 
 (defun %buffer-get-line (buffer linum)
   (cond
@@ -322,17 +315,6 @@
   (let ((line (buffer-get-line buffer linum)))
     (when (line-p line)
       (line-str line))))
-
-(defun buffer-update-mark-overlay (buffer)
-  (when (buffer-mark-p buffer)
-    (with-point ((start (buffer-point buffer))
-		 (end (buffer-mark buffer)))
-      (when (point< end start)
-        (rotatef start end))
-      (when (buffer-mark-overlay buffer)
-        (delete-overlay (buffer-mark-overlay buffer)))
-      (setf (buffer-mark-overlay buffer)
-            (make-overlay start end *mark-overlay-attribute*)))))
 
 (defun check-read-only-buffer (buffer)
   (when (buffer-read-only-p buffer)

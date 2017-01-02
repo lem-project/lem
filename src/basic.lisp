@@ -461,11 +461,10 @@
 
 (defun set-current-mark (point)
   (let ((buffer (point-buffer point)))
-    (cond ((buffer-mark-p buffer)
-           (move-point (buffer-mark buffer)
-                       point))
+    (setf (buffer-mark-p buffer) t)
+    (cond ((buffer-mark buffer)
+           (move-point (buffer-mark buffer) point))
           (t
-           (setf (buffer-mark-p buffer) t)
            (setf (buffer-mark buffer)
                  (copy-point point :right-inserting)))))
   point)

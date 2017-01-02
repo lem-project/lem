@@ -218,10 +218,7 @@
   (buffer-%filename buffer))
 
 (defun (setf buffer-filename) (filename &optional (buffer (current-buffer)))
-  (let ((result (probe-file filename)))
-    (unless result
-      (error "file does not exist: ~A" filename))
-    (setf (buffer-%filename buffer) (namestring result))))
+  (setf (buffer-%filename buffer) filename))
 
 (defun buffer-directory (&optional (buffer (current-buffer)))
   (or (buffer-%directory buffer)

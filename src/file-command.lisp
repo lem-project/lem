@@ -34,23 +34,20 @@
   t)
 
 (define-key *global-keymap* (kbd "C-x C-s") 'save-buffer)
-(define-command save-buffer () ()
+(define-command save-buffer (&optional arg) ("P")
   (let ((buffer (current-buffer)))
     (cond
-      ((null (buffer-modified-p buffer))
-       nil)
+      ((and (or arg (buffer-modified-p buffer))
+            (buffer-have-file-p buffer))
+       (write-to-file buffer (buffer-filename buffer))
+       (message "Wrote ~A" (buffer-filename)))
       ((not (buffer-have-file-p buffer))
-       (message "No file name")
-       nil)
-      (t
-       (save-buffer-internal buffer)
-       (message "Wrote ~A" (buffer-filename))))))
+       (message "No file name")))))
 
 (define-key *global-keymap* (kbd "C-x C-w") 'write-file)
 (define-command write-file (filename) ("FWrite File: ")
-  (setf (buffer-%filename (current-buffer)) filename)
-  (save-buffer-internal (current-buffer))
-  (message "Wrote ~A" (buffer-filename)))
+  (setf (buffer-filename (current-buffer)) filename)
+  (save-buffer t))
 
 (define-key *global-keymap* (kbd "C-x C-i") 'insert-file)
 (define-command insert-file (filename) ("fInsert file: ")

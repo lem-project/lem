@@ -161,27 +161,27 @@
              (run-hooks 'find-file-hook buffer))
            (values buffer t)))))
 
-(defun write-to-file (buffer filename)
+(defun write-to-file-1 (buffer filename)
   (flet ((f (out end-of-line)
            (with-open-stream (in (make-buffer-input-stream (buffers-start buffer)))
              (loop
-		(multiple-value-bind (str eof-p)
-		    (read-line in nil)
-		  (unless str (return))
-		  (princ str out)
-		  (unless eof-p
-		    #+sbcl
-		    (ecase end-of-line
-		      ((:crlf)
-		       (princ #\return out)
-		       (princ #\newline out))
-		      ((:lf)
-		       (princ #\newline out))
-		      ((:cr)
-		       (princ #\return out)))
-		    #-sbcl
-		    (princ #\newline out)
-		    ))))))
+               (multiple-value-bind (str eof-p)
+                   (read-line in nil)
+                 (unless str (return))
+                 (princ str out)
+                 (unless eof-p
+                   #+sbcl
+                   (ecase end-of-line
+                     ((:crlf)
+                      (princ #\return out)
+                      (princ #\newline out))
+                     ((:lf)
+                      (princ #\newline out))
+                     ((:cr)
+                      (princ #\return out)))
+                   #-sbcl
+                   (princ #\newline out)
+                   ))))))
     (cond
       ((buffer-external-format buffer)
        (with-open-file (out filename
@@ -198,16 +198,15 @@
                             :direction :output
                             :if-exists :supersede
                             :if-does-not-exist :create)
-         (f out :lf)))))
-  (buffer-unmark buffer)
-  (update-changed-disk-date buffer))
+         (f out :lf))))))
 
-(defun save-buffer-internal (buffer)
+(defun write-to-file (buffer filename)
   (scan-file-property-list buffer)
   (run-hooks 'before-save-hook buffer)
-  (write-to-file buffer (buffer-filename buffer))
-  (run-hooks 'after-save-hook buffer)
-  t)
+  (write-to-file-1 buffer filename)
+  (buffer-unmark buffer)
+  (update-changed-disk-date buffer)
+  (run-hooks 'after-save-hook buffer))
 
 (defun file-write-date* (buffer)
   (if (probe-file (buffer-filename buffer))

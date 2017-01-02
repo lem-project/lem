@@ -502,7 +502,7 @@
 (defun scan-current-package (check-package-fn)
   (save-excursion
     (loop (multiple-value-bind (result groups)
-              (looking-at-line "\\(in-package (?:#?:|')([^\)]*)\\)")
+              (looking-at-line "\\(in-package (?:#?:|')?([^\)]*)\\)")
             (when result
               (let ((package (funcall check-package-fn (aref groups 0))))
                 (when package
@@ -750,13 +750,15 @@
   (%lisp-macroexpand 'swank/backend:macroexpand-all
                      "*macroexpand*"))
 
-(defun lisp-read-symbol (prompt history-name)
-  (let ((default-name (or (symbol-string-at-point (current-point)) "")))
-    (let ((name (prompt-for-line prompt
-                                 default-name
-                                 'complete-symbol
-                                 nil
-                                 history-name)))
+(defun lisp-read-symbol (prompt history-name &optional use-default-name)
+  (let ((default-name (symbol-string-at-point (current-point))))
+    (let ((name (if (and use-default-name default-name)
+                    default-name
+                    (prompt-for-line prompt
+                                     (or default-name "")
+                                     'complete-symbol
+                                     nil
+                                     history-name))))
       (setq name (string-right-trim ":" name))
       (with-safe-form
         (let ((*package* (lisp-current-package)))
@@ -808,7 +810,7 @@
 (define-key *lisp-mode-keymap* (kbd "M-.") 'lisp-find-definitions)
 (define-command lisp-find-definitions () ()
   (multiple-value-bind (name error-p)
-      (lisp-read-symbol "Find definitions: " 'mh-find-definitions)
+      (lisp-read-symbol "Find definitions: " 'mh-find-definitions t)
     (unless error-p
       (let ((defs))
         (dolist (def (lisp-find-definitions-internal name))
@@ -1025,7 +1027,7 @@
 (when (or (not (boundp '*lisp-timer*))
           (not (timer-alive-p *lisp-timer*)))
   (setf *lisp-timer*
-        (start-idle-timer "lisp" 500 t 'lisp-idle-timer-function nil
+        (start-idle-timer "lisp" 200 t 'lisp-idle-timer-function nil
                           (lambda (condition)
                             (pop-up-backtrace condition)
                             (stop-timer *lisp-timer*)))))

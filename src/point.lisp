@@ -2,7 +2,6 @@
 
 (export '(current-point
           pointp
-          make-point
           copy-point
           delete-point
           point-buffer

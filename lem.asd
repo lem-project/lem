@@ -32,7 +32,7 @@
                              (:file "package")
                              (:file "key")
                              (:file "errors")
-                             (:file "header")
+                             (:file "macros")
                              (:file "wide")
                              (:file "hooks")
                              (:file "attribute")

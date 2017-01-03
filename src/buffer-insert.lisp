@@ -7,13 +7,9 @@
 (define-buffer-local-and-global-hook before-change-functions)
 (define-buffer-local-and-global-hook after-change-functions)
 
-(defun get-line/point (point)
-  (buffer-get-line (point-buffer point)
-                   (point-linum point)))
-
 (defun check-read-only-at-point (point offset)
   (unless *inhibit-read-only*
-    (let ((line (get-line/point point))
+    (let ((line (point-line point))
           (charpos (point-charpos point)))
       (when (if (eql offset 0)
                 (line-search-property line :read-only charpos)
@@ -35,7 +31,7 @@
 
 (defun shift-sticky-objects (point n)
   (let ((buffer (point-buffer point))
-        (line (get-line/point point))
+        (line (point-line point))
         (linum (point-linum point))
         (charpos (point-charpos point)))
     (line-property-insert-pos line charpos n)
@@ -54,7 +50,7 @@
   (let ((linum (point-linum point))
         (charpos (point-charpos point))
         (buffer (point-buffer point))
-        (line (get-line/point point)))
+        (line (point-line point)))
     (line-property-insert-newline line (line-next line) charpos)
     (dolist (m (buffer-points buffer))
       (cond ((and (= (point-linum m) linum)
@@ -71,7 +67,7 @@
              (incf (point-linum m)))))))
 
 (defun shift-sticky-objects-subtract (point n)
-  (let ((line (get-line/point point))
+  (let ((line (point-line point))
         (linum (point-linum point))
         (charpos (point-charpos point))
         (buffer (point-buffer point)))
@@ -85,7 +81,7 @@
                   (- (point-charpos m) n)))))))
 
 (defun shift-sticky-objects-subtract-line (point nextp)
-  (let ((line (get-line/point point))
+  (let ((line (point-line point))
         (linum (point-linum point))
         (charpos (point-charpos point))
         (buffer (point-buffer point)))
@@ -122,7 +118,7 @@
 				(point-linum point)
 				(point-charpos point)))
         (t
-         (let ((line (get-line/point point))
+         (let ((line (point-line point))
                (charpos (point-charpos point)))
            (shift-sticky-objects point 1)
            (setf (line-str line)
@@ -204,7 +200,7 @@
         (declare (special killring-stream))
         (let ((charpos (point-charpos point))
               (buffer (point-buffer point))
-              (line (get-line/point point)))
+              (line (point-line point)))
           (declare (special buffer line))
           (loop :while (or (eq n 'T) (plusp n))
 	     :for eolp := (or (eq n 'T)

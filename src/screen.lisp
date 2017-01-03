@@ -282,7 +282,7 @@
   (with-point ((point view-point))
     (loop :for i :from 0 :below (screen-height screen)
           :do
-          (let ((line (lem::get-line/point point)))
+          (let ((line (lem::point-line point)))
             (setf (aref (screen-lines screen) i)
                   (lem::line-string/attributes line)))
           (unless (line-offset point 1)

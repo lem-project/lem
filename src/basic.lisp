@@ -336,7 +336,7 @@
 
 (defun text-property-at (point key &optional (offset 0))
   (if (zerop offset)
-      (line-search-property (get-line/point point) key (point-charpos point))
+      (line-search-property (point-line point) key (point-charpos point))
       (with-point ((temp-point point))
         (when (character-offset temp-point offset)
           (text-property-at temp-point key 0)))))

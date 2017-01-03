@@ -45,8 +45,7 @@ exec ros -Q -- $0 "$@"
                   (if (second arg-) (second arg-) "lem-dbg")
                   :toplevel #'(lambda ()
                                 (sb-posix:unsetenv "SBCL_HOME")
-                                (let ((lem::*program-name* "lem dbg"))
-                                  (apply 'lem::lem (uiop:command-line-arguments))))
+                                (apply 'lem::lem (uiop:command-line-arguments)))
                   :executable t)
                  (error "build not supported."))
                 ((or (string= "--debug" arg)
@@ -59,7 +58,4 @@ exec ros -Q -- $0 "$@"
                 (t
                  (push arg filenames))))
     (setq filenames (nreverse filenames))
-    (if debug-flag
-        (let ((lem::*program-name* "lem dbg"))
-          (apply #'lem:lem filenames))
-        (apply #'lem:lem filenames))))
+    (apply #'lem:lem filenames)))

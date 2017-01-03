@@ -16,8 +16,6 @@
   (list 'modeline-read-only-p
         'modeline-modified-p
         " "
-        *program-name*
-        ": "
         'modeline-name
         " ("
         'modeline-major-mode

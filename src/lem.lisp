@@ -131,7 +131,7 @@
 
 (defun check-init ()
   (when *running-p*
-    (error "~A is already running" *program-name*)))
+    (error "Editor is already running")))
 
 (defun lem (&rest args)
   (check-init)

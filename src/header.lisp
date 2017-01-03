@@ -1,7 +1,6 @@
 (in-package :lem)
 
-(export '(*program-name*
-          *debug-p*
+(export '(*debug-p*
           save-excursion
           with-point
           with-buffer-read-only
@@ -9,7 +8,6 @@
           with-pop-up-typeout-window
           handler-case-bind))
 
-(defvar *program-name* "Lem")
 (defvar *debug-p* nil)
 
 (defmacro save-excursion (&body body)

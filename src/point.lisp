@@ -21,6 +21,10 @@
     :initarg :buffer
     :accessor point-buffer
     :type buffer)
+   (line
+    :initarg :line
+    :accessor point-line
+    :type line)
    (linum
     :initarg :linum
     :accessor point-linum
@@ -54,6 +58,7 @@
 (defun make-point (buffer linum charpos &key (kind :right-inserting) name)
   (let ((point (make-instance 'point
                               :buffer buffer
+                              :line (buffer-get-line buffer linum)
                               :linum linum
                               :charpos charpos
                               :kind kind

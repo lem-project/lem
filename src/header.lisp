@@ -1,14 +1,11 @@
 (in-package :lem)
 
-(export '(*debug-p*
-          save-excursion
+(export '(save-excursion
           with-point
           with-buffer-read-only
           with-current-window
           with-pop-up-typeout-window
           handler-case-bind))
-
-(defvar *debug-p* nil)
 
 (defmacro save-excursion (&body body)
   `(invoke-save-excursion (lambda () ,@body)))

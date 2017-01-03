@@ -1,9 +1,11 @@
 (in-package :lem)
 
-(export '(pop-up-backtrace
+(export '(*debug-p*
+          pop-up-backtrace
           with-editor
           lem))
 
+(defvar *debug-p* nil)
 (defvar *running-p* nil)
 
 (defun pop-up-backtrace (condition)

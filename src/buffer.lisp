@@ -63,14 +63,6 @@
     :initform nil
     :initarg :tail-line
     :accessor buffer-tail-line)
-   (cache-line
-    :initform nil
-    :initarg :cache-line
-    :accessor buffer-cache-line)
-   (cache-linum
-    :initform nil
-    :initarg :cache-linum
-    :accessor buffer-cache-linum)
    (mark-p
     :initform nil
     :initarg :mark-p
@@ -155,9 +147,7 @@
         (line (make-line nil nil "")))
     (setf (buffer-head-line buffer) line)
     (setf (buffer-tail-line buffer) line)
-    (setf (buffer-cache-line buffer) line)
 
-    (setf (buffer-cache-linum buffer) 1)
     (setf (buffer-mark-p buffer) nil)
     (setf (buffer-mark buffer) nil)
     (setf (buffer-keep-binfo buffer) nil)
@@ -255,29 +245,6 @@
     (setf (buffer-mark-p buffer) nil)
     t))
 
-(defun %buffer-get-line (buffer linum)
-  (cond
-    ((= linum (buffer-cache-linum buffer))
-     (buffer-cache-line buffer))
-    ((> linum (buffer-cache-linum buffer))
-     (if (< (- linum (buffer-cache-linum buffer))
-	    (- (buffer-nlines buffer) linum))
-	 (line-forward-n
-	  (buffer-cache-line buffer)
-	  (- linum (buffer-cache-linum buffer)))
-	 (line-backward-n
-	  (buffer-tail-line buffer)
-	  (- (buffer-nlines buffer) linum))))
-    (t
-     (if (< (1- linum)
-	    (- (buffer-cache-linum buffer) linum))
-	 (line-forward-n
-	  (buffer-head-line buffer)
-	  (1- linum))
-	 (line-backward-n
-	  (buffer-cache-line buffer)
-	  (- (buffer-cache-linum buffer) linum))))))
-
 (defun check-linum (buffer linum)
   (unless (<= 1 linum (buffer-nlines buffer))
     (error "invalid line number: ~A" linum)))
@@ -289,10 +256,7 @@
 
 (defun buffer-get-line (buffer linum)
   (check-linum buffer linum)
-  (let ((line (%buffer-get-line buffer linum)))
-    (setf (buffer-cache-linum buffer) linum)
-    (setf (buffer-cache-line buffer) line)
-    line))
+  (line-forward-n (buffer-head-line buffer) (1- linum)))
 
 (defun buffer-get-char (buffer linum charpos)
   (let ((line (buffer-get-line buffer linum)))

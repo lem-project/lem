@@ -319,9 +319,10 @@
 		     (return)))))))))))
 
 (defun update-all ()
-  (dolist (buffer (buffer-list))
-    (when (eq 'dired-mode (buffer-major-mode buffer))
-      (update buffer)))
+  (save-excursion
+    (dolist (buffer (buffer-list))
+      (when (eq 'dired-mode (buffer-major-mode buffer))
+        (update buffer))))
   (redraw-display))
 
 (defun dired-buffer (filename)

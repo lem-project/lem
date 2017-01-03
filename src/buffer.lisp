@@ -55,14 +55,14 @@
     :initform nil
     :initarg :minor-modes
     :accessor buffer-minor-modes)
-   (head-line
+   (start-point
     :initform nil
-    :initarg :head-line
-    :accessor buffer-head-line)
-   (tail-line
+    :initarg :start-point
+    :accessor buffer-start-point)
+   (end-point
     :initform nil
-    :initarg :tail-line
-    :accessor buffer-tail-line)
+    :initarg :end-point
+    :accessor buffer-end-point)
    (mark-p
     :initform nil
     :initarg :mark-p
@@ -143,27 +143,31 @@
                                :%directory (when filename (directory-namestring filename))
                                :read-only-p read-only-p
                                :%enable-undo-p enable-undo-p
-                               :major-mode 'fundamental-mode))
-        (line (make-line nil nil "")))
-    (setf (buffer-head-line buffer) line)
-    (setf (buffer-tail-line buffer) line)
-
+                               :major-mode 'fundamental-mode)))
     (setf (buffer-mark-p buffer) nil)
     (setf (buffer-mark buffer) nil)
     (setf (buffer-keep-binfo buffer) nil)
     (setf (buffer-nlines buffer) 1)
-
     (setf (buffer-%modified-p buffer) 0)
     (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
-    (setf (buffer-points buffer) nil)
     (setf (buffer-truncate-lines buffer) t)
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
-    (setf (buffer-point buffer)
-          (make-point buffer 1 0
-		      :name "buffer-point"
-		      :kind :left-inserting))
+    (setf (buffer-points buffer) nil)
+    (let ((line (make-line nil nil "")))
+      (setf (buffer-start-point buffer)
+            (make-point buffer line 1 0
+                        :kind :left-inserting
+                        :name "start-point"))
+      (setf (buffer-end-point buffer)
+            (make-point buffer line 1 0
+                        :kind :right-inserting
+                        :name "end-point"))
+      (setf (buffer-point buffer)
+            (make-point buffer line 1 0
+                        :name "buffer-point"
+                        :kind :left-inserting)))
     (add-buffer buffer)
     buffer))
 
@@ -256,7 +260,7 @@
 
 (defun buffer-get-line (buffer linum)
   (check-linum buffer linum)
-  (line-forward-n (buffer-head-line buffer) (1- linum)))
+  (line-forward-n (point-line (buffer-start-point buffer)) (1- linum)))
 
 (defun buffer-get-char (buffer linum charpos)
   (let ((line (buffer-get-line buffer linum)))

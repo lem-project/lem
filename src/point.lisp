@@ -55,10 +55,10 @@
 (defun pointp (x)
   (typep x 'point))
 
-(defun make-point (buffer linum charpos &key (kind :right-inserting) name)
+(defun make-point (buffer line linum charpos &key (kind :right-inserting) name)
   (let ((point (make-instance 'point
                               :buffer buffer
-                              :line (buffer-get-line buffer linum)
+                              :line line
                               :linum linum
                               :charpos charpos
                               :kind kind
@@ -69,6 +69,7 @@
 
 (defun copy-point (point &optional kind)
   (make-point (point-buffer point)
+              (point-line point)
 	      (point-linum point)
 	      (point-charpos point)
 	      :kind (or kind (point-kind point))

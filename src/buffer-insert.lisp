@@ -101,10 +101,9 @@
     (let ((newline (make-line line
                               (line-next line)
                               (subseq (line-str line) charpos))))
+      (declare (ignore newline))
       (shift-sticky-objects-newline point)
       (incf (buffer-nlines buffer))
-      (when (eq line (buffer-tail-line buffer))
-        (setf (buffer-tail-line buffer) newline))
       (setf (line-str line)
             (subseq (line-str line) 0 charpos)))))
 
@@ -183,9 +182,6 @@
   (unless (eq n 'T)
     (decf n (1+ (- (line-length line) start))))
   (decf (buffer-nlines buffer))
-  (when (eq (line-next line)
-            (buffer-tail-line buffer))
-    (setf (buffer-tail-line buffer) line))
   (setf (line-str line)
         (concatenate 'string
                      (subseq (line-str line) 0 start)

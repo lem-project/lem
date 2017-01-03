@@ -73,13 +73,10 @@
         (set-current-mark mark)))))
 
 (defun buffers-start (buffer)
-  (make-point buffer 1 0 :kind :temporary))
+  (copy-point (buffer-start-point buffer) :temporary))
 
 (defun buffers-end (buffer)
-  (make-point buffer
-	      (buffer-nlines buffer)
-	      (line-length (buffer-tail-line buffer))
-	      :kind :temporary))
+  (copy-point (buffer-end-point buffer) :temporary))
 
 (defun first-line-p (point)
   (<= (point-linum point) 1))

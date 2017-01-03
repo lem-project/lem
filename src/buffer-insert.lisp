@@ -61,9 +61,11 @@
                      (< charpos (point-charpos m)))
                     ((eql :temporary)
                      nil)))
+             (setf (point-line m) (line-next (point-line m)))
              (incf (point-linum m))
              (decf (point-charpos m) charpos))
             ((< linum (point-linum m))
+             (setf (point-line m) (line-next (point-line m)))
              (incf (point-linum m)))))))
 
 (defun shift-sticky-objects-subtract (point n)
@@ -91,6 +93,8 @@
                   (< charpos (point-charpos m)))
              (setf (point-charpos m) charpos))
             ((< linum (point-linum m))
+             (when (= linum (1- (point-linum m)))
+               (setf (point-line m) (line-prev (point-line m))))
              (decf (point-linum m)))))
     (when nextp
       (line-merge line (line-next line) charpos))))
@@ -98,14 +102,13 @@
 (defun %insert-newline/point (point linum charpos)
   (let* ((buffer (point-buffer point))
          (line (buffer-get-line buffer linum)))
-    (let ((newline (make-line line
-                              (line-next line)
-                              (subseq (line-str line) charpos))))
-      (declare (ignore newline))
-      (shift-sticky-objects-newline point)
-      (incf (buffer-nlines buffer))
-      (setf (line-str line)
-            (subseq (line-str line) 0 charpos)))))
+    (make-line line
+               (line-next line)
+               (subseq (line-str line) charpos))
+    (shift-sticky-objects-newline point)
+    (incf (buffer-nlines buffer))
+    (setf (line-str line)
+          (subseq (line-str line) 0 charpos))))
 
 (defgeneric insert-char/point (point char)
   (:method (point char)

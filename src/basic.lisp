@@ -179,9 +179,9 @@
              (decf n (1+ w)))))
         (t
          (setf n (- n))
-         (do ((line (point-line point) (line-prev line))
-              (linum (point-linum point) (1- linum))
-              (charpos (point-charpos point) 0))
+         (do* ((line (point-line point) (line-prev line))
+               (linum (point-linum point) (1- linum))
+               (charpos (point-charpos point) (and line (line-length line))))
              ((null line) nil)
            (when (<= n charpos)
              (return (funcall fn linum line (- charpos n))))

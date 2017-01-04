@@ -25,7 +25,9 @@
     line))
 
 (defun line-char (line i)
-  (char (line-str line) i))
+  (if (= i (line-length line))
+      #\newline
+      (char (line-str line) i)))
 
 (defun line-length (line)
   (length (line-str line)))

@@ -168,22 +168,23 @@
 
 (define-key *global-keymap* (kbd "C-w") 'kill-region)
 (define-command kill-region (start end) ("r")
-  (setf end (copy-point end :temporary))
+  (when (point< end start)
+    (rotatef start end))
   (unless (continue-flag :kill)
     (kill-ring-new))
-  (move-point (current-point) start)
-  (delete-character (current-point) (count-characters start end) t)
+  (delete-character start (count-characters start end) t)
   t)
 
 (define-key *global-keymap* (kbd "C-k") 'kill-line)
 (define-command kill-line (&optional (n 1)) ("p")
-  (kill-region (copy-point (current-point) :temporary)
-               (dotimes (_ n (current-point))
-                 (cond ((eolp)
-                        (next-line 1)
-                        (beginning-of-line))
-                       (t
-                        (end-of-line))))))
+  (with-point ((start (current-point) :right-inserting))
+    (kill-region start
+                 (dotimes (_ n (current-point))
+                   (cond ((eolp)
+                          (next-line 1)
+                          (beginning-of-line))
+                         (t
+                          (end-of-line)))))))
 
 (define-key *global-keymap* (kbd "C-y") 'yank)
 (define-command yank (n) ("p")

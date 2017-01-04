@@ -128,9 +128,7 @@
     (assert (<= 1
                 linum
                 (buffer-nlines buffer)))
-    (assert (<= 0
-                charpos
-                (line-length line)))
+    (assert (<= 0 charpos))
     (%change-line point line)
     (setf (point-linum point) linum)
     (setf (point-charpos point) (min (line-length line) charpos)))

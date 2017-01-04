@@ -158,11 +158,11 @@
     (let ((line (make-line nil nil "")))
       (setf (buffer-start-point buffer)
             (make-point buffer line 1 0
-                        :kind :left-inserting
+                        :kind :right-inserting
                         :name "start-point"))
       (setf (buffer-end-point buffer)
             (make-point buffer line 1 0
-                        :kind :right-inserting
+                        :kind :left-inserting
                         :name "end-point"))
       (setf (buffer-point buffer)
             (make-point buffer line 1 0

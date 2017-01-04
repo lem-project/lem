@@ -24,6 +24,9 @@
       (setf (line-next prev) line))
     line))
 
+(defun line-char (line i)
+  (char (line-str line) i))
+
 (defun line-length (line)
   (length (line-str line)))
 

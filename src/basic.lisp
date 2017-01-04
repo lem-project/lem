@@ -521,5 +521,7 @@
   (point-column (current-point)))
 
 (defun point-to-offset (point)
-  (declare (ignore point))
-  (error "undefined function"))
+  (let ((offset (point-charpos point)))
+    (do ((line (line-prev (point-line point)) (line-prev line)))
+        ((null line) offset)
+      (incf offset (1+ (line-length line))))))

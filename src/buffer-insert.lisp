@@ -216,31 +216,31 @@
 		    (%delete-line/point point charpos)))))))))
 
 (defmethod insert-char/point :around (point char)
-  (let ((save-point (copy-point point :temporary)))
+  (let ((offset (point-to-offset point)))
     (prog1 (call-next-method)
       (push-undo point
                  (lambda ()
-                   (move-point point save-point)
+                   (character-offset (buffer-start point) offset)
                    (delete-char/point point 1)
-                   save-point)))))
+                   point)))))
 
 (defmethod insert-string/point :around (point string)
-  (let ((save-point (copy-point point :temporary)))
+  (let ((offset (point-to-offset point)))
     (prog1 (call-next-method)
       (push-undo point
                  (lambda ()
-                   (move-point point save-point)
+                   (character-offset (buffer-start point) offset)
                    (delete-char/point point (length string))
-                   save-point)))))
+                   point)))))
 
 (defmethod delete-char/point :around (point n)
-  (let ((save-point (copy-point point :temporary))
+  (let ((offset (point-to-offset point))
         (string (call-next-method)))
     (push-undo point
                (lambda ()
-                 (move-point point save-point)
+                 (character-offset (buffer-start point) offset)
                  (insert-string/point point string)
-                 save-point))
+                 point))
     string))
 
 (defmethod insert-char/point :before (point char)

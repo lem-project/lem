@@ -123,21 +123,15 @@
   ;; この関数はlineでpointを管理するときに色々することになる
   (setf (point-line point) line))
 
-(defun %move-to-position (point linum line charpos)
-  (let ((buffer (point-buffer point)))
-    (assert (line-alive-p line))
-    (assert (<= 1
-                linum
-                (buffer-nlines buffer)))
-    (assert (<= 0 charpos))
-    (%change-line point line)
-    (setf (point-linum point) linum)
-    (setf (point-charpos point) (min (line-length line) charpos)))
+(defun %move-to-position (point line charpos)
+  (assert (line-alive-p line))
+  (assert (<= 0 charpos))
+  (%change-line point line)
+  (setf (point-charpos point) (min (line-length line) charpos))
   point)
 
 (defun move-point (point new-point)
   (%move-to-position point
-                     (point-linum new-point)
                      (point-line new-point)
                      (point-charpos new-point)))
 
@@ -145,19 +139,17 @@
   (cond
     ((plusp n)
      (do ((n n (1- n))
-          (linum (point-linum point) (1+ linum))
           (line (point-line point) (line-next line)))
          ((null line) nil)
        (when (zerop n)
-         (%move-to-position point linum line charpos)
+         (%move-to-position point line charpos)
          (return point))))
     ((minusp n)
      (do ((n n (1+ n))
-          (linum (point-linum point) (1- linum))
           (line (point-line point) (line-prev line)))
          ((null line) nil)
        (when (zerop n)
-         (%move-to-position point linum line charpos)
+         (%move-to-position point line charpos)
          (return point))))
     (t
      (setf (point-charpos point)
@@ -171,35 +163,32 @@
   (cond ((zerop n) (when zero-fn (funcall zero-fn)))
         ((plusp n)
          (do ((line (point-line point) (line-next line))
-              (linum (point-linum point) (1+ linum))
               (charpos (point-charpos point) 0))
              ((null line) nil)
            (let ((w (- (line-length line) charpos)))
              (when (<= n w)
-               (return (funcall fn linum line (+ charpos n))))
+               (return (funcall fn line (+ charpos n))))
              (decf n (1+ w)))))
         (t
          (setf n (- n))
          (do* ((line (point-line point) (line-prev line))
-               (linum (point-linum point) (1- linum))
                (charpos (point-charpos point) (and line (line-length line))))
              ((null line) nil)
            (when (<= n charpos)
-             (return (funcall fn linum line (- charpos n))))
+             (return (funcall fn line (- charpos n))))
            (decf n (1+ charpos))))))
 
 (defun character-offset (point n)
   (%character-offset point n
-                     (lambda (linum line charpos)
-                       (%move-to-position point linum line charpos)
+                     (lambda (line charpos)
+                       (%move-to-position point line charpos)
                        point)
                      (lambda ()
                        point)))
 
 (defun character-at (point &optional (offset 0))
   (%character-offset point offset
-                     (lambda (linum line charpos)
-                       (declare (ignore linum))
+                     (lambda (line charpos)
                        (line-char line charpos))
                      (lambda ()
                        (line-char (point-line point)
@@ -265,11 +254,11 @@
 (defun %map-region (start end function)
   (when (point< end start)
     (rotatef start end))
-  (let ((start-line (point-line start)))
+  (let ((start-line (point-line start))
+        (end-line (point-line end)))
     (loop :for line := start-line :then (line-next line)
-          :for linum :from (point-linum start) :to (point-linum end)
           :for firstp := (eq line start-line)
-          :for lastp := (= linum (point-linum end))
+          :for lastp := (eq line end-line)
           :do (funcall function
                        line
                        (if firstp
@@ -277,7 +266,8 @@
                            0)
                        (if lastp
                            (point-charpos end)
-                           nil))))
+                           nil))
+          :until lastp))
   (values))
 
 (defun map-region (start end function)
@@ -332,8 +322,7 @@
 
 (defun text-property-at (point key &optional (offset 0))
   (%character-offset point offset
-                     (lambda (linum line charpos)
-                       (declare (ignore linum))
+                     (lambda (line charpos)
                        (line-search-property line key charpos))
                      (lambda ()
                        (line-search-property (point-line point)

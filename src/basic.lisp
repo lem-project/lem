@@ -65,12 +65,14 @@
   (let ((point (copy-point (current-point) :right-inserting))
         (mark (when (buffer-mark-p (current-buffer))
                 (copy-point (buffer-mark (current-buffer))
-			    :right-inserting))))
+                            :right-inserting))))
     (unwind-protect (funcall function)
       (setf (current-buffer) (point-buffer point))
       (move-point (current-point) point)
+      (delete-point point)
       (when mark
-        (set-current-mark mark)))))
+        (set-current-mark mark)
+        (delete-point mark)))))
 
 (defun buffers-start (buffer)
   (buffer-start-point buffer))

@@ -5,7 +5,6 @@
           copy-point
           delete-point
           point-buffer
-          point-linum
           point-charpos
           point-kind
 
@@ -25,10 +24,6 @@
     :initarg :line
     :accessor point-line
     :type line)
-   (linum
-    :initarg :linum
-    :accessor point-linum
-    :type fixnum)
    (charpos
     :initarg :charpos
     :accessor point-charpos
@@ -47,19 +42,17 @@
 
 (defmethod print-object ((object point) stream)
   (print-unreadable-object (object stream :identity t)
-    (format stream "POINT ~A (~A ~A)"
+    (format stream "POINT ~A ~A"
             (point-name object)
-            (point-linum object)
             (point-charpos object))))
 
 (defun pointp (x)
   (typep x 'point))
 
-(defun make-point (buffer line linum charpos &key (kind :right-inserting) name)
+(defun make-point (buffer line charpos &key (kind :right-inserting) name)
   (let ((point (make-instance 'point
                               :buffer buffer
                               :line line
-                              :linum linum
                               :charpos charpos
                               :kind kind
                               :name name)))
@@ -70,7 +63,6 @@
 (defun copy-point (point &optional kind)
   (make-point (point-buffer point)
               (point-line point)
-	      (point-linum point)
 	      (point-charpos point)
 	      :kind (or kind (point-kind point))
 	      :name (point-name point)))

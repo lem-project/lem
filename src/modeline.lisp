@@ -57,7 +57,7 @@
      (format nil "~2d%"
              (floor
               (* 100
-                 (float (/ (point-linum (window-view-point window))
+                 (float (/ (line-number-at-point (window-view-point window))
                            (buffer-nlines (window-buffer window))))))))))
 
 (defun modeline-read-only-p (window)
@@ -85,7 +85,7 @@
         (setf firstp t)))))
 
 (defun modeline-linum (window)
-  (point-linum (window-point window)))
+  (line-number-at-point (window-point window)))
 
 (defun modeline-column (window)
   (point-column (window-point window)))

@@ -155,7 +155,7 @@
     (setf (buffer-truncate-lines buffer) t)
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
     (setf (buffer-points buffer) nil)
-    (let ((line (make-line nil nil "")))
+    (let ((line (make-line buffer nil nil "")))
       (setf (buffer-start-point buffer)
             (make-point buffer line 1 0
                         :kind :right-inserting
@@ -399,13 +399,4 @@
   (do ((line (point-line (buffer-start-point buffer))
              (line-next line)))
       ((null line))
-    (pdebug line))
-  (pdebug '*)
-  (do ((line (point-line (buffer-end-point buffer))
-             (line-prev line)))
-      ((null line))
-    (pdebug line))
-  (pdebug '*)
-  (pdebug (list (point-line (buffer-point buffer))
-                (point-linum (buffer-point buffer))
-                (point-charpos (buffer-point buffer)))))
+    (pdebug line)))

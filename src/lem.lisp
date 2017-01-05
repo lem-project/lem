@@ -110,8 +110,7 @@
                     (read-only-error ()
 		      (message "Read Only"))
                     (editor-error (c)
-		      (message (editor-error-message c))))))))))
-    #+nil(buffer-test (current-buffer))))
+		      (message (editor-error-message c))))))))))))
 
 (let ((passed nil))
   (defun call-with-editor (function)

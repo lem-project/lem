@@ -90,7 +90,8 @@
       (line-merge line (line-next line) charpos))))
 
 (defun %insert-newline/point (buffer linum line charpos)
-  (make-line line
+  (make-line buffer
+             line
              (line-next line)
              (subseq (line-str line) charpos))
   (shift-sticky-objects-newline buffer linum line charpos)

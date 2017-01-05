@@ -256,7 +256,7 @@
 	       (end end :right-inserting))
     (move-point (current-point) start)
     (loop :while (point< (current-point) end) :do
-       (with-point ((prev (line-start (current-point))))
+       (with-point ((prev (line-start (current-point)) :left-inserting))
 	 (funcall function)
 	 (when (same-line-p (current-point) prev)
 	   (unless (line-offset (current-point) 1)

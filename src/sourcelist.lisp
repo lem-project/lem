@@ -32,7 +32,7 @@
 
 (defun append-sourcelist (sourcelist write-function jump-function)
   (let ((point *sourcelist-point*))
-    (with-point ((start-point point))
+    (with-point ((start-point point :right-inserting))
       (funcall write-function point)
       (insert-character point #\newline)
       (when jump-function

@@ -272,10 +272,10 @@
 	 (when goal-point
 	   (move-point (current-point) goal-point))
 	 (return))
-       (with-point ((end cur-point))
+       (with-point ((end cur-point :right-inserting))
 	 (isearch-update-buffer cur-point before)
 	 (funcall *isearch-search-backward-function* cur-point before)
-	 (with-point ((start cur-point))
+	 (with-point ((start cur-point :right-inserting))
 	   (loop :for c := (unless pass-through
 			     (minibuf-read-char (format nil "Replace ~s with ~s" before after)))
 	      :do (cond

@@ -401,7 +401,7 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-M-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()
-  (with-point ((end (current-point)))
+  (with-point ((end (current-point) :right-inserting))
     (when (form-offset end 1)
       (indent-region (current-point) end))))
 
@@ -1000,8 +1000,8 @@
 
 (define-command lisp-uncomment-region () ()
   (when (buffer-mark-p (current-buffer))
-    (with-point ((start (region-beginning))
-                 (end (region-end)))
+    (with-point ((start (region-beginning) :right-inserting)
+                 (end (region-end) :right-inserting))
       (move-point start (character-offset (copy-point start :temporary) -1))
       (loop
         ;; ここを実行中は構文走査がされないのでテキストプロパティが更新されず、ずれていくので後ろから探していく

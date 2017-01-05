@@ -214,7 +214,7 @@
     (prog1 (call-next-method)
       (push-undo point
                  (lambda ()
-                   (character-offset (buffer-start point) offset)
+                   (go-to-offset point offset)
                    (save-excursion
                      (delete-char/point point 1))
                    point)))))
@@ -224,7 +224,7 @@
     (prog1 (call-next-method)
       (push-undo point
                  (lambda ()
-                   (character-offset (buffer-start point) offset)
+                   (go-to-offset point offset)
                    (save-excursion
                      (delete-char/point point (length string)))
                    point)))))
@@ -234,7 +234,7 @@
         (string (call-next-method)))
     (push-undo point
                (lambda ()
-                 (character-offset (buffer-start point) offset)
+                 (go-to-offset point offset)
                  (save-excursion
                    (insert-string/point point string))
                  point))

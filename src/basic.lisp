@@ -515,3 +515,6 @@
     (do ((line (line-prev (point-line point)) (line-prev line)))
         ((null line) offset)
       (incf offset (1+ (line-length line))))))
+
+(defun go-to-offset (point offset)
+  (character-offset (buffer-start point) offset))

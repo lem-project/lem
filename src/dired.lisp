@@ -40,11 +40,7 @@
 (define-key *dired-mode-keymap* "+" 'dired-mkdir)
 
 (defun start-point (buffer)
-  (get-bvar 'start-point :buffer buffer :default (buffers-start buffer)))
-
-(defun (setf start-point) (point buffer)
-  (setf (get-bvar 'start-point :buffer buffer)
-        point))
+  (line-offset (buffer-start (copy-point (buffer-point buffer) :temporary)) 3))
 
 (defun move-to-start-point (point)
   (move-point point (start-point (point-buffer point))))
@@ -284,7 +280,6 @@
           (insert-string cur-point output-string)
           (buffer-start cur-point)
           (line-offset cur-point 3)
-          (setf (start-point buffer) (copy-point cur-point :temporary))
           (loop
 	     (let ((string (line-string-at cur-point)))
 	       (multiple-value-bind (start end start-groups end-groups)

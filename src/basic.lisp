@@ -121,14 +121,11 @@
 (defun buffer-end (point)
   (move-point point (buffers-end (point-buffer point))))
 
-(defun %change-line (point line)
-  ;; この関数はlineでpointを管理するときに色々することになる
-  (setf (point-line point) line))
-
 (defun %move-to-position (point line charpos)
   (assert (line-alive-p line))
+  (assert (eq (point-buffer point) (line-buffer line)))
   (assert (<= 0 charpos))
-  (%change-line point line)
+  (point-change-line point line)
   (setf (point-charpos point) (min (line-length line) charpos))
   point)
 

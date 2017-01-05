@@ -42,14 +42,16 @@
 
 (defmethod print-object ((object point) stream)
   (print-unreadable-object (object stream :identity t)
-    (format stream "POINT ~A ~A"
+    (format stream "POINT ~A ~A ~S"
             (point-name object)
-            (point-charpos object))))
+            (point-charpos object)
+            (line-str (point-line object)))))
 
 (defun pointp (x)
   (typep x 'point))
 
 (defun make-point (buffer line charpos &key (kind :right-inserting) name)
+  (check-type kind (member :temporary :left-inserting :right-inserting))
   (let ((point (make-instance 'point
                               :buffer buffer
                               :line line
@@ -57,27 +59,34 @@
                               :kind kind
                               :name name)))
     (unless (eq :temporary kind)
+      (push point (line-points line))
       (buffer-add-point buffer point))
     point))
 
-(defun copy-point (point &optional kind)
+(defun copy-point (point &optional kind name)
   (make-point (point-buffer point)
               (point-line point)
 	      (point-charpos point)
 	      :kind (or kind (point-kind point))
-	      :name (point-name point)))
+	      :name (or name (point-name point))))
 
 (defun delete-point (point)
-  (unless (eq :temporary (point-kind point))
+  (unless (point-temporary-p point)
+    (setf (line-points (point-line point))
+          (delete point (line-points (point-line point))))
     (buffer-delete-point (point-buffer point)
-			 point)))
+                         point)))
 
-(defun point-change-buffer (point buffer)
-  (delete-point point)
-  (unless (eq :temporary (point-kind point))
-    (buffer-add-point buffer point))
-  (setf (point-buffer point) buffer)
-  t)
+(defun point-change-line (point new-line)
+  (unless (point-temporary-p point)
+    (let ((old-line (point-line point)))
+      (setf (line-points old-line)
+            (remove point (line-points old-line)))
+      (push point (line-points new-line))))
+  (setf (point-line point) new-line))
+
+(defun point-temporary-p (point)
+  (eq (point-kind point) :temporary))
 
 (defun point-line-ord (point)
   (line-ord (point-line point)))

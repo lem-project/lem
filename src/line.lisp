@@ -10,7 +10,8 @@
   %symbol-lifetimes
   %region
   ord
-  buffer)
+  buffer
+  points)
 
 (defmethod print-object ((object line) stream)
   (print-unreadable-object (object stream :identity t)

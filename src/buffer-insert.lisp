@@ -197,8 +197,7 @@
       (push-undo point
                  (lambda ()
                    (go-to-offset point offset)
-                   (save-excursion
-                     (delete-char/point point 1))
+                   (delete-char/point point 1)
                    point)))))
 
 (defmethod insert-string/point :around (point string)
@@ -207,8 +206,7 @@
       (push-undo point
                  (lambda ()
                    (go-to-offset point offset)
-                   (save-excursion
-                     (delete-char/point point (length string)))
+                   (delete-char/point point (length string))
                    point)))))
 
 (defmethod delete-char/point :around (point n)
@@ -217,8 +215,7 @@
     (push-undo point
                (lambda ()
                  (go-to-offset point offset)
-                 (save-excursion
-                   (insert-string/point point string))
+                 (insert-string/point point string)
                  point))
     string))
 

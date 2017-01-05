@@ -399,4 +399,4 @@
   (do ((line (point-line (buffer-start-point buffer))
              (line-next line)))
       ((null line))
-    (pdebug line)))
+    (pdebug (list line (line-points line)))))

@@ -55,7 +55,7 @@
 
 (defvar *rest-words* nil)
 (defvar *all-words* nil)
-(defvar *start-point* nil)
+(defvar *start-charpos* nil)
 
 (define-key *global-keymap* (kbd "M-/") 'abbrev)
 (define-command abbrev () ()
@@ -63,7 +63,9 @@
     (cond ((continue-flag :abbrev)
            (when (null *rest-words*)
              (setf *rest-words* *all-words*))
-           (delete-between-points *start-point* point)
+           (let ((n (- (point-charpos point) *start-charpos*)))
+             (line-offset point 0 *start-charpos*)
+             (delete-character point n))
            (insert-string point (first *rest-words*))
            (setf *rest-words* (rest *rest-words*)))
           (t
@@ -72,5 +74,5 @@
              (delete-character point (- (length src-word)) nil)
              (setf *rest-words* (rest words))
              (setf *all-words* words)
-             (setf *start-point* (copy-point point :temporary))
+             (setf *start-charpos* (point-charpos point))
              (insert-string point (first words)))))))

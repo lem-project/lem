@@ -221,7 +221,7 @@
                                 :read-only t
                                 :field t)
                  (character-offset (current-point) (length prompt)))
-               (let ((*minibuffer-start-point* (copy-point (current-point) :temporary)))
+               (with-point ((*minibuffer-start-point* (current-point) :right-inserting))
                  (when initial
                    (insert-string (current-point) initial))
                  (unwind-protect (call-with-save-windows

@@ -131,6 +131,7 @@
   (setq *isearch-prompt* prompt)
   (setq *isearch-string* initial-string)
   (setq *isearch-search-function* search-func)
+  ;; isearch中にバッファを変更する機能をつけるとここの:temporaryは変えないと駄目
   (setq *isearch-start-point* (copy-point (current-point) :temporary))
   (setq *isearch-search-forward-function* search-forward-function)
   (setq *isearch-search-backward-function* search-backward-function)

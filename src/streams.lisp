@@ -19,9 +19,8 @@
 
 (defun make-buffer-input-stream (&optional (point (current-point)))
   (make-instance 'buffer-input-stream
-                 :point (copy-point point :temporary)))
+                 :point (copy-point point :left-inserting)))
 
-#+nil
 (defmethod trivial-gray-streams::close ((stream buffer-input-stream) &key abort)
   (declare (ignore abort))
   (delete-point (buffer-stream-point stream))

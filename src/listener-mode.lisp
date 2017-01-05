@@ -30,7 +30,7 @@
           (make-history))))
 
 (defun listener-start-point ()
-  (copy-point (%listener-point) :temporary))
+  (%listener-point))
 
 (defun listener-start (buffer-name mode)
   (let ((buffer (get-buffer-create buffer-name)))

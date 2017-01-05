@@ -822,7 +822,8 @@
                           (goto-position filepos)
                           (redraw-display)))
                   defs)))
-        (push (copy-point (current-point) :temporary)
+        (push (list (buffer-name (current-buffer))
+                    (point-to-offset (current-point)))
               *lisp-find-definition-stack*)
         (cond ((= 1 (length defs))
                (funcall (second (car defs))))
@@ -837,11 +838,14 @@
 
 (define-key *lisp-mode-keymap* (kbd "M-,") 'lisp-pop-find-definition-stack)
 (define-command lisp-pop-find-definition-stack () ()
-  (let ((cur-point (pop *lisp-find-definition-stack*)))
-    (unless cur-point
+  (let ((elt (pop *lisp-find-definition-stack*)))
+    (unless elt
       (return-from lisp-pop-find-definition-stack nil))
-    (switch-to-buffer (point-buffer cur-point))
-    (move-point (current-point) cur-point)))
+    (destructuring-bind (buffer-name offset) elt
+      (let ((buffer (get-buffer-create buffer-name)))
+        (switch-to-buffer buffer)
+        (character-offset (buffer-start (buffer-point buffer))
+                          offset)))))
 
 (defun analyze-symbol (str)
   (let (package
@@ -1002,7 +1006,7 @@
   (when (buffer-mark-p (current-buffer))
     (with-point ((start (region-beginning) :right-inserting)
                  (end (region-end) :right-inserting))
-      (move-point start (character-offset (copy-point start :temporary) -1))
+      (character-offset start -1)
       (loop
         ;; ここを実行中は構文走査がされないのでテキストプロパティが更新されず、ずれていくので後ろから探していく
         (unless (previous-single-property-change end :attribute start)

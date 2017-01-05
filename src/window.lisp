@@ -72,7 +72,7 @@
     :type point)
    (point
     :initarg :point
-    :reader %window-point
+    :accessor %window-point
     :type point)
    (delete-hook
     :initform nil
@@ -99,9 +99,9 @@
                  :height height
                  :%buffer buffer
                  :screen (make-screen x y width height use-modeline-p)
-                 :view-point (copy-point (buffer-point buffer) :right-inserting)
+                 :view-point (copy-point (buffer-point buffer) :right-inserting "view-point")
                  :use-modeline-p use-modeline-p
-                 :point (copy-point (buffers-start buffer) :right-inserting)))
+                 :point (copy-point (buffers-start buffer) :right-inserting "window-point")))
 
 (defun window-x (&optional (window (current-window)))
   (window-%x window))
@@ -761,16 +761,18 @@
                     (copy-point (buffer-point (window-buffer (current-window))) :right-inserting)))))
     (set-window-buffer (current-window) buffer)
     (setf (current-buffer) buffer)
-    (point-change-buffer (%window-point (current-window)) buffer)
-    (point-change-buffer (window-view-point (current-window)) buffer)
+    (delete-point (%window-point (current-window)))
+    (delete-point (window-view-point (current-window)))
     (cond ((buffer-keep-binfo buffer)
            (destructuring-bind (view-point cursor-point)
                (buffer-keep-binfo buffer)
-             (move-point (window-view-point (current-window)) view-point)
-             (move-point (%window-point (current-window)) cursor-point)
-             (move-point (window-point (current-window)) (buffer-point buffer))))
+             (set-window-view-point (copy-point view-point) (current-window))
+             (setf (%window-point (current-window)) (copy-point cursor-point))))
           (t
-           (move-point (window-view-point (current-window)) (buffers-start buffer)))))
+           (setf (%window-point (current-window))
+                 (copy-point (buffers-start buffer) :right-inserting))
+           (set-window-view-point (copy-point (buffers-start buffer) :right-inserting)
+                                  (current-window)))))
   (setf (window-parameter (current-window) 'change-buffer) t)
   buffer)
 

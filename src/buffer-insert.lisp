@@ -7,19 +7,17 @@
 (define-buffer-local-and-global-hook before-change-functions)
 (define-buffer-local-and-global-hook after-change-functions)
 
-(defun check-read-only-at-point (point offset)
+(defun check-read-only-at-point (line charpos offset)
   (unless *inhibit-read-only*
-    (let ((line (point-line point))
-          (charpos (point-charpos point)))
-      (when (if (eql offset 0)
-                (line-search-property line :read-only charpos)
-                (line-search-property-range line
-                                            :read-only
-                                            charpos
-                                            (if (null offset)
-                                                nil
-                                                (+ charpos offset))))
-        (error 'read-only-error)))))
+    (when (if (eql offset 0)
+              (line-search-property line :read-only charpos)
+              (line-search-property-range line
+                                          :read-only
+                                          charpos
+                                          (if (null offset)
+                                              nil
+                                              (+ charpos offset))))
+      (error 'read-only-error))))
 
 (defmacro with-modify-buffer (buffer &body body)
   (alexandria:once-only (buffer)
@@ -29,43 +27,35 @@
        (prog1 (progn ,@body)
          (buffer-modify ,buffer)))))
 
-(defun shift-sticky-objects (point n)
-  (let ((buffer (point-buffer point))
-        (line (point-line point))
-        (linum (point-linum point))
-        (charpos (point-charpos point)))
-    (line-property-insert-pos line charpos n)
-    (dolist (m (buffer-points buffer))
-      (when (and (= linum (point-linum m))
-                 (etypecase (point-kind m)
-                   ((eql :left-inserting)
-                    (<= charpos (point-charpos m)))
-                   ((eql :right-inserting)
-                    (< charpos (point-charpos m)))
-                   ((eql :temporary)
-                    nil)))
-        (incf (point-charpos m) n)))))
+(defun shift-sticky-objects (buffer linum line charpos n)
+  (line-property-insert-pos line charpos n)
+  (dolist (m (buffer-points buffer))
+    (when (and (= linum (point-linum m))
+               (etypecase (point-kind m)
+                 ((eql :left-inserting)
+                  (<= charpos (point-charpos m)))
+                 ((eql :right-inserting)
+                  (< charpos (point-charpos m)))
+                 ((eql :temporary)
+                  nil)))
+      (incf (point-charpos m) n))))
 
-(defun shift-sticky-objects-newline (point)
-  (let ((linum (point-linum point))
-        (charpos (point-charpos point))
-        (buffer (point-buffer point))
-        (line (point-line point)))
-    (line-property-insert-newline line (line-next line) charpos)
-    (dolist (m (buffer-points buffer))
-      (cond ((and (= (point-linum m) linum)
-                  (etypecase (point-kind m)
-                    ((eql :left-inserting)
-                     (<= charpos (point-charpos m)))
-                    ((eql :right-inserting)
-                     (< charpos (point-charpos m)))
-                    ((eql :temporary)
-                     nil)))
-             (setf (point-line m) (line-next (point-line m)))
-             (incf (point-linum m))
-             (decf (point-charpos m) charpos))
-            ((< linum (point-linum m))
-             (incf (point-linum m)))))))
+(defun shift-sticky-objects-newline (buffer linum line charpos)
+  (line-property-insert-newline line (line-next line) charpos)
+  (dolist (m (buffer-points buffer))
+    (cond ((and (= (point-linum m) linum)
+                (etypecase (point-kind m)
+                  ((eql :left-inserting)
+                   (<= charpos (point-charpos m)))
+                  ((eql :right-inserting)
+                   (< charpos (point-charpos m)))
+                  ((eql :temporary)
+                   nil)))
+           (setf (point-line m) (line-next (point-line m)))
+           (incf (point-linum m))
+           (decf (point-charpos m) charpos))
+          ((< linum (point-linum m))
+           (incf (point-linum m))))))
 
 (defun shift-sticky-objects-subtract (point n)
   (let ((line (point-line point))
@@ -99,30 +89,29 @@
     (when nextp
       (line-merge line (line-next line) charpos))))
 
-(defun %insert-newline/point (point linum charpos)
-  (let* ((buffer (point-buffer point))
-         (line (buffer-get-line buffer linum)))
-    (make-line line
-               (line-next line)
-               (subseq (line-str line) charpos))
-    (shift-sticky-objects-newline point)
-    (incf (buffer-nlines buffer))
-    (setf (line-str line)
-          (subseq (line-str line) 0 charpos))))
+(defun %insert-newline/point (buffer linum line charpos)
+  (make-line line
+             (line-next line)
+             (subseq (line-str line) charpos))
+  (shift-sticky-objects-newline buffer linum line charpos)
+  (incf (buffer-nlines buffer))
+  (setf (line-str line)
+        (subseq (line-str line) 0 charpos)))
 
 (defgeneric insert-char/point (point char)
   (:method (point char)
     (with-modify-buffer (point-buffer point)
-      (check-read-only-at-point point 0)
+      (check-read-only-at-point (point-line point) (point-charpos point) 0)
       (cond
         ((char= char #\newline)
-         (%insert-newline/point point
+         (%insert-newline/point (point-buffer point)
 				(point-linum point)
+                                (point-line point)
 				(point-charpos point)))
         (t
          (let ((line (point-line point))
                (charpos (point-charpos point)))
-           (shift-sticky-objects point 1)
+           (shift-sticky-objects (point-buffer point) (point-linum point) line charpos 1)
            (setf (line-str line)
                  (concatenate 'string
                               (subseq (line-str line) 0 charpos)
@@ -130,33 +119,34 @@
                               (subseq (line-str line) charpos))))))
       char)))
 
-(defun %insert-line-string/point (point linum charpos string)
-  (check-read-only-at-point point 0)
-  (shift-sticky-objects point (length string))
-  (let ((line
-         (buffer-get-line (point-buffer point)
-                          linum)))
-    (setf (line-str line)
-          (concatenate 'string
-                       (subseq (line-str line) 0 charpos)
-                       string
-                       (subseq (line-str line) charpos)))))
+(defun %insert-line-string/point (buffer linum line charpos string)
+  (check-read-only-at-point line charpos 0)
+  (shift-sticky-objects buffer linum line charpos (length string))
+  (setf (line-str line)
+        (concatenate 'string
+                     (subseq (line-str line) 0 charpos)
+                     string
+                     (subseq (line-str line) charpos))))
 
 (defgeneric insert-string/point (point string)
   (:method (point string)
-    (with-modify-buffer (point-buffer point)
-      (loop :with start := 0
-	 :for pos := (position #\newline string :start start)
-	 :for linum :from (point-linum point) :by 1
-	 :for charpos := (point-charpos point) :then 0
-	 :do (if (null pos)
-		 (progn
-		   (%insert-line-string/point point linum charpos (subseq string start))
-		   (return))
-		 (let ((substr (subseq string start pos)))
-		   (%insert-line-string/point point linum charpos substr)
-		   (%insert-newline/point point linum (+ charpos (length substr)))
-		   (setf start (1+ pos))))))
+    (let ((buffer (point-buffer point)))
+      (with-modify-buffer buffer
+        (loop :with start := 0
+              :for pos := (position #\newline string :start start)
+              :for line := (point-line point) :then (line-next line)
+              :for linum :from (point-linum point) :by 1
+              :for charpos := (point-charpos point) :then 0
+              :do (cond ((null pos)
+                         (%insert-line-string/point buffer linum line charpos
+                                                    (subseq string start))
+                         (return))
+                        (t
+                         (let ((substr (subseq string start pos)))
+                           (%insert-line-string/point buffer linum line charpos substr)
+                           (%insert-newline/point buffer linum line
+                                                  (+ charpos (length substr)))
+                           (setf start (1+ pos))))))))
     string))
 
 (defun %delete-line-between/point (point start end)
@@ -204,7 +194,9 @@
           (loop :while (or (eq n 'T) (plusp n))
 	     :for eolp := (or (eq n 'T)
 			      (> n (- (line-length line) charpos)))
-	     :do (check-read-only-at-point point (if (eq n 'T) nil (if eolp n nil)))
+	     :do (check-read-only-at-point (point-line point)
+                                           (point-charpos point)
+                                           (if (eq n 'T) nil (if eolp n nil)))
 	     :do (cond
 		   ((not eolp)
 		    (%delete-line-between/point point charpos (+ charpos n))

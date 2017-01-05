@@ -62,10 +62,10 @@
           point-to-offset))
 
 (defun invoke-save-excursion (function)
-  (let ((point (copy-point (current-point) :temporary))
+  (let ((point (copy-point (current-point) :right-inserting))
         (mark (when (buffer-mark-p (current-buffer))
                 (copy-point (buffer-mark (current-buffer))
-			    :temporary))))
+			    :right-inserting))))
     (unwind-protect (funcall function)
       (setf (current-buffer) (point-buffer point))
       (move-point (current-point) point)
@@ -125,6 +125,7 @@
 
 (defun %move-to-position (point linum line charpos)
   (let ((buffer (point-buffer point)))
+    (assert (line-alive-p line))
     (assert (<= 1
                 linum
                 (buffer-nlines buffer)))

@@ -24,6 +24,9 @@
       (setf (line-next prev) line))
     line))
 
+(defun line-alive-p (line)
+  (not (null (line-str line))))
+
 (defun line-char (line i)
   (if (= i (line-length line))
       #\newline

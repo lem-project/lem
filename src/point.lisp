@@ -87,11 +87,14 @@
   (setf (point-buffer point) buffer)
   t)
 
+(defun point-line-ord (point)
+  (line-ord (point-line point)))
+
 (defun point= (point1 point2)
   (assert (eq (point-buffer point1)
               (point-buffer point2)))
-  (and (= (point-linum point1)
-          (point-linum point2))
+  (and (= (point-line-ord point1)
+          (point-line-ord point2))
        (= (point-charpos point1)
           (point-charpos point2))))
 
@@ -103,14 +106,9 @@
 (defun point< (point1 point2)
   (assert (eq (point-buffer point1)
               (point-buffer point2)))
-  (cond ((< (point-linum point1) (point-linum point2))
-         t)
-        ((> (point-linum point1) (point-linum point2))
-         nil)
-        ((< (point-charpos point1) (point-charpos point2))
-         t)
-        (t
-         nil)))
+  (or (< (point-line-ord point1) (point-line-ord point2))
+      (and (= (point-line-ord point1) (point-line-ord point2))
+           (< (point-charpos point1) (point-charpos point2)))))
 
 (defun point<= (point1 point2)
   (assert (eq (point-buffer point1)

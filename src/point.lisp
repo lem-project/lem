@@ -80,9 +80,14 @@
 (defun point-change-line (point new-line)
   (unless (point-temporary-p point)
     (let ((old-line (point-line point)))
-      (setf (line-points old-line)
-            (remove point (line-points old-line)))
-      (push point (line-points new-line))))
+      (do ((scan (line-points old-line) (cdr scan))
+           (prev nil scan))
+          ((eq (car scan) point)
+           (if prev
+               (setf (cdr prev) (cdr scan))
+               (setf (line-points old-line) (cdr scan)))
+           (setf (cdr scan) (line-points new-line)
+                 (line-points new-line) scan)))))
   (setf (point-line point) new-line))
 
 (defun point-temporary-p (point)

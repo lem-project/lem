@@ -194,29 +194,29 @@
 (defmethod insert-char/point :around (point char)
   (let ((offset (point-to-offset point)))
     (prog1 (call-next-method)
-      (push-undo point
-                 (lambda ()
-                   (go-to-offset point offset)
-                   (delete-char/point point 1)
-                   point)))))
+      (push-undo (point-buffer point)
+                 (lambda (cur-point)
+                   (go-to-offset cur-point offset)
+                   (delete-char/point cur-point 1)
+                   t)))))
 
 (defmethod insert-string/point :around (point string)
   (let ((offset (point-to-offset point)))
     (prog1 (call-next-method)
-      (push-undo point
-                 (lambda ()
-                   (go-to-offset point offset)
-                   (delete-char/point point (length string))
-                   point)))))
+      (push-undo (point-buffer point)
+                 (lambda (cur-point)
+                   (go-to-offset cur-point offset)
+                   (delete-char/point cur-point (length string))
+                   t)))))
 
 (defmethod delete-char/point :around (point n)
   (let ((offset (point-to-offset point))
         (string (call-next-method)))
-    (push-undo point
-               (lambda ()
-                 (go-to-offset point offset)
-                 (insert-string/point point string)
-                 point))
+    (push-undo (point-buffer point)
+               (lambda (cur-point)
+                 (go-to-offset cur-point offset)
+                 (insert-string/point cur-point string)
+                 t))
     string))
 
 

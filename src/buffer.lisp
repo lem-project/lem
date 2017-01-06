@@ -277,18 +277,17 @@
 (defun push-redo-stack (buffer elt)
   (push elt (buffer-redo-stack buffer)))
 
-(defun push-undo (point fn)
-  (let ((buffer (point-buffer point)))
-    (when (and (buffer-enable-undo-p buffer)
-               (not (ghost-buffer-p buffer)))
-      (ecase *undo-mode*
-        (:edit
-         (push-undo-stack buffer fn)
-         (setf (buffer-redo-stack buffer) nil))
-        (:redo
-         (push-undo-stack buffer fn))
-        (:undo
-         (push-redo-stack buffer fn))))))
+(defun push-undo (buffer fn)
+  (when (and (buffer-enable-undo-p buffer)
+             (not (ghost-buffer-p buffer)))
+    (ecase *undo-mode*
+      (:edit
+       (push-undo-stack buffer fn)
+       (setf (buffer-redo-stack buffer) nil))
+      (:redo
+       (push-undo-stack buffer fn))
+      (:undo
+       (push-redo-stack buffer fn)))))
 
 (defun buffer-rename (buffer name)
   (check-type buffer buffer)
@@ -301,44 +300,48 @@
   (and (buffer-filename buffer)
        (uiop:file-pathname-p (buffer-filename buffer))))
 
-(defun buffer-undo-1 (buffer)
-  (let ((elt (pop (buffer-undo-stack buffer))))
+(defun buffer-undo-1 (point)
+  (let* ((buffer (point-buffer point))
+         (elt (pop (buffer-undo-stack buffer))))
     (when elt
       (let ((*undo-mode* :undo))
         (unless (eq elt :separator)
           (decf (buffer-undo-size buffer))
-          (funcall elt))))))
+          (funcall elt point))))))
 
-(defun buffer-undo (buffer)
-  (push :separator (buffer-redo-stack buffer))
-  (when (eq :separator (car (buffer-undo-stack buffer)))
-    (pop (buffer-undo-stack buffer)))
-  (let ((point nil))
-    (loop :for result := (buffer-undo-1 buffer)
-       :while result
-       :do (setf point result))
-    (unless point
-      (assert (eq :separator (car (buffer-redo-stack buffer))))
-      (pop (buffer-redo-stack buffer)))
-    point))
+(defun buffer-undo (point)
+  (let ((buffer (point-buffer point)))
+    (push :separator (buffer-redo-stack buffer))
+    (when (eq :separator (car (buffer-undo-stack buffer)))
+      (pop (buffer-undo-stack buffer)))
+    (let ((result0 nil))
+      (loop :for result := (buffer-undo-1 point)
+            :while result
+            :do (setf result0 result))
+      (unless result0
+        (assert (eq :separator (car (buffer-redo-stack buffer))))
+        (pop (buffer-redo-stack buffer)))
+      result0)))
 
-(defun buffer-redo-1 (buffer)
-  (let ((elt (pop (buffer-redo-stack buffer))))
+(defun buffer-redo-1 (point)
+  (let* ((buffer (point-buffer point))
+         (elt (pop (buffer-redo-stack buffer))))
     (when elt
       (let ((*undo-mode* :redo))
         (unless (eq elt :separator)
-          (funcall elt))))))
+          (funcall elt point))))))
 
-(defun buffer-redo (buffer)
-  (push :separator (buffer-undo-stack buffer))
-  (let ((point nil))
-    (loop :for result := (buffer-redo-1 buffer)
-       :while result
-       :do (setf point result))
-    (unless point
-      (assert (eq :separator (car (buffer-undo-stack buffer))))
-      (pop (buffer-undo-stack buffer)))
-    point))
+(defun buffer-redo (point)
+  (let ((buffer (point-buffer point)))
+    (push :separator (buffer-undo-stack buffer))
+    (let ((result0 nil))
+      (loop :for result := (buffer-redo-1 point)
+            :while result
+            :do (setf result0 result))
+      (unless result0
+        (assert (eq :separator (car (buffer-undo-stack buffer))))
+        (pop (buffer-undo-stack buffer)))
+      result0)))
 
 (defun buffer-undo-boundary (&optional (buffer (current-buffer)))
   (unless (eq :separator (car (buffer-undo-stack buffer)))
@@ -362,9 +365,12 @@
 
 
 (defun buffer-test (buffer)
-  (pdebug '***)
   (pdebug buffer)
   (do ((line (point-line (buffer-start-point buffer))
-             (line-next line)))
-      ((null line))
-    (pdebug (list line (line-points line)))))
+             (line-next line))
+       (num-points 0))
+      ((null line)
+       (pdebug (list :num-points num-points)))
+    (incf num-points (length (line-points line)))
+    ;(pdebug (list line (line-points line)))
+    ))

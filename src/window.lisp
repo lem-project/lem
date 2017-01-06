@@ -767,7 +767,8 @@
            (destructuring-bind (view-point cursor-point)
                (buffer-keep-binfo buffer)
              (set-window-view-point (copy-point view-point) (current-window))
-             (setf (%window-point (current-window)) (copy-point cursor-point))))
+             (setf (%window-point (current-window)) (copy-point cursor-point))
+             (setf (buffer-point (current-buffer)) cursor-point)))
           (t
            (setf (%window-point (current-window))
                  (copy-point (buffers-start buffer) :right-inserting))

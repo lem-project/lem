@@ -58,15 +58,15 @@
   (redraw-display)
   (message nil))
 
-;; (start-idle-timer "mainloop" 200 t
-;;                   (lambda ()
-;;                     (redraw-display)))
+(start-idle-timer "mainloop" 200 t
+                  (lambda ()
+                    (redraw-display)))
 
-;; (start-idle-timer "lazy-syntax-scan" 500 t
-;;                   (lambda ()
-;;                     (syntax-scan-current-view)
-;;                     (redraw-display)))
-;;
+(start-idle-timer "lazy-syntax-scan" 500 t
+                  (lambda ()
+                    (syntax-scan-current-view)
+                    (redraw-display)))
+
 (defmacro cockpit (&body body)
   `(cond (*debug-p*
           (handler-bind ((error #'bailout)
@@ -81,9 +81,9 @@
       (buffer-end end))
     (syntax-scan-lines point end)))
 
-;; (add-hook 'after-init-hook
-;;           (lambda ()
-;;             (pushnew 'syntax-scan-point (after-change-functions))))
+(add-hook 'after-init-hook
+          (lambda ()
+            (pushnew 'syntax-scan-point (after-change-functions))))
 
 (defun lem-mainloop ()
   (do-commandloop (:toplevel t)

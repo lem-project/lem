@@ -249,38 +249,6 @@
     (setf (buffer-mark-p buffer) nil)
     t))
 
-(defun check-linum (buffer linum)
-  (unless (<= 1 linum (buffer-nlines buffer))
-    (error "invalid line number: ~A" linum)))
-
-(defun check-point (buffer linum charpos)
-  (check-linum buffer linum)
-  (unless (<= 0 charpos (buffer-line-length buffer linum))
-    (error "invalid character position: ~A" charpos)))
-
-(defun buffer-get-line (buffer linum)
-  (check-linum buffer linum)
-  (line-forward-n (point-line (buffer-start-point buffer)) (1- linum)))
-
-(defun buffer-get-char (buffer linum charpos)
-  (let ((line (buffer-get-line buffer linum)))
-    (when (line-p line)
-      (let* ((str (line-str line))
-             (len (length str)))
-        (cond
-          ((<= 0 charpos (1- len))
-           (char str charpos))
-          ((= charpos len)
-           #\newline))))))
-
-(defun buffer-line-length (buffer linum)
-  (line-length (buffer-get-line buffer linum)))
-
-(defun buffer-line-string (buffer linum)
-  (let ((line (buffer-get-line buffer linum)))
-    (when (line-p line)
-      (line-str line))))
-
 (defun check-read-only-buffer (buffer)
   (when (buffer-read-only-p buffer)
     (error 'read-only-error)))

@@ -254,7 +254,9 @@
           (line-prev line)))
   (setf (line-prev line) nil
         (line-next line) nil
-        (line-str line) nil))
+        (line-str line) nil
+        (line-points line) nil
+        (line-buffer line) nil))
 
 (defun line-step-n (line n step-f)
   (do ((l line (funcall step-f l))

@@ -293,10 +293,10 @@
       (cond ((syntax-escape-char-p (character-at point 0))
              (character-offset point 1))
             ((*syntax-test-match-p (syntax-region-end region) point)
-             (setf (line-%region (point-line point)) nil)
+             (setf (line-%syntax-context (point-line point)) nil)
              (return-from *syntax-scan-region (values point t))))
       (character-offset point 1))
-    (setf (line-%region (point-line point)) region)
+    (setf (line-%syntax-context (point-line point)) region)
     (unless (line-offset point 1)
       (return-from *syntax-scan-region point))
     (when (point<= *syntax-scan-limit* point)
@@ -330,7 +330,18 @@
                            :key #'car)))
            (cond
              ((syntax-match-move-action syntax)
-              point)
+              (with-point ((end start)
+                           (cur start))
+                (let ((end (funcall (syntax-match-move-action syntax) end)))
+                  (when (and end (point< cur end))
+                    (loop :until (same-line-p cur end) :do
+                          (setf (line-%syntax-context (point-line cur)) syntax)
+                          (line-offset cur 1))
+                    (setf (line-%syntax-context (point-line cur)) 'end-move-action)
+                    (when (syntax-attribute syntax)
+                      (put-text-property start end :attribute (syntax-attribute syntax)))
+                    (move-point point end)
+                    point))))
              ((syntax-attribute syntax)
               (put-text-property start point :attribute (syntax-attribute syntax))
               point)
@@ -340,23 +351,32 @@
 (defun *syntax-maybe-scan-region (point)
   (let* ((line (point-line point))
          (prev (line-prev line))
-         (syntax (and prev (line-%region prev))))
+         (syntax (and prev (line-%syntax-context prev))))
     (if (null syntax)
-        (setf (line-%region line) nil)
-        (typecase syntax
-          (syntax-region
+        (setf (line-%syntax-context line) nil)
+        (cond
+          ((typep syntax 'syntax-region)
            (with-point ((start point))
              (*syntax-scan-region syntax point)
              (put-text-property start point
                                 :attribute (syntax-attribute syntax))
              t))
-          (otherwise
-           nil)))))
+          ((typep syntax 'syntax)
+           (cond ((eq (line-%syntax-context line) 'end-move-action)
+                  (with-point ((end point))
+                    (previous-single-property-change point :attribute)
+                    (move-point point (*syntax-scan-ahead point (line-end end)))))
+                 (t
+                  (line-add-property (point-line point)
+                                     0 (line-length line)
+                                     :attribute (syntax-attribute syntax)
+                                     t)
+                  (line-end point))))))))
 
 (defun *syntax-scan-ahead (point limit)
   (let ((*syntax-scan-limit* limit))
     (*syntax-maybe-scan-region point)
-    (setf (line-%region (point-line point)) nil)
+    (setf (line-%syntax-context (point-line point)) nil)
     (loop :until (end-line-p point)
           :do
           (skip-chars-forward point (lambda (c)
@@ -395,7 +415,7 @@
           (loop
             (*syntax-scan-ahead point end)
             (when (point<= end point)
-              (return))))))))
+              (return point))))))))
 
 
 (defun skip-whitespace-forward (point)

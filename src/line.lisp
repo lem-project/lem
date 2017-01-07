@@ -8,7 +8,7 @@
   str
   plist
   %symbol-lifetimes
-  %region
+  %syntax-context
   ord
   buffer
   points)

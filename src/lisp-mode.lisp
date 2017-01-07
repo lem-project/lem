@@ -145,7 +145,7 @@
   (let ((table
          (make-syntax-table
           :space-chars '(#\space #\tab #\newline)
-          :symbol-chars '(#\$ #\& #\* #\+ #\- #\_ #\< #\> #\= #\/ #\: #\. #\%)
+          :symbol-chars '(#\+ #\- #\< #\> #\/ #\* #\& #\= #\. #\? #\_ #\! #\$ #\% #\: #\@ #\[ #\] #\^ #\{ #\} #\~ #\# #\|)
           :paren-alist '((#\( . #\))
                          (#\[ . #\])
                          (#\{ . #\}))
@@ -188,8 +188,9 @@
                       (make-syntax-test
                        `(:alternation
                          ,@(word-length-sort
-                            "block" "case" "ccase" "defvar" "ecase" "typecase" "etypecase"
-                            "ctypecase" "catch" "cond" "destructuring-bind" "do" "do*" "dolist" "dotimes"
+                            "block" "case" "ccase" "defvar" "defparameter" "defconstant"
+                            "ecase" "typecase" "etypecase" "ctypecase" "catch" "cond"
+                            "destructuring-bind" "do" "do*" "dolist" "dotimes"
                             "eval-when" "flet" "labels" "macrolet" "generic-flet" "generic-labels"
                             "handler-case" "restart-case" "if" "lambda" "let" "let*" "handler-bind"
                             "restart-bind" "locally" "multiple-value-bind" "multiple-value-call"

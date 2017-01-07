@@ -1,11 +1,12 @@
 (in-package :lem)
 
-(export '(minibuffer-window-p
+(export '(*enable-recursive-minibuffers*
+          *minibuf-keymap*
+          minibuffer-window-p
           minibuffer-window-height
           message
           minibuf-y-or-n-p
           minibuf-read-char
-          *minibuf-keymap*
           active-minibuffer-window
           check-switch-minibuffer-window
           minibuf-read-line-confirm
@@ -19,6 +20,7 @@
           prompt-for-file))
 
 (defparameter *minibuffer-window-height* 1)
+(defvar *enable-recursive-minibuffers* t)
 
 (defvar *minibuf-window*)
 (defvar *minibuffer-calls-window*)
@@ -111,6 +113,7 @@
 (defvar *minibuf-read-line-history*)
 
 (defvar *minibuf-read-line-depth* 0)
+(defvar *minibuf-prev-prompt* nil)
 
 (defun check-switch-minibuffer-window ()
   (when (minibuffer-window-active-p)
@@ -191,9 +194,7 @@
       str)))
 
 (defun prompt-for-line (prompt initial comp-f existing-p history-name)
-  (when (< 0 *minibuf-read-line-depth*)
-    ;; 再帰的にミニバッファを使うと、深さを一つ戻すときにそのミニバッファのテキストプロパティも戻す必要があって
-    ;; それがうまくできていないから、とりあえず再帰的なミニバッファの仕様を禁止している
+  (when (and (not *enable-recursive-minibuffers*) (< 0 *minibuf-read-line-depth*))
     (editor-error "ERROR: recursive use of minibuffer"))
   (let ((*minibuffer-calls-window* (current-window))
         (*minibuf-read-line-history* (let ((table (gethash history-name *minibuf-read-line-history-table*)))
@@ -208,8 +209,12 @@
              (let ((minibuf-buffer-prev-string
                     (points-to-string (buffers-start (minibuffer))
                                       (buffers-end (minibuffer))))
+                   (prev-prompt-length
+                    (when *minibuf-prev-prompt*
+                      (length *minibuf-prev-prompt*)))
                    (minibuf-buffer-prev-point
                     (window-point (minibuffer-window)))
+                   (*minibuf-prev-prompt* prompt)
                    (*minibuf-read-line-depth*
                     (1+ *minibuf-read-line-depth*)))
                (let ((*inhibit-read-only* t))
@@ -232,6 +237,14 @@
                      (let ((*inhibit-read-only* t))
                        (erase-buffer))
                      (insert-string (current-point) minibuf-buffer-prev-string)
+                     (when prev-prompt-length
+                       (with-point ((start (current-point))
+                                    (end (current-point)))
+                         (line-start start)
+                         (line-offset end 0 prev-prompt-length)
+                         (put-text-property start end :attribute *minibuffer-prompt-attribute*)
+                         (put-text-property start end :read-only t)
+                         (put-text-property start end :field t)))
                      (move-point (current-point) minibuf-buffer-prev-point))))))))
       (editor-abort (c)
                     (error c)))))

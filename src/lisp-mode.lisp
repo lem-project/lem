@@ -175,7 +175,7 @@
                          (:alternation
                           ,@(word-length-sort
                              "defun" "defclass" "defgeneric" "defsetf" "defmacro" "deftype"
-                             "defmethod" "defpackage" "defstruct" "defvar" "defparameter" "defconstant")
+                             "defmethod" "defpackage" "defstruct")
                           (:sequence "define-" (:greedy-repetition 0 nil
                                                 (:inverted-char-class #\space #\tab #\( #\))))))
                        :word-p t)
@@ -203,11 +203,6 @@
                       :attribute *syntax-keyword-attribute*)
 
     (syntax-add-match table
-                      (make-syntax-test "(?:[^:*]*:)?\\*[^*]+\\*"
-                                        :word-p t)
-                      :attribute *syntax-variable-attribute*)
-
-    (syntax-add-match table
                       (make-syntax-test ":[^() \\t]+"
                                         :word-p t)
                       :attribute *syntax-constant-attribute*)
@@ -216,6 +211,11 @@
                       (make-syntax-test "&[^() \\t]+"
                                         :word-p t)
                       :attribute *syntax-constant-attribute*)
+
+    (syntax-add-match table
+                      (make-syntax-test "(?:[^:*]*:)?\\*.*?\\*(?=(?:[() \\t]|$))"
+                                        :word-p t)
+                      :attribute *syntax-variable-attribute*)
 
     (syntax-add-match
      table

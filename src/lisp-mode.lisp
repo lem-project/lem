@@ -981,13 +981,13 @@
         (lisp-change-package package)))))
 
 (defvar *lisp-timer*)
-;; (when (or (not (boundp '*lisp-timer*))
-;;           (not (timer-alive-p *lisp-timer*)))
-;;   (setf *lisp-timer*
-;;         (start-idle-timer "lisp" 200 t 'lisp-idle-timer-function nil
-;;                           (lambda (condition)
-;;                             (pop-up-backtrace condition)
-;;                             (stop-timer *lisp-timer*)))))
+(when (or (not (boundp '*lisp-timer*))
+          (not (timer-alive-p *lisp-timer*)))
+  (setf *lisp-timer*
+        (start-idle-timer "lisp" 110 t 'lisp-idle-timer-function nil
+                          (lambda (condition)
+                            (pop-up-backtrace condition)
+                            (stop-timer *lisp-timer*)))))
 
 (defun lisp-print-values (values)
   (with-point ((point (current-point) :left-inserting))

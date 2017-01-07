@@ -134,6 +134,10 @@
 
 (defvar *feature-attribute* (copy-attribute *syntax-comment-attribute*))
 
+(defparameter +symbol-package-prefix+
+  '(:sequence
+    (:greedy-repetition 1 nil (:inverted-char-class #\( #\) #\space #\tab)) #\:))
+
 (defvar *lisp-syntax-table*
   (let ((table
          (make-syntax-table
@@ -152,122 +156,63 @@
           :block-comment-following-char #\|)))
 
     (syntax-add-match table
-                      (make-syntax-test "(")
-                      :matched-symbol :start-expr
-                      :symbol-lifetime 1)
+                      (make-syntax-test "\\(")
+                      :matched-symbol :start-form)
 
     (syntax-add-match table
-                      (make-syntax-test "[^() \\t]+" :regex-p t)
+                      (make-syntax-test "[^() \\t]+")
                       :test-symbol :define-start
                       :attribute *syntax-function-name-attribute*)
 
-    (dolist (str '("defun"
-                   "defclass"
-                   "defgeneric"
-                   "defsetf"
-                   "defmacro"
-                   "deftype"
-                   "defmethod"
-                   "defpackage"
-                   "defstruct"
-                   "defvar"
-                   "defparameter"
-                   "defconstant"))
-      (syntax-add-match table
-                        (make-syntax-test str :word-p t)
-                        :test-symbol :start-expr
-                        :attribute *syntax-keyword-attribute*
-                        :matched-symbol :define-start
-                        :symbol-lifetime 1))
-
     (syntax-add-match table
-                      (make-syntax-test "^(:?[^: \\t]+:)?define-[^ \\t()]*$"
-                                        :regex-p t :word-p t)
-                      :test-symbol :start-expr
+                      (make-syntax-test
+                       `(:sequence
+                         (:greedy-repetition 0 1 ,+symbol-package-prefix+)
+                         (:alternation
+                          "defun" "defclass" "defgeneric" "defsetf" "defmacro" "deftype"
+                          "defmethod" "defpackage" "defstruct" "defvar" "defparameter" "defconstant"
+                          (:sequence "define-" (:greedy-repetition 0 nil
+                                                (:inverted-char-class #\space #\tab #\( #\))))))
+                       :word-p t)
+                      :test-symbol :start-form
                       :attribute *syntax-keyword-attribute*
                       :matched-symbol :define-start
                       :symbol-lifetime 1)
 
-    (dolist (str '("block"
-                   "case"
-                   "ccase"
-                   "defvar"
-                   "ecase"
-                   "typecase"
-                   "etypecase"
-                   "ctypecase"
-                   "catch"
-                   "cond"
-                   "destructuring-bind"
-                   "do"
-                   "do*"
-                   "dolist"
-                   "dotimes"
-                   "eval-when"
-                   "flet"
-                   "labels"
-                   "macrolet"
-                   "generic-flet"
-                   "generic-labels"
-                   "handler-case"
-                   "restart-case"
-                   "if"
-                   "lambda"
-                   "let"
-                   "let*"
-                   "handler-bind"
-                   "restart-bind"
-                   "locally"
-                   "multiple-value-bind"
-                   "multiple-value-call"
-                   "multiple-value-prog1"
-                   "prog"
-                   "prog*"
-                   "prog1"
-                   "prog2"
-                   "progn"
-                   "progv"
-                   "return"
-                   "return-from"
-                   "symbol-macrolet"
-                   "tagbody"
-                   "throw"
-                   "unless"
-                   "unwind-protect"
-                   "when"
-                   "with-accessors"
-                   "with-condition-restarts"
-                   "with-open-file"
-                   "with-output-to-string"
-                   "with-slots"
-                   "with-standard-io-syntax"
-                   "loop"
-                   "declare"
-                   "declaim"
-                   "proclaim"))
-      (syntax-add-match table
-                        (make-syntax-test str :word-p t)
-                        :test-symbol :start-expr
-                        :attribute *syntax-keyword-attribute*))
+    (syntax-add-match table
+                      (make-syntax-test
+                       '(:alternation "block" "case" "ccase" "defvar" "ecase" "typecase" "etypecase"
+                         "ctypecase" "catch" "cond" "destructuring-bind" "do" "do*" "dolist" "dotimes"
+                         "eval-when" "flet" "labels" "macrolet" "generic-flet" "generic-labels"
+                         "handler-case" "restart-case" "if" "lambda" "let" "let*" "handler-bind"
+                         "restart-bind" "locally" "multiple-value-bind" "multiple-value-call"
+                         "multiple-value-prog1" "prog" "prog*" "prog1" "prog2" "progn" "progv" "return"
+                         "return-from" "symbol-macrolet" "tagbody" "throw" "unless" "unwind-protect"
+                         "when" "with-accessors" "with-condition-restarts" "with-open-file"
+                         "with-output-to-string" "with-slots" "with-standard-io-syntax" "loop"
+                         "declare" "declaim" "proclaim")
+                       :word-p t)
+                      :test-symbol :start-form
+                      :attribute *syntax-keyword-attribute*)
 
     (syntax-add-match table
-                      (make-syntax-test "^(?:[^:*]*:)?\\*[^*]+\\*$"
-                                        :regex-p t :word-p t)
+                      (make-syntax-test "(?:[^:*]*:)?\\*[^*]+\\*"
+                                        :word-p t)
                       :attribute *syntax-variable-attribute*)
 
     (syntax-add-match table
-                      (make-syntax-test "^:[^() \\t]+$"
-                                        :regex-p t :word-p t)
+                      (make-syntax-test ":[^() \\t]+"
+                                        :word-p t)
                       :attribute *syntax-constant-attribute*)
 
     (syntax-add-match table
-                      (make-syntax-test "^&[^() \\t]+$"
-                                        :regex-p t :word-p t)
+                      (make-syntax-test "&[^() \\t]+"
+                                        :word-p t)
                       :attribute *syntax-constant-attribute*)
 
     (syntax-add-match
      table
-     (make-syntax-test "#[+-]" :regex-p t)
+     (make-syntax-test "#[+-]")
      :move-action (lambda (cur-point)
                     (ignore-errors
 		      (let ((positivep (eql #\+ (character-at cur-point 1))))

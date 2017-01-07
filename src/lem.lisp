@@ -78,8 +78,8 @@
 (defun syntax-scan-point (point)
   (with-point ((start point)
                (end point))
-    (*syntax-scan-range (line-start start)
-                        (line-end end))))
+    (syntax-scan-range (line-start start)
+                       (line-end end))))
 
 (add-hook 'after-init-hook
           (lambda ()

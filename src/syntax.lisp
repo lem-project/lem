@@ -244,7 +244,7 @@
              (null *syntax-scan-window-recursive-p*))
     (let ((*syntax-scan-window-recursive-p* t))
       (window-see window)
-      (*syntax-scan-range (window-view-point window)
+      (syntax-scan-range (window-view-point window)
                          (or (line-offset (copy-point (window-view-point window) :temporary)
                                           (window-height window))
                              (buffers-end (window-buffer window)))))))
@@ -252,7 +252,7 @@
 (defun syntax-scan-buffer (buffer)
   (check-type buffer buffer)
   (when (enable-syntax-highlight-p buffer)
-    (*syntax-scan-range (buffers-start buffer) (buffers-end buffer))))
+    (syntax-scan-range (buffers-start buffer) (buffers-end buffer))))
 
 (defun syntax-scan-current-view ()
   (cond
@@ -271,7 +271,7 @@
 	   :when (/= 0 lifetime)
 	   :collect (cons symbol (1- lifetime)))))
 
-(defun *syntax-test-match-p (syntax-test point)
+(defun syntax-test-match-p (syntax-test point)
   (let ((string (line-string-at point)))
     (multiple-value-bind (start end)
         (ppcre:scan (syntax-test-thing syntax-test)
@@ -285,30 +285,30 @@
         (line-offset point 0 end)
         point))))
 
-(defun *syntax-scan-region (region point)
+(defun syntax-scan-region (region point)
   (loop
     (loop
       (when (end-line-p point)
         (return))
       (cond ((syntax-escape-char-p (character-at point 0))
              (character-offset point 1))
-            ((*syntax-test-match-p (syntax-region-end region) point)
+            ((syntax-test-match-p (syntax-region-end region) point)
              (setf (line-%syntax-context (point-line point)) nil)
-             (return-from *syntax-scan-region (values point t))))
+             (return-from syntax-scan-region (values point t))))
       (character-offset point 1))
     (setf (line-%syntax-context (point-line point)) region)
     (unless (line-offset point 1)
-      (return-from *syntax-scan-region point))
+      (return-from syntax-scan-region point))
     (when (point<= *syntax-scan-limit* point)
-      (return-from *syntax-scan-region point))))
+      (return-from syntax-scan-region point))))
 
-(defun *syntax-scan-token-test (syntax point)
+(defun syntax-scan-token-test (syntax point)
   (etypecase syntax
     (syntax-region
      (with-point ((start point))
-       (let ((point (*syntax-test-match-p (syntax-region-start syntax) point)))
+       (let ((point (syntax-test-match-p (syntax-region-start syntax) point)))
          (when point
-           (let ((end (*syntax-scan-region syntax point)))
+           (let ((end (syntax-scan-region syntax point)))
              (assert (pointp end))
              (put-text-property start end :attribute (syntax-attribute syntax))
              end)))))
@@ -318,7 +318,7 @@
                      *syntax-symbol-lifetimes*
                      :key #'car))
        (with-point ((start point))
-         (when (*syntax-test-match-p (syntax-match-test syntax) point)
+         (when (syntax-test-match-p (syntax-match-test syntax) point)
            (when (syntax-match-matched-symbol syntax)
              (push (cons (syntax-match-matched-symbol syntax)
                          (syntax-match-symbol-lifetime syntax))
@@ -348,7 +348,7 @@
              (t
               point))))))))
 
-(defun *syntax-maybe-scan-region (point)
+(defun syntax-maybe-scan-region (point)
   (let* ((line (point-line point))
          (prev (line-prev line))
          (syntax (and prev (line-%syntax-context prev))))
@@ -357,7 +357,7 @@
         (cond
           ((typep syntax 'syntax-region)
            (with-point ((start point))
-             (*syntax-scan-region syntax point)
+             (syntax-scan-region syntax point)
              (put-text-property start point
                                 :attribute (syntax-attribute syntax))
              t))
@@ -365,7 +365,7 @@
            (cond ((eq (line-%syntax-context line) 'end-move-action)
                   (with-point ((end point))
                     (previous-single-property-change point :attribute)
-                    (move-point point (*syntax-scan-ahead point (line-end end)))))
+                    (move-point point (syntax-scan-ahead point (line-end end)))))
                  (t
                   (line-add-property (point-line point)
                                      0 (line-length line)
@@ -373,9 +373,9 @@
                                      t)
                   (line-end point))))))))
 
-(defun *syntax-scan-ahead (point limit)
+(defun syntax-scan-ahead (point limit)
   (let ((*syntax-scan-limit* limit))
-    (*syntax-maybe-scan-region point)
+    (syntax-maybe-scan-region point)
     (setf (line-%syntax-context (point-line point)) nil)
     (loop :until (end-line-p point)
           :do
@@ -386,10 +386,10 @@
                        (character-offset point 2)
                        nil)
                       ((dolist (syn (syntax-table-region-list (current-syntax)))
-                         (when (*syntax-scan-token-test syn point)
+                         (when (syntax-scan-token-test syn point)
                            (return t))))
                       ((dolist (syn (syntax-table-match-list (current-syntax)))
-                         (when (*syntax-scan-token-test syn point)
+                         (when (syntax-scan-token-test syn point)
                            (return t))))
                       (t
                        (character-offset point 1)
@@ -400,7 +400,7 @@
           *syntax-symbol-lifetimes*)
     (line-offset point 1)))
 
-(defun *syntax-scan-range (start end)
+(defun syntax-scan-range (start end)
   (assert (eq (point-buffer start)
               (point-buffer end)))
   (let ((buffer (point-buffer start)))
@@ -413,7 +413,7 @@
         (remove-text-property start end :attribute)
         (with-point ((point start))
           (loop
-            (*syntax-scan-ahead point end)
+            (syntax-scan-ahead point end)
             (when (point<= end point)
               (return point))))))))
 

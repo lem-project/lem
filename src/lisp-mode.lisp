@@ -138,6 +138,9 @@
   '(:sequence
     (:greedy-repetition 1 nil (:inverted-char-class #\( #\) #\space #\tab)) #\:))
 
+(defun word-length-sort (&rest words)
+  (sort (copy-list words) #'> :key #'length))
+
 (defvar *lisp-syntax-table*
   (let ((table
          (make-syntax-table
@@ -157,7 +160,8 @@
 
     (syntax-add-match table
                       (make-syntax-test "\\(")
-                      :matched-symbol :start-form)
+                      :matched-symbol :start-form
+                      :symbol-lifetime 1)
 
     (syntax-add-match table
                       (make-syntax-test "[^() \\t]+")
@@ -169,8 +173,9 @@
                        `(:sequence
                          (:greedy-repetition 0 1 ,+symbol-package-prefix+)
                          (:alternation
-                          "defun" "defclass" "defgeneric" "defsetf" "defmacro" "deftype"
-                          "defmethod" "defpackage" "defstruct" "defvar" "defparameter" "defconstant"
+                          ,@(word-length-sort
+                             "defun" "defclass" "defgeneric" "defsetf" "defmacro" "deftype"
+                             "defmethod" "defpackage" "defstruct" "defvar" "defparameter" "defconstant")
                           (:sequence "define-" (:greedy-repetition 0 nil
                                                 (:inverted-char-class #\space #\tab #\( #\))))))
                        :word-p t)
@@ -181,16 +186,18 @@
 
     (syntax-add-match table
                       (make-syntax-test
-                       '(:alternation "block" "case" "ccase" "defvar" "ecase" "typecase" "etypecase"
-                         "ctypecase" "catch" "cond" "destructuring-bind" "do" "do*" "dolist" "dotimes"
-                         "eval-when" "flet" "labels" "macrolet" "generic-flet" "generic-labels"
-                         "handler-case" "restart-case" "if" "lambda" "let" "let*" "handler-bind"
-                         "restart-bind" "locally" "multiple-value-bind" "multiple-value-call"
-                         "multiple-value-prog1" "prog" "prog*" "prog1" "prog2" "progn" "progv" "return"
-                         "return-from" "symbol-macrolet" "tagbody" "throw" "unless" "unwind-protect"
-                         "when" "with-accessors" "with-condition-restarts" "with-open-file"
-                         "with-output-to-string" "with-slots" "with-standard-io-syntax" "loop"
-                         "declare" "declaim" "proclaim")
+                       `(:alternation
+                         ,@(word-length-sort
+                            "block" "case" "ccase" "defvar" "ecase" "typecase" "etypecase"
+                            "ctypecase" "catch" "cond" "destructuring-bind" "do" "do*" "dolist" "dotimes"
+                            "eval-when" "flet" "labels" "macrolet" "generic-flet" "generic-labels"
+                            "handler-case" "restart-case" "if" "lambda" "let" "let*" "handler-bind"
+                            "restart-bind" "locally" "multiple-value-bind" "multiple-value-call"
+                            "multiple-value-prog1" "prog" "prog*" "prog1" "prog2" "progn" "progv" "return"
+                            "return-from" "symbol-macrolet" "tagbody" "throw" "unless" "unwind-protect"
+                            "when" "with-accessors" "with-condition-restarts" "with-open-file"
+                            "with-output-to-string" "with-slots" "with-standard-io-syntax" "loop"
+                            "declare" "declaim" "proclaim"))
                        :word-p t)
                       :test-symbol :start-form
                       :attribute *syntax-keyword-attribute*)

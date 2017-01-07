@@ -76,10 +76,10 @@
           ,@body)))
 
 (defun syntax-scan-point (point)
-  (with-point ((end point))
-    (unless (line-offset end 1)
-      (buffer-end end))
-    (syntax-scan-lines point end)))
+  (with-point ((start point)
+               (end point))
+    (*syntax-scan-range (line-start start)
+                        (line-end end))))
 
 (add-hook 'after-init-hook
           (lambda ()
@@ -89,28 +89,27 @@
   (do-commandloop (:toplevel t)
     (with-error-handler ()
       (cockpit
-        (redraw-display)
-        (let ()
-          (start-idle-timers)
-          (let ((cmd (read-key-command)))
-            (stop-idle-timers)
-            (if (changed-disk-p (current-buffer))
-                (ask-revert-buffer)
-                (progn
-                  (message nil)
-                  (handler-case
-                      (handler-bind ((editor-condition
-                                      (lambda (c)
-                                        (declare (ignore c))
-                                        (stop-record-key))))
-                        (cmd-call cmd nil))
-                    (editor-abort ()
-		      (buffer-mark-cancel (current-buffer))
-		      (message "Quit"))
-                    (read-only-error ()
-		      (message "Read Only"))
-                    (editor-error (c)
-		      (message (editor-error-message c))))))))))
+       (redraw-display)
+       (start-idle-timers)
+       (let ((cmd (read-key-command)))
+         (stop-idle-timers)
+         (if (changed-disk-p (current-buffer))
+             (ask-revert-buffer)
+             (progn
+               (message nil)
+               (handler-case
+                   (handler-bind ((editor-condition
+                                   (lambda (c)
+                                     (declare (ignore c))
+                                     (stop-record-key))))
+                     (cmd-call cmd nil))
+                 (editor-abort ()
+                               (buffer-mark-cancel (current-buffer))
+                               (message "Quit"))
+                 (read-only-error ()
+                                  (message "Read Only"))
+                 (editor-error (c)
+                               (message (editor-error-message c)))))))))
     #+(or)
     (buffer-test (current-buffer))))
 

@@ -43,9 +43,13 @@
 
 (define-key *global-keymap* (kbd "C-M-@") 'mark-sexp)
 (define-command mark-sexp () ()
-  (save-excursion
-    (and (forward-sexp 1)
-	 (mark-set))))
+  (cond
+    ((continue-flag :mark-sexp)
+     (form-offset (buffer-mark (current-buffer)) 1))
+    (t
+     (save-excursion
+       (form-offset (current-point) 1)
+       (mark-set)))))
 
 (define-key *global-keymap* (kbd "C-M-k") 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")

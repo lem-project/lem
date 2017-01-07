@@ -267,17 +267,18 @@
 	   :collect (cons symbol (1- lifetime)))))
 
 (defun *syntax-test-match-p (syntax-test point)
-  (multiple-value-bind (start end)
-      (ppcre:scan (syntax-test-thing syntax-test)
-                  (line-string-at point)
-                  :start (point-charpos point))
-    (when (and start
-               (= (point-charpos point) start)
-               (or (not (syntax-test-word-p syntax-test))
-                   (not (syntax-symbol-char-p
-                         (character-offset point (- end start))))))
-      (line-offset point 0 end)
-      point)))
+  (let ((string (line-string-at point)))
+    (multiple-value-bind (start end)
+        (ppcre:scan (syntax-test-thing syntax-test)
+                    string
+                    :start (point-charpos point))
+      (when (and start
+                 (= (point-charpos point) start)
+                 (or (not (syntax-test-word-p syntax-test))
+                     (<= end (length string))
+                     (not (syntax-symbol-char-p (schar string end)))))
+        (line-offset point 0 end)
+        point))))
 
 (defun *syntax-scan-region (region point)
   (loop

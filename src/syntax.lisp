@@ -133,20 +133,25 @@
 (defun syntax-add-match (syntax-table test
                                       &key test-symbol end-symbol attribute
                                       matched-symbol (symbol-lifetime -1) move-action)
-  (push (make-instance 'syntax-match
-                       :test test
-                       :test-symbol test-symbol
-                       :end-symbol end-symbol
-                       :attribute attribute
-                       :matched-symbol matched-symbol
-                       :symbol-lifetime symbol-lifetime
-                       :move-action move-action)
-        (syntax-table-match-list syntax-table))
+  (setf (syntax-table-match-list syntax-table)
+        (nconc (syntax-table-match-list syntax-table)
+               (list (make-instance 'syntax-match
+                                    :test test
+                                    :test-symbol test-symbol
+                                    :end-symbol end-symbol
+                                    :attribute attribute
+                                    :matched-symbol matched-symbol
+                                    :symbol-lifetime symbol-lifetime
+                                    :move-action move-action))))
   t)
 
 (defun syntax-add-region (syntax-table start end &key attribute)
-  (push (make-instance 'syntax-region :start start :end end :attribute attribute)
-        (syntax-table-region-list syntax-table)))
+  (setf (syntax-table-region-list syntax-table)
+        (nconc (syntax-table-region-list syntax-table)
+               (list (make-instance 'syntax-region
+                                    :start start
+                                    :end end
+                                    :attribute attribute)))))
 
 (defvar *current-syntax* nil)
 

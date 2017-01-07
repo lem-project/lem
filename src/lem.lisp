@@ -5,7 +5,7 @@
           with-editor
           lem))
 
-(defvar *debug-p* t)
+(defvar *debug-p* nil)
 (defvar *running-p* nil)
 
 (defun pop-up-backtrace (condition)

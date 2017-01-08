@@ -270,7 +270,6 @@
 
 (defun erase-buffer (&optional (buffer (current-buffer)))
   (buffer-start (buffer-point buffer))
-  (buffer-mark-cancel buffer)
   (delete-char/point (buffer-point buffer) t))
 
 (defun region-beginning (&optional (buffer (current-buffer)))

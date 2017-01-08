@@ -280,7 +280,7 @@
       (when (and start
                  (= (point-charpos point) start)
                  (or (not (syntax-test-word-p syntax-test))
-                     (<= end (length string))
+                     (<= (length string) end)
                      (not (syntax-symbol-char-p (schar string end)))))
         (line-offset point 0 end)
         point))))

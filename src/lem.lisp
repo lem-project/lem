@@ -35,6 +35,32 @@
 			 ,@body)
                       ((condition) (declare (ignore condition)))))
 
+(defvar *syntax-scan-window-recursive-p* nil)
+
+(defun syntax-scan-window (window)
+  (check-type window window)
+  (when (and (enable-syntax-highlight-p (window-buffer window))
+             (null *syntax-scan-window-recursive-p*))
+    (let ((*syntax-scan-window-recursive-p* t))
+      (window-see window)
+      (syntax-scan-range (line-start (copy-point (window-view-point window) :temporary))
+                         (or (line-offset (copy-point (window-view-point window) :temporary)
+                                          (window-height window))
+                             (buffers-end (window-buffer window)))))))
+
+(defun syntax-scan-buffer (buffer)
+  (check-type buffer buffer)
+  (when (enable-syntax-highlight-p buffer)
+    (syntax-scan-range (buffers-start buffer) (buffers-end buffer))))
+
+(defun syntax-scan-current-view ()
+  (cond
+    ((get-bvar 'already-visited)
+     (syntax-scan-window (current-window)))
+    (t
+     (setf (get-bvar 'already-visited) t)
+     (syntax-scan-buffer (current-buffer)))))
+
 (pushnew #'(lambda (window)
              (declare (ignore window))
              (syntax-scan-current-view))

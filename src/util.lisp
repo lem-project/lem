@@ -4,12 +4,6 @@
   (:export
    :pdebug
    :utf8-bytes
-   :split-string
-   :join
-   :replace-string
-   :random-range
-   :temp-file-name
-   :safe-aref
    :make-history
    :last-history
    :add-history
@@ -17,9 +11,7 @@
    :next-history
    :bests-if
    :max-if
-   :min-if
-   :mkstr
-   :symb))
+   :min-if))
 (in-package :lem.util)
 
 (defun pdebug (x &optional (file "DEBUG"))
@@ -36,61 +28,6 @@
     ((<= #xe0 c #xef) 3)
     ((<= #xf0 c #xf4) 4)
     (t 1)))
-
-(defun split-string (str delim)
-  (labels ((f (str acc length)
-	     (let ((i (position delim str)))
-	       (if (null i)
-		   (values (nreverse (cons str acc))
-			   (1+ length))
-		   (f (subseq str (1+ i))
-		      (cons (subseq str 0 i) acc)
-		      (1+ length))))))
-    (f str nil 0)))
-
-(defun join (str strings)
-  (format nil "~{~A~}"
-          (loop :for rest :on strings
-	     :collect (car rest)
-	     :if (cdr rest)
-	     :collect str)))
-
-(defun replace-string (before after string)
-  (let ((i (search before string)))
-    (if i
-        (values (concatenate
-                 'string
-                 (subseq string 0 i)
-                 after
-                 (replace-string before after
-                                 (subseq string (+ i (length before)))))
-                t)
-        (values string nil))))
-
-(defun random-range (min max)
-  (+ min (random (1+ (- max min)))))
-
-(defun temp-file-name (prefix-name)
-  (labels ((random-name ()
-             (concatenate 'string
-                          "/tmp/"
-                          prefix-name
-                          "-"
-                          (coerce (loop repeat 8
-				     collect (code-char
-					      (random-range
-					       (char-code #\a)
-					       (char-code #\z))))
-                                  'string))))
-    (loop
-       for name = (random-name)
-       while (cl-fad:file-exists-p name)
-       finally (return name))))
-
-(defun safe-aref (seq i &optional default)
-  (if (< -1 i (length seq))
-      (aref seq i)
-      default))
 
 (defstruct (history (:constructor %make-history))
   data
@@ -151,10 +88,3 @@
 
 (defun min-if (fn list)
   (bests-if fn list #'<))
-
-(defun mkstr (&rest args)
-  (with-output-to-string (s)
-    (dolist (a args) (princ a s))))
-
-(defun symb (&rest args)
-  (values (intern (apply #'mkstr args))))

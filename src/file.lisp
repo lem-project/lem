@@ -38,16 +38,14 @@
     (nreverse path)))
 
 (defun expand-file-name (pathname &optional directory)
-  (concatenate 'string
-               "/"
-               (join "/"
-                     (parse-pathname
-                      (if (and (plusp (length pathname))
-                               (char/= #\/ (aref pathname 0)))
-                          (format nil "~a~a"
-                                  (or directory (buffer-directory))
-                                  pathname)
-                          pathname)))))
+  (format nil "/~{~A~^/~}"
+          (parse-pathname
+           (if (and (plusp (length pathname))
+                    (char/= #\/ (aref pathname 0)))
+               (format nil "~a~a"
+                       (or directory (buffer-directory))
+                       pathname)
+               pathname))))
 
 #+lem-use-inquisitor
 (defun detect-external-format-from-file (pathname)

@@ -103,7 +103,7 @@
                    (kbd-string-1 (concatenate 'string
                                               "M-C-" (subseq str 4)))
                    (kbd-string-1 str)))
-           (split-string str #\space))))
+           (uiop:split-string str :separator " "))))
 
 (defun kbd-keys (keys)
   (make-kbd keys))

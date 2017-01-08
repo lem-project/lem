@@ -169,6 +169,11 @@
                       :attribute *syntax-function-name-attribute*)
 
     (syntax-add-match table
+                      (make-syntax-test "[^() \\t]+")
+                      :test-symbol :defvar-start
+                      :attribute *syntax-variable-attribute*)
+
+    (syntax-add-match table
                       (make-syntax-test
                        `(:sequence
                          (:greedy-repetition 0 1 ,+symbol-package-prefix+)
@@ -186,19 +191,32 @@
 
     (syntax-add-match table
                       (make-syntax-test
-                       `(:alternation
-                         ,@(word-length-sort
-                            "block" "case" "ccase" "defvar" "defparameter" "defconstant"
-                            "ecase" "typecase" "etypecase" "ctypecase" "catch" "cond"
-                            "destructuring-bind" "do" "do*" "dolist" "dotimes"
-                            "eval-when" "flet" "labels" "macrolet" "generic-flet" "generic-labels"
-                            "handler-case" "restart-case" "if" "lambda" "let" "let*" "handler-bind"
-                            "restart-bind" "locally" "multiple-value-bind" "multiple-value-call"
-                            "multiple-value-prog1" "prog" "prog*" "prog1" "prog2" "progn" "progv" "return"
-                            "return-from" "symbol-macrolet" "tagbody" "throw" "unless" "unwind-protect"
-                            "when" "with-accessors" "with-condition-restarts" "with-open-file"
-                            "with-output-to-string" "with-slots" "with-standard-io-syntax" "loop"
-                            "declare" "declaim" "proclaim"))
+                       `(:sequence
+                         (:greedy-repetition 0 1 ,+symbol-package-prefix+)
+                         (:alternation
+                          ,@(word-length-sort "defvar" "defparameter" "defconstant")))
+                       :word-p t)
+                      :test-symbol :start-form
+                      :attribute *syntax-keyword-attribute*
+                      :matched-symbol :defvar-start
+                      :symbol-lifetime 1)
+
+    (syntax-add-match table
+                      (make-syntax-test
+                       `(:sequence
+                         (:greedy-repetition 0 1 ,+symbol-package-prefix+)
+                         (:alternation
+                          ,@(word-length-sort
+                             "block" "case" "ccase" "ecase" "typecase" "etypecase" "ctypecase" "catch"
+                             "cond" "destructuring-bind" "do" "do*" "dolist" "dotimes"
+                             "eval-when" "flet" "labels" "macrolet" "generic-flet" "generic-labels"
+                             "handler-case" "restart-case" "if" "lambda" "let" "let*" "handler-bind"
+                             "restart-bind" "locally" "multiple-value-bind" "multiple-value-call"
+                             "multiple-value-prog1" "prog" "prog*" "prog1" "prog2" "progn" "progv" "return"
+                             "return-from" "symbol-macrolet" "tagbody" "throw" "unless" "unwind-protect"
+                             "when" "with-accessors" "with-condition-restarts" "with-open-file"
+                             "with-output-to-string" "with-slots" "with-standard-io-syntax" "loop"
+                             "declare" "declaim" "proclaim")))
                        :word-p t)
                       :test-symbol :start-form
                       :attribute *syntax-keyword-attribute*)
@@ -212,11 +230,6 @@
                       (make-syntax-test "&[^() \\t]+"
                                         :word-p t)
                       :attribute *syntax-constant-attribute*)
-
-    (syntax-add-match table
-                      (make-syntax-test "(?:[^:*]*:)?\\*.*?\\*(?=(?:[() \\t]|$))"
-                                        :word-p t)
-                      :attribute *syntax-variable-attribute*)
 
     (syntax-add-match
      table

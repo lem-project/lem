@@ -1,6 +1,8 @@
 (in-package :lem)
 
-(export '(*inhibit-read-only*))
+(export '(*inhibit-read-only*
+          before-change-functions
+          after-change-functions))
 
 (defvar *inhibit-read-only* nil)
 

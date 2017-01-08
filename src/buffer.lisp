@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(current-buffer
+          buffer
           bufferp
           buffer-name
           buffer-modified-p

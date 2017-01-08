@@ -33,7 +33,6 @@
       (dolist (window (get-buffer-windows buffer))
         (with-current-window window
           (switch-to-buffer (get-next-buffer (current-buffer)))))
-      (run-hooks 'kill-buffer-hook buffer)
       (delete-buffer buffer)))
   t)
 

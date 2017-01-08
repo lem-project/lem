@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(*debug-p*
+          after-init-hook
           pop-up-backtrace
           with-editor
           lem))

@@ -1,6 +1,9 @@
 (in-package :lem)
 
-(export '(interactive-p
+(export '(pre-command-hook
+          post-command-hook
+          exit-editor-hook
+          interactive-p
           add-continue-flag
           continue-flag))
 

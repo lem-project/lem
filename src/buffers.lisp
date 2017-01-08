@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(buffer-list
+(export '(kill-buffer-hook
+          buffer-list
           ghost-buffer-p
           special-buffer-p
           filter-special-buffers
@@ -72,6 +73,7 @@
 
 (defun delete-buffer (buffer)
   (check-type buffer buffer)
+  (run-hooks 'kill-buffer-hook buffer)
   (call-buffer-delete-hooks buffer)
   (setf *buffer-list* (delete buffer (buffer-list))))
 

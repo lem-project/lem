@@ -1,6 +1,9 @@
 (in-package :lem)
 
-(export '(*find-directory-function*
+(export '(find-file-hook
+          before-save-hook
+          after-save-hook
+          *find-directory-function*
           expand-file-name
           insert-file-contents
           find-file-buffer

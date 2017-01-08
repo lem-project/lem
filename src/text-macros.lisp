@@ -2,7 +2,8 @@
 
 (export '(save-excursion
           with-point
-          with-buffer-read-only))
+          with-buffer-read-only
+          define-buffer-local-and-global-hook))
 
 (defmacro save-excursion (&body body)
   `(invoke-save-excursion (lambda () ,@body)))
@@ -32,3 +33,25 @@
        (setf (buffer-read-only-p ,gbuffer) ,flag)
        (unwind-protect (progn ,@body)
          (setf (buffer-read-only-p ,gbuffer) ,gtmp)))))
+
+(defmacro define-buffer-local-and-global-hook (name)
+  (let ((global-name (intern (format nil "*~A*" name)))
+        (keyword-name (intern (format nil "*~A*" name) :keyword)))
+    `(progn
+
+       (export ',global-name)
+
+       (defvar ,global-name nil)
+
+       (defun ,name (&key buffer-local-p)
+         (if buffer-local-p
+             (get-bvar ,keyword-name)
+             (or (get-bvar ,keyword-name)
+                 ,global-name)))
+
+       (defun (setf ,name) (value &key buffer-local-p)
+         (if buffer-local-p
+             (setf (get-bvar ,keyword-name) value)
+             (if (get-bvar ,keyword-name)
+                 (setf (get-bvar ,keyword-name) value)
+                 (setf ,global-name value)))))))

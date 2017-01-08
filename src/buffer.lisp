@@ -19,6 +19,7 @@
           buffer-filename
           buffer-directory
           buffer-unmark
+          buffer-mark-cancel
           buffer-undo-boundary
           get-bvar
           clear-buffer-variables

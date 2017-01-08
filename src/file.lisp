@@ -8,6 +8,7 @@
           insert-file-contents
           find-file-buffer
           write-to-file
+          update-changed-disk-date
           changed-disk-p))
 
 (defvar *find-directory-function* nil)

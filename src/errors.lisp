@@ -5,7 +5,8 @@
           editor-abort-depth
           read-only-error
           editor-error
-          editor-error-message))
+          editor-error-message
+          scan-error))
 
 (define-condition editor-condition (simple-error)
   ())
@@ -25,6 +26,7 @@
 
 (define-condition editor-error (editor-condition)
   ((message
+    :initform ""
     :initarg :message
     :reader editor-error-message))
   (:report
@@ -35,3 +37,6 @@
 
 (defun editor-error (message &rest args)
   (error 'editor-error :message (apply #'format nil message args)))
+
+(defun scan-error ()
+  (editor-error "Scan Error"))

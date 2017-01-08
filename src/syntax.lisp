@@ -24,6 +24,7 @@
           syntax-line-comment-p
           syntax-start-block-comment-p
           syntax-end-block-comment-p
+          syntax-scan-range
 
           skip-whitespace-forward
           skip-whitespace-backward
@@ -430,9 +431,6 @@
       (points-to-string start point))))
 
 
-(defun sexp-scan-error ()
-  (editor-error "scan error"))
-
 (defun %sexp-escape-p (point offset)
   (let ((count 0))
     (loop :with string := (line-string-at point)
@@ -600,11 +598,11 @@
                  (move-point point prev)
                  (if no-errors
                      (return nil)
-                     (sexp-scan-error)))))
+                     (scan-error)))))
             (t
              (dotimes (_ (- n) point)
                (unless (%skip-list-backward point depth)
                  (move-point point prev)
                  (if no-errors
                      (return nil)
-                     (sexp-scan-error)))))))))
+                     (scan-error)))))))))

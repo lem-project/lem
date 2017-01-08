@@ -19,7 +19,7 @@
             (move-point (current-point) prev)
             (if no-errors
                 nil
-                (sexp-scan-error)))))))
+                (scan-error)))))))
 
 (define-key *global-keymap* (kbd "C-M-b") 'backward-sexp)
 (define-command backward-sexp (&optional (n 1) no-errors) ("p")
@@ -58,7 +58,7 @@
       (if end
           (with-point ((end end :right-inserting))
             (kill-region (current-point) end))
-          (sexp-scan-error)))))
+          (scan-error)))))
 
 (define-key *global-keymap* (kbd "C-M-t") 'transpose-sexps)
 (define-command transpose-sexps () ()

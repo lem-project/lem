@@ -39,12 +39,3 @@
                        *auto-mode-alist*)))
     (when elt
       (change-buffer-mode buffer (cdr elt)))))
-
-(add-hook 'find-file-hook
-          (lambda (buffer)
-            (prepare-auto-mode buffer)
-            (scan-file-property-list buffer)))
-
-(add-hook 'before-save-hook
-          (lambda (buffer)
-            (scan-file-property-list buffer)))

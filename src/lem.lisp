@@ -61,20 +61,6 @@
      (setf (get-bvar 'already-visited) t)
      (syntax-scan-buffer (current-buffer)))))
 
-(pushnew #'(lambda (window)
-             (declare (ignore window))
-             (syntax-scan-current-view))
-         *window-scroll-functions*)
-
-(pushnew #'(lambda (window)
-             (declare (ignore window))
-             (syntax-scan-current-view))
-         *window-size-change-functions*)
-
-(pushnew #'(lambda (window)
-             (syntax-scan-window window))
-         *window-show-buffer-functions*)
-
 (defun ask-revert-buffer ()
   (if (minibuf-y-or-n-p (format nil
                                 "~A changed on disk; revert buffer?"
@@ -83,15 +69,6 @@
       (update-changed-disk-date (current-buffer)))
   (redraw-display)
   (message nil))
-
-(start-idle-timer "mainloop" 200 t
-                  (lambda ()
-                    (redraw-display)))
-
-(start-idle-timer "lazy-syntax-scan" 500 t
-                  (lambda ()
-                    (syntax-scan-current-view)
-                    (redraw-display)))
 
 (defmacro cockpit (&body body)
   `(cond (*debug-p*
@@ -107,9 +84,33 @@
     (syntax-scan-range (line-start start)
                        (line-end end))))
 
-(add-hook 'after-init-hook
-          (lambda ()
-            (pushnew 'syntax-scan-point (after-change-functions))))
+(defun setup ()
+  (start-idle-timer "mainloop" 200 t
+                    (lambda ()
+                      (redraw-display)))
+  (start-idle-timer "lazy-syntax-scan" 500 t
+                    (lambda ()
+                      (syntax-scan-current-view)
+                      (redraw-display)))
+  (pushnew #'(lambda (window)
+               (declare (ignore window))
+               (syntax-scan-current-view))
+           *window-scroll-functions*)
+  (pushnew #'(lambda (window)
+               (declare (ignore window))
+               (syntax-scan-current-view))
+           *window-size-change-functions*)
+  (pushnew #'(lambda (window)
+               (syntax-scan-window window))
+           *window-show-buffer-functions*)
+  (pushnew 'syntax-scan-point (after-change-functions))
+  (add-hook 'find-file-hook
+            (lambda (buffer)
+              (prepare-auto-mode buffer)
+              (scan-file-property-list buffer)))
+  (add-hook 'before-save-hook
+            (lambda (buffer)
+              (scan-file-property-list buffer))))
 
 (defun lem-mainloop ()
   (do-commandloop (:toplevel t)
@@ -151,6 +152,7 @@
 		   (display-init)
 		   (window-init)
 		   (minibuf-init)
+                   (setup)
 		   (run-hooks 'after-init-hook))))
 	     (funcall function)))
       (display-finalize))))

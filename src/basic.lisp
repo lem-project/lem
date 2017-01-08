@@ -54,7 +54,6 @@
           preceding-char
           char-after
           char-before
-          delete-while-whitespaces
           blank-line-p
           skip-chars-forward
           skip-chars-backward
@@ -461,13 +460,6 @@
 
 (defun char-before (&optional (point (current-point)))
   (character-at point -1))
-
-(defun delete-while-whitespaces (&optional ignore-newline-p use-kill-ring)
-  (let ((n (skip-chars-forward (current-point)
-                               (if ignore-newline-p
-                                   '(#\space #\tab)
-                                   '(#\space #\tab #\newline)))))
-    (delete-character (current-point) (- n) use-kill-ring)))
 
 (defun blank-line-p (point)
   (let ((string (line-string-at point))

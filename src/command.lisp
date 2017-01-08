@@ -300,6 +300,13 @@
          (window-recenter (current-window))
          t))))
 
+(defun delete-while-whitespaces (ignore-newline-p)
+  (let ((n (skip-chars-forward (current-point)
+                               (if ignore-newline-p
+                                   '(#\space #\tab)
+                                   '(#\space #\tab #\newline)))))
+    (delete-character (current-point) (- n))))
+
 (defun tab-line-aux (n make-space-str)
   (dotimes (_ n t)
     (let ((count (save-excursion
@@ -308,7 +315,7 @@
       (multiple-value-bind (div mod)
           (floor count (tab-size))
         (beginning-of-line)
-        (delete-while-whitespaces t nil)
+        (delete-while-whitespaces t)
         (insert-string (current-point) (funcall make-space-str div))
         (insert-character (current-point) #\space mod)))
     (unless (forward-line 1)
@@ -358,7 +365,7 @@
 (define-key *global-keymap* (kbd "M-Spc") 'just-one-space)
 (define-command just-one-space () ()
   (skip-chars-backward (current-point) '(#\space #\tab))
-  (delete-while-whitespaces t nil)
+  (delete-while-whitespaces t)
   (insert-character (current-point) #\space 1)
   t)
 

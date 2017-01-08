@@ -776,7 +776,7 @@
                           (redraw-display)))
                   defs)))
         (push (list (buffer-name (current-buffer))
-                    (point-to-offset (current-point)))
+                    (position-at-point (current-point)))
               *lisp-find-definition-stack*)
         (cond ((= 1 (length defs))
                (funcall (second (car defs))))

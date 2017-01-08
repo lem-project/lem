@@ -268,7 +268,7 @@
 
 (defun update (buffer)
   (with-buffer-read-only buffer nil
-    (let ((pos (point-to-offset (buffer-point buffer)))
+    (let ((pos (position-at-point (buffer-point buffer)))
           (dirname (probe-file (buffer-directory buffer))))
       (erase-buffer buffer)
       (with-point ((cur-point (buffer-point buffer) :left-inserting))

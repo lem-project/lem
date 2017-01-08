@@ -59,7 +59,7 @@
           skip-chars-forward
           skip-chars-backward
           current-column
-          point-to-offset
+          position-at-point
           move-to-position))
 
 (defun buffers-start (buffer)
@@ -389,7 +389,7 @@
           (t
            (line-end point)))))
 
-(defun point-to-offset (point)
+(defun position-at-point (point)
   (let ((offset (point-charpos point)))
     (do ((line (line-prev (point-line point)) (line-prev line)))
         ((null line) offset)

@@ -66,7 +66,7 @@
 (define-key *global-keymap* (kbd "C-r") 'isearch-backward)
 (define-command isearch-backward () ()
   (isearch-start
-   "ISearch:"
+   "ISearch: "
    (lambda (point str)
      (search-backward (or (character-offset point (length str))
                           point)

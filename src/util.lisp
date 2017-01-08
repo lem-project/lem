@@ -19,8 +19,7 @@
    :max-if
    :min-if
    :mkstr
-   :symb
-   :mklist))
+   :symb))
 (in-package :lem.util)
 
 (defun pdebug (x &optional (file "DEBUG"))
@@ -159,8 +158,3 @@
 
 (defun symb (&rest args)
   (values (intern (apply #'mkstr args))))
-
-(defun mklist (x)
-  (if (listp x)
-      x
-      (list x)))

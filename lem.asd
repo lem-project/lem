@@ -17,6 +17,7 @@
                :iterate
                :cl-charms
                :cl-fad
+               :alexandria
                #+sbcl :sb-posix
                #+sbcl :sb-introspect
                :swank

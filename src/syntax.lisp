@@ -308,10 +308,9 @@
      (with-point ((start point))
        (let ((point (syntax-test-match-p (syntax-region-start syntax) point)))
          (when point
-           (let ((end (syntax-scan-region syntax point)))
-             (assert (pointp end))
-             (put-text-property start end :attribute (syntax-attribute syntax))
-             end)))))
+           (syntax-scan-region syntax point)
+           (put-text-property start point :attribute (syntax-attribute syntax))
+           point))))
     (syntax-match
      (when (or (not (syntax-match-test-symbol syntax))
                (find (syntax-match-test-symbol syntax)
@@ -376,8 +375,8 @@
 (defun syntax-scan-ahead (point limit)
   (let ((*syntax-scan-limit* limit))
     (syntax-maybe-scan-region point)
-    (setf (line-%syntax-context (point-line point)) nil)
-    (loop :until (end-line-p point)
+    (loop :until (or (end-line-p point)
+                     (point<= *syntax-scan-limit* point))
           :do
           (skip-chars-forward point (lambda (c)
                                       (and (syntax-space-char-p c)

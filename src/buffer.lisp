@@ -7,6 +7,7 @@
           buffer-name
           buffer-modified-p
           buffer-read-only-p
+          buffer-syntax-table
           buffer-major-mode
           buffer-minor-modes
           buffer-mark-p
@@ -50,6 +51,10 @@
     :initform nil
     :initarg :read-only-p
     :accessor buffer-read-only-p)
+   (syntax-table
+    :initform (fundamental-syntax-table)
+    :initarg :syntax-table
+    :accessor buffer-syntax-table)
    (major-mode
     :initform nil
     :initarg :major-mode

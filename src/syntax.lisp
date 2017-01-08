@@ -3,6 +3,7 @@
 (export '(*enable-syntax-highlight*
           enable-syntax-highlight-p
           syntax-table
+          fundamental-syntax-table
           make-syntax-table
           make-syntax-test
           syntax-add-match
@@ -152,11 +153,16 @@
                                     :end end
                                     :attribute attribute)))))
 
+(defvar *fundamental-syntax-table* (make-syntax-table))
+
+(defun fundamental-syntax-table ()
+  *fundamental-syntax-table*)
+
 (defvar *current-syntax* nil)
 
 (defun current-syntax ()
   (or *current-syntax*
-      (mode-syntax-table (buffer-major-mode (current-buffer)))))
+      (buffer-syntax-table (current-buffer))))
 
 (defun syntax-word-char-p (c)
   (and (characterp c)
@@ -378,7 +384,7 @@
   (let ((buffer (point-buffer start)))
     (when (enable-syntax-highlight-p buffer)
       (let ((*current-syntax*
-             (mode-syntax-table (buffer-major-mode buffer)))
+             (buffer-syntax-table buffer))
             (*syntax-symbol-lifetimes*
              (let ((prev (line-prev (point-line start))))
                (and prev (line-%symbol-lifetimes prev)))))
@@ -569,9 +575,8 @@
 
 (defun form-offset (point n)
   (let ((*current-syntax*
-         (mode-syntax-table
-          (buffer-major-mode
-           (point-buffer point)))))
+         (buffer-syntax-table
+          (point-buffer point))))
     (with-point ((prev point))
       (cond ((plusp n)
              (dotimes (_ n point)
@@ -586,9 +591,8 @@
 
 (defun scan-lists (point n depth &optional no-errors)
   (let ((*current-syntax*
-         (mode-syntax-table
-          (buffer-major-mode
-           (point-buffer point)))))
+         (buffer-syntax-table
+          (point-buffer point))))
     (with-point ((prev point))
       (cond ((plusp n)
              (dotimes (_ n point)

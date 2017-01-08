@@ -67,11 +67,12 @@
                     (mode-syntax-table ',parent-mode)))
             (t
              `(setf (mode-syntax-table ',major-mode)
-                    (make-syntax-table))))
+                    (fundamental-syntax-table))))
      (define-command ,major-mode () ()
        (clear-buffer-variables)
        ,(when parent-mode `(,parent-mode))
        (setf (buffer-major-mode (current-buffer)) ',major-mode)
+       (setf (buffer-syntax-table (current-buffer)) (mode-syntax-table ',major-mode))
        (run-hooks ',(alexandria:symbolicate major-mode "-HOOK"))
        ,@body)))
 

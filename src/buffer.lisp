@@ -362,15 +362,3 @@
 (defun buffer-add-delete-hook (buffer fn)
   (push fn (buffer-delete-hooks buffer))
   fn)
-
-
-(defun buffer-test (buffer)
-  (pdebug buffer)
-  (do ((line (point-line (buffer-start-point buffer))
-             (line-next line))
-       (num-points 0))
-      ((null line)
-       (pdebug (list :num-points num-points)))
-    (incf num-points (length (line-points line)))
-    ;(pdebug (list line (line-points line)))
-    ))

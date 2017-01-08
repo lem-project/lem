@@ -47,6 +47,7 @@
                              (:file "kill")
                              (:file "basic")
                              (:file "file")
+                             (:file "file-ext")
                              (:file "search")
                              (:file "indent")
                              (:file "attribute")

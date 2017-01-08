@@ -1,7 +1,6 @@
 (in-package :lem)
 
 (export '(*find-directory-function*
-          *auto-mode-alist*
           expand-file-name
           insert-file-contents
           find-file-buffer
@@ -9,7 +8,6 @@
           changed-disk-p))
 
 (defvar *find-directory-function* nil)
-(defvar *auto-mode-alist* nil)
 
 (defun parse-pathname (pathname)
   (let ((path))
@@ -93,42 +91,6 @@
             (cons external-format end-of-line))
       point)))
 
-(defun prepare-auto-mode (buffer)
-  (let* ((filename (file-namestring (buffer-filename buffer)))
-         (elt (find-if (lambda (elt)
-                         (ppcre:scan (car elt) filename))
-                       *auto-mode-alist*)))
-    (when elt
-      (change-buffer-mode buffer (cdr elt)))))
-
-(defun scan-line-property-list (buffer str)
-  (ppcre:do-register-groups (var val)
-      ("([a-zA-Z0-9-_]+)\\s*:\\s*([^ ;]+);?" str)
-    (cond ((string= (string-downcase var) "mode")
-           (let ((mode (find-mode-from-name val)))
-             (when mode
-               (change-buffer-mode buffer mode))))
-          (t
-           (setf (get-bvar :file-property-list :buffer buffer)
-                 (cons (cons (string-downcase var) val)
-                       (get-bvar :file-property-list :buffer buffer)))))))
-
-(defun scan-file-property-list (buffer)
-  (with-point ((cur-point (buffer-point buffer)))
-    (buffer-start cur-point)
-    (when (ppcre:scan "^#!" (line-string-at cur-point))
-      (line-offset cur-point 1))
-    (loop :until (end-line-p cur-point)
-       :for string := (line-string-at cur-point)
-       :do (ppcre:register-groups-bind (result)
-	       ("-\\*-(.*)-\\*-" string)
-	     (when result
-	       (scan-line-property-list buffer result)
-	       (return)))
-       :do (if (string= "" (string-trim '(#\space #\tab) string))
-	       (line-offset cur-point 1)
-	       (return)))))
-
 (defun find-file-buffer (filename)
   (when (pathnamep filename)
     (setf filename (namestring filename)))
@@ -152,8 +114,6 @@
            (buffer-start (buffer-point buffer))
            (buffer-enable-undo buffer)
            (update-changed-disk-date buffer)
-           (prepare-auto-mode buffer)
-           (scan-file-property-list buffer)
            (save-excursion
              (setf (current-buffer) buffer)
              (run-hooks 'find-file-hook buffer))
@@ -199,7 +159,6 @@
          (f out :lf))))))
 
 (defun write-to-file (buffer filename)
-  (scan-file-property-list buffer)
   (run-hooks 'before-save-hook buffer)
   (write-to-file-1 buffer filename)
   (buffer-unmark buffer)

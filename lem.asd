@@ -29,6 +29,7 @@
   :components ((:module "src"
                 :serial t
                 :components ((:file "util")
+                             (:file "history")
                              (:file "term")
                              (:file "package")
                              (:file "key")

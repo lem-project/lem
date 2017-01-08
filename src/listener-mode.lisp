@@ -1,6 +1,6 @@
 (in-package :cl-user)
 (defpackage :lem.listener-mode
-  (:use :cl :lem :lem.util)
+  (:use :cl :lem)
   (:export :listener-mode
            :*listener-mode-keymap*
            :listener-start
@@ -27,7 +27,7 @@
   (setf (get-bvar :enable-syntax-highlight) nil)
   (unless (%listener-history)
     (setf (%listener-history)
-          (make-history))))
+          (lem.history:make-history))))
 
 (defun listener-start-point ()
   (%listener-point))
@@ -73,7 +73,7 @@
             (listener-reset-prompt)
             (return-from listener-return t))
           (let ((str (points-to-string start point)))
-            (add-history (%listener-history) str)
+            (lem.history:add-history (%listener-history) str)
             (buffer-end point)
             (insert-character point #\newline)
             (listener-update-point)
@@ -83,7 +83,7 @@
 (define-key *listener-mode-keymap* (kbd "M-p") 'listener-prev-input)
 (define-command listener-prev-input () ()
   (multiple-value-bind (str win)
-      (prev-history (%listener-history))
+      (lem.history:prev-history (%listener-history))
     (let ((start (listener-start-point))
           (end (buffers-end (current-buffer))))
       (save-excursion
@@ -94,7 +94,7 @@
 (define-key *listener-mode-keymap* (kbd "M-n") 'listener-next-input)
 (define-command listener-next-input () ()
   (multiple-value-bind (str win)
-      (next-history (%listener-history))
+      (lem.history:next-history (%listener-history))
     (let ((start (listener-start-point))
           (end (buffers-end (current-buffer))))
       (save-excursion

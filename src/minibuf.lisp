@@ -154,14 +154,14 @@
 
 (define-command minibuf-read-line-prev-history () ()
   (multiple-value-bind (str win)
-      (prev-history *minibuf-read-line-history*)
+      (lem.history:prev-history *minibuf-read-line-history*)
     (when win
       (minibuffer-clear-input)
       (insert-string (current-point) str))))
 
 (define-command minibuf-read-line-next-history () ()
   (multiple-value-bind (str win)
-      (next-history *minibuf-read-line-history*)
+      (lem.history:next-history *minibuf-read-line-history*)
     (when win
       (minibuffer-clear-input)
       (insert-string (current-point) str))))
@@ -196,7 +196,7 @@
             (editor-error (c)
                           (message (editor-error-message c)))))))
     (let ((str (get-minibuffer-string)))
-      (add-history *minibuf-read-line-history* str)
+      (lem.history:add-history *minibuf-read-line-history* str)
       str)))
 
 (defun prompt-for-line (prompt initial comp-f existing-p history-name)
@@ -206,7 +206,7 @@
         (*minibuf-read-line-history* (let ((table (gethash history-name *minibuf-read-line-history-table*)))
                                        (or table
                                            (setf (gethash history-name *minibuf-read-line-history-table*)
-                                                 (make-history))))))
+                                                 (lem.history:make-history))))))
     (handler-case
         (call-with-allow-interrupt
          nil

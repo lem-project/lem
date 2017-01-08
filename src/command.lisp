@@ -50,6 +50,11 @@
           indent-region
           delete-trailing-whitespace))
 
+(defun delete-character-with-killring (point n killp)
+  (let ((string (delete-character point n)))
+    (when (and killp string) (kill-push string))
+    t))
+
 (define-key *global-keymap* (kbd "C-x C-c") 'exit-lem)
 (define-command exit-lem () ()
   (when (or (not (any-modified-buffer-p))
@@ -125,7 +130,7 @@
       (cond ((char= c C-m)
              (insert-character (current-point) #\newline 1))
             ((char= c C-d)
-             (delete-character (current-point) 1 nil))
+             (delete-character (current-point) 1))
             (t
              (insert-character (current-point) c 1))))))
 
@@ -147,9 +152,9 @@
   (when n
     (unless (continue-flag :kill)
       (kill-ring-new)))
-  (delete-character (current-point)
-		    (or n 1)
-		    (if n t nil)))
+  (delete-character-with-killring (current-point)
+                                  (or n 1)
+                                  (if n t nil)))
 
 (define-key *global-keymap* (kbd "C-h") 'delete-previous-char)
 (define-key *global-keymap* (kbd "[backspace]") 'delete-previous-char)
@@ -172,7 +177,7 @@
     (rotatef start end))
   (unless (continue-flag :kill)
     (kill-ring-new))
-  (delete-character start (count-characters start end) t)
+  (delete-character-with-killring start (count-characters start end) t)
   t)
 
 (define-key *global-keymap* (kbd "C-k") 'kill-line)
@@ -501,7 +506,7 @@
 	    (let ((c (preceding-char)))
 	      (if (or (equal c #\space)
 		      (equal c #\tab))
-		  (delete-character (current-point) -1 nil)
+		  (delete-character (current-point) -1)
 		  (return))))
 	 (forward-line 1))
     (end-of-buffer)

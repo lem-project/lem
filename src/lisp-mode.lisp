@@ -1055,7 +1055,7 @@
      (insert-character point #\))
      (incf count)
      (unless (form-offset (copy-point point :temporary) -1)
-       (delete-character point (- count) nil)
+       (delete-character point (- count))
        (return (= 1 count)))))
 
 (defun lisp-repl-confirm (point string)

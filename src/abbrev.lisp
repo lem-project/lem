@@ -71,7 +71,7 @@
           (t
            (let* ((src-word (preceding-word point))
                   (words (scan-all-buffer-words src-word)))
-             (delete-character point (- (length src-word)) nil)
+             (delete-character point (- (length src-word)))
              (setf *rest-words* (rest words))
              (setf *all-words* words)
              (setf *start-charpos* (point-charpos point))

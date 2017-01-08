@@ -259,16 +259,14 @@
                 :do (put-text-property start-point end-point k v)))))
   t)
 
-(defun delete-character (point &optional (n 1) killp)
+(defun delete-character (point &optional (n 1))
   (when (minusp n)
     (unless (character-offset point n)
       (return-from delete-character nil))
     (setf n (- n)))
   (unless (end-buffer-p point)
     (let ((string (delete-char/point point n)))
-      (when killp
-        (kill-push string))
-      t)))
+      string)))
 
 (defun erase-buffer (&optional (buffer (current-buffer)))
   (buffer-start (buffer-point buffer))

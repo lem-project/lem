@@ -73,26 +73,27 @@
 (defun insert-file-contents (point filename)
   (multiple-value-bind (external-format end-of-line)
       (detect-external-format-from-file filename)
-    (with-open-stream (output (make-buffer-output-stream point nil))
+    (with-point ((point point :left-inserting))
       (with-open-file (in filename :external-format external-format)
         (loop
-	   (multiple-value-bind (str eof-p)
-	       (read-line in nil)
-	     (cond
-	       (eof-p
-		(when str
-		  (write-string str output))
-		(return))
-	       (t
-		(let ((end nil))
-		  #+sbcl
-		  (when (and (eq end-of-line :crlf)
-			     (< 0 (length str)))
-		    (setf end (1- (length str))))
-		  (write-line str output :end end)))))))
-      (setf (buffer-external-format (point-buffer point))
-            (cons external-format end-of-line))
-      point)))
+          (multiple-value-bind (str eof-p)
+              (read-line in nil)
+            (cond
+              (eof-p
+               (when str
+                 (insert-string point str))
+               (return))
+              (t
+               (let ((end nil))
+                 #+sbcl
+                 (when (and (eq end-of-line :crlf)
+                            (< 0 (length str)))
+                   (setf end (1- (length str))))
+                 (insert-string point
+                                (if end
+                                    (subseq str 0 end)
+                                    str))
+                 (insert-character point #\newline))))))))))
 
 (defun find-file-buffer (filename)
   (when (pathnamep filename)
@@ -124,25 +125,26 @@
 
 (defun write-to-file-1 (buffer filename)
   (flet ((f (out end-of-line)
-           (with-open-stream (in (make-buffer-input-stream (buffers-start buffer)))
-             (loop
-               (multiple-value-bind (str eof-p)
-                   (read-line in nil)
-                 (unless str (return))
-                 (princ str out)
-                 (unless eof-p
-                   #+sbcl
-                   (ecase end-of-line
-                     ((:crlf)
-                      (princ #\return out)
-                      (princ #\newline out))
-                     ((:lf)
-                      (princ #\newline out))
-                     ((:cr)
-                      (princ #\return out)))
-                   #-sbcl
-                   (princ #\newline out)
-                   ))))))
+           (with-point ((point (buffers-start buffer)))
+             (loop :for eof-p := (end-buffer-p point)
+                   :for str := (line-string-at point)
+                   :do
+                   (princ str out)
+                   (unless eof-p
+                     #+sbcl
+                     (ecase end-of-line
+                       ((:crlf)
+                        (princ #\return out)
+                        (princ #\newline out))
+                       ((:lf)
+                        (princ #\newline out))
+                       ((:cr)
+                        (princ #\return out)))
+                     #-sbcl
+                     (princ #\newline out)
+                     )
+                   (unless (line-offset point 1)
+                     (return))))))
     (cond
       ((buffer-external-format buffer)
        (with-open-file (out filename

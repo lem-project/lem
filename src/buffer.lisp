@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(current-buffer
+          make-buffer
           buffer
           bufferp
           buffer-name
@@ -139,6 +140,8 @@
 (defvar *undo-limit* 100000)
 
 (defun make-buffer (name &key filename read-only-p (enable-undo-p t))
+  (when (get-buffer name)
+    (error "buffer already exists: ~A" name))
   (let ((buffer (make-instance 'buffer
                                :name name
                                :%filename filename

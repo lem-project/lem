@@ -11,7 +11,8 @@
           uniq-buffer-name
           update-prev-buffer
           bury-buffer
-          get-next-buffer))
+          get-next-buffer
+          delete-buffer))
 
 (defvar *buffer-list* nil)
 

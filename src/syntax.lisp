@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(*enable-syntax-highlight*
+          enable-syntax-highlight-p
           syntax-table
           make-syntax-table
           make-syntax-test

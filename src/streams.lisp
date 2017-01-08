@@ -111,12 +111,11 @@
 
 (defmethod trivial-gray-streams:stream-write-char ((stream buffer-output-stream) char)
   (prog1 char
-    (insert-char/point (buffer-stream-point stream)
-		       char)))
+    (insert-character (buffer-stream-point stream) char 1)))
 
 (defun %write-string-to-buffer-stream (stream string start end &key)
-  (insert-string/point (buffer-stream-point stream)
-		       (subseq string start end))
+  (insert-string (buffer-stream-point stream)
+                 (subseq string start end))
   string)
 
 (defun %write-octets-to-buffer-stream (stream octets start end &key)
@@ -141,9 +140,9 @@
   (%write-string-to-buffer-stream stream string start end))
 
 (defmethod trivial-gray-streams:stream-terpri ((stream buffer-output-stream))
-  (prog1 (insert-char/point (buffer-stream-point stream)
-			    #\newline)
-    (buffer-output-stream-refresh stream)))
+  (insert-character (buffer-stream-point stream) #\newline 1)
+  (buffer-output-stream-refresh stream)
+  #\newline)
 
 (defmethod trivial-gray-streams:stream-finish-output ((stream buffer-output-stream))
   (buffer-output-stream-refresh stream))

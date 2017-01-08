@@ -24,6 +24,7 @@
           region-beginning
           region-end
           apply-region-lines
+          map-region
           points-to-string
           count-characters
           delete-between-points

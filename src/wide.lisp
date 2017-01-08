@@ -60,7 +60,7 @@
   (declare (character c) (fixnum w))
   (cond ((char= c #\tab)
          (+ (* (floor w (tab-size)) (tab-size)) (tab-size)))
-        ((or (wide-char-p c) (ctrl-p c))
+        ((or (wide-char-p c) (char<= #.(code-char 0) c #.(code-char 26)))
          (+ w 2))
         (t
          (+ w 1))))

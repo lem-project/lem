@@ -38,10 +38,10 @@
   (let ((buffer (current-buffer)))
     (cond
       ((and (or arg (buffer-modified-p buffer))
-            (buffer-have-file-p buffer))
+            (buffer-filename buffer))
        (write-to-file buffer (buffer-filename buffer))
        (message "Wrote ~A" (buffer-filename)))
-      ((not (buffer-have-file-p buffer))
+      ((not (buffer-filename buffer))
        (message "No file name")))))
 
 (define-key *global-keymap* (kbd "C-x C-w") 'write-file)
@@ -61,7 +61,7 @@
   (let ((prev-buffer (current-buffer)))
     (dolist (buffer (buffer-list))
       (when (and (buffer-modified-p buffer)
-                 (buffer-have-file-p buffer))
+                 (buffer-filename buffer))
         (switch-to-buffer buffer nil)
         (when (or save-silently-p
                   (progn

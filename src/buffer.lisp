@@ -297,10 +297,6 @@
     (editor-error "Buffer name `~A' is in use" name))
   (setf (buffer-name buffer) name))
 
-(defun buffer-have-file-p (buffer)
-  (and (buffer-filename buffer)
-       (uiop:file-pathname-p (buffer-filename buffer))))
-
 (defun buffer-undo-1 (point)
   (let* ((buffer (point-buffer point))
          (elt (pop (buffer-undo-stack buffer))))

@@ -179,6 +179,7 @@
         (file-write-date* buffer)))
 
 (defun changed-disk-p (buffer)
-  (and (buffer-have-file-p buffer)
+  (and (buffer-filename buffer)
+       (uiop:file-exists-p (buffer-filename buffer))
        (not (eql (buffer-last-write-date buffer)
                  (file-write-date* buffer)))))

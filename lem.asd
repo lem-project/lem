@@ -32,6 +32,7 @@
                              (:file "package")
                              (:file "key")
                              (:file "errors")
+                             (:file "text-macros")
                              (:file "macros")
                              (:file "wide")
                              (:file "hooks")

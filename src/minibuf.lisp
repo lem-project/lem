@@ -24,7 +24,7 @@
 
 (defvar *minibuf-window*)
 (defvar *minibuffer-calls-window*)
-(defvar *minibuffer-start-point*)
+(defvar *minibuffer-start-charpos*)
 (defvar *minibuffer-prompt-attribute* (make-attribute "blue" nil :bold-p t))
 
 (defun minibuffer-window () *minibuf-window*)
@@ -124,12 +124,18 @@
       (minibuffer-window)
       nil))
 
+(defun minibuffer-start-point ()
+  (character-offset
+   (copy-point (buffers-start (minibuffer))
+               :temporary)
+   *minibuffer-start-charpos*))
+
 (defun get-minibuffer-string ()
-  (points-to-string *minibuffer-start-point*
+  (points-to-string (minibuffer-start-point)
                     (buffers-end (minibuffer))))
 
 (defun minibuffer-clear-input ()
-  (delete-between-points *minibuffer-start-point*
+  (delete-between-points (minibuffer-start-point)
                          (buffers-end (minibuffer))))
 
 (define-command minibuf-read-line-confirm () ()
@@ -226,7 +232,7 @@
                                 :read-only t
                                 :field t)
                  (character-offset (current-point) (length prompt)))
-               (with-point ((*minibuffer-start-point* (current-point) :right-inserting))
+               (let ((*minibuffer-start-charpos* (point-charpos (current-point))))
                  (when initial
                    (insert-string (current-point) initial))
                  (unwind-protect (call-with-save-windows

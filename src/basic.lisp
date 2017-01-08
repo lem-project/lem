@@ -59,7 +59,8 @@
           skip-chars-forward
           skip-chars-backward
           current-column
-          point-to-offset))
+          point-to-offset
+          move-to-position))
 
 (defun buffers-start (buffer)
   (buffer-start-point buffer))
@@ -394,8 +395,8 @@
         ((null line) offset)
       (incf offset (1+ (line-length line))))))
 
-(defun go-to-offset (point offset)
-  (character-offset (buffer-start point) offset))
+(defun move-to-position (point position)
+  (character-offset (buffer-start point) position))
 
 
 (defun bolp ()

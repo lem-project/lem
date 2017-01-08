@@ -196,7 +196,7 @@
     (prog1 (call-next-method)
       (push-undo (point-buffer point)
                  (lambda (cur-point)
-                   (go-to-offset cur-point offset)
+                   (move-to-position cur-point offset)
                    (delete-char/point cur-point 1)
                    t)))))
 
@@ -205,7 +205,7 @@
     (prog1 (call-next-method)
       (push-undo (point-buffer point)
                  (lambda (cur-point)
-                   (go-to-offset cur-point offset)
+                   (move-to-position cur-point offset)
                    (delete-char/point cur-point (length string))
                    t)))))
 
@@ -214,7 +214,7 @@
         (string (call-next-method)))
     (push-undo (point-buffer point)
                (lambda (cur-point)
-                 (go-to-offset cur-point offset)
+                 (move-to-position cur-point offset)
                  (insert-string/point cur-point string)
                  t))
     string))

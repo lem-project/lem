@@ -810,8 +810,7 @@
     (destructuring-bind (buffer-name offset) elt
       (let ((buffer (get-buffer-create buffer-name)))
         (switch-to-buffer buffer)
-        (character-offset (buffer-start (buffer-point buffer))
-                          offset)))))
+        (move-to-position (current-point) offset)))))
 
 (defun analyze-symbol (str)
   (let (package

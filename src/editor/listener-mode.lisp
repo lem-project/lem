@@ -4,6 +4,7 @@
   (:export :listener-mode
            :*listener-mode-keymap*
            :listener-start
+           :listener-update-point
            :listener-reset-prompt
            :listener-return
            :listener-prev-input

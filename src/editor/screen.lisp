@@ -298,36 +298,36 @@
       (delete-overlay mark-overlay))))
 
 (defun screen-display-line-wrapping (screen view-charpos
-				     visual-cursor-x visual-cursor-y
-				     point-x point-y str/attributes)
+                                            visual-cursor-x visual-cursor-y
+                                            point-x point-y str/attributes)
   (when (and (< 0 view-charpos) (= point-y 0))
     (setf str/attributes
           (cons (subseq (car str/attributes) view-charpos)
                 (lem-core::subseq-elements (cdr str/attributes)
-                                      view-charpos
-                                      (length (car str/attributes))))))
+                                           view-charpos
+                                           (length (car str/attributes))))))
   (when (= point-y visual-cursor-y)
     (setf visual-cursor-x (string-width (car str/attributes) 0 point-x)))
   (let ((start 0))
     (loop :for i := (wide-index (car str/attributes)
                                 (1- (screen-width screen))
                                 :start start)
-       :while (< point-y (screen-height screen))
-       :do (cond ((null i)
-		  (disp-print-line screen point-y str/attributes t :string-start start)
-		  (return))
-		 (t
-		  (cond ((< point-y visual-cursor-y)
-			 (incf visual-cursor-y))
-			((= point-y visual-cursor-y)
-			 (let ((len (string-width (car str/attributes) start i)))
-			   (when (<= len visual-cursor-x)
-			     (decf visual-cursor-x len)
-			     (incf visual-cursor-y)))))
-		  (disp-print-line screen point-y str/attributes t :string-start start :string-end i)
-		  (disp-print-line screen point-y (cons "!" nil) t :start-x (1- (screen-width screen)))
-		  (incf point-y)
-		  (setf start i))))
+          :while (< point-y (screen-height screen))
+          :do (cond ((null i)
+                     (disp-print-line screen point-y str/attributes t :string-start start)
+                     (return))
+                    (t
+                     (cond ((< point-y visual-cursor-y)
+                            (incf visual-cursor-y))
+                           ((= point-y visual-cursor-y)
+                            (let ((len (string-width (car str/attributes) start i)))
+                              (when (<= len visual-cursor-x)
+                                (decf visual-cursor-x len)
+                                (incf visual-cursor-y)))))
+                     (disp-print-line screen point-y str/attributes t :string-start start :string-end i)
+                     (disp-print-line screen point-y (cons "!" nil) t :start-x (1- (screen-width screen)))
+                     (incf point-y)
+                     (setf start i))))
     (values visual-cursor-x visual-cursor-y point-y)))
 
 (defun screen-display-line (screen view-charpos

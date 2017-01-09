@@ -120,7 +120,7 @@
   t)
 
 (define-command rename-buffer (name) ("sRename buffer: ")
-  (lem-core::buffer-rename (current-buffer) name)
+  (buffer-rename (current-buffer) name)
   t)
 
 (define-key *global-keymap* (kbd "C-q") 'quoted-insert)
@@ -410,13 +410,13 @@
 (define-key *global-keymap* (kbd "C-\\") 'undo)
 (define-command undo (n) ("p")
   (dotimes (_ n t)
-    (unless (lem-core::buffer-undo (current-point))
+    (unless (buffer-undo (current-point))
       (editor-error "Undo Error"))))
 
 (define-key *global-keymap* (kbd "C-_") 'redo)
 (define-command redo (n) ("p")
   (dotimes (_ n t)
-    (unless (lem-core::buffer-redo (current-point))
+    (unless (buffer-redo (current-point))
       (editor-error "Redo Error"))))
 
 (define-key *global-keymap* (kbd "C-@") 'mark-set)

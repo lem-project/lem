@@ -23,10 +23,16 @@
           buffer-directory
           buffer-unmark
           buffer-mark-cancel
+          buffer-rename
+          buffer-undo
+          buffer-redo
           buffer-undo-boundary
           get-bvar
           clear-buffer-variables
           buffer-add-delete-hook))
+
+(export '(%buffer-keep-binfo
+          %buffer-clear-keep-binfo))
 
 (defclass buffer ()
   ((name
@@ -87,7 +93,7 @@
    (keep-binfo
     :initform nil
     :initarg :keep-binfo
-    :accessor buffer-keep-binfo)
+    :accessor %buffer-keep-binfo)
    (nlines
     :initform nil
     :initarg :nlines
@@ -157,7 +163,7 @@
                                :major-mode 'fundamental-mode)))
     (setf (buffer-mark-p buffer) nil)
     (setf (buffer-mark buffer) nil)
-    (setf (buffer-keep-binfo buffer) nil)
+    (setf (%buffer-keep-binfo buffer) nil)
     (setf (buffer-nlines buffer) 1)
     (setf (buffer-%modified-p buffer) 0)
     (setf (buffer-undo-size buffer) 0)
@@ -196,16 +202,16 @@
           (buffer-name buffer)
           (buffer-filename buffer)))
 
-(defun buffer-clear-keep-binfo (buffer)
-  (when (buffer-keep-binfo buffer)
+(defun %buffer-clear-keep-binfo (buffer)
+  (when (%buffer-keep-binfo buffer)
     (destructuring-bind (view-point point)
-        (buffer-keep-binfo buffer)
+        (%buffer-keep-binfo buffer)
       (delete-point view-point)
       (delete-point point))))
 
 (defun call-buffer-delete-hooks (buffer)
   (mapc #'funcall (buffer-delete-hooks buffer))
-  (buffer-clear-keep-binfo buffer)
+  (%buffer-clear-keep-binfo buffer)
   (delete-point (buffer-point buffer)))
 
 (defun buffer-enable-undo (buffer)

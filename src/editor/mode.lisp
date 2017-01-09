@@ -67,7 +67,7 @@
                     (mode-syntax-table ',parent-mode)))
             (t
              `(setf (mode-syntax-table ',major-mode)
-                    (lem-core::fundamental-syntax-table))))
+                    (fundamental-syntax-table))))
      (define-command ,major-mode () ()
        (clear-buffer-variables)
        ,(when parent-mode `(,parent-mode))

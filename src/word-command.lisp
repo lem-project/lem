@@ -108,7 +108,7 @@
     (let ((c (character-at point)))
       (delete-character point)
       (insert-character point (funcall first-case c))
-      (with-point ((end (word-offset (copy-point point :temporary) 1) :right-inserting))
+      (with-point ((end (word-offset (copy-point point :temporary) 1) :left-inserting))
         (case-region-aux point
                          end
                          rest-case
@@ -133,11 +133,12 @@
         (dir (if (plusp n) 1 -1)))
     (dotimes (_ (abs n))
       (loop :while (blank-line-p point)
-	 :do (unless (line-offset point dir)
-	       (return-from forward-paragraph)))
+            :do (unless (line-offset point dir)
+                  (return-from forward-paragraph)))
       (loop :until (blank-line-p point)
-	 :do (unless (line-offset point dir)
-	       (return-from forward-paragraph))))))
+            :do (unless (line-offset point dir)
+                  (buffer-end point)
+                  (return-from forward-paragraph))))))
 
 (define-key *global-keymap* (kbd "M-{") 'backward-paragraph)
 (define-command backward-paragraph (&optional (n 1)) ("p")

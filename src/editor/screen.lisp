@@ -143,7 +143,7 @@
                         (if (null string-end)
                             nil
                             (min (length str) string-end))))
-      (setf attributes (lem-core::subseq-elements attributes string-start string-end)))
+      (setf attributes (lem-base::subseq-elements attributes string-start string-end)))
     (let ((prev-end 0)
           (x start-x))
       (loop :for (start end attr) :in attributes
@@ -210,7 +210,7 @@
     (destructuring-bind (string . attributes)
         (aref (screen-lines screen) screen-row)
       (setf (cdr (aref (screen-lines screen) screen-row))
-            (lem-core::put-elements attributes
+            (lem-base::put-elements attributes
                                start-charpos
                                (or end-charpos
                                    (length string))
@@ -282,17 +282,17 @@
   (with-point ((point view-point))
     (loop :for i :from 0 :below (screen-height screen)
           :do
-          (let ((line (lem-core::point-line point)))
+          (let ((line (lem-base::point-line point)))
             (setf (aref (screen-lines screen) i)
-                  (lem-core::line-string/attributes line)))
+                  (lem-base::line-string/attributes line)))
           (unless (line-offset point 1)
             (fill (screen-lines screen) nil :start (1+ i))
             (return))))
   (let ((mark-overlay (maybe-make-mark-overlay buffer)))
     (disp-set-overlays screen
                        (if mark-overlay
-                           (cons mark-overlay (lem-core::buffer-overlays buffer))
-                           (lem-core::buffer-overlays buffer))
+                           (cons mark-overlay (lem-base::buffer-overlays buffer))
+                           (lem-base::buffer-overlays buffer))
                        view-point)
     (when mark-overlay
       (delete-overlay mark-overlay))))
@@ -303,7 +303,7 @@
   (when (and (< 0 view-charpos) (= point-y 0))
     (setf str/attributes
           (cons (subseq (car str/attributes) view-charpos)
-                (lem-core::subseq-elements (cdr str/attributes)
+                (lem-base::subseq-elements (cdr str/attributes)
                                            view-charpos
                                            (length (car str/attributes))))))
   (when (= point-y visual-cursor-y)

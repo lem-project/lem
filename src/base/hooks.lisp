@@ -1,4 +1,4 @@
-(in-package :lem-core)
+(in-package :lem-base)
 
 (export '(run-hooks add-hook))
 

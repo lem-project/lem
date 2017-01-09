@@ -1,10 +1,10 @@
-(asdf:defsystem lem-core
+(asdf:defsystem lem-base
   :depends-on (:uiop
                :iterate
                :alexandria
                :cl-ppcre
                :babel)
-  :components ((:module "src/core"
+  :components ((:module "src/base"
                 :serial t
                 :components ((:file "package")
                              (:file "errors")

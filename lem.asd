@@ -1,6 +1,6 @@
 (cl:in-package :cl-user)
 
-(load "lem-core.asd")
+(load "lem-base.asd")
 
 #-asdf(require :asdf)
 
@@ -26,7 +26,7 @@
                :cl-ppcre
                #+lem-use-inquisitor :inquisitor
                :babel
-               :lem-core)
+               :lem-base)
   :serial t
   :components ((:module "src/editor"
                 :serial t

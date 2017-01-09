@@ -10,7 +10,7 @@
                              (:file "errors")
                              (:file "attribute")
                              (:file "wide")
-                             (:file "text-macros")
+                             (:file "macros")
                              (:file "hooks")
                              (:file "line")
                              (:file "buffer")

@@ -11,7 +11,7 @@
 (define-key *typeout-mode-keymap* (kbd "q") 'dismiss-typeout-window)
 
 (define-command dismiss-typeout-window () ()
-  (quit-window (current-window) t))
+  (quit-window (current-window) nil))
 
 (defun pop-up-typeout-window (buffer fn &key focus erase)
   (let ((window (display-buffer buffer)))

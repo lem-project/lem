@@ -28,7 +28,7 @@
                :babel
                :lem-core)
   :serial t
-  :components ((:module "src"
+  :components ((:module "src/editor"
                 :serial t
                 :components ((:file "util")
                              (:file "history")

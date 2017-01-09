@@ -31,9 +31,9 @@
 
 (defvar *window-sufficient-width* 150)
 (defvar *scroll-recenter-p* t)
-(defvar *window-scroll-functions* nil)
-(defvar *window-size-change-functions* nil)
-(defvar *window-show-buffer-functions* nil)
+(defvar *window-scroll-functions* '())
+(defvar *window-size-change-functions* '())
+(defvar *window-show-buffer-functions* '())
 
 (defvar *modified-window-tree-p* nil)
 
@@ -383,8 +383,7 @@
     (if (plusp n)
         (window-scroll-down window)
         (window-scroll-up window)))
-  (dolist (fun *window-scroll-functions*)
-    (funcall fun window)))
+  (run-hooks *window-scroll-functions* window))
 
 (defun window-wrapping-offset (window)
   (unless (buffer-truncate-lines (window-buffer window))
@@ -515,8 +514,7 @@
   (window-set-size window
                    (+ (window-%width window) dw)
                    (+ (window-%height window) dh))
-  (dolist (fun *window-size-change-functions*)
-    (funcall fun window)))
+  (run-hooks *window-size-change-functions* window))
 
 (defun adjust-size-windows-after-delete-window (deleted-window
                                                 window-tree
@@ -744,8 +742,7 @@
 (defun window-prompt-display (window)
   (when (window-parameter window 'change-buffer)
     (setf (window-parameter window 'change-buffer) nil)
-    (dolist (fun *window-show-buffer-functions*)
-      (funcall fun window))))
+    (run-hooks *window-show-buffer-functions* window)))
 
 (defun switch-to-buffer (buffer &optional (update-prev-buffer-p t))
   (check-type buffer buffer)

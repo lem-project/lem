@@ -94,17 +94,17 @@
                     (lambda ()
                       (syntax-scan-current-view)
                       (redraw-display)))
-  (pushnew #'(lambda (window)
-               (declare (ignore window))
-               (syntax-scan-current-view))
-           *window-scroll-functions*)
-  (pushnew #'(lambda (window)
-               (declare (ignore window))
-               (syntax-scan-current-view))
-           *window-size-change-functions*)
-  (pushnew #'(lambda (window)
-               (syntax-scan-window window))
-           *window-show-buffer-functions*)
+  (add-hook *window-scroll-functions*
+            (lambda (window)
+              (declare (ignore window))
+              (syntax-scan-current-view)))
+  (add-hook *window-size-change-functions*
+            (lambda (window)
+              (declare (ignore window))
+              (syntax-scan-current-view)))
+  (add-hook *window-show-buffer-functions*
+            (lambda (window)
+              (syntax-scan-window window)))
   (add-hook *after-change-functions*
             'syntax-scan-point)
   (add-hook *find-file-hook*

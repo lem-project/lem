@@ -169,7 +169,7 @@
       (editor-error "~A" error-string))))
 
 (define-command dired-delete-files () ()
-  (when (minibuf-y-or-n-p "Really delete files")
+  (when (prompt-for-y-or-n-p "Really delete files")
     (dolist (file (selected-files))
       (run-command "rm -fr ~A" file)))
   (update-all))

@@ -66,7 +66,7 @@
         (when (or save-silently-p
                   (progn
                     (redraw-display)
-                    (minibuf-y-or-n-p (format nil "Save file ~A" (buffer-filename buffer)))))
+                    (prompt-for-y-or-n-p (format nil "Save file ~A" (buffer-filename buffer)))))
           (save-buffer))))
     (switch-to-buffer prev-buffer nil)))
 
@@ -74,7 +74,7 @@
   (when (and (or (buffer-modified-p (current-buffer))
                  (changed-disk-p (current-buffer)))
              (or does-not-ask-p
-                 (minibuf-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))))
+                 (prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))))
     (with-buffer-read-only (current-buffer) nil
       (erase-buffer)
       (insert-file-contents (current-point)

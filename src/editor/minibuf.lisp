@@ -5,7 +5,6 @@
           minibuffer-window-p
           minibuffer-window-height
           message
-          minibuf-y-or-n-p
           minibuf-read-char
           active-minibuffer-window
           check-switch-minibuffer-window
@@ -13,6 +12,7 @@
           minibuf-read-line-completion
           minibuf-read-line-prev-history
           minibuf-read-line-next-history
+          prompt-for-y-or-n-p
           prompt-for-line
           prompt-for-string
           prompt-for-integer
@@ -89,7 +89,7 @@
         (error 'editor-abort)
         c)))
 
-(defun minibuf-y-or-n-p (prompt)
+(defun prompt-for-y-or-n-p (prompt)
   (do () (nil)
     (let ((c (minibuf-read-char (format nil "~a [y/n]? " prompt))))
       (cond

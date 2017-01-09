@@ -63,7 +63,7 @@
      (syntax-scan-buffer (current-buffer)))))
 
 (defun ask-revert-buffer ()
-  (if (minibuf-y-or-n-p (format nil
+  (if (prompt-for-y-or-n-p (format nil
                                 "~A changed on disk; revert buffer?"
                                 (buffer-filename)))
       (revert-buffer t)

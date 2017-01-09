@@ -73,7 +73,6 @@
        ,(when parent-mode `(,parent-mode))
        (setf (buffer-major-mode (current-buffer)) ',major-mode)
        (setf (buffer-syntax-table (current-buffer)) (mode-syntax-table ',major-mode))
-       (run-hooks ',(alexandria:symbolicate major-mode "-HOOK"))
        ,@body)))
 
 (defmacro define-minor-mode (minor-mode (&key name keymap) &body body)

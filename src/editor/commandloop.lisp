@@ -1,11 +1,15 @@
 (in-package :lem)
 
-(export '(pre-command-hook
-          post-command-hook
-          exit-editor-hook
+(export '(*pre-command-hook*
+          *post-command-hook*
+          *exit-editor-hook*
           interactive-p
           add-continue-flag
           continue-flag))
+
+(defvar *pre-command-hook* '())
+(defvar *post-command-hook* '())
+(defvar *exit-editor-hook* '())
 
 (defvar *interactive-p* nil)
 (defun interactive-p () *interactive-p*)
@@ -30,10 +34,10 @@
     (push (cons flag t) *curr-flags*)))
 
 (defun cmd-call (cmd arg)
-  (run-hooks 'pre-command-hook)
+  (run-hooks *pre-command-hook*)
   (prog1 (funcall cmd arg)
     (buffer-undo-boundary)
-    (run-hooks 'post-command-hook)))
+    (run-hooks *post-command-hook*)))
 
 (defun do-commandloop-function (function)
   (do ((*curr-flags* (%make-flags) (%make-flags))
@@ -51,5 +55,5 @@
       `(do-commandloop-function (lambda () ,@body))))
 
 (defun exit-editor (&optional report)
-  (run-hooks 'exit-editor-hook)
+  (run-hooks *exit-editor-hook*)
   (throw +exit-tag+ report))

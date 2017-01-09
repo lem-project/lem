@@ -1,10 +1,12 @@
 (in-package :lem)
 
 (export '(*debug-p*
-          after-init-hook
+          *after-init-hook*
           pop-up-backtrace
           with-editor
           lem))
+
+(defvar *after-init-hook* '())
 
 (defvar *debug-p* nil)
 (defvar *running-p* nil)
@@ -104,11 +106,11 @@
                (syntax-scan-window window))
            *window-show-buffer-functions*)
   (pushnew 'syntax-scan-point (after-change-functions))
-  (add-hook 'find-file-hook
+  (add-hook *find-file-hook*
             (lambda (buffer)
               (prepare-auto-mode buffer)
               (scan-file-property-list buffer)))
-  (add-hook 'before-save-hook
+  (add-hook *before-save-hook*
             (lambda (buffer)
               (scan-file-property-list buffer))))
 
@@ -153,7 +155,7 @@
 		   (window-init)
 		   (minibuf-init)
                    (setup)
-		   (run-hooks 'after-init-hook))))
+		   (run-hooks *after-init-hook*))))
 	     (funcall function)))
       (display-finalize))))
 

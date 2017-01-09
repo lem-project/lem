@@ -1,8 +1,8 @@
 (in-package :lem-base)
 
-(export '(find-file-hook
-          before-save-hook
-          after-save-hook
+(export '(*find-file-hook*
+          *before-save-hook*
+          *after-save-hook*
           *find-directory-function*
           expand-file-name
           insert-file-contents
@@ -10,6 +10,10 @@
           write-to-file
           update-changed-disk-date
           changed-disk-p))
+
+(defvar *find-file-hook* '())
+(defvar *before-save-hook* '())
+(defvar *after-save-hook* '())
 
 (defvar *find-directory-function* nil)
 
@@ -121,7 +125,7 @@
            (update-changed-disk-date buffer)
            (save-excursion
              (setf (current-buffer) buffer)
-             (run-hooks 'find-file-hook buffer))
+             (run-hooks *find-file-hook* buffer))
            (values buffer t)))))
 
 (defun write-to-file-1 (buffer filename)
@@ -165,11 +169,11 @@
          (f out :lf))))))
 
 (defun write-to-file (buffer filename)
-  (run-hooks 'before-save-hook buffer)
+  (run-hooks *before-save-hook* buffer)
   (write-to-file-1 buffer filename)
   (buffer-unmark buffer)
   (update-changed-disk-date buffer)
-  (run-hooks 'after-save-hook buffer))
+  (run-hooks *after-save-hook* buffer))
 
 (defun file-write-date* (buffer)
   (if (probe-file (buffer-filename buffer))

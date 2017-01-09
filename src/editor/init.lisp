@@ -9,7 +9,7 @@
     (or (test (merge-pathnames "lem.rc" (truename ".")))
         (test (merge-pathnames ".lemrc" (user-homedir-pathname))))))
 
-(add-hook 'after-init-hook 'load-init-file)
+(add-hook *after-init-hook* 'load-init-file)
 
 #+sbcl
 (push #'(lambda (x)

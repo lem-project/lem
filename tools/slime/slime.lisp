@@ -1026,7 +1026,7 @@
                             :search t))
   (sleep 1)
   (slime-connect "localhost" *default-port*)
-  (add-hook 'exit-editor-hook
+  (add-hook *exit-editor-hook*
             (lambda ()
               (slime-quit))))
 

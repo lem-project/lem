@@ -2,9 +2,9 @@
 
 (export '(run-hooks add-hook))
 
-(defun run-hooks (hook &rest args)
-  (dolist (fn (get hook 'hooks))
+(defun run-hooks (functions &rest args)
+  (dolist (fn functions)
     (apply fn args)))
 
-(defun add-hook (hook callback)
-  (pushnew callback (get hook 'hooks)))
+(defmacro add-hook (place callback)
+  `(pushnew ,callback ,place))

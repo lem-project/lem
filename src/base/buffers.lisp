@@ -1,6 +1,6 @@
 (in-package :lem-base)
 
-(export '(kill-buffer-hook
+(export '(*kill-buffer-hook*
           buffer-list
           ghost-buffer-p
           special-buffer-p
@@ -14,7 +14,8 @@
           get-next-buffer
           delete-buffer))
 
-(defvar *buffer-list* nil)
+(defvar *kill-buffer-hook* '())
+(defvar *buffer-list* '())
 
 (defun add-buffer (buffer)
   (check-type buffer buffer)
@@ -74,7 +75,7 @@
 
 (defun delete-buffer (buffer)
   (check-type buffer buffer)
-  (run-hooks 'kill-buffer-hook buffer)
+  (run-hooks *kill-buffer-hook* buffer)
   (call-buffer-delete-hooks buffer)
   (setf *buffer-list* (delete buffer (buffer-list))))
 

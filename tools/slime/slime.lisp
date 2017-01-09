@@ -181,7 +181,7 @@
   (let ((package-names (mapcar #'string-downcase
                                (slime-eval-internal
                                 '(swank:list-all-package-names t)))))
-    (string-upcase (minibuf-read-line
+    (string-upcase (prompt-for-line
                     "Package: " ""
                     (lambda (str)
                       (completion str package-names))
@@ -190,8 +190,7 @@
                     'mh-slime-package))))
 
 (define-command slime-indent-sexp () ()
-  (indent-region (current-marker)
-                 (lem::form-offset (copy-marker (current-marker) :temporary) 1)))
+  (lem.lisp-mode:lisp-indent-sexp))
 
 (define-command slime-set-package (package-name) ((list (read-package-name)))
   (check-connection)
@@ -211,28 +210,28 @@
 (define-command slime-eval-last-expression () ()
   (check-connection)
   (refresh-output-buffer)
-  (save-excursion
-    (interactive-eval (region-string (current-point)
-                                     (progn (backward-sexp 1 t)
-                                            (current-point))))))
+  (with-point ((start (current-point))
+               (end (current-point)))
+    (scan-lists start -1 0)
+    (interactive-eval (points-to-string start end))))
 
 (define-command slime-eval-defun () ()
   (check-connection)
-  (save-excursion
-    (lem.lisp-mode::top-of-defun (current-marker))
-    (let ((string
-           (region-string (current-point)
-                          (progn (forward-sexp 1)
-                                 (current-point)))))
-      (refresh-output-buffer)
-      (if (ppcre:scan "^\\(defvar\\b" string)
-          (re-eval-defvar string)
-          (interactive-eval string)))))
+  (with-point ((point (current-point)))
+    (lem.lisp-mode::top-of-defun point)
+    (with-point ((start point)
+                 (end point))
+      (scan-lists end 1 0)
+      (let ((string (points-to-string start end)))
+        (refresh-output-buffer)
+        (if (ppcre:scan "^\\(defvar\\b" string)
+            (re-eval-defvar string)
+            (interactive-eval string))))))
 
 (define-command slime-eval-region (start end) ("r")
   (check-connection)
   (refresh-output-buffer)
-  (interactive-eval (region-string start end)))
+  (interactive-eval (points-to-string start end)))
 
 (define-command slime-load-file (filename) ("fLoad File: ")
   (check-connection)
@@ -244,9 +243,10 @@
     (eval-with-transcript `(swank:load-file ,filename))))
 
 (defun get-operator-name ()
-  (save-excursion
-    (lem.lisp-mode::go-to-car)
-    (symbol-string-at-point (current-marker))))
+  (with-point ((point (current-point)))
+    (lem.lisp-mode::top-of-defun point)
+    (character-offset point 1)
+    (symbol-string-at-point point)))
 
 (define-command slime-echo-arglist () ()
   (check-connection)
@@ -263,15 +263,15 @@
         (start-eval-timer)))))
 
 (define-command slime-space (n) ("p")
-  (insert-char #\space n)
+  (insert-character (current-point) #\space n)
   (slime-echo-arglist))
 
 (defun check-parens ()
-  (save-excursion
-    (point-set (point-min))
-    (loop :while (forward-sexp 1 t))
-    (skip-whitespace-forward (current-marker))
-    (eobp)))
+  (with-point ((point (current-point)))
+    (buffer-start point)
+    (loop :while (form-offset point 1))
+    (skip-whitespace-forward point)
+    (end-buffer-p point)))
 
 (defun compilation-finished (result)
   (stop-eval-timer)
@@ -300,12 +300,11 @@
                                       (format nil "[~,2f secs]" secs)))))))
 
 (defun make-highlight-overlay (pos buffer)
-  (save-excursion
-    (setf (current-buffer) buffer)
-    (goto-position pos)
-    (skip-chars-backward (current-marker) #'syntax-symbol-char-p)
-    (make-overlay (copy-marker (current-marker) :temporary)
-                  (lem::form-offset (copy-marker (current-marker) :temporary) 1)
+  (with-point ((point (buffer-point buffer)))
+    (move-to-position point pos)
+    (skip-chars-backward point #'syntax-symbol-char-p)
+    (make-overlay point
+                  (form-offset (copy-point point :temporary) 1)
                   *note-attribute*)))
 
 (defvar *note-overlays* nil)
@@ -332,26 +331,22 @@
                                  (let ((buffer (get-buffer buffer-name)))
                                    (when buffer
                                      (setf (current-window) (pop-to-buffer buffer))
-                                     (goto-position pos))))
+                                     (move-to-position (current-point) pos))))
                                (lambda ()
                                  (find-file file)
-                                 (goto-position pos)))))
+                                 (move-to-position (current-point) pos)))))
              (lem.sourcelist:append-sourcelist
               sourcelist
               (let ((name (or buffer-name file)))
-                (lambda (cur-marker)
-                  (lem::insert-string-at cur-marker
-                                         (lem.text-property:make-text-property
-                                          name :attribute lem.grep::*attribute-1*))
-                  (lem::insert-string-at cur-marker ":")
-                  (lem::insert-string-at cur-marker
-                                         (lem.text-property:make-text-property
-                                          (princ-to-string pos) :attribute lem.grep::*attribute-2*))
-                  (lem::insert-string-at cur-marker ":")
-                  (lem::insert-char-at cur-marker #\newline)
-                  (lem::insert-string-at cur-marker message)
-                  (lem::insert-char-at cur-marker #\newline)
-                  (lem::insert-string-at cur-marker source-context)))
+                (lambda (cur-point)
+                  (insert-string cur-point name :attribute lem.grep::*attribute-1*)
+                  (insert-string cur-point ":")
+                  (insert-string cur-point (princ-to-string pos) :attribute lem.grep::*attribute-2*)
+                  (insert-string cur-point ":")
+                  (insert-character cur-point #\newline 1)
+                  (insert-string cur-point message)
+                  (insert-character cur-point #\newline)
+                  (insert-string cur-point source-context)))
               jump-fun)
              (push (make-highlight-overlay pos
                                            (if buffer-name
@@ -367,7 +362,7 @@
 (define-command slime-compile-and-load-file () ()
   (check-connection)
   (when (buffer-modified-p (current-buffer))
-    (when (minibuf-y-or-n-p "Save file")
+    (when (prompt-for-y-or-n-p "Save file")
       (save-buffer)))
   (let ((file (buffer-filename (current-buffer))))
     (refresh-output-buffer)
@@ -380,8 +375,10 @@
 (define-command slime-compile-region (start end) ("r")
   (check-connection)
   (let ((string (lem::points-to-string start end))
-        (position `((:position ,(point-to-offset start))
-                    (:line ,(current-linum) ,(current-charpos)))))
+        (position `((:position ,(position-at-point start))
+                    (:line
+                     ,(line-number-at-point (current-point))
+                     ,(point-charpos (current-point))))))
     (refresh-output-buffer)
     (eval-async `(swank:compile-string-for-emacs ,string
                                                  ,(buffer-name (current-buffer))
@@ -395,18 +392,20 @@
 
 (define-command slime-compile-defun () ()
   (check-connection)
-  (save-excursion
-    (let* ((start (progn (lem.lisp-mode::top-of-defun (current-marker)) (current-point)))
-           (end (progn (forward-sexp 1) (current-point))))
+  (with-point ((point (current-point)))
+    (lem.lisp-mode::top-of-defun point)
+    (with-point ((start point)
+                 (end point))
+      (form-offset end 1)
       (slime-compile-region start end))))
 
 (defun form-string-at-point ()
-  (region-string (save-excursion
-                   (skip-chars-backward (current-marker) #'syntax-symbol-char-p)
-                   (current-point))
-                 (save-excursion
-                   (forward-sexp 1)
-                   (current-point))))
+  (with-point ((point (current-point)))
+    (skip-chars-backward point #'syntax-symbol-char-p)
+    (with-point ((start point)
+                 (end point))
+      (form-offset end 1)
+      (points-to-string start end))))
 
 (defun macroexpand-internal (expander buffer-name)
   (let ((string (slime-eval-internal `(,expander ,(form-string-at-point)))))
@@ -434,19 +433,19 @@
 
 (defun read-symbol-name (prompt &optional (initial ""))
   (let ((package (current-package)))
-    (minibuf-read-line prompt
-                       initial
-                       (lambda (str)
-                         (symbol-completion str package))
-                       nil
-                       'mh-read-symbol)))
+    (prompt-for-line prompt
+                     initial
+                     (lambda (str)
+                       (symbol-completion str package))
+                     nil
+                     'mh-read-symbol)))
 
 (defvar *edit-definition-stack* nil)
 
 (define-command slime-edit-definition () ()
   (check-connection)
   (let* ((name (read-symbol-name "Edit Definition of: "
-                                 (or (symbol-string-at-point (current-marker)) "")))
+                                 (or (symbol-string-at-point (current-point)) "")))
          (definitions (slime-eval-internal `(swank:find-definitions-for-emacs ,name)))
          (found-list '()))
     (dolist (def definitions)
@@ -458,45 +457,45 @@
                      (list :snippet _)))
          (push (list title file offset) found-list))))
     (when found-list
-      (push (list (current-buffer) (current-point))
+      (push (list (buffer-name (current-buffer))
+                  (position-at-point (current-point)))
             *edit-definition-stack*)
       (if (null (rest found-list))
           (destructuring-bind (title file offset)
               (first found-list)
             (declare (ignore title))
             (find-file file)
-            (goto-position offset))
+            (move-to-position (current-point) offset))
           (let ((prev-file nil))
             (lem.sourcelist:with-sourcelist (sourcelist "*slime-definitions*")
               (dolist (elt found-list)
                 (destructuring-bind (title file offset) elt
                   (lem.sourcelist:append-sourcelist
                    sourcelist
-                   (lambda (cur-marker)
+                   (lambda (cur-point)
                      (unless (and prev-file (string= prev-file file))
-                       (lem::insert-string-at cur-marker
-                                              (lem.text-property:make-text-property
-                                               file :attribute *headline-attribute*))
-                       (lem::insert-char-at cur-marker #\newline))
-                     (lem::insert-string-at cur-marker
-                                            (lem.text-property:make-text-property
-                                             (format nil "  ~A" title)
-                                             :attribute *entry-attribute*)))
+                       (insert-string cur-point file
+                                      :attribute *headline-attribute*)
+                       (insert-character cur-point #\newline))
+                     (insert-string cur-point
+                                    (format nil "  ~A" title)
+                                    :attribute *entry-attribute*))
                    (lambda ()
                      (find-file file)
-                     (goto-position offset)))
+                     (move-to-position (current-point) offset)))
                   (setf prev-file file)))))))))
 
 (define-command slime-pop-find-definition-stack () ()
   (let ((elt (pop *edit-definition-stack*)))
     (when elt
-      (destructuring-bind (buffer point) elt
-        (select-buffer buffer)
-        (point-set point)))))
+      (destructuring-bind (buffer-name position) elt
+        (let ((buffer (get-buffer-create buffer-name)))
+          (switch-to-buffer buffer)
+          (move-to-position (current-point) position))))))
 
 (define-command slime-edit-uses () ()
   (check-connection)
-  (let* ((symbol (read-symbol-name "Edit uses of: " (or (symbol-string-at-point (current-marker)) "")))
+  (let* ((symbol (read-symbol-name "Edit uses of: " (or (symbol-string-at-point (current-point)) "")))
          (result (slime-eval-internal `(swank:xrefs '(:calls :macroexpands :binds
                                                       :references :sets :specializes)
                                                     ,symbol)))
@@ -515,24 +514,22 @@
                   (setf found t)
                   (lem.sourcelist:append-sourcelist
                    sourcelist
-                   (lambda (cur-marker)
-                     (lem::insert-string-at cur-marker
-                                            (lem.text-property:make-text-property
-                                             (princ-to-string type) :attribute *headline-attribute*)))
+                   (lambda (cur-point)
+                     (insert-string cur-point (princ-to-string type)
+                                         :attribute *headline-attribute*))
                    nil)
                   (loop :for def :in defs
                         :do (destructuring-bind (name file offset snippet) def
                               (declare (ignore snippet))
                               (lem.sourcelist:append-sourcelist
                                sourcelist
-                               (lambda (cur-marker)
-                                 (lem::insert-string-at cur-marker
-                                                        (lem.text-property:make-text-property
-                                                         (format nil "  ~A" name)
-                                                         :attribute *entry-attribute*)))
+                               (lambda (cur-point)
+                                 (insert-string cur-point
+                                                (format nil "  ~A" name)
+                                                :attribute *entry-attribute*))
                                (lambda ()
                                  (find-file file)
-                                 (goto-position offset))))))))
+                                 (move-to-position (current-point) offset))))))))
     (cond
       (found
        (push (list (current-buffer) (current-point))
@@ -556,19 +553,19 @@
 
 (defun show-apropos (data)
   (let ((buffer (get-buffer-create "*slime-apropos*")))
-    (setf (current-window) (display-buffer buffer))
+    (switch-to-buffer buffer)
     (slime-apropos-mode)
     (erase-buffer buffer)
     (save-excursion
-      (loop :for plist :in data
-            :do (let ((designator (cadr plist))
-                      (plist1 (cddr plist)))
-                  (lem::insert-string-at (current-marker)
-                                         (lem.text-property:make-text-property
-                                          designator :attribute *headline-attribute*))
-                  (loop :for (k v) :on plist1 :by #'cddr
-                        :do (insert-string (format nil "~%  ~A: ~A" k v)))
-                  (insert-newline 2))))))
+      (let ((point (current-point)))
+        (loop :for plist :in data
+              :do (let ((designator (cadr plist))
+                        (plist1 (cddr plist)))
+                    (insert-string point designator
+                                   :attribute *headline-attribute*)
+                    (loop :for (k v) :on plist1 :by #'cddr
+                          :do (insert-string point (format nil "~%  ~A: ~A" k v)))
+                    (insert-character point #\newline 2)))))))
 
 (defun slime-apropos-internal (string only-external-p package case-sensitive-p)
   (show-apropos (slime-eval-internal
@@ -584,19 +581,19 @@
         (package nil)
         (case-sensitive-p nil))
     (if arg
-        (setq string (minibuf-read-string "SLIME Apropos: ")
-              only-external-p (minibuf-y-or-n-p "External symbols only? ")
+        (setq string (prompt-for-string "SLIME Apropos: ")
+              only-external-p (prompt-for-y-or-n-p "External symbols only? ")
               package (let ((name (read-package-name)))
                         (if (string= "" name)
                             nil
                             name))
-              case-sensitive-p (minibuf-y-or-n-p "Case-sensitive? "))
-        (setq string (minibuf-read-string "SLIME Apropos: ")))
+              case-sensitive-p (prompt-for-y-or-n-p "Case-sensitive? "))
+        (setq string (prompt-for-string "SLIME Apropos: ")))
     (slime-apropos-internal string only-external-p package case-sensitive-p)))
 
 (define-command slime-apropos-all () ()
   (check-connection)
-  (slime-apropos-internal (minibuf-read-string "SLIME Apropos: ")
+  (slime-apropos-internal (prompt-for-string "SLIME Apropos: ")
                           nil nil nil))
 
 (define-command slime-apropos-package (internal) ("P")
@@ -618,7 +615,7 @@
   (check-connection)
   (let ((symbol-name
          (read-symbol-name "Describe symbol: "
-                           (or (symbol-string-at-point (current-marker)) ""))))
+                           (or (symbol-string-at-point (current-point)) ""))))
     (when (string= "" symbol-name)
       (editor-error "No symbol given"))
     (show-description (slime-eval-internal `(swank:describe-symbol ,symbol-name)))))
@@ -627,7 +624,7 @@
   (check-connection)
   (let ((symbol-name
          (read-symbol-name "Describe symbol: "
-                           (or (symbol-string-at-point (current-marker)) ""))))
+                           (or (symbol-string-at-point (current-point)) ""))))
     (when (string= "" symbol-name)
       (editor-error "No symbol given"))
     (lem-slime.clhs:main symbol-name)))
@@ -728,8 +725,8 @@
               (if windows
                   (first windows)
                   (pop-to-buffer buffer))))
-      (point-set (point-max))
-      (lem.listener-mode::listener-update-marker)
+      (buffer-end (current-point))
+      (lem.listener-mode:listener-update-point)
       (repl-change-read-line-input))))
 
 (defun repl-abort-read (thread tag)
@@ -757,9 +754,9 @@
     (when buffer
       (with-open-stream (stream (make-buffer-output-stream (lem::buffers-end buffer)))
         (princ string stream))
-      (lem.listener-mode::listener-update-marker (lem::buffers-end buffer))
+      (lem.listener-mode:listener-update-point (buffers-end buffer))
       (when (eq buffer (current-buffer))
-        (point-set (point-max)))
+        (buffer-end (current-point)))
       (redraw-display))))
 
 (defparameter *fresh-output-buffer-p* t)
@@ -778,8 +775,8 @@
   (setq *fresh-output-buffer-p* t))
 
 (define-command slime-connect (hostname port)
-    ((list (minibuf-read-string "Hostname: " "localhost")
-           (parse-integer (minibuf-read-string "Port: " (princ-to-string *default-port*)))))
+    ((list (prompt-for-string "Hostname: " "localhost")
+           (parse-integer (prompt-for-string "Port: " (princ-to-string *default-port*)))))
   (setf *connection* (make-instance 'swank-protocol:connection :hostname hostname :port port))
   (message "Connecting...")
   (handler-case (swank-protocol:connect *connection*)
@@ -980,18 +977,20 @@
           conts)
     (erase-buffer buffer)
     (buffer-add-delete-hook buffer 'slime-quit-debugger)
-    (dolist (c condition)
-      (insert-string (if (stringp c)
-                         c
-                         (prin1-to-string c)))
-      (insert-newline 1))
-    (insert-string (format nil "~%Restarts:~%"))
-    (loop :for n :from 0
-          :for (title description) :in restarts
-          :do (insert-string (format nil "~D: [~A] ~A~%" n title description)))
-    (insert-string (format nil "~%Backtrace:~%"))
-    (loop :for (n form) :in frames
-          :do (insert-string (format nil "~D: ~A~%" n form)))))
+    (let ((point (current-point)))
+      (dolist (c condition)
+        (insert-string point
+                       (if (stringp c)
+                           c
+                           (prin1-to-string c)))
+        (insert-character point #\newline 1))
+      (insert-string point (format nil "~%Restarts:~%"))
+      (loop :for n :from 0
+            :for (title description) :in restarts
+            :do (insert-string point (format nil "~D: [~A] ~A~%" n title description)))
+      (insert-string point (format nil "~%Backtrace:~%"))
+      (loop :for (n form) :in frames
+            :do (insert-string point (format nil "~D: ~A~%" n form))))))
 
 (defun active-debugger (thread level select)
   (declare (ignore select))
@@ -1042,20 +1041,20 @@
 
 
 (defun idle-timer-function ()
-  (when (and (eq (buffer-major-mode) 'slime-mode)
+  (when (and (eq (buffer-major-mode (current-buffer)) 'slime-mode)
              (connected-p))
     (let ((package (lem.lisp-mode::scan-current-package #'identity)))
       (when package
         (slime-set-package package)))))
 
-(defvar *idle-timer*)
-(when (or (not (boundp '*idle-timer*))
-          (not (timer-alive-p *idle-timer*)))
-  (setf *idle-timer*
-        (start-idle-timer "slime" 200 t 'idle-timer-function nil
-                          (lambda (condition)
-                            (pop-up-backtrace condition)
-                            (stop-timer *idle-timer*)))))
+;; (defvar *idle-timer*)
+;; (when (or (not (boundp '*idle-timer*))
+;;           (not (timer-alive-p *idle-timer*)))
+;;   (setf *idle-timer*
+;;         (start-idle-timer "slime" 200 t 'idle-timer-function nil
+;;                           (lambda (condition)
+;;                             (pop-up-backtrace condition)
+;;                             (stop-timer *idle-timer*)))))
 
-(pushnew (cons ".lisp$" 'slime-mode) *auto-mode-alist* :test #'equal)
-(pushnew (cons ".asd$" 'slime-mode) *auto-mode-alist* :test #'equal)
+;; (pushnew (cons ".lisp$" 'slime-mode) *auto-mode-alist* :test #'equal)
+;; (pushnew (cons ".asd$" 'slime-mode) *auto-mode-alist* :test #'equal)

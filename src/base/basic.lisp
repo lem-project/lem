@@ -46,7 +46,6 @@
           end-of-buffer
           beginning-of-line
           end-of-line
-          goto-position
           forward-line
           shift-position
           check-marked
@@ -421,11 +420,6 @@
 (defun end-of-line ()
   (line-end (current-point))
   t)
-
-(defun goto-position (position)
-  (check-type position (integer 1 *))
-  (beginning-of-buffer)
-  (shift-position position))
 
 (defun forward-line (&optional (n 1))
   (line-offset (current-point) n))

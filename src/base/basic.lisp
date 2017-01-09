@@ -270,7 +270,9 @@
 
 (defun erase-buffer (&optional (buffer (current-buffer)))
   (buffer-start (buffer-point buffer))
-  (delete-char/point (buffer-point buffer) t))
+  (delete-char/point (buffer-point buffer)
+                     (count-characters (buffers-start buffer)
+                                       (buffers-end buffer))))
 
 (defun region-beginning (&optional (buffer (current-buffer)))
   (let ((start (buffer-point buffer))

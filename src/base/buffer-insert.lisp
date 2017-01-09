@@ -1,13 +1,12 @@
 (in-package :lem-base)
 
 (export '(*inhibit-read-only*
-          before-change-functions
-          after-change-functions))
+          *before-change-functions*
+          *after-change-functions*))
 
 (defvar *inhibit-read-only* nil)
-
-(define-buffer-local-and-global-hook before-change-functions)
-(define-buffer-local-and-global-hook after-change-functions)
+(defvar *before-change-functions* '())
+(defvar *after-change-functions* '())
 
 (defun check-read-only-at-point (line charpos offset)
   (unless *inhibit-read-only*
@@ -193,9 +192,28 @@
 		    (%delete-line/point point charpos)))))))))
 
 
+(defmacro insert/after-change-function (point arg)
+  `(if *after-change-functions*
+       (with-point ((start ,point))
+         (prog1 (call-next-method)
+           (with-point ((end start))
+             (character-offset end ,arg)
+             (run-hooks *after-change-functions* start end 0))))
+       (call-next-method)))
+
+(defmacro delete/after-change-function (point)
+  `(if *after-change-functions*
+       (let ((string (call-next-method)))
+         (with-point ((start ,point)
+                      (end ,point))
+           (run-hooks *after-change-functions* start end (length string)))
+         string)
+       (call-next-method)))
+
 (defmethod insert-char/point :around (point char)
+  (run-hooks *before-change-functions* point 1)
   (let ((pos (position-at-point point)))
-    (prog1 (call-next-method)
+    (prog1 (insert/after-change-function point 1)
       (push-undo (point-buffer point)
                  (lambda (cur-point)
                    (move-to-position cur-point pos)
@@ -203,8 +221,9 @@
                    t)))))
 
 (defmethod insert-string/point :around (point string)
+  (run-hooks *before-change-functions* point (length string))
   (let ((pos (position-at-point point)))
-    (prog1 (call-next-method)
+    (prog1 (insert/after-change-function point (length string))
       (push-undo (point-buffer point)
                  (lambda (cur-point)
                    (move-to-position cur-point pos)
@@ -212,49 +231,12 @@
                    t)))))
 
 (defmethod delete-char/point :around (point n)
+  (run-hooks *before-change-functions* point (- n))
   (let ((pos (position-at-point point))
-        (string (call-next-method)))
+        (string (delete/after-change-function point)))
     (push-undo (point-buffer point)
                (lambda (cur-point)
                  (move-to-position cur-point pos)
                  (insert-string/point cur-point string)
                  t))
     string))
-
-
-(defmethod insert-char/point :before (point char)
-  (when (before-change-functions)
-    (with-point ((point point))
-      (dolist (hook (before-change-functions))
-        (funcall hook point 1)))))
-
-(defmethod insert-string/point :before (point string)
-  (when (before-change-functions)
-    (with-point ((point point))
-      (let ((length (length string)))
-        (dolist (hook (before-change-functions))
-          (funcall hook point length))))))
-
-(defmethod delete-char/point :before (point n)
-  (when (before-change-functions)
-    (with-point ((point point))
-      (dolist (hook (before-change-functions))
-        (funcall hook point (- n))))))
-
-(defmethod insert-char/point :after (point char)
-  (when (after-change-functions)
-    (with-point ((point point))
-      (dolist (hook (after-change-functions))
-        (funcall hook point)))))
-
-(defmethod insert-string/point :after (point string)
-  (when (after-change-functions)
-    (with-point ((point point))
-      (dolist (hook (after-change-functions))
-        (funcall hook point)))))
-
-(defmethod delete-char/point :after (point n)
-  (when (after-change-functions)
-    (with-point ((point point))
-      (dolist (hook (after-change-functions))
-        (funcall hook point)))))

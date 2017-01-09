@@ -80,11 +80,11 @@
          (t
           ,@body)))
 
-(defun syntax-scan-point (point)
-  (with-point ((start point)
-               (end point))
-    (syntax-scan-range (line-start start)
-                       (line-end end))))
+(defun syntax-scan-point (start end old-len)
+  (line-start start)
+  (if (zerop old-len)
+      (syntax-scan-range start end)
+      (syntax-scan-range (line-start start) (line-end end))))
 
 (defun setup ()
   (start-idle-timer "mainloop" 200 t
@@ -105,7 +105,8 @@
   (pushnew #'(lambda (window)
                (syntax-scan-window window))
            *window-show-buffer-functions*)
-  (pushnew 'syntax-scan-point (after-change-functions))
+  (add-hook *after-change-functions*
+            'syntax-scan-point)
   (add-hook *find-file-hook*
             (lambda (buffer)
               (prepare-auto-mode buffer)

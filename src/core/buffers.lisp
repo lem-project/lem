@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (export '(kill-buffer-hook
           buffer-list

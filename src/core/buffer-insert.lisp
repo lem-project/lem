@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (export '(*inhibit-read-only*
           before-change-functions

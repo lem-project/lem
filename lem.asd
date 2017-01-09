@@ -1,5 +1,7 @@
 (cl:in-package :cl-user)
 
+(load "lem-core.asd")
+
 #-asdf(require :asdf)
 
 #-uiop(require :uiop)
@@ -14,7 +16,6 @@
 (defsystem lem
   :version "0.1"
   :depends-on (:uiop
-               :iterate
                :cl-charms
                :cl-fad
                :alexandria
@@ -24,7 +25,8 @@
                :trivial-gray-streams
                :cl-ppcre
                #+lem-use-inquisitor :inquisitor
-               :babel)
+               :babel
+               :lem-core)
   :serial t
   :components ((:module "src"
                 :serial t
@@ -33,25 +35,9 @@
                              (:file "term")
                              (:file "package")
                              (:file "key")
-                             (:file "errors")
-                             (:file "text-macros")
                              (:file "macros")
-                             (:file "wide")
-                             (:file "hooks")
-                             (:file "line")
-                             (:file "buffer")
-                             (:file "buffer-insert")
-                             (:file "buffers")
-                             (:file "point")
-                             (:file "overlay")
                              (:file "kill")
-                             (:file "basic")
-                             (:file "file")
                              (:file "file-ext")
-                             (:file "search")
-                             (:file "indent")
-                             (:file "attribute")
-                             (:file "syntax")
                              (:file "window")
                              (:file "modeline")
                              (:file "commandloop")

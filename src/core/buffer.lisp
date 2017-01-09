@@ -1,6 +1,7 @@
-(in-package :lem)
+(in-package :lem-core)
 
-(export '(current-buffer
+(export '(fundamental-mode
+          current-buffer
           make-buffer
           buffer
           bufferp

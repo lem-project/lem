@@ -123,9 +123,7 @@
            (buffer-start (buffer-point buffer))
            (buffer-enable-undo buffer)
            (update-changed-disk-date buffer)
-           (save-excursion
-             (setf (current-buffer) buffer)
-             (run-hooks *find-file-hook* buffer))
+           (run-hooks *find-file-hook* buffer)
            (values buffer t)))))
 
 (defun write-to-file-1 (buffer filename)

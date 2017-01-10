@@ -1,5 +1,7 @@
 (cl:in-package :cl-user)
 
+(pushnew :lem-use-inquisitor *features*)
+
 (load "lem-base.asd")
 
 #-asdf(require :asdf)
@@ -10,8 +12,6 @@
   (:use :cl :asdf))
 
 (in-package :lem-asd)
-
-(pushnew :lem-use-inquisitor *features*)
 
 (defsystem lem
   :version "0.1"

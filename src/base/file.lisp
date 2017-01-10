@@ -53,24 +53,24 @@
                        pathname)
                pathname))))
 
-;; #+lem-use-inquisitor
-;; (defun detect-external-format-from-file (pathname)
-;;   (let ((external-format)
-;;         (end-of-line :lf))
-;;     (with-open-file (in pathname
-;;                         :element-type '(unsigned-byte 8))
-;;       (let ((inquisitor:*detecting-buffer-size* (file-length in)))
-;;         (setq external-format (inquisitor:detect-external-format in :jp))))
-;;     #+sbcl
-;;     (with-open-file (in pathname
-;;                         :element-type '(unsigned-byte 8))
-;;       (let ((result (inquisitor:detect-end-of-line in)))
-;;         (when result
-;;           (setq end-of-line result))))
-;;     (values external-format
-;;             end-of-line)))
+#+lem-use-inquisitor
+(defun detect-external-format-from-file (pathname)
+  (let ((external-format)
+        (end-of-line :lf))
+    (with-open-file (in pathname
+                        :element-type '(unsigned-byte 8))
+      (let ((inquisitor:*detecting-buffer-size* (file-length in)))
+        (setq external-format (inquisitor:detect-external-format in :jp))))
+    #+sbcl
+    (with-open-file (in pathname
+                        :element-type '(unsigned-byte 8))
+      (let ((result (inquisitor:detect-end-of-line in)))
+        (when result
+          (setq end-of-line result))))
+    (values external-format
+            end-of-line)))
 
-;;#-lem-use-inquisitor
+#-lem-use-inquisitor
 (defun detect-external-format-from-file (pathname)
   (declare (ignore pathname))
   (values :utf-8 :lf))

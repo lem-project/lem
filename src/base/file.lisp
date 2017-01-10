@@ -45,14 +45,12 @@
 		  (push str path))))))
     (nreverse path)))
 
-(defun expand-file-name (pathname &optional directory)
+(defun expand-file-name (pathname &optional (directory (uiop:getcwd)))
   (format nil "/~{~A~^/~}"
           (parse-pathname
            (if (and (plusp (length pathname))
                     (char/= #\/ (aref pathname 0)))
-               (format nil "~a~a"
-                       (or directory (buffer-directory))
-                       pathname)
+               (namestring (merge-pathnames pathname directory))
                pathname))))
 
 (defun insert-file-contents (point filename)

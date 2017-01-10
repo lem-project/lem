@@ -2,8 +2,7 @@
   :depends-on (:uiop
                :iterate
                :alexandria
-               :cl-ppcre
-               :babel)
+               :cl-ppcre)
   :components ((:module "src/base"
                 :serial t
                 :components ((:file "package")

@@ -315,7 +315,7 @@
 
 (defun window-init ()
   (setf (current-window)
-        (make-window (get-buffer-create "*tmp*")
+        (make-window (current-buffer)
                      0
                      0
                      (window-max-width)

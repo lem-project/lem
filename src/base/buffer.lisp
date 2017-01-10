@@ -34,6 +34,8 @@
 (export '(%buffer-keep-binfo
           %buffer-clear-keep-binfo))
 
+(defparameter +original-buffer-name+ "*tmp*")
+
 (defclass buffer ()
   ((name
     :initform nil
@@ -141,7 +143,11 @@
 
 (defvar *current-buffer*)
 
-(defun current-buffer () *current-buffer*)
+(defun current-buffer ()
+  (unless (boundp '*current-buffer*)
+    (setf *current-buffer*
+          (get-buffer-create +original-buffer-name+)))
+  *current-buffer*)
 
 (defun (setf current-buffer) (buffer)
   (check-type buffer buffer)

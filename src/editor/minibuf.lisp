@@ -287,13 +287,14 @@
         default
         result)))
 
-(defun prompt-for-file (prompt &optional directory default existing)
+(defun prompt-for-file (prompt &optional directory (default (buffer-directory)) existing)
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))
   (let ((result
          (prompt-for-line prompt
                           directory
-                          'completion-file
+                          (lambda (str)
+                            (completion-file str directory))
                           (and existing #'cl-fad:file-exists-p)
                           'mh-read-file)))
     (if (string= result "")

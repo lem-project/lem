@@ -322,7 +322,9 @@
   (redraw-display))
 
 (defun dired-buffer (filename)
-  (setf filename (uiop:directory-exists-p (expand-file-name (namestring filename))))
+  (setf filename
+        (uiop:directory-exists-p
+         (expand-file-name (namestring filename) (buffer-directory))))
   (let ((buffer (get-buffer-create (format nil "DIRED \"~A\"" filename))))
     (change-buffer-mode buffer 'dired-mode)
     (setf (buffer-directory buffer) filename)

@@ -63,8 +63,8 @@
 (defun completion-hypheen (name list &key key)
   (completion name list :test #'completion-test :separator "-" :key key))
 
-(defun completion-file (str)
-  (setf str (expand-file-name str))
+(defun completion-file (str directory)
+  (setf str (expand-file-name str directory))
   (let* ((dirname (directory-namestring str))
          (files (mapcar #'namestring (cl-fad:list-directory dirname))))
     (let ((strings

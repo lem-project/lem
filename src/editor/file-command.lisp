@@ -11,7 +11,7 @@
           change-directory))
 
 (defun expand-files* (filename)
-  (setf filename (expand-file-name filename))
+  (setf filename (expand-file-name filename (buffer-directory)))
   (or (directory filename)
       (list filename)))
 
@@ -85,5 +85,5 @@
 
 (define-command change-directory (directory)
     ((list (prompt-for-file "change directory: " (buffer-directory))))
-  (setf (buffer-directory) (expand-file-name directory))
+  (setf (buffer-directory) (expand-file-name directory (buffer-directory)))
   t)

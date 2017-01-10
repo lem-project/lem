@@ -3,6 +3,7 @@
 (export '(*find-file-hook*
           *before-save-hook*
           *after-save-hook*
+          *external-format-function*
           *find-directory-function*
           expand-file-name
           insert-file-contents
@@ -15,6 +16,7 @@
 (defvar *before-save-hook* '())
 (defvar *after-save-hook* '())
 
+(defvar *external-format-function* nil)
 (defvar *find-directory-function* nil)
 
 (defun parse-pathname (pathname)
@@ -53,31 +55,12 @@
                        pathname)
                pathname))))
 
-#+lem-use-inquisitor
-(defun detect-external-format-from-file (pathname)
-  (let ((external-format)
-        (end-of-line :lf))
-    (with-open-file (in pathname
-                        :element-type '(unsigned-byte 8))
-      (let ((inquisitor:*detecting-buffer-size* (file-length in)))
-        (setq external-format (inquisitor:detect-external-format in :jp))))
-    #+sbcl
-    (with-open-file (in pathname
-                        :element-type '(unsigned-byte 8))
-      (let ((result (inquisitor:detect-end-of-line in)))
-        (when result
-          (setq end-of-line result))))
-    (values external-format
-            end-of-line)))
-
-#-lem-use-inquisitor
-(defun detect-external-format-from-file (pathname)
-  (declare (ignore pathname))
-  (values :utf-8 :lf))
-
 (defun insert-file-contents (point filename)
-  (multiple-value-bind (external-format end-of-line)
-      (detect-external-format-from-file filename)
+  (let ((external-format :utf-8)
+        (end-of-line :lf))
+    (when *external-format-function*
+      (multiple-value-setq (external-format end-of-line)
+                           (funcall *external-format-function* filename)))
     (with-point ((point point :left-inserting))
       (with-open-file (in filename :external-format external-format)
         (loop

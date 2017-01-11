@@ -1047,14 +1047,14 @@
       (when package
         (slime-set-package package)))))
 
-;; (defvar *idle-timer*)
-;; (when (or (not (boundp '*idle-timer*))
-;;           (not (timer-alive-p *idle-timer*)))
-;;   (setf *idle-timer*
-;;         (start-idle-timer "slime" 200 t 'idle-timer-function nil
-;;                           (lambda (condition)
-;;                             (pop-up-backtrace condition)
-;;                             (stop-timer *idle-timer*)))))
+(defvar *idle-timer*)
+(when (or (not (boundp '*idle-timer*))
+          (not (timer-alive-p *idle-timer*)))
+  (setf *idle-timer*
+        (start-idle-timer "slime" 110 t 'idle-timer-function nil
+                          (lambda (condition)
+                            (stop-timer *idle-timer*)
+                            (pop-up-backtrace condition)))))
 
-;; (pushnew (cons ".lisp$" 'slime-mode) *auto-mode-alist* :test #'equal)
-;; (pushnew (cons ".asd$" 'slime-mode) *auto-mode-alist* :test #'equal)
+(pushnew (cons ".lisp$" 'slime-mode) *auto-mode-alist* :test #'equal)
+(pushnew (cons ".asd$" 'slime-mode) *auto-mode-alist* :test #'equal)

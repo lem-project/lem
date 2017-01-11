@@ -13,8 +13,8 @@
 
 (defun pop-up-backtrace (condition)
   (let ((buffer (get-buffer-create "*EDITOR ERROR*")))
+    (erase-buffer buffer)
     (display-buffer buffer)
-    (erase-buffer)
     (with-open-stream (stream (make-buffer-output-stream (buffer-point buffer)))
       (princ condition stream)
       (fresh-line stream)

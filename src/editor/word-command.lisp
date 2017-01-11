@@ -137,7 +137,7 @@
                   (return-from forward-paragraph)))
       (loop :until (blank-line-p point)
             :do (unless (line-offset point dir)
-                  (buffer-end point)
+                  (when (plusp dir) (buffer-end point))
                   (return-from forward-paragraph))))))
 
 (define-key *global-keymap* (kbd "M-{") 'backward-paragraph)

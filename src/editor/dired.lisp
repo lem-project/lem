@@ -72,7 +72,8 @@
 
 (define-command dired-find-file-other-window () ()
   (select-file (lambda (file)
-                 (pop-to-buffer (find-file-buffer file)))))
+                 (setf (current-window)
+                       (pop-to-buffer (find-file-buffer file))))))
 
 (define-command dired-next-line (n) ("p")
   (let ((point (current-point)))
@@ -305,7 +306,8 @@
                         (#\d
                          (put-text-property start-point end-point 'type :directory)
                          (character-offset (line-start cur-point) start-file-charpos)
-                         (put-text-property cur-point end-point :attribute *directory-attribute*))
+                         (put-text-property cur-point end-point :attribute *directory-attribute*)
+                         (setf filename (namestring (uiop:ensure-directory-pathname filename))))
                         (#\-
                          (put-text-property start-point end-point 'type :file)))
                       (put-text-property start-point end-point 'file filename)))

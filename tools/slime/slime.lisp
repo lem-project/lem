@@ -244,7 +244,7 @@
 
 (defun get-operator-name ()
   (with-point ((point (current-point)))
-    (lem.lisp-mode::top-of-defun point)
+    (scan-lists point -1 1)
     (character-offset point 1)
     (symbol-string-at-point point)))
 

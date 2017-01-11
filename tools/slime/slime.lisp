@@ -34,6 +34,8 @@
   (setf (get-bvar :calc-indent-function)
         'calc-indent))
 
+(define-key *slime-mode-keymap* "C-M-a" 'lem.lisp-mode:lisp-beginning-of-defun)
+(define-key *slime-mode-keymap* "C-M-e" 'lem.lisp-mode:lisp-end-of-defun)
 (define-key *slime-mode-keymap* "C-M-q" 'slime-indent-sexp)
 (define-key *slime-mode-keymap* "C-c M-p" 'slime-set-package)
 (define-key *slime-mode-keymap* "C-c C-e" 'slime-eval-last-expression)

@@ -518,7 +518,8 @@
                    sourcelist
                    (lambda (cur-point)
                      (insert-string cur-point (princ-to-string type)
-                                         :attribute *headline-attribute*))
+                                    :attribute *headline-attribute*
+                                    ))
                    nil)
                   (loop :for def :in defs
                         :do (destructuring-bind (name file offset snippet) def
@@ -534,7 +535,8 @@
                                  (move-to-position (current-point) offset))))))))
     (cond
       (found
-       (push (list (current-buffer) (current-point))
+       (push (list (buffer-name (current-buffer))
+                   (position-at-point (current-point)))
              *edit-definition-stack*))
       (t
        (message "No xref information found for ~A" symbol)))))

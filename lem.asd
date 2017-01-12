@@ -2,8 +2,6 @@
 
 (pushnew :lem-use-inquisitor *features*)
 
-(load "lem-base.asd")
-
 #-asdf(require :asdf)
 
 #-uiop(require :uiop)

@@ -13,7 +13,6 @@
 
 (defvar *slime-prompt-string*) ;(1)
 (defvar *connection* nil)
-(defvar *eval-timer* nil)
 (defvar *write-string-function* 'write-string-to-output-buffer)
 (defvar *last-compilation-result* nil)
 (defvar *indent-table* (make-hash-table :test 'equal))
@@ -120,7 +119,6 @@
                                     (setq result-value value))
                                    ((:abort condition)
                                     (declare (ignore condition))
-                                    (stop-eval-timer)
                                     (editor-error "Synchronous Lisp Evaluation aborted"))))
                  :package package
                  :thread t)
@@ -157,15 +155,13 @@
    *connection*
    form
    :continuation (lambda (value)
-                   (stop-eval-timer)
                    (alexandria:destructuring-case value
                      ((:ok x)
                       (message "~A" x))
                      ((:abort condition)
                       (message "Evaluation aborted on ~A." condition))))
    :package (current-package)
-   :thread t)
-  (start-eval-timer))
+   :thread t))
 
 (defun re-eval-defvar (string)
   (eval-with-transcript `(swank:re-evaluate-defvar ,string)))
@@ -252,17 +248,14 @@
 
 (define-command slime-echo-arglist () ()
   (check-connection)
-  (unless (eval-timer-alive-p)
-    (let ((name (get-operator-name))
-          (package (current-package)))
-      (when name
-        (eval-async `(swank:operator-arglist ,name ,package)
-                    (lambda (arglist)
-                      (stop-eval-timer)
-                      (when arglist
-                        (message "~A" (ppcre:regex-replace-all "\\s+" arglist " "))))
-                    t)
-        (start-eval-timer)))))
+  (let ((name (get-operator-name))
+        (package (current-package)))
+    (when name
+      (eval-async `(swank:operator-arglist ,name ,package)
+                  (lambda (arglist)
+                    (when arglist
+                      (message "~A" (ppcre:regex-replace-all "\\s+" arglist " "))))
+                  t))))
 
 (define-command slime-space (n) ("p")
   (insert-character (current-point) #\space n)
@@ -276,7 +269,6 @@
     (end-buffer-p point)))
 
 (defun compilation-finished (result)
-  (stop-eval-timer)
   (setf *last-compilation-result* result)
   (if (not (check-parens))
       (message "unmatched paren")
@@ -371,8 +363,7 @@
     (eval-async `(swank:compile-file-for-emacs ,file t)
                 #'compilation-finished
                 t
-                (buffer-package (current-buffer)))
-    (start-eval-timer)))
+                (buffer-package (current-buffer)))))
 
 (define-command slime-compile-region (start end) ("r")
   (check-connection)
@@ -389,8 +380,7 @@
                                                  nil)
                 #'compilation-finished
                 t
-                (buffer-package (current-buffer)))
-    (start-eval-timer)))
+                (buffer-package (current-buffer)))))
 
 (define-command slime-compile-defun () ()
   (check-connection)
@@ -646,11 +636,10 @@
 (define-key *slime-repl-mode-keymap* "C-c C-c" 'slime-repl-interrupt)
 
 (define-command slime-repl-interrupt () ()
-  (when (eval-timer-alive-p)
-    (swank-protocol:send-message-string *connection*
-                                        (format nil "(:emacs-interrupt ~(~S~))"
-                                                (or (car *read-string-thread-stack*)
-                                                    :repl-thread)))))
+  (swank-protocol:send-message-string *connection*
+                                      (format nil "(:emacs-interrupt ~(~S~))"
+                                              (or (car *read-string-thread-stack*)
+                                                  :repl-thread))))
 
 (defun repl-buffer (&optional force)
   (if force
@@ -678,30 +667,6 @@
         (get-bvar :listener-confirm-function)
         'repl-read-line))
 
-(defun eval-timer-alive-p ()
-  (and (timer-p *eval-timer*)
-       (timer-alive-p *eval-timer*)))
-
-(defvar *modeline-eval-flag* "During-Evalation")
-
-(defun start-eval-timer ()
-  (unless (eval-timer-alive-p)
-    (modeline-add-status-list *modeline-eval-flag*)
-    (setf *eval-timer*
-          (start-timer nil 20 t
-                       (lambda ()
-                         (setf (timer-ms *eval-timer*) 100)
-                         (pull-events))
-                       nil
-                       (lambda (condition)
-                         (pop-up-backtrace condition)
-                         (stop-timer *eval-timer*))))))
-
-(defun stop-eval-timer ()
-  (when (eval-timer-alive-p)
-    (modeline-remove-status-list *modeline-eval-flag*)
-    (stop-timer *eval-timer*)))
-
 (defun repl-confirm (point string)
   (declare (ignore point))
   (check-connection)
@@ -711,12 +676,10 @@
      string
      (lambda (value)
        (declare (ignore value))
-       (stop-eval-timer)
        (repl-reset-input)
        (lem.listener-mode:listener-reset-prompt (repl-buffer))
        (redraw-display)
        (setf *write-string-function* prev-write-string-function)))
-    (start-eval-timer)
     (setf *write-string-function* 'write-string-to-repl)))
 
 (defun repl-read-string (thread tag)
@@ -778,6 +741,15 @@
 (defun refresh-output-buffer ()
   (setq *fresh-output-buffer-p* t))
 
+(defun start-thread ()
+  (bt:make-thread (lambda ()
+                    (loop
+                      (when (swank-protocol:message-waiting-p *connection* :timeout 1)
+                        (send-event (lambda ()
+                                      (pull-events)))
+                        (sleep 0.1))))
+                  :name "slime-wait-message"))
+
 (define-command slime-connect (hostname port)
     ((list (prompt-for-string "Hostname: " "localhost")
            (parse-integer (prompt-for-string "Port: " (princ-to-string *default-port*)))))
@@ -794,7 +766,8 @@
                           :ok)
                     :package)
               :prompt))
-  (slime-repl))
+  (slime-repl)
+  (start-thread))
 
 (defun log-message (message)
   (let ((buffer (get-buffer-create "*slime-events*")))
@@ -810,7 +783,6 @@
         (disconnected
          (c)
          (declare (ignore c))
-         (stop-eval-timer)
          (setq *connection* nil)))
       (loop :for message :in messages
             :do (log-message message)
@@ -832,7 +804,6 @@
                    (swank-protocol:debugger-in *connection*)
                    (active-debugger thread level select))
                   ((:debug thread level condition restarts frames conts)
-                   (stop-eval-timer)
                    (start-debugger thread level condition restarts frames conts))
                   ((:debug-return thread level stepping)
                    (swank-protocol:debugger-out *connection*)
@@ -900,8 +871,7 @@
 
 (define-command slime-quit-debugger () ()
   (when (swank-protocol:debuggerp *connection*)
-    (swank-protocol:emacs-rex *connection* `(swank:throw-to-toplevel))
-    (start-eval-timer)))
+    (swank-protocol:emacs-rex *connection* `(swank:throw-to-toplevel))))
 
 (define-command slime-continue () ()
   (when (null (get-bvar 'restarts))
@@ -911,15 +881,13 @@
                             :continuation (lambda (value)
                                             (alexandria:destructuring-case value
                                               ((:ok x)
-                                               (error "sldb-quit returned [~A]" x)))))
-  (start-eval-timer))
+                                               (error "sldb-quit returned [~A]" x))))))
 
 (define-command slime-abort () ()
   (when (swank-protocol:debuggerp *connection*)
     (eval-async '(swank:sldb-abort)
                 (lambda (v)
-                  (message "Restart returned: ~A" v)))
-    (start-eval-timer)))
+                  (message "Restart returned: ~A" v)))))
 
 (defun slime-invoke-restart (n)
   (check-type n integer)
@@ -927,8 +895,7 @@
     (swank-protocol:emacs-rex *connection*
                               `(swank:invoke-nth-restart-for-emacs
                                 ,(get-bvar 'level :default -1)
-                                ,n))
-    (start-eval-timer)))
+                                ,n))))
 
 (define-command slime-invoke-restart-0 () () (slime-invoke-restart 0))
 (define-command slime-invoke-restart-1 () () (slime-invoke-restart 1))

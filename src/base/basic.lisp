@@ -470,16 +470,16 @@
 
 (defun skip-chars-internal (point test not-p dir)
   (loop :for count :from 0
-     :for c := (character-at point (if dir 0 -1))
-     :do
-     (unless (if (if (consp test)
-		     (member c test)
-		     (funcall test c))
-		 (not not-p)
-		 not-p)
-       (return count))
-     (unless (character-offset point (if dir 1 -1))
-       (return count))))
+        :for c := (character-at point (if dir 0 -1))
+        :do
+        (unless (if (if (consp test)
+                        (member c test)
+                        (funcall test c))
+                    (not not-p)
+                    not-p)
+          (return count))
+        (unless (character-offset point (if dir 1 -1))
+          (return count))))
 
 (defun skip-chars-forward (point test &optional not-p)
   (skip-chars-internal point test not-p t))

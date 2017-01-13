@@ -437,11 +437,11 @@
 (defun %sexp-escape-p (point offset)
   (let ((count 0))
     (loop :with string := (line-string-at point)
-       :for i :downfrom (+ (1- (point-charpos point)) offset) :to 0
-       :do (if (syntax-escape-char-p (schar string i))
-	       (incf count)
-	       (return)))
-    (oddp count)))
+          :for i :downfrom (+ (1- (point-charpos point)) offset) :to 0
+          :do (if (syntax-escape-char-p (schar string i))
+                  (incf count)
+                  (return)))
+    (values (oddp count) count)))
 
 (defun %sexp-symbol-p (c)
   (or (syntax-symbol-char-p c)
@@ -449,11 +449,29 @@
       (syntax-expr-prefix-char-p c)))
 
 (defun %skip-symbol-forward (point)
-  (skip-chars-forward point #'%sexp-symbol-p)
+  (loop :for c := (character-at point 0)
+        :do
+        (cond ((syntax-escape-char-p c)
+               (character-offset point 1))
+              ((not (or (syntax-symbol-char-p c)
+                        (syntax-expr-prefix-char-p c)))
+               (return)))
+        (unless (character-offset point 1)
+          (return)))
   point)
 
 (defun %skip-symbol-backward (point)
-  (skip-chars-backward point #'%sexp-symbol-p)
+  (loop :for c := (character-at point -1)
+        :do (multiple-value-bind (escape-p skip-count)
+                (%sexp-escape-p point -1)
+              (cond (escape-p
+                     (character-offset point (- (1+ skip-count))))
+                    ((or (syntax-symbol-char-p c)
+                         (syntax-expr-prefix-char-p c)
+                         (syntax-escape-char-p c))
+                     (character-offset point -1))
+                    (t
+                     (return)))))
   point)
 
 (defun %skip-string-forward (point)
@@ -504,7 +522,8 @@
 	     ((syntax-string-quote-char-p c)
 	      (%skip-string-forward point))
 	     ((syntax-escape-char-p c)
-	      (character-offset point 2))
+              (unless (character-offset point 2)
+                (return nil)))
 	     (t
 	      (character-offset point 1))))))
 

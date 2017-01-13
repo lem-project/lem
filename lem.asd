@@ -32,6 +32,7 @@
                              (:file "history")
                              (:file "term")
                              (:file "package")
+                             (:file "errors")
                              (:file "key")
                              (:file "macros")
                              (:file "kill")

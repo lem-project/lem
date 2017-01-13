@@ -476,36 +476,36 @@
   (redraw-display-window (current-window) nil)
   (charms/ll:doupdate))
 
-(defun update-display-size ()
+(defun update-display-size (display-width display-height)
   (let ((delete-windows))
     (dolist (window (window-list))
-      (when (<= (display-height)
+      (when (<= display-height
                 (+ (window-y window) 2))
         (push window delete-windows))
-      (when (<= (display-width)
+      (when (<= display-width
                 (+ (window-x window) 1))
         (push window delete-windows)))
     (mapc #'delete-window delete-windows))
   (let ((window-list (window-list)))
     (dolist (window (lem::collect-right-windows window-list))
       (lem::window-resize window
-                          (- (display-width)
+                          (- display-width
                              *old-display-width*)
                           0))
     (dolist (window (lem::collect-bottom-windows window-list))
       (lem::window-resize window
                           0
-                          (- (display-height)
+                          (- display-height
                              *old-display-height*)))
-    (setq *old-display-width* (display-width))
-    (setq *old-display-height* (display-height))
+    (setq *old-display-width* display-width)
+    (setq *old-display-height* display-height)
     (charms/ll:mvwin *echo-area-scrwin*
-                     (- (display-height)
+                     (- display-height
                         (minibuffer-window-height))
                      0)
     (charms/ll:wresize *echo-area-scrwin*
                        (minibuffer-window-height)
-                       (display-width))
+                       display-width)
     (lem::minibuf-update-size)
     (print-echoarea nil nil)
     (redraw-display)))
@@ -517,51 +517,6 @@
   (if doupdate-p
       (charms/ll:wrefresh *echo-area-scrwin*)
       (charms/ll:wnoutrefresh *echo-area-scrwin*)))
-
-(defun get-char-1 ()
-  (loop :for code := (charms/ll:getch) :do
-     (cond ((= code 410)
-	    (update-display-size))
-	   ((= code -1)
-	    (return nil))
-	   (t
-	    (return
-	      (let ((nbytes (utf8-bytes code)))
-		(if (= nbytes 1)
-		    (code-char code)
-		    (aref (babel:octets-to-string
-			   (coerce (cons code
-					 (loop :repeat (1- nbytes)
-					    :collect (charms/ll:getch)))
-				   '(vector (unsigned-byte 8))))
-			  0))))))))
-
-(defun get-char (timeout)
-  (etypecase timeout
-    (integer
-     (let ((num 100000))
-       (cond ((< num timeout)
-              (multiple-value-bind (div mod)
-                  (floor timeout num)
-                (loop :repeat div :do
-		   (multiple-value-bind (char timeout-p)
-		       (get-char num)
-		     (unless timeout-p
-		       (return char))))
-                (if (zerop mod)
-                    (values #\nul t)
-                    (get-char mod))))
-             (t
-              (charms/ll:timeout timeout)
-              (let ((char (get-char-1)))
-                (charms/ll:timeout -1)
-                (if (null char)
-                    (values #\nul t)
-                    (values char nil)))))))
-    (null
-     (loop :for char := (get-char-1) :do
-	(unless (null char)
-	  (return char))))))
 
 (defun call-with-allow-interrupt (flag fn)
   (with-raw (not flag)

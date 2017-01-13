@@ -1,8 +1,6 @@
 (in-package :lem-base)
 
 (export '(editor-condition
-          editor-abort
-          editor-abort-depth
           read-only-error
           editor-error
           editor-error-message
@@ -10,16 +8,6 @@
 
 (define-condition editor-condition (simple-error)
   ())
-
-(define-condition editor-abort (editor-condition)
-  ((depth
-    :initarg :depth
-    :reader editor-abort-depth
-    :initform 0))
-  (:report
-   (lambda (condition stream)
-     (declare (ignore condition))
-     (format stream "Abort"))))
 
 (define-condition read-only-error (editor-condition)
   ())

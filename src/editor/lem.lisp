@@ -31,10 +31,10 @@
        :condition condition))))
 
 (defmacro with-error-handler (() &body body)
-  `(handler-case-bind (#'(lambda (condition)
-                           (handler-bind ((error #'bailout))
-                             (pop-up-backtrace condition)))
-			 ,@body)
+  `(handler-case-bind ((lambda (condition)
+                         (handler-bind ((error #'bailout))
+                           (pop-up-backtrace condition)))
+                       ,@body)
                       ((condition) (declare (ignore condition)))))
 
 (defvar *syntax-scan-window-recursive-p* nil)
@@ -115,49 +115,79 @@
             (lambda (buffer)
               (scan-file-property-list buffer))))
 
-(defun lem-mainloop ()
-  (do-commandloop (:toplevel t)
-    (with-error-handler ()
-      (cockpit
-       (redraw-display)
-       (start-idle-timers)
-       (let ((cmd (read-key-command)))
-         (stop-idle-timers)
-         (if (changed-disk-p (current-buffer))
-             (ask-revert-buffer)
-             (progn
-               (message nil)
-               (handler-case
-                   (handler-bind ((editor-condition
-                                   (lambda (c)
-                                     (declare (ignore c))
-                                     (stop-record-key))))
-                     (cmd-call cmd nil))
-                 (editor-abort ()
-                               (buffer-mark-cancel (current-buffer))
-                               (message "Quit"))
-                 (read-only-error ()
-                                  (message "Read Only"))
-                 (editor-error (c)
-                               (message (editor-error-message c)))))))))
-    #+(or)
-    (buffer-test (current-buffer))))
+(defun toplevel-editor-loop ()
+  (catch 'toplevel
+    (do-commandloop (:toplevel t)
+      (with-error-handler ()
+        (cockpit
+          (redraw-display)
+          (start-idle-timers)
+          (let ((cmd (read-key-command)))
+            (stop-idle-timers)
+            (if (changed-disk-p (current-buffer))
+                (ask-revert-buffer)
+                (progn
+                  (message nil)
+                  (handler-case
+                      (handler-bind ((editor-condition
+                                      (lambda (c)
+                                        (declare (ignore c))
+                                        (stop-record-key))))
+                        (cmd-call cmd nil))
+                    (editor-abort ()
+                                  (buffer-mark-cancel (current-buffer))
+                                  (message "Quit"))
+                    (read-only-error ()
+                                     (message "Read Only"))
+                    (editor-error (c)
+                                  (message (editor-error-message c))))))))))
+    nil))
+
+(defun lem-internal ()
+  (let* ((main-thread (bt:current-thread))
+         (thread (bt:make-thread
+                  (lambda ()
+                    (let ((result (toplevel-editor-loop)))
+                      (bt:interrupt-thread main-thread
+                                           (lambda ()
+                                             (error 'exit-editor
+                                                    :value result)))))
+                  :name "editor")))
+    (handler-case
+        (loop
+          (unless (bt:thread-alive-p thread) (return))
+          (let ((code (charms/ll:getch)))
+            (cond ((= code -1))
+                  ((= code 410)
+                   (send-resize-screen-event charms/ll:*cols* charms/ll:*lines*))
+                  (t
+                   (send-event
+                    (let ((nbytes (utf8-bytes code)))
+                      (if (= nbytes 1)
+                          (code-char code)
+                          (let ((vec (make-array nbytes)))
+                            (setf (svref vec 0) code)
+                            (loop :for i :from 1 :to nbytes
+                                  :do (setf (svref vec i) (charms/ll:getch)))
+                            (schar (babel:octets-to-string vec) 0)))))))))
+      (exit-editor (c)
+                   (return-from lem-internal (exit-editor-value c))))))
 
 (let ((passed nil))
   (defun call-with-editor (function)
     (unwind-protect
-	 (catch 'toplevel
-	   (let ((*running-p* t))
-	     (unless passed
-	       (setq passed t)
-	       (let ((*debug-p* t))
-		 (cockpit
-		   (display-init)
-		   (window-init)
-		   (minibuf-init)
-                   (setup)
-		   (run-hooks *after-init-hook*))))
-	     (funcall function)))
+        (catch 'toplevel
+          (let ((*running-p* t))
+            (unless passed
+              (setq passed t)
+              (let ((*debug-p* t))
+                (cockpit
+                  (display-init)
+                  (window-init)
+                  (minibuf-init)
+                  (setup)
+                  (run-hooks *after-init-hook*))))
+            (funcall function)))
       (display-finalize))))
 
 (defmacro with-editor (() &body body)
@@ -171,6 +201,6 @@
   (check-init)
   (let ((report (with-editor ()
                   (mapc 'find-file args)
-                  (lem-mainloop))))
+                  (lem-internal))))
     (when report
       (format t "~&~a~%" report))))

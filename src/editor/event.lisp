@@ -3,7 +3,7 @@
 (export '(read-event
           send-event))
 
-(declaim (inline make-queue enqueue dequeue))
+(declaim (inline make-queue enqueue dequeue empty-queue-p))
 
 (defun make-queue ()
   (cons nil nil))
@@ -20,6 +20,9 @@
 (defun dequeue (queue)
   (pop (car queue)))
 
+(defun empty-queue-p (queue)
+  (null (car queue)))
+
 (defparameter +resize-screen+ (make-symbol "RESIZE-SCREEN"))
 
 (let ((wait (bt:make-condition-variable))
@@ -28,7 +31,7 @@
 
   (defun dequeue-event (timeout)
     (bt:with-lock-held (lock)
-      (if (not (null (car queue)))
+      (if (not (empty-queue-p queue))
           (dequeue queue)
           (cond ((if timeout
                      (bt:condition-wait wait lock :timeout timeout)

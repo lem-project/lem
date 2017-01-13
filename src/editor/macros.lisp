@@ -39,7 +39,7 @@
          (sb-profile:report)))))
 
 (defmacro handler-case-bind ((error-bind &body body)
-					   ((condition) &body protected-form))
+                             ((condition) &body protected-form))
   (let ((gerror-bind (gensym "ERROR-BIND")))
     `(let ((,gerror-bind ,error-bind))
        (handler-case

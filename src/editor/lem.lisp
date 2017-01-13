@@ -151,7 +151,8 @@
                       (bt:interrupt-thread main-thread
                                            (lambda ()
                                              (error 'exit-editor
-                                                    :value result))))))))
+                                                    :value result)))))
+                  :name "editor")))
     (handler-case
         (loop
           (unless (bt:thread-alive-p thread) (return))

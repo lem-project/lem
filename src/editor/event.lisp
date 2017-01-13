@@ -82,7 +82,7 @@
           ((listp event)
            (eval event)
            t)
-          ((functionp event)
+          ((or (functionp event) (symbolp event))
            (funcall event)
            t)
           (t

@@ -71,4 +71,14 @@
           (lem-interface::update-display-size width height))))))
 
 (defun read-event (&optional timeout)
-  (receive-event timeout))
+  (let ((event (receive-event timeout)))
+    (cond ((characterp event)
+           event)
+          ((listp event)
+           (eval event)
+           t)
+          ((functionp event)
+           (funcall event)
+           t)
+          (t
+           event))))

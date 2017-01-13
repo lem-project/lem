@@ -45,7 +45,9 @@
   (loop
     (let ((ms (shortest-wait-timers)))
       (if (null ms)
-          (return (read-event nil))
+          (loop :for obj := (read-event nil)
+                :do (when (characterp obj)
+                      (return-from read-key-1 obj)))
           (if (minusp ms)
               (update-timer)
               (let ((e (read-event (float (/ ms 1000)))))

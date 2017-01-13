@@ -361,6 +361,7 @@
           (skip-chars-forward point (lambda (c)
                                       (and (syntax-space-char-p c)
                                            (char/= c #\newline))))
+          (when (end-line-p point) (return))
           (when (cond ((syntax-escape-char-p (character-at point 0))
                        (unless (character-offset point 2)
                          (buffer-end point)

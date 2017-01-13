@@ -68,7 +68,9 @@
                                (destructuring-bind (width height) (cdr e)
                                  (lem-interface::update-display-size width height)))
                               (prev-time
-                               (setf undone-p (cdr e)))))))))
+                               (setf undone-p (cdr e))))))
+                     (t
+                      (return e)))))
       (when undone-p
         (destructuring-bind (width height) undone-p
           (lem-interface::update-display-size width height))))))

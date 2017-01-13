@@ -40,6 +40,7 @@
                              (:file "modeline")
                              (:file "commandloop")
                              (:file "timer")
+                             (:file "event")
                              (:file "input")
                              (:file "streams")
                              (:file "defcommand")

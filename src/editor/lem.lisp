@@ -115,7 +115,7 @@
             (lambda (buffer)
               (scan-file-property-list buffer))))
 
-(defun lem-mainloop ()
+(defun toplevel-editor-loop ()
   (do-commandloop (:toplevel t)
     (with-error-handler ()
       (cockpit
@@ -139,9 +139,26 @@
                  (read-only-error ()
                                   (message "Read Only"))
                  (editor-error (c)
-                               (message (editor-error-message c)))))))))
-    #+(or)
-    (buffer-test (current-buffer))))
+                               (message (editor-error-message c)))))))))))
+
+(defun lem-internal ()
+  (let ((thread (bt:make-thread 'toplevel-editor-loop)))
+    (loop
+      (unless (bt:thread-alive-p thread) (return))
+      (let ((code (charms/ll:getch)))
+        (cond ((= code -1))
+              ((= code 410)
+               (enqueue-event (list :resize-screen charms/ll:*cols* charms/ll:*lines*)))
+              (t
+               (enqueue-event
+                (let ((nbytes (utf8-bytes code)))
+                  (if (= nbytes 1)
+                      (code-char code)
+                      (let ((vec (make-array nbytes)))
+                        (setf (svref vec 0) code)
+                        (loop :for i :from 1 :to nbytes
+                              :do (setf (svref vec i) (charms/ll:getch)))
+                        (schar (babel:octets-to-string vec) 0)))))))))))
 
 (let ((passed nil))
   (defun call-with-editor (function)
@@ -171,6 +188,6 @@
   (check-init)
   (let ((report (with-editor ()
                   (mapc 'find-file args)
-                  (lem-mainloop))))
+                  (lem-internal))))
     (when report
       (format t "~&~a~%" report))))

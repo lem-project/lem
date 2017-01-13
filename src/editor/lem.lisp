@@ -158,9 +158,9 @@
           (let ((code (charms/ll:getch)))
             (cond ((= code -1))
                   ((= code 410)
-                   (enqueue-event (list :resize-screen charms/ll:*cols* charms/ll:*lines*)))
+                   (send-resize-screen-event charms/ll:*cols* charms/ll:*lines*))
                   (t
-                   (enqueue-event
+                   (send-event
                     (let ((nbytes (utf8-bytes code)))
                       (if (= nbytes 1)
                           (code-char code)

@@ -41,29 +41,6 @@
 (defun key-recording-p ()
   *key-recording-p*)
 
-(defun read-event (timeout)
-  (let ((prev-time nil)
-        (undone-p))
-    (prog1 (loop
-             (let ((e (dequeue-event timeout)))
-               (cond ((characterp e)
-                      (return e))
-                     ((eql e :timeout)
-                      (assert timeout)
-                      (return nil))
-                     ((and (consp e) (eq (car e) :resize-screen))
-                      (let ((curr-time (get-internal-real-time)))
-                        (cond ((or (null prev-time) (< 100 (- curr-time prev-time)))
-                               (setf undone-p nil)
-                               (setf prev-time curr-time)
-                               (destructuring-bind (width height) (cdr e)
-                                 (lem-interface::update-display-size width height)))
-                              (prev-time
-                               (setf undone-p (cdr e)))))))))
-      (when undone-p
-        (destructuring-bind (width height) undone-p
-          (lem-interface::update-display-size width height))))))
-
 (defun read-key-1 ()
   (loop
     (let ((ms (shortest-wait-timers)))

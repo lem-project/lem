@@ -283,6 +283,19 @@
     ;;  (return-from syntax-scan-region point))
     ))
 
+(defun syntax-scan-move-action (syntax start)
+  (with-point ((end start)
+               (cur start))
+    (let ((end (funcall (syntax-match-move-action syntax) end)))
+      (when (and end (point< cur end))
+        (loop :until (same-line-p cur end) :do
+              (setf (line-%syntax-context (point-line cur)) syntax)
+              (line-offset cur 1))
+        (setf (line-%syntax-context (point-line cur)) 'end-move-action)
+        (when (syntax-attribute syntax)
+          (put-text-property start end :attribute (syntax-attribute syntax)))
+        end))))
+
 (defun syntax-scan-token-test (syntax point)
   (etypecase syntax
     (syntax-region
@@ -310,18 +323,9 @@
                            :key #'car)))
            (cond
              ((syntax-match-move-action syntax)
-              (with-point ((end start)
-                           (cur start))
-                (let ((end (funcall (syntax-match-move-action syntax) end)))
-                  (when (and end (point< cur end))
-                    (loop :until (same-line-p cur end) :do
-                          (setf (line-%syntax-context (point-line cur)) syntax)
-                          (line-offset cur 1))
-                    (setf (line-%syntax-context (point-line cur)) 'end-move-action)
-                    (when (syntax-attribute syntax)
-                      (put-text-property start end :attribute (syntax-attribute syntax)))
-                    (move-point point end)
-                    point))))
+              (let ((goal-point (syntax-scan-move-action syntax start)))
+                (when goal-point
+                  (move-point point goal-point))))
              ((syntax-attribute syntax)
               (put-text-property start point :attribute (syntax-attribute syntax))
               point)
@@ -343,9 +347,11 @@
              t))
           ((typep syntax 'syntax)
            (cond ((eq (line-%syntax-context line) 'end-move-action)
-                  (with-point ((end point))
-                    (previous-single-property-change point :attribute)
-                    (move-point point (syntax-scan-ahead point (line-end end)))))
+                  (with-point ((cur point))
+                    (previous-single-property-change cur :attribute)
+                    (let ((goal-point (syntax-scan-move-action syntax cur)))
+                      (when goal-point
+                        (move-point point goal-point)))))
                  (t
                   (line-add-property (point-line point)
                                      0 (line-length line)

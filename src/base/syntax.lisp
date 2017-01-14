@@ -351,7 +351,8 @@
                                      0 (line-length line)
                                      :attribute (syntax-attribute syntax)
                                      t)
-                  (line-end point))))))))
+                  (line-end point))))
+          (t (setf (line-%syntax-context line) nil))))))
 
 (defun syntax-scan-ahead (point limit)
   (let ((*syntax-scan-limit* limit))

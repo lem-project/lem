@@ -2,7 +2,8 @@
 
 (export '(save-excursion
           with-point
-          with-buffer-read-only))
+          with-buffer-read-only
+          without-interrupts))
 
 (defmacro save-excursion (&body body)
   `(invoke-save-excursion (lambda () ,@body)))
@@ -32,3 +33,9 @@
        (setf (buffer-read-only-p ,gbuffer) ,flag)
        (unwind-protect (progn ,@body)
          (setf (buffer-read-only-p ,gbuffer) ,gtmp)))))
+
+(defmacro without-interrupts (&body body)
+  `(#+ccl ccl:without-interrupts
+    #+sbcl sb-sys:without-interrupts
+    #-(or ccl sbcl) progn
+    ,@body))

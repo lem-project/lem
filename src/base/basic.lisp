@@ -100,8 +100,9 @@
   (assert (line-alive-p line))
   (assert (eq (point-buffer point) (line-buffer line)))
   (assert (<= 0 charpos))
-  (point-change-line point line)
-  (setf (point-charpos point) (min (line-length line) charpos))
+  (without-interrupts
+    (point-change-line point line)
+    (setf (point-charpos point) (min (line-length line) charpos)))
   point)
 
 (defun move-point (point new-point)

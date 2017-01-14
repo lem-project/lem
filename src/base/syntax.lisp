@@ -396,17 +396,18 @@
               (point-buffer end)))
   (let ((buffer (point-buffer start)))
     (when (enable-syntax-highlight-p buffer)
-      (let ((*current-syntax*
-             (buffer-syntax-table buffer))
-            (*syntax-symbol-lifetimes*
-             (let ((prev (line-prev (point-line start))))
-               (and prev (line-%symbol-lifetimes prev)))))
-        (remove-text-property start end :attribute)
-        (with-point ((point start))
-          (loop
-            (syntax-scan-ahead point end)
-            (when (point<= end point)
-              (return point))))))))
+      (without-interrupts
+        (let ((*current-syntax*
+               (buffer-syntax-table buffer))
+              (*syntax-symbol-lifetimes*
+               (let ((prev (line-prev (point-line start))))
+                 (and prev (line-%symbol-lifetimes prev)))))
+          (remove-text-property start end :attribute)
+          (with-point ((point start))
+            (loop
+              (syntax-scan-ahead point end)
+              (when (point<= end point)
+                (return point)))))))))
 
 
 (defun skip-whitespace-forward (point)

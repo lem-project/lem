@@ -71,7 +71,7 @@
   (check-type buffer buffer)
   (setq *buffer-list*
         (cons buffer
-              (delete buffer (buffer-list)))))
+              (remove buffer (buffer-list)))))
 
 (defun delete-buffer (buffer)
   (check-type buffer buffer)
@@ -90,6 +90,6 @@
 (defun bury-buffer (buffer)
   (check-type buffer buffer)
   (setf *buffer-list*
-        (append (delete buffer (buffer-list))
+        (append (remove buffer (buffer-list))
                 (list buffer)))
   (car (buffer-list)))

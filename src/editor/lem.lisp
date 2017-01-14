@@ -55,13 +55,13 @@
   (when (enable-syntax-highlight-p buffer)
     (syntax-scan-range (buffers-start buffer) (buffers-end buffer))))
 
-(defun syntax-scan-current-view ()
+(defun syntax-scan-current-view (&optional (window (current-window)))
   (cond
-    ((get-bvar 'already-visited)
-     (syntax-scan-window (current-window)))
+    ((get-bvar 'already-visited :buffer (window-buffer window))
+     (syntax-scan-window window))
     (t
-     (setf (get-bvar 'already-visited) t)
-     (syntax-scan-buffer (current-buffer)))))
+     (setf (get-bvar 'already-visited :buffer (window-buffer window)) t)
+     (syntax-scan-buffer (window-buffer window)))))
 
 (defun ask-revert-buffer ()
   (if (prompt-for-y-or-n-p (format nil
@@ -92,16 +92,14 @@
                       (redraw-display)))
   (start-idle-timer "lazy-syntax-scan" 500 t
                     (lambda ()
-                      (syntax-scan-current-view)
+                      (syntax-scan-current-view (current-window))
                       (redraw-display)))
   (add-hook *window-scroll-functions*
             (lambda (window)
-              (declare (ignore window))
-              (syntax-scan-current-view)))
+              (syntax-scan-current-view window)))
   (add-hook *window-size-change-functions*
             (lambda (window)
-              (declare (ignore window))
-              (syntax-scan-current-view)))
+              (syntax-scan-current-view window)))
   (add-hook *window-show-buffer-functions*
             (lambda (window)
               (syntax-scan-window window)))
@@ -110,7 +108,8 @@
   (add-hook *find-file-hook*
             (lambda (buffer)
               (prepare-auto-mode buffer)
-              (scan-file-property-list buffer)))
+              (scan-file-property-list buffer)
+              (syntax-scan-buffer buffer)))
   (add-hook *before-save-hook*
             (lambda (buffer)
               (scan-file-property-list buffer))))

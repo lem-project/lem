@@ -114,51 +114,58 @@
             (lambda (buffer)
               (scan-file-property-list buffer))))
 
+(defun read-key-command-with-idle-timers ()
+  (start-idle-timers)
+  (prog1 (read-key-command)
+    (stop-idle-timers)))
+
 (defun toplevel-editor-loop ()
   (catch 'toplevel
     (do-commandloop (:toplevel t)
       (with-error-handler ()
         (cockpit
           (when (= 0 (event-queue-length)) (redraw-display))
-          (start-idle-timers)
-          (let ((cmd (read-key-command)))
-            (stop-idle-timers)
-            (if (changed-disk-p (current-buffer))
-                (ask-revert-buffer)
-                (progn
-                  (message nil)
-                  (handler-case
-                      (handler-bind ((editor-condition
-                                      (lambda (c)
-                                        (declare (ignore c))
-                                        (stop-record-key))))
-                        (cmd-call cmd nil))
-                    (editor-abort ()
-                                  (buffer-mark-cancel (current-buffer))
-                                  (message "Quit"))
-                    (read-only-error ()
-                                     (message "Read Only"))
-                    (editor-error (c)
-                                  (message (editor-error-message c))))))))))
+          (handler-case
+              (handler-bind ((editor-condition
+                              (lambda (c)
+                                (declare (ignore c))
+                                (stop-record-key))))
+                (let ((cmd (read-key-command-with-idle-timers)))
+                  (cond ((changed-disk-p (current-buffer))
+                         (ask-revert-buffer))
+                        (t
+                         (message nil)
+                         (cmd-call cmd nil)))))
+            (editor-abort ()
+                          (buffer-mark-cancel (current-buffer))
+                          (message "Quit"))
+            (read-only-error ()
+                             (message "Read Only"))
+            (editor-error (c)
+                          (message (editor-error-message c)))))))
     nil))
 
 (defun lem-internal ()
   (let* ((main-thread (bt:current-thread))
-         (thread (bt:make-thread
-                  (lambda ()
-                    (let ((result (toplevel-editor-loop)))
-                      (bt:interrupt-thread main-thread
-                                           (lambda ()
-                                             (error 'exit-editor
-                                                    :value result)))))
-                  :name "editor")))
+         (editor-thread (bt:make-thread
+                         (lambda ()
+                           (let ((result (toplevel-editor-loop)))
+                             (bt:interrupt-thread main-thread
+                                                  (lambda ()
+                                                    (error 'exit-editor
+                                                           :value result)))))
+                         :name "editor")))
     (handler-case
         (loop
-          (unless (bt:thread-alive-p thread) (return))
+          (unless (bt:thread-alive-p editor-thread) (return))
           (let ((code (charms/ll:getch)))
             (cond ((= code -1))
                   ((= code 410)
                    (send-resize-screen-event charms/ll:*cols* charms/ll:*lines*))
+                  ((= code (char-code C-\]))
+                   (bt:interrupt-thread editor-thread
+                                        (lambda ()
+                                          (editor-error "interrupt"))))
                   (t
                    (send-event
                     (let ((nbytes (utf8-bytes code)))

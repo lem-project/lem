@@ -257,14 +257,3 @@
         (line-str line) nil
         (line-points line) nil
         (line-buffer line) nil))
-
-(defun line-step-n (line n step-f)
-  (do ((l line (funcall step-f l))
-       (i 0 (1+ i)))
-      ((= i n) l)))
-
-(defun line-forward-n (line n)
-  (line-step-n line n 'line-next))
-
-(defun line-backward-n (line n)
-  (line-step-n line n 'line-prev))

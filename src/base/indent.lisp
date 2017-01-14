@@ -3,6 +3,8 @@
 (export '(indent-line))
 
 (defun indent-line-1 (point column)
+  (when (null column)
+    (return-from indent-line-1 t))
   (when (minusp column)
     (setf column 0))
   (let ((old-column (point-column point))

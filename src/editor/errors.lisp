@@ -10,7 +10,7 @@
   (:report
    (lambda (condition stream)
      (declare (ignore condition))
-     (format stream "Abort"))))
+     (princ "Abort" stream))))
 
 (define-condition exit-editor (editor-condition)
   ((value
@@ -18,9 +18,9 @@
     :reader exit-editor-value
     :initform nil)))
 
-(define-condition editor-interrupt (editor-condition)
+(define-condition editor-interrupt (simple-error)
   ()
   (:report
    (lambda (condition stream)
      (declare (ignore condition))
-     (format stream "Interrupt"))))
+     (princ "Interrupt" stream))))

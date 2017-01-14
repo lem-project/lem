@@ -139,10 +139,8 @@
             (editor-abort ()
                           (buffer-mark-cancel (current-buffer))
                           (message "Quit"))
-            (read-only-error ()
-                             (message "Read Only"))
-            (editor-error (c)
-                          (message (editor-error-message c)))))))
+            (editor-condition (c)
+                              (message "~A" c))))))
     nil))
 
 (defun lem-internal ()
@@ -165,7 +163,7 @@
                   ((= code (char-code C-\]))
                    (bt:interrupt-thread editor-thread
                                         (lambda ()
-                                          (editor-error "interrupt"))))
+                                          (error 'editor-interrupt))))
                   (t
                    (send-event
                     (let ((nbytes (utf8-bytes code)))

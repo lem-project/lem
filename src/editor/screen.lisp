@@ -517,7 +517,3 @@
   (if doupdate-p
       (charms/ll:wrefresh *echo-area-scrwin*)
       (charms/ll:wnoutrefresh *echo-area-scrwin*)))
-
-(defun call-with-allow-interrupt (flag fn)
-  (with-raw (not flag)
-    (funcall fn)))

@@ -208,50 +208,47 @@
                                            (setf (gethash history-name *minibuf-read-line-history-table*)
                                                  (lem.history:make-history))))))
     (handler-case
-        (call-with-allow-interrupt
-         nil
-         (lambda ()
-           (with-current-window (minibuffer-window)
-             (let ((minibuf-buffer-prev-string
-                    (points-to-string (buffers-start (minibuffer))
-                                      (buffers-end (minibuffer))))
-                   (prev-prompt-length
-                    (when *minibuf-prev-prompt*
-                      (length *minibuf-prev-prompt*)))
-                   (minibuf-buffer-prev-point
-                    (window-point (minibuffer-window)))
-                   (*minibuf-prev-prompt* prompt)
-                   (*minibuf-read-line-depth*
-                    (1+ *minibuf-read-line-depth*)))
-               (let ((*inhibit-read-only* t))
-                 (erase-buffer))
-               (minibuffer-mode)
-               (unless (string= "" prompt)
-                 (insert-string (current-point) prompt
-                                :attribute *minibuffer-prompt-attribute*
-                                :read-only t
-                                :field t)
-                 (character-offset (current-point) (length prompt)))
-               (let ((*minibuffer-start-charpos* (point-charpos (current-point))))
-                 (when initial
-                   (insert-string (current-point) initial))
-                 (unwind-protect (call-with-save-windows
-                                  (minibuffer-calls-window)
-                                  (lambda ()
-                                    (minibuf-read-line-loop comp-f existing-p)))
-                   (with-current-window (minibuffer-window)
-                     (let ((*inhibit-read-only* t))
-                       (erase-buffer))
-                     (insert-string (current-point) minibuf-buffer-prev-string)
-                     (when prev-prompt-length
-                       (with-point ((start (current-point))
-                                    (end (current-point)))
-                         (line-start start)
-                         (line-offset end 0 prev-prompt-length)
-                         (put-text-property start end :attribute *minibuffer-prompt-attribute*)
-                         (put-text-property start end :read-only t)
-                         (put-text-property start end :field t)))
-                     (move-point (current-point) minibuf-buffer-prev-point))))))))
+        (with-current-window (minibuffer-window)
+          (let ((minibuf-buffer-prev-string
+                 (points-to-string (buffers-start (minibuffer))
+                                   (buffers-end (minibuffer))))
+                (prev-prompt-length
+                 (when *minibuf-prev-prompt*
+                   (length *minibuf-prev-prompt*)))
+                (minibuf-buffer-prev-point
+                 (window-point (minibuffer-window)))
+                (*minibuf-prev-prompt* prompt)
+                (*minibuf-read-line-depth*
+                 (1+ *minibuf-read-line-depth*)))
+            (let ((*inhibit-read-only* t))
+              (erase-buffer))
+            (minibuffer-mode)
+            (unless (string= "" prompt)
+              (insert-string (current-point) prompt
+                             :attribute *minibuffer-prompt-attribute*
+                             :read-only t
+                             :field t)
+              (character-offset (current-point) (length prompt)))
+            (let ((*minibuffer-start-charpos* (point-charpos (current-point))))
+              (when initial
+                (insert-string (current-point) initial))
+              (unwind-protect (call-with-save-windows
+                               (minibuffer-calls-window)
+                               (lambda ()
+                                 (minibuf-read-line-loop comp-f existing-p)))
+                (with-current-window (minibuffer-window)
+                  (let ((*inhibit-read-only* t))
+                    (erase-buffer))
+                  (insert-string (current-point) minibuf-buffer-prev-string)
+                  (when prev-prompt-length
+                    (with-point ((start (current-point))
+                                 (end (current-point)))
+                      (line-start start)
+                      (line-offset end 0 prev-prompt-length)
+                      (put-text-property start end :attribute *minibuffer-prompt-attribute*)
+                      (put-text-property start end :read-only t)
+                      (put-text-property start end :field t)))
+                  (move-point (current-point) minibuf-buffer-prev-point))))))
       (editor-abort (c)
                     (error c)))))
 

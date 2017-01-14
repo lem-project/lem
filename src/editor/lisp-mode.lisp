@@ -587,14 +587,11 @@
 
 (defun %lisp-eval (x point
 		   &optional update-point-p)
-  (call-with-allow-interrupt
-   t
-   (lambda ()
-     (multiple-value-bind (results error-p)
-         (%lisp-eval-internal x
-                              point
-                              update-point-p)
-       (values results error-p)))))
+  (multiple-value-bind (results error-p)
+      (%lisp-eval-internal x
+                           point
+                           update-point-p)
+    (values results error-p)))
 
 (defun %lisp-eval-string (string point
 			  &optional

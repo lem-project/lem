@@ -17,8 +17,7 @@
            :screen-move-cursor
            :print-echoarea
            :get-char
-           :redraw-display
-           :call-with-allow-interrupt))
+           :redraw-display))
 
 ;; (defpackage :lem-interface.ncurses
 ;;   (:use :cl :lem.fatstring :lem.term :lem.util)

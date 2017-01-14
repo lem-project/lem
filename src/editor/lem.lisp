@@ -119,7 +119,7 @@
     (do-commandloop (:toplevel t)
       (with-error-handler ()
         (cockpit
-          (redraw-display)
+          (when (= 0 (event-queue-length)) (redraw-display))
           (start-idle-timers)
           (let ((cmd (read-key-command)))
             (stop-idle-timers)

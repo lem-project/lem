@@ -29,6 +29,10 @@
       (lock (bt:make-lock))
       (queue (make-queue)))
 
+  (defun event-queue-length ()
+    (bt:with-lock-held (lock)
+      (length (car queue))))
+
   (defun dequeue-event (timeout)
     (bt:with-lock-held (lock)
       (if (not (empty-queue-p queue))

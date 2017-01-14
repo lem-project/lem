@@ -164,10 +164,10 @@
                     (let ((nbytes (utf8-bytes code)))
                       (if (= nbytes 1)
                           (code-char code)
-                          (let ((vec (make-array nbytes)))
-                            (setf (svref vec 0) code)
-                            (loop :for i :from 1 :to nbytes
-                                  :do (setf (svref vec i) (charms/ll:getch)))
+                          (let ((vec (make-array nbytes :element-type '(unsigned-byte 8))))
+                            (setf (aref vec 0) code)
+                            (loop :for i :from 1 :below nbytes
+                                  :do (setf (aref vec i) (charms/ll:getch)))
                             (schar (babel:octets-to-string vec) 0)))))))))
       (exit-editor (c)
                    (return-from lem-internal (exit-editor-value c))))))

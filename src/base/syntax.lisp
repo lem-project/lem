@@ -381,7 +381,8 @@
             (syntax-update-symbol-lifetimes)))
     (setf (line-%symbol-lifetimes (point-line point))
           *syntax-symbol-lifetimes*)
-    (line-offset point 1)))
+    (or (line-offset point 1)
+        (buffer-end point))))
 
 (defun syntax-scan-range (start end)
   (assert (eq (point-buffer start)

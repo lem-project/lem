@@ -279,8 +279,9 @@
     (setf (line-%syntax-context (point-line point)) region)
     (unless (line-offset point 1)
       (return-from syntax-scan-region point))
-    (when (point<= *syntax-scan-limit* point)
-      (return-from syntax-scan-region point))))
+    ;;(when (point<= *syntax-scan-limit* point)
+    ;;  (return-from syntax-scan-region point))
+    ))
 
 (defun syntax-scan-token-test (syntax point)
   (etypecase syntax

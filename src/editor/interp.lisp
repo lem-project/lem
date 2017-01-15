@@ -80,7 +80,11 @@
   (do-command-loop (:toplevel toplevel)
     (when (= 0 (event-queue-length)) (redraw-display))
     (handler-case
-        (handler-bind ((editor-condition
+        (handler-bind ((editor-abort
+                        (lambda (c)
+                          (declare (ignore c))
+                          (buffer-mark-cancel (current-buffer))))
+                       (editor-condition
                         (lambda (c)
                           (declare (ignore c))
                           (stop-record-key))))

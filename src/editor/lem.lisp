@@ -9,7 +9,7 @@
 (defvar *after-init-hook* '())
 
 (defvar *debug-p* nil)
-(defvar *running-p* nil)
+(defvar *in-the-editor* nil)
 
 (defun pop-up-backtrace (condition)
   (let ((buffer (get-buffer-create "*EDITOR ERROR*")))
@@ -22,18 +22,23 @@
        :stream stream
        :count 100))))
 
+(defun error-report (condition)
+  (with-output-to-string (stream)
+    (princ condition stream)
+    (uiop/image:print-backtrace
+     :stream stream
+     :condition condition)))
+
 (defun bailout (condition)
   (throw 'toplevel
-    (with-output-to-string (stream)
-      (princ condition stream)
-      (uiop/image:print-backtrace
-       :stream stream
-       :condition condition))))
+    (error-report condition)))
 
 (defmacro with-error-handler (() &body body)
   `(handler-case-bind ((lambda (condition)
-                         (handler-bind ((error #'bailout))
-                           (pop-up-backtrace condition)))
+                         (if *debug-p*
+                             (bailout condition)
+                             (handler-bind ((error #'bailout))
+                               (pop-up-backtrace condition))))
                        ,@body)
                       ((condition) (declare (ignore condition)))))
 
@@ -62,23 +67,6 @@
     (t
      (setf (get-bvar 'already-visited :buffer (window-buffer window)) t)
      (syntax-scan-buffer (window-buffer window)))))
-
-(defun ask-revert-buffer ()
-  (if (prompt-for-y-or-n-p (format nil
-                                "~A changed on disk; revert buffer?"
-                                (buffer-filename)))
-      (revert-buffer t)
-      (update-changed-disk-date (current-buffer)))
-  (redraw-display)
-  (message nil))
-
-(defmacro cockpit (&body body)
-  `(cond (*debug-p*
-          (handler-bind ((error #'bailout)
-                         #+sbcl (sb-sys:interactive-interrupt #'bailout))
-            ,@body))
-         (t
-          ,@body)))
 
 (defun syntax-scan-point (start end old-len)
   (line-start start)
@@ -123,31 +111,28 @@
   (catch 'toplevel
     (do-commandloop (:toplevel t)
       (with-error-handler ()
-        (cockpit
-          (when (= 0 (event-queue-length)) (redraw-display))
-          (handler-case
-              (handler-bind ((editor-condition
-                              (lambda (c)
-                                (declare (ignore c))
-                                (stop-record-key))))
-                (let ((cmd (read-key-command-with-idle-timers)))
-                  (cond ((changed-disk-p (current-buffer))
-                         (ask-revert-buffer))
-                        (t
-                         (message nil)
-                         (cmd-call cmd nil)))))
-            (editor-abort ()
-                          (buffer-mark-cancel (current-buffer))
-                          (message "Quit"))
-            (editor-condition (c)
-                              (message "~A" c))))))
+        (when (= 0 (event-queue-length)) (redraw-display))
+        (handler-case
+            (handler-bind ((editor-condition
+                            (lambda (c)
+                              (declare (ignore c))
+                              (stop-record-key))))
+              (let ((cmd (read-key-command-with-idle-timers)))
+                (message nil)
+                (cmd-call cmd nil)))
+          (editor-abort ()
+                        (buffer-mark-cancel (current-buffer))
+                        (message "Quit"))
+          (editor-condition (c)
+                            (message "~A" c)))))
     nil))
 
 (defun lem-internal ()
   (let* ((main-thread (bt:current-thread))
          (editor-thread (bt:make-thread
                          (lambda ()
-                           (let ((result (toplevel-editor-loop)))
+                           (let* ((*in-the-editor* t)
+                                  (result (toplevel-editor-loop)))
                              (bt:interrupt-thread main-thread
                                                   (lambda ()
                                                     (error 'exit-editor
@@ -179,32 +164,27 @@
 
 (let ((passed nil))
   (defun call-with-editor (function)
-    (unwind-protect
-        (catch 'toplevel
-          (let ((*running-p* t))
-            (unless passed
-              (setq passed t)
-              (let ((*debug-p* t))
-                (cockpit
-                  (display-init)
-                  (window-init)
-                  (minibuf-init)
-                  (setup)
-                  (run-hooks *after-init-hook*))))
-            (funcall function)))
-      (display-finalize))))
+    (handler-bind ((error #'error-report)
+                   #+sbcl (sb-sys:interactive-interrupt #'error-report))
+      (unwind-protect (let ((*in-the-editor* t))
+                        (unless passed
+                          (setq passed t)
+                          (display-init)
+                          (window-init)
+                          (minibuf-init)
+                          (setup)
+                          (run-hooks *after-init-hook*))
+                        (funcall function))
+        (display-finalize)))))
 
 (defmacro with-editor (() &body body)
   `(call-with-editor (lambda () ,@body)))
 
-(defun check-init ()
-  (when *running-p*
-    (error "Editor is already running")))
-
 (defun lem (&rest args)
-  (check-init)
-  (let ((report (with-editor ()
-                  (mapc 'find-file args)
-                  (lem-internal))))
-    (when report
-      (format t "~&~a~%" report))))
+  (if *in-the-editor*
+      (mapc 'find-file args)
+      (let ((report (with-editor ()
+                      (mapc 'find-file args)
+                      (lem-internal))))
+        (when report
+          (format t "~&~A~%" report)))))

@@ -1,49 +1,12 @@
 (in-package :lem)
 
-(export '(*debug-p*
-          *after-init-hook*
-          pop-up-backtrace
+(export '(*after-init-hook*
           with-editor
           lem))
 
 (defvar *after-init-hook* '())
 
-(defvar *debug-p* nil)
 (defvar *in-the-editor* nil)
-
-(defparameter +bailout-tag+ (make-symbol "BAILOUT"))
-
-(defun pop-up-backtrace (condition)
-  (let ((buffer (get-buffer-create "*EDITOR ERROR*")))
-    (erase-buffer buffer)
-    (display-buffer buffer)
-    (with-open-stream (stream (make-buffer-output-stream (buffer-point buffer)))
-      (princ condition stream)
-      (fresh-line stream)
-      (uiop/image:print-backtrace
-       :stream stream
-       :count 100))))
-
-(defmacro with-catch-bailout (&body body)
-  `(catch +bailout-tag+
-     ,@body))
-
-(defun bailout (condition)
-  (throw +bailout-tag+
-    (with-output-to-string (stream)
-      (princ condition stream)
-      (uiop/image:print-backtrace
-       :stream stream
-       :condition condition))))
-
-(defmacro with-error-handler (() &body body)
-  `(handler-case-bind ((lambda (condition)
-                         (if *debug-p*
-                             (bailout condition)
-                             (handler-bind ((error #'bailout))
-                               (pop-up-backtrace condition))))
-                       ,@body)
-                      ((condition) (declare (ignore condition)))))
 
 (defvar *syntax-scan-window-recursive-p* nil)
 
@@ -105,36 +68,13 @@
             (lambda (buffer)
               (scan-file-property-list buffer))))
 
-(defun read-key-command-with-idle-timers ()
-  (start-idle-timers)
-  (prog1 (read-key-command)
-    (stop-idle-timers)))
-
-(defun toplevel-editor-loop ()
-  (do-commandloop (:toplevel t)
-    (with-error-handler ()
-      (when (= 0 (event-queue-length)) (redraw-display))
-      (handler-case
-          (handler-bind ((editor-condition
-                          (lambda (c)
-                            (declare (ignore c))
-                            (stop-record-key))))
-            (let ((cmd (read-key-command-with-idle-timers)))
-              (message nil)
-              (cmd-call cmd nil)))
-        (editor-abort ()
-                      (buffer-mark-cancel (current-buffer))
-                      (message "Quit"))
-        (editor-condition (c)
-                          (message "~A" c))))))
-
 (defun lem-internal ()
   (let* ((main-thread (bt:current-thread))
          (editor-thread (bt:make-thread
                          (lambda ()
                            (let ((*in-the-editor* t))
                              (let ((report (with-catch-bailout
-                                             (toplevel-editor-loop))))
+                                             (command-loop t))))
                                (bt:interrupt-thread
                                 main-thread
                                 (lambda ()

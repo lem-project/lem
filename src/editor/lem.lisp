@@ -11,6 +11,8 @@
 (defvar *debug-p* nil)
 (defvar *in-the-editor* nil)
 
+(defparameter +bailout-tag+ (make-symbol "BAILOUT"))
+
 (defun pop-up-backtrace (condition)
   (let ((buffer (get-buffer-create "*EDITOR ERROR*")))
     (erase-buffer buffer)
@@ -22,16 +24,17 @@
        :stream stream
        :count 100))))
 
-(defun error-report (condition)
-  (with-output-to-string (stream)
-    (princ condition stream)
-    (uiop/image:print-backtrace
-     :stream stream
-     :condition condition)))
+(defmacro with-catch-bailout (&body body)
+  `(catch +bailout-tag+
+     ,@body))
 
 (defun bailout (condition)
-  (throw 'toplevel
-    (error-report condition)))
+  (throw +bailout-tag+
+    (with-output-to-string (stream)
+      (princ condition stream)
+      (uiop/image:print-backtrace
+       :stream stream
+       :condition condition))))
 
 (defmacro with-error-handler (() &body body)
   `(handler-case-bind ((lambda (condition)
@@ -108,35 +111,34 @@
     (stop-idle-timers)))
 
 (defun toplevel-editor-loop ()
-  (catch 'toplevel
-    (do-commandloop (:toplevel t)
-      (with-error-handler ()
-        (when (= 0 (event-queue-length)) (redraw-display))
-        (handler-case
-            (handler-bind ((editor-condition
-                            (lambda (c)
-                              (declare (ignore c))
-                              (stop-record-key))))
-              (let ((cmd (read-key-command-with-idle-timers)))
-                (message nil)
-                (cmd-call cmd nil)))
-          (editor-abort ()
-                        (buffer-mark-cancel (current-buffer))
-                        (message "Quit"))
-          (editor-condition (c)
-                            (message "~A" c)))))
-    nil))
+  (do-commandloop (:toplevel t)
+    (with-error-handler ()
+      (when (= 0 (event-queue-length)) (redraw-display))
+      (handler-case
+          (handler-bind ((editor-condition
+                          (lambda (c)
+                            (declare (ignore c))
+                            (stop-record-key))))
+            (let ((cmd (read-key-command-with-idle-timers)))
+              (message nil)
+              (cmd-call cmd nil)))
+        (editor-abort ()
+                      (buffer-mark-cancel (current-buffer))
+                      (message "Quit"))
+        (editor-condition (c)
+                          (message "~A" c))))))
 
 (defun lem-internal ()
   (let* ((main-thread (bt:current-thread))
          (editor-thread (bt:make-thread
                          (lambda ()
-                           (let* ((*in-the-editor* t)
-                                  (result (toplevel-editor-loop)))
-                             (bt:interrupt-thread main-thread
-                                                  (lambda ()
-                                                    (error 'exit-editor
-                                                           :value result)))))
+                           (let ((*in-the-editor* t))
+                             (let ((report (with-catch-bailout
+                                             (toplevel-editor-loop))))
+                               (bt:interrupt-thread
+                                main-thread
+                                (lambda ()
+                                  (error 'exit-editor :value report))))))
                          :name "editor")))
     (handler-case
         (loop
@@ -164,18 +166,22 @@
 
 (let ((passed nil))
   (defun call-with-editor (function)
-    (handler-bind ((error #'error-report)
-                   #+sbcl (sb-sys:interactive-interrupt #'error-report))
-      (unwind-protect (let ((*in-the-editor* t))
-                        (unless passed
-                          (setq passed t)
-                          (display-init)
-                          (window-init)
-                          (minibuf-init)
-                          (setup)
-                          (run-hooks *after-init-hook*))
-                        (funcall function))
-        (display-finalize)))))
+    (let ((report
+           (with-catch-bailout
+             (handler-bind ((error #'bailout)
+                            #+sbcl (sb-sys:interactive-interrupt #'bailout))
+               (unwind-protect (let ((*in-the-editor* t))
+                                 (unless passed
+                                   (setq passed t)
+                                   (display-init)
+                                   (window-init)
+                                   (minibuf-init)
+                                   (setup)
+                                   (run-hooks *after-init-hook*))
+                                 (funcall function))
+                 (display-finalize))))))
+      (when report
+        (format t "~&~A~%" report)))))
 
 (defmacro with-editor (() &body body)
   `(call-with-editor (lambda () ,@body)))
@@ -183,8 +189,6 @@
 (defun lem (&rest args)
   (if *in-the-editor*
       (mapc 'find-file args)
-      (let ((report (with-editor ()
-                      (mapc 'find-file args)
-                      (lem-internal))))
-        (when report
-          (format t "~&~A~%" report)))))
+      (with-editor ()
+        (mapc 'find-file args)
+        (lem-internal))))

@@ -46,13 +46,13 @@
 
 (define-key *global-keymap* (kbd "C-x C-w") 'write-file)
 (define-command write-file (filename) ("FWrite File: ")
-  (setf (buffer-filename (current-buffer)) filename)
+  (setf (buffer-filename (current-buffer)) (expand-file-name filename))
   (save-buffer t))
 
 (define-key *global-keymap* (kbd "C-x C-i") 'insert-file)
 (define-command insert-file (filename) ("fInsert file: ")
   (insert-file-contents (current-point)
-                        filename)
+                        (expand-file-name filename))
   t)
 
 (define-key *global-keymap* (kbd "C-x s") 'save-some-buffers)

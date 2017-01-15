@@ -101,7 +101,7 @@
                        (start-idle-timers)
                        (prog1 (read-key-command)
                          (stop-idle-timers)))))
-            (message nil)
+            (unless (minibuffer-window-active-p) (message nil))
             (cmd-call cmd nil)))
       (editor-condition (c)
                         (message "~A" c)))))

@@ -3,10 +3,7 @@
 (export '(editor-abort))
 
 (define-condition editor-abort (editor-condition)
-  ((depth
-    :initarg :depth
-    :reader editor-abort-depth
-    :initform 0))
+  ()
   (:report
    (lambda (condition stream)
      (declare (ignore condition))

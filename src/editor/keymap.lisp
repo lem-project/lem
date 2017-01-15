@@ -2,17 +2,12 @@
 
 (export '(*keymaps*
           keymap
-          keymap-undef-hook
-          keymap-parent
-          keymap-table
           make-keymap
           *global-keymap*
           kbd-p
           define-key
           kbd-to-string
           kbd
-          keymap-find-keybind
-          search-keybind-all
           find-keybind
           insertion-key-p))
 
@@ -135,10 +130,6 @@
             (when parent
               (keymap-find-keybind parent key)))
           (keymap-undef-hook keymap0)))))
-
-(defun key-undef-hook (keymap key)
-  (when (keymap-undef-hook keymap)
-    (funcall (keymap-undef-hook keymap) key)))
 
 (defun insertion-key-p (key)
   (let ((first-key (car (kbd-list key))))

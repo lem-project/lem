@@ -186,11 +186,7 @@
   (let ((*minibuf-read-line-existing-p* existing-p)
         (*minibuf-read-line-comp-f* comp-f))
     (catch 'minibuf-read-line-end
-      (do-commandloop ()
-        (redraw-display)
-        (let ((cmd (read-key-command)))
-          (handler-case (cmd-call cmd nil)
-            (editor-condition (c) (message "~A" c))))))
+      (command-loop nil))
     (let ((str (get-minibuffer-string)))
       (lem.history:add-history *minibuf-read-line-history* str)
       str)))

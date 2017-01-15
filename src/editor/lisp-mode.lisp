@@ -255,8 +255,8 @@
 
 (define-major-mode lisp-mode nil
     (:name "lisp"
-	   :keymap *lisp-mode-keymap*
-	   :syntax-table *lisp-syntax-table*)
+     :keymap *lisp-mode-keymap*
+     :syntax-table *lisp-syntax-table*)
   (setf (get-bvar :enable-syntax-highlight) t)
   (setf (get-bvar :indent-tabs-mode) nil)
   (modeline-add-status-list (lambda (window)

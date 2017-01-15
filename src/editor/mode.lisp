@@ -75,12 +75,13 @@
        (setf (buffer-syntax-table (current-buffer)) (mode-syntax-table ',major-mode))
        ,@body)))
 
-(defmacro define-minor-mode (minor-mode (&key name keymap) &body body)
+(defmacro define-minor-mode (minor-mode (&key name (keymap nil keymapp)) &body body)
   `(progn
      (pushnew ',minor-mode *mode-list*)
      (setf (mode-name ',minor-mode) ,name)
-     (defvar ,keymap (make-keymap))
-     (setf (mode-keymap ',minor-mode) ,keymap)
+     ,@(when keymapp
+         `((defvar ,keymap (make-keymap))
+           (setf (mode-keymap ',minor-mode) ,keymap)))
      (define-command ,minor-mode (&rest args) ("P")
        (cond ((null args)
               (toggle-minor-mode ',minor-mode))

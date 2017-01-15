@@ -304,8 +304,9 @@
 
 (defun lookup-keybind (key)
   (let ((buffer (current-buffer)))
-    (or (some #'(lambda (mode)
-                  (keymap-find-keybind (mode-keymap mode) key))
+    (or (some (lambda (mode)
+                (when (mode-keymap mode)
+                  (keymap-find-keybind (mode-keymap mode) key)))
               (buffer-minor-modes buffer))
         (keymap-find-keybind (mode-keymap (buffer-major-mode buffer)) key)
         (keymap-find-keybind *global-keymap* key))))

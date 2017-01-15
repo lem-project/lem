@@ -70,18 +70,18 @@
   (buffer-name (window-buffer window)))
 
 (defun modeline-major-mode (window)
-  (string-downcase (buffer-major-mode (window-buffer window))))
+  (mode-name (buffer-major-mode (window-buffer window))))
 
 (defun modeline-minor-modes (window)
   (with-output-to-string (*standard-output*)
     (let ((firstp t))
-      (dolist (x (append (buffer-minor-modes (window-buffer window))
-                         (append (get-bvar :modeline-status-list :buffer (window-buffer window))
-                                 *modeline-status-list*)))
+      (dolist (x (append (mapcar #'mode-name (buffer-minor-modes (window-buffer window)))
+                         (get-bvar :modeline-status-list :buffer (window-buffer window))
+                         *modeline-status-list*))
         (princ " ")
         (if (functionp x)
             (princ (funcall x window))
-            (let ((*print-case* :downcase)) (princ x)))
+            (princ x))
         (setf firstp t)))))
 
 (defun modeline-linum (window)

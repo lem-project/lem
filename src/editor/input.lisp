@@ -34,9 +34,10 @@
   (setq *temp-macro-chars* nil))
 
 (defun stop-record-key ()
-  (modeline-remove-status-list *key-recording-status-name*)
-  (setq *key-recording-p* nil)
-  (nreverse *temp-macro-chars*))
+  (when *key-recording-p*
+    (modeline-remove-status-list *key-recording-status-name*)
+    (setq *key-recording-p* nil)
+    (nreverse *temp-macro-chars*)))
 
 (defun key-recording-p ()
   *key-recording-p*)

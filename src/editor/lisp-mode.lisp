@@ -998,13 +998,12 @@
                             (pop-up-backtrace condition)
                             (stop-timer *lisp-timer*)))))
 
-(defun lisp-print-values (values)
-  (with-point ((point (current-point) :left-inserting))
+(defun lisp-print-values (point values)
+  (with-point ((point point :left-inserting))
     (with-open-stream (out (make-buffer-output-stream point))
       (let ((*package* (lisp-current-package)))
         (dolist (v values)
-          (pprint v out))))
-    (move-point (current-point) point)))
+          (pprint v out))))))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-j") 'lisp-eval-print-last-sexp)
 (define-command lisp-eval-print-last-sexp () ()
@@ -1013,12 +1012,13 @@
    #'(lambda (string)
        (unless (bolp) (insert-character (current-point) #\newline))
        (setq - (first (%string-to-exps string (lisp-current-package))))
-       (let ((values (%lisp-eval - (current-point) t)))
-         (setq +++ ++ /// //     *** (car ///)
-               ++  +  //  /      **  (car //)
-               +   -  /   values *   (car /))
-         (lisp-print-values values)
-         (insert-character (current-point) #\newline)))))
+       (let ((point (current-point)))
+         (let ((values (%lisp-eval - point t)))
+           (setq +++ ++ /// //     *** (car ///)
+                 ++  +  //  /      **  (car //)
+                 +   -  /   values *   (car /))
+           (lisp-print-values point values)
+           (insert-character point #\newline))))))
 
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "lisp-repl"
@@ -1063,8 +1063,8 @@
           ++  +  //  /      **  (car //)
           +   -  /   values *   (car /))
     (buffer-end point)
-    (lisp-print-values values)
-    (listener-reset-prompt)))
+    (lisp-print-values point values)
+    (listener-reset-prompt (point-buffer point))))
 
 (define-key *lisp-repl-mode-keymap* (kbd "C-c M-p") 'lisp-repl-set-package)
 (define-command lisp-repl-set-package () ()

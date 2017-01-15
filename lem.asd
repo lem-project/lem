@@ -39,7 +39,7 @@
                              (:file "file-ext")
                              (:file "window")
                              (:file "modeline")
-                             (:file "commandloop")
+                             (:file "interp")
                              (:file "timer")
                              (:file "event")
                              (:file "input")

@@ -83,7 +83,7 @@
         (prev-unread-keys (copy-list *unread-keys*)))
     (unread-key-sequence key-sequence)
     (block nil
-      (do-commandloop ()
+      (do-command-loop ()
         (when (>= prev-unread-keys-length
                   (length *unread-keys*))
           (return t))

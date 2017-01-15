@@ -37,6 +37,13 @@
        :stream stream
        :count 100))))
 
+(defmacro with-error-handler (() &body body)
+  `(handler-case-bind ((lambda (condition)
+                         (handler-bind ((error #'bailout))
+                           (pop-up-backtrace condition)))
+                       ,@body)
+                      ((condition) (declare (ignore condition)))))
+
 (defvar *interactive-p* nil)
 (defun interactive-p () *interactive-p*)
 
@@ -48,36 +55,29 @@
     (push (cons flag t) *last-flags*)
     (push (cons flag t) *curr-flags*)))
 
-(defun cmd-call (cmd arg)
+(defun call-command (cmd arg)
   (run-hooks *pre-command-hook*)
   (prog1 (funcall cmd arg)
     (buffer-undo-boundary)
     (run-hooks *post-command-hook*)))
 
-(defun do-commandloop-function (function)
+(defun %do-command-loop (function)
   (loop :for *last-flags* := nil :then *curr-flags*
         :for *curr-flags* := nil
         :do (let ((*interactive-p* t))
               (funcall function))))
 
-(defmacro with-error-handler (() &body body)
-  `(handler-case-bind ((lambda (condition)
-                         (handler-bind ((error #'bailout))
-                           (pop-up-backtrace condition)))
-                       ,@body)
-                      ((condition) (declare (ignore condition)))))
-
-(defmacro do-commandloop ((&key toplevel) &body body)
+(defmacro do-command-loop ((&key toplevel) &body body)
   `(if ,toplevel
        (catch +exit-tag+
-         (do-commandloop-function
-           (lambda ()
-             (with-error-handler ()
-               ,@body))))
-       (do-commandloop-function (lambda () ,@body))))
+         (%do-command-loop
+          (lambda ()
+            (with-error-handler ()
+              ,@body))))
+       (%do-command-loop (lambda () ,@body))))
 
 (defun command-loop (toplevel)
-  (do-commandloop (:toplevel toplevel)
+  (do-command-loop (:toplevel toplevel)
     (when (= 0 (event-queue-length)) (redraw-display))
     (handler-case
         (handler-bind ((editor-condition
@@ -89,7 +89,7 @@
                        (prog1 (read-key-command)
                          (stop-idle-timers)))))
             (unless (minibuffer-window-active-p) (message nil))
-            (cmd-call cmd nil)))
+            (call-command cmd nil)))
       (editor-condition (c)
                         (message "~A" c)))))
 

@@ -4,7 +4,6 @@
           *post-command-hook*
           *exit-editor-hook*
           interactive-p
-          add-continue-flag
           continue-flag
           pop-up-backtrace))
 
@@ -44,17 +43,6 @@
 (defvar *last-flags* nil)
 (defvar *curr-flags* nil)
 
-(defvar *continue-command-flags*
-  (list :next-line :kill :undo :yank))
-
-(defun add-continue-flag (keyword)
-  (pushnew keyword *continue-command-flags*))
-
-(defun %make-flags ()
-  (mapcar #'(lambda (sym)
-              (cons sym nil))
-          *continue-command-flags*))
-
 (defun continue-flag (flag)
   (prog1 (cdr (assoc flag *last-flags*))
     (push (cons flag t) *last-flags*)
@@ -67,11 +55,10 @@
     (run-hooks *post-command-hook*)))
 
 (defun do-commandloop-function (function)
-  (do ((*curr-flags* (%make-flags) (%make-flags))
-       (*last-flags* (%make-flags) *curr-flags*))
-      (nil)
-    (let ((*interactive-p* t))
-      (funcall function))))
+  (loop :for *last-flags* := nil :then *curr-flags*
+        :for *curr-flags* := nil
+        :do (let ((*interactive-p* t))
+              (funcall function))))
 
 (defmacro with-error-handler (() &body body)
   `(handler-case-bind ((lambda (condition)

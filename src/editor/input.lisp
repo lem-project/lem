@@ -21,12 +21,13 @@
 (defvar *key-recording-status-name* (make-symbol "Def"))
 
 (defun last-read-key-sequence ()
-  (if (kbd-p *last-read-key-sequence*)
-      *last-read-key-sequence*
-      (setf *last-read-key-sequence* (make-kbd *last-read-key-sequence*))))
+  *last-read-key-sequence*)
 
 (defun set-last-read-key-sequence (key-sequence)
-  (setf *last-read-key-sequence* key-sequence))
+  (setf *last-read-key-sequence*
+        (if (kbd-p key-sequence)
+            key-sequence
+            (make-kbd key-sequence))))
 
 (defun start-record-key ()
   (modeline-add-status-list *key-recording-status-name*)

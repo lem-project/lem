@@ -74,7 +74,7 @@
                          (lambda ()
                            (let ((*in-the-editor* t))
                              (let ((report (with-catch-bailout
-                                             (command-loop t))))
+                                             (toplevel-command-loop))))
                                (bt:interrupt-thread
                                 main-thread
                                 (lambda ()

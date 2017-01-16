@@ -61,41 +61,37 @@
     (buffer-undo-boundary)
     (run-hooks *post-command-hook*)))
 
-(defun %do-command-loop (function)
-  (loop :for *last-flags* := nil :then *curr-flags*
-        :for *curr-flags* := nil
-        :do (let ((*interactive-p* t))
-              (funcall function))))
+(defmacro do-command-loop ((&key interactive) &body body)
+  (alexandria:once-only (interactive)
+    `(loop :for *last-flags* := nil :then *curr-flags*
+           :for *curr-flags* := nil
+           :do (let ((*interactive-p* ,interactive)) ,@body))))
 
-(defmacro do-command-loop ((&key toplevel) &body body)
-  `(if ,toplevel
-       (catch +exit-tag+
-         (%do-command-loop
-          (lambda ()
-            (with-error-handler ()
-              ,@body))))
-       (%do-command-loop (lambda () ,@body))))
+(defun command-loop ()
+  (do-command-loop (:interactive t)
+    (with-error-handler ()
+      (when (= 0 (event-queue-length)) (redraw-display))
+      (handler-case
+          (handler-bind ((editor-abort
+                          (lambda (c)
+                            (declare (ignore c))
+                            (buffer-mark-cancel (current-buffer))))
+                         (editor-condition
+                          (lambda (c)
+                            (declare (ignore c))
+                            (stop-record-key))))
+            (let ((cmd (progn
+                         (start-idle-timers)
+                         (prog1 (read-command)
+                           (stop-idle-timers)))))
+              (unless (minibuffer-window-active-p) (message nil))
+              (call-command cmd nil)))
+        (editor-condition (c)
+                          (message "~A" c))))))
 
-(defun command-loop (toplevel)
-  (do-command-loop (:toplevel toplevel)
-    (when (= 0 (event-queue-length)) (redraw-display))
-    (handler-case
-        (handler-bind ((editor-abort
-                        (lambda (c)
-                          (declare (ignore c))
-                          (buffer-mark-cancel (current-buffer))))
-                       (editor-condition
-                        (lambda (c)
-                          (declare (ignore c))
-                          (stop-record-key))))
-          (let ((cmd (progn
-                       (start-idle-timers)
-                       (prog1 (read-command)
-                         (stop-idle-timers)))))
-            (unless (minibuffer-window-active-p) (message nil))
-            (call-command cmd nil)))
-      (editor-condition (c)
-                        (message "~A" c)))))
+(defun toplevel-command-loop ()
+  (catch +exit-tag+
+    (command-loop)))
 
 (defun exit-editor (&optional report)
   (run-hooks *exit-editor-hook*)

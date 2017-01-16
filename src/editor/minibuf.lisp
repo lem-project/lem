@@ -186,7 +186,7 @@
   (let ((*minibuf-read-line-existing-p* existing-p)
         (*minibuf-read-line-comp-f* comp-f))
     (catch 'minibuf-read-line-end
-      (command-loop nil))
+      (command-loop))
     (let ((str (get-minibuffer-string)))
       (lem.history:add-history *minibuf-read-line-history* str)
       str)))

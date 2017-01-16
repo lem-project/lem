@@ -11,34 +11,30 @@
           execute-key-sequence
           sit-for))
 
-(defvar *last-read-key-sequence*)
-
 (defvar *key-recording-p* nil)
 (defvar *temp-macro-chars* nil)
 
 (defvar *unread-keys* nil)
 
-(defvar *key-recording-status-name* (make-symbol "Def"))
+(let (last-read-key-sequence)
+  (defun last-read-key-sequence ()
+    last-read-key-sequence)
+  (defun set-last-read-key-sequence (key-sequence)
+    (setf last-read-key-sequence
+          (if (kbd-p key-sequence)
+              key-sequence
+              (make-kbd key-sequence)))))
 
-(defun last-read-key-sequence ()
-  *last-read-key-sequence*)
-
-(defun set-last-read-key-sequence (key-sequence)
-  (setf *last-read-key-sequence*
-        (if (kbd-p key-sequence)
-            key-sequence
-            (make-kbd key-sequence))))
-
-(defun start-record-key ()
-  (modeline-add-status-list *key-recording-status-name*)
-  (setq *key-recording-p* t)
-  (setq *temp-macro-chars* nil))
-
-(defun stop-record-key ()
-  (when *key-recording-p*
-    (modeline-remove-status-list *key-recording-status-name*)
-    (setq *key-recording-p* nil)
-    (nreverse *temp-macro-chars*)))
+(let ((key-recording-status-name (make-symbol "Def")))
+  (defun start-record-key ()
+    (modeline-add-status-list key-recording-status-name)
+    (setq *key-recording-p* t)
+    (setq *temp-macro-chars* nil))
+  (defun stop-record-key ()
+    (when *key-recording-p*
+      (modeline-remove-status-list key-recording-status-name)
+      (setq *key-recording-p* nil)
+      (nreverse *temp-macro-chars*))))
 
 (defun key-recording-p ()
   *key-recording-p*)

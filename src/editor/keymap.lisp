@@ -307,16 +307,3 @@
   (let ((cmd (lookup-keybind key)))
     (when (or (symbolp cmd) (functionp cmd))
       (function-to-command cmd))))
-
-(defun read-key-command ()
-  (let* ((c (read-key))
-         (cmd (lookup-keybind c))
-         (list (list c)))
-    (loop
-       (cond ((hash-table-p cmd)
-	      (let ((c (read-key)))
-		(setf list (nconc list (list c)))
-		(setf cmd (lookup-keybind list))))
-	     (t
-	      (set-last-read-key-sequence list)
-	      (return (function-to-command cmd)))))))

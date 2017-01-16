@@ -70,6 +70,19 @@
     (pop *temp-macro-chars*))
   (push char *unread-keys*))
 
+(defun read-key-command ()
+  (let* ((c (read-key))
+         (cmd (lookup-keybind c))
+         (list (list c)))
+    (loop
+       (cond ((hash-table-p cmd)
+	      (let ((c (read-key)))
+		(setf list (nconc list (list c)))
+		(setf cmd (lookup-keybind list))))
+	     (t
+	      (set-last-read-key-sequence list)
+	      (return (function-to-command cmd)))))))
+
 (defun read-key-sequence ()
   (read-key-command)
   (last-read-key-sequence))
@@ -90,7 +103,7 @@
                   (length *unread-keys*))
           (return t))
         (handler-case (let ((*interactive-p* nil))
-                        (funcall (find-keybind (read-key-sequence)) nil))
+                        (funcall (read-key-command) nil))
           (editor-condition ()
 	    (setf *unread-keys* prev-unread-keys)
 	    (return nil)))))))

@@ -66,7 +66,7 @@
     (pop *temp-macro-chars*))
   (push char *unread-keys*))
 
-(defun read-key-command ()
+(defun read-command ()
   (let* ((c (read-key))
          (cmd (lookup-keybind c))
          (list (list c)))
@@ -80,7 +80,7 @@
 	      (return (function-to-command cmd)))))))
 
 (defun read-key-sequence ()
-  (read-key-command)
+  (read-command)
   (last-read-key-sequence))
 
 (defun unread-key-sequence (key)
@@ -99,7 +99,7 @@
                   (length *unread-keys*))
           (return t))
         (handler-case (let ((*interactive-p* nil))
-                        (funcall (read-key-command) nil))
+                        (funcall (read-command) nil))
           (editor-condition ()
 	    (setf *unread-keys* prev-unread-keys)
 	    (return nil)))))))

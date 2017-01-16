@@ -99,7 +99,7 @@
          (let ((arg (if numlist
                         (parse-integer (format nil "~{~a~}" numlist))
                         4)))
-           (return (funcall (read-key-command)
+           (return (funcall (read-command)
                             arg))))))))
 
 (define-command self-insert (n) ("p")

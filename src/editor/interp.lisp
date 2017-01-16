@@ -90,7 +90,7 @@
                           (stop-record-key))))
           (let ((cmd (progn
                        (start-idle-timers)
-                       (prog1 (read-key-command)
+                       (prog1 (read-command)
                          (stop-idle-timers)))))
             (unless (minibuffer-window-active-p) (message nil))
             (call-command cmd nil)))

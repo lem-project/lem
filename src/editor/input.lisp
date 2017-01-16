@@ -90,19 +90,15 @@
                )))
 
 (defun execute-key-sequence (key-sequence)
-  (let ((prev-unread-keys-length (length *unread-keys*))
-        (prev-unread-keys (copy-list *unread-keys*)))
-    (unread-key-sequence key-sequence)
+  (let ((*unread-keys* key-sequence))
     (block nil
-      (do-command-loop ()
-        (when (>= prev-unread-keys-length
-                  (length *unread-keys*))
-          (return t))
-        (handler-case (let ((*interactive-p* nil))
-                        (funcall (read-command) nil))
-          (editor-condition ()
-	    (setf *unread-keys* prev-unread-keys)
-	    (return nil)))))))
+      (handler-case
+          (do-command-loop ()
+            (when (null *unread-keys*)
+              (return t))
+            (let ((*interactive-p* nil))
+              (funcall (read-command) nil)))
+        (editor-condition ())))))
 
 (defun sit-for (seconds &optional (update-window-p t))
   (when update-window-p (redraw-display))

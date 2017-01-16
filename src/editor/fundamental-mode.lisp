@@ -4,4 +4,4 @@
 
 (define-major-mode fundamental-mode nil
     (:name "fundamental"
-	   :keymap *global-keymap*))
+     :keymap *global-keymap*))

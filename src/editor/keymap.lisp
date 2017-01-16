@@ -54,17 +54,18 @@
     (define-key-internal keymap kbd fun)))
 
 (defun define-key-internal (keymap kbd fun)
-  (do ((rest (kbd-list kbd) (cdr rest)))
-      ((null (cdr rest))
-       (setf (gethash (car rest) (keymap-table keymap)) fun))
-    (let ((k (car rest)))
-      (let ((cmd (gethash k (keymap-table keymap))))
-        (if (keymap-p cmd)
-            (setf keymap cmd)
-            (let ((new-keymap (make-keymap)))
-              (setf (gethash k (keymap-table keymap))
-                    new-keymap)
-              (setf keymap new-keymap)))))))
+  (loop :with table := (keymap-table keymap)
+        :for rest :on (kbd-list kbd)
+        :for k := (car rest)
+        :do (cond ((null (cdr rest))
+                   (setf (gethash k table) fun))
+                  (t
+                   (let ((next (gethash k table)))
+                     (if next
+                         (setf table next)
+                         (let ((new-table (make-hash-table :test 'equal)))
+                           (setf (gethash k table) new-table)
+                           (setf table new-table))))))))
 
 (defun kbd-to-string (key)
   (format nil "~{~A~^~}"
@@ -111,11 +112,11 @@
      (kbd-keys (cons string-or-first-key keys)))))
 
 (defun keymap-find-keybind (keymap key)
-  (let ((keymap0 keymap))
+  (let ((table (keymap-table keymap)))
     (labels ((f (k)
-	       (let ((cmd (gethash k (keymap-table keymap))))
-		 (if (keymap-p cmd)
-		     (setf keymap cmd)
+	       (let ((cmd (gethash k table)))
+		 (if (hash-table-p cmd)
+		     (setf table cmd)
 		     cmd))))
       (or (if (characterp key)
               (f key)
@@ -126,10 +127,10 @@
                   (unless (setf cmd (f k))
                     (return)))
                 cmd))
-          (let ((parent (keymap-parent keymap0)))
+          (let ((parent (keymap-parent keymap)))
             (when parent
               (keymap-find-keybind parent key)))
-          (keymap-undef-hook keymap0)))))
+          (keymap-undef-hook keymap)))))
 
 (defun insertion-key-p (key)
   (let ((first-key (car (kbd-list key))))
@@ -138,13 +139,13 @@
       first-key)))
 
 (defun keymap-flatten-map (keymap fun)
-  (labels ((f (keymap prefix)
+  (labels ((f (table prefix)
 	     (maphash (lambda (k v)
-			(if (keymap-p v)
+			(if (hash-table-p v)
 			    (f v (cons k prefix))
 			    (funcall fun (make-kbd (reverse (cons k prefix))) v)))
-		      (keymap-table keymap))))
-    (f keymap nil)))
+		      table)))
+    (f (keymap-table keymap) nil)))
 
 (defvar *global-keymap* (make-keymap 'self-insert))
 
@@ -312,7 +313,7 @@
          (cmd (lookup-keybind c))
          (list (list c)))
     (loop
-       (cond ((keymap-p cmd)
+       (cond ((hash-table-p cmd)
 	      (let ((c (read-key)))
 		(setf list (nconc list (list c)))
 		(setf cmd (lookup-keybind list))))

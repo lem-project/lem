@@ -157,30 +157,33 @@
           :line-comment-preceding-char #\;
           :block-comment-preceding-char #\#
           :block-comment-following-char #\|)))
-
+    (syntax-add-match table
+                      (make-syntax-test ":[^() \\t]+"
+                                        :word-p t)
+                      :attribute *syntax-constant-attribute*)
     (syntax-add-match table
                       (make-syntax-test "\\(")
                       :matched-symbol :start-form
                       :symbol-lifetime 1)
-
     (syntax-add-match table
                       (make-syntax-test "[^() \\t]+")
                       :test-symbol :define-start
                       :attribute *syntax-function-name-attribute*)
-
+    (syntax-add-match table
+                      (make-syntax-test "[^() \\t]+")
+                      :test-symbol :defpackage-start
+                      :attribute *syntax-type-attribute*)
     (syntax-add-match table
                       (make-syntax-test "[^() \\t]+")
                       :test-symbol :defvar-start
                       :attribute *syntax-variable-attribute*)
-
     (syntax-add-match table
                       (make-syntax-test
                        `(:sequence
                          (:greedy-repetition 0 1 ,+symbol-package-prefix+)
                          (:alternation
                           ,@(word-length-sort
-                             "defun" "defclass" "defgeneric" "defsetf" "defmacro" "deftype"
-                             "defmethod" "defpackage" "defstruct")
+                             "defun" "defclass" "defgeneric" "defsetf" "defmacro" "defmethod")
                           (:sequence "define-" (:greedy-repetition 0 nil
                                                 (:inverted-char-class #\space #\tab #\( #\))))))
                        :word-p t)
@@ -188,7 +191,18 @@
                       :attribute *syntax-keyword-attribute*
                       :matched-symbol :define-start
                       :symbol-lifetime 1)
-
+    (syntax-add-match table
+                      (make-syntax-test
+                       `(:sequence
+                         (:greedy-repetition 0 1 ,+symbol-package-prefix+)
+                         (:alternation
+                          ,@(word-length-sort
+                             "deftype" "defpackage" "defstruct")))
+                       :word-p t)
+                      :test-symbol :start-form
+                      :attribute *syntax-keyword-attribute*
+                      :matched-symbol :defpackage-start
+                      :symbol-lifetime 1)
     (syntax-add-match table
                       (make-syntax-test
                        `(:sequence
@@ -200,7 +214,6 @@
                       :attribute *syntax-keyword-attribute*
                       :matched-symbol :defvar-start
                       :symbol-lifetime 1)
-
     (syntax-add-match table
                       (make-syntax-test
                        `(:sequence
@@ -220,37 +233,29 @@
                        :word-p t)
                       :test-symbol :start-form
                       :attribute *syntax-keyword-attribute*)
-
-    (syntax-add-match table
-                      (make-syntax-test ":[^() \\t]+"
-                                        :word-p t)
-                      :attribute *syntax-constant-attribute*)
-
     (syntax-add-match table
                       (make-syntax-test "&[^() \\t]+"
                                         :word-p t)
                       :attribute *syntax-constant-attribute*)
-
     (syntax-add-match
      table
      (make-syntax-test "#[+-]")
      :move-action (lambda (cur-point)
                     (ignore-errors
-		      (let ((positivep (eql #\+ (character-at cur-point 1))))
-			(character-offset cur-point 2)
-			(with-point ((prev cur-point))
-			  (when (form-offset cur-point 1)
-			    (cond
-			      ((if (featurep (read-from-string
-					      (points-to-string
-					       prev cur-point)))
-				   positivep
-				   (not positivep))
-			       nil)
-			      (t
-			       (form-offset cur-point 1))))))))
+                     (let ((positivep (eql #\+ (character-at cur-point 1))))
+                       (character-offset cur-point 2)
+                       (with-point ((prev cur-point))
+                         (when (form-offset cur-point 1)
+                           (cond
+                             ((if (featurep (read-from-string
+                                             (points-to-string
+                                              prev cur-point)))
+                                  positivep
+                                  (not positivep))
+                              nil)
+                             (t
+                              (form-offset cur-point 1))))))))
      :attribute *feature-attribute*)
-
     table))
 
 (define-major-mode lisp-mode nil

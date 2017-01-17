@@ -10,6 +10,7 @@
           *syntax-constant-attribute*
           *syntax-function-name-attribute*
           *syntax-variable-attribute*
+          *syntax-type-attribute*
           copy-attribute
           attribute-p
           attribute-name
@@ -75,3 +76,4 @@
 (defvar *syntax-constant-attribute* (make-attribute "magenta" nil :name  "constant"))
 (defvar *syntax-function-name-attribute* (make-attribute "cyan" nil :name  "function"))
 (defvar *syntax-variable-attribute* (make-attribute "yellow" nil :name  "variable"))
+(defvar *syntax-type-attribute* (make-attribute "cyan" nil :name "type"))

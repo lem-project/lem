@@ -68,13 +68,14 @@
             (lambda (buffer)
               (scan-file-property-list buffer))))
 
-(defun lem-internal ()
+(defun lem-internal (initialize-function)
   (let* ((main-thread (bt:current-thread))
          (editor-thread (bt:make-thread
                          (lambda ()
                            (let ((*in-the-editor* t))
                              (let ((report (with-catch-bailout
-                                             (toplevel-command-loop))))
+                                             (toplevel-command-loop
+                                              initialize-function))))
                                (bt:interrupt-thread
                                 main-thread
                                 (lambda ()
@@ -116,8 +117,7 @@
                                    (display-init)
                                    (window-init)
                                    (minibuf-init)
-                                   (setup)
-                                   (run-hooks *after-init-hook*))
+                                   (setup))
                                  (funcall function))
                  (display-finalize))))))
       (when report
@@ -130,5 +130,7 @@
   (if *in-the-editor*
       (mapc 'find-file args)
       (with-editor ()
-        (mapc 'find-file args)
-        (lem-internal))))
+        (lem-internal
+         (lambda ()
+           (run-hooks *after-init-hook*)
+           (mapc 'find-file args))))))

@@ -89,8 +89,10 @@
         (editor-condition (c)
                           (message "~A" c))))))
 
-(defun toplevel-command-loop ()
+(defun toplevel-command-loop (initialize-function)
   (catch +exit-tag+
+    (with-error-handler ()
+      (funcall initialize-function))
     (command-loop)))
 
 (defun exit-editor (&optional report)

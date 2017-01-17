@@ -24,7 +24,11 @@
    (buffer
     :initarg :buffer
     :reader overlay-buffer
-    :type buffer)))
+    :type buffer)
+   (alivep
+    :initform t
+    :accessor overlay-alive-p
+    :type boolean)))
 
 (defun overlay-p (x)
   (typep x 'overlay))
@@ -44,7 +48,9 @@
     overlay))
 
 (defun delete-overlay (overlay)
-  (when (overlay-p overlay)
+  (when (and (overlay-p overlay)
+             (overlay-alive-p overlay))
     (delete-point (overlay-start overlay))
     (delete-point (overlay-end overlay))
-    (buffer-delete-overlay (overlay-buffer overlay) overlay)))
+    (buffer-delete-overlay (overlay-buffer overlay) overlay)
+    (setf (overlay-alive-p overlay) nil)))

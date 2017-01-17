@@ -985,11 +985,12 @@
 
 
 (defvar *process* nil)
+(defparameter *impl-name* "sbcl")
 
 (define-command slime () ()
   (setf *process*
         (sb-ext:run-program "ros"
-                            `("-s" "swank" "-e"
+                            `("-L" ,*impl-name* "-s" "swank" "-e"
                                    ,(format nil "(swank:create-server :port ~D :dont-close t)"
                                             *default-port*)
                                    "wait")

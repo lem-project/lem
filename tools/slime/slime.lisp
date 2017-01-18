@@ -744,9 +744,10 @@
 (defun start-thread ()
   (bt:make-thread (lambda ()
                     (loop
-                      (when (swank-protocol:message-waiting-p *connection* :timeout 1)
+                      (when (swank-protocol:message-waiting-p *connection* :timeout 3)
                         (send-event (lambda ()
-                                      (pull-events)))
+                                      (pull-events)
+                                      (redraw-display)))
                         (sleep 0.1))))
                   :name "slime-wait-message"))
 

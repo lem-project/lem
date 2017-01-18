@@ -63,7 +63,8 @@
             (lambda (buffer)
               (prepare-auto-mode buffer)
               (scan-file-property-list buffer)
-              (syntax-scan-buffer buffer)))
+              (syntax-scan-buffer buffer))
+            5000)
   (add-hook *before-save-hook*
             (lambda (buffer)
               (scan-file-property-list buffer))))

@@ -394,7 +394,7 @@
               (point-buffer end)))
   (let ((buffer (point-buffer start)))
     (when (enable-syntax-highlight-p buffer)
-      (without-interrupts
+      (progn #+(or)without-interrupts
         (let ((*current-syntax*
                (buffer-syntax-table buffer))
               (*syntax-symbol-lifetimes*

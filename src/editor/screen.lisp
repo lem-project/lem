@@ -453,7 +453,7 @@
 (defun redraw-display-window (window doupdate-p)
   (window-see window)
   (lem::window-prompt-display window)
-  (without-interrupts
+  (progn #+(or)without-interrupts
     (disp-reset-lines (lem::window-screen window)
                       (window-buffer window)
                       (lem::window-view-point window))

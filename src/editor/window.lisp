@@ -747,7 +747,7 @@
 (defun switch-to-buffer (buffer &optional (update-prev-buffer-p t))
   (check-type buffer buffer)
   (check-switch-minibuffer-window)
-  (without-interrupts
+  (progn #+(or)without-interrupts
     (unless (eq (current-buffer) buffer)
       (when update-prev-buffer-p
         (setf (window-parameter (current-window) :split-p) nil)

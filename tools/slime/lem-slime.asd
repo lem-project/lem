@@ -9,7 +9,8 @@
                :usocket
                :swank
                :optima
-               :uiop)
+               :uiop
+               :lem)
   :serial t
   :components ((:file "clhs")
                (:file "errors")

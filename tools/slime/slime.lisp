@@ -52,7 +52,7 @@
 (define-key *slime-mode-keymap* "M-," 'slime-pop-find-definition-stack)
 (define-key *slime-mode-keymap* "M-_" 'slime-edit-uses)
 (define-key *slime-mode-keymap* "M-?" 'slime-edit-uses)
-(define-key *slime-mode-keymap* "C-M-i" 'slime-complete-symbol)
+(define-key *slime-mode-keymap* "C-M-i" 'slime-completion-symbol-at-point)
 (define-key *slime-mode-keymap* "C-c C-d C-a" 'slime-echo-arglist)
 (define-key *slime-mode-keymap* "C-c C-d a" 'slime-apropos)
 (define-key *slime-mode-keymap* "C-c C-d z" 'slime-apropos-all)
@@ -266,7 +266,7 @@
   (with-point ((point (current-point)))
     (buffer-start point)
     (loop :while (form-offset point 1))
-    (skip-whitespace-forward point)
+    (skip-space-and-comment-forward point)
     (end-buffer-p point)))
 
 (defun compilation-finished (result)
@@ -532,7 +532,7 @@
       (t
        (message "No xref information found for ~A" symbol)))))
 
-(define-command slime-complete-symbol () ()
+(define-command slime-completion-symbol-at-point () ()
   (check-connection)
   (start-completion #'symbol-completion
                     (lem.lisp-mode::lisp-preceding-symbol))
@@ -992,10 +992,10 @@
 (define-command slime () ()
   (setf *process*
         (sb-ext:run-program "ros"
-                            `("-L" ,*impl-name* "-s" "swank" "-e"
-                                   ,(format nil "(swank:create-server :port ~D :dont-close t)"
-                                            *default-port*)
-                                   "wait")
+                            (list "-L" *impl-name* "-s" "swank" "-e"
+                                  (format nil "(swank:create-server :port ~D :dont-close t)"
+                                          *default-port*)
+                                  "wait")
                             :wait nil
                             :search t))
   (sleep 1)

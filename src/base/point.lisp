@@ -1,6 +1,7 @@
 (in-package :lem-base)
 
 (export '(current-point
+          point
           pointp
           copy-point
           delete-point

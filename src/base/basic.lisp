@@ -59,7 +59,8 @@
           skip-chars-backward
           current-column
           position-at-point
-          move-to-position))
+          move-to-position
+          move-to-line))
 
 (defun buffers-start (buffer)
   (buffer-start-point buffer))
@@ -401,6 +402,13 @@
 
 (defun move-to-position (point position)
   (character-offset (buffer-start point) position))
+
+(defun move-to-line (point line-number)
+  (let ((n (- (buffer-nlines (point-buffer point))
+              line-number)))
+  (if (< line-number n)
+      (line-offset (buffer-start point) (1- line-number))
+      (line-offset (buffer-end point) (- n)))))
 
 
 (defun bolp ()

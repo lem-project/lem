@@ -217,7 +217,7 @@
                                attribute)))))
 
 (defun disp-set-overlay (screen attribute view-point start end)
-  (let ((screen-row (1- (count-lines view-point start))))
+  (let ((screen-row (count-lines view-point start)))
     (disp-set-line screen attribute screen-row (point-charpos start) nil)
     (with-point ((point start))
       (line-offset point 1)
@@ -244,7 +244,7 @@
 		   (point< start view-end-point))
 	      (disp-set-line screen
 			     (overlay-attribute overlay)
-			     (1- (count-lines view-point start))
+			     (count-lines view-point start)
 			     (point-charpos start)
 			     (point-charpos end)))
 	     ((and (point<= view-point start)
@@ -380,7 +380,7 @@
         (wrap-lines (screen-wrap-lines screen)))
     (setf (screen-wrap-lines screen) nil)
     (let* ((visual-cursor-x 0)
-           (visual-cursor-y (1- (count-lines view-point cursor-point)))
+           (visual-cursor-y (count-lines view-point cursor-point))
            (cursor-y visual-cursor-y)
            (view-charpos (point-charpos view-point))
            (point-x (point-charpos cursor-point)))

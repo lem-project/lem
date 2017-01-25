@@ -402,8 +402,8 @@
       offset)))
 
 (defun window-cursor-y-not-wrapping (window)
-  (1- (count-lines (window-point window)
-                   (window-view-point window))))
+  (count-lines (window-point window)
+               (window-view-point window)))
 
 (defun window-cursor-y (window)
   (+ (window-cursor-y-not-wrapping window)
@@ -414,8 +414,8 @@
 		      (window-view-point window))
               (not (same-line-p (window-point window)
                                 (window-view-point window))))
-         (1- (count-lines (window-point window)
-                          (window-view-point window))))
+         (count-lines (window-point window)
+                      (window-view-point window)))
         ((and (same-line-p (window-point window)
                            (window-view-point window))
               (not (start-line-p (window-view-point window))))

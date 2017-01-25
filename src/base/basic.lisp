@@ -355,7 +355,6 @@
   (delete-char/point start
 		     (count-characters start end)))
 
-;; startからendまでに含まれる行数を数えるけど改行の数を数えるほうがいいかもしれない
 (defun count-lines (start end)
   (assert (eq (point-buffer start)
               (point-buffer end)))
@@ -363,12 +362,12 @@
     (rotatef start end))
   (do ((line (point-line start) (line-next line))
        (goal (point-line end))
-       (count 1 (1+ count)))
+       (count 0 (1+ count)))
       ((eq line goal)
        count)))
 
 (defun line-number-at-point (point)
-  (count-lines (buffers-start (point-buffer point)) point))
+  (1+ (count-lines (buffers-start (point-buffer point)) point)))
 
 (defun point-column (point)
   (string-width (line-string-at point)

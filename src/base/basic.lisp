@@ -367,7 +367,13 @@
        count)))
 
 (defun line-number-at-point (point)
-  (1+ (count-lines (buffers-start (point-buffer point)) point)))
+  (let* ((buffer (point-buffer point))
+         (end-point (buffer-end-point buffer))
+         (n (line-ord (point-line point)))
+         (n2 (line-ord (point-line end-point))))
+    (if (< n (- n2 n))
+        (1+ (count-lines (buffer-start-point buffer) point))
+        (- (buffer-nlines buffer) (count-lines point end-point)))))
 
 (defun point-column (point)
   (string-width (line-string-at point)

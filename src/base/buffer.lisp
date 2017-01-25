@@ -6,6 +6,7 @@
           buffer
           bufferp
           buffer-name
+          buffer-version
           buffer-modified-p
           buffer-read-only-p
           buffer-syntax-table
@@ -51,6 +52,7 @@
     :accessor buffer-%directory)
    (%modified-p
     :initform nil
+    :reader buffer-version
     :accessor buffer-%modified-p)
    (%enable-undo-p
     :initform nil

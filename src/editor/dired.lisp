@@ -327,7 +327,10 @@
   (setf filename
         (uiop:directory-exists-p
          (expand-file-name (namestring filename) (buffer-directory))))
-  (let ((buffer (get-buffer-create (format nil "DIRED \"~A\"" filename))))
+  (let ((buffer (get-buffer-create
+                 (format nil "DIRED ~A"
+                         (pathname-name
+                          (string-right-trim "/" (princ-to-string filename)))))))
     (change-buffer-mode buffer 'dired-mode)
     (setf (buffer-directory buffer) filename)
     (setf (buffer-read-only-p buffer) t)

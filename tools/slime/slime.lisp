@@ -271,17 +271,15 @@
 
 (defun compilation-finished (result)
   (setf *last-compilation-result* result)
-  (if (not (check-parens))
-      (message "unmatched paren")
-      (destructuring-bind (notes successp duration loadp fastfile)
-          (rest result)
-        (show-compile-result notes duration
-                             (if (not loadp)
-                                 successp
-                                 (and fastfile successp)))
-        (highlight-notes notes)
-        (when (and loadp fastfile successp)
-          (eval-async `(swank:load-file ,fastfile) nil t)))))
+  (destructuring-bind (notes successp duration loadp fastfile)
+      (rest result)
+    (show-compile-result notes duration
+                         (if (not loadp)
+                             successp
+                             (and fastfile successp)))
+    (highlight-notes notes)
+    (when (and loadp fastfile successp)
+      (eval-async `(swank:load-file ,fastfile) nil t))))
 
 (defun show-compile-result (notes secs successp)
   (message (format nil "~{~A~^ ~}"

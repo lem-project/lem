@@ -408,38 +408,47 @@
                 (return point)))))))))
 
 
+(defmacro with-point-syntax (point &body body)
+  `(let ((*current-syntax* (buffer-syntax-table (point-buffer ,point))))
+     ,@body))
+
 (defun skip-whitespace-forward (point)
-  (skip-chars-forward point #'syntax-space-char-p))
+  (with-point-syntax point
+    (skip-chars-forward point #'syntax-space-char-p)))
 
 (defun skip-whitespace-backward (point)
-  (skip-chars-backward point #'syntax-space-char-p))
+  (with-point-syntax point
+    (skip-chars-backward point #'syntax-space-char-p)))
 
 (defun skip-space-and-comment-forward (point)
-  (loop
-     (skip-whitespace-forward point)
-     (unless (and (not (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
-		  (eq *syntax-comment-attribute* (text-property-at point :attribute)))
-       (return t))
-     (unless (next-single-property-change point :attribute)
-       (return nil))))
+  (with-point-syntax point
+    (loop
+      (skip-whitespace-forward point)
+      (unless (and (not (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
+                   (eq *syntax-comment-attribute* (text-property-at point :attribute)))
+        (return t))
+      (unless (next-single-property-change point :attribute)
+        (return nil)))))
 
 (defun skip-space-and-comment-backward (point)
-  (loop
-     (skip-whitespace-backward point)
-     (unless (and (not (eq *syntax-comment-attribute* (text-property-at point :attribute)))
-		  (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
-       (return t))
-     (unless (previous-single-property-change point :attribute)
-       (return nil))))
+  (with-point-syntax point
+    (loop
+      (skip-whitespace-backward point)
+      (unless (and (not (eq *syntax-comment-attribute* (text-property-at point :attribute)))
+                   (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
+        (return t))
+      (unless (previous-single-property-change point :attribute)
+        (return nil)))))
 
 (defun symbol-string-at-point (point)
-  (with-point ((point point))
-    (skip-chars-backward point #'syntax-symbol-char-p)
-    (unless (syntax-symbol-char-p (character-at point))
-      (return-from symbol-string-at-point nil))
-    (with-point ((start point))
-      (skip-chars-forward point #'syntax-symbol-char-p)
-      (points-to-string start point))))
+  (with-point-syntax point
+    (with-point ((point point))
+      (skip-chars-backward point #'syntax-symbol-char-p)
+      (unless (syntax-symbol-char-p (character-at point))
+        (return-from symbol-string-at-point nil))
+      (with-point ((start point))
+        (skip-chars-forward point #'syntax-symbol-char-p)
+        (points-to-string start point)))))
 
 
 (defun %sexp-escape-p (point offset)
@@ -602,9 +611,7 @@
       (syntax-skip-expr-prefix-backward point))))
 
 (defun form-offset (point n)
-  (let ((*current-syntax*
-         (buffer-syntax-table
-          (point-buffer point))))
+  (with-point-syntax point
     (with-point ((prev point))
       (cond ((plusp n)
              (dotimes (_ n point)
@@ -618,9 +625,7 @@
                  (return nil))))))))
 
 (defun scan-lists (point n depth &optional no-errors)
-  (let ((*current-syntax*
-         (buffer-syntax-table
-          (point-buffer point))))
+  (with-point-syntax point
     (with-point ((prev point))
       (cond ((plusp n)
              (dotimes (_ n point)

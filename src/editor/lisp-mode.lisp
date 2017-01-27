@@ -862,35 +862,30 @@
             (add p)))))
     (nreverse (remove-duplicates symbols :test #'string=))))
 
-(defun complete-symbol (str)
-  (let ((result (analyze-symbol str)))
-    (when result
-      (destructuring-bind (package symbol-name external-p) result
-        (declare (ignore symbol-name))
-        (let ((package-name
-               (subseq str 0 (position #\: str))))
-          (completion-hypheen str
-                              (%collect-symbols package
-                                                package-name
-                                                external-p)))))))
+(defun complete-symbol (string)
+  (values nil (mapcar #'first (fuzzy-completions string))))
 
 (defvar *fuzzy-completions* nil)
 
-(define-key *lisp-mode-keymap* (kbd "C-M-i") 'lisp-complete-symbol)
-(define-command lisp-complete-symbol () ()
+(defun fuzzy-completions (string &optional (package (lisp-current-package)))
   (unless *fuzzy-completions*
     (swank:swank-require "SWANK-FUZZY")
     (setf *fuzzy-completions* (intern "FUZZY-COMPLETIONS" :swank)))
+  (let ((swank::*buffer-package* (lisp-current-package))
+        (swank::*buffer-readtable* *readtable*))
+    (first (funcall *fuzzy-completions*
+                    string
+                    (or package (lisp-current-package))))))
+
+(define-key *lisp-mode-keymap* (kbd "C-M-i") 'lisp-complete-symbol)
+(define-command lisp-complete-symbol () ()
   (with-point ((start (current-point))
                (end (current-point)))
     (skip-chars-backward start #'syntax-symbol-char-p)
     (skip-chars-forward end #'syntax-symbol-char-p)
-    (let* ((result (let ((swank::*buffer-package* (lisp-current-package))
-                         (swank::*buffer-readtable* *readtable*))
-                     (funcall *fuzzy-completions*
-                              (points-to-string start end)
+    (let ((completions
+           (fuzzy-completions (points-to-string start end)
                               (lisp-current-package))))
-           (completions (car result)))
       (when completions
         (run-completion
          (mapcar (lambda (completion)

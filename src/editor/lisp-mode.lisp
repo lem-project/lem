@@ -874,14 +874,6 @@
                                                 package-name
                                                 external-p)))))))
 
-(defun lisp-preceding-symbol ()
-  (let* ((end (current-point))
-         (start (form-offset (copy-point end :temporary) -1)))
-    (when (and start end)
-      (string-left-trim
-       "'`," (string-left-trim
-              "#" (points-to-string start end))))))
-
 (defvar *fuzzy-completions* nil)
 
 (define-key *lisp-mode-keymap* (kbd "C-M-i") 'lisp-complete-symbol)

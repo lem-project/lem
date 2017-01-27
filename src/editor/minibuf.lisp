@@ -150,18 +150,23 @@
 
 (define-command minibuf-read-line-completion () ()
   (when *minibuf-read-line-comp-f*
-    (multiple-value-bind (str strings)
+    (multiple-value-bind (str items)
         (funcall *minibuf-read-line-comp-f* (get-minibuffer-string))
       (minibuffer-clear-input)
       (insert-string (current-point) str)
       (with-point ((start (minibuffer-start-point))
                    (end (current-point)))
         (run-completion
-         (mapcar (lambda (string)
-                   (make-completion-item :label string
-                                          :start start
-                                          :end end))
-                 strings))))))
+         (loop :for item? :in items
+               :for item := (typecase item?
+                              (string
+                               (make-completion-item :label item?
+                                                     :start start
+                                                     :end end))
+                              (completion-item
+                               item))
+               :when item
+               :collect item))))))
 
 (define-command minibuf-read-line-prev-history () ()
   (multiple-value-bind (str win)

@@ -882,11 +882,31 @@
        "'`," (string-left-trim
               "#" (points-to-string start end))))))
 
+(defvar *fuzzy-completions* nil)
+
 (define-key *lisp-mode-keymap* (kbd "C-M-i") 'lisp-complete-symbol)
 (define-command lisp-complete-symbol () ()
-  (start-completion #'complete-symbol
-                    (lisp-preceding-symbol))
-  t)
+  (unless *fuzzy-completions*
+    (swank:swank-require "SWANK-FUZZY")
+    (setf *fuzzy-completions* (intern "FUZZY-COMPLETIONS" :swank)))
+  (with-point ((start (current-point))
+               (end (current-point)))
+    (skip-chars-backward start #'syntax-symbol-char-p)
+    (skip-chars-forward end #'syntax-symbol-char-p)
+    (let* ((result (let ((swank::*buffer-package* (lisp-current-package))
+                         (swank::*buffer-readtable* *readtable*))
+                     (funcall *fuzzy-completions*
+                              (points-to-string start end)
+                              (lisp-current-package))))
+           (completions (car result)))
+      (when completions
+        (run-completion
+         (mapcar (lambda (completion)
+                   (lem::make-completion-item :label (first completion)
+                                              :detail (fourth completion)
+                                              :start start
+                                              :end end))
+                 completions))))))
 
 (defun lisp-get-arglist (symbol)
   (when (fboundp symbol)

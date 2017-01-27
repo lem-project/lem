@@ -5,7 +5,7 @@
           completion-hypheen
           completion-file
           completion-buffer-name
-          start-completion))
+          run-completion))
 
 (defun completion-test (x y)
   (and (<= (length x) (length y))
@@ -85,143 +85,134 @@
 (defun completion-buffer-name (str)
   (completion str (mapcar #'buffer-name (buffer-list))))
 
+
+(defstruct completion-item
+  (label "" :read-only t :type string)
+  (detail "" :read-only t :type string)
+  (start nil :read-only t :type (or null point))
+  (end nil :read-only t :type (or null point))
+  (apply-fn nil :read-only t :type (or null function)))
+
 (defvar *completion-mode-keymap* (make-keymap 'completion-self-insert))
-(defvar *completion-window* nil)
+(define-minor-mode completion-mode
+    (:name "completion"
+     :keymap *completion-mode-keymap*))
+
+(define-key *completion-mode-keymap* "C-n" 'completion-next-line)
+(define-key *completion-mode-keymap* "M-n" 'completion-next-line)
+(define-key *completion-mode-keymap* "C-i" 'completion-next-line)
+(define-key *completion-mode-keymap* "C-p" 'completion-previous-line)
+(define-key *completion-mode-keymap* "M-p" 'completion-previous-line)
+(define-key *completion-mode-keymap* "C-v" 'completion-next-page)
+(define-key *completion-mode-keymap* "M-v" 'completion-previous-page)
+(define-key *completion-mode-keymap* "M->" 'completion-end-of-buffer)
+(define-key *completion-mode-keymap* "M-<" 'completion-beginning-of-buffer)
+(define-key *completion-mode-keymap* "C-m" 'completion-select)
+
 (defvar *completion-overlay* nil)
 (defvar *completion-overlay-attribute* (make-attribute "blue" nil :reverse-p t))
 
-(define-minor-mode completion-mode
-    (:name "completion"
-	   :keymap *completion-mode-keymap*))
+(defun completion-buffer ()
+  (get-buffer "*Completion*"))
 
-(defun completion-update-overlay ()
+(defun completion-buffer-point ()
+  (let ((buffer (completion-buffer)))
+    (when buffer
+      (buffer-point buffer))))
+
+(defun completion-window ()
+  (let ((buffer (completion-buffer)))
+    (when buffer
+      (first (get-buffer-windows buffer)))))
+
+(defun update-completion-overlay (point)
   (when *completion-overlay*
     (delete-overlay *completion-overlay*))
-  (setf *completion-overlay*
-        (make-overlay (line-start (copy-point (current-point) :temporary))
-                      (line-end (copy-point (current-point) :temporary))
-                      *completion-overlay-attribute*)))
-
-(define-key *completion-mode-keymap* (kbd "C-n") 'completion-next-line)
-(define-key *completion-mode-keymap* (kbd "M-n") 'completion-next-line)
-(define-key *completion-mode-keymap* (kbd "C-i") 'completion-next-line)
-(define-command completion-next-line (n) ("p")
-  (with-current-window *completion-window*
-    (if (last-line-p (current-point))
-        (buffer-start (current-point))
-        (line-offset (current-point) n))
-    (completion-update-overlay)))
-
-(define-key *completion-mode-keymap* (kbd "C-p") 'completion-previous-line)
-(define-key *completion-mode-keymap* (kbd "M-p") 'completion-previous-line)
-(define-command completion-previous-line (n) ("p")
-  (with-current-window *completion-window*
-    (if (first-line-p (current-point))
-        (end-of-buffer)
-        (forward-line (- n)))
-    (completion-update-overlay)))
-
-(define-key *completion-mode-keymap* (kbd "C-v") 'completion-next-page)
-(define-command completion-next-page () ()
-  (with-current-window *completion-window*
-    (unless (next-page)
-      (end-of-buffer))
-    (completion-update-overlay)))
-
-(define-key *completion-mode-keymap* (kbd "M-v") 'completion-previous-page)
-(define-command completion-previous-page () ()
-  (with-current-window *completion-window*
-    (unless (prev-page)
-      (beginning-of-buffer))
-    (completion-update-overlay)))
-
-(define-key *completion-mode-keymap* (kbd "M->") 'completion-end-of-buffer)
-(define-command completion-end-of-buffer () ()
-  (with-current-window *completion-window*
-    (end-of-buffer)
-    (completion-update-overlay)))
-
-(define-key *completion-mode-keymap* (kbd "M-<") 'completion-beginning-of-buffer)
-(define-command completion-beginning-of-buffer () ()
-  (with-current-window *completion-window*
-    (beginning-of-buffer)
-    (completion-update-overlay)))
-
-(defvar *completion-last-string* nil)
-(defvar *completion-last-function* nil)
+  (when point
+    (with-point ((start point)
+                 (end point))
+      (setf *completion-overlay*
+            (make-overlay (line-start start)
+                          (line-end end)
+                          *completion-overlay-attribute*)))))
 
 (defun completion-end ()
   (completion-mode nil)
-  (delete-completion-window)
-  (setf *completion-last-string* nil)
-  (setf *completion-last-function* nil)
-  t)
+  (let ((window (completion-window)))
+    (with-current-window window
+      (quit-window window))))
 
-(define-key *completion-mode-keymap* (kbd "C-m") 'completion-select)
+(define-command completion-self-insert () ()
+  (unread-key-sequence (last-read-key-sequence))
+  (completion-end))
+
+(define-command completion-next-line () ()
+  (alexandria:when-let ((point (completion-buffer-point)))
+    (line-offset point 1)
+    (update-completion-overlay point)))
+
+(define-command completion-previous-line () ()
+  (alexandria:when-let ((point (completion-buffer-point)))
+    (line-offset point -1)
+    (update-completion-overlay point)))
+
+(define-command completion-next-page () ()
+  (alexandria:when-let ((point (completion-buffer-point)))
+    (with-current-window (first (get-buffer-windows (point-buffer point)))
+      (next-page))
+    (update-completion-overlay point)))
+
+(define-command completion-previous-page () ()
+  (alexandria:when-let ((point (completion-buffer-point)))
+    (with-current-window (first (get-buffer-windows (point-buffer point)))
+      (prev-page))
+    (update-completion-overlay point)))
+
+(define-command completion-end-of-buffer () ()
+  (alexandria:when-let ((point (completion-buffer-point)))
+    (buffer-end point)
+    (update-completion-overlay point)))
+
+(define-command completion-beginning-of-buffer () ()
+  (alexandria:when-let ((point (completion-buffer-point)))
+    (buffer-start point)
+    (update-completion-overlay point)))
+
 (define-command completion-select () ()
-  (let ((str
-         (line-string-at
-          (buffer-point
-           (window-buffer *completion-window*)))))
-    (delete-character (current-point) (- (length *completion-last-string*)))
-    (setf *completion-last-string* str)
-    (insert-string (current-point) str)
-    (completion-end))
-  t)
+  (let* ((completion-point (completion-buffer-point))
+         (item (when completion-point
+                 (text-property-at completion-point :item))))
+    (completion-insert (current-point) item)
+    (completion-end)))
 
-(define-key *completion-mode-keymap* (kbd "C-h") 'completion-delete-previous-char)
-(define-key *completion-mode-keymap* (kbd "[backspace]") 'completion-delete-previous-char)
-(define-command completion-delete-previous-char (n) ("p")
-  (delete-character (current-point) (- n))
-  (update-completion *completion-last-function*
-		     (subseq *completion-last-string* 0 (- (length *completion-last-string*) n))))
-
-(define-command completion-self-insert (n) ("p")
-  (let ((c (insertion-key-p (last-read-key-sequence))))
-    (cond (c (insert-character (current-point) c n)
-             (update-completion *completion-last-function*
-				(concatenate 'string
-					     *completion-last-string*
-					     (string c))))
-          (t (unread-key-sequence (last-read-key-sequence))
-             (completion-end)))))
-
-(defun update-completion (comp-f str)
-  (setf *completion-last-function* comp-f)
-  (setf *completion-last-string* str)
-  (multiple-value-bind (result strings) (funcall comp-f str)
-    (cond (strings
-           (let ((buffer (get-buffer-create "*Completions*")))
-             (setf *completion-window*
-                   (with-pop-up-typeout-window (out buffer :erase t)
-                     (format out "~{~A~^~%~}" strings)))
-             (set-window-delete-hook (lambda () (setf *completion-window* nil))
-                                     *completion-window*)
-             (setf (get-bvar :completion-buffer-p :buffer buffer) t)
-             (with-current-window *completion-window*
-               (completion-update-overlay))))
-          ((null result)
-           (completion-end)))
-    (if result
-        (values result t (and (consp strings) (null (cdr strings))))
-        (values str nil))))
-
-(defun start-completion (comp-f str)
+(defun start-completion-mode (buffer)
   (completion-mode t)
-  (multiple-value-bind (str result confirm-p)
-      (update-completion comp-f str)
-    (declare (ignore result))
-    (when confirm-p
-      (delete-character (current-point) (- (length *completion-last-string*)))
-      (insert-string (current-point) str)
-      (completion-end)))
-  t)
+  (update-completion-overlay (buffer-point buffer)))
 
-(defun delete-completion-window ()
-  (when (and (windowp *completion-window*)
-             (not (deleted-window-p *completion-window*)))
-    (with-current-window *completion-window*
-      (when (get-bvar :completion-buffer-p
-                      :buffer (window-buffer *completion-window*))
-        (quit-window)))
-    (setf *completion-window* nil)))
+(defun completion-insert (point item)
+  (cond ((completion-item-apply-fn item)
+         (funcall (completion-item-apply-fn item)
+                  point))
+        ((and (completion-item-start item)
+              (completion-item-end item))
+         (move-point point (completion-item-start item))
+         (delete-between-points (completion-item-start item)
+                                (completion-item-end item))
+         (insert-string point (completion-item-label item)))))
+
+(defun run-completion (items &optional (start-completion-mode t))
+  (if (uiop:length=n-p items 1)
+      (completion-insert (current-point) (first items))
+      (let ((buffer (get-buffer-create "*Completion*")))
+        (erase-buffer buffer)
+        (display-buffer buffer)
+        (let ((point (buffer-point buffer)))
+          (dolist (item items)
+            (insert-string point (completion-item-label item))
+            (insert-string point " ")
+            (insert-string point (completion-item-detail item))
+            (put-text-property (line-start (copy-point point :temporary)) point :item item)
+            (insert-character point #\newline))
+          (buffer-start point))
+        (when start-completion-mode
+          (start-completion-mode buffer)))))

@@ -49,9 +49,14 @@
 (define-command abbrev-with-pop-up-window () ()
   (let* ((src-word (preceding-word (current-point)))
          (words (scan-all-buffer-words src-word)))
-    (start-completion (lambda (str)
-                        (completion str words))
-                      src-word)))
+    (with-point ((start (current-point))
+                 (end (current-point)))
+      (skip-chars-backward start #'syntax-symbol-char-p)
+      (run-completion (mapcar (lambda (word)
+                                (lem::make-completion-item :label word
+                                                           :start start
+                                                           :end end))
+                              words)))))
 
 (defvar *rest-words* nil)
 (defvar *all-words* nil)

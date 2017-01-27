@@ -137,6 +137,8 @@
                           *completion-overlay-attribute*)))))
 
 (defun completion-end ()
+  (when *completion-overlay*
+    (delete-overlay *completion-overlay*))
   (completion-mode nil)
   (let ((window (completion-window)))
     (with-current-window window

@@ -473,7 +473,7 @@
 (defun scan-current-package (check-package-fn)
   (save-excursion
     (loop (multiple-value-bind (result groups)
-              (looking-at-line "\\(in-package (?:#?:|')?([^\)]*)\\)")
+              (looking-at-line "^\\s*\\(in-package (?:#?:|')?([^\)]*)\\)")
             (when result
               (let ((package (funcall check-package-fn (aref groups 0))))
                 (when package

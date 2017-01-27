@@ -5,6 +5,7 @@
           completion-hypheen
           completion-file
           completion-buffer-name
+          make-completion-item
           run-completion))
 
 (defun completion-test (x y)

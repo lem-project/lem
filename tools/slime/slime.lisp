@@ -545,7 +545,7 @@
           (declare (ignore timeout-p))
           (run-completion
            (mapcar (lambda (completion)
-                     (lem::make-completion-item
+                     (make-completion-item
                       :label (first completion)
                       :detail (fourth completion)
                       :start start

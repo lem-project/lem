@@ -53,9 +53,9 @@
                  (end (current-point)))
       (skip-chars-backward start #'syntax-symbol-char-p)
       (run-completion (mapcar (lambda (word)
-                                (lem::make-completion-item :label word
-                                                           :start start
-                                                           :end end))
+                                (make-completion-item :label word
+                                                      :start start
+                                                      :end end))
                               words)))))
 
 (defvar *rest-words* nil)

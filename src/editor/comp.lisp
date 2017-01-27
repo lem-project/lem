@@ -200,7 +200,7 @@
                                 (completion-item-end item))
          (insert-string point (completion-item-label item)))))
 
-(defun run-completion (items &optional (start-completion-mode t))
+(defun run-completion (items)
   (if (uiop:length=n-p items 1)
       (completion-insert (current-point) (first items))
       (let ((buffer (get-buffer-create "*Completion*")))
@@ -214,5 +214,4 @@
             (put-text-property (line-start (copy-point point :temporary)) point :item item)
             (insert-character point #\newline))
           (buffer-start point))
-        (when start-completion-mode
-          (start-completion-mode buffer)))))
+        (start-completion-mode buffer))))

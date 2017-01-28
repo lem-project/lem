@@ -107,6 +107,7 @@
 (define-key *completion-mode-keymap* "M->" 'completion-end-of-buffer)
 (define-key *completion-mode-keymap* "M-<" 'completion-beginning-of-buffer)
 (define-key *completion-mode-keymap* "C-m" 'completion-select)
+(define-key *completion-mode-keymap* "Spc" 'completion-insert-space-and-cancel)
 
 (defvar *completion-overlay* nil)
 (defvar *completion-overlay-attribute* (make-attribute "blue" nil :reverse-p t))
@@ -181,6 +182,10 @@
                  (text-property-at completion-point :item))))
     (completion-insert (current-point) item)
     (completion-end)))
+
+(define-command completion-insert-space-and-cancel () ()
+  (insert-character (current-point) #\space)
+  (completion-end))
 
 (defun start-completion-mode (buffer restart-function)
   (setf *completion-restart-function* restart-function)

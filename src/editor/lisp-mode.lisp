@@ -893,7 +893,9 @@
                                               :detail (fourth completion)
                                               :start start
                                               :end end))
-                 completions))))))
+                 completions)
+         :auto-insert nil
+         :restart-function 'lisp-complete-symbol)))))
 
 (defun lisp-get-arglist (symbol)
   (when (fboundp symbol)

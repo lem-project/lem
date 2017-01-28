@@ -152,9 +152,7 @@
   (when *minibuf-read-line-comp-f*
     (multiple-value-bind (str items)
         (funcall *minibuf-read-line-comp-f* (get-minibuffer-string))
-      (when str
-        (minibuffer-clear-input)
-        (insert-string (current-point) str))
+      (declare (ignore str))
       (with-point ((start (minibuffer-start-point))
                    (end (current-point)))
         (run-completion
@@ -168,7 +166,9 @@
                                item))
                :when item
                :collect item)
-         :use-floating-window nil)))))
+         :use-floating-window nil
+         :auto-insert nil
+         :restart-function 'minibuf-read-line-completion)))))
 
 (define-command minibuf-read-line-prev-history () ()
   (multiple-value-bind (str win)

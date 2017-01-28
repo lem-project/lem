@@ -112,6 +112,7 @@
 (defvar *completion-overlay-attribute* (make-attribute "blue" nil :reverse-p t))
 (defvar *completion-attribute* (make-attribute nil nil :reverse-p t))
 (defvar *completion-window* nil)
+(defvar *completion-restart-function* nil)
 
 (defun completion-buffer ()
   (get-buffer "*Completion*"))
@@ -139,8 +140,12 @@
   (delete-window *completion-window*))
 
 (define-command completion-self-insert () ()
-  (unread-key-sequence (last-read-key-sequence))
-  (completion-end))
+  (let ((c (insertion-key-p (last-read-key-sequence))))
+    (cond (c (insert-character (current-point) c)
+             (completion-end)
+             (funcall *completion-restart-function*))
+          (t (unread-key-sequence (last-read-key-sequence))
+             (completion-end)))))
 
 (define-command completion-next-line () ()
   (alexandria:when-let ((point (completion-buffer-point)))
@@ -175,7 +180,8 @@
     (completion-insert (current-point) item)
     (completion-end)))
 
-(defun start-completion-mode (buffer)
+(defun start-completion-mode (buffer restart-function)
+  (setf *completion-restart-function* restart-function)
   (completion-mode t)
   (update-completion-overlay (buffer-point buffer)))
 
@@ -221,7 +227,7 @@
       (buffer-start point)
       (values buffer max-column))))
 
-(defun run-completion (items &key (use-floating-window t) (auto-insert t))
+(defun run-completion (items &key restart-function (use-floating-window t) (auto-insert t))
   (if (and auto-insert (uiop:length=n-p items 1))
       (completion-insert (current-point) (first items))
       (multiple-value-bind (buffer max-column)
@@ -238,5 +244,5 @@
                                      (floor (window-height (current-window)) 2))))
                     (make-floating-window buffer x y width height nil))
                   (display-buffer buffer)))
-        (start-completion-mode buffer)))
+        (start-completion-mode buffer restart-function)))
   t)

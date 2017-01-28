@@ -848,5 +848,7 @@
     (when (<= (display-width) (+ x width))
       (decf x (- (+ x width) (display-width))))
     (when (<= (display-height) y)
+      (when (minusp (- y (+ 1 height)))
+        (setf height (- (display-height) 2)))
       (decf y (+ 1 height)))
     (make-floating-window buffer x y width height nil)))

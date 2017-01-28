@@ -104,8 +104,6 @@
 (define-key *completion-mode-keymap* "C-i" 'completion-next-line)
 (define-key *completion-mode-keymap* "C-p" 'completion-previous-line)
 (define-key *completion-mode-keymap* "M-p" 'completion-previous-line)
-(define-key *completion-mode-keymap* "C-v" 'completion-next-page)
-(define-key *completion-mode-keymap* "M-v" 'completion-previous-page)
 (define-key *completion-mode-keymap* "M->" 'completion-end-of-buffer)
 (define-key *completion-mode-keymap* "M-<" 'completion-beginning-of-buffer)
 (define-key *completion-mode-keymap* "C-m" 'completion-select)
@@ -151,24 +149,14 @@
 
 (define-command completion-next-line () ()
   (alexandria:when-let ((point (completion-buffer-point)))
-    (line-offset point 1)
+    (unless (line-offset point 1)
+      (buffer-start point))
     (update-completion-overlay point)))
 
 (define-command completion-previous-line () ()
   (alexandria:when-let ((point (completion-buffer-point)))
-    (line-offset point -1)
-    (update-completion-overlay point)))
-
-(define-command completion-next-page () ()
-  (alexandria:when-let ((point (completion-buffer-point)))
-    (with-current-window (first (get-buffer-windows (point-buffer point)))
-      (next-page))
-    (update-completion-overlay point)))
-
-(define-command completion-previous-page () ()
-  (alexandria:when-let ((point (completion-buffer-point)))
-    (with-current-window (first (get-buffer-windows (point-buffer point)))
-      (prev-page))
+    (unless (line-offset point -1)
+      (buffer-end point))
     (update-completion-overlay point)))
 
 (define-command completion-end-of-buffer () ()

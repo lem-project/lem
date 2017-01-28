@@ -152,8 +152,9 @@
   (when *minibuf-read-line-comp-f*
     (multiple-value-bind (str items)
         (funcall *minibuf-read-line-comp-f* (get-minibuffer-string))
-      (minibuffer-clear-input)
-      (insert-string (current-point) str)
+      (when str
+        (minibuffer-clear-input)
+        (insert-string (current-point) str))
       (with-point ((start (minibuffer-start-point))
                    (end (current-point)))
         (run-completion

@@ -27,7 +27,9 @@
           get-buffer-windows
           other-buffer
           switch-to-buffer
-          pop-to-buffer))
+          pop-to-buffer
+          floating-windows
+          balloon))
 
 (defvar *window-sufficient-width* 150)
 (defvar *scroll-recenter-p* t)

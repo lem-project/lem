@@ -144,7 +144,8 @@
   (let ((c (insertion-key-p (last-read-key-sequence))))
     (cond (c (insert-character (current-point) c)
              (completion-end)
-             (funcall *completion-restart-function*))
+             (when *completion-restart-function*
+               (funcall *completion-restart-function*)))
           (t (unread-key-sequence (last-read-key-sequence))
              (completion-end)))))
 
@@ -228,18 +229,16 @@
       (buffer-start point)
       (values buffer max-column))))
 
-(defun run-completion (items &key restart-function (use-floating-window t) (auto-insert t))
+(defun run-completion (items &key restart-function (auto-insert t))
   (if (and auto-insert (uiop:length=n-p items 1))
       (completion-insert (current-point) (first items))
       (multiple-value-bind (buffer max-column)
-          (create-completion-buffer items (if use-floating-window *completion-attribute*))
+          (create-completion-buffer items *completion-attribute*)
         (setf *completion-window*
-              (if use-floating-window
-                  (balloon (current-window)
-                           buffer
-                           (+ 2 max-column)
-                           (min (length items)
-                                (floor (window-height (current-window)) 2)))
-                  (display-buffer buffer)))
+              (balloon (current-window)
+                       buffer
+                       (+ 2 max-column)
+                       (min (length items)
+                            (display-height))))
         (start-completion-mode buffer restart-function)))
   t)

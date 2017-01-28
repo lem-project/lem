@@ -166,7 +166,6 @@
                                item))
                :when item
                :collect item)
-         :use-floating-window nil
          :auto-insert nil
          :restart-function 'minibuf-read-line-completion)))))
 

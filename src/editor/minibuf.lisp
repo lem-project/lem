@@ -149,25 +149,27 @@
   t)
 
 (define-command minibuf-read-line-completion () ()
-  (when *minibuf-read-line-comp-f*
-    (multiple-value-bind (str items)
-        (funcall *minibuf-read-line-comp-f* (get-minibuffer-string))
-      (declare (ignore str))
-      (with-point ((start (minibuffer-start-point))
-                   (end (current-point)))
-        (run-completion
-         (loop :for item? :in items
-               :for item := (typecase item?
-                              (string
-                               (make-completion-item :label item?
-                                                     :start start
-                                                     :end end))
-                              (completion-item
-                               item))
-               :when item
-               :collect item)
-         :auto-insert nil
-         :restart-function 'minibuf-read-line-completion)))))
+  (labels ((f (auto-insert)
+             (multiple-value-bind (str items)
+                 (funcall *minibuf-read-line-comp-f* (get-minibuffer-string))
+               (declare (ignore str))
+               (with-point ((start (minibuffer-start-point))
+                            (end (current-point)))
+                 (run-completion
+                  (loop :for item? :in items
+                        :for item := (typecase item?
+                                       (string
+                                        (make-completion-item :label item?
+                                                              :start start
+                                                              :end end))
+                                       (completion-item
+                                        item))
+                        :when item
+                        :collect item)
+                  :auto-insert auto-insert
+                  :restart-function (lambda () (f nil)))))))
+    (when *minibuf-read-line-comp-f*
+      (f t))))
 
 (define-command minibuf-read-line-prev-history () ()
   (multiple-value-bind (str win)

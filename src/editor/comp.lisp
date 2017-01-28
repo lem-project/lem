@@ -235,15 +235,11 @@
           (create-completion-buffer items (if use-floating-window *completion-attribute*))
         (setf *completion-window*
               (if use-floating-window
-                  (let ((x (+ (window-x (current-window)) 1))
-                        (y (+ (window-y (current-window))
-                              (count-lines (window-point (current-window))
-                                           (window-view-point (current-window)))
-                              1))
-                        (width (+ 2 max-column))
-                        (height (min (length items)
-                                     (floor (window-height (current-window)) 2))))
-                    (make-floating-window buffer x y width height nil))
+                  (balloon (current-window)
+                           buffer
+                           (+ 2 max-column)
+                           (min (length items)
+                                (floor (window-height (current-window)) 2)))
                   (display-buffer buffer)))
         (start-completion-mode buffer restart-function)))
   t)

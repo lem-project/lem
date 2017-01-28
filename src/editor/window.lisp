@@ -829,3 +829,11 @@
   (setf *floating-windows*
         (delete window *floating-windows*))
   t)
+
+(defun balloon (orig-window buffer width height)
+  (let ((x (+ (window-x orig-window) 1))
+        (y (+ (window-y orig-window)
+              (count-lines (window-point orig-window)
+                           (window-view-point orig-window))
+              1)))
+    (make-floating-window buffer x y width height nil)))

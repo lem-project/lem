@@ -451,7 +451,7 @@
   (charms/ll:wnoutrefresh (screen-%modeline-scrwin (lem::window-screen window))))
 
 (defun redraw-display-window (window &optional (use-cache-p t))
-  (window-see window)
+  (when (eq window (current-window)) (window-see window))
   (lem::window-prompt-display window)
   (progn
     #+(or)without-interrupts

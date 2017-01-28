@@ -127,9 +127,12 @@
   (screen-modify (window-screen window))
   (setf (window-%buffer window) buffer))
 
+(defun window-buffer-point (window)
+  (buffer-point (window-buffer window)))
+
 (defun window-point (window)
   (if (eq window (current-window))
-      (buffer-point (window-buffer window))
+      (window-buffer-point window)
       (%window-point window)))
 
 (defun window-parameter (window parameter)
@@ -146,7 +149,7 @@
   (when (boundp '*current-window*)
     (let ((old-window (current-window)))
       (move-point (%window-point old-window)
-                  (buffer-point (window-buffer old-window)))))
+                  (window-buffer-point old-window))))
   (let ((buffer (window-buffer new-window)))
     (setf (current-buffer) buffer)
     (move-point (buffer-point buffer)
@@ -329,8 +332,9 @@
   (setf (window-tree) (current-window)))
 
 (defun window-recenter (window)
-  (move-point (window-view-point window)
-              (line-start (copy-point (window-point window) :temporary)))
+  (line-start
+   (move-point (window-view-point window)
+               (window-buffer-point window)))
   (window-scroll window (- (floor (window-%height window) 2))))
 
 (defun map-wrapping-line (string winwidth fn)
@@ -398,7 +402,7 @@
                (declare (ignore arg))
                (incf offset)))
       (map-region (window-view-point window)
-                  (window-point window)
+                  (window-buffer-point window)
                   (lambda (string lastp)
                     (declare (ignore lastp))
                     (map-wrapping-line string
@@ -407,7 +411,7 @@
       offset)))
 
 (defun window-cursor-y-not-wrapping (window)
-  (count-lines (window-point window)
+  (count-lines (window-buffer-point window)
                (window-view-point window)))
 
 (defun window-cursor-y (window)
@@ -415,13 +419,13 @@
      (window-wrapping-offset window)))
 
 (defun window-offset-view (window)
-  (cond ((and (point< (window-point window)
+  (cond ((and (point< (window-buffer-point window)
 		      (window-view-point window))
-              (not (same-line-p (window-point window)
+              (not (same-line-p (window-buffer-point window)
                                 (window-view-point window))))
-         (count-lines (window-point window)
+         (count-lines (window-buffer-point window)
                       (window-view-point window)))
-        ((and (same-line-p (window-point window)
+        ((and (same-line-p (window-buffer-point window)
                            (window-view-point window))
               (not (start-line-p (window-view-point window))))
          -1)
@@ -442,10 +446,18 @@
   (window-set-size current-window
                    (window-%width current-window)
                    (window-%height current-window))
+
   (move-point (window-view-point new-window)
               (window-view-point current-window))
-  (move-point (window-point new-window)
-              (window-point current-window))
+
+  (move-point (%window-point new-window)
+              (window-buffer-point current-window))
+
+  (move-point (window-buffer-point new-window)
+              (window-buffer-point current-window))
+
+  (window-see new-window)
+
   (multiple-value-bind (node getter setter)
       (window-tree-parent (window-tree) current-window)
     (if (null node)
@@ -764,7 +776,7 @@
           (%buffer-clear-keep-binfo old-buffer)
           (setf (%buffer-keep-binfo old-buffer)
                 (list (copy-point (window-view-point (current-window)) :right-inserting)
-                      (copy-point (buffer-point (window-buffer (current-window))) :right-inserting)))))
+                      (copy-point (window-buffer-point (current-window)) :right-inserting)))))
       (set-window-buffer (current-window) buffer)
       (setf (current-buffer) buffer)
       (delete-point (%window-point (current-window)))

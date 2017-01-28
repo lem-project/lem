@@ -792,3 +792,18 @@
                                                       (current-window))))
           (switch-to-buffer buffer)
           (values (current-window) split-p)))))
+
+(defvar *floating-windows* '())
+
+(defun floating-windows ()
+  *floating-windows*)
+
+(defun make-floating-window (buffer x y width height use-modeline-p)
+  (let ((window (make-window buffer x y width height use-modeline-p)))
+    (push window *floating-windows*)
+    window))
+
+(defun delete-floating-window (window)
+  (setf *floating-windows*
+        (delete window *floating-windows*))
+  t)

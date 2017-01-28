@@ -450,15 +450,17 @@
                            *modeline-inactive-attribute*))
   (charms/ll:wnoutrefresh (screen-%modeline-scrwin (lem::window-screen window))))
 
-(defun redraw-display-window (window doupdate-p)
+(defun redraw-display-window (window &optional (use-cache-p t))
   (window-see window)
   (lem::window-prompt-display window)
-  (progn #+(or)without-interrupts
+  (progn
+    #+(or)without-interrupts
     (disp-reset-lines (lem::window-screen window)
                       (window-buffer window)
                       (lem::window-view-point window))
     (screen-display-lines (lem::window-screen window)
-                          (screen-modified-p (lem::window-screen window))
+                          (or (not use-cache-p)
+                              (screen-modified-p (lem::window-screen window)))
                           (window-buffer window)
                           (lem::window-view-point window)
                           (lem::window-point window))
@@ -466,15 +468,15 @@
       (screen-redraw-separator window)
       (screen-redraw-modeline window))
     (charms/ll:wnoutrefresh (screen-%scrwin (lem::window-screen window)))
-    (setf (screen-modified-p (lem::window-screen window)) nil)
-    (when doupdate-p
-      (charms/ll:doupdate))))
+    (setf (screen-modified-p (lem::window-screen window)) nil)))
 
 (defun redraw-display ()
   (dolist (window (window-list))
     (unless (eq window (current-window))
-      (redraw-display-window window nil)))
-  (redraw-display-window (current-window) nil)
+      (redraw-display-window window)))
+  (redraw-display-window (current-window))
+  (dolist (window (lem::floating-windows))
+    (redraw-display-window window nil))
   (charms/ll:doupdate))
 
 (defun update-display-size (display-width display-height)

@@ -139,6 +139,9 @@
     (delete-overlay *completion-overlay*))
   (completion-mode nil)
   (delete-window *completion-window*)
+  (let ((buffer (completion-buffer)))
+    (when buffer
+      (delete-buffer buffer)))
   (redraw-display t))
 
 (define-command completion-self-insert () ()

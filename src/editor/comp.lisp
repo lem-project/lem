@@ -137,7 +137,8 @@
   (when *completion-overlay*
     (delete-overlay *completion-overlay*))
   (completion-mode nil)
-  (delete-window *completion-window*))
+  (delete-window *completion-window*)
+  (redraw-display t))
 
 (define-command completion-self-insert () ()
   (let ((c (insertion-key-p (last-read-key-sequence))))

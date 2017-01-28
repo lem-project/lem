@@ -87,12 +87,13 @@
     :initform nil
     :accessor window-parameters)))
 
+(defgeneric %delete-window (window))
+
 (defun windowp (x)
   (typep x 'window))
 
-(defun make-window (buffer x y width height use-modeline-p)
-  (setf *modified-window-tree-p* t)
-  (make-instance 'window
+(defun %make-window (class-name buffer x y width height use-modeline-p)
+  (make-instance class-name
                  :x x
                  :y y
                  :width width
@@ -102,6 +103,10 @@
                  :view-point (copy-point (buffer-point buffer) :right-inserting "view-point")
                  :use-modeline-p use-modeline-p
                  :point (copy-point (buffers-start buffer) :right-inserting "window-point")))
+
+(defun make-window (buffer x y width height use-modeline-p)
+  (setf *modified-window-tree-p* t)
+  (%make-window 'window buffer x y width height use-modeline-p))
 
 (defun window-x (&optional (window (current-window)))
   (window-%x window))
@@ -556,7 +561,7 @@
                                   (+ (window-%height deleted-window)
                                      (window-%height win)))))))))
 
-(defun delete-window (window)
+(defmethod %delete-window ((window window))
   (when (or (one-window-p)
             (minibuffer-window-p window))
     (editor-error "Can not delete this window"))
@@ -575,7 +580,10 @@
       (declare (ignore getter2))
       (if (null node2)
           (setf (window-tree) (funcall another-getter))
-          (funcall setter2 (funcall another-getter)))))
+          (funcall setter2 (funcall another-getter))))))
+
+(defun delete-window (window)
+  (%delete-window window)
   (when (window-delete-hook window)
     (funcall (window-delete-hook window)))
   (%free-window window)
@@ -798,12 +806,14 @@
 (defun floating-windows ()
   *floating-windows*)
 
+(defclass floating-window (window) ())
+
 (defun make-floating-window (buffer x y width height use-modeline-p)
-  (let ((window (make-window buffer x y width height use-modeline-p)))
+  (let ((window (%make-window 'floating-window buffer x y width height use-modeline-p)))
     (push window *floating-windows*)
     window))
 
-(defun delete-floating-window (window)
+(defmethod %delete-window ((window floating-window))
   (setf *floating-windows*
         (delete window *floating-windows*))
   t)

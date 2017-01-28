@@ -141,7 +141,7 @@
   (when *completion-overlay*
     (delete-overlay *completion-overlay*))
   (completion-mode nil)
-  (delete-floating-window *completion-window*))
+  (delete-window *completion-window*))
 
 (define-command completion-self-insert () ()
   (unread-key-sequence (last-read-key-sequence))

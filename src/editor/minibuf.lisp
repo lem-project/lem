@@ -167,7 +167,8 @@
                               (completion-item
                                item))
                :when item
-               :collect item))))))
+               :collect item)
+         :use-floating-window nil)))))
 
 (define-command minibuf-read-line-prev-history () ()
   (multiple-value-bind (str win)

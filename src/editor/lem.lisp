@@ -26,13 +26,14 @@
   (when (enable-syntax-highlight-p buffer)
     (syntax-scan-range (buffers-start buffer) (buffers-end buffer))))
 
-(defun syntax-scan-current-view (&optional (window (current-window)))
-  (cond
-    ((get-bvar 'already-visited :buffer (window-buffer window))
-     (syntax-scan-window window))
-    (t
-     (setf (get-bvar 'already-visited :buffer (window-buffer window)) t)
-     (syntax-scan-buffer (window-buffer window)))))
+(let ((already-visited (gensym)))
+  (defun syntax-scan-current-view (window)
+    (cond
+      ((get-bvar already-visited :buffer (window-buffer window))
+       (syntax-scan-window window))
+      (t
+       (setf (get-bvar already-visited :buffer (window-buffer window)) t)
+       (syntax-scan-buffer (window-buffer window))))))
 
 (defun syntax-scan-point (start end old-len)
   (line-start start)

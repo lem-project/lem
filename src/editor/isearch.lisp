@@ -89,7 +89,7 @@
                  #'search-backward-regexp
                  ""))
 
-(define-key *global-keymap* (kbd "C-x C-M-s") 'isearch-forward-symbol)
+(define-key *global-keymap* (kbd "M-s _") 'isearch-forward-symbol)
 (define-command isearch-forward-symbol () ()
   (isearch-start "ISearch Symbol: "
                  #'search-forward-symbol
@@ -97,7 +97,7 @@
                  #'search-backward-symbol
                  ""))
 
-(define-key *global-keymap* (kbd "C-x C-M-r") 'isearch-backward-symbol)
+(define-key *global-keymap* (kbd "M-s M-_") 'isearch-backward-symbol)
 (define-command isearch-backward-symbol () ()
   (isearch-start "ISearch Symbol: "
                  #'search-backward-symbol
@@ -105,7 +105,7 @@
                  #'search-backward-symbol
                  ""))
 
-(define-key *global-keymap* (kbd "C-x .") 'isearch-forward-symbol-at-point)
+(define-key *global-keymap* (kbd "M-s .") 'isearch-forward-symbol-at-point)
 (define-command isearch-forward-symbol-at-point () ()
   (let ((point (current-point)))
     (skip-chars-forward point #'syntax-symbol-char-p)

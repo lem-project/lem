@@ -5,6 +5,7 @@
           minibuffer-window-p
           minibuffer-window-height
           message
+          message-without-log
           minibuf-read-char
           active-minibuffer-window
           check-switch-minibuffer-window
@@ -67,8 +68,7 @@
           (fresh-line stream)
           (princ msg stream))))))
 
-(defun message (string &rest args)
-  (log-message string args)
+(defun message-1 (string args)
   (when (interactive-p)
     (let ((flag (minibuffer-window-active-p)))
       (print-echoarea (if (null string)
@@ -77,7 +77,15 @@
                       flag)
       (when flag
         (sit-for 1 nil)
-        (print-echoarea nil nil))))
+        (print-echoarea nil nil)))))
+
+(defun message (string &rest args)
+  (log-message string args)
+  (message-1 string args)
+  t)
+
+(defun message-without-log (string &rest args)
+  (message-1 string args)
   t)
 
 (defun minibuf-read-char (prompt)

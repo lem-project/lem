@@ -43,13 +43,11 @@
 (defvar *isearch-highlight-active-attribute* (make-attribute "cyan" nil :reverse-p t))
 
 (defun isearch-update-display ()
-  (isearch-update-minibuf)
+  (isearch-update-minibuffer)
   (isearch-update-buffer (current-point)))
 
-(defun isearch-update-minibuf ()
-  (message "~a~a"
-           *isearch-prompt*
-           *isearch-string*))
+(defun isearch-update-minibuffer ()
+  (message-without-log "~A~A" *isearch-prompt* *isearch-string*))
 
 (define-key *global-keymap* (kbd "C-s") 'isearch-forward)
 (define-command isearch-forward () ()

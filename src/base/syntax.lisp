@@ -263,23 +263,30 @@
         (line-offset point 0 end)
         point))))
 
-(defun syntax-scan-region (region point)
-  (loop
+(defun syntax-scan-region (region point start-charpos)
+  (do ((start-charpos start-charpos 0)) (nil)
     (loop
       (when (end-line-p point)
         (return))
       (cond ((syntax-escape-char-p (character-at point 0))
              (character-offset point 1))
             ((syntax-test-match-p (syntax-region-end region) point)
+             (line-add-property (point-line point)
+                                start-charpos (point-charpos point)
+                                :attribute (syntax-attribute region)
+                                nil)
              (setf (line-%syntax-context (point-line point)) nil)
              (return-from syntax-scan-region (values point t))))
       (character-offset point 1))
+    (line-add-property (point-line point)
+                       start-charpos (line-length (point-line point))
+                       :attribute (syntax-attribute region)
+                       t)
     (setf (line-%syntax-context (point-line point)) region)
     (unless (line-offset point 1)
       (return-from syntax-scan-region point))
-    ;;(when (point<= *syntax-scan-limit* point)
-    ;;  (return-from syntax-scan-region point))
-    ))
+    (when (point<= *syntax-scan-limit* point)
+      (return-from syntax-scan-region point))))
 
 (defun syntax-scan-move-action (syntax start)
   (with-point ((end start)
@@ -297,12 +304,11 @@
 (defun syntax-scan-token-test (syntax point)
   (etypecase syntax
     (syntax-region
-     (with-point ((start point))
-       (let ((point (syntax-test-match-p (syntax-region-start syntax) point)))
-         (when point
-           (syntax-scan-region syntax point)
-           (put-text-property start point :attribute (syntax-attribute syntax))
-           point))))
+     (let ((start-charpos (point-charpos point))
+           (point (syntax-test-match-p (syntax-region-start syntax) point)))
+       (when point
+         (syntax-scan-region syntax point start-charpos)
+         point)))
     (syntax-match
      (when (or (not (syntax-match-test-symbol syntax))
                (find (syntax-match-test-symbol syntax)
@@ -338,11 +344,7 @@
         (setf (line-%syntax-context line) nil)
         (cond
           ((typep syntax 'syntax-region)
-           (with-point ((start point))
-             (syntax-scan-region syntax point)
-             (put-text-property start point
-                                :attribute (syntax-attribute syntax))
-             t))
+           (syntax-scan-region syntax point (point-charpos point)))
           ((typep syntax 'syntax)
            (cond ((eq (line-%syntax-context line) 'end-move-action)
                   (with-point ((cur point))

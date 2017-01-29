@@ -148,6 +148,9 @@
         (normalization-elements (remove-elements (getf (line-plist line) key) start end))))
 
 (defun line-add-property (line start end key value contp)
+  (assert (<= 0 start (line-length line)))
+  (assert (<= 0 end (line-length line)))
+  (assert (<= start end))
   (setf (getf (line-plist line) key)
         (put-elements (getf (line-plist line) key)
                       start end value contp)))

@@ -16,7 +16,6 @@
           buffer-mark
           buffer-point
           buffer-nlines
-          buffer-truncate-lines
           buffer-enable-undo-p
           buffer-enable-undo
           buffer-disable-undo
@@ -122,10 +121,6 @@
     :initform nil
     :initarg :points
     :accessor buffer-points)
-   (truncate-lines
-    :initform nil
-    :initarg :truncate-lines
-    :accessor buffer-truncate-lines)
    (external-format
     :initform nil
     :initarg :external-format
@@ -177,7 +172,6 @@
     (setf (buffer-undo-size buffer) 0)
     (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
-    (setf (buffer-truncate-lines buffer) t)
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
     (setf (buffer-points buffer) nil)
     (let ((line (make-line buffer nil nil "")))

@@ -22,7 +22,7 @@
       (funcall function sourcelist))
     (change-buffer-mode buffer 'sourcelist-mode t)
     (display-buffer buffer)
-    (setf (buffer-truncate-lines buffer) nil)
+    (setf (value 'truncate-lines buffer) nil)
     (setf *current-sourcelist* sourcelist)))
 
 (defmacro with-sourcelist ((var buffer-name) &body body)

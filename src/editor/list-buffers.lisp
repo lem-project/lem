@@ -14,10 +14,10 @@
 (define-key *global-keymap* (kbd "C-x C-b") 'list-buffers)
 (define-command list-buffers () ()
   (let ((buffer (get-buffer-create "*Buffers*")))
-    (setf (buffer-truncate-lines buffer) nil)
     (change-buffer-mode buffer 'list-buffers-mode)
     (display-buffer buffer)
     (erase-buffer buffer)
+    (setf (value 'truncate-lines buffer) nil)
     (let ((point (buffer-point buffer)))
       (buffer-start point)
       (let* ((max-name-len

@@ -1,6 +1,8 @@
 (in-package :lem-base)
 
-(export '(define-editor-variable value))
+(export '(define-editor-variable
+          value
+          truncate-lines))
 
 (defstruct editor-variable
   value
@@ -38,3 +40,5 @@
         (setf (get-bvar (editor-variable-local-indicator var)
                         :buffer buffer)
               value))))
+
+(define-editor-variable truncate-lines t)

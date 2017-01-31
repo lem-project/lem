@@ -7,6 +7,7 @@
                 :serial t
                 :components ((:file "package")
                              (:file "errors")
+                             (:file "var")
                              (:file "attribute")
                              (:file "wide")
                              (:file "macros")

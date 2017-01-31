@@ -482,7 +482,7 @@
 
 (define-key *global-keymap* (kbd "C-i") 'indent)
 (define-command indent (&optional (n 1)) ("p")
-  (if (get-bvar :calc-indent-function :buffer (current-buffer))
+  (if (value 'calc-indent-function)
       (indent-line (current-point))
       (self-insert n)))
 

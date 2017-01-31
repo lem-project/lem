@@ -1,6 +1,6 @@
 (in-package :lem-base)
 
-(export '(*enable-syntax-highlight*
+(export '(enable-syntax-highlight
           enable-syntax-highlight-p
           syntax-table
           fundamental-syntax-table
@@ -35,7 +35,7 @@
           form-offset
           scan-lists))
 
-(defvar *enable-syntax-highlight* t)
+(define-editor-variable enable-syntax-highlight t)
 
 (defstruct (syntax-test (:constructor %make-syntax-test))
   thing
@@ -237,8 +237,7 @@
   (syntax-start-block-comment-p c2 c1))
 
 (defun enable-syntax-highlight-p (buffer)
-  (and *enable-syntax-highlight*
-       (get-bvar :enable-syntax-highlight :buffer buffer)))
+  (value 'enable-syntax-highlight buffer))
 
 (defvar *syntax-scan-limit*)
 (defvar *syntax-symbol-lifetimes* nil)

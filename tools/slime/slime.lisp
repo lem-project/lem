@@ -29,10 +29,8 @@
   (modeline-add-status-list (lambda (window)
                               (buffer-package (window-buffer window) "CL-USER"))
                             (current-buffer))
-  (setf (get-bvar :enable-syntax-highlight) t)
-  (setf (get-bvar :indent-tabs-mode) nil)
-  (setf (get-bvar :calc-indent-function)
-        'calc-indent))
+  (setf (value 'indent-tabs-mode) nil)
+  (setf (value 'calc-indent-function) 'calc-indent))
 
 (define-key *slime-mode-keymap* "C-M-a" 'lem.lisp-mode:lisp-beginning-of-defun)
 (define-key *slime-mode-keymap* "C-M-e" 'lem.lisp-mode:lisp-end-of-defun)

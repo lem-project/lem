@@ -1,6 +1,11 @@
 (in-package :lem-base)
 
-(export '(indent-line))
+(export '(indent-line
+          indent-tabs-mode
+          calc-indent-function))
+
+(define-editor-variable indent-tabs-mode nil)
+(define-editor-variable calc-indent-function 'calc-indent-default)
 
 (defun indent-line-1 (point column)
   (when (null column)
@@ -15,7 +20,7 @@
                                                  '(#\space #\tab))
                              point)))
         (new-indent-string
-         (if (get-bvar :indent-tabs-mode :default t :buffer (point-buffer point))
+         (if (value 'indent-tabs-mode (point-buffer point))
              (multiple-value-bind (div mod)
                  (floor column (tab-size))
                (concatenate 'string
@@ -45,7 +50,5 @@
 
 (defun indent-line (point)
   (indent-line-1 point
-                 (funcall (get-bvar :calc-indent-function
-                                    :default #'calc-indent-default
-                                    :buffer (point-buffer point))
+                 (funcall (value 'calc-indent-function (point-buffer point))
                           point)))

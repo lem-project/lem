@@ -30,6 +30,7 @@
                               (buffer-package (window-buffer window) "CL-USER"))
                             (current-buffer))
   (setf (value 'indent-tabs-mode) nil)
+  (setf (value 'enable-syntax-highlight) t)
   (setf (value 'calc-indent-function) 'calc-indent))
 
 (define-key *slime-mode-keymap* "C-M-a" 'lem.lisp-mode:lisp-beginning-of-defun)

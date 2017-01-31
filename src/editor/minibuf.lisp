@@ -242,7 +242,6 @@
                      (let ((*inhibit-read-only* t))
                        (erase-buffer))
                      (minibuffer-mode)
-                     (setf (value 'enable-syntax-highlight) nil)
                      (unless (string= "" prompt)
                        (insert-string (current-point) prompt
                                       :attribute *minibuffer-prompt-attribute*

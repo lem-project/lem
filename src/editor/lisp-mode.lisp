@@ -263,11 +263,12 @@
      :keymap *lisp-mode-keymap*
      :syntax-table *lisp-syntax-table*)
   (setf (value 'indent-tabs-mode) nil)
+  (setf (value 'enable-syntax-highlight) t)
+  (setf (value 'calc-indent-function) 'lisp-calc-indent)
   (modeline-add-status-list (lambda (window)
                               (package-name (lisp-current-package
                                              (window-buffer window))))
-                            (current-buffer))
-  (setf (value 'calc-indent-function) 'lisp-calc-indent))
+                            (current-buffer)))
 
 (defun %lisp-mode-skip-expr-prefix (c1 c2 step-fn)
   (when c1

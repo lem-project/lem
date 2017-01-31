@@ -24,7 +24,7 @@
 
 (define-minor-mode listener-mode
     (:name "listener"
-	   :keymap *listener-mode-keymap*)
+     :keymap *listener-mode-keymap*)
   (setf (value 'enable-syntax-highlight) nil)
   (unless (%listener-history)
     (setf (%listener-history)

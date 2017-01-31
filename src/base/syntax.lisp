@@ -36,7 +36,7 @@
           form-offset
           scan-lists))
 
-(define-editor-variable enable-syntax-highlight t)
+(define-editor-variable enable-syntax-highlight nil)
 (defvar *global-syntax-highlight* t)
 
 (defstruct (syntax-test (:constructor %make-syntax-test))

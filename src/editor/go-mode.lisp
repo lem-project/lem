@@ -52,8 +52,9 @@
 
 (define-major-mode go-mode nil
     (:name "go"
-	   :keymap *go-mode-keymap*
-	   :syntax-table *go-syntax-table*)
+     :keymap *go-mode-keymap*
+     :syntax-table *go-syntax-table*)
+  (setf (value 'enable-syntax-highlight) t)
   (setf (value 'calc-indent-function) 'go-calc-indent))
 
 (defun following-word ()

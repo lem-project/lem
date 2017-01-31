@@ -17,7 +17,7 @@
     (change-buffer-mode buffer 'list-buffers-mode)
     (display-buffer buffer)
     (erase-buffer buffer)
-    (setf (value 'truncate-lines buffer) nil)
+    (setf (value 'truncate-lines :buffer buffer) nil)
     (let ((point (buffer-point buffer)))
       (buffer-start point)
       (let* ((max-name-len

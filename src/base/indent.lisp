@@ -20,7 +20,7 @@
                                                  '(#\space #\tab))
                              point)))
         (new-indent-string
-         (if (value 'indent-tabs-mode (point-buffer point))
+         (if (value 'indent-tabs-mode :buffer (point-buffer point))
              (multiple-value-bind (div mod)
                  (floor column (tab-size))
                (concatenate 'string
@@ -50,5 +50,5 @@
 
 (defun indent-line (point)
   (indent-line-1 point
-                 (funcall (value 'calc-indent-function (point-buffer point))
+                 (funcall (value 'calc-indent-function :buffer (point-buffer point))
                           point)))

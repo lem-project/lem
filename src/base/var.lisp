@@ -22,7 +22,7 @@
   (unless (editor-variable-p (get symbol 'editor-variable))
     (error "~A is not editor variable" symbol)))
 
-(defun value (symbol &optional (buffer (current-buffer)))
+(defun value (symbol &key (buffer (current-buffer)))
   (check-type buffer (or null buffer))
   (check-editor-variable symbol)
   (let ((var (get symbol 'editor-variable)))
@@ -31,7 +31,7 @@
         (get-bvar (editor-variable-local-indicator var)
                   :buffer buffer :default (editor-variable-value var)))))
 
-(defun (setf value) (value symbol &optional (buffer (current-buffer)))
+(defun (setf value) (value symbol &key (buffer (current-buffer)))
   (check-type buffer (or buffer null))
   (check-editor-variable symbol)
   (let ((var (get symbol 'editor-variable)))

@@ -198,11 +198,7 @@
            (new-package name prompt-string)
            (lem.listener-mode:listener-reset-prompt (repl-buffer))))
         (t
-         (setf (get-bvar :file-property-list)
-               (acons "package" package-name
-                      (remove "package" (get-bvar :file-property-list)
-                              :test #'equal
-                              :key #'car))))))
+         (setf (get-bvar "package") package-name))))
 
 (define-command slime-eval-last-expression () ()
   (check-connection)

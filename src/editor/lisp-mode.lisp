@@ -425,11 +425,7 @@
             (character-offset point 1))))))
 
 (defun lisp-buffer-package (buffer)
-  (let ((package-name
-         (cdr (assoc "package"
-                     (get-bvar :file-property-list
-                               :buffer buffer)
-                     :test #'equal))))
+  (let ((package-name (get-bvar "package" :buffer buffer)))
     (when package-name
       (string-upcase package-name))))
 
@@ -438,11 +434,7 @@
       (find-package "COMMON-LISP-USER")))
 
 (defun lisp-change-package (package)
-  (setf (get-bvar :file-property-list)
-        (acons "package" (package-name package)
-               (remove "package" (get-bvar :file-property-list)
-                       :test #'equal
-                       :key #'car))))
+  (setf (get-bvar "package") (package-name package)))
 
 (defun lisp-read-change-package (find-package-function
                                  complete-package-function)

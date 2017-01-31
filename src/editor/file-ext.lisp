@@ -12,9 +12,7 @@
              (when mode
                (change-buffer-mode buffer mode))))
           (t
-           (setf (get-bvar :file-property-list :buffer buffer)
-                 (cons (cons (string-downcase var) val)
-                       (get-bvar :file-property-list :buffer buffer)))))))
+           (setf (get-bvar (string-downcase var) :buffer buffer) val)))))
 
 (defun scan-file-property-list (buffer)
   (with-point ((cur-point (buffer-point buffer)))

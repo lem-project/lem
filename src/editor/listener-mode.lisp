@@ -9,7 +9,11 @@
            :listener-return
            :listener-prev-input
            :listener-next-input
-           :listener-reset-interactive))
+           :listener-reset-interactive
+           ;;
+           :listener-get-prompt-function
+           :listener-check-confirm-function
+           :listener-confirm-function))
 (in-package :lem.listener-mode)
 
 (defvar *prompt-attribute* (make-attribute "blue" nil :bold-p t))
@@ -29,6 +33,10 @@
   (unless (%listener-history)
     (setf (%listener-history)
           (lem.history:make-history))))
+
+(define-editor-variable listener-get-prompt-function)
+(define-editor-variable listener-check-confirm-function)
+(define-editor-variable listener-confirm-function)
 
 (defun listener-start-point (buffer)
   (%listener-point buffer))
@@ -56,7 +64,7 @@
     (insert-string cur-point
 		   (princ-to-string
 		    (funcall
-		     (get-bvar :listener-get-prompt-function :buffer buffer)))
+		     (value 'listener-get-prompt-function :buffer buffer)))
 		   :attribute *prompt-attribute*
 		   :read-only t
 		   :field t)
@@ -67,7 +75,7 @@
 (define-key *listener-mode-keymap* (kbd "C-m") 'listener-return)
 (define-command listener-return () ()
   (with-point ((point (buffer-end (current-point)) :left-inserting))
-    (if (not (funcall (get-bvar :listener-check-confirm-function) point))
+    (if (not (funcall (value 'listener-check-confirm-function) point))
         (insert-character point #\newline)
         (let ((start (listener-start-point (current-buffer))))
           (unless (point< start point)
@@ -78,7 +86,7 @@
             (buffer-end point)
             (insert-character point #\newline)
             (listener-update-point)
-            (funcall (get-bvar :listener-confirm-function) point str)))))
+            (funcall (value 'listener-confirm-function) point str)))))
   t)
 
 (define-key *listener-mode-keymap* (kbd "M-p") 'listener-prev-input)

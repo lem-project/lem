@@ -1029,11 +1029,11 @@
     (:name "lisp-repl"
 	   :keymap *lisp-repl-mode-keymap*
 	   :syntax-table *lisp-syntax-table*)
-  (setf (get-bvar :listener-get-prompt-function)
+  (setf (value 'listener-get-prompt-function)
         'lisp-repl-get-prompt)
-  (setf (get-bvar :listener-check-confirm-function)
+  (setf (value 'listener-check-confirm-function)
         'lisp-repl-paren-correspond-p)
-  (setf (get-bvar :listener-confirm-function)
+  (setf (value 'listener-confirm-function)
         'lisp-repl-confirm)
   (listener-mode t))
 

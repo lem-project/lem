@@ -663,19 +663,19 @@
 (defun repl-reset-input ()
   (let ((buffer (repl-buffer)))
     (when buffer
-      (setf (get-bvar :listener-get-prompt-function :buffer buffer)
+      (setf (value 'lem.listener-mode:listener-get-prompt-function :buffer buffer)
             'repl-get-prompt
-            (get-bvar :listener-check-confirm-function :buffer buffer)
+            (value 'lem.listener-mode:listener-check-confirm-function :buffer buffer)
             'lem.lisp-mode:lisp-repl-paren-correspond-p
-            (get-bvar :listener-confirm-function :buffer buffer)
+            (value 'lem.listener-mode:listener-confirm-function :buffer buffer)
             'repl-confirm))))
 
 (defun repl-change-read-line-input ()
-  (setf (get-bvar :listener-get-prompt-function)
+  (setf (value 'lem.listener-mode:listener-get-prompt-function)
         (constantly "")
-        (get-bvar :listener-check-confirm-function)
+        (value 'lem.listener-mode:listener-check-confirm-function)
         (constantly t)
-        (get-bvar :listener-confirm-function)
+        (value 'lem.listener-mode:listener-confirm-function)
         'repl-read-line))
 
 (defun repl-confirm (point string)

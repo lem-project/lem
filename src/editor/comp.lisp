@@ -210,13 +210,19 @@
 (defun create-completion-buffer (items back-attribute)
   (let ((buffer (get-buffer-create "*Completion*")))
     (erase-buffer buffer)
+    (setf (value 'truncate-lines :buffer buffer) nil)
     (let ((point (buffer-point buffer))
-          (max-column 0))
+          (max-column 0)
+          (label-end-column
+           (reduce (lambda (max item)
+                     (max max (1+ (string-width (completion-item-label item)))))
+                   items
+                   :initial-value 0)))
       (loop :for rest-items :on items
             :for item := (car rest-items)
             :do
             (insert-string point (completion-item-label item))
-            (insert-string point " ")
+            (move-to-column point label-end-column t)
             (insert-string point (completion-item-detail item))
             (setf max-column (max max-column (point-column point)))
             (with-point ((start (line-start (copy-point point :temporary))))
@@ -246,8 +252,7 @@
         (setf *completion-window*
               (balloon (current-window)
                        buffer
-                       (+ 2 max-column)
-                       (min (length items)
-                            (display-height))))
+                       (+ 1 max-column)
+                       (min 20 (length items))))
         (start-completion-mode buffer restart-function)))
   t)

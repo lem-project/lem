@@ -15,20 +15,10 @@
            :screen-erase
            :screen-print-string
            :screen-move-cursor
-           :print-echoarea
-           :get-char
            :redraw-display
-           :update-display-size))
-
-;; (defpackage :lem-interface.ncurses
-;;   (:use :cl :lem.fatstring :lem.term :lem.util)
-;;   (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-interface)
-;;                      :collect sym)))
-
-;; (defpackage :lem-interface.null
-;;   (:use :cl)
-;;   (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-interface)
-;;                      :collect sym)))
+           :update-display-size
+           :print-echoarea
+           ))
 
 (defpackage :lem
   (:use :cl :lem.util :lem-interface :lem-base)

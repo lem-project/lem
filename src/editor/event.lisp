@@ -70,14 +70,14 @@
                                (setf undone-p nil)
                                (setf prev-time curr-time)
                                (destructuring-bind (width height) (cdr e)
-                                 (lem-interface::update-display-size width height)))
+                                 (update-display-size width height)))
                               (prev-time
                                (setf undone-p (cdr e))))))
                      (t
                       (return e)))))
       (when undone-p
         (destructuring-bind (width height) undone-p
-          (lem-interface::update-display-size width height))))))
+          (update-display-size width height))))))
 
 (defun read-event (&optional timeout)
   (let ((event (receive-event timeout)))

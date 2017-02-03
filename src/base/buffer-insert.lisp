@@ -22,7 +22,7 @@
 
 (defmacro with-modify-buffer (buffer &body body)
   (alexandria:once-only (buffer)
-    `(progn
+    `(without-interrupts
        (unless *inhibit-read-only*
          (check-read-only-buffer ,buffer))
        (prog1 (progn ,@body)
@@ -212,34 +212,31 @@
 
 (defmethod insert-char/point :around (point char)
   (run-hooks *before-change-functions* point 1)
-  (without-interrupts
-    (let ((pos (position-at-point point)))
-      (prog1 (insert/after-change-function point 1)
-        (push-undo (point-buffer point)
-                   (lambda (cur-point)
-                     (move-to-position cur-point pos)
-                     (delete-char/point cur-point 1)
-                     t))))))
-
-(defmethod insert-string/point :around (point string)
-  (run-hooks *before-change-functions* point (length string))
-  (without-interrupts
-    (let ((pos (position-at-point point)))
-      (prog1 (insert/after-change-function point (length string))
-        (push-undo (point-buffer point)
-                   (lambda (cur-point)
-                     (move-to-position cur-point pos)
-                     (delete-char/point cur-point (length string))
-                     t))))))
-
-(defmethod delete-char/point :around (point n)
-  (run-hooks *before-change-functions* point (- n))
-  (without-interrupts
-    (let ((pos (position-at-point point))
-          (string (delete/after-change-function point)))
+  (let ((pos (position-at-point point)))
+    (prog1 (insert/after-change-function point 1)
       (push-undo (point-buffer point)
                  (lambda (cur-point)
                    (move-to-position cur-point pos)
-                   (insert-string/point cur-point string)
-                   t))
-      string)))
+                   (delete-char/point cur-point 1)
+                   t)))))
+
+(defmethod insert-string/point :around (point string)
+  (run-hooks *before-change-functions* point (length string))
+  (let ((pos (position-at-point point)))
+    (prog1 (insert/after-change-function point (length string))
+      (push-undo (point-buffer point)
+                 (lambda (cur-point)
+                   (move-to-position cur-point pos)
+                   (delete-char/point cur-point (length string))
+                   t)))))
+
+(defmethod delete-char/point :around (point n)
+  (run-hooks *before-change-functions* point (- n))
+  (let ((pos (position-at-point point))
+        (string (delete/after-change-function point)))
+    (push-undo (point-buffer point)
+               (lambda (cur-point)
+                 (move-to-position cur-point pos)
+                 (insert-string/point cur-point string)
+                 t))
+    string))

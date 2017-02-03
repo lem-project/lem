@@ -108,7 +108,7 @@
                    (lambda (point)
                      (multiple-value-bind (start end)
                          (ppcre:scan scanner
-                                     (line-string-at point)
+                                     (line-string point)
                                      :start (point-charpos point))
                        (when (and start
                                   (if (= start end)
@@ -120,7 +120,7 @@
                    (lambda (point)
                      (nth-value 1
                                 (ppcre:scan scanner
-                                            (line-string-at point))))
+                                            (line-string point))))
                    (lambda (point)
                      (line-offset point 1))
                    (lambda (point charpos)
@@ -134,14 +134,14 @@
                    (lambda (point)
                      (let (pos)
                        (ppcre:do-scans (start end reg-starts reg-ends scanner
-                                              (line-string-at point) nil
+                                              (line-string point) nil
                                               :end (point-charpos point))
                          (setf pos start))
                        pos))
                    (lambda (point)
                      (let (pos)
                        (ppcre:do-scans (start end reg-starts reg-ends scanner
-                                              (line-string-at point) nil
+                                              (line-string point) nil
                                               :start (point-charpos point))
                          (setf pos start))
                        pos))
@@ -169,9 +169,9 @@
   (let ((charpos (point-charpos point)))
     (search-step point
                  (lambda (point)
-                   (cdr (search-symbol (line-string-at point) name :start charpos)))
+                   (cdr (search-symbol (line-string point) name :start charpos)))
                  (lambda (point)
-                   (cdr (search-symbol (line-string-at point) name)))
+                   (cdr (search-symbol (line-string point) name)))
                  (lambda (point)
                    (line-offset point 1))
                  (lambda (point charpos)
@@ -181,12 +181,12 @@
 (defun search-backward-symbol (point name &optional limit-point)
   (search-step point
                (lambda (point)
-                 (car (search-symbol (line-string-at point)
+                 (car (search-symbol (line-string point)
                                      name
                                      :end (point-charpos point)
                                      :from-end t)))
                (lambda (point)
-                 (car (search-symbol (line-string-at point)
+                 (car (search-symbol (line-string point)
                                      name
                                      :from-end t)))
                (lambda (point)
@@ -198,7 +198,7 @@
 (defun looking-at-line (regex &key (start nil startp) (end nil endp))
   (macrolet ((m (&rest args)
 	       `(ppcre:scan-to-strings regex
-				       (line-string-at (current-point))
+				       (line-string (current-point))
 				       ,@args)))
     (cond ((and startp endp)
            (m :start start :end end))
@@ -212,5 +212,5 @@
 (defun looking-at (point regex)
   (let ((start (point-charpos point)))
     (eql start (ppcre:scan regex
-                           (line-string-at point)
+                           (line-string point)
                            :start start))))

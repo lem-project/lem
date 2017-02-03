@@ -111,7 +111,7 @@
   (flet ((f (out end-of-line)
            (with-point ((point (buffers-start buffer)))
              (loop :for eof-p := (end-buffer-p point)
-                   :for str := (line-string-at point)
+                   :for str := (line-string point)
                    :do
                    (princ str out)
                    (unless eof-p

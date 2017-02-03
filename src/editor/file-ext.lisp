@@ -17,10 +17,10 @@
 (defun scan-file-property-list (buffer)
   (with-point ((cur-point (buffer-point buffer)))
     (buffer-start cur-point)
-    (when (ppcre:scan "^#!" (line-string-at cur-point))
+    (when (ppcre:scan "^#!" (line-string cur-point))
       (line-offset cur-point 1))
     (loop :until (end-line-p cur-point)
-       :for string := (line-string-at cur-point)
+       :for string := (line-string cur-point)
        :do (ppcre:register-groups-bind (result)
 	       ("-\\*-(.*)-\\*-" string)
 	     (when result

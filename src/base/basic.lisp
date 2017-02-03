@@ -35,7 +35,7 @@
           remove-text-property
           next-single-property-change
           previous-single-property-change
-          line-string-at
+          line-string
           point-column
           move-to-column
           bolp
@@ -94,7 +94,7 @@
               (point-buffer point2)))
   (eq (point-line point1) (point-line point2)))
 
-(defun line-string-at (point)
+(defun line-string (point)
   (line-str (point-line point)))
 
 (defun %move-to-position (point line charpos)
@@ -377,7 +377,7 @@
         (- (buffer-nlines buffer) (count-lines point end-point)))))
 
 (defun point-column (point)
-  (string-width (line-string-at point)
+  (string-width (line-string point)
                 0
                 (point-charpos point)))
 
@@ -386,7 +386,7 @@
   (let ((cur-column (point-column point)))
     (cond ((< column cur-column)
            (setf (point-charpos point)
-                 (wide-index (line-string-at point) column))
+                 (wide-index (line-string point) column))
            point)
           (force
            (insert-character point #\space (- column cur-column))
@@ -470,7 +470,7 @@
   (character-at point -1))
 
 (defun blank-line-p (point)
-  (let ((string (line-string-at point))
+  (let ((string (line-string point))
         (eof-p (last-line-p point))
         (count 0))
     (loop :for c :across string :do

@@ -252,7 +252,7 @@
 	   :collect (cons symbol (1- lifetime)))))
 
 (defun syntax-test-match-p (syntax-test point)
-  (let ((string (line-string-at point)))
+  (let ((string (line-string point)))
     (multiple-value-bind (start end)
         (ppcre:scan (syntax-test-thing syntax-test)
                     string
@@ -457,7 +457,7 @@
 
 (defun %sexp-escape-p (point offset)
   (let ((count 0))
-    (loop :with string := (line-string-at point)
+    (loop :with string := (line-string point)
           :for i :downfrom (+ (1- (point-charpos point)) offset) :to 0
           :do (if (syntax-escape-char-p (schar string i))
                   (incf count)

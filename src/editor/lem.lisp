@@ -42,10 +42,7 @@
       (syntax-scan-range (line-start start) (line-end end))))
 
 (defun setup ()
-  (start-idle-timer "mainloop" 200 t
-                    (lambda ()
-                      (redraw-display)))
-  (start-idle-timer "lazy-syntax-scan" 500 t
+  (start-idle-timer "mainloop" 101 t
                     (lambda ()
                       (syntax-scan-current-view (current-window))
                       (redraw-display)))

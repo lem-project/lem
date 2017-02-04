@@ -403,23 +403,21 @@
     (or (line-offset point 1)
         (buffer-end point))))
 
-(defun syntax-scan-range (start end)
-  (assert (eq (point-buffer start)
-              (point-buffer end)))
-  (let ((buffer (point-buffer start)))
-    (when (enable-syntax-highlight-p buffer)
-      (progn #+(or)without-interrupts
-        (let ((*current-syntax*
-               (buffer-syntax-table buffer))
-              (*syntax-symbol-lifetimes*
-               (let ((prev (line-prev (point-line start))))
-                 (and prev (line-%symbol-lifetimes prev)))))
-          (remove-text-property start end :attribute)
-          (with-point ((point start))
-            (loop
-              (syntax-scan-line point end)
-              (when (point<= end point)
-                (return point)))))))))
+(defun syntax-scan-ahead-line (point)
+  (tagbody
+    head
+    (line-clear-property (point-line point) :attribute)
+    (syntax-scan-line (line-start point) (buffers-end (point-buffer point)))
+    (when (and (eq *syntax-string-attribute* (text-property-at point :attribute))
+               (not (eq *syntax-string-attribute* (text-property-at point :attribute -1)))
+               (not (syntax-string-quote-char-p (character-at point 0))))
+      (go head))
+    (when (and (eq *syntax-comment-attribute* (text-property-at point :attribute))
+               (not (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
+               (let ((c1 (character-at point 0))
+                     (c2 (character-at point 1)))
+                 (not (syntax-start-block-comment-p c1 c2))))
+      (go head))))
 
 (defun syntax-scan-point (point)
   (let ((buffer (point-buffer point)))
@@ -429,20 +427,23 @@
             (*syntax-symbol-lifetimes*
              (let ((prev (line-prev (point-line point))))
                (and prev (line-%symbol-lifetimes prev)))))
-        (tagbody
-          head
-          (line-clear-property (point-line point) :attribute)
-          (syntax-scan-line (line-start point) (buffers-end buffer))
-          (when (and (eq *syntax-string-attribute* (text-property-at point :attribute))
-                     (not (eq *syntax-string-attribute* (text-property-at point :attribute -1)))
-                     (not (syntax-string-quote-char-p (character-at point 0))))
-            (go head))
-          (when (and (eq *syntax-comment-attribute* (text-property-at point :attribute))
-                     (not (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
-                     (let ((c1 (character-at point 0))
-                           (c2 (character-at point 1)))
-                       (not (syntax-start-block-comment-p c1 c2))))
-            (go head)))))))
+        (syntax-scan-ahead-line point)))))
+
+(defun syntax-scan-range (start end)
+  (assert (eq (point-buffer start)
+              (point-buffer end)))
+  (let ((buffer (point-buffer start)))
+    (when (enable-syntax-highlight-p buffer)
+      (let ((*current-syntax*
+             (buffer-syntax-table buffer))
+            (*syntax-symbol-lifetimes*
+             (let ((prev (line-prev (point-line start))))
+               (and prev (line-%symbol-lifetimes prev)))))
+        (with-point ((point start))
+          (loop
+            (syntax-scan-ahead-line point)
+            (when (point<= end point)
+              (return point))))))))
 
 (defmacro with-point-syntax (point &body body)
   `(let ((*current-syntax* (buffer-syntax-table (point-buffer ,point))))

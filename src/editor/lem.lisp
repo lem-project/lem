@@ -46,8 +46,8 @@
               (syntax-scan-window window)))
   (add-hook *after-change-functions*
             (lambda (start end old-len)
-              (declare (ignore end old-len))
-              (syntax-scan-point start)))
+              (declare (ignore old-len))
+              (syntax-scan-range start end)))
   (add-hook *find-file-hook*
             (lambda (buffer)
               (prepare-auto-mode buffer)

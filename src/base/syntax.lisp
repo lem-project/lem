@@ -116,9 +116,10 @@
         (let ((string (if flw
                           (format nil "~c~c" pre flw)
                           pre)))
-          (syntax-add-match syntax-table
-                            (make-syntax-test (format nil "~a.*$" string))
-                            :attribute *syntax-comment-attribute*))))
+          (syntax-add-region syntax-table
+                             (make-syntax-test `(:sequence ,string))
+                             (make-syntax-test "$")
+                             :attribute *syntax-comment-attribute*))))
     (dolist (string-quote-char (syntax-table-string-quote-chars syntax-table))
       (syntax-add-region syntax-table
                          (make-syntax-test `(:sequence ,(string string-quote-char)))

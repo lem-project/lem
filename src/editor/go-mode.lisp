@@ -81,11 +81,11 @@
     (setf (current-buffer) (point-buffer point))
     (move-point (current-point) point)
     (back-to-indentation)
-    (let ((attribute (text-property-at (current-point) :attribute -1)))
-      (cond ((eq attribute *syntax-comment-attribute*)
+    (progn
+      (cond ((in-comment-p (current-point))
 	     (previous-single-property-change (current-point) :attribute)
 	     (1+ (current-column)))
-	    ((eq attribute *syntax-string-attribute*)
+	    ((in-string-p (current-point))
 	     nil)
 	    (t
 	     (let ((inside-indenting-paren nil)

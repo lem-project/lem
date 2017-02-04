@@ -220,6 +220,9 @@
                                            end)
                                        key))))
 
+;; 下の二つの関数next-single-property-change, previous-single-property-changeは
+;; 効率がとても悪いので時が来たら書き直す
+
 (defun next-single-property-change (point property-name &optional limit-point)
   (let ((first-value (text-property-at point property-name)))
     (with-point ((curr point))

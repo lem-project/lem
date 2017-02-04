@@ -29,6 +29,10 @@
           syntax-scan-point
           in-string-p
           in-comment-p
+          search-comment-start-forward
+          search-comment-start-backward
+          search-string-start-forward
+          search-string-start-backward
           skip-whitespace-forward
           skip-whitespace-backward
           skip-space-and-comment-forward
@@ -440,18 +444,54 @@
                        (not (syntax-start-block-comment-p c1 c2))))
             (go head)))))))
 
-(defun in-string-p (point)
-  (and (eq *syntax-string-attribute* (text-property-at point :attribute))
-       (not (eq :start (text-property-at point 'region-side)))))
-
-(defun in-comment-p (point)
-  (and (eq *syntax-comment-attribute* (text-property-at point :attribute))
-       (not (eq :start (text-property-at point 'region-side)))))
-
-
 (defmacro with-point-syntax (point &body body)
   `(let ((*current-syntax* (buffer-syntax-table (point-buffer ,point))))
      ,@body))
+
+(defun in-string-p (point)
+  (with-point-syntax point
+    (and (eq *syntax-string-attribute*
+             (text-property-at point :attribute))
+         (not (eq :start (text-property-at point 'region-side))))))
+
+(defun in-comment-p (point)
+  (with-point-syntax point
+    (and (eq *syntax-comment-attribute*
+             (text-property-at point :attribute))
+         (not (eq :start (text-property-at point 'region-side))))))
+
+
+(defun %search-syntax-start-forward (point syntax)
+  (with-point ((curr point))
+    (loop
+      (unless (next-single-property-change curr :attribute)
+        (return nil))
+      (when (and (eq syntax
+                     (text-property-at curr :attribute))
+                 (eq :start (text-property-at curr 'region-side)))
+        (return (move-point point curr))))))
+
+(defun %search-syntax-start-backward (point syntax)
+  (with-point ((curr point))
+    (loop
+      (unless (previous-single-property-change curr :attribute)
+        (return nil))
+      (when (and (eq syntax
+                     (text-property-at curr :attribute))
+                 (eq :start (text-property-at curr 'region-side)))
+        (return (move-point point curr))))))
+
+(defun search-comment-start-forward (point)
+  (%search-syntax-start-forward point *syntax-comment-attribute*))
+
+(defun search-comment-start-backward (point)
+  (%search-syntax-start-backward point *syntax-comment-attribute*))
+
+(defun search-string-start-forward (point)
+  (%search-syntax-start-forward point *syntax-string-attribute*))
+
+(defun search-string-start-backward (point)
+  (%search-syntax-start-backward point *syntax-string-attribute*))
 
 (defun skip-whitespace-forward (point)
   (with-point-syntax point

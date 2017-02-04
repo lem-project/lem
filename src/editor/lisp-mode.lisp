@@ -362,8 +362,7 @@
     (setf (current-buffer) (point-buffer point))
     (move-point (current-point) point)
     (beginning-of-line)
-    (when (eq *syntax-string-attribute*
-              (text-property-at (current-point) :attribute -1))
+    (when (in-string-p (current-point))
       (return-from lisp-calc-indent nil))
     (when (save-excursion (and (backward-sexp 1 t) (bolp)))
       (return-from lisp-calc-indent 0))
@@ -956,6 +955,7 @@
   (save-excursion
     (with-point ((start (region-beginning) :right-inserting)
                  (end (region-end) :left-inserting))
+      (skip-chars-forward start #'syntax-space-char-p)
       (let ((charpos (point-charpos start)))
         (loop
           (when (same-line-p start end)
@@ -978,8 +978,7 @@
         ;; ここを実行中は構文走査がされないのでテキストプロパティが更新されず、ずれていくので後ろから探していく
         (unless (previous-single-property-change end :attribute start)
           (return))
-        (when (and (eq *syntax-comment-attribute* (text-property-at end :attribute 0))
-                   (not (eq *syntax-comment-attribute* (text-property-at end :attribute -1))))
+        (when (looking-at end ";")
           (if (looking-at end ";; ")
               (delete-character end 3)
               (loop :while (char= #\; (character-at end 0))

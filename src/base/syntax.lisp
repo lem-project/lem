@@ -26,13 +26,13 @@
           syntax-start-block-comment-p
           syntax-end-block-comment-p
           syntax-scan-range
-
+          in-string-p
+          in-comment-p
           skip-whitespace-forward
           skip-whitespace-backward
           skip-space-and-comment-forward
           skip-space-and-comment-backward
           symbol-string-at-point
-
           form-offset
           scan-lists))
 
@@ -415,6 +415,15 @@
               (syntax-scan-ahead point end)
               (when (point<= end point)
                 (return point)))))))))
+
+
+(defun in-string-p (point)
+  (and (eq *syntax-string-attribute* (text-property-at point :attribute))
+       (not (eq :start (text-property-at point 'region-side)))))
+
+(defun in-comment-p (point)
+  (and (eq *syntax-comment-attribute* (text-property-at point :attribute))
+       (not (eq :start (text-property-at point 'region-side)))))
 
 
 (defmacro with-point-syntax (point &body body)

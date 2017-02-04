@@ -21,31 +21,20 @@
                                           (window-height window))
                              (buffers-end (window-buffer window)))))))
 
-(defun syntax-scan-buffer (buffer)
-  (check-type buffer buffer)
-  (when (enable-syntax-highlight-p buffer)
-    (syntax-scan-range (buffers-start buffer) (buffers-end buffer))))
-
 (let ((already-visited (gensym)))
+  (defun syntax-scan-buffer (buffer)
+    (check-type buffer buffer)
+    (setf (get-bvar already-visited :buffer buffer) t)
+    (syntax-scan-range (buffers-start buffer) (buffers-end buffer)))
+
   (defun syntax-scan-current-view (window)
     (cond
       ((get-bvar already-visited :buffer (window-buffer window))
        (syntax-scan-window window))
       (t
-       (setf (get-bvar already-visited :buffer (window-buffer window)) t)
        (syntax-scan-buffer (window-buffer window))))))
 
-(defun syntax-scan-point (start end old-len)
-  (line-start start)
-  (if (zerop old-len)
-      (syntax-scan-range start end)
-      (syntax-scan-range (line-start start) (line-end end))))
-
 (defun setup ()
-  (start-idle-timer "mainloop" 101 t
-                    (lambda ()
-                      (syntax-scan-current-view (current-window))
-                      (redraw-display)))
   (add-hook *window-scroll-functions*
             (lambda (window)
               (syntax-scan-current-view window)))
@@ -56,7 +45,9 @@
             (lambda (window)
               (syntax-scan-window window)))
   (add-hook *after-change-functions*
-            'syntax-scan-point)
+            (lambda (start end old-len)
+              (declare (ignore end old-len))
+              (syntax-scan-point start)))
   (add-hook *find-file-hook*
             (lambda (buffer)
               (prepare-auto-mode buffer)

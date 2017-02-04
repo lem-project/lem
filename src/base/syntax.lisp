@@ -26,6 +26,7 @@
           syntax-start-block-comment-p
           syntax-end-block-comment-p
           syntax-scan-range
+          syntax-scan-point
           in-string-p
           in-comment-p
           skip-whitespace-forward
@@ -367,7 +368,7 @@
                   (line-end point))))
           (t (setf (line-%syntax-context line) nil))))))
 
-(defun syntax-scan-ahead (point limit)
+(defun syntax-scan-line (point limit)
   (let ((*syntax-scan-limit* limit))
     (syntax-maybe-scan-region point)
     (loop :until (or (end-line-p point)
@@ -412,10 +413,32 @@
           (remove-text-property start end :attribute)
           (with-point ((point start))
             (loop
-              (syntax-scan-ahead point end)
+              (syntax-scan-line point end)
               (when (point<= end point)
                 (return point)))))))))
 
+(defun syntax-scan-point (point)
+  (let ((buffer (point-buffer point)))
+    (when (enable-syntax-highlight-p buffer)
+      (let ((*current-syntax*
+             (buffer-syntax-table buffer))
+            (*syntax-symbol-lifetimes*
+             (let ((prev (line-prev (point-line point))))
+               (and prev (line-%symbol-lifetimes prev)))))
+        (tagbody
+          head
+          (line-clear-property (point-line point) :attribute)
+          (syntax-scan-line (line-start point) (buffers-end buffer))
+          (when (and (eq *syntax-string-attribute* (text-property-at point :attribute))
+                     (not (eq *syntax-string-attribute* (text-property-at point :attribute -1)))
+                     (not (syntax-string-quote-char-p (character-at point 0))))
+            (go head))
+          (when (and (eq *syntax-comment-attribute* (text-property-at point :attribute))
+                     (not (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
+                     (let ((c1 (character-at point 0))
+                           (c2 (character-at point 1)))
+                       (not (syntax-start-block-comment-p c1 c2))))
+            (go head)))))))
 
 (defun in-string-p (point)
   (and (eq *syntax-string-attribute* (text-property-at point :attribute))

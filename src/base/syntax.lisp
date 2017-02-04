@@ -252,7 +252,7 @@
 	   :when (/= 0 lifetime)
 	   :collect (cons symbol (1- lifetime)))))
 
-(defun syntax-test-match-p (syntax-test point)
+(defun syntax-test-match-p (syntax-test point &optional optional-key optional-value)
   (let ((string (line-string point)))
     (multiple-value-bind (start end)
         (ppcre:scan (syntax-test-thing syntax-test)
@@ -263,23 +263,27 @@
                  (or (not (syntax-test-word-p syntax-test))
                      (<= (length string) end)
                      (not (syntax-symbol-char-p (schar string end)))))
-        (line-offset point 0 end)
+        (if optional-key
+            (with-point ((start-point point))
+              (line-offset point 0 end)
+              (put-text-property start-point point optional-key optional-value))
+            (line-offset point 0 end))
         point))))
 
 (defun syntax-scan-region (region point start-charpos)
   (do ((start-charpos start-charpos 0)) (nil)
     (loop
-      (when (end-line-p point)
-        (return))
       (cond ((syntax-escape-char-p (character-at point 0))
              (character-offset point 1))
-            ((syntax-test-match-p (syntax-region-end region) point)
+            ((syntax-test-match-p (syntax-region-end region) point 'region-side :end)
              (line-add-property (point-line point)
                                 start-charpos (point-charpos point)
                                 :attribute (syntax-attribute region)
                                 nil)
              (setf (line-%syntax-context (point-line point)) nil)
-             (return-from syntax-scan-region (values point t))))
+             (return-from syntax-scan-region (values point t)))
+            ((end-line-p point)
+             (return)))
       (character-offset point 1))
     (line-add-property (point-line point)
                        start-charpos (line-length (point-line point))
@@ -308,7 +312,7 @@
   (etypecase syntax
     (syntax-region
      (let ((start-charpos (point-charpos point))
-           (point (syntax-test-match-p (syntax-region-start syntax) point)))
+           (point (syntax-test-match-p (syntax-region-start syntax) point 'region-side :start)))
        (when point
          (syntax-scan-region syntax point start-charpos)
          point)))

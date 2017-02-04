@@ -441,22 +441,24 @@
 (defun skip-space-and-comment-forward (point)
   (with-point-syntax point
     (loop
-      (skip-whitespace-forward point)
-      (unless (and (not (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
-                   (eq *syntax-comment-attribute* (text-property-at point :attribute)))
-        (return t))
-      (unless (next-single-property-change point :attribute)
-        (return nil)))))
+      (skip-chars-forward point #'syntax-space-char-p)
+      (if (and (eq *syntax-comment-attribute*
+                   (text-property-at point :attribute))
+               (eq (text-property-at point 'region-side)
+                   :start))
+          (unless (next-single-property-change point :attribute)
+            (return nil))
+          (return t)))))
 
 (defun skip-space-and-comment-backward (point)
   (with-point-syntax point
     (loop
-      (skip-whitespace-backward point)
-      (unless (and (not (eq *syntax-comment-attribute* (text-property-at point :attribute)))
-                   (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
+      (when (= 0 (skip-chars-backward point #'syntax-space-char-p))
         (return t))
-      (unless (previous-single-property-change point :attribute)
-        (return nil)))))
+      (when (and (not (eq *syntax-comment-attribute* (text-property-at point :attribute)))
+                 (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
+        (unless (previous-single-property-change point :attribute)
+          (return nil))))))
 
 (defun symbol-string-at-point (point)
   (with-point-syntax point

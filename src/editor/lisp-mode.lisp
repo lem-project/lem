@@ -976,7 +976,7 @@
       (character-offset start -1)
       (loop
         ;; ここを実行中は構文走査がされないのでテキストプロパティが更新されず、ずれていくので後ろから探していく
-        (unless (previous-single-property-change end :attribute start)
+        (unless (search-comment-start-backward end start)
           (return))
         (when (looking-at end ";")
           (if (looking-at end ";; ")

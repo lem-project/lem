@@ -462,37 +462,37 @@
          (not (eq :start (text-property-at point 'region-side))))))
 
 
-(defun %search-syntax-start-forward (point syntax)
+(defun %search-syntax-start-forward (point syntax limit)
   (with-point ((curr point))
     (loop
-      (unless (next-single-property-change curr :attribute)
+      (unless (next-single-property-change curr :attribute limit)
         (return nil))
       (when (and (eq syntax
                      (text-property-at curr :attribute))
                  (eq :start (text-property-at curr 'region-side)))
         (return (move-point point curr))))))
 
-(defun %search-syntax-start-backward (point syntax)
+(defun %search-syntax-start-backward (point syntax limit)
   (with-point ((curr point))
     (loop
-      (unless (previous-single-property-change curr :attribute)
+      (unless (previous-single-property-change curr :attribute limit)
         (return nil))
       (when (and (eq syntax
                      (text-property-at curr :attribute))
                  (eq :start (text-property-at curr 'region-side)))
         (return (move-point point curr))))))
 
-(defun search-comment-start-forward (point)
-  (%search-syntax-start-forward point *syntax-comment-attribute*))
+(defun search-comment-start-forward (point &optional limit)
+  (%search-syntax-start-forward point *syntax-comment-attribute* limit))
 
-(defun search-comment-start-backward (point)
-  (%search-syntax-start-backward point *syntax-comment-attribute*))
+(defun search-comment-start-backward (point &optional limit)
+  (%search-syntax-start-backward point *syntax-comment-attribute* limit))
 
-(defun search-string-start-forward (point)
-  (%search-syntax-start-forward point *syntax-string-attribute*))
+(defun search-string-start-forward (point &optional limit)
+  (%search-syntax-start-forward point *syntax-string-attribute* limit))
 
-(defun search-string-start-backward (point)
-  (%search-syntax-start-backward point *syntax-string-attribute*))
+(defun search-string-start-backward (point &optional limit)
+  (%search-syntax-start-backward point *syntax-string-attribute* limit))
 
 (defun skip-whitespace-forward (point)
   (with-point-syntax point

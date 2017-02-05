@@ -83,7 +83,7 @@
     (back-to-indentation)
     (progn
       (cond ((in-comment-p (current-point))
-	     (previous-single-property-change (current-point) :attribute)
+             (search-comment-start-backward (current-point))
 	     (1+ (current-column)))
 	    ((in-string-p (current-point))
 	     nil)

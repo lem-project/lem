@@ -26,7 +26,6 @@
           syntax-start-block-comment-p
           syntax-end-block-comment-p
           syntax-scan-range
-          syntax-scan-point
           in-string-p
           in-comment-p
           search-comment-start-forward
@@ -403,32 +402,6 @@
     (or (line-offset point 1)
         (buffer-end point))))
 
-(defun syntax-scan-ahead-line (point)
-  (tagbody
-    head
-    (line-clear-property (point-line point) :attribute)
-    (syntax-scan-line (line-start point) (buffers-end (point-buffer point)))
-    (when (and (eq *syntax-string-attribute* (text-property-at point :attribute))
-               (not (eq *syntax-string-attribute* (text-property-at point :attribute -1)))
-               (not (syntax-string-quote-char-p (character-at point 0))))
-      (go head))
-    (when (and (eq *syntax-comment-attribute* (text-property-at point :attribute))
-               (not (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
-               (let ((c1 (character-at point 0))
-                     (c2 (character-at point 1)))
-                 (not (syntax-start-block-comment-p c1 c2))))
-      (go head))))
-
-(defun syntax-scan-point (point)
-  (let ((buffer (point-buffer point)))
-    (when (enable-syntax-highlight-p buffer)
-      (let ((*current-syntax*
-             (buffer-syntax-table buffer))
-            (*syntax-symbol-lifetimes*
-             (let ((prev (line-prev (point-line point))))
-               (and prev (line-%symbol-lifetimes prev)))))
-        (syntax-scan-ahead-line point)))))
-
 (defun syntax-scan-range (start end)
   (assert (eq (point-buffer start)
               (point-buffer end)))
@@ -439,11 +412,16 @@
             (*syntax-symbol-lifetimes*
              (let ((prev (line-prev (point-line start))))
                (and prev (line-%symbol-lifetimes prev)))))
-        (with-point ((point start))
+        (with-point ((start start)
+                     (end end))
+          (line-start start)
+          (line-end end)
           (loop
-            (syntax-scan-ahead-line point)
-            (when (point<= end point)
-              (return point))))))))
+            (line-clear-property (point-line start) :attribute)
+            (syntax-scan-line start end)
+            (when (point<= end start)
+              (return start))))))))
+
 
 (defmacro with-point-syntax (point &body body)
   `(let ((*current-syntax* (buffer-syntax-table (point-buffer ,point))))

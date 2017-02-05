@@ -21,26 +21,21 @@
                                           (window-height window))
                              (buffers-end (window-buffer window)))))))
 
-(let ((already-visited (gensym)))
-  (defun syntax-scan-buffer (buffer)
-    (check-type buffer buffer)
-    (setf (get-bvar already-visited :buffer buffer) t)
-    (syntax-scan-range (buffers-start buffer) (buffers-end buffer)))
-
-  (defun syntax-scan-current-view (window)
-    (cond
-      ((get-bvar already-visited :buffer (window-buffer window))
-       (syntax-scan-window window))
-      (t
-       (syntax-scan-buffer (window-buffer window))))))
+(defun syntax-scan-buffer (buffer)
+  (check-type buffer buffer)
+  (syntax-scan-range (buffers-start buffer) (buffers-end buffer)))
 
 (defun setup ()
+  (start-idle-timer "mainloop" 100 t
+                    (lambda ()
+                      (syntax-scan-window (current-window))
+                      (redraw-display)))
   (add-hook *window-scroll-functions*
             (lambda (window)
-              (syntax-scan-current-view window)))
+              (syntax-scan-window window)))
   (add-hook *window-size-change-functions*
             (lambda (window)
-              (syntax-scan-current-view window)))
+              (syntax-scan-window window)))
   (add-hook *window-show-buffer-functions*
             (lambda (window)
               (syntax-scan-window window)))

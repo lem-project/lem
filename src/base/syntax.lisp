@@ -14,9 +14,6 @@
           syntax-symbol-char-p
           syntax-open-paren-char-p
           syntax-closed-paren-char-p
-          syntax-pair-open-paren
-          syntax-pair-closed-paren
-          syntax-parallel-paren
           syntax-string-quote-char-p
           syntax-escape-char-p
           syntax-expr-prefix-char-p
@@ -176,21 +173,11 @@
 (defun syntax-closed-paren-char-p (c)
   (rassoc c (syntax-table-paren-alist (current-syntax))))
 
-(defun syntax-pair-open-paren (c)
-  (car (rassoc c (syntax-table-paren-alist (current-syntax)))))
-
-(defun syntax-pair-closed-paren (c)
-  (cdr (assoc c (syntax-table-paren-alist (current-syntax)))))
-
-(defun syntax-parallel-paren (c)
-  (or (syntax-pair-open-paren c)
-      (syntax-pair-closed-paren c)))
-
 (defun syntax-equal-paren-p (x y)
   (flet ((f (c)
 	   (if (syntax-open-paren-char-p c)
 	       c
-	       (syntax-pair-open-paren c))))
+               (car (rassoc c (syntax-table-paren-alist (current-syntax)))))))
     (eql (f x) (f y))))
 
 (defun syntax-string-quote-char-p (c)

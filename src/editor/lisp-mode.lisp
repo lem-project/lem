@@ -154,9 +154,8 @@
           :expr-prefix-chars '(#\' #\, #\@ #\# #\`)
           :expr-prefix-forward-function 'lisp-mode-skip-expr-prefix-forward
           :expr-prefix-backward-function 'lisp-mode-skip-expr-prefix-backward
-          :line-comment-preceding-char #\;
-          :block-comment-preceding-char #\#
-          :block-comment-following-char #\|)))
+          :line-comment-string ";"
+          :block-comment-pairs '(("#|" . "|#")))))
     (syntax-add-match table
                       (make-syntax-test ":[^() \\t]+"
                                         :word-p t)

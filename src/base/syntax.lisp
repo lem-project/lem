@@ -22,9 +22,6 @@
           syntax-expr-prefix-char-p
           syntax-skip-expr-prefix-forward
           syntax-skip-expr-prefix-backward
-          syntax-line-comment-p
-          syntax-start-block-comment-p
-          syntax-end-block-comment-p
           syntax-scan-range
           in-string-p
           in-comment-p
@@ -105,37 +102,29 @@
   expr-prefix-chars
   expr-prefix-forward-function
   expr-prefix-backward-function
-  line-comment-preceding-char
-  line-comment-following-char
-  block-comment-preceding-char
-  block-comment-following-char
+  line-comment-string
+  block-comment-pairs
   region-list
   match-list)
 
 (defun make-syntax-table (&rest args)
   (let ((syntax-table (apply '%make-syntax-table args)))
-    (let ((pre (syntax-table-line-comment-preceding-char syntax-table))
-          (flw (syntax-table-line-comment-following-char syntax-table)))
-      (when pre
-        (let ((string (if flw
-                          (format nil "~c~c" pre flw)
-                          pre)))
-          (syntax-add-region syntax-table
-                             (make-syntax-test `(:sequence ,string))
-                             (make-syntax-test "$")
-                             :attribute *syntax-comment-attribute*))))
+    (let ((string (syntax-table-line-comment-string syntax-table)))
+      (when string
+        (syntax-add-region syntax-table
+                           (make-syntax-test `(:sequence ,string))
+                           (make-syntax-test "$")
+                           :attribute *syntax-comment-attribute*)))
     (dolist (string-quote-char (syntax-table-string-quote-chars syntax-table))
       (syntax-add-region syntax-table
                          (make-syntax-test `(:sequence ,(string string-quote-char)))
                          (make-syntax-test `(:sequence ,(string string-quote-char)))
                          :attribute *syntax-string-attribute*))
-    (let ((pre (syntax-table-block-comment-preceding-char syntax-table))
-          (flw (syntax-table-block-comment-following-char syntax-table)))
-      (when (and pre flw)
-        (syntax-add-region syntax-table
-                           (make-syntax-test `(:sequence ,(format nil "~c~c" pre flw)))
-                           (make-syntax-test `(:sequence ,(format nil "~c~c" flw pre)))
-                           :attribute *syntax-comment-attribute*)))
+    (loop :for (start . end) :in (syntax-table-block-comment-pairs syntax-table)
+          :do (syntax-add-region syntax-table
+                                 (make-syntax-test `(:sequence ,start))
+                                 (make-syntax-test `(:sequence ,end))
+                                 :attribute *syntax-comment-attribute*))
     syntax-table))
 
 (defun syntax-add-match (syntax-table test
@@ -221,28 +210,40 @@
   (let ((f (syntax-table-expr-prefix-backward-function (current-syntax))))
     (if f (funcall f point) t)))
 
-(defun equal-comment-p (a b x y)
-  (and (eql a x)
-       (or (null b)
-           (eql b y))))
+(defun %syntax-string-match (str1 str2 str1-pos)
+  (let ((end1 (+ str1-pos (length str2))))
+    (when (and (<= end1 (length str1))
+               (string= str1 str2
+                        :start1 str1-pos
+                        :end1 end1))
+      (length str2))))
 
-(defun syntax-line-comment-p (c1 c2)
-  (equal-comment-p
-   (syntax-table-line-comment-preceding-char (current-syntax))
-   (syntax-table-line-comment-following-char (current-syntax))
-   c1
-   c2))
+(defun syntax-line-comment-p (line-string pos)
+  (%syntax-string-match line-string
+                        (syntax-table-line-comment-string (current-syntax))
+                        pos))
 
-(defun syntax-start-block-comment-p (c1 c2)
-  (equal-comment-p
-   (syntax-table-block-comment-preceding-char (current-syntax))
-   (syntax-table-block-comment-following-char (current-syntax))
-   c1
-   c2))
+(defun syntax-start-block-comment-p (point)
+  (let ((line-string (line-string point))
+        (pos (point-charpos point)))
+    (dolist (pair (syntax-table-block-comment-pairs (current-syntax)))
+      (let ((start (car pair)))
+        (let ((result (%syntax-string-match line-string start pos)))
+          (when result
+            (return (values result pair))))))))
 
-(defun syntax-end-block-comment-p (c1 c2)
-  (syntax-start-block-comment-p c2 c1))
+(defun syntax-end-block-comment-p (point)
+  (dolist (pair (syntax-table-block-comment-pairs (current-syntax)))
+    (let ((end (cdr pair)))
+      (with-point ((point point))
+        (character-offset point (- (length end)))
+        (let ((result (%syntax-string-match (line-string point)
+                                            end
+                                            (point-charpos point))))
+          (when result
+            (return (values result pair))))))))
 
+
 (defun enable-syntax-highlight-p (buffer)
   (and *global-syntax-highlight*
        (value 'enable-syntax-highlight :buffer buffer)))
@@ -439,7 +440,6 @@
              (text-property-at point :attribute))
          (not (eq :start (text-property-at point 'region-side))))))
 
-
 (defun %search-syntax-start-forward (point syntax limit)
   (with-point ((curr point))
     (loop
@@ -472,6 +472,7 @@
 (defun search-string-start-backward (point &optional limit)
   (%search-syntax-start-backward point *syntax-string-attribute* limit))
 
+
 (defun skip-whitespace-forward (point)
   (with-point-syntax point
     (skip-chars-forward point #'syntax-space-char-p)))
@@ -484,23 +485,19 @@
   (with-point-syntax point
     (loop
       (skip-chars-forward point #'syntax-space-char-p)
-      (if (and (eq *syntax-comment-attribute*
-                   (text-property-at point :attribute))
-               (eq (text-property-at point 'region-side)
-                   :start))
-          (unless (next-single-property-change point :attribute)
-            (return nil))
-          (return t)))))
+      (multiple-value-bind (result success)
+          (%skip-comment-forward point)
+        (unless result
+          (return success))))))
 
 (defun skip-space-and-comment-backward (point)
   (with-point-syntax point
     (loop
-      (when (= 0 (skip-chars-backward point #'syntax-space-char-p))
-        (return t))
-      (when (and (not (eq *syntax-comment-attribute* (text-property-at point :attribute)))
-                 (eq *syntax-comment-attribute* (text-property-at point :attribute -1)))
-        (unless (previous-single-property-change point :attribute)
-          (return nil))))))
+      (skip-chars-backward point #'syntax-space-char-p)
+      (multiple-value-bind (result success)
+          (%skip-comment-backward point)
+        (unless result
+          (return success))))))
 
 (defun symbol-string-at-point (point)
   (with-point-syntax point
@@ -513,6 +510,78 @@
         (points-to-string start point)))))
 
 
+(defun %skip-comment-forward (point)
+  (multiple-value-bind (n pair)
+      (syntax-start-block-comment-p point)
+    (cond (n
+           (with-point ((curr point))
+             (character-offset curr n)
+             (loop :with depth := 1
+                   :do (with-point ((point1 curr)
+                                    (point2 curr))
+                         (cond ((null (search-forward point2 (cdr pair)))
+                                (return-from %skip-comment-forward
+                                  (values nil nil)))
+                               ((and (search-forward point1 (car pair))
+                                     (point< point1 point2))
+                                (incf depth)
+                                (move-point curr point1))
+                               (t
+                                (move-point curr point2)
+                                (when (= 0 (decf depth))
+                                  (return))))))
+             (values (move-point point curr) t)))
+          ((syntax-line-comment-p (line-string point)
+                                  (point-charpos point))
+           (values (line-offset point 1) t))
+          (t
+           (values nil t)))))
+
+(defun %position-line-comment (string end instr)
+  (loop :for i := 0 :then (1+ i)
+        :while (< i end)
+        :do (let ((c (schar string i)))
+              (if instr
+                  (cond ((syntax-escape-char-p c)
+                         (incf i))
+                        ((syntax-string-quote-char-p c)
+                         (setf instr nil)))
+                  (cond ((syntax-line-comment-p string i)
+                         (return i))
+                        ((syntax-escape-char-p c)
+                         (incf i))
+                        ((syntax-string-quote-char-p c)
+                         (setf instr t)))))
+        :finally (if instr
+                     (return (%position-line-comment string end t))
+                     (return nil))))
+
+(defun %skip-comment-backward (point)
+  (multiple-value-bind (n pair)
+      (syntax-end-block-comment-p point)
+    (if n
+        (with-point ((curr point))
+          (character-offset curr (- n))
+          (loop :with depth := 1
+                :do (with-point ((point1 curr)
+                                 (point2 curr))
+                      (cond ((null (search-backward point1 (car pair)))
+                             (return-from %skip-comment-backward
+                               (values nil nil)))
+                            ((and (search-backward point2 (cdr pair))
+                                  (point< point1 point2))
+                             (incf depth)
+                             (move-point curr point2))
+                            (t
+                             (move-point curr point1)
+                             (when (= 0 (decf depth))
+                               (return))))))
+          (values (move-point point curr) t))
+        (let ((line-comment-pos (%position-line-comment (line-string point) (point-charpos point) nil)))
+          (if line-comment-pos
+              (values (line-offset point 0 line-comment-pos) t)
+              (values nil t))))))
+
 (defun %sexp-escape-p (point offset)
   (let ((count 0))
     (loop :with string := (line-string point)
@@ -636,6 +705,8 @@
 
 (defun %form-offset-positive (point)
   (skip-space-and-comment-forward point)
+  (when (end-buffer-p point)
+    (return-from %form-offset-positive nil))
   (syntax-skip-expr-prefix-forward point)
   (skip-chars-forward point #'syntax-expr-prefix-char-p)
   (unless (end-buffer-p point)
@@ -656,6 +727,8 @@
 
 (defun %form-offset-negative (point)
   (skip-space-and-comment-backward point)
+  (when (start-buffer-p point)
+    (return-from %form-offset-negative nil))
   (let ((c (character-at point -1)))
     (prog1 (cond ((or (syntax-symbol-char-p c)
                       (syntax-escape-char-p c)
@@ -674,32 +747,30 @@
 
 (defun form-offset (point n)
   (with-point-syntax point
-    (with-point ((prev point))
-      (cond ((plusp n)
-             (dotimes (_ n point)
-               (unless (%form-offset-positive point)
-                 (move-point point prev)
-                 (return nil))))
-            (t
-             (dotimes (_ (- n) point)
-               (unless (%form-offset-negative point)
-                 (move-point point prev)
-                 (return nil))))))))
+    (with-point ((curr point))
+      (when (cond ((plusp n)
+                   (dotimes (_ n t)
+                     (unless (%form-offset-positive curr)
+                       (return nil))))
+                  (t
+                   (dotimes (_ (- n) t)
+                     (unless (%form-offset-negative curr)
+                       (return nil)))))
+        (move-point point curr)))))
 
 (defun scan-lists (point n depth &optional no-errors)
   (with-point-syntax point
-    (with-point ((prev point))
-      (cond ((plusp n)
-             (dotimes (_ n point)
-               (unless (%skip-list-forward point depth)
-                 (move-point point prev)
-                 (if no-errors
-                     (return nil)
-                     (scan-error)))))
-            (t
-             (dotimes (_ (- n) point)
-               (unless (%skip-list-backward point depth)
-                 (move-point point prev)
-                 (if no-errors
-                     (return nil)
-                     (scan-error)))))))))
+    (with-point ((curr point))
+      (when (cond ((plusp n)
+                   (dotimes (_ n t)
+                     (unless (%skip-list-forward curr depth)
+                       (if no-errors
+                           (return nil)
+                           (scan-error)))))
+                  (t
+                   (dotimes (_ (- n) t)
+                     (unless (%skip-list-backward curr depth)
+                       (if no-errors
+                           (return nil)
+                           (scan-error))))))
+        (move-point point curr)))))

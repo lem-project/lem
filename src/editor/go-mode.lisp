@@ -29,10 +29,8 @@
                                (#\{ . #\})
                                (#\[ . #\]))
                 :string-quote-chars '(#\" #\' #\`)
-                :line-comment-preceding-char #\/
-                :line-comment-following-char #\/
-                :block-comment-preceding-char #\/
-                :block-comment-following-char #\*)))
+                :line-comment-string "//"
+                :block-comment-pairs '(("/*" . "*/")))))
 
     (dolist (k *go-keywords*)
       (syntax-add-match table

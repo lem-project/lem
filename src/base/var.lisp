@@ -11,7 +11,7 @@
 
 (defmacro define-editor-variable (var &optional value documentation)
   (check-type var symbol)
-  `(progn
+  `(unless (get ',var 'editor-variable)
      (setf (get ',var 'editor-variable)
            (make-editor-variable :value ,value
                                  :documentation ,documentation

@@ -468,26 +468,6 @@
   (with-point-syntax point
     (skip-chars-backward point #'syntax-space-char-p)))
 
-(defun skip-space-and-comment-forward (point)
-  (with-point-syntax point
-    (loop
-      (skip-chars-forward point #'syntax-space-char-p)
-      (multiple-value-bind (result success)
-          (%skip-comment-forward point)
-        (unless result
-          (return success))))))
-
-(defun skip-space-and-comment-backward (point)
-  (with-point-syntax point
-    (if (%position-line-comment (line-string point) (point-charpos point) nil)
-        (skip-chars-backward point #'syntax-space-char-p)
-        (loop
-          (skip-chars-backward point #'syntax-space-char-p)
-          (multiple-value-bind (result success)
-              (%skip-comment-backward point)
-            (unless result
-              (return success)))))))
-
 (defun symbol-string-at-point (point)
   (with-point-syntax point
     (with-point ((point point))
@@ -498,7 +478,6 @@
         (skip-chars-forward point #'syntax-symbol-char-p)
         (points-to-string start point)))))
 
-
 (defun %skip-comment-forward (point)
   (multiple-value-bind (n pair)
       (syntax-start-block-comment-p point)
@@ -574,6 +553,26 @@
           (if line-comment-pos
               (values (line-offset point 0 line-comment-pos) t)
               (values nil t))))))
+
+(defun skip-space-and-comment-forward (point)
+  (with-point-syntax point
+    (loop
+      (skip-chars-forward point #'syntax-space-char-p)
+      (multiple-value-bind (result success)
+          (%skip-comment-forward point)
+        (unless result
+          (return success))))))
+
+(defun skip-space-and-comment-backward (point)
+  (with-point-syntax point
+    (if (%position-line-comment (line-string point) (point-charpos point) nil)
+        (skip-chars-backward point #'syntax-space-char-p)
+        (loop
+          (skip-chars-backward point #'syntax-space-char-p)
+          (multiple-value-bind (result success)
+              (%skip-comment-backward point)
+            (unless result
+              (return success)))))))
 
 (defun %sexp-escape-p (point offset)
   (let ((count 0))

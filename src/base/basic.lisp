@@ -150,6 +150,7 @@
                     (line-length (point-line point)))))
      point)))
 
+(declaim (inline %character-offset))
 (defun %character-offset (point n fn zero-fn)
   (cond ((zerop n) (when zero-fn (funcall zero-fn)))
         ((plusp n)

@@ -479,12 +479,14 @@
 
 (defun skip-space-and-comment-backward (point)
   (with-point-syntax point
-    (loop
-      (skip-chars-backward point #'syntax-space-char-p)
-      (multiple-value-bind (result success)
-          (%skip-comment-backward point)
-        (unless result
-          (return success))))))
+    (if (%position-line-comment (line-string point) (point-charpos point) nil)
+        (skip-chars-backward point #'syntax-space-char-p)
+        (loop
+          (skip-chars-backward point #'syntax-space-char-p)
+          (multiple-value-bind (result success)
+              (%skip-comment-backward point)
+            (unless result
+              (return success)))))))
 
 (defun symbol-string-at-point (point)
   (with-point-syntax point

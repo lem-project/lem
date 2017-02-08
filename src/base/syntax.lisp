@@ -96,6 +96,7 @@
                  (#\{ . #\})))
   (string-quote-chars '(#\"))
   (escape-chars '(#\\))
+  fence-chars
   expr-prefix-chars
   expr-prefix-forward-function
   expr-prefix-backward-function
@@ -182,6 +183,9 @@
 
 (defun syntax-string-quote-char-p (c)
   (member c (syntax-table-string-quote-chars (current-syntax))))
+
+(defun syntax-fence-char-p (c)
+  (member c (syntax-table-fence-chars (current-syntax))))
 
 (defun syntax-escape-char-p (c)
   (member c (syntax-table-escape-chars (current-syntax))))
@@ -525,29 +529,44 @@
                                    (return (values (move-point point curr) t))))
                                 (t
                                  (incf depth))))))
-            (let ((line-comment-pos (%position-line-comment (line-string point) (point-charpos point) nil)))
+            (let ((line-comment-pos (%position-line-comment (line-string point)
+                                                            (point-charpos point)
+                                                            nil)))
               (if line-comment-pos
                   (values (line-offset point 0 line-comment-pos) t)
                   (values nil t))))))))
 
-(defun %position-line-comment (string end instr)
+(defun %position-line-comment (string end in-token)
   (loop :for i := 0 :then (1+ i)
         :while (< i end)
         :do (let ((c (schar string i)))
-              (if instr
-                  (cond ((syntax-escape-char-p c)
-                         (incf i))
-                        ((syntax-string-quote-char-p c)
-                         (setf instr nil)))
-                  (cond ((syntax-line-comment-p string i)
-                         (return i))
-                        ((syntax-escape-char-p c)
-                         (incf i))
-                        ((syntax-string-quote-char-p c)
-                         (setf instr t)))))
-        :finally (if instr
-                     (return (%position-line-comment string end t))
-                     (return nil))))
+              (ecase in-token
+                ((:string)
+                 (cond ((syntax-escape-char-p c)
+                        (incf i))
+                       ((syntax-string-quote-char-p c)
+                        (setf in-token nil))))
+                ((:fence)
+                 (cond ((syntax-escape-char-p c)
+                        (incf i))
+                       ((syntax-fence-char-p c)
+                        (setf in-token nil))))
+                ((nil)
+                 (cond ((syntax-line-comment-p string i)
+                        (return i))
+                       ((syntax-escape-char-p c)
+                        (incf i))
+                       ((syntax-string-quote-char-p c)
+                        (setf in-token :string))
+                       ((syntax-fence-char-p c)
+                        (setf in-token :fence))))))
+        :finally (ecase in-token
+                   ((:string)
+                    (return (%position-line-comment string end :string)))
+                   ((:fence)
+                    (return (%position-line-comment string end :fence)))
+                   ((nil)
+                    (return nil)))))
 
 (defun skip-space-and-comment-forward (point)
   (with-point-syntax point
@@ -588,6 +607,8 @@
         :do
         (cond ((syntax-escape-char-p c)
                (character-offset point 1))
+              ((syntax-fence-char-p c)
+               (%skip-fence-forward point))
               ((not (or (syntax-symbol-char-p c)
                         (syntax-expr-prefix-char-p c)))
                (return)))
@@ -601,6 +622,8 @@
                 (%sexp-escape-p point -1)
               (cond (escape-p
                      (character-offset point (- (1+ skip-count))))
+                    ((syntax-fence-char-p c)
+                     (%skip-fence-backward point))
                     ((or (syntax-symbol-char-p c)
                          (syntax-expr-prefix-char-p c)
                          (syntax-escape-char-p c))
@@ -633,6 +656,32 @@
 		       (char= c quote-char))
 		  (return point)))))))
 
+(defun %skip-fence-forward (point)
+  (loop :with fence-char := (character-at point 0)
+        :do
+        (unless (character-offset point 1)
+          (return nil))
+        (let ((c (character-at point)))
+          (cond ((syntax-escape-char-p c)
+                 (character-offset point 1))
+                ((and (syntax-fence-char-p c)
+                      (char= c fence-char))
+                 (character-offset point 1)
+                 (return point))))))
+
+(defun %skip-fence-backward (point)
+  (character-offset point -1)
+  (loop :with fence-char := (character-at point)
+        :do
+        (unless (character-offset point -1)
+          (return nil))
+        (if (%sexp-escape-p point 0)
+            (character-offset point -1)
+            (let ((c (character-at point)))
+              (cond ((and (syntax-fence-char-p c)
+                          (char= c fence-char))
+                     (return point)))))))
+
 (defun %skip-list-forward (point depth)
   (loop :with paren-stack := '() :do
      (unless (skip-space-and-comment-forward point)
@@ -656,6 +705,8 @@
 		(return point)))
 	     ((syntax-string-quote-char-p c)
 	      (%skip-string-forward point))
+             ((syntax-fence-char-p c)
+              (%skip-fence-forward point))
 	     ((syntax-escape-char-p c)
               (unless (character-offset point 2)
                 (return nil)))
@@ -687,6 +738,8 @@
 		(return point)))
 	     ((syntax-string-quote-char-p c)
 	      (%skip-string-backward point))
+             ((syntax-fence-char-p c)
+              (%skip-fence-backward point))
 	     (t
 	      (character-offset point -1))))))
 
@@ -709,6 +762,8 @@
              nil)
             ((syntax-string-quote-char-p c)
              (%skip-string-forward point))
+            ((syntax-fence-char-p c)
+             (%skip-fence-forward point))
             (t
              (character-offset point 1))))))
 
@@ -727,6 +782,8 @@
                   nil)
                  ((syntax-string-quote-char-p c)
                   (%skip-string-backward point))
+                 ((syntax-fence-char-p c)
+                  (%skip-fence-backward point))
                  (t
                   (character-offset point -1)))
       (skip-chars-backward point #'syntax-expr-prefix-char-p)

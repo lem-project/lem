@@ -145,19 +145,21 @@
   (let ((table
          (make-syntax-table
           :space-chars '(#\space #\tab #\newline)
-          :symbol-chars '(#\+ #\- #\< #\> #\/ #\* #\& #\= #\. #\? #\_ #\! #\$ #\% #\: #\@ #\[ #\] #\^ #\{ #\} #\~ #\# #\|)
+          :symbol-chars '(#\+ #\- #\< #\> #\/ #\* #\& #\= #\. #\? #\_ #\! #\$ #\% #\: #\@ #\[ #\]
+                              #\^ #\{ #\} #\~ #\# #\|)
           :paren-alist '((#\( . #\))
                          (#\[ . #\])
                          (#\{ . #\}))
           :string-quote-chars '(#\")
           :escape-chars '(#\\)
+          :fence-chars '(#\|)
           :expr-prefix-chars '(#\' #\, #\@ #\# #\`)
           :expr-prefix-forward-function 'lisp-mode-skip-expr-prefix-forward
           :expr-prefix-backward-function 'lisp-mode-skip-expr-prefix-backward
           :line-comment-string ";"
           :block-comment-pairs '(("#|" . "|#")))))
     (syntax-add-match table
-                      (make-syntax-test ":[^() \\t]+"
+                      (make-syntax-test ":[^()\" \\t]+"
                                         :word-p t)
                       :attribute *syntax-constant-attribute*)
     (syntax-add-match table

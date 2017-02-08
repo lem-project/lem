@@ -959,7 +959,7 @@
   (save-excursion
     (with-point ((start (region-beginning) :right-inserting)
                  (end (region-end) :left-inserting))
-      (skip-chars-forward start #'syntax-space-char-p)
+      (skip-whitespace-forward start)
       (let ((charpos (point-charpos start)))
         (loop
           (when (same-line-p start end)

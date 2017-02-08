@@ -464,13 +464,22 @@
   (%search-syntax-start-backward point *syntax-string-attribute* limit))
 
 
-(defun skip-whitespace-forward (point)
-  (with-point-syntax point
-    (skip-chars-forward point #'syntax-space-char-p)))
+(flet ((f (c)
+         (and (not (char= c #\newline))
+              (syntax-space-char-p c))))
 
-(defun skip-whitespace-backward (point)
-  (with-point-syntax point
-    (skip-chars-backward point #'syntax-space-char-p)))
+  (defun skip-whitespace-forward (point &optional (oneline nil))
+    (with-point-syntax point
+      (if oneline
+          (skip-chars-forward point #'f)
+          (skip-chars-forward point #'syntax-space-char-p))))
+
+  (defun skip-whitespace-backward (point &optional (oneline nil))
+    (with-point-syntax point
+      (if oneline
+          (skip-chars-backward point #'f)
+          (skip-chars-backward point #'syntax-space-char-p)))))
+
 
 (defun symbol-string-at-point (point)
   (with-point-syntax point

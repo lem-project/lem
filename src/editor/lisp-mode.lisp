@@ -331,7 +331,7 @@
 (defun arg1-first-line-p ()
   (let ((point (current-point)))
     (when (form-offset point 1)
-      (skip-chars-forward point '(#\space #\tab))
+      (skip-whitespace-forward point t)
       (not (end-line-p point)))))
 
 (defun calc-indent-1 ()
@@ -419,12 +419,12 @@
                               (return)))
                         (point< point p))
                    (move-point point p)
-                   (skip-chars-forward point '(#\space #\tab))
+                   (skip-whitespace-forward point t)
                    (when (end-line-p point)
                      (character-offset point 1)))
                   (t
                    (form-offset point 1)
-                   (skip-chars-forward point '(#\space #\tab))
+                   (skip-whitespace-forward point t)
                    (when (end-line-p point)
                      (character-offset point 1)))))))))
 
@@ -952,7 +952,7 @@
 
 (defun space*-p (point)
   (with-point ((point point))
-    (skip-chars-forward point '(#\space #\tab))
+    (skip-whitespace-forward point t)
     (end-line-p point)))
 
 (define-command lisp-comment-region () ()

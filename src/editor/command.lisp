@@ -369,7 +369,7 @@
 
 (define-key *global-keymap* (kbd "M-Spc") 'just-one-space)
 (define-command just-one-space () ()
-  (skip-chars-backward (current-point) '(#\space #\tab))
+  (skip-whitespace-backward (current-point) t)
   (delete-while-whitespaces t)
   (insert-character (current-point) #\space 1)
   t)

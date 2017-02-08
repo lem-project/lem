@@ -16,8 +16,7 @@
         (old-indent-string
          (points-to-string (line-start (copy-point point :temporary))
                            (with-point ((point point))
-                             (skip-chars-forward (line-start point)
-                                                 '(#\space #\tab))
+                             (skip-whitespace-forward (line-start point) t)
                              point)))
         (new-indent-string
          (if (value 'indent-tabs-mode :buffer (point-buffer point))
@@ -32,19 +31,19 @@
            (delete-character point (length old-indent-string))
            (insert-string point new-indent-string)
            (if (< old-column column)
-               (skip-chars-forward (line-start point) '(#\space #\tab))
+               (skip-whitespace-forward (line-start point) t)
                (move-to-column point
                                (max 0 (+ old-column
                                          (- (string-width new-indent-string)
                                             (string-width old-indent-string)))))))
           ((< old-column column)
-           (skip-chars-forward (line-start point) '(#\space #\tab)))))
+           (skip-whitespace-forward (line-start point) t))))
   t)
 
 (defun calc-indent-default (point)
   (with-point ((point point))
     (cond ((line-offset point -1)
-           (skip-chars-forward point '(#\space #\tab))
+           (skip-whitespace-forward point t)
            (point-column point))
           (t 0))))
 

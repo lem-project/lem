@@ -606,15 +606,17 @@
   (loop :for c := (character-at point 0)
         :do
         (cond ((syntax-escape-char-p c)
-               (character-offset point 1))
+               (unless (character-offset point 2)
+                 (return)))
               ((syntax-fence-char-p c)
-               (%skip-fence-forward point))
+               (unless (%skip-fence-forward point)
+                 (return)))
               ((not (or (syntax-symbol-char-p c)
                         (syntax-expr-prefix-char-p c)))
-               (return)))
-        (unless (character-offset point 1)
-          (return)))
-  point)
+               (return point))
+              (t
+               (unless (character-offset point 1)
+                 (return))))))
 
 (defun %skip-symbol-backward (point)
   (loop :for c := (character-at point -1)
@@ -623,14 +625,14 @@
               (cond (escape-p
                      (character-offset point (- (1+ skip-count))))
                     ((syntax-fence-char-p c)
-                     (%skip-fence-backward point))
+                     (unless (%skip-fence-backward point)
+                       (return)))
                     ((or (syntax-symbol-char-p c)
                          (syntax-expr-prefix-char-p c)
                          (syntax-escape-char-p c))
                      (character-offset point -1))
                     (t
-                     (return)))))
-  point)
+                     (return point))))))
 
 (defun %skip-string-forward (point)
   (loop :with quote-char := (character-at point 0) :do

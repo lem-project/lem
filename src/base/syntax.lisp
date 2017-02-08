@@ -197,38 +197,38 @@
   (let ((f (syntax-table-expr-prefix-backward-function (current-syntax))))
     (if f (funcall f point) t)))
 
-(defun %syntax-string-match (str1 str2 str1-pos)
-  (let ((end1 (+ str1-pos (length str2))))
-    (when (and (<= end1 (length str1))
-               (string= str1 str2
-                        :start1 str1-pos
-                        :end1 end1))
-      (length str2))))
+(flet ((%match (str1 str2 str1-pos)
+         (let ((end1 (+ str1-pos (length str2))))
+           (when (and (<= end1 (length str1))
+                      (string= str1 str2
+                               :start1 str1-pos
+                               :end1 end1))
+             (length str2)))))
 
-(defun syntax-line-comment-p (line-string pos)
-  (%syntax-string-match line-string
-                        (syntax-table-line-comment-string (current-syntax))
-                        pos))
+  (defun syntax-line-comment-p (line-string pos)
+    (%match line-string
+            (syntax-table-line-comment-string (current-syntax))
+            pos))
 
-(defun syntax-start-block-comment-p (point)
-  (let ((line-string (line-string point))
-        (pos (point-charpos point)))
+  (defun syntax-start-block-comment-p (point)
+    (let ((line-string (line-string point))
+          (pos (point-charpos point)))
+      (dolist (pair (syntax-table-block-comment-pairs (current-syntax)))
+        (let ((start (car pair)))
+          (let ((result (%match line-string start pos)))
+            (when result
+              (return (values result pair))))))))
+
+  (defun syntax-end-block-comment-p (point)
     (dolist (pair (syntax-table-block-comment-pairs (current-syntax)))
-      (let ((start (car pair)))
-        (let ((result (%syntax-string-match line-string start pos)))
-          (when result
-            (return (values result pair))))))))
-
-(defun syntax-end-block-comment-p (point)
-  (dolist (pair (syntax-table-block-comment-pairs (current-syntax)))
-    (let ((end (cdr pair)))
-      (with-point ((point point))
-        (character-offset point (- (length end)))
-        (let ((result (%syntax-string-match (line-string point)
-                                            end
-                                            (point-charpos point))))
-          (when result
-            (return (values result pair))))))))
+      (let ((end (cdr pair)))
+        (with-point ((point point))
+          (character-offset point (- (length end)))
+          (let ((result (%match (line-string point)
+                                end
+                                (point-charpos point))))
+            (when result
+              (return (values result pair)))))))))
 
 
 (defun enable-syntax-highlight-p (buffer)

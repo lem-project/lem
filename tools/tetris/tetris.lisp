@@ -105,12 +105,8 @@
   *field*)
 
 (defun insert-block (attribute)
-  (insert-string (current-point) "  ")
-  (put-text-property (character-offset (copy-point (current-point)
-                                                   :temporary)
-                                       -2)
-                     (current-point)
-                     :attribute attribute))
+  (insert-string (current-point) "  "
+                 :attribute attribute))
 
 (defun draw-field-internal (field)
   (dotimes (y +field-height+)

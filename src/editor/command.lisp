@@ -37,7 +37,7 @@
           just-one-space
           delete-indentation
           transpose-characters
-          back-to-indentation
+          back-to-indentation-command
           undo
           redo
           mark-set
@@ -313,18 +313,18 @@
     (delete-character (current-point) (- n))))
 
 (defun tab-line-aux (n make-space-str)
-  (dotimes (_ n t)
-    (let ((count (save-excursion
-                   (back-to-indentation)
-                   (current-column))))
-      (multiple-value-bind (div mod)
-          (floor count (tab-size))
-        (beginning-of-line)
-        (delete-while-whitespaces t)
-        (insert-string (current-point) (funcall make-space-str div))
-        (insert-character (current-point) #\space mod)))
-    (unless (forward-line 1)
-      (return))))
+  (let ((p (current-point)))
+    (dotimes (_ n t)
+      (with-point ((p2 (back-to-indentation p)))
+        (let ((count (point-column p2)))
+          (multiple-value-bind (div mod)
+              (floor count (tab-size))
+            (line-start p)
+            (delete-between-points p p2)
+            (insert-string p (funcall make-space-str div))
+            (insert-character p #\space mod)))
+        (unless (line-offset p 1)
+          (return))))))
 
 (define-command entab-line (n) ("p")
   (tab-line-aux n
@@ -400,11 +400,9 @@
              (delete-character point -1)
              (insert-string point (format nil "~C~C" c1 c2)))))))
 
-(define-key *global-keymap* (kbd "M-m") 'back-to-indentation)
-(define-command back-to-indentation () ()
-  (let ((point (current-point)))
-    (skip-chars-forward (line-start point)
-                        '(#\space #\tab)))
+(define-key *global-keymap* (kbd "M-m") 'back-to-indentation-command)
+(define-command back-to-indentation-command () ()
+  (back-to-indentation (current-point))
   t)
 
 (define-key *global-keymap* (kbd "C-\\") 'undo)

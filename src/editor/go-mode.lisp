@@ -78,7 +78,7 @@
   (save-excursion
     (setf (current-buffer) (point-buffer point))
     (move-point (current-point) point)
-    (back-to-indentation)
+    (back-to-indentation-command)
     (progn
       (cond ((in-comment-p (current-point))
              (search-comment-start-backward (current-point))
@@ -93,7 +93,7 @@
 		       (when (up-list 1 t)
 			 (case (following-char)
 			   (#\{
-			    (back-to-indentation)
+			    (back-to-indentation-command)
 			    (+ *go-tab-width* (current-column)))
 			   (#\(
 			    (let ((n 0))
@@ -104,7 +104,7 @@
 					      :test #'string=))
 				(setf inside-indenting-paren t)
 				(incf n *go-tab-width*))
-			      (back-to-indentation)
+			      (back-to-indentation-command)
 			      (+ (current-column) n)))))))
 	       (when (null indent)
 		 (return-from go-calc-indent 0))
@@ -116,7 +116,7 @@
 			(end-of-line)
 			(skip-chars-backward (current-point) '(#\)))
 			(backward-sexp 1 t)
-			(back-to-indentation)
+			(back-to-indentation-command)
 			(setf indent (current-column)))))
 	       (save-excursion
 		 (beginning-of-line)

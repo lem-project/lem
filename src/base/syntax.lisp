@@ -209,10 +209,14 @@
                                :end1 end1))
              (length str2)))))
 
-  (defun syntax-line-comment-p (line-string pos)
+  (defun syntax-line-comment-string-p (line-string pos)
     (%match line-string
             (syntax-table-line-comment-string (current-syntax))
             pos))
+
+  (defun syntax-line-comment-p (point)
+    (syntax-line-comment-string-p (line-string point)
+                                  (point-charpos point)))
 
   (defun syntax-start-block-comment-p (point)
     (let ((line-string (line-string point))
@@ -515,8 +519,7 @@
                                       (return (values (move-point point curr) t))))
                                    (t
                                     (incf depth)))))))
-              ((syntax-line-comment-p (line-string point)
-                                      (point-charpos point))
+              ((syntax-line-comment-p point)
                (values (line-offset point 1) t))
               (t
                (values nil t)))))
@@ -561,7 +564,7 @@
                        ((syntax-fence-char-p c)
                         (setf in-token nil))))
                 ((nil)
-                 (cond ((syntax-line-comment-p string i)
+                 (cond ((syntax-line-comment-string-p string i)
                         (return i))
                        ((syntax-escape-char-p c)
                         (incf i))

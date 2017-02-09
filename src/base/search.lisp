@@ -7,7 +7,6 @@
           search-backward-regexp
           search-forward-symbol
           search-backward-symbol
-          looking-at-line
           looking-at
           match-string-at))
 
@@ -195,20 +194,6 @@
                (lambda (point charpos)
                  (line-offset point 0 charpos))
                (search-backward-endp-function limit-point)))
-
-(defun looking-at-line (regex &key (start nil startp) (end nil endp))
-  (macrolet ((m (&rest args)
-	       `(ppcre:scan-to-strings regex
-				       (line-string (current-point))
-				       ,@args)))
-    (cond ((and startp endp)
-           (m :start start :end end))
-          (startp
-           (m :start start))
-          (endp
-           (m :end end))
-          (t
-           (m)))))
 
 (defun looking-at (point regex)
   (let ((start (point-charpos point)))

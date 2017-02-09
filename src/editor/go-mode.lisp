@@ -108,9 +108,10 @@
 			      (+ (current-column) n)))))))
 	       (when (null indent)
 		 (return-from go-calc-indent 0))
-	       (cond ((looking-at-line "case\\W|default\\W" :start (point-charpos (current-point)))
+	       (cond ((looking-at (current-point) "case\\W|default\\W")
 		      (decf indent *go-tab-width*))
-		     ((looking-at-line "\\s*}")
+		     ((looking-at (line-start (copy-point (current-point) :temporary))
+                                  "\\s*}")
 		      (save-excursion
 			(end-of-line)
 			(skip-chars-backward (current-point) '(#\)))
@@ -131,7 +132,9 @@
 			 (t
 			  (not (semicolon-p))))
 		   (incf indent *go-tab-width*)))
-	       (when (and (looking-at-line "^\\s*\\)\\s*$") inside-indenting-paren)
+	       (when (and (looking-at (line-start (copy-point (current-point) :temporary))
+                                      "^\\s*\\)\\s*$")
+                          inside-indenting-paren)
 		 (decf indent *go-tab-width*))
 	       indent))))))
 

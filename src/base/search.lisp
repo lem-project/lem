@@ -196,10 +196,18 @@
                (search-backward-endp-function limit-point)))
 
 (defun looking-at (point regex)
-  (let ((start (point-charpos point)))
-    (eql start (ppcre:scan regex
-                           (line-string point)
-                           :start start))))
+  (let ((start (point-charpos point))
+        (string (line-string point)))
+    (multiple-value-bind (match-start match-end reg-starts reg-ends)
+        (ppcre:scan regex string :start start)
+      (when (eql match-start start)
+        (values (subseq string match-start match-end)
+                (map 'vector
+                     (lambda (reg-start reg-end)
+                       (when reg-start
+                         (subseq string reg-start reg-end)))
+                     reg-starts
+                     reg-ends))))))
 
 (defun match-string-at (point string &optional across-line-p)
   (let ((overp

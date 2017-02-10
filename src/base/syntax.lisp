@@ -496,57 +496,59 @@
         (points-to-string start point)))))
 
 (let ((cache (make-hash-table :test 'equal)))
-  (flet ((f (x)
-           (or (gethash x cache)
-               (setf (gethash x cache)
-                     (ppcre:create-scanner x)))))
-    (defun %skip-comment-forward (point)
-      (multiple-value-bind (n pair)
-          (syntax-start-block-comment-p point)
-        (cond (n
-               (let ((regex (f `(:alternation
-                                 (:sequence ,(car pair))
-                                 (:sequence ,(cdr pair))))))
-                 (with-point ((curr point))
-                   (character-offset curr n)
-                   (loop :with depth := 1
-                         :do (cond ((not (search-forward-regexp curr regex))
-                                    (return (values nil nil)))
-                                   ((match-string-at (character-offset (copy-point curr :temporary)
-                                                                       (- (length (cdr pair))))
-                                                     (cdr pair))
-                                    (when (= 0 (decf depth))
-                                      (return (values (move-point point curr) t))))
-                                   (t
-                                    (incf depth)))))))
-              ((syntax-line-comment-p point)
-               (values (line-offset point 1) t))
-              (t
-               (values nil t)))))
+  (defun %create-pair-regex (pair)
+    (let ((tree
+           `(:positive-lookahead
+             (:alternation
+              (:sequence ,(car pair))
+              (:sequence ,(cdr pair))))))
+      (or (gethash tree cache)
+          (setf (gethash tree cache)
+                (ppcre:create-scanner tree))))))
 
-    (defun %skip-comment-backward (point)
-      (multiple-value-bind (n pair)
-          (syntax-end-block-comment-p point)
-        (if n
-            (let ((regex (f `(:alternation
-                              (:sequence ,(car pair))
-                              (:sequence ,(cdr pair))))))
-              (with-point ((curr point))
-                (character-offset curr (- n))
-                (loop :with depth := 1
-                      :do (cond ((not (search-backward-regexp curr regex))
-                                 (return (values nil nil)))
-                                ((match-string-at curr (car pair))
-                                 (when (= 0 (decf depth))
-                                   (return (values (move-point point curr) t))))
-                                (t
-                                 (incf depth))))))
-            (let ((line-comment-pos (%position-line-comment (line-string point)
-                                                            (point-charpos point)
-                                                            nil)))
-              (if line-comment-pos
-                  (values (line-offset point 0 line-comment-pos) t)
-                  (values nil t))))))))
+(defun %skip-comment-forward (point)
+  (multiple-value-bind (n pair)
+      (syntax-start-block-comment-p point)
+    (cond (n
+           (let ((regex (%create-pair-regex pair)))
+             (with-point ((curr point))
+               (character-offset curr n)
+               (loop :with depth := 1
+                     :do (cond ((not (search-forward-regexp curr regex))
+                                (return (values nil nil)))
+                               ((match-string-at curr (cdr pair))
+                                (character-offset curr (length (cdr pair)))
+                                (when (= 0 (decf depth))
+                                  (return (values (move-point point curr) t))))
+                               (t
+                                (character-offset curr (length (car pair)))
+                                (incf depth)))))))
+          ((syntax-line-comment-p point)
+           (values (line-offset point 1) t))
+          (t
+           (values nil t)))))
+
+(defun %skip-comment-backward (point)
+  (multiple-value-bind (n pair)
+      (syntax-end-block-comment-p point)
+    (if n
+        (let ((regex (%create-pair-regex pair)))
+          (with-point ((curr point))
+            (character-offset curr (- n))
+            (loop :with depth := 1
+                  :do (cond ((not (search-backward-regexp curr regex))
+                             (return (values nil nil)))
+                            ((match-string-at curr (car pair))
+                             (when (= 0 (decf depth))
+                               (return (values (move-point point curr) t))))
+                            (t
+                             (incf depth))))))
+        (let ((line-comment-pos (%position-line-comment (line-string point)
+                                                        (point-charpos point)
+                                                        nil)))
+          (if line-comment-pos
+              (values (line-offset point 0 line-comment-pos) t)
+              (values nil t))))))
 
 (defun %position-line-comment (string end in-token)
   (loop :for i := 0 :then (1+ i)

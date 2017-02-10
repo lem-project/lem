@@ -834,3 +834,111 @@
                            (return nil)
                            (scan-error))))))
         (move-point point curr)))))
+
+
+(defstruct parser-state
+  type
+  token-start-point
+  end-char
+  block-comment-depth
+  block-comment-pair
+  paren-stack)
+
+(defun parse-partial-sexp (from to &optional (state (make-parser-state)))
+  (assert (eq (point-buffer from)
+              (point-buffer to)))
+  (with-point-syntax from
+    (with-point ((p from))
+      (let ((type (parser-state-type state))
+            (token-start-point (parser-state-token-start-point state))
+            (end-char (parser-state-end-char state))
+            (block-comment-depth (parser-state-block-comment-depth state))
+            (block-comment-pair (parser-state-block-comment-pair state))
+            (paren-stack (parser-state-paren-stack state)))
+        (block outer
+          (loop
+            (case type
+              (:string
+               #1=(loop
+                    (when (point<= to p)
+                      (return-from outer))
+                    (let ((c (character-at p)))
+                      (cond ((syntax-escape-char-p c)
+                             (character-offset p 1))
+                            ((char= c end-char)
+                             (setf end-char nil)
+                             (setf type nil)
+                             (setf token-start-point nil)
+                             (return (character-offset p 1))))
+                      (character-offset p 1))))
+              (:fence
+               #1#)
+              (:block-comment
+               (let ((regex (%create-pair-regex block-comment-pair)))
+                 (loop
+                   (unless (search-forward-regexp p regex to)
+                     (move-point p to)
+                     (return-from outer))
+                   (cond
+                     ((match-string-at p (cdr block-comment-pair))
+                      (character-offset p (length (car block-comment-pair)))
+                      (when (= 0 (decf block-comment-depth))
+                        (setf block-comment-depth nil)
+                        (setf block-comment-pair nil)
+                        (setf type nil)
+                        (setf token-start-point nil)
+                        (return p)))
+                     (t
+                      (character-offset p (length (cdr block-comment-pair)))
+                      (incf block-comment-depth))))))
+              (:line-comment
+               (when (and (point<= p to)
+                          (same-line-p p to))
+                 (return-from outer))
+               (line-offset p 1)
+               (setf type nil)
+               (setf token-start-point nil))
+              (otherwise
+               (loop
+                 (when (point<= to p)
+                   (return-from outer))
+                 (let ((c (character-at p)))
+                   (cond
+                     ((syntax-escape-char-p c)
+                      (character-offset p 1))
+                     ((or (syntax-string-quote-char-p c)
+                          (syntax-fence-char-p c))
+                      (setf type (if (syntax-string-quote-char-p c)
+                                     :string
+                                     :fence))
+                      (setf end-char c)
+                      (setf token-start-point (copy-point p :temporary))
+                      (character-offset p 1)
+                      (return))
+                     ((multiple-value-bind (n pair)
+                          (syntax-start-block-comment-p p)
+                        (when n
+                          (setf token-start-point (copy-point p :temporary))
+                          (setf type :block-comment)
+                          (setf block-comment-depth 1)
+                          (setf block-comment-pair pair)
+                          (character-offset p n)
+                          (return))))
+                     ((syntax-line-comment-p p)
+                      (setf type :line-comment)
+                      (setf token-start-point (copy-point p :temporary))
+                      (return))
+                     ((syntax-open-paren-char-p c)
+                      (push c paren-stack))
+                     ((syntax-closed-paren-char-p c)
+                      (when (syntax-equal-paren-p c (car paren-stack))
+                        (pop paren-stack))))
+                   (character-offset p 1)))))))
+        (without-interrupts
+          (setf (parser-state-type state) type
+                (parser-state-token-start-point state) token-start-point
+                (parser-state-end-char state) end-char
+                (parser-state-block-comment-depth state) block-comment-depth
+                (parser-state-block-comment-pair state) block-comment-pair
+                (parser-state-paren-stack state) paren-stack))
+        state))))

@@ -20,23 +20,27 @@
                           :focus ,focus
                           :erase ,erase))
 
+(defmacro with-debug-output ((filename) &body body)
+  `(with-open-file (out ,filename
+                        :direction :output
+                        :if-does-not-exist :create
+                        :if-exists :supersede)
+     (let ((*terminal-io* out)
+           (*standard-output* out)
+           (*standard-input* out)
+           (*error-output* out)
+           (*query-io* out)
+           (*debug-io* out)
+           (*trace-output* out))
+       ,@body)))
+
 #+sbcl
 (defmacro with-profile (&body body)
   `(progn
-     (sb-profile:profile "LEM")
+     (sb-profile:profile "LEM" "LEM-BASE")
      ,@body
-     (with-open-file (out "PROFILE"
-                          :direction :output
-                          :if-does-not-exist :create
-                          :if-exists :supersede)
-       (let ((*terminal-io* out)
-             (*standard-output* out)
-             (*standard-input* out)
-             (*error-output* out)
-             (*query-io* out)
-             (*debug-io* out)
-             (*trace-output* out))
-         (sb-profile:report)))))
+     (with-debug-output ("PROFILE")
+       (sb-profile:report))))
 
 (defmacro handler-case-bind ((error-bind &body body)
                              ((condition) &body protected-form))

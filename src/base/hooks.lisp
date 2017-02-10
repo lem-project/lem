@@ -7,9 +7,12 @@
     (apply (car hook) args)))
 
 (defmacro add-hook (place callback &optional (weight 0))
-  `(setf ,place
-         (merge 'list
-                (list (cons ,callback ,weight))
-                ,place
-                #'>
-                :key #'cdr)))
+  (let ((_callback (gensym)))
+    `(let ((,_callback ,callback))
+       (unless (member ,_callback ,place :key #'car)
+         (setf ,place
+               (merge 'list
+                      (list (cons ,_callback ,weight))
+                      ,place
+                      #'>
+                      :key #'cdr))))))

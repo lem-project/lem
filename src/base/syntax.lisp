@@ -942,3 +942,31 @@
                 (parser-state-block-comment-pair state) block-comment-pair
                 (parser-state-paren-stack state) paren-stack))
         state))))
+
+(flet ((cache-point (cache) (car cache))
+       (cache-state (cache) (cdr cache)))
+  (defun syntax-ppss (point)
+    (let* ((buffer (point-buffer point))
+           (cache-list (get-bvar 'syntax-ppss-cache :buffer buffer))
+           state)
+      (do ((rest cache-list (cdr rest))
+           (prev nil rest))
+          ((null rest)
+           (setf state (parse-partial-sexp (buffers-start buffer) point))
+           (let ((new-rest (list (cons (copy-point point :temporary) state))))
+             (if prev
+                 (setf (cdr prev) new-rest)
+                 (setf cache-list new-rest))))
+        (when (point> point (cache-point (car rest)))
+          (setf state (parse-partial-sexp (cache-point (car rest))
+                                          point
+                                          (cache-state (car rest))))
+          (let ((new-rest (cons (cons (copy-point point :temporary) state)
+                                rest)))
+            (if prev
+                (setf (cdr prev) new-rest)
+                (setf cache-list new-rest))
+            (return))))
+      (setf (get-bvar 'syntax-ppss-cache :buffer buffer)
+            cache-list)
+      state)))

@@ -39,7 +39,7 @@
   (add-hook *window-show-buffer-functions*
             (lambda (window)
               (syntax-scan-window window)))
-  (add-hook *after-change-functions*
+  (add-hook (value 'after-change-functions :global)
             (lambda (start end old-len)
               (declare (ignore old-len))
               (syntax-scan-range start end)))

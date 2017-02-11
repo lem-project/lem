@@ -1,12 +1,13 @@
 (in-package :lem-base)
 
 (export '(*inhibit-read-only*
-          *before-change-functions*
-          *after-change-functions*))
+          before-change-functions
+          after-change-functions))
 
 (defvar *inhibit-read-only* nil)
-(defvar *before-change-functions* '())
-(defvar *after-change-functions* '())
+
+(define-editor-variable before-change-functions '())
+(define-editor-variable after-change-functions '())
 
 (defun check-read-only-at-point (line charpos offset)
   (unless *inhibit-read-only*
@@ -192,26 +193,41 @@
 		    (%delete-line/point point charpos)))))))))
 
 
+(declaim (inline call-before-change-functions
+                 call-after-change-functions))
+
+(defun call-before-change-functions (buffer start n)
+  (alexandria:when-let ((hooks (value 'before-change-functions :buffer buffer)))
+    (run-hooks hooks start n))
+  (alexandria:when-let ((hooks (value 'before-change-functions :global)))
+    (run-hooks hooks start n)))
+
+(defun call-after-change-functions (buffer start end old-len)
+  (alexandria:when-let ((hooks (value 'after-change-functions :buffer buffer)))
+    (run-hooks hooks start end old-len))
+  (alexandria:when-let ((hooks (value 'after-change-functions :global)))
+    (run-hooks hooks start end old-len)))
+
 (defmacro insert/after-change-function (point arg)
-  `(if *after-change-functions*
+  `(if (value 'after-change-functions)
        (with-point ((start ,point))
          (prog1 (call-next-method)
            (with-point ((end start))
              (character-offset end ,arg)
-             (run-hooks *after-change-functions* start end 0))))
+             (call-after-change-functions (point-buffer ,point) start end 0))))
        (call-next-method)))
 
 (defmacro delete/after-change-function (point)
-  `(if *after-change-functions*
+  `(if (value 'after-change-functions)
        (let ((string (call-next-method)))
          (with-point ((start ,point)
                       (end ,point))
-           (run-hooks *after-change-functions* start end (length string)))
+           (call-after-change-functions (point-buffer ,point) start end (length string)))
          string)
        (call-next-method)))
 
 (defmethod insert-char/point :around (point char)
-  (run-hooks *before-change-functions* point 1)
+  (call-before-change-functions (point-buffer point) point 1)
   (if (not (buffer-enable-undo-p (point-buffer point)))
       (insert/after-change-function point 1)
       (let ((pos (position-at-point point)))
@@ -223,7 +239,7 @@
                        t))))))
 
 (defmethod insert-string/point :around (point string)
-  (run-hooks *before-change-functions* point (length string))
+  (call-before-change-functions (point-buffer point) point (length string))
   (if (not (buffer-enable-undo-p (point-buffer point)))
       (insert/after-change-function point (length string))
       (let ((pos (position-at-point point)))
@@ -235,7 +251,7 @@
                        t))))))
 
 (defmethod delete-char/point :around (point n)
-  (run-hooks *before-change-functions* point (- n))
+  (call-before-change-functions (point-buffer point) point (- n))
   (if (not (buffer-enable-undo-p (point-buffer point)))
       (delete/after-change-function point)
       (let ((pos (position-at-point point))

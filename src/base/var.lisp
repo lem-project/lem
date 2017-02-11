@@ -12,33 +12,61 @@
 (defmacro define-editor-variable (var &optional value documentation)
   (check-type var symbol)
   `(unless (get ',var 'editor-variable)
+     (defvar ,var)
      (setf (get ',var 'editor-variable)
            (make-editor-variable :value ,value
                                  :documentation ,documentation
                                  :local-indicator (gensym ,(string var))))
      t))
 
+(defun editor-variable-error (symbol)
+  (error "~A is not editor variable" symbol))
+
 (defun check-editor-variable (symbol)
   (unless (editor-variable-p (get symbol 'editor-variable))
-    (error "~A is not editor variable" symbol)))
+    (editor-variable-error symbol)))
 
-(defun value (symbol &key (buffer (current-buffer)))
-  (check-type buffer (or null buffer))
-  (check-editor-variable symbol)
-  (let ((var (get symbol 'editor-variable)))
-    (if (null buffer)
-        (editor-variable-value var)
-        (get-bvar (editor-variable-local-indicator var)
-                  :buffer buffer :default (editor-variable-value var)))))
+(defun ensure-buffer (where)
+  (if (pointp where)
+      (point-buffer where)
+      (progn
+        (check-type where buffer)
+        where)))
 
-(defun (setf value) (value symbol &key (buffer (current-buffer)))
-  (check-type buffer (or buffer null))
-  (check-editor-variable symbol)
+(defun value (symbol &optional (kind :default) (where nil wherep))
   (let ((var (get symbol 'editor-variable)))
-    (if (null buffer)
-        (setf (editor-variable-value var) value)
-        (setf (get-bvar (editor-variable-local-indicator var)
-                        :buffer buffer)
-              value))))
+    (unless (editor-variable-p var)
+      (editor-variable-error symbol))
+    (ecase kind
+      ((:default)
+       (let ((buffer (if wherep
+                         (ensure-buffer where)
+                         (current-buffer))))
+         (get-bvar (editor-variable-local-indicator var)
+                   :buffer buffer
+                   :default (editor-variable-value var))))
+      ((:buffer)
+       (let ((buffer (if wherep
+                         (ensure-buffer where)
+                         (current-buffer))))
+         (get-bvar (editor-variable-local-indicator var)
+                   :buffer buffer)))
+      ((:global)
+       (editor-variable-value var)))))
+
+(defun (setf value) (value symbol &optional (kind :default) (where nil wherep))
+  (let ((var (get symbol 'editor-variable)))
+    (unless (editor-variable-p var)
+      (editor-variable-error symbol))
+    (ecase kind
+      ((:default :buffer)
+       (let ((buffer (if wherep
+                         (ensure-buffer where)
+                         (current-buffer))))
+         (setf (get-bvar (editor-variable-local-indicator var)
+                         :buffer buffer)
+               value)))
+      ((:global)
+       (setf (editor-variable-value var) value)))))
 
 (define-editor-variable truncate-lines t)

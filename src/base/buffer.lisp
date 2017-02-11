@@ -363,12 +363,14 @@
     (push :separator (buffer-undo-stack buffer))))
 
 (defun buffer-value (buffer name &optional default)
+  (setf buffer (ensure-buffer buffer))
   (multiple-value-bind (value foundp)
       (gethash name (buffer-variables buffer))
     (if foundp value default)))
 
 (defun (setf buffer-value) (value buffer name &optional default)
   (declare (ignore default))
+  (setf buffer (ensure-buffer buffer))
   (setf (gethash name (buffer-variables buffer)) value))
 
 (defun clear-buffer-variables (&key (buffer (current-buffer)))

@@ -29,9 +29,9 @@
   (modeline-add-status-list (lambda (window)
                               (buffer-package (window-buffer window) "CL-USER"))
                             (current-buffer))
-  (setf (value 'indent-tabs-mode) nil)
-  (setf (value 'enable-syntax-highlight) t)
-  (setf (value 'calc-indent-function) 'calc-indent))
+  (setf (variable-value 'indent-tabs-mode) nil)
+  (setf (variable-value 'enable-syntax-highlight) t)
+  (setf (variable-value 'calc-indent-function) 'calc-indent))
 
 (define-key *slime-mode-keymap* "C-M-a" 'lem.lisp-mode:lisp-beginning-of-defun)
 (define-key *slime-mode-keymap* "C-M-e" 'lem.lisp-mode:lisp-end-of-defun)
@@ -663,19 +663,19 @@
 (defun repl-reset-input ()
   (let ((buffer (repl-buffer)))
     (when buffer
-      (setf (value 'lem.listener-mode:listener-get-prompt-function :buffer buffer)
+      (setf (variable-value 'lem.listener-mode:listener-get-prompt-function :buffer buffer)
             'repl-get-prompt
-            (value 'lem.listener-mode:listener-check-confirm-function :buffer buffer)
+            (variable-value 'lem.listener-mode:listener-check-confirm-function :buffer buffer)
             'lem.lisp-mode:lisp-repl-paren-correspond-p
-            (value 'lem.listener-mode:listener-confirm-function :buffer buffer)
+            (variable-value 'lem.listener-mode:listener-confirm-function :buffer buffer)
             'repl-confirm))))
 
 (defun repl-change-read-line-input ()
-  (setf (value 'lem.listener-mode:listener-get-prompt-function)
+  (setf (variable-value 'lem.listener-mode:listener-get-prompt-function)
         (constantly "")
-        (value 'lem.listener-mode:listener-check-confirm-function)
+        (variable-value 'lem.listener-mode:listener-check-confirm-function)
         (constantly t)
-        (value 'lem.listener-mode:listener-confirm-function)
+        (variable-value 'lem.listener-mode:listener-confirm-function)
         'repl-read-line))
 
 (defun repl-confirm (point string)

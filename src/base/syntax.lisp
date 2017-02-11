@@ -948,16 +948,19 @@
              (if prev
                  (setf (cdr prev) new-rest)
                  (setf cache-list new-rest))))
-        (when (point> point (cache-point (car rest)))
-          (setf state (parse-partial-sexp (cache-point (car rest))
-                                          point
-                                          (cache-state (car rest))))
-          (let ((new-rest (cons (cons (copy-point point :temporary) state)
-                                rest)))
-            (if prev
-                (setf (cdr prev) new-rest)
-                (setf cache-list new-rest))
-            (return))))
+        (cond ((point= point (cache-point (car rest)))
+               (setf state (cache-state (car rest)))
+               (return))
+              ((point> point (cache-point (car rest)))
+               (setf state (parse-partial-sexp (cache-point (car rest))
+                                               point
+                                               (copy-parser-state (cache-state (car rest)))))
+               (let ((new-rest (cons (cons (copy-point point :temporary) state)
+                                     rest)))
+                 (if prev
+                     (setf (cdr prev) new-rest)
+                     (setf cache-list new-rest))
+                 (return)))))
       (when (eql 0 (buffer-value buffer 'syntax-ppss-cache 0))
         (add-hook (variable-value 'before-change-functions :buffer buffer)
                   (lambda (p n)

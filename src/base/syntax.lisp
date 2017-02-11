@@ -241,7 +241,7 @@
 
 (defun enable-syntax-highlight-p (buffer)
   (and *global-syntax-highlight*
-       (value 'enable-syntax-highlight :buffer buffer)))
+       (variable-value 'enable-syntax-highlight :buffer buffer)))
 
 (defvar *syntax-scan-limit*)
 (defvar *syntax-symbol-lifetimes* nil)

@@ -29,7 +29,7 @@
 (define-minor-mode listener-mode
     (:name "listener"
      :keymap *listener-mode-keymap*)
-  (setf (value 'enable-syntax-highlight) nil)
+  (setf (variable-value 'enable-syntax-highlight) nil)
   (unless (%listener-history)
     (setf (%listener-history)
           (lem.history:make-history))))
@@ -64,7 +64,7 @@
     (insert-string cur-point
 		   (princ-to-string
 		    (funcall
-		     (value 'listener-get-prompt-function :buffer buffer)))
+		     (variable-value 'listener-get-prompt-function :buffer buffer)))
 		   :attribute *prompt-attribute*
 		   :read-only t
 		   :field t)
@@ -75,7 +75,7 @@
 (define-key *listener-mode-keymap* (kbd "C-m") 'listener-return)
 (define-command listener-return () ()
   (with-point ((point (buffer-end (current-point)) :left-inserting))
-    (if (not (funcall (value 'listener-check-confirm-function) point))
+    (if (not (funcall (variable-value 'listener-check-confirm-function) point))
         (insert-character point #\newline)
         (let ((start (listener-start-point (current-buffer))))
           (unless (point< start point)
@@ -86,7 +86,7 @@
             (buffer-end point)
             (insert-character point #\newline)
             (listener-update-point)
-            (funcall (value 'listener-confirm-function) point str)))))
+            (funcall (variable-value 'listener-confirm-function) point str)))))
   t)
 
 (define-key *listener-mode-keymap* (kbd "M-p") 'listener-prev-input)

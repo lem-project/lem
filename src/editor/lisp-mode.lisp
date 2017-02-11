@@ -263,9 +263,9 @@
     (:name "lisp"
      :keymap *lisp-mode-keymap*
      :syntax-table *lisp-syntax-table*)
-  (setf (value 'indent-tabs-mode) nil)
-  (setf (value 'enable-syntax-highlight) t)
-  (setf (value 'calc-indent-function) 'lisp-calc-indent)
+  (setf (variable-value 'indent-tabs-mode) nil)
+  (setf (variable-value 'enable-syntax-highlight) t)
+  (setf (variable-value 'calc-indent-function) 'lisp-calc-indent)
   (modeline-add-status-list (lambda (window)
                               (package-name (lisp-current-package
                                              (window-buffer window))))
@@ -1033,11 +1033,11 @@
     (:name "lisp-repl"
 	   :keymap *lisp-repl-mode-keymap*
 	   :syntax-table *lisp-syntax-table*)
-  (setf (value 'listener-get-prompt-function)
+  (setf (variable-value 'listener-get-prompt-function)
         'lisp-repl-get-prompt)
-  (setf (value 'listener-check-confirm-function)
+  (setf (variable-value 'listener-check-confirm-function)
         'lisp-repl-paren-correspond-p)
-  (setf (value 'listener-confirm-function)
+  (setf (variable-value 'listener-confirm-function)
         'lisp-repl-confirm)
   (listener-mode t))
 

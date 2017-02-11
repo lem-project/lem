@@ -24,7 +24,7 @@
            (points-to-string (line-start start)
                              (back-to-indentation end))))
         (new-indent-string
-         (if (value 'indent-tabs-mode :buffer point)
+         (if (variable-value 'indent-tabs-mode :buffer point)
              (multiple-value-bind (div mod)
                  (floor column (tab-size))
                (concatenate 'string
@@ -54,5 +54,5 @@
 
 (defun indent-line (point)
   (indent-line-1 point
-                 (funcall (value 'calc-indent-function :buffer point)
+                 (funcall (variable-value 'calc-indent-function :buffer point)
                           point)))

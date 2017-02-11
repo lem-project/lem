@@ -480,7 +480,7 @@
 
 (define-key *global-keymap* (kbd "C-i") 'indent)
 (define-command indent (&optional (n 1)) ("p")
-  (if (value 'calc-indent-function)
+  (if (variable-value 'calc-indent-function)
       (indent-line (current-point))
       (self-insert n)))
 

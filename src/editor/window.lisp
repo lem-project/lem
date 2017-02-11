@@ -350,7 +350,7 @@
      (setq start i)))
 
 (defun %scroll-down-if-wrapping (window)
-  (when (value 'truncate-lines :buffer (window-buffer window))
+  (when (variable-value 'truncate-lines :buffer (window-buffer window))
     (let ((view-charpos (point-charpos (window-view-point window))))
       (line-start (window-view-point window))
       (map-wrapping-line (line-string (window-view-point window))
@@ -366,7 +366,7 @@
     (line-offset (window-view-point window) 1)))
 
 (defun %scroll-up-if-wrapping (window)
-  (when (and (value 'truncate-lines :buffer (window-buffer window))
+  (when (and (variable-value 'truncate-lines :buffer (window-buffer window))
              (not (first-line-p (window-view-point window))))
     (let ((charpos-list))
       (map-wrapping-line (line-string (if (start-line-p (window-view-point window))
@@ -400,7 +400,7 @@
   (run-hooks *window-scroll-functions* window))
 
 (defun window-wrapping-offset (window)
-  (unless (value 'truncate-lines :buffer (window-buffer window))
+  (unless (variable-value 'truncate-lines :buffer (window-buffer window))
     (return-from window-wrapping-offset 0))
   (let ((offset 0))
     (labels ((inc (arg)

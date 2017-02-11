@@ -210,7 +210,7 @@
 (defun create-completion-buffer (items back-attribute)
   (let ((buffer (get-buffer-create "*Completion*")))
     (erase-buffer buffer)
-    (setf (value 'truncate-lines :buffer buffer) nil)
+    (setf (variable-value 'truncate-lines :buffer buffer) nil)
     (let ((point (buffer-point buffer))
           (max-column 0)
           (label-end-column

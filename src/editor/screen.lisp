@@ -374,7 +374,7 @@
 
 (defun screen-display-lines (screen redraw-flag buffer view-point cursor-point)
   (let ((disp-line-function
-         (if (value 'truncate-lines :buffer buffer)
+         (if (variable-value 'truncate-lines :buffer buffer)
              #'screen-display-line-wrapping
              #'screen-display-line))
         (wrap-lines (screen-wrap-lines screen)))
@@ -389,7 +389,7 @@
 	 :for str/attributes :across (screen-lines screen)
 	 :while (< y (screen-height screen))
 	 :do (cond
-	       ((and (value 'truncate-lines :buffer buffer)
+	       ((and (variable-value 'truncate-lines :buffer buffer)
 		     (not redraw-flag)
 		     (not (null str/attributes))
 		     #1=(aref (screen-old-lines screen) i)
@@ -416,7 +416,7 @@
 			     point-x
 			     y
 			     str/attributes))
-		  (when (value 'truncate-lines :buffer buffer)
+		  (when (variable-value 'truncate-lines :buffer buffer)
 		    (let ((offset (- y2 y)))
 		      (cond ((< 0 offset)
 			     (setf redraw-flag t)

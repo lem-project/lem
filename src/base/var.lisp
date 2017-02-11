@@ -1,7 +1,8 @@
 (in-package :lem-base)
 
 (export '(define-editor-variable
-          value))
+          variable-value
+          variable-documentation))
 
 (defstruct editor-variable
   value
@@ -32,7 +33,7 @@
         (check-type where buffer)
         where)))
 
-(defun value (symbol &optional (kind :default) (where nil wherep))
+(defun variable-value (symbol &optional (kind :default) (where nil wherep))
   (let ((var (get symbol 'editor-variable)))
     (unless (editor-variable-p var)
       (editor-variable-error symbol))
@@ -53,7 +54,7 @@
       ((:global)
        (editor-variable-value var)))))
 
-(defun (setf value) (value symbol &optional (kind :default) (where nil wherep))
+(defun (setf variable-value) (value symbol &optional (kind :default) (where nil wherep))
   (let ((var (get symbol 'editor-variable)))
     (unless (editor-variable-p var)
       (editor-variable-error symbol))
@@ -67,3 +68,9 @@
                value)))
       ((:global)
        (setf (editor-variable-value var) value)))))
+
+(defun variable-documentation (symbol)
+  (let ((var (get symbol 'editor-variable)))
+    (unless (editor-variable-p var)
+      (editor-variable-error symbol))
+    (editor-variable-documentation var)))

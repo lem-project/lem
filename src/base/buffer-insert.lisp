@@ -197,19 +197,19 @@
                  call-after-change-functions))
 
 (defun call-before-change-functions (buffer start n)
-  (alexandria:when-let ((hooks (value 'before-change-functions :buffer buffer)))
+  (alexandria:when-let ((hooks (variable-value 'before-change-functions :buffer buffer)))
     (run-hooks hooks start n))
-  (alexandria:when-let ((hooks (value 'before-change-functions :global)))
+  (alexandria:when-let ((hooks (variable-value 'before-change-functions :global)))
     (run-hooks hooks start n)))
 
 (defun call-after-change-functions (buffer start end old-len)
-  (alexandria:when-let ((hooks (value 'after-change-functions :buffer buffer)))
+  (alexandria:when-let ((hooks (variable-value 'after-change-functions :buffer buffer)))
     (run-hooks hooks start end old-len))
-  (alexandria:when-let ((hooks (value 'after-change-functions :global)))
+  (alexandria:when-let ((hooks (variable-value 'after-change-functions :global)))
     (run-hooks hooks start end old-len)))
 
 (defmacro insert/after-change-function (point arg)
-  `(if (value 'after-change-functions)
+  `(if (variable-value 'after-change-functions)
        (with-point ((start ,point))
          (prog1 (call-next-method)
            (with-point ((end start))
@@ -218,7 +218,7 @@
        (call-next-method)))
 
 (defmacro delete/after-change-function (point)
-  `(if (value 'after-change-functions)
+  `(if (variable-value 'after-change-functions)
        (let ((string (call-next-method)))
          (with-point ((start ,point)
                       (end ,point))

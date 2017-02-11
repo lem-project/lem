@@ -20,8 +20,6 @@
           syntax-skip-expr-prefix-forward
           syntax-skip-expr-prefix-backward
           syntax-scan-range
-          in-string-p
-          in-comment-p
           search-comment-start-forward
           search-comment-start-backward
           search-string-start-forward
@@ -32,7 +30,12 @@
           skip-space-and-comment-backward
           symbol-string-at-point
           form-offset
-          scan-lists))
+          scan-lists
+          parse-partial-sexp
+          syntax-ppss
+          in-string-p
+          in-comment-p
+          in-string-or-comment-p))
 
 (define-editor-variable enable-syntax-highlight nil)
 (defvar *global-syntax-highlight* t)
@@ -422,18 +425,6 @@
 (defmacro with-point-syntax (point &body body)
   `(let ((*current-syntax* (buffer-syntax-table (point-buffer ,point))))
      ,@body))
-
-(defun in-string-p (point)
-  (with-point-syntax point
-    (and (eq *syntax-string-attribute*
-             (text-property-at point :attribute))
-         (not (eq :start (text-property-at point 'region-side))))))
-
-(defun in-comment-p (point)
-  (with-point-syntax point
-    (and (eq *syntax-comment-attribute*
-             (text-property-at point :attribute))
-         (not (eq :start (text-property-at point 'region-side))))))
 
 (defun %search-syntax-start-forward (point syntax limit)
   (with-point ((curr point))
@@ -978,3 +969,18 @@
       (setf (buffer-value buffer 'syntax-ppss-cache)
             cache-list)
       state)))
+
+(defun in-string-p (point)
+  (let ((state (syntax-ppss point)))
+    (eq (parser-state-type state) :string)))
+
+(defun in-comment-p (point)
+  (let ((state (syntax-ppss point)))
+    (or (eq (parser-state-type state) :line-comment)
+        (eq (parser-state-type state) :block-comment))))
+
+(defun in-string-or-comment-p (point)
+  (let ((state (syntax-ppss point)))
+    (or (eq (parser-state-type state) :string)
+        (eq (parser-state-type state) :line-comment)
+        (eq (parser-state-type state) :block-comment))))

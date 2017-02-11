@@ -7,7 +7,7 @@
 (defun scan-line-property-list (buffer str)
   (ppcre:do-register-groups (var val)
       ("([a-zA-Z0-9-_]+)\\s*:\\s*([^ ;]+);?" str)
-    (cond ((string= (string-downcase var) "mode")
+    (cond ((string-equal var "mode")
            (let ((mode (find-mode-from-name val)))
              (when mode
                (change-buffer-mode buffer mode))))

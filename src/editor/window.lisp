@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(*window-sufficient-width*
+(export '(truncate-lines
+          *window-sufficient-width*
           *scroll-recenter-p*
           *window-scroll-functions*
           *window-size-change-functions*
@@ -30,6 +31,8 @@
           pop-to-buffer
           floating-windows
           balloon))
+
+(define-editor-variable truncate-lines t)
 
 (defvar *window-sufficient-width* 150)
 (defvar *scroll-recenter-p* t)

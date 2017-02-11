@@ -1,8 +1,7 @@
 (in-package :lem-base)
 
 (export '(define-editor-variable
-          value
-          truncate-lines))
+          value))
 
 (defstruct editor-variable
   value
@@ -68,5 +67,3 @@
                value)))
       ((:global)
        (setf (editor-variable-value var) value)))))
-
-(define-editor-variable truncate-lines t)

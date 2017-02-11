@@ -245,14 +245,17 @@
       (values buffer max-column))))
 
 (defun run-completion (items &key restart-function (auto-insert t))
-  (if (and auto-insert (uiop:length=n-p items 1))
-      (completion-insert (current-point) (first items))
-      (multiple-value-bind (buffer max-column)
-          (create-completion-buffer items *completion-attribute*)
-        (setf *completion-window*
-              (balloon (current-window)
-                       buffer
-                       (+ 1 max-column)
-                       (min 20 (length items))))
-        (start-completion-mode buffer restart-function)))
+  (cond
+    ((null items))
+    ((and auto-insert (uiop:length=n-p items 1))
+     (completion-insert (current-point) (first items)))
+    (t
+     (multiple-value-bind (buffer max-column)
+         (create-completion-buffer items *completion-attribute*)
+       (setf *completion-window*
+             (balloon (current-window)
+                      buffer
+                      (+ 1 max-column)
+                      (min 20 (length items))))
+       (start-completion-mode buffer restart-function))))
   t)

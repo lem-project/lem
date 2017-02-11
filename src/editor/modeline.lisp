@@ -31,14 +31,14 @@
 
 (defun modeline-add-status-list (x &optional (buffer nil bufferp))
   (if bufferp
-      (push x (get-bvar :modeline-status-list :buffer buffer))
+      (push x (buffer-value buffer :modeline-status-list))
       (push x *modeline-status-list*))
   (values))
 
 (defun modeline-remove-status-list (x &optional (buffer nil bufferp))
   (if bufferp
-      (setf (get-bvar :modeline-status-list :buffer buffer)
-            (remove x (get-bvar :modeline-status-list :buffer buffer)))
+      (setf (buffer-value buffer :modeline-status-list)
+            (remove x (buffer-value buffer :modeline-status-list)))
       (setf *modeline-status-list*
             (remove x *modeline-status-list*))))
 
@@ -76,7 +76,7 @@
   (with-output-to-string (*standard-output*)
     (let ((firstp t))
       (dolist (x (append (mapcar #'mode-name (buffer-minor-modes (window-buffer window)))
-                         (get-bvar :modeline-status-list :buffer (window-buffer window))
+                         (buffer-value (window-buffer window) :modeline-status-list)
                          *modeline-status-list*))
         (princ " ")
         (if (functionp x)
@@ -94,9 +94,9 @@
   (let* ((posline (posline window))
          (str (with-output-to-string (out)
                 (dolist (x
-                         (get-bvar :modeline-format
-                                   :buffer (window-buffer window)
-                                   :default *modeline-default-format*))
+                         (buffer-value (window-buffer window)
+                                       :modeline-format
+                                       *modeline-default-format*))
                   (if (or (symbolp x) (functionp x))
                       (princ (funcall x window) out)
                       (princ x out)))))

@@ -199,7 +199,7 @@
            (new-package name prompt-string)
            (lem.listener-mode:listener-reset-prompt (repl-buffer))))
         (t
-         (setf (get-bvar "package") package-name))))
+         (setf (buffer-value (current-buffer) "package") package-name))))
 
 (define-command slime-eval-last-expression () ()
   (check-connection)
@@ -886,7 +886,7 @@
     (swank-protocol:emacs-rex *connection* `(swank:throw-to-toplevel))))
 
 (define-command slime-continue () ()
-  (when (null (get-bvar 'restarts))
+  (when (null (buffer-value (current-buffer) 'restarts))
     (error "slime-continue called outside of debug buffer"))
   (swank-protocol:emacs-rex *connection*
                             '(swank:sldb-continue)
@@ -906,7 +906,7 @@
   (when (swank-protocol:debuggerp *connection*)
     (swank-protocol:emacs-rex *connection*
                               `(swank:invoke-nth-restart-for-emacs
-                                ,(get-bvar 'level :default -1)
+                                ,(buffer-value (current-buffer) 'level -1)
                                 ,n))))
 
 (define-command slime-invoke-restart-0 () () (slime-invoke-restart 0))
@@ -922,7 +922,7 @@
 
 (defun get-debug-buffer (thread)
   (dolist (buffer (buffer-list))
-    (when (eql thread (get-bvar 'thread :buffer buffer))
+    (when (eql thread (buffer-value buffer 'thread))
       (return buffer))))
 
 (defun get-debug-buffer-create (thread)
@@ -948,15 +948,15 @@
     (setf (current-window) (display-buffer buffer))
     (slime-debug-mode)
     (setf (swank-protocol:connection-thread *connection*) thread)
-    (setf (get-bvar 'thread :buffer buffer)
+    (setf (buffer-value buffer 'thread)
           thread
-          (get-bvar 'level :buffer buffer)
+          (buffer-value buffer 'level)
           level
-          (get-bvar 'condition :buffer buffer)
+          (buffer-value buffer 'condition)
           condition
-          (get-bvar 'restarts :buffer buffer)
+          (buffer-value buffer 'restarts)
           restarts
-          (get-bvar 'continuations :buffer buffer)
+          (buffer-value buffer 'continuations)
           conts)
     (erase-buffer buffer)
     (buffer-add-delete-hook buffer 'slime-quit-debugger)
@@ -979,7 +979,7 @@
   (declare (ignore select))
   (let ((buffer (get-debug-buffer thread)))
     (cond ((and buffer
-                (= level (get-bvar 'level :buffer buffer :default -1)))
+                (= level (buffer-value buffer 'level -1)))
            ;(when select (pop-to-buffer buffer))
            )
           (t

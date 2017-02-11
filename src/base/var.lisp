@@ -42,15 +42,15 @@
        (let ((buffer (if wherep
                          (ensure-buffer where)
                          (current-buffer))))
-         (get-bvar (editor-variable-local-indicator var)
-                   :buffer buffer
-                   :default (editor-variable-value var))))
+         (buffer-value buffer
+                       (editor-variable-local-indicator var)
+                       (editor-variable-value var))))
       ((:buffer)
        (let ((buffer (if wherep
                          (ensure-buffer where)
                          (current-buffer))))
-         (get-bvar (editor-variable-local-indicator var)
-                   :buffer buffer)))
+         (buffer-value buffer
+                       (editor-variable-local-indicator var))))
       ((:global)
        (editor-variable-value var)))))
 
@@ -63,8 +63,8 @@
        (let ((buffer (if wherep
                          (ensure-buffer where)
                          (current-buffer))))
-         (setf (get-bvar (editor-variable-local-indicator var)
-                         :buffer buffer)
+         (setf (buffer-value buffer
+                             (editor-variable-local-indicator var))
                value)))
       ((:global)
        (setf (editor-variable-value var) value)))))

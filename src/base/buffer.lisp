@@ -27,7 +27,7 @@
           buffer-undo
           buffer-redo
           buffer-undo-boundary
-          get-bvar
+          buffer-value
           clear-buffer-variables
           buffer-add-delete-hook))
 
@@ -362,12 +362,12 @@
   (unless (eq :separator (car (buffer-undo-stack buffer)))
     (push :separator (buffer-undo-stack buffer))))
 
-(defun get-bvar (name &key (buffer (current-buffer)) default)
+(defun buffer-value (buffer name &optional default)
   (multiple-value-bind (value foundp)
       (gethash name (buffer-variables buffer))
     (if foundp value default)))
 
-(defun (setf get-bvar) (value name &key (buffer (current-buffer)) default)
+(defun (setf buffer-value) (value buffer name &optional default)
   (declare (ignore default))
   (setf (gethash name (buffer-variables buffer)) value))
 

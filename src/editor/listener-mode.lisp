@@ -20,11 +20,11 @@
 
 (defvar %listener-point-indicator (gensym))
 (defmacro %listener-point (buffer)
-  `(get-bvar %listener-point-indicator :buffer ,buffer))
+  `(buffer-value ,buffer %listener-point-indicator))
 
 (defvar %listener-history-indicator (gensym))
 (defmacro %listener-history ()
-  `(get-bvar %listener-history-indicator))
+  `(buffer-value (current-buffer) %listener-history-indicator))
 
 (define-minor-mode listener-mode
     (:name "listener"

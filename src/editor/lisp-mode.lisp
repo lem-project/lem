@@ -429,7 +429,7 @@
                      (character-offset point 1)))))))))
 
 (defun lisp-buffer-package (buffer)
-  (let ((package-name (get-bvar "package" :buffer buffer)))
+  (let ((package-name (buffer-value buffer "package")))
     (when package-name
       (string-upcase package-name))))
 
@@ -438,7 +438,7 @@
       (find-package "COMMON-LISP-USER")))
 
 (defun lisp-change-package (package)
-  (setf (get-bvar "package") (package-name package)))
+  (setf (buffer-value (current-buffer) "package") (package-name package)))
 
 (defun lisp-read-change-package (find-package-function
                                  complete-package-function)

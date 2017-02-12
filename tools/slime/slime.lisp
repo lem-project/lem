@@ -545,7 +545,8 @@
                       :detail (fourth completion)
                       :start start
                       :end end))
-                   completions))))))
+                   completions)
+           :restart-function 'slime-completion-symbol-at-point)))))
   t)
 
 (defvar *slime-apropos-mode-keymap* (make-keymap nil *slime-mode-keymap*))

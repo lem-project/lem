@@ -4,6 +4,7 @@
           *minibuf-keymap*
           minibuffer-window-p
           minibuffer-window-height
+          minibufferp
           message
           message-without-log
           minibuf-read-char

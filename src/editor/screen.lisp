@@ -42,6 +42,7 @@
   %modeline-scrwin
   x
   y
+  left-lines
   lines
   old-lines
   wrap-lines
@@ -57,6 +58,7 @@
                 :x x
                 :y y
                 :width width
+                :left-lines (make-array (max 0 height) :initial-element nil)
                 :lines (make-array (max 0 height) :initial-element nil)
                 :old-lines (make-array (max 0 height) :initial-element nil)))
 
@@ -94,6 +96,8 @@
     (charms/ll:wresize (screen-%modeline-scrwin screen)
                        (minibuffer-window-height)
                        width))
+  (setf (screen-left-lines screen)
+        (make-array height :initial-element nil))
   (setf (screen-lines screen)
         (make-array height :initial-element nil))
   (setf (screen-old-lines screen)
@@ -173,10 +177,10 @@
         (aref (screen-lines screen) screen-row)
       (setf (cdr (aref (screen-lines screen) screen-row))
             (lem-base::put-elements attributes
-                               start-charpos
-                               (or end-charpos
-                                   (length string))
-                               attribute)))))
+                                    start-charpos
+                                    (or end-charpos
+                                        (length string))
+                                    attribute)))))
 
 (defun disp-set-overlay (screen attribute view-point start end)
   (let ((screen-row (count-lines view-point start)))
@@ -244,9 +248,11 @@
   (with-point ((point view-point))
     (loop :for i :from 0 :below (screen-height screen)
           :do
-          (let ((line (lem-base::point-line point)))
-            (setf (aref (screen-lines screen) i)
-                  (lem-base::line-string/attributes line)))
+          (let* ((line (lem-base::point-line point))
+                 (str/attributes (lem-base::line-string/attributes line))
+                 (left-fringe (lem-base::line-left-fringe line)))
+            (setf (aref (screen-left-lines screen) i) left-fringe)
+            (setf (aref (screen-lines screen) i) str/attributes))
           (unless (line-offset point 1)
             (fill (screen-lines screen) nil :start (1+ i))
             (return))))
@@ -293,8 +299,8 @@
     (values visual-cursor-x visual-cursor-y point-y)))
 
 (defun screen-display-line (screen view-charpos
-			    visual-cursor-x visual-cursor-y
-			    point-x point-y str/attributes)
+                                   visual-cursor-x visual-cursor-y
+                                   point-x point-y str/attributes)
   (declare (ignore view-charpos))
   (when (= visual-cursor-y point-y)
     (setf visual-cursor-x (string-width (car str/attributes) 0 point-x)))
@@ -347,51 +353,64 @@
            (view-charpos (point-charpos view-point))
            (point-x (point-charpos cursor-point)))
       (loop :for y :from 0
-	 :for i :from 0
-	 :for str/attributes :across (screen-lines screen)
-	 :while (< y (screen-height screen))
-	 :do (cond
-	       ((and (variable-value 'truncate-lines :buffer buffer)
-		     (not redraw-flag)
-		     (not (null str/attributes))
-		     #1=(aref (screen-old-lines screen) i)
-		     (equal str/attributes #1#)
-		     (/= cursor-y i))
-		(let ((n (count i wrap-lines)))
-		  (when (and (< 0 n) (<= y visual-cursor-y))
-		    (incf visual-cursor-y n))
-		  (incf y n)
-		  (dotimes (_ n)
-		    (push i (screen-wrap-lines screen)))))
-	       (str/attributes
-		(setf (aref (screen-old-lines screen) i) str/attributes)
-		(when (zerop (length (car str/attributes)))
-		  (charms/ll:wmove (screen-%scrwin screen) y 0)
-		  (charms/ll:wclrtoeol (screen-%scrwin screen)))
-		(let (y2)
-		  (multiple-value-setq (visual-cursor-x visual-cursor-y y2)
-		    (funcall disp-line-function
-			     screen
-			     view-charpos
-			     visual-cursor-x
-			     visual-cursor-y
-			     point-x
-			     y
-			     str/attributes))
-		  (when (variable-value 'truncate-lines :buffer buffer)
-		    (let ((offset (- y2 y)))
-		      (cond ((< 0 offset)
-			     (setf redraw-flag t)
-			     (dotimes (_ offset)
-			       (push i (screen-wrap-lines screen))))
-			    ((and (= offset 0) (find i wrap-lines))
-			     (setf redraw-flag t))))
-		    (setf y y2))))
-	       (t
-		(fill (screen-old-lines screen) nil :start i)
-		(charms/ll:wmove (screen-%scrwin screen) y 0)
-		(charms/ll:wclrtobot (screen-%scrwin screen))
-		(return))))
+            :for i :from 0
+            :for str/attributes :across (screen-lines screen)
+            :for left-str/attributes :across (screen-left-lines screen)
+            :while (< y (screen-height screen))
+            :do (cond
+                  ((and (variable-value 'truncate-lines :buffer buffer)
+                        (null left-str/attributes)
+                        (not redraw-flag)
+                        (not (null str/attributes))
+                        #1=(aref (screen-old-lines screen) i)
+                        (equal str/attributes #1#)
+                        (/= cursor-y i))
+                   (let ((n (count i wrap-lines)))
+                     (when (and (< 0 n) (<= y visual-cursor-y))
+                       (incf visual-cursor-y n))
+                     (incf y n)
+                     (dotimes (_ n)
+                       (push i (screen-wrap-lines screen)))))
+                  (str/attributes
+                   (setf (aref (screen-old-lines screen) i) str/attributes)
+                   (when (zerop (length (car str/attributes)))
+                     (charms/ll:wmove (screen-%scrwin screen) y 0)
+                     (charms/ll:wclrtoeol (screen-%scrwin screen)))
+                   (let (y2)
+                     (cond
+                       (left-str/attributes
+                        (when (= y visual-cursor-y)
+                          (incf point-x (length (car left-str/attributes))))
+                        (setf str/attributes
+                              (cons (concatenate 'string (car left-str/attributes) (car str/attributes))
+                                    (append (cdr left-str/attributes)
+                                            (lem-base::offset-elements
+                                             (cdr str/attributes)
+                                             (length (car left-str/attributes))))))))
+                     (multiple-value-setq
+                      (visual-cursor-x visual-cursor-y y2)
+                      (funcall disp-line-function
+                               screen
+                               view-charpos
+                               visual-cursor-x
+                               visual-cursor-y
+                               point-x
+                               y
+                               str/attributes))
+                     (when (variable-value 'truncate-lines :buffer buffer)
+                       (let ((offset (- y2 y)))
+                         (cond ((< 0 offset)
+                                (setf redraw-flag t)
+                                (dotimes (_ offset)
+                                  (push i (screen-wrap-lines screen))))
+                               ((and (= offset 0) (find i wrap-lines))
+                                (setf redraw-flag t))))
+                       (setf y y2))))
+                  (t
+                   (fill (screen-old-lines screen) nil :start i)
+                   (charms/ll:wmove (screen-%scrwin screen) y 0)
+                   (charms/ll:wclrtobot (screen-%scrwin screen))
+                   (return))))
       (screen-move-cursor screen visual-cursor-x visual-cursor-y))))
 
 (defun screen-redraw-separator (window)

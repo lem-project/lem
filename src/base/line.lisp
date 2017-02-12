@@ -9,6 +9,7 @@
   plist
   %symbol-lifetimes
   %syntax-context
+  left-fringe
   ord
   buffer
   points)
@@ -110,6 +111,10 @@
 		(iter:collect (list (- start start) (- end1 start) value1)))
 	       ((<= start1 start end end1)
 		(iter:collect (list (- start start) (- end start) value1))))))
+
+(defun offset-elements (elements n)
+  (iter:iter (iter:for (start1 end1 value1) iter:in elements)
+    (iter:collect (list (+ n start1) (+ n end1) value1))))
 
 (defun put-elements (elements start end value &optional contp)
   (normalization-elements

@@ -5,6 +5,8 @@
 (defvar *old-display-width*)
 (defvar *old-display-height*)
 
+(defvar *print-start-x* 0)
+
 (defun %attribute-to-bits (attribute)
   (or (attribute-%internal-value attribute)
       (let ((bits (logior (get-color-pair (attribute-fg-color attribute)
@@ -121,7 +123,16 @@
         ((attribute-p attr)
          (setf attr (%attribute-to-bits attr))))
   (charms/ll:wattron scrwin attr)
-  (charms/ll:mvwaddstr scrwin y x string)
+  (loop :for c :across string
+        :do (cond ((char= c #\tab)
+                   (loop :with size := (+ *print-start-x* (* (tab-size) (floor (+ (tab-size) x) (tab-size))))
+                         :while (< x size)
+                         :do
+                         (charms/ll:mvwaddch scrwin y x #.(char-code #\space))
+                         (incf x)))
+                  (t
+                   (charms/ll:mvwaddch scrwin y x (char-code c))
+                   (incf x))))
   (charms/ll:wattroff scrwin attr))
 
 (defun screen-print-string (screen x y string)
@@ -407,18 +418,19 @@
                        (let ((len (length (car left-str/attributes))))
                          (decf screen-width len)
                          (setf start-x len)))
-                     (multiple-value-setq
-                      (visual-cursor-x visual-cursor-y y2)
-                      (funcall disp-line-function
-                               screen
-                               screen-width
-                               start-x
-                               view-charpos
-                               visual-cursor-x
-                               visual-cursor-y
-                               point-x
-                               y
-                               str/attributes))
+                     (let ((*print-start-x* start-x))
+                       (multiple-value-setq
+                        (visual-cursor-x visual-cursor-y y2)
+                        (funcall disp-line-function
+                                 screen
+                                 screen-width
+                                 start-x
+                                 view-charpos
+                                 visual-cursor-x
+                                 visual-cursor-y
+                                 point-x
+                                 y
+                                 str/attributes)))
                      (when (variable-value 'truncate-lines :buffer buffer)
                        (let ((offset (- y2 y)))
                          (cond ((< 0 offset)

@@ -1,6 +1,6 @@
 (in-package :lem-base)
 
-(export '(run-hooks add-hook))
+(export '(run-hooks add-hook remove-hook))
 
 (defun run-hooks (hooks &rest args)
   (dolist (hook hooks)
@@ -16,3 +16,6 @@
                       ,place
                       #'>
                       :key #'cdr))))))
+
+(defmacro remove-hook (place callback)
+  `(setf ,place (delete ,callback ,place :key #'car)))

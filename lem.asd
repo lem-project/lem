@@ -65,6 +65,7 @@
                              (:file "isearch")
                              (:file "showparen")
                              (:file "list-buffers")
+                             (:file "line-numbers")
                              (:file "sourcelist")
                              (:file "grep")
                              (:file "lisp-mode")

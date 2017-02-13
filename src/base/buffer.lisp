@@ -28,6 +28,7 @@
           buffer-redo
           buffer-undo-boundary
           buffer-value
+          buffer-unbound
           clear-buffer-variables
           buffer-add-delete-hook))
 
@@ -372,6 +373,9 @@
   (declare (ignore default))
   (setf buffer (ensure-buffer buffer))
   (setf (gethash name (buffer-variables buffer)) value))
+
+(defun buffer-unbound (buffer name)
+  (remhash name (buffer-variables buffer)))
 
 (defun clear-buffer-variables (&key (buffer (current-buffer)))
   (clrhash (buffer-variables buffer)))

@@ -69,7 +69,7 @@
              `(setf (mode-syntax-table ',major-mode)
                     (fundamental-syntax-table))))
      (define-command ,major-mode () ()
-       (clear-buffer-variables)
+       (clear-editor-local-variables (current-buffer))
        ,(when parent-mode `(,parent-mode))
        (setf (buffer-major-mode (current-buffer)) ',major-mode)
        (setf (buffer-syntax-table (current-buffer)) (mode-syntax-table ',major-mode))

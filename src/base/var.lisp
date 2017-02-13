@@ -1,18 +1,28 @@
 (in-package :lem-base)
 
 (export '(define-editor-variable
+          clear-editor-local-variables
           variable-value
           variable-documentation))
+
+(defvar *editor-variables* '())
 
 (defstruct editor-variable
   value
   documentation
   local-indicator)
 
+(defun clear-editor-local-variables (buffer)
+  (dolist (symbol *editor-variables*)
+    (buffer-unbound buffer
+                    (editor-variable-local-indicator
+                     (get symbol 'editor-variable)))))
+
 (defmacro define-editor-variable (var &optional value documentation)
   (check-type var symbol)
   `(unless (get ',var 'editor-variable)
      (defvar ,var)
+     (pushnew ',var *editor-variables*)
      (setf (get ',var 'editor-variable)
            (make-editor-variable :value ,value
                                  :documentation ,documentation

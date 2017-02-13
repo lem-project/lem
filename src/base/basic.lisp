@@ -516,9 +516,3 @@
       (when mark
         (set-current-mark mark)
         (delete-point mark)))))
-
-
-(defun set-left-fringe (point string &optional attribute)
-  (let ((line (point-line point)))
-    (setf (line-left-fringe line)
-          (cons string (list (list 0 (length string) attribute))))))

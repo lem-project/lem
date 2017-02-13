@@ -213,38 +213,47 @@
            (or (line-offset view-point (screen-height screen))
                (buffer-end view-point)))))
     (loop :for overlay :in overlays
-       :for start := (overlay-start overlay)
-       :for end := (overlay-end overlay)
-       :do (cond
-	     ((and (same-line-p start end)
-		   (point<= view-point start)
-		   (point< start view-end-point))
-	      (disp-set-line screen
-			     (overlay-attribute overlay)
-			     (count-lines view-point start)
-			     (point-charpos start)
-			     (point-charpos end)))
-	     ((and (point<= view-point start)
-		   (point< end view-end-point))
-	      (disp-set-overlay screen
-				(overlay-attribute overlay)
-				view-point
-				start
-				end))
-	     ((and (point<= start view-point)
-		   (point<= view-point end)
-		   (point<= end view-end-point))
-	      (disp-set-overlay screen
-				(overlay-attribute overlay)
-				view-point
-				view-point
-				end))
-	     ((point<= view-point start)
-	      (disp-set-overlay screen
-				(overlay-attribute overlay)
-				view-point
-				start
-				view-end-point))))))
+          :for start := (overlay-start overlay)
+          :for end := (overlay-end overlay)
+          :do (cond
+                ((overlay-get overlay :display-left)
+                 (when (and (point<= view-point start)
+                            (point<= end view-end-point))
+                   (let ((i (count-lines view-point start)))
+                     (when (and (< i (length (screen-left-lines screen)))
+                                (null (aref (screen-left-lines screen) i)))
+                       (setf (aref (screen-left-lines screen) i)
+                             (let ((str (overlay-get overlay :text)))
+                               (cons str (overlay-attribute overlay))))))))
+                ((and (same-line-p start end)
+                      (point<= view-point start)
+                      (point< start view-end-point))
+                 (disp-set-line screen
+                                (overlay-attribute overlay)
+                                (count-lines view-point start)
+                                (point-charpos start)
+                                (point-charpos end)))
+                ((and (point<= view-point start)
+                      (point< end view-end-point))
+                 (disp-set-overlay screen
+                                   (overlay-attribute overlay)
+                                   view-point
+                                   start
+                                   end))
+                ((and (point<= start view-point)
+                      (point<= view-point end)
+                      (point<= end view-end-point))
+                 (disp-set-overlay screen
+                                   (overlay-attribute overlay)
+                                   view-point
+                                   view-point
+                                   end))
+                ((point<= view-point start)
+                 (disp-set-overlay screen
+                                   (overlay-attribute overlay)
+                                   view-point
+                                   start
+                                   view-end-point))))))
 
 (defun maybe-make-mark-overlay (buffer)
   (when (and (eq buffer (current-buffer))
@@ -260,9 +269,8 @@
     (loop :for i :from 0 :below (screen-height screen)
           :do
           (let* ((line (lem-base::point-line point))
-                 (str/attributes (lem-base::line-string/attributes line))
-                 (left-fringe (lem-base::line-left-fringe line)))
-            (setf (aref (screen-left-lines screen) i) left-fringe)
+                 (str/attributes (lem-base::line-string/attributes line)))
+            (setf (aref (screen-left-lines screen) i) nil)
             (setf (aref (screen-lines screen) i) str/attributes))
           (unless (line-offset point 1)
             (fill (screen-lines screen) nil :start (1+ i))
@@ -389,11 +397,11 @@
       (loop :for y :from 0
             :for i :from 0
             :for str/attributes :across (screen-lines screen)
-            :for left-str/attributes :across (screen-left-lines screen)
+            :for left-str/attr :across (screen-left-lines screen)
             :while (< y (screen-height screen))
             :do (cond
                   ((and (variable-value 'truncate-lines :buffer buffer)
-                        (null left-str/attributes)
+                        (null left-str/attr)
                         (not redraw-flag)
                         (not (null str/attributes))
                         #1=(aref (screen-old-lines screen) i)
@@ -413,9 +421,13 @@
                    (let ((screen-width (screen-width screen))
                          (start-x 0)
                          y2)
-                     (when left-str/attributes
-                       (disp-print-line screen y left-str/attributes nil)
-                       (let ((len (length (car left-str/attributes))))
+                     (when left-str/attr
+                       (screen-print-string-attr screen
+                                                 0
+                                                 y
+                                                 (car left-str/attr)
+                                                 (cdr left-str/attr))
+                       (let ((len (length (car left-str/attr))))
                          (decf screen-width len)
                          (setf start-x len)))
                      (let ((*print-start-x* start-x))

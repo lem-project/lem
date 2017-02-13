@@ -6,7 +6,9 @@
           overlay-attribute
           overlay-buffer
           make-overlay
-          delete-overlay))
+          delete-overlay
+          overlay-put
+          overlay-get))
 
 (defclass overlay ()
   ((start
@@ -25,6 +27,10 @@
     :initarg :buffer
     :reader overlay-buffer
     :type buffer)
+   (plist
+    :initform nil
+    :accessor overlay-plist
+    :type list)
    (alivep
     :initform t
     :accessor overlay-alive-p
@@ -54,3 +60,9 @@
     (delete-point (overlay-end overlay))
     (buffer-delete-overlay (overlay-buffer overlay) overlay)
     (setf (overlay-alive-p overlay) nil)))
+
+(defun overlay-put (overlay key value)
+  (setf (getf (overlay-plist overlay) key) value))
+
+(defun overlay-get (overlay key)
+  (getf (overlay-plist overlay) key))

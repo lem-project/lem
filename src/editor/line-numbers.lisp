@@ -3,20 +3,24 @@
 (in-package :lem.line-numbers)
 
 (defvar *visited* nil)
-(defvar *toggle* nil)
 (defvar *attribute* (make-attribute "blue" nil))
 
 (defun update (&optional (window (current-window)))
   (let ((buffer (window-buffer window)))
+    (mapc #'delete-overlay (buffer-value buffer 'overlays))
     (when (buffer-value buffer 'line-numbers)
-      (with-point ((p (window-view-point window)))
-        (let ((n (length (prin1-to-string (buffer-nlines buffer)))))
-          (loop :for linum :from (line-number-at-point p) :repeat (window-height window)
-                :do
-                (lem-base::set-left-fringe
-                 p (format nil "~vD " n linum) *attribute*)
-                (unless (line-offset p 1)
-                  (return))))))))
+      (let ((overlays '()))
+        (with-point ((p (window-view-point window)))
+          (let ((n (length (prin1-to-string (buffer-nlines buffer)))))
+            (loop :for linum :from (line-number-at-point p) :repeat (window-height window)
+                  :do
+                  (let ((ov (make-overlay p p *attribute*)))
+                    (overlay-put ov :display-left t)
+                    (overlay-put ov :text (format nil "~vD " n linum))
+                    (push ov overlays))
+                  (unless (line-offset p 1)
+                    (return)))))
+        (setf (buffer-value buffer 'overlays) overlays)))))
 
 (define-command enable-line-numbers () ()
   (setf (buffer-value (current-buffer) 'line-numbers) t)

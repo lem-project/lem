@@ -5,6 +5,7 @@
           *scroll-recenter-p*
           *window-scroll-functions*
           *window-size-change-functions*
+          *window-show-buffer-functions*
           window-view-point
           windowp
           window-x

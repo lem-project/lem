@@ -9,7 +9,6 @@
   plist
   %symbol-lifetimes
   %syntax-context
-  left-fringe
   ord
   buffer
   points)

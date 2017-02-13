@@ -45,6 +45,7 @@
   x
   y
   left-lines
+  left-width
   lines
   old-lines
   wrap-lines
@@ -211,7 +212,8 @@
   (let ((view-end-point
          (with-point ((view-point view-point))
            (or (line-offset view-point (screen-height screen))
-               (buffer-end view-point)))))
+               (buffer-end view-point))))
+        (left-width 0))
     (loop :for overlay :in overlays
           :for start := (overlay-start overlay)
           :for end := (overlay-end overlay)
@@ -221,8 +223,9 @@
                             (point<= end view-end-point))
                    (let ((i (count-lines view-point start)))
                      (when (< i (length (screen-left-lines screen)))
-                       (setf (aref (screen-left-lines screen) i)
-                             (let ((str (overlay-get overlay :text)))
+                       (let ((str (overlay-get overlay :text)))
+                         (setf left-width (max left-width (length str)))
+                         (setf (aref (screen-left-lines screen) i)
                                (cons str (overlay-attribute overlay))))))))
                 ((and (same-line-p start end)
                       (point<= view-point start)
@@ -252,7 +255,8 @@
                                    (overlay-attribute overlay)
                                    view-point
                                    start
-                                   view-end-point))))))
+                                   view-end-point))))
+    (setf (screen-left-width screen) left-width)))
 
 (defun maybe-make-mark-overlay (buffer)
   (when (and (eq buffer (current-buffer))
@@ -386,7 +390,8 @@
          (if (variable-value 'truncate-lines :buffer buffer)
              #'screen-display-line-wrapping
              #'screen-display-line))
-        (wrap-lines (screen-wrap-lines screen)))
+        (wrap-lines (screen-wrap-lines screen))
+        (left-width (screen-left-width screen)))
     (setf (screen-wrap-lines screen) nil)
     (let* ((visual-cursor-x 0)
            (visual-cursor-y (count-lines view-point cursor-point))
@@ -417,18 +422,15 @@
                    (when (zerop (length (car str/attributes)))
                      (charms/ll:wmove (screen-%scrwin screen) y 0)
                      (charms/ll:wclrtoeol (screen-%scrwin screen)))
-                   (let ((screen-width (screen-width screen))
-                         (start-x 0)
+                   (let ((screen-width (- (screen-width screen) left-width))
+                         (start-x left-width)
                          y2)
                      (when left-str/attr
                        (screen-print-string-attr screen
                                                  0
                                                  y
                                                  (car left-str/attr)
-                                                 (cdr left-str/attr))
-                       (let ((len (length (car left-str/attr))))
-                         (decf screen-width len)
-                         (setf start-x len)))
+                                                 (cdr left-str/attr)))
                      (let ((*print-start-x* start-x))
                        (multiple-value-setq
                         (visual-cursor-x visual-cursor-y y2)

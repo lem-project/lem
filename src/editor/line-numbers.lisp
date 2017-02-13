@@ -9,6 +9,7 @@
   (let ((buffer (window-buffer window)))
     (mapc #'delete-overlay (buffer-value buffer 'line-number-overlays))
     (when (buffer-value buffer 'line-numbers)
+      (window-see window)
       (let ((overlays '()))
         (with-point ((p (window-view-point window)))
           (let ((n (length (prin1-to-string (buffer-nlines buffer)))))
@@ -28,5 +29,13 @@
     (setf *visited* t)
     (add-hook *post-command-hook* 'update)))
 
-;; (define-command disable-line-numbers () ()
-;;   )
+(define-command disable-line-numbers () ()
+  (let ((buffer (current-buffer)))
+    (when (buffer-value buffer 'line-numbers)
+      (mapc #'delete-overlay (buffer-value buffer 'line-number-overlays))
+      (setf (buffer-value buffer 'line-numbers) nil))))
+
+(define-command toggle-line-numbers () ()
+  (if (buffer-value (current-buffer) 'line-numbers)
+      (disable-line-numbers)
+      (enable-line-numbers)))

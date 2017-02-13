@@ -87,8 +87,11 @@
                             (loop :for i :from 1 :below nbytes
                                   :do (setf (aref vec i) (charms/ll:getch)))
                             (schar (babel:octets-to-string vec) 0)))))))))
-      (exit-editor (c)
-                   (return-from lem-internal (exit-editor-value c))))))
+      (exit-editor (c) (return-from lem-internal (exit-editor-value c)))
+      #+sbcl
+      (sb-sys:interactive-interrupt (c)
+                                    (declare (ignore c))
+                                    (bt:destroy-thread editor-thread)))))
 
 (let ((passed nil))
   (defun call-with-editor (function)

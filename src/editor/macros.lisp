@@ -44,23 +44,7 @@
 
 (defmacro handler-case-bind ((error-bind &body body)
                              ((condition) &body protected-form))
-  (let ((gerror-bind (gensym "ERROR-BIND")))
-    `(let ((,gerror-bind ,error-bind))
-       (handler-case
-           (handler-bind ((error ,gerror-bind)
-                          #+sbcl (sb-sys:interactive-interrupt ,gerror-bind)
-                          #+ccl (ccl:interrupt-signal-condition ,gerror-bind)
-                          #+ecl (ext:interactive-interrupt ,gerror-bind))
-             #+ccl
-             (let ((ccl:*break-hook*
-                    #'(lambda (condition hook)
-                        (declare (ignore hook))
-                        (error condition))))
-               ,@body)
-             #-ccl
-             (progn ,@body))
-         ((or error
-	   #+sbcl sb-sys:interactive-interrupt
-	   #+ccl ccl:interrupt-signal-condition)
-	     (,condition)
-	   ,@protected-form)))))
+  `(handler-case
+       (handler-bind ((error ,error-bind))
+         (progn ,@body))
+     (error (,condition) ,@protected-form)))

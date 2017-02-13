@@ -123,16 +123,16 @@
         ((attribute-p attr)
          (setf attr (%attribute-to-bits attr))))
   (charms/ll:wattron scrwin attr)
-  (loop :for c :across string
-        :do (cond ((char= c #\tab)
+  (loop :for char :across string
+        :do (cond ((char= char #\tab)
                    (loop :with size := (+ *print-start-x* (* (tab-size) (floor (+ (tab-size) x) (tab-size))))
                          :while (< x size)
                          :do
                          (charms/ll:mvwaddch scrwin y x #.(char-code #\space))
                          (incf x)))
                   (t
-                   (charms/ll:mvwaddch scrwin y x (char-code c))
-                   (incf x))))
+                   (charms/ll:mvwaddstr scrwin y x (string char))
+                   (setf x (char-width char x)))))
   (charms/ll:wattroff scrwin attr))
 
 (defun screen-print-string (screen x y string)

@@ -17,7 +17,6 @@
                              (:file "buffer-insert")
                              (:file "buffers")
                              (:file "point")
-                             (:file "overlay")
                              (:file "basic")
                              (:file "syntax")
                              (:file "file")

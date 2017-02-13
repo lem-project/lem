@@ -114,10 +114,6 @@
     :initform nil
     :initarg :redo-stack
     :accessor buffer-redo-stack)
-   (overlays
-    :initform nil
-    :initarg :overlays
-    :accessor buffer-overlays)
    (points
     :initform nil
     :initarg :points
@@ -247,13 +243,6 @@
 
 (defun buffer-unmark (buffer)
   (setf (buffer-%modified-p buffer) 0))
-
-(defun buffer-add-overlay (buffer overlay)
-  (push overlay (buffer-overlays buffer)))
-
-(defun buffer-delete-overlay (buffer overlay)
-  (setf (buffer-overlays buffer)
-        (delete overlay (buffer-overlays buffer))))
 
 (defun buffer-add-point (buffer point)
   (push point (buffer-points buffer)))

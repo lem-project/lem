@@ -7,7 +7,7 @@
 
 (defun update (&optional (window (current-window)))
   (let ((buffer (window-buffer window)))
-    (mapc #'delete-overlay (buffer-value buffer 'overlays))
+    (mapc #'delete-overlay (buffer-value buffer 'line-number-overlays))
     (when (buffer-value buffer 'line-numbers)
       (let ((overlays '()))
         (with-point ((p (window-view-point window)))
@@ -20,7 +20,7 @@
                     (push ov overlays))
                   (unless (line-offset p 1)
                     (return)))))
-        (setf (buffer-value buffer 'overlays) overlays)))))
+        (setf (buffer-value buffer 'line-number-overlays) overlays)))))
 
 (define-command enable-line-numbers () ()
   (setf (buffer-value (current-buffer) 'line-numbers) t)

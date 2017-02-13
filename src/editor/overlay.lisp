@@ -1,4 +1,4 @@
-(in-package :lem-base)
+(in-package :lem)
 
 (export '(overlay-p
           overlay-start
@@ -50,7 +50,7 @@
                          :end (copy-point end :right-inserting)
                          :attribute attribute
                          :buffer buffer)))
-    (buffer-add-overlay buffer overlay)
+    (push overlay (buffer-value buffer 'overlays))
     overlay))
 
 (defun delete-overlay (overlay)
@@ -58,7 +58,9 @@
              (overlay-alive-p overlay))
     (delete-point (overlay-start overlay))
     (delete-point (overlay-end overlay))
-    (buffer-delete-overlay (overlay-buffer overlay) overlay)
+    (let ((buffer (overlay-buffer overlay)))
+      (setf (buffer-value buffer 'overlays)
+            (delete overlay (buffer-value buffer 'overlays))))
     (setf (overlay-alive-p overlay) nil)))
 
 (defun overlay-put (overlay key value)
@@ -66,3 +68,6 @@
 
 (defun overlay-get (overlay key)
   (getf (overlay-plist overlay) key))
+
+(defun overlays (buffer)
+  (buffer-value buffer 'overlays))

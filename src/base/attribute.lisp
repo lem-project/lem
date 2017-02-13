@@ -12,6 +12,7 @@
           *syntax-variable-attribute*
           *syntax-type-attribute*
           copy-attribute
+          attribute
           attribute-p
           attribute-name
           attribute-fg-color

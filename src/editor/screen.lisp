@@ -220,8 +220,7 @@
                  (when (and (point<= view-point start)
                             (point<= end view-end-point))
                    (let ((i (count-lines view-point start)))
-                     (when (and (< i (length (screen-left-lines screen)))
-                                (null (aref (screen-left-lines screen) i)))
+                     (when (< i (length (screen-left-lines screen)))
                        (setf (aref (screen-left-lines screen) i)
                              (let ((str (overlay-get overlay :text)))
                                (cons str (overlay-attribute overlay))))))))
@@ -278,8 +277,8 @@
   (let ((mark-overlay (maybe-make-mark-overlay buffer)))
     (disp-set-overlays screen
                        (if mark-overlay
-                           (cons mark-overlay (lem-base::buffer-overlays buffer))
-                           (lem-base::buffer-overlays buffer))
+                           (cons mark-overlay (lem::overlays buffer))
+                           (lem::overlays buffer))
                        view-point)
     (when mark-overlay
       (delete-overlay mark-overlay))))

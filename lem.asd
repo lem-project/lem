@@ -46,6 +46,7 @@
                              (:file "event")
                              (:file "interp")
                              (:file "input")
+                             (:file "overlay")
                              (:file "streams")
                              (:file "fundamental-mode")
                              (:file "comp")

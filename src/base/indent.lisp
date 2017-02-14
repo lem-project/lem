@@ -53,6 +53,7 @@
           (t 0))))
 
 (defun indent-line (point)
-  (indent-line-1 point
-                 (funcall (variable-value 'calc-indent-function :buffer point)
-                          point)))
+  (let* ((fn (or (variable-value 'calc-indent-function :buffer point)
+                 'calc-indent-default))
+         (column (funcall fn point)))
+    (indent-line-1 point column)))

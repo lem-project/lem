@@ -194,8 +194,8 @@
                                         (length string))
                                     attribute)))))
 
-(defun disp-set-overlay (screen attribute view-point start end)
-  (let ((screen-row (count-lines view-point start)))
+(defun disp-set-overlay (screen attribute screen-row start end)
+  (let ()
     (disp-set-line screen attribute screen-row (point-charpos start) nil)
     (with-point ((point start))
       (line-offset point 1)
@@ -208,12 +208,25 @@
 	 (unless (line-offset point 1)
 	   (return-from disp-set-overlay))))))
 
+(defun calc-row (curr-point)
+  (declare (special last-point last-index))
+  (let* ((offset (count-lines last-point curr-point))
+         (i (+ last-index
+               (if (point< last-point curr-point)
+                   offset
+                   (- offset)))))
+    (setf last-point curr-point)
+    (setf last-index i)
+    i))
+
 (defun disp-set-overlays (screen overlays view-point)
-  (let ((view-end-point
-         (with-point ((view-point view-point))
-           (or (line-offset view-point (screen-height screen))
-               (buffer-end view-point))))
-        (left-width 0))
+  (let ((left-width 0)
+        (view-end-point (with-point ((view-point view-point))
+                          (or (line-offset view-point (screen-height screen))
+                              (buffer-end view-point))))
+        (last-point view-point)
+        (last-index 0))
+    (declare (special last-point last-index))
     (loop :for overlay :in overlays
           :for start := (overlay-start overlay)
           :for end := (overlay-end overlay)
@@ -221,8 +234,8 @@
                 ((overlay-get overlay :display-left)
                  (when (and (point<= view-point start)
                             (point<= end view-end-point))
-                   (let ((i (count-lines view-point start)))
-                     (when (< i (length (screen-left-lines screen)))
+                   (let ((i (calc-row start)))
+                     (when (< i (screen-height screen))
                        (let ((str (overlay-get overlay :text)))
                          (setf left-width (max left-width (length str)))
                          (setf (aref (screen-left-lines screen) i)
@@ -232,14 +245,14 @@
                       (point< start view-end-point))
                  (disp-set-line screen
                                 (overlay-attribute overlay)
-                                (count-lines view-point start)
+                                (calc-row start)
                                 (point-charpos start)
                                 (point-charpos end)))
                 ((and (point<= view-point start)
                       (point< end view-end-point))
                  (disp-set-overlay screen
                                    (overlay-attribute overlay)
-                                   view-point
+                                   (calc-row start)
                                    start
                                    end))
                 ((and (point<= start view-point)
@@ -247,13 +260,13 @@
                       (point<= end view-end-point))
                  (disp-set-overlay screen
                                    (overlay-attribute overlay)
-                                   view-point
+                                   0
                                    view-point
                                    end))
                 ((point<= view-point start)
                  (disp-set-overlay screen
                                    (overlay-attribute overlay)
-                                   view-point
+                                   (calc-row start)
                                    start
                                    view-end-point))))
     (setf (screen-left-width screen) left-width)))

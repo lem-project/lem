@@ -37,10 +37,11 @@
 #+sbcl
 (defmacro with-profile (&body body)
   `(progn
-     (sb-profile:profile "LEM" "LEM-BASE")
+     (sb-profile:profile "LEM" "LEM-BASE" "LEM-INTERFACE")
      ,@body
      (with-debug-output ("PROFILE")
-       (sb-profile:report))))
+       (sb-profile:report))
+     (sb-profile:unprofile)))
 
 (defmacro handler-case-bind ((error-bind &body body)
                              ((condition) &body protected-form))

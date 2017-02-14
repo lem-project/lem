@@ -8,6 +8,8 @@
            :term-set-tty))
 (in-package :lem.term)
 
+(cffi:defcvar ("COLOR_PAIRS" *COLOR-PAIRS* :library charms/ll::libcurses) :int)
+
 (defvar *colors* nil)
 (defvar *color-pair-table* (make-hash-table :test 'equal))
 (defvar *use-bg-color*)

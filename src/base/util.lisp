@@ -1,13 +1,10 @@
-(in-package :cl-user)
-(defpackage :lem.util
-  (:use :cl)
-  (:export
-   :pdebug
-   :utf8-bytes
-   :bests-if
-   :max-if
-   :min-if))
-(in-package :lem.util)
+(in-package :lem-base)
+
+(export '(pdebug
+          utf8-bytes
+          bests-if
+          max-if
+          min-if))
 
 (defun pdebug (x &optional (file "DEBUG"))
   (with-open-file (out file

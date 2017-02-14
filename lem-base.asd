@@ -6,6 +6,7 @@
   :components ((:module "src/base"
                 :serial t
                 :components ((:file "package")
+                             (:file "util")
                              (:file "errors")
                              (:file "var")
                              (:file "attribute")

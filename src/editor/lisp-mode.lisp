@@ -1,8 +1,6 @@
 (in-package :cl-user)
 (defpackage :lem.lisp-mode
   (:use :cl :lem :lem.listener-mode)
-  (:import-from
-   :lem.util)
   (:export
    :*indent-spec-function*
    :*lisp-indent-table*

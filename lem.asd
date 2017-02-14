@@ -28,8 +28,7 @@
   :serial t
   :components ((:module "src/editor"
                 :serial t
-                :components ((:file "util")
-                             (:file "history")
+                :components ((:file "history")
                              (:file "term")
                              (:file "package")
                              (:file "errors")

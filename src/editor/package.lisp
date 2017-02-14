@@ -1,7 +1,7 @@
 (in-package :cl-user)
 
 (defpackage :lem-interface
-  (:use :cl :lem.term :lem.util)
+  (:use :cl :lem.term)
   (:export :display-init
            :display-finalize
            :make-screen
@@ -21,7 +21,7 @@
            ))
 
 (defpackage :lem
-  (:use :cl :lem.util :lem-interface :lem-base)
+  (:use :cl :lem-interface :lem-base)
   (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-base)
                      :collect (make-symbol (string sym))))
   (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-interface)

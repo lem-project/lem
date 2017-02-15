@@ -10,9 +10,9 @@
 
 (cffi:defcvar ("COLOR_PAIRS" *COLOR-PAIRS* :library charms/ll::libcurses) :int)
 
-(defvar *colors* nil)
+(defvar *colors* '())
 (defvar *color-pair-table* (make-hash-table :test 'equal))
-(defvar *use-bg-color*)
+(defvar *pair-counter* 0)
 
 (defstruct color
   number
@@ -20,47 +20,6 @@
   r
   g
   b)
-
-(defun get-color (string)
-  (let ((string (string-trim " " string)))
-    (cond ((zerop (length string))
-           nil)
-          ((and (char= #\# (aref string 0))
-                (= 7 (length string)))
-           (let ((r (parse-integer string :start 1 :end 3 :radix 16 :junk-allowed t))
-                 (g (parse-integer string :start 3 :end 5 :radix 16 :junk-allowed t))
-                 (b (parse-integer string :start 5 :end 7 :radix 16 :junk-allowed t)))
-             (if (not (and r g b))
-                 nil
-                 (let (found-color
-                       (min most-positive-fixnum))
-                   (dolist (color *colors*)
-                     (let ((dr (- (color-r color) r))
-                           (dg (- (color-g color) g))
-                           (db (- (color-b color) b)))
-                       (let ((dist (+ (* dr dr) (* dg dg) (* db db))))
-                         (when (< dist min)
-                           (setf min dist)
-                           (setf found-color color)))))
-                   (assert (not (null found-color)))
-                   (color-number found-color)))))
-          (t
-           (dolist (color *colors* nil)
-             (when (string= string (color-name color))
-               (return (color-number color))))))))
-
-(defun get-color-pair (fg-color-name bg-color-name)
-  (let ((fg-color (if (null fg-color-name) -1 (get-color fg-color-name)))
-        (bg-color (if *use-bg-color*
-                      (if (null bg-color-name) -1 (get-color bg-color-name))
-                      -1)))
-    (if (and fg-color bg-color)
-        (gethash (if *use-bg-color*
-                     (cons fg-color bg-color)
-                     fg-color)
-                 *color-pair-table*
-                 0)
-        0)))
 
 (defun add-color (number name r g b &optional builtin)
   (unless builtin
@@ -70,20 +29,21 @@
                           :short g
                           :short b
                           :int))
-  (push (make-color :number number
-                    :name name
-                    :r r
-                    :g g
-                    :b b)
+  (push (make-color :number number :name name :r r :g g :b b)
         *colors*))
+
+(defun init-pair (fg-color bg-color)
+  (incf *pair-counter*)
+  (charms/ll:init-pair *pair-counter* fg-color bg-color)
+  (setf (gethash (cons fg-color bg-color) *color-pair-table*)
+        (charms/ll:color-pair *pair-counter*)))
 
 (defun init-colors ()
   (when (/= 0 (charms/ll:has-colors))
     (charms/ll:start-color)
     (charms/ll:use-default-colors)
-
+    (clrhash *color-pair-table*)
     (setf *colors* nil)
-
     (add-color charms/ll:color_black "black" #x00 #x00 #x00 t)
     (add-color charms/ll:color_red "red" #xcd #x00 #x00 t)
     (add-color charms/ll:color_green "green" #x00 #xcd #x00 t)
@@ -92,15 +52,15 @@
     (add-color charms/ll:color_magenta "magenta" #xcd #x00 #xcd t)
     (add-color charms/ll:color_cyan "cyan" #x00 #xcd #xcd t)
     (add-color charms/ll:color_white "white" #xe5 #xe5 #xe5 t)
-
-    (when (<= 256 charms/ll:*colors*)
+    (when (<= 16 charms/ll:*colors*)
       (add-color 8 "brightred" #xff #x00 #x00)
       (add-color 9 "brightgreen" #x00 #xff #x00)
       (add-color 10 "brightyellow" #xff #xff #x00)
       (add-color 11 "brightblue" #x5c #x5c #xff)
       (add-color 12 "brightmagenta" #xff #x00 #xff)
       (add-color 13 "brightcyan" #x00 #xff #xff)
-      (add-color 14 "brightwhite" #xff #xff #xff)
+      (add-color 14 "brightwhite" #xff #xff #xff))
+    (when (<= 256 charms/ll:*colors*)
       (add-color 15 "color-16" #x00 #x00 #x00)
       (add-color 16 "color-17" #x00 #x00 #x5f)
       (add-color 17 "color-18" #x00 #x00 #x87)
@@ -341,35 +301,44 @@
       (add-color 252 "color-253" #xda #xda #xda)
       (add-color 253 "color-254" #xe4 #xe4 #xe4)
       (add-color 254 "color-255" #xee #xee #xee))
-
-    (clrhash *color-pair-table*)
-    (if (setf *use-bg-color* (= 8 charms/ll:*colors*))
-
-        (let ((pair 1))
-          (flet ((add-pair (fg-color-number bg-color-number)
-                   (charms/ll:init-pair pair
-                                        fg-color-number
-                                        bg-color-number)
-                   (setf (gethash (cons fg-color-number bg-color-number)
-                                  *color-pair-table*)
-                         (charms/ll:color-pair pair))
-                   (incf pair)))
-            (dolist (fg-color *colors*)
-              (dolist (bg-color *colors*)
-                (add-pair (color-number fg-color)
-                          (color-number bg-color)))
-              (add-pair (color-number fg-color) -1)
-              (add-pair -1 (color-number fg-color)))))
-
-        (loop :for pair :from 1 :to 255
-	   :for fg-color :in *colors*
-	   :do (charms/ll:init-pair pair
-				    (color-number fg-color)
-				    -1)
-	   :do (setf (gethash (color-number fg-color)
-			      *color-pair-table*)
-		     (charms/ll:color-pair pair))))
     t))
+
+(defun get-color (string)
+  (let ((string (string-trim " " string)))
+    (cond ((zerop (length string))
+           nil)
+          ((and (char= #\# (aref string 0))
+                (= 7 (length string)))
+           (let ((r (parse-integer string :start 1 :end 3 :radix 16 :junk-allowed t))
+                 (g (parse-integer string :start 3 :end 5 :radix 16 :junk-allowed t))
+                 (b (parse-integer string :start 5 :end 7 :radix 16 :junk-allowed t)))
+             (if (not (and r g b))
+                 nil
+                 (let (found-color
+                       (min most-positive-fixnum))
+                   (dolist (color *colors*)
+                     (let ((dr (- (color-r color) r))
+                           (dg (- (color-g color) g))
+                           (db (- (color-b color) b)))
+                       (let ((dist (+ (* dr dr) (* dg dg) (* db db))))
+                         (when (< dist min)
+                           (setf min dist)
+                           (setf found-color color)))))
+                   (assert (not (null found-color)))
+                   (color-number found-color)))))
+          (t
+           (dolist (color *colors* nil)
+             (when (string= string (color-name color))
+               (return (color-number color))))))))
+
+(defun get-color-pair (fg-color-name bg-color-name)
+  (let ((fg-color (if (null fg-color-name) -1 (get-color fg-color-name)))
+        (bg-color (if (null bg-color-name) -1 (get-color bg-color-name))))
+    (cond ((not (and fg-color bg-color)) 0)
+          ((gethash (cons fg-color bg-color) *color-pair-table*))
+          ((< *pair-counter* *color-pairs*)
+           (init-pair fg-color bg-color))
+          (t 0))))
 
 ;;;
 

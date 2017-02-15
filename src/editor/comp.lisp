@@ -110,7 +110,7 @@
 (define-key *completion-mode-keymap* "Spc" 'completion-insert-space-and-cancel)
 
 (defvar *completion-overlay* nil)
-(defvar *completion-overlay-attribute* (make-attribute "blue" nil :reverse-p t))
+(defvar *completion-overlay-attribute* (make-attribute "blue" "white" :reverse-p t))
 (defvar *completion-attribute* (make-attribute nil nil :reverse-p t))
 (defvar *completion-window* nil)
 (defvar *completion-restart-function* nil)

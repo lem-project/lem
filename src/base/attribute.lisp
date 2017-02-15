@@ -15,8 +15,8 @@
           attribute
           attribute-p
           attribute-name
-          attribute-fg-color
-          attribute-bg-color
+          attribute-foreground
+          attribute-background
           attribute-reverse-p
           attribute-bold-p
           attribute-underline-p
@@ -26,8 +26,8 @@
 
 (defstruct (attribute (:constructor %make-attribute))
   name
-  fg-color
-  bg-color
+  foreground
+  background
   reverse-p
   bold-p
   underline-p
@@ -37,32 +37,29 @@
   (print-unreadable-object (object stream)
     (format stream "ATTRIBUTE: ~A" (attribute-name object))))
 
-(defun make-attribute (fg-color bg-color &key reverse-p bold-p underline-p name)
+(defun make-attribute (foreground background &key reverse-p bold-p underline-p name)
   (%make-attribute :name name
-                   :fg-color fg-color
-                   :bg-color bg-color
+                   :foreground foreground
+                   :background background
                    :reverse-p reverse-p
                    :bold-p bold-p
                    :underline-p underline-p))
 
 (defun set-attribute (attribute &key
-				  (fg-color nil fg-color-p)
-				  (bg-color nil bg-color-p)
-				  (reverse-p nil reverse-p-p)
-				  (bold-p nil bold-p-p)
-				  (underline-p nil underline-p-p)
-				  (name nil name-p))
+                                (foreground nil foreground-p)
+                                (background nil background-p)
+                                reverse-p
+                                bold-p
+                                underline-p
+                                (name nil name-p))
   (setf (attribute-%internal-value attribute) nil) ; これをnilにするのはncurses依存かもしれないのであまりよくない
-  (when fg-color-p
-    (setf (attribute-fg-color attribute) fg-color))
-  (when bg-color-p
-    (setf (attribute-bg-color attribute) bg-color))
-  (when reverse-p-p
-    (setf (attribute-reverse-p attribute) reverse-p))
-  (when bold-p-p
-    (setf (attribute-bold-p attribute) bold-p))
-  (when underline-p-p
-    (setf (attribute-underline-p attribute) underline-p))
+  (when foreground-p
+    (setf (attribute-foreground attribute) foreground))
+  (when background-p
+    (setf (attribute-background attribute) background))
+  (setf (attribute-reverse-p attribute) reverse-p)
+  (setf (attribute-bold-p attribute) bold-p)
+  (setf (attribute-underline-p attribute) underline-p)
   (when name-p
     (setf (attribute-name attribute) name))
   attribute)

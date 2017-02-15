@@ -9,8 +9,8 @@
 
 (defun %attribute-to-bits (attribute)
   (or (attribute-%internal-value attribute)
-      (let ((bits (logior (get-color-pair (attribute-fg-color attribute)
-                                          (attribute-bg-color attribute))
+      (let ((bits (logior (get-color-pair (attribute-foreground attribute)
+                                          (attribute-background attribute))
                           (if (attribute-reverse-p attribute)
                               charms/ll:a_reverse
                               0)

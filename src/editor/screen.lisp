@@ -23,6 +23,16 @@
         (setf (attribute-%internal-value attribute) bits)
         bits)))
 
+(defvar *display-background-mode* nil)
+
+(defun display-background-mode ()
+  (or *display-background-mode*
+      (lem.term:background-mode)))
+
+(defun (setf display-background-mode) (mode)
+  (check-type mode (or (eql :light) (eql :dark) null))
+  (setf *display-background-mode* mode))
+
 (defun display-init ()
   (term-init)
   (setq *old-display-width* charms/ll:*cols*)

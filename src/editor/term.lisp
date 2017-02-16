@@ -3,6 +3,7 @@
   (:use :cl)
   (:export :with-raw
            :get-color-pair
+           :background-mode
            :term-init
            :term-finalize
            :term-set-tty))
@@ -10,7 +11,7 @@
 
 (cffi:defcvar ("COLOR_PAIRS" *COLOR-PAIRS* :library charms/ll::libcurses) :int)
 
-(defvar *colors* '())
+(defvar *colors*)
 (defvar *color-pair-table* (make-hash-table :test 'equal))
 (defvar *pair-counter* 0)
 
@@ -25,8 +26,8 @@
   (declare (ignore builtin))
   (flet ((f (n) (round (* n 1000/255))))
     (charms/ll:init-color number (f r) (f g) (f b)))
-  (push (make-color :number number :name name :r r :g g :b b)
-        *colors*))
+  (vector-push-extend (make-color :number number :name name :r r :g g :b b)
+                      *colors*))
 
 (defun init-pair (fg-color bg-color)
   (incf *pair-counter*)
@@ -37,9 +38,8 @@
 (defun init-colors ()
   (when (/= 0 (charms/ll:has-colors))
     (charms/ll:start-color)
-    (charms/ll:use-default-colors)
     (clrhash *color-pair-table*)
-    (setf *colors* nil)
+    (setf *colors* (make-array 0 :fill-pointer 0 :adjustable t))
     (add-color charms/ll:color_black "black" #x00 #x00 #x00 t)
     (add-color charms/ll:color_red "red" #xcd #x00 #x00 t)
     (add-color charms/ll:color_green "green" #x00 #xcd #x00 t)
@@ -298,35 +298,38 @@
       (add-color 253 "color-253" #xda #xda #xda)
       (add-color 254 "color-254" #xe4 #xe4 #xe4)
       (add-color 255 "color-255" #xee #xee #xee))
+    (set-default-color nil nil)
     t))
 
 (defun get-color (string)
-  (let ((string (string-trim " " string)))
-    (cond ((zerop (length string))
-           nil)
-          ((and (char= #\# (aref string 0))
-                (= 7 (length string)))
-           (let ((r (parse-integer string :start 1 :end 3 :radix 16 :junk-allowed t))
-                 (g (parse-integer string :start 3 :end 5 :radix 16 :junk-allowed t))
-                 (b (parse-integer string :start 5 :end 7 :radix 16 :junk-allowed t)))
-             (if (not (and r g b))
-                 nil
-                 (let (found-color
-                       (min most-positive-fixnum))
-                   (dolist (color *colors*)
-                     (let ((dr (- (color-r color) r))
-                           (dg (- (color-g color) g))
-                           (db (- (color-b color) b)))
-                       (let ((dist (+ (* dr dr) (* dg dg) (* db db))))
-                         (when (< dist min)
-                           (setf min dist)
-                           (setf found-color color)))))
-                   (assert (not (null found-color)))
-                   (color-number found-color)))))
-          (t
-           (dolist (color *colors* nil)
-             (when (string= string (color-name color))
-               (return (color-number color))))))))
+  (let* ((string (string-trim " " string))
+         (color (cond ((zerop (length string))
+                       nil)
+                      ((and (char= #\# (aref string 0))
+                            (= 7 (length string)))
+                       (let ((r (parse-integer string :start 1 :end 3 :radix 16 :junk-allowed t))
+                             (g (parse-integer string :start 3 :end 5 :radix 16 :junk-allowed t))
+                             (b (parse-integer string :start 5 :end 7 :radix 16 :junk-allowed t)))
+                         (if (not (and r g b))
+                             nil
+                             (let (found-color
+                                   (min most-positive-fixnum))
+                               (loop :for color :across *colors*
+                                     :do (let ((dr (- (color-r color) r))
+                                               (dg (- (color-g color) g))
+                                               (db (- (color-b color) b)))
+                                           (let ((dist (+ (* dr dr) (* dg dg) (* db db))))
+                                             (when (< dist min)
+                                               (setf min dist)
+                                               (setf found-color color)))))
+                               (assert (not (null found-color)))
+                               (color-number found-color)))))
+                      (t
+                       (loop :for color :across *colors*
+                             :do (when (string= string (color-name color))
+                                   (return (color-number color)))
+                             :finally (return nil))))))
+    (or color 0)))
 
 (defun get-color-pair (fg-color-name bg-color-name)
   (let ((fg-color (if (null fg-color-name) -1 (get-color fg-color-name)))
@@ -335,6 +338,41 @@
           ((< *pair-counter* *color-pairs*)
            (init-pair fg-color bg-color))
           (t 0))))
+
+#+(or)
+(defun get-color-content (n)
+  (cffi:with-foreign-pointer (r (cffi:foreign-type-size '(:pointer :short)))
+    (cffi:with-foreign-pointer (g (cffi:foreign-type-size '(:pointer :short)))
+      (cffi:with-foreign-pointer (b (cffi:foreign-type-size '(:pointer :short)))
+        (charms/ll:color-content n r g b)
+        (list (cffi:mem-ref r :short)
+              (cffi:mem-ref g :short)
+              (cffi:mem-ref b :short))))))
+
+(defun get-default-colors ()
+  (cffi:with-foreign-pointer (f (cffi:foreign-type-size '(:pointer :short)))
+    (cffi:with-foreign-pointer (b (cffi:foreign-type-size '(:pointer :short)))
+      (charms/ll:pair-content 0 f b)
+      (values (cffi:mem-ref f :short)
+              (cffi:mem-ref b :short)))))
+
+(defun set-default-color (foreground background)
+  (let ((fg-color (if foreground (get-color foreground) -1))
+        (bg-color (if background (get-color background) -1)))
+    (charms/ll:assume-default-colors fg-color
+                                     bg-color)))
+
+(defun background-mode ()
+  (let ((b (nth-value 1 (get-default-colors))))
+    (cond ((= b -1) :light)
+          (t
+           (let ((color (aref *colors* b)))
+             (let ((r (color-r color))
+                   (g (color-g color))
+                   (b (color-b color)))
+               (if (< 50 (/ (max r g b) 2.55))
+                   :light
+                   :dark)))))))
 
 ;;;
 

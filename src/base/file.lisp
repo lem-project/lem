@@ -98,8 +98,9 @@
                                      :filename filename
                                      :enable-undo-p nil)))
            (when (probe-file filename)
-             (insert-file-contents (buffers-start buffer)
-                                   filename)
+             (let ((*inhibit-modification-hooks* t))
+               (insert-file-contents (buffers-start buffer)
+                                     filename))
              (buffer-unmark buffer))
            (buffer-start (buffer-point buffer))
            (buffer-enable-undo buffer)

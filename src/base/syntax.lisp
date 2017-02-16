@@ -277,7 +277,9 @@
   (do ((start-charpos start-charpos 0)) (nil)
     (loop
       (cond ((syntax-escape-char-p (character-at point 0))
-             (character-offset point 1))
+             (character-offset point 1)
+             (when (end-line-p point)
+               (return)))
             ((syntax-test-match-p (syntax-region-end region) point 'region-side :end)
              (line-add-property (point-line point)
                                 start-charpos (point-charpos point)

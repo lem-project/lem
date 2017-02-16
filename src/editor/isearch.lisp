@@ -200,22 +200,28 @@
                                                :temporary)
                                    (window-height (current-window)))
                                   (buffers-end (window-buffer (current-window))))))
-      (loop :while (funcall *isearch-search-forward-function*
-                            cur-point
-                            search-string
-                            limit-point)
-	 :do (let ((start-point (with-point ((temp-point cur-point :temporary))
-				  (funcall *isearch-search-backward-function*
-					   temp-point
-					   search-string)
-				  temp-point)))
-	       (push (make-overlay start-point
-				   (copy-point cur-point :temporary)
-				   (if (and (point<= start-point point)
-					    (point<= point cur-point))
-				       *isearch-highlight-active-attribute*
-				       *isearch-highlight-attribute*))
-		     *isearch-highlight-overlays*))))))
+      (loop (with-point ((prev-point cur-point))
+              (unless (funcall *isearch-search-forward-function*
+                               cur-point
+                               search-string
+                               limit-point)
+                (return))
+              (let ((start-point (with-point ((temp-point cur-point :temporary))
+                                   (when (funcall *isearch-search-backward-function*
+                                                  temp-point
+                                                  search-string
+                                                  prev-point)
+                                     temp-point))))
+                (when (or (null start-point) (point= start-point cur-point))
+                  ;; 正規表現の^や(?=text)が終わらないので中断する
+                  (return))
+                (push (make-overlay start-point
+                                    (copy-point cur-point :temporary)
+                                    (if (and (point<= start-point point)
+                                             (point<= point cur-point))
+                                        *isearch-highlight-active-attribute*
+                                        *isearch-highlight-attribute*))
+                      *isearch-highlight-overlays*)))))))
 
 (defun isearch-add-char (c)
   (setq *isearch-string*

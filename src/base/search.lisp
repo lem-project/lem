@@ -110,13 +110,8 @@
                          (ppcre:scan scanner
                                      (line-string point)
                                      :start (point-charpos point))
-                       (when (and start
-                                  (if (= start end)
-                                      (< (point-charpos point) start)
-                                      (<= (point-charpos point) start)))
-                         (if (= start end)
-                             (1+ end)
-                             end))))
+                       (when (and start (<= (point-charpos point) start))
+                         end)))
                    (lambda (point)
                      (nth-value 1
                                 (ppcre:scan scanner

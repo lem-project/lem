@@ -105,6 +105,7 @@
   expr-prefix-backward-function
   line-comment-string
   block-comment-pairs
+  block-string-pairs
   region-list
   match-list)
 
@@ -126,6 +127,11 @@
                                  (make-syntax-test `(:sequence ,start))
                                  (make-syntax-test `(:sequence ,end))
                                  :attribute *syntax-comment-attribute*))
+    (loop :for (start . end) :in (syntax-table-block-string-pairs syntax-table)
+          :do (syntax-add-region syntax-table
+                                 (make-syntax-test `(:sequence ,start))
+                                 (make-syntax-test `(:sequence ,end))
+                                 :attribute *syntax-string-attribute*))
     syntax-table))
 
 (defun syntax-add-match (syntax-table test
@@ -212,11 +218,6 @@
                                :end1 end1))
              (length str2)))))
 
-  (defun syntax-line-comment-string-p (line-string pos)
-    (%match line-string
-            (syntax-table-line-comment-string (current-syntax))
-            pos))
-
   (defun syntax-start-block-syntax-string-p (line-string pos pairs)
     (dolist (pair pairs)
       (let ((start (car pair)))
@@ -233,29 +234,34 @@
             (when result
               (return (values result pair))))))))
 
-  (defun syntax-start-block-comment-string-p (line-string pos)
-    (syntax-start-block-syntax-string-p line-string
-                                        pos
+  (defun syntax-line-comment-p (point)
+    (%match (line-string point)
+            (syntax-table-line-comment-string (current-syntax))
+            (point-charpos point)))
+
+  (defun syntax-start-block-comment-p (point)
+    (syntax-start-block-syntax-string-p (line-string point)
+                                        (point-charpos point)
                                         (syntax-table-block-comment-pairs
                                          (current-syntax))))
 
-  (defun syntax-end-block-comment-string-p (line-string pos)
-    (syntax-end-block-syntax-string-p line-string
-                                      pos
+  (defun syntax-end-block-comment-p (point)
+    (syntax-end-block-syntax-string-p (line-string point)
+                                      (point-charpos point)
                                       (syntax-table-block-comment-pairs
+                                       (current-syntax))))
+
+  (defun syntax-start-block-string-p (point)
+    (syntax-start-block-syntax-string-p (line-string point)
+                                        (point-charpos point)
+                                        (syntax-table-block-string-pairs
+                                         (current-syntax))))
+
+  (defun syntax-end-block-string-p (point)
+    (syntax-end-block-syntax-string-p (line-string point)
+                                      (point-charpos point)
+                                      (syntax-table-block-string-pairs
                                        (current-syntax)))))
-
-(defun syntax-line-comment-p (point)
-  (syntax-line-comment-string-p (line-string point)
-                                (point-charpos point)))
-
-(defun syntax-start-block-comment-p (point)
-  (syntax-start-block-comment-string-p (line-string point)
-                                       (point-charpos point)))
-
-(defun syntax-end-block-comment-p (point)
-  (syntax-end-block-comment-string-p (line-string point)
-                                     (point-charpos point)))
 
 
 (defun enable-syntax-highlight-p (buffer)
@@ -515,6 +521,10 @@
                                             (return)))
                                          (t
                                           (incf depth))))))
+                      ((multiple-value-setq (n pair) (syntax-end-block-string-p p))
+                       (if (search-backward p (car pair) limit)
+                           (return)
+                           (return-from inline-line-comment-p nil)))
                       (t
                        (character-offset p -1)
                        (cond
@@ -673,65 +683,77 @@
   (%skip-quote-backward point))
 
 (defun %skip-list-forward (point depth)
-  (loop :with paren-stack := '() :do
-     (unless (skip-space-and-comment-forward point)
-       (return nil))
-     (when (end-buffer-p point)
-       (return nil))
-     (let ((c (character-at point 0)))
-       (cond ((syntax-open-paren-char-p c)
-	      (push c paren-stack)
-	      (character-offset point 1)
-	      (when (zerop (incf depth))
-		(return point)))
-	     ((syntax-closed-paren-char-p c)
-	      (unless (or (and (< 0 depth)
-			       (null paren-stack))
-			  (syntax-equal-paren-p c (car paren-stack)))
-		(return nil))
-	      (pop paren-stack)
-	      (character-offset point 1)
-	      (when (zerop (decf depth))
-		(return point)))
-	     ((syntax-string-quote-char-p c)
-	      (%skip-string-forward point))
-             ((syntax-fence-char-p c)
-              (%skip-fence-forward point))
-	     ((syntax-escape-char-p c)
-              (unless (character-offset point 2)
-                (return nil)))
-	     (t
-	      (character-offset point 1))))))
+  (loop :with paren-stack := '()
+        :do
+        (unless (skip-space-and-comment-forward point)
+          (return nil))
+        (when (end-buffer-p point)
+          (return nil))
+        (let ((c (character-at point 0))
+              n pair)
+          (cond ((syntax-open-paren-char-p c)
+                 (push c paren-stack)
+                 (character-offset point 1)
+                 (when (zerop (incf depth))
+                   (return point)))
+                ((syntax-closed-paren-char-p c)
+                 (unless (or (and (< 0 depth)
+                                  (null paren-stack))
+                             (syntax-equal-paren-p c (car paren-stack)))
+                   (return nil))
+                 (pop paren-stack)
+                 (character-offset point 1)
+                 (when (zerop (decf depth))
+                   (return point)))
+                ((multiple-value-setq (n pair) (syntax-start-block-string-p point))
+                 (character-offset point n)
+                 (unless (search-forward point (cdr pair))
+                   (return nil)))
+                ((syntax-string-quote-char-p c)
+                 (%skip-string-forward point))
+                ((syntax-fence-char-p c)
+                 (%skip-fence-forward point))
+                ((syntax-escape-char-p c)
+                 (unless (character-offset point 2)
+                   (return nil)))
+                (t
+                 (character-offset point 1))))))
 
 (defun %skip-list-backward (point depth)
-  (loop :with paren-stack := '() :do
-     (unless (skip-space-and-comment-backward point)
-       (return nil))
-     (when (start-buffer-p point)
-       (return nil))
-     (let ((c (character-at point -1)))
-       (cond ((syntax-escape-point-p point -1)
-	      (character-offset point -1))
-	     ((syntax-closed-paren-char-p c)
-	      (push c paren-stack)
-	      (character-offset point -1)
-	      (when (zerop (incf depth))
-		(return point)))
-	     ((syntax-open-paren-char-p c)
-	      (unless (or (and (< 0 depth)
-			       (null paren-stack))
-			  (syntax-equal-paren-p c (car paren-stack)))
-		(return nil))
-	      (pop paren-stack)
-	      (character-offset point -1)
-	      (when (zerop (decf depth))
-		(return point)))
-	     ((syntax-string-quote-char-p c)
-	      (%skip-string-backward point))
-             ((syntax-fence-char-p c)
-              (%skip-fence-backward point))
-	     (t
-	      (character-offset point -1))))))
+  (loop :with paren-stack := '()
+        :do
+        (unless (skip-space-and-comment-backward point)
+          (return nil))
+        (when (start-buffer-p point)
+          (return nil))
+        (let ((c (character-at point -1))
+              n pair)
+          (cond ((syntax-escape-point-p point -1)
+                 (character-offset point -1))
+                ((syntax-closed-paren-char-p c)
+                 (push c paren-stack)
+                 (character-offset point -1)
+                 (when (zerop (incf depth))
+                   (return point)))
+                ((syntax-open-paren-char-p c)
+                 (unless (or (and (< 0 depth)
+                                  (null paren-stack))
+                             (syntax-equal-paren-p c (car paren-stack)))
+                   (return nil))
+                 (pop paren-stack)
+                 (character-offset point -1)
+                 (when (zerop (decf depth))
+                   (return point)))
+                ((multiple-value-setq (n pair) (syntax-end-block-string-p point))
+                 (character-offset point (- n))
+                 (unless (search-backward point (car pair))
+                   (return nil)))
+                ((syntax-string-quote-char-p c)
+                 (%skip-string-backward point))
+                ((syntax-fence-char-p c)
+                 (%skip-fence-backward point))
+                (t
+                 (character-offset point -1))))))
 
 (defun %form-offset-positive (point)
   (skip-space-and-comment-forward point)
@@ -740,7 +762,8 @@
   (syntax-skip-expr-prefix-forward point)
   (skip-chars-forward point #'syntax-expr-prefix-char-p)
   (unless (end-buffer-p point)
-    (let ((c (character-at point)))
+    (let ((c (character-at point))
+          n pair)
       (cond ((or (syntax-symbol-char-p c)
                  (syntax-escape-char-p c))
              (%skip-symbol-forward point))
@@ -750,6 +773,11 @@
              (%skip-list-forward point 0))
             ((syntax-closed-paren-char-p c)
              nil)
+            ((multiple-value-setq (n pair) (syntax-start-block-string-p point))
+             (character-offset point n)
+             (if (search-forward point (cdr pair))
+                 point
+                 nil))
             ((syntax-string-quote-char-p c)
              (%skip-string-forward point))
             ((syntax-fence-char-p c)
@@ -761,7 +789,8 @@
   (skip-space-and-comment-backward point)
   (when (start-buffer-p point)
     (return-from %form-offset-negative nil))
-  (let ((c (character-at point -1)))
+  (let ((c (character-at point -1))
+        n pair)
     (prog1 (cond ((or (syntax-symbol-char-p c)
                       (syntax-escape-char-p c)
                       (syntax-expr-prefix-char-p c)
@@ -771,6 +800,11 @@
                   (%skip-list-backward point 0))
                  ((syntax-open-paren-char-p c)
                   nil)
+                 ((multiple-value-setq (n pair) (syntax-end-block-string-p point))
+                  (character-offset point (- n))
+                  (if (search-backward point (car pair))
+                      point
+                      nil))
                  ((syntax-string-quote-char-p c)
                   (%skip-string-backward point))
                  ((syntax-fence-char-p c)
@@ -842,7 +876,7 @@
   token-start-point
   end-char
   block-comment-depth
-  block-comment-pair
+  block-pair
   paren-stack)
 
 (defun parse-partial-sexp (from to &optional (state (make-parser-state)))
@@ -854,11 +888,21 @@
             (token-start-point (parser-state-token-start-point state))
             (end-char (parser-state-end-char state))
             (block-comment-depth (parser-state-block-comment-depth state))
-            (block-comment-pair (parser-state-block-comment-pair state))
+            (block-pair (parser-state-block-pair state))
             (paren-stack (parser-state-paren-stack state)))
         (block outer
           (loop
             (case type
+              (:block-string
+               (cond
+                 ((search-forward p (cdr block-pair) to)
+                  (setf block-pair nil)
+                  (setf type nil)
+                  (setf token-start-point nil)
+                  (return p))
+                 (t
+                  (move-point p to)
+                  (return-from outer))))
               (:string
                #1=(loop
                     (when (point<= to p)
@@ -875,22 +919,22 @@
               (:fence
                #1#)
               (:block-comment
-               (let ((regex (%create-pair-regex block-comment-pair)))
+               (let ((regex (%create-pair-regex block-pair)))
                  (loop
                    (unless (search-forward-regexp p regex to)
                      (move-point p to)
                      (return-from outer))
                    (cond
-                     ((match-string-at p (cdr block-comment-pair))
-                      (character-offset p (length (car block-comment-pair)))
+                     ((match-string-at p (cdr block-pair))
+                      (character-offset p (length (car block-pair)))
                       (when (= 0 (decf block-comment-depth))
                         (setf block-comment-depth nil)
-                        (setf block-comment-pair nil)
+                        (setf block-pair nil)
                         (setf type nil)
                         (setf token-start-point nil)
                         (return p)))
                      (t
-                      (character-offset p (length (cdr block-comment-pair)))
+                      (character-offset p (length (cdr block-pair)))
                       (incf block-comment-depth))))))
               (:line-comment
                (when (and (point<= p to)
@@ -907,6 +951,14 @@
                    (cond
                      ((syntax-escape-char-p c)
                       (character-offset p 1))
+                     ((multiple-value-bind (n pair)
+                          (syntax-start-block-string-p p)
+                        (when n
+                          (setf token-start-point (copy-point p :temporary))
+                          (setf type :block-string)
+                          (setf block-pair pair)
+                          (character-offset p n)
+                          (return))))
                      ((or (syntax-string-quote-char-p c)
                           (syntax-fence-char-p c))
                       (setf type (if (syntax-string-quote-char-p c)
@@ -922,7 +974,7 @@
                           (setf token-start-point (copy-point p :temporary))
                           (setf type :block-comment)
                           (setf block-comment-depth 1)
-                          (setf block-comment-pair pair)
+                          (setf block-pair pair)
                           (character-offset p n)
                           (return))))
                      ((syntax-line-comment-p p)
@@ -940,7 +992,7 @@
                 (parser-state-token-start-point state) token-start-point
                 (parser-state-end-char state) end-char
                 (parser-state-block-comment-depth state) block-comment-depth
-                (parser-state-block-comment-pair state) block-comment-pair
+                (parser-state-block-pair state) block-pair
                 (parser-state-paren-stack state) paren-stack))
         state))))
 
@@ -985,15 +1037,16 @@
 
 (defun in-string-p (point)
   (let ((state (syntax-ppss point)))
-    (eq (parser-state-type state) :string)))
+    (member (parser-state-type state) '(:block-string :string))))
 
 (defun in-comment-p (point)
   (let ((state (syntax-ppss point)))
-    (or (eq (parser-state-type state) :line-comment)
-        (eq (parser-state-type state) :block-comment))))
+    (member (parser-state-type state) '(:line-comment :block-comment))))
 
 (defun in-string-or-comment-p (point)
   (let ((state (syntax-ppss point)))
-    (or (eq (parser-state-type state) :string)
-        (eq (parser-state-type state) :line-comment)
-        (eq (parser-state-type state) :block-comment))))
+    (member (parser-state-type state)
+            '(:block-string
+              :string
+              :line-comment
+              :block-comment))))

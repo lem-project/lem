@@ -221,25 +221,30 @@
     (syntax-line-comment-string-p (line-string point)
                                   (point-charpos point)))
 
-  (defun syntax-start-block-comment-p (point)
-    (let ((line-string (line-string point))
-          (pos (point-charpos point)))
-      (dolist (pair (syntax-table-block-comment-pairs (current-syntax)))
-        (let ((start (car pair)))
-          (let ((result (%match line-string start pos)))
+  (defun syntax-start-block-comment-string-p (line-string pos)
+    (dolist (pair (syntax-table-block-comment-pairs (current-syntax)))
+      (let ((start (car pair)))
+        (let ((result (%match line-string start pos)))
+          (when result
+            (return (values result pair)))))))
+
+  (defun syntax-end-block-comment-string-p (line-string pos)
+    (dolist (pair (syntax-table-block-comment-pairs (current-syntax)))
+      (let* ((end (cdr pair))
+             (pos (- pos (length end))))
+        (when (<= 0 pos)
+          (let ((result (%match line-string end pos)))
             (when result
               (return (values result pair))))))))
 
+  (defun syntax-start-block-comment-p (point)
+    (let ((line-string (line-string point))
+          (pos (point-charpos point)))
+      (syntax-start-block-comment-string-p line-string pos)))
+
   (defun syntax-end-block-comment-p (point)
-    (dolist (pair (syntax-table-block-comment-pairs (current-syntax)))
-      (let ((end (cdr pair)))
-        (with-point ((point point))
-          (character-offset point (- (length end)))
-          (let ((result (%match (line-string point)
-                                end
-                                (point-charpos point))))
-            (when result
-              (return (values result pair)))))))))
+    (syntax-end-block-comment-string-p (line-string point)
+                                       (point-charpos point))))
 
 
 (defun enable-syntax-highlight-p (buffer)
@@ -543,7 +548,27 @@
               (values (line-offset point 0 line-comment-pos) t)
               (values nil t))))))
 
+(defun %position-block-comment-end (string pos pair depth)
+  (let ((regex (%create-pair-regex pair))
+        (car-len (length (car pair)))
+        (cdr-len (length (cdr pair))))
+    (loop
+      (let ((match-start (ppcre:scan regex string :start pos)))
+        (cond ((null match-start)
+               (return (length string)))
+              ((string= string (car pair)
+                        :start1 match-start
+                        :end1 (+ match-start car-len))
+               (incf depth)
+               (setf pos (+ match-start car-len)))
+              (t
+               (setf pos (+ match-start cdr-len))
+               (when (= 0 (decf depth))
+                 (return pos))))))))
+
 (defun %position-line-comment (string end in-token)
+  (when (syntax-end-block-comment-string-p string end)
+    (return-from %position-line-comment nil))
   (loop :for i := 0 :then (1+ i)
         :while (< i end)
         :do (let ((c (schar string i)))
@@ -559,14 +584,18 @@
                        ((syntax-fence-char-p c)
                         (setf in-token nil))))
                 ((nil)
-                 (cond ((syntax-line-comment-string-p string i)
-                        (return i))
-                       ((syntax-escape-char-p c)
-                        (incf i))
-                       ((syntax-string-quote-char-p c)
-                        (setf in-token :string))
-                       ((syntax-fence-char-p c)
-                        (setf in-token :fence))))))
+                 (multiple-value-bind (n pair)
+                     (syntax-start-block-comment-string-p string i)
+                   (cond (n
+                          (setf i (%position-block-comment-end string (+ i n) pair 1)))
+                         ((syntax-line-comment-string-p string i)
+                          (return i))
+                         ((syntax-escape-char-p c)
+                          (incf i))
+                         ((syntax-string-quote-char-p c)
+                          (setf in-token :string))
+                         ((syntax-fence-char-p c)
+                          (setf in-token :fence)))))))
         :finally (ecase in-token
                    ((:string)
                     (return (%position-line-comment string end :string)))

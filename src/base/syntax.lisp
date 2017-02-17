@@ -636,55 +636,41 @@
                     (t
                      (return point))))))
 
-(defun %skip-string-forward (point)
-  (loop :with quote-char := (character-at point 0) :do
-     (unless (character-offset point 1)
-       (return nil))
-     (let ((c (character-at point)))
-       (cond ((syntax-escape-char-p c)
-	      (character-offset point 1))
-	     ((and (syntax-string-quote-char-p c)
-		   (char= c quote-char))
-	      (character-offset point 1)
-	      (return point))))))
-
-(defun %skip-string-backward (point)
-  (character-offset point -1)
-  (loop :with quote-char := (character-at point) :do
-     (unless (character-offset point -1)
-       (return nil))
-     (if (syntax-escape-point-p point 0)
-	 (character-offset point -1)
-	 (let ((c (character-at point)))
-	   (cond ((and (syntax-string-quote-char-p c)
-		       (char= c quote-char))
-		  (return point)))))))
-
-(defun %skip-fence-forward (point)
-  (loop :with fence-char := (character-at point 0)
+(defun %skip-quote-forward (point)
+  (loop :with quote-char := (character-at point 0)
         :do
         (unless (character-offset point 1)
           (return nil))
         (let ((c (character-at point)))
           (cond ((syntax-escape-char-p c)
                  (character-offset point 1))
-                ((and (syntax-fence-char-p c)
-                      (char= c fence-char))
+                ((eql c quote-char)
                  (character-offset point 1)
                  (return point))))))
 
-(defun %skip-fence-backward (point)
+(defun %skip-quote-backward (point)
   (character-offset point -1)
-  (loop :with fence-char := (character-at point)
+  (loop :with quote-char := (character-at point)
         :do
         (unless (character-offset point -1)
           (return nil))
         (if (syntax-escape-point-p point 0)
             (character-offset point -1)
             (let ((c (character-at point)))
-              (cond ((and (syntax-fence-char-p c)
-                          (char= c fence-char))
+              (cond ((eql c quote-char)
                      (return point)))))))
+
+(defun %skip-string-forward (point)
+  (%skip-quote-forward point))
+
+(defun %skip-string-backward (point)
+  (%skip-quote-backward point))
+
+(defun %skip-fence-forward (point)
+  (%skip-quote-forward point))
+
+(defun %skip-fence-backward (point)
+  (%skip-quote-backward point))
 
 (defun %skip-list-forward (point depth)
   (loop :with paren-stack := '() :do

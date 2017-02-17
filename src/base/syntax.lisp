@@ -24,13 +24,13 @@
           search-comment-start-backward
           search-string-start-forward
           search-string-start-backward
-          skip-whitespace-forward
-          skip-whitespace-backward
           skip-space-and-comment-forward
           skip-space-and-comment-backward
-          symbol-string-at-point
           form-offset
           scan-lists
+          skip-whitespace-forward
+          skip-whitespace-backward
+          symbol-string-at-point
           parse-partial-sexp
           syntax-ppss
           in-string-p
@@ -217,19 +217,15 @@
             (syntax-table-line-comment-string (current-syntax))
             pos))
 
-  (defun syntax-line-comment-p (point)
-    (syntax-line-comment-string-p (line-string point)
-                                  (point-charpos point)))
-
-  (defun syntax-start-block-comment-string-p (line-string pos)
-    (dolist (pair (syntax-table-block-comment-pairs (current-syntax)))
+  (defun syntax-start-block-syntax-string-p (line-string pos pairs)
+    (dolist (pair pairs)
       (let ((start (car pair)))
         (let ((result (%match line-string start pos)))
           (when result
             (return (values result pair)))))))
 
-  (defun syntax-end-block-comment-string-p (line-string pos)
-    (dolist (pair (syntax-table-block-comment-pairs (current-syntax)))
+  (defun syntax-end-block-syntax-string-p (line-string pos pairs)
+    (dolist (pair pairs)
       (let* ((end (cdr pair))
              (pos (- pos (length end))))
         (when (<= 0 pos)
@@ -237,14 +233,29 @@
             (when result
               (return (values result pair))))))))
 
-  (defun syntax-start-block-comment-p (point)
-    (let ((line-string (line-string point))
-          (pos (point-charpos point)))
-      (syntax-start-block-comment-string-p line-string pos)))
+  (defun syntax-start-block-comment-string-p (line-string pos)
+    (syntax-start-block-syntax-string-p line-string
+                                        pos
+                                        (syntax-table-block-comment-pairs
+                                         (current-syntax))))
 
-  (defun syntax-end-block-comment-p (point)
-    (syntax-end-block-comment-string-p (line-string point)
-                                       (point-charpos point))))
+  (defun syntax-end-block-comment-string-p (line-string pos)
+    (syntax-end-block-syntax-string-p line-string
+                                      pos
+                                      (syntax-table-block-comment-pairs
+                                       (current-syntax)))))
+
+(defun syntax-line-comment-p (point)
+  (syntax-line-comment-string-p (line-string point)
+                                (point-charpos point)))
+
+(defun syntax-start-block-comment-p (point)
+  (syntax-start-block-comment-string-p (line-string point)
+                                       (point-charpos point)))
+
+(defun syntax-end-block-comment-p (point)
+  (syntax-end-block-comment-string-p (line-string point)
+                                     (point-charpos point)))
 
 
 (defun enable-syntax-highlight-p (buffer)
@@ -466,33 +477,6 @@
   (%search-syntax-start-backward point *syntax-string-attribute* limit))
 
 
-(flet ((f (c)
-         (and (not (char= c #\newline))
-              (syntax-space-char-p c))))
-
-  (defun skip-whitespace-forward (point &optional (oneline nil))
-    (with-point-syntax point
-      (if oneline
-          (skip-chars-forward point #'f)
-          (skip-chars-forward point #'syntax-space-char-p))))
-
-  (defun skip-whitespace-backward (point &optional (oneline nil))
-    (with-point-syntax point
-      (if oneline
-          (skip-chars-backward point #'f)
-          (skip-chars-backward point #'syntax-space-char-p)))))
-
-
-(defun symbol-string-at-point (point)
-  (with-point-syntax point
-    (with-point ((point point))
-      (skip-chars-backward point #'syntax-symbol-char-p)
-      (unless (syntax-symbol-char-p (character-at point))
-        (return-from symbol-string-at-point nil))
-      (with-point ((start point))
-        (skip-chars-forward point #'syntax-symbol-char-p)
-        (points-to-string start point)))))
-
 (let ((cache (make-hash-table :test 'equal)))
   (defun %create-pair-regex (pair)
     (let ((tree
@@ -503,50 +487,6 @@
       (or (gethash tree cache)
           (setf (gethash tree cache)
                 (ppcre:create-scanner tree))))))
-
-(defun %skip-comment-forward (point)
-  (multiple-value-bind (n pair)
-      (syntax-start-block-comment-p point)
-    (cond (n
-           (let ((regex (%create-pair-regex pair)))
-             (with-point ((curr point))
-               (character-offset curr n)
-               (loop :with depth := 1
-                     :do (cond ((not (search-forward-regexp curr regex))
-                                (return (values nil nil)))
-                               ((match-string-at curr (cdr pair))
-                                (character-offset curr (length (cdr pair)))
-                                (when (= 0 (decf depth))
-                                  (return (values (move-point point curr) t))))
-                               (t
-                                (character-offset curr (length (car pair)))
-                                (incf depth)))))))
-          ((syntax-line-comment-p point)
-           (values (line-offset point 1) t))
-          (t
-           (values nil t)))))
-
-(defun %skip-comment-backward (point)
-  (multiple-value-bind (n pair)
-      (syntax-end-block-comment-p point)
-    (if n
-        (let ((regex (%create-pair-regex pair)))
-          (with-point ((curr point))
-            (character-offset curr (- n))
-            (loop :with depth := 1
-                  :do (cond ((not (search-backward-regexp curr regex))
-                             (return (values nil nil)))
-                            ((match-string-at curr (car pair))
-                             (when (= 0 (decf depth))
-                               (return (values (move-point point curr) t))))
-                            (t
-                             (incf depth))))))
-        (let ((line-comment-pos (%position-line-comment (line-string point)
-                                                        (point-charpos point)
-                                                        nil)))
-          (if line-comment-pos
-              (values (line-offset point 0 line-comment-pos) t)
-              (values nil t))))))
 
 (defun %position-block-comment-end (string pos pair depth)
   (let ((regex (%create-pair-regex pair))
@@ -604,6 +544,50 @@
                    ((nil)
                     (return nil)))))
 
+(defun %skip-comment-forward (point)
+  (multiple-value-bind (n pair)
+      (syntax-start-block-comment-p point)
+    (cond (n
+           (let ((regex (%create-pair-regex pair)))
+             (with-point ((curr point))
+               (character-offset curr n)
+               (loop :with depth := 1
+                     :do (cond ((not (search-forward-regexp curr regex))
+                                (return (values nil nil)))
+                               ((match-string-at curr (cdr pair))
+                                (character-offset curr (length (cdr pair)))
+                                (when (= 0 (decf depth))
+                                  (return (values (move-point point curr) t))))
+                               (t
+                                (character-offset curr (length (car pair)))
+                                (incf depth)))))))
+          ((syntax-line-comment-p point)
+           (values (line-offset point 1) t))
+          (t
+           (values nil t)))))
+
+(defun %skip-comment-backward (point)
+  (multiple-value-bind (n pair)
+      (syntax-end-block-comment-p point)
+    (if n
+        (let ((regex (%create-pair-regex pair)))
+          (with-point ((curr point))
+            (character-offset curr (- n))
+            (loop :with depth := 1
+                  :do (cond ((not (search-backward-regexp curr regex))
+                             (return (values nil nil)))
+                            ((match-string-at curr (car pair))
+                             (when (= 0 (decf depth))
+                               (return (values (move-point point curr) t))))
+                            (t
+                             (incf depth))))))
+        (let ((line-comment-pos (%position-line-comment (line-string point)
+                                                        (point-charpos point)
+                                                        nil)))
+          (if line-comment-pos
+              (values (line-offset point 0 line-comment-pos) t)
+              (values nil t))))))
+
 (defun skip-space-and-comment-forward (point)
   (with-point-syntax point
     (loop
@@ -632,11 +616,6 @@
                   (incf count)
                   (return)))
     (values (oddp count) count)))
-
-(defun %sexp-symbol-p (c)
-  (or (syntax-symbol-char-p c)
-      (syntax-escape-char-p c)
-      (syntax-expr-prefix-char-p c)))
 
 (defun %skip-symbol-forward (point)
   (loop :for c := (character-at point 0)
@@ -857,6 +836,32 @@
                            (return nil)
                            (scan-error))))))
         (move-point point curr)))))
+
+(flet ((f (c)
+         (and (not (char= c #\newline))
+              (syntax-space-char-p c))))
+
+  (defun skip-whitespace-forward (point &optional (oneline nil))
+    (with-point-syntax point
+      (if oneline
+          (skip-chars-forward point #'f)
+          (skip-chars-forward point #'syntax-space-char-p))))
+
+  (defun skip-whitespace-backward (point &optional (oneline nil))
+    (with-point-syntax point
+      (if oneline
+          (skip-chars-backward point #'f)
+          (skip-chars-backward point #'syntax-space-char-p)))))
+
+(defun symbol-string-at-point (point)
+  (with-point-syntax point
+    (with-point ((point point))
+      (skip-chars-backward point #'syntax-symbol-char-p)
+      (unless (syntax-symbol-char-p (character-at point))
+        (return-from symbol-string-at-point nil))
+      (with-point ((start point))
+        (skip-chars-forward point #'syntax-symbol-char-p)
+        (points-to-string start point)))))
 
 
 (defstruct parser-state

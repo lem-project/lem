@@ -299,7 +299,7 @@
       (return-from looking-at-indent-spec result))
     (when (and name (setf result (gethash name *indent-table*)))
       (return-from looking-at-indent-spec result))
-    (let ((arglist (lisp-search-arglist string #'lisp-get-arglist)))
+    (let ((arglist (lisp-search-arglist string)))
       (when (and arglist (setf result (position '&body arglist)))
         (return-from looking-at-indent-spec result)))
     (when (ppcre:scan "^(?:def|with-|do-)" name)
@@ -358,17 +358,6 @@
     (when (save-excursion (and (backward-sexp 1 t) (bolp)))
       (return-from lisp-calc-indent 0))
     (calc-indent-1)))
-
-(defun traverse-form-backward (point look)
-  (with-point ((point point))
-    (loop
-      (loop
-        (unless (form-offset point -1) (return))
-        (when (start-line-p point) (return-from traverse-form-backward nil)))
-      (alexandria:if-let ((result (funcall look point)))
-        (return result)
-        (unless (scan-lists point -1 1 t)
-          (return))))))
 
 (define-key *lisp-mode-keymap* (kbd "C-M-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()
@@ -806,31 +795,6 @@
         (switch-to-buffer buffer)
         (move-to-position (current-point) offset)))))
 
-(defun analyze-symbol (str)
-  (let (package
-        external-p)
-    (let* ((list (uiop:split-string str :separator ":"))
-           (len (length list)))
-      (case len
-        ((1)
-         (setq str (car list)))
-        ((2 3)
-         (setq package
-               (if (equal "" (car list))
-                   (find-package :keyword)
-                   (find-package
-                    (string-readcase (car list)))))
-         (unless package
-           (return-from analyze-symbol nil))
-         (setq str (car (last list)))
-         (if (= len 2)
-             (setq external-p t)
-             (unless (equal "" (cadr list))
-               (return-from analyze-symbol nil))))
-        (otherwise
-         (return-from analyze-symbol nil))))
-    (list package str external-p)))
-
 (defun %collect-symbols (package package-name external-p)
   (let ((symbols))
     (labels ((f (sym separator)
@@ -889,34 +853,59 @@
          :auto-insert nil
          :restart-function 'lisp-complete-symbol)))))
 
-(defun lisp-get-arglist (symbol)
-  (when (fboundp symbol)
-    (values (swank/backend:arglist symbol) t)))
+(defun analyze-symbol (str)
+  (let (package
+        external-p)
+    (let* ((list (uiop:split-string str :separator ":"))
+           (len (length list)))
+      (case len
+        ((1)
+         (setq str (car list)))
+        ((2 3)
+         (setq package
+               (if (equal "" (car list))
+                   (find-package :keyword)
+                   (find-package
+                    (string-readcase (car list)))))
+         (unless package
+           (return-from analyze-symbol nil))
+         (setq str (car (last list)))
+         (if (= len 2)
+             (setq external-p t)
+             (unless (equal "" (cadr list))
+               (return-from analyze-symbol nil))))
+        (otherwise
+         (return-from analyze-symbol nil))))
+    (list package str external-p)))
 
-(defun lisp-get-arglist-string (symbol)
-  (multiple-value-bind (arglist foundp)
-      (lisp-get-arglist symbol)
-    (when foundp
-      (if (null arglist)
-          "()"
-          (ppcre:regex-replace-all "\\s+" (princ-to-string arglist) " ")))))
-
-(defun lisp-search-arglist (string arglist-fn)
+(defun lisp-search-arglist (string)
   (multiple-value-bind (x error-p)
       (ignore-errors
-	(destructuring-bind (package symbol-name external-p)
-	    (analyze-symbol string)
-	  (declare (ignore external-p))
-	  (multiple-value-bind (symbol status)
-	      (find-symbol (string-readcase symbol-name)
-			   (or package
-			       (lisp-current-package)))
-	    (if (null status)
-		nil
-		symbol))))
+       (destructuring-bind (package symbol-name external-p)
+           (analyze-symbol string)
+         (declare (ignore external-p))
+         (multiple-value-bind (symbol status)
+             (find-symbol (string-readcase symbol-name)
+                          (or package
+                              (lisp-current-package)))
+           (if (null status)
+               nil
+               symbol))))
     (when (and (not error-p)
-               (symbolp x))
-      (funcall arglist-fn x))))
+               (symbolp x)
+               (fboundp x))
+      (swank/backend:arglist x))))
+
+(defun traverse-form-backward (point look)
+  (with-point ((point point))
+    (loop
+      (loop
+        (unless (form-offset point -1) (return))
+        (when (start-line-p point) (return-from traverse-form-backward nil)))
+      (alexandria:if-let ((result (funcall look point)))
+        (return result)
+        (unless (scan-lists point -1 1 t)
+          (return))))))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-a") 'lisp-echo-arglist)
 (define-command lisp-echo-arglist () ()

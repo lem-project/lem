@@ -126,18 +126,16 @@
              (funcall step-fn)))))
 
   (defun skip-expr-prefix-forward (point)
-    (%skip-expr-prefix
-     (character-at point 0)
-     (character-at point 1)
-     (lambda ()
-       (character-offset point 2))))
+    (f (character-at point 0)
+       (character-at point 1)
+       (lambda ()
+         (character-offset point 2))))
 
   (defun skip-expr-prefix-backward (point)
-    (%skip-expr-prefix
-     (character-at point -2)
-     (character-at point -1)
-     (lambda ()
-       (character-offset point -2)))))
+    (f (character-at point -2)
+       (character-at point -1)
+       (lambda ()
+         (character-offset point -2)))))
 
 (defun featurep (form)
   (cond ((atom form)

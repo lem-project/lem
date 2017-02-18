@@ -575,7 +575,7 @@
           (t
            (values nil t)))))
 
-(defun %skip-comment-backward (point)
+(defun %skip-block-comment-backward (point)
   (multiple-value-bind (n pair)
       (syntax-end-block-comment-p point)
     (if n
@@ -590,10 +590,20 @@
                                (return (values (move-point point curr) t))))
                             (t
                              (incf depth))))))
-        (let ((p (inline-line-comment-p point)))
-          (if p
-              (values (move-point point p) t)
-              (values nil t))))))
+        (values nil t))))
+
+(defun %skip-comment-backward (point)
+  (multiple-value-bind (p win)
+      (%skip-block-comment-backward point)
+    (cond ((not win)
+           (values nil nil))
+          ((null p)
+           (let ((p (inline-line-comment-p point)))
+             (if p
+                 (values (move-point point p) t)
+                 (values nil t))))
+          (t
+           (values point win)))))
 
 (defun skip-space-and-comment-forward (point)
   (with-point-syntax point
@@ -722,8 +732,9 @@
 (defun %skip-list-backward (point depth)
   (loop :with paren-stack := '()
         :do
-        (unless (skip-space-and-comment-backward point)
-          (return nil))
+        (when (end-line-p point)
+          (let ((p (inline-line-comment-p point)))
+            (when p (move-point point p))))
         (when (start-buffer-p point)
           (return nil))
         (let ((c (character-at point -1))
@@ -753,7 +764,12 @@
                 ((syntax-fence-char-p c)
                  (%skip-fence-backward point))
                 (t
-                 (character-offset point -1))))))
+                 (multiple-value-bind (p win)
+                     (%skip-block-comment-backward point)
+                   (unless win
+                     (return nil))
+                   (unless p
+                     (character-offset point -1))))))))
 
 (defun %form-offset-positive (point)
   (skip-space-and-comment-forward point)

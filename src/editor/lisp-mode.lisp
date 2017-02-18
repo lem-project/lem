@@ -119,6 +119,26 @@
 	 (":import-from" . progn))
    :do (setf (gethash name *indent-table*) n))
 
+(flet ((f (c1 c2 step-fn)
+         (when c1
+           (when (and (member c1 '(#\#))
+                      (alphanumericp c2))
+             (funcall step-fn)))))
+
+  (defun skip-expr-prefix-forward (point)
+    (%skip-expr-prefix
+     (character-at point 0)
+     (character-at point 1)
+     (lambda ()
+       (character-offset point 2))))
+
+  (defun skip-expr-prefix-backward (point)
+    (%skip-expr-prefix
+     (character-at point -2)
+     (character-at point -1)
+     (lambda ()
+       (character-offset point -2)))))
+
 (defun featurep (form)
   (cond ((atom form)
          (find (find-symbol (princ-to-string form)
@@ -268,32 +288,6 @@
                               (package-name (lisp-current-package
                                              (window-buffer window))))
                             (current-buffer)))
-
-(defun %skip-expr-prefix (c1 c2 step-fn)
-  (when c1
-    (multiple-value-bind (unused-fn dispatch-char-p)
-        (get-macro-character c1)
-      (declare (ignore unused-fn))
-      (when (and dispatch-char-p
-                 (not (member c2 '(#\( #\\)))
-                 (get-dispatch-macro-character c1 c2))
-        (funcall step-fn c1 c2)))))
-
-(defun skip-expr-prefix-forward (point)
-  (%skip-expr-prefix
-   (character-at point 0)
-   (character-at point 1)
-   (lambda (c1 c2)
-     (declare (ignore c1 c2))
-     (character-offset point 2))))
-
-(defun skip-expr-prefix-backward (point)
-  (%skip-expr-prefix
-   (character-at point -2)
-   (character-at point -1)
-   (lambda (c1 c2)
-     (declare (ignore c1 c2))
-     (character-offset point -2))))
 
 (defun looking-at-indent-spec ()
   (let* ((string (symbol-string-at-point (current-point)))

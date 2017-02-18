@@ -367,10 +367,6 @@
     (when (form-offset end 1)
       (indent-region (current-point) end))))
 
-(defun top-of-defun (point)
-  (loop :while (scan-lists point -1 1 t))
-  t)
-
 (defun beginning-of-defun (point n)
   (with-point ((start point))
     (if (minusp n)
@@ -626,7 +622,7 @@
 
 (define-key *lisp-mode-keymap* (kbd "C-M-x") 'lisp-eval-defun)
 (define-command lisp-eval-defun () ()
-  (lisp-move-and-eval-sexp (lambda () (top-of-defun (current-point)))
+  (lisp-move-and-eval-sexp (lambda () (beginning-of-defun (current-point) -1))
                            #'lisp-eval-string))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-e") 'lisp-eval-last-sexp)

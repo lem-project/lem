@@ -913,23 +913,18 @@
                (symbolp x))
       (funcall arglist-fn x))))
 
-(defun search-backward-arglist ()
-  (save-excursion
+(defun search-backward-arglist (point)
+  (with-point ((point point))
     (loop
-       (go-to-car)
-       (let ((name (symbol-string-at-point (current-point))))
-	 (multiple-value-bind (arglist)
-	     (lisp-search-arglist name #'lisp-get-arglist-string)
-	   (cond (arglist
-		  (return (values (format nil "~A: ~A" name arglist) t)))
-		 ((not (up-list 1 t))
-		  (return nil))))))))
+      (unless (form-offset point -1) (return))
+      (when (start-line-p point) (return)))
+    (let ((name (symbol-string-at-point point)))
+      (swank:operator-arglist name (lisp-current-package)))))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-a") 'lisp-echo-arglist)
 (define-command lisp-echo-arglist () ()
-  (multiple-value-bind (arglist foundp)
-      (search-backward-arglist)
-    (when foundp
+  (let ((arglist (search-backward-arglist (current-point))))
+    (when arglist
       (message "~A" arglist))))
 
 (define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-insert-space-and-echo-arglist)

@@ -359,6 +359,17 @@
       (return-from lisp-calc-indent 0))
     (calc-indent-1)))
 
+(defun traverse-form-backward (point look)
+  (with-point ((point point))
+    (loop
+      (loop
+        (unless (form-offset point -1) (return))
+        (when (start-line-p point) (return-from traverse-form-backward nil)))
+      (alexandria:if-let ((result (funcall look point)))
+        (return result)
+        (unless (scan-lists point -1 1 t)
+          (return))))))
+
 (define-key *lisp-mode-keymap* (kbd "C-M-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()
   (with-point ((end (current-point) :right-inserting))
@@ -907,17 +918,14 @@
                (symbolp x))
       (funcall arglist-fn x))))
 
-(defun search-backward-arglist (point)
-  (with-point ((point point))
-    (loop
-      (unless (form-offset point -1) (return))
-      (when (start-line-p point) (return)))
-    (let ((name (symbol-string-at-point point)))
-      (swank:operator-arglist name (lisp-current-package)))))
-
 (define-key *lisp-mode-keymap* (kbd "C-c C-a") 'lisp-echo-arglist)
 (define-command lisp-echo-arglist () ()
-  (let ((arglist (search-backward-arglist (current-point))))
+  (let ((arglist (traverse-form-backward
+                  (current-point)
+                  (lambda (point)
+                    (let ((name (symbol-string-at-point point)))
+                      (when name
+                        (swank:operator-arglist name (lisp-current-package))))))))
     (when arglist
       (message "~A" arglist))))
 

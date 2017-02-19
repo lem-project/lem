@@ -99,7 +99,7 @@
 
 (defun calc-indent (point)
   (let ((lem.lisp-mode:*indent-spec-function* #'indent-spec))
-    (lem.lisp-mode::lisp-calc-indent point)))
+    (lem.lisp-mode::calc-indent point)))
 
 (defun get-buffer-from-file (file)
   (dolist (buffer (buffer-list))

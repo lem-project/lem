@@ -641,9 +641,12 @@
       (funcall eval-string-function str)
       t)))
 
+(defun top-of-defun (point)
+  (beginning-of-defun (line-end point) -1))
+
 (define-key *lisp-mode-keymap* (kbd "C-M-x") 'lisp-eval-defun)
 (define-command lisp-eval-defun () ()
-  (lisp-move-and-eval-sexp (lambda () (beginning-of-defun (current-point) -1))
+  (lisp-move-and-eval-sexp (lambda () (top-of-defun (current-point)))
                            #'lisp-eval-string))
 
 (define-key *lisp-mode-keymap* (kbd "C-c C-e") 'lisp-eval-last-sexp)

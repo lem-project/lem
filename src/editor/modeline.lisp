@@ -31,8 +31,8 @@
 
 (defun modeline-add-status-list (x &optional (buffer nil bufferp))
   (if bufferp
-      (push x (buffer-value buffer 'modeline-status-list))
-      (push x *modeline-status-list*))
+      (pushnew x (buffer-value buffer 'modeline-status-list))
+      (pushnew x *modeline-status-list*))
   (values))
 
 (defun modeline-remove-status-list (x &optional (buffer nil bufferp))

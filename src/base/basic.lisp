@@ -401,7 +401,7 @@
       (incf offset (1+ (line-length line))))))
 
 (defun move-to-position (point position)
-  (character-offset (buffer-start point) position))
+  (character-offset (buffer-start point) (1- position)))
 
 (defun move-to-line (point line-number)
   (let ((n (- (buffer-nlines (point-buffer point))

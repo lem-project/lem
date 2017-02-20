@@ -56,7 +56,9 @@
                                 (make-completion-item :label word
                                                       :start start
                                                       :end end))
-                              words)))))
+                              words)
+                      :auto-insert nil
+                      :restart-function 'abbrev-with-pop-up-window))))
 
 (defvar *rest-words* nil)
 (defvar *all-words* nil)

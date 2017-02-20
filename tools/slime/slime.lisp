@@ -546,6 +546,7 @@
                       :start start
                       :end end))
                    completions)
+           :auto-insert nil
            :restart-function 'slime-completion-symbol-at-point)))))
   t)
 

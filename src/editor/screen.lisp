@@ -409,12 +409,13 @@
             point-y)))
 
 (defun screen-display-lines (screen redraw-flag buffer view-point cursor-point)
-  (let ((disp-line-function
-         (if (variable-value 'truncate-lines :buffer buffer)
-             #'screen-display-line-wrapping
-             #'screen-display-line))
-        (wrap-lines (screen-wrap-lines screen))
-        (left-width (screen-left-width screen)))
+  (let* ((truncate-lines (variable-value 'truncate-lines :default buffer))
+         (disp-line-function
+          (if truncate-lines
+              #'screen-display-line-wrapping
+              #'screen-display-line))
+         (wrap-lines (screen-wrap-lines screen))
+         (left-width (screen-left-width screen)))
     (setf (screen-wrap-lines screen) nil)
     (let* ((visual-cursor-x 0)
            (visual-cursor-y (count-lines view-point cursor-point))
@@ -427,8 +428,7 @@
             :for left-str/attr :across (screen-left-lines screen)
             :while (< y (screen-height screen))
             :do (cond
-                  ((and (variable-value 'truncate-lines :buffer buffer)
-                        (null left-str/attr)
+                  ((and (null left-str/attr)
                         (not redraw-flag)
                         (not (null str/attributes))
                         #1=(aref (screen-old-lines screen) i)
@@ -467,15 +467,18 @@
                                  point-x
                                  y
                                  str/attributes)))
-                     (when (variable-value 'truncate-lines :buffer buffer)
-                       (let ((offset (- y2 y)))
-                         (cond ((< 0 offset)
-                                (setf redraw-flag t)
-                                (dotimes (_ offset)
-                                  (push i (screen-wrap-lines screen))))
-                               ((and (= offset 0) (find i wrap-lines))
-                                (setf redraw-flag t))))
-                       (setf y y2))))
+                     (cond
+                       (truncate-lines
+                        (let ((offset (- y2 y)))
+                          (cond ((< 0 offset)
+                                 (setf redraw-flag t)
+                                 (dotimes (_ offset)
+                                   (push i (screen-wrap-lines screen))))
+                                ((and (= offset 0) (find i wrap-lines))
+                                 (setf redraw-flag t))))
+                        (setf y y2))
+                       (t
+                        (setf (aref (screen-lines screen) i) nil)))))
                   (t
                    (fill (screen-old-lines screen) nil :start i)
                    (charms/ll:wmove (screen-%scrwin screen) y 0)

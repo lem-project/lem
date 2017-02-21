@@ -30,6 +30,8 @@
           scan-lists
           skip-whitespace-forward
           skip-whitespace-backward
+          skip-symbol-forward
+          skip-symbol-backward
           symbol-string-at-point
           parse-partial-sexp
           syntax-ppss
@@ -878,6 +880,14 @@
       (if oneline
           (skip-chars-backward point #'f)
           (skip-chars-backward point #'syntax-space-char-p)))))
+
+(defun skip-symbol-forward (point)
+  (with-point-syntax point
+    (skip-chars-forward point #'syntax-symbol-char-p)))
+
+(defun skip-symbol-backward (point)
+  (with-point-syntax point
+    (skip-chars-backward point #'syntax-symbol-char-p)))
 
 (defun symbol-string-at-point (point)
   (with-point-syntax point

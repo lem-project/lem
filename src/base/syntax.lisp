@@ -1028,6 +1028,7 @@
 (flet ((cache-point (cache) (car cache))
        (cache-state (cache) (cdr cache)))
   (defun syntax-ppss (point)
+    ;(check-ppss-cache point)
     (let* ((buffer (point-buffer point))
            (cache-list (buffer-value buffer 'syntax-ppss-cache))
            state)
@@ -1062,7 +1063,15 @@
                       (setf (buffer-value point 'syntax-ppss-cache) list)))))
       (setf (buffer-value buffer 'syntax-ppss-cache)
             cache-list)
-      state)))
+      state))
+
+  (defun check-ppss-cache (buffer)
+    (loop :for prev := nil :then (cache-point cache)
+          :for cache :in (buffer-value buffer 'syntax-ppss-cache)
+          :do
+          (assert (line-alive-p (point-line (cache-point cache))))
+          (when prev
+            (assert (point< (cache-point cache) prev))))))
 
 (defun in-string-p (point)
   (let ((state (syntax-ppss point)))

@@ -132,9 +132,9 @@
                        result-value)
                       (t
                        (editor-error "timeout"))))))
-  (defun slime-eval-string-internal (string &optional (package (current-package)))
+  (defun slime-eval-from-string (string &optional (package (current-package)))
     (m swank-protocol:emacs-rex-string string))
-  (defun slime-eval-internal (sexp &optional (package (current-package)))
+  (defun slime-eval (sexp &optional (package (current-package)))
     (m swank-protocol:emacs-rex sexp)))
 
 (defun eval-async (form &optional cont thread package)
@@ -178,7 +178,7 @@
 (defun read-package-name ()
   (check-connection)
   (let ((package-names (mapcar #'string-downcase
-                               (slime-eval-internal
+                               (slime-eval
                                 '(swank:list-all-package-names t)))))
     (string-upcase (prompt-for-line
                     "Package: " ""
@@ -196,7 +196,7 @@
   (cond ((string= package-name ""))
         ((eq (current-buffer) (repl-buffer))
          (destructuring-bind (name prompt-string)
-             (slime-eval-internal `(swank:set-package ,package-name))
+             (slime-eval `(swank:set-package ,package-name))
            (new-package name prompt-string)
            (lem.listener-mode:listener-reset-prompt (repl-buffer))))
         (t
@@ -395,7 +395,7 @@
       (points-to-string start end))))
 
 (defun macroexpand-internal (expander buffer-name)
-  (let ((string (slime-eval-internal `(,expander ,(form-string-at-point)))))
+  (let ((string (slime-eval `(,expander ,(form-string-at-point)))))
     (with-pop-up-typeout-window (out (get-buffer-create buffer-name) :focus t :erase t)
       (princ string out))))
 
@@ -408,7 +408,7 @@
   (macroexpand-internal 'swank:swank-macroexpand-all "*slime-macroexpand-all*"))
 
 (defun symbol-completion (str &optional (package (current-package)))
-  (let ((result (slime-eval-string-internal
+  (let ((result (slime-eval-from-string
                  (format nil "(swank:fuzzy-completions ~S ~S)"
                          str
                          package)
@@ -433,7 +433,7 @@
   (check-connection)
   (let* ((name (read-symbol-name "Edit Definition of: "
                                  (or (symbol-string-at-point (current-point)) "")))
-         (definitions (slime-eval-internal `(swank:find-definitions-for-emacs ,name)))
+         (definitions (slime-eval `(swank:find-definitions-for-emacs ,name)))
          (found-list '()))
     (dolist (def definitions)
       (optima:match def
@@ -483,9 +483,9 @@
 (define-command slime-edit-uses () ()
   (check-connection)
   (let* ((symbol (read-symbol-name "Edit uses of: " (or (symbol-string-at-point (current-point)) "")))
-         (result (slime-eval-internal `(swank:xrefs '(:calls :macroexpands :binds
-                                                      :references :sets :specializes)
-                                                    ,symbol)))
+         (result (slime-eval `(swank:xrefs '(:calls :macroexpands :binds
+                                             :references :sets :specializes)
+                                           ,symbol)))
          (found nil))
     (lem.sourcelist:with-sourcelist (sourcelist "*slime-xrefs*")
       (loop :for (type . definitions) :in result
@@ -533,9 +533,9 @@
     (skip-chars-backward start #'syntax-symbol-char-p)
     (skip-chars-forward end #'syntax-symbol-char-p)
     (let ((result
-           (slime-eval-string-internal (format nil "(swank:fuzzy-completions ~S ~S)"
-                                               (points-to-string start end)
-                                               (current-package)))))
+           (slime-eval-from-string (format nil "(swank:fuzzy-completions ~S ~S)"
+                                           (points-to-string start end)
+                                           (current-package)))))
       (when result
         (destructuring-bind (completions timeout-p) result
           (declare (ignore timeout-p))
@@ -576,7 +576,7 @@
                     (insert-character point #\newline 2)))))))
 
 (defun slime-apropos-internal (string only-external-p package case-sensitive-p)
-  (show-apropos (slime-eval-internal
+  (show-apropos (slime-eval
                  `(swank:apropos-list-for-emacs ,string
                                                 ,only-external-p
                                                 ,case-sensitive-p
@@ -626,7 +626,7 @@
                            (or (symbol-string-at-point (current-point)) ""))))
     (when (string= "" symbol-name)
       (editor-error "No symbol given"))
-    (show-description (slime-eval-internal `(swank:describe-symbol ,symbol-name)))))
+    (show-description (slime-eval `(swank:describe-symbol ,symbol-name)))))
 
 (define-command slime-documentation-lookup () ()
   (check-connection)

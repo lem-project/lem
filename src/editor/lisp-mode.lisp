@@ -320,8 +320,8 @@
          (eql #\( (character-at p))
          (scan-lists p -1 1 t)
          (not (start-line-p p))
-         (scan-lists p -1 1 t)
-         (character-offset p 1)
+         (form-offset p -1)
+         (eql #\( (character-at p -1))
          (eq 'flet (indent-spec-at p)))))
 
 (defun handler-case-indent-p (point)

@@ -788,10 +788,9 @@
              (not (null *connection*)))
     (let (messages)
       (handler-case (setq messages (swank-protocol:read-all-messages *connection*))
-        (disconnected
-         (c)
-         (declare (ignore c))
-         (setq *connection* nil)))
+        (disconnected (c)
+          (declare (ignore c))
+          (setq *connection* nil)))
       (loop :for message :in messages
             :do (log-message message)
             :do (alexandria:destructuring-case message

@@ -752,10 +752,14 @@
   (bt:make-thread (lambda ()
                     (loop
                       (when (swank-protocol:message-waiting-p *connection* :timeout 3)
-                        (send-event (lambda ()
-                                      (pull-events)
-                                      (redraw-display)))
-                        (sleep 0.1))))
+                        (let ((barrior t))
+                          (send-event (lambda ()
+                                        (unwind-protect (progn (pull-events)
+                                                               (redraw-display))
+                                          (setq barrior nil))))
+                          (loop
+                            (unless barrior
+                              (return)))))))
                   :name "slime-wait-message"))
 
 (define-command slime-connect (hostname port)

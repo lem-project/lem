@@ -108,31 +108,21 @@
       (return buffer))))
 
 (defun slime-eval-internal (emacs-rex-fun rex-arg package)
-  (let (result-value
-        result-value-p)
-    (funcall emacs-rex-fun
-             *connection*
-             rex-arg
-             :continuation (lambda (result)
-                             (alexandria:destructuring-case result
-                               ((:ok value)
-                                (setq result-value-p t)
-                                (setq result-value value))
-                               ((:abort condition)
-                                (declare (ignore condition))
-                                (editor-error "Synchronous Lisp Evaluation aborted"))))
-             :package package
-             :thread t)
-    (cond ((swank-protocol:message-waiting-p *connection* :timeout 2)
-           (loop :repeat 10
-                 :do
-                 (pull-events)
-                 (when result-value-p
-                   (return))
-                 (sleep 0.01)))
-          (t
-           (editor-error "timeout")))
-    result-value))
+  (let ((tag (gensym)))
+    (catch tag
+      (funcall emacs-rex-fun
+               *connection*
+               rex-arg
+               :continuation (lambda (result)
+                               (alexandria:destructuring-case result
+                                 ((:ok value)
+                                  (throw tag value))
+                                 ((:abort condition)
+                                  (declare (ignore condition))
+                                  (editor-error "Synchronous Lisp Evaluation aborted"))))
+               :package package
+               :thread t)
+      (loop (ignore-errors (sit-for 10))))))
 
 (defun slime-eval-from-string (string &optional (package (current-package)))
   (slime-eval-internal 'swank-protocol:emacs-rex-string string package))

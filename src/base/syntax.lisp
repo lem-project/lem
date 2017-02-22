@@ -737,9 +737,6 @@
 (defun %skip-list-backward (point depth)
   (loop :with paren-stack := '()
         :do
-        (when (end-line-p point)
-          (let ((p (inline-line-comment-p point)))
-            (when p (move-point point p))))
         (when (start-buffer-p point)
           (return nil))
         (let ((c (character-at point -1))
@@ -774,7 +771,10 @@
                    (unless win
                      (return nil))
                    (unless p
-                     (character-offset point -1))))))))
+                     (character-offset point -1))))))
+        (when (end-line-p point)
+          (let ((p (inline-line-comment-p point)))
+            (when p (move-point point p))))))
 
 (defun %form-offset-positive (point)
   (skip-space-and-comment-forward point)

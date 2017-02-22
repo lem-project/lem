@@ -107,35 +107,38 @@
     (when (uiop:pathname-equal file (buffer-filename buffer))
       (return buffer))))
 
-(macrolet ((m (emacs-rex x)
-             `(let (result-value
-                    result-value-p)
-                (,emacs-rex
-                 *connection*
-                 ,x
-                 :continuation (lambda (result)
-                                 (alexandria:destructuring-case result
-                                   ((:ok value)
-                                    (setq result-value-p t)
-                                    (setq result-value value))
-                                   ((:abort condition)
-                                    (declare (ignore condition))
-                                    (editor-error "Synchronous Lisp Evaluation aborted"))))
-                 :package package
-                 :thread t)
-                (cond ((swank-protocol:message-waiting-p *connection* :timeout 2)
-                       (loop :repeat 10 :do
-                             (pull-events)
-                             (when result-value-p
-                               (return))
-                             (sleep 0.01))
-                       result-value)
-                      (t
-                       (editor-error "timeout"))))))
-  (defun slime-eval-from-string (string &optional (package (current-package)))
-    (m swank-protocol:emacs-rex-string string))
-  (defun slime-eval (sexp &optional (package (current-package)))
-    (m swank-protocol:emacs-rex sexp)))
+(defun slime-eval-internal (emacs-rex-fun rex-arg package)
+  (let (result-value
+        result-value-p)
+    (funcall emacs-rex-fun
+             *connection*
+             rex-arg
+             :continuation (lambda (result)
+                             (alexandria:destructuring-case result
+                               ((:ok value)
+                                (setq result-value-p t)
+                                (setq result-value value))
+                               ((:abort condition)
+                                (declare (ignore condition))
+                                (editor-error "Synchronous Lisp Evaluation aborted"))))
+             :package package
+             :thread t)
+    (cond ((swank-protocol:message-waiting-p *connection* :timeout 2)
+           (loop :repeat 10
+                 :do
+                 (pull-events)
+                 (when result-value-p
+                   (return))
+                 (sleep 0.01)))
+          (t
+           (editor-error "timeout")))
+    result-value))
+
+(defun slime-eval-from-string (string &optional (package (current-package)))
+  (slime-eval-internal 'swank-protocol:emacs-rex-string string package))
+
+(defun slime-eval (sexp &optional (package (current-package)))
+  (slime-eval-internal 'swank-protocol:emacs-rex sexp package))
 
 (defun eval-async (form &optional cont thread package)
   (swank-protocol:emacs-rex

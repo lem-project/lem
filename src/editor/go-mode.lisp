@@ -53,7 +53,8 @@
      :keymap *go-mode-keymap*
      :syntax-table *go-syntax-table*)
   (setf (variable-value 'enable-syntax-highlight) t)
-  (setf (variable-value 'calc-indent-function) 'go-calc-indent))
+  (setf (variable-value 'calc-indent-function) 'go-calc-indent)
+  (setf (variable-value 'indent-tabs-mode) t))
 
 (defun following-word (point)
   (points-to-string point

@@ -263,7 +263,7 @@ to check if input is available."
                   continuation)
             (connection-continuations connection)))
     (send-message-string connection msg)
-    t))
+    (connection-request-count connection)))
 
 (defun emacs-rex-string (connection string &key continuation thread package)
   (emacs-rex-internal connection string continuation thread package))

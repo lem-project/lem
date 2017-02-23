@@ -122,7 +122,7 @@
                                   (editor-error "Synchronous Lisp Evaluation aborted"))))
                :package package
                :thread t)
-      (loop (ignore-errors (sit-for 10))))))
+      (loop (sit-for 10)))))
 
 (defun slime-eval-from-string (string &optional (package (current-package)))
   (slime-eval-internal 'swank-protocol:emacs-rex-string string package))
@@ -759,7 +759,8 @@
                                           (setq barrior nil))))
                           (loop
                             (unless barrior
-                              (return)))))))
+                              (return))
+                            (sleep 0.1))))))
                   :name "slime-wait-message"))
 
 (define-command slime-connect (hostname port)

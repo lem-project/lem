@@ -75,6 +75,10 @@
   (or (buffer-package (current-buffer))
       (swank-protocol:connection-package *connection*)))
 
+(defun features ()
+  (when (connected-p)
+    (swank-protocol:connection-features *connection*)))
+
 (defun indentation-update (info)
   (loop :for (name indent packages) :in info
         :do (dolist (package packages)
@@ -783,6 +787,7 @@
                           :ok)
                     :package)
               :prompt))
+  (setf lem.lisp-mode:*get-features-function* 'features)
   (slime-repl)
   (start-thread))
 
@@ -835,8 +840,9 @@
     ;;  )
     ;; ((:emacs-return-string thread tag string)
     ;;  )
-    ;; ((:new-features features)
-    ;; )
+    ((:new-features features)
+     (setf (swank-protocol:connection-features *connection*)
+           features))
     ((:indentation-update info)
      (indentation-update info))
     ;; ((:eval-no-wait form)

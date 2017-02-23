@@ -14,7 +14,8 @@
            :connection-package
            :connection-thread
            :connection-log-p
-           :connection-logging-stream)
+           :connection-logging-stream
+           :connection-features)
   (:export :connect
            :read-message-string
            :send-message-string
@@ -146,6 +147,7 @@ Parses length information to determine how many characters to read."
    (swank-version :accessor connection-swank-version
                   :type string
                   :documentation "The server's Swank version.")
+   (features :accessor connection-features)
    (info :accessor connection-info))
   (:documentation "A connection to a remote Lisp."))
 
@@ -185,7 +187,10 @@ create a REPL."
           (getf machine :version)
 
           (connection-swank-version connection)
-          (getf data :version)))
+          (getf data :version)
+
+          (connection-features connection)
+          (getf data :features)))
   ;; Require some Swank modules
   (request-swank-require
    connection

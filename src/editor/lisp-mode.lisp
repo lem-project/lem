@@ -3,6 +3,7 @@
   (:use :cl :lem :lem.listener-mode)
   (:export
    :*indent-spec-function*
+   :*get-features-function*
    :*lisp-indent-table*
    :*lisp-mode-keymap*
    :*lisp-syntax-table*
@@ -43,6 +44,7 @@
 
 (defvar *indent-table* (make-hash-table :test 'equal))
 (defvar *indent-spec-function* nil)
+(defvar *get-features-function* nil)
 
 (loop :for (name . n)
    :in '(("block" . 1)
@@ -141,7 +143,9 @@
   (cond ((atom form)
          (find (find-symbol (princ-to-string form)
                             :keyword)
-               *features*))
+               (if *get-features-function*
+                   (funcall *get-features-function*)
+                   *features*)))
         ((string-equal 'and (car form))
          (every #'featurep (cdr form)))
         ((string-equal 'or (car form))

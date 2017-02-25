@@ -204,7 +204,7 @@
   (refresh-output-buffer)
   (with-point ((start (current-point))
                (end (current-point)))
-    (scan-lists start -1 0)
+    (form-offset start -1)
     (interactive-eval (points-to-string start end))))
 
 (define-command slime-eval-defun () ()

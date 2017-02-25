@@ -40,7 +40,9 @@
 (define-key *dired-mode-keymap* "+" 'dired-mkdir)
 
 (defun start-point (buffer)
-  (line-offset (buffer-start (copy-point (buffer-point buffer) :temporary)) 3))
+  (with-point ((p (buffer-point buffer)))
+    (buffer-start p)
+    (or (line-offset p 3) p)))
 
 (defun move-to-start-point (point)
   (move-point point (start-point (point-buffer point))))
@@ -272,50 +274,52 @@
     (let ((pos (position-at-point (buffer-point buffer)))
           (dirname (probe-file (buffer-directory buffer))))
       (erase-buffer buffer)
-      (with-point ((cur-point (buffer-point buffer) :left-inserting))
-        (insert-string cur-point
-                       (namestring dirname)
-                       :attribute *header-attribute*)
-        (insert-character cur-point #\newline 2)
-        (let ((output-string (ls-output-string dirname)))
-          (insert-string cur-point output-string)
-          (buffer-start cur-point)
-          (line-offset cur-point 3)
-          (loop
-            (let ((string (line-string cur-point)))
-              (multiple-value-bind (start end start-groups end-groups)
-                  (ppcre:scan "^(\\S*)\\s+(\\d+)\\s+(\\S*)\\s+(\\S*)\\s+(\\d+)\\s+(\\S+\\s+\\S+\\s+\\S+)\\s+(.*?)(?: -> .*)?$"
-                              string)
-                (declare (ignorable start end start-groups end-groups))
-                (when start
-                  (insert-string cur-point "  ")
-                  (let* ((index (1- (length start-groups)))
-                         (filename (merge-pathnames
-                                    (subseq string
-                                            (aref start-groups index)
-                                            (aref end-groups index))
-                                    dirname))
-                         (start-file-charpos (+ 2 (aref start-groups index))))
-                    (with-point ((start-point (line-start cur-point))
-                                 (end-point (line-end cur-point)))
-                      (case (char string 0)
-                        (#\l
-                         (put-text-property start-point end-point 'type :link)
-                         (character-offset (line-start cur-point) start-file-charpos)
-                         (put-text-property cur-point end-point :attribute *link-attribute*))
-                        (#\d
-                         (put-text-property start-point end-point 'type :directory)
-                         (character-offset (line-start cur-point) start-file-charpos)
-                         (put-text-property cur-point end-point :attribute *directory-attribute*)
-                         (setf filename (namestring (uiop:ensure-directory-pathname filename))))
-                        (#\-
-                         (put-text-property start-point end-point 'type :file)))
-                      (put-text-property start-point end-point 'file filename)))
-                  (line-offset cur-point 1)
-                  (when (end-line-p cur-point)
-                    (return))))))))
-      (character-offset (buffer-start (buffer-point buffer))
-                        pos))))
+      (when dirname
+        (with-point ((cur-point (buffer-point buffer) :left-inserting))
+          (insert-string cur-point
+                         (namestring dirname)
+                         :attribute *header-attribute*)
+          (insert-character cur-point #\newline 2)
+          (let ((output-string (ls-output-string dirname)))
+            (insert-string cur-point output-string)
+            (buffer-start cur-point)
+            (line-offset cur-point 3)
+            (loop
+              (let ((string (line-string cur-point)))
+                (multiple-value-bind (start end start-groups end-groups)
+                    (ppcre:scan "^(\\S*)\\s+(\\d+)\\s+(\\S*)\\s+(\\S*)\\s+(\\d+)\\s+(\\S+\\s+\\S+\\s+\\S+)\\s+(.*?)(?: -> .*)?$"
+                                string)
+                  (declare (ignorable start end start-groups end-groups))
+                  (when start
+                    (insert-string cur-point "  ")
+                    (let* ((index (1- (length start-groups)))
+                           (filename (merge-pathnames
+                                      (subseq string
+                                              (aref start-groups index)
+                                              (aref end-groups index))
+                                      dirname))
+                           (start-file-charpos (+ 2 (aref start-groups index))))
+                      (with-point ((start-point (line-start cur-point))
+                                   (end-point (line-end cur-point)))
+                        (case (char string 0)
+                          (#\l
+                           (put-text-property start-point end-point 'type :link)
+                           (character-offset (line-start cur-point) start-file-charpos)
+                           (put-text-property cur-point end-point :attribute *link-attribute*))
+                          (#\d
+                           (put-text-property start-point end-point 'type :directory)
+                           (character-offset (line-start cur-point) start-file-charpos)
+                           (put-text-property cur-point end-point :attribute *directory-attribute*)
+                           (setf filename (namestring (uiop:ensure-directory-pathname filename))))
+                          (#\-
+                           (put-text-property start-point end-point 'type :file)))
+                        (put-text-property start-point end-point 'file filename)))
+                    (line-offset cur-point 1)
+                    (when (end-line-p cur-point)
+                      (return))))))))
+        (character-offset (buffer-start (buffer-point buffer))
+                          pos)
+        t))))
 
 (defun update-all ()
   (dolist (buffer (buffer-list))

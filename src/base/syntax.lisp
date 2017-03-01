@@ -37,7 +37,10 @@
           syntax-ppss
           in-string-p
           in-comment-p
-          in-string-or-comment-p))
+          in-string-or-comment-p
+          maybe-beginning-of-string
+          maybe-beginning-of-comment
+          maybe-beginning-of-string-or-comment))
 
 (define-editor-variable enable-syntax-highlight nil)
 (defvar *global-syntax-highlight* t)
@@ -1091,3 +1094,22 @@
               :string
               :line-comment
               :block-comment))))
+
+(defun maybe-beginning-of-string (point)
+  (let ((state (syntax-ppss point)))
+    (when (member (parser-state-type state) '(:block-string :string))
+      (move-point point (parser-state-token-start-point state)))))
+
+(defun maybe-beginning-of-comment (point)
+  (let ((state (syntax-ppss point)))
+    (when (member (parser-state-type state) '(:line-comment :block-comment))
+      (move-point point (parser-state-token-start-point state)))))
+
+(defun maybe-beginning-of-string-or-comment (point)
+  (let ((state (syntax-ppss point)))
+    (when (member (parser-state-type state)
+                  '(:block-string
+                    :string
+                    :line-comment
+                    :block-comment))
+      (move-point point (parser-state-token-start-point state)))))

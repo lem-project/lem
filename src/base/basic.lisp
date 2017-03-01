@@ -397,7 +397,7 @@
 (defun position-at-point (point)
   (let ((offset (point-charpos point)))
     (do ((line (line-prev (point-line point)) (line-prev line)))
-        ((null line) offset)
+        ((null line) (1+ offset))
       (incf offset (1+ (line-length line))))))
 
 (defun move-to-position (point position)

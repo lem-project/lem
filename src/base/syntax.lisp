@@ -935,21 +935,19 @@
                  (t
                   (move-point p to)
                   (return-from outer))))
-              (:string
-               #1=(loop
-                    (when (point<= to p)
-                      (return-from outer))
-                    (let ((c (character-at p)))
-                      (cond ((syntax-escape-char-p c)
-                             (character-offset p 1))
-                            ((char= c end-char)
-                             (setf end-char nil)
-                             (setf type nil)
-                             (setf token-start-point nil)
-                             (return (character-offset p 1))))
-                      (character-offset p 1))))
-              (:fence
-               #1#)
+              ((:string :fence)
+               (loop
+                 (when (point<= to p)
+                   (return-from outer))
+                 (let ((c (character-at p)))
+                   (cond ((syntax-escape-char-p c)
+                          (character-offset p 1))
+                         ((char= c end-char)
+                          (setf end-char nil)
+                          (setf type nil)
+                          (setf token-start-point nil)
+                          (return (character-offset p 1))))
+                   (character-offset p 1))))
               (:block-comment
                (let ((regex (%create-pair-regex block-pair)))
                  (loop

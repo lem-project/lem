@@ -53,7 +53,7 @@
 
 (defun encode-integer (integer)
   "Encode an integer to a 0-padded 16-bit hexadecimal string."
-  (format nil "~6,'0,X" integer))
+  (babel:string-to-octets (format nil "~6,'0,X" integer)))
 
 (defun decode-integer (string)
   "Decode a string representing a 0-padded 16-bit hex string to an integer."
@@ -63,24 +63,26 @@
 
 (defun write-message-to-stream (stream message)
   "Write a string to a stream, prefixing it with length information for Swank."
-  (let* ((length-string (encode-integer (1+ (length message))))
-         (msg (concatenate 'string
-                           length-string
-                           message
-                           (string #\Newline))))
+  (let* ((octets (babel:string-to-octets message))
+         (length-octets (encode-integer (length octets)))
+         (msg (make-array (+ (length length-octets)
+                             (length octets))
+                          :element-type '(unsigned-byte 8))))
+    (replace msg length-octets)
+    (replace msg octets :start1 (length length-octets))
     (write-sequence msg stream)))
 
 (defun read-message-from-stream (stream)
   "Read a string from a string.
 
 Parses length information to determine how many characters to read."
-  (let ((length-string (make-array 6 :element-type 'character)))
-    (when (/= 6 (read-sequence length-string stream))
+  (let ((length-buffer (make-array 6 :element-type '(unsigned-byte 8))))
+    (when (/= 6 (read-sequence length-buffer stream))
       (error 'disconnected))
-    (let* ((length (decode-integer length-string))
-           (buffer (make-array length :element-type 'character)))
+    (let* ((length (decode-integer (babel:octets-to-string length-buffer)))
+           (buffer (make-array length :element-type '(unsigned-byte 8))))
       (read-sequence buffer stream)
-      buffer)))
+      (babel:octets-to-string buffer))))
 
 ;;; Data
 
@@ -156,7 +158,7 @@ Parses length information to determine how many characters to read."
   (with-slots (hostname port) connection
     (let ((socket (usocket:socket-connect hostname
                                           port
-                                          :element-type 'character)))
+                                          :element-type '(unsigned-byte 8))))
       (setf (connection-socket connection) socket)))
   t)
 
@@ -214,7 +216,8 @@ create a REPL."
 (defun log-message (connection format-string &rest arguments)
   "Log a message."
   (when (connection-log-p connection)
-    (apply #'format (cons (connection-logging-stream connection)
+    (lem::pdebug (cons format-string arguments))
+    #+(or)(apply #'format (cons (connection-logging-stream connection)
                           (cons format-string
                                 arguments)))))
 

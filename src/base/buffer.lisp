@@ -151,7 +151,8 @@
 (defvar *undo-mode* :edit)
 (defvar *undo-limit* 100000)
 
-(defun make-buffer (name &key filename read-only-p (enable-undo-p t))
+(defun make-buffer (name &key filename read-only-p (enable-undo-p t)
+                         (syntax-table (fundamental-syntax-table)))
   (when (get-buffer name)
     (error "buffer already exists: ~A" name))
   (let ((buffer (make-instance 'buffer
@@ -160,7 +161,8 @@
                                :%directory (when filename (directory-namestring filename))
                                :read-only-p read-only-p
                                :%enable-undo-p enable-undo-p
-                               :major-mode 'fundamental-mode)))
+                               :major-mode 'fundamental-mode
+                               :syntax-table syntax-table)))
     (setf (buffer-mark-p buffer) nil)
     (setf (buffer-mark buffer) nil)
     (setf (%buffer-keep-binfo buffer) nil)

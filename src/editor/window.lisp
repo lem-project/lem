@@ -436,7 +436,8 @@
               (not (start-line-p (window-view-point window))))
          -1)
         ((let ((n (- (window-cursor-y window)
-                     (- (window-%height window) 2))))
+                     (- (window-%height window)
+                        (if (window-use-modeline-p window) 2 1)))))
            (when (< 0 n) n)))
         (t
          0)))

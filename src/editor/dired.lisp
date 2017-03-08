@@ -317,8 +317,7 @@
                     (line-offset cur-point 1)
                     (when (end-line-p cur-point)
                       (return))))))))
-        (character-offset (buffer-start (buffer-point buffer))
-                          pos)
+        (move-to-position (buffer-point buffer) pos)
         t))))
 
 (defun update-all ()

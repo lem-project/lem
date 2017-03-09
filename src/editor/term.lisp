@@ -1,8 +1,7 @@
 (in-package :cl-user)
 (defpackage :lem.term
   (:use :cl)
-  (:export :with-raw
-           :get-color-pair
+  (:export :get-color-pair
            :background-mode
            :term-init
            :term-finalize
@@ -376,32 +375,6 @@
 
 ;;;
 
-
-(let ((raw-mode))
-  (defun raw-p ()
-    raw-mode)
-  (defun raw ()
-    (setq raw-mode t)
-    (charms/ll:raw))
-  (defun noraw ()
-    (setq raw-mode nil)
-    (charms/ll:noraw)))
-
-(defmacro with-raw (raw-p &body body)
-  (let ((g-old-raw (gensym))
-        (g-new-raw (gensym)))
-    `(let ((,g-old-raw (raw-p))
-           (,g-new-raw ,raw-p))
-       (if ,g-new-raw
-           (raw)
-           (noraw))
-       (unwind-protect (progn ,@body)
-         (if ,g-old-raw
-             (raw)
-             (noraw))))))
-
-;;;
-
 (cffi:defcfun "fopen" :pointer (path :string) (mode :string))
 (cffi:defcfun "fclose" :int (fp :pointer))
 (cffi:defcfun "fileno" :int (fd :pointer))
@@ -440,7 +413,7 @@
   (init-colors)
   (charms/ll:noecho)
   (charms/ll:cbreak)
-  (raw)
+  (charms/ll:raw)
   (charms/ll:nonl)
   (charms/ll:refresh)
   (charms/ll:keypad charms/ll:*stdscr* 1))

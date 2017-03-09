@@ -146,10 +146,7 @@
                    (setf x (char-width char x)))))
   (charms/ll:wattroff scrwin attr))
 
-(defun screen-print-string (screen x y string)
-  (scrwin-print-string (screen-%scrwin screen) x y string nil))
-
-(defun screen-print-string-attr (screen x y string attr)
+(defun screen-print-string (screen x y string attr)
   (scrwin-print-string (screen-%scrwin screen) x y string attr))
 
 (defun screen-move-cursor (screen x y)
@@ -175,17 +172,17 @@
       (loop :for (start end attr) :in attributes
             :do (setf end (min (length str) end))
             :do (progn
-                  (screen-print-string-attr screen x y (subseq str prev-end start) nil)
+                  (screen-print-string screen x y (subseq str prev-end start) nil)
                   (incf x (string-width str prev-end start)))
             :do (progn
-                  (screen-print-string-attr screen x y (subseq str start end) attr)
+                  (screen-print-string screen x y (subseq str start end) attr)
                   (incf x (string-width str start end)))
             :do (setf prev-end end))
-      (screen-print-string-attr screen x y
-                                (if (= prev-end 0)
-                                    str
-                                    (subseq str prev-end))
-                                nil))
+      (screen-print-string screen x y
+                           (if (= prev-end 0)
+                               str
+                               (subseq str prev-end))
+                           nil))
     (when do-clrtoeol
       (charms/ll:wclrtoeol (screen-%scrwin screen)))))
 
@@ -449,11 +446,11 @@
                          (start-x left-width)
                          y2)
                      (when left-str/attr
-                       (screen-print-string-attr screen
-                                                 0
-                                                 y
-                                                 (car left-str/attr)
-                                                 (cdr left-str/attr)))
+                       (screen-print-string screen
+                                            0
+                                            y
+                                            (car left-str/attr)
+                                            (cdr left-str/attr)))
                      (let ((*print-start-x* start-x))
                        (multiple-value-setq
                         (visual-cursor-x visual-cursor-y y2)

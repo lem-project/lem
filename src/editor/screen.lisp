@@ -49,6 +49,12 @@
 (defun display-width () charms/ll:*cols*)
 (defun display-height () charms/ll:*lines*)
 
+(defun call-with-screen (function)
+  (unwind-protect (progn
+                    (display-init)
+                    (funcall function))
+    (display-finalize)))
+
 (defstruct (screen (:constructor %make-screen))
   %scrwin
   %modeline-scrwin

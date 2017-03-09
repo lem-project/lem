@@ -99,15 +99,15 @@
            (with-catch-bailout
              (handler-bind ((error #'bailout)
                             #+sbcl (sb-sys:interactive-interrupt #'bailout))
-               (unwind-protect (let ((*in-the-editor* t))
-                                 (unless passed
-                                   (setq passed t)
-                                   (display-init)
-                                   (window-init)
-                                   (minibuf-init)
-                                   (setup))
-                                 (funcall function))
-                 (display-finalize))))))
+               (call-with-screen
+                (lambda ()
+                  (let ((*in-the-editor* t))
+                    (unless passed
+                      (setq passed t)
+                      (window-init)
+                      (minibuf-init)
+                      (setup))
+                    (funcall function))))))))
       (when report
         (format t "~&~A~%" report)))))
 

@@ -3,8 +3,7 @@
 (defpackage :lem-interface
   (:use :cl :lem.term)
   (:export :display-background-mode
-           :display-init
-           :display-finalize
+           :call-with-screen
            :make-screen
            :screen-delete
            :screen-modify

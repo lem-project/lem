@@ -20,6 +20,7 @@
     (erase-buffer buffer)
     (with-point ((*sourcelist-point* (buffer-point buffer) :left-inserting))
       (funcall function sourcelist))
+    (buffer-start (buffer-point buffer))
     (change-buffer-mode buffer 'sourcelist-mode t)
     (display-buffer buffer)
     (setf (variable-value 'truncate-lines :buffer buffer) nil)

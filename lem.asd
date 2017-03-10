@@ -29,7 +29,6 @@
   :components ((:module "src/editor"
                 :serial t
                 :components ((:file "history")
-                             (:file "term")
                              (:file "package")
                              (:file "errors")
                              (:file "key")
@@ -75,4 +74,5 @@
 
                              (:file "init")
 
-                             (:file "screen")))))
+                             (:file "term")
+                             (:file "ncurses")))))

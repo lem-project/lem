@@ -72,7 +72,8 @@
           (let ((code (charms/ll:getch)))
             (cond ((= code -1))
                   ((= code 410)
-                   (send-resize-screen-event charms/ll:*cols* charms/ll:*lines*))
+                   (send-resize-screen-event (display-width)
+                                             (display-height)))
                   ((= code (char-code C-\]))
                    (bt:interrupt-thread editor-thread
                                         (lambda ()
@@ -90,8 +91,8 @@
       (exit-editor (c) (return-from lem-internal (exit-editor-value c)))
       #+sbcl
       (sb-sys:interactive-interrupt (c)
-                                    (declare (ignore c))
-                                    (bt:destroy-thread editor-thread)))))
+        (declare (ignore c))
+        (bt:destroy-thread editor-thread)))))
 
 (let ((passed nil))
   (defun call-with-editor (function)

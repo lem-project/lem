@@ -1,7 +1,7 @@
 (in-package :cl-user)
 
 (defpackage :lem-interface
-  (:use :cl :lem.term)
+  (:use :cl)
   (:export :display-background-mode
            :call-with-screen
            :make-screen
@@ -21,11 +21,9 @@
            :print-echoarea))
 
 (defpackage :lem
-  (:use :cl :lem-interface :lem-base)
+  (:use :cl :lem-base :lem-interface)
   (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-base)
                      :collect (make-symbol (string sym)))))
 
 (defpackage :lem-user
   (:use :cl :lem))
-
-(use-package :lem :lem-interface)

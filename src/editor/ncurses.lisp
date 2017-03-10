@@ -1,4 +1,7 @@
-(in-package :lem-interface)
+(uiop:define-package :lem-ncurses
+  (:use :cl :lem :lem.term :lem-interface)
+  (:reexport :lem-interface))
+(in-package :lem-ncurses)
 
 (defvar *echo-area-scrwin*)
 
@@ -152,8 +155,8 @@
                    (setf x (char-width char x)))))
   (charms/ll:wattroff scrwin attr))
 
-(defun screen-print-string (screen x y string attr)
-  (scrwin-print-string (screen-%scrwin screen) x y string attr))
+(defun screen-print-string (screen x y string attribute)
+  (scrwin-print-string (screen-%scrwin screen) x y string attribute))
 
 (defun screen-move-cursor (screen x y)
   (charms/ll:wmove (screen-%scrwin screen) y x))
@@ -507,7 +510,7 @@
                            *modeline-inactive-attribute*))
   (charms/ll:wnoutrefresh (screen-%modeline-scrwin (lem::window-screen window))))
 
-(defun redraw-display-window (window &optional force)
+(defun redraw-display-window (window force)
   (when (eq window (current-window)) (window-see window))
   (lem::window-prompt-display window)
   (progn

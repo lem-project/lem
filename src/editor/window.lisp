@@ -31,7 +31,8 @@
           switch-to-buffer
           pop-to-buffer
           floating-windows
-          balloon))
+          balloon
+          redraw-display))
 
 (define-editor-variable truncate-lines t)
 
@@ -866,3 +867,12 @@
         (setf width (display-width)))
       (setf x (- (display-width) width)))
     (make-floating-window buffer x y width height nil)))
+
+(defun redraw-display (&optional force)
+  (dolist (window (window-list))
+    (unless (eq window (current-window))
+      (redraw-display-window window force)))
+  (redraw-display-window (current-window) force)
+  (dolist (window (floating-windows))
+    (redraw-display-window window t))
+  (update-display))

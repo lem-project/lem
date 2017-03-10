@@ -15,16 +15,14 @@
            :screen-erase
            :screen-print-string
            :screen-move-cursor
-           :redraw-display
+           :redraw-display-window
+           :update-display
            :update-display-size
-           :print-echoarea
-           ))
+           :print-echoarea))
 
 (defpackage :lem
   (:use :cl :lem-interface :lem-base)
   (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-base)
-                     :collect (make-symbol (string sym))))
-  (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-interface)
                      :collect (make-symbol (string sym)))))
 
 (defpackage :lem-user

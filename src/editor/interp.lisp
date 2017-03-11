@@ -40,7 +40,8 @@
 (defmacro with-error-handler (() &body body)
   `(handler-case-bind ((lambda (condition)
                          (handler-bind ((error #'bailout))
-                           (pop-up-backtrace condition)))
+                           (pop-up-backtrace condition)
+                           (redraw-display)))
                        ,@body)
                       ((condition) (declare (ignore condition)))))
 
@@ -71,8 +72,6 @@
   (do-command-loop (:interactive t)
     (with-error-handler ()
       (when (= 0 (event-queue-length))
-        #+(or)(handler-bind ((error #'bailout))
-                (redraw-display))
         (redraw-display))
       (handler-case
           (handler-bind ((editor-abort

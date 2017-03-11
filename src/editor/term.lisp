@@ -2,6 +2,8 @@
 (defpackage :lem.term
   (:use :cl)
   (:export :get-color-pair
+           :term-set-foreground
+           :term-set-background
            :background-mode
            :term-init
            :term-finalize
@@ -328,7 +330,9 @@
                              :do (when (string= string (color-name color))
                                    (return (color-number color)))
                              :finally (return nil))))))
-    (or color 0)))
+    (if color
+        (values color t)
+        (values 0 nil))))
 
 (defun get-color-pair (fg-color-name bg-color-name)
   (let ((fg-color (if (null fg-color-name) -1 (get-color fg-color-name)))
@@ -360,6 +364,20 @@
         (bg-color (if background (get-color background) -1)))
     (charms/ll:assume-default-colors fg-color
                                      bg-color)))
+
+(defun term-set-foreground (name)
+  (multiple-value-bind (fg found) (get-color name)
+    (let ((bg (nth-value 1 (get-default-colors))))
+      (when found
+        (charms/ll:assume-default-colors fg bg)
+        t))))
+
+(defun term-set-background (name)
+  (multiple-value-bind (bg found) (get-color name)
+    (let ((fg (nth-value 0 (get-default-colors))))
+      (when found
+        (charms/ll:assume-default-colors fg bg)
+        t))))
 
 (defun background-mode ()
   (let ((b (nth-value 1 (get-default-colors))))

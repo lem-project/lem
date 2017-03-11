@@ -2,7 +2,9 @@
 
 (defpackage :lem-interface
   (:use :cl)
-  (:export :display-background-mode
+  (:export :set-foreground
+           :set-background
+           :display-background-mode
            :call-with-screen
            :make-screen
            :screen-delete
@@ -23,7 +25,9 @@
 (defpackage :lem
   (:use :cl :lem-base :lem-interface)
   (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-base)
-                     :collect (make-symbol (string sym)))))
+                     :collect (make-symbol (string sym))))
+  (:export :set-foreground
+           :set-background))
 
 (defpackage :lem-user
   (:use :cl :lem))

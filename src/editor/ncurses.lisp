@@ -35,6 +35,10 @@
   (or *display-background-mode*
       (lem.term:background-mode)))
 
+(defun (setf display-background-mode) (mode)
+  (check-type mode (or (eql :light) (eql :dark) null))
+  (setf *display-background-mode* mode))
+
 (defun set-foreground (name)
   (or (term-set-foreground name)
       (error "Undefined color: ~A" name)))
@@ -42,10 +46,6 @@
 (defun set-background (name)
   (or (term-set-background name)
       (error "Undefined color: ~A" name)))
-
-(defun (setf display-background-mode) (mode)
-  (check-type mode (or (eql :light) (eql :dark) null))
-  (setf *display-background-mode* mode))
 
 (defun display-init ()
   (term-init)

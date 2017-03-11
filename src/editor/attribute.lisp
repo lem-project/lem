@@ -100,15 +100,17 @@
            (or (get ',name '%attribute-value)
                (setf (get ',name '%attribute-value)
                      (cond ,@(loop :for (pattern . args) :in specs
-                                   :collect (ecase pattern
-                                              ((:light)
-                                               `((display-light-p)
-                                                 (make-attribute ,@args)))
-                                              ((:dark)
-                                               `((display-dark-p)
-                                                 (make-attribute ,@args)))
-                                              ((t)
-                                               `(t (make-attribute ,@args)))))))))))
+                                   :collect (cond
+                                              ((eq pattern t)
+                                               `(t (make-attribute ,@args)))
+                                              (t
+                                               `((or ,@(mapcar (lambda (p)
+                                                                 (cond ((eq p :light)
+                                                                        '(display-light-p))
+                                                                       ((eq p :dark)
+                                                                        `(display-dark-p))))
+                                                               (alexandria:ensure-list pattern)))
+                                                 (make-attribute ,@args)))))))))))
 
 (define-attribute region
   (:light :foreground "blue" :reverse-p t)

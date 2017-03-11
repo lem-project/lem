@@ -76,4 +76,6 @@
                              (:file "init")
 
                              (:file "term")
-                             (:file "ncurses")))))
+                             (:file "ncurses")
+
+                             (:file "color-theme")))))

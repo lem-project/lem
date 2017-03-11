@@ -1,6 +1,10 @@
 (defpackage :lem.dired
   (:use :cl :lem)
-  (:export :dired
+  (:export :dired-header-attribute
+           :dired-file-attribute
+           :dired-directory-attribute
+           :dired-link-attribute
+           :dired
            :dired-buffer))
 (in-package :lem.dired)
 

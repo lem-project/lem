@@ -1,11 +1,12 @@
 (in-package :cl-user)
 (defpackage :lem.show-paren
-  (:use :cl :lem))
+  (:use :cl :lem)
+  (:export :showparen-attribute))
 (in-package :lem.show-paren)
 
 (defvar *brackets-overlays* nil)
 
-(define-attribute paren-attribute
+(define-attribute showparen-attribute
   (t :foreground "cyan" :reverse-p t))
 
 (defun show-paren-timer-function ()
@@ -25,7 +26,7 @@
       (dolist (point highlight-points)
         (push (make-overlay point
                             (character-offset (copy-point point :temporary) 1)
-                            'paren-attribute)
+                            'showparen-attribute)
               *brackets-overlays*))
       (when (or shew-p highlight-points)
         (redraw-display)))))

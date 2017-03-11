@@ -2,6 +2,7 @@
 
 (export '(*enable-recursive-minibuffers*
           *minibuf-keymap*
+          minibuffer-prompt-attribute
           minibuffer-window-p
           minibuffer-window-height
           minibufferp

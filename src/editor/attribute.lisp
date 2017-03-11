@@ -9,9 +9,9 @@
           set-attribute-bold-p
           set-attribute-underline-p
           define-attribute
-          mark-overlay-attribute
-          modeline-attribute
-          modeline-inactive-attribute
+          region
+          modeline
+          modeline-inactive
           syntax-string-attribute
           syntax-comment-attribute
           syntax-keyword-attribute
@@ -62,7 +62,7 @@
         (t
          nil)))
 
-(defun set-attribute (attribute &rest
+(defun set-attribute (attribute &key
                                 (foreground nil foregroundp)
                                 (background nil backgroundp)
                                 reverse-p bold-p underline-p)
@@ -110,15 +110,15 @@
                                               ((t)
                                                `(t (make-attribute ,@args)))))))))))
 
-(define-attribute mark-overlay-attribute
+(define-attribute region
   (:light :foreground "blue" :reverse-p t)
   (:dark :foreground "cyan" :reverse-p t))
 
-(define-attribute modeline-attribute
+(define-attribute modeline
   (:light :reverse-p t)
   (:dark :reverse-p t))
 
-(define-attribute modeline-inactive-attribute
+(define-attribute modeline-inactive
   (:light :reverse-p t)
   (:dark :reverse-p t))
 

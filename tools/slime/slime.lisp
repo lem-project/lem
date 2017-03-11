@@ -1,7 +1,10 @@
 (in-package :cl-user)
 (defpackage :lem-slime
   (:use :cl :lem)
-  (:export :*impl-name*)
+  (:export :slime-note-attribute
+           :slime-entry-attribute
+           :slime-headline-attribute
+           :*impl-name*)
   (:import-from :lem-slime.errors
                 :disconnected)
   (:local-nicknames

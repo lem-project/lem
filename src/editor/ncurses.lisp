@@ -294,7 +294,7 @@
           (end (buffer-mark buffer)))
       (when (point< end start)
         (rotatef start end))
-      (make-overlay start end 'mark-overlay-attribute))))
+      (make-overlay start end 'region))))
 
 (defun disp-reset-lines (screen buffer view-point)
   (with-point ((point view-point))
@@ -493,7 +493,7 @@
       (screen-move-cursor screen visual-cursor-x visual-cursor-y))))
 
 (defun screen-redraw-separator (window)
-  (let ((attr (%attribute-to-bits 'modeline-attribute)))
+  (let ((attr (%attribute-to-bits 'modeline)))
     (charms/ll:attron attr)
     (when (< 0 (window-x window))
       (charms/ll:move (window-y window) (1- (window-x window)))
@@ -507,8 +507,8 @@
                        0
                        (modeline-string window)
                        (if (eq window (current-window))
-                           'modeline-attribute
-                           'modeline-inactive-attribute))
+                           'modeline
+                           'modeline-inactive))
   (charms/ll:wnoutrefresh (screen-%modeline-scrwin (lem::window-screen window))))
 
 (defun redraw-display-window (window force)

@@ -1,6 +1,8 @@
 (in-package :lem)
 
-(export '(completion
+(export '(completion-attribute
+          non-focus-completion-attribute
+          completion
           completion-test
           completion-hypheen
           completion-file

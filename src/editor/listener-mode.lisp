@@ -1,7 +1,8 @@
 (in-package :cl-user)
 (defpackage :lem.listener-mode
   (:use :cl :lem)
-  (:export :listener-mode
+  (:export :listener-prompt-attribute
+           :listener-mode
            :*listener-mode-keymap*
            :listener-start
            :listener-update-point
@@ -10,7 +11,6 @@
            :listener-prev-input
            :listener-next-input
            :listener-reset-interactive
-           ;;
            :listener-get-prompt-function
            :listener-check-confirm-function
            :listener-confirm-function))

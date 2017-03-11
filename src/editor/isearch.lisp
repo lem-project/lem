@@ -1,28 +1,29 @@
 (in-package :cl-user)
 (defpackage :lem.isearch
   (:use :cl :lem)
-  (:export
-   :*isearch-keymap*
-   :isearch-mode
-   :isearch-forward
-   :isearch-backward
-   :isearch-forward-regexp
-   :isearch-backward-regexp
-   :isearch-forward-symbol
-   :isearch-backward-symbol
-   :isearch-forward-symbol-at-point
-   :isearch-abort
-   :isearch-delete-char
-   :isearch-raw-insert
-   :isearch-end
-   :isearch-next
-   :isearch-prev
-   :isearch-yank
-   :isearch-self-insert
-   :read-query-replace-args
-   :query-replace
-   :query-replace-regexp
-   :query-replace-symbol))
+  (:export :*isearch-keymap*
+           :isearch-highlight-attribute
+           :isearch-highlight-active-attribute
+           :isearch-mode
+           :isearch-forward
+           :isearch-backward
+           :isearch-forward-regexp
+           :isearch-backward-regexp
+           :isearch-forward-symbol
+           :isearch-backward-symbol
+           :isearch-forward-symbol-at-point
+           :isearch-abort
+           :isearch-delete-char
+           :isearch-raw-insert
+           :isearch-end
+           :isearch-next
+           :isearch-prev
+           :isearch-yank
+           :isearch-self-insert
+           :read-query-replace-args
+           :query-replace
+           :query-replace-regexp
+           :query-replace-symbol))
 (in-package :lem.isearch)
 
 (defvar *isearch-keymap* (make-keymap 'isearch-self-insert))

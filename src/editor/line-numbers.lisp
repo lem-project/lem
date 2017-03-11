@@ -1,5 +1,6 @@
 (defpackage :lem.line-numbers
-  (:use :cl :lem))
+  (:use :cl :lem)
+  (:export :line-numbers-attribute))
 (in-package :lem.line-numbers)
 
 (defvar *visited* nil)

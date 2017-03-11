@@ -35,17 +35,17 @@
     (dolist (k *go-keywords*)
       (syntax-add-match table
                         (make-syntax-test k :word-p t)
-                        :attribute *syntax-keyword-attribute*))
+                        :attribute 'syntax-keyword-attribute))
 
     (dolist (k *go-builtin*)
       (syntax-add-match table
                         (make-syntax-test k :word-p t)
-                        :attribute *syntax-keyword-attribute*))
+                        :attribute 'syntax-keyword-attribute))
 
     (dolist (k *go-constants*)
       (syntax-add-match table
                         (make-syntax-test k :word-p t)
-                        :attribute *syntax-constant-attribute*))
+                        :attribute 'syntax-constant-attribute))
     table))
 
 (define-major-mode go-mode nil

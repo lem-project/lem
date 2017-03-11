@@ -16,7 +16,8 @@
            :listener-confirm-function))
 (in-package :lem.listener-mode)
 
-(defvar *prompt-attribute* (make-attribute "blue" nil :bold-p t))
+(define-attribute listener-prompt-attribute
+  (t :foreground "blue" :bold-p t))
 
 (defvar %listener-point-indicator (gensym))
 (defmacro %listener-point (buffer)
@@ -65,7 +66,7 @@
 		   (princ-to-string
 		    (funcall
 		     (variable-value 'listener-get-prompt-function :buffer buffer)))
-		   :attribute *prompt-attribute*
+		   :attribute 'listener-prompt-attribute
 		   :read-only t
 		   :field t)
     (buffer-end cur-point)

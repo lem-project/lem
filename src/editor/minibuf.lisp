@@ -29,7 +29,9 @@
 (defvar *minibuf-window*)
 (defvar *minibuffer-calls-window*)
 (defvar *minibuffer-start-charpos*)
-(defvar *minibuffer-prompt-attribute* (make-attribute "blue" nil :bold-p t))
+
+(define-attribute minibuffer-prompt-attribute
+  (t :foreground "blue" :bold-p t))
 
 (defun minibuffer-window () *minibuf-window*)
 (defun minibuffer-window-p (window) (eq window (minibuffer-window)))
@@ -245,7 +247,7 @@
                      (minibuffer-mode)
                      (unless (string= "" prompt)
                        (insert-string (current-point) prompt
-                                      :attribute *minibuffer-prompt-attribute*
+                                      :attribute 'minibuffer-prompt-attribute
                                       :read-only t
                                       :field t)
                        (character-offset (current-point) (length prompt)))
@@ -265,7 +267,7 @@
                                           (end (current-point)))
                                (line-start start)
                                (line-offset end 0 prev-prompt-length)
-                               (put-text-property start end :attribute *minibuffer-prompt-attribute*)
+                               (put-text-property start end :attribute 'minibuffer-prompt-attribute)
                                (put-text-property start end :read-only t)
                                (put-text-property start end :field t)))
                            (move-point (current-point) minibuf-buffer-prev-point))))))

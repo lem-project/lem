@@ -109,9 +109,12 @@
 (define-key *completion-mode-keymap* "C-m" 'completion-select)
 (define-key *completion-mode-keymap* "Spc" 'completion-insert-space-and-cancel)
 
+(define-attribute completion-attribute
+  (t :foreground "blue" :background "white" :reverse-p t))
+(define-attribute non-focus-completion-attribute
+  (t :reverse-p t))
+
 (defvar *completion-overlay* nil)
-(defvar *completion-overlay-attribute* (make-attribute "blue" "white" :reverse-p t))
-(defvar *completion-attribute* (make-attribute nil nil :reverse-p t))
 (defvar *completion-window* nil)
 (defvar *completion-restart-function* nil)
 
@@ -132,7 +135,7 @@
       (setf *completion-overlay*
             (make-overlay (line-start start)
                           (line-end end)
-                          *completion-overlay-attribute*)))))
+                          'completion-attribute)))))
 
 (defun completion-end ()
   (when *completion-overlay*
@@ -237,7 +240,7 @@
                        (end point))
             (put-text-property (line-start start)
                                (line-end end)
-                               :attribute *completion-attribute*)))
+                               :attribute 'non-focus-completion-attribute)))
         (line-offset point 1)
         (when (end-buffer-p point)
           (return)))
@@ -251,7 +254,7 @@
      (completion-insert (current-point) (first items)))
     (t
      (multiple-value-bind (buffer max-column)
-         (create-completion-buffer items *completion-attribute*)
+         (create-completion-buffer items 'non-focus-completion-attribute)
        (setf *completion-window*
              (balloon (current-window)
                       buffer

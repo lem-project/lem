@@ -18,9 +18,14 @@
 (defvar *last-compilation-result* nil)
 (defvar *indent-table* (make-hash-table :test 'equal))
 
-(defvar *note-attribute* (make-attribute "red" nil :underline-p t))
-(defvar *entry-attribute* (make-attribute "blue" nil :bold-p t))
-(defvar *headline-attribute* (make-attribute nil nil :bold-p t))
+(define-attribute slime-note-attribute
+  (t :foreground "red" :underline-p t))
+
+(define-attribute slime-entry-attribute
+  (t :foreground "blue" :bold-p t))
+
+(define-attribute slime-headline-attribute
+  (t :bold-p t))
 
 (define-major-mode slime-mode nil
     (:name "slime"
@@ -291,7 +296,7 @@
     (skip-chars-backward point #'syntax-symbol-char-p)
     (make-overlay point
                   (form-offset (copy-point point :temporary) 1)
-                  *note-attribute*)))
+                  'slime-note-attribute)))
 
 (defvar *note-overlays* nil)
 
@@ -325,9 +330,9 @@
               sourcelist
               (let ((name (or buffer-name file)))
                 (lambda (cur-point)
-                  (insert-string cur-point name :attribute lem.grep::*attribute-1*)
+                  (insert-string cur-point name :attribute 'lem.grep:title-attribute)
                   (insert-string cur-point ":")
-                  (insert-string cur-point (princ-to-string pos) :attribute lem.grep::*attribute-2*)
+                  (insert-string cur-point (princ-to-string pos) :attribute 'lem.grep:position-attribute)
                   (insert-string cur-point ":")
                   (insert-character cur-point #\newline 1)
                   (insert-string cur-point message)
@@ -536,11 +541,11 @@
                    (lambda (cur-point)
                      (unless (and prev-file (string= prev-file file))
                        (insert-string cur-point file
-                                      :attribute *headline-attribute*)
+                                      :attribute 'slime-headline-attribute)
                        (insert-character cur-point #\newline))
                      (insert-string cur-point
                                     (format nil "  ~A" title)
-                                    :attribute *entry-attribute*))
+                                    :attribute 'slime-entry-attribute))
                    (lambda ()
                      (find-file file)
                      (move-to-position (current-point) offset)))
@@ -577,7 +582,7 @@
                    sourcelist
                    (lambda (cur-point)
                      (insert-string cur-point (princ-to-string type)
-                                    :attribute *headline-attribute*
+                                    :attribute 'slime-headline-attribute
                                     ))
                    nil)
                   (loop :for def :in defs
@@ -588,7 +593,7 @@
                                (lambda (cur-point)
                                  (insert-string cur-point
                                                 (format nil "  ~A" name)
-                                                :attribute *entry-attribute*))
+                                                :attribute 'slime-entry-attribute))
                                (lambda ()
                                  (find-file file)
                                  (move-to-position (current-point) offset))))))))
@@ -642,7 +647,7 @@
               :do (let ((designator (cadr plist))
                         (plist1 (cddr plist)))
                     (insert-string point designator
-                                   :attribute *headline-attribute*)
+                                   :attribute 'slime-headline-attribute)
                     (loop :for (k v) :on plist1 :by #'cddr
                           :do (insert-string point (format nil "~%  ~A: ~A" k v)))
                     (insert-character point #\newline 2)))))))

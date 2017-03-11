@@ -5,7 +5,8 @@
 
 (defvar *brackets-overlays* nil)
 
-(defvar *paren-attribute* (make-attribute "cyan" nil :reverse-p t))
+(define-attribute paren-attribute
+  (t :foreground "cyan" :reverse-p t))
 
 (defun show-paren-timer-function ()
   (let ((shew-p (if *brackets-overlays* t nil)))
@@ -24,7 +25,7 @@
       (dolist (point highlight-points)
         (push (make-overlay point
                             (character-offset (copy-point point :temporary) 1)
-                            *paren-attribute*)
+                            'paren-attribute)
               *brackets-overlays*))
       (when (or shew-p highlight-points)
         (redraw-display)))))

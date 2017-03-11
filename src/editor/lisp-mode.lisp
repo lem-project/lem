@@ -152,8 +152,6 @@
          (some #'featurep (cdr form)))
         (t)))
 
-(defvar *feature-attribute* (copy-attribute *syntax-comment-attribute*))
-
 (defparameter +symbol-package-prefix+
   '(:sequence
     (:greedy-repetition 1 nil (:inverted-char-class #\( #\) #\space #\tab)) #\:))
@@ -181,7 +179,7 @@
     (syntax-add-match table
                       (make-syntax-test ":[^()\" \\t]+"
                                         :word-p t)
-                      :attribute *syntax-constant-attribute*)
+                      :attribute 'syntax-constant-attribute)
     (syntax-add-match table
                       (make-syntax-test "\\(")
                       :matched-symbol :start-form
@@ -189,15 +187,15 @@
     (syntax-add-match table
                       (make-syntax-test "[^() \\t]+")
                       :test-symbol :define-start
-                      :attribute *syntax-function-name-attribute*)
+                      :attribute 'syntax-function-name-attribute)
     (syntax-add-match table
                       (make-syntax-test "[^() \\t]+")
                       :test-symbol :defpackage-start
-                      :attribute *syntax-type-attribute*)
+                      :attribute 'syntax-type-attribute)
     (syntax-add-match table
                       (make-syntax-test "[^() \\t]+")
                       :test-symbol :defvar-start
-                      :attribute *syntax-variable-attribute*)
+                      :attribute 'syntax-variable-attribute)
     (syntax-add-match table
                       (make-syntax-test
                        `(:sequence
@@ -209,7 +207,7 @@
                                                 (:inverted-char-class #\space #\tab #\( #\))))))
                        :word-p t)
                       :test-symbol :start-form
-                      :attribute *syntax-keyword-attribute*
+                      :attribute 'syntax-keyword-attribute
                       :matched-symbol :define-start
                       :symbol-lifetime 1)
     (syntax-add-match table
@@ -221,7 +219,7 @@
                              "deftype" "defpackage" "defstruct")))
                        :word-p t)
                       :test-symbol :start-form
-                      :attribute *syntax-keyword-attribute*
+                      :attribute 'syntax-keyword-attribute
                       :matched-symbol :defpackage-start
                       :symbol-lifetime 1)
     (syntax-add-match table
@@ -232,7 +230,7 @@
                           ,@(word-length-sort "defvar" "defparameter" "defconstant")))
                        :word-p t)
                       :test-symbol :start-form
-                      :attribute *syntax-keyword-attribute*
+                      :attribute 'syntax-keyword-attribute
                       :matched-symbol :defvar-start
                       :symbol-lifetime 1)
     (syntax-add-match table
@@ -253,11 +251,11 @@
                              "declare" "declaim" "proclaim")))
                        :word-p t)
                       :test-symbol :start-form
-                      :attribute *syntax-keyword-attribute*)
+                      :attribute 'syntax-keyword-attribute)
     (syntax-add-match table
                       (make-syntax-test "&[^() \\t]+"
                                         :word-p t)
-                      :attribute *syntax-constant-attribute*)
+                      :attribute 'syntax-constant-attribute)
     (syntax-add-match
      table
      (make-syntax-test "#[+-]")
@@ -276,7 +274,7 @@
                               nil)
                              (t
                               (form-offset cur-point 1))))))))
-     :attribute *feature-attribute*)
+     :attribute 'syntax-comment-attribute)
     table))
 
 (define-major-mode lisp-mode nil

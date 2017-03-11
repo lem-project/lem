@@ -22,7 +22,7 @@
    (attribute
     :initarg :attribute
     :reader overlay-attribute
-    :type attribute)
+    :type (or null attribute))
    (buffer
     :initarg :buffer
     :reader overlay-buffer
@@ -40,9 +40,9 @@
   (typep x 'overlay))
 
 (defun make-overlay (start end attribute)
-  (check-type attribute attribute)
   (assert (eq (point-buffer start)
               (point-buffer end)))
+  (setf attribute (ensure-attribute attribute))
   (let* ((buffer (point-buffer start))
          (overlay
           (make-instance 'overlay

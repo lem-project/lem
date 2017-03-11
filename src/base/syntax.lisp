@@ -57,8 +57,7 @@
   ((attribute
     :initarg :attribute
     :initform 0
-    :reader syntax-attribute
-    :type (or null attribute))))
+    :reader syntax-attribute)))
 
 (defclass syntax-region (syntax)
   ((start
@@ -121,22 +120,22 @@
         (syntax-add-region syntax-table
                            (make-syntax-test `(:sequence ,string))
                            (make-syntax-test "$")
-                           :attribute *syntax-comment-attribute*)))
+                           :attribute 'syntax-comment-attribute)))
     (dolist (string-quote-char (syntax-table-string-quote-chars syntax-table))
       (syntax-add-region syntax-table
                          (make-syntax-test `(:sequence ,(string string-quote-char)))
                          (make-syntax-test `(:sequence ,(string string-quote-char)))
-                         :attribute *syntax-string-attribute*))
+                         :attribute 'syntax-string-attribute))
     (loop :for (start . end) :in (syntax-table-block-comment-pairs syntax-table)
           :do (syntax-add-region syntax-table
                                  (make-syntax-test `(:sequence ,start))
                                  (make-syntax-test `(:sequence ,end))
-                                 :attribute *syntax-comment-attribute*))
+                                 :attribute 'syntax-comment-attribute))
     (loop :for (start . end) :in (syntax-table-block-string-pairs syntax-table)
           :do (syntax-add-region syntax-table
                                  (make-syntax-test `(:sequence ,start))
                                  (make-syntax-test `(:sequence ,end))
-                                 :attribute *syntax-string-attribute*))
+                                 :attribute 'syntax-string-attribute))
     syntax-table))
 
 (defun syntax-add-match (syntax-table test
@@ -476,16 +475,16 @@
         (return (move-point point curr))))))
 
 (defun search-comment-start-forward (point &optional limit)
-  (%search-syntax-start-forward point *syntax-comment-attribute* limit))
+  (%search-syntax-start-forward point 'syntax-comment-attribute limit))
 
 (defun search-comment-start-backward (point &optional limit)
-  (%search-syntax-start-backward point *syntax-comment-attribute* limit))
+  (%search-syntax-start-backward point 'syntax-comment-attribute limit))
 
 (defun search-string-start-forward (point &optional limit)
-  (%search-syntax-start-forward point *syntax-string-attribute* limit))
+  (%search-syntax-start-forward point 'syntax-string-attribute limit))
 
 (defun search-string-start-backward (point &optional limit)
-  (%search-syntax-start-backward point *syntax-string-attribute* limit))
+  (%search-syntax-start-backward point 'syntax-string-attribute limit))
 
 
 (let ((cache (make-hash-table :test 'equal)))

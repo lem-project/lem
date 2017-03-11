@@ -39,8 +39,11 @@
     (:name "isearch"
 	   :keymap *isearch-keymap*))
 
-(defvar *isearch-highlight-attribute* (make-attribute nil nil :reverse-p t))
-(defvar *isearch-highlight-active-attribute* (make-attribute "cyan" nil :reverse-p t))
+(define-attribute isearch-highlight-attribute
+  (t :reverse-p t))
+
+(define-attribute isearch-highlight-active-attribute
+  (t :foreground "cyan" :reverse-p t))
 
 (defun isearch-update-display ()
   (isearch-update-minibuffer)
@@ -219,8 +222,8 @@
                                     (copy-point cur-point :temporary)
                                     (if (and (point<= start-point point)
                                              (point<= point cur-point))
-                                        *isearch-highlight-active-attribute*
-                                        *isearch-highlight-attribute*))
+                                        'isearch-highlight-active-attribute
+                                        'isearch-highlight-attribute))
                       *isearch-highlight-overlays*)))))))
 
 (defun isearch-add-char (c)

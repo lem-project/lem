@@ -3,7 +3,9 @@
 (in-package :lem.line-numbers)
 
 (defvar *visited* nil)
-(defvar *attribute* (make-attribute "blue" nil))
+
+(define-attribute line-numbers-attribute
+  (t :foreground "blue"))
 
 (defun update (&optional (window (current-window)))
   (let ((buffer (window-buffer window)))
@@ -15,7 +17,7 @@
             (let ((n (length (prin1-to-string (buffer-nlines buffer)))))
               (loop :for linum :from (line-number-at-point p) :repeat (window-height window)
                     :do
-                    (let ((ov (make-overlay p p *attribute*)))
+                    (let ((ov (make-overlay p p 'line-numbers-attribute)))
                       (overlay-put ov :display-left t)
                       (overlay-put ov :text (format nil "~vD " n linum))
                       (push ov overlays))

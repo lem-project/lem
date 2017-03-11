@@ -10,21 +10,24 @@
 
 (defvar *print-start-x* 0)
 
-(defun %attribute-to-bits (attribute)
-  (or (attribute-%internal-value attribute)
-      (let ((bits (logior (get-color-pair (attribute-foreground attribute)
-                                          (attribute-background attribute))
-                          (if (attribute-reverse-p attribute)
-                              charms/ll:a_reverse
-                              0)
-                          (if (attribute-bold-p attribute)
-                              charms/ll:a_bold
-                              0)
-                          (if (attribute-underline-p attribute)
-                              charms/ll:a_underline
-                              0))))
-        (setf (attribute-%internal-value attribute) bits)
-        bits)))
+(defun %attribute-to-bits (attribute-or-name)
+  (let ((attribute (ensure-attribute attribute-or-name)))
+    (if (null attribute)
+        0
+        (or (lem::attribute-%internal-value attribute)
+            (let ((bits (logior (get-color-pair (lem::attribute-foreground attribute)
+                                                (lem::attribute-background attribute))
+                                (if (lem::attribute-reverse-p attribute)
+                                    charms/ll:a_reverse
+                                    0)
+                                (if (lem::attribute-bold-p attribute)
+                                    charms/ll:a_bold
+                                    0)
+                                (if (lem::attribute-underline-p attribute)
+                                    charms/ll:a_underline
+                                    0))))
+              (setf (lem::attribute-%internal-value attribute) bits)
+              bits)))))
 
 (defvar *display-background-mode* nil)
 
@@ -138,10 +141,7 @@
                      x)))
 
 (defun scrwin-print-string (scrwin x y string attr)
-  (cond ((null attr)
-         (setf attr 0))
-        ((attribute-p attr)
-         (setf attr (%attribute-to-bits attr))))
+  (setf attr (%attribute-to-bits attr))
   (charms/ll:wattron scrwin attr)
   (loop :for char :across string
         :do (cond ((char= char #\tab)
@@ -294,7 +294,7 @@
           (end (buffer-mark buffer)))
       (when (point< end start)
         (rotatef start end))
-      (make-overlay start end *mark-overlay-attribute*))))
+      (make-overlay start end 'mark-overlay-attribute))))
 
 (defun disp-reset-lines (screen buffer view-point)
   (with-point ((point view-point))
@@ -493,7 +493,7 @@
       (screen-move-cursor screen visual-cursor-x visual-cursor-y))))
 
 (defun screen-redraw-separator (window)
-  (let ((attr (%attribute-to-bits *modeline-attribute*)))
+  (let ((attr (%attribute-to-bits 'modeline-attribute)))
     (charms/ll:attron attr)
     (when (< 0 (window-x window))
       (charms/ll:move (window-y window) (1- (window-x window)))
@@ -507,8 +507,8 @@
                        0
                        (modeline-string window)
                        (if (eq window (current-window))
-                           *modeline-attribute*
-                           *modeline-inactive-attribute*))
+                           'modeline-attribute
+                           'modeline-inactive-attribute))
   (charms/ll:wnoutrefresh (screen-%modeline-scrwin (lem::window-screen window))))
 
 (defun redraw-display-window (window force)

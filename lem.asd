@@ -33,6 +33,7 @@
                              (:file "errors")
                              (:file "key")
                              (:file "macros")
+                             (:file "attribute")
                              (:file "kill")
                              (:file "file-ext")
                              (:file "window")

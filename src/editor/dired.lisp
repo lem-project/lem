@@ -4,10 +4,17 @@
            :dired-buffer))
 (in-package :lem.dired)
 
-(defvar *header-attribute* (make-attribute "green" nil))
-(defvar *file-attribute* (make-attribute nil nil))
-(defvar *directory-attribute* (make-attribute "blue" nil :bold-p t))
-(defvar *link-attribute* (make-attribute "green" nil))
+(define-attribute dired-header-attribute
+  (t :foreground "green"))
+
+(define-attribute dired-file-attribute
+  (t))
+
+(define-attribute dired-directory-attribute
+  (t :foreground "blue" :bold-p t))
+
+(define-attribute dired-link-attribute
+  (t :foreground "green"))
 
 (define-major-mode dired-mode ()
     (:name "dired"
@@ -278,7 +285,7 @@
         (with-point ((cur-point (buffer-point buffer) :left-inserting))
           (insert-string cur-point
                          (namestring dirname)
-                         :attribute *header-attribute*)
+                         :attribute 'dired-header-attribute)
           (insert-character cur-point #\newline 2)
           (let ((output-string (ls-output-string dirname)))
             (insert-string cur-point output-string)
@@ -305,11 +312,11 @@
                           (#\l
                            (put-text-property start-point end-point 'type :link)
                            (character-offset (line-start cur-point) start-file-charpos)
-                           (put-text-property cur-point end-point :attribute *link-attribute*))
+                           (put-text-property cur-point end-point :attribute 'dired-link-attribute))
                           (#\d
                            (put-text-property start-point end-point 'type :directory)
                            (character-offset (line-start cur-point) start-file-charpos)
-                           (put-text-property cur-point end-point :attribute *directory-attribute*)
+                           (put-text-property cur-point end-point :attribute 'dired-directory-attribute)
                            (setf filename (namestring (uiop:ensure-directory-pathname filename))))
                           (#\-
                            (put-text-property start-point end-point 'type :file)))

@@ -1,11 +1,16 @@
 (in-package :cl-user)
 (defpackage :lem.grep
   (:use :cl :lem)
-  (:export :grep))
+  (:export :title-attribute
+           :position-attribute
+           :grep))
 (in-package :lem.grep)
 
-(defvar *attribute-1* (make-attribute "blue" nil))
-(defvar *attribute-2* (make-attribute "red" nil))
+(define-attribute title-attribute
+  (t :foreground "blue"))
+
+(define-attribute position-attribute
+  (t :foreground "red"))
 
 (defun grep-parse-line (line)
   (ignore-errors
@@ -38,11 +43,11 @@
              (lambda (cur-point)
                (insert-string cur-point
 			      filename
-			      :attribute *attribute-1*)
+			      :attribute 'title-attribute)
                (insert-string cur-point ":")
                (insert-string cur-point
 			      (princ-to-string linum)
-			      :attribute *attribute-2*)
+			      :attribute 'position-attribute)
                (insert-string cur-point thing))
              jump-fun)))))))
 

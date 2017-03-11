@@ -2,6 +2,12 @@
 
 (export '(make-attribute
           ensure-attribute
+          set-attribute
+          set-attribute-foreground
+          set-attribute-background
+          set-attribute-reverse-p
+          set-attribute-bold-p
+          set-attribute-underline-p
           define-attribute
           mark-overlay-attribute
           modeline-attribute
@@ -14,30 +20,72 @@
           syntax-variable-attribute
           syntax-type-attribute))
 
-(defstruct (attribute (:constructor %make-attribute))
-  foreground
-  background
-  reverse-p
-  bold-p
-  underline-p
-  %internal-value)
+(defclass attribute ()
+  ((foreground
+    :initarg :foreground
+    :reader attribute-foreground)
+   (background
+    :initarg :background
+    :reader attribute-background)
+   (reverse-p
+    :initarg :reverse-p
+    :reader attribute-reverse-p)
+   (bold-p
+    :initarg :bold-p
+    :reader attribute-bold-p)
+   (underline-p
+    :initarg :underline-p
+    :reader attribute-underline-p)
+   (%internal-value
+    :initform nil
+    :accessor attribute-%internal-value)))
+
+(defun attribute-p (x)
+  (typep x 'attribute))
 
 (defun make-attribute (&key foreground background reverse-p bold-p underline-p)
-  (%make-attribute :foreground foreground
-                   :background background
-                   :reverse-p reverse-p
-                   :bold-p bold-p
-                   :underline-p underline-p))
+  (make-instance 'attribute
+                 :foreground foreground
+                 :background background
+                 :reverse-p reverse-p
+                 :bold-p bold-p
+                 :underline-p underline-p))
 
-(defun ensure-attribute (x)
+(defun ensure-attribute (x raise)
   (cond ((symbolp x)
          (let ((fn (get x 'attribute)))
-           (when fn
-             (funcall fn))))
+           (cond (fn (funcall fn))
+                 (raise (error "invalid attribute: ~A" x))
+                 (t nil))))
         ((attribute-p x)
          x)
         (t
          nil)))
+
+(defun set-attribute (attribute &rest
+                                (foreground nil foregroundp)
+                                (background nil backgroundp)
+                                reverse-p bold-p underline-p)
+  (let ((attribute (ensure-attribute attribute t)))
+    (setf (attribute-%internal-value attribute) nil)
+    (when foregroundp
+      (setf (slot-value attribute 'foreground) foreground))
+    (when backgroundp
+      (setf (slot-value attribute 'background) background))
+    (setf (slot-value attribute 'reverse-p) reverse-p)
+    (setf (slot-value attribute 'bold-p) bold-p)
+    (setf (slot-value attribute 'underline-p) underline-p)))
+
+(macrolet ((def (setter slot-name)
+             `(defun ,setter (attribute value)
+                (let ((attribute (ensure-attribute attribute t)))
+                  (setf (attribute-%internal-value attribute) nil)
+                  (setf (slot-value attribute ',slot-name) value)))))
+  (def set-attribute-foreground foreground)
+  (def set-attribute-background background)
+  (def set-attribute-reverse-p reverse-p)
+  (def set-attribute-bold-p bold-p)
+  (def set-attribute-underline-p underline-p))
 
 (defun display-light-p ()
   (eq :light (display-background-mode)))

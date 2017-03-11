@@ -42,7 +42,7 @@
 (defun make-overlay (start end attribute)
   (assert (eq (point-buffer start)
               (point-buffer end)))
-  (setf attribute (ensure-attribute attribute))
+  (setf attribute (ensure-attribute attribute t))
   (let* ((buffer (point-buffer start))
          (overlay
           (make-instance 'overlay

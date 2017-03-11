@@ -11,7 +11,7 @@
 (defvar *print-start-x* 0)
 
 (defun %attribute-to-bits (attribute-or-name)
-  (let ((attribute (ensure-attribute attribute-or-name)))
+  (let ((attribute (ensure-attribute attribute-or-name nil)))
     (if (null attribute)
         0
         (or (lem::attribute-%internal-value attribute)

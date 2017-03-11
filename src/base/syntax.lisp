@@ -1,6 +1,13 @@
 (in-package :lem-base)
 
-(export '(*global-syntax-highlight*
+(export '(syntax-string-attribute
+          syntax-comment-attribute
+          syntax-keyword-attribute
+          syntax-constant-attribute
+          syntax-function-name-attribute
+          syntax-variable-attribute
+          syntax-type-attribute
+          *global-syntax-highlight*
           enable-syntax-highlight
           enable-syntax-highlight-p
           syntax-table

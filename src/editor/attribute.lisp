@@ -20,6 +20,8 @@
           syntax-variable-attribute
           syntax-type-attribute))
 
+(defvar *attributes* '())
+
 (defclass attribute ()
   ((foreground
     :initarg :foreground
@@ -96,6 +98,7 @@
 (defmacro define-attribute (name &body specs)
   (check-type name symbol)
   `(progn
+     (pushnew ',name *attributes*)
      (setf (get ',name '%attribute-value) nil)
      (setf (get ',name 'attribute)
            (lambda ()

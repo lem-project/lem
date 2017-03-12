@@ -7,10 +7,10 @@
 (in-package :lem.grep)
 
 (define-attribute title-attribute
-  (t :foreground "blue"))
+  (t :foreground "dark blue"))
 
 (define-attribute position-attribute
-  (t :foreground "red"))
+  (t :foreground "dark red"))
 
 (defun grep-parse-line (line)
   (ignore-errors

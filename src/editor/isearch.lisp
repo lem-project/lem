@@ -44,7 +44,7 @@
   (t :reverse-p t))
 
 (define-attribute isearch-highlight-active-attribute
-  (t :foreground "cyan" :reverse-p t))
+  (t :foreground "black" :background "cyan"))
 
 (defun isearch-update-display ()
   (isearch-update-minibuffer)

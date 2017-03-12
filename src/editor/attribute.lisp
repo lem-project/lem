@@ -95,22 +95,24 @@
 
 (defmacro define-attribute (name &body specs)
   (check-type name symbol)
-  `(setf (get ',name 'attribute)
-         (lambda ()
-           (or (get ',name '%attribute-value)
-               (setf (get ',name '%attribute-value)
-                     (cond ,@(loop :for (pattern . args) :in specs
-                                   :collect (cond
-                                              ((eq pattern t)
-                                               `(t (make-attribute ,@args)))
-                                              (t
-                                               `((or ,@(mapcar (lambda (p)
-                                                                 (cond ((eq p :light)
-                                                                        '(display-light-p))
-                                                                       ((eq p :dark)
-                                                                        `(display-dark-p))))
-                                                               (alexandria:ensure-list pattern)))
-                                                 (make-attribute ,@args)))))))))))
+  `(progn
+     (setf (get ',name '%attribute-value) nil)
+     (setf (get ',name 'attribute)
+           (lambda ()
+             (or (get ',name '%attribute-value)
+                 (setf (get ',name '%attribute-value)
+                       (cond ,@(loop :for (pattern . args) :in specs
+                                     :collect (cond
+                                                ((eq pattern t)
+                                                 `(t (make-attribute ,@args)))
+                                                (t
+                                                 `((or ,@(mapcar (lambda (p)
+                                                                   (cond ((eq p :light)
+                                                                          '(display-light-p))
+                                                                         ((eq p :dark)
+                                                                          `(display-dark-p))))
+                                                                 (alexandria:ensure-list pattern)))
+                                                   (make-attribute ,@args))))))))))))
 
 (define-attribute region
   (:light :foreground "blue" :reverse-p t)

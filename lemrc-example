@@ -1,0 +1,13 @@
+;; -*- mode:lisp -*-
+
+;;; copy to $HOME/.lemrc
+
+(in-package :lem-user)
+
+;;(load-theme "emacs-light")
+(load-theme "emacs-dark")
+
+(setf (variable-value 'truncate-lines) t)
+(setf *scroll-recenter-p* t)
+
+;;(add-hook *before-save-hook* 'delete-trailing-whitespace)

@@ -64,6 +64,16 @@
         (t
          nil)))
 
+(defun merge-attribute (under over)
+  (make-attribute :foreground (or (attribute-foreground over)
+                                  (attribute-foreground under))
+                  :background (or (attribute-background over)
+                                  (attribute-background under))
+                  :reverse-p (or (attribute-reverse-p over)
+                                 (attribute-reverse-p under))
+                  :underline-p (or (attribute-underline-p over)
+                                   (attribute-underline-p under))))
+
 (defun set-attribute (attribute &key
                                 (foreground nil foregroundp)
                                 (background nil backgroundp)

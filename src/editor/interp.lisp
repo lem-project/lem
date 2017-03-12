@@ -72,7 +72,8 @@
   (do-command-loop (:interactive t)
     (with-error-handler ()
       (when (= 0 (event-queue-length))
-        (redraw-display))
+        (handler-bind ((error #'bailout))
+          (redraw-display)))
       (handler-case
           (handler-bind ((editor-abort
                           (lambda (c)

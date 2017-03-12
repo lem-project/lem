@@ -203,6 +203,19 @@
     (when do-clrtoeol
       (charms/ll:wclrtoeol (screen-%scrwin screen)))))
 
+(defun overlay-line (elements start end attribute)
+  (if (null elements)
+      (list (list start end attribute))
+      (loop :for rest :on elements
+            :for firstp := t :then nil
+            :for prev := nil :then e
+            :for (s e value) :in elements
+            :if firstp :collect (list start (+ start s) attribute)
+            :if (and prev) :collect (list (+ start prev) (+ start s) attribute)
+            :collect (let ((src-attribute (ensure-attribute value t)))
+                       (list (+ start s) (+ start e) (lem::merge-attribute src-attribute attribute)))
+            :if (null (cdr rest)) :collect (list (+ start e) end attribute))))
+
 (defun disp-set-line (screen attribute screen-row start-charpos end-charpos)
   (when (and (<= 0 screen-row)
              (< screen-row (screen-height screen))
@@ -211,26 +224,35 @@
                  (< start-charpos end-charpos)))
     (destructuring-bind (string . attributes)
         (aref (screen-lines screen) screen-row)
-      (setf (cdr (aref (screen-lines screen) screen-row))
-            (lem-base::put-elements attributes
-                                    start-charpos
-                                    (or end-charpos
-                                        (length string))
-                                    attribute)))))
+      (let ((end-charpos (or end-charpos (length string))))
+        (let ((range-elements
+               (lem-base::subseq-elements attributes
+                                          start-charpos
+                                          end-charpos))
+              (src-elements #1=(cdr (aref (screen-lines screen) screen-row))))
+          (setf #1#
+                (lem-base::normalization-elements
+                 (nconc (overlay-line range-elements
+                                      start-charpos
+                                      end-charpos
+                                      attribute)
+                        (lem-base::remove-elements src-elements
+                                                   start-charpos
+                                                   end-charpos)))))))))
 
 (defun disp-set-overlay (screen attribute screen-row start end)
-  (let ()
-    (disp-set-line screen attribute screen-row (point-charpos start) nil)
-    (with-point ((point start))
-      (line-offset point 1)
-      (loop :for i :from (1+ screen-row)
-	 :do
-	 (when (same-line-p point end)
-	   (disp-set-line screen attribute i 0 (point-charpos end))
-	   (return))
-	 (disp-set-line screen attribute i 0 nil)
-	 (unless (line-offset point 1)
-	   (return-from disp-set-overlay))))))
+  (disp-set-line screen attribute screen-row (point-charpos start) nil)
+  (with-point ((point start))
+    (line-offset point 1)
+    (loop :for i :from (1+ screen-row)
+          :do (cond
+                ((same-line-p point end)
+                 (disp-set-line screen attribute i 0 (point-charpos end))
+                 (return))
+                (t
+                 (disp-set-line screen attribute i 0 nil)
+                 (unless (line-offset point 1)
+                   (return-from disp-set-overlay)))))))
 
 (defun calc-row (curr-point)
   (declare (special last-point last-index))

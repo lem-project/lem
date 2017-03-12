@@ -41,7 +41,7 @@
 	   :keymap *isearch-keymap*))
 
 (define-attribute isearch-highlight-attribute
-  (t :reverse-p t))
+  (t :background "gray"))
 
 (define-attribute isearch-highlight-active-attribute
   (t :foreground "black" :background "cyan"))

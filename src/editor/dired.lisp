@@ -16,8 +16,8 @@
   (t))
 
 (define-attribute dired-directory-attribute
-  (:light :foreground "dark blue" :bold-p t)
-  (:dark :foreground "cyan" :bold-p t))
+  (:light :foreground "blue" :bold-p t)
+  (:dark :foreground "sky blue" :bold-p t))
 
 (define-attribute dired-link-attribute
   (:light :foreground "dark green")

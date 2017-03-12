@@ -122,8 +122,8 @@
                                                 (make-attribute ,@args)))))))))))
 
 (define-attribute region
-  (:light :foreground "blue" :reverse-p t)
-  (:dark :foreground "cyan" :reverse-p t))
+  (:light :reverse-p t)
+  (:dark :reverse-p t))
 
 (define-attribute modeline
   (:light :reverse-p t)

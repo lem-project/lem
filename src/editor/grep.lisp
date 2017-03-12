@@ -7,7 +7,7 @@
 (in-package :lem.grep)
 
 (define-attribute title-attribute
-  (:light :foreground "dark blue")
+  (:light :foreground "blue")
   (:dark :foreground "cyan"))
 
 (define-attribute position-attribute

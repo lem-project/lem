@@ -7,7 +7,7 @@
 (defvar *brackets-overlays* nil)
 
 (define-attribute showparen-attribute
-  (t :foreground "cyan" :reverse-p t))
+  (t :background "cyan"))
 
 (defun show-paren-timer-function ()
   (let ((shew-p (if *brackets-overlays* t nil)))

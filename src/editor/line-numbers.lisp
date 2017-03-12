@@ -6,7 +6,8 @@
 (defvar *visited* nil)
 
 (define-attribute line-numbers-attribute
-  (t :foreground "dark blue"))
+  (:light :foreground "blue" :background "#e0e0e0")
+  (:dark :foreground "snow" :background "gray20"))
 
 (defun update (&optional (window (current-window)))
   (let ((buffer (window-buffer window)))

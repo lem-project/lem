@@ -17,7 +17,8 @@
 (in-package :lem.listener-mode)
 
 (define-attribute listener-prompt-attribute
-  (t :foreground "blue" :bold-p t))
+  (:light :foreground "blue" :bold-p t)
+  (:dark :foreground "cyan" :bold-p t))
 
 (defvar %listener-point-indicator (gensym))
 (defmacro %listener-point (buffer)

@@ -10,6 +10,9 @@
 
 (defvar *color-themes* (make-hash-table :test 'equal))
 
+(defun find-color-theme (name)
+  (gethash name *color-themes*))
+
 (defun all-color-themes ()
   (alexandria:hash-table-keys *color-themes*))
 
@@ -18,7 +21,7 @@
     (check-type parent string))
   `(progn
      ,@(when parentp
-         `((unless (gethash ,parent *color-themes*)
+         `((unless (find-color-theme ,parent)
              (error ,(format nil "undefined color theme: ~A" parent)))))
      (setf (gethash ,name *color-themes*)
            (make-color-theme
@@ -30,13 +33,13 @@
 
 (defun inherit-load-theme (theme spec-table)
   (when (color-theme-parent theme)
-    (inherit-load-theme (gethash (color-theme-parent theme) *color-themes*)
+    (inherit-load-theme (find-color-theme (color-theme-parent theme))
                        spec-table))
   (loop :for (name . args) :in (color-theme-specs theme)
         :do (setf (gethash name spec-table) args)))
 
-(defun load-theme (name)
-  (let ((theme (gethash name *color-themes*)))
+(defun load-theme-1 (name)
+  (let ((theme (find-color-theme name)))
     (unless theme
       (error "undefined color theme: ~A" name))
     (let ((spec-table (make-hash-table)))
@@ -51,9 +54,21 @@
                     (apply #'set-attribute name args))))
                spec-table))))
 
-(define-color-theme "default-light" ()
-  ;(foreground "#000000")
-  ;(background "#FFFFFF")
+(define-command load-theme (name)
+    ((list (prompt-for-line "Color theme: "
+                            nil
+                            (lambda (string)
+                              (completion string (all-color-themes)))
+                            'find-color-theme
+                            'mh-color-theme)))
+  (when (find-color-theme name)
+    (load-theme-1 name)
+    (message nil)
+    (redraw-display t)))
+
+(define-color-theme "emacs-light" ()
+  (foreground "#000000")
+  (background "#FFFFFF")
   (minibuffer-prompt-attribute :foreground "blue" :bold-p t)
   (region :background "#eedc82")
   (modeline :background "#bbbbbb" :foreground "black")
@@ -68,9 +83,9 @@
   (syntax-variable-attribute :foreground "#8D5232")
   (syntax-type-attribute :foreground "#00875f"))
 
-(define-color-theme "default-dark" ("default-light")
-  ;(foreground "#FFFFFF")
-  ;(background "#000000")
+(define-color-theme "emacs-dark" ("emacs-light")
+  (foreground "#FFFFFF")
+  (background "#000000")
   (minibuffer-prompt-attribute :foreground "cyan" :bold-p t)
   (region :background "blue")
   (syntax-string-attribute :foreground "light salmon")

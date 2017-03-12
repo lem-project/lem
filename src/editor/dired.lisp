@@ -9,16 +9,19 @@
 (in-package :lem.dired)
 
 (define-attribute dired-header-attribute
-  (t :foreground "dark green"))
+  (:light :foreground "dark green")
+  (:dark :foreground "green"))
 
 (define-attribute dired-file-attribute
   (t))
 
 (define-attribute dired-directory-attribute
-  (t :foreground "dark blue" :bold-p t))
+  (:light :foreground "dark blue" :bold-p t)
+  (:dark :foreground "cyan" :bold-p t))
 
 (define-attribute dired-link-attribute
-  (t :foreground "dark green"))
+  (:light :foreground "dark green")
+  (:dark :foreground "green"))
 
 (define-major-mode dired-mode ()
     (:name "dired"

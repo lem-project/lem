@@ -25,6 +25,7 @@
   (t :foreground "red" :underline-p t))
 
 (define-attribute slime-entry-attribute
+  (:dark :foreground "cyan" :bold-p t)
   (t :foreground "blue" :bold-p t))
 
 (define-attribute slime-headline-attribute

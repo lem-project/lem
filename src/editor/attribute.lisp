@@ -89,6 +89,10 @@
   (def set-attribute-bold-p bold-p)
   (def set-attribute-underline-p underline-p))
 
+(defun clear-all-attribute-cache ()
+  (dolist (attribute *attributes*)
+    (setf (get attribute '%attribute-value) nil)))
+
 (defun display-light-p ()
   (eq :light (display-background-mode)))
 

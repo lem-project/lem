@@ -42,6 +42,7 @@
   (let ((theme (find-color-theme name)))
     (unless theme
       (error "undefined color theme: ~A" name))
+    (clear-all-attribute-cache)
     (let ((spec-table (make-hash-table)))
       (inherit-load-theme theme spec-table)
       (maphash (lambda (name args)

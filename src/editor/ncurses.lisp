@@ -203,6 +203,8 @@
     (when do-clrtoeol
       (charms/ll:wclrtoeol (screen-%scrwin screen)))))
 
+#+(or)
+(progn
 (defun overlay-line (elements start end attribute)
   (declare (optimize (speed 3) (safety 0) (debug 0)))
   (declare (type fixnum start end))
@@ -257,6 +259,21 @@
                         (lem-base::remove-elements attributes
                                                    start-charpos
                                                    end-charpos)))))))))
+)
+
+(defun disp-set-line (screen attribute screen-row start-charpos end-charpos)
+  (when (and (<= 0 screen-row)
+             (< screen-row (screen-height screen))
+             (not (null (aref (screen-lines screen) screen-row)))
+             (or (null end-charpos)
+                 (< start-charpos end-charpos)))
+    (destructuring-bind (string . attributes)
+        (aref (screen-lines screen) screen-row)
+      (setf (cdr (aref (screen-lines screen) screen-row))
+            (lem-base::put-elements attributes
+                                    start-charpos
+                                    (or end-charpos (length string))
+                                    attribute)))))
 
 (defun disp-set-overlay (screen attribute screen-row start end)
   (disp-set-line screen attribute screen-row (point-charpos start) nil)

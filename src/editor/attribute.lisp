@@ -2,6 +2,7 @@
 
 (export '(make-attribute
           ensure-attribute
+          merge-attribute
           set-attribute
           set-attribute-foreground
           set-attribute-background
@@ -74,6 +75,8 @@
                                   (attribute-foreground under))
                   :background (or (attribute-background over)
                                   (attribute-background under))
+                  :bold-p (or (attribute-bold-p over)
+                              (attribute-bold-p under))
                   :reverse-p (or (attribute-reverse-p over)
                                  (attribute-reverse-p under))
                   :underline-p (or (attribute-underline-p over)

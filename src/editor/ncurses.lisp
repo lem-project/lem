@@ -223,7 +223,7 @@
                 :do (let ((src-attribute (ensure-attribute value nil)))
                       (add (the fixnum (+ start s))
                            (the fixnum (+ start e))
-                           (lem::merge-attribute src-attribute attribute)))
+                           (merge-attribute src-attribute attribute)))
                 :if (null (cdr rest)) :do (add (the fixnum (+ start e)) end attribute))))
     acc))
 

@@ -8,6 +8,11 @@
           set-attribute-reverse-p
           set-attribute-bold-p
           set-attribute-underline-p
+          attribute-foreground
+          attribute-background
+          attribute-reverse-p
+          attribute-bold-p
+          attribute-underline-p
           define-attribute
           region
           modeline

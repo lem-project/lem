@@ -350,9 +350,7 @@
             (return))))
   (let ((mark-overlay (maybe-make-mark-overlay buffer)))
     (disp-set-overlays screen
-                       (if mark-overlay
-                           (cons mark-overlay (lem::overlays buffer))
-                           (lem::overlays buffer))
+                       (lem::overlays buffer)
                        view-point)
     (when mark-overlay
       (delete-overlay mark-overlay))))

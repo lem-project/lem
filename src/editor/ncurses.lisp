@@ -235,19 +235,24 @@
                  (< start-charpos end-charpos)))
     (destructuring-bind (string . attributes)
         (aref (screen-lines screen) screen-row)
-      (let ((end-charpos (or end-charpos (length string))))
-        (let ((range-elements
-               (lem-base::subseq-elements attributes
-                                          start-charpos
-                                          end-charpos))
-              (src-elements #1=(cdr (aref (screen-lines screen) screen-row))))
-          (setf #1#
+      (let ((end-charpos (or end-charpos (screen-width screen))))
+        (let* ((range-elements
+                (lem-base::subseq-elements attributes
+                                           start-charpos
+                                           end-charpos)))
+          (when (< (length string) end-charpos)
+            (setf (car (aref (screen-lines screen) screen-row))
+                  (concatenate 'string
+                               string
+                               (make-string (1- (- end-charpos (length string)))
+                                            :initial-element #\space))))
+          (setf (cdr (aref (screen-lines screen) screen-row))
                 (lem-base::normalization-elements
                  (nconc (overlay-line range-elements
                                       start-charpos
                                       end-charpos
                                       attribute)
-                        (lem-base::remove-elements src-elements
+                        (lem-base::remove-elements attributes
                                                    start-charpos
                                                    end-charpos)))))))))
 

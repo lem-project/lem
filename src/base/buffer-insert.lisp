@@ -43,7 +43,7 @@
 
 (defun shift-sticky-objects-newline (line charpos)
   (line-property-insert-newline line (line-next line) charpos)
-  (dolist (p (line-points line))
+  (loop :for p :in (line-points line) :do
     (when (etypecase (point-kind p)
             ((eql :left-inserting)
              (<= charpos (point-charpos p)))

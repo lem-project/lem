@@ -10,7 +10,7 @@
 
 (defvar *print-start-x* 0)
 
-(defun %attribute-to-bits (attribute-or-name)
+(defun attribute-to-bits (attribute-or-name)
   (let ((attribute (ensure-attribute attribute-or-name nil)))
     (if (null attribute)
         0
@@ -149,7 +149,7 @@
                      x)))
 
 (defun scrwin-print-string (scrwin x y string attr)
-  (setf attr (%attribute-to-bits attr))
+  (setf attr (attribute-to-bits attr))
   (charms/ll:wattron scrwin attr)
   (loop :for char :across string
         :do (cond ((char= char #\tab)
@@ -534,7 +534,7 @@
       (screen-move-cursor screen visual-cursor-x visual-cursor-y))))
 
 (defun screen-redraw-separator (window)
-  (let ((attr (%attribute-to-bits 'modeline)))
+  (let ((attr (attribute-to-bits 'modeline)))
     (charms/ll:attron attr)
     (when (< 0 (window-x window))
       (charms/ll:move (window-y window) (1- (window-x window)))

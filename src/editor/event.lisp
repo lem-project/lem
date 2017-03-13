@@ -37,9 +37,13 @@
     (bt:with-lock-held (lock)
       (if (not (empty-queue-p queue))
           (dequeue queue)
-          (cond ((if timeout
-                     (bt:condition-wait wait lock :timeout timeout)
-                     (bt:condition-wait wait lock))
+          (cond ((progn
+                   #-ecl
+                   (if timeout
+                       (bt:condition-wait wait lock :timeout timeout)
+                       (bt:condition-wait wait lock))
+                   #+ecl
+                   (bt:condition-wait wait lock))
                  (let ((obj (dequeue queue)))
                    obj))
                 (t

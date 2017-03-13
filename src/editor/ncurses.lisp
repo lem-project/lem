@@ -235,11 +235,13 @@
                  (< start-charpos end-charpos)))
     (destructuring-bind (string . attributes)
         (aref (screen-lines screen) screen-row)
+      (declare (ignore string))
       (let ((end-charpos (or end-charpos (screen-width screen))))
         (let* ((range-elements
                 (lem-base::subseq-elements attributes
                                            start-charpos
                                            end-charpos)))
+          #+(or)
           (when (< (length string) end-charpos)
             (setf (car (aref (screen-lines screen) screen-row))
                   (concatenate 'string

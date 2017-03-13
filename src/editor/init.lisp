@@ -24,7 +24,7 @@
                      (mapcar #'directory-namestring
                              (directory
                               (merge-pathnames "**/*.asd"
-                                               (merge-pathnames "tools/"
+                                               (merge-pathnames "contrib/"
                                                                 (asdf:system-source-directory :lem))))))
              asdf:*central-registry*
              :test #'equal))

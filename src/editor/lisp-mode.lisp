@@ -124,7 +124,8 @@
 (flet ((f (c1 c2 step-fn)
          (when c1
            (when (and (member c1 '(#\#))
-                      (alphanumericp c2))
+                      (or (alphanumericp c2)
+                          (member c2 '(#\+ #\-))))
              (funcall step-fn)))))
 
   (defun skip-expr-prefix-forward (point)

@@ -204,17 +204,28 @@
       (charms/ll:wclrtoeol (screen-%scrwin screen)))))
 
 (defun overlay-line (elements start end attribute)
-  (if (null elements)
-      (list (list start end attribute))
-      (loop :for rest :on elements
-            :for firstp := t :then nil
-            :for prev := nil :then e
-            :for (s e value) :in elements
-            :if firstp :collect (list start (+ start s) attribute)
-            :if (and prev) :collect (list (+ start prev) (+ start s) attribute)
-            :collect (let ((src-attribute (ensure-attribute value t)))
-                       (list (+ start s) (+ start e) (lem::merge-attribute src-attribute attribute)))
-            :if (null (cdr rest)) :collect (list (+ start e) end attribute))))
+  (declare (optimize (speed 3) (safety 0) (debug 0)))
+  (declare (type fixnum start end))
+  (let ((acc '()))
+    (flet ((add (start end attribute)
+             (when (< start end)
+               (push (list start end attribute) acc))))
+      (if (null elements)
+          (add start end attribute)
+          (loop :for rest :on elements
+                :for firstp := t :then nil
+                :for prev := nil :then e
+                :for (s e value) :of-type (fixnum fixnum t) :in elements
+                :if firstp :do (add start (the fixnum (+ start s)) attribute)
+                :if (and prev) :do (add (the fixnum (+ start (the fixnum prev)))
+                                        (the fixnum (+ start s))
+                                        attribute)
+                :do (let ((src-attribute (ensure-attribute value nil)))
+                      (add (the fixnum (+ start s))
+                           (the fixnum (+ start e))
+                           (lem::merge-attribute src-attribute attribute)))
+                :if (null (cdr rest)) :do (add (the fixnum (+ start e)) end attribute))))
+    acc))
 
 (defun disp-set-line (screen attribute screen-row start-charpos end-charpos)
   (when (and (<= 0 screen-row)

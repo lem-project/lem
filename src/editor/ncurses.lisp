@@ -352,32 +352,36 @@
                                    view-end-point))))
     (setf (screen-left-width screen) left-width)))
 
-(defun maybe-make-mark-overlay (buffer)
-  (when (and (eq buffer (current-buffer))
-             (buffer-mark-p buffer))
-    (let ((start (buffer-point buffer))
-          (end (buffer-mark buffer)))
-      (when (point< end start)
-        (rotatef start end))
-      (make-overlay start end 'region))))
+(defun maybe-make-mark-overlay (window)
+  (when (eq window (current-window))
+    (let ((buffer (window-buffer window)))
+      (when (buffer-mark-p buffer)
+        (let ((start (buffer-point buffer))
+              (end (buffer-mark buffer)))
+          (when (point< end start)
+            (rotatef start end))
+          (make-overlay start end 'region))))))
 
-(defun disp-reset-lines (screen buffer view-point)
-  (with-point ((point view-point))
-    (loop :for i :from 0 :below (screen-height screen)
-          :do
-          (let* ((line (lem-base::point-line point))
-                 (str/attributes (lem-base::line-string/attributes line)))
-            (setf (aref (screen-left-lines screen) i) nil)
-            (setf (aref (screen-lines screen) i) str/attributes))
-          (unless (line-offset point 1)
-            (fill (screen-lines screen) nil :start (1+ i))
-            (return))))
-  (let ((mark-overlay (maybe-make-mark-overlay buffer)))
-    (disp-set-overlays screen
-                       (lem::overlays buffer)
-                       view-point)
-    (when mark-overlay
-      (delete-overlay mark-overlay))))
+(defun disp-reset-lines (window)
+  (let ((screen (lem::window-screen window))
+        (buffer (window-buffer window))
+        (view-point (lem::window-view-point window)))
+    (with-point ((point view-point))
+      (loop :for i :from 0 :below (screen-height screen)
+            :do
+            (let* ((line (lem-base::point-line point))
+                   (str/attributes (lem-base::line-string/attributes line)))
+              (setf (aref (screen-left-lines screen) i) nil)
+              (setf (aref (screen-lines screen) i) str/attributes))
+            (unless (line-offset point 1)
+              (fill (screen-lines screen) nil :start (1+ i))
+              (return))))
+    (let ((mark-overlay (maybe-make-mark-overlay window)))
+      (disp-set-overlays screen
+                         (lem::overlays buffer)
+                         view-point)
+      (when mark-overlay
+        (delete-overlay mark-overlay)))))
 
 (defun screen-display-line-wrapping (screen screen-width start-x view-charpos
                                             visual-cursor-x visual-cursor-y
@@ -579,9 +583,7 @@
   (lem::window-prompt-display window)
   (progn
     #+(or)without-interrupts
-    (disp-reset-lines (lem::window-screen window)
-                      (window-buffer window)
-                      (lem::window-view-point window))
+    (disp-reset-lines window)
     (screen-display-lines (lem::window-screen window)
                           (or force
                               (screen-modified-p (lem::window-screen window)))

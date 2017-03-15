@@ -17,8 +17,12 @@
     :type point)
    (end
     :initarg :end
-    :reader overlay-end
+    :reader %overlay-end
     :type point)
+   (length
+    :initarg :length
+    :reader overlay-length
+    :type fixnum)
    (attribute
     :initarg :attribute
     :reader overlay-attribute
@@ -47,7 +51,8 @@
          (overlay
           (make-instance 'overlay
                          :start (copy-point start :right-inserting)
-                         :end (copy-point end :right-inserting)
+                         :end (copy-point end :temporary)
+                         :length (count-characters start end)
                          :attribute attribute
                          :buffer buffer)))
     (push overlay (buffer-value buffer 'overlays))
@@ -57,11 +62,15 @@
   (when (and (overlay-p overlay)
              (overlay-alive-p overlay))
     (delete-point (overlay-start overlay))
-    (delete-point (overlay-end overlay))
     (let ((buffer (overlay-buffer overlay)))
       (setf (buffer-value buffer 'overlays)
             (delete overlay (buffer-value buffer 'overlays))))
     (setf (overlay-alive-p overlay) nil)))
+
+(defun overlay-end (overlay)
+  (character-offset (move-point (%overlay-end overlay)
+                                (overlay-start overlay))
+                    (overlay-length overlay)))
 
 (defun overlay-put (overlay key value)
   (setf (getf (overlay-plist overlay) key) value))

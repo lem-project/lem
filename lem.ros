@@ -4,7 +4,6 @@
 exec ros -Q -- $0 "$@"
 |#
 
-(load (make-pathname :defaults *load-pathname* :name "lem" :type "asd"))
 (ql:quickload :lem :silent t)
 
 (defun main (&rest argv)

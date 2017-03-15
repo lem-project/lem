@@ -68,9 +68,10 @@
     (setf (overlay-alive-p overlay) nil)))
 
 (defun overlay-end (overlay)
-  (character-offset (move-point (%overlay-end overlay)
-                                (overlay-start overlay))
-                    (overlay-length overlay)))
+  (or (character-offset (move-point (%overlay-end overlay)
+                                    (overlay-start overlay))
+                        (overlay-length overlay))
+      (buffer-end (%overlay-end overlay))))
 
 (defun overlay-put (overlay key value)
   (setf (getf (overlay-plist overlay) key) value))

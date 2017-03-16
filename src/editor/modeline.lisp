@@ -3,29 +3,19 @@
 (export '(*modeline-default-format*
           modeline-add-status-list
           modeline-remove-status-list
-          modeline-read-only-p
-          modeline-modified-p
+          modeline-write-ifno
           modeline-name
           modeline-major-mode
           modeline-minor-modes
           modeline-linum
-          modeline-column
-          modeline-string))
+          modeline-column))
 
 (defvar *modeline-default-format*
-  (list 'modeline-read-only-p
-        'modeline-modified-p
-        " "
-        'modeline-name
-        " ("
-        'modeline-major-mode
-        'modeline-minor-modes
-        ") "
-        "("
-        'modeline-linum
-        ", "
-        'modeline-column
-        ")"))
+  '(modeline-write-info
+    modeline-name
+    modeline-mode-names
+    modeline-position
+    (modeline-posline nil :right)))
 
 (defvar *modeline-status-list* nil)
 
@@ -42,38 +32,22 @@
       (setf *modeline-status-list*
             (remove x *modeline-status-list*))))
 
-(defun posline (window)
-  (cond
-    ((<= (buffer-nlines (window-buffer window))
-         (window-height window))
-     "All")
-    ((first-line-p (window-view-point window))
-     "Top")
-    ((null (line-offset (copy-point (window-view-point window)
-                                    :temporary)
-                        (window-height window)))
-     "Bot")
-    (t
-     (format nil "~2d%"
-             (floor
-              (* 100
-                 (float (/ (line-number-at-point (window-view-point window))
-                           (buffer-nlines (window-buffer window))))))))))
-
-(defun modeline-read-only-p (window)
-  (if (buffer-read-only-p (window-buffer window)) "%" "-"))
-
-(defun modeline-modified-p (window)
-  (if (buffer-modified-p (window-buffer window)) "*" "-"))
+(defun modeline-write-info (window)
+  (let ((buffer (window-buffer window)))
+    (cond ((buffer-read-only-p buffer)
+           " % ")
+          ((buffer-modified-p buffer)
+           " * ")
+          (t
+           " - "))))
 
 (defun modeline-name (window)
   (buffer-name (window-buffer window)))
 
-(defun modeline-major-mode (window)
-  (mode-name (buffer-major-mode (window-buffer window))))
-
-(defun modeline-minor-modes (window)
+(defun modeline-mode-names (window)
   (with-output-to-string (*standard-output*)
+    (princ " (")
+    (princ (mode-name (buffer-major-mode (window-buffer window))))
     (let ((firstp t))
       (dolist (x (append (mapcar #'mode-name (buffer-minor-modes (window-buffer window)))
                          (buffer-value (window-buffer window) 'modeline-status-list)
@@ -82,25 +56,51 @@
         (if (functionp x)
             (princ (funcall x window))
             (princ x))
-        (setf firstp t)))))
+        (setf firstp t)))
+    (princ ") ")))
 
-(defun modeline-linum (window)
-  (line-number-at-point (window-point window)))
+(defun modeline-position (window)
+  (with-output-to-string (*standard-output*)
+    (princ "(")
+    (princ (line-number-at-point (window-point window)))
+    (princ ", ")
+    (princ (point-column (window-point window)))
+    (princ ")")))
 
-(defun modeline-column (window)
-  (point-column (window-point window)))
+(defun modeline-posline (window)
+  (cond
+    ((<= (buffer-nlines (window-buffer window))
+         (window-height window))
+     "All  ")
+    ((first-line-p (window-view-point window))
+     "Top  ")
+    ((null (line-offset (copy-point (window-view-point window)
+                                    :temporary)
+                        (window-height window)))
+     "Bot  ")
+    (t
+     (format nil "~2d%  "
+             (floor
+              (* 100
+                 (float (/ (line-number-at-point (window-view-point window))
+                           (buffer-nlines (window-buffer window))))))))))
 
-(defun modeline-string (window)
-  (let* ((posline (posline window))
-         (str (with-output-to-string (out)
-                (dolist (x
-                         (buffer-value (window-buffer window)
-                                       'modeline-format
-                                       *modeline-default-format*))
-                  (if (or (symbolp x) (functionp x))
-                      (princ (funcall x window) out)
-                      (princ x out)))))
-         (mdstr (make-string (window-width window)
-                             :initial-element #\space)))
-    (replace mdstr str)
-    (replace mdstr posline :start1 (- (length mdstr) 5))))
+(defun modeline-apply (window print-fn default-attribute)
+  (dolist (item (buffer-value (window-buffer window)
+                              'modeline-format
+                              *modeline-default-format*))
+    (multiple-value-bind (name attribute alignment)
+        (if (consp item)
+            (values (first item) (or (second item) default-attribute) (or (third item) :left))
+            (values item default-attribute :left))
+      (when (or (symbolp name) (functionp name))
+        (let (attribute-1 alignment-1)
+          (multiple-value-setq (name attribute-1 alignment-1) (funcall name window))
+          (when attribute-1
+            (setf attribute attribute-1))
+          (when alignment-1
+            (setf alignment alignment-1))))
+      (funcall print-fn
+               (princ-to-string name)
+               attribute
+               alignment))))

@@ -569,14 +569,28 @@
     (charms/ll:wnoutrefresh charms/ll:*stdscr*)))
 
 (defun screen-redraw-modeline (window)
-  (scrwin-print-string (screen-%modeline-scrwin (lem::window-screen window))
-                       0
-                       0
-                       (modeline-string window)
-                       (if (eq window (current-window))
-                           'modeline
-                           'modeline-inactive))
-  (charms/ll:wnoutrefresh (screen-%modeline-scrwin (lem::window-screen window))))
+  (let ((scrwin (screen-%modeline-scrwin
+                 (lem::window-screen window)))
+        (default-attribute (if (eq window (current-window))
+                               'modeline
+                               'modeline-inactive))
+        (left-x 0)
+        (right-x (window-width window)))
+    (scrwin-print-string scrwin 0 0
+                         (make-string (window-width window)
+                                      :initial-element #\space)
+                         default-attribute)
+    (lem::modeline-apply window
+                         (lambda (string attribute alignment)
+                           (case alignment
+                             ((:right)
+                              (decf right-x (length string))
+                              (scrwin-print-string scrwin right-x 0 string attribute))
+                             (otherwise
+                              (scrwin-print-string scrwin left-x 0 string attribute)
+                              (incf left-x (length string)))))
+                         default-attribute)
+    (charms/ll:wnoutrefresh scrwin)))
 
 (defun redraw-display-window (window force)
   (when (eq window (current-window)) (window-see window))

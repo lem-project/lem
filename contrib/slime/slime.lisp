@@ -299,7 +299,8 @@
     (move-to-position point pos)
     (skip-chars-backward point #'syntax-symbol-char-p)
     (make-overlay point
-                  (form-offset (copy-point point :temporary) 1)
+                  (or (form-offset (copy-point point :temporary) 1)
+                      (buffers-end buffer))
                   'slime-note-attribute)))
 
 (defvar *note-overlays* nil)

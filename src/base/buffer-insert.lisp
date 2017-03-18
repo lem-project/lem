@@ -11,17 +11,19 @@
 (define-editor-variable before-change-functions '())
 (define-editor-variable after-change-functions '())
 
-(defun check-read-only-at-point (line charpos offset)
+(defun check-read-only-at-point (point offset)
   (unless *inhibit-read-only*
-    (when (if (eql offset 0)
-              (line-search-property line :read-only charpos)
-              (line-search-property-range line
-                                          :read-only
-                                          charpos
-                                          (if (null offset)
-                                              nil
-                                              (+ charpos offset))))
-      (error 'read-only-error))))
+    (let ((line (point-line point))
+          (charpos (point-charpos point)))
+      (when (if (eql offset 0)
+                (line-search-property line :read-only charpos)
+                (line-search-property-range line
+                                            :read-only
+                                            charpos
+                                            (if (null offset)
+                                                nil
+                                                (+ charpos offset))))
+        (error 'read-only-error)))))
 
 (defmacro with-modify-buffer (buffer &body body)
   (alexandria:once-only (buffer)
@@ -89,7 +91,7 @@
 (defgeneric insert-char/point (point char)
   (:method (point char)
     (with-modify-buffer (point-buffer point)
-      (check-read-only-at-point (point-line point) (point-charpos point) 0)
+      (check-read-only-at-point point 0)
       (cond
         ((char= char #\newline)
          (%insert-newline/point (point-buffer point)
@@ -107,7 +109,6 @@
       char)))
 
 (defun %insert-line-string/point (line charpos string)
-  (check-read-only-at-point line charpos 0)
   (shift-sticky-objects line charpos (length string))
   (setf (line-str line)
         (concatenate 'string
@@ -119,6 +120,7 @@
   (:method (point string)
     (let ((buffer (point-buffer point)))
       (with-modify-buffer buffer
+        (check-read-only-at-point point 0)
         (loop :with start := 0
               :for pos := (position #\newline string :start start)
               :for line := (point-line point) :then (line-next line)
@@ -181,8 +183,7 @@
           (loop :while (or (eq n 'T) (plusp n))
 	     :for eolp := (or (eq n 'T)
 			      (> n (- (line-length line) charpos)))
-	     :do (check-read-only-at-point (point-line point)
-                                           (point-charpos point)
+	     :do (check-read-only-at-point point
                                            (if (eq n 'T) nil (if eolp n nil)))
 	     :do (cond
 		   ((not eolp)

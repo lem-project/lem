@@ -45,12 +45,12 @@
   t)
 
 (define-key *global-keymap* (kbd "C-x 2") 'split-active-window-vertically)
-(define-command split-active-window-vertically () ()
-  (split-window-vertically (current-window)))
+(define-command split-active-window-vertically (n) ("P")
+  (split-window-vertically (current-window) n))
 
 (define-key *global-keymap* (kbd "C-x 3") 'split-active-window-horizontally)
-(define-command split-active-window-horizontally () ()
-  (split-window-horizontally (current-window)))
+(define-command split-active-window-horizontally (n) ("P")
+  (split-window-horizontally (current-window) n))
 
 (define-key *global-keymap* (kbd "C-x o") 'other-window)
 (define-command other-window (&optional (n 1)) ("p")

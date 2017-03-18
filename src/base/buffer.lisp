@@ -114,10 +114,6 @@
     :initform nil
     :initarg :redo-stack
     :accessor buffer-redo-stack)
-   (points
-    :initform nil
-    :initarg :points
-    :accessor buffer-points)
    (external-format
     :initform nil
     :initarg :external-format
@@ -172,7 +168,6 @@
     (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
-    (setf (buffer-points buffer) nil)
     (let ((line (make-line buffer nil nil "")))
       (setf (buffer-start-point buffer)
             (make-point buffer line 0
@@ -245,15 +240,6 @@
 
 (defun buffer-unmark (buffer)
   (setf (buffer-%modified-p buffer) 0))
-
-(defun buffer-add-point (buffer point)
-  (push point (buffer-points buffer)))
-
-(defun buffer-delete-point (buffer point)
-  (let ((length (length (buffer-points buffer))))
-    (prog1 (setf (buffer-points buffer)
-                 (delete point (buffer-points buffer)))
-      (assert (/= length (length (buffer-points buffer)))))))
 
 (defun buffer-mark-cancel (buffer)
   (when (buffer-mark-p buffer)

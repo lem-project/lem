@@ -60,8 +60,7 @@
                               :kind kind
                               :name name)))
     (unless (eq :temporary kind)
-      (push point (line-points line))
-      (buffer-add-point buffer point))
+      (push point (line-points line)))
     point))
 
 (defun copy-point (point &optional kind name)
@@ -74,9 +73,7 @@
 (defun delete-point (point)
   (unless (point-temporary-p point)
     (setf (line-points (point-line point))
-          (delete point (line-points (point-line point))))
-    (buffer-delete-point (point-buffer point)
-                         point)))
+          (delete point (line-points (point-line point))))))
 
 (defun point-change-line (point new-line)
   (unless (point-temporary-p point)

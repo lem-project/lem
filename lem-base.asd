@@ -9,7 +9,6 @@
                              (:file "util")
                              (:file "errors")
                              (:file "var")
-                             (:file "attribute")
                              (:file "wide")
                              (:file "macros")
                              (:file "hooks")

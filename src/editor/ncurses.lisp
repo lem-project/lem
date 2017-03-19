@@ -383,6 +383,8 @@
       (when mark-overlay
         (delete-overlay mark-overlay)))))
 
+(defvar *truncate-str/attributes* (cons " " (list '(0 1 lem::truncate-attribute))))
+
 (defun screen-display-line-wrapping (screen screen-width start-x view-charpos
                                             visual-cursor-x visual-cursor-y
                                             point-x point-y str/attributes)
@@ -415,7 +417,9 @@
                        (disp-print-line screen point-y str/attributes t
                                         :string-start start :string-end i
                                         :start-x start-x)
-                       (disp-print-line screen point-y (cons "!" nil) t
+                       (disp-print-line screen point-y
+                                        *truncate-str/attributes*
+                                        t
                                         :start-x (+ start-x (1- screen-width)))
                        (incf point-y)
                        (setf start i))))

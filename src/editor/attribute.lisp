@@ -18,6 +18,7 @@
           region
           modeline
           modeline-inactive
+          truncate-attribute
           syntax-string-attribute
           syntax-comment-attribute
           syntax-keyword-attribute
@@ -150,6 +151,9 @@
 (define-attribute modeline-inactive
   (:light :reverse-p t)
   (:dark :reverse-p t))
+
+(define-attribute truncate-attribute
+  (t :background "blue"))
 
 (define-attribute syntax-string-attribute
   (t :foreground "green"))

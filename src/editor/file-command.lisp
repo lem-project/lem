@@ -21,7 +21,7 @@
   (when (pathnamep filename)
     (setf filename (namestring filename)))
   (dolist (pathname (expand-files* filename))
-    (switch-to-buffer (find-file-buffer (namestring pathname))))
+    (switch-to-buffer (find-file-buffer (namestring pathname)) t nil))
   t)
 
 (define-key *global-keymap* (kbd "C-x C-r") 'read-file)
@@ -30,7 +30,7 @@
   (when (pathnamep filename)
     (setf filename (namestring filename)))
   (dolist (pathname (expand-files* filename))
-    (switch-to-buffer (find-file-buffer (namestring pathname))))
+    (switch-to-buffer (find-file-buffer (namestring pathname)) t nil))
   t)
 
 (define-key *global-keymap* (kbd "C-x C-s") 'save-buffer)

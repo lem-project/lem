@@ -1,5 +1,7 @@
 (in-package :lem-base)
 
+(annot:enable-annot-syntax)
+
 (export '(fundamental-mode
           current-buffer
           make-buffer
@@ -129,14 +131,14 @@
 (defvar *current-buffer*)
 
 (defun current-buffer ()
-  "現在の`buffer`を返します。"
+  @lang(:jp "現在の`buffer`を返します。")
   (unless (boundp '*current-buffer*)
     (setf *current-buffer*
           (get-buffer-create +original-buffer-name+)))
   *current-buffer*)
 
 (defun (setf current-buffer) (buffer)
-  "現在の`buffer`を変更します。"
+  @lang(:jp "現在の`buffer`を変更します。")
   (check-type buffer buffer)
   (setf *current-buffer* buffer))
 
@@ -184,24 +186,24 @@
     buffer))
 
 (defun bufferp (x)
-  "`x`が`buffer`ならT、それ以外ならNILを返します。"
+  @lang(:jp "`x`が`buffer`ならT、それ以外ならNILを返します。")
   (typep x 'buffer))
 
 (defun buffer-modified-p (&optional (buffer (current-buffer)))
-  "`buffer`が変更されていたらT、それ以外ならNILを返します。"
+  @lang(:jp "`buffer`が変更されていたらT、それ以外ならNILを返します。")
   (/= 0 (buffer-%modified-p buffer)))
 
 (defun buffer-enable-undo-p (&optional (buffer (current-buffer)))
-  "`buffer`でアンドゥが有効ならT、それ以外ならNILを返します。"
+  @lang(:jp "`buffer`でアンドゥが有効ならT、それ以外ならNILを返します。")
   (buffer-%enable-undo-p buffer))
 
 (defun buffer-enable-undo (buffer)
-  "`buffer`のアンドゥを有効にします。"
+  @lang(:jp "`buffer`のアンドゥを有効にします。")
   (setf (buffer-%enable-undo-p buffer) t)
   nil)
 
 (defun buffer-disable-undo (buffer)
-  "`buffer`のアンドゥを無効にして編集履歴を空にします。"
+  @lang(:jp "`buffer`のアンドゥを無効にして編集履歴を空にします。")
   (setf (buffer-%enable-undo-p buffer) nil)
   (setf (buffer-undo-size buffer) 0)
   (setf (buffer-undo-stack buffer) nil)
@@ -225,18 +227,18 @@
   (delete-point (buffer-point buffer)))
 
 (defun buffer-name (&optional (buffer (current-buffer)))
-  "`buffer`の名前を返します。"
+  @lang(:jp "`buffer`の名前を返します。")
   (buffer-%name buffer))
 
 (defun buffer-filename (&optional (buffer (current-buffer)))
-  "`buffer`のファイル名を返します。"
+  @lang(:jp "`buffer`のファイル名を返します。")
   (buffer-%filename buffer))
 
 (defun (setf buffer-filename) (filename &optional (buffer (current-buffer)))
   (setf (buffer-%filename buffer) filename))
 
 (defun buffer-directory (&optional (buffer (current-buffer)))
-  "`buffer`のディレクトリを返します。"
+  @lang(:jp "`buffer`のディレクトリを返します。")
   (or (buffer-%directory buffer)
       (namestring (uiop:getcwd))))
 
@@ -248,7 +250,7 @@
           (namestring result))))
 
 (defun buffer-unmark (buffer)
-  "`buffer`の変更フラグを下ろします。"
+  @lang(:jp "`buffer`の変更フラグを下ろします。")
   (setf (buffer-%modified-p buffer) 0))
 
 (defun buffer-mark-cancel (buffer)
@@ -297,7 +299,7 @@
        (push-redo-stack buffer fn)))))
 
 (defun buffer-rename (buffer name)
-  "`buffer`の名前を`name`に変更します。"
+  @lang(:jp "`buffer`の名前を`name`に変更します。")
   (check-type buffer buffer)
   (check-type name string)
   (when (get-buffer name)

@@ -1,5 +1,7 @@
 (in-package :lem-base)
 
+(annot:enable-annot-syntax)
+
 (export '(kill-buffer-hook
           buffer-list
           ghost-buffer-p
@@ -25,7 +27,7 @@
     (push buffer *buffer-list*)))
 
 (defun buffer-list ()
-  "`buffer`のリストを返します。"
+  @lang(:jp "`buffer`のリストを返します。")
   *buffer-list*)
 
 (defun ghost-buffer-p (buffer)

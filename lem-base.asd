@@ -2,10 +2,12 @@
   :depends-on (:uiop
                :iterate
                :alexandria
-               :cl-ppcre)
+               :cl-ppcre
+               :cl-annot)
   :components ((:module "src/base"
                 :serial t
                 :components ((:file "package")
+                             (:file "documentation")
                              (:file "util")
                              (:file "errors")
                              (:file "var")

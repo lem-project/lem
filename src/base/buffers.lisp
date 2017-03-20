@@ -53,6 +53,8 @@
            (filter-special-buffers)))
 
 (defun get-buffer (buffer-or-name)
+  @lang(:jp "`buffer-or-name`がバッファならそのまま返し、
+文字列ならその名前のバッファを返します。")
   (if (bufferp buffer-or-name)
       buffer-or-name
       (find-if #'(lambda (buffer)
@@ -61,6 +63,8 @@
                (buffer-list))))
 
 (defun get-buffer-create (name)
+  @lang(:jp "バッファ名`name`のバッファがあればそれを返し、
+無ければ作って返します。")
   (or (get-buffer name)
       (make-buffer name)))
 
@@ -79,6 +83,8 @@
               (remove buffer (buffer-list)))))
 
 (defun delete-buffer (buffer)
+  @lang(:jp "`buffer`をバッファのリストから消します。
+エディタ変数`kill-buffer-hook`があれば消す前に実行されます。")
   (check-type buffer buffer)
   (alexandria:when-let ((hooks (variable-value 'kill-buffer-hook :buffer buffer)))
     (run-hooks hooks buffer))
@@ -88,6 +94,7 @@
   (setf *buffer-list* (delete buffer (buffer-list))))
 
 (defun get-next-buffer (buffer)
+  @lang(:jp "バッファリスト内にある`buffer`の次のバッファを返します。")
   (check-type buffer buffer)
   (let* ((buffer-list (reverse (buffer-list)))
          (res (member buffer buffer-list)))
@@ -96,6 +103,7 @@
         (car buffer-list))))
 
 (defun bury-buffer (buffer)
+  @lang(:jp "`buffer`をバッファリストの一番最後に移動させます。")
   (check-type buffer buffer)
   (setf *buffer-list*
         (append (remove buffer (buffer-list))

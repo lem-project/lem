@@ -17,7 +17,15 @@
 {lem:buffer-unmark function}
 {lem:buffer-rename function}
 
-##
 {lem:buffer-list function}
+(lem:get-buffer function}
+{lem:get-buffer-create function}
+{lem:delete-buffer function}
+{lem:get-next-buffer function}
+{lem:bury-buffer function}
 
-## エディタ変数
+# エディタ変数
+{lem:buffer-value function}
+{lem:buffer-value setf}
+{lem:buffer-unbound function}
+{lem:clear-buffer-variables function}

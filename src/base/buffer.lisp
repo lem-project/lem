@@ -354,18 +354,23 @@
     (push :separator (buffer-undo-stack buffer))))
 
 (defun buffer-value (buffer name &optional default)
+  @lang(:jp "`buffer`のバッファ変数`name`に束縛されている値を返します。
+変数が設定されていない場合は`default`を返します。")
   (setf buffer (ensure-buffer buffer))
   (multiple-value-bind (value foundp)
       (gethash name (buffer-variables buffer))
     (if foundp value default)))
 
 (defun (setf buffer-value) (value buffer name &optional default)
+  @lang(:jp "`buffer`のバッファ変数`name`に`value`を束縛します。")
   (declare (ignore default))
   (setf buffer (ensure-buffer buffer))
   (setf (gethash name (buffer-variables buffer)) value))
 
 (defun buffer-unbound (buffer name)
+  @lang(:jp "`buffer`のバッファ変数`name`の束縛を消します。")
   (remhash name (buffer-variables buffer)))
 
 (defun clear-buffer-variables (&key (buffer (current-buffer)))
+  @lang(:jp "`buffer`に束縛されているすべてのバッファ変数を消します。")
   (clrhash (buffer-variables buffer)))

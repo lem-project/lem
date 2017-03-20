@@ -29,8 +29,7 @@
           buffer-undo-boundary
           buffer-value
           buffer-unbound
-          clear-buffer-variables
-          buffer-add-delete-hook))
+          clear-buffer-variables))
 
 (export '(%buffer-keep-binfo
           %buffer-clear-keep-binfo))
@@ -122,10 +121,6 @@
     :initform nil
     :initarg :last-write-date
     :accessor buffer-last-write-date)
-   (delete-hooks
-    :initform nil
-    :initarg :delete-hooks
-    :accessor buffer-delete-hooks)
    (variables
     :initform nil
     :initarg :variables
@@ -225,8 +220,7 @@
       (delete-point view-point)
       (delete-point point))))
 
-(defun call-buffer-delete-hooks (buffer)
-  (mapc #'funcall (buffer-delete-hooks buffer))
+(defun buffer-free (buffer)
   (%buffer-clear-keep-binfo buffer)
   (delete-point (buffer-point buffer)))
 
@@ -373,7 +367,3 @@
 
 (defun clear-buffer-variables (&key (buffer (current-buffer)))
   (clrhash (buffer-variables buffer)))
-
-(defun buffer-add-delete-hook (buffer fn)
-  (push fn (buffer-delete-hooks buffer))
-  fn)

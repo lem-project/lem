@@ -1055,7 +1055,10 @@
           (buffer-value buffer 'continuations)
           conts)
     (erase-buffer buffer)
-    (buffer-add-delete-hook buffer 'slime-quit-debugger)
+    (add-hook (variable-value 'kill-buffer-hook :buffer buffer)
+              (lambda (buffer)
+                (declare (ignore buffer))
+                (slime-quit-debugger)))
     (let ((point (current-point)))
       (dolist (c condition)
         (insert-string point

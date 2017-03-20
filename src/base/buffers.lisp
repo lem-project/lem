@@ -23,7 +23,9 @@
     (assert (not (get-buffer (buffer-name buffer))))
     (push buffer *buffer-list*)))
 
-(defun buffer-list () *buffer-list*)
+(defun buffer-list ()
+  "`buffer`のリストを返します。"
+  *buffer-list*)
 
 (defun ghost-buffer-p (buffer)
   (let ((name (buffer-name buffer)))

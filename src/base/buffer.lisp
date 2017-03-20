@@ -41,7 +41,7 @@
   ((name
     :initform nil
     :initarg :name
-    :accessor buffer-name)
+    :accessor buffer-%name)
    (%filename
     :initform nil
     :initarg :%filename
@@ -134,12 +134,14 @@
 (defvar *current-buffer*)
 
 (defun current-buffer ()
+  "現在の`buffer`を返します。"
   (unless (boundp '*current-buffer*)
     (setf *current-buffer*
           (get-buffer-create +original-buffer-name+)))
   *current-buffer*)
 
 (defun (setf current-buffer) (buffer)
+  "現在の`buffer`を変更します。"
   (check-type buffer buffer)
   (setf *current-buffer* buffer))
 
@@ -149,6 +151,8 @@
 
 (defun make-buffer (name &key filename read-only-p (enable-undo-p t)
                          (syntax-table (fundamental-syntax-table)))
+  "新しい`buffer`を作って返します。  
+既に`name`と同じ名前のバッファがある場合はエラーになります。"
   (when (get-buffer name)
     (error "buffer already exists: ~A" name))
   (let ((buffer (make-instance 'buffer
@@ -184,14 +188,30 @@
     (add-buffer buffer)
     buffer))
 
-(defun buffer-enable-undo-p (&optional (buffer (current-buffer)))
-  (buffer-%enable-undo-p buffer))
+(defun bufferp (x)
+  "`x`が`buffer`ならT、それ以外ならNILを返します。"
+  (typep x 'buffer))
 
 (defun buffer-modified-p (&optional (buffer (current-buffer)))
+  "`buffer`が変更されていたらT、それ以外ならNILを返します。"
   (/= 0 (buffer-%modified-p buffer)))
 
-(defun bufferp (x)
-  (typep x 'buffer))
+(defun buffer-enable-undo-p (&optional (buffer (current-buffer)))
+  "`buffer`でアンドゥが有効ならT、それ以外ならNILを返します。"
+  (buffer-%enable-undo-p buffer))
+
+(defun buffer-enable-undo (buffer)
+  "`buffer`のアンドゥを有効にします。"
+  (setf (buffer-%enable-undo-p buffer) t)
+  nil)
+
+(defun buffer-disable-undo (buffer)
+  "`buffer`のアンドゥを無効にして編集履歴を空にします。"
+  (setf (buffer-%enable-undo-p buffer) nil)
+  (setf (buffer-undo-size buffer) 0)
+  (setf (buffer-undo-stack buffer) nil)
+  (setf (buffer-redo-stack buffer) nil)
+  nil)
 
 (defmethod print-object ((buffer buffer) stream)
   (format stream "#<BUFFER ~a ~a>"
@@ -210,24 +230,19 @@
   (%buffer-clear-keep-binfo buffer)
   (delete-point (buffer-point buffer)))
 
-(defun buffer-enable-undo (buffer)
-  (setf (buffer-%enable-undo-p buffer) t)
-  nil)
-
-(defun buffer-disable-undo (buffer)
-  (setf (buffer-%enable-undo-p buffer) nil)
-  (setf (buffer-undo-size buffer) 0)
-  (setf (buffer-undo-stack buffer) nil)
-  (setf (buffer-redo-stack buffer) nil)
-  nil)
+(defun buffer-name (&optional (buffer (current-buffer)))
+  "`buffer`の名前を返します。"
+  (buffer-%name buffer))
 
 (defun buffer-filename (&optional (buffer (current-buffer)))
+  "`buffer`のファイル名を返します。"
   (buffer-%filename buffer))
 
 (defun (setf buffer-filename) (filename &optional (buffer (current-buffer)))
   (setf (buffer-%filename buffer) filename))
 
 (defun buffer-directory (&optional (buffer (current-buffer)))
+  "`buffer`のディレクトリを返します。"
   (or (buffer-%directory buffer)
       (namestring (uiop:getcwd))))
 
@@ -239,6 +254,7 @@
           (namestring result))))
 
 (defun buffer-unmark (buffer)
+  "`buffer`の変更フラグを下ろします。"
   (setf (buffer-%modified-p buffer) 0))
 
 (defun buffer-mark-cancel (buffer)
@@ -287,11 +303,12 @@
        (push-redo-stack buffer fn)))))
 
 (defun buffer-rename (buffer name)
+  "`buffer`の名前を`name`に変更します。"
   (check-type buffer buffer)
   (check-type name string)
   (when (get-buffer name)
     (editor-error "Buffer name `~A' is in use" name))
-  (setf (buffer-name buffer) name))
+  (setf (buffer-%name buffer) name))
 
 (defun buffer-undo-1 (point)
   (let* ((buffer (point-buffer point))

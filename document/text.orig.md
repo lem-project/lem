@@ -18,7 +18,7 @@
 {lem:buffer-rename function}
 
 {lem:buffer-list function}
-(lem:get-buffer function}
+{lem:get-buffer function}
 {lem:get-buffer-create function}
 {lem:delete-buffer function}
 {lem:get-next-buffer function}

@@ -86,10 +86,10 @@
 
 
 * `lem:point-buffer: (object)`  
-  
+  `point`が指す`buffer`を返します。
 
 * `lem:point-kind: (object)`  
-  
+  `point`の種類(`:temporary`、`:left-inserting`または`:right-inserting`)を返します。
 
 * `lem:current-point: ()`  
   現在の`point`を返します。

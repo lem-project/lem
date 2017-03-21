@@ -21,8 +21,7 @@
   ((buffer
     :initarg :buffer
     :reader point-buffer
-    :type buffer
-    :documentation @lang(:jp "`point`が指す`buffer`を返します。"))
+    :type buffer)
    (line
     :initarg :line
     :accessor point-line
@@ -34,9 +33,7 @@
    (kind
     :initarg :kind
     :reader point-kind
-    :type (member :temporary :left-inserting :right-inserting)
-    :documentation
-    @lang(:jp "`point`の種類(`:temporary`, `:left-inserting`, `:right-inserting`)を返します。")))
+    :type (member :temporary :left-inserting :right-inserting)))
   (:documentation
    @lang(:jp "`point`はバッファ内のテキストの位置を指すオブジェクトです。  
 `buffer`とその位置の行、行頭からの0始まりのオフセット`charpos`をもっています。  
@@ -50,6 +47,12 @@
 `:left-inserting`または`:right-inserting`の時はバッファがその`point`を管理しているので、
 使用後は`delete-point`で明示的に削除するか`with-point`を使ってください。
 ")))
+
+(setf (documentation 'point-buffer 'function)
+      @lang(:jp "`point`が指す`buffer`を返します。"))
+
+(setf (documentation 'point-kind 'function)
+      @lang(:jp "`point`の種類(`:temporary`、`:left-inserting`または`:right-inserting`)を返します。"))
 
 (defun current-point ()
   @lang(:jp "現在の`point`を返します。")

@@ -61,7 +61,7 @@
 
 * `lem:delete-buffer: (buffer)`  
   `buffer`をバッファのリストから消します。
-エディタ変数`kill-buffer-hook`があれば消す前に実行されます。
+エディタ変数`kill-buffer-hook`がバッファが消される前に実行されます。
 
 * `lem:get-next-buffer: (buffer)`  
   バッファリスト内にある`buffer`の次のバッファを返します。
@@ -84,6 +84,51 @@
 `:left-inserting`または`:right-inserting`の時はバッファがその`point`を管理しているので、
 使用後は`delete-point`で明示的に削除するか`with-point`を使ってください。
 
+
+* `lem:point-buffer: (object)`  
+  
+
+* `lem:point-kind: (object)`  
+  
+
+* `lem:current-point: ()`  
+  現在の`point`を返します。
+
+* `lem:pointp: (x)`  
+  `x`が`point`ならT、それ以外ならNILを返します。
+
+* `lem:copy-point: (point &optional kind)`  
+  `point`のコピーを作って返します。
+`kind`は`:temporary`、`:left-inserting`または `right-inserting`です。
+
+* `lem:delete-point: (point)`  
+  `point`を削除します。
+`point-kind`が:temporaryの場合はこの関数を使う必要はありません。
+
+* `lem:point=: (point1 point2)`  
+  `point1`と`point2`が同じ位置にあるならT、それ以外はNILを返します。
+
+* `lem:point/=: (point1 point2)`  
+  `point1`と`point2`が同じ位置ではないならT、それ以外はNILを返します。
+
+* `lem:point<: (point1 point2)`  
+  `point1`が`point2`よりも前にあるならT、それ以外はNILを返します。
+
+* `lem:point<=: (point1 point2)`  
+  `point1`が`point2`と同じ位置、または前にあるならT、それ以外はNILを返します。
+
+* `lem:point>: (point1 point2)`  
+  `point1`が`point2`よりも後にあるならT、それ以外はNILを返します。
+
+* `lem:point>=: (point1 point2)`  
+  `point1`が`point2`と同じ位置、または後にあるならT、それ以外はNILを返します。
+
+* `lem:with-point: (bindings &body body)`  
+  このマクロは`body`内で使う各`point`を`bindings`で作り、
+`body`を抜けると各`point`を削除して`body`の値を返します。  
+`body`でエラーがあっても`point`は削除されます。  
+`bindings`の形式は(`var` `point` [`kind`])のリストです。  
+`kind`は省略可能でデフォルトで`:temporary`です。  
 
 
 

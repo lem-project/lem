@@ -77,12 +77,16 @@
     point))
 
 (defun copy-point (point &optional kind)
+  @lang(:jp "`point`のコピーを作って返します。
+`kind`は`:temporary`、`:left-inserting`または `right-inserting`です。")
   (make-point (point-buffer point)
               (point-line point)
 	      (point-charpos point)
 	      :kind (or kind (point-kind point))))
 
 (defun delete-point (point)
+  @lang(:jp "`point`を削除します。
+`point-kind`が:temporaryの場合はこの関数を使う必要はありません。")
   (unless (point-temporary-p point)
     (setf (line-points (point-line point))
           (delete point (line-points (point-line point))))))
@@ -107,6 +111,7 @@
   (line-ord (point-line point)))
 
 (defun point= (point1 point2)
+  @lang(:jp "`point1`と`point2`が同じ位置にあるならT、それ以外はNILを返します。")
   (assert (eq (point-buffer point1)
               (point-buffer point2)))
   (and (= (point-line-ord point1)
@@ -115,11 +120,13 @@
           (point-charpos point2))))
 
 (defun point/= (point1 point2)
+  @lang(:jp "`point1`と`point2`が同じ位置ではないならT、それ以外はNILを返します。")
   (assert (eq (point-buffer point1)
               (point-buffer point2)))
   (not (point= point1 point2)))
 
 (defun point< (point1 point2)
+  @lang(:jp "`point1`が`point2`よりも前にあるならT、それ以外はNILを返します。")
   (assert (eq (point-buffer point1)
               (point-buffer point2)))
   (or (< (point-line-ord point1) (point-line-ord point2))
@@ -127,17 +134,20 @@
            (< (point-charpos point1) (point-charpos point2)))))
 
 (defun point<= (point1 point2)
+  @lang(:jp "`point1`が`point2`と同じ位置、または前にあるならT、それ以外はNILを返します。")
   (assert (eq (point-buffer point1)
               (point-buffer point2)))
   (or (point< point1 point2)
       (point= point1 point2)))
 
 (defun point> (point1 point2)
+  @lang(:jp "`point1`が`point2`よりも後にあるならT、それ以外はNILを返します。")
   (assert (eq (point-buffer point1)
               (point-buffer point2)))
   (point< point2 point1))
 
 (defun point>= (point1 point2)
+  @lang(:jp "`point1`が`point2`と同じ位置、または後にあるならT、それ以外はNILを返します。")
   (assert (eq (point-buffer point1)
               (point-buffer point2)))
   (point<= point2 point1))

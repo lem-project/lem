@@ -29,7 +29,15 @@
 {lem:point-kind function}
 {lem:current-point function}
 {lem:pointp function}
-
+{lem:copy-point function}
+{lem:delete-point function}
+{lem:point= function}
+{lem:point/= function}
+{lem:point< function}
+{lem:point<= function}
+{lem:point> function}
+{lem:point>= function}
+{lem:with-point function}
 
 # エディタ変数
 {lem:buffer-value function}

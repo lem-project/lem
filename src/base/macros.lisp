@@ -1,5 +1,7 @@
 (in-package :lem-base)
 
+(annot:enable-annot-syntax)
+
 (export '(save-excursion
           with-point
           with-buffer-read-only
@@ -9,6 +11,12 @@
   `(invoke-save-excursion (lambda () ,@body)))
 
 (defmacro with-point (bindings &body body)
+  @lang(:jp "このマクロは`body`内で使う各`point`を`bindings`で作り、
+`body`を抜けると各`point`を削除して`body`の値を返します。  
+`body`でエラーがあっても`point`は削除されます。  
+`bindings`の形式は(`var` `point` [`kind`])のリストです。  
+`kind`は省略可能でデフォルトで`:temporary`です。  
+")
   (let ((cleanups
          (mapcan (lambda (b)
                    (destructuring-bind (var point &optional (kind :temporary)) b

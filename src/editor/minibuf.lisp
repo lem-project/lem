@@ -80,7 +80,9 @@
                           (apply #'format nil string args))
                       flag)
       (when flag
-        (sit-for 1 nil)
+        (handler-case (sit-for 1 nil)
+          (editor-abort ()
+            (minibuf-read-line-break)))
         (print-echoarea nil nil)))))
 
 (defun message (string &rest args)

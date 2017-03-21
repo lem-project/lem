@@ -24,6 +24,10 @@
 {lem:get-next-buffer function}
 {lem:bury-buffer function}
 
+# point
+{lem:point type}
+
+
 # エディタ変数
 {lem:buffer-value function}
 {lem:buffer-value setf}

@@ -45,9 +45,53 @@
   `buffer`の名前を`name`に変更します。
 
 
-##
 * `lem:buffer-list: ()`  
   `buffer`のリストを返します。
 
+(lem:get-buffer function}
+* `lem:get-buffer-create: (name)`  
+  バッファ名`name`のバッファがあればそれを返し、
+無ければ作って返します。
 
-## エディタ変数
+* `lem:delete-buffer: (buffer)`  
+  `buffer`をバッファのリストから消します。
+エディタ変数`kill-buffer-hook`があれば消す前に実行されます。
+
+* `lem:get-next-buffer: (buffer)`  
+  バッファリスト内にある`buffer`の次のバッファを返します。
+
+* `lem:bury-buffer: (buffer)`  
+  `buffer`をバッファリストの一番最後に移動させます。
+
+
+# point
+* `lem:point`  
+  `point`はバッファ内のテキストの位置を指すオブジェクトです。
+`buffer`とその位置の行、行頭からの0始まりのオフセット`charpos`をもっています。
+`point`には`kind`があり、バッファ内に挿入、削除したときに位置を調整する動作を制御します。
+`kind`が`:temporary`の時は`point`を一時的な読み取りに使います。
+作成、削除時のオーバーヘッドが低く、明示的に削除する必要もありませんが、
+その位置より前を編集した後は正しく使用できません。
+`kind`が`:left-inserting`または`:right-inserting`の時はそれより前の位置を編集したときに、
+編集した長さだけ位置を移動します。
+`point`と同じ位置に挿入したときは`:right-inserting`は元の位置のままで、`:left-inserting`の時は移動します。
+`:left-inserting`または`:right-inserting`の時はバッファがその`point`を管理しているので、
+使用後は`delete-point`で明示的に削除するか`with-point`を使ってください。
+
+
+
+
+# エディタ変数
+* `lem:buffer-value: (buffer name &optional default)`  
+  `buffer`のバッファ変数`name`に束縛されている値を返します。
+変数が設定されていない場合は`default`を返します。
+
+* `(setf lem:buffer-value): (value buffer name &optional default)`  
+  `buffer`のバッファ変数`name`に`value`を束縛します。
+
+* `lem:buffer-unbound: (buffer name)`  
+  `buffer`のバッファ変数`name`の束縛を消します。
+
+* `lem:clear-buffer-variables: (&key (buffer (current-buffer)))`  
+  `buffer`に束縛されているすべてのバッファ変数を消します。
+

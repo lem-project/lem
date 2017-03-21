@@ -1,6 +1,5 @@
 # buffer
-`buffer`はバッファ名、ファイル名、テキスト、テキストを指す位置等が入った、文書を管理するオブジェクトです。  
-複数の`buffer`はリストで管理されています。  
+{lem:buffer type}
 
 ## buffer用オペレーション
 {lem:current-buffer function}

@@ -84,7 +84,7 @@
 
 (defun delete-buffer (buffer)
   @lang(:jp "`buffer`をバッファのリストから消します。
-エディタ変数`kill-buffer-hook`があれば消す前に実行されます。")
+エディタ変数`kill-buffer-hook`がバッファが消される前に実行されます。")
   (check-type buffer buffer)
   (alexandria:when-let ((hooks (variable-value 'kill-buffer-hook :buffer buffer)))
     (run-hooks hooks buffer))

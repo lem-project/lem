@@ -126,7 +126,11 @@
    (variables
     :initform nil
     :initarg :variables
-    :accessor buffer-variables)))
+    :accessor buffer-variables))
+  (:documentation
+   @lang(:jp "`buffer`はバッファ名、ファイル名、テキスト、テキストを指す位置等が入った、
+文書を管理するオブジェクトです。  
+複数の`buffer`はリストで管理されています。")))
 
 (defvar *current-buffer*)
 

@@ -25,6 +25,10 @@
 
 # point
 {lem:point type}
+{lem:point-buffer function}
+{lem:point-kind function}
+{lem:current-point function}
+{lem:pointp function}
 
 
 # エディタ変数

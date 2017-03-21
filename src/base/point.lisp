@@ -10,7 +10,6 @@
           point-buffer
           point-charpos
           point-kind
-
           point=
           point/=
           point<
@@ -21,8 +20,9 @@
 (defclass point ()
   ((buffer
     :initarg :buffer
-    :accessor point-buffer
-    :type buffer)
+    :reader point-buffer
+    :type buffer
+    :documentation @lang(:jp "`point`が指す`buffer`を返します。"))
    (line
     :initarg :line
     :accessor point-line
@@ -33,8 +33,10 @@
     :type fixnum)
    (kind
     :initarg :kind
-    :accessor point-kind
-    :type (member :temporary :left-inserting :right-inserting))
+    :reader point-kind
+    :type (member :temporary :left-inserting :right-inserting)
+    :documentation
+    @lang(:jp "`point`の種類(`:temporary`, `:left-inserting`, `:right-inserting`)を返します。"))
    (name
     :initarg :name
     :accessor point-name
@@ -54,6 +56,7 @@
 ")))
 
 (defun current-point ()
+  @lang(:jp "現在の`point`を返します。")
   (buffer-point (current-buffer)))
 
 (defmethod print-object ((object point) stream)
@@ -64,6 +67,7 @@
             (line-str (point-line object)))))
 
 (defun pointp (x)
+  @lang(:jp "`x`が`point`ならT、それ以外ならNILを返します。")
   (typep x 'point))
 
 (defun make-point (buffer line charpos &key (kind :right-inserting) name)

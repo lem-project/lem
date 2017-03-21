@@ -199,34 +199,29 @@
   (isearch-reset-buffer)
   (unless (equal search-string "")
     (window-see (current-window))
-    (with-point ((cur-point (window-view-point (current-window)))
-                 (limit-point (or (line-offset
-                                   (copy-point (window-view-point (current-window))
-                                               :temporary)
-                                   (window-height (current-window)))
-                                  (buffers-end (window-buffer (current-window))))))
-      (loop (with-point ((prev-point cur-point))
-              (unless (funcall *isearch-search-forward-function*
-                               cur-point
-                               search-string
-                               limit-point)
+    (with-point ((curr (window-view-point (current-window)))
+                 (limit (window-view-point (current-window))))
+      (unless (line-offset limit (window-height (current-window)))
+        (buffer-end limit))
+      (loop :with prev
+            :do
+            (when (and prev (point= prev curr)) (return))
+            (setf prev (copy-point curr :temporary))
+            (unless (funcall *isearch-search-forward-function*
+                             curr search-string limit)
+              (return))
+            (with-point ((before curr))
+              (unless (funcall *isearch-search-backward-function*
+                               before search-string prev)
                 (return))
-              (let ((start-point (with-point ((temp-point cur-point :temporary))
-                                   (when (funcall *isearch-search-backward-function*
-                                                  temp-point
-                                                  search-string
-                                                  prev-point)
-                                     temp-point))))
-                (when (or (null start-point) (point= start-point cur-point))
-                  ;; 正規表現の^や(?=text)が終わらないので中断する
-                  (return))
-                (push (make-overlay start-point
-                                    (copy-point cur-point :temporary)
-                                    (if (and (point<= start-point point)
-                                             (point<= point cur-point))
-                                        'isearch-highlight-active-attribute
-                                        'isearch-highlight-attribute))
-                      *isearch-highlight-overlays*)))))))
+              (when (point= before curr)
+                (return))
+              (push (make-overlay before curr
+                                  (if (and (point<= before point)
+                                           (point<= point curr))
+                                      'isearch-highlight-active-attribute
+                                      'isearch-highlight-attribute))
+                    *isearch-highlight-overlays*))))))
 
 (defun isearch-add-char (c)
   (setq *isearch-string*

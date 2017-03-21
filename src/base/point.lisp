@@ -36,11 +36,7 @@
     :reader point-kind
     :type (member :temporary :left-inserting :right-inserting)
     :documentation
-    @lang(:jp "`point`の種類(`:temporary`, `:left-inserting`, `:right-inserting`)を返します。"))
-   (name
-    :initarg :name
-    :accessor point-name
-    :type (or null string)))
+    @lang(:jp "`point`の種類(`:temporary`, `:left-inserting`, `:right-inserting`)を返します。")))
   (:documentation
    @lang(:jp "`point`はバッファ内のテキストの位置を指すオブジェクトです。  
 `buffer`とその位置の行、行頭からの0始まりのオフセット`charpos`をもっています。  
@@ -61,8 +57,7 @@
 
 (defmethod print-object ((object point) stream)
   (print-unreadable-object (object stream :identity t)
-    (format stream "POINT ~A ~A ~S"
-            (point-name object)
+    (format stream "POINT ~A ~S"
             (point-charpos object)
             (line-str (point-line object)))))
 
@@ -70,24 +65,22 @@
   @lang(:jp "`x`が`point`ならT、それ以外ならNILを返します。")
   (typep x 'point))
 
-(defun make-point (buffer line charpos &key (kind :right-inserting) name)
+(defun make-point (buffer line charpos &key (kind :right-inserting))
   (check-type kind (member :temporary :left-inserting :right-inserting))
   (let ((point (make-instance 'point
                               :buffer buffer
                               :line line
                               :charpos charpos
-                              :kind kind
-                              :name name)))
+                              :kind kind)))
     (unless (eq :temporary kind)
       (push point (line-points line)))
     point))
 
-(defun copy-point (point &optional kind name)
+(defun copy-point (point &optional kind)
   (make-point (point-buffer point)
               (point-line point)
 	      (point-charpos point)
-	      :kind (or kind (point-kind point))
-	      :name (or name (point-name point))))
+	      :kind (or kind (point-kind point))))
 
 (defun delete-point (point)
   (unless (point-temporary-p point)

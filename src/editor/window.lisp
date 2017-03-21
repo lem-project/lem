@@ -107,9 +107,9 @@
                  :height height
                  :%buffer buffer
                  :screen (make-screen x y width height use-modeline-p)
-                 :view-point (copy-point (buffer-point buffer) :right-inserting "view-point")
+                 :view-point (copy-point (buffer-point buffer) :right-inserting)
                  :use-modeline-p use-modeline-p
-                 :point (copy-point (buffers-start buffer) :right-inserting "window-point")))
+                 :point (copy-point (buffers-start buffer) :right-inserting)))
 
 (defun make-window (buffer x y width height use-modeline-p)
   (setf *modified-window-tree-p* t)

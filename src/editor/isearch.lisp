@@ -144,6 +144,7 @@
 (define-command isearch-abort () ()
   (move-point (current-point) *isearch-start-point*)
   (isearch-reset-buffer)
+  (isearch-end)
   t)
 
 (define-key *isearch-keymap* (kbd "C-h") 'isearch-delete-char)

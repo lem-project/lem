@@ -34,11 +34,11 @@ exec ros -Q -- $0 "$@"
             (case doc-type
               ((function)
                (let ((arglist (swank/backend:arglist symbol)))
-                 (format nil "~(~A~): (~(~{~A~^ ~}~))"
+                 (format nil "~(~A~) (~(~{~A~^ ~}~))"
                          symbol-name
                          arglist)))
               ((setf)
-               (format nil "(setf ~(~A~)): (~(~{~A~^ ~}~))"
+               (format nil "(setf ~(~A~)) (~(~{~A~^ ~}~))"
                        symbol-name
                        (swank/backend:arglist `(setf ,symbol))))
               (otherwise

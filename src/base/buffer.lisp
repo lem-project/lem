@@ -204,7 +204,7 @@
   nil)
 
 (defun buffer-disable-undo (buffer)
-  @lang(:jp "`buffer`のアンドゥを無効にして編集履歴を空にします。")
+  @lang(:jp "`buffer`のアンドゥを無効にしてアンドゥ用の情報を空にします。")
   (setf (buffer-%enable-undo-p buffer) nil)
   (setf (buffer-undo-size buffer) 0)
   (setf (buffer-undo-stack buffer) nil)
@@ -355,7 +355,8 @@
     (push :separator (buffer-undo-stack buffer))))
 
 (defun buffer-value (buffer name &optional default)
-  @lang(:jp "`buffer`のバッファ変数`name`に束縛されている値を返します。
+  @lang(:jp "`buffer`のバッファ変数`name`に束縛されている値を返します。  
+`buffer`の型は`buffer`または`point`です。  
 変数が設定されていない場合は`default`を返します。")
   (setf buffer (ensure-buffer buffer))
   (multiple-value-bind (value foundp)
@@ -363,7 +364,8 @@
     (if foundp value default)))
 
 (defun (setf buffer-value) (value buffer name &optional default)
-  @lang(:jp "`buffer`のバッファ変数`name`に`value`を束縛します。")
+  @lang(:jp "`buffer`のバッファ変数`name`に`value`を束縛します。  
+`buffer`の型は`buffer`または`point`です。")
   (declare (ignore default))
   (setf buffer (ensure-buffer buffer))
   (setf (gethash name (buffer-variables buffer)) value))

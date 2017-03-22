@@ -13,9 +13,16 @@
 (defmacro with-point (bindings &body body)
   @lang(:jp "このマクロは`body`内で使う各`point`を`bindings`で作り、
 `body`を抜けると各`point`を削除して`body`の値を返します。  
-`body`でエラーがあっても`point`は削除されます。  
-`bindings`の形式は(`var` `point` [`kind`])のリストです。  
+`body`でエラーがあっても各`point`は削除されます。  
+`bindings`の形式は(`var` `point` &optional `kind`)のリストです。  
 `kind`は省略可能でデフォルトで`:temporary`です。  
+```
+例
+\(with-point ((p3 expr1)
+             (p1 expr2 :left-inserting)
+             (p2 expr3 :right-inserting))
+  ...)
+```
 ")
   (let ((cleanups
          (mapcan (lambda (b)

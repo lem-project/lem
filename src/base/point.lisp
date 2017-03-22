@@ -37,15 +37,16 @@
   (:documentation
    @lang(:jp "`point`はバッファ内のテキストの位置を指すオブジェクトです。  
 `buffer`とその位置の行、行頭からの0始まりのオフセット`charpos`をもっています。  
-`point`には`kind`があり、バッファ内に挿入、削除したときに位置を調整する動作を制御します。  
+`point`には`kind`があり、バッファ内に挿入、削除した後の位置が`kind`の値によって変わります。  
 `kind`が`:temporary`の時は`point`を一時的な読み取りに使います。  
 作成、削除時のオーバーヘッドが低く、明示的に削除する必要もありませんが、
-その位置より前を編集した後は正しく使用できません。  
+その位置より前を編集した後はその`point`は正しく使用できません。  
 `kind`が`:left-inserting`または`:right-inserting`の時はそれより前の位置を編集したときに、
-編集した長さだけ位置を移動します。  
-`point`と同じ位置に挿入したときは`:right-inserting`は元の位置のままで、`:left-inserting`の時は移動します。  
-`:left-inserting`または`:right-inserting`の時はバッファがその`point`を管理しているので、
-使用後は`delete-point`で明示的に削除するか`with-point`を使ってください。
+編集した長さだけ位置を調整します。  
+`point`と同じ位置に挿入すると
+`:right-inserting`では元の位置のままで、`:left-inserting`では移動します。  
+`:left-inserting`または`:right-inserting`の場合は、使用後に`delete-point`で明示的に削除するか、
+`with-point`を使う必要があります。
 ")))
 
 (setf (documentation 'point-buffer 'function)
@@ -81,7 +82,8 @@
 
 (defun copy-point (point &optional kind)
   @lang(:jp "`point`のコピーを作って返します。
-`kind`は`:temporary`、`:left-inserting`または `right-inserting`です。")
+`kind`は`:temporary`、`:left-inserting`または `right-inserting`です。
+省略された場合は`point`と同じ値です。")
   (make-point (point-buffer point)
               (point-line point)
 	      (point-charpos point)

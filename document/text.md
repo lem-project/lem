@@ -30,7 +30,7 @@
   `buffer`のアンドゥを有効にします。
 
 * `lem:buffer-disable-undo: (buffer)`  
-  `buffer`のアンドゥを無効にして編集履歴を空にします。
+  `buffer`のアンドゥを無効にしてアンドゥ用の情報を空にします。
 
 * `lem:buffer-name: (&optional (buffer (current-buffer)))`  
   `buffer`の名前を返します。
@@ -67,22 +67,23 @@
   バッファリスト内にある`buffer`の次のバッファを返します。
 
 * `lem:bury-buffer: (buffer)`  
-  `buffer`をバッファリストの一番最後に移動させます。
+  `buffer`をバッファリストの一番最後に移動させ、バッファリストの先頭を返します。
 
 
 # point
 * `lem:point`  
   `point`はバッファ内のテキストの位置を指すオブジェクトです。  
 `buffer`とその位置の行、行頭からの0始まりのオフセット`charpos`をもっています。  
-`point`には`kind`があり、バッファ内に挿入、削除したときに位置を調整する動作を制御します。  
+`point`には`kind`があり、バッファ内に挿入、削除した後の位置が`kind`の値によって変わります。  
 `kind`が`:temporary`の時は`point`を一時的な読み取りに使います。  
 作成、削除時のオーバーヘッドが低く、明示的に削除する必要もありませんが、
-その位置より前を編集した後は正しく使用できません。  
+その位置より前を編集した後はその`point`は正しく使用できません。  
 `kind`が`:left-inserting`または`:right-inserting`の時はそれより前の位置を編集したときに、
-編集した長さだけ位置を移動します。  
-`point`と同じ位置に挿入したときは`:right-inserting`は元の位置のままで、`:left-inserting`の時は移動します。  
-`:left-inserting`または`:right-inserting`の時はバッファがその`point`を管理しているので、
-使用後は`delete-point`で明示的に削除するか`with-point`を使ってください。
+編集した長さだけ位置を調整します。  
+`point`と同じ位置に挿入すると
+`:right-inserting`では元の位置のままで、`:left-inserting`では移動します。  
+`:left-inserting`または`:right-inserting`の場合は、使用後に`delete-point`で明示的に削除するか、
+`with-point`を使う必要があります。
 
 
 * `lem:point-buffer: (object)`  
@@ -100,6 +101,7 @@
 * `lem:copy-point: (point &optional kind)`  
   `point`のコピーを作って返します。
 `kind`は`:temporary`、`:left-inserting`または `right-inserting`です。
+省略された場合は`point`と同じ値です。
 
 * `lem:delete-point: (point)`  
   `point`を削除します。
@@ -126,19 +128,28 @@
 * `lem:with-point: (bindings &body body)`  
   このマクロは`body`内で使う各`point`を`bindings`で作り、
 `body`を抜けると各`point`を削除して`body`の値を返します。  
-`body`でエラーがあっても`point`は削除されます。  
-`bindings`の形式は(`var` `point` [`kind`])のリストです。  
+`body`でエラーがあっても各`point`は削除されます。  
+`bindings`の形式は(`var` `point` &optional `kind`)のリストです。  
 `kind`は省略可能でデフォルトで`:temporary`です。  
+```
+例
+(with-point ((p3 expr1)
+             (p1 expr2 :left-inserting)
+             (p2 expr3 :right-inserting))
+  ...)
+```
 
 
 
 # エディタ変数
 * `lem:buffer-value: (buffer name &optional default)`  
-  `buffer`のバッファ変数`name`に束縛されている値を返します。
+  `buffer`のバッファ変数`name`に束縛されている値を返します。  
+`buffer`の型は`buffer`または`point`です。  
 変数が設定されていない場合は`default`を返します。
 
 * `(setf lem:buffer-value): (value buffer name &optional default)`  
-  `buffer`のバッファ変数`name`に`value`を束縛します。
+  `buffer`のバッファ変数`name`に`value`を束縛します。  
+`buffer`の型は`buffer`または`point`です。
 
 * `lem:buffer-unbound: (buffer name)`  
   `buffer`のバッファ変数`name`の束縛を消します。

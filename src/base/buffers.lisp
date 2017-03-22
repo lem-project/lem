@@ -103,7 +103,7 @@
         (car buffer-list))))
 
 (defun bury-buffer (buffer)
-  @lang(:jp "`buffer`をバッファリストの一番最後に移動させます。")
+  @lang(:jp "`buffer`をバッファリストの一番最後に移動させ、バッファリストの先頭を返します。")
   (check-type buffer buffer)
   (setf *buffer-list*
         (append (remove buffer (buffer-list))

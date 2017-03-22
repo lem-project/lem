@@ -62,6 +62,8 @@
           move-to-position
           move-to-line))
 
+(annot:enable-annot-syntax)
+
 (defun buffers-start (buffer)
   @lang(:jp "`buffer`の最初の位置の`point`を返します。")
   (buffer-start-point buffer))

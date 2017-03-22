@@ -63,38 +63,48 @@
           move-to-line))
 
 (defun buffers-start (buffer)
+  @lang(:jp "`buffer`の最初の位置の`point`を返します。")
   (buffer-start-point buffer))
 
 (defun buffers-end (buffer)
+  @lang(:jp "`buffer`の最後の位置の`point`を返します。")
   (buffer-end-point buffer))
 
 (defun first-line-p (point)
+  @lang(:jp "`point`が最初の行ならT、それ以外ならNILを返します。")
   (null (line-prev (point-line point))))
 
 (defun last-line-p (point)
+  @lang(:jp "`point`が最後の行ならT、それ以外ならNILを返します。")
   (null (line-next (point-line point))))
 
 (defun start-line-p (point)
+  @lang(:jp "`point`が行頭ならT、それ以外ならNILを返します。")
   (zerop (point-charpos point)))
 
 (defun end-line-p (point)
+  @lang(:jp "`point`が行末ならT、それ以外ならNILを返します。")
   (= (point-charpos point)
      (line-length (point-line point))))
 
 (defun start-buffer-p (point)
+  @lang(:jp "`point`がバッファの最初の位置ならT、それ以外ならNILを返します。")
   (and (first-line-p point)
        (start-line-p point)))
 
 (defun end-buffer-p (point)
+  @lang(:jp "`point`がバッファの最後の位置ならT、それ以外ならNILを返します。")
   (and (last-line-p point)
        (end-line-p point)))
 
 (defun same-line-p (point1 point2)
+  @lang(:jp "`point1`と`point2`が同じ位置ならT、それ以外ならNILを返します。")
   (assert (eq (point-buffer point1)
               (point-buffer point2)))
   (eq (point-line point1) (point-line point2)))
 
 (defun line-string (point)
+  @lang(:jp "`point`の行の文字列を返します。")
   (line-str (point-line point)))
 
 (defun %move-to-position (point line charpos)
@@ -107,26 +117,35 @@
   point)
 
 (defun move-point (point new-point)
+  @lang(:jp "`point`を`new-point`の位置に移動します。")
   (%move-to-position point
                      (point-line new-point)
                      (point-charpos new-point)))
 
 (defun line-start (point)
+  @lang(:jp "`point`を行頭に移動します。")
   (setf (point-charpos point) 0)
   point)
 
 (defun line-end (point)
+  @lang(:jp "`point`を行末に移動します。")
   (setf (point-charpos point)
         (line-length (point-line point)))
   point)
 
 (defun buffer-start (point)
+  @lang(:jp "`point`をバッファの最初の位置に移動します。")
   (move-point point (buffers-start (point-buffer point))))
 
 (defun buffer-end (point)
+  @lang(:jp "`point`をバッファの最後の位置に移動します。")
   (move-point point (buffers-end (point-buffer point))))
 
 (defun line-offset (point n &optional (charpos 0))
+  @lang(:jp "`point`を`n`が正の数なら下に、負の数なら上に行を移動し、移動後の`point`を返します。
+`n`行先に行が無ければ`point`の位置はそのままでNILを返します。
+`charpos`は移動後の行頭からのオフセットです。
+")
   (cond
     ((plusp n)
      (do ((n n (1- n))
@@ -171,6 +190,8 @@
            (decf n (1+ charpos))))))
 
 (defun character-offset (point n)
+  @lang(:jp "`point`を`n`が正の数なら後に、負の数なら前に移動し、移動後の`point`を返します。
+`n`文字先がバッファの範囲外なら`point`の位置はそのままでNILを返します。")
   (%character-offset point n
                      (lambda (line charpos)
                        (%move-to-position point line charpos)
@@ -179,6 +200,8 @@
                        point)))
 
 (defun character-at (point &optional (offset 0))
+  @lang(:jp "`point`から`offset`ずらした位置の文字を返します。
+バッファの範囲外ならNILを返します。")
   (%character-offset point offset
                      (lambda (line charpos)
                        (line-char line charpos))

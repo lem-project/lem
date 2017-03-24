@@ -55,7 +55,6 @@
           blank-line-p
           skip-chars-forward
           skip-chars-backward
-          current-column
           position-at-point
           move-to-position
           move-to-line))
@@ -552,9 +551,6 @@
 `test`が関数ならその位置の前の文字を引数として一つ取り、返り値が非NILであるか
 ")
   (skip-chars-internal point test nil))
-
-(defun current-column ()
-  (point-column (current-point)))
 
 (defun invoke-save-excursion (function)
   (let ((point (copy-point (current-point) :right-inserting))

@@ -220,7 +220,7 @@
 (define-key *global-keymap* (kbd "[down]") 'next-line)
 (define-command next-line (&optional n) ("p")
   (unless (continue-flag :next-line)
-    (setq *next-line-prev-column* (current-column)))
+    (setq *next-line-prev-column* (point-column (current-point))))
   (unless (prog1 (forward-line n)
             (move-to-column (current-point) *next-line-prev-column*))
     (cond ((plusp n)

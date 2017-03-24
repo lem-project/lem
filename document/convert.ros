@@ -30,19 +30,20 @@ exec ros -Q -- $0 "$@"
 
 (defun describe-symbol (symbol-name symbol doc-type)
   (with-output-to-string (*standard-output*)
-    (format t "* `~A`  ~%  ~A~%"
-            (case doc-type
-              ((function)
-               (let ((arglist (swank/backend:arglist symbol)))
-                 (format nil "~(~A~) (~(~{~A~^ ~}~))"
-                         symbol-name
-                         arglist)))
-              ((setf)
-               (format nil "(setf ~(~A~)) (~(~{~A~^ ~}~))"
-                       symbol-name
-                       (swank/backend:arglist `(setf ,symbol))))
-              (otherwise
-               symbol-name))
+    (format t "*~A* " doc-type)
+    (case doc-type
+      ((function)
+       (format t "`~(~A~) (~(~{~A~^ ~}~))`"
+               symbol-name
+               (swank/backend:arglist symbol)))
+      ((setf)
+       (format t "`(setf ~(~A~)) (~(~{~A~^ ~}~))`"
+               symbol-name
+               (swank/backend:arglist `(setf ,symbol))))
+      (otherwise
+       (format t "`~A`" symbol-name)))
+    (format t "  ~%")
+    (format t "~A~%"
             (or (if (eq doc-type 'setf)
                     (documentation `(setf ,symbol) 'function)
                     (documentation symbol doc-type))

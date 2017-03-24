@@ -1,7 +1,5 @@
-# buffer
+# バッファ
 {lem:buffer type}
-
-## buffer用オペレーション
 {lem:current-buffer function}
 {lem:current-buffer setf}
 {lem:make-buffer function}
@@ -15,7 +13,6 @@
 {lem:buffer-directory function}
 {lem:buffer-unmark function}
 {lem:buffer-rename function}
-
 {lem:buffer-list function}
 {lem:get-buffer function}
 {lem:get-buffer-create function}
@@ -23,7 +20,7 @@
 {lem:get-next-buffer function}
 {lem:bury-buffer function}
 
-# point
+# ポイント
 {lem:point type}
 {lem:point-buffer function}
 {lem:point-kind function}
@@ -37,7 +34,62 @@
 {lem:point<= function}
 {lem:point> function}
 {lem:point>= function}
+
 {lem:with-point function}
+
+## ポイントの取得
+{lem:buffer-point function}
+{lem:buffer-mark function}
+{lem:buffers-start function}
+{lem:buffers-end function}
+
+## ポイント位置の検査
+{lem:first-line-p function}
+{lem:last-line-p function}
+{lem:start-line-p function}
+{lem:end-line-p function}
+{lem:start-buffer-p function}
+{lem:end-buffer-p function}
+{lem:same-line-p function}
+
+## ポイントの移動
+## ポイント位置の編集
+
+{lem:line-string function}
+{lem:move-point function}
+{lem:line-start function}
+{lem:line-end function}
+{lem:buffer-start function}
+{lem:buffer-end function}
+{lem:line-offset function}
+{lem:character-offset function}
+{lem:character-at function}
+{lem:insert-character function}
+{lem:insert-string function}
+{lem:delete-character function}
+{lem:erase-buffer function}
+{lem:region-beginning function}
+{lem:region-end function}
+{lem:points-to-string function}
+{lem:count-characters function}
+{lem:delete-between-points function}
+{lem:count-lines function}
+{lem:line-number-at-point function}
+{lem:point-column function}
+{lem:move-to-column function}
+{lem:position-at-point function}
+{lem:move-to-position function}
+{lem:move-to-line function}
+{lem:set-current-mark function}
+{lem:skip-chars-forward function}
+{lem:skip-chars-backward function}
+
+## テキストプロパティ
+{lem:text-property-at function}
+{lem:put-text-property function}
+{lem:remove-text-property function}
+{lem:next-single-property-change function}
+{lem:previous-single-property-change function}
 
 # エディタ変数
 {lem:buffer-value function}

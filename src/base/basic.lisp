@@ -378,6 +378,8 @@
 
 @export
 (defun filter-region-lines (start-point end-point function)
+  @lang(:jp "`start-point`から`end-point`までの範囲の行に`function`を適用します。
+`function`は行の文字列を引数に取り新しい行の文字列を返す関数です。")
   (assert (eq (point-buffer start-point)
               (point-buffer end-point)))
   (when (point< end-point start-point)

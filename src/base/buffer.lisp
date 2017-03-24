@@ -132,6 +132,9 @@
 文書を管理するオブジェクトです。  
 複数の`buffer`はリストで管理されています。")))
 
+(setf (documentation 'buffer-point 'function) @lang(:jp "`buffer`の現在の`point`を返します。"))
+(setf (documentation 'buffer-mark 'function) @lang(:jp "`buffer`の現在のマークの`point`を返します。"))
+
 (defvar *current-buffer*)
 
 (defun current-buffer ()

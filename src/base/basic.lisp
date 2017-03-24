@@ -36,8 +36,6 @@
           line-string
           point-column
           move-to-column
-          bolp
-          eolp
           bobp
           eobp
           beginning-of-buffer
@@ -455,12 +453,6 @@
       (line-offset (buffer-end point) (- n)))))
 
 
-(defun bolp ()
-  (start-line-p (current-point)))
-
-(defun eolp ()
-  (end-line-p (current-point)))
-
 (defun bobp ()
   (start-buffer-p (current-point)))
 

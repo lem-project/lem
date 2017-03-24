@@ -1026,7 +1026,7 @@
   (lisp-move-and-eval-sexp
    #'backward-sexp
    #'(lambda (string)
-       (unless (bolp) (insert-character (current-point) #\newline))
+       (unless (start-line-p (current-point)) (insert-character (current-point) #\newline))
        (setq - (first (%string-to-exps string (lisp-current-package))))
        (let ((point (current-point)))
          (let ((values (%lisp-eval - point t)))

@@ -181,15 +181,21 @@
   t)
 
 (define-key *global-keymap* (kbd "C-k") 'kill-line)
-(define-command kill-line (&optional (n 1)) ("p")
+(define-command kill-line (&optional arg) ("P")
   (with-point ((start (current-point) :right-inserting))
-    (kill-region start
-                 (dotimes (_ n (current-point))
-                   (cond ((eolp)
-                          (next-line 1)
-                          (beginning-of-line))
-                         (t
-                          (end-of-line)))))))
+    (cond
+      ((null arg)
+       (let ((p (current-point)))
+         (cond ((end-buffer-p p)
+                (editor-error "End of buffer"))
+               ((end-line-p p)
+                (character-offset p 1))
+               (t (line-end p)))
+         (kill-region start p)))
+      (t
+       (next-line arg)
+       (let ((end (current-point)))
+         (kill-region start end))))))
 
 (define-key *global-keymap* (kbd "C-y") 'yank)
 (define-command yank (n) ("p")

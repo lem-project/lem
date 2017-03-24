@@ -1,8 +1,6 @@
 (in-package :lem-base)
 
-(export '(buffers-start
-          buffers-end
-          first-line-p
+(export '(first-line-p
           last-line-p
           start-line-p
           end-line-p
@@ -63,14 +61,6 @@
           move-to-line))
 
 (annot:enable-annot-syntax)
-
-(defun buffers-start (buffer)
-  @lang(:jp "`buffer`の最初の位置の`point`を返します。")
-  (buffer-start-point buffer))
-
-(defun buffers-end (buffer)
-  @lang(:jp "`buffer`の最後の位置の`point`を返します。")
-  (buffer-end-point buffer))
 
 (defun first-line-p (point)
   @lang(:jp "`point`が最初の行ならT、それ以外ならNILを返します。")

@@ -7,6 +7,8 @@
           make-buffer
           buffer
           bufferp
+          buffers-start
+          buffers-end
           buffer-name
           buffer-version
           buffer-modified-p
@@ -78,11 +80,13 @@
    (start-point
     :initform nil
     :initarg :start-point
-    :accessor buffer-start-point)
+    :accessor buffer-start-point
+    :reader buffers-start)
    (end-point
     :initform nil
     :initarg :end-point
-    :accessor buffer-end-point)
+    :accessor buffer-end-point
+    :reader buffers-end)
    (mark-p
     :initform nil
     :initarg :mark-p
@@ -134,6 +138,8 @@
 
 (setf (documentation 'buffer-point 'function) @lang(:jp "`buffer`の現在の`point`を返します。"))
 (setf (documentation 'buffer-mark 'function) @lang(:jp "`buffer`の現在のマークの`point`を返します。"))
+(setf (documentation 'buffers-start 'function) @lang(:jp "`buffer`の最初の位置の`point`を返します。"))
+(setf (documentation 'buffers-end 'function) @lang(:jp "`buffer`の最後の位置の`point`を返します。"))
 
 (defvar *current-buffer*)
 

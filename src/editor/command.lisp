@@ -147,7 +147,7 @@
 (define-key *global-keymap* (kbd "C-d") 'delete-next-char)
 (define-key *global-keymap* (kbd "[dc]") 'delete-next-char)
 (define-command delete-next-char (&optional n) ("P")
-  (when (eobp)
+  (when (end-buffer-p (current-point))
     (editor-error "End of buffer"))
   (when n
     (unless (continue-flag :kill)

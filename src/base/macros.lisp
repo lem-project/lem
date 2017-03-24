@@ -8,7 +8,8 @@
           without-interrupts))
 
 (defmacro save-excursion (&body body)
-  @lang(:jp "")
+  @lang(:jp "現在の`point`と`mark`を保存し、`body`の評価後に復元し`body`の結果を返します。  
+`body`でエラーがあっても復元されます。")
   `(invoke-save-excursion (lambda () ,@body)))
 
 (defmacro with-point (bindings &body body)

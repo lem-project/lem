@@ -502,16 +502,9 @@
     (apply-region-lines start end 'indent)))
 
 (define-command delete-trailing-whitespace () ()
-  (save-excursion
-    (beginning-of-buffer)
-    (loop until (eobp) do
-	 (loop
-	    (end-of-line)
-	    (let ((c (preceding-char)))
-	      (if (or (equal c #\space)
-		      (equal c #\tab))
-		  (delete-character (current-point) -1)
-		  (return))))
-	 (forward-line 1))
-    (end-of-buffer)
-    (delete-blank-lines)))
+  (filter-region-lines (buffers-start (current-buffer))
+                       (buffers-end (current-buffer))
+                       (lambda (string)
+                         (string-right-trim '(#\space #\tab) string)))
+  (move-to-end-of-buffer)
+  (delete-blank-lines))

@@ -399,6 +399,23 @@
       ((eq line goal)
        count)))
 
+@export
+(defun filter-region-lines (start-point end-point function)
+  (assert (eq (point-buffer start-point)
+              (point-buffer end-point)))
+  (when (point< end-point start-point)
+    (rotatef end-point start-point))
+  (let ((fstr (make-array '(0) :element-type 'character :fill-pointer 0 :adjustable t))
+        (length 0))
+    (with-output-to-string (out fstr)
+      (map-region start-point end-point
+                  (lambda (string lastp)
+                    (incf length (1+ (length string)))
+                    (write-string (funcall function string) out)
+                    (unless lastp
+                      (write-char #\newline out)))))
+    (delete-char/point start-point length)
+    (insert-string start-point fstr)))
 (defun line-number-at-point (point)
   @lang(:jp "`point`の行番号を返します。")
   (let* ((buffer (point-buffer point))

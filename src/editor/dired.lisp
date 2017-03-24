@@ -164,7 +164,7 @@
       (lem.isearch:read-query-replace-args)
     (dolist (file (selected-files))
       (find-file file)
-      (beginning-of-buffer)
+      (buffer-start (current-point))
       (funcall query-function before after))))
 
 (define-command dired-query-replace () ()
@@ -224,60 +224,57 @@
     (when file
       (funcall open-file file))))
 
-(defun mark-current-line (flag)
-  (let ((point (current-point)))
-    (when (dired-range-p point)
-      (line-start point)
-      (with-buffer-read-only (point-buffer point) nil
-        (save-excursion
-          (delete-character point 1)
-          (if flag
-              (insert-character point #\*)
-              (insert-character point #\space)))))))
+(defun mark-current-line (flag &optional (point (current-point)))
+  (when (dired-range-p point)
+    (line-start point)
+    (with-buffer-read-only (point-buffer point) nil
+      (save-excursion
+        (delete-character point 1)
+        (if flag
+            (insert-character point #\*)
+            (insert-character point #\space))))))
 
 (defun mark-lines (test get-flag)
-  (save-excursion
-    (move-to-start-point (current-point))
-    (line-offset (current-point) 2)
+  (with-point ((p (current-point)))
+    (move-to-start-point p)
+    (line-offset p 2)
     (loop
-       (beginning-of-line)
-       (let ((flag (char= (following-char) #\*)))
-	 (when (funcall test flag)
-	   (mark-current-line (funcall get-flag flag))))
-       (unless (forward-line 1)
-	 (return)))))
+      (line-start p)
+      (let ((flag (char= (character-at p) #\*)))
+        (when (funcall test flag)
+          (mark-current-line (funcall get-flag flag) p)))
+      (unless (line-offset p 1)
+        (return)))))
 
 (defun selected-files ()
   (let ((files '()))
-    (save-excursion
-      (move-to-start-point (current-point))
+    (with-point ((p (current-point)))
+      (move-to-start-point p)
       (loop
-	 (beginning-of-line)
-	 (let ((flag (char= (following-char) #\*)))
-	   (when flag
-	     (line-start (current-point))
-	     (push (get-file) files)))
-	 (unless (forward-line 1)
-	   (return))))
+        (line-start p)
+        (let ((flag (char= (character-at p) #\*)))
+          (when flag
+            (line-start p)
+            (push (get-file p) files)))
+        (unless (line-offset p 1)
+          (return))))
     (if (null files)
         (let ((file (get-file)))
           (when file
             (list file)))
         (nreverse files))))
 
-(defun get-line-property (property-name)
-  (let ((point
-         (character-offset (line-start (copy-point (current-point)
-						   :temporary))
-			   1)))
-    (when point
-      (text-property-at point property-name))))
+(defun get-line-property (point property-name)
+  (with-point ((point point))
+    (line-start point)
+    (character-offset point 1)
+    (text-property-at point property-name)))
 
-(defun get-file ()
-  (get-line-property 'file))
+(defun get-file (&optional (point (current-point)))
+  (get-line-property point 'file))
 
-(defun get-type ()
-  (get-line-property 'type))
+(defun get-type (&optional (point (current-point)))
+  (get-line-property point 'type))
 
 (defun ls-output-string (filename)
   (with-output-to-string (stream)

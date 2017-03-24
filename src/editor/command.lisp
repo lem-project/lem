@@ -227,13 +227,13 @@
 (define-command next-line (&optional n) ("p")
   (unless (continue-flag :next-line)
     (setq *next-line-prev-column* (point-column (current-point))))
-  (unless (prog1 (forward-line n)
+  (unless (prog1 (line-offset (current-point) n)
             (move-to-column (current-point) *next-line-prev-column*))
     (cond ((plusp n)
-           (end-of-buffer)
+           (move-to-end-of-buffer)
            (editor-error "End of buffer"))
           (t
-           (beginning-of-buffer)
+           (move-to-beginning-of-buffer)
            (editor-error "Beginning of buffer"))))
   t)
 
@@ -245,23 +245,23 @@
 (define-key *global-keymap* (kbd "C-f") 'next-char)
 (define-key *global-keymap* (kbd "[right]") 'next-char)
 (define-command next-char (&optional (n 1)) ("p")
-  (or (shift-position n)
+  (or (character-offset (current-point) n)
       (editor-error "End of buffer")))
 
 (define-key *global-keymap* (kbd "C-b") 'prev-char)
 (define-key *global-keymap* (kbd "[left]") 'prev-char)
 (define-command prev-char (&optional (n 1)) ("p")
-  (or (shift-position (- n))
+  (or (character-offset (current-point) (- n))
       (editor-error "Beginning of buffer")))
 
 (define-key *global-keymap* (kbd "M-<") 'move-to-beginning-of-buffer)
 (define-command move-to-beginning-of-buffer () ()
-  (beginning-of-buffer)
+  (buffer-start (current-point))
   t)
 
 (define-key *global-keymap* (kbd "M->") 'move-to-end-of-buffer)
 (define-command move-to-end-of-buffer () ()
-  (end-of-buffer)
+  (buffer-end (current-point))
   t)
 
 (define-key *global-keymap* (kbd "C-a") 'move-to-beginning-of-line)
@@ -278,7 +278,7 @@
 (define-key *global-keymap* (kbd "C-e") 'move-to-end-of-line)
 (define-key *global-keymap* (kbd "[end]") 'move-to-end-of-line)
 (define-command move-to-end-of-line () ()
-  (end-of-line)
+  (line-end (current-point))
   t)
 
 (define-key *global-keymap* (kbd "C-v") 'next-page)

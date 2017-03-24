@@ -477,16 +477,17 @@
                            (list-all-packages))))))
 
 (defun scan-current-package (check-package-fn)
-  (save-excursion
-    (loop (multiple-value-bind (result groups)
-              (looking-at (line-start (copy-point (current-point) :temporary))
-                          "^\\s*\\(in-package (?:#?:|')?([^\)]*)\\)")
-            (when result
-              (let ((package (funcall check-package-fn (aref groups 0))))
-                (when package
-                  (return package))))
-            (unless (forward-line -1)
-              (return))))))
+  (with-point ((p (current-point)))
+    (loop
+      (multiple-value-bind (result groups)
+          (looking-at (line-start p)
+                      "^\\s*\\(in-package (?:#?:|')?([^\)]*)\\)")
+        (when result
+          (let ((package (funcall check-package-fn (aref groups 0))))
+            (when package
+              (return package))))
+        (unless (line-offset p -1)
+          (return))))))
 
 (defun %string-to-exps (str package)
   (let ((str str)

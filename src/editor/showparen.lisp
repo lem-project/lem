@@ -14,12 +14,12 @@
     (mapc #'delete-overlay *brackets-overlays*)
     (setq *brackets-overlays* nil)
     (let ((highlight-points '()))
-      (when (syntax-open-paren-char-p (following-char))
+      (when (syntax-open-paren-char-p (character-at (current-point)))
         (let ((goal-point (form-offset (copy-point (current-point) :temporary) 1)))
           (when goal-point
             (push (character-offset goal-point -1)
                   highlight-points))))
-      (when (syntax-closed-paren-char-p (preceding-char))
+      (when (syntax-closed-paren-char-p (character-at (current-point) -1))
         (let ((goal-point (form-offset (copy-point (current-point) :temporary) -1)))
           (when goal-point
             (push goal-point highlight-points))))

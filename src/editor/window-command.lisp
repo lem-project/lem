@@ -152,7 +152,7 @@
       (scroll-up (- n))
       (dotimes (_ n)
         (when (= (window-cursor-y (current-window)) 0)
-          (unless (forward-line n)
+          (unless (line-offset (current-point) n)
             (return)))
         (window-scroll (current-window) 1))))
 
@@ -164,6 +164,6 @@
         (when (and (= (window-cursor-y (current-window))
                       (- (window-height (current-window)) 2))
                    (not (first-line-p (window-view-point (current-window)))))
-          (unless (forward-line (- n))
+          (unless (line-offset (current-point) (- n))
             (return)))
         (window-scroll (current-window) -1))))

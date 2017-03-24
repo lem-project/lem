@@ -453,34 +453,6 @@
       (line-offset (buffer-start point) (1- line-number))
       (line-offset (buffer-end point) (- n)))))
 
-
-
-@export
-(defun beginning-of-buffer ()
-  (buffer-start (current-point)))
-
-@export
-(defun end-of-buffer ()
-  (buffer-end (current-point)))
-
-@export
-(defun beginning-of-line ()
-  (line-start (current-point))
-  t)
-
-@export
-(defun end-of-line ()
-  (line-end (current-point))
-  t)
-
-@export
-(defun forward-line (&optional (n 1))
-  (line-offset (current-point) n))
-
-@export
-(defun shift-position (n)
-  (character-offset (current-point) n))
-
 @export
 (defun check-marked ()
   (unless (buffer-mark (current-buffer))
@@ -497,22 +469,6 @@
            (setf (buffer-mark buffer)
                  (copy-point point :right-inserting)))))
   point)
-
-@export
-(defun following-char ()
-  (character-at (current-point)))
-
-@export
-(defun preceding-char ()
-  (character-at (current-point) -1))
-
-@export
-(defun char-after (&optional (point (current-point)))
-  (character-at point 0))
-
-@export
-(defun char-before (&optional (point (current-point)))
-  (character-at point -1))
 
 @export
 (defun blank-line-p (point)

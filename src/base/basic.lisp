@@ -538,24 +538,30 @@
         count
         (1+ count))))
 
-(defun skip-chars-internal (point test not-p dir)
+(defun skip-chars-internal (point test dir)
   (loop :for count :from 0
         :for c := (character-at point (if dir 0 -1))
         :do
-        (unless (if (if (consp test)
-                        (member c test)
-                        (funcall test c))
-                    (not not-p)
-                    not-p)
+        (unless (if (consp test)
+                    (member c test)
+                    (funcall test c))
           (return count))
         (unless (character-offset point (if dir 1 -1))
           (return count))))
 
-(defun skip-chars-forward (point test &optional not-p)
-  (skip-chars-internal point test not-p t))
+(defun skip-chars-forward (point test)
+  @lang(:jp "`point`からその位置の文字を`test`で評価して非NILの間、後の方向に移動します。  
+`test`が文字のリストならその位置の文字が`test`のリスト内に含まれるか  
+`test`が関数ならその位置の文字を引数として一つ取り、返り値が非NILであるか
+")
+  (skip-chars-internal point test t))
 
-(defun skip-chars-backward (point test &optional not-p)
-  (skip-chars-internal point test not-p nil))
+(defun skip-chars-backward (point test)
+  @lang(:jp "`point`からその位置の前の文字を`test`で評価して非NILの間、前の方向に移動します。  
+`test`が文字のリストならその位置の前の文字が`test`のリスト内に含まれるか  
+`test`が関数ならその位置の前の文字を引数として一つ取り、返り値が非NILであるか
+")
+  (skip-chars-internal point test nil))
 
 (defun current-column ()
   (point-column (current-point)))

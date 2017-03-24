@@ -113,7 +113,7 @@
 (define-command isearch-forward-symbol-at-point () ()
   (let ((point (current-point)))
     (skip-chars-forward point #'syntax-symbol-char-p)
-    (skip-chars-backward point #'syntax-symbol-char-p t)
+    (skip-chars-backward point (complement #'syntax-symbol-char-p))
     (skip-chars-backward point #'syntax-symbol-char-p)
     (with-point ((start point))
       (skip-chars-forward point #'syntax-symbol-char-p)

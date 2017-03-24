@@ -8,6 +8,7 @@
           without-interrupts))
 
 (defmacro save-excursion (&body body)
+  @lang(:jp "")
   `(invoke-save-excursion (lambda () ,@body)))
 
 (defmacro with-point (bindings &body body)

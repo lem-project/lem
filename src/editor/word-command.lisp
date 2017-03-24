@@ -36,7 +36,7 @@
 (defun word-offset (point n)
   (if (plusp n)
       (loop :repeat n :do
-	 (skip-chars-forward point #'word-type t)
+	 (skip-chars-forward point (complement #'word-type))
 	 (when (end-buffer-p point)
 	   (return))
 	 (let ((type (word-type (character-at point))))
@@ -44,7 +44,7 @@
 			       (lambda (c)
 				 (eql type (word-type c))))))
       (loop :repeat (- n) :do
-	 (skip-chars-backward point #'word-type t)
+	 (skip-chars-backward point (complement #'word-type))
 	 (when (start-buffer-p point)
 	   (return))
 	 (let ((type (word-type (character-at point -1))))
@@ -102,7 +102,7 @@
 
 (defun case-word-aux (point n replace-char-p first-case rest-case)
   (dotimes (_ n)
-    (skip-chars-forward point #'word-type t)
+    (skip-chars-forward point (complement #'word-type))
     (when (end-buffer-p point)
       (return))
     (let ((c (character-at point)))

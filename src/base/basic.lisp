@@ -42,11 +42,6 @@
               (point-buffer point2)))
   (eq (point-line point1) (point-line point2)))
 
-@export
-(defun line-string (point)
-  @lang(:jp "`point`の行の文字列を返します。")
-  (line-str (point-line point)))
-
 (defun %move-to-position (point line charpos)
   (assert (line-alive-p line))
   (assert (eq (point-buffer point) (line-buffer line)))
@@ -156,6 +151,11 @@
                      (lambda ()
                        (line-char (point-line point)
                                   (point-charpos point)))))
+
+@export
+(defun line-string (point)
+  @lang(:jp "`point`の行の文字列を返します。")
+  (line-str (point-line point)))
 
 @export
 (defun text-property-at (point prop &optional (offset 0))

@@ -74,6 +74,7 @@
 {lem:count-characters function}
 {lem:delete-between-points function}
 {lem:count-lines function}
+{lem:filter-region-lines function}
 {lem:line-number-at-point function}
 {lem:point-column function}
 {lem:move-to-column function}

@@ -146,10 +146,10 @@
 *FUNCTION* `lem:buffer-mark (object)`  
 `buffer`の現在のマークの`point`を返します。
 
-*FUNCTION* `lem:buffers-start (object)`  
+*FUNCTION* `lem:buffer-start-point (object)`  
 `buffer`の最初の位置の`point`を返します。
 
-*FUNCTION* `lem:buffers-end (object)`  
+*FUNCTION* `lem:buffer-end-point (object)`  
 `buffer`の最後の位置の`point`を返します。
 
 
@@ -242,6 +242,10 @@
 
 *FUNCTION* `lem:count-lines (start-point end-point)`  
 `start-point`から`end-point`までの行数を返します。
+
+*FUNCTION* `lem:filter-region-lines (start-point end-point function)`  
+`start-point`から`end-point`までの範囲の行に`function`を適用します。
+`function`は行の文字列を引数に取り新しい行の文字列を返す関数です。
 
 *FUNCTION* `lem:line-number-at-point (point)`  
 `point`の行番号を返します。

@@ -99,7 +99,7 @@
                                      :enable-undo-p nil)))
            (when (probe-file filename)
              (let ((*inhibit-modification-hooks* t))
-               (insert-file-contents (buffers-start buffer)
+               (insert-file-contents (buffer-start-point buffer)
                                      filename))
              (buffer-unmark buffer))
            (buffer-start (buffer-point buffer))
@@ -110,7 +110,7 @@
 
 (defun write-to-file-1 (buffer filename)
   (flet ((f (out end-of-line)
-           (with-point ((point (buffers-start buffer)))
+           (with-point ((point (buffer-start-point buffer)))
              (loop :for eof-p := (end-buffer-p point)
                    :for str := (line-string point)
                    :do

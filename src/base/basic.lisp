@@ -79,12 +79,12 @@
 @export
 (defun buffer-start (point)
   @lang(:jp "`point`をバッファの最初の位置に移動します。")
-  (move-point point (buffers-start (point-buffer point))))
+  (move-point point (buffer-start-point (point-buffer point))))
 
 @export
 (defun buffer-end (point)
   @lang(:jp "`point`をバッファの最後の位置に移動します。")
-  (move-point point (buffers-end (point-buffer point))))
+  (move-point point (buffer-end-point (point-buffer point))))
 
 @export
 (defun line-offset (point n &optional (charpos 0))
@@ -269,8 +269,8 @@
   @lang(:jp "`buffer`のテキストをすべて削除します。")
   (buffer-start (buffer-point buffer))
   (delete-char/point (buffer-point buffer)
-                     (count-characters (buffers-start buffer)
-                                       (buffers-end buffer))))
+                     (count-characters (buffer-start-point buffer)
+                                       (buffer-end-point buffer))))
 
 @export
 (defun region-beginning (&optional (buffer (current-buffer)))

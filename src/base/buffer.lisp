@@ -7,8 +7,8 @@
           make-buffer
           buffer
           bufferp
-          buffers-start
-          buffers-end
+          buffer-start-point
+          buffer-end-point
           buffer-name
           buffer-version
           buffer-modified-p
@@ -80,13 +80,13 @@
    (start-point
     :initform nil
     :initarg :start-point
-    :accessor buffer-start-point
-    :reader buffers-start)
+    :writer set-buffer-start-point
+    :reader buffer-start-point)
    (end-point
     :initform nil
     :initarg :end-point
-    :accessor buffer-end-point
-    :reader buffers-end)
+    :writer set-buffer-end-point
+    :reader buffer-end-point)
    (mark-p
     :initform nil
     :initarg :mark-p
@@ -138,8 +138,8 @@
 
 (setf (documentation 'buffer-point 'function) @lang(:jp "`buffer`の現在の`point`を返します。"))
 (setf (documentation 'buffer-mark 'function) @lang(:jp "`buffer`の現在のマークの`point`を返します。"))
-(setf (documentation 'buffers-start 'function) @lang(:jp "`buffer`の最初の位置の`point`を返します。"))
-(setf (documentation 'buffers-end 'function) @lang(:jp "`buffer`の最後の位置の`point`を返します。"))
+(setf (documentation 'buffer-start-point 'function) @lang(:jp "`buffer`の最初の位置の`point`を返します。"))
+(setf (documentation 'buffer-end-point 'function) @lang(:jp "`buffer`の最後の位置の`point`を返します。"))
 
 (defvar *current-buffer*)
 
@@ -183,12 +183,11 @@
     (setf (buffer-redo-stack buffer) nil)
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
     (let ((line (make-line buffer nil nil "")))
-      (setf (buffer-start-point buffer)
-            (make-point buffer line 0
-                        :kind :right-inserting))
-      (setf (buffer-end-point buffer)
-            (make-point buffer line 0
-                        :kind :left-inserting))
+      (set-buffer-start-point (make-point buffer line 0 :kind :right-inserting)
+                              buffer)
+      (set-buffer-end-point (make-point buffer line 0
+                                        :kind :left-inserting)
+                            buffer)
       (setf (buffer-point buffer)
             (make-point buffer line 0
                         :kind :left-inserting)))

@@ -621,7 +621,7 @@
     (change-buffer-mode output-buffer 'lisp-mode)
     (buffer-unmark output-buffer)
     (message "~{~s~^,~}"
-             (%lisp-eval-string string (buffers-start output-buffer)
+             (%lisp-eval-string string (buffer-start-point output-buffer)
                                 nil
                                 (lisp-current-package)))
     (when (buffer-modified-p output-buffer)
@@ -699,8 +699,8 @@
     (pprint expr stream))
   (let ((*package* (lisp-current-package)))
     (read-from-string
-     (points-to-string (buffers-start (current-buffer))
-                       (buffers-end (current-buffer))))))
+     (points-to-string (buffer-start-point (current-buffer))
+                       (buffer-end-point (current-buffer))))))
 
 (defun %lisp-macroexpand (macroexpand-symbol buffer-name)
   (multiple-value-bind (expr error-p)

@@ -40,8 +40,8 @@
 ## ポイントの取得
 {lem:buffer-point function}
 {lem:buffer-mark function}
-{lem:buffers-start function}
-{lem:buffers-end function}
+{lem:buffer-start-point function}
+{lem:buffer-end-point function}
 
 ## ポイント位置の検査
 {lem:first-line-p function}

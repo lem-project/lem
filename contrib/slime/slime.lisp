@@ -300,7 +300,7 @@
     (skip-chars-backward point #'syntax-symbol-char-p)
     (make-overlay point
                   (or (form-offset (copy-point point :temporary) 1)
-                      (buffers-end buffer))
+                      (buffer-end-point buffer))
                   'slime-note-attribute)))
 
 (defvar *note-overlays* nil)
@@ -815,9 +815,9 @@
 (defun write-string-to-repl (string)
   (let ((buffer (repl-buffer)))
     (when buffer
-      (with-open-stream (stream (make-buffer-output-stream (lem::buffers-end buffer)))
+      (with-open-stream (stream (make-buffer-output-stream (lem::buffer-end-point buffer)))
         (princ string stream))
-      (lem.listener-mode:listener-update-point (buffers-end buffer))
+      (lem.listener-mode:listener-update-point (buffer-end-point buffer))
       (when (eq buffer (current-buffer))
         (buffer-end (current-point)))
       (redraw-display))))
@@ -878,7 +878,7 @@
 
 (defun log-message (message)
   (let ((buffer (get-buffer-create "*slime-events*")))
-    (with-open-stream (stream (make-buffer-output-stream (lem::buffers-end buffer)))
+    (with-open-stream (stream (make-buffer-output-stream (lem::buffer-end-point buffer)))
       (print message stream))))
 
 (defvar *unknown-keywords* nil)

@@ -26,7 +26,7 @@
 
 (defun scan-buffer-words (buffer word)
   (let ((words))
-    (with-open-stream (in (make-buffer-input-stream (buffers-start buffer)))
+    (with-open-stream (in (make-buffer-input-stream (buffer-start-point buffer)))
       (loop :for str := (read-line in nil)
 	 :while str
 	 :do (dolist (w (remove-if-not #'(lambda (tok)

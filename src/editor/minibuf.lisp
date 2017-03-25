@@ -68,7 +68,7 @@
     (let ((msg (apply #'format nil string args)))
       (let ((buffer (get-buffer-create "*Messages*")))
         (with-open-stream (stream (make-buffer-output-stream
-                                   (buffers-end buffer)))
+                                   (buffer-end-point buffer)))
           (fresh-line stream)
           (princ msg stream))))))
 
@@ -142,17 +142,17 @@
 
 (defun minibuffer-start-point ()
   (character-offset
-   (copy-point (buffers-start (minibuffer))
+   (copy-point (buffer-start-point (minibuffer))
                :temporary)
    *minibuffer-start-charpos*))
 
 (defun get-minibuffer-string ()
   (points-to-string (minibuffer-start-point)
-                    (buffers-end (minibuffer))))
+                    (buffer-end-point (minibuffer))))
 
 (defun minibuffer-clear-input ()
   (delete-between-points (minibuffer-start-point)
-                         (buffers-end (minibuffer))))
+                         (buffer-end-point (minibuffer))))
 
 (define-command minibuf-read-line-confirm () ()
   (let ((str (get-minibuffer-string)))
@@ -225,8 +225,8 @@
              (handler-case
                  (with-current-window (minibuffer-window)
                    (let ((minibuf-buffer-prev-string
-                          (points-to-string (buffers-start (minibuffer))
-                                            (buffers-end (minibuffer))))
+                          (points-to-string (buffer-start-point (minibuffer))
+                                            (buffer-end-point (minibuffer))))
                          (prev-prompt-length
                           (when *minibuf-prev-prompt*
                             (length *minibuf-prev-prompt*)))

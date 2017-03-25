@@ -1042,7 +1042,7 @@
       (do ((rest cache-list (cdr rest))
            (prev nil rest))
           ((null rest)
-           (setf state (parse-partial-sexp (buffers-start buffer) point))
+           (setf state (parse-partial-sexp (buffer-start-point buffer) point))
            (let ((new-rest (list (cons (copy-point point :temporary) state))))
              (if prev
                  (setf (cdr prev) new-rest)

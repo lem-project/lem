@@ -454,8 +454,8 @@
                (values (region-beginning buffer)
                        (region-end buffer)))
               (t
-               (values (buffers-start buffer)
-                       (buffers-end buffer))))
+               (values (buffer-start-point buffer)
+                       (buffer-end-point buffer))))
       (let ((string (points-to-string start end))
             output-value
             error-output-value
@@ -502,8 +502,8 @@
     (apply-region-lines start end 'indent)))
 
 (define-command delete-trailing-whitespace () ()
-  (filter-region-lines (buffers-start (current-buffer))
-                       (buffers-end (current-buffer))
+  (filter-region-lines (buffer-start-point (current-buffer))
+                       (buffer-end-point (current-buffer))
                        (lambda (string)
                          (string-right-trim '(#\space #\tab) string)))
   (move-to-end-of-buffer)

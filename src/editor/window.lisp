@@ -109,7 +109,7 @@
                  :screen (make-screen x y width height use-modeline-p)
                  :view-point (copy-point (buffer-point buffer) :right-inserting)
                  :use-modeline-p use-modeline-p
-                 :point (copy-point (buffers-start buffer) :right-inserting)))
+                 :point (copy-point (buffer-start-point buffer) :right-inserting)))
 
 (defun make-window (buffer x y width height use-modeline-p)
   (setf *modified-window-tree-p* t)
@@ -811,8 +811,8 @@
                     (move-point (buffer-point (current-buffer)) cursor-point)))
                  (t
                   (setf (%window-point (current-window))
-                        (copy-point (buffers-start buffer) :right-inserting))
-                  (set-window-view-point (copy-point (buffers-start buffer) :right-inserting)
+                        (copy-point (buffer-start-point buffer) :right-inserting))
+                  (set-window-view-point (copy-point (buffer-start-point buffer) :right-inserting)
                                          (current-window)))))
          (setf (window-parameter (current-window) 'change-buffer) t))
   buffer)

@@ -19,11 +19,11 @@
       (syntax-scan-range (line-start (copy-point (window-view-point window) :temporary))
                          (or (line-offset (copy-point (window-view-point window) :temporary)
                                           (window-height window))
-                             (buffers-end (window-buffer window)))))))
+                             (buffer-end-point (window-buffer window)))))))
 
 (defun syntax-scan-buffer (buffer)
   (check-type buffer buffer)
-  (syntax-scan-range (buffers-start buffer) (buffers-end buffer)))
+  (syntax-scan-range (buffer-start-point buffer) (buffer-end-point buffer)))
 
 (defun setup ()
   (start-idle-timer "mainloop" 100 t

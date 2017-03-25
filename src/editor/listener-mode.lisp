@@ -96,7 +96,7 @@
   (multiple-value-bind (str win)
       (lem.history:prev-history (%listener-history))
     (let ((start (listener-start-point (current-buffer)))
-          (end (buffers-end (current-buffer))))
+          (end (buffer-end-point (current-buffer))))
       (save-excursion
         (delete-between-points start end)
         (when win (insert-string start str))
@@ -107,7 +107,7 @@
   (multiple-value-bind (str win)
       (lem.history:next-history (%listener-history))
     (let ((start (listener-start-point (current-buffer)))
-          (end (buffers-end (current-buffer))))
+          (end (buffer-end-point (current-buffer))))
       (save-excursion
         (delete-between-points start end)
         (when win (insert-string start str))
@@ -124,4 +124,4 @@
 (define-key *listener-mode-keymap* (kbd "C-c C-u") 'listener-clear-input)
 (define-command listener-clear-input () ()
   (delete-between-points (listener-start-point (current-buffer))
-			 (buffers-end (current-buffer))))
+			 (buffer-end-point (current-buffer))))

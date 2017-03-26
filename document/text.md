@@ -123,6 +123,28 @@
 `point1`が`point2`と同じ位置、または後にあるならT、それ以外はNILを返します。
 
 
+*FUNCTION* `lem:set-current-mark (point)`  
+`point`を現在のマークに設定します。
+
+
+*FUNCTION* `lem:character-at (point &optional (offset 0))`  
+`point`から`offset`ずらした位置の文字を返します。
+バッファの範囲外ならNILを返します。
+
+*FUNCTION* `lem:line-string (point)`  
+`point`の行の文字列を返します。
+
+
+*FUNCTION* `lem:line-number-at-point (point)`  
+`point`の行番号を返します。
+
+*FUNCTION* `lem:point-column (point)`  
+`point`の行頭からの列幅を返します。
+
+*FUNCTION* `lem:position-at-point (point)`  
+`point`のバッファの先頭からの1始まりのオフセットを返します。
+
+
 *FUNCTION* `lem:with-point (bindings &body body)`  
 このマクロは`body`内で使う各`point`を`bindings`で作り、
 `body`を抜けると各`point`を削除して`body`の値を返します。  
@@ -137,6 +159,10 @@
   ...)
 ```
 
+
+*FUNCTION* `lem:save-excursion (&body body)`  
+現在の`point`と`mark`を保存し、`body`の評価後に復元し`body`の結果を返します。  
+`body`でエラーがあっても復元されます。
 
 
 ## ポイントの取得
@@ -177,11 +203,6 @@
 
 
 ## ポイントの移動
-## ポイント位置の編集
-
-*FUNCTION* `lem:line-string (point)`  
-`point`の行の文字列を返します。
-
 *FUNCTION* `lem:move-point (point new-point)`  
 `point`を`new-point`の位置に移動します。
 
@@ -207,10 +228,50 @@
 `point`を`n`が正の数なら後に、負の数なら前に移動し、移動後の`point`を返します。
 `n`文字先がバッファの範囲外なら`point`の位置はそのままでNILを返します。
 
-*FUNCTION* `lem:character-at (point &optional (offset 0))`  
-`point`から`offset`ずらした位置の文字を返します。
-バッファの範囲外ならNILを返します。
+*FUNCTION* `lem:move-to-column (point column &optional force)`  
+`point`を行頭から列幅`column`まで移動し、移動後の`point`を返します。
+`force`が非NILの場合は、行の長さが`column`より少なければ空白を挿入して移動し、
+`force`がNILの場合は、行末まで移動し、移動後の`point`を返します。
 
+*FUNCTION* `lem:move-to-position (point position)`  
+`point`をバッファの先頭からの1始まりのオフセット`position`に移動してその位置を返します。
+`position`がバッファの範囲外なら`point`は移動せず、NILを返します。
+
+*FUNCTION* `lem:move-to-line (point line-number)`  
+`point`を行番号`line-number`に移動し、移動後の位置を返します。
+`line-number`がバッファの範囲外なら`point`は移動せず、NILを返します。
+
+*FUNCTION* `lem:skip-chars-forward (point test)`  
+`point`からその位置の文字を`test`で評価して非NILの間、後の方向に移動します。  
+`test`が文字のリストならその位置の文字が`test`のリスト内に含まれるか  
+`test`が関数ならその位置の文字を引数として一つ取り、返り値が非NILであるか
+
+
+*FUNCTION* `lem:skip-chars-backward (point test)`  
+`point`からその位置の前の文字を`test`で評価して非NILの間、前の方向に移動します。  
+`test`が文字のリストならその位置の前の文字が`test`のリスト内に含まれるか  
+`test`が関数ならその位置の前の文字を引数として一つ取り、返り値が非NILであるか
+
+
+
+## リージョン
+*FUNCTION* `lem:region-beginning (&optional (buffer (current-buffer)))`  
+`buffer`内のリージョンの始まりの位置の`point`を返します。
+
+*FUNCTION* `lem:region-end (&optional (buffer (current-buffer)))`  
+`buffer`内のリージョンの終わりの位置の`point`を返します。
+
+*FUNCTION* `lem:points-to-string (start-point end-point)`  
+`start-point`から`end-point`までの範囲の文字列を返します。
+
+*FUNCTION* `lem:count-characters (start-point end-point)`  
+`start-point`から`end-point`までの文字列の長さを返します。
+
+*FUNCTION* `lem:count-lines (start-point end-point)`  
+`start-point`から`end-point`までの行数を返します。
+
+
+## テキストの編集
 *FUNCTION* `lem:insert-character (point char &optional (n 1))`  
 `point`に文字`char`を`n`回挿入します。
 
@@ -225,64 +286,12 @@
 *FUNCTION* `lem:erase-buffer (&optional (buffer (current-buffer)))`  
 `buffer`のテキストをすべて削除します。
 
-*FUNCTION* `lem:region-beginning (&optional (buffer (current-buffer)))`  
-`buffer`内のリージョンの始まりの位置の`point`を返します。
-
-*FUNCTION* `lem:region-end (&optional (buffer (current-buffer)))`  
-`buffer`内のリージョンの終わりの位置の`point`を返します。
-
-*FUNCTION* `lem:points-to-string (start-point end-point)`  
-`start-point`から`end-point`までの範囲の文字列を返します。
-
-*FUNCTION* `lem:count-characters (start-point end-point)`  
-`start-point`から`end-point`までの文字列の長さを返します。
-
 *FUNCTION* `lem:delete-between-points (start-point end-point)`  
 `start-point`から`end-point`までの範囲を削除し、削除した文字列を返します。
-
-*FUNCTION* `lem:count-lines (start-point end-point)`  
-`start-point`から`end-point`までの行数を返します。
 
 *FUNCTION* `lem:filter-region-lines (start-point end-point function)`  
 `start-point`から`end-point`までの範囲の行に`function`を適用します。
 `function`は行の文字列を引数に取り新しい行の文字列を返す関数です。
-
-*FUNCTION* `lem:line-number-at-point (point)`  
-`point`の行番号を返します。
-
-*FUNCTION* `lem:point-column (point)`  
-`point`の行頭からの列幅を返します。
-
-*FUNCTION* `lem:move-to-column (point column &optional force)`  
-`point`を行頭から列幅`column`まで移動し、移動後の`point`を返します。
-`force`が非NILの場合は、行の長さが`column`より少なければ空白を挿入して移動し、
-`force`がNILの場合は、行末まで移動し、移動後の`point`を返します。
-
-*FUNCTION* `lem:position-at-point (point)`  
-`point`のバッファの先頭からの1始まりのオフセットを返します。
-
-*FUNCTION* `lem:move-to-position (point position)`  
-`point`をバッファの先頭からの1始まりのオフセット`position`に移動してその位置を返します。
-`position`がバッファの範囲外なら`point`は移動せず、NILを返します。
-
-*FUNCTION* `lem:move-to-line (point line-number)`  
-`point`を行番号`line-number`に移動し、移動後の位置を返します。
-`line-number`がバッファの範囲外なら`point`は移動せず、NILを返します。
-
-*FUNCTION* `lem:set-current-mark (point)`  
-`point`を現在のマークに設定します。
-
-*FUNCTION* `lem:skip-chars-forward (point test)`  
-`point`からその位置の文字を`test`で評価して非NILの間、後の方向に移動します。  
-`test`が文字のリストならその位置の文字が`test`のリスト内に含まれるか  
-`test`が関数ならその位置の文字を引数として一つ取り、返り値が非NILであるか
-
-
-*FUNCTION* `lem:skip-chars-backward (point test)`  
-`point`からその位置の前の文字を`test`で評価して非NILの間、前の方向に移動します。  
-`test`が文字のリストならその位置の前の文字が`test`のリスト内に含まれるか  
-`test`が関数ならその位置の前の文字を引数として一つ取り、返り値が非NILであるか
-
 
 
 ## テキストプロパティ

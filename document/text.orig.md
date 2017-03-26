@@ -35,7 +35,17 @@
 {lem:point> function}
 {lem:point>= function}
 
+{lem:set-current-mark function}
+
+{lem:character-at function}
+{lem:line-string function}
+
+{lem:line-number-at-point function}
+{lem:point-column function}
+{lem:position-at-point function}
+
 {lem:with-point function}
+{lem:save-excursion function}
 
 ## ポイントの取得
 {lem:buffer-point function}
@@ -53,9 +63,6 @@
 {lem:same-line-p function}
 
 ## ポイントの移動
-## ポイント位置の編集
-
-{lem:line-string function}
 {lem:move-point function}
 {lem:line-start function}
 {lem:line-end function}
@@ -63,27 +70,26 @@
 {lem:buffer-end function}
 {lem:line-offset function}
 {lem:character-offset function}
-{lem:character-at function}
-{lem:insert-character function}
-{lem:insert-string function}
-{lem:delete-character function}
-{lem:erase-buffer function}
+{lem:move-to-column function}
+{lem:move-to-position function}
+{lem:move-to-line function}
+{lem:skip-chars-forward function}
+{lem:skip-chars-backward function}
+
+## リージョン
 {lem:region-beginning function}
 {lem:region-end function}
 {lem:points-to-string function}
 {lem:count-characters function}
-{lem:delete-between-points function}
 {lem:count-lines function}
+
+## テキストの編集
+{lem:insert-character function}
+{lem:insert-string function}
+{lem:delete-character function}
+{lem:erase-buffer function}
+{lem:delete-between-points function}
 {lem:filter-region-lines function}
-{lem:line-number-at-point function}
-{lem:point-column function}
-{lem:move-to-column function}
-{lem:position-at-point function}
-{lem:move-to-position function}
-{lem:move-to-line function}
-{lem:set-current-mark function}
-{lem:skip-chars-forward function}
-{lem:skip-chars-backward function}
 
 ## テキストプロパティ
 {lem:text-property-at function}

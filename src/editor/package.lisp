@@ -2,7 +2,9 @@
 
 (defpackage :lem-interface
   (:use :cl)
-  (:export :set-foreground
+  (:export :define-interface
+           :define-implementation
+           :set-foreground
            :set-background
            :display-background-mode
            :call-with-screen

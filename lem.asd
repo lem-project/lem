@@ -74,6 +74,8 @@
                              (:file "abbrev")
 
                              (:file "init")
+                             
+                             (:file "interface")
 
                              (:file "term")
                              (:file "ncurses")

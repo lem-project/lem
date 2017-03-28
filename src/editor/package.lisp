@@ -20,7 +20,8 @@
            :redraw-display-window
            :update-display
            :update-display-size
-           :print-echoarea))
+           :print-echoarea
+           :input-loop))
 
 (defpackage :lem
   (:use :cl :lem-base :lem-interface)

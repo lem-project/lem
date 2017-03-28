@@ -1,7 +1,9 @@
 (in-package :lem)
 
 (export '(read-event
-          send-event))
+          send-event
+          send-abort-event
+          send-resize-screen-event))
 
 (declaim (inline make-queue enqueue dequeue empty-queue-p))
 
@@ -54,6 +56,11 @@
       (enqueue queue obj)
       (bt:condition-notify wait)))
   )
+
+(defun send-abort-event (editor-thread)
+  (bt:interrupt-thread editor-thread
+                       (lambda ()
+                         (error 'editor-interrupt))))
 
 (defun send-resize-screen-event (width height)
   (send-event (list +resize-screen+ width height)))

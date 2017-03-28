@@ -658,3 +658,24 @@
   (if doupdate-p
       (charms/ll:wrefresh *echo-area-scrwin*)
       (charms/ll:wnoutrefresh *echo-area-scrwin*)))
+
+(defun input-loop (editor-thread)
+  (loop
+    (unless (bt:thread-alive-p editor-thread) (return))
+    (let ((code (charms/ll:getch)))
+      (cond ((= code -1))
+            ((= code 410)
+             (send-resize-screen-event (display-width)
+                                       (display-height)))
+            ((= code #.(char-code lem::C-\]))
+             (send-abort-event editor-thread))
+            (t
+             (send-event
+              (let ((nbytes (utf8-bytes code)))
+                (if (= nbytes 1)
+                    (code-char code)
+                    (let ((vec (make-array nbytes :element-type '(unsigned-byte 8))))
+                      (setf (aref vec 0) code)
+                      (loop :for i :from 1 :below nbytes
+                            :do (setf (aref vec i) (charms/ll:getch)))
+                      (schar (babel:octets-to-string vec) 0))))))))))

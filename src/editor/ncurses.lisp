@@ -31,19 +31,19 @@
 
 (defvar *display-background-mode* nil)
 
-(define-interface display-background-mode ()
+(define-implementation display-background-mode ()
   (or *display-background-mode*
       (lem.term:background-mode)))
 
-(define-interface set-display-background-mode (mode)
+(define-implementation set-display-background-mode (mode)
   (check-type mode (or (eql :light) (eql :dark) null))
   (setf *display-background-mode* mode))
 
-(define-interface set-foreground (name)
+(define-implementation set-foreground (name)
   (or (term-set-foreground name)
       (error "Undefined color: ~A" name)))
 
-(define-interface set-background (name)
+(define-implementation set-background (name)
   (or (term-set-background name)
       (error "Undefined color: ~A" name)))
 
@@ -60,10 +60,10 @@
 (defun display-finalize ()
   (term-finalize))
 
-(define-interface display-width () charms/ll:*cols*)
-(define-interface display-height () charms/ll:*lines*)
+(define-implementation display-width () charms/ll:*cols*)
+(define-implementation display-height () charms/ll:*lines*)
 
-(define-interface call-with-screen (function)
+(define-implementation call-with-screen (function)
   (unwind-protect (progn
                     (display-init)
                     (funcall function))
@@ -82,7 +82,7 @@
   width
   modified-p)
 
-(define-interface make-screen (x y width height use-modeline-p)
+(define-implementation make-screen (x y width height use-modeline-p)
   (when use-modeline-p
     (decf height))
   (%make-screen :%scrwin (charms/ll:newwin height width y x)
@@ -95,27 +95,27 @@
                 :lines (make-array (max 0 height) :initial-element nil)
                 :old-lines (make-array (max 0 height) :initial-element nil)))
 
-(define-interface screen-delete (screen)
+(define-implementation screen-delete (screen)
   (charms/ll:delwin (screen-%scrwin screen))
   (when (screen-%modeline-scrwin screen)
     (charms/ll:delwin (screen-%modeline-scrwin screen))))
 
-(define-interface screen-clear (screen)
+(define-implementation screen-clear (screen)
   (screen-modify screen)
   (charms/ll:clearok (screen-%scrwin screen) 1)
   (when (screen-%modeline-scrwin screen)
     (charms/ll:clearok (screen-%modeline-scrwin screen) 1)))
 
-(define-interface screen-erase (screen)
+(define-implementation screen-erase (screen)
   (charms/ll:werase (screen-%scrwin screen)))
 
 (defun screen-height (screen)
   (length (screen-lines screen)))
 
-(define-interface screen-modify (screen)
+(define-implementation screen-modify (screen)
   (setf (screen-modified-p screen) t))
 
-(define-interface screen-set-size (screen width height)
+(define-implementation screen-set-size (screen width height)
   (screen-modify screen)
   (when (screen-%modeline-scrwin screen)
     (decf height))
@@ -138,7 +138,7 @@
   (setf (screen-width screen)
         width))
 
-(define-interface screen-set-pos (screen x y)
+(define-implementation screen-set-pos (screen x y)
   (screen-modify screen)
   (setf (screen-x screen) x)
   (setf (screen-y screen) y)
@@ -163,10 +163,10 @@
                    (setf x (char-width char x)))))
   (charms/ll:wattroff scrwin attr))
 
-(define-interface screen-print-string (screen x y string attribute)
+(define-implementation screen-print-string (screen x y string attribute)
   (scrwin-print-string (screen-%scrwin screen) x y string attribute))
 
-(define-interface screen-move-cursor (screen x y)
+(define-implementation screen-move-cursor (screen x y)
   (charms/ll:wmove (screen-%scrwin screen) y x))
 
 
@@ -596,7 +596,7 @@
                          default-attribute)
     (charms/ll:wnoutrefresh scrwin)))
 
-(define-interface redraw-display-window (window force)
+(define-implementation redraw-display-window (window force)
   (when (eq window (current-window)) (window-see window))
   (lem::window-prompt-display window)
   (progn
@@ -614,10 +614,10 @@
     (charms/ll:wnoutrefresh (screen-%scrwin (lem::window-screen window)))
     (setf (screen-modified-p (lem::window-screen window)) nil)))
 
-(define-interface update-display ()
+(define-implementation update-display ()
   (charms/ll:doupdate))
 
-(define-interface update-display-size (display-width display-height)
+(define-implementation update-display-size (display-width display-height)
   (let ((delete-windows))
     (dolist (window (window-list))
       (when (<= display-height
@@ -651,7 +651,7 @@
     (print-echoarea nil nil)
     (redraw-display)))
 
-(define-interface print-echoarea (string doupdate-p)
+(define-implementation print-echoarea (string doupdate-p)
   (charms/ll:werase *echo-area-scrwin*)
   (unless (null string)
     (charms/ll:mvwaddstr *echo-area-scrwin* 0 0 string))
@@ -659,7 +659,7 @@
       (charms/ll:wrefresh *echo-area-scrwin*)
       (charms/ll:wnoutrefresh *echo-area-scrwin*)))
 
-(define-interface input-loop (editor-thread)
+(define-implementation input-loop (editor-thread)
   (loop
     (unless (bt:thread-alive-p editor-thread) (return))
     (let ((code (charms/ll:getch)))

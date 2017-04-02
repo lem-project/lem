@@ -427,8 +427,8 @@
                          (when (syntax-scan-token-test syn point)
                            (return t))))
                       (t
-                       (character-offset point 1)
-                       (skip-chars-forward point #'syntax-symbol-char-p)
+                       (when (= 0 (skip-chars-forward point #'syntax-symbol-char-p))
+                         (character-offset point 1))
                        t))
             (syntax-update-symbol-lifetimes)))
     (setf (line-%symbol-lifetimes (point-line point))

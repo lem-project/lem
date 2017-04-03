@@ -284,7 +284,7 @@
      :syntax-table *lisp-syntax-table*)
   (setf (variable-value 'indent-tabs-mode) nil)
   (setf (variable-value 'enable-syntax-highlight) t)
-  (setf (variable-value 'calc-indent-function) 'calc-indent)
+  (setf (variable-value 'calc-indent-function) 'lem-lisp-syntax.indent:calc-indent)
   (modeline-add-status-list (lambda (window)
                               (package-name (lisp-current-package
                                              (window-buffer window))))
@@ -380,10 +380,7 @@
                  (1+ car-column)))))))
 
 (defun calc-indent (point)
-  (line-start point)
-  (if (in-string-p point)
-      nil
-      (catch 'drop-out (calc-indent-1 point))))
+  (lem-lisp-syntax.indent:calc-indent point))
 
 (define-key *lisp-mode-keymap* (kbd "C-M-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()

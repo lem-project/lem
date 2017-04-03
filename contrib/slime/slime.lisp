@@ -34,7 +34,7 @@
 (define-major-mode slime-mode nil
     (:name "slime"
      :keymap *slime-mode-keymap*
-     :syntax-table lem.lisp-mode:*lisp-syntax-table*)
+     :syntax-table lem-lisp-syntax.syntax-table:*syntax-table*)
   (modeline-add-status-list (lambda (window)
                               (buffer-package (window-buffer window) "CL-USER"))
                             (current-buffer))
@@ -642,7 +642,7 @@
 (define-major-mode slime-apropos-mode ()
     (:name "slime-apropos"
      :keymap *slime-apropos-mode-keymap*
-     :syntax-table lem.lisp-mode:*lisp-syntax-table*))
+     :syntax-table lem-lisp-syntax.syntax-table:*syntax-table*))
 
 (defun show-apropos (data)
   (let ((buffer (get-buffer-create "*slime-apropos*")))
@@ -725,7 +725,7 @@
 (define-major-mode slime-repl-mode slime-mode
     (:name "slime-repl"
      :keymap *slime-repl-mode-keymap*
-     :syntax-table lem.lisp-mode:*lisp-syntax-table*)
+     :syntax-table lem-lisp-syntax.syntax-table:*syntax-table*)
   (repl-reset-input)
   (lem.listener-mode:listener-mode t))
 
@@ -875,7 +875,7 @@
                           :ok)
                     :package)
               :prompt))
-  (setf lem.lisp-mode:*get-features-function* 'features)
+  (setf lem-lisp-syntax.syntax-table:*get-features-function* 'features)
   (slime-repl)
   (start-thread))
 

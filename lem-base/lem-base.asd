@@ -1,9 +1,9 @@
-(asdf:defsystem lem-base
-  :depends-on (:uiop
-               :iterate
-               :alexandria
-               :cl-ppcre
-               :cl-annot)
+(defsystem "lem-base"
+  :depends-on ("uiop"
+               "iterate"
+               "alexandria"
+               "cl-ppcre"
+               "cl-annot")
   :serial t
   :components ((:file "package")
                (:file "documentation")

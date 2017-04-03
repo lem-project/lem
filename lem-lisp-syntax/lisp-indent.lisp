@@ -1,12 +1,14 @@
 (defpackage :lem-lisp-syntax.indent
   (:use :cl :lem-base)
-  (:export :calc-indent))
+  (:export :*get-method-function*
+           :set-indentation
+           :calc-indent))
 (in-package :lem-lisp-syntax.indent)
 
 (defparameter *body-indent* 2)
 (defparameter *max-depth* 4)
 
-(defvar *get-indent-method-function* nil)
+(defvar *get-method-function* nil)
 (defvar *indent-table* (make-hash-table :test 'equal))
 
 (defun get-indentation (name)
@@ -222,8 +224,8 @@
     (let ((name1 (ppcre:scan-to-strings "(?<=:)[^:]+" name)))
       (when name1
         (f (get-indentation name1)))
-      (f (and *get-indent-method-function*
-              (funcall *get-indent-method-function* name)))
+      (f (and *get-method-function*
+              (funcall *get-method-function* name)))
       (f (and (null (cdr path))
               (ppcre:scan "^(?:with-|without-|within-|do-|def)" (or name1 name))
               '(&lambda &body))))))

@@ -89,6 +89,9 @@
     (swank-protocol:connection-features *connection*)))
 
 (defun indentation-update (info)
+  (loop :for (name indent packages) :in info :do
+    (lem-lisp-syntax.indent:set-indentation name indent))
+  #+(or)
   (loop :for (name indent packages) :in info
         :do (dolist (package packages)
               (unless (gethash package *indent-table*)
@@ -112,8 +115,8 @@
           (values (gethash (first (last parts)) table)))))))
 
 (defun calc-indent (point)
-  (let ((lem.lisp-mode:*indent-spec-function* #'indent-spec))
-    (lem.lisp-mode::calc-indent point)))
+  (let ((lem-lisp-syntax.indent:*get-method-function* #'indent-spec))
+    (lem-lisp-syntax.indent:calc-indent point)))
 
 (defun get-buffer-from-file (file)
   (dolist (buffer (buffer-list))

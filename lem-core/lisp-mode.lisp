@@ -205,11 +205,21 @@
      :syntax-table *lisp-syntax-table*)
   (setf (variable-value 'indent-tabs-mode) nil)
   (setf (variable-value 'enable-syntax-highlight) t)
-  (setf (variable-value 'calc-indent-function) 'lem-lisp-syntax.indent:calc-indent)
+  (setf (variable-value 'calc-indent-function) 'calc-indent)
   (modeline-add-status-list (lambda (window)
                               (package-name (lisp-current-package
                                              (window-buffer window))))
                             (current-buffer)))
+
+(defun indent-spec (string)
+  (let ((arglist (lisp-search-arglist string))
+        result)
+    (when (and arglist (setf result (position '&body arglist)))
+      (return-from indent-spec result))))
+
+(defun calc-indent (point)
+  (let ((lem-lisp-syntax.indent:*get-method-function* #'indent-spec))
+    (lem-lisp-syntax.indent:calc-indent point)))
 
 (define-key *lisp-mode-keymap* (kbd "C-M-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()

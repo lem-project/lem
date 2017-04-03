@@ -485,7 +485,7 @@
             visual-cursor-y
             point-y)))
 
-(defun screen-display-lines (screen redraw-flag buffer view-point cursor-point)
+(defun screen-display-lines (screen redraw-flag buffer view-point cursor-point focus-window-p)
   (let* ((truncate-lines (variable-value 'truncate-lines :default buffer))
          (disp-line-function
           (if truncate-lines
@@ -495,10 +495,14 @@
          (left-width (screen-left-width screen)))
     (setf (screen-wrap-lines screen) nil)
     (let* ((visual-cursor-x 0)
-           (visual-cursor-y (count-lines view-point cursor-point))
+           (visual-cursor-y (if focus-window-p
+                                (count-lines view-point cursor-point)
+                                0))
            (cursor-y visual-cursor-y)
-           (view-charpos (point-charpos view-point))
-           (point-x (point-charpos cursor-point)))
+           (view-charpos (if focus-window-p (point-charpos view-point) 0))
+           (point-x (if focus-window-p
+                        (point-charpos cursor-point)
+                        0)))
       (loop :for y :from 0
             :for i :from 0
             :for str/attributes :across (screen-lines screen)
@@ -597,22 +601,24 @@
     (charms/ll:wnoutrefresh scrwin)))
 
 (define-implementation redraw-display-window (window force)
-  (when (eq window (current-window)) (window-see window))
-  (lem::window-prompt-display window)
-  (progn
-    #+(or)without-interrupts
-    (disp-reset-lines window)
-    (screen-display-lines (lem::window-screen window)
-                          (or force
-                              (screen-modified-p (lem::window-screen window)))
-                          (window-buffer window)
-                          (lem::window-view-point window)
-                          (lem::window-point window))
-    (when (lem::window-use-modeline-p window)
-      (screen-redraw-separator window)
-      (screen-redraw-modeline window))
-    (charms/ll:wnoutrefresh (screen-%scrwin (lem::window-screen window)))
-    (setf (screen-modified-p (lem::window-screen window)) nil)))
+  (let ((focus-window-p (eq window (current-window))))
+    (when focus-window-p (window-see window))
+    (lem::window-prompt-display window)
+    (progn
+      #+(or)without-interrupts
+      (disp-reset-lines window)
+      (screen-display-lines (lem::window-screen window)
+                            (or force
+                                (screen-modified-p (lem::window-screen window)))
+                            (window-buffer window)
+                            (lem::window-view-point window)
+                            (lem::window-point window)
+                            focus-window-p)
+      (when (lem::window-use-modeline-p window)
+        (screen-redraw-separator window)
+        (screen-redraw-modeline window))
+      (charms/ll:wnoutrefresh (screen-%scrwin (lem::window-screen window)))
+      (setf (screen-modified-p (lem::window-screen window)) nil))))
 
 (define-implementation update-display ()
   (charms/ll:doupdate))

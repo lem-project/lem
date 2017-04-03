@@ -225,7 +225,7 @@
       (f (and *get-indent-method-function*
               (funcall *get-indent-method-function* name)))
       (f (and (null (cdr path))
-              (ppcre:scan "^(?:with|without|within|do)-" (or name1 name))
+              (ppcre:scan "^(?:with-|without-|within-|do-|def)" (or name1 name))
               '(&lambda &body))))))
 
 (defun calc-default-indent (point)

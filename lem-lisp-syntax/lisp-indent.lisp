@@ -254,9 +254,7 @@
              :do
              (loop :for n :from 0 :do
                (when (and (< 0 n) (start-line-p p))
-                 (if (null (cdr path))
-                     (return-from outer nil)
-                     (return-from calc-indent-1 0)))
+                 (return-from outer nil))
                (unless (form-offset p -1)
                  (push n path)
                  (return)))

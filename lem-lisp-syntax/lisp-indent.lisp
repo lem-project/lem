@@ -1,8 +1,7 @@
 (defpackage :lem-lisp-syntax.indent
-  (:use :cl :lem-base))
+  (:use :cl :lem-base)
+  (:export :calc-indent))
 (in-package :lem-lisp-syntax.indent)
-
-(in-package :lem-user)
 
 (defparameter *body-indent* 2)
 (defvar *max-depth* 4)
@@ -177,7 +176,7 @@
                                      ((integerp method1)
                                       (+ sexp-column method1))
                                      (t
-                                      (call-indent-function method1))))))))))))
+                                      (funcall method1 path indent-point sexp-column))))))))))))
 
 (defun compute-indent-method (method path indent-point sexp-column)
   (funcall (if (integerp method)

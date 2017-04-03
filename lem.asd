@@ -8,8 +8,9 @@
                "cl-ppcre"
                "inquisitor"
                "babel"
-               "lem-base")
-  :pathname "lem-core"
+               "lem-base"
+               "lem-lisp-syntax")
+  :pathname "lem-core/"
   :serial t
   :components ((:file "history")
                (:file "package")

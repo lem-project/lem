@@ -2,4 +2,4 @@
   :depends-on ("lem-base" "cl-ppcre")
   :pathname "lem-lisp-syntax/"
   :serial t
-  :components ((:file "lisp-indent")))
+  :components ((:file "indent")))

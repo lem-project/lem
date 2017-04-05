@@ -292,15 +292,15 @@
 
 @export
 (defun apply-region-lines (start end function)
+  (when (point< end start)
+    (rotatef start end))
   (with-point ((start start :right-inserting)
-	       (end end :right-inserting))
-    (move-point (current-point) start)
-    (loop :while (point< (current-point) end) :do
-       (with-point ((prev (line-start (current-point)) :left-inserting))
-	 (funcall function)
-	 (when (same-line-p (current-point) prev)
-	   (unless (line-offset (current-point) 1)
-	     (return)))))))
+               (end end :right-inserting)
+               (point start))
+    (loop :while (point< start end) :do
+      (funcall function (move-point point start))
+      (unless (line-offset start 1)
+        (return)))))
 
 (defun %map-region (start end function)
   (when (point< end start)

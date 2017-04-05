@@ -499,7 +499,7 @@
 (define-key *global-keymap* (kbd "C-M-\\") 'indent-region)
 (define-command indent-region (start end) ("r")
   (save-excursion
-    (apply-region-lines start end 'indent)))
+    (apply-region-lines start end 'indent-line)))
 
 (define-command delete-trailing-whitespace () ()
   (filter-region-lines (buffer-start-point (current-buffer))

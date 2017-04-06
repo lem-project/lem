@@ -461,11 +461,23 @@
               (push (list head file position) moves))))))
     (nreverse moves)))
 
+(defun push-definition-stack (point)
+  (push (list (buffer-name (point-buffer point))
+              (position-at-point point))
+        *lisp-find-definition-stack*))
+
 (define-key *lisp-mode-keymap* (kbd "M-.") 'lisp-find-definitions)
 (define-command lisp-find-definitions () ()
   (multiple-value-bind (name error-p)
       (lisp-read-symbol "Find definitions: " 'mh-find-definitions t)
     (unless error-p
+      (let ((local-point
+             (lem-lisp-syntax.enclosing:search-local-definition
+              (current-point) (string-downcase name))))
+        (when local-point
+          (push-definition-stack (current-point))
+          (move-point (current-point) local-point)
+          (return-from lisp-find-definitions)))
       (let ((defs))
         (dolist (def (lisp-find-definitions-internal name))
           (destructuring-bind (head file filepos) def
@@ -476,9 +488,7 @@
                           (move-to-position (current-point) filepos)
                           (redraw-display)))
                   defs)))
-        (push (list (buffer-name (current-buffer))
-                    (position-at-point (current-point)))
-              *lisp-find-definition-stack*)
+        (push-definition-stack (current-point))
         (cond ((= 1 (length defs))
                (funcall (second (car defs))))
               (t

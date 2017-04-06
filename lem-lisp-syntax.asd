@@ -3,4 +3,5 @@
   :pathname "lem-lisp-syntax/"
   :serial t
   :components ((:file "indent")
-               (:file "syntax-table")))
+               (:file "syntax-table")
+               (:file "enclosing")))

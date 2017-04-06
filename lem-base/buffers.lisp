@@ -14,7 +14,8 @@
           update-prev-buffer
           bury-buffer
           get-next-buffer
-          delete-buffer))
+          delete-buffer
+          get-file-buffer))
 
 (define-editor-variable kill-buffer-hook '())
 
@@ -109,3 +110,10 @@
         (append (remove buffer (buffer-list))
                 (list buffer)))
   (car (buffer-list)))
+
+(defun get-file-buffer (filename)
+  @lang(:jp "`filename`に対応するバッファを返します。
+見つからなければNILを返します。")
+  (dolist (buffer (buffer-list))
+    (when (uiop:pathname-equal file (buffer-filename buffer))
+      (return buffer))))

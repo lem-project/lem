@@ -66,6 +66,10 @@
 *FUNCTION* `lem:bury-buffer (buffer)`  
 `buffer`をバッファリストの一番最後に移動させ、バッファリストの先頭を返します。
 
+*FUNCTION* `lem:get-file-buffer (filename)`  
+`filename`に対応するバッファを返します。
+見つからなければNILを返します。
+
 
 # ポイント
 *TYPE* `lem:point`  

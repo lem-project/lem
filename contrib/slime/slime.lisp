@@ -118,11 +118,6 @@
   (let ((lem-lisp-syntax.indent:*get-method-function* #'indent-spec))
     (lem-lisp-syntax.indent:calc-indent point)))
 
-(defun get-buffer-from-file (file)
-  (dolist (buffer (buffer-list))
-    (when (uiop:pathname-equal file (buffer-filename buffer))
-      (return buffer))))
-
 (defun slime-eval-internal (emacs-rex-fun rex-arg package)
   (let ((tag (gensym)))
     (catch tag
@@ -350,7 +345,7 @@
              (push (make-highlight-overlay pos
                                            (if buffer-name
                                                (get-buffer buffer-name)
-                                               (get-buffer-from-file file)))
+                                               (get-file-buffer file)))
                    overlays))))))
     (when overlays
       (setf *note-overlays* overlays))))

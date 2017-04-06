@@ -19,6 +19,7 @@
 {lem:delete-buffer function}
 {lem:get-next-buffer function}
 {lem:bury-buffer function}
+{lem:get-file-buffer function}
 
 # ポイント
 {lem:point type}

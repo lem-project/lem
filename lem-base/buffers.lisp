@@ -115,5 +115,5 @@
   @lang(:jp "`filename`に対応するバッファを返します。
 見つからなければNILを返します。")
   (dolist (buffer (buffer-list))
-    (when (uiop:pathname-equal file (buffer-filename buffer))
+    (when (uiop:pathname-equal filename (buffer-filename buffer))
       (return buffer))))

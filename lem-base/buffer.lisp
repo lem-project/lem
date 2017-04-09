@@ -186,13 +186,13 @@
     (setf (buffer-redo-stack buffer) nil)
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
     (let ((line (make-line buffer nil nil "")))
-      (set-buffer-start-point (make-point buffer line 0 :kind :right-inserting)
+      (set-buffer-start-point (make-point buffer 1 line 0 :kind :right-inserting)
                               buffer)
-      (set-buffer-end-point (make-point buffer line 0
+      (set-buffer-end-point (make-point buffer 1 line 0
                                         :kind :left-inserting)
                             buffer)
       (setf (buffer-point buffer)
-            (make-point buffer line 0
+            (make-point buffer 1 line 0
                         :kind :left-inserting)))
     (add-buffer buffer)
     buffer))

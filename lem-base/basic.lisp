@@ -42,12 +42,12 @@
               (point-buffer point2)))
   (eq (point-line point1) (point-line point2)))
 
-(defun %move-to-position (point line charpos)
+(defun %move-to-position (point linum line charpos)
   (assert (line-alive-p line))
   (assert (eq (point-buffer point) (line-buffer line)))
   (assert (<= 0 charpos))
   (without-interrupts
-    (point-change-line point line)
+    (point-change-line point linum line)
     (setf (point-charpos point) (min (line-length line) charpos)))
   point)
 
@@ -55,6 +55,7 @@
 (defun move-point (point new-point)
   @lang(:jp "`point`を`new-point`の位置に移動します。")
   (%move-to-position point
+                     (point-linum new-point)
                      (point-line new-point)
                      (point-charpos new-point)))
 
@@ -89,18 +90,20 @@
 ")
   (cond
     ((plusp n)
-     (do ((n n (1- n))
+     (do ((i n (1- i))
           (line (point-line point) (line-next line)))
          ((null line) nil)
-       (when (zerop n)
-         (%move-to-position point line charpos)
+       (when (zerop i)
+         (%move-to-position point (- (point-linum point) n)
+                            line charpos)
          (return point))))
     ((minusp n)
-     (do ((n n (1+ n))
+     (do ((i n (1+ i))
           (line (point-line point) (line-prev line)))
          ((null line) nil)
-       (when (zerop n)
-         (%move-to-position point line charpos)
+       (when (zerop i)
+         (%move-to-position point (+ (point-linum point) n)
+                            line charpos)
          (return point))))
     (t
      (setf (point-charpos point)
@@ -115,19 +118,21 @@
   (cond ((zerop n) (when zero-fn (funcall zero-fn)))
         ((plusp n)
          (do ((line (point-line point) (line-next line))
+              (linum (point-linum point) (1+ linum))
               (charpos (point-charpos point) 0))
              ((null line) nil)
            (let ((w (- (line-length line) charpos)))
              (when (<= n w)
-               (return (funcall fn line (+ charpos n))))
+               (return (funcall fn linum line (+ charpos n))))
              (decf n (1+ w)))))
         (t
          (setf n (- n))
          (do* ((line (point-line point) (line-prev line))
+               (linum (point-linum point) (1- linum))
                (charpos (point-charpos point) (and line (line-length line))))
              ((null line) nil)
            (when (<= n charpos)
-             (return (funcall fn line (- charpos n))))
+             (return (funcall fn linum line (- charpos n))))
            (decf n (1+ charpos))))))
 
 @export
@@ -135,8 +140,8 @@
   @lang(:jp "`point`を`n`が正の数なら後に、負の数なら前に移動し、移動後の`point`を返します。
 `n`文字先がバッファの範囲外なら`point`の位置はそのままでNILを返します。")
   (%character-offset point n
-                     (lambda (line charpos)
-                       (%move-to-position point line charpos)
+                     (lambda (linum line charpos)
+                       (%move-to-position point linum line charpos)
                        point)
                      (lambda ()
                        point)))
@@ -146,7 +151,8 @@
   @lang(:jp "`point`から`offset`ずらした位置の文字を返します。
 バッファの範囲外ならNILを返します。")
   (%character-offset point offset
-                     (lambda (line charpos)
+                     (lambda (linum line charpos)
+                       (declare (ignore linum))
                        (line-char line charpos))
                      (lambda ()
                        (line-char (point-line point)
@@ -161,7 +167,8 @@
 (defun text-property-at (point prop &optional (offset 0))
   @lang(:jp "`point`から`offset`ずらした位置の`prop`のプロパティを返します。")
   (%character-offset point offset
-                     (lambda (line charpos)
+                     (lambda (linum line charpos)
+                       (declare (ignore linum))
                        (line-search-property line prop charpos))
                      (lambda ()
                        (line-search-property (point-line point)
@@ -368,13 +375,8 @@
   @lang(:jp "`start-point`から`end-point`までの行数を返します。")
   (assert (eq (point-buffer start-point)
               (point-buffer end-point)))
-  (when (point< end-point start-point)
-    (rotatef start-point end-point))
-  (do ((line (point-line start-point) (line-next line))
-       (goal (point-line end-point))
-       (count 0 (1+ count)))
-      ((eq line goal)
-       count)))
+  (abs (- (point-linum start-point)
+          (point-linum end-point))))
 
 @export
 (defun filter-region-lines (start-point end-point function)
@@ -399,13 +401,7 @@
 @export
 (defun line-number-at-point (point)
   @lang(:jp "`point`の行番号を返します。")
-  (let* ((buffer (point-buffer point))
-         (end-point (buffer-end-point buffer))
-         (n (line-ord (point-line point)))
-         (n2 (line-ord (point-line end-point))))
-    (if (< n (- n2 n))
-        (1+ (count-lines (buffer-start-point buffer) point))
-        (- (buffer-nlines buffer) (count-lines point end-point)))))
+  (point-linum point))
 
 @export
 (defun point-column (point)

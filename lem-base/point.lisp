@@ -22,6 +22,10 @@
     :initarg :buffer
     :reader point-buffer
     :type buffer)
+   (linum
+    :initarg :linum
+    :accessor point-linum
+    :type fixnum)
    (line
     :initarg :line
     :accessor point-line
@@ -69,10 +73,11 @@
   @lang(:jp "`x`が`point`ならT、それ以外ならNILを返します。")
   (typep x 'point))
 
-(defun make-point (buffer line charpos &key (kind :right-inserting))
+(defun make-point (buffer linum line charpos &key (kind :right-inserting))
   (check-type kind (member :temporary :left-inserting :right-inserting))
   (let ((point (make-instance 'point
                               :buffer buffer
+                              :linum linum
                               :line line
                               :charpos charpos
                               :kind kind)))
@@ -86,6 +91,7 @@
 `kind`は`:temporary`、`:left-inserting`または `right-inserting`です。
 省略された場合は`point`と同じ値です。")
   (make-point (point-buffer point)
+              (point-linum point)
               (point-line point)
 	      (point-charpos point)
 	      :kind (or kind (point-kind point))))
@@ -96,35 +102,36 @@
   (unless (point-temporary-p point)
     (setf (line-points (point-line point))
           (delete point (line-points (point-line point))))
-    (setf (buffer-points buffer)
-          (delete point (buffer-points buffer)))
+    (let ((buffer (point-buffer point)))
+      (setf (buffer-points buffer)
+            (delete point (buffer-points buffer))))
     (values)))
 
-(defun point-change-line (point new-line)
+(defun point-change-line (point new-linum new-line)
   (unless (point-temporary-p point)
     (let ((old-line (point-line point)))
-      (do ((scan (line-points old-line) (cdr scan))
-           (prev nil scan))
-          ((eq (car scan) point)
-           (if prev
-               (setf (cdr prev) (cdr scan))
-               (setf (line-points old-line) (cdr scan)))
-           (setf (cdr scan) (line-points new-line)
-                 (line-points new-line) scan)))))
+      (if (line-alive-p old-line)
+          (do ((scan (line-points old-line) (cdr scan))
+               (prev nil scan))
+              ((eq (car scan) point)
+               (if prev
+                   (setf (cdr prev) (cdr scan))
+                   (setf (line-points old-line) (cdr scan)))
+               (setf (cdr scan) (line-points new-line)
+                     (line-points new-line) scan)))
+          (push point (line-points new-line)))))
+  (setf (point-linum point) new-linum)
   (setf (point-line point) new-line))
 
 (defun point-temporary-p (point)
   (eq (point-kind point) :temporary))
 
-(defun point-line-ord (point)
-  (line-ord (point-line point)))
-
 (defun point= (point1 point2)
   @lang(:jp "`point1`と`point2`が同じ位置にあるならT、それ以外はNILを返します。")
   (assert (eq (point-buffer point1)
               (point-buffer point2)))
-  (and (= (point-line-ord point1)
-          (point-line-ord point2))
+  (and (= (point-linum point1)
+          (point-linum point2))
        (= (point-charpos point1)
           (point-charpos point2))))
 
@@ -138,8 +145,8 @@
   @lang(:jp "`point1`が`point2`よりも前にあるならT、それ以外はNILを返します。")
   (assert (eq (point-buffer point1)
               (point-buffer point2)))
-  (or (< (point-line-ord point1) (point-line-ord point2))
-      (and (= (point-line-ord point1) (point-line-ord point2))
+  (or (< (point-linum point1) (point-linum point2))
+      (and (= (point-linum point1) (point-linum point2))
            (< (point-charpos point1) (point-charpos point2)))))
 
 (defun point<= (point1 point2)

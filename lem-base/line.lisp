@@ -9,31 +9,14 @@
   plist
   %symbol-lifetimes
   %syntax-context
-  ord
   buffer
   points)
 
 (defmethod print-object ((object line) stream)
   (print-unreadable-object (object stream :identity t)
-    (format stream "LINE: ord: ~D, string: ~S, plist: ~S"
-            (line-ord object)
+    (format stream "LINE: string: ~S, plist: ~S"
             (line-str object)
             (line-plist object))))
-
-(defun compute-line-ord (prev next line)
-  (cond ((null prev)
-         (setf (line-ord line) 0))
-        ((null next)
-         (setf (line-ord line)
-               (+ (line-ord prev) +line-increment+)))
-        (t
-         (let ((ord (+ (line-ord prev)
-                       (truncate (- (line-ord next)
-                                    (line-ord prev))
-                                 2))))
-           (if (= ord (line-ord prev))
-               (renumber (line-buffer line))
-               (setf (line-ord line) ord))))))
 
 (defun make-line (buffer prev next str)
   (let ((line (%make-line :buffer buffer
@@ -44,15 +27,7 @@
       (setf (line-prev next) line))
     (when prev
       (setf (line-next prev) line))
-    (compute-line-ord prev next line)
     line))
-
-(defun renumber (buffer)
-  (do ((line (point-line (buffer-start-point buffer))
-             (line-next line))
-       (ord 0 (+ ord +line-increment+)))
-      ((null line))
-    (setf (line-ord line) ord)))
 
 (defun line-alive-p (line)
   (not (null (line-str line))))

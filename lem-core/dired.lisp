@@ -338,19 +338,19 @@
   (redraw-display))
 
 (defun dired-buffer (filename)
-  (setf filename
-        (uiop:directory-exists-p
-         (expand-file-name (namestring filename) (buffer-directory))))
-  (let ((buffer (get-buffer-create
-                 (format nil "DIRED ~A"
-                         (pathname-name
-                          (string-right-trim "/" (princ-to-string filename)))))))
-    (change-buffer-mode buffer 'dired-mode)
-    (setf (buffer-directory buffer) filename)
-    (setf (buffer-read-only-p buffer) t)
-    (buffer-disable-undo buffer)
-    (update buffer)
-    (move-to-start-point (buffer-point buffer))
-    buffer))
+  (let* ((filename
+          (uiop:directory-exists-p
+           (expand-file-name (namestring filename) (buffer-directory))))
+         (buffer-name (format nil "DIRED ~A"
+                              (pathname-name
+                               (string-right-trim
+                                "/" (princ-to-string filename))))))
+    (or (get-buffer buffer-name)
+        (let ((buffer (make-buffer buffer-name :enable-undo-p nil)))
+          (change-buffer-mode buffer 'dired-mode)
+          (setf (buffer-directory buffer) filename)
+          (update buffer)
+          (move-to-start-point (buffer-point buffer))
+          buffer))))
 
 (setf *find-directory-function* 'dired-buffer)

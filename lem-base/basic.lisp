@@ -94,7 +94,7 @@
           (line (point-line point) (line-next line)))
          ((null line) nil)
        (when (zerop i)
-         (%move-to-position point (- (point-linum point) n)
+         (%move-to-position point (+ (point-linum point) n)
                             line charpos)
          (return point))))
     ((minusp n)

@@ -103,6 +103,9 @@
     :initform nil
     :initarg :keep-binfo
     :accessor %buffer-keep-binfo)
+   (points
+    :initform nil
+    :accessor buffer-points)
    (nlines
     :initform nil
     :initarg :nlines

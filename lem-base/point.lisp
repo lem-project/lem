@@ -77,7 +77,8 @@
                               :charpos charpos
                               :kind kind)))
     (unless (eq :temporary kind)
-      (push point (line-points line)))
+      (push point (line-points line))
+      (push point (buffer-points buffer)))
     point))
 
 (defun copy-point (point &optional kind)
@@ -94,7 +95,10 @@
 `point-kind`が:temporaryの場合はこの関数を使う必要はありません。")
   (unless (point-temporary-p point)
     (setf (line-points (point-line point))
-          (delete point (line-points (point-line point))))))
+          (delete point (line-points (point-line point))))
+    (setf (buffer-points buffer)
+          (delete point (buffer-points buffer)))
+    (values)))
 
 (defun point-change-line (point new-line)
   (unless (point-temporary-p point)

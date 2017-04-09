@@ -29,11 +29,6 @@
       (setf (line-next prev) line))
     line))
 
-(defun line-next* (line n)
-  (loop :repeat n
-        :do (setf line (line-next line)))
-  line)
-
 (defun line-alive-p (line)
   (not (null (line-str line))))
 

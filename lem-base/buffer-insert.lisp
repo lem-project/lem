@@ -33,6 +33,11 @@
        (prog1 (progn ,@body)
          (buffer-modify ,buffer)))))
 
+(defun line-next-n (line n)
+  (loop :repeat n
+        :do (setf line (line-next line)))
+  line)
+
 (defun shift-markers (point offset-line offset-char)
   (cond ((and (= 0 offset-line)
               (< 0 offset-char))
@@ -47,7 +52,7 @@
         ((< 0 offset-line)
          (let ((linum (point-linum point))
                (charpos (point-charpos point))
-               (line (line-next* (point-line point) offset-line)))
+               (line (line-next-n (point-line point) offset-line)))
            (dolist (p (buffer-points (point-buffer point)))
              (cond ((and (= linum (point-linum p))
                          (etypecase (point-kind p)
@@ -57,7 +62,8 @@
                             (< charpos (point-charpos p)))))
                     (incf (point-linum p) offset-line)
                     (decf (point-charpos p) charpos)
-                    (point-change-line p linum line))
+                    (incf (point-charpos p) offset-char)
+                    (point-change-line p (+ linum offset-line) line))
                    ((< linum (point-linum p))
                     (incf (point-linum p) offset-line))))))
         ((and (= 0 offset-line)
@@ -196,25 +202,27 @@
         (declare (special killring-stream))
         (let ((charpos (point-charpos point))
               (buffer (point-buffer point))
-              (line (point-line point)))
+              (line (point-line point))
+              (offset-line 0))
           (declare (special buffer line))
           (loop :while (or (eq n 'T) (plusp n))
                 :for eolp := (or (eq n 'T)
                                  (> n (- (line-length line) charpos)))
-                :for offset-line :from 0
                 :do
                 (check-read-only-at-point point (if (eq n 'T) nil (if eolp n nil)))
                 (cond
                   ((not eolp)
                    (%delete-line-between/point point charpos (+ charpos n))
-                   (shift-markers point (- offset-line) n)
+                   (shift-markers point offset-line (- n))
                    (return))
                   ((null (line-next line))
                    (%delete-line-eol/point point charpos)
-                   (shift-markers point (- offset-line) (- charpos (line-length line)))
+                   (shift-markers point offset-line (- charpos (line-length line)))
                    (return))
                   (t
-                   (%delete-line/point point charpos)))))))))
+                   (%delete-line/point point charpos)))
+                 (decf offset-line)
+                 :finally (shift-markers point offset-line 0)))))))
 
 
 (declaim (inline call-before-change-functions

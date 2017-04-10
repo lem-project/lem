@@ -346,7 +346,7 @@
                                (string-right-trim
                                 "/" (princ-to-string filename))))))
     (or (get-buffer buffer-name)
-        (let ((buffer (make-buffer buffer-name :enable-undo-p nil)))
+        (let ((buffer (make-buffer buffer-name :enable-undo-p nil :read-only-p t)))
           (change-buffer-mode buffer 'dired-mode)
           (setf (buffer-directory buffer) filename)
           (update buffer)

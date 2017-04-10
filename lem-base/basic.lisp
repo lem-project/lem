@@ -445,11 +445,21 @@
 (defun move-to-line (point line-number)
   @lang(:jp "`point`を行番号`line-number`に移動し、移動後の位置を返します。
 `line-number`がバッファの範囲外なら`point`は移動せず、NILを返します。")
-  (let ((n (- (buffer-nlines (point-buffer point))
-              line-number)))
-  (if (< line-number n)
-      (line-offset (buffer-start point) (1- line-number))
-      (line-offset (buffer-end point) (- n)))))
+  (let ((cur-linum (line-number-at-point point))
+        (nlines (buffer-nlines (point-buffer point))))
+    (cond ((or (> 1 line-number)
+               (< nlines line-number))
+           nil)
+          ((= line-number cur-linum)
+           point)
+          ((< line-number cur-linum)
+           (if (< line-number (- cur-linum line-number))
+               (line-offset (buffer-start point) (1- line-number))
+               (line-offset point (- line-number cur-linum))))
+          (t
+           (if (< (- line-number cur-linum) (- nlines line-number))
+               (line-offset point (- line-number cur-linum))
+               (line-offset (buffer-end point) (- line-number nlines)))))))
 
 @export
 (defun check-marked ()

@@ -671,8 +671,10 @@
     (let ((code (charms/ll:getch)))
       (cond ((= code -1))
             ((= code 410)
-             (send-resize-screen-event (display-width)
-                                       (display-height)))
+             (loop :while (< 0 (lem::event-queue-length)) :do
+               (sleep 0.01))
+             (update-display-size (display-width)
+                                  (display-height)))
             ((= code #.(char-code lem::C-\]))
              (send-abort-event editor-thread))
             (t

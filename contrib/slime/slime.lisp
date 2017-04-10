@@ -1046,7 +1046,8 @@
 
 (define-command slime-quit () ()
   (when (and *process* (sb-ext:process-alive-p *process*))
-    (sb-ext:process-kill *process* 9)))
+    (sb-ext:process-kill *process* 9)
+    (setf *connection* nil)))
 
 (define-command slime-restart () ()
   (slime-quit)

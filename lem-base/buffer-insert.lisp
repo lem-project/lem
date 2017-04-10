@@ -97,8 +97,7 @@
                       (decf (point-linum p) offset-line)))))))))
 
 (defun %insert-newline/point (buffer line charpos)
-  (make-line buffer
-             line
+  (make-line line
              (line-next line)
              (subseq (line-str line) charpos))
   (line-property-insert-newline line (line-next line) charpos)

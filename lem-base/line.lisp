@@ -9,7 +9,6 @@
   plist
   %symbol-lifetimes
   %syntax-context
-  buffer
   points)
 
 (defmethod print-object ((object line) stream)
@@ -18,9 +17,8 @@
             (line-str object)
             (line-plist object))))
 
-(defun make-line (buffer prev next str)
-  (let ((line (%make-line :buffer buffer
-                          :next next
+(defun make-line (prev next str)
+  (let ((line (%make-line :next next
                           :prev prev
                           :str str)))
     (when next
@@ -237,5 +235,4 @@
   (setf (line-prev line) nil
         (line-next line) nil
         (line-str line) nil
-        (line-points line) nil
-        (line-buffer line) nil))
+        (line-points line) nil))

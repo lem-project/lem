@@ -44,7 +44,6 @@
 
 (defun %move-to-position (point linum line charpos)
   (assert (line-alive-p line))
-  (assert (eq (point-buffer point) (line-buffer line)))
   (assert (<= 0 charpos))
   (without-interrupts
     (point-change-line point linum line)

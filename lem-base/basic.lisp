@@ -296,18 +296,6 @@
         end
         start)))
 
-@export
-(defun apply-region-lines (start end function)
-  (when (point< end start)
-    (rotatef start end))
-  (with-point ((start start :right-inserting)
-               (end end :right-inserting)
-               (point start))
-    (loop :while (point< start end) :do
-      (funcall function (move-point point start))
-      (unless (line-offset start 1)
-        (return)))))
-
 (defun %map-region (start end function)
   (when (point< end start)
     (rotatef start end))
@@ -376,6 +364,20 @@
               (point-buffer end-point)))
   (abs (- (point-linum start-point)
           (point-linum end-point))))
+
+@export
+(defun apply-region-lines (start-point end-point function)
+  @lang(:jp "`start-point`から`end-point`の各行に対して
+ポイントを引数に取る`function`を適用します。")
+  (when (point< end-point start-point)
+    (rotatef start-point end-point))
+  (with-point ((start-point start-point :right-inserting)
+               (end-point end-point :right-inserting)
+               (point start-point))
+    (loop :while (point< start-point end-point) :do
+      (funcall function (move-point point start-point))
+      (unless (line-offset start-point 1)
+        (return)))))
 
 @export
 (defun filter-region-lines (start-point end-point function)

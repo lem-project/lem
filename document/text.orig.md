@@ -83,6 +83,7 @@
 {lem:points-to-string function}
 {lem:count-characters function}
 {lem:count-lines function}
+{lem:apply-region-lines function}
 
 ## テキストの編集
 {lem:insert-character function}

@@ -274,6 +274,10 @@
 *FUNCTION* `lem:count-lines (start-point end-point)`  
 `start-point`から`end-point`までの行数を返します。
 
+*FUNCTION* `lem:apply-region-lines (start-point end-point function)`  
+`start-point`から`end-point`の各行に対して
+ポイントを引数に取る`function`を適用します。
+
 
 ## テキストの編集
 *FUNCTION* `lem:insert-character (point char &optional (n 1))`  

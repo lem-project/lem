@@ -47,8 +47,8 @@
   (setf (variable-value 'find-references-function) 'find-references)
   (setf (variable-value 'completion-function) 'completion-symbol))
 
-(define-key *slime-mode-keymap* "C-M-a" 'lem.lisp-mode:lisp-beginning-of-defun)
-(define-key *slime-mode-keymap* "C-M-e" 'lem.lisp-mode:lisp-end-of-defun)
+(define-key *slime-mode-keymap* "C-M-a" 'slime-beginning-of-defun)
+(define-key *slime-mode-keymap* "C-M-e" 'slime-end-of-defun)
 (define-key *slime-mode-keymap* "C-M-q" 'slime-indent-sexp)
 (define-key *slime-mode-keymap* "C-c M-p" 'slime-set-package)
 (define-key *slime-mode-keymap* "C-c C-e" 'slime-eval-last-expression)
@@ -189,6 +189,32 @@
                     (lambda (str)
                       (find str package-names :test #'string=))
                     'mh-slime-package))))
+
+(define-command slime-beginning-of-defun (n) ("p")
+  (lem-lisp-syntax.misc:beginning-of-defun (current-point) (- n)))
+
+(define-command slime-end-of-defun (n) ("p")
+  (if (minusp n)
+      (slime-beginning-of-defun (- n))
+      (let ((point (current-point)))
+        (dotimes (_ n)
+          (with-point ((p point))
+            (cond ((and (lem-lisp-syntax.misc:beginning-of-defun p -1)
+                        (point<= p point)
+                        (or (form-offset p 1)
+                            (progn
+                              (move-point point p)
+                              (return)))
+                        (point< point p))
+                   (move-point point p)
+                   (skip-whitespace-forward point t)
+                   (when (end-line-p point)
+                     (character-offset point 1)))
+                  (t
+                   (form-offset point 1)
+                   (skip-whitespace-forward point t)
+                   (when (end-line-p point)
+                     (character-offset point 1)))))))))
 
 (define-command slime-indent-sexp () ()
   (lem.lisp-mode:lisp-indent-sexp))

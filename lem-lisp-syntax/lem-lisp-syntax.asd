@@ -3,4 +3,5 @@
   :serial t
   :components ((:file "indent")
                (:file "syntax-table")
+               (:file "misc")
                (:file "enclosing")))

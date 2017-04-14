@@ -6,6 +6,7 @@
    :insertion-line-comment
    :find-definitions-function
    :find-references-function
+   :completion-function
    :language-mode
    :indent
    :newline-and-indent
@@ -18,6 +19,7 @@
 (define-editor-variable insertion-line-comment nil)
 (define-editor-variable find-definitions-function nil)
 (define-editor-variable find-references-function nil)
+(define-editor-variable completion-function nil)
 
 (defun prompt-for-symbol (prompt history-name)
   (prompt-for-line prompt "" nil nil history-name))
@@ -26,7 +28,7 @@
     (:keymap *language-mode-keymap*)
   nil)
 
-(define-key *language-mode-keymap* (kbd "C-i") 'indent)
+(define-key *language-mode-keymap* (kbd "C-i") 'indent-line-and-complete-symbol)
 (define-key *language-mode-keymap* (kbd "C-j") 'newline-and-indent)
 (define-key *language-mode-keymap* (kbd "M-j") 'newline-and-indent)
 (define-key *language-mode-keymap* (kbd "C-M-\\") 'indent-region)
@@ -197,3 +199,25 @@
         (select-buffer buffer-name)
         (move-to-line (current-point) line-number)
         (line-offset (current-point) 0 charpos)))))
+
+(defun line-indent-num ()
+  (with-point ((p (current-point)))
+    (point-charpos (back-to-indentation p))))
+
+(defun complete-symbol ()
+  (alexandria:when-let (fn (variable-value 'completion-function :buffer))
+    (alexandria:when-let (completion-items (funcall fn))
+      (run-completion completion-items
+                      :auto-insert nil
+                      :restart-function #'complete-symbol))))
+
+(define-command indent-line-and-complete-symbol () ()
+  (if (variable-value 'calc-indent-function :buffer)
+      (let ((charpos (point-charpos (current-point)))
+            (old (line-indent-num)))
+        (handler-case (indent-line (current-point))
+          (editor-condition ()))
+        (when (= old (line-indent-num))
+          (line-offset (current-point) 0 charpos)
+          (complete-symbol)))
+      (complete-symbol)))

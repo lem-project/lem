@@ -44,7 +44,8 @@
   (setf (variable-value 'line-comment) ";")
   (setf (variable-value 'insertion-line-comment) ";; ")
   (setf (variable-value 'find-definitions-function) 'find-definitions)
-  (setf (variable-value 'find-references-function) 'find-references))
+  (setf (variable-value 'find-references-function) 'find-references)
+  (setf (variable-value 'completion-function) 'completion-symbol))
 
 (define-key *slime-mode-keymap* "C-M-a" 'lem.lisp-mode:lisp-beginning-of-defun)
 (define-key *slime-mode-keymap* "C-M-e" 'lem.lisp-mode:lisp-end-of-defun)
@@ -60,7 +61,6 @@
 (define-key *slime-mode-keymap* "C-c C-c" 'slime-compile-defun)
 (define-key *slime-mode-keymap* "C-c C-m" 'slime-macroexpand)
 (define-key *slime-mode-keymap* "C-c M-m" 'slime-macroexpand-all)
-(define-key *slime-mode-keymap* "C-M-i" 'slime-completion-symbol-at-point)
 (define-key *slime-mode-keymap* "C-c C-d C-a" 'slime-echo-arglist)
 (define-key *slime-mode-keymap* "C-c C-d a" 'slime-apropos)
 (define-key *slime-mode-keymap* "C-c C-d z" 'slime-apropos-all)
@@ -477,7 +477,7 @@
       :collect (make-xref-references :type type
                                      :locations defs))))
 
-(define-command slime-completion-symbol-at-point () ()
+(defun completion-symbol ()
   (check-connection)
   (with-point ((start (current-point))
                (end (current-point)))
@@ -490,17 +490,13 @@
       (when result
         (destructuring-bind (completions timeout-p) result
           (declare (ignore timeout-p))
-          (run-completion
-           (mapcar (lambda (completion)
-                     (make-completion-item
-                      :label (first completion)
-                      :detail (fourth completion)
-                      :start start
-                      :end end))
-                   completions)
-           :auto-insert nil
-           :restart-function 'slime-completion-symbol-at-point)))))
-  t)
+          (mapcar (lambda (completion)
+                    (make-completion-item
+                     :label (first completion)
+                     :detail (fourth completion)
+                     :start start
+                     :end end))
+                  completions))))))  
 
 (defvar *slime-apropos-mode-keymap* (make-keymap nil *slime-mode-keymap*))
 (define-key *slime-apropos-mode-keymap* "q" 'quit-window)

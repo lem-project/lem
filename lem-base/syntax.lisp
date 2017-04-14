@@ -102,6 +102,43 @@
     :initform nil
     :reader syntax-match-move-action)))
 
+(defclass syntax-patterns ()
+  ((patterns
+    :initarg :patterns
+    :reader syntax-patterns)))
+
+(defclass syntax-pattern ()
+  ())
+
+(defclass syntax-pattern-match (syntax-pattern)
+  ((match
+    :initarg :match
+    :reader syntax-pattern-match)
+   (captures
+    :initarg :captures
+    :reader syntax-pattern-captures)
+   (attribute
+    :initarg :attribute
+    :initform nil
+    :reader syntax-pattern-attribute)))
+
+(defclass syntax-pattern-region (syntax-pattern)
+  ((begin
+    :initarg :begin
+    :reader syntax-pattern-begin)
+   (end
+    :initarg :end
+    :reader syntax-pattern-end)
+   (begin-captures
+    :initarg :begin-captures
+    :reader syntax-pattern-begin-captures)
+   (end-captures
+    :initarg :end-captures
+    :reader syntax-pattern-end-captures)))
+
+(defun syntax-patterns (&rest patterns)
+  (make-instance 'syntax-patterns :patterns patterns))
+
 (defstruct (syntax-table (:constructor %make-syntax-table))
   (space-chars '(#\space #\tab #\newline))
   (symbol-chars '(#\_))

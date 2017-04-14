@@ -4,7 +4,6 @@
                "alexandria"
                "cl-ppcre"
                "cl-annot")
-  :pathname "lem-base/"
   :serial t
   :components ((:file "package")
                (:file "documentation")

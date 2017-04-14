@@ -133,7 +133,9 @@
 
 (define-command find-definitions () ()
   (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))
-    (alexandria:when-let (locations (funcall fn))
+    (let ((locations (funcall fn)))
+      (unless locations
+        (editor-error "No definitions found"))
       (push-location-stack (current-point))
       (if (null (rest locations))
           (go-to-location (first locations))
@@ -156,7 +158,9 @@
 
 (define-command find-references () ()
   (alexandria:when-let (fn (variable-value 'find-references-function :buffer))
-    (alexandria:when-let (refs (funcall fn))
+    (let ((refs (funcall fn)))
+      (unless refs
+        (editor-error "No references found"))
       (push-location-stack (current-point))
       (with-sourcelist (sourcelist "*references*")
         (dolist (ref refs)

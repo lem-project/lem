@@ -1,6 +1,10 @@
 (in-package :cl-user)
 (defpackage :lem.go-mode
   (:use :cl :lem)
+  (:import-from
+   :lem.language-mode
+   :language-mode
+   :indent)
   (:export))
 (in-package :lem.go-mode)
 
@@ -48,7 +52,7 @@
                         :attribute 'syntax-constant-attribute))
     table))
 
-(define-major-mode go-mode nil
+(define-major-mode go-mode language-mode
     (:name "go"
      :keymap *go-mode-keymap*
      :syntax-table *go-syntax-table*)

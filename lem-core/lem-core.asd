@@ -43,6 +43,7 @@
                (:file "word-command")
                (:file "sexp-command")
 
+               (:file "language-mode")
                (:file "listener-mode")
                (:file "kbdmacro")
                (:file "isearch")

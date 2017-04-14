@@ -30,7 +30,6 @@
           prev-page
           entab-line
           detab-line
-          newline-and-indent
           next-page-char
           prev-page-char
           delete-blank-lines
@@ -45,9 +44,6 @@
           goto-line
           filter-buffer
           pipe-command
-          indent
-          newline-and-indent
-          indent-region
           delete-trailing-whitespace))
 
 (defun delete-character-with-killring (point n killp)
@@ -483,23 +479,6 @@
                         :output out
                         :error-output out
                         :ignore-error-status t))))
-
-(define-key *global-keymap* (kbd "C-i") 'indent)
-(define-command indent (&optional (n 1)) ("p")
-  (if (variable-value 'calc-indent-function)
-      (indent-line (current-point))
-      (self-insert n)))
-
-(define-key *global-keymap* (kbd "C-j") 'newline-and-indent)
-(define-key *global-keymap* (kbd "M-j") 'newline-and-indent)
-(define-command newline-and-indent (n) ("p")
-  (newline n)
-  (indent))
-
-(define-key *global-keymap* (kbd "C-M-\\") 'indent-region)
-(define-command indent-region (start end) ("r")
-  (save-excursion
-    (apply-region-lines start end 'indent-line)))
 
 (define-command delete-trailing-whitespace () ()
   (filter-region-lines (buffer-start-point (current-buffer))

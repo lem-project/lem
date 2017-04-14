@@ -25,9 +25,6 @@
    :lisp-get-arglist
    :lisp-echo-arglist
    :lisp-self-insert-then-arg-list
-   :lisp-comment-or-uncomment-region
-   :lisp-comment-region
-   :lisp-uncomment-region
    :lisp-eval-print-last-sexp
    :*lisp-repl-mode-keymap*
    :lisp-repl-mode
@@ -45,6 +42,8 @@
   (setf (variable-value 'indent-tabs-mode) nil)
   (setf (variable-value 'enable-syntax-highlight) t)
   (setf (variable-value 'calc-indent-function) 'calc-indent)
+  (setf (variable-value 'line-comment) ";")
+  (setf (variable-value 'insertion-line-comment) ";; ")
   (modeline-add-status-list (lambda (window)
                               (package-name (lisp-current-package
                                              (window-buffer window))))
@@ -637,50 +636,6 @@
 (define-command lisp-insert-space-and-echo-arglist (n) ("p")
   (insert-character (current-point) #\space n)
   (lisp-echo-arglist))
-
-(define-key *lisp-mode-keymap* (kbd "C-c ;") 'lisp-comment-or-uncomment-region)
-(define-command lisp-comment-or-uncomment-region (arg) ("P")
-  (if arg
-      (lisp-uncomment-region)
-      (lisp-comment-region)))
-
-(defun space*-p (point)
-  (with-point ((point point))
-    (skip-whitespace-forward point t)
-    (end-line-p point)))
-
-(define-command lisp-comment-region () ()
-  (save-excursion
-    (with-point ((start (region-beginning) :right-inserting)
-                 (end (region-end) :left-inserting))
-      (skip-whitespace-forward start)
-      (let ((charpos (point-charpos start)))
-        (loop
-          (when (same-line-p start end)
-            (cond ((space*-p start))
-                  (t
-                   (insert-string start ";; ")
-                   (unless (space*-p end)
-                     (insert-character end #\newline))))
-            (return))
-          (unless (space*-p start)
-            (insert-string start ";; "))
-          (line-offset start 1 charpos))))))
-
-(define-command lisp-uncomment-region () ()
-  (when (buffer-mark-p (current-buffer))
-    (with-point ((start (region-beginning) :right-inserting)
-                 (end (region-end) :right-inserting))
-      (character-offset start -1)
-      (loop
-        ;; ここを実行中は構文走査がされないのでテキストプロパティが更新されず、ずれていくので後ろから探していく
-        (unless (search-comment-start-backward end start)
-          (return))
-        (when (looking-at end ";")
-          (if (looking-at end ";; ")
-              (delete-character end 3)
-              (loop :while (char= #\; (character-at end 0))
-                    :do (delete-character end 1))))))))
 
 (defun check-package (package-name)
   (find-package (string-upcase package-name)))

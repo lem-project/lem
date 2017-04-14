@@ -1,3 +1,4 @@
 (defsystem "lem"
-  :depends-on ("lem-core"
+  :depends-on ("cffi"
+               "lem-core"
                "lem-lisp-mode"))

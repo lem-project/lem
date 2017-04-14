@@ -12,8 +12,6 @@
                :uiop
                :lem)
   :serial t
-  :components ((:file "clhs")
-               (:file "errors")
+  :components ((:file "errors")
                (:file "swank-protocol")
-               (:file "slime")
-               ))
+               (:file "slime")))

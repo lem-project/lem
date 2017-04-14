@@ -67,7 +67,6 @@
 (define-key *slime-mode-keymap* "C-c C-d z" 'slime-apropos-all)
 (define-key *slime-mode-keymap* "C-c C-d p" 'slime-apropos-package)
 (define-key *slime-mode-keymap* "C-c C-d d" 'slime-describe-symbol)
-(define-key *slime-mode-keymap* "C-c C-d h" 'slime-documentation-lookup)
 
 (defun connected-p ()
   (not (null *connection*)))
@@ -639,15 +638,6 @@
     (when (string= "" symbol-name)
       (editor-error "No symbol given"))
     (show-description (slime-eval `(swank:describe-symbol ,symbol-name)))))
-
-(define-command slime-documentation-lookup () ()
-  (check-connection)
-  (let ((symbol-name
-         (read-symbol-name "Describe symbol: "
-                           (or (symbol-string-at-point (current-point)) ""))))
-    (when (string= "" symbol-name)
-      (editor-error "No symbol given"))
-    (lem-slime.clhs:main symbol-name)))
 
 (define-major-mode slime-repl-mode slime-mode
     (:name "slime-repl"

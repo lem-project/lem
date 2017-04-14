@@ -43,7 +43,8 @@
   (setf (variable-value 'calc-indent-function) 'calc-indent)
   (setf (variable-value 'line-comment) ";")
   (setf (variable-value 'insertion-line-comment) ";; ")
-  (setf (variable-value 'find-definitions-function) 'find-definitions))
+  (setf (variable-value 'find-definitions-function) 'find-definitions)
+  (setf (variable-value 'find-references-function) 'find-references))
 
 (define-key *slime-mode-keymap* "C-M-a" 'lem.lisp-mode:lisp-beginning-of-defun)
 (define-key *slime-mode-keymap* "C-M-e" 'lem.lisp-mode:lisp-end-of-defun)
@@ -59,8 +60,6 @@
 (define-key *slime-mode-keymap* "C-c C-c" 'slime-compile-defun)
 (define-key *slime-mode-keymap* "C-c C-m" 'slime-macroexpand)
 (define-key *slime-mode-keymap* "C-c M-m" 'slime-macroexpand-all)
-(define-key *slime-mode-keymap* "M-_" 'slime-edit-uses)
-(define-key *slime-mode-keymap* "M-?" 'slime-edit-uses)
 (define-key *slime-mode-keymap* "C-M-i" 'slime-completion-symbol-at-point)
 (define-key *slime-mode-keymap* "C-c C-d C-a" 'slime-echo-arglist)
 (define-key *slime-mode-keymap* "C-c C-d a" 'slime-apropos)
@@ -438,6 +437,21 @@
               (position-at-point point))
         *edit-definition-stack*))
 
+(defun definitions-to-locations (definitions)
+  (let ((xrefs '()))
+    (dolist (def definitions)
+      (optima:match def
+        ((list title
+               (list :location
+                     (list :file file)
+                     (list :position position)
+                     (list :snippet _)))
+         (push (make-xref-location :title title
+                                   :file file
+                                   :position position)
+               xrefs))))
+    xrefs))
+
 (defun find-definitions ()
   (check-connection)
   (let ((name (or (symbol-string-at-point (current-point))
@@ -445,66 +459,23 @@
     (let ((point (lem-lisp-syntax.enclosing:search-local-definition (current-point) name)))
       (when point
         (return-from find-definitions
-          (list (make-xref :file (buffer-filename (current-buffer))
-                           :position (position-at-point point))))))
-    (let ((definitions (slime-eval `(swank:find-definitions-for-emacs ,name)))
-          (xrefs '()))
-      (dolist (def definitions)
-        (optima:match def
-          ((list title
-                 (list :location
-                       (list :file file)
-                       (list :position position)
-                       (list :snippet _)))
-           (push (make-xref :title title
-                            :file file
-                            :position position)
-                 xrefs))))
-      xrefs)))
+          (list (make-xref-location :file (buffer-filename (current-buffer))
+                                    :position (position-at-point point))))))
+    (let ((definitions (slime-eval `(swank:find-definitions-for-emacs ,name))))
+      (definitions-to-locations definitions))))
 
-(define-command slime-edit-uses () ()
+(defun find-references ()
   (check-connection)
-  (let* ((symbol (read-symbol-name "Edit uses of: " (or (symbol-string-at-point (current-point)) "")))
-         (result (slime-eval `(swank:xrefs '(:calls :macroexpands :binds
-                                             :references :sets :specializes)
-                                           ,symbol)))
-         (found nil))
-    (lem.sourcelist:with-sourcelist (sourcelist "*slime-xrefs*")
-      (loop :for (type . definitions) :in result
-            :for defs := (loop :for def :in definitions
-                               :collect (optima:match def
-                                          ((list name
-                                                 (list :location
-                                                       (list :file file)
-                                                       (list :position offset)
-                                                       (list :snippet snippet)))
-                                           (list name file offset snippet))))
-            :do (when defs
-                  (setf found t)
-                  (lem.sourcelist:append-sourcelist
-                   sourcelist
-                   (lambda (cur-point)
-                     (insert-string cur-point (princ-to-string type)
-                                    :attribute 'slime-headline-attribute
-                                    ))
-                   nil)
-                  (loop :for def :in defs
-                        :do (destructuring-bind (name file offset snippet) def
-                              (declare (ignore snippet))
-                              (lem.sourcelist:append-sourcelist
-                               sourcelist
-                               (lambda (cur-point)
-                                 (insert-string cur-point
-                                                (format nil "  ~A" name)
-                                                :attribute 'slime-entry-attribute))
-                               (lambda ()
-                                 (find-file file)
-                                 (move-to-position (current-point) offset))))))))
-    (cond
-      (found
-       (push-edit-definition (current-point)))
-      (t
-       (message "No xref information found for ~A" symbol)))))
+  (let* ((name (or (symbol-string-at-point (current-point))
+                   (read-symbol-name "Edit uses of: ")))
+         (data (slime-eval `(swank:xrefs '(:calls :macroexpands :binds
+                                           :references :sets :specializes)
+                                         ,name))))
+    (loop
+      :for (type . definitions) :in data
+      :for defs := (definitions-to-locations definitions)
+      :collect (make-xref-references :type type
+                                     :locations defs))))
 
 (define-command slime-completion-symbol-at-point () ()
   (check-connection)

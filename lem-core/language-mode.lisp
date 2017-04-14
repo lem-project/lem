@@ -1,17 +1,24 @@
 (defpackage :lem.language-mode
-  (:use :cl :lem)
+  (:use :cl :lem :lem.sourcelist)
   (:export
    :*language-mode-keymap*
    :line-comment
    :insertion-line-comment
+   :find-definitions-function
    :language-mode
    :indent
    :newline-and-indent
-   :indent-region))
+   :indent-region
+   :make-xref))
 (in-package :lem.language-mode)
 
 (define-editor-variable line-comment nil)
 (define-editor-variable insertion-line-comment nil)
+(define-editor-variable find-definitions-function nil)
+
+(defun prompt-for-symbol (prompt history-name)
+  (prompt-for-line prompt "" nil nil history-name))
+
 (define-major-mode language-mode ()
     (:keymap *language-mode-keymap*)
   nil)
@@ -21,6 +28,8 @@
 (define-key *language-mode-keymap* (kbd "M-j") 'newline-and-indent)
 (define-key *language-mode-keymap* (kbd "C-M-\\") 'indent-region)
 (define-key *language-mode-keymap* (kbd "M-;") 'comment-or-uncomment-region)
+(define-key *language-mode-keymap* (kbd "M-.") 'find-definitions)
+(define-key *language-mode-keymap* (kbd "M-,") 'pop-xref-stack)
 
 (define-command indent (&optional (n 1)) ("p")
   (if (variable-value 'calc-indent-function)
@@ -96,3 +105,65 @@
                   (delete-character end (length res))
                   (loop :while (looking-at end line-comment)
                     :do (delete-character end (length line-comment)))))))))))
+
+(define-attribute xref-headline-attribute
+  (t :bold-p t))
+
+(define-attribute xref-title-attribute
+  (:dark :foreground "cyan" :bold-p t)
+  (:light :foreground "blue" :bold-p t))
+
+(defstruct xref
+  (file nil :read-only t :type (or string pathname))
+  (position 1 :read-only t :type integer)
+  (title "" :read-only t :type string))
+
+(defun go-to-xref (xref)
+  (find-file (xref-file xref))
+  (move-to-position (current-point) (xref-position xref)))
+
+(define-command find-definitions () ()
+  (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))
+    (alexandria:when-let (xrefs (funcall fn))
+      (push-xref-stack (current-point))
+      (if (null (rest xrefs))
+          (go-to-xref (first xrefs))
+          (let ((prev-file nil))
+            (with-sourcelist (sourcelist "*definitions*")
+              (dolist (xref xrefs)
+                (let ((file (xref-file xref))
+                      (title (xref-title xref)))
+                  (append-sourcelist sourcelist
+                                     (lambda (p)
+                                       (unless (equal prev-file file)
+                                         (insert-string p file :attribute 'xref-headline-attribute)
+                                         (insert-character p #\newline))
+                                       (insert-string p (format nil "  ~A" title)
+                                                      :attribute 'xref-title-attribute))
+                                     (let ((xref xref))
+                                       (lambda ()
+                                         (go-to-xref xref))))
+                  (setf prev-file file)))))))))
+
+(define-command find-references () ()
+  (let ((fn (variable-value 'find-references-function :buffer)))
+    (when fn
+      (funcall fn))))
+
+(defvar *xref-stack-table* (make-hash-table :test 'equal))
+
+(defun push-xref-stack (point)
+  (let ((buffer (point-buffer point)))
+    (push (list (buffer-name buffer)
+                (line-number-at-point point)
+                (point-charpos point))
+          (gethash (buffer-major-mode buffer) *xref-stack-table*))))
+
+(define-command pop-xref-stack () ()
+  (let ((elt (pop (gethash (buffer-major-mode (current-buffer))
+                           *xref-stack-table*))))
+    (when elt
+      (destructuring-bind (buffer-name line-number charpos) elt
+        (select-buffer buffer-name)
+        (move-to-line (current-point) line-number)
+        (line-offset (current-point) 0 charpos)))))

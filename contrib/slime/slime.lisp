@@ -1,6 +1,6 @@
 (in-package :cl-user)
 (defpackage :lem-slime
-  (:use :cl :lem)
+  (:use :cl :lem :lem.language-mode)
   (:export :slime-note-attribute
            :slime-entry-attribute
            :slime-headline-attribute
@@ -31,7 +31,7 @@
 (define-attribute slime-headline-attribute
   (t :bold-p t))
 
-(define-major-mode slime-mode nil
+(define-major-mode slime-mode language-mode
     (:name "slime"
      :keymap *slime-mode-keymap*
      :syntax-table lem-lisp-syntax.syntax-table:*syntax-table*)
@@ -40,11 +40,13 @@
                             (current-buffer))
   (setf (variable-value 'indent-tabs-mode) nil)
   (setf (variable-value 'enable-syntax-highlight) t)
-  (setf (variable-value 'calc-indent-function) 'calc-indent))
+  (setf (variable-value 'calc-indent-function) 'calc-indent)
+  (setf (variable-value 'line-comment) ";")
+  (setf (variable-value 'insertion-line-comment) ";; ")
+  (setf (variable-value 'find-definitions-function) 'find-definitions))
 
 (define-key *slime-mode-keymap* "C-M-a" 'lem.lisp-mode:lisp-beginning-of-defun)
 (define-key *slime-mode-keymap* "C-M-e" 'lem.lisp-mode:lisp-end-of-defun)
-(define-key *slime-mode-keymap* "C-c ;" 'lem.lisp-mode:lisp-comment-or-uncomment-region)
 (define-key *slime-mode-keymap* "C-M-q" 'slime-indent-sexp)
 (define-key *slime-mode-keymap* "C-c M-p" 'slime-set-package)
 (define-key *slime-mode-keymap* "C-c C-e" 'slime-eval-last-expression)
@@ -57,8 +59,6 @@
 (define-key *slime-mode-keymap* "C-c C-c" 'slime-compile-defun)
 (define-key *slime-mode-keymap* "C-c C-m" 'slime-macroexpand)
 (define-key *slime-mode-keymap* "C-c M-m" 'slime-macroexpand-all)
-(define-key *slime-mode-keymap* "M-." 'slime-edit-definition)
-(define-key *slime-mode-keymap* "M-," 'slime-pop-find-definition-stack)
 (define-key *slime-mode-keymap* "M-_" 'slime-edit-uses)
 (define-key *slime-mode-keymap* "M-?" 'slime-edit-uses)
 (define-key *slime-mode-keymap* "C-M-i" 'slime-completion-symbol-at-point)
@@ -438,60 +438,29 @@
               (position-at-point point))
         *edit-definition-stack*))
 
-(define-command slime-edit-definition () ()
+(defun find-definitions ()
   (check-connection)
-  (let* ((name (read-symbol-name "Edit Definition of: "
-                                 (or (symbol-string-at-point (current-point)) "")))
-         (definitions (slime-eval `(swank:find-definitions-for-emacs ,name)))
-         (found-list '()))
-    (let ((point (lem-lisp-syntax.enclosing:search-local-definition
-                  (current-point) name)))
+  (let ((name (or (symbol-string-at-point (current-point))
+                  (read-symbol-name "Edit Definition of: "))))
+    (let ((point (lem-lisp-syntax.enclosing:search-local-definition (current-point) name)))
       (when point
-        (push-edit-definition (current-point))
-        (move-point (current-point) point)
-        (return-from slime-edit-definition)))
-    (dolist (def definitions)
-      (optima:match def
-        ((list title
-               (list :location
-                     (list :file file)
-                     (list :position offset)
-                     (list :snippet _)))
-         (push (list title file offset) found-list))))
-    (when found-list
-      (push-edit-definition (current-point))
-      (if (null (rest found-list))
-          (destructuring-bind (title file offset)
-              (first found-list)
-            (declare (ignore title))
-            (find-file file)
-            (move-to-position (current-point) offset))
-          (let ((prev-file nil))
-            (lem.sourcelist:with-sourcelist (sourcelist "*slime-definitions*")
-              (dolist (elt found-list)
-                (destructuring-bind (title file offset) elt
-                  (lem.sourcelist:append-sourcelist
-                   sourcelist
-                   (lambda (cur-point)
-                     (unless (and prev-file (string= prev-file file))
-                       (insert-string cur-point file
-                                      :attribute 'slime-headline-attribute)
-                       (insert-character cur-point #\newline))
-                     (insert-string cur-point
-                                    (format nil "  ~A" title)
-                                    :attribute 'slime-entry-attribute))
-                   (lambda ()
-                     (find-file file)
-                     (move-to-position (current-point) offset)))
-                  (setf prev-file file)))))))))
-
-(define-command slime-pop-find-definition-stack () ()
-  (let ((elt (pop *edit-definition-stack*)))
-    (when elt
-      (destructuring-bind (buffer-name position) elt
-        (let ((buffer (get-buffer-create buffer-name)))
-          (switch-to-buffer buffer)
-          (move-to-position (current-point) position))))))
+        (return-from find-definitions
+          (list (make-xref :file (buffer-filename (current-buffer))
+                           :position (position-at-point point))))))
+    (let ((definitions (slime-eval `(swank:find-definitions-for-emacs ,name)))
+          (xrefs '()))
+      (dolist (def definitions)
+        (optima:match def
+          ((list title
+                 (list :location
+                       (list :file file)
+                       (list :position position)
+                       (list :snippet _)))
+           (push (make-xref :title title
+                            :file file
+                            :position position)
+                 xrefs))))
+      xrefs)))
 
 (define-command slime-edit-uses () ()
   (check-connection)

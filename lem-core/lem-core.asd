@@ -43,7 +43,6 @@
                (:file "word-command")
                (:file "sexp-command")
 
-               (:file "language-mode")
                (:file "listener-mode")
                (:file "kbdmacro")
                (:file "isearch")
@@ -52,6 +51,7 @@
                (:file "line-numbers")
                (:file "sourcelist")
                (:file "grep")
+               (:file "language-mode")
                (:file "go-mode")
                (:file "dired")
                (:file "abbrev")

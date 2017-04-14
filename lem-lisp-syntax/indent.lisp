@@ -128,6 +128,10 @@
   (declare (ignore path indent-point sexp-column))
   'default-indent)
 
+(defun lisp-indent-keyword (path indent-point sexp-column)
+  (declare (ignore path indent-point))
+  (+ sexp-column 1))
+
 (defun compute-indent-lambda-list (path indent-point sexp-column)
   (declare (ignore path indent-point sexp-column))
   'default-indent)
@@ -228,7 +232,9 @@
               (funcall *get-method-function* name)))
       (f (and (null (cdr path))
               (ppcre:scan "^(?:with-|without-|within-|do-|def)" (or name1 name))
-              '(&lambda &body))))))
+              '(&lambda &body)))
+      (f (and (ppcre:scan "^:.*" name)
+              'lisp-indent-keyword)))))
 
 (defun calc-default-indent (point)
   (loop

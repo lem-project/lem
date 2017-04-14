@@ -34,7 +34,7 @@
 (define-major-mode slime-mode language-mode
     (:name "slime"
      :keymap *slime-mode-keymap*
-     :syntax-table lem-lisp-syntax.syntax-table:*syntax-table*)
+     :syntax-table lem-lisp-syntax:*syntax-table*)
   (modeline-add-status-list (lambda (window)
                               (buffer-package (window-buffer window) "CL-USER"))
                             (current-buffer))
@@ -88,7 +88,7 @@
 
 (defun indentation-update (info)
   (loop :for (name indent packages) :in info :do
-    (lem-lisp-syntax.indent:set-indentation name indent))
+    (lem-lisp-syntax:set-indentation name indent))
   #+(or)
   (loop :for (name indent packages) :in info
         :do (dolist (package packages)
@@ -113,8 +113,8 @@
           (values (gethash (first (last parts)) table)))))))
 
 (defun calc-indent (point)
-  (let ((lem-lisp-syntax.indent:*get-method-function* #'indent-spec))
-    (lem-lisp-syntax.indent:calc-indent point)))
+  (let ((lem-lisp-syntax:*get-method-function* #'indent-spec))
+    (lem-lisp-syntax:calc-indent point)))
 
 (defun slime-eval-internal (emacs-rex-fun rex-arg package)
   (let ((tag (gensym)))
@@ -191,7 +191,7 @@
                     'mh-slime-package))))
 
 (define-command slime-beginning-of-defun (n) ("p")
-  (lem-lisp-syntax.misc:beginning-of-defun (current-point) (- n)))
+  (lem-lisp-syntax:beginning-of-defun (current-point) (- n)))
 
 (define-command slime-end-of-defun (n) ("p")
   (if (minusp n)
@@ -199,7 +199,7 @@
       (let ((point (current-point)))
         (dotimes (_ n)
           (with-point ((p point))
-            (cond ((and (lem-lisp-syntax.misc:beginning-of-defun p -1)
+            (cond ((and (lem-lisp-syntax:beginning-of-defun p -1)
                         (point<= p point)
                         (or (form-offset p 1)
                             (progn
@@ -482,7 +482,7 @@
   (check-connection)
   (let ((name (or (symbol-string-at-point (current-point))
                   (read-symbol-name "Edit Definition of: "))))
-    (let ((point (lem-lisp-syntax.enclosing:search-local-definition (current-point) name)))
+    (let ((point (lem-lisp-syntax:search-local-definition (current-point) name)))
       (when point
         (return-from find-definitions
           (list (make-xref-location :file (buffer-filename (current-buffer))
@@ -530,7 +530,7 @@
 (define-major-mode slime-apropos-mode ()
     (:name "slime-apropos"
      :keymap *slime-apropos-mode-keymap*
-     :syntax-table lem-lisp-syntax.syntax-table:*syntax-table*))
+     :syntax-table lem-lisp-syntax:*syntax-table*))
 
 (defun show-apropos (data)
   (let ((buffer (get-buffer-create "*slime-apropos*")))
@@ -604,7 +604,7 @@
 (define-major-mode slime-repl-mode slime-mode
     (:name "slime-repl"
      :keymap *slime-repl-mode-keymap*
-     :syntax-table lem-lisp-syntax.syntax-table:*syntax-table*)
+     :syntax-table lem-lisp-syntax:*syntax-table*)
   (repl-reset-input)
   (lem.listener-mode:listener-mode t))
 
@@ -754,7 +754,7 @@
                           :ok)
                     :package)
               :prompt))
-  (setf lem-lisp-syntax.syntax-table:*get-features-function* 'features)
+  (setf lem-lisp-syntax:*get-features-function* 'features)
   (slime-repl)
   (start-thread))
 

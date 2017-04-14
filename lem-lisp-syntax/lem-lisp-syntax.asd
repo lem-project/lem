@@ -4,4 +4,5 @@
   :components ((:file "indent")
                (:file "syntax-table")
                (:file "misc")
-               (:file "enclosing")))
+               (:file "enclosing")
+               (:file "lem-lisp-syntax")))

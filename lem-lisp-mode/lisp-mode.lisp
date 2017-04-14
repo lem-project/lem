@@ -38,7 +38,7 @@
 (define-major-mode lisp-mode language-mode
     (:name "lisp"
      :keymap *lisp-mode-keymap*
-     :syntax-table lem-lisp-syntax.syntax-table:*syntax-table*)
+     :syntax-table lem-lisp-syntax:*syntax-table*)
   (setf (variable-value 'indent-tabs-mode) nil)
   (setf (variable-value 'enable-syntax-highlight) t)
   (setf (variable-value 'calc-indent-function) 'calc-indent)
@@ -56,8 +56,8 @@
       (return-from indent-spec result))))
 
 (defun calc-indent (point)
-  (let ((lem-lisp-syntax.indent:*get-method-function* #'indent-spec))
-    (lem-lisp-syntax.indent:calc-indent point)))
+  (let ((lem-lisp-syntax:*get-method-function* #'indent-spec))
+    (lem-lisp-syntax:calc-indent point)))
 
 (define-key *lisp-mode-keymap* (kbd "C-M-q") 'lisp-indent-sexp)
 (define-command lisp-indent-sexp () ()
@@ -471,7 +471,7 @@
       (lisp-read-symbol "Find definitions: " 'mh-find-definitions t)
     (unless error-p
       (let ((local-point
-             (lem-lisp-syntax.enclosing:search-local-definition
+             (lem-lisp-syntax:search-local-definition
               (current-point) (string-downcase name))))
         (when local-point
           (push-definition-stack (current-point))
@@ -680,7 +680,7 @@
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "lisp-repl"
 	   :keymap *lisp-repl-mode-keymap*
-	   :syntax-table lem-lisp-syntax.syntax-table:*syntax-table*)
+	   :syntax-table lem-lisp-syntax:*syntax-table*)
   (setf (variable-value 'listener-get-prompt-function)
         'lisp-repl-get-prompt)
   (setf (variable-value 'listener-check-confirm-function)

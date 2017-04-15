@@ -86,33 +86,38 @@ Parses length information to determine how many characters to read."
 ;;; Data
 
 (defclass connection ()
-  ((hostname :reader connection-hostname
-             :initarg :hostname
-             :type string
-             :documentation "The host to connect to.")
-   (port :reader connection-port
-         :initarg :port
-         :type integer
-         :documentation "The port to connect to.")
-   ;; Internal
-   (socket :accessor connection-socket
-           :type usocket:stream-usocket
-           :documentation "The usocket socket.")
-   (request-count :accessor connection-request-count
-                  :initform 0
-                  :type integer
-                  :documentation "A number that is increased and sent along with every request.")
-   (package :accessor connection-package
-            :initform "COMMON-LISP-USER"
-            :type string
-            :documentation "The name of the connection's package.")
-   (thread :accessor connection-thread
-           :initform t
-           :documentation "The current thread.")
-   (continuations :accessor connection-continuations
-                  :initform nil)
-
-   ;; Logging
+  ((hostname
+    :reader connection-hostname
+    :initarg :hostname
+    :type string
+    :documentation "The host to connect to.")
+   (port
+    :reader connection-port
+    :initarg :port
+    :type integer
+    :documentation "The port to connect to.")
+   (socket
+    :reader connection-socket
+    :initarg :socket
+    :type usocket:stream-usocket
+    :documentation "The usocket socket.")
+   (request-count
+    :accessor connection-request-count
+    :initform 0
+    :type integer
+    :documentation "A number that is increased and sent along with every request.")
+   (package
+    :accessor connection-package
+    :initform "COMMON-LISP-USER"
+    :type string
+    :documentation "The name of the connection's package.")
+   (thread
+    :accessor connection-thread
+    :initform t
+    :documentation "The current thread.")
+   (continuations
+    :accessor connection-continuations
+    :initform nil)
    (logp :accessor connection-log-p
          :initarg :logp
          :initform nil
@@ -123,7 +128,6 @@ Parses length information to determine how many characters to read."
                    :initform *error-output*
                    :type stream
                    :documentation "The stream to log to.")
-
    (debug-level :accessor connection-debug-level
                 :initform 0
                 :type integer
@@ -154,7 +158,7 @@ Parses length information to determine how many characters to read."
 
 (defun new-connection (hostname port)
   (let* ((socket (usocket:socket-connect hostname port :element-type '(unsigned-byte 8)))
-         (connection (make-instance 'connect
+         (connection (make-instance 'connection
                                     :hostname hostname
                                     :port port
                                     :socket socket)))
@@ -162,7 +166,7 @@ Parses length information to determine how many characters to read."
     connection))
 
 (defun setup (connection)
-  (request-connection-info connection)
+  (emacs-rex connection `(swank:connection-info))
   ;; Read the connection information message
   (let* ((info (read-message connection))
          (data (getf (getf info :return) :ok))
@@ -196,8 +200,8 @@ Parses length information to determine how many characters to read."
      swank-repl))
   (read-message connection)
   ;; Start it up
-  (request-init-presentations connection)
-  (request-create-repl connection)
+  (emacs-rex connection '(swank:init-presentations))
+  (emacs-rex connection '(swank-repl:create-repl nil :coding-system "utf-8-unix"))
   ;; Wait for startup
   (read-message connection)
   ;; Read all the other messages, dumping them
@@ -206,31 +210,31 @@ Parses length information to determine how many characters to read."
 (defun log-message (connection format-string &rest arguments)
   "Log a message."
   (when (connection-log-p connection)
-    (lem::pdebug (cons format-string arguments))
-    #+(or)(apply #'format (cons (connection-logging-stream connection)
-                          (cons format-string
-                                arguments)))))
+    (apply #'format
+           (connection-logging-stream connection)
+           format-string
+           arguments)))
 
 (defun read-message-string (connection)
   "Read a message string from a Swank connection.
 
 This function will block until it reads everything. Consider message-waiting-p
 to check if input is available."
-  (with-slots (socket) connection
-    (let ((stream (usocket:socket-stream socket)))
-      (when (usocket:wait-for-input socket :timeout 5)
-        (let ((msg (read-message-from-stream stream)))
-          (log-message connection "~%Read: ~A~%" msg)
-          msg)))))
+  (let* ((socket (connection-socket connection))
+         (stream (usocket:socket-stream socket)))
+    (when (usocket:wait-for-input socket :timeout 5)
+      (let ((msg (read-message-from-stream stream)))
+        (log-message connection "~%Read: ~A~%" msg)
+        msg))))
 
 (defun send-message-string (connection message)
   "Send a message string to a Swank connection."
-  (with-slots (socket) connection
-    (let ((stream (usocket:socket-stream socket)))
-      (write-message-to-stream stream message)
-      (force-output stream)
-      (log-message connection "~%Sent: ~A~%" message)
-      message)))
+  (let* ((socket (connection-socket connection))
+         (stream (usocket:socket-stream socket)))
+    (write-message-to-stream stream message)
+    (force-output stream)
+    (log-message connection "~%Sent: ~A~%" message)
+    message))
 
 (defun message-waiting-p (connection &key (timeout 0))
   "t if there's a message in the connection waiting to be read, nil otherwise."
@@ -281,27 +285,13 @@ to check if input is available."
             (remove id (connection-continuations connection) :key #'car))
       (funcall (cdr elt) value))))
 
-(defun request-connection-info (connection)
-  "Request that Swank provide connection information."
-  (emacs-rex connection `(swank:connection-info)))
-
 (defun request-swank-require (connection requirements)
-  "Request that the Swank server load contrib modules. `requirements` must be a list of symbols, e.g. '(swank-repl swank-media)."
+  "Request that the Swank server load contrib modules.
+`requirements` must be a list of symbols, e.g. '(swank-repl swank-media)."
   (emacs-rex connection
              `(swank:swank-require ',(loop for item in requirements collecting
                                        (intern (symbol-name item)
                                                (find-package :swank-io-package))))))
-
-(defun request-init-presentations (connection)
-  "Request that Swank initiate presentations."
-  (emacs-rex connection `(swank:init-presentations)))
-
-(defun request-create-repl (connection)
-  "Request that Swank create a new REPL."
-  (prog1
-      (emacs-rex connection `(swank-repl:create-repl nil :coding-system "utf-8-unix"))
-    ;;(setf (connection-thread connection) 1)
-    ))
 
 (defun request-listener-eval (connection string &optional continuation)
   "Request that Swank evaluate a string of code in the REPL."
@@ -348,10 +338,6 @@ to check if input is available."
   "Read an arbitrary message from a connection."
   (with-swank-syntax ()
     (read-from-string* (read-message-string connection))))
-
-(defun read-all-messages (connection)
-  (loop while (message-waiting-p connection) collecting
-    (read-message connection)))
 
 ;;;
 

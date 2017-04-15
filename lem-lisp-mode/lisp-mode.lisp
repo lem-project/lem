@@ -723,6 +723,7 @@
              (concatenate 'string string (string #\newline))))))
 
 (define-command start-lisp-repl () ()
+  (check-connection)
   (lem.listener-mode:listener-start "*lisp-repl*" 'lisp-repl-mode))
 
 (defun write-string-to-repl (string)

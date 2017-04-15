@@ -509,20 +509,21 @@
                (end (current-point)))
     (skip-chars-backward start #'syntax-symbol-char-p)
     (skip-chars-forward end #'syntax-symbol-char-p)
-    (let ((result
-           (slime-eval-from-string (format nil "(swank:fuzzy-completions ~S ~S)"
-                                           (points-to-string start end)
-                                           (current-package)))))
-      (when result
-        (destructuring-bind (completions timeout-p) result
-          (declare (ignore timeout-p))
-          (mapcar (lambda (completion)
-                    (make-completion-item
-                     :label (first completion)
-                     :detail (fourth completion)
-                     :start start
-                     :end end))
-                  completions))))))  
+    (when (point< start end)
+      (let ((result
+             (slime-eval-from-string (format nil "(swank:fuzzy-completions ~S ~S)"
+                                             (points-to-string start end)
+                                             (current-package)))))
+        (when result
+          (destructuring-bind (completions timeout-p) result
+            (declare (ignore timeout-p))
+            (mapcar (lambda (completion)
+                      (make-completion-item
+                       :label (first completion)
+                       :detail (fourth completion)
+                       :start start
+                       :end end))
+                    completions)))))))
 
 (defvar *slime-apropos-mode-keymap* (make-keymap nil *slime-mode-keymap*))
 (define-key *slime-apropos-mode-keymap* "q" 'quit-window)

@@ -1,4 +1,3 @@
-(in-package :cl-user)
 (defpackage lem-lisp-mode.swank-protocol
   (:use :cl)
   (:import-from :lem-lisp-mode.errors
@@ -16,7 +15,7 @@
            :connection-log-p
            :connection-logging-stream
            :connection-features)
-  (:export :connect
+  (:export :new-connection
            :read-message-string
            :send-message-string
            :message-waiting-p
@@ -153,19 +152,16 @@ Parses length information to determine how many characters to read."
    (info :accessor connection-info))
   (:documentation "A connection to a remote Lisp."))
 
-(defmethod connect ((connection connection))
-  "Connect to the remote server. Returns t."
-  (with-slots (hostname port) connection
-    (let ((socket (usocket:socket-connect hostname
-                                          port
-                                          :element-type '(unsigned-byte 8))))
-      (setf (connection-socket connection) socket)))
-  t)
+(defun new-connection (hostname port)
+  (let* ((socket (usocket:socket-connect hostname port :element-type '(unsigned-byte 8)))
+         (connection (make-instance 'connect
+                                    :hostname hostname
+                                    :port port
+                                    :socket socket)))
+    (setup connection)
+    connection))
 
-(defmethod connect :after ((connection connection))
-  "After connecting, query the Swank server for connection information and
-create a REPL."
-  ;; Issue every request
+(defun setup (connection)
   (request-connection-info connection)
   ;; Read the connection information message
   (let* ((info (read-message connection))
@@ -175,22 +171,16 @@ create a REPL."
     (setf (connection-info connection) info)
     (setf (connection-pid connection)
           (getf data :pid)
-
           (connection-implementation-name connection)
           (getf impl :name)
-
           (connection-implementation-version connection)
           (getf impl :version)
-
           (connection-machine-type connection)
           (getf machine :type)
-
           (connection-machine-version connection)
           (getf machine :version)
-
           (connection-swank-version connection)
           (getf data :version)
-
           (connection-features connection)
           (getf data :features)))
   ;; Require some Swank modules

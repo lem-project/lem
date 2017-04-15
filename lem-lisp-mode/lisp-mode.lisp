@@ -774,10 +774,12 @@
     ((list (prompt-for-string "Hostname: " "localhost")
            (parse-integer (prompt-for-string "Port: " (princ-to-string *default-port*)))
            t))
-  (setf *connection* (make-instance 'swank-protocol:connection :hostname hostname :port port))
   (message "Connecting...")
-  (handler-case (swank-protocol:connect *connection*)
-    (usocket:connection-refused-error (c) (editor-error "~A" c)))
+  (handler-case (setf *connection*
+                      (swank-protocol:new-connection hostname
+                                                     port))
+    (usocket:connection-refused-error (c)
+      (editor-error "~A" c)))
   (message "Swank server running on ~A ~A"
            (swank-protocol:connection-implementation-name *connection*)
            (swank-protocol:connection-implementation-version *connection*))

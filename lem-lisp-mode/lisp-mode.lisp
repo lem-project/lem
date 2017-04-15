@@ -44,7 +44,7 @@
 (define-key *lisp-mode-keymap* "C-M-e" 'lisp-end-of-defun)
 (define-key *lisp-mode-keymap* "C-M-q" 'lisp-indent-sexp)
 (define-key *lisp-mode-keymap* "C-c M-p" 'lisp-set-package)
-(define-key *lisp-mode-keymap* "M-:" 'lisp-eval-string)
+(define-key *global-keymap* "M-:" 'lisp-eval-string)
 (define-key *lisp-mode-keymap* "C-c C-e" 'lisp-eval-last-expression)
 (define-key *lisp-mode-keymap* "C-M-x" 'lisp-eval-defun)
 (define-key *lisp-mode-keymap* "C-c C-r" 'lisp-eval-region)
@@ -246,6 +246,7 @@
                               (completion-symbol))
                             nil
                             'mh-lisp-eval-string)))
+  (check-connection)
   (interactive-eval string))
 
 (define-command lisp-eval-last-expression () ()

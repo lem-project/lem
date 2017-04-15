@@ -75,7 +75,7 @@
                     (swank:create-server :port port))
       (error ()
         (go :START)))
-    (lisp-connect "localhost" port nil)))
+    (slime-connect "localhost" port nil)))
 
 (defun check-connection ()
   (unless (connected-p)
@@ -770,7 +770,7 @@
                             (sleep 0.1))))))
                   :name "lisp-wait-message"))
 
-(define-command lisp-connect (hostname port &optional (start-repl t))
+(define-command slime-connect (hostname port &optional (start-repl t))
     ((list (prompt-for-string "Hostname: " "localhost")
            (parse-integer (prompt-for-string "Port: " (princ-to-string *default-port*)))
            t))
@@ -1015,7 +1015,7 @@
 (defvar *process* nil)
 (defparameter *impl-name* nil)
 
-(define-command lisp () ()
+(define-command slime () ()
   (setf *process*
         (sb-ext:run-program "ros"
                             `(,@(if *impl-name* `("-L" ,*impl-name*))
@@ -1026,17 +1026,17 @@
                             :wait nil
                             :search t))
   (sleep 1)
-  (lisp-connect "localhost" *default-port*)
+  (slime-connect "localhost" *default-port*)
   (add-hook *exit-editor-hook*
             (lambda ()
               (lisp-quit))))
 
-(define-command lisp-quit () ()
+(define-command slime-quit () ()
   (when (and *process* (sb-ext:process-alive-p *process*))
     (sb-ext:process-kill *process* 9)
     (setf *connection* nil)))
 
-(define-command lisp-restart () ()
+(define-command slime-restart () ()
   (lisp-quit)
   (sleep 1)
   (lisp))

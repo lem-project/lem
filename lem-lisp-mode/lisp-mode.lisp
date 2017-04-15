@@ -21,14 +21,10 @@
 (defvar *last-compilation-result* nil)
 (defvar *indent-table* (make-hash-table :test 'equal))
 
-(define-attribute lisp-note-attribute
+(define-attribute compiler-note-attribute
   (t :foreground "red" :underline-p t))
 
-(define-attribute lisp-entry-attribute
-  (:dark :foreground "cyan" :bold-p t)
-  (t :foreground "blue" :bold-p t))
-
-(define-attribute lisp-headline-attribute
+(define-attribute apropos-headline-attribute
   (t :bold-p t))
 
 (define-major-mode lisp-mode language-mode
@@ -348,7 +344,7 @@
     (make-overlay point
                   (or (form-offset (copy-point point :temporary) 1)
                       (buffer-end-point buffer))
-                  'lisp-note-attribute)))
+                  'compiler-note-attribute)))
 
 (defvar *note-overlays* nil)
 
@@ -569,7 +565,7 @@
               :do (let ((designator (cadr plist))
                         (plist1 (cddr plist)))
                     (insert-string point designator
-                                   :attribute 'lisp-headline-attribute)
+                                   :attribute 'apropos-headline-attribute)
                     (loop :for (k v) :on plist1 :by #'cddr
                           :do (insert-string point (format nil "~%  ~A: ~A" k v)))
                     (insert-character point #\newline 2)))))))

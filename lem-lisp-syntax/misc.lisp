@@ -1,6 +1,8 @@
 (defpackage :lem-lisp-syntax.misc
   (:use :cl :lem-base)
-  (:export :beginning-of-defun))
+  (:export
+   :beginning-of-defun
+   :top-of-defun))
 (in-package :lem-lisp-syntax.misc)
 
 (defun beginning-of-defun (point n)
@@ -23,3 +25,6 @@
               (return-from beginning-of-defun nil))
             (when (char= #\( (character-at point 0))
               (return)))))))
+
+(defun top-of-defun (point)
+  (beginning-of-defun (line-end point) -1))

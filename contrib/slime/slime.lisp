@@ -51,6 +51,7 @@
 (define-key *slime-mode-keymap* "C-M-e" 'slime-end-of-defun)
 (define-key *slime-mode-keymap* "C-M-q" 'slime-indent-sexp)
 (define-key *slime-mode-keymap* "C-c M-p" 'slime-set-package)
+(define-key *slime-mode-keymap* "M-:" 'slime-eval-string)
 (define-key *slime-mode-keymap* "C-c C-e" 'slime-eval-last-expression)
 (define-key *slime-mode-keymap* "C-M-x" 'slime-eval-defun)
 (define-key *slime-mode-keymap* "C-c C-r" 'slime-eval-region)
@@ -243,6 +244,16 @@
            (lem.listener-mode:listener-reset-prompt (repl-buffer))))
         (t
          (setf (buffer-value (current-buffer) "package") package-name))))
+
+(define-command slime-eval-string (string)
+    ((list (prompt-for-line "Slime Eval: "
+                            ""
+                            (lambda (str)
+                              (declare (ignore str))
+                              (values nil (completion-symbol)))
+                            nil
+                            'mh-slime-eval-string)))
+  (interactive-eval string))
 
 (define-command slime-eval-last-expression () ()
   (check-connection)

@@ -13,6 +13,7 @@
 
 (defparameter *default-port* 4005)
 
+(defvar *connection-list* '())
 (defvar *connection* nil)
 (defvar *write-string-function* 'write-string-to-output-buffer)
 (defvar *last-compilation-result* nil)
@@ -63,6 +64,15 @@
 
 (defun connected-p ()
   (not (null *connection*)))
+
+(defun add-connection (conn)
+  (push conn *connection-list*)
+  (setf *connection* conn))
+
+(defun remove-connection (conn)
+  (setf *connection-list* (delete conn *connection-list*))
+  (setf *connection* (car *connection-list*))
+  *connection*)
 
 (defun self-connect ()
   (prog (port)
@@ -780,18 +790,19 @@
            (parse-integer (prompt-for-string "Port: " (princ-to-string *default-port*)))
            t))
   (message "Connecting...")
-  (handler-case (setf *connection*
-                      (swank-protocol:new-connection hostname
-                                                     port))
-    (usocket:connection-refused-error (c)
-      (editor-error "~A" c)))
-  (message "Swank server running on ~A ~A"
-           (swank-protocol:connection-implementation-name *connection*)
-           (swank-protocol:connection-implementation-version *connection*))
-  (setf lem-lisp-syntax:*get-features-function* 'features)
-  (when start-repl (start-lisp-repl))
-  (start-thread)
-  *connection*)
+  (let (connection)
+    (handler-case (setf connection
+                        (swank-protocol:new-connection hostname port))
+      (usocket:connection-refused-error (c)
+        (editor-error "~A" c)))
+    (message "Swank server running on ~A ~A"
+             (swank-protocol:connection-implementation-name connection)
+             (swank-protocol:connection-implementation-version connection))
+    (setf lem-lisp-syntax:*get-features-function* 'features)
+    (add-connection connection)
+    (when start-repl (start-lisp-repl))
+    (start-thread)
+    connection))
 
 (defun log-message (message)
   (let ((buffer (get-buffer-create "*lisp-events*")))
@@ -804,7 +815,7 @@
              (not (null *connection*)))
     (handler-bind ((disconnected (lambda (c)
                                    (declare (ignore c))
-                                   (setq *connection* nil))))
+                                   (remove-connection *connection*))))
       (loop :while (swank-protocol:message-waiting-p *connection*)
             :do (dispatch-message (swank-protocol:read-message *connection*))))))
 
@@ -1037,7 +1048,8 @@
   (let ((process (swank-protocol:connection-process *connection*)))
     (when (and process (sb-ext:process-alive-p process))
       (sb-ext:process-kill process 9)
-      (setf *connection* nil))))
+      (remove-connection *connection*)
+      t)))
 
 (define-command slime-restart () ()
   (slime-quit)

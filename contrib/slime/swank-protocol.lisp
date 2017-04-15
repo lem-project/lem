@@ -321,10 +321,43 @@ to check if input is available."
 
 ;;; Reading/parsing messages
 
+(defun read-atom (in)
+  (let ((token
+         (coerce (loop :for c := (peek-char nil in nil)
+                       :until (or (null c) (member c '(#\( #\) #\space #\newline #\tab)))
+                       :collect c
+                       :do (read-char in))
+                 'string)))
+    (handler-case (read-from-string token)
+      (error ()
+        (let ((name (ppcre:scan-to-strings "::?.*" token)))
+          (intern (string-upcase (string-left-trim ":" name))
+                  :keyword))))))
+
+(defun read-list (in)
+  (read-char in)
+  (loop :until (eql (peek-char t in) #\))
+        :collect (read-ahead in)
+        :finally (read-char in)))
+
+(defun read-ahead (in)
+  (let ((c (peek-char t in)))
+    (case c
+      ((#\()
+       (read-list in))
+      ((#\")
+       (read in))
+      (otherwise
+       (read-atom in)))))
+
+(defun read-from-string* (string)
+  (with-input-from-string (in string)
+    (read-ahead in)))
+
 (defun read-message (connection)
   "Read an arbitrary message from a connection."
   (with-swank-syntax ()
-    (read-from-string (read-message-string connection))))
+    (read-from-string* (read-message-string connection))))
 
 (defun read-all-messages (connection)
   (loop while (message-waiting-p connection) collecting

@@ -177,7 +177,7 @@
                                                               :start start
                                                               :end end))
                                        (completion-item
-                                        item))
+                                        item?))
                         :when item
                         :collect item)
                   :auto-insert auto-insert

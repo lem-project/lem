@@ -70,9 +70,19 @@
 (defun connected-p ()
   (not (null *connection*)))
 
+(defun self-connect ()
+  (prog (port)
+   :START
+    (setf port (+ 10000 (random 10000)))
+    (handler-case (let ((swank::*swank-debug-p* nil))
+                    (swank:create-server :port port))
+      (error ()
+        (go :START)))
+    (slime-connect "localhost" port nil)))
+
 (defun check-connection ()
   (unless (connected-p)
-    (editor-error "Not connected.")))
+    (self-connect)))
 
 (defun buffer-package (buffer &optional default)
   (or (lem.lisp-mode::lisp-buffer-package buffer)
@@ -692,7 +702,7 @@
              tag
              (concatenate 'string string (string #\newline))))))
 
-(define-command slime-repl () ()
+(define-command start-slime-repl () ()
   (lem.listener-mode:listener-start "*slime-repl*" 'slime-repl-mode))
 
 (defun write-string-to-repl (string)
@@ -725,7 +735,7 @@
                     (loop
                       (unless (connected-p)
                         (return))
-                      (when (swank-protocol:message-waiting-p *connection* :timeout 3)
+                      (when (swank-protocol:message-waiting-p *connection* :timeout 10)
                         (let ((barrior t))
                           (send-event (lambda ()
                                         (unwind-protect (progn (pull-events)
@@ -739,9 +749,10 @@
                             (sleep 0.1))))))
                   :name "slime-wait-message"))
 
-(define-command slime-connect (hostname port)
+(define-command slime-connect (hostname port &optional (start-repl t))
     ((list (prompt-for-string "Hostname: " "localhost")
-           (parse-integer (prompt-for-string "Port: " (princ-to-string *default-port*)))))
+           (parse-integer (prompt-for-string "Port: " (princ-to-string *default-port*)))
+           t))
   (setf *connection* (make-instance 'swank-protocol:connection :hostname hostname :port port))
   (message "Connecting...")
   (handler-case (swank-protocol:connect *connection*)
@@ -756,7 +767,7 @@
                     :package)
               :prompt))
   (setf lem-lisp-syntax:*get-features-function* 'features)
-  (slime-repl)
+  (when start-repl (start-slime-repl))
   (start-thread))
 
 (defun log-message (message)

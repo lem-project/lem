@@ -339,6 +339,10 @@ to check if input is available."
   (with-swank-syntax ()
     (read-from-string* (read-message-string connection))))
 
+(defun read-all-messages (connection)
+  (loop while (message-waiting-p connection) collecting
+    (read-message connection)))
+
 ;;;
 
 (defun debuggerp (connection)

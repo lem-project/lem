@@ -203,16 +203,18 @@
   (throw +recursive-minibuffer-break-tag+
     +recursive-minibuffer-break-tag+))
 
-(defun minibuf-read-line-loop (comp-f existing-p)
+(defun minibuf-read-line-loop (comp-f existing-p syntax-table)
   (let ((*minibuf-read-line-existing-p* existing-p)
         (*minibuf-read-line-comp-f* comp-f))
-    (catch 'minibuf-read-line-end
-      (command-loop))
-    (let ((str (get-minibuffer-string)))
-      (lem.history:add-history *minibuf-read-line-history* str)
-      str)))
+    (with-current-syntax syntax-table
+      (catch 'minibuf-read-line-end
+        (command-loop))
+      (let ((str (get-minibuffer-string)))
+        (lem.history:add-history *minibuf-read-line-history* str)
+        str))))
 
-(defun prompt-for-line (prompt initial comp-f existing-p history-name)
+(defun prompt-for-line (prompt initial comp-f existing-p history-name
+                               &optional (syntax-table (current-syntax)))
   (when (and (not *enable-recursive-minibuffers*) (< 0 *minibuf-read-line-depth*))
     (editor-error "ERROR: recursive use of minibuffer"))
   (let ((*minibuffer-calls-window* (current-window))
@@ -250,7 +252,7 @@
                        (unwind-protect (call-with-save-windows
                                         (minibuffer-calls-window)
                                         (lambda ()
-                                          (minibuf-read-line-loop comp-f existing-p)))
+                                          (minibuf-read-line-loop comp-f existing-p syntax-table)))
                          (with-current-window (minibuffer-window)
                            (let ((*inhibit-read-only* t))
                              (erase-buffer))

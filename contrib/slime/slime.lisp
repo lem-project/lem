@@ -85,8 +85,10 @@
     (self-connect)))
 
 (defun buffer-package (buffer &optional default)
-  (or (lem.lisp-mode::lisp-buffer-package buffer)
-      default))
+  (let ((package-name (buffer-value buffer "package")))
+    (if package-name
+        (string-upcase package-name)
+        default)))
 
 (defun current-package ()
   (or (buffer-package (current-buffer))
@@ -227,7 +229,9 @@
                      (character-offset point 1)))))))))
 
 (define-command slime-indent-sexp () ()
-  (lem.lisp-mode:lisp-indent-sexp))
+  (with-point ((end (current-point) :right-inserting))
+    (when (form-offset end 1)
+      (indent-region (current-point) end))))
 
 (define-command slime-set-package (package-name) ((list (read-package-name)))
   (check-connection)
@@ -638,13 +642,22 @@
 (defun repl-get-prompt ()
   (format nil "~A> " *slime-prompt-string*))
 
+(defun repl-paren-correspond-p (point)
+  (loop :with count := 0
+        :do
+        (insert-character point #\))
+        (incf count)
+        (unless (form-offset (copy-point point :temporary) -1)
+          (delete-character point (- count))
+          (return (= 1 count)))))
+
 (defun repl-reset-input ()
   (let ((buffer (repl-buffer)))
     (when buffer
       (setf (variable-value 'lem.listener-mode:listener-get-prompt-function :buffer buffer)
             'repl-get-prompt
             (variable-value 'lem.listener-mode:listener-check-confirm-function :buffer buffer)
-            'lem.lisp-mode:lisp-repl-paren-correspond-p
+            'repl-paren-correspond-p
             (variable-value 'lem.listener-mode:listener-confirm-function :buffer buffer)
             'repl-confirm))))
 
@@ -1019,10 +1032,23 @@
   (slime))
 
 
+(defun scan-current-package (point)
+  (with-point ((p point))
+    (loop
+      (multiple-value-bind (result groups)
+          (looking-at (line-start p)
+                      "^\\s*\\(in-package (?:#?:|')?([^\)]*)\\)")
+        (when result
+          (let ((package (aref groups 0)))
+            (when package
+              (return package))))
+        (unless (line-offset p -1)
+          (return))))))
+
 (defun idle-timer-function ()
   (when (and (eq (buffer-major-mode (current-buffer)) 'slime-mode)
              (connected-p))
-    (let ((package (lem.lisp-mode::scan-current-package #'identity)))
+    (let ((package (scan-current-package (current-point))))
       (when package
         (slime-set-package package)))))
 

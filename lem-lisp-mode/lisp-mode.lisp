@@ -1029,7 +1029,7 @@
   (slime-connect "localhost" *default-port*)
   (add-hook *exit-editor-hook*
             (lambda ()
-              (lisp-quit))))
+              (slime-quit))))
 
 (define-command slime-quit () ()
   (when (and *process* (sb-ext:process-alive-p *process*))
@@ -1037,9 +1037,9 @@
     (setf *connection* nil)))
 
 (define-command slime-restart () ()
-  (lisp-quit)
+  (slime-quit)
   (sleep 1)
-  (lisp))
+  (slime))
 
 
 (defun scan-current-package (point)

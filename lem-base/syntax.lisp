@@ -12,6 +12,8 @@
           enable-syntax-highlight-p
           syntax-table
           fundamental-syntax-table
+          current-syntax
+          with-current-syntax
           make-syntax-table
           make-syntax-test
           syntax-add-match
@@ -213,6 +215,10 @@
 (defun current-syntax ()
   (or *current-syntax*
       (buffer-syntax-table (current-buffer))))
+
+(defmacro with-current-syntax (syntax &body body)
+  `(let ((*current-syntax* ,syntax))
+     ,@body))
 
 (defun syntax-word-char-p (c)
   (and (characterp c)

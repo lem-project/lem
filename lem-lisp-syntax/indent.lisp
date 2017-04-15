@@ -155,7 +155,10 @@
     :do (let ((restp nil))
           (loop
             (let ((method1 (car method)))
-              (cond ((and restp (not (or (consp method1) (symbolp method1))))
+              (cond ((and restp
+                          (not (or (consp method1)
+                                   (and (symbolp method1)
+                                        (not (member method1 '(&rest &body &whole &lambda)))))))
                      (return-from exit
                        'default-indent))
                     ((eq method1 '&body)

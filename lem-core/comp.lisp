@@ -47,21 +47,15 @@
                                        (parts2-length (length parts2)))
                                   (and (<= parts1-length parts2-length)
                                        (loop
-					  :for p1 :in parts1
-					  :for p2 :in parts2
-					  :unless (funcall test p1 p2)
-					  :do (return nil)
-					  :finally (return t))))))
+                                         :for p1 :in parts1
+                                         :for p2 :in parts2
+                                         :unless (funcall test p1 p2)
+                                         :do (return nil)
+                                         :finally (return t))))))
                             (lambda (elt)
                               (funcall test name elt)))
                         list)))
-    (cond
-      ((null strings) nil)
-      ((null (cdr strings))
-       (values (car strings)
-	       strings))
-      (t
-       (values (logand-strings strings) strings)))))
+    strings))
 
 (defun completion-hypheen (name list &key key)
   (completion name list :test #'completion-test :separator "-" :key key))
@@ -72,18 +66,16 @@
          (files (mapcar #'namestring (cl-fad:list-directory dirname))))
     (let ((strings
            (loop
-	      :for pathname :in (or (directory str) (list str))
-	      :for str := (namestring pathname)
-	      :append
-	      (multiple-value-bind (andstr strings)
-		  (completion (enough-namestring str dirname)
-			      files
-			      :test #'completion-test
-			      :separator "-."
-			      :key #'(lambda (path)
-				       (enough-namestring path dirname)))
-		(when andstr strings)))))
-      (values (logand-strings strings) strings))))
+             :for pathname :in (or (directory str) (list str))
+             :for str := (namestring pathname)
+             :append
+             (completion (enough-namestring str dirname)
+                         files
+                         :test #'completion-test
+                         :separator "-."
+                         :key #'(lambda (path)
+                                  (enough-namestring path dirname))))))
+      strings)))
 
 (defun completion-buffer-name (str)
   (completion str (mapcar #'buffer-name (buffer-list))))

@@ -164,9 +164,7 @@
 
 (define-command minibuf-read-line-completion () ()
   (labels ((f (auto-insert)
-             (multiple-value-bind (str items)
-                 (funcall *minibuf-read-line-comp-f* (get-minibuffer-string))
-               (declare (ignore str))
+             (let ((items (funcall *minibuf-read-line-comp-f* (get-minibuffer-string))))
                (with-point ((start (minibuffer-start-point))
                             (end (current-point)))
                  (run-completion

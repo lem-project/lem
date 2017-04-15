@@ -245,7 +245,7 @@
                             ""
                             (lambda (str)
                               (declare (ignore str))
-                              (values nil (completion-symbol)))
+                              (completion-symbol))
                             nil
                             'mh-lisp-eval-string)))
   (interactive-eval string))

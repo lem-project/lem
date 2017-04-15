@@ -200,10 +200,6 @@
         (move-to-line (current-point) line-number)
         (line-offset (current-point) 0 charpos)))))
 
-(defun line-indent-num ()
-  (with-point ((p (current-point)))
-    (point-charpos (back-to-indentation p))))
-
 (defun complete-symbol ()
   (alexandria:when-let (fn (variable-value 'completion-function :buffer))
     (alexandria:when-let (completion-items (funcall fn))
@@ -213,11 +209,10 @@
 
 (define-command indent-line-and-complete-symbol () ()
   (if (variable-value 'calc-indent-function :buffer)
-      (let ((charpos (point-charpos (current-point)))
-            (old (line-indent-num)))
-        (handler-case (indent-line (current-point))
+      (let* ((p (current-point))
+             (old (point-charpos p)))
+        (handler-case (indent-line p)
           (editor-condition ()))
-        (when (= old (line-indent-num))
-          (line-offset (current-point) 0 charpos)
+        (when (= old (point-charpos p))
           (complete-symbol)))
       (complete-symbol)))

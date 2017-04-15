@@ -86,8 +86,9 @@
     (setf window (current-window)))
   (cond
     ((and (window-parameter window :split-p) (not (one-window-p)))
-     (when kill-buffer-p
-       (kill-buffer (window-buffer window)))
+     (if kill-buffer-p
+         (kill-buffer (window-buffer window))
+         (bury-buffer (window-buffer window)))
      (delete-window window))
     (t
      (if kill-buffer-p

@@ -647,10 +647,8 @@
                                               (or (car (read-string-thread-stack))
                                                   :repl-thread))))
 
-(defun repl-buffer (&optional force)
-  (if force
-      (get-buffer-create "*lisp-repl*")
-      (get-buffer "*lisp-repl*")))
+(defun repl-buffer ()
+  (get-buffer "*lisp-repl*"))
 
 (defun repl-get-prompt ()
   (format nil "~A> " (swank-protocol:connection-prompt-string *connection*)))

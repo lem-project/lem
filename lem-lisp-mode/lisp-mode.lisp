@@ -789,7 +789,8 @@
            (swank-protocol:connection-implementation-version *connection*))
   (setf lem-lisp-syntax:*get-features-function* 'features)
   (when start-repl (start-lisp-repl))
-  (start-thread))
+  (start-thread)
+  *connection*)
 
 (defun log-message (message)
   (let ((buffer (get-buffer-create "*lisp-events*")))
@@ -1014,25 +1015,28 @@
 (defparameter *impl-name* nil)
 
 (define-command slime () ()
-  (setf *process*
-        (sb-ext:run-program "ros"
-                            `(,@(if *impl-name* `("-L" ,*impl-name*))
-                              "-s" "swank"
-                              "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)"
-                                            *default-port*)
-                              "wait")
-                            :wait nil
-                            :search t))
-  (sleep 1)
-  (slime-connect "localhost" *default-port*)
+  (let ((process
+         (sb-ext:run-program "ros"
+                             `(,@(if *impl-name* `("-L" ,*impl-name*))
+                               "-s" "swank"
+                               "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)"
+                                             *default-port*)
+                               "wait")
+                             :wait nil
+                             :search t)))
+    (sleep 1)
+    (let ((connection (slime-connect "localhost" *default-port*)))
+      (setf (swank-protocol:connection-process connection)
+            process)))
   (add-hook *exit-editor-hook*
             (lambda ()
               (slime-quit))))
 
 (define-command slime-quit () ()
-  (when (and *process* (sb-ext:process-alive-p *process*))
-    (sb-ext:process-kill *process* 9)
-    (setf *connection* nil)))
+  (let ((process (swank-protocol:connection-process *connection*)))
+    (when (and process (sb-ext:process-alive-p process))
+      (sb-ext:process-kill process 9)
+      (setf *connection* nil))))
 
 (define-command slime-restart () ()
   (slime-quit)

@@ -12,6 +12,7 @@
            :connection-request-count
            :connection-package
            :connection-prompt-string
+           :connection-process
            :connection-thread
            :connection-log-p
            :connection-logging-stream
@@ -115,6 +116,9 @@ Parses length information to determine how many characters to read."
    (prompt-string
     :accessor connection-prompt-string
     :type string)
+   (process
+    :initform nil
+    :accessor connection-process)
    (thread
     :accessor connection-thread
     :initform t

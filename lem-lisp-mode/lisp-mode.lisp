@@ -15,7 +15,6 @@
 
 ;; (1)とコメントで印を付けているところはコネクションを複数管理するときに今のやり方ではまずいところ
 
-(defvar *lisp-prompt-string*) ;(1)
 (defvar *connection* nil)
 (defvar *write-string-function* 'write-string-to-output-buffer)
 (defvar *last-compilation-result* nil)
@@ -183,7 +182,7 @@
 
 (defun new-package (name prompt-string)
   (setf (swank-protocol:connection-package *connection*) name)
-  (setf *lisp-prompt-string* prompt-string)
+  (setf (swank-protocol:connection-prompt-string *connection*) prompt-string)
   t)
 
 (defun read-package-name ()
@@ -647,7 +646,7 @@
       (get-buffer "*lisp-repl*")))
 
 (defun repl-get-prompt ()
-  (format nil "~A> " *lisp-prompt-string*))
+  (format nil "~A> " (swank-protocol:connection-prompt-string *connection*)))
 
 (defun repl-paren-correspond-p (point)
   (loop :with count := 0
@@ -783,12 +782,6 @@
   (message "Swank server running on ~A ~A"
            (swank-protocol:connection-implementation-name *connection*)
            (swank-protocol:connection-implementation-version *connection*))
-  (setf *lisp-prompt-string*
-        (getf (getf (getf (getf (swank-protocol::connection-info *connection*)
-                                :return)
-                          :ok)
-                    :package)
-              :prompt))
   (setf lem-lisp-syntax:*get-features-function* 'features)
   (when start-repl (start-lisp-repl))
   (start-thread))

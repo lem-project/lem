@@ -11,6 +11,7 @@
            :connection-port
            :connection-request-count
            :connection-package
+           :connection-prompt-string
            :connection-thread
            :connection-log-p
            :connection-logging-stream
@@ -111,6 +112,9 @@ Parses length information to determine how many characters to read."
     :initform "COMMON-LISP-USER"
     :type string
     :documentation "The name of the connection's package.")
+   (prompt-string
+    :accessor connection-prompt-string
+    :type string)
    (thread
     :accessor connection-thread
     :initform t
@@ -186,7 +190,12 @@ Parses length information to determine how many characters to read."
           (connection-swank-version connection)
           (getf data :version)
           (connection-features connection)
-          (getf data :features)))
+          (getf data :features)
+          (connection-package connection)
+          (getf (getf data :package) :name)
+          (connection-prompt-string connection)
+          (getf (getf data :package) :prompt)
+          ))
   ;; Require some Swank modules
   (request-swank-require
    connection

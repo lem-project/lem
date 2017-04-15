@@ -13,8 +13,6 @@
 
 (defparameter *default-port* 4005)
 
-;; (1)とコメントで印を付けているところはコネクションを複数管理するときに今のやり方ではまずいところ
-
 (defvar *connection* nil)
 (defvar *write-string-function* 'write-string-to-output-buffer)
 (defvar *last-compilation-result* nil)
@@ -629,15 +627,24 @@
   (repl-reset-input)
   (lem.listener-mode:listener-mode t))
 
-(defvar *read-string-thread-stack* nil) ;(1)
-(defvar *read-string-tag-stack* nil) ;(1)
+(defun read-string-thread-stack ()
+  (buffer-value (current-buffer) 'read-string-thread-stack))
+
+(defun (setf read-string-thread-stack) (val)
+  (setf (buffer-value (current-buffer) 'read-string-thread-stack) val))
+
+(defun read-string-tag-stack ()
+  (buffer-value (current-buffer) 'read-string-tag-stack))
+
+(defun (setf read-string-tag-stack) (val)
+  (setf (buffer-value (current-buffer) 'read-string-tag-stack) val))
 
 (define-key *lisp-repl-mode-keymap* "C-c C-c" 'lisp-repl-interrupt)
 
 (define-command lisp-repl-interrupt () ()
   (swank-protocol:send-message-string *connection*
                                       (format nil "(:emacs-interrupt ~(~S~))"
-                                              (or (car *read-string-thread-stack*)
+                                              (or (car (read-string-thread-stack))
                                                   :repl-thread))))
 
 (defun repl-buffer (&optional force)
@@ -693,8 +700,8 @@
 (defun repl-read-string (thread tag)
   (let ((buffer (repl-buffer)))
     (when buffer
-      (push thread *read-string-thread-stack*)
-      (push tag *read-string-tag-stack*)
+      (push thread (read-string-thread-stack))
+      (push tag (read-string-tag-stack))
       (let ((windows (get-buffer-windows buffer)))
         (setf (current-window)
               (if windows
@@ -706,14 +713,14 @@
 
 (defun repl-abort-read (thread tag)
   (declare (ignore thread tag))
-  (pop *read-string-thread-stack*)
-  (pop *read-string-tag-stack*)
+  (pop (read-string-thread-stack))
+  (pop (read-string-tag-stack))
   (message "Read aborted"))
 
 (defun repl-read-line (point string)
   (declare (ignore point))
-  (let ((thread (pop *read-string-thread-stack*))
-        (tag (pop *read-string-tag-stack*)))
+  (let ((thread (pop (read-string-thread-stack)))
+        (tag (pop (read-string-tag-stack))))
     (swank-protocol:send-message-string
      *connection*
      (format nil "(:emacs-return-string ~A ~A ~S)"

@@ -1,103 +1,218 @@
 (in-package :cl-user)
-(defpackage :lem.lisp-mode
-  (:use :cl :lem :lem.listener-mode :lem.language-mode)
-  (:export
-   :*lisp-mode-keymap*
-   :lisp-mode
-   :lisp-newline-and-indent
-   :lisp-indent-sexp
-   :lisp-beginning-of-defun
-   :lisp-end-of-defun
-   :lisp-current-package
-   :lisp-set-package
-   :lisp-eval-string
-   :lisp-eval-region
-   :lisp-eval-defun
-   :lisp-eval-last-sexp
-   :lisp-load-file
-   :lisp-macroexpand
-   :lisp-macroexpand-all
-   :lisp-describe-symbol
-   :lisp-disassemble-symbol
-   :lisp-find-definitions
-   :complete-symbol
-   :lisp-complete-symbol
-   :lisp-get-arglist
-   :lisp-echo-arglist
-   :lisp-self-insert-then-arg-list
-   :lisp-eval-print-last-sexp
-   :*lisp-repl-mode-keymap*
-   :lisp-repl-mode
-   :start-lisp-repl
-   :lisp-repl-get-prompt
-   :lisp-repl-paren-correspond-p
-   :lisp-repl-confirm
-   :lisp-repl-set-package))
-(in-package :lem.lisp-mode)
+(defpackage :lem-lisp-mode
+  (:use :cl :lem :lem.language-mode)
+  (:export :lisp-note-attribute
+           :lisp-entry-attribute
+           :lisp-headline-attribute
+           :*impl-name*)
+  (:import-from :lem-lisp-mode.errors
+                :disconnected)
+  (:local-nicknames
+   (:swank-protocol :lem-lisp-mode.swank-protocol)))
+(in-package :lem-lisp-mode)
+
+(defparameter *default-port* 4005)
+
+;; (1)とコメントで印を付けているところはコネクションを複数管理するときに今のやり方ではまずいところ
+
+(defvar *lisp-prompt-string*) ;(1)
+(defvar *connection* nil)
+(defvar *write-string-function* 'write-string-to-output-buffer)
+(defvar *last-compilation-result* nil)
+(defvar *indent-table* (make-hash-table :test 'equal))
+
+(define-attribute lisp-note-attribute
+  (t :foreground "red" :underline-p t))
+
+(define-attribute lisp-entry-attribute
+  (:dark :foreground "cyan" :bold-p t)
+  (t :foreground "blue" :bold-p t))
+
+(define-attribute lisp-headline-attribute
+  (t :bold-p t))
 
 (define-major-mode lisp-mode language-mode
     (:name "lisp"
      :keymap *lisp-mode-keymap*
      :syntax-table lem-lisp-syntax:*syntax-table*)
+  (modeline-add-status-list (lambda (window)
+                              (buffer-package (window-buffer window) "CL-USER"))
+                            (current-buffer))
   (setf (variable-value 'indent-tabs-mode) nil)
   (setf (variable-value 'enable-syntax-highlight) t)
   (setf (variable-value 'calc-indent-function) 'calc-indent)
   (setf (variable-value 'line-comment) ";")
   (setf (variable-value 'insertion-line-comment) ";; ")
-  (modeline-add-status-list (lambda (window)
-                              (package-name (lisp-current-package
-                                             (window-buffer window))))
-                            (current-buffer)))
+  (setf (variable-value 'find-definitions-function) 'find-definitions)
+  (setf (variable-value 'find-references-function) 'find-references)
+  (setf (variable-value 'completion-function) 'completion-symbol))
+
+(define-key *lisp-mode-keymap* "C-M-a" 'lisp-beginning-of-defun)
+(define-key *lisp-mode-keymap* "C-M-e" 'lisp-end-of-defun)
+(define-key *lisp-mode-keymap* "C-M-q" 'lisp-indent-sexp)
+(define-key *lisp-mode-keymap* "C-c M-p" 'lisp-set-package)
+(define-key *lisp-mode-keymap* "M-:" 'lisp-eval-string)
+(define-key *lisp-mode-keymap* "C-c C-e" 'lisp-eval-last-expression)
+(define-key *lisp-mode-keymap* "C-M-x" 'lisp-eval-defun)
+(define-key *lisp-mode-keymap* "C-c C-r" 'lisp-eval-region)
+(define-key *lisp-mode-keymap* "C-c C-l" 'lisp-load-file)
+(define-key *lisp-mode-keymap* "Spc" 'lisp-space)
+(define-key *lisp-mode-keymap* "C-c M-c" 'lisp-remove-notes)
+(define-key *lisp-mode-keymap* "C-c C-k" 'lisp-compile-and-load-file)
+(define-key *lisp-mode-keymap* "C-c C-c" 'lisp-compile-defun)
+(define-key *lisp-mode-keymap* "C-c C-m" 'lisp-macroexpand)
+(define-key *lisp-mode-keymap* "C-c M-m" 'lisp-macroexpand-all)
+(define-key *lisp-mode-keymap* "C-c C-d C-a" 'lisp-echo-arglist)
+(define-key *lisp-mode-keymap* "C-c C-d a" 'lisp-apropos)
+(define-key *lisp-mode-keymap* "C-c C-d z" 'lisp-apropos-all)
+(define-key *lisp-mode-keymap* "C-c C-d p" 'lisp-apropos-package)
+(define-key *lisp-mode-keymap* "C-c C-d d" 'lisp-describe-symbol)
+
+(defun connected-p ()
+  (not (null *connection*)))
+
+(defun self-connect ()
+  (prog (port)
+   :START
+    (setf port (+ 10000 (random 10000)))
+    (handler-case (let ((swank::*swank-debug-p* nil))
+                    (swank:create-server :port port))
+      (error ()
+        (go :START)))
+    (lisp-connect "localhost" port nil)))
+
+(defun check-connection ()
+  (unless (connected-p)
+    (self-connect)))
+
+(defun buffer-package (buffer &optional default)
+  (let ((package-name (buffer-value buffer "package")))
+    (if package-name
+        (string-upcase package-name)
+        default)))
+
+(defun current-package ()
+  (or (buffer-package (current-buffer))
+      (swank-protocol:connection-package *connection*)))
+
+(defun features ()
+  (when (connected-p)
+    (swank-protocol:connection-features *connection*)))
+
+(defun indentation-update (info)
+  (loop :for (name indent packages) :in info :do
+    (lem-lisp-syntax:set-indentation name indent))
+  #+(or)
+  (loop :for (name indent packages) :in info
+        :do (dolist (package packages)
+              (unless (gethash package *indent-table*)
+                (setf (gethash package *indent-table*)
+                      (make-hash-table :test 'equal)))
+              (setf (gethash name (gethash package *indent-table*)) indent))))
 
 (defun indent-spec (string)
-  (let ((arglist (lisp-search-arglist string))
-        result)
-    (when (and arglist (setf result (position '&body arglist)))
-      (return-from indent-spec result))))
+  (when (connected-p)
+    (let* ((parts (uiop:split-string string :separator ":"))
+           (length (length parts))
+           (package))
+      (cond ((= length 1)
+             (setq package (current-package)))
+            ((or (= length 2)
+                 (and (= length 3)
+                      (string= "" (second parts))))
+             (setq package (first parts))))
+      (let ((table (gethash package *indent-table*)))
+        (when table
+          (values (gethash (first (last parts)) table)))))))
 
 (defun calc-indent (point)
   (let ((lem-lisp-syntax:*get-method-function* #'indent-spec))
     (lem-lisp-syntax:calc-indent point)))
 
-(define-key *lisp-mode-keymap* (kbd "C-M-q") 'lisp-indent-sexp)
-(define-command lisp-indent-sexp () ()
-  (with-point ((end (current-point) :right-inserting))
-    (when (form-offset end 1)
-      (indent-region (current-point) end))))
+(defun lisp-eval-internal (emacs-rex-fun rex-arg package)
+  (let ((tag (gensym)))
+    (catch tag
+      (funcall emacs-rex-fun
+               *connection*
+               rex-arg
+               :continuation (lambda (result)
+                               (alexandria:destructuring-case result
+                                 ((:ok value)
+                                  (throw tag value))
+                                 ((:abort condition)
+                                  (declare (ignore condition))
+                                  (editor-error "Synchronous Lisp Evaluation aborted"))))
+               :package package
+               :thread t)
+      (loop (sit-for 10)))))
 
-(defun beginning-of-defun (point n)
-  (with-point ((start point))
-    (if (minusp n)
-        (dotimes (_ (- n) point)
-          (if (start-line-p point)
-              (line-offset point -1)
-              (line-start point))
-          (loop
-            (when (char= #\( (character-at point 0))
-              (return))
-            (unless (line-offset point -1)
-              (move-point point start)
-              (return-from beginning-of-defun nil))))
-        (dotimes (_ n point)
-          (loop
-            (unless (line-offset point 1)
-              (move-point point start)
-              (return-from beginning-of-defun nil))
-            (when (char= #\( (character-at point 0))
-              (return)))))))
+(defun lisp-eval-from-string (string &optional (package (current-package)))
+  (lisp-eval-internal 'swank-protocol:emacs-rex-string string package))
 
-(define-key *lisp-mode-keymap* (kbd "C-M-a") 'lisp-beginning-of-defun)
+(defun lisp-eval (sexp &optional (package (current-package)))
+  (lisp-eval-internal 'swank-protocol:emacs-rex sexp package))
+
+(defun eval-async (form &optional cont thread package)
+  (swank-protocol:emacs-rex
+   *connection*
+   form
+   :continuation (lambda (value)
+                   (alexandria:destructuring-ecase value
+                     ((:ok result)
+                      (when cont
+                        (funcall cont result)))
+                     ((:abort condition)
+                      (message "Evaluation aborted on ~A." condition))))
+   :thread thread
+   :package package))
+
+(defun eval-with-transcript (form)
+  (swank-protocol:emacs-rex
+   *connection*
+   form
+   :continuation (lambda (value)
+                   (alexandria:destructuring-case value
+                     ((:ok x)
+                      (message "~A" x))
+                     ((:abort condition)
+                      (message "Evaluation aborted on ~A." condition))))
+   :package (current-package)
+   :thread t))
+
+(defun re-eval-defvar (string)
+  (eval-with-transcript `(swank:re-evaluate-defvar ,string)))
+
+(defun interactive-eval (string)
+  (eval-with-transcript `(swank:interactive-eval ,string)))
+
+(defun new-package (name prompt-string)
+  (setf (swank-protocol:connection-package *connection*) name)
+  (setf *lisp-prompt-string* prompt-string)
+  t)
+
+(defun read-package-name ()
+  (check-connection)
+  (let ((package-names (mapcar #'string-downcase
+                               (lisp-eval
+                                '(swank:list-all-package-names t)))))
+    (string-upcase (prompt-for-line
+                    "Package: " ""
+                    (lambda (str)
+                      (completion str package-names))
+                    (lambda (str)
+                      (find str package-names :test #'string=))
+                    'mh-lisp-package))))
+
 (define-command lisp-beginning-of-defun (n) ("p")
-  (beginning-of-defun (current-point) (- n)))
+  (lem-lisp-syntax:beginning-of-defun (current-point) (- n)))
 
-(define-key *lisp-mode-keymap* (kbd "C-M-e") 'lisp-end-of-defun)
 (define-command lisp-end-of-defun (n) ("p")
   (if (minusp n)
       (lisp-beginning-of-defun (- n))
       (let ((point (current-point)))
         (dotimes (_ n)
           (with-point ((p point))
-            (cond ((and (beginning-of-defun p -1)
+            (cond ((and (lem-lisp-syntax:beginning-of-defun p -1)
                         (point<= p point)
                         (or (form-offset p 1)
                             (progn
@@ -114,620 +229,848 @@
                    (when (end-line-p point)
                      (character-offset point 1)))))))))
 
-(defun lisp-buffer-package (buffer)
-  (let ((package-name (buffer-value buffer "package")))
-    (when package-name
-      (string-upcase package-name))))
+(define-command lisp-indent-sexp () ()
+  (with-point ((end (current-point) :right-inserting))
+    (when (form-offset end 1)
+      (indent-region (current-point) end))))
 
-(defun lisp-current-package (&optional (buffer (current-buffer)))
-  (or (find-package (lisp-buffer-package buffer))
-      (find-package "COMMON-LISP-USER")))
+(define-command lisp-set-package (package-name) ((list (read-package-name)))
+  (check-connection)
+  (cond ((string= package-name ""))
+        ((eq (current-buffer) (repl-buffer))
+         (destructuring-bind (name prompt-string)
+             (lisp-eval `(swank:set-package ,package-name))
+           (new-package name prompt-string)
+           (lem.listener-mode:listener-reset-prompt (repl-buffer))))
+        (t
+         (setf (buffer-value (current-buffer) "package") package-name))))
 
-(defun lisp-change-package (package)
-  (setf (buffer-value (current-buffer) "package") (package-name package)))
+(define-command lisp-eval-string (string)
+    ((list (prompt-for-line "lisp Eval: "
+                            ""
+                            (lambda (str)
+                              (declare (ignore str))
+                              (values nil (completion-symbol)))
+                            nil
+                            'mh-lisp-eval-string)))
+  (interactive-eval string))
 
-(defun lisp-read-change-package (find-package-function
-                                 complete-package-function)
-  (let* ((package-name
-          (string-upcase
-           (prompt-for-line "Package: " ""
-                            complete-package-function nil
-                            'mh-lisp-package)))
-         (package (funcall find-package-function package-name)))
-    (cond (package
-           (lisp-change-package package) t)
+(define-command lisp-eval-last-expression () ()
+  (check-connection)
+  (refresh-output-buffer)
+  (with-point ((start (current-point))
+               (end (current-point)))
+    (form-offset start -1)
+    (interactive-eval (points-to-string start end))))
+
+(define-command lisp-eval-defun () ()
+  (check-connection)
+  (with-point ((point (current-point)))
+    (lem-lisp-syntax:top-of-defun point)
+    (with-point ((start point)
+                 (end point))
+      (scan-lists end 1 0)
+      (let ((string (points-to-string start end)))
+        (refresh-output-buffer)
+        (if (ppcre:scan "^\\(defvar\\b" string)
+            (re-eval-defvar string)
+            (interactive-eval string))))))
+
+(define-command lisp-eval-region (start end) ("r")
+  (check-connection)
+  (refresh-output-buffer)
+  (interactive-eval (points-to-string start end)))
+
+(define-command lisp-load-file (filename) ("fLoad File: ")
+  (check-connection)
+  (when (uiop:pathname-equal filename (buffer-directory))
+    (setf filename (buffer-filename (current-buffer))))
+  (when (and (cl-fad:file-exists-p filename)
+             (not (cl-fad:directory-pathname-p filename)))
+    (refresh-output-buffer)
+    (eval-with-transcript `(swank:load-file ,filename))))
+
+(defun get-operator-name ()
+  (with-point ((point (current-point)))
+    (scan-lists point -1 1)
+    (character-offset point 1)
+    (symbol-string-at-point point)))
+
+(define-command lisp-echo-arglist () ()
+  (check-connection)
+  (let ((name (get-operator-name))
+        (package (current-package)))
+    (when name
+      (eval-async `(swank:operator-arglist ,name ,package)
+                  (lambda (arglist)
+                    (when arglist
+                      (message "~A" (ppcre:regex-replace-all "\\s+" arglist " "))))
+                  t))))
+
+(define-command lisp-space (n) ("p")
+  (insert-character (current-point) #\space n)
+  (lisp-echo-arglist))
+
+(defun check-parens ()
+  (with-point ((point (current-point)))
+    (buffer-start point)
+    (loop :while (form-offset point 1))
+    (skip-space-and-comment-forward point)
+    (end-buffer-p point)))
+
+(defun compilation-finished (result)
+  (setf *last-compilation-result* result)
+  (destructuring-bind (notes successp duration loadp fastfile)
+      (rest result)
+    (show-compile-result notes duration
+                         (if (not loadp)
+                             successp
+                             (and fastfile successp)))
+    (highlight-notes notes)
+    (when (and loadp fastfile successp)
+      (eval-async `(swank:load-file ,fastfile) nil t))))
+
+(defun show-compile-result (notes secs successp)
+  (message (format nil "~{~A~^ ~}"
+                   (remove-if #'null
+                              (list (if successp
+                                        "Compilation finished"
+                                        "Compilation failed")
+                                    (unless notes
+                                      "(No warnings)")
+                                    (when secs
+                                      (format nil "[~,2f secs]" secs)))))))
+
+(defun make-highlight-overlay (pos buffer)
+  (with-point ((point (buffer-point buffer)))
+    (move-to-position point pos)
+    (skip-chars-backward point #'syntax-symbol-char-p)
+    (make-overlay point
+                  (or (form-offset (copy-point point :temporary) 1)
+                      (buffer-end-point buffer))
+                  'lisp-note-attribute)))
+
+(defvar *note-overlays* nil)
+
+(defun highlight-notes (notes)
+  (lisp-remove-notes)
+  (let ((overlays '()))
+    (lem.sourcelist:with-sourcelist (sourcelist "*lisp-compilations*")
+      (dolist (note notes)
+        (optima:match note
+          ((and (optima:property :location
+                                 (or (list :location
+                                           (list :buffer buffer-name)
+                                           (list :offset pos _)
+                                           _)
+                                     (list :location
+                                           (list :file file)
+                                           (list :position pos)
+                                           _)))
+                (or (optima:property :message message) (and))
+                (or (optima:property :source-context source-context) (and)))
+           (let ((jump-fun (if buffer-name
+                               (lambda ()
+                                 (let ((buffer (get-buffer buffer-name)))
+                                   (when buffer
+                                     (setf (current-window) (pop-to-buffer buffer))
+                                     (move-to-position (current-point) pos))))
+                               (lambda ()
+                                 (find-file file)
+                                 (move-to-position (current-point) pos)))))
+             (lem.sourcelist:append-sourcelist
+              sourcelist
+              (let ((name (or buffer-name file)))
+                (lambda (cur-point)
+                  (insert-string cur-point name :attribute 'lem.grep:title-attribute)
+                  (insert-string cur-point ":")
+                  (insert-string cur-point (princ-to-string pos) :attribute 'lem.grep:position-attribute)
+                  (insert-string cur-point ":")
+                  (insert-character cur-point #\newline 1)
+                  (insert-string cur-point message)
+                  (insert-character cur-point #\newline)
+                  (insert-string cur-point source-context)))
+              jump-fun)
+             (push (make-highlight-overlay pos
+                                           (if buffer-name
+                                               (get-buffer buffer-name)
+                                               (get-file-buffer file)))
+                   overlays))))))
+    (when overlays
+      (setf *note-overlays* overlays))))
+
+(define-command lisp-remove-notes () ()
+  (mapc #'delete-overlay *note-overlays*))
+
+(define-command lisp-compile-and-load-file () ()
+  (check-connection)
+  (when (buffer-modified-p (current-buffer))
+    (when (prompt-for-y-or-n-p "Save file")
+      (save-buffer)))
+  (let ((file (buffer-filename (current-buffer))))
+    (refresh-output-buffer)
+    (eval-async `(swank:compile-file-for-emacs ,file t)
+                #'compilation-finished
+                t
+                (buffer-package (current-buffer)))))
+
+(define-command lisp-compile-region (start end) ("r")
+  (check-connection)
+  (let ((string (lem::points-to-string start end))
+        (position `((:position ,(position-at-point start))
+                    (:line
+                     ,(line-number-at-point (current-point))
+                     ,(point-charpos (current-point))))))
+    (refresh-output-buffer)
+    (eval-async `(swank:compile-string-for-emacs ,string
+                                                 ,(buffer-name (current-buffer))
+                                                 ',position
+                                                 ,(buffer-filename (current-buffer))
+                                                 nil)
+                #'compilation-finished
+                t
+                (buffer-package (current-buffer)))))
+
+(define-command lisp-compile-defun () ()
+  (check-connection)
+  (with-point ((point (current-point)))
+    (lem-lisp-syntax:top-of-defun point)
+    (with-point ((start point)
+                 (end point))
+      (form-offset end 1)
+      (lisp-compile-region start end))))
+
+(defun form-string-at-point ()
+  (with-point ((point (current-point)))
+    (skip-chars-backward point #'syntax-symbol-char-p)
+    (with-point ((start point)
+                 (end point))
+      (form-offset end 1)
+      (points-to-string start end))))
+
+(defun macroexpand-internal (expander buffer-name)
+  (let ((string (lisp-eval `(,expander ,(form-string-at-point)))))
+    (with-pop-up-typeout-window (out (get-buffer-create buffer-name) :focus t :erase t)
+      (princ string out))))
+
+(define-command lisp-macroexpand () ()
+  (check-connection)
+  (macroexpand-internal 'swank:swank-macroexpand-1 "*lisp-macroexpand*"))
+
+(define-command lisp-macroexpand-all () ()
+  (check-connection)
+  (macroexpand-internal 'swank:swank-macroexpand-all "*lisp-macroexpand-all*"))
+
+(defun symbol-completion (str &optional (package (current-package)))
+  (let ((result (lisp-eval-from-string
+                 (format nil "(swank:fuzzy-completions ~S ~S)"
+                         str
+                         package)
+                 "COMMON-LISP")))
+    (when result
+      (destructuring-bind (completions timeout-p) result
+        (declare (ignore timeout-p))
+        (completion-hypheen str (mapcar #'first completions))))))
+
+(defun read-symbol-name (prompt &optional (initial ""))
+  (let ((package (current-package)))
+    (prompt-for-line prompt
+                     initial
+                     (lambda (str)
+                       (symbol-completion str package))
+                     nil
+                     'mh-read-symbol)))
+
+(defvar *edit-definition-stack* nil)
+
+(defun push-edit-definition (point)
+  (push (list (buffer-name (point-buffer point))
+              (position-at-point point))
+        *edit-definition-stack*))
+
+(defun definitions-to-locations (definitions)
+  (let ((xrefs '()))
+    (dolist (def definitions)
+      (optima:match def
+        ((list title
+               (list :location
+                     (list :file file)
+                     (list :position position)
+                     (list :snippet _)))
+         (push (make-xref-location :title title
+                                   :file file
+                                   :position position)
+               xrefs))))
+    xrefs))
+
+(defun find-definitions ()
+  (check-connection)
+  (let ((name (or (symbol-string-at-point (current-point))
+                  (read-symbol-name "Edit Definition of: "))))
+    (let ((point (lem-lisp-syntax:search-local-definition (current-point) name)))
+      (when point
+        (return-from find-definitions
+          (list (make-xref-location :file (buffer-filename (current-buffer))
+                                    :position (position-at-point point))))))
+    (let ((definitions (lisp-eval `(swank:find-definitions-for-emacs ,name))))
+      (definitions-to-locations definitions))))
+
+(defun find-references ()
+  (check-connection)
+  (let* ((name (or (symbol-string-at-point (current-point))
+                   (read-symbol-name "Edit uses of: ")))
+         (data (lisp-eval `(swank:xrefs '(:calls :macroexpands :binds
+                                           :references :sets :specializes)
+                                         ,name))))
+    (loop
+      :for (type . definitions) :in data
+      :for defs := (definitions-to-locations definitions)
+      :collect (make-xref-references :type type
+                                     :locations defs))))
+
+(defun completion-symbol ()
+  (check-connection)
+  (with-point ((start (current-point))
+               (end (current-point)))
+    (skip-chars-backward start #'syntax-symbol-char-p)
+    (skip-chars-forward end #'syntax-symbol-char-p)
+    (when (point< start end)
+      (let ((result
+             (lisp-eval-from-string (format nil "(swank:fuzzy-completions ~S ~S)"
+                                             (points-to-string start end)
+                                             (current-package)))))
+        (when result
+          (destructuring-bind (completions timeout-p) result
+            (declare (ignore timeout-p))
+            (mapcar (lambda (completion)
+                      (make-completion-item
+                       :label (first completion)
+                       :detail (fourth completion)
+                       :start start
+                       :end end))
+                    completions)))))))
+
+(defvar *lisp-apropos-mode-keymap* (make-keymap nil *lisp-mode-keymap*))
+(define-key *lisp-apropos-mode-keymap* "q" 'quit-window)
+
+(define-major-mode lisp-apropos-mode ()
+    (:name "lisp-apropos"
+     :keymap *lisp-apropos-mode-keymap*
+     :syntax-table lem-lisp-syntax:*syntax-table*))
+
+(defun show-apropos (data)
+  (let ((buffer (get-buffer-create "*lisp-apropos*")))
+    (switch-to-buffer buffer)
+    (lisp-apropos-mode)
+    (erase-buffer buffer)
+    (save-excursion
+      (let ((point (current-point)))
+        (loop :for plist :in data
+              :do (let ((designator (cadr plist))
+                        (plist1 (cddr plist)))
+                    (insert-string point designator
+                                   :attribute 'lisp-headline-attribute)
+                    (loop :for (k v) :on plist1 :by #'cddr
+                          :do (insert-string point (format nil "~%  ~A: ~A" k v)))
+                    (insert-character point #\newline 2)))))))
+
+(defun lisp-apropos-internal (string only-external-p package case-sensitive-p)
+  (show-apropos (lisp-eval
+                 `(swank:apropos-list-for-emacs ,string
+                                                ,only-external-p
+                                                ,case-sensitive-p
+                                                ,package))))
+
+(define-command lisp-apropos (&optional arg) ("P")
+  (check-connection)
+  (let ((string)
+        (only-external-p t)
+        (package nil)
+        (case-sensitive-p nil))
+    (if arg
+        (setq string (prompt-for-string "lisp Apropos: ")
+              only-external-p (prompt-for-y-or-n-p "External symbols only? ")
+              package (let ((name (read-package-name)))
+                        (if (string= "" name)
+                            nil
+                            name))
+              case-sensitive-p (prompt-for-y-or-n-p "Case-sensitive? "))
+        (setq string (prompt-for-string "lisp Apropos: ")))
+    (lisp-apropos-internal string only-external-p package case-sensitive-p)))
+
+(define-command lisp-apropos-all () ()
+  (check-connection)
+  (lisp-apropos-internal (prompt-for-string "lisp Apropos: ")
+                          nil nil nil))
+
+(define-command lisp-apropos-package (internal) ("P")
+  (check-connection)
+  (let ((package (read-package-name)))
+    (lisp-apropos-internal ""
+                            (not internal)
+                            (if (string= package "")
+                                (current-package)
+                                package)
+                            nil)))
+
+(defun show-description (string)
+  (let ((buffer (get-buffer-create "*lisp description*")))
+    (with-pop-up-typeout-window (stream buffer :erase t)
+      (princ string stream))))
+
+(define-command lisp-describe-symbol () ()
+  (check-connection)
+  (let ((symbol-name
+         (read-symbol-name "Describe symbol: "
+                           (or (symbol-string-at-point (current-point)) ""))))
+    (when (string= "" symbol-name)
+      (editor-error "No symbol given"))
+    (show-description (lisp-eval `(swank:describe-symbol ,symbol-name)))))
+
+(define-major-mode lisp-repl-mode lisp-mode
+    (:name "lisp-repl"
+     :keymap *lisp-repl-mode-keymap*
+     :syntax-table lem-lisp-syntax:*syntax-table*)
+  (repl-reset-input)
+  (lem.listener-mode:listener-mode t))
+
+(defvar *read-string-thread-stack* nil) ;(1)
+(defvar *read-string-tag-stack* nil) ;(1)
+
+(define-key *lisp-repl-mode-keymap* "C-c C-c" 'lisp-repl-interrupt)
+
+(define-command lisp-repl-interrupt () ()
+  (swank-protocol:send-message-string *connection*
+                                      (format nil "(:emacs-interrupt ~(~S~))"
+                                              (or (car *read-string-thread-stack*)
+                                                  :repl-thread))))
+
+(defun repl-buffer (&optional force)
+  (if force
+      (get-buffer-create "*lisp-repl*")
+      (get-buffer "*lisp-repl*")))
+
+(defun repl-get-prompt ()
+  (format nil "~A> " *lisp-prompt-string*))
+
+(defun repl-paren-correspond-p (point)
+  (loop :with count := 0
+        :do
+        (insert-character point #\))
+        (incf count)
+        (unless (form-offset (copy-point point :temporary) -1)
+          (delete-character point (- count))
+          (return (= 1 count)))))
+
+(defun repl-reset-input ()
+  (let ((buffer (repl-buffer)))
+    (when buffer
+      (setf (variable-value 'lem.listener-mode:listener-get-prompt-function :buffer buffer)
+            'repl-get-prompt
+            (variable-value 'lem.listener-mode:listener-check-confirm-function :buffer buffer)
+            'repl-paren-correspond-p
+            (variable-value 'lem.listener-mode:listener-confirm-function :buffer buffer)
+            'repl-confirm))))
+
+(defun repl-change-read-line-input ()
+  (setf (variable-value 'lem.listener-mode:listener-get-prompt-function)
+        (constantly "")
+        (variable-value 'lem.listener-mode:listener-check-confirm-function)
+        (constantly t)
+        (variable-value 'lem.listener-mode:listener-confirm-function)
+        'repl-read-line))
+
+(defun repl-confirm (point string)
+  (declare (ignore point))
+  (check-connection)
+  (let ((prev-write-string-function *write-string-function*))
+    (swank-protocol:request-listener-eval
+     *connection*
+     string
+     (lambda (value)
+       (declare (ignore value))
+       (repl-reset-input)
+       (lem.listener-mode:listener-reset-prompt (repl-buffer))
+       (redraw-display)
+       (setf *write-string-function* prev-write-string-function)))
+    (setf *write-string-function* 'write-string-to-repl)))
+
+(defun repl-read-string (thread tag)
+  (let ((buffer (repl-buffer)))
+    (when buffer
+      (push thread *read-string-thread-stack*)
+      (push tag *read-string-tag-stack*)
+      (let ((windows (get-buffer-windows buffer)))
+        (setf (current-window)
+              (if windows
+                  (first windows)
+                  (pop-to-buffer buffer))))
+      (buffer-end (current-point))
+      (lem.listener-mode:listener-update-point)
+      (repl-change-read-line-input))))
+
+(defun repl-abort-read (thread tag)
+  (declare (ignore thread tag))
+  (pop *read-string-thread-stack*)
+  (pop *read-string-tag-stack*)
+  (message "Read aborted"))
+
+(defun repl-read-line (point string)
+  (declare (ignore point))
+  (let ((thread (pop *read-string-thread-stack*))
+        (tag (pop *read-string-tag-stack*)))
+    (swank-protocol:send-message-string
+     *connection*
+     (format nil "(:emacs-return-string ~A ~A ~S)"
+             thread
+             tag
+             (concatenate 'string string (string #\newline))))))
+
+(define-command start-lisp-repl () ()
+  (lem.listener-mode:listener-start "*lisp-repl*" 'lisp-repl-mode))
+
+(defun write-string-to-repl (string)
+  (let ((buffer (repl-buffer)))
+    (when buffer
+      (with-open-stream (stream (make-buffer-output-stream (lem::buffer-end-point buffer)))
+        (princ string stream))
+      (lem.listener-mode:listener-update-point (buffer-end-point buffer))
+      (when (eq buffer (current-buffer))
+        (buffer-end (current-point)))
+      (redraw-display))))
+
+(defparameter *fresh-output-buffer-p* t)
+
+(defun write-string-to-output-buffer (string)
+  (with-pop-up-typeout-window (stream (get-buffer-create "*lisp-output*"))
+    (when *fresh-output-buffer-p*
+      (setq *fresh-output-buffer-p* nil)
+      (fresh-line stream)
+      (terpri stream)
+      (princ '*** stream)
+      (terpri stream))
+    (princ string stream)))
+
+(defun refresh-output-buffer ()
+  (setq *fresh-output-buffer-p* t))
+
+(defun start-thread ()
+  (bt:make-thread (lambda ()
+                    (loop
+                      (unless (connected-p)
+                        (return))
+                      (when (swank-protocol:message-waiting-p *connection* :timeout 10)
+                        (let ((barrior t))
+                          (send-event (lambda ()
+                                        (unwind-protect (progn (pull-events)
+                                                               (redraw-display))
+                                          (setq barrior nil))))
+                          (loop
+                            (unless (connected-p)
+                              (return))
+                            (unless barrior
+                              (return))
+                            (sleep 0.1))))))
+                  :name "lisp-wait-message"))
+
+(define-command lisp-connect (hostname port &optional (start-repl t))
+    ((list (prompt-for-string "Hostname: " "localhost")
+           (parse-integer (prompt-for-string "Port: " (princ-to-string *default-port*)))
+           t))
+  (setf *connection* (make-instance 'swank-protocol:connection :hostname hostname :port port))
+  (message "Connecting...")
+  (handler-case (swank-protocol:connect *connection*)
+    (usocket:connection-refused-error (c) (editor-error "~A" c)))
+  (message "Swank server running on ~A ~A"
+           (swank-protocol:connection-implementation-name *connection*)
+           (swank-protocol:connection-implementation-version *connection*))
+  (setf *lisp-prompt-string*
+        (getf (getf (getf (getf (swank-protocol::connection-info *connection*)
+                                :return)
+                          :ok)
+                    :package)
+              :prompt))
+  (setf lem-lisp-syntax:*get-features-function* 'features)
+  (when start-repl (start-lisp-repl))
+  (start-thread))
+
+(defun log-message (message)
+  (let ((buffer (get-buffer-create "*lisp-events*")))
+    (with-open-stream (stream (make-buffer-output-stream (lem::buffer-end-point buffer)))
+      (print message stream))))
+
+(defvar *unknown-keywords* nil)
+(defun pull-events ()
+  (when (and (boundp '*connection*)
+             (not (null *connection*)))
+    (handler-bind ((disconnected (lambda (c)
+                                   (declare (ignore c))
+                                   (setq *connection* nil))))
+      (loop :while (swank-protocol:message-waiting-p *connection*)
+            :do (dispatch-message (swank-protocol:read-message *connection*))))))
+
+(defun dispatch-message (message)
+  (log-message message)
+  (alexandria:destructuring-case message
+    ((:write-string string &rest rest)
+     (declare (ignore rest))
+     (funcall *write-string-function* string))
+    ((:read-string thread tag)
+     (repl-read-string thread tag))
+    ((:read-aborted thread tag)
+     (repl-abort-read thread tag))
+    ;; ((:open-dedicated-output-stream port coding-system)
+    ;;  )
+    ((:new-package name prompt-string)
+     (new-package name prompt-string))
+    ((:return value id)
+     (swank-protocol:finish-evaluated *connection* value id))
+    ((:debug-activate thread level &optional select)
+     (swank-protocol:debugger-in *connection*)
+     (active-debugger thread level select))
+    ((:debug thread level condition restarts frames conts)
+     (start-debugger thread level condition restarts frames conts))
+    ((:debug-return thread level stepping)
+     (swank-protocol:debugger-out *connection*)
+     (exit-debugger thread level stepping))
+    ;; ((:channel-send id msg)
+    ;;  )
+    ;; ((:emacs-channel-send id msg)
+    ;;  )
+    ;; ((:read-from-minibuffer thread tag prompt initial-value)
+    ;;  )
+    ;; ((:y-or-n-p thread tag question)
+    ;;  )
+    ;; ((:emacs-return-string thread tag string)
+    ;;  )
+    ((:new-features features)
+     (setf (swank-protocol:connection-features *connection*)
+           features))
+    ((:indentation-update info)
+     (indentation-update info))
+    ;; ((:eval-no-wait form)
+    ;;  )
+    ;; ((:eval thread tag form-string)
+    ;;  )
+    ;; ((:emacs-return thread tag value)
+    ;;  )
+    ;; ((:ed what)
+    ;;  )
+    ;; ((:inspect what thread tag)
+    ;;  )
+    ;; ((:background-message message)
+    ;;  )
+    ;; ((:debug-condition thread message)
+    ;;  )
+    ((:ping thread tag)
+     (swank-protocol:send-message-string
+      *connection*
+      (format nil "(:emacs-pong ~A ~A)" thread tag)))
+    ;; ((:reader-error packet condition)
+    ;;  )
+    ;; ((:invalid-rpc id message)
+    ;;  )
+    ;; ((:emacs-skipped-packet _pkg))
+    ;; ((:test-delay seconds)
+    ;;  )
+    ((t &rest args)
+     (declare (ignore args))
+     (pushnew (car message) *unknown-keywords*))))
+
+(define-major-mode lisp-debug-mode ()
+    (:name "lisp-debug"
+     :keymap *lisp-debugger-keymap*))
+
+(define-key *lisp-debugger-keymap* "q" 'lisp-quit-debugger)
+(define-key *lisp-debugger-keymap* "c" 'lisp-continue)
+(define-key *lisp-debugger-keymap* "a" 'lisp-abort)
+(define-key *lisp-debugger-keymap* "0" 'lisp-invoke-restart-0)
+(define-key *lisp-debugger-keymap* "1" 'lisp-invoke-restart-1)
+(define-key *lisp-debugger-keymap* "2" 'lisp-invoke-restart-2)
+(define-key *lisp-debugger-keymap* "3" 'lisp-invoke-restart-3)
+(define-key *lisp-debugger-keymap* "4" 'lisp-invoke-restart-4)
+(define-key *lisp-debugger-keymap* "5" 'lisp-invoke-restart-5)
+(define-key *lisp-debugger-keymap* "6" 'lisp-invoke-restart-6)
+(define-key *lisp-debugger-keymap* "7" 'lisp-invoke-restart-7)
+(define-key *lisp-debugger-keymap* "8" 'lisp-invoke-restart-8)
+(define-key *lisp-debugger-keymap* "9" 'lisp-invoke-restart-9)
+
+(define-command lisp-quit-debugger () ()
+  (when (swank-protocol:debuggerp *connection*)
+    (swank-protocol:emacs-rex *connection* `(swank:throw-to-toplevel))))
+
+(define-command lisp-continue () ()
+  (when (null (buffer-value (current-buffer) 'restarts))
+    (error "lisp-continue called outside of debug buffer"))
+  (swank-protocol:emacs-rex *connection*
+                            '(swank:sldb-continue)
+                            :continuation (lambda (value)
+                                            (alexandria:destructuring-case value
+                                              ((:ok x)
+                                               (error "sldb-quit returned [~A]" x))))))
+
+(define-command lisp-abort () ()
+  (when (swank-protocol:debuggerp *connection*)
+    (eval-async '(swank:sldb-abort)
+                (lambda (v)
+                  (message "Restart returned: ~A" v)))))
+
+(defun lisp-invoke-restart (n)
+  (check-type n integer)
+  (when (swank-protocol:debuggerp *connection*)
+    (swank-protocol:emacs-rex *connection*
+                              `(swank:invoke-nth-restart-for-emacs
+                                ,(buffer-value (current-buffer) 'level -1)
+                                ,n))))
+
+(define-command lisp-invoke-restart-0 () () (lisp-invoke-restart 0))
+(define-command lisp-invoke-restart-1 () () (lisp-invoke-restart 1))
+(define-command lisp-invoke-restart-2 () () (lisp-invoke-restart 2))
+(define-command lisp-invoke-restart-3 () () (lisp-invoke-restart 3))
+(define-command lisp-invoke-restart-4 () () (lisp-invoke-restart 4))
+(define-command lisp-invoke-restart-5 () () (lisp-invoke-restart 5))
+(define-command lisp-invoke-restart-6 () () (lisp-invoke-restart 6))
+(define-command lisp-invoke-restart-7 () () (lisp-invoke-restart 7))
+(define-command lisp-invoke-restart-8 () () (lisp-invoke-restart 8))
+(define-command lisp-invoke-restart-9 () () (lisp-invoke-restart 9))
+
+(defun get-debug-buffer (thread)
+  (dolist (buffer (buffer-list))
+    (when (eql thread (buffer-value buffer 'thread))
+      (return buffer))))
+
+(defun get-debug-buffer-create (thread)
+  (or (get-debug-buffer thread)
+      (get-buffer-create (format nil "*lisp-debugger ~D*" thread))))
+
+(defun exit-debugger (thread level stepping)
+  (declare (ignore level stepping))
+  (let ((buffer (get-debug-buffer thread)))
+    (when buffer
+      (cond ((eq buffer (window-buffer (current-window)))
+             (quit-window (current-window) t)
+             (let* ((repl-buffer (repl-buffer))
+                    (repl-window (when repl-buffer
+                                   (first (get-buffer-windows repl-buffer)))))
+               (when repl-window
+                 (setf (current-window) repl-window))))
+            (t
+             (kill-buffer buffer))))))
+
+(defun start-debugger (thread level condition restarts frames conts)
+  (let ((buffer (get-debug-buffer-create thread)))
+    (setf (current-window) (display-buffer buffer))
+    (lisp-debug-mode)
+    (setf (swank-protocol:connection-thread *connection*) thread)
+    (setf (buffer-value buffer 'thread)
+          thread
+          (buffer-value buffer 'level)
+          level
+          (buffer-value buffer 'condition)
+          condition
+          (buffer-value buffer 'restarts)
+          restarts
+          (buffer-value buffer 'continuations)
+          conts)
+    (erase-buffer buffer)
+    (add-hook (variable-value 'kill-buffer-hook :buffer buffer)
+              (lambda (buffer)
+                (declare (ignore buffer))
+                (lisp-quit-debugger)))
+    (let ((point (current-point)))
+      (dolist (c condition)
+        (insert-string point
+                       (if (stringp c)
+                           c
+                           (prin1-to-string c)))
+        (insert-character point #\newline 1))
+      (insert-string point (format nil "~%Restarts:~%"))
+      (loop :for n :from 0
+            :for (title description) :in restarts
+            :do (insert-string point (format nil "~D: [~A] ~A~%" n title description)))
+      (insert-string point (format nil "~%Backtrace:~%"))
+      (loop :for (n form) :in frames
+            :do (insert-string point (format nil "~D: ~A~%" n form))))))
+
+(defun active-debugger (thread level select)
+  (declare (ignore select))
+  (let ((buffer (get-debug-buffer thread)))
+    (cond ((and buffer
+                (= level (buffer-value buffer 'level -1)))
+           ;(when select (pop-to-buffer buffer))
+           )
           (t
-           (message "Package does not exist: ~a" package-name)
-           nil))))
+           (debugger-reinitialize thread level)))))
 
-(define-key *lisp-mode-keymap* (kbd "C-c M-p") 'lisp-set-package)
-(define-command lisp-set-package () ()
-  (lisp-read-change-package
-   #'find-package
-   #'(lambda (str)
-       (completion str
-                   (mapcar #'(lambda (pkg)
-                               (string-downcase (package-name pkg)))
-                           (list-all-packages))))))
+(defun debugger-reinitialize (thread level)
+  (swank-protocol:emacs-rex
+   *connection*
+   (swank:debugger-info-for-emacs 0 10)
+   :continuation (lambda (value)
+                   (alexandria:destructuring-case value
+                     ((:ok result)
+                      (apply #'start-debugger thread level result))))
+   :thread thread))
 
-(defun scan-current-package (check-package-fn)
-  (with-point ((p (current-point)))
+
+(defvar *process* nil)
+(defparameter *impl-name* nil)
+
+(define-command lisp () ()
+  (setf *process*
+        (sb-ext:run-program "ros"
+                            `(,@(if *impl-name* `("-L" ,*impl-name*))
+                              "-s" "swank"
+                              "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)"
+                                            *default-port*)
+                              "wait")
+                            :wait nil
+                            :search t))
+  (sleep 1)
+  (lisp-connect "localhost" *default-port*)
+  (add-hook *exit-editor-hook*
+            (lambda ()
+              (lisp-quit))))
+
+(define-command lisp-quit () ()
+  (when (and *process* (sb-ext:process-alive-p *process*))
+    (sb-ext:process-kill *process* 9)
+    (setf *connection* nil)))
+
+(define-command lisp-restart () ()
+  (lisp-quit)
+  (sleep 1)
+  (lisp))
+
+
+(defun scan-current-package (point)
+  (with-point ((p point))
     (loop
       (multiple-value-bind (result groups)
           (looking-at (line-start p)
                       "^\\s*\\(in-package (?:#?:|')?([^\)]*)\\)")
         (when result
-          (let ((package (funcall check-package-fn (aref groups 0))))
+          (let ((package (aref groups 0)))
             (when package
               (return package))))
         (unless (line-offset p -1)
           (return))))))
 
-(defun %string-to-exps (str package)
-  (let ((str str)
-        (exps)
-        (eof-value (make-symbol "eof")))
-    (do ()
-        ((string= "" str))
-      (multiple-value-bind (expr i)
-          (let ((*package* package))
-            (read-from-string str nil eof-value))
-        (when (eq expr eof-value)
-          (return))
-        (push expr exps)
-        (setq str (subseq str i))))
-    (nreverse exps)))
-
-(defun string-readcase (string &key (start 0) end)
-  (ecase (readtable-case *readtable*)
-    ((:upcase)
-     (string-upcase string :start start :end end))
-    ((:downcase)
-     (string-downcase string :start start :end end))
-    ((:invert :preserve)
-     string)))
-
-(defun lisp-eval-in-package (expr package)
-  (let* ((string (write-to-string expr))
-         (*package* (find-package package)))
-    (multiple-value-list (eval (read-from-string string)))))
-
-(defun ldebug-store-value (condition)
-  (do ((x)
-       (error-p nil))
-      (nil)
-    (handler-case
-        (setq x
-              (eval
-               (read-from-string
-                (prompt-for-string
-                 "Type a form to be evaluated: ")
-                nil)))
-      (error (cdt)
-	(setq error-p t)
-	(message "~a" cdt)))
-    (unless error-p
-      (store-value x condition)
-      (return))))
-
-(defvar *error-buffer-name* "*error*")
-
-(defun lisp-debugger (condition)
-  (let* ((choices (compute-restarts condition))
-         (n (length choices)))
-    (with-pop-up-typeout-window (out (get-buffer-create *error-buffer-name*) :erase t)
-      (format out "~a~%~%" condition)
-      (loop
-	 for choice in choices
-	 for i from 1
-	 do (format out "~&[~d] ~a~%" i choice))
-      (terpri out)
-      (uiop/image:print-backtrace :stream out :count 100))
-    (loop
-       (redraw-display)
-       (handler-case
-	   (let* ((str (prompt-for-string "Debug: "))
-		  (i (and (stringp str) (parse-integer str :junk-allowed t))))
-	     (cond ((and i (<= 1 i n))
-		    (let ((restart (nth (1- i) choices)))
-		      (cond ((eq 'store-value (restart-name restart))
-			     (ldebug-store-value condition))
-			    (t
-			     (invoke-restart-interactively restart))))
-		    (return))
-		   (t
-		    (let ((x
-			   (handler-case (eval (read-from-string str nil))
-			     (error (cdt) (format nil "~a" cdt)))))
-		      (with-pop-up-typeout-window (out (get-buffer-create "*output*") :erase t)
-			(princ x out))))))
-	 (editor-abort ()))))
-  condition)
-
-(defun %lisp-eval-internal (x point &optional update-point-p)
-  (with-point ((cur-point point
-			  (if update-point-p
-			      :left-inserting
-			      :right-inserting)))
-    (with-open-stream (io (make-editor-io-stream cur-point t))
-      (let* ((error-p)
-             (results)
-             (*terminal-io* io)
-             (*standard-output* io)
-             (*standard-input* io)
-             (*error-output* io)
-             (*query-io* io)
-             (*debug-io* io)
-             (*trace-output* io)
-             (*package* (lisp-current-package)))
-        (handler-case-bind (#'lisp-debugger
-                            (setq results
-                                  (restart-case
-                                      (multiple-value-list (eval x))
-                                    (editor-abort () :report "Abort.")))
-                            (when update-point-p
-                              (move-point point cur-point)))
-                           ((condition)
-                            (setq error-p t)
-                            (setq results (list condition))))
-        (values results error-p)))))
-
-(defun %lisp-eval (x point
-		   &optional update-point-p)
-  (multiple-value-bind (results error-p)
-      (%lisp-eval-internal x
-                           point
-                           update-point-p)
-    (values results error-p)))
-
-(defun %lisp-eval-string (string point
-			  &optional
-			    update-point-p (package "COMMON-LISP-USER"))
-  (%lisp-eval `(cl:progn ,@(%string-to-exps string package))
-              point
-              update-point-p))
-
-(define-key *global-keymap* (kbd "M-:") 'lisp-eval-string)
-(define-command lisp-eval-string (string)
-    ((list (prompt-for-line "Eval: " "" nil nil 'mh-lisp-eval)))
-  (let ((output-buffer (get-buffer-create "*output*")))
-    (erase-buffer output-buffer)
-    (change-buffer-mode output-buffer 'lisp-mode)
-    (buffer-unmark output-buffer)
-    (message "~{~s~^,~}"
-             (%lisp-eval-string string (buffer-start-point output-buffer)
-                                nil
-                                (lisp-current-package)))
-    (when (buffer-modified-p output-buffer)
-      (pop-up-typeout-window output-buffer nil))))
-
-(define-key *lisp-mode-keymap* (kbd "C-c C-r") 'lisp-eval-region)
-(define-command lisp-eval-region (&optional start end) ("r")
-  (unless (or start end)
-    (setq start (region-beginning))
-    (setq end (region-end)))
-  (lisp-eval-string (points-to-string start end))
-  t)
-
-(defun lisp-move-and-eval-sexp (move-sexp eval-string-function)
-  (let ((str (save-excursion
-               (and (funcall move-sexp)
-                    (let ((end (form-offset (copy-point (current-point) :temporary) 1)))
-                      (when end
-                        (points-to-string (current-point) end)))))))
-    (when str
-      (funcall eval-string-function str)
-      t)))
-
-(defun top-of-defun (point)
-  (beginning-of-defun (line-end point) -1))
-
-(define-key *lisp-mode-keymap* (kbd "C-M-x") 'lisp-eval-defun)
-(define-command lisp-eval-defun () ()
-  (lisp-move-and-eval-sexp (lambda () (top-of-defun (current-point)))
-                           #'lisp-eval-string))
-
-(define-key *lisp-mode-keymap* (kbd "C-c C-e") 'lisp-eval-last-sexp)
-(define-command lisp-eval-last-sexp () ()
-  (lisp-move-and-eval-sexp #'backward-sexp #'lisp-eval-string))
-
-(define-key *lisp-mode-keymap* (kbd "C-c l") 'lisp-load-file)
-(define-key *lisp-mode-keymap* (kbd "C-c C-l") 'lisp-load-file)
-(define-command lisp-load-file (filename) ("fLoad File: ")
-  (when (uiop:pathname-equal filename (buffer-directory))
-    (setf filename (buffer-filename (current-buffer))))
-  (when (and (cl-fad:file-exists-p filename)
-             (not (cl-fad:directory-pathname-p filename)))
-    (lisp-eval-string
-     (format nil "(cl:load ~s)" filename))
-    (message "load: ~A" filename)))
-
-(defun lisp-print-error (condition)
-  (with-pop-up-typeout-window (out (get-buffer-create *error-buffer-name*) :erase t)
-    (format out "~a~%~%" condition)
-    (uiop/image:print-backtrace :stream out :count 100)))
-
-(defmacro with-safe-form (&body body)
-  `(handler-case
-       (handler-bind ((error #'lisp-print-error))
-         (values (progn ,@body) nil))
-     (error (cdt) (values cdt t))))
-
-(defun %lisp-macroexpand-at-point (macroexpand-symbol)
-  (car (lisp-eval-in-package
-        `(,macroexpand-symbol
-          (let ((*package* (lisp-current-package)))
-            (read-from-string
-             (points-to-string
-              (current-point)
-              (form-offset (copy-point (current-point)
-				       :temporary)
-			   1)))))
-        (lisp-current-package))))
-
-(defun %lisp-macroexpand-replace-expr (expr)
-  (delete-between-points
-   (current-point)
-   (form-offset (copy-point (current-point) :temporary) 1))
-  (with-open-stream (stream (make-buffer-output-stream (current-point)))
-    (pprint expr stream))
-  (let ((*package* (lisp-current-package)))
-    (read-from-string
-     (points-to-string (buffer-start-point (current-buffer))
-                       (buffer-end-point (current-buffer))))))
-
-(defun %lisp-macroexpand (macroexpand-symbol buffer-name)
-  (multiple-value-bind (expr error-p)
-      (with-safe-form
-        (let ((expr (%lisp-macroexpand-at-point macroexpand-symbol)))
-          (cond ((eq (current-buffer)
-                     (get-buffer buffer-name))
-                 (%lisp-macroexpand-replace-expr expr))
-                (t
-                 expr))))
-    (unless error-p
-      (with-pop-up-typeout-window (out (change-buffer-mode (get-buffer-create buffer-name)
-                                                           'lisp-mode)
-                                       :focus nil
-                                       :erase t)
-        (pprint expr out)))))
-
-(define-key *lisp-mode-keymap* (kbd "C-c m") 'lisp-macroexpand)
-(define-key *lisp-mode-keymap* (kbd "C-c C-m") 'lisp-macroexpand)
-(define-command lisp-macroexpand () ()
-  (%lisp-macroexpand 'macroexpand-1 "*macroexpand*"))
-
-(define-key *lisp-mode-keymap* (kbd "C-c M") 'lisp-macroexpand-all)
-(define-key *lisp-mode-keymap* (kbd "C-c M-m") 'lisp-macroexpand-all)
-(define-command lisp-macroexpand-all () ()
-  (%lisp-macroexpand 'swank/backend:macroexpand-all
-                     "*macroexpand*"))
-
-(defun lisp-read-symbol (prompt history-name &optional use-default-name)
-  (let ((default-name (symbol-string-at-point (current-point))))
-    (let ((name (if (and use-default-name default-name)
-                    default-name
-                    (prompt-for-line prompt
-                                     (or default-name "")
-                                     'complete-symbol
-                                     nil
-                                     history-name))))
-      (setq name (string-right-trim ":" name))
-      (with-safe-form
-        (let ((*package* (lisp-current-package)))
-          (read-from-string name))))))
-
-(define-key *lisp-mode-keymap* (kbd "C-c C-d") 'lisp-describe-symbol)
-(define-command lisp-describe-symbol () ()
-  (multiple-value-bind (name error-p)
-      (lisp-read-symbol "Describe: " 'mh-describe)
-    (unless error-p
-      (with-pop-up-typeout-window (out (change-buffer-mode (get-buffer-create "*describe*")
-                                                           'lisp-mode)
-                                       :erase t)
-        (describe name out)))))
-
-(define-key *lisp-mode-keymap* (kbd "C-c M-d") 'lisp-disassemble-symbol)
-(define-command lisp-disassemble-symbol () ()
-  (multiple-value-bind (name error-p)
-      (lisp-read-symbol "Disassemble: " 'mh-disassemble)
-    (unless error-p
-      (let ((str
-             (with-output-to-string (out)
-               (handler-case (disassemble name :stream out)
-                 (error (condition)
-		   (message "~a" condition)
-		   (return-from lisp-disassemble-symbol nil))))))
-        (with-pop-up-typeout-window (out (change-buffer-mode (get-buffer-create "*disassemble*")
-                                                             'lisp-mode))
-          (princ str out))))))
-
-(defvar *lisp-find-definition-stack* nil)
-
-(defun find-definitions (name)
-  (let ((swank::*buffer-package* (lisp-current-package))
-        (swank::*buffer-readtable* *readtable*))
-    (swank::find-definitions name)))
-
-(defun lisp-find-definitions-internal (symbol)
-  (let ((moves))
-    (dolist (definition (find-definitions symbol))
-      (destructuring-bind (head &rest alist) definition
-        (let ((location (cdr (assoc :location alist))))
-          (when location
-            (let ((file (second (assoc :file location)))
-                  (position (second (assoc :position location))))
-              (push (list head file position) moves))))))
-    (nreverse moves)))
-
-(defun push-definition-stack (point)
-  (push (list (buffer-name (point-buffer point))
-              (position-at-point point))
-        *lisp-find-definition-stack*))
-
-(define-key *lisp-mode-keymap* (kbd "M-.") 'lisp-find-definitions)
-(define-command lisp-find-definitions () ()
-  (multiple-value-bind (name error-p)
-      (lisp-read-symbol "Find definitions: " 'mh-find-definitions t)
-    (unless error-p
-      (let ((local-point
-             (lem-lisp-syntax:search-local-definition
-              (current-point) (string-downcase name))))
-        (when local-point
-          (push-definition-stack (current-point))
-          (move-point (current-point) local-point)
-          (return-from lisp-find-definitions)))
-      (let ((defs))
-        (dolist (def (lisp-find-definitions-internal name))
-          (destructuring-bind (head file filepos) def
-            (declare (ignore head))
-            (push (list file
-                        (lambda ()
-                          (find-file file)
-                          (move-to-position (current-point) filepos)
-                          (redraw-display)))
-                  defs)))
-        (push-definition-stack (current-point))
-        (cond ((= 1 (length defs))
-               (funcall (second (car defs))))
-              (t
-               (lem.sourcelist:with-sourcelist (sourcelist "*Definitions*")
-                 (loop :for (file jump-fun) :in defs
-		    :do (lem.sourcelist:append-sourcelist
-			 sourcelist
-			 (lambda (cur-point)
-			   (insert-string cur-point file))
-			 jump-fun)))))))))
-
-(define-key *lisp-mode-keymap* (kbd "M-,") 'lisp-pop-find-definition-stack)
-(define-command lisp-pop-find-definition-stack () ()
-  (let ((elt (pop *lisp-find-definition-stack*)))
-    (unless elt
-      (return-from lisp-pop-find-definition-stack nil))
-    (destructuring-bind (buffer-name offset) elt
-      (let ((buffer (get-buffer-create buffer-name)))
-        (switch-to-buffer buffer)
-        (move-to-position (current-point) offset)))))
-
-(defun %collect-symbols (package package-name external-p)
-  (let ((symbols))
-    (labels ((f (sym separator)
-	       (push (if package
-			 (format nil "~a~a~a"
-				 package-name
-				 separator
-				 (string-downcase (string sym)))
-			 (string-downcase (string sym)))
-		     symbols)))
-      (let ((pkg (or package (lisp-current-package))))
-        (if external-p
-            (do-external-symbols (sym pkg) (f sym ":"))
-            (do-symbols (sym pkg) (f sym "::")))))
-    (when (null package)
-      (flet ((add (name)
-	       (push (format nil "~(~a~):" name) symbols)))
-        (dolist (p (list-all-packages))
-          (add (package-name p))
-          (dolist (p (package-nicknames p))
-            (add p)))))
-    (nreverse (remove-duplicates symbols :test #'string=))))
-
-(defun complete-symbol (string)
-  (values nil (mapcar #'first (fuzzy-completions string))))
-
-(defvar *fuzzy-completions* nil)
-
-(defun fuzzy-completions (string &optional (package (lisp-current-package)))
-  (unless *fuzzy-completions*
-    (swank:swank-require "SWANK-FUZZY")
-    (setf *fuzzy-completions* (intern "FUZZY-COMPLETIONS" :swank)))
-  (let ((swank::*buffer-package* (lisp-current-package))
-        (swank::*buffer-readtable* *readtable*))
-    (first (funcall *fuzzy-completions*
-                    string
-                    (or package (lisp-current-package))))))
-
-(define-key *lisp-mode-keymap* (kbd "C-M-i") 'lisp-complete-symbol)
-(define-command lisp-complete-symbol () ()
-  (with-point ((start (current-point))
-               (end (current-point)))
-    (skip-chars-backward start #'syntax-symbol-char-p)
-    (skip-chars-forward end #'syntax-symbol-char-p)
-    (let ((completions
-           (fuzzy-completions (points-to-string start end)
-                              (lisp-current-package))))
-      (when completions
-        (run-completion
-         (mapcar (lambda (completion)
-                   (lem::make-completion-item :label (first completion)
-                                              :detail (fourth completion)
-                                              :start start
-                                              :end end))
-                 completions)
-         :auto-insert nil
-         :restart-function 'lisp-complete-symbol)))))
-
-(defun analyze-symbol (str)
-  (let (package
-        external-p)
-    (let* ((list (uiop:split-string str :separator ":"))
-           (len (length list)))
-      (case len
-        ((1)
-         (setq str (car list)))
-        ((2 3)
-         (setq package
-               (if (equal "" (car list))
-                   (find-package :keyword)
-                   (find-package
-                    (string-readcase (car list)))))
-         (unless package
-           (return-from analyze-symbol nil))
-         (setq str (car (last list)))
-         (if (= len 2)
-             (setq external-p t)
-             (unless (equal "" (cadr list))
-               (return-from analyze-symbol nil))))
-        (otherwise
-         (return-from analyze-symbol nil))))
-    (list package str external-p)))
-
-(defun lisp-search-arglist (string)
-  (multiple-value-bind (x error-p)
-      (ignore-errors
-       (destructuring-bind (package symbol-name external-p)
-           (analyze-symbol string)
-         (declare (ignore external-p))
-         (multiple-value-bind (symbol status)
-             (find-symbol (string-readcase symbol-name)
-                          (or package
-                              (lisp-current-package)))
-           (if (null status)
-               nil
-               symbol))))
-    (when (and (not error-p)
-               (symbolp x)
-               (fboundp x))
-      (swank/backend:arglist x))))
-
-(defun traverse-form-backward (point look)
-  (with-point ((point point))
-    (loop
-      (loop
-        (unless (form-offset point -1) (return))
-        (when (start-line-p point) (return-from traverse-form-backward nil)))
-      (alexandria:if-let ((result (funcall look point)))
-        (return result)
-        (unless (scan-lists point -1 1 t)
-          (return))))))
-
-(define-key *lisp-mode-keymap* (kbd "C-c C-a") 'lisp-echo-arglist)
-(define-command lisp-echo-arglist () ()
-  (let ((arglist (traverse-form-backward
-                  (current-point)
-                  (lambda (point)
-                    (let ((name (symbol-string-at-point point)))
-                      (when name
-                        (swank:operator-arglist name (lisp-current-package))))))))
-    (when arglist
-      (message "~A" arglist))))
-
-(define-key *lisp-mode-keymap* (kbd "Spc") 'lisp-insert-space-and-echo-arglist)
-(define-command lisp-insert-space-and-echo-arglist (n) ("p")
-  (insert-character (current-point) #\space n)
-  (lisp-echo-arglist))
-
-(defun check-package (package-name)
-  (find-package (string-upcase package-name)))
-
-(defun lisp-idle-timer-function ()
-  (when (eq (buffer-major-mode (current-buffer)) 'lisp-mode)
-    (let ((package (scan-current-package #'check-package)))
+(defun idle-timer-function ()
+  (when (and (eq (buffer-major-mode (current-buffer)) 'lisp-mode)
+             (connected-p))
+    (let ((package (scan-current-package (current-point))))
       (when package
-        (lisp-change-package package)))))
+        (lisp-set-package package)))))
 
-(defvar *lisp-timer*)
-(when (or (not (boundp '*lisp-timer*))
-          (not (timer-alive-p *lisp-timer*)))
-  (setf *lisp-timer*
-        (start-idle-timer "lisp" 110 t 'lisp-idle-timer-function nil
+(defvar *idle-timer*)
+(when (or (not (boundp '*idle-timer*))
+          (not (timer-alive-p *idle-timer*)))
+  (setf *idle-timer*
+        (start-idle-timer "lisp" 110 t 'idle-timer-function nil
                           (lambda (condition)
-                            (pop-up-backtrace condition)
-                            (stop-timer *lisp-timer*)))))
-
-(defun lisp-print-values (point values)
-  (with-point ((point point :left-inserting))
-    (with-open-stream (out (make-buffer-output-stream point))
-      (let ((*package* (lisp-current-package)))
-        (dolist (v values)
-          (pprint v out))))))
-
-(define-key *lisp-mode-keymap* (kbd "C-c C-j") 'lisp-eval-print-last-sexp)
-(define-command lisp-eval-print-last-sexp () ()
-  (lisp-move-and-eval-sexp
-   #'backward-sexp
-   #'(lambda (string)
-       (unless (start-line-p (current-point)) (insert-character (current-point) #\newline))
-       (setq - (first (%string-to-exps string (lisp-current-package))))
-       (let ((point (current-point)))
-         (let ((values (%lisp-eval - point t)))
-           (setq +++ ++ /// //     *** (car ///)
-                 ++  +  //  /      **  (car //)
-                 +   -  /   values *   (car /))
-           (lisp-print-values point values)
-           (insert-character point #\newline))))))
-
-(define-major-mode lisp-repl-mode lisp-mode
-    (:name "lisp-repl"
-	   :keymap *lisp-repl-mode-keymap*
-	   :syntax-table lem-lisp-syntax:*syntax-table*)
-  (setf (variable-value 'listener-get-prompt-function)
-        'lisp-repl-get-prompt)
-  (setf (variable-value 'listener-check-confirm-function)
-        'lisp-repl-paren-correspond-p)
-  (setf (variable-value 'listener-confirm-function)
-        'lisp-repl-confirm)
-  (listener-mode t))
-
-(define-command start-lisp-repl () ()
-  (listener-start "*lisp-repl*" 'lisp-repl-mode))
-
-(defun shorten-package-name (package)
-  (car
-   (sort (copy-list
-          (cons (package-name package)
-                (package-nicknames package)))
-         #'(lambda (x y)
-             (< (length x) (length y))))))
-
-(defun lisp-repl-get-prompt ()
-  (format nil "~A> " (shorten-package-name (lisp-current-package))))
-
-(defun lisp-repl-paren-correspond-p (point)
-  (loop :with count := 0 :do
-     (insert-character point #\))
-     (incf count)
-     (unless (form-offset (copy-point point :temporary) -1)
-       (delete-character point (- count))
-       (return (= 1 count)))))
-
-(defun lisp-repl-confirm (point string)
-  (setq - (car (%string-to-exps string (lisp-current-package))))
-  (multiple-value-bind (values error-p)
-      (%lisp-eval - point t)
-    (declare (ignore error-p))
-    (setq +++ ++ /// //     *** (car ///)
-          ++  +  //  /      **  (car //)
-          +   -  /   values *   (car /))
-    (buffer-end point)
-    (lisp-print-values point values)
-    (listener-reset-prompt (point-buffer point))))
-
-(define-key *lisp-repl-mode-keymap* (kbd "C-c M-p") 'lisp-repl-set-package)
-(define-command lisp-repl-set-package () ()
-  (lisp-set-package)
-  (listener-reset-prompt)
-  t)
+                            (stop-timer *idle-timer*)
+                            (pop-up-backtrace condition)))))
 
 (pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons ".asd$" 'lisp-mode) *auto-mode-alist* :test #'equal)

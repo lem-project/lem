@@ -1,4 +1,12 @@
-(defsystem "lem-lisp-mode"
-  :depends-on ("lem-core")
+(defsystem lem-lisp-mode
+  :depends-on (:alexandria
+               :trivial-types
+               :usocket
+               :swank
+               :optima
+               :uiop
+               :lem-core)
   :serial t
-  :components ((:file "lisp-mode")))
+  :components ((:file "errors")
+               (:file "swank-protocol")
+               (:file "lisp-mode")))

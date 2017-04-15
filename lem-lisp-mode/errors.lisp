@@ -1,8 +1,8 @@
-(defpackage :lem-slime.errors
+(defpackage :lem-lisp-mode.errors
   (:use :cl)
   (:export :disconnected))
 
-(in-package :lem-slime.errors)
+(in-package :lem-lisp-mode.errors)
 
 (define-condition disconnected (simple-condition)
   ())

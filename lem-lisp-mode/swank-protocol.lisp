@@ -1,7 +1,7 @@
 (in-package :cl-user)
-(defpackage lem-slime.swank-protocol
+(defpackage lem-lisp-mode.swank-protocol
   (:use :cl)
-  (:import-from :lem-slime.errors
+  (:import-from :lem-lisp-mode.errors
                 :disconnected)
   (:import-from :trivial-types
                 :association-list
@@ -42,7 +42,7 @@
            :debugger-in
            :debugger-out)
   (:documentation "Low-level implementation of a client for the Swank protocol."))
-(in-package :lem-slime.swank-protocol)
+(in-package :lem-lisp-mode.swank-protocol)
 
 ;;; Prevent reader errors
 

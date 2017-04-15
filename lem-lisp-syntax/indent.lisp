@@ -99,8 +99,7 @@
         ("return" 0)
         ("return-from" (nil &body))
         ("symbol-macrolet" . "let")
-        ;("tagbody"     lisp-indent-tagbody)
-        ("tagbody" 0)
+        ("tagbody"     lisp-indent-tagbody)
         ("throw" 1)
         ("unless" 1)
         ("unwind-protect" (5 &body))
@@ -125,8 +124,11 @@
   'default-indent)
 
 (defun lisp-indent-tagbody (path indent-point sexp-column)
-  (declare (ignore path indent-point sexp-column))
-  'default-indent)
+  (declare (ignore path))
+  (with-point ((indent-point indent-point))
+    (if (symbol-string-at-point (back-to-indentation indent-point))
+        (+ sexp-column 1)
+        (+ sexp-column *body-indent*))))
 
 (defun lisp-indent-keyword (path indent-point sexp-column)
   (declare (ignore path indent-point))

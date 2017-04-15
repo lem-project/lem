@@ -22,7 +22,7 @@
         (typeout-mode t)
         (when fn
           (save-excursion
-            (with-open-stream (out (make-buffer-output-stream (buffer-point buffer)))
+            (with-open-stream (out (make-buffer-output-stream (buffer-end-point buffer)))
               (funcall fn out))))))
     (when focus
       (setf (current-window) window))

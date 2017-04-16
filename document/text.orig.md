@@ -91,7 +91,6 @@
 {lem:delete-character function}
 {lem:erase-buffer function}
 {lem:delete-between-points function}
-{lem:filter-region-lines function}
 
 ## テキストプロパティ
 {lem:text-property-at function}

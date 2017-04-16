@@ -481,9 +481,13 @@
                         :ignore-error-status t))))
 
 (define-command delete-trailing-whitespace () ()
-  (filter-region-lines (buffer-start-point (current-buffer))
-                       (buffer-end-point (current-buffer))
-                       (lambda (string)
-                         (string-right-trim '(#\space #\tab) string)))
-  (move-to-end-of-buffer)
-  (delete-blank-lines))
+  (save-excursion
+    (let ((p (current-point)))
+      (buffer-start p)
+      (loop
+        (line-end p)
+        (delete-character p (skip-whitespace-backward p t))
+        (unless (line-offset p 1)
+          (return))))
+    (move-to-end-of-buffer)
+    (delete-blank-lines)))

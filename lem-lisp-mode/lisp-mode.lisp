@@ -359,50 +359,51 @@
 
 (defun highlight-notes (notes)
   (lisp-remove-notes)
-  (let ((overlays '()))
-    (lem.sourcelist:with-sourcelist (sourcelist "*lisp-compilations*")
-      (dolist (note notes)
-        (optima:match note
-          ((and (optima:property :location
-                                 (or (list :location
-                                           (list :buffer buffer-name)
-                                           (list :offset pos _)
-                                           _)
-                                     (list :location
-                                           (list :file file)
-                                           (list :position pos)
-                                           _)))
-                (or (optima:property :message message) (and))
-                (or (optima:property :source-context source-context) (and)))
-           (let ((jump-fun (if buffer-name
-                               (lambda ()
-                                 (let ((buffer (get-buffer buffer-name)))
-                                   (when buffer
-                                     (setf (current-window) (pop-to-buffer buffer))
-                                     (move-to-position (current-point) pos))))
-                               (lambda ()
-                                 (find-file file)
-                                 (move-to-position (current-point) pos)))))
-             (lem.sourcelist:append-sourcelist
-              sourcelist
-              (let ((name (or buffer-name file)))
-                (lambda (cur-point)
-                  (insert-string cur-point name :attribute 'lem.grep:title-attribute)
-                  (insert-string cur-point ":")
-                  (insert-string cur-point (princ-to-string pos) :attribute 'lem.grep:position-attribute)
-                  (insert-string cur-point ":")
-                  (insert-character cur-point #\newline 1)
-                  (insert-string cur-point message)
-                  (insert-character cur-point #\newline)
-                  (insert-string cur-point source-context)))
-              jump-fun)
-             (push (make-highlight-overlay pos
-                                           (if buffer-name
-                                               (get-buffer buffer-name)
-                                               (get-file-buffer file)))
-                   overlays))))))
-    (when overlays
-      (setf *note-overlays* overlays))))
+  (when notes
+    (let ((overlays '()))
+      (lem.sourcelist:with-sourcelist (sourcelist "*lisp-compilations*")
+        (dolist (note notes)
+          (optima:match note
+            ((and (optima:property :location
+                                   (or (list :location
+                                             (list :buffer buffer-name)
+                                             (list :offset pos _)
+                                             _)
+                                       (list :location
+                                             (list :file file)
+                                             (list :position pos)
+                                             _)))
+                  (or (optima:property :message message) (and))
+                  (or (optima:property :source-context source-context) (and)))
+             (let ((jump-fun (if buffer-name
+                                 (lambda ()
+                                   (let ((buffer (get-buffer buffer-name)))
+                                     (when buffer
+                                       (setf (current-window) (pop-to-buffer buffer))
+                                       (move-to-position (current-point) pos))))
+                                 (lambda ()
+                                   (find-file file)
+                                   (move-to-position (current-point) pos)))))
+               (lem.sourcelist:append-sourcelist
+                sourcelist
+                (let ((name (or buffer-name file)))
+                  (lambda (cur-point)
+                    (insert-string cur-point name :attribute 'lem.grep:title-attribute)
+                    (insert-string cur-point ":")
+                    (insert-string cur-point (princ-to-string pos) :attribute 'lem.grep:position-attribute)
+                    (insert-string cur-point ":")
+                    (insert-character cur-point #\newline 1)
+                    (insert-string cur-point message)
+                    (insert-character cur-point #\newline)
+                    (insert-string cur-point source-context)))
+                jump-fun)
+               (push (make-highlight-overlay pos
+                                             (if buffer-name
+                                                 (get-buffer buffer-name)
+                                                 (get-file-buffer file)))
+                     overlays))))))
+      (when overlays
+        (setf *note-overlays* overlays)))))
 
 (define-command lisp-remove-notes () ()
   (mapc #'delete-overlay *note-overlays*))
@@ -421,7 +422,7 @@
 
 (define-command lisp-compile-region (start end) ("r")
   (check-connection)
-  (let ((string (lem::points-to-string start end))
+  (let ((string (points-to-string start end))
         (position `((:position ,(position-at-point start))
                     (:line
                      ,(line-number-at-point (current-point))
@@ -745,7 +746,7 @@
 (defun write-string-to-repl (string)
   (let ((buffer (repl-buffer)))
     (when buffer
-      (with-open-stream (stream (make-buffer-output-stream (lem::buffer-end-point buffer)))
+      (with-open-stream (stream (make-buffer-output-stream (buffer-end-point buffer)))
         (princ string stream))
       (lem.listener-mode:listener-update-point (buffer-end-point buffer))
       (when (eq buffer (current-buffer))
@@ -807,7 +808,7 @@
 
 (defun log-message (message)
   (let ((buffer (get-buffer-create "*lisp-events*")))
-    (with-open-stream (stream (make-buffer-output-stream (lem::buffer-end-point buffer)))
+    (with-open-stream (stream (make-buffer-output-stream (buffer-end-point buffer)))
       (print message stream))))
 
 (defvar *unknown-keywords* nil)

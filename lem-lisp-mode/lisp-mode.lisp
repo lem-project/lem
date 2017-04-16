@@ -82,7 +82,8 @@
                     (swank:create-server :port port))
       (error ()
         (go :START)))
-    (slime-connect "localhost" port nil)))
+    (slime-connect "localhost" port nil)
+    (update-buffer-package)))
 
 (defun check-connection ()
   (unless (connected-p)
@@ -1070,7 +1071,7 @@
         (unless (line-offset p -1)
           (return))))))
 
-(defun idle-timer-function ()
+(defun update-buffer-package ()
   (when (and (eq (buffer-major-mode (current-buffer)) 'lisp-mode)
              (connected-p))
     (let ((package (scan-current-package (current-point))))
@@ -1081,7 +1082,7 @@
 (when (or (not (boundp '*idle-timer*))
           (not (timer-alive-p *idle-timer*)))
   (setf *idle-timer*
-        (start-idle-timer "lisp" 110 t 'idle-timer-function nil
+        (start-idle-timer "lisp" 110 t 'update-buffer-package nil
                           (lambda (condition)
                             (stop-timer *idle-timer*)
                             (pop-up-backtrace condition)))))

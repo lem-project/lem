@@ -74,6 +74,25 @@
   (setf *connection* (car *connection-list*))
   *connection*)
 
+(define-command lisp-connection-list () ()
+  (let ((menu (make-instance 'lem.menu-mode:menu
+                             :buffer-name "*lisp-connections*"
+                             :columns '(" " "hostname" "port" "pid" "name" "version"))))
+    (dolist (c *connection-list*)
+      (let ((item (make-instance 'lem.menu-mode:menu-item
+                                 :select-function (let ((c c))
+                                                    (lambda ()
+                                                      (setf *connection* c)
+                                                      (lisp-connection-list))))))
+        (lem.menu-mode:append-menu-item item (if (eq c *connection*) "*" " "))
+        (lem.menu-mode:append-menu-item item (swank-protocol:connection-hostname c))
+        (lem.menu-mode:append-menu-item item (swank-protocol:connection-port c))
+        (lem.menu-mode:append-menu-item item (swank-protocol:connection-pid c))
+        (lem.menu-mode:append-menu-item item (swank-protocol:connection-implementation-name c))
+        (lem.menu-mode:append-menu-item item (swank-protocol:connection-implementation-version c))
+        (lem.menu-mode:append-menu menu item)))
+    (lem.menu-mode:display-menu menu)))
+
 (defun self-connect ()
   (prog (port)
    :START

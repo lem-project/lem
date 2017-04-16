@@ -47,6 +47,7 @@
                (:file "kbdmacro")
                (:file "isearch")
                (:file "showparen")
+               (:file "menu-mode")
                (:file "list-buffers")
                (:file "line-numbers")
                (:file "sourcelist")

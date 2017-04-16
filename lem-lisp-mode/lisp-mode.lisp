@@ -39,7 +39,8 @@
   (setf (variable-value 'insertion-line-comment) ";; ")
   (setf (variable-value 'find-definitions-function) 'find-definitions)
   (setf (variable-value 'find-references-function) 'find-references)
-  (setf (variable-value 'completion-function) 'completion-symbol))
+  (setf (variable-value 'completion-function) 'completion-symbol)
+  (unless (connected-p) (self-connect)))
 
 (define-key *lisp-mode-keymap* "C-M-a" 'lisp-beginning-of-defun)
 (define-key *lisp-mode-keymap* "C-M-e" 'lisp-end-of-defun)

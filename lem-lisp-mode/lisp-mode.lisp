@@ -182,7 +182,7 @@
                                   (editor-error "Synchronous Lisp Evaluation aborted"))))
                :package package
                :thread (current-swank-thread))
-      (loop (sit-for 10)))))
+      (loop (sit-for 10 nil)))))
 
 (defun lisp-eval-from-string (string &optional (package (current-package)))
   (lisp-eval-internal 'swank-protocol:emacs-rex-string string package))
@@ -938,6 +938,7 @@
     (:name "sldb"
      :keymap *sldb-keymap*))
 
+(define-key *sldb-keymap* "C-m" 'sldb-default-action)
 (define-key *sldb-keymap* "M-n" 'sldb-details-down)
 (define-key *sldb-keymap* "M-p" 'sldb-details-up)
 (define-key *sldb-keymap* "q" 'sldb-quit)
@@ -964,6 +965,10 @@
   (or (get-sldb-buffer thread)
       (get-buffer-create (format nil "*sldb ~D*" thread))))
 
+(defun sldb-frame.number (frame) (first frame))
+(defun sldb-frame.string (frame) (second frame))
+(defun sldb-frame.plist (frame) (third frame))
+
 (defun prune-initial-frames (frames)
   (or (loop :for frame :in frames
             :for (n form) := frame
@@ -977,9 +982,10 @@
 
 (defun sldb-setup (thread level condition restarts frames conts)
   (let ((buffer (get-sldb-buffer-create thread)))
-    (setf (buffer-read-only-p buffer) nil)
+    (setf (current-window) (display-buffer buffer))
     (change-buffer-mode buffer 'sldb-mode)
-    ;(setf (swank-protocol:connection-thread *connection*) thread)
+    (setf (buffer-read-only-p buffer) nil)
+    (setf (variable-value 'truncate-lines :buffer buffer) nil)
     (setf (buffer-value buffer 'thread)
           thread
           (buffer-value buffer 'level)
@@ -1016,20 +1022,35 @@
       (insert-string point (format nil "~%Backtrace:~%") :attribute 'section-attribute)
       (setf (buffer-value buffer 'backtrace-start-point)
             (copy-point point :right-inserting))
-      (with-point ((save-point point))
-        ;(setf frames (prune-initial-frames frames))
-        (loop :for (n form) :in frames
-              :do
-              (with-point ((s point))
-                (insert-string point " ")
-                (insert-string point (format nil "~2d:" n) :attribute 'frame-label-attribute)
-                (insert-string point " ")
-                (insert-string point form)
-                (put-text-property s point 'frame t)
-                (insert-character point #\newline)))
-        (move-point point save-point)))
-    (setf (buffer-read-only-p buffer) t)
-    (setf (current-window) (display-buffer buffer))))
+      (sldb-insert-frames point frames))
+    (setf (buffer-read-only-p buffer) t)))
+
+(defun sldb-insert-frames (point frames)
+  (declare (ignore frames))
+  (let ((p (copy-point point)))
+    (start-timer 0 nil
+                 (lambda ()
+                   (save-excursion
+                     (setf (current-buffer) (point-buffer p))
+                     (let ((*inhibit-read-only* t))
+                       (let ((frames (lisp-eval '(swank:backtrace 0 nil))))
+                         (dolist (frame frames)
+                           (sldb-insert-frame p frame))))
+                     (delete-point p))))))
+
+(defun sldb-insert-frame (point frame)
+  (let ((number (sldb-frame.number frame))
+        (string (sldb-frame.string frame)))
+    (with-point ((s point))
+      (insert-string point " ")
+      (insert-string point (format nil "~2d:" number) :attribute 'frame-label-attribute)
+      (insert-string point " ")
+      (insert-string point string)
+      (put-text-property s point 'frame frame)
+      (put-text-property s point 'action 'sldb-toggle-details)
+      (insert-character point #\newline))))
+
+(defun sldb-toggle-details ())
 
 (defun sldb-active (thread level select)
   (let ((buffer (get-sldb-buffer thread)))
@@ -1063,6 +1084,10 @@
                  (setf (current-window) repl-window))))
             (t
              (kill-buffer buffer))))))
+
+(define-command sldb-default-action () ()
+  (let ((action (text-property-at (current-point) 'action)))
+    (when action (funcall action))))
 
 (define-command sldb-details-down () ()
   (let ((p (current-point)))

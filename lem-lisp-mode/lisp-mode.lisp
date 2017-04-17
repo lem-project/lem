@@ -176,7 +176,7 @@
 (defun lisp-eval (sexp &optional (package (current-package)))
   (lisp-eval-internal 'swank-protocol:emacs-rex sexp package))
 
-(defun eval-async (form &optional cont thread package)
+(defun lisp-eval-async (form &optional cont package)
   (swank-protocol:emacs-rex
    *connection*
    form
@@ -187,7 +187,7 @@
                         (funcall cont result)))
                      ((:abort condition)
                       (message "Evaluation aborted on ~A." condition))))
-   :thread thread
+   :thread t
    :package package))
 
 (defun eval-with-transcript (form)
@@ -326,11 +326,10 @@
   (let ((name (get-operator-name))
         (package (current-package)))
     (when name
-      (eval-async `(swank:operator-arglist ,name ,package)
-                  (lambda (arglist)
-                    (when arglist
-                      (message "~A" (ppcre:regex-replace-all "\\s+" arglist " "))))
-                  t))))
+      (lisp-eval-async `(swank:operator-arglist ,name ,package)
+                       (lambda (arglist)
+                         (when arglist
+                           (message "~A" (ppcre:regex-replace-all "\\s+" arglist " "))))))))
 
 (define-command lisp-space (n) ("p")
   (insert-character (current-point) #\space n)
@@ -353,7 +352,7 @@
                              (and fastfile successp)))
     (highlight-notes notes)
     (when (and loadp fastfile successp)
-      (eval-async `(swank:load-file ,fastfile) nil t))))
+      (lisp-eval-async `(swank:load-file ,fastfile)))))
 
 (defun show-compile-result (notes secs successp)
   (message (format nil "~{~A~^ ~}"
@@ -435,10 +434,9 @@
       (save-buffer)))
   (let ((file (buffer-filename (current-buffer))))
     (refresh-output-buffer)
-    (eval-async `(swank:compile-file-for-emacs ,file t)
-                #'compilation-finished
-                t
-                (buffer-package (current-buffer)))))
+    (lisp-eval-async `(swank:compile-file-for-emacs ,file t)
+                     #'compilation-finished
+                     (buffer-package (current-buffer)))))
 
 (define-command lisp-compile-region (start end) ("r")
   (check-connection)
@@ -448,14 +446,13 @@
                      ,(line-number-at-point (current-point))
                      ,(point-charpos (current-point))))))
     (refresh-output-buffer)
-    (eval-async `(swank:compile-string-for-emacs ,string
-                                                 ,(buffer-name (current-buffer))
-                                                 ',position
-                                                 ,(buffer-filename (current-buffer))
-                                                 nil)
-                #'compilation-finished
-                t
-                (buffer-package (current-buffer)))))
+    (lisp-eval-async `(swank:compile-string-for-emacs ,string
+                                                      ,(buffer-name (current-buffer))
+                                                      ',position
+                                                      ,(buffer-filename (current-buffer))
+                                                      nil)
+                     #'compilation-finished
+                     (buffer-package (current-buffer)))))
 
 (define-command lisp-compile-defun () ()
   (check-connection)
@@ -1088,9 +1085,9 @@
                                                (error "sldb-quit returned [~A]" x))))))
 
 (define-command sldb-abort () ()
-  (eval-async '(swank:sldb-abort)
-              (lambda (v)
-                (message "Restart returned: ~A" v))))
+  (lisp-eval-async '(swank:sldb-abort)
+                   (lambda (v)
+                     (message "Restart returned: ~A" v))))
 
 (define-command sldb-restart-frame () ()
   )

@@ -261,7 +261,7 @@ to check if input is available."
            (*print-case* :downcase))
        ,@body)))
 
-(defun emacs-rex-internal (connection string continuation thread package)
+(defun emacs-rex-string (connection string &key continuation thread package)
   (let ((msg (format nil "(:emacs-rex ~A ~S ~A ~A)"
                      string
                      (or package
@@ -273,19 +273,15 @@ to check if input is available."
       (push (cons (connection-request-count connection)
                   continuation)
             (connection-continuations connection)))
-    (send-message-string connection msg)
-    (connection-request-count connection)))
-
-(defun emacs-rex-string (connection string &key continuation thread package)
-  (emacs-rex-internal connection string continuation thread package))
+    (send-message-string connection msg)))
 
 (defun emacs-rex (connection form &key continuation thread package)
-  (emacs-rex-internal connection
-                      (with-swank-syntax ()
-                        (prin1-to-string form))
-                      continuation
-                      thread
-                      package))
+  (emacs-rex-string connection
+                    (with-swank-syntax ()
+                      (prin1-to-string form))
+                    :continuation continuation
+                    :thread thread
+                    :package package))
 
 (defun finish-evaluated (connection value id)
   (let ((elt (assoc id (connection-continuations connection))))

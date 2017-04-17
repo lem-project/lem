@@ -13,7 +13,6 @@
            :connection-package
            :connection-prompt-string
            :connection-process
-           :connection-thread
            :connection-log-p
            :connection-logging-stream
            :connection-features)
@@ -115,10 +114,6 @@ Parses length information to determine how many characters to read."
    (process
     :initform nil
     :accessor connection-process)
-   (thread
-    :accessor connection-thread
-    :initform t
-    :documentation "The current thread.")
    (continuations
     :accessor connection-continuations
     :initform nil)
@@ -266,8 +261,7 @@ to check if input is available."
                      string
                      (or package
                          (connection-package connection))
-                     (or thread
-                         (connection-thread connection))
+                     thread
                      (incf (connection-request-count connection)))))
     (when continuation
       (push (cons (connection-request-count connection)

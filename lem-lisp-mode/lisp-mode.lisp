@@ -858,12 +858,10 @@
     ((:return value id)
      (swank-protocol:finish-evaluated *connection* value id))
     ((:debug-activate thread level &optional select)
-     (swank-protocol:debugger-in *connection*)
      (sldb-active thread level select))
     ((:debug thread level condition restarts frames conts)
      (sldb-setup thread level condition restarts frames conts))
     ((:debug-return thread level stepping)
-     (swank-protocol:debugger-out *connection*)
      (sldb-exit thread level stepping))
     ;; ((:channel-send id msg)
     ;;  )
@@ -1026,12 +1024,10 @@
     (setf (current-window) (display-buffer buffer))))
 
 (defun sldb-active (thread level select)
-  (declare (ignore select))
   (let ((buffer (get-sldb-buffer thread)))
     (cond ((and buffer
                 (= level (buffer-value buffer 'level -1)))
-           ;(when select (pop-to-buffer buffer))
-           )
+           (when select (pop-to-buffer buffer)))
           (t
            (sldb-reinitialize thread level)))))
 
@@ -1046,10 +1042,12 @@
    :thread thread))
 
 (defun sldb-exit (thread level stepping)
-  (declare (ignore level stepping))
+  (declare (ignore level))
   (let ((buffer (get-sldb-buffer thread)))
     (when buffer
-      (cond ((eq buffer (window-buffer (current-window)))
+      (cond (stepping
+             (error "stepping"))
+            ((eq buffer (window-buffer (current-window)))
              (quit-window (current-window) t)
              (let* ((repl-buffer (repl-buffer))
                     (repl-window (when repl-buffer
@@ -1077,8 +1075,7 @@
              (previous-single-property-change p 'frame))))))
 
 (define-command sldb-quit () ()
-  (when (swank-protocol:debuggerp *connection*)
-    (swank-protocol:emacs-rex *connection* `(swank:throw-to-toplevel))))
+  (swank-protocol:emacs-rex *connection* `(swank:throw-to-toplevel)))
 
 (define-command sldb-continue () ()
   (when (null (buffer-value (current-buffer) 'restarts))
@@ -1091,21 +1088,19 @@
                                                (error "sldb-quit returned [~A]" x))))))
 
 (define-command sldb-abort () ()
-  (when (swank-protocol:debuggerp *connection*)
-    (eval-async '(swank:sldb-abort)
-                (lambda (v)
-                  (message "Restart returned: ~A" v)))))
+  (eval-async '(swank:sldb-abort)
+              (lambda (v)
+                (message "Restart returned: ~A" v))))
 
 (define-command sldb-restart-frame () ()
   )
 
 (defun sldb-invoke-restart (n)
   (check-type n integer)
-  (when (swank-protocol:debuggerp *connection*)
-    (swank-protocol:emacs-rex *connection*
-                              `(swank:invoke-nth-restart-for-emacs
-                                ,(buffer-value (current-buffer) 'level -1)
-                                ,n))))
+  (swank-protocol:emacs-rex *connection*
+                            `(swank:invoke-nth-restart-for-emacs
+                              ,(buffer-value (current-buffer) 'level -1)
+                              ,n)))
 
 (define-command sldb-invoke-restart-0 () () (sldb-invoke-restart 0))
 (define-command sldb-invoke-restart-1 () () (sldb-invoke-restart 1))

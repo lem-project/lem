@@ -37,11 +37,7 @@
            :connection-implementation-version
            :connection-machine-type
            :connection-machine-version
-           :connection-swank-version
-
-           :debuggerp
-           :debugger-in
-           :debugger-out)
+           :connection-swank-version)
   (:documentation "Low-level implementation of a client for the Swank protocol."))
 (in-package :lem-lisp-mode.swank-protocol)
 
@@ -355,15 +351,3 @@ to check if input is available."
 (defun read-all-messages (connection)
   (loop while (message-waiting-p connection) collecting
     (read-message connection)))
-
-;;;
-
-(defun debuggerp (connection)
-  "T if the connection is in the debugger, NIL otherwise."
-  (> (connection-debug-level connection) 0))
-
-(defun debugger-in (connection)
-  (incf (connection-debug-level connection)))
-
-(defun debugger-out (connection)
-  (decf (connection-debug-level connection)))

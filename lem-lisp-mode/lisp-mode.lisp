@@ -174,7 +174,7 @@
                *connection*
                rex-arg
                :continuation (lambda (result)
-                               (alexandria:destructuring-case result
+                               (alexandria:destructuring-ecase result
                                  ((:ok value)
                                   (throw tag value))
                                  ((:abort condition)
@@ -191,21 +191,24 @@
   (lisp-eval-internal 'swank-protocol:emacs-rex sexp package))
 
 (defun lisp-eval-async (form &optional cont (package (current-package)))
-  (lisp-rex form
-            :continuation (lambda (value)
-                            (alexandria:destructuring-ecase value
-                              ((:ok result)
-                               (when cont
-                                 (funcall cont result)))
-                              ((:abort condition)
-                               (message "Evaluation aborted on ~A." condition))))
-            :thread (current-swank-thread)
-            :package package))
+  (let ((buffer (current-buffer)))
+    (lisp-rex form
+              :continuation (lambda (value)
+                              (alexandria:destructuring-ecase value
+                                ((:ok result)
+                                 (when cont
+                                   (save-excursion
+                                     (setf (current-buffer) buffer)
+                                     (funcall cont result))))
+                                ((:abort condition)
+                                 (message "Evaluation aborted on ~A." condition))))
+              :thread (current-swank-thread)
+              :package package)))
 
 (defun eval-with-transcript (form)
   (lisp-rex form
             :continuation (lambda (value)
-                            (alexandria:destructuring-case value
+                            (alexandria:destructuring-ecase value
                               ((:ok x)
                                (message "~A" x))
                               ((:abort condition)
@@ -1040,7 +1043,7 @@
   (lisp-rex
    '(swank:debugger-info-for-emacs 0 10)
    :continuation (lambda (value)
-                   (alexandria:destructuring-case value
+                   (alexandria:destructuring-ecase value
                      ((:ok result)
                       (apply #'sldb-setup thread level result))))
    :thread thread))
@@ -1093,7 +1096,7 @@
             :continuation (lambda (value)
                             (alexandria:destructuring-case value
                               ((:ok x)
-                               (error "sldb-quit returned [~A]" x))))))
+                               (editor-error "sldb-quit returned [~A]" x))))))
 
 (define-command sldb-abort () ()
   (lisp-eval-async '(swank:sldb-abort)

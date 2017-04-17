@@ -119,6 +119,10 @@
   (or (buffer-package (current-buffer))
       (swank-protocol:connection-package *connection*)))
 
+(defun current-swank-thread ()
+  (or (buffer-value (current-buffer) 'thread)
+      t))
+
 (defun features ()
   (when (connected-p)
     (swank-protocol:connection-features *connection*)))
@@ -153,6 +157,16 @@
   (let ((lem-lisp-syntax:*get-method-function* #'indent-spec))
     (lem-lisp-syntax:calc-indent point)))
 
+(defun lisp-rex (form &key
+                      continuation
+                      (thread (current-swank-thread))
+                      (package (current-package)))
+  (swank-protocol:emacs-rex *connection*
+                            form
+                            :continuation continuation
+                            :thread thread
+                            :package package))
+
 (defun lisp-eval-internal (emacs-rex-fun rex-arg package)
   (let ((tag (gensym)))
     (catch tag
@@ -167,7 +181,7 @@
                                   (declare (ignore condition))
                                   (editor-error "Synchronous Lisp Evaluation aborted"))))
                :package package
-               :thread t)
+               :thread (current-swank-thread))
       (loop (sit-for 10)))))
 
 (defun lisp-eval-from-string (string &optional (package (current-package)))
@@ -177,31 +191,26 @@
   (lisp-eval-internal 'swank-protocol:emacs-rex sexp package))
 
 (defun lisp-eval-async (form &optional cont (package (current-package)))
-  (swank-protocol:emacs-rex
-   *connection*
-   form
-   :continuation (lambda (value)
-                   (alexandria:destructuring-ecase value
-                     ((:ok result)
-                      (when cont
-                        (funcall cont result)))
-                     ((:abort condition)
-                      (message "Evaluation aborted on ~A." condition))))
-   :thread t
-   :package (current-package)))
+  (lisp-rex form
+            :continuation (lambda (value)
+                            (alexandria:destructuring-ecase value
+                              ((:ok result)
+                               (when cont
+                                 (funcall cont result)))
+                              ((:abort condition)
+                               (message "Evaluation aborted on ~A." condition))))
+            :thread (current-swank-thread)
+            :package package))
 
 (defun eval-with-transcript (form)
-  (swank-protocol:emacs-rex
-   *connection*
-   form
-   :continuation (lambda (value)
-                   (alexandria:destructuring-case value
-                     ((:ok x)
-                      (message "~A" x))
-                     ((:abort condition)
-                      (message "Evaluation aborted on ~A." condition))))
-   :package (current-package)
-   :thread t))
+  (lisp-rex form
+            :continuation (lambda (value)
+                            (alexandria:destructuring-case value
+                              ((:ok x)
+                               (message "~A" x))
+                              ((:abort condition)
+                               (message "Evaluation aborted on ~A." condition))))
+            :package (current-package)))
 
 (defun re-eval-defvar (string)
   (eval-with-transcript `(swank:re-evaluate-defvar ,string)))
@@ -965,8 +974,9 @@
 
 (defun sldb-setup (thread level condition restarts frames conts)
   (let ((buffer (get-sldb-buffer-create thread)))
+    (setf (buffer-read-only-p buffer) nil)
     (change-buffer-mode buffer 'sldb-mode)
-    (setf (swank-protocol:connection-thread *connection*) thread)
+    ;(setf (swank-protocol:connection-thread *connection*) thread)
     (setf (buffer-value buffer 'thread)
           thread
           (buffer-value buffer 'level)
@@ -1004,16 +1014,16 @@
       (setf (buffer-value buffer 'backtrace-start-point)
             (copy-point point :right-inserting))
       (with-point ((save-point point))
-        (let ((frames (prune-initial-frames frames)))
-          (loop :for (n form) :in frames
-                :do
-                (with-point ((s point))
-                  (insert-string point " ")
-                  (insert-string point (format nil "~2d:" n) :attribute 'frame-label-attribute)
-                  (insert-string point " ")
-                  (insert-string point form)
-                  (put-text-property s point 'frame t)
-                  (insert-character point #\newline))))
+        ;(setf frames (prune-initial-frames frames))
+        (loop :for (n form) :in frames
+              :do
+              (with-point ((s point))
+                (insert-string point " ")
+                (insert-string point (format nil "~2d:" n) :attribute 'frame-label-attribute)
+                (insert-string point " ")
+                (insert-string point form)
+                (put-text-property s point 'frame t)
+                (insert-character point #\newline)))
         (move-point point save-point)))
     (setf (buffer-read-only-p buffer) t)
     (setf (current-window) (display-buffer buffer))))
@@ -1027,9 +1037,8 @@
            (sldb-reinitialize thread level)))))
 
 (defun sldb-reinitialize (thread level)
-  (swank-protocol:emacs-rex
-   *connection*
-   (swank:debugger-info-for-emacs 0 10)
+  (lisp-rex
+   '(swank:debugger-info-for-emacs 0 10)
    :continuation (lambda (value)
                    (alexandria:destructuring-case value
                      ((:ok result)
@@ -1070,17 +1079,21 @@
              (previous-single-property-change p 'frame))))))
 
 (define-command sldb-quit () ()
-  (swank-protocol:emacs-rex *connection* `(swank:throw-to-toplevel)))
+  (lisp-rex `(swank:throw-to-toplevel)
+            :continuation (lambda (value)
+                            (alexandria:destructuring-ecase
+                                value
+                              ((:ok x) (editor-error "sldb-quit returned [%s]" x))
+                              ((:abort _) (declare (ignore _)))))))
 
 (define-command sldb-continue () ()
   (when (null (buffer-value (current-buffer) 'restarts))
     (error "continue called outside of debug buffer"))
-  (swank-protocol:emacs-rex *connection*
-                            '(swank:sldb-continue)
-                            :continuation (lambda (value)
-                                            (alexandria:destructuring-case value
-                                              ((:ok x)
-                                               (error "sldb-quit returned [~A]" x))))))
+  (lisp-rex '(swank:sldb-continue)
+            :continuation (lambda (value)
+                            (alexandria:destructuring-case value
+                              ((:ok x)
+                               (error "sldb-quit returned [~A]" x))))))
 
 (define-command sldb-abort () ()
   (lisp-eval-async '(swank:sldb-abort)
@@ -1092,10 +1105,13 @@
 
 (defun sldb-invoke-restart (n)
   (check-type n integer)
-  (swank-protocol:emacs-rex *connection*
-                            `(swank:invoke-nth-restart-for-emacs
-                              ,(buffer-value (current-buffer) 'level -1)
-                              ,n)))
+  (lisp-rex `(swank:invoke-nth-restart-for-emacs
+              ,(buffer-value (current-buffer) 'level -1)
+              ,n)
+            :continuation (lambda (x)
+                            (alexandria:destructuring-ecase x
+                              ((:ok value) (message "Restart returned: %s" value))
+                              ((:abort _) (declare (ignore _)))))))
 
 (define-command sldb-invoke-restart-0 () () (sldb-invoke-restart 0))
 (define-command sldb-invoke-restart-1 () () (sldb-invoke-restart 1))

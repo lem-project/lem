@@ -261,7 +261,7 @@ to check if input is available."
                      string
                      (or package
                          (connection-package connection))
-                     thread
+                     (or thread t)
                      (incf (connection-request-count connection)))))
     (when continuation
       (push (cons (connection-request-count connection)

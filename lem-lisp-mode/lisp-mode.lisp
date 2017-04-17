@@ -859,12 +859,12 @@
      (swank-protocol:finish-evaluated *connection* value id))
     ((:debug-activate thread level &optional select)
      (swank-protocol:debugger-in *connection*)
-     (active-debugger thread level select))
+     (sldb-active thread level select))
     ((:debug thread level condition restarts frames conts)
-     (start-debugger thread level condition restarts frames conts))
+     (sldb-setup thread level condition restarts frames conts))
     ((:debug-return thread level stepping)
      (swank-protocol:debugger-out *connection*)
-     (exit-debugger thread level stepping))
+     (sldb-exit thread level stepping))
     ;; ((:channel-send id msg)
     ;;  )
     ;; ((:emacs-channel-send id msg)
@@ -909,90 +909,70 @@
      (declare (ignore args))
      (pushnew (car message) *unknown-keywords*))))
 
-(define-major-mode lisp-debug-mode ()
-    (:name "lisp-debug"
-     :keymap *lisp-debugger-keymap*))
+
+(define-attribute topline-attribute)
 
-(define-key *lisp-debugger-keymap* "q" 'lisp-quit-debugger)
-(define-key *lisp-debugger-keymap* "c" 'lisp-continue)
-(define-key *lisp-debugger-keymap* "a" 'lisp-abort)
-(define-key *lisp-debugger-keymap* "0" 'lisp-invoke-restart-0)
-(define-key *lisp-debugger-keymap* "1" 'lisp-invoke-restart-1)
-(define-key *lisp-debugger-keymap* "2" 'lisp-invoke-restart-2)
-(define-key *lisp-debugger-keymap* "3" 'lisp-invoke-restart-3)
-(define-key *lisp-debugger-keymap* "4" 'lisp-invoke-restart-4)
-(define-key *lisp-debugger-keymap* "5" 'lisp-invoke-restart-5)
-(define-key *lisp-debugger-keymap* "6" 'lisp-invoke-restart-6)
-(define-key *lisp-debugger-keymap* "7" 'lisp-invoke-restart-7)
-(define-key *lisp-debugger-keymap* "8" 'lisp-invoke-restart-8)
-(define-key *lisp-debugger-keymap* "9" 'lisp-invoke-restart-9)
+(define-attribute condition-attribute
+  (t :foreground "red" :bold-p t))
 
-(define-command lisp-quit-debugger () ()
-  (when (swank-protocol:debuggerp *connection*)
-    (swank-protocol:emacs-rex *connection* `(swank:throw-to-toplevel))))
+(define-attribute section-attribute
+  (t :background "gray" :foreground "black"))
 
-(define-command lisp-continue () ()
-  (when (null (buffer-value (current-buffer) 'restarts))
-    (error "lisp-continue called outside of debug buffer"))
-  (swank-protocol:emacs-rex *connection*
-                            '(swank:sldb-continue)
-                            :continuation (lambda (value)
-                                            (alexandria:destructuring-case value
-                                              ((:ok x)
-                                               (error "sldb-quit returned [~A]" x))))))
+(define-attribute restart-number-attribute
+  (t :bold-p t))
 
-(define-command lisp-abort () ()
-  (when (swank-protocol:debuggerp *connection*)
-    (eval-async '(swank:sldb-abort)
-                (lambda (v)
-                  (message "Restart returned: ~A" v)))))
+(define-attribute restart-type-attribute
+  (t :foreground "purple"))
 
-(defun lisp-invoke-restart (n)
-  (check-type n integer)
-  (when (swank-protocol:debuggerp *connection*)
-    (swank-protocol:emacs-rex *connection*
-                              `(swank:invoke-nth-restart-for-emacs
-                                ,(buffer-value (current-buffer) 'level -1)
-                                ,n))))
+(define-attribute restart-attribute)
 
-(define-command lisp-invoke-restart-0 () () (lisp-invoke-restart 0))
-(define-command lisp-invoke-restart-1 () () (lisp-invoke-restart 1))
-(define-command lisp-invoke-restart-2 () () (lisp-invoke-restart 2))
-(define-command lisp-invoke-restart-3 () () (lisp-invoke-restart 3))
-(define-command lisp-invoke-restart-4 () () (lisp-invoke-restart 4))
-(define-command lisp-invoke-restart-5 () () (lisp-invoke-restart 5))
-(define-command lisp-invoke-restart-6 () () (lisp-invoke-restart 6))
-(define-command lisp-invoke-restart-7 () () (lisp-invoke-restart 7))
-(define-command lisp-invoke-restart-8 () () (lisp-invoke-restart 8))
-(define-command lisp-invoke-restart-9 () () (lisp-invoke-restart 9))
+(define-attribute frame-label-attribute
+  (t :foreground "gray40"))
 
-(defun get-debug-buffer (thread)
+(define-major-mode sldb-mode ()
+    (:name "sldb"
+     :keymap *sldb-keymap*))
+
+(define-key *sldb-keymap* "M-n" 'sldb-details-down)
+(define-key *sldb-keymap* "M-p" 'sldb-details-up)
+(define-key *sldb-keymap* "q" 'sldb-quit)
+(define-key *sldb-keymap* "c" 'sldb-continue)
+(define-key *sldb-keymap* "a" 'sldb-abort)
+(define-key *sldb-keymap* "r" 'sldb-restart-frame)
+(define-key *sldb-keymap* "0" 'sldb-invoke-restart-0)
+(define-key *sldb-keymap* "1" 'sldb-invoke-restart-1)
+(define-key *sldb-keymap* "2" 'sldb-invoke-restart-2)
+(define-key *sldb-keymap* "3" 'sldb-invoke-restart-3)
+(define-key *sldb-keymap* "4" 'sldb-invoke-restart-4)
+(define-key *sldb-keymap* "5" 'sldb-invoke-restart-5)
+(define-key *sldb-keymap* "6" 'sldb-invoke-restart-6)
+(define-key *sldb-keymap* "7" 'sldb-invoke-restart-7)
+(define-key *sldb-keymap* "8" 'sldb-invoke-restart-8)
+(define-key *sldb-keymap* "9" 'sldb-invoke-restart-9)
+
+(defun get-sldb-buffer (thread)
   (dolist (buffer (buffer-list))
     (when (eql thread (buffer-value buffer 'thread))
       (return buffer))))
 
-(defun get-debug-buffer-create (thread)
-  (or (get-debug-buffer thread)
-      (get-buffer-create (format nil "*lisp-debugger ~D*" thread))))
+(defun get-sldb-buffer-create (thread)
+  (or (get-sldb-buffer thread)
+      (get-buffer-create (format nil "*sldb ~D*" thread))))
 
-(defun exit-debugger (thread level stepping)
-  (declare (ignore level stepping))
-  (let ((buffer (get-debug-buffer thread)))
-    (when buffer
-      (cond ((eq buffer (window-buffer (current-window)))
-             (quit-window (current-window) t)
-             (let* ((repl-buffer (repl-buffer))
-                    (repl-window (when repl-buffer
-                                   (first (get-buffer-windows repl-buffer)))))
-               (when repl-window
-                 (setf (current-window) repl-window))))
-            (t
-             (kill-buffer buffer))))))
+(defun prune-initial-frames (frames)
+  (or (loop :for frame :in frames
+            :for (n form) := frame
+            :until (ppcre:scan (load-time-value
+                                (ppcre:create-scanner
+                                 "^(?:[() ]|lambda)*swank\\b"
+                                 :case-insensitive-mode t))
+                               form)
+            :collect frame)
+      frames))
 
-(defun start-debugger (thread level condition restarts frames conts)
-  (let ((buffer (get-debug-buffer-create thread)))
-    (setf (current-window) (display-buffer buffer))
-    (lisp-debug-mode)
+(defun sldb-setup (thread level condition restarts frames conts)
+  (let ((buffer (get-sldb-buffer-create thread)))
+    (change-buffer-mode buffer 'sldb-mode)
     (setf (swank-protocol:connection-thread *connection*) thread)
     (setf (buffer-value buffer 'thread)
           thread
@@ -1008,41 +988,135 @@
     (add-hook (variable-value 'kill-buffer-hook :buffer buffer)
               (lambda (buffer)
                 (declare (ignore buffer))
-                (lisp-quit-debugger)))
-    (let ((point (current-point)))
-      (dolist (c condition)
-        (insert-string point
-                       (if (stringp c)
-                           c
-                           (prin1-to-string c)))
-        (insert-character point #\newline 1))
-      (insert-string point (format nil "~%Restarts:~%"))
+                (sldb-quit)))
+    (let ((point (buffer-point buffer)))
+      (destructuring-bind (message type extras) condition
+        (declare (ignore extras))
+        (insert-string point message :attribute 'topline-attribute)
+        (insert-character point #\newline)
+        (insert-string point type :attribute 'condition-attribute)
+        (insert-character point #\newline))
+      (insert-string point (format nil "~%Restarts:~%") :attribute 'section-attribute)
       (loop :for n :from 0
             :for (title description) :in restarts
-            :do (insert-string point (format nil "~D: [~A] ~A~%" n title description)))
-      (insert-string point (format nil "~%Backtrace:~%"))
-      (loop :for (n form) :in frames
-            :do (insert-string point (format nil "~D: ~A~%" n form))))))
+            :do
+            (insert-string point " ")
+            (insert-string point (format nil "~D" n) :attribute 'restart-number-attribute)
+            (insert-string point ": [")
+            (insert-string point title :attribute 'restart-type-attribute)
+            (insert-string point "] ")
+            (insert-string point description :attribute 'restart-attribute)
+            (insert-character point #\newline))
+      (insert-string point (format nil "~%Backtrace:~%") :attribute 'section-attribute)
+      (setf (buffer-value buffer 'backtrace-start-point)
+            (copy-point point :right-inserting))
+      (with-point ((save-point point))
+        (let ((frames (prune-initial-frames frames)))
+          (loop :for (n form) :in frames
+                :do
+                (with-point ((s point))
+                  (insert-string point " ")
+                  (insert-string point (format nil "~2d:" n) :attribute 'frame-label-attribute)
+                  (insert-string point " ")
+                  (insert-string point form)
+                  (put-text-property s point 'frame t)
+                  (insert-character point #\newline))))
+        (move-point point save-point)))
+    (setf (buffer-read-only-p buffer) t)
+    (setf (current-window) (display-buffer buffer))))
 
-(defun active-debugger (thread level select)
+(defun sldb-active (thread level select)
   (declare (ignore select))
-  (let ((buffer (get-debug-buffer thread)))
+  (let ((buffer (get-sldb-buffer thread)))
     (cond ((and buffer
                 (= level (buffer-value buffer 'level -1)))
            ;(when select (pop-to-buffer buffer))
            )
           (t
-           (debugger-reinitialize thread level)))))
+           (sldb-reinitialize thread level)))))
 
-(defun debugger-reinitialize (thread level)
+(defun sldb-reinitialize (thread level)
   (swank-protocol:emacs-rex
    *connection*
    (swank:debugger-info-for-emacs 0 10)
    :continuation (lambda (value)
                    (alexandria:destructuring-case value
                      ((:ok result)
-                      (apply #'start-debugger thread level result))))
+                      (apply #'sldb-setup thread level result))))
    :thread thread))
+
+(defun sldb-exit (thread level stepping)
+  (declare (ignore level stepping))
+  (let ((buffer (get-sldb-buffer thread)))
+    (when buffer
+      (cond ((eq buffer (window-buffer (current-window)))
+             (quit-window (current-window) t)
+             (let* ((repl-buffer (repl-buffer))
+                    (repl-window (when repl-buffer
+                                   (first (get-buffer-windows repl-buffer)))))
+               (when repl-window
+                 (setf (current-window) repl-window))))
+            (t
+             (kill-buffer buffer))))))
+
+(define-command sldb-details-down () ()
+  (let ((p (current-point)))
+    (next-single-property-change p 'frame)
+    (when (end-line-p p)
+      (next-single-property-change p 'frame))))
+
+(define-command sldb-details-up () ()
+  (let ((p (current-point))
+        (sp (buffer-value (current-buffer)
+                          'backtrace-start-point)))
+    (cond ((point< p sp)
+           (move-point p sp))
+          (t
+           (previous-single-property-change p 'frame)
+           (when (end-line-p p)
+             (previous-single-property-change p 'frame))))))
+
+(define-command sldb-quit () ()
+  (when (swank-protocol:debuggerp *connection*)
+    (swank-protocol:emacs-rex *connection* `(swank:throw-to-toplevel))))
+
+(define-command sldb-continue () ()
+  (when (null (buffer-value (current-buffer) 'restarts))
+    (error "continue called outside of debug buffer"))
+  (swank-protocol:emacs-rex *connection*
+                            '(swank:sldb-continue)
+                            :continuation (lambda (value)
+                                            (alexandria:destructuring-case value
+                                              ((:ok x)
+                                               (error "sldb-quit returned [~A]" x))))))
+
+(define-command sldb-abort () ()
+  (when (swank-protocol:debuggerp *connection*)
+    (eval-async '(swank:sldb-abort)
+                (lambda (v)
+                  (message "Restart returned: ~A" v)))))
+
+(define-command sldb-restart-frame () ()
+  )
+
+(defun sldb-invoke-restart (n)
+  (check-type n integer)
+  (when (swank-protocol:debuggerp *connection*)
+    (swank-protocol:emacs-rex *connection*
+                              `(swank:invoke-nth-restart-for-emacs
+                                ,(buffer-value (current-buffer) 'level -1)
+                                ,n))))
+
+(define-command sldb-invoke-restart-0 () () (sldb-invoke-restart 0))
+(define-command sldb-invoke-restart-1 () () (sldb-invoke-restart 1))
+(define-command sldb-invoke-restart-2 () () (sldb-invoke-restart 2))
+(define-command sldb-invoke-restart-3 () () (sldb-invoke-restart 3))
+(define-command sldb-invoke-restart-4 () () (sldb-invoke-restart 4))
+(define-command sldb-invoke-restart-5 () () (sldb-invoke-restart 5))
+(define-command sldb-invoke-restart-6 () () (sldb-invoke-restart 6))
+(define-command sldb-invoke-restart-7 () () (sldb-invoke-restart 7))
+(define-command sldb-invoke-restart-8 () () (sldb-invoke-restart 8))
+(define-command sldb-invoke-restart-9 () () (sldb-invoke-restart 9))
 
 
 (defvar *process* nil)

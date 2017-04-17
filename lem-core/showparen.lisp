@@ -36,5 +36,5 @@
 (when (or (not (boundp '*show-paren-timer*))
           (not (timer-alive-p *show-paren-timer*)))
   (setf *show-paren-timer*
-        (start-idle-timer "show-paren" 100 t
+        (start-idle-timer 100 t
                           'show-paren-timer-function)))

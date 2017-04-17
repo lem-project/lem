@@ -34,10 +34,6 @@
     :initarg :function
     :reader timer-function
     :type (or symbol function))
-   (args
-    :initarg :args
-    :reader timer-args
-    :type list)
    (handle-function
     :initarg :handle-function
     :reader timer-handle-function
@@ -58,14 +54,13 @@
 (defun timer-p (x)
   (typep x 'timer))
 
-(defun start-timer (name ms repeat-p function &optional args handle-function)
+(defun start-timer (ms repeat-p function &optional handle-function name)
   (let ((timer (make-instance 'timer
                               :name name
                               :ms ms
                               :repeat-p repeat-p
                               :last-time (get-internal-real-time)
                               :function function
-                              :args args
                               :handle-function handle-function
                               :alive-p t
                               :idle-p nil)))
@@ -103,8 +98,8 @@
       (handler-case
           (if (timer-handle-function timer)
               (handler-bind ((error (timer-handle-function timer)))
-                (apply (timer-function timer) (timer-args timer)))
-              (apply (timer-function timer) (timer-args timer)))
+                (funcall (timer-function timer)))
+              (funcall (timer-function timer)))
         (error (condition)
 	  (message "Error running timer ~S: ~A" (timer-name timer) condition)
 	  (redraw-display))))
@@ -123,13 +118,12 @@
 (defun exist-running-timer-p ()
   (not (null *timer-list*)))
 
-(defun start-idle-timer (name ms repeat-p function &optional args handle-function)
+(defun start-idle-timer (ms repeat-p function &optional handle-function name)
   (let ((timer (make-instance 'timer
                               :name name
                               :ms ms
                               :repeat-p repeat-p
                               :function function
-                              :args args
                               :handle-function handle-function
                               :alive-p t
                               :idle-p t)))

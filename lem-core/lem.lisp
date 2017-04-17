@@ -26,7 +26,7 @@
   (syntax-scan-range (buffer-start-point buffer) (buffer-end-point buffer)))
 
 (defun setup ()
-  (start-idle-timer "mainloop" 100 t
+  (start-idle-timer 100 t
                     (lambda ()
                       (syntax-scan-window (current-window))
                       (redraw-display)))

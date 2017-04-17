@@ -305,10 +305,9 @@
     (init-player)
     (draw)
     (setq *playing-p* t)
-    (setq *timer* (start-timer "tetris"
-                               1000
+    (setq *timer* (start-timer 1000
                                t
-                               #'update (list buffer)
-                               #'(lambda (condition)
-                                   (pop-up-backtrace condition)
-                                   (stop-timer *timer*))))))
+                               (lambda () (update buffer))
+                               (lambda (condition)
+                                 (pop-up-backtrace condition)
+                                 (stop-timer *timer*))))))

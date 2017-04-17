@@ -1186,7 +1186,7 @@
 (when (or (not (boundp '*idle-timer*))
           (not (timer-alive-p *idle-timer*)))
   (setf *idle-timer*
-        (start-idle-timer "lisp" 110 t 'update-buffer-package nil
+        (start-idle-timer 110 t 'update-buffer-package
                           (lambda (condition)
                             (stop-timer *idle-timer*)
                             (pop-up-backtrace condition)))))

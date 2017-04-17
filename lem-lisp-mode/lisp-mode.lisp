@@ -176,7 +176,7 @@
 (defun lisp-eval (sexp &optional (package (current-package)))
   (lisp-eval-internal 'swank-protocol:emacs-rex sexp package))
 
-(defun lisp-eval-async (form &optional cont package)
+(defun lisp-eval-async (form &optional cont (package (current-package)))
   (swank-protocol:emacs-rex
    *connection*
    form
@@ -188,7 +188,7 @@
                      ((:abort condition)
                       (message "Evaluation aborted on ~A." condition))))
    :thread t
-   :package package))
+   :package (current-package)))
 
 (defun eval-with-transcript (form)
   (swank-protocol:emacs-rex
@@ -435,8 +435,7 @@
   (let ((file (buffer-filename (current-buffer))))
     (refresh-output-buffer)
     (lisp-eval-async `(swank:compile-file-for-emacs ,file t)
-                     #'compilation-finished
-                     (buffer-package (current-buffer)))))
+                     #'compilation-finished)))
 
 (define-command lisp-compile-region (start end) ("r")
   (check-connection)
@@ -451,8 +450,7 @@
                                                       ',position
                                                       ,(buffer-filename (current-buffer))
                                                       nil)
-                     #'compilation-finished
-                     (buffer-package (current-buffer)))))
+                     #'compilation-finished)))
 
 (define-command lisp-compile-defun () ()
   (check-connection)

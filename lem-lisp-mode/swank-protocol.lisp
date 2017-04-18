@@ -1,7 +1,5 @@
 (defpackage lem-lisp-mode.swank-protocol
   (:use :cl)
-  (:import-from :lem-lisp-mode.errors
-                :disconnected)
   (:import-from :trivial-types
                 :association-list
                 :proper-list)
@@ -39,6 +37,9 @@
            :connection-swank-version)
   (:documentation "Low-level implementation of a client for the Swank protocol."))
 (in-package :lem-lisp-mode.swank-protocol)
+
+(define-condition disconnected (simple-condition)
+  ())
 
 ;;; Prevent reader errors
 

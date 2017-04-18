@@ -920,7 +920,8 @@
             process)))
   (add-hook *exit-editor-hook*
             (lambda ()
-              (slime-quit))))
+              (ignore-errors
+               (slime-quit)))))
 
 (define-command slime-quit () ()
   (let ((process (swank-protocol:connection-process *connection*)))

@@ -1022,21 +1022,17 @@
       (insert-string point (format nil "~%Backtrace:~%") :attribute 'section-attribute)
       (setf (buffer-value buffer 'backtrace-start-point)
             (copy-point point :right-inserting))
-      (sldb-insert-frames point frames))
+      (save-excursion
+        (sldb-insert-frames point (prune-initial-frames frames) t)))
     (setf (buffer-read-only-p buffer) t)))
 
-(defun sldb-insert-frames (point frames)
-  (declare (ignore frames))
-  (let ((p (copy-point point)))
-    (start-timer 0 nil
-                 (lambda ()
-                   (save-excursion
-                     (setf (current-buffer) (point-buffer p))
-                     (let ((*inhibit-read-only* t))
-                       (let ((frames (lisp-eval '(swank:backtrace 0 nil))))
-                         (dolist (frame frames)
-                           (sldb-insert-frame p frame))))
-                     (delete-point p))))))
+(defun sldb-insert-frames (point frames more)
+  (dolist (frame frames)
+    (sldb-insert-frame point frame))
+  (when more
+    (insert-string point " --more--"
+                   'default-action #'sldb-fetch-all-frames
+                   :attribute 'section-attribute)))
 
 (defun sldb-insert-frame (point frame)
   (let ((number (sldb-frame.number frame))
@@ -1047,8 +1043,17 @@
       (insert-string point " ")
       (insert-string point string)
       (put-text-property s point 'frame frame)
-      (put-text-property s point 'action 'sldb-toggle-details)
+      (put-text-property s point 'default-action 'sldb-toggle-details)
       (insert-character point #\newline))))
+
+(defun sldb-fetch-all-frames ()
+  (let ((*inhibit-read-only* t)
+        (p (current-point)))
+    (buffer-start p)
+    (next-single-property-change p 'frame)
+    (delete-between-points p (buffer-end-point (current-buffer)))
+    (save-excursion
+      (sldb-insert-frames p (lisp-eval '(swank:backtrace 0 nil)) nil))))
 
 (defun sldb-toggle-details ())
 
@@ -1086,8 +1091,8 @@
              (kill-buffer buffer))))))
 
 (define-command sldb-default-action () ()
-  (let ((action (text-property-at (current-point) 'action)))
-    (when action (funcall action))))
+  (let ((fn (text-property-at (current-point) 'default-action)))
+    (when fn (funcall fn))))
 
 (define-command sldb-details-down () ()
   (let ((p (current-point)))

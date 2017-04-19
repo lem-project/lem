@@ -256,12 +256,15 @@
 (define-command sldb-invoke-restart-8 () () (sldb-invoke-restart 8))
 (define-command sldb-invoke-restart-9 () () (sldb-invoke-restart 9))
 
-(add-hook *event-hooks*
-          (lambda (event)
-            (alexandria:destructuring-case event
-              ((:debug-activate thread level &optional select)
-               (sldb-active thread level select))
-              ((:debug thread level condition restarts frames conts)
-               (sldb-setup thread level condition restarts frames conts))
-              ((:debug-return thread level stepping)
-               (sldb-exit thread level stepping)))))
+(pushnew (lambda (event)
+           (alexandria:destructuring-case event
+             ((:debug-activate thread level &optional select)
+              (sldb-active thread level select)
+              t)
+             ((:debug thread level condition restarts frames conts)
+              (sldb-setup thread level condition restarts frames conts)
+              t)
+             ((:debug-return thread level stepping)
+              (sldb-exit thread level stepping)
+              t)))
+         *event-hooks*)

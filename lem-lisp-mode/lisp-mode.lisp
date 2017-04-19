@@ -655,19 +655,20 @@
      :keymap *lisp-repl-mode-keymap*
      :syntax-table lem-lisp-syntax:*syntax-table*)
   (repl-reset-input)
-  (lem.listener-mode:listener-mode t))
+  (lem.listener-mode:listener-mode t)
+  (setf *write-string-function* 'write-string-to-repl))
 
 (defun read-string-thread-stack ()
-  (buffer-value (current-buffer) 'read-string-thread-stack))
+  (buffer-value (repl-buffer) 'read-string-thread-stack))
 
 (defun (setf read-string-thread-stack) (val)
-  (setf (buffer-value (current-buffer) 'read-string-thread-stack) val))
+  (setf (buffer-value (repl-buffer) 'read-string-thread-stack) val))
 
 (defun read-string-tag-stack ()
-  (buffer-value (current-buffer) 'read-string-tag-stack))
+  (buffer-value (repl-buffer) 'read-string-tag-stack))
 
 (defun (setf read-string-tag-stack) (val)
-  (setf (buffer-value (current-buffer) 'read-string-tag-stack) val))
+  (setf (buffer-value (repl-buffer) 'read-string-tag-stack) val))
 
 (define-key *lisp-repl-mode-keymap* "C-c C-c" 'lisp-repl-interrupt)
 
@@ -713,42 +714,43 @@
 (defun repl-confirm (point string)
   (declare (ignore point))
   (check-connection)
-  (let ((prev-write-string-function *write-string-function*))
-    (swank-protocol:request-listener-eval
-     *connection*
-     string
-     (lambda (value)
-       (declare (ignore value))
-       (repl-reset-input)
-       (lem.listener-mode:listener-reset-prompt (repl-buffer))
-       (redraw-display)
-       (setf *write-string-function* prev-write-string-function)))
-    (setf *write-string-function* 'write-string-to-repl)))
+  (swank-protocol:request-listener-eval
+   *connection*
+   string
+   (lambda (value)
+     (declare (ignore value))
+     (lem.listener-mode:listener-reset-prompt (repl-buffer))
+     (redraw-display))))
 
 (defun repl-read-string (thread tag)
+  (unless (repl-buffer) (start-lisp-repl))
   (let ((buffer (repl-buffer)))
-    (when buffer
-      (push thread (read-string-thread-stack))
-      (push tag (read-string-tag-stack))
-      (let ((windows (get-buffer-windows buffer)))
-        (setf (current-window)
-              (if windows
-                  (first windows)
-                  (pop-to-buffer buffer))))
-      (buffer-end (current-point))
-      (lem.listener-mode:listener-update-point)
-      (repl-change-read-line-input))))
+    (push thread (read-string-thread-stack))
+    (push tag (read-string-tag-stack))
+    (let ((windows (get-buffer-windows buffer)))
+      (setf (current-window)
+            (if windows
+                (first windows)
+                (pop-to-buffer buffer))))
+    (buffer-end (current-point))
+    (lem.listener-mode:listener-update-point)
+    (repl-change-read-line-input)))
+
+(defun repl-pop-stack ()
+  (let ((thread (pop (read-string-thread-stack)))
+        (tag (pop (read-string-tag-stack))))
+    (when (null (read-string-thread-stack))
+      (repl-reset-input))
+    (values thread tag)))
 
 (defun repl-abort-read (thread tag)
   (declare (ignore thread tag))
-  (pop (read-string-thread-stack))
-  (pop (read-string-tag-stack))
+  (repl-pop-stack)
   (message "Read aborted"))
 
 (defun repl-read-line (point string)
   (declare (ignore point))
-  (let ((thread (pop (read-string-thread-stack)))
-        (tag (pop (read-string-tag-stack))))
+  (multiple-value-bind (thread tag) (repl-pop-stack)
     (swank-protocol:send-message-string
      *connection*
      (format nil "(:emacs-return-string ~A ~A ~S)"

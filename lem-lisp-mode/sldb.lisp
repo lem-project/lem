@@ -32,6 +32,7 @@
 (define-key *sldb-keymap* "C-m" 'sldb-default-action)
 (define-key *sldb-keymap* "M-n" 'sldb-details-down)
 (define-key *sldb-keymap* "M-p" 'sldb-details-up)
+(define-key *sldb-keymap* "C-i" 'sldb-forward-button)
 (define-key *sldb-keymap* "q" 'sldb-quit)
 (define-key *sldb-keymap* "c" 'sldb-continue)
 (define-key *sldb-keymap* "a" 'sldb-abort)
@@ -257,6 +258,13 @@
 
 (define-command sldb-details-up () ()
   (sldb-up (current-point)))
+
+(define-command sldb-forward-button () ()
+  (let ((p (current-point)))
+    (or (forward-button p)
+        (progn
+          (buffer-start p)
+          (forward-button p)))))
 
 (define-command sldb-quit () ()
   (lisp-rex `(swank:throw-to-toplevel)

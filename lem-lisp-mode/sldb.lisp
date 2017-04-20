@@ -87,23 +87,9 @@
                 (declare (ignore buffer))
                 (sldb-quit)))
     (let ((point (buffer-point buffer)))
-      (destructuring-bind (message type extras) condition
-        (declare (ignore extras))
-        (insert-string point message :attribute 'topline-attribute)
-        (insert-character point #\newline)
-        (insert-string point type :attribute 'condition-attribute)
-        (insert-character point #\newline))
+      (sldb-insert-condition point condition)
       (insert-string point (format nil "~%Restarts:~%") :attribute 'section-attribute)
-      (loop :for n :from 0
-            :for (title description) :in restarts
-            :do
-            (insert-string point " ")
-            (insert-string point (format nil "~D" n) :attribute 'restart-number-attribute)
-            (insert-string point ": [")
-            (insert-string point title :attribute 'restart-type-attribute)
-            (insert-string point "] ")
-            (insert-string point description :attribute 'restart-attribute)
-            (insert-character point #\newline))
+      (sldb-insert-restarts point restarts)
       (insert-string point (format nil "~%Backtrace:~%") :attribute 'section-attribute)
       (setf (buffer-value buffer 'backtrace-start-point)
             (copy-point point :right-inserting))
@@ -111,31 +97,47 @@
         (sldb-insert-frames point (prune-initial-frames frames) t)))
     (setf (buffer-read-only-p buffer) t)))
 
+(defun sldb-insert-condition (point condition)
+  (destructuring-bind (message type extras) condition
+    (declare (ignore extras))
+    (insert-string point message :attribute 'topline-attribute)
+    (insert-character point #\newline)
+    (insert-string point type :attribute 'condition-attribute)
+    (insert-character point #\newline)))
+
+(defun sldb-insert-restarts (point restarts)
+  (loop :for n :from 0
+        :for (title description) :in restarts
+        :do
+        (insert-string point " ")
+        (insert-string point (format nil "~D: " n) :attribute 'restart-number-attribute)
+        (insert-button point (format nil "[~A] " title)
+                       (let ((n n)) (lambda () (sldb-invoke-restart n)))
+                       :attribute 'restart-type-attribute)
+        (insert-string point description :attribute 'restart-attribute)
+        (insert-character point #\newline)))
+
 (defun sldb-insert-frames (point frames more)
   (dolist (frame frames)
     (sldb-insert-frame point frame))
   (when more
-    (insert-string point " --more--"
-                   'default-action #'sldb-fetch-all-frames
+    (insert-button point " --more--"
+                   #'sldb-fetch-all-frames
                    :attribute 'section-attribute)))
 
 (defun sldb-insert-frame (point frame)
   (let ((number (frame-number frame))
         (string (frame-string frame)))
-    (with-point ((s point))
-      (insert-string point " ")
-      (insert-string point (format nil "~2d:" number) :attribute 'frame-label-attribute)
-      (insert-string point " ")
-      (insert-string point string)
-      (put-text-property s point 'frame frame)
-      (put-text-property s point 'default-action 'sldb-toggle-details)
-      (insert-character point #\newline))))
+    (insert-string point " ")
+    (insert-string point (format nil "~2d:" number) :attribute 'frame-label-attribute)
+    (insert-string point " ")
+    (insert-button point string #'sldb-toggle-details 'frame frame)
+    (insert-character point #\newline)))
 
 (defun sldb-fetch-all-frames ()
   (let ((*inhibit-read-only* t)
         (p (current-point)))
-    (buffer-start p)
-    (next-single-property-change p 'frame)
+    (move-point p (buffer-value (current-buffer) 'backtrace-start-point))
     (delete-between-points p (buffer-end-point (current-buffer)))
     (save-excursion
       (sldb-insert-frames p (lisp-eval '(swank:backtrace 0 nil)) nil))))
@@ -190,7 +192,7 @@
              (kill-buffer buffer))))))
 
 (define-command sldb-default-action () ()
-  (let ((fn (text-property-at (current-point) 'default-action)))
+  (let ((fn (text-property-at (current-point) 'action)))
     (when fn (funcall fn))))
 
 (define-command sldb-details-down () ()

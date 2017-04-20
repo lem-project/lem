@@ -232,8 +232,19 @@
                    (lambda (v)
                      (message "Restart returned: ~A" v))))
 
-(define-command sldb-restart-frame () ()
-  )
+(defun frame-number-at-point (point)
+  (let ((frame (text-property-at point 'frame)))
+    (when frame
+      (frame-number frame))))
+
+(define-command sldb-restart-frame (frame-number)
+    ((list (frame-number-at-point (current-point))))
+  (when frame-number
+    (lisp-rex `(swank:restart-frame ,frame-number)
+              :continuation (lambda (v)
+                              (alexandria:destructuring-ecase v
+                                ((:ok value) (message "~A" value))
+                                ((:abort _) (declare (ignore _))))))))
 
 (defun sldb-invoke-restart (n)
   (check-type n integer)

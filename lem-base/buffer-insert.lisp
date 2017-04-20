@@ -182,6 +182,7 @@
 (defun %delete-line/point (point start)
   (declare (special killring-stream line buffer n))
   (line-property-delete-line (point-line point) (point-charpos point))
+  (line-merge (point-line point) (line-next (point-line point)) start)
   (write-string (line-str line) killring-stream :start start)
   (write-char #\newline killring-stream)
   (unless (eq n 'T)
@@ -220,8 +221,8 @@
                    (return))
                   (t
                    (%delete-line/point point charpos)))
-                 (decf offset-line)
-                 :finally (shift-markers point offset-line 0)))))))
+                (decf offset-line)
+                :finally (shift-markers point offset-line 0)))))))
 
 
 (declaim (inline call-before-change-functions

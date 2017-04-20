@@ -129,7 +129,8 @@
   (when more
     (insert-button point " --more--"
                    #'sldb-fetch-all-frames
-                   :attribute 'section-attribute)))
+                   :attribute 'section-attribute
+                   :button-tag 'sldb-more-frames)))
 
 (defun sldb-insert-frame (point frame)
   (let ((number (frame-number frame))
@@ -137,7 +138,7 @@
     (insert-string point " ")
     (insert-string point (format nil "~2d:" number) :attribute 'frame-label-attribute)
     (insert-string point " ")
-    (insert-button point string #'sldb-toggle-details 'frame frame)
+    (insert-button point string #'sldb-toggle-details 'frame frame :button-tag 'sldb-frame)
     (insert-character point #\newline)))
 
 (defun sldb-fetch-all-frames ()
@@ -148,21 +149,22 @@
     (save-excursion
       (sldb-insert-frames p (lisp-eval '(swank:backtrace 0 nil)) nil))))
 
-(defun sldb-toggle-details (&optional on)
+(defun sldb-toggle-details ()
   (let* ((point (current-point))
          (frame-button (button-at point)))
     (when (and frame-button (button-get frame-button 'frame))
       (save-excursion
         (let ((*inhibit-read-only* t))
-          (if (or on (not (sldb-frame-details-visible-p point)))
-              (sldb-show-frame-details point frame-button)
-              (sldb-hide-frame-details point frame-button)))))))
+          (if (button-get frame-button 'toggle)
+              (sldb-hide-frame-details point frame-button)
+              (sldb-show-frame-details point frame-button)))))))
 
 (defun sldb-show-frame-details (point frame-button)
   (destructuring-bind (locals catches)
       (lisp-eval `(swank:frame-locals-and-catch-tags
                    ,(frame-number
                      (button-get frame-button 'frame))))
+    (setf (button-get frame-button 'toggle) t)
     (move-point point (button-end frame-button))
     (let ((indent1 (make-string 7 :initial-element #\space))
           (indent2 (make-string 9 :initial-element #\space)))
@@ -174,7 +176,8 @@
             :do (destructuring-bind (&key name id value) var
                   (insert-character point #\newline)
                   (insert-string point indent2)
-                  (insert-string point (format nil "~A~A" name (if (zerop id) "" (format nil "#~D" id)))
+                  (insert-button point (format nil "~A~A" name (if (zerop id) "" (format nil "#~D" id)))
+                                 'sldb-inspect-var
                                  :attribute 'local-name-attribute)
                   (insert-string point " = ")
                   (insert-string point value :attribute 'local-value-attribute)))
@@ -188,11 +191,13 @@
           (insert-string point tag :attribute 'catch-tag-attribute))))))
 
 (defun sldb-hide-frame-details (point frame-button)
-  (declare (ignore point frame-button)))
-
-(defun sldb-frame-details-visible-p (point)
-  (and (text-property-at point 'frame)
-       (text-property-at point 'detail-visible-p)))
+  (setf (button-get frame-button 'toggle) nil)
+  (move-point point (button-end frame-button))
+  (with-point ((start point))
+    (character-offset start 1)
+    (sldb-down point)
+    (line-start point)
+    (delete-between-points start point)))
 
 (defun sldb-active (thread level select)
   (let ((buffer (get-sldb-buffer thread)))
@@ -231,22 +236,27 @@
   (let ((fn (text-property-at (current-point) 'action)))
     (when fn (funcall fn))))
 
-(define-command sldb-details-down () ()
-  (let ((p (current-point)))
-    (next-single-property-change p 'frame)
-    (when (end-line-p p)
-      (next-single-property-change p 'frame))))
+(defun sldb-down (p)
+  (next-single-property-change p 'sldb-frame)
+  (when (end-line-p p)
+    (or (next-single-property-change p 'sldb-frame)
+        (next-single-property-change p 'sldb-more-frames))))
 
-(define-command sldb-details-up () ()
-  (let ((p (current-point))
-        (sp (buffer-value (current-buffer)
+(defun sldb-up (p)
+  (let ((sp (buffer-value (current-buffer)
                           'backtrace-start-point)))
     (cond ((point< p sp)
            (move-point p sp))
           (t
-           (previous-single-property-change p 'frame)
+           (previous-single-property-change p 'sldb-frame)
            (when (end-line-p p)
-             (previous-single-property-change p 'frame))))))
+             (previous-single-property-change p 'sldb-frame))))))
+
+(define-command sldb-details-down () ()
+  (sldb-down (current-point)))
+
+(define-command sldb-details-up () ()
+  (sldb-up (current-point)))
 
 (define-command sldb-quit () ()
   (lisp-rex `(swank:throw-to-toplevel)
@@ -271,7 +281,7 @@
                      (message "Restart returned: ~A" v))))
 
 (defun frame-number-at-point (point)
-  (let ((frame (text-property-at point 'frame)))
+  (let ((frame (text-property-at point 'sldb-frame)))
     (when frame
       (frame-number frame))))
 
@@ -304,6 +314,9 @@
 (define-command sldb-invoke-restart-7 () () (sldb-invoke-restart 7))
 (define-command sldb-invoke-restart-8 () () (sldb-invoke-restart 8))
 (define-command sldb-invoke-restart-9 () () (sldb-invoke-restart 9))
+
+(defun sldb-inspect-var ()
+  )
 
 (pushnew (lambda (event)
            (alexandria:destructuring-case event

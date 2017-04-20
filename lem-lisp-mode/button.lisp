@@ -5,14 +5,22 @@
   end
   plist)
 
-(defun button-get (button key &optional default)
-  (getf (button-plist button) key default))
+(defun button-get (button key)
+  (getf (button-plist button) key))
+
+(defun (setf button-get) (value button key)
+  (setf (getf (button-plist button) key) value))
 
 (defun insert-button (point text &optional callback &rest plist)
-  (insert-string point text
-                 'button (make-button :plist plist)
-                 'action callback
-                 :attribute (getf plist :attribute)))
+  (let ((button-tag (getf plist :button-tag)))
+    (apply #'insert-string
+           point text
+           'button (make-button :plist plist)
+           'action callback
+           :attribute (getf plist :attribute)
+           (if button-tag
+               `(,button-tag t)
+               '()))))
 
 (defun forward-button (point &optional limit)
   (when (text-property-at point 'button)

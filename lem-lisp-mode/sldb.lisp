@@ -50,9 +50,9 @@
   (or (get-sldb-buffer thread)
       (get-buffer-create (format nil "*sldb ~D*" thread))))
 
-(defun sldb-frame.number (frame) (first frame))
-(defun sldb-frame.string (frame) (second frame))
-(defun sldb-frame.plist (frame) (third frame))
+(defun frame-number (frame) (first frame))
+(defun frame-string (frame) (second frame))
+(defun frame-plist (frame) (third frame))
 
 (defun prune-initial-frames (frames)
   (or (loop :for frame :in frames
@@ -120,8 +120,8 @@
                    :attribute 'section-attribute)))
 
 (defun sldb-insert-frame (point frame)
-  (let ((number (sldb-frame.number frame))
-        (string (sldb-frame.string frame)))
+  (let ((number (frame-number frame))
+        (string (frame-string frame)))
     (with-point ((s point))
       (insert-string point " ")
       (insert-string point (format nil "~2d:" number) :attribute 'frame-label-attribute)

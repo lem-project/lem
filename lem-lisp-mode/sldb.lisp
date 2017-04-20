@@ -19,6 +19,12 @@
 (define-attribute frame-label-attribute
   (t :foreground "gray40"))
 
+(define-attribute local-name-attribute)
+
+(define-attribute local-value-attribute)
+
+(define-attribute catch-tag-attribute)
+
 (define-major-mode sldb-mode ()
     (:name "sldb"
      :keymap *sldb-keymap*))
@@ -143,16 +149,46 @@
       (sldb-insert-frames p (lisp-eval '(swank:backtrace 0 nil)) nil))))
 
 (defun sldb-toggle-details (&optional on)
-  (let ((*inhibit-read-only* t))
-    (if (or on (not (sldb-frame-details-visible-p (current-point))))
-        (sldb-show-frame-details)
-        (sldb-hide-frame-details))))
+  (let* ((point (current-point))
+         (frame-button (button-at point)))
+    (when (and frame-button (button-get frame-button 'frame))
+      (save-excursion
+        (let ((*inhibit-read-only* t))
+          (if (or on (not (sldb-frame-details-visible-p point)))
+              (sldb-show-frame-details point frame-button)
+              (sldb-hide-frame-details point frame-button)))))))
 
-(defun sldb-show-frame-details ()
-  )
+(defun sldb-show-frame-details (point frame-button)
+  (destructuring-bind (locals catches)
+      (lisp-eval `(swank:frame-locals-and-catch-tags
+                   ,(frame-number
+                     (button-get frame-button 'frame))))
+    (move-point point (button-end frame-button))
+    (let ((indent1 (make-string 7 :initial-element #\space))
+          (indent2 (make-string 9 :initial-element #\space)))
+      (insert-character point #\newline)
+      (insert-string point indent1)
+      (insert-string point (if locals "Locals:" "[No Locals]")
+                     :attribute 'section-attribute)
+      (loop :for var :in locals
+            :do (destructuring-bind (&key name id value) var
+                  (insert-character point #\newline)
+                  (insert-string point indent2)
+                  (insert-string point (format nil "~A~A" name (if (zerop id) "" (format nil "#~D" id)))
+                                 :attribute 'local-name-attribute)
+                  (insert-string point " = ")
+                  (insert-string point value :attribute 'local-value-attribute)))
+      (when catches
+        (insert-character point #\newline)
+        (insert-string point indent1)
+        (insert-string point "Catch-tags:" :attribute 'section-attribute)
+        (dolist (tag catches)
+          (insert-character point #\newline)
+          (insert-string point indent2)
+          (insert-string point tag :attribute 'catch-tag-attribute))))))
 
-(defun sldb-hide-frame-details ()
-  )
+(defun sldb-hide-frame-details (point frame-button)
+  (declare (ignore point frame-button)))
 
 (defun sldb-frame-details-visible-p (point)
   (and (text-property-at point 'frame)

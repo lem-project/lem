@@ -150,55 +150,57 @@
     (save-excursion
       (sldb-insert-frames p (lisp-eval '(swank:backtrace 0 nil)) nil))))
 
-(defun sldb-toggle-details ()
+(defun sldb-toggle-details (&optional on)
   (let* ((point (current-point))
          (frame-button (button-at point)))
     (when (and frame-button (button-get frame-button 'frame))
       (save-excursion
         (let ((*inhibit-read-only* t))
-          (if (button-get frame-button 'toggle)
-              (sldb-hide-frame-details point frame-button)
-              (sldb-show-frame-details point frame-button)))))))
+          (if (or on (not (button-get frame-button 'toggle)))
+              (sldb-show-frame-details point frame-button)
+              (sldb-hide-frame-details point frame-button)))))))
 
 (defun sldb-show-frame-details (point frame-button)
-  (destructuring-bind (locals catches)
-      (lisp-eval `(swank:frame-locals-and-catch-tags
-                   ,(frame-number
-                     (button-get frame-button 'frame))))
-    (setf (button-get frame-button 'toggle) t)
-    (move-point point (button-end frame-button))
-    (let ((indent1 (make-string 7 :initial-element #\space))
-          (indent2 (make-string 9 :initial-element #\space)))
-      (insert-character point #\newline)
-      (insert-string point indent1)
-      (insert-string point (if locals "Locals:" "[No Locals]")
-                     :attribute 'section-attribute)
-      (loop :for var :in locals
-            :do (destructuring-bind (&key name id value) var
-                  (insert-character point #\newline)
-                  (insert-string point indent2)
-                  (insert-button point (format nil "~A~A" name (if (zerop id) "" (format nil "#~D" id)))
-                                 'sldb-inspect-var
-                                 :attribute 'local-name-attribute)
-                  (insert-string point " = ")
-                  (insert-string point value :attribute 'local-value-attribute)))
-      (when catches
+  (unless (button-get frame-button 'toggle)
+    (destructuring-bind (locals catches)
+        (lisp-eval `(swank:frame-locals-and-catch-tags
+                     ,(frame-number
+                       (button-get frame-button 'frame))))
+      (setf (button-get frame-button 'toggle) t)
+      (move-point point (button-end frame-button))
+      (let ((indent1 (make-string 7 :initial-element #\space))
+            (indent2 (make-string 9 :initial-element #\space)))
         (insert-character point #\newline)
         (insert-string point indent1)
-        (insert-string point "Catch-tags:" :attribute 'section-attribute)
-        (dolist (tag catches)
+        (insert-string point (if locals "Locals:" "[No Locals]")
+                       :attribute 'section-attribute)
+        (loop :for var :in locals
+              :do (destructuring-bind (&key name id value) var
+                    (insert-character point #\newline)
+                    (insert-string point indent2)
+                    (insert-button point (format nil "~A~A" name (if (zerop id) "" (format nil "#~D" id)))
+                                   'sldb-inspect-var
+                                   :attribute 'local-name-attribute)
+                    (insert-string point " = ")
+                    (insert-string point value :attribute 'local-value-attribute)))
+        (when catches
           (insert-character point #\newline)
-          (insert-string point indent2)
-          (insert-string point tag :attribute 'catch-tag-attribute))))))
+          (insert-string point indent1)
+          (insert-string point "Catch-tags:" :attribute 'section-attribute)
+          (dolist (tag catches)
+            (insert-character point #\newline)
+            (insert-string point indent2)
+            (insert-string point tag :attribute 'catch-tag-attribute)))))))
 
 (defun sldb-hide-frame-details (point frame-button)
-  (setf (button-get frame-button 'toggle) nil)
-  (move-point point (button-end frame-button))
-  (with-point ((start point))
-    (character-offset start 1)
-    (sldb-down point)
-    (line-start point)
-    (delete-between-points start point)))
+  (when (button-get frame-button 'toggle)
+    (setf (button-get frame-button 'toggle) nil)
+    (move-point point (button-end frame-button))
+    (with-point ((start point))
+      (character-offset start 1)
+      (sldb-down point)
+      (line-start point)
+      (delete-between-points start point))))
 
 (defun sldb-active (thread level select)
   (let ((buffer (get-sldb-buffer thread)))
@@ -254,10 +256,12 @@
              (previous-single-property-change p 'sldb-frame))))))
 
 (define-command sldb-details-down () ()
-  (sldb-down (current-point)))
+  (sldb-down (current-point))
+  (sldb-toggle-details t))
 
 (define-command sldb-details-up () ()
-  (sldb-up (current-point)))
+  (sldb-up (current-point))
+  (sldb-toggle-details t))
 
 (define-command sldb-forward-button () ()
   (let ((p (current-point)))

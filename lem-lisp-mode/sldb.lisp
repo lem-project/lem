@@ -30,6 +30,8 @@
      :keymap *sldb-keymap*))
 
 (define-key *sldb-keymap* "C-m" 'sldb-default-action)
+(define-key *sldb-keymap* "n" 'sldb-down)
+(define-key *sldb-keymap* "p" 'sldb-up)
 (define-key *sldb-keymap* "M-n" 'sldb-details-down)
 (define-key *sldb-keymap* "M-p" 'sldb-details-up)
 (define-key *sldb-keymap* "C-i" 'sldb-forward-button)
@@ -239,13 +241,13 @@
   (let ((fn (text-property-at (current-point) 'action)))
     (when fn (funcall fn))))
 
-(defun sldb-down (p)
+(define-command sldb-down (p) ((list (current-point)))
   (next-single-property-change p 'sldb-frame)
   (when (end-line-p p)
     (or (next-single-property-change p 'sldb-frame)
         (next-single-property-change p 'sldb-more-frames))))
 
-(defun sldb-up (p)
+(define-command sldb-up (p) ((list (current-point)))
   (let ((sp (buffer-value (current-buffer)
                           'backtrace-start-point)))
     (cond ((point< p sp)

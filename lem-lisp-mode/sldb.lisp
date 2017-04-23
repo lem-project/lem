@@ -188,7 +188,8 @@
         (insert-string point indent1)
         (insert-string point (if locals "Locals:" "[No Locals]")
                        :attribute 'section-attribute)
-        (loop :for var :in locals
+        (loop :for i :from 0
+              :for var :in locals
               :do (destructuring-bind (&key name id value) var
                     (insert-character point #\newline)
                     (insert-string point indent2)
@@ -211,7 +212,7 @@
             (insert-string point tag :attribute 'catch-tag-attribute)))))))
 
 (defun sldb-inspect-var (frame-number var)
-  (lisp-eval-async `(swank:inspect-frame-var ,frame-plist ,var)
+  (lisp-eval-async `(swank:inspect-frame-var ,frame-number ,var)
                    'open-inspector))
 
 (defun sldb-hide-frame-details (point frame-button)
@@ -246,7 +247,12 @@
   (let ((buffer (get-sldb-buffer thread)))
     (when buffer
       (cond (stepping
-             (error "stepping"))
+             (setf (buffer-value buffer 'level) nil)
+             (start-timer 100 nil (lambda ()
+                                    (let ((window (car (get-buffer-windows buffer))))
+                                      (when (and window (not (deleted-window-p window))
+                                                 (not (buffer-value buffer 'level)))
+                                        (quit-window window t))))))
             ((eq buffer (window-buffer (current-window)))
              (quit-window (current-window) t)
              (let* ((repl-buffer (repl-buffer))
@@ -353,8 +359,8 @@
     ((list (let ((restarts (buffer-value (current-buffer) 'restarts)))
              (prompt-for-line "Restart:"
                               ""
-                              (lambda (str) (completion str restarts))
-                              (lambda (str) (member str restarts :test #'string-equal :key #'first))
+                              (lambda (s) (completion s restarts))
+                              (lambda (s) (member s restarts :test #'string-equal :key #'first))
                               'sldb-restarts))))
   (sldb-invoke-restart
    (position restart-name
@@ -398,6 +404,30 @@
   (let ((frame-number (frame-number-at-point (current-point))))
     (lisp-eval-async `(swank:inspect-in-frame ,string ,frame-number)
                      'open-inspector)))
+
+(define-command sldb-step () ()
+  (lisp-eval-async `(swank:sldb-step ,(frame-number-at-point (current-point)))))
+
+(define-command sldb-next () ()
+  (lisp-eval-async `(swank:sldb-step ,(frame-number-at-point (current-point)))))
+
+(define-command sldb-out () ()
+  (lisp-eval-async `(swank:sldb-out ,(frame-number-at-point (current-point)))))
+
+(define-command sldb-break-on-return (name)
+    ((list (read-symbol-name "Function: ")))
+  (lisp-eval-async `(swank:sldb-break ,name)
+                   (lambda (message)
+                     (message "~A" message))))
+
+(define-command sldb-inspect-condition () ()
+  (lisp-eval-async '(swank:inspect-current-condition)
+                   'open-inspector))
+
+(define-command sldb-print-condition () ()
+  (lisp-eval-async '(swank:sdlb-print-condition)
+                   (lambda (message)
+                     (message "~A" message))))
 
 (defun recompile-location (source-location)
   (save-excursion

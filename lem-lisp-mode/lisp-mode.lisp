@@ -511,20 +511,31 @@
               (position-at-point point))
         *edit-definition-stack*))
 
+(defun definition-to-location (definition)
+  (optima:match definition
+    ((list title
+           (list :location
+                 (list :file file)
+                 (list :position position)
+                 (list :snippet _)))
+     (return-from definition-to-location
+       (make-xref-location :title title
+                           :file file
+                           :position (1+ position))))
+    ((list :location
+           (list :file file)
+           (list :position position)
+           (list :snippet _))
+     (return-from definition-to-location
+       (make-xref-location :title ""
+                           :file file
+                           :position (1+ position))))))
+
 (defun definitions-to-locations (definitions)
-  (let ((xrefs '()))
-    (dolist (def definitions)
-      (optima:match def
-        ((list title
-               (list :location
-                     (list :file file)
-                     (list :position position)
-                     (list :snippet _)))
-         (push (make-xref-location :title title
-                                   :file file
-                                   :position position)
-               xrefs))))
-    xrefs))
+  (loop :for def :in definitions
+        :for xref := (definition-to-location def)
+        :when xref
+        :collect xref))
 
 (defun find-definitions ()
   (check-connection)

@@ -49,6 +49,7 @@
 (define-key *sldb-keymap* "7" 'sldb-invoke-restart-7)
 (define-key *sldb-keymap* "8" 'sldb-invoke-restart-8)
 (define-key *sldb-keymap* "9" 'sldb-invoke-restart-9)
+(define-key *sldb-keymap* "I" 'sldb-invoke-restart-by-name)
 
 (defun get-sldb-buffer (thread)
   (dolist (buffer (buffer-list))
@@ -328,6 +329,19 @@
 (define-command sldb-invoke-restart-7 () () (sldb-invoke-restart 7))
 (define-command sldb-invoke-restart-8 () () (sldb-invoke-restart 8))
 (define-command sldb-invoke-restart-9 () () (sldb-invoke-restart 9))
+
+(define-command sldb-invoke-restart-by-name (restart-name)
+    ((list (let ((restarts (buffer-value (current-buffer) 'restarts)))
+             (prompt-for-line "Restart:"
+                              ""
+                              (lambda (str) (completion str restarts))
+                              (lambda (str) (member str restarts :test #'string-equal :key #'first))
+                              'sldb-restarts))))
+  (sldb-invoke-restart
+   (position restart-name
+             (buffer-value (current-buffer) 'restarts)
+             :test #'string-equal
+             :key #'first)))
 
 (defun sldb-inspect-var ()
   )

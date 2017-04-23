@@ -11,4 +11,5 @@
                (:file "package")
                (:file "button")
                (:file "lisp-mode")
-               (:file "sldb")))
+               (:file "sldb")
+               (:file "inspector")))

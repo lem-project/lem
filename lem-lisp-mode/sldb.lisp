@@ -192,8 +192,12 @@
               :do (destructuring-bind (&key name id value) var
                     (insert-character point #\newline)
                     (insert-string point indent2)
-                    (insert-button point (format nil "~A~A" name (if (zerop id) "" (format nil "#~D" id)))
-                                   'sldb-inspect-var
+                    (insert-button point (format nil "~A~A" name
+                                                 (if (zerop id) "" (format nil "#~D" id)))
+                                   (let ((var i)
+                                         (frame-number (button-get frame-button 'frame)))
+                                     (lambda ()
+                                       (sldb-inspect-var frame-number var)))
                                    :attribute 'local-name-attribute)
                     (insert-string point " = ")
                     (insert-string point value :attribute 'local-value-attribute)))
@@ -205,6 +209,10 @@
             (insert-character point #\newline)
             (insert-string point indent2)
             (insert-string point tag :attribute 'catch-tag-attribute)))))))
+
+(defun sldb-inspect-var (frame-number var)
+  (lisp-eval-async `(swank:inspect-frame-var ,frame-plist ,var)
+                   'open-inspector))
 
 (defun sldb-hide-frame-details (point frame-button)
   (when (button-get frame-button 'toggle)
@@ -405,9 +413,6 @@
                        ((t &rest _)
                         (declare (ignore _))
                         (recompile-location source-location))))))
-
-(defun sldb-inspect-var ()
-  )
 
 (pushnew (lambda (event)
            (alexandria:destructuring-case event

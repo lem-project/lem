@@ -296,9 +296,8 @@
                      (message "Restart returned: ~A" v))))
 
 (defun frame-number-at-point (point)
-  (let ((frame (text-property-at point 'sldb-frame)))
-    (when frame
-      (frame-number frame))))
+  (when (text-property-at point 'sldb-frame)
+    (frame-number (button-get (button-at point) 'frame))))
 
 (define-command sldb-restart-frame (frame-number)
     ((list (frame-number-at-point (current-point))))

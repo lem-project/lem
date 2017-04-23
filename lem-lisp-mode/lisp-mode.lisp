@@ -105,8 +105,11 @@
         (string-upcase package-name)
         default)))
 
+(defvar *current-package* nil)
+
 (defun current-package ()
-  (or (buffer-package (current-buffer))
+  (or *current-package*
+      (buffer-package (current-buffer))
       (swank-protocol:connection-package *connection*)))
 
 (defun current-swank-thread ()
@@ -271,14 +274,17 @@
         (t
          (setf (buffer-value (current-buffer) "package") package-name))))
 
+(defun prompt-for-sexp (string)
+  (prompt-for-line string
+                   ""
+                   (lambda (str)
+                     (declare (ignore str))
+                     (completion-symbol))
+                   nil
+                   'mh-sexp))
+
 (define-command lisp-eval-string (string)
-    ((list (prompt-for-line "lisp Eval: "
-                            ""
-                            (lambda (str)
-                              (declare (ignore str))
-                              (completion-symbol))
-                            nil
-                            'mh-lisp-eval-string)))
+    ((list (prompt-for-sexp "Lisp Eval: ")))
   (check-connection)
   (interactive-eval string))
 

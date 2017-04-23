@@ -50,6 +50,16 @@
 (define-key *sldb-keymap* "8" 'sldb-invoke-restart-8)
 (define-key *sldb-keymap* "9" 'sldb-invoke-restart-9)
 (define-key *sldb-keymap* "I" 'sldb-invoke-restart-by-name)
+(define-key *sldb-keymap* "v" 'sldb-show-frame-source)
+(define-key *sldb-keymap* "e" 'sldb-eval-in-frame)
+(define-key *sldb-keymap* "d" 'sldb-pprint-eval-in-frame)
+(define-key *sldb-keymap* "i" 'sldb-inspect-in-frame)
+(define-key *sldb-keymap* "s" 'sldb-step)
+(define-key *sldb-keymap* "x" 'sldb-next)
+(define-key *sldb-keymap* "o" 'sldb-out)
+(define-key *sldb-keymap* "b" 'sldb-break-on-return)
+(define-key *sldb-keymap* "C" 'sldb-inspect-condition)
+(define-key *sldb-keymap* "C-c C-c" 'sldb-recompile-in-frame-source)
 
 (defun get-sldb-buffer (thread)
   (dolist (buffer (buffer-list))
@@ -105,7 +115,8 @@
             (copy-point point :right-inserting))
       (save-excursion
         (sldb-insert-frames point (prune-initial-frames frames) t)))
-    (setf (buffer-read-only-p buffer) t)))
+    (setf (buffer-read-only-p buffer) t)
+    (sldb-forward-button)))
 
 (defun sldb-insert-condition (point condition)
   (destructuring-bind (message type extras) condition
@@ -296,8 +307,9 @@
                      (message "Restart returned: ~A" v))))
 
 (defun frame-number-at-point (point)
-  (when (text-property-at point 'sldb-frame)
-    (frame-number (button-get (button-at point) 'frame))))
+  (or (when (text-property-at point 'sldb-frame)
+        (frame-number (button-get (button-at point) 'frame)))
+      (editor-error "No frame at point")))
 
 (define-command sldb-restart-frame (frame-number)
     ((list (frame-number-at-point (current-point))))
@@ -341,6 +353,58 @@
              (buffer-value (current-buffer) 'restarts)
              :test #'string-equal
              :key #'first)))
+
+(define-command sldb-show-frame-source (frame-number)
+    ((list (frame-number-at-point (current-point))))
+  (lisp-eval-async `(swank:frame-source-location ,frame-number)
+                   (lambda (source-location)
+                     (message "source-location: ~S" source-location)
+                     (alexandria:destructuring-case source-location
+                       ((:error message)
+                        (message "~A" message))
+                       ((t &rest _)
+                        (declare (ignore _))
+                        (go-to-location (definition-to-location source-location) t))))))
+
+(defun eval-form-for-frame (format-string)
+  (let* ((frame (frame-number-at-point (current-point)))
+         (pkg (lisp-eval `(swank:frame-package-name ,frame))))
+    (list frame
+          (let ((*current-package* pkg))
+            (prompt-for-sexp (format nil format-string pkg)))
+          pkg)))
+
+(define-command sldb-eval-in-frame (frame string package)
+    ((eval-form-for-frame "Eval in frame (~A)> "))
+  (lisp-eval-async `(swank:eval-string-in-frame ,string ,frame ,package)
+                   (lambda (string)
+                     (message "~A" string))))
+
+(define-command sldb-pprint-eval-in-frame (frame string package)
+    ((eval-form-for-frame "Eval in frame (~A)> "))
+  (lisp-eval-async `(swank:pprint-eval-string-in-frame ,string ,frame ,package)
+                   *write-string-function*))
+
+(define-command sldb-inspect-in-frame (string)
+    ((list (prompt-for-sexp "Inspect in frame (evaluated): ")))
+  (let ((frame-number (frame-number-at-point (current-point))))
+    (lisp-eval-async `(swank:inspect-in-frame ,string ,frame-number)
+                     'open-inspector)))
+
+(defun recompile-location (source-location)
+  (save-excursion
+    (go-to-location source-location)
+    (lisp-compile-defun)))
+
+(define-command sldb-recompile-in-frame-source () ()
+  (lisp-eval-async `(swank:frame-source-location ,(frame-number-at-point (current-point)))
+                   (lambda (source-location)
+                     (alexandria:destructuring-case source-location
+                       ((:error message)
+                        (message "~A" message))
+                       ((t &rest _)
+                        (declare (ignore _))
+                        (recompile-location source-location))))))
 
 (defun sldb-inspect-var ()
   )

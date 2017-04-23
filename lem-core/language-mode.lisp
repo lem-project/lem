@@ -8,6 +8,7 @@
    :find-references-function
    :completion-function
    :language-mode
+   :go-to-location
    :indent
    :newline-and-indent
    :indent-region
@@ -129,9 +130,12 @@
   (type nil :read-only t)
   (locations nil :read-only t))
 
-(defun go-to-location (location)
-  (find-file (xref-location-file location))
-  (move-to-position (current-point) (xref-location-position location)))
+(defun go-to-location (location &optional pop-to-buffer)
+  (let ((buffer (find-file-buffer (xref-location-file location))))
+    (if pop-to-buffer
+        (setf (current-window) (pop-to-buffer buffer))
+        (switch-to-buffer buffer))
+    (move-to-position (current-point) (xref-location-position location))))
 
 (define-command find-definitions () ()
   (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))

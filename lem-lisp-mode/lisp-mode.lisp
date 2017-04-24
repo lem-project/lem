@@ -190,9 +190,8 @@
                               (alexandria:destructuring-ecase value
                                 ((:ok result)
                                  (when cont
-                                   (save-excursion
-                                     (setf (current-buffer) buffer)
-                                     (funcall cont result))))
+                                   (setf (current-buffer) buffer)
+                                   (funcall cont result)))
                                 ((:abort condition)
                                  (message "Evaluation aborted on ~A." condition))))
               :thread (current-swank-thread)

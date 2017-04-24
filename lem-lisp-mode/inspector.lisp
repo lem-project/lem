@@ -30,26 +30,26 @@
         buffer)))
 
 (defun open-inspector (inspected-parts &optional inspector-position hook)
-  (let* ((buffer (inspector-buffer))
-         (point (buffer-point buffer)))
+  (let ((buffer (inspector-buffer)))
     (with-current-window (display-buffer buffer)
-      (when hook
-        (add-hook (variable-value 'kill-buffer-hook :buffer buffer) hook))
-      (let ((*inhibit-read-only* t))
-        (erase-buffer buffer)
-        (destructuring-bind (&key id title content) inspected-parts
-          (insert-button point title
-                         (make-inspect-action :part id)
-                         :attribute 'inspector-value-attribute)
-          (delete-between-points point (buffer-end-point buffer))
-          (insert-string point
-                         (format nil "~%--------------------~%")
-                         :attribute 'inspector-label-attribute)
-          (save-excursion
-            (inspector-insert-content content))
-          (when inspector-position
-            (move-to-line point (car inspector-position))
-            (line-offset point 0 (cdr inspector-position))))))))
+      (let ((point (current-point)))
+        (when hook
+          (add-hook (variable-value 'kill-buffer-hook :buffer buffer) hook))
+        (let ((*inhibit-read-only* t))
+          (erase-buffer buffer)
+          (destructuring-bind (&key id title content) inspected-parts
+            (insert-button point title
+                           (make-inspect-action :part id)
+                           :attribute 'inspector-value-attribute)
+            (delete-between-points point (buffer-end-point buffer))
+            (insert-string point
+                           (format nil "~%--------------------~%")
+                           :attribute 'inspector-label-attribute)
+            (save-excursion
+              (inspector-insert-content content))))
+        (when inspector-position
+          (move-to-line point (car inspector-position))
+          (line-offset point 0 (cdr inspector-position)))))))
 
 (defun inspector-insert-content (content)
   (inspector-fetch-chunk

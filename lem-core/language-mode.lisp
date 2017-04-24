@@ -77,6 +77,9 @@
              (line-start start)
              (line-end end)))
           (skip-whitespace-forward start)
+          (when (point>= start end)
+            (insert-string (current-point) line-comment)
+            (return-from comment-region))
           (let ((charpos (point-charpos start)))
             (loop
               (when (same-line-p start end)

@@ -185,7 +185,7 @@
                  :attribute 'inspector-action-attribute))
 
 (define-command lisp-inspector-fetch-all () ()
-  (let ((button (button-at (buffer-end (current-point)))))
+  (let ((button (button-at (character-offset (buffer-end (current-point)) -1))))
     (when button
       (let ((*inspector-limit*))
         (button-action button)))))

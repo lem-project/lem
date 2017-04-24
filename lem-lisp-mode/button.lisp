@@ -47,11 +47,15 @@
     (next-single-property-change point 'button)))
 
 (defun button-at (point)
-  (let ((button (text-property-at point 'button)))
-    (when button
-      (with-point ((point point))
-        (setf (button-start button)
-              (move-to-button-start point))
-        (setf (button-end button)
-              (move-to-button-end point))
-        button))))
+  (with-point ((point point))
+    (let ((button (or (text-property-at point 'button)
+                      (text-property-at (character-offset point -1)
+                                        'button))))
+      (when button
+        (with-point ((start point)
+                     (end point))
+          (setf (button-start button)
+                (move-to-button-start start))
+          (setf (button-end button)
+                (or (move-to-button-end end) (buffer-end point)))
+          button)))))

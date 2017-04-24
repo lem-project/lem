@@ -768,12 +768,12 @@
 (defun repl-read-line (point string)
   (declare (ignore point))
   (multiple-value-bind (thread tag) (repl-pop-stack)
-    (swank-protocol:send-message-string
-     *connection*
-     (format nil "(:emacs-return-string ~A ~A ~S)"
-             thread
-             tag
-             (concatenate 'string string (string #\newline))))))
+    (dispatch-message (list :emacs-return-string
+                            thread
+                            tag
+                            (concatenate 'string
+                                         string
+                                         (string #\newline))))))
 
 (define-command start-lisp-repl () ()
   (check-connection)
@@ -881,12 +881,17 @@
     ;;  )
     ;; ((:emacs-channel-send id msg)
     ;;  )
-    ;; ((:read-from-minibuffer thread tag prompt initial-value)
-    ;;  )
-    ;; ((:y-or-n-p thread tag question)
-    ;;  )
-    ;; ((:emacs-return-string thread tag string)
-    ;;  )
+    ((:read-from-minibuffer thread tag prompt initial-value)
+     (read-from-minibuffer thread tag prompt initial-value))
+    ((:y-or-n-p thread tag question)
+     (dispatch-message `(:emacs-return ,thread ,tag ,(prompt-for-y-or-n-p question))))
+    ((:emacs-return-string thread tag string)
+     (swank-protocol:send-message-string
+      *connection*
+      (format nil "(:emacs-return-string ~A ~A ~S)"
+              thread
+              tag
+              string)))
     ((:new-features features)
      (setf (swank-protocol:connection-features *connection*)
            features))
@@ -896,16 +901,19 @@
     ;;  )
     ;; ((:eval thread tag form-string)
     ;;  )
-    ;; ((:emacs-return thread tag value)
-    ;;  )
+    ((:emacs-return thread tag value)
+     (swank-protocol:send-message-string
+      *connection*
+      (format nil "(:emacs-return ~A ~A ~S)" thread tag value)))
     ;; ((:ed what)
     ;;  )
     ;; ((:inspect what thread tag)
     ;;  )
     ;; ((:background-message message)
     ;;  )
-    ;; ((:debug-condition thread message)
-    ;;  )
+    ((:debug-condition thread message)
+     (assert thread)
+     (message "~A" message))
     ((:ping thread tag)
      (swank-protocol:send-message-string
       *connection*
@@ -920,6 +928,10 @@
     ((t &rest args)
      (declare (ignore args))
      (pushnew (car message) *unknown-keywords*))))
+
+(defun read-from-minibuffer (thread tag prompt initial-value)
+  (let ((input (prompt-for-sexp prompt initial-value)))
+    (dispatch-message `(:emacs-return ,thread ,tag ,input))))
 
 
 (defvar *process* nil)

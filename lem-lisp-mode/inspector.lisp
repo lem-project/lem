@@ -200,3 +200,15 @@
             ((= e2 s1)
              (list (append i2 i1) l2 s2 e1))
             (t (error "Invalid chunks"))))))
+
+(pushnew (lambda (event)
+           (alexandria:destructuring-case event
+             ((:inspect what thread tag)
+              (let ((hook (when (and thread tag)
+                            (alexandria:curry (lambda (sexp)
+                                                (swank-protocol:send-message-string
+                                                 *connection*
+                                                 sexp))
+                                              `(:emacs-return ,thread ,tag nil)))))
+                (open-inspector what nil hook)))))
+         *event-hooks*)

@@ -17,6 +17,7 @@
   (:export :new-connection
            :read-message-string
            :send-message-string
+           :send-message
            :message-waiting-p
            :emacs-rex-string
            :emacs-rex
@@ -40,6 +41,12 @@
 
 (define-condition disconnected (simple-condition)
   ())
+
+(defmacro with-swank-syntax (() &body body)
+  `(with-standard-io-syntax
+     (let ((*package* (find-package :swank-io-package))
+           (*print-case* :downcase))
+       ,@body)))
 
 ;;; Prevent reader errors
 
@@ -241,6 +248,11 @@ to check if input is available."
     (log-message connection "~%Sent: ~A~%" message)
     message))
 
+(defun send-message (connection form)
+  (send-message-string connection
+                       (with-swank-syntax ()
+                         (prin1-to-string form))))
+
 (defun message-waiting-p (connection &key (timeout 0))
   "t if there's a message in the connection waiting to be read, nil otherwise."
   (if (usocket:wait-for-input (connection-socket connection)
@@ -250,12 +262,6 @@ to check if input is available."
       nil))
 
 ;;; Sending messages
-
-(defmacro with-swank-syntax (() &body body)
-  `(with-standard-io-syntax
-     (let ((*package* (find-package :swank-io-package))
-           (*print-case* :downcase))
-       ,@body)))
 
 (defun emacs-rex-string (connection string &key continuation thread package)
   (let ((msg (format nil "(:emacs-rex ~A ~S ~A ~A)"

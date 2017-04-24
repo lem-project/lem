@@ -52,6 +52,8 @@
 (define-key *lisp-mode-keymap* "C-c C-d z" 'lisp-apropos-all)
 (define-key *lisp-mode-keymap* "C-c C-d p" 'lisp-apropos-package)
 (define-key *lisp-mode-keymap* "C-c C-d d" 'lisp-describe-symbol)
+(define-key *lisp-mode-keymap* "C-c C-z" 'lisp-switch-to-repl-buffer)
+(define-key *lisp-mode-keymap* "C-c z" 'lisp-switch-to-repl-buffer)
 
 (defun connected-p ()
   (not (null *connection*)))
@@ -781,6 +783,14 @@
 (define-command start-lisp-repl () ()
   (check-connection)
   (lem.listener-mode:listener-start "*lisp-repl*" 'lisp-repl-mode))
+
+(define-command lisp-switch-to-repl-buffer () ()
+  (let ((buffer (repl-buffer)))
+    (if buffer
+        (setf (current-window)
+              (or (car (get-buffer-windows buffer))
+                  (pop-to-buffer buffer)))
+        (start-lisp-repl))))
 
 (defun write-string-to-repl (string)
   (let ((buffer (repl-buffer)))

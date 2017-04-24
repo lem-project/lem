@@ -1,13 +1,14 @@
 (in-package :lem-lisp-mode)
 
 (define-attribute inspector-label-attribute
-  )
+  (:light :foreground "LightSteelBlue"))
 
 (define-attribute inspector-value-attribute
-  )
+  (:light :foreground "dark cyan")
+  (:dark :foreground "cyan"))
 
 (define-attribute inspector-action-attribute
-  )
+  (t :foreground "red"))
 
 (defvar *inspector-limit* 500)
 (defvar *inspector-mark-stack* '())
@@ -16,6 +17,19 @@
     (:name "lisp-inspector"
      :keymap *lisp-inspector-keymap*)
   (setf (buffer-read-only-p (current-buffer)) t))
+
+(define-key *lisp-inspector-keymap* "l" 'lisp-inspector-pop)
+(define-key *lisp-inspector-keymap* "n" 'lisp-inspector-next)
+(define-key *lisp-inspector-keymap* "Spc" 'lisp-inspector-next)
+(define-key *lisp-inspector-keymap* "d" 'lisp-inspector-describe)
+(define-key *lisp-inspector-keymap* "p" 'lisp-inspector-pprint)
+(define-key *lisp-inspector-keymap* "e" 'lisp-inspector-eval)
+(define-key *lisp-inspector-keymap* "h" 'lisp-inspector-history)
+(define-key *lisp-inspector-keymap* "g" 'lisp-inspector-reinspect)
+(define-key *lisp-inspector-keymap* "v" 'lisp-inspector-toggle-verbose)
+(define-key *lisp-inspector-keymap* "." 'lisp-inspector-show-source)
+(define-key *lisp-inspector-keymap* ">" 'lisp-inspector-fetch-all)
+(define-key *lisp-inspector-keymap* "q" 'lisp-inspector-quit)
 
 (define-command lisp-inspect (string)
     ((list (or (symbol-string-at-point (current-point))
@@ -40,6 +54,7 @@
           (destructuring-bind (&key id title content) inspected-parts
             (insert-button point title
                            (make-inspect-action :part id)
+                           'part id
                            :attribute 'inspector-value-attribute)
             (delete-between-points point (buffer-end-point buffer))
             (insert-string point
@@ -72,7 +87,8 @@
       (alexandria:destructuring-ecase ispec
         ((:value string id)
          (insert-button (current-point) string
-                        (make-inspect-action :part id)))
+                        (make-inspect-action :part id)
+                        'part id))
         ((:label string)
          (insert-string (current-point) string :attribute 'inspector-label-attribute))
         ((:action string id)
@@ -122,32 +138,45 @@
 
 (define-command lisp-inspector-quit () ()
   (lisp-eval-async `(swank:quit-inspector))
-  (quit-window t))
+  (quit-window))
 
 ;; slime-find-inspectable-object
 ;; slime-inspector-next-inspectable-object
 ;; slime-inspector-previous-inspectable-object
 
 (define-command lisp-inspector-describe () ()
-  )
+  (lisp-eval-describe `(swank:describe-inspectee)))
 
-(define-command lisp-inspector-pprint () ()
-  )
+(define-command lisp-inspector-pprint (part)
+    ((list 
+      (let* ((button (button-at (current-point)))
+             (part (and button (button-get button 'part))))
+        (unless part (editor-error "No part at point"))
+        part)))
+  (lisp-eval-describe `(swank:pprint-inspector-part ,part)))
 
-(define-command lisp-inspector-eval () ()
-  )
+(define-command lisp-inspector-eval (string)
+    ((list (prompt-for-sexp "Inspector eval: ")))
+  (eval-with-transcript `(swank:inspector-eval ,string)))
 
 (define-command lisp-inspector-history () ()
-  )
+  (lisp-eval-describe `(swank:inspector-history)))
 
 (define-command lisp-inspector-show-source () ()
-  )
+  (lisp-eval-async `(swank:find-source-location-for-emacs `(:inspector ,part))
+                   #'show-source-location))
 
 (define-command lisp-inspector-reinspect () ()
-  )
+  (lisp-eval-async '(swank:inspector-reinspect)
+                   (let ((pos (inspector-position (current-point))))
+                     (lambda (parts)
+                       (open-inspector parts pos)))))
 
 (define-command lisp-inspector-toggle-verbose () ()
-  )
+  (lisp-eval-async `(swank:inspector-toggle-verbose)
+                   (let ((pos (inspector-position (current-point))))
+                     (lambda (parts)
+                       (open-inspector parts pos)))))
 
 (defun inspector-insert-more-button (index previous)
   (insert-button (current-point)

@@ -197,6 +197,9 @@
               :thread (current-swank-thread)
               :package package)))
 
+(defun lisp-eval-describe (form)
+  (lisp-eval-async form #'show-description))
+
 (defun eval-with-transcript (form)
   (lisp-rex form
             :continuation (lambda (value)
@@ -653,7 +656,8 @@
                             nil)))
 
 (defun show-description (string)
-  (let ((buffer (get-buffer-create "*lisp description*")))
+  (let ((buffer (get-buffer-create "*lisp-description*")))
+    (change-buffer-mode buffer 'lisp-mode t)
     (with-pop-up-typeout-window (stream buffer :erase t)
       (princ string stream))))
 
@@ -931,6 +935,14 @@
 (defun read-from-minibuffer (thread tag prompt initial-value)
   (let ((input (prompt-for-sexp prompt initial-value)))
     (dispatch-message `(:emacs-return ,thread ,tag ,input))))
+
+(defun show-source-location (source-location)
+  (alexandria:destructuring-case source-location
+    ((:error message)
+     (message "~A" message))
+    ((t &rest _)
+     (declare (ignore _))
+     (go-to-location (definition-to-location source-location) t))))
 
 
 (defvar *process* nil)

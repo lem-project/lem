@@ -7,6 +7,7 @@
 
 (define-key *lisp-ui-keymap* "C-m" 'lisp-ui-default-action)
 (define-key *lisp-ui-keymap* "C-i" 'lisp-ui-forward-button)
+(define-key *lisp-ui-keymap* "q" 'quit-window)
 
 (define-command lisp-ui-default-action () ()
   (let ((button (button-at (current-point))))

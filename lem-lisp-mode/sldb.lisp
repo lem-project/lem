@@ -362,14 +362,7 @@
 (define-command sldb-show-frame-source (frame-number)
     ((list (frame-number-at-point (current-point))))
   (lisp-eval-async `(swank:frame-source-location ,frame-number)
-                   (lambda (source-location)
-                     (message "source-location: ~S" source-location)
-                     (alexandria:destructuring-case source-location
-                       ((:error message)
-                        (message "~A" message))
-                       ((t &rest _)
-                        (declare (ignore _))
-                        (go-to-location (definition-to-location source-location) t))))))
+                   #'show-source-location))
 
 (defun eval-form-for-frame (format-string)
   (let* ((frame (frame-number-at-point (current-point)))

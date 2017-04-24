@@ -104,10 +104,6 @@
        (lisp-eval-async `(swank::inspector-call-nth-action ,value)
                         'inspector-opener)))))
 
-(define-command lisp-inspector-operate-on-point () ()
-  (let ((button (button-at (current-point))))
-    (button-action button)))
-
 (define-command lisp-inspector-pop () ()
   (lisp-eval-async `(swank:inspector-pop)
                    (lambda (result)

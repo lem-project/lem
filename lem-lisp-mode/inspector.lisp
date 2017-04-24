@@ -109,13 +109,24 @@
     (button-action button)))
 
 (define-command lisp-inspector-pop () ()
-  )
+  (lisp-eval-async `(swank:inspector-pop)
+                   (lambda (result)
+                     (cond (result
+                            (open-inspector result (pop *inspector-mark-stack*)))
+                           (t
+                            (message "No previous object"))))))
 
 (define-command lisp-inspector-next () ()
-  )
+  (let ((result (lisp-eval `(swank:inspector-next))))
+    (cond (result
+           (push (inspector-position (current-point)) *inspector-mark-stack*)
+           (open-inspector result))
+          (t
+           (message "No next object")))))
 
 (define-command lisp-inspector-quit () ()
-  )
+  (lisp-eval-async `(swank:quit-inspector))
+  (quit-window t))
 
 ;; slime-find-inspectable-object
 ;; slime-inspector-next-inspectable-object

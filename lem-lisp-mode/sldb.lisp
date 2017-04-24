@@ -25,16 +25,14 @@
 
 (define-attribute catch-tag-attribute)
 
-(define-major-mode sldb-mode ()
+(define-major-mode sldb-mode lisp-ui-mode
     (:name "sldb"
      :keymap *sldb-keymap*))
 
-(define-key *sldb-keymap* "C-m" 'sldb-default-action)
 (define-key *sldb-keymap* "n" 'sldb-down)
 (define-key *sldb-keymap* "p" 'sldb-up)
 (define-key *sldb-keymap* "M-n" 'sldb-details-down)
 (define-key *sldb-keymap* "M-p" 'sldb-details-up)
-(define-key *sldb-keymap* "C-i" 'sldb-forward-button)
 (define-key *sldb-keymap* "q" 'sldb-quit)
 (define-key *sldb-keymap* "c" 'sldb-continue)
 (define-key *sldb-keymap* "a" 'sldb-abort)
@@ -116,7 +114,7 @@
       (save-excursion
         (sldb-insert-frames point (prune-initial-frames frames) t)))
     (setf (buffer-read-only-p buffer) t)
-    (sldb-forward-button)))
+    (lisp-ui-forward-button)))
 
 (defun sldb-insert-condition (point condition)
   (destructuring-bind (message type extras) condition
@@ -264,8 +262,8 @@
              (kill-buffer buffer))))))
 
 (define-command sldb-default-action () ()
-  (let ((fn (text-property-at (current-point) 'action)))
-    (when fn (funcall fn))))
+  (let ((button (button-at (current-point))))
+    (when button (button-action button))))
 
 (define-command sldb-down (p) ((list (current-point)))
   (next-single-property-change p 'sldb-frame)
@@ -290,13 +288,6 @@
 (define-command sldb-details-up () ()
   (sldb-up (current-point))
   (sldb-toggle-details t))
-
-(define-command sldb-forward-button () ()
-  (let ((p (current-point)))
-    (or (forward-button p)
-        (progn
-          (buffer-start p)
-          (forward-button p)))))
 
 (define-command sldb-quit () ()
   (lisp-rex `(swank:throw-to-toplevel)

@@ -274,9 +274,9 @@
         (t
          (setf (buffer-value (current-buffer) "package") package-name))))
 
-(defun prompt-for-sexp (string)
+(defun prompt-for-sexp (string &optional initial)
   (prompt-for-line string
-                   ""
+                   initial
                    (lambda (str)
                      (declare (ignore str))
                      (completion-symbol))

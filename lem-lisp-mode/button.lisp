@@ -3,7 +3,8 @@
 (defstruct button
   start
   end
-  plist)
+  plist
+  callback)
 
 (defun button-get (button key)
   (getf (button-plist button) key))
@@ -15,12 +16,15 @@
   (let ((button-tag (getf plist :button-tag)))
     (apply #'insert-string
            point text
-           'button (make-button :plist plist)
+           'button (make-button :plist plist :callback callback)
            'action callback
            :attribute (getf plist :attribute)
            (if button-tag
                `(,button-tag t)
                '()))))
+
+(defun button-action (button)
+  (funcall (button-callback button)))
 
 (defun forward-button (point &optional limit)
   (when (text-property-at point 'button)

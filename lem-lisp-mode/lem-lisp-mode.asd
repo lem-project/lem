@@ -10,6 +10,7 @@
   :components ((:file "swank-protocol")
                (:file "package")
                (:file "button")
+               (:file "lisp-ui-mode")
                (:file "lisp-mode")
                (:file "sldb")
                (:file "inspector")))

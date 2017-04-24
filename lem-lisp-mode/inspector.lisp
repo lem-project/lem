@@ -18,6 +18,8 @@
      :keymap *lisp-inspector-keymap*)
   (setf (buffer-read-only-p (current-buffer)) t))
 
+(define-key *lisp-mode-keymap* "C-c I" 'lisp-inspect)
+
 (define-key *lisp-inspector-keymap* "l" 'lisp-inspector-pop)
 (define-key *lisp-inspector-keymap* "n" 'lisp-inspector-next)
 (define-key *lisp-inspector-keymap* "Spc" 'lisp-inspector-next)

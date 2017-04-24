@@ -88,7 +88,8 @@
         ((:value string id)
          (insert-button (current-point) string
                         (make-inspect-action :part id)
-                        'part id))
+                        'part id
+                        :attribute 'inspector-value-attribute))
         ((:label string)
          (insert-string (current-point) string :attribute 'inspector-label-attribute))
         ((:action string id)

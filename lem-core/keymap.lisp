@@ -13,16 +13,24 @@
 
 (defvar *keymaps* nil)
 
-(defstruct (keymap (:constructor %make-keymap))
+(defstruct (keymap (:constructor %make-keymap) (:print-function %print-keymap))
   undef-hook
   parent
-  table)
+  table
+  name)
 
-(defun make-keymap (&optional undef-hook parent)
+(defun %print-keymap (object stream depth)
+  (declare (ignorable depth))
+  (print-unreadable-object (object stream :identity t :type t)
+    (when (keymap-name object)
+      (format stream "~A" (keymap-name object)))))
+
+(defun make-keymap (&key undef-hook parent name)
   (let ((keymap (%make-keymap
                  :undef-hook undef-hook
                  :parent parent
-                 :table (make-hash-table :test 'equal))))
+                 :table (make-hash-table :test 'equal)
+                 :name name)))
     (push keymap *keymaps*)
     keymap))
 
@@ -147,7 +155,8 @@
 		      table)))
     (f (keymap-table keymap) nil)))
 
-(defvar *global-keymap* (make-keymap 'self-insert))
+(defvar *global-keymap* (make-keymap :name '*global-keymap*
+                                     :undef-hook 'self-insert))
 
 (define-command undefined-key () ()
   (editor-error "Key not found: ~A"

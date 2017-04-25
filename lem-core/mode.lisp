@@ -49,7 +49,7 @@
      (pushnew ',major-mode *mode-list*)
      (setf (mode-name ',major-mode) ,name)
      ,@(cond (keymap
-              `((defvar ,keymap (make-keymap))
+              `((defvar ,keymap (make-keymap :name ',keymap))
                 (setf (mode-keymap ',major-mode) ,keymap)
                 ,(when parent-mode
                    `(setf (keymap-parent ,keymap)
@@ -80,7 +80,7 @@
      (pushnew ',minor-mode *mode-list*)
      (setf (mode-name ',minor-mode) ,name)
      ,@(when keymapp
-         `((defvar ,keymap (make-keymap))
+         `((defvar ,keymap (make-keymap :name ',keymap))
            (setf (mode-keymap ',minor-mode) ,keymap)))
      (define-command ,minor-mode (&rest args) ("P")
        (cond ((null args)

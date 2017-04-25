@@ -512,3 +512,12 @@
       (when mark
         (set-current-mark mark)
         (delete-point mark)))))
+
+@export
+(defun insert-buffer (point buffer)
+  (loop :for line := (point-line (buffer-start-point buffer)) :then (line-next line)
+        :while line
+        :do
+        (insert-string point (line-str line))
+        (setf (line-plist (point-line point)) (line-plist line))
+        (insert-character point #\newline)))

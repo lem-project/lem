@@ -886,7 +886,11 @@
   (dolist (window (window-list))
     (unless (eq window (current-window))
       (redraw-display-window window force)))
-  (redraw-display-window (current-window) force)
+  (cond ((eq (current-window) (minibuffer-window))
+         (redraw-display-window (minibuffer-window) force))
+        (t
+         (redraw-display-window (minibuffer-window) force)
+         (redraw-display-window (current-window) force)))
   (dolist (window (floating-windows))
     (redraw-display-window window t))
   (update-display))

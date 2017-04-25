@@ -8,6 +8,7 @@
           minibufferp
           message
           message-without-log
+          message-buffer
           minibuf-read-char
           active-minibuffer-window
           check-switch-minibuffer-window
@@ -72,27 +73,30 @@
           (fresh-line stream)
           (princ msg stream))))))
 
-(defun message-1 (string args)
-  (when (interactive-p)
-    (let ((flag (minibuffer-window-active-p)))
-      (print-echoarea (if (null string)
-                          nil
-                          (apply #'format nil string args))
-                      flag)
-      (when flag
-        (handler-case (sit-for 1 nil)
-          (editor-abort ()
-            (minibuf-read-line-break)))
-        (print-echoarea nil nil)))))
+(defun message-without-log (string &rest args)
+  (cond ((minibuffer-window-active-p)
+         (print-echoarea (if (null string)
+                             nil
+                             (apply #'format nil string args))
+                         t)
+         (handler-case (sit-for 1 nil)
+           (editor-abort ()
+             (minibuf-read-line-break))))
+        (string
+         (let ((point (buffer-point (minibuffer))))
+           (insert-string point (apply #'format nil string args))))
+        (t
+         (erase-buffer (minibuffer))))
+  t)
 
 (defun message (string &rest args)
   (log-message string args)
-  (message-1 string args)
+  (apply #'message-without-log string args)
   t)
 
-(defun message-without-log (string &rest args)
-  (message-1 string args)
-  t)
+(defun message-buffer (buffer)
+  (erase-buffer (minibuffer))
+  (insert-buffer (buffer-point (minibuffer)) buffer))
 
 (defun minibuf-read-char (prompt)
   (when (interactive-p)

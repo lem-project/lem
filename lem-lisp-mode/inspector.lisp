@@ -150,12 +150,14 @@
 (define-command lisp-inspector-describe () ()
   (lisp-eval-describe `(swank:describe-inspectee)))
 
+(defun inspector-get-part ()
+  (let* ((button (button-at (current-point)))
+         (part (and button (button-get button 'part))))
+    (unless part (editor-error "No part at point"))
+    part))
+
 (define-command lisp-inspector-pprint (part)
-    ((list 
-      (let* ((button (button-at (current-point)))
-             (part (and button (button-get button 'part))))
-        (unless part (editor-error "No part at point"))
-        part)))
+    ((list (inspector-get-part)))
   (lisp-eval-describe `(swank:pprint-inspector-part ,part)))
 
 (define-command lisp-inspector-eval (string)
@@ -165,8 +167,9 @@
 (define-command lisp-inspector-history () ()
   (lisp-eval-describe `(swank:inspector-history)))
 
-(define-command lisp-inspector-show-source () ()
-  (lisp-eval-async `(swank:find-source-location-for-emacs `(:inspector ,part))
+(define-command lisp-inspector-show-source (part)
+    ((list (inspector-get-part)))
+  (lisp-eval-async `(swank:find-source-location-for-emacs '(:inspector ,part))
                    #'show-source-location))
 
 (define-command lisp-inspector-reinspect () ()

@@ -93,15 +93,17 @@
     (:name "completion"
      :keymap *completion-mode-keymap*))
 
-(define-key *completion-mode-keymap* "C-n" 'completion-next-line)
-(define-key *completion-mode-keymap* "M-n" 'completion-next-line)
-(define-key *completion-mode-keymap* "C-i" 'completion-next-line)
-(define-key *completion-mode-keymap* "C-p" 'completion-previous-line)
-(define-key *completion-mode-keymap* "M-p" 'completion-previous-line)
-(define-key *completion-mode-keymap* "M->" 'completion-end-of-buffer)
-(define-key *completion-mode-keymap* "M-<" 'completion-beginning-of-buffer)
-(define-key *completion-mode-keymap* "C-m" 'completion-select)
-(define-key *completion-mode-keymap* "Spc" 'completion-insert-space-and-cancel)
+(define-key *completion-mode-keymap* "C-n"    'completion-next-line)
+(define-key *completion-mode-keymap* "[down]" 'completion-next-line)
+(define-key *completion-mode-keymap* "M-n"    'completion-next-line)
+(define-key *completion-mode-keymap* "C-i"    'completion-next-line)
+(define-key *completion-mode-keymap* "C-p"    'completion-previous-line)
+(define-key *completion-mode-keymap* "[up]"   'completion-previous-line)
+(define-key *completion-mode-keymap* "M-p"    'completion-previous-line)
+(define-key *completion-mode-keymap* "M->"    'completion-end-of-buffer)
+(define-key *completion-mode-keymap* "M-<"    'completion-beginning-of-buffer)
+(define-key *completion-mode-keymap* "C-m"    'completion-select)
+(define-key *completion-mode-keymap* "Spc"    'completion-insert-space-and-cancel)
 
 (define-attribute completion-attribute
   (t :foreground "blue" :background "white" :reverse-p t))

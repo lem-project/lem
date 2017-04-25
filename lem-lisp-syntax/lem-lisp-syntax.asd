@@ -5,4 +5,5 @@
                (:file "syntax-table")
                (:file "misc")
                (:file "enclosing")
+               (:file "parse")
                (:file "lem-lisp-syntax")))

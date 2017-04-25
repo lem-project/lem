@@ -4,4 +4,5 @@
    :lem-lisp-syntax.indent
    :lem-lisp-syntax.syntax-table
    :lem-lisp-syntax.misc
-   :lem-lisp-syntax.enclosing))
+   :lem-lisp-syntax.enclosing
+   :lem-lisp-syntax.parse))

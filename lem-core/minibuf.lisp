@@ -9,6 +9,7 @@
           message
           message-without-log
           message-buffer
+          active-echoarea-p
           minibuf-read-char
           active-minibuffer-window
           check-switch-minibuffer-window
@@ -97,6 +98,10 @@
 (defun message-buffer (buffer)
   (erase-buffer (minibuffer))
   (insert-buffer (buffer-point (minibuffer)) buffer))
+
+(defun active-echoarea-p ()
+  (not (point= (buffer-start-point (minibuffer))
+               (buffer-end-point (minibuffer)))))
 
 (defun minibuf-read-char (prompt)
   (when (interactive-p)

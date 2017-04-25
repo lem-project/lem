@@ -41,7 +41,6 @@
 (define-key *lisp-mode-keymap* "C-M-x" 'lisp-eval-defun)
 (define-key *lisp-mode-keymap* "C-c C-r" 'lisp-eval-region)
 (define-key *lisp-mode-keymap* "C-c C-l" 'lisp-load-file)
-(define-key *lisp-mode-keymap* "Spc" 'lisp-space)
 (define-key *lisp-mode-keymap* "C-c M-c" 'lisp-remove-notes)
 (define-key *lisp-mode-keymap* "C-c C-k" 'lisp-compile-and-load-file)
 (define-key *lisp-mode-keymap* "C-c C-c" 'lisp-compile-defun)
@@ -369,10 +368,6 @@
                      (delete-between-points start point)
                      (insert-string point string :attribute 'region))))
                (message-buffer buffer)))))))))
-
-(define-command lisp-space (n) ("p")
-  (insert-character (current-point) #\space n)
-  (lisp-echo-arglist))
 
 (defun check-parens ()
   (with-point ((point (current-point)))
@@ -1031,17 +1026,23 @@
           (return))))))
 
 (defun update-buffer-package ()
-  (when (and (eq (buffer-major-mode (current-buffer)) 'lisp-mode)
-             (connected-p))
-    (let ((package (scan-current-package (current-point))))
-      (when package
-        (lisp-set-package package)))))
+  (let ((package (scan-current-package (current-point))))
+    (when package
+      (lisp-set-package package))))
+
+(defun timer-function ()
+  (when (connected-p)
+    (let ((major-mode (buffer-major-mode (current-buffer))))
+      (when (eq major-mode 'lisp-mode) (update-buffer-package))
+      (when (member major-mode '(lisp-mode lisp-repl-mode))
+        (unless (active-echoarea-p)
+          (lisp-autodoc))))))
 
 (defvar *idle-timer*)
 (when (or (not (boundp '*idle-timer*))
           (not (timer-alive-p *idle-timer*)))
   (setf *idle-timer*
-        (start-idle-timer 110 t 'update-buffer-package
+        (start-idle-timer 110 t 'timer-function
                           (lambda (condition)
                             (stop-timer *idle-timer*)
                             (pop-up-backtrace condition)))))

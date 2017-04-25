@@ -26,7 +26,8 @@
            :query-replace-symbol))
 (in-package :lem.isearch)
 
-(defvar *isearch-keymap* (make-keymap 'isearch-self-insert))
+(defvar *isearch-keymap* (make-keymap :name '*isearch-keymap*
+                                      :undef-hook 'isearch-self-insert))
 (defvar *isearch-prompt*)
 (defvar *isearch-string*)
 (defvar *isearch-prev-string* "")

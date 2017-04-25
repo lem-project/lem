@@ -594,7 +594,10 @@
                        :end end))
                     completions)))))))
 
-(defvar *lisp-apropos-mode-keymap* (make-keymap nil *lisp-mode-keymap*))
+(defvar *lisp-apropos-mode-keymap*
+  (make-keymap :name '*lisp-apropos-mode-keymap*
+               :parent *lisp-mode-keymap*))
+
 (define-key *lisp-apropos-mode-keymap* "q" 'quit-window)
 
 (define-major-mode lisp-apropos-mode ()

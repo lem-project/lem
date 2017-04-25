@@ -88,7 +88,8 @@
   (end nil :read-only t :type (or null point))
   (apply-fn nil :read-only t :type (or null function)))
 
-(defvar *completion-mode-keymap* (make-keymap 'completion-self-insert))
+(defvar *completion-mode-keymap* (make-keymap :name '*completion-mode-keymap*
+                                              :undef-hook 'completion-self-insert))
 (define-minor-mode completion-mode
     (:name "completion"
      :keymap *completion-mode-keymap*))

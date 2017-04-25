@@ -102,49 +102,86 @@
                      (search-backward-endp-function limit-point))))))
 
 (defun search-forward-regexp (point regex &optional limit-point)
-  (let ((scanner (ignore-errors (ppcre:create-scanner regex))))
+  (let ((scanner (ignore-errors (ppcre:create-scanner regex)))
+        (string)
+        (reg-starts)
+        (reg-ends))
     (when scanner
-      (search-step point
-                   (lambda (point)
-                     (multiple-value-bind (start end)
-                         (ppcre:scan scanner
-                                     (line-string point)
-                                     :start (point-charpos point))
-                       (when (and start (<= (point-charpos point) start))
-                         end)))
-                   (lambda (point)
-                     (nth-value 1
-                                (ppcre:scan scanner
-                                            (line-string point))))
-                   (lambda (point)
-                     (line-offset point 1))
-                   (lambda (point charpos)
-                     (character-offset (line-start point) charpos))
-                   (search-forward-endp-function limit-point)))))
+      (when (search-step point
+                         (lambda (point)
+                           (multiple-value-bind (start end reg-starts-1 reg-ends-1)
+                               (ppcre:scan scanner
+                                           (line-string point)
+                                           :start (point-charpos point))
+                             (when (and start (<= (point-charpos point) start))
+                               (setf string (line-string point))
+                               (setf reg-starts reg-starts-1)
+                               (setf reg-ends reg-ends-1)
+                               end)))
+                         (lambda (point)
+                           (multiple-value-bind (_start end reg-starts-1 reg-ends-1)
+                               (ppcre:scan scanner (line-string point))
+                             (declare (ignore _start))
+                             (when end
+                               (setf string (line-string point))
+                               (setf reg-starts reg-starts-1)
+                               (setf reg-ends reg-ends-1)
+                               end)))
+                         (lambda (point)
+                           (line-offset point 1))
+                         (lambda (point charpos)
+                           (character-offset (line-start point) charpos))
+                         (search-forward-endp-function limit-point))
+        (if reg-starts
+            (apply #'values
+                   t
+                   (map 'list (lambda (reg-start reg-end)
+                                (subseq string reg-start reg-end))
+                        reg-starts
+                        reg-ends))
+            t)))))
 
 (defun search-backward-regexp (point regex &optional limit-point)
-  (let ((scanner (ignore-errors (ppcre:create-scanner regex))))
+  (let ((scanner (ignore-errors (ppcre:create-scanner regex)))
+        (string)
+        (reg-starts)
+        (reg-ends))
     (when scanner
-      (search-step point
-                   (lambda (point)
-                     (let (pos)
-                       (ppcre:do-scans (start end reg-starts reg-ends scanner
-                                              (line-string point) nil
-                                              :end (point-charpos point))
-                         (setf pos start))
-                       pos))
-                   (lambda (point)
-                     (let (pos)
-                       (ppcre:do-scans (start end reg-starts reg-ends scanner
-                                              (line-string point) nil
-                                              :start (point-charpos point))
-                         (setf pos start))
-                       pos))
-                   (lambda (point)
-                     (line-offset point -1))
-                   (lambda (point charpos)
-                     (character-offset (line-start point) charpos))
-                   (search-backward-endp-function limit-point)))))
+      (when (search-step point
+                         (lambda (point)
+                           (let ((pos)
+                                 (str (line-string point)))
+                             (ppcre:do-scans (start end reg-starts-1 reg-ends-1 scanner
+                                                    str nil :end (point-charpos point))
+                               (setf string str)
+                               (setf reg-starts reg-starts-1)
+                               (setf reg-ends reg-ends-1)
+                               (setf pos start))
+                             pos))
+                         (lambda (point)
+                           (let ((pos)
+                                 (str (line-string point)))
+                             (ppcre:do-scans (start end reg-starts-1 reg-ends-1 scanner
+                                                    str nil
+                                                    :start (point-charpos point))
+                               (setf string str)
+                               (setf reg-starts reg-starts-1)
+                               (setf reg-ends reg-ends-1)
+                               (setf pos start))
+                             pos))
+                         (lambda (point)
+                           (line-offset point -1))
+                         (lambda (point charpos)
+                           (character-offset (line-start point) charpos))
+                         (search-backward-endp-function limit-point))
+        (if reg-starts
+            (apply #'values
+                   t
+                   (map 'list (lambda (reg-start reg-end)
+                                (subseq string reg-start reg-end))
+                        reg-starts
+                        reg-ends))
+            t)))))
 
 (defun search-symbol (string name &key (start 0) (end (length string)) from-end)
   (loop :while (< start end)

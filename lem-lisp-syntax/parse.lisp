@@ -28,6 +28,8 @@
             ((or (start-line-p point)
                  (compare-char point -1 #'syntax-space-char-p t))
              (push "" suffix))
+            ((compare-char point -1 #'syntax-open-paren-char-p t)
+             (push "" suffix))
             (t
              (skip-symbol-forward point)))
       (with-point ((end point))

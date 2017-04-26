@@ -45,7 +45,7 @@
                   (buffer-list)))
    :test #'equal))
 
-(define-key *global-keymap* (kbd "C-x /") 'abbrev-with-pop-up-window)
+(define-key *global-keymap* "C-x /" 'abbrev-with-pop-up-window)
 (define-command abbrev-with-pop-up-window () ()
   (let* ((src-word (preceding-word (current-point)))
          (words (scan-all-buffer-words src-word)))
@@ -64,7 +64,7 @@
 (defvar *all-words* nil)
 (defvar *start-charpos* nil)
 
-(define-key *global-keymap* (kbd "M-/") 'abbrev)
+(define-key *global-keymap* "M-/" 'abbrev)
 (define-command abbrev () ()
   (let ((point (current-point)))
     (cond ((continue-flag :abbrev)

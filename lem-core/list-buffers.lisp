@@ -4,7 +4,7 @@
   (:export :list-buffers))
 (in-package :lem.list-buffers)
 
-(define-key *global-keymap* (kbd "C-x C-b") 'list-buffers)
+(define-key *global-keymap* "C-x C-b" 'list-buffers)
 
 (define-command list-buffers () ()
   (let ((menu (make-instance 'menu

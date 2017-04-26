@@ -11,7 +11,7 @@
 (defvar *last-macro-chars* nil)
 (defvar *macro-running-p* nil)
 
-(define-key *global-keymap* (kbd "C-x (") 'kbdmacro-start)
+(define-key *global-keymap* "C-x (" 'kbdmacro-start)
 (define-command kbdmacro-start () ()
   (cond ((key-recording-p)
          (stop-record-key)
@@ -19,7 +19,7 @@
         (t
          (start-record-key))))
 
-(define-key *global-keymap* (kbd "C-x )") 'kbdmacro-end)
+(define-key *global-keymap* "C-x )" 'kbdmacro-end)
 (define-command kbdmacro-end () ()
   (cond (*macro-running-p* t)
         ((not (key-recording-p))
@@ -27,7 +27,7 @@
         (t
          (setq *last-macro-chars* (stop-record-key)))))
 
-(define-key *global-keymap* (kbd "C-x e") 'kbdmacro-execute)
+(define-key *global-keymap* "C-x e" 'kbdmacro-execute)
 (define-command kbdmacro-execute (n) ("p")
   (cond ((key-recording-p)
          (editor-error "Macro already active"))

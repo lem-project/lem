@@ -15,7 +15,7 @@
   (or (directory filename)
       (list filename)))
 
-(define-key *global-keymap* (kbd "C-x C-f") 'find-file)
+(define-key *global-keymap* "C-x C-f" 'find-file)
 (define-command find-file (filename) ("FFind File: ")
   (check-switch-minibuffer-window)
   (when (pathnamep filename)
@@ -24,7 +24,7 @@
     (switch-to-buffer (find-file-buffer (namestring pathname)) t nil))
   t)
 
-(define-key *global-keymap* (kbd "C-x C-r") 'read-file)
+(define-key *global-keymap* "C-x C-r" 'read-file)
 (define-command read-file (filename) ("FRead File: ")
   (check-switch-minibuffer-window)
   (when (pathnamep filename)
@@ -33,7 +33,7 @@
     (switch-to-buffer (find-file-buffer (namestring pathname)) t nil))
   t)
 
-(define-key *global-keymap* (kbd "C-x C-s") 'save-buffer)
+(define-key *global-keymap* "C-x C-s" 'save-buffer)
 (define-command save-buffer (&optional arg) ("P")
   (let ((buffer (current-buffer)))
     (cond
@@ -44,18 +44,18 @@
       ((not (buffer-filename buffer))
        (message "No file name")))))
 
-(define-key *global-keymap* (kbd "C-x C-w") 'write-file)
+(define-key *global-keymap* "C-x C-w" 'write-file)
 (define-command write-file (filename) ("FWrite File: ")
   (setf (buffer-filename (current-buffer)) (expand-file-name filename))
   (save-buffer t))
 
-(define-key *global-keymap* (kbd "C-x C-i") 'insert-file)
+(define-key *global-keymap* "C-x C-i" 'insert-file)
 (define-command insert-file (filename) ("fInsert file: ")
   (insert-file-contents (current-point)
                         (expand-file-name filename))
   t)
 
-(define-key *global-keymap* (kbd "C-x s") 'save-some-buffers)
+(define-key *global-keymap* "C-x s" 'save-some-buffers)
 (define-command save-some-buffers (&optional save-silently-p) ("P")
   (check-switch-minibuffer-window)
   (let ((prev-buffer (current-buffer)))

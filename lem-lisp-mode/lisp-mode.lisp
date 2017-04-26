@@ -544,24 +544,8 @@
         *edit-definition-stack*))
 
 (defun definition-to-location (definition)
-  (optima:match definition
-    ((list title
-           (list :location
-                 (list :file file)
-                 (list :position position)
-                 (list :snippet _)))
-     (return-from definition-to-location
-       (make-xref-location :title title
-                           :filespec file
-                           :position (1+ position))))
-    ((list :location
-           (list :file file)
-           (list :position position)
-           (list :snippet _))
-     (return-from definition-to-location
-       (make-xref-location :title ""
-                           :filespec file
-                           :position (1+ position))))))
+  (destructuring-bind (title location) definition
+    (source-location-to-xref-location location title)))
 
 (defun definitions-to-locations (definitions)
   (loop :for def :in definitions
@@ -586,8 +570,8 @@
   (let* ((name (or (symbol-string-at-point (current-point))
                    (read-symbol-name "Edit uses of: ")))
          (data (lisp-eval `(swank:xrefs '(:calls :macroexpands :binds
-                                           :references :sets :specializes)
-                                         ,name))))
+                                          :references :sets :specializes)
+                                        ,name))))
     (loop
       :for (type . definitions) :in data
       :for defs := (definitions-to-locations definitions)
@@ -980,14 +964,16 @@
      (let ((xref-location (source-location-to-xref-location source-location)))
        (go-to-location xref-location t)))))
 
-(defun source-location-to-xref-location (location)
+(defun source-location-to-xref-location (location &optional (title ""))
   (alexandria:destructuring-ecase location
     ((:location location-buffer position _hints)
      (declare (ignore _hints))
-     (let* ((buffer (location-buffer-to-buffer location-buffer))
-            (point (buffer-point buffer)))
-       (move-to-location-position point position)
-       (make-xref-location :filespec buffer :position (position-at-point point))))
+     (let ((buffer (location-buffer-to-buffer location-buffer)))
+       (with-point ((point (buffer-point buffer)))
+         (move-to-location-position point position)
+         (make-xref-location :title title
+                             :filespec buffer
+                             :position (position-at-point point)))))
     ((:error message)
      (editor-error "~A" message))))
 

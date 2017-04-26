@@ -123,12 +123,12 @@
 	((char= #\n c)
 	 (return nil))))))
 
-(define-key *minibuf-keymap* (kbd "C-j") 'minibuf-read-line-confirm)
-(define-key *minibuf-keymap* (kbd "C-m") 'minibuf-read-line-confirm)
-(define-key *minibuf-keymap* (kbd "C-i") 'minibuf-read-line-completion)
-(define-key *minibuf-keymap* (kbd "M-p") 'minibuf-read-line-prev-history)
-(define-key *minibuf-keymap* (kbd "M-n") 'minibuf-read-line-next-history)
-(define-key *minibuf-keymap* (kbd "C-g") 'minibuf-read-line-break)
+(define-key *minibuf-keymap* "C-j" 'minibuf-read-line-confirm)
+(define-key *minibuf-keymap* "C-m" 'minibuf-read-line-confirm)
+(define-key *minibuf-keymap* "C-i" 'minibuf-read-line-completion)
+(define-key *minibuf-keymap* "M-p" 'minibuf-read-line-prev-history)
+(define-key *minibuf-keymap* "M-n" 'minibuf-read-line-next-history)
+(define-key *minibuf-keymap* "C-g" 'minibuf-read-line-break)
 
 (defvar *minibuf-read-line-prompt*)
 (defvar *minibuf-read-line-comp-f*)

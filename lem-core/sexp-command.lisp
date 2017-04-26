@@ -10,7 +10,7 @@
           kill-sexp
           transpose-sexps))
 
-(define-key *global-keymap* (kbd "C-M-f") 'forward-sexp)
+(define-key *global-keymap* "C-M-f" 'forward-sexp)
 (define-command forward-sexp (&optional (n 1) no-errors) ("p")
   (with-point ((prev (current-point)))
     (let ((point (form-offset (current-point) n)))
@@ -21,27 +21,27 @@
                 nil
                 (scan-error)))))))
 
-(define-key *global-keymap* (kbd "C-M-b") 'backward-sexp)
+(define-key *global-keymap* "C-M-b" 'backward-sexp)
 (define-command backward-sexp (&optional (n 1) no-errors) ("p")
   (forward-sexp (- n) no-errors))
 
-(define-key *global-keymap* (kbd "C-M-n") 'forward-list)
+(define-key *global-keymap* "C-M-n" 'forward-list)
 (define-command forward-list (&optional (n 1) no-errors) ("p")
   (scan-lists (current-point) n 0 no-errors))
 
-(define-key *global-keymap* (kbd "C-M-p") 'backward-list)
+(define-key *global-keymap* "C-M-p" 'backward-list)
 (define-command backward-list (&optional (n 1) no-errors) ("p")
   (scan-lists (current-point) (- n) 0 no-errors))
 
-(define-key *global-keymap* (kbd "C-M-d") 'down-list)
+(define-key *global-keymap* "C-M-d" 'down-list)
 (define-command down-list (&optional (n 1) no-errors) ("p")
   (scan-lists (current-point) n -1 no-errors))
 
-(define-key *global-keymap* (kbd "C-M-u") 'up-list)
+(define-key *global-keymap* "C-M-u" 'up-list)
 (define-command up-list (&optional (n 1) no-errors) ("p")
   (scan-lists (current-point) (- n) 1 no-errors))
 
-(define-key *global-keymap* (kbd "C-M-@") 'mark-sexp)
+(define-key *global-keymap* "C-M-@" 'mark-sexp)
 (define-command mark-sexp () ()
   (cond
     ((continue-flag :mark-sexp)
@@ -51,7 +51,7 @@
        (form-offset (current-point) 1)
        (mark-set)))))
 
-(define-key *global-keymap* (kbd "C-M-k") 'kill-sexp)
+(define-key *global-keymap* "C-M-k" 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (let ((end (form-offset (copy-point (current-point) :temporary) 1)))
@@ -60,7 +60,7 @@
             (kill-region (current-point) end))
           (scan-error)))))
 
-(define-key *global-keymap* (kbd "C-M-t") 'transpose-sexps)
+(define-key *global-keymap* "C-M-t" 'transpose-sexps)
 (define-command transpose-sexps () ()
   (with-point ((point1 (current-point) :left-inserting)
                (point2 (current-point) :left-inserting))

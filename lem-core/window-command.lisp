@@ -17,13 +17,13 @@
           scroll-down
           scroll-up))
 
-(define-key *global-keymap* (kbd "C-x b") 'select-buffer)
+(define-key *global-keymap* "C-x b" 'select-buffer)
 (define-command select-buffer (name) ("BUse Buffer: ")
   (check-switch-minibuffer-window)
   (switch-to-buffer (get-buffer-create name))
   t)
 
-(define-key *global-keymap* (kbd "C-x k") 'kill-buffer)
+(define-key *global-keymap* "C-x k" 'kill-buffer)
 (define-command kill-buffer (buffer-or-name) ("bKill buffer: ")
   (check-switch-minibuffer-window)
   (let ((buffer (get-buffer buffer-or-name)))
@@ -36,7 +36,7 @@
       (delete-buffer buffer)))
   t)
 
-(define-key *global-keymap* (kbd "C-l") 'recenter)
+(define-key *global-keymap* "C-l" 'recenter)
 (define-command recenter () ()
   (dolist (window (window-list))
     (screen-clear (window-screen window)))
@@ -44,15 +44,15 @@
   (redraw-display)
   t)
 
-(define-key *global-keymap* (kbd "C-x 2") 'split-active-window-vertically)
+(define-key *global-keymap* "C-x 2" 'split-active-window-vertically)
 (define-command split-active-window-vertically (&optional n) ("P")
   (split-window-vertically (current-window) n))
 
-(define-key *global-keymap* (kbd "C-x 3") 'split-active-window-horizontally)
+(define-key *global-keymap* "C-x 3" 'split-active-window-horizontally)
 (define-command split-active-window-horizontally (&optional n) ("P")
   (split-window-horizontally (current-window) n))
 
-(define-key *global-keymap* (kbd "C-x o") 'other-window)
+(define-key *global-keymap* "C-x o" 'other-window)
 (define-command other-window (&optional (n 1)) ("p")
   (let ((window-list
          (append (alexandria:ensure-list
@@ -65,7 +65,7 @@
             (get-next-window (current-window)
                              window-list)))))
 
-(define-key *global-keymap* (kbd "C-x 1") 'delete-other-windows)
+(define-key *global-keymap* "C-x 1" 'delete-other-windows)
 (define-command delete-other-windows () ()
   (unless (minibuffer-window-active-p)
     (dolist (win (window-list))
@@ -77,7 +77,7 @@
                      (window-max-height))
     t))
 
-(define-key *global-keymap* (kbd "C-x 0") 'delete-current-window)
+(define-key *global-keymap* "C-x 0" 'delete-current-window)
 (define-command delete-current-window () ()
   (delete-window (current-window)))
 
@@ -96,7 +96,7 @@
          (switch-to-buffer (bury-buffer (window-buffer window))
                            nil)))))
 
-(define-key *global-keymap* (kbd "C-x ^") 'grow-window)
+(define-key *global-keymap* "C-x ^" 'grow-window)
 (define-command grow-window (n) ("p")
   (when (< n 0)
     (return-from grow-window (shrink-window (- n))))
@@ -107,7 +107,7 @@
                                (grow-window-internal x y n))
                            :vsplit))
 
-(define-key *global-keymap* (kbd "C-x C-z") 'shrink-window)
+(define-key *global-keymap* "C-x C-z" 'shrink-window)
 (define-command shrink-window (n) ("p")
   (when (< n 0)
     (return-from shrink-window (grow-window (- n))))
@@ -118,7 +118,7 @@
                                (grow-window-internal y x n))
                            :vsplit))
 
-(define-key *global-keymap* (kbd "C-x }") 'grow-window-horizontally)
+(define-key *global-keymap* "C-x }" 'grow-window-horizontally)
 (define-command grow-window-horizontally (n) ("p")
   (when (< n 0)
     (return-from grow-window-horizontally (shrink-window-horizontally (- n))))
@@ -129,7 +129,7 @@
                                (grow-window-horizontally-internal x y n))
                            :hsplit))
 
-(define-key *global-keymap* (kbd "C-x {") 'shrink-window-horizontally)
+(define-key *global-keymap* "C-x {" 'shrink-window-horizontally)
 (define-command shrink-window-horizontally (n) ("p")
   (when (< n 0)
     (return-from shrink-window-horizontally (grow-window-horizontally (- n))))
@@ -147,7 +147,7 @@
       (setf (window-parameter window :split-p) split-p))
     window))
 
-(define-key *global-keymap* (kbd "C-down") 'scroll-down)
+(define-key *global-keymap* "C-down" 'scroll-down)
 (define-command scroll-down (n) ("p")
   (if (minusp n)
       (scroll-up (- n))
@@ -157,7 +157,7 @@
             (return)))
         (window-scroll (current-window) 1))))
 
-(define-key *global-keymap* (kbd "C-up") 'scroll-up)
+(define-key *global-keymap* "C-up" 'scroll-up)
 (define-command scroll-up (n) ("p")
   (if (minusp n)
       (scroll-down (- n))

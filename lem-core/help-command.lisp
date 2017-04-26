@@ -5,7 +5,7 @@
           execute-command
           apropos-command))
 
-(define-key *global-keymap* (kbd "C-x ?") 'describe-key)
+(define-key *global-keymap* "C-x ?" 'describe-key)
 (define-command describe-key () ()
   (message "describe-key: ")
   (redraw-display)
@@ -47,7 +47,7 @@
                                     (mode-name mode)
                                     (mode-keymap mode))))))
 
-(define-key *global-keymap* (kbd "M-x") 'execute-command)
+(define-key *global-keymap* "M-x" 'execute-command)
 (define-command execute-command (arg) ("P")
   (let* ((name (prompt-for-line
                 (if arg

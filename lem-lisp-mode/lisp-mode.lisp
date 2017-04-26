@@ -443,7 +443,8 @@
                   (lambda (cur-point)
                     (insert-string cur-point name :attribute 'lem.grep:title-attribute)
                     (insert-string cur-point ":")
-                    (insert-string cur-point (princ-to-string pos) :attribute 'lem.grep:position-attribute)
+                    (insert-string cur-point (princ-to-string pos)
+                                   :attribute 'lem.grep:position-attribute)
                     (insert-string cur-point ":")
                     (insert-character cur-point #\newline 1)
                     (insert-string cur-point message)
@@ -999,7 +1000,7 @@
 (defun move-to-location-position (point location-position)
   (alexandria:destructuring-ecase location-position
     ((:position pos)
-     (move-to-position point pos))
+     (move-to-position point (1+ pos)))
     ((:offset start offset)
      (move-to-position point start)
      (character-offset point offset))

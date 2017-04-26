@@ -53,10 +53,15 @@
 (define-key *dired-mode-keymap* "R" 'dired-rename-files)
 (define-key *dired-mode-keymap* "+" 'dired-mkdir)
 
+(defun adjust-point (point)
+  (let ((charpos (buffer-value point 'start-file-charpos 0)))
+    (line-offset point 0 charpos)))
+
 (defun start-point (buffer)
   (with-point ((p (buffer-point buffer)))
     (buffer-start p)
-    (or (line-offset p 3) p)))
+    (or (line-offset p 3) p)
+    (adjust-point p)))
 
 (defun move-to-start-point (point)
   (move-point point (start-point (point-buffer point))))
@@ -98,36 +103,38 @@
       (move-to-start-point point))
     (when (last-line-p point)
       (line-offset point -1))
-    (line-start point)))
+    (adjust-point point)))
 
 (define-command dired-previous-line (n) ("p")
   (let ((point (current-point)))
     (line-offset point (- n))
     (when (dired-first-line-p point)
       (move-to-start-point point))
-    (line-start point)))
+    (adjust-point point)))
 
 (define-command dired-next-directory-line (n) ("p")
   (with-point ((cur-point (current-point)))
     (loop
-       (when (dired-last-line-p cur-point)
-	 (return))
-       (line-offset cur-point 1)
-       (when (and (eq :directory (text-property-at cur-point 'type))
-		  (>= 0 (decf n)))
-	 (move-point (current-point) cur-point)
-	 (return)))))
+      (when (dired-last-line-p cur-point)
+        (return))
+      (line-offset cur-point 1)
+      (when (and (eq :directory (text-property-at cur-point 'type))
+                 (>= 0 (decf n)))
+        (move-point (current-point) cur-point)
+        (return)))
+    (adjust-point (current-point))))
 
 (define-command dired-previous-directory-line (n) ("p")
   (with-point ((cur-point (current-point)))
     (loop
-       (when (dired-first-line-p cur-point)
-	 (return))
-       (line-offset cur-point -1)
-       (when (and (eq :directory (text-property-at cur-point 'type))
-		  (>= 0 (decf n)))
-	 (move-point (current-point) cur-point)
-	 (return)))))
+      (when (dired-first-line-p cur-point)
+        (return))
+      (line-offset cur-point -1)
+      (when (and (eq :directory (text-property-at cur-point 'type))
+                 (>= 0 (decf n)))
+        (move-point (current-point) cur-point)
+        (return)))
+    (adjust-point (current-point))))
 
 (define-command dired-mark-and-next-line (n) ("p")
   (loop :repeat n :do
@@ -232,7 +239,8 @@
         (delete-character point 1)
         (if flag
             (insert-character point #\*)
-            (insert-character point #\space))))))
+            (insert-character point #\space))))
+    (adjust-point point)))
 
 (defun mark-lines (test get-flag)
   (with-point ((p (current-point)))
@@ -282,7 +290,8 @@
 
 (defun update (buffer)
   (with-buffer-read-only buffer nil
-    (let ((pos (position-at-point (buffer-point buffer)))
+    (let ((line-number (line-number-at-point (buffer-point buffer)))
+          (charpos (point-charpos (buffer-point buffer)))
           (dirname (probe-file (buffer-directory buffer))))
       (erase-buffer buffer)
       (when dirname
@@ -310,6 +319,7 @@
                                               (aref end-groups index))
                                       dirname))
                            (start-file-charpos (+ 2 (aref start-groups index))))
+                      (setf (buffer-value buffer 'start-file-charpos) start-file-charpos)
                       (with-point ((start-point (line-start cur-point))
                                    (end-point (line-end cur-point)))
                         (case (char string 0)
@@ -328,7 +338,8 @@
                     (line-offset cur-point 1)
                     (when (end-line-p cur-point)
                       (return))))))))
-        (move-to-position (buffer-point buffer) pos)
+        (move-to-line (buffer-point buffer) line-number)
+        (line-offset (buffer-point buffer) 0 charpos)
         t))))
 
 (defun update-all ()

@@ -8,7 +8,7 @@
     (:name "typeout"
 	   :keymap *typeout-mode-keymap*))
 
-(define-key *typeout-mode-keymap* (kbd "q") 'dismiss-typeout-window)
+(define-key *typeout-mode-keymap* "q" 'dismiss-typeout-window)
 
 (define-command dismiss-typeout-window () ()
   (quit-window (current-window) nil))

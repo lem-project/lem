@@ -74,7 +74,7 @@
     (buffer-undo-boundary buffer)
     (listener-update-point cur-point)))
 
-(define-key *listener-mode-keymap* (kbd "C-m") 'listener-return)
+(define-key *listener-mode-keymap* "C-m" 'listener-return)
 (define-command listener-return () ()
   (with-point ((point (buffer-end (current-point)) :left-inserting))
     (if (not (funcall (variable-value 'listener-check-confirm-function) point))
@@ -91,7 +91,7 @@
             (funcall (variable-value 'listener-confirm-function) point str)))))
   t)
 
-(define-key *listener-mode-keymap* (kbd "M-p") 'listener-prev-input)
+(define-key *listener-mode-keymap* "M-p" 'listener-prev-input)
 (define-command listener-prev-input () ()
   (multiple-value-bind (str win)
       (lem.history:prev-history (%listener-history))
@@ -102,7 +102,7 @@
         (when win (insert-string start str))
         (move-point (%listener-point (current-buffer)) start)))))
 
-(define-key *listener-mode-keymap* (kbd "M-n") 'listener-next-input)
+(define-key *listener-mode-keymap* "M-n" 'listener-next-input)
 (define-command listener-next-input () ()
   (multiple-value-bind (str win)
       (lem.history:next-history (%listener-history))
@@ -113,7 +113,7 @@
         (when win (insert-string start str))
         (move-point (%listener-point (current-buffer)) start)))))
 
-(define-key *listener-mode-keymap* (kbd "M-r") 'listener-reset-interactive)
+(define-key *listener-mode-keymap* "M-r" 'listener-reset-interactive)
 (define-command listener-reset-interactive (arg) ("P")
   (when arg
     (let ((*inhibit-read-only* t))
@@ -121,7 +121,7 @@
   (listener-reset-prompt)
   t)
 
-(define-key *listener-mode-keymap* (kbd "C-c C-u") 'listener-clear-input)
+(define-key *listener-mode-keymap* "C-c C-u" 'listener-clear-input)
 (define-command listener-clear-input () ()
   (delete-between-points (listener-start-point (current-buffer))
 			 (buffer-end-point (current-buffer))))

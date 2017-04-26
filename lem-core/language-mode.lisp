@@ -13,7 +13,14 @@
    :newline-and-indent
    :indent-region
    :make-xref-location
-   :make-xref-references))
+   :make-xref-references
+   :xref-location-filespec
+   :xref-location-position
+   :xref-location-title
+   :xref-references-type
+   :xref-references-locations
+   :filespec-to-buffer
+   :filespec-to-filename))
 (in-package :lem.language-mode)
 
 (define-editor-variable line-comment nil)
@@ -139,11 +146,11 @@
     (string (find-file-buffer filespec))
     (pathname (find-file-buffer filespec))))
 
-(defun filespec-to-file (filespec)
+(defun filespec-to-filename (filespec)
   (etypecase filespec
     (buffer (buffer-filename filespec))
     (string filespec)
-    (pathname filespec)))
+    (pathname (namestring filespec))))
 
 (defun go-to-location (location &optional pop-to-buffer)
   (let ((buffer (filespec-to-buffer (xref-location-filespec location))))
@@ -163,7 +170,7 @@
           (let ((prev-file nil))
             (with-sourcelist (sourcelist "*definitions*")
               (dolist (location locations)
-                (let ((file (filespec-to-file (xref-location-filespec location)))
+                (let ((file (filespec-to-filename (xref-location-filespec location)))
                       (title (xref-location-title location)))
                   (append-sourcelist sourcelist
                                      (lambda (p)

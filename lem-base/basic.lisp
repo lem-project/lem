@@ -420,7 +420,13 @@
 (defun move-to-position (point position)
   @lang(:jp "`point`をバッファの先頭からの1始まりのオフセット`position`に移動してその位置を返します。
 `position`がバッファの範囲外なら`point`は移動せず、NILを返します。")
-  (character-offset (buffer-start point) (1- position)))
+  (let ((line-number (line-number-at-point point))
+        (charpos (point-charpos point)))
+    (or (character-offset (buffer-start point) (1- position))
+        (progn
+          (move-to-line point line-number)
+          (line-offset point 0 charpos)
+          nil))))
 
 @export
 (defun move-to-line (point line-number)

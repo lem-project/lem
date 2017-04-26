@@ -350,24 +350,25 @@
       (lisp-eval-async
        `(,autodoc-symbol ',context)
        (lambda (doc)
-         (destructuring-bind (doc cache-p) doc
-           (declare (ignore cache-p))
-           (unless (eq doc :not-available)
-             (let* ((buffer (get-buffer-create " *swank:autodoc-fontity*"))
-                    (point (buffer-point buffer)))
-               (erase-buffer buffer)
-               (change-buffer-mode buffer 'lisp-mode)
-               (insert-string point doc)
-               (buffer-start point)
-               (multiple-value-bind (result string)
-                   (search-forward-regexp point "(?====> (.*) <===)")
-                 (when result
-                   (with-point ((start point))
-                     (character-offset point 5)
-                     (search-forward point "<===")
-                     (delete-between-points start point)
-                     (insert-string point string :attribute 'region))))
-               (message-buffer buffer)))))))))
+         (ignore-errors
+          (destructuring-bind (doc cache-p) doc
+            (declare (ignore cache-p))
+            (unless (eq doc :not-available)
+              (let* ((buffer (get-buffer-create " *swank:autodoc-fontity*"))
+                     (point (buffer-point buffer)))
+                (erase-buffer buffer)
+                (change-buffer-mode buffer 'lisp-mode)
+                (insert-string point doc)
+                (buffer-start point)
+                (multiple-value-bind (result string)
+                    (search-forward-regexp point "(?====> (.*) <===)")
+                  (when result
+                    (with-point ((start point))
+                      (character-offset point 5)
+                      (search-forward point "<===")
+                      (delete-between-points start point)
+                      (insert-string point string :attribute 'region))))
+                (message-buffer buffer))))))))))
 
 (defun check-parens ()
   (with-point ((point (current-point)))

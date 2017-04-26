@@ -125,7 +125,7 @@
   (:light :foreground "blue" :bold-p t))
 
 (defstruct xref-location
-  (file nil :read-only t :type (or string pathname))
+  (filespec nil :read-only t :type (or buffer string pathname))
   (position 1 :read-only t :type integer)
   (title "" :read-only t :type string))
 
@@ -133,8 +133,20 @@
   (type nil :read-only t)
   (locations nil :read-only t))
 
+(defun filespec-to-buffer (filespec)
+  (etypecase filespec
+    (buffer filespec)
+    (string (find-file-buffer filespec))
+    (pathname (find-file-buffer filespec))))
+
+(defun filespec-to-file (filespec)
+  (etypecase filespec
+    (buffer (buffer-filename filespec))
+    (string filespec)
+    (pathname filespec)))
+
 (defun go-to-location (location &optional pop-to-buffer)
-  (let ((buffer (find-file-buffer (xref-location-file location))))
+  (let ((buffer (filespec-to-buffer (xref-location-filespec location))))
     (if pop-to-buffer
         (setf (current-window) (pop-to-buffer buffer))
         (switch-to-buffer buffer))
@@ -151,7 +163,7 @@
           (let ((prev-file nil))
             (with-sourcelist (sourcelist "*definitions*")
               (dolist (location locations)
-                (let ((file (xref-location-file location))
+                (let ((file (filespec-to-file (xref-location-filespec location)))
                       (title (xref-location-title location)))
                   (append-sourcelist sourcelist
                                      (lambda (p)

@@ -552,7 +552,7 @@
                  (list :snippet _)))
      (return-from definition-to-location
        (make-xref-location :title title
-                           :file file
+                           :filespec file
                            :position (1+ position))))
     ((list :location
            (list :file file)
@@ -560,7 +560,7 @@
            (list :snippet _))
      (return-from definition-to-location
        (make-xref-location :title ""
-                           :file file
+                           :filespec file
                            :position (1+ position))))))
 
 (defun definitions-to-locations (definitions)
@@ -576,7 +576,7 @@
     (let ((point (lem-lisp-syntax:search-local-definition (current-point) name)))
       (when point
         (return-from find-definitions
-          (list (make-xref-location :file (buffer-filename (current-buffer))
+          (list (make-xref-location :filespec (current-buffer)
                                     :position (position-at-point point))))))
     (let ((definitions (lisp-eval `(swank:find-definitions-for-emacs ,name))))
       (definitions-to-locations definitions))))

@@ -352,10 +352,7 @@
   (let* ((filename
           (uiop:directory-exists-p
            (expand-file-name (namestring filename) (buffer-directory))))
-         (buffer-name (format nil "DIRED ~A"
-                              (pathname-name
-                               (string-right-trim
-                                "/" (princ-to-string filename))))))
+         (buffer-name (format nil "DIRED ~A" (princ-to-string filename))))
     (or (get-buffer buffer-name)
         (let ((buffer (make-buffer buffer-name :enable-undo-p nil :read-only-p t)))
           (change-buffer-mode buffer 'dired-mode)

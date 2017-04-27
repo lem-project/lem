@@ -654,7 +654,7 @@
 
 (defun show-description (string)
   (let ((buffer (get-buffer-create "*lisp-description*")))
-    (change-buffer-mode buffer 'lisp-mode t)
+    (change-buffer-mode buffer 'lisp-mode)
     (with-pop-up-typeout-window (stream buffer :erase t)
       (princ string stream))))
 

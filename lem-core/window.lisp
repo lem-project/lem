@@ -854,8 +854,7 @@
 
 (defun balloon (orig-window buffer width height)
   (let* ((y (+ (window-y orig-window)
-               (count-lines (window-point orig-window)
-                            (window-view-point orig-window))
+               (window-cursor-y orig-window)
                1))
          (x (+ (window-x orig-window)
                (let ((x (point-charpos (window-buffer-point orig-window))))

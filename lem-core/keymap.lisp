@@ -142,7 +142,8 @@
 
 (defun insertion-key-p (key)
   (let* ((first-key (car (kbd-list key))))
-    (when (and (not (gethash first-key *key->symbol*))
+    (when (and (or (not (gethash first-key *key->symbol*))
+                   (char= first-key #\space))
                (or (< 31 (char-code first-key))
                    (char= C-i first-key)))
       first-key)))

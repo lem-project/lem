@@ -47,15 +47,20 @@
   (or (term-set-background name)
       (error "Undefined color: ~A" name)))
 
+(defun newwin (nlines ncols begin-y begin-x)
+  (let ((win (charms/ll:newwin nlines ncols begin-y begin-x)))
+    (charms/ll:keypad win 1)
+    win))
+
 (defun display-init ()
   (term-init)
   (setq *old-display-width* charms/ll:*cols*)
   (setq *old-display-height* charms/ll:*lines*)
   (setf *echo-area-scrwin*
-        (charms/ll:newwin (minibuffer-window-height)
-                          (display-width)
-                          (- (display-height) (minibuffer-window-height))
-                          0)))
+        (newwin (minibuffer-window-height)
+                (display-width)
+                (- (display-height) (minibuffer-window-height))
+                0)))
 
 (defun display-finalize ()
   (term-finalize))
@@ -85,9 +90,9 @@
 (define-implementation make-screen (x y width height use-modeline-p)
   (when use-modeline-p
     (decf height))
-  (%make-screen :%scrwin (charms/ll:newwin height width y x)
+  (%make-screen :%scrwin (newwin height width y x)
                 :%modeline-scrwin (when use-modeline-p
-                                    (charms/ll:newwin 1 width (+ y height) x))
+                                    (newwin 1 width (+ y height) x))
                 :x x
                 :y y
                 :width width

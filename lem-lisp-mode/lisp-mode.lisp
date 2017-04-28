@@ -490,9 +490,11 @@
       (points-to-string start end))))
 
 (defun macroexpand-internal (expander buffer-name)
-  (let ((string (lisp-eval `(,expander ,(form-string-at-point)))))
-    (with-pop-up-typeout-window (out (get-buffer-create buffer-name) :focus t :erase t)
-      (princ string out))))
+  (lisp-eval-async `(,expander ,(form-string-at-point))
+                   (lambda (string)
+                     (with-pop-up-typeout-window
+                         (out (get-buffer-create buffer-name) :focus t :erase t)
+                       (princ string out)))))
 
 (define-command lisp-macroexpand () ()
   (check-connection)

@@ -39,19 +39,7 @@
       (change-buffer-mode buffer (cdr elt)))))
 
 (defun detect-external-format-from-file (pathname)
-  (let ((external-format)
-        (end-of-line :lf))
-    (with-open-file (in pathname
-                        :element-type '(unsigned-byte 8))
-      (let ((inquisitor:*detecting-buffer-size* (file-length in)))
-        (setq external-format (inquisitor:detect-external-format in :jp))))
-    #+sbcl
-    (with-open-file (in pathname
-                        :element-type '(unsigned-byte 8))
-      (let ((result (inquisitor:detect-end-of-line in)))
-        (when result
-          (setq end-of-line result))))
-    (values external-format
-            end-of-line)))
+  (values (inq:detect-encoding (pathname pathname) :jp)
+          (inq:detect-end-of-line (pathname pathname))))
 
 (setf *external-format-function* 'detect-external-format-from-file)

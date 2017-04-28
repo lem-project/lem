@@ -105,6 +105,8 @@
 (define-key *completion-mode-keymap* "M-<"    'completion-beginning-of-buffer)
 (define-key *completion-mode-keymap* "C-m"    'completion-select)
 (define-key *completion-mode-keymap* "Spc"    'completion-insert-space-and-cancel)
+(define-key *completion-mode-keymap* "[backspace]" 'completion-delete-prevous-char)
+(define-key *completion-mode-keymap* "C-h" 'completion-delete-prevous-char)
 
 (define-attribute completion-attribute
   (t :foreground "blue" :background "white" :reverse-p t))
@@ -144,14 +146,21 @@
       (delete-buffer buffer)))
   (redraw-display t))
 
+(defun completion-again ()
+  (completion-end)
+  (when *completion-restart-function*
+    (funcall *completion-restart-function*)))
+
 (define-command completion-self-insert () ()
   (let ((c (insertion-key-p (last-read-key-sequence))))
     (cond (c (insert-character (current-point) c)
-             (completion-end)
-             (when *completion-restart-function*
-               (funcall *completion-restart-function*)))
+             (completion-again))
           (t (unread-key-sequence (last-read-key-sequence))
              (completion-end)))))
+
+(define-command completion-delete-prevous-char (n) ("p")
+  (delete-previous-char n)
+  (completion-again))
 
 (define-command completion-next-line () ()
   (alexandria:when-let ((point (completion-buffer-point)))

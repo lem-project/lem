@@ -141,9 +141,10 @@
           (keymap-undef-hook keymap)))))
 
 (defun insertion-key-p (key)
-  (let ((first-key (car (kbd-list key))))
-    (when (or (< 31 (char-code first-key))
-              (char= C-i first-key))
+  (let* ((first-key (car (kbd-list key))))
+    (when (and (not (gethash first-key *key->symbol*))
+               (or (< 31 (char-code first-key))
+                   (char= C-i first-key)))
       first-key)))
 
 (defun keymap-flatten-map (keymap fun)

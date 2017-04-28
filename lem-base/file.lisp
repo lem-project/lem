@@ -58,7 +58,7 @@
         (end-of-line :lf))
     (when *external-format-function*
       (multiple-value-setq (external-format end-of-line)
-                           (funcall *external-format-function* filename)))
+        (funcall *external-format-function* filename)))
     (with-point ((point point :left-inserting))
       (with-open-file (in filename :external-format external-format)
         (loop
@@ -79,7 +79,8 @@
                                 (if end
                                     (subseq str 0 end)
                                     str))
-                 (insert-character point #\newline))))))))))
+                 (insert-character point #\newline))))))))
+    (values external-format end-of-line)))
 
 (defun find-file-buffer (filename)
   (when (pathnamep filename)
@@ -99,8 +100,11 @@
                                      :enable-undo-p nil)))
            (when (probe-file filename)
              (let ((*inhibit-modification-hooks* t))
-               (insert-file-contents (buffer-start-point buffer)
-                                     filename))
+               (multiple-value-bind (external-format end-of-line)
+                   (insert-file-contents (buffer-start-point buffer)
+                                         filename)
+                 (setf (buffer-external-format buffer)
+                       (cons external-format end-of-line))))
              (buffer-unmark buffer))
            (buffer-start (buffer-point buffer))
            (buffer-enable-undo buffer)

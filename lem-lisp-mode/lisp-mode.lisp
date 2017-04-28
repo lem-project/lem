@@ -531,7 +531,7 @@
 
 (defun definition-to-location (definition)
   (destructuring-bind (title location) definition
-    (source-location-to-xref-location location title)))
+    (source-location-to-xref-location location title t)))
 
 (defun definitions-to-locations (definitions)
   (loop :for def :in definitions
@@ -950,7 +950,7 @@
      (let ((xref-location (source-location-to-xref-location source-location)))
        (go-to-location xref-location t)))))
 
-(defun source-location-to-xref-location (location &optional (title ""))
+(defun source-location-to-xref-location (location &optional (title "") no-errors)
   (alexandria:destructuring-ecase location
     ((:location location-buffer position _hints)
      (declare (ignore _hints))
@@ -961,7 +961,8 @@
                              :filespec buffer
                              :position (position-at-point point)))))
     ((:error message)
-     (editor-error "~A" message))))
+     (unless no-errors
+       (editor-error "~A" message)))))
 
 (defun location-buffer-to-buffer (location-buffer)
   (alexandria:destructuring-ecase location-buffer

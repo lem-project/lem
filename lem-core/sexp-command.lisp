@@ -39,7 +39,8 @@
 
 (define-key *global-keymap* "C-M-u" 'up-list)
 (define-command up-list (&optional (n 1) no-errors) ("p")
-  (scan-lists (current-point) (- n) 1 no-errors))
+  (or (maybe-beginning-of-string (current-point))
+      (scan-lists (current-point) (- n) 1 no-errors)))
 
 (define-key *global-keymap* "C-M-@" 'mark-sexp)
 (define-command mark-sexp () ()

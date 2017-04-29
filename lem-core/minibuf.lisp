@@ -10,7 +10,7 @@
           message-without-log
           message-buffer
           active-echoarea-p
-          minibuf-read-char
+          prompt-for-character
           active-minibuffer-window
           check-switch-minibuffer-window
           minibuf-read-line-confirm
@@ -103,7 +103,7 @@
   (not (point= (buffer-start-point (minibuffer))
                (buffer-end-point (minibuffer)))))
 
-(defun minibuf-read-char (prompt)
+(defun prompt-for-character (prompt)
   (when (interactive-p)
     (message prompt)
     (redraw-display))
@@ -116,7 +116,7 @@
 
 (defun prompt-for-y-or-n-p (prompt)
   (do () (nil)
-    (let ((c (minibuf-read-char (format nil "~a [y/n]? " prompt))))
+    (let ((c (prompt-for-character (format nil "~a [y/n]? " prompt))))
       (cond
 	((char= #\y c)
 	 (return t))

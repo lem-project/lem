@@ -283,7 +283,7 @@
 	 (funcall *isearch-search-backward-function* cur-point before)
 	 (with-point ((start cur-point :right-inserting))
 	   (loop :for c := (unless pass-through
-			     (minibuf-read-char (format nil "Replace ~s with ~s" before after)))
+                             (prompt-for-character (format nil "Replace ~s with ~s" before after)))
 	      :do (cond
 		    ((or pass-through (char= c #\y))
 		     (delete-between-points start end)

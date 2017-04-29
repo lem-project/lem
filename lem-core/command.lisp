@@ -69,8 +69,8 @@
 (define-command universal-argument () ()
   (let ((numlist)
         n)
-    (do ((c (minibuf-read-char "C-u 4")
-            (minibuf-read-char
+    (do ((c (prompt-for-character "C-u 4")
+            (prompt-for-character
              (format nil "C-u ~{~a~}" numlist))))
         (nil)
       (cond

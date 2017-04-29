@@ -358,7 +358,7 @@
                      (point (buffer-point buffer)))
                 (erase-buffer buffer)
                 (change-buffer-mode buffer 'lisp-mode)
-                (insert-string point doc)
+                (insert-string point (ppcre:regex-replace-all "\\s*\\n\\s*" doc " "))
                 (buffer-start point)
                 (multiple-value-bind (result string)
                     (search-forward-regexp point "(?====> (.*) <===)")

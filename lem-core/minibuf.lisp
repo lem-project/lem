@@ -105,7 +105,7 @@
 
 (defun prompt-for-character (prompt)
   (when (interactive-p)
-    (message prompt)
+    (message "~A" prompt)
     (redraw-display))
   (let ((c (read-key)))
     (when (interactive-p)

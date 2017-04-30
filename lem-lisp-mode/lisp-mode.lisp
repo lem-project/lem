@@ -1023,11 +1023,21 @@
                                              *default-port*)
                                "wait")
                              :wait nil
-                             :search t)))
-    (sleep 1)
-    (let ((connection (slime-connect "localhost" *default-port*)))
-      (setf (swank-protocol:connection-process connection)
-            process)))
+                             :search t))
+        (successp)
+        (condition))
+    (loop :repeat 3
+          :do (handler-case
+                  (let ((connection (slime-connect "localhost" *default-port* t)))
+                    (setf (swank-protocol:connection-process connection)
+                          process)
+                    (setf successp t)
+                    (return))
+                (editor-error (c)
+                  (setf condition c)
+                  (sleep 0.7))))
+    (unless successp
+      (error condition)))
   (add-hook *exit-editor-hook*
             (lambda ()
               (ignore-errors

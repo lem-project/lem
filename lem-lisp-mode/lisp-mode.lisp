@@ -54,16 +54,20 @@
 (define-key *lisp-mode-keymap* "C-c C-z" 'lisp-switch-to-repl-buffer)
 (define-key *lisp-mode-keymap* "C-c z" 'lisp-switch-to-repl-buffer)
 
+(defun change-current-connection (conn)
+  (when *connection* (swank-protocol:abort-all *connection* "change connection"))
+  (setf *connection* conn))
+
 (defun connected-p ()
   (not (null *connection*)))
 
 (defun add-connection (conn)
   (push conn *connection-list*)
-  (setf *connection* conn))
+  (change-current-connection conn))
 
 (defun remove-connection (conn)
   (setf *connection-list* (delete conn *connection-list*))
-  (setf *connection* (car *connection-list*))
+  (change-current-connection (car *connection-list*))
   *connection*)
 
 (define-command lisp-connection-list () ()
@@ -74,7 +78,7 @@
       (let ((item (make-instance 'lem.menu-mode:menu-item
                                  :select-function (let ((c c))
                                                     (lambda ()
-                                                      (setf *connection* c)
+                                                      (change-current-connection c)
                                                       (lisp-connection-list))))))
         (lem.menu-mode:append-menu-item item (if (eq c *connection*) "*" " "))
         (lem.menu-mode:append-menu-item item (swank-protocol:connection-hostname c))

@@ -22,6 +22,7 @@
            :emacs-rex-string
            :emacs-rex
            :finish-evaluated
+           :abort-all
            :request-connection-info
            :request-swank-require
            :request-init-presentations
@@ -290,6 +291,11 @@ to check if input is available."
       (setf (connection-continuations connection)
             (remove id (connection-continuations connection) :key #'car))
       (funcall (cdr elt) value))))
+
+(defun abort-all (connection condition)
+  (loop :for (id . fn) :in (connection-continuations connection)
+        :do (funcall fn `(:abort ,condition)))
+  (setf (connection-continuations connection) nil))
 
 (defun request-swank-require (connection requirements)
   "Request that the Swank server load contrib modules.

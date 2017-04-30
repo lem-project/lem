@@ -818,24 +818,27 @@
 (defun refresh-output-buffer ()
   (setq *fresh-output-buffer-p* t))
 
+(defvar *wait-message-thread* nil)
 (defun start-thread ()
-  (bt:make-thread (lambda ()
-                    (loop
-                      (unless (connected-p)
-                        (return))
-                      (when (swank-protocol:message-waiting-p *connection* :timeout 10)
-                        (let ((barrior t))
-                          (send-event (lambda ()
-                                        (unwind-protect (progn (pull-events)
-                                                               (redraw-display))
-                                          (setq barrior nil))))
-                          (loop
-                            (unless (connected-p)
-                              (return))
-                            (unless barrior
-                              (return))
-                            (sleep 0.1))))))
-                  :name "lisp-wait-message"))
+  (unless *wait-message-thread*
+    (setf *wait-message-thread*
+          (bt:make-thread (lambda ()
+                            (loop
+                              (unless (connected-p)
+                                (return))
+                              (when (swank-protocol:message-waiting-p *connection* :timeout 10)
+                                (let ((barrior t))
+                                  (send-event (lambda ()
+                                                (unwind-protect (progn (pull-events)
+                                                                  (redraw-display))
+                                                  (setq barrior nil))))
+                                  (loop
+                                    (unless (connected-p)
+                                      (return))
+                                    (unless barrior
+                                      (return))
+                                    (sleep 0.1))))))
+                          :name "lisp-wait-message"))))
 
 (define-command slime-connect (hostname port &optional (start-repl t))
     ((list (prompt-for-string "Hostname: " "localhost")

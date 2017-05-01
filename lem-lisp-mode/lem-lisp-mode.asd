@@ -9,8 +9,8 @@
   :serial t
   :components ((:file "errors")
                (:file "swank-protocol")
-               (:file "package")
                (:file "button")
+               (:file "package")
                (:file "lisp-ui-mode")
                (:file "lisp-mode")
                (:file "sldb")

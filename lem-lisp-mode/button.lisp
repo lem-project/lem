@@ -1,4 +1,15 @@
-(in-package :lem-lisp-mode)
+(defpackage :lem-lisp-mode.button
+  (:use :cl :lem)
+  (:export :button
+           :button-start
+           :button-end
+           :button-get
+           :insert-button
+           :button-action
+           :forward-button
+           :backward-button
+           :button-at))
+(in-package :lem-lisp-mode.button)
 
 (defstruct button
   start

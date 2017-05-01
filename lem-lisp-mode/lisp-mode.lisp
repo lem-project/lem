@@ -55,7 +55,9 @@
 (define-key *lisp-mode-keymap* "C-c z" 'lisp-switch-to-repl-buffer)
 
 (defun change-current-connection (conn)
-  (when *connection* (swank-protocol:abort-all *connection* "change connection"))
+  (when *connection*
+    (swank-protocol:abort-all *connection* "change connection")
+    (notify-change-connection-to-wait-message-thread))
   (setf *connection* conn))
 
 (defun connected-p ()
@@ -823,14 +825,22 @@
   (setq *fresh-output-buffer-p* t))
 
 (defvar *wait-message-thread* nil)
+
+(defun notify-change-connection-to-wait-message-thread ()
+  (bt:interrupt-thread *wait-message-thread*
+                       (lambda () (error 'change-connection))))
+
 (defun start-thread ()
   (unless *wait-message-thread*
     (setf *wait-message-thread*
           (bt:make-thread (lambda ()
                             (loop
                               (unless (connected-p)
+                                (setf *wait-message-thread* nil)
                                 (return))
-                              (when (swank-protocol:message-waiting-p *connection* :timeout 10)
+                              (when (handler-case
+                                        (swank-protocol:message-waiting-p *connection* :timeout 10)
+                                      (change-connection () nil))
                                 (let ((barrior t))
                                   (send-event (lambda ()
                                                 (unwind-protect (progn (pull-events)
@@ -872,7 +882,7 @@
 (defun pull-events ()
   (when (and (boundp '*connection*)
              (not (null *connection*)))
-    (handler-bind ((swank-protocol:disconnected
+    (handler-bind ((disconnected
                     (lambda (c)
                       (declare (ignore c))
                       (remove-connection *connection*))))

@@ -1,9 +1,8 @@
 (defpackage lem-lisp-mode.swank-protocol
-  (:use :cl)
+  (:use :cl :lem-lisp-mode.errors)
   (:import-from :trivial-types
                 :association-list
                 :proper-list)
-  (:export :disconnected)
   (:export :connection
            :connection-hostname
            :connection-port
@@ -39,9 +38,6 @@
            :connection-swank-version)
   (:documentation "Low-level implementation of a client for the Swank protocol."))
 (in-package :lem-lisp-mode.swank-protocol)
-
-(define-condition disconnected (simple-condition)
-  ())
 
 (defmacro with-swank-syntax (() &body body)
   `(with-standard-io-syntax

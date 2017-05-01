@@ -325,7 +325,9 @@
 (define-command lisp-eval-region (start end) ("r")
   (check-connection)
   (refresh-output-buffer)
-  (interactive-eval (points-to-string start end)))
+  (eval-with-transcript
+   `(swank:interactive-eval-region
+     ,(points-to-string start end))))
 
 (define-command lisp-load-file (filename) ("fLoad File: ")
   (check-connection)

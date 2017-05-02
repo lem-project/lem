@@ -396,47 +396,33 @@
 (defun screen-display-line-wrapping (screen screen-width start-x view-charpos
                                             visual-cursor-x visual-cursor-y
                                             point-x point-y str/attributes)
+  (declare (ignore visual-cursor-x visual-cursor-y point-x))
   (when (and (< 0 view-charpos) (= point-y 0))
     (setf str/attributes
           (cons (subseq (car str/attributes) view-charpos)
                 (lem-base::subseq-elements (cdr str/attributes)
                                            view-charpos
                                            (length (car str/attributes))))))
-  (let ((cursor-line-p nil))
-    (when (= point-y visual-cursor-y)
-      (setq cursor-line-p t)
-      (setf visual-cursor-x (string-width (car str/attributes) 0 point-x)))
-    (let ((start 0))
-      (loop :for i := (wide-index (car str/attributes)
-                                  (1- screen-width)
-                                  :start start)
-            :while (< point-y (screen-height screen))
-            :do (cond ((null i)
-                       (disp-print-line screen point-y str/attributes t
-                                        :string-start start :start-x start-x)
-                       (return))
-                      (t
-                       (cond ((< point-y visual-cursor-y)
-                              (incf visual-cursor-y))
-                             ((= point-y visual-cursor-y)
-                              (let ((len (string-width (car str/attributes) start i)))
-                                (when (<= len visual-cursor-x)
-                                  (decf visual-cursor-x len)
-                                  (incf visual-cursor-y)))))
-                       (disp-print-line screen point-y str/attributes t
-                                        :string-start start :string-end i
-                                        :start-x start-x)
-                       (disp-print-line screen point-y
-                                        *truncate-str/attributes*
-                                        t
-                                        :start-x (+ start-x (1- screen-width)))
-                       (incf point-y)
-                       (setf start i))))
-      (values (if cursor-line-p
-                  (+ visual-cursor-x start-x)
-                  visual-cursor-x)
-              visual-cursor-y
-              point-y))))
+  (let ((start 0))
+    (loop :for i := (wide-index (car str/attributes)
+                                (1- screen-width)
+                                :start start)
+          :while (< point-y (screen-height screen))
+          :do (cond ((null i)
+                     (disp-print-line screen point-y str/attributes t
+                                      :string-start start :start-x start-x)
+                     (return))
+                    (t
+                     (disp-print-line screen point-y str/attributes t
+                                      :string-start start :string-end i
+                                      :start-x start-x)
+                     (disp-print-line screen point-y
+                                      *truncate-str/attributes*
+                                      t
+                                      :start-x (+ start-x (1- screen-width)))
+                     (incf point-y)
+                     (setf start i))))
+    (values nil nil point-y)))
 
 (defun screen-display-line (screen screen-width start-x view-charpos
                                    visual-cursor-x visual-cursor-y
@@ -525,8 +511,6 @@
                         (equal str/attributes #1#)
                         (/= cursor-y i))
                    (let ((n (count i wrap-lines)))
-                     (when (and (< 0 n) (<= y visual-cursor-y))
-                       (incf visual-cursor-y n))
                      (incf y n)
                      (dotimes (_ n)
                        (push i (screen-wrap-lines screen)))))
@@ -573,9 +557,7 @@
                    (fill (screen-old-lines screen) nil :start i)
                    (charms/ll:wmove (screen-%scrwin screen) y 0)
                    (charms/ll:wclrtobot (screen-%scrwin screen))
-                   (return))))
-      ;(screen-move-cursor screen visual-cursor-x visual-cursor-y)
-      )))
+                   (return)))))))
 
 (defun screen-redraw-separator (window)
   (let ((attr (attribute-to-bits 'modeline)))

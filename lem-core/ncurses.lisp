@@ -394,9 +394,9 @@
 (defvar *truncate-str/attributes* (cons " " (list '(0 1 lem::truncate-attribute))))
 
 (defun screen-display-line-wrapping (screen screen-width view-charpos
-                                            visual-cursor-y
-                                            point-x point-y str/attributes)
-  (declare (ignore visual-cursor-y point-x))
+                                            cursor-y cursor-x
+                                            point-y str/attributes)
+  (declare (ignore cursor-y cursor-x))
   (when (and (< 0 view-charpos) (= point-y 0))
     (setf str/attributes
           (cons (subseq (car str/attributes) view-charpos)
@@ -426,19 +426,19 @@
     point-y))
 
 (defun screen-display-line (screen screen-width view-charpos
-                                   visual-cursor-y
-                                   point-x point-y str/attributes)
+                                   cursor-y cursor-x
+                                   point-y str/attributes)
   (declare (ignore view-charpos))
   (let ((visual-cursor-x 0)
         (start-x (screen-left-width screen)))
-    (when (= visual-cursor-y point-y)
-      (setf visual-cursor-x (string-width (car str/attributes) 0 point-x)))
+    (when (= cursor-y point-y)
+      (setf visual-cursor-x (string-width (car str/attributes) 0 cursor-x)))
     (let ((cols screen-width))
       (cond
         ((< (string-width (car str/attributes))
             screen-width)
          (disp-print-line screen point-y str/attributes t :start-x start-x))
-        ((or (/= visual-cursor-y point-y)
+        ((or (/= cursor-y point-y)
              (< visual-cursor-x (1- cols)))
          (let ((i (wide-index (car str/attributes) (1- cols))))
            (cond ((<= cols (string-width (car str/attributes) 0 i))
@@ -452,9 +452,9 @@
                                    :start-x start-x)
                   (disp-print-line screen point-y (cons "$" nil) nil
                                    :start-x (+ start-x i))))))
-        ((< point-x (length (car str/attributes)))
+        ((< cursor-x (length (car str/attributes)))
          (let ((start (wide-index (car str/attributes) (- visual-cursor-x cols -3)))
-               (end point-x))
+               (end cursor-x))
            (setf visual-cursor-x (- cols 2))
            (cond ((wide-char-p (char (car str/attributes) end))
                   (disp-print-line screen point-y (cons "$" nil) nil :start-x start-x)
@@ -492,9 +492,9 @@
                          (count-lines view-point cursor-point)
                          0))
            (view-charpos (if focus-window-p (point-charpos view-point) 0))
-           (point-x (if focus-window-p
-                        (point-charpos cursor-point)
-                        0)))
+           (cursor-x (if focus-window-p
+                         (point-charpos cursor-point)
+                         0)))
       (loop :for y :from 0
             :for i :from 0
             :for str/attributes :across (screen-lines screen)
@@ -531,7 +531,7 @@
                                       screen-width
                                       view-charpos
                                       cursor-y
-                                      point-x
+                                      cursor-x
                                       y
                                       str/attributes)))
                      (cond

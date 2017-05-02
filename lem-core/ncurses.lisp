@@ -486,7 +486,9 @@
               #'screen-display-line-wrapping
               #'screen-display-line))
          (wrap-lines (screen-wrap-lines screen))
-         (left-width (screen-left-width screen)))
+         (screen-width (- (screen-width screen)
+                          (screen-left-width screen)))
+         (*print-start-x* (screen-left-width screen)))
     (setf (screen-wrap-lines screen) nil)
     (let* ((cursor-y (if focus-window-p
                          (count-lines view-point cursor-point)
@@ -516,24 +518,22 @@
                    (when (zerop (length (car str/attributes)))
                      (charms/ll:wmove (screen-%scrwin screen) y 0)
                      (charms/ll:wclrtoeol (screen-%scrwin screen)))
-                   (let ((screen-width (- (screen-width screen) left-width))
-                         y2)
+                   (let (y2)
                      (when left-str/attr
                        (screen-print-string screen
                                             0
                                             y
                                             (car left-str/attr)
                                             (cdr left-str/attr)))
-                     (let ((*print-start-x* left-width))
-                       (setq y2
-                             (funcall disp-line-function
-                                      screen
-                                      screen-width
-                                      view-charpos
-                                      cursor-y
-                                      cursor-x
-                                      y
-                                      str/attributes)))
+                     (setq y2
+                           (funcall disp-line-function
+                                    screen
+                                    screen-width
+                                    view-charpos
+                                    cursor-y
+                                    cursor-x
+                                    y
+                                    str/attributes))
                      (cond
                        (truncate-lines
                         (let ((offset (- y2 y)))

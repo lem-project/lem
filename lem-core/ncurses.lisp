@@ -294,70 +294,55 @@
                  (unless (line-offset point 1)
                    (return-from disp-set-overlay)))))))
 
-(defun calc-row (curr-point)
-  (declare (special last-point last-index))
-  (let* ((offset (count-lines last-point curr-point))
-         (i (+ last-index
-               (if (point< last-point curr-point)
-                   offset
-                   (- offset)))))
-    (setf last-point curr-point)
-    (setf last-index i)
-    i))
-
 (defun disp-set-overlays (screen overlays view-point)
-  (let ((left-width 0)
-        (view-end-point (with-point ((view-point view-point))
-                          (or (line-offset view-point (screen-height screen))
-                              (buffer-end view-point))))
-        (last-point view-point)
-        (last-index 0))
-    (declare (special last-point last-index))
-    (loop :for overlay :in overlays
-          :for start := (overlay-start overlay)
-          :for end := (overlay-end overlay)
-          :do (cond
-                ((overlay-get overlay :display-left)
-                 (when (and (point<= view-point start)
-                            (point<= end view-end-point))
-                   (let ((i (calc-row start)))
-                     (when (< i (screen-height screen))
-                       (let ((str (overlay-get overlay :text)))
-                         (setf left-width (max left-width (length str)))
-                         (setf (aref (screen-left-lines screen) i)
-                               (cons str (overlay-attribute overlay))))))))
-                ((and (same-line-p start end)
-                      (point<= view-point start)
-                      (point< start view-end-point))
-                 (disp-set-line screen
-                                (overlay-attribute overlay)
-                                (calc-row start)
-                                (point-charpos start)
-                                (point-charpos end)))
-                ((and (point<= view-point start)
-                      (point< end view-end-point))
-                 (disp-set-overlay screen
-                                   (overlay-attribute overlay)
-                                   (calc-row start)
-                                   start
-                                   end))
-                ((and (point<= start view-point)
-                      (point<= view-point end)
-                      (point<= end view-end-point))
-                 (disp-set-overlay screen
-                                   (overlay-attribute overlay)
-                                   0
-                                   view-point
-                                   end))
-                ((point<= view-point start)
-                 (disp-set-overlay screen
-                                   (overlay-attribute overlay)
-                                   (calc-row start)
-                                   start
-                                   view-end-point))))
-    (setf (screen-left-width screen) left-width)))
-
-(defun maybe-make-mark-overlay (window)
+  (flet ((calc-row (curr-point) (count-lines view-point curr-point)))
+    (let ((left-width 0)
+          (view-end-point (with-point ((view-point view-point))
+                            (or (line-offset view-point (screen-height screen))
+                                (buffer-end view-point)))))
+      (loop :for overlay :in overlays
+            :for start := (overlay-start overlay)
+            :for end := (overlay-end overlay)
+            :do (cond
+                  ((overlay-get overlay :display-left)
+                   (when (and (point<= view-point start)
+                              (point<= end view-end-point))
+                     (let ((i (calc-row start)))
+                       (when (< i (screen-height screen))
+                         (let ((str (overlay-get overlay :text)))
+                           (setf left-width (max left-width (length str)))
+                           (setf (aref (screen-left-lines screen) i)
+                                 (cons str (overlay-attribute overlay))))))))
+                  ((and (same-line-p start end)
+                        (point<= view-point start)
+                        (point< start view-end-point))
+                   (disp-set-line screen
+                                  (overlay-attribute overlay)
+                                  (calc-row start)
+                                  (point-charpos start)
+                                  (point-charpos end)))
+                  ((and (point<= view-point start)
+                        (point< end view-end-point))
+                   (disp-set-overlay screen
+                                     (overlay-attribute overlay)
+                                     (calc-row start)
+                                     start
+                                     end))
+                  ((and (point<= start view-point)
+                        (point<= view-point end)
+                        (point<= end view-end-point))
+                   (disp-set-overlay screen
+                                     (overlay-attribute overlay)
+                                     0
+                                     view-point
+                                     end))
+                  ((point<= view-point start)
+                   (disp-set-overlay screen
+                                     (overlay-attribute overlay)
+                                     (calc-row start)
+                                     start
+                                     view-end-point))))
+      (setf (screen-left-width screen) left-width))))
   (when (eq window (current-window))
     (let ((buffer (window-buffer window)))
       (when (buffer-mark-p buffer)

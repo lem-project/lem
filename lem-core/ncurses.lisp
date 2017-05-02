@@ -393,17 +393,18 @@
 
 (defvar *truncate-str/attributes* (cons " " (list '(0 1 lem::truncate-attribute))))
 
-(defun screen-display-line-wrapping (screen screen-width start-x view-charpos
-                                            visual-cursor-x visual-cursor-y
+(defun screen-display-line-wrapping (screen screen-width view-charpos
+                                            visual-cursor-y
                                             point-x point-y str/attributes)
-  (declare (ignore visual-cursor-x visual-cursor-y point-x))
+  (declare (ignore visual-cursor-y point-x))
   (when (and (< 0 view-charpos) (= point-y 0))
     (setf str/attributes
           (cons (subseq (car str/attributes) view-charpos)
                 (lem-base::subseq-elements (cdr str/attributes)
                                            view-charpos
                                            (length (car str/attributes))))))
-  (let ((start 0))
+  (let ((start 0)
+        (start-x (screen-left-width screen)))
     (loop :for i := (wide-index (car str/attributes)
                                 (1- screen-width)
                                 :start start)
@@ -422,63 +423,61 @@
                                       :start-x (+ start-x (1- screen-width)))
                      (incf point-y)
                      (setf start i))))
-    (values nil nil point-y)))
+    point-y))
 
-(defun screen-display-line (screen screen-width start-x view-charpos
-                                   visual-cursor-x visual-cursor-y
+(defun screen-display-line (screen screen-width view-charpos
+                                   visual-cursor-y
                                    point-x point-y str/attributes)
   (declare (ignore view-charpos))
-  (when (= visual-cursor-y point-y)
-    (setf visual-cursor-x (string-width (car str/attributes) 0 point-x)))
-  (let ((cols screen-width))
-    (cond
-      ((< (string-width (car str/attributes))
-          screen-width)
-       (disp-print-line screen point-y str/attributes t :start-x start-x))
-      ((or (/= visual-cursor-y point-y)
-           (< visual-cursor-x (1- cols)))
-       (let ((i (wide-index (car str/attributes) (1- cols))))
-         (cond ((<= cols (string-width (car str/attributes) 0 i))
-                (disp-print-line screen point-y str/attributes nil :string-end (1- i)
-                                 :start-x start-x)
-                (disp-print-line screen point-y (cons " $" nil) nil
-                                 :start-x (+ start-x (1- i))))
-               (t
-                (disp-print-line screen point-y str/attributes nil
-                                 :string-end i
-                                 :start-x start-x)
-                (disp-print-line screen point-y (cons "$" nil) nil
-                                 :start-x (+ start-x i))))))
-      ((< point-x (length (car str/attributes)))
-       (let ((start (wide-index (car str/attributes) (- visual-cursor-x cols -3)))
-             (end point-x))
-         (setf visual-cursor-x (- cols 2))
-         (cond ((wide-char-p (char (car str/attributes) end))
-                (disp-print-line screen point-y (cons "$" nil) nil :start-x start-x)
-                (disp-print-line screen point-y str/attributes nil
-                                 :start-x (+ start-x 1) :string-start start :string-end (1- end))
-                (disp-print-line screen point-y (cons " $" nil) nil :start-x (+ start-x (1- end)))
-                (decf visual-cursor-x))
-               (t
-                (disp-print-line screen point-y (cons "$" nil) nil :start-x start-x)
-                (disp-print-line screen point-y str/attributes nil
-                                 :start-x (+ start-x 1)
-                                 :string-start start
-                                 :string-end end)
-                (disp-print-line screen point-y (cons "$" nil) nil
-                                 :start-x (+ start-x (1+ end)))))))
-      (t
-       (let ((start (- visual-cursor-x cols -2)))
-         (disp-print-line screen point-y (cons "$" nil) nil :start-x start-x)
-         (disp-print-line screen point-y str/attributes t
-                          :start-x (+ start-x 1)
-                          :string-start (wide-index (car str/attributes) start)))
-       (setq visual-cursor-x (- cols 1))))
-    (values (if (= visual-cursor-y point-y)
-                (+ start-x visual-cursor-x)
-                visual-cursor-x)
-            visual-cursor-y
-            point-y)))
+  (let ((visual-cursor-x 0)
+        (start-x (screen-left-width screen)))
+    (when (= visual-cursor-y point-y)
+      (setf visual-cursor-x (string-width (car str/attributes) 0 point-x)))
+    (let ((cols screen-width))
+      (cond
+        ((< (string-width (car str/attributes))
+            screen-width)
+         (disp-print-line screen point-y str/attributes t :start-x start-x))
+        ((or (/= visual-cursor-y point-y)
+             (< visual-cursor-x (1- cols)))
+         (let ((i (wide-index (car str/attributes) (1- cols))))
+           (cond ((<= cols (string-width (car str/attributes) 0 i))
+                  (disp-print-line screen point-y str/attributes nil :string-end (1- i)
+                                   :start-x start-x)
+                  (disp-print-line screen point-y (cons " $" nil) nil
+                                   :start-x (+ start-x (1- i))))
+                 (t
+                  (disp-print-line screen point-y str/attributes nil
+                                   :string-end i
+                                   :start-x start-x)
+                  (disp-print-line screen point-y (cons "$" nil) nil
+                                   :start-x (+ start-x i))))))
+        ((< point-x (length (car str/attributes)))
+         (let ((start (wide-index (car str/attributes) (- visual-cursor-x cols -3)))
+               (end point-x))
+           (setf visual-cursor-x (- cols 2))
+           (cond ((wide-char-p (char (car str/attributes) end))
+                  (disp-print-line screen point-y (cons "$" nil) nil :start-x start-x)
+                  (disp-print-line screen point-y str/attributes nil
+                                   :start-x (+ start-x 1) :string-start start :string-end (1- end))
+                  (disp-print-line screen point-y (cons " $" nil) nil :start-x (+ start-x (1- end)))
+                  (decf visual-cursor-x))
+                 (t
+                  (disp-print-line screen point-y (cons "$" nil) nil :start-x start-x)
+                  (disp-print-line screen point-y str/attributes nil
+                                   :start-x (+ start-x 1)
+                                   :string-start start
+                                   :string-end end)
+                  (disp-print-line screen point-y (cons "$" nil) nil
+                                   :start-x (+ start-x (1+ end)))))))
+        (t
+         (let ((start (- visual-cursor-x cols -2)))
+           (disp-print-line screen point-y (cons "$" nil) nil :start-x start-x)
+           (disp-print-line screen point-y str/attributes t
+                            :start-x (+ start-x 1)
+                            :string-start (wide-index (car str/attributes) start)))
+         (setq visual-cursor-x (- cols 1))))
+      point-y)))
 
 (defun screen-display-lines (screen redraw-flag buffer view-point cursor-point focus-window-p)
   (let* ((truncate-lines (variable-value 'truncate-lines :default buffer))
@@ -489,11 +488,9 @@
          (wrap-lines (screen-wrap-lines screen))
          (left-width (screen-left-width screen)))
     (setf (screen-wrap-lines screen) nil)
-    (let* ((visual-cursor-x 0)
-           (visual-cursor-y (if focus-window-p
-                                (count-lines view-point cursor-point)
-                                0))
-           (cursor-y visual-cursor-y)
+    (let* ((cursor-y (if focus-window-p
+                         (count-lines view-point cursor-point)
+                         0))
            (view-charpos (if focus-window-p (point-charpos view-point) 0))
            (point-x (if focus-window-p
                         (point-charpos cursor-point)
@@ -520,7 +517,6 @@
                      (charms/ll:wmove (screen-%scrwin screen) y 0)
                      (charms/ll:wclrtoeol (screen-%scrwin screen)))
                    (let ((screen-width (- (screen-width screen) left-width))
-                         (start-x left-width)
                          y2)
                      (when left-str/attr
                        (screen-print-string screen
@@ -528,19 +524,16 @@
                                             y
                                             (car left-str/attr)
                                             (cdr left-str/attr)))
-                     (let ((*print-start-x* start-x))
-                       (multiple-value-setq
-                        (visual-cursor-x visual-cursor-y y2)
-                        (funcall disp-line-function
-                                 screen
-                                 screen-width
-                                 start-x
-                                 view-charpos
-                                 visual-cursor-x
-                                 visual-cursor-y
-                                 point-x
-                                 y
-                                 str/attributes)))
+                     (let ((*print-start-x* left-width))
+                       (setq y2
+                             (funcall disp-line-function
+                                      screen
+                                      screen-width
+                                      view-charpos
+                                      cursor-y
+                                      point-x
+                                      y
+                                      str/attributes)))
                      (cond
                        (truncate-lines
                         (let ((offset (- y2 y)))

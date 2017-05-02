@@ -74,9 +74,10 @@
 
 (defun wide-index (str goal &key (start 0))
   (loop
-     with w = 0
-     for i from start below (length str) by 1
-     for c across str do
-       (setq w (char-width c w))
-       (when (< goal w)
-	 (return i))))
+    :with w := 0
+    :for i :from start :below (length str) :by 1
+    :for c := (schar str i)
+    :do
+    (setq w (char-width c w))
+    (when (< goal w)
+      (return i))))

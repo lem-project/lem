@@ -274,6 +274,11 @@
                  (< start-charpos end-charpos)))
     (destructuring-bind (string . attributes)
         (aref (screen-lines screen) screen-row)
+      (when (and end-charpos (<= (length string) end-charpos))
+        (setf (car (aref (screen-lines screen) screen-row))
+              (concatenate 'string string
+                           (make-string (- end-charpos (length string))
+                                        :initial-element #\space))))
       (setf (cdr (aref (screen-lines screen) screen-row))
             (lem-base::put-elements attributes
                                     start-charpos

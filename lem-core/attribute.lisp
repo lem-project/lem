@@ -15,6 +15,7 @@
           attribute-bold-p
           attribute-underline-p
           define-attribute
+          cursor
           region
           modeline
           modeline-inactive
@@ -139,6 +140,9 @@
                                                                 `(display-dark-p))))
                                                        (alexandria:ensure-list pattern)))
                                                 (make-attribute ,@args)))))))))))
+
+(define-attribute cursor
+  (t :reverse-p t))
 
 (define-attribute region
   (:light :reverse-p t)

@@ -158,7 +158,8 @@
   (charms/ll:wattron scrwin attr)
   (loop :for char :across string
         :do (cond ((char= char #\tab)
-                   (loop :with size := (+ *print-start-x* (* (tab-size) (floor (+ (tab-size) x) (tab-size))))
+                   (loop :with size := (+ *print-start-x*
+                                          (* (tab-size) (floor (+ (tab-size) x) (tab-size))))
                          :while (< x size)
                          :do
                          (charms/ll:mvwaddch scrwin y x #.(char-code #\space))
@@ -194,8 +195,8 @@
       (loop :for (start end attr) :in attributes
             :do (setf end (min (length str) end))
             :do (progn
-                  (screen-print-string screen x y (subseq str prev-end start) nil)
-                  (incf x (string-width str prev-end start)))
+                     (screen-print-string screen x y (subseq str prev-end start) nil)
+                     (incf x (string-width str prev-end start)))
             :do (progn
                   (screen-print-string screen x y (subseq str start end) attr)
                   (incf x (string-width str start end)))
@@ -348,6 +349,8 @@
                                      start
                                      view-end-point))))
       (setf (screen-left-width screen) left-width))))
+
+(defun maybe-push-mark-overlay (window)
   (when (eq window (current-window))
     (let ((buffer (window-buffer window)))
       (when (buffer-mark-p buffer)
@@ -355,7 +358,18 @@
               (end (buffer-mark buffer)))
           (when (point< end start)
             (rotatef start end))
-          (make-overlay start end 'region))))))
+          (lem::make-temporary-overlay start end 'region))))))
+
+(defun maybe-set-cursor-attribute (window screen view-point)
+  (when (eq window (current-window))
+    (let* ((buffer (window-buffer window))
+           (point (buffer-point buffer))
+           (charpos (point-charpos point)))
+      (disp-set-line screen
+                     'cursor
+                     (count-lines view-point point)
+                     charpos
+                     (1+ charpos)))))
 
 (defun disp-reset-lines (window)
   (let ((screen (lem::window-screen window))
@@ -371,12 +385,11 @@
             (unless (line-offset point 1)
               (fill (screen-lines screen) nil :start (1+ i))
               (return))))
-    (let ((mark-overlay (maybe-make-mark-overlay window)))
-      (disp-set-overlays screen
-                         (lem::overlays buffer)
-                         view-point)
-      (when mark-overlay
-        (delete-overlay mark-overlay)))))
+    (let ((overlays (lem::overlays buffer))
+          ov)
+      (when (setf ov (maybe-push-mark-overlay window)) (push ov overlays))
+      (disp-set-overlays screen overlays view-point)
+      (maybe-set-cursor-attribute window screen view-point))))
 
 (defvar *truncate-str/attributes* (cons " " (list '(0 1 lem::truncate-attribute))))
 
@@ -399,7 +412,8 @@
                                   :start start)
             :while (< point-y (screen-height screen))
             :do (cond ((null i)
-                       (disp-print-line screen point-y str/attributes t :string-start start :start-x start-x)
+                       (disp-print-line screen point-y str/attributes t
+                                        :string-start start :start-x start-x)
                        (return))
                       (t
                        (cond ((< point-y visual-cursor-y)
@@ -560,7 +574,8 @@
                    (charms/ll:wmove (screen-%scrwin screen) y 0)
                    (charms/ll:wclrtobot (screen-%scrwin screen))
                    (return))))
-      (screen-move-cursor screen visual-cursor-x visual-cursor-y))))
+      ;(screen-move-cursor screen visual-cursor-x visual-cursor-y)
+      )))
 
 (defun screen-redraw-separator (window)
   (let ((attr (attribute-to-bits 'modeline)))

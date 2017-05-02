@@ -39,6 +39,19 @@
 (defun overlay-p (x)
   (typep x 'overlay))
 
+(defun make-temporary-overlay (start end attribute)
+  (assert (eq (point-buffer start)
+              (point-buffer end)))
+  (setf attribute (ensure-attribute attribute t))
+  (let* ((buffer (point-buffer start))
+         (overlay
+          (make-instance 'overlay
+                         :start start
+                         :end end
+                         :attribute attribute
+                         :buffer buffer)))
+    overlay))
+
 (defun make-overlay (start end attribute)
   (assert (eq (point-buffer start)
               (point-buffer end)))

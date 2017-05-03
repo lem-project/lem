@@ -85,7 +85,8 @@
   old-lines
   wrap-lines
   width
-  modified-p)
+  modified-p
+  (horizontal-scroll-start 0))
 
 (define-implementation make-screen (x y width height use-modeline-p)
   (when use-modeline-p
@@ -431,56 +432,40 @@
 (defun screen-display-line (screen screen-width view-charpos
                                    cursor-y cursor-x
                                    point-y str/attributes)
-  (declare (ignore view-charpos))
-  (let ((visual-cursor-x 0)
-        (start-x (screen-left-width screen)))
-    (when (= cursor-y point-y)
-      (setf visual-cursor-x (string-width (car str/attributes) 0 cursor-x)))
-    (let ((cols screen-width))
-      (cond
-        ((< (string-width (car str/attributes))
-            screen-width)
-         (disp-print-line screen point-y str/attributes t :start-x start-x))
-        ((or (/= cursor-y point-y)
-             (< visual-cursor-x (1- cols)))
-         (let ((i (wide-index (car str/attributes) (1- cols))))
-           (cond ((<= cols (string-width (car str/attributes) 0 i))
-                  (disp-print-line screen point-y str/attributes nil :string-end (1- i)
-                                   :start-x start-x)
-                  (disp-print-line screen point-y (cons " $" nil) nil
-                                   :start-x (+ start-x (1- i))))
-                 (t
-                  (disp-print-line screen point-y str/attributes nil
-                                   :string-end i
-                                   :start-x start-x)
-                  (disp-print-line screen point-y (cons "$" nil) nil
-                                   :start-x (+ start-x i))))))
-        ((< cursor-x (length (car str/attributes)))
-         (let ((start (wide-index (car str/attributes) (- visual-cursor-x cols -3)))
-               (end cursor-x))
-           (setf visual-cursor-x (- cols 2))
-           (cond ((wide-char-p (char (car str/attributes) end))
-                  (disp-print-line screen point-y (cons "$" nil) nil :start-x start-x)
-                  (disp-print-line screen point-y str/attributes nil
-                                   :start-x (+ start-x 1) :string-start start :string-end (1- end))
-                  (disp-print-line screen point-y (cons " $" nil) nil :start-x (+ start-x (1- end)))
-                  (decf visual-cursor-x))
-                 (t
-                  (disp-print-line screen point-y (cons "$" nil) nil :start-x start-x)
-                  (disp-print-line screen point-y str/attributes nil
-                                   :start-x (+ start-x 1)
-                                   :string-start start
-                                   :string-end end)
-                  (disp-print-line screen point-y (cons "$" nil) nil
-                                   :start-x (+ start-x (1+ end)))))))
-        (t
-         (let ((start (- visual-cursor-x cols -2)))
-           (disp-print-line screen point-y (cons "$" nil) nil :start-x start-x)
-           (disp-print-line screen point-y str/attributes t
-                            :start-x (+ start-x 1)
-                            :string-start (wide-index (car str/attributes) start)))
-         (setq visual-cursor-x (- cols 1))))
-      point-y)))
+  (declare (ignore view-charpos cursor-x))
+  (let ((start-x (screen-left-width screen))
+        start
+        end)
+    (cond ((= cursor-y point-y)
+           (setf start (or (wide-index (car str/attributes)
+                                       (screen-horizontal-scroll-start screen))
+                           0))
+           (setf end (wide-index (car str/attributes)
+                                 (+ (screen-horizontal-scroll-start screen)
+                                    screen-width))))
+          (t
+           (setf start 0)
+           (setf end (wide-index (car str/attributes) screen-width))))
+    (charms/ll:wmove (screen-%scrwin screen) point-y start-x)
+    (charms/ll:wclrtoeol (screen-%scrwin screen))
+    (disp-print-line screen point-y str/attributes nil
+                     :start-x start-x
+                     :string-start start
+                     :string-end end))
+  point-y)
+
+(defun adjust-horizontal-scroll (window)
+  (let ((screen (lem::window-screen window))
+        (buffer (window-buffer window)))
+    (unless (variable-value 'truncate-lines :default buffer)
+      (let ((point-column (point-column (buffer-point buffer)))
+            (width (- (screen-width screen) (screen-left-width screen))))
+        (cond ((<= (+ (screen-horizontal-scroll-start screen) width)
+                   (1+ point-column))
+               (setf (screen-horizontal-scroll-start screen)
+                     (- (1+ point-column) width)))
+              ((< point-column (screen-horizontal-scroll-start screen))
+               (setf (screen-horizontal-scroll-start screen) point-column)))))))
 
 (defun screen-display-lines (screen redraw-flag buffer view-point cursor-point focus-window-p)
   (let* ((truncate-lines (variable-value 'truncate-lines :default buffer))
@@ -595,6 +580,7 @@
     (progn
       #+(or)without-interrupts
       (disp-reset-lines window)
+      (when focus-window-p (adjust-horizontal-scroll window))
       (screen-display-lines (lem::window-screen window)
                             (or force
                                 (screen-modified-p (lem::window-screen window)))

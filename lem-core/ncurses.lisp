@@ -165,6 +165,7 @@
                          :do
                          (charms/ll:mvwaddch scrwin y x #.(char-code #\space))
                          (incf x)))
+                  ((char= char #\return))
                   (t
                    (charms/ll:mvwaddstr scrwin y x (string char))
                    (setf x (char-width char x)))))

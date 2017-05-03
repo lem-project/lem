@@ -394,10 +394,8 @@
 
 (defvar *truncate-character* #\\)
 
-(defun screen-display-line-wrapping (screen screen-width view-charpos
-                                            cursor-y cursor-x
-                                            point-y str/attributes)
-  (declare (ignore cursor-y cursor-x))
+(defun screen-display-line-wrapping (screen screen-width view-charpos cursor-y point-y str/attributes)
+  (declare (ignore cursor-y))
   (when (and (< 0 view-charpos) (= point-y 0))
     (setf str/attributes
           (cons (subseq (car str/attributes) view-charpos)
@@ -429,10 +427,8 @@
                      (setf start i))))
     point-y))
 
-(defun screen-display-line (screen screen-width view-charpos
-                                   cursor-y cursor-x
-                                   point-y str/attributes)
-  (declare (ignore view-charpos cursor-x))
+(defun screen-display-line (screen screen-width view-charpos cursor-y point-y str/attributes)
+  (declare (ignore view-charpos))
   (let ((start-x (screen-left-width screen))
         start
         end)
@@ -481,9 +477,6 @@
     (let* ((view-charpos (point-charpos view-point))
            (cursor-y (if focus-window-p
                          (count-lines view-point cursor-point)
-                         0))
-           (cursor-x (if focus-window-p
-                         (point-charpos cursor-point)
                          0)))
       (loop :for y :from 0
             :for i :from 0
@@ -519,7 +512,6 @@
                                     screen-width
                                     view-charpos
                                     cursor-y
-                                    cursor-x
                                     y
                                     str/attributes))
                      (cond

@@ -156,8 +156,7 @@
   (:light :reverse-p t)
   (:dark :reverse-p t))
 
-(define-attribute truncate-attribute
-  (t :background "blue"))
+(define-attribute truncate-attribute)
 
 (define-attribute syntax-string-attribute
   (t :foreground "green"))

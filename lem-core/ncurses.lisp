@@ -391,7 +391,7 @@
       (disp-set-overlays screen overlays view-point)
       (maybe-set-cursor-attribute window screen view-point))))
 
-(defvar *truncate-str/attributes* (cons " " (list '(0 1 lem::truncate-attribute))))
+(defvar *truncate-character* #\\)
 
 (defun screen-display-line-wrapping (screen screen-width view-charpos
                                             cursor-y cursor-x
@@ -404,7 +404,10 @@
                                            view-charpos
                                            (length (car str/attributes))))))
   (let ((start 0)
-        (start-x (screen-left-width screen)))
+        (start-x (screen-left-width screen))
+        (truncate-str/attributes
+         (cons (string *truncate-character*)
+               (list (list 0 1 'lem:truncate-attribute)))))
     (loop :for i := (wide-index (car str/attributes)
                                 (1- screen-width)
                                 :start start)
@@ -418,7 +421,7 @@
                                       :string-start start :string-end i
                                       :start-x start-x)
                      (disp-print-line screen point-y
-                                      *truncate-str/attributes*
+                                      truncate-str/attributes
                                       t
                                       :start-x (+ start-x (1- screen-width)))
                      (incf point-y)

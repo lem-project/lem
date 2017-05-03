@@ -165,9 +165,11 @@
                          :do
                          (charms/ll:mvwaddch scrwin y x #.(char-code #\space))
                          (incf x)))
-                  ((char= char #\return))
                   (t
-                   (charms/ll:mvwaddstr scrwin y x (string char))
+                   (charms/ll:mvwaddstr scrwin y x
+                                        (if (char= char #\return)
+                                            "^R"
+                                            (string char)))
                    (setf x (char-width char x)))))
   (charms/ll:wattroff scrwin attr)
   x)

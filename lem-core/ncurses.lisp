@@ -478,10 +478,10 @@
                           (screen-left-width screen)))
          (*print-start-x* (screen-left-width screen)))
     (setf (screen-wrap-lines screen) nil)
-    (let* ((cursor-y (if focus-window-p
+    (let* ((view-charpos (point-charpos view-point))
+           (cursor-y (if focus-window-p
                          (count-lines view-point cursor-point)
                          0))
-           (view-charpos (if focus-window-p (point-charpos view-point) 0))
            (cursor-x (if focus-window-p
                          (point-charpos cursor-point)
                          0)))

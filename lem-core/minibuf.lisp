@@ -84,6 +84,7 @@
            (editor-abort ()
              (minibuf-read-line-break))))
         (string
+         (erase-buffer (minibuffer))
          (let ((point (buffer-point (minibuffer))))
            (insert-string point (apply #'format nil string args))))
         (t

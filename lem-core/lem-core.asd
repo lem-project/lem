@@ -12,6 +12,7 @@
                "lem-lisp-syntax")
   :serial t
   :components ((:file "history")
+               (:file "clipboard")
                (:file "package")
                (:file "errors")
                (:file "key")

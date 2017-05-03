@@ -194,8 +194,10 @@
          (kill-region start end))))))
 
 (define-key *global-keymap* "C-y" 'yank)
-(define-command yank (n) ("p")
-  (let ((string (kill-ring-nth n)))
+(define-command yank (arg) ("P")
+  (let ((string (if (null arg)
+                    (current-kill-ring)
+                    (kill-ring-nth arg))))
     (setf (buffer-value (current-buffer) 'yank-start) (copy-point (current-point) :temporary))
     (insert-string (current-point) string)
     (setf (buffer-value (current-buffer) 'yank-end) (copy-point (current-point) :temporary))

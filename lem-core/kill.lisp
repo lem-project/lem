@@ -36,7 +36,14 @@
      (setq *kill-new-flag* nil))
     (t
      (kill-append string *kill-before-p*)))
+  (lem.clipboard:copy string)
   t)
+
+(defun current-kill-ring ()
+  (let ((string (lem.clipboard:paste)))
+    (if (and string (string/= string ""))
+        string
+        (kill-ring-nth 1))))
 
 (defun kill-ring-nth (n)
   (do ((ptr *kill-ring-yank-ptr*

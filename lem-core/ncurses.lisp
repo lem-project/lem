@@ -168,7 +168,8 @@
                   (t
                    (charms/ll:mvwaddstr scrwin y x (string char))
                    (setf x (char-width char x)))))
-  (charms/ll:wattroff scrwin attr))
+  (charms/ll:wattroff scrwin attr)
+  x)
 
 (define-implementation screen-print-string (screen x y string attribute)
   (scrwin-print-string (screen-%scrwin screen) x y string attribute))
@@ -194,14 +195,11 @@
     (let ((prev-end 0)
           (x start-x))
       (loop :for (start end attr) :in attributes
-            :do (setf end (min (length str) end))
-            :do (progn
-                     (screen-print-string screen x y (subseq str prev-end start) nil)
-                     (incf x (string-width str prev-end start)))
-            :do (progn
-                  (screen-print-string screen x y (subseq str start end) attr)
-                  (incf x (string-width str start end)))
-            :do (setf prev-end end))
+            :do
+            (setf end (min (length str) end))
+            (setf x (screen-print-string screen x y (subseq str prev-end start) nil))
+            (setf x (screen-print-string screen x y (subseq str start end) attr))
+            (setf prev-end end))
       (screen-print-string screen x y
                            (if (= prev-end 0)
                                str

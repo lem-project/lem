@@ -42,8 +42,6 @@
 (defvar *window-size-change-functions* '())
 (defvar *window-show-buffer-functions* '())
 
-(defvar *modified-window-tree-p* nil)
-
 (defvar *window-tree*)
 
 (defvar *current-window*)
@@ -112,7 +110,6 @@
                  :point (copy-point (buffer-start-point buffer) :right-inserting)))
 
 (defun make-window (buffer x y width height use-modeline-p)
-  (setf *modified-window-tree-p* t)
   (%make-window 'window buffer x y width height use-modeline-p))
 
 (defun window-x (&optional (window (current-window)))
@@ -167,7 +164,6 @@
   *window-tree*)
 
 (defun (setf window-tree) (new-window-tree)
-  (setf *modified-window-tree-p* t)
   (setf *window-tree* new-window-tree))
 
 (defstruct (window-node (:constructor %make-window-node))
@@ -258,72 +254,6 @@
   (delete-point (window-view-point window))
   (delete-point (%window-point window))
   (screen-delete (window-screen window)))
-
-(defun dump-window-tree (window-tree current-window)
-  (labels ((f (window-tree)
-	     (if (window-tree-leaf-p window-tree)
-		 (list
-		  :window
-		  (eq current-window window-tree)
-		  (buffer-name (window-buffer window-tree))
-		  (window-%x window-tree)
-		  (window-%y window-tree)
-		  (window-%width window-tree)
-		  (window-%height window-tree)
-		  (window-view-point window-tree)
-		  (%window-point window-tree)
-		  (window-delete-hook window-tree)
-		  (window-parameters window-tree)
-		  (window-use-modeline-p window-tree))
-		 (list
-		  (window-node-split-type window-tree)
-		  (f (window-node-car window-tree))
-		  (f (window-node-cdr window-tree))))))
-    (f window-tree)))
-
-(defun load-window-tree (dumped-tree)
-  (dolist (window (window-list))
-    (%free-window window))
-  (let ((current-window nil))
-    (labels ((f (dumped-tree)
-	       (if (eq :window (car dumped-tree))
-		   (destructuring-bind (current-window-p
-					buffer-name
-					x
-					y
-					width
-					height
-					view-point
-					point
-					delete-hook
-					parameters
-					use-modeline-p)
-		       (cdr dumped-tree)
-		     (let ((window (make-window (get-buffer-create buffer-name)
-						x y width height use-modeline-p)))
-		       (move-point (window-view-point window) view-point)
-		       (move-point (%window-point window) point)
-		       (set-window-delete-hook delete-hook window)
-		       (setf (window-parameters window) parameters)
-		       (when current-window-p
-			 (setf current-window window))
-		       window))
-		   (destructuring-bind (split-type car-window cdr-window)
-		       dumped-tree
-		     (make-window-node split-type
-				       (f car-window)
-				       (f cdr-window))))))
-      (setf (window-tree) (f dumped-tree))
-      (setf (current-window)
-            (or current-window
-                (car (window-list)))))))
-
-(defun call-with-save-windows (current-window function)
-  (let ((dumped-tree (dump-window-tree (window-tree) current-window))
-        (*modified-window-tree-p* nil))
-    (unwind-protect (funcall function)
-      (when *modified-window-tree-p*
-        (load-window-tree dumped-tree)))))
 
 (defun window-max-width () (display-width))
 (defun window-max-height () (- (display-height) (minibuffer-window-height)))

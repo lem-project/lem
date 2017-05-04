@@ -268,10 +268,10 @@
                      (let ((*minibuffer-start-charpos* (point-charpos (current-point))))
                        (when initial
                          (insert-string (current-point) initial))
-                       (unwind-protect (call-with-save-windows
-                                        (minibuffer-calls-window)
-                                        (lambda ()
-                                          (minibuf-read-line-loop comp-f existing-p syntax-table)))
+                       (unwind-protect (minibuf-read-line-loop comp-f existing-p syntax-table)
+                         (if (deleted-window-p (minibuffer-calls-window))
+                             (setf (current-window) (car (window-list)))
+                             (setf (current-window) (minibuffer-calls-window)))
                          (with-current-window (minibuffer-window)
                            (let ((*inhibit-read-only* t))
                              (erase-buffer))

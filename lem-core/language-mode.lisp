@@ -94,7 +94,8 @@
           (return t))
         (unless (looking-at start line-comment)
           (return nil))
-        (line-offset start 1)))))
+        (unless (line-offset start 1)
+          (return t))))))
 
 (define-command comment-region () ()
   (let ((line-comment (or (variable-value 'insertion-line-comment :buffer)

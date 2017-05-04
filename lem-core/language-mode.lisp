@@ -64,10 +64,37 @@
     (skip-whitespace-forward point t)
     (end-line-p point)))
 
-(define-command comment-or-uncomment-region (arg) ("P")
-  (if arg
+(defun indentation-point-p (point)
+  (with-point ((p point))
+    (back-to-indentation p)
+    (point<= point p)))
+
+(define-command comment-or-uncomment-region () ()
+  (if (commented-region-p)
       (uncomment-region)
       (comment-region)))
+
+(defun set-region-point (start end)
+  (cond
+    ((buffer-mark-p (current-buffer))
+     (move-point start (region-beginning))
+     (move-point end (region-end)))
+    (t
+     (line-start start)
+     (line-end end))))
+
+(defun commented-region-p ()
+  (let ((line-comment (variable-value 'line-comment :buffer)))
+    (with-point ((start (current-point))
+                 (end (current-point)))
+      (set-region-point start end)
+      (loop
+        (skip-whitespace-forward start)
+        (when (point>= start end)
+          (return t))
+        (unless (looking-at start line-comment)
+          (return nil))
+        (line-offset start 1)))))
 
 (define-command comment-region () ()
   (let ((line-comment (or (variable-value 'insertion-line-comment :buffer)
@@ -76,13 +103,7 @@
       (save-excursion
         (with-point ((start (current-point) :right-inserting)
                      (end (current-point) :left-inserting))
-          (cond
-            ((buffer-mark-p (current-buffer))
-             (move-point start (region-beginning))
-             (move-point end (region-end)))
-            (t
-             (line-start start)
-             (line-end end)))
+          (set-region-point start end)
           (skip-whitespace-forward start)
           (when (point>= start end)
             (insert-string (current-point) line-comment)
@@ -91,6 +112,7 @@
             (loop
               (when (same-line-p start end)
                 (cond ((space*-p start))
+                      ((indentation-point-p end))
                       (t
                        (insert-string start line-comment)
                        (unless (space*-p end)
@@ -106,13 +128,7 @@
     (when line-comment
       (with-point ((start (current-point) :right-inserting)
                    (end (current-point) :right-inserting))
-        (cond
-          ((buffer-mark-p (current-buffer))
-           (move-point start (region-beginning))
-           (move-point end (region-end)))
-          (t
-           (line-start start)
-           (line-end end)))
+        (set-region-point start end)
         (character-offset start -1)
         (loop
           (unless (search-comment-start-backward end start)

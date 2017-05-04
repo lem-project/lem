@@ -4,7 +4,8 @@
           utf8-bytes
           bests-if
           max-if
-          min-if))
+          min-if
+          random-range))
 
 (defun pdebug (x &optional (file "DEBUG"))
   (with-open-file (out file
@@ -39,3 +40,6 @@
 
 (defun min-if (fn list)
   (bests-if fn list #'<))
+
+(defun random-range (min max &optional (state *random-state*))
+  (+ min (random (- max min) state)))

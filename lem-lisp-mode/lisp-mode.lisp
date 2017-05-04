@@ -94,7 +94,7 @@
 (defun self-connect ()
   (prog (port)
    :START
-    (setf port (+ 10000 (random 10000)))
+    (setf port (random-range 49152 65535))
     (handler-case (let ((swank::*swank-debug-p* nil))
                     (swank:create-server :port port))
       (error ()

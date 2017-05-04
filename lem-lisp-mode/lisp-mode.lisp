@@ -318,7 +318,7 @@
       (scan-lists end 1 0)
       (let ((string (points-to-string start end)))
         (refresh-output-buffer)
-        (if (ppcre:scan "^\\(defvar\\b" string)
+        (if (ppcre:scan "^\\(defvar(?:\\s|$)" string)
             (re-eval-defvar string)
             (interactive-eval string))))))
 

@@ -235,7 +235,7 @@
           (return (move-point point curr)))
         (unless (character-offset curr -1)
           (return nil))
-        (when (and limit-point (point>= limit-point curr))
+        (when (and limit-point (point> limit-point curr))
           (return nil))))))
 
 @export

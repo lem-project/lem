@@ -112,7 +112,10 @@
   (insert-buffer (buffer-point (window-buffer *echoarea-window*)) buffer))
 
 (defun active-echoarea-p ()
-  (eq *current-minibuffer-window* *echoarea-window*))
+  (and (eq *current-minibuffer-window* *echoarea-window*)
+       (let ((buffer (window-buffer *echoarea-window*)))
+         (point< (buffer-start-point buffer)
+                 (buffer-end-point buffer)))))
 
 (defun prompt-for-character (prompt)
   (when (interactive-p)

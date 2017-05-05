@@ -71,7 +71,7 @@
     (dolist (win (window-list))
       (unless (eq win (current-window))
         (delete-window win)))
-    (window-set-pos (current-window) 0 0)
+    (window-set-pos (current-window) (window-topleft-x) (window-topleft-y))
     (window-set-size (current-window)
                      (window-max-width)
                      (window-max-height))

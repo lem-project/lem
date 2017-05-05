@@ -255,14 +255,16 @@
   (delete-point (%window-point window))
   (screen-delete (window-screen window)))
 
-(defun window-max-width () (display-width))
-(defun window-max-height () (- (display-height) (minibuffer-window-height)))
+(defun window-topleft-y () 0)
+(defun window-topleft-x () 0)
+(defun window-max-width () (- (display-width) (window-topleft-x)))
+(defun window-max-height () (- (display-height) (minibuffer-window-height) (window-topleft-y)))
 
 (defun window-init ()
   (setf (current-window)
         (make-window (current-buffer)
-                     0
-                     0
+                     (window-topleft-x)
+                     (window-topleft-y)
                      (window-max-width)
                      (window-max-height)
                      t))

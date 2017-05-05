@@ -108,7 +108,7 @@
   (loop :for prev := nil :then curr
         :for curr :in (buffer-list)
         :do (when (eq buffer curr)
-              (return (or prev (car (last (buffer-list))))))))
+              (return prev))))
 
 (defun bury-buffer (buffer)
   @lang(:jp "`buffer`をバッファリストの一番最後に移動させ、バッファリストの先頭を返します。")

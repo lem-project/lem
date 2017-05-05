@@ -31,12 +31,12 @@
      (push string *kill-ring*)
      (when (nthcdr *kill-ring-max* *kill-ring*)
        (setq *kill-ring*
-	     (subseq *kill-ring* 0 *kill-ring-max*)))
+             (subseq *kill-ring* 0 *kill-ring-max*)))
      (setq *kill-ring-yank-ptr* *kill-ring*)
-     (setq *kill-new-flag* nil))
+     (setq *kill-new-flag* nil)
+     (lem.clipboard:copy string))
     (t
-     (kill-append string *kill-before-p*)))
-  (lem.clipboard:copy string)
+     (lem.clipboard:copy (kill-append string *kill-before-p*))))
   t)
 
 (defun current-kill-ring ()

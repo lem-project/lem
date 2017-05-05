@@ -14,6 +14,7 @@
           update-prev-buffer
           bury-buffer
           get-next-buffer
+          get-previous-buffer
           delete-buffer
           get-file-buffer))
 
@@ -97,11 +98,17 @@
 (defun get-next-buffer (buffer)
   @lang(:jp "バッファリスト内にある`buffer`の次のバッファを返します。")
   (check-type buffer buffer)
-  (let* ((buffer-list (reverse (buffer-list)))
+  (let* ((buffer-list (buffer-list))
          (res (member buffer buffer-list)))
-    (if (cdr res)
-        (cadr res)
-        (car buffer-list))))
+    (cadr res)))
+
+(defun get-previous-buffer (buffer)
+  @lang(:jp "バッファリスト内にある`buffer`の前のバッファを返します。")
+  (check-type buffer buffer)
+  (loop :for prev := nil :then curr
+        :for curr :in (buffer-list)
+        :do (when (eq buffer curr)
+              (return (or prev (car (last (buffer-list))))))))
 
 (defun bury-buffer (buffer)
   @lang(:jp "`buffer`をバッファリストの一番最後に移動させ、バッファリストの先頭を返します。")

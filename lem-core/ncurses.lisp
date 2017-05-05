@@ -576,15 +576,6 @@
 (define-implementation update-display ()
   (charms/ll:doupdate))
 
-(define-implementation update-display-size (display-width display-height)
-  (declare (ignore display-width display-height))
-  (lem::adjust-windows (lem::window-topleft-x)
-                       (lem::window-topleft-y)
-                       (lem::window-max-width)
-                       (lem::window-max-height))
-  (lem::minibuf-update-size)
-  (redraw-display))
-
 (define-implementation input-loop (editor-thread)
   (loop
     (unless (bt:thread-alive-p editor-thread) (return))
@@ -593,8 +584,7 @@
             ((= code 410)
              (loop :while (< 0 (lem::event-queue-length)) :do
                (sleep 0.01))
-             (update-display-size (display-width)
-                                  (display-height)))
+             (lem::change-display-size-hook))
             ((= code #.(char-code lem::C-\]))
              (send-abort-event editor-thread))
             (t

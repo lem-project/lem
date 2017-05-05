@@ -850,3 +850,11 @@
   (dolist (window (floating-windows))
     (redraw-display-window window t))
   (update-display))
+
+(defun change-display-size-hook ()
+  (adjust-windows (window-topleft-x)
+                  (window-topleft-y)
+                  (window-max-width)
+                  (window-max-height))
+  (minibuf-update-size)
+  (redraw-display))

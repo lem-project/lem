@@ -35,6 +35,5 @@
 (define-interface screen-move-cursor (screen x y))
 (define-interface redraw-display-window (window force))
 (define-interface update-display ())
-(define-interface update-display-size (display-width display-height))
 (define-interface print-echoarea (string doupdate-p))
 (define-interface input-loop (editor-thread))

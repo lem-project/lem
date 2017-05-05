@@ -21,7 +21,6 @@
            :screen-move-cursor
            :redraw-display-window
            :update-display
-           :update-display-size
            :input-loop))
 
 (defpackage :lem

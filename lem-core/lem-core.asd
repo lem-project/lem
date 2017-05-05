@@ -23,6 +23,7 @@
                (:file "window")
                (:file "modeline")
                (:file "defcommand")
+               (:file "tabbar")
                (:file "mode")
                (:file "keymap")
                (:file "timer")

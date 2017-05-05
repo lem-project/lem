@@ -22,7 +22,6 @@
            :redraw-display-window
            :update-display
            :update-display-size
-           :print-echoarea
            :input-loop))
 
 (defpackage :lem

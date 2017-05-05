@@ -3,8 +3,6 @@
   (:reexport :lem-interface))
 (in-package :lem-ncurses)
 
-(defvar *echo-area-scrwin*)
-
 (defvar *old-display-width*)
 (defvar *old-display-height*)
 
@@ -55,12 +53,7 @@
 (defun display-init ()
   (term-init)
   (setq *old-display-width* charms/ll:*cols*)
-  (setq *old-display-height* charms/ll:*lines*)
-  (setf *echo-area-scrwin*
-        (newwin (minibuffer-window-height)
-                (display-width)
-                (- (display-height) (minibuffer-window-height))
-                0)))
+  (setq *old-display-height* charms/ll:*lines*))
 
 (defun display-finalize ()
   (term-finalize))
@@ -611,24 +604,8 @@
                              *old-display-height*)))
     (setq *old-display-width* display-width)
     (setq *old-display-height* display-height)
-    (charms/ll:mvwin *echo-area-scrwin*
-                     (- display-height
-                        (minibuffer-window-height))
-                     0)
-    (charms/ll:wresize *echo-area-scrwin*
-                       (minibuffer-window-height)
-                       display-width)
     (lem::minibuf-update-size)
-    (print-echoarea nil nil)
     (redraw-display)))
-
-(define-implementation print-echoarea (string doupdate-p)
-  (charms/ll:werase *echo-area-scrwin*)
-  (unless (null string)
-    (charms/ll:mvwaddstr *echo-area-scrwin* 0 0 string))
-  (if doupdate-p
-      (charms/ll:wrefresh *echo-area-scrwin*)
-      (charms/ll:wnoutrefresh *echo-area-scrwin*)))
 
 (define-implementation input-loop (editor-thread)
   (loop

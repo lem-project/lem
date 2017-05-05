@@ -3,9 +3,6 @@
   (:reexport :lem-interface))
 (in-package :lem-ncurses)
 
-(defvar *old-display-width*)
-(defvar *old-display-height*)
-
 (defvar *print-start-x* 0)
 
 (defun attribute-to-bits (attribute-or-name)
@@ -51,9 +48,7 @@
     win))
 
 (defun display-init ()
-  (term-init)
-  (setq *old-display-width* charms/ll:*cols*)
-  (setq *old-display-height* charms/ll:*lines*))
+  (term-init))
 
 (defun display-finalize ()
   (term-finalize))
@@ -582,30 +577,13 @@
   (charms/ll:doupdate))
 
 (define-implementation update-display-size (display-width display-height)
-  (let ((delete-windows))
-    (dolist (window (window-list))
-      (when (<= display-height
-                (+ (window-y window) 2))
-        (push window delete-windows))
-      (when (<= display-width
-                (+ (window-x window) 1))
-        (push window delete-windows)))
-    (mapc #'delete-window delete-windows))
-  (let ((window-list (window-list)))
-    (dolist (window (lem::collect-right-windows window-list))
-      (lem::window-resize window
-                          (- display-width
-                             *old-display-width*)
-                          0))
-    (dolist (window (lem::collect-bottom-windows window-list))
-      (lem::window-resize window
-                          0
-                          (- display-height
-                             *old-display-height*)))
-    (setq *old-display-width* display-width)
-    (setq *old-display-height* display-height)
-    (lem::minibuf-update-size)
-    (redraw-display)))
+  (declare (ignore display-width display-height))
+  (lem::adjust-windows (lem::window-topleft-x)
+                       (lem::window-topleft-y)
+                       (lem::window-max-width)
+                       (lem::window-max-height))
+  (lem::minibuf-update-size)
+  (redraw-display))
 
 (define-implementation input-loop (editor-thread)
   (loop

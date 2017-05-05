@@ -698,6 +698,31 @@
           (t
            (resize-window-recursive parent-node n apply-fn split-type)))))
 
+(defun adjust-windows (frame-x frame-y frame-width frame-height)
+  (let ((window-list (window-list)))
+    (dolist (window (collect-top-windows window-list))
+      (window-set-pos window (window-x window) frame-y))
+    (dolist (window (collect-left-windows window-list))
+      (window-set-pos window frame-x (window-y window)))
+    (let ((delete-windows '()))
+      (dolist (window window-list)
+        (when (<= frame-height (+ 2 (window-y window)))
+          (push window delete-windows))
+        (when (<= frame-width (+ 1 (window-x window)))
+          (push window delete-windows)))
+      (mapc #'delete-window delete-windows)))
+  (let ((window-list (window-list)))
+    (dolist (window (collect-right-windows window-list))
+      (window-resize window
+                     (- frame-width
+                        (+ (window-x window) (window-width window)))
+                     0))
+    (dolist (window (collect-bottom-windows window-list))
+      (window-resize window
+                     0
+                     (- frame-height
+                        (+ (window-y window) (window-height window)))))))
+
 (defun get-buffer-windows (buffer)
   (loop :for window :in (window-list)
      :when (eq buffer (window-buffer window))

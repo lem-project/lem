@@ -2,8 +2,7 @@
 
 (export '(read-event
           send-event
-          send-abort-event
-          send-resize-screen-event))
+          send-abort-event))
 
 (declaim (inline make-queue enqueue dequeue empty-queue-p))
 
@@ -24,8 +23,6 @@
 
 (defun empty-queue-p (queue)
   (null (car queue)))
-
-(defparameter +resize-screen+ (make-symbol "RESIZE-SCREEN"))
 
 (let ((wait (bt:make-condition-variable))
       (lock (bt:make-lock))
@@ -54,16 +51,12 @@
   (defun send-event (obj)
     (bt:with-lock-held (lock)
       (enqueue queue obj)
-      (bt:condition-notify wait)))
-  )
+      (bt:condition-notify wait))))
 
 (defun send-abort-event (editor-thread)
   (bt:interrupt-thread editor-thread
                        (lambda ()
                          (error 'editor-interrupt))))
-
-(defun send-resize-screen-event (width height)
-  (send-event (list +resize-screen+ width height)))
 
 (defun receive-event (timeout)
   (loop
@@ -73,9 +66,6 @@
             ((eql e :timeout)
              (assert timeout)
              (return nil))
-            ((and (consp e) (eq +resize-screen+ (car e)))
-             (destructuring-bind (width height) (cdr e)
-               (update-display-size width height)))
             (t
              (return e))))))
 

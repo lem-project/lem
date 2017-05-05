@@ -84,10 +84,10 @@
 
 (define-command tabbar-next (n) ("p")
   (dotimes (_ n)
-    (alexandria:when-let (buffer (get-next-buffer (current-buffer)))
-      (switch-to-buffer buffer nil))))
+    (let ((buffer (get-next-buffer (current-buffer))))
+      (switch-to-buffer (or buffer (first (buffer-list))) nil))))
 
 (define-command tabbar-prev (n) ("p")
   (dotimes (_ n)
-    (alexandria:when-let (buffer (get-previous-buffer (current-buffer)))
-      (switch-to-buffer buffer nil))))
+    (let ((buffer (get-previous-buffer (current-buffer))))
+      (switch-to-buffer (or buffer (car (last (buffer-list)))) nil))))

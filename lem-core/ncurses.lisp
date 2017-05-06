@@ -557,7 +557,7 @@
     (progn
       #+(or)without-interrupts
       (disp-reset-lines window)
-      (when focus-window-p (adjust-horizontal-scroll window))
+      (adjust-horizontal-scroll window)
       (screen-display-lines (lem::window-screen window)
                             (or force
                                 (screen-modified-p (lem::window-screen window)))

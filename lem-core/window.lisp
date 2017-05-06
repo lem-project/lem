@@ -880,6 +880,8 @@
   (update-display))
 
 (defun change-display-size-hook ()
+  (dolist (window *header-windows*)
+    (window-set-size window (display-width) 1))
   (adjust-windows (window-topleft-x)
                   (window-topleft-y)
                   (+ (window-max-width) (window-topleft-x))

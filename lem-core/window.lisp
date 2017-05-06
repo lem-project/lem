@@ -67,20 +67,17 @@
     :initarg :height
     :accessor window-%height
     :type fixnum)
-   (%buffer
-    :initarg :%buffer
+   (buffer
+    :initarg :buffer
     :accessor window-%buffer
     :type buffer)
    (screen
-    :initarg :screen
     :reader window-screen)
    (view-point
-    :initarg :view-point
     :reader window-view-point
     :writer set-window-view-point
     :type point)
    (point
-    :initarg :point
     :accessor %window-point
     :type point)
    (delete-hook
@@ -96,25 +93,30 @@
     :initform nil
     :accessor window-parameters)))
 
-(defgeneric %delete-window (window))
+(defmethod initialize-instance :after ((window window) &rest initargs)
+  (declare (ignore initargs))
+  (with-slots (screen view-point point) window
+    (setf screen (make-screen (window-x window)
+                              (window-y window)
+                              (window-width window)
+                              (window-height window)
+                              (window-use-modeline-p window)))
+    (setf view-point (copy-point (buffer-point (window-buffer window)) :right-inserting))
+    (setf point (copy-point (buffer-start-point (window-buffer window)) :right-inserting))))
 
-(defun windowp (x)
-  (typep x 'window))
-
-(defun %make-window (class-name buffer x y width height use-modeline-p)
-  (make-instance class-name
+(defun make-window (buffer x y width height use-modeline-p)
+  (make-instance 'window
+                 :buffer buffer
                  :x x
                  :y y
                  :width width
                  :height height
-                 :%buffer buffer
-                 :screen (make-screen x y width height use-modeline-p)
-                 :view-point (copy-point (buffer-point buffer) :right-inserting)
-                 :use-modeline-p use-modeline-p
-                 :point (copy-point (buffer-start-point buffer) :right-inserting)))
+                 :use-modeline-p use-modeline-p))
 
-(defun make-window (buffer x y width height use-modeline-p)
-  (%make-window 'window buffer x y width height use-modeline-p))
+(defgeneric %delete-window (window))
+
+(defun windowp (x)
+  (typep x 'window))
 
 (defun window-x (&optional (window (current-window)))
   (window-%x window))
@@ -805,14 +807,19 @@
 (defclass floating-window (window) ())
 
 (defun make-floating-window (buffer x y width height use-modeline-p)
-  (let ((window (%make-window 'floating-window buffer x y width height use-modeline-p)))
+  (let ((window (make-instance 'floating-window
+                               :buffer buffer
+                               :x x
+                               :y y
+                               :width width
+                               :height height
+                               :use-modeline-p use-modeline-p)))
     (push window *floating-windows*)
     window))
 
 (defmethod %delete-window ((window floating-window))
   (setf *floating-windows*
-        (delete window *floating-windows*))
-  t)
+        (delete window *floating-windows*)))
 
 (defun balloon (orig-window buffer width height)
   (let* ((y (+ (window-y orig-window)

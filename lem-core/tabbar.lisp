@@ -1,5 +1,7 @@
 (in-package :lem)
 
+(defvar *use-tabbar* nil)
+
 (defstruct tabbar
   buffer
   window

@@ -44,7 +44,6 @@
 (defvar *window-scroll-functions* '())
 (defvar *window-size-change-functions* '())
 (defvar *window-show-buffer-functions* '())
-(defvar *use-tabbar* t)
 
 (defvar *floating-windows* '())
 (defvar *header-windows* '())
@@ -277,8 +276,7 @@
                      (window-max-width)
                      (window-max-height)
                      t))
-  (setf (window-tree) (current-window))
-  (when *use-tabbar* (tabbar-init)))
+  (setf (window-tree) (current-window)))
 
 (defun window-recenter (window)
   (line-start
@@ -852,7 +850,6 @@
   ())
 
 (defun redraw-display (&optional force)
-  (when *use-tabbar* (tabbar-draw))
   (dolist (window (window-list))
     (unless (eq window (current-window))
       (redraw-display-window window force)))

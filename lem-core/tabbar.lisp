@@ -1,5 +1,5 @@
 (defpackage :lem.tabbar
-  (:use :cl :lem))
+  (:use :cl :lem :lem.button))
 (in-package :lem.tabbar)
 
 (defclass tabbar-window (header-window)
@@ -38,21 +38,26 @@
   (declare (ignore force))
   (when (tabbar-require-update)
     (let* ((buffer (tabbar-buffer *tabbar*))
-           (p (buffer-point buffer)))
+           (p (buffer-point buffer))
+           (charpos (point-charpos p)))
       (erase-buffer buffer)
       (dolist (buffer (buffer-list))
-        (insert-string p
-                       (let ((name (buffer-name buffer)))
-                         (if (< 20 (length name))
-                             (format nil "[~A...]" (subseq name 0 17))
-                             (format nil "[~A]" name)))
-                       :attribute (if (eq buffer (current-buffer))
-                                      'tabbar-active-tab-attribute
-                                      'tabbar-attribute)))
+        (let ((focusp (eq buffer (current-buffer))))
+          (insert-button p
+                         (let ((name (buffer-name buffer)))
+                           (if (< 20 (length name))
+                               (format nil "[~A...]" (subseq name 0 17))
+                               (format nil "[~A]" name)))
+                         nil
+                         :attribute (if focusp
+                                        'tabbar-active-tab-attribute
+                                        'tabbar-attribute)
+                         'buffer buffer)))
       (let ((n (- (display-width) (point-column p))))
         (when (> n 0)
           (insert-string p (make-string n :initial-element #\space)
-                         :attribute 'tabbar-attribute)))))
+                         :attribute 'tabbar-attribute)))
+      (line-offset p 0 charpos)))
   (setf (tabbar-prev-buffer-list *tabbar*) (buffer-list))
   (setf (tabbar-prev-current-buffer *tabbar*) (current-buffer))
   (setf (tabbar-prev-display-width *tabbar*) (display-width))
@@ -88,11 +93,19 @@
 (define-key *global-keymap* (list (code-char 555)) 'tabbar-prev) ; control + pageup
 
 (define-command tabbar-next (n) ("p")
-  (dotimes (_ n)
-    (let ((buffer (get-next-buffer (current-buffer))))
-      (switch-to-buffer (or buffer (first (buffer-list))) nil))))
+  (let ((p (buffer-point (tabbar-buffer *tabbar*))))
+    (dotimes (_ n)
+      (forward-button p))
+    (let ((button (button-at p)))
+      (when button
+        (move-point p (button-end button))
+        (character-offset p -1)
+        (switch-to-buffer (button-get button 'buffer) nil)))))
 
 (define-command tabbar-prev (n) ("p")
-  (dotimes (_ n)
-    (let ((buffer (get-previous-buffer (current-buffer))))
-      (switch-to-buffer (or buffer (car (last (buffer-list)))) nil))))
+  (let ((p (buffer-point (tabbar-buffer *tabbar*))))
+    (dotimes (_ n)
+      (backward-button p))
+    (let ((button (button-at p)))
+      (when button
+        (switch-to-buffer (button-get button 'buffer) nil)))))

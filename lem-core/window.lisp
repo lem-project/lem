@@ -874,8 +874,6 @@
   (when *modify-header-windows*
     (setf *modify-header-windows* nil)
     (change-display-size-hook nil))
-  (dolist (window *header-windows*)
-    (window-redraw window force))
   (dolist (window (window-list))
     (unless (eq window (current-window))
       (window-redraw window force)))
@@ -884,6 +882,8 @@
         (t
          (window-redraw (current-minibuffer-window) force)
          (window-redraw (current-window) force)))
+  (dolist (window *header-windows*)
+    (window-redraw window force))
   (dolist (window *floating-windows*)
     (window-redraw window t))
   (update-display))

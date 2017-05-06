@@ -115,10 +115,11 @@
 
 (defvar *completion-overlay* nil)
 (defvar *completion-window* nil)
+(defvar *completion-buffer* nil)
 (defvar *completion-restart-function* nil)
 
 (defun completion-buffer ()
-  (get-buffer "*Completion*"))
+  *completion-buffer*)
 
 (defun completion-buffer-point ()
   (let ((buffer (completion-buffer)))
@@ -143,7 +144,8 @@
   (delete-window *completion-window*)
   (let ((buffer (completion-buffer)))
     (when buffer
-      (delete-buffer buffer)))
+      (delete-buffer buffer)
+      (setf *completion-buffer* nil)))
   (redraw-display t))
 
 (defun completion-again ()
@@ -217,7 +219,9 @@
            (insert-string point (completion-item-label item))))))
 
 (defun create-completion-buffer (items back-attribute)
-  (let ((buffer (get-buffer-create "*Completion*")))
+  (let ((buffer (or (completion-buffer)
+                    (make-buffer " *Completion*" :enable-undo-p nil))))
+    (setf *completion-buffer* buffer)
     (erase-buffer buffer)
     (setf (variable-value 'truncate-lines :buffer buffer) nil)
     (let ((point (buffer-point buffer))

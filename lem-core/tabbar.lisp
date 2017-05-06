@@ -35,33 +35,37 @@
     nil))
 
 (defmethod window-redraw ((window tabbar-window) force)
-  (declare (ignore force))
-  (when (tabbar-require-update)
+  (when (or force (tabbar-require-update))
     (let* ((buffer (tabbar-buffer *tabbar*))
            (p (buffer-point buffer))
            (charpos (point-charpos p)))
       (erase-buffer buffer)
       (dolist (buffer (buffer-list))
         (let ((focusp (eq buffer (current-buffer))))
-          (insert-button p
-                         (let ((name (buffer-name buffer)))
-                           (if (< 20 (length name))
-                               (format nil "[~A...]" (subseq name 0 17))
-                               (format nil "[~A]" name)))
-                         nil
-                         :attribute (if focusp
-                                        'tabbar-active-tab-attribute
-                                        'tabbar-attribute)
-                         'buffer buffer)))
+          (let ((start-pos (point-charpos p)))
+            (insert-button p
+                           (let ((name (buffer-name buffer)))
+                             (if (< 20 (length name))
+                                 (format nil "[~A...]" (subseq name 0 17))
+                                 (format nil "[~A]" name)))
+                           (let ((buffer buffer))
+                             (lambda () (switch-to-buffer buffer nil)))
+                           :attribute (if focusp
+                                          'tabbar-active-tab-attribute
+                                          'tabbar-attribute))
+            (when focusp
+              (let ((end-pos (point-charpos p)))
+                (unless (<= start-pos charpos (1- end-pos))
+                  (setf charpos start-pos)))))))
       (let ((n (- (display-width) (point-column p))))
         (when (> n 0)
           (insert-string p (make-string n :initial-element #\space)
                          :attribute 'tabbar-attribute)))
-      (line-offset p 0 charpos)))
-  (setf (tabbar-prev-buffer-list *tabbar*) (buffer-list))
-  (setf (tabbar-prev-current-buffer *tabbar*) (current-buffer))
-  (setf (tabbar-prev-display-width *tabbar*) (display-width))
-  (call-next-method))
+      (line-offset p 0 charpos))
+    (setf (tabbar-prev-buffer-list *tabbar*) (buffer-list))
+    (setf (tabbar-prev-current-buffer *tabbar*) (current-buffer))
+    (setf (tabbar-prev-display-width *tabbar*) (display-width))
+    (call-next-method)))
 
 (defun tabbar-clear-cache ()
   (setf (tabbar-buffer *tabbar*) nil)
@@ -100,7 +104,7 @@
       (when button
         (move-point p (button-end button))
         (character-offset p -1)
-        (switch-to-buffer (button-get button 'buffer) nil)))))
+        (button-action button)))))
 
 (define-command tabbar-prev (n) ("p")
   (let ((p (buffer-point (tabbar-buffer *tabbar*))))
@@ -108,4 +112,4 @@
       (backward-button p))
     (let ((button (button-at p)))
       (when button
-        (switch-to-buffer (button-get button 'buffer) nil)))))
+        (button-action button)))))

@@ -19,8 +19,6 @@
           region
           modeline
           modeline-inactive
-          tabbar-active-tab-attribute
-          tabbar-attribute
           truncate-attribute
           syntax-string-attribute
           syntax-comment-attribute
@@ -157,13 +155,6 @@
 (define-attribute modeline-inactive
   (:light :reverse-p t)
   (:dark :reverse-p t))
-
-(define-attribute tabbar-active-tab-attribute
-  (t :foreground "white" :background "blue"))
-
-(define-attribute tabbar-attribute
-  (:light :foreground "black" :background "gray")
-  (:dark :foreground "black" :background "white"))
 
 (define-attribute truncate-attribute)
 

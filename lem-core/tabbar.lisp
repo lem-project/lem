@@ -1,6 +1,18 @@
 (defpackage :lem.tabbar
-  (:use :cl :lem :lem.button))
+  (:use :cl :lem :lem.button)
+  (:export :tabbar-active-tab-attribute
+           :tabbar-attribute
+           :tabbar-background-attribute))
 (in-package :lem.tabbar)
+
+(define-attribute tabbar-active-tab-attribute
+  (t :foreground "black" :background "dark gray"))
+
+(define-attribute tabbar-attribute
+  (t :foreground "white" :background "gray"))
+
+(define-attribute tabbar-background-attribute
+  (t :underline-p t))
 
 (defclass tabbar-window (header-window)
   ((buffer
@@ -46,8 +58,8 @@
             (insert-button p
                            (let ((name (buffer-name buffer)))
                              (if (< 20 (length name))
-                                 (format nil "[~A...]" (subseq name 0 17))
-                                 (format nil "[~A]" name)))
+                                 (format nil " ~A... " (subseq name 0 17))
+                                 (format nil " ~A " name)))
                            (let ((buffer buffer))
                              (lambda () (switch-to-buffer buffer nil)))
                            :attribute (if focusp
@@ -60,7 +72,7 @@
       (let ((n (- (display-width) (point-column p))))
         (when (> n 0)
           (insert-string p (make-string n :initial-element #\space)
-                         :attribute 'tabbar-attribute)))
+                         :attribute 'tabbar-background-attribute)))
       (line-offset p 0 charpos))
     (setf (tabbar-prev-buffer-list *tabbar*) (buffer-list))
     (setf (tabbar-prev-current-buffer *tabbar*) (current-buffer))

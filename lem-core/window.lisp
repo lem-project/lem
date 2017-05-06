@@ -47,6 +47,7 @@
 (defvar *use-tabbar* t)
 
 (defvar *floating-windows* '())
+(defvar *header-windows* '())
 
 (defvar *window-tree*)
 
@@ -263,7 +264,7 @@
   (delete-point (%window-point window))
   (screen-delete (window-screen window)))
 
-(defun window-topleft-y () (if *use-tabbar* 1 0))
+(defun window-topleft-y () (length *header-windows*))
 (defun window-topleft-x () 0)
 (defun window-max-width () (- (display-width) (window-topleft-x)))
 (defun window-max-height () (- (display-height) (minibuffer-window-height) (window-topleft-y)))
@@ -846,6 +847,9 @@
         (setf width (display-width)))
       (setf x (- (display-width) width)))
     (make-floating-window buffer x y width height nil)))
+
+(defclass header-window (window)
+  ())
 
 (defun redraw-display (&optional force)
   (when *use-tabbar* (tabbar-draw))

@@ -46,6 +46,8 @@
 (defvar *window-show-buffer-functions* '())
 (defvar *use-tabbar* t)
 
+(defvar *floating-windows* '())
+
 (defvar *window-tree*)
 
 (defvar *current-window*)
@@ -799,11 +801,6 @@
           (switch-to-buffer buffer)
           (values (current-window) split-p)))))
 
-(defvar *floating-windows* '())
-
-(defun floating-windows ()
-  *floating-windows*)
-
 (defclass floating-window (window) ())
 
 (defun make-floating-window (buffer x y width height use-modeline-p)
@@ -860,7 +857,7 @@
         (t
          (redraw-display-window (current-minibuffer-window) force)
          (redraw-display-window (current-window) force)))
-  (dolist (window (floating-windows))
+  (dolist (window *floating-windows*)
     (redraw-display-window window t))
   (update-display))
 

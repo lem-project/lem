@@ -38,20 +38,29 @@
   (funcall (button-callback button)))
 
 (defun forward-button (point &optional limit)
-  (when (text-property-at point 'button)
-    (next-single-property-change point 'button))
-  (next-single-property-change point 'button limit))
+  (let ((button (button-at point)))
+    (cond (button
+           (move-point point (button-end button))
+           (if (text-property-at point 'button)
+               point
+               (next-single-property-change point 'button limit)))
+          (t
+           (next-single-property-change point 'button limit)))))
 
 (defun backward-button (point &optional limit)
-  (when (text-property-at point 'button -1)
-    (previous-single-property-change point 'button))
+  (let ((button (button-at point)))
+    (when button
+      (move-point point (button-start button))))
   (previous-single-property-change point 'button limit))
 
 (defun move-to-button-start (point)
-  (cond ((text-property-at point 'button -1)
-         (previous-single-property-change point 'button))
-        ((text-property-at point 'button 0)
-         point)))
+  (let ((following (text-property-at point 'button -1))
+        (preceding (text-property-at point 'button 0)))
+    (cond ((and preceding
+                (eq following preceding))
+           (previous-single-property-change point 'button))
+          (preceding
+           point))))
 
 (defun move-to-button-end (point)
   (when (text-property-at point 'button)
@@ -60,8 +69,8 @@
 (defun button-at (point)
   (with-point ((point point))
     (let ((button (or (text-property-at point 'button)
-                      (text-property-at (character-offset point -1)
-                                        'button))))
+                      (when (character-offset point -1)
+                        (text-property-at point 'button)))))
       (when button
         (with-point ((start point)
                      (end point))

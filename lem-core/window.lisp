@@ -34,9 +34,7 @@
           floating-windows
           balloon
           redraw-display
-          tabbar-on
-          tabbar-off
-          enable-tabbar-p))
+          header-window))
 
 (define-editor-variable truncate-lines t)
 
@@ -90,6 +88,7 @@
     :type (or null function))
    (use-modeline-p
     :initarg :use-modeline-p
+    :initform nil
     :reader window-use-modeline-p
     :type boolean)
    (parameters
@@ -850,23 +849,33 @@
       (setf x (- (display-width) width)))
     (make-floating-window buffer x y width height nil)))
 
+(defvar *modify-header-windows* nil)
+
 (defclass header-window (window)
   ())
 
-(defmethod initialize-instance :after ((window header-window) &rest initargs)
+(defmethod initialize-instance ((window header-window) &rest initargs)
   (declare (ignore initargs))
   (with-slots (x y width height) window
     (setf x 0)
     (setf y (length *header-windows*))
     (setf width (display-width))
     (setf height 1))
-  (push window *header-windows*))
+  (push window *header-windows*)
+  (setf *modify-header-windows* t)
+  (call-next-method))
 
 (defmethod %delete-window ((window header-window))
   (setf *header-windows*
-        (delete window *header-windows*)))
+        (delete window *header-windows*))
+  (setf *modify-header-windows* t))
 
 (defun redraw-display (&optional force)
+  (when *modify-header-windows*
+    (setf *modify-header-windows* nil)
+    (change-display-size-hook nil))
+  (dolist (window *header-windows*)
+    (window-redraw window force))
   (dolist (window (window-list))
     (unless (eq window (current-window))
       (window-redraw window force)))
@@ -879,7 +888,7 @@
     (window-redraw window t))
   (update-display))
 
-(defun change-display-size-hook ()
+(defun change-display-size-hook (redraw-p)
   (dolist (window *header-windows*)
     (window-set-size window (display-width) 1))
   (adjust-windows (window-topleft-x)
@@ -887,4 +896,4 @@
                   (+ (window-max-width) (window-topleft-x))
                   (+ (window-max-height) (window-topleft-y)))
   (minibuf-update-size)
-  (redraw-display))
+  (when redraw-p (redraw-display)))

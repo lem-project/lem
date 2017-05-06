@@ -25,7 +25,6 @@
                (:file "defcommand")
                (:file "mode")
                (:file "keymap")
-               (:file "tabbar")
                (:file "timer")
                (:file "event")
                (:file "interp")
@@ -45,6 +44,7 @@
                (:file "word-command")
                (:file "sexp-command")
 
+               (:file "tabbar")
                (:file "listener-mode")
                (:file "kbdmacro")
                (:file "isearch")

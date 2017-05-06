@@ -584,7 +584,7 @@
             ((= code 410)
              (loop :while (< 0 (lem::event-queue-length)) :do
                (sleep 0.01))
-             (lem::change-display-size-hook))
+             (lem::change-display-size-hook t))
             ((= code #.(char-code lem::C-\]))
              (send-abort-event editor-thread))
             (t

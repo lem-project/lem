@@ -1,23 +1,28 @@
-(in-package :lem)
+(defpackage :lem.tabbar
+  (:use :cl :lem))
+(in-package :lem.tabbar)
+
+(defclass tabbar-window (header-window)
+  ((buffer
+    :initarg :buffer
+    :accessor tabbar-buffer)
+   (prev-buffer-list
+    :initform '()
+    :accessor tabbar-prev-buffer-list)
+   (prev-current-buffer
+    :initform nil
+    :accessor tabbar-prev-current-buffer)
+   (prev-display-width
+    :initform 0
+    :accessor tabbar-prev-display-width)))
 
 (defvar *use-tabbar* nil)
-
-(defstruct tabbar
-  buffer
-  window
-  (prev-buffer-list '())
-  (prev-current-buffer nil)
-  (prev-display-width 0))
-
 (defvar *tabbar* nil)
 
 (defun tabbar-init ()
-  (let* ((buffer (make-buffer " *tabbar*" :enable-undo-p nil))
-         (window (make-floating-window buffer 0 0 (display-width) 1 nil)))
+  (let ((buffer (make-buffer " *tabbar*" :enable-undo-p nil)))
     (setf (variable-value 'truncate-lines :buffer buffer) nil)
-    (setf *tabbar*
-          (make-tabbar :buffer buffer
-                       :window window))))
+    (setf *tabbar* (make-instance 'tabbar-window :buffer buffer))))
 
 (defun tabbar-require-update ()
   (block exit
@@ -26,11 +31,11 @@
     (unless (eq (buffer-list) (tabbar-prev-buffer-list *tabbar*))
       (return-from exit t))
     (unless (= (display-width) (tabbar-prev-display-width *tabbar*))
-      (window-set-size (tabbar-window *tabbar*) (display-width) 1)
       (return-from exit t))
     nil))
 
-(defun tabbar-draw ()
+(defmethod window-redraw ((window tabbar-window) force)
+  (declare (ignore force))
   (when (tabbar-require-update)
     (let* ((buffer (tabbar-buffer *tabbar*))
            (p (buffer-point buffer)))
@@ -51,10 +56,9 @@
   (setf (tabbar-prev-buffer-list *tabbar*) (buffer-list))
   (setf (tabbar-prev-current-buffer *tabbar*) (current-buffer))
   (setf (tabbar-prev-display-width *tabbar*) (display-width))
-  t)
-  
+  (call-next-method))
+
 (defun tabbar-clear-cache ()
-  (setf (tabbar-window *tabbar*) nil)
   (setf (tabbar-buffer *tabbar*) nil)
   (setf (tabbar-prev-buffer-list *tabbar*) '())
   (setf (tabbar-prev-current-buffer *tabbar*) nil)
@@ -63,15 +67,14 @@
 (defun tabbar-off ()
   (when *use-tabbar*
     (setf *use-tabbar* nil)
-    (delete-window (tabbar-window *tabbar*))
     (tabbar-clear-cache)
-    (change-display-size-hook)))
+    (delete-window *tabbar*)
+    (setf *tabbar* nil)))
   
 (defun tabbar-on ()
   (unless *use-tabbar*
-    (tabbar-init)
     (setf *use-tabbar* t)
-    (change-display-size-hook)))
+    (tabbar-init)))
 
 (defun enable-tabbar-p ()
   *use-tabbar*)

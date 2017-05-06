@@ -14,6 +14,7 @@
           window-height
           window-buffer
           window-parameter
+          window-redraw
           current-window
           window-list
           one-window-p
@@ -116,6 +117,9 @@
                  :use-modeline-p use-modeline-p))
 
 (defgeneric %delete-window (window))
+(defgeneric window-redraw (window force)
+  (:method (window force)
+    (redraw-display-window window force)))
 
 (defun windowp (x)
   (typep x 'window))

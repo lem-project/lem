@@ -853,6 +853,19 @@
 (defclass header-window (window)
   ())
 
+(defmethod initialize-instance :after ((window header-window) &rest initargs)
+  (declare (ignore initargs))
+  (with-slots (x y width height) window
+    (setf x 0)
+    (setf y (length *header-windows*))
+    (setf width (display-width))
+    (setf height 1))
+  (push window *header-windows*))
+
+(defmethod %delete-window ((window header-window))
+  (setf *header-windows*
+        (delete window *header-windows*)))
+
 (defun redraw-display (&optional force)
   (dolist (window (window-list))
     (unless (eq window (current-window))

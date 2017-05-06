@@ -44,6 +44,7 @@
                (:file "word-command")
                (:file "sexp-command")
 
+               (:file "button")
                (:file "tabbar")
                (:file "listener-mode")
                (:file "kbdmacro")

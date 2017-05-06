@@ -1,5 +1,5 @@
 (defpackage :lem-lisp-mode
-  (:use :cl :lem :lem.language-mode :lem-lisp-mode.errors :lem-lisp-mode.button)
+  (:use :cl :lem :lem.language-mode :lem-lisp-mode.errors :lem.button)
   (:export :lisp-note-attribute
            :lisp-entry-attribute
            :lisp-headline-attribute

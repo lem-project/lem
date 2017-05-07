@@ -15,7 +15,7 @@
   (index -1))
 
 (defun call-with-sourcelist (buffer-name function)
-  (let ((buffer (get-buffer-create buffer-name))
+  (let ((buffer (make-buffer buffer-name))
         (sourcelist (make-sourcelist :buffer-name buffer-name)))
     (erase-buffer buffer)
     (with-point ((*sourcelist-point* (buffer-point buffer) :left-inserting))

@@ -27,7 +27,7 @@
        :condition condition))))
 
 (defun pop-up-backtrace (condition)
-  (let ((buffer (get-buffer-create "*EDITOR ERROR*")))
+  (let ((buffer (make-buffer "*EDITOR ERROR*")))
     (erase-buffer buffer)
     (display-buffer buffer)
     (with-open-stream (stream (make-buffer-output-stream (buffer-point buffer)))

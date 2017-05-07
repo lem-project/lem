@@ -366,7 +366,7 @@
           (destructuring-bind (doc cache-p) doc
             (declare (ignore cache-p))
             (unless (eq doc :not-available)
-              (let* ((buffer (get-buffer-create " *swank:autodoc-fontity*"))
+              (let* ((buffer (make-buffer " *swank:autodoc-fontity*"))
                      (point (buffer-point buffer)))
                 (erase-buffer buffer)
                 (change-buffer-mode buffer 'lisp-mode)
@@ -505,7 +505,7 @@
   (lisp-eval-async `(,expander ,(form-string-at-point))
                    (lambda (string)
                      (with-pop-up-typeout-window
-                         (out (get-buffer-create buffer-name) :focus t :erase t)
+                         (out (make-buffer buffer-name) :focus t :erase t)
                        (princ string out)))))
 
 (define-command lisp-macroexpand () ()
@@ -612,7 +612,7 @@
      :syntax-table lem-lisp-syntax:*syntax-table*))
 
 (defun show-apropos (data)
-  (let ((buffer (get-buffer-create "*lisp-apropos*")))
+  (let ((buffer (make-buffer "*lisp-apropos*")))
     (switch-to-buffer buffer)
     (lisp-apropos-mode)
     (erase-buffer buffer)
@@ -667,7 +667,7 @@
                             nil)))
 
 (defun show-description (string)
-  (let ((buffer (get-buffer-create "*lisp-description*")))
+  (let ((buffer (make-buffer "*lisp-description*")))
     (change-buffer-mode buffer 'lisp-mode)
     (with-pop-up-typeout-window (stream buffer :erase t)
       (princ string stream))))
@@ -808,7 +808,7 @@
 (defparameter *fresh-output-buffer-p* t)
 
 (defun write-string-to-output-buffer (string)
-  (with-pop-up-typeout-window (stream (get-buffer-create "*lisp-output*"))
+  (with-pop-up-typeout-window (stream (make-buffer "*lisp-output*"))
     (when *fresh-output-buffer-p*
       (setq *fresh-output-buffer-p* nil)
       (fresh-line stream)
@@ -870,7 +870,7 @@
     connection))
 
 (defun log-message (message)
-  (let ((buffer (get-buffer-create "*lisp-events*")))
+  (let ((buffer (make-buffer "*lisp-events*")))
     (with-open-stream (stream (make-buffer-output-stream (buffer-end-point buffer)))
       (print message stream))))
 
@@ -993,7 +993,7 @@
      (or (get-buffer buffer)
          (find-file-buffer filename)))
     ((:source-form string)
-     (let ((buffer (get-buffer-create "*lisp-source*")))
+     (let ((buffer (make-buffer "*lisp-source*")))
        (erase-buffer buffer)
        (change-buffer-mode buffer 'lisp-mode)
        (insert-string (buffer-point buffer) string)

@@ -298,7 +298,7 @@
     (redraw-display)))
 
 (define-command tetris () ()
-  (let ((buffer (get-buffer-create "*tetris*")))
+  (let ((buffer (make-buffer "*tetris*")))
     (switch-to-buffer buffer)
     (tetris-mode)
     (init-field)

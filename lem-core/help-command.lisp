@@ -34,7 +34,7 @@
 
 (define-command describe-bindings () ()
   (let ((buffer (current-buffer)))
-    (with-pop-up-typeout-window (s (get-buffer-create "*bindings*") :focus t :erase t)
+    (with-pop-up-typeout-window (s (make-buffer "*bindings*") :focus t :erase t)
       (describe-bindings-internal s
                                   "Major Mode Bindings"
                                   (mode-keymap (buffer-major-mode buffer))
@@ -66,7 +66,7 @@
         (message "invalid command"))))
 
 (define-command apropos-command (str) ("sApropos: ")
-  (with-pop-up-typeout-window (out (get-buffer-create "*Apropos*") :focus t :erase t)
+  (with-pop-up-typeout-window (out (make-buffer "*Apropos*") :focus t :erase t)
     (dolist (name (all-command-names))
       (when (search str name)
         (describe (string-to-command name) out)))))

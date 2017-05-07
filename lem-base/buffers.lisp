@@ -9,7 +9,6 @@
           filter-special-buffers
           any-modified-buffer-p
           get-buffer
-          get-buffer-create
           uniq-buffer-name
           update-prev-buffer
           bury-buffer
@@ -63,12 +62,6 @@
                    (string= buffer-or-name
                             (buffer-name buffer)))
                (buffer-list))))
-
-(defun get-buffer-create (name)
-  @lang(:jp "バッファ名`name`のバッファがあればそれを返し、
-無ければ作って返します。")
-  (or (get-buffer name)
-      (make-buffer name)))
 
 (defun uniq-buffer-name (name)
   (if (null (get-buffer name))

@@ -20,7 +20,7 @@
 (define-key *global-keymap* "C-x b" 'select-buffer)
 (define-command select-buffer (name) ("BUse Buffer: ")
   (check-switch-minibuffer-window)
-  (switch-to-buffer (get-buffer-create name))
+  (switch-to-buffer (make-buffer name))
   t)
 
 (define-key *global-keymap* "C-x k" 'kill-buffer)

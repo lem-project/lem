@@ -63,7 +63,7 @@
 
 (defun display-menu (menu)
   (let* ((columns (compute-columns menu))
-         (buffer (get-buffer-create (menu-buffer-name menu)))
+         (buffer (make-buffer (menu-buffer-name menu)))
          (p (buffer-point buffer)))
     (change-buffer-mode buffer 'menu-mode)
     (setf (variable-value 'truncate-lines :buffer buffer) nil)

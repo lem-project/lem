@@ -476,7 +476,7 @@
 (define-key *global-keymap* "C-x @" 'pipe-command)
 (define-command pipe-command (str) ("sPipe command: ")
   (let ((directory (buffer-directory)))
-    (with-pop-up-typeout-window (out (get-buffer-create "*Command*") :focus t :erase t)
+    (with-pop-up-typeout-window (out (make-buffer "*Command*") :focus t :erase t)
       (uiop:run-program (format nil "cd ~A; ~A" directory str)
                         :output out
                         :error-output out

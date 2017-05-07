@@ -66,7 +66,7 @@
 
 (defun get-sldb-buffer-create (thread)
   (or (get-sldb-buffer thread)
-      (get-buffer-create (format nil "*sldb ~D*" thread))))
+      (make-buffer (format nil "*sldb ~D*" thread))))
 
 (defun frame-number (frame) (first frame))
 (defun frame-string (frame) (second frame))

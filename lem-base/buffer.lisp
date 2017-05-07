@@ -150,7 +150,7 @@
   @lang(:jp "現在の`buffer`を返します。")
   (unless (boundp '*current-buffer*)
     (setf *current-buffer*
-          (get-buffer-create +original-buffer-name+)))
+          (make-buffer +original-buffer-name+)))
   *current-buffer*)
 
 (defun (setf current-buffer) (buffer)
@@ -164,10 +164,9 @@
 
 (defun make-buffer (name &key read-only-p (enable-undo-p t)
                          (syntax-table (fundamental-syntax-table)))
-  "新しい`buffer`を作って返します。  
-既に`name`と同じ名前のバッファがある場合はエラーになります。"
-  (when (get-buffer name)
-    (error "buffer already exists: ~A" name))
+  @lang(:jp "")
+  (uiop:if-let ((buffer (get-buffer name)))
+    (return-from make-buffer buffer))
   (let ((buffer (make-instance 'buffer
                                :name name
                                :read-only-p read-only-p

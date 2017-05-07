@@ -52,10 +52,6 @@
 `buffer-or-name`がバッファならそのまま返し、
 文字列ならその名前のバッファを返します。
 
-*FUNCTION* `lem:get-buffer-create (name)`  
-バッファ名`name`のバッファがあればそれを返し、
-無ければ作って返します。
-
 *FUNCTION* `lem:delete-buffer (buffer)`  
 `buffer`をバッファのリストから消します。
 エディタ変数`kill-buffer-hook`がバッファが消される前に実行されます。

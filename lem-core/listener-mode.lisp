@@ -44,7 +44,7 @@
   (%listener-point buffer))
 
 (defun listener-start (buffer-name mode)
-  (let ((buffer (get-buffer-create buffer-name)))
+  (let ((buffer (make-buffer buffer-name)))
     (setf (current-window) (pop-to-buffer buffer))
     (funcall mode)
     (listener-reset-prompt buffer)))

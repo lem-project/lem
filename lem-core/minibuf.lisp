@@ -81,7 +81,7 @@
 (defun log-message (string args)
   (when string
     (let ((msg (apply #'format nil string args)))
-      (let ((buffer (get-buffer-create "*Messages*")))
+      (let ((buffer (make-buffer "*Messages*")))
         (with-open-stream (stream (make-buffer-output-stream
                                    (buffer-end-point buffer)))
           (fresh-line stream)

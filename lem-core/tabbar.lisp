@@ -2,7 +2,8 @@
   (:use :cl :lem :lem.button)
   (:export :tabbar-active-tab-attribute
            :tabbar-attribute
-           :tabbar-background-attribute))
+           :tabbar-background-attribute
+           :tabbar))
 (in-package :lem.tabbar)
 
 (define-attribute tabbar-active-tab-attribute
@@ -28,7 +29,6 @@
     :initform 0
     :accessor tabbar-prev-display-width)))
 
-(defvar *use-tabbar* nil)
 (defvar *tabbar* nil)
 
 (defun tabbar-init ()
@@ -86,24 +86,24 @@
   (setf (tabbar-prev-display-width *tabbar*) 0))
   
 (defun tabbar-off ()
-  (when *use-tabbar*
-    (setf *use-tabbar* nil)
+  (when (variable-value 'tabbar :global)
     (tabbar-clear-cache)
     (delete-window *tabbar*)
     (setf *tabbar* nil)))
   
 (defun tabbar-on ()
-  (unless *use-tabbar*
-    (setf *use-tabbar* t)
+  (unless (variable-value 'tabbar :global)
     (tabbar-init)))
 
-(defun enable-tabbar-p ()
-  *use-tabbar*)
+(define-editor-variable tabbar t ""
+  (lambda (value)
+    (if value
+        (tabbar-on)
+        (tabbar-off))))
 
 (define-command toggle-tabbar () ()
-  (if (enable-tabbar-p)
-      (tabbar-off)
-      (tabbar-on)))
+  (setf (variable-value 'tabbar :global)
+        (not (variable-value 'tabbar :global))))
 
 (define-key *global-keymap* (list (code-char 550)) 'tabbar-next) ; control + pagedown
 (define-key *global-keymap* (list (code-char 555)) 'tabbar-prev) ; control + pageup
@@ -125,3 +125,8 @@
     (let ((button (button-at p)))
       (when button
         (button-action button)))))
+
+(add-hook *after-init-hook*
+          (lambda ()
+            (when (variable-value 'tabbar :global)
+              (tabbar-init))))

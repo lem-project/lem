@@ -204,15 +204,15 @@
 (defun window-tree-flatten (tree)
   (let ((windows))
     (window-tree-map tree
-                     #'(lambda (win)
-                         (push win windows)))
+                     (lambda (win)
+                       (push win windows)))
     (nreverse windows)))
 
 (defun window-tree-find (tree window)
   (window-tree-map tree
-                   #'(lambda (win)
-                       (when (eq win window)
-                         (return-from window-tree-find win)))))
+                   (lambda (win)
+                     (when (eq win window)
+                       (return-from window-tree-find win)))))
 
 (defun window-tree-find-if (tree test)
   (window-tree-map tree
@@ -224,24 +224,24 @@
   (cond ((window-tree-leaf-p tree) nil)
         ((eq node (window-node-car tree))
          (values tree
-                 #'(lambda ()
-                     (window-node-car tree))
-                 #'(lambda (new-value)
-                     (setf (window-node-car tree) new-value))
-                 #'(lambda ()
-                     (window-node-cdr tree))
-                 #'(lambda (new-value)
-                     (setf (window-node-cdr tree) new-value))))
+                 (lambda ()
+                   (window-node-car tree))
+                 (lambda (new-value)
+                   (setf (window-node-car tree) new-value))
+                 (lambda ()
+                   (window-node-cdr tree))
+                 (lambda (new-value)
+                   (setf (window-node-cdr tree) new-value))))
         ((eq node (window-node-cdr tree))
          (values tree
-                 #'(lambda ()
-                     (window-node-cdr tree))
-                 #'(lambda (new-value)
-                     (setf (window-node-cdr tree) new-value))
-                 #'(lambda ()
-                     (window-node-car tree))
-                 #'(lambda (new-value)
-                     (setf (window-node-car tree) new-value))))
+                 (lambda ()
+                   (window-node-cdr tree))
+                 (lambda (new-value)
+                   (setf (window-node-cdr tree) new-value))
+                 (lambda ()
+                   (window-node-car tree))
+                 (lambda (new-value)
+                   (setf (window-node-car tree) new-value))))
         (t
          (multiple-value-bind (parent
                                getter
@@ -571,7 +571,7 @@
   (min-if #'window-%x window-list))
 
 (defun collect-right-windows (window-list)
-  (max-if #'(lambda (window)
+  (max-if (lambda (window)
               (+ (window-%x window)
                  (window-%width window)))
           window-list))
@@ -580,7 +580,7 @@
   (min-if #'window-%y window-list))
 
 (defun collect-bottom-windows (window-list)
-  (max-if #'(lambda (window)
+  (max-if (lambda (window)
               (+ (window-%y window)
                  (window-%height window)))
           window-list))
@@ -614,29 +614,29 @@
 (defun shrink-top-windows (window-list n)
   (%shrink-windows window-list
                    #'collect-top-windows
-                   #'(lambda (window)
-                       (< 2 (window-%height window)))
+                   (lambda (window)
+                     (< 2 (window-%height window)))
                    n 0 n 0))
 
 (defun shrink-bottom-windows (window-list n)
   (%shrink-windows window-list
                    #'collect-bottom-windows
-                   #'(lambda (window)
-                       (< 2 (window-%height window)))
+                   (lambda (window)
+                     (< 2 (window-%height window)))
                    n 0 0 0))
 
 (defun shrink-left-windows (window-list n)
   (%shrink-windows window-list
                    #'collect-left-windows
-                   #'(lambda (window)
-                       (< 2 (window-%width window)))
+                   (lambda (window)
+                     (< 2 (window-%width window)))
                    0 n 0 n))
 
 (defun shrink-right-windows (window-list n)
   (%shrink-windows window-list
                    #'collect-right-windows
-                   #'(lambda (window)
-                       (< 2 (window-%width window)))
+                   (lambda (window)
+                     (< 2 (window-%width window)))
                    0 n 0 0))
 
 (defun %grow-windows (window-list

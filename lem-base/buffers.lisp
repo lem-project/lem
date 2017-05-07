@@ -4,9 +4,6 @@
 
 (export '(kill-buffer-hook
           buffer-list
-          ghost-buffer-p
-          special-buffer-p
-          filter-special-buffers
           any-modified-buffer-p
           get-buffer
           uniq-buffer-name
@@ -23,35 +20,18 @@
 
 (defun add-buffer (buffer)
   (check-type buffer buffer)
-  (unless (ghost-buffer-p buffer)
-    (assert (not (get-buffer (buffer-name buffer))))
-    (push buffer *buffer-list*)))
+  (assert (not (get-buffer (buffer-name buffer))))
+  (push buffer *buffer-list*))
 
 (defun buffer-list ()
   @lang(:jp "`buffer`のリストを返します。")
   *buffer-list*)
 
-(defun ghost-buffer-p (buffer)
-  (let ((name (buffer-name buffer)))
-    (and (<= 3 (length name))
-         (char= #\space (aref name 0))
-         (char= #\* (aref name 1))
-         (char= #\* (aref name (1- (length name)))))))
-
-(defun special-buffer-p (buffer)
-  (or (ghost-buffer-p buffer)
-      (let ((name (buffer-name buffer)))
-        (and (char= #\* (aref name 0))
-             (char= #\* (aref name (1- (length name))))))))
-
-(defun filter-special-buffers ()
-  (remove-if #'special-buffer-p (buffer-list)))
-
 (defun any-modified-buffer-p ()
-  (find-if #'(lambda (buffer)
-               (and (buffer-filename buffer)
-                    (buffer-modified-p buffer)))
-           (filter-special-buffers)))
+  (find-if (lambda (buffer)
+             (and (buffer-filename buffer)
+                  (buffer-modified-p buffer)))
+           (buffer-list)))
 
 (defun get-buffer (buffer-or-name)
   @lang(:jp "`buffer-or-name`がバッファならそのまま返し、

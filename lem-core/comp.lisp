@@ -220,7 +220,7 @@
 
 (defun create-completion-buffer (items back-attribute)
   (let ((buffer (or (completion-buffer)
-                    (make-buffer " *Completion*" :enable-undo-p nil))))
+                    (make-buffer "*Completion*" :enable-undo-p nil :temporary t))))
     (setf *completion-buffer* buffer)
     (erase-buffer buffer)
     (setf (variable-value 'truncate-lines :buffer buffer) nil)

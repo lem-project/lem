@@ -366,7 +366,7 @@
           (destructuring-bind (doc cache-p) doc
             (declare (ignore cache-p))
             (unless (eq doc :not-available)
-              (let* ((buffer (make-buffer " *swank:autodoc-fontity*"))
+              (let* ((buffer (make-buffer "*swank:autodoc-fontity*" :temporary t))
                      (point (buffer-point buffer)))
                 (erase-buffer buffer)
                 (change-buffer-mode buffer 'lisp-mode)

@@ -61,6 +61,9 @@
     :initform nil
     :initarg :%enable-undo-p
     :accessor buffer-%enable-undo-p)
+   (temporary
+    :initarg :temporary
+    :accessor buffer-temporary-p)
    (read-only-p
     :initform nil
     :initarg :read-only-p
@@ -162,15 +165,24 @@
 (defvar *undo-mode* :edit)
 (defvar *undo-limit* 100000)
 
-(defun make-buffer (name &key read-only-p (enable-undo-p t)
+(defun make-buffer (name &key temporary read-only-p (enable-undo-p t)
                          (syntax-table (fundamental-syntax-table)))
-  @lang(:jp "")
-  (uiop:if-let ((buffer (get-buffer name)))
-    (return-from make-buffer buffer))
+  @lang(:jp "バッファ名が`name`のバッファがバッファリストに含まれていれば
+そのバッファを返し、無ければ作成します。  
+`read-only-p`は読み込み専用にするか。  
+`enable-undo-p`はアンドゥを有効にするか。  
+`syntax-table`はそのバッファの構文テーブルを指定します。  
+`temporary`が非NILならバッファリストに含まないバッファを作成します。  
+引数で指定できるオプションは`temporary`がNILで既にバッファが存在する場合は無視します。
+")
+  (unless temporary
+    (uiop:if-let ((buffer (get-buffer name)))
+      (return-from make-buffer buffer)))
   (let ((buffer (make-instance 'buffer
                                :name name
                                :read-only-p read-only-p
                                :%enable-undo-p enable-undo-p
+                               :temporary temporary
                                :major-mode 'fundamental-mode
                                :syntax-table syntax-table)))
     (setf (buffer-mark-p buffer) nil)
@@ -191,7 +203,7 @@
       (setf (buffer-point buffer)
             (make-point buffer 1 line 0
                         :kind :left-inserting)))
-    (add-buffer buffer)
+    (unless temporary (add-buffer buffer))
     buffer))
 
 (defun bufferp (x)
@@ -298,7 +310,7 @@
 
 (defun push-undo (buffer fn)
   (when (and (buffer-enable-undo-p buffer)
-             (not (ghost-buffer-p buffer)))
+             (not (buffer-temporary-p buffer)))
     (ecase *undo-mode*
       (:edit
        (push-undo-stack buffer fn)

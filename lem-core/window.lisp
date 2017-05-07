@@ -403,18 +403,13 @@
   (window-set-size current-window
                    (window-%width current-window)
                    (window-%height current-window))
-
   (move-point (window-view-point new-window)
               (window-view-point current-window))
-
   (move-point (%window-point new-window)
               (window-buffer-point current-window))
-
   (move-point (window-buffer-point new-window)
               (window-buffer-point current-window))
-
   (window-see new-window)
-
   (multiple-value-bind (node getter setter)
       (window-tree-parent (window-tree) current-window)
     (if (null node)

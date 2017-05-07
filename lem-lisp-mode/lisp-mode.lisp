@@ -758,11 +758,7 @@
   (let ((buffer (repl-buffer)))
     (push thread (read-string-thread-stack))
     (push tag (read-string-tag-stack))
-    (let ((windows (get-buffer-windows buffer)))
-      (setf (current-window)
-            (if windows
-                (first windows)
-                (pop-to-buffer buffer))))
+    (setf (current-window) (pop-to-buffer buffer))
     (buffer-end (current-point))
     (lem.listener-mode:listener-update-point)
     (repl-change-read-line-input)))
@@ -796,9 +792,7 @@
 (define-command lisp-switch-to-repl-buffer () ()
   (let ((buffer (repl-buffer)))
     (if buffer
-        (setf (current-window)
-              (or (car (get-buffer-windows buffer))
-                  (pop-to-buffer buffer)))
+        (setf (current-window) (pop-to-buffer buffer))
         (start-lisp-repl))))
 
 (defun write-string-to-repl (string)

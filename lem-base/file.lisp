@@ -96,8 +96,8 @@
                 (buffer (make-buffer (if (get-buffer name)
                                          (uniq-buffer-name name)
                                          name)
-                                     :filename filename
                                      :enable-undo-p nil)))
+           (setf (buffer-filename buffer) filename)
            (when (probe-file filename)
              (let ((*inhibit-modification-hooks* t))
                (multiple-value-bind (external-format end-of-line)

@@ -214,6 +214,12 @@
                        (when (eq win window)
                          (return-from window-tree-find win)))))
 
+(defun window-tree-find-if (tree test)
+  (window-tree-map tree
+                   (lambda (win)
+                     (when (funcall test win)
+                       (return-from window-tree-find-if win)))))
+
 (defun window-tree-parent (tree node)
   (cond ((window-tree-leaf-p tree) nil)
         ((eq node (window-node-car tree))
@@ -796,9 +802,9 @@
           (split-window-sensibly (if (minibuffer-window-active-p)
                                      (minibuffer-calls-window)
                                      (current-window))))
-        (with-current-window (or (window-tree-find (window-tree)
-                                                   (lambda (window)
-                                                     (eq buffer (window-buffer window))))
+        (with-current-window (or (window-tree-find-if (window-tree)
+                                                      (lambda (window)
+                                                        (eq buffer (window-buffer window))))
                                  (get-next-window (if (minibuffer-window-active-p)
                                                       (minibuffer-calls-window)
                                                       (current-window))))

@@ -10,7 +10,8 @@
 (defstruct editor-variable
   value
   documentation
-  local-indicator)
+  local-indicator
+  change-value-hook)
 
 (defun clear-editor-local-variables (buffer)
   (dolist (symbol *editor-variables*)
@@ -18,7 +19,7 @@
                     (editor-variable-local-indicator
                      (get symbol 'editor-variable)))))
 
-(defmacro define-editor-variable (var &optional value documentation)
+(defmacro define-editor-variable (var &optional value documentation change-value-hook)
   (check-type var symbol)
   `(unless (get ',var 'editor-variable)
      (defvar ,var)
@@ -26,7 +27,8 @@
      (setf (get ',var 'editor-variable)
            (make-editor-variable :value ,value
                                  :documentation ,documentation
-                                 :local-indicator (gensym ,(string var))))
+                                 :local-indicator (gensym ,(string var))
+                                 :change-value-hook ,change-value-hook))
      t))
 
 (defun editor-variable-error (symbol)
@@ -77,6 +79,9 @@
                              (editor-variable-local-indicator var))
                value)))
       ((:global)
+       (let ((fn (editor-variable-change-value-hook var)))
+         (when fn
+           (funcall fn value)))
        (setf (editor-variable-value var) value)))))
 
 (defun variable-documentation (symbol)

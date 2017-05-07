@@ -69,6 +69,7 @@
   y
   left-lines
   left-width
+  old-left-width
   lines
   old-lines
   wrap-lines
@@ -551,27 +552,32 @@
     (charms/ll:wnoutrefresh scrwin)))
 
 (define-implementation redraw-display-window (window force)
-  (let ((focus-window-p (eq window (current-window))))
+  (let ((focus-window-p (eq window (current-window)))
+        (screen (lem::window-screen window)))
     (when focus-window-p (window-see window))
     (lem::window-prompt-display window)
     (progn
       #+(or)without-interrupts
       (disp-reset-lines window)
       (adjust-horizontal-scroll window)
-      (screen-display-lines (lem::window-screen window)
+      (screen-display-lines screen
                             (or force
-                                (screen-modified-p (lem::window-screen window)))
+                                (screen-modified-p screen)
+                                (not (eql (screen-left-width screen)
+                                          (screen-old-left-width screen))))
                             (window-buffer window)
                             (point-charpos (lem::window-view-point window))
                             (if focus-window-p
                                 (count-lines (lem::window-view-point window)
                                              (lem::window-point window))
                                 0))
+      (setf (screen-old-left-width screen)
+            (screen-left-width screen))
       (when (lem::window-use-modeline-p window)
         (screen-redraw-separator window)
         (screen-redraw-modeline window))
-      (charms/ll:wnoutrefresh (screen-%scrwin (lem::window-screen window)))
-      (setf (screen-modified-p (lem::window-screen window)) nil))))
+      (charms/ll:wnoutrefresh (screen-%scrwin screen))
+      (setf (screen-modified-p screen) nil))))
 
 (define-implementation update-display ()
   (charms/ll:doupdate))

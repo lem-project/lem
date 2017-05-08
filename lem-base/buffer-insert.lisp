@@ -83,7 +83,7 @@
                (offset-line (abs offset-line))
                (offset-char (abs offset-char)))
            (dolist (p (buffer-points (point-buffer point)))
-             (when (or (<= linum (point-linum p))
+             (when (or (< linum (point-linum p))
                        (and (= linum (point-linum p))
                             (<= charpos (point-charpos p))))
                (cond ((<= (- (point-linum p) offset-line)

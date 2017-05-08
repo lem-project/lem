@@ -32,7 +32,7 @@
     (when (cdr (buffer-list))
       (dolist (window (get-buffer-windows buffer))
         (with-current-window window
-          (switch-to-buffer (or (get-next-buffer (current-buffer))
+          (switch-to-buffer (or (get-previous-buffer (current-buffer))
                                 (first (buffer-list))))))
       (delete-buffer buffer)))
   t)

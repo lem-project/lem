@@ -720,22 +720,24 @@
                         (+ (window-y window) (- frame-y old-frame-y))))
       (let ((delete-windows '()))
         (dolist (window window-list)
-          (when (<= frame-height (+ 2 (window-y window)))
-            (push window delete-windows))
-          (when (<= frame-width (+ 1 (window-x window)))
-            (push window delete-windows)))
-        (mapc #'delete-window delete-windows)))
-    (let ((window-list (window-list)))
-      (dolist (window (collect-right-windows window-list))
-        (window-resize window
-                       (- frame-width
-                          (+ (window-x window) (window-width window)))
-                       0))
-      (dolist (window (collect-bottom-windows window-list))
-        (window-resize window
-                       0
-                       (- frame-height
-                          (+ (window-y window) (window-height window))))))))
+          (cond ((<= frame-height (+ 2 (window-y window)))
+                 (push window delete-windows))
+                ((<= frame-width (+ 1 (window-x window)))
+                 (push window delete-windows))))
+        (dolist (window delete-windows)
+          (when (one-window-p) (return))
+          (delete-window window)))))
+  (let ((window-list (window-list)))
+    (dolist (window (collect-right-windows window-list))
+      (window-resize window
+                     (- frame-width
+                        (+ (window-x window) (window-width window)))
+                     0))
+    (dolist (window (collect-bottom-windows window-list))
+      (window-resize window
+                     0
+                     (- frame-height
+                        (+ (window-y window) (window-height window)))))))
 
 (defun get-buffer-windows (buffer)
   (loop :for window :in (window-list)

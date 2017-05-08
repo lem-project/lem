@@ -53,8 +53,8 @@
 (defun display-finalize ()
   (term-finalize))
 
-(define-implementation display-width () charms/ll:*cols*)
-(define-implementation display-height () charms/ll:*lines*)
+(define-implementation display-width () (max 5 charms/ll:*cols*))
+(define-implementation display-height () (max 3 charms/ll:*lines*))
 
 (define-implementation call-with-screen (function)
   (unwind-protect (progn

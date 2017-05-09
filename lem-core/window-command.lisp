@@ -32,8 +32,8 @@
     (when (cdr (buffer-list))
       (dolist (window (get-buffer-windows buffer))
         (with-current-window window
-          (switch-to-buffer (or (get-previous-buffer (current-buffer))
-                                (first (buffer-list))))))
+          (switch-to-buffer (or (get-previous-buffer buffer)
+                                (car (last (buffer-list)))))))
       (delete-buffer buffer)))
   t)
 

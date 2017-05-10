@@ -346,7 +346,13 @@
 `editor-variable`はエディタ内で使われる変数です。  
 バッファローカルな変数や大域的な値を管理するために使います。
 
-{lem:define-editor-variable func function}
+*FUNCTION* `lem:define-editor-variable (var &optional value documentation change-value-hook)`  
+エディタ変数`var`を定義します。  
+`value`はそのエディタ変数に束縛されている大域的な値です。  
+`documentation`はそのエディタ変数の文書文字列です。  
+`change-value-hook`はそのエディタ変数の大域的な値が変更されるときに呼び出されるフック関数です。
+
+
 *FUNCTION* `lem:clear-editor-local-variables (buffer)`  
 `buffer`の全てのバッファローカルなエディタ変数を未束縛にします。
 

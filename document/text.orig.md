@@ -107,7 +107,7 @@
 
 # エディタ変数
 {lem:editor-variable type}
-{lem:define-editor-variable func function}
+{lem:define-editor-variable function}
 {lem:clear-editor-local-variables function}
 {lem:variable-value function}
 {lem:variable-value setf}

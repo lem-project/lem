@@ -1237,7 +1237,8 @@
   (charms/ll:nonl)
   (charms/ll:refresh)
   (charms/ll:keypad charms/ll:*stdscr* 1)
-  (charms/ll:curs-set 0))
+  ;(charms/ll:curs-set 0)
+  )
 
 (defun term-set-tty (tty-name)
   (setf *tty-name* tty-name))

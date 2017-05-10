@@ -10,10 +10,16 @@
 *SETF* `(setf lem:current-buffer) (buffer)`  
 現在の`buffer`を変更します。
 
-*FUNCTION* `lem:make-buffer (name &key filename read-only-p (enable-undo-p t) (syntax-table
-                                                                               (fundamental-syntax-table)))`  
-新しい`buffer`を作って返します。  
-既に`name`と同じ名前のバッファがある場合はエラーになります。
+*FUNCTION* `lem:make-buffer (name &key temporary read-only-p (enable-undo-p t) (syntax-table
+                                                                                (fundamental-syntax-table)))`  
+バッファ名が`name`のバッファがバッファリストに含まれていれば
+そのバッファを返し、無ければ作成します。  
+`read-only-p`は読み込み専用にするか。  
+`enable-undo-p`はアンドゥを有効にするか。  
+`syntax-table`はそのバッファの構文テーブルを指定します。  
+`temporary`が非NILならバッファリストに含まないバッファを作成します。  
+引数で指定できるオプションは`temporary`がNILで既にバッファが存在する場合は無視します。
+
 
 *FUNCTION* `lem:bufferp (x)`  
 `x`が`buffer`ならT、それ以外ならNILを返します。
@@ -58,6 +64,9 @@
 
 *FUNCTION* `lem:get-next-buffer (buffer)`  
 バッファリスト内にある`buffer`の次のバッファを返します。
+
+*FUNCTION* `lem:get-previous-buffer (buffer)`  
+バッファリスト内にある`buffer`の前のバッファを返します。
 
 *FUNCTION* `lem:bury-buffer (buffer)`  
 `buffer`をバッファリストの一番最後に移動させ、バッファリストの先頭を返します。
@@ -293,10 +302,6 @@
 *FUNCTION* `lem:delete-between-points (start-point end-point)`  
 `start-point`から`end-point`までの範囲を削除し、削除した文字列を返します。
 
-*FUNCTION* `lem:filter-region-lines (start-point end-point function)`  
-`start-point`から`end-point`までの範囲の行に`function`を適用します。
-`function`は行の文字列を引数に取り新しい行の文字列を返す関数です。
-
 
 ## テキストプロパティ
 *FUNCTION* `lem:text-property-at (point prop &optional (offset 0))`  
@@ -319,7 +324,7 @@
 バッファの最初の位置まで走査が止まらないか、`limit-point`を越えると走査を中断しNILを返します。
 
 
-# エディタ変数
+# バッファ変数
 *FUNCTION* `lem:buffer-value (buffer name &optional default)`  
 `buffer`のバッファ変数`name`に束縛されている値を返します。  
 `buffer`の型は`buffer`または`point`です。  
@@ -334,4 +339,42 @@
 
 *FUNCTION* `lem:clear-buffer-variables (&key (buffer (current-buffer)))`  
 `buffer`に束縛されているすべてのバッファ変数を消します。
+
+
+# エディタ変数
+*TYPE* `lem:editor-variable`  
+`editor-variable`はエディタ内で使われる変数です。  
+バッファローカルな変数や大域的な値を管理するために使います。
+
+{lem:define-editor-variable func function}
+*FUNCTION* `lem:clear-editor-local-variables (buffer)`  
+`buffer`の全てのバッファローカルなエディタ変数を未束縛にします。
+
+*FUNCTION* `lem:variable-value (symbol &optional (kind default) (where nil
+                                                                 wherep))`  
+`symbol`のエディタ変数の値を返します。  
+
+`where`はバッファです、未指定なら`current-buffer`になります。
+
+`kind`が`:default`の場合は`where`のバッファローカルなエディタ変数が束縛されていればそれを返し、  
+無ければ大域的なエディタ変数の値を返します。
+
+`kind`が`:buffer`の場合は`where`のバッファローカルなエディタ変数が束縛されていればそれを返し、
+無ければNILを返します。
+
+`kind`が`:global`の場合は大域的なエディタ変数を返します。
+
+
+*SETF* `(setf lem:variable-value) (value symbol &optional (kind default) (where
+                                                                          nil
+                                                                          wherep))`  
+`symbol`のエディタ変数の値に`value`を束縛します。  
+
+`where`はバッファです、未指定なら`current-buffer`になります。
+
+`kind`が`default`か`buffer`の場合は、`where`のバッファローカルなエディタ変数に`value`を束縛します。
+
+`kind`が`global`の場合は、大域的なエディタ変数に`value`を束縛します。
+エディタ変数に`change-value-hook`があれば値を束縛する前にその関数が`value`を引数にして呼び出されます。
+
 

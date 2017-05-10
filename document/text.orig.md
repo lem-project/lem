@@ -99,8 +99,15 @@
 {lem:next-single-property-change function}
 {lem:previous-single-property-change function}
 
-# エディタ変数
+# バッファ変数
 {lem:buffer-value function}
 {lem:buffer-value setf}
 {lem:buffer-unbound function}
 {lem:clear-buffer-variables function}
+
+# エディタ変数
+{lem:editor-variable type}
+{lem:define-editor-variable func function}
+{lem:clear-editor-local-variables function}
+{lem:variable-value function}
+{lem:variable-value setf}

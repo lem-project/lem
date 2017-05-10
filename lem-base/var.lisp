@@ -60,15 +60,11 @@
 
 (defun variable-value (symbol &optional (kind :default) (where nil wherep))
   @lang(:jp "`symbol`のエディタ変数の値を返します。  
-
-`where`はバッファです、未指定なら`current-buffer`になります。
-
+`where`はバッファです、未指定なら`current-buffer`になります。  
 `kind`が`:default`の場合は`where`のバッファローカルなエディタ変数が束縛されていればそれを返し、  
-無ければ大域的なエディタ変数の値を返します。
-
+無ければ大域的なエディタ変数の値を返します。  
 `kind`が`:buffer`の場合は`where`のバッファローカルなエディタ変数が束縛されていればそれを返し、
-無ければNILを返します。
-
+無ければNILを返します。  
 `kind`が`:global`の場合は大域的なエディタ変数を返します。
 ")
   (let ((var (get symbol 'editor-variable)))
@@ -93,13 +89,10 @@
 
 (defun (setf variable-value) (value symbol &optional (kind :default) (where nil wherep))
   @lang(:jp "`symbol`のエディタ変数の値に`value`を束縛します。  
-
-`where`はバッファです、未指定なら`current-buffer`になります。
-
-`kind`が`default`か`buffer`の場合は、`where`のバッファローカルなエディタ変数に`value`を束縛します。
-
-`kind`が`global`の場合は、大域的なエディタ変数に`value`を束縛します。
-エディタ変数に`change-value-hook`があれば値を束縛する前にその関数が`value`を引数にして呼び出されます。
+`where`はバッファです、未指定なら`current-buffer`になります。  
+`kind`が`default`か`buffer`の場合は、`where`のバッファローカルなエディタ変数に`value`を束縛します。  
+`kind`が`global`の場合は、大域的なエディタ変数に`value`を束縛します。  
+エディタ変数に`change-value-hook`があれば値を束縛する前にその関数が`value`を引数にして呼び出されます。  
 ")
   (let ((var (get symbol 'editor-variable)))
     (unless (editor-variable-p var)

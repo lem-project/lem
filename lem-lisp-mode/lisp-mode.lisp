@@ -5,7 +5,7 @@
 (defvar *connection-list* '())
 (defvar *connection* nil)
 (defvar *event-hooks* '())
-(defvar *write-string-function* 'write-string-to-output-buffer)
+(defvar *write-string-function* 'write-string-to-repl)
 (defvar *last-compilation-result* nil)
 (defvar *indent-table* (make-hash-table :test 'equal))
 
@@ -303,7 +303,6 @@
 
 (define-command lisp-eval-last-expression () ()
   (check-connection)
-  (refresh-output-buffer)
   (with-point ((start (current-point))
                (end (current-point)))
     (form-offset start -1)
@@ -317,14 +316,12 @@
                  (end point))
       (scan-lists end 1 0)
       (let ((string (points-to-string start end)))
-        (refresh-output-buffer)
         (if (ppcre:scan "^\\(defvar(?:\\s|$)" string)
             (re-eval-defvar string)
             (interactive-eval string))))))
 
 (define-command lisp-eval-region (start end) ("r")
   (check-connection)
-  (refresh-output-buffer)
   (eval-with-transcript
    `(swank:interactive-eval-region
      ,(points-to-string start end))))
@@ -335,7 +332,6 @@
     (setf filename (buffer-filename (current-buffer))))
   (when (and (cl-fad:file-exists-p filename)
              (not (cl-fad:directory-pathname-p filename)))
-    (refresh-output-buffer)
     (eval-with-transcript `(swank:load-file ,filename))))
 
 (defun get-operator-name ()
@@ -465,7 +461,6 @@
     (when (prompt-for-y-or-n-p "Save file")
       (save-buffer)))
   (let ((file (buffer-filename (current-buffer))))
-    (refresh-output-buffer)
     (lisp-eval-async `(swank:compile-file-for-emacs ,file t)
                      #'compilation-finished)))
 
@@ -476,7 +471,6 @@
                     (:line
                      ,(line-number-at-point (current-point))
                      ,(point-charpos (current-point))))))
-    (refresh-output-buffer)
     (lisp-eval-async `(swank:compile-string-for-emacs ,string
                                                       ,(buffer-name (current-buffer))
                                                       ',position
@@ -797,28 +791,15 @@
 
 (defun write-string-to-repl (string)
   (let ((buffer (repl-buffer)))
-    (when buffer
-      (with-open-stream (stream (make-buffer-output-stream (buffer-end-point buffer)))
-        (princ string stream))
-      (lem.listener-mode:listener-update-point (buffer-end-point buffer))
-      (when (eq buffer (current-buffer))
-        (buffer-end (current-point)))
-      (redraw-display))))
-
-(defparameter *fresh-output-buffer-p* t)
-
-(defun write-string-to-output-buffer (string)
-  (with-pop-up-typeout-window (stream (make-buffer "*lisp-output*"))
-    (when *fresh-output-buffer-p*
-      (setq *fresh-output-buffer-p* nil)
-      (fresh-line stream)
-      (terpri stream)
-      (princ '*** stream)
-      (terpri stream))
-    (princ string stream)))
-
-(defun refresh-output-buffer ()
-  (setq *fresh-output-buffer-p* t))
+    (unless buffer
+      (start-lisp-repl)
+      (setf buffer (repl-buffer)))
+    (with-open-stream (stream (make-buffer-output-stream (buffer-end-point buffer)))
+      (princ string stream))
+    (lem.listener-mode:listener-update-point (buffer-end-point buffer))
+    (when (eq buffer (current-buffer))
+      (buffer-end (current-point)))
+    (redraw-display)))
 
 (defvar *wait-message-thread* nil)
 

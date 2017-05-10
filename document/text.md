@@ -154,7 +154,7 @@
 `point`のバッファの先頭からの1始まりのオフセットを返します。
 
 
-*FUNCTION* `lem:with-point (bindings &body body)`  
+*MACRO* `lem:with-point`  
 このマクロは`body`内で使う各`point`を`bindings`で作り、
 `body`を抜けると各`point`を削除して`body`の値を返します。  
 `body`でエラーがあっても各`point`は削除されます。  
@@ -169,7 +169,7 @@
 ```
 
 
-*FUNCTION* `lem:save-excursion (&body body)`  
+*MACRO* `lem:save-excursion`  
 現在の`point`と`mark`を保存し、`body`の評価後に復元し`body`の結果を返します。  
 `body`でエラーがあっても復元されます。
 
@@ -324,7 +324,7 @@
 バッファの最初の位置まで走査が止まらないか、`limit-point`を越えると走査を中断しNILを返します。
 
 
-# バッファ変数
+## バッファ変数
 *FUNCTION* `lem:buffer-value (buffer name &optional default)`  
 `buffer`のバッファ変数`name`に束縛されている値を返します。  
 `buffer`の型は`buffer`または`point`です。  
@@ -346,7 +346,7 @@
 `editor-variable`はエディタ内で使われる変数です。  
 バッファローカルな変数や大域的な値を管理するために使います。
 
-*FUNCTION* `lem:define-editor-variable (var &optional value documentation change-value-hook)`  
+*MACRO* `lem:define-editor-variable`  
 エディタ変数`var`を定義します。  
 `value`はそのエディタ変数に束縛されている大域的な値です。  
 `documentation`はそのエディタ変数の文書文字列です。  

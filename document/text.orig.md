@@ -45,8 +45,8 @@
 {lem:point-column function}
 {lem:position-at-point function}
 
-{lem:with-point function}
-{lem:save-excursion function}
+{lem:with-point macro}
+{lem:save-excursion macro}
 
 ## ポイントの取得
 {lem:buffer-point function}
@@ -99,7 +99,7 @@
 {lem:next-single-property-change function}
 {lem:previous-single-property-change function}
 
-# バッファ変数
+## バッファ変数
 {lem:buffer-value function}
 {lem:buffer-value setf}
 {lem:buffer-unbound function}
@@ -107,7 +107,7 @@
 
 # エディタ変数
 {lem:editor-variable type}
-{lem:define-editor-variable function}
+{lem:define-editor-variable macro}
 {lem:clear-editor-local-variables function}
 {lem:variable-value function}
 {lem:variable-value setf}

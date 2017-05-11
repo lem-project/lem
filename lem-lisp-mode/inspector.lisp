@@ -141,7 +141,7 @@
 
 (define-command lisp-inspector-quit () ()
   (lisp-eval-async `(swank:quit-inspector))
-  (quit-window))
+  (quit-window nil t))
 
 ;; slime-find-inspectable-object
 ;; slime-inspector-next-inspectable-object

@@ -29,10 +29,6 @@
           syntax-skip-expr-prefix-forward
           syntax-skip-expr-prefix-backward
           syntax-scan-range
-          search-comment-start-forward
-          search-comment-start-backward
-          search-string-start-forward
-          search-string-start-backward
           skip-space-and-comment-forward
           skip-space-and-comment-backward
           form-offset
@@ -503,38 +499,6 @@
 (defmacro with-point-syntax (point &body body)
   `(let ((*current-syntax* (buffer-syntax-table (point-buffer ,point))))
      ,@body))
-
-(defun %search-syntax-start-forward (point syntax limit)
-  (with-point ((curr point))
-    (loop
-      (unless (next-single-property-change curr :attribute limit)
-        (return nil))
-      (when (and (eq syntax
-                     (text-property-at curr :attribute))
-                 (eq :start (text-property-at curr 'region-side)))
-        (return (move-point point curr))))))
-
-(defun %search-syntax-start-backward (point syntax limit)
-  (with-point ((curr point))
-    (loop
-      (unless (previous-single-property-change curr :attribute limit)
-        (return nil))
-      (when (and (eq syntax
-                     (text-property-at curr :attribute))
-                 (eq :start (text-property-at curr 'region-side)))
-        (return (move-point point curr))))))
-
-(defun search-comment-start-forward (point &optional limit)
-  (%search-syntax-start-forward point 'syntax-comment-attribute limit))
-
-(defun search-comment-start-backward (point &optional limit)
-  (%search-syntax-start-backward point 'syntax-comment-attribute limit))
-
-(defun search-string-start-forward (point &optional limit)
-  (%search-syntax-start-forward point 'syntax-string-attribute limit))
-
-(defun search-string-start-backward (point &optional limit)
-  (%search-syntax-start-backward point 'syntax-string-attribute limit))
 
 
 (let ((cache (make-hash-table :test 'equal)))

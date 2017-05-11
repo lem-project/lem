@@ -130,16 +130,16 @@
       (with-point ((start (current-point) :right-inserting)
                    (end (current-point) :right-inserting))
         (set-region-point start end)
-        (character-offset start -1)
-        (loop
-          (unless (search-comment-start-backward end start)
-            (return))
-          (when (looking-at end line-comment)
-            (let ((res (looking-at end insertion-line-comment)))
-              (if res
-                  (delete-character end (length res))
-                  (loop :while (looking-at end line-comment)
-                    :do (delete-character end (length line-comment)))))))))))
+        (let ((p start))
+          (loop
+            (parse-partial-sexp p end nil t)
+            (when (looking-at p line-comment)
+              (let ((res (looking-at p insertion-line-comment)))
+                (if res
+                    (delete-character p (length res))
+                    (loop :while (looking-at p line-comment)
+                          :do (delete-character p (length line-comment))))))
+            (unless (line-offset p 1) (return))))))))
 
 (define-attribute xref-headline-attribute
   (t :bold-p t))

@@ -1079,13 +1079,16 @@
                   (parser-state-paren-stack state) paren-stack))
           state)))))
 
+(define-editor-variable syntax-ppss-cache nil)
+
+(defmacro syntax-ppss-cache (buffer)
+  `(variable-value 'syntax-ppss-cache :buffer ,buffer))
+
 (flet ((cache-point (cache) (car cache))
        (cache-state (cache) (cdr cache)))
   (defun syntax-ppss (point)
-    (unless (variable-value 'before-change-functions :buffer point)
-      (setf (buffer-value point 'syntax-ppss-cache) nil))
     (let* ((buffer (point-buffer point))
-           (cache-list (buffer-value buffer 'syntax-ppss-cache))
+           (cache-list (syntax-ppss-cache buffer))
            state)
       (do ((rest cache-list (cdr rest))
            (prev nil rest))
@@ -1110,22 +1113,22 @@
                  (return)))))
       (add-hook (variable-value 'before-change-functions :buffer buffer)
                 'syntax-ppss-clear-cache)
-      (setf (buffer-value buffer 'syntax-ppss-cache)
+      (setf (syntax-ppss-cache buffer)
             cache-list)
       state))
 
   (defun syntax-ppss-clear-cache (point &rest ignore-args)
     (declare (ignore ignore-args))
     (if (null point)
-        (setf (buffer-value point 'syntax-ppss-cache) nil)
+        (setf (syntax-ppss-cache point) nil)
         (let ((list (member-if (lambda (cache)
                                  (point< (cache-point cache) point))
-                               (buffer-value point 'syntax-ppss-cache))))
-          (setf (buffer-value point 'syntax-ppss-cache) list))))
+                               (syntax-ppss-cache point))))
+          (setf (syntax-ppss-cache point) list))))
 
   (defun check-ppss-cache (buffer)
     (loop :for prev := nil :then (cache-point cache)
-          :for cache :in (buffer-value buffer 'syntax-ppss-cache)
+          :for cache :in (syntax-ppss-cache buffer)
           :do
           (assert (line-alive-p (point-line (cache-point cache))))
           (when prev

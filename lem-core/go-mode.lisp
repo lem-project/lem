@@ -82,8 +82,7 @@
 (defun go-calc-indent (point)
   (save-excursion
     (back-to-indentation point)
-    (cond ((in-comment-p point)
-           (search-comment-start-backward point)
+    (cond ((maybe-beginning-of-comment point)
            (1+ (point-column point)))
           ((in-string-p point)
            nil)

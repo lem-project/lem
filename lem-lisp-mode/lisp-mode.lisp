@@ -673,7 +673,7 @@
                            (or (symbol-string-at-point (current-point)) ""))))
     (when (string= "" symbol-name)
       (editor-error "No symbol given"))
-    (show-description (lisp-eval `(swank:describe-symbol ,symbol-name)))))
+    (lisp-eval-describe `(swank:describe-symbol ,symbol-name))))
 
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "lisp-repl"

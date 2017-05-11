@@ -19,11 +19,14 @@
 (define-attribute frame-label-attribute
   (t :foreground "gray40"))
 
-(define-attribute local-name-attribute)
+(define-attribute local-name-attribute
+  (t :foreground "dark cyan"))
 
-(define-attribute local-value-attribute)
+(define-attribute local-value-attribute
+  (t :foreground "red"))
 
-(define-attribute catch-tag-attribute)
+(define-attribute catch-tag-attribute
+  (t :foreground "green"))
 
 (define-major-mode sldb-mode lisp-ui-mode
     (:name "sldb"

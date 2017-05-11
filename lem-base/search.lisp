@@ -38,13 +38,13 @@
       (lambda (point)
         (or (point<= limit-point point)
             (end-buffer-p point)))
-      #'end-buffer-p))
+      (constantly nil)))
 
 (defun search-backward-endp-function (limit-point)
   (if limit-point
       (lambda (point)
         (point< point limit-point))
-      #'start-buffer-p))
+      (constantly nil)))
 
 (defmacro search* (&rest args)
   `(search ,@args

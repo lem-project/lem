@@ -21,12 +21,12 @@
                     (not (funcall endp point)))
                    (t
                     (loop :until (funcall endp point) :do
-                          (unless (funcall step point)
-                            (return nil))
-                          (let ((res (funcall search point)))
-                            (when res
-                              (funcall move-matched point res)
-                              (return t)))))))))
+		       (unless (funcall step point)
+			 (return nil))
+		       (let ((res (funcall search point)))
+			 (when res
+			   (funcall move-matched point res)
+			   (return t)))))))))
       (if (and result (not (funcall endp point)))
           result
           (progn

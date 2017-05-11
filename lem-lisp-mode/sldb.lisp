@@ -194,7 +194,8 @@
                     (insert-button point (format nil "~A~A" name
                                                  (if (zerop id) "" (format nil "#~D" id)))
                                    (let ((var i)
-                                         (frame-number (button-get frame-button 'frame)))
+                                         (frame-number (frame-number
+                                                        (button-get frame-button 'frame))))
                                      (lambda ()
                                        (sldb-inspect-var frame-number var)))
                                    :attribute 'local-name-attribute)

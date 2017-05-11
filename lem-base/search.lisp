@@ -21,15 +21,17 @@
                     (not (funcall endp point)))
                    (t
                     (loop :until (funcall endp point) :do
-		       (unless (funcall step point)
-			 (return nil))
-		       (let ((res (funcall search point)))
-			 (when res
-			   (funcall move-matched point res)
-			   (return t)))))))))
-      (unless result
-        (move-point point start-point))
-      result)))
+                          (unless (funcall step point)
+                            (return nil))
+                          (let ((res (funcall search point)))
+                            (when res
+                              (funcall move-matched point res)
+                              (return t)))))))))
+      (if (and result (not (funcall endp point)))
+          result
+          (progn
+            (move-point point start-point)
+            nil)))))
 
 (defun search-forward-endp-function (limit-point)
   (if limit-point
@@ -54,7 +56,7 @@
   (let ((nlines (count #\newline string)))
     (flet ((take-string (point)
              (with-point ((start-point point)
-			  (end-point point))
+                          (end-point point))
                (points-to-string (line-start start-point)
                                  (line-end (or (line-offset end-point nlines)
                                                (buffer-end end-point)))))))

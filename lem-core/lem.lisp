@@ -4,6 +4,8 @@
           with-editor
           lem))
 
+(defvar *before-init-hook* '())
+
 (defvar *after-init-hook* '())
 
 (defvar *in-the-editor* nil)
@@ -93,11 +95,19 @@
 (defmacro with-editor (() &body body)
   `(call-with-editor (lambda () ,@body)))
 
+(defun parse-args (args)
+  ;; stub
+  (mapcar (lambda (file) `(find-file ,file)) args))
+
 (defun lem (&rest args)
+  (setf args (parse-args args))
   (if *in-the-editor*
-      (mapc 'find-file args)
-      (with-editor ()
-        (lem-internal
-         (lambda ()
-           (run-hooks *after-init-hook*)
-           (mapc 'find-file args))))))
+      (loop for exp in args do (eval exp))
+      (progn
+        (run-hooks *before-init-hook*)
+        (with-editor ()
+          (lem-internal
+           (lambda ()
+             (load-init-file) ;; need to idea for support '-q' '-u' on emacs
+             (run-hooks *after-init-hook*)
+             (loop for exp in args do (eval exp))))))))

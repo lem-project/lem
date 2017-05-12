@@ -80,8 +80,7 @@
                       :attribute 'syntax-constant-attribute)
     (syntax-add-match table
                       (make-regexp-matcher "\\(")
-                      :matched-symbol :start-form
-                      :symbol-lifetime 1)
+                      :matched-symbol :start-form)
     (syntax-add-match table
                       (make-regexp-matcher "[^() \\t]+")
                       :test-symbol :define-start
@@ -107,8 +106,7 @@
                          symbol-boundary-end))
                       :test-symbol :start-form
                       :attribute 'syntax-keyword-attribute
-                      :matched-symbol :define-start
-                      :symbol-lifetime 1)
+                      :matched-symbol :define-start)
     (syntax-add-match table
                       (make-regexp-matcher
                        `(:sequence
@@ -120,8 +118,7 @@
                          symbol-boundary-end))
                       :test-symbol :start-form
                       :attribute 'syntax-keyword-attribute
-                      :matched-symbol :defpackage-start
-                      :symbol-lifetime 1)
+                      :matched-symbol :defpackage-start)
     (syntax-add-match table
                       (make-regexp-matcher
                        `(:sequence
@@ -132,8 +129,7 @@
                          symbol-boundary-end))
                       :test-symbol :start-form
                       :attribute 'syntax-keyword-attribute
-                      :matched-symbol :defvar-start
-                      :symbol-lifetime 1)
+                      :matched-symbol :defvar-start)
     (syntax-add-match table
                       (make-regexp-matcher
                        `(:sequence

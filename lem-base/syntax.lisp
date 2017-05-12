@@ -86,10 +86,6 @@
     :initarg :matched-symbol
     :initform nil
     :reader syntax-match-matched-symbol)
-   (symbol-lifetime
-    :initarg :symbol-lifetime
-    :initform nil
-    :reader syntax-match-symbol-lifetime)
    (move-action
     :initarg :move-action
     :initform nil
@@ -177,14 +173,13 @@
 
 (defun syntax-add-match (syntax-table test
                                       &key test-symbol end-symbol attribute
-                                      matched-symbol (symbol-lifetime -1) move-action)
+                                      matched-symbol move-action)
   (push (make-instance 'syntax-match
                        :test test
                        :test-symbol test-symbol
                        :end-symbol end-symbol
                        :attribute attribute
                        :matched-symbol matched-symbol
-                       :symbol-lifetime symbol-lifetime
                        :move-action move-action)
         (syntax-table-match-list syntax-table))
   t)
@@ -388,7 +383,7 @@
          (when (syntax-test-match-p (syntax-match-test syntax) point)
            (when (syntax-match-matched-symbol syntax)
              (push (cons (syntax-match-matched-symbol syntax)
-                         (syntax-match-symbol-lifetime syntax))
+                         1)
                    *syntax-symbol-lifetimes*))
            (when (syntax-match-end-symbol syntax)
              (setf *syntax-symbol-lifetimes*

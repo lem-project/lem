@@ -15,7 +15,7 @@
           current-syntax
           with-current-syntax
           make-syntax-table
-          make-regexp-matcher
+          make-regex-matcher
           syntax-add-match
           syntax-add-region
           syntax-word-char-p
@@ -50,7 +50,7 @@
 (define-editor-variable enable-syntax-highlight nil)
 (defvar *global-syntax-highlight* t)
 
-(defun make-regexp-matcher (thing)
+(defun make-regex-matcher (thing)
   (ppcre:create-scanner thing))
 
 (defclass syntax ()
@@ -151,23 +151,23 @@
     (let ((string (syntax-table-line-comment-string syntax-table)))
       (when string
         (syntax-add-region syntax-table
-                           (make-regexp-matcher `(:sequence ,string))
-                           (make-regexp-matcher "$")
+                           (make-regex-matcher `(:sequence ,string))
+                           (make-regex-matcher "$")
                            :attribute 'syntax-comment-attribute)))
     (dolist (string-quote-char (syntax-table-string-quote-chars syntax-table))
       (syntax-add-region syntax-table
-                         (make-regexp-matcher `(:sequence ,(string string-quote-char)))
-                         (make-regexp-matcher `(:sequence ,(string string-quote-char)))
+                         (make-regex-matcher `(:sequence ,(string string-quote-char)))
+                         (make-regex-matcher `(:sequence ,(string string-quote-char)))
                          :attribute 'syntax-string-attribute))
     (loop :for (start . end) :in (syntax-table-block-comment-pairs syntax-table)
           :do (syntax-add-region syntax-table
-                                 (make-regexp-matcher `(:sequence ,start))
-                                 (make-regexp-matcher `(:sequence ,end))
+                                 (make-regex-matcher `(:sequence ,start))
+                                 (make-regex-matcher `(:sequence ,end))
                                  :attribute 'syntax-comment-attribute))
     (loop :for (start . end) :in (syntax-table-block-string-pairs syntax-table)
           :do (syntax-add-region syntax-table
-                                 (make-regexp-matcher `(:sequence ,start))
-                                 (make-regexp-matcher `(:sequence ,end))
+                                 (make-regex-matcher `(:sequence ,start))
+                                 (make-regex-matcher `(:sequence ,end))
                                  :attribute 'syntax-string-attribute))
     syntax-table))
 

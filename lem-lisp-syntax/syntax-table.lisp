@@ -73,28 +73,28 @@
           :line-comment-string ";"
           :block-comment-pairs '(("#|" . "|#")))))
     (syntax-add-match table
-                      (make-regexp-matcher `(:sequence
-                                             symbol-boundary-begin
-                                             ,(ppcre:parse-string ":[^()\" \\t]+")
-                                             symbol-boundary-end))
+                      (make-regex-matcher `(:sequence
+                                            symbol-boundary-begin
+                                            ,(ppcre:parse-string ":[^()\" \\t]+")
+                                            symbol-boundary-end))
                       :attribute 'syntax-constant-attribute)
     (syntax-add-match table
-                      (make-regexp-matcher "\\(")
+                      (make-regex-matcher "\\(")
                       :matched-symbol :start-form)
     (syntax-add-match table
-                      (make-regexp-matcher "[^() \\t]+")
+                      (make-regex-matcher "[^() \\t]+")
                       :test-symbol :define-start
                       :attribute 'syntax-function-name-attribute)
     (syntax-add-match table
-                      (make-regexp-matcher "[^() \\t]+")
+                      (make-regex-matcher "[^() \\t]+")
                       :test-symbol :defpackage-start
                       :attribute 'syntax-type-attribute)
     (syntax-add-match table
-                      (make-regexp-matcher "[^() \\t]+")
+                      (make-regex-matcher "[^() \\t]+")
                       :test-symbol :defvar-start
                       :attribute 'syntax-variable-attribute)
     (syntax-add-match table
-                      (make-regexp-matcher
+                      (make-regex-matcher
                        `(:sequence
                          symbol-boundary-begin
                          (:greedy-repetition 0 1 ,+symbol-package-prefix+)
@@ -108,7 +108,7 @@
                       :attribute 'syntax-keyword-attribute
                       :matched-symbol :define-start)
     (syntax-add-match table
-                      (make-regexp-matcher
+                      (make-regex-matcher
                        `(:sequence
                          symbol-boundary-begin
                          (:greedy-repetition 0 1 ,+symbol-package-prefix+)
@@ -120,7 +120,7 @@
                       :attribute 'syntax-keyword-attribute
                       :matched-symbol :defpackage-start)
     (syntax-add-match table
-                      (make-regexp-matcher
+                      (make-regex-matcher
                        `(:sequence
                          symbol-boundary-begin
                          (:greedy-repetition 0 1 ,+symbol-package-prefix+)
@@ -131,7 +131,7 @@
                       :attribute 'syntax-keyword-attribute
                       :matched-symbol :defvar-start)
     (syntax-add-match table
-                      (make-regexp-matcher
+                      (make-regex-matcher
                        `(:sequence
                          symbol-boundary-begin
                          (:greedy-repetition 0 1 ,+symbol-package-prefix+)
@@ -151,14 +151,14 @@
                       :test-symbol :start-form
                       :attribute 'syntax-keyword-attribute)
     (syntax-add-match table
-                      (make-regexp-matcher `(:sequence
-                                             symbol-boundary-begin
-                                             ,(ppcre:parse-string "&[^() \\t]+")
-                                             symbol-boundary-end))
+                      (make-regex-matcher `(:sequence
+                                            symbol-boundary-begin
+                                            ,(ppcre:parse-string "&[^() \\t]+")
+                                            symbol-boundary-end))
                       :attribute 'syntax-constant-attribute)
     (syntax-add-match
      table
-     (make-regexp-matcher "#[+-]")
+     (make-regex-matcher "#[+-]")
      :move-action (lambda (cur-point)
                     (ignore-errors
                      (let ((positivep (eql #\+ (character-at cur-point 1))))

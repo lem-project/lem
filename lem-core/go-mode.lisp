@@ -38,17 +38,17 @@
 
     (dolist (k *go-keywords*)
       (syntax-add-match table
-                        (make-regexp-matcher `(:sequence :word-boundary ,k :word-boundary))
+                        (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
                         :attribute 'syntax-keyword-attribute))
 
     (dolist (k *go-builtin*)
       (syntax-add-match table
-                        (make-regexp-matcher `(:sequence :word-boundary ,k :word-boundary))
+                        (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
                         :attribute 'syntax-keyword-attribute))
 
     (dolist (k *go-constants*)
       (syntax-add-match table
-                        (make-regexp-matcher `(:sequence :word-boundary ,k :word-boundary))
+                        (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
                         :attribute 'syntax-constant-attribute))
     table))
 

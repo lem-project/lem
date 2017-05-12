@@ -78,10 +78,6 @@
     :initarg :test-symbol
     :initform nil
     :reader syntax-match-test-symbol)
-   (end-symbol
-    :initarg :end-symbol
-    :initform nil
-    :reader syntax-match-end-symbol)
    (matched-symbol
     :initarg :matched-symbol
     :initform nil
@@ -134,12 +130,11 @@
     syntax-table))
 
 (defun syntax-add-match (syntax-table test
-                                      &key test-symbol end-symbol attribute
+                                      &key test-symbol attribute
                                       matched-symbol move-action)
   (push (make-instance 'syntax-match
                        :test test
                        :test-symbol test-symbol
-                       :end-symbol end-symbol
                        :attribute attribute
                        :matched-symbol matched-symbol
                        :move-action move-action)
@@ -363,11 +358,6 @@
              (push (cons (syntax-match-matched-symbol syntax)
                          1)
                    *syntax-symbol-lifetimes*))
-           (when (syntax-match-end-symbol syntax)
-             (setf *syntax-symbol-lifetimes*
-                   (delete (syntax-match-end-symbol syntax)
-                           *syntax-symbol-lifetimes*
-                           :key #'car)))
            (cond
              ((syntax-match-move-action syntax)
               (let ((goal-point (syntax-scan-move-action syntax start)))

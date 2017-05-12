@@ -311,6 +311,22 @@
 (defvar *syntax-scan-limit*)
 (defvar *syntax-symbol-lifetimes* nil)
 
+(defun set-syntax-context (line x)
+  (if (line-%syntax-context line)
+      (setf (car (line-%syntax-context line)) x)
+      (setf (line-%syntax-context line) (cons x nil))))
+
+(defun get-syntax-context (line)
+  (car (line-%syntax-context line)))
+
+(defun set-syntax-lifetimes (line lifetimes)
+  (if (line-%syntax-context line)
+      (setf (cdr (line-%syntax-context line)) lifetimes)
+      (setf (line-%syntax-context line) (cons nil lifetimes))))
+
+(defun get-syntax-lifetimes (line)
+  (cdr (line-%syntax-context line)))
+
 (defun syntax-update-symbol-lifetimes ()
   (setq *syntax-symbol-lifetimes*
         (loop :for (symbol . lifetime) :in *syntax-symbol-lifetimes*
@@ -338,7 +354,7 @@
                                 start-charpos (point-charpos point)
                                 :attribute (syntax-attribute region)
                                 nil)
-             (setf (line-%syntax-context (point-line point)) nil)
+             (set-syntax-context (point-line point) nil)
              (return-from syntax-scan-region (values point t)))
             ((end-line-p point)
              (return)))
@@ -347,7 +363,7 @@
                        start-charpos (line-length (point-line point))
                        :attribute (syntax-attribute region)
                        t)
-    (setf (line-%syntax-context (point-line point)) region)
+    (set-syntax-context (point-line point) region)
     (unless (line-offset point 1)
       (return-from syntax-scan-region point))
     (when (point<= *syntax-scan-limit* point)
@@ -359,9 +375,9 @@
     (let ((end (funcall (syntax-match-move-action syntax) end)))
       (when (and end (point< cur end))
         (loop :until (same-line-p cur end) :do
-              (setf (line-%syntax-context (point-line cur)) syntax)
+              (set-syntax-context (point-line cur) syntax)
               (line-offset cur 1))
-        (setf (line-%syntax-context (point-line cur)) 'end-move-action)
+        (set-syntax-context (point-line cur) 'end-move-action)
         (when (syntax-attribute syntax)
           (put-text-property start end :attribute (syntax-attribute syntax)))
         end))))
@@ -404,14 +420,14 @@
 (defun syntax-maybe-scan-region (point)
   (let* ((line (point-line point))
          (prev (line-prev line))
-         (syntax (and prev (line-%syntax-context prev))))
+         (syntax (and prev (get-syntax-context prev))))
     (if (null syntax)
-        (setf (line-%syntax-context line) nil)
+        (set-syntax-context line nil)
         (cond
           ((typep syntax 'syntax-region)
            (syntax-scan-region syntax point (point-charpos point)))
           ((typep syntax 'syntax)
-           (cond ((eq (line-%syntax-context line) 'end-move-action)
+           (cond ((eq (get-syntax-context line) 'end-move-action)
                   (with-point ((cur point))
                     (previous-single-property-change cur :attribute)
                     (let ((goal-point (syntax-scan-move-action syntax cur)))
@@ -423,7 +439,7 @@
                                      :attribute (syntax-attribute syntax)
                                      t)
                   (line-end point))))
-          (t (setf (line-%syntax-context line) nil))))))
+          (t (set-syntax-context line nil))))))
 
 (defun syntax-scan-line (point limit)
   (let ((*syntax-scan-limit* limit))
@@ -451,8 +467,7 @@
                          (character-offset point 1))
                        t))
             (syntax-update-symbol-lifetimes)))
-    (setf (line-%symbol-lifetimes (point-line point))
-          *syntax-symbol-lifetimes*)
+    (set-syntax-lifetimes (point-line point) *syntax-symbol-lifetimes*)
     (or (line-offset point 1)
         (buffer-end point))))
 
@@ -465,7 +480,7 @@
              (buffer-syntax-table buffer))
             (*syntax-symbol-lifetimes*
              (let ((prev (line-prev (point-line start))))
-               (and prev (line-%symbol-lifetimes prev)))))
+               (and prev (get-syntax-lifetimes prev)))))
         (with-point ((start start)
                      (end end))
           (line-start start)

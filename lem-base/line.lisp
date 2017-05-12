@@ -7,7 +7,6 @@
   next
   str
   plist
-  %symbol-lifetimes
   %syntax-context
   points)
 

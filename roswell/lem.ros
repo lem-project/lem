@@ -7,8 +7,10 @@ exec ros -Q -m lem -L sbcl-bin -- $0 "$@"
   (unless (find-package :lem)
     (ql:quickload :lem))
   ;; It should be part of lem. but I can't place where's apropriate. (2017/05/12 SANO)
+  #-lem.siteinit
   (load (merge-pathnames ".lem/site-init.lisp" (user-homedir-pathname))
-        :if-does-not-exist nil))
+        :if-does-not-exist nil)
+  (pushnew :lem.siteinit *features*))
 
 (defpackage :ros.script.lem.3672618460
   (:use :cl))

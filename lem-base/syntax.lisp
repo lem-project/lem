@@ -327,7 +327,7 @@
 	   :when (/= 0 lifetime)
 	   :collect (cons symbol (1- lifetime)))))
 
-(defun syntax-test-match-p (syntax-test point &optional optional-key optional-value)
+(defun syntax-test-match-p (syntax-test point)
   (let ((string (line-string point)))
     (multiple-value-bind (start end)
         (ppcre:scan (syntax-test-thing syntax-test)
@@ -338,11 +338,7 @@
                  (or (not (syntax-test-word-p syntax-test))
                      (<= (length string) end)
                      (not (syntax-symbol-char-p (schar string end)))))
-        (if optional-key
-            (with-point ((start-point point))
-              (line-offset point 0 end)
-              (put-text-property start-point point optional-key optional-value))
-            (line-offset point 0 end))
+        (line-offset point 0 end)
         point))))
 
 (defun syntax-scan-region (region point start-charpos)
@@ -352,7 +348,7 @@
              (character-offset point 1)
              (when (end-line-p point)
                (return)))
-            ((syntax-test-match-p (syntax-region-end region) point 'region-side :end)
+            ((syntax-test-match-p (syntax-region-end region) point)
              (line-add-property (point-line point)
                                 start-charpos (point-charpos point)
                                 :attribute (syntax-attribute region)
@@ -389,7 +385,7 @@
   (etypecase syntax
     (syntax-region
      (let ((start-charpos (point-charpos point))
-           (point (syntax-test-match-p (syntax-region-start syntax) point 'region-side :start)))
+           (point (syntax-test-match-p (syntax-region-start syntax) point)))
        (when point
          (syntax-scan-region syntax point start-charpos)
          point)))

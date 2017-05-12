@@ -45,12 +45,22 @@
 (defun word-length-sort (&rest words)
   (sort (copy-list words) #'> :key #'length))
 
+(ppcre:define-parse-tree-synonym symbol-boundary-begin
+  (:alternation
+   :start-anchor
+   (:positive-lookbehind (:char-class #\( #\) :whitespace-char-class))))
+
+(ppcre:define-parse-tree-synonym symbol-boundary-end
+  (:alternation
+   :end-anchor
+   (:positive-lookahead  (:char-class #\( #\) :whitespace-char-class))))
+
 (defvar *syntax-table*
   (let ((table
          (make-syntax-table
           :space-chars '(#\space #\tab #\newline)
           :symbol-chars '(#\+ #\- #\< #\> #\/ #\* #\& #\= #\. #\? #\_ #\! #\$ #\% #\: #\@ #\[ #\]
-                              #\^ #\{ #\} #\~ #\# #\|)
+                          #\^ #\{ #\} #\~ #\# #\|)
           :paren-alist '((#\( . #\))
                          (#\[ . #\])
                          (#\{ . #\}))
@@ -63,65 +73,71 @@
           :line-comment-string ";"
           :block-comment-pairs '(("#|" . "|#")))))
     (syntax-add-match table
-                      (make-syntax-test ":[^()\" \\t]+"
-                                        :word-p t)
+                      (make-regexp-matcher `(:sequence
+                                             symbol-boundary-begin
+                                             ,(ppcre:parse-string ":[^()\" \\t]+")
+                                             symbol-boundary-end))
                       :attribute 'syntax-constant-attribute)
     (syntax-add-match table
-                      (make-syntax-test "\\(")
+                      (make-regexp-matcher "\\(")
                       :matched-symbol :start-form
                       :symbol-lifetime 1)
     (syntax-add-match table
-                      (make-syntax-test "[^() \\t]+")
+                      (make-regexp-matcher "[^() \\t]+")
                       :test-symbol :define-start
                       :attribute 'syntax-function-name-attribute)
     (syntax-add-match table
-                      (make-syntax-test "[^() \\t]+")
+                      (make-regexp-matcher "[^() \\t]+")
                       :test-symbol :defpackage-start
                       :attribute 'syntax-type-attribute)
     (syntax-add-match table
-                      (make-syntax-test "[^() \\t]+")
+                      (make-regexp-matcher "[^() \\t]+")
                       :test-symbol :defvar-start
                       :attribute 'syntax-variable-attribute)
     (syntax-add-match table
-                      (make-syntax-test
+                      (make-regexp-matcher
                        `(:sequence
+                         symbol-boundary-begin
                          (:greedy-repetition 0 1 ,+symbol-package-prefix+)
                          (:alternation
                           ,@(word-length-sort
                              "defun" "defclass" "defgeneric" "defsetf" "defmacro" "defmethod")
                           (:sequence "define-" (:greedy-repetition 0 nil
-                                                (:inverted-char-class #\space #\tab #\( #\))))))
-                       :word-p t)
+                                                (:inverted-char-class #\space #\tab #\( #\)))))
+                         symbol-boundary-end))
                       :test-symbol :start-form
                       :attribute 'syntax-keyword-attribute
                       :matched-symbol :define-start
                       :symbol-lifetime 1)
     (syntax-add-match table
-                      (make-syntax-test
+                      (make-regexp-matcher
                        `(:sequence
+                         symbol-boundary-begin
                          (:greedy-repetition 0 1 ,+symbol-package-prefix+)
                          (:alternation
                           ,@(word-length-sort
-                             "deftype" "defpackage" "defstruct")))
-                       :word-p t)
+                             "deftype" "defpackage" "defstruct"))
+                         symbol-boundary-end))
                       :test-symbol :start-form
                       :attribute 'syntax-keyword-attribute
                       :matched-symbol :defpackage-start
                       :symbol-lifetime 1)
     (syntax-add-match table
-                      (make-syntax-test
+                      (make-regexp-matcher
                        `(:sequence
+                         symbol-boundary-begin
                          (:greedy-repetition 0 1 ,+symbol-package-prefix+)
                          (:alternation
-                          ,@(word-length-sort "defvar" "defparameter" "defconstant")))
-                       :word-p t)
+                          ,@(word-length-sort "defvar" "defparameter" "defconstant"))
+                         symbol-boundary-end))
                       :test-symbol :start-form
                       :attribute 'syntax-keyword-attribute
                       :matched-symbol :defvar-start
                       :symbol-lifetime 1)
     (syntax-add-match table
-                      (make-syntax-test
+                      (make-regexp-matcher
                        `(:sequence
+                         symbol-boundary-begin
                          (:greedy-repetition 0 1 ,+symbol-package-prefix+)
                          (:alternation
                           ,@(word-length-sort
@@ -134,17 +150,19 @@
                              "return-from" "symbol-macrolet" "tagbody" "throw" "unless" "unwind-protect"
                              "when" "with-accessors" "with-condition-restarts" "with-open-file"
                              "with-output-to-string" "with-slots" "with-standard-io-syntax" "loop"
-                             "declare" "declaim" "proclaim")))
-                       :word-p t)
+                             "declare" "declaim" "proclaim"))
+                         symbol-boundary-end))
                       :test-symbol :start-form
                       :attribute 'syntax-keyword-attribute)
     (syntax-add-match table
-                      (make-syntax-test "&[^() \\t]+"
-                                        :word-p t)
+                      (make-regexp-matcher `(:sequence
+                                             symbol-boundary-begin
+                                             ,(ppcre:parse-string "&[^() \\t]+")
+                                             symbol-boundary-end))
                       :attribute 'syntax-constant-attribute)
     (syntax-add-match
      table
-     (make-syntax-test "#[+-]")
+     (make-regexp-matcher "#[+-]")
      :move-action (lambda (cur-point)
                     (ignore-errors
                      (let ((positivep (eql #\+ (character-at cur-point 1))))

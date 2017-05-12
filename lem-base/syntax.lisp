@@ -15,7 +15,7 @@
           current-syntax
           with-current-syntax
           make-syntax-table
-          make-syntax-test
+          make-regexp-matcher
           syntax-add-match
           syntax-add-region
           syntax-word-char-p
@@ -50,13 +50,8 @@
 (define-editor-variable enable-syntax-highlight nil)
 (defvar *global-syntax-highlight* t)
 
-(defstruct (syntax-test (:constructor %make-syntax-test))
-  thing
-  word-p)
-
-(defun make-syntax-test (thing &key word-p)
-  (%make-syntax-test :thing (ppcre:create-scanner thing)
-                     :word-p word-p))
+(defun make-regexp-matcher (thing)
+  (ppcre:create-scanner thing))
 
 (defclass syntax ()
   ((attribute
@@ -160,23 +155,23 @@
     (let ((string (syntax-table-line-comment-string syntax-table)))
       (when string
         (syntax-add-region syntax-table
-                           (make-syntax-test `(:sequence ,string))
-                           (make-syntax-test "$")
+                           (make-regexp-matcher `(:sequence ,string))
+                           (make-regexp-matcher "$")
                            :attribute 'syntax-comment-attribute)))
     (dolist (string-quote-char (syntax-table-string-quote-chars syntax-table))
       (syntax-add-region syntax-table
-                         (make-syntax-test `(:sequence ,(string string-quote-char)))
-                         (make-syntax-test `(:sequence ,(string string-quote-char)))
+                         (make-regexp-matcher `(:sequence ,(string string-quote-char)))
+                         (make-regexp-matcher `(:sequence ,(string string-quote-char)))
                          :attribute 'syntax-string-attribute))
     (loop :for (start . end) :in (syntax-table-block-comment-pairs syntax-table)
           :do (syntax-add-region syntax-table
-                                 (make-syntax-test `(:sequence ,start))
-                                 (make-syntax-test `(:sequence ,end))
+                                 (make-regexp-matcher `(:sequence ,start))
+                                 (make-regexp-matcher `(:sequence ,end))
                                  :attribute 'syntax-comment-attribute))
     (loop :for (start . end) :in (syntax-table-block-string-pairs syntax-table)
           :do (syntax-add-region syntax-table
-                                 (make-syntax-test `(:sequence ,start))
-                                 (make-syntax-test `(:sequence ,end))
+                                 (make-regexp-matcher `(:sequence ,start))
+                                 (make-regexp-matcher `(:sequence ,end))
                                  :attribute 'syntax-string-attribute))
     syntax-table))
 
@@ -330,14 +325,9 @@
 (defun syntax-test-match-p (syntax-test point)
   (let ((string (line-string point)))
     (multiple-value-bind (start end)
-        (ppcre:scan (syntax-test-thing syntax-test)
-                    string
-                    :start (point-charpos point))
+        (ppcre:scan syntax-test string :start (point-charpos point))
       (when (and start
-                 (= (point-charpos point) start)
-                 (or (not (syntax-test-word-p syntax-test))
-                     (<= (length string) end)
-                     (not (syntax-symbol-char-p (schar string end)))))
+                 (= (point-charpos point) start))
         (line-offset point 0 end)
         point))))
 

@@ -6,10 +6,10 @@
 	     (load path)
 	     (message "Load file: ~a" path)
 	     t)))
-    (or (test (merge-pathnames "lem.rc" (truename ".")))
-        (test (merge-pathnames ".lemrc" (user-homedir-pathname))))))
-
-(add-hook *after-init-hook* 'load-init-file)
+    (let ((home (user-homedir-pathname)))
+      (or (ignore-errors (test (merge-pathnames "lem.rc" (truename "."))))
+          (test (merge-pathnames ".lem/init.lisp" home))
+          (test (merge-pathnames ".lemrc" home))))))
 
 #+sbcl
 (push #'(lambda (x)

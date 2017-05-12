@@ -1,13 +1,13 @@
 (defsystem "lem-core"
   :depends-on ("uiop"
                "cl-charms"
-               "cl-fad"
                "alexandria"
                "swank"
                "trivial-gray-streams"
                "cl-ppcre"
                "inquisitor"
                "babel"
+               "bordeaux-threads"
                "lem-base"
                "lem-lisp-syntax")
   :serial t

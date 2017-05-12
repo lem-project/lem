@@ -330,8 +330,8 @@
   (check-connection)
   (when (uiop:pathname-equal filename (buffer-directory))
     (setf filename (buffer-filename (current-buffer))))
-  (when (and (cl-fad:file-exists-p filename)
-             (not (cl-fad:directory-pathname-p filename)))
+  (when (and (uiop:file-exists-p filename)
+             (not (uiop:directory-pathname-p filename)))
     (eval-with-transcript `(swank:load-file ,filename))))
 
 (defun get-operator-name ()

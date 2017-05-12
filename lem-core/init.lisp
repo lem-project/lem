@@ -2,7 +2,7 @@
 
 (defun load-init-file ()
   (flet ((test (path)
-	   (when (cl-fad:file-exists-p path)
+	   (when (uiop:file-exists-p path)
 	     (load path)
 	     (message "Load file: ~a" path)
 	     t)))

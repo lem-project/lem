@@ -63,7 +63,8 @@
 (defun completion-file (str directory)
   (setf str (expand-file-name str directory))
   (let* ((dirname (directory-namestring str))
-         (files (mapcar #'namestring (cl-fad:list-directory dirname))))
+         (files (mapcar #'namestring (append (uiop:directory-files dirname)
+                                             (uiop:subdirectories dirname)))))
     (let ((strings
            (loop
              :for pathname :in (or (directory str) (list str))

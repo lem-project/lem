@@ -99,15 +99,18 @@
   ;; stub
   (mapcar (lambda (file) `(find-file ,file)) args))
 
-(defun lem (&rest args)
-  (setf args (parse-args args))
-  (if *in-the-editor*
-      (loop for exp in args do (eval exp))
-      (progn
-        (run-hooks *before-init-hook*)
-        (with-editor ()
-          (lem-internal
-           (lambda ()
-             (load-init-file) ;; need to idea for support '-q' '-u' on emacs
-             (run-hooks *after-init-hook*)
-             (loop for exp in args do (eval exp))))))))
+(let ((visited nil))
+  (defun lem (&rest args)
+    (setf args (parse-args args))
+    (if *in-the-editor*
+        (loop for exp in args do (eval exp))
+        (progn
+          (run-hooks *before-init-hook*)
+          (with-editor ()
+            (lem-internal
+             (lambda ()
+               (unless visited
+                 (setf visited t)
+                 (load-init-file) ;; need to idea for support '-q' '-u' on emacs
+                 (run-hooks *after-init-hook*))
+               (loop for exp in args do (eval exp)))))))))

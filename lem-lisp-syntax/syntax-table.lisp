@@ -38,19 +38,6 @@
          (some #'featurep (cdr form)))
         (t)))
 
-(defparameter +symbol-package-prefix+
-  '(:sequence
-    (:greedy-repetition 1 nil (:inverted-char-class #\( #\) #\space #\tab)) #\:))
-
-(defun word-length-sort (&rest words)
-  (sort (copy-list words) #'> :key #'length))
-
-(defun wrap-symbol-names (&rest names)
-  `(:sequence
-    (:greedy-repetition 0 1 ,+symbol-package-prefix+)
-    (:alternation
-     ,@(apply #'word-length-sort names))))
-
 (ppcre:define-parse-tree-synonym symbol-boundary-begin
   (:alternation
    :start-anchor
@@ -60,6 +47,23 @@
   (:alternation
    :end-anchor
    (:positive-lookahead  (:char-class #\( #\) :whitespace-char-class))))
+
+(ppcre:define-parse-tree-synonym maybe-package-prefix
+  (:greedy-repetition 0 1
+   (:sequence
+    (:greedy-repetition 1 nil (:inverted-char-class #\( #\) #\space #\tab)) #\:)))
+
+(defun word-length-sort (&rest words)
+  (sort (copy-list words) #'> :key #'length))
+
+(defun wrap-symbol-names (&rest names)
+  `(:sequence
+    maybe-package-prefix
+    (:register
+     (:group :case-insensitive-p
+      (:alternation
+       ,@(apply #'word-length-sort names))))
+    (:alternation (:greedy-repetition 1 nil :whitespace-char-class) :end-anchor)))
 
 (defvar *syntax-table*
   (let ((table
@@ -99,8 +103,8 @@
       (make-regex-matcher
        `(:sequence
          "("
-         (:register
-          ,(wrap-symbol-names 
+         (:sequence
+          ,(wrap-symbol-names
             "defun" "defclass" "defgeneric"
             "defsetf" "defmacro" "defmethod"))
          (:register ,(ppcre:parse-string "[^() \\t]+"))))
@@ -113,9 +117,21 @@
       (make-regex-matcher
        `(:sequence
          "("
-         (:register
-          ,(wrap-symbol-names
-            "defvar" "defparameter" "defconstant"))
+         (:group :case-insensitive-p
+          (:register (:sequence "define-" ,(ppcre:parse-string "\\S*"))))
+         (:alternation (:greedy-repetition 1 nil :whitespace-char-class) :end-anchor)
+         (:register ,(ppcre:parse-string "[^() \\t]+"))))
+      :captures (vector nil
+                        (make-syntax-name :attribute 'syntax-keyword-attribute)
+                        (make-syntax-name :attribute 'syntax-function-name-attribute))))
+    (add-syntax-pattern
+     table
+     (make-syntax-match
+      (make-regex-matcher
+       `(:sequence
+         "("
+         ,(wrap-symbol-names
+           "defvar" "defparameter" "defconstant")
          (:register ,(ppcre:parse-string "[^() \\t]+"))))
       :captures (vector nil
                         (make-syntax-name :attribute 'syntax-keyword-attribute)
@@ -126,9 +142,8 @@
       (make-regex-matcher
        `(:sequence
          "("
-         (:register
-          ,(wrap-symbol-names
-            "deftype" "defpackage" "defstruct"))
+         ,(wrap-symbol-names
+           "deftype" "defpackage" "defstruct")
          (:register ,(ppcre:parse-string "[^() \\t]+"))))
       :captures (vector nil
                         (make-syntax-name :attribute 'syntax-keyword-attribute)
@@ -139,18 +154,17 @@
       (make-regex-matcher
        `(:sequence
          "("
-         (:register
-          ,(wrap-symbol-names
-            "block" "case" "ccase" "ecase" "typecase" "etypecase" "ctypecase" "catch"
-            "cond" "destructuring-bind" "do" "do*" "dolist" "dotimes"
-            "eval-when" "flet" "labels" "macrolet" "generic-flet" "generic-labels"
-            "handler-case" "restart-case" "if" "lambda" "let" "let*" "handler-bind"
-            "restart-bind" "locally" "multiple-value-bind" "multiple-value-call"
-            "multiple-value-prog1" "prog" "prog*" "prog1" "prog2" "progn" "progv" "return"
-            "return-from" "symbol-macrolet" "tagbody" "throw" "unless" "unwind-protect"
-            "when" "with-accessors" "with-condition-restarts" "with-open-file"
-            "with-output-to-string" "with-slots" "with-standard-io-syntax" "loop"
-            "declare" "declaim" "proclaim"))))
+         ,(wrap-symbol-names
+           "block" "case" "ccase" "ecase" "typecase" "etypecase" "ctypecase" "catch"
+           "cond" "destructuring-bind" "do" "do*" "dolist" "dotimes"
+           "eval-when" "flet" "labels" "macrolet" "generic-flet" "generic-labels"
+           "handler-case" "restart-case" "if" "lambda" "let" "let*" "handler-bind"
+           "restart-bind" "locally" "multiple-value-bind" "multiple-value-call"
+           "multiple-value-prog1" "prog" "prog*" "prog1" "prog2" "progn" "progv" "return"
+           "return-from" "symbol-macrolet" "tagbody" "throw" "unless" "unwind-protect"
+           "when" "with-accessors" "with-condition-restarts" "with-open-file"
+           "with-output-to-string" "with-slots" "with-standard-io-syntax" "loop"
+           "declare" "declaim" "proclaim")))
       :captures (vector nil
                         (make-syntax-name :attribute 'syntax-keyword-attribute))))
     (add-syntax-pattern

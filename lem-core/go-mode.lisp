@@ -35,33 +35,37 @@
                 :string-quote-chars '(#\" #\' #\`)
                 :line-comment-string "//"
                 :block-comment-pairs '(("/*" . "*/")))))
-    (syntax-add-region table
-                       (make-regex-matcher `(:sequence "//"))
-                       (make-regex-matcher "$")
-                       :attribute 'syntax-comment-attribute)
+    (add-syntax-pattern table
+                        (make-syntax-region
+                         (make-regex-matcher `(:sequence "//"))
+                         (make-regex-matcher "$")
+                         :attribute 'syntax-comment-attribute))
     (dolist (c '(#\" #\' #\`))
-      (syntax-add-region table
-                         (make-regex-matcher `(:sequence ,(string c)))
-                         (make-regex-matcher `(:sequence ,(string c)))
-                         :attribute 'syntax-string-attribute))
-    (syntax-add-region table
-                       (make-regex-matcher `(:sequence "/*"))
-                       (make-regex-matcher `(:sequence "*/"))
-                       :attribute 'syntax-comment-attribute)
+      (add-syntax-pattern table
+                          (make-syntax-region
+                           (make-regex-matcher `(:sequence ,(string c)))
+                           (make-regex-matcher `(:sequence ,(string c)))
+                           :attribute 'syntax-string-attribute)))
+    (add-syntax-pattern table
+                        (make-syntax-region
+                         (make-regex-matcher `(:sequence "/*"))
+                         (make-regex-matcher `(:sequence "*/"))
+                         :attribute 'syntax-comment-attribute))
     (dolist (k *go-keywords*)
-      (syntax-add-match table
-                        (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
-                        :attribute 'syntax-keyword-attribute))
-
+      (add-syntax-pattern table
+                          (make-syntax-match
+                           (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
+                           :attribute 'syntax-keyword-attribute)))
     (dolist (k *go-builtin*)
-      (syntax-add-match table
-                        (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
-                        :attribute 'syntax-keyword-attribute))
-
+      (add-syntax-pattern table
+                          (make-syntax-match
+                           (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
+                           :attribute 'syntax-keyword-attribute)))
     (dolist (k *go-constants*)
-      (syntax-add-match table
-                        (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
-                        :attribute 'syntax-constant-attribute))
+      (add-syntax-pattern table
+                          (make-syntax-match
+                           (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
+                           :attribute 'syntax-constant-attribute)))
     table))
 
 (define-major-mode go-mode language-mode

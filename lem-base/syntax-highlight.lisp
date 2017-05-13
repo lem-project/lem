@@ -11,15 +11,17 @@
           enable-syntax-highlight
           enable-syntax-highlight-p
           make-regex-matcher
-          syntax-add-match
-          syntax-add-region
+          make-syntax-match
+          make-syntax-region
+          add-syntax-pattern
+          make-syntax-name
           syntax-scan-range))
 
 (define-editor-variable enable-syntax-highlight nil)
 (defvar *global-syntax-highlight* t)
 
-(defun make-regex-matcher (thing)
-  (ppcre:create-scanner thing))
+(defun make-regex-matcher (regex)
+  (ppcre:create-scanner regex))
 
 (defclass syntax ()
   ((attribute
@@ -28,24 +30,26 @@
     :reader syntax-attribute)))
 
 (defclass syntax-region (syntax)
-  ((start
-    :initarg :start
-    :reader syntax-region-start)
+  ((begin
+    :initarg :begin
+    :reader syntax-region-begin)
    (end
     :initarg :end
     :reader syntax-region-end)))
 
 (defclass syntax-match (syntax)
-  ((test
-    :initarg :test
+  ((matcher
+    :initarg :matcher
     :initform nil
-    :reader syntax-match-test)
+    :reader syntax-match-matcher)
+   (captures
+    :initarg :captures
+    :initform nil
+    :reader syntax-match-captures)
    (test-symbol
-    :initarg :test-symbol
     :initform nil
     :reader syntax-match-test-symbol)
    (matched-symbol
-    :initarg :matched-symbol
     :initform nil
     :reader syntax-match-matched-symbol)
    (move-action
@@ -53,24 +57,24 @@
     :initform nil
     :reader syntax-match-move-action)))
 
-(defun syntax-add-match (syntax-table test
-                                      &key test-symbol attribute
-                                      matched-symbol move-action)
-  (push (make-instance 'syntax-match
-                       :test test
-                       :test-symbol test-symbol
-                       :attribute attribute
-                       :matched-symbol matched-symbol
-                       :move-action move-action)
-        (syntax-table-patterns syntax-table))
-  t)
+(defun make-syntax-match (matcher &key attribute captures move-action)
+  (make-instance 'syntax-match
+                 :matcher matcher
+                 :attribute attribute
+                 :captures captures
+                 :move-action move-action))
 
-(defun syntax-add-region (syntax-table start end &key attribute)
-  (push (make-instance 'syntax-region
-                       :start start
-                       :end end
-                       :attribute attribute)
-        (syntax-table-patterns syntax-table)))
+(defun make-syntax-region (begin-matcher end-matcher &key attribute)
+  (make-instance 'syntax-region
+                 :begin begin-matcher
+                 :end end-matcher
+                 :attribute attribute))
+
+(defun add-syntax-pattern (syntax-table pattern)
+  (push pattern (syntax-table-patterns syntax-table)))
+
+(defun make-syntax-name (&key attribute)
+  attribute)
 
 (defun enable-syntax-highlight-p (buffer)
   (and *global-syntax-highlight*
@@ -154,7 +158,7 @@
   (etypecase syntax
     (syntax-region
      (let ((start-charpos (point-charpos point))
-           (point (syntax-test-match-p (syntax-region-start syntax) point)))
+           (point (syntax-test-match-p (syntax-region-begin syntax) point)))
        (when point
          (syntax-scan-region syntax point start-charpos)
          point)))
@@ -164,7 +168,7 @@
                      *syntax-symbol-lifetimes*
                      :key #'car))
        (with-point ((start point))
-         (when (syntax-test-match-p (syntax-match-test syntax) point)
+         (when (syntax-test-match-p (syntax-match-matcher syntax) point)
            (when (syntax-match-matched-symbol syntax)
              (push (cons (syntax-match-matched-symbol syntax)
                          1)

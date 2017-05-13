@@ -45,6 +45,12 @@
 (defun word-length-sort (&rest words)
   (sort (copy-list words) #'> :key #'length))
 
+(defun wrap-symbol-names (&rest names)
+  `(:sequence
+    (:greedy-repetition 0 1 ,+symbol-package-prefix+)
+    (:alternation
+     ,@(apply #'word-length-sort names))))
+
 (ppcre:define-parse-tree-synonym symbol-boundary-begin
   (:alternation
    :start-anchor
@@ -72,119 +78,114 @@
           :expr-prefix-backward-function 'skip-expr-prefix-backward
           :line-comment-string ";"
           :block-comment-pairs '(("#|" . "|#")))))
-    (syntax-add-region table
-                       (make-regex-matcher `(:sequence ";"))
-                       (make-regex-matcher "$")
-                       :attribute 'syntax-comment-attribute)
-    (syntax-add-region table
-                       (make-regex-matcher `(:sequence "\""))
-                       (make-regex-matcher `(:sequence "\""))
-                       :attribute 'syntax-string-attribute)
-    (syntax-add-region table
-                       (make-regex-matcher `(:sequence "#|"))
-                       (make-regex-matcher `(:sequence "|#"))
-                       :attribute 'syntax-comment-attribute)
-    (syntax-add-match table
-                      (make-regex-matcher `(:sequence
-                                            symbol-boundary-begin
-                                            ,(ppcre:parse-string ":[^()\" \\t]+")
-                                            symbol-boundary-end))
-                      :attribute 'syntax-constant-attribute)
-    (syntax-add-match table
-                      (make-regex-matcher "\\(")
-                      :matched-symbol :start-form)
-    (syntax-add-match table
-                      (make-regex-matcher "[^() \\t]+")
-                      :test-symbol :define-start
-                      :attribute 'syntax-function-name-attribute)
-    (syntax-add-match table
-                      (make-regex-matcher "[^() \\t]+")
-                      :test-symbol :defpackage-start
-                      :attribute 'syntax-type-attribute)
-    (syntax-add-match table
-                      (make-regex-matcher "[^() \\t]+")
-                      :test-symbol :defvar-start
-                      :attribute 'syntax-variable-attribute)
-    (syntax-add-match table
-                      (make-regex-matcher
-                       `(:sequence
-                         symbol-boundary-begin
-                         (:greedy-repetition 0 1 ,+symbol-package-prefix+)
-                         (:alternation
-                          ,@(word-length-sort
-                             "defun" "defclass" "defgeneric" "defsetf" "defmacro" "defmethod")
-                          (:sequence "define-" (:greedy-repetition 0 nil
-                                                (:inverted-char-class #\space #\tab #\( #\)))))
-                         symbol-boundary-end))
-                      :test-symbol :start-form
-                      :attribute 'syntax-keyword-attribute
-                      :matched-symbol :define-start)
-    (syntax-add-match table
-                      (make-regex-matcher
-                       `(:sequence
-                         symbol-boundary-begin
-                         (:greedy-repetition 0 1 ,+symbol-package-prefix+)
-                         (:alternation
-                          ,@(word-length-sort
-                             "deftype" "defpackage" "defstruct"))
-                         symbol-boundary-end))
-                      :test-symbol :start-form
-                      :attribute 'syntax-keyword-attribute
-                      :matched-symbol :defpackage-start)
-    (syntax-add-match table
-                      (make-regex-matcher
-                       `(:sequence
-                         symbol-boundary-begin
-                         (:greedy-repetition 0 1 ,+symbol-package-prefix+)
-                         (:alternation
-                          ,@(word-length-sort "defvar" "defparameter" "defconstant"))
-                         symbol-boundary-end))
-                      :test-symbol :start-form
-                      :attribute 'syntax-keyword-attribute
-                      :matched-symbol :defvar-start)
-    (syntax-add-match table
-                      (make-regex-matcher
-                       `(:sequence
-                         symbol-boundary-begin
-                         (:greedy-repetition 0 1 ,+symbol-package-prefix+)
-                         (:alternation
-                          ,@(word-length-sort
-                             "block" "case" "ccase" "ecase" "typecase" "etypecase" "ctypecase" "catch"
-                             "cond" "destructuring-bind" "do" "do*" "dolist" "dotimes"
-                             "eval-when" "flet" "labels" "macrolet" "generic-flet" "generic-labels"
-                             "handler-case" "restart-case" "if" "lambda" "let" "let*" "handler-bind"
-                             "restart-bind" "locally" "multiple-value-bind" "multiple-value-call"
-                             "multiple-value-prog1" "prog" "prog*" "prog1" "prog2" "progn" "progv" "return"
-                             "return-from" "symbol-macrolet" "tagbody" "throw" "unless" "unwind-protect"
-                             "when" "with-accessors" "with-condition-restarts" "with-open-file"
-                             "with-output-to-string" "with-slots" "with-standard-io-syntax" "loop"
-                             "declare" "declaim" "proclaim"))
-                         symbol-boundary-end))
-                      :test-symbol :start-form
-                      :attribute 'syntax-keyword-attribute)
-    (syntax-add-match table
-                      (make-regex-matcher `(:sequence
-                                            symbol-boundary-begin
-                                            ,(ppcre:parse-string "&[^() \\t]+")
-                                            symbol-boundary-end))
-                      :attribute 'syntax-constant-attribute)
-    (syntax-add-match
+    (add-syntax-pattern table
+                        (make-syntax-region
+                         (make-regex-matcher `(:sequence ";"))
+                         (make-regex-matcher "$")
+                         :attribute 'syntax-comment-attribute))
+    (add-syntax-pattern table
+                        (make-syntax-region
+                         (make-regex-matcher `(:sequence "\""))
+                         (make-regex-matcher `(:sequence "\""))
+                         :attribute 'syntax-string-attribute))
+    (add-syntax-pattern table
+                        (make-syntax-region
+                         (make-regex-matcher `(:sequence "#|"))
+                         (make-regex-matcher `(:sequence "|#"))
+                         :attribute 'syntax-comment-attribute))
+    (add-syntax-pattern
      table
-     (make-regex-matcher "#[+-]")
-     :move-action (lambda (cur-point)
-                    (ignore-errors
-                     (let ((positivep (eql #\+ (character-at cur-point 1))))
-                       (character-offset cur-point 2)
-                       (with-point ((prev cur-point))
-                         (when (form-offset cur-point 1)
-                           (cond
-                             ((if (featurep (read-from-string
-                                             (points-to-string
-                                              prev cur-point)))
-                                  positivep
-                                  (not positivep))
-                              nil)
-                             (t
-                              (form-offset cur-point 1))))))))
-     :attribute 'syntax-comment-attribute)
+     (make-syntax-match
+      (make-regex-matcher
+       `(:sequence
+         "("
+         (:register
+          ,(wrap-symbol-names 
+            "defun" "defclass" "defgeneric"
+            "defsetf" "defmacro" "defmethod"))
+         (:register ,(ppcre:parse-string "[^() \\t]+"))))
+      :captures (vector nil
+                        (make-syntax-name :attribute 'syntax-keyword-attribute)
+                        (make-syntax-name :attribute 'syntax-function-name-attribute))))
+    (add-syntax-pattern
+     table
+     (make-syntax-match
+      (make-regex-matcher
+       `(:sequence
+         "("
+         (:register
+          ,(wrap-symbol-names
+            "defvar" "defparameter" "defconstant"))
+         (:register ,(ppcre:parse-string "[^() \\t]+"))))
+      :captures (vector nil
+                        (make-syntax-name :attribute 'syntax-keyword-attribute)
+                        (make-syntax-name :attribute 'syntax-variable-attribute))))
+    (add-syntax-pattern
+     table
+     (make-syntax-match
+      (make-regex-matcher
+       `(:sequence
+         "("
+         (:register
+          ,(wrap-symbol-names
+            "deftype" "defpackage" "defstruct"))
+         (:register ,(ppcre:parse-string "[^() \\t]+"))))
+      :captures (vector nil
+                        (make-syntax-name :attribute 'syntax-keyword-attribute)
+                        (make-syntax-name :attribute 'syntax-type-attribute))))
+    (add-syntax-pattern
+     table
+     (make-syntax-match
+      (make-regex-matcher
+       `(:sequence
+         "("
+         (:register
+          ,(wrap-symbol-names
+            "block" "case" "ccase" "ecase" "typecase" "etypecase" "ctypecase" "catch"
+            "cond" "destructuring-bind" "do" "do*" "dolist" "dotimes"
+            "eval-when" "flet" "labels" "macrolet" "generic-flet" "generic-labels"
+            "handler-case" "restart-case" "if" "lambda" "let" "let*" "handler-bind"
+            "restart-bind" "locally" "multiple-value-bind" "multiple-value-call"
+            "multiple-value-prog1" "prog" "prog*" "prog1" "prog2" "progn" "progv" "return"
+            "return-from" "symbol-macrolet" "tagbody" "throw" "unless" "unwind-protect"
+            "when" "with-accessors" "with-condition-restarts" "with-open-file"
+            "with-output-to-string" "with-slots" "with-standard-io-syntax" "loop"
+            "declare" "declaim" "proclaim"))))
+      :captures (vector nil
+                        (make-syntax-name :attribute 'syntax-keyword-attribute))))
+    (add-syntax-pattern
+     table
+     (make-syntax-match
+      (make-regex-matcher `(:sequence
+                            symbol-boundary-begin
+                            ,(ppcre:parse-string ":[^()\" \\t]+")
+                            symbol-boundary-end))
+      :attribute 'syntax-constant-attribute))
+    (add-syntax-pattern
+     table
+     (make-syntax-match
+      (make-regex-matcher `(:sequence
+                            symbol-boundary-begin
+                            ,(ppcre:parse-string "&[^() \\t]+")
+                            symbol-boundary-end))
+      :attribute 'syntax-constant-attribute))
+    ;; (syntax-add-match
+    ;;  table
+    ;;  (make-regex-matcher "#[+-]")
+    ;;  :move-action (lambda (cur-point)
+    ;;                 (ignore-errors
+    ;;                  (let ((positivep (eql #\+ (character-at cur-point 1))))
+    ;;                    (character-offset cur-point 2)
+    ;;                    (with-point ((prev cur-point))
+    ;;                      (when (form-offset cur-point 1)
+    ;;                        (cond
+    ;;                          ((if (featurep (read-from-string
+    ;;                                          (points-to-string
+    ;;                                           prev cur-point)))
+    ;;                               positivep
+    ;;                               (not positivep))
+    ;;                           nil)
+    ;;                          (t
+    ;;                           (form-offset cur-point 1))))))))
+    ;;  :attribute 'syntax-comment-attribute)
     table))

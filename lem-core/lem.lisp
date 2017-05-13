@@ -58,14 +58,13 @@
   (let* ((main-thread (bt:current-thread))
          (editor-thread (bt:make-thread
                          (lambda ()
-                           (let ((*in-the-editor* t))
-                             (let ((report (with-catch-bailout
-                                             (toplevel-command-loop
-                                              initialize-function))))
-                               (bt:interrupt-thread
-                                main-thread
-                                (lambda ()
-                                  (error 'exit-editor :value report))))))
+                           (let ((report (with-catch-bailout
+                                           (toplevel-command-loop
+                                            initialize-function))))
+                             (bt:interrupt-thread
+                              main-thread
+                              (lambda ()
+                                (error 'exit-editor :value report)))))
                          :name "editor")))
     (handler-case (input-loop editor-thread)
       (exit-editor (c) (return-from lem-internal (exit-editor-value c)))
@@ -82,13 +81,16 @@
                             #+sbcl (sb-sys:interactive-interrupt #'bailout))
                (call-with-screen
                 (lambda ()
-                  (let ((*in-the-editor* t))
-                    (unless passed
-                      (setq passed t)
-                      (window-init)
-                      (minibuf-init)
-                      (setup))
-                    (funcall function))))))))
+                  (unwind-protect
+                       (progn
+                         (setf *in-the-editor* t)
+                         (unless passed
+                           (setq passed t)
+                           (window-init)
+                           (minibuf-init)
+                           (setup))
+                         (funcall function))
+                    (setf *in-the-editor* nil))))))))
       (when report
         (format t "~&~A~%" report)))))
 

@@ -163,6 +163,10 @@
   `(let ((*current-syntax* ,syntax))
      ,@body))
 
+(defmacro with-point-syntax (point &body body)
+  `(with-current-syntax (buffer-syntax-table (point-buffer ,point))
+     ,@body))
+
 (defun syntax-word-char-p (c)
   (and (characterp c)
        (alphanumericp c)))
@@ -439,11 +443,6 @@
             (syntax-scan-line start end)
             (when (point<= end start)
               (return start))))))))
-
-
-(defmacro with-point-syntax (point &body body)
-  `(let ((*current-syntax* (buffer-syntax-table (point-buffer ,point))))
-     ,@body))
 
 
 (let ((cache (make-hash-table :test 'equal)))

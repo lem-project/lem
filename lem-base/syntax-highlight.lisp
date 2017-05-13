@@ -15,6 +15,7 @@
           make-syntax-match
           make-syntax-region
           add-syntax-pattern
+          make-syntax-patterns
           make-syntax-name
           syntax-scan-range))
 
@@ -38,7 +39,11 @@
     :reader syntax-region-begin)
    (end
     :initarg :end
-    :reader syntax-region-end)))
+    :reader syntax-region-end)
+   (patterns
+    :initarg :patterns
+    :initform nil
+    :reader syntax-region-patterns)))
 
 (defclass syntax-match (syntax)
   ((matcher
@@ -67,14 +72,18 @@
                  :captures captures
                  :move-action move-action))
 
-(defun make-syntax-region (begin-matcher end-matcher &key attribute)
+(defun make-syntax-region (begin-matcher end-matcher &key attribute patterns)
   (make-instance 'syntax-region
                  :begin begin-matcher
                  :end end-matcher
-                 :attribute attribute))
+                 :attribute attribute
+                 :patterns patterns))
 
 (defun add-syntax-pattern (syntax-table pattern)
   (push pattern (syntax-table-patterns syntax-table)))
+
+(defun make-syntax-patterns (&rest patterns)
+  patterns)
 
 (defun make-syntax-name (&key attribute)
   attribute)

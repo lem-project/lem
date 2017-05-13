@@ -82,21 +82,30 @@
           :expr-prefix-backward-function 'skip-expr-prefix-backward
           :line-comment-string ";"
           :block-comment-pairs '(("#|" . "|#")))))
-    (add-syntax-pattern table
-                        (make-syntax-region
-                         (make-regex-matcher `(:sequence ";"))
-                         (make-regex-matcher "$")
-                         :attribute 'syntax-comment-attribute))
-    (add-syntax-pattern table
-                        (make-syntax-region
-                         (make-regex-matcher `(:sequence "\""))
-                         (make-regex-matcher `(:sequence "\""))
-                         :attribute 'syntax-string-attribute))
-    (add-syntax-pattern table
-                        (make-syntax-region
-                         (make-regex-matcher `(:sequence "#|"))
-                         (make-regex-matcher `(:sequence "|#"))
-                         :attribute 'syntax-comment-attribute))
+    (add-syntax-pattern
+     table
+     (make-syntax-region
+      (make-regex-matcher `(:sequence ";"))
+      (make-regex-matcher "$")
+      :attribute 'syntax-comment-attribute))
+    (add-syntax-pattern
+     table
+     (make-syntax-region
+      (make-regex-matcher `(:sequence "\""))
+      (make-regex-matcher `(:sequence "\""))
+      :attribute 'syntax-string-attribute
+      :patterns (make-syntax-patterns
+                 (make-syntax-match (make-regex-matcher "\\\\.")))))
+    (add-syntax-pattern
+     table
+     (make-syntax-region
+      (make-regex-matcher `(:sequence "#|"))
+      (make-regex-matcher `(:sequence "|#"))
+      :attribute 'syntax-comment-attribute))
+    (add-syntax-pattern
+     table
+     (make-syntax-match
+      (make-regex-matcher "\\\\.")))
     (add-syntax-pattern
      table
      (make-syntax-match

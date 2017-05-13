@@ -20,6 +20,7 @@
                (:file "point")
                (:file "basic")
                (:file "syntax")
+               (:file "syntax-highlight")
                (:file "file")
                (:file "search")
                (:file "indent")))

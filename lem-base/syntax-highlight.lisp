@@ -1,6 +1,7 @@
 (in-package :lem-base)
 
-(export '(syntax-string-attribute
+(export '(*syntax-scan-region-function*
+          syntax-string-attribute
           syntax-comment-attribute
           syntax-keyword-attribute
           syntax-constant-attribute
@@ -16,6 +17,8 @@
           add-syntax-pattern
           make-syntax-name
           syntax-scan-range))
+
+(defvar *syntax-scan-region-function* 'syntax-scan-range)
 
 (define-editor-variable enable-syntax-highlight nil)
 (defvar *global-syntax-highlight* t)

@@ -21,6 +21,7 @@
                (:file "basic")
                (:file "syntax")
                (:file "syntax-highlight")
+               (:file "syntax-highlight-tm")
                (:file "file")
                (:file "search")
                (:file "indent")))

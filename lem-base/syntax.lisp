@@ -85,7 +85,7 @@
     :initform nil
     :reader syntax-match-move-action)))
 
-(defstruct (syntax-table (:constructor %make-syntax-table))
+(defstruct syntax-table
   (space-chars '(#\space #\tab #\newline))
   (symbol-chars '(#\_))
   (paren-alist '((#\( . #\))
@@ -101,31 +101,6 @@
   block-comment-pairs
   block-string-pairs
   patterns)
-
-(defun make-syntax-table (&rest args)
-  (let ((syntax-table (apply '%make-syntax-table args)))
-    (let ((string (syntax-table-line-comment-string syntax-table)))
-      (when string
-        (syntax-add-region syntax-table
-                           (make-regex-matcher `(:sequence ,string))
-                           (make-regex-matcher "$")
-                           :attribute 'syntax-comment-attribute)))
-    (dolist (string-quote-char (syntax-table-string-quote-chars syntax-table))
-      (syntax-add-region syntax-table
-                         (make-regex-matcher `(:sequence ,(string string-quote-char)))
-                         (make-regex-matcher `(:sequence ,(string string-quote-char)))
-                         :attribute 'syntax-string-attribute))
-    (loop :for (start . end) :in (syntax-table-block-comment-pairs syntax-table)
-          :do (syntax-add-region syntax-table
-                                 (make-regex-matcher `(:sequence ,start))
-                                 (make-regex-matcher `(:sequence ,end))
-                                 :attribute 'syntax-comment-attribute))
-    (loop :for (start . end) :in (syntax-table-block-string-pairs syntax-table)
-          :do (syntax-add-region syntax-table
-                                 (make-regex-matcher `(:sequence ,start))
-                                 (make-regex-matcher `(:sequence ,end))
-                                 :attribute 'syntax-string-attribute))
-    syntax-table))
 
 (defun syntax-add-match (syntax-table test
                                       &key test-symbol attribute

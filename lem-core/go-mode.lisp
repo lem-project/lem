@@ -35,7 +35,19 @@
                 :string-quote-chars '(#\" #\' #\`)
                 :line-comment-string "//"
                 :block-comment-pairs '(("/*" . "*/")))))
-
+    (syntax-add-region table
+                       (make-regex-matcher `(:sequence "//"))
+                       (make-regex-matcher "$")
+                       :attribute 'syntax-comment-attribute)
+    (dolist (c '(#\" #\' #\`))
+      (syntax-add-region table
+                         (make-regex-matcher `(:sequence ,(string c)))
+                         (make-regex-matcher `(:sequence ,(string c)))
+                         :attribute 'syntax-string-attribute))
+    (syntax-add-region table
+                       (make-regex-matcher `(:sequence "/*"))
+                       (make-regex-matcher `(:sequence "*/"))
+                       :attribute 'syntax-comment-attribute)
     (dolist (k *go-keywords*)
       (syntax-add-match table
                         (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))

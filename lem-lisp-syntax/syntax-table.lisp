@@ -72,6 +72,18 @@
           :expr-prefix-backward-function 'skip-expr-prefix-backward
           :line-comment-string ";"
           :block-comment-pairs '(("#|" . "|#")))))
+    (syntax-add-region table
+                       (make-regex-matcher `(:sequence ";"))
+                       (make-regex-matcher "$")
+                       :attribute 'syntax-comment-attribute)
+    (syntax-add-region table
+                       (make-regex-matcher `(:sequence "\""))
+                       (make-regex-matcher `(:sequence "\""))
+                       :attribute 'syntax-string-attribute)
+    (syntax-add-region table
+                       (make-regex-matcher `(:sequence "#|"))
+                       (make-regex-matcher `(:sequence "|#"))
+                       :attribute 'syntax-comment-attribute)
     (syntax-add-match table
                       (make-regex-matcher `(:sequence
                                             symbol-boundary-begin

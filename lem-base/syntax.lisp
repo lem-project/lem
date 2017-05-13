@@ -62,12 +62,10 @@
 (defclass syntax-region (syntax)
   ((start
     :initarg :start
-    :reader syntax-region-start
-    :type syntax-test)
+    :reader syntax-region-start)
    (end
     :initarg :end
-    :reader syntax-region-end
-    :type syntax-test)))
+    :reader syntax-region-end)))
 
 (defclass syntax-match (syntax)
   ((test

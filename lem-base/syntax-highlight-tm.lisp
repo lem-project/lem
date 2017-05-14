@@ -8,8 +8,8 @@
 
 (defun tm-ahead-matcher (syntax)
   (etypecase syntax
-    (syntax-region
-     (syntax-region-begin syntax))
+    (tm-region
+     (tm-region-begin syntax))
     (syntax-match
      (syntax-match-matcher syntax))))
 
@@ -70,12 +70,12 @@
         (start2 (if begin-result (tm-result-end begin-result) 0)))
     (let* ((end-result
             (tm-ahead-match syntax
-                            (syntax-region-end syntax)
+                            (tm-region-end syntax)
                             (line-string point)
                             start2))
            (results
             (cons end-result
-                  (tm-get-results-from-patterns (syntax-region-patterns syntax)
+                  (tm-get-results-from-patterns (tm-region-patterns syntax)
                                                 (line-string point)
                                                 start2))))
       (loop
@@ -154,7 +154,7 @@
 (defun tm-apply-result (point result)
   (let ((syntax (tm-result-syntax result)))
     (etypecase syntax
-      (syntax-region
+      (tm-region
        (tm-apply-region syntax point result))
       (syntax-match
        (tm-apply-match syntax point result)))))
@@ -165,7 +165,7 @@
          (context (and prev (get-syntax-context prev))))
     (cond ((null context)
            (set-syntax-context line nil))
-          ((typep context 'syntax-region)
+          ((typep context 'tm-region)
            (tm-apply-region context point nil))
           ((typep context 'syntax)
            (cond ((eq (get-syntax-context line) 'end-move-action)

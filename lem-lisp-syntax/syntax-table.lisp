@@ -69,13 +69,13 @@
   (let ((tmlanguage (make-tmlanguage)))
     (add-syntax-pattern
      tmlanguage
-     (make-syntax-region
+     (make-tm-region
       (make-regex-matcher `(:sequence ";"))
       (make-regex-matcher "$")
       :attribute 'syntax-comment-attribute))
     (add-syntax-pattern
      tmlanguage
-     (make-syntax-region
+     (make-tm-region
       (make-regex-matcher `(:sequence "\""))
       (make-regex-matcher `(:sequence "\""))
       :attribute 'syntax-string-attribute
@@ -83,7 +83,7 @@
                  (make-syntax-match (make-regex-matcher "\\\\.")))))
     (add-syntax-pattern
      tmlanguage
-     (make-syntax-region
+     (make-tm-region
       (make-regex-matcher `(:sequence "#|"))
       (make-regex-matcher `(:sequence "|#"))
       :attribute 'syntax-comment-attribute))

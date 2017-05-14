@@ -37,18 +37,18 @@
                 :block-comment-pairs '(("/*" . "*/"))))
         (tmlanguage (make-tmlanguage)))
     (add-syntax-pattern tmlanguage
-                        (make-syntax-region
+                        (make-tm-region
                          (make-regex-matcher `(:sequence "//"))
                          (make-regex-matcher "$")
                          :attribute 'syntax-comment-attribute))
     (dolist (c '(#\" #\' #\`))
       (add-syntax-pattern tmlanguage
-                          (make-syntax-region
+                          (make-tm-region
                            (make-regex-matcher `(:sequence ,(string c)))
                            (make-regex-matcher `(:sequence ,(string c)))
                            :attribute 'syntax-string-attribute)))
     (add-syntax-pattern tmlanguage
-                        (make-syntax-region
+                        (make-tm-region
                          (make-regex-matcher `(:sequence "/*"))
                          (make-regex-matcher `(:sequence "*/"))
                          :attribute 'syntax-comment-attribute))

@@ -13,7 +13,7 @@
           make-tmlanguage
           make-regex-matcher
           make-syntax-match
-          make-syntax-region
+          make-tm-region
           add-syntax-pattern
           make-syntax-patterns
           make-syntax-name
@@ -60,17 +60,17 @@
     :initform 0
     :reader syntax-attribute)))
 
-(defclass syntax-region (syntax)
+(defclass tm-region (syntax)
   ((begin
     :initarg :begin
-    :reader syntax-region-begin)
+    :reader tm-region-begin)
    (end
     :initarg :end
-    :reader syntax-region-end)
+    :reader tm-region-end)
    (patterns
     :initarg :patterns
     :initform nil
-    :reader syntax-region-patterns)))
+    :reader tm-region-patterns)))
 
 (defclass syntax-match (syntax)
   ((matcher
@@ -96,8 +96,8 @@
                  :captures captures
                  :move-action move-action))
 
-(defun make-syntax-region (begin-matcher end-matcher &key attribute patterns)
-  (make-instance 'syntax-region
+(defun make-tm-region (begin-matcher end-matcher &key attribute patterns)
+  (make-instance 'tm-region
                  :begin begin-matcher
                  :end end-matcher
                  :attribute attribute

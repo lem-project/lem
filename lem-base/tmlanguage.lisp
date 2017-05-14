@@ -46,6 +46,11 @@
     :initform nil
     :reader tm-match-move-action)))
 
+(defclass tm-patterns ()
+  ((patterns
+    :initarg :patterns
+    :reader patterns)))
+
 (defun make-tmlanguage ()
   (make-instance 'tmlanguage))
 
@@ -67,7 +72,7 @@
   (ppcre:create-scanner regex))
 
 (defun make-tm-patterns (&rest patterns)
-  patterns)
+  (make-instance 'tm-patterns :patterns patterns))
 
 (defun make-rule-name (&key attribute)
   attribute)
@@ -212,10 +217,10 @@
                (line-end (move-point point start))))))))
 
 (defun tm-apply-match-in-capture (point capture start end)
-  (etypecase capture
-    (cons
-     (tm-scan-line point capture start end))
-    (atom
+  (typecase capture
+    (tm-patterns
+     (tm-scan-line point (patterns capture) start end))
+    (otherwise
      (line-add-property (point-line point) start end :attribute capture nil))))
 
 (defun tm-apply-match (rule point result)

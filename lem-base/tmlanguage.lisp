@@ -6,19 +6,18 @@
           make-tm-region
           add-tm-pattern
           make-tm-patterns
-          make-rule-name))
+          make-tm-name))
 
 (defclass tmlanguage (syntax-parser)
   ((patterns
     :initarg :patterns
-    :initform nil
     :accessor tmlanguage-patterns)))
 
 (defclass tm-rule ()
-  ((attribute
-    :initarg :attribute
+  ((name
+    :initarg :name
     :initform 0
-    :reader tm-rule-attribute)))
+    :reader tm-rule-name)))
 
 (defclass tm-region (tm-rule)
   ((begin
@@ -49,23 +48,23 @@
 (defclass tm-patterns ()
   ((patterns
     :initarg :patterns
-    :reader patterns)))
+    :accessor patterns)))
 
 (defun make-tmlanguage ()
-  (make-instance 'tmlanguage))
+  (make-instance 'tmlanguage :patterns (make-tm-patterns)))
 
-(defun make-tm-match (matcher &key attribute captures move-action)
+(defun make-tm-match (matcher &key name captures move-action)
   (make-instance 'tm-match
                  :matcher matcher
-                 :attribute attribute
+                 :name name
                  :captures captures
                  :move-action move-action))
 
-(defun make-tm-region (begin-matcher end-matcher &key attribute patterns)
+(defun make-tm-region (begin-matcher end-matcher &key name (patterns (make-tm-patterns)))
   (make-instance 'tm-region
                  :begin begin-matcher
                  :end end-matcher
-                 :attribute attribute
+                 :name name
                  :patterns patterns))
 
 (defun make-regex-matcher (regex)
@@ -74,11 +73,11 @@
 (defun make-tm-patterns (&rest patterns)
   (make-instance 'tm-patterns :patterns patterns))
 
-(defun make-rule-name (&key attribute)
-  attribute)
+(defun make-tm-name (name)
+  name)
 
 (defun add-tm-pattern (tmlanguage pattern)
-  (push pattern (tmlanguage-patterns tmlanguage)))
+  (push pattern (patterns (tmlanguage-patterns tmlanguage))))
 
 (defmethod %syntax-scan-region ((tmlanguage tmlanguage) start end)
   (tm-syntax-scan-region start end))
@@ -122,7 +121,7 @@
               (tm-result-reg-ends result2))))
 
 (defun tm-get-results-from-patterns (patterns string start end)
-  (loop :for rule :in patterns
+  (loop :for rule :in (patterns patterns)
         :for result := (tm-ahead-match rule (tm-ahead-matcher rule) string start end)
         :when result
         :collect result))
@@ -172,7 +171,7 @@
                  (line-add-property (point-line point)
                                     start1
                                     (line-length (point-line point))
-                                    :attribute (tm-rule-attribute rule)
+                                    :attribute (tm-rule-name rule)
                                     t)
                  (set-syntax-context (point-line point) rule)
                  (line-end point)
@@ -181,7 +180,7 @@
                  (line-add-property (point-line point)
                                     start1
                                     (tm-result-end end-result)
-                                    :attribute (tm-rule-attribute rule)
+                                    :attribute (tm-rule-name rule)
                                     nil)
                  (set-syntax-context (point-line point) nil)
                  (line-offset point 0 (tm-result-end end-result))
@@ -207,7 +206,7 @@
               (set-syntax-context (point-line point) rule)
               (line-offset point 1))
         (set-syntax-context (point-line point) 'end-move-action)
-        (uiop:if-let ((attribute (tm-rule-attribute rule)))
+        (uiop:if-let ((attribute (tm-rule-name rule)))
           (put-text-property start end :attribute attribute))
         (cond (allow-multiline
                (move-point point end))
@@ -219,7 +218,7 @@
 (defun tm-apply-match-in-capture (point capture start end)
   (typecase capture
     (tm-patterns
-     (tm-scan-line point (patterns capture) start end))
+     (tm-scan-line point capture start end))
     (otherwise
      (line-add-property (point-line point) start end :attribute capture nil))))
 
@@ -229,7 +228,7 @@
         (reg-starts (tm-result-reg-starts result))
         (reg-ends (tm-result-reg-ends result))
         (captures (tm-match-captures rule)))
-    (line-add-property (point-line point) start end :attribute (tm-rule-attribute rule) nil)
+    (line-add-property (point-line point) start end :attribute (tm-rule-name rule) nil)
     (when (and captures (< 0 (length captures)))
       (alexandria:when-let (cap0 (aref captures 0))
         (tm-apply-match-in-capture point cap0 start end))
@@ -274,7 +273,7 @@
                  (t
                   (line-add-property (point-line point)
                                      0 (line-length line)
-                                     :attribute (tm-rule-attribute context)
+                                     :attribute (tm-rule-name context)
                                      t)
                   (line-end point))))
           (t

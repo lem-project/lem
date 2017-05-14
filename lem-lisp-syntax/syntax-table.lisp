@@ -72,13 +72,13 @@
      (make-tm-region
       (make-regex-matcher `(:sequence ";"))
       (make-regex-matcher "$")
-      :attribute 'syntax-comment-attribute))
+      :name 'syntax-comment-attribute))
     (add-tm-pattern
      tmlanguage
      (make-tm-region
       (make-regex-matcher `(:sequence "\""))
       (make-regex-matcher `(:sequence "\""))
-      :attribute 'syntax-string-attribute
+      :name 'syntax-string-attribute
       :patterns (make-tm-patterns
                  (make-tm-match (make-regex-matcher "\\\\.")))))
     (add-tm-pattern
@@ -86,7 +86,7 @@
      (make-tm-region
       (make-regex-matcher `(:sequence "#|"))
       (make-regex-matcher `(:sequence "|#"))
-      :attribute 'syntax-comment-attribute))
+      :name 'syntax-comment-attribute))
     (add-tm-pattern
      tmlanguage
      (make-tm-match
@@ -103,8 +103,8 @@
             "defsetf" "defmacro" "defmethod"))
          (:register ,(ppcre:parse-string "[^() \\t]+"))))
       :captures (vector nil
-                        (make-rule-name :attribute 'syntax-keyword-attribute)
-                        (make-rule-name :attribute 'syntax-function-name-attribute))))
+                        (make-tm-name 'syntax-keyword-attribute)
+                        (make-tm-name 'syntax-function-name-attribute))))
     (add-tm-pattern
      tmlanguage
      (make-tm-match
@@ -116,8 +116,8 @@
          (:alternation (:greedy-repetition 1 nil :whitespace-char-class) :end-anchor)
          (:register ,(ppcre:parse-string "[^() \\t]+"))))
       :captures (vector nil
-                        (make-rule-name :attribute 'syntax-keyword-attribute)
-                        (make-rule-name :attribute 'syntax-function-name-attribute))))
+                        (make-tm-name 'syntax-keyword-attribute)
+                        (make-tm-name 'syntax-function-name-attribute))))
     (add-tm-pattern
      tmlanguage
      (make-tm-match
@@ -128,8 +128,8 @@
            "defvar" "defparameter" "defconstant")
          (:register ,(ppcre:parse-string "[^() \\t]+"))))
       :captures (vector nil
-                        (make-rule-name :attribute 'syntax-keyword-attribute)
-                        (make-rule-name :attribute 'syntax-variable-attribute))))
+                        (make-tm-name 'syntax-keyword-attribute)
+                        (make-tm-name 'syntax-variable-attribute))))
     (add-tm-pattern
      tmlanguage
      (make-tm-match
@@ -140,8 +140,8 @@
            "deftype" "defpackage" "defstruct")
          (:register ,(ppcre:parse-string "[^() \\t]+"))))
       :captures (vector nil
-                        (make-rule-name :attribute 'syntax-keyword-attribute)
-                        (make-rule-name :attribute 'syntax-type-attribute))))
+                        (make-tm-name 'syntax-keyword-attribute)
+                        (make-tm-name 'syntax-type-attribute))))
     (add-tm-pattern
      tmlanguage
      (make-tm-match
@@ -160,7 +160,7 @@
            "with-output-to-string" "with-slots" "with-standard-io-syntax" "loop"
            "declare" "declaim" "proclaim")))
       :captures (vector nil
-                        (make-rule-name :attribute 'syntax-keyword-attribute))))
+                        (make-tm-name 'syntax-keyword-attribute))))
     (add-tm-pattern
      tmlanguage
      (make-tm-match
@@ -168,7 +168,7 @@
                             symbol-boundary-begin
                             ,(ppcre:parse-string ":[^()\" \\t]+")
                             symbol-boundary-end))
-      :attribute 'syntax-constant-attribute))
+      :name 'syntax-constant-attribute))
     (add-tm-pattern
      tmlanguage
      (make-tm-match
@@ -176,12 +176,12 @@
                             symbol-boundary-begin
                             ,(ppcre:parse-string "&[^() \\t]+")
                             symbol-boundary-end))
-      :attribute 'syntax-constant-attribute))
+      :name 'syntax-constant-attribute))
     (add-tm-pattern
      tmlanguage
      (make-tm-match
       (make-regex-matcher "#[+-]")
-      :attribute 'syntax-comment-attribute
+      :name 'syntax-comment-attribute
       :move-action (lambda (cur-point)
                      (ignore-errors
                       (let ((positivep (eql #\+ (character-at cur-point 1))))

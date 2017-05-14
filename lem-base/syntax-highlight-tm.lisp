@@ -97,10 +97,10 @@
                  (tm-recompute-results results
                                        (line-string point)
                                        (point-charpos point))
-                 (loop :for result :in results
-                       :do (when (and result (eq (tm-result-syntax result) syntax))
-                             (setf end-result result)
-                             (return))))))))))
+                 (dolist (result results)
+                   (when (and result (eq (tm-result-syntax result) syntax))
+                     (setf end-result result)
+                     (return))))))))))
 
 (defun tm-move-action (syntax point)
   (with-point ((start point)

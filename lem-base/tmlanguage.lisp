@@ -192,7 +192,7 @@
                      (setf end-result result)
                      (return))))))))))
 
-(defun tm-move-action (rule point)
+(defun tm-move-action (rule point allow-multiline)
   (with-point ((start point)
                (end point))
     (let ((end (funcall (tm-match-move-action rule) end)))
@@ -204,9 +204,12 @@
         (set-syntax-context (point-line point) 'end-move-action)
         (uiop:if-let ((attribute (tm-rule-attribute rule)))
           (put-text-property start end :attribute attribute))
-        (if (same-line-p start end)
-            (move-point point end)
-            (line-end point))))))
+        (cond (allow-multiline
+               (move-point point end))
+              ((same-line-p start end)
+               (move-point point end))
+              (t
+               (line-end (move-point point start))))))))
 
 (defun tm-apply-match (rule point result)
   (let ((start (tm-result-start result))
@@ -232,7 +235,7 @@
                                      nil))))
     (cond ((tm-match-move-action rule)
            (line-offset point 0 start)
-           (or (tm-move-action rule point)
+           (or (tm-move-action rule point nil)
                (line-offset point 0 end)))
           (t
            (line-offset point 0 end)))))
@@ -257,7 +260,7 @@
            (cond ((eq (get-syntax-context line) 'end-move-action)
                   (with-point ((p point))
                     (previous-single-property-change p :attribute)
-                    (let ((goal (tm-move-action context p)))
+                    (let ((goal (tm-move-action context p t)))
                       (when goal
                         (move-point point goal)))))
                  (t
@@ -270,7 +273,8 @@
            (set-syntax-context line nil)))))
 
 (defun tm-scan-line (point patterns start end)
-  (let ((results (tm-get-results-from-patterns patterns (line-string point) start end)))
+  (let ((results (tm-get-results-from-patterns patterns (line-string point) start end))
+        (old-linenumber (line-number-at-point point)))
     (loop
       (let ((best (tm-best-result results)))
         (unless best (return))
@@ -278,7 +282,10 @@
         (tm-recompute-results results
                               (line-string point)
                               (point-charpos point)
-                              end)))))
+                              end)))
+    (assert (= old-linenumber (line-number-at-point point)))
+    (when (and end (< end (point-charpos point)))
+      (line-offset point 0 end))))
 
 (defun tm-syntax-scan-line (point)
   (tm-continue-prev-line point)

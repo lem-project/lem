@@ -98,7 +98,7 @@
     (when start
       (vector rule start end reg-starts reg-ends))))
 
-(defun tm-result-rule     (result) (aref result 0))
+(defun tm-result-rule       (result) (aref result 0))
 (defun tm-result-start      (result) (aref result 1))
 (defun tm-result-end        (result) (aref result 2))
 (defun tm-result-reg-starts (result) (aref result 3))
@@ -125,10 +125,10 @@
 (defun tm-best-result (results)
   (let ((min)
         (best))
-    (loop :for result :in results
-          :do (when (and result (or (null min) (> min (tm-result-start result))))
-                (setf min (tm-result-start result))
-                (setf best result)))
+    (dolist (result results)
+      (when (and result (or (null min) (> min (tm-result-start result))))
+        (setf min (tm-result-start result))
+        (setf best result)))
     best))
 
 (defun tm-recompute-results (results string i)

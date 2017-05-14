@@ -37,6 +37,16 @@
                 :block-comment-pairs '(("/*" . "*/"))))
         (tmlanguage (make-tmlanguage)))
     (add-tm-pattern tmlanguage
+                    (make-tm-match
+                     (make-regex-matcher "\\w+(?:,\\s*\\w+)*(?=\\s*:=)")
+                     :captures (vector (make-tm-patterns
+                                        (make-tm-match (make-regex-matcher "\\d\\w*")
+                                                       :attribute (make-attribute
+                                                                   :foreground "red"))
+                                        (make-tm-match (make-regex-matcher "\\w+")
+                                                       :attribute (make-attribute
+                                                                   :foreground "dark cyan"))))))
+    (add-tm-pattern tmlanguage
                     (make-tm-region
                      (make-regex-matcher `(:sequence "//"))
                      (make-regex-matcher "$")

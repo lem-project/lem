@@ -211,16 +211,23 @@
               (t
                (line-end (move-point point start))))))))
 
+(defun tm-apply-match-in-capture (point capture start end)
+  (etypecase capture
+    (cons
+     (tm-scan-line point capture start end))
+    (atom
+     (line-add-property (point-line point) start end :attribute capture nil))))
+
 (defun tm-apply-match (rule point result)
   (let ((start (tm-result-start result))
         (end (tm-result-end result))
         (reg-starts (tm-result-reg-starts result))
         (reg-ends (tm-result-reg-ends result))
         (captures (tm-match-captures rule)))
-    (line-add-property (point-line point)
-                       start end
-                       :attribute (tm-rule-attribute rule) nil)
-    (when captures
+    (line-add-property (point-line point) start end :attribute (tm-rule-attribute rule) nil)
+    (when (and captures (< 0 (length captures)))
+      (alexandria:when-let (cap0 (aref captures 0))
+        (tm-apply-match-in-capture point cap0 start end))
       (loop :for reg-start-index :from 0 :below (length reg-starts)
             :for reg-end-index :from 0 :below (length reg-ends)
             :for captures-index :from 1 :below (length captures)
@@ -228,11 +235,7 @@
             :for reg-end := (aref reg-ends reg-end-index)
             :for cap := (aref captures captures-index)
             :do (when cap
-                  (line-add-property (point-line point)
-                                     reg-start
-                                     reg-end
-                                     :attribute cap
-                                     nil))))
+                  (tm-apply-match-in-capture point cap reg-start reg-end))))
     (cond ((tm-match-move-action rule)
            (line-offset point 0 start)
            (or (tm-move-action rule point nil)

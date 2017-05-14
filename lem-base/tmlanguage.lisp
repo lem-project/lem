@@ -1,5 +1,84 @@
 (in-package :lem-base)
 
+(export '(make-tmlanguage
+          make-regex-matcher
+          make-tm-match
+          make-tm-region
+          add-tm-pattern
+          make-tm-patterns
+          make-rule-name))
+
+(defclass tmlanguage (syntax-parser)
+  ((patterns
+    :initarg :patterns
+    :initform nil
+    :accessor tmlanguage-patterns)))
+
+(defclass tm-rule ()
+  ((attribute
+    :initarg :attribute
+    :initform 0
+    :reader tm-rule-attribute)))
+
+(defclass tm-region (tm-rule)
+  ((begin
+    :initarg :begin
+    :reader tm-region-begin)
+   (end
+    :initarg :end
+    :reader tm-region-end)
+   (patterns
+    :initarg :patterns
+    :initform nil
+    :reader tm-region-patterns)))
+
+(defclass tm-match (tm-rule)
+  ((matcher
+    :initarg :matcher
+    :initform nil
+    :reader tm-match-matcher)
+   (captures
+    :initarg :captures
+    :initform nil
+    :reader tm-match-captures)
+   (move-action
+    :initarg :move-action
+    :initform nil
+    :reader tm-match-move-action)))
+
+(defun make-tmlanguage ()
+  (make-instance 'tmlanguage))
+
+(defun make-tm-match (matcher &key attribute captures move-action)
+  (make-instance 'tm-match
+                 :matcher matcher
+                 :attribute attribute
+                 :captures captures
+                 :move-action move-action))
+
+(defun make-tm-region (begin-matcher end-matcher &key attribute patterns)
+  (make-instance 'tm-region
+                 :begin begin-matcher
+                 :end end-matcher
+                 :attribute attribute
+                 :patterns patterns))
+
+(defun make-regex-matcher (regex)
+  (ppcre:create-scanner regex))
+
+(defun make-tm-patterns (&rest patterns)
+  patterns)
+
+(defun make-rule-name (&key attribute)
+  attribute)
+
+(defun add-tm-pattern (tmlanguage pattern)
+  (push pattern (tmlanguage-patterns tmlanguage)))
+
+(defmethod %syntax-scan-region ((tmlanguage tmlanguage) start end)
+  (tm-syntax-scan-region start end))
+
+
 (defun set-syntax-context (line x)
   (setf (line-%syntax-context line) x))
 

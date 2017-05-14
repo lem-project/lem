@@ -102,10 +102,10 @@
                              (setf end-result result)
                              (return))))))))))
 
-(defun tm-move-action (syntax point move-action)
+(defun tm-move-action (syntax point)
   (with-point ((start point)
                (end point))
-    (let ((end (funcall move-action end)))
+    (let ((end (funcall (syntax-match-move-action syntax) end)))
       (when (and end (point< point end))
         (loop :until (same-line-p point end)
               :do
@@ -138,13 +138,12 @@
                                      reg-end
                                      :attribute cap
                                      nil))))
-    (let ((move-action (syntax-match-move-action syntax)))
-      (if move-action
-          (progn
-            (line-offset point start)
-            (or (tm-move-action syntax point move-action)
-                (line-offset point 0 end)))
-          (line-offset point 0 end)))))
+    (cond ((syntax-match-move-action syntax)
+           (line-offset point start)
+           (or (tm-move-action syntax point)
+               (line-offset point 0 end)))
+          (t
+           (line-offset point 0 end)))))
 
 (defun tm-apply-result (point result)
   (let ((syntax (tm-result-syntax result)))
@@ -166,7 +165,7 @@
            (cond ((eq (get-syntax-context line) 'end-move-action)
                   (with-point ((p point))
                     (previous-single-property-change p :attribute)
-                    (let ((goal (syntax-scan-move-action context p)))
+                    (let ((goal (tm-move-action context p)))
                       (when goal
                         (move-point point goal)))))
                  (t

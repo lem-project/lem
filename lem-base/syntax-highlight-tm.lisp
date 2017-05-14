@@ -10,8 +10,8 @@
   (etypecase syntax
     (tm-region
      (tm-region-begin syntax))
-    (syntax-match
-     (syntax-match-matcher syntax))))
+    (tm-match
+     (tm-match-matcher syntax))))
 
 (defun tm-ahead-match (syntax syntax-test string start)
   (multiple-value-bind (start end reg-starts reg-ends)
@@ -111,7 +111,7 @@
 (defun tm-move-action (syntax point)
   (with-point ((start point)
                (end point))
-    (let ((end (funcall (syntax-match-move-action syntax) end)))
+    (let ((end (funcall (tm-match-move-action syntax) end)))
       (when (and end (point< point end))
         (loop :until (same-line-p point end)
               :do
@@ -127,7 +127,7 @@
         (end (tm-result-end result))
         (reg-starts (tm-result-reg-starts result))
         (reg-ends (tm-result-reg-ends result))
-        (captures (syntax-match-captures syntax)))
+        (captures (tm-match-captures syntax)))
     (line-add-property (point-line point)
                        start end
                        :attribute (syntax-attribute syntax) nil)
@@ -144,7 +144,7 @@
                                      reg-end
                                      :attribute cap
                                      nil))))
-    (cond ((syntax-match-move-action syntax)
+    (cond ((tm-match-move-action syntax)
            (line-offset point 0 start)
            (or (tm-move-action syntax point)
                (line-offset point 0 end)))
@@ -156,7 +156,7 @@
     (etypecase syntax
       (tm-region
        (tm-apply-region syntax point result))
-      (syntax-match
+      (tm-match
        (tm-apply-match syntax point result)))))
 
 (defun tm-continue-prev-line (point)

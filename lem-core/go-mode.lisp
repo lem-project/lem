@@ -54,17 +54,17 @@
                          :attribute 'syntax-comment-attribute))
     (dolist (k *go-keywords*)
       (add-syntax-pattern tmlanguage
-                          (make-syntax-match
+                          (make-tm-match
                            (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
                            :attribute 'syntax-keyword-attribute)))
     (dolist (k *go-builtin*)
       (add-syntax-pattern tmlanguage
-                          (make-syntax-match
+                          (make-tm-match
                            (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
                            :attribute 'syntax-keyword-attribute)))
     (dolist (k *go-constants*)
       (add-syntax-pattern tmlanguage
-                          (make-syntax-match
+                          (make-tm-match
                            (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
                            :attribute 'syntax-constant-attribute)))
     (set-syntax-parser table tmlanguage)

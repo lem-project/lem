@@ -80,7 +80,7 @@
       (make-regex-matcher `(:sequence "\""))
       :attribute 'syntax-string-attribute
       :patterns (make-syntax-patterns
-                 (make-syntax-match (make-regex-matcher "\\\\.")))))
+                 (make-tm-match (make-regex-matcher "\\\\.")))))
     (add-syntax-pattern
      tmlanguage
      (make-tm-region
@@ -89,11 +89,11 @@
       :attribute 'syntax-comment-attribute))
     (add-syntax-pattern
      tmlanguage
-     (make-syntax-match
+     (make-tm-match
       (make-regex-matcher "\\\\.")))
     (add-syntax-pattern
      tmlanguage
-     (make-syntax-match
+     (make-tm-match
       (make-regex-matcher
        `(:sequence
          "("
@@ -107,7 +107,7 @@
                         (make-syntax-name :attribute 'syntax-function-name-attribute))))
     (add-syntax-pattern
      tmlanguage
-     (make-syntax-match
+     (make-tm-match
       (make-regex-matcher
        `(:sequence
          "("
@@ -120,7 +120,7 @@
                         (make-syntax-name :attribute 'syntax-function-name-attribute))))
     (add-syntax-pattern
      tmlanguage
-     (make-syntax-match
+     (make-tm-match
       (make-regex-matcher
        `(:sequence
          "("
@@ -132,7 +132,7 @@
                         (make-syntax-name :attribute 'syntax-variable-attribute))))
     (add-syntax-pattern
      tmlanguage
-     (make-syntax-match
+     (make-tm-match
       (make-regex-matcher
        `(:sequence
          "("
@@ -144,7 +144,7 @@
                         (make-syntax-name :attribute 'syntax-type-attribute))))
     (add-syntax-pattern
      tmlanguage
-     (make-syntax-match
+     (make-tm-match
       (make-regex-matcher
        `(:sequence
          "("
@@ -163,7 +163,7 @@
                         (make-syntax-name :attribute 'syntax-keyword-attribute))))
     (add-syntax-pattern
      tmlanguage
-     (make-syntax-match
+     (make-tm-match
       (make-regex-matcher `(:sequence
                             symbol-boundary-begin
                             ,(ppcre:parse-string ":[^()\" \\t]+")
@@ -171,7 +171,7 @@
       :attribute 'syntax-constant-attribute))
     (add-syntax-pattern
      tmlanguage
-     (make-syntax-match
+     (make-tm-match
       (make-regex-matcher `(:sequence
                             symbol-boundary-begin
                             ,(ppcre:parse-string "&[^() \\t]+")
@@ -179,7 +179,7 @@
       :attribute 'syntax-constant-attribute))
     (add-syntax-pattern
      tmlanguage
-     (make-syntax-match
+     (make-tm-match
       (make-regex-matcher "#[+-]")
       :attribute 'syntax-comment-attribute
       :move-action (lambda (cur-point)

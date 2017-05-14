@@ -92,9 +92,9 @@
     (tm-match
      (tm-match-matcher rule))))
 
-(defun tm-ahead-match (rule matcher string start)
+(defun tm-ahead-match (rule matcher string start end)
   (multiple-value-bind (start end reg-starts reg-ends)
-      (ppcre:scan matcher string :start start)
+      (ppcre:scan matcher string :start start :end (or end (length string)))
     (when start
       (vector rule start end reg-starts reg-ends))))
 
@@ -116,9 +116,9 @@
        (equal (tm-result-reg-ends result1)
               (tm-result-reg-ends result2))))
 
-(defun tm-get-results-from-patterns (patterns string start)
+(defun tm-get-results-from-patterns (patterns string start end)
   (loop :for rule :in patterns
-        :for result := (tm-ahead-match rule (tm-ahead-matcher rule) string start)
+        :for result := (tm-ahead-match rule (tm-ahead-matcher rule) string start end)
         :when result
         :collect result))
 
@@ -140,7 +140,8 @@
                      (tm-ahead-match (tm-result-rule result)
                                      (tm-ahead-matcher (tm-result-rule result))
                                      string
-                                     i)))
+                                     i
+                                     nil)))
                 (setf (car rest-results)
                       new-result)))))
 
@@ -151,12 +152,14 @@
             (tm-ahead-match rule
                             (tm-region-end rule)
                             (line-string point)
-                            start2))
+                            start2
+                            nil))
            (results
             (cons end-result
                   (tm-get-results-from-patterns (tm-region-patterns rule)
                                                 (line-string point)
-                                                start2))))
+                                                start2
+                                                nil))))
       (loop
         (let ((best (tm-best-result results)))
           (cond ((or (null end-result)
@@ -268,7 +271,8 @@
   (let ((results
          (tm-get-results-from-patterns (tmlanguage-patterns (current-syntax-parser))
                                        (line-string point)
-                                       (point-charpos point))))
+                                       (point-charpos point)
+                                       nil)))
     (loop
       (let ((best (tm-best-result results)))
         (unless best (return))

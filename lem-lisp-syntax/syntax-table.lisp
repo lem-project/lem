@@ -192,23 +192,24 @@
                             ,(ppcre:parse-string "&[^() \\t]+")
                             symbol-boundary-end))
       :attribute 'syntax-constant-attribute))
-    ;; (syntax-add-match
-    ;;  table
-    ;;  (make-regex-matcher "#[+-]")
-    ;;  :move-action (lambda (cur-point)
-    ;;                 (ignore-errors
-    ;;                  (let ((positivep (eql #\+ (character-at cur-point 1))))
-    ;;                    (character-offset cur-point 2)
-    ;;                    (with-point ((prev cur-point))
-    ;;                      (when (form-offset cur-point 1)
-    ;;                        (cond
-    ;;                          ((if (featurep (read-from-string
-    ;;                                          (points-to-string
-    ;;                                           prev cur-point)))
-    ;;                               positivep
-    ;;                               (not positivep))
-    ;;                           nil)
-    ;;                          (t
-    ;;                           (form-offset cur-point 1))))))))
-    ;;  :attribute 'syntax-comment-attribute)
+    (add-syntax-pattern
+     table
+     (make-syntax-match
+      (make-regex-matcher "#[+-]")
+      :attribute 'syntax-comment-attribute
+      :move-action (lambda (cur-point)
+                     (ignore-errors
+                      (let ((positivep (eql #\+ (character-at cur-point 1))))
+                        (character-offset cur-point 2)
+                        (with-point ((prev cur-point))
+                          (when (form-offset cur-point 1)
+                            (cond
+                              ((if (featurep (read-from-string
+                                              (points-to-string
+                                               prev cur-point)))
+                                   positivep
+                                   (not positivep))
+                               nil)
+                              (t
+                               (form-offset cur-point 1))))))))))
     table))

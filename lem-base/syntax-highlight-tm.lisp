@@ -102,6 +102,20 @@
                              (setf end-result result)
                              (return))))))))))
 
+(defun tm-move-action (syntax point move-action)
+  (with-point ((start point)
+               (end point))
+    (let ((end (funcall move-action end)))
+      (when (and end (point< point end))
+        (loop :until (same-line-p point end)
+              :do
+              (set-syntax-context (point-line point) syntax)
+              (line-offset point 1))
+        (set-syntax-context (point-line point) 'end-move-action)
+        (uiop:if-let ((attribute (syntax-attribute syntax)))
+          (put-text-property start end :attribute attribute))
+        (move-point point end)))))
+
 (defun tm-apply-match (syntax point result)
   (let ((start (tm-result-start result))
         (end (tm-result-end result))
@@ -124,7 +138,13 @@
                                      reg-end
                                      :attribute cap
                                      nil))))
-    (line-offset point 0 end)))
+    (let ((move-action (syntax-match-move-action syntax)))
+      (if move-action
+          (progn
+            (line-offset point start)
+            (or (tm-move-action syntax point move-action)
+                (line-offset point 0 end)))
+          (line-offset point 0 end)))))
 
 (defun tm-apply-result (point result)
   (let ((syntax (tm-result-syntax result)))
@@ -143,7 +163,17 @@
           ((typep context 'syntax-region)
            (tm-apply-region context point nil))
           ((typep context 'syntax)
-           (error "trap"))
+           (cond ((eq (get-syntax-context line) 'end-move-action)
+                  (with-point ((p point))
+                    (previous-single-property-change p :attribute)
+                    (let ((goal (syntax-scan-move-action context p)))
+                      (when goal
+                        (move-point point goal)))))
+                 (t
+                  (line-add-property (point-line point)
+                                     0 (line-length line)
+                                     :attribute (syntax-attribute context)
+                                     t))))
           (t
            (set-syntax-context line nil)))))
 

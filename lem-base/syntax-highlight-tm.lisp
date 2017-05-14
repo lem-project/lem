@@ -102,34 +102,37 @@
                              (setf end-result result)
                              (return))))))))))
 
+(defun tm-apply-match (syntax point result)
+  (let ((start (tm-result-start result))
+        (end (tm-result-end result))
+        (reg-starts (tm-result-reg-starts result))
+        (reg-ends (tm-result-reg-ends result))
+        (captures (syntax-match-captures syntax)))
+    (line-add-property (point-line point)
+                       start end
+                       :attribute (syntax-attribute syntax) nil)
+    (when captures
+      (loop :for reg-start-index :from 0 :below (length reg-starts)
+            :for reg-end-index :from 0 :below (length reg-ends)
+            :for captures-index :from 1 :below (length captures)
+            :for reg-start := (aref reg-starts reg-start-index)
+            :for reg-end := (aref reg-ends reg-end-index)
+            :for cap := (aref captures captures-index)
+            :do (when cap
+                  (line-add-property (point-line point)
+                                     reg-start
+                                     reg-end
+                                     :attribute cap
+                                     nil))))
+    (line-offset point 0 end)))
+
 (defun tm-apply-result (point result)
   (let ((syntax (tm-result-syntax result)))
     (etypecase syntax
       (syntax-region
        (tm-apply-region syntax point result))
       (syntax-match
-       (let ((start (tm-result-start result))
-             (end (tm-result-end result))
-             (reg-starts (tm-result-reg-starts result))
-             (reg-ends (tm-result-reg-ends result))
-             (captures (syntax-match-captures syntax)))
-         (line-add-property (point-line point)
-                            start end
-                            :attribute (syntax-attribute syntax) nil)
-         (when captures
-           (loop :for reg-start-index :from 0 :below (length reg-starts)
-                 :for reg-end-index :from 0 :below (length reg-ends)
-                 :for captures-index :from 1 :below (length captures)
-                 :for reg-start := (aref reg-starts reg-start-index)
-                 :for reg-end := (aref reg-ends reg-end-index)
-                 :for cap := (aref captures captures-index)
-                 :do (when cap
-                       (line-add-property (point-line point)
-                                          reg-start
-                                          reg-end
-                                          :attribute cap
-                                          nil))))
-         (line-offset point 0 end))))))
+       (tm-apply-match syntax point result)))))
 
 (defun tm-continue-prev-line (point)
   (let* ((line (point-line point))

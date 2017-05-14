@@ -1,6 +1,7 @@
 (in-package :lem-base)
 
 (export '(syntax-table
+          set-syntax-parser
           fundamental-syntax-table
           current-syntax
           with-current-syntax
@@ -48,7 +49,10 @@
   line-comment-string
   block-comment-pairs
   block-string-pairs
-  patterns)
+  parser)
+
+(defun set-syntax-parser (syntax-table parser)
+  (setf (syntax-table-parser syntax-table) parser))
 
 (defvar *fundamental-syntax-table* (make-syntax-table))
 

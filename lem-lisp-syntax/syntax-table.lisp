@@ -65,31 +65,16 @@
        ,@(apply #'word-length-sort names))))
     (:alternation (:greedy-repetition 1 nil :whitespace-char-class) :end-anchor #\( #\))))
 
-(defvar *syntax-table*
-  (let ((table
-         (make-syntax-table
-          :space-chars '(#\space #\tab #\newline)
-          :symbol-chars '(#\+ #\- #\< #\> #\/ #\* #\& #\= #\. #\? #\_ #\! #\$ #\% #\: #\@ #\[ #\]
-                          #\^ #\{ #\} #\~ #\# #\|)
-          :paren-alist '((#\( . #\))
-                         (#\[ . #\])
-                         (#\{ . #\}))
-          :string-quote-chars '(#\")
-          :escape-chars '(#\\)
-          :fence-chars '(#\|)
-          :expr-prefix-chars '(#\' #\, #\@ #\# #\`)
-          :expr-prefix-forward-function 'skip-expr-prefix-forward
-          :expr-prefix-backward-function 'skip-expr-prefix-backward
-          :line-comment-string ";"
-          :block-comment-pairs '(("#|" . "|#")))))
+(defun make-tmlanguage-lisp ()
+  (let ((tmlanguage (make-tmlanguage)))
     (add-syntax-pattern
-     table
+     tmlanguage
      (make-syntax-region
       (make-regex-matcher `(:sequence ";"))
       (make-regex-matcher "$")
       :attribute 'syntax-comment-attribute))
     (add-syntax-pattern
-     table
+     tmlanguage
      (make-syntax-region
       (make-regex-matcher `(:sequence "\""))
       (make-regex-matcher `(:sequence "\""))
@@ -97,17 +82,17 @@
       :patterns (make-syntax-patterns
                  (make-syntax-match (make-regex-matcher "\\\\.")))))
     (add-syntax-pattern
-     table
+     tmlanguage
      (make-syntax-region
       (make-regex-matcher `(:sequence "#|"))
       (make-regex-matcher `(:sequence "|#"))
       :attribute 'syntax-comment-attribute))
     (add-syntax-pattern
-     table
+     tmlanguage
      (make-syntax-match
       (make-regex-matcher "\\\\.")))
     (add-syntax-pattern
-     table
+     tmlanguage
      (make-syntax-match
       (make-regex-matcher
        `(:sequence
@@ -121,7 +106,7 @@
                         (make-syntax-name :attribute 'syntax-keyword-attribute)
                         (make-syntax-name :attribute 'syntax-function-name-attribute))))
     (add-syntax-pattern
-     table
+     tmlanguage
      (make-syntax-match
       (make-regex-matcher
        `(:sequence
@@ -134,7 +119,7 @@
                         (make-syntax-name :attribute 'syntax-keyword-attribute)
                         (make-syntax-name :attribute 'syntax-function-name-attribute))))
     (add-syntax-pattern
-     table
+     tmlanguage
      (make-syntax-match
       (make-regex-matcher
        `(:sequence
@@ -146,7 +131,7 @@
                         (make-syntax-name :attribute 'syntax-keyword-attribute)
                         (make-syntax-name :attribute 'syntax-variable-attribute))))
     (add-syntax-pattern
-     table
+     tmlanguage
      (make-syntax-match
       (make-regex-matcher
        `(:sequence
@@ -158,7 +143,7 @@
                         (make-syntax-name :attribute 'syntax-keyword-attribute)
                         (make-syntax-name :attribute 'syntax-type-attribute))))
     (add-syntax-pattern
-     table
+     tmlanguage
      (make-syntax-match
       (make-regex-matcher
        `(:sequence
@@ -177,7 +162,7 @@
       :captures (vector nil
                         (make-syntax-name :attribute 'syntax-keyword-attribute))))
     (add-syntax-pattern
-     table
+     tmlanguage
      (make-syntax-match
       (make-regex-matcher `(:sequence
                             symbol-boundary-begin
@@ -185,7 +170,7 @@
                             symbol-boundary-end))
       :attribute 'syntax-constant-attribute))
     (add-syntax-pattern
-     table
+     tmlanguage
      (make-syntax-match
       (make-regex-matcher `(:sequence
                             symbol-boundary-begin
@@ -193,7 +178,7 @@
                             symbol-boundary-end))
       :attribute 'syntax-constant-attribute))
     (add-syntax-pattern
-     table
+     tmlanguage
      (make-syntax-match
       (make-regex-matcher "#[+-]")
       :attribute 'syntax-comment-attribute
@@ -212,4 +197,24 @@
                                nil)
                               (t
                                (form-offset cur-point 1))))))))))
+    tmlanguage))
+
+(defvar *syntax-table*
+  (let ((table
+         (make-syntax-table
+          :space-chars '(#\space #\tab #\newline)
+          :symbol-chars '(#\+ #\- #\< #\> #\/ #\* #\& #\= #\. #\? #\_ #\! #\$ #\% #\: #\@ #\[ #\]
+                          #\^ #\{ #\} #\~ #\# #\|)
+          :paren-alist '((#\( . #\))
+                         (#\[ . #\])
+                         (#\{ . #\}))
+          :string-quote-chars '(#\")
+          :escape-chars '(#\\)
+          :fence-chars '(#\|)
+          :expr-prefix-chars '(#\' #\, #\@ #\# #\`)
+          :expr-prefix-forward-function 'skip-expr-prefix-forward
+          :expr-prefix-backward-function 'skip-expr-prefix-backward
+          :line-comment-string ";"
+          :block-comment-pairs '(("#|" . "|#")))))
+    (set-syntax-parser table (make-tmlanguage-lisp))
     table))

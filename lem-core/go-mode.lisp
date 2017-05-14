@@ -34,38 +34,40 @@
                                (#\[ . #\]))
                 :string-quote-chars '(#\" #\' #\`)
                 :line-comment-string "//"
-                :block-comment-pairs '(("/*" . "*/")))))
-    (add-syntax-pattern table
+                :block-comment-pairs '(("/*" . "*/"))))
+        (tmlanguage (make-tmlanguage)))
+    (add-syntax-pattern tmlanguage
                         (make-syntax-region
                          (make-regex-matcher `(:sequence "//"))
                          (make-regex-matcher "$")
                          :attribute 'syntax-comment-attribute))
     (dolist (c '(#\" #\' #\`))
-      (add-syntax-pattern table
+      (add-syntax-pattern tmlanguage
                           (make-syntax-region
                            (make-regex-matcher `(:sequence ,(string c)))
                            (make-regex-matcher `(:sequence ,(string c)))
                            :attribute 'syntax-string-attribute)))
-    (add-syntax-pattern table
+    (add-syntax-pattern tmlanguage
                         (make-syntax-region
                          (make-regex-matcher `(:sequence "/*"))
                          (make-regex-matcher `(:sequence "*/"))
                          :attribute 'syntax-comment-attribute))
     (dolist (k *go-keywords*)
-      (add-syntax-pattern table
+      (add-syntax-pattern tmlanguage
                           (make-syntax-match
                            (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
                            :attribute 'syntax-keyword-attribute)))
     (dolist (k *go-builtin*)
-      (add-syntax-pattern table
+      (add-syntax-pattern tmlanguage
                           (make-syntax-match
                            (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
                            :attribute 'syntax-keyword-attribute)))
     (dolist (k *go-constants*)
-      (add-syntax-pattern table
+      (add-syntax-pattern tmlanguage
                           (make-syntax-match
                            (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
                            :attribute 'syntax-constant-attribute)))
+    (set-syntax-parser table tmlanguage)
     table))
 
 (define-major-mode go-mode language-mode

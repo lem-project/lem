@@ -1,5 +1,11 @@
 (in-package :lem-base)
 
+(defun set-syntax-context (line x)
+  (setf (line-%syntax-context line) x))
+
+(defun get-syntax-context (line)
+  (line-%syntax-context line))
+
 (defun tm-ahead-matcher (syntax)
   (etypecase syntax
     (syntax-region
@@ -180,7 +186,7 @@
 (defun tm-syntax-scan-line (point)
   (tm-continue-prev-line point)
   (let ((results
-         (tm-get-results-from-patterns (syntax-table-patterns (current-syntax))
+         (tm-get-results-from-patterns (tmlanguage-patterns (current-syntax-parser))
                                        (line-string point)
                                        (point-charpos point))))
     (loop
@@ -193,21 +199,9 @@
   (line-offset point 1))
 
 (defun tm-syntax-scan-region (start end)
-  (assert (eq (point-buffer start)
-              (point-buffer end)))
-  (let ((buffer (point-buffer start)))
-    (when (enable-syntax-highlight-p buffer)
-      (let ((*current-syntax*
-             (buffer-syntax-table buffer)))
-        (with-point ((start start)
-                     (end end))
-          (line-start start)
-          (line-end end)
-          (loop
-            (line-clear-property (point-line start) :attribute)
-            (unless (tm-syntax-scan-line start)
-              (return start))
-            (when (point<= end start)
-              (return start))))))))
-
-(setf *syntax-scan-region-function* 'tm-syntax-scan-region)
+  (loop
+    (line-clear-property (point-line start) :attribute)
+    (unless (tm-syntax-scan-line start)
+      (return start))
+    (when (point<= end start)
+      (return start))))

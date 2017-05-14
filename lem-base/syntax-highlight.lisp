@@ -1,7 +1,6 @@
 (in-package :lem-base)
 
-(export '(*syntax-scan-region-function*
-          syntax-string-attribute
+(export '(syntax-string-attribute
           syntax-comment-attribute
           syntax-keyword-attribute
           syntax-constant-attribute
@@ -11,21 +10,49 @@
           *global-syntax-highlight*
           enable-syntax-highlight
           enable-syntax-highlight-p
+          make-tmlanguage
           make-regex-matcher
           make-syntax-match
           make-syntax-region
           add-syntax-pattern
           make-syntax-patterns
           make-syntax-name
-          syntax-scan-range))
-
-(defvar *syntax-scan-region-function*)
+          syntax-scan-region))
 
 (define-editor-variable enable-syntax-highlight nil)
 (defvar *global-syntax-highlight* t)
 
-(defun make-regex-matcher (regex)
-  (ppcre:create-scanner regex))
+(defun enable-syntax-highlight-p (buffer)
+  (and *global-syntax-highlight*
+       (variable-value 'enable-syntax-highlight :buffer buffer)))
+
+(defun current-syntax-parser ()
+  (syntax-table-parser (current-syntax)))
+
+(defclass syntax-parser ()
+  ())
+
+(defgeneric %syntax-scan-region (parser start end))
+
+(defun syntax-scan-region (start end)
+  (assert (eq (point-buffer start)
+              (point-buffer end)))
+  (let ((buffer (point-buffer start)))
+    (when (enable-syntax-highlight-p buffer)
+      (let ((*current-syntax*
+             (buffer-syntax-table buffer)))
+        (with-point ((start start)
+                     (end end))
+          (line-start start)
+          (line-end end)
+          (%syntax-scan-region (syntax-table-parser *current-syntax*) start end))))))
+
+
+(defclass tmlanguage (syntax-parser)
+  ((patterns
+    :initarg :patterns
+    :initform nil
+    :accessor tmlanguage-patterns)))
 
 (defclass syntax ()
   ((attribute
@@ -59,6 +86,9 @@
     :initform nil
     :reader syntax-match-move-action)))
 
+(defun make-tmlanguage ()
+  (make-instance 'tmlanguage))
+
 (defun make-syntax-match (matcher &key attribute captures move-action)
   (make-instance 'syntax-match
                  :matcher matcher
@@ -73,8 +103,8 @@
                  :attribute attribute
                  :patterns patterns))
 
-(defun add-syntax-pattern (syntax-table pattern)
-  (push pattern (syntax-table-patterns syntax-table)))
+(defun make-regex-matcher (regex)
+  (ppcre:create-scanner regex))
 
 (defun make-syntax-patterns (&rest patterns)
   patterns)
@@ -82,12 +112,8 @@
 (defun make-syntax-name (&key attribute)
   attribute)
 
-(defun enable-syntax-highlight-p (buffer)
-  (and *global-syntax-highlight*
-       (variable-value 'enable-syntax-highlight :buffer buffer)))
+(defun add-syntax-pattern (tmlanguage pattern)
+  (push pattern (tmlanguage-patterns tmlanguage)))
 
-(defun set-syntax-context (line x)
-  (setf (line-%syntax-context line) x))
-
-(defun get-syntax-context (line)
-  (line-%syntax-context line))
+(defmethod %syntax-scan-region ((tmlanguage tmlanguage) start end)
+  (tm-syntax-scan-region start end))

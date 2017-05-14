@@ -17,17 +17,17 @@
   (when (and (enable-syntax-highlight-p (window-buffer window))
              (null *syntax-scan-window-recursive-p*))
     (let ((*syntax-scan-window-recursive-p* t))
-      (funcall *syntax-scan-region-function*
-               (line-start (copy-point (window-view-point window) :temporary))
-               (or (line-offset (copy-point (window-view-point window) :temporary)
-                                (window-height window))
-                   (buffer-end-point (window-buffer window)))))))
+      (syntax-scan-region
+       (line-start (copy-point (window-view-point window) :temporary))
+       (or (line-offset (copy-point (window-view-point window) :temporary)
+                        (window-height window))
+           (buffer-end-point (window-buffer window)))))))
 
 (defun syntax-scan-buffer (buffer)
   (check-type buffer buffer)
-  (funcall *syntax-scan-region-function*
-           (buffer-start-point buffer)
-           (buffer-end-point buffer)))
+  (syntax-scan-region
+   (buffer-start-point buffer)
+   (buffer-end-point buffer)))
 
 (defun setup ()
   (start-idle-timer 100 t
@@ -46,7 +46,7 @@
   (add-hook (variable-value 'after-change-functions :global)
             (lambda (start end old-len)
               (declare (ignore old-len))
-              (funcall *syntax-scan-region-function* start end)))
+              (syntax-scan-region start end)))
   (add-hook *find-file-hook*
             (lambda (buffer)
               (prepare-auto-mode buffer)

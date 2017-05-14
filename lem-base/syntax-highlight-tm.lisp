@@ -172,7 +172,8 @@
                   (line-add-property (point-line point)
                                      0 (line-length line)
                                      :attribute (syntax-attribute context)
-                                     t))))
+                                     t)
+                  (line-end point))))
           (t
            (set-syntax-context line nil)))))
 

@@ -69,7 +69,8 @@
 
 (defun remove-connection (conn)
   (setf *connection-list* (delete conn *connection-list*))
-  (change-current-connection (car *connection-list*))
+  ;(change-current-connection (car *connection-list*))
+  (setf *connection* (car *connection-list*))
   *connection*)
 
 (define-command lisp-connection-list () ()
@@ -859,12 +860,10 @@
 (defun pull-events ()
   (when (and (boundp '*connection*)
              (not (null *connection*)))
-    (handler-bind ((disconnected
-                    (lambda (c)
-                      (declare (ignore c))
-                      (remove-connection *connection*))))
-      (loop :while (swank-protocol:message-waiting-p *connection*)
-            :do (dispatch-message (swank-protocol:read-message *connection*))))))
+    (handler-case (loop :while (swank-protocol:message-waiting-p *connection*)
+                        :do (dispatch-message (swank-protocol:read-message *connection*)))
+      (disconnected ()
+        (remove-connection *connection*)))))
 
 (defun dispatch-message (message)
   (log-message message)

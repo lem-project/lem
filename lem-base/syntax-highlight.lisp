@@ -54,13 +54,13 @@
     :initform nil
     :accessor tmlanguage-patterns)))
 
-(defclass syntax ()
+(defclass tm-rule ()
   ((attribute
     :initarg :attribute
     :initform 0
-    :reader syntax-attribute)))
+    :reader tm-rule-attribute)))
 
-(defclass tm-region (syntax)
+(defclass tm-region (tm-rule)
   ((begin
     :initarg :begin
     :reader tm-region-begin)
@@ -72,7 +72,7 @@
     :initform nil
     :reader tm-region-patterns)))
 
-(defclass tm-match (syntax)
+(defclass tm-match (tm-rule)
   ((matcher
     :initarg :matcher
     :initform nil

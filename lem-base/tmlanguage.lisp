@@ -131,21 +131,21 @@
         (setf best result)))
     best))
 
-(defun tm-recompute-results (results string i)
+(defun tm-recompute-results (results string start end)
   (loop :for rest-results :on results
         :for result := (car rest-results)
         :do (when (and result
-                       (>= i (tm-result-start result)))
+                       (>= start (tm-result-start result)))
               (let ((new-result
                      (tm-ahead-match (tm-result-rule result)
                                      (tm-ahead-matcher (tm-result-rule result))
                                      string
-                                     i
-                                     nil)))
+                                     start
+                                     end)))
                 (setf (car rest-results)
                       new-result)))))
 
-(defun tm-apply-region (rule point begin-result)
+(defun tm-apply-region (rule point begin-result end)
   (let ((start1 (if begin-result (tm-result-start begin-result) 0))
         (start2 (if begin-result (tm-result-end begin-result) 0)))
     (let* ((end-result
@@ -153,7 +153,7 @@
                             (tm-region-end rule)
                             (line-string point)
                             start2
-                            nil))
+                            end))
            (results
             (cons end-result
                   (tm-get-results-from-patterns (tm-region-patterns rule)
@@ -185,7 +185,8 @@
                  (line-offset point 0 (tm-result-end best))
                  (tm-recompute-results results
                                        (line-string point)
-                                       (point-charpos point))
+                                       (point-charpos point)
+                                       end)
                  (dolist (result results)
                    (when (and result (eq (tm-result-rule result) rule))
                      (setf end-result result)
@@ -203,7 +204,9 @@
         (set-syntax-context (point-line point) 'end-move-action)
         (uiop:if-let ((attribute (tm-rule-attribute rule)))
           (put-text-property start end :attribute attribute))
-        (move-point point end)))))
+        (if (same-line-p start end)
+            (move-point point end)
+            (line-end point))))))
 
 (defun tm-apply-match (rule point result)
   (let ((start (tm-result-start result))
@@ -234,11 +237,11 @@
           (t
            (line-offset point 0 end)))))
 
-(defun tm-apply-result (point result)
+(defun tm-apply-result (point result end)
   (let ((rule (tm-result-rule result)))
     (etypecase rule
       (tm-region
-       (tm-apply-region rule point result))
+       (tm-apply-region rule point result end))
       (tm-match
        (tm-apply-match rule point result)))))
 
@@ -249,7 +252,7 @@
     (cond ((null context)
            (set-syntax-context line nil))
           ((typep context 'tm-region)
-           (tm-apply-region context point nil))
+           (tm-apply-region context point nil nil))
           ((typep context 'tm-rule)
            (cond ((eq (get-syntax-context line) 'end-move-action)
                   (with-point ((p point))
@@ -266,20 +269,23 @@
           (t
            (set-syntax-context line nil)))))
 
-(defun tm-syntax-scan-line (point)
-  (tm-continue-prev-line point)
-  (let ((results
-         (tm-get-results-from-patterns (tmlanguage-patterns (current-syntax-parser))
-                                       (line-string point)
-                                       (point-charpos point)
-                                       nil)))
+(defun tm-scan-line (point patterns start end)
+  (let ((results (tm-get-results-from-patterns patterns (line-string point) start end)))
     (loop
       (let ((best (tm-best-result results)))
         (unless best (return))
-        (tm-apply-result point best)
+        (tm-apply-result point best end)
         (tm-recompute-results results
                               (line-string point)
-                              (point-charpos point)))))
+                              (point-charpos point)
+                              end)))))
+
+(defun tm-syntax-scan-line (point)
+  (tm-continue-prev-line point)
+  (tm-scan-line point
+                (tmlanguage-patterns (current-syntax-parser))
+                (point-charpos point)
+                nil)
   (line-offset point 1))
 
 (defun tm-syntax-scan-region (start end)

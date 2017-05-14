@@ -54,12 +54,6 @@
     :initarg :captures
     :initform nil
     :reader syntax-match-captures)
-   (test-symbol
-    :initform nil
-    :reader syntax-match-test-symbol)
-   (matched-symbol
-    :initform nil
-    :reader syntax-match-matched-symbol)
    (move-action
     :initarg :move-action
     :initform nil

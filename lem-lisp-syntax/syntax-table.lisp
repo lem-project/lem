@@ -63,7 +63,7 @@
      (:group :case-insensitive-p
       (:alternation
        ,@(apply #'word-length-sort names))))
-    (:alternation (:greedy-repetition 1 nil :whitespace-char-class) :end-anchor)))
+    (:alternation (:greedy-repetition 1 nil :whitespace-char-class) :end-anchor #\( #\))))
 
 (defvar *syntax-table*
   (let ((table

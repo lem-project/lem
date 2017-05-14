@@ -175,6 +175,7 @@
                                     (tm-result-end end-result)
                                     :attribute (tm-rule-attribute rule)
                                     nil)
+                 (set-syntax-context (point-line point) nil)
                  (line-offset point 0 (tm-result-end end-result))
                  (return))
                 (t

@@ -36,37 +36,37 @@
                 :line-comment-string "//"
                 :block-comment-pairs '(("/*" . "*/"))))
         (tmlanguage (make-tmlanguage)))
-    (add-syntax-pattern tmlanguage
-                        (make-tm-region
-                         (make-regex-matcher `(:sequence "//"))
-                         (make-regex-matcher "$")
-                         :attribute 'syntax-comment-attribute))
+    (add-tm-pattern tmlanguage
+                    (make-tm-region
+                     (make-regex-matcher `(:sequence "//"))
+                     (make-regex-matcher "$")
+                     :attribute 'syntax-comment-attribute))
     (dolist (c '(#\" #\' #\`))
-      (add-syntax-pattern tmlanguage
-                          (make-tm-region
-                           (make-regex-matcher `(:sequence ,(string c)))
-                           (make-regex-matcher `(:sequence ,(string c)))
-                           :attribute 'syntax-string-attribute)))
-    (add-syntax-pattern tmlanguage
-                        (make-tm-region
-                         (make-regex-matcher `(:sequence "/*"))
-                         (make-regex-matcher `(:sequence "*/"))
-                         :attribute 'syntax-comment-attribute))
+      (add-tm-pattern tmlanguage
+                      (make-tm-region
+                       (make-regex-matcher `(:sequence ,(string c)))
+                       (make-regex-matcher `(:sequence ,(string c)))
+                       :attribute 'syntax-string-attribute)))
+    (add-tm-pattern tmlanguage
+                    (make-tm-region
+                     (make-regex-matcher `(:sequence "/*"))
+                     (make-regex-matcher `(:sequence "*/"))
+                     :attribute 'syntax-comment-attribute))
     (dolist (k *go-keywords*)
-      (add-syntax-pattern tmlanguage
-                          (make-tm-match
-                           (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
-                           :attribute 'syntax-keyword-attribute)))
+      (add-tm-pattern tmlanguage
+                      (make-tm-match
+                       (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
+                       :attribute 'syntax-keyword-attribute)))
     (dolist (k *go-builtin*)
-      (add-syntax-pattern tmlanguage
-                          (make-tm-match
-                           (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
-                           :attribute 'syntax-keyword-attribute)))
+      (add-tm-pattern tmlanguage
+                      (make-tm-match
+                       (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
+                       :attribute 'syntax-keyword-attribute)))
     (dolist (k *go-constants*)
-      (add-syntax-pattern tmlanguage
-                          (make-tm-match
-                           (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
-                           :attribute 'syntax-constant-attribute)))
+      (add-tm-pattern tmlanguage
+                      (make-tm-match
+                       (make-regex-matcher `(:sequence :word-boundary ,k :word-boundary))
+                       :attribute 'syntax-constant-attribute)))
     (set-syntax-parser table tmlanguage)
     table))
 

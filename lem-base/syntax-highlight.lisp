@@ -14,9 +14,9 @@
           make-regex-matcher
           make-tm-match
           make-tm-region
-          add-syntax-pattern
-          make-syntax-patterns
-          make-syntax-name
+          add-tm-pattern
+          make-tm-patterns
+          make-rule-name
           syntax-scan-region))
 
 (define-editor-variable enable-syntax-highlight nil)
@@ -106,13 +106,13 @@
 (defun make-regex-matcher (regex)
   (ppcre:create-scanner regex))
 
-(defun make-syntax-patterns (&rest patterns)
+(defun make-tm-patterns (&rest patterns)
   patterns)
 
-(defun make-syntax-name (&key attribute)
+(defun make-rule-name (&key attribute)
   attribute)
 
-(defun add-syntax-pattern (tmlanguage pattern)
+(defun add-tm-pattern (tmlanguage pattern)
   (push pattern (tmlanguage-patterns tmlanguage)))
 
 (defmethod %syntax-scan-region ((tmlanguage tmlanguage) start end)

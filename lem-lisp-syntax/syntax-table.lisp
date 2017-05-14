@@ -67,31 +67,31 @@
 
 (defun make-tmlanguage-lisp ()
   (let ((tmlanguage (make-tmlanguage)))
-    (add-syntax-pattern
+    (add-tm-pattern
      tmlanguage
      (make-tm-region
       (make-regex-matcher `(:sequence ";"))
       (make-regex-matcher "$")
       :attribute 'syntax-comment-attribute))
-    (add-syntax-pattern
+    (add-tm-pattern
      tmlanguage
      (make-tm-region
       (make-regex-matcher `(:sequence "\""))
       (make-regex-matcher `(:sequence "\""))
       :attribute 'syntax-string-attribute
-      :patterns (make-syntax-patterns
+      :patterns (make-tm-patterns
                  (make-tm-match (make-regex-matcher "\\\\.")))))
-    (add-syntax-pattern
+    (add-tm-pattern
      tmlanguage
      (make-tm-region
       (make-regex-matcher `(:sequence "#|"))
       (make-regex-matcher `(:sequence "|#"))
       :attribute 'syntax-comment-attribute))
-    (add-syntax-pattern
+    (add-tm-pattern
      tmlanguage
      (make-tm-match
       (make-regex-matcher "\\\\.")))
-    (add-syntax-pattern
+    (add-tm-pattern
      tmlanguage
      (make-tm-match
       (make-regex-matcher
@@ -103,9 +103,9 @@
             "defsetf" "defmacro" "defmethod"))
          (:register ,(ppcre:parse-string "[^() \\t]+"))))
       :captures (vector nil
-                        (make-syntax-name :attribute 'syntax-keyword-attribute)
-                        (make-syntax-name :attribute 'syntax-function-name-attribute))))
-    (add-syntax-pattern
+                        (make-rule-name :attribute 'syntax-keyword-attribute)
+                        (make-rule-name :attribute 'syntax-function-name-attribute))))
+    (add-tm-pattern
      tmlanguage
      (make-tm-match
       (make-regex-matcher
@@ -116,9 +116,9 @@
          (:alternation (:greedy-repetition 1 nil :whitespace-char-class) :end-anchor)
          (:register ,(ppcre:parse-string "[^() \\t]+"))))
       :captures (vector nil
-                        (make-syntax-name :attribute 'syntax-keyword-attribute)
-                        (make-syntax-name :attribute 'syntax-function-name-attribute))))
-    (add-syntax-pattern
+                        (make-rule-name :attribute 'syntax-keyword-attribute)
+                        (make-rule-name :attribute 'syntax-function-name-attribute))))
+    (add-tm-pattern
      tmlanguage
      (make-tm-match
       (make-regex-matcher
@@ -128,9 +128,9 @@
            "defvar" "defparameter" "defconstant")
          (:register ,(ppcre:parse-string "[^() \\t]+"))))
       :captures (vector nil
-                        (make-syntax-name :attribute 'syntax-keyword-attribute)
-                        (make-syntax-name :attribute 'syntax-variable-attribute))))
-    (add-syntax-pattern
+                        (make-rule-name :attribute 'syntax-keyword-attribute)
+                        (make-rule-name :attribute 'syntax-variable-attribute))))
+    (add-tm-pattern
      tmlanguage
      (make-tm-match
       (make-regex-matcher
@@ -140,9 +140,9 @@
            "deftype" "defpackage" "defstruct")
          (:register ,(ppcre:parse-string "[^() \\t]+"))))
       :captures (vector nil
-                        (make-syntax-name :attribute 'syntax-keyword-attribute)
-                        (make-syntax-name :attribute 'syntax-type-attribute))))
-    (add-syntax-pattern
+                        (make-rule-name :attribute 'syntax-keyword-attribute)
+                        (make-rule-name :attribute 'syntax-type-attribute))))
+    (add-tm-pattern
      tmlanguage
      (make-tm-match
       (make-regex-matcher
@@ -160,8 +160,8 @@
            "with-output-to-string" "with-slots" "with-standard-io-syntax" "loop"
            "declare" "declaim" "proclaim")))
       :captures (vector nil
-                        (make-syntax-name :attribute 'syntax-keyword-attribute))))
-    (add-syntax-pattern
+                        (make-rule-name :attribute 'syntax-keyword-attribute))))
+    (add-tm-pattern
      tmlanguage
      (make-tm-match
       (make-regex-matcher `(:sequence
@@ -169,7 +169,7 @@
                             ,(ppcre:parse-string ":[^()\" \\t]+")
                             symbol-boundary-end))
       :attribute 'syntax-constant-attribute))
-    (add-syntax-pattern
+    (add-tm-pattern
      tmlanguage
      (make-tm-match
       (make-regex-matcher `(:sequence
@@ -177,7 +177,7 @@
                             ,(ppcre:parse-string "&[^() \\t]+")
                             symbol-boundary-end))
       :attribute 'syntax-constant-attribute))
-    (add-syntax-pattern
+    (add-tm-pattern
      tmlanguage
      (make-tm-match
       (make-regex-matcher "#[+-]")

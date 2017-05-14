@@ -72,9 +72,10 @@
                   (tm-get-results-from-patterns (syntax-region-patterns syntax)
                                                 (line-string point)
                                                 start2))))
-      (loop :for $count :from 0 :do
+      (loop
         (let ((best (tm-best-result results)))
-          (cond ((null end-result)
+          (cond ((or (null end-result)
+                     (null best))
                  (line-add-property (point-line point)
                                     start1
                                     (line-length (point-line point))

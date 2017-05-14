@@ -92,21 +92,8 @@
   (and *global-syntax-highlight*
        (variable-value 'enable-syntax-highlight :buffer buffer)))
 
-(defvar *syntax-scan-limit*)
-(defvar *syntax-symbol-lifetimes* nil)
-
 (defun set-syntax-context (line x)
-  (if (line-%syntax-context line)
-      (setf (car (line-%syntax-context line)) x)
-      (setf (line-%syntax-context line) (cons x nil))))
+  (setf (line-%syntax-context line) x))
 
 (defun get-syntax-context (line)
-  (car (line-%syntax-context line)))
-
-(defun set-syntax-lifetimes (line lifetimes)
-  (if (line-%syntax-context line)
-      (setf (cdr (line-%syntax-context line)) lifetimes)
-      (setf (line-%syntax-context line) (cons nil lifetimes))))
-
-(defun get-syntax-lifetimes (line)
-  (cdr (line-%syntax-context line)))
+  (line-%syntax-context line))

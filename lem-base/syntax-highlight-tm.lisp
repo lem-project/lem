@@ -139,7 +139,7 @@
                                      :attribute cap
                                      nil))))
     (cond ((syntax-match-move-action syntax)
-           (line-offset point start)
+           (line-offset point 0 start)
            (or (tm-move-action syntax point)
                (line-offset point 0 end)))
           (t

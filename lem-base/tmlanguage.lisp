@@ -5,13 +5,20 @@
           make-tm-match
           make-tm-region
           add-tm-pattern
+          add-tm-repository
           make-tm-patterns
           make-tm-name))
+
+;;; TODO
+;;; begin/endルールでbeginのキャプチャをendで使えるようにする
 
 (defclass tmlanguage (syntax-parser)
   ((patterns
     :initarg :patterns
-    :accessor tmlanguage-patterns)))
+    :accessor tmlanguage-patterns)
+   (repository
+    :initarg :repository
+    :accessor tmlanguage-repository)))
 
 (defclass tm-rule ()
   ((name
@@ -49,13 +56,24 @@
     :initform nil
     :reader tm-match-move-action)))
 
+(defclass tm-include ()
+  ((spec
+    :initarg :spec
+    :reader tm-include-spec)
+   (refer
+    :initarg :refer
+    :initform nil
+    :reader tm-include-refer)))
+
 (defclass tm-patterns ()
   ((patterns
     :initarg :patterns
     :accessor patterns)))
 
 (defun make-tmlanguage ()
-  (make-instance 'tmlanguage :patterns (make-tm-patterns)))
+  (make-instance 'tmlanguage
+                 :patterns (make-tm-patterns)
+                 :repository (make-hash-table :test 'equal)))
 
 (defun make-tm-match (matcher &key name captures move-action)
   (make-instance 'tm-match
@@ -73,6 +91,14 @@
                  :content-name content-name
                  :patterns patterns))
 
+(defun make-tm-include (spec)
+  (cond ((string= spec "$self")
+         (make-instance 'tm-include :type :self))
+        ((char= #\# (schar spec 0))
+         (make-instance 'tm-include :type :repository :refer (subseq spec 1)))
+        (t
+         (error "unsupported spec: ~A" spec))))
+
 (defun make-regex-matcher (regex)
   (ppcre:create-scanner regex))
 
@@ -84,6 +110,10 @@
 
 (defun add-tm-pattern (tmlanguage pattern)
   (push pattern (patterns (tmlanguage-patterns tmlanguage))))
+
+(defun add-tm-repository (tmlanguage name patterns)
+  (setf (gethash name (tmlanguage-repository tmlanguage))
+        patterns))
 
 (defmethod %syntax-scan-region ((tmlanguage tmlanguage) start end)
   (tm-syntax-scan-region start end))

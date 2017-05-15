@@ -198,16 +198,16 @@
   (let ((best))
     (loop :for rest-results :on results
           :for result := (car rest-results)
-          :do (when (and result
-                         (>= start (tm-result-start result)))
-                (let ((new-result
-                       (tm-ahead-match (tm-result-rule result)
-                                       (tm-ahead-matcher (tm-result-rule result))
-                                       string
-                                       start
-                                       end)))
-                  (setf (car rest-results) new-result)
-                  (setf best (tm-get-best-result best new-result)))))
+          :do (if (and result (>= start (tm-result-start result)))
+                  (let ((new-result
+                         (tm-ahead-match (tm-result-rule result)
+                                         (tm-ahead-matcher (tm-result-rule result))
+                                         string
+                                         start
+                                         end)))
+                    (setf (car rest-results) new-result)
+                    (setf best (tm-get-best-result best new-result)))
+                  (setf best (tm-get-best-result best result))))
     best))
 
 (defun tm-apply-content-name (rule point start end contp)

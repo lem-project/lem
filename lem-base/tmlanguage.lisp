@@ -56,13 +56,11 @@
     :initform nil
     :reader tm-match-move-action)))
 
-(defclass tm-include ()
-  ((spec
-    :initarg :spec
-    :reader tm-include-spec)
-   (refer
+(defclass tm-include () ())
+(defclass tm-include-self (tm-include) ())
+(defclass tm-include-repository (tm-include)
+  ((refer
     :initarg :refer
-    :initform nil
     :reader tm-include-refer)))
 
 (defclass tm-patterns ()
@@ -93,9 +91,9 @@
 
 (defun make-tm-include (spec)
   (cond ((string= spec "$self")
-         (make-instance 'tm-include :type :self))
+         (make-instance 'tm-include-self))
         ((char= #\# (schar spec 0))
-         (make-instance 'tm-include :type :repository :refer (subseq spec 1)))
+         (make-instance 'tm-include-repository :refer (subseq spec 1)))
         (t
          (error "unsupported spec: ~A" spec))))
 
@@ -124,6 +122,9 @@
 
 (defun get-syntax-context (line)
   (line-%syntax-context line))
+
+(defun tm-get-repository (name)
+  (gethash name (tmlanguage-repository (current-syntax-parser))))
 
 (defun tm-ahead-matcher (rule)
   (etypecase rule
@@ -156,54 +157,71 @@
        (equal (tm-result-reg-ends result1)
               (tm-result-reg-ends result2))))
 
-(defun tm-get-results-from-patterns (patterns string start end)
-  (loop :for rule :in (patterns patterns)
-        :for result := (tm-ahead-match rule (tm-ahead-matcher rule) string start end)
-        :when result
-        :collect result))
+(defun tm-get-best-result (old-result new-result)
+  (if (and new-result
+           (or (null old-result)
+               (> (tm-result-start old-result)
+                  (tm-result-start new-result))
+               (and (= (tm-result-start old-result)
+                       (tm-result-start new-result))
+                    (< (tm-result-end old-result)
+                       (tm-result-end new-result)))))
+      new-result
+      old-result))
 
-(defun tm-best-result (results)
-  (let ((min)
-        (best))
-    (dolist (result results)
-      (when (and result (or (null min) (> min (tm-result-start result))))
-        (setf min (tm-result-start result))
-        (setf best result)))
-    best))
+(defun tm-best-rule-in-patterns (patterns string start end)
+  (macrolet ((if-push (x list)
+               (alexandria:once-only (x)
+                 `(when ,x (push ,x ,list) ,x))))
+    (let ((results '())
+          (best))
+      (dolist (pattern (patterns patterns))
+        (let ((result
+               (typecase pattern
+                 (tm-region
+                  (if-push (tm-ahead-match pattern (tm-region-begin pattern) string start end)
+                           results))
+                 (tm-match
+                  (if-push (tm-ahead-match pattern (tm-match-matcher pattern) string start end)
+                           results))
+                 (tm-include-repository
+                  (multiple-value-bind (result results2)
+                      (tm-best-rule-in-patterns (tm-get-repository (tm-include-refer pattern))
+                                                string start end)
+                    (setf results (nconc results2 results))
+                    result)))))
+          (when result
+            (setf best (tm-get-best-result best result)))))
+      (values best results))))
 
 (defun tm-recompute-results (results string start end)
-  (loop :for rest-results :on results
-        :for result := (car rest-results)
-        :do (when (and result
-                       (>= start (tm-result-start result)))
-              (let ((new-result
-                     (tm-ahead-match (tm-result-rule result)
-                                     (tm-ahead-matcher (tm-result-rule result))
-                                     string
-                                     start
-                                     end)))
-                (setf (car rest-results)
-                      new-result)))))
+  (let ((best))
+    (loop :for rest-results :on results
+          :for result := (car rest-results)
+          :do (when (and result
+                         (>= start (tm-result-start result)))
+                (let ((new-result
+                       (tm-ahead-match (tm-result-rule result)
+                                       (tm-ahead-matcher (tm-result-rule result))
+                                       string
+                                       start
+                                       end)))
+                  (setf (car rest-results) new-result)
+                  (setf best (tm-get-best-result best new-result)))))
+    best))
 
 (defun tm-apply-region (rule point begin-result end)
   (let ((start1 (if begin-result (tm-result-start begin-result) 0))
         (start2 (if begin-result (tm-result-end begin-result) 0)))
-    (let* ((end-result
-            (tm-ahead-match rule
-                            (tm-region-end rule)
-                            (line-string point)
-                            start2
-                            end))
-           (results
-            (cons end-result
-                  (tm-get-results-from-patterns (tm-region-patterns rule)
-                                                (line-string point)
-                                                start2
-                                                nil))))
-      (loop
-        (let ((best (tm-best-result results)))
-          (cond ((or (null end-result)
-                     (null best))
+    (let ((end-result
+           (tm-ahead-match rule (tm-region-end rule) (line-string point) start2 end)))
+      (multiple-value-bind (best results)
+          (tm-best-rule-in-patterns (tm-region-patterns rule)
+                                    (line-string point)
+                                    start2 nil)
+        (setf best (tm-get-best-result best end-result))
+        (loop
+          (cond ((null best)
                  (line-add-property (point-line point)
                                     start1
                                     (line-length (point-line point))
@@ -218,7 +236,7 @@
                  (set-syntax-context (point-line point) rule)
                  (line-end point)
                  (return))
-                ((tm-result= best end-result)
+                ((and best end-result (tm-result= best end-result))
                  (line-add-property (point-line point)
                                     start1
                                     (tm-result-end end-result)
@@ -235,14 +253,19 @@
                  (return))
                 (t
                  (line-offset point 0 (tm-result-end best))
-                 (tm-recompute-results results
+                 (setf end-result
+                       (tm-ahead-match rule
+                                       (tm-region-end rule)
                                        (line-string point)
                                        (point-charpos point)
-                                       end)
-                 (dolist (result results)
-                   (when (and result (eq (tm-result-rule result) rule))
-                     (setf end-result result)
-                     (return))))))))))
+                                       end))
+                 (setf best
+                       (tm-get-best-result
+                        end-result
+                        (tm-recompute-results results
+                                              (line-string point)
+                                              (point-charpos point)
+                                              end))))))))))
 
 (defun tm-move-action (rule point allow-multiline)
   (with-point ((start point)
@@ -328,16 +351,13 @@
            (set-syntax-context line nil)))))
 
 (defun tm-scan-line (point patterns start end)
-  (let ((results (tm-get-results-from-patterns patterns (line-string point) start end))
-        (old-linenumber (line-number-at-point point)))
-    (loop
-      (let ((best (tm-best-result results)))
+  (let ((old-linenumber (line-number-at-point point)))
+    (multiple-value-bind (best results)
+        (tm-best-rule-in-patterns patterns (line-string point) start end)
+      (loop
         (unless best (return))
         (tm-apply-result point best end)
-        (tm-recompute-results results
-                              (line-string point)
-                              (point-charpos point)
-                              end)))
+        (setf best (tm-recompute-results results (line-string point) (point-charpos point) end))))
     (assert (= old-linenumber (line-number-at-point point)))
     (when (and end (< end (point-charpos point)))
       (line-offset point 0 end))))

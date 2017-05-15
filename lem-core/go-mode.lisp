@@ -51,6 +51,11 @@
                      (make-regex-matcher `(:sequence "//"))
                      (make-regex-matcher "$")
                      :name 'syntax-comment-attribute))
+    (add-tm-pattern tmlanguage
+                    (make-tm-region
+                     (make-regex-matcher "#if 0(\\s.*)?$")
+                     (make-regex-matcher "#endif")
+                     :content-name (make-attribute :foreground "gray")))
     (dolist (c '(#\" #\' #\`))
       (add-tm-pattern tmlanguage
                       (make-tm-region

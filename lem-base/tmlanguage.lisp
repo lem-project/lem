@@ -1,7 +1,6 @@
 (in-package :lem-base)
 
 (export '(make-tmlanguage
-          make-regex-matcher
           make-tm-match
           make-tm-region
           add-tm-pattern
@@ -73,18 +72,23 @@
                  :patterns (make-tm-patterns)
                  :repository (make-hash-table :test 'equal)))
 
-(defun make-tm-match (matcher &key name captures move-action)
+(defun make-tm-match (string &key name captures move-action)
   (make-instance 'tm-match
-                 :matcher matcher
+                 :matcher (ppcre:create-scanner string)
                  :name name
                  :captures captures
                  :move-action move-action))
 
-(defun make-tm-region (begin-matcher end-matcher
+(defun make-tm-region (begin end
                        &key name content-name (patterns (make-tm-patterns)))
   (make-instance 'tm-region
-                 :begin begin-matcher
-                 :end end-matcher
+                 :begin (ppcre:create-scanner begin)
+                 :end (let ((end (if (stringp end)
+                                     (ppcre:parse-string end)
+                                     end)))
+                        (if (find-tree :back-reference end)
+                            end
+                            (ppcre:create-scanner end)))
                  :name name
                  :content-name content-name
                  :patterns patterns))
@@ -96,11 +100,6 @@
          (make-instance 'tm-include-repository :refer (subseq spec 1)))
         (t
          (error "unsupported spec: ~A" spec))))
-
-(defun make-regex-matcher (regex)
-  (let ((scanner (ppcre:create-scanner regex)))
-    (lambda (string start end)
-      (ppcre:scan scanner string :start start :end end))))
 
 (defun make-tm-patterns (&rest patterns)
   (make-instance 'tm-patterns :patterns patterns))
@@ -137,15 +136,17 @@
 
 (defun tm-ahead-match (rule matcher string start end)
   (multiple-value-bind (start end reg-starts reg-ends)
-      (funcall matcher string start (or end (length string)))
+      (ppcre:scan matcher string :start start :end (or end (length string)))
     (when start
-      (vector rule start end reg-starts reg-ends))))
+      (vector rule start end reg-starts reg-ends nil))))
 
 (defun tm-result-rule       (result) (aref result 0))
 (defun tm-result-start      (result) (aref result 1))
 (defun tm-result-end        (result) (aref result 2))
 (defun tm-result-reg-starts (result) (aref result 3))
 (defun tm-result-reg-ends   (result) (aref result 4))
+(defun tm-result-option     (result) (aref result 5))
+(defun (setf tm-result-option) (v result) (setf (aref result 5) v))
 
 (defun tm-result= (result1 result2)
   (and (eq (tm-result-rule result1)
@@ -220,11 +221,42 @@
                        :attribute content-name
                        contp)))
 
-(defun tm-apply-region (rule point begin-result start end)
-  (let ((start1 (or start (tm-result-start begin-result)))
-        (start2 (or start (tm-result-end begin-result))))
+(defun tm-replace-back-reference (tree string reg-starts reg-ends)
+  (loop :for n :from 1
+        :for reg-start :across reg-starts
+        :for reg-end :across reg-ends
+        :do (let ((str (subseq string reg-start reg-end)))
+              (setf tree
+                    (nsubst-if str
+                               (lambda (x)
+                                 (and (consp x)
+                                      (eq :back-reference (first x))
+                                      (= n (second x))))
+                               tree))))
+  tree)
+
+(defun tm-init-region-end-regex (rule begin-result string)
+  (let* ((reg-starts
+          (tm-result-reg-starts begin-result))
+         (reg-ends
+          (tm-result-reg-ends begin-result))
+         (end-regex
+          (tm-replace-back-reference (tm-region-end rule)
+                                     string
+                                     reg-starts
+                                     reg-ends)))
+    (setf (tm-result-option begin-result)
+          (ppcre:create-scanner end-regex))))
+
+(defun tm-apply-region (rule point begin-result end start-line-p)
+  (when start-line-p
+    (tm-init-region-end-regex rule
+                              begin-result
+                              (line-string point)))
+  (let ((start1 (if start-line-p (tm-result-start begin-result) 0))
+        (start2 (if start-line-p (tm-result-end begin-result) 0)))
     (let ((end-result
-           (tm-ahead-match rule (tm-region-end rule) (line-string point) start2 end)))
+           (tm-ahead-match rule (tm-result-option begin-result) (line-string point) start2 end)))
       (multiple-value-bind (best results)
           (tm-best-rule-in-patterns (tm-region-patterns rule)
                                     (line-string point)
@@ -251,7 +283,7 @@
                  (line-offset point 0 (tm-result-end best))
                  (setf end-result
                        (tm-ahead-match rule
-                                       (tm-region-end rule)
+                                       (tm-result-option begin-result)
                                        (line-string point)
                                        (point-charpos point)
                                        end))
@@ -318,7 +350,7 @@
   (let ((rule (tm-result-rule result)))
     (etypecase rule
       (tm-region
-       (tm-apply-region rule point result nil end))
+       (tm-apply-region rule point result end t))
       (tm-match
        (tm-apply-match rule point result)))))
 
@@ -332,7 +364,7 @@
           ((typep rule 'tm-region)
            (tm-apply-region rule point
                             (when (consp context) (cdr context))
-                            0 nil))
+                            nil nil))
           ((typep rule 'tm-rule)
            (cond ((eq (get-syntax-context line) 'end-move-action)
                   (with-point ((p point))

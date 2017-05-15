@@ -43,3 +43,10 @@
 
 (defun random-range (min max &optional (state *random-state*))
   (+ min (random (- max min) state)))
+
+(defun find-tree (x tree)
+  (cond ((null tree) nil)
+        ((eql x tree) x)
+        ((consp tree)
+         (or (find-tree x (car tree))
+             (find-tree x (cdr tree))))))

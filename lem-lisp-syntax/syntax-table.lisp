@@ -70,117 +70,112 @@
     (add-tm-pattern
      tmlanguage
      (make-tm-region
-      (make-regex-matcher `(:sequence ";"))
-      (make-regex-matcher "$")
+      `(:sequence ";")
+      "$"
       :name 'syntax-comment-attribute))
     (add-tm-pattern
      tmlanguage
      (make-tm-region
-      (make-regex-matcher `(:sequence "\""))
-      (make-regex-matcher `(:sequence "\""))
+      `(:sequence "\"")
+      `(:sequence "\"")
       :name 'syntax-string-attribute
       :patterns (make-tm-patterns
-                 (make-tm-match (make-regex-matcher "\\\\.")))))
+                 (make-tm-match "\\\\."))))
     (add-tm-pattern
      tmlanguage
      (make-tm-region
-      (make-regex-matcher `(:sequence "#|"))
-      (make-regex-matcher `(:sequence "|#"))
+      `(:sequence "#|")
+      `(:sequence "|#")
       :name 'syntax-comment-attribute))
     (add-tm-pattern
      tmlanguage
      (make-tm-match
-      (make-regex-matcher "\\\\.")))
+      "\\\\."))
     (add-tm-pattern
      tmlanguage
      (make-tm-match
-      (make-regex-matcher
-       `(:sequence
-         "("
-         (:sequence
-          ,(wrap-symbol-names
-            "defun" "defclass" "defgeneric"
-            "defsetf" "defmacro" "defmethod"))
-         (:register ,(ppcre:parse-string "[^() \\t]+"))))
-      :captures (vector nil
-                        (make-tm-name 'syntax-keyword-attribute)
-                        (make-tm-name 'syntax-function-name-attribute))))
-    (add-tm-pattern
-     tmlanguage
-     (make-tm-match
-      (make-regex-matcher
-       `(:sequence
-         "("
-         (:group :case-insensitive-p
-          (:register (:sequence "define-" ,(ppcre:parse-string "\\S*"))))
-         (:alternation (:greedy-repetition 1 nil :whitespace-char-class) :end-anchor)
-         (:register ,(ppcre:parse-string "[^() \\t]+"))))
-      :captures (vector nil
-                        (make-tm-name 'syntax-keyword-attribute)
-                        (make-tm-name 'syntax-function-name-attribute))))
-    (add-tm-pattern
-     tmlanguage
-     (make-tm-match
-      (make-regex-matcher
-       `(:sequence
-         "("
+      `(:sequence
+        "("
+        (:sequence
          ,(wrap-symbol-names
-           "defvar" "defparameter" "defconstant")
-         (:register ,(ppcre:parse-string "[^() \\t]+"))))
+           "defun" "defclass" "defgeneric"
+           "defsetf" "defmacro" "defmethod"))
+        (:register ,(ppcre:parse-string "[^() \\t]+")))
+      :captures (vector nil
+                        (make-tm-name 'syntax-keyword-attribute)
+                        (make-tm-name 'syntax-function-name-attribute))))
+    (add-tm-pattern
+     tmlanguage
+     (make-tm-match
+      `(:sequence
+        "("
+        (:group :case-insensitive-p
+         (:register (:sequence "define-" ,(ppcre:parse-string "\\S*"))))
+        (:alternation (:greedy-repetition 1 nil :whitespace-char-class) :end-anchor)
+        (:register ,(ppcre:parse-string "[^() \\t]+")))
+      :captures (vector nil
+                        (make-tm-name 'syntax-keyword-attribute)
+                        (make-tm-name 'syntax-function-name-attribute))))
+    (add-tm-pattern
+     tmlanguage
+     (make-tm-match
+      `(:sequence
+        "("
+        ,(wrap-symbol-names
+          "defvar" "defparameter" "defconstant")
+        (:register ,(ppcre:parse-string "[^() \\t]+")))
       :captures (vector nil
                         (make-tm-name 'syntax-keyword-attribute)
                         (make-tm-name 'syntax-variable-attribute))))
     (add-tm-pattern
      tmlanguage
      (make-tm-match
-      (make-regex-matcher
-       `(:sequence
-         "("
-         ,(wrap-symbol-names
-           "deftype" "defpackage" "defstruct")
-         (:register ,(ppcre:parse-string "[^() \\t]+"))))
+      `(:sequence
+        "("
+        ,(wrap-symbol-names
+          "deftype" "defpackage" "defstruct")
+        (:register ,(ppcre:parse-string "[^() \\t]+")))
       :captures (vector nil
                         (make-tm-name 'syntax-keyword-attribute)
                         (make-tm-name 'syntax-type-attribute))))
     (add-tm-pattern
      tmlanguage
      (make-tm-match
-      (make-regex-matcher
-       `(:sequence
-         "("
-         ,(wrap-symbol-names
-           "block" "case" "ccase" "ecase" "typecase" "etypecase" "ctypecase" "catch"
-           "cond" "destructuring-bind" "do" "do*" "dolist" "dotimes"
-           "eval-when" "flet" "labels" "macrolet" "generic-flet" "generic-labels"
-           "handler-case" "restart-case" "if" "lambda" "let" "let*" "handler-bind"
-           "restart-bind" "locally" "multiple-value-bind" "multiple-value-call"
-           "multiple-value-prog1" "prog" "prog*" "prog1" "prog2" "progn" "progv" "return"
-           "return-from" "symbol-macrolet" "tagbody" "throw" "unless" "unwind-protect"
-           "when" "with-accessors" "with-condition-restarts" "with-open-file"
-           "with-output-to-string" "with-slots" "with-standard-io-syntax" "loop"
-           "declare" "declaim" "proclaim")))
+      `(:sequence
+        "("
+        ,(wrap-symbol-names
+          "block" "case" "ccase" "ecase" "typecase" "etypecase" "ctypecase" "catch"
+          "cond" "destructuring-bind" "do" "do*" "dolist" "dotimes"
+          "eval-when" "flet" "labels" "macrolet" "generic-flet" "generic-labels"
+          "handler-case" "restart-case" "if" "lambda" "let" "let*" "handler-bind"
+          "restart-bind" "locally" "multiple-value-bind" "multiple-value-call"
+          "multiple-value-prog1" "prog" "prog*" "prog1" "prog2" "progn" "progv" "return"
+          "return-from" "symbol-macrolet" "tagbody" "throw" "unless" "unwind-protect"
+          "when" "with-accessors" "with-condition-restarts" "with-open-file"
+          "with-output-to-string" "with-slots" "with-standard-io-syntax" "loop"
+          "declare" "declaim" "proclaim"))
       :captures (vector nil
                         (make-tm-name 'syntax-keyword-attribute))))
     (add-tm-pattern
      tmlanguage
      (make-tm-match
-      (make-regex-matcher `(:sequence
-                            symbol-boundary-begin
-                            ,(ppcre:parse-string ":[^()\" \\t]+")
-                            symbol-boundary-end))
+      `(:sequence
+        symbol-boundary-begin
+        ,(ppcre:parse-string ":[^()\" \\t]+")
+        symbol-boundary-end)
       :name 'syntax-constant-attribute))
     (add-tm-pattern
      tmlanguage
      (make-tm-match
-      (make-regex-matcher `(:sequence
-                            symbol-boundary-begin
-                            ,(ppcre:parse-string "&[^() \\t]+")
-                            symbol-boundary-end))
+      `(:sequence
+        symbol-boundary-begin
+        ,(ppcre:parse-string "&[^() \\t]+")
+        symbol-boundary-end)
       :name 'syntax-constant-attribute))
     (add-tm-pattern
      tmlanguage
      (make-tm-match
-      (make-regex-matcher "#[+-]")
+      "#[+-]"
       :name 'syntax-comment-attribute
       :move-action (lambda (cur-point)
                      (ignore-errors

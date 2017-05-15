@@ -210,6 +210,12 @@
                   (setf best (tm-get-best-result best new-result)))))
     best))
 
+(defun tm-apply-content-name (rule point start end contp)
+  (alexandria:when-let (content-name (tm-region-content-name rule))
+    (line-add-property (point-line point) start end
+                       :attribute content-name
+                       contp)))
+
 (defun tm-apply-region (rule point begin-result end)
   (let ((start1 (if begin-result (tm-result-start begin-result) 0))
         (start2 (if begin-result (tm-result-end begin-result) 0)))
@@ -222,32 +228,18 @@
         (setf best (tm-get-best-result best end-result))
         (loop
           (cond ((null best)
-                 (line-add-property (point-line point)
-                                    start1
-                                    (line-length (point-line point))
+                 (line-add-property (point-line point) start1 (line-length (point-line point))
                                     :attribute (tm-rule-name rule)
                                     t)
-                 (alexandria:when-let (content-name (tm-region-content-name rule))
-                   (line-add-property (point-line point)
-                                      start2
-                                      (line-length (point-line point))
-                                      :attribute content-name
-                                      t))
+                 (tm-apply-content-name rule point start2 (line-length (point-line point)) t)
                  (set-syntax-context (point-line point) rule)
                  (line-end point)
                  (return))
                 ((and best end-result (tm-result= best end-result))
-                 (line-add-property (point-line point)
-                                    start1
-                                    (tm-result-end end-result)
+                 (line-add-property (point-line point) start1 (tm-result-end end-result)
                                     :attribute (tm-rule-name rule)
                                     nil)
-                 (alexandria:when-let (content-name (tm-region-content-name rule))
-                   (line-add-property (point-line point)
-                                      start1
-                                      (tm-result-start end-result)
-                                      :attribute content-name
-                                      nil))
+                 (tm-apply-content-name rule point start1 (tm-result-start end-result) nil)
                  (set-syntax-context (point-line point) nil)
                  (line-offset point 0 (tm-result-end end-result))
                  (return))

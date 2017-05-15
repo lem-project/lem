@@ -53,6 +53,10 @@
    (:sequence
     (:greedy-repetition 1 nil (:inverted-char-class #\( #\) #\space #\tab)) #\:)))
 
+(ppcre:define-parse-tree-synonym symbol
+  (:greedy-repetition 1 nil
+   (:inverted-char-class #\( #\) :whitespace-char-class #\; #\")))
+
 (defun word-length-sort (&rest words)
   (sort (copy-list words) #'> :key #'length))
 
@@ -61,8 +65,8 @@
     maybe-package-prefix
     (:register
      (:group :case-insensitive-p
-      (:alternation
-       ,@(apply #'word-length-sort names))))
+      ,(let ((args (apply #'word-length-sort names)))
+         (if (null (rest args)) (first args) `(:alternation ,@args)))))
     (:alternation (:greedy-repetition 1 nil :whitespace-char-class) :end-anchor #\( #\))))
 
 (defun make-tmlanguage-lisp ()
@@ -100,9 +104,20 @@
          ,(wrap-symbol-names
            "defun" "defclass" "defgeneric"
            "defsetf" "defmacro" "defmethod"))
-        (:register ,(ppcre:parse-string "[^() \\t]+")))
+        (:register symbol))
       :captures (vector nil
                         (make-tm-name 'syntax-keyword-attribute)
+                        (make-tm-name 'syntax-function-name-attribute))))
+    (add-tm-pattern
+     tmlanguage
+     (make-tm-match
+      `(:sequence
+        "(" ,(wrap-symbol-names "defun")
+        ,(ppcre:parse-string "\\s*\\(")
+        ,(ppcre:parse-string "((?i:setf))\\s+") (:register symbol))
+      :captures (vector nil
+                        (make-tm-name 'syntax-keyword-attribute)
+                        (make-tm-name 'syntax-function-name-attribute)
                         (make-tm-name 'syntax-function-name-attribute))))
     (add-tm-pattern
      tmlanguage
@@ -112,7 +127,7 @@
         (:group :case-insensitive-p
          (:register (:sequence "define-" ,(ppcre:parse-string "\\S*"))))
         (:alternation (:greedy-repetition 1 nil :whitespace-char-class) :end-anchor)
-        (:register ,(ppcre:parse-string "[^() \\t]+")))
+        (:register symbol))
       :captures (vector nil
                         (make-tm-name 'syntax-keyword-attribute)
                         (make-tm-name 'syntax-function-name-attribute))))
@@ -123,7 +138,7 @@
         "("
         ,(wrap-symbol-names
           "defvar" "defparameter" "defconstant")
-        (:register ,(ppcre:parse-string "[^() \\t]+")))
+        (:register symbol))
       :captures (vector nil
                         (make-tm-name 'syntax-keyword-attribute)
                         (make-tm-name 'syntax-variable-attribute))))
@@ -134,7 +149,7 @@
         "("
         ,(wrap-symbol-names
           "deftype" "defpackage" "defstruct")
-        (:register ,(ppcre:parse-string "[^() \\t]+")))
+        (:register symbol))
       :captures (vector nil
                         (make-tm-name 'syntax-keyword-attribute)
                         (make-tm-name 'syntax-type-attribute))))
@@ -161,7 +176,7 @@
      (make-tm-match
       `(:sequence
         symbol-boundary-begin
-        ,(ppcre:parse-string ":[^()\" \\t]+")
+        ":" symbol
         symbol-boundary-end)
       :name 'syntax-constant-attribute))
     (add-tm-pattern
@@ -169,7 +184,7 @@
      (make-tm-match
       `(:sequence
         symbol-boundary-begin
-        ,(ppcre:parse-string "&[^() \\t]+")
+        "&" symbol
         symbol-boundary-end)
       :name 'syntax-constant-attribute))
     (add-tm-pattern

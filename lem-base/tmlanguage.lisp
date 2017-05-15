@@ -220,9 +220,9 @@
                        :attribute content-name
                        contp)))
 
-(defun tm-apply-region (rule point begin-result end)
-  (let ((start1 (if begin-result (tm-result-start begin-result) 0))
-        (start2 (if begin-result (tm-result-end begin-result) 0)))
+(defun tm-apply-region (rule point begin-result start end)
+  (let ((start1 (or start (tm-result-start begin-result)))
+        (start2 (or start (tm-result-end begin-result))))
     (let ((end-result
            (tm-ahead-match rule (tm-region-end rule) (line-string point) start2 end)))
       (multiple-value-bind (best results)
@@ -236,7 +236,7 @@
                                     :attribute (tm-rule-name rule)
                                     t)
                  (tm-apply-content-name rule point start2 (line-length (point-line point)) t)
-                 (set-syntax-context (point-line point) rule)
+                 (set-syntax-context (point-line point) (cons rule begin-result))
                  (line-end point)
                  (return))
                 ((and best end-result (tm-result= best end-result))
@@ -318,29 +318,32 @@
   (let ((rule (tm-result-rule result)))
     (etypecase rule
       (tm-region
-       (tm-apply-region rule point result end))
+       (tm-apply-region rule point result nil end))
       (tm-match
        (tm-apply-match rule point result)))))
 
 (defun tm-continue-prev-line (point)
   (let* ((line (point-line point))
          (prev (line-prev line))
-         (context (and prev (get-syntax-context prev))))
-    (cond ((null context)
+         (context (and prev (get-syntax-context prev)))
+         (rule (if (consp context) (car context) context)))
+    (cond ((null rule)
            (set-syntax-context line nil))
-          ((typep context 'tm-region)
-           (tm-apply-region context point nil nil))
-          ((typep context 'tm-rule)
+          ((typep rule 'tm-region)
+           (tm-apply-region rule point
+                            (when (consp context) (cdr context))
+                            0 nil))
+          ((typep rule 'tm-rule)
            (cond ((eq (get-syntax-context line) 'end-move-action)
                   (with-point ((p point))
                     (previous-single-property-change p :attribute)
-                    (let ((goal (tm-move-action context p t)))
+                    (let ((goal (tm-move-action rule p t)))
                       (when goal
                         (move-point point goal)))))
                  (t
                   (line-add-property (point-line point)
                                      0 (line-length line)
-                                     :attribute (tm-rule-name context)
+                                     :attribute (tm-rule-name rule)
                                      t)
                   (line-end point))))
           (t

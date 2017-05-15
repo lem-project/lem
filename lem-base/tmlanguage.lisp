@@ -26,6 +26,10 @@
    (end
     :initarg :end
     :reader tm-region-end)
+   (content-name
+    :initarg :content-name
+    :initform nil
+    :reader tm-region-content-name)
    (patterns
     :initarg :patterns
     :initform nil
@@ -60,11 +64,13 @@
                  :captures captures
                  :move-action move-action))
 
-(defun make-tm-region (begin-matcher end-matcher &key name (patterns (make-tm-patterns)))
+(defun make-tm-region (begin-matcher end-matcher
+                       &key name content-name (patterns (make-tm-patterns)))
   (make-instance 'tm-region
                  :begin begin-matcher
                  :end end-matcher
                  :name name
+                 :content-name content-name
                  :patterns patterns))
 
 (defun make-regex-matcher (regex)
@@ -173,6 +179,12 @@
                                     (line-length (point-line point))
                                     :attribute (tm-rule-name rule)
                                     t)
+                 (alexandria:when-let (content-name (tm-region-content-name rule))
+                   (line-add-property (point-line point)
+                                      start2
+                                      (line-length (point-line point))
+                                      :attribute content-name
+                                      t))
                  (set-syntax-context (point-line point) rule)
                  (line-end point)
                  (return))
@@ -182,6 +194,12 @@
                                     (tm-result-end end-result)
                                     :attribute (tm-rule-name rule)
                                     nil)
+                 (alexandria:when-let (content-name (tm-region-content-name rule))
+                   (line-add-property (point-line point)
+                                      start1
+                                      (tm-result-start end-result)
+                                      :attribute content-name
+                                      nil))
                  (set-syntax-context (point-line point) nil)
                  (line-offset point 0 (tm-result-end end-result))
                  (return))
@@ -206,7 +224,7 @@
               (set-syntax-context (point-line point) rule)
               (line-offset point 1))
         (set-syntax-context (point-line point) 'end-move-action)
-        (uiop:if-let ((attribute (tm-rule-name rule)))
+        (alexandria:when-let ((attribute (tm-rule-name rule)))
           (put-text-property start end :attribute attribute))
         (cond (allow-multiline
                (move-point point end))

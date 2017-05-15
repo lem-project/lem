@@ -98,7 +98,9 @@
          (error "unsupported spec: ~A" spec))))
 
 (defun make-regex-matcher (regex)
-  (ppcre:create-scanner regex))
+  (let ((scanner (ppcre:create-scanner regex)))
+    (lambda (string start end)
+      (ppcre:scan scanner string :start start :end end))))
 
 (defun make-tm-patterns (&rest patterns)
   (make-instance 'tm-patterns :patterns patterns))
@@ -135,7 +137,7 @@
 
 (defun tm-ahead-match (rule matcher string start end)
   (multiple-value-bind (start end reg-starts reg-ends)
-      (ppcre:scan matcher string :start start :end (or end (length string)))
+      (funcall matcher string start (or end (length string)))
     (when start
       (vector rule start end reg-starts reg-ends))))
 

@@ -29,6 +29,14 @@
    (end
     :initarg :end
     :reader tm-region-end)
+   (begin-captures
+    :initarg :begin-captures
+    :initform nil
+    :reader tm-region-begin-captures)
+   (end-captures
+    :initarg :end-captures
+    :initform nil
+    :reader tm-region-end-captures)
    (content-name
     :initarg :content-name
     :initform nil
@@ -77,7 +85,9 @@
                  :move-action move-action))
 
 (defun make-tm-region (begin end
-                       &key name content-name (patterns (make-tm-patterns)))
+                       &key
+                       begin-captures end-captures
+                       name content-name (patterns (make-tm-patterns)))
   (make-instance 'tm-region
                  :begin (ppcre:create-scanner begin)
                  :end (let ((end (if (stringp end)
@@ -86,6 +96,8 @@
                         (if (find-tree :back-reference end)
                             end
                             (ppcre:create-scanner end)))
+                 :begin-captures begin-captures
+                 :end-captures end-captures
                  :name name
                  :content-name content-name
                  :patterns patterns))

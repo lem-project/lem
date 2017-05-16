@@ -8,9 +8,6 @@
           make-tm-patterns
           make-tm-name))
 
-;;; TODO
-;;; begin/endルールでbeginのキャプチャをendで使えるようにする
-
 (defclass tmlanguage (syntax-parser)
   ((patterns
     :initarg :patterns
@@ -358,7 +355,7 @@
   (let* ((line (point-line point))
          (prev (line-prev line))
          (context (and prev (get-syntax-context prev)))
-         (rule (if (consp context) (car context) context)))
+         (rule (alexandria:ensure-car context)))
     (cond ((null rule)
            (set-syntax-context line nil))
           ((typep rule 'tm-region)

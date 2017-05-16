@@ -90,7 +90,7 @@
 
 (defun make-tm-region (begin end
                        &key
-                       begin-captures end-captures
+                       begin-captures end-captures captures
                        name content-name (patterns (make-tm-patterns)))
   (make-instance 'tm-region
                  :begin (ppcre:create-scanner begin)
@@ -100,8 +100,8 @@
                         (if (find-tree :back-reference end)
                             end
                             (ppcre:create-scanner end)))
-                 :begin-captures begin-captures
-                 :end-captures end-captures
+                 :begin-captures (or begin-captures captures)
+                 :end-captures (or end-captures captures)
                  :name name
                  :content-name content-name
                  :patterns patterns))
@@ -224,6 +224,27 @@
                   (setf best (tm-get-best-result best result))))
     best))
 
+(defun tm-apply-capture (point capture start end)
+  (typecase capture
+    (tm-patterns
+     (tm-scan-line point capture start end))
+    (otherwise
+     (line-add-property (point-line point) start end :attribute capture nil))))
+
+(defun tm-apply-captures (point result captures)
+  (when (and captures (< 0 (length captures)))
+    (let ((start (tm-result-start result))
+          (end (tm-result-end result))
+          (reg-starts (tm-result-reg-starts result))
+          (reg-ends (tm-result-reg-ends result)))
+      (alexandria:when-let ((cap0 (aref captures 0)))
+        (tm-apply-capture point cap0 start end))
+      (loop :for reg-start :across reg-starts
+            :for reg-end :across reg-ends
+            :for capture-index :from 1 :below (length captures)
+            :for cap := (aref captures capture-index)
+            :do (when cap (tm-apply-capture point cap reg-start reg-end))))))
+
 (defun tm-apply-content-name (rule point start end contp)
   (alexandria:when-let (content-name (tm-region-content-name rule))
     (line-add-property (point-line point) start end
@@ -257,11 +278,18 @@
     (setf (tm-result-option begin-result)
           (ppcre:create-scanner end-regex))))
 
+(defun tm-apply-begin-captures (rule point begin-result start-line-p)
+  (when start-line-p
+    (let ((captures (tm-region-begin-captures rule)))
+      (tm-apply-captures point begin-result captures))))
+
+(defun tm-apply-end-captures (rule point end-result)
+  (let ((captures (tm-region-end-captures rule)))
+    (tm-apply-captures point end-result captures)))
+
 (defun tm-apply-region (rule point begin-result end start-line-p)
   (when start-line-p
-    (tm-init-region-end-regex rule
-                              begin-result
-                              (line-string point)))
+    (tm-init-region-end-regex rule begin-result (line-string point)))
   (let ((start1 (if start-line-p (tm-result-start begin-result) 0))
         (start2 (if start-line-p (tm-result-end begin-result) 0)))
     (let ((end-result
@@ -276,6 +304,7 @@
                  (line-add-property (point-line point) start1 (line-length (point-line point))
                                     :attribute (tm-rule-name rule)
                                     t)
+                 (tm-apply-begin-captures rule point begin-result start-line-p)
                  (tm-apply-content-name rule point start2 (line-length (point-line point)) t)
                  (set-syntax-context (point-line point) (cons rule begin-result))
                  (line-end point)
@@ -284,6 +313,8 @@
                  (line-add-property (point-line point) start1 (tm-result-end end-result)
                                     :attribute (tm-rule-name rule)
                                     nil)
+                 (tm-apply-begin-captures rule point begin-result start-line-p)
+                 (tm-apply-end-captures rule point end-result)
                  (tm-apply-content-name rule point start1 (tm-result-start end-result) nil)
                  (set-syntax-context (point-line point) nil)
                  (line-offset point 0 (tm-result-end end-result))
@@ -333,21 +364,9 @@
 (defun tm-apply-match (rule point result)
   (let ((start (tm-result-start result))
         (end (tm-result-end result))
-        (reg-starts (tm-result-reg-starts result))
-        (reg-ends (tm-result-reg-ends result))
         (captures (tm-match-captures rule)))
     (line-add-property (point-line point) start end :attribute (tm-rule-name rule) nil)
-    (when (and captures (< 0 (length captures)))
-      (alexandria:when-let (cap0 (aref captures 0))
-        (tm-apply-match-in-capture point cap0 start end))
-      (loop :for reg-start-index :from 0 :below (length reg-starts)
-            :for reg-end-index :from 0 :below (length reg-ends)
-            :for captures-index :from 1 :below (length captures)
-            :for reg-start := (aref reg-starts reg-start-index)
-            :for reg-end := (aref reg-ends reg-end-index)
-            :for cap := (aref captures captures-index)
-            :do (when cap
-                  (tm-apply-match-in-capture point cap reg-start reg-end))))
+    (tm-apply-captures point result captures)
     (cond ((tm-match-move-action rule)
            (line-offset point 0 start)
            (or (tm-move-action rule point nil)

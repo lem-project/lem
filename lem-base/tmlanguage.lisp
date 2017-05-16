@@ -1,12 +1,13 @@
 (in-package :lem-base)
 
 (export '(make-tmlanguage
+          make-tm-repository
           make-tm-match
           make-tm-region
-          add-tm-pattern
-          add-tm-repository
+          make-tm-include
           make-tm-patterns
-          make-tm-name))
+          make-tm-name
+          add-tm-pattern))
 
 (defclass tmlanguage (syntax-parser)
   ((patterns
@@ -72,10 +73,13 @@
     :initarg :patterns
     :accessor patterns)))
 
-(defun make-tmlanguage ()
+(defun make-tmlanguage (&key (patterns (make-tm-patterns)) (repository (make-tm-repository)))
   (make-instance 'tmlanguage
-                 :patterns (make-tm-patterns)
-                 :repository (make-hash-table :test 'equal)))
+                 :patterns patterns
+                 :repository repository))
+
+(defun make-tm-repository ()
+  (make-hash-table :test 'equal))
 
 (defun make-tm-match (string &key name captures move-action)
   (make-instance 'tm-match
@@ -118,10 +122,6 @@
 
 (defun add-tm-pattern (tmlanguage pattern)
   (push pattern (patterns (tmlanguage-patterns tmlanguage))))
-
-(defun add-tm-repository (tmlanguage name patterns)
-  (setf (gethash name (tmlanguage-repository tmlanguage))
-        patterns))
 
 (defmethod %syntax-scan-region ((tmlanguage tmlanguage) start end)
   (tm-syntax-scan-region start end))

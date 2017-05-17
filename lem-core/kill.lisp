@@ -34,13 +34,13 @@
              (subseq *kill-ring* 0 *kill-ring-max*)))
      (setq *kill-ring-yank-ptr* *kill-ring*)
      (setq *kill-new-flag* nil)
-     (lem.clipboard:copy string))
+     (trivial-clipboard:text string))
     (t
-     (lem.clipboard:copy (kill-append string *kill-before-p*))))
+     (trivial-clipboard:text (kill-append string *kill-before-p*))))
   t)
 
 (defun current-kill-ring ()
-  (let ((string (lem.clipboard:paste)))
+  (let ((string (trivial-clipboard:text)))
     (if (and string (string/= string ""))
         string
         (kill-ring-nth 1))))

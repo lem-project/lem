@@ -2,6 +2,9 @@
 (defpackage :lem-go-mode
   (:use :cl :lem)
   (:import-from
+   :lem.tmlanguage
+   :load-tmlanguage)
+  (:import-from
    :lem.language-mode
    :language-mode
    :indent)
@@ -35,7 +38,7 @@
                 :string-quote-chars '(#\" #\' #\`)
                 :line-comment-string "//"
                 :block-comment-pairs '(("/*" . "*/"))))
-        (tmlanguage (lem.tmlanguage:load-tmlanguage
+        (tmlanguage (load-tmlanguage
                      (merge-pathnames "go.json"
                                       (merge-pathnames "lem-go-mode/"
                                                        (asdf:system-source-directory :lem))))))

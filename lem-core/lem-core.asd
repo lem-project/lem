@@ -9,6 +9,7 @@
                "babel"
                "bordeaux-threads"
                "trivial-clipboard"
+               "yason"
                "lem-base"
                "lem-lisp-syntax")
   :serial t
@@ -44,6 +45,7 @@
                (:file "word-command")
                (:file "sexp-command")
 
+               (:file "tmlanguage")
                (:file "button")
                (:file "tabbar")
                (:file "listener-mode")

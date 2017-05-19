@@ -248,7 +248,8 @@
             :for reg-end :across reg-ends
             :for capture-index :from 1 :below (length captures)
             :for cap := (aref captures capture-index)
-            :do (when cap (tm-apply-capture point cap reg-start reg-end))))))
+            :do (when (and cap reg-start)
+                  (tm-apply-capture point cap reg-start reg-end))))))
 
 (defun tm-apply-content-name (rule point start end contp)
   (alexandria:when-let (content-name (tm-region-content-name rule))

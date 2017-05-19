@@ -106,7 +106,3 @@
            (load-json pathname))
           (t
            (error "unsupported type: ~A" type)))))
-
-#|
-(lem.tmlanguage:load-tmlanguage "~/go.json")
-|#

@@ -1,12 +1,12 @@
 (in-package :cl-user)
-(defpackage :lem.go-mode
+(defpackage :lem-go-mode
   (:use :cl :lem)
   (:import-from
    :lem.language-mode
    :language-mode
    :indent)
   (:export))
-(in-package :lem.go-mode)
+(in-package :lem-go-mode)
 
 (defvar *go-tab-width* 8)
 
@@ -35,53 +35,10 @@
                 :string-quote-chars '(#\" #\' #\`)
                 :line-comment-string "//"
                 :block-comment-pairs '(("/*" . "*/"))))
-        (tmlanguage (make-tmlanguage)))
-    (add-tm-pattern tmlanguage
-                    (make-tm-match
-                     "\\w+(?:,\\s*\\w+)*(?=\\s*:=)"
-                     :captures (vector (make-tm-patterns
-                                        (make-tm-match "\\d\\w*"
-                                                       :name (make-attribute
-                                                              :foreground "red"))
-                                        (make-tm-match "\\w+"
-                                                       :name (make-attribute
-                                                              :foreground "dark cyan"))))))
-    (add-tm-pattern tmlanguage
-                    (make-tm-region
-                     `(:sequence "//")
-                     "$"
-                     :name 'syntax-comment-attribute))
-    (add-tm-pattern tmlanguage
-                    (make-tm-region
-                     "#if 0(\\s.*)?$"
-                     "#endif"
-                     :content-name (make-attribute :foreground "gray")))
-    (dolist (c '(#\" #\' #\`))
-      (add-tm-pattern tmlanguage
-                      (make-tm-region
-                       `(:sequence ,(string c))
-                       `(:sequence ,(string c))
-                       :name 'syntax-string-attribute)))
-    (add-tm-pattern tmlanguage
-                    (make-tm-region
-                     `(:sequence "/*")
-                     `(:sequence "*/")
-                     :name 'syntax-comment-attribute))
-    (dolist (k *go-keywords*)
-      (add-tm-pattern tmlanguage
-                      (make-tm-match
-                       `(:sequence :word-boundary ,k :word-boundary)
-                       :name 'syntax-keyword-attribute)))
-    (dolist (k *go-builtin*)
-      (add-tm-pattern tmlanguage
-                      (make-tm-match
-                       `(:sequence :word-boundary ,k :word-boundary)
-                       :name 'syntax-keyword-attribute)))
-    (dolist (k *go-constants*)
-      (add-tm-pattern tmlanguage
-                      (make-tm-match
-                       `(:sequence :word-boundary ,k :word-boundary)
-                       :name 'syntax-constant-attribute)))
+        (tmlanguage (lem.tmlanguage:load-tmlanguage
+                     (merge-pathnames "go.json"
+                                      (merge-pathnames "lem-go-mode/"
+                                                       (asdf:system-source-directory :lem))))))
     (set-syntax-parser table tmlanguage)
     table))
 

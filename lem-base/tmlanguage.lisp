@@ -7,6 +7,7 @@
           make-tm-include
           make-tm-patterns
           make-tm-name
+          add-tm-repository
           add-tm-pattern))
 
 (defclass tmlanguage (syntax-parser)
@@ -107,6 +108,7 @@
                  :patterns patterns))
 
 (defun make-tm-include (spec)
+  (setf spec (coerce spec 'simple-string))
   (cond ((string= spec "$self")
          (make-instance 'tm-include-self))
         ((char= #\# (schar spec 0))
@@ -119,6 +121,9 @@
 
 (defun make-tm-name (name)
   name)
+
+(defun add-tm-repository (repository name patterns)
+  (setf (gethash name repository) patterns))
 
 (defun add-tm-pattern (tmlanguage pattern)
   (push pattern (patterns (tmlanguage-patterns tmlanguage))))

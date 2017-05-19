@@ -95,11 +95,11 @@
                        name content-name (patterns (make-tm-patterns)))
   (make-instance 'tm-region
                  :begin (ppcre:create-scanner begin)
-                 :end (let ((end (if (stringp end)
+                 :end (let ((tree (if (stringp end)
                                      (ppcre:parse-string end)
                                      end)))
-                        (if (find-tree :back-reference end)
-                            end
+                        (if (find-tree :back-reference tree)
+                            tree
                             (ppcre:create-scanner end)))
                  :begin-captures (or begin-captures captures)
                  :end-captures (or end-captures captures)

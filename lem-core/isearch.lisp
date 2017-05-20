@@ -59,11 +59,12 @@
 (define-key *isearch-keymap* "[backspace]" 'isearch-delete-char)
 (define-key *isearch-keymap* "[del]" 'isearch-delete-char)
 (define-key *isearch-keymap* "C-q" 'isearch-raw-insert)
-(define-key *isearch-keymap* "C-j" 'isearch-end)
-(define-key *isearch-keymap* "C-m" 'isearch-end)
+(define-key *isearch-keymap* "C-j" 'isearch-finish)
+(define-key *isearch-keymap* "C-m" 'isearch-finish)
 (define-key *isearch-keymap* "C-s" 'isearch-next)
 (define-key *isearch-keymap* "C-r" 'isearch-prev)
 (define-key *isearch-keymap* "C-y" 'isearch-yank)
+(define-key *global-keymap* "M-r" 'isearch-replace-highlight)
 
 (defun isearch-update-display ()
   (isearch-update-minibuffer)
@@ -169,11 +170,19 @@
 (define-command isearch-raw-insert () ()
   (isearch-add-char (read-key)))
 
-(define-command isearch-end () ()
+(defun isearch-end ()
   (isearch-reset-buffer)
   (setq *isearch-prev-string* *isearch-string*)
   (isearch-mode nil)
   t)
+
+(define-command isearch-finish () ()
+  (isearch-update-buffer (buffer-start-point (current-buffer))
+                         *isearch-string*
+                         (buffer-start-point (current-buffer))
+                         (buffer-nlines (current-buffer)))
+  (setq *isearch-prev-string* *isearch-string*)
+  (isearch-mode nil))
 
 (define-command isearch-next () ()
   (when (string= "" *isearch-string*)
@@ -246,6 +255,27 @@
              (unread-key-sequence (last-read-key-sequence))
              (isearch-end)))))
 
+(define-command isearch-replace-highlight () ()
+  (unless *isearch-highlight-overlays*
+    (return-from isearch-replace-highlight))
+  (let ((string (prompt-for-string "Replace: "))
+        (buffer (current-buffer))
+        (p (current-point))
+        (start)
+        (end))
+    (if (buffer-mark-p buffer)
+        (setf start (copy-point (region-beginning buffer) :temporary)
+              end (region-end buffer))
+        (setf start (buffer-start-point buffer)
+              end (buffer-end-point buffer)))
+    (save-excursion
+      (dolist (overlay *isearch-highlight-overlays*)
+        (when (and (point<= start (overlay-start overlay))
+                   (point<= (overlay-end overlay) end))
+          (move-point p (overlay-start overlay))
+          (delete-between-points (overlay-start overlay) (overlay-end overlay))
+          (insert-string p string)))
+      (isearch-reset-buffer))))
 
 
 (defvar *replace-before-string* nil)

@@ -30,6 +30,7 @@
   (setf (variable-value 'find-definitions-function) 'find-definitions)
   (setf (variable-value 'find-references-function) 'find-references)
   (setf (variable-value 'completion-function) 'completion-symbol)
+  (set-syntax-parser lem-lisp-syntax:*syntax-table* (make-tmlanguage-lisp))
   (unless (connected-p) (self-connect)))
 
 (define-key *lisp-mode-keymap* "C-M-a" 'lisp-beginning-of-defun)
@@ -845,7 +846,6 @@
     (message "Swank server running on ~A ~A"
              (swank-protocol:connection-implementation-name connection)
              (swank-protocol:connection-implementation-version connection))
-    (setf lem-lisp-syntax:*get-features-function* 'features)
     (add-connection connection)
     (when start-repl (start-lisp-repl))
     (start-thread)

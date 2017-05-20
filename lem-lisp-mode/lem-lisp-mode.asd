@@ -11,6 +11,7 @@
                (:file "swank-protocol")
                (:file "package")
                (:file "lisp-ui-mode")
+               (:file "grammer")
                (:file "lisp-mode")
                (:file "sldb")
                (:file "inspector")))

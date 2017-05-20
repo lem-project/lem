@@ -37,15 +37,33 @@
 (defvar *isearch-search-backward-function*)
 (defvar *isearch-highlight-overlays* nil)
 
-(define-minor-mode isearch-mode
-    (:name "isearch"
-	   :keymap *isearch-keymap*))
-
 (define-attribute isearch-highlight-attribute
   (t :background "gray"))
 
 (define-attribute isearch-highlight-active-attribute
   (t :foreground "black" :background "cyan"))
+
+(define-minor-mode isearch-mode
+    (:name "isearch"
+	   :keymap *isearch-keymap*))
+
+(define-key *global-keymap* "C-s" 'isearch-forward)
+(define-key *global-keymap* "C-r" 'isearch-backward)
+(define-key *global-keymap* "C-M-s" 'isearch-forward-regexp)
+(define-key *global-keymap* "C-M-r" 'isearch-backward-regexp)
+(define-key *global-keymap* "M-s _" 'isearch-forward-symbol)
+(define-key *global-keymap* "M-s M-_" 'isearch-backward-symbol)
+(define-key *global-keymap* "M-s ." 'isearch-forward-symbol-at-point)
+(define-key *isearch-keymap* "C-g" 'isearch-abort)
+(define-key *isearch-keymap* "C-h" 'isearch-delete-char)
+(define-key *isearch-keymap* "[backspace]" 'isearch-delete-char)
+(define-key *isearch-keymap* "[del]" 'isearch-delete-char)
+(define-key *isearch-keymap* "C-q" 'isearch-raw-insert)
+(define-key *isearch-keymap* "C-j" 'isearch-end)
+(define-key *isearch-keymap* "C-m" 'isearch-end)
+(define-key *isearch-keymap* "C-s" 'isearch-next)
+(define-key *isearch-keymap* "C-r" 'isearch-prev)
+(define-key *isearch-keymap* "C-y" 'isearch-yank)
 
 (defun isearch-update-display ()
   (isearch-update-minibuffer)
@@ -54,7 +72,6 @@
 (defun isearch-update-minibuffer ()
   (message-without-log "~A~A" *isearch-prompt* *isearch-string*))
 
-(define-key *global-keymap* "C-s" 'isearch-forward)
 (define-command isearch-forward () ()
   (isearch-start
    "ISearch: "
@@ -66,7 +83,6 @@
    #'search-backward
    ""))
 
-(define-key *global-keymap* "C-r" 'isearch-backward)
 (define-command isearch-backward () ()
   (isearch-start
    "ISearch: "
@@ -78,7 +94,6 @@
    #'search-backward
    ""))
 
-(define-key *global-keymap* "C-M-s" 'isearch-forward-regexp)
 (define-command isearch-forward-regexp () ()
   (isearch-start "ISearch Regexp: "
                  #'search-forward-regexp
@@ -86,7 +101,6 @@
                  #'search-backward-regexp
                  ""))
 
-(define-key *global-keymap* "C-M-r" 'isearch-backward-regexp)
 (define-command isearch-backward-regexp () ()
   (isearch-start "ISearch Regexp: "
                  #'search-backward-regexp
@@ -94,7 +108,6 @@
                  #'search-backward-regexp
                  ""))
 
-(define-key *global-keymap* "M-s _" 'isearch-forward-symbol)
 (define-command isearch-forward-symbol () ()
   (isearch-start "ISearch Symbol: "
                  #'search-forward-symbol
@@ -102,7 +115,6 @@
                  #'search-backward-symbol
                  ""))
 
-(define-key *global-keymap* "M-s M-_" 'isearch-backward-symbol)
 (define-command isearch-backward-symbol () ()
   (isearch-start "ISearch Symbol: "
                  #'search-backward-symbol
@@ -110,7 +122,6 @@
                  #'search-backward-symbol
                  ""))
 
-(define-key *global-keymap* "M-s ." 'isearch-forward-symbol-at-point)
 (define-command isearch-forward-symbol-at-point () ()
   (let ((point (current-point)))
     (skip-chars-forward point #'syntax-symbol-char-p)
@@ -141,16 +152,12 @@
   (isearch-update-display)
   t)
 
-(define-key *isearch-keymap* "C-g" 'isearch-abort)
 (define-command isearch-abort () ()
   (move-point (current-point) *isearch-start-point*)
   (isearch-reset-buffer)
   (isearch-end)
   t)
 
-(define-key *isearch-keymap* "C-h" 'isearch-delete-char)
-(define-key *isearch-keymap* "[backspace]" 'isearch-delete-char)
-(define-key *isearch-keymap* "[del]" 'isearch-delete-char)
 (define-command isearch-delete-char () ()
   (when (plusp (length *isearch-string*))
     (setq *isearch-string*
@@ -159,33 +166,27 @@
                   (1- (length *isearch-string*))))
     (isearch-update-display)))
 
-(define-key *isearch-keymap* "C-q" 'isearch-raw-insert)
 (define-command isearch-raw-insert () ()
   (isearch-add-char (read-key)))
 
-(define-key *isearch-keymap* "C-j" 'isearch-end)
-(define-key *isearch-keymap* "C-m" 'isearch-end)
 (define-command isearch-end () ()
   (isearch-reset-buffer)
   (setq *isearch-prev-string* *isearch-string*)
   (isearch-mode nil)
   t)
 
-(define-key *isearch-keymap* "C-s" 'isearch-next)
 (define-command isearch-next () ()
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
   (funcall *isearch-search-forward-function* (current-point) *isearch-string*)
   (isearch-update-display))
 
-(define-key *isearch-keymap* "C-r" 'isearch-prev)
 (define-command isearch-prev () ()
   (when (string= "" *isearch-string*)
     (setq *isearch-string* *isearch-prev-string*))
   (funcall *isearch-search-backward-function* (current-point) *isearch-string*)
   (isearch-update-display))
 
-(define-key *isearch-keymap* "C-y" 'isearch-yank)
 (define-command isearch-yank () ()
   (let ((str (kill-ring-first-string)))
     (when str
@@ -242,6 +243,8 @@
              (unread-key-sequence (last-read-key-sequence))
              (isearch-end)))))
 
+
+
 (defvar *replace-before-string* nil)
 (defvar *replace-after-string* nil)
 
@@ -316,6 +319,7 @@
     (isearch-reset-buffer)))
 
 (define-key *global-keymap* "M-%" 'query-replace)
+
 (define-command query-replace (before after)
     ((read-query-replace-args))
   (query-replace-internal before

@@ -334,7 +334,7 @@
                           directory
                           (lambda (str)
                             (completion-file str directory))
-                          (and existing #'uiop:file-exists-p)
+                          (and existing #'probe-file)
                           'mh-read-file)))
     (if (string= result "")
         default

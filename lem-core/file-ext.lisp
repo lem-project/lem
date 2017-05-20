@@ -40,6 +40,6 @@
 
 (defun detect-external-format-from-file (pathname)
   (values (inq:detect-encoding (pathname pathname) :jp)
-          (inq:detect-end-of-line (pathname pathname))))
+          (or (inq:detect-end-of-line (pathname pathname)) :lf)))
 
 (setf *external-format-function* 'detect-external-format-from-file)

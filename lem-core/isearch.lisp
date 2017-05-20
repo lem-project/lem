@@ -197,13 +197,16 @@
   (mapc #'delete-overlay *isearch-highlight-overlays*)
   (setq *isearch-highlight-overlays* nil))
 
-(defun isearch-update-buffer (point &optional (search-string *isearch-string*))
+(defun isearch-update-buffer (point &optional
+                                    (search-string *isearch-string*)
+                                    (start-point (window-view-point (current-window)))
+                                    (search-lines (window-height (current-window))))
   (isearch-reset-buffer)
   (unless (equal search-string "")
     (window-see (current-window))
-    (with-point ((curr (window-view-point (current-window)))
-                 (limit (window-view-point (current-window))))
-      (unless (line-offset limit (window-height (current-window)))
+    (with-point ((curr start-point)
+                 (limit start-point))
+      (unless (line-offset limit search-lines)
         (buffer-end limit))
       (loop :with prev
             :do

@@ -65,6 +65,10 @@
 (define-key *isearch-keymap* "C-r" 'isearch-prev)
 (define-key *isearch-keymap* "C-y" 'isearch-yank)
 (define-key *global-keymap* "M-r" 'isearch-replace-highlight)
+(define-key *global-keymap* "M-s M-n" 'isearch-next-highlight)
+(define-key *global-keymap* "M-s n" 'isearch-next-highlight)
+(define-key *global-keymap* "M-s M-p" 'isearch-prev-highlight)
+(define-key *global-keymap* "M-s p" 'isearch-prev-highlight)
 
 (defun isearch-update-display ()
   (isearch-update-minibuffer)
@@ -146,7 +150,6 @@
   (setq *isearch-prompt* prompt)
   (setq *isearch-string* initial-string)
   (setq *isearch-search-function* search-func)
-  ;; isearch中にバッファを変更する機能をつけるとここの:temporaryは変えないと駄目
   (setq *isearch-start-point* (copy-point (current-point) :temporary))
   (setq *isearch-search-forward-function* search-forward-function)
   (setq *isearch-search-backward-function* search-backward-function)
@@ -276,6 +279,32 @@
           (delete-between-points (overlay-start overlay) (overlay-end overlay))
           (insert-string p string)))
       (isearch-reset-buffer))))
+
+(define-command isearch-next-highlight (n) ("p")
+  (when *isearch-highlight-overlays*
+    (when (< n 0) (isearch-prev-highlight (- n)))
+    (dotimes (_ n)
+      (let ((p (current-point))
+            (best))
+        (dolist (overlay *isearch-highlight-overlays*)
+          (when (and (point< p (overlay-start overlay))
+                     (or (null best) (point< (overlay-start overlay) best)))
+            (setf best (overlay-start overlay))))
+        (when best
+          (move-point p best))))))
+
+(define-command isearch-prev-highlight (n) ("p")
+  (when *isearch-highlight-overlays*
+    (when (< n 0) (isearch-next-highlight (- n)))
+    (dotimes (_ n)
+      (let ((p (current-point))
+            (best))
+        (dolist (overlay *isearch-highlight-overlays*)
+          (when (and (point< (overlay-start overlay) p)
+                     (or (null best) (point< best (overlay-start overlay))))
+            (setf best (overlay-start overlay))))
+        (when best
+          (move-point p best))))))
 
 
 (defvar *replace-before-string* nil)

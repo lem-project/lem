@@ -243,22 +243,34 @@
 
 (defun isearch-end ()
   (isearch-reset-overlays (current-buffer))
-  (buffer-unbound (current-buffer) 'isearch-redisplay-string)
   (setq *isearch-prev-string* *isearch-string*)
+  (buffer-unbound (current-buffer) 'isearch-redisplay-string)
+  (remove-hook (variable-value 'after-change-functions :buffer)
+               'isearch-change-buffer-hook)
   (isearch-mode nil)
   t)
 
-(defun isearch-redisplay-inactive (&optional (window (current-window)))
-  (alexandria:when-let ((string
-                         (buffer-value (window-buffer window)
-                                       'isearch-redisplay-string)))
-    (isearch-update-buffer (buffer-start-point (window-buffer window))
-                           string)))
+(defun isearch-redisplay-inactive (buffer)
+  (alexandria:when-let ((string (buffer-value buffer 'isearch-redisplay-string)))
+    (isearch-update-buffer (buffer-start-point buffer) string)))
+
+(defun isearch-scroll-hook (window)
+  (isearch-redisplay-inactive (window-buffer window)))
+
+(defun isearch-change-buffer-hook (start &rest args)
+  (declare (ignore args))
+  (isearch-redisplay-inactive (point-buffer start)))
+
+(defun isearch-add-hooks ()
+  (add-hook *window-scroll-functions*
+            'isearch-scroll-hook)
+  (add-hook (variable-value 'after-change-functions :buffer)
+            'isearch-change-buffer-hook))
 
 (define-command isearch-finish () ()
   (setf (buffer-value (current-buffer) 'isearch-redisplay-string) *isearch-string*)
-  (add-hook *window-scroll-functions* 'isearch-redisplay-inactive)
   (setq *isearch-prev-string* *isearch-string*)
+  (isearch-add-hooks)
   (isearch-mode nil))
 
 (define-command isearch-next () ()

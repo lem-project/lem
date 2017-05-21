@@ -57,7 +57,7 @@
         ;("do"          lisp-indent-do)
         ("do" 2)
         ("do*" . "do")
-        ("dolist"      ((&whole 4 2 1) &body))
+        ("dolist"      1)
         ("dotimes" . "dolist")
         ("eval-when"   1)
         ("flet"        ((&whole 4 &rest (&whole 1 &lambda &body)) &body))

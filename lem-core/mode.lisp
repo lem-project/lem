@@ -6,6 +6,7 @@
           mode-syntax-table
           current-mode-keymap
           find-mode-from-name
+          mode-active-p
           toggle-minor-mode
           define-major-mode
           define-minor-mode
@@ -34,9 +35,13 @@
                (string-equal mode-name (mode-name mode)))
            *mode-list*))
 
+(defun mode-active-p (buffer mode)
+  (or (eq mode (buffer-major-mode buffer))
+      (find mode (buffer-minor-modes buffer))))
+
 (defun toggle-minor-mode (minor-mode)
   (let ((buffer (current-buffer)))
-    (if (member minor-mode (buffer-minor-modes buffer))
+    (if (mode-active-p buffer minor-mode)
         (setf (buffer-minor-modes buffer)
               (delete minor-mode (buffer-minor-modes buffer)))
         (push minor-mode (buffer-minor-modes buffer)))))

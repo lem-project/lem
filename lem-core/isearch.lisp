@@ -103,7 +103,8 @@
 
 
 (defun isearch-update-display ()
-  (isearch-update-minibuffer)
+  (when (mode-active-p (current-buffer) 'isearch-mode)
+    (isearch-update-minibuffer))
   (isearch-update-buffer (current-point)))
 
 (defun isearch-update-minibuffer ()

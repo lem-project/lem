@@ -35,7 +35,6 @@
 (defvar *isearch-search-function*)
 (defvar *isearch-search-forward-function*)
 (defvar *isearch-search-backward-function*)
-(defvar *isearch-highlight-overlays* nil)
 
 (define-attribute isearch-highlight-attribute
   (t :background "gray"))
@@ -70,6 +69,39 @@
 (define-key *global-keymap* "M-s M-p" 'isearch-prev-highlight)
 (define-key *global-keymap* "M-s p" 'isearch-prev-highlight)
 
+
+(defun isearch-overlays (buffer)
+  (buffer-value buffer 'isearch-overlays))
+
+(defun isearch-reset-overlays (buffer)
+  (mapc #'delete-overlay (buffer-value buffer 'isearch-overlays))
+  (setf (buffer-value buffer 'isearch-overlays) '()))
+
+(defun isearch-add-overlay (buffer overlay)
+  (push overlay (buffer-value buffer 'isearch-overlays)))
+
+(defun isearch-sort-overlays (buffer)
+  (setf (buffer-value buffer 'isearch-overlays)
+        (sort (buffer-value buffer 'isearch-overlays) #'point< :key #'overlay-start)))
+
+(defun isearch-visible-overlays (buffer)
+  (not (null (buffer-value buffer 'isearch-overlays))))
+
+(defun isearch-next-overlay-point (point)
+  (dolist (ov (buffer-value point 'isearch-overlays))
+    (when (point< point (overlay-start ov))
+      (return (overlay-start ov)))))
+
+(defun isearch-prev-overlay-point (point)
+  (let ((prev))
+    (dolist (ov (buffer-value point 'isearch-overlays)
+                (when prev
+                  (overlay-start prev)))
+      (when (point<= point (overlay-start ov))
+        (return (overlay-start prev)))
+      (setf prev ov))))
+
+
 (defun isearch-update-display ()
   (isearch-update-minibuffer)
   (isearch-update-buffer (current-point)))
@@ -158,7 +190,7 @@
 
 (define-command isearch-abort () ()
   (move-point (current-point) *isearch-start-point*)
-  (isearch-reset-buffer)
+  (isearch-reset-overlays (current-buffer))
   (isearch-end)
   t)
 
@@ -174,7 +206,7 @@
   (isearch-add-char (read-key)))
 
 (defun isearch-end ()
-  (isearch-reset-buffer)
+  (isearch-reset-overlays (current-buffer))
   (setq *isearch-prev-string* *isearch-string*)
   (isearch-mode nil)
   t)
@@ -205,40 +237,39 @@
       (setq *isearch-string* str)
       (isearch-update-display))))
 
-(defun isearch-reset-buffer ()
-  (mapc #'delete-overlay *isearch-highlight-overlays*)
-  (setq *isearch-highlight-overlays* nil))
-
 (defun isearch-update-buffer (point &optional
                                     (search-string *isearch-string*)
                                     (start-point (window-view-point (current-window)))
                                     (search-lines (window-height (current-window))))
-  (isearch-reset-buffer)
-  (unless (equal search-string "")
-    (window-see (current-window))
-    (with-point ((curr start-point)
-                 (limit start-point))
-      (unless (line-offset limit search-lines)
-        (buffer-end limit))
-      (loop :with prev
-            :do
-            (when (and prev (point= prev curr)) (return))
-            (setf prev (copy-point curr :temporary))
-            (unless (funcall *isearch-search-forward-function*
-                             curr search-string limit)
-              (return))
-            (with-point ((before curr))
-              (unless (funcall *isearch-search-backward-function*
-                               before search-string prev)
+  (let ((buffer (point-buffer point)))
+    (isearch-reset-overlays buffer)
+    (unless (equal search-string "")
+      (window-see (current-window))
+      (with-point ((curr start-point)
+                   (limit start-point))
+        (unless (line-offset limit search-lines)
+          (buffer-end limit))
+        (loop :with prev
+              :do
+              (when (and prev (point= prev curr)) (return))
+              (setf prev (copy-point curr :temporary))
+              (unless (funcall *isearch-search-forward-function*
+                               curr search-string limit)
                 (return))
-              (when (point= before curr)
-                (return))
-              (push (make-overlay before curr
-                                  (if (and (point<= before point)
-                                           (point<= point curr))
-                                      'isearch-highlight-active-attribute
-                                      'isearch-highlight-attribute))
-                    *isearch-highlight-overlays*))))))
+              (with-point ((before curr))
+                (unless (funcall *isearch-search-backward-function*
+                                 before search-string prev)
+                  (return))
+                (when (point= before curr)
+                  (return))
+                (isearch-add-overlay buffer
+                                     (make-overlay
+                                      before curr
+                                      (if (and (point<= before point)
+                                               (point<= point curr))
+                                          'isearch-highlight-active-attribute
+                                          'isearch-highlight-attribute))))))
+      (isearch-sort-overlays buffer))))
 
 (defun isearch-add-char (c)
   (setq *isearch-string*
@@ -259,52 +290,40 @@
              (isearch-end)))))
 
 (define-command isearch-replace-highlight () ()
-  (unless *isearch-highlight-overlays*
-    (return-from isearch-replace-highlight))
-  (let ((string (prompt-for-string "Replace: "))
-        (buffer (current-buffer))
-        (p (current-point))
-        (start)
-        (end))
-    (if (buffer-mark-p buffer)
-        (setf start (copy-point (region-beginning buffer) :temporary)
-              end (region-end buffer))
-        (setf start (buffer-start-point buffer)
-              end (buffer-end-point buffer)))
-    (save-excursion
-      (dolist (overlay *isearch-highlight-overlays*)
-        (when (and (point<= start (overlay-start overlay))
-                   (point<= (overlay-end overlay) end))
-          (move-point p (overlay-start overlay))
-          (delete-between-points (overlay-start overlay) (overlay-end overlay))
-          (insert-string p string)))
-      (isearch-reset-buffer))))
+  (let ((buffer (current-buffer)))
+    (unless (isearch-visible-overlays buffer)
+      (return-from isearch-replace-highlight))
+    (let ((string (prompt-for-string "Replace: "))
+          (p (current-point))
+          (start)
+          (end))
+      (if (buffer-mark-p buffer)
+          (setf start (copy-point (region-beginning buffer) :temporary)
+                end (region-end buffer))
+          (setf start (buffer-start-point buffer)
+                end (buffer-end-point buffer)))
+      (save-excursion
+        (dolist (overlay (isearch-overlays buffer))
+          (when (and (point<= start (overlay-start overlay))
+                     (point<= (overlay-end overlay) end))
+            (move-point p (overlay-start overlay))
+            (delete-between-points (overlay-start overlay) (overlay-end overlay))
+            (insert-string p string)))
+        (isearch-reset-overlays buffer)))))
 
 (define-command isearch-next-highlight (n) ("p")
-  (when *isearch-highlight-overlays*
-    (when (< n 0) (isearch-prev-highlight (- n)))
-    (dotimes (_ n)
-      (let ((p (current-point))
-            (best))
-        (dolist (overlay *isearch-highlight-overlays*)
-          (when (and (point< p (overlay-start overlay))
-                     (or (null best) (point< (overlay-start overlay) best)))
-            (setf best (overlay-start overlay))))
-        (when best
-          (move-point p best))))))
+  (when (isearch-visible-overlays (current-buffer))
+    (let ((fn (if (plusp n)
+                  'isearch-next-overlay-point
+                  'isearch-prev-overlay-point)))
+      (dotimes (_ (abs n))
+        (alexandria:when-let*
+            ((p (current-point))
+             (p2 (funcall fn p)))
+          (move-point p p2))))))
 
 (define-command isearch-prev-highlight (n) ("p")
-  (when *isearch-highlight-overlays*
-    (when (< n 0) (isearch-next-highlight (- n)))
-    (dotimes (_ n)
-      (let ((p (current-point))
-            (best))
-        (dolist (overlay *isearch-highlight-overlays*)
-          (when (and (point< (overlay-start overlay) p)
-                     (or (null best) (point< best (overlay-start overlay))))
-            (setf best (overlay-start overlay))))
-        (when best
-          (move-point p best))))))
+  (isearch-next-highlight (- n)))
 
 
 (defvar *replace-before-string* nil)
@@ -361,24 +380,24 @@
 		     (setf pass-through t)))))))))
 
 (defun query-replace-internal (before after search-forward-function search-backward-function)
-  (unwind-protect
-       (let ((*isearch-search-forward-function* search-forward-function)
-	     (*isearch-search-backward-function* search-backward-function)
-	     (buffer (current-buffer)))
-	 (when (and before after)
-	   (if (buffer-mark-p buffer)
-	       (with-point ((mark-point (buffer-mark buffer) :right-inserting))
-		 (if (point< mark-point (buffer-point buffer))
-		     (query-replace-internal-body mark-point
-						  (buffer-point buffer)
-						  before after)
-		     (query-replace-internal-body (buffer-point buffer)
-						  mark-point
-						  before after)))
-	       (query-replace-internal-body (buffer-point buffer)
-					    nil
-					    before after))))
-    (isearch-reset-buffer)))
+  (let ((buffer (current-buffer)))
+    (unwind-protect
+         (let ((*isearch-search-forward-function* search-forward-function)
+               (*isearch-search-backward-function* search-backward-function))
+           (when (and before after)
+             (if (buffer-mark-p buffer)
+                 (with-point ((mark-point (buffer-mark buffer) :right-inserting))
+                   (if (point< mark-point (buffer-point buffer))
+                       (query-replace-internal-body mark-point
+                                                    (buffer-point buffer)
+                                                    before after)
+                       (query-replace-internal-body (buffer-point buffer)
+                                                    mark-point
+                                                    before after)))
+                 (query-replace-internal-body (buffer-point buffer)
+                                              nil
+                                              before after))))
+      (isearch-reset-overlays buffer))))
 
 (define-key *global-keymap* "M-%" 'query-replace)
 

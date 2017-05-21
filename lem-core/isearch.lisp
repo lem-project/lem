@@ -315,12 +315,12 @@
   (when (isearch-visible-overlays (current-buffer))
     (let ((fn (if (plusp n)
                   'isearch-next-overlay-point
-                  'isearch-prev-overlay-point)))
+                  'isearch-prev-overlay-point))
+          (p (current-point)))
       (dotimes (_ (abs n))
-        (alexandria:when-let*
-            ((p (current-point))
-             (p2 (funcall fn p)))
-          (move-point p p2))))))
+        (alexandria:if-let ((p2 (funcall fn p)))
+          (move-point p p2)
+          (return))))))
 
 (define-command isearch-prev-highlight (n) ("p")
   (isearch-next-highlight (- n)))

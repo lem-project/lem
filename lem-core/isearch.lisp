@@ -311,25 +311,22 @@
 
 (define-command isearch-replace-highlight () ()
   (let ((buffer (current-buffer)))
-    (unless (isearch-visible-overlays buffer)
-      (return-from isearch-replace-highlight))
-    (let ((string (prompt-for-string "Replace: "))
-          (p (current-point))
-          (start)
-          (end))
-      (if (buffer-mark-p buffer)
-          (setf start (copy-point (region-beginning buffer) :temporary)
-                end (region-end buffer))
-          (setf start (buffer-start-point buffer)
-                end (buffer-end-point buffer)))
-      (save-excursion
-        (dolist (overlay (isearch-overlays buffer))
-          (when (and (point<= start (overlay-start overlay))
-                     (point<= (overlay-end overlay) end))
-            (move-point p (overlay-start overlay))
-            (delete-between-points (overlay-start overlay) (overlay-end overlay))
-            (insert-string p string)))
-        (isearch-reset-overlays buffer)))))
+    (let ((old-string (buffer-value buffer 'isearch-redisplay-string)))
+      (unless old-string
+        (return-from isearch-replace-highlight))
+      (let ((new-string (prompt-for-string "Replace: "))
+            start end)
+        (if (buffer-mark-p buffer)
+            (setf start (copy-point (region-beginning buffer) :temporary)
+                  end (region-end buffer))
+            (setf start (buffer-start-point buffer)
+                  end (buffer-end-point buffer)))
+        (save-excursion
+          (query-replace-internal old-string
+                                  new-string
+                                  *isearch-search-forward-function*
+                                  *isearch-search-backward-function*
+                                  nil))))))
 
 (define-command isearch-next-highlight (n) ("p")
   (when (isearch-visible-overlays (current-buffer))
@@ -374,32 +371,32 @@
     (setq *replace-after-string* after)
     (list before after)))
 
-(defun query-replace-internal-body (cur-point goal-point before after)
-  (let ((pass-through nil))
+(defun query-replace-internal-body (cur-point goal-point before after query)
+  (let ((pass-through (not query)))
     (loop
-       (when (or (not (funcall *isearch-search-forward-function* cur-point before))
-		 (and goal-point (point< goal-point cur-point)))
-	 (when goal-point
-	   (move-point (current-point) goal-point))
-	 (return))
-       (with-point ((end cur-point :right-inserting))
-	 (isearch-update-buffer cur-point before)
-	 (funcall *isearch-search-backward-function* cur-point before)
-	 (with-point ((start cur-point :right-inserting))
-	   (loop :for c := (unless pass-through
-                             (prompt-for-character (format nil "Replace ~s with ~s" before after)))
-	      :do (cond
-		    ((or pass-through (char= c #\y))
-		     (delete-between-points start end)
-		     (insert-string cur-point after)
-		     (return))
-		    ((char= c #\n)
-		     (move-point cur-point end)
-		     (return))
-		    ((char= c #\!)
-		     (setf pass-through t)))))))))
+      (when (or (not (funcall *isearch-search-forward-function* cur-point before))
+                (and goal-point (point< goal-point cur-point)))
+        (when goal-point
+          (move-point (current-point) goal-point))
+        (return))
+      (with-point ((end cur-point :right-inserting))
+        (isearch-update-buffer cur-point before)
+        (funcall *isearch-search-backward-function* cur-point before)
+        (with-point ((start cur-point :right-inserting))
+          (loop :for c := (unless pass-through
+                            (prompt-for-character (format nil "Replace ~s with ~s" before after)))
+                :do (cond
+                      ((or pass-through (char= c #\y))
+                       (delete-between-points start end)
+                       (insert-string cur-point after)
+                       (return))
+                      ((char= c #\n)
+                       (move-point cur-point end)
+                       (return))
+                      ((char= c #\!)
+                       (setf pass-through t)))))))))
 
-(defun query-replace-internal (before after search-forward-function search-backward-function)
+(defun query-replace-internal (before after search-forward-function search-backward-function query)
   (let ((buffer (current-buffer)))
     (unwind-protect
          (let ((*isearch-search-forward-function* search-forward-function)
@@ -410,13 +407,12 @@
                    (if (point< mark-point (buffer-point buffer))
                        (query-replace-internal-body mark-point
                                                     (buffer-point buffer)
-                                                    before after)
+                                                    before after query)
                        (query-replace-internal-body (buffer-point buffer)
                                                     mark-point
-                                                    before after)))
+                                                    before after query)))
                  (query-replace-internal-body (buffer-point buffer)
-                                              nil
-                                              before after))))
+                                              nil before after query))))
       (isearch-reset-overlays buffer))))
 
 (define-key *global-keymap* "M-%" 'query-replace)
@@ -426,18 +422,21 @@
   (query-replace-internal before
                           after
                           #'search-forward
-                          #'search-backward))
+                          #'search-backward
+                          t))
 
 (define-command query-replace-regexp (before after)
     ((read-query-replace-args))
   (query-replace-internal before
                           after
                           #'search-forward-regexp
-                          #'search-backward-regexp))
+                          #'search-backward-regexp
+                          t))
 
 (define-command query-replace-symbol (before after)
     ((read-query-replace-args))
   (query-replace-internal before
                           after
                           #'search-forward-symbol
-                          #'search-backward-symbol))
+                          #'search-backward-symbol
+                          t))

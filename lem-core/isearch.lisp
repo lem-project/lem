@@ -323,6 +323,7 @@
             (setf start (buffer-start-point buffer)
                   end (buffer-end-point buffer)))
         (save-excursion
+          (move-point (current-point) start)
           (query-replace-internal old-string
                                   new-string
                                   *isearch-search-forward-function*

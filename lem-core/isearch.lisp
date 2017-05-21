@@ -271,6 +271,7 @@
   (setf (buffer-value (current-buffer) 'isearch-redisplay-string) *isearch-string*)
   (setq *isearch-prev-string* *isearch-string*)
   (isearch-add-hooks)
+  (isearch-redisplay-inactive (current-buffer))
   (isearch-mode nil))
 
 (define-command isearch-next () ()

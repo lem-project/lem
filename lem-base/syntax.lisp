@@ -44,6 +44,7 @@
   (escape-chars '(#\\))
   fence-chars
   expr-prefix-chars
+  expr-suffix-chars
   expr-prefix-forward-function
   expr-prefix-backward-function
   line-comment-string
@@ -471,31 +472,40 @@
   (unless (end-buffer-p point)
     (let ((c (character-at point))
           n pair)
-      (cond ((or (syntax-symbol-char-p c)
-                 (syntax-escape-char-p c))
-             (%skip-symbol-forward point))
-            ((syntax-expr-prefix-char-p c)
-             (character-offset point 1))
-            ((syntax-open-paren-char-p c)
-             (%skip-list-forward point 0))
-            ((syntax-closed-paren-char-p c)
-             nil)
-            ((multiple-value-setq (n pair) (syntax-start-block-string-p point))
-             (character-offset point n)
-             (if (search-forward point (cdr pair))
-                 point
-                 nil))
-            ((syntax-string-quote-char-p c)
-             (%skip-string-forward point))
-            ((syntax-fence-char-p c)
-             (%skip-fence-forward point))
-            (t
-             (character-offset point 1))))))
+      (let ((point
+             (cond ((or (syntax-symbol-char-p c)
+                        (syntax-escape-char-p c))
+                    (%skip-symbol-forward point))
+                   ((syntax-expr-prefix-char-p c)
+                    (character-offset point 1))
+                   ((syntax-open-paren-char-p c)
+                    (%skip-list-forward point 0))
+                   ((syntax-closed-paren-char-p c)
+                    nil)
+                   ((multiple-value-setq (n pair) (syntax-start-block-string-p point))
+                    (character-offset point n)
+                    (if (search-forward point (cdr pair))
+                        point
+                        nil))
+                   ((syntax-string-quote-char-p c)
+                    (%skip-string-forward point))
+                   ((syntax-fence-char-p c)
+                    (%skip-fence-forward point))
+                   (t
+                    (character-offset point 1)))))
+        (when point
+          (when (syntax-table-expr-suffix-chars (current-syntax))
+            (skip-chars-forward point
+                                (syntax-table-expr-suffix-chars
+                                 (current-syntax))))
+          point)))))
 
 (defun %form-offset-negative (point)
   (skip-space-and-comment-backward point)
   (when (start-buffer-p point)
     (return-from %form-offset-negative nil))
+  (when (syntax-table-expr-suffix-chars (current-syntax))
+    (skip-chars-backward point (syntax-table-expr-suffix-chars (current-syntax))))
   (let ((c (character-at point -1))
         n pair)
     (prog1 (cond ((or (syntax-symbol-char-p c)

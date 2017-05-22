@@ -54,6 +54,12 @@
                                    :name 'syntax-keyword-attribute)
                     (make-tm-match "\\b((0(x|X)[0-9a-fA-F]([0-9a-fA-F']*[0-9a-fA-F])?)|(0(b|B)[01]([01']*[01])?)|(([0-9]([0-9']*[0-9])?\\.?[0-9]*([0-9']*[0-9])?)|(\\.[0-9]([0-9']*[0-9])?))((e|E)(\\+|-)?[0-9]([0-9']*[0-9])?)?)(L|l|UL|ul|u|U|F|f|ll|LL|ull|ULL)?\\b"
                                    :name 'syntax-constant-attribute)
-                    (make-tm-match "^\\s*#(?:define|defined|if|ifdef|elif|else|endif|include)\\b"
+                    (make-tm-match `(:sequence
+                                     :start-anchor
+                                     (:greedy-repetition 0 nil :whitespace-char-class)
+                                     "#"
+                                     ,(tokens nil '("defined" "define" "include"
+                                                    "ifdef" "if" "elif" "else" "endif"))
+                                     :word-boundary)
                                    :name 'syntax-builtin-attribute))))
     (make-tmlanguage :patterns patterns)))

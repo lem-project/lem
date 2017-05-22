@@ -483,7 +483,7 @@
   (loop :for count :from 0
         :for c := (character-at point (if dir 0 -1))
         :do
-        (unless (if (consp test)
+        (unless (if (listp test)
                     (member c test)
                     (funcall test c))
           (return count))

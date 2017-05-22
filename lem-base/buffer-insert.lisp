@@ -246,7 +246,8 @@
 
 (defmacro insert/after-change-function (point arg)
   `(if (and (not *inhibit-modification-hooks*)
-            (variable-value 'after-change-functions))
+            (or (variable-value 'after-change-functions)
+                (variable-value 'after-change-functions :global)))
        (with-point ((start ,point))
          (prog1 (call-next-method)
            (with-point ((end start))
@@ -256,7 +257,8 @@
 
 (defmacro delete/after-change-function (point)
   `(if (and (not *inhibit-modification-hooks*)
-            (variable-value 'after-change-functions))
+            (or (variable-value 'after-change-functions)
+                (variable-value 'after-change-functions :global)))
        (let ((string (call-next-method)))
          (with-point ((start ,point)
                       (end ,point))

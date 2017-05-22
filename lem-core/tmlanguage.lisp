@@ -11,7 +11,7 @@
     (cond ((string= name "comment") 'syntax-comment-attribute)
           ((string= name "constant") 'syntax-constant-attribute)
           ((string= name "entity") 'syntax-function-name-attribute)
-          ((string= name "invalid") 'syntax-invalid-attribute)
+          ((string= name "invalid") 'syntax-warning-attribute)
           ((string= name "keyword") 'syntax-keyword-attribute)
           ((string= name "markup") nil)
           ((string= name "meta") nil)

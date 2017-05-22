@@ -20,6 +20,7 @@
           modeline
           modeline-inactive
           truncate-attribute
+          syntax-warning-attribute
           syntax-string-attribute
           syntax-comment-attribute
           syntax-keyword-attribute
@@ -156,6 +157,9 @@
   (:dark :reverse-p t))
 
 (define-attribute truncate-attribute)
+
+(define-attribute syntax-warning-attribute
+  (t :foreground "red"))
 
 (define-attribute syntax-string-attribute
   (t :foreground "green"))

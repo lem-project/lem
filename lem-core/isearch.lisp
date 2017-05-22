@@ -107,35 +107,33 @@
   (let ((buffer (point-buffer point)))
     (isearch-reset-overlays buffer)
     (unless (equal search-string "")
-      (loop :for window :in (get-buffer-windows buffer)
-            :for search-lines := (window-height window)
-            :do 
-            (when (eq window (current-window))
-              (window-see window))
-            (with-point ((curr (window-view-point window))
-                         (limit (window-view-point window)))
-              (unless (line-offset limit search-lines)
-                (buffer-end limit))
-              (loop :with prev
-                    :do
-                    (when (and prev (point= prev curr)) (return))
-                    (setf prev (copy-point curr :temporary))
-                    (unless (funcall *isearch-search-forward-function*
-                                     curr search-string limit)
-                      (return))
-                    (with-point ((before curr))
-                      (unless (funcall *isearch-search-backward-function*
-                                       before search-string prev)
-                        (return))
-                      (when (point= before curr)
-                        (return))
-                      (isearch-add-overlay buffer
-                                           (make-overlay
-                                            before curr
-                                            (if (and (point<= before point)
-                                                     (point<= point curr))
-                                                'isearch-highlight-active-attribute
-                                                'isearch-highlight-attribute)))))))
+      (dolist (window (get-buffer-windows buffer))
+        (when (eq window (current-window))
+          (window-see window))
+        (with-point ((curr (window-view-point window))
+                     (limit (window-view-point window)))
+          (unless (line-offset limit (window-height window))
+            (buffer-end limit))
+          (loop :with prev
+                :do
+                (when (and prev (point= prev curr)) (return))
+                (setf prev (copy-point curr :temporary))
+                (unless (funcall *isearch-search-forward-function*
+                                 curr search-string limit)
+                  (return))
+                (with-point ((before curr))
+                  (unless (funcall *isearch-search-backward-function*
+                                   before search-string prev)
+                    (return))
+                  (when (point= before curr)
+                    (return))
+                  (isearch-add-overlay buffer
+                                       (make-overlay
+                                        before curr
+                                        (if (and (point<= before point)
+                                                 (point<= point curr))
+                                            'isearch-highlight-active-attribute
+                                            'isearch-highlight-attribute)))))))
       (isearch-sort-overlays buffer))))
 
 (defun isearch-update-display ()

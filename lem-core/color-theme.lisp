@@ -68,8 +68,8 @@
     (redraw-display t)))
 
 (define-color-theme "emacs-light" ()
-  (foreground "#000000")
-  (background "#FFFFFF")
+  ;; (foreground "#000000")
+  ;; (background "#FFFFFF")
   (minibuffer-prompt-attribute :foreground "blue" :bold-p t)
   (region :foreground nil :background "#eedc82")
   (modeline :background "#bbbbbb" :foreground "black")
@@ -85,8 +85,8 @@
   (syntax-type-attribute :foreground "#00875f"))
 
 (define-color-theme "emacs-dark" ("emacs-light")
-  (foreground "#FFFFFF")
-  (background "#000000")
+  ;; (foreground "#FFFFFF")
+  ;; (background "#000000")
   (minibuffer-prompt-attribute :foreground "cyan" :bold-p t)
   (region :foreground nil :background "blue")
   (syntax-string-attribute :foreground "light salmon")

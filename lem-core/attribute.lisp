@@ -27,7 +27,8 @@
           syntax-constant-attribute
           syntax-function-name-attribute
           syntax-variable-attribute
-          syntax-type-attribute))
+          syntax-type-attribute
+          syntax-builtin-attribute))
 
 (defvar *attributes* '())
 
@@ -162,22 +163,25 @@
   (t :foreground "red"))
 
 (define-attribute syntax-string-attribute
-  (t :foreground "green"))
+  (t :foreground "#8B2252"))
 
 (define-attribute syntax-comment-attribute
-  (t :foreground "red"))
+  (t :foreground "#cd0000"))
 
 (define-attribute syntax-keyword-attribute
-  (t :foreground "blue"))
+  (t :foreground "purple"))
 
 (define-attribute syntax-constant-attribute
-  (t :foreground "magenta"))
+  (t :foreground "#ff00ff"))
 
 (define-attribute syntax-function-name-attribute
-  (t :foreground "cyan"))
+  (t :foreground "#0000ff"))
 
 (define-attribute syntax-variable-attribute
-  (t :foreground "yellow"))
+  (t :foreground "#8D5232"))
 
 (define-attribute syntax-type-attribute
-  (t :foreground "cyan"))
+  (t :foreground "#00875f"))
+
+(define-attribute syntax-builtin-attribute
+  (t :foreground "#D030F0"))

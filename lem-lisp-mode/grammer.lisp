@@ -151,7 +151,7 @@
         symbol-boundary-begin
         ":" symbol
         symbol-boundary-end)
-      :name 'syntax-constant-attribute))
+      :name 'syntax-builtin-attribute))
     (add-tm-pattern
      tmlanguage
      (make-tm-match

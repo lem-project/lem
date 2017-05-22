@@ -3,8 +3,6 @@
   (:export :load-tmlanguage))
 (in-package :lem.tmlanguage)
 
-(declaim (optimize (debug 3) (safety 3) (speed 0)))
-
 (defun name-to-attribute (name)
   (let* ((pos (position #\. name))
          (name (if pos (subseq name 0 pos) name)))
@@ -15,7 +13,7 @@
           ((string= name "keyword") 'syntax-keyword-attribute)
           ((string= name "markup") nil)
           ((string= name "meta") nil)
-          ((string= name "storage") 'syntax-variable-attribute)
+          ((string= name "storage") 'syntax-builtin-attribute)
           ((string= name "string") 'syntax-string-attribute)
           ((string= name "support") 'syntax-keyword-attribute)
           ((string= name "variable") 'syntax-variable-attribute))))

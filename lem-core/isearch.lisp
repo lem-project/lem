@@ -68,6 +68,8 @@
 (define-key *global-keymap* "M-s n" 'isearch-next-highlight)
 (define-key *global-keymap* "M-s M-p" 'isearch-prev-highlight)
 (define-key *global-keymap* "M-s p" 'isearch-prev-highlight)
+(define-key *global-keymap* "[f3]" 'isearch-next-highlight)
+(define-key *global-keymap* (list (code-char 279)) 'isearch-prev-highlight) ; shift + F3
 
 
 (defun isearch-overlays (buffer)

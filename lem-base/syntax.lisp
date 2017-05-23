@@ -25,6 +25,13 @@
           skip-symbol-forward
           skip-symbol-backward
           symbol-string-at-point
+          make-pps-state
+          pps-state-state-type
+          pps-state-token-start-point
+          pps-state-end-char
+          pps-state-block-comment-depth
+          pps-state-block-pair
+          pps-state-paren-stack
           parse-partial-sexp
           syntax-ppss
           in-string-p
@@ -596,7 +603,7 @@
         (points-to-string start point)))))
 
 
-(defstruct parser-state
+(defstruct pps-state
   type
   token-start-point
   end-char
@@ -607,15 +614,15 @@
 (defun parse-partial-sexp (from to &optional state comment-stop)
   (assert (eq (point-buffer from)
               (point-buffer to)))
-  (unless state (setf state (make-parser-state)))
+  (unless state (setf state (make-pps-state)))
   (with-point-syntax from
     (let ((p from)
-          (type (parser-state-type state))
-          (token-start-point (parser-state-token-start-point state))
-          (end-char (parser-state-end-char state))
-          (block-comment-depth (parser-state-block-comment-depth state))
-          (block-pair (parser-state-block-pair state))
-          (paren-stack (parser-state-paren-stack state)))
+          (type (pps-state-type state))
+          (token-start-point (pps-state-token-start-point state))
+          (end-char (pps-state-end-char state))
+          (block-comment-depth (pps-state-block-comment-depth state))
+          (block-pair (pps-state-block-pair state))
+          (paren-stack (pps-state-paren-stack state)))
       (flet ((update-token-start-point (p)
                (if token-start-point
                    (move-point token-start-point p)
@@ -720,12 +727,12 @@
                         (pop paren-stack))))
                    (character-offset p 1)))))))
         (without-interrupts
-          (setf (parser-state-type state) type
-                (parser-state-token-start-point state) token-start-point
-                (parser-state-end-char state) end-char
-                (parser-state-block-comment-depth state) block-comment-depth
-                (parser-state-block-pair state) block-pair
-                (parser-state-paren-stack state) paren-stack))
+          (setf (pps-state-type state) type
+                (pps-state-token-start-point state) token-start-point
+                (pps-state-end-char state) end-char
+                (pps-state-block-comment-depth state) block-comment-depth
+                (pps-state-block-pair state) block-pair
+                (pps-state-paren-stack state) paren-stack))
         state))))
 
 (define-editor-variable syntax-ppss-cache nil)
@@ -754,7 +761,7 @@
               ((point> point (cache-point (car rest)))
                (setf state (parse-partial-sexp (copy-point (cache-point (car rest)) :temporary)
                                                point
-                                               (copy-parser-state (cache-state (car rest)))))
+                                               (copy-pps-state (cache-state (car rest)))))
                (let ((new-rest (cons (cons (copy-point point :temporary) state)
                                      rest)))
                  (if prev
@@ -786,15 +793,15 @@
 
 (defun in-string-p (point)
   (let ((state (syntax-ppss point)))
-    (member (parser-state-type state) '(:block-string :string))))
+    (member (pps-state-type state) '(:block-string :string))))
 
 (defun in-comment-p (point)
   (let ((state (syntax-ppss point)))
-    (member (parser-state-type state) '(:line-comment :block-comment))))
+    (member (pps-state-type state) '(:line-comment :block-comment))))
 
 (defun in-string-or-comment-p (point)
   (let ((state (syntax-ppss point)))
-    (member (parser-state-type state)
+    (member (pps-state-type state)
             '(:block-string
               :string
               :line-comment
@@ -802,19 +809,19 @@
 
 (defun maybe-beginning-of-string (point)
   (let ((state (syntax-ppss point)))
-    (when (member (parser-state-type state) '(:block-string :string))
-      (move-point point (parser-state-token-start-point state)))))
+    (when (member (pps-state-type state) '(:block-string :string))
+      (move-point point (pps-state-token-start-point state)))))
 
 (defun maybe-beginning-of-comment (point)
   (let ((state (syntax-ppss point)))
-    (when (member (parser-state-type state) '(:line-comment :block-comment))
-      (move-point point (parser-state-token-start-point state)))))
+    (when (member (pps-state-type state) '(:line-comment :block-comment))
+      (move-point point (pps-state-token-start-point state)))))
 
 (defun maybe-beginning-of-string-or-comment (point)
   (let ((state (syntax-ppss point)))
-    (when (member (parser-state-type state)
+    (when (member (pps-state-type state)
                   '(:block-string
                     :string
                     :line-comment
                     :block-comment))
-      (move-point point (parser-state-token-start-point state)))))
+      (move-point point (pps-state-token-start-point state)))))

@@ -52,6 +52,7 @@
   (let ((tab-width (variable-value 'tab-width :default p)))
     (back-to-indentation p)
     (loop :while (end-line-p p)
+          :do (%indent p indent)
           :do (if (line-offset p 1)
                   (back-to-indentation p)
                   (return-from c-indent-line nil)))
@@ -60,13 +61,17 @@
       (character-offset p 1)
       (skip-whitespace-forward p t))
     (let ((word (looking-at p "\\w+"))
-          (state))
+          (state)
+          (unbalanced-flag nil))
       (when word
         (character-offset p (length word))
         (skip-whitespace-forward p t))
-      (with-point ((tmp p))
+      (with-point ((start p))
         (cond
-          ((unbalanced-p (setf state (parse-partial-sexp tmp (line-end p))))
+          ((unbalanced-p (setf state
+                               (parse-partial-sexp (copy-point start :temporary)
+                                                   (line-end p))))
+           (setf unbalanced-flag t)
            (%indent p indent)
            (loop
              (scan-lists p -1 1)
@@ -75,7 +80,9 @@
              (loop
                (unless (line-offset p 1) (return-from c-indent-line nil))
                (%indent p indent1)
-               (unless (unbalanced-p (setf state (parse-partial-sexp tmp (line-end p))))
+               (unless (unbalanced-p (setf state
+                                           (parse-partial-sexp (copy-point start :temporary)
+                                                               (line-end p))))
                  (return)))))
           (t
            (if (and word (ppcre:scan "^(?:case|default)$" word))
@@ -83,7 +90,8 @@
                (%indent p indent)))))
       (when (eql #\{ (car (pps-state-paren-stack state)))
         (return-from c-indent-line (+ indent tab-width)))
-      (when (and word (ppcre:scan "^(?:do|else|for|if|switch|while)$" word))
+      (when (and word (ppcre:scan "^(?:do|else|for|if|switch|while)$" word)
+                 (not (and (not unbalanced-flag) (ppcre:scan "[};]\\s*$" (line-string p)))))
         (unless (line-offset p 1) (return-from c-indent-line nil))
         (c-indent-line p (+ indent tab-width))
         (return-from c-indent-line indent))
@@ -101,6 +109,7 @@
 
 (defun calc-indent (point)
   (with-point ((start point))
+    (line-offset start -1)
     (c-beginning-of-defun start)
     (let ((*indent-line-function*
            (lambda (p indent)

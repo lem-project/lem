@@ -17,32 +17,33 @@
     (return-from indent-line-1 t))
   (when (minusp column)
     (setf column 0))
-  (let ((old-column (point-column point))
-        (old-indent-string
-         (with-point ((start point)
-                      (end point))
-           (points-to-string (line-start start)
-                             (back-to-indentation end))))
-        (new-indent-string
-         (if (variable-value 'indent-tabs-mode :default point)
-             (multiple-value-bind (div mod)
-                 (floor column (tab-size))
-               (concatenate 'string
-                            (make-string div :initial-element #\tab)
-                            (make-string mod :initial-element #\space)))
-             (make-string column :initial-element #\space))))
-    (cond ((string/= old-indent-string new-indent-string)
-           (line-start point)
-           (delete-character point (length old-indent-string))
-           (insert-string point new-indent-string)
-           (if (< old-column column)
-               (back-to-indentation point)
-               (move-to-column point
-                               (max 0 (+ old-column
-                                         (- (string-width new-indent-string)
-                                            (string-width old-indent-string)))))))
-          ((< old-column column)
-           (back-to-indentation point))))
+  (let ((*tab-size* (variable-value 'tab-width :default point)))
+    (let ((old-column (point-column point))
+          (old-indent-string
+           (with-point ((start point)
+                        (end point))
+             (points-to-string (line-start start)
+                               (back-to-indentation end))))
+          (new-indent-string
+           (if (variable-value 'indent-tabs-mode :default point)
+               (multiple-value-bind (div mod)
+                   (floor column (tab-size))
+                 (concatenate 'string
+                              (make-string div :initial-element #\tab)
+                              (make-string mod :initial-element #\space)))
+               (make-string column :initial-element #\space))))
+      (cond ((string/= old-indent-string new-indent-string)
+             (line-start point)
+             (delete-character point (length old-indent-string))
+             (insert-string point new-indent-string)
+             (if (< old-column column)
+                 (back-to-indentation point)
+                 (move-to-column point
+                                 (max 0 (+ old-column
+                                           (- (string-width new-indent-string)
+                                              (string-width old-indent-string)))))))
+            ((< old-column column)
+             (back-to-indentation point)))))
   t)
 
 (defun calc-indent-default (point)

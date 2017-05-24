@@ -49,14 +49,14 @@
 
 (defun compute-columns (menu)
   (let ((width-vector (make-array (length (menu-columns menu))
-                                  :initial-contents (mapcar #'string-width
+                                  :initial-contents (mapcar #'length
                                                             (menu-columns menu)))))
     (dolist (item (menu-items menu))
       (loop :for i :from 0
             :for (string . _) :in (menu-item-elements item)
             :do (setf (aref width-vector i)
                       (max (aref width-vector i)
-                           (string-width string)))))
+                           (length string)))))
     (loop :for width :across width-vector
           :for column := (+ width 1) :then (+ column width 1)
           :collect column)))

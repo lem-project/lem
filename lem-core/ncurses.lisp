@@ -459,7 +459,8 @@
                (setf (screen-horizontal-scroll-start screen) point-column)))))))
 
 (defun screen-display-lines (screen redraw-flag buffer view-charpos cursor-y)
-  (let* ((truncate-lines (variable-value 'truncate-lines :default buffer))
+  (let* ((lem-base::*tab-size* (variable-value 'tab-width :default buffer))
+         (truncate-lines (variable-value 'truncate-lines :default buffer))
          (disp-line-function
           (if truncate-lines
               #'screen-display-line-wrapping

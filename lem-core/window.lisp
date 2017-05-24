@@ -294,13 +294,14 @@
   (window-scroll window (- (floor (window-%height window) 2))))
 
 (defun map-wrapping-line (window string fn)
-  (loop :with start := 0
-        :and width := (1- (window-width window))
-        :for i := (wide-index string width :start start)
-        :while i
-        :do
-        (funcall fn i)
-        (setq start i)))
+  (let ((lem-base::*tab-size* (variable-value 'tab-width :default (window-buffer window))))
+    (loop :with start := 0
+          :and width := (1- (window-width window))
+          :for i := (wide-index string width :start start)
+          :while i
+          :do
+          (funcall fn i)
+          (setq start i))))
 
 (defun %scroll-down-if-wrapping (window)
   (when (variable-value 'truncate-lines :default (window-buffer window))

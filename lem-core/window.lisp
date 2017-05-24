@@ -293,19 +293,21 @@
                (window-buffer-point window)))
   (window-scroll window (- (floor (window-%height window) 2))))
 
-(defun map-wrapping-line (string winwidth fn)
+(defun map-wrapping-line (window string fn)
   (loop :with start := 0
-     :for i := (wide-index string (1- winwidth) :start start)
-     :while i :do
-     (funcall fn i)
-     (setq start i)))
+        :and width := (1- (window-width window))
+        :for i := (wide-index string width :start start)
+        :while i
+        :do
+        (funcall fn i)
+        (setq start i)))
 
 (defun %scroll-down-if-wrapping (window)
   (when (variable-value 'truncate-lines :default (window-buffer window))
     (let ((view-charpos (point-charpos (window-view-point window))))
       (line-start (window-view-point window))
-      (map-wrapping-line (line-string (window-view-point window))
-                         (window-%width window)
+      (map-wrapping-line window
+                         (line-string (window-view-point window))
                          (lambda (c)
                            (when (< view-charpos c)
                              (line-offset (window-view-point window) 0 c)
@@ -320,12 +322,12 @@
   (when (and (variable-value 'truncate-lines :default (window-buffer window))
              (not (first-line-p (window-view-point window))))
     (let ((charpos-list))
-      (map-wrapping-line (line-string (if (start-line-p (window-view-point window))
+      (map-wrapping-line window
+                         (line-string (if (start-line-p (window-view-point window))
                                           (line-offset (copy-point (window-view-point window)
                                                                    :temporary)
                                                        -1)
                                           (window-view-point window)))
-                         (window-%width window)
                          (lambda (c)
                            (push c charpos-list)))
       (cond ((and charpos-list (start-line-p (window-view-point window)))
@@ -361,8 +363,8 @@
                   (window-buffer-point window)
                   (lambda (string lastp)
                     (declare (ignore lastp))
-                    (map-wrapping-line string
-                                       (window-%width window)
+                    (map-wrapping-line window
+                                       string
                                        #'inc)))
       offset)))
 

@@ -3,4 +3,5 @@
                "lem-core"
                "lem-lisp-mode"
                "lem-go-mode"
-               "lem-c-mode"))
+               ;;"lem-c-mode"
+               ))

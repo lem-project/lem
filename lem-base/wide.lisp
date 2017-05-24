@@ -14,9 +14,6 @@
 (defun tab-size ()
   *tab-size*)
 
-(defun (setf tab-size) (tab-size)
-  (setf *tab-size* tab-size))
-
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *eastasian-full*
     (vector

@@ -322,7 +322,7 @@
       (with-point ((p2 (back-to-indentation p)))
         (let ((count (point-column p2)))
           (multiple-value-bind (div mod)
-              (floor count (tab-size))
+              (floor count (variable-value 'tab-width))
             (line-start p)
             (delete-between-points p p2)
             (insert-string p (funcall make-space-str div))
@@ -337,8 +337,9 @@
 
 (define-command detab-line (n) ("p")
   (tab-line-aux n
-                #'(lambda (n)
-                    (make-string (* n (tab-size)) :initial-element #\space))))
+                (lambda (n)
+                  (make-string (* n (variable-value 'tab-width))
+                               :initial-element #\space))))
 
 (define-key *global-keymap* "C-x ]" 'next-page-char)
 (define-command next-page-char (&optional (n 1)) ("p")

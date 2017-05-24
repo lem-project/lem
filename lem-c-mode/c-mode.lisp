@@ -4,8 +4,10 @@
    :lem.language-mode
    :language-mode
    :indent)
-  (:export))
+  (:export :*c-mode-hook*))
 (in-package :lem-c-mode)
+
+(defvar *c-mode-hook* '())
 
 (defvar *c-syntax-table*
   (let ((table (make-syntax-table
@@ -29,7 +31,8 @@
      :syntax-table *c-syntax-table*)
   (setf (variable-value 'enable-syntax-highlight) t)
   (setf (variable-value 'calc-indent-function) 'calc-indent)
-  (setf (variable-value 'indent-tabs-mode) t))
+  (setf (variable-value 'indent-tabs-mode) t)
+  (run-hooks *c-mode-hook*))
 
 (defun c-beginning-of-defun (point)
   (loop

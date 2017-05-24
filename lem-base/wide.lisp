@@ -1,10 +1,13 @@
 (in-package :lem-base)
 
-(export '(tab-size
+(export '(tab-width
+          tab-size
           wide-char-p
           char-width
           string-width
           wide-index))
+
+(define-editor-variable tab-width 8)
 
 (defvar *tab-size* 8)
 

@@ -96,9 +96,11 @@
                                                    (line-end p))))
            (setf unbalanced-flag t)
            (%indent p indent)
-           (loop
-             (scan-lists p -1 1)
-             (when (eql #\( (character-at p)) (return)))
+           (let ((n (count #\( (pps-state-paren-stack state))))
+             (loop
+               (scan-lists p -1 1)
+               (when (eql #\( (character-at p))
+                 (when (zerop (decf n)) (return)))))
            (let ((indent1 (1+ (point-column p))))
              (loop
                (unless (line-offset p 1) (return-from c-indent-line nil))

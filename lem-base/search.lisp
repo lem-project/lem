@@ -36,7 +36,7 @@
 (defun search-forward-endp-function (limit-point)
   (if limit-point
       (lambda (point)
-        (or (point<= limit-point point)
+        (or (point< limit-point point)
             (end-buffer-p point)))
       (constantly nil)))
 

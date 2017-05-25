@@ -32,6 +32,7 @@
           pps-state-block-comment-depth
           pps-state-block-pair
           pps-state-paren-stack
+          pps-state-paren-depth
           parse-partial-sexp
           syntax-ppss
           in-string-p
@@ -609,7 +610,8 @@
   end-char
   block-comment-depth
   block-pair
-  paren-stack)
+  paren-stack
+  (paren-depth 0))
 
 (defun parse-partial-sexp (from to &optional state comment-stop)
   (assert (eq (point-buffer from)
@@ -622,7 +624,8 @@
           (end-char (pps-state-end-char state))
           (block-comment-depth (pps-state-block-comment-depth state))
           (block-pair (pps-state-block-pair state))
-          (paren-stack (pps-state-paren-stack state)))
+          (paren-stack (pps-state-paren-stack state))
+          (paren-depth (pps-state-paren-depth state)))
       (flet ((update-token-start-point (p)
                (if token-start-point
                    (move-point token-start-point p)
@@ -721,8 +724,10 @@
                       (update-token-start-point p)
                       (return))
                      ((syntax-open-paren-char-p c)
+                      (incf paren-depth)
                       (push c paren-stack))
                      ((syntax-closed-paren-char-p c)
+                      (decf paren-depth)
                       (when (syntax-equal-paren-p c (car paren-stack))
                         (pop paren-stack))))
                    (character-offset p 1)))))))
@@ -732,7 +737,8 @@
                 (pps-state-end-char state) end-char
                 (pps-state-block-comment-depth state) block-comment-depth
                 (pps-state-block-pair state) block-pair
-                (pps-state-paren-stack state) paren-stack))
+                (pps-state-paren-stack state) paren-stack
+                (pps-state-paren-depth state) paren-depth))
         state))))
 
 (define-editor-variable syntax-ppss-cache nil)

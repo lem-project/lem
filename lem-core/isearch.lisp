@@ -315,15 +315,9 @@
     (let ((old-string (buffer-value buffer 'isearch-redisplay-string)))
       (unless old-string
         (return-from isearch-replace-highlight))
-      (let ((new-string (prompt-for-string "Replace: "))
-            start end)
-        (if (buffer-mark-p buffer)
-            (setf start (copy-point (region-beginning buffer) :temporary)
-                  end (region-end buffer))
-            (setf start (buffer-start-point buffer)
-                  end (buffer-end-point buffer)))
+      (let ((new-string (prompt-for-string "Replace: ")))
         (save-excursion
-          (move-point (current-point) start)
+          (unless (buffer-mark-p buffer) (buffer-start (current-point)))
           (query-replace-internal old-string
                                   new-string
                                   *isearch-search-forward-function*

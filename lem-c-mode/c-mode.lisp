@@ -51,6 +51,28 @@
 (defun unbalanced-p (state)
   (if (member #\( (pps-state-paren-stack state)) t nil))
 
+(defun unbalanced-indent (p indent start)
+  (flet ((jmp-start-paren (p)
+           (loop
+             (scan-lists p -1 1)
+             (when (eql #\( (character-at p))
+               (return)))))
+    (let ((state))
+      (%indent p indent)
+      (jmp-start-paren p)
+      (let ((indent1 (1+ (point-column p))))
+        (loop
+          (unless (line-offset p 1) (return-from unbalanced-indent nil))
+          (%indent p indent1)
+          (unless (unbalanced-p (setf state
+                                      (parse-partial-sexp (copy-point start :temporary)
+                                                          (line-end p))))
+            (return))
+          (with-point ((p p))
+            (jmp-start-paren p)
+            (setf indent1 (1+ (point-column p)))))
+        state))))
+
 (defun cond-op-line-p (p limit)
   (and (search-forward (line-start p) "?" limit)
        (not (in-string-or-comment-p p))
@@ -95,26 +117,8 @@
                                (parse-partial-sexp (copy-point start :temporary)
                                                    (line-end p))))
            (setf unbalanced-flag t)
-           (%indent p indent)
-           (loop
-             (scan-lists p -1 1)
-             (when (eql #\( (character-at p))
-               (return)))
-           (let ((indent1 (1+ (point-column p))))
-             (loop
-               (unless (line-offset p 1) (return-from c-indent-line nil))
-               (%indent p indent1)
-               (unless (unbalanced-p (setf state
-                                           (parse-partial-sexp (copy-point start :temporary)
-                                                               (line-end p))))
-                 (return))
-               (with-point ((p p))
-                 (loop
-                   (scan-lists p -1 1)
-                   (when (eql #\( (character-at p))
-                     (return)))
-                 (setf indent1 (1+ (point-column p))))
-               )))
+           (unless (setf state (unbalanced-indent p indent start))
+             (return-from c-indent-line nil)))
           ((and word (ppcre:scan "^(?:case|default)$" word))
            (%indent p (- indent tab-width)))
           (t

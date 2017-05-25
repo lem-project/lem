@@ -48,6 +48,14 @@
   (when *indent-line-function*
     (funcall *indent-line-function* p indent)))
 
+(defun delimiter-line-p (p)
+  (multiple-value-bind (start)
+      (ppcre:scan "[^\\\\]?;\\s*(?:/\\*.*?\\*/|//.*?)?\\s*$" (line-string p))
+    (when start
+      (with-point ((p p))
+        (line-offset p 0 (1+ start))
+        (not (in-string-or-comment-p p))))))
+
 (defun unbalanced-p (state)
   (if (member #\( (pps-state-paren-stack state)) t nil))
 
@@ -74,7 +82,8 @@
         state))))
 
 (defun cond-op-line-p (p limit)
-  (and (search-forward (line-start p) "?" limit)
+  (and (not (delimiter-line-p p))
+       (search-forward (line-start p) "?" limit)
        (not (in-string-or-comment-p p))
        (not (syntax-escape-char-p (character-at p -2)))))
 
@@ -83,13 +92,11 @@
     (when (cond-op-line-p p tmp)
       (line-start tmp)
       (when (and (not (unbalanced-p (parse-partial-sexp tmp p)))
-                 (not (and (ppcre:scan "[^\\\\]?;\\s*$" (line-string p))
-                           (not (in-string-or-comment-p (line-end p))))))
+                 (not (delimiter-line-p p)))
         (loop
           (unless (line-offset p 1) (return-from indent-cond-op nil))
           (c-indent-line p (+ indent tab-width))
-          (when (and (ppcre:scan "[^\\\\]?;\\s*$" (line-string p))
-                     (not (in-string-or-comment-p (line-end p))))
+          (when (delimiter-line-p p)
             (return))))))
   t)
 
@@ -136,7 +143,7 @@
           (when (looking-at (line-start p) "\\s*\\}")
             (return-from c-indent-line indent))))
       (when (and word (ppcre:scan "^(?:do|else|for|if|switch|while)$" word)
-                 (not (and (not unbalanced-flag) (ppcre:scan "[};]\\s*$" (line-string p)))))
+                 (not (and (not unbalanced-flag) (delimiter-line-p p))))
         (unless (line-offset p 1) (return-from c-indent-line nil))
         (c-indent-line p (+ indent tab-width))
         (return-from c-indent-line indent))

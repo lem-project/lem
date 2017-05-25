@@ -187,8 +187,7 @@
   (line-merge (point-line point) (line-next (point-line point)) start)
   (write-string (line-str line) killring-stream :start start)
   (write-char #\newline killring-stream)
-  (unless (eq n 'T)
-    (decf n (1+ (- (line-length line) start))))
+  (decf n (1+ (- (line-length line) start)))
   (decf (buffer-nlines buffer))
   (setf (line-str line)
         (concatenate 'string
@@ -207,9 +206,8 @@
               (line (point-line point))
               (offset-line 0))
           (declare (special buffer line))
-          (loop :while (or (eq n 'T) (plusp n))
-                :for eolp := (or (eq n 'T)
-                                 (> n (- (line-length line) charpos)))
+          (loop :while (plusp n)
+                :for eolp := (> n (- (line-length line) charpos))
                 :do
                 (check-read-only-at-point point (if (eq n 'T) nil (if eolp n nil)))
                 (cond

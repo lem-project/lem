@@ -11,18 +11,21 @@
 (define-editor-variable before-change-functions '())
 (define-editor-variable after-change-functions '())
 
-(defun check-read-only-at-point (point offset)
+(defun step-on-read-only (point n)
+  (loop :for line := (point-line point) :then (line-next line)
+        :for charpos := (point-charpos point) :then 0
+        :do (when (line-search-property-range line :read-only charpos n)
+              (return t))
+        :do (when (>= 0 (decf n (1+ (- (line-length line) charpos))))
+              (return nil))))
+
+(defun check-read-only-at-point (point n)
   (unless *inhibit-read-only*
     (let ((line (point-line point))
           (charpos (point-charpos point)))
-      (when (if (eql offset 0)
+      (when (if (eql n 0)
                 (line-search-property line :read-only charpos)
-                (line-search-property-range line
-                                            :read-only
-                                            charpos
-                                            (if (null offset)
-                                                nil
-                                                (+ charpos offset))))
+                (step-on-read-only point n))
         (error 'read-only-error)))))
 
 (defmacro with-modify-buffer (buffer &body body)
@@ -199,6 +202,7 @@
   (:method (point n)
     (declare (special n))
     (with-modify-buffer (point-buffer point)
+      (check-read-only-at-point point n)
       (with-output-to-string (killring-stream)
         (declare (special killring-stream))
         (let ((charpos (point-charpos point))
@@ -209,7 +213,6 @@
           (loop :while (plusp n)
                 :for eolp := (> n (- (line-length line) charpos))
                 :do
-                (check-read-only-at-point point (if (eq n 'T) nil (if eolp n nil)))
                 (cond
                   ((not eolp)
                    (%delete-line-between/point point charpos (+ charpos n))

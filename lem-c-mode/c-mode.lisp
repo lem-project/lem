@@ -56,6 +56,17 @@
         (line-offset p 0 (1+ start))
         (not (in-string-or-comment-p p))))))
 
+(defun end-block-line-p (p)
+  (with-point ((p p))
+    (loop :for start := 0 :then (1+ i)
+          :for i := (position #\} (line-string p) :start start)
+          :while i
+          :do
+          (unless (let ((p (character-offset (line-start p) i)))
+                        (check-type p point)
+                        (in-string-or-comment-p p))
+                (return t)))))
+
 (defun unbalanced-p (state)
   (if (member #\( (pps-state-paren-stack state)) t nil))
 
@@ -136,12 +147,14 @@
            (unless (indent-cond-op p indent)
              (return-from c-indent-line nil)))))
       (when (eql #\{ (car (pps-state-paren-stack state)))
-        (incf indent tab-width)
-        (loop
-          (unless (line-offset p 1) (return-from c-indent-line nil))
-          (setf indent (c-indent-line p indent))
-          (when (looking-at (line-start p) "\\s*\\}")
-            (return-from c-indent-line indent))))
+        (let ((indent (+ indent tab-width))
+              (status))
+          (loop
+            (unless (line-offset p 1) (return-from c-indent-line nil))
+            (setf (values indent status) (c-indent-line p indent))
+            (when (and (not (eq status :block-end))
+                       (end-block-line-p p))
+              (return-from c-indent-line (values indent :block-end))))))
       (when (and word (ppcre:scan "^(?:do|else|for|if|switch|while)$" word)
                  (not (and (not unbalanced-flag) (delimiter-line-p p))))
         (unless (line-offset p 1) (return-from c-indent-line nil))

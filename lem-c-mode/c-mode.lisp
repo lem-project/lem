@@ -126,7 +126,12 @@
            (unless (indent-cond-op p indent)
              (return-from c-indent-line nil)))))
       (when (eql #\{ (car (pps-state-paren-stack state)))
-        (return-from c-indent-line (+ indent tab-width)))
+        (incf indent tab-width)
+        (loop
+          (unless (line-offset p 1) (return-from c-indent-line nil))
+          (setf indent (c-indent-line p indent))
+          (when (looking-at (line-start p) "\\s*\\}")
+            (return-from c-indent-line indent))))
       (when (and word (ppcre:scan "^(?:do|else|for|if|switch|while)$" word)
                  (not (and (not unbalanced-flag) (ppcre:scan "[};]\\s*$" (line-string p)))))
         (unless (line-offset p 1) (return-from c-indent-line nil))

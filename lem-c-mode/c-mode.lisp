@@ -96,11 +96,10 @@
                                                    (line-end p))))
            (setf unbalanced-flag t)
            (%indent p indent)
-           (let ((n (count #\( (pps-state-paren-stack state))))
-             (loop
-               (scan-lists p -1 1)
-               (when (eql #\( (character-at p))
-                 (when (zerop (decf n)) (return)))))
+           (loop
+             (scan-lists p -1 1)
+             (when (eql #\( (character-at p))
+               (return)))
            (let ((indent1 (1+ (point-column p))))
              (loop
                (unless (line-offset p 1) (return-from c-indent-line nil))
@@ -108,7 +107,14 @@
                (unless (unbalanced-p (setf state
                                            (parse-partial-sexp (copy-point start :temporary)
                                                                (line-end p))))
-                 (return)))))
+                 (return))
+               (with-point ((p p))
+                 (loop
+                   (scan-lists p -1 1)
+                   (when (eql #\( (character-at p))
+                     (return)))
+                 (setf indent1 (1+ (point-column p))))
+               )))
           ((and word (ppcre:scan "^(?:case|default)$" word))
            (%indent p (- indent tab-width)))
           (t

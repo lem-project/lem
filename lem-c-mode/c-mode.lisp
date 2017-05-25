@@ -135,14 +135,24 @@
           (setf indent next-indent))))))
 
 (defun calc-indent (point)
-  (with-point ((start point))
-    (line-offset start -1)
-    (c-beginning-of-defun start)
-    (let ((*indent-line-function*
-           (lambda (p indent)
-             (when (same-line-p point p)
-               (return-from calc-indent indent)))))
-      (calc-indent-region start point))))
+  (cond
+    ((in-string-p point)
+     (+ (back-to-indentation point)
+        (variable-value 'tab-width :default point)))
+    ((with-point ((p point))
+       (when (maybe-beginning-of-comment p)
+         (if (eql #\* (character-at (back-to-indentation point)))
+             (+ 1 (point-column p))
+             (+ 2 (point-column p))))))
+    (t
+     (with-point ((start point))
+       (line-offset start -1)
+       (c-beginning-of-defun start)
+       (let ((*indent-line-function*
+              (lambda (p indent)
+                (when (same-line-p point p)
+                  (return-from calc-indent indent)))))
+         (calc-indent-region start point))))))
 
 (pushnew (cons "\\.c$" 'c-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons "\\.h$" 'c-mode) *auto-mode-alist* :test #'equal)

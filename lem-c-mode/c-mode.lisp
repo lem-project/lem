@@ -34,6 +34,12 @@
   (setf (variable-value 'indent-tabs-mode) t)
   (run-hooks *c-mode-hook*))
 
+(define-key *c-mode-keymap* "}" 'c-electric-brace)
+
+(define-command c-electric-brace () ()
+  (insert-character (current-point) #\})
+  (indent))
+
 (defun c-beginning-of-defun (point)
   (loop
     (line-start point)

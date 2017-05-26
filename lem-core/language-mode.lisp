@@ -2,6 +2,8 @@
   (:use :cl :lem :lem.sourcelist)
   (:export
    :*language-mode-keymap*
+   :beginning-of-defun-function
+   :end-of-defun-function
    :line-comment
    :insertion-line-comment
    :find-definitions-function
@@ -23,6 +25,8 @@
    :filespec-to-filename))
 (in-package :lem.language-mode)
 
+(define-editor-variable beginning-of-defun-function nil)
+(define-editor-variable end-of-defun-function nil)
 (define-editor-variable line-comment nil)
 (define-editor-variable insertion-line-comment nil)
 (define-editor-variable find-definitions-function nil)
@@ -36,6 +40,8 @@
     (:keymap *language-mode-keymap*)
   nil)
 
+(define-key *language-mode-keymap* "C-M-a" 'beginning-of-defun)
+(define-key *language-mode-keymap* "C-M-e" 'end-of-defun)
 (define-key *language-mode-keymap* "C-i" 'indent-line-and-complete-symbol)
 (define-key *language-mode-keymap* "C-j" 'newline-and-indent)
 (define-key *language-mode-keymap* "M-j" 'newline-and-indent)
@@ -45,6 +51,22 @@
 (define-key *language-mode-keymap* "M-_" 'find-references)
 (define-key *language-mode-keymap* "M-?" 'find-references)
 (define-key *language-mode-keymap* "M-," 'pop-definition-stack)
+
+(defun beginning-of-defun-1 (n)
+  (alexandria:when-let ((fn (variable-value 'beginning-of-defun-function :buffer)))
+    (when fn (funcall fn (current-point) n))))
+
+(define-command beginning-of-defun (n) ("p")
+  (if (minusp n)
+      (end-of-defun (- n))
+      (beginning-of-defun-1 n)))
+
+(define-command end-of-defun (n) ("p")
+  (if (minusp n)
+      (beginning-of-defun (- n))
+      (alexandria:if-let ((fn (variable-value 'end-of-defun-function :buffer)))
+        (funcall fn (current-point) n)
+        (beginning-of-defun-1 (- n)))))
 
 (define-command indent (&optional (n 1)) ("p")
   (if (variable-value 'calc-indent-function)

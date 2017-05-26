@@ -3,7 +3,9 @@
   (:import-from
    :lem.language-mode
    :language-mode
-   :indent)
+   :indent
+   :beginning-of-defun-function
+   :end-of-defun-function)
   (:export :*c-mode-hook*))
 (in-package :lem-c-mode)
 
@@ -32,6 +34,8 @@
   (setf (variable-value 'enable-syntax-highlight) t)
   (setf (variable-value 'calc-indent-function) 'calc-indent)
   (setf (variable-value 'indent-tabs-mode) t)
+  (setf (variable-value 'beginning-of-defun-function) 'c-beginning-of-defun)
+  (setf (variable-value 'end-of-defun-function) 'c-end-of-defun)
   (run-hooks *c-mode-hook*))
 
 (define-key *c-mode-keymap* "}" 'c-electric-brace)
@@ -40,13 +44,25 @@
   (insert-character (current-point) #\})
   (indent))
 
-(defun c-beginning-of-defun (point)
-  (loop
-    (line-start point)
-    (when (looking-at point "^\\w[^=(]*\\(.*\\)")
-      (return point))
-    (unless (line-offset point -1)
-      (return point))))
+(defun move-to-match-line (point n regex)
+  (let ((step (if (plusp n) 1 -1)))
+    (dotimes (_ (abs n))
+      (when (start-line-p point)
+        (unless (line-offset point step)
+          (return-from move-to-match-line)))
+      (loop
+        (when (ppcre:scan regex (line-string point))
+          (return))
+        (unless (line-offset point step)
+          (return-from move-to-match-line))))))
+
+(defun c-beginning-of-defun (point n)
+  (move-to-match-line point (- n) (ppcre:create-scanner "^\\w[^=(]*")))
+
+(defun c-end-of-defun (point n)
+  (if (minusp n)
+      (c-beginning-of-defun point (- n))
+      (search-forward-regexp point "^\\}")))
 
 (defvar *indent-line-function* nil)
 
@@ -196,7 +212,7 @@
     (t
      (with-point ((start point))
        (line-offset start -1)
-       (c-beginning-of-defun start)
+       (c-beginning-of-defun start 1)
        (let ((*indent-line-function*
               (lambda (p indent)
                 (when (same-line-p point p)

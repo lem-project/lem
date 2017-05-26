@@ -145,14 +145,12 @@
            (setf unbalanced-flag t)
            (unless (setf state (unbalanced-indent p indent start))
              (return-from c-indent-line nil)))
+          ((and word (ppcre:scan "^(?:case|default)$" word))
+           (%indent p (- indent tab-width)))
           (t
-           (cond
-             ((and word (ppcre:scan "^(?:case|default)$" word))
-              (%indent p (- indent tab-width)))
-             (t
-              (%indent p indent)
-              (unless (indent-cond-op p indent)
-                (return-from c-indent-line nil)))))))
+           (%indent p indent)
+           (unless (indent-cond-op p indent)
+             (return-from c-indent-line nil)))))
       (when (eql #\{ (car (pps-state-paren-stack state)))
         (let ((indent (+ indent tab-width))
               (status))

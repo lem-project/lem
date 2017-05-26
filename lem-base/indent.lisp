@@ -33,11 +33,12 @@
                               (make-string mod :initial-element #\space)))
                (make-string column :initial-element #\space))))
       (cond ((string/= old-indent-string new-indent-string)
-             (line-start point)
-             (delete-character point (length old-indent-string))
-             (insert-string point new-indent-string)
+             (with-point ((point point))
+               (line-start point)
+               (delete-character point (length old-indent-string))
+               (insert-string point new-indent-string))
              (if (< old-column column)
-                 (back-to-indentation point)
+                 nil
                  (move-to-column point
                                  (max 0 (+ old-column
                                            (- (string-width new-indent-string)

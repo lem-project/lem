@@ -7,6 +7,7 @@
            :set-foreground
            :set-background
            :display-background-mode
+           :set-display-background-mode
            :call-with-screen
            :make-screen
            :screen-delete

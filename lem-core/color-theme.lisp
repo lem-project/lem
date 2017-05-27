@@ -47,6 +47,11 @@
       (inherit-load-theme theme spec-table)
       (maphash (lambda (name args)
                  (case name
+                   ((display-background-mode)
+                    (set-display-background-mode
+                     (case (first args)
+                       ((:light :dark) (first args))
+                       (otherwise nil))))
                    ((foreground)
                     (apply #'set-foreground args))
                    ((background)
@@ -68,6 +73,7 @@
     (redraw-display t)))
 
 (define-color-theme "emacs-light" ()
+  (display-background-mode :light)
   ;; (foreground "#000000")
   ;; (background "#FFFFFF")
   (minibuffer-prompt-attribute :foreground "blue" :bold-p t)
@@ -85,6 +91,7 @@
   (syntax-type-attribute :foreground "#00875f"))
 
 (define-color-theme "emacs-dark" ("emacs-light")
+  (display-background-mode :dark)
   ;; (foreground "#FFFFFF")
   ;; (background "#000000")
   (minibuffer-prompt-attribute :foreground "cyan" :bold-p t)

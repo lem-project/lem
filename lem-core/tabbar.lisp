@@ -86,7 +86,8 @@
   (setf (tabbar-prev-display-width *tabbar*) 0))
   
 (defun tabbar-off ()
-  (when (variable-value 'tabbar :global)
+  (when (and (variable-value 'tabbar :global)
+             *tabbar*)
     (tabbar-clear-cache)
     (delete-window *tabbar*)
     (setf *tabbar* nil)))

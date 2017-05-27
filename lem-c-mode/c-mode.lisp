@@ -20,7 +20,7 @@
                                (#\[ . #\]))
                 :string-quote-chars '(#\" #\' #\`)
                 :expr-prefix-chars '(#\, #\;)
-                :expr-suffix-chars '(#\, #\;)
+                :expr-suffix-chars '(#\,)
                 :line-comment-string "//"
                 :block-comment-pairs '(("/*" . "*/"))))
         (tmlanguage (lem-c-mode.grammer:make-tmlanguage-c)))
@@ -88,6 +88,15 @@
                         (in-string-or-comment-p p))
                 (return i)))))
 
+(defun dangling-start-p (p)
+  (let ((str (looking-at p "do|else\\s+if|else|for|if|switch|while")))
+    (character-offset p (length str))
+    (or (not (eql #\( (character-at p)))
+        (form-offset p 1))
+    (let ((old-linenumber (line-number-at-point p)))
+      (skip-space-and-comment-forward p)
+      (/= old-linenumber (line-number-at-point p)))))
+
 (defun unbalanced-p (state)
   (if (member #\( (pps-state-paren-stack state)) t nil))
 
@@ -153,9 +162,11 @@
         (when (> 0 (pps-state-paren-depth (parse-partial-sexp start p)))
           (decf indent tab-width))))
     (let ((word (looking-at p "\\w+"))
+          (word-point)
           (state)
           (unbalanced-flag nil))
       (when word
+        (setf word-point (copy-point p :temporary))
         (character-offset p (length word))
         (skip-whitespace-forward p t))
       (with-point ((start p))
@@ -182,8 +193,7 @@
             (when (and (not (eq status :block-end))
                        (end-block-line-p p))
               (return-from c-indent-line (values indent :block-end))))))
-      (when (and word (ppcre:scan "^(?:do|else|for|if|switch|while)$" word)
-                 (not (and (not unbalanced-flag) (delimiter-line-p p))))
+      (when (and word-point (dangling-start-p word-point))
         (unless (line-offset p 1) (return-from c-indent-line nil))
         (c-indent-line p (+ indent tab-width))
         (return-from c-indent-line indent))

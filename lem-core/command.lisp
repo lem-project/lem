@@ -484,7 +484,7 @@
                                :error-output out
                                :ignore-error-status t))))
       (unless (string= output-string "")
-        (with-pop-up-typeout-window (out (make-buffer "*Command*") :focus t :erase t)
+        (with-pop-up-typeout-window (out (make-buffer "*Command*") :focus nil :erase t)
           (write-string output-string out))))))
 
 (define-command delete-trailing-whitespace () ()

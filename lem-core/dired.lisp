@@ -17,7 +17,7 @@
 
 (define-attribute dired-directory-attribute
   (:light :foreground "blue" :bold-p t)
-  (:dark :foreground "sky blue" :bold-p t))
+  (:dark :foreground "sky blue"))
 
 (define-attribute dired-link-attribute
   (:light :foreground "dark green")
@@ -25,7 +25,7 @@
 
 (define-major-mode dired-mode ()
     (:name "dired"
-	   :keymap *dired-mode-keymap*))
+     :keymap *dired-mode-keymap*))
 
 (define-key *dired-mode-keymap* "q" 'quit-window)
 (define-key *dired-mode-keymap* "g" 'dired-update-buffer)

@@ -9,7 +9,7 @@
 
 (define-attribute head-line-attribute
   (:light :background "gray85")
-  (:dark :background "gray20"))
+  (:dark :foreground "black" :background "gray85"))
 
 (define-major-mode menu-mode nil
     (:name "Menu"

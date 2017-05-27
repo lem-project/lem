@@ -96,7 +96,7 @@
   (unless (variable-value 'tabbar :global)
     (tabbar-init)))
 
-(define-editor-variable tabbar t ""
+(define-editor-variable tabbar nil ""
   (lambda (value)
     (if value
         (tabbar-on)

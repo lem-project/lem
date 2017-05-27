@@ -89,7 +89,7 @@
                 (return i)))))
 
 (defun dangling-start-p (p)
-  (let ((str (looking-at p "do|else\\s+if|else|for|if|switch|while")))
+  (let ((str (looking-at p "(?:do|else\\s+if|else|for|if|switch|while)\\s*")))
     (character-offset p (length str))
     (or (not (eql #\( (character-at p)))
         (form-offset p 1))

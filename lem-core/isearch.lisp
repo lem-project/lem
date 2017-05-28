@@ -37,14 +37,14 @@
 (defvar *isearch-search-backward-function*)
 
 (define-attribute isearch-highlight-attribute
-  (t :background "gray"))
+  (t :foreground "black" :background "gray"))
 
 (define-attribute isearch-highlight-active-attribute
   (t :foreground "black" :background "cyan"))
 
 (define-minor-mode isearch-mode
     (:name "isearch"
-	   :keymap *isearch-keymap*))
+     :keymap *isearch-keymap*))
 
 (define-key *global-keymap* "C-s" 'isearch-forward)
 (define-key *global-keymap* "C-r" 'isearch-backward)

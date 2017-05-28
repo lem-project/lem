@@ -40,7 +40,9 @@
      (:group :case-insensitive-p
       ,(let ((args (apply #'word-length-sort names)))
          (if (null (rest args)) (first args) `(:alternation ,@args)))))
-    (:alternation (:greedy-repetition 1 nil :whitespace-char-class) :end-anchor #\( #\))))
+    (:alternation
+     (:greedy-repetition 1 nil :whitespace-char-class)
+     :whitespace-char-class :end-anchor #\( #\))))
 
 (defun make-tmlanguage-lisp ()
   (let ((patterns (make-tm-patterns
@@ -65,9 +67,10 @@
                       "("
                       (:sequence
                        ,(wrap-symbol-names
-                         "defun" "defclass" "defgeneric"
-                         "defsetf" "defmacro" "defmethod"))
-                      (:register symbol))
+                         "defun" "defclass" "defgeneric" "defsetf" "defmacro" "defmethod"
+                         "define-method-combination" "define-condition" "define-setf-expander"
+                         "define-compiler-macro" "define-modify-macro"))
+                      (:greedy-repetition 0 1 (:register symbol)))
                     :captures (vector nil
                                       (make-tm-name 'syntax-keyword-attribute)
                                       (make-tm-name 'syntax-function-name-attribute)))
@@ -75,7 +78,8 @@
                     `(:sequence
                       "(" ,(wrap-symbol-names "defun")
                       ,(ppcre:parse-string "\\s*\\(")
-                      ,(ppcre:parse-string "((?i:setf))\\s+") (:register symbol))
+                      ,(ppcre:parse-string "((?i:setf))\\s+")
+                      (:greedy-repetition 0 1 (:register symbol)))
                     :captures (vector nil
                                       (make-tm-name 'syntax-keyword-attribute)
                                       (make-tm-name 'syntax-function-name-attribute)
@@ -86,7 +90,7 @@
                       (:group :case-insensitive-p
                        (:register (:sequence "define-" ,(ppcre:parse-string "\\S*"))))
                       (:alternation (:greedy-repetition 1 nil :whitespace-char-class) :end-anchor)
-                      (:register symbol))
+                      (:greedy-repetition 0 1 (:register symbol)))
                     :captures (vector nil
                                       (make-tm-name 'syntax-keyword-attribute)
                                       (make-tm-name 'syntax-function-name-attribute)))
@@ -94,8 +98,9 @@
                     `(:sequence
                       "("
                       ,(wrap-symbol-names
-                        "defvar" "defparameter" "defconstant")
-                      (:register symbol))
+                        "defvar" "defparameter" "defconstant"
+                        "define-symbol-macro")
+                      (:greedy-repetition 0 1 (:register symbol)))
                     :captures (vector nil
                                       (make-tm-name 'syntax-keyword-attribute)
                                       (make-tm-name 'syntax-variable-attribute)))
@@ -104,26 +109,46 @@
                       "("
                       ,(wrap-symbol-names
                         "deftype" "defpackage" "defstruct")
-                      (:register symbol))
+                      (:greedy-repetition 0 1 (:register symbol)))
                     :captures (vector nil
                                       (make-tm-name 'syntax-keyword-attribute)
                                       (make-tm-name 'syntax-type-attribute)))
                    (make-tm-match
                     `(:sequence
+                      "(" ,(wrap-symbol-names "defstruct")
+                      ,(ppcre:parse-string "\\s*\\(")
+                      (:register symbol))
+                    :captures (vector nil
+                                      (make-tm-name 'syntax-keyword-attribute)
+                                      (make-tm-name 'syntax-function-name-attribute)))
+                   (make-tm-match
+                    `(:sequence
                       "("
                       ,(wrap-symbol-names
-                        "block" "case" "ccase" "ecase" "typecase" "etypecase" "ctypecase" "catch"
-                        "cond" "destructuring-bind" "do" "do*" "dolist" "dotimes"
-                        "eval-when" "flet" "labels" "macrolet" "generic-flet" "generic-labels"
-                        "handler-case" "restart-case" "if" "lambda" "let" "let*" "handler-bind"
-                        "restart-bind" "locally" "multiple-value-bind" "multiple-value-call"
-                        "multiple-value-prog1" "prog" "prog*" "prog1" "prog2" "progn" "progv" "return"
-                        "return-from" "symbol-macrolet" "tagbody" "throw" "unless" "unwind-protect"
-                        "when" "with-accessors" "with-condition-restarts" "with-open-file"
-                        "with-output-to-string" "with-slots" "with-standard-io-syntax" "loop"
-                        "declare" "declaim" "proclaim"))
+                        "cond" "if" "let" "let*" "progn" "prog1"
+                        "prog2" "lambda" "unwind-protect"
+                        "when" "unless" "with-output-to-string"
+                        "ignore-errors" "dotimes" "dolist" "declare"
+                        "block" "break" "case" "ccase" "compiler-let" "ctypecase"
+                        "declaim" "destructuring-bind" "do" "do*"
+                        "ecase" "etypecase" "eval-when" "flet" "flet*"
+                        "go" "handler-case" "handler-bind" "in-package"
+                        "labels" "letf" "locally" "loop"
+                        "macrolet" "multiple-value-bind" "multiple-value-prog1"
+                        "proclaim" "prog" "prog*" "progv"
+                        "restart-case" "restart-bind" "return" "return-from"
+                        "symbol-macrolet" "tagbody" "the" "typecase"
+                        "with-accessors" "with-compilation-unit"
+                        "with-condition-restarts" "with-hash-table-iterator"
+                        "with-input-from-string" "with-open-file"
+                        "with-open-stream" "with-package-iterator"
+                        "with-simple-restart" "with-slots" "with-standard-io-syntax"))
                     :captures (vector nil
                                       (make-tm-name 'syntax-keyword-attribute)))
+                   (make-tm-match
+                    `(:sequence
+                      "(" ,(wrap-symbol-names "warn" "error" "signal" "abort" "cerror"))
+                    :captures (vector nil (make-tm-name 'syntax-warning-attribute)))
                    (make-tm-match
                     `(:sequence
                       symbol-boundary-begin

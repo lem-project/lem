@@ -106,7 +106,7 @@
      (line-end end))))
 
 (defun commented-region-p ()
-  (let ((line-comment (variable-value 'line-comment :buffer)))
+  (alexandria:when-let ((line-comment (variable-value 'line-comment :buffer)))
     (with-point ((start (current-point))
                  (end (current-point)))
       (set-region-point start end)
@@ -146,8 +146,9 @@
               (line-offset start 1 charpos))))))))
 
 (define-command uncomment-region () ()
-  (let ((line-comment (variable-value 'line-comment :buffer))
-        (insertion-line-comment (variable-value 'insertion-line-comment :buffer)))
+  (let* ((line-comment (variable-value 'line-comment :buffer))
+         (insertion-line-comment (or (variable-value 'insertion-line-comment :buffer)
+                                     line-comment)))
     (when line-comment
       (with-point ((start (current-point) :right-inserting)
                    (end (current-point) :right-inserting))

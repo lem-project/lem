@@ -95,23 +95,25 @@
 (define-command listener-prev-input () ()
   (multiple-value-bind (str win)
       (lem.history:prev-history (%listener-history))
-    (let ((start (listener-start-point (current-buffer)))
-          (end (buffer-end-point (current-buffer))))
-      (save-excursion
-        (delete-between-points start end)
-        (when win (insert-string start str))
-        (move-point (%listener-point (current-buffer)) start)))))
+    (when win
+      (let ((start (listener-start-point (current-buffer)))
+            (end (buffer-end-point (current-buffer))))
+        (save-excursion
+          (delete-between-points start end)
+          (when win (insert-string start str))
+          (move-point (%listener-point (current-buffer)) start))))))
 
 (define-key *listener-mode-keymap* "M-n" 'listener-next-input)
 (define-command listener-next-input () ()
   (multiple-value-bind (str win)
       (lem.history:next-history (%listener-history))
-    (let ((start (listener-start-point (current-buffer)))
-          (end (buffer-end-point (current-buffer))))
-      (save-excursion
-        (delete-between-points start end)
-        (when win (insert-string start str))
-        (move-point (%listener-point (current-buffer)) start)))))
+    (when win
+      (let ((start (listener-start-point (current-buffer)))
+            (end (buffer-end-point (current-buffer))))
+        (save-excursion
+          (delete-between-points start end)
+          (insert-string start str)
+          (move-point (%listener-point (current-buffer)) start))))))
 
 (define-key *listener-mode-keymap* "M-r" 'listener-reset-interactive)
 (define-command listener-reset-interactive (arg) ("P")

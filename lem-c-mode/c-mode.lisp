@@ -1,11 +1,5 @@
 (defpackage :lem-c-mode
-  (:use :cl :lem)
-  (:import-from
-   :lem.language-mode
-   :language-mode
-   :indent
-   :beginning-of-defun-function
-   :end-of-defun-function)
+  (:use :cl :lem :lem.language-mode)
   (:export :*c-mode-hook*))
 (in-package :lem-c-mode)
 
@@ -36,6 +30,8 @@
   (setf (variable-value 'indent-tabs-mode) t)
   (setf (variable-value 'beginning-of-defun-function) 'c-beginning-of-defun)
   (setf (variable-value 'end-of-defun-function) 'c-end-of-defun)
+  (setf (variable-value 'line-comment) "//")
+  (setf (variable-value 'insertion-line-comment) "// ")
   (run-hooks *c-mode-hook*))
 
 (define-key *c-mode-keymap* "}" 'c-electric-brace)

@@ -48,7 +48,12 @@
 ;;; Prevent reader errors
 
 (eval-when (:compile-toplevel :load-toplevel)
-  (swank:swank-require '(swank-presentations swank-repl)))
+  (let ((*load-verbose* nil)
+        (*compile-verbose* nil)
+        (*load-print* nil)
+        (*compile-print* nil))
+    (handler-bind ((warning #'muffle-warning))
+      (swank:swank-require '(swank-presentations swank-repl)))))
 
 ;;; Encoding and decoding messages
 

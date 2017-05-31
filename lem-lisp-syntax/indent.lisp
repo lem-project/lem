@@ -73,7 +73,7 @@
         ("if"          (&rest nil))
         ;("lambda"      (&lambda &rest lisp-indent-function-lambda-hack))
         ("lambda" (&lambda &body))
-        ("let"         ((&whole 4 &rest (&whole 1 1 2)) &body))
+        ("let"         ((&whole 4 &rest (&whole 1 2)) &body))
         ("let*" . "let")
         ("compiler-let" . "let") ;barf
         ("handler-bind" . "let")
@@ -94,7 +94,7 @@
         ("prog*" . "prog")
         ("prog1" 1)
         ("prog2" 2)
-        ("progn" 0)
+        ("progn" (&rest &body))
         ("progv"       (4 4 &body))
         ("return" 0)
         ("return-from" (nil &body))
@@ -139,8 +139,8 @@
   (+ sexp-column 1))
 
 (defun compute-indent-lambda-list (path indent-point sexp-column)
-  (declare (ignore path indent-point sexp-column))
-  'default-indent)
+  (declare (ignore path indent-point))
+  (+ sexp-column 1))
 
 (defun compute-indent-integer-method (method path indent-point sexp-column)
   (declare (ignore indent-point))

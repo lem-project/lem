@@ -103,13 +103,6 @@
                        (character-offset (line-start point) charpos))
                      (search-backward-endp-function limit-point))))))
 
-(define-compiler-macro search-forward-regexp (&whole form &environment env
-                                                     point regex &optional limit-point)
-  (if (constantp regex env)
-      `(search-forward-regexp ,point (load-time-value (ppcre:create-scanner ,regex))
-                              ,limit-point)
-      form))
-
 (defun search-forward-regexp (point regex &optional limit-point)
   (let ((scanner (ignore-errors (ppcre:create-scanner regex)))
         (string)
@@ -150,11 +143,11 @@
                         reg-ends))
             t)))))
 
-(define-compiler-macro search-backward-regexp (&whole form &environment env
-                                                      point regex &optional limit-point)
-  (if (constantp form env)
-      `(search-backward-regexp ,point (load-time-value (ppcre:create-scanner ,regex))
-                               ,limit-point)
+(define-compiler-macro search-forward-regexp (&whole form &environment env
+                                                     point regex &optional limit-point)
+  (if (constantp regex env)
+      `(search-forward-regexp ,point (load-time-value (ppcre:create-scanner ,regex))
+                              ,limit-point)
       form))
 
 (defun search-backward-regexp (point regex &optional limit-point)
@@ -198,6 +191,13 @@
                         reg-starts
                         reg-ends))
             t)))))
+
+(define-compiler-macro search-backward-regexp (&whole form &environment env
+                                                      point regex &optional limit-point)
+  (if (constantp form env)
+      `(search-backward-regexp ,point (load-time-value (ppcre:create-scanner ,regex))
+                               ,limit-point)
+      form))
 
 (defun search-symbol (string name &key (start 0) (end (length string)) from-end)
   (loop :while (< start end)

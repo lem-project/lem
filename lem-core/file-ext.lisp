@@ -12,7 +12,10 @@
              (when mode
                (change-buffer-mode buffer mode))))
           (t
-           (setf (buffer-value buffer (string-downcase var)) val)))))
+           (let ((ev (find-editor-variable var)))
+             (if ev
+                 (setf (variable-value ev :buffer buffer) val)
+                 (setf (buffer-value buffer (string-downcase var)) val)))))))
 
 (defun scan-file-property-list (buffer)
   (with-point ((cur-point (buffer-point buffer)))

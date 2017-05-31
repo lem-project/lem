@@ -6,7 +6,8 @@
           define-editor-variable
           clear-editor-local-variables
           variable-value
-          variable-documentation))
+          variable-documentation
+          find-editor-variable))
 
 (defvar *editor-variables* '())
 
@@ -117,3 +118,6 @@
     (unless (editor-variable-p var)
       (editor-variable-error symbol))
     (editor-variable-documentation var)))
+
+(defun find-editor-variable (var)
+  (find var *editor-variables* :test 'string-equal))

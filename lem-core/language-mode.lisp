@@ -74,6 +74,13 @@
       (self-insert n)))
 
 (define-command newline-and-indent (n) ("p")
+  (let* ((p (current-point))
+         (old-charpos (point-charpos p)))
+    (line-end p)
+    (let ((offset (skip-whitespace-backward p t)))
+      (when (plusp offset)
+        (delete-character p offset)))
+    (line-offset p 0 old-charpos))
   (newline n)
   (indent))
 

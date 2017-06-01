@@ -793,11 +793,11 @@
          (setf (window-parameter (current-window) 'change-buffer) t))
   buffer)
 
-(defun pop-to-buffer (buffer)
+(defun pop-to-buffer (buffer &optional force-split-p)
   (if (eq buffer (current-buffer))
       (values (current-window) nil)
       (let ((split-p))
-        (when (one-window-p)
+        (when (or (one-window-p) force-split-p)
           (setq split-p t)
           (split-window-sensibly (if (minibuffer-window-active-p)
                                      (minibuffer-calls-window)

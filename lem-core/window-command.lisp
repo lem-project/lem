@@ -141,9 +141,9 @@
                                (grow-window-horizontally-internal y x n))
                            :hsplit))
 
-(defun display-buffer (buffer)
+(defun display-buffer (buffer &optional force-split-p)
   (multiple-value-bind (window split-p)
-      (pop-to-buffer buffer)
+      (pop-to-buffer buffer force-split-p)
     (unless (window-parameter window :split-p)
       (setf (window-parameter window :split-p) split-p))
     window))

@@ -106,14 +106,14 @@
     (not (null update-timers))))
 
 (defun shortest-wait-timers ()
-  (let ((list (mapcar (lambda (timer)
-                        (- (timer-ms timer)
-                           (- (get-internal-real-time)
-                              (timer-last-time timer))))
-                      *timer-list*)))
-    (if (null list)
-        nil
-        (reduce #'min list))))
+  (let ((min nil))
+    (dolist (timer *timer-list*)
+      (let ((v (- (timer-ms timer)
+                  (- (get-internal-real-time)
+                     (timer-last-time timer)))))
+        (when (or (null min) (< v min))
+          (setf min v))))
+    min))
 
 (defun exist-running-timer-p ()
   (not (null *timer-list*)))

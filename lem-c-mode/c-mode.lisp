@@ -14,7 +14,7 @@
                                (#\[ . #\]))
                 :string-quote-chars '(#\" #\' #\`)
                 :expr-prefix-chars '(#\, #\;)
-                :expr-suffix-chars '(#\,)
+                :expr-suffix-chars '(#\, #\;)
                 :line-comment-string "//"
                 :block-comment-pairs '(("/*" . "*/"))))
         (tmlanguage (lem-c-mode.grammer:make-tmlanguage-c)))
@@ -88,7 +88,7 @@
   (let ((str (looking-at p "(?:do|else\\s+if|else|for|if|switch|while)\\s*")))
     (character-offset p (length str))
     (or (not (eql #\( (character-at p)))
-        (form-offset p 1))
+        (scan-lists p 1 0 t))
     (let ((old-linenumber (line-number-at-point p)))
       (skip-space-and-comment-forward p)
       (/= old-linenumber (line-number-at-point p)))))

@@ -15,12 +15,12 @@
     (setq *brackets-overlays* nil)
     (let ((highlight-points '()))
       (when (syntax-open-paren-char-p (character-at (current-point)))
-        (let ((goal-point (form-offset (copy-point (current-point) :temporary) 1)))
+        (let ((goal-point (scan-lists (copy-point (current-point) :temporary) 1 0 t)))
           (when goal-point
             (push (character-offset goal-point -1)
                   highlight-points))))
       (when (syntax-closed-paren-char-p (character-at (current-point) -1))
-        (let ((goal-point (form-offset (copy-point (current-point) :temporary) -1)))
+        (let ((goal-point (scan-lists (copy-point (current-point) :temporary) -1 0 t)))
           (when goal-point
             (push goal-point highlight-points))))
       (dolist (point highlight-points)

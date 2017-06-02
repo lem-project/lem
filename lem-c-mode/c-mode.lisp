@@ -58,7 +58,7 @@
 (defun c-end-of-defun (point n)
   (if (minusp n)
       (c-beginning-of-defun point (- n))
-      (search-forward-regexp point "^\\}")))
+      (search-forward-regexp point "^\\};*")))
 
 (defvar *indent-line-function* nil)
 

@@ -120,7 +120,7 @@
                       (:register symbol))
                     :captures (vector nil
                                       (make-tm-name 'syntax-keyword-attribute)
-                                      (make-tm-name 'syntax-function-name-attribute)))
+                                      (make-tm-name 'syntax-type-attribute)))
                    (make-tm-match
                     `(:sequence
                       "("

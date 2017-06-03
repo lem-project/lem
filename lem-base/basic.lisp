@@ -485,9 +485,10 @@
   (loop :for count :from 0
         :for c := (character-at point (if dir 0 -1))
         :do
-        (unless (if (listp test)
-                    (member c test)
-                    (funcall test c))
+        (when (or (null c)
+                  (not (if (listp test)
+                           (member c test)
+                           (funcall test c))))
           (return count))
         (unless (character-offset point (if dir 1 -1))
           (return count))))

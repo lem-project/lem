@@ -194,7 +194,7 @@
 (define-command completion-select () ()
   (let* ((completion-point (completion-buffer-point))
          (item (when completion-point
-                 (text-property-at completion-point :item))))
+                 (text-property-at (line-start completion-point) :item))))
     (completion-insert (current-point) item)
     (completion-end)))
 

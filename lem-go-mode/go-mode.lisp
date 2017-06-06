@@ -147,4 +147,17 @@
 (define-command gofmt () ()
   (filter-buffer "gofmt"))
 
+(define-command godoc (command)
+    ((list (prompt-for-string "godoc ")))
+  (let ((text
+          (with-output-to-string (out)
+            (uiop:run-program (concatenate 'string "godoc " command)
+                              :output out
+                              :error-output out
+                              :ignore-error-status t)))
+        (buffer (make-buffer "*godoc*" :read-only-p t :enable-undo-p nil)))
+    (change-buffer-mode buffer 'go-mode)
+    (with-pop-up-typeout-window (out buffer :erase t)
+      (write-string text out))))
+
 (pushnew (cons "\\.go$" 'go-mode) *auto-mode-alist* :test #'equal)

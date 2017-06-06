@@ -40,20 +40,8 @@
   (insert-character (current-point) #\})
   (indent))
 
-(defun move-to-match-line (point n regex)
-  (let ((step (if (plusp n) 1 -1)))
-    (dotimes (_ (abs n))
-      (when (start-line-p point)
-        (unless (line-offset point step)
-          (return-from move-to-match-line)))
-      (loop
-        (when (ppcre:scan regex (line-string point))
-          (return))
-        (unless (line-offset point step)
-          (return-from move-to-match-line))))))
-
 (defun c-beginning-of-defun (point n)
-  (move-to-match-line point (- n) (ppcre:create-scanner "^\\w[^=(]*")))
+  (loop :repeat n :do (search-backward-regexp point "^\\w[^=(]*")))
 
 (defun c-end-of-defun (point n)
   (if (minusp n)

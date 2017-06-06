@@ -160,10 +160,14 @@
               (constantly nil)))
 
 (define-command dired-mark-regexp (regex) ("sRegex: ")
-  (mark-lines (lambda (flag)
+  (mark-lines (lambda (flag file)
                 (declare (ignore flag))
-                (let ((file (get-file)))
-                  (and file (ppcre:scan regex (namestring file)))))
+                (setf file
+                      (let ((file1 (file-namestring file)))
+                        (if (string= "" file1)
+                            (car (last (pathname-directory file)))
+                            file1)))
+                (ppcre:scan regex file))
               (constantly t)))
 
 (defun dired-query-replace-internal (query-function)
@@ -248,8 +252,9 @@
     (line-offset p 2)
     (loop
       (line-start p)
-      (let ((flag (char= (character-at p) #\*)))
-        (when (funcall test flag)
+      (let ((flag (char= (character-at p) #\*))
+            (file (get-file p)))
+        (when (and file (funcall test flag file))
           (mark-current-line (funcall get-flag flag) p)))
       (unless (line-offset p 1)
         (return)))))

@@ -1,13 +1,9 @@
 (in-package :cl-user)
 (defpackage :lem-go-mode
-  (:use :cl :lem)
+  (:use :cl :lem :lem.language-mode)
   (:import-from
    :lem.tmlanguage
    :load-tmlanguage)
-  (:import-from
-   :lem.language-mode
-   :language-mode
-   :indent)
   (:export))
 (in-package :lem-go-mode)
 
@@ -51,7 +47,20 @@
      :syntax-table *go-syntax-table*)
   (setf (variable-value 'enable-syntax-highlight) t)
   (setf (variable-value 'calc-indent-function) 'go-calc-indent)
-  (setf (variable-value 'indent-tabs-mode) t))
+  (setf (variable-value 'indent-tabs-mode) t)
+  (setf (variable-value 'beginning-of-defun-function) 'go-beginning-of-defun)
+  (setf (variable-value 'end-of-defun-function) 'go-end-of-defun)
+  (setf (variable-value 'line-comment) "//")
+  (setf (variable-value 'insertion-line-comment) "// "))
+
+
+(defun go-beginning-of-defun (point n)
+  (loop :repeat n :do (search-backward-regexp point "^\\w[^=(]*")))
+
+(defun go-end-of-defun (point n)
+  (if (minusp n)
+      (go-beginning-of-defun point (- n))
+      (search-forward-regexp point "^(?:\\}|\\))")))
 
 (defun following-word (point)
   (points-to-string point

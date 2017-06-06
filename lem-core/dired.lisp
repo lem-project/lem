@@ -312,7 +312,7 @@
             (loop
               (let ((string (line-string cur-point)))
                 (multiple-value-bind (start end start-groups end-groups)
-                    (ppcre:scan "^(\\S*)\\s+(\\d+)\\s+(\\S*)\\s+(\\S*)\\s+(\\d+)\\s+(\\S+\\s+\\S+\\s+\\S+)\\s+(.*?)(?: -> .*)?$"
+                    (ppcre:scan "^(\\S*)\\s+(\\d+)\\s+(\\S*)\\s+(\\S*)\\s+(\\d+)\\s+(\\S+\\s+\\S+\\s+\\S+)\\s(.*?)(?: -> .*)?$"
                                 string)
                   (declare (ignorable start end start-groups end-groups))
                   (when start

@@ -447,7 +447,9 @@
 
 (define-key *global-keymap* "C-x #" 'filter-buffer)
 (define-command filter-buffer (cmd) ("sFilter buffer: ")
-  (let ((buffer (current-buffer)))
+  (let ((buffer (current-buffer))
+        (line-number (line-number-at-point (current-point)))
+        (charpos (point-charpos (current-point))))
     (multiple-value-bind (start end)
         (cond ((buffer-mark-p buffer)
                (values (region-beginning buffer)
@@ -471,6 +473,8 @@
 				       :ignore-error-status t))))))
           (delete-between-points start end)
           (insert-string start output-string)
+          (move-to-line (current-point) line-number)
+          (line-offset (current-point) 0 charpos)
           (message "~D ~A" status error-output-value)
           (zerop status))))))
 

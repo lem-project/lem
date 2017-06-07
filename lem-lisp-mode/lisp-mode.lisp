@@ -9,9 +9,6 @@
 (defvar *last-compilation-result* nil)
 (defvar *indent-table* (make-hash-table :test 'equal))
 
-(define-attribute compiler-note-attribute
-  (t :foreground "red" :underline-p t))
-
 (define-attribute apropos-headline-attribute
   (t :bold-p t))
 

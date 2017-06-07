@@ -237,4 +237,33 @@
 (defun go-completion ()
   (gocode (current-point)))
 
+(defvar *goflymake-overlays* '())
+
+(defun goflymake-note (point line-number error-message)
+  (move-to-line point line-number)
+  (let ((ov (make-overlay (back-to-indentation point)
+                          (line-end (copy-point point :temporary))
+                          'compiler-note-attribute)))
+    (push ov *goflymake-overlays*)
+    (overlay-put ov 'message error-message)))
+
+(define-command goflymake () ()
+  (mapc #'delete-overlay *goflymake-overlays*)
+  (setf *goflymake-overlays* '())
+  (let* ((buffer (current-buffer))
+         (text (with-output-to-string (out)
+                 (uiop:run-program (format nil
+                                           "cd ~A; goflymake -debug=false --prefix='' '~A'"
+                                           (buffer-directory buffer)
+                                           (buffer-filename buffer))
+                                   :output out))))
+    (with-input-from-string (in text)
+      (with-point ((p (buffer-point buffer)))
+        (loop :for line := (read-line in nil)
+              :while line
+              :do (ppcre:register-groups-bind (line-number error-message)
+                      (":(\\d+):\\s*(.*)" line)
+                    (when (and line-number error-message)
+                      (goflymake-note p (parse-integer line-number) error-message))))))))
+
 (pushnew (cons "\\.go$" 'go-mode) *auto-mode-alist* :test #'equal)

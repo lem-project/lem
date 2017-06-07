@@ -176,7 +176,10 @@
                                   :output out
                                   :ignore-error-status t)))))
       (with-input-from-string (in text)
-        (values (read-line in nil))))))
+        (values (read-line in nil)
+                (loop :for line := (read-line in nil)
+                      :while line
+                      :collect line))))))
 
 (defun godef-successful-p (output)
   (not (or (string= "-" output)
@@ -209,6 +212,11 @@
        (editor-error "~A" (godef-error file)))
       (t
        (godef-parse file)))))
+
+(define-command godef-describe () ()
+  (let ((description (nth-value 1 (call-godef (current-point)))))
+    (when description
+      (message "~{~A~%~}" description))))
 
 (defun parse-gocode (text)
   (let ((json (yason:parse text)))
@@ -273,10 +281,11 @@
                (point<= (overlay-start ov) (current-point))
                (point<= (current-point) (overlay-end ov)))
       (message "~A" (overlay-get ov 'message))
-      (return))))
+      (return t))))
 
 (defun go-idle-function ()
-  (goflymake-message))
+  (or (goflymake-message)
+      (godef-describe)))
 
 (add-hook *after-save-hook*
           (lambda (buffer)

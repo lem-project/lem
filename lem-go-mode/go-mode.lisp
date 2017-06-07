@@ -278,4 +278,9 @@
 (defun go-idle-function ()
   (goflymake-message))
 
+(add-hook *after-save-hook*
+          (lambda (buffer)
+            (when (eq 'go-mode (buffer-major-mode buffer))
+              (goflymake))))
+
 (pushnew (cons "\\.go$" 'go-mode) *auto-mode-alist* :test #'equal)

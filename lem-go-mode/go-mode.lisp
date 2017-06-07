@@ -50,7 +50,8 @@
   (setf (variable-value 'beginning-of-defun-function) 'go-beginning-of-defun)
   (setf (variable-value 'end-of-defun-function) 'go-end-of-defun)
   (setf (variable-value 'line-comment) "//")
-  (setf (variable-value 'insertion-line-comment) "// "))
+  (setf (variable-value 'insertion-line-comment) "// ")
+  (setf (variable-value 'find-definitions-function) 'find-definitions))
 
 (defun go-beginning-of-defun (point n)
   (loop :repeat n :do (search-backward-regexp point "^\\w[^=(]*")))
@@ -158,5 +159,53 @@
     (change-buffer-mode buffer 'go-mode)
     (with-pop-up-typeout-window (out buffer :erase t)
       (write-string text out))))
+
+(defun call-godef (point)
+  (let ((buffer (point-buffer point)))
+    (let ((text
+            (with-output-to-string (out)
+              (with-input-from-string (in (points-to-string (buffer-start-point buffer)
+                                                            (buffer-end-point buffer)))
+                (uiop:run-program (format nil
+                                          "godef -i -t -f ~A -o ~D"
+                                          (probe-file (buffer-filename buffer))
+                                          (position-at-point point))
+                                  :input in
+                                  :output out
+                                  :ignore-error-status t)))))
+      (with-input-from-string (in text)
+        (values (read-line in nil))))))
+
+(defun godef-successful-p (output)
+  (not (or (string= "-" output)
+           (string= "godef: no identifier found" output)
+           (ppcre:scan '(:sequence :start-anchor "godef: no declaration found for ") output)
+           (ppcre:scan '(:sequence :start-anchor "error finding import path for ") output))))
+
+(defun godef-error (output)
+  (cond ((godef-successful-p output)
+         nil)
+        ((string= "." output)
+         "godef: expression is not defined anywhere")
+        (t
+         output)))
+
+(defun godef-parse (output)
+  (ppcre:register-groups-bind (filename line-number charpos)
+      ("(.+):(\\d+):(\\d+)" output)
+    (when (and filename line-number charpos)
+      (make-xref-location :filespec filename
+                          :position (cons (parse-integer line-number)
+                                          (1- (parse-integer charpos)))))))
+
+(defun find-definitions ()
+  (unless (buffer-filename (current-buffer))
+    (editor-error "Cannot use godef on a buffer without a file name"))
+  (let ((file (call-godef (current-point))))
+    (cond
+      ((not (godef-successful-p file))
+       (editor-error "~A" (godef-error file)))
+      (t
+       (godef-parse file)))))
 
 (pushnew (cons "\\.go$" 'go-mode) *auto-mode-alist* :test #'equal)

@@ -52,7 +52,8 @@
   (setf (variable-value 'line-comment) "//")
   (setf (variable-value 'insertion-line-comment) "// ")
   (setf (variable-value 'find-definitions-function) 'find-definitions)
-  (setf (variable-value 'completion-function) 'go-completion))
+  (setf (variable-value 'completion-function) 'go-completion)
+  (setf (variable-value 'idle-function) 'go-idle-function))
 
 (defun go-beginning-of-defun (point n)
   (loop :repeat n :do (search-backward-regexp point "^\\w[^=(]*")))
@@ -265,5 +266,17 @@
                       (":(\\d+):\\s*(.*)" line)
                     (when (and line-number error-message)
                       (goflymake-note p (parse-integer line-number) error-message))))))))
+
+(define-command goflymake-message () ()
+  (dolist (ov *goflymake-overlays*)
+    (when (and (eq (current-buffer) (overlay-buffer ov))
+               (point<= (overlay-start ov) (current-point))
+               (point<= (current-point) (overlay-end ov)))
+      (message "~A" (overlay-get ov 'message))
+      (redraw-display)
+      (return))))
+
+(defun go-idle-function ()
+  (goflymake-message))
 
 (pushnew (cons "\\.go$" 'go-mode) *auto-mode-alist* :test #'equal)

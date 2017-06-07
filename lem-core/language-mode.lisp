@@ -2,6 +2,7 @@
   (:use :cl :lem :lem.sourcelist)
   (:export
    :*language-mode-keymap*
+   :idle-function
    :beginning-of-defun-function
    :end-of-defun-function
    :line-comment
@@ -25,6 +26,7 @@
    :filespec-to-filename))
 (in-package :lem.language-mode)
 
+(define-editor-variable idle-function nil)
 (define-editor-variable beginning-of-defun-function nil)
 (define-editor-variable end-of-defun-function nil)
 (define-editor-variable line-comment nil)
@@ -36,9 +38,22 @@
 (defun prompt-for-symbol (prompt history-name)
   (prompt-for-line prompt "" nil nil history-name))
 
+(defvar *idle-timer* nil)
+
+(defun language-idle-function ()
+  (alexandria:when-let ((fn (variable-value 'idle-function :buffer)))
+    (funcall fn)))
+
 (define-major-mode language-mode ()
     (:keymap *language-mode-keymap*)
-  nil)
+  (when (or (null *idle-timer*)
+            (not (timer-alive-p *idle-timer*)))
+    (setf *idle-timer*
+          (start-idle-timer 200 t 'language-idle-function
+                            (lambda (condition)
+                              (stop-timer *idle-timer*)
+                              (pop-up-backtrace condition)
+                              (setf *idle-timer* nil))))))
 
 (define-key *language-mode-keymap* "C-M-a" 'beginning-of-defun)
 (define-key *language-mode-keymap* "C-M-e" 'end-of-defun)

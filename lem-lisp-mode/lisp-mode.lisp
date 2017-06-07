@@ -29,6 +29,7 @@
   (setf (variable-value 'find-definitions-function) 'find-definitions)
   (setf (variable-value 'find-references-function) 'find-references)
   (setf (variable-value 'completion-function) 'completion-symbol)
+  (setf (variable-value 'idle-function) 'lisp-idle-function)
   (set-syntax-parser lem-lisp-syntax:*syntax-table* (make-tmlanguage-lisp))
   (unless (connected-p) (self-connect)))
 
@@ -742,8 +743,7 @@
    string
    (lambda (value)
      (declare (ignore value))
-     (lem.listener-mode:listener-reset-prompt (repl-buffer))
-     (redraw-display))))
+     (lem.listener-mode:listener-reset-prompt (repl-buffer)))))
 
 (defun repl-read-string (thread tag)
   (unless (repl-buffer) (start-lisp-repl))
@@ -796,8 +796,7 @@
       (princ string stream))
     (lem.listener-mode:listener-update-point (buffer-end-point buffer))
     (when (eq buffer (current-buffer))
-      (buffer-end (current-point)))
-    (redraw-display)))
+      (buffer-end (current-point)))))
 
 (defvar *wait-message-thread* nil)
 
@@ -819,7 +818,7 @@
                                 (let ((barrior t))
                                   (send-event (lambda ()
                                                 (unwind-protect (progn (pull-events)
-                                                                  (redraw-display))
+                                                                       (redraw-display))
                                                   (setq barrior nil))))
                                   (loop
                                     (unless (connected-p)
@@ -1063,22 +1062,13 @@
     (when package
       (lisp-set-package package))))
 
-(defun timer-function ()
+(defun lisp-idle-function ()
   (when (connected-p)
     (let ((major-mode (buffer-major-mode (current-buffer))))
       (when (eq major-mode 'lisp-mode) (update-buffer-package))
       (when (member major-mode '(lisp-mode lisp-repl-mode))
         (unless (active-echoarea-p)
           (lisp-autodoc))))))
-
-(defvar *idle-timer*)
-(when (or (not (boundp '*idle-timer*))
-          (not (timer-alive-p *idle-timer*)))
-  (setf *idle-timer*
-        (start-idle-timer 110 t 'timer-function
-                          (lambda (condition)
-                            (stop-timer *idle-timer*)
-                            (pop-up-backtrace condition)))))
 
 (pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons ".asd$" 'lisp-mode) *auto-mode-alist* :test #'equal)

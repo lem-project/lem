@@ -180,7 +180,7 @@
 
 (defstruct xref-location
   (filespec nil :read-only t :type (or buffer string pathname))
-  (position 1 :read-only t :type integer)
+  (position 1 :read-only t)
   (title "" :read-only t :type string))
 
 (defstruct xref-references
@@ -204,7 +204,18 @@
     (if pop-to-buffer
         (setf (current-window) (pop-to-buffer buffer))
         (switch-to-buffer buffer))
-    (move-to-position (current-point) (xref-location-position location))))
+    (let ((position (xref-location-position location)))
+      (etypecase position
+        (integer
+         (move-to-position (current-point) position))
+        (cons
+         (move-to-line (current-point) (car position))
+         (line-offset (current-point) 0 (cdr position)))
+        (point
+         (let ((line-number (line-number-at-point position))
+               (charpos (point-charpos position)))
+           (move-to-line (current-point) line-number)
+           (line-offset (current-point) 0 charpos)))))))
 
 (define-command find-definitions () ()
   (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))
@@ -212,6 +223,7 @@
       (unless locations
         (editor-error "No definitions found"))
       (push-location-stack (current-point))
+      (setf locations (uiop:ensure-list locations))
       (if (null (rest locations))
           (go-to-location (first locations))
           (let ((prev-file nil))

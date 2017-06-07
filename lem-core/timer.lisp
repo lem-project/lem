@@ -101,8 +101,8 @@
                 (funcall (timer-function timer)))
               (funcall (timer-function timer)))
         (error (condition)
-	  (message "Error running timer ~S: ~A" (timer-name timer) condition)
-	  (redraw-display))))
+          (message "Error running timer ~S: ~A" (timer-name timer) condition))))
+    (redraw-display)
     (not (null update-timers))))
 
 (defun shortest-wait-timers ()

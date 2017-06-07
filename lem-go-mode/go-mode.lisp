@@ -273,7 +273,6 @@
                (point<= (overlay-start ov) (current-point))
                (point<= (current-point) (overlay-end ov)))
       (message "~A" (overlay-get ov 'message))
-      (redraw-display)
       (return))))
 
 (defun go-idle-function ()

@@ -209,15 +209,20 @@
 
 (defun completion-insert (point item)
   (when item
-    (cond ((completion-item-apply-fn item)
-           (funcall (completion-item-apply-fn item)
-                    point))
-          ((and (completion-item-start item)
+    (cond ((and (completion-item-start item)
                 (completion-item-end item))
            (move-point point (completion-item-start item))
            (delete-between-points (completion-item-start item)
                                   (completion-item-end item))
-           (insert-string point (completion-item-label item))))))
+           (insert-string point (completion-item-label item)))
+          ((completion-item-apply-fn item)
+           (funcall (completion-item-apply-fn item)
+                    point))
+          (t
+           (with-point ((start point))
+             (skip-chars-backward start #'syntax-symbol-char-p)
+             (delete-between-points start point)
+             (insert-string start (completion-item-label item)))))))
 
 (defun create-completion-buffer (items back-attribute)
   (let ((buffer (or (completion-buffer)

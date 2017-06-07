@@ -51,7 +51,8 @@
   (setf (variable-value 'end-of-defun-function) 'go-end-of-defun)
   (setf (variable-value 'line-comment) "//")
   (setf (variable-value 'insertion-line-comment) "// ")
-  (setf (variable-value 'find-definitions-function) 'find-definitions))
+  (setf (variable-value 'find-definitions-function) 'find-definitions)
+  (setf (variable-value 'completion-function) 'go-completion))
 
 (defun go-beginning-of-defun (point n)
   (loop :repeat n :do (search-backward-regexp point "^\\w[^=(]*")))
@@ -207,5 +208,33 @@
        (editor-error "~A" (godef-error file)))
       (t
        (godef-parse file)))))
+
+(defun parse-gocode (text)
+  (let ((json (yason:parse text)))
+    (let ((len (first json))
+          (candidates (second json)))
+      (declare (ignore len))
+      (loop :for ht :in candidates
+            :for class := (gethash "class" ht)
+            :for name := (gethash "name" ht)
+            :for type := (gethash "type" ht)
+            :collect (make-completion-item :label name
+                                           :detail (format nil "~40A ~A " type class))))))
+
+(defun gocode (point)
+  (let ((buffer (point-buffer point)))
+    (let ((text
+            (with-output-to-string (out)
+              (with-input-from-string (in (points-to-string (buffer-start-point buffer)
+                                                            (buffer-end-point buffer)))
+                (uiop:run-program (format nil "gocode -f=json autocomplete '~A' c~D"
+                                          (or (buffer-filename buffer) "")
+                                          (1- (position-at-point point)))
+                                  :input in
+                                  :output out)))))
+      (parse-gocode text))))
+
+(defun go-completion ()
+  (gocode (current-point)))
 
 (pushnew (cons "\\.go$" 'go-mode) *auto-mode-alist* :test #'equal)

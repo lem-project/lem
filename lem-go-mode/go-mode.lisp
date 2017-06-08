@@ -1,4 +1,3 @@
-(in-package :cl-user)
 (defpackage :lem-go-mode
   (:use :cl :lem :lem.language-mode)
   (:import-from
@@ -54,6 +53,9 @@
   (setf (variable-value 'find-definitions-function) 'find-definitions)
   (setf (variable-value 'completion-function) 'go-completion)
   (setf (variable-value 'idle-function) 'go-idle-function))
+
+(define-key *go-mode-keymap* "}" 'go-electric-close)
+(define-key *go-mode-keymap* "C-c C-d" 'godef-describe)
 
 (defun go-beginning-of-defun (point n)
   (loop :repeat n :do (search-backward-regexp point "^\\w[^=(]*")))
@@ -141,7 +143,6 @@
                  (decf indent tab-width)))
              indent)))))
 
-(define-key *go-mode-keymap* "}" 'go-electric-close)
 (define-command go-electric-close (n) ("p")
   (self-insert n)
   (indent))
@@ -294,8 +295,7 @@
       (return t))))
 
 (defun go-idle-function ()
-  (or (goflymake-message)
-      (godef-describe)))
+  (goflymake-message))
 
 (add-hook *after-save-hook*
           (lambda (buffer)

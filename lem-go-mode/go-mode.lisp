@@ -228,7 +228,7 @@
 (define-command godef-describe () ()
   (let ((description (nth-value 1 (call-godef (current-point)))))
     (when description
-      (message "~{~A~%~}" description))))
+      (balloon-message (format nil "~{~A~^~%~}" description)))))
 
 (defun parse-gocode (text)
   (let ((json (yason:parse text)))
@@ -291,7 +291,7 @@
     (when (and (eq (current-buffer) (overlay-buffer ov))
                (point<= (overlay-start ov) (current-point))
                (point<= (current-point) (overlay-end ov)))
-      (message "~A" (overlay-get ov 'message))
+      (balloon-message (overlay-get ov 'message))
       (return t))))
 
 (defun go-idle-function ()

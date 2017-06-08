@@ -32,7 +32,7 @@
           switch-to-buffer
           pop-to-buffer
           floating-windows
-          balloon
+          balloon-message
           redraw-display
           header-window))
 
@@ -856,6 +856,40 @@
         (setf width (display-width)))
       (setf x (- (display-width) width)))
     (make-floating-window buffer x y width height nil)))
+
+(defvar *balloon-message-window* nil)
+
+(defun balloon-message (text)
+  (let ((buffer (make-buffer "*balloon*" :temporary t :enable-undo-p nil)))
+    (erase-buffer buffer)
+    (let ((p (buffer-point buffer))
+          (max-column 0))
+      (insert-string p text)
+      (buffer-start p)
+      (loop :for column := (point-column (line-end p))
+            :do (setf max-column (max max-column column))
+            :while (line-offset p 1))
+      (buffer-start p)
+      (with-point ((s p))
+        (loop :do
+              (move-to-column p max-column t)
+              (put-text-property (line-start (move-point s p))
+                                 (line-end p)
+                                 :attribute 'balloon-attribute)
+              :while (line-offset p 1)))
+      (let ((window
+              (balloon (current-window)
+                       buffer
+                       (+ 1 max-column)
+                       (buffer-nlines buffer))))
+        (buffer-start (window-view-point window))
+        (window-see window)
+        (setf *balloon-message-window* window)))))
+
+(defun clear-balloon-message ()
+  (when *balloon-message-window*
+    (delete-window *balloon-message-window*)
+    (setf *balloon-message-window* nil)))
 
 (defvar *modify-header-windows* nil)
 

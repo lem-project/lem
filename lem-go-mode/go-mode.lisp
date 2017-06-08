@@ -179,14 +179,12 @@
   (let ((buffer (point-buffer point)))
     (let ((text
             (with-output-to-string (out)
-              (with-input-from-string (in (buffer-text buffer))
-                (uiop:run-program (format nil
-                                          "godef -i -t -f ~A -o ~D"
-                                          (probe-file (buffer-filename buffer))
-                                          (position-at-point point))
-                                  :input in
-                                  :output out
-                                  :ignore-error-status t)))))
+              (uiop:run-program (format nil
+                                        "godef -t -f ~A -o ~D"
+                                        (probe-file (buffer-filename buffer))
+                                        (position-at-point point))
+                                :output out
+                                :ignore-error-status t))))
       (with-input-from-string (in text)
         (values (read-line in nil)
                 (loop :for line := (read-line in nil)

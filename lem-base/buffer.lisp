@@ -10,7 +10,7 @@
           buffer-start-point
           buffer-end-point
           buffer-name
-          buffer-version
+          buffer-modified-tick
           buffer-modified-p
           buffer-read-only-p
           buffer-syntax-table
@@ -55,7 +55,7 @@
     :accessor buffer-%directory)
    (%modified-p
     :initform nil
-    :reader buffer-version
+    :reader buffer-modified-tick
     :accessor buffer-%modified-p)
    (%enable-undo-p
     :initform nil

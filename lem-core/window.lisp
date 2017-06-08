@@ -889,7 +889,8 @@
 (defun clear-balloon-message ()
   (when *balloon-message-window*
     (delete-window *balloon-message-window*)
-    (setf *balloon-message-window* nil)))
+    (setf *balloon-message-window* nil)
+    (redraw-display t)))
 
 (defvar *modify-header-windows* nil)
 

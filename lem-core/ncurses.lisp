@@ -580,7 +580,7 @@
     (when (lem::window-use-modeline-p window)
       (screen-redraw-separator window)
       (screen-redraw-modeline window))
-    (charms/ll:wnoutrefresh (screen-%scrwin screen))
+    (unless focus-window-p (charms/ll:wnoutrefresh (screen-%scrwin screen)))
     (setf (screen-modified-p screen) nil)))
 
 (define-implementation update-display ()

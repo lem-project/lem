@@ -267,28 +267,47 @@
     (push ov *goflymake-overlays*)
     (overlay-put ov 'message error-message)))
 
+(defun fly-send-result (text buffer-name)
+  (send-event
+   (lambda ()
+     (alexandria:when-let ((buffer (get-buffer buffer-name)))
+       (with-input-from-string (in text)
+         (with-point ((p (buffer-point buffer)))
+           (loop :for line := (read-line in nil)
+                 :while line
+                 :do (ppcre:register-groups-bind (line-number error-message)
+                         (":(\\d+):\\s*(.*)" line)
+                       (when (and line-number error-message)
+                         (goflymake-note p (parse-integer line-number)
+                                         error-message))))))))))
+
+(defvar *fly-thread* nil)
+
+(defun run-flymake (fn)
+  (when (and *fly-thread* (bt:thread-alive-p *fly-thread*))
+    (bt:destroy-thread *fly-thread*))
+  (setf *fly-thread*
+        (bt:make-thread fn :name "go-flymake")))
+
 (define-command goflymake () ()
   (mapc #'delete-overlay *goflymake-overlays*)
   (setf *goflymake-overlays* '())
   (let* ((buffer (current-buffer))
-         (text (with-output-to-string (out)
-                 (let ((flymake-file
-                         (make-pathname :name "flymake_go"
-                                        :type "go"
-                                        :directory "tmp")))
-                   (uiop:copy-file (buffer-filename buffer) flymake-file)
+         (buffer-name (buffer-name buffer)))
+    (let ((flymake-file
+            (make-pathname :name "flymake_go"
+                           :type "go"
+                           :directory "tmp")))
+      (uiop:copy-file (buffer-filename buffer) flymake-file)
+      (run-flymake
+       (lambda ()
+         (let ((text
+                 (with-output-to-string (out)
                    (uiop:run-program
                     (format nil "cd /tmp/; goflymake -debug=false -prefix='flymake_' '~A'"
                             flymake-file)
-                    :output out)))))
-    (with-input-from-string (in text)
-      (with-point ((p (buffer-point buffer)))
-        (loop :for line := (read-line in nil)
-              :while line
-              :do (ppcre:register-groups-bind (line-number error-message)
-                      (":(\\d+):\\s*(.*)" line)
-                    (when (and line-number error-message)
-                      (goflymake-note p (parse-integer line-number) error-message))))))))
+                    :output out))))
+           (fly-send-result text buffer-name)))))))
 
 (define-command goflymake-message () ()
   (dolist (ov *goflymake-overlays*)

@@ -272,11 +272,15 @@
   (setf *goflymake-overlays* '())
   (let* ((buffer (current-buffer))
          (text (with-output-to-string (out)
-                 (uiop:run-program (format nil
-                                           "cd ~A; goflymake -debug=false --prefix='' '~A'"
-                                           (buffer-directory buffer)
-                                           (buffer-filename buffer))
-                                   :output out))))
+                 (let ((flymake-file
+                         (make-pathname :name "flymake_go"
+                                        :type "go"
+                                        :directory "tmp")))
+                   (uiop:copy-file (buffer-filename buffer) flymake-file)
+                   (uiop:run-program
+                    (format nil "cd /tmp/; goflymake -debug=false -prefix='flymake_' '~A'"
+                            flymake-file)
+                    :output out)))))
     (with-input-from-string (in text)
       (with-point ((p (buffer-point buffer)))
         (loop :for line := (read-line in nil)

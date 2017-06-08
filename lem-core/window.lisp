@@ -833,7 +833,7 @@
                (window-cursor-y orig-window)
                1))
          (x (+ (window-x orig-window)
-               (let ((x (point-charpos (window-buffer-point orig-window))))
+               (let ((x (point-column (window-buffer-point orig-window))))
                  (when (<= (window-width orig-window) x)
                    (let ((mod (mod x (window-width orig-window)))
                          (floor (floor x (window-width orig-window))))

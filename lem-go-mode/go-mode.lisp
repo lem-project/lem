@@ -6,21 +6,6 @@
   (:export))
 (in-package :lem-go-mode)
 
-(defvar *go-builtin*
-  '("append" "cap"   "close"   "complex" "copy"
-    "delete" "imag"  "len"     "make"    "new"
-    "panic"  "print" "println" "real"    "recover"))
-
-(defvar *go-keywords*
-  '("break"    "default"     "func"   "interface" "select"
-    "case"     "defer"       "go"     "map"       "struct"
-    "chan"     "else"        "goto"   "package"   "switch"
-    "const"    "fallthrough" "if"     "range"     "type"
-    "continue" "for"         "import" "return"    "var"))
-
-(defvar *go-constants*
-  '("nil" "true" "false" "iota"))
-
 (defvar *go-syntax-table*
   (let ((table (make-syntax-table
                 :space-chars '(#\space #\tab #\newline)

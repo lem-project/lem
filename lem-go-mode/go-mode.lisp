@@ -41,6 +41,7 @@
 
 (define-key *go-mode-keymap* "}" 'go-electric-close)
 (define-key *go-mode-keymap* "C-c C-d" 'godef-describe)
+(define-key *go-mode-keymap* "C-c M-c" 'go-remove-notes)
 
 (defun go-beginning-of-defun (point n)
   (loop :repeat n :do (search-backward-regexp point "^\\w[^=(]*")))
@@ -301,6 +302,10 @@
                (point<= (current-point) (overlay-end ov)))
       (balloon-message (overlay-get ov 'message))
       (return t))))
+
+(define-command go-remove-notes () ()
+  (mapc #'delete-overlay *goflymake-overlays*)
+  (setf *goflymake-overlays* nil))
 
 (defun go-idle-function ()
   (goflymake-message))

@@ -860,6 +860,7 @@
 (defvar *balloon-message-window* nil)
 
 (defun balloon-message (text)
+  (clear-balloon-message)
   (let ((buffer (make-buffer "*balloon*" :temporary t :enable-undo-p nil)))
     (erase-buffer buffer)
     (let ((p (buffer-point buffer))

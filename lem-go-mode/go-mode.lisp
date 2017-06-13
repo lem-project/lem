@@ -3,8 +3,10 @@
   (:import-from
    :lem.tmlanguage
    :load-tmlanguage)
-  (:export))
+  (:export :*go-mode-hook*))
 (in-package :lem-go-mode)
+
+(defvar *go-mode-hook* '())
 
 (defvar *go-syntax-table*
   (let ((table (make-syntax-table
@@ -37,7 +39,8 @@
   (setf (variable-value 'insertion-line-comment) "// ")
   (setf (variable-value 'find-definitions-function) 'find-definitions)
   (setf (variable-value 'completion-function) 'go-completion)
-  (setf (variable-value 'idle-function) 'go-idle-function))
+  (setf (variable-value 'idle-function) 'go-idle-function)
+  (run-hooks *go-mode-hook*))
 
 (define-key *go-mode-keymap* "}" 'go-electric-close)
 (define-key *go-mode-keymap* "C-c C-d" 'godef-describe)

@@ -15,16 +15,17 @@
   (index -1))
 
 (defun call-with-sourcelist (buffer-name function)
-  (let ((buffer (make-buffer buffer-name))
+  (let ((buffer (make-buffer buffer-name :read-only-p t :enable-undo-p nil))
         (sourcelist (make-sourcelist :buffer-name buffer-name)))
-    (erase-buffer buffer)
-    (with-point ((*sourcelist-point* (buffer-point buffer) :left-inserting))
-      (funcall function sourcelist))
-    (buffer-start (buffer-point buffer))
-    (change-buffer-mode buffer 'sourcelist-mode t)
-    (display-buffer buffer)
-    (setf (variable-value 'truncate-lines :buffer buffer) nil)
-    (setf *current-sourcelist* sourcelist)))
+    (with-buffer-read-only buffer nil
+      (erase-buffer buffer)
+      (with-point ((*sourcelist-point* (buffer-point buffer) :left-inserting))
+        (funcall function sourcelist))
+      (buffer-start (buffer-point buffer))
+      (change-buffer-mode buffer 'sourcelist-mode t)
+      (display-buffer buffer)
+      (setf (variable-value 'truncate-lines :buffer buffer) nil)
+      (setf *current-sourcelist* sourcelist))))
 
 (defmacro with-sourcelist ((var buffer-name) &body body)
   `(call-with-sourcelist ,buffer-name

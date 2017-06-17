@@ -475,7 +475,6 @@
           (insert-string start output-string)
           (move-to-line (current-point) line-number)
           (line-offset (current-point) 0 charpos)
-          (message "~D ~A" status error-output-value)
           (zerop status))))))
 
 (define-key *global-keymap* "C-x @" 'pipe-command)

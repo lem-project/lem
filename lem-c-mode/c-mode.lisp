@@ -32,6 +32,7 @@
   (setf (variable-value 'end-of-defun-function) 'c-end-of-defun)
   (setf (variable-value 'line-comment) "//")
   (setf (variable-value 'insertion-line-comment) "// ")
+  (setf (variable-value 'find-definitions-function) 'lem.gtags:find-definitions)
   (run-hooks *c-mode-hook*))
 
 (define-key *c-mode-keymap* "}" 'c-electric-brace)

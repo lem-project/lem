@@ -58,6 +58,7 @@
                (:file "sourcelist")
                (:file "grep")
                (:file "language-mode")
+               (:file "gtags")
                (:file "dired")
                (:file "abbrev")
 

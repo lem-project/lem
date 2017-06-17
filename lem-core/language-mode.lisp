@@ -15,6 +15,8 @@
    :indent
    :newline-and-indent
    :indent-region
+   :xref-headline-attribute
+   :xref-title-attribute
    :make-xref-location
    :make-xref-references
    :xref-location-filespec

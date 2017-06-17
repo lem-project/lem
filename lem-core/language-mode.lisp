@@ -267,18 +267,21 @@
         (editor-error "No references found"))
       (push-location-stack (current-point))
       (with-sourcelist (sourcelist "*references*")
-        (dolist (ref refs)
+        (dolist (ref (uiop:ensure-list refs))
           (let ((type (xref-references-type ref)))
-            (append-sourcelist sourcelist
-                               (lambda (p)
-                                 (insert-string p (princ-to-string type)
-                                                :attribute 'xref-headline-attribute))
-                               nil)
+            (when type
+              (append-sourcelist sourcelist
+                                 (lambda (p)
+                                   (insert-string p (princ-to-string type)
+                                                  :attribute 'xref-headline-attribute))
+                                 nil))
             (dolist (location (xref-references-locations ref))
               (let ((title (xref-location-title location)))
                 (append-sourcelist sourcelist
                                    (lambda (p)
-                                     (insert-string p (format nil "  ~A" title)
+                                     (insert-string p (if type
+                                                          (format nil "  ~A" title)
+                                                          (princ-to-string title))
                                                     :attribute 'xref-title-attribute))
                                    (let ((location location))
                                      (lambda ()

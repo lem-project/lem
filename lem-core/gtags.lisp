@@ -1,6 +1,7 @@
 (defpackage :lem.gtags
   (:use :cl :lem :lem.language-mode)
-  (:export :find-definitions))
+  (:export :find-definitions
+           :find-references))
 (in-package :lem.gtags)
 
 (defun parse-line (line)
@@ -23,13 +24,35 @@
           :when parts
           :collect parts)))
 
+(defun result-to-xref-locations (text title-function)
+  (loop :for (name line-number file desc) :in (parse-global-output text)
+        :collect (make-xref-location :filespec (merge-pathnames file (buffer-directory))
+                                     :position (cons line-number 0)
+                                     :title (funcall title-function name line-number file desc))))
+
 (defun find-definitions ()
   (let* ((name (symbol-string-at-point (current-point)))
          (text (global (buffer-directory) "-x" name)))
-    (loop :for (name line-number file desc) :in (parse-global-output text)
-          :collect (make-xref-location :filespec (merge-pathnames file (buffer-directory))
-                                       :position (cons line-number 0)
-                                       :title desc))))
+    (result-to-xref-locations text
+                              (lambda (name line-number file desc)
+                                (declare (ignore line-number file desc))
+                                name))))
+
+(defun find-references ()
+  (let* ((name (symbol-string-at-point (current-point)))
+         (text (global (buffer-directory) "-rx" name))
+         (locations (result-to-xref-locations
+                     text
+                     (lambda (name line-number file desc)
+                       (declare (ignore name))
+                       (lambda (p)
+                         (insert-string p file :attribute 'lem.grep:title-attribute)
+                         (insert-string p ":")
+                         (insert-string p (princ-to-string line-number)
+                                        :attribute 'lem.grep:position-attribute)
+                         (insert-string p ":")
+                         (insert-string p desc))))))
+    (make-xref-references :locations locations)))
 
 (define-command gtags-definition-list () ()
   (let ((parts-list (parse-global-output (global (buffer-directory) "-f" (buffer-filename)))))

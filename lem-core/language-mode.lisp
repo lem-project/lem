@@ -198,7 +198,7 @@
 (defstruct xref-location
   (filespec nil :read-only t :type (or buffer string pathname))
   (position 1 :read-only t)
-  (title "" :read-only t :type string))
+  (title "" :read-only t))
 
 (defstruct xref-references
   (type nil :read-only t)
@@ -253,8 +253,10 @@
                                        (unless (equal prev-file file)
                                          (insert-string p file :attribute 'xref-headline-attribute)
                                          (insert-character p #\newline))
-                                       (insert-string p (format nil "  ~A" title)
-                                                      :attribute 'xref-title-attribute))
+                                       (if (functionp title)
+                                           (funcall title p)
+                                           (insert-string p (format nil "  ~A" title)
+                                                          :attribute 'xref-title-attribute)))
                                      (let ((location location))
                                        (lambda ()
                                          (go-to-location location))))
@@ -279,10 +281,12 @@
               (let ((title (xref-location-title location)))
                 (append-sourcelist sourcelist
                                    (lambda (p)
-                                     (insert-string p (if type
-                                                          (format nil "  ~A" title)
-                                                          (princ-to-string title))
-                                                    :attribute 'xref-title-attribute))
+                                     (if (functionp title)
+                                         (funcall title p)
+                                         (insert-string p (if type
+                                                              (format nil "  ~A" title)
+                                                              (princ-to-string title))
+                                                        :attribute 'xref-title-attribute)))
                                    (let ((location location))
                                      (lambda ()
                                        (go-to-location location))))))))))))

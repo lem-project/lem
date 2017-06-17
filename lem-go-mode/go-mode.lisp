@@ -258,9 +258,10 @@
     (push ov *goflymake-overlays*)
     (overlay-put ov 'message error-message)))
 
-(defun fly-send-result (text buffer-name)
+(defun fly-send-result (text buffer-name flymake-file)
   (send-event
    (lambda ()
+     (delete-file flymake-file)
      (alexandria:when-let ((buffer (get-buffer buffer-name)))
        (with-input-from-string (in text)
          (with-point ((p (buffer-point buffer)))
@@ -280,25 +281,30 @@
   (setf *fly-thread*
         (bt:make-thread fn :name "go-flymake")))
 
-(define-command goflymake () ()
-  (mapc #'delete-overlay *goflymake-overlays*)
-  (setf *goflymake-overlays* '())
-  (let* ((buffer (current-buffer))
-         (buffer-name (buffer-name buffer)))
-    (let ((flymake-file
-            (make-pathname :name "flymake_go"
-                           :type "go"
-                           :directory "tmp")))
-      (uiop:copy-file (buffer-filename buffer) flymake-file)
+(define-command goflymake (buffer)
+    ((list (current-buffer)))
+  (when (eq 'go-mode (buffer-major-mode buffer))
+    (mapc #'delete-overlay *goflymake-overlays*)
+    (setf *goflymake-overlays* '())
+    (let* ((buffer-name (buffer-name buffer))
+           (directory (buffer-directory buffer))
+           (filename (buffer-filename buffer))
+           (flymake-file (make-pathname :name (concatenate 'string
+                                                           "flymake_"
+                                                           (pathname-name filename))
+                                        :type "go"
+                                        :directory (pathname-directory filename))))
+      (uiop:copy-file filename flymake-file)
       (run-flymake
        (lambda ()
          (let ((text
                  (with-output-to-string (out)
                    (uiop:run-program
-                    (format nil "cd /tmp/; goflymake -debug=false -prefix='flymake_' '~A'"
+                    (format nil "cd ~A; goflymake -debug=false '~A'"
+                            directory
                             flymake-file)
                     :output out))))
-           (fly-send-result text buffer-name)))))))
+           (fly-send-result text buffer-name flymake-file)))))))
 
 (define-command goflymake-message () ()
   (dolist (ov *goflymake-overlays*)
@@ -315,9 +321,6 @@
 (defun go-idle-function ()
   (goflymake-message))
 
-(add-hook *after-save-hook*
-          (lambda (buffer)
-            (when (eq 'go-mode (buffer-major-mode buffer))
-              (goflymake))))
+(add-hook *after-save-hook* 'goflymake)
 
 (pushnew (cons "\\.go$" 'go-mode) *auto-mode-alist* :test #'equal)

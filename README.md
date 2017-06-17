@@ -1,12 +1,10 @@
 # lem
-![screenshot](./screenshots/screenshot.png)
 
 ## Requirement
-- https://github.com/roswell/roswell
+- [roswell](https://github.com/roswell/roswell)
 - ncurses
 
 ## Installation
-`$ sudo apt install libncurses5-dev  # for debian`  
 `$ ros install cxxxr/lem`
 
 ## Usage

@@ -336,9 +336,11 @@
   (isearch-next-highlight (- n)))
 
 (define-command isearch-toggle-highlighting () ()
-  (if (isearch-overlays (current-buffer))
-      (isearch-end)
-      (isearch-update-buffer)))
+  (cond
+    ((isearch-overlays (current-buffer))
+     (isearch-end))
+    ((boundp '*isearch-string*)
+     (isearch-update-buffer))))
 
 
 (defvar *replace-before-string* nil)

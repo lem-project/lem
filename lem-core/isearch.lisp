@@ -105,13 +105,11 @@
 
 
 (defun isearch-update-buffer (&optional (point (current-point))
-                                        (search-string *isearch-string*))
+                              (search-string *isearch-string*))
   (let ((buffer (point-buffer point)))
     (isearch-reset-overlays buffer)
     (unless (equal search-string "")
       (dolist (window (get-buffer-windows buffer))
-        (when (eq window (current-window))
-          (window-see window))
         (with-point ((curr (window-view-point window))
                      (limit (window-view-point window)))
           (unless (line-offset limit (window-height window))
@@ -140,6 +138,7 @@
 
 (defun isearch-update-display ()
   (isearch-update-minibuffer)
+  (window-see (current-window))
   (isearch-update-buffer))
 
 (defun isearch-update-minibuffer ()
@@ -297,10 +296,10 @@
         (concatenate 'string
                      *isearch-string*
                      (string c)))
-  (isearch-update-display)
   (with-point ((start-point (current-point)))
     (unless (funcall *isearch-search-function* (current-point) *isearch-string*)
       (move-point (current-point) start-point)))
+  (isearch-update-display)
   t)
 
 (define-command isearch-self-insert () ()

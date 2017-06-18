@@ -15,8 +15,8 @@
    :indent
    :newline-and-indent
    :indent-region
-   :xref-headline-attribute
-   :xref-title-attribute
+   :xref-location-content
+   :xref-insert-content
    :make-xref-location
    :make-xref-references
    :xref-location-filespec
@@ -191,14 +191,28 @@
 (define-attribute xref-headline-attribute
   (t :bold-p t))
 
-(define-attribute xref-title-attribute
+(define-attribute xref-content-attribute
   (:dark :foreground "cyan" :bold-p t)
   (:light :foreground "blue" :bold-p t))
+
+(defclass xref-location-content ()
+  ((content
+    :initform ""
+    :initarg :content
+    :reader content)))
+
+(defgeneric xref-insert-content (content point)
+  (:method (content point)
+    (insert-string point (princ-to-string content)
+                   :attribute 'xref-content-attribute))
+  (:method ((content string) point)
+    (insert-string point content
+                   :attribute 'xref-content-attribute)))
 
 (defstruct xref-location
   (filespec nil :read-only t :type (or buffer string pathname))
   (position 1 :read-only t)
-  (title "" :read-only t))
+  (content "" :read-only t))
 
 (defstruct xref-references
   (type nil :read-only t)
@@ -247,16 +261,13 @@
             (with-sourcelist (sourcelist "*definitions*")
               (dolist (location locations)
                 (let ((file (filespec-to-filename (xref-location-filespec location)))
-                      (title (xref-location-title location)))
+                      (content (xref-location-content location)))
                   (append-sourcelist sourcelist
                                      (lambda (p)
                                        (unless (equal prev-file file)
                                          (insert-string p file :attribute 'xref-headline-attribute)
                                          (insert-character p #\newline))
-                                       (if (functionp title)
-                                           (funcall title p)
-                                           (insert-string p (format nil "  ~A" title)
-                                                          :attribute 'xref-title-attribute)))
+                                       (xref-insert-content content p))
                                      (let ((location location))
                                        (lambda ()
                                          (go-to-location location))))
@@ -278,15 +289,10 @@
                                                   :attribute 'xref-headline-attribute))
                                  nil))
             (dolist (location (xref-references-locations ref))
-              (let ((title (xref-location-title location)))
+              (let ((content (xref-location-content location)))
                 (append-sourcelist sourcelist
                                    (lambda (p)
-                                     (if (functionp title)
-                                         (funcall title p)
-                                         (insert-string p (if type
-                                                              (format nil "  ~A" title)
-                                                              (princ-to-string title))
-                                                        :attribute 'xref-title-attribute)))
+                                     (xref-insert-content content p))
                                    (let ((location location))
                                      (lambda ()
                                        (go-to-location location))))))))))))

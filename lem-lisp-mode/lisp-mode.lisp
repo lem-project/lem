@@ -944,14 +944,14 @@
      (let ((xref-location (source-location-to-xref-location source-location)))
        (go-to-location xref-location t)))))
 
-(defun source-location-to-xref-location (location &optional (title "") no-errors)
+(defun source-location-to-xref-location (location &optional (content "") no-errors)
   (alexandria:destructuring-ecase location
     ((:location location-buffer position _hints)
      (declare (ignore _hints))
      (let ((buffer (location-buffer-to-buffer location-buffer)))
        (with-point ((point (buffer-point buffer)))
          (move-to-location-position point position)
-         (make-xref-location :title title
+         (make-xref-location :content content
                              :filespec buffer
                              :position (position-at-point point)))))
     ((:error message)

@@ -6,7 +6,8 @@
 (define-minor-mode less-mode
     (:name "less"
      :keymap *less-mode-keymap*)
-  (setf (buffer-read-only-p (current-buffer)) t))
+  (setf (buffer-read-only-p (current-buffer))
+        (mode-active-p (current-buffer) 'less-mode)))
 
 (define-key *less-mode-keymap* "e" 'less-forward-line)
 ;; (define-key *less-mode-keymap* "C-e" 'less-forward-line)

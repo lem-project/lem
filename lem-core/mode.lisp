@@ -39,12 +39,17 @@
   (or (eq mode (buffer-major-mode buffer))
       (find mode (buffer-minor-modes buffer))))
 
+(defun enable-minor-mode (minor-mode)
+  (pushnew minor-mode (buffer-minor-modes (current-buffer))))
+
+(defun disable-minor-mode (minor-mode)
+  (setf (buffer-minor-modes (current-buffer))
+        (delete minor-mode (buffer-minor-modes (current-buffer)))))
+
 (defun toggle-minor-mode (minor-mode)
-  (let ((buffer (current-buffer)))
-    (if (mode-active-p buffer minor-mode)
-        (setf (buffer-minor-modes buffer)
-              (delete minor-mode (buffer-minor-modes buffer)))
-        (push minor-mode (buffer-minor-modes buffer)))))
+  (if (mode-active-p (current-buffer) minor-mode)
+      (disable-minor-mode minor-mode)
+      (enable-minor-mode minor-mode)))
 
 (defmacro define-major-mode (major-mode
                              parent-mode
@@ -90,11 +95,14 @@
      (define-command ,minor-mode (&rest args) ("P")
        (cond ((null args)
               (toggle-minor-mode ',minor-mode))
+             ((consp (car args))
+              (if (null (caar args))
+                  (toggle-minor-mode ',minor-mode)
+                  (enable-minor-mode ',minor-mode)))
              ((car args)
-              (pushnew ',minor-mode (buffer-minor-modes (current-buffer))))
+              (enable-minor-mode ',minor-mode))
              (t
-              (setf (buffer-minor-modes (current-buffer))
-                    (delete ',minor-mode (buffer-minor-modes (current-buffer))))))
+              (disable-minor-mode ',minor-mode)))
        ,@body)))
 
 (defun change-buffer-mode (buffer mode &rest args)

@@ -61,6 +61,7 @@
                (:file "gtags")
                (:file "dired")
                (:file "abbrev")
+               (:file "less-mode")
 
                (:file "init")
 

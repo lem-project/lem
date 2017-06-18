@@ -21,6 +21,7 @@
            :isearch-yank
            :isearch-self-insert
            :read-query-replace-args
+           :isearch-toggle-highlighting
            :query-replace
            :query-replace-regexp
            :query-replace-symbol))
@@ -333,6 +334,11 @@
 
 (define-command isearch-prev-highlight (n) ("p")
   (isearch-next-highlight (- n)))
+
+(define-command isearch-toggle-highlighting () ()
+  (if (isearch-overlays (current-buffer))
+      (isearch-end)
+      (isearch-update-buffer)))
 
 
 (defvar *replace-before-string* nil)

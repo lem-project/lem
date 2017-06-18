@@ -68,13 +68,17 @@
                                                              :file file
                                                              :desc desc))))
 
+(defun read-name (prompt)
+  (or (symbol-string-at-point (current-point))
+      (prompt-for-line prompt "" nil nil 'read-name)))
+
 (defun find-definitions ()
-  (let* ((name (symbol-string-at-point (current-point)))
+  (let* ((name (read-name "gtags -x "))
          (text (global (buffer-directory) "-x" name)))
     (result-to-xref-locations text 'content)))
 
 (defun find-references ()
-  (let* ((name (symbol-string-at-point (current-point)))
+  (let* ((name (read-name "gtags -rx "))
          (text (global (buffer-directory) "-rx" name))
          (locations (result-to-xref-locations text 'reference-content)))
     (make-xref-references :locations locations)))

@@ -37,6 +37,7 @@
   (run-hooks *c-mode-hook*))
 
 (define-key *c-mode-keymap* "}" 'c-electric-brace)
+(define-key *c-mode-keymap* "C-c @" 'lem.gtags:gtags-definition-list)
 
 (define-command c-electric-brace () ()
   (insert-character (current-point) #\})

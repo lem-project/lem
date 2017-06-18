@@ -1,7 +1,8 @@
 (defpackage :lem.gtags
   (:use :cl :lem :lem.language-mode)
   (:export :find-definitions
-           :find-references))
+           :find-references
+           :gtags-definition-list))
 (in-package :lem.gtags)
 
 (defclass content ()
@@ -37,6 +38,11 @@
       ("^(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(.*)$" line)
     (when (and name line-number file desc)
       (list name (parse-integer line-number) file desc))))
+
+(defun parts-name (parts) (first parts))
+(defun parts-line-number (parts) (second parts))
+(defun parts-file (parts) (third parts))
+(defun parts-desc (parts) (fourth parts))
 
 (defun global (directory &rest args)
   (with-output-to-string (out)
@@ -74,16 +80,17 @@
     (make-xref-references :locations locations)))
 
 (define-command gtags-definition-list () ()
-  (let ((parts-list (parse-global-output (global (buffer-directory) "-f" (buffer-filename)))))
-    (lem.sourcelist:with-sourcelist (sourcelist "*global*")
-      (loop :for parts :in parts-list
-            :do (destructuring-bind (name line-number file desc) parts
-                  (declare (ignore desc))
-                  (lem.sourcelist:append-sourcelist
-                   sourcelist
-                   (lambda (p)
-                     (insert-string p name :attribute nil))
-                   (lambda ()
-                     (alexandria:when-let ((buffer (get-buffer file)))
-                       (setf (current-window) (pop-to-buffer buffer))
-                       (move-to-line (current-point) line-number)))))))))
+  (let* ((parts-list (parse-global-output (global (buffer-directory) "-f" (buffer-filename))))
+         (names (mapcar #'parts-name parts-list))
+         (name (prompt-for-line "> " ""
+                                (lambda (str) (completion str names))
+                                (lambda (str) (find str names :test #'string=))
+                                'gtags-definition-list))
+         (i (position name parts-list :key #'parts-name :test #'string=)))
+    (when i
+      (let* ((parts (elt parts-list i))
+             (file (parts-file parts))
+             (line-number (parts-line-number parts)))
+        (alexandria:when-let ((buffer (get-buffer file)))
+          (setf (current-window) (pop-to-buffer buffer))
+          (move-to-line (current-point) line-number))))))

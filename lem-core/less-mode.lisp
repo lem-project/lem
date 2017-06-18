@@ -1,11 +1,12 @@
 (defpackage :lem.less-mode
   (:use :cl :lem)
-  (:export))
+  (:export :less-mode))
 (in-package :lem.less-mode)
 
 (define-minor-mode less-mode
     (:name "less"
      :keymap *less-mode-keymap*)
+  (setf *read-only-function* 'less-mode)
   (setf (buffer-read-only-p (current-buffer))
         (mode-active-p (current-buffer) 'less-mode)))
 

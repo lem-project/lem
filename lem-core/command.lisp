@@ -6,6 +6,7 @@
           universal-argument
           self-insert
           unmark-buffer
+          *read-only-function*
           toggle-read-only
           rename-buffer
           quoted-insert
@@ -109,10 +110,15 @@
   (buffer-unmark (current-buffer))
   t)
 
+(defvar *read-only-function* nil)
+
 (define-key *global-keymap* "C-x C-q" 'toggle-read-only)
 (define-command toggle-read-only () ()
   (setf (buffer-read-only-p (current-buffer))
         (not (buffer-read-only-p (current-buffer))))
+  (when *read-only-function*
+    (funcall *read-only-function*
+             (buffer-read-only-p (current-buffer))))
   t)
 
 (define-command rename-buffer (name) ("sRename buffer: ")

@@ -4,7 +4,7 @@
            :find-references))
 (in-package :lem.gtags)
 
-(defclass content (xref-location-content)
+(defclass content ()
   ((name
     :initarg :name
     :reader content-name)
@@ -21,7 +21,7 @@
 (defclass reference-content (content) ())
 
 (defmethod xref-insert-content ((content content) point)
-  (insert-string point (content-name content)))
+  (insert-string point (content-name content) :attribute 'xref-content-attribute))
 
 (defmethod xref-insert-content ((content reference-content) point)
   (insert-string point (content-file content) :attribute 'lem.grep:title-attribute)

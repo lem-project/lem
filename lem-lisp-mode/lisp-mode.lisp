@@ -429,9 +429,9 @@
                   (or (optima:property :message message) (and))
                   (or (optima:property :source-context source-context) (and)))
              (let* ((xref-location (source-location-to-xref-location location))
-                    (name (filespec-to-filename (xref-location-filespec xref-location)))
+                    (name (xref-filespec-to-filename (xref-location-filespec xref-location)))
                     (pos (xref-location-position xref-location))
-                    (buffer (filespec-to-buffer (xref-location-filespec xref-location))))
+                    (buffer (xref-filespec-to-buffer (xref-location-filespec xref-location))))
                (lem.sourcelist:append-sourcelist
                 sourcelist
                 (lambda (cur-point)

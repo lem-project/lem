@@ -15,7 +15,8 @@
    :indent
    :newline-and-indent
    :indent-region
-   :xref-location-content
+   :xref-headline-attribute
+   :xref-content-attribute
    :xref-insert-content
    :make-xref-location
    :make-xref-references
@@ -24,8 +25,8 @@
    :xref-location-title
    :xref-references-type
    :xref-references-locations
-   :filespec-to-buffer
-   :filespec-to-filename))
+   :xref-filespec-to-buffer
+   :xref-filespec-to-filename))
 (in-package :lem.language-mode)
 
 (define-editor-variable idle-function nil)
@@ -195,18 +196,11 @@
   (:dark :foreground "cyan" :bold-p t)
   (:light :foreground "blue" :bold-p t))
 
-(defclass xref-location-content ()
-  ((content
-    :initform ""
-    :initarg :content
-    :reader content)))
-
 (defgeneric xref-insert-content (content point)
   (:method (content point)
-    (insert-string point (princ-to-string content)
-                   :attribute 'xref-content-attribute))
+    (xref-insert-content (princ-to-string content) point))
   (:method ((content string) point)
-    (insert-string point content
+    (insert-string point (concatenate 'string "  " content)
                    :attribute 'xref-content-attribute)))
 
 (defstruct xref-location
@@ -218,20 +212,20 @@
   (type nil :read-only t)
   (locations nil :read-only t))
 
-(defun filespec-to-buffer (filespec)
+(defun xref-filespec-to-buffer (filespec)
   (etypecase filespec
     (buffer filespec)
     (string (find-file-buffer filespec))
     (pathname (find-file-buffer filespec))))
 
-(defun filespec-to-filename (filespec)
+(defun xref-filespec-to-filename (filespec)
   (etypecase filespec
     (buffer (buffer-filename filespec))
     (string filespec)
     (pathname (namestring filespec))))
 
 (defun go-to-location (location &optional pop-to-buffer)
-  (let ((buffer (filespec-to-buffer (xref-location-filespec location))))
+  (let ((buffer (xref-filespec-to-buffer (xref-location-filespec location))))
     (if pop-to-buffer
         (setf (current-window) (pop-to-buffer buffer))
         (switch-to-buffer buffer))
@@ -260,7 +254,7 @@
           (let ((prev-file nil))
             (with-sourcelist (sourcelist "*definitions*")
               (dolist (location locations)
-                (let ((file (filespec-to-filename (xref-location-filespec location)))
+                (let ((file (xref-filespec-to-filename (xref-location-filespec location)))
                       (content (xref-location-content location)))
                   (append-sourcelist sourcelist
                                      (lambda (p)

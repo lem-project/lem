@@ -181,6 +181,7 @@
         (let ((p start))
           (loop
             (parse-partial-sexp p end nil t)
+            (when (point<= end p) (return))
             (when (looking-at p line-comment)
               (let ((res (looking-at p insertion-line-comment)))
                 (if res

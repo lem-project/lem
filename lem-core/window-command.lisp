@@ -150,22 +150,22 @@
 
 (define-key *global-keymap* "C-down" 'scroll-down)
 (define-command scroll-down (n) ("p")
-  (if (minusp n)
-      (scroll-up (- n))
-      (dotimes (_ n)
-        (when (= (window-cursor-y (current-window)) 0)
-          (unless (line-offset (current-point) n)
-            (return)))
-        (window-scroll (current-window) 1))))
+  (cond
+    ((minusp n)
+     (scroll-up (- n)))
+    (t
+     (window-scroll (current-window) n)
+     (let ((offset (window-offset-view (current-window))))
+       (unless (zerop offset)
+         (line-offset (current-point) (- offset)))))))
 
 (define-key *global-keymap* "C-up" 'scroll-up)
 (define-command scroll-up (n) ("p")
-  (if (minusp n)
-      (scroll-down (- n))
-      (dotimes (_ n)
-        (when (and (= (window-cursor-y (current-window))
-                      (- (window-height (current-window)) 2))
-                   (not (first-line-p (window-view-point (current-window)))))
-          (unless (line-offset (current-point) (- n))
-            (return)))
-        (window-scroll (current-window) -1))))
+  (cond
+    ((minusp n)
+     (scroll-down (- n)))
+    (t
+     (window-scroll (current-window) (- n))
+     (let ((offset (window-offset-view (current-window))))
+       (unless (zerop offset)
+         (line-offset (current-point) (- offset)))))))

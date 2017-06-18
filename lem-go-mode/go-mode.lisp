@@ -174,7 +174,7 @@
                 (uiop:run-program (format nil
                                           "godef -i -t -f ~A -o ~D"
                                           (probe-file (buffer-filename buffer))
-                                          (position-at-point point))
+                                          (point-bytes point))
                                   :input in
                                   :output out
                                   :ignore-error-status t)))))

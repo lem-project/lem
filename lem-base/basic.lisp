@@ -431,6 +431,18 @@
           nil))))
 
 @export
+(defun point-bytes (point)
+  (with-point ((point point))
+    (let ((nbytes 0))
+      (incf nbytes
+            (babel:string-size-in-octets (line-string point)
+                                         :end (point-charpos point)))
+      (loop
+        (unless (line-offset point -1) (return))
+        (incf nbytes (1+ (babel:string-size-in-octets (line-string point)))))
+      nbytes)))
+
+@export
 (defun move-to-line (point line-number)
   @lang(:jp "`point`を行番号`line-number`に移動し、移動後の位置を返します。
 `line-number`がバッファの範囲外なら`point`は移動せず、NILを返します。")

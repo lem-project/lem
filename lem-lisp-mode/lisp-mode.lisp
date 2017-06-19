@@ -1049,7 +1049,7 @@
     (loop
       (multiple-value-bind (result groups)
           (looking-at (line-start p)
-                      "^\\s*\\(in-package (?:#?:|')?([^\)]*)\\)")
+                      "^\\s*\\((?:cl:)?in-package (?:#?:|')?([^\)]*)\\)")
         (when result
           (let ((package (aref groups 0)))
             (when package

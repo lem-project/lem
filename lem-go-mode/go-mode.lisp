@@ -303,7 +303,9 @@
                     (format nil "cd ~A; goflymake -debug=false '~A'"
                             directory
                             flymake-file)
-                    :output out))))
+                    :output out
+                    :error-output out
+                    :ignore-error-status t))))
            (fly-send-result text buffer-name flymake-file)))))))
 
 (define-command goflymake-message () ()

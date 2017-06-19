@@ -25,6 +25,9 @@
                          (car *kill-ring*)
                          string))))
 
+(defun %clipboard (&optional arg)
+  (ignore-errors (trivial-clipboard:text arg)))
+
 (defun kill-push (string)
   (cond
     (*kill-new-flag*
@@ -34,13 +37,13 @@
              (subseq *kill-ring* 0 *kill-ring-max*)))
      (setq *kill-ring-yank-ptr* *kill-ring*)
      (setq *kill-new-flag* nil)
-     (trivial-clipboard:text string))
+     (%clipboard string))
     (t
-     (trivial-clipboard:text (kill-append string *kill-before-p*))))
+     (%clipboard (kill-append string *kill-before-p*))))
   t)
 
 (defun current-kill-ring ()
-  (let ((string (trivial-clipboard:text)))
+  (let ((string (%clipboard)))
     (if (and string (string/= string ""))
         string
         (kill-ring-nth 1))))

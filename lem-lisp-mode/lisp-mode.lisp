@@ -17,7 +17,7 @@
      :keymap *lisp-mode-keymap*
      :syntax-table lem-lisp-syntax:*syntax-table*)
   (modeline-add-status-list (lambda (window)
-                              (buffer-package (window-buffer window) "CL-USER"))
+                              (format nil " [~A]" (buffer-package (window-buffer window) "CL-USER")))
                             (current-buffer))
   (setf (variable-value 'beginning-of-defun-function) 'lisp-beginning-of-defun)
   (setf (variable-value 'end-of-defun-function) 'lisp-end-of-defun)

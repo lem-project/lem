@@ -25,7 +25,7 @@
               key-sequence
               (make-kbd key-sequence)))))
 
-(let ((key-recording-status-name (make-symbol "Def")))
+(let ((key-recording-status-name " Def"))
   (defun start-record-key ()
     (modeline-add-status-list key-recording-status-name)
     (setq *key-recording-p* t)

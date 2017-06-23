@@ -496,13 +496,16 @@
         (with-pop-up-typeout-window (out (make-buffer "*Command*") :focus nil :erase t)
           (write-string output-string out))))))
 
-(define-command delete-trailing-whitespace () ()
+(define-command delete-trailing-whitespace (buffer) ((list (current-buffer)))
   (save-excursion
+    (setf (current-buffer) buffer)
     (let ((p (current-point)))
       (buffer-start p)
       (loop
         (line-end p)
-        (delete-character p (skip-whitespace-backward p t))
+        (let ((n (skip-whitespace-backward p t)))
+          (unless (zerop n)
+            (delete-character p n)))
         (unless (line-offset p 1)
           (return))))
     (move-to-end-of-buffer)

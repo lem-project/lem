@@ -12,4 +12,4 @@
 (setf (variable-value 'lem.tabbar:tabbar :global) t)
 (setf (variable-value 'lem.line-numbers:line-numbers :global) t)
 
-;;(add-hook *before-save-hook* 'delete-trailing-whitespace)
+;(add-hook *before-save-hook* 'delete-trailing-whitespace)

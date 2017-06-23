@@ -1,4 +1,3 @@
-(in-package :cl-user)
 (defpackage :lem.list-buffers
   (:use :cl :lem :lem.menu-mode)
   (:export :list-buffers))

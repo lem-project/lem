@@ -1,4 +1,3 @@
-(in-package :cl-user)
 (defpackage :lem.sourcelist
   (:use :cl :lem)
   (:export :with-sourcelist

@@ -1,5 +1,3 @@
-;; -*- mode:lisp; package:tetris -*-
-
 (defpackage :lem.tetris
   (:use :cl :lem)
   (:export))

@@ -1,4 +1,3 @@
-(in-package :cl-user)
 (defpackage :lem.history
   (:use :cl)
   (:export :make-history

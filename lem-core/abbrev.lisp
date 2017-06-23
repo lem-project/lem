@@ -1,4 +1,3 @@
-(in-package :cl-user)
 (defpackage :lem.abbrev
   (:use :cl :lem)
   (:export :abbrev))

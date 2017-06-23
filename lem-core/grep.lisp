@@ -1,4 +1,3 @@
-(in-package :cl-user)
 (defpackage :lem.grep
   (:use :cl :lem)
   (:export :title-attribute

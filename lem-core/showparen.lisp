@@ -1,4 +1,3 @@
-(in-package :cl-user)
 (defpackage :lem.show-paren
   (:use :cl :lem)
   (:export :showparen-attribute))

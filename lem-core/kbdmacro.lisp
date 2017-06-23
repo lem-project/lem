@@ -1,4 +1,3 @@
-(in-package :cl-user)
 (defpackage :lem.kbdmacro
   (:use :cl :lem)
   (:export

@@ -1,4 +1,3 @@
-(in-package :cl-user)
 (defpackage :lem.term
   (:use :cl)
   (:export :get-color-pair

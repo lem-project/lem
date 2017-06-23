@@ -1,4 +1,3 @@
-(in-package :cl-user)
 (defpackage :lem.listener-mode
   (:use :cl :lem)
   (:export :listener-prompt-attribute

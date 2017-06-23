@@ -1,5 +1,3 @@
-(in-package :cl-user)
-
 (defpackage :lem-interface
   (:use :cl)
   (:export :define-interface

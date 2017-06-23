@@ -1,4 +1,3 @@
-(in-package :cl-user)
 (defpackage :lem.isearch
   (:use :cl :lem)
   (:export :*isearch-keymap*

@@ -12,6 +12,8 @@
              (when mode
                (change-buffer-mode buffer mode))))
           (t
+           (let ((*read-eval* nil))
+             (setf val (read-from-string val)))
            (let ((ev (find-editor-variable var)))
              (if ev
                  (setf (variable-value ev :buffer buffer) val)

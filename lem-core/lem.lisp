@@ -32,8 +32,7 @@
 (defun setup ()
   (start-idle-timer 100 t
                     (lambda ()
-                      (syntax-scan-window (current-window))
-                      (redraw-display)))
+                      (syntax-scan-window (current-window))))
   (add-hook *window-scroll-functions*
             (lambda (window)
               (syntax-scan-window window)))

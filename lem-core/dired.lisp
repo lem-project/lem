@@ -350,8 +350,7 @@
 (defun update-all ()
   (dolist (buffer (buffer-list))
     (when (eq 'dired-mode (buffer-major-mode buffer))
-      (update buffer)))
-  (redraw-display))
+      (update buffer))))
 
 (defun dired-buffer (filename)
   (let* ((filename

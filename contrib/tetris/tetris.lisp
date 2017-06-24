@@ -292,8 +292,7 @@
            (reset-player)
            (draw))
           (t
-           (tetris-move-down)))
-    (redraw-display)))
+           (tetris-move-down)))))
 
 (define-command tetris () ()
   (let ((buffer (make-buffer "*tetris*")))

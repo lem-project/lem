@@ -64,9 +64,7 @@
                  (buffer-filename buffer))
         (switch-to-buffer buffer nil)
         (when (or save-silently-p
-                  (progn
-                    (redraw-display)
-                    (prompt-for-y-or-n-p (format nil "Save file ~A" (buffer-filename buffer)))))
+                  (prompt-for-y-or-n-p (format nil "Save file ~A" (buffer-filename buffer))))
           (save-buffer))))
     (switch-to-buffer prev-buffer nil)))
 

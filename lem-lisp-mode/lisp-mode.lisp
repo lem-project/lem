@@ -113,6 +113,9 @@
         (string-upcase package-name)
         default)))
 
+(defun (setf buffer-package) (package buffer)
+  (setf (buffer-value buffer "package") package))
+
 (defvar *current-package* nil)
 
 (defun current-package ()
@@ -494,20 +497,35 @@
       (form-offset end 1)
       (points-to-string start end))))
 
-(defun macroexpand-internal (expander buffer-name)
-  (lisp-eval-async `(,expander ,(form-string-at-point))
-                   (lambda (string)
-                     (with-pop-up-typeout-window
-                         (out (make-buffer buffer-name) :focus t :erase t)
-                       (princ string out)))))
+(defun macroexpand-internal (expander)
+  (let* ((self (eq (current-buffer) (get-buffer "*lisp-macroexpand*")))
+         (orig-package-name (buffer-package (current-buffer) "CL-USER"))
+         (p (and self (copy-point (current-point) :temporary))))
+    (lisp-eval-async `(,expander ,(form-string-at-point))
+                     (lambda (string)
+                       (let ((buffer (make-buffer "*lisp-macroexpand*")))
+                         (unless self (erase-buffer buffer))
+                         (change-buffer-mode buffer 'lisp-mode)
+                         (setf (buffer-package buffer) orig-package-name)
+                         (when self
+                           (move-point (current-point) p)
+                           (kill-sexp))
+                         (insert-string (buffer-point buffer)
+                                        string)
+                         (indent-region (buffer-start-point buffer)
+                                        (buffer-end-point buffer))
+                         (with-pop-up-typeout-window (s buffer)
+                           (declare (ignore s)))
+                         (when self
+                           (move-point (buffer-point buffer) p)))))))
 
 (define-command lisp-macroexpand () ()
   (check-connection)
-  (macroexpand-internal 'swank:swank-macroexpand-1 "*lisp-macroexpand*"))
+  (macroexpand-internal 'swank:swank-macroexpand-1))
 
 (define-command lisp-macroexpand-all () ()
   (check-connection)
-  (macroexpand-internal 'swank:swank-macroexpand-all "*lisp-macroexpand-all*"))
+  (macroexpand-internal 'swank:swank-macroexpand-all))
 
 (defun symbol-completion (str &optional (package (current-package)))
   (let ((result (lisp-eval-from-string

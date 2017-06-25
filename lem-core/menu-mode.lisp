@@ -16,7 +16,9 @@
      :keymap *menu-mode-keymap*))
 
 (define-key *menu-mode-keymap* "q" 'quit-window)
-(define-key *menu-mode-keymap* "C-m" 'menu-select)
+(define-key *menu-mode-keymap* "C-m" 'menu-select-this-window)
+(define-key *menu-mode-keymap* "C-o" 'menu-select-other-window)
+(define-key *menu-mode-keymap* "o" 'menu-select-switch-other-window)
 
 (defclass menu ()
   ((buffer-name
@@ -91,6 +93,17 @@
               (put-text-property start p 'function (menu-item-select-function item))))
           (move-to-line (buffer-point buffer) 2))))))
 
-(define-command menu-select () ()
-  (let ((fn (text-property-at (current-point) 'function)))
-    (when fn (funcall fn))))
+(defun menu-select-1 (set-buffer-fn)
+  (alexandria:when-let ((fn (text-property-at (current-point) 'function)))
+    (funcall fn set-buffer-fn)))
+
+(define-command menu-select-this-window () ()
+  (menu-select-1 #'switch-to-buffer))
+
+(define-command menu-select-other-window () ()
+  (menu-select-1 #'pop-to-buffer))
+
+(define-command menu-select-switch-other-window () ()
+  (menu-select-1 (lambda (buffer)
+                   (setf (current-window)
+                         (pop-to-buffer buffer)))))

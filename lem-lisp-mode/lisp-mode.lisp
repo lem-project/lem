@@ -79,7 +79,8 @@
     (dolist (c *connection-list*)
       (let ((item (make-instance 'lem.menu-mode:menu-item
                                  :select-function (let ((c c))
-                                                    (lambda ()
+                                                    (lambda (set-buffer-fn)
+                                                      (declare (ignore set-buffer-fn))
                                                       (change-current-connection c)
                                                       (lisp-connection-list))))))
         (lem.menu-mode:append-menu-item item (if (eq c *connection*) "*" " "))

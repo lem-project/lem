@@ -13,10 +13,10 @@
       (let ((item (make-instance
                    'menu-item
                    :select-function (let ((buffer-name (buffer-name buffer)))
-                                      (lambda ()
+                                      (lambda (set-buffer-fn)
                                         (let ((buffer (get-buffer buffer-name)))
                                           (when buffer
-                                            (switch-to-buffer buffer))))))))
+                                            (funcall set-buffer-fn buffer))))))))
         (append-menu-item item (if (buffer-modified-p buffer) " *" " "))
         (append-menu-item item (if (buffer-read-only-p buffer) " *" " "))
         (append-menu-item item (buffer-name buffer))

@@ -6,9 +6,19 @@
           completion-test
           completion-hypheen
           completion-file
+          completion-strings
           completion-buffer-name
           make-completion-item
           run-completion))
+
+(defun fuzzy-match-p (str elt)
+  (loop :with start := 0
+        :for c :across str
+        :do (let ((pos (position c elt :start start)))
+              (if pos
+                  (setf start pos)
+                  (return nil)))
+        :finally (return t)))
 
 (defun completion-test (x y)
   (and (<= (length x) (length y))
@@ -25,15 +35,6 @@
 	 (push (string (aref string start)) list)
 	 (incf words)
 	 (setf end start)))))
-
-(defun logand-strings (strings)
-  (let* ((str (car strings))
-         (len (length str)))
-    (dolist (s (cdr strings))
-      (let ((res (mismatch str s :end1 len)))
-        (when res
-          (setq len res))))
-    (subseq str 0 len)))
 
 (defun completion (name list &key (test #'search) separator key)
   (let ((strings
@@ -78,20 +79,11 @@
                                   (enough-namestring path dirname))))))
       strings)))
 
-(defun match-fuzzy-buffer-name-p (string buffer-name)
-  (loop :with start := 0
-        :for c :across string
-        :do (let ((pos (position c buffer-name :start start)))
-              (if pos
-                  (setf start pos)
-                  (return nil)))
-        :finally (return t)))
+(defun completion-strings (str strings)
+  (completion str strings :test #'fuzzy-match-p))
 
 (defun completion-buffer-name (str)
-  (loop :for buffer :in (buffer-list)
-        :for name := (buffer-name buffer)
-        :when (match-fuzzy-buffer-name-p str name)
-        :collect name))
+  (completion-strings str (mapcar #'buffer-name (buffer-list))))
 
 
 (defstruct completion-item

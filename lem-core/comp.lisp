@@ -78,8 +78,20 @@
                                   (enough-namestring path dirname))))))
       strings)))
 
+(defun match-fuzzy-buffer-name-p (string buffer-name)
+  (loop :with start := 0
+        :for c :across string
+        :do (let ((pos (position c buffer-name :start start)))
+              (if pos
+                  (setf start pos)
+                  (return nil)))
+        :finally (return t)))
+
 (defun completion-buffer-name (str)
-  (completion str (mapcar #'buffer-name (buffer-list))))
+  (loop :for buffer :in (buffer-list)
+        :for name := (buffer-name buffer)
+        :when (match-fuzzy-buffer-name-p str name)
+        :collect name))
 
 
 (defstruct completion-item

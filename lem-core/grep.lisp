@@ -32,31 +32,48 @@
 
 (defun grep-with-string (buffer-name string)
   (lem.sourcelist:with-sourcelist (sourcelist buffer-name)
-    (let ((current-directory (buffer-directory)))
-      (dolist (elt (grep-parse string))
-        (destructuring-bind (filename linum thing) elt
-          (let* ((filename (expand-file-name filename current-directory))
-                 (jump-fun (lambda ()
-                             (find-file filename)
-                             (goto-line linum))))
-            (lem.sourcelist:append-sourcelist
-             sourcelist
-             (lambda (cur-point)
-               (insert-string cur-point
-			      filename
-			      :attribute 'title-attribute)
-               (insert-string cur-point ":")
-               (insert-string cur-point
-			      (princ-to-string linum)
-			      :attribute 'position-attribute)
-               (insert-string cur-point thing))
-             jump-fun)))))))
+    (let* ((buffer (get-buffer buffer-name))
+           (p (buffer-point buffer)))
+      (insert-string p string)
+      (buffer-start p)
+      (with-point ((p2 p))
+        (loop
+          (let ((string (line-string p)))
+            (ppcre:register-groups-bind (filename line-number-str charpos-str)
+                ("^(.*?):(\\d+):(\\d+)?" string)
+              (when (and filename line-number-str)
+                (let ((pathname (merge-pathnames filename (buffer-directory)))
+                      (line-number (parse-integer line-number-str))
+                      (charpos (and charpos-str (parse-integer charpos-str))))
+                  (move-point p2 (line-start p))
+                  (put-text-property p2 (character-offset p (length filename))
+                                     :attribute 'title-attribute)
+                  (move-point p2 (character-offset p 1))
+                  (put-text-property p2 (character-offset p (length line-number-str))
+                                     :attribute 'position-attribute)
+                  (when charpos
+                    (move-point p2 (character-offset p 1))
+                    (put-text-property p2 (character-offset p (length charpos-str))
+                                       :attribute 'position-attribute))
+                  (lem.sourcelist:append-jump-function
+                   sourcelist
+                   (line-start p2)
+                   (line-end p)
+                   (lambda ()
+                     (find-file pathname)
+                     (move-to-line (current-point) line-number)
+                     (if charpos
+                         (line-offset (current-point) 0 charpos)
+                         (back-to-indentation (current-point)))))))))
+          (unless (line-offset p 1) (return))))))
+  (redraw-display))
 
 (define-command grep (string) ((list (prompt-for-string ": " "grep -nH ")))
   (let ((directory (buffer-directory)))
-    (grep-with-string "*grep*"
-                      (with-output-to-string (s)
-                        (uiop:run-program (format nil "cd ~A; ~A" directory string)
-                                          :output s
-                                          :error-output s
-                                          :ignore-error-status t)))))
+    (call-background-job (lambda ()
+                           (with-output-to-string (s)
+                             (uiop:run-program (format nil "cd ~A; ~A" directory string)
+                                               :output s
+                                               :error-output s
+                                               :ignore-error-status t)))
+                         (alexandria:curry #'grep-with-string "*grep*"))))

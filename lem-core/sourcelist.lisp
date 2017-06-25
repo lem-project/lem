@@ -1,6 +1,7 @@
 (defpackage :lem.sourcelist
   (:use :cl :lem)
   (:export :with-sourcelist
+           :append-jump-function
            :append-sourcelist))
 (in-package :lem.sourcelist)
 
@@ -34,18 +35,20 @@
                            ,@body)
                          ,focus))
 
+(defun append-jump-function (sourcelist start end jump-function)
+  (put-text-property start end 'sourcelist jump-function)
+  (vector-push-extend jump-function (sourcelist-elements sourcelist)))
+
 (defun append-sourcelist (sourcelist write-function jump-function)
   (let ((point *sourcelist-point*))
     (with-point ((start-point point :right-inserting))
       (funcall write-function point)
       (insert-character point #\newline)
       (when jump-function
-        (put-text-property start-point
-			   point
-			   'sourcelist
-			   jump-function)
-        (vector-push-extend jump-function
-                            (sourcelist-elements sourcelist))))))
+        (append-jump-function sourcelist
+                           start-point
+                           point
+                           jump-function)))))
 
 (defun jump-current-element ()
   (funcall (aref (sourcelist-elements *current-sourcelist*)

@@ -5,7 +5,8 @@
           *exit-editor-hook*
           interactive-p
           continue-flag
-          pop-up-backtrace))
+          pop-up-backtrace
+          call-background-job))
 
 (defvar *pre-command-hook* '())
 (defvar *post-command-hook* '())
@@ -102,3 +103,27 @@
 (defun exit-editor (&optional report)
   (run-hooks *exit-editor-hook*)
   (throw +exit-tag+ report))
+
+(defun call-background-job (function cont)
+  (bt:make-thread
+   (lambda ()
+     (let ((error-text))
+       (handler-case
+           (handler-bind ((error (lambda (c)
+                                   (setf error-text
+                                         (with-output-to-string (stream)
+                                           (princ c stream)
+                                           (fresh-line stream)
+                                           (uiop:print-backtrace
+                                            :stream stream
+                                            :count 100))))))
+             (let ((result (funcall function)))
+               (send-event (lambda () (funcall cont result)))))
+         (error ()
+           (send-event (lambda ()
+                         (let ((buffer (make-buffer "*BACKGROUND JOB ERROR*")))
+                           (erase-buffer buffer)
+                           (insert-string (buffer-point buffer)
+                                          error-text)
+                           (display-buffer buffer)
+                           (buffer-start (buffer-point buffer)))))))))))

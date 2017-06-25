@@ -13,7 +13,7 @@
   (elements (make-array 0 :adjustable t :fill-pointer 0))
   (index -1))
 
-(defun call-with-sourcelist (buffer-name function)
+(defun call-with-sourcelist (buffer-name function focus)
   (let ((buffer (make-buffer buffer-name :read-only-p t :enable-undo-p nil))
         (sourcelist (make-sourcelist :buffer-name buffer-name)))
     (with-buffer-read-only buffer nil
@@ -22,14 +22,17 @@
         (funcall function sourcelist))
       (buffer-start (buffer-point buffer))
       (change-buffer-mode buffer 'sourcelist-mode t)
-      (display-buffer buffer)
+      (if focus
+          (setf (current-window) (display-buffer buffer))
+          (display-buffer buffer))
       (setf (variable-value 'truncate-lines :buffer buffer) nil)
       (setf *current-sourcelist* sourcelist))))
 
-(defmacro with-sourcelist ((var buffer-name) &body body)
+(defmacro with-sourcelist ((var buffer-name &key focus) &body body)
   `(call-with-sourcelist ,buffer-name
                          (lambda (,var)
-                           ,@body)))
+                           ,@body)
+                         ,focus))
 
 (defun append-sourcelist (sourcelist write-function jump-function)
   (let ((point *sourcelist-point*))

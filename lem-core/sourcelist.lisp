@@ -55,15 +55,17 @@
                  (sourcelist-index *current-sourcelist*))
            (let ((buffer-name (sourcelist-buffer-name *current-sourcelist*)))
              (lambda (buffer)
-               (let ((sourcelist-window
-                       (car (get-buffer-windows (get-buffer buffer-name)))))
-                 (unless sourcelist-window
-                   (let ((sourcelist-buffer (get-buffer buffer-name)))
-                     (setf sourcelist-window
-                           (display-buffer sourcelist-buffer))))
-                 (if (eq (current-window) sourcelist-window)
-                     (setf (current-window) (pop-to-buffer buffer))
-                     (switch-to-buffer buffer)))))))
+               (with-point ((p (buffer-point buffer)))
+                 (let ((sourcelist-window
+                         (car (get-buffer-windows (get-buffer buffer-name)))))
+                   (unless sourcelist-window
+                     (let ((sourcelist-buffer (get-buffer buffer-name)))
+                       (setf sourcelist-window
+                             (display-buffer sourcelist-buffer))))
+                   (if (eq (current-window) sourcelist-window)
+                       (setf (current-window) (pop-to-buffer buffer))
+                       (switch-to-buffer buffer))
+                   (move-point (buffer-point buffer) p)))))))
 
 (define-key *global-keymap* "C-x n" 'sourcelist-next)
 (define-key *global-keymap* "C-x C-n" 'sourcelist-next)

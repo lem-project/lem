@@ -69,6 +69,7 @@
 (define-key *language-mode-keymap* "M-_" 'find-references)
 (define-key *language-mode-keymap* "M-?" 'find-references)
 (define-key *language-mode-keymap* "M-," 'pop-definition-stack)
+(define-key *language-mode-keymap* "C-M-i" 'complete-symbol)
 
 (defun beginning-of-defun-1 (n)
   (alexandria:when-let ((fn (variable-value 'beginning-of-defun-function :buffer)))
@@ -310,7 +311,7 @@
         (move-to-line (current-point) line-number)
         (line-offset (current-point) 0 charpos)))))
 
-(defun complete-symbol ()
+(define-command complete-symbol () ()
   (alexandria:when-let (fn (variable-value 'completion-function :buffer))
     (alexandria:when-let (completion-items (funcall fn))
       (run-completion completion-items

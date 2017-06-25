@@ -13,8 +13,8 @@
                                (#\{ . #\})
                                (#\[ . #\]))
                 :string-quote-chars '(#\" #\' #\`)
-                ;:expr-prefix-chars '(#\, #\;)
-                ;:expr-suffix-chars '(#\, #\;)
+                :expr-prefix-chars '(#\,)
+                :expr-suffix-chars '(#\;)
                 :line-comment-string "//"
                 :block-comment-pairs '(("/*" . "*/"))))
         (tmlanguage (lem-c-mode.grammer:make-tmlanguage-c)))

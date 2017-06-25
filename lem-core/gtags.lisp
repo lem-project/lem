@@ -83,18 +83,52 @@
          (locations (result-to-xref-locations text 'reference-content)))
     (make-xref-references :locations locations)))
 
+(defun gtags-path ()
+  (string-right-trim
+   '(#\newline)
+   (with-output-to-string (out)
+     (uiop:run-program "global -p"
+                       :output out
+                       :ignore-error-status t))))
+
+(defun fetch-gtags-definitions (basedir)
+  (loop :for filename
+        :in (sort (append (directory (merge-pathnames "*.c" basedir))
+                          (directory (merge-pathnames "*.h" basedir)))
+                  #'string<
+                  :key #'file-namestring)
+        :append (parse-global-output (global basedir "-f" filename))))
+
+(defun gtags-definition-list-cont (basedir parts-list)
+  (let ((max-len (loop :for parts :in parts-list
+                       :for name := (parts-name parts)
+                       :maximize (+ 3 (length name)))))
+    (lem.sourcelist:with-sourcelist (sourcelist "*gtags-definitions*")
+      (dolist (parts parts-list)
+        (let ((name (parts-name parts))
+              (file (parts-file parts))
+              (linum (parts-line-number parts)))
+          (lem.sourcelist:append-sourcelist
+           sourcelist
+           (lambda (p)
+             (insert-string p name)
+             (move-to-column p max-len t)
+             (insert-string p file :attribute 'lem.grep:title-attribute)
+             (insert-string p ":")
+             (insert-string p (princ-to-string linum)
+                            :attribute 'lem.grep:position-attribute))
+           (lambda ()
+             (alexandria:when-let ((buffer (or (get-buffer file)
+                                               (find-file-buffer
+                                                (merge-pathnames file basedir)))))
+               (if (get-buffer-windows buffer)
+                   (setf (current-window) (pop-to-buffer buffer))
+                   (switch-to-buffer buffer))
+               (move-to-line (current-point) linum))))))))
+  (redraw-display))
+
 (define-command gtags-definition-list () ()
-  (let* ((parts-list (parse-global-output (global (buffer-directory) "-f" (buffer-filename))))
-         (names (mapcar #'parts-name parts-list))
-         (name (prompt-for-line "> " ""
-                                (lambda (str) (completion str names))
-                                (lambda (str) (find str names :test #'string=))
-                                'gtags-definition-list))
-         (i (position name parts-list :key #'parts-name :test #'string=)))
-    (when i
-      (let* ((parts (elt parts-list i))
-             (file (parts-file parts))
-             (line-number (parts-line-number parts)))
-        (alexandria:when-let ((buffer (get-buffer file)))
-          (setf (current-window) (pop-to-buffer buffer))
-          (move-to-line (current-point) line-number))))))
+  (let ((basedir (buffer-directory)))
+    (call-background-job (lambda ()
+                           (fetch-gtags-definitions basedir))
+                         (alexandria:curry #'gtags-definition-list-cont basedir))))

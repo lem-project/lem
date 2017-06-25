@@ -226,11 +226,9 @@
     (string filespec)
     (pathname (namestring filespec))))
 
-(defun go-to-location (location &optional pop-to-buffer)
+(defun go-to-location (location set-buffer-fn)
   (let ((buffer (xref-filespec-to-buffer (xref-location-filespec location))))
-    (if pop-to-buffer
-        (setf (current-window) (pop-to-buffer buffer))
-        (switch-to-buffer buffer))
+    (funcall set-buffer-fn buffer)
     (let ((position (xref-location-position location)))
       (etypecase position
         (integer
@@ -252,7 +250,7 @@
       (push-location-stack (current-point))
       (setf locations (uiop:ensure-list locations))
       (if (null (rest locations))
-          (go-to-location (first locations))
+          (go-to-location (first locations) #'switch-to-buffer)
           (let ((prev-file nil))
             (with-sourcelist (sourcelist "*definitions*")
               (dolist (location locations)
@@ -265,8 +263,7 @@
                                          (insert-character p #\newline))
                                        (xref-insert-content content p))
                                      (let ((location location))
-                                       (lambda ()
-                                         (go-to-location location))))
+                                       (alexandria:curry #'go-to-location location)))
                   (setf prev-file file)))))))))
 
 (define-command find-references () ()
@@ -286,12 +283,12 @@
                                  nil))
             (dolist (location (xref-references-locations ref))
               (let ((content (xref-location-content location)))
-                (append-sourcelist sourcelist
-                                   (lambda (p)
-                                     (xref-insert-content content p))
-                                   (let ((location location))
-                                     (lambda ()
-                                       (go-to-location location))))))))))))
+                (append-sourcelist
+                 sourcelist
+                 (lambda (p)
+                   (xref-insert-content content p))
+                 (let ((location location))
+                   (alexandria:curry #'go-to-location location)))))))))))
 
 (defvar *xref-stack-table* (make-hash-table :test 'equal))
 

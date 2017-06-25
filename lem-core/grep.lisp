@@ -59,12 +59,14 @@
                    sourcelist
                    (line-start p2)
                    (line-end p)
-                   (lambda ()
-                     (find-file pathname)
-                     (move-to-line (current-point) line-number)
-                     (if charpos
-                         (line-offset (current-point) 0 charpos)
-                         (back-to-indentation (current-point)))))))))
+                   (lambda (set-buffer-fn)
+                     (let* ((buffer (find-file-buffer pathname))
+                            (p (buffer-point buffer)))
+                       (move-to-line p line-number)
+                       (if charpos
+                           (line-offset p 0 charpos)
+                           (back-to-indentation p))
+                       (funcall set-buffer-fn buffer))))))))
           (unless (line-offset p 1) (return))))))
   (redraw-display))
 

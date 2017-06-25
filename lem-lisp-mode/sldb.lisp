@@ -419,7 +419,10 @@
 
 (defun recompile-location (source-location)
   (save-excursion
-    (go-to-location source-location)
+    (go-to-location source-location
+                    (lambda (buffer)
+                      (setf (current-window)
+                            (pop-to-buffer buffer))))
     (lisp-compile-defun)))
 
 (define-command sldb-recompile-in-frame-source () ()

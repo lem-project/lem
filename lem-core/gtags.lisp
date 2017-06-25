@@ -117,13 +117,11 @@
              (insert-string p ":")
              (insert-string p (princ-to-string linum)
                             :attribute 'lem.grep:position-attribute))
-           (lambda ()
+           (lambda (set-buffer-fn)
              (alexandria:when-let ((buffer (or (get-buffer file)
                                                (find-file-buffer
                                                 (merge-pathnames file basedir)))))
-               (if (get-buffer-windows buffer)
-                   (setf (current-window) (pop-to-buffer buffer))
-                   (switch-to-buffer buffer))
+               (funcall set-buffer-fn buffer)
                (move-to-line (current-point) linum))))))))
   (redraw-display))
 

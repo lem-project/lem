@@ -445,8 +445,7 @@
                   (insert-string cur-point message)
                   (insert-character cur-point #\newline)
                   (insert-string cur-point source-context))
-                (lambda ()
-                  (go-to-location xref-location)))
+                (alexandria:curry #'go-to-location xref-location))
                (push (make-highlight-overlay pos buffer)
                      overlays))))))
       (when overlays
@@ -943,7 +942,10 @@
     ((t &rest _)
      (declare (ignore _))
      (let ((xref-location (source-location-to-xref-location source-location)))
-       (go-to-location xref-location t)))))
+       (go-to-location xref-location
+                       (lambda (buffer)
+                         (setf (current-window)
+                               (pop-to-buffer buffer))))))))
 
 (defun source-location-to-xref-location (location &optional (content "") no-errors)
   (alexandria:destructuring-ecase location

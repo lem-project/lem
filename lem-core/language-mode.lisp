@@ -9,6 +9,7 @@
    :insertion-line-comment
    :find-definitions-function
    :find-references-function
+   :xref-mode-tag
    :completion-function
    :language-mode
    :go-to-location
@@ -36,6 +37,7 @@
 (define-editor-variable insertion-line-comment nil)
 (define-editor-variable find-definitions-function nil)
 (define-editor-variable find-references-function nil)
+(define-editor-variable xref-mode-tag nil)
 (define-editor-variable completion-function nil)
 
 (defun prompt-for-symbol (prompt history-name)
@@ -292,15 +294,19 @@
 
 (defvar *xref-stack-table* (make-hash-table :test 'equal))
 
+(defun xref-stack-table-key (buffer)
+  (or (variable-value 'xref-mode-tag :buffer buffer)
+      (buffer-major-mode buffer)))
+
 (defun push-location-stack (point)
   (let ((buffer (point-buffer point)))
     (push (list (buffer-name buffer)
                 (line-number-at-point point)
                 (point-charpos point))
-          (gethash (buffer-major-mode buffer) *xref-stack-table*))))
+          (gethash (xref-stack-table-key buffer) *xref-stack-table*))))
 
 (define-command pop-definition-stack () ()
-  (let ((elt (pop (gethash (buffer-major-mode (current-buffer))
+  (let ((elt (pop (gethash (xref-stack-table-key (current-buffer))
                            *xref-stack-table*))))
     (when elt
       (destructuring-bind (buffer-name line-number charpos) elt

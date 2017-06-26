@@ -26,6 +26,7 @@
   (setf (variable-value 'calc-indent-function) 'calc-indent)
   (setf (variable-value 'line-comment) ";")
   (setf (variable-value 'insertion-line-comment) ";; ")
+  (setf (variable-value 'xref-mode-tag) 'lisp-mode)
   (setf (variable-value 'find-definitions-function) 'find-definitions)
   (setf (variable-value 'find-references-function) 'find-references)
   (setf (variable-value 'completion-function) 'completion-symbol)

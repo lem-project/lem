@@ -8,10 +8,7 @@
     (:name "typeout"
 	   :keymap *typeout-mode-keymap*))
 
-(define-key *typeout-mode-keymap* "q" 'dismiss-typeout-window)
-
-(define-command dismiss-typeout-window () ()
-  (quit-window (current-window) nil))
+(define-key *typeout-mode-keymap* "q" 'quit-window)
 
 (defun pop-up-typeout-window (buffer fn &key focus erase)
   (let ((window (display-buffer buffer)))

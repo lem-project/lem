@@ -63,7 +63,7 @@
 (define-key *isearch-keymap* "C-s" 'isearch-next)
 (define-key *isearch-keymap* "C-r" 'isearch-prev)
 (define-key *isearch-keymap* "C-y" 'isearch-yank)
-(define-key *global-keymap* "M-r" 'isearch-replace-highlight)
+(define-key *global-keymap* "[f2]" 'isearch-replace-highlight)
 (define-key *global-keymap* "M-s M-n" 'isearch-next-highlight)
 (define-key *global-keymap* "M-s n" 'isearch-next-highlight)
 (define-key *global-keymap* "M-s M-p" 'isearch-prev-highlight)

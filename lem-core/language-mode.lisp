@@ -300,6 +300,7 @@
       (buffer-major-mode buffer)))
 
 (defun push-location-stack (point)
+  (run-hooks *set-location-hook* point)
   (let* ((buffer (point-buffer point))
          (key (xref-table-key buffer))
          (elt (list (buffer-name buffer)

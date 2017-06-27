@@ -213,6 +213,7 @@
                       search-forward-function
                       search-backward-function
                       initial-string)
+  (run-hooks *set-location-hook* (current-point))
   (isearch-mode t)
   (setq *isearch-prompt* prompt)
   (setq *isearch-string* initial-string)

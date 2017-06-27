@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(exit-lem
+(export '(*set-location-hook*
+          exit-lem
           quick-exit
           keyboard-quit
           universal-argument
@@ -46,6 +47,8 @@
           filter-buffer
           pipe-command
           delete-trailing-whitespace))
+
+(defvar *set-location-hook* '())
 
 (defun delete-character-with-killring (point n killp)
   (let ((string (delete-character point n)))
@@ -101,9 +104,11 @@
 
 (define-command self-insert (n) ("p")
   (let ((c (insertion-key-p (last-read-key-sequence))))
-    (if c
-        (insert-character (current-point) c n)
-        (undefined-key))))
+    (cond (c
+           (run-hooks *set-location-hook* (current-point))
+           (insert-character (current-point) c n))
+          (t
+           (undefined-key)))))
 
 (define-key *global-keymap* "M-~" 'unmark-buffer)
 (define-command unmark-buffer () ()
@@ -260,11 +265,13 @@
 
 (define-key *global-keymap* "M-<" 'move-to-beginning-of-buffer)
 (define-command move-to-beginning-of-buffer () ()
+  (run-hooks *set-location-hook* (current-point))
   (buffer-start (current-point))
   t)
 
 (define-key *global-keymap* "M->" 'move-to-end-of-buffer)
 (define-command move-to-end-of-buffer () ()
+  (run-hooks *set-location-hook* (current-point))
   (buffer-end (current-point))
   t)
 
@@ -430,6 +437,7 @@
 
 (define-key *global-keymap* "C-@" 'mark-set)
 (define-command mark-set () ()
+  (run-hooks *set-location-hook* (current-point))
   (set-current-mark (current-point))
   (message "Mark set"))
 
@@ -448,6 +456,7 @@
          (setf n 1))
         ((< #1=(buffer-nlines (current-buffer)) n)
          (setf n #1#)))
+  (run-hooks *set-location-hook* (current-point))
   (line-offset (buffer-start (current-point)) (1- n))
   t)
 

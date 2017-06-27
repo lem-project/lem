@@ -57,6 +57,7 @@
                (:file "line-numbers")
                (:file "sourcelist")
                (:file "grep")
+               (:file "go-back")
                (:file "language-mode")
                (:file "gtags")
                (:file "dired")

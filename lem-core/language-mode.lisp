@@ -320,36 +320,6 @@
         (move-to-line (current-point) line-number)
         (line-offset (current-point) 0 charpos)))))
 
-(define-command xref-push-history () ()
-  (let ((history
-          (gethash (xref-table-key (current-buffer))
-                   *xref-history-table*)))
-    (with-sourcelist (sourcelist "*xref-history*")
-      (dolist (elt history)
-        (destructuring-bind (buffer-name line-number charpos) elt
-          (alexandria:when-let ((buffer (get-buffer buffer-name)))
-            (let ((desc (with-point ((p (buffer-start-point buffer)))
-                          (move-to-line p line-number)
-                          (line-string p))))
-              (append-sourcelist sourcelist
-                                 (lambda (point)
-                                   (insert-string point buffer-name
-                                                  :attribute 'lem.grep:title-attribute)
-                                   (insert-string point ":")
-                                   (insert-string point (princ-to-string line-number)
-                                                  :attribute 'lem.grep:position-attribute)
-                                   (insert-string point ":")
-                                   (insert-string point (princ-to-string charpos)
-                                                  :attribute 'lem.grep:position-attribute)
-                                   (insert-string point ":")
-                                   (when desc (insert-string point desc)) )
-                                 (lambda (set-buffer-fn)
-                                   (let ((buffer (get-buffer buffer-name)))
-                                     (unless buffer (editor-error "No such buffer: ~A" buffer-name))
-                                     (move-to-line (buffer-point buffer) line-number)
-                                     (line-offset (buffer-point buffer) 0 charpos)
-                                     (funcall set-buffer-fn buffer)))))))))))
-
 (define-command complete-symbol () ()
   (alexandria:when-let (fn (variable-value 'completion-function :buffer))
     (alexandria:when-let (completion-items (funcall fn))

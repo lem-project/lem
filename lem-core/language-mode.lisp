@@ -315,6 +315,7 @@
   (let ((elt (pop (gethash (xref-table-key (current-buffer))
                            *xref-stack-table*))))
     (when elt
+      (run-hooks *set-location-hook* (current-point))
       (destructuring-bind (buffer-name line-number charpos) elt
         (select-buffer buffer-name)
         (move-to-line (current-point) line-number)

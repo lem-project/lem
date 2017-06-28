@@ -124,7 +124,7 @@
   (let ((c (read-key)))
     (when (interactive-p)
       (message nil))
-    (if (char= c C-g)
+    (if (abort-key-p c)
         (error 'editor-abort)
         c)))
 

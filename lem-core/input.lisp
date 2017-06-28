@@ -102,6 +102,6 @@
   (when update-window-p (redraw-display))
   (let ((e (read-event seconds)))
     (cond ((null e) t)
-          ((eql e C-g) (error 'editor-abort))
+          ((abort-key-p e) (error 'editor-abort))
           ((characterp e) (unread-key e))
           (t nil))))

@@ -590,7 +590,7 @@
     (charms/ll:doupdate)))
 
 (define-implementation input-loop (editor-thread)
-  (loop
+  (loop :with abort-key := (char-code (keyname->keychar "C-]")) :do
     (unless (bt:thread-alive-p editor-thread) (return))
     (let ((code (charms/ll:getch)))
       (cond ((= code -1))
@@ -598,7 +598,7 @@
              (loop :while (< 0 (lem::event-queue-length)) :do
                (sleep 0.01))
              (lem::change-display-size-hook t))
-            ((= code #.(char-code lem::C-\]))
+            ((= code abort-key)
              (send-abort-event editor-thread))
             (t
              (send-event

@@ -1,5 +1,8 @@
 (in-package :lem)
 
+(export '(keyname->keychar
+          keychar->keyname))
+
 (defvar *string->key* (make-hash-table :test 'equal))
 (defvar *key->symbol* (make-hash-table))
 
@@ -9,17 +12,12 @@
 (defun keychar->keyname (char)
   (gethash char *key->symbol*))
 
-(defmacro defkeycode (name code &optional (const-name name))
+(defmacro defkeycode (name code)
   (when (integerp code)
     (setf code (code-char code)))
   `(progn
      (setf (gethash ,name *string->key*) ,code
-           (gethash ,code *key->symbol*) ,name)
-     (defconstant ,(intern
-                    (string
-                     (read-from-string
-                      (format nil "#:~A" const-name))))
-       ,code)))
+           (gethash ,code *key->symbol*) ,name)))
 
 (defkeycode "C-@" 0)
 (defkeycode "C-a" 1)
@@ -49,7 +47,7 @@
 (defkeycode "C-y" 25)
 (defkeycode "C-z" 26)
 (defkeycode "escape" 27)
-(defkeycode "C-\\" 28 "C-backslash")
+(defkeycode "C-\\" 28)
 (defkeycode "C-]" 29)
 (defkeycode "C-^" 30)
 (defkeycode "C-_" 31)
@@ -170,4 +168,9 @@
 (defkeycode "[event]" #o633)
 
 (defun ctrl-p (c)
-  (char<= C-@ c C-z))
+  (char<= (keyname->keychar "C-@")
+          c
+          (keyname->keychar "C-z")))
+
+(defun abort-key-p (c)
+  (char= c (keyname->keychar "C-g")))

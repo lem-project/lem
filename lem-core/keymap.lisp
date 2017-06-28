@@ -85,18 +85,18 @@
                                 (char-downcase
                                  (code-char
                                   (+ 64 (char-code c))))))
-                       ((char= c escape) "M")
+                       ((char= c (keyname->keychar "escape")) "M")
                        ((keychar->keyname c))
                        (t (format nil "~A" c)))
              collect (cond ((not (cdr c-))"")
-                           ((char= c escape) "-")
+                           ((char= c (keyname->keychar "escape")) "-")
                            (t " ")))))
 
 (defun kbd-string-1 (str)
   (if (and (>= (length str) 2)
            (eql (aref str 0) #\M)
            (eql (aref str 1) #\-))
-      (cons escape (kbd-string-1 (subseq str 2)))
+      (cons (keyname->keychar "escape") (kbd-string-1 (subseq str 2)))
       (list (keyname->keychar str))))
 
 (defun kbd-string (str)
@@ -145,7 +145,8 @@
     (when (and (or (not (keychar->keyname first-key))
                    (member first-key '(#\space #\tab)))
                (or (< 31 (char-code first-key))
-                   (char= C-i first-key)))
+                   (char= first-key
+                          (keyname->keychar "C-i"))))
       first-key)))
 
 (defun keymap-flatten-map (keymap fun)

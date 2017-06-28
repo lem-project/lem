@@ -17,7 +17,7 @@
 
 (defun describe-bindings-internal (s name keymap &optional first-p)
   (unless first-p
-    (princ C-L s)
+    (princ #\page s)
     (terpri s))
   (let ((column-width 16))
     (princ name s)

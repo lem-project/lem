@@ -50,7 +50,9 @@
 
 (define-command select-go-back () ()
   (with-sourcelist (sourcelist "*select-locations*" :focus t)
-    (loop :for (name linum charpos) :in (record-locations *global-record*)
+    (loop :for (name linum charpos) :in (remove-duplicates
+                                         (record-locations *global-record*)
+                                         :test #'equal-location)
           :for buffer := (get-buffer name)
           :when buffer
           :do (let ((name name)

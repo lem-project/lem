@@ -105,7 +105,6 @@
 (define-command self-insert (n) ("p")
   (let ((c (insertion-key-p (last-read-key-sequence))))
     (cond (c
-           (run-hooks *set-location-hook* (current-point))
            (insert-character (current-point) c n))
           (t
            (undefined-key)))))

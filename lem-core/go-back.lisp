@@ -6,21 +6,40 @@
 (in-package :lem.go-back)
 
 (defvar *record-locations* '())
+(defvar *len* 0)
+(defvar *max* 100)
 
 (defun elt-name (elt) (first elt))
 (defun elt-linum (elt) (second elt))
 (defun elt-charpos (elt) (third elt))
 
-(defun record-location (point)
-  (loop :for (name linum) :in *record-locations*
-        :do (when (and (equal name (buffer-name (point-buffer point)))
-                       (= linum (line-number-at-point point)))
-              (return-from record-location nil)))
-  (let ((buffer (point-buffer point)))
-    (push (list (buffer-name buffer)
-                (line-number-at-point point)
-                (point-charpos point))
-          *record-locations*)))
+(defun point-to-elt (point)
+  (list (buffer-name (point-buffer point))
+        (line-number-at-point point)
+        (point-charpos point)))
+
+(defun equal-location (elt1 elt2)
+  (and (equal (elt-name elt1)
+              (elt-name elt2))
+       (= (elt-linum elt1)
+          (elt-linum elt2))))
+
+(defun record-location (point &optional tail)
+  (let ((new-elt (point-to-elt point)))
+    (when (if tail
+              (equal-location new-elt
+                              (car (last *record-locations*)))
+              (equal-location new-elt
+                              (car *record-locations*)))
+      (return-from record-location))
+    (if (<= *max* *len*)
+        (progn
+          (setf *record-locations* (nbutlast *record-locations* (1+ (- *len* *max*))))
+          (setf *len* *max*))
+        (incf *len*))
+    (if tail
+        (alexandria:nconcf *record-locations* (list new-elt))
+        (push new-elt *record-locations*))))
 
 (define-command select-go-back () ()
   (with-sourcelist (sourcelist "*select-locations*" :focus t)
@@ -54,9 +73,13 @@
 (define-command go-back (n) ("p")
   (when (plusp n)
     (loop :while *record-locations*
-          :for elt := (pop *record-locations*)
+          :for elt := (progn
+                        (decf *len*)
+                        (pop *record-locations*))
           :for (buffer-name line-number charpos) := elt
           :do (alexandria:when-let ((buffer (get-buffer buffer-name)))
+                (record-location (current-point) t)
+                (incf *len*)
                 (alexandria:nconcf *record-locations* (list elt))
                 (when (zerop (decf n))
                   (switch-to-buffer buffer)
@@ -64,10 +87,5 @@
                     (move-to-line p line-number)
                     (line-offset p 0 charpos))
                   (return))))))
-
-(define-command go-forward (n) ("p")
-  (alexandria:nreversef *record-locations*)
-  (go-back n)
-  (alexandria:nreversef *record-locations*))
 
 (add-hook *set-location-hook* 'record-location)

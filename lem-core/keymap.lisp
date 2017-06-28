@@ -142,11 +142,9 @@
 
 (defun insertion-key-p (key)
   (let* ((first-key (car (kbd-list key))))
-    (when (and (or (not (keychar->keyname first-key))
-                   (member first-key '(#\space #\tab)))
-               (or (< 31 (char-code first-key))
-                   (char= first-key
-                          (keyname->keychar "C-i"))))
+    (when (or (< 31 (char-code first-key))
+              (char= first-key
+                     (keyname->keychar "C-i")))
       first-key)))
 
 (defun keymap-flatten-map (keymap fun)

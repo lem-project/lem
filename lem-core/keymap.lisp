@@ -80,11 +80,6 @@
           (loop for c- on (kbd-list key)
              for c = (first c-)
              collect (cond
-                       ((ctrl-p c)
-                        (format nil "C-~c"
-                                (char-downcase
-                                 (code-char
-                                  (+ 64 (char-code c))))))
                        ((char= c (keyname->keychar "escape")) "M")
                        ((keychar->keyname c))
                        (t (format nil "~A" c)))
@@ -144,7 +139,7 @@
   (let* ((first-key (car (kbd-list key))))
     (when (or (< 31 (char-code first-key))
               (char= first-key
-                     (keyname->keychar "C-i")))
+                     (load-time-value (keyname->keychar "C-i"))))
       first-key)))
 
 (defun keymap-flatten-map (keymap fun)
@@ -317,3 +312,7 @@
   (let ((cmd (lookup-keybind key)))
     (when (or (symbolp cmd) (functionp cmd))
       (function-to-command cmd))))
+
+(let ((abort-key (keyname->keychar "C-g")))
+  (defun abort-key-p (c)
+    (char= c abort-key)))

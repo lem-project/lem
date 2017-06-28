@@ -161,11 +161,3 @@
 (defkeycode "[mouse]" #o631)
 (defkeycode "[resize]" #o632)
 (defkeycode "[event]" #o633)
-
-(defun ctrl-p (c)
-  (char<= (keyname->keychar "C-@")
-          c
-          (keyname->keychar "C-z")))
-
-(defun abort-key-p (c)
-  (char= c (keyname->keychar "C-g")))

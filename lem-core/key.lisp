@@ -3,6 +3,12 @@
 (defvar *string->key* (make-hash-table :test 'equal))
 (defvar *key->symbol* (make-hash-table))
 
+(defun keyname->keychar (name)
+  (gethash name *string->key*))
+
+(defun keychar->keyname (char)
+  (gethash char *key->symbol*))
+
 (defmacro defkeycode (name code &optional (const-name name))
   (when (integerp code)
     (setf code (code-char code)))

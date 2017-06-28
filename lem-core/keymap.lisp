@@ -86,7 +86,7 @@
                                  (code-char
                                   (+ 64 (char-code c))))))
                        ((char= c escape) "M")
-                       ((gethash c *key->symbol*))
+                       ((keychar->keyname c))
                        (t (format nil "~A" c)))
              collect (cond ((not (cdr c-))"")
                            ((char= c escape) "-")
@@ -97,7 +97,7 @@
            (eql (aref str 0) #\M)
            (eql (aref str 1) #\-))
       (cons escape (kbd-string-1 (subseq str 2)))
-      (list (gethash str *string->key*))))
+      (list (keyname->keychar str))))
 
 (defun kbd-string (str)
   (make-kbd
@@ -142,7 +142,7 @@
 
 (defun insertion-key-p (key)
   (let* ((first-key (car (kbd-list key))))
-    (when (and (or (not (gethash first-key *key->symbol*))
+    (when (and (or (not (keychar->keyname first-key))
                    (member first-key '(#\space #\tab)))
                (or (< 31 (char-code first-key))
                    (char= C-i first-key)))

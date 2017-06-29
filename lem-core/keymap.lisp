@@ -315,4 +315,4 @@
 
 (let ((abort-key (keyname->keychar "C-g")))
   (defun abort-key-p (c)
-    (char= c abort-key)))
+    (eql c abort-key)))

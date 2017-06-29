@@ -252,7 +252,9 @@
       (push-location-stack (current-point))
       (setf locations (uiop:ensure-list locations))
       (if (null (rest locations))
-          (go-to-location (first locations) #'switch-to-buffer)
+          (progn
+            (go-to-location (first locations) #'switch-to-buffer)
+            (jump-highlighting))
           (let ((prev-file nil))
             (with-sourcelist (sourcelist "*definitions*")
               (dolist (location locations)
@@ -319,7 +321,8 @@
       (destructuring-bind (buffer-name line-number charpos) elt
         (select-buffer buffer-name)
         (move-to-line (current-point) line-number)
-        (line-offset (current-point) 0 charpos)))))
+        (line-offset (current-point) 0 charpos))
+      (jump-highlighting))))
 
 (define-command complete-symbol () ()
   (alexandria:when-let (fn (variable-value 'completion-function :buffer))

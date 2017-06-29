@@ -2,8 +2,12 @@
   (:use :cl :lem)
   (:export :with-sourcelist
            :append-jump-function
-           :append-sourcelist))
+           :append-sourcelist
+           :jump-highlighting))
 (in-package :lem.sourcelist)
+
+(define-attribute jump-highlight
+  (t :background "cyan"))
 
 (defvar *sourcelist-point*)
 (defvar *current-sourcelist* nil)
@@ -52,6 +56,15 @@
                            point
                            jump-function)))))
 
+(defun jump-highlighting ()
+  (let ((point (current-point)))
+    (with-point ((start point)
+                 (end point))
+      (let ((overlay (make-overlay (back-to-indentation start) (line-end end)
+                                   'jump-highlight)))
+        (start-timer 300 nil (lambda ()
+                               (delete-overlay overlay)))))))
+
 (defun jump-current-element (index)
   (funcall (aref (sourcelist-elements *current-sourcelist*)
                  index)
@@ -67,7 +80,8 @@
                    (if (eq (current-window) sourcelist-window)
                        (setf (current-window) (pop-to-buffer buffer))
                        (switch-to-buffer buffer))
-                   (move-point (buffer-point buffer) p)))))))
+                   (move-point (buffer-point buffer) p))))))
+  (jump-highlighting))
 
 (define-key *global-keymap* "C-x n" 'sourcelist-next)
 (define-key *global-keymap* "C-x C-n" 'sourcelist-next)

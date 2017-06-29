@@ -69,11 +69,7 @@
                                 (error 'exit-editor :value report)))))
                          :name "editor")))
     (handler-case (input-loop editor-thread)
-      (exit-editor (c) (return-from lem-internal (exit-editor-value c)))
-      #+sbcl
-      (sb-sys:interactive-interrupt (c)
-        (declare (ignore c))
-        (bt:destroy-thread editor-thread)))))
+      (exit-editor (c) (return-from lem-internal (exit-editor-value c))))))
 
 (let ((passed nil))
   (defun call-with-editor (function)

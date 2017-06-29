@@ -590,23 +590,32 @@
     (charms/ll:doupdate)))
 
 (define-implementation input-loop (editor-thread)
-  (loop :with abort-key := (char-code (keyname->keychar "C-]")) :do
-    (unless (bt:thread-alive-p editor-thread) (return))
-    (let ((code (charms/ll:getch)))
-      (cond ((= code -1))
-            ((= code 410)
-             (loop :while (< 0 (lem::event-queue-length)) :do
-               (sleep 0.01))
-             (lem::change-display-size-hook t))
-            ((= code abort-key)
-             (send-abort-event editor-thread))
-            (t
-             (send-event
-              (let ((nbytes (utf8-bytes code)))
-                (if (= nbytes 1)
-                    (code-char code)
-                    (let ((vec (make-array nbytes :element-type '(unsigned-byte 8))))
-                      (setf (aref vec 0) code)
-                      (loop :for i :from 1 :below nbytes
-                            :do (setf (aref vec i) (charms/ll:getch)))
-                      (schar (babel:octets-to-string vec) 0))))))))))
+  (loop
+    :with abort-key := (char-code (keyname->keychar "C-]"))
+    :do (handler-case
+            (progn
+              (unless (bt:thread-alive-p editor-thread) (return))
+              (let ((code (charms/ll:getch)))
+                (cond
+                  ((= code -1))
+                  ((= code 410)
+                   (loop :while (< 0 (lem::event-queue-length)) :do
+                         (sleep 0.01))
+                   (lem::change-display-size-hook t))
+                  ((= code abort-key)
+                   (send-abort-event editor-thread))
+                  (t
+                   (send-event
+                    (let ((nbytes (utf8-bytes code)))
+                      (if (= nbytes 1)
+                          (code-char code)
+                          (let ((vec (make-array nbytes
+                                                 :element-type '(unsigned-byte 8))))
+                            (setf (aref vec 0) code)
+                            (loop :for i :from 1 :below nbytes
+                                  :do (setf (aref vec i) (charms/ll:getch)))
+                            (schar (babel:octets-to-string vec) 0)))))))))
+          #+sbcl
+          (sb-sys:interactive-interrupt (c)
+            (declare (ignore c))
+            (send-abort-event editor-thread)))))

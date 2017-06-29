@@ -36,7 +36,9 @@
                          ,focus))
 
 (defun append-jump-function (sourcelist start end jump-function)
-  (put-text-property start end 'sourcelist jump-function)
+  (put-text-property start end
+                     'sourcelist
+                     (length (sourcelist-elements sourcelist)))
   (vector-push-extend jump-function (sourcelist-elements sourcelist)))
 
 (defun append-sourcelist (sourcelist write-function jump-function)
@@ -50,9 +52,9 @@
                            point
                            jump-function)))))
 
-(defun jump-current-element ()
+(defun jump-current-element (index)
   (funcall (aref (sourcelist-elements *current-sourcelist*)
-                 (sourcelist-index *current-sourcelist*))
+                 index)
            (let ((buffer-name (sourcelist-buffer-name *current-sourcelist*)))
              (lambda (buffer)
                (with-point ((p (buffer-point buffer)))
@@ -73,16 +75,16 @@
   (when *current-sourcelist*
     (when (< (1+ (sourcelist-index *current-sourcelist*))
              (length (sourcelist-elements *current-sourcelist*)))
-      (incf (sourcelist-index *current-sourcelist*))
-      (jump-current-element))))
+      (jump-current-element
+       (incf (sourcelist-index *current-sourcelist*))))))
 
 (define-key *global-keymap* "C-x p" 'sourcelist-previous)
 (define-key *global-keymap* "C-x C-p" 'sourcelist-previous)
 (define-command sourcelist-previous () ()
   (when *current-sourcelist*
     (when (<= 0 (1- (sourcelist-index *current-sourcelist*)))
-      (decf (sourcelist-index *current-sourcelist*))
-      (jump-current-element))))
+      (jump-current-element
+       (decf (sourcelist-index *current-sourcelist*))))))
 
 (define-minor-mode sourcelist-mode
     (:name "sourcelist"
@@ -92,10 +94,7 @@
 (define-key *sourcelist-mode-keymap* "q" 'quit-window)
 
 (define-command sourcelist-jump () ()
-  (let ((jump-function (text-property-at (current-point) 'sourcelist)))
-    (when jump-function
-      (funcall jump-function
-               (lambda (buffer)
-                 (with-point ((p (buffer-point buffer)))
-                   (setf (current-window) (pop-to-buffer buffer))
-                   (move-point (buffer-point buffer) p)))))))
+  (let ((index (text-property-at (current-point) 'sourcelist)))
+    (when index
+      (jump-current-element
+       (setf (sourcelist-index *current-sourcelist*) index)))))

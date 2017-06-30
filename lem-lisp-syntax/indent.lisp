@@ -2,6 +2,7 @@
   (:use :cl :lem-base)
   (:export :*get-method-function*
            :set-indentation
+           :indentation-update
            :calc-indent))
 (in-package :lem-lisp-syntax.indent)
 
@@ -16,6 +17,11 @@
 
 (defun set-indentation (name method)
   (setf (gethash name *indent-table*) method))
+
+(defun indentation-update ()
+  (do-all-symbols (symbol)
+    (alexandria:when-let ((indent (swank::symbol-indentation symbol)))
+      (set-indentation (string-downcase symbol) indent))))
 
 (mapc (lambda (elt)
         (let ((name (car elt))

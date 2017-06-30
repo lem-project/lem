@@ -77,7 +77,7 @@
 		(setf cmd (lookup-keybind list))))
 	     (t
 	      (set-last-read-key-sequence list)
-	      (return (function-to-command cmd)))))))
+	      (return cmd))))))
 
 (defun read-key-sequence ()
   (read-command)
@@ -95,7 +95,7 @@
         (do-command-loop (:interactive nil)
           (when (null *unread-keys*)
             (return-from execute-key-sequence t))
-          (funcall (read-command) nil)))
+          (call-command (read-command) nil)))
     (editor-condition ())))
 
 (defun sit-for (seconds &optional (update-window-p t))

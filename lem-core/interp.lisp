@@ -57,9 +57,12 @@
     (push (cons flag t) *last-flags*)
     (push (cons flag t) *curr-flags*)))
 
-(defun call-command (cmd arg)
+(defun call-command (command-name arg)
   (run-hooks *pre-command-hook*)
-  (prog1 (funcall cmd arg)
+  (prog1 (let ((cmd (function-to-command command-name)))
+           (if cmd
+               (funcall cmd arg)
+               (editor-error "~A: command not found" command-name)))
     (buffer-undo-boundary)
     (run-hooks *post-command-hook*)))
 

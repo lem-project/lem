@@ -301,7 +301,7 @@
                                                               sexp-column)))))))))
     (if (or (null calculated)
             (eq calculated 'default-indent))
-        (if const-flag
+        (if (and const-flag innermost-sexp-column)
             (1+ innermost-sexp-column)
             (calc-function-indent indent-point))
         calculated)))

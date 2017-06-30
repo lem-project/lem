@@ -151,16 +151,9 @@
                        (lambda (window)
                          (= id (window-id window)))))
 
-(let ((last-window-id 'last-window-id))
-  (defun buffer-previous-window (buffer)
-    (alexandria:when-let*
-        ((id (buffer-value buffer last-window-id))
-         (window (find-window id)))
-      window))
-  (defun set-window-buffer (window buffer)
-    (screen-modify (window-screen window))
-    (setf (buffer-value buffer last-window-id) (window-id window))
-    (setf (window-%buffer window) buffer)))
+(defun set-window-buffer (window buffer)
+  (screen-modify (window-screen window))
+  (setf (window-%buffer window) buffer))
 
 (defun window-buffer-point (window)
   (buffer-point (window-buffer window)))
@@ -816,10 +809,6 @@
 (defun pop-to-buffer (buffer &optional force-split-p)
   (when (eq buffer (current-buffer))
     (return-from pop-to-buffer (values (current-window) nil)))
-  (alexandria:when-let ((window (buffer-previous-window buffer)))
-    (with-current-window window
-      (switch-to-buffer buffer)
-      (return-from pop-to-buffer (values (current-window) nil))))
   (let ((split-p))
     (when (or (one-window-p) force-split-p)
       (setq split-p t)

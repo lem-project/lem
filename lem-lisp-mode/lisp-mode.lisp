@@ -425,35 +425,34 @@
 
 (defun highlight-notes (notes)
   (lisp-remove-notes)
-  (when notes
-    (let ((overlays '()))
-      (lem.sourcelist:with-sourcelist (sourcelist "*lisp-compilations*")
-        (dolist (note notes)
-          (optima:match note
-            ((and (optima:property :location location)
-                  (or (optima:property :message message) (and))
-                  (or (optima:property :source-context source-context) (and)))
-             (let* ((xref-location (source-location-to-xref-location location))
-                    (name (xref-filespec-to-filename (xref-location-filespec xref-location)))
-                    (pos (xref-location-position xref-location))
-                    (buffer (xref-filespec-to-buffer (xref-location-filespec xref-location))))
-               (lem.sourcelist:append-sourcelist
-                sourcelist
-                (lambda (cur-point)
-                  (insert-string cur-point name :attribute 'lem.grep:title-attribute)
-                  (insert-string cur-point ":")
-                  (insert-string cur-point (princ-to-string pos)
-                                 :attribute 'lem.grep:position-attribute)
-                  (insert-string cur-point ":")
-                  (insert-character cur-point #\newline 1)
-                  (insert-string cur-point message)
-                  (insert-character cur-point #\newline)
-                  (insert-string cur-point source-context))
-                (alexandria:curry #'go-to-location xref-location))
-               (push (make-highlight-overlay pos buffer)
-                     overlays))))))
-      (when overlays
-        (setf *note-overlays* overlays)))))
+  (let ((overlays '()))
+    (lem.sourcelist:with-sourcelist (sourcelist "*lisp-compilations*")
+      (dolist (note notes)
+        (optima:match note
+          ((and (optima:property :location location)
+                (or (optima:property :message message) (and))
+                (or (optima:property :source-context source-context) (and)))
+           (let* ((xref-location (source-location-to-xref-location location))
+                  (name (xref-filespec-to-filename (xref-location-filespec xref-location)))
+                  (pos (xref-location-position xref-location))
+                  (buffer (xref-filespec-to-buffer (xref-location-filespec xref-location))))
+             (lem.sourcelist:append-sourcelist
+              sourcelist
+              (lambda (cur-point)
+                (insert-string cur-point name :attribute 'lem.grep:title-attribute)
+                (insert-string cur-point ":")
+                (insert-string cur-point (princ-to-string pos)
+                               :attribute 'lem.grep:position-attribute)
+                (insert-string cur-point ":")
+                (insert-character cur-point #\newline 1)
+                (insert-string cur-point message)
+                (insert-character cur-point #\newline)
+                (insert-string cur-point source-context))
+              (alexandria:curry #'go-to-location xref-location))
+             (push (make-highlight-overlay pos buffer)
+                   overlays))))))
+    (when overlays
+      (setf *note-overlays* overlays))))
 
 (define-command lisp-remove-notes () ()
   (mapc #'delete-overlay *note-overlays*))

@@ -1000,10 +1000,24 @@
     #+(or)((:zip file entry))
     ))
 
+(defun move-to-bytes (point bytes)
+  (buffer-start point)
+  (loop
+    (let ((size (1+ (babel:string-size-in-octets (line-string point)))))
+      (when (<= bytes size)
+        (loop :for i :from 0
+              :do
+              (decf bytes (babel:string-size-in-octets (string (character-at point i))))
+              (when (<= bytes 0)
+                (character-offset point i)
+                (return-from move-to-bytes point))))
+      (decf bytes size)
+      (unless (line-offset point 1) (return)))))
+
 (defun move-to-location-position (point location-position)
   (alexandria:destructuring-ecase location-position
     ((:position pos)
-     (move-to-position point (1+ pos)))
+     (move-to-bytes point pos))
     ((:offset start offset)
      (move-to-position point (1+ start))
      (character-offset point offset))

@@ -86,9 +86,17 @@
             :collect frame)
       frames))
 
+(defvar *sldb-last-window-id* nil)
 (defun sldb-setup (thread level condition restarts frames conts)
   (let ((buffer (get-sldb-buffer-create thread)))
-    (setf (current-window) (display-buffer buffer))
+    (if *sldb-last-window-id*
+        (progn
+          (setf (current-window)
+                (find-window *sldb-last-window-id*))
+          (switch-to-buffer buffer))
+        (let ((window (display-buffer buffer)))
+          (setf *sldb-last-window-id* (window-id window))
+          (setf (current-window) window)))
     (change-buffer-mode buffer 'sldb-mode)
     (setf (buffer-read-only-p buffer) nil)
     (setf (variable-value 'truncate-lines :buffer buffer) nil)
@@ -227,7 +235,7 @@
       (line-start point)
       (delete-between-points start point))))
 
-(defun sldb-active (thread level select)
+(defun sldb-activate (thread level select)
   (let ((buffer (get-sldb-buffer thread)))
     (cond ((and buffer
                 (= level (buffer-value buffer 'level -1)))
@@ -250,11 +258,13 @@
     (when buffer
       (cond (stepping
              (setf (buffer-value buffer 'level) nil)
-             (start-timer 100 nil (lambda ()
+             (start-timer 0 nil (lambda ()
+                                  (when (get-buffer (buffer-name buffer))
                                     (let ((window (car (get-buffer-windows buffer))))
-                                      (when (and window (not (deleted-window-p window))
+                                      (when (and window
+                                                 (not (deleted-window-p window))
                                                  (not (buffer-value buffer 'level)))
-                                        (quit-window window t))))))
+                                        (quit-window window t)))))))
             ((eq buffer (window-buffer (current-window)))
              (quit-window (current-window) t)
              (let* ((repl-buffer (repl-buffer))
@@ -438,7 +448,7 @@
 (pushnew (lambda (event)
            (alexandria:destructuring-case event
              ((:debug-activate thread level &optional select)
-              (sldb-active thread level select)
+              (sldb-activate level thread select)
               t)
              ((:debug thread level condition restarts frames conts)
               (sldb-setup thread level condition restarts frames conts)

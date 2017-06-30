@@ -6,8 +6,10 @@
           *window-scroll-functions*
           *window-size-change-functions*
           *window-show-buffer-functions*
+          find-window
           window-view-point
           windowp
+          window-id
           window-x
           window-y
           window-width
@@ -144,14 +146,16 @@
 (defun window-buffer (&optional (window (current-window)))
   (window-%buffer window))
 
+(defun find-window (id)
+  (window-tree-find-if (window-tree)
+                       (lambda (window)
+                         (= id (window-id window)))))
+
 (let ((last-window-id 'last-window-id))
   (defun buffer-previous-window (buffer)
     (alexandria:when-let*
         ((id (buffer-value buffer last-window-id))
-         (window
-          (window-tree-find-if (window-tree)
-                               (lambda (window)
-                                 (eq id (window-id window))))))
+         (window (find-window id)))
       window))
   (defun set-window-buffer (window buffer)
     (screen-modify (window-screen window))

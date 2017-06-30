@@ -14,6 +14,8 @@
 (defun step-on-read-only (point n)
   (loop :for line := (point-line point) :then (line-next line)
         :for charpos := (point-charpos point) :then 0
+        :do (unless line
+              (return nil))
         :do (when (line-search-property-range line :read-only charpos n)
               (return t))
         :do (when (>= 0 (decf n (1+ (- (line-length line) charpos))))

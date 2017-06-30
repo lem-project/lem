@@ -51,8 +51,14 @@
 
 (defvar *current-window*)
 
+(defvar *window-id-counter* 0)
+
 (defclass window ()
-  ((x
+  ((id
+    :initform (mod (incf *window-id-counter*) most-positive-fixnum)
+    :reader window-id
+    :type fixnum)
+   (x
     :initarg :x
     :accessor window-%x
     :type fixnum)

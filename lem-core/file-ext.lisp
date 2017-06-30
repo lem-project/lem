@@ -4,20 +4,39 @@
 
 (defvar *auto-mode-alist* nil)
 
+(defun scan-var/val (str start)
+  (multiple-value-bind (start end reg-starts reg-ends)
+      (ppcre:scan "([a-zA-Z0-9-_]+):\\s*" str :start start)
+    (when start
+      (let ((var (subseq str
+                         (aref reg-starts 0)
+                         (aref reg-ends 0))))
+        (multiple-value-bind (val end)
+            (handler-bind ((error (lambda (c)
+                                    (declare (ignore c))
+                                    (return-from scan-var/val))))
+              (let ((*read-eval* nil))
+                (read-from-string str nil nil :start end)))
+          (values end var val))))))
+
+(defun set-file-property (buffer var val)
+  (cond ((string-equal var "mode")
+         (let ((mode (find-mode-from-name val)))
+           (when mode
+             (change-buffer-mode buffer mode))))
+        (t
+         (let ((ev (find-editor-variable var)))
+           (if ev
+               (setf (variable-value ev :buffer buffer) val)
+               (setf (buffer-value buffer (string-downcase var)) val))))))
+
 (defun scan-line-property-list (buffer str)
-  (ppcre:do-register-groups (var val)
-      ("([a-zA-Z0-9-_]+)\\s*:\\s*([^ ;]+);?" str)
-    (cond ((string-equal var "mode")
-           (let ((mode (find-mode-from-name val)))
-             (when mode
-               (change-buffer-mode buffer mode))))
-          (t
-           (let ((*read-eval* nil))
-             (setf val (read-from-string val)))
-           (let ((ev (find-editor-variable var)))
-             (if ev
-                 (setf (variable-value ev :buffer buffer) val)
-                 (setf (buffer-value buffer (string-downcase var)) val)))))))
+  (loop :with i := 0
+        :do (multiple-value-bind (pos var val)
+                (scan-var/val str i)
+              (unless pos (return)) 
+              (set-file-property buffer var val)
+              (setf i pos))))
 
 (defun scan-file-property-list (buffer)
   (with-point ((cur-point (buffer-point buffer)))

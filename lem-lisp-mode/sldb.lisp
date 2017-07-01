@@ -89,14 +89,16 @@
 (defvar *sldb-last-window-id* nil)
 (defun sldb-setup (thread level condition restarts frames conts)
   (let ((buffer (get-sldb-buffer-create thread)))
-    (if *sldb-last-window-id*
-        (progn
-          (setf (current-window)
-                (find-window *sldb-last-window-id*))
-          (switch-to-buffer buffer))
-        (let ((window (display-buffer buffer)))
-          (setf *sldb-last-window-id* (window-id window))
-          (setf (current-window) window)))
+    (let ((window
+            (and *sldb-last-window-id*
+                 (find-window *sldb-last-window-id*))))
+      (if window
+          (progn
+            (setf (current-window) window)
+            (switch-to-buffer buffer))
+          (let ((window (display-buffer buffer)))
+            (setf *sldb-last-window-id* (window-id window))
+            (setf (current-window) window))))
     (change-buffer-mode buffer 'sldb-mode)
     (setf (buffer-read-only-p buffer) nil)
     (setf (variable-value 'truncate-lines :buffer buffer) nil)

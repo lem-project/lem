@@ -665,18 +665,25 @@
                    (unless (search-forward-regexp p regex to)
                      (move-point p to)
                      (return-from outer))
-                   (cond
-                     ((match-string-at p (cdr block-pair))
-                      (character-offset p (length (car block-pair)))
-                      (when (= 0 (decf block-comment-depth))
-                        (setf block-comment-depth nil)
-                        (setf block-pair nil)
-                        (setf type nil)
-                        (setf token-start-point nil)
-                        (return p)))
-                     (t
-                      (character-offset p (length (cdr block-pair)))
-                      (incf block-comment-depth))))))
+                   (let ((end-block-p (match-string-at p (cdr block-pair))))
+                     (let ((offset
+                             (length (if end-block-p
+                                         (cdr block-pair)
+                                         (car block-pair)))))
+                       (character-offset p offset)
+                       (when (point< to p)
+                         (character-offset p (- offset))
+                         (return-from outer)))
+                     (cond
+                       (end-block-p
+                        (when (= 0 (decf block-comment-depth))
+                          (setf block-comment-depth nil)
+                          (setf block-pair nil)
+                          (setf type nil)
+                          (setf token-start-point nil)
+                          (return p)))
+                       (t
+                        (incf block-comment-depth)))))))
               (:line-comment
                (when (and (point<= p to)
                           (same-line-p p to))

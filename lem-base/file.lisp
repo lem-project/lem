@@ -82,7 +82,7 @@
                  (insert-character point #\newline))))))))
     (values external-format end-of-line)))
 
-(defun find-file-buffer (filename)
+(defun find-file-buffer (filename &key temporary (enable-undo-p t))
   (when (pathnamep filename)
     (setf filename (namestring filename)))
   (setf filename (expand-file-name filename))
@@ -90,13 +90,17 @@
          (if *find-directory-function*
              (funcall *find-directory-function* filename)
              (editor-error "~A is a directory" filename)))
-        ((find filename (buffer-list) :key #'buffer-filename :test #'equal))
+        ((and (not temporary)
+              (find filename (buffer-list) :key #'buffer-filename :test #'equal)))
         (t
          (let* ((name (file-namestring filename))
-                (buffer (make-buffer (if (get-buffer name)
-                                         (uniq-buffer-name name)
-                                         name)
-                                     :enable-undo-p nil)))
+                (buffer (make-buffer (if temporary
+                                         name
+                                         (if (get-buffer name)
+                                             (uniq-buffer-name name)
+                                             name))
+                                     :enable-undo-p nil
+                                     :temporary temporary)))
            (setf (buffer-filename buffer) filename)
            (when (probe-file filename)
              (let ((*inhibit-modification-hooks* t))
@@ -107,7 +111,7 @@
                        (cons external-format end-of-line))))
              (buffer-unmark buffer))
            (buffer-start (buffer-point buffer))
-           (buffer-enable-undo buffer)
+           (when enable-undo-p (buffer-enable-undo buffer))
            (update-changed-disk-date buffer)
            (run-hooks *find-file-hook* buffer)
            (values buffer t)))))

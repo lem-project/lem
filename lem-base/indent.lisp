@@ -1,9 +1,10 @@
 (in-package :lem-base)
 
 (export '(back-to-indentation
-          indent-line
           indent-tabs-mode
-          calc-indent-function))
+          calc-indent-function
+          indent-line
+          indent-region))
 
 (define-editor-variable indent-tabs-mode nil)
 (define-editor-variable calc-indent-function 'calc-indent-default)
@@ -58,3 +59,9 @@
                              'calc-indent-default)
                          (copy-point point :temporary))))
     (indent-line-1 point column)))
+
+(defun indent-region (start end)
+  (apply-region-lines start end
+                      (lambda (point)
+                        (unless (blank-line-p point)
+                          (indent-line point)))))

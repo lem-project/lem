@@ -35,6 +35,9 @@
           pps-state-paren-depth
           parse-partial-sexp
           syntax-ppss
+          pps-state-string-p
+          pps-state-comment-p
+          pps-state-string-or-comment-p
           in-string-p
           in-comment-p
           in-string-or-comment-p
@@ -797,21 +800,30 @@
           (when prev
             (assert (point< (cache-point cache) prev))))))
 
+(defun pps-state-string-p (state)
+  (member (pps-state-type state) '(:block-string :string)))
+
+(defun pps-state-comment-p (state)
+  (member (pps-state-type state) '(:line-comment :block-comment)))
+
+(defun pps-state-string-or-comment-p (state)
+  (member (pps-state-type state)
+          '(:block-string
+            :string
+            :line-comment
+            :block-comment)))
+
 (defun in-string-p (point)
   (let ((state (syntax-ppss point)))
-    (member (pps-state-type state) '(:block-string :string))))
+    (pps-state-string-p state)))
 
 (defun in-comment-p (point)
   (let ((state (syntax-ppss point)))
-    (member (pps-state-type state) '(:line-comment :block-comment))))
+    (pps-state-comment-p state)))
 
 (defun in-string-or-comment-p (point)
   (let ((state (syntax-ppss point)))
-    (member (pps-state-type state)
-            '(:block-string
-              :string
-              :line-comment
-              :block-comment))))
+    (pps-state-string-or-comment-p state)))
 
 (defun maybe-beginning-of-string (point)
   (let ((state (syntax-ppss point)))

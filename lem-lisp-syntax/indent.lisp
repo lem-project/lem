@@ -269,36 +269,40 @@
   (let* ((const-flag nil)
          (innermost-sexp-column nil)
          (calculated
-          (with-point ((p indent-point))
-            (loop
-              :named outer
-              :with path := '() :and sexp-column
-              :for innermost := t :then nil
-              :repeat *max-depth*
-              :do
-              (loop :for n :from 0 :do
-                    (when (and (< 0 n) (start-line-p p))
-                      (return-from outer nil))
-                    (unless (form-offset p -1)
-                      (push n path)
-                      (return)))
-              (when (and innermost (member (character-at p 0) '(#\: #\")))
-                (setq const-flag t))
-              (let ((name (string-downcase (symbol-string-at-point p))))
-                (unless (scan-lists p -1 1 t)
-                  (return-from outer 'default-indent))
-                (unless sexp-column (setf sexp-column (point-column p)))
-                (when (or (quote-form-point-p p)
-                          (vector-form-point-p p))
-                  (return-from outer (1+ sexp-column)))
-                (when innermost
-                  (setf innermost-sexp-column sexp-column))
-                (let ((method (find-indent-method name path)))
-                  (when method
-                    (return-from outer (compute-indent-method method
-                                                              path
-                                                              indent-point
-                                                              sexp-column)))))))))
+           (with-point ((p indent-point))
+             (loop
+               :named outer
+               :with path := '() :and sexp-column
+               :for innermost := t :then nil
+               :repeat *max-depth*
+               :do
+               (loop :for n :from 0 :do
+                     (when (and (< 0 n) (start-line-p p))
+                       (return-from outer nil))
+                     (unless (form-offset p -1)
+                       (push n path)
+                       (return)))
+               (when (and (null (cdr path))
+                          (= 0 (car path))
+                          (scan-lists p -1 1 t))
+                 (return-from outer (1+ (point-column p))))
+               (when (and innermost (member (character-at p 0) '(#\: #\")))
+                 (setf const-flag t))
+               (let ((name (string-downcase (symbol-string-at-point p))))
+                 (unless (scan-lists p -1 1 t)
+                   (return-from outer 'default-indent))
+                 (unless sexp-column (setf sexp-column (point-column p)))
+                 (when (or (quote-form-point-p p)
+                           (vector-form-point-p p))
+                   (return-from outer (1+ sexp-column)))
+                 (when innermost
+                   (setf innermost-sexp-column sexp-column))
+                 (let ((method (find-indent-method name path)))
+                   (when method
+                     (return-from outer (compute-indent-method method
+                                                               path
+                                                               indent-point
+                                                               sexp-column)))))))))
     (if (or (null calculated)
             (eq calculated 'default-indent))
         (if (and const-flag innermost-sexp-column)

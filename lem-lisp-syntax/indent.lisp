@@ -308,7 +308,11 @@
 
 (defun calc-indent (point)
   (line-start point)
-  (if (in-string-p point)
-      nil
-      (catch 'drop-out
-        (calc-indent-1 point))))
+  (let ((state (syntax-ppss point)))
+    (cond
+      ((pps-state-string-p state) nil)
+      ((zerop (pps-state-paren-depth state))
+       0)
+      (t
+       (catch 'drop-out
+         (calc-indent-1 point))))))

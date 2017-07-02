@@ -864,10 +864,10 @@
     (start-thread)
     connection))
 
+(defvar *lisp-event* '())
+
 (defun log-message (message)
-  (let ((buffer (make-buffer "*lisp-events*")))
-    (with-open-stream (stream (make-buffer-output-stream (buffer-end-point buffer)))
-      (print message stream))))
+  (push message *lisp-event*))
 
 (defvar *unknown-keywords* nil)
 (defun pull-events ()

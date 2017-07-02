@@ -637,6 +637,7 @@
           (loop
             (case type
               (:block-string
+               ;; TODO: a203e4cf9のブロックコメントの修正をここにもすること
                (cond
                  ((search-forward p (cdr block-pair) to)
                   (setf block-pair nil)

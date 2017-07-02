@@ -547,13 +547,6 @@
                      nil
                      'mh-read-symbol)))
 
-(defvar *edit-definition-stack* nil)
-
-(defun push-edit-definition (point)
-  (push (list (buffer-name (point-buffer point))
-              (position-at-point point))
-        *edit-definition-stack*))
-
 (defun definition-to-location (definition)
   (destructuring-bind (title location) definition
     (source-location-to-xref-location location title t)))

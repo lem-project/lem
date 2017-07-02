@@ -11,6 +11,22 @@
          (some #'featurep (cdr form)))
         (t)))
 
+(defun skip-feature (p)
+  (let ((positivep (eql #\+ (character-at p 1))))
+    (character-offset p 2)
+    (with-point ((prev p))
+      (when (form-offset p 1)
+        (cond
+          ((if (featurep (let ((*read-eval* nil))
+                           (read-from-string
+                            (points-to-string
+                             prev p))))
+               positivep
+               (not positivep))
+           nil)
+          (t
+           (form-offset p 1)))))))
+
 (ppcre:define-parse-tree-synonym symbol-boundary-begin
   (:alternation
    :start-anchor
@@ -166,17 +182,5 @@
                     :name 'syntax-comment-attribute
                     :move-action (lambda (cur-point)
                                    (ignore-errors
-                                    (let ((positivep (eql #\+ (character-at cur-point 1))))
-                                      (character-offset cur-point 2)
-                                      (with-point ((prev cur-point))
-                                        (when (form-offset cur-point 1)
-                                          (cond
-                                            ((if (featurep (read-from-string
-                                                            (points-to-string
-                                                             prev cur-point)))
-                                                 positivep
-                                                 (not positivep))
-                                             nil)
-                                            (t
-                                             (form-offset cur-point 1))))))))))))
+                                    (skip-feature cur-point)))))))
     (make-tmlanguage :patterns patterns)))

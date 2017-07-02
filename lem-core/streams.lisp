@@ -15,7 +15,10 @@
     :accessor buffer-input-stream-unread-char)
    (point
     :initarg :point
-    :accessor buffer-stream-point)))
+    :accessor buffer-stream-point)
+   (eof-p
+    :initform nil
+    :accessor buffer-input-stream-eof-p)))
 
 (defun make-buffer-input-stream (&optional (point (current-point)))
   (make-instance 'buffer-input-stream
@@ -31,9 +34,12 @@
     (prog1 (cond (character
                   (setf (buffer-input-stream-unread-char stream) nil)
                   character)
+                 ((buffer-input-stream-eof-p stream)
+                  :eof)
                  (t
                   (character-at (buffer-stream-point stream))))
-      (character-offset (buffer-stream-point stream) 1))))
+      (unless (character-offset (buffer-stream-point stream) 1)
+        (setf (buffer-input-stream-eof-p stream) t)))))
 
 (defmethod trivial-gray-streams:stream-unread-char ((stream buffer-input-stream) character)
   (setf (buffer-input-stream-unread-char stream) character)

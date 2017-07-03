@@ -610,10 +610,11 @@
 
 (define-key *lisp-apropos-mode-keymap* "q" 'quit-window)
 
-(define-major-mode lisp-apropos-mode ()
+(define-major-mode lisp-apropos-mode lisp-mode
     (:name "lisp-apropos"
      :keymap *lisp-apropos-mode-keymap*
-     :syntax-table lem-lisp-syntax:*syntax-table*))
+     :syntax-table lem-lisp-syntax:*syntax-table*)
+  (setf (variable-value 'enable-syntax-highlight) nil))
 
 (defun show-apropos (data)
   (let ((buffer (make-buffer "*lisp-apropos*")))

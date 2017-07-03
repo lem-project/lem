@@ -27,6 +27,10 @@
 (defmacro %listener-history ()
   `(buffer-value (current-buffer) %listener-history-indicator))
 
+(define-editor-variable listener-get-prompt-function)
+(define-editor-variable listener-check-confirm-function)
+(define-editor-variable listener-confirm-function)
+
 (define-minor-mode listener-mode
     (:name "listener"
      :keymap *listener-mode-keymap*)
@@ -35,9 +39,12 @@
     (setf (%listener-history)
           (lem.history:make-history))))
 
-(define-editor-variable listener-get-prompt-function)
-(define-editor-variable listener-check-confirm-function)
-(define-editor-variable listener-confirm-function)
+(define-key *listener-mode-keymap* "C-m" 'listener-return)
+(define-key *listener-mode-keymap* "M-p" 'listener-prev-input)
+(define-key *listener-mode-keymap* "M-n" 'listener-next-input)
+(define-key *listener-mode-keymap* "M-r" 'listener-previous-matching-input)
+(define-key *listener-mode-keymap* "C-c M-o" 'listener-clear-buffer)
+(define-key *listener-mode-keymap* "C-c C-u" 'listener-clear-input)
 
 (defun listener-start-point (buffer)
   (%listener-point buffer))
@@ -73,7 +80,6 @@
     (buffer-undo-boundary buffer)
     (listener-update-point cur-point)))
 
-(define-key *listener-mode-keymap* "C-m" 'listener-return)
 (define-command listener-return () ()
   (with-point ((point (buffer-end (current-point)) :left-inserting))
     (if (not (funcall (variable-value 'listener-check-confirm-function) point))
@@ -90,39 +96,39 @@
             (funcall (variable-value 'listener-confirm-function) point str)))))
   t)
 
-(define-key *listener-mode-keymap* "M-p" 'listener-prev-input)
+(defun replace-textarea (str)
+  (let ((start (listener-start-point (current-buffer)))
+        (end (buffer-end-point (current-buffer))))
+    (save-excursion
+      (delete-between-points start end)
+      (insert-string start str)
+      (move-point (%listener-point (current-buffer)) start))))
+
 (define-command listener-prev-input () ()
   (multiple-value-bind (str win)
       (lem.history:prev-history (%listener-history))
     (when win
-      (let ((start (listener-start-point (current-buffer)))
-            (end (buffer-end-point (current-buffer))))
-        (save-excursion
-          (delete-between-points start end)
-          (when win (insert-string start str))
-          (move-point (%listener-point (current-buffer)) start))))))
+      (replace-textarea str))))
 
-(define-key *listener-mode-keymap* "M-n" 'listener-next-input)
 (define-command listener-next-input () ()
   (multiple-value-bind (str win)
       (lem.history:next-history (%listener-history))
     (when win
-      (let ((start (listener-start-point (current-buffer)))
-            (end (buffer-end-point (current-buffer))))
-        (save-excursion
-          (delete-between-points start end)
-          (insert-string start str)
-          (move-point (%listener-point (current-buffer)) start))))))
+      (replace-textarea str))))
 
-(define-key *listener-mode-keymap* "M-r" 'listener-reset-interactive)
-(define-command listener-reset-interactive (arg) ("P")
-  (when arg
-    (let ((*inhibit-read-only* t))
-      (erase-buffer (current-buffer))))
+(define-command listener-previous-matching-input (regexp)
+    ((list (prompt-for-string "Previous element matching (regexp): ")))
+  (multiple-value-bind (str win)
+      (lem.history:previous-matching (%listener-history) regexp)
+    (when win
+      (replace-textarea str))))
+
+(define-command listener-clear-buffer () ()
+  (let ((*inhibit-read-only* t))
+    (erase-buffer (current-buffer)))
   (listener-reset-prompt)
   t)
 
-(define-key *listener-mode-keymap* "C-c C-u" 'listener-clear-input)
 (define-command listener-clear-input () ()
   (delete-between-points (listener-start-point (current-buffer))
 			 (buffer-end-point (current-buffer))))

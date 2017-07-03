@@ -4,7 +4,8 @@
            :last-history
            :add-history
            :prev-history
-           :next-history))
+           :next-history
+           :previous-matching))
 (in-package :lem.history)
 
 (defstruct (history (:constructor %make-history))
@@ -47,3 +48,10 @@
     (values (aref (history-data history)
                   (incf (history-index history)))
             t)))
+
+(defun previous-matching (history regexp)
+  (loop :for i :downfrom (1- (history-index history)) :to 0
+        :do (when (ppcre:scan regexp (aref (history-data history) i))
+              (setf (history-index history) i)
+              (return (values (aref (history-data history) i)
+                              t)))))

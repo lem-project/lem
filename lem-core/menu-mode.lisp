@@ -1,10 +1,12 @@
 (defpackage :lem.menu-mode
   (:use :cl :lem)
-  (:export :menu
+  (:export :menu-mode
+           :menu
            :menu-item
            :append-menu
            :append-menu-item
-           :display-menu))
+           :display-menu
+           :menu-property-at))
 (in-package :lem.menu-mode)
 
 (define-attribute head-line-attribute
@@ -38,7 +40,11 @@
    (select-function
     :initarg :select-function
     :initform nil
-    :reader menu-item-select-function)))
+    :reader menu-item-select-function)
+   (plist
+    :initarg :plist
+    :initform nil
+    :reader menu-item-plist)))
 
 (defun append-menu (menu item)
   (setf (menu-items menu)
@@ -63,11 +69,11 @@
           :for column := (+ width 1) :then (+ column width 1)
           :collect column)))
 
-(defun display-menu (menu)
+(defun display-menu (menu &optional (mode 'menu-mode))
   (let* ((columns (compute-columns menu))
          (buffer (make-buffer (menu-buffer-name menu)))
          (p (buffer-point buffer)))
-    (change-buffer-mode buffer 'menu-mode)
+    (change-buffer-mode buffer mode)
     (setf (variable-value 'truncate-lines :buffer buffer) nil)
     (setf (buffer-read-only-p buffer) t)
     (let ((window (display-buffer buffer)))
@@ -90,8 +96,13 @@
                     :do
                     (insert-string p string :attribute attribute)
                     (move-to-column p column t))
-              (put-text-property start p 'function (menu-item-select-function item))))
+              (put-text-property start p 'function (menu-item-select-function item))
+              (put-text-property start p 'plist (menu-item-plist item))))
           (move-to-line (buffer-point buffer) 2))))))
+
+(defun menu-property-at (point indicator)
+  (with-point ((p point))
+    (getf (text-property-at (line-start p) 'plist) indicator)))
 
 (defun menu-select-1 (set-buffer-fn)
   (alexandria:when-let ((fn (text-property-at (current-point) 'function)))

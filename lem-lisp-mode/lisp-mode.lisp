@@ -1,5 +1,8 @@
 (in-package :lem-lisp-mode)
 
+(define-editor-variable load-file-functions '())
+(define-editor-variable before-compile-functions '())
+
 (defparameter *default-port* 4005)
 
 (defvar *connection-list* '())
@@ -336,6 +339,7 @@
     (setf filename (buffer-filename (current-buffer))))
   (when (and (uiop:file-exists-p filename)
              (not (uiop:directory-pathname-p filename)))
+    (run-hooks (variable-value 'load-file-functions) filename)
     (eval-with-transcript `(swank:load-file ,filename))))
 
 (defun get-operator-name ()
@@ -463,6 +467,7 @@
     (when (prompt-for-y-or-n-p "Save file")
       (save-buffer)))
   (let ((file (buffer-filename (current-buffer))))
+    (run-hooks (variable-value 'load-file-functions) file)
     (lisp-eval-async `(swank:compile-file-for-emacs ,file t)
                      #'compilation-finished)))
 
@@ -473,6 +478,7 @@
                     (:line
                      ,(line-number-at-point (current-point))
                      ,(point-charpos (current-point))))))
+    (run-hooks (variable-value 'before-compile-functions) start end)
     (lisp-eval-async `(swank:compile-string-for-emacs ,string
                                                       ,(buffer-name (current-buffer))
                                                       ',position

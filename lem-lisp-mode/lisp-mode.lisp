@@ -216,6 +216,15 @@
               :thread (current-swank-thread)
               :package package)))
 
+(defun require-swank-extras ()
+  (check-connection)
+  (unless (swank-protocol:connection-already-loaded-swank-extras *connection*)
+    (setf (swank-protocol:connection-already-loaded-swank-extras *connection*) t)
+    (let ((filename
+            (merge-pathnames "swank-extras.lisp"
+                             (asdf:system-source-directory :lem-lisp-mode))))
+      (lisp-eval `(swank:load-file ,filename)))))
+
 (defun lisp-eval-describe (form)
   (lisp-eval-async form #'show-description))
 

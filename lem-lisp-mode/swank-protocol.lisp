@@ -12,7 +12,8 @@
            :connection-process
            :connection-log-p
            :connection-logging-stream
-           :connection-features)
+           :connection-features
+           :connection-already-loaded-swank-extras)
   (:export :new-connection
            :read-message-string
            :send-message-string
@@ -127,6 +128,9 @@ Parses length information to determine how many characters to read."
    (continuations
     :accessor connection-continuations
     :initform nil)
+   (loaded-swank-extras
+    :initform nil
+    :accessor connection-already-loaded-swank-extras)
    (logp :accessor connection-log-p
          :initarg :logp
          :initform nil

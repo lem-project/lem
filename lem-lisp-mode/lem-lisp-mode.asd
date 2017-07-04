@@ -14,4 +14,5 @@
                (:file "grammer")
                (:file "lisp-mode")
                (:file "sldb")
-               (:file "inspector")))
+               (:file "inspector")
+               (:file "lisp-definitions")))

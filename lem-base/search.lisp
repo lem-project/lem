@@ -138,7 +138,8 @@
             (apply #'values
                    t
                    (map 'list (lambda (reg-start reg-end)
-                                (subseq string reg-start reg-end))
+                                (when reg-start
+                                  (subseq string reg-start reg-end)))
                         reg-starts
                         reg-ends))
             t)))))
@@ -187,7 +188,8 @@
             (apply #'values
                    t
                    (map 'list (lambda (reg-start reg-end)
-                                (subseq string reg-start reg-end))
+                                (when reg-start
+                                  (subseq string reg-start reg-end)))
                         reg-starts
                         reg-ends))
             t)))))

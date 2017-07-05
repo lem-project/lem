@@ -5,15 +5,22 @@
    (format nil "(cl:ignore-errors (swank/lem-extras:walk ~S))" string)
    (or package (current-package))))
 
+(define-key *lisp-mode-keymap* "C-c C-d l" 'lisp-definitions-list)
+
 (define-major-mode lisp-definitions-mode lem.menu-mode:menu-mode
     (:name "lisp-definitions"
      :keymap *lisp-definitions-mode-keymap*))
 
+(define-key *lisp-definitions-mode-keymap* "g" 'lisp-definitions-update)
 (define-key *lisp-definitions-mode-keymap* "." 'lisp-definitions-show-source)
 (define-key *lisp-definitions-mode-keymap* "C-c C-c" 'lisp-definitions-compile-defun)
 
 (defun lisp-definitions-buffer ()
   (get-buffer "*lisp-definitions*"))
+
+(defun lisp-definitions-source-buffer ()
+  (alexandria:when-let ((buffer (lisp-definitions-buffer)))
+    (get-buffer (buffer-value buffer 'buffer-name))))
 
 (defun lisp-definitions-cache-table ()
   (alexandria:when-let ((buffer (lisp-definitions-buffer)))
@@ -26,7 +33,7 @@
       (alexandria:when-let ((cache-table (lisp-definitions-cache-table)))
         (funcall function cache-table)))))
 
-(defun cache-key (def)
+(defun lisp-definitions-cache-key (def)
   (destructuring-bind (type name name-id form pos) def
     (declare (ignore form pos))
     (list type name name-id)))
@@ -45,7 +52,39 @@
      (lambda (cache-table)
        (loop :for def :in (request-walk text package)
              :for (type name name-id form pos) := def
-             :do (setf (gethash (cache-key def) cache-table) form))))))
+             :do (setf (gethash (lisp-definitions-cache-key def) cache-table) form))))))
+
+(defun lisp-definitions-list-1 (source-buffer)
+  (let ((cache-table
+          (let ((buffer (lisp-definitions-buffer)))
+            (or (and buffer
+                     (buffer-value buffer 'cache-table))
+                (make-hash-table :test 'equal))))
+        (definitions (request-walk (points-to-string (buffer-start-point source-buffer)
+                                                     (buffer-end-point source-buffer))
+                                   (buffer-package source-buffer))))
+    (let ((menu (make-instance 'lem.menu-mode:menu
+                               :buffer-name "*lisp-definitions*"
+                               :columns '("MOD" "Name  " ""))))
+      (dolist (def definitions)
+        (destructuring-bind (type name _name-id form pos) def
+          (declare (ignore _name-id))
+          (let* ((item (make-instance 'lem.menu-mode:menu-item
+                                      :plist (list 'pos pos)))
+                 (changed (multiple-value-bind (old win)
+                              (gethash (lisp-definitions-cache-key def) cache-table)
+                            (when win
+                              (not (equal old form))))))
+            (lem.menu-mode:append-menu-item item (if changed " * " ""))
+            (lem.menu-mode:append-menu-item item name)
+            (lem.menu-mode:append-menu-item item type)
+            (lem.menu-mode:append-menu menu item)
+            (unless changed
+              (setf (gethash (lisp-definitions-cache-key def) cache-table) form)))))
+      (lem.menu-mode:display-menu menu 'lisp-definitions-mode)
+      (let ((buffer (lisp-definitions-buffer)))
+        (setf (buffer-value buffer 'buffer-name) (buffer-name source-buffer))
+        (setf (buffer-value buffer 'cache-table) cache-table)))))
 
 (define-command lisp-definitions-list () ()
   (require-swank-extras)
@@ -53,41 +92,21 @@
           (merge-pathnames "swank-extras.lisp"
                            (asdf:system-source-directory :lem-lisp-mode))))
     (lisp-eval `(swank:load-file ,filename)))
-  (let ((srcbuffer (current-buffer)))
-    (add-hook (variable-value 'load-file-functions :buffer srcbuffer)
+  (let ((source-buffer (current-buffer)))
+    (add-hook (variable-value 'load-file-functions :buffer source-buffer)
               'lisp-definitions-load-file-hook)
-    (add-hook (variable-value 'before-compile-functions :buffer srcbuffer)
+    (add-hook (variable-value 'before-compile-functions :buffer source-buffer)
               'lisp-definitions-before-compile-hook)
-    (let ((cache-table
-            (let ((buffer (lisp-definitions-buffer)))
-              (or (and buffer
-                       (buffer-value buffer 'cache-table))
-                  (make-hash-table :test 'equal))))
-          (definitions (request-walk (points-to-string (buffer-start-point srcbuffer)
-                                                       (buffer-end-point srcbuffer))
-                                     (buffer-package srcbuffer))))
-      (let ((menu (make-instance 'lem.menu-mode:menu
-                                 :buffer-name "*lisp-definitions*"
-                                 :columns '("MOD" "Name  " ""))))
-        (dolist (def definitions)
-          (destructuring-bind (type name _name-id form pos) def
-            (declare (ignore _name-id))
-            (let* ((item (make-instance 'lem.menu-mode:menu-item
-                                        :plist (list 'pos pos)))
-                   (changed (multiple-value-bind (old win)
-                                (gethash (cache-key def) cache-table)
-                              (when win
-                                (not (equal old form))))))
-              (lem.menu-mode:append-menu-item item (if changed " * " ""))
-              (lem.menu-mode:append-menu-item item name)
-              (lem.menu-mode:append-menu-item item type)
-              (lem.menu-mode:append-menu menu item)
-              (unless changed
-                (setf (gethash (cache-key def) cache-table) form)))))
-        (lem.menu-mode:display-menu menu 'lisp-definitions-mode)
-        (let ((buffer (lisp-definitions-buffer)))
-          (setf (buffer-value buffer 'buffer-name) (buffer-name srcbuffer))
-          (setf (buffer-value buffer 'cache-table) cache-table))))))
+    (lisp-definitions-list-1 source-buffer)))
+
+(define-command lisp-definitions-update () ()
+  (let ((line-number
+          (if (eq (current-buffer) (lisp-definitions-buffer))
+              (line-number-at-point (current-point)))))
+    (alexandria:when-let ((source-buffer (lisp-definitions-source-buffer)))
+      (lisp-definitions-list-1 source-buffer)
+      (when line-number
+        (move-to-line (current-point) line-number)))))
 
 (define-command lisp-definitions-show-source () ()
   (when (eq (current-buffer) (lisp-definitions-buffer))
@@ -101,4 +120,5 @@
   (when (eq (current-buffer) (lisp-definitions-buffer))
     (with-current-window (current-window)
       (when (lisp-definitions-show-source)
-        (lisp-compile-defun)))))
+        (lisp-compile-defun)))
+    (lisp-definitions-update)))

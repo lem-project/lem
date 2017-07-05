@@ -21,6 +21,8 @@
 (define-key *menu-mode-keymap* "C-m" 'menu-select-this-window)
 (define-key *menu-mode-keymap* "C-o" 'menu-select-other-window)
 (define-key *menu-mode-keymap* "o" 'menu-select-switch-other-window)
+(define-key *menu-mode-keymap* "n" 'menu-next-line)
+(define-key *menu-mode-keymap* "p" 'menu-previous-line)
 
 (defclass menu ()
   ((buffer-name
@@ -31,7 +33,10 @@
     :accessor menu-columns)
    (items
     :initform nil
-    :accessor menu-items)))
+    :accessor menu-items)
+   (use-headline-p
+    :initform t
+    :reader menu-use-headline-p)))
 
 (defclass menu-item ()
   ((elements
@@ -73,6 +78,7 @@
   (let* ((columns (compute-columns menu))
          (buffer (make-buffer (menu-buffer-name menu)))
          (p (buffer-point buffer)))
+    (setf (buffer-value buffer '%menu) menu)
     (change-buffer-mode buffer mode)
     (setf (variable-value 'truncate-lines :buffer buffer) nil)
     (setf (buffer-read-only-p buffer) t)
@@ -118,3 +124,14 @@
   (menu-select-1 (lambda (buffer)
                    (setf (current-window)
                          (pop-to-buffer buffer)))))
+
+(define-command menu-next-line (n) ("p")
+  (line-offset (current-point) n))
+
+(define-command menu-previous-line (n) ("p")
+  (let ((menu (buffer-value (current-buffer) '%menu)))
+    (dotimes (_ n)
+      (when (and (menu-use-headline-p menu)
+                 (>= 2 (line-number-at-point (current-point))))
+        (return))
+      (line-offset (current-point) -1))))

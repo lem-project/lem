@@ -13,6 +13,9 @@
   (:light :background "gray85")
   (:dark :foreground "black" :background "gray85"))
 
+(define-attribute mark-attribute
+  (t :foreground "blue" :reverse-p t :underline-p t))
+
 (define-major-mode menu-mode nil
     (:name "Menu"
      :keymap *menu-mode-keymap*))
@@ -23,6 +26,9 @@
 (define-key *menu-mode-keymap* "o" 'menu-select-switch-other-window)
 (define-key *menu-mode-keymap* "n" 'menu-next-line)
 (define-key *menu-mode-keymap* "p" 'menu-previous-line)
+(define-key *menu-mode-keymap* "m" 'menu-mark-and-next-line)
+(define-key *menu-mode-keymap* "u" 'menu-unmark-and-next-line)
+(define-key *menu-mode-keymap* "U" 'menu-unmark-and-previous-line)
 
 (defclass menu ()
   ((buffer-name
@@ -129,9 +135,50 @@
   (line-offset (current-point) n))
 
 (define-command menu-previous-line (n) ("p")
-  (let ((menu (buffer-value (current-buffer) '%menu)))
-    (dotimes (_ n)
+  (alexandria:when-let ((menu (buffer-value (current-buffer) '%menu)))
+    (dotimes (_ n t)
       (when (and (menu-use-headline-p menu)
                  (>= 2 (line-number-at-point (current-point))))
         (return))
       (line-offset (current-point) -1))))
+
+(defun find-overlay-marked-line (p)
+  (dolist (ov (buffer-value p 'mark-overlays))
+    (when (and (point<= (overlay-start ov) p)
+               (point<= p (overlay-end ov)))
+      (return ov))))
+
+(defun marked-line-p (p)
+  (not (null (find-overlay-marked-line p))))
+
+(defun mark-line (p)
+  (unless (marked-line-p p)
+    (with-point ((start p)
+                 (end p))
+      (line-start start)
+      (line-end end)
+      (push (make-overlay start end 'mark-attribute)
+            (buffer-value p 'mark-overlays)))))
+
+(defun unmark-line (p)
+  (alexandria:when-let ((ov (find-overlay-marked-line p)))
+    (alexandria:deletef (buffer-value p 'mark-overlays) ov)
+    (delete-overlay ov)))
+
+(define-command menu-mark-and-next-line (n) ("p")
+  (dotimes (_ n)
+    (mark-line (current-point))
+    (unless (menu-next-line 1)
+      (return))))
+
+(define-command menu-unmark-and-next-line (n) ("p")
+  (dotimes (_ n)
+    (unmark-line (current-point))
+    (unless (menu-next-line 1)
+      (return))))
+
+(define-command menu-unmark-and-previous-line (n) ("p")
+  (dotimes (_ n)
+    (unless (menu-previous-line 1)
+      (return))
+    (unmark-line (current-point))))

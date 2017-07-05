@@ -337,6 +337,18 @@ to check if input is available."
         :collect (read-ahead in)
         :finally (read-char in)))
 
+(defun read-sharp (in)
+  (read-char in)
+  (case (peek-char nil in)
+    ((#\()
+     (let ((list (read-list in)))
+       (make-array (length list) :initial-contents list)))
+    ((#\\)
+     (read-char in)
+     (read-char in))
+    (otherwise
+     (unread-char #\# in))))
+
 (defun read-ahead (in)
   (let ((c (peek-char t in)))
     (case c
@@ -344,6 +356,8 @@ to check if input is available."
        (read-list in))
       ((#\")
        (read in))
+      ((#\#)
+       (read-sharp in))
       (otherwise
        (read-atom in)))))
 

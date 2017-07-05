@@ -16,7 +16,7 @@
 (defun append-definition (name type form)
   (when (and (symbolp name)
              (not (null (symbol-package name))))
-    (push (list type (string name) form *file-position*)
+    (push (list type (string name) (swank:to-string form) *file-position*)
           (global-env-definitions *global-env*))
     nil))
 

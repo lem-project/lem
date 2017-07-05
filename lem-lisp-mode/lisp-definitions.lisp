@@ -70,7 +70,7 @@
         (destructuring-bind (type name _name-id form pos) def
           (declare (ignore _name-id))
           (let* ((item (make-instance 'lem.menu-mode:menu-item
-                                      :plist (list 'pos pos)))
+                                      :position pos))
                  (changed (multiple-value-bind (old win)
                               (gethash (lisp-definitions-cache-key def) cache-table)
                             (when win
@@ -110,15 +110,19 @@
 
 (define-command lisp-definitions-show-source () ()
   (when (eq (current-buffer) (lisp-definitions-buffer))
-    (alexandria:when-let ((buffer (get-buffer (buffer-value (current-buffer) 'buffer-name))))
-      (let ((pos (lem.menu-mode:menu-property-at (current-point) 'pos)))
+    (alexandria:when-let ((buffer (lisp-definitions-source-buffer)))
+      (let ((pos (lem.menu-mode:menu-property-at (current-point) :position)))
         (setf (current-window) (pop-to-buffer buffer))
         (and (move-to-position (current-point) pos)
              (form-offset (current-point) -1))))))
 
 (define-command lisp-definitions-compile-defun () ()
   (when (eq (current-buffer) (lisp-definitions-buffer))
-    (with-current-window (current-window)
-      (when (lisp-definitions-show-source)
-        (lisp-compile-defun)))
-    (lisp-definitions-update)))
+    (alexandria:when-let ((buffer (lisp-definitions-source-buffer)))
+      (with-current-window (current-window)
+        (dolist (pos (lem.menu-mode:marked-menu-items (current-point) :position))
+          (setf (current-window) (pop-to-buffer buffer))
+          (when (and (move-to-position (current-point) pos)
+                     (form-offset (current-point) -1))
+            (lisp-compile-defun)))
+        (lisp-definitions-update)))))

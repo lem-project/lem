@@ -6,7 +6,8 @@
            :append-menu
            :append-menu-item
            :display-menu
-           :menu-property-at))
+           :menu-property-at
+           :marked-menu-items))
 (in-package :lem.menu-mode)
 
 (define-attribute head-line-attribute
@@ -53,9 +54,16 @@
     :initform nil
     :reader menu-item-select-function)
    (plist
-    :initarg :plist
     :initform nil
-    :reader menu-item-plist)))
+    :accessor menu-item-plist)))
+
+(defmethod initialize-instance :after ((menu-item menu-item) &rest initargs &key &allow-other-keys)
+  (let ((plist '()))
+    (loop :for (k v) :on initargs :by #'cddr
+          :do (unless (member k '(:select-function))
+                (push v plist)
+                (push k plist)))
+    (setf (menu-item-plist menu-item) plist)))
 
 (defun append-menu (menu item)
   (setf (menu-items menu)
@@ -84,6 +92,8 @@
   (let* ((columns (compute-columns menu))
          (buffer (make-buffer (menu-buffer-name menu)))
          (p (buffer-point buffer)))
+    (mapc #'delete-overlay (buffer-value buffer 'mark-overlays))
+    (setf (buffer-value buffer 'mark-overlays) nil)
     (setf (buffer-value buffer '%menu) menu)
     (change-buffer-mode buffer mode)
     (setf (variable-value 'truncate-lines :buffer buffer) nil)
@@ -182,3 +192,9 @@
     (unless (menu-previous-line 1)
       (return))
     (unmark-line (current-point))))
+
+(defun marked-menu-items (point indicator)
+  (or (loop :for ov :in (buffer-value point 'mark-overlays)
+            :collect (menu-property-at (overlay-start ov) indicator))
+      (list (menu-property-at point indicator))))
+

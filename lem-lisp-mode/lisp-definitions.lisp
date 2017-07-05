@@ -26,6 +26,11 @@
       (alexandria:when-let ((cache-table (lisp-definitions-cache-table)))
         (funcall function cache-table)))))
 
+(defun cache-key (def)
+  (destructuring-bind (type name name-id form pos) def
+    (declare (ignore form pos))
+    (list type name name-id)))
+
 (defun lisp-definitions-load-file-hook (filename)
   (call-with-definitions-cache-table
    (find filename (buffer-list) :key #'buffer-filename)
@@ -38,8 +43,9 @@
     (call-with-definitions-cache-table
      (point-buffer start)
      (lambda (cache-table)
-       (loop :for (type name form pos) :in (request-walk text package)
-             :do (setf (gethash name cache-table) form))))))
+       (loop :for def :in (request-walk text package)
+             :for (type name name-id form pos) := def
+             :do (setf (gethash (cache-key def) cache-table) form))))))
 
 (define-command lisp-definitions-list () ()
   (require-swank-extras)
@@ -64,19 +70,20 @@
                                  :buffer-name "*lisp-definitions*"
                                  :columns '("MOD" "Name  " ""))))
         (dolist (def definitions)
-          (destructuring-bind (type name form pos) def
-            (let ((item (make-instance 'lem.menu-mode:menu-item
-                                       :plist (list 'pos pos)))
-                  (changed (multiple-value-bind (old-form win)
-                               (gethash name cache-table)
-                             (when win
-                               (not (equal old-form form))))))
+          (destructuring-bind (type name _name-id form pos) def
+            (declare (ignore _name-id))
+            (let* ((item (make-instance 'lem.menu-mode:menu-item
+                                        :plist (list 'pos pos)))
+                   (changed (multiple-value-bind (old win)
+                                (gethash (cache-key def) cache-table)
+                              (when win
+                                (not (equal old form))))))
               (lem.menu-mode:append-menu-item item (if changed " * " ""))
               (lem.menu-mode:append-menu-item item name)
               (lem.menu-mode:append-menu-item item type)
               (lem.menu-mode:append-menu menu item)
               (unless changed
-                (setf (gethash name cache-table) form)))))
+                (setf (gethash (cache-key def) cache-table) form)))))
         (lem.menu-mode:display-menu menu 'lisp-definitions-mode)
         (let ((buffer (lisp-definitions-buffer)))
           (setf (buffer-value buffer 'buffer-name) (buffer-name srcbuffer))

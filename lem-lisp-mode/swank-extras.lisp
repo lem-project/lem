@@ -8,7 +8,8 @@
 (defstruct global-env
   package
   export-symbols
-  definitions)
+  definitions
+  (name-table (make-hash-table :test 'equal)))
 
 (defvar *global-env*)
 (defvar *file-position* nil)
@@ -16,7 +17,11 @@
 (defun append-definition (name type form)
   (when (and (symbolp name)
              (not (null (symbol-package name))))
-    (push (list type (string name) (swank:to-string form) *file-position*)
+    (setf name (string name))
+    (push (list type
+                name
+                (incf (gethash name (global-env-name-table *global-env*) 0))
+                (swank:to-string form) *file-position*)
           (global-env-definitions *global-env*))
     nil))
 

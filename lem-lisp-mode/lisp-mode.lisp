@@ -438,6 +438,9 @@
 
 (defun highlight-notes (notes)
   (lisp-remove-notes)
+  (when (and (null notes)
+             (null (get-buffer-windows (get-buffer "*lisp-compilations*"))))
+    (return-from highlight-notes))
   (let ((overlays '()))
     (lem.sourcelist:with-sourcelist (sourcelist "*lisp-compilations*")
       (dolist (note notes)

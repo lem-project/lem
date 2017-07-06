@@ -1089,7 +1089,7 @@
 
 (define-command slime-restart () ()
   (slime-quit)
-  (sleep 1)
+  (sit-for 3)
   (slime))
 
 

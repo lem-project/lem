@@ -15,7 +15,7 @@
   (:dark :foreground "black" :background "gray85"))
 
 (define-attribute mark-attribute
-  (t :foreground "blue" :reverse-p t :underline-p t))
+  (t :background "blue" :foreground "white" :underline-p t))
 
 (define-major-mode menu-mode nil
     (:name "Menu"

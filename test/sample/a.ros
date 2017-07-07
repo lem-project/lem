@@ -1,0 +1,66 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#| <Put a one-line description here>
+exec ros -Q -- $0 "$@"
+|#
+(progn ;;init forms
+  (ros:ensure-asdf)
+  ;;#+quicklisp (ql:quickload '() :silent t)
+  )
+
+(defpackage :ros.script.a.3707894802
+  (:use :cl)
+  (:export :foo
+           :bar
+           :baz)
+  (:export
+   :foo
+   :bar
+   :baz))
+(in-package :ros.script.a.3707894802)
+
+#|
+aaaaaa
+bbbbbb
+cccccc
+|#
+
+#|********()
+|#
+
+
+aaaaaaa(
+        a
+        b
+        c
+        )
+
+(defun foo (foo &optional opt1
+                  opt2
+            &rest rest)
+  (list foo opt1 opt2
+        rest))
+
+(defmacro foo ((foo &optional opt1
+                      opt2
+                &rest rest))
+  (list foo opt1 opt2
+        rest))
+
+(let ((x y)
+      (foo #-foo (no-foo)
+           #+foo (yes-foo))
+      (bar #-bar
+           (no-bar)
+           #+bar
+           (yes-bar)))
+  (list foo bar
+        x))
+
+(list ;comment
+ foo
+ bar)
+
+(defun main (&rest argv)
+  (declare (ignorable argv)))
+;;; vim: set ft=lisp lisp:

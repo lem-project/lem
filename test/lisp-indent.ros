@@ -1,0 +1,40 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#| <Put a one-line description here>
+exec ros -Q -- $0 "$@"
+|#
+(progn ;;init forms
+  (ros:ensure-asdf)
+  #+quicklisp (ql:quickload '(:lem) :silent t)
+  )
+
+(defpackage :ros.script.lisp-indent.3708418648
+  (:use :cl))
+(in-package :ros.script.lisp-indent.3708418648)
+
+(defun indent-file (file)
+  (let ((buffer (lem-base:find-file-buffer file :temporary t :enable-undo-p nil)))
+    (setf (lem-base:buffer-syntax-table buffer)
+          lem-lisp-syntax:*syntax-table*)
+    (setf (lem-base:variable-value 'lem-base:calc-indent-function :buffer buffer)
+          'lem-lisp-syntax:calc-indent)
+    (lem-base:indent-region (lem-base:buffer-start-point buffer)
+                            (lem-base:buffer-end-point buffer))
+    (lem-base:write-to-file buffer (lem-base:buffer-filename buffer))))
+
+(defun test-file (file)
+  (uiop:with-temporary-file (:pathname tempfile)
+    (uiop:copy-file file tempfile)
+    (indent-file tempfile)
+    (let ((text
+            (with-output-to-string (output)
+              (uiop:run-program (format nil "diff ~A ~A" file tempfile)
+                                :output output
+                                :error-output output
+                                :ignore-error-status t))))
+      (assert (string= text "")))))
+
+(defun main (&rest argv)
+  (declare (ignorable argv))
+  (test-file (merge-pathnames "sample/a.ros" *load-pathname*)))
+;;; vim: set ft=lisp lisp:

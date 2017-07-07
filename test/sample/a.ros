@@ -36,14 +36,14 @@ aaaaaaa(
         )
 
 (defun foo (foo &optional opt1
-                  opt2
-            &rest rest)
+                          opt2
+                &rest rest)
   (list foo opt1 opt2
         rest))
 
 (defmacro foo ((foo &optional opt1
-                      opt2
-                &rest rest))
+                              opt2
+                    &rest rest))
   (list foo opt1 opt2
         rest))
 
@@ -60,6 +60,54 @@ aaaaaaa(
 (list ;comment
  foo
  bar)
+
+(defun foo (x)
+  (tagbody
+   foo
+    (bar)
+   baz
+    (when (losing)
+      (with-big-loser
+          (yow)
+        ((lambda ()
+           foo)
+         big)))
+    (flet ((foo (bar baz zap)
+             (zip))
+           (zot ()
+             quux))
+      (do ()
+          ((lose)
+           (foo 1))
+        (quux)
+        foo
+        (lose))
+      (cond ((x)
+             (win 1 2
+                  (foo)))
+            (t
+             (lose
+              3))))))
+
+(defmacro foo (body)
+  `(let (,@(stuff)
+         ,(more-stuff)
+         ,(even-more)
+         (foo foo))
+     ,@bofy))
+
+(defun foo ()
+  `(list foo bar
+         ,@(quux fo
+                 foo)))
+
+(defmacro foofoo (body)
+  `(foo
+    `(let (,',@,(stuff)
+           ,(more-stuff)
+           ,(even-more)
+           (foo foo))
+       ,@bofy)))
 
 (defun main (&rest argv)
   (declare (ignorable argv)))

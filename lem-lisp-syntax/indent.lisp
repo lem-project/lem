@@ -152,8 +152,8 @@
              :test #'string-equal)))
 
 (defvar *lambda-list-indentation* t)
-(defvar *lambda-list-keyword-parameter-alignment* nil)
-(defvar *lambda-list-keyword-alignment* nil)
+(defvar *lambda-list-keyword-parameter-alignment* t)
+(defvar *lambda-list-keyword-alignment* t)
 
 (defun search-lambda-list-keyword (p)
   (loop

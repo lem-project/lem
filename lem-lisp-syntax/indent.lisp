@@ -144,9 +144,44 @@
   (declare (ignore path indent-point))
   (+ sexp-column 1))
 
+(defun lambda-list-keyword-p (name)
+  (and (stringp name)
+       (find name
+             '("&optional" "&rest" "&key" "&allow-other-keys" "&aux"
+               "&whole" "&body" "&environment")
+             :test #'string-equal)))
+
+(defvar *lambda-list-indentation* t)
+(defvar *lambda-list-keyword-parameter-alignment* nil)
+(defvar *lambda-list-keyword-alignment* nil)
+
+(defun search-lambda-list-keyword (p)
+  (loop
+    (unless (form-offset p -1)
+      (return nil))
+    (when (lambda-list-keyword-p (symbol-string-at-point p))
+      (return p))))
+
 (defun compute-indent-lambda-list (path indent-point sexp-column)
-  (declare (ignore path indent-point))
-  (+ sexp-column 1))
+  (declare (ignore path))
+  (unless *lambda-list-indentation*
+    (return-from compute-indent-lambda-list (1+ sexp-column)))
+  (with-point ((p indent-point))
+    (cond
+      ((progn
+         (back-to-indentation p)
+         (lambda-list-keyword-p (symbol-string-at-point p)))
+       (if *lambda-list-keyword-alignment*
+           (if (search-lambda-list-keyword p)
+               (point-column p)
+               (1+ sexp-column))
+           (1+ sexp-column)))
+      (t
+       (if (search-lambda-list-keyword p)
+           (if *lambda-list-keyword-parameter-alignment*
+               (+ 1 (point-column (form-offset p 1)))
+               (+ 2 (point-column p)))
+           (1+ sexp-column))))))
 
 (defun compute-indent-integer-method (method path indent-point sexp-column)
   (declare (ignore indent-point))
@@ -192,10 +227,13 @@
                      (return-from exit
                        (cond ((null (cdr pathrest))
                               (+ sexp-column 4))
-                             ((null (cddr pathrest))
-                              (compute-indent-lambda-list path indent-point sexp-column))
                              (t
-                              'default-indent))))
+                              (compute-indent-lambda-list path indent-point sexp-column))
+                             ;; ((null (cddr pathrest))
+                             ;;  (compute-indent-lambda-list path indent-point sexp-column))
+                             ;; (t
+                             ;;  'default-indent)
+                             )))
                     ((integerp method1)
                      (return-from exit
                        (if (null (cdr pathrest))

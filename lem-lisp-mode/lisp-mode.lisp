@@ -441,15 +441,14 @@
   (when (and (null notes)
              (null (get-buffer-windows (get-buffer "*lisp-compilations*"))))
     (return-from highlight-notes))
-  (let ((overlays '()))
-    (lem.sourcelist:with-sourcelist (sourcelist "*lisp-compilations*")
-      (dolist (note notes)
-        (optima:match note
-          ((and (optima:property :location location)
-                (or (optima:property :message message) (and))
-                (or (optima:property :source-context source-context) (and)))
-           (let* ((xref-location (source-location-to-xref-location location))
-                  (name (xref-filespec-to-filename (xref-location-filespec xref-location)))
+  (lem.sourcelist:with-sourcelist (sourcelist "*lisp-compilations*")
+    (dolist (note notes)
+      (optima:match note
+        ((and (optima:property :location location)
+              (or (optima:property :message message) (and))
+              (or (optima:property :source-context source-context) (and)))
+         (alexandria:when-let ((xref-location (source-location-to-xref-location location nil t)))
+           (let* ((name (xref-filespec-to-filename (xref-location-filespec xref-location)))
                   (pos (xref-location-position xref-location))
                   (buffer (xref-filespec-to-buffer (xref-location-filespec xref-location))))
              (lem.sourcelist:append-sourcelist
@@ -466,12 +465,11 @@
                 (insert-string cur-point source-context))
               (alexandria:curry #'go-to-location xref-location))
              (push (make-highlight-overlay pos buffer)
-                   overlays))))))
-    (when overlays
-      (setf *note-overlays* overlays))))
+                   *note-overlays*))))))))
 
 (define-command lisp-remove-notes () ()
-  (mapc #'delete-overlay *note-overlays*))
+  (mapc #'delete-overlay *note-overlays*)
+  (setf *note-overlays* '()))
 
 (define-command lisp-compile-and-load-file () ()
   (check-connection)
@@ -977,14 +975,14 @@
                          (setf (current-window)
                                (pop-to-buffer buffer))))))))
 
-(defun source-location-to-xref-location (location &optional (content "") no-errors)
+(defun source-location-to-xref-location (location &optional content no-errors)
   (alexandria:destructuring-ecase location
     ((:location location-buffer position _hints)
      (declare (ignore _hints))
      (let ((buffer (location-buffer-to-buffer location-buffer)))
        (with-point ((point (buffer-point buffer)))
          (move-to-location-position point position)
-         (make-xref-location :content content
+         (make-xref-location :content (or content "")
                              :filespec buffer
                              :position (position-at-point point)))))
     ((:error message)

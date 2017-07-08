@@ -3,6 +3,7 @@
   (:export :lisp-note-attribute
            :lisp-entry-attribute
            :lisp-headline-attribute
+           :lisp-mode
            :*impl-name*)
   (:local-nicknames
    (:swank-protocol :lem-lisp-mode.swank-protocol)))

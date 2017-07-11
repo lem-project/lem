@@ -54,8 +54,9 @@
     (princ " (")
     (princ (mode-name (buffer-major-mode (window-buffer window))))
     (dolist (mode (buffer-minor-modes (window-buffer window)))
-      (princ " ")
-      (princ (mode-name mode)))
+      (when (mode-name mode)
+        (princ " ")
+        (princ (mode-name mode))))
     (princ ") ")))
 
 (defun modeline-position (window)

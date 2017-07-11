@@ -737,13 +737,11 @@
   (format nil "~A> " (swank-protocol:connection-prompt-string *connection*)))
 
 (defun repl-paren-correspond-p (point)
-  (loop :with count := 0
-        :do
-        (insert-character point #\))
-        (incf count)
-        (unless (form-offset (copy-point point :temporary) -1)
-          (delete-character point (- count))
-          (return (= 1 count)))))
+  (unless (eq (repl-buffer) (point-buffer point))
+    (return-from repl-paren-correspond-p))
+  (with-point ((start (lem.listener-mode::listener-start-point (repl-buffer))))
+    (let ((state (parse-partial-sexp start point)))
+      (>= 0 (pps-state-paren-depth state)))))
 
 (defun repl-reset-input ()
   (let ((buffer (repl-buffer)))

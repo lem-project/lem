@@ -12,6 +12,13 @@
 (defvar *get-method-function* nil)
 (defvar *indent-table* (make-hash-table :test 'equal))
 
+(defvar *lambda-list-indentation* t)
+(defvar *lambda-list-keyword-parameter-alignment* t)
+(defvar *lambda-list-keyword-alignment* t)
+
+(defvar *loop-indent-subclauses* nil)
+(defvar *simple-loop-indentation* 2)
+
 (defun get-indentation (name)
   (gethash name *indent-table*))
 
@@ -85,8 +92,8 @@
         ("handler-bind" . "let")
         ("restart-bind" . "let")
         ("locally" 1)
-        ;("loop"         lisp-indent-loop)
-        ("loop" (&rest &body))
+        ("loop"         lisp-indent-loop)
+        ;("loop" (&rest &body))
         (":method" (&lambda &body)) ; in `defgeneric'
         ("multiple-value-bind" ((&whole 6 &rest 1) 4 &body))
         ("multiple-value-call" (4 &body))
@@ -121,9 +128,96 @@
   (declare (ignore path sexp-column))
   (calc-function-indent indent-point))
 
+(defun loop-type (point)
+  (let ((comment-split nil))
+    (labels ((guard (x)
+               (unless x
+                 (return-from loop-type
+                   (if comment-split
+                       'simple/split
+                       'simple)))))
+      (with-point ((p point))
+        (let ((line-number (line-number-at-point p))
+              (maybe-split t))
+          (guard (character-offset p 1))
+          (guard (form-offset p 1))
+          (with-point ((p p))
+            (skip-whitespace-forward p)
+            (if (= line-number (line-number-at-point p))
+                (setf maybe-split nil)
+                (setf comment-split t)))
+          (guard (form-offset p 1))
+          (guard (form-offset p -1))
+          (if (eql (character-at p) #\()
+              (if (or (not maybe-split)
+                      (= line-number (line-number-at-point p)))
+                  'simple
+                  'simple/split)
+              (if (or (not maybe-split)
+                      (= line-number (line-number-at-point p)))
+                  'extended
+                  'extended/split)))))))
+
+(defun trailing-comment (p)
+  (and (form-offset p -1)
+       (form-offset p 1)
+       (progn
+         (skip-whitespace-forward p t)
+         (and (eql (character-at p) #\;)
+              (point-column p)))))
+
+(defun loop-macro-1 (p)
+  (declare (ignore p))
+  (error "unsupported ~A" '*loop-indent-subclauses*))
+
+(defun loop-macro-keyword-p (string)
+  (ppcre:scan "^(?:#?:)?(?:do|doing|finally|initially)" string))
+
+(defun loop-part-indentation (p indent-point type)
+  (labels ((f (p)
+             (or (end-line-p p)
+                 (eql #\) (character-at p))
+                 (looking-at p "(?:#?:)?\\w+"))))
+    (let ((loop-indentation (if (eq type 'extended/split)
+                                (- (point-column p) 4)
+                                (point-column p)))
+          (indent nil))
+      (back-to-indentation (move-point p indent-point))
+      (cond ((eq type 'simple/split)
+             (+ loop-indentation *simple-loop-indentation*))
+            ((eq type 'simple)
+             (+ loop-indentation 6))
+            ((and (not (f p))
+                  (with-point ((p p))
+                    (loop :while (and (form-offset p -1)
+                                      (not (f p)))
+                          :do (setf indent (point-column p)))
+                    (and indent (loop-macro-keyword-p (symbol-string-at-point p)))))
+             indent)
+            ((or #+(or) lisp-loop-indent-forms-like-keywords
+                 (f p)
+                 (eql #\; (character-at p)))
+             (if (and (eql #\; (character-at p))
+                      (alexandria:when-let ((col (trailing-comment p)))
+                        (setf loop-indentation col)))
+                 loop-indentation
+                 (+ loop-indentation 6)))
+            (t
+             (+ loop-indentation 9))))))
+
 (defun lisp-indent-loop (path indent-point sexp-column)
-  (declare (ignore path indent-point sexp-column))
-  'default-indent)
+  (declare (ignore sexp-column))
+  (if (cdr path)
+      'default-indent
+      (with-point ((p indent-point))
+        (scan-lists p -1 1)
+        (let ((type (loop-type p)))
+          (if (and *loop-indent-subclauses*
+                   (member type '(extended extended/split)))
+              (loop-macro-1 p)
+              (loop-part-indentation p
+                                     (copy-point indent-point :temporary)
+                                     type))))))
 
 (defun lisp-indent-do (path indent-point sexp-column)
   (declare (ignore path indent-point sexp-column))
@@ -150,10 +244,6 @@
              '("&optional" "&rest" "&key" "&allow-other-keys" "&aux"
                "&whole" "&body" "&environment")
              :test #'string-equal)))
-
-(defvar *lambda-list-indentation* t)
-(defvar *lambda-list-keyword-parameter-alignment* t)
-(defvar *lambda-list-keyword-alignment* t)
 
 (defun search-lambda-list-keyword (p)
   (loop

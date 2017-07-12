@@ -30,19 +30,19 @@
   (defun gen-binary-search-function (name vector)
     (declare (optimize (speed 0) (safety 3) (debug 3)))
     (labels ((rec (begin end)
-	       (when (<= begin end)
-		 (let* ((i (floor (+ end begin) 2))
-			(elt (aref vector i))
-			(a (car elt))
-			(b (cadr elt))
-			(then (rec begin (1- i)))
-			(else (rec (1+ i) end)))
-		   `(if (<= ,a code ,b)
-			t
-			,(if (or then else)
-			     `(if (< code ,a)
-				  ,then
-				  ,else)))))))
+               (when (<= begin end)
+                 (let* ((i (floor (+ end begin) 2))
+                        (elt (aref vector i))
+                        (a (car elt))
+                        (b (cadr elt))
+                        (then (rec begin (1- i)))
+                        (else (rec (1+ i) end)))
+                   `(if (<= ,a code ,b)
+                        t
+                        ,(if (or then else)
+                             `(if (< code ,a)
+                                  ,then
+                                  ,else)))))))
       (compile
        (eval
         `(defun ,name (code)
@@ -67,17 +67,16 @@
 
 (defun string-width (str &optional (start 0) end)
   (loop :with width := 0
-     :for i :from start :below (or end (length str))
-     :for c := (aref str i)
-     :do (setq width (char-width c width))
-     :finally (return width)))
+        :for i :from start :below (or end (length str))
+        :for c := (aref str i)
+        :do (setq width (char-width c width))
+        :finally (return width)))
 
 (defun wide-index (str goal &key (start 0))
   (loop
     :with w := 0
     :for i :from start :below (length str) :by 1
     :for c := (schar str i)
-    :do
-    (setq w (char-width c w))
-    (when (< goal w)
-      (return i))))
+    :do (setq w (char-width c w))
+        (when (< goal w)
+          (return i))))

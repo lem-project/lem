@@ -27,12 +27,12 @@
 ```
 ")
   (let ((cleanups
-         (mapcan (lambda (b)
-                   (destructuring-bind (var point &optional (kind :temporary)) b
-                     (declare (ignore point))
-                     (unless (eq :temporary kind)
-                       `((delete-point ,var)))))
-                 bindings)))
+          (mapcan (lambda (b)
+                    (destructuring-bind (var point &optional (kind :temporary)) b
+                      (declare (ignore point))
+                      (unless (eq :temporary kind)
+                        `((delete-point ,var)))))
+                  bindings)))
     `(let ,(mapcar (lambda (b)
                      (destructuring-bind (var point &optional (kind :temporary)) b
                        `(,var (copy-point ,point ,kind))))
@@ -53,6 +53,6 @@
 
 (defmacro without-interrupts (&body body)
   `(#+ccl ccl:without-interrupts
-    #+sbcl sb-sys:without-interrupts
-    #-(or ccl sbcl) progn
-    ,@body))
+          #+sbcl sb-sys:without-interrupts
+          #-(or ccl sbcl) progn
+          ,@body))

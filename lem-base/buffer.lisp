@@ -166,7 +166,7 @@
 (defvar *undo-limit* 100000)
 
 (defun make-buffer (name &key temporary read-only-p (enable-undo-p t)
-                         (syntax-table (fundamental-syntax-table)))
+                              (syntax-table (fundamental-syntax-table)))
   @lang(:jp "バッファ名が`name`のバッファがバッファリストに含まれていれば
 そのバッファを返し、無ければ作成します。  
 `read-only-p`は読み込み専用にするか。  

@@ -355,7 +355,7 @@
   (unless (point< start-point end-point)
     (rotatef start-point end-point))
   (delete-char/point start-point
-		     (count-characters start-point end-point)))
+                     (count-characters start-point end-point)))
 
 @export
 (defun count-lines (start-point end-point)
@@ -374,10 +374,10 @@
   (with-point ((start-point start-point :right-inserting)
                (end-point end-point :right-inserting)
                (point start-point))
-    (loop :while (point< start-point end-point) :do
-      (funcall function (move-point point start-point))
-      (unless (line-offset start-point 1)
-        (return)))))
+    (loop :while (point< start-point end-point)
+          :do (funcall function (move-point point start-point))
+              (unless (line-offset start-point 1)
+                (return)))))
 
 @export
 (defun line-number-at-point (point)
@@ -484,11 +484,11 @@
   (let ((string (line-string point))
         (eof-p (last-line-p point))
         (count 0))
-    (loop :for c :across string :do
-       (unless (or (char= c #\space)
-		   (char= c #\tab))
-	 (return-from blank-line-p nil))
-       (incf count))
+    (loop :for c :across string
+          :do (unless (or (char= c #\space)
+                          (char= c #\tab))
+                (return-from blank-line-p nil))
+              (incf count))
     (if eof-p
         count
         (1+ count))))
@@ -496,14 +496,13 @@
 (defun skip-chars-internal (point test dir)
   (loop :for count :from 0
         :for c := (character-at point (if dir 0 -1))
-        :do
-        (when (or (null c)
-                  (not (if (listp test)
-                           (member c test)
-                           (funcall test c))))
-          (return count))
-        (unless (character-offset point (if dir 1 -1))
-          (return count))))
+        :do (when (or (null c)
+                      (not (if (listp test)
+                               (member c test)
+                               (funcall test c))))
+              (return count))
+            (unless (character-offset point (if dir 1 -1))
+              (return count))))
 
 @export
 (defun skip-chars-forward (point test)
@@ -538,7 +537,6 @@
 (defun insert-buffer (point buffer)
   (loop :for line := (point-line (buffer-start-point buffer)) :then (line-next line)
         :while line
-        :do
-        (insert-string point (line-str line))
-        (setf (line-plist (point-line point)) (line-plist line))
-        (insert-character point #\newline)))
+        :do (insert-string point (line-str line))
+            (setf (line-plist (point-line point)) (line-plist line))
+            (insert-character point #\newline)))

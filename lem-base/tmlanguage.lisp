@@ -90,14 +90,13 @@
                  :move-action move-action))
 
 (defun make-tm-region (begin end
-                       &key
-                       begin-captures end-captures captures
-                       name content-name (patterns (make-tm-patterns)))
+                       &key begin-captures end-captures captures
+                            name content-name (patterns (make-tm-patterns)))
   (make-instance 'tm-region
                  :begin (ppcre:create-scanner begin)
                  :end (let ((tree (if (stringp end)
-                                     (ppcre:parse-string end)
-                                     end)))
+                                      (ppcre:parse-string end)
+                                      end)))
                         (if (find-tree :back-reference tree)
                             tree
                             (ppcre:create-scanner end)))
@@ -198,17 +197,17 @@
           (best))
       (dolist (pattern (patterns patterns))
         (let ((result
-               (etypecase pattern
-                 (tm-region
-                  (if-push (tm-ahead-match pattern (tm-region-begin pattern) string start end)))
-                 (tm-match
-                  (if-push (tm-ahead-match pattern (tm-match-matcher pattern) string start end)))
-                 (tm-include-repository
-                  (if-pushs (tm-best-rule-in-patterns (tm-get-repository (tm-include-refer pattern))
-                                                      string start end)))
-                 (tm-include-self
-                  (if-pushs (tm-best-rule-in-patterns (tmlanguage-patterns (current-syntax-parser))
-                                                      string start end))))))
+                (etypecase pattern
+                  (tm-region
+                   (if-push (tm-ahead-match pattern (tm-region-begin pattern) string start end)))
+                  (tm-match
+                   (if-push (tm-ahead-match pattern (tm-match-matcher pattern) string start end)))
+                  (tm-include-repository
+                   (if-pushs (tm-best-rule-in-patterns (tm-get-repository (tm-include-refer pattern))
+                                                       string start end)))
+                  (tm-include-self
+                   (if-pushs (tm-best-rule-in-patterns (tmlanguage-patterns (current-syntax-parser))
+                                                       string start end))))))
           (when result
             (setf best (tm-get-best-result best result)))))
       (values best results))))
@@ -219,11 +218,11 @@
           :for result := (car rest-results)
           :do (if (and result (>= start (tm-result-start result)))
                   (let ((new-result
-                         (tm-ahead-match (tm-result-rule result)
-                                         (tm-ahead-matcher (tm-result-rule result))
-                                         string
-                                         start
-                                         end)))
+                          (tm-ahead-match (tm-result-rule result)
+                                          (tm-ahead-matcher (tm-result-rule result))
+                                          string
+                                          start
+                                          end)))
                     (setf (car rest-results) new-result)
                     (setf best (tm-get-best-result best new-result)))
                   (setf best (tm-get-best-result best result))))
@@ -273,14 +272,14 @@
 
 (defun tm-init-region-end-regex (rule begin-result string)
   (let* ((reg-starts
-          (tm-result-reg-starts begin-result))
+           (tm-result-reg-starts begin-result))
          (reg-ends
-          (tm-result-reg-ends begin-result))
+           (tm-result-reg-ends begin-result))
          (end-regex
-          (tm-replace-back-reference (tm-region-end rule)
-                                     string
-                                     reg-starts
-                                     reg-ends)))
+           (tm-replace-back-reference (tm-region-end rule)
+                                      string
+                                      reg-starts
+                                      reg-ends)))
     (setf (tm-result-option begin-result)
           (ppcre:create-scanner end-regex))))
 
@@ -299,7 +298,7 @@
   (let ((start1 (if start-line-p (tm-result-start begin-result) 0))
         (start2 (if start-line-p (tm-result-end begin-result) 0)))
     (let ((end-result
-           (tm-ahead-match rule (tm-result-option begin-result) (line-string point) start2 end)))
+            (tm-ahead-match rule (tm-result-option begin-result) (line-string point) start2 end)))
       (multiple-value-bind (best results)
           (tm-best-rule-in-patterns (tm-region-patterns rule)
                                     (line-string point)
@@ -347,9 +346,8 @@
     (let ((end (funcall (tm-match-move-action rule) end)))
       (when (and end (point< point end))
         (loop :until (same-line-p point end)
-              :do
-              (set-syntax-context (point-line point) rule)
-              (line-offset point 1))
+              :do (set-syntax-context (point-line point) rule)
+                  (line-offset point 1))
         (set-syntax-context (point-line point) 'end-move-action)
         (alexandria:when-let ((attribute (tm-rule-name rule)))
           (put-text-property start end :attribute attribute))

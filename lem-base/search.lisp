@@ -15,18 +15,18 @@
 (defun search-step (point first-search search step move-matched endp)
   (with-point ((start-point point))
     (let ((result
-           (let ((res (funcall first-search point)))
-             (cond (res
-                    (funcall move-matched point res)
-                    (not (funcall endp point)))
-                   (t
-                    (loop :until (funcall endp point) :do
-		       (unless (funcall step point)
-			 (return nil))
-		       (let ((res (funcall search point)))
-			 (when res
-			   (funcall move-matched point res)
-			   (return t)))))))))
+            (let ((res (funcall first-search point)))
+              (cond (res
+                     (funcall move-matched point res)
+                     (not (funcall endp point)))
+                    (t
+                     (loop :until (funcall endp point) :do
+                              (unless (funcall step point)
+                                (return nil))
+                              (let ((res (funcall search point)))
+                                (when res
+                                  (funcall move-matched point res)
+                                  (return t)))))))))
       (if (and result (not (funcall endp point)))
           result
           (progn
@@ -203,17 +203,17 @@
 
 (defun search-symbol (string name &key (start 0) (end (length string)) from-end)
   (loop :while (< start end)
-     :do (let ((pos (search name string :start2 start :end2 end :from-end from-end)))
-	   (when pos
-	     (let ((pos2 (+ pos (length name))))
-	       (when (and (or (zerop pos)
-			      (not (syntax-symbol-char-p (aref string (1- pos)))))
-			  (or (>= pos2 (length string))
-			      (not (syntax-symbol-char-p (aref string pos2)))))
-		 (return (cons pos pos2)))))
-           (if from-end
-               (setf end (1- (or pos end)))
-               (setf start (1+ (or pos start)))))))
+        :do (let ((pos (search name string :start2 start :end2 end :from-end from-end)))
+              (when pos
+                (let ((pos2 (+ pos (length name))))
+                  (when (and (or (zerop pos)
+                                 (not (syntax-symbol-char-p (aref string (1- pos)))))
+                             (or (>= pos2 (length string))
+                                 (not (syntax-symbol-char-p (aref string pos2)))))
+                    (return (cons pos pos2)))))
+              (if from-end
+                  (setf end (1- (or pos end)))
+                  (setf start (1+ (or pos start)))))))
 
 (defun search-forward-symbol (point name &optional limit-point)
   (let ((charpos (point-charpos point)))
@@ -266,8 +266,8 @@
 
 (defun match-string-at (point string &optional across-line-p)
   (let ((overp
-         (> (+ (point-charpos point) (length string))
-            (length (line-string point)))))
+          (> (+ (point-charpos point) (length string))
+             (length (line-string point)))))
     (cond ((and across-line-p overp)
            (string= string
                     (points-to-string point

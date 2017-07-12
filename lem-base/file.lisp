@@ -22,27 +22,27 @@
 (defun parse-pathname (pathname)
   (let ((path))
     (loop
-       (let ((pos (position #\/ pathname)))
-	 (when (null pos)
-	   (push pathname path)
-	   (return))
-	 (let ((str (subseq pathname 0 pos)))
-	   (setq pathname (subseq pathname (1+ pos)))
-	   (cond ((string= str "."))
-		 ((string= str "..")
-		  (pop path))
-		 ((string= str "~")
-		  (setq path
-			(nreverse
-			 (parse-pathname
-			  (string-right-trim
-			   '(#\/)
-			   (namestring
-			    (user-homedir-pathname)))))))
-		 ((string= str "")
-		  (setq path nil))
-		 (t
-		  (push str path))))))
+      (let ((pos (position #\/ pathname)))
+        (when (null pos)
+          (push pathname path)
+          (return))
+        (let ((str (subseq pathname 0 pos)))
+          (setq pathname (subseq pathname (1+ pos)))
+          (cond ((string= str "."))
+                ((string= str "..")
+                 (pop path))
+                ((string= str "~")
+                 (setq path
+                       (nreverse
+                        (parse-pathname
+                         (string-right-trim
+                          '(#\/)
+                          (namestring
+                           (user-homedir-pathname)))))))
+                ((string= str "")
+                 (setq path nil))
+                (t
+                 (push str path))))))
     (nreverse path)))
 
 (defun expand-file-name (pathname &optional (directory (uiop:getcwd)))
@@ -121,23 +121,22 @@
            (with-point ((point (buffer-start-point buffer)))
              (loop :for eof-p := (end-buffer-p point)
                    :for str := (line-string point)
-                   :do
-                   (princ str out)
-                   (unless eof-p
-                     #+sbcl
-                     (ecase end-of-line
-                       ((:crlf)
-                        (princ #\return out)
-                        (princ #\newline out))
-                       ((:lf)
-                        (princ #\newline out))
-                       ((:cr)
-                        (princ #\return out)))
-                     #-sbcl
-                     (princ #\newline out)
-                     )
-                   (unless (line-offset point 1)
-                     (return))))))
+                   :do (princ str out)
+                       (unless eof-p
+                         #+sbcl
+                         (ecase end-of-line
+                           ((:crlf)
+                            (princ #\return out)
+                            (princ #\newline out))
+                           ((:lf)
+                            (princ #\newline out))
+                           ((:cr)
+                            (princ #\return out)))
+                         #-sbcl
+                         (princ #\newline out)
+                         )
+                       (unless (line-offset point 1)
+                         (return))))))
     (cond
       ((buffer-external-format buffer)
        (with-open-file (out filename

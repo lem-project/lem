@@ -33,7 +33,7 @@
   (let ((buffer (point-buffer start)))
     (when (enable-syntax-highlight-p buffer)
       (let ((*current-syntax*
-             (buffer-syntax-table buffer)))
+              (buffer-syntax-table buffer)))
         (with-point ((start start)
                      (end end))
           (line-start start)

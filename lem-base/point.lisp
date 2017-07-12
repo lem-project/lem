@@ -93,8 +93,8 @@
   (make-point (point-buffer point)
               (point-linum point)
               (point-line point)
-	      (point-charpos point)
-	      :kind (or kind (point-kind point))))
+              (point-charpos point)
+              :kind (or kind (point-kind point))))
 
 (defun delete-point (point)
   @lang(:jp "`point`を削除します。

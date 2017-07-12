@@ -47,6 +47,9 @@ aaaaaaa(
   (list foo opt1 opt2
         rest))
 
+(#+sbcl foo
+ #+ccl bar)
+
 (let ((x y)
       (foo #-foo (no-foo)
            #+foo (yes-foo))

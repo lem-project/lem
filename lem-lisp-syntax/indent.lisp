@@ -415,7 +415,9 @@
                           (= 0 (car path))
                           (scan-lists p -1 1 t))
                  (return-from outer (1+ (point-column p))))
-               (when (and innermost (member (character-at p 0) '(#\: #\")))
+               (when (and innermost
+                          (or (member (character-at p 0) '(#\: #\"))
+                              (looking-at p "#!?[+-]")))
                  (setf const-flag t))
                (let ((name (string-downcase (symbol-string-at-point p))))
                  (unless (scan-lists p -1 1 t)
@@ -447,5 +449,4 @@
       ((zerop (pps-state-paren-depth state))
        0)
       (t
-       (catch 'drop-out
-         (calc-indent-1 point))))))
+       (calc-indent-1 point)))))

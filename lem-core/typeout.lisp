@@ -6,7 +6,7 @@
 
 (define-minor-mode typeout-mode
     (:name "typeout"
-	   :keymap *typeout-mode-keymap*))
+     :keymap *typeout-mode-keymap*))
 
 (define-key *typeout-mode-keymap* "q" 'quit-window)
 

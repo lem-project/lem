@@ -365,18 +365,18 @@
 (define-command delete-blank-lines () ()
   (let ((point (current-point)))
     (loop
-       (unless (blank-line-p point)
-	 (line-offset point 1)
-	 (return))
-       (unless (line-offset point -1)
-	 (return)))
+      (unless (blank-line-p point)
+        (line-offset point 1)
+        (return))
+      (unless (line-offset point -1)
+        (return)))
     (loop
-       (when (end-buffer-p point)
-	 (return))
-       (let ((nblanks (blank-line-p point)))
-	 (if nblanks
-	     (delete-character point nblanks)
-	     (return))))))
+      (when (end-buffer-p point)
+        (return))
+      (let ((nblanks (blank-line-p point)))
+        (if nblanks
+            (delete-character point nblanks)
+            (return))))))
 
 (define-key *global-keymap* "M-Spc" 'just-one-space)
 (define-command just-one-space () ()
@@ -470,15 +470,15 @@
             error-output-value
             status)
         (let ((output-string
-               (with-output-to-string (output)
-                 (with-input-from-string (input string)
-                   (multiple-value-setq
-		       (output-value error-output-value status)
-		     (uiop:run-program (format nil "cd ~A; ~A" (buffer-directory buffer) cmd)
-				       :input input
-				       :output output
-				       :error-output output
-				       :ignore-error-status t))))))
+                (with-output-to-string (output)
+                  (with-input-from-string (input string)
+                    (multiple-value-setq
+                        (output-value error-output-value status)
+                      (uiop:run-program (format nil "cd ~A; ~A" (buffer-directory buffer) cmd)
+                                        :input input
+                                        :output output
+                                        :error-output output
+                                        :ignore-error-status t))))))
           (delete-between-points start end)
           (insert-string start output-string)
           (move-to-line (current-point) line-number)
@@ -489,11 +489,11 @@
 (define-command pipe-command (str) ("sPipe command: ")
   (let ((directory (buffer-directory)))
     (let ((output-string
-           (with-output-to-string (out)
-             (uiop:run-program (format nil "cd ~A; ~A" directory str)
-                               :output out
-                               :error-output out
-                               :ignore-error-status t))))
+            (with-output-to-string (out)
+              (uiop:run-program (format nil "cd ~A; ~A" directory str)
+                                :output out
+                                :error-output out
+                                :ignore-error-status t))))
       (unless (string= output-string "")
         (with-pop-up-typeout-window (out (make-buffer "*Command*") :focus nil :erase t)
           (write-string output-string out))))))

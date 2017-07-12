@@ -156,9 +156,8 @@
                    (loop :with size := (+ *print-start-x*
                                           (* (tab-size) (floor (+ (tab-size) x) (tab-size))))
                          :while (< x size)
-                         :do
-                         (charms/ll:mvwaddch scrwin y x #.(char-code #\space))
-                         (incf x)))
+                         :do (charms/ll:mvwaddch scrwin y x #.(char-code #\space))
+                             (incf x)))
                   (t
                    (charms/ll:mvwaddstr scrwin y x
                                         (if (char= char #\return)
@@ -176,7 +175,7 @@
 
 
 (defun disp-print-line (screen y str/attributes do-clrtoeol
-                               &key (start-x 0) (string-start 0) string-end)
+                        &key (start-x 0) (string-start 0) string-end)
   (destructuring-bind (str . attributes)
       str/attributes
     (when (null string-end)
@@ -192,11 +191,10 @@
     (let ((prev-end 0)
           (x start-x))
       (loop :for (start end attr) :in attributes
-            :do
-            (setf end (min (length str) end))
-            (setf x (screen-print-string screen x y (subseq str prev-end start) nil))
-            (setf x (screen-print-string screen x y (subseq str start end) attr))
-            (setf prev-end end))
+            :do (setf end (min (length str) end))
+                (setf x (screen-print-string screen x y (subseq str prev-end start) nil))
+                (setf x (screen-print-string screen x y (subseq str start end) attr))
+                (setf prev-end end))
       (screen-print-string screen x y
                            (if (= prev-end 0)
                                str
@@ -207,61 +205,61 @@
 
 #+(or)
 (progn
-(defun overlay-line (elements start end attribute)
-  (declare (optimize (speed 3) (safety 0) (debug 0)))
-  (declare (type fixnum start end))
-  (let ((acc '()))
-    (flet ((add (start end attribute)
-             (when (< start end)
-               (push (list start end attribute) acc))))
-      (if (null elements)
-          (add start end attribute)
-          (loop :for rest :on elements
-                :for firstp := t :then nil
-                :for prev := nil :then e
-                :for (s e value) :of-type (fixnum fixnum t) :in elements
-                :if firstp :do (add start (the fixnum (+ start s)) attribute)
-                :if (and prev) :do (add (the fixnum (+ start (the fixnum prev)))
-                                        (the fixnum (+ start s))
-                                        attribute)
-                :do (let ((src-attribute (ensure-attribute value nil)))
-                      (add (the fixnum (+ start s))
-                           (the fixnum (+ start e))
-                           (merge-attribute src-attribute attribute)))
-                :if (null (cdr rest)) :do (add (the fixnum (+ start e)) end attribute))))
-    acc))
+  (defun overlay-line (elements start end attribute)
+    (declare (optimize (speed 3) (safety 0) (debug 0)))
+    (declare (type fixnum start end))
+    (let ((acc '()))
+      (flet ((add (start end attribute)
+               (when (< start end)
+                 (push (list start end attribute) acc))))
+        (if (null elements)
+            (add start end attribute)
+            (loop :for rest :on elements
+                  :for firstp := t :then nil
+                  :for prev := nil :then e
+                  :for (s e value) :of-type (fixnum fixnum t) :in elements
+                  :if firstp :do (add start (the fixnum (+ start s)) attribute)
+                  :if (and prev) :do (add (the fixnum (+ start (the fixnum prev)))
+                                          (the fixnum (+ start s))
+                                          attribute)
+                  :do (let ((src-attribute (ensure-attribute value nil)))
+                        (add (the fixnum (+ start s))
+                             (the fixnum (+ start e))
+                             (merge-attribute src-attribute attribute)))
+                  :if (null (cdr rest)) :do (add (the fixnum (+ start e)) end attribute))))
+      acc))
 
-(defun disp-set-line (screen attribute screen-row start-charpos end-charpos)
-  (when (and (<= 0 screen-row)
-             (< screen-row (screen-height screen))
-             (not (null (aref (screen-lines screen) screen-row)))
-             (or (null end-charpos)
-                 (< start-charpos end-charpos)))
-    (destructuring-bind (string . attributes)
-        (aref (screen-lines screen) screen-row)
-      (declare (ignore string))
-      (let ((end-charpos (or end-charpos (screen-width screen))))
-        (let* ((range-elements
-                (lem-base::subseq-elements attributes
-                                           start-charpos
-                                           end-charpos)))
-          #+(or)
-          (when (< (length string) end-charpos)
-            (setf (car (aref (screen-lines screen) screen-row))
-                  (concatenate 'string
-                               string
-                               (make-string (1- (- end-charpos (length string)))
-                                            :initial-element #\space))))
-          (setf (cdr (aref (screen-lines screen) screen-row))
-                (lem-base::normalization-elements
-                 (nconc (overlay-line range-elements
-                                      start-charpos
-                                      end-charpos
-                                      attribute)
-                        (lem-base::remove-elements attributes
-                                                   start-charpos
-                                                   end-charpos)))))))))
-)
+  (defun disp-set-line (screen attribute screen-row start-charpos end-charpos)
+    (when (and (<= 0 screen-row)
+               (< screen-row (screen-height screen))
+               (not (null (aref (screen-lines screen) screen-row)))
+               (or (null end-charpos)
+                   (< start-charpos end-charpos)))
+      (destructuring-bind (string . attributes)
+          (aref (screen-lines screen) screen-row)
+        (declare (ignore string))
+        (let ((end-charpos (or end-charpos (screen-width screen))))
+          (let* ((range-elements
+                   (lem-base::subseq-elements attributes
+                                              start-charpos
+                                              end-charpos)))
+            #+(or)
+            (when (< (length string) end-charpos)
+              (setf (car (aref (screen-lines screen) screen-row))
+                    (concatenate 'string
+                                 string
+                                 (make-string (1- (- end-charpos (length string)))
+                                              :initial-element #\space))))
+            (setf (cdr (aref (screen-lines screen) screen-row))
+                  (lem-base::normalization-elements
+                   (nconc (overlay-line range-elements
+                                        start-charpos
+                                        end-charpos
+                                        attribute)
+                          (lem-base::remove-elements attributes
+                                                     start-charpos
+                                                     end-charpos)))))))))
+  )
 
 (defun disp-set-line (screen attribute screen-row start-charpos end-charpos)
   (when (and (<= 0 screen-row)
@@ -373,14 +371,13 @@
         (view-point (lem::window-view-point window)))
     (with-point ((point view-point))
       (loop :for i :from 0 :below (screen-height screen)
-            :do
-            (let* ((line (lem-base::point-line point))
-                   (str/attributes (lem-base::line-string/attributes line)))
-              (setf (aref (screen-left-lines screen) i) nil)
-              (setf (aref (screen-lines screen) i) str/attributes))
-            (unless (line-offset point 1)
-              (fill (screen-lines screen) nil :start (1+ i))
-              (return))))
+            :do (let* ((line (lem-base::point-line point))
+                       (str/attributes (lem-base::line-string/attributes line)))
+                  (setf (aref (screen-left-lines screen) i) nil)
+                  (setf (aref (screen-lines screen) i) str/attributes))
+                (unless (line-offset point 1)
+                  (fill (screen-lines screen) nil :start (1+ i))
+                  (return))))
     (let ((overlays (lem::overlays buffer))
           ov)
       (when (setf ov (maybe-push-mark-overlay window)) (push ov overlays))
@@ -400,8 +397,8 @@
   (let ((start 0)
         (start-x (screen-left-width screen))
         (truncate-str/attributes
-         (cons (string *truncate-character*)
-               (list (list 0 1 'lem:truncate-attribute)))))
+          (cons (string *truncate-character*)
+                (list (list 0 1 'lem:truncate-attribute)))))
     (loop :for i := (wide-index (car str/attributes)
                                 (1- screen-width)
                                 :start start)
@@ -462,9 +459,9 @@
   (let* ((lem-base::*tab-size* (variable-value 'tab-width :default buffer))
          (truncate-lines (variable-value 'truncate-lines :default buffer))
          (disp-line-function
-          (if truncate-lines
-              #'screen-display-line-wrapping
-              #'screen-display-line))
+           (if truncate-lines
+               #'screen-display-line-wrapping
+               #'screen-display-line))
          (wrap-lines (screen-wrap-lines screen))
          (screen-width (- (screen-width screen)
                           (screen-left-width screen)))
@@ -599,8 +596,8 @@
                 (cond
                   ((= code -1))
                   ((= code 410)
-                   (loop :while (< 0 (lem::event-queue-length)) :do
-                         (sleep 0.01))
+                   (loop :while (< 0 (lem::event-queue-length))
+                         :do (sleep 0.01))
                    (lem::change-display-size-hook t))
                   ((= code abort-key)
                    (send-abort-event editor-thread))

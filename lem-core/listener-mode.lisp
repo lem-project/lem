@@ -70,12 +70,12 @@
       (insert-character cur-point #\newline 1)
       (buffer-end cur-point))
     (insert-string cur-point
-		   (princ-to-string
-		    (funcall
-		     (variable-value 'listener-get-prompt-function :buffer buffer)))
-		   :attribute 'listener-prompt-attribute
-		   :read-only t
-		   :field t)
+                   (princ-to-string
+                    (funcall
+                     (variable-value 'listener-get-prompt-function :buffer buffer)))
+                   :attribute 'listener-prompt-attribute
+                   :read-only t
+                   :field t)
     (buffer-end cur-point)
     (buffer-undo-boundary buffer)
     (listener-update-point cur-point)))
@@ -131,4 +131,4 @@
 
 (define-command listener-clear-input () ()
   (delete-between-points (listener-start-point (current-buffer))
-			 (buffer-end-point (current-buffer))))
+                         (buffer-end-point (current-buffer))))

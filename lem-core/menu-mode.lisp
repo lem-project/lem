@@ -105,9 +105,8 @@
           (with-point ((start p))
             (loop :for str :in (menu-columns menu)
                   :for column :in columns
-                  :do
-                  (insert-string p str)
-                  (move-to-column p column t))
+                  :do (insert-string p str)
+                      (move-to-column p column t))
             (move-to-column p (1- (window-width window)) t)
             (put-text-property start p :attribute 'head-line-attribute))
           (dolist (item (menu-items menu))
@@ -115,9 +114,8 @@
             (with-point ((start p))
               (loop :for (string . attribute) :in (menu-item-elements item)
                     :for column :in columns
-                    :do
-                    (insert-string p string :attribute attribute)
-                    (move-to-column p column t))
+                    :do (insert-string p string :attribute attribute)
+                        (move-to-column p column t))
               (put-text-property start p 'function (menu-item-select-function item))
               (put-text-property start p 'plist (menu-item-plist item))))
           (move-to-line (buffer-point buffer) 2))))))

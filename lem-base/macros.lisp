@@ -53,6 +53,6 @@
 
 (defmacro without-interrupts (&body body)
   `(#+ccl ccl:without-interrupts
-          #+sbcl sb-sys:without-interrupts
-          #-(or ccl sbcl) progn
-          ,@body))
+    #+sbcl sb-sys:without-interrupts
+    #-(or ccl sbcl) progn
+    ,@body))

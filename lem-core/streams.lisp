@@ -76,14 +76,13 @@
     :accessor buffer-stream-point)))
 
 (defun make-buffer-stream-instance (class-name point
-				    &optional
-				      interactive-update-p)
+                                    &optional interactive-update-p)
   (make-instance class-name
                  :point (copy-point point :left-inserting)
                  :interactive-update-p interactive-update-p))
 
 (defun make-buffer-output-stream (&optional (point (current-point))
-				    interactive-update-p)
+                                            interactive-update-p)
   (make-buffer-stream-instance 'buffer-output-stream
                                point interactive-update-p))
 
@@ -126,13 +125,13 @@
 
 (defun %write-octets-to-buffer-stream (stream octets start end &key)
   (let ((octets (subseq octets start end)))
-    (loop :for c :across octets :do
-       (trivial-gray-streams:stream-write-byte stream c))
+    (loop :for c :across octets
+          :do (trivial-gray-streams:stream-write-byte stream c))
     octets))
 
 (defmethod trivial-gray-streams:stream-write-sequence
-    ((stream buffer-output-stream)
-     sequence start end &key)
+  ((stream buffer-output-stream)
+   sequence start end &key)
   (etypecase sequence
     (string
      (%write-string-to-buffer-stream stream sequence start end))
@@ -140,9 +139,9 @@
      (%write-octets-to-buffer-stream stream sequence start end))))
 
 (defmethod trivial-gray-streams:stream-write-string
-    ((stream buffer-output-stream)
-     (string string)
-     &optional (start 0) end)
+  ((stream buffer-output-stream)
+   (string string)
+   &optional (start 0) end)
   (%write-string-to-buffer-stream stream string start end))
 
 (defmethod trivial-gray-streams:stream-terpri ((stream buffer-output-stream))
@@ -174,10 +173,10 @@
   (let ((c (pop (minibuffer-input-stream-queue stream))))
     (cond ((null c)
            (let ((string
-                  (handler-case (values (prompt-for-string "") t)
-                    (editor-abort ()
-		      (setf (minibuffer-input-stream-queue stream) nil)
-		      (return-from trivial-gray-streams:stream-read-char :eof)))))
+                   (handler-case (values (prompt-for-string "") t)
+                     (editor-abort ()
+                       (setf (minibuffer-input-stream-queue stream) nil)
+                       (return-from trivial-gray-streams:stream-read-char :eof)))))
              (setf (minibuffer-input-stream-queue stream)
                    (nconc (minibuffer-input-stream-queue stream)
                           (coerce string 'list)

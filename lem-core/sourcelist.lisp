@@ -52,9 +52,9 @@
       (insert-character point #\newline)
       (when jump-function
         (append-jump-function sourcelist
-                           start-point
-                           point
-                           jump-function)))))
+                              start-point
+                              point
+                              jump-function)))))
 
 (defun jump-highlighting ()
   (let ((point (current-point)))
@@ -102,7 +102,7 @@
 
 (define-minor-mode sourcelist-mode
     (:name "sourcelist"
-	   :keymap *sourcelist-mode-keymap*))
+     :keymap *sourcelist-mode-keymap*))
 
 (define-key *sourcelist-mode-keymap* "C-m" 'sourcelist-jump)
 (define-key *sourcelist-mode-keymap* "q" 'quit-window)

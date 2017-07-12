@@ -45,11 +45,11 @@
   (setf attribute (ensure-attribute attribute t))
   (let* ((buffer (point-buffer start))
          (overlay
-          (make-instance 'overlay
-                         :start start
-                         :end end
-                         :attribute attribute
-                         :buffer buffer)))
+           (make-instance 'overlay
+                          :start start
+                          :end end
+                          :attribute attribute
+                          :buffer buffer)))
     overlay))
 
 (defun make-overlay (start end attribute)
@@ -58,11 +58,11 @@
   (setf attribute (ensure-attribute attribute t))
   (let* ((buffer (point-buffer start))
          (overlay
-          (make-instance 'overlay
-                         :start (copy-point start :right-inserting)
-                         :end (copy-point end :left-inserting)
-                         :attribute attribute
-                         :buffer buffer)))
+           (make-instance 'overlay
+                          :start (copy-point start :right-inserting)
+                          :end (copy-point end :left-inserting)
+                          :attribute attribute
+                          :buffer buffer)))
     (push overlay (buffer-value buffer 'overlays))
     overlay))
 

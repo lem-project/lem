@@ -88,10 +88,9 @@
                   :underline-p (or (attribute-underline-p over)
                                    (attribute-underline-p under))))
 
-(defun set-attribute (attribute &key
-                                (foreground nil foregroundp)
-                                (background nil backgroundp)
-                                reverse-p bold-p underline-p)
+(defun set-attribute (attribute &key (foreground nil foregroundp)
+                                     (background nil backgroundp)
+                                     reverse-p bold-p underline-p)
   (let ((attribute (ensure-attribute attribute t)))
     (setf (attribute-%internal-value attribute) nil)
     (when foregroundp

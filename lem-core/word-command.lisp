@@ -36,21 +36,21 @@
 (defun word-offset (point n)
   (if (plusp n)
       (loop :repeat n :do
-	 (skip-chars-forward point (complement #'word-type))
-	 (when (end-buffer-p point)
-	   (return))
-	 (let ((type (word-type (character-at point))))
-	   (skip-chars-forward point
-			       (lambda (c)
-				 (eql type (word-type c))))))
+               (skip-chars-forward point (complement #'word-type))
+               (when (end-buffer-p point)
+                 (return))
+               (let ((type (word-type (character-at point))))
+                 (skip-chars-forward point
+                                     (lambda (c)
+                                       (eql type (word-type c))))))
       (loop :repeat (- n) :do
-	 (skip-chars-backward point (complement #'word-type))
-	 (when (start-buffer-p point)
-	   (return))
-	 (let ((type (word-type (character-at point -1))))
-	   (skip-chars-backward point
-				(lambda (c)
-				  (eql type (word-type c)))))))
+               (skip-chars-backward point (complement #'word-type))
+               (when (start-buffer-p point)
+                 (return))
+               (let ((type (word-type (character-at point -1))))
+                 (skip-chars-backward point
+                                      (lambda (c)
+                                        (eql type (word-type c)))))))
   point)
 
 (define-key *global-keymap* "M-f" 'next-word)
@@ -83,14 +83,14 @@
     (with-point ((point start :left-inserting))
       (loop :while (and (point< point end)
                         (not (end-buffer-p point)))
-	 :do (let ((c (character-at point 0)))
-	       (cond ((char= c #\newline)
-		      (character-offset point 1))
-		     ((funcall replace-char-p c)
-		      (delete-character point)
-		      (insert-character point (funcall case-fun c)))
-		     (t
-		      (character-offset point 1))))))))
+            :do (let ((c (character-at point 0)))
+                  (cond ((char= c #\newline)
+                         (character-offset point 1))
+                        ((funcall replace-char-p c)
+                         (delete-character point)
+                         (insert-character point (funcall case-fun c)))
+                        (t
+                         (character-offset point 1))))))))
 
 (define-key *global-keymap* "C-x C-l" 'downcase-region)
 (define-command downcase-region (start end) ("r")

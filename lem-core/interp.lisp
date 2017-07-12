@@ -80,13 +80,13 @@
           (redraw-display)))
       (handler-case
           (handler-bind ((editor-abort
-                          (lambda (c)
-                            (declare (ignore c))
-                            (buffer-mark-cancel (current-buffer))))
+                           (lambda (c)
+                             (declare (ignore c))
+                             (buffer-mark-cancel (current-buffer))))
                          (editor-condition
-                          (lambda (c)
-                            (declare (ignore c))
-                            (stop-record-key))))
+                           (lambda (c)
+                             (declare (ignore c))
+                             (stop-record-key))))
             (let ((cmd (progn
                          (start-idle-timers)
                          (prog1 (read-command)
@@ -95,7 +95,7 @@
               (clear-balloon-message)
               (call-command cmd nil)))
         (editor-condition (c)
-                          (message "~A" c))))))
+          (message "~A" c))))))
 
 (defun toplevel-command-loop (initialize-function)
   (catch +exit-tag+

@@ -137,19 +137,19 @@
     (adjust-point (current-point))))
 
 (define-command dired-mark-and-next-line (n) ("p")
-  (loop :repeat n :do
-     (mark-current-line t)
-     (dired-next-line 1)))
+  (loop :repeat n
+        :do (mark-current-line t)
+            (dired-next-line 1)))
 
 (define-command dired-unmark-and-next-line (n) ("p")
-  (loop :repeat n :do
-     (mark-current-line nil)
-     (dired-next-line 1)))
+  (loop :repeat n
+        :do (mark-current-line nil)
+            (dired-next-line 1)))
 
 (define-command dired-unmark-and-previous-line (n) ("p")
-  (loop :repeat n :do
-     (dired-previous-line 1)
-     (mark-current-line nil)))
+  (loop :repeat n
+        :do (dired-previous-line 1)
+            (mark-current-line nil)))
 
 (define-command dired-toggle-marks () ()
   (mark-lines (constantly t)
@@ -189,10 +189,10 @@
 
 (defun run-command (string &rest args)
   (let ((error-string
-         (with-output-to-string (error-output)
-           (uiop:run-program (apply #'format nil string args)
-                             :ignore-error-status t
-                             :error-output error-output))))
+          (with-output-to-string (error-output)
+            (uiop:run-program (apply #'format nil string args)
+                              :ignore-error-status t
+                              :error-output error-output))))
     (when (string/= error-string "")
       (editor-error "~A" error-string))))
 
@@ -354,8 +354,8 @@
 
 (defun dired-buffer (filename)
   (let* ((filename
-          (uiop:directory-exists-p
-           (expand-file-name (namestring filename) (buffer-directory))))
+           (uiop:directory-exists-p
+            (expand-file-name (namestring filename) (buffer-directory))))
          (buffer-name (format nil "DIRED ~A" (princ-to-string filename))))
     (or (get-buffer buffer-name)
         (let ((buffer (make-buffer buffer-name :enable-undo-p nil :read-only-p t)))

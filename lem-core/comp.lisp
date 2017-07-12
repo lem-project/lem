@@ -29,33 +29,33 @@
     (when (zerop end) (return-from %comp-split nil))
     (flet ((separatorp (char) (find char separator))
            (done () (return-from %comp-split (cons (subseq string 0 end) list))))
-      (loop :for start = (position-if #'separatorp string :end end :from-end t) :do
-	 (when (null start) (done))
-	 (push (subseq string (1+ start) end) list)
-	 (push (string (aref string start)) list)
-	 (incf words)
-	 (setf end start)))))
+      (loop :for start = (position-if #'separatorp string :end end :from-end t)
+            :do (when (null start) (done))
+                (push (subseq string (1+ start) end) list)
+                (push (string (aref string start)) list)
+                (incf words)
+                (setf end start)))))
 
 (defun completion (name list &key (test #'search) separator key)
   (let ((strings
-         (remove-if-not (if separator
-                            (let* ((parts1 (%comp-split name separator))
-                                   (parts1-length (length parts1)))
-                              (lambda (elt)
-                                (when key
-                                  (setf elt (funcall key elt)))
-                                (let* ((parts2 (%comp-split elt separator))
-                                       (parts2-length (length parts2)))
-                                  (and (<= parts1-length parts2-length)
-                                       (loop
-                                         :for p1 :in parts1
-                                         :for p2 :in parts2
-                                         :unless (funcall test p1 p2)
-                                         :do (return nil)
-                                         :finally (return t))))))
-                            (lambda (elt)
-                              (funcall test name elt)))
-                        list)))
+          (remove-if-not (if separator
+                             (let* ((parts1 (%comp-split name separator))
+                                    (parts1-length (length parts1)))
+                               (lambda (elt)
+                                 (when key
+                                   (setf elt (funcall key elt)))
+                                 (let* ((parts2 (%comp-split elt separator))
+                                        (parts2-length (length parts2)))
+                                   (and (<= parts1-length parts2-length)
+                                        (loop
+                                          :for p1 :in parts1
+                                          :for p2 :in parts2
+                                          :unless (funcall test p1 p2)
+                                          :do (return nil)
+                                          :finally (return t))))))
+                             (lambda (elt)
+                               (funcall test name elt)))
+                         list)))
     strings))
 
 (defun completion-hypheen (name list &key key)
@@ -67,16 +67,16 @@
          (files (mapcar #'namestring (append (uiop:directory-files dirname)
                                              (uiop:subdirectories dirname)))))
     (let ((strings
-           (loop
-             :for pathname :in (or (directory str) (list str))
-             :for str := (namestring pathname)
-             :append
-             (completion (enough-namestring str dirname)
-                         files
-                         :test #'completion-test
-                         :separator "-."
-                         :key #'(lambda (path)
-                                  (enough-namestring path dirname))))))
+            (loop
+              :for pathname :in (or (directory str) (list str))
+              :for str := (namestring pathname)
+              :append
+                 (completion (enough-namestring str dirname)
+                             files
+                             :test #'completion-test
+                             :separator "-."
+                             :key #'(lambda (path)
+                                      (enough-namestring path dirname))))))
       strings)))
 
 (defun completion-strings (str strings)
@@ -237,21 +237,20 @@
     (let ((point (buffer-point buffer))
           (max-column 0)
           (label-end-column
-           (reduce (lambda (max item)
-                     (max max (1+ (length (completion-item-label item)))))
-                   items
-                   :initial-value 0)))
+            (reduce (lambda (max item)
+                      (max max (1+ (length (completion-item-label item)))))
+                    items
+                    :initial-value 0)))
       (loop :for rest-items :on items
             :for item := (car rest-items)
-            :do
-            (insert-string point (completion-item-label item))
-            (move-to-column point label-end-column t)
-            (insert-string point (completion-item-detail item))
-            (setf max-column (max max-column (point-column point)))
-            (with-point ((start (line-start (copy-point point :temporary))))
-              (put-text-property start point :item item))
-            (when (cdr rest-items)
-              (insert-character point #\newline)))
+            :do (insert-string point (completion-item-label item))
+                (move-to-column point label-end-column t)
+                (insert-string point (completion-item-detail item))
+                (setf max-column (max max-column (point-column point)))
+                (with-point ((start (line-start (copy-point point :temporary))))
+                  (put-text-property start point :item item))
+                (when (cdr rest-items)
+                  (insert-character point #\newline)))
       (buffer-start point)
       (loop
         (move-to-column point max-column t)

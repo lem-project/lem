@@ -56,9 +56,9 @@
 (define-key *global-keymap* "C-x o" 'other-window)
 (define-command other-window (&optional (n 1)) ("p")
   (let ((window-list
-         (append (alexandria:ensure-list
-                  (active-minibuffer-window))
-                 (window-list))))
+          (append (alexandria:ensure-list
+                   (active-minibuffer-window))
+                  (window-list))))
     (when (minusp n)
       (setf n (- (length window-list) (abs n))))
     (dotimes (_ n t)

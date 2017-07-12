@@ -71,13 +71,13 @@
          (cmd (lookup-keybind c))
          (list (list c)))
     (loop
-       (cond ((hash-table-p cmd)
-	      (let ((c (read-key)))
-		(setf list (nconc list (list c)))
-		(setf cmd (lookup-keybind list))))
-	     (t
-	      (set-last-read-key-sequence list)
-	      (return cmd))))))
+      (cond ((hash-table-p cmd)
+             (let ((c (read-key)))
+               (setf list (nconc list (list c)))
+               (setf cmd (lookup-keybind list))))
+            (t
+             (set-last-read-key-sequence list)
+             (return cmd))))))
 
 (defun read-key-sequence ()
   (read-command)

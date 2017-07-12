@@ -34,7 +34,7 @@
 (defun inherit-load-theme (theme spec-table)
   (when (color-theme-parent theme)
     (inherit-load-theme (find-color-theme (color-theme-parent theme))
-                       spec-table))
+                        spec-table))
   (loop :for (name . args) :in (color-theme-specs theme)
         :do (setf (gethash name spec-table) args)))
 

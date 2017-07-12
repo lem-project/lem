@@ -74,21 +74,21 @@
 (let ((passed nil))
   (defun call-with-editor (function)
     (let ((report
-           (with-catch-bailout
-             (handler-bind ((error #'bailout)
-                            #+sbcl (sb-sys:interactive-interrupt #'bailout))
-               (call-with-screen
-                (lambda ()
-                  (unwind-protect
-                       (progn
-                         (setf *in-the-editor* t)
-                         (unless passed
-                           (setq passed t)
-                           (window-init)
-                           (minibuf-init)
-                           (setup))
-                         (funcall function))
-                    (setf *in-the-editor* nil))))))))
+            (with-catch-bailout
+              (handler-bind ((error #'bailout)
+                             #+sbcl (sb-sys:interactive-interrupt #'bailout))
+                (call-with-screen
+                 (lambda ()
+                   (unwind-protect
+                        (progn
+                          (setf *in-the-editor* t)
+                          (unless passed
+                            (setq passed t)
+                            (window-init)
+                            (minibuf-init)
+                            (setup))
+                          (funcall function))
+                     (setf *in-the-editor* nil))))))))
       (when report
         (format t "~&~A~%" report)))))
 

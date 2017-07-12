@@ -206,11 +206,11 @@
 
 (defun window-tree-map (tree fn)
   (labels ((f (tree)
-	     (cond ((window-tree-leaf-p tree)
-		    (funcall fn tree))
-		   (t
-		    (f (window-node-car tree))
-		    (f (window-node-cdr tree))))))
+             (cond ((window-tree-leaf-p tree)
+                    (funcall fn tree))
+                   (t
+                    (f (window-node-car tree))
+                    (f (window-node-cdr tree))))))
     (f tree)
     nil))
 
@@ -313,8 +313,8 @@
           :for i := (wide-index string width :start start)
           :while i
           :do
-          (funcall fn i)
-          (setq start i))))
+             (funcall fn i)
+             (setq start i))))
 
 (defun %scroll-down-if-wrapping (window)
   (when (variable-value 'truncate-lines :default (window-buffer window))
@@ -392,7 +392,7 @@
 
 (defun window-offset-view (window)
   (cond ((and (point< (window-buffer-point window)
-		      (window-view-point window))
+                      (window-view-point window))
               (not (same-line-p (window-buffer-point window)
                                 (window-view-point window))))
          (- (count-lines (window-buffer-point window)
@@ -451,12 +451,12 @@
             ((< max height)
              (setf height max))))
     (let ((new-window
-           (make-window (window-buffer window)
-                        (window-x window)
-                        (+ (window-y window) height)
-                        (window-width window)
-                        (- (window-height window) height)
-                        t)))
+            (make-window (window-buffer window)
+                         (window-x window)
+                         (+ (window-y window) height)
+                         (window-width window)
+                         (- (window-height window) height)
+                         t)))
       (setf (window-%height window) height)
       (split-window-after window new-window :vsplit))))
 
@@ -472,12 +472,12 @@
             ((< max width)
              (setf width max))))
     (let ((new-window
-           (make-window (window-buffer window)
-                        (+ 1 (window-x window) width)
-                        (window-y window)
-                        (- (window-width window) width 1)
-                        (window-height window)
-                        t)))
+            (make-window (window-buffer window)
+                         (+ 1 (window-x window) width)
+                         (window-y window)
+                         (- (window-width window) width 1)
+                         (window-height window)
+                         t)))
       (setf (window-%width window) width)
       (split-window-after window new-window :hsplit))))
 
@@ -588,8 +588,8 @@
 
 (defun collect-right-windows (window-list)
   (max-if (lambda (window)
-              (+ (window-%x window)
-                 (window-%width window)))
+            (+ (window-%x window)
+               (window-%width window)))
           window-list))
 
 (defun collect-top-windows (window-list)
@@ -597,8 +597,8 @@
 
 (defun collect-bottom-windows (window-list)
   (max-if (lambda (window)
-              (+ (window-%y window)
-                 (window-%height window)))
+            (+ (window-%y window)
+               (window-%height window)))
           window-list))
 
 (defun %shrink-windows (window-list
@@ -609,7 +609,7 @@
                         shift-height
                         shift-width)
   (let ((shrink-window-list
-         (funcall collect-windows-fn window-list)))
+          (funcall collect-windows-fn window-list)))
     (dolist (window shrink-window-list)
       (when (not (funcall check-fn window))
         (return-from %shrink-windows nil)))
@@ -757,8 +757,8 @@
 
 (defun get-buffer-windows (buffer)
   (loop :for window :in (window-list)
-     :when (eq buffer (window-buffer window))
-     :collect window))
+        :when (eq buffer (window-buffer window))
+        :collect window))
 
 (defun other-buffer ()
   (let ((buffer-list (buffer-list)))
@@ -887,10 +887,10 @@
       (buffer-start p)
       (with-point ((s p))
         (loop :do
-              (move-to-column p max-column t)
-              (put-text-property (line-start (move-point s p))
-                                 (line-end p)
-                                 :attribute 'balloon-attribute)
+                 (move-to-column p max-column t)
+                 (put-text-property (line-start (move-point s p))
+                                    (line-end p)
+                                    :attribute 'balloon-attribute)
               :while (line-offset p 1)))
       (let ((window
               (balloon (current-window)

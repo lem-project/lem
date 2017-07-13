@@ -239,6 +239,15 @@ aaaaaaa(
     1
     2))
 
+(defun foo (a
+            &optional b
+                      c))
+
+(defun foo (a
+            &optional
+            b
+            c))
+
 (defun main (&rest argv)
   (declare (ignorable argv)))
 ;;; vim: set ft=lisp lisp:

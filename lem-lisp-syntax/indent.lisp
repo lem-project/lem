@@ -295,7 +295,8 @@
                (1+ sexp-column))
            (1+ sexp-column)))
       (t
-       (if (search-lambda-list-keyword p)
+       (if (and (search-lambda-list-keyword p)
+                (not (looking-at p "[\\w&]+\\s*$")))
            (if *lambda-list-keyword-parameter-alignment*
                (+ 1 (point-column (form-offset p 1)))
                (+ 2 (point-column p)))

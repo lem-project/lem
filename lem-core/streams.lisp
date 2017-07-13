@@ -130,8 +130,8 @@
     octets))
 
 (defmethod trivial-gray-streams:stream-write-sequence
-  ((stream buffer-output-stream)
-   sequence start end &key)
+    ((stream buffer-output-stream)
+     sequence start end &key)
   (etypecase sequence
     (string
      (%write-string-to-buffer-stream stream sequence start end))
@@ -139,9 +139,9 @@
      (%write-octets-to-buffer-stream stream sequence start end))))
 
 (defmethod trivial-gray-streams:stream-write-string
-  ((stream buffer-output-stream)
-   (string string)
-   &optional (start 0) end)
+    ((stream buffer-output-stream)
+     (string string)
+     &optional (start 0) end)
   (%write-string-to-buffer-stream stream string start end))
 
 (defmethod trivial-gray-streams:stream-terpri ((stream buffer-output-stream))

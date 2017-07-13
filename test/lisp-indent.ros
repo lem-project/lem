@@ -34,7 +34,13 @@ exec ros -Q -- $0 "$@"
                                 :ignore-error-status t))))
       (assert (string= text "")))))
 
+(defun test-dir (dir)
+  (mapc #'test-file (directory (merge-pathnames "*.lisp" dir))))
+
 (defun main (&rest argv)
   (declare (ignorable argv))
-  (test-file (merge-pathnames "sample/a.ros" *load-pathname*)))
+  (lem-lisp-syntax:indentation-update)
+  (test-file (merge-pathnames "sample/a.ros" *load-pathname*))
+  (test-dir (asdf:system-source-directory :lem-base))
+  (test-dir (asdf:system-source-directory :lem-core)))
 ;;; vim: set ft=lisp lisp:

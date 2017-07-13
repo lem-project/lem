@@ -2,6 +2,7 @@
   (:use :cl :lem-base)
   (:export :*get-method-function*
            :set-indentation
+           :update-system-indentation
            :indentation-update
            :calc-indent))
 (in-package :lem-lisp-syntax.indent)
@@ -10,7 +11,8 @@
 (defparameter *max-depth* 4)
 
 (defvar *get-method-function* nil)
-(defvar *indent-table* (make-hash-table :test 'equal))
+(defvar *static-indent-table* (make-hash-table :test 'equal))
+(defvar *dynamic-indent-table* (make-hash-table :test 'equal))
 
 (defvar *lambda-list-indentation* t)
 (defvar *lambda-list-keyword-parameter-alignment* t)
@@ -20,15 +22,37 @@
 (defvar *simple-loop-indentation* 2)
 
 (defun get-indentation (name)
-  (gethash name *indent-table*))
+  (or (gethash name *static-indent-table*)
+      (caar (gethash name *dynamic-indent-table*))))
 
 (defun set-indentation (name method)
-  (setf (gethash name *indent-table*) method))
+  (setf (gethash name *static-indent-table*) method))
+
+(defun update-system-indentation (name indent packages)
+  (let ((list (gethash name *dynamic-indent-table*))
+        ok)
+    (if (null list)
+        (setf (gethash name *dynamic-indent-table*)
+              (list (cons indent packages)))
+        (dolist (spec list)
+          (cond ((equal (car spec) indent)
+                 (setf (cdr spec)
+                       (nunion (cdr spec) packages))
+                 (setf ok t))
+                (t
+                 (setf (cdr spec)
+                       (nset-difference (cdr spec) packages :test #'equal))))))
+    (unless ok
+      (setf (gethash name *dynamic-indent-table*)
+            (cons (cons indent packages) list)))))
 
 (defun indentation-update ()
   (do-all-symbols (symbol)
-    (alexandria:when-let ((indent (swank::symbol-indentation symbol)))
-      (set-indentation (string-downcase symbol) indent))))
+    (let ((key (string-downcase symbol)))
+      (alexandria:when-let ((indent (swank::symbol-indentation symbol)))
+        (update-system-indentation key
+                                   indent
+                                   (list (package-name (symbol-package symbol))))))))
 
 (mapc (lambda (elt)
         (let ((name (car elt))

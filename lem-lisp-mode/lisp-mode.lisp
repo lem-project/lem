@@ -136,8 +136,8 @@
     (swank-protocol:connection-features *connection*)))
 
 (defun indentation-update (info)
-  (loop :for (name indent packages) :in info :do
-    (lem-lisp-syntax:set-indentation name indent))
+  (loop :for (name indent packages) :in info
+        :do (lem-lisp-syntax:update-system-indentation name indent packages))
   #+(or)
   (loop :for (name indent packages) :in info
         :do (dolist (package packages)

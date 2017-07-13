@@ -61,7 +61,7 @@
         ("defmacro" . "defun")
         ("defsubst" . "defun")
         ("deftype" . "defun")
-        ("defmethodlisp-indent-defmethod")
+        ("defmethod" lisp-indent-defmethod)
         ("defpackage"  (4 &rest (&whole 2 &rest defpackage-body)))
         ("defstruct"   ((&whole 4 &rest (&whole 2 &rest 1))
                         &rest (&whole 2 &rest 1)))
@@ -94,7 +94,7 @@
         ("locally" 1)
         ("loop"         lisp-indent-loop)
         ;("loop" (&rest &body))
-        (":method" (&lambda &body)) ; in `defgeneric'
+        (":method" lisp-indent-defmethod) ; in `defgeneric'
         ("multiple-value-bind" ((&whole 6 &rest 1) 4 &body))
         ("multiple-value-call" (4 &body))
         ("multiple-value-prog1" 1)
@@ -219,6 +219,34 @@
                                      (copy-point indent-point :temporary)
                                      type))))))
 
+(defun beginning-of-defmethod-qualifiers (p)
+  (let ((str nil))
+    (loop :while (and (scan-lists p -1 1)
+                      (character-offset p 1)
+                      (setf str (symbol-string-at-point p))
+                      (not (member str '("defmethod" ":method") :test #'string-equal))))
+    (cond ((string-equal str "defmethod")
+           (form-offset p 2)
+           1)
+          ((string-equal str ":method")
+           (form-offset p 1)
+           0))))
+
+(defun lisp-indent-defmethod (path indent-point sexp-column)
+  (with-point ((p indent-point))
+    (compute-indent-method
+     (let ((nskip (beginning-of-defmethod-qualifiers p)))
+       (cond (nskip
+              (skip-whitespace-forward p)
+              (loop :while (syntax-symbol-char-p (character-at p))
+                    :do (incf nskip)
+                        (form-offset p 1)
+                        (skip-whitespace-forward p))
+              (append (make-list nskip :initial-element 4) '(&lambda &body)))
+             (t
+              (get-indentation "defun"))))
+     path indent-point sexp-column)))
+
 (defun lisp-indent-do (path indent-point sexp-column)
   (declare (ignore path indent-point sexp-column))
   'default-indent)
@@ -286,7 +314,8 @@
   (funcall method path indent-point sexp-column))
 
 (defun compute-indent-complex-method (method path indent-point sexp-column)
-  (loop :named exit
+  (loop
+    :named exit
     :for pathrest :on path
     :for n := (1- (car pathrest))
     :do (let ((restp nil))
@@ -443,10 +472,10 @@
 
 (defun calc-indent (point)
   (line-start point)
-  (let ((state (syntax-ppss point)))
-    (cond
-      ((pps-state-string-p state) nil)
-      ((zerop (pps-state-paren-depth state))
-       0)
-      (t
-       (calc-indent-1 point)))))
+  (lem-base::with-point-syntax point
+    (let ((state (syntax-ppss point)))
+      (cond
+        ((pps-state-string-p state) nil)
+        ((zerop (pps-state-paren-depth state))
+         0)
+        (t (calc-indent-1 point))))))

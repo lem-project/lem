@@ -216,6 +216,29 @@ aaaaaaa(
            bar
            baz))
 
+
+(defmethod foo
+    ()
+  ()
+  ())
+
+(defmethod foo :after
+    ()
+  ()
+  ())
+
+(defgeneric foo ()
+  (:method
+      ()
+    1
+    2))
+
+(defgeneric foo ()
+  (:method :after
+      ()
+    1
+    2))
+
 (defun main (&rest argv)
   (declare (ignorable argv)))
 ;;; vim: set ft=lisp lisp:

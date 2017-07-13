@@ -320,12 +320,15 @@
                (1+ sexp-column))
            (1+ sexp-column)))
       (t
-       (if (and (search-lambda-list-keyword p)
-                (not (looking-at p "[\\w&]+\\s*$")))
-           (if *lambda-list-keyword-parameter-alignment*
-               (+ 1 (point-column (form-offset p 1)))
-               (+ 2 (point-column p)))
-           (1+ sexp-column))))))
+       (cond
+         ((search-lambda-list-keyword p)
+          (if *lambda-list-keyword-parameter-alignment*
+              (if (looking-at p "[\\w&]+\\s*$")
+                  (point-column p)
+                  (+ 1 (point-column (form-offset p 1))))
+              (+ 2 (point-column p))))
+         (t
+          (1+ sexp-column)))))))
 
 (defun compute-indent-integer-method (method path indent-point sexp-column)
   (declare (ignore indent-point))

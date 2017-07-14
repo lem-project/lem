@@ -1,5 +1,5 @@
 (defpackage :lem.language-mode
-  (:use :cl :lem :lem.sourcelist)
+  (:use :cl :lem :lem.sourcelist :lem.completion-mode)
   (:export
    :*language-mode-keymap*
    :idle-function

@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(*enable-recursive-minibuffers*
+          *minibuffer-completion-function*
           *minibuf-keymap*
           minibuffer-prompt-attribute
           minibuffer-window-p
@@ -34,6 +35,8 @@
 (defvar *minibuf-window*)
 (defvar *minibuffer-calls-window*)
 (defvar *minibuffer-start-charpos*)
+
+(defvar *minibuffer-completion-function* nil)
 
 (define-attribute minibuffer-prompt-attribute
   (t :foreground "blue" :bold-p t))
@@ -186,25 +189,12 @@
   t)
 
 (define-command minibuf-read-line-completion () ()
-  (labels ((f (auto-insert)
-             (let ((items (funcall *minibuf-read-line-comp-f* (get-minibuffer-string))))
-               (with-point ((start (minibuffer-start-point))
-                            (end (current-point)))
-                 (run-completion
-                  (loop :for item? :in items
-                        :for item := (typecase item?
-                                       (string
-                                        (make-completion-item :label item?
-                                                              :start start
-                                                              :end end))
-                                       (completion-item
-                                        item?))
-                        :when item
-                        :collect item)
-                  :auto-insert auto-insert
-                  :restart-function (lambda () (f nil)))))))
-    (when *minibuf-read-line-comp-f*
-      (f t))))
+  (when (and *minibuf-read-line-comp-f*
+             *minibuffer-completion-function*)
+    (with-point ((start (minibuffer-start-point)))
+      (funcall *minibuffer-completion-function*
+               *minibuf-read-line-comp-f*
+               start))))
 
 (define-command minibuf-read-line-prev-history () ()
   (multiple-value-bind (str win)

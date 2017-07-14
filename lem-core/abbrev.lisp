@@ -1,5 +1,5 @@
 (defpackage :lem.abbrev
-  (:use :cl :lem)
+  (:use :cl :lem :lem.completion-mode)
   (:export :abbrev))
 (in-package :lem.abbrev)
 

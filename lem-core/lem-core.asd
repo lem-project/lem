@@ -45,6 +45,7 @@
                (:file "word-command")
                (:file "sexp-command")
 
+               (:file "completion-mode")
                (:file "tmlanguage")
                (:file "button")
                (:file "tabbar")

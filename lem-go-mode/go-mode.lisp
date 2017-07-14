@@ -1,5 +1,5 @@
 (defpackage :lem-go-mode
-  (:use :cl :lem :lem.language-mode)
+  (:use :cl :lem :lem.completion-mode :lem.language-mode)
   (:import-from
    :lem.tmlanguage
    :load-tmlanguage)

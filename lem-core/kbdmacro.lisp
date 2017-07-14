@@ -41,10 +41,11 @@
              :while (execute-key-sequence *last-macro-chars*)
              :finally (return t))))))
 
-(define-command apply-macro-to-region-lines () ()
-  (apply-region-lines (region-beginning)
-                      (region-end)
-                      (lambda (point)
-                        (move-point (current-point) point)
-                        (kbdmacro-execute 1)))
-  t)
+(define-command apply-macro-to-region-lines (start-point end-point) ("r")
+  (with-point ((next-line-point start-point :left-inserting)
+               (end-point end-point :right-inserting))
+    (loop :while (point< next-line-point end-point)
+          :do (save-excursion
+                (move-point (current-point) next-line-point)
+                (line-offset next-line-point 1)
+                (kbdmacro-execute 1)))))

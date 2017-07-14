@@ -51,22 +51,27 @@
 (defun kbd-p (x)
   (typep x 'kbd))
 
-(defun define-key (keymap key fun)
+(defun define-key (keymap key symbol)
+  (check-type symbol symbol)
   (let ((kbd (typecase key
+               (symbol (loop :for (key1 . keymap1) :in (get key 'keybind)
+                             :do (define-key keymap key1 symbol))
+                       (return-from define-key))
                (list (apply #'kbd key))
                (string (kbd key))
                (t key))))
     (unless (and (kbd-p kbd)
                  (every #'characterp (kbd-list kbd)))
       (error "define-key: ~s is illegal key" key))
-    (define-key-internal keymap kbd fun)))
+    (pushnew (cons key keymap) (get symbol 'keybind) :test 'equal)
+    (define-key-internal keymap kbd symbol)))
 
-(defun define-key-internal (keymap kbd fun)
+(defun define-key-internal (keymap kbd symbol)
   (loop :with table := (keymap-table keymap)
         :for rest :on (kbd-list kbd)
         :for k := (car rest)
         :do (cond ((null (cdr rest))
-                   (setf (gethash k table) fun))
+                   (setf (gethash k table) symbol))
                   (t
                    (let ((next (gethash k table)))
                      (if next
@@ -310,7 +315,7 @@
 
 (defun find-keybind (key)
   (let ((cmd (lookup-keybind key)))
-    (when (or (symbolp cmd) (functionp cmd))
+    (when (symbolp cmd)
       (function-to-command cmd))))
 
 (let ((abort-key (keyname->keychar "C-g")))

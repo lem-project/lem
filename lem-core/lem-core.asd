@@ -63,6 +63,7 @@
                (:file "dired")
                (:file "abbrev")
                (:file "less-mode")
+               (:file "rectangle")
 
                (:file "init")
 

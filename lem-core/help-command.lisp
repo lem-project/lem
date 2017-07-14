@@ -26,10 +26,11 @@
     (format s "~va~a~%" column-width "---" "-------")
     (keymap-flatten-map keymap
                         (lambda (kbd command)
-                          (format s "~va~a~%"
-                                  column-width
-                                  (kbd-to-string kbd)
-                                  (symbol-name command))))
+                          (unless (equal "UNDEFINED-KEY" (symbol-name command))
+                            (format s "~va~(~a~)~%"
+                                    column-width
+                                    (kbd-to-string kbd)
+                                    (symbol-name command)))))
     (terpri s)))
 
 (define-command describe-bindings () ()

@@ -374,7 +374,7 @@
   (with-point ((start-point start-point :right-inserting)
                (end-point end-point :right-inserting)
                (point start-point))
-    (loop :while (point< start-point end-point)
+    (loop :while (point<= start-point end-point)
           :do (funcall function (move-point point start-point))
               (unless (line-offset start-point 1)
                 (return)))))

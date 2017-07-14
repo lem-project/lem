@@ -6,7 +6,8 @@
           kill-push
           kill-ring-rotate
           kill-ring-first-string
-          kill-ring-nth-string))
+          kill-ring-nth-string
+          kill-ring-new))
 
 (defvar *kill-ring* nil)
 (defvar *kill-ring-yank-ptr* nil)

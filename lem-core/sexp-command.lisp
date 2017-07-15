@@ -5,7 +5,7 @@
           forward-list
           backward-list
           down-list
-          up-list
+          backward-up-list
           mark-sexp
           kill-sexp
           transpose-sexps))
@@ -37,8 +37,8 @@
 (define-command down-list (&optional (n 1) no-errors) ("p")
   (scan-lists (current-point) n -1 no-errors))
 
-(define-key *global-keymap* "C-M-u" 'up-list)
-(define-command up-list (&optional (n 1) no-errors) ("p")
+(define-key *global-keymap* "C-M-u" 'backward-up-list)
+(define-command backward-up-list (&optional (n 1) no-errors) ("p")
   (or (maybe-beginning-of-string (current-point))
       (scan-lists (current-point) (- n) 1 no-errors)))
 

@@ -6,7 +6,7 @@
 (defun preceding-word (point)
   (with-point ((cur point)
                (end point))
-    (skip-chars-backward cur #'syntax-symbol-char-p)
+    (skip-symbol-backward cur)
     (points-to-string cur end)))
 
 (defun scan-line-words (str)

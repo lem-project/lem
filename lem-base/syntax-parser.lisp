@@ -30,12 +30,13 @@
 (defun syntax-scan-region (start end)
   (assert (eq (point-buffer start)
               (point-buffer end)))
-  (let ((buffer (point-buffer start)))
-    (when (enable-syntax-highlight-p buffer)
-      (let ((*current-syntax*
-              (buffer-syntax-table buffer)))
-        (with-point ((start start)
-                     (end end))
-          (line-start start)
-          (line-end end)
-          (%syntax-scan-region (syntax-table-parser *current-syntax*) start end))))))
+  (without-interrupts
+    (let ((buffer (point-buffer start)))
+      (when (enable-syntax-highlight-p buffer)
+        (let ((*current-syntax*
+                (buffer-syntax-table buffer)))
+          (with-point ((start start)
+                       (end end))
+            (line-start start)
+            (line-end end)
+            (%syntax-scan-region (syntax-table-parser *current-syntax*) start end)))))))

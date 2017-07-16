@@ -53,10 +53,16 @@
       (enqueue queue obj)
       (bt:condition-notify wait))))
 
-(defun send-abort-event (editor-thread)
+(defun send-abort-event-1 (editor-thread)
   (bt:interrupt-thread editor-thread
                        (lambda ()
                          (error 'editor-interrupt))))
+
+(defun send-abort-event (editor-thread force)
+  (if force
+      (send-abort-event-1 editor-thread)
+      (bt:with-lock-held (lem-base::*interrupts-lock*)
+        (send-abort-event-1 editor-thread))))
 
 (defun receive-event (timeout)
   (loop

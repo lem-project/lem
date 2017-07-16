@@ -600,7 +600,7 @@
                          :do (sleep 0.01))
                    (lem::change-display-size-hook t))
                   ((= code abort-key)
-                   (send-abort-event editor-thread))
+                   (send-abort-event editor-thread nil))
                   (t
                    (send-event
                     (let ((nbytes (utf8-bytes code)))
@@ -615,4 +615,4 @@
           #+sbcl
           (sb-sys:interactive-interrupt (c)
             (declare (ignore c))
-            (send-abort-event editor-thread)))))
+            (send-abort-event editor-thread t)))))

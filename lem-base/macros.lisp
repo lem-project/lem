@@ -51,8 +51,11 @@
        (unwind-protect (progn ,@body)
          (setf (buffer-read-only-p ,gbuffer) ,gtmp)))))
 
+(defvar *interrupts-lock*
+  #+sbcl (sb-thread:make-mutex)
+  #-sbcl nil)
 (defmacro without-interrupts (&body body)
-  `(#+ccl ccl:without-interrupts
-    #+sbcl sb-sys:without-interrupts
-    #-(or ccl sbcl) progn
-    ,@body))
+  #+sbcl
+  `(sb-thread:with-recursive-lock (*interrupts-lock*)
+     ,@body)
+  #-sbcl `(progn ,@body))

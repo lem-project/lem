@@ -251,7 +251,9 @@
    :continuation (lambda (value)
                    (alexandria:destructuring-ecase value
                      ((:ok result)
-                      (apply #'sldb-setup thread level result))))
+                      (apply #'sldb-setup thread level result))
+                     ((:abort _)
+                      (declare (ignore _)))))
    :thread thread))
 
 (defun sldb-exit (thread level stepping)

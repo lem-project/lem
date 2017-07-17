@@ -10,8 +10,6 @@
            :connection-package
            :connection-prompt-string
            :connection-process
-           :connection-log-p
-           :connection-logging-stream
            :connection-features
            :connection-already-loaded-swank-extras)
   (:export :new-connection
@@ -131,16 +129,6 @@ Parses length information to determine how many characters to read."
    (loaded-swank-extras
     :initform nil
     :accessor connection-already-loaded-swank-extras)
-   (logp :accessor connection-log-p
-         :initarg :logp
-         :initform nil
-         :type boolean
-         :documentation "Whether or not to log connection requests.")
-   (logging-stream :accessor connection-logging-stream
-                   :initarg :logging-stream
-                   :initform *error-output*
-                   :type stream
-                   :documentation "The stream to log to.")
    (debug-level :accessor connection-debug-level
                 :initform 0
                 :type integer
@@ -225,13 +213,14 @@ Parses length information to determine how many characters to read."
   ;; Read all the other messages, dumping them
   (read-all-messages connection))
 
-(defun log-message (connection format-string &rest arguments)
+(defun log-message (string)
   "Log a message."
-  (when (connection-log-p connection)
-    (apply #'format
-           (connection-logging-stream connection)
-           format-string
-           arguments)))
+  (let* ((buffer (or (lem:get-buffer "*lisp-event*")
+                     (lem:make-buffer "*lisp-event*")))
+         (p (lem:buffer-end-point buffer)))
+    (lem:bury-buffer buffer)
+    (lem:insert-string p string)
+    (lem:insert-character p #\newline)))
 
 (defun read-message-string (connection)
   "Read a message string from a Swank connection.
@@ -242,7 +231,6 @@ to check if input is available."
          (stream (usocket:socket-stream socket)))
     (when (usocket:wait-for-input socket :timeout 5)
       (let ((msg (read-message-from-stream stream)))
-        (log-message connection "~%Read: ~A~%" msg)
         msg))))
 
 (defun send-message-string (connection message)
@@ -251,7 +239,6 @@ to check if input is available."
          (stream (usocket:socket-stream socket)))
     (write-message-to-stream stream message)
     (force-output stream)
-    (log-message connection "~%Sent: ~A~%" message)
     message))
 
 (defun send-message (connection form)
@@ -276,6 +263,7 @@ to check if input is available."
                          (connection-package connection))
                      (or thread t)
                      (incf (connection-request-count connection)))))
+    (log-message msg)
     (when continuation
       (push (cons (connection-request-count connection)
                   continuation)

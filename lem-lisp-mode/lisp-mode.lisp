@@ -872,11 +872,6 @@
     (start-thread)
     connection))
 
-(defvar *lisp-event* '())
-
-(defun log-message (message)
-  (push message *lisp-event*))
-
 (defvar *unknown-keywords* nil)
 (defun pull-events ()
   (when (and (boundp '*connection*)
@@ -887,7 +882,7 @@
         (remove-connection *connection*)))))
 
 (defun dispatch-message (message)
-  (log-message message)
+  (swank-protocol::log-message (prin1-to-string message))
   (dolist (e *event-hooks*)
     (when (funcall e message)
       (return-from dispatch-message)))

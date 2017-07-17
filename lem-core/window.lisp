@@ -929,22 +929,23 @@
   (setf *modify-header-windows* t))
 
 (defun redraw-display (&optional force)
-  (when *modify-header-windows*
-    (setf *modify-header-windows* nil)
-    (change-display-size-hook nil))
-  (dolist (window (window-list))
-    (unless (eq window (current-window))
-      (window-redraw window force)))
-  (cond ((minibuffer-window-active-p)
-         (window-redraw (current-minibuffer-window) force))
-        (t
-         (window-redraw (current-minibuffer-window) force)
-         (window-redraw (current-window) force)))
-  (dolist (window *header-windows*)
-    (window-redraw window force))
-  (dolist (window *floating-windows*)
-    (window-redraw window t))
-  (update-display))
+  (without-interrupts
+    (when *modify-header-windows*
+      (setf *modify-header-windows* nil)
+      (change-display-size-hook nil))
+    (dolist (window (window-list))
+      (unless (eq window (current-window))
+        (window-redraw window force)))
+    (cond ((minibuffer-window-active-p)
+           (window-redraw (current-minibuffer-window) force))
+          (t
+           (window-redraw (current-minibuffer-window) force)
+           (window-redraw (current-window) force)))
+    (dolist (window *header-windows*)
+      (window-redraw window force))
+    (dolist (window *floating-windows*)
+      (window-redraw window t))
+    (update-display)))
 
 (defun change-display-size-hook (redraw-p)
   (dolist (window *header-windows*)

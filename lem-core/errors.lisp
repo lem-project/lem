@@ -14,10 +14,3 @@
     :initarg :value
     :reader exit-editor-value
     :initform nil)))
-
-(define-condition editor-interrupt (simple-error)
-  ()
-  (:report
-   (lambda (condition stream)
-     (declare (ignore condition))
-     (princ "Interrupt" stream))))

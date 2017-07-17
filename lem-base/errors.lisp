@@ -4,7 +4,8 @@
           read-only-error
           editor-error
           editor-error-message
-          scan-error))
+          scan-error
+          editor-interrupt))
 
 (define-condition editor-condition (simple-error)
   ())
@@ -29,3 +30,10 @@
 
 (defun scan-error ()
   (editor-error "Scan Error"))
+
+(define-condition editor-interrupt (simple-error)
+  ()
+  (:report
+   (lambda (condition stream)
+     (declare (ignore condition))
+     (princ "Interrupt" stream))))

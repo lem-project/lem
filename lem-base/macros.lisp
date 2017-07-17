@@ -51,11 +51,26 @@
        (unwind-protect (progn ,@body)
          (setf (buffer-read-only-p ,gbuffer) ,gtmp)))))
 
-(defvar *interrupts-lock*
-  #+sbcl (sb-thread:make-mutex)
-  #-sbcl nil)
+(defvar *interrupts-enabled* t)
+(defvar *interrupted* nil)
+
 (defmacro without-interrupts (&body body)
-  #+sbcl
-  `(sb-thread:with-recursive-lock (*interrupts-lock*)
-     ,@body)
-  #-sbcl `(progn ,@body))
+  (let ((prev-enabled (gensym)))
+    `(let ((,prev-enabled *interrupts-enabled*)
+           (*interrupts-enabled* nil))
+       (prog1 (progn ,@body)
+         (when (and *interrupted* ,prev-enabled)
+           ;; ここで*interrupted*をnilにした後、errorが起こる前に
+           ;; 別のスレッドから(interrupt)をinterrupt-threadされると*interrupted*がtになってしまう
+           (setf *interrupted* nil)
+           (error 'editor-interrupt))))))
+
+;; 別のスレッドから(bt:interrupt-thread thread #'interrupt)で使う関数
+(defun interrupt (&optional force)
+  (cond
+    (force
+     (error 'editor-interrupt))
+    (*interrupts-enabled*
+     (error 'editor-interrupt))
+    (t
+     (setf *interrupted* t))))

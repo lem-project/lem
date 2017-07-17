@@ -450,7 +450,7 @@
 (pushnew (lambda (event)
            (alexandria:destructuring-case event
              ((:debug-activate thread level &optional select)
-              (sldb-activate level thread select)
+              (sldb-activate thread level select)
               t)
              ((:debug thread level condition restarts frames conts)
               (sldb-setup thread level condition restarts frames conts)

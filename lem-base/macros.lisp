@@ -54,16 +54,21 @@
 (defvar *interrupts-enabled* t)
 (defvar *interrupted* nil)
 
+(defmacro %without-interrupts (&body body)
+  `(#+sbcl sb-sys:without-interrupts
+    #+ccl ccl:without-interrupts
+    #-(or sbcl ccl) progn
+    ,@body))
+
 (defmacro without-interrupts (&body body)
   (let ((prev-enabled (gensym)))
     `(let ((,prev-enabled *interrupts-enabled*)
            (*interrupts-enabled* nil))
        (prog1 (progn ,@body)
          (when (and *interrupted* ,prev-enabled)
-           ;; ここで*interrupted*をnilにした後、errorが起こる前に
-           ;; 別のスレッドから(interrupt)をinterrupt-threadされると*interrupted*がtになってしまう
-           (setf *interrupted* nil)
-           (error 'editor-interrupt))))))
+           (%without-interrupts
+             (setf *interrupted* nil)
+             (error 'editor-interrupt)))))))
 
 ;; 別のスレッドから(bt:interrupt-thread thread #'interrupt)で使う関数
 (defun interrupt (&optional force)

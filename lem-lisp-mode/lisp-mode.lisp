@@ -762,14 +762,16 @@
         'repl-read-line))
 
 (defun repl-confirm (point string)
-  (declare (ignore point))
-  (check-connection)
-  (swank-protocol:request-listener-eval
-   *connection*
-   string
-   (lambda (value)
-     (declare (ignore value))
-     (lem.listener-mode:listener-reset-prompt (repl-buffer)))))
+  (let* ((window (car (get-buffer-windows (point-buffer point))))
+         (width (when window (window-width window))))
+    (check-connection)
+    (swank-protocol:request-listener-eval
+     *connection*
+     string
+     (lambda (value)
+       (declare (ignore value))
+       (lem.listener-mode:listener-reset-prompt (repl-buffer)))
+     width)))
 
 (defun repl-read-string (thread tag)
   (unless (repl-buffer) (start-lisp-repl))

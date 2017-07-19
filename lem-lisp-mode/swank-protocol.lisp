@@ -291,9 +291,12 @@ to check if input is available."
                                                   (intern (symbol-name item)
                                                           (find-package :swank-io-package))))))))
 
-(defun request-listener-eval (connection string &optional continuation)
+(defun request-listener-eval (connection string &optional continuation window-width)
   "Request that Swank evaluate a string of code in the REPL."
-  (emacs-rex-string connection (format nil "(swank-repl:listener-eval ~S)" string)
+  (emacs-rex-string connection
+                    (if window-width
+                        (format nil "(swank-repl:listener-eval ~S :window-width ~A)" string window-width)
+                        (format nil "(swank-repl:listener-eval ~S)" string))
                     :continuation continuation
                     :thread ":repl-thread"))
 

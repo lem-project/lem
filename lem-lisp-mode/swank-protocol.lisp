@@ -44,16 +44,6 @@
            (*print-case* :downcase))
        ,@body)))
 
-;;; Prevent reader errors
-
-(eval-when (:compile-toplevel :load-toplevel)
-  (let ((*load-verbose* nil)
-        (*compile-verbose* nil)
-        (*load-print* nil)
-        (*compile-print* nil))
-    (handler-bind ((warning #'muffle-warning))
-      (swank:swank-require '(swank-presentations swank-repl)))))
-
 ;;; Encoding and decoding messages
 
 (defun encode-integer (integer)
@@ -206,8 +196,8 @@ Parses length information to determine how many characters to read."
      swank-repl))
   (read-message connection)
   ;; Start it up
-  (emacs-rex connection '(swank:init-presentations))
-  (emacs-rex connection '(swank-repl:create-repl nil :coding-system "utf-8-unix"))
+  (emacs-rex-string connection "(swank:init-presentations)")
+  (emacs-rex-string connection "(swank-repl:create-repl nil :coding-system \"utf-8-unix\")")
   ;; Wait for startup
   (read-message connection)
   ;; Read all the other messages, dumping them
@@ -294,15 +284,20 @@ to check if input is available."
   "Request that the Swank server load contrib modules.
 `requirements` must be a list of symbols, e.g. '(swank-repl swank-media)."
   (emacs-rex connection
-             `(swank:swank-require ',(loop for item in requirements collecting
-                                       (intern (symbol-name item)
-                                               (find-package :swank-io-package))))))
+             `(let ((*load-verbose* nil)
+                    (*compile-verbose* nil)
+                    (*load-print* nil)
+                    (*compile-print* nil))
+                (handler-bind ((warning #'muffle-warning))
+                  (swank:swank-require ',(loop for item in requirements collecting
+                                                  (intern (symbol-name item)
+                                                          (find-package :swank-io-package))))))))
 
 (defun request-listener-eval (connection string &optional continuation)
   "Request that Swank evaluate a string of code in the REPL."
-  (emacs-rex connection `(swank-repl:listener-eval ,string)
-             :continuation continuation
-             :thread ":repl-thread"))
+  (emacs-rex-string connection (format nil "(swank-repl:listener-eval ~S)" string)
+                    :continuation continuation
+                    :thread ":repl-thread"))
 
 ;;; Reading/parsing messages
 

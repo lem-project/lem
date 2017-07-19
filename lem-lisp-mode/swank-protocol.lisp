@@ -23,8 +23,6 @@
            :abort-all
            :request-connection-info
            :request-swank-require
-           :request-init-presentations
-           :request-create-repl
            :request-listener-eval
            :read-message
            :read-all-messages)

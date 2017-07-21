@@ -763,7 +763,7 @@
 
 (defun repl-confirm (point string)
   (let* ((window (car (get-buffer-windows (point-buffer point))))
-         (width (when window (window-width window))))
+         (width (when window (- (window-width window) 2))))
     (check-connection)
     (swank-protocol:request-listener-eval
      *connection*

@@ -201,14 +201,11 @@ Parses length information to determine how many characters to read."
   ;; Read all the other messages, dumping them
   (read-all-messages connection))
 
+(defvar *event-log* '())
+
 (defun log-message (string)
   "Log a message."
-  (let* ((buffer (or (lem:get-buffer "*lisp-event*")
-                     (lem:make-buffer "*lisp-event*")))
-         (p (lem:buffer-end-point buffer)))
-    (lem:bury-buffer buffer)
-    (lem:insert-string p string)
-    (lem:insert-character p #\newline)))
+  (push string *event-log*))
 
 (defun read-message-string (connection)
   "Read a message string from a Swank connection.

@@ -1044,34 +1044,41 @@
 (defvar *process* nil)
 (defparameter *impl-name* nil)
 
-(define-command slime () ()
-  (let ((process
-         (sb-ext:run-program "ros"
-                             `(,@(if *impl-name* `("-L" ,*impl-name*))
-                               "-s" "swank"
-                               "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)"
-                                             *default-port*)
-                               "wait")
-                             :wait nil
-                             :search t))
-        (successp)
-        (condition))
-    (loop :repeat 3
-          :do (handler-case
-                  (let ((connection (slime-connect "localhost" *default-port* t)))
-                    (setf (swank-protocol:connection-process connection)
-                          process)
-                    (setf successp t)
-                    (return))
-                (editor-error (c)
-                  (setf condition c)
-                  (sleep 0.7))))
-    (unless successp
-      (error condition)))
-  (add-hook *exit-editor-hook*
-            (lambda ()
-              (ignore-errors
-               (slime-quit)))))
+(defun prompt-for-impl ()
+  (let ((impl (prompt-for-string "impl: ")))
+    (if (string= "" impl) nil impl)))
+
+(define-command slime (&optional ask-impl) ("P")
+  (let ((impl (if ask-impl
+                  (prompt-for-impl)
+                  *impl-name*)))
+    (let ((process
+            (sb-ext:run-program "ros"
+                                `(,@(if impl `("-L" ,impl))
+                                  "-s" "swank"
+                                  "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)"
+                                                *default-port*)
+                                  "wait")
+                                :wait nil
+                                :search t))
+          (successp)
+          (condition))
+      (loop :repeat 3
+            :do (handler-case
+                    (let ((connection (slime-connect "localhost" *default-port* t)))
+                      (setf (swank-protocol:connection-process connection)
+                            process)
+                      (setf successp t)
+                      (return))
+                  (editor-error (c)
+                    (setf condition c)
+                    (sleep 0.7))))
+      (unless successp
+        (error condition)))
+    (add-hook *exit-editor-hook*
+              (lambda ()
+                (ignore-errors
+                 (slime-quit))))))
 
 (define-command slime-quit () ()
   (let ((process (swank-protocol:connection-process *connection*)))

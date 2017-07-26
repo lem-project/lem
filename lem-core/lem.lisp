@@ -95,17 +95,36 @@
 (defmacro with-editor (() &body body)
   `(call-with-editor (lambda () ,@body)))
 
+(defstruct command-line-arguments
+  args
+  (no-init-file nil))
+
 (defun parse-args (args)
-  ;; stub
-  (mapcar (lambda (file)
-            `(find-file ,(merge-pathnames file (uiop:getcwd))))
-          args))
+  (let ((parsed-args
+          (make-command-line-arguments)))
+    (loop :with args2 := '()
+          :while args
+          :for arg := (pop args)
+          :do (cond ((member arg '("-q" "--no-init-file") :test #'equal)
+                     (setf (command-line-arguments-no-init-file parsed-args)
+                           t))
+                    ((or (stringp arg) (pathnamep arg))
+                     (push `(find-file ,(merge-pathnames arg (uiop:getcwd)))
+                           args2))
+                    (t
+                     (push arg args2)))
+          :finally (setf (command-line-arguments-args parsed-args)
+                         (nreverse args2)))
+    parsed-args))
+
+(defun apply-args (args)
+  (mapc #'eval (command-line-arguments-args args)))
 
 (let ((visited nil))
   (defun lem (&rest args)
     (setf args (parse-args args))
     (if *in-the-editor*
-        (loop for exp in args do (eval exp))
+        (apply-args args)
         (progn
           (run-hooks *before-init-hook*)
           (with-editor ()
@@ -113,6 +132,7 @@
              (lambda ()
                (unless visited
                  (setf visited t)
-                 (load-init-file) ;; need to idea for support '-q' '-u' on emacs
+                 (unless (command-line-arguments-no-init-file args)
+                   (load-init-file))
                  (run-hooks *after-init-hook*))
-               (loop for exp in args do (eval exp)))))))))
+               (apply-args args))))))))

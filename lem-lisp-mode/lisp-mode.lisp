@@ -90,16 +90,20 @@
         (lem.menu-mode:append-menu menu item)))
     (lem.menu-mode:display-menu menu)))
 
-(defun self-connect ()
-  (prog (port)
-   :START
-    (setf port (random-range 49152 65535))
-    (handler-case (let ((swank::*swank-debug-p* nil))
-                    (swank:create-server :port port))
-      (error ()
-        (go :START)))
-    (slime-connect "localhost" port nil)
-    (update-buffer-package)))
+(let ((self-connected nil))
+  (defun self-connected-p ()
+    self-connected)
+  (defun self-connect ()
+    (prog (port)
+     :START
+      (setf port (random-range 49152 65535))
+      (handler-case (let ((swank::*swank-debug-p* nil))
+                      (swank:create-server :port port))
+        (error ()
+          (go :START)))
+      (slime-connect "localhost" port nil)
+      (update-buffer-package)
+      (setf self-connected t))))
 
 (defun check-connection ()
   (unless (connected-p)
@@ -1018,6 +1022,10 @@
   (slime-quit)
   (sit-for 3)
   (slime))
+
+(define-command slime-self-connect () ()
+  (unless (self-connected-p)
+    (self-connect)))
 
 
 (defun scan-current-package (point)

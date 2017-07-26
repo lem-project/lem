@@ -1,11 +1,11 @@
 (in-package :lem)
 
-(export '(*after-init-hook*
+(export '(*before-init-hook*
+          *after-init-hook*
           with-editor
           lem))
 
 (defvar *before-init-hook* '())
-
 (defvar *after-init-hook* '())
 
 (defvar *in-the-editor* nil)

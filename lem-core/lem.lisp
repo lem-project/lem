@@ -97,7 +97,9 @@
 
 (defun parse-args (args)
   ;; stub
-  (mapcar (lambda (file) `(find-file ,file)) args))
+  (mapcar (lambda (file)
+            `(find-file ,(merge-pathnames file (uiop:getcwd))))
+          args))
 
 (let ((visited nil))
   (defun lem (&rest args)

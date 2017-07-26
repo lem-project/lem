@@ -5,9 +5,7 @@
         :lem.language-mode
         :lem-lisp-mode.errors
         :lem.button)
-  (:export :lisp-note-attribute
-           :lisp-entry-attribute
-           :lisp-headline-attribute
+  (:export :apropos-headline-attribute
            :lisp-mode
            :*impl-name*)
   (:local-nicknames

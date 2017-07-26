@@ -219,9 +219,6 @@
                              (asdf:system-source-directory :lem-lisp-mode))))
       (lisp-eval `(swank:load-file ,filename)))))
 
-(defun lisp-eval-describe (form)
-  (lisp-eval-async form #'show-description))
-
 (defun eval-with-transcript (form)
   (lisp-rex form
             :continuation (lambda (value)
@@ -619,6 +616,9 @@
     (change-buffer-mode buffer 'lisp-mode)
     (with-pop-up-typeout-window (stream buffer :erase t)
       (princ string stream))))
+
+(defun lisp-eval-describe (form)
+  (lisp-eval-async form #'show-description))
 
 (define-command lisp-describe-symbol () ()
   (check-connection)

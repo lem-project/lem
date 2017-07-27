@@ -2,7 +2,8 @@
 
 (export '(color-theme-names
           define-color-theme
-          load-theme))
+          load-theme
+          display-background-mode))
 
 (defstruct color-theme
   specs

@@ -2,7 +2,7 @@
 
 (defun load-init-file ()
   (flet ((test (path)
-           (when (uiop:file-exists-p path)
+           (when (probe-file path)
              (load path)
              (message "Load file: ~a" path)
              t)))

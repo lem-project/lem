@@ -343,7 +343,7 @@
   (check-connection)
   (when (uiop:pathname-equal filename (buffer-directory))
     (setf filename (buffer-filename (current-buffer))))
-  (when (and (uiop:file-exists-p filename)
+  (when (and (probe-file filename)
              (not (uiop:directory-pathname-p filename)))
     (run-hooks (variable-value 'load-file-functions) filename)
     (eval-with-transcript `(swank:load-file ,filename))))

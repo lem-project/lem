@@ -3,10 +3,9 @@
         :lem
         :lem.completion-mode
         :lem.language-mode
+        :lem.button
         :lem-lisp-mode.errors
-        :lem.button)
+        :lem-lisp-mode.swank-protocol)
   (:export :apropos-headline-attribute
            :lisp-mode
-           :*impl-name*)
-  (:local-nicknames
-   (:swank-protocol :lem-lisp-mode.swank-protocol)))
+           :*impl-name*))

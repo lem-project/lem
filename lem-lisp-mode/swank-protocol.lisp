@@ -13,6 +13,7 @@
            :connection-features
            :connection-already-loaded-swank-extras)
   (:export :new-connection
+           :log-message
            :read-message-string
            :send-message-string
            :send-message

@@ -248,7 +248,7 @@
              ((:inspect what thread tag)
               (let ((hook (when (and thread tag)
                             (alexandria:curry (lambda (sexp)
-                                                (swank-protocol:send-message-string
+                                                (send-message-string
                                                  *connection*
                                                  sexp))
                                               `(:emacs-return ,thread ,tag nil)))))

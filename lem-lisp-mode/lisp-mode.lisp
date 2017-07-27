@@ -53,7 +53,7 @@
 
 (defun change-current-connection (conn)
   (when *connection*
-    (swank-protocol:abort-all *connection* "change connection")
+    (abort-all *connection* "change connection")
     (notify-change-connection-to-wait-message-thread))
   (setf *connection* conn))
 
@@ -82,11 +82,11 @@
                                                       (change-current-connection c)
                                                       (lisp-connection-list))))))
         (lem.menu-mode:append-menu-item item (if (eq c *connection*) "*" " "))
-        (lem.menu-mode:append-menu-item item (swank-protocol:connection-hostname c))
-        (lem.menu-mode:append-menu-item item (swank-protocol:connection-port c))
-        (lem.menu-mode:append-menu-item item (swank-protocol:connection-pid c))
-        (lem.menu-mode:append-menu-item item (swank-protocol:connection-implementation-name c))
-        (lem.menu-mode:append-menu-item item (swank-protocol:connection-implementation-version c))
+        (lem.menu-mode:append-menu-item item (connection-hostname c))
+        (lem.menu-mode:append-menu-item item (connection-port c))
+        (lem.menu-mode:append-menu-item item (connection-pid c))
+        (lem.menu-mode:append-menu-item item (connection-implementation-name c))
+        (lem.menu-mode:append-menu-item item (connection-implementation-version c))
         (lem.menu-mode:append-menu menu item)))
     (lem.menu-mode:display-menu menu)))
 
@@ -123,7 +123,7 @@
 (defun current-package ()
   (or *current-package*
       (buffer-package (current-buffer))
-      (swank-protocol:connection-package *connection*)))
+      (connection-package *connection*)))
 
 (defun current-swank-thread ()
   (or (buffer-value (current-buffer) 'thread)
@@ -131,7 +131,7 @@
 
 (defun features ()
   (when (connected-p)
-    (swank-protocol:connection-features *connection*)))
+    (connection-features *connection*)))
 
 (defun indentation-update (info)
   (loop :for (name indent packages) :in info
@@ -167,11 +167,11 @@
                       continuation
                       (thread (current-swank-thread))
                       (package (current-package)))
-  (swank-protocol:emacs-rex *connection*
-                            form
-                            :continuation continuation
-                            :thread thread
-                            :package package))
+  (emacs-rex *connection*
+             form
+             :continuation continuation
+             :thread thread
+             :package package))
 
 (defun lisp-eval-internal (emacs-rex-fun rex-arg package)
   (let ((tag (gensym)))
@@ -191,10 +191,10 @@
       (loop (sit-for 10 nil)))))
 
 (defun lisp-eval-from-string (string &optional (package (current-package)))
-  (lisp-eval-internal 'swank-protocol:emacs-rex-string string package))
+  (lisp-eval-internal 'emacs-rex-string string package))
 
 (defun lisp-eval (sexp &optional (package (current-package)))
-  (lisp-eval-internal 'swank-protocol:emacs-rex sexp package))
+  (lisp-eval-internal 'emacs-rex sexp package))
 
 (defun lisp-eval-async (form &optional cont (package (current-package)))
   (let ((buffer (current-buffer)))
@@ -216,8 +216,8 @@
 
 (defun require-swank-extras ()
   (check-connection)
-  (unless (swank-protocol:connection-already-loaded-swank-extras *connection*)
-    (setf (swank-protocol:connection-already-loaded-swank-extras *connection*) t)
+  (unless (connection-already-loaded-swank-extras *connection*)
+    (setf (connection-already-loaded-swank-extras *connection*) t)
     (let ((filename
             (merge-pathnames "swank-extras.lisp"
                              (asdf:system-source-directory :lem-lisp-mode))))
@@ -240,8 +240,8 @@
   (eval-with-transcript `(swank:interactive-eval ,string)))
 
 (defun new-package (name prompt-string)
-  (setf (swank-protocol:connection-package *connection*) name)
-  (setf (swank-protocol:connection-prompt-string *connection*) prompt-string)
+  (setf (connection-package *connection*) name)
+  (setf (connection-prompt-string *connection*) prompt-string)
   t)
 
 (defun read-package-name ()
@@ -601,7 +601,7 @@
     (skip-chars-forward end #'syntax-symbol-char-p)
     (when (point< start end)
       (let ((result
-             (lisp-eval-from-string (format nil "(swank:fuzzy-completions ~S ~S)"
+              (lisp-eval-from-string (format nil "(swank:fuzzy-completions ~S ~S)"
                                              (points-to-string start end)
                                              (current-package)))))
         (when result
@@ -627,8 +627,8 @@
 (define-command lisp-describe-symbol () ()
   (check-connection)
   (let ((symbol-name
-         (read-symbol-name "Describe symbol: "
-                           (or (symbol-string-at-point (current-point)) ""))))
+          (read-symbol-name "Describe symbol: "
+                            (or (symbol-string-at-point (current-point)) ""))))
     (when (string= "" symbol-name)
       (editor-error "No symbol given"))
     (lisp-eval-describe `(swank:describe-symbol ,symbol-name))))
@@ -656,16 +656,16 @@
 (define-key *lisp-repl-mode-keymap* "C-c C-c" 'lisp-repl-interrupt)
 
 (define-command lisp-repl-interrupt () ()
-  (swank-protocol:send-message-string *connection*
-                                      (format nil "(:emacs-interrupt ~(~S~))"
-                                              (or (car (read-string-thread-stack))
-                                                  :repl-thread))))
+  (send-message-string *connection*
+                       (format nil "(:emacs-interrupt ~(~S~))"
+                               (or (car (read-string-thread-stack))
+                                   :repl-thread))))
 
 (defun repl-buffer ()
   (get-buffer "*lisp-repl*"))
 
 (defun repl-get-prompt ()
-  (format nil "~A> " (swank-protocol:connection-prompt-string *connection*)))
+  (format nil "~A> " (connection-prompt-string *connection*)))
 
 (defun repl-paren-correspond-p (point)
   (unless (eq (repl-buffer) (point-buffer point))
@@ -696,7 +696,7 @@
   (let* ((window (car (get-buffer-windows (point-buffer point))))
          (width (when window (- (window-width window) 2))))
     (check-connection)
-    (swank-protocol:request-listener-eval
+    (request-listener-eval
      *connection*
      string
      (lambda (value)
@@ -772,7 +772,7 @@
                                 (setf *wait-message-thread* nil)
                                 (return))
                               (when (handler-case
-                                        (swank-protocol:message-waiting-p *connection* :timeout 10)
+                                        (message-waiting-p *connection* :timeout 10)
                                       (change-connection () nil))
                                 (let ((barrior t))
                                   (send-event (lambda ()
@@ -794,12 +794,12 @@
   (message "Connecting...")
   (let (connection)
     (handler-case (setf connection
-                        (swank-protocol:new-connection hostname port))
+                        (new-connection hostname port))
       (usocket:connection-refused-error (c)
         (editor-error "~A" c)))
     (message "Swank server running on ~A ~A"
-             (swank-protocol:connection-implementation-name connection)
-             (swank-protocol:connection-implementation-version connection))
+             (connection-implementation-name connection)
+             (connection-implementation-version connection))
     (add-connection connection)
     (when start-repl (start-lisp-repl))
     (start-thread)
@@ -809,13 +809,13 @@
 (defun pull-events ()
   (when (and (boundp '*connection*)
              (not (null *connection*)))
-    (handler-case (loop :while (swank-protocol:message-waiting-p *connection*)
-                        :do (dispatch-message (swank-protocol:read-message *connection*)))
+    (handler-case (loop :while (message-waiting-p *connection*)
+                        :do (dispatch-message (read-message *connection*)))
       (disconnected ()
         (remove-connection *connection*)))))
 
 (defun dispatch-message (message)
-  (swank-protocol::log-message (prin1-to-string message))
+  (log-message (prin1-to-string message))
   (dolist (e *event-hooks*)
     (when (funcall e message)
       (return-from dispatch-message)))
@@ -832,7 +832,7 @@
     ((:new-package name prompt-string)
      (new-package name prompt-string))
     ((:return value id)
-     (swank-protocol:finish-evaluated *connection* value id))
+     (finish-evaluated *connection* value id))
     ;; ((:channel-send id msg)
     ;;  )
     ;; ((:emacs-channel-send id msg)
@@ -842,14 +842,14 @@
     ((:y-or-n-p thread tag question)
      (dispatch-message `(:emacs-return ,thread ,tag ,(prompt-for-y-or-n-p question))))
     ((:emacs-return-string thread tag string)
-     (swank-protocol:send-message-string
+     (send-message-string
       *connection*
       (format nil "(:emacs-return-string ~A ~A ~S)"
               thread
               tag
               string)))
     ((:new-features features)
-     (setf (swank-protocol:connection-features *connection*)
+     (setf (connection-features *connection*)
            features))
     ((:indentation-update info)
      (indentation-update info))
@@ -858,7 +858,7 @@
     ;; ((:eval thread tag form-string)
     ;;  )
     ((:emacs-return thread tag value)
-     (swank-protocol:send-message-string
+     (send-message-string
       *connection*
       (format nil "(:emacs-return ~A ~A ~S)" thread tag value)))
     ;; ((:ed what)
@@ -871,7 +871,7 @@
      (assert thread)
      (message "~A" message))
     ((:ping thread tag)
-     (swank-protocol:send-message-string
+     (send-message-string
       *connection*
       (format nil "(:emacs-pong ~A ~A)" thread tag)))
     ;; ((:reader-error packet condition)
@@ -943,10 +943,10 @@
       (when (<= bytes size)
         (loop :for i :from 0
               :do
-              (decf bytes (babel:string-size-in-octets (string (character-at point i))))
-              (when (<= bytes 0)
-                (character-offset point i)
-                (return-from move-to-bytes point))))
+                 (decf bytes (babel:string-size-in-octets (string (character-at point i))))
+                 (when (<= bytes 0)
+                   (character-offset point i)
+                   (return-from move-to-bytes point))))
       (decf bytes size)
       (unless (line-offset point 1) (return)))))
 
@@ -997,7 +997,7 @@
       (loop :repeat 3
             :do (handler-case
                     (let ((connection (slime-connect "localhost" *default-port* t)))
-                      (setf (swank-protocol:connection-process connection)
+                      (setf (connection-process connection)
                             process)
                       (setf successp t)
                       (return))
@@ -1012,7 +1012,7 @@
                  (slime-quit))))))
 
 (define-command slime-quit () ()
-  (let ((process (swank-protocol:connection-process *connection*)))
+  (let ((process (connection-process *connection*)))
     (when (and process (sb-ext:process-alive-p process))
       (sb-ext:process-kill process 9)
       (remove-connection *connection*)

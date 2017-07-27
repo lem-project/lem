@@ -17,7 +17,7 @@
   ((name
     :initarg :name
     :reader timer-name
-    :type simple-string)
+    :type (or null string))
    (ms
     :initarg :ms
     :accessor timer-ms

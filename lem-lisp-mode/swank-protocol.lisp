@@ -9,7 +9,6 @@
            :connection-request-count
            :connection-package
            :connection-prompt-string
-           :connection-process
            :connection-features
            :connection-already-loaded-swank-extras)
   (:export :new-connection
@@ -109,9 +108,6 @@ Parses length information to determine how many characters to read."
    (prompt-string
     :accessor connection-prompt-string
     :type string)
-   (process
-    :initform nil
-    :accessor connection-process)
    (continuations
     :accessor connection-continuations
     :initform nil)

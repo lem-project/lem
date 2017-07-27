@@ -90,9 +90,11 @@
         (lem.menu-mode:append-menu menu item)))
     (lem.menu-mode:display-menu menu)))
 
-(let ((self-connected nil))
+(let (self-connected-port)
   (defun self-connected-p ()
-    self-connected)
+    (not (null self-connected-port)))
+  (defun self-connected-port ()
+    self-connected-port)
   (defun self-connect ()
     (prog (port)
      :START
@@ -103,7 +105,7 @@
           (go :START)))
       (slime-connect "localhost" port nil)
       (update-buffer-package)
-      (setf self-connected t))))
+      (setf self-connected-port port))))
 
 (defun check-connection ()
   (unless (connected-p)
@@ -983,27 +985,25 @@
   (let ((impl (if ask-impl
                   (prompt-for-impl)
                   *impl-name*)))
-    (let ((process
-            (sb-ext:run-program "ros"
-                                `(,@(if impl `("-L" ,impl))
-                                  "-s" "swank"
-                                  "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)"
-                                                *default-port*)
-                                  "wait")
-                                :wait nil
-                                :search t))
-          (successp)
+    (uiop:run-program (format nil "ros ~{~S~^ ~} &"
+                              `(,@(if impl `("-L" ,impl))
+                                "-s" "swank"
+                                "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)"
+                                              *default-port*)
+                                "wait"))
+                      :output nil
+                      :error-output nil)
+    (let ((successp)
           (condition))
-      (loop :repeat 3
+      (loop :repeat 5
             :do (handler-case
-                    (let ((connection (slime-connect "localhost" *default-port* t)))
-                      (setf (connection-process connection)
-                            process)
+                    (progn
+                      (slime-connect "localhost" *default-port* t)
                       (setf successp t)
                       (return))
                   (editor-error (c)
                     (setf condition c)
-                    (sleep 0.7))))
+                    (sleep 0.5))))
       (unless successp
         (error condition)))
     (add-hook *exit-editor-hook*
@@ -1012,16 +1012,17 @@
                  (slime-quit))))))
 
 (define-command slime-quit () ()
-  (let ((process (connection-process *connection*)))
-    (when (and process (sb-ext:process-alive-p process))
-      (sb-ext:process-kill process 9)
-      (remove-connection *connection*)
-      t)))
+  (when (and *connection*
+             (not (eql (connection-port *connection*)
+                       (self-connected-port))))
+    (lisp-rex '(uiop:quit))
+    (remove-connection *connection*)
+    t))
 
 (define-command slime-restart () ()
-  (slime-quit)
-  (sit-for 3)
-  (slime))
+  (when (slime-quit)
+    (sit-for 3)
+    (slime)))
 
 (define-command slime-self-connect () ()
   (unless (self-connected-p)

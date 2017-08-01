@@ -10,7 +10,7 @@
            :connection-package
            :connection-prompt-string
            :connection-features
-           :connection-already-loaded-swank-extras)
+           :connection-plist)
   (:export :new-connection
            :log-message
            :read-message-string
@@ -111,9 +111,6 @@ Parses length information to determine how many characters to read."
    (continuations
     :accessor connection-continuations
     :initform nil)
-   (loaded-swank-extras
-    :initform nil
-    :accessor connection-already-loaded-swank-extras)
    (debug-level :accessor connection-debug-level
                 :initform 0
                 :type integer
@@ -139,7 +136,8 @@ Parses length information to determine how many characters to read."
                   :type string
                   :documentation "The server's Swank version.")
    (features :accessor connection-features)
-   (info :accessor connection-info))
+   (info :accessor connection-info)
+   (plist :initform nil :accessor connection-plist))
   (:documentation "A connection to a remote Lisp."))
 
 (defun new-connection (hostname port)

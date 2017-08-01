@@ -218,8 +218,8 @@
 
 (defun require-swank-extras ()
   (check-connection)
-  (unless (connection-already-loaded-swank-extras *connection*)
-    (setf (connection-already-loaded-swank-extras *connection*) t)
+  (unless (get (connection-plist *connection*) 'already-loaded-swank-extras)
+    (setf (get (connection-plist *connection*) 'already-loaded-swank-extras) t)
     (let ((filename
             (merge-pathnames "swank-extras.lisp"
                              (asdf:system-source-directory :lem-lisp-mode))))
@@ -981,24 +981,27 @@
   (let ((impl (prompt-for-string "impl: ")))
     (if (string= "" impl) nil impl)))
 
+(defun run-swank-server (impl)
+  (uiop:run-program (format nil "ros ~{~S~^ ~} &"
+                            `(,@(if impl `("-L" ,impl))
+                              "-s" "swank"
+                              "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)"
+                                            *default-port*)
+                              "wait"))
+                    :output nil
+                    :error-output nil))
+
 (define-command slime (&optional ask-impl) ("P")
   (let ((impl (if ask-impl
                   (prompt-for-impl)
                   *impl-name*)))
-    (uiop:run-program (format nil "ros ~{~S~^ ~} &"
-                              `(,@(if impl `("-L" ,impl))
-                                "-s" "swank"
-                                "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)"
-                                              *default-port*)
-                                "wait"))
-                      :output nil
-                      :error-output nil)
+    (run-swank-server impl)
     (let ((successp)
           (condition))
       (loop :repeat 5
             :do (handler-case
-                    (progn
-                      (slime-connect "localhost" *default-port* t)
+                    (let ((conn (slime-connect "localhost" *default-port* t)))
+                      (setf (getf (connection-plist conn) 'run) t)
                       (setf successp t)
                       (return))
                   (editor-error (c)
@@ -1012,12 +1015,11 @@
                  (slime-quit))))))
 
 (define-command slime-quit () ()
-  (when (and *connection*
-             (not (eql (connection-port *connection*)
-                       (self-connected-port))))
-    (lisp-rex '(uiop:quit))
-    (remove-connection *connection*)
-    t))
+  (when *connection*
+    (prog1 (when (getf (connection-plist *connection*) 'run)
+             (lisp-rex '(uiop:quit))
+             t)
+      (remove-connection *connection*))))
 
 (define-command slime-restart () ()
   (when (slime-quit)

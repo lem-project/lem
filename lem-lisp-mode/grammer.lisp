@@ -173,6 +173,13 @@
                     :name 'syntax-builtin-attribute)
                    (make-tm-match
                     `(:sequence
+                      (:positive-lookbehind "#")
+                      ":"
+                      symbol
+                      symbol-boundary-end)
+                    :name 'syntax-builtin-attribute)
+                   (make-tm-match
+                    `(:sequence
                       symbol-boundary-begin
                       "&" symbol
                       symbol-boundary-end)

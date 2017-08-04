@@ -5,29 +5,26 @@
           display-width
           display-height))
 
+(defgeneric interface-display-width (implementation))
+(defgeneric interface-display-height (implementation))
+(defgeneric interface-make-view (implementation x y width height use-modeline-p))
+(defgeneric interface-delete-view (implementation view))
+(defgeneric interface-clear (implementation view))
+(defgeneric interface-set-view-size (implementation view width height))
+(defgeneric interface-set-view-pos (implementation view x y))
+(defgeneric interface-print (implementation view x y string attribute))
+(defgeneric interface-print-modeline (implementation view x y string attribute))
+(defgeneric interface-clear-eol (implementation view x y))
+(defgeneric interface-clear-eob (implementation view x y))
+(defgeneric interface-move-cursor (implementation view x y))
+(defgeneric interface-redraw-view-after (implementation view focus-window-p))
+(defgeneric interface-update-display (implementation))
+
+(defvar *implementation* :ncurses)
 
 (defvar *print-start-x* 0)
 (defvar *cursor-x* 0)
 (defvar *cursor-y* 0)
-
-(defun attribute-to-bits (attribute-or-name)
-  (let ((attribute (ensure-attribute attribute-or-name nil)))
-    (if (null attribute)
-        0
-        (or (lem::attribute-%internal-value attribute)
-            (let ((bits (logior (lem.term:get-color-pair (lem::attribute-foreground attribute)
-                                                         (lem::attribute-background attribute))
-                                (if (lem::attribute-reverse-p attribute)
-                                    charms/ll:a_reverse
-                                    0)
-                                (if (lem::attribute-bold-p attribute)
-                                    charms/ll:a_bold
-                                    0)
-                                (if (lem::attribute-underline-p attribute)
-                                    charms/ll:a_underline
-                                    0))))
-              (setf (lem::attribute-%internal-value attribute) bits)
-              bits)))))
 
 (defvar *display-background-mode* nil)
 
@@ -47,8 +44,8 @@
   (or (lem.term:term-set-background name)
       (error "Undefined color: ~A" name)))
 
-(defun display-width () (max 5 charms/ll:*cols*))
-(defun display-height () (max 3 charms/ll:*lines*))
+(defun display-width () (interface-display-width *implementation*))
+(defun display-height () (interface-display-height *implementation*))
 
 (defun call-with-screen (function)
   (unwind-protect (progn
@@ -57,8 +54,8 @@
     (lem.term:term-finalize)))
 
 (defstruct (screen (:constructor %make-screen))
-  %scrwin
-  %modeline-scrwin
+  view
+  use-modeline-p
   x
   y
   left-lines
@@ -72,15 +69,11 @@
   (horizontal-scroll-start 0))
 
 (defun make-screen (x y width height use-modeline-p)
-  (flet ((newwin (nlines ncols begin-y begin-x)
-           (let ((win (charms/ll:newwin nlines ncols begin-y begin-x)))
-             (charms/ll:keypad win 1)
-             win)))
-    (when use-modeline-p
-      (decf height))
-    (%make-screen :%scrwin (newwin height width y x)
-                  :%modeline-scrwin (when use-modeline-p
-                                      (newwin 1 width (+ y height) x))
+  (when use-modeline-p
+    (decf height))
+  (let ((view (interface-make-view *implementation* x y width height use-modeline-p)))
+    (%make-screen :view view
+                  :use-modeline-p use-modeline-p
                   :x x
                   :y y
                   :width width
@@ -89,15 +82,11 @@
                   :old-lines (make-array (max 0 height) :initial-element nil))))
 
 (defun screen-delete (screen)
-  (charms/ll:delwin (screen-%scrwin screen))
-  (when (screen-%modeline-scrwin screen)
-    (charms/ll:delwin (screen-%modeline-scrwin screen))))
+  (interface-delete-view *implementation* (screen-view screen)))
 
 (defun screen-clear (screen)
   (screen-modify screen)
-  (charms/ll:clearok (screen-%scrwin screen) 1)
-  (when (screen-%modeline-scrwin screen)
-    (charms/ll:clearok (screen-%modeline-scrwin screen) 1)))
+  (interface-clear *implementation* (screen-view screen)))
 
 (defun screen-height (screen)
   (length (screen-lines screen)))
@@ -107,18 +96,9 @@
 
 (defun screen-set-size (screen width height)
   (screen-modify screen)
-  (when (screen-%modeline-scrwin screen)
+  (when (screen-use-modeline-p screen)
     (decf height))
-  (charms/ll:wresize (screen-%scrwin screen)
-                     height
-                     width)
-  (when (screen-%modeline-scrwin screen)
-    (charms/ll:mvwin (screen-%modeline-scrwin screen)
-                     (+ (screen-y screen) height)
-                     (screen-x screen))
-    (charms/ll:wresize (screen-%modeline-scrwin screen)
-                       (minibuffer-window-height)
-                       width))
+  (interface-set-view-size *implementation* (screen-view screen) width height)
   (setf (screen-left-lines screen)
         (make-array height :initial-element nil))
   (setf (screen-lines screen)
@@ -132,36 +112,36 @@
   (screen-modify screen)
   (setf (screen-x screen) x)
   (setf (screen-y screen) y)
-  (charms/ll:mvwin (screen-%scrwin screen) y x)
-  (when (screen-%modeline-scrwin screen)
-    (charms/ll:mvwin (screen-%modeline-scrwin screen)
-                     (+ y (screen-height screen))
-                     x)))
-
-(defun scrwin-print-string (scrwin x y string attr)
-  (when (eq attr 'cursor)
-    (setf *cursor-x* x)
-    (setf *cursor-y* y))
-  (setf attr (attribute-to-bits attr))
-  (charms/ll:wattron scrwin attr)
-  (loop :for char :across string
-        :do (cond ((char= char #\tab)
-                   (loop :with size := (+ *print-start-x*
-                                          (* (tab-size) (floor (+ (tab-size) x) (tab-size))))
-                         :while (< x size)
-                         :do (charms/ll:mvwaddch scrwin y x #.(char-code #\space))
-                             (incf x)))
-                  (t
-                   (charms/ll:mvwaddstr scrwin y x
-                                        (if (char= char #\return)
-                                            "^R"
-                                            (string char)))
-                   (setf x (char-width char x)))))
-  (charms/ll:wattroff scrwin attr)
-  x)
+  (interface-set-view-pos *implementation* (screen-view screen) x y))
 
 (defun screen-print-string (screen x y string attribute)
-  (scrwin-print-string (screen-%scrwin screen) x y string attribute))
+  (when (eq attribute 'cursor)
+    (setf *cursor-x* x)
+    (setf *cursor-y* y))
+  (let ((view (screen-view screen))
+        (x0 x)
+        (i -1)
+        (pool-string (make-string (screen-width screen) :initial-element #\space)))
+    (loop :for char :across string
+          :do (cond
+                ((char= char #\tab)
+                 (loop :with size :=
+                          (+ *print-start-x*
+                             (* (tab-size) (floor (+ (tab-size) x) (tab-size))))
+                       :while (< x size)
+                       :do (setf (aref pool-string (incf i)) #\space)
+                           (incf x)))
+                ((char= char #\return)
+                 (setf (aref pool-string (incf i)) #\^) (incf x)
+                 (setf (aref pool-string (incf i)) #\R) (incf x))
+                (t
+                 (setf (aref pool-string (incf i)) char)
+                 (setf x (char-width char x)))))
+    (unless (= i -1)
+      (interface-print *implementation* view x0 y
+                       (subseq pool-string 0 (1+ i))
+                       attribute))
+    x))
 
 
 (defun disp-print-line (screen y str/attributes do-clrtoeol
@@ -185,13 +165,13 @@
                 (setf x (screen-print-string screen x y (subseq str prev-end start) nil))
                 (setf x (screen-print-string screen x y (subseq str start end) attr))
                 (setf prev-end end))
-      (screen-print-string screen x y
-                           (if (= prev-end 0)
-                               str
-                               (subseq str prev-end))
-                           nil))
-    (when do-clrtoeol
-      (charms/ll:wclrtoeol (screen-%scrwin screen)))))
+      (setf x (screen-print-string screen x y
+                                   (if (= prev-end 0)
+                                       str
+                                       (subseq str prev-end))
+                                   nil))
+      (when do-clrtoeol
+        (interface-clear-eol *implementation* (screen-view screen) x y)))))
 
 #+(or)
 (progn
@@ -424,8 +404,7 @@
           (t
            (setf start 0)
            (setf end (wide-index (car str/attributes) screen-width))))
-    (charms/ll:wmove (screen-%scrwin screen) point-y start-x)
-    (charms/ll:wclrtoeol (screen-%scrwin screen))
+    (interface-clear-eol *implementation* (screen-view screen) start-x point-y)
     (disp-print-line screen point-y str/attributes nil
                      :start-x start-x
                      :string-start start
@@ -476,8 +455,7 @@
                 (str/attributes
                  (setf (aref (screen-old-lines screen) i) str/attributes)
                  (when (zerop (length (car str/attributes)))
-                   (charms/ll:wmove (screen-%scrwin screen) y 0)
-                   (charms/ll:wclrtoeol (screen-%scrwin screen)))
+                   (interface-clear-eol *implementation* (screen-view screen) 0 y))
                  (let (y2)
                    (when left-str/attr
                      (screen-print-string screen
@@ -507,42 +485,33 @@
                       (setf (aref (screen-lines screen) i) nil)))))
                 (t
                  (fill (screen-old-lines screen) nil :start i)
-                 (charms/ll:wmove (screen-%scrwin screen) y 0)
-                 (charms/ll:wclrtobot (screen-%scrwin screen))
+                 (interface-clear-eob *implementation* (screen-view screen) 0 y)
                  (return))))))
 
-(defun screen-redraw-separator (window)
-  (let ((attr (attribute-to-bits 'modeline)))
-    (charms/ll:attron attr)
-    (when (< 0 (window-x window))
-      (charms/ll:move (window-y window) (1- (window-x window)))
-      (charms/ll:vline (char-code #\space) (window-height window)))
-    (charms/ll:attroff attr)
-    (charms/ll:wnoutrefresh charms/ll:*stdscr*)))
-
 (defun screen-redraw-modeline (window)
-  (let ((scrwin (screen-%modeline-scrwin
-                 (lem::window-screen window)))
-        (default-attribute (if (eq window (current-window))
-                               'modeline
-                               'modeline-inactive))
-        (left-x 0)
-        (right-x (window-width window)))
-    (scrwin-print-string scrwin 0 0
-                         (make-string (window-width window)
-                                      :initial-element #\space)
-                         default-attribute)
-    (lem::modeline-apply window
-                         (lambda (string attribute alignment)
-                           (case alignment
-                             ((:right)
-                              (decf right-x (length string))
-                              (scrwin-print-string scrwin right-x 0 string attribute))
-                             (otherwise
-                              (scrwin-print-string scrwin left-x 0 string attribute)
-                              (incf left-x (length string)))))
-                         default-attribute)
-    (charms/ll:wnoutrefresh scrwin)))
+  (let* ((screen (window-screen window))
+         (view (screen-view screen))
+         (default-attribute (if (eq window (current-window))
+                                'modeline
+                                'modeline-inactive))
+         (left-x 0)
+         (right-x (window-width window)))
+    (interface-print-modeline *implementation* view 0 0
+                              (make-string (window-width window)
+                                           :initial-element #\space)
+                              default-attribute)
+    (modeline-apply window
+                    (lambda (string attribute alignment)
+                      (case alignment
+                        ((:right)
+                         (decf right-x (length string))
+                         (interface-print-modeline *implementation*
+                                                   view right-x 0 string attribute))
+                        (otherwise
+                         (interface-print-modeline *implementation*
+                                                   view left-x 0 string attribute)
+                         (incf left-x (length string)))))
+                    default-attribute)))
 
 (defun redraw-display-window (window force)
   (let ((focus-window-p (eq window (current-window)))
@@ -565,16 +534,12 @@
     (setf (screen-old-left-width screen)
           (screen-left-width screen))
     (when (lem::window-use-modeline-p window)
-      (screen-redraw-separator window)
       (screen-redraw-modeline window))
-    (charms/ll:wnoutrefresh (screen-%scrwin screen))
+    (interface-redraw-view-after *implementation* (screen-view screen) focus-window-p)
     (setf (screen-modified-p screen) nil)))
 
 (defun update-display ()
-  (let ((scrwin (screen-%scrwin (lem::window-screen (current-window)))))
-    (charms/ll:wmove scrwin *cursor-y* *cursor-x*)
-    (charms/ll:wnoutrefresh scrwin)
-    (charms/ll:doupdate)))
+  (interface-update-display *implementation*))
 
 (defun input-loop (editor-thread)
   (loop
@@ -607,15 +572,124 @@
             (declare (ignore c))
             (send-abort-event editor-thread t)))))
 
-#|
-(display-width)                   server -> client response
-(display-height)                  server -> client response
-(make-view)                       server -> client notify
-(delete-view view)                server -> client notify
-(clear view)                      server -> client notify
-(set-view-size view width height) server -> client notify
-(set-view-pos view x y)           server -> client notify
-(print view x y string attribute) server -> client notify
-(send-input)                      client -> server notify
-(resize-display)                  client -> server notify
-|#
+
+
+(defun attribute-to-bits (attribute-or-name)
+  (let ((attribute (ensure-attribute attribute-or-name nil)))
+    (if (null attribute)
+        0
+        (or (lem::attribute-%internal-value attribute)
+            (let ((bits (logior (lem.term:get-color-pair (lem::attribute-foreground attribute)
+                                                         (lem::attribute-background attribute))
+                                (if (lem::attribute-reverse-p attribute)
+                                    charms/ll:a_reverse
+                                    0)
+                                (if (lem::attribute-bold-p attribute)
+                                    charms/ll:a_bold
+                                    0)
+                                (if (lem::attribute-underline-p attribute)
+                                    charms/ll:a_underline
+                                    0))))
+              (setf (lem::attribute-%internal-value attribute) bits)
+              bits)))))
+
+(defstruct ncurses-view
+  scrwin
+  modeline-scrwin
+  x
+  y
+  width
+  height)
+
+(defmethod interface-display-width ((implementation (eql :ncurses)))
+  (max 5 charms/ll:*cols*))
+
+(defmethod interface-display-height ((implementation (eql :ncurses)))
+  (max 3 charms/ll:*lines*))
+
+(defmethod interface-make-view ((implementation (eql :ncurses)) x y width height use-modeline-p)
+  (flet ((newwin (nlines ncols begin-y begin-x)
+           (let ((win (charms/ll:newwin nlines ncols begin-y begin-x)))
+             (charms/ll:keypad win 1)
+             win)))
+    (make-ncurses-view
+     :scrwin (newwin height width y x)
+     :modeline-scrwin (when use-modeline-p (newwin 1 width (+ y height) x))
+     :x x
+     :y y
+     :width width
+     :height height)))
+
+(defmethod interface-delete-view ((implementation (eql :ncurses)) view)
+  (charms/ll:delwin (ncurses-view-scrwin view))
+  (when (ncurses-view-modeline-scrwin view)
+    (charms/ll:delwin (ncurses-view-modeline-scrwin view))))
+
+(defmethod interface-clear ((implementation (eql :ncurses)) view)
+  (charms/ll:clearok (ncurses-view-scrwin view) 1)
+  (when (ncurses-view-modeline-scrwin view)
+    (charms/ll:clearok (ncurses-view-modeline-scrwin view) 1)))
+
+(defmethod interface-set-view-size ((implementation (eql :ncurses)) view width height)
+  (setf (ncurses-view-width view) width)
+  (setf (ncurses-view-height view) height)
+  (charms/ll:wresize (ncurses-view-scrwin view) height width)
+  (when (ncurses-view-modeline-scrwin view)
+    (charms/ll:mvwin (ncurses-view-modeline-scrwin view)
+                     (+ (ncurses-view-y view) height)
+                     (ncurses-view-x view))
+    (charms/ll:wresize (ncurses-view-modeline-scrwin view)
+                       (minibuffer-window-height)
+                       width)))
+
+(defmethod interface-set-view-pos ((implementation (eql :ncurses)) view x y)
+  (setf (ncurses-view-x view) x)
+  (setf (ncurses-view-y view) y)
+  (charms/ll:mvwin (ncurses-view-scrwin view) y x)
+  (when (ncurses-view-modeline-scrwin view)
+    (charms/ll:mvwin (ncurses-view-modeline-scrwin view)
+                     (+ y (ncurses-view-height view))
+                     x)))
+
+(defmethod interface-print ((implementation (eql :ncurses)) view x y string attribute)
+  (let ((attr (attribute-to-bits attribute)))
+    (charms/ll:wattron (ncurses-view-scrwin view) attr)
+    (charms/ll:mvwaddstr (ncurses-view-scrwin view) y x string)
+    (charms/ll:wattroff (ncurses-view-scrwin view) attr)))
+
+(defmethod interface-print-modeline ((implementation (eql :ncurses)) view x y string attribute)
+  (let ((attr (attribute-to-bits attribute)))
+    (charms/ll:wattron (ncurses-view-modeline-scrwin view) attr)
+    (charms/ll:mvwaddstr (ncurses-view-modeline-scrwin view) y x string)
+    (charms/ll:wattroff (ncurses-view-modeline-scrwin view) attr)))
+
+(defmethod interface-clear-eol ((implementation (eql :ncurses)) view x y)
+  (charms/ll:wmove (ncurses-view-scrwin view) y x)
+  (charms/ll:wclrtoeol (ncurses-view-scrwin view)))
+
+(defmethod interface-clear-eob ((implementation (eql :ncurses)) view x y)
+  (charms/ll:wmove (ncurses-view-scrwin view) y x)
+  (charms/ll:wclrtobot (ncurses-view-scrwin view)))
+
+(defmethod interface-move-cursor ((implementation (eql :ncurses)) view x y)
+  (charms/ll:wmove (ncurses-view-scrwin view) y x))
+
+(defmethod interface-redraw-view-after ((implementation (eql :ncurses)) view focus-window-p)
+  (let ((attr (attribute-to-bits 'modeline)))
+    (charms/ll:attron attr)
+    (when (and (ncurses-view-modeline-scrwin view)
+               (< 0 (ncurses-view-x view)))
+      (charms/ll:move (ncurses-view-y view) (1- (ncurses-view-x view)))
+      (charms/ll:vline (char-code #\space) (1+ (ncurses-view-height view))))
+    (charms/ll:attroff attr)
+    (charms/ll:wnoutrefresh charms/ll:*stdscr*))
+  (when (ncurses-view-modeline-scrwin view)
+    (charms/ll:wnoutrefresh (ncurses-view-modeline-scrwin view)))
+  (when focus-window-p
+    (interface-move-cursor implementation
+                           view
+                           *cursor-x* *cursor-y*))
+  (charms/ll:wnoutrefresh (ncurses-view-scrwin view)))
+
+(defmethod interface-update-display ((implementation (eql :ncurses)))
+  (charms/ll:doupdate))

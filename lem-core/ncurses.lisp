@@ -96,9 +96,6 @@
   (when (screen-%modeline-scrwin screen)
     (charms/ll:clearok (screen-%modeline-scrwin screen) 1)))
 
-(define-implementation screen-erase (screen)
-  (charms/ll:werase (screen-%scrwin screen)))
-
 (defun screen-height (screen)
   (length (screen-lines screen)))
 
@@ -162,9 +159,6 @@
 
 (define-implementation screen-print-string (screen x y string attribute)
   (scrwin-print-string (screen-%scrwin screen) x y string attribute))
-
-(define-implementation screen-move-cursor (screen x y)
-  (charms/ll:wmove (screen-%scrwin screen) y x))
 
 
 (defun disp-print-line (screen y str/attributes do-clrtoeol

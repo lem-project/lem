@@ -15,9 +15,7 @@
            :screen-clear
            :display-width
            :display-height
-           :screen-erase
            :screen-print-string
-           :screen-move-cursor
            :redraw-display-window
            :update-display
            :input-loop))

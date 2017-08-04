@@ -603,3 +603,16 @@
           (sb-sys:interactive-interrupt (c)
             (declare (ignore c))
             (send-abort-event editor-thread t)))))
+
+#|
+(display-width)                   server -> client response
+(display-height)                  server -> client response
+(make-view)                       server -> client notify
+(delete-view view)                server -> client notify
+(clear view)                      server -> client notify
+(set-view-size view width height) server -> client notify
+(set-view-pos view x y)           server -> client notify
+(print view x y string attribute) server -> client notify
+(send-input)                      client -> server notify
+(resize-display)                  client -> server notify
+|#

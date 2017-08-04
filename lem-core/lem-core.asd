@@ -68,9 +68,7 @@
 
                (:file "init")
 
-               (:file "interface")
-
                (:file "term")
-               (:file "ncurses")
+               (:file "interface")
 
                (:file "color-theme")))

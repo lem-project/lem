@@ -45,6 +45,10 @@
                (:file "word-command")
                (:file "sexp-command")
 
+               (:file "init")
+               (:file "term")
+               (:file "interface")
+
                (:file "completion-mode")
                (:file "tmlanguage")
                (:file "button")
@@ -65,10 +69,5 @@
                (:file "abbrev")
                (:file "less-mode")
                (:file "rectangle")
-
-               (:file "init")
-
-               (:file "term")
-               (:file "interface")
 
                (:file "color-theme")))

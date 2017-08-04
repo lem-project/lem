@@ -1,29 +1,9 @@
 (in-package :lem)
 
-(defmacro define-interface (name args &body body)
-  (declare (ignore name args body)))
-
-(defmacro define-implementation (name args &body body)
-  `(defun ,name ,args ,@body))
-
-(define-interface set-foreground (name))
-(define-interface set-background (name))
-(define-interface display-background-mode ())
-(define-interface set-display-background-mode (mode))
-(define-interface call-with-screen (function) (funcall function))
-(define-interface make-screen (x y width height use-modeline-p))
-(define-interface screen-delete (screen))
-(define-interface screen-modify (screen))
-(define-interface screen-set-size (screen width height))
-(define-interface screen-set-pos (screen x y))
-(define-interface screen-clear (screen))
-(define-interface display-width ())
-(define-interface display-height ())
-(define-interface screen-print-string (screen x y string attribute))
-(define-interface redraw-display-window (window force))
-(define-interface update-display ())
-(define-interface print-echoarea (string doupdate-p))
-(define-interface input-loop (editor-thread))
+(export '(set-foreground
+          set-background
+          display-width
+          display-height))
 
 
 (defvar *print-start-x* 0)
@@ -51,26 +31,26 @@
 
 (defvar *display-background-mode* nil)
 
-(define-implementation display-background-mode ()
+(defun display-background-mode ()
   (or *display-background-mode*
       (lem.term:background-mode)))
 
-(define-implementation set-display-background-mode (mode)
+(defun set-display-background-mode (mode)
   (check-type mode (or (eql :light) (eql :dark) null))
   (setf *display-background-mode* mode))
 
-(define-implementation set-foreground (name)
+(defun set-foreground (name)
   (or (lem.term:term-set-foreground name)
       (error "Undefined color: ~A" name)))
 
-(define-implementation set-background (name)
+(defun set-background (name)
   (or (lem.term:term-set-background name)
       (error "Undefined color: ~A" name)))
 
-(define-implementation display-width () (max 5 charms/ll:*cols*))
-(define-implementation display-height () (max 3 charms/ll:*lines*))
+(defun display-width () (max 5 charms/ll:*cols*))
+(defun display-height () (max 3 charms/ll:*lines*))
 
-(define-implementation call-with-screen (function)
+(defun call-with-screen (function)
   (unwind-protect (progn
                     (lem.term:term-init)
                     (funcall function))
@@ -91,7 +71,7 @@
   modified-p
   (horizontal-scroll-start 0))
 
-(define-implementation make-screen (x y width height use-modeline-p)
+(defun make-screen (x y width height use-modeline-p)
   (flet ((newwin (nlines ncols begin-y begin-x)
            (let ((win (charms/ll:newwin nlines ncols begin-y begin-x)))
              (charms/ll:keypad win 1)
@@ -108,12 +88,12 @@
                   :lines (make-array (max 0 height) :initial-element nil)
                   :old-lines (make-array (max 0 height) :initial-element nil))))
 
-(define-implementation screen-delete (screen)
+(defun screen-delete (screen)
   (charms/ll:delwin (screen-%scrwin screen))
   (when (screen-%modeline-scrwin screen)
     (charms/ll:delwin (screen-%modeline-scrwin screen))))
 
-(define-implementation screen-clear (screen)
+(defun screen-clear (screen)
   (screen-modify screen)
   (charms/ll:clearok (screen-%scrwin screen) 1)
   (when (screen-%modeline-scrwin screen)
@@ -122,10 +102,10 @@
 (defun screen-height (screen)
   (length (screen-lines screen)))
 
-(define-implementation screen-modify (screen)
+(defun screen-modify (screen)
   (setf (screen-modified-p screen) t))
 
-(define-implementation screen-set-size (screen width height)
+(defun screen-set-size (screen width height)
   (screen-modify screen)
   (when (screen-%modeline-scrwin screen)
     (decf height))
@@ -148,7 +128,7 @@
   (setf (screen-width screen)
         width))
 
-(define-implementation screen-set-pos (screen x y)
+(defun screen-set-pos (screen x y)
   (screen-modify screen)
   (setf (screen-x screen) x)
   (setf (screen-y screen) y)
@@ -180,7 +160,7 @@
   (charms/ll:wattroff scrwin attr)
   x)
 
-(define-implementation screen-print-string (screen x y string attribute)
+(defun screen-print-string (screen x y string attribute)
   (scrwin-print-string (screen-%scrwin screen) x y string attribute))
 
 
@@ -564,7 +544,7 @@
                          default-attribute)
     (charms/ll:wnoutrefresh scrwin)))
 
-(define-implementation redraw-display-window (window force)
+(defun redraw-display-window (window force)
   (let ((focus-window-p (eq window (current-window)))
         (screen (lem::window-screen window)))
     (when focus-window-p (window-see window))
@@ -590,13 +570,13 @@
     (charms/ll:wnoutrefresh (screen-%scrwin screen))
     (setf (screen-modified-p screen) nil)))
 
-(define-implementation update-display ()
+(defun update-display ()
   (let ((scrwin (screen-%scrwin (lem::window-screen (current-window)))))
     (charms/ll:wmove scrwin *cursor-y* *cursor-x*)
     (charms/ll:wnoutrefresh scrwin)
     (charms/ll:doupdate)))
 
-(define-implementation input-loop (editor-thread)
+(defun input-loop (editor-thread)
   (loop
     :with abort-key := (char-code (keyname->keychar "C-]"))
     :do (handler-case

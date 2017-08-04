@@ -44,11 +44,6 @@
   (or (term-set-background name)
       (error "Undefined color: ~A" name)))
 
-(defun newwin (nlines ncols begin-y begin-x)
-  (let ((win (charms/ll:newwin nlines ncols begin-y begin-x)))
-    (charms/ll:keypad win 1)
-    win))
-
 (defun display-init ()
   (term-init))
 
@@ -80,17 +75,21 @@
   (horizontal-scroll-start 0))
 
 (define-implementation make-screen (x y width height use-modeline-p)
-  (when use-modeline-p
-    (decf height))
-  (%make-screen :%scrwin (newwin height width y x)
-                :%modeline-scrwin (when use-modeline-p
-                                    (newwin 1 width (+ y height) x))
-                :x x
-                :y y
-                :width width
-                :left-lines (make-array (max 0 height) :initial-element nil)
-                :lines (make-array (max 0 height) :initial-element nil)
-                :old-lines (make-array (max 0 height) :initial-element nil)))
+  (flet ((newwin (nlines ncols begin-y begin-x)
+           (let ((win (charms/ll:newwin nlines ncols begin-y begin-x)))
+             (charms/ll:keypad win 1)
+             win)))
+    (when use-modeline-p
+      (decf height))
+    (%make-screen :%scrwin (newwin height width y x)
+                  :%modeline-scrwin (when use-modeline-p
+                                      (newwin 1 width (+ y height) x))
+                  :x x
+                  :y y
+                  :width width
+                  :left-lines (make-array (max 0 height) :initial-element nil)
+                  :lines (make-array (max 0 height) :initial-element nil)
+                  :old-lines (make-array (max 0 height) :initial-element nil))))
 
 (define-implementation screen-delete (screen)
   (charms/ll:delwin (screen-%scrwin screen))

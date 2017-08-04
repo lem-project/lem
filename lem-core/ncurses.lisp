@@ -545,7 +545,7 @@
   (let ((focus-window-p (eq window (current-window)))
         (screen (lem::window-screen window)))
     (when focus-window-p (window-see window))
-    (lem::window-prompt-display window)
+    (lem::run-show-buffer-hooks window)
     (disp-reset-lines window)
     (adjust-horizontal-scroll window)
     (screen-display-lines screen

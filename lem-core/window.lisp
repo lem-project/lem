@@ -770,7 +770,7 @@
         (car (buffer-list))
         (car buffer-list))))
 
-(defun window-prompt-display (window)
+(defun run-show-buffer-hooks (window)
   (when (window-parameter window 'change-buffer)
     (setf (window-parameter window 'change-buffer) nil)
     (run-hooks *window-show-buffer-functions* window)))

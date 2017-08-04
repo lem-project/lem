@@ -44,20 +44,14 @@
   (or (term-set-background name)
       (error "Undefined color: ~A" name)))
 
-(defun display-init ()
-  (term-init))
-
-(defun display-finalize ()
-  (term-finalize))
-
 (define-implementation display-width () (max 5 charms/ll:*cols*))
 (define-implementation display-height () (max 3 charms/ll:*lines*))
 
 (define-implementation call-with-screen (function)
   (unwind-protect (progn
-                    (display-init)
+                    (term-init)
                     (funcall function))
-    (display-finalize)))
+    (term-finalize)))
 
 (defstruct (screen (:constructor %make-screen))
   %scrwin

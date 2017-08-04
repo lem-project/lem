@@ -5,6 +5,9 @@
           display-width
           display-height))
 
+(defgeneric interface-display-background-mode (implementation))
+(defgeneric interface-update-foreground (implementation color-name))
+(defgeneric interface-update-background (implementation color-name))
 (defgeneric interface-display-width (implementation))
 (defgeneric interface-display-height (implementation))
 (defgeneric interface-make-view (implementation x y width height use-modeline-p))
@@ -30,19 +33,17 @@
 
 (defun display-background-mode ()
   (or *display-background-mode*
-      (lem.term:background-mode)))
+      (interface-display-background-mode *implementation*)))
 
 (defun set-display-background-mode (mode)
   (check-type mode (or (eql :light) (eql :dark) null))
   (setf *display-background-mode* mode))
 
 (defun set-foreground (name)
-  (or (lem.term:term-set-foreground name)
-      (error "Undefined color: ~A" name)))
+  (interface-update-foreground *implementation* name))
 
 (defun set-background (name)
-  (or (lem.term:term-set-background name)
-      (error "Undefined color: ~A" name)))
+  (interface-update-background *implementation* name))
 
 (defun display-width () (interface-display-width *implementation*))
 (defun display-height () (interface-display-height *implementation*))
@@ -600,6 +601,15 @@
   y
   width
   height)
+
+(defmethod interface-display-background-mode ((implementation (eql :ncurses)))
+  (lem.term:background-mode))
+
+(defmethod interface-update-foreground ((implementation (eql :ncurses)) color-name)
+  (lem.term:term-set-foreground color-name))
+
+(defmethod interface-update-background ((implementation (eql :ncurses)) color-name)
+  (lem.term:term-set-background color-name))
 
 (defmethod interface-display-width ((implementation (eql :ncurses)))
   (max 5 charms/ll:*cols*))

@@ -1166,16 +1166,20 @@
 (defun term-set-foreground (name)
   (multiple-value-bind (fg found) (get-color name)
     (let ((bg (nth-value 1 (get-default-colors))))
-      (when found
-        (charms/ll:assume-default-colors fg bg)
-        t))))
+      (cond (found
+             (charms/ll:assume-default-colors fg bg)
+             t)
+            (t
+             (error "Undefined color: ~A" name))))))
 
 (defun term-set-background (name)
   (multiple-value-bind (bg found) (get-color name)
     (let ((fg (nth-value 0 (get-default-colors))))
-      (when found
-        (charms/ll:assume-default-colors fg bg)
-        t))))
+      (cond (found
+             (charms/ll:assume-default-colors fg bg)
+             t)
+            (t
+             (error "Undefined color: ~A" name))))))
 
 (defun background-mode ()
   (let ((b (nth-value 1 (get-default-colors))))

@@ -49,7 +49,7 @@
 (defun display-width () (interface-display-width *implementation*))
 (defun display-height () (interface-display-height *implementation*))
 
-(defun call-with-screen (function)
+(defun invoke-frontend (function)
   (interface-invoke *implementation* function))
 
 (defstruct (screen (:constructor %make-screen))

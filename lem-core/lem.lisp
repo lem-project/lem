@@ -110,7 +110,7 @@
 
 (defun run-lem (args)
   (let ((report
-          (call-with-screen
+          (invoke-frontend
            (lambda (&optional (input-thread (bt:current-thread)))
              (run-editor-thread input-thread args)))))
     (when report

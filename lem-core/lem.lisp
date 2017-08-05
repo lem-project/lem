@@ -64,9 +64,8 @@
   (let* ((main-thread (bt:current-thread))
          (editor-thread (bt:make-thread
                          (lambda ()
-                           (let ((report (with-catch-bailout
-                                           (toplevel-command-loop
-                                            initialize-function))))
+                           (let ((report (toplevel-command-loop
+                                          initialize-function)))
                              (bt:interrupt-thread
                               main-thread
                               (lambda ()

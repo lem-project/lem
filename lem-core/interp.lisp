@@ -99,10 +99,11 @@
           (message "~A" c))))))
 
 (defun toplevel-command-loop (initialize-function)
-  (catch +exit-tag+
-    (with-error-handler ()
-      (funcall initialize-function))
-    (command-loop)))
+  (with-catch-bailout
+    (catch +exit-tag+
+      (with-error-handler ()
+        (funcall initialize-function))
+      (command-loop))))
 
 (defun exit-editor (&optional report)
   (run-hooks *exit-editor-hook*)

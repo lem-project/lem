@@ -28,9 +28,11 @@
               bits)))))
 
 (defmethod interface-invoke ((implementation (eql :ncurses)) function)
-  (unwind-protect (progn
-                    (lem.term:term-init)
-                    (funcall function))
+  (unwind-protect
+       (progn
+         (lem.term:term-init)
+         (let ((editor-thread (funcall function)))
+           (input-loop editor-thread)))
     (lem.term:term-finalize)))
 
 (defmethod interface-display-background-mode ((implementation (eql :ncurses)))

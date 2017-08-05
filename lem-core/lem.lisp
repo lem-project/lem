@@ -60,18 +60,6 @@
                 (lambda (buffer)
                   (scan-file-property-list buffer))))))
 
-(defun lem-internal (initialize-function)
-  (let* ((main-thread (bt:current-thread))
-         (editor-thread
-           (bt:make-thread (lambda ()
-                             (let ((report (toplevel-command-loop
-                                            initialize-function)))
-                               (bt:interrupt-thread main-thread
-                                                    (lambda ()
-                                                      (error 'exit-editor :value report)))))
-                           :name "editor")))
-    (input-loop editor-thread)))
-
 (defstruct command-line-arguments
   args
   (no-init-file nil))
@@ -106,21 +94,25 @@
       (run-hooks *after-init-hook*))
     (apply-args args)))
 
+(defun run-editor-thread (input-thread args)
+  (bt:make-thread
+   (lambda ()
+     (unwind-protect
+          (progn
+            (setf *in-the-editor* t)
+            (setup)
+            (let ((report (toplevel-command-loop (lambda () (init args)))))
+              (bt:interrupt-thread input-thread
+                                   (lambda ()
+                                     (error 'exit-editor :value report)))))
+       (setf *in-the-editor* nil)))
+   :name "editor"))
+
 (defun run-lem (args)
   (let ((report
-          (with-catch-bailout
-            (handler-bind ((error #'bailout)
-                           #+sbcl (sb-sys:interactive-interrupt #'bailout))
-              (call-with-screen
-               (lambda ()
-                 (unwind-protect
-                      (progn
-                        (setf *in-the-editor* t)
-                        (setup)
-                        (lem-internal
-                         (lambda ()
-                           (init args))))
-                   (setf *in-the-editor* nil))))))))
+          (call-with-screen
+           (lambda (&optional (input-thread (bt:current-thread)))
+             (run-editor-thread input-thread args)))))
     (when report
       (format t "~&~A~%" report))))
 

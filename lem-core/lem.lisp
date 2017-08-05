@@ -120,19 +120,21 @@
 (defun apply-args (args)
   (mapc #'eval (command-line-arguments-args args)))
 
-(let ((visited nil))
-  (defun lem (&rest args)
-    (setf args (parse-args args))
-    (if *in-the-editor*
-        (apply-args args)
-        (progn
-          (run-hooks *before-init-hook*)
-          (with-editor ()
-            (lem-internal
-             (lambda ()
-               (unless visited
-                 (setf visited t)
-                 (unless (command-line-arguments-no-init-file args)
-                   (load-init-file))
-                 (run-hooks *after-init-hook*))
-               (apply-args args))))))))
+(let ((initialized nil))
+  (defun init (args)
+    (unless initialized
+      (setf initialized t)
+      (run-hooks *before-init-hook*)
+      (unless (command-line-arguments-no-init-file args)
+        (load-init-file))
+      (run-hooks *after-init-hook*))
+    (apply-args args)))
+
+(defun lem (&rest args)
+  (setf args (parse-args args))
+  (if *in-the-editor*
+      (apply-args args)
+      (with-editor ()
+        (lem-internal
+         (lambda ()
+           (init args))))))

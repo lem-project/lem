@@ -58,15 +58,18 @@
               (sb-sys:interactive-interrupt (c)
                 (declare (ignore c))
                 (send-abort-event editor-thread t))))
-    (exit-editor (c) (return-from input-loop (exit-editor-value c)))))
+    (exit-editor (c) (return-from input-loop c))))
 
 (defmethod interface-invoke ((implementation (eql :ncurses)) function)
-  (unwind-protect
-       (progn
-         (lem.term:term-init)
-         (let ((editor-thread (funcall function)))
-           (input-loop editor-thread)))
-    (lem.term:term-finalize)))
+  (let ((result nil))
+    (unwind-protect
+         (progn
+           (lem.term:term-init)
+           (let ((editor-thread (funcall function)))
+             (setf result (input-loop editor-thread))))
+      (lem.term:term-finalize))
+    (when (typep result 'exit-editor)
+      (format t "~&~A~%" (exit-editor-value result)))))
 
 (defmethod interface-display-background-mode ((implementation (eql :ncurses)))
   (lem.term:background-mode))

@@ -108,16 +108,10 @@
        (setf *in-the-editor* nil)))
    :name "editor"))
 
-(defun run-lem (args)
-  (let ((report
-          (invoke-frontend
-           (lambda (&optional (input-thread (bt:current-thread)))
-             (run-editor-thread input-thread args)))))
-    (when report
-      (format t "~&~A~%" report))))
-
 (defun lem (&rest args)
   (setf args (parse-args args))
   (if *in-the-editor*
       (apply-args args)
-      (run-lem args)))
+      (invoke-frontend
+       (lambda (&optional (input-thread (bt:current-thread)))
+         (run-editor-thread input-thread args)))))

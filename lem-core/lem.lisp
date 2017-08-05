@@ -62,17 +62,15 @@
 
 (defun lem-internal (initialize-function)
   (let* ((main-thread (bt:current-thread))
-         (editor-thread (bt:make-thread
-                         (lambda ()
-                           (let ((report (toplevel-command-loop
-                                          initialize-function)))
-                             (bt:interrupt-thread
-                              main-thread
-                              (lambda ()
-                                (error 'exit-editor :value report)))))
-                         :name "editor")))
-    (handler-case (input-loop editor-thread)
-      (exit-editor (c) (return-from lem-internal (exit-editor-value c))))))
+         (editor-thread
+           (bt:make-thread (lambda ()
+                             (let ((report (toplevel-command-loop
+                                            initialize-function)))
+                               (bt:interrupt-thread main-thread
+                                                    (lambda ()
+                                                      (error 'exit-editor :value report)))))
+                           :name "editor")))
+    (input-loop editor-thread)))
 
 (defstruct command-line-arguments
   args

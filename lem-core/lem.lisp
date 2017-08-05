@@ -2,7 +2,6 @@
 
 (export '(*before-init-hook*
           *after-init-hook*
-          with-editor
           lem))
 
 (defvar *before-init-hook* '())
@@ -76,25 +75,6 @@
     (handler-case (input-loop editor-thread)
       (exit-editor (c) (return-from lem-internal (exit-editor-value c))))))
 
-(defun call-with-editor (function)
-  (let ((report
-          (with-catch-bailout
-            (handler-bind ((error #'bailout)
-                           #+sbcl (sb-sys:interactive-interrupt #'bailout))
-              (call-with-screen
-               (lambda ()
-                 (unwind-protect
-                      (progn
-                        (setf *in-the-editor* t)
-                        (setup)
-                        (funcall function))
-                   (setf *in-the-editor* nil))))))))
-    (when report
-      (format t "~&~A~%" report))))
-
-(defmacro with-editor (() &body body)
-  `(call-with-editor (lambda () ,@body)))
-
 (defstruct command-line-arguments
   args
   (no-init-file nil))
@@ -130,11 +110,26 @@
       (run-hooks *after-init-hook*))
     (apply-args args)))
 
+(defun run-lem (args)
+  (let ((report
+          (with-catch-bailout
+            (handler-bind ((error #'bailout)
+                           #+sbcl (sb-sys:interactive-interrupt #'bailout))
+              (call-with-screen
+               (lambda ()
+                 (unwind-protect
+                      (progn
+                        (setf *in-the-editor* t)
+                        (setup)
+                        (lem-internal
+                         (lambda ()
+                           (init args))))
+                   (setf *in-the-editor* nil))))))))
+    (when report
+      (format t "~&~A~%" report))))
+
 (defun lem (&rest args)
   (setf args (parse-args args))
   (if *in-the-editor*
       (apply-args args)
-      (with-editor ()
-        (lem-internal
-         (lambda ()
-           (init args))))))
+      (run-lem args)))

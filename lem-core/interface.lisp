@@ -5,6 +5,7 @@
           display-width
           display-height))
 
+(defgeneric interface-invoke (implementation function))
 (defgeneric interface-display-background-mode (implementation))
 (defgeneric interface-update-foreground (implementation color-name))
 (defgeneric interface-update-background (implementation color-name))
@@ -49,10 +50,7 @@
 (defun display-height () (interface-display-height *implementation*))
 
 (defun call-with-screen (function)
-  (unwind-protect (progn
-                    (lem.term:term-init)
-                    (funcall function))
-    (lem.term:term-finalize)))
+  (interface-invoke *implementation* function))
 
 (defstruct (screen (:constructor %make-screen))
   view
@@ -601,6 +599,12 @@
   y
   width
   height)
+
+(defmethod interface-invoke ((implementation (eql :ncurses)) function)
+  (unwind-protect (progn
+                    (lem.term:term-init)
+                    (funcall function))
+    (lem.term:term-finalize)))
 
 (defmethod interface-display-background-mode ((implementation (eql :ncurses)))
   (lem.term:background-mode))

@@ -29,32 +29,37 @@
    (buffer-start-point buffer)
    (buffer-end-point buffer)))
 
-(defun setup ()
-  (start-idle-timer 100 t
-                    (lambda ()
-                      (syntax-scan-window (current-window))))
-  (add-hook *window-scroll-functions*
-            (lambda (window)
-              (syntax-scan-window window)))
-  (add-hook *window-size-change-functions*
-            (lambda (window)
-              (syntax-scan-window window)))
-  (add-hook *window-show-buffer-functions*
-            (lambda (window)
-              (syntax-scan-window window)))
-  (add-hook (variable-value 'after-change-functions :global)
-            (lambda (start end old-len)
-              (declare (ignore old-len))
-              (syntax-scan-region start end)))
-  (add-hook *find-file-hook*
-            (lambda (buffer)
-              (prepare-auto-mode buffer)
-              (scan-file-property-list buffer)
-              (syntax-scan-buffer buffer))
-            5000)
-  (add-hook *before-save-hook*
-            (lambda (buffer)
-              (scan-file-property-list buffer))))
+(let ((once nil))
+  (defun setup ()
+    (unless once
+      (setf once t)
+      (window-init)
+      (minibuf-init)
+      (start-idle-timer 100 t
+                        (lambda ()
+                          (syntax-scan-window (current-window))))
+      (add-hook *window-scroll-functions*
+                (lambda (window)
+                  (syntax-scan-window window)))
+      (add-hook *window-size-change-functions*
+                (lambda (window)
+                  (syntax-scan-window window)))
+      (add-hook *window-show-buffer-functions*
+                (lambda (window)
+                  (syntax-scan-window window)))
+      (add-hook (variable-value 'after-change-functions :global)
+                (lambda (start end old-len)
+                  (declare (ignore old-len))
+                  (syntax-scan-region start end)))
+      (add-hook *find-file-hook*
+                (lambda (buffer)
+                  (prepare-auto-mode buffer)
+                  (scan-file-property-list buffer)
+                  (syntax-scan-buffer buffer))
+                5000)
+      (add-hook *before-save-hook*
+                (lambda (buffer)
+                  (scan-file-property-list buffer))))))
 
 (defun lem-internal (initialize-function)
   (let* ((main-thread (bt:current-thread))
@@ -71,26 +76,21 @@
     (handler-case (input-loop editor-thread)
       (exit-editor (c) (return-from lem-internal (exit-editor-value c))))))
 
-(let ((passed nil))
-  (defun call-with-editor (function)
-    (let ((report
-            (with-catch-bailout
-              (handler-bind ((error #'bailout)
-                             #+sbcl (sb-sys:interactive-interrupt #'bailout))
-                (call-with-screen
-                 (lambda ()
-                   (unwind-protect
-                        (progn
-                          (setf *in-the-editor* t)
-                          (unless passed
-                            (setq passed t)
-                            (window-init)
-                            (minibuf-init)
-                            (setup))
-                          (funcall function))
-                     (setf *in-the-editor* nil))))))))
-      (when report
-        (format t "~&~A~%" report)))))
+(defun call-with-editor (function)
+  (let ((report
+          (with-catch-bailout
+            (handler-bind ((error #'bailout)
+                           #+sbcl (sb-sys:interactive-interrupt #'bailout))
+              (call-with-screen
+               (lambda ()
+                 (unwind-protect
+                      (progn
+                        (setf *in-the-editor* t)
+                        (setup)
+                        (funcall function))
+                   (setf *in-the-editor* nil))))))))
+    (when report
+      (format t "~&~A~%" report))))
 
 (defmacro with-editor (() &body body)
   `(call-with-editor (lambda () ,@body)))
@@ -120,10 +120,10 @@
 (defun apply-args (args)
   (mapc #'eval (command-line-arguments-args args)))
 
-(let ((initialized nil))
+(let ((once nil))
   (defun init (args)
-    (unless initialized
-      (setf initialized t)
+    (unless once
+      (setf once t)
       (run-hooks *before-init-hook*)
       (unless (command-line-arguments-no-init-file args)
         (load-init-file))

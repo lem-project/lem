@@ -81,19 +81,18 @@
 (defun parse-args (args)
   (let ((parsed-args
           (make-command-line-arguments)))
-    (loop :with args2 := '()
-          :while args
-          :for arg := (pop args)
-          :do (cond ((member arg '("-q" "--no-init-file") :test #'equal)
-                     (setf (command-line-arguments-no-init-file parsed-args)
-                           t))
-                    ((or (stringp arg) (pathnamep arg))
-                     (push `(find-file ,(merge-pathnames arg (uiop:getcwd)))
-                           args2))
-                    (t
-                     (push arg args2)))
-          :finally (setf (command-line-arguments-args parsed-args)
-                         (nreverse args2)))
+    (setf (command-line-arguments-args parsed-args)
+          (loop :while args
+                :for arg := (pop args)
+                :when (cond ((member arg '("-q" "--no-init-file") :test #'equal)
+                             (setf (command-line-arguments-no-init-file parsed-args)
+                                   t)
+                             nil)
+                            ((or (stringp arg) (pathnamep arg))
+                             `(find-file ,(merge-pathnames arg (uiop:getcwd))))
+                            (t
+                             arg))
+                :collect it))
     parsed-args))
 
 (defun apply-args (args)

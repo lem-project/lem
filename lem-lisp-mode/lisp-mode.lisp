@@ -46,7 +46,7 @@
 (define-key *lisp-mode-keymap* "C-c C-c" 'lisp-compile-defun)
 (define-key *lisp-mode-keymap* "C-c C-m" 'lisp-macroexpand)
 (define-key *lisp-mode-keymap* "C-c M-m" 'lisp-macroexpand-all)
-(define-key *lisp-mode-keymap* "C-c C-d C-a" 'lisp-echo-arglist)
+(define-key *lisp-mode-keymap* "C-c C-d C-a" 'lisp-autodoc-with-typeout)
 (define-key *lisp-mode-keymap* "C-c C-d d" 'lisp-describe-symbol)
 (define-key *lisp-mode-keymap* "C-c C-z" 'lisp-switch-to-repl-buffer)
 (define-key *lisp-mode-keymap* "C-c z" 'lisp-switch-to-repl-buffer)
@@ -365,7 +365,7 @@
                            (message "~A" (ppcre:regex-replace-all "\\s+" arglist " "))))))))
 
 (let (autodoc-symbol)
-  (define-command lisp-autodoc () ()
+  (defun autodoc (function)
     (let ((context (lem-lisp-syntax:parse-for-swank-autodoc (current-point))))
       (unless autodoc-symbol
         (setf autodoc-symbol (intern "AUTODOC" :swank)))
@@ -390,7 +390,17 @@
                       (search-forward point "<===")
                       (delete-between-points start point)
                       (insert-string point string :attribute 'region))))
-                (message-buffer buffer))))))))))
+                (funcall function buffer))))))))))
+
+(define-command lisp-autodoc-with-typeout () ()
+  (autodoc (lambda (temp-buffer)
+             (let ((buffer (make-buffer (buffer-name temp-buffer))))
+               (erase-buffer buffer)
+               (insert-buffer (buffer-point buffer) temp-buffer)
+               (with-pop-up-typeout-window (stream buffer))))))
+
+(define-command lisp-autodoc () ()
+  (autodoc (lambda (buffer) (message-buffer buffer))))
 
 (defun check-parens ()
   (with-point ((point (current-point)))

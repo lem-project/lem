@@ -46,7 +46,6 @@
                (:file "sexp-command")
 
                (:file "init")
-               (:file "term")
                (:file "interface")
 
                (:file "completion-mode")

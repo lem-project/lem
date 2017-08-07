@@ -92,7 +92,7 @@
                                       (make-tm-name 'syntax-function-name-attribute)))
                    (make-tm-match
                     `(:sequence
-                      "(" ,(wrap-symbol-names "defun")
+                      "(" ,(wrap-symbol-names "defun" "defmethod")
                       ,(ppcre:parse-string "\\s*\\(")
                       ,(ppcre:parse-string "((?i:setf))\\s+")
                       (:greedy-repetition 0 1 (:register symbol)))
@@ -153,7 +153,7 @@
                         "macrolet" "multiple-value-bind" "multiple-value-prog1"
                         "proclaim" "prog" "prog*" "progv"
                         "restart-case" "restart-bind" "return" "return-from"
-                        "symbol-macrolet" "tagbody" "the" "typecase"
+                        "setf" "setq" "symbol-macrolet" "tagbody" "the" "typecase"
                         "with-accessors" "with-compilation-unit"
                         "with-condition-restarts" "with-hash-table-iterator"
                         "with-input-from-string" "with-open-file"

@@ -298,17 +298,17 @@
 (defun push-redo-stack (buffer elt)
   (push elt (buffer-redo-stack buffer)))
 
-(defun push-undo (buffer fn)
+(defun push-undo (buffer edit)
   (when (and (buffer-enable-undo-p buffer)
              (not (buffer-temporary-p buffer)))
     (ecase *undo-mode*
       (:edit
-       (push-undo-stack buffer fn)
+       (push-undo-stack buffer edit)
        (setf (buffer-redo-stack buffer) nil))
       (:redo
-       (push-undo-stack buffer fn))
+       (push-undo-stack buffer edit))
       (:undo
-       (push-redo-stack buffer fn)))))
+       (push-redo-stack buffer edit)))))
 
 (defun buffer-rename (buffer name)
   @lang(:jp "`buffer`の名前を`name`に変更します。")
@@ -325,7 +325,7 @@
       (let ((*undo-mode* :undo))
         (unless (eq elt :separator)
           (decf (buffer-undo-size buffer))
-          (funcall elt point))))))
+          (apply-inverse-edit elt point))))))
 
 (defun buffer-undo (point)
   (let ((buffer (point-buffer point)))
@@ -347,7 +347,7 @@
     (when elt
       (let ((*undo-mode* :redo))
         (unless (eq elt :separator)
-          (funcall elt point))))))
+          (apply-inverse-edit elt point))))))
 
 (defun buffer-redo (point)
   (let ((buffer (point-buffer point)))

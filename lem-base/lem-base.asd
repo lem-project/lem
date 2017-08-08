@@ -15,6 +15,7 @@
                (:file "macros")
                (:file "hooks")
                (:file "line")
+               (:file "edit")
                (:file "buffer")
                (:file "buffer-insert")
                (:file "buffers")

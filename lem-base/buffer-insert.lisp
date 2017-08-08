@@ -277,11 +277,7 @@
         (prog1 (insert/after-change-function point 1)
           (without-interrupts
             (push-undo (point-buffer point)
-                       (lambda (cur-point)
-                         (move-to-line cur-point linum)
-                         (line-offset cur-point 0 charpos)
-                         (delete-char/point cur-point 1)
-                         t)))))))
+                       (make-edit :insert-char linum charpos char)))))))
 
 (defmethod insert-string/point :around (point string)
   (call-before-change-functions (point-buffer point) point (length string))
@@ -292,11 +288,7 @@
         (prog1 (insert/after-change-function point (length string))
           (without-interrupts
             (push-undo (point-buffer point)
-                       (lambda (cur-point)
-                         (move-to-line cur-point linum)
-                         (line-offset cur-point 0 charpos)
-                         (delete-char/point cur-point (length string))
-                         t)))))))
+                       (make-edit :insert-string linum charpos string)))))))
 
 (defmethod delete-char/point :around (point n)
   (call-before-change-functions (point-buffer point) point (- n))
@@ -307,9 +299,5 @@
             (string (delete/after-change-function point)))
         (without-interrupts
           (push-undo (point-buffer point)
-                     (lambda (cur-point)
-                       (move-to-line cur-point linum)
-                       (line-offset cur-point 0 charpos)
-                       (insert-string/point cur-point string)
-                       t)))
+                     (make-edit :delete-char linum charpos string)))
         string)))

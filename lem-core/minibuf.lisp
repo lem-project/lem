@@ -58,7 +58,7 @@
 
 (defun minibuf-init ()
   (setf *minibuf-window*
-        (make-window (make-buffer "*minibuffer*" :temporary t)
+        (make-window (make-buffer "*minibuffer*" :temporary t :enable-undo-p t)
                      0
                      (- (display-height)
                         (minibuffer-window-height))
@@ -66,7 +66,7 @@
                      (minibuffer-window-height)
                      nil))
   (setf *echoarea-window*
-        (make-window (make-buffer "*echoarea*" :temporary t)
+        (make-window (make-buffer "*echoarea*" :temporary t :enable-undo-p nil)
                      0
                      (- (display-height)
                         (minibuffer-window-height))

@@ -294,8 +294,7 @@
   (push elt (buffer-redo-stack buffer)))
 
 (defun push-undo (buffer edit)
-  (when (and (buffer-enable-undo-p buffer)
-             (not (buffer-temporary-p buffer)))
+  (when (buffer-enable-undo-p buffer)
     (ecase *undo-mode*
       (:edit
        (push-undo-stack buffer edit)

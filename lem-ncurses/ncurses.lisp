@@ -68,7 +68,8 @@
            (let ((editor-thread (funcall function)))
              (setf result (input-loop editor-thread))))
       (lem.term:term-finalize))
-    (when (typep result 'exit-editor)
+    (when (and (typep result 'exit-editor)
+               (exit-editor-value result))
       (format t "~&~A~%" (exit-editor-value result)))))
 
 (defmethod interface-display-background-mode ((implementation (eql :ncurses)))

@@ -113,17 +113,11 @@
     :initform nil
     :initarg :nlines
     :accessor buffer-nlines)
-   (undo-size
-    :initform nil
-    :initarg :undo-size
-    :accessor buffer-undo-size)
-   (undo-stack
-    :initform nil
-    :initarg :undo-stack
-    :accessor buffer-undo-stack)
+   (edit-history
+    :initform (make-array 0 :adjustable t :fill-pointer 0)
+    :accessor buffer-edit-history)
    (redo-stack
     :initform nil
-    :initarg :redo-stack
     :accessor buffer-redo-stack)
    (external-format
     :initform nil
@@ -164,6 +158,11 @@
 (defvar *undo-modes* '(:edit :undo :redo))
 (defvar *undo-mode* :edit)
 
+(defun last-edit-history (buffer)
+  (when (< 0 (fill-pointer (buffer-edit-history buffer)))
+    (aref (buffer-edit-history buffer)
+          (1- (fill-pointer (buffer-edit-history buffer))))))
+
 (defun make-buffer (name &key temporary read-only-p (enable-undo-p t)
                               (syntax-table (fundamental-syntax-table)))
   @lang(:jp "バッファ名が`name`のバッファがバッファリストに含まれていれば
@@ -189,8 +188,6 @@
     (setf (%buffer-keep-binfo buffer) nil)
     (setf (buffer-nlines buffer) 1)
     (setf (buffer-%modified-p buffer) 0)
-    (setf (buffer-undo-size buffer) 0)
-    (setf (buffer-undo-stack buffer) nil)
     (setf (buffer-redo-stack buffer) nil)
     (setf (buffer-variables buffer) (make-hash-table :test 'equal))
     (let ((line (make-line nil nil "")))
@@ -225,8 +222,7 @@
 (defun buffer-disable-undo (buffer)
   @lang(:jp "`buffer`のアンドゥを無効にしてアンドゥ用の情報を空にします。")
   (setf (buffer-%enable-undo-p buffer) nil)
-  (setf (buffer-undo-size buffer) 0)
-  (setf (buffer-undo-stack buffer) nil)
+  (setf (buffer-edit-history buffer) (make-array 0 :adjustable t :fill-pointer 0))
   (setf (buffer-redo-stack buffer) nil)
   nil)
 
@@ -292,8 +288,7 @@
   (buffer-mark-cancel buffer))
 
 (defun push-undo-stack (buffer elt)
-  (incf (buffer-undo-size buffer))
-  (push elt (buffer-undo-stack buffer)))
+  (vector-push-extend elt (buffer-edit-history buffer)))
 
 (defun push-redo-stack (buffer elt)
   (push elt (buffer-redo-stack buffer)))
@@ -320,18 +315,18 @@
 
 (defun buffer-undo-1 (point)
   (let* ((buffer (point-buffer point))
-         (elt (pop (buffer-undo-stack buffer))))
+         (edit-history (buffer-edit-history buffer))
+         (elt (and (< 0 (length edit-history)) (vector-pop edit-history))))
     (when elt
       (let ((*undo-mode* :undo))
         (unless (eq elt :separator)
-          (decf (buffer-undo-size buffer))
           (apply-inverse-edit elt point))))))
 
 (defun buffer-undo (point)
   (let ((buffer (point-buffer point)))
     (push :separator (buffer-redo-stack buffer))
-    (when (eq :separator (car (buffer-undo-stack buffer)))
-      (pop (buffer-undo-stack buffer)))
+    (when (eq :separator (last-edit-history buffer))
+      (vector-pop (buffer-edit-history buffer)))
     (let ((result0 nil))
       (loop :for result := (buffer-undo-1 point)
             :while result
@@ -351,19 +346,20 @@
 
 (defun buffer-redo (point)
   (let ((buffer (point-buffer point)))
-    (push :separator (buffer-undo-stack buffer))
+    (vector-push-extend :separator (buffer-edit-history buffer))
     (let ((result0 nil))
       (loop :for result := (buffer-redo-1 point)
             :while result
             :do (setf result0 result))
       (unless result0
-        (assert (eq :separator (car (buffer-undo-stack buffer))))
-        (pop (buffer-undo-stack buffer)))
+        (assert (eq :separator
+                    (last-edit-history buffer)))
+        (vector-pop (buffer-edit-history buffer)))
       result0)))
 
 (defun buffer-undo-boundary (&optional (buffer (current-buffer)))
-  (unless (eq :separator (car (buffer-undo-stack buffer)))
-    (push :separator (buffer-undo-stack buffer))))
+  (unless (eq :separator (last-edit-history buffer))
+    (vector-push-extend :separator (buffer-edit-history buffer))))
 
 (defun buffer-value (buffer name &optional default)
   @lang(:jp "`buffer`のバッファ変数`name`に束縛されている値を返します。  

@@ -163,7 +163,6 @@
 
 (defvar *undo-modes* '(:edit :undo :redo))
 (defvar *undo-mode* :edit)
-(defvar *undo-limit* 100000)
 
 (defun make-buffer (name &key temporary read-only-p (enable-undo-p t)
                               (syntax-table (fundamental-syntax-table)))
@@ -293,16 +292,7 @@
   (buffer-mark-cancel buffer))
 
 (defun push-undo-stack (buffer elt)
-  (cond ((<= (+ *undo-limit* (floor (* *undo-limit* 0.3)))
-             (buffer-undo-size buffer))
-         (setf (buffer-undo-stack buffer)
-               (subseq (buffer-undo-stack buffer)
-                       0
-                       *undo-limit*))
-         (setf (buffer-undo-size buffer)
-               (1+ (length (buffer-undo-stack buffer)))))
-        (t
-         (incf (buffer-undo-size buffer))))
+  (incf (buffer-undo-size buffer))
   (push elt (buffer-undo-stack buffer)))
 
 (defun push-redo-stack (buffer elt)

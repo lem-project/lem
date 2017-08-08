@@ -397,7 +397,8 @@
              (let ((buffer (make-buffer (buffer-name temp-buffer))))
                (erase-buffer buffer)
                (insert-buffer (buffer-point buffer) temp-buffer)
-               (with-pop-up-typeout-window (stream buffer))))))
+               (with-pop-up-typeout-window (stream buffer)
+                 (declare (ignore stream)))))))
 
 (define-command lisp-autodoc () ()
   (autodoc (lambda (buffer) (message-buffer buffer))))

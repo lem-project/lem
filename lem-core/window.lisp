@@ -35,8 +35,7 @@
           pop-to-buffer
           floating-windows
           balloon-message
-          redraw-display
-          header-window))
+          redraw-display))
 
 (define-editor-variable truncate-lines t)
 
@@ -47,7 +46,6 @@
 (defvar *window-show-buffer-functions* '())
 
 (defvar *floating-windows* '())
-(defvar *header-windows* '())
 
 (defvar *window-tree*)
 
@@ -285,7 +283,7 @@
   (delete-point (%window-point window))
   (screen-delete (window-screen window)))
 
-(defun window-topleft-y () (length *header-windows*))
+(defun window-topleft-y () 0)
 (defun window-topleft-x () 0)
 (defun window-max-width () (- (display-width) (window-topleft-x)))
 (defun window-max-height () (- (display-height) (minibuffer-window-height) (window-topleft-y)))
@@ -907,32 +905,8 @@
     (setf *balloon-message-window* nil)
     (redraw-display t)))
 
-(defvar *modify-header-windows* nil)
-
-(defclass header-window (window)
-  ())
-
-(defmethod initialize-instance ((window header-window) &rest initargs)
-  (declare (ignore initargs))
-  (with-slots (x y width height) window
-    (setf x 0)
-    (setf y (length *header-windows*))
-    (setf width (display-width))
-    (setf height 1))
-  (push window *header-windows*)
-  (setf *modify-header-windows* t)
-  (call-next-method))
-
-(defmethod %delete-window ((window header-window))
-  (setf *header-windows*
-        (delete window *header-windows*))
-  (setf *modify-header-windows* t))
-
 (defun redraw-display (&optional force)
   (without-interrupts
-    (when *modify-header-windows*
-      (setf *modify-header-windows* nil)
-      (change-display-size-hook nil))
     (dolist (window (window-list))
       (unless (eq window (current-window))
         (window-redraw window force)))
@@ -941,15 +915,11 @@
           (t
            (window-redraw (current-minibuffer-window) force)
            (window-redraw (current-window) force)))
-    (dolist (window *header-windows*)
-      (window-redraw window force))
     (dolist (window *floating-windows*)
       (window-redraw window t))
     (update-display)))
 
 (defun change-display-size-hook (redraw-p)
-  (dolist (window *header-windows*)
-    (window-set-size window (display-width) 1))
   (adjust-windows (window-topleft-x)
                   (window-topleft-y)
                   (+ (window-max-width) (window-topleft-x))

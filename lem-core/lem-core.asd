@@ -50,7 +50,6 @@
                (:file "completion-mode")
                (:file "tmlanguage")
                (:file "button")
-               (:file "tabbar")
                (:file "listener-mode")
                (:file "kbdmacro")
                (:file "isearch")

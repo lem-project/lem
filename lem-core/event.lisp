@@ -24,34 +24,33 @@
 (defun empty-queue-p (queue)
   (null (car queue)))
 
-(let ((wait (bt:make-condition-variable))
-      (lock (bt:make-lock))
-      (queue (make-queue)))
+(defstruct event-queue
+  (wait (bt:make-condition-variable))
+  (lock (bt:make-lock))
+  (queue (make-queue)))
 
-  (defun event-queue-length ()
-    (bt:with-lock-held (lock)
-      (length (car queue))))
+(defvar *editor-event-queue* (make-event-queue))
 
-  (defun dequeue-event (timeout)
-    (bt:with-lock-held (lock)
-      (if (not (empty-queue-p queue))
-          (dequeue queue)
-          (cond ((progn
-                   #-ecl
-                   (if timeout
-                       (bt:condition-wait wait lock :timeout timeout)
-                       (bt:condition-wait wait lock))
-                   #+ecl
-                   (bt:condition-wait wait lock))
-                 (let ((obj (dequeue queue)))
-                   obj))
-                (t
-                 :timeout)))))
+(defun event-queue-length (&optional (evq *editor-event-queue*))
+  (bt:with-lock-held ((event-queue-lock evq))
+    (length (car (event-queue-queue evq)))))
 
-  (defun send-event (obj)
-    (bt:with-lock-held (lock)
-      (enqueue queue obj)
-      (bt:condition-notify wait))))
+(defun dequeue-event (timeout &optional (evq *editor-event-queue*))
+  (bt:with-lock-held ((event-queue-lock evq))
+    (if (not (empty-queue-p (event-queue-queue evq)))
+        (dequeue (event-queue-queue evq))
+        (cond ((if timeout
+                   (bt:condition-wait (event-queue-wait evq) (event-queue-lock evq)
+                                      :timeout timeout)
+                   (bt:condition-wait (event-queue-wait evq) (event-queue-lock evq)))
+               (dequeue (event-queue-queue evq)))
+              (t
+               :timeout)))))
+
+(defun send-event (obj &optional (evq *editor-event-queue*))
+  (bt:with-lock-held ((event-queue-lock evq))
+    (enqueue (event-queue-queue evq) obj)
+    (bt:condition-notify (event-queue-wait evq))))
 
 (defun send-abort-event (editor-thread force)
   (bt:interrupt-thread editor-thread

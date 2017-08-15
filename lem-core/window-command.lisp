@@ -2,6 +2,8 @@
 
 (export '(select-buffer
           kill-buffer
+          previous-buffer
+          next-buffer
           recenter
           split-active-window-vertically
           split-active-window-horizontally
@@ -36,6 +38,22 @@
                                 (car (last (buffer-list)))))))
       (delete-buffer buffer)))
   t)
+
+(define-key *global-keymap* "C-x [left]" 'previous-buffer)
+(define-command previous-buffer () ()
+  (switch-to-buffer
+   (if (eq (current-buffer) (car (buffer-list)))
+       (alexandria:lastcar (buffer-list))
+       (loop :for rest :on (buffer-list)
+             :do (when (eq (cadr rest) (current-buffer))
+                   (return (car rest)))))
+   nil))
+
+(define-key *global-keymap* "C-x [right]" 'next-buffer)
+(define-command next-buffer () ()
+  (switch-to-buffer (or (cadr (member (current-buffer) (buffer-list)))
+                        (car (buffer-list)))
+                    nil))
 
 (define-key *global-keymap* "C-l" 'recenter)
 (define-command recenter () ()

@@ -96,7 +96,8 @@
                       *command-table*)
              ',gcmd)
        (defun ,name ,parms ,@body)
-       ,(define-command-gen-cmd gcmd name parms arg-descripters))))
+       ,(define-command-gen-cmd gcmd name parms arg-descripters)
+       ',name)))
 
 (defun all-command-names ()
   (let ((names))

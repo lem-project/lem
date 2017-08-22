@@ -69,17 +69,19 @@
     (switch-to-buffer prev-buffer nil)))
 
 (define-command revert-buffer (does-not-ask-p) ("P")
-  (when (and (or (buffer-modified-p (current-buffer))
-                 (changed-disk-p (current-buffer)))
-             (or does-not-ask-p
-                 (prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))))
-    (with-buffer-read-only (current-buffer) nil
-      (erase-buffer)
-      (insert-file-contents (current-point)
-                            (buffer-filename))
-      (buffer-unmark (current-buffer))
-      (update-changed-disk-date (current-buffer))
-      t)))
+  (cond ((buffer-value (current-buffer) 'revert-buffer-function)
+         (funcall (buffer-value (current-buffer) 'revert-buffer-function) does-not-ask-p))
+        ((and (or (buffer-modified-p (current-buffer))
+                  (changed-disk-p (current-buffer)))
+              (or does-not-ask-p
+                  (prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))))
+         (with-buffer-read-only (current-buffer) nil
+           (erase-buffer)
+           (insert-file-contents (current-point)
+                                 (buffer-filename))
+           (buffer-unmark (current-buffer))
+           (update-changed-disk-date (current-buffer))
+           t))))
 
 (define-command change-directory (directory)
     ((list (prompt-for-file "change directory: " (buffer-directory))))

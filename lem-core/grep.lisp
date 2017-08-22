@@ -30,10 +30,12 @@
 (defun grep-parse (string)
   (grep-parse-lines (uiop:split-string string :separator '(#\newline))))
 
-(defun grep-with-string (buffer-name string)
+(defun grep-with-string (buffer-name revert-fun string)
   (lem.sourcelist:with-sourcelist (sourcelist buffer-name)
     (let* ((buffer (get-buffer buffer-name))
            (p (buffer-point buffer)))
+      (setf (buffer-value buffer 'lem::revert-buffer-function)
+            revert-fun)
       (insert-string p string)
       (buffer-start p)
       (with-point ((p2 p))
@@ -72,10 +74,16 @@
 
 (define-command grep (string) ((list (prompt-for-string ": " "grep -nH ")))
   (let ((directory (buffer-directory)))
-    (call-background-job (lambda ()
-                           (with-output-to-string (s)
-                             (uiop:run-program (format nil "cd ~A; ~A" directory string)
-                                               :output s
-                                               :error-output s
-                                               :ignore-error-status t)))
-                         (alexandria:curry #'grep-with-string "*grep*"))))
+    (labels ((f (&optional a)
+               (declare (ignore a))
+               (call-background-job
+                (lambda ()
+                  (with-output-to-string (s)
+                    (uiop:run-program (format nil "cd ~A; ~A" directory string)
+                                      :output s
+                                      :error-output s
+                                      :ignore-error-status t)))
+                (alexandria:curry #'grep-with-string
+                                  "*grep*"
+                                  #'f))))
+      (f))))

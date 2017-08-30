@@ -2,6 +2,7 @@
 
 (export '(*enable-recursive-minibuffers*
           *minibuffer-completion-function*
+          *minibuffer-file-complete-function*
           *minibuf-keymap*
           minibuffer-prompt-attribute
           minibuffer-window-p
@@ -37,6 +38,7 @@
 (defvar *minibuffer-start-charpos*)
 
 (defvar *minibuffer-completion-function* nil)
+(defvar *minibuffer-file-complete-function* nil)
 
 (define-attribute minibuffer-prompt-attribute
   (t :foreground "blue" :bold-p t))
@@ -322,8 +324,10 @@
   (let ((result
           (prompt-for-line prompt
                            directory
-                           (lambda (str)
-                             (completion-file str directory))
+                           (when *minibuffer-file-complete-function*
+                             (lambda (str)
+                               (funcall *minibuffer-file-complete-function*
+                                        str directory)))
                            (and existing #'probe-file)
                            'mh-read-file)))
     (if (string= result "")

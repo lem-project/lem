@@ -128,15 +128,15 @@
 
 (defun completion-insert (point item)
   (when item
-    (cond ((and (completion-item-start item)
+    (cond ((completion-item-apply-fn item)
+           (funcall (completion-item-apply-fn item)
+                    point))
+          ((and (completion-item-start item)
                 (completion-item-end item))
            (move-point point (completion-item-start item))
            (delete-between-points (completion-item-start item)
                                   (completion-item-end item))
            (insert-string point (completion-item-label item)))
-          ((completion-item-apply-fn item)
-           (funcall (completion-item-apply-fn item)
-                    point))
           (t
            (with-point ((start point))
              (skip-chars-backward start #'syntax-symbol-char-p)
@@ -220,3 +220,23 @@
     (f t)))
 
 (setf *minibuffer-completion-function* 'minibuffer-completion)
+
+
+(defun pathname-name* (pathname)
+  (enough-namestring
+   pathname
+   (if (uiop:directory-pathname-p pathname)
+       (uiop:pathname-parent-directory-pathname pathname)
+       (uiop:pathname-directory-pathname pathname))))
+
+(defun minibuffer-file-complete (str directory)
+  (mapcar (lambda (filename)
+            (make-completion-item :label (pathname-name* filename)
+                                  :apply-fn (lambda (p)
+                                              (move-point p (lem::minibuffer-start-point))
+                                              (delete-between-points
+                                               p (line-end (copy-point p :temporary)))
+                                              (insert-string p filename))))
+          (completion-file str directory)))
+
+(setf *minibuffer-file-complete-function* 'minibuffer-file-complete)

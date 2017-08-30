@@ -33,7 +33,7 @@
                (:file "streams")
                (:file "fundamental-mode")
                (:file "comp")
-               (:file "minibuf")
+               (:file "minibuffer")
                (:file "typeout")
                (:file "lem")
 

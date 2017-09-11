@@ -11,7 +11,7 @@
 (defgeneric interface-update-background (implementation color-name))
 (defgeneric interface-display-width (implementation))
 (defgeneric interface-display-height (implementation))
-(defgeneric interface-make-view (implementation x y width height use-modeline-p))
+(defgeneric interface-make-view (implementation x y width height use-modeline))
 (defgeneric interface-delete-view (implementation view))
 (defgeneric interface-clear (implementation view))
 (defgeneric interface-set-view-size (implementation view width height))
@@ -54,7 +54,7 @@
 
 (defstruct (screen (:constructor %make-screen))
   view
-  use-modeline-p
+  use-modeline
   x
   y
   left-lines
@@ -67,12 +67,12 @@
   modified-p
   (horizontal-scroll-start 0))
 
-(defun make-screen (x y width height use-modeline-p)
-  (when use-modeline-p
+(defun make-screen (x y width height use-modeline)
+  (when use-modeline
     (decf height))
-  (let ((view (interface-make-view *implementation* x y width height use-modeline-p)))
+  (let ((view (interface-make-view *implementation* x y width height use-modeline)))
     (%make-screen :view view
-                  :use-modeline-p use-modeline-p
+                  :use-modeline use-modeline
                   :x x
                   :y y
                   :width width
@@ -95,7 +95,7 @@
 
 (defun screen-set-size (screen width height)
   (screen-modify screen)
-  (when (screen-use-modeline-p screen)
+  (when (screen-use-modeline screen)
     (decf height))
   (interface-set-view-size *implementation* (screen-view screen) width height)
   (setf (screen-left-lines screen)

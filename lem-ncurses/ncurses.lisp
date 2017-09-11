@@ -87,14 +87,14 @@
 (defmethod interface-display-height ((implementation (eql :ncurses)))
   (max 3 charms/ll:*lines*))
 
-(defmethod interface-make-view ((implementation (eql :ncurses)) x y width height use-modeline-p)
+(defmethod interface-make-view ((implementation (eql :ncurses)) x y width height use-modeline)
   (flet ((newwin (nlines ncols begin-y begin-x)
            (let ((win (charms/ll:newwin nlines ncols begin-y begin-x)))
              (charms/ll:keypad win 1)
              win)))
     (make-ncurses-view
      :scrwin (newwin height width y x)
-     :modeline-scrwin (when use-modeline-p (newwin 1 width (+ y height) x))
+     :modeline-scrwin (when use-modeline (newwin 1 width (+ y height) x))
      :x x
      :y y
      :width width

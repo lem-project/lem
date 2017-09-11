@@ -270,12 +270,7 @@
                                                  (not (buffer-value buffer 'level)))
                                         (quit-window window t)))))))
             ((eq buffer (window-buffer (current-window)))
-             (quit-window (current-window) t)
-             (let* ((repl-buffer (repl-buffer))
-                    (repl-window (when repl-buffer
-                                   (first (get-buffer-windows repl-buffer)))))
-               (when repl-window
-                 (setf (current-window) repl-window))))
+             (quit-window (current-window) t))
             (t
              (kill-buffer buffer))))))
 

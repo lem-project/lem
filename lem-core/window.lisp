@@ -779,7 +779,7 @@
   (without-interrupts
     (unless (eq (current-buffer) buffer)
       (when update-prev-buffer-p
-        (setf (window-parameter (current-window) :split-p) nil)
+        (setf (window-parameter (current-window) 'parent-window) nil)
         (let ((old-buffer (current-buffer)))
           (update-prev-buffer old-buffer)
           (%buffer-clear-keep-binfo old-buffer)

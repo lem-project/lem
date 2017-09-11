@@ -104,7 +104,8 @@
   (when (null window)
     (setf window (current-window)))
   (cond
-    ((and (window-parameter window :split-p) (not (one-window-p)))
+    ((or (one-window-p)
+         (eql window (window-parameter window 'parent-window)))
      (if kill-buffer-p
          (kill-buffer (window-buffer window))
          (bury-buffer (window-buffer window)))
@@ -112,8 +113,7 @@
     (t
      (if kill-buffer-p
          (kill-buffer (window-buffer window))
-         (switch-to-buffer (bury-buffer (window-buffer window))
-                           nil)))))
+         (bury-buffer (window-buffer window))))))
 
 (define-key *global-keymap* "C-x ^" 'grow-window)
 (define-command grow-window (n) ("p")
@@ -160,11 +160,11 @@
                            :hsplit))
 
 (defun display-buffer (buffer &optional force-split-p)
-  (multiple-value-bind (window split-p)
-      (pop-to-buffer buffer force-split-p)
-    (unless (window-parameter window :split-p)
-      (setf (window-parameter window :split-p) split-p))
-    window))
+  (let ((parent-window (current-window)))
+    (multiple-value-bind (window split-p)
+        (pop-to-buffer buffer force-split-p)
+      (setf (window-parameter window 'parent-window) parent-window)
+      window)))
 
 (define-key *global-keymap* "C-down" 'scroll-down)
 (define-command scroll-down (n) ("p")

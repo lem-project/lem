@@ -24,7 +24,7 @@
 (defgeneric interface-redraw-view-after (implementation view focus-window-p))
 (defgeneric interface-update-display (implementation))
 
-(defvar *implementation* :ncurses)
+(defvar *implementation*)
 
 (defvar *print-start-x* 0)
 (defvar *cursor-x* 0)

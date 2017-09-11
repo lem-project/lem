@@ -173,3 +173,5 @@
 
 (defmethod interface-update-display ((implementation (eql :ncurses)))
   (charms/ll:doupdate))
+
+(setf *implementation* :ncurses)

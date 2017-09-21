@@ -2,8 +2,6 @@
   (:use :cl :lem))
 (in-package :lem-jsonrpc)
 
-(defparameter *port* 50879)
-
 (defvar *view-id-counter* 0)
 (defvar *display-width* 80)
 (defvar *display-height* 24)
@@ -32,9 +30,9 @@
 
 (defmethod lem::interface-invoke ((implementation (eql :jsonrpc)) function)
   (setf *server* (jsonrpc:make-server))
+  (jsonrpc:server-listen *server* :mode :stdio)
   (jsonrpc:expose *server* "input" 'input-callback)
-  (setf *editor-thread* (funcall function))
-  (jsonrpc:server-listen *server* :port *port* :mode :tcp))
+  (setf *editor-thread* (funcall function)))
 
 (defmethod lem::interface-display-background-mode ((implementation (eql :jsonrpc)))
   :dark)
@@ -70,7 +68,7 @@
   (notify "set-view-pos" (view-params view "x" x "y" y)))
 
 (defmethod lem::interface-print ((implementation (eql :jsonrpc)) view x y string attribute)
-  (notify "put" (view-params view "x" x "y" y "text" string "attribute" attribute)))
+  (notify "put-line-text" (view-params view "row" y "text" string "attribute" attribute)))
 
 (defmethod lem::interface-print-modeline
     ((implementation (eql :jsonrpc)) view x y string attribute)

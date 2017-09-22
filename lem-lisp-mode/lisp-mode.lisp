@@ -1056,7 +1056,7 @@
     (run-swank-server impl)
     (let ((successp)
           (condition))
-      (loop :repeat 5
+      (loop :repeat 10
             :do (handler-case
                     (let ((conn (slime-connect "localhost" *default-port* t)))
                       (setf (getf (connection-plist conn) 'run) t)

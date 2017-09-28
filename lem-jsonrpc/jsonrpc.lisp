@@ -22,8 +22,8 @@
     (yason:with-object ()
       (yason:encode-object-element "id" (view-id view)))))
 
-(defun view-params (view &rest args)
-  (alexandria:plist-hash-table (list* "view" view args)))
+(defun params (&rest args)
+  (alexandria:plist-hash-table args))
 
 (defun notify (method argument)
   (jsonrpc:notify *server* method argument))
@@ -51,37 +51,59 @@
 
 (defmethod lem::interface-make-view
     ((implementation (eql :jsonrpc)) x y width height use-modeline)
-  (let ((view (make-view :x x :y y :width width :height height :use-modeline use-modeline)))
-    (notify "make-view" view)
-    view))
+  (make-view :x x :y y :width width :height height :use-modeline use-modeline))
 
 (defmethod lem::interface-delete-view ((implementation (eql :jsonrpc)) view)
-  (notify "delete-view" (view-params view)))
+  (values))
 
 (defmethod lem::interface-clear ((implementation (eql :jsonrpc)) view)
-  (notify "clear" (view-params view)))
+  (notify "clear"
+          (params "x" (view-x view)
+                  "y" (view-y view)
+                  "width" (view-width view)
+                  "height" (view-height view))))
 
 (defmethod lem::interface-set-view-size ((implementation (eql :jsonrpc)) view width height)
-  (notify "set-view-size" (view-params view "width" width "height" height)))
+  (setf (view-width view) width
+        (view-height view) height))
 
 (defmethod lem::interface-set-view-pos ((implementation (eql :jsonrpc)) view x y)
-  (notify "set-view-pos" (view-params view "x" x "y" y)))
+  (setf (view-x view) x
+        (view-y view) y))
+
+(defun put-line-text (view x y text attribute)
+  (notify "put-line-text"
+          (params "x" (+ (view-x view) x)
+                  "y" (+ (view-y view) y)
+                  "text" text
+                  "attribute" attribute)))
 
 (defmethod lem::interface-print ((implementation (eql :jsonrpc)) view x y string attribute)
-  (notify "put-line-text" (view-params view "row" y "text" string "attribute" attribute)))
+  (put-line-text view x y string attribute))
 
 (defmethod lem::interface-print-modeline
     ((implementation (eql :jsonrpc)) view x y string attribute)
-  (notify "modeline-put" (view-params view "x" x "y" y "text" string "attribute" attribute)))
+  (put-line-text view x y string attribute))
 
 (defmethod lem::interface-clear-eol ((implementation (eql :jsonrpc)) view x y)
-  (notify "clear-eol" (view-params view "x" x "y" y)))
+  (notify "clear"
+          (params "x" (+ x (view-x view))
+                  "y" (+ y (view-y view))
+                  "width" (- (view-width view) x)
+                  "height" 1)))
 
 (defmethod lem::interface-clear-eob ((implementation (eql :jsonrpc)) view x y)
-  (notify "clear-eob" (view-params view "x" x "y" y)))
+  (assert (= x 0))
+  (notify "clear"
+          (params "x" (view-x view)
+                  "y" (+ (view-y view) y)
+                  "width" (view-width view)
+                  "height" (- (view-height view) y))))
 
 (defmethod lem::interface-move-cursor ((implementation (eql :jsonrpc)) view x y)
-  (notify "move-cursor" (view-params view "x" x "y" y)))
+  (notify "move-cursor"
+          (params "x" (+ x (view-x view))
+                  "y" (+ y (view-y view)))))
 
 ;; (defmethod lem::interface-redraw-view-after ((implementation (eql :jsonrpc)) view focus-window-p)
 ;;   )

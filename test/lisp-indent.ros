@@ -28,7 +28,7 @@ exec ros -Q -- $0 "$@"
     (indent-file tempfile)
     (let ((text
             (with-output-to-string (output)
-              (uiop:run-program (format nil "diff ~A ~A" file tempfile)
+              (uiop:run-program (format nil "diff '~A' '~A'" file tempfile)
                                 :output output
                                 :error-output output
                                 :ignore-error-status t))))

@@ -46,7 +46,7 @@
 
 (defun global (directory &rest args)
   (with-output-to-string (out)
-    (uiop:run-program (format nil "cd ~A; global ~{'~A'~^ ~}" directory args)
+    (uiop:run-program (format nil "cd '~A'; global ~{'~A'~^ ~}" directory args)
                       :output out
                       :ignore-error-status t)))
 

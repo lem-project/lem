@@ -300,7 +300,7 @@
          (let ((text
                  (with-output-to-string (out)
                    (uiop:run-program
-                    (format nil "cd ~A; goflymake -debug=false '~A'"
+                    (format nil "cd '~A'; goflymake -debug=false '~A'"
                             directory
                             flymake-file)
                     :output out

@@ -11,7 +11,8 @@
           uppercase-word
           forward-paragraph
           backward-paragraph
-          kill-paragraph))
+          kill-paragraph
+          count-words))
 
 (defun word-type (char)
   (when (characterp char)
@@ -154,3 +155,28 @@
       (forward-paragraph)
       (kill-region start
                    (current-point)))))
+
+(defun %count-words (start end)
+  (save-excursion
+    (let ((wnum 0))
+      (loop :for point := (copy-point start) :then (word-offset point 1)
+            :while (and point (point< point end))
+            :do (incf wnum))
+      wnum)))
+
+(define-command count-words () ()
+  (let ((buffer (current-buffer)))
+    (multiple-value-bind (start end)
+        (if (buffer-mark-p buffer)
+            (values (region-beginning buffer)
+                    (region-end buffer))
+            (values (buffer-start-point buffer)
+                    (buffer-end-point buffer)))
+      (let ((chnum (length (points-to-string start end)))
+            (wnum (%count-words start end))
+            (linum (count-lines start end)))
+        (message (format nil "~a has ~d lines, ~d words and ~d characters."
+                         (if (buffer-mark-p buffer)
+                             "Region"
+                             "Buffer")
+                         linum wnum chnum))))))

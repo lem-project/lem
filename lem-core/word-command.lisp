@@ -34,24 +34,27 @@
            :alphanumeric))))
 
 (defun word-offset (point n)
-  (if (plusp n)
-      (loop :repeat n :do
-               (skip-chars-forward point (complement #'word-type))
-               (when (end-buffer-p point)
-                 (return))
-               (let ((type (word-type (character-at point))))
-                 (skip-chars-forward point
-                                     (lambda (c)
-                                       (eql type (word-type c))))))
-      (loop :repeat (- n) :do
-               (skip-chars-backward point (complement #'word-type))
-               (when (start-buffer-p point)
-                 (return))
-               (let ((type (word-type (character-at point -1))))
-                 (skip-chars-backward point
-                                      (lambda (c)
-                                        (eql type (word-type c)))))))
-  point)
+  (multiple-value-bind (skip-chars-forward
+                        char-offset
+                        end-buffer-p)
+      (if (plusp n)
+          (values #'skip-chars-forward
+                  1
+                  #'end-buffer-p)
+          (values #'skip-chars-backward
+                  -1
+                  #'start-buffer-p))
+    (loop :repeat (abs n)
+          :do (funcall skip-chars-forward point (complement #'word-type))
+              (when (funcall end-buffer-p point)
+                (return))
+              (let ((type (word-type (character-at point char-offset))))
+                (if (null type)
+                    (return nil)
+                    (funcall skip-chars-forward
+                             point
+                             (lambda (c) (eql type (word-type c))))))
+          :finally (return point))))
 
 (define-key *global-keymap* "M-f" 'next-word)
 (define-key *global-keymap* "C-right" 'next-word)

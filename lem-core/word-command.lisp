@@ -164,6 +164,7 @@
             :do (incf wnum))
       wnum)))
 
+(define-key *global-keymap* "M-=" 'count-words)
 (define-command count-words () ()
   (let ((buffer (current-buffer)))
     (multiple-value-bind (start end)

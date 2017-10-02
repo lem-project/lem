@@ -162,7 +162,7 @@
 (defun %count-words (start end)
   (save-excursion
     (let ((wnum 0))
-      (loop :for point := (copy-point start) :then (word-offset point 1)
+      (loop :for point := (copy-point start :temporary) :then (word-offset point 1)
             :while (and point (point< point end))
             :do (incf wnum))
       wnum)))
@@ -176,7 +176,7 @@
                     (region-end buffer))
             (values (buffer-start-point buffer)
                     (buffer-end-point buffer)))
-      (let ((chnum (length (points-to-string start end)))
+      (let ((chnum (count-characters start end))
             (wnum (%count-words start end))
             (linum (count-lines start end)))
         (message (format nil "~a has ~d lines, ~d words and ~d characters."

@@ -39,7 +39,7 @@
                         end-buffer-p)
       (if (plusp n)
           (values #'skip-chars-forward
-                  1
+                  0
                   #'end-buffer-p)
           (values #'skip-chars-backward
                   -1

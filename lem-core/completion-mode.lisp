@@ -153,7 +153,7 @@
           (max-column 0)
           (label-end-column
             (reduce (lambda (max item)
-                      (max max (1+ (length (completion-item-label item)))))
+                      (max max (1+ (string-width (completion-item-label item)))))
                     items
                     :initial-value 0)))
       (loop :for rest-items :on items

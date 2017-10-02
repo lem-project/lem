@@ -71,7 +71,8 @@
 (define-command delete-word (n) ("p")
   (with-point ((point (current-point) :right-inserting))
     (let ((start (current-point))
-          (end (word-offset point n)))
+          (end (or (word-offset point n)
+                   (buffer-end point))))
       (if (point< start end)
           (kill-region start end)
           (kill-region end start)))))
@@ -111,7 +112,9 @@
     (let ((c (character-at point)))
       (delete-character point)
       (insert-character point (funcall first-case c))
-      (with-point ((end (word-offset (copy-point point :temporary) 1) :left-inserting))
+      (with-point ((end (or (word-offset (copy-point point :temporary) 1)
+                            (buffer-end point))
+                        :left-inserting))
         (case-region-aux point
                          end
                          rest-case

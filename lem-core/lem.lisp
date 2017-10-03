@@ -94,14 +94,16 @@
       (run-hooks *after-init-hook*))
     (apply-args args)))
 
-(defun run-editor-thread (input-thread args)
+(defun run-editor-thread (init-function input-thread args)
   (bt:make-thread
    (lambda ()
+     (funcall init-function)
      (unwind-protect
           (progn
             (setf *in-the-editor* t)
             (setup)
             (let ((report (toplevel-command-loop (lambda () (init args)))))
+              (lem:pdebug report "~/ERROR")
               (bt:interrupt-thread input-thread
                                    (lambda ()
                                      (error 'exit-editor :value report)))))
@@ -113,5 +115,5 @@
   (if *in-the-editor*
       (apply-args args)
       (invoke-frontend
-       (lambda (&optional (input-thread (bt:current-thread)))
-         (run-editor-thread input-thread args)))))
+       (lambda (&optional init-function (input-thread (bt:current-thread)))
+         (run-editor-thread init-function input-thread args)))))

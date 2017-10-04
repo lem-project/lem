@@ -32,18 +32,22 @@
 (let ((lock (bt:make-lock)))
   (defun dbg (x)
     (bt:with-lock-held (lock)
-      (pdebug x "~/log"))
+      (with-open-file (out "~/log"
+                           :direction :output
+                           :if-exists :append
+                           :if-does-not-exist :create)
+        (write-string x out)
+        (terpri out)))
     x))
 
 (defun params (&rest args)
   (alexandria:plist-hash-table args))
 
 (defun notify (method argument)
-  (handler-case
-      (dbg (list method
-                 (with-output-to-string (*standard-output*)
-                   (yason:encode argument))))
-    (error () (dbg (list '*********** (alexandria:hash-table-plist argument)))))
+  (dbg (format nil "~A:~A"
+               method
+               (with-output-to-string (*standard-output*)
+                 (yason:encode argument))))
   (let ((jsonrpc/connection:*connection*
           (jsonrpc/transport/interface:transport-connection
            (jsonrpc/class:jsonrpc-transport *server*))))
@@ -53,7 +57,7 @@
   (setf *main-thread* (bt:current-thread))
   (setf *editor-thread*
         (funcall function
-                 (lambda () (sleep 5))))
+                 (lambda () (sleep 2))))
   (setf *server* (jsonrpc:make-server))
   (jsonrpc:expose *server* "input" 'input-callback)
   (dbg "server-listen")
@@ -108,7 +112,7 @@
 
 (defmethod lem::interface-print-modeline
     ((implementation (eql :jsonrpc)) view x y string attribute)
-  (put-line-text view x y string attribute))
+  (put-line-text view x (+ y (view-height view) -1) string attribute))
 
 (defmethod lem::interface-clear-eol ((implementation (eql :jsonrpc)) view x y)
   (notify "clear"
@@ -146,15 +150,16 @@
 
 (define-enum ()
   +abort+
-  +key+)
+  +keycode+)
 
 (defun input-callback (args)
   (let ((kind (gethash "kind" args))
         (value (gethash "value" args)))
+    (dbg (format nil "~A:~A~%" kind value))
     (cond ((= kind +abort+)
            (send-abort-event *editor-thread* nil))
-          ((= kind +key+)
-           (send-event value))
+          ((= kind +keycode+)
+           (send-event (code-char value)))
           (t
            (error "unexpected kind: ~D" kind)))))
 

@@ -103,7 +103,6 @@
             (setf *in-the-editor* t)
             (setup)
             (let ((report (toplevel-command-loop (lambda () (init args)))))
-              (lem:pdebug report "~/ERROR")
               (bt:interrupt-thread input-thread
                                    (lambda ()
                                      (error 'exit-editor :value report)))))

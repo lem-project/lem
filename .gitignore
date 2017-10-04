@@ -1,3 +1,4 @@
 DEBUG
 *.so
 *.fasl
+roswell/lem

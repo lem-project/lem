@@ -4,6 +4,7 @@
 (define-editor-variable before-compile-functions '())
 
 (defparameter *default-port* 4005)
+(defparameter *localhost* "127.0.0.1")
 
 (defvar *connection-list* '())
 (defvar *connection* nil)
@@ -104,7 +105,7 @@
                       (swank:create-server :port port))
         (error ()
           (go :START)))
-      (slime-connect "localhost" port nil)
+      (slime-connect *localhost* port nil)
       (update-buffer-package)
       (setf self-connected-port port))))
 
@@ -848,15 +849,13 @@
                           :name "lisp-wait-message"))))
 
 (define-command slime-connect (hostname port &optional (start-repl t))
-    ((list (prompt-for-string "Hostname: " "localhost")
+    ((list (prompt-for-string "Hostname: " *localhost*)
            (parse-integer (prompt-for-string "Port: " (princ-to-string *default-port*)))
            t))
   (message "Connecting...")
   (let (connection)
-    (handler-case (setf connection
-                        (new-connection hostname port))
-      (usocket:connection-refused-error (c)
-        (editor-error "~A" c)))
+    (setf connection
+          (new-connection hostname port))
     (message "Swank server running on ~A ~A"
              (connection-implementation-name connection)
              (connection-implementation-version connection))
@@ -1058,7 +1057,7 @@
           (condition))
       (loop :repeat 10
             :do (handler-case
-                    (let ((conn (slime-connect "localhost" *default-port* t)))
+                    (let ((conn (slime-connect *localhost* *default-port* t)))
                       (setf (getf (connection-plist conn) 'run) t)
                       (setf successp t)
                       (return))

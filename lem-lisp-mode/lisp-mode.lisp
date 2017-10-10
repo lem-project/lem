@@ -1053,6 +1053,7 @@
                   (prompt-for-impl)
                   *impl-name*)))
     (run-swank-server impl)
+    (sleep 0.5)
     (let ((successp)
           (condition))
       (loop :repeat 10

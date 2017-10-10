@@ -854,8 +854,10 @@
            t))
   (message "Connecting...")
   (let (connection)
-    (setf connection
-          (new-connection hostname port))
+    (handler-case (setf connection
+                        (new-connection hostname port))
+      (error (c)
+        (editor-error "~A" c)))
     (message "Swank server running on ~A ~A"
              (connection-implementation-name connection)
              (connection-implementation-version connection))

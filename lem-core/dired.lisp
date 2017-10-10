@@ -199,7 +199,7 @@
 (define-command dired-delete-files () ()
   (when (prompt-for-y-or-n-p "Really delete files")
     (dolist (file (selected-files))
-      (run-command "rm -fr ~A" file)))
+      (run-command "rm -fr '~A'" file)))
   (update-all))
 
 (defun get-dest-directory ()

@@ -6,6 +6,7 @@
 (defvar *display-width* 80)
 (defvar *display-height* 24)
 
+(defvar *main-thread*)
 (defvar *editor-thread*)
 (defvar *server*)
 
@@ -17,22 +18,50 @@
   height
   use-modeline)
 
-(defmethod yason:encode ((view view) &optional (stream *standard-output*))
+(defun bool (x) (if x 'yason:true 'yason:false))
+
+(defmethod yason:encode ((attribute lem::attribute) &optional (stream *standard-output*))
   (yason:with-output (stream)
     (yason:with-object ()
-      (yason:encode-object-element "id" (view-id view)))))
+      (yason:encode-object-element "foreground" (attribute-foreground attribute))
+      (yason:encode-object-element "background" (attribute-background attribute))
+      (yason:encode-object-element "reverse" (bool (attribute-reverse-p attribute)))
+      (yason:encode-object-element "bold" (bool (attribute-bold-p attribute)))
+      (yason:encode-object-element "underline" (bool (attribute-underline-p attribute))))))
+
+(let ((lock (bt:make-lock)))
+  (defun dbg (x)
+    (bt:with-lock-held (lock)
+      (with-open-file (out "~/log"
+                           :direction :output
+                           :if-exists :append
+                           :if-does-not-exist :create)
+        (write-string x out)
+        (terpri out)))
+    x))
 
 (defun params (&rest args)
   (alexandria:plist-hash-table args))
 
 (defun notify (method argument)
-  (jsonrpc:notify *server* method argument))
+  (dbg (format nil "~A:~A"
+               method
+               (with-output-to-string (*standard-output*)
+                 (yason:encode argument))))
+  (let ((jsonrpc/connection:*connection*
+          (jsonrpc/transport/interface:transport-connection
+           (jsonrpc/class:jsonrpc-transport *server*))))
+    (jsonrpc:notify *server* method argument)))
 
 (defmethod lem::interface-invoke ((implementation (eql :jsonrpc)) function)
+  (setf *main-thread* (bt:current-thread))
+  (setf *editor-thread*
+        (funcall function
+                 (lambda () (sleep 2))))
   (setf *server* (jsonrpc:make-server))
-  (jsonrpc:server-listen *server* :mode :stdio)
   (jsonrpc:expose *server* "input" 'input-callback)
-  (setf *editor-thread* (funcall function)))
+  (dbg "server-listen")
+  (jsonrpc:server-listen *server* :mode :stdio))
 
 (defmethod lem::interface-display-background-mode ((implementation (eql :jsonrpc)))
   :dark)
@@ -76,14 +105,14 @@
           (params "x" (+ (view-x view) x)
                   "y" (+ (view-y view) y)
                   "text" text
-                  "attribute" attribute)))
+                  "attribute" (ensure-attribute attribute nil))))
 
 (defmethod lem::interface-print ((implementation (eql :jsonrpc)) view x y string attribute)
   (put-line-text view x y string attribute))
 
 (defmethod lem::interface-print-modeline
     ((implementation (eql :jsonrpc)) view x y string attribute)
-  (put-line-text view x y string attribute))
+  (put-line-text view x (+ y (view-height view) -1) string attribute))
 
 (defmethod lem::interface-clear-eol ((implementation (eql :jsonrpc)) view x y)
   (notify "clear"
@@ -105,23 +134,33 @@
           (params "x" (+ x (view-x view))
                   "y" (+ y (view-y view)))))
 
-;; (defmethod lem::interface-redraw-view-after ((implementation (eql :jsonrpc)) view focus-window-p)
-;;   )
+(defmethod lem::interface-redraw-view-after ((implementation (eql :jsonrpc)) view focus-window-p)
+  )
 
-;; (defmethod lem::interface-update-display ((implementation (eql :jsonrpc)))
-;;   )
+(defmethod lem::interface-update-display ((implementation (eql :jsonrpc)))
+  )
 
 
-(defconstant +abort+ 0)
-(defconstant +key+ 1)
+(defmacro define-enum (name &rest vars)
+  (declare (ignore name))
+  `(progn
+     ,@(loop :for v :in vars
+             :for n :from 0
+             :collect `(defconstant ,v ,n))))
+
+(define-enum ()
+  +abort+
+  +keycode+)
 
 (defun input-callback (args)
   (let ((kind (gethash "kind" args))
         (value (gethash "value" args)))
-    (ecase kind
-      (#.+abort+
-       (send-abort-event *editor-thread* nil))
-      (#.+key+
-       (send-event value)))))
+    (dbg (format nil "~A:~A~%" kind value))
+    (cond ((= kind +abort+)
+           (send-abort-event *editor-thread* nil))
+          ((= kind +keycode+)
+           (send-event (code-char value)))
+          (t
+           (error "unexpected kind: ~D" kind)))))
 
 (setf lem::*implementation* :jsonrpc)

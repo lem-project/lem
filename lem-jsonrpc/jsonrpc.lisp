@@ -150,7 +150,15 @@
 
 (define-enum ()
   +abort+
-  +keycode+)
+  +keyevent+)
+
+(defun convert-keyevent (e)
+  ;; (list (gethash "keycode" e)
+  ;;       (gethash "shift" e)
+  ;;       (gethash "ctrl" e)
+  ;;       (gethash "meta" e)
+  ;;       (gethash "super" e))
+  e)
 
 (defun input-callback (args)
   (let ((kind (gethash "kind" args))
@@ -158,8 +166,8 @@
     (dbg (format nil "~A:~A~%" kind value))
     (cond ((= kind +abort+)
            (send-abort-event *editor-thread* nil))
-          ((= kind +keycode+)
-           (send-event (code-char value)))
+          ((= kind +keyevent+)
+           (send-event (convert-keyevent value)))
           (t
            (error "unexpected kind: ~D" kind)))))
 

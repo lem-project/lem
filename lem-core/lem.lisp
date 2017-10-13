@@ -97,7 +97,7 @@
 (defun run-editor-thread (init-function input-thread args)
   (bt:make-thread
    (lambda ()
-     (funcall init-function)
+     (when init-function (funcall init-function))
      (unwind-protect
           (progn
             (setf *in-the-editor* t)

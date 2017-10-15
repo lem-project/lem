@@ -112,7 +112,7 @@
 
 (defmethod lem::interface-print-modeline
     ((implementation (eql :jsonrpc)) view x y string attribute)
-  (put-line-text view x (+ y (view-height view) -1) string attribute))
+  (put-line-text view x (+ y (view-height view)) string attribute))
 
 (defmethod lem::interface-clear-eol ((implementation (eql :jsonrpc)) view x y)
   (notify "clear"

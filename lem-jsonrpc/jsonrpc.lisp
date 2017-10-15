@@ -152,23 +152,85 @@
   +abort+
   +keyevent+)
 
+(defvar *key-table*
+  (alexandria:plist-hash-table
+   (append (loop :for code :from (char-code #\a) :to (char-code #\z)
+                 :for char := (code-char code)
+                 :for lchar := (char-downcase char)
+                 :for uchar := (char-upcase char)
+                 :collect (string lchar) :collect lchar
+                 :collect (string uchar) :collect uchar)
+           (list "Backspace" (keyname->keychar "[backspace]")
+                 "Tab" #\Tab
+                 "Enter" #\Return
+                 " " #\Space
+                 "PageDown" (keyname->keychar "[npage]")
+                 "PageUp" (keyname->keychar "[ppage]")
+                 "Home" (keyname->keychar "[home]")
+                 "End" (keyname->keychar "[end]")
+                 "AllowRight" (keyname->keychar "[right]")
+                 "AllowLeft" (keyname->keychar "[left]")
+                 "AllowUp" (keyname->keychar "[up]")
+                 "AllowDown" (keyname->keychar "[down]")
+                 "Insert" (keyname->keychar "[ic]")
+                 "Delete" (keyname->keychar "[dc]")
+                 "F1" (keyname->keychar "[f1]")
+                 "F2" (keyname->keychar "[f2]")
+                 "F3" (keyname->keychar "[f3]")
+                 "F4" (keyname->keychar "[f4]")
+                 "F5" (keyname->keychar "[f5]")
+                 "F6" (keyname->keychar "[f6]")
+                 "F7" (keyname->keychar "[f7]")
+                 "F8" (keyname->keychar "[f8]")
+                 "F9" (keyname->keychar "[f9]")
+                 "F10" (keyname->keychar "[f10]")
+                 "F11" (keyname->keychar "[f11]")
+                 "F12" (keyname->keychar "[f12]")))
+   :test #'equal))
+
+(defun key-to-char (key)
+  (gethash key *key-table*))
+
 (defun convert-keyevent (e)
-  ;; (list (gethash "keycode" e)
-  ;;       (gethash "shift" e)
-  ;;       (gethash "ctrl" e)
-  ;;       (gethash "meta" e)
-  ;;       (gethash "super" e))
-  e)
+  (when e
+    (let ((keys '()))
+      (let ((key (gethash "key" e))
+            ;(shift (gethash "shift" e))
+            (ctrl (gethash "ctrl" e))
+            (meta (gethash "meta" e))
+            ;(super (gethash "super" e))
+            )
+        (dbg (format nil "key: ~A~%" key))
+        (when (or meta (string= key "Escape"))
+          (push (keyname->keychar "escape") keys))
+        (let ((char (key-to-char key)))
+          (when char
+            (push (if ctrl
+                      (cond ((alpha-char-p char)
+                             (code-char (1+ (- (char-code (char-upcase char))
+                                               (char-code #\A)))))
+                            ((member char '(#\space #\@))
+                             (keyname->keychar "C-@"))
+                            (t
+                             char))
+                      char)
+                  keys))))
+      (nreverse keys))))
 
 (defun input-callback (args)
-  (let ((kind (gethash "kind" args))
-        (value (gethash "value" args)))
-    (dbg (format nil "~A:~A~%" kind value))
-    (cond ((= kind +abort+)
-           (send-abort-event *editor-thread* nil))
-          ((= kind +keyevent+)
-           (send-event (convert-keyevent value)))
-          (t
-           (error "unexpected kind: ~D" kind)))))
+  (handler-case
+      (let ((kind (gethash "kind" args))
+            (value (gethash "value" args)))
+        (cond ((= kind +abort+)
+               (send-abort-event *editor-thread* nil))
+              ((= kind +keyevent+)
+               (let ((keys (convert-keyevent value)))
+                 ;(dbg (format nil "~A ~A" value keys))
+                 (dolist (char keys)
+                   (send-event char))))
+              (t
+               (error "unexpected kind: ~D" kind))))
+    (error (e)
+      (dbg (format nil "~%******ERROR******:~%~A~%" e)))))
 
 (setf lem::*implementation* :jsonrpc)

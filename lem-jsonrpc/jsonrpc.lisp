@@ -163,7 +163,6 @@
            (list "Backspace" (keyname->keychar "[backspace]")
                  "Tab" #\Tab
                  "Enter" #\Return
-                 " " #\Space
                  "PageDown" (keyname->keychar "[npage]")
                  "PageUp" (keyname->keychar "[ppage]")
                  "Home" (keyname->keychar "[home]")
@@ -189,7 +188,10 @@
    :test #'equal))
 
 (defun key-to-char (key)
-  (gethash key *key-table*))
+  (or (gethash key *key-table*)
+      (and (= 1 (length key))
+           (graphic-char-p (aref key 0))
+           (aref key 0))))
 
 (defun convert-keyevent (e)
   (when e

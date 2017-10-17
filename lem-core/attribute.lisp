@@ -132,17 +132,19 @@
              (or (get ',name '%attribute-value)
                  (setf (get ',name '%attribute-value)
                        (cond
-                         ,@(loop :for (pattern . args) :in specs
-                                 :collect (if (eq pattern t)
-                                              `(t (make-attribute ,@args))
-                                              `((or ,@(mapcar
-                                                       (lambda (p)
-                                                         (cond ((eq p :light)
-                                                                '(display-light-p))
-                                                               ((eq p :dark)
-                                                                `(display-dark-p))))
-                                                       (alexandria:ensure-list pattern)))
-                                                (make-attribute ,@args)))))))))))
+                         ,@(if (null specs)
+                               `((t (make-attribute)))
+                               (loop :for (pattern . args) :in specs
+                                     :collect (if (eq pattern t)
+                                                  `(t (make-attribute ,@args))
+                                                  `((or ,@(mapcar
+                                                           (lambda (p)
+                                                             (cond ((eq p :light)
+                                                                    '(display-light-p))
+                                                                   ((eq p :dark)
+                                                                    `(display-dark-p))))
+                                                           (alexandria:ensure-list pattern)))
+                                                    (make-attribute ,@args))))))))))))
 
 (define-attribute cursor)
 

@@ -54,14 +54,20 @@
     (jsonrpc:notify *server* method argument)))
 
 (defmethod lem::interface-invoke ((implementation (eql :jsonrpc)) function)
-  (setf *main-thread* (bt:current-thread))
-  (setf *editor-thread*
-        (funcall function
-                 (lambda () (sleep 2))))
-  (setf *server* (jsonrpc:make-server))
-  (jsonrpc:expose *server* "input" 'input-callback)
-  (dbg "server-listen")
-  (jsonrpc:server-listen *server* :mode :stdio))
+  (let ((ready nil))
+    (setf *main-thread* (bt:current-thread))
+    (setf *editor-thread*
+          (funcall function
+                   (lambda ()
+                     (loop :until ready))))
+    (setf *server* (jsonrpc:make-server))
+    (jsonrpc:expose *server* "ready"
+                    (lambda (args)
+                      (declare (ignore args))
+                      (setf ready t)))
+    (jsonrpc:expose *server* "input" 'input-callback)
+    (dbg "server-listen")
+    (jsonrpc:server-listen *server* :mode :stdio)))
 
 (defmethod lem::interface-display-background-mode ((implementation (eql :jsonrpc)))
   :dark)

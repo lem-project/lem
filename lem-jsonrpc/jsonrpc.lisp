@@ -135,7 +135,11 @@
                   "y" (+ y (view-y view)))))
 
 (defmethod lem::interface-redraw-view-after ((implementation (eql :jsonrpc)) view focus-window-p)
-  )
+  (when focus-window-p
+    (lem::interface-move-cursor implementation
+                                view
+                                lem::*cursor-x*
+                                lem::*cursor-y*)))
 
 (defmethod lem::interface-update-display ((implementation (eql :jsonrpc)))
   )

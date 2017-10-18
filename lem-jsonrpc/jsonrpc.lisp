@@ -64,7 +64,9 @@
     (jsonrpc:expose *server* "ready"
                     (lambda (args)
                       (declare (ignore args))
-                      (setf ready t)))
+                      (setf ready t)
+                      (params "width" *display-width*
+                              "height" *display-height*)))
     (jsonrpc:expose *server* "input" 'input-callback)
     (dbg "server-listen")
     (jsonrpc:server-listen *server* :mode :stdio)))

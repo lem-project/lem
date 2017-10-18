@@ -142,7 +142,7 @@
                                 lem::*cursor-y*)))
 
 (defmethod lem::interface-update-display ((implementation (eql :jsonrpc)))
-  )
+  (notify "update-display" nil))
 
 
 (defmacro define-enum (name &rest vars)

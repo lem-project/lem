@@ -162,7 +162,8 @@
 
 (define-enum ()
   +abort+
-  +keyevent+)
+  +keyevent+
+  +resize+)
 
 (defvar *key-table*
   (alexandria:plist-hash-table
@@ -239,9 +240,14 @@
                (send-abort-event *editor-thread* nil))
               ((= kind +keyevent+)
                (let ((keys (convert-keyevent value)))
-                 ;(dbg (format nil "~A ~A" value keys))
                  (dolist (char keys)
                    (send-event char))))
+              ((= kind +resize+)
+               (let ((width (gethash "width" value))
+                     (height (gethash "height" value)))
+                 (setf *display-width* width)
+                 (setf *display-height* height)
+                 (send-event :resize)))
               (t
                (error "unexpected kind: ~D" kind))))
     (error (e)

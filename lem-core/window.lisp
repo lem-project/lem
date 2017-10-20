@@ -923,10 +923,10 @@
       (window-redraw window t))
     (update-display)))
 
-(defun change-display-size-hook (redraw-p)
+(defun change-display-size-hook ()
   (adjust-windows (window-topleft-x)
                   (window-topleft-y)
                   (+ (window-max-width) (window-topleft-x))
                   (+ (window-max-height) (window-topleft-y)))
   (minibuf-update-size)
-  (when redraw-p (redraw-display)))
+  (redraw-display))

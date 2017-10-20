@@ -65,6 +65,8 @@
             ((eql e :timeout)
              (assert timeout)
              (return nil))
+            ((eql e :resize)
+             (change-display-size-hook))
             (t
              (return e))))))
 

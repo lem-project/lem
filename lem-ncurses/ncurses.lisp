@@ -40,7 +40,7 @@
                       ((= code 410)
                        (loop :while (< 0 (lem::event-queue-length))
                              :do (sleep 0.01))
-                       (lem::change-display-size-hook t))
+                       (send-event :resize))
                       ((= code abort-key)
                        (send-abort-event editor-thread nil))
                       (t

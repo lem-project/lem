@@ -44,6 +44,7 @@
   (alexandria:plist-hash-table args))
 
 (defun notify (method argument)
+  #+(or)
   (dbg (format nil "~A:~A"
                method
                (with-output-to-string (*standard-output*)
@@ -52,6 +53,12 @@
           (jsonrpc/transport/interface:transport-connection
            (jsonrpc/class:jsonrpc-transport *server*))))
     (jsonrpc:notify *server* method argument)))
+
+(defun resize (params)
+  (let ((width (gethash "width" params))
+        (height (gethash "height" params)))
+    (setf *display-width* width)
+    (setf *display-height* height)))
 
 (defmethod lem::interface-invoke ((implementation (eql :jsonrpc)) function)
   (let ((ready nil))
@@ -62,13 +69,13 @@
                      (loop :until ready))))
     (setf *server* (jsonrpc:make-server))
     (jsonrpc:expose *server* "ready"
-                    (lambda (args)
-                      (declare (ignore args))
+                    (lambda (params)
+                      (resize params)
                       (setf ready t)
                       (params "width" *display-width*
                               "height" *display-height*)))
     (jsonrpc:expose *server* "input" 'input-callback)
-    (dbg "server-listen")
+    ;(dbg "server-listen")
     (jsonrpc:server-listen *server* :mode :stdio)))
 
 (defmethod lem::interface-display-background-mode ((implementation (eql :jsonrpc)))
@@ -215,7 +222,7 @@
             (meta (gethash "meta" e))
             ;(super (gethash "super" e))
             )
-        (dbg (format nil "key: ~A~%" key))
+        ;(dbg (format nil "key: ~A~%" key))
         (when (or meta (string= key "Escape"))
           (push (keyname->keychar "escape") keys))
         (let ((char (key-to-char key)))
@@ -243,11 +250,8 @@
                  (dolist (char keys)
                    (send-event char))))
               ((= kind +resize+)
-               (let ((width (gethash "width" value))
-                     (height (gethash "height" value)))
-                 (setf *display-width* width)
-                 (setf *display-height* height)
-                 (send-event :resize)))
+               (resize value)
+               (send-event :resize))
               (t
                (error "unexpected kind: ~D" kind))))
     (error (e)

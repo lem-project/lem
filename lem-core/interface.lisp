@@ -23,12 +23,17 @@
 (defgeneric interface-move-cursor (implementation view x y))
 (defgeneric interface-redraw-view-after (implementation view focus-window-p))
 (defgeneric interface-update-display (implementation))
+(defgeneric interface-scroll (implementation view n))
+
+(defparameter *native-scroll-support* nil)
 
 (defvar *implementation*)
 
 (defvar *print-start-x* 0)
 (defvar *cursor-x* 0)
 (defvar *cursor-y* 0)
+(defvar *redraw-start-y*)
+(defvar *redraw-end-y*)
 
 (defvar *display-background-mode* nil)
 
@@ -145,6 +150,8 @@
 
 (defun disp-print-line (screen y str/attributes do-clrtoeol
                         &key (start-x 0) (string-start 0) string-end)
+  (when (and *redraw-start-y* (not (<= *redraw-start-y* y *redraw-end-y*)))
+    (return-from disp-print-line nil))
   (destructuring-bind (str . attributes)
       str/attributes
     (when (null string-end)
@@ -515,27 +522,38 @@
 (defun redraw-display-window (window force)
   (let ((focus-window-p (eq window (current-window)))
         (screen (lem::window-screen window)))
-    (when focus-window-p (window-see window))
-    (lem::run-show-buffer-hooks window)
-    (disp-reset-lines window)
-    (adjust-horizontal-scroll window)
-    (screen-display-lines screen
-                          (or force
-                              (screen-modified-p screen)
-                              (not (eql (screen-left-width screen)
-                                        (screen-old-left-width screen))))
-                          (window-buffer window)
-                          (point-charpos (lem::window-view-point window))
-                          (if focus-window-p
-                              (count-lines (lem::window-view-point window)
-                                           (lem::window-point window))
-                              0))
-    (setf (screen-old-left-width screen)
-          (screen-left-width screen))
-    (when (lem::window-use-modeline-p window)
-      (screen-redraw-modeline window))
-    (interface-redraw-view-after *implementation* (screen-view screen) focus-window-p)
-    (setf (screen-modified-p screen) nil)))
+    (let ((scroll-n (when focus-window-p
+                      (window-see window))))
+      (when (or (not *native-scroll-support*)
+                (and scroll-n (>= scroll-n (screen-height screen))))
+        (setf scroll-n nil))
+      (when scroll-n
+        (interface-scroll *implementation* (screen-view screen) scroll-n))
+      (multiple-value-bind (*redraw-start-y* *redraw-end-y*)
+          (when scroll-n
+            (if (plusp scroll-n)
+                (values (- (screen-height screen) scroll-n) (screen-height screen))
+                (values 0 (- scroll-n))))
+        (lem::run-show-buffer-hooks window)
+        (disp-reset-lines window)
+        (adjust-horizontal-scroll window)
+        (screen-display-lines screen
+                              (or force
+                                  (screen-modified-p screen)
+                                  (not (eql (screen-left-width screen)
+                                            (screen-old-left-width screen))))
+                              (window-buffer window)
+                              (point-charpos (window-view-point window))
+                              (if focus-window-p
+                                  (count-lines (window-view-point window)
+                                               (lem::window-point window))
+                                  0))
+        (setf (screen-old-left-width screen)
+              (screen-left-width screen))
+        (when (lem::window-use-modeline-p window)
+          (screen-redraw-modeline window))
+        (interface-redraw-view-after *implementation* (screen-view screen) focus-window-p)
+        (setf (screen-modified-p screen) nil)))))
 
 (defun update-display ()
   (interface-update-display *implementation*))

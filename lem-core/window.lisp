@@ -411,7 +411,8 @@
     (unless (zerop offset)
       (if recenter
           (window-recenter window)
-          (window-scroll window offset)))))
+          (window-scroll window offset))
+      offset)))
 
 (defun split-window-after (current-window new-window split-type)
   (window-set-size current-window

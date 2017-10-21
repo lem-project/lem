@@ -167,6 +167,14 @@
 (defmethod lem::interface-update-display ((implementation (eql :jsonrpc)))
   (notify "update-display" nil))
 
+(defmethod lem::interface-scroll ((implementation (eql :jsonrpc)) view n)
+  (notify "scroll"
+          (params "x" (view-x view)
+                  "y" (view-y view)
+                  "width" (view-width view)
+                  "height" (view-height view)
+                  "n" n)))
+
 
 (defmacro define-enum (name &rest vars)
   (declare (ignore name))
@@ -266,3 +274,4 @@
       (dbg (format nil "~%******ERROR******:~%~A~%" e)))))
 
 (setf lem::*implementation* :jsonrpc)
+(setf lem::*native-scroll-support* t)

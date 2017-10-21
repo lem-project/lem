@@ -88,13 +88,16 @@
   (max 3 charms/ll:*lines*))
 
 (defmethod interface-make-view ((implementation (eql :ncurses)) x y width height use-modeline)
-  (flet ((newwin (nlines ncols begin-y begin-x)
+  (flet ((newwin (nlines ncols begin-y begin-x main-screen)
            (let ((win (charms/ll:newwin nlines ncols begin-y begin-x)))
-             (charms/ll:keypad win 1)
+             (when use-modeline (charms/ll:keypad win 1))
+             (when main-screen
+               (charms/ll:idlok win 1)
+               (charms/ll:scrollok win 1))
              win)))
     (make-ncurses-view
-     :scrwin (newwin height width y x)
-     :modeline-scrwin (when use-modeline (newwin 1 width (+ y height) x))
+     :scrwin (newwin height width y x t)
+     :modeline-scrwin (when use-modeline (newwin 1 width (+ y height) x nil))
      :x x
      :y y
      :width width
@@ -134,7 +137,9 @@
 (defmethod interface-print ((implementation (eql :ncurses)) view x y string attribute)
   (let ((attr (attribute-to-bits attribute)))
     (charms/ll:wattron (ncurses-view-scrwin view) attr)
+    (charms/ll:scrollok (ncurses-view-scrwin view) 0)
     (charms/ll:mvwaddstr (ncurses-view-scrwin view) y x string)
+    (charms/ll:scrollok (ncurses-view-scrwin view) 1)
     (charms/ll:wattroff (ncurses-view-scrwin view) attr)))
 
 (defmethod interface-print-modeline ((implementation (eql :ncurses)) view x y string attribute)
@@ -174,4 +179,9 @@
 (defmethod interface-update-display ((implementation (eql :ncurses)))
   (charms/ll:doupdate))
 
+(defmethod interface-scroll ((implementation (eql :ncurses)) view n)
+  (charms/ll:wscrl (ncurses-view-scrwin view) n))
+
 (setf *implementation* :ncurses)
+
+(setq *native-scroll-support* t)

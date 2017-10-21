@@ -149,7 +149,15 @@
           (params "x" (+ x (view-x view))
                   "y" (+ y (view-y view)))))
 
+(defun vline (view)
+  (loop :with attr := (ensure-attribute 'modeline nil)
+        :for y :from 0 :repeat (view-height view)
+        :do (put-line-text view -1 y " " attr)))
+
 (defmethod lem::interface-redraw-view-after ((implementation (eql :jsonrpc)) view focus-window-p)
+  (when (and (view-use-modeline view)
+             (< 0 (view-x view)))
+    (vline view))
   (when focus-window-p
     (lem::interface-move-cursor implementation
                                 view

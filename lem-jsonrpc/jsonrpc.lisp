@@ -151,7 +151,7 @@
 
 (defun vline (view)
   (loop :with attr := (ensure-attribute 'modeline nil)
-        :for y :from 0 :repeat (view-height view)
+        :for y :from 0 :repeat (1+ (view-height view))
         :do (put-line-text view -1 y " " attr)))
 
 (defmethod lem::interface-redraw-view-after ((implementation (eql :jsonrpc)) view focus-window-p)

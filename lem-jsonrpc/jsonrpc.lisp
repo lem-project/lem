@@ -119,7 +119,14 @@
   (notify "put-line-text"
           (params "x" (+ (view-x view) x)
                   "y" (+ (view-y view) y)
-                  "text" text
+                  "text" (map 'list
+                              (lambda (c)
+                                (let* ((octets (babel:string-to-octets (string c)))
+                                       (bytes (make-array (1+ (length octets)))))
+                                  (setf (aref bytes 0) (if (wide-char-p c) 2 1))
+                                  (replace bytes octets :start1 1)
+                                  bytes))
+                              text)
                   "attribute" (ensure-attribute attribute nil))))
 
 (defmethod lem::interface-print ((implementation (eql :jsonrpc)) view x y string attribute)

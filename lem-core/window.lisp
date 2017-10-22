@@ -302,7 +302,9 @@
   (line-start
    (move-point (window-view-point window)
                (window-buffer-point window)))
-  (window-scroll window (- (floor (window-%height window) 2))))
+  (let ((n (- (floor (window-%height window) 2))))
+    (window-scroll window n)
+    n))
 
 (defun map-wrapping-line (window string fn)
   (let ((lem-base::*tab-size* (variable-value 'tab-width :default (window-buffer window))))
@@ -411,8 +413,9 @@
     (unless (zerop offset)
       (if recenter
           (window-recenter window)
-          (window-scroll window offset))
-      offset)))
+          (progn
+            (window-scroll window offset)
+            offset)))))
 
 (defun split-window-after (current-window new-window split-type)
   (window-set-size current-window

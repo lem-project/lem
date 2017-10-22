@@ -11,8 +11,3 @@
   (super nil :type event-modifier)
   (hypher nil :type event-modifier)
   (keysym 0 :type event-keysym))
-
-(defun event-equal (ev1 ev2)
-  (or (eq ev1 ev2)
-      (eq t ev2)
-      (eq ev2 t)))

@@ -150,9 +150,13 @@
     x))
 
 
+(defun redraw-line-p (y)
+  (or (not *redraw-start-y*)
+      (<= *redraw-start-y* y *redraw-end-y*)))
+
 (defun disp-print-line (screen y str/attributes do-clrtoeol
                         &key (start-x 0) (string-start 0) string-end)
-  (when (and *redraw-start-y* (not (<= *redraw-start-y* y *redraw-end-y*)))
+  (unless (redraw-line-p y)
     (return-from disp-print-line nil))
   (destructuring-bind (str . attributes)
       str/attributes
@@ -412,7 +416,8 @@
           (t
            (setf start 0)
            (setf end (wide-index (car str/attributes) screen-width))))
-    (interface-clear-eol *implementation* (screen-view screen) start-x point-y)
+    (when (redraw-line-p point-y)
+      (interface-clear-eol *implementation* (screen-view screen) start-x point-y))
     (disp-print-line screen point-y str/attributes nil
                      :start-x start-x
                      :string-start start

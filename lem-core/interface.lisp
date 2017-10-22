@@ -70,6 +70,8 @@
   wrap-lines
   width
   modified-p
+  last-buffer-name
+  last-buffer-modified-tick
   (horizontal-scroll-start 0))
 
 (defun make-screen (x y width height use-modeline)
@@ -521,10 +523,14 @@
 
 (defun redraw-display-window (window force)
   (let ((focus-window-p (eq window (current-window)))
+        (buffer (window-buffer window))
         (screen (lem::window-screen window)))
     (let ((scroll-n (when focus-window-p
                       (window-see window))))
       (when (or (not *native-scroll-support*)
+                (not (equal (screen-last-buffer-name screen) (buffer-name buffer)))
+                (not (eql (screen-last-buffer-modified-tick screen)
+                          (buffer-modified-tick buffer)))
                 (and scroll-n (>= scroll-n (screen-height screen))))
         (setf scroll-n nil))
       (when scroll-n
@@ -542,7 +548,7 @@
                                   (screen-modified-p screen)
                                   (not (eql (screen-left-width screen)
                                             (screen-old-left-width screen))))
-                              (window-buffer window)
+                              buffer
                               (point-charpos (window-view-point window))
                               (if focus-window-p
                                   (count-lines (window-view-point window)
@@ -550,6 +556,10 @@
                                   0))
         (setf (screen-old-left-width screen)
               (screen-left-width screen))
+        (setf (screen-last-buffer-name screen)
+              (buffer-name buffer))
+        (setf (screen-last-buffer-modified-tick screen)
+              (buffer-modified-tick buffer))
         (when (lem::window-use-modeline-p window)
           (screen-redraw-modeline window))
         (interface-redraw-view-after *implementation* (screen-view screen) focus-window-p)

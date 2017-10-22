@@ -96,7 +96,7 @@
                (charms/ll:scrollok win 1))
              win)))
     (make-ncurses-view
-     :scrwin (newwin height width y x t)
+     :scrwin (newwin height width y x nil)
      :modeline-scrwin (when use-modeline (newwin 1 width (+ y height) x nil))
      :x x
      :y y
@@ -137,9 +137,9 @@
 (defmethod interface-print ((implementation (eql :ncurses)) view x y string attribute)
   (let ((attr (attribute-to-bits attribute)))
     (charms/ll:wattron (ncurses-view-scrwin view) attr)
-    (charms/ll:scrollok (ncurses-view-scrwin view) 0)
+    ;(charms/ll:scrollok (ncurses-view-scrwin view) 0)
     (charms/ll:mvwaddstr (ncurses-view-scrwin view) y x string)
-    (charms/ll:scrollok (ncurses-view-scrwin view) 1)
+    ;(charms/ll:scrollok (ncurses-view-scrwin view) 1)
     (charms/ll:wattroff (ncurses-view-scrwin view) attr)))
 
 (defmethod interface-print-modeline ((implementation (eql :ncurses)) view x y string attribute)
@@ -184,4 +184,4 @@
 
 (setf *implementation* :ncurses)
 
-(setq *native-scroll-support* t)
+(setq *native-scroll-support* nil)

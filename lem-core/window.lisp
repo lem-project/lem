@@ -302,8 +302,8 @@
   (line-start
    (move-point (window-view-point window)
                (window-buffer-point window)))
-  (let ((n (- (floor (window-%height window) 2))))
-    (window-scroll window n)
+  (let ((n (floor (window-%height window) 2)))
+    (window-scroll window (- n))
     n))
 
 (defun map-wrapping-line (window string fn)
@@ -411,11 +411,12 @@
 (defun window-see (window &optional (recenter *scroll-recenter-p*))
   (let ((offset (window-offset-view window)))
     (unless (zerop offset)
-      (if recenter
-          (window-recenter window)
-          (progn
-            (window-scroll window offset)
-            offset)))))
+      (cond (recenter
+             (window-recenter window)
+             nil)
+            (t
+             (window-scroll window offset)
+             offset)))))
 
 (defun split-window-after (current-window new-window split-type)
   (window-set-size current-window

@@ -17,6 +17,7 @@
                (:file "errors")
                (:file "key")
                (:file "macros")
+               (:file "color")
                (:file "attribute")
                (:file "kill")
                (:file "file-ext")

@@ -20,11 +20,18 @@
 
 (defun bool (x) (if x 'yason:true 'yason:false))
 
+(defun ensure-rgb (color)
+  (let ((v (get-rgb-from-color-name color)))
+    (if (null v)
+        color
+        (destructuring-bind (r g b) v
+          (format nil "#~2,'0X~2,'0X~2,'0X" r g b)))))
+
 (defmethod yason:encode ((attribute lem::attribute) &optional (stream *standard-output*))
   (yason:with-output (stream)
     (yason:with-object ()
-      (yason:encode-object-element "foreground" (attribute-foreground attribute))
-      (yason:encode-object-element "background" (attribute-background attribute))
+      (yason:encode-object-element "foreground" (ensure-rgb (attribute-foreground attribute)))
+      (yason:encode-object-element "background" (ensure-rgb (attribute-background attribute)))
       (yason:encode-object-element "reverse" (bool (attribute-reverse-p attribute)))
       (yason:encode-object-element "bold" (bool (attribute-bold-p attribute)))
       (yason:encode-object-element "underline" (bool (attribute-underline-p attribute))))))

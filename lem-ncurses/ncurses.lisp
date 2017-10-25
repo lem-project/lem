@@ -66,6 +66,8 @@
          (progn
            (lem.term:term-init)
            (let ((editor-thread (funcall function)))
+             (send-event (lambda ()
+                           (load-theme "emacs-dark")))
              (setf result (input-loop editor-thread))))
       (lem.term:term-finalize))
     (when (and (typep result 'exit-editor)

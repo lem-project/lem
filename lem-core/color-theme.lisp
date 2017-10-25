@@ -104,7 +104,3 @@
   (syntax-function-name-attribute :foreground "LightSkyBlue")
   (syntax-variable-attribute :foreground "LightGoldenrod")
   (syntax-type-attribute :foreground "PaleGreen"))
-
-(add-hook *before-init-hook*
-          (lambda ()
-            (load-theme "emacs-dark")))

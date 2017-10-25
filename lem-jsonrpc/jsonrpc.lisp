@@ -10,6 +10,8 @@
 (defvar *editor-thread*)
 (defvar *server*)
 
+(defvar *background-mode*)
+
 (defstruct view
   (id (incf *view-id-counter*))
   x
@@ -61,11 +63,9 @@
            (jsonrpc/class:jsonrpc-transport *server*))))
     (jsonrpc:notify *server* method argument)))
 
-(defun resize (params)
-  (let ((width (gethash "width" params))
-        (height (gethash "height" params)))
-    (setf *display-width* width)
-    (setf *display-height* height)))
+(defun resize (width height)
+  (setf *display-width* width)
+  (setf *display-height* height))
 
 (defmethod lem::interface-invoke ((implementation (eql :jsonrpc)) function)
   (let ((ready nil))
@@ -77,16 +77,25 @@
     (setf *server* (jsonrpc:make-server))
     (jsonrpc:expose *server* "ready"
                     (lambda (params)
-                      (resize params)
-                      (setf ready t)
-                      (params "width" *display-width*
-                              "height" *display-height*)))
+                      (let ((width (gethash "width" params))
+                            (height (gethash "height" params))
+                            (foreground (gethash "foreground" params))
+                            (background (gethash "background" params)))
+                        (declare (ignore foreground))
+                        (resize width height)
+                        (let ((color (or (get-rgb-from-color-name background) background)))
+                          (when color
+                            (destructuring-bind (r g b) color
+                              (lem::set-display-background-mode (rgb-to-background-mode r g b)))))
+                        (setf ready t)
+                        (params "width" *display-width*
+                                "height" *display-height*))))
     (jsonrpc:expose *server* "input" 'input-callback)
     ;(dbg "server-listen")
     (jsonrpc:server-listen *server* :mode :stdio)))
 
 (defmethod lem::interface-display-background-mode ((implementation (eql :jsonrpc)))
-  :dark)
+  *background-mode*)
 
 (defmethod lem::interface-update-foreground ((implementation (eql :jsonrpc)) color-name)
   (notify "update-foreground" color-name))
@@ -284,7 +293,8 @@
                  (dolist (char keys)
                    (send-event char))))
               ((= kind +resize+)
-               (resize value)
+               (resize (gethash "width" value)
+                       (gethash "height" value))
                (send-event :resize))
               (t
                (error "unexpected kind: ~D" kind))))

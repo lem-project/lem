@@ -153,12 +153,10 @@
   (:dark :reverse-p t))
 
 (define-attribute modeline
-  (:light :reverse-p t)
-  (:dark :reverse-p t))
+  (t :background "#bbbbbb" :foreground "black"))
 
 (define-attribute modeline-inactive
-  (:light :reverse-p t)
-  (:dark :reverse-p t))
+  (t :background "#bbbbbb" :foreground "#777777"))
 
 (define-attribute truncate-attribute)
 
@@ -173,25 +171,32 @@
   (t :foreground "red"))
 
 (define-attribute syntax-string-attribute
-  (t :foreground "#8B2252"))
+  (:light :foreground "#8B2252")
+  (:dark :foreground "light salmon"))
 
 (define-attribute syntax-comment-attribute
-  (t :foreground "#cd0000"))
+  (:light :foreground "#cd0000")
+  (:dark :foreground "chocolate1"))
 
 (define-attribute syntax-keyword-attribute
-  (t :foreground "purple"))
+  (:light :foreground "purple")
+  (:dark :foreground "cyan1"))
 
 (define-attribute syntax-constant-attribute
-  (t :foreground "#ff00ff"))
+  (:light :foreground "#ff00ff")
+  (:dark :foreground "LightSteelBlue"))
 
 (define-attribute syntax-function-name-attribute
-  (t :foreground "#0000ff"))
+  (:light :foreground "#0000ff")
+  (:dark :foreground "LightSkyBlue"))
 
 (define-attribute syntax-variable-attribute
-  (t :foreground "#8D5232"))
+  (:light :foreground "#8D5232")
+  (:dark :foreground "LightGoldenrod"))
 
 (define-attribute syntax-type-attribute
-  (t :foreground "#00875f"))
+  (:light :foreground "#00875f")
+  (:dark :foreground "PaleGreen"))
 
 (define-attribute syntax-builtin-attribute
   (t :foreground "#D030F0"))

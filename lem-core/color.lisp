@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(get-rgb-from-color-name))
+(export '(get-rgb-from-color-name
+          rgb-to-background-mode))
 
 (defparameter *rgb.txt* "! $Xorg: rgb.txt,v 1.3 2000/08/17 19:54:00 cpqbld Exp $
 255 250 250  snow
@@ -758,7 +759,7 @@
 144 238 144  LightGreen
 ")
 
-(let ((*color-names*
+(let ((color-names
         (flet ((parse (text)
                  (with-input-from-string (stream text)
                    (loop :for line := (read-line stream nil)
@@ -773,4 +774,9 @@
                          :collect elt))))
           (alexandria:alist-hash-table (parse *rgb.txt*) :test 'equal))))
   (defun get-rgb-from-color-name (color-name)
-    (gethash color-name *color-names*)))
+    (gethash color-name color-names)))
+
+(defun rgb-to-background-mode (r g b)
+  (if (< 50 (/ (max r g b) 2.55))
+      :light
+      :dark))

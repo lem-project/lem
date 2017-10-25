@@ -415,12 +415,9 @@
     (cond ((= b -1) :light)
           (t
            (let ((color (aref *colors* b)))
-             (let ((r (color-red color))
-                   (g (color-green color))
-                   (b (color-blue color)))
-               (if (< 50 (/ (max r g b) 2.55))
-                   :light
-                   :dark)))))))
+             (lem:rgb-to-background-mode (color-red color)
+                                         (color-green color)
+                                         (color-blue color)))))))
 
 ;;;
 

@@ -91,11 +91,12 @@
 
 (defmethod interface-make-view ((implementation (eql :ncurses)) x y width height use-modeline)
   (flet ((newwin (nlines ncols begin-y begin-x main-screen)
+           (declare (ignore main-screen))
            (let ((win (charms/ll:newwin nlines ncols begin-y begin-x)))
              (when use-modeline (charms/ll:keypad win 1))
-             (when main-screen
-               (charms/ll:idlok win 1)
-               (charms/ll:scrollok win 1))
+             ;; (when main-screen
+             ;;   (charms/ll:idlok win 1)
+             ;;   (charms/ll:scrollok win 1))
              win)))
     (make-ncurses-view
      :scrwin (newwin height width y x nil)

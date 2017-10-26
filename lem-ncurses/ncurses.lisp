@@ -65,9 +65,10 @@
     (unwind-protect
          (progn
            (lem.term:term-init)
+           (send-event (lambda ()
+                         (add-hook *before-init-hook*
+                                   (lambda () (load-theme "emacs-dark")))))
            (let ((editor-thread (funcall function)))
-             (send-event (lambda ()
-                           (load-theme "emacs-dark")))
              (setf result (input-loop editor-thread))))
       (lem.term:term-finalize))
     (when (and (typep result 'exit-editor)

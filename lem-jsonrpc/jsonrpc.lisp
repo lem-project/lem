@@ -38,6 +38,16 @@
       (yason:encode-object-element "bold" (bool (attribute-bold-p attribute)))
       (yason:encode-object-element "underline" (bool (attribute-underline-p attribute))))))
 
+(defmethod yason:encode ((view view) &optional (stream *standard-output*))
+  (yason:with-output ()
+    (yason:with-object ()
+      (yason:encode-object-element "id" (view-id view))
+      (yason:encode-object-element "x" (view-x view))
+      (yason:encode-object-element "y" (view-y view))
+      (yason:encode-object-element "width" (view-width view))
+      (yason:encode-object-element "height" (view-height view))
+      (yason:encode-object-element "useModeline" (view-use-modeline view)))))
+
 (let ((lock (bt:make-lock)))
   (defun dbg (x)
     (bt:with-lock-held (lock)

@@ -67,6 +67,21 @@
   (setf *display-width* width)
   (setf *display-height* height))
 
+(defun ready (loaded-fn)
+  (lambda (params)
+    (let ((width (gethash "width" params))
+          (height (gethash "height" params))
+          (foreground (gethash "foreground" params))
+          (background (gethash "background" params)))
+      (declare (ignore foreground))
+      (resize width height)
+      (alexandria:when-let (color (or (get-rgb-from-color-name background) background))
+        (destructuring-bind (r g b) color
+          (lem::set-display-background-mode (rgb-to-background-mode r g b))))
+      (funcall loaded-fn)
+      (params "width" *display-width*
+              "height" *display-height*))))
+
 (defmethod lem::interface-invoke ((implementation (eql :jsonrpc)) function)
   (let ((ready nil))
     (setf *main-thread* (bt:current-thread))
@@ -75,21 +90,7 @@
                    (lambda ()
                      (loop :until ready))))
     (setf *server* (jsonrpc:make-server))
-    (jsonrpc:expose *server* "ready"
-                    (lambda (params)
-                      (let ((width (gethash "width" params))
-                            (height (gethash "height" params))
-                            (foreground (gethash "foreground" params))
-                            (background (gethash "background" params)))
-                        (declare (ignore foreground))
-                        (resize width height)
-                        (let ((color (or (get-rgb-from-color-name background) background)))
-                          (when color
-                            (destructuring-bind (r g b) color
-                              (lem::set-display-background-mode (rgb-to-background-mode r g b)))))
-                        (setf ready t)
-                        (params "width" *display-width*
-                                "height" *display-height*))))
+    (jsonrpc:expose *server* "ready" (ready (lambda () (setf ready t))))
     (jsonrpc:expose *server* "input" 'input-callback)
     ;(dbg "server-listen")
     (jsonrpc:server-listen *server* :mode :stdio)))

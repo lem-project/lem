@@ -112,92 +112,69 @@
 
 (defmethod lem::interface-make-view
     ((implementation (eql :jsonrpc)) x y width height use-modeline)
-  (make-view :x x :y y :width width :height height :use-modeline use-modeline))
+  (notify "make-view"
+          (make-view :x x :y y :width width :height height :use-modeline use-modeline)))
 
 (defmethod lem::interface-delete-view ((implementation (eql :jsonrpc)) view)
-  (values))
-
-(defmethod lem::interface-clear ((implementation (eql :jsonrpc)) view)
-  (notify "clear"
-          (params "x" (view-x view)
-                  "y" (view-y view)
-                  "width" (view-width view)
-                  "height" (view-height view))))
+  (notify "delete-view" (params "view" view)))
 
 (defmethod lem::interface-set-view-size ((implementation (eql :jsonrpc)) view width height)
   (setf (view-width view) width
-        (view-height view) height))
+        (view-height view) height)
+  (notify "resize-view" (params "view" view)))
 
 (defmethod lem::interface-set-view-pos ((implementation (eql :jsonrpc)) view x y)
   (setf (view-x view) x
-        (view-y view) y))
+        (view-y view) y)
+  (notify "move-view" (params "view" view)))
 
-(defun put-line-text (view x y text attribute)
-  (notify "put-line-text"
-          (params "x" (+ (view-x view) x)
-                  "y" (+ (view-y view) y)
-                  "text" (map 'list
-                              (lambda (c)
-                                (let* ((octets (babel:string-to-octets (string c)))
-                                       (bytes (make-array (1+ (length octets)))))
-                                  (setf (aref bytes 0) (if (wide-char-p c) 2 1))
-                                  (replace bytes octets :start1 1)
-                                  bytes))
-                              text)
-                  "attribute" (ensure-attribute attribute nil))))
-
-(defmethod lem::interface-print ((implementation (eql :jsonrpc)) view x y string attribute)
-  (put-line-text view x y string attribute))
-
-(defmethod lem::interface-print-modeline
-    ((implementation (eql :jsonrpc)) view x y string attribute)
-  (put-line-text view x (+ y (view-height view)) string attribute))
+(defmethod lem::interface-clear ((implementation (eql :jsonrpc)) view)
+  (notify "clear" (params "view" view)))
 
 (defmethod lem::interface-clear-eol ((implementation (eql :jsonrpc)) view x y)
-  (notify "clear"
-          (params "x" (+ x (view-x view))
-                  "y" (+ y (view-y view))
-                  "width" (- (view-width view) x)
-                  "height" 1)))
+  (notify "clear-eol"
+          (params "view" view)))
 
 (defmethod lem::interface-clear-eob ((implementation (eql :jsonrpc)) view x y)
   (assert (= x 0))
-  (notify "clear"
-          (params "x" (view-x view)
-                  "y" (+ (view-y view) y)
-                  "width" (view-width view)
-                  "height" (- (view-height view) y))))
+  (notify "clear-eob" (params "view" view)))
+
+(defun put-params (view string attribute)
+  (params "view" view
+          "text" (map 'list
+                      (lambda (c)
+                        (let* ((octets (babel:string-to-octets (string c)))
+                               (bytes (make-array (1+ (length octets)))))
+                          (setf (aref bytes 0) (if (wide-char-p c) 2 1))
+                          (replace bytes octets :start1 1)
+                          bytes))
+                      string)
+          "attribute" (ensure-attribute attribute nil)))
+
+(defmethod lem::interface-print ((implementation (eql :jsonrpc)) view x y string attribute)
+  (notify "put" (put-params view string attribute)))
+
+(defmethod lem::interface-print-modeline
+    ((implementation (eql :jsonrpc)) view x y string attribute)
+  (notify "modeline-put" (put-params view string attribute)))
 
 (defmethod lem::interface-move-cursor ((implementation (eql :jsonrpc)) view x y)
   (notify "move-cursor"
-          (params "x" (+ x (view-x view))
-                  "y" (+ y (view-y view)))))
-
-(defun vline (view)
-  (loop :with attr := (ensure-attribute 'modeline nil)
-        :for y :from 0 :repeat (1+ (view-height view))
-        :do (put-line-text view -1 y " " attr)))
+          (params "view" view "x" x "y" y)))
 
 (defmethod lem::interface-redraw-view-after ((implementation (eql :jsonrpc)) view focus-window-p)
-  (when (and (view-use-modeline view)
-             (< 0 (view-x view)))
-    (vline view))
   (when focus-window-p
     (lem::interface-move-cursor implementation
                                 view
                                 lem::*cursor-x*
                                 lem::*cursor-y*)))
 
-(defmethod lem::interface-update-display ((implementation (eql :jsonrpc)))
-  (notify "update-display" nil))
-
 (defmethod lem::interface-scroll ((implementation (eql :jsonrpc)) view n)
   (notify "scroll"
-          (params "x" (view-x view)
-                  "y" (view-y view)
-                  "width" (view-width view)
-                  "height" (view-height view)
-                  "n" n)))
+          (params "view" view "n" n)))
+
+(defmethod lem::interface-update-display ((implementation (eql :jsonrpc)))
+  (notify "update-display" nil))
 
 
 (defmacro define-enum (name &rest vars)

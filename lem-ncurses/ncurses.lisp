@@ -60,14 +60,15 @@
                 (send-abort-event editor-thread t))))
     (exit-editor (c) (return-from input-loop c))))
 
+(add-hook *before-init-hook*
+          (lambda ()
+            (load-theme "emacs-dark")))
+
 (defmethod interface-invoke ((implementation (eql :ncurses)) function)
   (let ((result nil))
     (unwind-protect
          (progn
            (lem.term:term-init)
-           (send-event (lambda ()
-                         (add-hook *before-init-hook*
-                                   (lambda () (load-theme "emacs-dark")))))
            (let ((editor-thread (funcall function)))
              (setf result (input-loop editor-thread))))
       (lem.term:term-finalize))

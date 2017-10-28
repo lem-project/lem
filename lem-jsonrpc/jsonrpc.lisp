@@ -149,30 +149,32 @@
 
 (defmethod lem::interface-clear-eol ((implementation (eql :jsonrpc)) view x y)
   (notify "clear-eol"
-          (params "viewInfo" view)))
+          (params "viewInfo" view "x" x "y" y)))
 
 (defmethod lem::interface-clear-eob ((implementation (eql :jsonrpc)) view x y)
   (assert (= x 0))
-  (notify "clear-eob" (params "viewInfo" view)))
+  (notify "clear-eob" (params "viewInfo" view "x" x "y" y)))
 
-(defun put-params (view string attribute)
+(defun put-params (view x y string attribute)
   (params "viewInfo" view
-          "text" (map 'list
-                      (lambda (c)
-                        (let* ((octets (babel:string-to-octets (string c)))
-                               (bytes (make-array (1+ (length octets)))))
-                          (setf (aref bytes 0) (if (wide-char-p c) 2 1))
-                          (replace bytes octets :start1 1)
-                          bytes))
-                      string)
+          "x" x
+          "y" y
+          "chars" (map 'list
+                       (lambda (c)
+                         (let* ((octets (babel:string-to-octets (string c)))
+                                (bytes (make-array (1+ (length octets)))))
+                           (setf (aref bytes 0) (if (wide-char-p c) 2 1))
+                           (replace bytes octets :start1 1)
+                           bytes))
+                       string)
           "attribute" (ensure-attribute attribute nil)))
 
 (defmethod lem::interface-print ((implementation (eql :jsonrpc)) view x y string attribute)
-  (notify "put" (put-params view string attribute)))
+  (notify "put" (put-params view x y string attribute)))
 
 (defmethod lem::interface-print-modeline
     ((implementation (eql :jsonrpc)) view x y string attribute)
-  (notify "modeline-put" (put-params view string attribute)))
+  (notify "modeline-put" (put-params view x y string attribute)))
 
 (defmethod lem::interface-move-cursor ((implementation (eql :jsonrpc)) view x y)
   (notify "move-cursor"

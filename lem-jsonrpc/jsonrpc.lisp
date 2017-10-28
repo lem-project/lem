@@ -39,14 +39,14 @@
       (yason:encode-object-element "underline" (bool (attribute-underline-p attribute))))))
 
 (defmethod yason:encode ((view view) &optional (stream *standard-output*))
-  (yason:with-output ()
+  (yason:with-output (stream)
     (yason:with-object ()
       (yason:encode-object-element "id" (view-id view))
       (yason:encode-object-element "x" (view-x view))
       (yason:encode-object-element "y" (view-y view))
       (yason:encode-object-element "width" (view-width view))
       (yason:encode-object-element "height" (view-height view))
-      (yason:encode-object-element "useModeline" (view-use-modeline view)))))
+      (yason:encode-object-element "use_modeline" (view-use-modeline view)))))
 
 (let ((lock (bt:make-lock)))
   (defun dbg (x)
@@ -126,31 +126,37 @@
           (make-view :x x :y y :width width :height height :use-modeline use-modeline)))
 
 (defmethod lem::interface-delete-view ((implementation (eql :jsonrpc)) view)
-  (notify "delete-view" (params "view" view)))
+  (notify "delete-view" (params "viewInfo" view)))
 
 (defmethod lem::interface-set-view-size ((implementation (eql :jsonrpc)) view width height)
   (setf (view-width view) width
         (view-height view) height)
-  (notify "resize-view" (params "view" view)))
+  (notify "resize-view"
+          (params "viewInfo" view
+                  "width" width
+                  "height" height)))
 
 (defmethod lem::interface-set-view-pos ((implementation (eql :jsonrpc)) view x y)
   (setf (view-x view) x
         (view-y view) y)
-  (notify "move-view" (params "view" view)))
+  (notify "move-view"
+          (params "viewInfo" view
+                  "x" x
+                  "y" y)))
 
 (defmethod lem::interface-clear ((implementation (eql :jsonrpc)) view)
-  (notify "clear" (params "view" view)))
+  (notify "clear" (params "viewInfo" view)))
 
 (defmethod lem::interface-clear-eol ((implementation (eql :jsonrpc)) view x y)
   (notify "clear-eol"
-          (params "view" view)))
+          (params "viewInfo" view)))
 
 (defmethod lem::interface-clear-eob ((implementation (eql :jsonrpc)) view x y)
   (assert (= x 0))
-  (notify "clear-eob" (params "view" view)))
+  (notify "clear-eob" (params "viewInfo" view)))
 
 (defun put-params (view string attribute)
-  (params "view" view
+  (params "viewInfo" view
           "text" (map 'list
                       (lambda (c)
                         (let* ((octets (babel:string-to-octets (string c)))
@@ -170,7 +176,7 @@
 
 (defmethod lem::interface-move-cursor ((implementation (eql :jsonrpc)) view x y)
   (notify "move-cursor"
-          (params "view" view "x" x "y" y)))
+          (params "viewInfo" view "x" x "y" y)))
 
 (defmethod lem::interface-redraw-view-after ((implementation (eql :jsonrpc)) view focus-window-p)
   (when focus-window-p
@@ -181,7 +187,7 @@
 
 (defmethod lem::interface-scroll ((implementation (eql :jsonrpc)) view n)
   (notify "scroll"
-          (params "view" view "n" n)))
+          (params "viewInfo" view "n" n)))
 
 (defmethod lem::interface-update-display ((implementation (eql :jsonrpc)))
   (notify "update-display" nil))

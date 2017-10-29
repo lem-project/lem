@@ -12,6 +12,8 @@
 
 (defvar *background-mode*)
 
+(setq *error-output* (open "~/ERROR" :direction :output :if-does-not-exist :create :if-exists :supersede))
+
 (defstruct view
   (id (incf *view-id-counter*))
   x
@@ -50,20 +52,24 @@
 
 (let ((lock (bt:make-lock)))
   (defun dbg (x)
-    (bt:with-lock-held (lock)
-      (with-open-file (out "~/log"
-                           :direction :output
-                           :if-exists :append
-                           :if-does-not-exist :create)
-        (write-string x out)
-        (terpri out)))
+    ;; (bt:with-lock-held (lock)
+    ;;   (with-open-file (out "~/log"
+    ;;                        :direction :output
+    ;;                        :if-exists :append
+    ;;                        :if-does-not-exist :create)
+    ;;     (write-string x out)
+    ;;     (terpri out)))
     x))
+
+(defmacro with-error-handler (() &body body)
+  `(handler-case (progn ,@body)
+     (error (c)
+       (dbg (format nil "~%******ERROR******:~%~A~%" c)))))
 
 (defun params (&rest args)
   (alexandria:plist-hash-table args))
 
 (defun notify (method argument)
-  #+(or)
   (dbg (format nil "~A:~A"
                method
                (with-output-to-string (*standard-output*)
@@ -79,31 +85,34 @@
 
 (defun ready (loaded-fn)
   (lambda (params)
-    (let ((width (gethash "width" params))
-          (height (gethash "height" params))
-          (foreground (gethash "foreground" params))
-          (background (gethash "background" params)))
-      (declare (ignore foreground))
-      (resize width height)
-      (alexandria:when-let (color (or (get-rgb-from-color-name background) background))
-        (destructuring-bind (r g b) color
-          (lem::set-display-background-mode (rgb-to-background-mode r g b))))
-      (funcall loaded-fn)
-      (params "width" *display-width*
-              "height" *display-height*))))
+    (with-error-handler ()
+      (let ((width (gethash "width" params))
+            (height (gethash "height" params))
+            (foreground (gethash "foreground" params))
+            (background (gethash "background" params)))
+        (declare (ignore foreground))
+        (resize width height)
+        (alexandria:when-let (color (or (get-rgb-from-color-name background) background))
+          (destructuring-bind (r g b) color
+            (lem::set-display-background-mode (rgb-to-background-mode r g b))))
+        (funcall loaded-fn)
+        (params "width" *display-width*
+                "height" *display-height*)))))
 
 (defmethod lem::interface-invoke ((implementation (eql :jsonrpc)) function)
-  (let ((ready nil))
-    (setf *main-thread* (bt:current-thread))
-    (setf *editor-thread*
-          (funcall function
-                   (lambda ()
-                     (loop :until ready))))
-    (setf *server* (jsonrpc:make-server))
-    (jsonrpc:expose *server* "ready" (ready (lambda () (setf ready t))))
-    (jsonrpc:expose *server* "input" 'input-callback)
-    ;(dbg "server-listen")
-    (jsonrpc:server-listen *server* :mode :stdio)))
+  (swank:create-server :port 10005 :dont-close t)
+  (with-error-handler ()
+    (let ((ready nil))
+      (setf *main-thread* (bt:current-thread))
+      (setf *editor-thread*
+            (funcall function
+                     (lambda ()
+                       (loop :until ready))))
+      (setf *server* (jsonrpc:make-server))
+      (jsonrpc:expose *server* "ready" (ready (lambda () (setf ready t))))
+      (jsonrpc:expose *server* "input" 'input-callback)
+      (dbg "server-listen")
+      (jsonrpc:server-listen *server* :mode :stdio))))
 
 (defmethod lem::interface-display-background-mode ((implementation (eql :jsonrpc)))
   *background-mode*)
@@ -122,77 +131,92 @@
 
 (defmethod lem::interface-make-view
     ((implementation (eql :jsonrpc)) x y width height use-modeline)
-  (notify "make-view"
-          (make-view :x x :y y :width width :height height :use-modeline use-modeline)))
+  (with-error-handler ()
+    (let ((view (make-view :x x :y y :width width :height height :use-modeline use-modeline)))
+      (notify "make-view" view)
+      view)))
 
 (defmethod lem::interface-delete-view ((implementation (eql :jsonrpc)) view)
-  (notify "delete-view" (params "viewInfo" view)))
+  (with-error-handler ()
+    (notify "delete-view" (params "viewInfo" view))))
 
 (defmethod lem::interface-set-view-size ((implementation (eql :jsonrpc)) view width height)
-  (setf (view-width view) width
-        (view-height view) height)
-  (notify "resize-view"
-          (params "viewInfo" view
-                  "width" width
-                  "height" height)))
+  (with-error-handler ()
+    (setf (view-width view) width
+          (view-height view) height)
+    (notify "resize-view"
+            (params "viewInfo" view
+                    "width" width
+                    "height" height))))
 
 (defmethod lem::interface-set-view-pos ((implementation (eql :jsonrpc)) view x y)
-  (setf (view-x view) x
-        (view-y view) y)
-  (notify "move-view"
-          (params "viewInfo" view
-                  "x" x
-                  "y" y)))
+  (with-error-handler ()
+    (setf (view-x view) x
+          (view-y view) y)
+    (notify "move-view"
+            (params "viewInfo" view
+                    "x" x
+                    "y" y))))
 
 (defmethod lem::interface-clear ((implementation (eql :jsonrpc)) view)
-  (notify "clear" (params "viewInfo" view)))
+  (with-error-handler ()
+    (notify "clear" (params "viewInfo" view))))
 
 (defmethod lem::interface-clear-eol ((implementation (eql :jsonrpc)) view x y)
-  (notify "clear-eol"
-          (params "viewInfo" view "x" x "y" y)))
+  (with-error-handler ()
+    (notify "clear-eol"
+            (params "viewInfo" view "x" x "y" y))))
 
 (defmethod lem::interface-clear-eob ((implementation (eql :jsonrpc)) view x y)
-  (assert (= x 0))
-  (notify "clear-eob" (params "viewInfo" view "x" x "y" y)))
+  (with-error-handler ()
+    (assert (= x 0))
+    (notify "clear-eob" (params "viewInfo" view "x" x "y" y))))
 
 (defun put-params (view x y string attribute)
-  (params "viewInfo" view
-          "x" x
-          "y" y
-          "chars" (map 'list
-                       (lambda (c)
-                         (let* ((octets (babel:string-to-octets (string c)))
-                                (bytes (make-array (1+ (length octets)))))
-                           (setf (aref bytes 0) (if (wide-char-p c) 2 1))
-                           (replace bytes octets :start1 1)
-                           bytes))
-                       string)
-          "attribute" (ensure-attribute attribute nil)))
+  (with-error-handler ()
+    (params "viewInfo" view
+            "x" x
+            "y" y
+            "chars" (map 'list
+                         (lambda (c)
+                           (let* ((octets (babel:string-to-octets (string c)))
+                                  (bytes (make-array (1+ (length octets)))))
+                             (setf (aref bytes 0) (if (wide-char-p c) 2 1))
+                             (replace bytes octets :start1 1)
+                             bytes))
+                         string)
+            "attribute" (ensure-attribute attribute nil))))
 
 (defmethod lem::interface-print ((implementation (eql :jsonrpc)) view x y string attribute)
-  (notify "put" (put-params view x y string attribute)))
+  (with-error-handler ()
+    (notify "put" (put-params view x y string attribute))))
 
 (defmethod lem::interface-print-modeline
     ((implementation (eql :jsonrpc)) view x y string attribute)
-  (notify "modeline-put" (put-params view x y string attribute)))
+  (with-error-handler ()
+    (notify "modeline-put" (put-params view x y string attribute))))
 
 (defmethod lem::interface-move-cursor ((implementation (eql :jsonrpc)) view x y)
-  (notify "move-cursor"
-          (params "viewInfo" view "x" x "y" y)))
+  (with-error-handler ()
+    (notify "move-cursor"
+            (params "viewInfo" view "x" x "y" y))))
 
 (defmethod lem::interface-redraw-view-after ((implementation (eql :jsonrpc)) view focus-window-p)
-  (when focus-window-p
-    (lem::interface-move-cursor implementation
-                                view
-                                lem::*cursor-x*
-                                lem::*cursor-y*)))
+  (with-error-handler ()
+    (when focus-window-p
+      (lem::interface-move-cursor implementation
+                                  view
+                                  lem::*cursor-x*
+                                  lem::*cursor-y*))))
 
 (defmethod lem::interface-scroll ((implementation (eql :jsonrpc)) view n)
-  (notify "scroll"
-          (params "viewInfo" view "n" n)))
+  (with-error-handler ()
+    (notify "scroll"
+            (params "viewInfo" view "n" n))))
 
 (defmethod lem::interface-update-display ((implementation (eql :jsonrpc)))
-  (notify "update-display" nil))
+  (with-error-handler ()
+    (notify "update-display" nil)))
 
 
 (defmacro define-enum (name &rest vars)

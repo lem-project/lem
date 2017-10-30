@@ -778,12 +778,10 @@
     (setf (window-parameter window 'change-buffer) nil)
     (run-hooks *window-show-buffer-functions* window)))
 
-(defun switch-to-buffer (buffer &optional (update-prev-buffer-p t) (move-prev-point t))
-  (check-type buffer buffer)
-  (check-switch-minibuffer-window)
+(defun %switch-to-buffer (buffer update-prev-buffer move-prev-point)
   (without-interrupts
     (unless (eq (current-buffer) buffer)
-      (when update-prev-buffer-p
+      (when update-prev-buffer
         (setf (window-parameter (current-window) 'split-p) nil)
         (setf (window-parameter (current-window) 'parent-window) nil)
         (let ((old-buffer (current-buffer)))
@@ -809,6 +807,10 @@
                                     (current-window)))))
     (setf (window-parameter (current-window) 'change-buffer) t))
   buffer)
+
+(defun switch-to-buffer (buffer &optional (update-prev-buffer-p t) (move-prev-point t))
+  (check-type buffer buffer)
+  (%switch-to-buffer buffer update-prev-buffer-p move-prev-point))
 
 (defun pop-to-buffer (buffer &optional force-split-p)
   (if (eq buffer (current-buffer))
@@ -920,9 +922,9 @@
       (unless (eq window (current-window))
         (window-redraw window force)))
     (cond ((minibuffer-window-active-p)
-           (window-redraw (current-minibuffer-window) force))
+           (window-redraw (minibuffer-window) force))
           (t
-           (window-redraw (current-minibuffer-window) force)
+           (window-redraw (minibuffer-window) force)
            (window-redraw (current-window) force)))
     (dolist (window *floating-windows*)
       (window-redraw window t))

@@ -31,11 +31,13 @@
 
 (defvar +recursive-minibuffer-break-tag+ (gensym))
 
-(defvar *current-minibuffer-window*)
-(defvar *echoarea-window*)
 (defvar *minibuf-window*)
 (defvar *minibuffer-calls-window*)
 (defvar *minibuffer-start-charpos*)
+
+(defvar *current-minibuffer-buffer*)
+(defvar *echoarea-buffer*)
+(defvar *minibuffer-buffer*)
 
 (defvar *minibuffer-completion-function* nil)
 (defvar *minibuffer-file-complete-function* nil)
@@ -43,7 +45,6 @@
 (define-attribute minibuffer-prompt-attribute
   (t :foreground "blue" :bold-p t))
 
-(defun current-minibuffer-window () *current-minibuffer-window*)
 (defun minibuffer-window () *minibuf-window*)
 (defun minibuffer-window-p (window) (eq window (minibuffer-window)))
 (defun minibuffer-window-active-p () (eq (current-window) (minibuffer-window)))
@@ -59,29 +60,23 @@
                     :symbol-chars '(#\_ #\-))))
 
 (defun minibuf-init ()
+  (setf *echoarea-buffer*
+        (make-buffer "*echoarea*" :temporary t :enable-undo-p nil))
+  (setf *minibuffer-buffer*
+        (make-buffer "*minibuffer*" :temporary t :enable-undo-p t))
   (setf *minibuf-window*
-        (make-window (make-buffer "*minibuffer*" :temporary t :enable-undo-p t)
+        (make-window *echoarea-buffer*
                      0
                      (- (display-height)
                         (minibuffer-window-height))
                      (display-width)
                      (minibuffer-window-height)
                      nil))
-  (setf *echoarea-window*
-        (make-window (make-buffer "*echoarea*" :temporary t :enable-undo-p nil)
-                     0
-                     (- (display-height)
-                        (minibuffer-window-height))
-                     (display-width)
-                     (minibuffer-window-height)
-                     nil))
-  (setf *current-minibuffer-window* *echoarea-window*))
+  (setf *current-minibuffer-buffer* *echoarea-buffer*))
 
 (defun minibuf-update-size ()
   (window-set-pos (minibuffer-window) 0 (1- (display-height)))
-  (window-set-size (minibuffer-window) (display-width) 1)
-  (window-set-pos *echoarea-window* 0 (1- (display-height)))
-  (window-set-size *echoarea-window* (display-width) 1))
+  (window-set-size (minibuffer-window) (display-width) 1))
 
 (defun log-message (string args)
   (when string
@@ -94,17 +89,20 @@
 
 (defun message-without-log (string &rest args)
   (cond (string
-         (erase-buffer (window-buffer *echoarea-window*))
-         (let ((point (buffer-point (window-buffer *echoarea-window*))))
+         (erase-buffer *echoarea-buffer*)
+         (let ((point (buffer-point *echoarea-buffer*)))
            (insert-string point (apply #'format nil string args)))
-         (when (eq *current-minibuffer-window* *minibuf-window*)
-           (handler-case (let ((*current-minibuffer-window*
-                                 *echoarea-window*))
-                           (sit-for 1 t))
+         (when (eq *current-minibuffer-buffer* *minibuffer-buffer*)
+           (handler-case
+               (with-current-window (minibuffer-window)
+                 (unwind-protect (progn
+                                   (%switch-to-buffer *echoarea-buffer* nil nil)
+                                   (sit-for 1 t))
+                   (%switch-to-buffer *minibuffer-buffer* nil nil)))
              (editor-abort ()
                (minibuf-read-line-break)))))
         (t
-         (erase-buffer (window-buffer *echoarea-window*))))
+         (erase-buffer *echoarea-buffer*)))
   t)
 
 (defun message (string &rest args)
@@ -113,14 +111,12 @@
   t)
 
 (defun message-buffer (buffer)
-  (erase-buffer (window-buffer *echoarea-window*))
-  (insert-buffer (buffer-point (window-buffer *echoarea-window*)) buffer))
+  (erase-buffer *echoarea-buffer*)
+  (insert-buffer (buffer-point *echoarea-buffer*) buffer))
 
 (defun active-echoarea-p ()
-  (and (eq *current-minibuffer-window* *echoarea-window*)
-       (let ((buffer (window-buffer *echoarea-window*)))
-         (point< (buffer-start-point buffer)
-                 (buffer-end-point buffer)))))
+  (point< (buffer-start-point *echoarea-buffer*)
+          (buffer-end-point *echoarea-buffer*)))
 
 (defun prompt-for-character (prompt)
   (when (interactive-p)
@@ -235,11 +231,12 @@
                                        (or table
                                            (setf (gethash history-name *minibuf-read-line-history-table*)
                                                  (lem.history:make-history)))))
-        (*current-minibuffer-window* (minibuffer-window)))
+        (*current-minibuffer-buffer* *minibuffer-buffer*))
     (let ((result
             (catch +recursive-minibuffer-break-tag+
               (handler-case
                   (with-current-window (minibuffer-window)
+                    (%switch-to-buffer *minibuffer-buffer* nil nil)
                     (let ((minibuf-buffer-prev-string
                             (points-to-string (buffer-start-point (minibuffer))
                                               (buffer-end-point (minibuffer))))
@@ -279,7 +276,10 @@
                                 (put-text-property start end :attribute 'minibuffer-prompt-attribute)
                                 (put-text-property start end :read-only t)
                                 (put-text-property start end :field t)))
-                            (move-point (current-point) minibuf-buffer-prev-point))))))
+                            (move-point (current-point) minibuf-buffer-prev-point)
+                            (when (= 1 *minibuf-read-line-depth*)
+                              (%switch-to-buffer *echoarea-buffer* nil nil)
+                              ))))))
                 (editor-abort (c)
                   (error c))))))
       (if (eq result +recursive-minibuffer-break-tag+)

@@ -207,7 +207,8 @@
       (lem::interface-move-cursor implementation
                                   view
                                   lem::*cursor-x*
-                                  lem::*cursor-y*))))
+                                  lem::*cursor-y*))
+    (notify "touch" (params "viewInfo" view))))
 
 (defmethod lem::interface-scroll ((implementation (eql :jsonrpc)) view n)
   (with-error-handler ()

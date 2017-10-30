@@ -60,6 +60,7 @@
 (defstruct (screen (:constructor %make-screen))
   view
   use-modeline
+  modeline-elements
   x
   y
   left-lines
@@ -501,30 +502,33 @@
                  (interface-clear-eob *implementation* (screen-view screen) 0 y)
                  (return))))))
 
-(defun screen-redraw-modeline (window)
+(defun screen-redraw-modeline (window force)
   (let* ((screen (window-screen window))
          (view (screen-view screen))
          (default-attribute (if (eq window (current-window))
                                 'modeline
                                 'modeline-inactive))
+         (elements '())
          (left-x 0)
          (right-x (window-width window)))
-    (interface-print-modeline *implementation* view 0 0
-                              (make-string (window-width window)
-                                           :initial-element #\space)
-                              default-attribute)
     (modeline-apply window
                     (lambda (string attribute alignment)
                       (case alignment
                         ((:right)
                          (decf right-x (length string))
-                         (interface-print-modeline *implementation*
-                                                   view right-x 0 string attribute))
+                         (push (list right-x string attribute) elements))
                         (otherwise
-                         (interface-print-modeline *implementation*
-                                                   view left-x 0 string attribute)
+                         (push (list left-x string attribute) elements)
                          (incf left-x (length string)))))
-                    default-attribute)))
+                    default-attribute)
+    (setf elements (nreverse elements))
+    (when (or force (not (equal elements (screen-modeline-elements screen))))
+      (setf (screen-modeline-elements screen) elements)
+      (interface-print-modeline *implementation* view 0 0
+                                (make-string (window-width window) :initial-element #\space)
+                                default-attribute)
+      (loop :for (x string attribute) :in elements
+            :do (interface-print-modeline *implementation* view x 0 string attribute)))))
 
 (defun redraw-display-window (window force)
   (let ((focus-window-p (eq window (current-window)))
@@ -558,15 +562,15 @@
                               (if focus-window-p
                                   (count-lines (window-view-point window)
                                                (lem::window-point window))
-                                  0))
+                                  -1))
         (setf (screen-old-left-width screen)
               (screen-left-width screen))
         (setf (screen-last-buffer-name screen)
               (buffer-name buffer))
         (setf (screen-last-buffer-modified-tick screen)
               (buffer-modified-tick buffer))
-        (when (lem::window-use-modeline-p window)
-          (screen-redraw-modeline window))
+        (when (window-use-modeline-p window)
+          (screen-redraw-modeline window force))
         (interface-redraw-view-after *implementation* (screen-view screen) focus-window-p)
         (setf (screen-modified-p screen) nil)))))
 

@@ -146,7 +146,8 @@
                                                            (alexandria:ensure-list pattern)))
                                                     (make-attribute ,@args))))))))))))
 
-(define-attribute cursor)
+(define-attribute cursor
+  (t :reverse-p t))
 
 (define-attribute region
   (:light :reverse-p t)

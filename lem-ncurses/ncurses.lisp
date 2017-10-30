@@ -13,17 +13,18 @@
     (if (null attribute)
         0
         (or (lem::attribute-%internal-value attribute)
-            (let ((bits (logior (lem.term:get-color-pair (lem::attribute-foreground attribute)
-                                                         (lem::attribute-background attribute))
-                                (if (lem::attribute-reverse-p attribute)
-                                    charms/ll:a_reverse
-                                    0)
-                                (if (lem::attribute-bold-p attribute)
-                                    charms/ll:a_bold
-                                    0)
-                                (if (lem::attribute-underline-p attribute)
-                                    charms/ll:a_underline
-                                    0))))
+            (let* ((foreground (attribute-foreground attribute))
+                   (background (attribute-background attribute))
+                   (bits (logior (if (lem::attribute-reverse-p attribute)
+                                     (lem.term:get-color-pair background foreground)
+                                     (lem.term:get-color-pair foreground background))
+                                 0
+                                 (if (lem::attribute-bold-p attribute)
+                                     charms/ll:a_bold
+                                     0)
+                                 (if (lem::attribute-underline-p attribute)
+                                     charms/ll:a_underline
+                                     0))))
               (setf (lem::attribute-%internal-value attribute) bits)
               bits)))))
 

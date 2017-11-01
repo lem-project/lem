@@ -41,11 +41,23 @@
 (defvar *minibuffer-completion-function* nil)
 (defvar *minibuffer-file-complete-function* nil)
 
+(defclass minibuffer-window (window) ())
+
+(defun make-minibuffer-window (buffer)
+  (make-instance 'minibuffer-window
+                 :buffer buffer
+                 :x 0
+                 :y (- (display-height)
+                       (minibuffer-window-height))
+                 :width (display-width)
+                 :height (minibuffer-window-height)
+                 :use-modeline-p nil))
+
 (define-attribute minibuffer-prompt-attribute
   (t :foreground "blue" :bold-p t))
 
 (defun minibuffer-window () *minibuf-window*)
-(defun minibuffer-window-p (window) (eq window (minibuffer-window)))
+(defun minibuffer-window-p (window) (typep window 'minibuffer-window))
 (defun minibuffer-window-active-p () (eq (current-window) (minibuffer-window)))
 (defun minibuffer-window-height () *minibuffer-window-height*)
 (defun minibuffer () (window-buffer (minibuffer-window)))
@@ -64,13 +76,7 @@
   (setf *minibuffer-buffer*
         (make-buffer "*minibuffer*" :temporary t :enable-undo-p t))
   (setf *minibuf-window*
-        (make-window *echoarea-buffer*
-                     0
-                     (- (display-height)
-                        (minibuffer-window-height))
-                     (display-width)
-                     (minibuffer-window-height)
-                     nil)))
+        (make-minibuffer-window *echoarea-buffer*)))
 
 (defun minibuf-update-size ()
   (window-set-pos (minibuffer-window) 0 (1- (display-height)))

@@ -11,7 +11,7 @@
 (defgeneric interface-update-background (implementation color-name))
 (defgeneric interface-display-width (implementation))
 (defgeneric interface-display-height (implementation))
-(defgeneric interface-make-view (implementation x y width height use-modeline))
+(defgeneric interface-make-view (implementation window x y width height use-modeline))
 (defgeneric interface-delete-view (implementation view))
 (defgeneric interface-clear (implementation view))
 (defgeneric interface-set-view-size (implementation view width height))
@@ -75,10 +75,10 @@
   last-buffer-modified-tick
   (horizontal-scroll-start 0))
 
-(defun make-screen (x y width height use-modeline)
+(defun make-screen (window x y width height use-modeline)
   (when use-modeline
     (decf height))
-  (let ((view (interface-make-view *implementation* x y width height use-modeline)))
+  (let ((view (interface-make-view *implementation* window x y width height use-modeline)))
     (%make-screen :view view
                   :use-modeline use-modeline
                   :x x

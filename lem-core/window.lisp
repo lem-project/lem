@@ -104,7 +104,8 @@
 (defmethod initialize-instance :after ((window window) &rest initargs)
   (declare (ignore initargs))
   (with-slots (screen view-point point) window
-    (setf screen (make-screen (window-x window)
+    (setf screen (make-screen window
+                              (window-x window)
                               (window-y window)
                               (window-width window)
                               (window-height window)

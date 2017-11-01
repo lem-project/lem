@@ -20,7 +20,8 @@
   y
   width
   height
-  use-modeline)
+  use-modeline
+  kind)
 
 (defun bool (x) (if x 'yason:true 'yason:false))
 
@@ -48,7 +49,8 @@
       (yason:encode-object-element "y" (view-y view))
       (yason:encode-object-element "width" (view-width view))
       (yason:encode-object-element "height" (view-height view))
-      (yason:encode-object-element "use_modeline" (view-use-modeline view)))))
+      (yason:encode-object-element "use_modeline" (view-use-modeline view))
+      (yason:encode-object-element "kind" (view-kind view)))))
 
 (let ((lock (bt:make-lock)))
   (defun dbg (x)
@@ -130,9 +132,13 @@
   *display-height*)
 
 (defmethod lem::interface-make-view
-    ((implementation (eql :jsonrpc)) x y width height use-modeline)
+    ((implementation (eql :jsonrpc)) window x y width height use-modeline)
   (with-error-handler ()
-    (let ((view (make-view :x x :y y :width width :height height :use-modeline use-modeline)))
+    (let ((view (make-view :x x :y y :width width :height height :use-modeline use-modeline
+                           :kind (cond ((lem::minibuffer-window-p window)
+                                        "minibuffer")
+                                       (t
+                                        nil)))))
       (notify "make-view" view)
       view)))
 

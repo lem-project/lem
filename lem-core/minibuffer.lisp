@@ -35,7 +35,6 @@
 (defvar *minibuffer-calls-window*)
 (defvar *minibuffer-start-charpos*)
 
-(defvar *current-minibuffer-buffer*)
 (defvar *echoarea-buffer*)
 (defvar *minibuffer-buffer*)
 
@@ -71,8 +70,7 @@
                         (minibuffer-window-height))
                      (display-width)
                      (minibuffer-window-height)
-                     nil))
-  (setf *current-minibuffer-buffer* *echoarea-buffer*))
+                     nil)))
 
 (defun minibuf-update-size ()
   (window-set-pos (minibuffer-window) 0 (1- (display-height)))
@@ -92,7 +90,7 @@
          (erase-buffer *echoarea-buffer*)
          (let ((point (buffer-point *echoarea-buffer*)))
            (insert-string point (apply #'format nil string args)))
-         (when (eq *current-minibuffer-buffer* *minibuffer-buffer*)
+         (when (active-minibuffer-window)
            (handler-case
                (with-current-window (minibuffer-window)
                  (unwind-protect (progn
@@ -230,8 +228,7 @@
         (*minibuf-read-line-history* (let ((table (gethash history-name *minibuf-read-line-history-table*)))
                                        (or table
                                            (setf (gethash history-name *minibuf-read-line-history-table*)
-                                                 (lem.history:make-history)))))
-        (*current-minibuffer-buffer* *minibuffer-buffer*))
+                                                 (lem.history:make-history))))))
     (let ((result
             (catch +recursive-minibuffer-break-tag+
               (handler-case

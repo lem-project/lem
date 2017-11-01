@@ -570,7 +570,7 @@
         (setf (screen-last-buffer-modified-tick screen)
               (buffer-modified-tick buffer))
         (when (window-use-modeline-p window)
-          (screen-redraw-modeline window force))
+          (screen-redraw-modeline window (or (screen-modified-p screen) force)))
         (interface-redraw-view-after *implementation* (screen-view screen) focus-window-p)
         (setf (screen-modified-p screen) nil)))))
 

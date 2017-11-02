@@ -54,6 +54,7 @@
 
 (let ((lock (bt:make-lock)))
   (defun dbg (x)
+    #+(or)
     (bt:with-lock-held (lock)
       (with-open-file (out "~/log"
                            :direction :output

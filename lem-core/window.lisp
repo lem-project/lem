@@ -852,6 +852,9 @@
   (setf *floating-windows*
         (delete window *floating-windows*)))
 
+(defun floating-window-p (window)
+  (typep window 'floating-window))
+
 (defun balloon (orig-window buffer width height)
   (let* ((y (+ (window-y orig-window)
                (window-cursor-y orig-window)

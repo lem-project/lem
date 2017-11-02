@@ -137,6 +137,8 @@
     (let ((view (make-view :x x :y y :width width :height height :use-modeline use-modeline
                            :kind (cond ((lem::minibuffer-window-p window)
                                         "minibuffer")
+                                       ((lem::floating-window-p window)
+                                        "popup")
                                        (t
                                         nil)))))
       (notify "make-view" view)

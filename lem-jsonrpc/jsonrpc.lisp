@@ -54,13 +54,13 @@
 
 (let ((lock (bt:make-lock)))
   (defun dbg (x)
-    ;; (bt:with-lock-held (lock)
-    ;;   (with-open-file (out "~/log"
-    ;;                        :direction :output
-    ;;                        :if-exists :append
-    ;;                        :if-does-not-exist :create)
-    ;;     (write-string x out)
-    ;;     (terpri out)))
+    (bt:with-lock-held (lock)
+      (with-open-file (out "~/log"
+                           :direction :output
+                           :if-exists :append
+                           :if-does-not-exist :create)
+        (write-string x out)
+        (terpri out)))
     x))
 
 (defmacro with-error-handler (() &body body)
@@ -102,7 +102,7 @@
                 "height" *display-height*)))))
 
 (defmethod lem::interface-invoke ((implementation (eql :jsonrpc)) function)
-  (swank:create-server :port 10005 :dont-close t)
+  ;(swank:create-server :port 10005 :dont-close t)
   (with-error-handler ()
     (let ((ready nil))
       (setf *main-thread* (bt:current-thread))

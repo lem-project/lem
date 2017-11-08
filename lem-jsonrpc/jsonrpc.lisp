@@ -1,5 +1,6 @@
 (defpackage :lem-jsonrpc
-  (:use :cl :lem))
+  (:use :cl :lem)
+  (:export :notify))
 (in-package :lem-jsonrpc)
 
 (defvar *view-id-counter* 0)

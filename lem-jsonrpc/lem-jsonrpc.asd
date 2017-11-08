@@ -1,4 +1,5 @@
 (defsystem "lem-jsonrpc"
   :depends-on ("lem-core" "jsonrpc")
   :serial t
-  :components ((:file "jsonrpc")))
+  :components ((:file "jsonrpc")
+               (:file "markdown")))

@@ -2,4 +2,5 @@
   :depends-on ("lem-core" "jsonrpc")
   :serial t
   :components ((:file "jsonrpc")
-               (:file "markdown")))
+               (:file "markdown")
+               (:file "webview")))

@@ -5,6 +5,7 @@
 (define-major-mode markdown-mode ()
     (:name "markdown"
      :keymap *markdown-mode-keymap*)
+  (markdown-update)
   (add-hook (variable-value 'after-change-functions
                             :buffer (current-buffer))
             (lambda (&rest args)

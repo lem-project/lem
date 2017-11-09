@@ -246,7 +246,8 @@
 (define-enum ()
   +abort+
   +keyevent+
-  +resize+)
+  +resize+
+  +command+)
 
 (defvar *key-table*
   (alexandria:plist-hash-table
@@ -333,6 +334,11 @@
                (resize (gethash "width" value)
                        (gethash "height" value))
                (send-event :resize))
+              ((= kind +command+)
+               (send-event (lambda ()
+                             (apply (lem::find-command-symbol (first value))
+                                    (rest value))
+                             (redraw-display))))
               (t
                (error "unexpected kind: ~D" kind))))
     (error (e)

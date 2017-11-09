@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(define-command
+          find-command
           exist-command-p))
 
 (defvar *command-table* (make-hash-table :test 'equal))
@@ -77,7 +78,10 @@
     (string-downcase f)))
 
 (defun find-command (name)
-  (gethash name *command-table*))
+  (car (gethash name *command-table*)))
+
+(defun find-command-symbol (name)
+  (cdr (gethash name *command-table*)))
 
 (defun function-to-command (f)
   (find-command (function-to-command-name f)))
@@ -85,27 +89,18 @@
 (defun command-name (command)
   (get command 'name))
 
-(defun string-to-command (str)
-  (intern (string-upcase str) :lem))
-
 (defmacro define-command (name parms (&rest arg-descripters) &body body)
-  (let ((gcmd (gensym (symbol-name name))))
+  (let ((gcmd (gensym (symbol-name name)))
+        (command-name (function-to-command-name name)))
     `(progn
-       (setf (get ',gcmd 'name) (string-downcase ',name))
-       (setf (gethash ,(function-to-command-name name)
-                      *command-table*)
-             ',gcmd)
+       (setf (get ',gcmd 'name) ,command-name)
+       (setf (gethash ,command-name *command-table*) (cons ',gcmd ',name))
        (defun ,name ,parms ,@body)
        ,(define-command-gen-cmd gcmd name parms arg-descripters)
        ',name)))
 
 (defun all-command-names ()
-  (let ((names))
-    (maphash (lambda (name cmd)
-               (declare (ignore cmd))
-               (push name names))
-             *command-table*)
-    (nreverse names)))
+  (alexandria:hash-table-keys *command-table*))
 
 (defun exist-command-p (str)
   (if (find-command str) t nil))

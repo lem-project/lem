@@ -70,4 +70,4 @@
   (with-pop-up-typeout-window (out (make-buffer "*Apropos*") :focus t :erase t)
     (dolist (name (all-command-names))
       (when (search str name)
-        (describe (string-to-command name) out)))))
+        (describe (find-command-symbol name) out)))))

@@ -66,14 +66,18 @@
     x))
 
 (defmacro with-error-handler (() &body body)
-  `(handler-case (progn ,@body)
-     (error (c)
-       (dbg (format nil "~%******ERROR******:~%~A~%" c)))))
+  `(handler-case
+       (handler-bind ((error (lambda (c)
+                               (dbg (format nil "~%******ERROR******:~%~A~%" c))
+                               (uiop:print-backtrace :stream *error-output* :condition c))))
+         (progn ,@body))
+     (error ())))
 
 (defun params (&rest args)
   (alexandria:plist-hash-table args))
 
 (defun notify (method argument)
+  #+(or)
   (dbg (format nil "~A:~A"
                method
                (with-output-to-string (*standard-output*)

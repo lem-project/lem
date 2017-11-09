@@ -349,3 +349,7 @@
 (define-command import-electron-module (name) ("sImport: ")
   (pushnew name *electron-modules*)
   (notify "import" (params "name" name)))
+
+(add-hook *exit-editor-hook*
+          (lambda ()
+            (notify "exit" nil)))

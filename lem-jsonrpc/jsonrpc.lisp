@@ -338,3 +338,6 @@
 
 (setf lem::*implementation* :jsonrpc)
 (setf lem::*native-scroll-support* t)
+
+(define-command delete-html-pane () ()
+  (notify "delete-pane" nil))

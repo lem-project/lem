@@ -1,5 +1,5 @@
 (defpackage :lem-webview
-  (:use :cl :lem))
+  (:use :cl :lem :lem-jsonrpc))
 (in-package :lem-webview)
 
 (defparameter *clhs-base-url*
@@ -77,6 +77,7 @@
         (editor-error "Symbol not found: ~A" name))))
 
 (define-command webview-open (url) ("sUrl: ")
-  (lem-jsonrpc:notify "webview-open"
-                      (alexandria:plist-hash-table `("url" ,url)
-                                                   :test #'equal)))
+  (import-electron-module "./webview/webview")
+  (notify "webview-open"
+          (alexandria:plist-hash-table `("url" ,url)
+                                       :test #'equal)))

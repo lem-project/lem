@@ -1,6 +1,8 @@
 (defpackage :lem-jsonrpc
   (:use :cl :lem)
-  (:export :notify))
+  (:export :notify
+           :delete-html-pane
+           :import-electron-module))
 (in-package :lem-jsonrpc)
 
 (defvar *view-id-counter* 0)
@@ -74,7 +76,7 @@
      (error ())))
 
 (defun params (&rest args)
-  (alexandria:plist-hash-table args))
+  (alexandria:plist-hash-table args :test #'equal))
 
 (defun notify (method argument)
   #+(or)
@@ -341,3 +343,9 @@
 
 (define-command delete-html-pane () ()
   (notify "delete-pane" nil))
+
+(defvar *electron-modules* '())
+
+(define-command import-electron-module (name) ("sImport: ")
+  (pushnew name *electron-modules*)
+  (notify "import" (params "name" name)))

@@ -156,12 +156,18 @@
                                   (or n 1)
                                   (if n t nil)))
 
+
 (define-key *global-keymap* "C-h" 'delete-previous-char)
 (define-key *global-keymap* "[backspace]" 'delete-previous-char)
 (define-key *global-keymap* "[del]" 'delete-previous-char)
 (define-command delete-previous-char (&optional n) ("P")
-  (prev-char (or n 1))
-  (delete-next-char n))
+  (if (buffer-mark (current-buffer))
+      (let ((start (region-beginning))
+            (end (region-end)))
+        (delete-character start (count-characters start end)))
+      (progn
+        (prev-char (or n 1))
+        (delete-next-char n))))
 
 (define-key *global-keymap* "M-w" 'copy-region)
 (define-command copy-region (start end) ("r")

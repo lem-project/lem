@@ -766,7 +766,7 @@
                          :while line
                          :for elt := (ppcre:register-groups-bind (r g b name)
                                          ("^\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+([a-zA-Z0-9 ]+)" line)
-                                       (cons name
+                                       (cons (string-downcase name)
                                              (list (and r (parse-integer r))
                                                    (and g (parse-integer g))
                                                    (and b (parse-integer b)))))
@@ -774,7 +774,7 @@
                          :collect elt))))
           (alexandria:alist-hash-table (parse *rgb.txt*) :test 'equal))))
   (defun get-rgb-from-color-name (color-name)
-    (gethash color-name color-names)))
+    (gethash (string-downcase color-name) color-names)))
 
 (defun rgb-to-background-mode (r g b)
   (if (< 50 (/ (max r g b) 2.55))

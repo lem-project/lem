@@ -59,7 +59,7 @@
 
 (defun call-command (command-name arg)
   (run-hooks *pre-command-hook*)
-  (prog1 (let ((cmd (function-to-command command-name)))
+  (prog1 (let ((cmd (get-command command-name)))
            (if cmd
                (funcall cmd arg)
                (editor-error "~A: command not found" command-name)))

@@ -316,7 +316,7 @@
 (defun find-keybind (key)
   (let ((cmd (lookup-keybind key)))
     (when (symbolp cmd)
-      (function-to-command cmd))))
+      (get-command cmd))))
 
 (let ((abort-key (keyname->keychar "C-g")))
   (defun abort-key-p (c)

@@ -72,27 +72,23 @@
                         (car arg-descripters))
                  (,fn-name ,@(collect-variables parms))))))))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun function-to-command-name (f)
-    (check-type f symbol)
-    (string-downcase f)))
-
 (defun find-command (name)
   (car (gethash name *command-table*)))
 
 (defun find-command-symbol (name)
   (cdr (gethash name *command-table*)))
 
-(defun function-to-command (f)
-  (find-command (function-to-command-name f)))
+(defun get-command (symbol)
+  (get symbol 'command))
 
 (defun command-name (command)
   (get command 'name))
 
 (defmacro define-command (name parms (&rest arg-descripters) &body body)
   (let ((gcmd (gensym (symbol-name name)))
-        (command-name (function-to-command-name name)))
+        (command-name (string-downcase name)))
     `(progn
+       (setf (get ',name 'command) ',gcmd)
        (setf (get ',gcmd 'name) ,command-name)
        (setf (gethash ,command-name *command-table*) (cons ',gcmd ',name))
        (defun ,name ,parms ,@body)

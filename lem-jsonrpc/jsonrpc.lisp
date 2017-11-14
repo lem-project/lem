@@ -5,6 +5,8 @@
            :import-electron-module))
 (in-package :lem-jsonrpc)
 
+(defparameter *debug* nil)
+
 (defvar *view-id-counter* 0)
 (defvar *display-width* 80)
 (defvar *display-height* 24)
@@ -15,7 +17,9 @@
 
 (defvar *background-mode*)
 
-(setq *error-output* (open "~/ERROR" :direction :output :if-does-not-exist :create :if-exists :supersede))
+(when *debug*
+  (setq *error-output*
+        (open "~/ERROR" :direction :output :if-does-not-exist :create :if-exists :supersede)))
 
 (defstruct view
   (id (incf *view-id-counter*))
@@ -57,14 +61,14 @@
 
 (let ((lock (bt:make-lock)))
   (defun dbg (x)
-    #+(or)
-    (bt:with-lock-held (lock)
-      (with-open-file (out "~/log"
-                           :direction :output
-                           :if-exists :append
-                           :if-does-not-exist :create)
-        (write-string x out)
-        (terpri out)))
+    (when *debug*
+      (bt:with-lock-held (lock)
+        (with-open-file (out "~/log"
+                             :direction :output
+                             :if-exists :append
+                             :if-does-not-exist :create)
+          (write-string x out)
+          (terpri out))))
     x))
 
 (defmacro with-error-handler (() &body body)

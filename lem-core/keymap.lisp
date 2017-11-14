@@ -9,7 +9,8 @@
           kbd-to-string
           kbd
           find-keybind
-          insertion-key-p))
+          insertion-key-p
+          lookup-keybind))
 
 (defvar *keymaps* nil)
 

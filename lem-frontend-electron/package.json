@@ -1,0 +1,18 @@
+{
+  "name": "frontend-app",
+  "version": "1.0.0",
+  "description": "lem frontend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "electron": "^1.7.9",
+    "marked": "^0.3.6",
+    "utf-8": "^1.0.0",
+    "vscode-jsonrpc": "^3.4.1"
+  }
+}

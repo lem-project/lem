@@ -4,7 +4,6 @@
           exit-lem
           quick-exit
           keyboard-quit
-          universal-argument
           self-insert
           unmark-buffer
           *read-only-function*
@@ -68,38 +67,6 @@
 (define-key *global-keymap* "C-g" 'keyboard-quit)
 (define-command keyboard-quit () ()
   (error 'editor-abort))
-
-(define-key *global-keymap* "C-u" 'universal-argument)
-(define-command universal-argument () ()
-  (let ((numlist)
-        n)
-    (do ((c (prompt-for-character "C-u 4")
-            (prompt-for-character
-             (format nil "C-u ~{~a~}" numlist))))
-        (nil)
-      (cond
-        ((char= c (keyname->keychar "C-u"))
-         (setq numlist
-               (mapcar 'digit-char-p
-                       (coerce
-                        (format nil "~a"
-                                (* 4
-                                   (if numlist
-                                       (parse-integer
-                                        (format nil "~{~a~}" numlist))
-                                       4)))
-                        'list))))
-        ((and (char= c #\-) (null numlist))
-         (setq numlist (append numlist (list #\-))))
-        ((setq n (digit-char-p c))
-         (setq numlist
-               (append numlist (list n))))
-        (t
-         (unread-key c)
-         (let ((arg (if numlist
-                        (parse-integer (format nil "~{~a~}" numlist))
-                        4)))
-           (return (call-command (read-command) arg))))))))
 
 (define-command self-insert (n) ("p")
   (let ((c (insertion-key-p (last-read-key-sequence))))

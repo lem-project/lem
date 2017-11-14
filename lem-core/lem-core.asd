@@ -52,6 +52,7 @@
                (:file "tmlanguage")
                (:file "button")
                (:file "listener-mode")
+               (:file "universal-argument")
                (:file "kbdmacro")
                (:file "isearch")
                (:file "showparen")

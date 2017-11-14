@@ -74,6 +74,10 @@
                              (setf (command-line-arguments-no-init-file parsed-args)
                                    t)
                              nil)
+                            ((member arg '("-v" "--version") :test #'equal)
+                             (format t "~a~%" (asdf:component-version (asdf:find-system :lem)))
+                             (uiop:quit)
+                             nil)
                             ((or (stringp arg) (pathnamep arg))
                              `(find-file ,(merge-pathnames arg (uiop:getcwd))))
                             (t

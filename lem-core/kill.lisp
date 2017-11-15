@@ -73,24 +73,24 @@
        (thread)
        (initval (gensym))
        (result initval))
+  (defun run-clipboard-thread ()
+    (setf q (make-event-queue))
+    (setf thread
+          (bt:make-thread (lambda ()
+                            (loop :for arg := (dequeue-event nil q)
+                                  :do (if (functionp arg)
+                                          (setf result
+                                                (funcall arg (trivial-clipboard:text)))
+                                          (ignore-errors (trivial-clipboard:text arg))))))))
+
   (defun clipboard-set (arg)
-    (unless thread
-      (setf q (make-event-queue))
-      (setf thread
-            (bt:make-thread (lambda ()
-                              (loop :for arg := (dequeue-event nil q)
-                                    :do (if (functionp arg)
-                                            (setf result
-                                                  (funcall arg (trivial-clipboard:text)))
-                                            (ignore-errors (trivial-clipboard:text arg))))))))
+    (unless thread (run-clipboard-thread))
     (ignore-errors
      (send-event arg q)))
 
   (defun clipboard-get (fn)
-    (cond ((null thread)
-           (funcall fn nil))
-          (t
-           (setf result initval)
-           (send-event fn q)
-           (loop :while (eq result initval))
-           result))))
+    (unless thread (run-clipboard-thread))
+    (setf result initval)
+    (send-event fn q)
+    (loop :while (eq result initval))
+    result))

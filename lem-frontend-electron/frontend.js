@@ -170,7 +170,7 @@ class LemEditor extends HTMLElement {
     }
 
     updateBackground(params) {
-        option.foreground = params;
+        option.background = params;
     }
 
     makeView(params) {

@@ -31,7 +31,7 @@
 (define-attribute completion-attribute
   (t :foreground "blue" :background "white" :reverse-p t))
 (define-attribute non-focus-completion-attribute
-  (t :reverse-p t))
+  (t))
 
 (defvar *completion-overlay* nil)
 (defvar *completion-window* nil)

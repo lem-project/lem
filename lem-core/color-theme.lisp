@@ -99,6 +99,8 @@
   ;; (background "#000000")
   (minibuffer-prompt-attribute :foreground "cyan" :bold-p t)
   (region :foreground nil :background "blue")
+  (completion-attribute :foreground "white" :background "black")
+  (non-focus-completion-attribute :foreground "black" :background "gray")
   (syntax-string-attribute :foreground "light salmon")
   (syntax-comment-attribute :foreground "chocolate1")
   (syntax-keyword-attribute :foreground "cyan1")

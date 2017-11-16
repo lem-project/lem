@@ -150,8 +150,8 @@
   (t :reverse-p t))
 
 (define-attribute region
-  (:light :reverse-p t)
-  (:dark :reverse-p t))
+  (:light :foreground nil :background "#eedc82")
+  (:dark :foreground nil :background "blue"))
 
 (define-attribute modeline
   (t :background "#bbbbbb" :foreground "black"))

@@ -887,14 +887,14 @@
     (cond (dst-window
            (window-set-size dst-window width height)
            (window-set-pos dst-window x y)
+           (redraw-display*)
            dst-window)
           (t
            (make-floating-window buffer x y width height nil)))))
 
 (defun quit-balloon (floating-window)
   (delete-window floating-window)
-  (when (eq *implementation* :ncurses)
-    (redraw-display t)))
+  (redraw-display*))
 
 (defvar *balloon-message-window* nil)
 
@@ -945,6 +945,10 @@
     (dolist (window *floating-windows*)
       (window-redraw window t))
     (update-display)))
+
+(defun redraw-display* ()
+  (when (eq (implementation) :ncurses)
+    (redraw-display t)))
 
 (defun change-display-size-hook ()
   (adjust-windows (window-topleft-x)

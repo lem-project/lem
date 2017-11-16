@@ -37,6 +37,9 @@
 
 (defvar *display-background-mode* nil)
 
+(defun implementation ()
+  *implementation*)
+
 (defun display-background-mode ()
   (or *display-background-mode*
       (interface-display-background-mode *implementation*)))

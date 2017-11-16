@@ -325,10 +325,7 @@
 
 (define-command complete-symbol () ()
   (alexandria:when-let (fn (variable-value 'completion-function :buffer))
-    (alexandria:when-let (completion-items (funcall fn))
-      (run-completion completion-items
-                      :auto-insert nil
-                      :restart-function #'complete-symbol))))
+    (run-completion fn)))
 
 (define-command indent-line-and-complete-symbol () ()
   (if (variable-value 'calc-indent-function :buffer)

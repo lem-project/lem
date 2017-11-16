@@ -68,9 +68,8 @@
       (setf *completion-buffer* nil))))
 
 (defun completion-again ()
-  (completion-end)
   (when *completion-restart-function*
-    (funcall *completion-restart-function*)))
+    (run-completion-1 *completion-restart-function* t)))
 
 (define-command completion-self-insert () ()
   (let ((c (insertion-key-p (last-read-key-sequence))))
@@ -180,43 +179,51 @@
       (buffer-start point)
       (values buffer max-column))))
 
-(defun run-completion (items &key restart-function (auto-insert t))
-  (cond
-    ((null items))
-    ((and auto-insert (uiop:length=n-p items 1))
-     (completion-insert (current-point) (first items)))
-    (t
-     (multiple-value-bind (buffer max-column)
-         (create-completion-buffer items 'non-focus-completion-attribute)
-       (setf *completion-window*
-             (balloon (current-window)
-                      buffer
-                      (+ 1 max-column)
-                      (min 20 (length items))))
-       (start-completion-mode buffer restart-function))))
-  t)
+(defun run-completion-1 (function repeat)
+  (let ((items (funcall function)))
+    (cond ((null items)
+           (when repeat (completion-end)))
+          ((and (not repeat) (null (rest items)))
+           (completion-insert (current-point) (first items)))
+          (t
+           (multiple-value-bind (buffer max-column)
+               (create-completion-buffer items 'non-focus-completion-attribute)
+             (cond (repeat
+                    (update-completion-overlay (buffer-point buffer))
+                    (balloon (current-window)
+                             buffer
+                             (+ 1 max-column)
+                             (min 20 (length items))
+                             *completion-window*))
+                   (t
+                    (setf *completion-window*
+                          (balloon (current-window)
+                                   buffer
+                                   (+ 1 max-column)
+                                   (min 20 (length items))))
+                    (start-completion-mode buffer function))))))))
+
+(defun run-completion (function)
+  (run-completion-1 function nil))
 
 (defun minibuffer-completion (comp-f start)
-  (labels ((f (auto-insert)
-             (with-point ((start start)
-                          (end (current-point)))
-               (let ((items (funcall comp-f
-                                     (points-to-string start
-                                                       (buffer-end-point (point-buffer end))))))
-                 (run-completion
-                  (loop :for item? :in items
-                        :for item := (typecase item?
-                                       (string
-                                        (make-completion-item :label item?
-                                                              :start start
-                                                              :end end))
-                                       (completion-item
-                                        item?))
-                        :when item
-                        :collect item)
-                  :auto-insert auto-insert
-                  :restart-function (lambda () (f nil)))))))
-    (f t)))
+  (run-completion
+   (lambda ()
+     (with-point ((start start)
+                  (end (current-point)))
+       (let ((items (funcall comp-f
+                             (points-to-string start
+                                               (buffer-end-point (point-buffer end))))))
+         (loop :for item? :in items
+               :for item := (typecase item?
+                              (string
+                               (make-completion-item :label item?
+                                                     :start start
+                                                     :end end))
+                              (completion-item
+                               item?))
+               :when item
+               :collect item))))))
 
 (setf *minibuffer-completion-function* 'minibuffer-completion)
 

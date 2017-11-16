@@ -885,8 +885,8 @@
         (setf width (display-width)))
       (setf x (- (display-width) width)))
     (cond (dst-window
-           (window-set-pos dst-window x y)
            (window-set-size dst-window width height)
+           (window-set-pos dst-window x y)
            dst-window)
           (t
            (make-floating-window buffer x y width height nil)))))

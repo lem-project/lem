@@ -61,12 +61,11 @@
   (when *completion-overlay*
     (delete-overlay *completion-overlay*))
   (completion-mode nil)
-  (delete-window *completion-window*)
+  (quit-balloon *completion-window*)
   (let ((buffer (completion-buffer)))
     (when buffer
       (delete-buffer buffer)
-      (setf *completion-buffer* nil)))
-  (redraw-display t))
+      (setf *completion-buffer* nil))))
 
 (defun completion-again ()
   (completion-end)
@@ -190,10 +189,10 @@
      (multiple-value-bind (buffer max-column)
          (create-completion-buffer items 'non-focus-completion-attribute)
        (setf *completion-window*
-             (lem::balloon (current-window)
-                           buffer
-                           (+ 1 max-column)
-                           (min 20 (length items))))
+             (balloon (current-window)
+                      buffer
+                      (+ 1 max-column)
+                      (min 20 (length items))))
        (start-completion-mode buffer restart-function))))
   t)
 

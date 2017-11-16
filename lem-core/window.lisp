@@ -34,6 +34,8 @@
           switch-to-buffer
           pop-to-buffer
           floating-windows
+          balloon
+          quit-balloon
           balloon-message
           redraw-display))
 
@@ -883,6 +885,11 @@
         (setf width (display-width)))
       (setf x (- (display-width) width)))
     (make-floating-window buffer x y width height nil)))
+
+(defun quit-balloon (floating-window)
+  (delete-window floating-window)
+  (when (eq *implementation* :ncurses)
+    (redraw-display t)))
 
 (defvar *balloon-message-window* nil)
 

@@ -857,7 +857,7 @@
 (defun floating-window-p (window)
   (typep window 'floating-window))
 
-(defun balloon (orig-window buffer width height)
+(defun balloon (orig-window buffer width height &optional dst-window)
   (let* ((y (+ (window-y orig-window)
                (window-cursor-y orig-window)
                1))
@@ -884,7 +884,12 @@
       (when (< (display-width) width)
         (setf width (display-width)))
       (setf x (- (display-width) width)))
-    (make-floating-window buffer x y width height nil)))
+    (cond (dst-window
+           (window-set-pos dst-window x y)
+           (window-set-size dst-window width height)
+           dst-window)
+          (t
+           (make-floating-window buffer x y width height nil)))))
 
 (defun quit-balloon (floating-window)
   (delete-window floating-window)

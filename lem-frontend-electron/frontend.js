@@ -103,6 +103,7 @@ class LemEditor extends HTMLElement {
         window.onkeydown = (e) => {
             const k = keyevent.convertKeyEvent(e);
             this.emitInput(kindKeyEvent, k);
+            return false;
         };
 
         ipcRenderer.on('resize', (event, message) => {

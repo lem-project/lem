@@ -9,10 +9,10 @@
 (define-command describe-key () ()
   (message "describe-key: ")
   (redraw-display)
-  (let* ((key (read-key-sequence))
-         (cmd (find-keybind key)))
+  (let* ((keys (read-key-sequence))
+         (cmd (find-keybind keys)))
     (message "describe-key: ~a ~a"
-             (kbd-to-string key)
+             (keyseq-to-string keys)
              (command-name cmd))))
 
 (defun describe-bindings-internal (s name keymap &optional first-p)
@@ -25,11 +25,11 @@
     (format s "~va~a~%" column-width "key" "binding")
     (format s "~va~a~%" column-width "---" "-------")
     (keymap-flatten-map keymap
-                        (lambda (kbd command)
+                        (lambda (keys command)
                           (unless (equal "UNDEFINED-KEY" (symbol-name command))
                             (format s "~va~(~a~)~%"
                                     column-width
-                                    (kbd-to-string kbd)
+                                    keys
                                     (symbol-name command)))))
     (terpri s)))
 

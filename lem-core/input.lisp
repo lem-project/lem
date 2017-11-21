@@ -21,10 +21,7 @@
   (defun last-read-key-sequence ()
     last-read-key-sequence)
   (defun set-last-read-key-sequence (key-sequence)
-    (setf last-read-key-sequence
-          (if (kbd-p key-sequence)
-              key-sequence
-              (make-kbd key-sequence)))))
+    (setf last-read-key-sequence key-sequence)))
 
 (let ((key-recording-status-name " Def"))
   (defun start-record-key ()
@@ -84,11 +81,8 @@
   (read-command)
   (last-read-key-sequence))
 
-(defun unread-key-sequence (key)
-  (setf *unread-keys*
-        (nconc *unread-keys*
-               (if (listp key) key (kbd-list key)) ;!!!
-               )))
+(defun unread-key-sequence (kseq)
+  (setf *unread-keys* (nconc *unread-keys* kseq)))
 
 (defun execute-key-sequence (key-sequence)
   (handler-case

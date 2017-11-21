@@ -4,10 +4,8 @@
           keymap
           make-keymap
           *global-keymap*
-          kbd-p
           define-key
-          kbd-to-string
-          kbd
+          keyseq-to-string
           find-keybind
           insertion-key-p
           lookup-keybind))
@@ -34,23 +32,6 @@
                  :name name)))
     (push keymap *keymaps*)
     keymap))
-
-(defclass kbd ()
-  ((list :initarg :list
-         :reader kbd-list)))
-
-(defvar *kbd-cache-table* (make-hash-table :test 'equal))
-
-(defun make-kbd (list)
-  (or (gethash list *kbd-cache-table*)
-      (setf (gethash list *kbd-cache-table*)
-            (make-instance 'kbd :list list))))
-
-(defmethod print-object ((k kbd) stream)
-  (format stream "(~A ~S)" 'kbd (kbd-to-string k)))
-
-(defun kbd-p (x)
-  (typep x 'kbd))
 
 (defun define-key (keymap keyspec symbol)
   (check-type symbol symbol)
@@ -95,9 +76,9 @@
                     (f string)))
             (uiop:split-string string :separator " "))))
 
-(defun kbd-to-string (key)
+(defun keyseq-to-string (kseq)
   (format nil "~{~A~^~}"
-          (loop for c- on (kbd-list key)
+          (loop for c- on kseq
                 for c = (first c-)
                 collect (cond
                           ((char= c (keyname->keychar "escape")) "M")
@@ -114,22 +95,22 @@
                  (if (hash-table-p cmd)
                      (setf table cmd)
                      cmd))))
-      (or (if (characterp key)
-              (f key)
-              (let (cmd)
-                (dolist (k (if (kbd-p key)
-                               (kbd-list key)
-                               key))
-                  (unless (setf cmd (f k))
-                    (return)))
-                cmd))
+      (or (etypecase key
+            (character
+             (f key))
+            (list
+             (let (cmd)
+               (dolist (k key)
+                 (unless (setf cmd (f k))
+                   (return)))
+               cmd)))
           (let ((parent (keymap-parent keymap)))
             (when parent
               (keymap-find-keybind parent key)))
           (keymap-undef-hook keymap)))))
 
-(defun insertion-key-p (key)
-  (let* ((first-key (car (kbd-list key))))
+(defun insertion-key-p (kseq)
+  (let* ((first-key (elt kseq 0)))
     (when (or (< 31 (char-code first-key))
               (char= first-key
                      (load-time-value (keyname->keychar "C-i"))))
@@ -140,7 +121,7 @@
              (maphash (lambda (k v)
                         (if (hash-table-p v)
                             (f v (cons k prefix))
-                            (funcall fun (make-kbd (reverse (cons k prefix))) v)))
+                            (funcall fun (reverse (cons k prefix)) v)))
                       table)))
     (f (keymap-table keymap) nil)))
 
@@ -149,7 +130,7 @@
 
 (define-command undefined-key () ()
   (editor-error "Key not found: ~A"
-                (kbd-to-string (last-read-key-sequence))))
+                (keyseq-to-string (last-read-key-sequence))))
 
 (define-key *global-keymap* "C-@" 'undefined-key)
 (define-key *global-keymap* "C-a" 'undefined-key)

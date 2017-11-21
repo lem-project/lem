@@ -53,7 +53,8 @@
   (let ((key (last-read-key-sequence))
         (n (to-integer *argument*)))
     (universal-argument-mode nil)
-    (call-command (lookup-keybind key) n)
+    (unread-key-sequence key)
+    (call-command (read-command) n)
     (reset-argument)))
 
 (define-command universal-argument-abort () ()

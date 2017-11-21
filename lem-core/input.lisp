@@ -6,6 +6,7 @@
           key-recording-p
           read-key
           unread-key
+          read-command
           read-key-sequence
           unread-key-sequence
           execute-key-sequence

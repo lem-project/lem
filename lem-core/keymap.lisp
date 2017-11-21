@@ -319,6 +319,5 @@
     (when (symbolp cmd)
       (get-command cmd))))
 
-(let ((abort-key (keyname->keychar "C-g")))
-  (defun abort-key-p (c)
-    (eql c abort-key)))
+(defun abort-key-p (key)
+  (eq 'keyboard-quit (lookup-keybind key)))

@@ -52,24 +52,23 @@
 (defun kbd-p (x)
   (typep x 'kbd))
 
-(defun define-key (keymap key symbol)
+(defun define-key (keymap keyspec symbol)
   (check-type symbol symbol)
-  (let ((kbd (typecase key
-               (symbol (loop :for (key1 . keymap1) :in (get key 'keybind)
-                             :do (define-key keymap key1 symbol))
-                       (return-from define-key))
-               (list (apply #'kbd key))
-               (string (kbd key))
-               (t key))))
-    (unless (and (kbd-p kbd)
-                 (every #'characterp (kbd-list kbd)))
-      (error "define-key: ~s is illegal key" key))
-    (pushnew (cons key keymap) (get symbol 'keybind) :test 'equal)
-    (define-key-internal keymap kbd symbol)))
+  (let ((keys (typecase keyspec
+                (symbol (loop :for (key1 . keymap1) :in (get keyspec 'keybind)
+                              :do (define-key keymap key1 symbol))
+                        (return-from define-key))
+                (list keyspec)
+                (string (parse-key keyspec)))))
+    (unless (and (listp keys)
+                 (every #'characterp keys))
+      (error "define-key: ~s is illegal key" keyspec))
+    (pushnew (cons keyspec keymap) (get symbol 'keybind) :test 'equal)
+    (define-key-internal keymap keys symbol)))
 
-(defun define-key-internal (keymap kbd symbol)
+(defun define-key-internal (keymap keys symbol)
   (loop :with table := (keymap-table keymap)
-        :for rest :on (kbd-list kbd)
+        :for rest :on keys
         :for k := (car rest)
         :do (cond ((null (cdr rest))
                    (setf (gethash k table) symbol))
@@ -80,6 +79,21 @@
                          (let ((new-table (make-hash-table :test 'equal)))
                            (setf (gethash k table) new-table)
                            (setf table new-table))))))))
+
+(defun parse-key (string)
+  (labels ((f (string)
+             (if (and (>= (length string) 2)
+                      (eql (aref string 0) #\M)
+                      (eql (aref string 1) #\-))
+                 (cons (keyname->keychar "escape") (f (subseq string 2)))
+                 (list (keyname->keychar string)))))
+    (mapcan #'(lambda (string)
+                (if (and (< 4 (length string))
+                         (string= string "C-M-" :end1 4))
+                    (f (concatenate 'string
+                                    "M-C-" (subseq string 4)))
+                    (f string)))
+            (uiop:split-string string :separator " "))))
 
 (defun kbd-to-string (key)
   (format nil "~{~A~^~}"
@@ -92,33 +106,6 @@
                 collect (cond ((not (cdr c-))"")
                               ((char= c (keyname->keychar "escape")) "-")
                               (t " ")))))
-
-(defun kbd-string-1 (str)
-  (if (and (>= (length str) 2)
-           (eql (aref str 0) #\M)
-           (eql (aref str 1) #\-))
-      (cons (keyname->keychar "escape") (kbd-string-1 (subseq str 2)))
-      (list (keyname->keychar str))))
-
-(defun kbd-string (str)
-  (make-kbd
-   (mapcan #'(lambda (str)
-               (if (and (< 4 (length str))
-                        (string= str "C-M-" :end1 4))
-                   (kbd-string-1 (concatenate 'string
-                                              "M-C-" (subseq str 4)))
-                   (kbd-string-1 str)))
-           (uiop:split-string str :separator " "))))
-
-(defun kbd-keys (keys)
-  (make-kbd keys))
-
-(defun kbd (string-or-first-key &rest keys)
-  (etypecase string-or-first-key
-    (string
-     (kbd-string string-or-first-key))
-    (character
-     (kbd-keys (cons string-or-first-key keys)))))
 
 (defun keymap-find-keybind (keymap key)
   (let ((table (keymap-table keymap)))
@@ -320,4 +307,5 @@
       (get-command cmd))))
 
 (defun abort-key-p (key)
-  (eq 'keyboard-quit (lookup-keybind key)))
+  (and (characterp key)
+       (eq 'keyboard-quit (lookup-keybind key))))

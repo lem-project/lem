@@ -7,7 +7,7 @@
           any-modified-buffer-p
           get-buffer
           uniq-buffer-name
-          update-prev-buffer
+          unbury-buffer
           bury-buffer
           get-next-buffer
           get-previous-buffer
@@ -51,12 +51,6 @@
           (unless (get-buffer name)
             (return name))))))
 
-(defun update-prev-buffer (buffer)
-  (check-type buffer buffer)
-  (setq *buffer-list*
-        (cons buffer
-              (remove buffer (buffer-list)))))
-
 (defun delete-buffer (buffer)
   @lang(:jp "`buffer`をバッファのリストから消します。
 エディタ変数`kill-buffer-hook`がバッファが消される前に実行されます。")
@@ -83,12 +77,19 @@
         :do (when (eq buffer curr)
               (return prev))))
 
+(defun unbury-buffer (buffer)
+  (check-type buffer buffer)
+  (setf *buffer-list*
+        (cons buffer
+              (delete buffer (buffer-list))))
+  buffer)
+
 (defun bury-buffer (buffer)
   @lang(:jp "`buffer`をバッファリストの一番最後に移動させ、バッファリストの先頭を返します。")
   (check-type buffer buffer)
   (setf *buffer-list*
-        (append (remove buffer (buffer-list))
-                (list buffer)))
+        (nconc (delete buffer (buffer-list))
+               (list buffer)))
   (car (buffer-list)))
 
 (defun get-file-buffer (filename)

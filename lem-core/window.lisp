@@ -781,14 +781,14 @@
     (setf (window-parameter window 'change-buffer) nil)
     (run-hooks *window-show-buffer-functions* window)))
 
-(defun %switch-to-buffer (buffer update-prev-buffer move-prev-point)
+(defun %switch-to-buffer (buffer record move-prev-point)
   (without-interrupts
     (unless (eq (current-buffer) buffer)
-      (when update-prev-buffer
+      (when record
         (setf (window-parameter (current-window) 'split-p) nil)
         (setf (window-parameter (current-window) 'parent-window) nil)
         (let ((old-buffer (current-buffer)))
-          (update-prev-buffer old-buffer)
+          (unbury-buffer old-buffer)
           (%buffer-clear-keep-binfo old-buffer)
           (setf (%buffer-keep-binfo old-buffer)
                 (list (copy-point (window-view-point (current-window)) :right-inserting)
@@ -811,9 +811,9 @@
     (setf (window-parameter (current-window) 'change-buffer) t))
   buffer)
 
-(defun switch-to-buffer (buffer &optional (update-prev-buffer-p t) (move-prev-point t))
+(defun switch-to-buffer (buffer &optional (record t) (move-prev-point t))
   (check-type buffer buffer)
-  (%switch-to-buffer buffer update-prev-buffer-p move-prev-point))
+  (%switch-to-buffer buffer record move-prev-point))
 
 (defun pop-to-buffer (buffer &optional force-split-p)
   (if (eq buffer (current-buffer))

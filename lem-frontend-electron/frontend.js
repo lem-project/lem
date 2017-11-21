@@ -111,7 +111,6 @@ class LemEditor extends HTMLElement {
         });
 
         ipcRenderer.on('command', (event, message) => {
-            console.log(message);
             this.emitInput(kindCommand, message);
         })
     }

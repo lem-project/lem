@@ -298,7 +298,6 @@
   (when e
     (let ((keys '()))
       (let ((key (gethash "key" e))
-            ;(shift (gethash "shift" e))
             (ctrl (gethash "ctrl" e))
             (meta (gethash "meta" e))
             ;(super (gethash "super" e))

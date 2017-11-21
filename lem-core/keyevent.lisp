@@ -6,7 +6,6 @@
 
 (defstruct key-event
   (ctrl nil :type key-event-modifier)
-  (shift nil :type key-event-modifier)
   (meta nil :type key-event-modifier)
   (super nil :type key-event-modifier)
   (hypher nil :type key-event-modifier)

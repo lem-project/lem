@@ -13,7 +13,7 @@
           sit-for))
 
 (defvar *key-recording-p* nil)
-(defvar *temp-macro-chars* nil)
+(defvar *record-keys* nil)
 
 (defvar *unread-keys* nil)
 
@@ -30,12 +30,12 @@
   (defun start-record-key ()
     (modeline-add-status-list key-recording-status-name)
     (setq *key-recording-p* t)
-    (setq *temp-macro-chars* nil))
+    (setq *record-keys* nil))
   (defun stop-record-key ()
     (when *key-recording-p*
       (modeline-remove-status-list key-recording-status-name)
       (setq *key-recording-p* nil)
-      (nreverse *temp-macro-chars*))))
+      (nreverse *record-keys*))))
 
 (defun key-recording-p ()
   *key-recording-p*)
@@ -55,17 +55,17 @@
                     (update-timer))))))))
 
 (defun read-key ()
-  (let ((char (if (null *unread-keys*)
-                  (read-key-1)
-                  (pop *unread-keys*))))
+  (let ((kev (if (null *unread-keys*)
+                 (read-key-1)
+                 (pop *unread-keys*))))
     (when *key-recording-p*
-      (push char *temp-macro-chars*))
-    char))
+      (push kev *record-keys*))
+    kev))
 
-(defun unread-key (char)
+(defun unread-key (key)
   (when *key-recording-p*
-    (pop *temp-macro-chars*))
-  (push char *unread-keys*))
+    (pop *record-keys*))
+  (push key *unread-keys*))
 
 (defun read-command ()
   (let* ((c (read-key))

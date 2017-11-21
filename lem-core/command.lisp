@@ -97,7 +97,7 @@
 
 (define-key *global-keymap* "C-q" 'quoted-insert)
 (define-command quoted-insert (&optional (n 1)) ("p")
-  (let ((c (read-key)))
+  (let ((c (read-char)))
     (dotimes (_ n t)
       (insert-character (current-point) c 1))))
 

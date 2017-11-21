@@ -6,6 +6,10 @@
           make-buffer-output-stream
           minibuffer-input-stream
           make-minibuffer-input-stream
+          editor-output-stream
+          make-editor-output-stream
+          editor-input-stream
+          make-editor-input-stream
           editor-io-stream
           make-editor-io-stream))
 
@@ -75,16 +79,11 @@
     :initarg :point
     :accessor buffer-stream-point)))
 
-(defun make-buffer-stream-instance (class-name point
-                                    &optional interactive-update-p)
-  (make-instance class-name
-                 :point (copy-point point :left-inserting)
-                 :interactive-update-p interactive-update-p))
-
 (defun make-buffer-output-stream (&optional (point (current-point))
                                             interactive-update-p)
-  (make-buffer-stream-instance 'buffer-output-stream
-                               point interactive-update-p))
+  (make-instance 'buffer-output-stream
+                 :point (copy-point point :left-inserting)
+                 :interactive-update-p interactive-update-p))
 
 (defmethod trivial-gray-streams::close ((stream buffer-output-stream) &key abort)
   (declare (ignore abort))
@@ -209,9 +208,90 @@
 (defmethod trivial-gray-streams:stream-clear-input ((stream minibuffer-input-stream))
   nil)
 
-(defclass editor-io-stream (buffer-output-stream minibuffer-input-stream)
+
+(defclass editor-input-stream (trivial-gray-streams:fundamental-character-input-stream)
   ())
 
-(defun make-editor-io-stream (point &optional interactive-update-p)
-  (make-buffer-stream-instance 'editor-io-stream
-                               point interactive-update-p))
+(defun make-editor-input-stream ()
+  (make-instance 'editor-input-stream))
+
+(defmethod trivial-gray-streams:stream-read-char ((stream editor-input-stream))
+  (read-key))
+
+(defmethod trivial-gray-streams:stream-unread-char ((stream editor-input-stream) character)
+  (unread-key character))
+
+;; (defmethod trivial-gray-streams:stream-read-char-no-hang ((stream editor-input-stream))
+;;   )
+
+;; (defmethod trivial-gray-streams:stream-peek-char ((stream editor-input-stream))
+;;   )
+
+(defmethod trivial-gray-streams:stream-listen ((stream editor-input-stream))
+  t)
+
+;; (defmethod trivial-gray-streams:stream-read-line ((stream editor-input-stream))
+;;   )
+
+;; (defmethod trivial-gray-streams:stream-clear-input ((stream editor-input-stream))
+;;   )
+
+
+(defclass editor-output-stream (trivial-gray-streams:fundamental-character-output-stream)
+  ((pool
+    :initform (make-string-output-stream))
+   (column
+    :initform 0)))
+
+(defun make-editor-output-stream ()
+  (make-instance 'editor-output-stream))
+
+(defun editor-output-stream-flush (stream)
+  (with-slots (pool) stream
+    (let ((string (get-output-stream-string pool)))
+      (message "~A" string))))
+
+(defmethod trivial-gray-streams:stream-write-char ((stream editor-output-stream) character)
+  (with-slots (pool column) stream
+    (when (char= character #\newline)
+      (editor-output-stream-flush stream))
+    (write-char character pool)
+    (setf column (char-width character column))
+    character))
+
+(defmethod trivial-gray-streams:stream-line-column ((stream editor-output-stream))
+  (with-slots (column) stream
+    column))
+
+(defmethod trivial-gray-streams:stream-start-line-p ((stream editor-output-stream))
+  (with-slots (column) stream
+    (zerop column)))
+
+;; (defmethod trivial-gray-streams:stream-write-string ((stream editor-output-stream) string &optional start end)
+;;   )
+
+;; (defmethod trivial-gray-streams:stream-terpri ((stream editor-output-stream))
+;;   )
+
+;; (defmethod trivial-gray-streams:stream-fresh-line ((stream editor-output-stream))
+;;   )
+
+(defmethod trivial-gray-streams:stream-finish-output ((stream editor-output-stream))
+  (editor-output-stream-flush stream))
+
+(defmethod trivial-gray-streams:stream-force-output ((stream editor-output-stream))
+  (editor-output-stream-flush stream))
+
+;; (defmethod trivial-gray-streams:stream-clear-output ((stream editor-output-stream))
+;;   )
+
+;; (defmethod trivial-gray-streams:stream-advance-to-column ((stream editor-output-stream) column)
+;;   )
+
+
+
+(defclass editor-io-stream (editor-output-stream editor-input-stream)
+  ())
+
+(defun make-editor-io-stream ()
+  (make-instance 'editor-io-stream))

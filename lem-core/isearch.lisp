@@ -238,7 +238,7 @@
     (isearch-update-display)))
 
 (define-command isearch-raw-insert () ()
-  (isearch-add-char (read-key)))
+  (isearch-add-char (read-char)))
 
 (defun isearch-end ()
   (isearch-reset-overlays (current-buffer))

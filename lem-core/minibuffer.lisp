@@ -126,7 +126,7 @@
   (when (interactive-p)
     (message "~A" prompt)
     (redraw-display))
-  (let ((c (read-key)))
+  (let ((c (read-char)))
     (when (interactive-p)
       (message nil))
     (if (abort-key-p c)

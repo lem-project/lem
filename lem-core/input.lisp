@@ -55,12 +55,12 @@
                     (update-timer))))))))
 
 (defun read-key ()
-  (let ((kev (if (null *unread-keys*)
+  (let ((key (if (null *unread-keys*)
                  (read-key-1)
                  (pop *unread-keys*))))
     (when *key-recording-p*
-      (push kev *record-keys*))
-    kev))
+      (push key *record-keys*))
+    key))
 
 (defun unread-key (key)
   (when *key-recording-p*

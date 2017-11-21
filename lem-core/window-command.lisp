@@ -116,7 +116,7 @@
       (t
        (if kill-buffer-p
            (kill-buffer (window-buffer window))
-           (switch-to-buffer (bury-buffer (window-buffer window))))
+           (switch-to-buffer (bury-buffer (window-buffer window)) nil))
        (unless (deleted-window-p parent-window)
          (setf (current-window) parent-window))))))
 

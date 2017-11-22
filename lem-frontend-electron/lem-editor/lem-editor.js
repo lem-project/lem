@@ -106,8 +106,10 @@ class LemEditor extends HTMLElement {
             return false;
         };
 
-        ipcRenderer.on('resize', (event, message) => {
-            this.resize(message.width, message.height);
+        const mainWindow = getCurrentWindow();
+        mainWindow.on('resize', () => {
+            const {width, height} = mainWindow.getBounds();
+            this.resize(width, height);
         });
 
         ipcRenderer.on('command', (event, message) => {

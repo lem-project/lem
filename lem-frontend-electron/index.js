@@ -13,9 +13,7 @@ electron.app.on('ready', function () {
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
-    mainWindow.on('resize', function (x) {
-        mainWindow.webContents.send('resize', mainWindow.getBounds());
-    });
+
     electron.ipcMain.on('exit', function() {
         electron.app.quit();
     })

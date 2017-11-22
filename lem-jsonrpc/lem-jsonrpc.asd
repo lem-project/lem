@@ -1,9 +1,5 @@
 (defsystem "lem-jsonrpc"
   :depends-on ("lem-core"
-               "jsonrpc"
-               "plump"
-               "clss")
+               "jsonrpc")
   :serial t
-  :components ((:file "jsonrpc")
-               (:file "markdown")
-               (:file "webview")))
+  :components ((:file "jsonrpc")))

@@ -1,6 +1,6 @@
-(defpackage :lem-jsonrpc.markdown
+(defpackage :lem-markdown
   (:use :cl :lem :lem-jsonrpc))
-(in-package :lem-jsonrpc.markdown)
+(in-package :lem-markdown)
 
 (define-major-mode markdown-mode ()
     (:name "markdown"

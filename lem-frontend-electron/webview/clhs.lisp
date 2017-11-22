@@ -1,6 +1,6 @@
-(defpackage :lem-webview
-  (:use :cl :lem :lem-jsonrpc))
-(in-package :lem-webview)
+(defpackage :lem-webview.clhs
+  (:use :cl :lem-webview))
+(in-package :lem-webview.clhs)
 
 (defparameter *clhs-base-url*
   "http://www.lispworks.com/documentation/HyperSpec/")
@@ -75,9 +75,3 @@
         (let ((url (clhs-url path)))
           (webview-open url))
         (editor-error "Symbol not found: ~A" name))))
-
-(define-command webview-open (url) ("sUrl: ")
-  (import-electron-module "./webview/webview")
-  (notify "webview-open"
-          (alexandria:plist-hash-table `("url" ,url)
-                                       :test #'equal)))

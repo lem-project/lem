@@ -5,7 +5,9 @@
 (define-major-mode markdown-mode ()
     (:name "markdown"
      :keymap *markdown-mode-keymap*)
-  (import-electron-module "./markdown-preview/markdown-preview")
+  (import-electron-module
+   (merge-pathnames "markdown-preview.js"
+                    (asdf:system-source-directory :lem-markdown)))
   (markdown-update)
   (add-hook (variable-value 'after-change-functions
                             :buffer (current-buffer))

@@ -78,6 +78,7 @@ class LemEditor extends HTMLElement {
         this.on('move-cursor', this.moveCursor.bind(this));
         this.on('scroll', this.scroll.bind(this));
         this.on('update-display', this.updateDisplay.bind(this));
+        this.on('js-eval', this.jsEval.bind(this));
         this.on('delete-pane', this.deletePane.bind(this));
         this.on('import', this.importModule.bind(this));
         this.on('exit', this.exit.bind(this));
@@ -275,6 +276,12 @@ class LemEditor extends HTMLElement {
     updateDisplay(params) {
         try {
         } catch (e) { console.log(e); }
+    }
+
+    jsEval(params) {
+        try{
+            eval(params.string);
+        } catch (e) {console.log(e); }
     }
 }
 

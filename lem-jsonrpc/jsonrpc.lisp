@@ -1,6 +1,7 @@
 (defpackage :lem-jsonrpc
   (:use :cl :lem)
   (:export :notify
+           :js-eval
            :delete-html-pane
            :import-electron-module))
 (in-package :lem-jsonrpc)
@@ -16,6 +17,9 @@
 (defvar *server*)
 
 (defvar *background-mode*)
+
+(setf lem::*implementation* :jsonrpc)
+(setf lem::*native-scroll-support* t)
 
 (when *debug*
   (setq *error-output*
@@ -347,8 +351,8 @@
     (error (e)
       (dbg (format nil "~%******ERROR******:~%~A~%" e)))))
 
-(setf lem::*implementation* :jsonrpc)
-(setf lem::*native-scroll-support* t)
+(defun js-eval (string)
+  (notify "js-eval" (params "string" string)))
 
 (define-command delete-html-pane () ()
   (notify "delete-pane" nil))

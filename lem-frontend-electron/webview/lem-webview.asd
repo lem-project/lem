@@ -2,6 +2,6 @@
   :depends-on ("plump"
                "clss")
   :serial t
-  :components ((:file "webview")
+  :components ((:file "lem-webview")
                (:file "clhs")))
 

@@ -1,5 +1,5 @@
 (defpackage :lem-webview.clhs
-  (:use :cl :lem-webview))
+  (:use :cl :lem :lem-webview))
 (in-package :lem-webview.clhs)
 
 (defparameter *clhs-base-url*

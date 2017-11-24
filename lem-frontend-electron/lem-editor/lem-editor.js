@@ -328,7 +328,7 @@ class Surface {
         this.ctx2.fillRect(
             x * fontAttribute.width,
             y * fontAttribute.height,
-            w * fontAttribute.width,
+            w * fontAttribute.width + 1,
             h * fontAttribute.height,
         );
     }

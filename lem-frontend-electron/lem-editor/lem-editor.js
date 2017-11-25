@@ -109,6 +109,7 @@ class LemEditor extends HTMLElement {
         this.on('scroll', this.scroll.bind(this));
         this.on('update-display', this.updateDisplay.bind(this));
         this.on('js-eval', this.jsEval.bind(this));
+        this.on('set-pane', this.setHtmlPane.bind(this));
         this.on('delete-pane', this.deletePane.bind(this));
         this.on('import', this.importModule.bind(this));
         this.on('exit', this.exit.bind(this));
@@ -160,6 +161,16 @@ class LemEditor extends HTMLElement {
             this.resize(this.width, this.height);
         }
         this.lemSidePane.append(e);
+    }
+
+    setHtmlPane(params) {
+        try {
+            const div = document.createElement('div');
+            div.innerHTML = utf8.getStringFromBytes(params.html);
+            this.setPane(div);
+        } catch (e) {
+            console.log(e);
+        }
     }
 
     deletePane() {

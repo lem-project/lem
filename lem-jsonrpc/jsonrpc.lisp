@@ -2,6 +2,7 @@
   (:use :cl :lem)
   (:export :notify
            :js-eval
+           :set-html-pane
            :delete-html-pane
            :import-electron-module))
 (in-package :lem-jsonrpc)
@@ -352,10 +353,16 @@
       (dbg (format nil "~%******ERROR******:~%~A~%" e)))))
 
 (defun js-eval (string)
-  (notify "js-eval" (params "string" string)))
+  (with-error-handler ()
+    (notify "js-eval" (params "string" string))))
+
+(defun set-html-pane (html)
+  (with-error-handler ()
+    (notify "set-pane" (params "html" (babel:string-to-octets html)))))
 
 (define-command delete-html-pane () ()
-  (notify "delete-pane" nil))
+  (with-error-handler ()
+    (notify "delete-pane" nil)))
 
 (defvar *electron-modules* '())
 

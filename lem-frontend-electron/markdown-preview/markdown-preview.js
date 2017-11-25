@@ -1,6 +1,7 @@
 'use strict';
 
 const marked = require('marked');
+const utf8 = require('utf-8');
 
 class Markdown extends HTMLElement {
     constructor() {
@@ -22,6 +23,6 @@ customElements.define('lem-markdown', Markdown);
 const lemEditor = document.getElementById('lem-editor');
 const markdown = document.createElement('lem-markdown');
 lemEditor.on('markdown-update', function (params) {
-    markdown.update(params.text);
+    markdown.update(utf8.getStringFromBytes(params.text));
 });
 lemEditor.setPane(markdown);

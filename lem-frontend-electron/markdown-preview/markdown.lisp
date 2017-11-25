@@ -17,7 +17,7 @@
 
 (defun send-markdown-text (text)
   (notify "markdown-update"
-          (alexandria:plist-hash-table `("text" ,text)
+          (alexandria:plist-hash-table `("text" ,(babel:string-to-octets text))
                                        :test #'equal)))
 
 (define-command markdown-update () ()

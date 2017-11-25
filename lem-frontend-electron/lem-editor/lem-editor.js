@@ -47,9 +47,39 @@ function getCurrentWindowSize() {
     return getCurrentWindow().getSize();
 }
 
-class LemModule extends HTMLElement {
+function getCurrentWindowWidth() {
+    return getCurrentWindowSize()[0];
+}
+
+function getCurrentWindowHeight() {
+    return getCurrentWindowSize()[1];
+}
+
+class LemEditorPane extends HTMLElement {
     constructor() {
         super();
+    }
+}
+
+class LemSidePane extends HTMLElement {
+    constructor() {
+        super();
+        this.elements = [];
+    }
+
+    append(element) {
+        const div = document.createElement('div');
+        div.style.overflow = 'hidden';
+        div.appendChild(element);
+        this.appendChild(div);
+        this.elements.push(div);
+        this.elements.forEach((e, i) => {
+            e.style.height = `${100 / this.elements.length}%`;
+        });
+    }
+
+    deleteAll() {
+        this.elements.forEach((e) => this.removeChild(e));
     }
 }
 
@@ -85,10 +115,11 @@ class LemEditor extends HTMLElement {
 
         this.rpcConnection.listen();
 
-        this.lemModule = document.createElement('lem-module');
-        this.lemModule.style.float = 'left';
-        this.appendChild(this.lemModule);
-        this.sideElement = null;
+        this.lemEditorPane = document.createElement('lem-editor-pane');
+        this.lemEditorPane.style.float = 'left';
+        this.appendChild(this.lemEditorPane);
+
+        this.lemSidePane = null;
 
         const [width, height] = getCurrentWindowSize();
         this.width = width;
@@ -109,7 +140,7 @@ class LemEditor extends HTMLElement {
 
         const mainWindow = getCurrentWindow();
         mainWindow.on('resize', () => {
-            const {width, height} = mainWindow.getBounds();
+            const { width, height } = mainWindow.getBounds();
             this.resize(width, height);
         });
 
@@ -123,18 +154,18 @@ class LemEditor extends HTMLElement {
     }
 
     setPane(e) {
-        if (this.sideElement !== null) this.deletePane();
-        this.resize(this.width / 2, this.height);
-        this.appendChild(e);
-        this.sideElement = e;
+        if (this.lemSidePane === null) {
+            this.lemSidePane = document.createElement('lem-side-pane');
+            this.appendChild(this.lemSidePane);
+            this.resize(this.width, this.height);
+        }
+        this.lemSidePane.append(e);
     }
 
     deletePane() {
-        if (this.sideElement) {
-            this.removeChild(this.sideElement);
-            this.sideElement = null;
-            this.resize(...getCurrentWindowSize());
-        }
+        this.removeChild(this.lemSidePane);
+        this.lemSidePane = null;
+        this.resize(...getCurrentWindowSize());
     }
 
     importModule(params) {
@@ -157,15 +188,17 @@ class LemEditor extends HTMLElement {
     }
 
     resize(width, height) {
-        if (this.sideElement !== null) width /= 2;
+        if (this.lemSidePane !== null) {
+            width /= 2;
+        }
         this.width = width;
         this.height = height;
         this.emitInput(kindResize, {
             "width": calcDisplayCols(width),
             "height": calcDisplayRows(height)
         });
-        this.lemModule.style.width = width;
-        this.lemModule.style.height = height;
+        this.lemEditorPane.style.width = width;
+        this.lemEditorPane.style.height = height;
     }
 
     updateForeground(params) {
@@ -180,7 +213,7 @@ class LemEditor extends HTMLElement {
         try {
             const { id, x, y, width, height, use_modeline, kind } = params;
             const view = new View(id, x, y, width, height, use_modeline, kind);
-            view.allTags().forEach((child) => { this.lemModule.appendChild(child); });
+            view.allTags().forEach((child) => { this.lemEditorPane.appendChild(child); });
             viewTable[id] = view;
         } catch (e) { console.log(e); }
     }
@@ -279,9 +312,9 @@ class LemEditor extends HTMLElement {
     }
 
     jsEval(params) {
-        try{
+        try {
             eval(params.string);
-        } catch (e) {console.log(e); }
+        } catch (e) { console.log(e); }
     }
 }
 
@@ -522,5 +555,6 @@ class View {
     }
 }
 
-customElements.define('lem-module', LemModule);
 customElements.define('lem-editor', LemEditor);
+customElements.define('lem-side-pane', LemSidePane);
+customElements.define('lem-editor-pane', LemEditorPane);

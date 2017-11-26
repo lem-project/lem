@@ -356,9 +356,11 @@
   (with-error-handler ()
     (notify "js-eval" (params "string" string))))
 
-(defun set-html-pane (html)
+(defun set-html-pane (name html)
   (with-error-handler ()
-    (notify "set-pane" (params "html" (babel:string-to-octets html)))))
+    (notify "set-pane"
+            (params "name" name
+                    "html" (babel:string-to-octets html)))))
 
 (define-command delete-html-pane () ()
   (with-error-handler ()

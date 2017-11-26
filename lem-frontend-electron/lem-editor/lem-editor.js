@@ -32,6 +32,7 @@ const kindAbort = 0;
 const kindKeyEvent = 1;
 const kindResize = 2;
 const kindCommand = 3;
+const kindMethod = 4;
 
 const viewTable = {};
 
@@ -189,6 +190,10 @@ class LemEditor extends HTMLElement {
         try {
             ipcRenderer.send('exit');
         } catch (e) { console.log(e); }
+    }
+
+    sendNotification(method, params) {
+        this.emitInput(kindMethod, {"method": method, "params": params});
     }
 
     emitInput(kind, value) {

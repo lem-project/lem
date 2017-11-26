@@ -1,6 +1,7 @@
 (defpackage :lem-jsonrpc
   (:use :cl :lem)
   (:export :notify
+           :define-notification-method
            :js-eval
            :set-html-pane
            :delete-html-pane
@@ -256,7 +257,14 @@
   +abort+
   +keyevent+
   +resize+
-  +command+)
+  +command+
+  +method+)
+
+(defvar *method-table* (make-hash-table :test 'equal))
+
+(defmacro define-notification-method (name params &body body)
+  `(setf (gethash ,name *method-table*)
+         (lambda (&key ,@params) ,@body)))
 
 (defvar *key-table*
   (alexandria:plist-hash-table
@@ -347,6 +355,14 @@
                              (apply (lem::find-command-symbol (first value))
                                     (rest value))
                              (redraw-display))))
+              ((= kind +method+)
+               (let* ((method (gethash (gethash "method" value) *method-table*))
+                      (params (gethash "params" value))
+                      (args
+                        (loop :for k :being :the :hash-keys :in params :using (hash-value v)
+                              :collect (intern (string-upcase k) :keyword)
+                              :collect v)))
+                 (send-event (lambda () (apply method args)))))
               (t
                (error "unexpected kind: ~D" kind))))
     (error (e)

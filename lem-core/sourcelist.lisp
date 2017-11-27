@@ -10,13 +10,19 @@
   (t :background "cyan"))
 
 (defvar *sourcelist-point*)
-(defvar *current-sourcelist* nil)
+(defvar *current-sourcelist-buffer* nil)
 
 (defstruct sourcelist
   buffer-name
   temp-point
   (elements (make-array 0 :adjustable t :fill-pointer 0))
   (index -1))
+
+(defun get-sourcelist (buffer)
+  (buffer-value buffer 'sourcelist))
+
+(defun (setf get-sourcelist) (sourcelist buffer)
+  (setf (buffer-value buffer 'sourcelist) sourcelist))
 
 (defun call-with-sourcelist (buffer-name function focus)
   (let ((buffer (make-buffer buffer-name :read-only-p t :enable-undo-p nil))
@@ -31,7 +37,8 @@
           (setf (current-window) (display-buffer buffer))
           (display-buffer buffer))
       (setf (variable-value 'truncate-lines :buffer buffer) nil)
-      (setf *current-sourcelist* sourcelist))))
+      (setf (get-sourcelist buffer) sourcelist)
+      (setf *current-sourcelist-buffer* buffer))))
 
 (defmacro with-sourcelist ((var buffer-name &key focus) &body body)
   `(call-with-sourcelist ,buffer-name
@@ -65,10 +72,10 @@
         (start-timer 300 nil (lambda ()
                                (delete-overlay overlay)))))))
 
-(defun jump-current-element (index)
-  (funcall (aref (sourcelist-elements *current-sourcelist*)
+(defun jump-current-element (index sourcelist)
+  (funcall (aref (sourcelist-elements sourcelist)
                  index)
-           (let ((buffer-name (sourcelist-buffer-name *current-sourcelist*)))
+           (let ((buffer-name (sourcelist-buffer-name sourcelist)))
              (lambda (buffer)
                (with-point ((p (buffer-point buffer)))
                  (let ((sourcelist-window
@@ -86,19 +93,23 @@
 (define-key *global-keymap* "C-x n" 'sourcelist-next)
 (define-key *global-keymap* "C-x C-n" 'sourcelist-next)
 (define-command sourcelist-next () ()
-  (when *current-sourcelist*
-    (when (< (1+ (sourcelist-index *current-sourcelist*))
-             (length (sourcelist-elements *current-sourcelist*)))
-      (jump-current-element
-       (incf (sourcelist-index *current-sourcelist*))))))
+  (when *current-sourcelist-buffer*
+    (alexandria:when-let ((sourcelist (get-sourcelist *current-sourcelist-buffer*)))
+      (when (< (1+ (sourcelist-index sourcelist))
+               (length (sourcelist-elements sourcelist)))
+        (jump-current-element
+         (incf (sourcelist-index sourcelist))
+         sourcelist)))))
 
 (define-key *global-keymap* "C-x p" 'sourcelist-previous)
 (define-key *global-keymap* "C-x C-p" 'sourcelist-previous)
 (define-command sourcelist-previous () ()
-  (when *current-sourcelist*
-    (when (<= 0 (1- (sourcelist-index *current-sourcelist*)))
-      (jump-current-element
-       (decf (sourcelist-index *current-sourcelist*))))))
+  (when *current-sourcelist-buffer*
+    (alexandria:when-let ((sourcelist (get-sourcelist *current-sourcelist-buffer*)))
+      (when (<= 0 (1- (sourcelist-index sourcelist)))
+        (jump-current-element
+         (decf (sourcelist-index sourcelist))
+         sourcelist)))))
 
 (define-minor-mode sourcelist-mode
     (:name "sourcelist"
@@ -108,7 +119,7 @@
 (define-key *sourcelist-mode-keymap* "q" 'quit-window)
 
 (define-command sourcelist-jump () ()
-  (let ((index (text-property-at (current-point) 'sourcelist)))
-    (when index
-      (jump-current-element
-       (setf (sourcelist-index *current-sourcelist*) index)))))
+  (alexandria:when-let ((sourcelist (get-sourcelist (current-buffer)))
+                        (index (text-property-at (current-point) 'sourcelist)))
+    (jump-current-element (setf (sourcelist-index sourcelist) index)
+                          sourcelist)))

@@ -1,5 +1,5 @@
 (defpackage :lem-markdown
-  (:use :cl :lem :lem-jsonrpc))
+  (:use :cl :lem :lem-jsonrpc :lem-electron-backend))
 (in-package :lem-markdown)
 
 (define-major-mode markdown-mode ()

@@ -1,5 +1,5 @@
 (defpackage :lem-webview
-  (:use :cl :lem :lem-jsonrpc)
+  (:use :cl :lem :lem-jsonrpc :lem-electron-backend)
   (:export :webview-open))
 (in-package :lem-webview)
 

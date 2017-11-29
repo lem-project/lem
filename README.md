@@ -1,4 +1,9 @@
 # lem
+![Terminal](screenshots/terminal.png)　　
+
+
+![Electron](screenshots/electron.png)　　
+
 
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
 
@@ -6,14 +11,32 @@
 - [roswell](https://github.com/roswell/roswell)
 - ncurses
 
+## Platform
+- Linux
+- MacOS 10.13+ 
+
 ## Installation
-`$ ros install cxxxr/lem`
+```
+$ ros install cxxxr/lem
+```
 
 ## Usage
-`$ lem`  
-
-    CL-USER> (ql:quickload :lem)
-    CL-USER> (lem:lem)
+If you add the PATH, you can start using lem at once!
+```
+$ lem
+```
+You can also start lem on roswell's REPL.
+```
+$ ros run
+CL-USER> (ql:quickload :lem)
+CL-USER> (lem:lem)
+```
+## Notes
+- If you use Rasberry Pi, you need to use CCL(Clozure Common Lisp).  
+Please change the CL implementation to CCL as follow:
+```
+$ ros use ccl-bin
+```
 
 ## Contributors
 

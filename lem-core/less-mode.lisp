@@ -79,7 +79,7 @@
 
 (define-command less-backward-window () ()
   (dotimes (_ (arg))
-    (prev-page)))
+    (previous-page)))
 
 (define-command less-forward-half-window () ()
   (scroll-down (floor (window-height) 2)))

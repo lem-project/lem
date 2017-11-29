@@ -1,7 +1,7 @@
 (in-package :lem)
 
-(export '(next-word
-          prev-word
+(export '(forward-word
+          previous-word
           delete-word
           backward-delete-word
           downcase-region
@@ -57,14 +57,14 @@
                              (lambda (c) (eql type (word-type c))))))
           :finally (return point))))
 
-(define-key *global-keymap* "M-f" 'next-word)
-(define-key *global-keymap* "C-right" 'next-word)
-(define-command next-word (n) ("p")
+(define-key *global-keymap* "M-f" 'forward-word)
+(define-key *global-keymap* "C-right" 'forward-word)
+(define-command forward-word (n) ("p")
   (word-offset (current-point) n))
 
-(define-key *global-keymap* "M-b" 'prev-word)
-(define-key *global-keymap* "C-left" 'prev-word)
-(define-command prev-word (n) ("p")
+(define-key *global-keymap* "M-b" 'previous-word)
+(define-key *global-keymap* "C-left" 'previous-word)
+(define-command previous-word (n) ("p")
   (word-offset (current-point) (- n)))
 
 (define-key *global-keymap* "M-d" 'delete-word)

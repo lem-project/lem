@@ -20,19 +20,19 @@
           yank
           yank-pop
           next-line
-          prev-line
-          next-char
-          prev-char
+          previous-line
+          forward-char
+          backward-char
           move-to-beginning-of-buffer
           move-to-end-of-buffer
           move-to-beginning-of-line
           move-to-end-of-line
           next-page
-          prev-page
+          previous-page
           entab-line
           detab-line
           next-page-char
-          prev-page-char
+          previous-page-char
           delete-blank-lines
           just-one-space
           delete-indentation
@@ -134,7 +134,7 @@
             (end (region-end)))
         (delete-character start (count-characters start end)))
       (progn
-        (prev-char (or n 1))
+        (backward-char (or n 1))
         (delete-next-char n))))
 
 (define-key *global-keymap* "M-w" 'copy-region)
@@ -213,20 +213,20 @@
            (editor-error "Beginning of buffer"))))
   t)
 
-(define-key *global-keymap* "C-p" 'prev-line)
-(define-key *global-keymap* "[up]" 'prev-line)
-(define-command prev-line (&optional n) ("p")
+(define-key *global-keymap* "C-p" 'previous-line)
+(define-key *global-keymap* "[up]" 'previous-line)
+(define-command previous-line (&optional n) ("p")
   (next-line (- n)))
 
-(define-key *global-keymap* "C-f" 'next-char)
-(define-key *global-keymap* "[right]" 'next-char)
-(define-command next-char (&optional (n 1)) ("p")
+(define-key *global-keymap* "C-f" 'forward-char)
+(define-key *global-keymap* "[right]" 'forward-char)
+(define-command forward-char (&optional (n 1)) ("p")
   (or (character-offset (current-point) n)
       (editor-error "End of buffer")))
 
-(define-key *global-keymap* "C-b" 'prev-char)
-(define-key *global-keymap* "[left]" 'prev-char)
-(define-command prev-char (&optional (n 1)) ("p")
+(define-key *global-keymap* "C-b" 'backward-char)
+(define-key *global-keymap* "[left]" 'backward-char)
+(define-command backward-char (&optional (n 1)) ("p")
   (or (character-offset (current-point) (- n))
       (editor-error "Beginning of buffer")))
 
@@ -274,9 +274,9 @@
          (window-recenter (current-window))
          t))))
 
-(define-key *global-keymap* "M-v" 'prev-page)
-(define-key *global-keymap* "[ppage]" 'prev-page)
-(define-command prev-page (&optional n) ("P")
+(define-key *global-keymap* "M-v" 'previous-page)
+(define-key *global-keymap* "[ppage]" 'previous-page)
+(define-command previous-page (&optional n) ("P")
   (if n
       (scroll-up n)
       (cond
@@ -331,8 +331,8 @@
         (when (eql #\page (character-at point 0))
           (return))))))
 
-(define-key *global-keymap* "C-x [" 'prev-page-char)
-(define-command prev-page-char (&optional (n 1)) ("p")
+(define-key *global-keymap* "C-x [" 'previous-page-char)
+(define-command previous-page-char (&optional (n 1)) ("p")
   (next-page-char (- n)))
 
 (define-key *global-keymap* "C-x C-o" 'delete-blank-lines)

@@ -19,10 +19,3 @@ class Markdown extends HTMLElement {
 }
 
 customElements.define('lem-markdown', Markdown);
-
-const lemEditor = document.getElementById('lem-editor');
-const markdown = document.createElement('lem-markdown');
-lemEditor.on('markdown-update', function (params) {
-    markdown.update(utf8.getStringFromBytes(params.text));
-});
-lemEditor.setPane(markdown);

@@ -8,18 +8,15 @@
 (in-package :lem-electron-backend)
 
 (defun js-eval (string)
-  (with-error-handler ()
-    (notify "js-eval" (params "string" string))))
+  (notify "js-eval" (params "string" string)))
 
 (defun set-html-pane (name html)
-  (with-error-handler ()
-    (notify "set-pane"
-            (params "name" name
-                    "html" (babel:string-to-octets html)))))
+  (notify "set-pane"
+          (params "name" name
+                  "html" (babel:string-to-octets html))))
 
 (define-command delete-html-pane () ()
-  (with-error-handler ()
-    (notify "delete-pane" nil)))
+  (notify "delete-pane" nil))
 
 (defvar *electron-modules* '())
 

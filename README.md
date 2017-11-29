@@ -1,4 +1,6 @@
-# lem
+# lem : The Editor for Common Lispers
+
+
 ![Terminal](screenshots/terminal.png)　　
 
 
@@ -6,6 +8,20 @@
 
 
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
+
+## What is lem?
+Lem is the editor for Common Lispers.
+
+Lem makes it possible to develop in Common Lisp the moment you've installed it. 
+
+You don't need any tidy setting or install any other plugins.
+
+You can write the setting and even write your original plugin in Common Lisp.
+
+## Vision
+- To make Better, Faster, Stronger CL development environment!
+- To combine Common Lisp with Web ecosystem!
+- To generate Common Lisp application by just one click!
 
 ## Requirement
 - [roswell](https://github.com/roswell/roswell)

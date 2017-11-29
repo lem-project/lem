@@ -1,14 +1,8 @@
 # lem : The Editor for Common Lispers
 
-
 ![Terminal](screenshots/terminal.png)　　
 
 ![Electron](screenshots/electron.png)　　
-
-
-## Screencast
-[![Screencast](http://img.youtube.com/vi/EtEy2x4vwDs/0.jpg)(http://www.youtube.com/watch?v=EtEy2x4vwDs)]
-
 
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
 

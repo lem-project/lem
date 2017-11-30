@@ -8,7 +8,8 @@
           modeline-name
           modeline-mode-names
           modeline-position
-          modeline-posline))
+          modeline-posline
+          convert-modeline-element))
 
 (define-editor-variable modeline-format '(modeline-write-info
                                           modeline-name
@@ -85,6 +86,11 @@
                  (float (/ (line-number-at-point (window-view-point window))
                            (buffer-nlines (window-buffer window))))))))))
 
+(defgeneric convert-modeline-element (element))
+
+(defmethod convert-modeline-element ((element string))
+  element)
+
 (defun modeline-apply-1 (window print-fn default-attribute items)
   (dolist (item items)
     (handler-case
@@ -100,7 +106,7 @@
               (when alignment-1
                 (setf alignment alignment-1))))
           (funcall print-fn
-                   (princ-to-string name)
+                   (convert-modeline-element (princ-to-string name))
                    attribute
                    alignment))
       (error (c)

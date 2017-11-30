@@ -5,15 +5,16 @@
 (in-package :lem.universal-argument)
 
 (defparameter *base* 4)
-(defvar *argument*)
-(defvar *universal-argument-keymap*
-  (make-keymap :name '*universal-argument-keymap*
-               :undef-hook 'universal-argument-default))
 
 (defstruct arg-state
   (type nil)
   (u 1)
   (n '()))
+
+(defvar *argument* (make-arg-state))
+(defvar *universal-argument-keymap*
+  (make-keymap :name '*universal-argument-keymap*
+               :undef-hook 'universal-argument-default))
 
 (defun to-integer (arg-state)
   (case (arg-state-type arg-state)
@@ -32,8 +33,7 @@
 
 (define-minor-mode universal-argument-mode
     (:name "C-U"
-     :keymap *universal-argument-keymap*)
-  (reset-argument))
+     :keymap *universal-argument-keymap*))
 
 (define-key *global-keymap* "C-u" 'universal-argument)
 (define-key *universal-argument-keymap* "C-g" 'universal-argument-abort)
@@ -41,8 +41,8 @@
 (define-key *universal-argument-keymap* "-" 'universal-argument-minus)
 (loop :for n :from 0 :to 9
       :for command := (read-from-string (format nil "universal-argument-~D" n))
-      :do (define-key *universal-argument-keymap* (prin1-to-string n) command)
-          ;(define-key *universal-argument-keymap* (format nil "C-~D" n) command)
+      :do (define-key *global-keymap* (format nil "M-~D" n) command)
+          (define-key *universal-argument-keymap* (prin1-to-string n) command)
           (define-key *universal-argument-keymap* (format nil "M-~D" n) command))
 
 (define-command universal-argument () ()
@@ -82,6 +82,7 @@
 
 (defmacro def-universal-argument-n (n)
   `(define-command ,(alexandria:symbolicate (format nil "UNIVERSAL-ARGUMENT-~D" n)) () ()
+     (universal-argument-mode t)
      (argument-n *argument* ,n)
      (update-message)))
 

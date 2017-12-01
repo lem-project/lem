@@ -6,7 +6,7 @@
 (in-package :lem-vi-mode)
 
 (defvar *vi-keymap* (make-keymap :name '*vi-keymap* :undef-hook 'vi-command-dispatcher))
-(defvar *command-keymap* (make-keymap :name '*command-keymap*))
+(defvar *command-keymap* (make-keymap :name '*command-keymap* :undef-hook 'vi-default-undef-hook))
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap*))
 
 (defvar *current-state*)
@@ -84,13 +84,22 @@
 
 (define-key *insert-keymap* "escape" 'vi-insert-end)
 
+(defun call-global-command (key-seq arg)
+  (let ((command (lem::keymap-find-keybind *global-keymap* key-seq)))
+    (call-command command arg)))
+
 (define-command vi-command-dispatcher (arg) ("P")
   (let* ((key-seq (last-read-key-sequence))
          (command (lem::keymap-find-keybind (vi-state-keymap *current-state*) key-seq)))
     (if command
         (call-command command arg)
-        (let ((command (lem::keymap-find-keybind *global-keymap* key-seq)))
-          (call-command command arg)))))
+        (call-global-command key-seq arg))))
+
+(define-command vi-default-undef-hook (arg) ("P")
+  (let ((key-seq (last-read-key-sequence)))
+    (if (insertion-key-p key-seq)
+        (undefined-key)
+        (call-global-command key-seq arg))))
 
 (define-command vi-move-to-beginning-of-line/universal-argument-0 () ()
   (if (mode-active-p (current-buffer) 'universal-argument)

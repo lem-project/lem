@@ -86,10 +86,18 @@
                  (float (/ (line-number-at-point (window-view-point window))
                            (buffer-nlines (window-buffer window))))))))))
 
-(defgeneric convert-modeline-element (element))
+(defgeneric convert-modeline-element (element window))
 
-(defmethod convert-modeline-element ((element string))
-  element)
+(defmethod convert-modeline-element ((element t) window)
+  (princ-to-string element))
+
+(defmethod convert-modeline-element ((element function) window)
+  (multiple-value-bind (name attribute alignment)
+      (funcall element window)
+    (values name attribute alignment)))
+
+(defmethod convert-modeline-element ((element symbol) window)
+  (convert-modeline-element (symbol-function element) window))
 
 (defun modeline-apply-1 (window print-fn default-attribute items)
   (dolist (item items)
@@ -98,15 +106,13 @@
             (if (consp item)
                 (values (first item) (or (second item) default-attribute) (or (third item) :left))
                 (values item default-attribute :left))
-          (when (or (symbolp name) (functionp name))
-            (let (attribute-1 alignment-1)
-              (multiple-value-setq (name attribute-1 alignment-1) (funcall name window))
-              (when attribute-1
-                (setf attribute attribute-1))
-              (when alignment-1
-                (setf alignment alignment-1))))
+          (let (attribute-1 alignment-1)
+            (setf (values name attribute-1 alignment-1)
+                  (convert-modeline-element name window))
+            (when attribute-1 (setf attribute attribute-1))
+            (when alignment-1 (setf alignment alignment-1)))
           (funcall print-fn
-                   (convert-modeline-element (princ-to-string name))
+                   (princ-to-string name)
                    attribute
                    alignment))
       (error (c)

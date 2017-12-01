@@ -60,11 +60,10 @@
      (pushnew ',major-mode *mode-list*)
      (setf (mode-name ',major-mode) ,name)
      ,@(cond (keymap
-              `((defvar ,keymap (make-keymap :name ',keymap))
-                (setf (mode-keymap ',major-mode) ,keymap)
-                ,(when parent-mode
-                   `(setf (keymap-parent ,keymap)
-                          (mode-keymap ',parent-mode)))))
+              `((defvar ,keymap (make-keymap :name ',keymap
+                                             :parent ,(when parent-mode
+                                                        `(mode-keymap ',parent-mode))))
+                (setf (mode-keymap ',major-mode) ,keymap)))
              (parent-mode
               `((setf (mode-keymap ',major-mode)
                       (mode-keymap ',parent-mode))))
@@ -146,12 +145,12 @@
   (alexandria:with-gensyms (parent-mode)
     `(progn
        ,@(when keymap
-           `((defvar ,keymap (make-keymap :name ',keymap))
-             (alexandria:when-let ((,parent-mode
-                                    ,(when parent
-                                       `(get ',parent 'global-mode))))
-               (setf (keymap-parent ,keymap)
-                     (global-mode-keymap ,parent-mode)))))
+           `((defvar ,keymap
+               (make-keymap :name ',keymap
+                            :parent (alexandria:when-let ((,parent-mode
+                                                           ,(when parent
+                                                              `(get ',parent 'global-mode))))
+                                      (global-mode-keymap ,parent-mode))))))
        (setf (get ',mode 'global-mode)
              (make-instance 'global-mode
                             :name ',mode

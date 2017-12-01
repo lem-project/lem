@@ -37,11 +37,10 @@
     (funcall (vi-state-function state))))
 
 (define-vi-state command (:keymap *command-keymap*)
-  (setf (buffer-read-only-p (current-buffer)) t)
   (setf (element-name *modeline-element*) "[NORMAL]"))
 
 (define-vi-state insert (:keymap *insert-keymap*)
-  (setf (buffer-read-only-p (current-buffer)) nil)
+  (message " -- INSERT --")
   (setf (element-name *modeline-element*) "[INSERT]"))
 
 (defun on-hook ()

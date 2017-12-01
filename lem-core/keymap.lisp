@@ -280,7 +280,7 @@
                   (keymap-find-keybind (mode-keymap mode) key)))
               (buffer-minor-modes buffer))
         (keymap-find-keybind (mode-keymap (buffer-major-mode buffer)) key)
-        (keymap-find-keybind *global-keymap* key))))
+        (keymap-find-keybind (global-mode-keymap (current-global-mode)) key))))
 
 (defun find-keybind (key)
   (let ((cmd (lookup-keybind key)))

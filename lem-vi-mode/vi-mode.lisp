@@ -5,7 +5,7 @@
         :lem-vi-mode.commands))
 (in-package :lem-vi-mode)
 
-(defvar *command-keymap* (make-keymap :name '*command-keymap*))
+(defvar *command-keymap* (make-keymap :name '*command-keymap* :insertion-hook 'undefined-key))
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap*))
 
 (defvar *modeline-element*)

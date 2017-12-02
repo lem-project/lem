@@ -1,6 +1,6 @@
 # lem : the editor for Common Lispers
 
-## Screenshots
+## Screenshot
 Terminal(default)
 
 ![Terminal](screenshots/terminal.png)　　
@@ -18,12 +18,9 @@ Lem makes it possible to develop in Common Lisp the moment you've installed it.
 
 You don't need any tidy setting or install any other plugins.
 
-You can write the setting and even write your original plugin in Common Lisp.
-
 ## Vision
-- To make Better, Faster, Stronger CL development environment
+- To be able to extend itself in Common Lisp
 - To combine Common Lisp with Web ecosystem
-- To generate Common Lisp application with just one click
 
 ## Requirement
 - [roswell](https://github.com/roswell/roswell)
@@ -34,14 +31,23 @@ You can write the setting and even write your original plugin in Common Lisp.
 - MacOS 10.13+ 
 
 ## Installation
+
 ```
+# Terminal version (default)
 $ ros install cxxxr/lem
+
+# Electron version (beta)
+Please install Node.js and Electron in advance.
+$ ros install cxxxr/lem
+$ cd ~/.roswell/local-projects/cxxxr/lem/lem-frontend-electron
+$ npm install
+$ electron .
 ```
 
 ## Usage
 If you add the PATH, you can start using lem at once!
 ```
-$ lem
+$ lem <filename.lisp>
 ```
 You can also start lem on roswell's REPL.
 ```
@@ -49,6 +55,10 @@ $ ros run
 CL-USER> (ql:quickload :lem)
 CL-USER> (lem:lem)
 ```
+You can watch the screencast on Youtube.
+
+[Screencast](https://youtu.be/YkSJ3p7Z9H0)
+
 
 ## Notes
 - If you use Rasberry Pi, you need to use CCL(Clozure Common Lisp).  

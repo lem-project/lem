@@ -10,8 +10,7 @@
           toggle-minor-mode
           define-major-mode
           define-minor-mode
-          change-buffer-mode
-          define-global-mode))
+          change-buffer-mode))
 
 (defvar *mode-list* nil)
 
@@ -110,56 +109,3 @@
     (setf (current-buffer) buffer)
     (apply mode args))
   buffer)
-
-
-(defvar *global-mode-list* '())
-(defvar *current-global-mode* nil)
-
-(defclass global-mode ()
-  ((name :initarg :name :accessor global-mode-name)
-   (parent :initarg :parent :accessor global-mode-parent)
-   (keymap :initarg :keymap :accessor global-mode-keymap)
-   (on-hook :initarg :on-hook :accessor global-mode-on-hook)
-   (off-hook :initarg :off-hook :accessor global-mode-off-hook)))
-
-(defun current-global-mode ()
-  (if (symbolp *current-global-mode*)
-      (setf *current-global-mode*
-            (get *current-global-mode* 'global-mode))
-      *current-global-mode*))
-
-(defun change-global-mode (mode)
-  (flet ((call (fun)
-           (unless (null fun)
-             (alexandria:when-let ((fun (alexandria:ensure-function fun)))
-               (funcall fun)))))
-    (let ((global-mode (get mode 'global-mode)))
-      (check-type global-mode global-mode)
-      (when global-mode
-        (when *current-global-mode*
-          (call (global-mode-off-hook *current-global-mode*)))
-        (setf *current-global-mode* global-mode)
-        (call (global-mode-on-hook global-mode))))))
-
-(defmacro define-global-mode (mode parent (&key keymap on-hook off-hook))
-  (alexandria:with-gensyms (parent-mode)
-    `(progn
-       ,@(when keymap
-           `((defvar ,keymap
-               (make-keymap :name ',keymap
-                            :parent (alexandria:when-let ((,parent-mode
-                                                           ,(when parent
-                                                              `(get ',parent 'global-mode))))
-                                      (global-mode-keymap ,parent-mode))))))
-       (setf (get ',mode 'global-mode)
-             (make-instance 'global-mode
-                            :name ',mode
-                            :parent ',parent
-                            :keymap ,keymap
-                            :on-hook ,on-hook
-                            :off-hook ,off-hook))
-       (pushnew ',mode *global-mode-list*)
-       (define-command ,mode () ()
-         (change-global-mode ',mode))
-       (when (null *current-global-mode*)
-         (setf *current-global-mode* ',mode)))))

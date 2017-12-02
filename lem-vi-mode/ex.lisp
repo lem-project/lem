@@ -1,6 +1,11 @@
 (in-package :lem-vi-mode)
 
-(define-vi-state ex (:keymap *global-keymap*))
+(defvar *ex-keymap* (make-keymap :name '*ex-keymap*))
+
+(define-vi-state ex (:keymap *ex-keymap*))
+
+(define-key *ex-keymap* "C-m" 'minibuffer-read-line-confirm)
+(define-key *ex-keymap* "C-i" 'ex-complete)
 
 (define-command ex-complete () ()
   )

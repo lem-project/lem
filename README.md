@@ -1,7 +1,12 @@
-# lem : The Editor for Common Lispers
+# lem : the editor for Common Lispers
+
+## Screenshots
+Terminal(default)
 
 ![Terminal](screenshots/terminal.png)　　
 
+
+Electron version(beta, in progress)
 ![Electron](screenshots/electron.png)　　
 
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
@@ -16,9 +21,9 @@ You don't need any tidy setting or install any other plugins.
 You can write the setting and even write your original plugin in Common Lisp.
 
 ## Vision
-- To make Better, Faster, Stronger CL development environment!
-- To combine Common Lisp with Web ecosystem!
-- To generate Common Lisp application by just one click!
+- To make Better, Faster, Stronger CL development environment
+- To combine Common Lisp with Web ecosystem
+- To generate Common Lisp application with just one click
 
 ## Requirement
 - [roswell](https://github.com/roswell/roswell)
@@ -44,6 +49,7 @@ $ ros run
 CL-USER> (ql:quickload :lem)
 CL-USER> (lem:lem)
 ```
+
 ## Notes
 - If you use Rasberry Pi, you need to use CCL(Clozure Common Lisp).  
 Please change the CL implementation to CCL as follow:

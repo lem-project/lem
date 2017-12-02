@@ -5,11 +5,9 @@
         :lem-vi-mode.commands))
 (in-package :lem-vi-mode)
 
-(defvar *vi-keymap* (make-keymap :name '*vi-keymap* :undef-hook 'vi-command-dispatcher))
-(defvar *command-keymap* (make-keymap :name '*command-keymap* :undef-hook 'vi-default-undef-hook))
+(defvar *command-keymap* (make-keymap :name '*command-keymap*))
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap*))
 
-(defvar *current-state*)
 (defvar *modeline-element*)
 
 (define-attribute state-attribute
@@ -33,7 +31,7 @@
 (defun trans-state (name)
   (let ((state (get name 'state)))
     (assert (vi-state-p state))
-    (setf *current-state* state)
+    (setf (mode-keymap 'vi-mode) (vi-state-keymap state))
     (funcall (vi-state-function state))))
 
 (define-vi-state command (:keymap *command-keymap*)
@@ -43,18 +41,19 @@
   (message " -- INSERT --")
   (setf (element-name *modeline-element*) "[INSERT]"))
 
-(defun on-hook ()
+(defun enable-hook ()
   (setf *modeline-element* (make-vi-modeline-element))
   (modeline-add-status-list *modeline-element*)
   (trans-state 'command))
 
-(defun off-hook ()
+(defun disable-hook ()
   (modeline-remove-status-list *modeline-element*))
 
-(define-global-mode vi-mode emacs-mode
-  (:keymap *vi-keymap*
-   :on-hook #'on-hook
-   :off-hook #'off-hook))
+(define-minor-mode vi-mode
+    (:global t
+     :keymap *command-keymap*
+     :enable-hook #'enable-hook
+     :disable-hook #'disable-hook))
 
 (define-key *command-keymap* "0" 'vi-move-to-beginning-of-line/universal-argument-0)
 (define-key *command-keymap* "1" 'universal-argument-1)
@@ -83,23 +82,6 @@
 (define-key *command-keymap* "i" 'vi-insert)
 
 (define-key *insert-keymap* "escape" 'vi-insert-end)
-
-(defun call-global-command (key-seq arg)
-  (let ((command (lem::keymap-find-keybind *global-keymap* key-seq)))
-    (call-command command arg)))
-
-(define-command vi-command-dispatcher (arg) ("P")
-  (let* ((key-seq (last-read-key-sequence))
-         (command (lem::keymap-find-keybind (vi-state-keymap *current-state*) key-seq)))
-    (if command
-        (call-command command arg)
-        (call-global-command key-seq arg))))
-
-(define-command vi-default-undef-hook (arg) ("P")
-  (let ((key-seq (last-read-key-sequence)))
-    (if (insertion-key-p key-seq)
-        (undefined-key)
-        (call-global-command key-seq arg))))
 
 (define-command vi-move-to-beginning-of-line/universal-argument-0 () ()
   (if (mode-active-p (current-buffer) 'universal-argument)

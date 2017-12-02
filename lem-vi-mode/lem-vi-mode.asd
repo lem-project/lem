@@ -1,6 +1,10 @@
 (defsystem "lem-vi-mode"
-  :depends-on (:lem-core)
+  :depends-on ()
   :serial t
-  :components ((:file "word")
+  :components ((:file "package")
+               (:file "modeline")
+               (:file "state")
                (:file "commands")
+               (:file "ex")
+               (:file "word")
                (:file "vi-mode")))

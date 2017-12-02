@@ -1,53 +1,19 @@
-(defpackage :lem-vi-mode
-  (:use :cl
-        :lem
-        :lem.universal-argument
-        :lem-vi-mode.commands))
 (in-package :lem-vi-mode)
 
 (defvar *command-keymap* (make-keymap :name '*command-keymap* :insertion-hook 'undefined-key))
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap*))
 
-(defvar *modeline-element*)
-
-(define-attribute state-attribute
-  (t :reverse-p t))
-
-(defstruct vi-state
-  name
-  keymap
-  function)
-
-(defstruct (vi-modeline-element (:conc-name element-))
-  name)
-
-(defmethod convert-modeline-element ((element vi-modeline-element) window)
-  (values (element-name element) 'state-attribute))
-
-(defmacro define-vi-state (name (&key keymap) &body body)
-  `(setf (get ',name 'state)
-         (make-vi-state :name ',name :keymap ,keymap :function (lambda () ,@body))))
-
-(defun trans-state (name)
-  (let ((state (get name 'state)))
-    (assert (vi-state-p state))
-    (setf (mode-keymap 'vi-mode) (vi-state-keymap state))
-    (funcall (vi-state-function state))))
-
-(define-vi-state command (:keymap *command-keymap*)
-  (setf (element-name *modeline-element*) "[NORMAL]"))
+(define-vi-state command (:keymap *command-keymap*))
 
 (define-vi-state insert (:keymap *insert-keymap*)
-  (message " -- INSERT --")
-  (setf (element-name *modeline-element*) "[INSERT]"))
+  (message " -- INSERT --"))
 
 (defun enable-hook ()
-  (setf *modeline-element* (make-vi-modeline-element))
-  (modeline-add-status-list *modeline-element*)
+  (initialize-vi-modeline)
   (trans-state 'command))
 
 (defun disable-hook ()
-  (modeline-remove-status-list *modeline-element*))
+  (finalize-vi-modeline))
 
 (define-minor-mode vi-mode
     (:global t
@@ -84,6 +50,7 @@
 (define-key *command-keymap* "u" 'undo)
 (define-key *command-keymap* "C-r" 'redo)
 (define-key *command-keymap* "i" 'vi-insert)
+(define-key *command-keymap* ":" 'vi-ex)
 
 (define-key *insert-keymap* "escape" 'vi-normal)
 

@@ -3,7 +3,7 @@
         :lem
         :lem-vi-mode.word
         :lem.universal-argument)
-  (:export :vi-move-to-beginning-of-line
+  (:export :vi-move-to-beginning-of-line/universal-argument-0
            :vi-forward-char
            :vi-backward-char
            :vi-next-line

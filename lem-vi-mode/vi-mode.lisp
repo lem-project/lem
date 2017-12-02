@@ -77,19 +77,18 @@
 (define-key *command-keymap* "E" 'vi-forward-word-end-broad)
 (define-key *command-keymap* "$" 'vi-move-to-end-of-line)
 (define-key *command-keymap* "^" 'vi-back-to-indentation)
+(define-key *command-keymap* "{" 'backward-paragraph)
+(define-key *command-keymap* "}" 'forward-paragraph)
 (define-key *command-keymap* "x" 'vi-delete-next-char)
 (define-key *command-keymap* "X" 'vi-delete-previous-char)
+(define-key *command-keymap* "u" 'undo)
+(define-key *command-keymap* "C-r" 'redo)
 (define-key *command-keymap* "i" 'vi-insert)
 
-(define-key *insert-keymap* "escape" 'vi-insert-end)
-
-(define-command vi-move-to-beginning-of-line/universal-argument-0 () ()
-  (if (mode-active-p (current-buffer) 'universal-argument)
-      (universal-argument-0)
-      (move-to-beginning-of-line)))
+(define-key *insert-keymap* "escape" 'vi-normal)
 
 (define-command vi-insert () ()
   (trans-state 'insert))
 
-(define-command vi-insert-end () ()
+(define-command vi-normal () ()
   (trans-state 'command))

@@ -10,7 +10,7 @@
 
 (defun enable-hook ()
   (initialize-vi-modeline)
-  (trans-state 'command))
+  (change-state 'command))
 
 (defun disable-hook ()
   (finalize-vi-modeline))
@@ -55,7 +55,7 @@
 (define-key *insert-keymap* "escape" 'vi-normal)
 
 (define-command vi-insert () ()
-  (trans-state 'insert))
+  (change-state 'insert))
 
 (define-command vi-normal () ()
-  (trans-state 'command))
+  (change-state 'command))

@@ -9,7 +9,7 @@
   `(setf (get ',name 'state)
          (make-vi-state :name ',name :keymap ,keymap :function (lambda () ,@body))))
 
-(defun trans-state (name)
+(defun change-state (name)
   (let ((state (get name 'state)))
     (assert (vi-state-p state))
     (setf (mode-keymap 'vi-mode) (vi-state-keymap state))

@@ -1,4 +1,13 @@
-(in-package :lem-vi-mode)
+(defpackage :lem-vi-mode.state
+  (:use :cl
+        :lem
+        :lem-vi-mode.mode
+        :lem-vi-mode.modeline)
+  (:export :current-state
+           :define-vi-state
+           :change-state
+           :with-state))
+(in-package :lem-vi-mode.state)
 
 (defstruct vi-state
   name

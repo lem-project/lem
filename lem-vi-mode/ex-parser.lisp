@@ -1,3 +1,6 @@
+(defpackage :lem-vi-mode.ex-parser
+  (:use :cl)
+  (:export :parse-ex-range))
 (in-package :lem-vi-mode.ex-parser)
 
 (defstruct lexer

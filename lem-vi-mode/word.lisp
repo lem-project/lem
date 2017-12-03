@@ -1,4 +1,9 @@
-(in-package :lem-vi-mode)
+(defpackage :lem-vi-mode.word
+  (:use :cl :lem)
+  (:export :forward-word-begin
+           :backward-word-begin
+           :forward-word-end))
+(in-package :lem-vi-mode.word)
 
 (defun hiragana-p (c)
   (<= #x3042 (char-code c) #x3093))

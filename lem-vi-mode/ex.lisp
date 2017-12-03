@@ -1,4 +1,9 @@
-(in-package :lem-vi-mode)
+(defpackage :lem-vi-mode.ex
+  (:use :cl
+        :lem
+        :lem-vi-mode.state)
+  (:export :vi-ex))
+(in-package :lem-vi-mode.ex)
 
 (defvar *ex-keymap* (make-keymap :name '*ex-keymap*))
 

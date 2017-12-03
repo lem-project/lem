@@ -1,3 +1,12 @@
+(defpackage :lem-vi-mode
+  (:use :cl
+        :lem
+        :lem-vi-mode.mode
+        :lem-vi-mode.modeline
+        :lem-vi-mode.state
+        :lem-vi-mode.commands
+        :lem-vi-mode.ex
+        :lem.universal-argument))
 (in-package :lem-vi-mode)
 
 (defvar *command-keymap* (make-keymap :name '*command-keymap* :insertion-hook 'undefined-key))
@@ -8,18 +17,14 @@
 (define-vi-state insert (:keymap *insert-keymap*)
   (message " -- INSERT --"))
 
-(defun enable-hook ()
-  (initialize-vi-modeline)
-  (change-state 'command))
+(add-hook *enable-hook*
+          (lambda ()
+            (initialize-vi-modeline)
+            (change-state 'command)))
 
-(defun disable-hook ()
-  (finalize-vi-modeline))
-
-(define-minor-mode vi-mode
-    (:global t
-     :keymap *command-keymap*
-     :enable-hook #'enable-hook
-     :disable-hook #'disable-hook))
+(add-hook *disable-hook*
+          (lambda ()
+            (finalize-vi-modeline)))
 
 (define-key *command-keymap* "0" 'vi-move-to-beginning-of-line/universal-argument-0)
 (define-key *command-keymap* "1" 'universal-argument-1)

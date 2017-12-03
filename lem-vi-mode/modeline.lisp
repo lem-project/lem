@@ -1,4 +1,9 @@
-(in-package :lem-vi-mode)
+(defpackage :lem-vi-mode.modeline
+  (:use :cl :lem)
+  (:export :initialize-vi-modeline
+           :finalize-vi-modeline
+           :change-element-name))
+(in-package :lem-vi-mode.modeline)
 
 (defvar *modeline-element*)
 

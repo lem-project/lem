@@ -1,4 +1,24 @@
-(in-package :lem-vi-mode)
+(defpackage :lem-vi-mode.commands
+  (:use :cl
+        :lem
+        :lem.universal-argument
+        :lem-vi-mode.word)
+  (:export :vi-move-to-beginning-of-line/universal-argument-0
+           :vi-forward-char
+           :vi-backward-char
+           :vi-next-line
+           :vi-previous-line
+           :vi-forward-word-begin
+           :vi-backward-word-begin
+           :vi-forward-word-begin-broad
+           :vi-backward-word-begin-broad
+           :vi-forward-word-end
+           :vi-forward-word-end-broad
+           :vi-move-to-beginning-of-line
+           :vi-back-to-indentation
+           :vi-delete-next-char
+           :vi-delete-previous-char))
+(in-package :lem-vi-mode.commands)
 
 (defun bolp (point)
   (zerop (point-charpos point)))

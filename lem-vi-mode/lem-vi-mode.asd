@@ -5,6 +5,7 @@
                (:file "modeline")
                (:file "state")
                (:file "commands")
+               (:file "ex-parser")
                (:file "ex")
                (:file "word")
                (:file "vi-mode")))

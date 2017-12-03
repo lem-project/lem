@@ -12,7 +12,4 @@
 
 (define-command vi-ex () ()
   (with-state 'ex
-    (execute-ex (prompt-for-line ": " "" nil nil 'vi-ex))))
-
-(defun execute-ex (string)
-  (declare (ignore string)))
+    (prompt-for-line ": " "" nil nil 'vi-ex)))

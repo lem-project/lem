@@ -31,7 +31,7 @@
   *point*)
 
 (defun last-line ()
-  (lem:line-end *point*))
+  (lem:buffer-end *point*))
 
 (defun marker (char)
   (declare (ignore char)))

@@ -1,4 +1,4 @@
-# lem : the editor for Common Lispers
+# lem : Common Lisp editor/IDE with high expansibility
 
 ## Screenshot
 Terminal(default)

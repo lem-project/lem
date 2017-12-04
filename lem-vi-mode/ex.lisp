@@ -22,4 +22,4 @@
 
 (defun execute-ex (string)
   (let ((lem-vi-mode.ex-command:*point* (current-point)))
-    (parse-ex string)))
+    (eval (parse-ex string))))

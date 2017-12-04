@@ -1,5 +1,5 @@
 (defpackage :lem-vi-mode.ex-command
-  (:use :cl)
+  (:use :cl :lem-vi-mode.ex-util)
   (:export :*point*
            :search-forward
            :search-backward
@@ -15,6 +15,7 @@
 (in-package :lem-vi-mode.ex-command)
 
 (defvar *point*)
+(defvar *command-table* '())
 
 (defun search-forward (pattern)
   (lem:search-forward-regexp *point* pattern))
@@ -44,9 +45,30 @@
   range)
 
 (defun all-lines ()
-  (let ((buffer (point-buffer *point*)))
-    (list (copy-point (lem:buffer-start-point buffer) :temporary)
-          (copy-point (lem:buffer-end-point buffer) :temporary))))
+  (let ((buffer (lem:point-buffer *point*)))
+    (list (lem:copy-point (lem:buffer-start-point buffer) :temporary)
+          (lem:copy-point (lem:buffer-end-point buffer) :temporary))))
 
 (defun call-ex-command (range command argument)
-  (declare (ignore range command argument)))
+  (let ((function (find-ex-command command)))
+    (unless function
+      (lem:editor-error "unknown command: ~A" command))
+    (funcall function range argument)))
+
+(defun find-ex-command (command)
+  (loop :for (names function) :in *command-table*
+        :do (when (member command names :test #'string=)
+              (return function))))
+
+(defmacro define-ex-command (names (range argument) &body body)
+  `(push (list (list ,@names) (lambda (,range ,argument) ,@body))
+         *command-table*))
+
+(define-ex-command ("w" "write") (range argument)
+  (let ((filename (string-trim " " argument)))
+    (when (string= filenae "")
+      (setf filename (lem:buffer-filename (lem:current-buffer))))
+    (case (length range)
+      (0 (lem:write-file filename))
+      ;(2)
+      (otherwise (syntax-error)))))

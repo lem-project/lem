@@ -6,6 +6,7 @@
                (:file "state")
                (:file "word")
                (:file "commands")
+               (:file "ex-util")
                (:file "ex-command")
                (:file "ex-parser")
                (:file "ex")

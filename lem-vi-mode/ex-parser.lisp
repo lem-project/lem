@@ -1,10 +1,7 @@
 (defpackage :lem-vi-mode.ex-parser
-  (:use :cl)
+  (:use :cl :lem-vi-mode.ex-util)
   (:export :parse-ex))
 (in-package :lem-vi-mode.ex-parser)
-
-(defun syntax-error ()
-  (lem:editor-error "syntax error"))
 
 (defstruct (lexer (:constructor %make-lexer))
   position

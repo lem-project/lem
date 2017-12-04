@@ -61,7 +61,7 @@
               (return function))))
 
 (defmacro define-ex-command (names (range argument) &body body)
-  `(push (list (list ,@names) (lambda (,range ,argument) ,@body))
+  `(push (list (list . ,(alexandria:ensure-list names)) (lambda (,range ,argument) ,@body))
          *command-table*))
 
 (define-ex-command ("w" "write") (range argument)

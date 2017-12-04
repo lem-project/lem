@@ -70,5 +70,5 @@
       (setf filename (lem:buffer-filename (lem:current-buffer))))
     (case (length range)
       (0 (lem:write-file filename))
-      ;(2)
+      (2 (lem:write-region-file (first range) (second range) filename))
       (otherwise (syntax-error)))))

@@ -15,6 +15,7 @@
            :vi-forward-word-end
            :vi-forward-word-end-broad
            :vi-move-to-beginning-of-line
+           :vi-move-to-end-of-line
            :vi-back-to-indentation
            :vi-delete-next-char
            :vi-delete-previous-char))

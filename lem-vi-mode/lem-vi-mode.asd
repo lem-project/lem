@@ -1,5 +1,5 @@
 (defsystem "lem-vi-mode"
-  :depends-on ()
+  :depends-on ("esrap")
   :serial t
   :components ((:file "mode")
                (:file "modeline")

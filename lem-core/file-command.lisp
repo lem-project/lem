@@ -5,6 +5,7 @@
           save-buffer
           changefile-name
           write-file
+          write-region-file
           insert-file
           save-some-buffers
           revert-buffer

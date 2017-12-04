@@ -11,7 +11,8 @@
            :goto-current-point
            :range
            :all-lines
-           :call-ex-command))
+           :call-ex-command
+           :define-ex-command))
 (in-package :lem-vi-mode.ex-command)
 
 (defvar *point*)

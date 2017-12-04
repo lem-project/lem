@@ -7,10 +7,13 @@
         :lem-vi-mode.commands
         :lem-vi-mode.ex
         :lem.universal-argument)
+  (:import-from :lem-vi-mode.ex-command
+                :define-ex-command)
   (:export :*command-keymap*
            :*insert-keymap*
            :*enable-hook*
-           :*disable-hook*))
+           :*disable-hook*
+           :define-ex-command))
 (in-package :lem-vi-mode)
 
 (defvar *command-keymap* (make-keymap :name '*command-keymap* :insertion-hook 'undefined-key))

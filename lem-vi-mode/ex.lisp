@@ -1,7 +1,8 @@
 (defpackage :lem-vi-mode.ex
   (:use :cl
         :lem
-        :lem-vi-mode.state)
+        :lem-vi-mode.state
+        :lem-vi-mode.ex-parser)
   (:export :vi-ex))
 (in-package :lem-vi-mode.ex)
 
@@ -17,4 +18,7 @@
 
 (define-command vi-ex () ()
   (with-state 'ex
-    (prompt-for-line ": " "" nil nil 'vi-ex)))
+    (execute-ex (prompt-for-line ": " "" nil nil 'vi-ex))))
+
+(defun execute-ex (string)
+  (parse-ex string))

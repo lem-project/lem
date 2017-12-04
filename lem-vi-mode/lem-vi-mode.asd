@@ -6,6 +6,7 @@
                (:file "state")
                (:file "word")
                (:file "commands")
+               (:file "ex-command")
                (:file "ex-parser")
                (:file "ex")
                (:file "vi-mode")))

@@ -1,22 +1,6 @@
-(defpackage :lem-vi-mode.ex-command
-  (:use :cl :lem)
-  (:export :search-forward
-           :search-backward
-           :goto-line
-           :current-line
-           :last-line
-           :all-lines
-           :marker
-           :offset-line
-           :search-forward
-           :search-backward
-           :goto-current-point
-           :range
-           :call-command))
-
 (defpackage :lem-vi-mode.ex-parser
   (:use :cl)
-  (:export :parse-ex-range))
+  (:export :parse-ex))
 (in-package :lem-vi-mode.ex-parser)
 
 (defun syntax-error ()
@@ -125,7 +109,7 @@
     (cond ((accept lexer #\,)
            (values nil t))
           ((accept lexer #\;)
-           (values 'lem-vi-mode.ex-command:goto-current-point t))
+           (values t t))
           (t
            (values nil nil)))))
 
@@ -137,9 +121,11 @@
               (setf (values delim contp) (delimiter lexer))
               (unless contp (return))
               (when delim
-                (setf (first range) (list delim (first range)))))
+                (setf (first range)
+                      `(lem-vi-mode.ex-command:goto-current-point
+                        ,(first range)))))
     (when range
-      `(lem-vi-mode.ex-command:range . ,(nreverse range)))))
+      `(lem-vi-mode.ex-command:range ,(nreverse range)))))
 
 (defun parse-command (lexer)
   (multiple-value-bind (start end)
@@ -153,9 +139,10 @@
 (defun parse-argument (lexer)
   (subseq (lexer-string lexer) (lexer-position lexer)))
 
-(defun parse-ex (lexer)
-  (let ((range (parse-ex-range lexer))
-        (command (parse-command lexer)))
+(defun parse-ex (string)
+  (let* ((lexer (make-lexer string))
+         (range (parse-ex-range lexer))
+         (command (parse-command lexer)))
     (cond ((null command)
            (skip-whitespace lexer)
            (unless (end-of-string-p lexer)
@@ -163,4 +150,4 @@
            range)
           (t
            (let ((argument (parse-argument lexer)))
-             `(lem-vi-mode.ex-command:call-command ,range ,command ,argument))))))
+             `(lem-vi-mode.ex-command:call-ex-command ,range ,command ,argument))))))

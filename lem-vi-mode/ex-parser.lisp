@@ -11,12 +11,16 @@
            :search-forward
            :search-backward
            :goto-current-point
-           :range))
+           :range
+           :call-command))
 
 (defpackage :lem-vi-mode.ex-parser
   (:use :cl)
   (:export :parse-ex-range))
 (in-package :lem-vi-mode.ex-parser)
+
+(defun syntax-error ()
+  (lem:editor-error "syntax error"))
 
 (defstruct (lexer (:constructor %make-lexer))
   position
@@ -146,7 +150,17 @@
       (setf (lexer-position lexer) end)
       (subseq (lexer-string lexer) start end))))
 
+(defun parse-argument (lexer)
+  (subseq (lexer-string lexer) (lexer-position lexer)))
+
 (defun parse-ex (lexer)
-  (let* ((range (parse-ex-range lexer))
-         (command (parse-command lexer)))
-    (declare (ignore range command))))
+  (let ((range (parse-ex-range lexer))
+        (command (parse-command lexer)))
+    (cond ((null command)
+           (skip-whitespace lexer)
+           (unless (end-of-string-p lexer)
+             (syntax-error))
+           range)
+          (t
+           (let ((argument (parse-argument lexer)))
+             `(lem-vi-mode.ex-command:call-command ,range ,command ,argument))))))

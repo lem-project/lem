@@ -12,3 +12,15 @@
 (setf (variable-value 'lem.line-numbers:line-numbers :global) t)
 
 ;(add-hook *before-save-hook* 'delete-trailing-whitespace)
+
+;;; vi-mode
+(define-key lem-vi-mode:*command-keymap* "q" 'quit-window)
+(define-key lem-vi-mode:*insert-keymap* "C-n" 'lem.abbrev:abbrev-with-pop-up-window)
+
+(add-hook lem-vi-mode:*enable-hook*
+          (lambda ()
+            (message "enable")))
+
+(add-hook lem-vi-mode:*disable-hook*
+          (lambda ()
+            (message "disable")))

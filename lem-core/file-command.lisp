@@ -49,6 +49,16 @@
   (setf (buffer-filename (current-buffer)) (expand-file-name filename))
   (save-buffer t))
 
+(define-command write-region-file (start end filename)
+    ((progn
+       (check-marked)
+       (list (region-beginning)
+             (region-end)
+             (prompt-for-file "Write Region To File: " (buffer-directory) nil nil))))
+  (setf filename (expand-file-name filename))
+  (write-region-to-file start end filename)
+  (message "Wrote ~A" filename))
+
 (define-key *global-keymap* "C-x C-i" 'insert-file)
 (define-command insert-file (filename) ("fInsert file: ")
   (insert-file-contents (current-point)

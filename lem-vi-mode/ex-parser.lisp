@@ -1,11 +1,29 @@
+(defpackage :lem-vi-mode.ex-command
+  (:use :cl :lem)
+  (:export :search-forward
+           :search-backward
+           :goto-line
+           :current-line
+           :last-line
+           :all-lines
+           :marker
+           :offset-line
+           :search-forward
+           :search-backward
+           :goto-current-point
+           :range))
+
 (defpackage :lem-vi-mode.ex-parser
   (:use :cl)
   (:export :parse-ex-range))
 (in-package :lem-vi-mode.ex-parser)
 
-(defstruct lexer
+(defstruct (lexer (:constructor %make-lexer))
   position
   string)
+
+(defun make-lexer (string)
+  (%make-lexer :string string :position 0))
 
 (defun lookahead (lexer)
   (char (lexer-string lexer) (lexer-position lexer)))
@@ -57,24 +75,24 @@
 (defun match-pattern (lexer)
   (unless (end-of-string-p lexer)
     (alexandria:when-let ((result (match-pattern-1 lexer #\/)))
-      (return-from match-pattern (list :search :forward result)))
+      (return-from match-pattern `(lem-vi-mode.ex-command:search-forward ,result)))
     (alexandria:when-let ((result (match-pattern-1 lexer #\?)))
-      (return-from match-pattern (list :search :backward result)))))
+      (return-from match-pattern `(lem-vi-mode.ex-command:search-backward ,result)))))
 
 (defun parse-ex-line (lexer)
   (skip-whitespace lexer)
   (unless (end-of-string-p lexer)
     (let ((result))
       (cond ((setf result (match-number lexer))
-             (list :line-number result))
+             `(lem-vi-mode.ex-command:goto-line ,result))
             ((setf result (case (lookahead lexer)
-                            (#\. :current-line)
-                            (#\$ :last-line)
-                            (#\% :all-lines)))
+                            (#\. '(lem-vi-mode.ex-command:current-line))
+                            (#\$ '(lem-vi-mode.ex-command:last-line))
+                            (#\% '(lem-vi-mode.ex-command:all-lines))))
              (lexer-forward lexer)
-             (list result))
+             result)
             ((accept lexer #\')
-             (prog1 (list :mark (lookahead lexer))
+             (prog1 `(lem-vi-mode.ex-command:marker ,(lookahead lexer))
                (lexer-forward lexer)))
             ((match-pattern lexer))))))
 
@@ -83,10 +101,10 @@
   (unless (end-of-string-p lexer)
     (cond ((accept lexer #\+)
            (alexandria:when-let ((number (match-number lexer)))
-             (list :offset number)))
+             `(lem-vi-mode.ex-command:offset-line ,number)))
           ((accept lexer #\-)
            (alexandria:when-let ((number (match-number lexer)))
-             (list :offset (- number)))))))
+             `(lem-vi-mode.ex-command:offset-line ,(- number)))))))
 
 (defun parse-ex-range-element (lexer)
   (let ((list (loop
@@ -94,29 +112,36 @@
                 :for offset := (parse-ex-offset lexer)
                 :collect line
                 :when offset :collect it
-                :unless (and (eq :search (first line))
+                :unless (and (member (first line)
+                                     '(lem-vi-mode.ex-command:search-forward
+                                       lem-vi-mode.ex-command:search-backward))
                              (setf line (match-pattern lexer)))
                 :do (loop-finish))))
     (if (alexandria:length= list 1)
         (first list)
-        (cons :patterns list))))
+        `(progn . ,list))))
 
 (defun delimiter (lexer)
   (unless (end-of-string-p lexer)
     (cond ((accept lexer #\,)
            (values nil t))
           ((accept lexer #\;)
-           (values :goto t))
+           (values 'lem-vi-mode.ex-command:goto-current-point t))
           (t
            (values nil nil)))))
 
-(defun parse-ex-range (string)
-  (let ((lexer (make-lexer :position 0 :string string))
-        (range '()))
+(defun parse-ex-range (lexer)
+  (let ((range '()))
     (loop :with delim := nil :and contp := nil
-          :do (push (parse-ex-range-element lexer) range)
+          :for elt := (parse-ex-range-element lexer)
+          :do (when elt (push elt range))
               (setf (values delim contp) (delimiter lexer))
               (unless contp (return))
-          (when delim
-            (setf (first range) (list :goto (first range)))))
-    (nreverse range)))
+              (when delim
+                (setf (first range) (list delim (first range)))))
+    (when range
+      `(lem-vi-mode.ex-command:range . ,(nreverse range)))))
+
+(defun parse-ex (lexer)
+  (let ((range (parse-ex-range lexer)))
+    ))

@@ -85,8 +85,7 @@
              `(lem-vi-mode.ex-command:goto-line ,result))
             ((setf result (case (lookahead lexer)
                             (#\. '(lem-vi-mode.ex-command:current-line))
-                            (#\$ '(lem-vi-mode.ex-command:last-line))
-                            (#\% '(lem-vi-mode.ex-command:all-lines))))
+                            (#\$ '(lem-vi-mode.ex-command:last-line))))
              (lexer-forward lexer)
              result)
             ((accept lexer #\')
@@ -113,7 +112,7 @@
           (t
            (values nil nil)))))
 
-(defun parse-ex-range (lexer)
+(defun parse-ex-range-1 (lexer)
   (let ((range '()))
     (loop :with delim := nil :and contp := nil
           :for elt := (parse-ex-range-element lexer)
@@ -125,7 +124,17 @@
                       `(lem-vi-mode.ex-command:goto-current-point
                         ,(first range)))))
     (when range
-      `(lem-vi-mode.ex-command:range ,(nreverse range)))))
+      `(lem-vi-mode.ex-command:range . ,(mapcar (lambda (x) `(lem:copy-point ,x :temporary))
+                                                (nreverse range))))))
+
+(defun parse-ex-range-all (lexer)
+  (skip-whitespace lexer)
+  (when (accept lexer #\%)
+    '(lem-vi-mode.ex-command:all-lines)))
+
+(defun parse-ex-range (lexer)
+  (or (parse-ex-range-all lexer)
+      (parse-ex-range-1 lexer)))
 
 (defun parse-command (lexer)
   (multiple-value-bind (start end)

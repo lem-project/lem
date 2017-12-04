@@ -21,4 +21,5 @@
     (execute-ex (prompt-for-line ": " "" nil nil 'vi-ex))))
 
 (defun execute-ex (string)
-  (parse-ex string))
+  (let ((lem-vi-mode.ex-command:*point* (current-point)))
+    (parse-ex string)))

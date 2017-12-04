@@ -79,6 +79,16 @@
     (alexandria:when-let ((result (match-pattern-1 lexer #\?)))
       (return-from match-pattern `(lem-vi-mode.ex-command:search-backward ,result)))))
 
+(defun parse-ex-offset (lexer)
+  (skip-whitespace lexer)
+  (unless (end-of-string-p lexer)
+    (cond ((accept lexer #\+)
+           (alexandria:when-let ((number (match-number lexer)))
+             `(lem-vi-mode.ex-command:offset-line ,number)))
+          ((accept lexer #\-)
+           (alexandria:when-let ((number (match-number lexer)))
+             `(lem-vi-mode.ex-command:offset-line ,(- number)))))))
+
 (defun parse-ex-line (lexer)
   (skip-whitespace lexer)
   (unless (end-of-string-p lexer)
@@ -94,32 +104,17 @@
             ((accept lexer #\')
              (prog1 `(lem-vi-mode.ex-command:marker ,(lookahead lexer))
                (lexer-forward lexer)))
-            ((match-pattern lexer))))))
-
-(defun parse-ex-offset (lexer)
-  (skip-whitespace lexer)
-  (unless (end-of-string-p lexer)
-    (cond ((accept lexer #\+)
-           (alexandria:when-let ((number (match-number lexer)))
-             `(lem-vi-mode.ex-command:offset-line ,number)))
-          ((accept lexer #\-)
-           (alexandria:when-let ((number (match-number lexer)))
-             `(lem-vi-mode.ex-command:offset-line ,(- number)))))))
+            ((match-pattern lexer))
+            ((parse-ex-offset lexer))))))
 
 (defun parse-ex-range-element (lexer)
-  (let ((list (loop
-                :with line := (parse-ex-line lexer)
-                :for offset := (parse-ex-offset lexer)
-                :collect line
-                :when offset :collect it
-                :unless (and (member (first line)
-                                     '(lem-vi-mode.ex-command:search-forward
-                                       lem-vi-mode.ex-command:search-backward))
-                             (setf line (match-pattern lexer)))
-                :do (loop-finish))))
-    (if (alexandria:length= list 1)
-        (first list)
-        `(progn . ,list))))
+  (let ((lines (loop
+                 :for line := (parse-ex-line lexer)
+                 :while line
+                 :collect line)))
+    (if (null (rest lines))
+        (first lines)
+        `(progn . ,lines))))
 
 (defun delimiter (lexer)
   (unless (end-of-string-p lexer)
@@ -142,6 +137,16 @@
     (when range
       `(lem-vi-mode.ex-command:range . ,(nreverse range)))))
 
+(defun parse-command (lexer)
+  (multiple-value-bind (start end)
+      (ppcre:scan "^(?:[~&*@<>=:]+|[\\w-]+|!)"
+                  (lexer-string lexer)
+                  :start (lexer-position lexer))
+    (when start
+      (setf (lexer-position lexer) end)
+      (subseq (lexer-string lexer) start end))))
+
 (defun parse-ex (lexer)
-  (let ((range (parse-ex-range lexer)))
-    ))
+  (let* ((range (parse-ex-range lexer))
+         (command (parse-command lexer)))
+    (declare (ignore range command))))

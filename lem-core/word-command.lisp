@@ -73,10 +73,14 @@
   (with-point ((point (current-point) :right-inserting))
     (let ((start (current-point))
           (end (or (word-offset point n)
-                   (buffer-end point))))
-      (if (point< start end)
-          (kill-region start end)
-          (kill-region end start)))))
+                   (if (plusp n)
+                       (buffer-end point)
+                       (buffer-start point)))))
+      (cond ((point= start end))
+            ((point< start end)
+             (kill-region start end))
+            (t
+             (kill-region end start))))))
 
 (define-key *global-keymap* "C-M-h" 'backward-delete-word)
 (define-key *global-keymap* "M-[backspace]" 'backward-delete-word)

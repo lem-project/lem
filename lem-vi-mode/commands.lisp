@@ -18,7 +18,8 @@
            :vi-move-to-end-of-line
            :vi-back-to-indentation
            :vi-delete-next-char
-           :vi-delete-previous-char))
+           :vi-delete-previous-char
+           :vi-move-to-matching-paren))
 (in-package :lem-vi-mode.commands)
 
 (defun bolp (point)
@@ -107,3 +108,12 @@
 (define-command vi-delete-previous-char (&optional (n 1)) ("p")
   (unless (bolp (current-point))
     (delete-previous-char n)))
+
+(define-command vi-move-to-matching-paren () ()
+  (let* ((p (current-point))
+         (c (character-at p)))
+    (cond ((syntax-open-paren-char-p c)
+           (scan-lists p 1 0)
+           (character-offset p -1))
+          ((syntax-closed-paren-char-p c)
+           (scan-lists (character-offset p 1) -1 0)))))

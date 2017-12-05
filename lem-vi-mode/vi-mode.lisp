@@ -61,6 +61,9 @@
 (define-key *command-keymap* "X" 'vi-delete-previous-char)
 (define-key *command-keymap* "u" 'undo)
 (define-key *command-keymap* "C-r" 'redo)
+(define-key *command-keymap* "C-f" 'next-page)
+(define-key *command-keymap* "C-b" 'previous-page)
+(define-key *command-keymap* "%" 'vi-move-to-matching-paren)
 (define-key *command-keymap* "i" 'vi-insert)
 (define-key *command-keymap* ":" 'vi-ex)
 

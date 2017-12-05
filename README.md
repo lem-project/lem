@@ -27,7 +27,7 @@ Please install roswell at first.
 
 [Roswell Installation Guide](https://github.com/roswell/roswell/wiki/Installation)
 
-After installing roswell, please follow the steps bellow.
+After that, please follow the steps bellow.
 
 ```
 1. install lem by roswell

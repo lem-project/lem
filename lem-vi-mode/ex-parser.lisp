@@ -119,11 +119,11 @@
     (coerce chars 'string)))
 
 (defrule ex (and (? ex-range)
-                       (? whitespace)
-                       (? (and ex-command
-                                     (? whitespace)
-                                     (? ex-argument)
-                                     (? whitespace))))
+                 (? whitespace)
+                 (? (and ex-command
+                         (? whitespace)
+                         (? ex-argument)
+                         (? whitespace))))
   (:lambda (list)
     (let ((range (first list))
           (command (first (third list)))
@@ -131,7 +131,7 @@
                       (string-trim " " argument))))
       (if (null command)
           `(lem-vi-mode.ex-command:goto-current-point ,range)
-          `(lem-vi-mode.ex-command:call-ex-command ,range ,command ,argument)))))
+          `(lem-vi-mode.ex-command:call-ex-command ,range ,command ,(or argument ""))))))
 
 (defun parse-ex (string)
   (parse 'ex string))

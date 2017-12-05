@@ -12,7 +12,7 @@ Lem is the editor/IDE well-tuned for Common Lisp.
 - You can extend itself in Common Lisp.
 
 ## Vision
-- To be able to combine Common Lisp with Web ecosystem using Electron
+- To combine Common Lisp with Web ecosystem using Electron
 
 ## Requirement
 - [roswell](https://github.com/roswell/roswell)
@@ -23,12 +23,26 @@ Lem is the editor/IDE well-tuned for Common Lisp.
 - MacOS 10.13+ 
 
 ## Installation
+Please install roswell at first.
+
+[Roswell Installation Guide](https://github.com/roswell/roswell/wiki/Installation)
+
+After installing roswell, please follow the steps bellow.
+
 ```
+1. install lem by roswell
 $ ros install cxxxr/lem
+
+2. add the code below in ~/.profile file to add lem to the PATH
+export PATH=$PATH:~/.roswell/bin
+
+3. enable the new settings
+$ source ~/.profile
 ```
+Then you can start using lem!
 
 ## Usage
-If you add the PATH, you can start using lem at once!
+
 ```
 $ lem <filename.lisp>
 ```
@@ -47,13 +61,13 @@ Electron version is in the experimental stage.
 
 If you'd like to try it, please follow the steps bellow.
 
-And if you're interested in it, please give me your opinion on issue.
+And if you're interested, please give me your opinion on issue.
 
 1. install Node.js and Electron in advance.
 
-[Node.js](https://nodejs.org)
+   [Node.js](https://nodejs.org)
 
-[Electron](https://github.com/electron/electron)
+   [Electron](https://github.com/electron/electron)
 
 2. install and run lem(Electron) as follows:
 

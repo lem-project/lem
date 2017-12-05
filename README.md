@@ -1,26 +1,18 @@
-# lem : Common Lisp editor/IDE with high expansibility
+# lem
+Lem is the editor/IDE well-tuned for Common Lisp.
 
 ## Screenshot
-Terminal(default)
-
 ![Terminal](screenshots/terminal.png)　　
-
-
-Electron version(beta, in progress)
-![Electron](screenshots/electron.png)　　
 
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
 
-## What is lem?
-Lem is the editor for Common Lispers.
+## Merit
+- After installing lem, you can start developing in Common Lisp at once. That is, you can skip over writing tidy settings or installing many plugins as you do on Emacs.
 
-Lem makes it possible to develop in Common Lisp the moment you've installed it. 
-
-You don't need any tidy setting or install any other plugins.
+- You can extend itself in Common Lisp.
 
 ## Vision
-- To be able to extend itself in Common Lisp
-- To combine Common Lisp with Web ecosystem
+- To be able to combine Common Lisp with Web ecosystem using Electron
 
 ## Requirement
 - [roswell](https://github.com/roswell/roswell)
@@ -31,17 +23,8 @@ You don't need any tidy setting or install any other plugins.
 - MacOS 10.13+ 
 
 ## Installation
-
 ```
-# Terminal version (default)
 $ ros install cxxxr/lem
-
-# Electron version (beta)
-Please install Node.js and Electron in advance.
-$ ros install cxxxr/lem
-$ cd ~/.roswell/local-projects/cxxxr/lem/lem-frontend-electron
-$ npm install
-$ electron .
 ```
 
 ## Usage
@@ -59,9 +42,34 @@ You can watch the screencast on Youtube.
 
 [Screencast](https://youtu.be/YkSJ3p7Z9H0)
 
+# Electron version (Beta)
+Electron version is in the experimental stage.
+
+If you'd like to try it, please follow the steps bellow.
+
+And if you're interested in it, please give me your opinion on issue.
+
+1. install Node.js and Electron in advance.
+
+[Node.js](https://nodejs.org)
+
+[Electron](https://github.com/electron/electron)
+
+2. install and run lem(Electron) as follows:
+
+```
+$ ros install cxxxr/lem
+$ cd ~/.roswell/local-projects/cxxxr/lem/lem-frontend-electron
+$ npm install
+$ electron .  # lem will start.
+```
+
+Electron version(beta, in progress)
+![Electron](screenshots/electron.png)　　
 
 ## Notes
-- If you use Rasberry Pi, you need to use CCL(Clozure Common Lisp).  
+
+- For Rasberry Pi users: You need to use CCL(Clozure Common Lisp).  
 Please change the CL implementation to CCL as follow:
 ```
 $ ros use ccl-bin

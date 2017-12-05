@@ -18,20 +18,30 @@
 
 (defvar *command-keymap* (make-keymap :name '*command-keymap* :insertion-hook 'undefined-key))
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap*))
+(defvar *inactive-keymap* (make-keymap))
 
 (define-vi-state command (:keymap *command-keymap*))
 
 (define-vi-state insert (:keymap *insert-keymap*)
   (message " -- INSERT --"))
 
+(define-vi-state modeline (:keymap *inactive-keymap*))
+
+(defun minibuffer-activate-hook () (change-state 'modeline))
+(defun minibuffer-deactivate-hook () (change-state 'command))
+
 (add-hook *enable-hook*
           (lambda ()
             (initialize-vi-modeline)
-            (change-state 'command)))
+            (change-state 'command)
+            (add-hook *minibuffer-activate-hook* 'minibuffer-activate-hook)
+            (add-hook *minibuffer-deactivate-hook* 'minibuffer-deactivate-hook)))
 
 (add-hook *disable-hook*
           (lambda ()
-            (finalize-vi-modeline)))
+            (finalize-vi-modeline)
+            (remove-hook *minibuffer-activate-hook* 'minibuffer-activate-hook)
+            (remove-hook *minibuffer-deactivate-hook* 'minibuffer-deactivate-hook)))
 
 (define-key *command-keymap* "0" 'vi-move-to-beginning-of-line/universal-argument-0)
 (define-key *command-keymap* "1" 'universal-argument-1)

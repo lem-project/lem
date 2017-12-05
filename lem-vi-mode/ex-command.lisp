@@ -66,9 +66,9 @@
          *command-table*))
 
 (define-ex-command ("w" "write") (range argument)
-  (let ((filename (string-trim " " argument)))
-    (when (string= filename "")
-      (setf filename (lem:buffer-filename (lem:current-buffer))))
+  (let ((filename (if (string= argument "")
+                      (lem:buffer-filename (lem:current-buffer))
+                      argument)))
     (case (length range)
       (0 (lem:write-file filename))
       (2 (lem:write-region-file (first range) (second range) filename))

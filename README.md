@@ -83,7 +83,7 @@ Electron version
 
 - To make a package manager on which you can build desktop applications
 
-- To make some desktop applications using the Electron version. (Common Lisp learning system, etc)
+- To make some applications on lem(Electron version). 
 
 ## Notes
 

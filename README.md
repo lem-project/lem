@@ -1,18 +1,14 @@
 # lem
 Lem is the editor/IDE well-tuned for Common Lisp.
 
+After installing lem, you can start developing in Common Lisp at once. 
+
+That is, you can skip over writing tidy settings or installing many plugins as you do on Emacs.
+
 ## Screenshot
 ![Terminal](screenshots/terminal.png)　　
 
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
-
-## Merit
-- After installing lem, you can start developing in Common Lisp at once. That is, you can skip over writing tidy settings or installing many plugins as you do on Emacs.
-
-- You can extend itself in Common Lisp.
-
-## Vision
-- To be able to combine Common Lisp with Web ecosystem using Electron
 
 ## Requirement
 - [roswell](https://github.com/roswell/roswell)
@@ -23,12 +19,26 @@ Lem is the editor/IDE well-tuned for Common Lisp.
 - MacOS 10.13+ 
 
 ## Installation
+Please install roswell at first.
+
+[Roswell Installation Guide](https://github.com/roswell/roswell/wiki/Installation)
+
+After that, please follow the steps bellow.
+
 ```
+1. install lem by roswell
 $ ros install cxxxr/lem
+
+2. add the code below in "~/.bashrc" for adding the PATH
+export PATH=$PATH:~/.roswell/bin
+
+3. enable the new setting
+$ source ~/.bashrc
 ```
+Then you can start using lem!
 
 ## Usage
-If you add the PATH, you can start using lem at once!
+
 ```
 $ lem <filename.lisp>
 ```
@@ -47,13 +57,13 @@ Electron version is in the experimental stage.
 
 If you'd like to try it, please follow the steps bellow.
 
-And if you're interested in it, please give me your opinion on issue.
+And if you're interested, please give me your opinion on issue.
 
 1. install Node.js and Electron in advance.
 
-[Node.js](https://nodejs.org)
+   [Node.js](https://nodejs.org)
 
-[Electron](https://github.com/electron/electron)
+   [Electron](https://github.com/electron/electron)
 
 2. install and run lem(Electron) as follows:
 
@@ -64,8 +74,16 @@ $ npm install
 $ electron .  # lem will start.
 ```
 
-Electron version(beta, in progress)
+Electron version
 ![Electron](screenshots/electron.png)　　
+
+
+## Plan
+- To implement the basic vi commands.
+
+- To make a package manager on which you can build desktop applications
+
+- To make some applications on lem(Electron version). 
 
 ## Notes
 

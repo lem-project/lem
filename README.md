@@ -1,18 +1,20 @@
 # lem
 Lem is the editor/IDE well-tuned for Common Lisp.
 
+After installing lem, you can start developing in Common Lisp at once. 
+
+That is, you can skip over writing tidy settings or installing many plugins as you do on Emacs.
+
 ## Screenshot
 ![Terminal](screenshots/terminal.png)　　
 
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
 
-## Merit
-- After installing lem, you can start developing in Common Lisp at once. That is, you can skip over writing tidy settings or installing many plugins as you do on Emacs.
-
-- You can extend itself in Common Lisp.
-
-## Vision
+## Plan
 - To combine Common Lisp with Web ecosystem using Electron
+
+- To make a package manager on which you can build desktop applications
+
 
 ## Requirement
 - [roswell](https://github.com/roswell/roswell)

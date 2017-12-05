@@ -33,7 +33,7 @@ After that, please follow the steps bellow.
 1. install lem by roswell
 $ ros install cxxxr/lem
 
-2. add the code below in ~/.profile file to add lem to the PATH
+2. add the code below in ~/.profile file for addind the PATH
 export PATH=$PATH:~/.roswell/bin
 
 3. enable the new settings

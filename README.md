@@ -81,9 +81,7 @@ Electron version
 ## Plan
 - To implement the basic vi commands.
 
-- To make a package manager on which you can build desktop applications
-
-- To make some applications on lem(Electron version). 
+- To make some applications using lem(Electron version). 
 
 ## Notes
 

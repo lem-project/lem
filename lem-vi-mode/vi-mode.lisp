@@ -70,6 +70,12 @@
 (define-key *command-keymap* "N" 'vi-search-previous)
 (define-key *command-keymap* "g g" 'vi-goto-first-line)
 (define-key *command-keymap* "G" 'vi-goto-line)
+(define-key *command-keymap* "C-w s" 'split-active-window-vertically)
+(define-key *command-keymap* "C-w C-s" 'split-active-window-vertically)
+(define-key *command-keymap* "C-w w" 'other-window)
+(define-key *command-keymap* "C-w C-w" 'other-window)
+(define-key *command-keymap* "C-w q" 'vi-quit)
+
 (define-key *command-keymap* "i" 'vi-insert)
 (define-key *command-keymap* ":" 'vi-ex)
 

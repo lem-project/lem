@@ -26,7 +26,8 @@
            :vi-search-next
            :vi-search-previous
            :vi-goto-first-line
-           :vi-goto-line))
+           :vi-goto-line
+           :vi-quit))
 (in-package :lem-vi-mode.commands)
 
 (defun bolp (point)
@@ -164,3 +165,8 @@
   (if (null arg)
       (move-to-end-of-buffer)
       (goto-line arg)))
+
+(define-command vi-quit () ()
+  (if (one-window-p)
+      (exit-lem)
+      (delete-current-window)))

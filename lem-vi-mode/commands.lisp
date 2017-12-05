@@ -2,6 +2,7 @@
   (:use :cl
         :lem
         :lem.universal-argument
+        :lem.show-paren
         :lem-vi-mode.word)
   (:export :vi-move-to-beginning-of-line/universal-argument-0
            :vi-forward-char
@@ -109,11 +110,31 @@
   (unless (bolp (current-point))
     (delete-previous-char n)))
 
+(defun forward-matching-paren (p &optional skip)
+  (with-point ((p p))
+    (when (or skip (syntax-open-paren-char-p (character-at p)))
+      (scan-lists p 1 0)
+      (character-offset p -1))))
+
+(defun backward-matching-paren (p)
+  (when (syntax-closed-paren-char-p (character-at p))
+    (scan-lists (character-offset (copy-point p :temporary) 1) -1 0)))
+
 (define-command vi-move-to-matching-paren () ()
-  (let* ((p (current-point))
-         (c (character-at p)))
-    (cond ((syntax-open-paren-char-p c)
-           (scan-lists p 1 0)
-           (character-offset p -1))
-          ((syntax-closed-paren-char-p c)
-           (scan-lists (character-offset p 1) -1 0)))))
+  (alexandria:when-let ((p (or (backward-matching-paren (current-point))
+                               (forward-matching-paren (current-point) t))))
+    (move-point (current-point) p)))
+
+(let ((old-forward-matching-paren)
+      (old-backward-matching-paren))
+  (defun on-matching-paren ()
+    (setf old-forward-matching-paren (variable-value 'forward-matching-paren :global))
+    (setf old-backward-matching-paren (variable-value 'backward-matching-paren :global))
+    (setf (variable-value 'forward-matching-paren :global) 'forward-matching-paren)
+    (setf (variable-value 'backward-matching-paren :global) 'backward-matching-paren))
+  (defun off-matching-paren ()
+    (setf (variable-value 'forward-matching-paren :global) old-forward-matching-paren)
+    (setf (variable-value 'backward-matching-paren :global) old-backward-matching-paren)))
+
+(add-hook lem-vi-mode.mode:*enable-hook* 'on-matching-paren)
+(add-hook lem-vi-mode.mode:*disable-hook* 'off-matching-paren)

@@ -78,7 +78,7 @@ $ npm install
 $ electron .  # lem will start.
 ```
 
-Electron version(beta, in progress)
+Electron version
 ![Electron](screenshots/electron.png)　　
 
 ## Notes

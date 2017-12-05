@@ -22,4 +22,6 @@
 
 (defun execute-ex (string)
   (let ((lem-vi-mode.ex-command:*point* (current-point)))
-    (eval (parse-ex string))))
+    (multiple-value-bind (exp error) (parse-ex string)
+      (when error (editor-error "syntax error"))
+      (eval exp))))

@@ -134,4 +134,4 @@
           `(lem-vi-mode.ex-command:call-ex-command ,range ,command ,(or argument ""))))))
 
 (defun parse-ex (string)
-  (parse 'ex string))
+  (ignore-errors (parse 'ex string)))

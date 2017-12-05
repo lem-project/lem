@@ -10,12 +10,6 @@ That is, you can skip over writing tidy settings or installing many plugins as y
 
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
 
-## Plan
-- To combine Common Lisp with Web ecosystem using Electron
-
-- To make a package manager on which you can build desktop applications
-
-
 ## Requirement
 - [roswell](https://github.com/roswell/roswell)
 - ncurses
@@ -35,11 +29,11 @@ After that, please follow the steps bellow.
 1. install lem by roswell
 $ ros install cxxxr/lem
 
-2. add the code below in ~/.profile file for addind the PATH
+2. add the code below in "~/.bashrc" for adding the PATH
 export PATH=$PATH:~/.roswell/bin
 
 3. enable the new settings
-$ source ~/.profile
+$ source ~/.bashrc
 ```
 Then you can start using lem!
 
@@ -82,6 +76,14 @@ $ electron .  # lem will start.
 
 Electron version
 ![Electron](screenshots/electron.png)　　
+
+
+## Plan
+- To implement the basic vi commands.
+
+- To make a package manager on which you can build desktop applications
+
+- To make some desktop applications using the Electron version. (Common Lisp learning system, etc)
 
 ## Notes
 

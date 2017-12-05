@@ -3,6 +3,8 @@
 (export '(*enable-recursive-minibuffers*
           *minibuffer-completion-function*
           *minibuffer-file-complete-function*
+          *minibuffer-activate-hook*
+          *minibuffer-deactivate-hook*
           *minibuf-keymap*
           minibuffer-prompt-attribute
           minibuffer-window-p
@@ -40,6 +42,9 @@
 
 (defvar *minibuffer-completion-function* nil)
 (defvar *minibuffer-file-complete-function* nil)
+
+(defvar *minibuffer-activate-hook* '())
+(defvar *minibuffer-deactivate-hook* '())
 
 (defclass minibuffer-window (window) ())
 
@@ -228,6 +233,8 @@
 
 (defun prompt-for-line (prompt initial comp-f existing-p history-name
                         &optional (syntax-table (current-syntax)))
+  (when (= 0 *minibuf-read-line-depth*)
+    (run-hooks *minibuffer-activate-hook*))
   (when (and (not *enable-recursive-minibuffers*) (< 0 *minibuf-read-line-depth*))
     (editor-error "ERROR: recursive use of minibuffer"))
   (let ((*minibuffer-calls-window* (current-window))
@@ -281,6 +288,7 @@
                                 (put-text-property start end :field t)))
                             (move-point (current-point) minibuf-buffer-prev-point)
                             (when (= 1 *minibuf-read-line-depth*)
+                              (run-hooks *minibuffer-deactivate-hook*)
                               (%switch-to-buffer *echoarea-buffer* nil nil)
                               ))))))
                 (editor-abort (c)

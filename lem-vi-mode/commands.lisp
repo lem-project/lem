@@ -24,7 +24,9 @@
            :vi-search-forward
            :vi-search-backward
            :vi-search-next
-           :vi-search-previous))
+           :vi-search-previous
+           :vi-goto-first-line
+           :vi-goto-line))
 (in-package :lem-vi-mode.commands)
 
 (defun bolp (point)
@@ -154,3 +156,11 @@
 
 (define-command vi-search-previous (n) ("p")
   (lem.isearch:isearch-prev-highlight n))
+
+(define-command vi-goto-first-line () ()
+  (move-to-beginning-of-buffer))
+
+(define-command vi-goto-line (arg) ("P")
+  (if (null arg)
+      (move-to-end-of-buffer)
+      (goto-line arg)))

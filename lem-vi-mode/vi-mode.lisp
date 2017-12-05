@@ -68,6 +68,8 @@
 (define-key *command-keymap* "?" 'vi-search-backward)
 (define-key *command-keymap* "n" 'vi-search-next)
 (define-key *command-keymap* "N" 'vi-search-previous)
+(define-key *command-keymap* "g g" 'vi-goto-first-line)
+(define-key *command-keymap* "G" 'vi-goto-line)
 (define-key *command-keymap* "i" 'vi-insert)
 (define-key *command-keymap* ":" 'vi-ex)
 

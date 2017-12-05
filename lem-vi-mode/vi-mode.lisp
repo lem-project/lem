@@ -64,6 +64,10 @@
 (define-key *command-keymap* "C-f" 'next-page)
 (define-key *command-keymap* "C-b" 'previous-page)
 (define-key *command-keymap* "%" 'vi-move-to-matching-paren)
+(define-key *command-keymap* "/" 'vi-search-forward)
+(define-key *command-keymap* "?" 'vi-search-backward)
+(define-key *command-keymap* "n" 'vi-search-next)
+(define-key *command-keymap* "N" 'vi-search-previous)
 (define-key *command-keymap* "i" 'vi-insert)
 (define-key *command-keymap* ":" 'vi-ex)
 

@@ -20,7 +20,11 @@
            :vi-back-to-indentation
            :vi-delete-next-char
            :vi-delete-previous-char
-           :vi-move-to-matching-paren))
+           :vi-move-to-matching-paren
+           :vi-search-forward
+           :vi-search-backward
+           :vi-search-next
+           :vi-search-previous))
 (in-package :lem-vi-mode.commands)
 
 (defun bolp (point)
@@ -138,3 +142,15 @@
 
 (add-hook lem-vi-mode.mode:*enable-hook* 'on-matching-paren)
 (add-hook lem-vi-mode.mode:*disable-hook* 'off-matching-paren)
+
+(define-command vi-search-forward () ()
+  (lem.isearch:isearch-forward-regexp "/"))
+
+(define-command vi-search-backward () ()
+  (lem.isearch:isearch-backward-regexp "?"))
+
+(define-command vi-search-next (n) ("p")
+  (lem.isearch:isearch-next-highlight n))
+
+(define-command vi-search-previous (n) ("p")
+  (lem.isearch:isearch-prev-highlight n))

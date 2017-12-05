@@ -19,6 +19,10 @@
            :isearch-prev
            :isearch-yank
            :isearch-self-insert
+           :isearch-replace-highlight
+           :isearch-next-highlight
+           :isearch-prev-highlight
+           :isearch-toggle-highlighting
            :read-query-replace-args
            :isearch-toggle-highlighting
            :query-replace
@@ -143,9 +147,9 @@
 (defun isearch-update-minibuffer ()
   (message-without-log "~A~A" *isearch-prompt* *isearch-string*))
 
-(define-command isearch-forward () ()
+(define-command isearch-forward (&optional prompt) ((list nil))
   (isearch-start
-   "ISearch: "
+   (or prompt "ISearch: ")
    (lambda (point str)
      (search-forward (or (character-offset point (- (length str)))
                          point)
@@ -154,9 +158,9 @@
    #'search-backward
    ""))
 
-(define-command isearch-backward () ()
+(define-command isearch-backward (&optional prompt) ((list nil))
   (isearch-start
-   "ISearch: "
+   (or prompt "ISearch: ")
    (lambda (point str)
      (search-backward (or (character-offset point (length str))
                           point)
@@ -165,29 +169,29 @@
    #'search-backward
    ""))
 
-(define-command isearch-forward-regexp () ()
-  (isearch-start "ISearch Regexp: "
+(define-command isearch-forward-regexp (&optional prompt) ((list nil))
+  (isearch-start (or prompt "ISearch Regexp: ")
                  #'search-forward-regexp
                  #'search-forward-regexp
                  #'search-backward-regexp
                  ""))
 
-(define-command isearch-backward-regexp () ()
-  (isearch-start "ISearch Regexp: "
+(define-command isearch-backward-regexp (&optional prompt) ((list nil))
+  (isearch-start (or prompt "ISearch Regexp: ")
                  #'search-backward-regexp
                  #'search-forward-regexp
                  #'search-backward-regexp
                  ""))
 
-(define-command isearch-forward-symbol () ()
-  (isearch-start "ISearch Symbol: "
+(define-command isearch-forward-symbol (&optional prompt) ((list nil))
+  (isearch-start (or prompt "ISearch Symbol: ")
                  #'search-forward-symbol
                  #'search-forward-symbol
                  #'search-backward-symbol
                  ""))
 
-(define-command isearch-backward-symbol () ()
-  (isearch-start "ISearch Symbol: "
+(define-command isearch-backward-symbol (&optional prompt) ((list nil))
+  (isearch-start (or prompt "ISearch Symbol: ")
                  #'search-backward-symbol
                  #'search-forward-symbol
                  #'search-backward-symbol

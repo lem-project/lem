@@ -172,7 +172,7 @@
          (kill-region start end))))))
 
 (define-key *global-keymap* "C-y" 'yank)
-(define-command yank (arg) ("P")
+(define-command yank (&optional arg) ("P")
   (let ((string (if (null arg)
                     (current-kill-ring)
                     (kill-ring-nth arg))))

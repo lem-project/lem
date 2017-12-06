@@ -55,9 +55,11 @@ You can watch the screencast on Youtube.
 # Electron version (Beta)
 Electron version is in the experimental stage.
 
-If you'd like to try it, please follow the steps bellow.
+In the near future, you can get executable/binary on surported platforms.
 
-And if you're interested, please give me your opinion on issue.
+Until then, you need to build the Electron version by yourself. 
+
+Please take the following steps and give it a try!
 
 1. install Node.js and Electron in advance.
 

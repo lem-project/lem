@@ -29,7 +29,7 @@ After that, please follow the steps bellow.
 1. install lem by roswell
 $ ros install cxxxr/lem
 
-2. add the PATH: please put the code below in the initialization file, such as ~/.bashrc
+2. add the PATH: please put the code below in the initialization file such as ~/.bashrc
 export PATH=$PATH:~/.roswell/bin
 
 3. enable the new setting
@@ -83,7 +83,10 @@ Electron version
 ## Plan
 - To implement the basic vi commands.
 
+- To distribute executable/binary on surported platforms.
+
 - To make some applications using lem(Electron version). 
+
 
 ## Notes
 

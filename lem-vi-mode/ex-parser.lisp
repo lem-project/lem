@@ -107,12 +107,9 @@
         x)))
 
 (defrule ex-command (or (+ (or #\~ #\& #\* #\@ #\< #\> #\= #\:))
-                              (+ (or command-char #\-))
-                              #\!)
+                              (+ (or command-char #\- #\!)))
   (:lambda (x)
-    (if (equal x "!")
-        x
-        (coerce x 'string))))
+    (map 'string (lambda (x) (if (equal "!" x) #\! x)) x)))
 
 (defrule ex-argument (+ character)
   (:lambda (chars)

@@ -29,7 +29,7 @@ After that, please follow the steps bellow.
 1. install lem by roswell
 $ ros install cxxxr/lem
 
-2. add the PATH: code below in "~/.bashrc" for adding the PATH
+2. add the PATH: please put the code below in the initialization file, such as ~/.bashrc
 export PATH=$PATH:~/.roswell/bin
 
 3. enable the new setting

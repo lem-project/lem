@@ -147,7 +147,16 @@
                  (kill-region start (current-point)))))))))
 
 (define-command vi-delete-line () ()
-  )
+  (cond ((visual-block-p)
+         (apply-visual-range (lambda (start end)
+                               (kill-region start (line-end end)))))
+        ((visual-p)
+         (apply-visual-range (lambda (start end)
+                               (kill-region (line-start start) (line-end end)))))
+        (t
+         (with-point ((start (current-point))
+                      (end (current-point)))
+           (kill-region start (line-end end))))))
 
 (define-command vi-paste-after () ()
   (insert-character (line-end (current-point)) #\newline)

@@ -6,6 +6,7 @@
            :vi-visual-line
            :vi-visual-block
            :visual-p
+           :visual-block-p
            :apply-visual-range))
 (in-package :lem-vi-mode.visual)
 
@@ -84,6 +85,10 @@
 
 (defun visual-p ()
   (eq 'visual (current-state)))
+
+(defun visual-block-p ()
+  (and (visual-p)
+       (eq *set-visual-function* 'visual-block)))
 
 (defun apply-visual-range (function)
   (dolist (ov *visual-overlays*)

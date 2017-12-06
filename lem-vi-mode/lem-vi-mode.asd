@@ -3,6 +3,7 @@
   :serial t
   :components ((:file "core")
                (:file "word")
+               (:file "visual")
                (:file "commands")
                (:file "ex-util")
                (:file "ex-command")

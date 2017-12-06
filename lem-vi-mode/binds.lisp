@@ -4,7 +4,8 @@
         :lem.universal-argument
         :lem-vi-mode.core
         :lem-vi-mode.commands
-        :lem-vi-mode.ex))
+        :lem-vi-mode.ex
+        :lem-vi-mode.visual))
 (in-package :lem-vi-mode.binds)
 
 (define-key *command-keymap* "0" 'vi-move-to-beginning-of-line/universal-argument-0)
@@ -53,6 +54,10 @@
 (define-key *command-keymap* "C-w l" 'window-move-right)
 (define-key *command-keymap* "C-w k" 'window-move-up)
 (define-key *command-keymap* "C-w j" 'window-move-down)
+
+(define-key *command-keymap* "v" 'vi-visual-char)
+(define-key *command-keymap* "V" 'vi-visual-line)
+(define-key *command-keymap* "C-v" 'vi-visual-block)
 
 (define-key *command-keymap* "i" 'vi-insert)
 (define-key *command-keymap* "a" 'vi-append)

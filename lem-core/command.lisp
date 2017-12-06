@@ -55,9 +55,9 @@
     t))
 
 (define-key *global-keymap* "C-x C-c" 'exit-lem)
-(define-command exit-lem () ()
-  (when (or (not (any-modified-buffer-p))
-            (prompt-for-y-or-n-p "Modified buffers exist. Leave anyway"))
+(define-command exit-lem (&optional (ask t)) ((list t))
+  (when (and ask (or (not (any-modified-buffer-p))
+                     (prompt-for-y-or-n-p "Modified buffers exist. Leave anyway")))
     (exit-editor)))
 
 (define-command quick-exit () ()

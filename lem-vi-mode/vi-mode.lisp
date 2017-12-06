@@ -91,11 +91,43 @@
 (define-key *command-keymap* "C-w j" 'window-move-down)
 
 (define-key *command-keymap* "i" 'vi-insert)
+(define-key *command-keymap* "a" 'vi-append)
+(define-key *command-keymap* "A" 'vi-append-line)
+(define-key *command-keymap* "o" 'vi-open-below)
+(define-key *command-keymap* "O" 'vi-open-adove)
 (define-key *command-keymap* ":" 'vi-ex)
 
-(define-key *insert-keymap* "escape" 'vi-normal)
+(define-key *insert-keymap* "escape" 'vi-end-insert)
+
+(define-command vi-end-insert () ()
+  (change-state 'command)
+  (vi-backward-char 1))
 
 (define-command vi-insert () ()
+  (change-state 'insert))
+
+(define-command vi-append () ()
+  (forward-char 1)
+  (change-state 'insert))
+
+(define-command vi-append-line () ()
+  (move-to-end-of-line)
+  (change-state 'insert))
+
+(define-command vi-open-below () ()
+  (let* ((p (current-point))
+         (column (with-point ((p (current-point)))
+                   (point-column (or (and (line-offset p 1)
+                                          (back-to-indentation p))
+                                     (line-start p))))))
+    (line-end p)
+    (insert-character p #\newline)
+    (move-to-column p column t)
+    (change-state 'insert)))
+
+(define-command vi-open-adove () ()
+  (line-start (current-point))
+  (open-line 1)
   (change-state 'insert))
 
 (define-command vi-normal () ()

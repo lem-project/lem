@@ -40,8 +40,10 @@
       (funcall *set-visual-function*)))
 
 (defun visual-char ()
-  (push (make-overlay *start-point* (current-point) 'region)
-        *visual-overlays*))
+  (with-point ((p (current-point)))
+    (character-offset p 1)
+    (push (make-overlay *start-point* p 'region)
+          *visual-overlays*)))
 
 (defun visual-line ()
   (with-point ((start *start-point*)
@@ -55,6 +57,7 @@
 (defun visual-block ()
   (with-point ((start *start-point*)
                (end (current-point)))
+    (character-offset end 1)
     (when (point< end start) (rotatef start end))
     (let ((start-column (point-column start))
           (end-column (point-column end)))

@@ -65,13 +65,34 @@
   `(push (list (list . ,(alexandria:ensure-list names)) (lambda (,range ,argument) ,@body))
          *command-table*))
 
-(define-ex-command ("w" "write") (range filename)
+(defun ex-write (range filename)
   (when (string= filename "")
     (setf filename (lem:buffer-filename (lem:current-buffer))))
   (case (length range)
     (0 (lem:write-file filename))
     (2 (lem:write-region-file (first range) (second range) filename))
     (otherwise (syntax-error))))
+
+(defun ex-write-quit (range filename force)
+  (ex-write range filename)
+  (lem-vi-mode.commands:vi-quit force))
+
+(define-ex-command ("w" "write") (range filename)
+  (ex-write range filename))
+
+(define-ex-command ("wq") (range filename)
+  (ex-write-quit range filename nil))
+
+(define-ex-command ("wq!") (range filename)
+  (ex-write-quit range filename t))
+
+(define-ex-command ("q") (range argument)
+  (declare (ignore range argument))
+  (lem-vi-mode.commands:vi-quit t))
+
+(define-ex-command ("q!") (range argument)
+  (declare (ignore range argument))
+  (lem-vi-mode.commands:vi-quit nil))
 
 (define-ex-command ("sp") (range filename)
   (declare (ignore range))

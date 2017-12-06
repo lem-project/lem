@@ -230,9 +230,9 @@
       (move-to-end-of-buffer)
       (goto-line arg)))
 
-(define-command vi-quit () ()
+(define-command vi-quit (&optional (ask t)) ((list t))
   (if (one-window-p)
-      (exit-lem)
+      (exit-lem ask)
       (delete-current-window)))
 
 

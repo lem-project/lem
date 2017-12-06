@@ -70,9 +70,16 @@
 (defun current-state ()
   *current-state*)
 
+(defun ensure-state (state)
+  (setf state
+        (if (symbolp state)
+            (get state 'state)
+            state))
+  (assert (vi-state-p state))
+  state)
+
 (defun change-state (name &rest args)
-  (let ((state (get name 'state)))
-    (assert (vi-state-p state))
+  (let ((state (ensure-state name)))
     (setf *current-state* name)
     (setf (mode-keymap 'vi-mode) (vi-state-keymap state))
     (change-element-name (format nil "[~A]" name))
@@ -101,7 +108,9 @@
 (defun minibuffer-deactivate-hook () (change-state 'command))
 
 (defun vi-post-command-hook ()
-  (funcall (vi-state-post-command-hook (current-state))))
+  (alexandria:when-let ((it (vi-state-post-command-hook
+                             (ensure-state (current-state)))))
+    (funcall it)))
 
 (add-hook *enable-hook*
           (lambda ()

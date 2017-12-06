@@ -3,7 +3,7 @@ Lem is the editor/IDE well-tuned for Common Lisp.
 
 After installing lem, you can start developing in Common Lisp at once. 
 
-That is, you can skip over writing tidy settings or installing many plugins as you do on Emacs.
+You can skip over writing tidy settings or installing many plugins as you do on Emacs.
 
 ## Screenshot
 ![Terminal](screenshots/terminal.png)　　
@@ -29,7 +29,7 @@ After that, please follow the steps bellow.
 1. install lem by roswell
 $ ros install cxxxr/lem
 
-2. add the code below in "~/.bashrc" for adding the PATH
+2. add the PATH: code below in "~/.bashrc" for adding the PATH
 export PATH=$PATH:~/.roswell/bin
 
 3. enable the new setting

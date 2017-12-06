@@ -2,6 +2,7 @@
   (:use :cl
         :lem
         :lem.universal-argument
+        :lem-vi-mode.core
         :lem-vi-mode.commands
         :lem-vi-mode.ex))
 (in-package :lem-vi-mode.binds)

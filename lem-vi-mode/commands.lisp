@@ -3,6 +3,7 @@
         :lem
         :lem.universal-argument
         :lem.show-paren
+        :lem-vi-mode.core
         :lem-vi-mode.word)
   (:export :vi-move-to-beginning-of-line/universal-argument-0
            :vi-forward-char
@@ -27,7 +28,14 @@
            :vi-search-previous
            :vi-goto-first-line
            :vi-goto-line
-           :vi-quit))
+           :vi-quit
+           :vi-end-insert
+           :vi-insert
+           :vi-append
+           :vi-append-line
+           :vi-open-below
+           :vi-open-adove
+           :vi-normal))
 (in-package :lem-vi-mode.commands)
 
 (defun bolp (point)
@@ -143,8 +151,8 @@
     (setf (variable-value 'forward-matching-paren :global) old-forward-matching-paren)
     (setf (variable-value 'backward-matching-paren :global) old-backward-matching-paren)))
 
-(add-hook lem-vi-mode.mode:*enable-hook* 'on-matching-paren)
-(add-hook lem-vi-mode.mode:*disable-hook* 'off-matching-paren)
+(add-hook *enable-hook* 'on-matching-paren)
+(add-hook *disable-hook* 'off-matching-paren)
 
 (define-command vi-search-forward () ()
   (lem.isearch:isearch-forward-regexp "/"))
@@ -170,3 +178,38 @@
   (if (one-window-p)
       (exit-lem)
       (delete-current-window)))
+
+
+(define-command vi-end-insert () ()
+  (change-state 'command)
+  (vi-backward-char 1))
+
+(define-command vi-insert () ()
+  (change-state 'insert))
+
+(define-command vi-append () ()
+  (forward-char 1)
+  (change-state 'insert))
+
+(define-command vi-append-line () ()
+  (move-to-end-of-line)
+  (change-state 'insert))
+
+(define-command vi-open-below () ()
+  (let* ((p (current-point))
+         (column (with-point ((p (current-point)))
+                   (point-column (or (and (line-offset p 1)
+                                          (back-to-indentation p))
+                                     (line-start p))))))
+    (line-end p)
+    (insert-character p #\newline)
+    (move-to-column p column t)
+    (change-state 'insert)))
+
+(define-command vi-open-adove () ()
+  (line-start (current-point))
+  (open-line 1)
+  (change-state 'insert))
+
+(define-command vi-normal () ()
+  (change-state 'command))

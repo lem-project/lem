@@ -1,7 +1,7 @@
 (defpackage :lem-vi-mode.ex
   (:use :cl
         :lem
-        :lem-vi-mode.state
+        :lem-vi-mode.core
         :lem-vi-mode.ex-parser)
   (:export :vi-ex))
 (in-package :lem-vi-mode.ex)

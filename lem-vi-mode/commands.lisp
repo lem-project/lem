@@ -131,20 +131,22 @@
     (delete-previous-char n)))
 
 (defvar *vi-delete-recursive* nil)
-(define-command vi-delete () ()
-  (cond (*vi-delete-recursive*
-         (move-to-beginning-of-line)
-         (kill-line 1)
-         (throw 'vi-delete t))
-        ((visual-p)
-         (apply-visual-range (lambda (start end) (kill-region start end))))
-        (t
-         (alexandria:when-let ((command (lookup-keybind (read-key))))
-           (with-point ((start (current-point)))
-             (let ((*vi-delete-recursive* t))
-               (catch 'vi-delete
-                 (call-command command nil)
-                 (kill-region start (current-point)))))))))
+(let ((tag (gensym)))
+  (define-command vi-delete () ()
+    (cond (*vi-delete-recursive*
+           (move-to-beginning-of-line)
+           (kill-line 1)
+           (throw tag t))
+          ((visual-p)
+           (apply-visual-range (lambda (start end) (kill-region start end))))
+          (t
+           (alexandria:when-let ((command (lookup-keybind (read-key))))
+             (with-point ((start (current-point)))
+               (let ((*vi-delete-recursive* t))
+                 (catch tag
+                   (call-command command nil)
+                   (when (point/= start (current-point))
+                     (kill-region start (current-point)))))))))))
 
 (define-command vi-delete-line () ()
   (cond ((visual-block-p)

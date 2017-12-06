@@ -10,4 +10,5 @@
                (:file "ex-command")
                (:file "ex-parser")
                (:file "ex")
-               (:file "vi-mode")))
+               (:file "vi-mode")
+               (:file "binds")))

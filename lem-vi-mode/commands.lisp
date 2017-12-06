@@ -24,6 +24,7 @@
            :vi-delete-previous-char
            :vi-delete
            :vi-delete-line
+           :vi-yank-line
            :vi-paste-after
            :vi-paste-before
            :vi-move-to-matching-paren
@@ -163,6 +164,13 @@
          (with-point ((start (current-point))
                       (end (current-point)))
            (kill-region start (line-end end))))))
+
+(define-command vi-yank-line () ()
+  (with-point ((start (current-point))
+               (end (current-point)))
+    (line-start start)
+    (line-end end)
+    (copy-region start end)))
 
 (define-command vi-paste-after () ()
   (insert-character (line-end (current-point)) #\newline)

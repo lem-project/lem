@@ -327,7 +327,7 @@
                                   new-string
                                   *isearch-search-forward-function*
                                   *isearch-search-backward-function*
-                                  nil))))))
+                                  :query nil))))))
 
 (define-command isearch-next-highlight (n) ("p")
   (alexandria:when-let ((string (buffer-value (current-buffer) 'isearch-redisplay-string)))
@@ -401,23 +401,29 @@
                       ((char= c #\!)
                        (setf pass-through t)))))))))
 
-(defun query-replace-internal (before after search-forward-function search-backward-function query)
+(defun query-replace-internal (before after search-forward-function search-backward-function
+                               &key query (start nil start-p) (end nil end-p))
   (let ((buffer (current-buffer)))
     (unwind-protect
          (let ((*isearch-search-forward-function* search-forward-function)
                (*isearch-search-backward-function* search-backward-function))
            (when (and before after)
-             (if (buffer-mark-p buffer)
-                 (with-point ((mark-point (buffer-mark buffer) :right-inserting))
-                   (if (point< mark-point (buffer-point buffer))
-                       (query-replace-internal-body mark-point
-                                                    (buffer-point buffer)
-                                                    before after query)
-                       (query-replace-internal-body (buffer-point buffer)
-                                                    mark-point
-                                                    before after query)))
-                 (query-replace-internal-body (buffer-point buffer)
-                                              nil before after query))))
+             (cond ((or start-p end-p)
+                    (with-point ((s (or start (buffer-start-point (current-buffer))))
+                                 (e (or end (buffer-end-point (current-buffer)))))
+                      (query-replace-internal-body s e before after query)))
+                   ((buffer-mark-p buffer)
+                    (with-point ((mark-point (buffer-mark buffer) :right-inserting))
+                      (cond ((point< mark-point (buffer-point buffer))
+                             (query-replace-internal-body mark-point
+                                                          (buffer-point buffer)
+                                                          before after query))
+                            (t
+                             (query-replace-internal-body (buffer-point buffer)
+                                                          mark-point
+                                                          before after query)))))
+                   (t (query-replace-internal-body (buffer-point buffer)
+                                                   nil before after query)))))
       (isearch-reset-overlays buffer))))
 
 (define-key *global-keymap* "M-%" 'query-replace)
@@ -428,7 +434,7 @@
                           after
                           #'search-forward
                           #'search-backward
-                          t))
+                          :query t))
 
 (define-command query-replace-regexp (before after)
     ((read-query-replace-args))
@@ -436,7 +442,7 @@
                           after
                           #'search-forward-regexp
                           #'search-backward-regexp
-                          t))
+                          :query t))
 
 (define-command query-replace-symbol (before after)
     ((read-query-replace-args))
@@ -444,4 +450,4 @@
                           after
                           #'search-forward-symbol
                           #'search-backward-symbol
-                          t))
+                          :query t))

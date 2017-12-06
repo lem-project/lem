@@ -85,7 +85,7 @@ Electron version
 
 - To distribute executable/binary on surported platforms.
 
-- To make some applications using lem(Electron version). 
+- To make a learning application using lem(Electron version). 
 
 
 ## Notes

@@ -142,14 +142,15 @@
           ((visual-p)
            (apply-visual-range (lambda (start end) (kill-region start end))))
           (t
-           (alexandria:when-let ((command (lookup-keybind (read-key))))
-             (with-point ((start (current-point)))
-               (let ((*vi-delete-recursive* t)
-                     (*forward-matching-paren-offset* 0))
-                 (catch tag
-                   (call-command command nil)
-                   (when (point/= start (current-point))
-                     (kill-region start (current-point)))))))))))
+           (let ((command (lookup-keybind (read-key))))
+             (when (symbolp command)
+               (with-point ((start (current-point)))
+                 (let ((*vi-delete-recursive* t)
+                       (*forward-matching-paren-offset* 0))
+                   (catch tag
+                     (call-command command nil)
+                     (when (point/= start (current-point))
+                       (kill-region start (current-point))))))))))))
 
 (define-command vi-delete-line () ()
   (cond ((visual-block-p)

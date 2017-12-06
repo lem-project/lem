@@ -4,7 +4,8 @@
         :lem.universal-argument
         :lem.show-paren
         :lem-vi-mode.core
-        :lem-vi-mode.word)
+        :lem-vi-mode.word
+        :lem-vi-mode.visual)
   (:export :vi-move-to-beginning-of-line/universal-argument-0
            :vi-forward-char
            :vi-backward-char
@@ -21,6 +22,10 @@
            :vi-back-to-indentation
            :vi-delete-next-char
            :vi-delete-previous-char
+           :vi-delete
+           :vi-delete-line
+           :vi-paste-after
+           :vi-paste-before
            :vi-move-to-matching-paren
            :vi-search-forward
            :vi-search-backward
@@ -124,6 +129,34 @@
 (define-command vi-delete-previous-char (&optional (n 1)) ("p")
   (unless (bolp (current-point))
     (delete-previous-char n)))
+
+(defvar *vi-delete-recursive* nil)
+(define-command vi-delete () ()
+  (cond (*vi-delete-recursive*
+         (move-to-beginning-of-line)
+         (kill-line 1)
+         (throw 'vi-delete t))
+        ((visual-p)
+         (apply-visual-range (lambda (start end) (kill-region start end))))
+        (t
+         (alexandria:when-let ((command (lookup-keybind (read-key))))
+           (with-point ((start (current-point)))
+             (let ((*vi-delete-recursive* t))
+               (catch 'vi-delete
+                 (call-command command nil)
+                 (kill-region start (current-point)))))))))
+
+(define-command vi-delete-line () ()
+  )
+
+(define-command vi-paste-after () ()
+  (insert-character (line-end (current-point)) #\newline)
+  (yank))
+
+(define-command vi-paste-before () ()
+  (line-start (current-point))
+  (open-line 1)
+  (yank))
 
 (defun forward-matching-paren (p &optional skip)
   (with-point ((p p))

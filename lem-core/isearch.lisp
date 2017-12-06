@@ -376,33 +376,34 @@
     (setq *replace-after-string* after)
     (list before after)))
 
-(defun query-replace-internal-body (cur-point goal-point before after query)
+(defun query-replace-internal-body (cur-point goal-point before after query count)
   (let ((pass-through (not query)))
     (loop
-      (when (or (not (funcall *isearch-search-forward-function* cur-point before))
-                (and goal-point (point< goal-point cur-point)))
-        (when goal-point
-          (move-point (current-point) goal-point))
-        (return))
-      (with-point ((end cur-point :right-inserting))
-        (isearch-update-buffer cur-point before)
-        (funcall *isearch-search-backward-function* cur-point before)
-        (with-point ((start cur-point :right-inserting))
-          (loop :for c := (unless pass-through
-                            (prompt-for-character (format nil "Replace ~s with ~s" before after)))
-                :do (cond
-                      ((or pass-through (char= c #\y))
-                       (delete-between-points start end)
-                       (insert-string cur-point after)
-                       (return))
-                      ((char= c #\n)
-                       (move-point cur-point end)
-                       (return))
-                      ((char= c #\!)
-                       (setf pass-through t)))))))))
+      :repeat (or count most-positive-fixnum)
+      :do (when (or (not (funcall *isearch-search-forward-function* cur-point before))
+                    (and goal-point (point< goal-point cur-point)))
+            (when goal-point
+              (move-point (current-point) goal-point))
+            (return))
+          (with-point ((end cur-point :right-inserting))
+            (isearch-update-buffer cur-point before)
+            (funcall *isearch-search-backward-function* cur-point before)
+            (with-point ((start cur-point :right-inserting))
+              (loop :for c := (unless pass-through
+                                (prompt-for-character (format nil "Replace ~s with ~s" before after)))
+                    :do (cond
+                          ((or pass-through (char= c #\y))
+                           (delete-between-points start end)
+                           (insert-string cur-point after)
+                           (return))
+                          ((char= c #\n)
+                           (move-point cur-point end)
+                           (return))
+                          ((char= c #\!)
+                           (setf pass-through t)))))))))
 
 (defun query-replace-internal (before after search-forward-function search-backward-function
-                               &key query (start nil start-p) (end nil end-p))
+                               &key query (start nil start-p) (end nil end-p) count)
   (let ((buffer (current-buffer)))
     (unwind-protect
          (let ((*isearch-search-forward-function* search-forward-function)
@@ -411,19 +412,19 @@
              (cond ((or start-p end-p)
                     (with-point ((s (or start (buffer-start-point (current-buffer))))
                                  (e (or end (buffer-end-point (current-buffer)))))
-                      (query-replace-internal-body s e before after query)))
+                      (query-replace-internal-body s e before after query count)))
                    ((buffer-mark-p buffer)
                     (with-point ((mark-point (buffer-mark buffer) :right-inserting))
                       (cond ((point< mark-point (buffer-point buffer))
                              (query-replace-internal-body mark-point
                                                           (buffer-point buffer)
-                                                          before after query))
+                                                          before after query count))
                             (t
                              (query-replace-internal-body (buffer-point buffer)
                                                           mark-point
-                                                          before after query)))))
+                                                          before after query count)))))
                    (t (query-replace-internal-body (buffer-point buffer)
-                                                   nil before after query)))))
+                                                   nil before after query count)))))
       (isearch-reset-overlays buffer))))
 
 (define-key *global-keymap* "M-%" 'query-replace)

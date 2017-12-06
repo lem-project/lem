@@ -21,7 +21,5 @@
     (execute-ex (prompt-for-line ":" "" nil nil 'vi-ex))))
 
 (defun execute-ex (string)
-  (let ((lem-vi-mode.ex-command:*point* (current-point)))
-    (multiple-value-bind (exp error) (parse-ex string)
-      (when error (editor-error "syntax error"))
-      (eval exp))))
+  (let ((lem-vi-mode.ex-core:*point* (current-point)))
+    (eval (parse-ex string))))

@@ -1,6 +1,9 @@
 (defpackage :lem-vi-mode.ex-parser
-  (:use :cl :esrap :lem-vi-mode.ex-util)
-  (:export :parse-ex))
+  (:use :cl :esrap)
+  (:import-from :lem-vi-mode.ex-core
+                :syntax-error)
+  (:export :parse-ex
+           :parse-subst-argument))
 (in-package :lem-vi-mode.ex-parser)
 
 (defrule whitespace (* #\space)
@@ -12,21 +15,21 @@
 
 (defrule goto-line number
   (:lambda (number)
-    `(lem-vi-mode.ex-command:goto-line ,number)))
+    `(lem-vi-mode.ex-core:goto-line ,number)))
 
 (defrule current-line #\.
   (:lambda (x)
     (declare (ignore x))
-    '(lem-vi-mode.ex-command:current-line)))
+    '(lem-vi-mode.ex-core:current-line)))
 
 (defrule last-line #\$
   (:lambda (x)
     (declare (ignore x))
-    '(lem-vi-mode.ex-command:last-line)))
+    '(lem-vi-mode.ex-core:last-line)))
 
 (defrule marker (and #\' character)
   (:lambda (list)
-    `(lem-vi-mode.ex-command:marker ,(second list))))
+    `(lem-vi-mode.ex-core:marker ,(second list))))
 
 (defun is-not (a b)
   (not (eql a b)))
@@ -46,7 +49,7 @@
 
 (defrule forward-pattern (and #\/ (* forward-pattern-char) (? #\/))
   (:lambda (list)
-    `(lem-vi-mode.ex-command:search-forward
+    `(lem-vi-mode.ex-core:search-forward
       ,(coerce (second list) 'string))))
 
 (defrule escape-question (and #\\ #\?)
@@ -58,18 +61,18 @@
 
 (defrule backward-pattern (and #\? (* backward-pattern-char) (? #\?))
   (:lambda (list)
-    `(lem-vi-mode.ex-command:search-backward
+    `(lem-vi-mode.ex-core:search-backward
       ,(coerce (second list) 'string))))
 
 (defrule offset-line (and (or #\+ #\-) number)
   (:lambda (list)
-    `(lem-vi-mode.ex-command:offset-line
+    `(lem-vi-mode.ex-core:offset-line
       ,(if (string= "-" (first list))
            (- (second list))
            (second list)))))
 
 (defrule ex-line (and whitespace (or goto-line current-line last-line marker
-                                           forward-pattern backward-pattern offset-line))
+                                     forward-pattern backward-pattern offset-line))
   (:lambda (list)
     (second list)))
 
@@ -87,16 +90,16 @@
 (defrule ex-range-lines (* (or (and ex-lines delimiter) (and ex-lines (? #\;))))
   (:lambda (list)
     (when list
-      `(lem-vi-mode.ex-command:range
+      `(lem-vi-mode.ex-core:range
         ,@(loop :for (lines delim) :in list
                 :collect `(lem:copy-point
                            ,(if (eql delim #\;)
-                                `(lem-vi-mode.ex-command:goto-current-point ,lines)
+                                `(lem-vi-mode.ex-core:goto-current-point ,lines)
                                 lines)
                            :temporary))))))
 
 (defrule ex-range-% #\%
-  (:constant '(lem-vi-mode.ex-command:all-lines)))
+  (:constant '(lem-vi-mode.ex-core:all-lines)))
 
 (defrule ex-range (or ex-range-% ex-range-lines))
 
@@ -107,7 +110,7 @@
         x)))
 
 (defrule ex-command (or (+ (or #\~ #\& #\* #\@ #\< #\> #\= #\:))
-                              (+ (or command-char #\- #\!)))
+                        (+ (or command-char #\- #\!)))
   (:lambda (x)
     (map 'string (lambda (x) (if (equal "!" x) #\! x)) x)))
 
@@ -127,8 +130,27 @@
           (argument (alexandria:when-let ((argument (third (third list))))
                       (string-trim " " argument))))
       (if (null command)
-          `(lem-vi-mode.ex-command:goto-current-point ,range)
-          `(lem-vi-mode.ex-command:call-ex-command ,range ,command ,(or argument ""))))))
+          `(lem-vi-mode.ex-core:goto-current-point ,range)
+          `(lem-vi-mode.ex-core:call-ex-command ,range ,command ,(or argument ""))))))
+
+
+(defrule subst (and #\/ (* forward-pattern-char) #\/ (* forward-pattern-char)
+                    (? #\/) (? #\g))
+  (:lambda (list)
+    (list (coerce (elt list 1) 'string)
+          (coerce (elt list 3) 'string)
+          (elt list 5))))
+
+(defmacro with-syntax (form)
+  (alexandria:with-gensyms (result err)
+    `(multiple-value-bind (,result ,err)
+         (ignore-errors ,form)
+       (if ,err
+           (syntax-error)
+           ,result))))
+
+(defun parse-subst-argument (string)
+  (with-syntax (parse 'subst string)))
 
 (defun parse-ex (string)
-  (ignore-errors (parse 'ex string)))
+  (with-syntax (parse 'ex string)))

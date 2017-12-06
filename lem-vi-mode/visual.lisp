@@ -15,10 +15,16 @@
 
 (define-key *visual-keymap* "escape" 'vi-visual-end)
 
-(define-vi-state visual (:keymap *visual-keymap* :post-command-hook 'post-command-hook)
-    (function)
-  (setf *set-visual-function* function)
-  (setf *start-point* (copy-point (current-point) :temporary)))
+(define-vi-state visual (:keymap *visual-keymap*
+                         :post-command-hook 'post-command-hook)
+  (:disable ()
+   (clear-visual-overlays))
+  (:enable (function)
+   (setf *set-visual-function* function)
+   (setf *start-point* (copy-point (current-point) :temporary))))
+
+(defun disable ()
+  (clear-visual-overlays))
 
 (defun clear-visual-overlays ()
   (mapc 'delete-overlay *visual-overlays*)
@@ -26,7 +32,9 @@
 
 (defun post-command-hook ()
   (clear-visual-overlays)
-  (funcall *set-visual-function*))
+  (if (not (eq (current-buffer) (point-buffer *start-point*)))
+      (vi-visual-end)
+      (funcall *set-visual-function*)))
 
 (defun visual-char ()
   (push (make-overlay *start-point* (current-point) 'region)

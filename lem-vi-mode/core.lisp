@@ -56,16 +56,20 @@
   name
   keymap
   post-command-hook
-  function)
+  enable-hook
+  disable-hook)
 
-(defvar *current-state*)
+(defvar *current-state* nil)
 
-(defmacro define-vi-state (name (&key keymap post-command-hook) lambda-list &body body)
-  `(setf (get ',name 'state)
-         (make-vi-state :name ',name
-                        :keymap ,keymap
-                        :post-command-hook ,post-command-hook
-                        :function (lambda ,lambda-list ,@body))))
+(defmacro define-vi-state (name (&key keymap post-command-hook) &body spec)
+  (let ((enable-form (rest (assoc :enable spec)))
+        (disable-form (rest (assoc :disable spec))))
+    `(setf (get ',name 'state)
+           (make-vi-state :name ',name
+                          :keymap ,keymap
+                          :post-command-hook ,post-command-hook
+                          :enable-hook ,(if enable-form `(lambda ,@enable-form))
+                          :disable-hook ,(if disable-form `(lambda ,@disable-form))))))
 
 (defun current-state ()
   *current-state*)
@@ -79,11 +83,15 @@
   state)
 
 (defun change-state (name &rest args)
+  (alexandria:when-let ((disable-hook (and *current-state*
+                                           (vi-state-disable-hook (ensure-state *current-state*)))))
+    (funcall disable-hook))
   (let ((state (ensure-state name)))
     (setf *current-state* name)
     (setf (mode-keymap 'vi-mode) (vi-state-keymap state))
     (change-element-name (format nil "[~A]" name))
-    (apply (vi-state-function state) args)))
+    (when (vi-state-enable-hook state)
+      (apply (vi-state-enable-hook state) args))))
 
 (defmacro with-state (state &body body)
   (alexandria:with-gensyms (old-state)
@@ -97,12 +105,12 @@
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap*))
 (defvar *inactive-keymap* (make-keymap))
 
-(define-vi-state command (:keymap *command-keymap*) ())
+(define-vi-state command (:keymap *command-keymap*))
 
-(define-vi-state insert (:keymap *insert-keymap*) ()
-  (message " -- INSERT --"))
+(define-vi-state insert (:keymap *insert-keymap*)
+  (:enable () (message " -- INSERT --")))
 
-(define-vi-state modeline (:keymap *inactive-keymap*) ())
+(define-vi-state modeline (:keymap *inactive-keymap*))
 
 (defun minibuffer-activate-hook () (change-state 'modeline))
 (defun minibuffer-deactivate-hook () (change-state 'command))

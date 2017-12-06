@@ -4,7 +4,9 @@
         :lem-vi-mode.core)
   (:export :vi-visual-char
            :vi-visual-line
-           :vi-visual-block))
+           :vi-visual-block
+           :visual-p
+           :apply-visual-range))
 (in-package :lem-vi-mode.visual)
 
 (defvar *set-visual-function* nil)
@@ -79,3 +81,12 @@
 (define-command vi-visual-block () ()
   (change-state 'visual 'visual-block)
   (message "-- VISUAL BLOCK --"))
+
+(defun visual-p ()
+  (eq 'visual (current-state)))
+
+(defun apply-visual-range (function)
+  (dolist (ov *visual-overlays*)
+    (funcall function
+             (overlay-start ov)
+             (overlay-end ov))))

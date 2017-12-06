@@ -43,6 +43,8 @@
            :vi-normal))
 (in-package :lem-vi-mode.commands)
 
+(defvar *forward-matching-paren-offset* -1)
+
 (defun bolp (point)
   (zerop (point-charpos point)))
 
@@ -142,7 +144,8 @@
           (t
            (alexandria:when-let ((command (lookup-keybind (read-key))))
              (with-point ((start (current-point)))
-               (let ((*vi-delete-recursive* t))
+               (let ((*vi-delete-recursive* t)
+                     (*forward-matching-paren-offset* 0))
                  (catch tag
                    (call-command command nil)
                    (when (point/= start (current-point))
@@ -173,7 +176,7 @@
   (with-point ((p p))
     (when (or skip (syntax-open-paren-char-p (character-at p)))
       (scan-lists p 1 0)
-      (character-offset p -1))))
+      (character-offset p *forward-matching-paren-offset*))))
 
 (defun backward-matching-paren (p)
   (when (syntax-closed-paren-char-p (character-at p))

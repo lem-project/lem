@@ -18,7 +18,7 @@
 
 (define-command vi-ex () ()
   (with-state 'ex
-    (execute-ex (prompt-for-line ": " "" nil nil 'vi-ex))))
+    (execute-ex (prompt-for-line ":" "" nil nil 'vi-ex))))
 
 (defun execute-ex (string)
   (let ((lem-vi-mode.ex-command:*point* (current-point)))

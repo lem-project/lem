@@ -4,6 +4,7 @@
           keymap
           make-keymap
           *global-keymap*
+          undefined-key
           define-key
           keyseq-to-string
           find-keybind
@@ -14,6 +15,7 @@
 
 (defstruct (keymap (:constructor %make-keymap) (:print-function %print-keymap))
   undef-hook
+  insertion-hook
   parent
   table
   name)
@@ -24,9 +26,10 @@
     (when (keymap-name object)
       (format stream "~A" (keymap-name object)))))
 
-(defun make-keymap (&key undef-hook parent name)
+(defun make-keymap (&key undef-hook insertion-hook parent name)
   (let ((keymap (%make-keymap
                  :undef-hook undef-hook
+                 :insertion-hook insertion-hook
                  :parent parent
                  :table (make-hash-table :test 'equal)
                  :name name)))
@@ -107,10 +110,15 @@
           (let ((parent (keymap-parent keymap)))
             (when parent
               (keymap-find-keybind parent key)))
+          (and (keymap-insertion-hook keymap)
+               (alexandria:when-let ((c (insertion-key-p key)))
+                 (keymap-insertion-hook keymap)))
           (keymap-undef-hook keymap)))))
 
-(defun insertion-key-p (kseq)
-  (let* ((first-key (elt kseq 0)))
+(defun insertion-key-p (key)
+  (let* ((first-key (typecase key
+                      (list (first key))
+                      (otherwise key))))
     (when (or (< 31 (char-code first-key))
               (char= first-key
                      (load-time-value (keyname->keychar "C-i"))))
@@ -274,13 +282,16 @@
 (define-key *global-keymap* "[event]" 'undefined-key)
 
 (defun lookup-keybind (key)
-  (let ((buffer (current-buffer)))
-    (or (some (lambda (mode)
-                (when (mode-keymap mode)
-                  (keymap-find-keybind (mode-keymap mode) key)))
-              (buffer-minor-modes buffer))
-        (keymap-find-keybind (mode-keymap (buffer-major-mode buffer)) key)
-        (keymap-find-keybind *global-keymap* key))))
+  (flet ((f (list)
+           (some (lambda (mode)
+                   (when (mode-keymap mode)
+                     (keymap-find-keybind (mode-keymap mode) key)))
+                 list)))
+    (let ((buffer (current-buffer)))
+      (or (f (buffer-minor-modes buffer))
+          (f *global-minor-mode-list*)
+          (keymap-find-keybind (mode-keymap (buffer-major-mode buffer)) key)
+          (keymap-find-keybind *global-keymap* key)))))
 
 (defun find-keybind (key)
   (let ((cmd (lookup-keybind key)))

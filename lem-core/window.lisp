@@ -33,6 +33,10 @@
           other-buffer
           switch-to-buffer
           pop-to-buffer
+          left-window
+          right-window
+          up-window
+          down-window
           floating-windows
           balloon
           quit-balloon
@@ -836,6 +840,53 @@
           (setf (window-parameter (current-window) 'split-p) split-p)
           (setf (window-parameter (current-window) 'parent-window) parent-window)
           (values (current-window) split-p)))))
+
+(defun difference-window-y (window)
+  (lambda (w1 w2)
+    (< (abs (- (window-y window) (window-y w1)))
+       (abs (- (window-y window) (window-y w2))))))
+
+(defun difference-window-x (window)
+  (lambda (w1 w2)
+    (< (abs (- (window-x window) (window-x w1)))
+       (abs (- (window-x window) (window-x w2))))))    
+
+(defun left-window (window)
+  (first (sort (remove-if-not (lambda (w)
+                                (and (<= (window-y w)
+                                         (window-y window)
+                                         (+ (window-y w) (window-height w) -1))
+                                     (< (window-x w)
+                                        (window-x window))))
+                              (window-list))
+               #'>
+               :key #'window-x)))
+
+(defun right-window (window)
+  (first (sort (min-if #'window-x
+                       (remove-if-not (lambda (w)
+                                        (> (window-x w)
+                                           (+ (window-x window) (window-width window))))
+                                      (window-list)))
+               (difference-window-y window))))
+
+(defun up-window (window)
+  (first (sort (remove-if-not (lambda (w)
+                                (and (<= (window-x w)
+                                         (window-x window)
+                                         (+ (window-x w) (window-width w) -1))
+                                     (< (window-y w)
+                                        (window-y window))))
+                              (window-list))
+               #'>
+               :key #'window-y)))
+
+(defun down-window (window)
+  (first (sort (min-if #'window-y
+                       (remove-if-not (lambda (w)
+                                        (>= (window-y w) (+ (window-y window) (window-height window))))
+                                      (window-list)))
+               (difference-window-x window))))
 
 (defclass floating-window (window) ())
 

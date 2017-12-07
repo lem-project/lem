@@ -3,6 +3,8 @@
 (export '(*enable-recursive-minibuffers*
           *minibuffer-completion-function*
           *minibuffer-file-complete-function*
+          *minibuffer-activate-hook*
+          *minibuffer-deactivate-hook*
           *minibuf-keymap*
           minibuffer-prompt-attribute
           minibuffer-window-p
@@ -15,10 +17,10 @@
           prompt-for-character
           active-minibuffer-window
           check-switch-minibuffer-window
-          minibuf-read-line-confirm
-          minibuf-read-line-completion
-          minibuf-read-line-prev-history
-          minibuf-read-line-next-history
+          minibuffer-read-line-confirm
+          minibuffer-read-line-completion
+          minibuffer-read-line-prev-history
+          minibuffer-read-line-next-history
           prompt-for-y-or-n-p
           prompt-for-line
           prompt-for-string
@@ -40,6 +42,9 @@
 
 (defvar *minibuffer-completion-function* nil)
 (defvar *minibuffer-file-complete-function* nil)
+
+(defvar *minibuffer-activate-hook* '())
+(defvar *minibuffer-deactivate-hook* '())
 
 (defclass minibuffer-window (window) ())
 
@@ -142,11 +147,11 @@
         ((char= #\n c)
          (return nil))))))
 
-(define-key *minibuf-keymap* "C-j" 'minibuf-read-line-confirm)
-(define-key *minibuf-keymap* "C-m" 'minibuf-read-line-confirm)
-(define-key *minibuf-keymap* "C-i" 'minibuf-read-line-completion)
-(define-key *minibuf-keymap* "M-p" 'minibuf-read-line-prev-history)
-(define-key *minibuf-keymap* "M-n" 'minibuf-read-line-next-history)
+(define-key *minibuf-keymap* "C-j" 'minibuffer-read-line-confirm)
+(define-key *minibuf-keymap* "C-m" 'minibuffer-read-line-confirm)
+(define-key *minibuf-keymap* "C-i" 'minibuffer-read-line-completion)
+(define-key *minibuf-keymap* "M-p" 'minibuffer-read-line-prev-history)
+(define-key *minibuf-keymap* "M-n" 'minibuffer-read-line-next-history)
 (define-key *minibuf-keymap* "C-g" 'minibuf-read-line-break)
 
 (defvar *minibuf-read-line-prompt*)
@@ -182,7 +187,7 @@
   (delete-between-points (minibuffer-start-point)
                          (buffer-end-point (minibuffer))))
 
-(define-command minibuf-read-line-confirm () ()
+(define-command minibuffer-read-line-confirm () ()
   (let ((str (get-minibuffer-string)))
     (when (or (string= str "")
               (null *minibuf-read-line-existing-p*)
@@ -190,7 +195,7 @@
       (throw 'minibuf-read-line-end t)))
   t)
 
-(define-command minibuf-read-line-completion () ()
+(define-command minibuffer-read-line-completion () ()
   (when (and *minibuf-read-line-comp-f*
              *minibuffer-completion-function*)
     (with-point ((start (minibuffer-start-point)))
@@ -198,14 +203,14 @@
                *minibuf-read-line-comp-f*
                start))))
 
-(define-command minibuf-read-line-prev-history () ()
+(define-command minibuffer-read-line-prev-history () ()
   (multiple-value-bind (str win)
       (lem.history:prev-history *minibuf-read-line-history*)
     (when win
       (minibuffer-clear-input)
       (insert-string (current-point) str))))
 
-(define-command minibuf-read-line-next-history () ()
+(define-command minibuffer-read-line-next-history () ()
   (multiple-value-bind (str win)
       (lem.history:next-history *minibuf-read-line-history*)
     (when win
@@ -228,6 +233,8 @@
 
 (defun prompt-for-line (prompt initial comp-f existing-p history-name
                         &optional (syntax-table (current-syntax)))
+  (when (= 0 *minibuf-read-line-depth*)
+    (run-hooks *minibuffer-activate-hook*))
   (when (and (not *enable-recursive-minibuffers*) (< 0 *minibuf-read-line-depth*))
     (editor-error "ERROR: recursive use of minibuffer"))
   (let ((*minibuffer-calls-window* (current-window))
@@ -281,6 +288,7 @@
                                 (put-text-property start end :field t)))
                             (move-point (current-point) minibuf-buffer-prev-point)
                             (when (= 1 *minibuf-read-line-depth*)
+                              (run-hooks *minibuffer-deactivate-hook*)
                               (%switch-to-buffer *echoarea-buffer* nil nil)
                               ))))))
                 (editor-abort (c)

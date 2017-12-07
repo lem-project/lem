@@ -8,6 +8,10 @@
           split-active-window-vertically
           split-active-window-horizontally
           other-window
+          window-move-up
+          window-move-down
+          window-move-right
+          window-move-left
           delete-other-windows
           delete-current-window
           quit-window
@@ -83,6 +87,22 @@
       (setf (current-window)
             (get-next-window (current-window)
                              window-list)))))
+
+(define-command window-move-down () ()
+  (alexandria:when-let ((window (down-window (current-window))))
+    (setf (current-window) window)))
+
+(define-command window-move-up () ()
+  (alexandria:when-let ((window (up-window (current-window))))
+    (setf (current-window) window)))
+
+(define-command window-move-right () ()
+  (alexandria:when-let ((window (right-window (current-window))))
+    (setf (current-window) window)))
+
+(define-command window-move-left () ()
+  (alexandria:when-let ((window (left-window (current-window))))
+    (setf (current-window) window)))
 
 (define-key *global-keymap* "C-x 1" 'delete-other-windows)
 (define-command delete-other-windows () ()

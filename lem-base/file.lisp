@@ -9,6 +9,7 @@
           insert-file-contents
           find-file-buffer
           write-to-file
+          write-region-to-file
           update-changed-disk-date
           changed-disk-p))
 
@@ -116,6 +117,18 @@
            (run-hooks *find-file-hook* buffer)
            (values buffer t)))))
 
+(defun open-output-file (buffer filename)
+  (if (buffer-external-format buffer)
+      (open filename
+            :direction :output
+            :if-exists :supersede
+            :if-does-not-exist :create
+            :external-format (car (buffer-external-format buffer)))
+      (open filename
+            :direction :output
+            :if-exists :supersede
+            :if-does-not-exist :create)))
+
 (defun write-to-file-1 (buffer filename)
   (flet ((f (out end-of-line)
            (with-point ((point (buffer-start-point buffer)))
@@ -137,30 +150,32 @@
                          )
                        (unless (line-offset point 1)
                          (return))))))
-    (cond
-      ((buffer-external-format buffer)
-       (with-open-file (out filename
-                            :direction :output
-                            :if-exists :supersede
-                            :if-does-not-exist :create
-                            :external-format (car (buffer-external-format
-                                                   buffer)))
-         (f out
-            (cdr (buffer-external-format
-                  buffer)))))
-      (t
-       (with-open-file (out filename
-                            :direction :output
-                            :if-exists :supersede
-                            :if-does-not-exist :create)
-         (f out :lf))))))
+    (with-open-stream (out (open-output-file buffer filename))
+      (f out
+         (if (buffer-external-format buffer)
+             (cdr (buffer-external-format
+                   buffer))
+             :lf)))))
+
+(defmacro with-write-hook (buffer &body body)
+  (alexandria:once-only (buffer)
+    `(progn
+       (run-hooks *before-save-hook* ,buffer)
+       ,@body
+       (update-changed-disk-date ,buffer)
+       (run-hooks *after-save-hook* ,buffer))))
 
 (defun write-to-file (buffer filename)
-  (run-hooks *before-save-hook* buffer)
-  (write-to-file-1 buffer filename)
-  (buffer-unmark buffer)
-  (update-changed-disk-date buffer)
-  (run-hooks *after-save-hook* buffer))
+  (with-write-hook buffer
+    (write-to-file-1 buffer filename)
+    (buffer-unmark buffer)))
+
+(defun write-region-to-file (start end filename)
+  (let ((string (points-to-string start end))
+        (buffer (point-buffer start)))
+    (with-write-hook buffer
+      (with-open-stream (out (open-output-file buffer filename))
+        (write-string string out)))))
 
 (defun file-write-date* (buffer)
   (if (probe-file (buffer-filename buffer))

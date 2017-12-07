@@ -1,17 +1,4 @@
-;; -*- mode:lisp -*-
-
-;;; copy to $HOME/.lemrc
-
 (in-package :lem-user)
-
-;;(load-theme "emacs-light")
-(load-theme "emacs-dark")
-
-(setf *scroll-recenter-p* t)
-(setf (variable-value 'truncate-lines :global) nil)
-(setf (variable-value 'lem.line-numbers:line-numbers :global) t)
-
-;(add-hook *before-save-hook* 'delete-trailing-whitespace)
 
 ;;; vi-mode
 (define-key lem-vi-mode:*command-keymap* "q" 'quit-window)
@@ -24,3 +11,10 @@
 (add-hook lem-vi-mode:*disable-hook*
           (lambda ()
             (message "disable")))
+
+(lem-vi-mode:define-ex-command "load" (range argument)
+  (declare (ignore range))
+  (let ((filename (string-trim " " argument)))
+    (lem-lisp-mode::lisp-load-file (if (string= filename "")
+                                       (buffer-filename (current-buffer))
+                                       filename))))

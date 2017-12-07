@@ -19,6 +19,10 @@
            :isearch-prev
            :isearch-yank
            :isearch-self-insert
+           :isearch-replace-highlight
+           :isearch-next-highlight
+           :isearch-prev-highlight
+           :isearch-toggle-highlighting
            :read-query-replace-args
            :isearch-toggle-highlighting
            :query-replace
@@ -143,9 +147,9 @@
 (defun isearch-update-minibuffer ()
   (message-without-log "~A~A" *isearch-prompt* *isearch-string*))
 
-(define-command isearch-forward () ()
+(define-command isearch-forward (&optional prompt) ((list nil))
   (isearch-start
-   "ISearch: "
+   (or prompt "ISearch: ")
    (lambda (point str)
      (search-forward (or (character-offset point (- (length str)))
                          point)
@@ -154,9 +158,9 @@
    #'search-backward
    ""))
 
-(define-command isearch-backward () ()
+(define-command isearch-backward (&optional prompt) ((list nil))
   (isearch-start
-   "ISearch: "
+   (or prompt "ISearch: ")
    (lambda (point str)
      (search-backward (or (character-offset point (length str))
                           point)
@@ -165,29 +169,29 @@
    #'search-backward
    ""))
 
-(define-command isearch-forward-regexp () ()
-  (isearch-start "ISearch Regexp: "
+(define-command isearch-forward-regexp (&optional prompt) ((list nil))
+  (isearch-start (or prompt "ISearch Regexp: ")
                  #'search-forward-regexp
                  #'search-forward-regexp
                  #'search-backward-regexp
                  ""))
 
-(define-command isearch-backward-regexp () ()
-  (isearch-start "ISearch Regexp: "
+(define-command isearch-backward-regexp (&optional prompt) ((list nil))
+  (isearch-start (or prompt "ISearch Regexp: ")
                  #'search-backward-regexp
                  #'search-forward-regexp
                  #'search-backward-regexp
                  ""))
 
-(define-command isearch-forward-symbol () ()
-  (isearch-start "ISearch Symbol: "
+(define-command isearch-forward-symbol (&optional prompt) ((list nil))
+  (isearch-start (or prompt "ISearch Symbol: ")
                  #'search-forward-symbol
                  #'search-forward-symbol
                  #'search-backward-symbol
                  ""))
 
-(define-command isearch-backward-symbol () ()
-  (isearch-start "ISearch Symbol: "
+(define-command isearch-backward-symbol (&optional prompt) ((list nil))
+  (isearch-start (or prompt "ISearch Symbol: ")
                  #'search-backward-symbol
                  #'search-forward-symbol
                  #'search-backward-symbol
@@ -323,7 +327,7 @@
                                   new-string
                                   *isearch-search-forward-function*
                                   *isearch-search-backward-function*
-                                  nil))))))
+                                  :query nil))))))
 
 (define-command isearch-next-highlight (n) ("p")
   (alexandria:when-let ((string (buffer-value (current-buffer) 'isearch-redisplay-string)))
@@ -372,48 +376,55 @@
     (setq *replace-after-string* after)
     (list before after)))
 
-(defun query-replace-internal-body (cur-point goal-point before after query)
+(defun query-replace-internal-body (cur-point goal-point before after query count)
   (let ((pass-through (not query)))
     (loop
-      (when (or (not (funcall *isearch-search-forward-function* cur-point before))
-                (and goal-point (point< goal-point cur-point)))
-        (when goal-point
-          (move-point (current-point) goal-point))
-        (return))
-      (with-point ((end cur-point :right-inserting))
-        (isearch-update-buffer cur-point before)
-        (funcall *isearch-search-backward-function* cur-point before)
-        (with-point ((start cur-point :right-inserting))
-          (loop :for c := (unless pass-through
-                            (prompt-for-character (format nil "Replace ~s with ~s" before after)))
-                :do (cond
-                      ((or pass-through (char= c #\y))
-                       (delete-between-points start end)
-                       (insert-string cur-point after)
-                       (return))
-                      ((char= c #\n)
-                       (move-point cur-point end)
-                       (return))
-                      ((char= c #\!)
-                       (setf pass-through t)))))))))
+      :repeat (or count most-positive-fixnum)
+      :do (when (or (not (funcall *isearch-search-forward-function* cur-point before))
+                    (and goal-point (point< goal-point cur-point)))
+            (when goal-point
+              (move-point (current-point) goal-point))
+            (return))
+          (with-point ((end cur-point :right-inserting))
+            (isearch-update-buffer cur-point before)
+            (funcall *isearch-search-backward-function* cur-point before)
+            (with-point ((start cur-point :right-inserting))
+              (loop :for c := (unless pass-through
+                                (prompt-for-character (format nil "Replace ~s with ~s" before after)))
+                    :do (cond
+                          ((or pass-through (char= c #\y))
+                           (delete-between-points start end)
+                           (insert-string cur-point after)
+                           (return))
+                          ((char= c #\n)
+                           (move-point cur-point end)
+                           (return))
+                          ((char= c #\!)
+                           (setf pass-through t)))))))))
 
-(defun query-replace-internal (before after search-forward-function search-backward-function query)
+(defun query-replace-internal (before after search-forward-function search-backward-function
+                               &key query (start nil start-p) (end nil end-p) count)
   (let ((buffer (current-buffer)))
     (unwind-protect
          (let ((*isearch-search-forward-function* search-forward-function)
                (*isearch-search-backward-function* search-backward-function))
            (when (and before after)
-             (if (buffer-mark-p buffer)
-                 (with-point ((mark-point (buffer-mark buffer) :right-inserting))
-                   (if (point< mark-point (buffer-point buffer))
-                       (query-replace-internal-body mark-point
-                                                    (buffer-point buffer)
-                                                    before after query)
-                       (query-replace-internal-body (buffer-point buffer)
-                                                    mark-point
-                                                    before after query)))
-                 (query-replace-internal-body (buffer-point buffer)
-                                              nil before after query))))
+             (cond ((or start-p end-p)
+                    (with-point ((s (or start (buffer-start-point (current-buffer))))
+                                 (e (or end (buffer-end-point (current-buffer)))))
+                      (query-replace-internal-body s e before after query count)))
+                   ((buffer-mark-p buffer)
+                    (with-point ((mark-point (buffer-mark buffer) :right-inserting))
+                      (cond ((point< mark-point (buffer-point buffer))
+                             (query-replace-internal-body mark-point
+                                                          (buffer-point buffer)
+                                                          before after query count))
+                            (t
+                             (query-replace-internal-body (buffer-point buffer)
+                                                          mark-point
+                                                          before after query count)))))
+                   (t (query-replace-internal-body (buffer-point buffer)
+                                                   nil before after query count)))))
       (isearch-reset-overlays buffer))))
 
 (define-key *global-keymap* "M-%" 'query-replace)
@@ -424,7 +435,7 @@
                           after
                           #'search-forward
                           #'search-backward
-                          t))
+                          :query t))
 
 (define-command query-replace-regexp (before after)
     ((read-query-replace-args))
@@ -432,7 +443,7 @@
                           after
                           #'search-forward-regexp
                           #'search-backward-regexp
-                          t))
+                          :query t))
 
 (define-command query-replace-symbol (before after)
     ((read-query-replace-args))
@@ -440,4 +451,4 @@
                           after
                           #'search-forward-symbol
                           #'search-backward-symbol
-                          t))
+                          :query t))

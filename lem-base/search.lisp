@@ -28,7 +28,7 @@
                                   (funcall move-matched point res)
                                   (return t)))))))))
       (if (and result (not (funcall endp point)))
-          result
+          (when result point)
           (progn
             (move-point point start-point)
             nil)))))
@@ -136,7 +136,7 @@
                          (search-forward-endp-function limit-point))
         (if reg-starts
             (apply #'values
-                   t
+                   point
                    (map 'list (lambda (reg-start reg-end)
                                 (when reg-start
                                   (subseq string reg-start reg-end)))
@@ -186,7 +186,7 @@
                          (search-backward-endp-function limit-point))
         (if reg-starts
             (apply #'values
-                   t
+                   point
                    (map 'list (lambda (reg-start reg-end)
                                 (when reg-start
                                   (subseq string reg-start reg-end)))

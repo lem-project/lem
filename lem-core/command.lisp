@@ -55,9 +55,9 @@
     t))
 
 (define-key *global-keymap* "C-x C-c" 'exit-lem)
-(define-command exit-lem () ()
-  (when (or (not (any-modified-buffer-p))
-            (prompt-for-y-or-n-p "Modified buffers exist. Leave anyway"))
+(define-command exit-lem (&optional (ask t)) ((list t))
+  (when (and ask (or (not (any-modified-buffer-p))
+                     (prompt-for-y-or-n-p "Modified buffers exist. Leave anyway")))
     (exit-editor)))
 
 (define-command quick-exit () ()
@@ -172,7 +172,7 @@
          (kill-region start end))))))
 
 (define-key *global-keymap* "C-y" 'yank)
-(define-command yank (arg) ("P")
+(define-command yank (&optional arg) ("P")
   (let ((string (if (null arg)
                     (current-kill-ring)
                     (kill-ring-nth arg))))

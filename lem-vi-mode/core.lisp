@@ -1,0 +1,136 @@
+(defpackage :lem-vi-mode.core
+  (:use :cl
+        :lem
+        :lem.universal-argument)
+  (:export :*enable-hook*
+           :*disable-hook*
+           :vi-mode
+           :define-vi-state
+           :current-state
+           :change-state
+           :with-state
+           :*command-keymap*
+           :*insert-keymap*
+           :command
+           :insert))
+(in-package :lem-vi-mode.core)
+
+(defvar *enable-hook* '())
+(defvar *disable-hook* '())
+
+(defun enable-hook ()
+  (run-hooks *enable-hook*))
+
+(defun disable-hook ()
+  (run-hooks *disable-hook*))
+
+(define-minor-mode vi-mode
+    (:global t
+     :enable-hook #'enable-hook
+     :disable-hook #'disable-hook))
+
+
+(defvar *modeline-element*)
+
+(define-attribute state-attribute
+  (t :reverse-p t))
+
+(defstruct (vi-modeline-element (:conc-name element-))
+  name)
+
+(defmethod convert-modeline-element ((element vi-modeline-element) window)
+  (values (element-name element) 'state-attribute))
+
+(defun initialize-vi-modeline ()
+  (setf *modeline-element* (make-vi-modeline-element))
+  (modeline-add-status-list *modeline-element*))
+
+(defun finalize-vi-modeline ()
+  (modeline-remove-status-list *modeline-element*))
+
+(defun change-element-name (name)
+  (setf (element-name *modeline-element*) name))
+
+
+(defstruct vi-state
+  name
+  keymap
+  post-command-hook
+  enable-hook
+  disable-hook)
+
+(defvar *current-state* nil)
+
+(defmacro define-vi-state (name (&key keymap post-command-hook) &body spec)
+  (let ((enable-form (rest (assoc :enable spec)))
+        (disable-form (rest (assoc :disable spec))))
+    `(setf (get ',name 'state)
+           (make-vi-state :name ',name
+                          :keymap ,keymap
+                          :post-command-hook ,post-command-hook
+                          :enable-hook ,(if enable-form `(lambda ,@enable-form))
+                          :disable-hook ,(if disable-form `(lambda ,@disable-form))))))
+
+(defun current-state ()
+  *current-state*)
+
+(defun ensure-state (state)
+  (setf state
+        (if (symbolp state)
+            (get state 'state)
+            state))
+  (assert (vi-state-p state))
+  state)
+
+(defun change-state (name &rest args)
+  (alexandria:when-let ((disable-hook (and *current-state*
+                                           (vi-state-disable-hook (ensure-state *current-state*)))))
+    (funcall disable-hook))
+  (let ((state (ensure-state name)))
+    (setf *current-state* name)
+    (setf (mode-keymap 'vi-mode) (vi-state-keymap state))
+    (change-element-name (format nil "[~A]" name))
+    (when (vi-state-enable-hook state)
+      (apply (vi-state-enable-hook state) args))))
+
+(defmacro with-state (state &body body)
+  (alexandria:with-gensyms (old-state)
+    `(let ((,old-state (current-state)))
+       (change-state ,state)
+       (unwind-protect (progn ,@body)
+         (change-state ,old-state)))))
+
+
+(defvar *command-keymap* (make-keymap :name '*command-keymap* :insertion-hook 'undefined-key))
+(defvar *insert-keymap* (make-keymap :name '*insert-keymap*))
+(defvar *inactive-keymap* (make-keymap))
+
+(define-vi-state command (:keymap *command-keymap*))
+
+(define-vi-state insert (:keymap *insert-keymap*)
+  (:enable () (message " -- INSERT --")))
+
+(define-vi-state modeline (:keymap *inactive-keymap*))
+
+(defun minibuffer-activate-hook () (change-state 'modeline))
+(defun minibuffer-deactivate-hook () (change-state 'command))
+
+(defun vi-post-command-hook ()
+  (alexandria:when-let ((it (vi-state-post-command-hook
+                             (ensure-state (current-state)))))
+    (funcall it)))
+
+(add-hook *enable-hook*
+          (lambda ()
+            (initialize-vi-modeline)
+            (change-state 'command)
+            (add-hook *minibuffer-activate-hook* 'minibuffer-activate-hook)
+            (add-hook *minibuffer-deactivate-hook* 'minibuffer-deactivate-hook)
+            (add-hook *post-command-hook* 'vi-post-command-hook)))
+
+(add-hook *disable-hook*
+          (lambda ()
+            (finalize-vi-modeline)
+            (remove-hook *minibuffer-activate-hook* 'minibuffer-activate-hook)
+            (remove-hook *minibuffer-deactivate-hook* 'minibuffer-deactivate-hook)
+            (remove-hook *post-command-hook* 'vi-post-command-hook)))

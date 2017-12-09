@@ -2,9 +2,10 @@
   "name": "lem",
   "version": "1.0.0",
   "description": "lem frontend",
-  "main": "index.js",
+  "main": "lem-frontend-electron/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "preinstall": "ros install cxxxr/lem"
   },
   "author": "",
   "license": "ISC",
@@ -14,5 +15,6 @@
     "marked": "^0.3.6",
     "utf-8": "^1.0.0",
     "vscode-jsonrpc": "^3.4.1"
-  }
+  },
+  "bin": "lem-frontend-electron/cli.js"
 }

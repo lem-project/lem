@@ -1,0 +1,22 @@
+#!/bin/sh
+
+frontend=ncurses
+
+case $1 in
+	--frontend|-f)
+		frontend=$2
+		shift 2
+	;;
+esac
+
+case $frontend in
+	electron)
+		lem-electron $*
+	;;
+	ncurses)
+		lem-ncurses $*
+	;;
+	*)
+		echo "unknown frontend: $frontend"
+	;;
+esac

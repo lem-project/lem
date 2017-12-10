@@ -20,6 +20,7 @@
 (setf lem::*implementation* :jsonrpc)
 (setf lem::*native-scroll-support* t)
 
+#+(or)
 (when *debug*
   (setq *error-output*
         (open "~/ERROR" :direction :output :if-does-not-exist :create :if-exists :supersede)))
@@ -263,75 +264,12 @@
   `(setf (gethash ,name *method-table*)
          (lambda (&key ,@params) ,@body)))
 
-(defvar *key-table*
-  (alexandria:plist-hash-table
-   (append (loop :for code :from (char-code #\a) :to (char-code #\z)
-                 :for char := (code-char code)
-                 :for lchar := (char-downcase char)
-                 :for uchar := (char-upcase char)
-                 :collect (string lchar) :collect lchar
-                 :collect (string uchar) :collect uchar)
-           (list "Backspace" (keyname->keychar "[backspace]")
-                 "Tab" #\Tab
-                 "Enter" #\Return
-                 "PageDown" (keyname->keychar "[npage]")
-                 "PageUp" (keyname->keychar "[ppage]")
-                 "Home" (keyname->keychar "[home]")
-                 "End" (keyname->keychar "[end]")
-                 "ArrowRight" (keyname->keychar "[right]")
-                 "ArrowLeft" (keyname->keychar "[left]")
-                 "ArrowUp" (keyname->keychar "[up]")
-                 "ArrowDown" (keyname->keychar "[down]")
-                 "Insert" (keyname->keychar "[ic]")
-                 "Delete" (keyname->keychar "[dc]")
-                 "F1" (keyname->keychar "[f1]")
-                 "F2" (keyname->keychar "[f2]")
-                 "F3" (keyname->keychar "[f3]")
-                 "F4" (keyname->keychar "[f4]")
-                 "F5" (keyname->keychar "[f5]")
-                 "F6" (keyname->keychar "[f6]")
-                 "F7" (keyname->keychar "[f7]")
-                 "F8" (keyname->keychar "[f8]")
-                 "F9" (keyname->keychar "[f9]")
-                 "F10" (keyname->keychar "[f10]")
-                 "F11" (keyname->keychar "[f11]")
-                 "F12" (keyname->keychar "[f12]")))
-   :test #'equal))
-
-(defun key-to-char (key)
-  (or (gethash key *key-table*)
-      (and (= 1 (length key))
-           (graphic-char-p (aref key 0))
-           (aref key 0))))
-
 (defun convert-keyevent (e)
-  (when e
-    (let ((keys '()))
-      (let ((key (gethash "key" e))
-            (ctrl (gethash "ctrl" e))
-            (meta (gethash "meta" e))
-            ;(super (gethash "super" e))
-            )
-        ;(dbg (format nil "key: ~A, ctrl: ~A, meta: ~A" key ctrl meta))
-        (when (or meta (string= key "Escape"))
-          (push (keyname->keychar "escape") keys))
-        (let ((char (key-to-char key)))
-          (when char
-            (push (if ctrl
-                      (cond ((alpha-char-p char)
-                             (code-char (1+ (- (char-code (char-upcase char))
-                                               (char-code #\A)))))
-                            ((member char '(#\space #\@))
-                             (keyname->keychar "C-@"))
-                            ((char= char #\\)
-                             (keyname->keychar "C-\\"))
-                            ((char= char #\_)
-                             (keyname->keychar "C-_"))
-                            (t
-                             char))
-                      char)
-                  keys))))
-      (nreverse keys))))
+  (let ((key (gethash "key" e))
+        (ctrl (gethash "ctrl" e))
+        (meta (gethash "meta" e))
+        (super (gethash "super" e)))
+    (make-key :ctrl ctrl :meta meta :super super :sym key)))
 
 (defun input-callback (args)
   (handler-case
@@ -340,9 +278,8 @@
         (cond ((= kind +abort+)
                (send-abort-event *editor-thread* nil))
               ((= kind +keyevent+)
-               (let ((keys (convert-keyevent value)))
-                 (dolist (char keys)
-                   (send-event char))))
+               (let ((key (convert-keyevent value)))
+                 (send-event key)))
               ((= kind +resize+)
                (resize (gethash "width" value)
                        (gethash "height" value))

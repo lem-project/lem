@@ -242,7 +242,8 @@
     (isearch-update-display)))
 
 (define-command isearch-raw-insert () ()
-  (isearch-add-char (read-char)))
+  (alexandria:when-let ((char (key-to-char (read-key))))
+    (isearch-add-char char)))
 
 (defun isearch-end ()
   (isearch-reset-overlays (current-buffer))

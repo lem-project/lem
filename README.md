@@ -64,7 +64,7 @@ $ lem
 
 
 ## Plan
-- To implement the basic vi commands.
+- ~To implement the basic vi commands.~
 
 - To implement the frontend using Electron
 

@@ -29,7 +29,7 @@ After that, please follow the steps bellow.
 1. install lem by roswell
 $ ros install cxxxr/lem
 
-2. add the PATH: please put the code below in the initialization file such as ~/.bashrc
+2. add the PATH in the initialization file(such as ~/.bashrc)
 export PATH=$PATH:~/.roswell/bin
 
 3. enable the new setting
@@ -42,12 +42,7 @@ Then you can start using lem!
 ```
 $ lem <filename.lisp>
 ```
-You can also start lem on roswell's REPL.
-```
-$ ros run
-CL-USER> (ql:quickload :lem)
-CL-USER> (lem:lem)
-```
+
 You can watch the screencast on Youtube.
 
 [Screencast](https://youtu.be/YkSJ3p7Z9H0)
@@ -55,25 +50,19 @@ You can watch the screencast on Youtube.
 # Electron version (Beta)
 Electron version is in the experimental stage.
 
-In the near future, you can get executable/binary on surported platforms.
-
-Until then, you need to build the Electron version by yourself. 
-
 Please take the following steps and give it a try!
 
-1. install Node.js and Electron in advance.
+1. install Node.js in advance.
 
    [Node.js](https://nodejs.org)
 
-   [Electron](https://github.com/electron/electron)
 
 2. install and run lem(Electron) as follows:
 
 ```
 $ ros install cxxxr/lem
-$ cd ~/.roswell/local-projects/cxxxr/lem/lem-frontend-electron
-$ npm install
-$ electron .  # lem will start.
+$ npm install -g cxxxr/lem
+$ lem
 ```
 
 Electron version
@@ -83,9 +72,7 @@ Electron version
 ## Plan
 - To implement the basic vi commands.
 
-- To distribute executable/binary on surported platforms.
-
-- To make a learning application using lem(Electron version). 
+- To implement the frontend using Electron
 
 
 ## Notes

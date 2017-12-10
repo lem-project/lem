@@ -57,7 +57,7 @@ Please take the following steps and give it a try!
 
 ```
 $ npm install -g cxxxr/lem
-$ lem
+$ lem-electron
 ```
 
 ![Electron](screenshots/electron.png)　　

@@ -1,5 +1,5 @@
 (defsystem "lem-jsonrpc"
-  :depends-on ("lem-core"
+  :depends-on ("lem"
                "jsonrpc")
   :serial t
   :components ((:file "jsonrpc")))

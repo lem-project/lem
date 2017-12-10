@@ -5,7 +5,7 @@ exec ros -Q -m lem -L sbcl-bin -- $0 "$@"
 |#
 (progn
   (unless (find-package :lem)
-    (ql:quickload :lem))
+    (ql:quickload :lem-ncurses))
   ;; It should be part of lem. but I can't place where's apropriate. (2017/05/12 SANO)
   #-lem.siteinit
   (load (merge-pathnames ".lem/site-init.lisp" (user-homedir-pathname))

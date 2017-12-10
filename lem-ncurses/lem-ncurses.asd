@@ -1,6 +1,7 @@
 (defsystem "lem-ncurses"
-  :depends-on ("cl-charms"
-               "lem-core")
+  :depends-on ("cffi"
+               "cl-charms"
+               "lem")
   :serial t
   :components ((:file "term")
                (:file "ncurses")))

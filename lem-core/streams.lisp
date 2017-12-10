@@ -7,11 +7,7 @@
           minibuffer-input-stream
           make-minibuffer-input-stream
           editor-output-stream
-          make-editor-output-stream
-          editor-input-stream
-          make-editor-input-stream
-          editor-io-stream
-          make-editor-io-stream))
+          make-editor-output-stream))
 
 (defclass buffer-input-stream (trivial-gray-streams:fundamental-input-stream)
   ((unread-char
@@ -209,34 +205,6 @@
   nil)
 
 
-(defclass editor-input-stream (trivial-gray-streams:fundamental-character-input-stream)
-  ())
-
-(defun make-editor-input-stream ()
-  (make-instance 'editor-input-stream))
-
-(defmethod trivial-gray-streams:stream-read-char ((stream editor-input-stream))
-  (read-key))
-
-(defmethod trivial-gray-streams:stream-unread-char ((stream editor-input-stream) character)
-  (unread-key character))
-
-;; (defmethod trivial-gray-streams:stream-read-char-no-hang ((stream editor-input-stream))
-;;   )
-
-;; (defmethod trivial-gray-streams:stream-peek-char ((stream editor-input-stream))
-;;   )
-
-(defmethod trivial-gray-streams:stream-listen ((stream editor-input-stream))
-  t)
-
-;; (defmethod trivial-gray-streams:stream-read-line ((stream editor-input-stream))
-;;   )
-
-;; (defmethod trivial-gray-streams:stream-clear-input ((stream editor-input-stream))
-;;   )
-
-
 (defclass editor-output-stream (trivial-gray-streams:fundamental-character-output-stream)
   ((pool
     :initform (make-string-output-stream))
@@ -287,11 +255,3 @@
 
 ;; (defmethod trivial-gray-streams:stream-advance-to-column ((stream editor-output-stream) column)
 ;;   )
-
-
-
-(defclass editor-io-stream (editor-output-stream editor-input-stream)
-  ())
-
-(defun make-editor-io-stream ()
-  (make-instance 'editor-io-stream))

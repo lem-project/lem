@@ -1,6 +1,5 @@
 DEBUG
 *.so
 *.fasl
-roswell/lem
 node_modules
 package-lock.json

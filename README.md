@@ -3,7 +3,7 @@ Lem is the editor/IDE well-tuned for Common Lisp.
 
 After installing lem, you can start developing in Common Lisp at once. 
 
-That is, you can skip over writing tidy settings or installing many plugins as you do on Emacs.
+You can skip over writing tidy settings or installing many plugins as you do on Emacs.
 
 ## Screenshot
 ![Terminal](screenshots/terminal.png)　　
@@ -29,25 +29,16 @@ After that, please follow the steps bellow.
 1. install lem by roswell
 $ ros install cxxxr/lem
 
-2. add the code below in "~/.bashrc" for adding the PATH
+2. add the PATH in the initialization file(such as ~/.bashrc)
 export PATH=$PATH:~/.roswell/bin
-
-3. enable the new setting
-$ source ~/.bashrc
 ```
-Then you can start using lem!
 
 ## Usage
 
 ```
 $ lem <filename.lisp>
 ```
-You can also start lem on roswell's REPL.
-```
-$ ros run
-CL-USER> (ql:quickload :lem)
-CL-USER> (lem:lem)
-```
+
 You can watch the screencast on Youtube.
 
 [Screencast](https://youtu.be/YkSJ3p7Z9H0)
@@ -55,33 +46,28 @@ You can watch the screencast on Youtube.
 # Electron version (Beta)
 Electron version is in the experimental stage.
 
-If you'd like to try it, please follow the steps bellow.
+Please take the following steps and give it a try!
 
-And if you're interested, please give me your opinion on issue.
-
-1. install Node.js and Electron in advance.
+1. install Node.js in advance.
 
    [Node.js](https://nodejs.org)
 
-   [Electron](https://github.com/electron/electron)
 
 2. install and run lem(Electron) as follows:
 
 ```
-$ ros install cxxxr/lem
-$ cd ~/.roswell/local-projects/cxxxr/lem/lem-frontend-electron
-$ npm install
-$ electron .  # lem will start.
+$ npm install -g cxxxr/lem
+$ lem
 ```
 
-Electron version
 ![Electron](screenshots/electron.png)　　
 
 
 ## Plan
-- To implement the basic vi commands.
+- ~To implement the basic vi commands.~
 
-- To make some applications using lem(Electron version). 
+- To implement the frontend using Electron
+
 
 ## Notes
 

@@ -31,9 +31,6 @@ $ ros install cxxxr/lem
 
 2. add the PATH in the initialization file(such as ~/.bashrc)
 export PATH=$PATH:~/.roswell/bin
-
-3. enable the new setting
-$ source ~/.bashrc
 ```
 Then you can start using lem!
 

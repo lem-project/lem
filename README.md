@@ -32,7 +32,6 @@ $ ros install cxxxr/lem
 2. add the PATH in the initialization file(such as ~/.bashrc)
 export PATH=$PATH:~/.roswell/bin
 ```
-Then you can start using lem!
 
 ## Usage
 
@@ -57,12 +56,10 @@ Please take the following steps and give it a try!
 2. install and run lem(Electron) as follows:
 
 ```
-$ ros install cxxxr/lem
 $ npm install -g cxxxr/lem
 $ lem
 ```
 
-Electron version
 ![Electron](screenshots/electron.png)　　
 
 

@@ -20,7 +20,6 @@
 (setf lem::*implementation* :jsonrpc)
 (setf lem::*native-scroll-support* t)
 
-#+(or)
 (when *debug*
   (setq *error-output*
         (open "~/ERROR" :direction :output :if-does-not-exist :create :if-exists :supersede)))
@@ -268,8 +267,13 @@
   (let ((key (gethash "key" e))
         (ctrl (gethash "ctrl" e))
         (meta (gethash "meta" e))
-        (super (gethash "super" e)))
-    (make-key :ctrl ctrl :meta meta :super super :sym key)))
+        (super (gethash "super" e))
+        (shift (gethash "shift" e)))
+    (make-key :ctrl ctrl
+              :meta meta
+              :super super
+              :shift (if (insertion-key-sym-p key) nil shift)
+              :sym key)))
 
 (defun input-callback (args)
   (handler-case

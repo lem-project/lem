@@ -19,6 +19,7 @@ exports.convertKeyEvent = function (e) {
         "key": key,
         "ctrl": e.ctrlKey,
         "meta": e.altKey,
-        "super": e.metaKey
+        "super": e.metaKey,
+        "shift": e.shiftKey,
     }
 }

@@ -98,7 +98,7 @@
   (labels ((fail ()
              (editor-error "parse error: ~A" string))
            (parse (str)
-             (loop :with ctrl :and meta :and super :and hypher
+             (loop :with ctrl :and meta :and super :and hypher :and shift
                    :do (cond
                          ((ppcre:scan "^[cmshCMSH]-" str)
                           (ecase (char-downcase (char str 0))
@@ -107,9 +107,12 @@
                             ((#\s) (setf super t))
                             ((#\h) (setf hypher t)))
                           (setf str (subseq str 2)))
+                         ((ppcre:scan "^[sS]hift-" str)
+                          (setf shift t)
+                          (setf str (subseq str 6)))
                          ((string= str "")
                           (fail))
-                         ((and (< 1 (length str))
+                         ((and (not (insertion-key-sym-p str))
                                (not (gethash str *key-sym-table*)))
                           (fail))
                          (t
@@ -123,6 +126,7 @@
                                             :meta meta
                                             :super super
                                             :hypher hypher
+                                            :shift shift
                                             :sym (or (gethash str *key-sym-table*)
                                                      str))))))))
     (mapcar #'parse (uiop:split-string string :separator " "))))
@@ -131,11 +135,12 @@
   (with-output-to-string (out)
     (loop :for key* :on kseq
           :for key := (first key*)
-          :do (with-slots (ctrl meta super hypher sym) key
+          :do (with-slots (ctrl meta super hypher shift sym) key
                 (when hypher (write-string "H-" out))
                 (when super (write-string "S-" out))
                 (when meta (write-string "M-" out))
                 (when ctrl (write-string "C-" out))
+                (when shift (write-string "Shift-" out))
                 (write-string sym out)
                 (when (rest key*)
                   (write-char #\space out))))))
@@ -171,7 +176,7 @@
          (sym (key-sym key)))
     (cond ((match-key key :sym "Return") #\Return)
           ((match-key key :sym "Tab") #\Tab)
-          ((and (= 1 (length sym))
+          ((and (insertion-key-sym-p sym)
                 (match-key key :sym sym))
            (char sym 0)))))
 

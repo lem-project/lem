@@ -4,6 +4,7 @@
           start-record-key
           stop-record-key
           key-recording-p
+          read-event
           read-key
           unread-key
           read-command
@@ -36,6 +37,9 @@
 
 (defun key-recording-p ()
   *key-recording-p*)
+
+(defun read-event (&optional timeout)
+  (receive-event timeout))
 
 (defun read-key-1 ()
   (loop

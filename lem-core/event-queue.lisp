@@ -1,7 +1,6 @@
 (in-package :lem)
 
-(export '(read-event
-          send-event
+(export '(send-event
           send-abort-event))
 
 (declaim (inline make-queue enqueue dequeue empty-queue-p))
@@ -65,16 +64,11 @@
              (return nil))
             ((eql e :resize)
              (change-display-size-hook))
+            ((consp e)
+             (eval e)
+             (return t))
+            ((or (functionp e) (symbolp e))
+             (funcall e)
+             (return t))
             (t
              (return e))))))
-
-(defun read-event (&optional timeout)
-  (let ((event (receive-event timeout)))
-    (cond ((listp event)
-           (eval event)
-           t)
-          ((or (functionp event) (symbolp event))
-           (funcall event)
-           t)
-          (t
-           event))))

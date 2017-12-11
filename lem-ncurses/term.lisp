@@ -466,7 +466,7 @@
   (charms/ll:nonl)
   (charms/ll:refresh)
   (charms/ll:keypad charms/ll:*stdscr* 1)
-  (setf charms/ll::*escdelay* 25)
+  (setf charms/ll::*escdelay* 0)
   ;(charms/ll:curs-set 0)
   )
 

@@ -1,6 +1,12 @@
 (in-package :lem)
 
 (export '(make-key
+          key-p
+          key-ctrl
+          key-meta
+          key-super
+          key-hypher
+          key-sym
           key-to-char))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)

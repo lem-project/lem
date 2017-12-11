@@ -190,39 +190,53 @@
               (setf (lem::attribute-%internal-value attribute) bits)
               bits)))))
 
+(defun get-key (code)
+  (let* ((char (let ((nbytes (utf8-bytes code)))
+                 (if (= nbytes 1)
+                     (code-char code)
+                     (let ((vec (make-array nbytes :element-type '(unsigned-byte 8))))
+                       (setf (aref vec 0) code)
+                       (loop :for i :from 1 :below nbytes
+                             :do (setf (aref vec i) (charms/ll:getch)))
+                       (schar (babel:octets-to-string vec) 0)))))
+         (key (char-to-key char)))
+    key))
+
+(let ((resize-code (get-code "[resize]"))
+      (abort-code (get-code "C-]"))
+      (escape-code (get-code "escape")))
+  (defun get-event ()
+    (tagbody :start
+      (return-from get-event
+        (let ((code (charms/ll:getch)))
+          (cond ((= code -1) (go :start))
+                ((= code resize-code) :resize)
+                ((= code abort-code) :abort)
+                ((= code escape-code)
+                 (let ((code (prog2 (charms/ll:timeout 100)
+                                 (charms/ll:getch)
+                               (charms/ll:timeout 0))))
+                   (if (= code -1)
+                       (make-key :sym "escape")
+                       (let ((key (get-key code)))
+                         (make-key :meta t :sym (key-sym key) :ctrl (key-ctrl key))))))
+                (t
+                 (get-key code))))))))
+
 (defun input-loop (editor-thread)
   (handler-case
       (loop
-        :with abort-key := (get-code "C-]")
-        :and resize := (get-code "[resize]")
-        :do (handler-case
-                (progn
-                  (unless (bt:thread-alive-p editor-thread) (return))
-                  (let ((code (charms/ll:getch)))
-                    (cond
-                      ((= code -1))
-                      ((= code resize)
-                       (loop :while (< 0 (lem::event-queue-length))
-                             :do (sleep 0.01))
-                       (send-event :resize))
-                      ((= code abort-key)
-                       (send-abort-event editor-thread nil))
-                      (t
-                       (let* ((char
-                                (let ((nbytes (utf8-bytes code)))
-                                  (if (= nbytes 1)
-                                      (code-char code)
-                                      (let ((vec (make-array nbytes :element-type '(unsigned-byte 8))))
-                                        (setf (aref vec 0) code)
-                                        (loop :for i :from 1 :below nbytes
-                                              :do (setf (aref vec i) (charms/ll:getch)))
-                                        (schar (babel:octets-to-string vec) 0)))))
-                              (key (char-to-key char)))
-                         (when key (send-event key)))))))
-              #+sbcl
-              (sb-sys:interactive-interrupt (c)
-                (declare (ignore c))
-                (send-abort-event editor-thread t))))
+        (handler-case
+            (progn
+              (unless (bt:thread-alive-p editor-thread) (return))
+              (let ((event (get-event)))
+                (if (eq event :abort)
+                    (send-abort-event editor-thread nil)
+                    (send-event event))))
+          #+sbcl
+          (sb-sys:interactive-interrupt (c)
+            (declare (ignore c))
+            (send-abort-event editor-thread t))))
     (exit-editor (c) (return-from input-loop c))))
 
 (add-hook *before-init-hook*

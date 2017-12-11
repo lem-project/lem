@@ -60,8 +60,44 @@
                            (setf (gethash k table) new-table)
                            (setf table new-table))))))))
 
+
+(defvar *key-sym-table* (make-hash-table :test 'equal))
+
+(defun set-key-sym (name &optional (value name))
+  (setf (gethash name *key-sym-table*) value))
+
+(set-key-sym "Tab")
+(set-key-sym "Return")
+(set-key-sym "Escape")
+(set-key-sym "Delete")
+(set-key-sym "Down")
+(set-key-sym "Up")
+(set-key-sym "Left")
+(set-key-sym "Right")
+(set-key-sym "Backspace")
+(set-key-sym "F0")
+(set-key-sym "F1")
+(set-key-sym "F2")
+(set-key-sym "F3")
+(set-key-sym "F4")
+(set-key-sym "F5")
+(set-key-sym "F6")
+(set-key-sym "F7")
+(set-key-sym "F8")
+(set-key-sym "F9")
+(set-key-sym "F10")
+(set-key-sym "F11")
+(set-key-sym "F12")
+(set-key-sym "Home")
+(set-key-sym "PageDown")
+(set-key-sym "PageUp")
+(set-key-sym "End")
+(set-key-sym "Space" " ")
+
 (defun parse-keyspec (string)
-  (labels ((parse (str)
+  (labels ((fail ()
+             (editor-error "parse error: ~A" string))
+           (parse (str)
              (loop :with ctrl :and meta :and super :and hypher
                    :do (cond
                          ((ppcre:scan "^[cmshCMSH]-" str)
@@ -72,13 +108,17 @@
                             ((#\h) (setf hypher t)))
                           (setf str (subseq str 2)))
                          ((string= str "")
-                          (editor-error "parse error: ~A" string))
+                          (fail))
+                         ((and (< 1 (length str))
+                               (not (gethash str *key-sym-table*)))
+                          (fail))
                          (t
                           (return (make-key :ctrl ctrl
                                             :meta meta
                                             :super super
                                             :hypher hypher
-                                            :sym str)))))))
+                                            :sym (or (gethash str *key-sym-table*)
+                                                     str))))))))
     (mapcar #'parse (uiop:split-string string :separator " "))))
 
 (defun keyseq-to-string (kseq)

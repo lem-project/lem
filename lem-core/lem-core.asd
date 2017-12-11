@@ -15,7 +15,7 @@
   :components ((:file "history")
                (:file "package")
                (:file "errors")
-               (:file "keyevent")
+               (:file "key")
                (:file "macros")
                (:file "color")
                (:file "attribute")

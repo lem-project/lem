@@ -214,5 +214,5 @@
       (get-command cmd))))
 
 (defun abort-key-p (key)
-  (and (or (characterp key) (key-p key))
+  (and (key-p key)
        (eq 'keyboard-quit (lookup-keybind key))))

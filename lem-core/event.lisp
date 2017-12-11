@@ -60,9 +60,7 @@
 (defun receive-event (timeout)
   (loop
     (let ((e (dequeue-event timeout)))
-      (cond ((characterp e)
-             (return e))
-            ((eql e :timeout)
+      (cond ((eql e :timeout)
              (assert timeout)
              (return nil))
             ((eql e :resize)
@@ -72,9 +70,7 @@
 
 (defun read-event (&optional timeout)
   (let ((event (receive-event timeout)))
-    (cond ((characterp event)
-           event)
-          ((listp event)
+    (cond ((listp event)
            (eval event)
            t)
           ((or (functionp event) (symbolp event))

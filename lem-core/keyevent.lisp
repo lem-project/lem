@@ -7,7 +7,8 @@
           key-super
           key-hypher
           key-sym
-          key-to-char))
+          key-to-char
+          match-key))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (deftype key-modifier () '(member :left :right t nil)))
@@ -26,3 +27,10 @@
                 (and code (<= 64 code 95) (- code 64)))))
         ((= 1 (length (key-sym key)))
          (char (key-sym key) 0))))
+
+(defun match-key (key &key ctrl meta super hypher sym)
+  (and (eq (key-ctrl key) ctrl)
+       (eq (key-meta key) meta)
+       (eq (key-super key) super)
+       (eq (key-hypher key) hypher)
+       (equal (key-sym key) sym)))

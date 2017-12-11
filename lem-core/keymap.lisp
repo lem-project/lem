@@ -165,15 +165,15 @@
           (keymap-undef-hook keymap)))))
 
 (defun insertion-key-p (key)
-  (let ((sym
-          (key-sym (typecase key
-                     (list (first key))
-                     (otherwise key)))))
-    (when (= 1 (length sym))
-      (let ((c (char sym 0)))
-        (when (or (< 31 (char-code c))
-                  (char= c #\tab))
-          c)))))
+  (let* ((key (typecase key
+                (list (first key))
+                (otherwise key)))
+         (sym (key-sym key)))
+    (cond ((match-key key :sym "Return") #\Return)
+          ((match-key key :sym "Tab") #\Tab)
+          ((and (= 1 (length sym))
+                (match-key key :sym sym))
+           (char sym 0)))))
 
 (defun keymap-flatten-map (keymap fun)
   (labels ((f (table prefix)

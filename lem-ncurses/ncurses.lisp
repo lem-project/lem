@@ -16,6 +16,9 @@
   (or (gethash (char-code char) *keycode-table*)
       (make-key :sym (string char))))
 
+(defun get-key-from-name (name)
+  (char-to-key (code-char (get-code name))))
+
 (defkeycode "C-@" 0 (make-key :ctrl t :sym "@"))
 (defkeycode "C-a" 1 (make-key :ctrl t :sym "a"))
 (defkeycode "C-b" 2 (make-key :ctrl t :sym "b"))
@@ -229,7 +232,7 @@
                  (let ((code (prog1 (charms/ll:getch)
                                (charms/ll:timeout -1))))
                    (if (= code -1)
-                       (make-key :sym "escape")
+                       (get-key-from-name "escape")
                        (let ((key (get-key code)))
                          (make-key :meta t :sym (key-sym key) :ctrl (key-ctrl key))))))
                 (t

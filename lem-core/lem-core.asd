@@ -27,7 +27,7 @@
                (:file "mode")
                (:file "keymap")
                (:file "timer")
-               (:file "event")
+               (:file "event-queue")
                (:file "interp")
                (:file "input")
                (:file "overlay")

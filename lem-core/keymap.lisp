@@ -206,7 +206,7 @@
       (or (f (buffer-minor-modes buffer))
           (f *global-minor-mode-list*)
           (keymap-find-keybind (mode-keymap (buffer-major-mode buffer)) key)
-          (keymap-find-keybind *global-keymap* key)))))
+          (keymap-find-keybind (global-mode-keymap (current-global-mode)) key)))))
 
 (defun find-keybind (key)
   (let ((cmd (lookup-keybind key)))

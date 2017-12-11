@@ -10,7 +10,9 @@
           toggle-minor-mode
           define-major-mode
           define-minor-mode
-          change-buffer-mode))
+          change-buffer-mode
+          define-global-mode
+          change-global-mode-keymap))
 
 (defvar *mode-list* '())
 (defvar *global-minor-mode-list* '())
@@ -131,3 +133,59 @@
     (setf (current-buffer) buffer)
     (apply mode args))
   buffer)
+
+(defvar *global-mode-list* '())
+(defvar *current-global-mode* nil)
+
+(defclass global-mode ()
+  ((name :initarg :name :accessor global-mode-name)
+   (parent :initarg :parent :accessor global-mode-parent)
+   (keymap :initarg :keymap :accessor global-mode-keymap)
+   (enable-hook :initarg :enable-hook :accessor global-mode-enable-hook)
+   (disable-hook :initarg :disable-hook :accessor global-mode-disable-hook)))
+
+(defun current-global-mode ()
+  (if (symbolp *current-global-mode*)
+      (setf *current-global-mode*
+            (get *current-global-mode* 'global-mode))
+      *current-global-mode*))
+
+(defun change-global-mode-keymap (mode keymap)
+  (setf (global-mode-keymap (get mode 'global-mode)) keymap))
+
+(defun change-global-mode (mode)
+  (flet ((call (fun)
+           (unless (null fun)
+             (alexandria:when-let ((fun (alexandria:ensure-function fun)))
+               (funcall fun)))))
+    (let ((global-mode (get mode 'global-mode)))
+      (check-type global-mode global-mode)
+      (when global-mode
+        (when *current-global-mode*
+          (call (global-mode-disable-hook *current-global-mode*)))
+        (setf *current-global-mode* global-mode)
+        (call (global-mode-enable-hook global-mode))))))
+
+(defmacro define-global-mode (mode parent (&key keymap enable-hook disable-hook))
+  (alexandria:with-gensyms (global-mode parent-mode)
+    `(progn
+       ,@(when keymap
+           `((defvar ,keymap
+               (make-keymap :name ',keymap
+                            :parent (alexandria:when-let ((,parent-mode
+                                                           ,(when parent
+                                                              `(get ',parent 'global-mode))))
+                                      (global-mode-keymap ,parent-mode))))))
+       (let ((,global-mode
+               (make-instance 'global-mode
+                              :name ',mode
+                              :parent ',parent
+                              :keymap ,keymap
+                              :enable-hook ,enable-hook
+                              :disable-hook ,disable-hook)))
+         (setf (get ',mode 'global-mode) ,global-mode)
+         (pushnew ',mode *global-mode-list*)
+         (define-command ,mode () ()
+           (change-global-mode ',mode))
+         (when (null *current-global-mode*)
+           (setf *current-global-mode* ,global-mode))))))

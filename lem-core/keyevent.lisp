@@ -8,9 +8,9 @@
           key-hypher
           key-shift
           key-sym
-          key-to-char
           match-key
-          insertion-key-sym-p))
+          insertion-key-sym-p
+          key-to-char))
 
 (defstruct key
   (ctrl nil :type boolean)
@@ -19,14 +19,6 @@
   (hypher nil :type boolean)
   (shift nil :type boolean)
   (sym 0 :type string))
-
-(defun key-to-char (key)
-  (cond ((key-ctrl key)
-         (and (= 1 (length (key-sym key)))
-              (let ((code (char-code (char-downcase (char (key-sym key) 0)))))
-                (and code (<= 64 code 95) (- code 64)))))
-        ((= 1 (length (key-sym key)))
-         (char (key-sym key) 0))))
 
 (defun match-key (key &key ctrl meta super hypher shift sym)
   (and (eq (key-ctrl key) ctrl)
@@ -38,3 +30,17 @@
 
 (defun insertion-key-sym-p (sym)
   (= 1 (length sym)))
+
+(defun key-to-char (key)
+  (let ((char (cond ((string= (key-sym key) "Return")
+                     #\Return)
+                    ((string= (key-sym key) "Tab")
+                     #\Tab)
+                    ((= 1 (length (key-sym key)))
+                     (char (key-sym key) 0)))))
+    (when char
+      (cond ((key-ctrl key)
+             (let ((code (char-code (char-upcase char))))
+               (cond ((<= 64 code 95)
+                      (code-char (- code 64))))))
+            (t char)))))

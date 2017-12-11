@@ -31,7 +31,7 @@
                  :undef-hook undef-hook
                  :insertion-hook insertion-hook
                  :parent parent
-                 :table (make-hash-table :test 'equalp)
+                 :table (make-hash-table :test 'eq)
                  :name name)))
     (push keymap *keymaps*)
     keymap))
@@ -56,7 +56,7 @@
                    (let ((next (gethash k table)))
                      (if next
                          (setf table next)
-                         (let ((new-table (make-hash-table :test 'equalp)))
+                         (let ((new-table (make-hash-table :test 'eq)))
                            (setf (gethash k table) new-table)
                            (setf table new-table))))))))
 

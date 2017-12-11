@@ -71,4 +71,4 @@
 (define-key *command-keymap* "O" 'vi-open-adove)
 (define-key *command-keymap* ":" 'vi-ex)
 
-(define-key *insert-keymap* "escape" 'vi-end-insert)
+(define-key *insert-keymap* "Escape" 'vi-end-insert)

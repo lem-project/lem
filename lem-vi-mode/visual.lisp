@@ -16,7 +16,7 @@
 
 (defvar *visual-keymap* (make-keymap :name '*visual-keymap* :parent *command-keymap*))
 
-(define-key *visual-keymap* "escape" 'vi-visual-end)
+(define-key *visual-keymap* "Escape" 'vi-visual-end)
 
 (define-vi-state visual (:keymap *visual-keymap*
                          :post-command-hook 'post-command-hook)

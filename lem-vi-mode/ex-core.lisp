@@ -29,7 +29,7 @@
   (lem:search-backward-regexp *point* pattern))
 
 (defun goto-line (line-number)
-  (lem:move-to-line (copy-point *point* :temporary) line-number))
+  (lem:move-to-line (lem:copy-point *point* :temporary) line-number))
 
 (defun current-line ()
   *point*)

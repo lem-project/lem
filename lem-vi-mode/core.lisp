@@ -24,10 +24,9 @@
 (defun disable-hook ()
   (run-hooks *disable-hook*))
 
-(define-minor-mode vi-mode
-    (:global t
-     :enable-hook #'enable-hook
-     :disable-hook #'disable-hook))
+(define-global-mode vi-mode (emacs-mode)
+  (:enable-hook #'enable-hook
+   :disable-hook #'disable-hook))
 
 
 (defvar *modeline-element*)
@@ -88,7 +87,7 @@
     (funcall disable-hook))
   (let ((state (ensure-state name)))
     (setf *current-state* name)
-    (setf (mode-keymap 'vi-mode) (vi-state-keymap state))
+    (change-global-mode-keymap 'vi-mode (vi-state-keymap state))
     (change-element-name (format nil "[~A]" name))
     (when (vi-state-enable-hook state)
       (apply (vi-state-enable-hook state) args))))
@@ -101,9 +100,9 @@
          (change-state ,old-state)))))
 
 
-(defvar *command-keymap* (make-keymap :name '*command-keymap* :insertion-hook 'undefined-key))
-(defvar *insert-keymap* (make-keymap :name '*insert-keymap*))
-(defvar *inactive-keymap* (make-keymap))
+(defvar *command-keymap* (make-keymap :name '*command-keymap* :insertion-hook 'undefined-key :parent *global-keymap*))
+(defvar *insert-keymap* (make-keymap :name '*insert-keymap* :parent *global-keymap*))
+(defvar *inactive-keymap* (make-keymap :parent *global-keymap*))
 
 (define-vi-state command (:keymap *command-keymap*))
 

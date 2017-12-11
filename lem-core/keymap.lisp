@@ -113,6 +113,12 @@
                                (not (gethash str *key-sym-table*)))
                           (fail))
                          (t
+                          (cond ((and ctrl (string= str "i"))
+                                 (setf ctrl nil
+                                       str "Tab"))
+                                ((and ctrl (string= str "m"))
+                                 (setf ctrl nil
+                                       str "Return")))
                           (return (make-key :ctrl ctrl
                                             :meta meta
                                             :super super

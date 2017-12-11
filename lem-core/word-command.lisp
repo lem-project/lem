@@ -58,17 +58,17 @@
           :finally (return point))))
 
 (define-key *global-keymap* "M-f" 'forward-word)
-(define-key *global-keymap* "C-right" 'forward-word)
+(define-key *global-keymap* "C-Right" 'forward-word)
 (define-command forward-word (n) ("p")
   (word-offset (current-point) n))
 
 (define-key *global-keymap* "M-b" 'previous-word)
-(define-key *global-keymap* "C-left" 'previous-word)
+(define-key *global-keymap* "C-Left" 'previous-word)
 (define-command previous-word (n) ("p")
   (word-offset (current-point) (- n)))
 
 (define-key *global-keymap* "M-d" 'delete-word)
-(define-key *global-keymap* "C-dc" 'delete-word)
+(define-key *global-keymap* "C-Delete" 'delete-word)
 (define-command delete-word (n) ("p")
   (with-point ((point (current-point) :right-inserting))
     (let ((start (current-point))
@@ -83,7 +83,7 @@
              (kill-region end start))))))
 
 (define-key *global-keymap* "C-M-h" 'backward-delete-word)
-(define-key *global-keymap* "M-[backspace]" 'backward-delete-word)
+(define-key *global-keymap* "M-Backspace" 'backward-delete-word)
 (define-command backward-delete-word (n) ("p")
   (delete-word (- n)))
 

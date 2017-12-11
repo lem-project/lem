@@ -26,9 +26,9 @@
 (define-key *less-mode-keymap* "f" 'less-forward-window)
 ;; (define-key *less-mode-keymap* "C-f" 'less-forward-window)
 (define-key *less-mode-keymap* "C-v" 'less-forward-window)
-(define-key *less-mode-keymap* "Spc" 'less-forward-window)
+(define-key *less-mode-keymap* "Space" 'less-forward-window)
 (define-key *less-mode-keymap* "z" 'less-forward-window)
-(define-key *less-mode-keymap* "M-Spc" 'less-forward-window)
+(define-key *less-mode-keymap* "M-Space" 'less-forward-window)
 
 (define-key *less-mode-keymap* "b" 'less-backward-window)
 ;; (define-key *less-mode-keymap* "C-b" 'less-backward-window)

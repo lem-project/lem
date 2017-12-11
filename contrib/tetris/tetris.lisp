@@ -278,10 +278,10 @@
   (setq *playing-p* nil)
   (stop-timer *timer*))
 
-(define-key *tetris-mode-keymap* "[left]" 'tetris-move-left)
-(define-key *tetris-mode-keymap* "[right]" 'tetris-move-right)
-(define-key *tetris-mode-keymap* "[down]" 'tetris-move-down)
-(define-key *tetris-mode-keymap* "[up]" 'tetris-rotate)
+(define-key *tetris-mode-keymap* "Left" 'tetris-move-left)
+(define-key *tetris-mode-keymap* "Right" 'tetris-move-right)
+(define-key *tetris-mode-keymap* "Down" 'tetris-move-down)
+(define-key *tetris-mode-keymap* "Up" 'tetris-rotate)
 (define-key *tetris-mode-keymap* "q" 'tetris-quit)
 
 (defun update (tetris-buffer)

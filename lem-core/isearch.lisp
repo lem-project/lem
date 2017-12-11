@@ -59,21 +59,21 @@
 (define-key *global-keymap* "M-s ." 'isearch-forward-symbol-at-point)
 (define-key *isearch-keymap* "C-g" 'isearch-abort)
 (define-key *isearch-keymap* "C-h" 'isearch-delete-char)
-(define-key *isearch-keymap* "[backspace]" 'isearch-delete-char)
-(define-key *isearch-keymap* "[del]" 'isearch-delete-char)
+(define-key *isearch-keymap* "Backspace" 'isearch-delete-char)
+(define-key *isearch-keymap* "Delete" 'isearch-delete-char)
 (define-key *isearch-keymap* "C-q" 'isearch-raw-insert)
 (define-key *isearch-keymap* "C-j" 'isearch-finish)
 (define-key *isearch-keymap* "C-m" 'isearch-finish)
 (define-key *isearch-keymap* "C-s" 'isearch-next)
 (define-key *isearch-keymap* "C-r" 'isearch-prev)
 (define-key *isearch-keymap* "C-y" 'isearch-yank)
-(define-key *global-keymap* "[f2]" 'isearch-replace-highlight)
+(define-key *global-keymap* "F2" 'isearch-replace-highlight)
 (define-key *global-keymap* "M-s M-n" 'isearch-next-highlight)
 (define-key *global-keymap* "M-s n" 'isearch-next-highlight)
 (define-key *global-keymap* "M-s M-p" 'isearch-prev-highlight)
 (define-key *global-keymap* "M-s p" 'isearch-prev-highlight)
-(define-key *global-keymap* "[f3]" 'isearch-next-highlight)
-(define-key *global-keymap* (list (code-char 279)) 'isearch-prev-highlight) ; shift + F3
+(define-key *global-keymap* "F3" 'isearch-next-highlight)
+;(define-key *global-keymap* "Shift-F3" 'isearch-prev-highlight)
 
 
 (defun isearch-overlays (buffer)

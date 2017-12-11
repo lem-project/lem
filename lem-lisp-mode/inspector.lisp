@@ -22,7 +22,7 @@
 
 (define-key *lisp-inspector-keymap* "l" 'lisp-inspector-pop)
 (define-key *lisp-inspector-keymap* "n" 'lisp-inspector-next)
-(define-key *lisp-inspector-keymap* "Spc" 'lisp-inspector-next)
+(define-key *lisp-inspector-keymap* "Space" 'lisp-inspector-next)
 (define-key *lisp-inspector-keymap* "d" 'lisp-inspector-describe)
 (define-key *lisp-inspector-keymap* "p" 'lisp-inspector-pprint)
 (define-key *lisp-inspector-keymap* "e" 'lisp-inspector-eval)

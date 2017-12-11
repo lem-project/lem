@@ -113,7 +113,7 @@
     (character-offset point (- n))))
 
 (define-key *global-keymap* "C-d" 'delete-next-char)
-(define-key *global-keymap* "[dc]" 'delete-next-char)
+(define-key *global-keymap* "Delete" 'delete-next-char)
 (define-command delete-next-char (&optional n) ("P")
   (when (end-buffer-p (current-point))
     (editor-error "End of buffer"))
@@ -126,8 +126,8 @@
 
 
 (define-key *global-keymap* "C-h" 'delete-previous-char)
-(define-key *global-keymap* "[backspace]" 'delete-previous-char)
-(define-key *global-keymap* "[del]" 'delete-previous-char)
+(define-key *global-keymap* "Backspace" 'delete-previous-char)
+(define-key *global-keymap* "Delete" 'delete-previous-char)
 (define-command delete-previous-char (&optional n) ("P")
   (if (and (buffer-mark (current-buffer))
            (buffer-mark-p (current-buffer)))
@@ -200,7 +200,7 @@
 (defvar *next-line-prev-column* nil)
 
 (define-key *global-keymap* "C-n" 'next-line)
-(define-key *global-keymap* "[down]" 'next-line)
+(define-key *global-keymap* "Down" 'next-line)
 (define-command next-line (&optional n) ("p")
   (unless (continue-flag :next-line)
     (setq *next-line-prev-column* (point-column (current-point))))
@@ -215,18 +215,18 @@
   t)
 
 (define-key *global-keymap* "C-p" 'previous-line)
-(define-key *global-keymap* "[up]" 'previous-line)
+(define-key *global-keymap* "Up" 'previous-line)
 (define-command previous-line (&optional n) ("p")
   (next-line (- n)))
 
 (define-key *global-keymap* "C-f" 'forward-char)
-(define-key *global-keymap* "[right]" 'forward-char)
+(define-key *global-keymap* "Right" 'forward-char)
 (define-command forward-char (&optional (n 1)) ("p")
   (or (character-offset (current-point) n)
       (editor-error "End of buffer")))
 
 (define-key *global-keymap* "C-b" 'backward-char)
-(define-key *global-keymap* "[left]" 'backward-char)
+(define-key *global-keymap* "Left" 'backward-char)
 (define-command backward-char (&optional (n 1)) ("p")
   (or (character-offset (current-point) (- n))
       (editor-error "Beginning of buffer")))
@@ -244,7 +244,7 @@
   t)
 
 (define-key *global-keymap* "C-a" 'move-to-beginning-of-line)
-(define-key *global-keymap* "[home]" 'move-to-beginning-of-line)
+(define-key *global-keymap* "Home" 'move-to-beginning-of-line)
 (define-command move-to-beginning-of-line () ()
   (let ((bol (line-start (copy-point (current-point) :temporary))))
     (or (text-property-at (current-point) :field -1)
@@ -255,13 +255,13 @@
   t)
 
 (define-key *global-keymap* "C-e" 'move-to-end-of-line)
-(define-key *global-keymap* "[end]" 'move-to-end-of-line)
+(define-key *global-keymap* "End" 'move-to-end-of-line)
 (define-command move-to-end-of-line () ()
   (line-end (current-point))
   t)
 
 (define-key *global-keymap* "C-v" 'next-page)
-(define-key *global-keymap* "[npage]" 'next-page)
+(define-key *global-keymap* "PageDown" 'next-page)
 (define-command next-page (&optional n) ("P")
   (if n
       (scroll-down n)
@@ -276,7 +276,7 @@
          t))))
 
 (define-key *global-keymap* "M-v" 'previous-page)
-(define-key *global-keymap* "[ppage]" 'previous-page)
+(define-key *global-keymap* "PageUp" 'previous-page)
 (define-command previous-page (&optional n) ("P")
   (if n
       (scroll-up n)
@@ -353,7 +353,7 @@
             (delete-character point nblanks)
             (return))))))
 
-(define-key *global-keymap* "M-Spc" 'just-one-space)
+(define-key *global-keymap* "M-Space" 'just-one-space)
 (define-command just-one-space () ()
   (skip-whitespace-backward (current-point) t)
   (delete-while-whitespaces t)

@@ -25,7 +25,7 @@
 (define-key *completion-mode-keymap* 'move-to-end-of-buffer 'completion-end-of-buffer)
 (define-key *completion-mode-keymap* 'move-to-beginning-of-buffer 'completion-beginning-of-buffer)
 (define-key *completion-mode-keymap* "C-m"    'completion-select)
-(define-key *completion-mode-keymap* "Spc"    'completion-insert-space-and-cancel)
+(define-key *completion-mode-keymap* "Space"    'completion-insert-space-and-cancel)
 (define-key *completion-mode-keymap* 'delete-previous-char 'completion-delete-prevous-char)
 
 (define-attribute completion-attribute

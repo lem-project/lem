@@ -43,7 +43,7 @@
       (delete-buffer buffer)))
   t)
 
-(define-key *global-keymap* "C-x [left]" 'previous-buffer)
+(define-key *global-keymap* "C-x Left" 'previous-buffer)
 (define-command previous-buffer () ()
   (switch-to-buffer
    (if (eq (current-buffer) (car (buffer-list)))
@@ -53,7 +53,7 @@
                    (return (car rest)))))
    nil))
 
-(define-key *global-keymap* "C-x [right]" 'next-buffer)
+(define-key *global-keymap* "C-x Right" 'next-buffer)
 (define-command next-buffer () ()
   (switch-to-buffer (or (cadr (member (current-buffer) (buffer-list)))
                         (car (buffer-list)))
@@ -190,7 +190,7 @@
     (declare (ignore split-p))
     window))
 
-(define-key *global-keymap* "C-down" 'scroll-down)
+(define-key *global-keymap* "C-Down" 'scroll-down)
 (define-command scroll-down (n) ("p")
   (cond
     ((minusp n)
@@ -201,7 +201,7 @@
        (unless (zerop offset)
          (line-offset (current-point) (- offset)))))))
 
-(define-key *global-keymap* "C-up" 'scroll-up)
+(define-key *global-keymap* "C-Up" 'scroll-up)
 (define-command scroll-up (n) ("p")
   (cond
     ((minusp n)

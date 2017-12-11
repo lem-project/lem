@@ -31,7 +31,7 @@
 (define-key *dired-mode-keymap* "g" 'dired-update-buffer)
 (define-key *dired-mode-keymap* "^" 'dired-up-directory)
 (define-key *dired-mode-keymap* "C-m" 'dired-find-file)
-(define-key *dired-mode-keymap* "Spc" 'dired-read-file)
+(define-key *dired-mode-keymap* "Space" 'dired-read-file)
 (define-key *dired-mode-keymap* "o" 'dired-find-file-other-window)
 
 (define-key *dired-mode-keymap* "n" 'dired-next-line)

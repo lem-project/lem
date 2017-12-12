@@ -135,15 +135,9 @@
   (with-output-to-string (out)
     (loop :for key* :on kseq
           :for key := (first key*)
-          :do (with-slots (ctrl meta super hypher shift sym) key
-                (when hypher (write-string "H-" out))
-                (when super (write-string "S-" out))
-                (when meta (write-string "M-" out))
-                (when ctrl (write-string "C-" out))
-                (when shift (write-string "Shift-" out))
-                (write-string sym out)
-                (when (rest key*)
-                  (write-char #\space out))))))
+          :do (princ key out)
+              (when (rest key*)
+                (write-char #\space out)))))
 
 (defun keymap-find-keybind (keymap key)
   (let ((table (keymap-table keymap)))

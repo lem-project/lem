@@ -20,6 +20,15 @@
   (shift nil :type boolean)
   (sym 0 :type string))
 
+(defmethod print-object ((object key) stream)
+  (with-slots (ctrl meta super hypher shift sym) object
+    (when hypher (write-string "H-" stream))
+    (when super (write-string "S-" stream))
+    (when meta (write-string "M-" stream))
+    (when ctrl (write-string "C-" stream))
+    (when shift (write-string "Shift-" stream))
+    (write-string sym stream)))
+
 (let ((table (make-hash-table :test 'equal)))
   (defun make-key (&rest args &key ctrl meta super hypher shift sym)
     (let ((hashkey (list ctrl meta super hypher shift sym)))

@@ -29,7 +29,7 @@
                           (unless (equal "UNDEFINED-KEY" (symbol-name command))
                             (format s "~va~(~a~)~%"
                                     column-width
-                                    keys
+                                    (keyseq-to-string keys)
                                     (symbol-name command)))))
     (terpri s)))
 

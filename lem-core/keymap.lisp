@@ -199,7 +199,8 @@
     (let ((buffer (current-buffer)))
       (or (f (buffer-minor-modes buffer))
           (f *global-minor-mode-list*)
-          (keymap-find-keybind (mode-keymap (buffer-major-mode buffer)) key)
+          (alexandria:when-let ((keymap (mode-keymap (buffer-major-mode buffer))))
+            (keymap-find-keybind keymap key))
           (keymap-find-keybind (global-mode-keymap (current-global-mode)) key)))))
 
 (defun find-keybind (key)

@@ -14,6 +14,10 @@
   (ex-write range filename)
   (lem-vi-mode.commands:vi-quit force))
 
+(define-ex-command ("e") (range filename)
+  (lem:find-file (merge-pathnames filename
+                                  (uiop:getcwd))))
+
 (define-ex-command ("w" "write") (range filename)
   (ex-write range filename))
 

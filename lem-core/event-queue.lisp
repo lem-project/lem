@@ -59,7 +59,9 @@
 (defun receive-event (timeout)
   (loop
     (let ((e (dequeue-event timeout)))
-      (cond ((eql e :timeout)
+      (cond ((null e)
+             (return e))
+            ((eql e :timeout)
              (assert timeout)
              (return nil))
             ((eql e :resize)

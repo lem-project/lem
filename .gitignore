@@ -3,3 +3,4 @@ DEBUG
 *.fasl
 node_modules
 package-lock.json
+*~

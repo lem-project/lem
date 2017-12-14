@@ -203,8 +203,10 @@
   (:method (content point)
     (xref-insert-content (princ-to-string content) point))
   (:method ((content string) point)
-    (insert-string point (concatenate 'string "  " content)
-                   :attribute 'xref-content-attribute)))
+   (insert-string point
+                  (concatenate #+lispworks 'lw:simple-bmp-string #-lispworks 'string
+                               "  " content)
+                  :attribute 'xref-content-attribute)))
 
 (defstruct xref-location
   (filespec nil :read-only t :type (or buffer string pathname))

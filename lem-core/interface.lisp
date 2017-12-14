@@ -232,7 +232,7 @@
             #+(or)
             (when (< (length string) end-charpos)
               (setf (car (aref (screen-lines screen) screen-row))
-                    (concatenate 'string
+                    (concatenate #+lispworks 'lw:simple-bmp-string #-lispworks 'string
                                  string
                                  (make-string (1- (- end-charpos (length string)))
                                               :initial-element #\space))))
@@ -257,7 +257,8 @@
         (aref (screen-lines screen) screen-row)
       (when (and end-charpos (<= (length string) end-charpos))
         (setf (car (aref (screen-lines screen) screen-row))
-              (concatenate 'string string
+              (concatenate #+lispworks 'lw:simple-bmp-string #-lispworks 'string
+                           string
                            (make-string (- end-charpos (length string))
                                         :initial-element #\space))))
       (setf (cdr (aref (screen-lines screen) screen-row))

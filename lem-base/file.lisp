@@ -61,7 +61,7 @@
       (multiple-value-setq (external-format end-of-line)
         (funcall *external-format-function* filename)))
     (with-point ((point point :left-inserting))
-      (with-open-file (in filename :external-format external-format)
+      (with-open-file (in filename :external-format external-format :element-type 'character)
         (loop
           (multiple-value-bind (str eof-p)
               (read-line in nil)
@@ -123,11 +123,13 @@
             :direction :output
             :if-exists :supersede
             :if-does-not-exist :create
-            :external-format (car (buffer-external-format buffer)))
+            :external-format (car (buffer-external-format buffer))
+            :element-type 'character)
       (open filename
             :direction :output
             :if-exists :supersede
-            :if-does-not-exist :create)))
+            :if-does-not-exist :create
+            :element-type 'character)))
 
 (defun write-to-file-1 (buffer filename)
   (flet ((f (out end-of-line)

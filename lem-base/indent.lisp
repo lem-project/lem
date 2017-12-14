@@ -29,7 +29,7 @@
             (if (variable-value 'indent-tabs-mode :default point)
                 (multiple-value-bind (div mod)
                     (floor column (tab-size))
-                  (concatenate 'string
+                  (concatenate #+lispworks 'lw:simple-bmp-string #-lispworks 'string
                                (make-string div :initial-element #\tab)
                                (make-string mod :initial-element #\space)))
                 (make-string column :initial-element #\space))))

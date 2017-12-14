@@ -19,10 +19,10 @@
 (defun kill-append (string before-p)
   (setf (car *kill-ring*)
         (if before-p
-            (concatenate 'string
+            (concatenate #+lispworks 'lw:simple-bmp-string #-lispworks 'string
                          string
                          (car *kill-ring*))
-            (concatenate 'string
+            (concatenate #+lispworks 'lw:simple-bmp-string #-lispworks 'string
                          (car *kill-ring*)
                          string))))
 

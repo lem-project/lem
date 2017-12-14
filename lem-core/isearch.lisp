@@ -300,7 +300,7 @@
 
 (defun isearch-add-char (c)
   (setq *isearch-string*
-        (concatenate 'string
+        (concatenate #+lispworks 'lw:simple-bmp-string #-lispworks 'string
                      *isearch-string*
                      (string c)))
   (with-point ((start-point (current-point)))

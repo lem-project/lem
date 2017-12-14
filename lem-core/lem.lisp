@@ -103,7 +103,7 @@
    (lambda ()
      (when init-function (funcall init-function))
      (unwind-protect
-          (progn
+          (let (#+lispworks (lw:*default-character-element-type* 'character))
             (setf *in-the-editor* t)
             (setup)
             (let ((report (toplevel-command-loop (lambda () (init args)))))

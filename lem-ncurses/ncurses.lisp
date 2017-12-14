@@ -208,12 +208,14 @@
 (defun get-key (code)
   (let* ((char (let ((nbytes (utf8-bytes code)))
                  (if (= nbytes 1)
-                     (code-char code)
-                     (let ((vec (make-array nbytes :element-type '(unsigned-byte 8))))
-                       (setf (aref vec 0) code)
-                       (loop :for i :from 1 :below nbytes
-                             :do (setf (aref vec i) (charms/ll:getch)))
-                       (schar (babel:octets-to-string vec) 0)))))
+                   (code-char code)
+                   (let ((vec (make-array nbytes :element-type '(unsigned-byte 8))))
+                     (setf (aref vec 0) code)
+                     (loop :for i :from 1 :below nbytes
+                           :do (setf (aref vec i) (charms/ll:getch)))
+                     (handler-case (schar (babel:octets-to-string vec) 0)
+                       (babel-encodings:invalid-utf8-continuation-byte ()
+                         (code-char code)))))))
          (key (char-to-key char)))
     key))
 

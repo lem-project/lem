@@ -1,14 +1,15 @@
 # lem
 Lem is the editor/IDE well-tuned for Common Lisp.
 
+[![Build Status](https://travis-ci.org/cxxxr/lem.svg?branch=master)](https://travis-ci.org/cxxxr/lem)
+[![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
+
 After installing lem, you can start developing in Common Lisp at once. 
 
 You can skip over writing tidy settings or installing many plugins as you do on Emacs.
 
 ## Screenshot
 ![Terminal](screenshots/terminal.png)　　
-
-[![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
 
 ## Requirement
 - [roswell](https://github.com/roswell/roswell)

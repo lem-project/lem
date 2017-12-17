@@ -40,7 +40,10 @@
        :count 100))))
 
 (defmacro with-error-handler (() &body body)
-  `(handler-case-bind (#'bailout
+  `(handler-case-bind ((lambda (condition)
+                         (handler-bind ((error #'bailout))
+                           (pop-up-backtrace condition)
+                           (redraw-display)))
                        ,@body)
                       ((condition) (declare (ignore condition)))))
 

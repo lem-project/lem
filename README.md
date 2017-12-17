@@ -13,6 +13,7 @@ You can skip over writing tidy settings or installing many plugins as you do on 
 ## Requirement
 - [roswell](https://github.com/roswell/roswell)
 - ncurses
+- Node.js 8.9.3LTS (Note: If you try the Electron version, you need nodejs.)
 
 ## Platform
 - Linux
@@ -46,18 +47,20 @@ You can watch the screencast on Youtube.
 # Electron version (Beta)
 Electron version is in the experimental stage.
 
-Please take the following steps and give it a try!
-
-1. install Node.js in advance.
-
-   [Node.js](https://nodejs.org)
-
-
-2. install and run lem(Electron) as follows:
+Please check if your nodejs version is 8.9.3LTS+.
 
 ```
-$ npm install -g cxxxr/lem
-$ lem-electron
+$ node -v
+v8.9.3
+$ npm -v
+5.5.1
+```
+
+Then you can install lem-electron and start it as follows.
+
+```
+$ npm install -g cxxxr/lem   # install lem-electron
+$ lem-electron               # Electron version will start
 ```
 
 ![Electron](screenshots/electron.png)　　

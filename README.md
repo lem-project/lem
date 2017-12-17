@@ -1,5 +1,4 @@
-# lem
-Lem is the editor/IDE well-tuned for Common Lisp.
+# Lem is the editor/IDE well-tuned for Common Lisp.
 
 [![Build Status](https://travis-ci.org/cxxxr/lem.svg?branch=master)](https://travis-ci.org/cxxxr/lem)
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)

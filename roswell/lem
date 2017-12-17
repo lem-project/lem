@@ -9,14 +9,12 @@ case $1 in
 	;;
 esac
 
-case $frontend in
-	electron)
-		lem-electron $*
-	;;
-	ncurses)
-		lem-ncurses $*
-	;;
-	*)
-		echo "unknown frontend: $frontend"
-	;;
-esac
+__which(){
+    command -v "$1" 2> /dev/null
+}
+
+if __which lem-$frontend > /dev/null;then
+    lem-$frontend $*
+else
+    echo "unknown frontend: $frontend"
+fi

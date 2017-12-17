@@ -9,9 +9,12 @@ env:
     - LISP=sbcl-bin
     - LISP=ccl-bin
 
+os:
+  - osx
+  - linux
+
 install:
   - curl -L https://raw.githubusercontent.com/roswell/roswell/release/scripts/install-for-ci.sh | sh
-  - sudo apt-get install libncurses5-dev
   - ros install cxxxr/lem
 
 script:

@@ -34,7 +34,9 @@
            :vi-search-previous
            :vi-goto-first-line
            :vi-goto-line
+           :vi-write
            :vi-quit
+           :vi-write-quit
            :vi-end-insert
            :vi-insert
            :vi-append
@@ -230,12 +232,18 @@
       (move-to-end-of-buffer)
       (goto-line arg)))
 
+(define-command vi-write () ()
+  (lem:write-file (lem:buffer-filename (lem:current-buffer))))
+
 (define-command vi-quit (&optional (ask t)) ((list t))
   (if (one-window-p)
       (exit-lem ask)
       (delete-current-window)))
 
-
+(define-command vi-write-quit () ()
+  (vi-write)
+  (vi-quit nil))
+
 (define-command vi-end-insert () ()
   (change-state 'command)
   (vi-backward-char 1))

@@ -128,7 +128,6 @@
 
 (define-key *global-keymap* "C-h" 'delete-previous-char)
 (define-key *global-keymap* "Backspace" 'delete-previous-char)
-(define-key *global-keymap* "Delete" 'delete-previous-char)
 (define-command delete-previous-char (&optional n) ("P")
   (if (and (buffer-mark (current-buffer))
            (buffer-mark-p (current-buffer)))

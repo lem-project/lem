@@ -18,4 +18,4 @@ install:
   - ros install cxxxr/lem
 
 script:
-  - ros -s lem-ncurses
+  - ros -s lem-ncurses -s lem-modeline-battery -s lem-tetris

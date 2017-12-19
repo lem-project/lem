@@ -180,7 +180,8 @@
              :package package))
 
 (defun lisp-eval-internal (emacs-rex-fun rex-arg package)
-  (let ((tag (gensym)))
+  (let ((tag (gensym))
+        (thread-id (current-swank-thread)))
     (catch tag
       (funcall emacs-rex-fun
                *connection*
@@ -193,8 +194,11 @@
                                   (declare (ignore condition))
                                   (editor-error "Synchronous Lisp Evaluation aborted"))))
                :package package
-               :thread (current-swank-thread))
-      (loop (sit-for 10 nil)))))
+               :thread thread-id)
+      (handler-case (loop (sit-for 10 nil))
+        (editor-abort ()
+          (send-message-string *connection* (format nil "(:emacs-interrupt ~D)" thread-id))
+          (keyboard-quit))))))
 
 (defun lisp-eval-from-string (string &optional (package (current-package)))
   (lisp-eval-internal 'emacs-rex-string string package))
@@ -244,6 +248,11 @@
 
 (defun interactive-eval (string)
   (eval-with-transcript `(swank:interactive-eval ,string)))
+
+(defun eval-print (string)
+  (let ((value (lisp-eval `(swank:eval-and-grab-output ,string))))
+    (insert-string (current-point) (first value))
+    (insert-string (current-point) (second value))))
 
 (defun new-package (name prompt-string)
   (setf (connection-package *connection*) name)
@@ -354,12 +363,15 @@
   (check-connection)
   (interactive-eval string))
 
-(define-command lisp-eval-last-expression () ()
+(define-command lisp-eval-last-expression (p) ("P")
   (check-connection)
   (with-point ((start (current-point))
                (end (current-point)))
     (form-offset start -1)
-    (interactive-eval (points-to-string start end))))
+    (let ((string (points-to-string start end)))
+      (if p
+          (eval-print string)
+          (interactive-eval string)))))
 
 (define-command lisp-eval-defun () ()
   (check-connection)

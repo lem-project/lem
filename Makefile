@@ -7,14 +7,15 @@ MKDIR_P = /bin/mkdir -p
 bindir = ${exec_prefix}/bin
 exec_prefix = ${prefix}
 prefix = /usr/local
-bin_PROGRAMS = roswell/lem$(EXEEXT)
+bin_PROGRAMS = roswell/lem-ncurses$(EXEEXT) roswell/lem$(EXEEXT)
 
 all:
 	make $(bin_PROGRAMS)
 
 %$(EXEEXT): %.ros
 	ros build $<
-
+clean:
+	rm -f roswell/lem-ncurses$(EXEEXT)
 install:
 	$(INSTALL) $(bin_PROGRAMS) $(DESTDIR)$(bindir)
 
@@ -28,5 +29,5 @@ uninstall:
 	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
 	cd "$(DESTDIR)$(bindir)" && rm -f $$files
 
-.PHONY: all install uninstall
+.PHONY: all clean install uninstall
 

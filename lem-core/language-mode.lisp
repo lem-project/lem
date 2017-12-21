@@ -204,7 +204,7 @@
     (xref-insert-content (princ-to-string content) point))
   (:method ((content string) point)
    (insert-string point
-                  (concatenate #+lispworks 'lw:simple-bmp-string #-lispworks 'string
+                  (concatenate 'string
                                "  " content)
                   :attribute 'xref-content-attribute)))
 

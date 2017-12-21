@@ -128,7 +128,7 @@
            (line-property-insert-pos line charpos 1)
            (shift-markers point 0 1)
            (setf (line-str line)
-                 (concatenate #+lispworks 'lw:simple-bmp-string #-lispworks 'string
+                 (concatenate 'string
                               (subseq (line-str line) 0 charpos)
                               (string char)
                               (subseq (line-str line) charpos))))))
@@ -137,7 +137,7 @@
 (defun %insert-line-string/point (line charpos string)
   (line-property-insert-pos line charpos (length string))
   (setf (line-str line)
-        (concatenate #+lispworks 'lw:simple-bmp-string #-lispworks 'string
+        (concatenate 'string
                      (subseq (line-str line) 0 charpos)
                      string
                      (subseq (line-str line) charpos))))
@@ -175,7 +175,7 @@
                 :start start
                 :end end)
   (setf (line-str line)
-        (concatenate #+lispworks 'lw:simple-bmp-string #-lispworks 'string
+        (concatenate 'string
                      (subseq (line-str line) 0 start)
                      (subseq (line-str line) end))))
 
@@ -195,7 +195,7 @@
   (decf n (1+ (- (line-length line) start)))
   (decf (buffer-nlines buffer))
   (setf (line-str line)
-        (concatenate #+lispworks 'lw:simple-bmp-string #-lispworks 'string
+        (concatenate 'string
                      (subseq (line-str line) 0 start)
                      (line-str (line-next line))))
   (line-free (line-next line)))

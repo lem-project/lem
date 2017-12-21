@@ -1,9 +1,25 @@
-#LEM-XCB
+# LEM-XCB
 
 This is an experimental front end for Lem.  Interesting features:
 
 - Custom XCB bindings - for better threading than XLIB
 - Freetype2 bindings - for beautiful subpixel antialiasing
+
+## Quick Start
+
+Clone the repo (make sure to clone the XCB branch until it's merged).  From emacs:
+
+```
+> (ql:quickload :lem-xcb)
+> (lem:lem)
+```
+
+You can also run it in a separate thread so your REPL is still available with
+```
+> (bt:make-thread (lambda () (lem:lem)))
+```
+
+The editor will terminate when you close the window or <C-x C-c>.
 
 ## STATUS
 

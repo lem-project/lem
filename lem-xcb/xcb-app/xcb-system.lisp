@@ -71,11 +71,13 @@
   (ft2init)
   (setf *gs-normal*
 	(make-instance
-	 'font :path "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"
+	 'font :path
+	 (asdf:system-relative-pathname 'lem-xcb "fonts/DejaVuSansMono.ttf")
 	 :size 10)
 	*gs-bold*
 	(make-instance
-	 'font :path "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
+	 'font :path
+	 (asdf:system-relative-pathname 'lem-xcb "fonts/DejaVuSansMono-Bold.ttf")
 	 :size 10))
   
   ;; prepare the event subsystem

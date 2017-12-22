@@ -16,5 +16,7 @@
     "utf-8": "^1.0.0",
     "vscode-jsonrpc": "^3.4.1"
   },
-  "bin": {"lem-electron": "lem-frontend-electron/cli.js"}
+  "bin": {
+    "lem-electron": "lem-frontend-electron/cli.js"
+  }
 }

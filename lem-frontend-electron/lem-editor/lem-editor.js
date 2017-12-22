@@ -113,6 +113,7 @@ class LemEditor extends HTMLElement {
         this.on('set-pane', this.setHtmlPane.bind(this));
         this.on('delete-pane', this.deletePane.bind(this));
         this.on('import', this.importModule.bind(this));
+        this.on('set-font', this.setFont.bind(this));
         this.on('exit', this.exit.bind(this));
 
         this.rpcConnection.listen();
@@ -183,6 +184,12 @@ class LemEditor extends HTMLElement {
     importModule(params) {
         try {
             require(params.name);
+        } catch (e) { console.log(e); }
+    }
+
+    setFont(params) {
+        try {
+            fontAttribute = new FontAttribute(params.name, params.size);
         } catch (e) { console.log(e); }
     }
 

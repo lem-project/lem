@@ -2,6 +2,7 @@
   (:use :cl :lem :lem-jsonrpc)
   (:export :js-eval
            :set-html-pane
+           :set-font
            :delete-html-pane
            :import-electron-module))
 
@@ -14,6 +15,11 @@
   (notify "set-pane"
           (params "name" name
                   "html" (babel:string-to-octets html))))
+
+(defun set-font (name size)
+  (notify "set-font"
+          (params "name" name
+                  "size" size)))
 
 (define-command delete-html-pane () ()
   (notify "delete-pane" nil))

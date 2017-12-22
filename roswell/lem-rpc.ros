@@ -5,7 +5,7 @@ exec ros -Q -- $0 "$@"
 |#
 (progn ;;init forms
   (ros:ensure-asdf)
-  (ql:quickload '(:lem-jsonrpc) :silent t)
+  (ql:quickload '(:lem-jsonrpc :lem-electron-backend) :silent t)
   )
 
 (defpackage :ros.script.lem-rpc.3715592460

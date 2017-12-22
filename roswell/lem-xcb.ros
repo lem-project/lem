@@ -1,0 +1,18 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -m lem -L sbcl-bin -- $0 "$@"
+|#
+(progn ;;init forms
+  (ros:ensure-asdf)
+  (ql:quickload '(:lem) :silent t))
+
+(defpackage :ros.script.lem-xcb.3722922487
+  (:use :cl))
+(in-package :ros.script.lem-xcb.3722922487)
+
+(defun main (&rest argv)
+  ;; lem-xcb dependency were not able to restart properly from the dump.
+  (ql:quickload :lem-xcb :silent t)
+  (apply #'lem:lem argv))
+;;; vim: set ft=lisp lisp:

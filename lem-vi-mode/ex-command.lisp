@@ -15,6 +15,7 @@
   (lem-vi-mode.commands:vi-quit force))
 
 (define-ex-command ("e") (range filename)
+  (declare (ignore range))
   (lem:find-file (merge-pathnames filename
                                   (uiop:getcwd))))
 

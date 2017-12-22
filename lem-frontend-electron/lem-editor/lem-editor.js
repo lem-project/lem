@@ -26,7 +26,7 @@ class FontAttribute {
     }
 }
 
-let fontAttribute = new FontAttribute(option.fontName, option.fontPixel);
+let fontAttribute = new FontAttribute(option.fontName, option.fontSize);
 
 const kindAbort = 0;
 const kindKeyEvent = 1;

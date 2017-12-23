@@ -1,5 +1,13 @@
 (in-package :lem)
 
+(defclass ncurses (implementation)
+  ()
+  (:default-initargs
+   :native-scroll-support nil
+   :redraw-after-modifying-floating-window t))
+
+(setf *implementation* (make-instance 'ncurses))
+
 (defvar *keycode-table* (make-hash-table))
 (defvar *keyname-table* (make-hash-table :test 'equal))
 
@@ -260,7 +268,7 @@
           (lambda ()
             (load-theme "emacs-dark")))
 
-(defmethod interface-invoke ((implementation (eql :ncurses)) function)
+(defmethod interface-invoke ((implementation ncurses) function)
   (let ((result nil))
     (unwind-protect
          (progn
@@ -272,23 +280,23 @@
                (exit-editor-value result))
       (format t "~&~A~%" (exit-editor-value result)))))
 
-(defmethod interface-display-background-mode ((implementation (eql :ncurses)))
+(defmethod interface-display-background-mode ((implementation ncurses))
   (lem.term:background-mode))
 
-(defmethod interface-update-foreground ((implementation (eql :ncurses)) color-name)
+(defmethod interface-update-foreground ((implementation ncurses) color-name)
   (lem.term:term-set-foreground color-name))
 
-(defmethod interface-update-background ((implementation (eql :ncurses)) color-name)
+(defmethod interface-update-background ((implementation ncurses) color-name)
   (lem.term:term-set-background color-name))
 
-(defmethod interface-display-width ((implementation (eql :ncurses)))
+(defmethod interface-display-width ((implementation ncurses))
   (max 5 charms/ll:*cols*))
 
-(defmethod interface-display-height ((implementation (eql :ncurses)))
+(defmethod interface-display-height ((implementation ncurses))
   (max 3 charms/ll:*lines*))
 
 (defmethod interface-make-view
-    ((implementation (eql :ncurses)) window x y width height use-modeline)
+    ((implementation ncurses) window x y width height use-modeline)
   (flet ((newwin (nlines ncols begin-y begin-x main-screen)
            (declare (ignore main-screen))
            (let ((win (charms/ll:newwin nlines ncols begin-y begin-x)))
@@ -305,17 +313,17 @@
      :width width
      :height height)))
 
-(defmethod interface-delete-view ((implementation (eql :ncurses)) view)
+(defmethod interface-delete-view ((implementation ncurses) view)
   (charms/ll:delwin (ncurses-view-scrwin view))
   (when (ncurses-view-modeline-scrwin view)
     (charms/ll:delwin (ncurses-view-modeline-scrwin view))))
 
-(defmethod interface-clear ((implementation (eql :ncurses)) view)
+(defmethod interface-clear ((implementation ncurses) view)
   (charms/ll:clearok (ncurses-view-scrwin view) 1)
   (when (ncurses-view-modeline-scrwin view)
     (charms/ll:clearok (ncurses-view-modeline-scrwin view) 1)))
 
-(defmethod interface-set-view-size ((implementation (eql :ncurses)) view width height)
+(defmethod interface-set-view-size ((implementation ncurses) view width height)
   (setf (ncurses-view-width view) width)
   (setf (ncurses-view-height view) height)
   (charms/ll:wresize (ncurses-view-scrwin view) height width)
@@ -327,7 +335,7 @@
                        (minibuffer-window-height)
                        width)))
 
-(defmethod interface-set-view-pos ((implementation (eql :ncurses)) view x y)
+(defmethod interface-set-view-pos ((implementation ncurses) view x y)
   (setf (ncurses-view-x view) x)
   (setf (ncurses-view-y view) y)
   (charms/ll:mvwin (ncurses-view-scrwin view) y x)
@@ -336,7 +344,7 @@
                      (+ y (ncurses-view-height view))
                      x)))
 
-(defmethod interface-print ((implementation (eql :ncurses)) view x y string attribute)
+(defmethod interface-print ((implementation ncurses) view x y string attribute)
   (let ((attr (attribute-to-bits attribute)))
     (charms/ll:wattron (ncurses-view-scrwin view) attr)
     ;(charms/ll:scrollok (ncurses-view-scrwin view) 0)
@@ -344,24 +352,24 @@
     ;(charms/ll:scrollok (ncurses-view-scrwin view) 1)
     (charms/ll:wattroff (ncurses-view-scrwin view) attr)))
 
-(defmethod interface-print-modeline ((implementation (eql :ncurses)) view x y string attribute)
+(defmethod interface-print-modeline ((implementation ncurses) view x y string attribute)
   (let ((attr (attribute-to-bits attribute)))
     (charms/ll:wattron (ncurses-view-modeline-scrwin view) attr)
     (charms/ll:mvwaddstr (ncurses-view-modeline-scrwin view) y x string)
     (charms/ll:wattroff (ncurses-view-modeline-scrwin view) attr)))
 
-(defmethod interface-clear-eol ((implementation (eql :ncurses)) view x y)
+(defmethod interface-clear-eol ((implementation ncurses) view x y)
   (charms/ll:wmove (ncurses-view-scrwin view) y x)
   (charms/ll:wclrtoeol (ncurses-view-scrwin view)))
 
-(defmethod interface-clear-eob ((implementation (eql :ncurses)) view x y)
+(defmethod interface-clear-eob ((implementation ncurses) view x y)
   (charms/ll:wmove (ncurses-view-scrwin view) y x)
   (charms/ll:wclrtobot (ncurses-view-scrwin view)))
 
-(defmethod interface-move-cursor ((implementation (eql :ncurses)) view x y)
+(defmethod interface-move-cursor ((implementation ncurses) view x y)
   (charms/ll:wmove (ncurses-view-scrwin view) y x))
 
-(defmethod interface-redraw-view-after ((implementation (eql :ncurses)) view focus-window-p)
+(defmethod interface-redraw-view-after ((implementation ncurses) view focus-window-p)
   (let ((attr (attribute-to-bits 'modeline)))
     (charms/ll:attron attr)
     (when (and (ncurses-view-modeline-scrwin view)
@@ -378,12 +386,9 @@
                            *cursor-x* *cursor-y*))
   (charms/ll:wnoutrefresh (ncurses-view-scrwin view)))
 
-(defmethod interface-update-display ((implementation (eql :ncurses)))
+(defmethod interface-update-display ((implementation ncurses))
   (charms/ll:doupdate))
 
-(defmethod interface-scroll ((implementation (eql :ncurses)) view n)
+(defmethod interface-scroll ((implementation ncurses) view n)
   (charms/ll:wscrl (ncurses-view-scrwin view) n))
 
-(setf *implementation* :ncurses)
-
-(setq *native-scroll-support* nil)

@@ -30,7 +30,8 @@
           syntax-function-name-attribute
           syntax-variable-attribute
           syntax-type-attribute
-          syntax-builtin-attribute))
+          syntax-builtin-attribute
+	  *attribute-destroy-%internal-value*))
 
 (defvar *attributes* '())
 
@@ -53,6 +54,10 @@
    (%internal-value
     :initform nil
     :accessor attribute-%internal-value)))
+
+;; 22-Dec-17 stacksmith:
+;; If internal value needs to be deallocated, set this to (lambda (attribute))
+(defparameter *attribute-destroy-%internal-value* nil)
 
 (defun attribute-p (x)
   (typep x 'attribute))
@@ -114,6 +119,8 @@
 
 (defun clear-all-attribute-cache ()
   (dolist (attribute *attributes*)
+    (when *attribute-destroy-%internal-value* ; let client clean up
+      (funcall *attribute-destroy-%internal-value* attribute))
     (setf (get attribute '%attribute-value) nil)))
 
 (defun display-light-p ()
@@ -201,3 +208,4 @@
 
 (define-attribute syntax-builtin-attribute
   (t :foreground "#D030F0"))
+

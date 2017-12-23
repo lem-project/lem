@@ -1,9 +1,21 @@
 (in-package :lem)
 
-(export '(set-foreground
+(export '(*implementation*
+          implementation
+          set-foreground
           set-background
           display-width
           display-height))
+
+(defclass implementation ()
+  ((native-scroll-support
+    :initform nil
+    :initarg :native-scroll-support
+    :reader native-scroll-support)
+   (redraw-after-modifying-floating-window
+    :initform nil
+    :initarg :redraw-after-modifying-floating-window
+    :reader redraw-after-modifying-floating-window)))
 
 (defgeneric interface-invoke (implementation function))
 (defgeneric interface-display-background-mode (implementation))
@@ -24,8 +36,6 @@
 (defgeneric interface-redraw-view-after (implementation view focus-window-p))
 (defgeneric interface-update-display (implementation))
 (defgeneric interface-scroll (implementation view n))
-
-(defparameter *native-scroll-support* nil)
 
 (defvar *implementation*)
 
@@ -540,7 +550,7 @@
         (screen (lem::window-screen window)))
     (let ((scroll-n (when focus-window-p
                       (window-see window))))
-      (when (or (not *native-scroll-support*)
+      (when (or (not (native-scroll-support *implementation*))
                 (not (equal (screen-last-buffer-name screen) (buffer-name buffer)))
                 (not (eql (screen-last-buffer-modified-tick screen)
                           (buffer-modified-tick buffer)))

@@ -2,7 +2,13 @@
 ;;=============================================================================
 ;; This is the meat of the XCB implementation.
 ;;
-(setf lem::*implementation* :xcb)
+(defclass xcb-frontend (lem:implementation)
+  ()
+  (:default-initargs
+   :native-scroll-support nil
+   :redraw-after-modifying-floating-window t))
+
+(setf lem::*implementation* (make-instance 'xcb-frontend))
 #||
 (lem:add-hook lem::*before-init-hook*
 	      (lambda ())	      )
@@ -152,7 +158,7 @@
        (format *q* "xcb: ")
        (format *q* ,@rest))))
 ;;==============================================================================
-(defmethod lem::interface-invoke ((implementation (eql :xcb)) function)
+(defmethod lem::interface-invoke ((implementation xcb-frontend) function)
   (xbug "interface-invoke ~&")
   (let ((result nil))
     (unwind-protect
@@ -188,12 +194,12 @@
 ;;==============================================================================
 ;; Set default colors from LEM
 (defmethod lem::interface-update-foreground
-    ((implementation (eql :xcb)) color-name)
+    ((implementation xcb-frontend) color-name)
   (xbug "update-foreground ~A~&" color-name)
   (setf (fg *w*) (pen-create color-name)))
 ;;==============================================================================
 (defmethod lem::interface-update-background
-    ((implementation (eql :xcb)) color-name)
+    ((implementation xcb-frontend) color-name)
   (xbug "update-background ~A~&" color-name)
   (setf (bg *w*) (pen-create color-name)))
 
@@ -201,16 +207,16 @@
 ;; LEM needs to know if we are light or dark.  This happens when LEM resolves
 ;; attributes, for instance lem::ensure-attribute.
 ;;
-(defmethod lem::interface-display-background-mode ((implementation (eql :xcb)))
+(defmethod lem::interface-display-background-mode ((implementation xcb-frontend))
   (xbug "background-mode~&")
   :dark)
 ;;==============================================================================
 ;; Display-width request from LEM
 ;;
-(defmethod lem::interface-display-width ((implementation (eql :xcb)))
+(defmethod lem::interface-display-width ((implementation xcb-frontend))
   (xbug "display-width ~&")
   (nth-value 0 (cell-grid-calc *w*) ))
-(defmethod lem::interface-display-height ((implementation (eql :xcb)))
+(defmethod lem::interface-display-height ((implementation xcb-frontend))
   (xbug "display-height ~&")
   (nth-value 1 (cell-grid-calc *w*) ))
 
@@ -221,7 +227,7 @@
 ;; Lem wants us to make a view object, which it will cache in the private
 ;; 
 (defmethod lem::interface-make-view
-    ((implementation (eql :xcb)) window x y width height use-modeline)
+    ((implementation xcb-frontend) window x y width height use-modeline)
   (xbug "make-view w:~A (~A ~A) ~A by ~A modeline: ~A~&"
 	  window x y width height use-modeline)
   (setf *view* (make-instance 'textview
@@ -231,7 +237,7 @@
 			      :data window)))
 ;;==============================================================================
 ;; Delete view  - we dont' have anything 
-(defmethod lem::interface-delete-view ((implementation (eql :xcb)) view)
+(defmethod lem::interface-delete-view ((implementation xcb-frontend) view)
   (xbug "delete-view ~A ~&" view)
   ;; TODO: fix this! https://github.com/cxxxr/lem/issues/101
   ;; For now, force YET ANOTHER REDRAW only to make the modeline refresh! 
@@ -240,7 +246,7 @@
 ;;==============================================================================
 ;; clear the entire view
 ;;
-(defmethod lem::interface-clear ((implementation (eql :xcb)) view)
+(defmethod lem::interface-clear ((implementation xcb-frontend) view)
   (xbug "clear-view ~A ~&" view)
   
   (with-slots (vx vy vw vh) view 
@@ -248,7 +254,7 @@
       (pic-rect (pic-scr *w*) (pen-abgr64 (bg *w*)) x y w h))))
 ;;==============================================================================
 (defmethod lem::interface-set-view-size
-    ((implementation (eql :xcb)) view width height)
+    ((implementation xcb-frontend) view width height)
   (xbug "set-view-size ~A ~A ~A ~&" view width height)
   (with-slots (vw vh modeline) view
     (setf vw width
@@ -257,7 +263,7 @@
       (setf modeline height))))
 ;;==============================================================================
 (defmethod lem::interface-set-view-pos
-    ((implementation (eql :xcb)) view x y)
+    ((implementation xcb-frontend) view x y)
   (xbug "set-view-pos ~A ~A ~A ~&" view x y)
   (with-slots (vx vy) view
     (setf vx x
@@ -265,7 +271,7 @@
 
 ;;==============================================================================
 (defmethod lem::interface-print
-    ((implementation (eql :xcb)) view x y string attribute)
+    ((implementation xcb-frontend) view x y string attribute)
   (xbug "interface-print ~A (~A ~A) |~A| attr:~A ~&"view x y string attribute)
    (textwin-print view x y string attribute))
 
@@ -299,7 +305,7 @@
 		    0 0 xbuflen xbuf))))))))
 ;;==============================================================================
 (defmethod lem::interface-print-modeline
-    ((implementation (eql :xcb)) view x y string attribute)
+    ((implementation xcb-frontend) view x y string attribute)
   (xbug "interface-print-modeline: view ~A x: ~A y ~A |~A| ~A~&"
 	view x y string attribute)
   (with-slots (modeline) view
@@ -308,7 +314,7 @@
 	(xbug "No modeline to print~&"))))
 
 ;;==============================================================================
-(defmethod lem::interface-clear-eol ((implementation (eql :xcb)) view x y)
+(defmethod lem::interface-clear-eol ((implementation xcb-frontend) view x y)
   (xbug "interface-clear-eol view ~A x: ~A y ~A~&" view x y )
   (with-slots (vx vy vw vh) view 
     (mvbind (xx yy ww hh) (view-cell-rect view x y (- vw x) 1)
@@ -316,7 +322,7 @@
       (pic-rect (pic-scr *w*) (pen-abgr64 (bg *w*)) xx yy ww hh)))
   )
 ;;==============================================================================
-(defmethod lem::interface-clear-eob ((implementation (eql :xcb)) view x y)
+(defmethod lem::interface-clear-eob ((implementation xcb-frontend) view x y)
   (xbug "interface-clear-eol view ~A x: ~A y ~A~&" view x y )
   (with-slots (vx vy vw vh) view
     (if (< y vh)
@@ -333,19 +339,19 @@
 
 ;;==============================================================================
 ;; TODO: when is this useful?
-(defmethod lem::interface-move-cursor ((implementation (eql :xcb)) view x y)
+(defmethod lem::interface-move-cursor ((implementation xcb-frontend) view x y)
   (xbug "move-cursor ~A ~A ~A ~&" view x y)
   (with-slots (cx cy) view
     (setf cx x
 	  cy y)))
 ;;==============================================================================
 ;; 
-(defmethod lem::interface-update-display ((implementation (eql :xcb)))
+(defmethod lem::interface-update-display ((implementation xcb-frontend))
   (xbug "interface-redraw-display: ~&")
   (xcb::flush c))
 ;;==============================================================================
 (defmethod lem::interface-redraw-view-after
-    ((implementation (eql :xcb)) view focus-window-p)
+    ((implementation xcb-frontend) view focus-window-p)
   (xbug "interface-redraw after: view ~A : ~A~&" view focus-window-p)
   (with-slots (modeline vx vy vw vh ) view
     (when (and modeline (< 0 vx))
@@ -356,7 +362,7 @@
 	(pic-rect (pic-scr *w*) #xFFFF100020000000 (+ x 3) y 2 h)))))
 
 ;;==============================================================================
-(defmethod lem::interface-scroll ((implementation (eql :xcb)) view n)
+(defmethod lem::interface-scroll ((implementation xcb-frontend) view n)
   (xbug "interface-scroll ~A ~A~&" view n))
   
 

@@ -46,7 +46,9 @@
   t)
 ;;-----------------------------------------------------------------------------
 (defun lem-%on-key-press (win key state)
+  (declare (ignore win))
   (mvbind (keysym mod) (key-process key state)
+   ;;; (format *q* "[~A]~A ~A~&" keysym mod  state)
     (when keysym
       (lem:send-event (lem:make-key
 		       :sym     keysym

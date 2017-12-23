@@ -22,7 +22,9 @@
 ;; Upon exit, destroy the X window
 (lem:add-hook lem::*exit-editor-hook*
 	      (lambda ()
-		(check (destroy-window c (id *w*)))))
+		;;(format *q* "EXIT-EDITOR HOOK~&")
+		(check (destroy-window c (id *w*)))
+		(xcb::flush c)))
 
 ;;=============================================================================
 ;; Upon initial expose, this handler installs 3 normal handlers for LEM windows
@@ -44,7 +46,9 @@
   t)
 ;;-----------------------------------------------------------------------------
 (defun lem-%on-key-press (win key state)
+  (declare (ignore win))
   (mvbind (keysym mod) (key-process key state)
+   ;;; (format *q* "[~A]~A ~A~&" keysym mod  state)
     (when keysym
       (lem:send-event (lem:make-key
 		       :sym     keysym
@@ -149,14 +153,6 @@
 ;; debugging
 (defparameter *editor-thread* nil)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defparameter *xbug* t))
-
-(defmacro xbug (&rest rest)
-  (when *xbug*
-    `(progn
-       (format *q* "xcb: ")
-       (format *q* ,@rest))))
 ;;==============================================================================
 (defmethod lem::interface-invoke ((implementation xcb-frontend) function)
   (xbug "interface-invoke ~&")
@@ -241,7 +237,7 @@
   (xbug "delete-view ~A ~&" view)
   ;; TODO: fix this! https://github.com/cxxxr/lem/issues/101
   ;; For now, force YET ANOTHER REDRAW only to make the modeline refresh! 
-  (lem::redraw-display t)
+ ;; (lem::redraw-display t)
   )
 ;;==============================================================================
 ;; clear the entire view

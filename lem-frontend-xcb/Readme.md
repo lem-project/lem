@@ -28,6 +28,12 @@ Just got it working - expecting issues.
 
 ## Notes:
 
+### Debug information
+
+See xcb/global.lisp.
+Set `*xbug*` t and recompile for debug output.
+Set `*compile-checked*` and recompile for checked XCB calls.
+
 Sequencing of events is a little tricky.
 
 1) at compile/load-time, `lem::*implementation*` is set to :xcb. 

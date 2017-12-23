@@ -107,10 +107,10 @@
 
 (defun key-process (key xmod)
   (let* ((mod (mod-normalize xmod))
-	 (it (aref (if (= mod 1) *key-shifted* *key-unshifted*) key)))
+	 (it (aref (if (logbitp 0 mod) *key-shifted* *key-unshifted*) key)))
     ;; shifted keys with 1-character symbols are considered unshifted
-    (when (= 1 (length it)
-	   (setf mod (logand mod #xFE))))
+    (when (= 1 (length it))
+      (setf mod (logand mod #xFE)))
     (values it mod) )
 
   

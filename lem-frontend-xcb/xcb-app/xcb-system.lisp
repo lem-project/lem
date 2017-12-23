@@ -58,12 +58,6 @@
 ;;(defparameter *gs-italic* nil)
 ;;(defparameter *gs-bold-italic* nil)
 
-
-;; debug output
-(defparameter *q* *standard-output*)
-
-;; Font class - keep track of all font-related stuff.
-
 ;; session-global initialization...
 (defun in1 ()
 ;;  (setf sp (create-pen #xFFFFFFFF));; deprecated, but keep for tests

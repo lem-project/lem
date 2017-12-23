@@ -1,5 +1,34 @@
 (in-package :xcb)
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defparameter *xbug* nil)
+  (defparameter *q* *standard-output*))
+
+(defmacro xbug (&rest rest)
+  (when *xbug*
+    `(progn
+       (format *q* "xcb: ")
+       (format *q* ,@rest))))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defparameter *compile-checked* nil))
+
+;; Compile a checked version of the function form.
+(defmacro check (function-form &key message)
+  (if *compile-checked*
+      (let ((checked-function-symbol
+	     (intern (concatenate 'string
+				  (symbol-name (car function-form))
+				  "-CHECKED"))))
+	(setf message (concatenate 'string "XCB fail: "
+				   (symbol-name checked-function-symbol)
+				   message))
+	`(let ((cookie (,checked-function-symbol ,@(cdr function-form))))
+	   (unless (null-pointer-p (request-check ,(cadr function-form) cookie))
+	     (error ,message))))
+      function-form))
+
+
 (defmacro mvbind (vars value-form &body body)
   `(multiple-value-bind ,vars ,value-form ,@body))
 
@@ -88,24 +117,6 @@
 (defun grinc (string)
   (uiop:run-program (list "grep" "-r" string "/usr/include/") :output :interactive :ignore-error-status t))
 
-;; Compile a checked version of the function form.
-
-(defmacro check (function-form &key message)
-  (let ((checked-function-symbol
-	 (intern (concatenate 'string
-			      (symbol-name (car function-form))
-			      "-CHECKED"))))
-    (setf message (concatenate 'string "XCB fail: "
-			       (symbol-name checked-function-symbol)
-			       message))
-    `(let ((cookie (,checked-function-symbol ,@(cdr function-form))))
-       (unless (null-pointer-p (request-check ,(cadr function-form) cookie))
-	 (error ,message)))))
-#||
-(defmacro with-id ((var) &body body)
-  `(let ((,var (generate-id c)))
-     ,@body))
-||#
 ;; Create an environment with generated id
 (defmacro with-ids (vars &body body)
   (let ((lets (mapcar (lambda (v) `(,v (generate-id c))) vars)))

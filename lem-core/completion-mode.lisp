@@ -165,17 +165,10 @@
                 (when (cdr rest-items)
                   (insert-character point #\newline)))
       (buffer-start point)
-      (loop
-        (move-to-column point max-column t)
-        (when back-attribute
-          (with-point ((start point)
-                       (end point))
-            (put-text-property (line-start start)
-                               (line-end end)
-                               :attribute 'non-focus-completion-attribute)))
-        (line-offset point 1)
-        (when (end-buffer-p point)
-          (return)))
+      (when back-attribute
+        (put-text-property (buffer-start-point buffer)
+                           (buffer-end-point buffer)
+                           :attribute 'non-focus-completion-attribute))
       (buffer-start point)
       (values buffer max-column))))
 

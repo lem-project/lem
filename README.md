@@ -65,13 +65,6 @@ $ lem-electron               # Electron version will start
 
 ![Electron](screenshots/electron.png)　　
 
-
-## Plan
-- ~To implement the basic vi commands.~
-
-- To implement the frontend using Electron
-
-
 ## Notes
 
 - For Rasberry Pi users: You need to use CCL(Clozure Common Lisp).  

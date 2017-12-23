@@ -233,7 +233,9 @@
 ;; Delete view  - we dont' have anything 
 (defmethod lem::interface-delete-view ((implementation (eql :xcb)) view)
   (xbug "delete-view ~A ~&" view)
-;;  (declare (ignore view))
+  ;; TODO: fix this! https://github.com/cxxxr/lem/issues/101
+  ;; For now, force YET ANOTHER REDRAW only to make the modeline refresh! 
+  (lem::redraw-display t)
   )
 ;;==============================================================================
 ;; clear the entire view

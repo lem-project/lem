@@ -27,13 +27,11 @@
     (setf %on-expose    #'lem-%on-expose
 	  %on-key-press #'lem-%on-key-press
 	  %on-resize    #'lem-%on-resize))
-
   t)
 ;;-----------------------------------------------------------------------------
 (defun lem-%on-expose (win event)
-  (format *q* "EXPO~&")
   (lem::redraw-display t)
-    t)
+  t)
 ;;-----------------------------------------------------------------------------
 (defun lem-%on-resize (win w h)
   (lem:send-event :resize)

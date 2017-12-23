@@ -185,14 +185,14 @@
                     (update-completion-overlay (buffer-point buffer))
                     (balloon (current-window)
                              buffer
-                             (+ 1 max-column)
+                             max-column
                              (min 20 (length items))
                              *completion-window*))
                    (t
                     (setf *completion-window*
                           (balloon (current-window)
                                    buffer
-                                   (+ 1 max-column)
+                                   max-column
                                    (min 20 (length items))))
                     (start-completion-mode buffer function))))))))
 

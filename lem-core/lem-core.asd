@@ -69,4 +69,5 @@
                (:file "less-mode")
                (:file "rectangle")
 
-               (:file "color-theme")))
+               (:file "color-theme")
+               (:file "site-init")))

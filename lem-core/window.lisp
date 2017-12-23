@@ -998,7 +998,7 @@
     (update-display)))
 
 (defun redraw-display* ()
-  (when (eq (implementation) :ncurses)
+  (when (redraw-after-modifying-floating-window (implementation))
     (redraw-display t)))
 
 (defun change-display-size-hook ()

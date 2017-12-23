@@ -269,45 +269,34 @@
   (xbug "interface-print ~A (~A ~A) |~A| attr:~A ~&"view x y string attribute)
    (textwin-print view x y string attribute))
 
+;; return attribute values
+
 (defun textwin-print (view col row string attribute)
+	       
   (let* ((slen (length string))
 	 (xbuflen (+ (ash slen 2) 8))) ;; 32-bits per character, and header
     (mvbind (xx yy ww hh) (view-cell-rect view col row slen 1)
-      ;; get fore and back colors from attribute
-
-      (let (penbg penfg
-		  (font *gs-normal*)
-		  (a (attribute-check attribute)))
-	(when a
-	  (destructuring-bind (f . b) (lem::attribute-%internal-value a)
-	    (if (lem:attribute-reverse-p a)
-		(setf penbg (or f (fg *w*))
-		      penfg (or b (bg *w*)))
-		(setf penbg (or b (bg *w*))
-		      penfg (or f (fg *w*)))))
-	  (when (lem:attribute-bold-p a)
-	      (setf font *gs-bold*)))
-	
-	;; any unset colors get defaults
-	(unless penbg (setf penbg (bg *w*)))
-	(unless penfg (setf penfg (fg *w*)))
-	(pic-rect (pic-scr *w*) (pen-abgr64 penbg) xx yy ww hh)
-	;; composite text
-	(with-foreign-object (xbuf :UINT8 xbuflen)
-	  (setf (mem-ref xbuf :UINT32 0) slen ;composite character count
-		(mem-ref xbuf :UINT16 4) xx ;window coordinates of x
-		(mem-ref xbuf :UINT16 6) (+ yy (cell-baseline *w*) )) ;and y
-	  ;; set the glyphs
-	  (loop for i from 8 by 4
-	     for c across string do
-	       (setf (mem-ref xbuf :UINT32 i)
-		     (glyph-assure font (char-code c))))
-	  
-	  (check (composite-glyphs-32
-		  c OP-OVER (pen-pic penfg)
-		  (pic-scr *w*) +ARGB32+ (glyphset font)
-		  0 0 xbuflen xbuf))))
-      )))
+      (mvbind (fg bg boldp underlinep) (attribute-decode attribute)
+	(let ((font (if boldp *gs-bold* *gs-normal*)))
+	  (pic-rect (pic-scr *w*) (pen-abgr64 bg) xx yy ww hh)
+	  (when underlinep
+	    (pic-rect (pic-scr *w*) (pen-abgr64 fg)
+		      xx (+ yy -1 (cell-height *w*))
+		      ww 1))
+	  ;; composite text
+	  (with-foreign-object (xbuf :UINT8 xbuflen)
+	    (setf (mem-ref xbuf :UINT32 0) slen ;composite character count
+		  (mem-ref xbuf :UINT16 4) xx ;window coordinates of x
+		  (mem-ref xbuf :UINT16 6) (+ yy (cell-baseline *w*) )) ;and y
+	    ;; set the glyphs
+	    (loop for i from 8 by 4
+	       for c across string do
+		 (setf (mem-ref xbuf :UINT32 i)
+		       (glyph-assure font (char-code c))))
+	    (check (composite-glyphs-32
+		    c OP-OVER (pen-pic fg)
+		    (pic-scr *w*) +ARGB32+ (glyphset font)
+		    0 0 xbuflen xbuf))))))))
 ;;==============================================================================
 (defmethod lem::interface-print-modeline
     ((implementation (eql :xcb)) view x y string attribute)
@@ -360,17 +349,15 @@
   (xbug "interface-redraw after: view ~A : ~A~&" view focus-window-p)
   (with-slots (modeline vx vy vw vh ) view
     (when (and modeline (< 0 vx))
-      (format *q* "HA! ~A ~A ~A ~A~&" vx vy vw vh)
+      ;; Draw separator. Should be parametrized
+      ;; TODO: https://github.com/cxxxr/lem/issues/103
       (mvbind (x y w h) (cell-rect *w* (1- vx) vy 1 (1+ vh))
 	(pic-rect (pic-scr *w*) (pen-abgr64 (bg *w*)) x y w h)
 	(pic-rect (pic-scr *w*) #xFFFF100020000000 (+ x 3) y 2 h)))))
 
-  
-
 ;;==============================================================================
 (defmethod lem::interface-scroll ((implementation (eql :xcb)) view n)
-  (xbug "interface-scroll ~A ~A~&" view n)
-  )
+  (xbug "interface-scroll ~A ~A~&" view n))
   
 
 

@@ -69,8 +69,6 @@ $ lem-electron               # Electron version will start
 ## Plan
 - ~To implement the basic vi commands.~
 
-- To implement the frontend using Electron
-
 
 ## Notes
 

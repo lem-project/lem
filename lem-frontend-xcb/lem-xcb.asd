@@ -2,7 +2,7 @@
   :depends-on ("cffi" "cffi-libffi" "cl-freetype2" "lem")
   :serial t
   :components ((:file "package")
-	       (:file "xcb/global")
+	       (:file "global")
 	       (:file "xcb/libs")
 	       (:file "xcb/xcb")
 	       (:file "xcb/icccm")
@@ -16,7 +16,7 @@
 	       (:file "xcb-app/attributes")
 	       (:file "xcb-app/win")
 	       (:file "xcb-app/geometry")
-	       (:file "xcb-app/textwin")
+	       (:file "xcb-app/lemwin")
 	 
 
 	       ;;	       (:file "xcb/util")

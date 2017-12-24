@@ -40,7 +40,7 @@
      "F12"    nil   nil    nil     nil     nil   nil    nil
      "Return"  nil   "/"    nil     nil    "Linefeed"   "Home" "Up" 
      ;;70 - 112      
-     "PageUp" "Left"  "Right" "End" "Down" "PageDown" "Insert" "Del"
+     "PageUp" "Left"  "Right" "End" "Down" "PageDown" "Insert" "Delete"
      nil nil nil nil  ;; "macro" "mute" "volumedown" "volumeup"
      nil "=" nil nil  ;; "power"    "kpequal"   "kpplusminus" "pause"
      ))
@@ -68,7 +68,7 @@
      "F12"    nil   nil    nil     nil     nil   nil    nil
      "Return"  nil   "/"    nil     nil    "Linefeed"   "Home" "Up" 
      ;;70 - 112      
-     "PageUp" "Left"  "Right" "End" "Down" "PageDown" "Insert" "Del"
+     "PageUp" "Left"  "Right" "End" "Down" "PageDown" "Insert" "Delete"
      nil nil nil nil  ;; "macro" "mute" "volumedown" "volumeup"
      nil "=" nil nil  ;; "power"    "kpequal"   "kpplusminus" "pause"
 ))

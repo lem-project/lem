@@ -11,7 +11,7 @@
        (format *q* ,@rest))))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defparameter *compile-checked* nil))
+  (defparameter *compile-checked* t))
 
 ;; Compile a checked version of the function form.
 (defmacro check (function-form &key message)

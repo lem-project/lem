@@ -124,13 +124,6 @@
    (cx :accessor cx :initform 0)
    (cy :accessor cy :initform 0)))
 
-;;------------------------------------------------------------------------------
-;; modeline, if any, is stored as a row index 
-(defmethod initialize-instance :after ((tv textview) &key)
-  (with-slots (modeline vy vh) tv
-    (when modeline
-      (setf modeline (+ vy vh)))))
-
 
 
 ;;------------------------------------------------------------------------------
@@ -165,7 +158,8 @@
 	   (setf result (input-loop *editor-thread*))) )
     (when (and (typep result 'lem::exit-editor)
                (lem::exit-editor-value result))
-      (format *q* "~&exit value: ~A~%" (lem::exit-editor-value result)))))
+;;      (format *q* "~&exit value: ~A~%" (lem::exit-editor-value result))
+      )))
 
 ;; running in input-thread: process x events.  These do not call lem:send-event;
 ;; key processing and resizing just does its thing.
@@ -229,8 +223,11 @@
   (setf *view* (make-instance 'textview
 			      :win *w*
 			      :vx x :vy y :vw width :vh height
-			      :modeline use-modeline
-			      :data window)))
+			      :modeline (and use-modeline
+					     height)
+			      :data window))
+;;  (format *q* "new view is ~A; modeline ~A~&" *view* (modeline *view*))
+  *view*)
 ;;==============================================================================
 ;; Delete view  - we dont' have anything 
 (defmethod lem::interface-delete-view ((implementation xcb-frontend) view)
@@ -251,7 +248,9 @@
 ;;==============================================================================
 (defmethod lem::interface-set-view-size
     ((implementation xcb-frontend) view width height)
-  (xbug "set-view-size ~A ~A ~A ~&" view width height)
+  (xbug *q* "set-view-size ~A ~A ~A (old pos ~A ~A) ~&"
+	view width height
+	(vx view) (vy view))
   (with-slots (vw vh modeline) view
     (setf vw width
 	  vh height)
@@ -274,7 +273,7 @@
 ;; return attribute values
 
 (defun textwin-print (view col row string attribute)
-	       
+  ;;(format *q* "1printing at (~A ~A) of view at (~A ~A)~&"col row (vx view) (vy view))
   (let* ((slen (length string))
 	 (xbuflen (+ (ash slen 2) 8))) ;; 32-bits per character, and header
     (mvbind (xx yy ww hh) (view-cell-rect view col row slen 1)
@@ -285,6 +284,7 @@
 	    (pic-rect (pic-scr *w*) (pen-abgr64 fg)
 		      xx (+ yy -1 (cell-height *w*))
 		      ww 1))
+;;	  (format *q* "printing ~A chars at (~A ~A) ~A ~A ~&" slen xx yy ww hh)
 	  ;; composite text
 	  (with-foreign-object (xbuf :UINT8 xbuflen)
 	    (setf (mem-ref xbuf :UINT32 0) slen ;composite character count
@@ -305,8 +305,9 @@
   (xbug "interface-print-modeline: view ~A x: ~A y ~A |~A| ~A~&"
 	view x y string attribute)
   (with-slots (modeline) view
+;;    (format *q* "~A modeline:at ~A; y ~A~&" view modeline y)
     (if modeline
-	(textwin-print view x (+ (modeline view) y) string attribute)
+	(textwin-print view x (+ modeline y) string attribute)
 	(xbug "No modeline to print~&"))))
 
 ;;==============================================================================

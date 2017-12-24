@@ -2,10 +2,12 @@
 
 (export '(*before-init-hook*
           *after-init-hook*
+          *splash-function*
           lem))
 
 (defvar *before-init-hook* '())
 (defvar *after-init-hook* '())
+(defvar *splash-function* nil)
 
 (defvar *in-the-editor* nil)
 
@@ -66,23 +68,28 @@
 
 (defun parse-args (args)
   (let ((parsed-args
-          (make-command-line-arguments)))
+          (make-command-line-arguments))
+        (file-count 0))
     (setf (command-line-arguments-args parsed-args)
-          (loop :while args
-                :for arg := (pop args)
-                :when (cond ((member arg '("-q" "--no-init-file") :test #'equal)
-                             (setf (command-line-arguments-no-init-file parsed-args)
-                                   t)
-                             nil)
-                            ((member arg '("-v" "--version") :test #'equal)
-                             (format t "~a~%" (asdf:component-version (asdf:find-system :lem)))
-                             (uiop:quit)
-                             nil)
-                            ((or (stringp arg) (pathnamep arg))
-                             `(find-file ,(merge-pathnames arg (uiop:getcwd))))
-                            (t
-                             arg))
-                :collect it))
+          `(,@(loop :while args
+                    :for arg := (pop args)
+                    :when (cond ((member arg '("-q" "--no-init-file") :test #'equal)
+                                 (setf (command-line-arguments-no-init-file parsed-args)
+                                       t)
+                                 nil)
+                                ((member arg '("-v" "--version") :test #'equal)
+                                 (format t "~a~%" (asdf:component-version (asdf:find-system :lem)))
+                                 (uiop:quit)
+                                 nil)
+                                ((or (stringp arg) (pathnamep arg))
+                                 (incf file-count)
+                                 `(find-file ,(merge-pathnames arg (uiop:getcwd))))
+                                (t
+                                 arg))
+                    :collect it)
+            ,@(and (zerop file-count)
+                   *splash-function*
+                   `((funcall ,*splash-function*)))))
     parsed-args))
 
 (defun apply-args (args)

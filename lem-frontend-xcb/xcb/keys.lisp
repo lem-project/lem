@@ -40,7 +40,7 @@
      "F12"    nil   nil    nil     nil     nil   nil    nil
      "Return"  nil   "/"    nil     nil    "Linefeed"   "Home" "Up" 
      ;;70 - 112      
-     "PageUp" "Left"  "Right" "End" "Down" "PageDown" "Insert" "Del"
+     "PageUp" "Left"  "Right" "End" "Down" "PageDown" "Insert" "Delete"
      nil nil nil nil  ;; "macro" "mute" "volumedown" "volumeup"
      nil "=" nil nil  ;; "power"    "kpequal"   "kpplusminus" "pause"
      ))
@@ -68,7 +68,7 @@
      "F12"    nil   nil    nil     nil     nil   nil    nil
      "Return"  nil   "/"    nil     nil    "Linefeed"   "Home" "Up" 
      ;;70 - 112      
-     "PageUp" "Left"  "Right" "End" "Down" "PageDown" "Insert" "Del"
+     "PageUp" "Left"  "Right" "End" "Down" "PageDown" "Insert" "Delete"
      nil nil nil nil  ;; "macro" "mute" "volumedown" "volumeup"
      nil "=" nil nil  ;; "power"    "kpequal"   "kpplusminus" "pause"
 ))
@@ -107,10 +107,10 @@
 
 (defun key-process (key xmod)
   (let* ((mod (mod-normalize xmod))
-	 (it (aref (if (= mod 1) *key-shifted* *key-unshifted*) key)))
+	 (it (aref (if (logbitp 0 mod) *key-shifted* *key-unshifted*) key)))
     ;; shifted keys with 1-character symbols are considered unshifted
-    (when (= 1 (length it)
-	   (setf mod (logand mod #xFE))))
+    (when (= 1 (length it))
+      (setf mod (logand mod #xFE)))
     (values it mod) )
 
   

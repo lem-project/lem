@@ -7,7 +7,7 @@
 (defclass xcb-frontend (implementation)
   ())
 
-(defparameter *q* *standard-output*)
+
 (defparameter *vw* 1)
 (defmethod interface-invoke ((implementation xcb-frontend) function)
   (let ((result nil))

@@ -4,7 +4,7 @@
 exec ros -Q -m lem -L sbcl-bin -- $0 "$@"
 |#
 (progn
-  (unless (find-package :lem-ncurses)
+  (unless (find-package :lem)
     (ql:quickload :lem-ncurses :silent t)))
 
 (defpackage :ros.script.lem.3672618460

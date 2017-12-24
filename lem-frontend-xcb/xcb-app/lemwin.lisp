@@ -48,7 +48,7 @@
 (defun lem-%on-key-press (win key state)
   (declare (ignore win))
   (mvbind (keysym mod) (key-process key state)
-   ;;; (format *q* "[~A]~A ~A~&" keysym mod  state)
+  ;; (format *q* "[~A]~A ~A~&" keysym mod  state)
     (when keysym
       (lem:send-event (lem:make-key
 		       :sym     keysym
@@ -278,7 +278,7 @@
 	 (xbuflen (+ (ash slen 2) 8))) ;; 32-bits per character, and header
     (mvbind (xx yy ww hh) (view-cell-rect view col row slen 1)
       (mvbind (fg bg boldp underlinep) (attribute-decode attribute)
-	(let ((font (if boldp *gs-bold* *gs-normal*)))
+		(let ((font (if boldp *gs-bold* *gs-normal*)))
 	  (pic-rect (pic-scr *w*) (pen-abgr64 bg) xx yy ww hh)
 	  (when underlinep
 	    (pic-rect (pic-scr *w*) (pen-abgr64 fg)

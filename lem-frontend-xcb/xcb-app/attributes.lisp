@@ -77,9 +77,10 @@
     (if a
 	(let ((bold (lem:attribute-bold-p a))
 	      (underline (lem:attribute-underline-p a)))
+	;;  (format *q* "ATTR-DECODE ~A ~A~&" bold underlineg)
 	  (destructuring-bind (f . b) (lem::attribute-%internal-value a)
 	    (if (lem:attribute-reverse-p a)
-		(values (or b (bg *w*))(or f (fg *w*) bold underline))
-		(values (or f (fg *w*))(or b (bg *w*) bold underline)))))
+		(values (or b (bg *w*))(or f (fg *w*)) bold underline)
+		(values (or f (fg *w*))(or b (bg *w*)) bold underline))))
 	(values (fg *w*) (bg *w*) nil nil))))
 

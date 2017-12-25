@@ -168,7 +168,7 @@
                (t (line-end p)))
          (kill-region start p)))
       (t
-       (next-line arg)
+       (line-offset (current-point) arg)
        (let ((end (current-point)))
          (kill-region start end))))))
 

@@ -10,6 +10,7 @@
 (defparameter *fbar-path* (truename "~/"))
 (defparameter *fbar-buffer* nil)
 (defparameter *fbar-window* nil)
+(defparameter *fbar-width* 32)
 
 (defparameter *old-window* nil)
 (defparameter *old-buffer* nil)
@@ -47,18 +48,25 @@
 ;;==============================================================================
 
 (defun fbar-insert-entry (pt path dirp tab)
-  (flet ((dname ()  (format nil "+ ~A" (car (last (pathname-directory path)))))
-	 (fname ()  (format nil "~A.~A" (pathname-name path)
-			    (or (pathname-type path) ""))))
-    
-    (let ((name (if dirp (dname) (fname))))
-;;      (format xcb::*q* "...~A ~A~&" pt path)
-      (insert-string pt
-		     (format nil "~v,,,v<~>~A~&" tab #\space name)
-		     :attribute  (if dirp 'fbar-dir  'fbar-file)
-		     'type (make-fb :tab tab :path path  :dir dirp :open nil))
-;;      (format xcb::*q* "...~A ~A~&" pt path)
-      )))
+  (flet ((spaces (count) (format nil "~v,,,v<~>" count #\space))
+	 (dname ()  (format nil "+ ~A" (car (last (pathname-directory path)))))
+	 (fname ()  (let ((suffix (pathname-type path)))
+		      (if suffix
+			  (format nil "~A.~A" (pathname-name path) suffix)
+			  (format nil "~A" (pathname-name path))))))
+    ;;pad the filename to create a 'background'
+    (let* ((nstring (if dirp (dname) (fname)))
+	   (rem (max 0 (- *fbar-width* (length nstring) tab))))
+      (setf nstring (concatenate 'string
+				 (spaces tab)
+				 nstring
+				 (spaces rem)
+				 "
+"))
+      (insert-string
+       pt nstring
+       :attribute  (if dirp 'fbar-dir  'fbar-file)
+       'type (make-fb :tab tab :path path  :dir dirp :open nil)))))
 
 (define-command fbar-select () ()
   (let ((prop (text-property-at (current-point) 'type)))
@@ -100,7 +108,8 @@
     (setf *fbar-window*
 	  (lem::make-floating-window
 	   *fbar-buffer*
-	   0 0 20 (- (window-height (current-window)) 2) nil))
+	   0 0 *fbar-width*
+	   (1- (interface-display-height *implementation*))  nil))
     
     (setf lem::*current-window* *fbar-window*)
     (setf (current-buffer) *fbar-buffer*)

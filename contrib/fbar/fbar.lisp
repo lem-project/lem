@@ -21,7 +21,8 @@
 
 (define-attribute fbar-file
   (:light :foreground "black" )
-  (:dark :foreground "white" ))
+  (:dark :foreground "white"
+	 :background "#333333"))
 (define-attribute fbar-dir
   (:light :foreground "blue" :bold-p t )
   (:dark :foreground "sky blue" :bold-p t

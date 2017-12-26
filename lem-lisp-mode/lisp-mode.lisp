@@ -1090,39 +1090,39 @@
   (let ((impl (prompt-for-string "impl: ")))
     (if (string= "" impl) nil impl)))
 
-(defun run-swank-server (impl)
-  (uiop:run-program (format nil "ros ~{~S~^ ~} &"
-                            `(,@(if impl `("-L" ,impl))
-                              "-s" "swank"
-                              "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)"
-                                            *default-port*)
-                              "wait"))
-                    :output nil
-                    :error-output nil))
+(defun get-lisp-command (&key impl (port *default-port*))
+  (format nil "ros ~{~S~^ ~} &"
+          `(,@(if impl `("-L" ,impl))
+            "-s" "swank"
+            "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)" port)
+            "wait")))
+
+(defun run-slime (cmd)
+  (uiop:run-program cmd :output nil :error-output nil)
+  (sleep 0.5)
+  (let ((successp)
+        (condition))
+    (loop :repeat 10
+          :do (handler-case
+                  (let ((conn (slime-connect *localhost* *default-port* t)))
+                    (setf (getf (connection-plist conn) 'run) t)
+                    (setf successp t)
+                    (return))
+                (editor-error (c)
+                  (setf condition c)
+                  (sleep 0.5))))
+    (unless successp
+      (error condition)))
+  (add-hook *exit-editor-hook*
+            (lambda ()
+              (ignore-errors
+               (slime-quit)))))
 
 (define-command slime (&optional ask-impl) ("P")
   (let ((impl (if ask-impl
                   (prompt-for-impl)
                   *impl-name*)))
-    (run-swank-server impl)
-    (sleep 0.5)
-    (let ((successp)
-          (condition))
-      (loop :repeat 10
-            :do (handler-case
-                    (let ((conn (slime-connect *localhost* *default-port* t)))
-                      (setf (getf (connection-plist conn) 'run) t)
-                      (setf successp t)
-                      (return))
-                  (editor-error (c)
-                    (setf condition c)
-                    (sleep 0.5))))
-      (unless successp
-        (error condition)))
-    (add-hook *exit-editor-hook*
-              (lambda ()
-                (ignore-errors
-                 (slime-quit))))))
+    (run-slime (get-lisp-command :impl impl))))
 
 (define-command slime-quit () ()
   (when *connection*

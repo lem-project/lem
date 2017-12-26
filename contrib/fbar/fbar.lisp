@@ -125,7 +125,7 @@
     (switch-to-buffer *old-buffer* t t)
     ;(delete-point *old-point*)
     (setf *fbar-window* nil)
-    (redraw-display)))
+    (redraw-display t)))
 
 
 

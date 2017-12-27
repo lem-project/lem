@@ -242,7 +242,7 @@
 ;; clear the entire view  -- is this ever called?
 ;;
 (defmethod lem::interface-clear ((implementation xcb-frontend) view)
-  (format *q* "clear-view ~A ~&" view)
+  (xbug "clear-view ~A ~&" view)
   
   (with-slots (vx vy vw vh) view 
     (mvbind (x y w h) (cell-rect *w* vx vy vw vh)
@@ -351,7 +351,7 @@
 ;;==============================================================================
 (defmethod lem::interface-redraw-view-after
     ((implementation xcb-frontend) view focus-window-p)
-  (xbuf "interface-redraw after: view ~A : ~A~&" view focus-window-p)
+  (xbug "interface-redraw after: view ~A : ~A~&" view focus-window-p)
   (with-slots (modeline vx vy vw vh ) view
     (when (> vx 0)
       ;; draw a vertical separator if view not leftmost

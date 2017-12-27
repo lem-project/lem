@@ -1086,7 +1086,6 @@
      (buffer-end point))))
 
 
-(defvar *process* nil)
 (defparameter *impl-name* nil)
 
 (defun prompt-for-impl ()

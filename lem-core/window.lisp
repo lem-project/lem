@@ -37,7 +37,9 @@
           right-window
           up-window
           down-window
-          floating-windows
+          floating-window
+          make-floating-window
+          floating-window-p
           balloon
           quit-balloon
           balloon-message

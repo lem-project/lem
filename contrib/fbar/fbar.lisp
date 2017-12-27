@@ -1,7 +1,8 @@
 (defpackage :lem-fbar
   (:use :cl :lem)
   (:export #:*fbar-path*
-	   #:*fbar-width*))
+	   #:*fbar-width*
+	   #:fbar))
 
 (in-package :lem-fbar)
 
@@ -135,14 +136,15 @@
 
 
 
-(defun fbar-init ()
+(defun fbar (&optional (path *fbar-path* custom-path))
+  (when custom-path (setf *fbar-path* path))
   (let* ((buffer (make-buffer "FBAR" :temporary t
 			      :enable-undo-p nil ))
 	 (point (buffer-point buffer)))
     (erase-buffer buffer)
-    (loop for f in (uiop:subdirectories *fbar-path*) do
+    (loop for f in (uiop:subdirectories path) do
 	 (fbar-insert-entry point f t 1))
-    (loop for f in (uiop:directory-files *fbar-path*) do
+    (loop for f in (uiop:directory-files path) do
 	 (fbar-insert-entry point f nil 1))
     (buffer-start point)
     (change-buffer-mode buffer 'fbar-mode)
@@ -150,4 +152,3 @@
     (setf (buffer-read-only-p *fbar-buffer*) t)
     ))
 
-(fbar-init)

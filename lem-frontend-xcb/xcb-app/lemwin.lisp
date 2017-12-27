@@ -47,22 +47,24 @@
 ;;-----------------------------------------------------------------------------
 (defun lem-%on-key-press (win key state)
   (declare (ignore win))
-  (mvbind (keysym mod) (key-process key state)
-  ;; (format *q* "[~A]~A ~A~&" keysym mod  state)
-    (when keysym
-      (lem:send-event (lem:make-key
-		       :sym     keysym
-		       :shift   (logbitp 0 mod)
-		       :ctrl (logbitp 1 mod)
-		       :meta    (logbitp 2 mod) ;;alt
-		       :super   (logbitp 3 mod) ;;win
-		       ))))
+  (if (< key 128)
+      (mvbind (keysym mod) (key-process key state)
+	;; (format *q* "[~A]~A ~A~&" keysym mod  state)
+	(when keysym
+	  (lem:send-event (lem:make-key
+			   :sym     keysym
+			   :shift   (logbitp 0 mod)
+			   :ctrl (logbitp 1 mod)
+			   :meta    (logbitp 2 mod) ;;alt
+			   :super   (logbitp 3 mod) ;;win
+			   ))))
+      (format *q* "Invalid key ~X~&" key))
   t)
 ;;=============================================================================
 ;; The main window
 ;;
 (defclass textwin (win geometry)
-  ((lem-state :accessor lem-state :initform nil)
+  (;;(lem-state :accessor lem-state :initform nil)
    (bg :accessor bg :initform (pen-from-lemcolor "black"));; TODO: theme
    (fg :accessor fg :initform (pen-from-lemcolor "white")))
 )

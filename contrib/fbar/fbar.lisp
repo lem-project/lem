@@ -1,10 +1,10 @@
 (defpackage :lem-fbar
   (:use :cl :lem)
-)
+  (:export #:*fbar-path*
+	   #:*fbar-width*))
 
 (in-package :lem-fbar)
-(export '(*fbar-path*
-	  *fbar-width*))
+
 
 ;; structure to track files.
 (defstruct fb tab path dir open)
@@ -43,6 +43,9 @@
 (define-key *fbar-mode-keymap* "Up" 'previous-line)
 (define-key *fbar-mode-keymap* "Return" 'fbar-select)
 (define-key *fbar-mode-keymap* "Escape" 'fbar-off)
+;; brutal, but seems effective in preventing unwanted strokes
+(define-key *fbar-mode-keymap* "C-x" 'fbar-off)
+
 
 ;;==============================================================================
 

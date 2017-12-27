@@ -1,6 +1,10 @@
-;;(defpackage :lem  (:use :cl :lem))
+(defpackage :lem-fbar
+  (:use :cl :lem)
+)
 
-(in-package :lem)
+(in-package :lem-fbar)
+(export '(*fbar-path*
+	  *fbar-width*))
 
 ;; structure to track files.
 (defstruct fb tab path dir open)
@@ -12,13 +16,8 @@
 (defparameter *fbar-window* nil)
 (defparameter *fbar-width* 32)
 
-(defparameter *old-window* nil)
-(defparameter *old-buffer* nil)
-(defparameter *old-point* nil)
-
 (define-major-mode fbar-mode nil; fundamental-mode
     (:name "fbar" :keymap *fbar-mode-keymap*))
-
 
 (define-attribute fbar-file
   (:light :foreground "black" )
@@ -71,61 +70,65 @@
 (define-command fbar-select () ()
   (let ((prop (text-property-at (current-point) 'type)))
 ;;    (format xcb::*q* "prop: ~A~&" prop)
-    ;;    (save-excursion)
     (setf (buffer-read-only-p *fbar-buffer*) nil)
-    (if (fb-dir prop)
-	(save-excursion
-	  (if (fb-open prop)
-	      ;; if open, close it
-	      (let ((ourtab (fb-tab prop)))
-		(setf (fb-open prop) nil)
-		(next-line 1) (line-start (current-point))
-		(loop 
-		   for tab = (fb-tab (text-property-at (current-point) 'type))
-		   while (> tab ourtab) do
-		     (kill-line) (kill-line)))
-	      ;; if closed, open it
-	      (let ((newtab (+ 2 (fb-tab prop))))
-		(setf (fb-open prop) t)
-		(character-offset (line-end (current-point)) 1)
-		(loop for f in (uiop:subdirectories (fb-path prop)) 
-		   for pt = (current-point) do
-		     (fbar-insert-entry pt f t newtab))
-		(loop for f in (uiop:directory-files (fb-path prop)) do
-		     (fbar-insert-entry (current-point) f nil newtab )))))
-	;; file!
-	(progn
-	  (fbar-off)
-	  (read-file (fb-path prop))))
+    (with-slots (dir open path tab) prop
+      (if dir
+	  (save-excursion ;; directories are only opened or closed...
+	    (if (setf open (not open))
+		;; if closed, open it
+		(let ((newtab (+ 2 tab)))
+		  (character-offset (line-end (current-point)) 1)
+		  (loop for f in (uiop:subdirectories path) 
+		     for pt = (current-point) do
+		       (fbar-insert-entry pt f t newtab))
+		  (loop for f in (uiop:directory-files path) do
+		       (fbar-insert-entry (current-point) f nil newtab )))
+		;; if open, close it
+		(let ((ourtab (fb-tab prop)))
+		  (next-line 1) (line-start (current-point))
+		  (loop 
+		     for tab = (fb-tab (text-property-at (current-point) 'type))
+		     while (> tab ourtab) do
+		       (kill-line) (kill-line))
+		  nil)))
+	    ;; file!
+	    (progn
+	      (fbar-off)
+	      (read-file path))))
     (setf (buffer-read-only-p *fbar-buffer*) t)))
 
 
-(define-command fbar-on () ()
-  (unless *fbar-window*
-    (setf *old-window* (current-window)
-	  *old-buffer* (current-buffer)
-	  *old-point* (copy-point  (current-point) :temporary  ))
-    (setf *fbar-window*
-	  (lem::make-floating-window
-	   *fbar-buffer*
-	   0 0 *fbar-width*
-	   (1- (interface-display-height *implementation*))  nil))
-    
-    (setf lem::*current-window* *fbar-window*)
-    (setf (current-buffer) *fbar-buffer*)
-    (redraw-display)))
+;; Closure to preserve fbar global state.
+(let ((old-window nil)
+      (old-buffer nil)
+      (old-point nil))
+  
+  (define-command fbar-on () ()
+    (unless *fbar-window*
+      (setf old-window (current-window)
+	    old-buffer (current-buffer)
+	    old-point (copy-point  (current-point) :temporary  ))
+      (setf *fbar-window*
+	    (lem::make-floating-window
+	     *fbar-buffer*
+	     0 0 *fbar-width*
+	     (1- (lem::interface-display-height *implementation*))  nil))
+      
+      (setf lem::*current-window* *fbar-window*)
+      (setf (current-buffer) *fbar-buffer*)
+      (redraw-display)))
 
 
-(define-command fbar-off () ()
-  (when *fbar-window*
-    (setf (current-window) *old-window*)
-    (setf (current-buffer) *old-buffer*)
-    (delete-window *fbar-window*)
-    (move-point (current-point) *old-point*)
-    (switch-to-buffer *old-buffer* t t)
-    ;(delete-point *old-point*)
-    (setf *fbar-window* nil)
-    (redraw-display t)))
+  (define-command fbar-off () ()
+    (when *fbar-window*
+      (setf (current-window) old-window)
+      (setf (current-buffer) old-buffer)
+      (delete-window *fbar-window*)
+      (move-point (current-point) old-point)
+      (switch-to-buffer old-buffer t t)
+      ;;(delete-point *old-point*)
+      (setf *fbar-window* nil)
+      (redraw-display t))))
 
 
 

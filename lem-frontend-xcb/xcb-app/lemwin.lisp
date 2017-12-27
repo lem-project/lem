@@ -361,13 +361,13 @@
 	(mvbind (x y w h) (cell-rect *w* (1- vx) modeline 1 1)
 	  (pic-rect (pic-scr *w*) #xFFFF800080008000 x y w h))))
     ;; Focused windows get an outline
-    (when focus-window-p
-      (mvbind (x y w h) (cell-rect *w* vx vy vw vh)
-	(pic-rect (pic-scr *w*) #x7FFF200030000000 (- x 1)  y w 1) ;; top
-	(pic-rect (pic-scr *w*) #x7FFF200030000000 (+ x w ) y 1 h) ;; right
-	(pic-rect (pic-scr *w*) #x7FFF200030000000 x (+ y h -1) w 1) ;; bottom
-	(pic-rect (pic-scr *w*) #x7FFF200030000000 (- x 1) y 1 h) ;; left
-	))))
+    (when focus-window-p)
+    (mvbind (x y w h) (cell-rect *w* vx vy vw vh)
+      (pic-rect (pic-scr *w*) #x7FFF200030000000 (- x 1)  y w 1) ;; top
+      (pic-rect (pic-scr *w*) #x7FFF200030000000 (+ x w -1 ) y 1 h) ;; right
+      (pic-rect (pic-scr *w*) #x7FFF200030000000 x (+ y h -1) w 1) ;; bottom
+      (pic-rect (pic-scr *w*) #x7FFF200030000000 (- x 1) y 1 h) ;; left
+      )))
 
 ;;==============================================================================
 (defmethod lem::interface-scroll ((implementation xcb-frontend) view n)

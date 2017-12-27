@@ -12,7 +12,8 @@
            :listener-reset-interactive
            :listener-get-prompt-function
            :listener-check-confirm-function
-           :listener-confirm-function))
+           :listener-confirm-function
+           :clear-listener))
 (in-package :lem.listener-mode)
 
 (define-attribute listener-prompt-attribute
@@ -123,10 +124,13 @@
     (when win
       (replace-textarea str))))
 
-(define-command listener-clear-buffer () ()
+(defun clear-listener (buffer)
   (let ((*inhibit-read-only* t))
-    (erase-buffer (current-buffer)))
-  (listener-reset-prompt)
+    (erase-buffer buffer))
+  (listener-reset-prompt buffer))
+
+(define-command listener-clear-buffer () ()
+  (clear-listener (current-buffer))
   t)
 
 (define-command listener-clear-input () ()

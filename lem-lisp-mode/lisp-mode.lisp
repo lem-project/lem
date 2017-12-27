@@ -758,6 +758,9 @@
         (variable-value 'lem.listener-mode:listener-confirm-function)
         'repl-read-line))
 
+(defun clear-repl ()
+  (lem.listener-mode:clear-listener (repl-buffer)))
+
 (defun repl-buffer-width ()
   (alexandria:when-let* ((buffer (repl-buffer))
                          (window (car (get-buffer-windows buffer)))

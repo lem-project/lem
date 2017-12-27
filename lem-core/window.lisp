@@ -954,6 +954,7 @@
 (defun balloon-message (text)
   (clear-balloon-message)
   (let ((buffer (make-buffer "*balloon*" :temporary t :enable-undo-p nil)))
+    (setf (variable-value 'truncate-lines :buffer buffer) nil)
     (erase-buffer buffer)
     (let ((p (buffer-point buffer))
           (max-column 0))
@@ -963,17 +964,15 @@
             :do (setf max-column (max max-column column))
             :while (line-offset p 1))
       (buffer-start p)
-      (with-point ((s p))
-        (loop :do
-                 (move-to-column p max-column t)
-                 (put-text-property (line-start (move-point s p))
-                                    (line-end p)
-                                    :attribute 'balloon-attribute)
-              :while (line-offset p 1)))
+      (loop :do (move-to-column p max-column t)
+            :while (line-offset p 1))
+      (put-text-property (buffer-start-point buffer)
+                         (buffer-end-point buffer)
+                         :attribute 'balloon-attribute)
       (let ((window
               (balloon (current-window)
                        buffer
-                       (+ 1 max-column)
+                       max-column
                        (buffer-nlines buffer))))
         (buffer-start (window-view-point window))
         (window-see window)

@@ -615,7 +615,7 @@
         (declare (ignore timeout-p))
         (completion-hypheen str (mapcar #'first completions))))))
 
-(defun read-symbol-name (prompt &optional (initial ""))
+(defun prompt-for-symbol-name (prompt &optional (initial ""))
   (let ((package (current-package)))
     (prompt-for-line prompt
                      initial
@@ -637,7 +637,7 @@
 (defun find-definitions ()
   (check-connection)
   (let ((name (or (symbol-string-at-point (current-point))
-                  (read-symbol-name "Edit Definition of: "))))
+                  (prompt-for-symbol-name "Edit Definition of: "))))
     (let ((point (lem-lisp-syntax:search-local-definition (current-point) name)))
       (when point
         (return-from find-definitions
@@ -649,7 +649,7 @@
 (defun find-references ()
   (check-connection)
   (let* ((name (or (symbol-string-at-point (current-point))
-                   (read-symbol-name "Edit uses of: ")))
+                   (prompt-for-symbol-name "Edit uses of: ")))
          (data (lisp-eval `(swank:xrefs '(:calls :macroexpands :binds
                                           :references :sets :specializes)
                                         ,name))))
@@ -693,7 +693,7 @@
 (define-command lisp-describe-symbol () ()
   (check-connection)
   (let ((symbol-name
-          (read-symbol-name "Describe symbol: "
+          (prompt-for-symbol-name "Describe symbol: "
                             (or (symbol-string-at-point (current-point)) ""))))
     (when (string= "" symbol-name)
       (editor-error "No symbol given"))
@@ -757,6 +757,9 @@
         (constantly t)
         (variable-value 'lem.listener-mode:listener-confirm-function)
         'repl-read-line))
+
+(defun clear-repl ()
+  (lem.listener-mode:clear-listener (repl-buffer)))
 
 (defun repl-buffer-width ()
   (alexandria:when-let* ((buffer (repl-buffer))
@@ -1083,7 +1086,6 @@
      (buffer-end point))))
 
 
-(defvar *process* nil)
 (defparameter *impl-name* nil)
 
 (defun prompt-for-impl ()

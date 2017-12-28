@@ -35,7 +35,8 @@
 ;; default  - any unhandled events go here.
 ;;
 (defun default-event-handler (event-pointer)
-  (format *q* "~&[Unhandled event: ~A~&" (aref events (event-type event-pointer)))
+  (when *show-unhandled-events*
+    (format *q* "~&[Unhandled event: ~A~&" (aref events (event-type event-pointer))))
   t;; last one - always handled.
   )
 ;;------------------------------------------------------------------------------

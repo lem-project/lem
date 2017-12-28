@@ -5,16 +5,23 @@ This is an experimental front end for Lem.  Interesting features:
 - Custom XCB bindings - for better threading than XLIB
 - Freetype2 bindings - for beautiful subpixel antialiasing
 
+## Requirements
+
+In order for LEM-XCB to work, your system must have XWindows/XCB libraries and Freetype2 libraries installed.  Most Linux distributions come with these pre-installed.
+
 ## Quick Start
 
-Clone the repo (make sure to clone the XCB branch until it's merged).  From emacs:
+After installing Lem editor with `roswell`, at the command line type
+```
+$ lem-xcb
+```
 
+If you are a developer, or are running Lem from a quicklisp-visible directory, you can start Lem from Emacs/slime like this:
 ```
 > (ql:quickload :lem-xcb)
 > (lem:lem)
 ```
-
-You can also run it in a separate thread so your REPL is still available with
+You can run Lem in a separate thread to keep the SLIME REPL:
 ```
 > (bt:make-thread (lambda () (lem:lem)))
 ```
@@ -23,11 +30,21 @@ The editor will terminate when you close the window or <C-x C-c>.
 
 ## STATUS
 
-Just got it working - expecting issues.
-
+Stable, but early.
 
 ## Notes:
 
+### Hacking
+
+You can use Emacs to develop lem-xcb (xcb, unlike ncurses, does not require a real terminal).  Make sure lem directory is visible to quicklisp (either symlink or add to your `.sbclrc` or whatever, something like this: `(pushnew (truename "...your lem directory...") ql:*local-project-directories* )`.  Now you can start Emacs/slime, and `(ql:quickload :lem-xcb`, and start Lem with:
+```
+> (ql:quickload :lem-xcb)
+> (lem:lem)
+```
+You can run Lem in a separate thread to keep the SLIME REPL:
+```
+> (bt:make-thread (lambda () (lem:lem)))
+```
 ### Debug information
 
 See xcb/global.lisp.

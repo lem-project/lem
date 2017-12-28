@@ -7,10 +7,11 @@
 (defclass win ()
   ((id :accessor id :initform nil)      ;; window xcb id
    (pic-scr :accessor pic-scr :initform nil) ;; xrender extension picture
+   (pix-off :accessor pix-off :initform nil) ;; off-screen pixmap id
+   (pic-off :accessor pic-off :initform nil) ;; off-screen picture id
    (width   :accessor width   :initform 0)
    (height  :accessor height  :initform 0)
 
-   (%on-expose :accessor %on-expose :initform #'default-%on-expose)
    (%on-resize :accessor %on-resize :initform #'default-%on-resize)
    (%on-key-press :accessor %on-key-press :initform #'default-%on-key-press)
 ))
@@ -23,15 +24,6 @@
    
     win))
 
-(defun default-%on-expose (win event)
-  (declare (ignore win event))
- #|| (with-slots (%on-expose %on-key-press %on-resize) win
-    (setf %on-expose    #'lem-%on-expose
-	  %on-key-press #'lem-%on-key-press
-	  %on-resize    #'lem-%on-resize)
-    (lem:lem))
-||#
-  t)
 
 (defun default-%on-resize (win w h)
   (declare (ignore win w h))
@@ -40,11 +32,6 @@
 (defun default-%on-key-press (win key state)
   (declare (ignore win key state))
   t)
-
-
-
-
-
 
 
 (defun win-startup (win)
@@ -74,6 +61,10 @@
 			      (+ CW-EVENT-MASK ;;CW-BACK-PIXEL
 				 ) vals)))
       (window-register id win)
+      ;; off-screen picture
+      (multiple-value-setq (pic-off pix-off)
+	(new-offscreen-picture width height))
+
       ;; screen picture
       (check (create-picture c pic-scr id +RGB24+ 0 (null-pointer)))
       
@@ -109,45 +100,38 @@
 ;; x y  w or h = dragging ul
 ;; x y         = moving
 ;; w or h      = resizing
-(let((rx 0) (ry 0) (rw 0)(rh 0))
-  (defmethod win-on-configure-notify ((win win) e x y w h)
-    
-;;    (format t "CONF ~A ~A ~A ~A~&" x y w h)
-    (if (or (/= (width win) w)
-	    (/= (height win) h))
-	
-	(progn ;;(format *q* "RESIZING ~A ~A&" h rh)
-	       (win-on-resize win w h)))
-     ;; still resizing? interactively fill the blank spaces.
-#||
 
-    (with-slots (pic-scr width height) win
-      (when (> w width)
-	;;(format t "right: ~A ~A ~A ~A~&"      width 0 (- w width) height)
-	(pic-rect pic-scr #xFFFF000000000000  width 0 (- w width) height))
-      (when (> h height)
-	;;(format t "bot: ~A ~A ~A ~A~&"  0 height w (- h height))
-	(pic-rect pic-scr #xFFFF000000000000  0 height w (- h height) )))
-  ||#  (setf rx x
-	  ry y
-	  rw w
-	  rh h) 
+(defmethod win-on-configure-notify ((win win) e x y w h)
+  (if (or (/= (width win) w)
+	  (/= (height win) h))
+      (progn (win-on-resize win w h)))
+  t)
 
-    t)
-)
 ;;==============================================================================
 ;; Invoked by win-on-configure-notify, not resize event (which we are not
 ;; redirecting!)
 ;;
 (defmethod win-on-resize ((win win) w h)
-  (with-slots (pic-scr width height) win
+  (with-slots (pic-scr pic-off pix-off width height) win
     (setf width w
-	  height h))
-  t)
+	  height h)
+    ;; allocate a new off-screen picture and pixmap..
+    (check (free-pixmap c pix-off))
+    (check (free-picture c pic-off))
+    (mvsetq (pic-off pix-off)
+	(new-offscreen-picture w h))
+    )
+  
 
+  t)
+;;------------------------------------------------------------------------------
 (defmethod win-on-expose ((win win) event)
-  ;; just to make the class concrete
-
+  (win-refresh win)
   t)
-
-
+;;------------------------------------------------------------------------------
+;; Redraw from off-screen buffer
+(defun win-refresh (win)
+  (with-slots (pic-scr pic-off width height) win
+    (check (composite c OP-SRC pic-off 0 pic-scr 0 0 0 0 0 0 width height))
+    (flush c)
+))

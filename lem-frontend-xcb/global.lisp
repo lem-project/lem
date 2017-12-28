@@ -1,7 +1,8 @@
 (in-package :xcb)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defparameter *xbug* nil)
+  (defparameter *compile-checked* t)
+  (defparameter *xbug* t)
   (defparameter *q* *standard-output*)
   (defparameter *show-unhandled-events* nil))
 
@@ -11,8 +12,6 @@
        (format *q* "xcb:" )
        (format *q* ,@rest))))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defparameter *compile-checked* nil))
 
 ;; Compile a checked version of the function form.
 (defmacro check (function-form &key message)

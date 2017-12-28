@@ -82,7 +82,7 @@
   (event-push-handler EVENT-CONFIGURE-NOTIFY #'on-configure-notify)
 ;;  (event-push-handler EVENT-RESIZE-REQUEST #'on-resize-request)
   (event-push-handler EVENT-DESTROY-NOTIFY #'on-destroy-notify)
-  (event-push-handler EVENT-MAP-NOTIFY #'on-map-notify)
+;;  (event-push-handler EVENT-MAP-NOTIFY #'on-map-notify)
 ;  (setf *styles* (make-instance 'styles))
   )
 ;;------------------------------------------------------------------------------

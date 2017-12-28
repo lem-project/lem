@@ -13,8 +13,9 @@
 	       (:file "xcb-app/ft2")
 	       (:file "xcb-app/event-handling")
 	       (:file "xcb-app/xcb-system")
+	       (:file "xcb-app/window-direct")
+	       (:file "xcb-app/window-double")
 	       (:file "xcb-app/attributes")
-	       (:file "xcb-app/win")
 	       (:file "xcb-app/geometry")
 	       (:file "xcb-app/lemwin")
 	 

@@ -239,7 +239,7 @@
  ;; (lem::redraw-display t)
   )
 ;;==============================================================================
-;; clear the entire view
+;; clear the entire view  -- is this ever called?
 ;;
 (defmethod lem::interface-clear ((implementation xcb-frontend) view)
   (xbug "clear-view ~A ~&" view)
@@ -353,12 +353,23 @@
     ((implementation xcb-frontend) view focus-window-p)
   (xbug "interface-redraw after: view ~A : ~A~&" view focus-window-p)
   (with-slots (modeline vx vy vw vh ) view
-    (when (and modeline (< 0 vx))
-      ;; Draw separator. Should be parametrized
-      ;; TODO: https://github.com/cxxxr/lem/issues/103
-      (mvbind (x y w h) (cell-rect *w* (1- vx) vy 1 (1+ vh))
-	(pic-rect (pic-scr *w*) (pen-abgr64 (bg *w*)) x y w h)
-	(pic-rect (pic-scr *w*) #xFFFF100020000000 (+ x 3) y 2 h)))))
+    (when (> vx 0)
+      ;; draw a vertical separator if view not leftmost
+      (mvbind (x y w h) (cell-rect *w* (1- vx) vy 1 vh)
+	(pic-rect (pic-scr *w*) (pen-abgr64 (bg *w*)) x y w h))
+      (when modeline;; draw modeline divet
+	(mvbind (x y w h) (cell-rect *w* (1- vx) modeline 1 1)
+	  (pic-rect (pic-scr *w*) #xFFFF800080008000 x y w h))))
+    ;; Focused windows get an outline
+    (let ((*outline-color*  (if focus-window-p
+				#x7FFF200040000000
+				#x7FFF100020000000)))
+      (mvbind (x y w h) (cell-rect *w* vx vy vw vh)
+	(pic-rect (pic-scr *w*) *outline-color* (- x 1)  y w 1) ;; top
+	(pic-rect (pic-scr *w*) *outline-color* (+ x w -1 ) y 1 h) ;; right
+	(pic-rect (pic-scr *w*) *outline-color* x (+ y h -1) w 1) ;; bottom
+	(pic-rect (pic-scr *w*) *outline-color* (- x 1) y 1 h) ;; left
+	))))
 
 ;;==============================================================================
 (defmethod lem::interface-scroll ((implementation xcb-frontend) view n)

@@ -17,7 +17,6 @@
 ;; ???
 (lem:add-hook lem::*before-init-hook*
 	      (lambda ()
-		(format *q* "HOOK!!!!~&")
 		(lem:load-theme "emacs-dark")))
 ;;-----------------------------------------------------------------------------
 ;; Upon exit, destroy the X window
@@ -63,7 +62,6 @@
 ;;-----------------------------------------------------------------------------
 (defmethod win-on-resize :after((win textwin) w h)
   (declare (ignore win w h))
-  (format *q* "textwin:win-on-resize sending to lem~&")
   (lem:send-event :resize)
   t)
 ;;-----------------------------------------------------------------------------
@@ -124,7 +122,7 @@
 
 ;;==============================================================================
 (defmethod lem::interface-invoke ((implementation xcb-frontend) function)
-  (format *q* "interface-invoke ~&")
+  (xbug "interface-invoke ~&")
   (let ((result nil))
     (unwind-protect
          (progn
@@ -213,26 +211,24 @@
 ;; clear the entire view  -- is this ever called?
 ;;
 (defmethod lem::interface-clear ((implementation xcb-frontend) view)
-  (xbug "clear-view ~A ~&" view)
-  
-  (with-slots (vx vy vw vh) view 
-    (mvbind (x y w h) (cell-rect *w* vx vy vw vh)
-      (pic-rect (pic *w*) (pen-abgr64 (bg *w*)) x y w h))))
+  (bt:with-lock-held ((pic-lock *w*))
+    (xbug "clear-view ~A ~&" view)
+    (with-slots (vx vy vw vh) view 
+      (mvbind (x y w h) (cell-rect *w* vx vy vw vh)
+	(pic-rect (pic *w*) (pen-abgr64 (bg *w*)) x y w h)))))
 ;;==============================================================================
 (defmethod lem::interface-set-view-size
     ((implementation xcb-frontend) view width height)
-  (xbug  "set-view-size <~A>~A ~A ~A (old pos ~A ~A) ~&"
-	 (bt:current-thread)
-	view width height
-	(vx view) (vy view))
-  (with-slots (vw vh modeline) view
-    (setf vw width
-	  vh height)
-    (when modeline
-      (setf modeline height)))
-  (xbug  "xxx.set-view-size ~A ~A ~A (old pos ~A ~A) ~&"
-	 view width height
-	 (vx view) (vy view)))
+  (bt:with-lock-held ((pic-lock *w*))
+    (xbug  "set-view-size <~A>~A ~A ~A (old pos ~A ~A) ~&"
+	   (bt:current-thread)
+	   view width height
+	   (vx view) (vy view))
+    (with-slots (vw vh modeline) view
+      (setf vw width
+	    vh height)
+      (when modeline
+	(setf modeline height)))))
 ;;==============================================================================
 (defmethod lem::interface-set-view-pos
     ((implementation xcb-frontend) view x y)
@@ -244,8 +240,9 @@
 ;;==============================================================================
 (defmethod lem::interface-print
     ((implementation xcb-frontend) view x y string attribute)
-  (xbug "interface-print <~A>~A (~A ~A) |~A| attr:~A ~&" (bt:current-thread) view x y string attribute)
-   (textwin-print view x y string attribute))
+  (bt:with-lock-held ((pic-lock *w*))
+    (xbug "interface-print <~A>~A (~A ~A) |~A| attr:~A ~&" (bt:current-thread) view x y string attribute)
+    (textwin-print view x y string attribute)))
 
 ;; return attribute values
 
@@ -279,37 +276,37 @@
 ;;==============================================================================
 (defmethod lem::interface-print-modeline
     ((implementation xcb-frontend) view x y string attribute)
-  (xbug "interface-print-modeline: view ~A x: ~A y ~A |~A| ~A~&"
-	view x y string attribute)
   (with-slots (modeline) view
-;;    (format *q* "~A modeline:at ~A; y ~A~&" view modeline y)
-    (if modeline
-	(textwin-print view x (+ modeline y) string attribute)
-	(xbug "No modeline to print~&"))))
+    (bt:with-lock-held ((pic-lock *w*))
+      (xbug "interface-print-modeline: view ~A x: ~A y ~A |~A| ~A~&"
+	    view x y string attribute)
+      (if modeline
+	  (textwin-print view x (+ modeline y) string attribute)
+	  (xbug "No modeline to print~&")))))
 
 ;;==============================================================================
 (defmethod lem::interface-clear-eol ((implementation xcb-frontend) view x y)
-  (xbug "interface-clear-eol view ~A x: ~A y ~A~&" view x y )
-  (with-slots (vx vy vw vh) view 
-    (mvbind (xx yy ww hh) (view-cell-rect view x y (- vw x) 1)
-      ;; (format *q* "actual rect :~A ~A ~A ~A~&" xx yy ww hh)
-      (pic-rect (pic *w*) (pen-abgr64 (bg *w*)) xx yy ww hh)))
-  )
+  (with-slots (vx vy vw vh) view
+    (bt:with-lock-held ((pic-lock *w*))
+      (xbug "interface-clear-eol view ~A x: ~A y ~A~&" view x y )
+      (mvbind (xx yy ww hh) (view-cell-rect view x y (- vw x) 1)
+	(pic-rect (pic *w*) (pen-abgr64 (bg *w*)) xx yy ww hh)))))
 ;;==============================================================================
 (defmethod lem::interface-clear-eob ((implementation xcb-frontend) view x y)
-  (xbug "interface-clear-eol view ~A x: ~A y ~A~&" view x y )
   (with-slots (vx vy vw vh) view
-    (if (< y vh)
-	(mvbind (xx yy ww hh) (view-cell-rect view x y (- vw x) 1)
-	  (pic-rect (pic *w*) (pen-abgr64 (bg *w*)) xx yy ww hh)
-	  ;; todo :check 0 case
-	;;  (format *q* "Height ~A; y ~A~&" vh y)
-	  )
-	(format *q* "clear-eob: bad coords"))
-    (when (< (incf y) vh)
-      ;;(format *q* "Height ~A; y ~A~&" vh y)
-      (mvbind (xx yy ww hh) (view-cell-rect view 0 y vw (- vh y))
-	(pic-rect (pic *w*) (pen-abgr64 (bg *w*)) xx yy ww hh)))))
+    (bt:with-lock-held ((pic-lock *w*))
+      (xbug "interface-clear-eol view ~A x: ~A y ~A~&" view x y )
+      (if (< y vh)
+	  (mvbind (xx yy ww hh) (view-cell-rect view x y (- vw x) 1)
+	    (pic-rect (pic *w*) (pen-abgr64 (bg *w*)) xx yy ww hh)
+	    ;; todo :check 0 case
+	    ;;  (format *q* "Height ~A; y ~A~&" vh y)
+	    )
+	 (format *q* "clear-eob: bad coords"))
+      (when (< (incf y) vh)
+       ;;(format *q* "Height ~A; y ~A~&" vh y)
+       (mvbind (xx yy ww hh) (view-cell-rect view 0 y vw (- vh y))
+	 (pic-rect (pic *w*) (pen-abgr64 (bg *w*)) xx yy ww hh))))))
 
 ;;==============================================================================
 ;; TODO: when is this useful?
@@ -327,25 +324,26 @@
 ;;==============================================================================
 (defmethod lem::interface-redraw-view-after
     ((implementation xcb-frontend) view focus-window-p)
-  (xbug "interface-redraw after: view ~A : ~A~&" view focus-window-p)
-  (with-slots (modeline vx vy vw vh ) view
-    (when (> vx 0)
-      ;; draw a vertical separator if view not leftmost
-      (mvbind (x y w h) (cell-rect *w* (1- vx) vy 1 vh)
-	(pic-rect (pic *w*) (pen-abgr64 (bg *w*)) x y w h))
-      (when modeline;; draw modeline divet
-	(mvbind (x y w h) (cell-rect *w* (1- vx) modeline 1 1)
-	  (pic-rect (pic *w*) #xFFFF800080008000 x y w h))))
-    ;; Focused windows get an outline
-    (let ((outline-color  (if focus-window-p
+  (bt:with-lock-held ((pic-lock *w*))
+    (xbug "interface-redraw after: view ~A : ~A~&" view focus-window-p)
+    (with-slots (modeline vx vy vw vh ) view
+      (when (> vx 0)
+	;; draw a vertical separator if view not leftmost
+	(mvbind (x y w h) (cell-rect *w* (1- vx) vy 1 vh)
+	  (pic-rect (pic *w*) (pen-abgr64 (bg *w*)) x y w h))
+	(when modeline;; draw modeline divet
+	  (mvbind (x y w h) (cell-rect *w* (1- vx) modeline 1 1)
+	    (pic-rect (pic *w*) #xFFFF800080008000 x y w h))))
+      ;; Focused windows get an outline
+      (let ((outline-color  (if focus-window-p
 				#x7FFF200040000000
 				#x7FFF100020000000)))
-      (mvbind (x y w h) (cell-rect *w* vx vy vw vh)
-	(pic-rect (pic *w*) outline-color (- x 1)  y w 1) ;; top
-	(pic-rect (pic *w*) outline-color (+ x w -1 ) y 1 h) ;; right
-	(pic-rect (pic *w*) outline-color x (+ y h -1) w 1) ;; bottom
-	(pic-rect (pic *w*) outline-color (- x 1) y 1 h) ;; left
-	))))
+	(mvbind (x y w h) (cell-rect *w* vx vy vw vh)
+	  (pic-rect (pic *w*) outline-color (- x 1)  y w 1) ;; top
+	  (pic-rect (pic *w*) outline-color (+ x w -1 ) y 1 h) ;; right
+	  (pic-rect (pic *w*) outline-color x (+ y h -1) w 1) ;; bottom
+	  (pic-rect (pic *w*) outline-color (- x 1) y 1 h) ;; left
+	  )))))
 
 ;;==============================================================================
 (defmethod lem::interface-scroll ((implementation xcb-frontend) view n)

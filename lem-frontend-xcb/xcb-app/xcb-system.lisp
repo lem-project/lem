@@ -147,6 +147,7 @@
     (check (create-pixmap  c 32 pixmap root-window width height))
     (check (create-picture c picture pixmap +ARGB32+ value-mask value-list))
     (pic-rect picture #xFFFF000000000000 0 0 width height)
+    (flush c)
     (values picture pixmap)))
 
 (defun pic-rect (picture color x y width height)

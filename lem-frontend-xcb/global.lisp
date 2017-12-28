@@ -1,8 +1,8 @@
 (in-package :xcb)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defparameter *compile-checked* t)
-  (defparameter *xbug* t)
+  (defparameter *compile-checked* nil)
+  (defparameter *xbug* nil)
   (defparameter *q* *standard-output*)
   (defparameter *show-unhandled-events* nil))
 

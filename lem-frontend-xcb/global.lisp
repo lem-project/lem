@@ -2,12 +2,13 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter *xbug* nil)
-  (defparameter *q* *standard-output*))
+  (defparameter *q* *standard-output*)
+  (defparameter *show-unhandled-events* nil))
 
 (defmacro xbug (&rest rest)
   (when *xbug*
     `(progn
-       (format *q* "xcb: ")
+       (format *q* "xcb:" )
        (format *q* ,@rest))))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)

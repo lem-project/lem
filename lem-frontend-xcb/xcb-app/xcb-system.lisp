@@ -82,6 +82,7 @@
   (event-push-handler EVENT-CONFIGURE-NOTIFY #'on-configure-notify)
 ;;  (event-push-handler EVENT-RESIZE-REQUEST #'on-resize-request)
   (event-push-handler EVENT-DESTROY-NOTIFY #'on-destroy-notify)
+  (event-push-handler EVENT-MAP-NOTIFY #'on-map-notify)
 ;  (setf *styles* (make-instance 'styles))
   )
 ;;------------------------------------------------------------------------------
@@ -91,11 +92,11 @@
 ;;    (format t "ON-EXPOSE; count ~A.  ~A ~A ~A ~A~&" count x y width height)
     (win-on-expose (gethash window windows) event)
     ))
-
+#||
 (defun on-resize-request (event)
   (with-foreign-slots ((window width height) event (:struct ES-RESIZE-REQUEST))
     (win-on-resize-request (gethash window windows) event width height)))
-
+||#
 ;;------------------------------------------------------------------------------
 ;; Handle window closure
 (defun on-client-notify (e)
@@ -123,32 +124,34 @@
   t
   )
 (defun on-configure-notify (e)
-  (with-foreign-slots (( window x y width height border-width response-type ) e (:struct ES-CONFIGURE))
+   (with-foreign-slots (( window x y width height border-width response-type ) e (:struct ES-CONFIGURE))
+;;    (format t "CONF ~A ~&" response-type)
     (when (= 150 response-type)
       (win-on-configure-notify (gethash window windows) e x y width height))
     t))
-
+#||
 (defun on-resize-notify (e)
   (with-foreign-slots (( window x y width height border-width response-type ) e (:struct ES-CONFIGURE))
     (when (= 150 response-type)
       (win-on-configure-notify (gethash window windows) e x y width height))
     t))
-
+||#
 
 ;;=============================================================================
 ;; create a picture
 (defun new-offscreen-picture (width height
 				 &optional (value-mask 0)
 				   (value-list (null-pointer)))
+  "return picture and pixmap ids"
   (with-ids (pixmap picture)
     (check (create-pixmap  c 32 pixmap root-window width height))
     (check (create-picture c picture pixmap +ARGB32+ value-mask value-list))
+    (pic-rect picture #xFFFF000000000000 0 0 width height)
     (values picture pixmap)))
 
 (defun pic-rect (picture color x y width height)
   (w-foreign-values
       (rect :int16 x :int16 y :int16 width :uint16 height)
-;;    (format t "pic-rect (~A ~A) ~A by ~A~&" x y width height)
     (check (fill-rectangles c OP-OVER picture color 1 rect))))
 
 

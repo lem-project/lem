@@ -39,6 +39,7 @@
            :vi-write-quit
            :vi-end-insert
            :vi-insert
+           :vi-insert-line
            :vi-append
            :vi-append-line
            :vi-open-below
@@ -249,6 +250,11 @@
   (vi-backward-char 1))
 
 (define-command vi-insert () ()
+  (change-state 'insert))
+
+(define-command vi-insert-line () ()
+  (move-to-beginning-of-line)
+  (skip-whitespace-forward (current-point) t)
   (change-state 'insert))
 
 (define-command vi-append () ()

@@ -16,21 +16,18 @@ After installing Lem editor with `roswell`, at the command line type
 $ lem-xcb
 ```
 
-If you are a developer, or are running Lem from a quicklisp-visible directory, you can start Lem from Emacs/slime like this:
-```
-> (ql:quickload :lem-xcb)
-> (lem:lem)
-```
-You can run Lem in a separate thread to keep the SLIME REPL:
-```
-> (bt:make-thread (lambda () (lem:lem)))
-```
-
 The editor will terminate when you close the window or <C-x C-c>.
 
-## STATUS
+## Configuring with .lemrc
+```
+(setf xcb:*font-path-normal* ...system-relative-pathname...)
+(setf xcb:*font-path-bold* ...system-relative-pathname...)
+```
+## STATUS 
 
 Stable, but early.
+
+Japanese font and input support is very limited right now.
 
 ## Notes:
 
@@ -43,7 +40,7 @@ You can use Emacs to develop lem-xcb (xcb, unlike ncurses, does not require a re
 ```
 You can run Lem in a separate thread to keep the SLIME REPL:
 ```
-> (bt:make-thread (lambda () (lem:lem)))
+> (bt:make-thread #'lem:lem)
 ```
 ### Debug information
 

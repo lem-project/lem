@@ -59,7 +59,7 @@ $ lem-electron               # Electron version will start
 
 ![Electron](screenshots/electron.png)　　
 
-## Lem on Rasberry Pi
+## Lem on Rasberry Pi3
 You need to install libncurses5-dev for ncurses and use Clozure Common Lisp.  
 
 ```

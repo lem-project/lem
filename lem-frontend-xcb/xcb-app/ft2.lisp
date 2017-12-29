@@ -14,9 +14,10 @@
  (library ft2::ft-library)
   (filter :uint32))
 
+(defparameter *xcb-context* nil)
 (defun ft2init ()
-    (let ((result  (set-lcd-filter& ft2::*library* 1)))
-;      (format t "filter set; resultd ~A~&" result)
+  (let ((result  (set-lcd-filter& ft2::*library* 1)))
+    (setf *xcb-context* c)
       ))
 
 (defclass font ()
@@ -65,10 +66,11 @@
 	  (setf (gethash code mapbig) t)))
     code))
 
-(defmacro glyph-assure (font code)
-  `(if (> ,code 256)
-       (glyph-assure-long ,font ,code )
-       ,code))
+(defun glyph-assure (font code)
+;;  (format *q* "GLYPH-ASSURE.  Thread: ~A; c is |~A|~&" (bt:current-thread) *xcb-context*)
+  (if (> code 256)
+       (glyph-assure-long font code )
+       code))
 
 #||
 ;; load a glyphset
@@ -150,8 +152,9 @@
 	   (x-bitmap  (make-glyph-bitmap source w h s-pitch))
 	   (glyphinfo (make-glyphinfo w h (- left)  top (/ advance-x 64) 0)))
       (declare (ignore unused))
+      ;;(format *q* "WWWWW ~A ~A ~A ~&" (code-char code) (/ advance-x 64) (ft2::get-loaded-advance face nil))
       (w-foreign-values (pcode :uint32 code)
-	(check (add-glyphs c glyphset  1 pcode  glyphinfo (* 4 w h) x-bitmap)))
+	(check (add-glyphs *xcb-context* glyphset  1 pcode  glyphinfo (* 4 w h) x-bitmap)))
       (foreign-free x-bitmap)
       (foreign-free glyphinfo)
       ;; mark glyph as loaded

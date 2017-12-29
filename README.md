@@ -43,7 +43,7 @@ You can watch the screencast on Youtube.
 
 [Screencast](https://youtu.be/YkSJ3p7Z9H0)
 
-# Electron version (Experiment)
+## Electron version (Experiment)
 Electron version is in the experimental stage.
 
 If you try, please follow below steps.
@@ -59,12 +59,18 @@ $ lem-electron               # Electron version will start
 
 ![Electron](screenshots/electron.png)　　
 
-## Notes
+## Lem on Rasberry Pi3
+You need to install libncurses5-dev for ncurses and use Clozure Common Lisp.  
 
-- For Rasberry Pi users: You need to use CCL(Clozure Common Lisp).  
-Please change the CL implementation to CCL as follow:
 ```
+$ sudo apt install libncurses5-dev
+$ ros install ccl-bin
 $ ros use ccl-bin
+$ ros run
+
+? (ql:quickload :lem-ncurses) # You need to refer to :lem-ncurses system
+? (lem:lem) # then you can start using lem
+
 ```
 
 ## Contributors

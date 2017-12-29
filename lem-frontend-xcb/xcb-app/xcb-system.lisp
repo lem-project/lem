@@ -49,6 +49,9 @@
 
 ;;=============================================================================
 ;; Fonts
+(defparameter *font-path-normal* "fonts/DejaVuSansMono.ttf")
+(defparameter *font-path-bold* "fonts/DejaVuSansMono-Bold.ttf")
+
 (defparameter *font-normal* nil)
 (defparameter *font-bold* nil)
 
@@ -58,16 +61,12 @@
   (setf *font-normal*
 	(make-instance
 	 'font :path
-	 (asdf:system-relative-pathname 'lem-xcb ;;"fonts/mplus-1m-medium.ttf"
-					"fonts/DejaVuSansMono.ttf"
-					)
+	 (asdf:system-relative-pathname 'lem-xcb *font-path-normal*)
 	 :size 10)
 	*font-bold*
 	(make-instance
 	 'font :path
-	 (asdf:system-relative-pathname 'lem-xcb ;;"fonts/mplus-1m-bold.ttf"
-					"fonts/DejaVuSansMono-Bold.ttf"
-					)
+	 (asdf:system-relative-pathname 'lem-xcb *font-path-bold*)
 	 :size 10))
   (ft2::get-loaded-advance (face *font-normal*) nil) )
 

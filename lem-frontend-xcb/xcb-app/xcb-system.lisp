@@ -82,7 +82,7 @@
   (event-push-handler EVENT-CONFIGURE-NOTIFY #'on-configure-notify)
 ;;  (event-push-handler EVENT-RESIZE-REQUEST #'on-resize-request)
   (event-push-handler EVENT-DESTROY-NOTIFY #'on-destroy-notify)
-  (event-push-handler EVENT-MAP-NOTIFY #'on-map-notify)
+;;  (event-push-handler EVENT-MAP-NOTIFY #'on-map-notify)
 ;  (setf *styles* (make-instance 'styles))
   )
 ;;------------------------------------------------------------------------------
@@ -147,6 +147,7 @@
     (check (create-pixmap  c 32 pixmap root-window width height))
     (check (create-picture c picture pixmap +ARGB32+ value-mask value-list))
     (pic-rect picture #xFFFF000000000000 0 0 width height)
+    (flush c)
     (values picture pixmap)))
 
 (defun pic-rect (picture color x y width height)

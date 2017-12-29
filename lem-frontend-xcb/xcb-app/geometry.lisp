@@ -5,6 +5,7 @@
    (cell-width  :accessor cell-width  :initform 7)
    (cell-baseline :accessor cell-baseline :initform 11)))
 
+
 (defun cell-rect (geo col row &optional (columns 1) (rows 1))
   "return x y w h for a cell or a group of cells"
   (with-slots (cell-height cell-width) geo

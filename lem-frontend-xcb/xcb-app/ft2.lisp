@@ -16,7 +16,8 @@
 
 (defun ft2init ()
     (let ((result  (set-lcd-filter& ft2::*library* 1)))
-      (format t "filter set; resultd ~A~&" result)))
+;      (format t "filter set; resultd ~A~&" result)
+      ))
 
 (defclass font ()
   ((face :accessor face :initform nil)

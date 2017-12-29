@@ -66,6 +66,7 @@
 (define-key *command-keymap* "C-v" 'vi-visual-block)
 
 (define-key *command-keymap* "i" 'vi-insert)
+(define-key *command-keymap* "I" 'vi-insert-line)
 (define-key *command-keymap* "a" 'vi-append)
 (define-key *command-keymap* "A" 'vi-append-line)
 (define-key *command-keymap* "o" 'vi-open-below)

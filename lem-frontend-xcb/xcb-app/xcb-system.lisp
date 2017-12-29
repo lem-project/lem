@@ -59,21 +59,25 @@
 ;;(defparameter *gs-bold-italic* nil)
 
 ;; session-global initialization...
-(defun in1 ()
-;;  (setf sp (create-pen #xFFFFFFFF));; deprecated, but keep for tests
- ;;
+(defun init-fonts ()
   (ft2init)
   (setf *gs-normal*
 	(make-instance
 	 'font :path
-	 (asdf:system-relative-pathname 'lem-xcb "fonts/DejaVuSansMono.ttf")
+	 (asdf:system-relative-pathname 'lem-xcb ;;"fonts/mplus-1m-medium.ttf"
+					"fonts/DejaVuSansMono.ttf"
+					)
 	 :size 10)
 	*gs-bold*
 	(make-instance
 	 'font :path
-	 (asdf:system-relative-pathname 'lem-xcb "fonts/DejaVuSansMono-Bold.ttf")
+	 (asdf:system-relative-pathname 'lem-xcb ;;"fonts/mplus-1m-bold.ttf"
+					"fonts/DejaVuSansMono-Bold.ttf"
+					)
 	 :size 10))
-  
+  (ft2::get-loaded-advance (face *gs-normal*) nil) )
+
+(defun in1 ()
   ;; prepare the event subsystem
   (event-dispatch-reset)
   (event-push-handler EVENT-EXPOSE #'on-expose)

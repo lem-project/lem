@@ -122,20 +122,25 @@
 
 ;;==============================================================================
 (defmethod lem::interface-invoke ((implementation xcb-frontend) function)
-  (xbug "interface-invoke ~&")
+  (xbug "interface-invoke ~A~&" (bt:current-thread))
   (let ((result nil))
     (unwind-protect
-         (progn
-	   ;; create x window here, and start the loop.
-	   (in) (in1)(make-instance 'textwin :w (* 80 7) :h (* 24 14));TODO
-	   
-	   (setf *editor-thread* (funcall function))
-	   (setf result (input-loop *editor-thread*))))
+	 (in) (in1)
+	 (setf *editor-thread*
+	       (funcall function
+			(lambda ()
+			  (let* ((width (truncate (init-fonts)))
+				 (w (make-instance 'textwin :w (* 80 width) :h (* 24 14))))
+			    (setf (cell-width w) width)))))
+
+     	      
+      (setf result (input-loop *editor-thread*)))
 
     (when (and (typep result 'lem::exit-editor)
                (lem::exit-editor-value result))
 ;;      (format *q* "~&exit value: ~A~%" (lem::exit-editor-value result))
       )))
+
 
 ;; running in input-thread: process x events.  These do not call lem:send-event;
 ;; key processing and resizing just does its thing.

@@ -39,6 +39,7 @@
 (define-key *command-keymap* "y y" 'vi-yank-line)
 (define-key *command-keymap* "p" 'vi-paste-after)
 (define-key *command-keymap* "P" 'vi-paste-before)
+(define-key *command-keymap* "r" 'vi-replace-char)
 (define-key *command-keymap* "u" 'undo)
 (define-key *command-keymap* "C-r" 'redo)
 (define-key *command-keymap* "C-f" 'next-page)

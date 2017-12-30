@@ -27,6 +27,7 @@
            :vi-yank-line
            :vi-paste-after
            :vi-paste-before
+           :vi-replace-char
            :vi-move-to-matching-paren
            :vi-search-forward
            :vi-search-backward
@@ -183,6 +184,10 @@
   (line-start (current-point))
   (open-line 1)
   (yank))
+
+(define-command vi-replace-char (c) ("r")
+  (delete-next-char 1)
+  (insert-character (current-point) c))
 
 (defun forward-matching-paren (p &optional skip)
   (with-point ((p p))

@@ -48,34 +48,27 @@
 
 
 ;;=============================================================================
-;; Hello
-;; A pen is a 1x1 picture of a given color.  globalish!
-;;
-;;(defparameter sp nil);; source pen
+;; Fonts
+(defparameter *font-path-normal* "fonts/DejaVuSansMono.ttf")
+(defparameter *font-path-bold* "fonts/DejaVuSansMono-Bold.ttf")
 
-(defparameter *gs-normal* nil)
-(defparameter *gs-bold* nil)
-;;(defparameter *gs-italic* nil)
-;;(defparameter *gs-bold-italic* nil)
+(defparameter *font-normal* nil)
+(defparameter *font-bold* nil)
 
 ;; session-global initialization...
 (defun init-fonts ()
   (ft2init)
-  (setf *gs-normal*
+  (setf *font-normal*
 	(make-instance
 	 'font :path
-	 (asdf:system-relative-pathname 'lem-xcb ;;"fonts/mplus-1m-medium.ttf"
-					"fonts/DejaVuSansMono.ttf"
-					)
+	 (asdf:system-relative-pathname 'lem-xcb *font-path-normal*)
 	 :size 10)
-	*gs-bold*
+	*font-bold*
 	(make-instance
 	 'font :path
-	 (asdf:system-relative-pathname 'lem-xcb ;;"fonts/mplus-1m-bold.ttf"
-					"fonts/DejaVuSansMono-Bold.ttf"
-					)
+	 (asdf:system-relative-pathname 'lem-xcb *font-path-bold*)
 	 :size 10))
-  (ft2::get-loaded-advance (face *gs-normal*) nil) )
+  (ft2::get-loaded-advance (face *font-normal*) nil) )
 
 (defun in1 ()
   ;; prepare the event subsystem

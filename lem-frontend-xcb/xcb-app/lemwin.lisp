@@ -257,7 +257,7 @@
 	 (xbuflen (+ (ash slen 2) 8))) ;; 32-bits per character, and header
     (mvbind (xx yy ww hh) (view-cell-rect view col row slen 1)
       (mvbind (fg bg boldp underlinep) (attribute-decode attribute)
-		(let ((font (if boldp *gs-bold* *gs-normal*)))
+		(let ((font (if boldp *font-bold* *font-normal*)))
 	  (pic-rect (pic *w*) (pen-abgr64 bg) xx yy ww hh)
 	  (when underlinep
 	    (pic-rect (pic *w*) (pen-abgr64 fg)

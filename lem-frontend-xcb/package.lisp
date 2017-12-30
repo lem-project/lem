@@ -2,8 +2,8 @@
 
 (defpackage #:xcb
   (:use #:cffi #:cl)
-  (:export)
-  )
+  (:export #:*font-path-normal*
+	   #:*font-path-bold*) )
 
 (defpackage #:lem-xcb
   (:use #:xcb #:cffi #:cl)

@@ -73,12 +73,16 @@
       (editor-variable-error symbol))
     (ecase kind
       ((:default)
-       (let ((buffer (if wherep
-                         (ensure-buffer where)
-                         (current-buffer))))
-         (buffer-value buffer
-                       (editor-variable-local-indicator var)
-                       (editor-variable-value var))))
+       (let* ((buffer (if wherep
+                          (ensure-buffer where)
+                          (current-buffer)))
+              (default '#:default)
+              (value (buffer-value buffer
+                                   (editor-variable-local-indicator var)
+                                   default)))
+         (if (eq value default)
+             (editor-variable-value var)
+             value)))
       ((:buffer)
        (let ((buffer (if wherep
                          (ensure-buffer where)

@@ -403,7 +403,7 @@
   (lisp-eval-async `(swank:sldb-out ,(frame-number-at-point (current-point)))))
 
 (define-command sldb-break-on-return (name)
-    ((list (read-symbol-name "Function: ")))
+    ((list (prompt-for-symbol-name "Function: ")))
   (lisp-eval-async `(swank:sldb-break ,name)
                    (lambda (message)
                      (message "~A" message))))

@@ -185,7 +185,8 @@
   (open-line 1)
   (yank))
 
-(define-command vi-replace-char (c) ("r")
+(define-command vi-replace-char (c)
+    ((list (key-to-char (read-key))))
   (delete-next-char 1)
   (insert-character (current-point) c))
 

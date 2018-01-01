@@ -1,7 +1,8 @@
 (in-package :lem)
 
 (export '(get-rgb-from-color-name
-          rgb-to-background-mode))
+          rgb-to-background-mode
+          parse-color))
 
 (defparameter *rgb.txt* "! $Xorg: rgb.txt,v 1.3 2000/08/17 19:54:00 cpqbld Exp $
 255 250 250  snow
@@ -780,3 +781,20 @@
   (if (< 50 (/ (max r g b) 2.55))
       :light
       :dark))
+
+(defun parse-color (string)
+  (or (get-rgb-from-color-name string)
+      (ppcre:register-groups-bind (r g b)
+          ("^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$"
+           string)
+        (when (and r g b)
+          (list (parse-integer r :radix 16)
+                (parse-integer g :radix 16)
+                (parse-integer b :radix 16))))
+      (ppcre:register-groups-bind (r g b)
+          ("^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$"
+           string)
+        (when (and r g b)
+          (list (* 17 (parse-integer r :radix 16))
+                (* 17 (parse-integer g :radix 16))
+                (* 17 (parse-integer b :radix 16)))))))

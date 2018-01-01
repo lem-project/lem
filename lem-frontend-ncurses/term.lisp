@@ -326,23 +326,10 @@
     (color-number best-color)))
 
 (defun get-color-1 (string)
-  (ppcre:register-groups-bind (r g b)
-      ("^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$"
-       string)
-    (return-from get-color-1
-      (get-color-rgb (and r (parse-integer r :radix 16))
-                     (and g (parse-integer g :radix 16))
-                     (and b (parse-integer b :radix 16)))))
-  (ppcre:register-groups-bind (r g b)
-      ("^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$"
-       string)
-    (return-from get-color-1
-      (get-color-rgb (and r (* 17 (parse-integer r :radix 16)))
-                     (and g (* 17 (parse-integer g :radix 16)))
-                     (and b (* 17 (parse-integer b :radix 16))))))
-  (alexandria:when-let ((color (lem:get-rgb-from-color-name string)))
-    (return-from get-color-1
-      (get-color-rgb (color-red color) (color-green color) (color-blue color)))))
+  (alexandria:when-let ((color (lem:parse-color string)))
+    (get-color-rgb (color-red color)
+                   (color-green color)
+                   (color-blue color))))
 
 (defun get-color (string)
   (let ((color (get-color-1 string)))

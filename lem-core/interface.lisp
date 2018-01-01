@@ -33,6 +33,7 @@
 (defgeneric interface-clear-eol (implementation view x y))
 (defgeneric interface-clear-eob (implementation view x y))
 (defgeneric interface-move-cursor (implementation view x y))
+(defgeneric interface-redraw-window (implementation window force))
 (defgeneric interface-redraw-view-after (implementation view focus-window-p))
 (defgeneric interface-update-display (implementation))
 (defgeneric interface-scroll (implementation view n))
@@ -545,6 +546,9 @@
             :do (interface-print-modeline *implementation* view x 0 string attribute)))))
 
 (defun redraw-display-window (window force)
+  (interface-redraw-window *implementation* window force))
+
+(defmethod interface-redraw-window (implementation window force)
   (let ((focus-window-p (eq window (current-window)))
         (buffer (window-buffer window))
         (screen (lem::window-screen window)))

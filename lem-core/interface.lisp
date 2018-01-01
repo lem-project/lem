@@ -350,7 +350,7 @@
               (end (buffer-mark buffer)))
           (when (point< end start)
             (rotatef start end))
-          (lem::make-temporary-overlay start end 'region))))))
+          (make-temporary-overlay start end 'region))))))
 
 (defun maybe-set-cursor-attribute (window screen view-point)
   (when (eq window (current-window))
@@ -364,9 +364,9 @@
                      (1+ charpos)))))
 
 (defun disp-reset-lines (window)
-  (let ((screen (lem::window-screen window))
+  (let ((screen (window-screen window))
         (buffer (window-buffer window))
-        (view-point (lem::window-view-point window)))
+        (view-point (window-view-point window)))
     (with-point ((point view-point))
       (loop :for i :from 0 :below (screen-height screen)
             :do (let* ((line (lem-base::point-line point))
@@ -376,7 +376,7 @@
                 (unless (line-offset point 1)
                   (fill (screen-lines screen) nil :start (1+ i))
                   (return))))
-    (let ((overlays (lem::overlays buffer))
+    (let ((overlays (overlays buffer))
           ov)
       (when (setf ov (maybe-push-mark-overlay window)) (push ov overlays))
       (disp-set-overlays screen overlays view-point)
@@ -441,7 +441,7 @@
   point-y)
 
 (defun adjust-horizontal-scroll (window)
-  (let ((screen (lem::window-screen window))
+  (let ((screen (window-screen window))
         (buffer (window-buffer window)))
     (unless (variable-value 'truncate-lines :default buffer)
       (let ((point-column (point-column (buffer-point buffer)))
@@ -551,7 +551,7 @@
 (defmethod interface-redraw-window (implementation window force)
   (let ((focus-window-p (eq window (current-window)))
         (buffer (window-buffer window))
-        (screen (lem::window-screen window)))
+        (screen (window-screen window)))
     (let ((scroll-n (when focus-window-p
                       (window-see window))))
       (when (or (not (native-scroll-support *implementation*))
@@ -567,7 +567,7 @@
             (if (plusp scroll-n)
                 (values (- (screen-height screen) scroll-n) (screen-height screen))
                 (values 0 (- scroll-n))))
-        (lem::run-show-buffer-hooks window)
+        (run-show-buffer-hooks window)
         (disp-reset-lines window)
         (adjust-horizontal-scroll window)
         (screen-display-lines screen
@@ -579,7 +579,7 @@
                               (point-charpos (window-view-point window))
                               (if focus-window-p
                                   (count-lines (window-view-point window)
-                                               (lem::window-point window))
+                                               (window-point window))
                                   -1))
         (setf (screen-old-left-width screen)
               (screen-left-width screen))

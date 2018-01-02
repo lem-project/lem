@@ -58,8 +58,9 @@
                                      :start-anchor
                                      (:greedy-repetition 0 nil :whitespace-char-class)
                                      "#"
-                                     ,(tokens nil '("defined" "define" "include"
-                                                    "ifdef" "if" "elif" "else" "endif"))
+                                     ,(tokens nil '("defined" "define" "undef" "include"
+                                                    "ifdef" "ifndef" "if" "elif" "else" "endif"
+                                                    "line" "error" "pragma"))
                                      :word-boundary)
                                    :name 'syntax-builtin-attribute))))
     (make-tmlanguage :patterns patterns)))

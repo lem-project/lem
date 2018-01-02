@@ -37,13 +37,14 @@
     (nreverse words)))
 
 (defun scan-all-buffer-words (word)
-  (remove-duplicates
-   (nconc (scan-buffer-words (current-buffer) word)
-          (mapcan #'(lambda (buffer)
-                      (unless (eq buffer (current-buffer))
-                        (scan-buffer-words buffer word)))
-                  (buffer-list)))
-   :test #'equal))
+  (unless (string= word "")
+    (remove-duplicates
+     (nconc (scan-buffer-words (current-buffer) word)
+            (mapcan #'(lambda (buffer)
+                        (unless (eq buffer (current-buffer))
+                          (scan-buffer-words buffer word)))
+                    (buffer-list)))
+     :test #'equal)))
 
 (define-key *global-keymap* "C-x /" 'abbrev-with-pop-up-window)
 (define-command abbrev-with-pop-up-window () ()
@@ -77,8 +78,10 @@
           (t
            (let* ((src-word (preceding-word point))
                   (words (scan-all-buffer-words src-word)))
-             (delete-character point (- (length src-word)))
+             (when words (delete-character point (- (length src-word))))
              (setf *rest-words* (rest words))
              (setf *all-words* words)
              (setf *start-charpos* (point-charpos point))
-             (insert-string point (first words)))))))
+             (if words
+                 (insert-string point (first words))
+                 (message (format nil "No dynamic expansion for '~A' found" src-word))))))))

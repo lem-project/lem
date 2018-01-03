@@ -232,12 +232,12 @@
 (declaim (inline call-before-change-functions
                  call-after-change-functions))
 
-(defun call-before-change-functions (buffer start n)
+(defun call-before-change-functions (buffer start arg)
   (unless *inhibit-modification-hooks*
     (alexandria:when-let ((hooks (variable-value 'before-change-functions :buffer buffer)))
-      (run-hooks hooks start n))
+      (run-hooks hooks start arg))
     (alexandria:when-let ((hooks (variable-value 'before-change-functions :global)))
-      (run-hooks hooks start n))))
+      (run-hooks hooks start arg))))
 
 (defun call-after-change-functions (buffer start end old-len)
   (unless *inhibit-modification-hooks*
@@ -269,7 +269,7 @@
        (call-next-method)))
 
 (defmethod insert-char/point :around (point char)
-  (call-before-change-functions (point-buffer point) point 1)
+  (call-before-change-functions (point-buffer point) point char)
   (if (not (buffer-enable-undo-p (point-buffer point)))
       (insert/after-change-function point 1)
       (let ((linum (line-number-at-point point))
@@ -280,7 +280,7 @@
                        (make-edit :insert-char linum charpos char)))))))
 
 (defmethod insert-string/point :around (point string)
-  (call-before-change-functions (point-buffer point) point (length string))
+  (call-before-change-functions (point-buffer point) point string)
   (if (not (buffer-enable-undo-p (point-buffer point)))
       (insert/after-change-function point (length string))
       (let ((linum (line-number-at-point point))
@@ -291,7 +291,7 @@
                        (make-edit :insert-string linum charpos string)))))))
 
 (defmethod delete-char/point :around (point n)
-  (call-before-change-functions (point-buffer point) point (- n))
+  (call-before-change-functions (point-buffer point) point n)
   (if (not (buffer-enable-undo-p (point-buffer point)))
       (delete/after-change-function point)
       (let ((linum (line-number-at-point point))

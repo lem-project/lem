@@ -127,44 +127,62 @@
 (defun point-temporary-p (point)
   (eq (point-kind point) :temporary))
 
-(defun point= (point1 point2)
-  @lang(:jp "`point1`と`point2`が同じ位置にあるならT、それ以外はNILを返します。")
-  (assert (eq (point-buffer point1)
-              (point-buffer point2)))
+(defun %always-same-buffer (point more-points)
+  (loop :with buffer1 := (point-buffer point)
+        :for point2 :in more-points
+        :for buffer2 := (point-buffer point2)
+        :always (eq buffer1 buffer2)))
+
+(defun %point= (point1 point2)
   (and (= (point-linum point1)
           (point-linum point2))
        (= (point-charpos point1)
           (point-charpos point2))))
 
-(defun point/= (point1 point2)
-  @lang(:jp "`point1`と`point2`が同じ位置ではないならT、それ以外はNILを返します。")
-  (assert (eq (point-buffer point1)
-              (point-buffer point2)))
-  (not (point= point1 point2)))
-
-(defun point< (point1 point2)
-  @lang(:jp "`point1`が`point2`よりも前にあるならT、それ以外はNILを返します。")
-  (assert (eq (point-buffer point1)
-              (point-buffer point2)))
+(defun %point< (point1 point2)
   (or (< (point-linum point1) (point-linum point2))
       (and (= (point-linum point1) (point-linum point2))
            (< (point-charpos point1) (point-charpos point2)))))
 
-(defun point<= (point1 point2)
-  @lang(:jp "`point1`が`point2`と同じ位置、または前にあるならT、それ以外はNILを返します。")
-  (assert (eq (point-buffer point1)
-              (point-buffer point2)))
-  (or (point< point1 point2)
-      (point= point1 point2)))
+(defun point= (point &rest more-points)
+  "Return T if all of its argument points have same line and point, NIL otherwise."
+  (assert (%always-same-buffer point more-points))
+  (loop :for point2 :in more-points
+        :always (%point= point point2)))
 
-(defun point> (point1 point2)
-  @lang(:jp "`point1`が`point2`よりも後にあるならT、それ以外はNILを返します。")
-  (assert (eq (point-buffer point1)
-              (point-buffer point2)))
-  (point< point2 point1))
+(defun point/= (point &rest more-points)
+  "Return T if no two of its argument points have same line and point, NIL otherwise."
+  (assert (%always-same-buffer point more-points))
+  (loop :for point1 := point :then (first points)
+        :for points :on more-points
+        :always (loop :for point2 :in points
+                      :never (%point= point1 point2))))
 
-(defun point>= (point1 point2)
-  @lang(:jp "`point1`が`point2`と同じ位置、または後にあるならT、それ以外はNILを返します。")
-  (assert (eq (point-buffer point1)
-              (point-buffer point2)))
-  (point<= point2 point1))
+(defun point< (point &rest more-points)
+  "Return T if its argument points are in strictly increasing order, NIL otherwise."
+  (assert (%always-same-buffer point more-points))
+  (loop :for point1 := point :then point2
+        :for point2 :in more-points
+        :always (%point< point1 point2)))
+
+(defun point<= (point &rest more-points)
+  "Return T if argument points are in strictly non-decreasing order, NIL otherwise."
+  (assert (%always-same-buffer point more-points))
+  (loop :for point1 := point :then point2
+        :for point2 :in more-points
+        :always (or (%point< point1 point2)
+                    (%point= point1 point2))))
+
+(defun point> (point &rest more-points)
+  "Return T if its argument points are in strictly decreasing order, NIL otherwise."
+  (loop :for point1 := point :then point2
+        :for point2 :in more-points
+        :always (%point< point2 point1)))
+
+(defun point>= (point &rest more-points)
+  "Return T if argument points are in strictly non-increasing order, NIL otherwise."
+  (assert (%always-same-buffer point more-points))
+  (loop :for point1 := point :then point2
+        :for point2 :in more-points
+        :always (or (%point< point2 point1)
+                    (%point= point2 point1))))

@@ -269,12 +269,19 @@
             (load-theme "emacs-dark")))
 
 (defmethod interface-invoke ((implementation ncurses) function)
-  (let ((result nil))
+  (let ((result nil)
+        (input-thread (bt:current-thread)))
     (unwind-protect
-         (progn
-           (lem.term:term-init)
-           (let ((editor-thread (funcall function)))
-             (setf result (input-loop editor-thread))))
+        (progn
+          (lem.term:term-init)
+          (let ((editor-thread
+                 (funcall function
+                          nil
+                          (lambda (report)
+                            (bt:interrupt-thread
+                             input-thread
+                             (lambda () (error 'exit-editor :value report)))))))
+            (setf result (input-loop editor-thread))))
       (lem.term:term-finalize))
     (when (and (typep result 'exit-editor)
                (exit-editor-value result))

@@ -105,18 +105,16 @@
       (run-hooks *after-init-hook*))
     (apply-args args)))
 
-(defun run-editor-thread (init-function input-thread args)
+(defun run-editor-thread (initialize args finalize)
   (bt:make-thread
    (lambda ()
-     (when init-function (funcall init-function))
+     (when initialize (funcall initialize))
      (unwind-protect
-          (let (#+lispworks (lw:*default-character-element-type* 'character))
-            (setf *in-the-editor* t)
-            (setup)
-            (let ((report (toplevel-command-loop (lambda () (init args)))))
-              (bt:interrupt-thread input-thread
-                                   (lambda ()
-                                     (error 'exit-editor :value report)))))
+         (let (#+lispworks (lw:*default-character-element-type* 'character))
+           (setf *in-the-editor* t)
+           (setup)
+           (let ((report (toplevel-command-loop (lambda () (init args)))))
+             (when finalize (funcall finalize report))))
        (setf *in-the-editor* nil)))
    :name "editor"))
 
@@ -125,5 +123,5 @@
   (if *in-the-editor*
       (apply-args args)
       (invoke-frontend
-       (lambda (&optional init-function (input-thread (bt:current-thread)))
-         (run-editor-thread init-function input-thread args)))))
+       (lambda (&optional initialize finalize)
+         (run-editor-thread initialize args finalize)))))

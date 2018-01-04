@@ -84,6 +84,8 @@
                             "Tab")
                            ((char= char #\Escape)
                             "Escape")
+                           ((char= char #\Backspace)
+                            "Backspace")
                            (t
                             (string char))))))))
       (when sym

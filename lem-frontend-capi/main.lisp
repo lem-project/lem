@@ -39,8 +39,7 @@
                    nil
                    (lambda (report)
                      (declare (ignore report))
-                     ;(capi:pane-close-display *lem-pane*)
-                     )))))
+                     (capi:quit-interface *lem-pane*))))))
 
 (defmethod lem::interface-display-background-mode ((implementation capi-impl))
   (with-error-handler ()

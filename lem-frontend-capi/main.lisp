@@ -14,7 +14,7 @@
 
 (setf *implementation* (make-instance 'capi-impl))
 
-(defstruct view x y width height)
+(defstruct view window x y width height)
 
 (defvar *lem-pane*)
 (defvar *editor-thread*)
@@ -65,7 +65,7 @@
 (defmethod lem::interface-make-view ((implementation capi-impl) window x y width height use-modeline)
   (with-error-handler ()
     (dbg (list "make-view" window x y width height use-modeline))
-    (make-view :x x :y y :width width :height height)))
+    (make-view :window window :x x :y y :width width :height height)))
 
 (defmethod lem::interface-delete-view ((implementation capi-impl) view)
   (with-error-handler ()
@@ -141,7 +141,8 @@
 (defmethod lem::interface-redraw-view-after ((implementation capi-impl) view focus-window-p)
   (with-error-handler ()
     (dbg (list "redraw-view-after" view focus-window-p))
-    (when (< 0 (view-x view))
+    (when (and (not (floating-window-p (view-window view)))
+               (< 0 (view-x view)))
       (draw-rectangle *lem-pane*
                       (1- (view-x view))
                       (view-y view)

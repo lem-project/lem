@@ -6,7 +6,9 @@
    :lem-pane-height
    :draw-rectangle
    :draw-text
-   :clear))
+   :clear
+   :change-foreground
+   :change-background))
 (in-package :lem-capi.lem-pane)
 
 (defvar *default-font-family* "DejaVu Sans Mono")
@@ -147,9 +149,9 @@
    (lambda ()
      (if attribute
          (let ((foreground (or (convert-color (lem:attribute-foreground attribute) nil)
-                               (color:make-rgb 0.0 0.0 0.0)))
+                               (capi:simple-pane-foreground lem-pane)))
                (background (or (convert-color (lem:attribute-background attribute) nil)
-                               (color:make-rgb 1.0 1.0 1.0)))
+                               (capi:simple-pane-background lem-pane)))
                (underline-p (lem:attribute-underline-p attribute))
                (bold-p (lem:attribute-bold-p attribute))
                (reverse-p (lem:attribute-reverse-p attribute)))
@@ -157,7 +159,9 @@
                         :underline underline-p
                         :bold bold-p
                         :reverse reverse-p))
-         (draw-string lem-pane string x y :black :white)))))
+         (draw-string lem-pane string x y
+                      (capi:simple-pane-foreground lem-pane)
+                      (capi:simple-pane-background lem-pane))))))
 
 (defun draw-rectangle (lem-pane x y width height color)
   (capi:apply-in-pane-process
@@ -178,3 +182,11 @@
    lem-pane
    (lambda ()
      (gp:clear-graphics-port lem-pane))))
+
+(defun change-foreground (lem-pane color)
+  (alexandria:when-let ((color (convert-color color nil)))
+    (setf (capi:simple-pane-foreground lem-pane) color)))
+
+(defun change-background (lem-pane color)
+  (alexandria:when-let ((color (convert-color color nil)))
+    (setf (capi:simple-pane-background lem-pane) color)))

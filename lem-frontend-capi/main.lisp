@@ -48,10 +48,10 @@
     :light))
 
 (defmethod lem::interface-update-foreground ((implementation capi-impl) color-name)
-  )
+  (change-foreground *lem-pane* color-name))
 
 (defmethod lem::interface-update-background ((implementation capi-impl) color-name)
-  )
+  (change-background *lem-pane* color-name))
 
 (defmethod lem::interface-display-width ((implementation capi-impl))
   (with-error-handler ()

@@ -101,12 +101,14 @@
       (lem:send-event key))))
 
 (defun lem-pane-width (lem-pane)
-  (floor (capi:simple-pane-visible-width lem-pane)
-         (lem-pane-char-width lem-pane)))
+  (values
+   (floor (capi:simple-pane-visible-width lem-pane)
+          (lem-pane-char-width lem-pane))))
 
 (defun lem-pane-height (lem-pane)
-  (floor (capi:simple-pane-visible-height lem-pane)
-         (lem-pane-char-height lem-pane)))
+  (values
+   (floor (capi:simple-pane-visible-height lem-pane)
+          (lem-pane-char-height lem-pane))))
 
 (defun convert-color (color default-color)
   (alexandria:if-let ((rgb (lem:parse-color color)))

@@ -133,13 +133,6 @@
              (char-height (+ (abs top) bottom))
              (x (* x char-width))
              (y (* y char-height)))
-        (gp:draw-rectangle lem-pane
-                           x
-                           y
-                           (* char-width (lem:string-width string))
-                           char-height
-                           :filled t
-                           :foreground background)
         (gp:draw-string lem-pane string x (+ y char-height (- bottom))
                         :font font
                         :foreground foreground :background background

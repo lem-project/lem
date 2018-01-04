@@ -24,6 +24,7 @@
            :vi-delete-previous-char
            :vi-delete
            :vi-delete-line
+           :vi-join-line
            :vi-yank-line
            :vi-paste-after
            :vi-paste-before
@@ -168,6 +169,14 @@
          (with-point ((start (current-point))
                       (end (current-point)))
            (kill-region start (line-end end))))))
+
+(define-command vi-join-line () ()
+  (move-to-end-of-line)
+  (let ((p (current-point))
+        (s '(#\space #\tab #\newline)))
+    (delete-character p (- (skip-chars-forward p s)))
+    (unless (syntax-space-char-p (character-at p -1))
+      (insert-character p #\space))))
 
 (define-command vi-yank-line () ()
   (with-point ((start (current-point))

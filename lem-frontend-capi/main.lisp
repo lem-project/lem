@@ -29,6 +29,7 @@
     (setf *lem-pane* (make-instance 'lem-pane))
     (capi:display
      (make-instance 'capi:interface
+                    :auto-menus nil
                     :best-width 800
                     :best-height 600
                     :layout (make-instance 'capi:column-layout

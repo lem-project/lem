@@ -32,7 +32,9 @@
   (when (pathnamep filename)
     (setf filename (namestring filename)))
   (dolist (pathname (expand-files* filename))
-    (switch-to-buffer (find-file-buffer (namestring pathname)) t nil))
+    (let ((buffer (find-file-buffer (namestring pathname))))
+      (setf (buffer-read-only-p buffer) t)
+      (switch-to-buffer buffer t nil)))
   t)
 
 (define-key *global-keymap* "C-x C-s" 'save-buffer)

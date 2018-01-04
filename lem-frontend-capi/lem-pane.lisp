@@ -89,10 +89,13 @@
                            (t
                             (string char))))))))
       (when sym
-        (lem:make-key :meta metap
-                      :ctrl ctrlp
-                      :shift shiftp
-                      :sym sym)))))
+        (cond ((and (not metap) ctrlp (not shiftp) (string= sym "i"))
+               (lem:make-key :sym "Tab"))
+              (t
+               (lem:make-key :meta metap
+                             :ctrl ctrlp
+                             :shift shiftp
+                             :sym sym)))))))
 
 (defun key-press (self x y gesture-spec)
   (declare (ignore self x y))

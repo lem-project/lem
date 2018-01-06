@@ -14,7 +14,7 @@ __which(){
 }
 
 if __which lem-$frontend > /dev/null;then
-    lem-$frontend $*
+    exec lem-$frontend $*
 else
     echo "unknown frontend: $frontend"
 fi

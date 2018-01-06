@@ -12,7 +12,7 @@
                          :if-exists nil)
       (format out "~A~%~(~S~)~%"
               *site-init-comment
-              `(defsystem ,*site-init-name*)))
+              `(asdf:defsystem ,*site-init-name*)))
     path))
 
 (defun load-site-init ()

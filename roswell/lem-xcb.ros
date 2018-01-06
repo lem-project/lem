@@ -1,11 +1,12 @@
 #!/bin/sh
 #|-*- mode:lisp -*-|#
 #|
-exec ros -Q -m lem -L sbcl-bin -- $0 "$@"
+exec ros -Q -m lem-xcb -L sbcl-bin -- $0 "$@"
 |#
 (progn ;;init forms
   (ros:ensure-asdf)
-  (ql:quickload '(:lem) :silent t))
+  (ql:quickload '(:lem) :silent t)
+  (uiop:symbol-call :lem :load-site-init))
 
 (defpackage :ros.script.lem-xcb.3722922487
   (:use :cl))

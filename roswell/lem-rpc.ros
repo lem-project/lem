@@ -1,12 +1,12 @@
 #!/bin/sh
 #|-*- mode:lisp -*-|#
-#| <Put a one-line description here>
-exec ros -Q -- $0 "$@"
+#|
+exec ros -Q -m lem-rpc -L sbcl-bin -- $0 "$@"
 |#
 (progn ;;init forms
   (ros:ensure-asdf)
   (ql:quickload '(:lem-jsonrpc :lem-electron-backend) :silent t)
-  )
+  (uiop:symbol-call :lem :load-site-init))
 
 (defpackage :ros.script.lem-rpc.3715592460
   (:use :cl))

@@ -498,3 +498,9 @@
           (return))))
     (move-to-end-of-buffer)
     (delete-blank-lines)))
+
+(define-command load-library (name) ("sload library: ")
+  (message "Loading ~A." name)
+  (cond #+quicklisp((ignore-errors (ql:quickload (format nil "lem-~A" name) :silent t))
+                    (message "Loaded ~A." name))
+        (t (message "Can't find Library ~A." name))))

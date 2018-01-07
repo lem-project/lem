@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(defvar *site-init-name* "lem.site-init")
+(defvar *site-init-name* "lem-site-init")
 (defvar *site-init-comment ";; don't edit !!!")
 
 (defun site-init-path ()

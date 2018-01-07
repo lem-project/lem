@@ -399,3 +399,4 @@
 (defmethod interface-scroll ((implementation ncurses) view n)
   (charms/ll:wscrl (ncurses-view-scrwin view) n))
 
+(pushnew :lem-ncurses *features*)

@@ -29,3 +29,5 @@
 (define-command import-electron-module (name) ("sImport: ")
   (pushnew name *electron-modules*)
   (notify "import" (params "name" (namestring name))))
+
+(pushnew :lem-electron *features*)

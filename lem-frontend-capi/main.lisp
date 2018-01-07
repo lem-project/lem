@@ -155,3 +155,4 @@
 
 ;(defmethod lem::interface-scroll ((implementation capi-impl) view n)
 ;  )
+(pushnew :lem-capi *features*)

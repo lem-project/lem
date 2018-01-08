@@ -873,8 +873,10 @@
     (with-open-stream (stream (make-buffer-output-stream (buffer-end-point buffer)))
       (princ string stream))
     (lem.listener-mode:listener-update-point (buffer-end-point buffer))
-    (when (eq buffer (current-buffer))
-      (buffer-end (current-point)))))
+    (buffer-end (buffer-point buffer))
+    (alexandria:when-let ((window (get-repl-window)))
+      (window-see window)
+      (setf (lem::%window-point window) (buffer-point buffer)))))
 
 (defvar *wait-message-thread* nil)
 

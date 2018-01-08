@@ -7,7 +7,6 @@
              (message "Load file: ~a" path)
              t)))
     (let ((home (user-homedir-pathname)))
-      (uiop:symbol-call :lem :load-site-init)
       (or (test (merge-pathnames ".lem/init.lisp" home))
           (test (merge-pathnames ".lemrc" home))))))
 

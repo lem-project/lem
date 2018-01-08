@@ -99,6 +99,7 @@
   (defun init (args)
     (unless once
       (setf once t)
+      (uiop:symbol-call :lem :load-site-init)
       (run-hooks *before-init-hook*)
       (unless (command-line-arguments-no-init-file args)
         (load-init-file))

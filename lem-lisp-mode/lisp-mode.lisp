@@ -761,9 +761,14 @@
 (defun clear-repl ()
   (lem.listener-mode:clear-listener (repl-buffer)))
 
+(defun get-repl-window ()
+  (let* ((buffer (repl-buffer)))
+    (if (eq buffer (window-buffer (current-window)))
+        (current-window)
+        (first (get-buffer-windows buffer)))))
+
 (defun repl-buffer-width ()
-  (alexandria:when-let* ((buffer (repl-buffer))
-                         (window (car (get-buffer-windows buffer)))
+  (alexandria:when-let* ((window (get-repl-window))
                          (width (- (window-width window) 2)))
     width))
 

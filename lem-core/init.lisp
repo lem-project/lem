@@ -6,7 +6,8 @@
              (load path)
              (message "Load file: ~a" path)
              t)))
-    (let ((home (user-homedir-pathname)))
+    (let ((home (user-homedir-pathname))
+          (*package* (find-package :lem-user)))
       (or (test (merge-pathnames ".lem/init.lisp" home))
           (test (merge-pathnames ".lemrc" home))))))
 

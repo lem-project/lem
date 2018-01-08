@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(defvar *site-init-name* "lem.site-init")
+(defvar *site-init-name* "lem-site-init")
 (defvar *site-init-comment ";; don't edit !!!")
 
 (defun site-init-path ()
@@ -15,7 +15,7 @@
               `(asdf:defsystem ,*site-init-name*)))
     path))
 
-(defun load-site-init ()
+(defun load-site-init (&key force)
   (let* ((asdf:*central-registry*
            (union (mapcar #'pathname
                           (mapcar #'directory-namestring
@@ -27,7 +27,8 @@
                   :test #'equal))
          (system-name *site-init-name*)
          (key (intern (string-upcase system-name) :keyword)))
-    (unless (find key *features*)
+    (unless (and (find key *features*)
+                 (not force))
       (pushnew key *features*)
       (asdf:load-asd (site-init-path))
       (let ((*package* (find-package :lem-user)))
@@ -47,10 +48,7 @@
   "Input system name and test it's loadable."
   (loop :with site-init := (site-init)
         :with depends-on := (getf (cddr site-init) :depends-on)
-        :for s :in (loop :for str = (format nil "~a " symbols) then (subseq str (1+ pos))
-                         :for pos := (position #\Space str)
-                         :while pos
-                         :collect (subseq str 0 pos))
+        :for s :in (uiop:split-string symbols)
         :for key := (read-from-string (format nil ":~A" s))
         :do (unless (find key depends-on)
               #+quicklisp(ql:quickload key :silent t)
@@ -64,16 +62,14 @@
   ;;TBD prepare prompt-site-init-depends-on like function
   (loop :with site-init := (site-init)
         :with depends-on := (getf (cddr site-init) :depends-on)
-        :for s :in (loop :for str = (format nil "~a " symbols) then (subseq str (1+ pos))
-                         :for pos := (position #\Space str)
-                         :while pos
-                         :collect (subseq str 0 pos))
+        :for s :in (uiop:split-string symbols)
         :for key := (read-from-string (format nil ":~A" s))
         :do (when (find key depends-on)
               (setf depends-on (remove key depends-on)))
         :finally (setf (getf (cddr site-init) :depends-on) depends-on)
                  (setf (site-init) site-init)
                  (message "~A" depends-on)))
+
 
 ;; TBD prepare some commands to edit asd file.
 ;; M-x site-init-edit-dependency / prepare buffer one system in a line which are editable. test loadable when save and update asd.

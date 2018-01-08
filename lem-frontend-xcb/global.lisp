@@ -177,3 +177,4 @@
 	    (mem-ref reply :uint 8)
 	  (foreign-free reply))))))
 
+(pushnew :lem-xcb *features*)

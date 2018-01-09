@@ -45,7 +45,8 @@
           goto-line
           filter-buffer
           pipe-command
-          delete-trailing-whitespace))
+          delete-trailing-whitespace
+          load-library))
 
 (defvar *set-location-hook* '())
 

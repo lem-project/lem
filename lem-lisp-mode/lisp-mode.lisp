@@ -875,7 +875,9 @@
     (lem.listener-mode:listener-update-point (buffer-end-point buffer))
     (buffer-end (buffer-point buffer))
     (alexandria:when-let ((window (get-repl-window)))
-      (window-see window))))
+      (with-current-window window
+        (buffer-end (buffer-point buffer))
+        (window-see window)))))
 
 (defvar *wait-message-thread* nil)
 

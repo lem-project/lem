@@ -38,7 +38,8 @@
       (minibuf-init)
       (start-idle-timer 100 t
                         (lambda ()
-                          (syntax-scan-window (current-window))))
+                          (syntax-scan-window (current-window)))
+                        nil "syntax-scan")
       (add-hook *window-scroll-functions*
                 (lambda (window)
                   (syntax-scan-window window)))

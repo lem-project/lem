@@ -15,6 +15,35 @@
               `(asdf:defsystem ,*site-init-name*)))
     path))
 
+(defun site-init-list-inits ()
+  (loop for i in (sort (mapcar #'pathname-name
+                               (directory (merge-pathnames ".lem/inits/*.lisp"
+                                                           (user-homedir-pathname))))
+                       #'string<)
+     collect (list :file (format nil "inits/~A" i))))
+
+(defun site-init ()
+  (with-open-file (i (site-init-path))
+    (let ((*package* (find-package :lem-user)))
+      (read i))))
+
+(defun (setf site-init) (exp)
+  (with-open-file (o (site-init-path) :direction :output :if-exists :supersede)
+    (let ((*package* (find-package :lem-user)))
+      (format o "~A~%~(~S~)" *site-init-comment exp))))
+
+(defun update-site-init-inits ()
+  (let* ((site-init (site-init))
+         (file (getf (cddr site-init) :components))
+         (dir (site-init-list-inits)))
+    (unless (and (= (length file)
+                    (length dir))
+                 (loop :for i :in file
+                       :for j :in dir
+                       :always (equal (second i) (second j))))
+      (setf (getf (cddr site-init) :components) dir
+            (site-init) site-init))))
+
 (defun load-site-init (&key force)
   (let* ((asdf:*central-registry*
            (union (mapcar #'pathname
@@ -30,19 +59,10 @@
     (unless (and (find key *features*)
                  (not force))
       (pushnew key *features*)
+      (update-site-init-inits)
       (asdf:load-asd (site-init-path))
       (let ((*package* (find-package :lem-user)))
         #+quicklisp(ql:quickload system-name :silent t)))))
-
-(defun site-init ()
-  (with-open-file (i (site-init-path))
-    (let ((*package* (find-package :lem-user)))
-      (read i))))
-
-(defun (setf site-init) (exp)
-  (with-open-file (o (site-init-path) :direction :output :if-exists :supersede)
-    (let ((*package* (find-package :lem-user)))
-      (format o "~A~%~(~S~)" *site-init-comment exp))))
 
 (define-command site-init-add-dependency (symbols) ("sPackages:")
   "Input system name and test it's loadable."

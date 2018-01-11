@@ -7,6 +7,7 @@
 
 (defvar *brackets-overlays* nil)
 
+
 (define-attribute showparen-attribute
   (t :background "cyan"))
 
@@ -43,4 +44,4 @@
           (not (timer-alive-p *show-paren-timer*)))
   (setf *show-paren-timer*
         (start-idle-timer 100 t
-                          'show-paren-timer-function)))
+                          'show-paren-timer-function nil "show paren timer")))

@@ -249,9 +249,13 @@
 (defun interactive-eval (string)
   (eval-with-transcript `(swank:interactive-eval ,string)))
 
-(defun eval-print (string)
-  (let ((value (lisp-eval `(swank:eval-and-grab-output ,string))))
+(defun eval-print (string &optional print-right-margin)
+  (let ((value (lisp-eval (if print-right-margin
+                              `(let ((*print-right-margin* ,print-right-margin))
+                                 (swank:eval-and-grab-output ,string))
+                              `(swank:eval-and-grab-output ,string)))))
     (insert-string (current-point) (first value))
+    (insert-character (current-point) #\newline)
     (insert-string (current-point) (second value))))
 
 (defun new-package (name prompt-string)
@@ -370,7 +374,7 @@
     (form-offset start -1)
     (let ((string (points-to-string start end)))
       (if p
-          (eval-print string)
+          (eval-print string (- (window-width (current-window)) 2))
           (interactive-eval string)))))
 
 (define-command lisp-eval-defun () ()

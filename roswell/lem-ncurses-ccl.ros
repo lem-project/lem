@@ -1,0 +1,16 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#| lem simple emacs clone 
+exec ros -Q -L ccl-bin -- $0 "$@"
+|#
+(progn
+  (ql:quickload :lem-ncurses :silent t)
+  (uiop:symbol-call :lem :load-site-init))
+
+(defpackage :ros.script.lem-ncurses-ccl.3724915314
+  (:use :cl))
+(in-package :ros.script.lem-ncurses-ccl.3724915314)
+
+(defun main (&rest argv)
+  (apply #'lem:lem argv))
+;;; vim: set ft=lisp lisp:

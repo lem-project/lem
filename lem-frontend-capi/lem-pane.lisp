@@ -11,8 +11,8 @@
    :change-background))
 (in-package :lem-capi.lem-pane)
 
-(defvar *default-font-family* "DejaVu Sans Mono")
-(defvar *default-font-size* 10)
+(defvar *default-font-family* #+win32 "Consolas" #-win32 "Monospace")
+(defvar *default-font-size* 11)
 
 (defvar *default-font*
   (gp:make-font-description :size *default-font-size*

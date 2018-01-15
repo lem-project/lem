@@ -59,18 +59,22 @@ $ lem-electron               # Electron version will start
 
 ![Electron](screenshots/electron.png)　　
 
-## Lem on Rasberry Pi3
-You need to install libncurses5-dev for ncurses and use Clozure Common Lisp.  
+## Lem on platforms without SBCL thread support (e.g. raspbbery pi3)
+
+If installation fails due to `bordeaux-threads`, there is no thread provided by SBCL on your PC. 
+You need to use Clozure Common Lisp (CCL) instead of SBCL.  
 
 ```
-$ sudo apt install libncurses5-dev
 $ ros install ccl-bin
 $ ros use ccl-bin
-$ ros run
+$ ros install cxxxr/lem
+```
 
-? (ql:quickload :lem-ncurses) # You need to refer to :lem-ncurses system
-? (lem:lem) # then you can start using lem
+And also need to specify frontend to `ncurses-ccl`.
+You can launch lem as follows:
 
+```
+$ lem --frontend ncurses-ccl
 ```
 
 ## Contributors

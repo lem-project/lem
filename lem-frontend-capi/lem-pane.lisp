@@ -34,8 +34,16 @@
    :font *default-font*
    :foreground :black
    :background :white
-   :input-model '((:gesture-spec key-press))
+   :input-model '((:gesture-spec key-press)
+                  . #-win32 ()
+                  #+win32 #.(loop :for code :from 1 :to 127
+                                  :for char := (code-char code)
+                                  :collect `((,char :press :meta) key-press)
+                                  :collect `((,char :press :meta :control) key-press)
+                                  :collect `((,char :press :meta :control :shift) key-press)))
    :resize-callback 'resize-callback))
+
+(defmethod capi:interface-keys-style ((lem-pane lem-pane)) :emacs)
 
 (defmethod (setf capi:simple-pane-font) :after (font (lem-pane lem-pane))
   (setf (lem-pane-font lem-pane) font)
@@ -68,7 +76,7 @@
 (defun meta-bit-p (modifiers)
   (/= 0 (logand modifiers sys:gesture-spec-meta-bit)))
 
-(defun gesture-spec-to-key (self gesture-spec)
+(defun gesture-spec-to-key (gesture-spec)
   (when (sys:gesture-spec-p gesture-spec)
     (let* ((data (sys:gesture-spec-data gesture-spec))
            (modifiers (sys:gesture-spec-modifiers gesture-spec))
@@ -102,7 +110,7 @@
 (defun key-press (self x y gesture-spec)
   (declare (ignore self x y))
   (with-error-handler ()
-    (alexandria:when-let ((key (gesture-spec-to-key self gesture-spec)))
+    (alexandria:when-let ((key (gesture-spec-to-key gesture-spec)))
       (lem:send-event key))))
 
 (defun lem-pane-width (lem-pane)

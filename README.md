@@ -61,7 +61,7 @@ $ lem-electron               # Electron version will start
 
 ## Lem on platforms without SBCL thread support (e.g. raspbbery pi3)
 
-If installation fails due to `bordeaux-threads`, there is no thread provided by SBCL on your PC. 
+If installation fails due to `bordeaux-threads`, there is no thread provided by SBCL on your PC.  
 You need to use Clozure Common Lisp (CCL) instead of SBCL.  
 
 ```

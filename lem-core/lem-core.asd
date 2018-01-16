@@ -1,4 +1,4 @@
-(defsystem "lem-core"
+(asdf:defsystem "lem-core"
   :depends-on ("uiop"
                "alexandria"
                "swank"

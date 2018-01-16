@@ -19,6 +19,8 @@ You can skip over writing tidy settings or installing many plugins as you do on 
 - MacOS 10.13+ 
 
 ## Installation
+
+### With Roswell
 Please install roswell at first.
 
 [Roswell Installation Guide](https://github.com/roswell/roswell/wiki/Installation)
@@ -32,6 +34,11 @@ $ ros install cxxxr/lem
 2. add the PATH in the initialization file(such as ~/.bashrc)
 export PATH=$PATH:~/.roswell/bin
 ```
+
+### With an executable
+See our releases to download a self-contained executable.
+
+You can build it with `make build`.
 
 ## Usage
 

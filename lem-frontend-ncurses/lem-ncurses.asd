@@ -1,4 +1,4 @@
-(defsystem "lem-ncurses"
+(asdf:defsystem "lem-ncurses"
   :depends-on ("cffi"
                "cl-charms"
                "lem")

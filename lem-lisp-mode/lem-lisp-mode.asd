@@ -1,4 +1,4 @@
-(defsystem "lem-lisp-mode"
+(asdf:defsystem "lem-lisp-mode"
   :depends-on ("alexandria"
                "trivial-types"
                "usocket"

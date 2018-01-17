@@ -1,4 +1,4 @@
-(defsystem "lem-vi-mode"
+(asdf:defsystem "lem-vi-mode"
   :depends-on ("esrap")
   :serial t
   :components ((:file "core")

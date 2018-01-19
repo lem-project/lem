@@ -2,11 +2,19 @@
 
 (export '(expand-file-name))
 
-(defun expand-file-name-1 (filename host)
-  (let* ((split-chars #+windows '(#\/ #\\) #-windows '(#\/)))
+(defun guess-host-name (filename)
+  #+windows
+  (ppcre:register-groups-bind (host) ("^(\\w):" filename) host)
+  #-windows
+  nil)
+
+(defun parse-filename (filename)
+  (let* ((host (guess-host-name filename))
+         (start0 (if host 2 0))
+         (split-chars #+windows '(#\/ #\\) #-windows '(#\/)))
     (flet ((split-char-p (c) (member c split-chars)))
       (loop :with path := (list :absolute)
-            :for start := 0 :then (1+ pos)
+            :for start := start0 :then (1+ pos)
             :for pos := (position-if #'split-char-p filename :start start)
             :unless pos :do (return
                              (if (= start (length filename))
@@ -29,15 +37,6 @@
                          (setf path (append path (list name))))))))))
 
 (defun expand-file-name (filename &optional (directory (uiop:getcwd)))
-  (flet ((f (filename) (subseq (namestring (merge-pathnames filename directory)) 2)))
-    (setf filename (namestring filename))
-    (let ((host #+windows
-                (ppcre:register-groups-bind (host)
-                    ("^(\\w):" filename)
-                  host)
-                #-windows
-                nil))
-      (namestring
-       (if host
-           (expand-file-name-1 (f (subseq filename 2)) host)
-           (expand-file-name-1 (f filename) host))))))
+  (when (pathnamep filename) (setf filename (namestring filename)))
+  (let ((pathname (parse-filename filename)))
+    (merge-pathnames pathname directory)))

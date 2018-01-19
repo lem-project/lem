@@ -8,6 +8,7 @@
   :serial t
   :components ((:file "package")
                (:file "documentation")
+               (:file "fileutil")
                (:file "util")
                (:file "errors")
                (:file "var")

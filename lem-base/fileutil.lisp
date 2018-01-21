@@ -4,7 +4,9 @@
 
 (defun guess-host-name (filename)
   #+windows
-  (ppcre:register-groups-bind (host) ("^(\\w):" filename) host)
+  (ppcre:register-groups-bind (host)
+      ("^(\\w:)" filename)
+    (pathname-host (parse-namestring host)))
   #-windows
   nil)
 

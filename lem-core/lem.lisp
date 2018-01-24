@@ -79,7 +79,7 @@
                                        t)
                                  nil)
                                 ((member arg '("-v" "--version") :test #'equal)
-                                 (format t "~a~%" (asdf:component-version (asdf:find-system :lem)))
+                                 (format t "~a~%" (lem-version))
                                  (uiop:quit)
                                  nil)
                                 ((or (stringp arg) (pathnamep arg))

@@ -46,7 +46,8 @@
           filter-buffer
           pipe-command
           delete-trailing-whitespace
-          load-library))
+          load-library
+          lem-version))
 
 (defvar *set-location-hook* '())
 
@@ -505,3 +506,13 @@
   (cond #+quicklisp((ignore-errors (ql:quickload (format nil "lem-~A" name) :silent t))
                     (message "Loaded ~A." name))
         (t (message "Can't find Library ~A." name))))
+
+(define-command lem-version (&optional name) ("p")
+  (let ((version (format nil #+ros.init"lem ~A (~A-~A)"
+                         #-ros.init "lem ~A"
+                         (asdf:component-version (asdf:find-system :lem))
+                         #+ros.init(roswell.util:uname-m)
+                         #+ros.init(roswell.util:uname))))
+    (when (eql name 1)
+      (message "~A" version))
+    version))

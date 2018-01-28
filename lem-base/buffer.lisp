@@ -248,7 +248,8 @@
 
 (defun buffer-filename (&optional (buffer (current-buffer)))
   @lang(:jp "`buffer`のファイル名を返します。")
-  (buffer-%filename buffer))
+  (alexandria:when-let (filename (buffer-%filename buffer))
+    (namestring filename)))
 
 (defun (setf buffer-filename) (filename &optional (buffer (current-buffer)))
   (setf (buffer-directory buffer) (directory-namestring filename))

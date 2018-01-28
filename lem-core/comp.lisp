@@ -66,7 +66,7 @@
                                              (uiop:subdirectories dirname)))))
     (let ((strings
             (loop
-              :for pathname :in (or (directory str) (list str))
+              :for pathname :in (directory-files str)
               :for str := (namestring pathname)
               :append
                  (completion (enough-namestring str dirname)

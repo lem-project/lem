@@ -12,11 +12,7 @@
           change-directory))
 
 (defun expand-files* (filename)
-  (setf filename (expand-file-name filename (buffer-directory)))
-  (if (null (pathname-name filename))
-      (list filename)
-      (or (directory filename)
-          (list filename))))
+  (directory-files (expand-file-name filename (buffer-directory))))
 
 (define-key *global-keymap* "C-x C-f" 'find-file)
 (define-command find-file (filename) ("FFind File: ")

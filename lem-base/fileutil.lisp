@@ -1,6 +1,7 @@
 (in-package :lem-base)
 
-(export '(expand-file-name))
+(export '(expand-file-name
+          directory-files))
 
 (defun guess-host-name (filename)
   #+windows
@@ -42,3 +43,9 @@
   (when (pathnamep filename) (setf filename (namestring filename)))
   (let ((pathname (parse-filename filename)))
     (merge-pathnames pathname directory)))
+
+(defun directory-files (pathspec)
+  (if (null (pathname-name pathspec))
+      (list (pathname pathspec))
+      (or (directory pathspec)
+          (list pathspec))))

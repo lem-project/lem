@@ -1,7 +1,8 @@
 (in-package :lem-base)
 
 (export '(expand-file-name
-          directory-files))
+          directory-files
+          file-size))
 
 (defun guess-host-name (filename)
   #+windows
@@ -45,7 +46,15 @@
     (namestring (merge-pathnames pathname directory))))
 
 (defun directory-files (pathspec)
-  (if (null (pathname-name pathspec))
+  (if (uiop:directory-pathname-p pathspec)
       (list (pathname pathspec))
       (or (directory pathspec)
           (list pathspec))))
+
+(defun file-size (pathname)
+  #+lispworks
+  (system:file-size pathname)
+  #+(and (not lispworks) win32)
+  (return-from file-size nil)
+  #-win32
+  (with-open-file (in pathname) (file-length in)))

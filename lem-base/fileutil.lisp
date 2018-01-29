@@ -42,7 +42,7 @@
 (defun expand-file-name (filename &optional (directory (uiop:getcwd)))
   (when (pathnamep filename) (setf filename (namestring filename)))
   (let ((pathname (parse-filename filename)))
-    (merge-pathnames pathname directory)))
+    (namestring (merge-pathnames pathname directory))))
 
 (defun directory-files (pathspec)
   (if (null (pathname-name pathspec))

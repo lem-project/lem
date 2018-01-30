@@ -2,6 +2,7 @@
 
 (export '(expand-file-name
           directory-files
+          list-directory
           file-size))
 
 (defun guess-host-name (filename)
@@ -50,6 +51,10 @@
       (list (pathname pathspec))
       (or (directory pathspec)
           (list pathspec))))
+
+(defun list-directory (directory)
+  (append (uiop:subdirectories directory)
+          (uiop:directory-files directory)))
 
 (defun file-size (pathname)
   #+lispworks

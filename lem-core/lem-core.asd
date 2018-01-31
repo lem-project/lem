@@ -65,7 +65,6 @@
                (:file "go-back")
                (:file "language-mode")
                (:file "gtags")
-               (:file "dired")
                (:file "directory-mode")
                (:file "abbrev")
                (:file "less-mode")

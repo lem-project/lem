@@ -53,11 +53,15 @@
 (defun move-to-start-line (point)
   (move-to-line point 3))
 
+(defun get-line-property (p key)
+  (with-point ((p p))
+    (text-property-at (line-start p) key)))
+
 (defun get-pathname (point)
-  (text-property-at point 'pathname))
+  (get-line-property point 'pathname))
 
 (defun get-name (point)
-  (text-property-at point 'name))
+  (get-line-property point 'name))
 
 (defun get-mark (p)
   (with-point ((p p))
@@ -66,8 +70,7 @@
 (defun set-mark (p mark)
   (with-buffer-read-only (point-buffer p) nil
     (with-point ((p p))
-      (line-start p)
-      (when (text-property-at p 'pathname)
+      (when (get-line-property p 'pathname)
         (character-offset (line-start p) 1)
         (delete-character p 1)
         (insert-character p (if mark #\* #\space))))))
@@ -127,7 +130,8 @@
               (decode-universal-time date)
               (values 0 0 0 0 0 0 nil)))
       (insert-string point
-                     (format nil "~4,'0D/~2,'0D/~2,'0D ~2,'0D:~2,'0D:~2,'0D ~A " year month day hour minute second
+                     (format nil "~4,'0D/~2,'0D/~2,'0D ~2,'0D:~2,'0D:~2,'0D ~A "
+                             year month day hour minute second
                              (if week (aref #("Mon" "Tue" "Wed" "Thr" "Fri" "Sat" "Sun") week)
                                  "   "))))
     (insert-string point name :attribute (get-file-attribute pathname))
@@ -143,7 +147,6 @@
       (insert-string p (format nil "~A~2%" directory))
       (dolist (pathname (list-directory directory))
         (insert-pathname p pathname directory))
-      (message "~S ~S" p line-number)
       (move-to-line p line-number))))
 
 (defun update-all ()

@@ -9,6 +9,7 @@
                "bordeaux-threads"
                "trivial-clipboard"
                "yason"
+               "cl-fad"
                "lem-base"
                "lem-lisp-syntax")
   :serial t
@@ -65,6 +66,7 @@
                (:file "language-mode")
                (:file "gtags")
                (:file "dired")
+               (:file "directory-mode")
                (:file "abbrev")
                (:file "less-mode")
                (:file "rectangle")

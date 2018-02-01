@@ -50,6 +50,16 @@
     (when (string/= error-string "")
       (editor-error "~A" error-string))))
 
+(defun update-line (point)
+  (let ((ov (buffer-value point 'line-overlay)))
+    (cond (ov
+           (line-start (move-point (overlay-start ov) point))
+           (line-end (move-point (overlay-end ov) point)))
+          (t
+           (with-point ((s point) (e point))
+             (setf ov (make-overlay (line-start s) (line-end e) 'region))
+             (setf (buffer-value point 'line-overlay) ov))))))
+
 (defun move-to-start-line (point)
   (move-to-line point 3))
 
@@ -341,3 +351,8 @@
   (update-all))
 
 (setf *find-directory-function* 'directory-buffer)
+
+(add-hook *post-command-hook*
+          (lambda ()
+            (when (eq 'directory-mode (buffer-major-mode (current-buffer)))
+              (update-line (current-point)))))

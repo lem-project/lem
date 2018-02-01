@@ -14,7 +14,7 @@
   (:dark :foreground "sky blue"))
 
 (define-attribute link-attribute
-  (:light :foreground "dark green")
+  (:light :foreground "cyan")
   (:dark :foreground "green"))
 
 (define-major-mode directory-mode ()
@@ -115,8 +115,13 @@
   (alexandria:when-let (pathname (get-pathname (current-point)))
     (funcall function pathname)))
 
+(defun symbolic-link-p (pathname)
+  (not (uiop:pathname-equal pathname (probe-file pathname))))
+
 (defun get-file-attribute (pathname)
-  (cond ((uiop:directory-pathname-p pathname)
+  (cond ((symbolic-link-p pathname)
+         'link-attribute)
+        ((uiop:directory-pathname-p pathname)
          'directory-attribute)
         (t
          'file-attribute)))
@@ -144,7 +149,11 @@
                              year month day hour minute second
                              (if week (aref #("Mon" "Tue" "Wed" "Thr" "Fri" "Sat" "Sun") week)
                                  "   "))))
-    (insert-string point name :attribute (get-file-attribute pathname))
+    (insert-string point
+                   name
+                   :attribute (get-file-attribute pathname))
+    (when (symbolic-link-p pathname)
+      (insert-string point (format nil "-> ~A" (probe-file pathname))))
     (insert-character point #\newline)))
 
 (defun update (buffer)

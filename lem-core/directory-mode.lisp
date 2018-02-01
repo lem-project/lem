@@ -176,7 +176,7 @@
   (setf filename (uiop:directory-exists-p
                   (expand-file-name (namestring filename)
                                     (buffer-directory))))
-  (let ((name (alexandria:lastcar (pathname-directory filename))))
+  (let ((name (pathname-directory-last-name filename)))
     (or (get-buffer name)
         (create-directory-buffer name filename))))
 

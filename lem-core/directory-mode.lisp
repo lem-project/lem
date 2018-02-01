@@ -169,6 +169,7 @@
     (change-buffer-mode buffer 'directory-mode)
     (setf (buffer-directory buffer) filename)
     (update buffer)
+    (move-to-start-line (buffer-point buffer))
     buffer))
 
 (defun directory-buffer (filename)

@@ -62,4 +62,4 @@
   #+(and (not lispworks) win32)
   (return-from file-size nil)
   #-win32
-  (with-open-file (in pathname) (file-length in)))
+  (ignore-errors (with-open-file (in pathname) (file-length in))))

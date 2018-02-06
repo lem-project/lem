@@ -13,6 +13,9 @@
 (defvar *last-compilation-result* nil)
 (defvar *indent-table* (make-hash-table :test 'equal))
 
+(defvar *load-file-function*
+  (or (find-symbol (string '#:load) :roswell) 'swank:load-file))
+
 (define-major-mode lisp-mode language-mode
     (:name "lisp"
      :keymap *lisp-mode-keymap*
@@ -402,7 +405,7 @@
   (when (and (probe-file filename)
              (not (uiop:directory-pathname-p filename)))
     (run-hooks (variable-value 'load-file-functions) filename)
-    (eval-with-transcript `(swank:load-file ,filename))))
+    (eval-with-transcript `(,*load-file-function* ,filename))))
 
 (defun get-operator-name ()
   (with-point ((point (current-point)))

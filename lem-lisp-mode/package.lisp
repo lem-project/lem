@@ -13,6 +13,7 @@
    :lisp-ui-default-action
    :lisp-ui-forward-button
    ;; lisp-mode.lisp
+   :*load-file-function*
    :load-file-functions
    :before-compile-functions
    :*default-port*

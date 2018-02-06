@@ -14,7 +14,9 @@
 (defvar *indent-table* (make-hash-table :test 'equal))
 
 (defvar *load-file-function*
-  (or (find-symbol (string '#:load) :roswell) 'swank:load-file))
+  (or (and (find-package :roswell)
+           (find-symbol (string '#:load) :roswell))
+      'swank:load-file))
 
 (define-major-mode lisp-mode language-mode
     (:name "lisp"

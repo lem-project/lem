@@ -17,6 +17,9 @@
   (:light :foreground "cyan")
   (:dark :foreground "green"))
 
+(define-attribute current-line-attribute
+  (t :underline-p t))
+
 (define-major-mode directory-mode ()
     (:name "directory"
      :keymap *directory-mode-keymap*))
@@ -57,7 +60,7 @@
            (line-end (move-point (overlay-end ov) point)))
           (t
            (with-point ((s point) (e point))
-             (setf ov (make-overlay (line-start s) (line-end e) 'region))
+             (setf ov (make-overlay (line-start s) (line-end e) 'current-line-attribute))
              (setf (buffer-value point 'line-overlay) ov))))))
 
 (defun move-to-start-line (point)

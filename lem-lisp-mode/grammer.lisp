@@ -43,8 +43,16 @@
     (:greedy-repetition 1 nil (:inverted-char-class #\( #\) #\space #\tab)) #\:)))
 
 (ppcre:define-parse-tree-synonym symbol
-  (:greedy-repetition 1 nil
-   (:inverted-char-class #\( #\) :whitespace-char-class #\; #\")))
+  (:alternation
+   (:sequence
+    #\|
+    (:greedy-repetition 0 nil
+     (:alternation
+      (:group "\\|")
+      (:inverted-char-class #\|)))
+    #\|)
+   (:greedy-repetition 1 nil
+    (:inverted-char-class #\( #\) :whitespace-char-class #\; #\"))))
 
 (defun word-length-sort (&rest words)
   (sort (copy-list words) #'> :key #'length))
@@ -66,6 +74,9 @@
                     `(:sequence ";")
                     "$"
                     :name 'syntax-comment-attribute)
+                   (make-tm-region
+                    `(:sequence "|")
+                    `(:sequence "|"))
                    (make-tm-region
                     `(:sequence "\"")
                     `(:sequence "\"")

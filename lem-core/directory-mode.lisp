@@ -244,7 +244,9 @@
   #+windows
   (copy-file src dst)
   #-windows
-  (run-command "cp -r '~A' '~A'" src dst))
+  (if *rename-p*
+      (run-command "mv '~A' '~A'" src dst)
+      (run-command "cp -r '~A' '~A'" src dst)))
 
 (defun check-copy-files (src-files dst)
   (let ((n (length src-files)))

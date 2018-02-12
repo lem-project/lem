@@ -5,3 +5,13 @@ node_modules
 package-lock.json
 roswell/lem-ncurses
 *~
+
+Makefile
+Makefile.in
+configure
+config.status
+config.log
+aclocal.m4
+autom4te.cache
+install-sh
+missing

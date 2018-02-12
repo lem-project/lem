@@ -3,7 +3,9 @@
 (export '(expand-file-name
           directory-files
           list-directory
-          file-size))
+          file-size
+          *virtual-file-open*
+          with-open-virtual-file))
 
 (defun guess-host-name (filename)
   #+windows
@@ -63,3 +65,33 @@
   (return-from file-size nil)
   #-win32
   (ignore-errors (with-open-file (in pathname) (file-length in))))
+
+(defvar *virtual-file-open* nil)
+
+(defun open-virtual-file (filename &key external-format direction)
+  (apply #'values
+         (or (loop :for f :in *virtual-file-open*
+                :for result := (funcall f filename
+                                        :external-format external-format
+                                        :direction direction)
+                :when result
+                :do (return result))
+             (list (apply #'open filename
+                          `(:direction ,direction
+                                       ,@(when (eql direction :output)
+                                           '(:if-exists :supersede
+                                             :if-does-not-exist :create))
+                                       ,@(when external-format
+                                           `(:external-format ,external-format))
+                                       :element-type character))))))
+
+(defmacro with-open-virtual-file ((stream filespec &rest options)
+                                  &body body)
+  (let ((close/ (gensym)))
+    `(multiple-value-bind (,stream ,close/)
+         (open-virtual-file ,filespec ,@options)
+       (unwind-protect
+            (multiple-value-prog1
+                (progn ,@body))
+         (when ,stream
+           (funcall (or ,close/ #'close) ,stream))))))

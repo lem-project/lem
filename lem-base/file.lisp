@@ -26,7 +26,9 @@
       (multiple-value-setq (external-format end-of-line)
         (funcall *external-format-function* filename)))
     (with-point ((point point :left-inserting))
-      (with-open-file (in filename :external-format external-format :element-type 'character)
+      (with-open-virtual-file (in filename
+                                  :external-format external-format
+                                  :direction :input)
         (loop
           (multiple-value-bind (str eof-p)
               (read-line in nil)
@@ -82,20 +84,6 @@
            (run-hooks *find-file-hook* buffer)
            (values buffer t)))))
 
-(defun open-output-file (buffer filename)
-  (if (buffer-external-format buffer)
-      (open filename
-            :direction :output
-            :if-exists :supersede
-            :if-does-not-exist :create
-            :external-format (car (buffer-external-format buffer))
-            :element-type 'character)
-      (open filename
-            :direction :output
-            :if-exists :supersede
-            :if-does-not-exist :create
-            :element-type 'character)))
-
 (defun write-to-file-1 (buffer filename)
   (flet ((f (out end-of-line)
            (with-point ((point (buffer-start-point buffer)))
@@ -117,7 +105,9 @@
                          )
                        (unless (line-offset point 1)
                          (return))))))
-    (with-open-stream (out (open-output-file buffer filename))
+    (with-open-virtual-file (out filename
+                                 :external-format (first (buffer-external-format buffer))
+                                 :direction :output)
       (f out
          (if (buffer-external-format buffer)
              (cdr (buffer-external-format
@@ -141,7 +131,9 @@
   (let ((string (points-to-string start end))
         (buffer (point-buffer start)))
     (with-write-hook buffer
-      (with-open-stream (out (open-output-file buffer filename))
+      (with-open-virtual-file (out filename
+                                   :external-format (first (buffer-external-format buffer))
+                                   :direction :output)
         (write-string string out)))))
 
 (defun file-write-date* (buffer)

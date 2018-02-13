@@ -1,6 +1,7 @@
 #!/bin/sh
 
 frontend=${LEM_DEFAULT_FRONTEND:-ncurses}
+cwd=`dirname $0`
 
 case $1 in
 	--frontend|-f)
@@ -9,11 +10,12 @@ case $1 in
 	;;
 esac
 
-__which(){
-    command -v "$1" 2> /dev/null
+__which() {
+    [ -f $cwd/$1 ] || command -v "$1" 2> /dev/null
 }
 
 if __which lem-$frontend > /dev/null;then
+    [ -f $cwd/lem-$frontend ] && exec $cwd/lem-$frontend $*
     exec lem-$frontend $*
 else
     echo "unknown frontend: $frontend"

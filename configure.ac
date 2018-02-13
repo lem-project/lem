@@ -1,0 +1,4 @@
+AC_INIT([lem],[1.1])
+AM_INIT_AUTOMAKE([foreign])
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT

@@ -86,7 +86,7 @@
     (if (not (funcall (variable-value 'listener-check-confirm-function) point))
         (insert-character point #\newline)
         (let ((start (listener-start-point (current-buffer))))
-          (unless (point< start point)
+          (unless (point<= start point)
             (listener-reset-prompt)
             (return-from listener-return t))
           (let ((str (points-to-string start point)))

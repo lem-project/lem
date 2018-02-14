@@ -4,4 +4,5 @@
                "lem-vi-mode"
                "lem-lisp-mode"
                "lem-go-mode"
-               "lem-c-mode"))
+               "lem-c-mode"
+               "lem-xml-mode"))

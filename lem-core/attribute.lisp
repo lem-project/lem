@@ -31,6 +31,8 @@
           syntax-variable-attribute
           syntax-type-attribute
           syntax-builtin-attribute
+          completion-attribute
+          non-focus-completion-attribute
 	  *attribute-destroy-%internal-value*))
 
 (defvar *attributes* '())
@@ -208,4 +210,3 @@
 
 (define-attribute syntax-builtin-attribute
   (t :foreground "#D030F0"))
-

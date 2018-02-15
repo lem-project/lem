@@ -1,11 +1,14 @@
 (in-package :lem)
 
-(export '(completion
+(export '(*file-completion-ignore-case*
+          completion
           completion-test
           completion-hypheen
           completion-file
           completion-strings
           completion-buffer-name))
+
+(defvar *file-completion-ignore-case* t)
 
 (defun fuzzy-match-p (str elt)
   (loop :with start := 0
@@ -16,9 +19,11 @@
                   (return nil)))
         :finally (return t)))
 
-(defun completion-test (x y)
+(defun completion-test (x y &optional (ignore-case nil))
   (and (<= (length x) (length y))
-       (string= x y :end2 (length x))))
+       (if ignore-case
+           (string-equal x y :end2 (length x))
+           (string= x y :end2 (length x)))))
 
 (defun %comp-split (string separator)
   (let ((list nil) (words 0) (end (length string)))
@@ -57,10 +62,11 @@
 (defun completion-hypheen (name list &key key)
   (completion name list :test #'completion-test :separator "-" :key key))
 
-(defun completion-file (str directory)
+(defun completion-file (str directory &key (ignore-case *file-completion-ignore-case*))
   (setf str (expand-file-name str directory))
   (let* ((dirname (directory-namestring str))
-         (files (mapcar #'namestring (list-directory dirname))))
+         (files (mapcar #'namestring (list-directory dirname)))
+         (test-fn (alexandria:rcurry #'completion-test ignore-case)))
     (let ((strings
             (loop
               :for pathname :in (directory-files str)
@@ -68,7 +74,7 @@
               :append
                  (completion (enough-namestring str dirname)
                              files
-                             :test #'completion-test
+                             :test test-fn
                              :separator "-."
                              :key #'(lambda (path)
                                       (enough-namestring path dirname))))))

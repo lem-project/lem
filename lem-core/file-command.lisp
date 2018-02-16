@@ -96,5 +96,8 @@
 
 (define-command change-directory (directory)
     ((list (prompt-for-file "change directory: " (buffer-directory))))
-  (setf (buffer-directory) (expand-file-name directory (buffer-directory)))
+  (let ((directory (expand-file-name directory (buffer-directory))))
+    (setf (buffer-directory) directory)
+    (uiop:chdir directory)
+    (setf *default-pathname-defaults* (uiop:getcwd)))
   t)

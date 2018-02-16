@@ -197,7 +197,8 @@
 (define-command vi-replace-char (c)
     ((list (key-to-char (read-key))))
   (delete-next-char 1)
-  (insert-character (current-point) c))
+  (insert-character (current-point) c)
+  (backward-char 1))
 
 (defun forward-matching-paren (p &optional skip)
   (with-point ((p p))

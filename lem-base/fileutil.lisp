@@ -55,8 +55,10 @@
           (list pathspec))))
 
 (defun list-directory (directory)
-  (append (uiop:subdirectories directory)
-          (uiop:directory-files directory)))
+  (append (sort (copy-list (uiop:subdirectories directory))
+                #'string< :key #'namestring)
+          (sort (copy-list (uiop:directory-files directory))
+                #'string< :key #'namestring)))
 
 (defun file-size (pathname)
   #+lispworks

@@ -148,7 +148,11 @@
                         :foreground foreground :background background
                         :block t)
         (when underline
-          (gp:draw-line lem-pane x (+ y char-height) (+ x char-width) (+ y char-height)
+          (gp:draw-line lem-pane
+                        x
+                        (+ y char-height -4)
+                        (+ x (* char-width (length string)))
+                        (+ y char-height -4)
                         :foreground foreground))))))
 
 (defun draw-text (lem-pane string x y attribute)

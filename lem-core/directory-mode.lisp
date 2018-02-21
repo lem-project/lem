@@ -136,8 +136,8 @@
               (return (format nil "~D~C" (1+ (floor size val)) sign)))
         :finally (return (princ-to-string size))))
 
-(defun insert-pathname (point pathname directory)
-  (let ((name (namestring (enough-namestring pathname directory))))
+(defun insert-pathname (point pathname directory &optional content)
+  (let ((name (or content (namestring (enough-namestring pathname directory)))))
     (insert-string point "  " 'pathname pathname 'name name)
     (insert-string point (format nil " ~5@A "
                                  (let ((size (file-size pathname)))
@@ -167,6 +167,7 @@
       (erase-buffer buffer)
       (buffer-start p)
       (insert-string p (format nil "~A~2%" directory))
+      (insert-pathname p (probe-file (merge-pathnames "../" directory)) directory "..")
       (dolist (pathname (list-directory directory))
         (insert-pathname p pathname directory))
       (move-to-line p line-number))))

@@ -64,20 +64,24 @@
 
 (defun completion-file (str directory &key (ignore-case *file-completion-ignore-case*))
   (setf str (expand-file-name str directory))
-  (let* ((dirname (directory-namestring str))
-         (files (mapcar #'namestring (list-directory dirname)))
+  (let* ((input-directory
+           (let ((dir (directory-namestring str)))
+             (or (ignore-errors (probe-file dir)) dir)))
+         (input-pathname (merge-pathnames (enough-namestring str (directory-namestring str))
+                                          input-directory))
+         (files (mapcar #'namestring (list-directory input-directory)))
          (test-fn (alexandria:rcurry #'completion-test ignore-case)))
     (let ((strings
             (loop
-              :for pathname :in (directory-files str)
-              :for str := (namestring pathname)
+              :for pathname :in (directory-files input-pathname)
+              :for namestr := (namestring pathname)
               :append
-                 (completion (enough-namestring str dirname)
+                 (completion (enough-namestring namestr input-directory)
                              files
                              :test test-fn
                              :separator "-."
                              :key #'(lambda (path)
-                                      (enough-namestring path dirname))))))
+                                      (enough-namestring path input-directory))))))
       strings)))
 
 (defun completion-strings (str strings)

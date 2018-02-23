@@ -178,10 +178,11 @@
     (unless (syntax-space-char-p (character-at p -1))
       (insert-character p #\space))))
 
-(define-command vi-yank-line () ()
+(define-command vi-yank-line (&optional (n 1)) ("p")
   (with-point ((start (current-point))
                (end (current-point)))
     (line-start start)
+    (line-offset end (1- n))
     (line-end end)
     (copy-region start end)))
 

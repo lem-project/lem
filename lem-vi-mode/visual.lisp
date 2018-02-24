@@ -21,10 +21,11 @@
 (define-vi-state visual (:keymap *visual-keymap*
                          :post-command-hook 'post-command-hook)
   (:disable ()
+   (delete-point *start-point*)
    (clear-visual-overlays))
   (:enable (function)
    (setf *set-visual-function* function)
-   (setf *start-point* (copy-point (current-point) :temporary))))
+   (setf *start-point* (copy-point (current-point)))))
 
 (defun disable ()
   (clear-visual-overlays))

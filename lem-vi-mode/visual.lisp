@@ -94,7 +94,7 @@
        (eq *set-visual-function* 'visual-block)))
 
 (defun apply-visual-range (function)
-  (dolist (ov *visual-overlays*)
+  (dolist (ov (sort (copy-list *visual-overlays*) #'point< :key #'overlay-start))
     (funcall function
              (overlay-start ov)
              (overlay-end ov))))

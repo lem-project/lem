@@ -146,7 +146,12 @@
            (kill-line 1)
            (throw tag t))
           ((visual-p)
-           (apply-visual-range (lambda (start end) (kill-region start end))))
+           (with-output-to-string (out)
+             (apply-visual-range (lambda (start end)
+                                   (write-line (points-to-string start end) out)
+                                   (delete-between-points start end)))
+             (unless (continue-flag :kill) (kill-ring-new))
+             (kill-push (get-output-stream-string out))))
           (t
            (let ((command (lookup-keybind (read-key))))
              (when (symbolp command)

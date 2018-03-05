@@ -1092,8 +1092,12 @@
      (if column
          (line-offset point 0 column)
          (back-to-indentation point)))
-    ;; ((:function-name name)
-    ;;  )
+    ((:function-name name)
+     (buffer-start point)
+     (search-forward-regexp point (ppcre:create-scanner
+                                   (format nil "\\(def[\\w-]+\\s+\\(*~A[\\s()]" name)
+                                   :case-insensitive-mode t))
+     (line-start point))
     ;; ((:method name specializers &rest qualifiers)
     ;;  )
     ;; ((:source-path source-path start-position)

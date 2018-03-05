@@ -47,6 +47,8 @@
 
 (define-editor-variable truncate-lines t)
 
+(defparameter *window-left-margin* 1)
+
 (defvar *window-sufficient-width* 150)
 (defvar *scroll-recenter-p* t)
 (defvar *window-scroll-functions* '())
@@ -485,9 +487,9 @@
              (setf width max))))
     (let ((new-window
             (make-window (window-buffer window)
-                         (+ 1 (window-x window) width)
+                         (+ *window-left-margin* (window-x window) width)
                          (window-y window)
-                         (- (window-width window) width 1)
+                         (- (window-width window) width *window-left-margin*)
                          (window-height window)
                          t)))
       (setf (window-%width window) width)

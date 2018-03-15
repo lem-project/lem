@@ -1,4 +1,5 @@
 'use strict';
+const os = require('os');
 
 const MODIFIERS = ["Shift", "Control", "Alt", "Meta"];
 const CONVERT_TABLE = {
@@ -49,7 +50,9 @@ exports.convertKeyEvent = function (e) {
         return null;
     }
     key = CONVERT_TABLE[key] || key;
-    key = !e.shiftKey ? CODE_VALUE_TABLE[e.code][0] : CODE_VALUE_TABLE[e.code][1];
+    if (os.platform() == "darwin") {
+      key = !e.shiftKey ? CODE_VALUE_TABLE[e.code][0] : CODE_VALUE_TABLE[e.code][1];
+    }
     return {
         "key": key,
         "ctrl": e.ctrlKey,

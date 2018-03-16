@@ -1,5 +1,6 @@
 'use strict';
 const os = require('os');
+const KeyboardLayout = require('keyboard-layout');
 
 const MODIFIERS = ["Shift", "Control", "Alt", "Meta"];
 const CONVERT_TABLE = {
@@ -51,8 +52,9 @@ exports.convertKeyEvent = function (e) {
     }
     key = CONVERT_TABLE[key] || key;
     if (os.platform() == "darwin") {
+      var keyinfo = KeyboardLayout.getCurrentKeymap()[e.code];
       if (CODE_VALUE_TABLE.hasOwnProperty(e.code)) {
-        key = !e.shiftKey ? CODE_VALUE_TABLE[e.code][0] : CODE_VALUE_TABLE[e.code][1];
+        key = !e.shiftKey ? keyinfo["unmodified"] : keyinfo["withShift"];
       }
     }
     return {

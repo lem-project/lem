@@ -51,7 +51,9 @@ exports.convertKeyEvent = function (e) {
     }
     key = CONVERT_TABLE[key] || key;
     if (os.platform() == "darwin") {
-      key = !e.shiftKey ? CODE_VALUE_TABLE[e.code][0] : CODE_VALUE_TABLE[e.code][1];
+      if (CODE_VALUE_TABLE.hasOwnProperty(e.code)) {
+        key = !e.shiftKey ? CODE_VALUE_TABLE[e.code][0] : CODE_VALUE_TABLE[e.code][1];
+      }
     }
     return {
         "key": key,

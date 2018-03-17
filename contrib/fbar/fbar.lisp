@@ -116,7 +116,7 @@
 	    (lem::make-floating-window
 	     *fbar-buffer*
 	     0 0 *fbar-width*
-	     (1- (lem::interface-display-height *implementation*))  nil))
+	     (1- (display-height))  nil))
       
       (setf lem::*current-window* *fbar-window*)
       (setf (current-buffer) *fbar-buffer*)

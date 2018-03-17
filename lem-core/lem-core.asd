@@ -67,7 +67,6 @@
                (:file "gtags")
                (:file "directory-mode")
                (:file "abbrev")
-               (:file "less-mode")
                (:file "rectangle")
 
                (:file "color-theme")

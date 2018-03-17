@@ -30,6 +30,16 @@
    (buffer-start-point buffer)
    (buffer-end-point buffer)))
 
+(defun ask-revert-buffer ()
+  (when (changed-disk-p (current-buffer))
+    (cond ((eql (buffer-value (current-buffer) 'no-revert-buffer)
+                (file-write-date (buffer-filename))))
+          ((prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))
+           (revert-buffer t))
+          (t
+           (setf (buffer-value (current-buffer) 'no-revert-buffer)
+                 (file-write-date (buffer-filename)))))))
+
 (let ((once nil))
   (defun setup ()
     (unless once
@@ -61,7 +71,9 @@
                 5000)
       (add-hook *before-save-hook*
                 (lambda (buffer)
-                  (scan-file-property-list buffer))))))
+                  (scan-file-property-list buffer)))
+      (start-idle-timer 100 t
+                        'ask-revert-buffer))))
 
 (defstruct command-line-arguments
   args

@@ -75,7 +75,8 @@
 
 (defun current-syntax ()
   (or *current-syntax*
-      (buffer-syntax-table (current-buffer))))
+      (buffer-syntax-table (current-buffer))
+      *fundamental-syntax-table*))
 
 (defmacro with-current-syntax (syntax &body body)
   `(let ((*current-syntax* ,syntax))

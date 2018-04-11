@@ -756,7 +756,7 @@
             (variable-value 'lem.listener-mode:listener-check-input-function :buffer buffer)
             'repl-paren-correspond-p
             (variable-value 'lem.listener-mode:listener-execute-function :buffer buffer)
-            'repl-confirm))))
+            'repl-eval))))
 
 (defun repl-change-read-line-input ()
   (setf (variable-value 'lem.listener-mode:listener-get-prompt-function)
@@ -801,7 +801,7 @@
 (defvar *repl-temporary-file*
   (merge-pathnames "slime-repl.tmp" (uiop:temporary-directory)))
 
-(defun repl-confirm (point string)
+(defun repl-eval (point string)
   (declare (ignore point))
   (check-connection)
   (cond

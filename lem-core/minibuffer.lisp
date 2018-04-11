@@ -17,7 +17,7 @@
           prompt-for-character
           active-minibuffer-window
           check-switch-minibuffer-window
-          minibuffer-read-line-confirm
+          minibuffer-read-line-execute
           minibuffer-read-line-completion
           minibuffer-read-line-prev-history
           minibuffer-read-line-next-history
@@ -147,8 +147,8 @@
         ((char= #\n c)
          (return nil))))))
 
-(define-key *minibuf-keymap* "C-j" 'minibuffer-read-line-confirm)
-(define-key *minibuf-keymap* "C-m" 'minibuffer-read-line-confirm)
+(define-key *minibuf-keymap* "C-j" 'minibuffer-read-line-execute)
+(define-key *minibuf-keymap* "C-m" 'minibuffer-read-line-execute)
 (define-key *minibuf-keymap* "C-i" 'minibuffer-read-line-completion)
 (define-key *minibuf-keymap* "M-p" 'minibuffer-read-line-prev-history)
 (define-key *minibuf-keymap* "M-n" 'minibuffer-read-line-next-history)
@@ -187,7 +187,7 @@
   (delete-between-points (minibuffer-start-point)
                          (buffer-end-point (minibuffer))))
 
-(define-command minibuffer-read-line-confirm () ()
+(define-command minibuffer-read-line-execute () ()
   (let ((str (get-minibuffer-string)))
     (when (or (string= str "")
               (null *minibuf-read-line-existing-p*)

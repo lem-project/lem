@@ -10,7 +10,7 @@
 
 (define-vi-state ex (:keymap *ex-keymap*))
 
-(define-key *ex-keymap* "C-m" 'minibuffer-read-line-confirm)
+(define-key *ex-keymap* "C-m" 'minibuffer-read-line-execute)
 (define-key *ex-keymap* "C-i" 'ex-complete)
 
 (define-command ex-complete () ()

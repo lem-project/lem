@@ -11,8 +11,8 @@
            :listener-next-input
            :listener-reset-interactive
            :listener-get-prompt-function
-           :listener-check-confirm-function
-           :listener-confirm-function
+           :listener-check-input-function
+           :listener-execute-function
            :clear-listener))
 (in-package :lem.listener-mode)
 
@@ -29,8 +29,8 @@
   `(buffer-value (current-buffer) %listener-history-indicator))
 
 (define-editor-variable listener-get-prompt-function)
-(define-editor-variable listener-check-confirm-function)
-(define-editor-variable listener-confirm-function)
+(define-editor-variable listener-check-input-function)
+(define-editor-variable listener-execute-function)
 
 (define-minor-mode listener-mode
     (:name "listener"
@@ -83,7 +83,7 @@
 
 (define-command listener-return () ()
   (with-point ((point (buffer-end (current-point)) :left-inserting))
-    (if (not (funcall (variable-value 'listener-check-confirm-function) point))
+    (if (not (funcall (variable-value 'listener-check-input-function) point))
         (insert-character point #\newline)
         (let ((start (listener-start-point (current-buffer))))
           (unless (point<= start point)
@@ -94,7 +94,7 @@
             (buffer-end point)
             (insert-character point #\newline)
             (listener-update-point)
-            (funcall (variable-value 'listener-confirm-function) point str)))))
+            (funcall (variable-value 'listener-execute-function) point str)))))
   t)
 
 (defun replace-textarea (str)

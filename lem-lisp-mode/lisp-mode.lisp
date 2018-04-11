@@ -753,17 +753,17 @@
     (when buffer
       (setf (variable-value 'lem.listener-mode:listener-get-prompt-function :buffer buffer)
             'repl-get-prompt
-            (variable-value 'lem.listener-mode:listener-check-confirm-function :buffer buffer)
+            (variable-value 'lem.listener-mode:listener-check-input-function :buffer buffer)
             'repl-paren-correspond-p
-            (variable-value 'lem.listener-mode:listener-confirm-function :buffer buffer)
+            (variable-value 'lem.listener-mode:listener-execute-function :buffer buffer)
             'repl-confirm))))
 
 (defun repl-change-read-line-input ()
   (setf (variable-value 'lem.listener-mode:listener-get-prompt-function)
         (constantly "")
-        (variable-value 'lem.listener-mode:listener-check-confirm-function)
+        (variable-value 'lem.listener-mode:listener-check-input-function)
         (constantly t)
-        (variable-value 'lem.listener-mode:listener-confirm-function)
+        (variable-value 'lem.listener-mode:listener-execute-function)
         'repl-read-line))
 
 (defun clear-repl ()

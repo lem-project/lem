@@ -5,4 +5,5 @@
                "lem-lisp-mode"
                "lem-go-mode"
                "lem-c-mode"
-               "lem-xml-mode"))
+               "lem-xml-mode"
+               "lem-python-mode"))

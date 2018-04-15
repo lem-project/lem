@@ -174,7 +174,7 @@
   (t :foreground "red" :underline-p t))
 
 (define-attribute balloon-attribute
-  (:light :background "#dddd30" :foreground "blue")
+  (:light :background "gray" :foreground "black")
   (:dark :background "white" :foreground "blue"))
 
 (define-attribute syntax-warning-attribute

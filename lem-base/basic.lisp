@@ -1,41 +1,81 @@
 (in-package :lem-base)
 
+(export '(first-line-p
+          last-line-p
+          start-line-p
+          end-line-p
+          start-buffer-p
+          end-buffer-p
+          same-line-p
+          move-point
+          line-start
+          line-end
+          buffer-start
+          buffer-end
+          line-offset
+          character-offset
+          character-at
+          line-string
+          text-property-at
+          put-text-property
+          remove-text-property
+          next-single-property-change
+          previous-single-property-change
+          insert-character
+          insert-string
+          delete-character
+          erase-buffer
+          region-beginning
+          region-end
+          map-region
+          points-to-string
+          count-characters
+          delete-between-points
+          count-lines
+          apply-region-lines
+          line-number-at-point
+          point-column
+          move-to-column
+          position-at-point
+          move-to-position
+          point-bytes
+          move-to-line
+          check-marked
+          set-current-mark
+          blank-line-p
+          skip-chars-forward
+          skip-chars-backward
+          insert-buffer))
+
 (annot:enable-annot-syntax)
 
-@export
 (defun first-line-p (point)
   @lang(:jp "`point`が最初の行ならT、それ以外ならNILを返します。")
   (null (line-prev (point-line point))))
 
-@export
 (defun last-line-p (point)
   @lang(:jp "`point`が最後の行ならT、それ以外ならNILを返します。")
   (null (line-next (point-line point))))
 
-@export
 (defun start-line-p (point)
   @lang(:jp "`point`が行頭ならT、それ以外ならNILを返します。")
   (zerop (point-charpos point)))
 
-@export
 (defun end-line-p (point)
   @lang(:jp "`point`が行末ならT、それ以外ならNILを返します。")
   (= (point-charpos point)
      (line-length (point-line point))))
 
-@export
 (defun start-buffer-p (point)
   @lang(:jp "`point`がバッファの最初の位置ならT、それ以外ならNILを返します。")
   (and (first-line-p point)
        (start-line-p point)))
 
-@export
 (defun end-buffer-p (point)
   @lang(:jp "`point`がバッファの最後の位置ならT、それ以外ならNILを返します。")
   (and (last-line-p point)
        (end-line-p point)))
 
-@export
 (defun same-line-p (point1 point2)
   @lang(:jp "`point1`と`point2`が同じ位置ならT、それ以外ならNILを返します。")
   (assert (eq (point-buffer point1)
@@ -50,7 +90,6 @@
     (setf (point-charpos point) (min (line-length line) charpos)))
   point)
 
-@export
 (defun move-point (point new-point)
   @lang(:jp "`point`を`new-point`の位置に移動します。")
   (%move-to-position point
@@ -58,30 +97,25 @@
                      (point-line new-point)
                      (point-charpos new-point)))
 
-@export
 (defun line-start (point)
   @lang(:jp "`point`を行頭に移動します。")
   (setf (point-charpos point) 0)
   point)
 
-@export
 (defun line-end (point)
   @lang(:jp "`point`を行末に移動します。")
   (setf (point-charpos point)
         (line-length (point-line point)))
   point)
 
-@export
 (defun buffer-start (point)
   @lang(:jp "`point`をバッファの最初の位置に移動します。")
   (move-point point (buffer-start-point (point-buffer point))))
 
-@export
 (defun buffer-end (point)
   @lang(:jp "`point`をバッファの最後の位置に移動します。")
   (move-point point (buffer-end-point (point-buffer point))))
 
-@export
 (defun line-offset (point n &optional (charpos 0))
   @lang(:jp "`point`を`n`が正の数なら下に、負の数なら上に行を移動し、移動後の`point`を返します。
 `n`行先に行が無ければ`point`の位置はそのままでNILを返します。
@@ -134,7 +168,6 @@
              (return (funcall fn linum line (- charpos n))))
            (decf n (1+ charpos))))))
 
-@export
 (defun character-offset (point n)
   @lang(:jp "`point`を`n`が正の数なら後に、負の数なら前に移動し、移動後の`point`を返します。
 `n`文字先がバッファの範囲外なら`point`の位置はそのままでNILを返します。")
@@ -145,7 +178,6 @@
                      (lambda ()
                        point)))
 
-@export
 (defun character-at (point &optional (offset 0))
   @lang(:jp "`point`から`offset`ずらした位置の文字を返します。
 バッファの範囲外ならNILを返します。")
@@ -157,12 +189,10 @@
                        (line-char (point-line point)
                                   (point-charpos point)))))
 
-@export
 (defun line-string (point)
   @lang(:jp "`point`の行の文字列を返します。")
   (line-str (point-line point)))
 
-@export
 (defun text-property-at (point prop &optional (offset 0))
   @lang(:jp "`point`から`offset`ずらした位置の`prop`のプロパティを返します。")
   (%character-offset point offset
@@ -174,7 +204,6 @@
                                              prop
                                              (point-charpos point)))))
 
-@export
 (defun put-text-property (start-point end-point prop value)
   @lang(:jp "`start-point`から`end-point`の間のテキストプロパティ`prop`を`value`にします。")
   (assert (eq (point-buffer start-point)
@@ -190,7 +219,6 @@
                                     value
                                     (null end)))))
 
-@export
 (defun remove-text-property (start-point end-point prop)
   @lang(:jp "`start-point`から`end-point`までのテキストプロパティ`prop`を削除します。")
   (assert (eq (point-buffer start-point)
@@ -204,11 +232,6 @@
                                            end)
                                        prop))))
 
-;; 下の二つの関数next-single-property-change, previous-single-property-changeは
-;; 効率がとても悪いので時が来たら書き直す
-
-
-@export
 (defun next-single-property-change (point prop &optional limit-point)
   @lang(:jp "`point`からテキストプロパティ`prop`の値が異なる位置まで後の方向に移動し、
 移動後の`point`を返します。  
@@ -223,7 +246,6 @@
         (when (and limit-point (point<= limit-point curr))
           (return nil))))))
 
-@export
 (defun previous-single-property-change (point prop &optional limit-point)
   @lang(:jp "`point`からテキストプロパティ`prop`の値が異なる位置まで前の方向に移動し、
 移動後の`point`を返します。  
@@ -238,13 +260,11 @@
         (when (and limit-point (point> limit-point curr))
           (return nil))))))
 
-@export
 (defun insert-character (point char &optional (n 1))
   @lang(:jp "`point`に文字`char`を`n`回挿入します。")
   (loop :repeat n :do (insert-char/point point char))
   t)
 
-@export
 (defun insert-string (point string &rest plist)
   @lang(:jp "`point`に文字列`string`を挿入します。  
 `plist`を指定すると`string`を挿入した範囲にテキストプロパティを設定します。")
@@ -258,7 +278,6 @@
                 :do (put-text-property start-point end-point k v)))))
   t)
 
-@export
 (defun delete-character (point &optional (n 1))
   @lang(:jp "`point`から`n`個文字を削除し、削除した文字列を返します。 
 `n`個の文字を削除する前にバッファの末尾に達した場合はNILを返します。")
@@ -270,7 +289,6 @@
     (let ((string (delete-char/point point n)))
       string)))
 
-@export
 (defun erase-buffer (&optional (buffer (current-buffer)))
   @lang(:jp "`buffer`のテキストをすべて削除します。")
   (buffer-start (buffer-point buffer))
@@ -278,7 +296,6 @@
                      (count-characters (buffer-start-point buffer)
                                        (buffer-end-point buffer))))
 
-@export
 (defun region-beginning (&optional (buffer (current-buffer)))
   @lang(:jp "`buffer`内のリージョンの始まりの位置の`point`を返します。")
   (let ((start (buffer-point buffer))
@@ -287,7 +304,6 @@
         start
         end)))
 
-@export
 (defun region-end (&optional (buffer (current-buffer)))
   @lang(:jp "`buffer`内のリージョンの終わりの位置の`point`を返します。")
   (let ((start (buffer-point buffer))
@@ -315,7 +331,6 @@
           :until lastp))
   (values))
 
-@export
 (defun map-region (start end function)
   (%map-region start end
                (lambda (line start end)
@@ -323,7 +338,6 @@
                           (subseq (line-str line) start end)
                           (not (null end))))))
 
-@export
 (defun points-to-string (start-point end-point)
   @lang(:jp "`start-point`から`end-point`までの範囲の文字列を返します。")
   (assert (eq (point-buffer start-point)
@@ -335,7 +349,6 @@
                   (unless lastp
                     (write-char #\newline out))))))
 
-@export
 (defun count-characters (start-point end-point)
   @lang(:jp "`start-point`から`end-point`までの文字列の長さを返します。")
   (let ((count 0))
@@ -347,7 +360,6 @@
                     (incf count))))
     count))
 
-@export
 (defun delete-between-points (start-point end-point)
   @lang(:jp "`start-point`から`end-point`までの範囲を削除し、削除した文字列を返します。")
   (assert (eq (point-buffer start-point)
@@ -357,7 +369,6 @@
   (delete-char/point start-point
                      (count-characters start-point end-point)))
 
-@export
 (defun count-lines (start-point end-point)
   @lang(:jp "`start-point`から`end-point`までの行数を返します。")
   (assert (eq (point-buffer start-point)
@@ -365,7 +376,6 @@
   (abs (- (point-linum start-point)
           (point-linum end-point))))
 
-@export
 (defun apply-region-lines (start-point end-point function)
   @lang(:jp "`start-point`から`end-point`の各行に対して
 ポイントを引数に取る`function`を適用します。")
@@ -379,12 +389,10 @@
               (unless (line-offset start-point 1)
                 (return)))))
 
-@export
 (defun line-number-at-point (point)
   @lang(:jp "`point`の行番号を返します。")
   (point-linum point))
 
-@export
 (defun point-column (point)
   @lang(:jp "`point`の行頭からの列幅を返します。")
   (let ((*tab-size* (variable-value 'tab-width :default point)))
@@ -392,7 +400,6 @@
                   0
                   (point-charpos point))))
 
-@export
 (defun move-to-column (point column &optional force)
   @lang(:jp "`point`を行頭から列幅`column`まで移動し、移動後の`point`を返します。
 `force`が非NILの場合は、行の長さが`column`より少なければ空白を挿入して移動し、
@@ -410,7 +417,6 @@
           (t
            (line-end point)))))
 
-@export
 (defun position-at-point (point)
   @lang(:jp "`point`のバッファの先頭からの1始まりのオフセットを返します。")
   (let ((offset (point-charpos point)))
@@ -418,7 +424,6 @@
         ((null line) (1+ offset))
       (incf offset (1+ (line-length line))))))
 
-@export
 (defun move-to-position (point position)
   @lang(:jp "`point`をバッファの先頭からの1始まりのオフセット`position`に移動してその位置を返します。
 `position`がバッファの範囲外なら`point`は移動せず、NILを返します。")
@@ -430,7 +435,6 @@
           (line-offset point 0 charpos)
           nil))))
 
-@export
 (defun point-bytes (point)
   (with-point ((point point))
     (let ((nbytes 0))
@@ -442,7 +446,6 @@
         (incf nbytes (1+ (babel:string-size-in-octets (line-string point)))))
       nbytes)))
 
-@export
 (defun move-to-line (point line-number)
   @lang(:jp "`point`を行番号`line-number`に移動し、移動後の位置を返します。
 `line-number`がバッファの範囲外なら`point`は移動せず、NILを返します。")
@@ -462,12 +465,10 @@
                (line-offset point (- line-number cur-linum))
                (line-offset (buffer-end point) (- line-number nlines)))))))
 
-@export
 (defun check-marked ()
   (unless (buffer-mark (current-buffer))
     (editor-error "Not mark in this buffer")))
 
-@export
 (defun set-current-mark (point)
   @lang(:jp "`point`を現在のマークに設定します。")
   (let ((buffer (point-buffer point)))
@@ -479,7 +480,6 @@
                  (copy-point point :right-inserting)))))
   point)
 
-@export
 (defun blank-line-p (point)
   (let ((string (line-string point))
         (eof-p (last-line-p point))
@@ -504,7 +504,6 @@
             (unless (character-offset point (if dir 1 -1))
               (return count))))
 
-@export
 (defun skip-chars-forward (point test)
   @lang(:jp "`point`からその位置の文字を`test`で評価して非NILの間、後の方向に移動します。  
 `test`が文字のリストならその位置の文字が`test`のリスト内に含まれるか  
@@ -512,7 +511,6 @@
 ")
   (skip-chars-internal point test t))
 
-@export
 (defun skip-chars-backward (point test)
   @lang(:jp "`point`からその位置の前の文字を`test`で評価して非NILの間、前の方向に移動します。  
 `test`が文字のリストならその位置の前の文字が`test`のリスト内に含まれるか  
@@ -533,7 +531,6 @@
         (set-current-mark mark)
         (delete-point mark)))))
 
-@export
 (defun insert-buffer (point buffer)
   (loop :for line := (point-line (buffer-start-point buffer)) :then (line-next line)
         :while line

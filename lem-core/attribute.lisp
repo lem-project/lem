@@ -156,7 +156,8 @@
                                                     (make-attribute ,@args))))))))))))
 
 (define-attribute cursor
-  (t :reverse-p t))
+  (:light :foreground "white" :background "black")
+  (:dark :foreground "black" :background "white"))
 
 (define-attribute region
   (:light :foreground nil :background "#eedc82")

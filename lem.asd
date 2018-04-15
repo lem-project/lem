@@ -6,3 +6,9 @@
                "lem-go-mode"
                "lem-c-mode"
                "lem-xml-mode"))
+
+(defsystem "lem/executable"
+  :build-operation program-op
+  :build-pathname "lem"
+  :entry-point "lem:lem"
+  :depends-on ("lem-ncurses"))

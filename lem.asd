@@ -10,5 +10,5 @@
 (defsystem "lem/executable"
   :build-operation program-op
   :build-pathname "lem"
-  :entry-point "lem:lem"
+  :entry-point "lem:main"
   :depends-on ("lem-ncurses"))

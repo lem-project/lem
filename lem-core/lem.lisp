@@ -3,7 +3,8 @@
 (export '(*before-init-hook*
           *after-init-hook*
           *splash-function*
-          lem))
+          lem
+          main))
 
 (defvar *before-init-hook* '())
 (defvar *after-init-hook* '())
@@ -143,3 +144,6 @@
       (invoke-frontend
        (lambda (&optional initialize finalize)
          (run-editor-thread initialize args finalize)))))
+
+(defun main (&optional (args (uiop:command-line-arguments)))
+  (apply #'lem args))

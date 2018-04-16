@@ -13,12 +13,18 @@
         `(:sequence ,boundary ,alternation ,boundary)
         alternation)))
 
+(defun make-tm-string-region (sepalator)
+  (make-tm-region `(:sequence ,sepalator)
+                  `(:sequence ,sepalator)
+                  :name 'syntax-string-attribute
+                  :patterns (make-tm-patterns (make-tm-match "\\\\."))))
+
 #| link : https://docs.python.org/3/reference/lexical_analysis.html |#
 (defun make-tmlanguage-python ()
   (let* ((patterns (make-tm-patterns
                     (make-tm-region "#" "$" :name 'syntax-comment-attribute)
                     (make-tm-match (tokens :word-boundary
-                                           '("False" "None" "True" "and" "as"
+                                           '("and" "as"
                                              "assert" "break" "class" "continue" "def"
                                              "del" "elif" "else" "except" "finally"
                                              "for" "from" "global" "if" "import"
@@ -26,15 +32,13 @@
                                              "or" "pass" "raise" "return" "try"
                                              "while" "with" "yield"))
                                    :name 'syntax-keyword-attribute)
-                    (make-tm-region '(:sequence "\"")
-                                    '(:sequence "\"")
-                                    :name 'syntax-string-attribute
-                                    :patterns (make-tm-patterns (make-tm-match "\\\\.")))
-                    (make-tm-region '(:sequence "'")
-                                    '(:sequence "'")
-                                    :name 'syntax-string-attribute
-                                    :patterns (make-tm-patterns (make-tm-match "\\\\.")))
-                    (make-tm-match "[0-9]+" :name 'syntax-constant-attribute)
+                    (make-tm-match (tokens :word-boundary
+                                           '("False" "None" "True"))
+                                   :name 'syntax-constant-attribute)
+                    (make-tm-string-region "\"")
+                    (make-tm-string-region "'")
+                    (make-tm-match "\\b(([1-9](_?[0-9])*)|(0(_?0)*)|(0(b|B)(_?[01])+)|(0(o|O)(_?[0-7])+)|(0(x|X)(_?[0-9a-fA-F])+))\\b"
+                                   :name 'syntax-constant-attribute)
                     (make-tm-match (tokens nil '("+" "-" "*" "**" "/" "//" "%" "@"
                                                  "<<" ">>" "&" "|" "^" "~"
                                                  "<" ">" "<=" ">=" "==" "!="))

@@ -61,7 +61,18 @@
     (:name "python"
      :keymap *python-mode-keymap*
      :syntax-table *python-syntax-table*)
-  (setf (variable-value 'enable-syntax-highlight) t)
+  (setf (variable-value 'enable-syntax-highlight) t
+        (variable-value 'indent-tabs-mode) nil
+        (variable-value 'tab-width) 4
+        (variable-value 'calc-indent-function) 'python-calc-indent
+        (variable-value 'line-comment) "#")
   (run-hooks *python-mode-hook*))
+
+#| link : https://www.python.org/dev/peps/pep-0008/ |#
+(defun python-calc-indent (point)
+  (with-point ((point point))
+    (let ((tab-width (variable-value 'tab-width :default point))
+          (column (point-column point)))
+      (+ column (- tab-width (rem column tab-width))))))
 
 (pushnew (cons "\\.py$" 'python-mode) *auto-mode-alist* :test #'equal)

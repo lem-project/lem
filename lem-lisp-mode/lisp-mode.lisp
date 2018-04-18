@@ -924,7 +924,10 @@
   (message "Connecting...")
   (let (connection)
     (handler-case (setf connection
-                        (new-connection hostname port))
+                        (if (eq hostname *localhost*)
+                            (or (ignore-errors (new-connection "127.0.0.1" port))
+                                (new-connection "localhost" port))
+                            (new-connection hostname port)))
       (error (c)
         (editor-error "~A" c)))
     (message "Swank server running on ~A ~A"

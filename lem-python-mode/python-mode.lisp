@@ -65,6 +65,8 @@
                                (#\{ . #\})
                                (#\[ . #\]))
                 :string-quote-chars '(#\" #\')
+                :block-string-pairs '(("\"\"\"" . "\"\"\"")
+                                      ("'''" . "'''"))
                 :line-comment-string "#"))
         (tmlanguage (make-tmlanguage-python)))
     (set-syntax-parser table tmlanguage)

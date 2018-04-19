@@ -129,7 +129,8 @@
    (lambda ()
      (when initialize (funcall initialize))
      (unwind-protect
-         (let (#+lispworks (lw:*default-character-element-type* 'character))
+         (let (#+lispworks (lw:*default-character-element-type* 'character)
+               (*standard-output* (make-editor-output-stream)))
            (setf *in-the-editor* t)
            (setup)
            (let ((report (toplevel-command-loop (lambda () (init args)))))

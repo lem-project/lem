@@ -19,9 +19,19 @@
                   :name 'syntax-string-attribute
                   :patterns (make-tm-patterns (make-tm-match "\\\\."))))
 
+(defun floating-point-literals ()
+  (let* ((digitpart "([0-9](_?[0-9])*)")
+         (fraction (format nil "\\.(~a)" digitpart))
+         (exponent (format nil "((e|E)(\\+|\\-)?(~a))" digitpart))
+         (pointfloat (format nil "(((~a)?(~a))|((~a)\\.))" digitpart fraction digitpart))
+         (exponentfloat (format nil "(((~a)|(~a))(~a))" digitpart pointfloat exponent)))
+    (format nil "(\\b((~a)|(~a))\\b)|((~a)|(~a))" pointfloat exponentfloat pointfloat exponentfloat)))
+
 #| link : https://docs.python.org/3/reference/lexical_analysis.html |#
 (defun make-tmlanguage-python ()
-  (let* ((patterns (make-tm-patterns
+  (let* ((integer-literals "\\b(([1-9](_?[0-9])*)|(0(_?0)*)|(0(b|B)(_?[01])+)|(0(o|O)(_?[0-7])+)|(0(x|X)(_?[0-9a-fA-F])+))\\b")
+         (floating-point-literals (floating-point-literals))
+         (patterns (make-tm-patterns
                     (make-tm-region "#" "$" :name 'syntax-comment-attribute)
                     (make-tm-match (tokens :word-boundary
                                            '("and" "as"
@@ -37,8 +47,11 @@
                                    :name 'syntax-constant-attribute)
                     (make-tm-string-region "\"")
                     (make-tm-string-region "'")
-                    (make-tm-match "\\b(([1-9](_?[0-9])*)|(0(_?0)*)|(0(b|B)(_?[01])+)|(0(o|O)(_?[0-7])+)|(0(x|X)(_?[0-9a-fA-F])+))\\b"
+                    (make-tm-match integer-literals
                                    :name 'syntax-constant-attribute)
+                    (make-tm-match floating-point-literals
+                                   :name 'syntax-constant-attribute)
+                    #+nil
                     (make-tm-match (tokens nil '("+" "-" "*" "**" "/" "//" "%" "@"
                                                  "<<" ">>" "&" "|" "^" "~"
                                                  "<" ">" "<=" ">=" "==" "!="))
@@ -76,3 +89,4 @@
       (+ column (- tab-width (rem column tab-width))))))
 
 (pushnew (cons "\\.py$" 'python-mode) *auto-mode-alist* :test #'equal)
+(pushnew (cons "wscript" 'python-mode) *auto-mode-alist* :test #'equal)

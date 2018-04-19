@@ -156,7 +156,8 @@
                                                     (make-attribute ,@args))))))))))))
 
 (define-attribute cursor
-  (t :reverse-p t))
+  (:light :foreground "white" :background "black")
+  (:dark :foreground "black" :background "white"))
 
 (define-attribute region
   (:light :foreground nil :background "#eedc82")
@@ -174,7 +175,7 @@
   (t :foreground "red" :underline-p t))
 
 (define-attribute balloon-attribute
-  (:light :background "#dddd30" :foreground "blue")
+  (:light :background "gray" :foreground "black")
   (:dark :background "white" :foreground "blue"))
 
 (define-attribute syntax-warning-attribute

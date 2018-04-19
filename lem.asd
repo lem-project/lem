@@ -7,3 +7,9 @@
                "lem-c-mode"
                "lem-xml-mode"
                "lem-python-mode"))
+
+(defsystem "lem/executable"
+  :build-operation program-op
+  :build-pathname "lem"
+  :entry-point "lem:main"
+  :depends-on ("lem-ncurses"))

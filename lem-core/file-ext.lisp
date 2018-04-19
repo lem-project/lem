@@ -34,7 +34,7 @@
   (loop :with i := 0
         :do (multiple-value-bind (pos var val)
                 (scan-var/val str i)
-              (unless pos (return)) 
+              (unless pos (return))
               (set-file-property buffer var val)
               (setf i pos))))
 
@@ -62,10 +62,14 @@
     (when elt
       (change-buffer-mode buffer (cdr elt)))))
 
-#-lispworks
 (defun detect-external-format-from-file (pathname)
-  (values (inq:detect-encoding (pathname pathname) :jp)
+  (values (let ((encoding (inq:detect-encoding (pathname pathname) :jp)))
+            #+lispworks
+            (if (eq encoding :cp932)
+                :shift-jis
+                encoding)
+            #-lispworks
+            encoding)
           (or (inq:detect-end-of-line (pathname pathname)) :lf)))
 
-#-lispworks
 (setf *external-format-function* 'detect-external-format-from-file)

@@ -4,7 +4,7 @@
                "swank"
                "trivial-gray-streams"
                "cl-ppcre"
-               #-lispworks "inquisitor"
+               "inquisitor"
                "babel"
                "bordeaux-threads"
                "trivial-clipboard"

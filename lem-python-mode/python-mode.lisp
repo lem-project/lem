@@ -80,7 +80,9 @@
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 4
         (variable-value 'calc-indent-function) 'python-calc-indent
-        (variable-value 'line-comment) "#")
+        (variable-value 'line-comment) "#"
+        (variable-value 'beginning-of-defun-function) 'beginning-of-defun
+        (variable-value 'end-of-defun-function) 'end-of-defun)
   (run-hooks *python-mode-hook*))
 
 #| link : https://www.python.org/dev/peps/pep-0008/ |#
@@ -89,6 +91,17 @@
     (let ((tab-width (variable-value 'tab-width :default point))
           (column (point-column point)))
       (+ column (- tab-width (rem column tab-width))))))
+
+(defun beginning-of-defun (point n)
+  (loop :repeat n :do (search-backward-regexp point "^\\w")))
+
+(defun end-of-defun (point n)
+  (with-point ((p point))
+    (loop :repeat n
+          :do (line-offset p 1)
+              (unless (search-forward-regexp p "^\\w") (return)))
+    (line-start p)
+    (move-point point p)))
 
 (pushnew (cons "\\.py$" 'python-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons "wscript" 'python-mode) *auto-mode-alist* :test #'equal)

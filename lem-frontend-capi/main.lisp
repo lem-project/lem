@@ -144,11 +144,11 @@
     (when (and (not (floating-window-p (view-window view)))
                (< 0 (view-x view)))
       (draw-rectangle *lem-pane*
-                      (1- (view-x view))
+                      (view-x view)
                       (view-y view)
-                      1
+                      0.1
                       (1+ (view-height view))
-                      :gray))))
+                      :black))))
 
 (defmethod lem::interface-update-display ((implementation capi-impl))
   (dbg "update-display"))
@@ -156,3 +156,5 @@
 ;(defmethod lem::interface-scroll ((implementation capi-impl) view n)
 ;  )
 (pushnew :lem-capi *features*)
+
+(setf lem::*window-left-margin* 0)

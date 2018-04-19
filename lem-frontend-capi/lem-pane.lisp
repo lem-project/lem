@@ -11,7 +11,7 @@
    :change-background))
 (in-package :lem-capi.lem-pane)
 
-(defvar *default-font-family* #+win32 "Consolas" #-win32 "Monospace")
+(defvar *default-font-family* #+win32 "Consolas" #-win32 "DejaVu Sans Mono")
 (defvar *default-font-size* 11)
 
 (defvar *default-font*

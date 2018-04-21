@@ -47,6 +47,8 @@
                                    :name 'syntax-constant-attribute)
                     (make-tm-string-region "\"")
                     (make-tm-string-region "'")
+                    (make-tm-string-region "\"\"\"")
+                    (make-tm-string-region "'''")
                     (make-tm-match integer-literals
                                    :name 'syntax-constant-attribute)
                     (make-tm-match floating-point-literals

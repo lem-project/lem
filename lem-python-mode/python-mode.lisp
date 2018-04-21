@@ -25,7 +25,7 @@
          (exponent (format nil "((e|E)(\\+|\\-)?(~a))" digitpart))
          (pointfloat (format nil "(((~a)?(~a))|((~a)\\.))" digitpart fraction digitpart))
          (exponentfloat (format nil "(((~a)|(~a))(~a))" digitpart pointfloat exponent)))
-    (format nil "(\\b((~a)|(~a))\\b)|((~a)|(~a))" pointfloat exponentfloat pointfloat exponentfloat)))
+    (format nil "\\b((~a)|(~a))\\b" pointfloat exponentfloat)))
 
 #| link : https://docs.python.org/3/reference/lexical_analysis.html |#
 (defun make-tmlanguage-python ()

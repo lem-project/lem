@@ -6,7 +6,8 @@
                "lem-go-mode"
                "lem-c-mode"
                "lem-xml-mode"
-               "lem-python-mode"))
+               "lem-python-mode"
+               "lem-posix-shell-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

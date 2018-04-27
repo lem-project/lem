@@ -34,8 +34,17 @@
     (:name "Markdown"
      :keymap *markdown-mode-keymap*
      :syntax-table *markdown-syntax-table*)
-  (setf (variable-value 'enable-syntax-highlight) t)
+  (setf (variable-value 'enable-syntax-highlight) t
+        (variable-value 'indent-tabs-mode) nil
+        (variable-value 'tab-width) 4
+        (variable-value 'calc-indent-function) 'markdown-calc-indent)
   (run-hooks *markdown-mode-hook*))
+
+(defun markdown-calc-indent (point)
+  (with-point ((point point))
+    (let ((tab-width (variable-value 'tab-width :default point))
+          (column (point-column point)))
+      (+ column (- tab-width (rem column tab-width))))))
 
 (dolist (s '("\\.md$" "\\.markdown$"))
   (pushnew (cons s 'markdown-mode) *auto-mode-alist*))

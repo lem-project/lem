@@ -2,6 +2,7 @@
   (:use :cl :lem)
   (:export :run-process
            :delete-process
+           :process-alive-p
            :process-send-input))
 (in-package :lem-process)
 
@@ -32,6 +33,9 @@
 (defun delete-process (process)
   (bt:destroy-thread (process-read-thread process))
   (async-process:delete-process (process-pointer process)))
+
+(defun process-alive-p (process)
+  (async-process:process-alive-p (process-pointer process)))
 
 (defun process-send-input (process string)
   (async-process:process-send-input (process-pointer process) string))

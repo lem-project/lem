@@ -12,18 +12,19 @@
   read-thread)
 
 (defun run-process (program args &key name buffer)
-  (let* ((buffer (get-buffer buffer))
-         (pointer (async-process:create-process (cons program args) :nonblock nil))
-         (thread (bt:make-thread
-                  (lambda ()
-                    (loop
-                      (alexandria:when-let
-                          (string (async-process:process-receive-output pointer))
-                        (send-event `(write-to-buffer ,buffer ,string))))))))
-    (make-process :pointer pointer
-                  :name name
-                  :buffer buffer
-                  :read-thread thread)))
+  (let ((buffer (get-buffer buffer)))
+    (assert (not (null buffer)))
+    (let* ((pointer (async-process:create-process (cons program args) :nonblock nil))
+           (thread (bt:make-thread
+                    (lambda ()
+                      (loop
+                        (alexandria:when-let
+                            (string (async-process:process-receive-output pointer))
+                          (send-event `(write-to-buffer ,buffer ,string))))))))
+      (make-process :pointer pointer
+                    :name name
+                    :buffer buffer
+                    :read-thread thread))))
 
 (defun write-to-buffer (buffer string)
   (insert-string (buffer-end-point buffer) string))

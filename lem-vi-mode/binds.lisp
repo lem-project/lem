@@ -37,7 +37,7 @@
 (define-key *command-keymap* "d" 'vi-delete)
 (define-key *command-keymap* "D" 'vi-delete-line)
 (define-key *command-keymap* "J" 'vi-join-line)
-(define-key *command-keymap* "y y" 'vi-yank-line)
+(define-key *command-keymap* "y" 'vi-yank)
 (define-key *command-keymap* "p" 'vi-paste-after)
 (define-key *command-keymap* "P" 'vi-paste-before)
 (define-key *command-keymap* "r" 'vi-replace-char)

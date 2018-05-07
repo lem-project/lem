@@ -25,6 +25,7 @@
            :vi-delete
            :vi-delete-line
            :vi-join-line
+           :vi-yank
            :vi-yank-line
            :vi-paste-after
            :vi-paste-before
@@ -183,13 +184,28 @@
     (unless (syntax-space-char-p (character-at p -1))
       (insert-character p #\space))))
 
-(define-command vi-yank-line (&optional (n 1)) ("p")
-  (with-point ((start (current-point))
-               (end (current-point)))
-    (line-start start)
-    (line-offset end (1- n))
-    (line-end end)
-    (copy-region start end)))
+(defvar *vi-yank-recursive* nil)
+(let ((tag (gensym)))
+  (define-command vi-yank (&optional (n 1)) ("p")
+    (cond (*vi-yank-recursive*
+           (with-point ((start (current-point))
+                        (end (current-point)))
+             (line-start start)
+             (line-offset end (1- n))
+             (line-end end)
+             (copy-region start end)
+             (throw tag t)))
+          (t
+           (let ((command (lookup-keybind (read-key))))
+             (when (symbolp command)
+               (with-point ((start (current-point)))
+                 (let ((*vi-yank-recursive* t)
+                       (*forward-matching-paren-offset* 0))
+                   (catch tag
+                     (call-command command n)
+                     (when (point/= start (current-point))
+                       (copy-region start (current-point)))))
+                 (move-point (current-point) start))))))))
 
 (define-command vi-paste-after () ()
   (insert-character (line-end (current-point)) #\newline)

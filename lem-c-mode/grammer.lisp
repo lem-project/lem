@@ -26,7 +26,6 @@
                                     :name 'syntax-string-attribute
                                     :patterns (make-tm-patterns
                                                (make-tm-match "\\\\.")))
-                    (make-tm-match "\\\\.")
                     (make-tm-match (tokens :word-boundary
                                            '("break" "case" "continue" "default"
                                              "do" "else" "for" "goto" "if"

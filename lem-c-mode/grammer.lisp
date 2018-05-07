@@ -21,11 +21,8 @@
                                     :name 'syntax-string-attribute
                                     :patterns (make-tm-patterns
                                                (make-tm-match "\\\\.")))
-                    (make-tm-region '(:sequence "'")
-                                    '(:sequence "'")
-                                    :name 'syntax-string-attribute
-                                    :patterns (make-tm-patterns
-                                               (make-tm-match "\\\\.")))
+                    (make-tm-match "'\\\\?.'"
+                                   :name 'syntax-string-attribute)
                     (make-tm-match (tokens :word-boundary
                                            '("break" "case" "continue" "default"
                                              "do" "else" "for" "goto" "if"

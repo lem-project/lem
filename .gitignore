@@ -16,3 +16,5 @@ autom4te.cache
 install-sh
 missing
 bin/
+
+.DS_Store

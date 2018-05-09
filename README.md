@@ -8,7 +8,7 @@ After installing lem, you can start developing in Common Lisp at once.
 You can skip over writing tidy settings or installing many plugins as you do on Emacs.
 
 ## Screenshot
-![Terminal](screenshots/cl-frontend-ncurses.png)　　
+![Terminal](screenshots/terminal.png)　　
 
 ## Requirement
 - [roswell](https://github.com/roswell/roswell)
@@ -57,7 +57,7 @@ $ npm install -g cxxxr/lem   # install lem-electron
 $ lem-electron               # Electron version will start
 ```
 
-![Electron](screenshots/cl-frontend-electron.png)　　
+![Electron](screenshots/electron.png)　　
 
 ## Lem on platforms without SBCL thread support (e.g. raspberry pi3)
 

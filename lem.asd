@@ -8,7 +8,8 @@
                "lem-xml-mode"
                "lem-python-mode"
                "lem-posix-shell-mode"
-               "lem-markdown-mode"))
+               "lem-markdown-mode"
+               "lem-js-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

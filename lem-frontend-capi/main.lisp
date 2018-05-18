@@ -151,7 +151,8 @@
                       :black))))
 
 (defmethod lem::interface-update-display ((implementation capi-impl))
-  (dbg "update-display"))
+  (dbg "update-display")
+  (update-display *lem-pane*))
 
 ;(defmethod lem::interface-scroll ((implementation capi-impl) view n)
 ;  )

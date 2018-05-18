@@ -68,17 +68,17 @@
        (funcall fn))
      (setf (lem-pane-queue lem-pane) nil))))
 
-(defun lem-pane-char-width (lem-pane)
+(defun lem-pane-char-size (lem-pane)
   (multiple-value-bind (left top right bottom)
       (gp:get-string-extent lem-pane "a")
-    (declare (ignore top bottom))
-    (- right left)))
+    (values (- right left)
+            (+ (abs top) bottom))))
+
+(defun lem-pane-char-width (lem-pane)
+  (nth-value 0 (lem-pane-char-size lem-pane)))
 
 (defun lem-pane-char-height (lem-pane)
-  (multiple-value-bind (left top right bottom)
-      (gp:get-string-extent lem-pane "a")
-    (declare (ignore left right))
-    (+ (abs top) bottom)))
+  (nth-value 1 (lem-pane-char-size lem-pane)))
 
 (defun shift-bit-p (modifiers)
   (/= 0 (logand modifiers sys:gesture-spec-shift-bit)))
@@ -196,8 +196,8 @@
   (capi:apply-in-pane-process
    lem-pane
    (lambda ()
-     (let ((char-width (lem-pane-char-width lem-pane))
-           (char-height (lem-pane-char-height lem-pane)))
+     (multiple-value-bind (char-width char-height)
+         (lem-pane-char-size lem-pane)
        (push (lambda ()
                (gp:draw-rectangle lem-pane
                                   (* x char-width)

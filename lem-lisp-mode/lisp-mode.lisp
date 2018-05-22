@@ -654,9 +654,9 @@
     (let ((definitions (lisp-eval `(swank:find-definitions-for-emacs ,name))))
       (definitions-to-locations definitions))))
 
-(defun find-references ()
+(defun find-references (point)
   (check-connection)
-  (let* ((name (or (symbol-string-at-point (current-point))
+  (let* ((name (or (symbol-string-at-point point)
                    (prompt-for-symbol-name "Edit uses of: ")))
          (data (lisp-eval `(swank:xrefs '(:calls :macroexpands :binds
                                           :references :sets :specializes)

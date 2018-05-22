@@ -273,7 +273,7 @@
 
 (define-command find-references () ()
   (alexandria:when-let (fn (variable-value 'find-references-function :buffer))
-    (let ((refs (funcall fn)))
+    (let ((refs (funcall fn (current-point))))
       (unless refs
         (editor-error "No references found"))
       (push-location-stack (current-point))

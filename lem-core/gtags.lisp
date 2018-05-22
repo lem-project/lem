@@ -77,9 +77,9 @@
          (text (global (buffer-directory) "-x" name)))
     (result-to-xref-locations text 'content)))
 
-(defun find-references ()
-  (let* ((name (read-name (current-point) "gtags -rx "))
-         (text (global (buffer-directory) "-rx" name))
+(defun find-references (point)
+  (let* ((name (read-name point "gtags -rx "))
+         (text (global (buffer-directory (point-buffer point)) "-rx" name))
          (locations (result-to-xref-locations text 'reference-content)))
     (make-xref-references :locations locations)))
 

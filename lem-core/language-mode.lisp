@@ -247,7 +247,7 @@
 
 (define-command find-definitions () ()
   (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))
-    (let ((locations (funcall fn)))
+    (let ((locations (funcall fn (current-point))))
       (unless locations
         (editor-error "No definitions found"))
       (push-location-stack (current-point))

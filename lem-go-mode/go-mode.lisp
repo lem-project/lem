@@ -206,10 +206,10 @@
                           :position (cons (parse-integer line-number)
                                           (1- (parse-integer charpos)))))))
 
-(defun find-definitions ()
-  (unless (buffer-filename (current-buffer))
+(defun find-definitions (point)
+  (unless (buffer-filename (point-buffer point))
     (editor-error "Cannot use godef on a buffer without a file name"))
-  (let ((file (call-godef (current-point))))
+  (let ((file (call-godef point)))
     (cond
       ((not (godef-successful-p file))
        (editor-error "~A" (godef-error file)))

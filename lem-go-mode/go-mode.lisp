@@ -245,8 +245,8 @@
                                   :output out)))))
       (parse-gocode text))))
 
-(defun go-completion ()
-  (gocode (current-point)))
+(defun go-completion (point)
+  (gocode point))
 
 (defvar *goflymake-overlays* '())
 

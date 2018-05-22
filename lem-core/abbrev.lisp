@@ -48,11 +48,11 @@
 
 (define-key *global-keymap* "C-x /" 'abbrev-with-pop-up-window)
 (define-command abbrev-with-pop-up-window () ()
-  (run-completion (lambda ()
-                    (let* ((src-word (preceding-word (current-point)))
+  (run-completion (lambda (point)
+                    (let* ((src-word (preceding-word point))
                            (words (scan-all-buffer-words src-word)))
-                      (with-point ((start (current-point))
-                                   (end (current-point)))
+                      (with-point ((start point)
+                                   (end point))
                         (skip-chars-backward start #'syntax-symbol-char-p)
                         (mapcar (lambda (word)
                                   (make-completion-item :label word

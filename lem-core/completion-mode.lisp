@@ -173,7 +173,7 @@
       (values buffer max-column))))
 
 (defun run-completion-1 (function repeat)
-  (let ((items (funcall function)))
+  (let ((items (funcall function (current-point))))
     (cond ((null items)
            (when repeat (completion-end)))
           ((and (not repeat) (null (rest items)))
@@ -201,9 +201,9 @@
 
 (defun minibuffer-completion (comp-f start)
   (run-completion
-   (lambda ()
+   (lambda (point)
      (with-point ((start start)
-                  (end (current-point)))
+                  (end point))
        (let ((items (funcall comp-f
                              (points-to-string start
                                                (buffer-end-point (point-buffer end))))))

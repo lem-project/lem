@@ -358,7 +358,7 @@
                    initial
                    (lambda (str)
                      (declare (ignore str))
-                     (completion-symbol))
+                     (completion-symbol (current-point)))
                    nil
                    'mh-sexp))
 
@@ -667,10 +667,10 @@
       :collect (make-xref-references :type type
                                      :locations defs))))
 
-(defun completion-symbol ()
+(defun completion-symbol (point)
   (check-connection)
-  (with-point ((start (current-point))
-               (end (current-point)))
+  (with-point ((start point)
+               (end point))
     (skip-chars-backward start #'syntax-symbol-char-p)
     (skip-chars-forward end #'syntax-symbol-char-p)
     (when (point< start end)

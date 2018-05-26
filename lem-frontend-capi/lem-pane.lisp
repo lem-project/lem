@@ -156,12 +156,23 @@
              (char-height (+ (abs top) bottom))
              (x (* x char-width))
              (y (* y char-height)))
-        (push (lambda ()
-                (gp:draw-string lem-pane string x (+ y char-height (- bottom))
-                                :font font
-                                :foreground foreground :background background
-                                :block t))
-              (lem-pane-queue lem-pane))
+        (let ((x1 x)
+              (y1 (+ y char-height (- bottom))))
+          (push (lambda ()
+                  (gp:draw-rectangle lem-pane x y
+                                     (* char-width (lem:string-width string))
+                                     char-height
+                                     :foreground background
+                                     :filled t)
+                  (loop :for c :across string
+                        :do
+                        (gp:draw-character lem-pane c x1 y1
+                                               :font font
+                                               :foreground foreground
+                                               :background background
+                                               :block t)
+                        (incf x1 (* char-width (if (lem:wide-char-p c) 2 1)))))
+                (lem-pane-queue lem-pane)))
         (when underline
           (push (lambda ()
                   (gp:draw-line lem-pane

@@ -15,7 +15,7 @@
 (in-package :lem-capi.lem-pane)
 
 (defvar *default-font-family* #+win32 "Consolas" #-win32 "DejaVu Sans Mono")
-(defvar *default-font-size* 11)
+(defvar *default-font-size* 10)
 
 (defvar *default-font*
   (gp:make-font-description :size *default-font-size*
@@ -33,9 +33,6 @@
    (bold-font
     :initform *default-bold-font*
     :accessor lem-pane-bold-font)
-   (queue
-    :initform nil
-    :accessor lem-pane-queue)
    (pixmap
     :initform nil
     :accessor lem-pane-pixmap))
@@ -64,7 +61,6 @@
 (defun resize-callback (lem-pane &rest args)
   (declare (ignore args))
   (lem:send-event :resize)
-  (clear lem-pane)
   (reinitialize-pixmap lem-pane))
 
 (defun reinitialize-pixmap (lem-pane)
@@ -86,11 +82,7 @@
    lem-pane
    nil
    (lambda ()
-     (dolist (fn (nreverse (lem-pane-queue lem-pane)))
-       (funcall fn (lem-pane-pixmap lem-pane)))
-     (setf (lem-pane-queue lem-pane) nil)
-     (gp:copy-pixels lem-pane
-                     (lem-pane-pixmap lem-pane)
+     (gp:copy-pixels lem-pane (lem-pane-pixmap lem-pane)
                      0 0
                      (capi:simple-pane-visible-width lem-pane)
                      (capi:simple-pane-visible-height lem-pane)
@@ -186,30 +178,25 @@
              (y (* y char-height)))
         (let ((x1 x)
               (y1 (+ y char-height (- bottom))))
-          (push (lambda (lem-pane)
-                  (gp:draw-rectangle lem-pane x y
-                                     (* char-width (lem:string-width string))
-                                     char-height
-                                     :foreground background
-                                     :filled t)
-                  (loop :for c :across string
-                        :do
-                        (gp:draw-character lem-pane c x1 y1
-                                               :font font
-                                               :foreground foreground
-                                               :background background
-                                               :block t)
-                        (incf x1 (* char-width (if (lem:wide-char-p c) 2 1)))))
-                (lem-pane-queue lem-pane)))
+          (let ((w (* char-width (lem:string-width string)))
+                (h char-height))
+            (gp:draw-rectangle (lem-pane-pixmap lem-pane) x y w h
+                               :foreground background
+                               :filled t))
+          (loop :for c :across string
+                :do (gp:draw-character (lem-pane-pixmap lem-pane) c x1 y1
+                                       :font font
+                                       :foreground foreground
+                                       :background background
+                                       :block t)
+                    (incf x1 (* char-width (if (lem:wide-char-p c) 2 1)))))
         (when underline
-          (push (lambda (lem-pane)
-                  (gp:draw-line lem-pane
-                                x
-                                (+ y char-height -4)
-                                (+ x (* char-width (length string)))
-                                (+ y char-height -4)
-                                :foreground foreground))
-                (lem-pane-queue lem-pane)))))))
+          (gp:draw-line (lem-pane-pixmap lem-pane)
+                        x
+                        (+ y char-height -4)
+                        (+ x (* char-width (length string)))
+                        (+ y char-height -4)
+                        :foreground foreground))))))
 
 (defun draw-text (lem-pane string x y attribute)
   (capi:apply-in-pane-process-wait-single
@@ -239,30 +226,24 @@
    (lambda ()
      (multiple-value-bind (char-width char-height)
          (lem-pane-char-size lem-pane)
-       (push (lambda (lem-pane)
-               (if color
-                   (gp:draw-rectangle lem-pane
-                                      (* x char-width)
-                                      (* y char-height)
-                                      (* width char-width)
-                                      (* height char-height)
-                                      :filled t
-                                      :foreground color)
-                   (gp:clear-rectangle lem-pane
-                                       (* x char-width)
-                                       (* y char-height)
-                                       (* width char-width)
-                                       (* height char-height))))
-             (lem-pane-queue lem-pane))))))
+       (let ((x (* x char-width))
+             (y (* y char-height))
+             (w (* width char-width))
+             (h (* height char-height)))
+         (if color
+             (gp:draw-rectangle (lem-pane-pixmap lem-pane)
+                                x y w h
+                                :filled t
+                                :foreground color)
+             (gp:clear-rectangle (lem-pane-pixmap lem-pane)
+                                 x y w h)))))))
 
 (defun clear (lem-pane)
   (capi:apply-in-pane-process-wait-single
    lem-pane
    nil
    (lambda ()
-     (push (lambda (lem-pane)
-             (gp:clear-graphics-port lem-pane))
-           (lem-pane-queue lem-pane)))))
+     (gp:clear-graphics-port (lem-pane-pixmap lem-pane)))))
 
 (defun change-foreground (lem-pane color)
   (alexandria:when-let ((color (convert-color color nil)))

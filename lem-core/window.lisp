@@ -23,6 +23,7 @@
           deleted-window-p
           window-recenter
           window-scroll
+          window-cursor-y
           window-see
           split-window-vertically
           split-window-horizontally

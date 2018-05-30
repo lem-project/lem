@@ -1,6 +1,8 @@
 (defpackage :lem-capi.lem-pane
+  (:add-use-defaults t)
   (:use :cl :lem-capi.util)
   (:export
+   :reinitialize-pixmap
    :lem-pane
    :lem-pane-width
    :lem-pane-height
@@ -33,7 +35,10 @@
     :accessor lem-pane-bold-font)
    (queue
     :initform nil
-    :accessor lem-pane-queue))
+    :accessor lem-pane-queue)
+   (pixmap
+    :initform nil
+    :accessor lem-pane-pixmap))
   (:default-initargs
    :font *default-font*
    :foreground :black
@@ -56,17 +61,40 @@
                                   :family (gp:font-description-attribute-value font :family)
                                   :weight :bold)))
 
-(defun resize-callback (&rest args)
+(defun resize-callback (lem-pane &rest args)
   (declare (ignore args))
-  (lem:send-event :resize))
+  (lem:send-event :resize)
+  (clear lem-pane)
+  (reinitialize-pixmap lem-pane))
+
+(defun reinitialize-pixmap (lem-pane)
+  (capi:apply-in-pane-process-wait-single
+   lem-pane
+   nil
+   (lambda (lem-pane)
+     (when-let (pixmap (lem-pane-pixmap lem-pane))
+       (gp:destroy-pixmap-port pixmap))
+     (setf (lem-pane-pixmap lem-pane)
+           (gp:create-pixmap-port lem-pane
+                                  (capi:simple-pane-visible-width lem-pane)
+                                  (capi:simple-pane-visible-height lem-pane)
+                                  :background (capi:simple-pane-background lem-pane))))
+   lem-pane))
 
 (defun update-display (lem-pane)
-  (capi:apply-in-pane-process
+  (capi:apply-in-pane-process-wait-single
    lem-pane
+   nil
    (lambda ()
      (dolist (fn (nreverse (lem-pane-queue lem-pane)))
-       (funcall fn))
-     (setf (lem-pane-queue lem-pane) nil))))
+       (funcall fn (lem-pane-pixmap lem-pane)))
+     (setf (lem-pane-queue lem-pane) nil)
+     (gp:copy-pixels lem-pane
+                     (lem-pane-pixmap lem-pane)
+                     0 0
+                     (capi:simple-pane-visible-width lem-pane)
+                     (capi:simple-pane-visible-height lem-pane)
+                     0 0))))
 
 (defun lem-pane-char-size (lem-pane)
   (multiple-value-bind (left top right bottom)
@@ -158,7 +186,7 @@
              (y (* y char-height)))
         (let ((x1 x)
               (y1 (+ y char-height (- bottom))))
-          (push (lambda ()
+          (push (lambda (lem-pane)
                   (gp:draw-rectangle lem-pane x y
                                      (* char-width (lem:string-width string))
                                      char-height
@@ -174,7 +202,7 @@
                         (incf x1 (* char-width (if (lem:wide-char-p c) 2 1)))))
                 (lem-pane-queue lem-pane)))
         (when underline
-          (push (lambda ()
+          (push (lambda (lem-pane)
                   (gp:draw-line lem-pane
                                 x
                                 (+ y char-height -4)
@@ -184,8 +212,9 @@
                 (lem-pane-queue lem-pane)))))))
 
 (defun draw-text (lem-pane string x y attribute)
-  (capi:apply-in-pane-process
+  (capi:apply-in-pane-process-wait-single
    lem-pane
+   nil
    (lambda ()
      (if attribute
          (let ((foreground (or (convert-color (lem:attribute-foreground attribute) nil)
@@ -203,27 +232,35 @@
                       (capi:simple-pane-foreground lem-pane)
                       (capi:simple-pane-background lem-pane))))))
 
-(defun draw-rectangle (lem-pane x y width height color)
-  (capi:apply-in-pane-process
+(defun draw-rectangle (lem-pane x y width height &optional color)
+  (capi:apply-in-pane-process-wait-single
    lem-pane
+   nil
    (lambda ()
      (multiple-value-bind (char-width char-height)
          (lem-pane-char-size lem-pane)
-       (push (lambda ()
-               (gp:draw-rectangle lem-pane
-                                  (* x char-width)
-                                  (* y char-height)
-                                  (* width char-width)
-                                  (* height char-height)
-                                  :foreground color
-                                  :filled t))
+       (push (lambda (lem-pane)
+               (if color
+                   (gp:draw-rectangle lem-pane
+                                      (* x char-width)
+                                      (* y char-height)
+                                      (* width char-width)
+                                      (* height char-height)
+                                      :filled t
+                                      :foreground color)
+                   (gp:clear-rectangle lem-pane
+                                       (* x char-width)
+                                       (* y char-height)
+                                       (* width char-width)
+                                       (* height char-height))))
              (lem-pane-queue lem-pane))))))
 
 (defun clear (lem-pane)
-  (capi:apply-in-pane-process
+  (capi:apply-in-pane-process-wait-single
    lem-pane
+   nil
    (lambda ()
-     (push (lambda ()
+     (push (lambda (lem-pane)
              (gp:clear-graphics-port lem-pane))
            (lem-pane-queue lem-pane)))))
 

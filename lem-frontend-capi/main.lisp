@@ -36,7 +36,8 @@
                                            :description (list *lem-pane*))))
     (setf *editor-thread*
           (funcall function
-                   nil
+                   (lambda ()
+                     (reinitialize-pixmap *lem-pane*))
                    (lambda (report)
                      (declare (ignore report))
                      (capi:quit-interface *lem-pane*))))))
@@ -76,11 +77,10 @@
   (with-error-handler ()
     (dbg (list "clear" view))
     (draw-rectangle *lem-pane*
-                    (view-x view)
-                    (view-y view)
-                    (1- (view-width view))
-                    (view-height view)
-                    (capi:simple-pane-background *lem-pane*))))
+                     (view-x view)
+                     (view-y view)
+                     (1- (view-width view))
+                     (view-height view))))
 
 (defmethod lem::interface-set-view-size ((implementation capi-impl) view width height)
   (with-error-handler ()
@@ -119,8 +119,7 @@
                     (+ (view-x view) x)
                     (+ (view-y view) y)
                     (- (view-width view) x)
-                    1
-                    (capi:simple-pane-background *lem-pane*))))
+                    1)))
 
 (defmethod lem::interface-clear-eob ((implementation capi-impl) view x y)
   (with-error-handler ()
@@ -129,11 +128,10 @@
       (lem::interface-clear-eol implementation view x y)
       (incf y))
     (draw-rectangle *lem-pane*
-                    (view-x view)
-                    (+ (view-y view) y)
-                    (view-width view)
-                    (- (view-height view) y)
-                    (capi:simple-pane-background *lem-pane*))))
+                     (view-x view)
+                     (+ (view-y view) y)
+                     (view-width view)
+                     (- (view-height view) y))))
 
 (defmethod lem::interface-move-cursor ((implementation capi-impl) view x y)
   (dbg (list "move-cursor" view x y)))
@@ -144,11 +142,11 @@
     (when (and (not (floating-window-p (view-window view)))
                (< 0 (view-x view)))
       (draw-rectangle *lem-pane*
-                      (view-x view)
-                      (view-y view)
-                      0.1
-                      (1+ (view-height view))
-                      :black))))
+                       (view-x view)
+                       (view-y view)
+                       0.1
+                       (1+ (view-height view))
+                       :black))))
 
 (defmethod lem::interface-update-display ((implementation capi-impl))
   (dbg "update-display")

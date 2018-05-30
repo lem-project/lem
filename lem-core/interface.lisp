@@ -17,26 +17,26 @@
     :initarg :redraw-after-modifying-floating-window
     :reader redraw-after-modifying-floating-window)))
 
-(defgeneric interface-invoke (implementation function))
-(defgeneric interface-display-background-mode (implementation))
-(defgeneric interface-update-foreground (implementation color-name))
-(defgeneric interface-update-background (implementation color-name))
-(defgeneric interface-display-width (implementation))
-(defgeneric interface-display-height (implementation))
-(defgeneric interface-make-view (implementation window x y width height use-modeline))
-(defgeneric interface-delete-view (implementation view))
-(defgeneric interface-clear (implementation view))
-(defgeneric interface-set-view-size (implementation view width height))
-(defgeneric interface-set-view-pos (implementation view x y))
-(defgeneric interface-print (implementation view x y string attribute))
-(defgeneric interface-print-modeline (implementation view x y string attribute))
-(defgeneric interface-clear-eol (implementation view x y))
-(defgeneric interface-clear-eob (implementation view x y))
-(defgeneric interface-move-cursor (implementation view x y))
-(defgeneric interface-redraw-window (implementation window force))
-(defgeneric interface-redraw-view-after (implementation view focus-window-p))
-(defgeneric interface-update-display (implementation))
-(defgeneric interface-scroll (implementation view n))
+(defgeneric lem-if:invoke (implementation function))
+(defgeneric lem-if:display-background-mode (implementation))
+(defgeneric lem-if:update-foreground (implementation color-name))
+(defgeneric lem-if:update-background (implementation color-name))
+(defgeneric lem-if:display-width (implementation))
+(defgeneric lem-if:display-height (implementation))
+(defgeneric lem-if:make-view (implementation window x y width height use-modeline))
+(defgeneric lem-if:delete-view (implementation view))
+(defgeneric lem-if:clear (implementation view))
+(defgeneric lem-if:set-view-size (implementation view width height))
+(defgeneric lem-if:set-view-pos (implementation view x y))
+(defgeneric lem-if:print (implementation view x y string attribute))
+(defgeneric lem-if:print-modeline (implementation view x y string attribute))
+(defgeneric lem-if:clear-eol (implementation view x y))
+(defgeneric lem-if:clear-eob (implementation view x y))
+(defgeneric lem-if:move-cursor (implementation view x y))
+(defgeneric lem-if:redraw-window (implementation window force))
+(defgeneric lem-if:redraw-view-after (implementation view focus-window-p))
+(defgeneric lem-if:update-display (implementation))
+(defgeneric lem-if:scroll (implementation view n))
 
 (defvar *implementation*)
 
@@ -53,23 +53,23 @@
 
 (defun display-background-mode ()
   (or *display-background-mode*
-      (interface-display-background-mode *implementation*)))
+      (lem-if:display-background-mode *implementation*)))
 
 (defun set-display-background-mode (mode)
   (check-type mode (or (eql :light) (eql :dark) null))
   (setf *display-background-mode* mode))
 
 (defun set-foreground (name)
-  (interface-update-foreground *implementation* name))
+  (lem-if:update-foreground *implementation* name))
 
 (defun set-background (name)
-  (interface-update-background *implementation* name))
+  (lem-if:update-background *implementation* name))
 
-(defun display-width () (interface-display-width *implementation*))
-(defun display-height () (interface-display-height *implementation*))
+(defun display-width () (lem-if:display-width *implementation*))
+(defun display-height () (lem-if:display-height *implementation*))
 
 (defun invoke-frontend (function)
-  (interface-invoke *implementation* function))
+  (lem-if:invoke *implementation* function))
 
 (defstruct (screen (:constructor %make-screen))
   view
@@ -92,7 +92,7 @@
 (defun make-screen (window x y width height use-modeline)
   (when use-modeline
     (decf height))
-  (let ((view (interface-make-view *implementation* window x y width height use-modeline)))
+  (let ((view (lem-if:make-view *implementation* window x y width height use-modeline)))
     (%make-screen :view view
                   :use-modeline use-modeline
                   :x x
@@ -103,11 +103,11 @@
                   :old-lines (make-array (max 0 height) :initial-element nil))))
 
 (defun screen-delete (screen)
-  (interface-delete-view *implementation* (screen-view screen)))
+  (lem-if:delete-view *implementation* (screen-view screen)))
 
 (defun screen-clear (screen)
   (screen-modify screen)
-  (interface-clear *implementation* (screen-view screen)))
+  (lem-if:clear *implementation* (screen-view screen)))
 
 (defun screen-height (screen)
   (length (screen-lines screen)))
@@ -119,7 +119,7 @@
   (screen-modify screen)
   (when (screen-use-modeline screen)
     (decf height))
-  (interface-set-view-size *implementation* (screen-view screen) width height)
+  (lem-if:set-view-size *implementation* (screen-view screen) width height)
   (setf (screen-left-lines screen)
         (make-array height :initial-element nil))
   (setf (screen-lines screen)
@@ -133,7 +133,7 @@
   (screen-modify screen)
   (setf (screen-x screen) x)
   (setf (screen-y screen) y)
-  (interface-set-view-pos *implementation* (screen-view screen) x y))
+  (lem-if:set-view-pos *implementation* (screen-view screen) x y))
 
 (defun screen-print-string (screen x y string attribute)
   (when (eq attribute 'cursor)
@@ -159,7 +159,7 @@
                  (setf (aref pool-string (incf i)) char)
                  (setf x (char-width char x)))))
     (unless (= i -1)
-      (interface-print *implementation* view x0 y
+      (lem-if:print *implementation* view x0 y
                        (subseq pool-string 0 (1+ i))
                        attribute))
     x))
@@ -198,7 +198,7 @@
                                        (subseq str prev-end))
                                    nil))
       (when do-clrtoeol
-        (interface-clear-eol *implementation* (screen-view screen) x y)))))
+        (lem-if:clear-eol *implementation* (screen-view screen) x y)))))
 
 #+(or)
 (progn
@@ -433,7 +433,7 @@
            (setf start 0)
            (setf end (wide-index (car str/attributes) screen-width))))
     (when (redraw-line-p point-y)
-      (interface-clear-eol *implementation* (screen-view screen) start-x point-y))
+      (lem-if:clear-eol *implementation* (screen-view screen) start-x point-y))
     (disp-print-line screen point-y str/attributes nil
                      :start-x start-x
                      :string-start start
@@ -484,7 +484,7 @@
                 (str/attributes
                  (setf (aref (screen-old-lines screen) i) str/attributes)
                  (when (zerop (length (car str/attributes)))
-                   (interface-clear-eol *implementation* (screen-view screen) 0 y))
+                   (lem-if:clear-eol *implementation* (screen-view screen) 0 y))
                  (let (y2)
                    (when left-str/attr
                      (screen-print-string screen
@@ -514,7 +514,7 @@
                       (setf (aref (screen-lines screen) i) nil)))))
                 (t
                  (fill (screen-old-lines screen) nil :start i)
-                 (interface-clear-eob *implementation* (screen-view screen) 0 y)
+                 (lem-if:clear-eob *implementation* (screen-view screen) 0 y)
                  (return))))))
 
 (defun screen-redraw-modeline (window force)
@@ -539,16 +539,16 @@
     (setf elements (nreverse elements))
     (when (or force (not (equal elements (screen-modeline-elements screen))))
       (setf (screen-modeline-elements screen) elements)
-      (interface-print-modeline *implementation* view 0 0
+      (lem-if:print-modeline *implementation* view 0 0
                                 (make-string (window-width window) :initial-element #\space)
                                 default-attribute)
       (loop :for (x string attribute) :in elements
-            :do (interface-print-modeline *implementation* view x 0 string attribute)))))
+            :do (lem-if:print-modeline *implementation* view x 0 string attribute)))))
 
 (defun redraw-display-window (window force)
-  (interface-redraw-window *implementation* window force))
+  (lem-if:redraw-window *implementation* window force))
 
-(defmethod interface-redraw-window (implementation window force)
+(defmethod lem-if:redraw-window (implementation window force)
   (let ((focus-window-p (eq window (current-window)))
         (buffer (window-buffer window))
         (screen (window-screen window)))
@@ -561,7 +561,7 @@
                 (and scroll-n (>= scroll-n (screen-height screen))))
         (setf scroll-n nil))
       (when scroll-n
-        (interface-scroll *implementation* (screen-view screen) scroll-n))
+        (lem-if:scroll *implementation* (screen-view screen) scroll-n))
       (multiple-value-bind (*redraw-start-y* *redraw-end-y*)
           (when scroll-n
             (if (plusp scroll-n)
@@ -589,8 +589,8 @@
               (buffer-modified-tick buffer))
         (when (window-use-modeline-p window)
           (screen-redraw-modeline window (or (screen-modified-p screen) force)))
-        (interface-redraw-view-after *implementation* (screen-view screen) focus-window-p)
+        (lem-if:redraw-view-after *implementation* (screen-view screen) focus-window-p)
         (setf (screen-modified-p screen) nil)))))
 
 (defun update-display ()
-  (interface-update-display *implementation*))
+  (lem-if:update-display *implementation*))

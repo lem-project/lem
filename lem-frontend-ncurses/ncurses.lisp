@@ -276,7 +276,7 @@
           (lambda ()
             (load-theme "emacs-dark")))
 
-(defmethod lem::interface-invoke ((implementation ncurses) function)
+(defmethod lem-if:invoke ((implementation ncurses) function)
   (let ((result nil)
         (input-thread (bt:current-thread)))
     (unwind-protect
@@ -295,22 +295,22 @@
                (exit-editor-value result))
       (format t "~&~A~%" (exit-editor-value result)))))
 
-(defmethod lem::interface-display-background-mode ((implementation ncurses))
+(defmethod lem-if:display-background-mode ((implementation ncurses))
   (lem.term:background-mode))
 
-(defmethod lem::interface-update-foreground ((implementation ncurses) color-name)
+(defmethod lem-if:update-foreground ((implementation ncurses) color-name)
   (lem.term:term-set-foreground color-name))
 
-(defmethod lem::interface-update-background ((implementation ncurses) color-name)
+(defmethod lem-if:update-background ((implementation ncurses) color-name)
   (lem.term:term-set-background color-name))
 
-(defmethod lem::interface-display-width ((implementation ncurses))
+(defmethod lem-if:display-width ((implementation ncurses))
   (max 5 charms/ll:*cols*))
 
-(defmethod lem::interface-display-height ((implementation ncurses))
+(defmethod lem-if:display-height ((implementation ncurses))
   (max 3 charms/ll:*lines*))
 
-(defmethod lem::interface-make-view
+(defmethod lem-if:make-view
     ((implementation ncurses) window x y width height use-modeline)
   (flet ((newwin (nlines ncols begin-y begin-x main-screen)
            (declare (ignore main-screen))
@@ -328,17 +328,17 @@
      :width width
      :height height)))
 
-(defmethod lem::interface-delete-view ((implementation ncurses) view)
+(defmethod lem-if:delete-view ((implementation ncurses) view)
   (charms/ll:delwin (ncurses-view-scrwin view))
   (when (ncurses-view-modeline-scrwin view)
     (charms/ll:delwin (ncurses-view-modeline-scrwin view))))
 
-(defmethod lem::interface-clear ((implementation ncurses) view)
+(defmethod lem-if:clear ((implementation ncurses) view)
   (charms/ll:clearok (ncurses-view-scrwin view) 1)
   (when (ncurses-view-modeline-scrwin view)
     (charms/ll:clearok (ncurses-view-modeline-scrwin view) 1)))
 
-(defmethod lem::interface-set-view-size ((implementation ncurses) view width height)
+(defmethod lem-if:set-view-size ((implementation ncurses) view width height)
   (setf (ncurses-view-width view) width)
   (setf (ncurses-view-height view) height)
   (charms/ll:wresize (ncurses-view-scrwin view) height width)
@@ -350,7 +350,7 @@
                        (minibuffer-window-height)
                        width)))
 
-(defmethod lem::interface-set-view-pos ((implementation ncurses) view x y)
+(defmethod lem-if:set-view-pos ((implementation ncurses) view x y)
   (setf (ncurses-view-x view) x)
   (setf (ncurses-view-y view) y)
   (charms/ll:mvwin (ncurses-view-scrwin view) y x)
@@ -359,7 +359,7 @@
                      (+ y (ncurses-view-height view))
                      x)))
 
-(defmethod lem::interface-print ((implementation ncurses) view x y string attribute)
+(defmethod lem-if:print ((implementation ncurses) view x y string attribute)
   (let ((attr (attribute-to-bits attribute)))
     (charms/ll:wattron (ncurses-view-scrwin view) attr)
     ;(charms/ll:scrollok (ncurses-view-scrwin view) 0)
@@ -367,21 +367,21 @@
     ;(charms/ll:scrollok (ncurses-view-scrwin view) 1)
     (charms/ll:wattroff (ncurses-view-scrwin view) attr)))
 
-(defmethod lem::interface-print-modeline ((implementation ncurses) view x y string attribute)
+(defmethod lem-if:print-modeline ((implementation ncurses) view x y string attribute)
   (let ((attr (attribute-to-bits attribute)))
     (charms/ll:wattron (ncurses-view-modeline-scrwin view) attr)
     (charms/ll:mvwaddstr (ncurses-view-modeline-scrwin view) y x string)
     (charms/ll:wattroff (ncurses-view-modeline-scrwin view) attr)))
 
-(defmethod lem::interface-clear-eol ((implementation ncurses) view x y)
+(defmethod lem-if:clear-eol ((implementation ncurses) view x y)
   (charms/ll:wmove (ncurses-view-scrwin view) y x)
   (charms/ll:wclrtoeol (ncurses-view-scrwin view)))
 
-(defmethod lem::interface-clear-eob ((implementation ncurses) view x y)
+(defmethod lem-if:clear-eob ((implementation ncurses) view x y)
   (charms/ll:wmove (ncurses-view-scrwin view) y x)
   (charms/ll:wclrtobot (ncurses-view-scrwin view)))
 
-(defmethod lem::interface-redraw-view-after ((implementation ncurses) view focus-window-p)
+(defmethod lem-if:redraw-view-after ((implementation ncurses) view focus-window-p)
   (let ((attr (attribute-to-bits 'modeline)))
     (charms/ll:attron attr)
     (when (and (ncurses-view-modeline-scrwin view)
@@ -396,10 +396,10 @@
     (charms/ll:wmove (ncurses-view-scrwin view) lem::*cursor-y* lem::*cursor-x*))
   (charms/ll:wnoutrefresh (ncurses-view-scrwin view)))
 
-(defmethod lem::interface-update-display ((implementation ncurses))
+(defmethod lem-if:update-display ((implementation ncurses))
   (charms/ll:doupdate))
 
-(defmethod lem::interface-scroll ((implementation ncurses) view n)
+(defmethod lem-if:scroll ((implementation ncurses) view n)
   (charms/ll:wscrl (ncurses-view-scrwin view) n))
 
 (pushnew :lem-ncurses *features*)

@@ -121,7 +121,7 @@
         (params "width" *display-width*
                 "height" *display-height*)))))
 
-(defmethod lem::interface-invoke ((implementation jsonrpc) function)
+(defmethod lem-if:invoke ((implementation jsonrpc) function)
   ;(swank:create-server :port 10005 :dont-close t)
   (with-error-handler ()
     (let ((ready nil))
@@ -136,22 +136,22 @@
       (dbg "server-listen")
       (jsonrpc:server-listen *server* :mode :stdio))))
 
-(defmethod lem::interface-display-background-mode ((implementation jsonrpc))
+(defmethod lem-if:display-background-mode ((implementation jsonrpc))
   *background-mode*)
 
-(defmethod lem::interface-update-foreground ((implementation jsonrpc) color-name)
+(defmethod lem-if:update-foreground ((implementation jsonrpc) color-name)
   (notify "update-foreground" color-name))
 
-(defmethod lem::interface-update-background ((implementation jsonrpc) color-name)
+(defmethod lem-if:update-background ((implementation jsonrpc) color-name)
   (notify "update-background" color-name))
 
-(defmethod lem::interface-display-width ((implementation jsonrpc))
+(defmethod lem-if:display-width ((implementation jsonrpc))
   *display-width*)
 
-(defmethod lem::interface-display-height ((implementation jsonrpc))
+(defmethod lem-if:display-height ((implementation jsonrpc))
   *display-height*)
 
-(defmethod lem::interface-make-view
+(defmethod lem-if:make-view
     ((implementation jsonrpc) window x y width height use-modeline)
   (with-error-handler ()
     (let ((view (make-view :x x :y y :width width :height height :use-modeline use-modeline
@@ -164,11 +164,11 @@
       (notify "make-view" view)
       view)))
 
-(defmethod lem::interface-delete-view ((implementation jsonrpc) view)
+(defmethod lem-if:delete-view ((implementation jsonrpc) view)
   (with-error-handler ()
     (notify "delete-view" (params "viewInfo" view))))
 
-(defmethod lem::interface-set-view-size ((implementation jsonrpc) view width height)
+(defmethod lem-if:set-view-size ((implementation jsonrpc) view width height)
   (with-error-handler ()
     (setf (view-width view) width
           (view-height view) height)
@@ -177,7 +177,7 @@
                     "width" width
                     "height" height))))
 
-(defmethod lem::interface-set-view-pos ((implementation jsonrpc) view x y)
+(defmethod lem-if:set-view-pos ((implementation jsonrpc) view x y)
   (with-error-handler ()
     (setf (view-x view) x
           (view-y view) y)
@@ -186,16 +186,16 @@
                     "x" x
                     "y" y))))
 
-(defmethod lem::interface-clear ((implementation jsonrpc) view)
+(defmethod lem-if:clear ((implementation jsonrpc) view)
   (with-error-handler ()
     (notify "clear" (params "viewInfo" view))))
 
-(defmethod lem::interface-clear-eol ((implementation jsonrpc) view x y)
+(defmethod lem-if:clear-eol ((implementation jsonrpc) view x y)
   (with-error-handler ()
     (notify "clear-eol"
             (params "viewInfo" view "x" x "y" y))))
 
-(defmethod lem::interface-clear-eob ((implementation jsonrpc) view x y)
+(defmethod lem-if:clear-eob ((implementation jsonrpc) view x y)
   (with-error-handler ()
     (assert (= x 0))
     (notify "clear-eob" (params "viewInfo" view "x" x "y" y))))
@@ -215,35 +215,35 @@
                          string)
             "attribute" (ensure-attribute attribute nil))))
 
-(defmethod lem::interface-print ((implementation jsonrpc) view x y string attribute)
+(defmethod lem-if:print ((implementation jsonrpc) view x y string attribute)
   (with-error-handler ()
     (notify "put" (put-params view x y string attribute))))
 
-(defmethod lem::interface-print-modeline
+(defmethod lem-if:print-modeline
     ((implementation jsonrpc) view x y string attribute)
   (with-error-handler ()
     (notify "modeline-put" (put-params view x y string attribute))))
 
-(defmethod lem::interface-move-cursor ((implementation jsonrpc) view x y)
+(defmethod lem-if:move-cursor ((implementation jsonrpc) view x y)
   (with-error-handler ()
     (notify "move-cursor"
             (params "viewInfo" view "x" x "y" y))))
 
-(defmethod lem::interface-redraw-view-after ((implementation jsonrpc) view focus-window-p)
+(defmethod lem-if:redraw-view-after ((implementation jsonrpc) view focus-window-p)
   (with-error-handler ()
     (when focus-window-p
-      (lem::interface-move-cursor implementation
+      (lem-if:move-cursor implementation
                                   view
                                   lem::*cursor-x*
                                   lem::*cursor-y*))
     (notify "touch" (params "viewInfo" view))))
 
-(defmethod lem::interface-scroll ((implementation jsonrpc) view n)
+(defmethod lem-if:scroll ((implementation jsonrpc) view n)
   (with-error-handler ()
     (notify "scroll"
             (params "viewInfo" view "n" n))))
 
-(defmethod lem::interface-update-display ((implementation jsonrpc))
+(defmethod lem-if:update-display ((implementation jsonrpc))
   (with-error-handler ()
     (notify "update-display" nil)))
 

@@ -913,7 +913,7 @@
 (defun floating-window-p (window)
   (typep window 'floating-window))
 
-(defun balloon (orig-window buffer width height &optional dst-window)
+(defun compute-pop-up-window-position (orig-window)
   (let* ((y (+ (window-y orig-window)
                (window-cursor-y orig-window)
                1))
@@ -925,6 +925,11 @@
                      (setf x (+ mod floor))
                      (incf y floor)))
                  x))))
+    (values x y)))
+
+(defun balloon (orig-window buffer width height &optional dst-window)
+  (multiple-value-bind (x y)
+      (compute-pop-up-window-position orig-window)
     (cond
       ((<= (display-height)
            (+ y (min height

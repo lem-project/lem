@@ -4,23 +4,28 @@
 
 (defvar *non-focus-interface*)
 (defvar *items*)
+(defvar *lem-process*)
 
 (defmethod lem-if:display-popup-menu ((implementation lem-capi::capi-impl) items
                                       &key action-callback print-function focus-attribute non-focus-attribute)
   (declare (ignore focus-attribute non-focus-attribute))
+  (setf *lem-process* mp:*current-process*)
   (setf *items* items)
-  (setf *non-focus-interface*
-        (capi:prompt-with-list-non-focus
-         items
-         :owner lem-capi::*lem-pane*
-         :x (lem:point-column (lem:current-point))
-         :y (lem:window-cursor-y (lem:current-window))
-         :print-function (or print-function #'princ-to-string)
-         :action-callback (lambda (item interface)
-                            (declare (ignore interface))
-                            (funcall action-callback item)
-                            (capi:non-focus-terminate *non-focus-interface*))
-         :list-updater (lambda () *items*))))
+  (multiple-value-bind (char-width char-height)
+      (lem-capi.lem-pane::lem-pane-char-size lem-capi::*lem-pane*)
+    (multiple-value-bind (x y)
+        (lem::compute-pop-up-window-position (lem:current-window))
+      (setf *non-focus-interface*
+            (capi:prompt-with-list-non-focus
+             items
+             :owner lem-capi::*lem-pane*
+             :x (* x char-width)
+             :y (* y char-height)
+             :print-function (or print-function #'princ-to-string)
+             :action-callback (lambda (item interface)
+                                (declare (ignore interface))
+                                (mp:process-interrupt *lem-process* action-callback item))
+             :list-updater (lambda () *items*))))))
 
 (defmethod lem-if:popup-menu-update ((implementation lem-capi::capi-impl) items)
   (setf *items* items)

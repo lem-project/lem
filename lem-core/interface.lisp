@@ -38,7 +38,8 @@
 (defgeneric lem-if:update-display (implementation))
 (defgeneric lem-if:scroll (implementation view n))
 
-(defgeneric lem-if:display-popup-menu (implementation items &key action-callback print-function))
+(defgeneric lem-if:display-popup-menu (implementation items &key action-callback print-function
+                                                      focus-attribute non-focus-attribute))
 (defgeneric lem-if:popup-menu-update (implementation items))
 (defgeneric lem-if:popup-menu-quit (implementation))
 (defgeneric lem-if:popup-menu-down (implementation))

@@ -6,7 +6,8 @@
 (defvar *items*)
 
 (defmethod lem-if:display-popup-menu ((implementation lem-capi::capi-impl) items
-                                      &key action-callback print-function)
+                                      &key action-callback print-function focus-attribute non-focus-attribute)
+  (declare (ignore focus-attribute non-focus-attribute))
   (setf *items* items)
   (setf *non-focus-interface*
         (capi:prompt-with-list-non-focus
@@ -19,8 +20,7 @@
                             (declare (ignore interface))
                             (funcall action-callback item)
                             (capi:non-focus-terminate *non-focus-interface*))
-         :list-updater (lambda () *items*)
-         )))
+         :list-updater (lambda () *items*))))
 
 (defmethod lem-if:popup-menu-update ((implementation lem-capi::capi-impl) items)
   (setf *items* items)

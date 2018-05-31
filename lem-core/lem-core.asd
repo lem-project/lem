@@ -48,6 +48,7 @@
 
                (:file "init")
                (:file "interface")
+               (:file "popup-menu")
 
                (:file "completion-mode")
                (:file "tmlanguage")

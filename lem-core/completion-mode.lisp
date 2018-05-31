@@ -107,7 +107,9 @@
                                       items
                                       :action-callback (lambda (item)
                                                          (completion-insert (current-point) item))
-                                      :print-function 'completion-item-label)
+                                      :print-function 'completion-item-label
+                                      :focus-attribute 'completion-attribute
+                                      :non-focus-attribute 'non-focus-completion-attribute)
            (start-completion-mode function)))))
 
 (defun run-completion (function)

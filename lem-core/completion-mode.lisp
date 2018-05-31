@@ -106,7 +106,8 @@
            (lem-if:display-popup-menu (implementation)
                                       items
                                       :action-callback (lambda (item)
-                                                         (completion-insert (current-point) item))
+                                                         (completion-insert (current-point) item)
+                                                         (completion-end))
                                       :print-function 'completion-item-label
                                       :focus-attribute 'completion-attribute
                                       :non-focus-attribute 'non-focus-completion-attribute)

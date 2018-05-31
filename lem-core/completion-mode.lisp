@@ -33,39 +33,11 @@
 (define-attribute non-focus-completion-attribute
   (t))
 
-(defvar *completion-overlay* nil)
-(defvar *completion-window* nil)
-(defvar *completion-buffer* nil)
 (defvar *completion-restart-function* nil)
 
-(defun completion-buffer ()
-  *completion-buffer*)
-
-(defun completion-buffer-point ()
-  (let ((buffer (completion-buffer)))
-    (when buffer
-      (buffer-point buffer))))
-
-(defun update-completion-overlay (point)
-  (when *completion-overlay*
-    (delete-overlay *completion-overlay*))
-  (when point
-    (with-point ((start point)
-                 (end point))
-      (setf *completion-overlay*
-            (make-overlay (line-start start)
-                          (line-end end)
-                          'completion-attribute)))))
-
 (defun completion-end ()
-  (when *completion-overlay*
-    (delete-overlay *completion-overlay*))
   (completion-mode nil)
-  (quit-balloon *completion-window*)
-  (let ((buffer (completion-buffer)))
-    (when buffer
-      (delete-buffer buffer)
-      (setf *completion-buffer* nil))))
+  (lem-if:popup-menu-quit (implementation)))
 
 (defun completion-again ()
   (when *completion-restart-function*
@@ -83,46 +55,27 @@
   (completion-again))
 
 (define-command completion-next-line () ()
-  (alexandria:when-let ((point (completion-buffer-point)))
-    (unless (line-offset point 1)
-      (buffer-start point))
-    (window-see *completion-window*)
-    (update-completion-overlay point)))
+  (lem-if:popup-menu-down (implementation)))
 
 (define-command completion-previous-line () ()
-  (alexandria:when-let ((point (completion-buffer-point)))
-    (unless (line-offset point -1)
-      (buffer-end point))
-    (window-see *completion-window*)
-    (update-completion-overlay point)))
+  (lem-if:popup-menu-up (implementation)))
 
 (define-command completion-end-of-buffer () ()
-  (alexandria:when-let ((point (completion-buffer-point)))
-    (buffer-end point)
-    (window-see *completion-window*)
-    (update-completion-overlay point)))
+  (lem-if:popup-menu-last (implementation)))
 
 (define-command completion-beginning-of-buffer () ()
-  (alexandria:when-let ((point (completion-buffer-point)))
-    (buffer-start point)
-    (window-see *completion-window*)
-    (update-completion-overlay point)))
+  (lem-if:popup-menu-first (implementation)))
 
 (define-command completion-select () ()
-  (let* ((completion-point (completion-buffer-point))
-         (item (when completion-point
-                 (text-property-at (line-start completion-point) :item))))
-    (completion-insert (current-point) item)
-    (completion-end)))
+  (lem-if:popup-menu-select (implementation)))
 
 (define-command completion-insert-space-and-cancel () ()
   (insert-character (current-point) #\space)
   (completion-end))
 
-(defun start-completion-mode (buffer restart-function)
+(defun start-completion-mode (restart-function)
   (setf *completion-restart-function* restart-function)
-  (completion-mode t)
-  (update-completion-overlay (buffer-point buffer)))
+  (completion-mode t))
 
 (defun completion-insert (point item)
   (when item
@@ -141,60 +94,21 @@
              (delete-between-points start point)
              (insert-string start (completion-item-label item)))))))
 
-(defun create-completion-buffer (items back-attribute)
-  (let ((buffer (or (completion-buffer)
-                    (make-buffer "*Completion*" :enable-undo-p nil :temporary t))))
-    (setf *completion-buffer* buffer)
-    (erase-buffer buffer)
-    (setf (variable-value 'truncate-lines :buffer buffer) nil)
-    (let ((point (buffer-point buffer))
-          (max-column 0)
-          (label-end-column
-            (reduce (lambda (max item)
-                      (max max (1+ (string-width (completion-item-label item)))))
-                    items
-                    :initial-value 0)))
-      (loop :for rest-items :on items
-            :for item := (car rest-items)
-            :do (insert-string point (completion-item-label item))
-                (move-to-column point label-end-column t)
-                (insert-string point (completion-item-detail item))
-                (setf max-column (max max-column (point-column point)))
-                (with-point ((start (line-start (copy-point point :temporary))))
-                  (put-text-property start point :item item))
-                (when (cdr rest-items)
-                  (insert-character point #\newline)))
-      (buffer-start point)
-      (when back-attribute
-        (put-text-property (buffer-start-point buffer)
-                           (buffer-end-point buffer)
-                           :attribute 'non-focus-completion-attribute))
-      (buffer-start point)
-      (values buffer max-column))))
-
 (defun run-completion-1 (function repeat)
   (let ((items (funcall function (current-point))))
     (cond ((null items)
            (when repeat (completion-end)))
           ((and (not repeat) (null (rest items)))
            (completion-insert (current-point) (first items)))
+          (repeat
+           (lem-if:popup-menu-update (implementation) items))
           (t
-           (multiple-value-bind (buffer max-column)
-               (create-completion-buffer items 'non-focus-completion-attribute)
-             (cond (repeat
-                    (update-completion-overlay (buffer-point buffer))
-                    (balloon (current-window)
-                             buffer
-                             max-column
-                             (min 20 (length items))
-                             *completion-window*))
-                   (t
-                    (setf *completion-window*
-                          (balloon (current-window)
-                                   buffer
-                                   max-column
-                                   (min 20 (length items))))
-                    (start-completion-mode buffer function))))))))
+           (lem-if:display-popup-menu (implementation)
+                                      items
+                                      :action-callback (lambda (item)
+                                                         (completion-insert (current-point) item))
+                                      :print-function 'completion-item-label)
+           (start-completion-mode function)))))
 
 (defun run-completion (function)
   (run-completion-1 function nil))

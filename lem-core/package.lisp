@@ -26,7 +26,15 @@
    :redraw-window
    :redraw-view-after
    :update-display
-   :scroll))
+   :scroll
+   :display-popup-menu
+   :popup-menu-update
+   :popup-menu-quit
+   :popup-menu-down
+   :popup-menu-up
+   :popup-menu-first
+   :popup-menu-last
+   :popup-menu-select))
 
 (defpackage :lem-user
   (:use :cl :lem))

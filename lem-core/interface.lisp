@@ -38,6 +38,15 @@
 (defgeneric lem-if:update-display (implementation))
 (defgeneric lem-if:scroll (implementation view n))
 
+(defgeneric lem-if:display-popup-menu (implementation items &key action-callback print-function))
+(defgeneric lem-if:popup-menu-update (implementation items))
+(defgeneric lem-if:popup-menu-quit (implementation))
+(defgeneric lem-if:popup-menu-down (implementation))
+(defgeneric lem-if:popup-menu-up (implementation))
+(defgeneric lem-if:popup-menu-first (implementation))
+(defgeneric lem-if:popup-menu-last (implementation))
+(defgeneric lem-if:popup-menu-select (implementation))
+
 (defvar *implementation*)
 
 (defvar *print-start-x* 0)

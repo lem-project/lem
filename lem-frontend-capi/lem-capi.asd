@@ -3,4 +3,5 @@
   :serial t
   :components ((:file "util")
                (:file "lem-pane")
-               (:file "main")))
+               (:file "main")
+               (:file "popup-menu")))

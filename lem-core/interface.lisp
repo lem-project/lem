@@ -4,6 +4,7 @@
           implementation
           native-scroll-support
           redraw-after-modifying-floating-window
+          support-floating-window
           set-foreground
           set-background
           display-width
@@ -19,7 +20,11 @@
    (redraw-after-modifying-floating-window
     :initform nil
     :initarg :redraw-after-modifying-floating-window
-    :reader redraw-after-modifying-floating-window)))
+    :reader redraw-after-modifying-floating-window)
+   (support-floating-window
+    :initform t
+    :initarg :support-floating-window
+    :reader support-floating-window)))
 
 (defgeneric lem-if:invoke (implementation function))
 (defgeneric lem-if:display-background-mode (implementation))

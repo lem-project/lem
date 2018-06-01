@@ -10,6 +10,54 @@
 (defvar *focus-attribute* nil)
 (defvar *non-focus-attribute* nil)
 
+(defun redraw-display* ()
+  (when (redraw-after-modifying-floating-window (implementation))
+    (redraw-display t)))
+
+(defun compute-popup-window-position (orig-window)
+  (let* ((y (+ (window-y orig-window)
+               (window-cursor-y orig-window)
+               1))
+         (x (+ (window-x orig-window)
+               (let ((x (point-column (lem::window-buffer-point orig-window))))
+                 (when (<= (window-width orig-window) x)
+                   (let ((mod (mod x (window-width orig-window)))
+                         (floor (floor x (window-width orig-window))))
+                     (setf x (+ mod floor))
+                     (incf y floor)))
+                 x))))
+    (values x y)))
+
+(defun popup-window (orig-window buffer width height &optional dst-window)
+  (multiple-value-bind (x y)
+      (compute-popup-window-position orig-window)
+    (cond
+      ((<= (display-height)
+           (+ y (min height
+                     (floor (display-height) 3))))
+       (cond ((>= 0 (- y height))
+              (setf y 1)
+              (setf height (min height (- (display-height) 1))))
+             (t
+              (decf y (+ height 1)))))
+      ((<= (display-height) (+ y height))
+       (setf height (- (display-height) y))))
+    (when (<= (display-width) (+ x width))
+      (when (< (display-width) width)
+        (setf width (display-width)))
+      (setf x (- (display-width) width)))
+    (cond (dst-window
+           (lem::window-set-size dst-window width height)
+           (lem::window-set-pos dst-window x y)
+           (redraw-display*)
+           dst-window)
+          (t
+           (make-floating-window buffer x y width height nil)))))
+
+(defun quit-popup-window (floating-window)
+  (delete-window floating-window)
+  (redraw-display))
+
 (defun focus-point ()
   (alexandria:when-let (buffer *menu-buffer*)
     (buffer-point buffer)))
@@ -60,7 +108,7 @@
     (text-property-at (line-start p) :item)))
 
 (defmethod lem-if:display-popup-menu (implementation items &key action-callback print-function
-                                                     focus-attribute non-focus-attribute)
+                                                                focus-attribute non-focus-attribute)
   (setf *print-function* print-function)
   (setf *action-callback* action-callback)
   (setf *focus-attribute* focus-attribute)
@@ -68,25 +116,25 @@
   (multiple-value-bind (buffer width)
       (create-menu-buffer items print-function)
     (setf *menu-window*
-          (balloon (current-window)
-                   buffer
-                   width
-                   (min 20 (length items))))))
+          (popup-window (current-window)
+                         buffer
+                         width
+                         (min 20 (length items))))))
 
 (defmethod lem-if:popup-menu-update (implementation items)
   (multiple-value-bind (buffer width)
       (create-menu-buffer items *print-function*)
     (update-focus-overlay (buffer-point buffer))
-    (balloon (current-window)
-             buffer
-             width
-             (min 20 (length items))
-             *menu-window*)))
+    (popup-window (current-window)
+                   buffer
+                   width
+                   (min 20 (length items))
+                   *menu-window*)))
 
 (defmethod lem-if:popup-menu-quit (implementation)
   (when *focus-overlay*
     (delete-overlay *focus-overlay*))
-  (quit-balloon *menu-window*)
+  (quit-popup-window *menu-window*)
   (when *menu-buffer*
     (delete-buffer *menu-buffer*)
     (setf *menu-buffer* nil)))
@@ -123,3 +171,43 @@
   (alexandria:when-let ((f *action-callback*)
                         (item (get-focus-item)))
     (funcall f item)))
+
+(define-attribute popup-window-attribute
+  (:light :background "gray" :foreground "black")
+  (:dark :background "white" :foreground "blue"))
+
+(defvar *popup-message-window* nil)
+
+(defun clear-popup-message ()
+  (when *popup-message-window*
+    (delete-window *popup-message-window*)
+    (setf *popup-message-window* nil)
+    (redraw-display*)))
+
+(defmethod lem-if:display-popup-message (implementation text timeout)
+  (clear-popup-message)
+  (let ((buffer (make-buffer "*Popup Message*" :temporary t :enable-undo-p nil)))
+    (setf (variable-value 'truncate-lines :buffer buffer) nil)
+    (erase-buffer buffer)
+    (let ((p (buffer-point buffer))
+          (max-column 0))
+      (insert-string p text)
+      (buffer-start p)
+      (loop :for column := (point-column (line-end p))
+            :do (setf max-column (max max-column column))
+            :while (line-offset p 1))
+      (buffer-start p)
+      (loop :do (move-to-column p max-column t)
+            :while (line-offset p 1))
+      (put-text-property (buffer-start-point buffer)
+                         (buffer-end-point buffer)
+                         :attribute 'popup-window-attribute)
+      (let ((window
+              (popup-window (current-window)
+                            buffer
+                            max-column
+                            (buffer-nlines buffer))))
+        (buffer-start (window-view-point window))
+        (window-see window)
+        (setf *popup-message-window* window)
+        (start-timer (* timeout 1000) nil 'clear-popup-message)))))

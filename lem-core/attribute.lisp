@@ -21,7 +21,6 @@
           modeline-inactive
           truncate-attribute
           compiler-note-attribute
-          balloon-attribute
           syntax-warning-attribute
           syntax-string-attribute
           syntax-comment-attribute
@@ -172,10 +171,6 @@
 
 (define-attribute compiler-note-attribute
   (t :foreground "red" :underline-p t))
-
-(define-attribute balloon-attribute
-  (:light :background "gray" :foreground "black")
-  (:dark :background "white" :foreground "blue"))
 
 (define-attribute syntax-warning-attribute
   (t :foreground "red"))

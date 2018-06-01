@@ -94,7 +94,6 @@
                          (prog1 (read-command)
                            (stop-idle-timers)))))
               (unless (minibuffer-window-active-p) (message nil))
-              (clear-balloon-message)
               (call-command cmd nil)))
         (editor-condition (c)
           (message "~A" c))))))

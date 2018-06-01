@@ -2,10 +2,14 @@
 
 (export '(*implementation*
           implementation
+          native-scroll-support
+          redraw-after-modifying-floating-window
           set-foreground
           set-background
           display-width
           display-height))
+
+(defvar *implementation*)
 
 (defclass implementation ()
   ((native-scroll-support
@@ -47,8 +51,7 @@
 (defgeneric lem-if:popup-menu-first (implementation))
 (defgeneric lem-if:popup-menu-last (implementation))
 (defgeneric lem-if:popup-menu-select (implementation))
-
-(defvar *implementation*)
+(defgeneric lem-if:display-popup-message (implementation text timeout))
 
 (defvar *print-start-x* 0)
 (defvar *cursor-x* 0)

@@ -219,7 +219,7 @@
 (define-command godef-describe () ()
   (let ((description (nth-value 1 (call-godef (current-point)))))
     (when description
-      (balloon-message (format nil "~{~A~^~%~}" description)))))
+      (display-popup-message (format nil "~{~A~^~%~}" description)))))
 
 (defun parse-gocode (text)
   (let ((json (yason:parse text)))
@@ -313,7 +313,7 @@
     (when (and (eq (current-buffer) (overlay-buffer ov))
                (point<= (overlay-start ov) (current-point))
                (point<= (current-point) (overlay-end ov)))
-      (balloon-message (overlay-get ov 'message))
+      (display-popup-message (overlay-get ov 'message))
       (return t))))
 
 (define-command go-remove-notes () ()

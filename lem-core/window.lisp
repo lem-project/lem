@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(truncate-lines
+          *default-popup-message-timeout*
           *window-sufficient-width*
           *scroll-recenter-p*
           *window-scroll-functions*
@@ -41,14 +42,14 @@
           floating-window
           make-floating-window
           floating-window-p
-          balloon
-          quit-balloon
-          balloon-message
-          redraw-display))
+          redraw-display
+          display-popup-message))
 
 (define-editor-variable truncate-lines t)
 
 (defparameter *window-left-margin* 1)
+
+(defvar *default-popup-message-timeout* 5)
 
 (defvar *window-sufficient-width* 150)
 (defvar *scroll-recenter-p* t)
@@ -913,85 +914,6 @@
 (defun floating-window-p (window)
   (typep window 'floating-window))
 
-(defun compute-pop-up-window-position (orig-window)
-  (let* ((y (+ (window-y orig-window)
-               (window-cursor-y orig-window)
-               1))
-         (x (+ (window-x orig-window)
-               (let ((x (point-column (window-buffer-point orig-window))))
-                 (when (<= (window-width orig-window) x)
-                   (let ((mod (mod x (window-width orig-window)))
-                         (floor (floor x (window-width orig-window))))
-                     (setf x (+ mod floor))
-                     (incf y floor)))
-                 x))))
-    (values x y)))
-
-(defun balloon (orig-window buffer width height &optional dst-window)
-  (multiple-value-bind (x y)
-      (compute-pop-up-window-position orig-window)
-    (cond
-      ((<= (display-height)
-           (+ y (min height
-                     (floor (display-height) 3))))
-       (cond ((>= 0 (- y height))
-              (setf y 1)
-              (setf height (min height (- (display-height) 1))))
-             (t
-              (decf y (+ height 1)))))
-      ((<= (display-height) (+ y height))
-       (setf height (- (display-height) y))))
-    (when (<= (display-width) (+ x width))
-      (when (< (display-width) width)
-        (setf width (display-width)))
-      (setf x (- (display-width) width)))
-    (cond (dst-window
-           (window-set-size dst-window width height)
-           (window-set-pos dst-window x y)
-           (redraw-display*)
-           dst-window)
-          (t
-           (make-floating-window buffer x y width height nil)))))
-
-(defun quit-balloon (floating-window)
-  (delete-window floating-window)
-  (redraw-display*))
-
-(defvar *balloon-message-window* nil)
-
-(defun balloon-message (text)
-  (clear-balloon-message)
-  (let ((buffer (make-buffer "*balloon*" :temporary t :enable-undo-p nil)))
-    (setf (variable-value 'truncate-lines :buffer buffer) nil)
-    (erase-buffer buffer)
-    (let ((p (buffer-point buffer))
-          (max-column 0))
-      (insert-string p text)
-      (buffer-start p)
-      (loop :for column := (point-column (line-end p))
-            :do (setf max-column (max max-column column))
-            :while (line-offset p 1))
-      (buffer-start p)
-      (loop :do (move-to-column p max-column t)
-            :while (line-offset p 1))
-      (put-text-property (buffer-start-point buffer)
-                         (buffer-end-point buffer)
-                         :attribute 'balloon-attribute)
-      (let ((window
-              (balloon (current-window)
-                       buffer
-                       max-column
-                       (buffer-nlines buffer))))
-        (buffer-start (window-view-point window))
-        (window-see window)
-        (setf *balloon-message-window* window)))))
-
-(defun clear-balloon-message ()
-  (when *balloon-message-window*
-    (delete-window *balloon-message-window*)
-    (setf *balloon-message-window* nil)
-    (redraw-display t)))
-
 (defun redraw-display (&optional force)
   (without-interrupts
     (dolist (window (window-list))
@@ -1006,10 +928,6 @@
       (window-redraw window t))
     (update-display)))
 
-(defun redraw-display* ()
-  (when (redraw-after-modifying-floating-window (implementation))
-    (redraw-display t)))
-
 (defun change-display-size-hook ()
   (adjust-windows (window-topleft-x)
                   (window-topleft-y)
@@ -1017,3 +935,6 @@
                   (+ (window-max-height) (window-topleft-y)))
   (minibuf-update-size)
   (redraw-display))
+
+(defun display-popup-message (text &key (timeout *default-popup-message-timeout*))
+  (lem-if:display-popup-message (implementation) text timeout))

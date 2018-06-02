@@ -224,7 +224,7 @@
   (with-error-handler ()
     (notify "modeline-put" (put-params view x y string attribute))))
 
-(defmethod lem-if:move-cursor ((implementation jsonrpc) view x y)
+(defmethod move-cursor ((implementation jsonrpc) view x y)
   (with-error-handler ()
     (notify "move-cursor"
             (params "viewInfo" view "x" x "y" y))))
@@ -232,10 +232,10 @@
 (defmethod lem-if:redraw-view-after ((implementation jsonrpc) view focus-window-p)
   (with-error-handler ()
     (when focus-window-p
-      (lem-if:move-cursor implementation
-                                  view
-                                  lem::*cursor-x*
-                                  lem::*cursor-y*))
+      (move-cursor implementation
+                   view
+                   lem::*cursor-x*
+                   lem::*cursor-y*))
     (notify "touch" (params "viewInfo" view))))
 
 (defmethod lem-if:scroll ((implementation jsonrpc) view n)

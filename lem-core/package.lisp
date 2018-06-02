@@ -22,7 +22,6 @@
    :print-modeline
    :clear-eol
    :clear-eob
-   :move-cursor
    :redraw-window
    :redraw-view-after
    :update-display

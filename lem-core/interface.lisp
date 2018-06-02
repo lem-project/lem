@@ -41,7 +41,6 @@
 (defgeneric lem-if:print-modeline (implementation view x y string attribute))
 (defgeneric lem-if:clear-eol (implementation view x y))
 (defgeneric lem-if:clear-eob (implementation view x y))
-(defgeneric lem-if:move-cursor (implementation view x y))
 (defgeneric lem-if:redraw-window (implementation window force))
 (defgeneric lem-if:redraw-view-after (implementation view focus-window-p))
 (defgeneric lem-if:update-display (implementation))

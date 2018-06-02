@@ -132,9 +132,6 @@
                      (view-width view)
                      (- (view-height view) y))))
 
-(defmethod lem-if:move-cursor ((implementation capi-impl) view x y)
-  (dbg (list "move-cursor" view x y)))
-
 (defmethod lem-if:redraw-view-after ((implementation capi-impl) view focus-window-p)
   (with-error-handler ()
     (dbg (list "redraw-view-after" view focus-window-p))

@@ -27,6 +27,8 @@
    :redraw-view-after
    :update-display
    :scroll
+   :split-window-horizontally
+   :split-window-vertically
    :display-popup-menu
    :popup-menu-update
    :popup-menu-quit

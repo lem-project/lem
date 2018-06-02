@@ -474,7 +474,8 @@
                          (- (window-height window) height)
                          t)))
       (setf (window-%height window) height)
-      (split-window-after window new-window :vsplit))))
+      (split-window-after window new-window :vsplit)
+      (lem-if:split-window-vertically window new-window))))
 
 (defun split-window-horizontally (window &optional width)
   (unless (minibuffer-window-p window)
@@ -495,7 +496,8 @@
                          (window-height window)
                          t)))
       (setf (window-%width window) width)
-      (split-window-after window new-window :hsplit))))
+      (split-window-after window new-window :hsplit)
+      (lem-if:split-window-horizontaly window new-window))))
 
 (defun split-window-sensibly (window)
   (if (< *window-sufficient-width* (window-%width window))

@@ -46,10 +46,10 @@
 (defgeneric lem-if:update-display (implementation))
 (defgeneric lem-if:scroll (implementation view n))
 
-(defgeneric lem-if:split-window-horizontally (implementation window new-window)
-  (:method (implementation window new-window)))
-(defgeneric lem-if:split-window-vertically (implementation window new-window)
-  (:method (implementation window new-window)))
+(defgeneric lem-if:split-window-horizontally (implementation view new-view)
+  (:method (implementation view new-view)))
+(defgeneric lem-if:split-window-vertically (implementation view new-view)
+  (:method (implementation view new-view)))
 
 (defgeneric lem-if:display-popup-menu (implementation items &key action-callback print-function
                                                       focus-attribute non-focus-attribute))

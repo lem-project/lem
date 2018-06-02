@@ -6,6 +6,8 @@
    :lem-capi.lem-pane))
 (in-package :lem-capi)
 
+(defvar *quit* nil)
+
 (defclass capi-impl (lem::implementation)
   ()
   (:default-initargs
@@ -40,7 +42,8 @@
                      (reinitialize-pixmap *lem-pane*))
                    (lambda (report)
                      (declare (ignore report))
-                     (capi:quit-interface *lem-pane*))))))
+                     (capi:quit-interface *lem-pane*)
+                     (when *quit* (lw:quit)))))))
 
 (defmethod lem-if:display-background-mode ((implementation capi-impl))
   (with-error-handler ()

@@ -1,6 +1,6 @@
-(defpackage :lem.popup-menu
+(defpackage :lem.popup-window
   (:use :cl :lem))
-(in-package :lem.popup-menu)
+(in-package :lem.popup-window)
 
 (defvar *menu-buffer* nil)
 (defvar *menu-window* nil)

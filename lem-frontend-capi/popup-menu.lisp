@@ -14,7 +14,7 @@
   (multiple-value-bind (char-width char-height)
       (lem-capi.lem-pane::lem-pane-char-size lem-capi::*lem-pane*)
     (multiple-value-bind (x y)
-        (lem.popup-menu::compute-popup-window-position (lem:current-window))
+        (lem.popup-window::compute-popup-window-position (lem:current-window))
       (setf *non-focus-interface*
             (capi:prompt-with-list-non-focus
              items
@@ -53,7 +53,7 @@
   (multiple-value-bind (char-width char-height)
       (lem-capi.lem-pane::lem-pane-char-size lem-capi::*lem-pane*)
     (multiple-value-bind (x y)
-        (lem.popup-menu::compute-popup-window-position (lem:current-window))
+        (lem.popup-window::compute-popup-window-position (lem:current-window))
       (capi:display-non-focus-message text
                                       :timeout timeout
                                       :owner lem-capi::*lem-pane*

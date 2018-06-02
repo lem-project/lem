@@ -896,9 +896,9 @@
 
 (defclass floating-window (window) ())
 
-(defmethod initialize-instance :before ((floating-winodw floating-winodw) &rest initargs)
+(defmethod initialize-instance :before ((floating-window floating-window) &rest initargs)
   (declare (ignore initargs))
-  (unless (support-floating-window (implementatio))
+  (unless (support-floating-window (implementation))
     (error "floating window is not supported")))
 
 (defun make-floating-window (buffer x y width height use-modeline-p)

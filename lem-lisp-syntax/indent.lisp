@@ -119,6 +119,7 @@
         ("loop"         lisp-indent-loop)
         ;("loop" (&rest &body))
         (":method" lisp-indent-defmethod) ; in `defgeneric'
+        (":default-initargs" (&rest 1))
         ("multiple-value-bind" ((&whole 6 &rest 1) 4 &body))
         ("multiple-value-call" (4 &body))
         ("multiple-value-prog1" 1)

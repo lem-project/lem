@@ -2,6 +2,7 @@
   (:add-use-defaults t)
   (:use :cl :lem-capi.util)
   (:export
+   :resize-if-required
    :reinitialize-pixmap
    :lem-pane
    :lem-pane-width
@@ -31,7 +32,10 @@
     :accessor lem-pane-string-extent)
    (pixmap
     :initform nil
-    :accessor lem-pane-pixmap))
+    :accessor lem-pane-pixmap)
+   (resized
+    :initform nil
+    :accessor lem-pane-resized))
   (:default-initargs
    :foreground :black
    :background :white
@@ -43,6 +47,25 @@
                                   :collect `((,char :press :meta :control) key-press)
                                   :collect `((,char :press :meta :control :shift) key-press)))
    :resize-callback 'resize-callback))
+
+(defmethod capi:interface-keys-style ((lem-pane lem-pane)) :emacs)
+
+(defun resize-callback (lem-pane &rest args)
+  (declare (ignore args))
+  (unless (lem-pane-resized lem-pane)
+    (setf (lem-pane-resized lem-pane) t)
+    (mp:schedule-timer-relative (mp:make-timer 'resize-if-required lem-pane) 0.1)))
+
+(defun resize-if-required (lem-pane)
+  (capi:apply-in-pane-process-wait-single
+   lem-pane
+   nil
+   (lambda ()
+     (when (lem-pane-resized lem-pane)
+       (setf (lem-pane-resized lem-pane) nil)
+       (lem:send-event :resize)
+       (reinitialize-pixmap lem-pane)
+       (clear lem-pane)))))
 
 (defun update-font-if-required (lem-pane)
   (unless (lem-pane-normal-font lem-pane)
@@ -63,13 +86,6 @@
     (setf (lem-pane-bold-font lem-pane) bold-font)
     (setf (lem-pane-string-extent lem-pane)
           (multiple-value-list (gp:get-string-extent lem-pane "a" normal-font)))))
-
-(defmethod capi:interface-keys-style ((lem-pane lem-pane)) :emacs)
-
-(defun resize-callback (lem-pane &rest args)
-  (declare (ignore args))
-  (lem:send-event :resize)
-  (reinitialize-pixmap lem-pane))
 
 (defun reinitialize-pixmap (lem-pane)
   (capi:apply-in-pane-process-wait-single

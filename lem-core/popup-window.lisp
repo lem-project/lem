@@ -56,7 +56,7 @@
 
 (defun quit-popup-window (floating-window)
   (delete-window floating-window)
-  (redraw-display))
+  (redraw-display*))
 
 (defun focus-point ()
   (alexandria:when-let (buffer *menu-buffer*)

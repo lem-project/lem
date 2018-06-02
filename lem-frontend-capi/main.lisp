@@ -21,10 +21,6 @@
 (defvar *lem-pane*)
 (defvar *editor-thread*)
 
-(defun key-press (self x y gesture-spec)
-  (declare (ignore self x y))
-  gesture-spec)
-
 (defmethod lem-if:invoke ((implementation capi-impl) function)
   (with-error-handler ()
     (dbg "interface-invoke")

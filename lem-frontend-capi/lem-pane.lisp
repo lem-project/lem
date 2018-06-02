@@ -197,14 +197,14 @@
                                        :foreground foreground
                                        :background background
                                        :block t)
-                    (incf x1 (* char-width (if (lem:wide-char-p c) 2 1)))))
-        (when underline
-          (gp:draw-line (lem-pane-pixmap lem-pane)
-                        x
-                        (+ y char-height -4)
-                        (+ x (* char-width (length string)))
-                        (+ y char-height -4)
-                        :foreground foreground))))))
+                    (incf x1 (* char-width (if (lem:wide-char-p c) 2 1)))
+                :finally (when underline
+                           (gp:draw-line (lem-pane-pixmap lem-pane)
+                                         x
+                                         (+ y char-height -4)
+                                         x1
+                                         (+ y char-height -4)
+                                         :foreground foreground))))))))
 
 (defun draw-text (lem-pane string x y attribute)
   (capi:apply-in-pane-process-wait-single

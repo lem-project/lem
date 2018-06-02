@@ -44,7 +44,7 @@
                                   :collect `((,char :press :meta :control :shift) key-press)))
    :resize-callback 'resize-callback))
 
-(defun maybe-update-cache-font (lem-pane)
+(defun update-font-if-required (lem-pane)
   (unless (lem-pane-normal-font lem-pane)
     (change-font lem-pane (car *default-font-spec*) (cdr *default-font-spec*))))
 
@@ -97,7 +97,7 @@
                      0 0))))
 
 (defun lem-pane-char-size (lem-pane)
-  (maybe-update-cache-font lem-pane)
+  (update-font-if-required lem-pane)
   (destructuring-bind (left top right bottom)
       (lem-pane-string-extent lem-pane)
     (values (- right left)
@@ -152,7 +152,7 @@
 (defun key-press (self x y gesture-spec)
   (declare (ignore self x y))
   (with-error-handler ()
-    (alexandria:when-let ((key (gesture-spec-to-key gesture-spec)))
+    (when-let (key (gesture-spec-to-key gesture-spec))
       (lem:send-event key))))
 
 (defun lem-pane-width (lem-pane)
@@ -165,16 +165,16 @@
    (floor (capi:simple-pane-visible-height lem-pane)
           (lem-pane-char-height lem-pane))))
 
-(defun convert-color (color default-color)
-  (alexandria:if-let ((rgb (lem:parse-color color)))
-      (let ((n (/ 1.0 255)))
-        (destructuring-bind (r g b) rgb
-          (color:make-rgb (* r n) (* g n) (* b n))))
+(defun convert-color (color &optional default-color)
+  (if-let (rgb (lem:parse-color color))
+    (let ((n (/ 1.0 255)))
+      (destructuring-bind (r g b) rgb
+        (color:make-rgb (* r n) (* g n) (* b n))))
     default-color))
 
 (defun draw-string (lem-pane string x y foreground background &key underline bold reverse)
   (when reverse (rotatef foreground background))
-  (maybe-update-cache-font lem-pane)
+  (update-font-if-required lem-pane)
   (let ((font (if bold
                   (lem-pane-bold-font lem-pane)
                   (lem-pane-normal-font lem-pane))))
@@ -212,10 +212,10 @@
    nil
    (lambda ()
      (if attribute
-         (let ((foreground (or (convert-color (lem:attribute-foreground attribute) nil)
-                               (capi:simple-pane-foreground lem-pane)))
-               (background (or (convert-color (lem:attribute-background attribute) nil)
-                               (capi:simple-pane-background lem-pane)))
+         (let ((foreground (convert-color (lem:attribute-foreground attribute)
+                                          (capi:simple-pane-foreground lem-pane)))
+               (background (convert-color (lem:attribute-background attribute)
+                                          (capi:simple-pane-background lem-pane)))
                (underline-p (lem:attribute-underline-p attribute))
                (bold-p (lem:attribute-bold-p attribute))
                (reverse-p (lem:attribute-reverse-p attribute)))
@@ -254,9 +254,9 @@
      (gp:clear-graphics-port (lem-pane-pixmap lem-pane)))))
 
 (defun change-foreground (lem-pane color)
-  (alexandria:when-let ((color (convert-color color nil)))
+  (when-let (color (convert-color color nil))
     (setf (capi:simple-pane-foreground lem-pane) color)))
 
 (defun change-background (lem-pane color)
-  (alexandria:when-let ((color (convert-color color nil)))
+  (when-let (color (convert-color color nil))
     (setf (capi:simple-pane-background lem-pane) color)))

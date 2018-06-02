@@ -14,30 +14,25 @@
    :change-background))
 (in-package :lem-capi.lem-pane)
 
-(defvar *default-font-family* #+win32 "Consolas" #-win32 "DejaVu Sans Mono")
-(defvar *default-font-size* 10)
-
-(defvar *default-font*
-  (gp:make-font-description :size *default-font-size*
-                            :family *default-font-family*))
-
-(defvar *default-bold-font*
-  (gp:make-font-description :size *default-font-size*
-                            :family *default-font-family*
-                            :weight :bold))
+(defvar *default-font-spec*
+  #+win32 (cons "Consolas" 10)
+  #+linux (cons "DejaVu Sans Mono" 10.5)
+  #+macosx (cons "Osaka" 10))
 
 (defclass lem-pane (capi:output-pane)
-  ((font
-    :initform *default-font*
-    :accessor lem-pane-font)
+  ((normal-font
+    :initform nil
+    :accessor lem-pane-normal-font)
    (bold-font
-    :initform *default-bold-font*
+    :initform nil
     :accessor lem-pane-bold-font)
+   (string-extent
+    :initform nil
+    :accessor lem-pane-string-extent)
    (pixmap
     :initform nil
     :accessor lem-pane-pixmap))
   (:default-initargs
-   :font *default-font*
    :foreground :black
    :background :white
    :input-model '((:gesture-spec key-press)
@@ -49,14 +44,27 @@
                                   :collect `((,char :press :meta :control :shift) key-press)))
    :resize-callback 'resize-callback))
 
-(defmethod capi:interface-keys-style ((lem-pane lem-pane)) :emacs)
+(defun maybe-update-cache-font (lem-pane)
+  (unless (lem-pane-normal-font lem-pane)
+    (change-font lem-pane (car *default-font-spec*) (cdr *default-font-spec*))))
 
-(defmethod (setf capi:simple-pane-font) :after (font (lem-pane lem-pane))
-  (setf (lem-pane-font lem-pane) font)
-  (setf (lem-pane-bold-font lem-pane)
-        (gp:make-font-description :size (gp:font-description-attribute-value font :size)
-                                  :family (gp:font-description-attribute-value font :family)
-                                  :weight :bold)))
+(defun change-font (lem-pane family size)
+  (let ((normal-font (gp:find-best-font
+                      lem-pane
+                      (gp:make-font-description :family family
+                                                :size size
+                                                :weight :normal)))
+        (bold-font (gp:find-best-font
+                    lem-pane
+                    (gp:make-font-description :family family
+                                              :size size
+                                              :weight :bold))))
+    (setf (lem-pane-normal-font lem-pane) normal-font)
+    (setf (lem-pane-bold-font lem-pane) bold-font)
+    (setf (lem-pane-string-extent lem-pane)
+          (multiple-value-list (gp:get-string-extent lem-pane "a" normal-font)))))
+
+(defmethod capi:interface-keys-style ((lem-pane lem-pane)) :emacs)
 
 (defun resize-callback (lem-pane &rest args)
   (declare (ignore args))
@@ -89,8 +97,9 @@
                      0 0))))
 
 (defun lem-pane-char-size (lem-pane)
-  (multiple-value-bind (left top right bottom)
-      (gp:get-string-extent lem-pane "a")
+  (maybe-update-cache-font lem-pane)
+  (destructuring-bind (left top right bottom)
+      (lem-pane-string-extent lem-pane)
     (values (- right left)
             (+ (abs top) bottom))))
 
@@ -165,13 +174,12 @@
 
 (defun draw-string (lem-pane string x y foreground background &key underline bold reverse)
   (when reverse (rotatef foreground background))
-  (let ((font (gp:find-best-font
-               lem-pane
-               (if bold
-                   (lem-pane-bold-font lem-pane)
-                   (lem-pane-font lem-pane)))))
-    (multiple-value-bind (left top right bottom)
-        (gp:get-string-extent lem-pane "a" font)
+  (maybe-update-cache-font lem-pane)
+  (let ((font (if bold
+                  (lem-pane-bold-font lem-pane)
+                  (lem-pane-normal-font lem-pane))))
+    (destructuring-bind (left top right bottom)
+        (lem-pane-string-extent lem-pane)
       (let* ((char-width (- right left))
              (char-height (+ (abs top) bottom))
              (x (* x char-width))

@@ -206,9 +206,11 @@
     (gp:clear-graphics-port window-pane)))
 
 (defun change-foreground (window-pane color)
-  (when-let (color (convert-color color))
-    (setf (capi:simple-pane-foreground window-pane) color)))
+  (with-apply-in-pane-process-wait-single (window-pane)
+    (when-let (color (convert-color color))
+      (setf (capi:simple-pane-foreground window-pane) color))))
 
 (defun change-background (window-pane color)
-  (when-let (color (convert-color color))
-    (setf (capi:simple-pane-background window-pane) color)))
+  (with-apply-in-pane-process-wait-single (window-pane)
+    (when-let (color (convert-color color))
+      (setf (capi:simple-pane-background window-pane) color))))

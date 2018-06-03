@@ -309,6 +309,7 @@
                      (window-max-width)
                      (window-max-height)
                      t))
+  (lem-if:set-first-view (implementation) (screen-view (window-screen (current-window))))
   (setf (window-tree) (current-window)))
 
 (defun window-recenter (window)

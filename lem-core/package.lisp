@@ -26,6 +26,7 @@
    :redraw-view-after
    :update-display
    :scroll
+   :set-first-view
    :split-window-horizontally
    :split-window-vertically
    :display-popup-menu

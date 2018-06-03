@@ -46,6 +46,8 @@
 (defgeneric lem-if:update-display (implementation))
 (defgeneric lem-if:scroll (implementation view n))
 
+(defgeneric lem-if:set-first-view (implementation view)
+  (:method (implementation view)))
 (defgeneric lem-if:split-window-horizontally (implementation view new-view)
   (:method (implementation view new-view)))
 (defgeneric lem-if:split-window-vertically (implementation view new-view)

@@ -8,6 +8,7 @@
           with-open-virtual-file))
 
 (defun guess-host-name (filename)
+  (declare (ignorable filename))
   #+windows
   (ppcre:register-groups-bind (host)
       ("^(\\w:)" filename)

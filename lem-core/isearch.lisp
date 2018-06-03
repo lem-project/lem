@@ -147,13 +147,17 @@
 (defun isearch-update-minibuffer ()
   (message-without-log "~A~A" *isearch-prompt* *isearch-string*))
 
+(defun make-add-char-callback (search-function)
+  (lambda (point string)
+    (alexandria:when-let (p (funcall search-function
+                                     (copy-point *isearch-start-point* :temporary)
+                                     string))
+      (move-point point p))))
+
 (define-command isearch-forward (&optional prompt) ((list nil))
   (isearch-start
    (or prompt "ISearch: ")
-   (lambda (point str)
-     (search-forward (or (character-offset point (- (length str)))
-                         point)
-                     str))
+   (make-add-char-callback #'search-forward)
    #'search-forward
    #'search-backward
    ""))
@@ -161,24 +165,21 @@
 (define-command isearch-backward (&optional prompt) ((list nil))
   (isearch-start
    (or prompt "ISearch: ")
-   (lambda (point str)
-     (search-backward (or (character-offset point (length str))
-                          point)
-                      str))
+   (make-add-char-callback #'search-backward)
    #'search-forward
    #'search-backward
    ""))
 
 (define-command isearch-forward-regexp (&optional prompt) ((list nil))
   (isearch-start (or prompt "ISearch Regexp: ")
-                 #'search-forward-regexp
+                 (make-add-char-callback #'search-forward-regexp)
                  #'search-forward-regexp
                  #'search-backward-regexp
                  ""))
 
 (define-command isearch-backward-regexp (&optional prompt) ((list nil))
   (isearch-start (or prompt "ISearch Regexp: ")
-                 #'search-backward-regexp
+                 (make-add-char-callback #'search-backward-regexp)
                  #'search-forward-regexp
                  #'search-backward-regexp
                  ""))

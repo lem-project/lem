@@ -16,6 +16,7 @@
           window-width
           window-height
           window-buffer
+          window-view
           window-parameter
           window-redraw
           current-window
@@ -156,6 +157,9 @@
 
 (defun window-buffer (&optional (window (current-window)))
   (window-%buffer window))
+
+(defun window-view (window)
+  (screen-view (window-screen window)))
 
 (defun find-window (id)
   (window-tree-find-if (window-tree)
@@ -309,7 +313,7 @@
                      (window-max-width)
                      (window-max-height)
                      t))
-  (lem-if:set-first-view (implementation) (screen-view (window-screen (current-window))))
+  (lem-if:set-first-view (implementation) (window-view (current-window)))
   (setf (window-tree) (current-window)))
 
 (defun window-recenter (window)
@@ -477,8 +481,8 @@
       (setf (window-%height window) height)
       (split-window-after window new-window :vsplit)
       (lem-if:split-window-vertically (implementation)
-                                      (screen-view (window-screen window))
-                                      (screen-view (window-screen new-window))))))
+                                      (window-view window)
+                                      (window-view new-window)))))
 
 (defun split-window-horizontally (window &optional width)
   (unless (minibuffer-window-p window)
@@ -501,8 +505,8 @@
       (setf (window-%width window) width)
       (split-window-after window new-window :hsplit)
       (lem-if:split-window-horizontally (implementation)
-                                        (screen-view (window-screen window))
-                                        (screen-view (window-screen new-window))))))
+                                        (window-view window)
+                                        (window-view new-window)))))
 
 (defun split-window-sensibly (window)
   (if (< *window-sufficient-width* (window-%width window))

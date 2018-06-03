@@ -142,89 +142,68 @@
             nil nil nil)))
 
 (defun draw-string (window-pane string x y attribute)
-  (capi:apply-in-pane-process-wait-single
-   window-pane
-   nil
-   (lambda ()
-     (apply #'%draw-string window-pane string x y (attribute-arguments window-pane attribute)))))
+  (with-apply-in-pane-process-wait-single (window-pane)
+    (apply #'%draw-string window-pane string x y (attribute-arguments window-pane attribute))))
 
 (defun draw-string-in-modeline (window-pane string x y attribute)
   (declare (ignore y))
-  (capi:apply-in-pane-process-wait-single
-   window-pane
-   nil
-   (lambda ()
-     (multiple-value-bind (char-width char-height)
-         (window-pane-char-size window-pane)
-       (let ((x (* x char-width))
-             (y (- (capi:simple-pane-visible-height window-pane) char-height)))
-         (apply #'%%draw-string window-pane string x y
-                (attribute-arguments window-pane attribute)))))))
+  (with-apply-in-pane-process-wait-single (window-pane)
+    (multiple-value-bind (char-width char-height)
+        (window-pane-char-size window-pane)
+      (let ((x (* x char-width))
+            (y (- (capi:simple-pane-visible-height window-pane) char-height)))
+        (apply #'%%draw-string window-pane string x y
+               (attribute-arguments window-pane attribute))))))
 
 (defun draw-rectangle (window-pane x y width height color)
-  (capi:apply-in-pane-process-wait-single
-   window-pane
-   nil
-   (lambda ()
-     (multiple-value-bind (char-width char-height)
-         (window-pane-char-size window-pane)
-       (let ((x (* x char-width))
-             (y (* y char-height))
-             (w (* width char-width))
-             (h (* height char-height)))
-         (gp:draw-rectangle window-pane
-                            x y w h
-                            :filled t
-                            :foreground color))))))
+  (with-apply-in-pane-process-wait-single (window-pane)
+    (multiple-value-bind (char-width char-height)
+        (window-pane-char-size window-pane)
+      (let ((x (* x char-width))
+            (y (* y char-height))
+            (w (* width char-width))
+            (h (* height char-height)))
+        (gp:draw-rectangle window-pane
+                           x y w h
+                           :filled t
+                           :foreground color)))))
 
 (defun clear-rectangle (window-pane x y width height)
-  (capi:apply-in-pane-process-wait-single
-   window-pane
-   nil
-   (lambda ()
-     (multiple-value-bind (char-width char-height)
-         (window-pane-char-size window-pane)
-       (let ((x (* x char-width))
-             (y (* y char-height))
-             (w (* width char-width))
-             (h (* height char-height)))
-         (gp:clear-rectangle window-pane
-                             x y w h))))))
+  (with-apply-in-pane-process-wait-single (window-pane)
+    (multiple-value-bind (char-width char-height)
+        (window-pane-char-size window-pane)
+      (let ((x (* x char-width))
+            (y (* y char-height))
+            (w (* width char-width))
+            (h (* height char-height)))
+        (gp:clear-rectangle window-pane
+                            x y w h)))))
 
 (defun clear-eol (window-pane x y)
-  (capi:apply-in-pane-process-wait-single
-   window-pane
-   nil
-   (lambda ()
-     (multiple-value-bind (char-width char-height)
-         (window-pane-char-size window-pane)
-       (let ((x (* x char-width))
-             (y (* y char-height)))
-         (gp:clear-rectangle window-pane
-                             x y (- (capi:simple-pane-visible-width window-pane) x) char-height))))))
+  (with-apply-in-pane-process-wait-single (window-pane)
+    (multiple-value-bind (char-width char-height)
+        (window-pane-char-size window-pane)
+      (let ((x (* x char-width))
+            (y (* y char-height)))
+        (gp:clear-rectangle window-pane
+                            x y (- (capi:simple-pane-visible-width window-pane) x) char-height)))))
 
 (defun clear-eob (window-pane x y)
-  (capi:apply-in-pane-process-wait-single
-   window-pane
-   nil
-   (lambda ()
-     (multiple-value-bind (char-width char-height)
-         (window-pane-char-size window-pane)
-       (let ((x (* x char-width))
-             (y (* y char-height)))
-         (gp:clear-rectangle window-pane
-                             x y (- (capi:simple-pane-visible-width window-pane) x) char-height)
-         (gp:clear-rectangle window-pane 0 (+ y char-height)
-                             (capi:simple-pane-visible-width window-pane)
-                             (- (capi:simple-pane-visible-height window-pane)
-                                y char-height char-height)))))))
+  (with-apply-in-pane-process-wait-single (window-pane)
+    (multiple-value-bind (char-width char-height)
+        (window-pane-char-size window-pane)
+      (let ((x (* x char-width))
+            (y (* y char-height)))
+        (gp:clear-rectangle window-pane
+                            x y (- (capi:simple-pane-visible-width window-pane) x) char-height)
+        (gp:clear-rectangle window-pane 0 (+ y char-height)
+                            (capi:simple-pane-visible-width window-pane)
+                            (- (capi:simple-pane-visible-height window-pane)
+                               y char-height char-height))))))
 
 (defun clear (window-pane)
-  (capi:apply-in-pane-process-wait-single
-   window-pane
-   nil
-   (lambda ()
-     (gp:clear-graphics-port window-pane))))
+  (with-apply-in-pane-process-wait-single (window-pane)
+    (gp:clear-graphics-port window-pane)))
 
 (defun change-foreground (window-pane color)
   (when-let (color (convert-color color))

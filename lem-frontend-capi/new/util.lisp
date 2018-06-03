@@ -10,3 +10,6 @@
                                              (uiop:print-backtrace :stream out :condition c))))))
          (progn ,@body))
      (error ())))
+
+(defmacro with-apply-in-pane-process-wait-single ((pane) &body body)
+  `(capi:apply-in-pane-process-wait-single ,pane nil (lambda () ,@body)))

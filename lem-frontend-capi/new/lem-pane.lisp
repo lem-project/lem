@@ -18,9 +18,6 @@
                                (list nil
                                      minibuffer-pane))))))
 
-(defmacro with-apply-in-pane-process-wait-single ((lem-pane) &body body)
-  `(capi:apply-in-pane-process-wait-single ,lem-pane nil (lambda () ,@body)))
-
 (defun set-first-window (lem-pane window-pane)
   (with-apply-in-pane-process-wait-single (lem-pane)
     (setf (capi:layout-description (first (capi:layout-description lem-pane)))

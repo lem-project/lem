@@ -101,13 +101,15 @@
 ;  )
 
 (defmethod lem-if:redraw-view-after ((implementation capi-impl) view focus-window-p)
-  (update-window view))
+  )
 
 (defmethod lem-if:update-display ((implementation capi-impl))
   (with-error-handler ()
-    (when (lem-pane-modified-p *lem-pane*)
-      (setf (lem-pane-modified-p *lem-pane*) nil)
-      (update-window-ratios *lem-pane*))))
+    (with-apply-in-pane-process-wait-single (*lem-pane*)
+      (when (lem-pane-modified-p *lem-pane*)
+        (setf (lem-pane-modified-p *lem-pane*) nil)
+        (update-window-ratios *lem-pane*))
+      (map-window-panes *lem-pane* #'update-window))))
 
 ;(defmethod lem-if:scroll ((implementation capi-impl) view n)
 ;  )

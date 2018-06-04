@@ -25,7 +25,11 @@
    (drawing-queue
     :initform nil
     :accessor window-pane-drawing-queue)
+   (pixmap
+    :initform nil
+    :accessor window-pane-pixmap)
    (window
+    :initform nil
     :initarg :window
     :reader window-pane-window))
   (:default-initargs
@@ -38,7 +42,8 @@
                                   :collect `((,char :press :meta) input-key)
                                   :collect `((,char :press :meta :control) input-key)
                                   :collect `((,char :press :meta :control :shift) input-key)))
-   :resize-callback 'window-pane-resize-callback))
+   :resize-callback 'window-pane-resize-callback
+   :display-callback 'window-pane-display-callback))
 
 (defmacro with-drawing ((window-pane) &body body)
   (check-type window-pane symbol)
@@ -47,12 +52,21 @@
 
 (defun update-window (window-pane)
   (with-apply-in-pane-process-wait-single (window-pane)
-    (multiple-value-bind (w h) (capi:simple-pane-visible-size window-pane)
-      (gp:with-pixmap-graphics-port (pixmap window-pane w h)
+    (with-error-handler ()
+      (multiple-value-bind (w h) (capi:simple-pane-visible-size window-pane)
+        (when-let (pixmap (window-pane-pixmap window-pane)) (gp:destroy-pixmap-port pixmap))
+        (setf (window-pane-pixmap window-pane) (gp:create-pixmap-port window-pane w h))
         (dolist (fn (nreverse (window-pane-drawing-queue window-pane)))
-          (funcall fn pixmap))
-        (gp:copy-pixels window-pane pixmap 0 0 w h 0 0)
-        (setf (window-pane-drawing-queue window-pane) nil)))))
+          (funcall fn (window-pane-pixmap window-pane)))
+        (setf (window-pane-drawing-queue window-pane) nil)
+        (gp:copy-pixels window-pane (window-pane-pixmap window-pane) 0 0 w h 0 0)))))
+
+(defun window-pane-display-callback (window-pane &rest args)
+  (declare (ignore args))
+  (with-error-handler ()
+    (when (window-pane-pixmap window-pane)
+      (multiple-value-bind (w h) (capi:simple-pane-visible-size window-pane)
+        (gp:copy-pixels window-pane (window-pane-pixmap window-pane) 0 0 w h 0 0)))))
 
 (defun window-pane-resize-callback (window-pane &rest args)
   (declare (ignore window-pane args))

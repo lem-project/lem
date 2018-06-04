@@ -23,15 +23,20 @@
     (setf (capi:layout-description (first (capi:layout-description lem-pane)))
           (list window-pane (lem-pane-minibuffer lem-pane)))))
 
-(defun all-window-panes (lem-pane)
+(defun map-window-panes (lem-pane function)
   (with-apply-in-pane-process-wait-single (lem-pane)
-    (let ((window-panes '()))
-      (capi:map-pane-descendant-children
-       lem-pane
-       (lambda (pane)
-         (when (typep pane 'window-pane)
-           (push pane window-panes))))
-      window-panes)))
+    (capi:map-pane-descendant-children
+     lem-pane
+     (lambda (pane)
+       (when (typep pane 'window-pane)
+         (funcall function pane))))))
+
+(defun all-window-panes (lem-pane)
+  (let ((window-panes '()))
+    (map-window-panes lem-pane
+                      (lambda (window-pane)
+                        (push window-pane window-panes)))
+    window-panes))
 
 (defun lem-pane-width (lem-pane)
   (with-apply-in-pane-process-wait-single (lem-pane)

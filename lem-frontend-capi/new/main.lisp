@@ -101,7 +101,7 @@
 ;  )
 
 (defmethod lem-if:redraw-view-after ((implementation capi-impl) view focus-window-p)
-  )
+  (update-window view))
 
 (defmethod lem-if:update-display ((implementation capi-impl))
   (with-error-handler ()

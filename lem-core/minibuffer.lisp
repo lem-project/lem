@@ -339,7 +339,7 @@
                              (lambda (str)
                                (funcall *minibuffer-file-complete-function*
                                         str directory)))
-                           (and existing #'probe-file)
+                           (and existing #'virtual-probe-file)
                            'mh-read-file)))
     (if (string= result "")
         default

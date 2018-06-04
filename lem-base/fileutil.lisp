@@ -4,6 +4,7 @@
           directory-files
           list-directory
           file-size
+          virtual-probe-file
           *virtual-file-open*
           with-open-virtual-file))
 
@@ -38,7 +39,7 @@
                         ((string= name "..")
                          (setf path (butlast path)))
                         ((string= name "~")
-                         (setf path (pathname-directory (user-homedir-pathname))))
+                         (setf path (list :absolute :home)))
                         ((string= name "")
                          (setf path (list :absolute)))
                         (t
@@ -49,17 +50,34 @@
   (let ((pathname (parse-filename filename)))
     (namestring (merge-pathnames pathname directory))))
 
+(defun probe-file% (x)
+  (let ((x2 (probe-file x)))
+    (when x2
+      (let* ((base "~/")
+             (mod (namestring (truename base)))
+             (len (length mod)))
+        (if (equal (ignore-errors (subseq (namestring x2) 0 len)) mod)
+            (make-pathname :defaults (format nil "~A~A" base (subseq (namestring x2) len)))
+            x2)))))
+
+(defun virtual-probe-file (pathspec &optional (base-dir pathspec))
+  (cond
+    ((ppcre:scan "^~/.*" (namestring base-dir)) (probe-file% pathspec))
+    (t (probe-file pathspec))))
+
 (defun directory-files (pathspec)
   (if (uiop:directory-pathname-p pathspec)
       (list (pathname pathspec))
-      (or (directory pathspec)
+      (or (mapcar (lambda (x) (virtual-probe-file x pathspec))
+                    (directory pathspec))
           (list pathspec))))
 
 (defun list-directory (directory)
-  (append (sort (copy-list (uiop:subdirectories directory))
-                #'string< :key #'namestring)
-          (sort (copy-list (uiop:directory-files directory))
-                #'string< :key #'namestring)))
+  (mapcar (lambda (x) (virtual-probe-file x directory))
+          (append (sort (copy-list (uiop:subdirectories directory))
+                        #'string< :key #'namestring)
+                  (sort (copy-list (uiop:directory-files directory))
+                        #'string< :key #'namestring))))
 
 (defun file-size (pathname)
   #+lispworks

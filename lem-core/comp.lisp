@@ -66,7 +66,7 @@
   (setf str (expand-file-name str directory))
   (let* ((input-directory
            (let ((dir (directory-namestring str)))
-             (or (ignore-errors (probe-file dir)) dir)))
+             (or (ignore-errors (virtual-probe-file dir)) dir)))
          (input-pathname (merge-pathnames (enough-namestring str (directory-namestring str))
                                           input-directory))
          (files (mapcar #'namestring (list-directory input-directory)))

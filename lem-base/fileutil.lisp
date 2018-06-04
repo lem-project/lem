@@ -39,7 +39,7 @@
                         ((string= name "..")
                          (setf path (butlast path)))
                         ((string= name "~")
-                         (setf path (list :absolute :home)))
+                         (setf path (pathname-directory (user-homedir-pathname))))
                         ((string= name "")
                          (setf path (list :absolute)))
                         (t

@@ -950,7 +950,7 @@
                   (+ (window-max-width) (window-topleft-x))
                   (+ (window-max-height) (window-topleft-y)))
   (minibuf-update-size)
-  (redraw-display))
+  (recenter t))
 
 (defun display-popup-message (text &key (timeout *default-popup-message-timeout*))
   (lem-if:display-popup-message (implementation) text timeout))

@@ -60,10 +60,10 @@
                     nil))
 
 (define-key *global-keymap* "C-l" 'recenter)
-(define-command recenter () ()
+(define-command recenter (p) ("P")
   (dolist (window (window-list))
     (screen-clear (window-screen window)))
-  (window-recenter (current-window))
+  (unless p (window-recenter (current-window)))
   (redraw-display)
   t)
 

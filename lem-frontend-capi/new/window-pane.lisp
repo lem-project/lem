@@ -60,8 +60,8 @@
       (setf (window-pane-pixmap window-pane) (gp:create-pixmap-port window-pane w h))
       (dolist (fn (nreverse (window-pane-drawing-queue window-pane)))
         (funcall fn (window-pane-pixmap window-pane)))
-      (setf (window-pane-drawing-queue window-pane) nil)
-      (gp:copy-pixels window-pane (window-pane-pixmap window-pane) 0 0 w h 0 0))))
+      (gp:copy-pixels window-pane (window-pane-pixmap window-pane) 0 0 w h 0 0)
+      (setf (window-pane-drawing-queue window-pane) nil))))
 
 (defun window-pane-display-callback (window-pane &rest args)
   (declare (ignore args))

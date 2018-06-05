@@ -64,9 +64,7 @@
         (lem-pane-minibuffer *lem-pane*)
         (make-instance 'window-pane
                        :window window
-                       :lem-pane *lem-pane*
-                       :visible-width `(:character ,width)
-                       :visible-height `(:character ,height)))))
+                       :lem-pane *lem-pane*))))
 
 (defmethod lem-if:delete-view ((implementation capi-impl) view)
   (with-error-handler ()

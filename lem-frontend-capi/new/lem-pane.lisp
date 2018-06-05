@@ -5,12 +5,16 @@
     :accessor lem-pane-minibuffer)
    (modified-p
     :initform nil
-    :accessor lem-pane-modified-p)))
+    :accessor lem-pane-modified-p)
+   (resizing
+    :initform nil
+    :accessor lem-pane-resizing)))
 
 (defmethod initialize-instance :after ((lem-pane lem-pane) &rest initargs)
   (declare (ignore initargs))
   (let ((minibuffer-pane (make-instance 'window-pane
-                                        :visible-max-height '(:character 1))))
+                                        :visible-max-height '(:character 1)
+                                        :lem-pane lem-pane)))
     (setf (lem-pane-minibuffer lem-pane) minibuffer-pane)
     (setf (capi:layout-description lem-pane)
           (list (make-instance 'capi:column-layout
@@ -127,20 +131,12 @@
     (with-apply-in-pane-process-wait-single (lem-pane)
       (f lem-pane))))
 
-(defun test ()
-  (setq x (capi:contain (make-instance 'lem-pane)))
-  (set-first-window x (make-instance 'window-pane))
-  (split-horizontally x (first (all-window-panes x)) (make-instance 'window-pane))
-  (split-vertically x (first (all-window-panes x)) (make-instance 'window-pane))
-  (split-horizontally x (second (all-window-panes x)) (make-instance 'window-pane))
-  (split-vertically x (fourth (all-window-panes x)) (make-instance 'window-pane)))
-
-#|
- (setq x (capi:contain (make-instance 'lem-pane)))
- (set-first-window x (make-instance 'window-pane))
- (split-horizontally x (first (all-window-panes x)) (make-instance 'window-pane))
- (split-vertically x (first (all-window-panes x)) (make-instance 'window-pane))
- (split-horizontally x (second (all-window-panes x)) (make-instance 'window-pane))
- (split-vertically x (fourth (all-window-panes x)) (make-instance 'window-pane))
- (delete-window x (first (all-window-panes x)))
-|#
+(defun lem-pane-resize-callback (lem-pane)
+  (let ((f (lambda (lem-pane)
+             (with-apply-in-pane-process-wait-single (lem-pane)
+               (when (lem-pane-resizing lem-pane)
+                 (setf (lem-pane-resizing lem-pane) nil)
+                 (lem:send-event :resize))))))
+    (unless (lem-pane-resizing lem-pane)
+      (setf (lem-pane-resizing lem-pane) t)
+      (mp:schedule-timer-relative (mp:make-timer f lem-pane) 0.1))))

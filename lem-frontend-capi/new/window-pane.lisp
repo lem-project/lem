@@ -31,7 +31,10 @@
    (window
     :initform nil
     :initarg :window
-    :reader window-pane-window))
+    :reader window-pane-window)
+   (lem-pane
+    :initarg :lem-pane
+    :reader window-pane-lem-pane))
   (:default-initargs
    :foreground :black
    :background :white
@@ -52,14 +55,13 @@
 
 (defun update-window (window-pane)
   (with-apply-in-pane-process-wait-single (window-pane)
-    (with-error-handler ()
-      (multiple-value-bind (w h) (capi:simple-pane-visible-size window-pane)
-        (when-let (pixmap (window-pane-pixmap window-pane)) (gp:destroy-pixmap-port pixmap))
-        (setf (window-pane-pixmap window-pane) (gp:create-pixmap-port window-pane w h))
-        (dolist (fn (nreverse (window-pane-drawing-queue window-pane)))
-          (funcall fn (window-pane-pixmap window-pane)))
-        (setf (window-pane-drawing-queue window-pane) nil)
-        (gp:copy-pixels window-pane (window-pane-pixmap window-pane) 0 0 w h 0 0)))))
+    (multiple-value-bind (w h) (capi:simple-pane-visible-size window-pane)
+      (when-let (pixmap (window-pane-pixmap window-pane)) (gp:destroy-pixmap-port pixmap))
+      (setf (window-pane-pixmap window-pane) (gp:create-pixmap-port window-pane w h))
+      (dolist (fn (nreverse (window-pane-drawing-queue window-pane)))
+        (funcall fn (window-pane-pixmap window-pane)))
+      (setf (window-pane-drawing-queue window-pane) nil)
+      (gp:copy-pixels window-pane (window-pane-pixmap window-pane) 0 0 w h 0 0))))
 
 (defun window-pane-display-callback (window-pane &rest args)
   (declare (ignore args))
@@ -69,8 +71,9 @@
         (gp:copy-pixels window-pane (window-pane-pixmap window-pane) 0 0 w h 0 0)))))
 
 (defun window-pane-resize-callback (window-pane &rest args)
-  (declare (ignore window-pane args))
-  (lem:send-event :resize))
+  (declare (ignore args))
+  (with-error-handler ()
+    (lem-pane-resize-callback (window-pane-lem-pane window-pane))))
 
 (defun destroy-window-pane (window-pane)
   (gp:destroy-pixmap-port (window-pane-pixmap window-pane)))

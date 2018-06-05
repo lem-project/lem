@@ -74,30 +74,29 @@
 (defun split-vertically (lem-pane current-window-pane new-window-pane)
   (split-window lem-pane current-window-pane new-window-pane 'capi:column-layout))
 
-(defun delete-window-1 (pane window-pane)
-  (cond ((typep pane 'capi:layout)
-         (let ((pos (position window-pane (capi:layout-description pane))))
-           (setf (capi:layout-ratios pane) nil)
-           (setf (capi:layout-description pane)
-                 (if pos
-                     (nconc (delete :divider (subseq (capi:layout-description pane) 0 pos) :count 1 :from-end t)
-                            (delete :divider (subseq (capi:layout-description pane) (1+ pos)) :count 1))
-                     (delete nil
-                             (map 'list
-                                  (lambda (c) (delete-window-1 c window-pane))
-                                  (capi:layout-description pane)))))
-           (cond ((null (capi:layout-description pane))
-                  nil)
-                 ((null (rest (capi:layout-description pane)))
-                  (first (capi:layout-description pane)))
-                 (t
-                  pane))))
-        (t
-         pane)))
-
-(defun delete-window (lem-pane window-pane)
-  (with-apply-in-pane-process-wait-single (lem-pane)
-    (delete-window-1 lem-pane window-pane)))
+(defun delete-window-from-lem-pane (lem-pane window-pane)
+  (labels ((f (pane)
+             (cond ((typep pane 'capi:layout)
+                    (let ((pos (position window-pane (capi:layout-description pane))))
+                      (setf (capi:layout-ratios pane) nil)
+                      (setf (capi:layout-description pane)
+                            (if pos
+                                (nconc (delete :divider (subseq (capi:layout-description pane) 0 pos)
+                                               :count 1 :from-end t)
+                                       (delete :divider (subseq (capi:layout-description pane) (1+ pos))
+                                               :count 1))
+                                (delete nil
+                                        (map 'list #'f (capi:layout-description pane)))))
+                      (cond ((null (capi:layout-description pane))
+                             nil)
+                            ((null (rest (capi:layout-description pane)))
+                             (first (capi:layout-description pane)))
+                            (t
+                             pane))))
+                   (t
+                    pane))))
+    (with-apply-in-pane-process-wait-single (lem-pane)
+      (f lem-pane))))
 
 (defun update-window-ratios (lem-pane)
   (labels ((sum (list)

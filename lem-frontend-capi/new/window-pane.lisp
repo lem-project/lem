@@ -72,6 +72,9 @@
   (declare (ignore window-pane args))
   (lem:send-event :resize))
 
+(defun destroy-window-pane (window-pane)
+  (gp:destroy-pixmap-port (window-pane-pixmap window-pane)))
+
 (defun change-font (window-pane family size)
   (let ((normal-font (gp:find-best-font
                       window-pane

@@ -108,7 +108,8 @@
     (with-apply-in-pane-process-wait-single (*lem-pane*)
       (when (lem-pane-modified-p *lem-pane*)
         (setf (lem-pane-modified-p *lem-pane*) nil)
-        (update-window-ratios *lem-pane*))
+        (update-window-ratios *lem-pane*)
+        (capi:set-pane-focus (lem-pane-minibuffer *lem-pane*)))
       (map-window-panes *lem-pane* #'update-window))))
 
 ;(defmethod lem-if:scroll ((implementation capi-impl) view n)

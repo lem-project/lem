@@ -45,13 +45,13 @@
 (defun lem-pane-width (lem-pane)
   (with-apply-in-pane-process-wait-single (lem-pane)
     (let ((window-pane (lem-pane-minibuffer lem-pane)))
-      (floor (capi:simple-pane-visible-width lem-pane)
+      (round (capi:simple-pane-visible-width lem-pane)
              (window-pane-char-width window-pane)))))
 
 (defun lem-pane-height (lem-pane)
   (with-apply-in-pane-process-wait-single (lem-pane)
     (let ((window-pane (lem-pane-minibuffer lem-pane)))
-      (floor (capi:simple-pane-visible-height lem-pane)
+      (round (capi:simple-pane-visible-height lem-pane)
              (window-pane-char-height window-pane)))))
 
 (defun split-window (lem-pane current-window-pane new-window-pane layout-class-name)

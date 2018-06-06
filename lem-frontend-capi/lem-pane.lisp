@@ -48,6 +48,34 @@
                                   :collect `((,char :press :meta :control :shift) key-press)))
    :resize-callback 'resize-callback))
 
+(defun capi.apply-in-pane-process-wait-single (pane timeout function &rest args)
+  (let ((mb (mp:make-mailbox :name "Apply-In-Pane-Process-Wait-Single")))
+    (apply (lambda (&rest args)
+             (declare (dynamic-extent args))
+             (mp:mailbox-send
+              mb 
+              (apply #'capi:apply-in-pane-process-if-alive
+                     pane
+                     function
+                     args)))
+           args)
+    (multiple-value-bind (result status)
+                         (mp:mailbox-read mb 
+                                          "Waiting for apply-in-pane-process"
+                                          timeout)
+      (values result
+              (or status :timeout)))))
+
+(declaim (inline apply-in-pane-process-wait-single))
+(defun apply-in-pane-process-wait-single 
+       (pane timeout function &rest args)
+  (apply #+lispworks7.1 #'capi:apply-in-pane-process-wait-single
+         #+lispworks7.0 #'capi.apply-in-pane-process-wait-single
+         pane 
+         timeout
+         function 
+         args))
+
 (defmethod capi:interface-keys-style ((lem-pane lem-pane)) :emacs)
 
 (defun resize-callback (lem-pane &rest args)
@@ -57,7 +85,7 @@
     (mp:schedule-timer-relative (mp:make-timer 'resize-if-required lem-pane) 0.1)))
 
 (defun resize-if-required (lem-pane)
-  (capi:apply-in-pane-process-wait-single
+  (apply-in-pane-process-wait-single
    lem-pane
    nil
    (lambda ()
@@ -88,7 +116,7 @@
           (multiple-value-list (gp:get-string-extent lem-pane "a" normal-font)))))
 
 (defun reinitialize-pixmap (lem-pane)
-  (capi:apply-in-pane-process-wait-single
+  (apply-in-pane-process-wait-single
    lem-pane
    nil
    (lambda (lem-pane)
@@ -102,7 +130,7 @@
    lem-pane))
 
 (defun update-display (lem-pane)
-  (capi:apply-in-pane-process-wait-single
+  (apply-in-pane-process-wait-single
    lem-pane
    nil
    (lambda ()
@@ -223,7 +251,7 @@
                                          :foreground foreground))))))))
 
 (defun draw-text (lem-pane string x y attribute)
-  (capi:apply-in-pane-process-wait-single
+  (apply-in-pane-process-wait-single
    lem-pane
    nil
    (lambda ()
@@ -244,7 +272,7 @@
                       (capi:simple-pane-background lem-pane))))))
 
 (defun draw-rectangle (lem-pane x y width height &optional color)
-  (capi:apply-in-pane-process-wait-single
+  (apply-in-pane-process-wait-single
    lem-pane
    nil
    (lambda ()
@@ -263,7 +291,7 @@
                                  x y w h)))))))
 
 (defun clear (lem-pane)
-  (capi:apply-in-pane-process-wait-single
+  (apply-in-pane-process-wait-single
    lem-pane
    nil
    (lambda ()

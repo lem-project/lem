@@ -175,9 +175,12 @@
                             (values x y w h))))))))
     (with-apply-in-pane-process-wait-single (lem-pane)
       (f lem-pane 0 0)
-      (lem:send-event :resize))))
+      (lem:send-event :resize)
+      (setf (lem-pane-resizing lem-pane) nil))))
 
 (defun lem-pane-resize-callback (lem-pane)
-  (if *window-is-modifying-p*
-      (lem:send-event :resize)
-      (mp:schedule-timer-relative (mp:make-timer #'update-window-size lem-pane) 0.1)))
+  (cond (*window-is-modifying-p*)
+        (t
+         (unless (lem-pane-resizing lem-pane)
+           (setf (lem-pane-resizing lem-pane) t)
+           (mp:schedule-timer-relative (mp:make-timer #'update-window-size lem-pane) 0.1)))))

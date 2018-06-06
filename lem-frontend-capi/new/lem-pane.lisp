@@ -1,7 +1,10 @@
 (in-package :lem-lispworks)
 
 (defclass lem-pane (capi:column-layout)
-  ((minibuffer
+  ((initialized
+    :initform nil
+    :accessor lem-pane-initialized)
+   (minibuffer
     :accessor lem-pane-minibuffer)
    (modified-p
     :initform nil
@@ -24,6 +27,7 @@
 
 (defun set-first-window (lem-pane window-pane)
   (with-apply-in-pane-process-wait-single (lem-pane)
+    (setf (lem-pane-initialized lem-pane) t)
     (setf (capi:layout-description (first (capi:layout-description lem-pane)))
           (list window-pane (lem-pane-minibuffer lem-pane)))))
 

@@ -73,7 +73,9 @@
 (defun window-pane-resize-callback (window-pane &rest args)
   (declare (ignore args))
   (with-error-handler ()
-    (lem-pane-resize-callback (window-pane-lem-pane window-pane))))
+    (let ((lem-pane (window-pane-lem-pane window-pane)))
+      (when (lem-pane-initialized lem-pane)
+        (lem-pane-resize-callback lem-pane)))))
 
 (defun destroy-window-pane (window-pane)
   (gp:destroy-pixmap-port (window-pane-pixmap window-pane)))

@@ -3,6 +3,7 @@
   :serial t
   :components ((:file "package")
                (:file "util")
+               (:file "misc")
                (:file "input")
                (:file "window-pane")
                (:file "lem-pane")

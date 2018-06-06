@@ -113,6 +113,18 @@
 (defun window-pane-char-height (window-pane)
   (nth-value 1 (window-pane-char-size window-pane)))
 
+(defun window-pane-size (window-pane)
+  (multiple-value-bind (width height)
+      (capi:simple-pane-visible-size window-pane)
+    (multiple-value-bind (char-width char-height)
+        (window-pane-char-size window-pane)
+      (values (floor width char-width)
+              (floor height char-height)))))
+
+(defun window-pane-width (window-pane)
+  (floor (capi:simple-pane-visible-width window-pane)
+         (window-pane-char-width window-pane)))
+
 (defun window-pane-height (window-pane)
   (floor (capi:simple-pane-visible-height window-pane)
          (window-pane-char-height window-pane)))

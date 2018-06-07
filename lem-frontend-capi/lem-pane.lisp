@@ -1,18 +1,4 @@
-(defpackage :lem-capi.lem-pane
-  (:add-use-defaults t)
-  (:use :cl :lem-capi.util)
-  (:export
-   :resize-if-required
-   :reinitialize-pixmap
-   :lem-pane
-   :lem-pane-width
-   :lem-pane-height
-   :update-display
-   :draw-rectangle
-   :draw-text
-   :change-foreground
-   :change-background))
-(in-package :lem-capi.lem-pane)
+(in-package :lem-capi)
 
 (defvar *default-font-spec*
   #+win32 (cons "Consolas" 10)
@@ -47,34 +33,6 @@
                                   :collect `((,char :press :meta :control :shift) key-press)))
    :resize-callback 'resize-callback))
 
-(defun capi.apply-in-pane-process-wait-single (pane timeout function &rest args)
-  (let ((mb (mp:make-mailbox :name "Apply-In-Pane-Process-Wait-Single")))
-    (apply (lambda (&rest args)
-             (declare (dynamic-extent args))
-             (mp:mailbox-send
-              mb 
-              (apply #'capi:apply-in-pane-process-if-alive
-                     pane
-                     function
-                     args)))
-           args)
-    (multiple-value-bind (result status)
-                         (mp:mailbox-read mb 
-                                          "Waiting for apply-in-pane-process"
-                                          timeout)
-      (values result
-              (or status :timeout)))))
-
-(declaim (inline apply-in-pane-process-wait-single))
-(defun apply-in-pane-process-wait-single 
-       (pane timeout function &rest args)
-  (apply #+lispworks7.1 #'capi:apply-in-pane-process-wait-single
-         #+lispworks7.0 #'capi.apply-in-pane-process-wait-single
-         pane 
-         timeout
-         function 
-         args))
-
 (defmethod capi:interface-keys-style ((lem-pane lem-pane)) :emacs)
 
 (defun resize-callback (lem-pane &rest args)
@@ -84,15 +42,12 @@
     (mp:schedule-timer-relative (mp:make-timer 'resize-if-required lem-pane) 0.1)))
 
 (defun resize-if-required (lem-pane)
-  (apply-in-pane-process-wait-single
-   lem-pane
-   nil
-   (lambda ()
-     (when (lem-pane-resized lem-pane)
-       (setf (lem-pane-resized lem-pane) nil)
-       (lem:send-event :resize)
-       (reinitialize-pixmap lem-pane)
-       (gp:clear-graphics-port (lem-pane-pixmap lem-pane))))))
+  (with-apply-in-pane-process-wait-single (lem-pane)
+    (when (lem-pane-resized lem-pane)
+      (setf (lem-pane-resized lem-pane) nil)
+      (lem:send-event :resize)
+      (reinitialize-pixmap lem-pane)
+      (gp:clear-graphics-port (lem-pane-pixmap lem-pane)))))
 
 (defun update-font-if-required (lem-pane)
   (unless (lem-pane-normal-font lem-pane)
@@ -115,29 +70,22 @@
           (multiple-value-list (gp:get-string-extent lem-pane "a" normal-font)))))
 
 (defun reinitialize-pixmap (lem-pane)
-  (apply-in-pane-process-wait-single
-   lem-pane
-   nil
-   (lambda (lem-pane)
-     (when-let (pixmap (lem-pane-pixmap lem-pane))
-       (gp:destroy-pixmap-port pixmap))
-     (setf (lem-pane-pixmap lem-pane)
-           (gp:create-pixmap-port lem-pane
-                                  (capi:simple-pane-visible-width lem-pane)
-                                  (capi:simple-pane-visible-height lem-pane)
-                                  :background (capi:simple-pane-background lem-pane))))
-   lem-pane))
+  (with-apply-in-pane-process-wait-single (lem-pane)
+    (when-let (pixmap (lem-pane-pixmap lem-pane))
+      (gp:destroy-pixmap-port pixmap))
+    (setf (lem-pane-pixmap lem-pane)
+          (gp:create-pixmap-port lem-pane
+                                 (capi:simple-pane-visible-width lem-pane)
+                                 (capi:simple-pane-visible-height lem-pane)
+                                 :background (capi:simple-pane-background lem-pane)))))
 
 (defun update-display (lem-pane)
-  (apply-in-pane-process-wait-single
-   lem-pane
-   nil
-   (lambda ()
-     (gp:copy-pixels lem-pane (lem-pane-pixmap lem-pane)
-                     0 0
-                     (capi:simple-pane-visible-width lem-pane)
-                     (capi:simple-pane-visible-height lem-pane)
-                     0 0))))
+  (with-apply-in-pane-process-wait-single (lem-pane)
+    (gp:copy-pixels lem-pane (lem-pane-pixmap lem-pane)
+                    0 0
+                    (capi:simple-pane-visible-width lem-pane)
+                    (capi:simple-pane-visible-height lem-pane)
+                    0 0)))
 
 (defun lem-pane-char-size (lem-pane)
   (update-font-if-required lem-pane)
@@ -250,44 +198,38 @@
                                          :foreground foreground))))))))
 
 (defun draw-text (lem-pane string x y attribute)
-  (apply-in-pane-process-wait-single
-   lem-pane
-   nil
-   (lambda ()
-     (if attribute
-         (let ((foreground (convert-color (lem:attribute-foreground attribute)
-                                          (capi:simple-pane-foreground lem-pane)))
-               (background (convert-color (lem:attribute-background attribute)
-                                          (capi:simple-pane-background lem-pane)))
-               (underline-p (lem:attribute-underline-p attribute))
-               (bold-p (lem:attribute-bold-p attribute))
-               (reverse-p (lem:attribute-reverse-p attribute)))
-           (draw-string lem-pane string x y foreground background
-                        :underline underline-p
-                        :bold bold-p
-                        :reverse reverse-p))
-         (draw-string lem-pane string x y
-                      (capi:simple-pane-foreground lem-pane)
-                      (capi:simple-pane-background lem-pane))))))
+  (with-apply-in-pane-process-wait-single (lem-pane)
+    (if attribute
+        (let ((foreground (convert-color (lem:attribute-foreground attribute)
+                                         (capi:simple-pane-foreground lem-pane)))
+              (background (convert-color (lem:attribute-background attribute)
+                                         (capi:simple-pane-background lem-pane)))
+              (underline-p (lem:attribute-underline-p attribute))
+              (bold-p (lem:attribute-bold-p attribute))
+              (reverse-p (lem:attribute-reverse-p attribute)))
+          (draw-string lem-pane string x y foreground background
+                       :underline underline-p
+                       :bold bold-p
+                       :reverse reverse-p))
+        (draw-string lem-pane string x y
+                     (capi:simple-pane-foreground lem-pane)
+                     (capi:simple-pane-background lem-pane)))))
 
 (defun draw-rectangle (lem-pane x y width height &optional color)
-  (apply-in-pane-process-wait-single
-   lem-pane
-   nil
-   (lambda ()
-     (multiple-value-bind (char-width char-height)
-         (lem-pane-char-size lem-pane)
-       (let ((x (* x char-width))
-             (y (* y char-height))
-             (w (* width char-width))
-             (h (* height char-height)))
-         (if color
-             (gp:draw-rectangle (lem-pane-pixmap lem-pane)
-                                x y w h
-                                :filled t
-                                :foreground color)
-             (gp:clear-rectangle (lem-pane-pixmap lem-pane)
-                                 x y w h)))))))
+  (with-apply-in-pane-process-wait-single (lem-pane)
+    (multiple-value-bind (char-width char-height)
+        (lem-pane-char-size lem-pane)
+      (let ((x (* x char-width))
+            (y (* y char-height))
+            (w (* width char-width))
+            (h (* height char-height)))
+        (if color
+            (gp:draw-rectangle (lem-pane-pixmap lem-pane)
+                               x y w h
+                               :filled t
+                               :foreground color)
+            (gp:clear-rectangle (lem-pane-pixmap lem-pane)
+                                x y w h))))))
 
 (defun change-foreground (lem-pane color)
   (when-let (color (convert-color color nil))

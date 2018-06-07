@@ -1,9 +1,3 @@
-(defpackage :lem-capi
-  (:use
-   :cl
-   :lem
-   :lem-capi.util
-   :lem-capi.lem-pane))
 (in-package :lem-capi)
 
 (defvar *quit* nil)
@@ -14,7 +8,7 @@
    :native-scroll-support nil
    :redraw-after-modifying-floating-window t))
 
-(setf *implementation* (make-instance 'capi-impl))
+(setf lem:*implementation* (make-instance 'capi-impl))
 
 (defstruct view window x y width height)
 
@@ -90,7 +84,7 @@
                string
                (+ (view-x view) x)
                (+ (view-y view) y)
-               (ensure-attribute attribute nil))))
+               (lem:ensure-attribute attribute nil))))
 
 (defmethod lem-if:print-modeline ((implementation capi-impl) view x y string attribute)
   (with-error-handler ()
@@ -98,7 +92,7 @@
                string
                (+ (view-x view) x)
                (+ (view-y view) (view-height view) y)
-               (ensure-attribute attribute nil))))
+               (lem:ensure-attribute attribute nil))))
 
 (defmethod lem-if:clear-eol ((implementation capi-impl) view x y)
   (with-error-handler ()
@@ -121,7 +115,7 @@
 
 (defmethod lem-if:redraw-view-after ((implementation capi-impl) view focus-window-p)
   (with-error-handler ()
-    (when (and (not (floating-window-p (view-window view)))
+    (when (and (not (lem:floating-window-p (view-window view)))
                (< 0 (view-x view)))
       (draw-rectangle *lem-pane*
                        (view-x view)

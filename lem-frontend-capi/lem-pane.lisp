@@ -26,9 +26,14 @@
                                   :collect `((,char :press :meta) input-key)
                                   :collect `((,char :press :meta :control) input-key)
                                   :collect `((,char :press :meta :control :shift) input-key)))
-   :resize-callback 'resize-callback))
+   :resize-callback 'resize-callback
+   :display-callback 'display-callback))
 
 (defmethod capi:interface-keys-style ((lem-pane lem-pane)) :emacs)
+
+(defun display-callback (lem-pane &rest args)
+  (declare (ignore args))
+  (update-display lem-pane))
 
 (defun resize-callback (lem-pane &rest args)
   (declare (ignore args))

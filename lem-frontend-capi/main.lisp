@@ -12,9 +12,6 @@
 
 (defstruct view window x y width height)
 
-(defvar *lem-pane*)
-(defvar *lem-process*)
-
 (defmethod lem-if:invoke ((implementation capi-impl) function)
   (with-error-handler ()
     (setf *lem-pane* (make-instance 'lem-pane))

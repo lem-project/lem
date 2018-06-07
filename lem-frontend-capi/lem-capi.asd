@@ -2,6 +2,7 @@
   :depends-on ("lem")
   :serial t
   :components ((:file "package")
+               (:file "variables")
                (:file "util")
                (:file "input")
                (:file "lem-pane")

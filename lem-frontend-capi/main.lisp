@@ -1,12 +1,13 @@
 (in-package :lem-capi)
 
-(defclass capi-impl (lem::implementation)
+(defclass capi-impl (lem:implementation)
   ()
   (:default-initargs
    :native-scroll-support nil
    :redraw-after-modifying-floating-window t))
 
 (setf lem:*implementation* (make-instance 'capi-impl))
+(setf lem::*window-left-margin* 0)
 
 (defstruct view window x y width height)
 
@@ -125,5 +126,3 @@
 ;  )
 
 (pushnew :lem-capi *features*)
-
-(setf lem::*window-left-margin* 0)

@@ -3,14 +3,12 @@
 (in-package :lem-capi.popup-menu)
 
 (defvar *non-focus-interface*)
-(defvar *items*)
-(defvar *lem-process*)
+(defvar *menu-items*)
 
 (defmethod lem-if:display-popup-menu ((implementation lem-capi::capi-impl) items
                                       &key action-callback print-function focus-attribute non-focus-attribute)
   (declare (ignore focus-attribute non-focus-attribute))
-  (setf *lem-process* mp:*current-process*)
-  (setf *items* items)
+  (setf *menu-items* items)
   (multiple-value-bind (char-width char-height)
       (lem-capi.lem-pane::lem-pane-char-size lem-capi::*lem-pane*)
     (multiple-value-bind (x y)
@@ -24,11 +22,11 @@
              :print-function (or print-function #'princ-to-string)
              :action-callback (lambda (item interface)
                                 (declare (ignore interface))
-                                (mp:process-interrupt *lem-process* action-callback item))
-             :list-updater (lambda () *items*))))))
+                                (mp:process-interrupt lem-capi::*lem-process* action-callback item))
+             :list-updater (lambda () *menu-items*))))))
 
 (defmethod lem-if:popup-menu-update ((implementation lem-capi::capi-impl) items)
-  (setf *items* items)
+  (setf *menu-items* items)
   (capi:non-focus-update *non-focus-interface*))
 
 (defmethod lem-if:popup-menu-quit ((implementation lem-capi::capi-impl))

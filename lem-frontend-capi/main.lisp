@@ -19,7 +19,7 @@
 (defstruct view window x y width height)
 
 (defvar *lem-pane*)
-(defvar *editor-thread*)
+(defvar *lem-process*)
 
 (defmethod lem-if:invoke ((implementation capi-impl) function)
   (with-error-handler ()
@@ -32,7 +32,7 @@
                     :best-height 600
                     :layout (make-instance 'capi:column-layout
                                            :description (list *lem-pane*))))
-    (setf *editor-thread*
+    (setf *lem-process*
           (funcall function
                    (lambda ()
                      (reinitialize-pixmap *lem-pane*))

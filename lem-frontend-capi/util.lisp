@@ -1,11 +1,8 @@
 (defpackage :lem-capi.util
   (:use :cl)
   (:export
-   :with-error-handler
-   :dbg))
+   :with-error-handler))
 (in-package :lem-capi.util)
-
-(defvar *debug* nil)
 
 (defmacro with-error-handler (() &body body)
   `(handler-case
@@ -15,7 +12,3 @@
                                              (uiop:print-backtrace :stream out :condition c))))))
          (progn ,@body))
      (error ())))
-
-(defun dbg (x)
-  (when *debug*
-    (lem:pdebug x)))

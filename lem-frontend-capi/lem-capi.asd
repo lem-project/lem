@@ -1,7 +1,8 @@
 (defsystem "lem-capi"
   :depends-on ("lem")
   :serial t
-  :components ((:file "util")
+  :components ((:file "package")
+               (:file "util")
                (:file "lem-pane")
                (:file "main")
                (:file "popup-menu")))

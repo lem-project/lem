@@ -10,7 +10,8 @@
 
 (uiop:symbol-call :ql :quickload :lem-capi)
 
-(setq lem-capi::*quit* t)
+(lem:add-hook lem:*exit-editor-hook*
+              (lambda () (lw:quit)))
 
 (defun run-lem ()
   (lem:lem))

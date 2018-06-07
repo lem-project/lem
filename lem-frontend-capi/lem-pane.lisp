@@ -10,7 +10,6 @@
    :update-display
    :draw-rectangle
    :draw-text
-   :clear
    :change-foreground
    :change-background))
 (in-package :lem-capi.lem-pane)
@@ -93,7 +92,7 @@
        (setf (lem-pane-resized lem-pane) nil)
        (lem:send-event :resize)
        (reinitialize-pixmap lem-pane)
-       (clear lem-pane)))))
+       (gp:clear-graphics-port (lem-pane-pixmap lem-pane))))))
 
 (defun update-font-if-required (lem-pane)
   (unless (lem-pane-normal-font lem-pane)
@@ -289,13 +288,6 @@
                                 :foreground color)
              (gp:clear-rectangle (lem-pane-pixmap lem-pane)
                                  x y w h)))))))
-
-(defun clear (lem-pane)
-  (apply-in-pane-process-wait-single
-   lem-pane
-   nil
-   (lambda ()
-     (gp:clear-graphics-port (lem-pane-pixmap lem-pane)))))
 
 (defun change-foreground (lem-pane color)
   (when-let (color (convert-color color nil))

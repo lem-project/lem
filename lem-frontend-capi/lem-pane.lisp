@@ -24,13 +24,13 @@
   (:default-initargs
    :foreground :black
    :background :white
-   :input-model '((:gesture-spec key-press)
+   :input-model '((:gesture-spec input-key)
                   . #-win32 ()
                   #+win32 #.(loop :for code :from 1 :to 127
                                   :for char := (code-char code)
-                                  :collect `((,char :press :meta) key-press)
-                                  :collect `((,char :press :meta :control) key-press)
-                                  :collect `((,char :press :meta :control :shift) key-press)))
+                                  :collect `((,char :press :meta) input-key)
+                                  :collect `((,char :press :meta :control) input-key)
+                                  :collect `((,char :press :meta :control :shift) input-key)))
    :resize-callback 'resize-callback))
 
 (defmethod capi:interface-keys-style ((lem-pane lem-pane)) :emacs)
@@ -99,52 +99,6 @@
 
 (defun lem-pane-char-height (lem-pane)
   (nth-value 1 (lem-pane-char-size lem-pane)))
-
-(defun shift-bit-p (modifiers)
-  (/= 0 (logand modifiers sys:gesture-spec-shift-bit)))
-
-(defun control-bit-p (modifiers)
-  (/= 0 (logand modifiers sys:gesture-spec-control-bit)))
-
-(defun meta-bit-p (modifiers)
-  (/= 0 (logand modifiers sys:gesture-spec-meta-bit)))
-
-(defun gesture-spec-to-key (gesture-spec)
-  (when (sys:gesture-spec-p gesture-spec)
-    (let* ((data (sys:gesture-spec-data gesture-spec))
-           (modifiers (sys:gesture-spec-modifiers gesture-spec))
-           (shiftp (shift-bit-p modifiers))
-           (ctrlp (control-bit-p modifiers))
-           (metap (meta-bit-p modifiers))
-           (sym (typecase data
-                  (string data)
-                  (keyword (string-capitalize data))
-                  (integer
-                   (let ((char (code-char data)))
-                     (cond ((char= char #\Return)
-                            "Return")
-                           ((char= char #\Tab)
-                            "Tab")
-                           ((char= char #\Escape)
-                            "Escape")
-                           ((char= char #\Backspace)
-                            "Backspace")
-                           (t
-                            (string char))))))))
-      (when sym
-        (cond ((and (not metap) ctrlp (not shiftp) (string= sym "i"))
-               (lem:make-key :sym "Tab"))
-              (t
-               (lem:make-key :meta metap
-                             :ctrl ctrlp
-                             :shift shiftp
-                             :sym sym)))))))
-
-(defun key-press (self x y gesture-spec)
-  (declare (ignore self x y))
-  (with-error-handler ()
-    (when-let (key (gesture-spec-to-key gesture-spec))
-      (lem:send-event key))))
 
 (defun lem-pane-width (lem-pane)
   (values

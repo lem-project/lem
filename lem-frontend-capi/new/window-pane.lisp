@@ -25,9 +25,6 @@
    (drawing-queue
     :initform nil
     :accessor window-pane-drawing-queue)
-   (pixmap
-    :initform nil
-    :accessor window-pane-pixmap)
    (window
     :initform nil
     :initarg :window
@@ -55,20 +52,12 @@
 
 (defun update-window (window-pane)
   (with-apply-in-pane-process-wait-single (window-pane)
-    (multiple-value-bind (w h) (capi:simple-pane-visible-size window-pane)
-      (when-let (pixmap (window-pane-pixmap window-pane)) (gp:destroy-pixmap-port pixmap))
-      (setf (window-pane-pixmap window-pane) (gp:create-pixmap-port window-pane w h))
-      (dolist (fn (nreverse (window-pane-drawing-queue window-pane)))
-        (funcall fn (window-pane-pixmap window-pane)))
-      (gp:copy-pixels window-pane (window-pane-pixmap window-pane) 0 0 w h 0 0)
-      (setf (window-pane-drawing-queue window-pane) nil))))
+    (dolist (fn (nreverse (window-pane-drawing-queue window-pane)))
+      (funcall fn window-pane))
+    (setf (window-pane-drawing-queue window-pane) nil)))
 
 (defun window-pane-display-callback (window-pane &rest args)
-  (declare (ignore args))
-  (with-error-handler ()
-    (when (window-pane-pixmap window-pane)
-      (multiple-value-bind (w h) (capi:simple-pane-visible-size window-pane)
-        (gp:copy-pixels window-pane (window-pane-pixmap window-pane) 0 0 w h 0 0)))))
+  (declare (ignore window-pane args)))
 
 (defun window-pane-resize-callback (window-pane &rest args)
   (declare (ignore args))
@@ -78,7 +67,7 @@
         (lem-pane-resize-callback lem-pane)))))
 
 (defun destroy-window-pane (window-pane)
-  (gp:destroy-pixmap-port (window-pane-pixmap window-pane)))
+  (declare (ignore window-pane)))
 
 (defun change-font (window-pane family size)
   (let ((normal-font (gp:find-best-font
@@ -141,28 +130,39 @@
              (char-height (+ (abs top) bottom)))
         (when reverse (rotatef foreground background))
         (with-drawing (window-pane)
-          (gp:draw-rectangle window-pane
-                             pixel-x
-                             pixel-y
-                             (* (lem:string-width string) char-width)
-                             char-height
-                             :foreground background
-                             :filled t)
-          (loop :with x1 := pixel-x :and y1 := (+ pixel-y char-height (- bottom))
-                :for c :across string
-                :do (gp:draw-character window-pane c x1 y1
-                                       :font font
-                                       :foreground foreground
-                                       :background background
-                                       :block t)
-                    (incf x1 (* char-width (if (lem:wide-char-p c) 2 1)))
-                :finally (when underline
-                           (gp:draw-line window-pane
-                                         pixel-x
-                                         (+ pixel-y char-height -4)
-                                         x1
-                                         (+ pixel-y char-height -4)
-                                         :foreground foreground))))))))
+          (let ((string-width (* (lem:string-width string) char-width)))
+            (cond ((= (length string) string-width)
+                   (gp:draw-rectangle window-pane pixel-x pixel-y string-width char-height
+                                      :foreground background
+                                      :filled t)
+                   (gp:draw-string window-pane string pixel-x (+ pixel-y char-height (- bottom))
+                                   :font font
+                                   :foreground foreground
+                                   :background background
+                                   :block t)
+                   (when underline
+                     (gp:draw-line window-pane
+                                   pixel-x
+                                   (+ pixel-y char-height -4)
+                                   (+ pixel-x string-width)
+                                   (+ pixel-y char-height -4)
+                                   :foreground foreground)))
+                  (t
+                   (loop :with x1 := pixel-x :and y1 := (+ pixel-y char-height (- bottom))
+                         :for c :across string
+                         :do (gp:draw-character window-pane c x1 y1
+                                                :font font
+                                                :foreground foreground
+                                                :background background
+                                                :block t)
+                         (incf x1 (* char-width (if (lem:wide-char-p c) 2 1)))
+                         :finally (when underline
+                                    (gp:draw-line window-pane
+                                                  pixel-x
+                                                  (+ pixel-y char-height -4)
+                                                  x1
+                                                  (+ pixel-y char-height -4)
+                                                  :foreground foreground)))))))))))
 
 (defun %draw-string (window-pane string x y foreground background underline bold reverse)
   (update-font-if-required window-pane)

@@ -83,7 +83,7 @@
 (defun split-vertically (lem-pane current-window-pane new-window-pane)
   (split-window lem-pane current-window-pane new-window-pane 'capi:column-layout))
 
-(defun delete-window-from-lem-pane (lem-pane window-pane)
+(defun lem-pane-delete-window (lem-pane window-pane)
   (labels ((f (pane)
              (cond ((typep pane 'capi:layout)
                     (let ((pos (position window-pane (capi:layout-description pane))))
@@ -179,7 +179,8 @@
       (setf (lem-pane-resizing lem-pane) nil))))
 
 (defun lem-pane-resize-callback (lem-pane)
-  (cond (*window-is-modifying-p*)
+  (cond (*window-is-modifying-p*
+         (lem:send-event :resize))
         (t
          (unless (lem-pane-resizing lem-pane)
            (setf (lem-pane-resizing lem-pane) t)

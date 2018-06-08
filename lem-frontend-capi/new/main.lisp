@@ -68,7 +68,7 @@
 
 (defmethod lem-if:delete-view ((implementation capi-impl) view)
   (with-error-handler ()
-    (delete-window-from-lem-pane *lem-pane* view)
+    (lem-pane-delete-window *lem-pane* view)
     (destroy-window-pane view)))
 
 (defmethod lem-if:clear ((implementation capi-impl) view)

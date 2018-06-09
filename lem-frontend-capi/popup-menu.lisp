@@ -8,7 +8,7 @@
   (declare (ignore focus-attribute non-focus-attribute))
   (setf *menu-items* items)
   (multiple-value-bind (char-width char-height)
-      (lem-pane-char-size (lem-panel-editor-pane *lem-panel*))
+      (editor-pane-char-size (lem-panel-editor-pane *lem-panel*))
     (multiple-value-bind (x y)
         (lem.popup-window::compute-popup-window-position (lem:current-window))
       (setf *non-focus-interface*
@@ -47,7 +47,7 @@
 
 (defmethod lem-if:display-popup-message ((implementation capi-impl) text timeout)
   (multiple-value-bind (char-width char-height)
-      (lem-pane-char-size (lem-panel-editor-pane *lem-panel*))
+      (editor-pane-char-size (lem-panel-editor-pane *lem-panel*))
     (multiple-value-bind (x y)
         (lem.popup-window::compute-popup-window-position (lem:current-window))
       (capi:display-non-focus-message text

@@ -5,7 +5,7 @@
                (:file "variables")
                (:file "util")
                (:file "input")
-               (:file "lem-pane")
+               (:file "editor-pane")
                (:file "lem-panel")
                (:file "main")
                (:file "popup-menu")))

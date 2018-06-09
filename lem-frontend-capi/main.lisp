@@ -40,11 +40,11 @@
 
 (defmethod lem-if:display-width ((implementation capi-impl))
   (with-error-handler ()
-    (lem-pane-width (lem-panel-editor-pane *lem-panel*))))
+    (editor-pane-width (lem-panel-editor-pane *lem-panel*))))
 
 (defmethod lem-if:display-height ((implementation capi-impl))
   (with-error-handler ()
-    (lem-pane-height (lem-panel-editor-pane *lem-panel*))))
+    (editor-pane-height (lem-panel-editor-pane *lem-panel*))))
 
 (defmethod lem-if:make-view ((implementation capi-impl) window x y width height use-modeline)
   (with-error-handler ()

@@ -6,8 +6,8 @@
     :reader lem-panel-editor-pane)))
 
 (defmethod initialize-instance ((lem-panel lem-panel) &rest initargs)
-  (let ((lem-pane (make-instance 'lem-pane)))
+  (let ((editor-pane (make-instance 'editor-pane)))
     (apply #'call-next-method lem-panel
-           :description (list lem-pane)
-           :editor-pane lem-pane
+           :description (list editor-pane)
+           :editor-pane editor-pane
            initargs)))

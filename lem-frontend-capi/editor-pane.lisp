@@ -79,8 +79,13 @@
                                  (capi:simple-pane-visible-height editor-pane)
                                  :background (capi:simple-pane-background editor-pane)))))
 
+(defun reinitialize-pixmap-if-required (editor-pane)
+  (unless (editor-pane-pixmap editor-pane)
+    (reinitialize-pixmap editor-pane)))
+
 (defun update-display (editor-pane)
   (with-apply-in-pane-process-wait-single (editor-pane)
+    (reinitialize-pixmap-if-required editor-pane)
     (gp:copy-pixels editor-pane (editor-pane-pixmap editor-pane)
                     0 0
                     (capi:simple-pane-visible-width editor-pane)
@@ -119,6 +124,7 @@
 
 (defun draw-string (editor-pane string x y foreground background &key underline bold reverse)
   (when reverse (rotatef foreground background))
+  (reinitialize-pixmap-if-required editor-pane)
   (update-font-if-required editor-pane)
   (let ((font (if bold
                   (editor-pane-bold-font editor-pane)
@@ -171,6 +177,7 @@
 
 (defun draw-rectangle (editor-pane x y width height &optional color)
   (with-apply-in-pane-process-wait-single (editor-pane)
+    (reinitialize-pixmap-if-required editor-pane)
     (multiple-value-bind (char-width char-height)
         (editor-pane-char-size editor-pane)
       (let ((x (* x char-width))

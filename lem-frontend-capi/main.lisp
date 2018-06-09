@@ -22,8 +22,7 @@
                     :layout *lem-panel*))
     (setf *lem-process*
           (funcall function
-                   (lambda ()
-                     (reinitialize-pixmap (lem-panel-editor-pane *lem-panel*)))
+                   (lambda ())
                    (lambda (report)
                      (declare (ignore report))
                      (capi:quit-interface *lem-panel*))))))

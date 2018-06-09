@@ -8,6 +8,7 @@
           *minibuf-keymap*
           minibuffer-prompt-attribute
           minibuffer-window-p
+          minibuffer-window-active-p
           minibuffer-window-height
           minibufferp
           message

@@ -17,8 +17,8 @@
     :initform nil
     :accessor editor-pane-resized))
   (:default-initargs
-   :foreground :black
-   :background :white
+   :foreground (convert-color "black")
+   :background (convert-color "white")
    :input-model '((:gesture-spec input-key)
                   . #-win32 ()
                   #+win32 #.(loop :for code :from 1 :to 127
@@ -114,13 +114,6 @@
   (values
    (floor (capi:simple-pane-visible-height editor-pane)
           (editor-pane-char-height editor-pane))))
-
-(defun convert-color (color &optional default-color)
-  (if-let (rgb (lem:parse-color color))
-    (let ((n (/ 1.0 255)))
-      (destructuring-bind (r g b) rgb
-        (color:make-rgb (* r n) (* g n) (* b n))))
-    default-color))
 
 (defun draw-string (editor-pane string x y foreground background &key underline bold reverse)
   (when reverse (rotatef foreground background))

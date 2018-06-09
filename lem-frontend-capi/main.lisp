@@ -119,7 +119,8 @@
                        :black))))
 
 (defmethod lem-if:update-display ((implementation capi-impl))
-  (update-display (lem-panel-editor-pane *lem-panel*)))
+  (update-display (lem-panel-editor-pane *lem-panel*))
+  (update-tab-layout *lem-panel*))
 
 ;(defmethod lem-if:scroll ((implementation capi-impl) view n)
 ;  )

@@ -27,9 +27,38 @@
                                   :collect `((,char :press :meta :control) input-key)
                                   :collect `((,char :press :meta :control :shift) input-key)))
    :resize-callback 'resize-callback
-   :display-callback 'display-callback))
+   :display-callback 'display-callback
+   :composition-callback 'composition-callback
+   :use-native-input-method t))
 
 (defmethod capi:interface-keys-style ((editor-pane editor-pane)) :emacs)
+
+(let ((last-len 0))
+  (defun composition-callback (editor-pane what)
+    (with-error-handler ()
+      (cond
+       ((eq what :start) (setf last-len 0))
+       ((eq what :end))
+       ((listp what)
+        (multiple-value-bind (x y)
+            (lem.popup-window::compute-popup-window-position (lem:current-window))
+          (decf y)
+          (draw-rectangle editor-pane x y last-len 1)
+          (loop :for (string face-plist) :in (getf what :string-face-lists)
+                :do (unless (string= "" string)
+                      (let ((foreground (getf face-plist :foreground (capi:simple-pane-foreground editor-pane)))
+                            (background (getf face-plist :background (capi:simple-pane-background editor-pane)))
+                            #+(or)(font (getf face-plist :font))
+                            #+(or)(italic-p (getf face-plist :italic-p))
+                            (bold-p (getf face-plist :bold-p))
+                            (underline-p (getf face-plist :underline-p)))
+                        (update-display editor-pane)
+                        (draw-string editor-pane string x y foreground background
+                                     :underline underline-p :bold bold-p)
+                        (update-display editor-pane)
+                        (let ((width (lem:string-width string)))
+                          (incf x width)
+                          (setf last-len (max last-len width))))))))))))
 
 (defun display-callback (editor-pane &rest args)
   (declare (ignore args))

@@ -73,11 +73,10 @@
   (with-apply-in-pane-process-wait-single (editor-pane)
     (when-let (pixmap (editor-pane-pixmap editor-pane))
       (gp:destroy-pixmap-port pixmap))
-    (setf (editor-pane-pixmap editor-pane)
-          (gp:create-pixmap-port editor-pane
-                                 (capi:simple-pane-visible-width editor-pane)
-                                 (capi:simple-pane-visible-height editor-pane)
-                                 :background (capi:simple-pane-background editor-pane)))))
+    (multiple-value-bind (w h) (capi:simple-pane-visible-size editor-pane)
+      (setf (editor-pane-pixmap editor-pane)
+            (gp:create-pixmap-port editor-pane w h
+                                   :background (capi:simple-pane-background editor-pane))))))
 
 (defun reinitialize-pixmap-if-required (editor-pane)
   (unless (editor-pane-pixmap editor-pane)
@@ -187,8 +186,16 @@
 
 (defun change-foreground (editor-pane color)
   (when-let (color (convert-color color nil))
-    (setf (capi:simple-pane-foreground editor-pane) color)))
+    (with-apply-in-pane-process-wait-single (editor-pane)
+      (setf (capi:simple-pane-foreground editor-pane) color))))
 
 (defun change-background (editor-pane color)
   (when-let (color (convert-color color nil))
-    (setf (capi:simple-pane-background editor-pane) color)))
+    (with-apply-in-pane-process-wait-single (editor-pane)
+      (setf (capi:simple-pane-background editor-pane) color)
+      (multiple-value-bind (w h) (capi:simple-pane-visible-size editor-pane)
+        (gp:draw-rectangle (editor-pane-pixmap editor-pane)
+                           0 0 w h
+                           :background color
+                           :filled t))
+      (reinitialize-pixmap editor-pane))))

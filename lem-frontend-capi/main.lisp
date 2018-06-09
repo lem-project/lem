@@ -118,7 +118,7 @@
                        (view-y view)
                        0.1
                        (1+ (view-height view))
-                       :black))))
+                       (capi:simple-pane-foreground (lem-panel-editor-pane *lem-panel*))))))
 
 (defmethod lem-if:update-display ((implementation capi-impl))
   (update-display (lem-panel-editor-pane *lem-panel*))

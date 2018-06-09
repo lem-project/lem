@@ -13,39 +13,38 @@
 
 (defmethod lem-if:invoke ((implementation capi-impl) function)
   (with-error-handler ()
-    (setf *lem-pane* (make-instance 'lem-pane))
+    (setf *lem-panel* (make-instance 'lem-panel))
     (capi:display
      (make-instance 'capi:interface
                     :auto-menus nil
                     :best-width 800
                     :best-height 600
-                    :layout (make-instance 'capi:column-layout
-                                           :description (list *lem-pane*))))
+                    :layout *lem-panel*))
     (setf *lem-process*
           (funcall function
                    (lambda ()
-                     (reinitialize-pixmap *lem-pane*))
+                     (reinitialize-pixmap (lem-panel-editor-pane *lem-panel*)))
                    (lambda (report)
                      (declare (ignore report))
-                     (capi:quit-interface *lem-pane*))))))
+                     (capi:quit-interface *lem-panel*))))))
 
 (defmethod lem-if:display-background-mode ((implementation capi-impl))
   (with-error-handler ()
     :light))
 
 (defmethod lem-if:update-foreground ((implementation capi-impl) color-name)
-  (change-foreground *lem-pane* color-name))
+  (change-foreground (lem-panel-editor-pane *lem-panel*) color-name))
 
 (defmethod lem-if:update-background ((implementation capi-impl) color-name)
-  (change-background *lem-pane* color-name))
+  (change-background (lem-panel-editor-pane *lem-panel*) color-name))
 
 (defmethod lem-if:display-width ((implementation capi-impl))
   (with-error-handler ()
-    (lem-pane-width *lem-pane*)))
+    (lem-pane-width (lem-panel-editor-pane *lem-panel*))))
 
 (defmethod lem-if:display-height ((implementation capi-impl))
   (with-error-handler ()
-    (lem-pane-height *lem-pane*)))
+    (lem-pane-height (lem-panel-editor-pane *lem-panel*))))
 
 (defmethod lem-if:make-view ((implementation capi-impl) window x y width height use-modeline)
   (with-error-handler ()
@@ -57,7 +56,7 @@
 
 (defmethod lem-if:clear ((implementation capi-impl) view)
   (with-error-handler ()
-    (draw-rectangle *lem-pane*
+    (draw-rectangle (lem-panel-editor-pane *lem-panel*)
                      (view-x view)
                      (view-y view)
                      (1- (view-width view))
@@ -75,7 +74,7 @@
 
 (defmethod lem-if:print ((implementation capi-impl) view x y string attribute)
   (with-error-handler ()
-    (draw-text *lem-pane*
+    (draw-text (lem-panel-editor-pane *lem-panel*)
                string
                (+ (view-x view) x)
                (+ (view-y view) y)
@@ -83,7 +82,7 @@
 
 (defmethod lem-if:print-modeline ((implementation capi-impl) view x y string attribute)
   (with-error-handler ()
-    (draw-text *lem-pane*
+    (draw-text (lem-panel-editor-pane *lem-panel*)
                string
                (+ (view-x view) x)
                (+ (view-y view) (view-height view) y)
@@ -91,7 +90,7 @@
 
 (defmethod lem-if:clear-eol ((implementation capi-impl) view x y)
   (with-error-handler ()
-    (draw-rectangle *lem-pane*
+    (draw-rectangle (lem-panel-editor-pane *lem-panel*)
                     (+ (view-x view) x)
                     (+ (view-y view) y)
                     (- (view-width view) x)
@@ -102,7 +101,7 @@
     (when (plusp x)
       (lem-if:clear-eol implementation view x y)
       (incf y))
-    (draw-rectangle *lem-pane*
+    (draw-rectangle (lem-panel-editor-pane *lem-panel*)
                      (view-x view)
                      (+ (view-y view) y)
                      (view-width view)
@@ -112,7 +111,7 @@
   (with-error-handler ()
     (when (and (not (lem:floating-window-p (view-window view)))
                (< 0 (view-x view)))
-      (draw-rectangle *lem-pane*
+      (draw-rectangle (lem-panel-editor-pane *lem-panel*)
                        (view-x view)
                        (view-y view)
                        0.1
@@ -120,7 +119,7 @@
                        :black))))
 
 (defmethod lem-if:update-display ((implementation capi-impl))
-  (update-display *lem-pane*))
+  (update-display (lem-panel-editor-pane *lem-panel*)))
 
 ;(defmethod lem-if:scroll ((implementation capi-impl) view n)
 ;  )

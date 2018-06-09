@@ -5,5 +5,5 @@
   #+linux (cons "DejaVu Sans Mono" 10.5)
   #+macosx (cons "Osaka" 10))
 
-(defvar *lem-pane*)
+(defvar *lem-panel*)
 (defvar *lem-process*)

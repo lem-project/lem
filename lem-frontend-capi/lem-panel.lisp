@@ -1,12 +1,21 @@
 (in-package :lem-capi)
 
 (defclass lem-panel (capi:simple-layout)
-  ((tab-layout
+  ((enable-directory-view-p
+    :initarg :enable-directory-view-p
+    :accessor lem-panel-enable-directory-view-p)
+   (directory-view
+    :initarg :directory-view
+    :reader lem-panel-directory-view)
+   (tab-layout
     :initarg :tab-layout
     :reader lem-panel-tab-layout)
    (editor-pane
     :initarg :editor-pane
-    :reader lem-panel-editor-pane)))
+    :reader lem-panel-editor-pane)
+   (layout
+    :initarg :layout
+    :reader lem-panel-layout)))
 
 (defmethod initialize-instance ((lem-panel lem-panel) &rest initargs)
   (let* ((editor-pane (make-instance 'editor-pane))
@@ -35,7 +44,28 @@
            :description (list layout)
            :editor-pane editor-pane
            :tab-layout tab-layout
+           :directory-view directory-view
+           :enable-directory-view-p t
+           :layout layout
            initargs)))
+
+(defun enable-directory-view (lem-panel)
+  (with-apply-in-pane-process-wait-single (lem-panel)
+    (setf (lem-panel-enable-directory-view-p lem-panel) t)
+    (setf (capi:layout-description (lem-panel-layout lem-panel))
+          (list (lem-panel-directory-view lem-panel)
+                (lem-panel-tab-layout lem-panel)))))
+
+(defun disable-directory-view (lem-panel)
+  (with-apply-in-pane-process-wait-single (lem-panel)
+    (setf (lem-panel-enable-directory-view-p lem-panel) nil)
+    (setf (capi:layout-description (lem-panel-layout lem-panel))
+          (list (lem-panel-tab-layout lem-panel)))))
+
+(defun toggle-directory-view (lem-panel)
+  (if (lem-panel-enable-directory-view-p lem-panel)
+      (disable-directory-view lem-panel)
+      (enable-directory-view lem-panel)))
 
 (defun update-tab-layout (lem-panel)
   (labels ((modified-buffer-list-p ()

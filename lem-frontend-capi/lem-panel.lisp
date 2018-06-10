@@ -10,21 +10,31 @@
 
 (defmethod initialize-instance ((lem-panel lem-panel) &rest initargs)
   (let* ((editor-pane (make-instance 'editor-pane))
-         (layout (make-instance 'capi:tab-layout
-                                :description (list editor-pane)
-                                :items (or (lem:buffer-list) (list nil))
-                                :visible-child-function nil
-                                :print-function (lambda (x) (if (lem:bufferp x) (lem:buffer-name x) ""))
-                                :callback-type :data
-                                :selection-callback (lambda (buffer)
-                                                      (lem:send-event (lambda ()
-                                                                        (lem:switch-to-buffer buffer nil)
-                                                                        (lem:redraw-display)))))))
-
+         (directory-view
+          (make-instance 'directory-view
+                         :callback (lambda (pathname)
+                                     (when (uiop:file-pathname-p pathname)
+                                       (lem:send-event (lambda ()
+                                                         (lem:find-file pathname)
+                                                         (lem:redraw-display)))))
+                         :visible-max-width 200))
+         (tab-layout (make-instance 'capi:tab-layout
+                                    :description (list editor-pane)
+                                    :items (or (lem:buffer-list) (list nil))
+                                    :visible-child-function nil
+                                    :print-function (lambda (x) (if (lem:bufferp x) (lem:buffer-name x) ""))
+                                    :callback-type :data
+                                    :selection-callback (lambda (buffer)
+                                                          (lem:send-event (lambda ()
+                                                                            (lem:switch-to-buffer buffer nil)
+                                                                            (lem:redraw-display))))))
+         (layout (make-instance 'capi:row-layout
+                                :description (list directory-view
+                                                   tab-layout))))
     (apply #'call-next-method lem-panel
            :description (list layout)
            :editor-pane editor-pane
-           :tab-layout layout
+           :tab-layout tab-layout
            initargs)))
 
 (defun update-tab-layout (lem-panel)

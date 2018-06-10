@@ -9,4 +9,5 @@
                (:file "directory-view")
                (:file "lem-panel")
                (:file "main")
-               (:file "popup-menu")))
+               (:file "popup-menu")
+               (:file "commands")))

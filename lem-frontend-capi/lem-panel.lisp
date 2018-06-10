@@ -37,9 +37,7 @@
                                                           (lem:send-event (lambda ()
                                                                             (lem:switch-to-buffer buffer nil)
                                                                             (lem:redraw-display))))))
-         (layout (make-instance 'capi:row-layout
-                                :description (list directory-view
-                                                   tab-layout))))
+         (layout (make-instance 'capi:row-layout :description (list directory-view tab-layout))))
     (apply #'call-next-method lem-panel
            :description (list layout)
            :editor-pane editor-pane
@@ -70,12 +68,14 @@
 (defun update-tab-layout (lem-panel)
   (labels ((modified-buffer-list-p ()
              (block outer
-               (map nil
-                    (lambda (x y)
-                      (unless (equal x y)
-                        (return-from outer t)))
-                    (capi:collection-items (lem-panel-tab-layout lem-panel))
-                    (lem:buffer-list))))
+               (or (/= (length (capi:collection-items (lem-panel-tab-layout lem-panel)))
+                       (length (lem:buffer-list)))
+                   (map nil
+                        (lambda (x y)
+                          (unless (equal x y)
+                            (return-from outer t)))
+                        (capi:collection-items (lem-panel-tab-layout lem-panel))
+                        (lem:buffer-list)))))
            (modified-current-buffer-p ()
              (/= (capi:choice-selection (lem-panel-tab-layout lem-panel))
                  (position (lem:current-buffer) (lem:buffer-list)))))

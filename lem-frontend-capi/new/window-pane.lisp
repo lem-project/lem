@@ -39,7 +39,35 @@
                                   :collect `((,char :press :meta :control) input-key)
                                   :collect `((,char :press :meta :control :shift) input-key)))
    :resize-callback 'window-pane-resize-callback
-   :display-callback 'window-pane-display-callback))
+   :display-callback 'window-pane-display-callback
+   :composition-callback 'composition-callback
+   :use-native-input-method t))
+
+(let ((last-len 0))
+  (defun composition-callback (window-pane what)
+    (with-error-handler ()
+      (setf window-pane (lem:window-view (lem:current-window)))
+      (cond
+        ((eq what :start) (setf last-len 0))
+        ((eq what :end))
+        ((listp what)
+         (let ((x (lem:point-column (lem:current-point)))
+               (y (lem:window-cursor-y (lem:current-window))))
+           (clear-rectangle window-pane x y last-len 1)
+           (loop :for (string face-plist) :in (getf what :string-face-lists)
+                 :do (unless (string= "" string)
+                       (let ((foreground (getf face-plist :foreground (capi:simple-pane-foreground window-pane)))
+                             (background (getf face-plist :background (capi:simple-pane-background window-pane)))
+                             #+(or)(font (getf face-plist :font))
+                             #+(or)(italic-p (getf face-plist :italic-p))
+                             (bold-p (getf face-plist :bold-p))
+                             (underline-p (getf face-plist :underline-p)))
+                         (%draw-string window-pane string x y foreground background
+                                       underline-p bold-p nil)
+                         (let ((width (lem:string-width string)))
+                           (incf x width)
+                           (setf last-len (max last-len width))))))
+           (update-window window-pane)))))))
 
 (defmacro with-drawing ((window-pane) &body body)
   (check-type window-pane symbol)

@@ -1,14 +1,13 @@
 (in-package :lem-lispworks)
 
 (defvar *non-focus-interface*)
-(defvar *items*)
-(defvar *lem-process*)
+(defvar *menu-items*)
 
 (defmethod lem-if:display-popup-menu ((implementation capi-impl) items
                                       &key action-callback print-function focus-attribute non-focus-attribute)
   (declare (ignore focus-attribute non-focus-attribute))
-  (setf *lem-process* mp:*current-process*)
-  (setf *items* items)
+  (setf *editor-thread* mp:*current-process*)
+  (setf *menu-items* items)
   (let ((window-pane (lem:window-view (lem:current-window))))
     (multiple-value-bind (char-width char-height)
         (window-pane-char-size window-pane)
@@ -21,11 +20,11 @@
              :print-function (or print-function #'princ-to-string)
              :action-callback (lambda (item interface)
                                 (declare (ignore interface))
-                                (mp:process-interrupt *lem-process* action-callback item))
-             :list-updater (lambda () *items*))))))
+                                (mp:process-interrupt *editor-thread* action-callback item))
+             :list-updater (lambda () *menu-items*))))))
 
 (defmethod lem-if:popup-menu-update ((implementation capi-impl) items)
-  (setf *items* items)
+  (setf *menu-items* items)
   (capi:non-focus-update *non-focus-interface*))
 
 (defmethod lem-if:popup-menu-quit ((implementation capi-impl))

@@ -5,13 +5,6 @@
   #+linux (cons "DejaVu Sans Mono" 10.5)
   #+macosx (cons "Osaka" 10))
 
-(defun convert-color (color &optional default-color)
-  (if-let (rgb (lem:parse-color color))
-    (let ((n (/ 1.0 255)))
-      (destructuring-bind (r g b) rgb
-        (color:make-rgb (* r n) (* g n) (* b n))))
-    default-color))
-
 (defclass window-pane (capi:output-pane)
   ((normal-font
     :initform nil

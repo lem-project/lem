@@ -25,9 +25,9 @@
     :initform nil
     :initarg :window
     :reader window-pane-window)
-   (lem-pane
-    :initarg :lem-pane
-    :reader window-pane-lem-pane))
+   (window-panel
+    :initarg :window-panel
+    :reader window-pane-window-panel))
   (:default-initargs
    :foreground :black
    :background :white
@@ -102,9 +102,9 @@
 (defun window-pane-resize-callback (window-pane &rest args)
   (declare (ignore args))
   (with-error-handler ()
-    (let ((lem-pane (window-pane-lem-pane window-pane)))
-      (when (lem-pane-initialized lem-pane)
-        (lem-pane-resize-callback lem-pane)))))
+    (let ((window-panel (window-pane-window-panel window-pane)))
+      (when (window-panel-initialized window-panel)
+        (window-panel-resize-callback window-panel)))))
 
 (defun destroy-window-pane (window-pane)
   (gp:destroy-pixmap-port (window-pane-pixmap window-pane)))

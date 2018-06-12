@@ -1,69 +1,69 @@
 (in-package :lem-lispworks)
 
-(defclass lem-pane (capi:column-layout)
+(defclass window-panel (capi:column-layout)
   ((initialized
     :initform nil
-    :accessor lem-pane-initialized)
+    :accessor window-panel-initialized)
    (minibuffer
-    :accessor lem-pane-minibuffer)
+    :accessor window-panel-minibuffer)
    (modified-p
     :initform nil
-    :accessor lem-pane-modified-p)
+    :accessor window-panel-modified-p)
    (resizing
     :initform nil
-    :accessor lem-pane-resizing)))
+    :accessor window-panel-resizing)))
 
-(defmethod initialize-instance :after ((lem-pane lem-pane) &rest initargs)
+(defmethod initialize-instance :after ((window-panel window-panel) &rest initargs)
   (declare (ignore initargs))
   (let ((minibuffer-pane (make-instance 'window-pane
                                         :visible-max-height '(:character 1)
-                                        :lem-pane lem-pane)))
-    (setf (lem-pane-minibuffer lem-pane) minibuffer-pane)
-    (setf (capi:layout-description lem-pane)
+                                        :window-panel window-panel)))
+    (setf (window-panel-minibuffer window-panel) minibuffer-pane)
+    (setf (capi:layout-description window-panel)
           (list (make-instance 'capi:column-layout
                                :description
                                (list nil
                                      minibuffer-pane))))))
 
-(defun set-first-window (lem-pane window-pane)
-  (with-apply-in-pane-process-wait-single (lem-pane)
-    (setf (lem-pane-initialized lem-pane) t)
-    (setf (capi:layout-description (first (capi:layout-description lem-pane)))
-          (list window-pane (lem-pane-minibuffer lem-pane)))))
+(defun set-first-window (window-panel window-pane)
+  (with-apply-in-pane-process-wait-single (window-panel)
+    (setf (window-panel-initialized window-panel) t)
+    (setf (capi:layout-description (first (capi:layout-description window-panel)))
+          (list window-pane (window-panel-minibuffer window-panel)))))
 
-(defun map-window-panes (lem-pane function)
-  (with-apply-in-pane-process-wait-single (lem-pane)
+(defun map-window-panes (window-panel function)
+  (with-apply-in-pane-process-wait-single (window-panel)
     (capi:map-pane-descendant-children
-     lem-pane
+     window-panel
      (lambda (pane)
        (when (typep pane 'window-pane)
          (funcall function pane))))))
 
-(defun all-window-panes (lem-pane)
+(defun all-window-panes (window-panel)
   (let ((window-panes '()))
-    (map-window-panes lem-pane
+    (map-window-panes window-panel
                       (lambda (window-pane)
                         (push window-pane window-panes)))
     window-panes))
 
-(defun lem-pane-width (lem-pane)
-  (with-apply-in-pane-process-wait-single (lem-pane)
-    (let ((window-pane (lem-pane-minibuffer lem-pane)))
-      (round (capi:simple-pane-visible-width lem-pane)
+(defun window-panel-width (window-panel)
+  (with-apply-in-pane-process-wait-single (window-panel)
+    (let ((window-pane (window-panel-minibuffer window-panel)))
+      (round (capi:simple-pane-visible-width window-panel)
              (window-pane-char-width window-pane)))))
 
-(defun lem-pane-height (lem-pane)
-  (with-apply-in-pane-process-wait-single (lem-pane)
-    (let ((window-pane (lem-pane-minibuffer lem-pane)))
-      (round (capi:simple-pane-visible-height lem-pane)
+(defun window-panel-height (window-panel)
+  (with-apply-in-pane-process-wait-single (window-panel)
+    (let ((window-pane (window-panel-minibuffer window-panel)))
+      (round (capi:simple-pane-visible-height window-panel)
              (window-pane-char-height window-pane)))))
 
-(defun split-window (lem-pane current-window-pane new-window-pane layout-class-name)
-  (with-apply-in-pane-process-wait-single (lem-pane)
+(defun split-window (window-panel current-window-pane new-window-pane layout-class-name)
+  (with-apply-in-pane-process-wait-single (window-panel)
     (block outer
       (let ((*window-is-modifying-p* t))
         (capi:map-pane-descendant-children
-         lem-pane
+         window-panel
          (lambda (pane)
            (when (or (typep pane 'capi:column-layout)
                      (typep pane 'capi:row-layout))
@@ -77,13 +77,13 @@
                             (subseq (capi:layout-description pane) (1+ pos))))
                (return-from outer)))))))))
 
-(defun split-horizontally (lem-pane current-window-pane new-window-pane)
-  (split-window lem-pane current-window-pane new-window-pane 'capi:row-layout))
+(defun split-horizontally (window-panel current-window-pane new-window-pane)
+  (split-window window-panel current-window-pane new-window-pane 'capi:row-layout))
 
-(defun split-vertically (lem-pane current-window-pane new-window-pane)
-  (split-window lem-pane current-window-pane new-window-pane 'capi:column-layout))
+(defun split-vertically (window-panel current-window-pane new-window-pane)
+  (split-window window-panel current-window-pane new-window-pane 'capi:column-layout))
 
-(defun lem-pane-delete-window (lem-pane window-pane)
+(defun window-panel-delete-window (window-panel window-pane)
   (labels ((f (pane)
              (cond ((typep pane 'capi:layout)
                     (let ((pos (position window-pane (capi:layout-description pane))))
@@ -104,11 +104,11 @@
                              pane))))
                    (t
                     pane))))
-    (with-apply-in-pane-process-wait-single (lem-pane)
+    (with-apply-in-pane-process-wait-single (window-panel)
       (let ((*window-is-modifying-p* t))
-        (f lem-pane)))))
+        (f window-panel)))))
 
-(defun update-window-ratios (lem-pane)
+(defun update-window-ratios (window-panel)
   (labels ((sum (list)
              (loop :for n :in list
                    :sum (or n 0) :into sum
@@ -127,18 +127,18 @@
                       (list (first (first width-height-list))
                             (sum ratios))))
                    ((typep pane 'window-pane)
-                    (let ((window (if (eq pane (lem-pane-minibuffer lem-pane))
+                    (let ((window (if (eq pane (window-panel-minibuffer window-panel))
                                       (lem::minibuffer-window)
                                       (window-pane-window pane))))
                       (list (lem:window-width window)
                             (lem:window-height window))))
                    (t
                     (list nil nil)))))
-    (with-apply-in-pane-process-wait-single (lem-pane)
+    (with-apply-in-pane-process-wait-single (window-panel)
       (let ((*window-is-modifying-p* t))
-        (f lem-pane)))))
+        (f window-panel)))))
 
-(defun update-window-size (lem-pane)
+(defun update-window-size (window-panel)
   (labels ((f (pane x y)
              (cond ((typep pane 'capi:row-layout)
                     (let ((w 0)
@@ -163,7 +163,7 @@
                             (setf w child-w))))
                       (values x y w h)))
                    ((typep pane 'window-pane)
-                    (if (eq pane (lem-pane-minibuffer lem-pane))
+                    (if (eq pane (window-panel-minibuffer window-panel))
                         (multiple-value-bind (w h)
                             (window-pane-size pane)
                           (values x y w h))
@@ -173,14 +173,14 @@
                             (lem::window-set-pos window x y)
                             (lem::window-set-size window w h)
                             (values x y w h))))))))
-    (with-apply-in-pane-process-wait-single (lem-pane)
-      (f lem-pane 0 0)
+    (with-apply-in-pane-process-wait-single (window-panel)
+      (f window-panel 0 0)
       (lem:send-event :resize)
-      (setf (lem-pane-resizing lem-pane) nil))))
+      (setf (window-panel-resizing window-panel) nil))))
 
-(defun lem-pane-resize-callback (lem-pane)
+(defun window-panel-resize-callback (window-panel)
   (cond (*window-is-modifying-p*)
         (t
-         (unless (lem-pane-resizing lem-pane)
-           (setf (lem-pane-resizing lem-pane) t)
-           (mp:schedule-timer-relative (mp:make-timer #'update-window-size lem-pane) 0.1)))))
+         (unless (window-panel-resizing window-panel)
+           (setf (window-panel-resizing window-panel) t)
+           (mp:schedule-timer-relative (mp:make-timer #'update-window-size window-panel) 0.1)))))

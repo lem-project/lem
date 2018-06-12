@@ -6,6 +6,6 @@
                (:file "misc")
                (:file "input")
                (:file "window-pane")
-               (:file "lem-pane")
+               (:file "window-panel")
                (:file "main")
                (:file "popup-window")))

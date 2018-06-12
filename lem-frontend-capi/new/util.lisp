@@ -1,7 +1,5 @@
 (in-package :lem-lispworks)
 
-(defvar *debug* nil)
-
 (defmacro with-error-handler (() &body body)
   `(handler-case
        (handler-bind ((error (lambda (c)

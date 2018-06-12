@@ -179,8 +179,7 @@
       (setf (lem-pane-resizing lem-pane) nil))))
 
 (defun lem-pane-resize-callback (lem-pane)
-  (cond (*window-is-modifying-p*
-         (lem:send-event :resize))
+  (cond (*window-is-modifying-p*)
         (t
          (unless (lem-pane-resizing lem-pane)
            (setf (lem-pane-resizing lem-pane) t)

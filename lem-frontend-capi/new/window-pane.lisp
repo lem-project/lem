@@ -53,6 +53,14 @@
   `(push (lambda (,window-pane) ,@body)
          (window-pane-drawing-queue ,window-pane)))
 
+(defun reinitialize-pixmap (window-pane)
+  (when (window-pane-pixmap window-pane)
+    (gp:destroy-pixmap-port (window-pane-pixmap window-pane)))
+  (multiple-value-bind (w h)
+      (capi:simple-pane-visible-size window-pane)
+    (setf (window-pane-pixmap window-pane)
+          (gp:create-pixmap-port window-pane w h :drawing-mode :quality))))
+
 (defun update-window (window-pane)
   (with-apply-in-pane-process-wait-single (window-pane)
     (multiple-value-bind (w h) (capi:simple-pane-visible-size window-pane)

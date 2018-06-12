@@ -6,7 +6,6 @@
 (defmethod lem-if:display-popup-menu ((implementation capi-impl) items
                                       &key action-callback print-function focus-attribute non-focus-attribute)
   (declare (ignore focus-attribute non-focus-attribute))
-  (setf *editor-thread* mp:*current-process*)
   (setf *menu-items* items)
   (let ((window-pane (lem:window-view (lem:current-window))))
     (multiple-value-bind (char-width char-height)

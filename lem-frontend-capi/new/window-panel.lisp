@@ -55,7 +55,7 @@
 (defun window-panel-height (window-panel)
   (with-apply-in-pane-process-wait-single (window-panel)
     (let ((window-pane (window-panel-minibuffer window-panel)))
-      (round (capi:simple-pane-visible-height window-panel)
+      (floor (capi:simple-pane-visible-height window-panel)
              (window-pane-char-height window-pane)))))
 
 (defun split-window (window-panel current-window-pane new-window-pane layout-class-name)

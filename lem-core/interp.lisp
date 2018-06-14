@@ -29,15 +29,18 @@
        :condition condition))))
 
 (defun pop-up-backtrace (condition)
-  (let ((buffer (make-buffer "*EDITOR ERROR*")))
-    (erase-buffer buffer)
-    (display-buffer buffer)
-    (with-open-stream (stream (make-buffer-output-stream (buffer-point buffer)))
-      (princ condition stream)
-      (fresh-line stream)
-      (uiop/image:print-backtrace
-       :stream stream
-       :count 100))))
+  (let ((o (with-output-to-string (stream)
+             (princ condition stream)
+             (fresh-line stream)
+             (uiop/image:print-backtrace
+              :stream stream
+              :count 100))))
+    (funcall 'pop-up-typeout-window
+             (make-buffer "*EDITOR ERROR*")
+             (lambda (stream)
+               (format stream "~A" o))
+             :focus t
+             :erase t)))
 
 (defmacro with-error-handler (() &body body)
   `(handler-case-bind ((lambda (condition)

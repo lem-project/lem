@@ -43,10 +43,10 @@
 
 (let ((once nil))
   (defun setup ()
+    (setup-windows)
+    (setup-minibuffer)
     (unless once
       (setf once t)
-      (window-init)
-      (minibuf-init)
       (start-idle-timer 100 t
                         (lambda ()
                           (syntax-scan-window (current-window)))
@@ -75,6 +75,10 @@
                   (scan-file-property-list buffer)))
       (start-idle-timer 100 t
                         'ask-revert-buffer))))
+
+(defun teardown ()
+  (teardown-windows)
+  (teardown-minibuffer))
 
 (defstruct command-line-arguments
   args
@@ -134,7 +138,8 @@
            (setf *in-the-editor* t)
            (setup)
            (let ((report (toplevel-command-loop (lambda () (init args)))))
-             (when finalize (funcall finalize report))))
+             (when finalize (funcall finalize report))
+             (teardown)))
        (setf *in-the-editor* nil)))
    :name "editor"))
 

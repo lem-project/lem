@@ -305,8 +305,8 @@
 (defun window-max-width () (- (display-width) (window-topleft-x)))
 (defun window-max-height () (- (display-height) (minibuffer-window-height) (window-topleft-y)))
 
-(defun window-init ()
-  (setf (current-window)
+(defun setup-windows ()
+  (setf *current-window*
         (make-window (current-buffer)
                      (window-topleft-x)
                      (window-topleft-y)
@@ -315,6 +315,9 @@
                      t))
   (lem-if:set-first-view (implementation) (window-view (current-window)))
   (setf (window-tree) (current-window)))
+
+(defun teardown-windows ()
+  (mapc #'%free-window (window-list)))
 
 (defun window-recenter (window)
   (line-start

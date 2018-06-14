@@ -76,13 +76,16 @@
      :syntax-table (make-syntax-table
                     :symbol-chars '(#\_ #\-))))
 
-(defun minibuf-init ()
+(defun setup-minibuffer ()
   (setf *echoarea-buffer*
         (make-buffer "*echoarea*" :temporary t :enable-undo-p nil))
   (setf *minibuffer-buffer*
         (make-buffer "*minibuffer*" :temporary t :enable-undo-p t))
   (setf *minibuf-window*
         (make-minibuffer-window *echoarea-buffer*)))
+
+(defun teardown-minibuffer ()
+  (%free-window *minibuf-window*))
 
 (defun minibuf-update-size ()
   (window-set-pos (minibuffer-window) 0 (1- (display-height)))

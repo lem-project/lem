@@ -3,5 +3,8 @@
 ;;;don't edit above
 
 (define-command man (str) ("sManual entry: ")
-  (with-pop-up-typeout-window (out (make-buffer (format nil "*Man ~A" str)) :focus t :erase t)
-    (format out "~A" (sn.man:man str))))
+  (let ((result (sn.man:man str)))
+    (if result
+        (with-pop-up-typeout-window (out (make-buffer (format nil "*Man ~A" str)) :focus t :erase t)
+          (format out "~A" result))
+        (message "no entry ~A" str))))

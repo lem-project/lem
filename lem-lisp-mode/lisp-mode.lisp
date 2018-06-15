@@ -18,7 +18,13 @@
      :keymap *lisp-mode-keymap*
      :syntax-table lem-lisp-syntax:*syntax-table*)
   (modeline-add-status-list (lambda (window)
-                              (format nil " [~A]" (buffer-package (window-buffer window) "CL-USER")))
+                              (format nil " [~A~A]" (buffer-package (window-buffer window) "CL-USER")
+                                      (if *connection*
+                                          (format nil " ~A:~A"
+                                                  (connection-implementation-name *connection*)
+                                                  (or (self-connectionp *connection*)
+                                                      (connection-pid *connection*)))
+                                          "")))
                             (current-buffer))
   (setf (variable-value 'beginning-of-defun-function) 'lisp-beginning-of-defun)
   (setf (variable-value 'end-of-defun-function) 'lisp-end-of-defun)
@@ -54,6 +60,7 @@
 (define-key *lisp-mode-keymap* "C-c C-d d" 'lisp-describe-symbol)
 (define-key *lisp-mode-keymap* "C-c C-z" 'lisp-switch-to-repl-buffer)
 (define-key *lisp-mode-keymap* "C-c z" 'lisp-switch-to-repl-buffer)
+(define-key *lisp-mode-keymap* "C-c C-b" 'lisp-connection-list)
 
 (defun change-current-connection (conn)
   (when *connection*
@@ -88,7 +95,7 @@
         (lem.menu-mode:append-menu-item item (if (eq c *connection*) "*" " "))
         (lem.menu-mode:append-menu-item item (connection-hostname c))
         (lem.menu-mode:append-menu-item item (connection-port c))
-        (lem.menu-mode:append-menu-item item (connection-pid c))
+        (lem.menu-mode:append-menu-item item (or (self-connectionp c) (connection-pid c)))
         (lem.menu-mode:append-menu-item item (connection-implementation-name c))
         (lem.menu-mode:append-menu-item item (connection-implementation-version c))
         (lem.menu-mode:append-menu menu item)))
@@ -109,7 +116,13 @@
           (go :START)))
       (slime-connect *localhost* port nil)
       (update-buffer-package)
-      (setf self-connected-port port))))
+      (setf self-connected-port port)))
+  (defun self-connectionp (c)
+    (and (typep c 'connection)
+         (member (connection-hostname c) '("127.0.0.1" "localhost") :test 'equal)
+         (ignore-errors (equal (connection-pid c) (swank/backend:getpid)))
+         (= (connection-port c) self-connected-port)
+         :self)))
 
 (defun check-connection ()
   (unless (connected-p)

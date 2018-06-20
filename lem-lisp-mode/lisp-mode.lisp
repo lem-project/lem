@@ -22,7 +22,7 @@
                                       (if *connection*
                                           (format nil " ~A:~A"
                                                   (connection-implementation-name *connection*)
-                                                  (or (self-connectionp *connection*)
+                                                  (or (self-connection-p *connection*)
                                                       (connection-pid *connection*)))
                                           "")))
                             (current-buffer))
@@ -95,7 +95,7 @@
         (lem.menu-mode:append-menu-item item (if (eq c *connection*) "*" " "))
         (lem.menu-mode:append-menu-item item (connection-hostname c))
         (lem.menu-mode:append-menu-item item (connection-port c))
-        (lem.menu-mode:append-menu-item item (or (self-connectionp c) (connection-pid c)))
+        (lem.menu-mode:append-menu-item item (or (self-connection-p c) (connection-pid c)))
         (lem.menu-mode:append-menu-item item (connection-implementation-name c))
         (lem.menu-mode:append-menu-item item (connection-implementation-version c))
         (lem.menu-mode:append-menu menu item)))
@@ -117,7 +117,7 @@
       (slime-connect *localhost* port nil)
       (update-buffer-package)
       (setf self-connected-port port)))
-  (defun self-connectionp (c)
+  (defun self-connection-p (c)
     (and (typep c 'connection)
          (member (connection-hostname c) '("127.0.0.1" "localhost") :test 'equal)
          (ignore-errors (equal (connection-pid c) (swank/backend:getpid)))

@@ -8,7 +8,7 @@
   (when (probe-file quicklisp-init)
     (load quicklisp-init)))
 
-(uiop:symbol-call :ql :quickload :lem-lispworks)
+(uiop:symbol-call :ql :quickload :lem-capi)
 
 (lem:add-hook lem:*exit-editor-hook*
               (lambda () (lw:quit)))

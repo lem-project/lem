@@ -184,8 +184,7 @@
     (setf *popup-message-window* nil)
     (redraw-display*)))
 
-(defmethod lem-if:display-popup-message (implementation text timeout)
-  (clear-popup-message)
+(defun make-popup-buffer (text)
   (let ((buffer (make-buffer "*Popup Message*" :temporary t :enable-undo-p nil)))
     (setf (variable-value 'truncate-lines :buffer buffer) nil)
     (erase-buffer buffer)
@@ -202,12 +201,18 @@
       (put-text-property (buffer-start-point buffer)
                          (buffer-end-point buffer)
                          :attribute 'popup-window-attribute)
-      (let ((window
-              (popup-window (current-window)
-                            buffer
-                            max-column
-                            (buffer-nlines buffer))))
-        (buffer-start (window-view-point window))
-        (window-see window)
-        (setf *popup-message-window* window)
+      (values buffer
+              max-column
+              (buffer-nlines buffer)))))
+
+(defmethod lem-if:display-popup-message (implementation text timeout)
+  (clear-popup-message)
+  (multiple-value-bind (buffer width height)
+      (make-popup-buffer text)
+    (let ((window (popup-window (current-window) buffer width height)))
+      (buffer-start (window-view-point window))
+      (window-see window)
+      (setf *popup-message-window* window)
+      (when timeout
+        (check-type timeout (integer 0 *))
         (start-timer (* timeout 1000) nil 'clear-popup-message)))))

@@ -45,11 +45,33 @@
   (capi:non-focus-maybe-capture-gesture *non-focus-interface* (sys:coerce-to-gesture-spec #\return)))
 
 (defmethod lem-if:display-popup-message ((implementation capi-impl) text timeout)
+  (clear-popup-message)
   (let ((window-pane (lem:window-view (lem:current-window))))
     (multiple-value-bind (char-width char-height)
         (window-pane-char-size window-pane)
-      (capi:display-non-focus-message text
-                                      :timeout timeout
-                                      :owner window-pane
-                                      :x (* (lem:point-column (lem:current-point)) char-width)
-                                      :y (* (lem:window-cursor-y (lem-base:current-point)) char-height)))))
+      (multiple-value-bind (buffer width height)
+          (lem.popup-window::make-popup-buffer text)
+        (let ((lw-buffer (editor:make-buffer "temp" :temporary t)))
+          (editor:insert-string (editor:buffer-point lw-buffer)
+                                (lem:points-to-string (lem:buffer-start-point buffer)
+                                                      (lem:buffer-end-point buffer)))
+          (editor:buffer-start (editor:buffer-point lw-buffer))
+          (with-apply-in-pane-process-wait-single (*lem-panel*)
+            (setf *non-focus-interface*
+                  (capi::display-non-focus-editor-pane
+                   :x (* (lem:point-column (lem:current-point)) char-width)
+                   :y (* (1+ (lem:window-cursor-y (lem:current-window))) char-height)
+                   :owner window-pane
+                   :width (* width char-width)
+                   :height (* height char-height)
+                   :echo-area-p nil
+                   :buffer-name lw-buffer
+                   :editor-font (window-pane-normal-font
+                                 (first (all-window-panes (lem-panel-window-panel *lem-panel*)))))))
+          (when timeout
+            (check-type timeout (integer 0 *))
+            (lem:start-timer (* timeout 1000) nil 'clear-popup-message)))))))
+
+(defun clear-popup-message ()
+  (when *non-focus-interface*
+    (capi:non-focus-terminate *non-focus-interface*)))

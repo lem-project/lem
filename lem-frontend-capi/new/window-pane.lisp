@@ -32,6 +32,11 @@
    :foreground :black
    :background :white
    :input-model '((:gesture-spec input-key)
+                  ((:button-1 :press) input-mouse-button :button-1 :press)
+                  ((:button-1 :release) input-mouse-button :button-1 :release)
+                  ((:button-1 :motion) input-mouse-button :button-1 :motion)
+                  ((:button-2 :press) input-mouse-button :button-2 :press)
+                  ((:button-3 :press) input-mouse-button :button-3 :press)
                   . #-win32 ()
                   #+win32 #.(loop :for code :from 1 :to 127
                                   :for char := (code-char code)
@@ -74,6 +79,24 @@
   (with-error-handler ()
     (when-let (key (gesture-spec-to-key gesture-spec))
       (lem:send-event key))))
+
+(defun input-mouse-button (window-pane x y button press-release)
+  (case button
+    (:button-1
+     (case press-release
+       (:press
+        (multiple-value-bind (w h) (window-pane-char-size window-pane)
+          (let ((window (window-pane-window window-pane))
+                (x (round x w))
+                (y (round y h)))
+            (lem:send-event (lambda ()
+                              (setf (lem:current-window) window)
+                              ;(move-to-cursor window x y)
+                              (lem:redraw-display))))))
+       (:motion)
+       (:release)))
+    (:button-2)
+    (:button-3)))
 
 (defmacro with-drawing ((window-pane) &body body)
   (check-type window-pane symbol)

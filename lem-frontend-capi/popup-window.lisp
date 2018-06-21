@@ -1,4 +1,4 @@
-(in-package :lem-lispworks)
+(in-package :lem-capi)
 
 (defvar *non-focus-interface*)
 (defvar *menu-items*)

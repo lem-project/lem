@@ -1,4 +1,4 @@
-(defsystem "lem-lispworks"
+(defsystem "lem-capi"
   :depends-on ("lem")
   :serial t
   :components ((:file "package")

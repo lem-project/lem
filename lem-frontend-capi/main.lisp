@@ -3,13 +3,14 @@
 (defclass capi-impl (lem:implementation)
   ()
   (:default-initargs
+   :support-floating-window nil
    :native-scroll-support nil
-   :redraw-after-modifying-floating-window t))
+   :redraw-after-modifying-floating-window nil))
 
 (setf lem:*implementation* (make-instance 'capi-impl))
-(setf lem::*window-left-margin* 0)
 
-(defstruct view window x y width height)
+(defvar *lem-panel*)
+(defvar *editor-thread*)
 
 (defmethod lem-if:invoke ((implementation capi-impl) function)
   (with-error-handler ()
@@ -20,112 +21,129 @@
                     :best-width 800
                     :best-height 600
                     :layout *lem-panel*))
-    (setf *lem-process*
+    (setf *editor-thread*
           (funcall function
                    (lambda ())
                    (lambda (report)
-                     (declare (ignore report))
+                     (when report
+                       (with-open-file (out "~/ERROR"
+                                            :direction :output
+                                            :if-exists :supersede
+                                            :if-does-not-exist :create)
+                         (write-string report out)))
                      (capi:quit-interface *lem-panel*))))))
 
-(defmethod lem-if:display-background-mode ((implementation capi-impl))
+(defmethod lem-if:set-first-view ((implementation capi-impl) view)
   (with-error-handler ()
-    (let ((color (color:get-color-spec (capi:simple-pane-background (lem-panel-editor-pane *lem-panel*)))))
-      (lem:rgb-to-background-mode (* (color:color-red color) 255)
-                                  (* (color:color-green color) 255)
-                                  (* (color:color-blue color) 255)))))
+    (set-first-window (lem-panel-window-panel *lem-panel*) view)))
+
+(defmethod lem-if:display-background-mode ((implementation capi-impl))
+  (let ((color (color:get-color-spec
+                (capi:simple-pane-background
+                 (first (all-window-panes (lem-panel-window-panel *lem-panel*)))))))
+    (lem:rgb-to-background-mode (* (color:color-red color) 255)
+                                (* (color:color-green color) 255)
+                                (* (color:color-blue color) 255))))
 
 (defmethod lem-if:update-foreground ((implementation capi-impl) color-name)
-  (change-foreground (lem-panel-editor-pane *lem-panel*) color-name))
+  (map-window-panes (lem-panel-window-panel *lem-panel*)
+                    (lambda (window-pane)
+                      (change-foreground window-pane color-name))))
 
 (defmethod lem-if:update-background ((implementation capi-impl) color-name)
-  (change-background (lem-panel-editor-pane *lem-panel*) color-name))
+  (map-window-panes (lem-panel-window-panel *lem-panel*)
+                    (lambda (window-pane)
+                      (change-background window-pane color-name))))
 
 (defmethod lem-if:display-width ((implementation capi-impl))
   (with-error-handler ()
-    (editor-pane-width (lem-panel-editor-pane *lem-panel*))))
+    (window-panel-width (lem-panel-window-panel *lem-panel*))))
 
 (defmethod lem-if:display-height ((implementation capi-impl))
   (with-error-handler ()
-    (editor-pane-height (lem-panel-editor-pane *lem-panel*))))
+    (window-panel-height (lem-panel-window-panel *lem-panel*))))
 
 (defmethod lem-if:make-view ((implementation capi-impl) window x y width height use-modeline)
   (with-error-handler ()
-    (make-view :window window :x x :y y :width width :height height)))
+    (if (lem:minibuffer-window-p window)
+        (window-panel-minibuffer (lem-panel-window-panel *lem-panel*))
+        (make-instance 'window-pane
+                       :window window
+                       :window-panel (lem-panel-window-panel *lem-panel*)))))
 
 (defmethod lem-if:delete-view ((implementation capi-impl) view)
   (with-error-handler ()
-    (values)))
+    (window-panel-delete-window (lem-panel-window-panel *lem-panel*) view)
+    (destroy-window-pane view)))
 
 (defmethod lem-if:clear ((implementation capi-impl) view)
   (with-error-handler ()
-    (draw-rectangle (lem-panel-editor-pane *lem-panel*)
-                     (view-x view)
-                     (view-y view)
-                     (1- (view-width view))
-                     (view-height view))))
+    (clear view)))
 
 (defmethod lem-if:set-view-size ((implementation capi-impl) view width height)
-  (with-error-handler ()
-    (setf (view-width view) width)
-    (setf (view-height view) height)))
+  (setf (window-panel-modified-p (lem-panel-window-panel *lem-panel*)) t))
 
 (defmethod lem-if:set-view-pos ((implementation capi-impl) view x y)
-  (with-error-handler ()
-    (setf (view-x view) x)
-    (setf (view-y view) y)))
+  (setf (window-panel-modified-p (lem-panel-window-panel *lem-panel*)) t))
 
 (defmethod lem-if:print ((implementation capi-impl) view x y string attribute)
   (with-error-handler ()
-    (draw-text (lem-panel-editor-pane *lem-panel*)
-               string
-               (+ (view-x view) x)
-               (+ (view-y view) y)
-               (lem:ensure-attribute attribute nil))))
+    (draw-string view string x y (lem:ensure-attribute attribute nil))))
 
 (defmethod lem-if:print-modeline ((implementation capi-impl) view x y string attribute)
   (with-error-handler ()
-    (draw-text (lem-panel-editor-pane *lem-panel*)
-               string
-               (+ (view-x view) x)
-               (+ (view-y view) (view-height view) y)
-               (lem:ensure-attribute attribute nil))))
+    (draw-string-in-modeline view string x y (lem:ensure-attribute attribute nil))))
 
 (defmethod lem-if:clear-eol ((implementation capi-impl) view x y)
   (with-error-handler ()
-    (draw-rectangle (lem-panel-editor-pane *lem-panel*)
-                    (+ (view-x view) x)
-                    (+ (view-y view) y)
-                    (- (view-width view) x)
-                    1)))
+    (clear-eol view x y)))
 
 (defmethod lem-if:clear-eob ((implementation capi-impl) view x y)
   (with-error-handler ()
-    (when (plusp x)
-      (lem-if:clear-eol implementation view x y)
-      (incf y))
-    (draw-rectangle (lem-panel-editor-pane *lem-panel*)
-                     (view-x view)
-                     (+ (view-y view) y)
-                     (view-width view)
-                     (- (view-height view) y))))
+    (clear-eob view x y)))
+
+;(defmethod lem-if:redraw-window ((implementation capi-impl) window force)
+;  )
 
 (defmethod lem-if:redraw-view-after ((implementation capi-impl) view focus-window-p)
-  (with-error-handler ()
-    (when (and (not (lem:floating-window-p (view-window view)))
-               (< 0 (view-x view)))
-      (draw-rectangle (lem-panel-editor-pane *lem-panel*)
-                       (view-x view)
-                       (view-y view)
-                       0.1
-                       (1+ (view-height view))
-                       (capi:simple-pane-foreground (lem-panel-editor-pane *lem-panel*))))))
+  )
 
 (defmethod lem-if:update-display ((implementation capi-impl))
-  (update-display (lem-panel-editor-pane *lem-panel*))
-  (update-tab-layout *lem-panel*)
-  (capi:set-pane-focus (lem-panel-editor-pane *lem-panel*)))
+  (with-error-handler ()
+    (let ((window-panel (lem-panel-window-panel *lem-panel*)))
+      (with-apply-in-pane-process-wait-single (window-panel)
+        (when (window-panel-modified-p window-panel)
+          (map-window-panes window-panel (lambda (window-pane)
+                                          (when (window-pane-pixmap window-pane)
+                                            (multiple-value-bind (w h)
+                                                (capi:simple-pane-visible-size window-pane)
+                                              (gp:clear-graphics-port (window-pane-pixmap window-pane))
+                                              (gp:copy-pixels window-pane
+                                                              (window-pane-pixmap window-pane)
+                                                              0 0 w h 0 0)))))
+          (update-window-ratios window-panel)
+          (lem::adjust-windows (lem::window-topleft-x)
+                               (lem::window-topleft-y)
+                               (+ (lem::window-max-width) (lem::window-topleft-x))
+                               (+ (lem::window-max-height) (lem::window-topleft-y)))
+          (lem::minibuf-update-size)
+          (setf (window-panel-modified-p window-panel) nil)
+          (map-window-panes window-panel #'reinitialize-pixmap))
+        (map-window-panes window-panel #'update-window)
+        (update-tab-layout *lem-panel*)
+        (capi:set-pane-focus (window-panel-minibuffer window-panel))))))
 
 ;(defmethod lem-if:scroll ((implementation capi-impl) view n)
 ;  )
 
-(pushnew :lem-capi *features*)
+(defmethod lem-if:split-window-horizontally ((implementation capi-impl) view new-view)
+  (with-error-handler ()
+    (let ((window-panel (lem-panel-window-panel *lem-panel*)))
+      (setf (window-panel-modified-p window-panel) t)
+      (split-horizontally window-panel view new-view))))
+
+(defmethod lem-if:split-window-vertically ((implementation capi-impl) view new-view)
+  (with-error-handler ()
+    (let ((window-panel (lem-panel-window-panel *lem-panel*)))
+      (setf (window-panel-modified-p window-panel) t)
+      (split-vertically window-panel view new-view))))

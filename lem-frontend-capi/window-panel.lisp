@@ -1,4 +1,4 @@
-(in-package :lem-lispworks)
+(in-package :lem-capi)
 
 (defclass window-panel (capi:column-layout)
   ((initialized

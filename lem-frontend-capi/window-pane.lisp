@@ -1,4 +1,4 @@
-(in-package :lem-lispworks)
+(in-package :lem-capi)
 
 (defvar *default-font-spec*
   #+win32 (cons "Consolas" 10)

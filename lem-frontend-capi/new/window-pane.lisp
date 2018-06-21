@@ -69,6 +69,12 @@
                            (setf last-len (max last-len width))))))
            (update-window window-pane)))))))
 
+(defun input-key (window-pane x y gesture-spec)
+  (declare (ignore window-pane x y))
+  (with-error-handler ()
+    (when-let (key (gesture-spec-to-key gesture-spec))
+      (lem:send-event key))))
+
 (defmacro with-drawing ((window-pane) &body body)
   (check-type window-pane symbol)
   `(push (lambda (,window-pane) ,@body)

@@ -39,9 +39,3 @@
                              :ctrl ctrlp
                              :shift shiftp
                              :sym sym)))))))
-
-(defun input-key (self x y gesture-spec)
-  (declare (ignore self x y))
-  (with-error-handler ()
-    (when-let (key (gesture-spec-to-key gesture-spec))
-      (lem:send-event key))))

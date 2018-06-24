@@ -45,8 +45,9 @@
 (define-key *global-keymap* "M-)" 'move-over-\))
 (define-key *lisp-mode-keymap* "C-M-q" 'lisp-indent-sexp)
 (define-key *lisp-mode-keymap* "C-c M-p" 'lisp-set-package)
-(define-key *global-keymap* "M-:" 'lisp-eval-string)
-(define-key *lisp-mode-keymap* "C-x C-e" 'lisp-eval-last-expression)
+(define-key *global-keymap* "M-:" 'self-lisp-eval-string)
+(define-key *lisp-mode-keymap* "C-c M-:" 'lisp-eval-string)
+(define-key *global-keymap* "C-x C-e" 'self-lisp-eval-last-expression)
 (define-key *lisp-mode-keymap* "C-c C-e" 'lisp-eval-last-expression)
 (define-key *lisp-mode-keymap* "C-M-x" 'lisp-eval-defun)
 (define-key *lisp-mode-keymap* "C-c C-r" 'lisp-eval-region)
@@ -389,6 +390,46 @@
       (if p
           (eval-print string (- (window-width (current-window)) 2))
           (interactive-eval string)))))
+
+(defun self-current-package ()
+  (or (find (or *current-package*
+                (buffer-package (current-buffer))
+                (scan-current-package (current-point)))
+            (list-all-packages)
+            :test 'equalp
+            :key 'package-name)
+      *package*))
+
+(defun self-interactive-eval (string)
+  (let* ((*package* (self-current-package))
+         (*standard-output* (make-string-output-stream))
+         (values (multiple-value-list (eval (read-from-string string))))
+         (output (get-output-stream-string *standard-output*)))
+    (unless (zerop (length output))
+      (write-string-to-repl output))
+    (message "=> ~{~S~^, ~}" values)))
+
+(defun self-eval-print (string &optional print-right-margin)
+  (declare (ignore print-right-margin))
+  (let* ((*package* (self-current-package))
+         (*standard-output* (make-string-output-stream))
+         (values (multiple-value-list (eval (read-from-string string)))))
+    (insert-string (current-point) (get-output-stream-string *standard-output*))
+    (insert-character (current-point) #\newline)
+    (insert-string (current-point) (format nil "~{~S~^~%~}" values))))
+
+(define-command self-lisp-eval-string (string)
+    ((list (prompt-for-sexp "Lisp Eval: ")))
+  (self-interactive-eval string))
+
+(define-command self-lisp-eval-last-expression (p) ("P")
+  (with-point ((start (current-point))
+               (end (current-point)))
+    (form-offset start -1)
+    (let ((string (points-to-string start end)))
+      (if p
+          (self-eval-print string (- (window-width (current-window)) 2))
+          (self-interactive-eval string)))))
 
 (define-command lisp-eval-defun () ()
   (check-connection)

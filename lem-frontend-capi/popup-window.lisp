@@ -1,7 +1,7 @@
 (in-package :lem-capi)
 
-(defvar *non-focus-interface*)
-(defvar *menu-items*)
+(defvar *non-focus-interface* nil)
+(defvar *menu-items* nil)
 
 (defmethod lem-if:display-popup-menu ((implementation capi-impl) items
                                       &key action-callback print-function focus-attribute non-focus-attribute)

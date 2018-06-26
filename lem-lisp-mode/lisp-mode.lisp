@@ -782,12 +782,46 @@
   (setf (buffer-value (repl-buffer) 'read-string-tag-stack) val))
 
 (define-key *lisp-repl-mode-keymap* "C-c C-c" 'lisp-repl-interrupt)
+(define-key *lisp-repl-mode-keymap* "," 'lisp-repl-shortcut)
 
 (define-command lisp-repl-interrupt () ()
   (send-message-string *connection*
                        (format nil "(:emacs-interrupt ~(~S~))"
                                (or (car (read-string-thread-stack))
                                    :repl-thread))))
+
+(defvar *lisp-repl-shortcuts* '())
+
+(defun prompt-for-shortcuts ()
+  (let* ((*lisp-repl-shortcuts* *lisp-repl-shortcuts*)
+         (names (mapcar #'car *lisp-repl-shortcuts*)))
+    (cdr (assoc (prompt-for-line
+                 "Command:"
+                 ""
+                 (lambda (x) (completion-strings x names))
+                 (lambda (name) (member name names :test #'string=))
+                 'mh-lisp-repl-shortcuts)
+                *lisp-repl-shortcuts* :test #'equal))))
+
+(define-command lisp-repl-shortcut (n) ("p")
+  (with-point ((point (current-point)))
+    (if (point>= (lem.listener-mode::listener-start-point (current-buffer)) point)
+        (let ((fun (prompt-for-shortcuts)))
+          (when fun
+            (funcall fun n)))
+        (let ((c (insertion-key-p (last-read-key-sequence))))
+          (insert-character point c n)))))
+
+(defmacro define-repl-shortcut (name lambda-list &body body)
+  (if (symbolp lambda-list)
+      `(progn
+         (setf *lisp-repl-shortcuts* (remove ,(string-downcase name) *lisp-repl-shortcuts* :key 'first :test 'equal))
+         (push (cons ,(string-downcase name) ',lambda-list) *lisp-repl-shortcuts*)
+         ',name)
+      `(progn
+         (setf *lisp-repl-shortcuts* (remove ,(string-downcase name) *lisp-repl-shortcuts* :key 'first :test 'equal))
+         (push (cons ,(string-downcase name) ',name) *lisp-repl-shortcuts*)
+         (defun ,name ,lambda-list ,@body))))
 
 (defun repl-buffer ()
   (get-buffer "*lisp-repl*"))

@@ -116,7 +116,7 @@
                     :for column :in columns
                     :do (insert-string p string :attribute attribute)
                         (move-to-column p column t))
-              (put-text-property start p 'function (menu-item-select-callback item))
+              (put-text-property start p 'select-callback (menu-item-select-callback item))
               (put-text-property start p 'plist (menu-item-plist item))))
           (move-to-line (buffer-point buffer) 2))))))
 
@@ -125,7 +125,7 @@
     (getf (text-property-at (line-start p) 'plist) indicator)))
 
 (defun menu-select-1 (set-buffer-fn)
-  (alexandria:when-let ((fn (text-property-at (current-point) 'function)))
+  (alexandria:when-let ((fn (text-property-at (current-point) 'select-callback)))
     (funcall fn set-buffer-fn)))
 
 (define-command menu-select-this-window () ()

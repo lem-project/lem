@@ -49,10 +49,10 @@
   ((elements
     :initform nil
     :accessor menu-item-elements)
-   (select-function
-    :initarg :select-function
+   (select-callback
+    :initarg :select-callback
     :initform nil
-    :reader menu-item-select-function)
+    :reader menu-item-select-callback)
    (plist
     :initform nil
     :accessor menu-item-plist)))
@@ -60,7 +60,7 @@
 (defmethod initialize-instance :after ((menu-item menu-item) &rest initargs &key &allow-other-keys)
   (let ((plist '()))
     (loop :for (k v) :on initargs :by #'cddr
-          :do (unless (member k '(:select-function))
+          :do (unless (member k '(:select-callback))
                 (push v plist)
                 (push k plist)))
     (setf (menu-item-plist menu-item) plist)))
@@ -116,7 +116,7 @@
                     :for column :in columns
                     :do (insert-string p string :attribute attribute)
                         (move-to-column p column t))
-              (put-text-property start p 'function (menu-item-select-function item))
+              (put-text-property start p 'function (menu-item-select-callback item))
               (put-text-property start p 'plist (menu-item-plist item))))
           (move-to-line (buffer-point buffer) 2))))))
 
@@ -195,4 +195,3 @@
   (or (loop :for ov :in (buffer-value point 'mark-overlays)
             :collect (menu-property-at (overlay-start ov) indicator))
       (list (menu-property-at point indicator))))
-

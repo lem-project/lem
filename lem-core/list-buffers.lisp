@@ -20,7 +20,7 @@
     (dolist (buffer (buffer-list))
       (let ((item (make-instance
                    'menu-item
-                   :select-function (let ((buffer-name (buffer-name buffer)))
+                   :select-callback (let ((buffer-name (buffer-name buffer)))
                                       (lambda (set-buffer-fn)
                                         (let ((buffer (get-buffer buffer-name)))
                                           (when buffer

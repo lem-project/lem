@@ -88,7 +88,7 @@
                              :columns '(" " "hostname" "port" "pid" "name" "version"))))
     (dolist (c *connection-list*)
       (let ((item (make-instance 'lem.menu-mode:menu-item
-                                 :select-function (let ((c c))
+                                 :select-callback (let ((c c))
                                                     (lambda (set-buffer-fn)
                                                       (declare (ignore set-buffer-fn))
                                                       (change-current-connection c)

@@ -5,9 +5,7 @@
            :menu-item
            :append-menu
            :append-menu-item
-           :display-menu
-           :menu-property-at
-           :marked-menu-items))
+           :display-menu))
 (in-package :lem.menu-mode)
 
 (define-attribute head-line-attribute
@@ -120,10 +118,6 @@
               (put-text-property start p 'plist (menu-item-plist item))))
           (move-to-line (buffer-point buffer) 2))))))
 
-(defun menu-property-at (point indicator)
-  (with-point ((p point))
-    (getf (text-property-at (line-start p) 'plist) indicator)))
-
 (defun menu-select-1 (set-buffer-fn)
   (alexandria:when-let ((fn (text-property-at (current-point) 'select-callback)))
     (funcall fn set-buffer-fn)))
@@ -145,8 +139,7 @@
 (define-command menu-previous-line (n) ("p")
   (alexandria:when-let ((menu (buffer-value (current-buffer) '%menu)))
     (dotimes (_ n t)
-      (when (and (menu-use-headline-p menu)
-                 (>= 2 (line-number-at-point (current-point))))
+      (when (>= 2 (line-number-at-point (current-point)))
         (return))
       (line-offset (current-point) -1))))
 
@@ -190,8 +183,3 @@
     (unless (menu-previous-line 1)
       (return))
     (unmark-line (current-point))))
-
-(defun marked-menu-items (point indicator)
-  (or (loop :for ov :in (buffer-value point 'mark-overlays)
-            :collect (menu-property-at (overlay-start ov) indicator))
-      (list (menu-property-at point indicator))))

@@ -37,7 +37,8 @@
    :popup-menu-first
    :popup-menu-last
    :popup-menu-select
-   :display-popup-message))
+   :display-popup-message
+   :display-menu))
 
 (defpackage :lem-user
   (:use :cl :lem))

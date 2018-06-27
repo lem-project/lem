@@ -83,24 +83,21 @@
   *connection*)
 
 (define-command lisp-connection-list () ()
-  (let ((menu (make-instance 'lem.menu-mode:menu
-                             :buffer-name "*lisp-connections*"
-                             :columns '(" " "hostname" "port" "pid" "name" "version"))))
-    (dolist (c *connection-list*)
-      (let ((item (make-instance 'lem.menu-mode:menu-item
-                                 :select-callback (let ((c c))
-                                                    (lambda (set-buffer-fn)
-                                                      (declare (ignore set-buffer-fn))
-                                                      (change-current-connection c)
-                                                      (lisp-connection-list))))))
-        (lem.menu-mode:append-menu-item item (if (eq c *connection*) "*" " "))
-        (lem.menu-mode:append-menu-item item (connection-hostname c))
-        (lem.menu-mode:append-menu-item item (connection-port c))
-        (lem.menu-mode:append-menu-item item (or (self-connection-p c) (connection-pid c)))
-        (lem.menu-mode:append-menu-item item (connection-implementation-name c))
-        (lem.menu-mode:append-menu-item item (connection-implementation-version c))
-        (lem.menu-mode:append-menu menu item)))
-    (lem.menu-mode:display-menu menu)))
+  (lem.menu-mode:display-menu
+   (make-instance 'lem.menu-mode:menu
+                  :columns '(" " "hostname" "port" "pid" "name" "version")
+                  :items *connection-list*
+                  :column-function (lambda (c)
+                                     (list (if (eq c *connection*) "*" "")
+                                           (connection-hostname c)
+                                           (connection-port c)
+                                           (or (self-connection-p c) (connection-pid c))
+                                           (connection-implementation-name c)
+                                           (connection-implementation-version c)))
+                  :select-callback (lambda (c)
+                                     (change-current-connection c)
+                                     (lisp-connection-list)))
+   :name "Lisp Connections"))
 
 (let (self-connected-port)
   (defun self-connected-p ()

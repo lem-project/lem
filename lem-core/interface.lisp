@@ -64,6 +64,8 @@
 (defgeneric lem-if:popup-menu-select (implementation))
 (defgeneric lem-if:display-popup-message (implementation text timeout))
 
+(defgeneric lem-if:display-menu (menu name))
+
 (defvar *print-start-x* 0)
 (defvar *cursor-x* 0)
 (defvar *cursor-y* 0)

@@ -5,14 +5,6 @@
 
 (define-key *global-keymap* "C-x C-b" 'list-buffers)
 
-(define-major-mode buffers-menu-mode menu-mode
-    (:name "Buffers"
-     :keymap *buffers-menu-mode-keymap*))
-
-(define-key *buffers-menu-mode-keymap* "d" 'list-buffers-delete)
-(define-key *buffers-menu-mode-keymap* "k" 'list-buffers-delete)
-(define-key *buffers-menu-mode-keymap* "C-k" 'list-buffers-delete)
-
 (define-command list-buffers () ()
   (let ((menu (make-instance 'menu
                              :buffer-name "*Buffer menu*"
@@ -33,7 +25,3 @@
         (append-menu menu item)))
     (display-menu menu 'buffers-menu-mode)))
 
-(define-command list-buffers-delete () ()
-  (dolist (buffer-name (marked-menu-items (current-point) :buffer-name))
-    (kill-buffer (get-buffer buffer-name)))
-  (list-buffers))

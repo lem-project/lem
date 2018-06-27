@@ -13,6 +13,7 @@
                (:file "lisp-ui-mode")
                (:file "grammer")
                (:file "lisp-mode")
+               (:file "repl")
                (:file "sldb")
                (:file "inspector")
                (:file "apropos-mode")

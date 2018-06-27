@@ -56,15 +56,6 @@
    :show-description
    :lisp-eval-describe
    :lisp-describe-symbol
-   :lisp-repl-mode
-   :*lisp-repl-mode-keymap*
-   :lisp-repl-interrupt
-   :repl-buffer
-   :clear-repl
-   :*repl-compiler-check*
-   :listener-eval
-   :start-lisp-repl
-   :lisp-switch-to-repl-buffer
    :slime-connect
    :move-to-bytes
    :*impl-name*
@@ -74,6 +65,16 @@
    :slime-quit
    :slime-restart
    :slime-self-connect
+   ;; repl.lisp
+   :lisp-repl-mode
+   :*lisp-repl-mode-keymap*
+   :lisp-repl-interrupt
+   :repl-buffer
+   :clear-repl
+   :*repl-compiler-check*
+   :listener-eval
+   :start-lisp-repl
+   :lisp-switch-to-repl-buffer
    ;; sldb.lisp
    :topline-attribute
    :condition-attribute

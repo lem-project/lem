@@ -17,5 +17,4 @@
                (:file "sldb")
                (:file "inspector")
                (:file "apropos-mode")
-               (:file "lisp-definitions")
                (:file "paren-coloring")))

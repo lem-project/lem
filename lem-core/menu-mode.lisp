@@ -1,11 +1,12 @@
 (defpackage :lem.menu-mode
   (:use :cl :lem)
-  (:export :*change-buffer-function*
-           :menu
-           :display-menu))
+  (:export :menu
+           :display-menu
+           :update-menu
+           :menu-change-buffer))
 (in-package :lem.menu-mode)
 
-(defvar *change-buffer-function*)
+(defvar *change-buffer-function* #'switch-to-buffer)
 
 (define-attribute head-line-attribute
   (:light :background "gray85")
@@ -27,11 +28,19 @@
 (define-key *menu-mode-keymap* "m" 'menu-mark-and-next-line)
 (define-key *menu-mode-keymap* "u" 'menu-unmark-and-next-line)
 (define-key *menu-mode-keymap* "U" 'menu-unmark-and-previous-line)
+(define-key *menu-mode-keymap* "g" 'menu-update)
 
 (defclass menu ()
-  ((columns
+  ((name
+    :initform nil
+    :accessor menu-name)
+   (columns
     :initarg :columns
     :accessor menu-columns)
+   (column-function
+    :initarg :column-function
+    :initform nil
+    :reader menu-column-function)
    (items
     :initarg :items
     :initform nil
@@ -42,10 +51,9 @@
     :initarg :select-callback
     :initform nil
     :reader menu-select-callback)
-   (column-function
-    :initarg :column-function
-    :initform nil
-    :reader menu-column-function)))
+   (update-items-function
+    :initarg :update-items-function
+    :reader menu-update-items-function)))
 
 (defmethod initialize-instance :around ((menu menu) &rest initargs &key items)
   (setf (menu-origin-items menu) items)
@@ -83,6 +91,7 @@
           :collect column)))
 
 (defun display-menu (menu &key name)
+  (setf (menu-name menu) name)
   (update-items menu)
   (let* ((columns (compute-columns menu))
          (buffer (make-buffer (format nil "*~A*" name)))
@@ -116,12 +125,20 @@
                       (put-text-property start p :item origin-item)))
           (move-to-line (buffer-point buffer) 2))))))
 
+(defun update-menu (menu items)
+  (setf (menu-origin-items menu) items)
+  (display-menu menu :name (menu-name menu)))
+
+(defun menu-change-buffer (menu buffer)
+  (declare (ignore menu))
+  (funcall *change-buffer-function* buffer))
+
 (defun menu-select-1 (set-buffer-fn)
   (alexandria:when-let* ((menu (buffer-value (current-buffer) 'menu))
                          (fn (menu-select-callback menu))
                          (item (text-property-at (current-point) :item))
                          (*change-buffer-function* set-buffer-fn))
-    (funcall fn item)))
+    (funcall fn menu item)))
 
 (define-command menu-select-this-window () ()
   (menu-select-1 #'switch-to-buffer))
@@ -184,3 +201,9 @@
     (unless (menu-previous-line 1)
       (return))
     (unmark-line (current-point))))
+
+(define-command menu-update () ()
+  (alexandria:when-let* ((menu (buffer-value (current-buffer) 'menu))
+                         (fn (menu-update-items-function menu)))
+    (let ((items (funcall fn)))
+      (update-menu menu items))))

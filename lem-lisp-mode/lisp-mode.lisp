@@ -94,9 +94,10 @@
                                            (or (self-connection-p c) (connection-pid c))
                                            (connection-implementation-name c)
                                            (connection-implementation-version c)))
-                  :select-callback (lambda (c)
+                  :select-callback (lambda (menu c)
                                      (change-current-connection c)
-                                     (lisp-connection-list)))
+                                     (lem.menu-mode:update-menu menu *connection-list*))
+                  :update-items-function (lambda () *connection-list*))
    :name "Lisp Connections"))
 
 (let (self-connected-port)

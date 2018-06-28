@@ -90,7 +90,13 @@
           :for column := (+ width 1) :then (+ column width 1)
           :collect column)))
 
+(defun update-menu (menu items)
+  (lem-if:update-menu (implementation) menu items))
+
 (defun display-menu (menu &key name)
+  (lem-if:display-menu (implementation) menu name))
+
+(defmethod lem-if:display-menu (implementation menu name)
   (setf (menu-name menu) name)
   (update-items menu)
   (let* ((columns (compute-columns menu))
@@ -125,7 +131,7 @@
                       (put-text-property start p :item origin-item)))
           (move-to-line (buffer-point buffer) 2))))))
 
-(defun update-menu (menu items)
+(defmethod lem-if:update-menu (implementation menu items)
   (setf (menu-origin-items menu) items)
   (display-menu menu :name (menu-name menu)))
 

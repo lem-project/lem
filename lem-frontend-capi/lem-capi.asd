@@ -11,4 +11,5 @@
                (:file "lem-panel")
                (:file "main")
                (:file "popup-window")
+               (:file "menu")
                (:file "commands")))

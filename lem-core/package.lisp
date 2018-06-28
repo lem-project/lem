@@ -38,7 +38,8 @@
    :popup-menu-last
    :popup-menu-select
    :display-popup-message
-   :display-menu))
+   :display-menu
+   :update-menu))
 
 (defpackage :lem-user
   (:use :cl :lem))

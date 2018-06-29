@@ -32,7 +32,11 @@
            (make-instance 'capi:tab-layout
                           :items (list (list "Main" window-panel))
                           :print-function #'first
-                          :visible-child-function #'second))
+                          :visible-child-function #'second
+                          :callback-type :data
+                          :selection-callback (lambda (item)
+                                                (when-let (callback (third item))
+                                                  (funcall callback)))))
          (layout (make-instance 'capi:row-layout :description (list tab-layout))))
     (apply #'call-next-method lem-panel
            :description (list layout)
@@ -51,8 +55,8 @@
 (defun position-tab-layout (lem-panel name)
   (find-tab-layout lem-panel name #'position))
 
-(defun add-tab-layout (lem-panel name layout)
-  (let ((item (list name layout)))
+(defun add-tab-layout (lem-panel name layout &optional selection-callback)
+  (let ((item (list name layout selection-callback)))
     (if-let (pos (position-tab-layout lem-panel name))
       (setf (elt (capi:collection-items (lem-panel-tab-layout lem-panel)) pos) item)
       (setf (capi:collection-items (lem-panel-tab-layout lem-panel))

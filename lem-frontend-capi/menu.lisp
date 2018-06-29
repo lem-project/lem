@@ -22,7 +22,12 @@
                                             (lem:redraw-display)))))
     (change-class menu 'menu :panel multi-column-list-panel)
     (with-apply-in-pane-process-wait-single (*lem-panel*)
-      (add-tab-layout *lem-panel* name multi-column-list-panel)
+      (add-tab-layout *lem-panel*
+                      name
+                      multi-column-list-panel
+                      (lambda ()
+                        (when-let (items (funcall (lem.menu-mode::menu-update-items-function menu)))
+                          (lem.menu-mode:update-menu menu items))))
       (change-to-tab *lem-panel* name))))
 
 (defmethod lem-if:update-menu ((implementation capi-impl) menu items)

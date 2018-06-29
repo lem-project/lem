@@ -89,6 +89,7 @@
           (let ((window (window-pane-window window-pane))
                 (x (round x w))
                 (y (round y h)))
+            (declare (ignore x y))
             (lem:send-event (lambda ()
                               (setf (lem:current-window) window)
                               ;(move-to-cursor window x y)

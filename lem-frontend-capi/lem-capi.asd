@@ -3,7 +3,7 @@
   :serial t
   :components ((:file "package")
                (:file "util")
-               (:file "misc")
+               (:file "variables")
                (:file "input")
                (:file "directory-view")
                (:file "window-pane")

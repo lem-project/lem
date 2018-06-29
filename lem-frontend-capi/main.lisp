@@ -130,7 +130,6 @@
           (setf (window-panel-modified-p window-panel) nil)
           (map-window-panes window-panel #'reinitialize-pixmap))
         (map-window-panes window-panel #'update-window)
-        (update-tab-layout *lem-panel*)
         (capi:set-pane-focus (window-panel-minibuffer window-panel))))))
 
 ;(defmethod lem-if:scroll ((implementation capi-impl) view n)

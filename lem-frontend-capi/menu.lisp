@@ -18,15 +18,12 @@
                          :action-callback (lambda (item)
                                             (funcall (lem.menu-mode::menu-select-callback menu)
                                                      menu item)
+                                            (change-to-tab *lem-panel* "Main")
                                             (lem:redraw-display)))))
     (change-class menu 'menu :panel multi-column-list-panel)
-    (capi:display
-     (make-instance 'capi:interface
-                    :title (princ-to-string name)
-                    :layout (list (make-instance 'capi:simple-layout
-                                                 :description (list multi-column-list-panel)))
-                    :best-width 800
-                    :best-height 600))))
+    (with-apply-in-pane-process-wait-single (*lem-panel*)
+      (add-tab-layout *lem-panel* name multi-column-list-panel)
+      (change-to-tab *lem-panel* name))))
 
 (defmethod lem-if:update-menu ((implementation capi-impl) menu items)
   (let ((panel (menu-panel menu)))

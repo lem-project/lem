@@ -43,6 +43,34 @@
            :layout layout
            initargs)))
 
+(defun find-tab-layout (lem-panel name &optional (function #'find))
+  (funcall function name
+           (capi:collection-items (lem-panel-tab-layout lem-panel))
+           :key #'first :test #'equal))
+
+(defun position-tab-layout (lem-panel name)
+  (find-tab-layout lem-panel name #'position))
+
+(defun add-tab-layout (lem-panel name layout)
+  (let ((item (list name layout)))
+    (if-let (pos (position-tab-layout lem-panel name))
+      (setf (elt (capi:collection-items (lem-panel-tab-layout lem-panel)) pos) item)
+      (setf (capi:collection-items (lem-panel-tab-layout lem-panel))
+            (concatenate 'list
+                         (capi:collection-items (lem-panel-tab-layout lem-panel))
+                         (list item))))))
+
+(defun change-to-tab (lem-panel name)
+  (with-apply-in-pane-process-wait-single (lem-panel)
+    (when-let (pos (position-tab-layout lem-panel name))
+      (setf (capi:choice-selection (lem-panel-tab-layout lem-panel)) pos)
+      (capi:set-pane-focus (second (elt (capi:collection-items
+                                         (lem-panel-tab-layout lem-panel))
+                                        pos))))))
+
+(defun current-tab-is-main (lem-panel)
+  (zerop (capi:choice-selection (lem-panel-tab-layout lem-panel))))
+
 (defun enable-directory-view (lem-panel)
   (with-apply-in-pane-process-wait-single (lem-panel)
     (setf (lem-panel-enable-directory-view-p lem-panel) t)

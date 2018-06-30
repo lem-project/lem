@@ -14,7 +14,7 @@
               (lambda () (lw:quit)))
 
 (defun run-lem ()
-  (lem:lem))
+  (apply #'lem:lem (rest sys:*line-arguments-list*)))
 
 (push '("lem" (:priority 60000000 :restart-action :continue) run-lem)
       mp:*initial-processes*)

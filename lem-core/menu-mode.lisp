@@ -3,10 +3,9 @@
   (:export :menu
            :display-menu
            :update-menu
-           :menu-change-buffer))
+           :menu-change-buffer
+           :menu-delete-buffer))
 (in-package :lem.menu-mode)
-
-(defvar *change-buffer-function* #'switch-to-buffer)
 
 (define-attribute head-line-attribute
   (:light :background "gray85")
@@ -20,6 +19,7 @@
      :keymap *menu-mode-keymap*))
 
 (define-key *menu-mode-keymap* "q" 'quit-window)
+(define-key *menu-mode-keymap* "d" 'menu-delete)
 (define-key *menu-mode-keymap* "C-m" 'menu-select-this-window)
 (define-key *menu-mode-keymap* "C-o" 'menu-select-other-window)
 (define-key *menu-mode-keymap* "o" 'menu-select-switch-other-window)
@@ -53,7 +53,12 @@
     :reader menu-select-callback)
    (update-items-function
     :initarg :update-items-function
-    :reader menu-update-items-function)))
+    :reader menu-update-items-function)
+   (delete-callback
+    :initarg :delete-callback
+    :initform nil
+    :reader menu-delete-callback)
+   ))
 
 (defmethod initialize-instance :around ((menu menu) &rest initargs &key items)
   (setf (menu-origin-items menu) items)
@@ -137,25 +142,54 @@
 
 (defun menu-change-buffer (menu buffer)
   (declare (ignore menu))
-  (funcall *change-buffer-function* buffer))
+   buffer)
 
-(defun menu-select-1 (set-buffer-fn)
+(defun menu-delete-buffer (menu buffer)
+  (declare (ignore menu))
+  (kill-buffer buffer)
+  :redraw)
+
+(defun menu-select-1 (&key (set-buffer #'switch-to-buffer)
+                           (callback #'menu-select-callback)
+                           marked)
   (alexandria:when-let* ((menu (buffer-value (current-buffer) 'menu))
-                         (fn (menu-select-callback menu))
-                         (item (text-property-at (current-point) :item))
-                         (*change-buffer-function* set-buffer-fn))
-    (funcall fn menu item)))
+                         (fn (funcall callback menu))
+                         (items (menu-current-items :marked marked)))
+    (loop :with cb := (current-buffer)
+          :with cw := (current-window)
+          :with redraw
+          :with close
+          :with buffer
+          :for item :in items
+          :for result := (funcall fn menu item)
+          :do (cond ((bufferp result) (setf buffer result))
+                    ((eql result :redraw) (setf redraw t))
+                    ((eql result :close)  (setf close t)))
+          :finally
+          (progn
+            (when buffer
+              (funcall set-buffer buffer))
+            (when redraw
+              (let ((items (funcall (menu-update-items-function menu))))
+                (update-menu menu items)))
+            (when (and close
+                       (equal (current-buffer) cb)
+                       (equal (current-window) cw))
+              (quit-window))))))
 
 (define-command menu-select-this-window () ()
-  (menu-select-1 #'switch-to-buffer))
+  (menu-select-1))
 
 (define-command menu-select-other-window () ()
-  (menu-select-1 #'pop-to-buffer))
+  (menu-select-1 :set-buffer #'pop-to-buffer))
 
 (define-command menu-select-switch-other-window () ()
-  (menu-select-1 (lambda (buffer)
-                   (setf (current-window)
-                         (pop-to-buffer buffer)))))
+  (menu-select-1 :set-buffer (lambda (buffer)
+                               (setf (current-window)
+                                     (pop-to-buffer buffer)))))
+
+(define-command menu-delete () ()
+  (menu-select-1 :callback #'menu-delete-callback :marked t))
 
 (define-command menu-next-line (n) ("p")
   (line-offset (current-point) n))
@@ -175,6 +209,14 @@
 
 (defun marked-line-p (p)
   (not (null (find-overlay-marked-line p))))
+
+(defun menu-current-items (&key marked)
+  (or (and marked
+           (mapcar (lambda (x) (text-property-at (overlay-start x) :item))
+                   (buffer-value (current-buffer) 'mark-overlays)))
+      (let ((item (text-property-at (current-point) :item)))
+        (and item
+             (list item)))))
 
 (defun mark-line (p)
   (unless (marked-line-p p)

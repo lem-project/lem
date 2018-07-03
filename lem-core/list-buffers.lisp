@@ -16,7 +16,7 @@
                                                    (buffer-read-only-p buffer))
                                            (buffer-name buffer)
                                            (buffer-filename buffer)))
-                  :select-callback (lambda (menu buffer)
-                                     (menu-change-buffer menu buffer))
+                  :select-callback #'menu-change-buffer
+                  :delete-callback #'menu-delete-buffer
                   :update-items-function (lambda () (buffer-list)))
    :name "Buffer Menu"))

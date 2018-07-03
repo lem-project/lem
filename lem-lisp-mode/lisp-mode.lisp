@@ -1024,9 +1024,11 @@
     (sit-for 3)
     (slime)))
 
-(define-command slime-self-connect () ()
+(define-command slime-self-connect (&optional (start-repl t))
+    ((list t))
   (unless (self-connected-p)
-    (self-connect)))
+    (self-connect))
+  (when start-repl (start-lisp-repl)))
 
 
 (defun scan-current-package (point)

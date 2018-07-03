@@ -16,8 +16,9 @@
                          :column-function (lem.menu-mode::menu-column-function menu)
                          :callback-type :data
                          :action-callback (lambda (item)
-                                            (funcall (lem.menu-mode::menu-select-callback menu)
-                                                     menu item)
+                                            (lem:switch-to-buffer
+                                             (funcall (lem.menu-mode::menu-select-callback menu)
+                                                      menu item))
                                             (change-to-tab *lem-panel* "Main")
                                             (lem:redraw-display)))))
     (change-class menu 'menu :panel multi-column-list-panel)

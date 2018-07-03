@@ -16,10 +16,11 @@
                          :column-function (lem.menu-mode::menu-column-function menu)
                          :callback-type :data
                          :action-callback (lambda (item)
-                                            (lem:switch-to-buffer
-                                             (funcall (lem.menu-mode::menu-select-callback menu)
-                                                      menu item))
-                                            (change-to-tab *lem-panel* "Main")
+                                            (let ((result (funcall (lem.menu-mode::menu-select-callback menu)
+                                                                   menu item)))
+                                              (when (lem:bufferp result)
+                                                (lem:switch-to-buffer result)
+                                                (change-to-tab *lem-panel* "Main")))
                                             (lem:redraw-display)))))
     (change-class menu 'menu :panel multi-column-list-panel)
     (with-apply-in-pane-process-wait-single (*lem-panel*)

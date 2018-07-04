@@ -960,4 +960,4 @@
   (lem-if:display-popup-message (implementation) text timeout))
 
 (defun delete-popup-message (popup-message)
-  (lem-if:delete-popup-message (lem:implementation) popup-message))
+  (lem-if:delete-popup-message (implementation) popup-message))

@@ -70,7 +70,11 @@
                                  (first (all-window-panes (lem-panel-window-panel *lem-panel*)))))))
           (when timeout
             (check-type timeout (integer 0 *))
-            (lem:start-timer (* timeout 1000) nil 'clear-popup-message)))))))
+            (lem:start-timer (* timeout 1000) nil 'clear-popup-message))
+          *non-focus-interface*)))))
+
+(defmethod lem-if:delete-popup-message ((implementation capi-impl) popup-message)
+  (capi:non-focus-terminate popup-message))
 
 (defun clear-popup-message ()
   (when *non-focus-interface*

@@ -215,4 +215,10 @@
       (setf *popup-message-window* window)
       (when timeout
         (check-type timeout (integer 0 *))
-        (start-timer (* timeout 1000) nil 'clear-popup-message)))))
+        (start-timer (* timeout 1000) nil 'clear-popup-message))
+      window)))
+
+(defmethod lem-if:delete-popup-message (implementation popup-message)
+  (when (windowp popup-message)
+    (delete-window popup-message)
+    (redraw-display*)))

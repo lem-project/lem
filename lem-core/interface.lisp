@@ -63,6 +63,7 @@
 (defgeneric lem-if:popup-menu-last (implementation))
 (defgeneric lem-if:popup-menu-select (implementation))
 (defgeneric lem-if:display-popup-message (implementation text timeout))
+(defgeneric lem-if:delete-popup-message (implementation popup-message))
 
 (defgeneric lem-if:display-menu (implementation menu name))
 (defgeneric lem-if:update-menu (implementation menu items))

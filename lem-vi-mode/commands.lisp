@@ -296,8 +296,10 @@
   (change-state 'insert))
 
 (define-command vi-append () ()
-  (forward-char 1)
-  (change-state 'insert))
+  (let ((p (current-point)))
+    (unless (end-buffer-p p)
+      (forward-char 1))
+    (change-state 'insert)))
 
 (define-command vi-append-line () ()
   (move-to-end-of-line)

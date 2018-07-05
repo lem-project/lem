@@ -974,19 +974,46 @@
 
 (defparameter *impl-name* nil)
 
-(defun prompt-for-impl ()
-  (let ((impl (prompt-for-string "impl: ")))
-    (if (string= "" impl) nil impl)))
+(let (cache)
+  (defun completion-impls (str)
+    (unless (and cache
+                 (< (get-universal-time) (+ 3600 (cdr cache))))
+      (setf cache (cons (nreverse (uiop:split-string (string-right-trim
+                                            (format nil "~%")
+                                            (with-output-to-string (out)
+                                             (uiop:run-program "ros list installed" :output out)))
+                                           :separator '(#\Newline)))
+                        (get-universal-time))))
+    (completion-strings
+     str (append (first cache)
+                 (when (and #+ros.init (roswell.util:which "qlot"))
+                   (mapcar (lambda (x) (format nil "qlot/~A" x)) (first cache)))
+                 '("")))))
+
+(defun prompt-for-impl (&key (existing t))
+  (let ((impl (prompt-for-line
+               "impl: "
+               ""
+               'completion-impls
+               (and existing
+                    (lambda (name)
+                      (member name (completion-impls "") :test #'string=)))
+               'mh-read-impl)))
+    (cond ((string= "" impl) (list :impl nil))
+          ((string= "qlot/" impl :end2 5)
+           (list :prefix "qlot exec " :impl (subseq impl 5)))
+          (t (list :impl impl)))))
 
 (defun get-lisp-command (&key impl (port *default-port*))
-  (format nil "ros ~{~S~^ ~} &"
-          `(,@(if impl `("-L" ,impl))
+  (format nil "~Aros ~{~S~^ ~} &" (getf impl :prefix "")
+          `(,@(if (getf impl :impl) `("-L" ,(getf impl :impl)))
             "-s" "swank"
             "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)" port)
             "wait")))
 
 (defun run-slime (cmd)
-  (uiop:run-program cmd :output nil :error-output nil)
+  (uiop:with-current-directory ((or (buffer-directory) (uiop:getcwd)))
+    (uiop:run-program cmd :output nil :error-output nil))
   (sleep 0.5)
   (let ((successp)
         (condition))

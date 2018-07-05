@@ -144,7 +144,12 @@
   (define-command vi-delete () ()
     (cond (*vi-delete-recursive*
            (move-to-beginning-of-line)
-           (kill-line 1)
+           (with-point ((start (current-point))
+                        (end (current-point)))
+             (line-start start)
+             (line-end end)
+             (character-offset end 1)
+             (kill-region start end))
            (throw tag t))
           ((visual-p)
            (with-output-to-string (out)

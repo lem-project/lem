@@ -961,7 +961,13 @@
     ((:function-name name)
      (buffer-start point)
      (search-forward-regexp point (ppcre:create-scanner
-                                   (format nil "\\(def[\\w-]+\\s+\\(*~A[\\s()]" name)
+                                   `(:sequence
+                                     "(def"
+                                     (:greedy-repetition 1 nil (:char-class :word-char-class #\-))
+                                     (:greedy-repetition 1 nil :whitespace-char-class)
+                                     (:greedy-repetition 0 nil #\()
+                                     ,name
+                                     (:char-class :whitespace-char-class #\( #\)))
                                    :case-insensitive-mode t))
      (line-start point))
     ;; ((:method name specializers &rest qualifiers)

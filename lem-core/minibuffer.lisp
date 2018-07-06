@@ -27,7 +27,8 @@
           prompt-for-string
           prompt-for-integer
           prompt-for-buffer
-          prompt-for-file))
+          prompt-for-file
+          prompt-for-directory))
 
 (defparameter *minibuffer-window-height* 1)
 (defvar *enable-recursive-minibuffers* t)
@@ -343,6 +344,20 @@
                              (lambda (str)
                                (funcall *minibuffer-file-complete-function*
                                         str directory)))
+                           (and existing #'virtual-probe-file)
+                           'mh-read-file)))
+    (if (string= result "")
+        default
+        result)))
+
+(defun prompt-for-directory (prompt &optional directory (default (buffer-directory)) existing)
+  (let ((result
+          (prompt-for-line prompt
+                           directory
+                           (when *minibuffer-file-complete-function*
+                             (lambda (str)
+                               (funcall *minibuffer-file-complete-function*
+                                        str directory :directory-only t)))
                            (and existing #'virtual-probe-file)
                            'mh-read-file)))
     (if (string= result "")

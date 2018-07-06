@@ -62,14 +62,14 @@
 (defun completion-hypheen (name list &key key)
   (completion name list :test #'completion-test :separator "-" :key key))
 
-(defun completion-file (str directory &key (ignore-case *file-completion-ignore-case*))
+(defun completion-file (str directory &key (ignore-case *file-completion-ignore-case*) directory-only)
   (setf str (expand-file-name str directory))
   (let* ((input-directory
            (let ((dir (directory-namestring str)))
              (or (ignore-errors (virtual-probe-file dir)) dir)))
          (input-pathname (merge-pathnames (enough-namestring str (directory-namestring str))
                                           input-directory))
-         (files (mapcar #'namestring (list-directory input-directory)))
+         (files (mapcar #'namestring (list-directory input-directory :directory-only directory-only)))
          (test-fn (alexandria:rcurry #'completion-test ignore-case)))
     (let ((strings
             (loop

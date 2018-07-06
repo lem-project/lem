@@ -1090,5 +1090,10 @@
         (unless (active-echoarea-p)
           (lisp-autodoc))))))
 
+(define-command lisp-scratch () ()
+  (let ((buffer (make-buffer "*tmp*")))
+    (change-buffer-mode buffer 'lem-lisp-mode:lisp-mode)
+    (switch-to-buffer buffer)))
+
 (pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons ".asd$" 'lisp-mode) *auto-mode-alist* :test #'equal)

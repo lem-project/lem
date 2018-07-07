@@ -26,7 +26,37 @@
                          (car *kill-ring*)
                          string))))
 
+(defvar *clipboard-newer-than-kill-ring-p* nil)
+(defvar *kill-ring-newer-than-clipboard-p* nil)
+(defvar *sync-kill-ring-with-clipboard* nil)
+
+(defun copy-to-clipboard (string)
+  (trivial-clipboard:text string)
+  (setq *clipboard-newer-than-kill-ring-p* t
+        *kill-ring-newer-than-clipboard-p* nil))
+
+(defun get-clipboard-data ()
+  (trivial-clipboard:text))
+
+(defun sync-kill-ring-to-clipboard ()
+  (when *kill-ring-newer-than-clipboard-p*
+    (let ((x (current-kill-ring)))
+      (when (and x (string/= x (get-clipboard-data)))
+        (copy-to-clipboard x)
+        (setq *clipboard-newer-than-kill-ring-p* nil
+              *kill-ring-newer-than-clipboard-p* nil)))))
+
+(defun sync-clipboard-to-kill-ring ()
+  (when *clipboard-newer-than-kill-ring-p*
+    (let ((x (get-clipboard-data)))
+      (when (and x (string/= x (current-kill-ring)))
+        (kill-push x)
+        (setq *clipboard-newer-than-kill-ring-p* nil
+              *kill-ring-newer-than-clipboard-p* nil)))))
+
 (defun kill-push (string)
+  (setq *clipboard-newer-than-kill-ring-p* nil
+        *kill-ring-newer-than-clipboard-p* t)
   (cond
     (*kill-new-flag*
      (push string *kill-ring*)
@@ -34,18 +64,15 @@
        (setq *kill-ring*
              (subseq *kill-ring* 0 *kill-ring-max*)))
      (setq *kill-ring-yank-ptr* *kill-ring*)
-     (setq *kill-new-flag* nil)
-     (clipboard-set string))
+     (setq *kill-new-flag* nil))
     (t
-     (clipboard-set (kill-append string *kill-before-p*))))
+     (kill-append string *kill-before-p*)))
   t)
 
 (defun current-kill-ring ()
-  (clipboard-get
-   (lambda (string)
-     (if (and string (string/= string ""))
-         string
-         (kill-ring-nth 1)))))
+  (when *sync-kill-ring-with-clipboard*
+    (sync-clipboard-to-kill-ring))
+  (kill-ring-nth 1))
 
 (defun kill-ring-nth (n)
   (do ((ptr *kill-ring-yank-ptr*
@@ -68,29 +95,3 @@
 
 (defun kill-ring-new ()
   (setf *kill-new-flag* t))
-
-(let* ((q)
-       (thread)
-       (initval (gensym))
-       (result initval))
-  (defun run-clipboard-thread ()
-    (setf q (make-event-queue))
-    (setf thread
-          (bt:make-thread (lambda ()
-                            (loop :for arg := (dequeue-event nil q)
-                                  :do (if (functionp arg)
-                                          (setf result
-                                                (funcall arg (trivial-clipboard:text)))
-                                          (ignore-errors (trivial-clipboard:text arg))))))))
-
-  (defun clipboard-set (arg)
-    (unless thread (run-clipboard-thread))
-    (ignore-errors
-     (send-event arg q)))
-
-  (defun clipboard-get (fn)
-    (unless thread (run-clipboard-thread))
-    (setf result initval)
-    (send-event fn q)
-    (loop :while (eq result initval))
-    result))

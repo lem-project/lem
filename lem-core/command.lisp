@@ -15,10 +15,14 @@
           delete-next-char
           delete-previous-char
           copy-region
+          copy-region-to-clipboard
           kill-region
+          kill-region-to-clipboard
           kill-line
           yank
           yank-pop
+          yank-to-clipboard
+          paste-from-clipboard
           next-line
           previous-line
           forward-char
@@ -151,6 +155,9 @@
   (buffer-mark-cancel (current-buffer))
   t)
 
+(define-command copy-region-to-clipboard (start end) ("r")
+  (copy-to-clipboard (points-to-string start end)))
+
 (define-key *global-keymap* "C-w" 'kill-region)
 (define-command kill-region (start end) ("r")
   (when (point< end start)
@@ -159,6 +166,10 @@
     (kill-ring-new))
   (delete-character-with-killring start (count-characters start end) t)
   t)
+
+(define-command kill-region-to-clipboard (start end) ("r")
+  (copy-region-to-clipboard start end)
+  (delete-character start (count-characters start end)))
 
 (define-key *global-keymap* "C-k" 'kill-line)
 (define-command kill-line (&optional arg) ("P")
@@ -201,6 +212,17 @@
           (t
            (message "Previous command was not a yank")
            nil))))
+
+(define-command yank-to-clipboard (&optional arg) ("p")
+  (let ((string (if (null arg)
+                    (current-kill-ring)
+                    (kill-ring-nth arg))))
+    (copy-to-clipboard string)
+    t))
+
+(define-command paste-from-clipboard () ()
+  (insert-string (current-point) (get-clipboard-data))
+  t)
 
 (defvar *next-line-prev-column* nil)
 

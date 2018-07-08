@@ -145,7 +145,7 @@
        (uiop:pathname-parent-directory-pathname pathname)
        (uiop:pathname-directory-pathname pathname))))
 
-(defun minibuffer-file-complete (str directory)
+(defun minibuffer-file-complete (str directory &key directory-only)
   (mapcar (lambda (filename)
             (make-completion-item :label (pathname-name* filename)
                                   :apply-fn (lambda (p)
@@ -153,6 +153,6 @@
                                               (delete-between-points
                                                p (line-end (copy-point p :temporary)))
                                               (insert-string p filename))))
-          (completion-file str directory)))
+          (completion-file str directory :directory-only directory-only)))
 
 (setf *minibuffer-file-complete-function* 'minibuffer-file-complete)

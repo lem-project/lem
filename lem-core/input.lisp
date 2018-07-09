@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(last-read-key-sequence
+(export '(*input-hook*
+          last-read-key-sequence
           start-record-key
           stop-record-key
           key-recording-p
@@ -13,9 +14,10 @@
           execute-key-sequence
           sit-for))
 
+(defvar *input-hook* '())
+
 (defvar *key-recording-p* nil)
 (defvar *record-keys* nil)
-
 (defvar *unread-keys* nil)
 
 (let (last-read-key-sequence)
@@ -59,8 +61,9 @@
   (let ((key (if (null *unread-keys*)
                  (read-key-1)
                  (pop *unread-keys*))))
-    (when *key-recording-p*
-      (push key *record-keys*))
+    (if *key-recording-p*
+        (push key *record-keys*)
+        (run-hooks *input-hook* key))
     key))
 
 (defun unread-key (key)

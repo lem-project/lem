@@ -100,7 +100,10 @@
          (change-state ,old-state)))))
 
 
-(defvar *command-keymap* (make-keymap :name '*command-keymap* :insertion-hook 'undefined-key :parent *global-keymap*))
+(defvar *command-keymap* (make-keymap :name '*command-keymap*
+                                      :insertion-hook 'undefined-key
+                                      :undef-hook 'undefined-key
+                                      :parent *global-keymap*))
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap* :parent *global-keymap*))
 (defvar *inactive-keymap* (make-keymap :parent *global-keymap*))
 

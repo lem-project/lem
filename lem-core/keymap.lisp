@@ -139,29 +139,35 @@
               (when (rest key*)
                 (write-char #\space out)))))
 
-(defun keymap-find-keybind (keymap key)
+(defun keymap-find-keybind (keymap key undef-hook)
   (let ((table (keymap-table keymap)))
     (labels ((f (k)
                (let ((cmd (gethash k table)))
                  (if (hash-table-p cmd)
                      (setf table cmd)
                      cmd))))
-      (or (etypecase key
-            (key
-             (f key))
-            (list
-             (let (cmd)
-               (dolist (k key)
-                 (unless (setf cmd (f k))
-                   (return)))
-               cmd)))
-          (let ((parent (keymap-parent keymap)))
-            (when parent
-              (keymap-find-keybind parent key)))
-          (and (keymap-insertion-hook keymap)
-               (insertion-key-p key)
-               (keymap-insertion-hook keymap))
-          (keymap-undef-hook keymap)))))
+      (values
+       (or (etypecase key
+             (key
+              (f key))
+             (list
+              (let (cmd)
+                (dolist (k key)
+                  (unless (setf cmd (f k))
+                    (return)))
+                cmd)))
+           (let ((parent (keymap-parent keymap))
+                 _)
+             (when parent
+               (multiple-value-setq (_ undef-hook)
+                 (keymap-find-keybind parent key (or undef-hook
+                                                     (keymap-undef-hook keymap))))))
+           (and (keymap-insertion-hook keymap)
+                (insertion-key-p key)
+                (keymap-insertion-hook keymap))
+           undef-hook
+           (keymap-undef-hook keymap))
+       undef-hook))))
 
 (defun insertion-key-p (key)
   (let* ((key (typecase key
@@ -191,17 +197,22 @@
                 (keyseq-to-string (last-read-key-sequence))))
 
 (defun lookup-keybind (key)
-  (flet ((f (list)
-           (some (lambda (mode)
-                   (when (mode-keymap mode)
-                     (keymap-find-keybind (mode-keymap mode) key)))
-                 list)))
-    (let ((buffer (current-buffer)))
+  (let ((buffer (current-buffer))
+        undef-hook
+        _)
+    (flet ((f (list)
+             (some (lambda (mode)
+                     (when (mode-keymap mode)
+                       (multiple-value-setq (_ undef-hook)
+                         (keymap-find-keybind (mode-keymap mode) key undef-hook))))
+                   list)))
       (or (f (buffer-minor-modes buffer))
           (f *global-minor-mode-list*)
           (alexandria:when-let ((keymap (mode-keymap (buffer-major-mode buffer))))
-            (keymap-find-keybind keymap key))
-          (keymap-find-keybind (global-mode-keymap (current-global-mode)) key)))))
+                               (multiple-value-setq (_ undef-hook)
+                                 (keymap-find-keybind keymap key undef-hook)))
+          (multiple-value-setq (_ undef-hook)
+            (keymap-find-keybind (global-mode-keymap (current-global-mode)) key undef-hook))))))
 
 (defun find-keybind (key)
   (let ((cmd (lookup-keybind key)))

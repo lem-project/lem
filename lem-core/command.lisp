@@ -138,7 +138,10 @@
         (delete-character start (count-characters start end)))
       (progn
         (backward-char (or n 1))
-        (delete-next-char n))))
+        (handler-case (delete-next-char n)
+          (read-only-error (e)
+            (forward-char (or n 1))
+            (error e))))))
 
 (define-key *global-keymap* "M-w" 'copy-region)
 (define-command copy-region (start end) ("r")

@@ -69,6 +69,7 @@
                (:file "directory-mode")
                (:file "abbrev")
                (:file "rectangle")
+               (:file "auto-save")
 
                (:file "color-theme")
                (:file "site-init")))

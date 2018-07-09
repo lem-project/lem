@@ -124,8 +124,7 @@
 
 (defun write-to-file (buffer filename)
   (with-write-hook buffer
-    (write-to-file-1 buffer filename)
-    (buffer-unmark buffer)))
+    (write-to-file-1 buffer filename)))
 
 (defun write-region-to-file (start end filename)
   (let ((string (points-to-string start end))

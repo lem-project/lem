@@ -41,6 +41,7 @@
       ((and (or arg (buffer-modified-p buffer))
             (buffer-filename buffer))
        (write-to-file buffer (buffer-filename buffer))
+       (buffer-unmark buffer)
        (message "Wrote ~A" (buffer-filename)))
       ((not (buffer-filename buffer))
        (message "No file name")))))

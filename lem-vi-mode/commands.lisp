@@ -50,7 +50,7 @@
            :vi-normal))
 (in-package :lem-vi-mode.commands)
 
-(defvar *forward-matching-paren-offset* -1)
+(defvar *cursor-offset* -1)
 
 (defun bolp (point)
   (zerop (point-charpos point)))
@@ -67,7 +67,7 @@
 (defun goto-eol (point)
   (line-end point)
   (unless (bolp point)
-    (character-offset point -1)))
+    (character-offset point *cursor-offset*)))
 
 (defun empty-line (point)
   (zerop (length (line-string point))))
@@ -163,7 +163,7 @@
              (when (symbolp command)
                (with-point ((start (current-point)))
                  (let ((*vi-delete-recursive* t)
-                       (*forward-matching-paren-offset* 0))
+                       (*cursor-offset* 0))
                    (catch tag
                      (call-command command nil)
                      (when (point/= start (current-point))
@@ -205,7 +205,7 @@
              (when (symbolp command)
                (with-point ((start (current-point)))
                  (let ((*vi-yank-recursive* t)
-                       (*forward-matching-paren-offset* 0))
+                       (*cursor-offset* 0))
                    (catch tag
                      (call-command command n)
                      (when (point/= start (current-point))
@@ -231,7 +231,7 @@
   (with-point ((p p))
     (when (or skip (syntax-open-paren-char-p (character-at p)))
       (scan-lists p 1 0)
-      (character-offset p *forward-matching-paren-offset*))))
+      (character-offset p *cursor-offset*))))
 
 (defun backward-matching-paren (p)
   (when (syntax-closed-paren-char-p (character-at p))

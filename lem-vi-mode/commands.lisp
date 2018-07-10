@@ -157,7 +157,8 @@
                                    (write-line (points-to-string start end) out)
                                    (delete-between-points start end)))
              (unless (continue-flag :kill) (kill-ring-new))
-             (kill-push (get-output-stream-string out))))
+             (kill-push (get-output-stream-string out)))
+           (vi-visual-end))
           (t
            (let ((command (lookup-keybind (read-key))))
              (when (symbolp command)
@@ -240,6 +241,7 @@
 (define-command vi-move-to-matching-paren () ()
   (alexandria:when-let ((p (or (backward-matching-paren (current-point))
                                (forward-matching-paren (current-point) t))))
+
     (move-point (current-point) p)))
 
 (let ((old-forward-matching-paren)

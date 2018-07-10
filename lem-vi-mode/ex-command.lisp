@@ -32,6 +32,10 @@
   (declare (ignore range argument))
   (lem-vi-mode.commands:vi-quit t))
 
+(define-ex-command ("qa") (range argument)
+  (declare (ignore range argument))
+  (lem:exit-lem t))
+
 (define-ex-command ("q!") (range argument)
   (declare (ignore range argument))
   (lem-vi-mode.commands:vi-quit nil))

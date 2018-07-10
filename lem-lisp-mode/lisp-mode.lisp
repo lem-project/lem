@@ -96,7 +96,8 @@
                                            (connection-implementation-version c)))
                   :select-callback (lambda (menu c)
                                      (change-current-connection c)
-                                     (lem.menu-mode:update-menu menu *connection-list*))
+                                     (lem.menu-mode:update-menu menu *connection-list*)
+                                     :close)
                   :update-items-function (lambda () *connection-list*))
    :name "Lisp Connections"))
 

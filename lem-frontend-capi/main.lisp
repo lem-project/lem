@@ -147,3 +147,9 @@
     (let ((window-panel (lem-panel-window-panel *lem-panel*)))
       (setf (window-panel-modified-p window-panel) t)
       (split-vertically window-panel view new-view))))
+
+(defmethod lem-if:clipboard-paste ((implementation capi-impl))
+  (capi:clipboard (capi:element-interface *lem-panel*) :string))
+
+(defmethod lem-if:clipboard-copy ((implementation capi-impl) text)
+  (capi:set-clipboard (capi:element-interface *lem-panel*) text))

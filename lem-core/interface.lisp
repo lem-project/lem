@@ -68,6 +68,11 @@
 (defgeneric lem-if:display-menu (implementation menu name))
 (defgeneric lem-if:update-menu (implementation menu items))
 
+(defgeneric lem-if:clipboard-paste (implementation)
+  (:method (implementation)))
+(defgeneric lem-if:clipboard-copy (implementation text)
+  (:method (implementation text)))
+
 (defvar *print-start-x* 0)
 (defvar *cursor-x* 0)
 (defvar *cursor-y* 0)

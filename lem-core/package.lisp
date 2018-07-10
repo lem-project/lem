@@ -40,7 +40,9 @@
    :display-popup-message
    :display-menu
    :update-menu
-   :delete-popup-message))
+   :delete-popup-message
+   :clipboard-paste
+   :clipboard-copy))
 
 (defpackage :lem-user
   (:use :cl :lem))

@@ -31,12 +31,12 @@
 (defvar *sync-kill-ring-with-clipboard* nil)
 
 (defun copy-to-clipboard (string)
-  (trivial-clipboard:text string)
+  (lem-if:clipboard-copy (implementation) string)
   (setq *clipboard-newer-than-kill-ring-p* t
         *kill-ring-newer-than-clipboard-p* nil))
 
 (defun get-clipboard-data ()
-  (trivial-clipboard:text))
+  (lem-if:clipboard-paste (implementation)))
 
 (defun sync-kill-ring-to-clipboard ()
   (when *kill-ring-newer-than-clipboard-p*

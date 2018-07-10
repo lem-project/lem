@@ -87,6 +87,7 @@
         ("deftype" . "defun")
         ("defmethod" lisp-indent-defmethod)
         ("defpackage"  (4 &rest (&whole 2 &rest defpackage-body)))
+        ("uiop:define-package" . "defpackage")
         ("defstruct"   ((&whole 4 &rest (&whole 2 &rest 1))
                         &rest (&whole 2 &rest 1)))
         ("destructuring-bind"

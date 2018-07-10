@@ -29,6 +29,7 @@
 (define-key *command-keymap* "e" 'vi-forward-word-end)
 (define-key *command-keymap* "E" 'vi-forward-word-end-broad)
 (define-key *command-keymap* "$" 'vi-move-to-end-of-line)
+(define-key *command-keymap* "H" 'vi-move-to-window-top)
 (define-key *command-keymap* "^" 'vi-back-to-indentation)
 (define-key *command-keymap* "{" 'backward-paragraph)
 (define-key *command-keymap* "}" 'forward-paragraph)

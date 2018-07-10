@@ -19,6 +19,7 @@
            :vi-forward-word-end-broad
            :vi-move-to-beginning-of-line
            :vi-move-to-end-of-line
+           :vi-move-to-window-top
            :vi-back-to-indentation
            :vi-delete-next-char
            :vi-delete-previous-char
@@ -126,6 +127,9 @@
 
 (define-command vi-move-to-end-of-line () ()
   (goto-eol (current-point)))
+
+(define-command vi-move-to-window-top () ()
+  (move-point (current-point) (window-view-point (current-window))))
 
 (define-command vi-back-to-indentation () ()
   (back-to-indentation-command))

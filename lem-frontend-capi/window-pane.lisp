@@ -212,9 +212,7 @@
                 :for c :across string
                 :do (gp:draw-character window-pane c x1 y1
                                        :font font
-                                       :foreground foreground
-                                       :background background
-                                       :block t)
+                                       :foreground foreground)
                     (incf x1 (* char-width (if (lem:wide-char-p c) 2 1)))
                 :finally (when underline
                            (gp:draw-line window-pane

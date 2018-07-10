@@ -202,13 +202,14 @@
   height)
 
 (defun attribute-to-bits (attribute-or-name)
-  (let ((attribute (ensure-attribute attribute-or-name nil)))
+  (let ((attribute (ensure-attribute attribute-or-name nil))
+        (cursorp (eq attribute-or-name 'cursor)))
     (if (null attribute)
         0
         (or (lem::attribute-%internal-value attribute)
             (let* ((foreground (attribute-foreground attribute))
                    (background (attribute-background attribute))
-                   (bits (logior (if (lem::attribute-reverse-p attribute)
+                   (bits (logior (if (or cursorp (lem::attribute-reverse-p attribute))
                                      (lem.term:get-color-pair background foreground)
                                      (lem.term:get-color-pair foreground background))
                                  0

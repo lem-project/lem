@@ -15,6 +15,8 @@
            :insert))
 (in-package :lem-vi-mode.core)
 
+(defvar *default-cursor-color* nil)
+
 (defvar *enable-hook* '())
 (defvar *disable-hook* '())
 
@@ -56,11 +58,12 @@
   keymap
   post-command-hook
   enable-hook
-  disable-hook)
+  disable-hook
+  cursor-color)
 
 (defvar *current-state* nil)
 
-(defmacro define-vi-state (name (&key keymap post-command-hook) &body spec)
+(defmacro define-vi-state (name (&key keymap post-command-hook cursor-color) &body spec)
   (let ((enable-form (rest (assoc :enable spec)))
         (disable-form (rest (assoc :disable spec))))
     `(setf (get ',name 'state)
@@ -68,7 +71,8 @@
                           :keymap ,keymap
                           :post-command-hook ,post-command-hook
                           :enable-hook ,(if enable-form `(lambda ,@enable-form))
-                          :disable-hook ,(if disable-form `(lambda ,@disable-form))))))
+                          :disable-hook ,(if disable-form `(lambda ,@disable-form))
+                          :cursor-color ,cursor-color))))
 
 (defun current-state ()
   *current-state*)
@@ -90,7 +94,11 @@
     (change-global-mode-keymap 'vi-mode (vi-state-keymap state))
     (change-element-name (format nil "[~A]" name))
     (when (vi-state-enable-hook state)
-      (apply (vi-state-enable-hook state) args))))
+      (apply (vi-state-enable-hook state) args))
+    (unless *default-cursor-color*
+      (setf *default-cursor-color*
+            (attribute-background (ensure-attribute 'cursor nil))))
+    (set-attribute 'cursor :background (or (vi-state-cursor-color state) *default-cursor-color*))))
 
 (defmacro with-state (state &body body)
   (alexandria:with-gensyms (old-state)
@@ -109,7 +117,7 @@
 
 (define-vi-state command (:keymap *command-keymap*))
 
-(define-vi-state insert (:keymap *insert-keymap*)
+(define-vi-state insert (:keymap *insert-keymap* :cursor-color "IndianRed")
   (:enable () (message " -- INSERT --")))
 
 (define-vi-state modeline (:keymap *inactive-keymap*))

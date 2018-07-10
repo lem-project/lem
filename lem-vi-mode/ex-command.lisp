@@ -40,6 +40,10 @@
   (declare (ignore range argument))
   (lem-vi-mode.commands:vi-quit nil))
 
+(define-ex-command ("qa!") (range argument)
+  (declare (ignore range argument))
+  (lem:exit-lem nil))
+
 (define-ex-command ("sp") (range filename)
   (declare (ignore range))
   (lem:split-active-window-vertically)

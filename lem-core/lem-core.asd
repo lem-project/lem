@@ -7,7 +7,6 @@
                "inquisitor"
                "babel"
                "bordeaux-threads"
-               "trivial-clipboard"
                "yason"
                "cl-fad"
                "lem-base"

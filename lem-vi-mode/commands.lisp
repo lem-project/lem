@@ -20,6 +20,7 @@
            :vi-move-to-beginning-of-line
            :vi-move-to-end-of-line
            :vi-move-to-window-top
+           :vi-move-to-window-bottom
            :vi-back-to-indentation
            :vi-delete-next-char
            :vi-delete-previous-char
@@ -130,6 +131,10 @@
 
 (define-command vi-move-to-window-top () ()
   (move-point (current-point) (window-view-point (current-window))))
+
+(define-command vi-move-to-window-bottom () ()
+  (vi-move-to-window-top)
+  (next-line (- (window-height (current-window)) 2)))
 
 (define-command vi-back-to-indentation () ()
   (back-to-indentation-command))

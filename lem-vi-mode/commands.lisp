@@ -318,7 +318,8 @@
 
 (define-command vi-append () ()
   (let ((p (current-point)))
-    (unless (end-buffer-p p)
+    (unless (or (end-line-p p)
+                (end-buffer-p p))
       (forward-char 1))
     (change-state 'insert)))
 

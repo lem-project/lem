@@ -443,9 +443,10 @@
   (if *tty-name*
       (term-init-tty *tty-name*)
       (charms/ll:initscr))
-  (charms/ll:start-color)
-  (init-colors charms/ll:*colors*)
-  (set-default-color nil nil)
+  (when (/= 0 (charms/ll:has-colors))
+    (charms/ll:start-color)
+    (init-colors charms/ll:*colors*)
+    (set-default-color nil nil))
   (charms/ll:noecho)
   (charms/ll:cbreak)
   (charms/ll:raw)

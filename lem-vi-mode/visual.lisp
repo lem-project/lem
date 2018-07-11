@@ -77,19 +77,36 @@
   (change-state 'command))
 
 (define-command vi-visual-char () ()
-  (change-state 'visual 'visual-char)
-  (message "-- VISUAL --"))
+  (if (visual-char-p)
+      (vi-visual-end)
+      (progn
+        (change-state 'visual 'visual-char)
+        (message "-- VISUAL --"))))
 
 (define-command vi-visual-line () ()
-  (change-state 'visual 'visual-line)
-  (message "-- VISUAL LINE --"))
+  (if (visual-line-p)
+      (vi-visual-end)
+      (progn
+        (change-state 'visual 'visual-line)
+        (message "-- VISUAL LINE --"))))
 
 (define-command vi-visual-block () ()
-  (change-state 'visual 'visual-block)
-  (message "-- VISUAL BLOCK --"))
+  (if (visual-block-p)
+      (vi-visual-end)
+      (progn
+        (change-state 'visual 'visual-block)
+        (message "-- VISUAL BLOCK --"))))
 
 (defun visual-p ()
   (eq 'visual (current-state)))
+
+(defun visual-char-p ()
+  (and (visual-p)
+       (eq *set-visual-function* 'visual-char)))
+
+(defun visual-line-p ()
+  (and (visual-p)
+       (eq *set-visual-function* 'visual-line)))
 
 (defun visual-block-p ()
   (and (visual-p)

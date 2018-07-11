@@ -215,6 +215,15 @@
              (line-end end)
              (copy-region start end)
              (throw tag t)))
+          ((visual-p)
+           (with-output-to-string (out)
+             (apply-visual-range (lambda (start end)
+                                   (write-line (points-to-string start end)
+                                               out)))
+             (unless (continue-flag :kill)
+               (kill-ring-new))
+             (kill-push (get-output-stream-string out)))
+           (vi-visual-end))
           (t
            (let ((command (lookup-keybind (read-key))))
              (when (symbolp command)
@@ -318,7 +327,8 @@
 
 (define-command vi-append () ()
   (let ((p (current-point)))
-    (unless (end-buffer-p p)
+    (unless (or (end-line-p p)
+                (end-buffer-p p))
       (forward-char 1))
     (change-state 'insert)))
 

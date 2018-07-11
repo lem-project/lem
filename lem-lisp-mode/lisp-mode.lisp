@@ -980,22 +980,50 @@
 
 
 (defparameter *impl-name* nil)
+(defvar *slime-command-impls* '(roswell-impls-candidates
+                                qlot-impls-candidates))
+
+(defun get-lisp-command (&key impl (port *default-port*) (prefix ""))
+  (format nil "~Aros ~{~S~^ ~} &" prefix
+          `(,@(if impl `("-L" ,impl))
+            "-s" "swank"
+            "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)" port)
+            "wait")))
 
 (let (cache)
-  (defun completion-impls (str)
-    (unless (and cache
-                 (< (get-universal-time) (+ 3600 (cdr cache))))
-      (setf cache (cons (nreverse (uiop:split-string (string-right-trim
-                                            (format nil "~%")
-                                            (with-output-to-string (out)
-                                             (uiop:run-program "ros list installed" :output out)))
-                                           :separator '(#\Newline)))
-                        (get-universal-time))))
-    (completion-strings
-     str (append (first cache)
-                 (when (and #+ros.init (roswell.util:which "qlot"))
-                   (mapcar (lambda (x) (format nil "qlot/~A" x)) (first cache)))
-                 '("")))))
+  (defun roswell-impls-candidates (&optional impl)
+    (if impl
+        (cond ((string= "" impl)
+               (get-lisp-command :impl nil))
+              ((find impl (or (first cache) (roswell-impls-candidates)) :test #'equal)
+               (get-lisp-command :impl impl)))
+        (progn
+          (unless (and cache
+                       (< (get-universal-time) (+ 3600 (cdr cache))))
+            (setf cache (cons (nreverse
+                               (uiop:split-string (string-right-trim
+                                                   (format nil "~%")
+                                                   (with-output-to-string (out)
+                                                     (uiop:run-program "ros list installed" :output out)))
+                                                  :separator '(#\Newline)))
+                              (get-universal-time))))
+          (first cache)))))
+
+(defun qlot-impls-candidates (&optional impl)
+  (if impl
+      (ignore-errors
+       (when (string= "qlot/" impl :end2 5)
+         (get-lisp-command :prefix "qlot exec "
+                           :impl (let ((impl (subseq impl 5)))
+                                   (unless (zerop (length impl))
+                                     impl)))))
+      (when (and #+ros.init (roswell.util:which "qlot"))
+        (mapcar (lambda (x) (format nil "qlot/~A" x)) (roswell-impls-candidates)))))
+
+(defun completion-impls (str)
+  (completion-strings
+   str (cons "" (loop :for f :in *slime-command-impls*
+                      :append (funcall f)))))
 
 (defun prompt-for-impl (&key (existing t))
   (let ((impl (prompt-for-line
@@ -1004,19 +1032,12 @@
                'completion-impls
                (and existing
                     (lambda (name)
-                      (member name (completion-impls "") :test #'string=)))
+                      (member name (completion-impls name) :test #'string=)))
                'mh-read-impl)))
-    (cond ((string= "" impl) (list :impl nil))
-          ((string= "qlot/" impl :end2 5)
-           (list :prefix "qlot exec " :impl (subseq impl 5)))
-          (t (list :impl impl)))))
-
-(defun get-lisp-command (&key impl (port *default-port*))
-  (format nil "~Aros ~{~S~^ ~} &" (getf impl :prefix "")
-          `(,@(if (getf impl :impl) `("-L" ,(getf impl :impl)))
-            "-s" "swank"
-            "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)" port)
-            "wait")))
+    (loop :for f :in *slime-command-impls*
+          :for command := (funcall f impl)
+          :when command
+          :do (return-from prompt-for-impl command))))
 
 (defun run-slime (cmd)
   (uiop:with-current-directory ((or (buffer-directory) (uiop:getcwd)))
@@ -1041,10 +1062,10 @@
                (slime-quit)))))
 
 (define-command slime (&optional ask-impl) ("P")
-  (let ((impl (if ask-impl
+  (let ((command (if ask-impl
                   (prompt-for-impl)
-                  *impl-name*)))
-    (run-slime (get-lisp-command :impl impl))))
+                  (get-lisp-command :impl *impl-name*))))
+    (run-slime command)))
 
 (define-command slime-quit () ()
   (when *connection*

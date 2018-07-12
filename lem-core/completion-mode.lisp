@@ -8,8 +8,7 @@
   (label "" :read-only t :type string)
   (detail "" :read-only t :type string)
   (start nil :read-only t :type (or null point))
-  (end nil :read-only t :type (or null point))
-  (apply-fn nil :read-only t :type (or null function)))
+  (end nil :read-only t :type (or null point)))
 
 (defvar *completion-mode-keymap* (make-keymap :name '*completion-mode-keymap*
                                               :undef-hook 'completion-self-insert))
@@ -79,10 +78,7 @@
 
 (defun completion-insert (point item)
   (when item
-    (cond ((completion-item-apply-fn item)
-           (funcall (completion-item-apply-fn item)
-                    point))
-          ((and (completion-item-start item)
+    (cond ((and (completion-item-start item)
                 (completion-item-end item))
            (move-point point (completion-item-start item))
            (delete-between-points (completion-item-start item)
@@ -147,12 +143,13 @@
 
 (defun minibuffer-file-complete (str directory &key directory-only)
   (mapcar (lambda (filename)
-            (make-completion-item :label (pathname-name* filename)
-                                  :apply-fn (lambda (p)
-                                              (move-point p (lem::minibuffer-start-point))
-                                              (delete-between-points
-                                               p (line-end (copy-point p :temporary)))
-                                              (insert-string p filename))))
+            (let* ((label (pathname-name* filename))
+                   (n (- (length filename) (length label))))
+              (with-point ((s (lem::minibuffer-start-point))
+                           (e (lem::minibuffer-start-point)))
+                (make-completion-item :label label
+                                      :start (character-offset s n)
+                                      :end (line-end e)))))
           (completion-file str directory :directory-only directory-only)))
 
 (setf *minibuffer-file-complete-function* 'minibuffer-file-complete)

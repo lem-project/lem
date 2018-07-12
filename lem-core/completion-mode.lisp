@@ -18,7 +18,7 @@
 
 (define-key *completion-mode-keymap* 'next-line 'completion-next-line)
 (define-key *completion-mode-keymap* "M-n"    'completion-next-line)
-(define-key *completion-mode-keymap* "C-i"    completion-narrowing-down-or-next-line)
+(define-key *completion-mode-keymap* "C-i"    'completion-narrowing-down-or-next-line)
 (define-key *completion-mode-keymap* 'previous-line 'completion-previous-line)
 (define-key *completion-mode-keymap* "M-p"    'completion-previous-line)
 (define-key *completion-mode-keymap* 'move-to-end-of-buffer 'completion-end-of-buffer)

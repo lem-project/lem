@@ -369,7 +369,7 @@
                   (mapcar (lambda (x) (pathname-name x))
                           (directory
                            (merge-pathnames "**/lem-*.asd"
-                                            (asdf:system-relative-pathname :lem "./contrib/"))))
+                                            (asdf:system-source-directory :lem-contrib))))
                   (set-difference
                    (mapcar #'pathname-name
                            (loop for i in ql:*local-project-directories*

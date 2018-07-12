@@ -22,8 +22,7 @@
                 :block-comment-pairs '(("/*" . "*/"))))
         (tmlanguage (load-tmlanguage
                      (merge-pathnames "go.json"
-                                      (merge-pathnames "lem-go-mode/"
-                                                       (asdf:system-source-directory :lem))))))
+                                      (asdf:system-source-directory :lem-go-mode)))))
     (set-syntax-parser table tmlanguage)
     table))
 

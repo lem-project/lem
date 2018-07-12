@@ -18,7 +18,7 @@
 
 (define-key *completion-mode-keymap* 'next-line 'completion-next-line)
 (define-key *completion-mode-keymap* "M-n"    'completion-next-line)
-(define-key *completion-mode-keymap* "C-i"    'completion-next-line)
+(define-key *completion-mode-keymap* "C-i"    completion-narrowing-down-or-next-line)
 (define-key *completion-mode-keymap* 'previous-line 'completion-previous-line)
 (define-key *completion-mode-keymap* "M-p"    'completion-previous-line)
 (define-key *completion-mode-keymap* 'move-to-end-of-buffer 'completion-end-of-buffer)
@@ -33,8 +33,10 @@
   (t))
 
 (defvar *completion-restart-function* nil)
+(defvar *last-items* nil)
 
 (defun completion-end ()
+  (setf *last-items* nil)
   (completion-mode nil)
   (lem-if:popup-menu-quit (implementation)))
 
@@ -72,26 +74,51 @@
   (insert-character (current-point) #\space)
   (completion-end))
 
+(defun partial-match (strings)
+  (when strings
+    (let ((n nil))
+      (loop :for rest :on strings
+            :do (loop :for rest2 :on (cdr rest)
+                      :for mismatch := (mismatch (first rest) (first rest2))
+                      :do (setf n
+                                (if n
+                                    (min n mismatch)
+                                    mismatch))))
+      n)))
+
+(define-command completion-narrowing-down-or-next-line () ()
+  (when *last-items*
+    (let ((n (partial-match (lem:pdebug (mapcar #'completion-item-label *last-items*)))))
+      (cond ((and n (plusp n))
+             (completion-insert (current-point)
+                                (first *last-items*)
+                                n))
+            ((alexandria:length= *last-items* 1)
+             (completion-insert (current-point)
+                                (first *last-items*)))))
+    (completion-again)))
+
 (defun start-completion-mode (restart-function)
   (setf *completion-restart-function* restart-function)
   (completion-mode t))
 
-(defun completion-insert (point item)
+(defun completion-insert (point item &optional begin)
   (when item
     (cond ((and (completion-item-start item)
                 (completion-item-end item))
            (move-point point (completion-item-start item))
            (delete-between-points (completion-item-start item)
                                   (completion-item-end item))
-           (insert-string point (completion-item-label item)))
+           (insert-string point (subseq (completion-item-label item) 0 begin)))
           (t
            (with-point ((start point))
              (skip-chars-backward start #'syntax-symbol-char-p)
              (delete-between-points start point)
-             (insert-string start (completion-item-label item)))))))
+             (insert-string start (subseq (completion-item-label item) 0 begin)))))))
 
 (defun run-completion-1 (function repeat)
   (let ((items (funcall function (current-point))))
+    (setf *last-items* items)
     (cond ((null items)
            (when repeat (completion-end)))
           ((and (not repeat) (null (rest items)))

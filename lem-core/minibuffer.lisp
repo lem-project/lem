@@ -365,14 +365,19 @@
         result)))
 
 (defun prompt-for-library (prompt history-name)
-  (let ((systems (mapcar (lambda (pathname)
-                           (string-right-trim
-                            "/"
-                            (enough-namestring
-                             pathname
-                             (uiop:pathname-parent-directory-pathname pathname))))
-                         (list-directory (asdf:system-relative-pathname :lem "./contrib/")
-                                         :directory-only t))))
+  (let ((systems (append
+                  (mapcar (lambda (x) (pathname-name x))
+                          (directory
+                           (merge-pathnames "**/lem-*.asd"
+                                            (asdf:system-relative-pathname :lem "./contrib/"))))
+                  (set-difference
+                   (mapcar #'pathname-name
+                           (loop for i in ql:*local-project-directories*
+                                 append (directory (merge-pathnames "**/lem-*.asd" i))))
+                   (mapcar #'pathname-name
+                           (directory (merge-pathnames "**/lem-*.asd" (asdf:system-source-directory :lem))))
+                   :test #'equal))))
+    (setq systems (mapcar (lambda (x) (subseq x 4)) systems))
     (prompt-for-line prompt ""
                      (lambda (str) (completion str systems))
                      (lambda (system) (find system systems :test #'string=))

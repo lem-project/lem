@@ -17,7 +17,7 @@
 (define-ex-command ("e") (range filename)
   (declare (ignore range))
   (lem:find-file (merge-pathnames filename
-                                  (uiop:getcwd))))
+                                  (lem:buffer-directory))))
 
 (define-ex-command ("w" "write") (range filename)
   (ex-write range filename))

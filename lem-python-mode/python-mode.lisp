@@ -63,7 +63,7 @@
 (defvar *python-syntax-table*
   (let ((table (make-syntax-table
                 :space-chars '(#\space #\tab #\newline)
-                :paren-alist '((#\( . #\))
+                :paren-pairs '((#\( . #\))
                                (#\{ . #\})
                                (#\[ . #\]))
                 :string-quote-chars '(#\" #\')

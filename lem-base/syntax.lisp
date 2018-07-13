@@ -48,7 +48,7 @@
 (defstruct syntax-table
   (space-chars '(#\space #\tab #\newline))
   (symbol-chars '(#\_))
-  (paren-alist '((#\( . #\))
+  (paren-pairs '((#\( . #\))
                  (#\[ . #\])
                  (#\{ . #\})))
   (string-quote-chars '(#\"))
@@ -98,16 +98,16 @@
       (member c (syntax-table-symbol-chars (current-syntax)))))
 
 (defun syntax-open-paren-char-p (c)
-  (assoc c (syntax-table-paren-alist (current-syntax))))
+  (assoc c (syntax-table-paren-pairs (current-syntax))))
 
 (defun syntax-closed-paren-char-p (c)
-  (rassoc c (syntax-table-paren-alist (current-syntax))))
+  (rassoc c (syntax-table-paren-pairs (current-syntax))))
 
 (defun syntax-equal-paren-p (x y)
   (flet ((f (c)
            (if (syntax-open-paren-char-p c)
                c
-               (car (rassoc c (syntax-table-paren-alist (current-syntax)))))))
+               (car (rassoc c (syntax-table-paren-pairs (current-syntax)))))))
     (eql (f x) (f y))))
 
 (defun syntax-string-quote-char-p (c)

@@ -100,7 +100,7 @@ link :
 (defvar *js-syntax-table*
   (let ((table (make-syntax-table
                 :space-chars *js-spaces*
-                :paren-alist '((#\( . #\))
+                :paren-pairs '((#\( . #\))
                                (#\{ . #\})
                                (#\[ . #\]))
                 :string-quote-chars '(#\" #\')

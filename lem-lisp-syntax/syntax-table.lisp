@@ -27,7 +27,7 @@
    :space-chars '(#\space #\tab #\newline)
    :symbol-chars '(#\+ #\- #\< #\> #\/ #\* #\& #\= #\. #\? #\_ #\! #\$ #\% #\: #\@ #\[ #\]
                    #\^ #\{ #\} #\~ #\# #\|)
-   :paren-alist '((#\( . #\))
+   :paren-pairs '((#\( . #\))
                   (#\[ . #\])
                   (#\{ . #\}))
    :string-quote-chars '(#\")

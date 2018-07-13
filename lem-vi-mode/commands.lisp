@@ -27,6 +27,7 @@
            :vi-delete-previous-char
            :vi-delete
            :vi-delete-line
+           :vi-clear
            :vi-clear-line
            :vi-join-line
            :vi-yank
@@ -196,6 +197,10 @@
          (with-point ((start (current-point))
                       (end (current-point)))
            (kill-region start (line-end end))))))
+
+(define-command vi-clear () ()
+  (vi-delete)
+  (vi-insert))
 
 (define-command vi-clear-line () ()
   (vi-delete-line)

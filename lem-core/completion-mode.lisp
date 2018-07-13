@@ -88,7 +88,7 @@
 
 (define-command completion-narrowing-down-or-next-line () ()
   (when *last-items*
-    (let ((n (partial-match (lem:pdebug (mapcar #'completion-item-label *last-items*)))))
+    (let ((n (partial-match (mapcar #'completion-item-label *last-items*))))
       (cond ((and n (plusp n))
              (completion-insert (current-point)
                                 (first *last-items*)

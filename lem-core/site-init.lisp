@@ -64,12 +64,13 @@
       (let ((*package* (find-package :lem-user)))
         #+quicklisp(ql:quickload system-name :silent t)))))
 
-(define-command site-init-add-dependency (symbols) ("sPackages:")
+(define-command site-init-add-dependency (symbols)
+  ((list (prompt-for-library "library: " 'load-library)))
   "Input system name and test it's loadable."
   (loop :with site-init := (site-init)
         :with depends-on := (getf (cddr site-init) :depends-on)
         :for s :in (uiop:split-string symbols)
-        :for key := (read-from-string (format nil ":~A" s))
+        :for key := (read-from-string (format nil ":lem-~A" s))
         :do (unless (find key depends-on)
               #+quicklisp(ql:quickload key :silent t)
               (push key depends-on))
@@ -83,13 +84,12 @@
   (loop :with site-init := (site-init)
         :with depends-on := (getf (cddr site-init) :depends-on)
         :for s :in (uiop:split-string symbols)
-        :for key := (read-from-string (format nil ":~A" s))
+        :for key := (read-from-string (format nil ":lem-~A" s))
         :do (when (find key depends-on)
               (setf depends-on (remove key depends-on)))
         :finally (setf (getf (cddr site-init) :depends-on) depends-on)
                  (setf (site-init) site-init)
                  (message "~A" depends-on)))
-
 
 ;; TBD prepare some commands to edit asd file.
 ;; M-x site-init-edit-dependency / prepare buffer one system in a line which are editable. test loadable when save and update asd.

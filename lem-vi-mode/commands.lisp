@@ -77,6 +77,14 @@
 (defun empty-line (point)
   (zerop (length (line-string point))))
 
+;; Vim word
+;; See http://vimdoc.sourceforge.net/htmldoc/motion.html#word
+;; word = a sequence of letters, digits and underscores
+(defun vi-word-char-p (char)
+  (and (characterp char)
+       (or (alphanumericp char)
+           (char= char #\_))))
+
 (define-command vi-move-to-beginning-of-line/universal-argument-0 () ()
   (if (mode-active-p (current-buffer) 'universal-argument)
       (universal-argument-0)
@@ -112,7 +120,22 @@
   (forward-word-begin (current-point) n nil))
 
 (define-command vi-backward-word-begin (&optional (n 1)) ("p")
-  (backward-word-begin (current-point) n nil))
+  (when (< 0 n)
+    (let ((p (current-point)))
+      (cond
+        ((vi-word-char-p (character-at p 0))
+         (vi-backward-char)
+         (loop
+           while (and (not (bolp p)) (vi-word-char-p (character-at p -1)))
+           do (vi-backward-char)))
+        (t
+         (loop until (or (bolp p) (vi-word-char-p (character-at p 0)))
+               do (vi-backward-char))
+         (when (bolp p)
+           (vi-previous-line)
+           (vi-move-to-end-of-line)
+           (vi-backward-word-begin n)))))
+    (vi-backward-word-begin (1- n))))
 
 (define-command vi-forward-word-begin-broad (&optional (n 1)) ("p")
   (forward-word-begin (current-point) n t))
@@ -121,7 +144,21 @@
   (backward-word-begin (current-point) n t))
 
 (define-command vi-forward-word-end (&optional (n 1)) ("p")
-  (forward-word-end (current-point) n nil))
+  (when (< 0 n)
+    (let ((p (current-point)))
+      (cond
+        ((vi-word-char-p (character-at p 1))
+         (loop
+           while (and (not (eolp p)) (vi-word-char-p (character-at p 1)))
+           do (vi-forward-char)))
+        ((eolp p)
+         (vi-next-line)
+         (vi-move-to-beginning-of-line)
+         (vi-forward-word-end n))
+        (t
+         (loop until (or (eolp p) (vi-word-char-p (character-at p 1)))
+               do (vi-forward-char)))))
+    (vi-forward-word-end (1- n))))
 
 (define-command vi-forward-word-end-broad (&optional (n 1)) ("p")
   (forward-word-end (current-point) n t))

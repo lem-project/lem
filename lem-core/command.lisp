@@ -526,7 +526,19 @@
     (move-to-end-of-buffer)
     (delete-blank-lines)))
 
-(define-command load-library (name) ("sload library: ")
+(define-command load-library (name)
+    ((list (let ((systems (mapcar (lambda (pathname)
+                                    (string-right-trim
+                                     "/"
+                                     (enough-namestring
+                                      pathname
+                                      (uiop:pathname-parent-directory-pathname pathname))))
+                                  (list-directory (asdf:system-relative-pathname :lem "./contrib/")
+                                                  :directory-only t))))
+             (prompt-for-line "load library: " ""
+                              (lambda (str) (completion str systems))
+                              (lambda (system) (find system systems :test #'string=))
+                              'load-library))))
   (message "Loading ~A." name)
   (cond #+quicklisp((ignore-errors (ql:quickload (format nil "lem-~A" name) :silent t))
                     (message "Loaded ~A." name))

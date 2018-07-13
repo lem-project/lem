@@ -94,11 +94,14 @@
         (cond ((and n (plusp n) (< (count-characters start end) n))
                (completion-insert (current-point)
                                   (first *last-items*)
-                                  n))
+                                  n)
+               (completion-again))
               ((alexandria:length= *last-items* 1)
                (completion-insert (current-point)
-                                  (first *last-items*))))))
-    (completion-again)))
+                                  (first *last-items*))
+               (completion-again))
+              (t
+               (completion-next-line)))))))
 
 (defun start-completion-mode (restart-function)
   (setf *completion-restart-function* restart-function)

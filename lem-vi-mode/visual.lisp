@@ -43,7 +43,6 @@
 
 (defun visual-char ()
   (with-point ((p (current-point)))
-    (character-offset p 1)
     (push (make-overlay *start-point* p 'region)
           *visual-overlays*)))
 

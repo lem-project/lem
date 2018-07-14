@@ -12,14 +12,20 @@
           ,@body))
       *response-methods*)))
 
-(defun get-root-path () (probe-file "."))
+(defun get-root-path ()
+  (probe-file "."))
+
+(defun pathname-to-uri (pathname)
+  (format nil "file://~A" pathname))
 
 (defparameter *log-stream* *error-output*)
 
 (defstruct workspace
   connection
   server-capabilities
-  root)
+  root
+  language-id
+  (file-version-table (make-hash-table)))
 
 (defun {} (&rest plist)
   (alexandria:plist-hash-table plist :test 'equal))
@@ -84,7 +90,7 @@
                                  ({}
                                   "processId" (getpid)
                                   #|"rootPath" root|#
-                                  "rootUri" (format nil "file://~A" root)
+                                  "rootUri" (pathname-to-uri root)
                                   #|"initializationOptions"|#
                                   "capabilities" (client-capabilities)
                                   #|"trace" "off"|#
@@ -103,18 +109,28 @@
 
 (define-response-method |window/showMessage| (|type| |message|)
   (declare (ignore |type|))
-  (message "~A" message))
+  (lem:message "~A" |message|))
 
 (define-response-method |window/showMessageRequest| (|type| |message|)
   (|window/showMessage| |type| |message|))
 
 (define-response-method |window/logMessage| (|type| |message|)
-  (format *log-stream* "~A: ~A" type message))
+  (format *log-stream* "~A: ~A" |type| |message|))
+
+(defun text-document-item (workspace buffer)
+  ({} "uri" (pathname-to-uri (lem:buffer-filename buffer))
+      "languageId" (workspace-language-id workspace)
+      "version" (gethash buffer (workspace-file-version-table workspace) 0)
+      "text" (lem:points-to-string (lem:buffer-start-point buffer) (lem:buffer-end-point buffer))))
+
+(defun text-document-did-open ()
+  )
 
 (defun start ()
   (let* ((connection (jsonrpc:make-client))
          (workspace (make-workspace :connection connection
-                                    :root (get-root-path))))
+                                    :root (get-root-path)
+                                    :language-id "go")))
     (dolist (response-method *response-methods*)
       (jsonrpc:expose connection (string response-method) response-method))
     (jsonrpc:client-connect (workspace-connection workspace)

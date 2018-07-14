@@ -113,9 +113,9 @@
          (values (completion-item-start item)
                  (completion-item-end item)))
         (t
-         (values (skip-chars-backward (copy-point point :temporary)
-                                      #'syntax-symbol-char-p)
-                 point))))
+         (with-point ((start point))
+           (skip-chars-backward start #'syntax-symbol-char-p)
+           (values start point)))))
 
 (defun completion-insert (point item &optional begin)
   (when item

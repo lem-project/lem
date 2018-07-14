@@ -1,6 +1,13 @@
 (in-package :lem-language-client)
 
-(defvar *client* (jsonrpc:make-client))
+(defun get-root-path () (probe-file "."))
+
+(defparameter *log-stream* *error-output*)
+
+(defstruct workspace
+  connection
+  server-capabilities
+  root)
 
 (defun {} (&rest plist)
   (alexandria:plist-hash-table plist :test 'equal))
@@ -58,20 +65,55 @@
       "textDocument" (text-document-client-capabilities)
       #|"experimental"|#))
 
-(defun method-initialize ()
-  (let* ((root-path (namestring (probe-file ".")))
-         (response (jsonrpc:call *client*
+(defun method-initialize (workspace)
+  (let* ((root (workspace-root workspace))
+         (response (jsonrpc:call (workspace-connection workspace)
                                  "initialize"
                                  ({}
                                   "processId" (getpid)
-                                  "rootPath" root-path
-                                  "rootUri" (format nil "file://~A" root-path)
+                                  #|"rootPath" root|#
+                                  "rootUri" (format nil "file://~A" root)
                                   #|"initializationOptions"|#
                                   "capabilities" (client-capabilities)
                                   #|"trace" "off"|#
                                   #|"workspaceFolders" nil|#))))
-    (gethash "capabilities" response)))
+    (setf (workspace-server-capabilities workspace)
+          (gethash "capabilities" response))))
+
+(defun method-initialized (workspace)
+  (jsonrpc:call-async (workspace-connection workspace) "initialized" ({})))
+
+(defun method-shutdown (workspace)
+  (jsonrpc:call (workspace-connection workspace) "shutdown" ({})))
+
+(defun method-exit (workspace)
+  (jsonrpc:call-async (workspace-connection workspace) "exit" ({})))
+
+(defun show-message (params)
+  (let ((type (gethash "type" params))
+        (message (gethash "message" params)))
+    (declare (ignore type))
+    (message "~A" message)))
+
+(defun show-message-request (params)
+  (show-message params))
+
+(defun log-message (params)
+  (let ((type (gethash "type" params))
+        (message (gethash "message" params)))
+    (format *log-stream* "~A: ~A" type message)))
 
 (defun start ()
-  (jsonrpc:client-connect *client* :mode :tcp :port 4389)
-  (method-initialize))
+  (let* ((connection (jsonrpc:make-client))
+         (workspace (make-workspace :connection connection
+                                    :root (get-root-path))))
+    (jsonrpc:expose connection "window/showMessage" #'show-message)
+    (jsonrpc:expose connection "window/showMessageRequest" #'show-message-request)
+    (jsonrpc:expose connection "window/logMessage" #'log-message)
+    ;(jsonrpc:expose connection "telemetry/event")
+    (jsonrpc:client-connect (workspace-connection workspace)
+                            :mode :tcp
+                            :port 4389)
+    (method-initialize workspace)
+    (method-initialized workspace)
+    workspace))

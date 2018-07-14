@@ -1,5 +1,17 @@
 (in-package :lem-language-client)
 
+(defvar *response-methods* '())
+
+(defmacro define-response-method (name (&rest vars) &body body)
+  (alexandria:with-gensyms (params)
+    `(pushnew
+      (defun ,name (,params)
+        (let ,(mapcar (lambda (var)
+                        `(,var (gethash ,(string var) ,params)))
+                      vars)
+          ,@body))
+      *response-methods*)))
+
 (defun get-root-path () (probe-file "."))
 
 (defparameter *log-stream* *error-output*)
@@ -89,28 +101,22 @@
 (defun method-exit (workspace)
   (jsonrpc:call-async (workspace-connection workspace) "exit" ({})))
 
-(defun show-message (params)
-  (let ((type (gethash "type" params))
-        (message (gethash "message" params)))
-    (declare (ignore type))
-    (message "~A" message)))
+(define-response-method |window/showMessage| (|type| |message|)
+  (declare (ignore |type|))
+  (message "~A" message))
 
-(defun show-message-request (params)
-  (show-message params))
+(define-response-method |window/showMessageRequest| (|type| |message|)
+  (|window/showMessage| |type| |message|))
 
-(defun log-message (params)
-  (let ((type (gethash "type" params))
-        (message (gethash "message" params)))
-    (format *log-stream* "~A: ~A" type message)))
+(define-response-method |window/logMessage| (|type| |message|)
+  (format *log-stream* "~A: ~A" type message))
 
 (defun start ()
   (let* ((connection (jsonrpc:make-client))
          (workspace (make-workspace :connection connection
                                     :root (get-root-path))))
-    (jsonrpc:expose connection "window/showMessage" #'show-message)
-    (jsonrpc:expose connection "window/showMessageRequest" #'show-message-request)
-    (jsonrpc:expose connection "window/logMessage" #'log-message)
-    ;(jsonrpc:expose connection "telemetry/event")
+    (dolist (response-method *response-methods*)
+      (jsonrpc:expose connection (string response-method) response-method))
     (jsonrpc:client-connect (workspace-connection workspace)
                             :mode :tcp
                             :port 4389)

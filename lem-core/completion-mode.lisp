@@ -177,12 +177,13 @@
 
 (defun minibuffer-file-complete (str directory &key directory-only)
   (mapcar (lambda (filename)
-            (let* ((label (pathname-name* filename))
-                   (n (- (length filename) (length label))))
+            (let ((label (pathname-name* filename)))
               (with-point ((s (lem::minibuffer-start-point))
                            (e (lem::minibuffer-start-point)))
                 (make-completion-item :label label
-                                      :start (character-offset s n)
+                                      :start (character-offset
+                                              s
+                                              (+ (length (namestring (uiop:pathname-directory-pathname str)))))
                                       :end (line-end e)))))
           (completion-file str directory :directory-only directory-only)))
 

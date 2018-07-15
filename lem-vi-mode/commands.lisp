@@ -208,8 +208,6 @@
            (with-output-to-string (out)
              (let ((*cursor-offset* 0))
                (apply-visual-range (lambda (start end)
-                                     (pprint start)
-                                     (pprint end)
                                      (unless (point< start end)
                                        (rotatef start end))
                                      (character-offset end 1)

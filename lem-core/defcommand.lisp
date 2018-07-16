@@ -62,6 +62,7 @@
     (defun define-command-gen-cmd (cmd-name fn-name parms arg-descripters)
       `(defun ,cmd-name (,garg)
          (declare (ignorable ,garg))
+         (block ,fn-name
          ,(if (null arg-descripters)
               (progn
                 (assert (null parms))
@@ -70,7 +71,7 @@
                    ,(if (stringp (car arg-descripters))
                         (define-command-gen-args cmd-name arg-descripters)
                         (car arg-descripters))
-                 (,fn-name ,@(collect-variables parms))))))))
+                 (,fn-name ,@(collect-variables parms)))))))))
 
 (defun find-command (name)
   (car (gethash name *command-table*)))

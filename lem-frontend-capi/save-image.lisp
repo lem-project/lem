@@ -8,6 +8,11 @@
   (when (probe-file quicklisp-init)
     (load quicklisp-init)))
 
+(asdf:initialize-source-registry
+ `(:source-registry
+   (:tree ,(namestring (probe-file "../")))
+   :INHERIT-CONFIGURATION))
+
 (uiop:symbol-call :ql :quickload :lem-capi)
 
 (lem:add-hook lem:*exit-editor-hook*

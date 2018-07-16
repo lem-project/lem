@@ -1,5 +1,8 @@
 (in-package :lem-language-client)
 
+(defparameter *root-path* (probe-file "."))
+(defparameter *language-id* "go")
+
 (defvar *response-methods* '())
 
 (defmacro define-response-method (name (&rest vars) &body body)
@@ -11,9 +14,6 @@
                       vars)
           ,@body))
       *response-methods*)))
-
-(defun get-root-path ()
-  (probe-file "."))
 
 (defun pathname-to-uri (pathname)
   (format nil "file://~A" pathname))
@@ -99,13 +99,13 @@
           (gethash "capabilities" response))))
 
 (defun method-initialized (workspace)
-  (jsonrpc:call-async (workspace-connection workspace) "initialized" ({})))
+  (jsonrpc:notify (workspace-connection workspace) "initialized" ({})))
 
 (defun method-shutdown (workspace)
   (jsonrpc:call (workspace-connection workspace) "shutdown" ({})))
 
 (defun method-exit (workspace)
-  (jsonrpc:call-async (workspace-connection workspace) "exit" ({})))
+  (jsonrpc:notify (workspace-connection workspace) "exit" ({})))
 
 (define-response-method |window/showMessage| (|type| |message|)
   (declare (ignore |type|))
@@ -123,14 +123,19 @@
       "version" (gethash buffer (workspace-file-version-table workspace) 0)
       "text" (lem:points-to-string (lem:buffer-start-point buffer) (lem:buffer-end-point buffer))))
 
-(defun text-document-did-open ()
+(defun text-document-did-open (workspace buffer)
+  (jsonrpc:notify (workspace-connection workspace)
+                  "textDocument/didOpen"
+                  ({} "textDocument" (text-document-item buffer))))
+
+(defun text-document-did-change (workspace buffer changes)
   )
 
 (defun start ()
   (let* ((connection (jsonrpc:make-client))
          (workspace (make-workspace :connection connection
-                                    :root (get-root-path)
-                                    :language-id "go")))
+                                    :root *root-path*
+                                    :language-id *language-id*)))
     (dolist (response-method *response-methods*)
       (jsonrpc:expose connection (string response-method) response-method))
     (jsonrpc:client-connect (workspace-connection workspace)

@@ -3,7 +3,17 @@
 (defparameter *root-path* (probe-file "."))
 (defparameter *language-id* "go")
 
+(defparameter *log-stream* *error-output*)
+
+(defvar *workspaces* (make-hash-table :test 'equal))
 (defvar *response-methods* '())
+
+(defstruct workspace
+  connection
+  server-capabilities
+  root
+  language-id
+  (file-version-table (make-hash-table)))
 
 (defmacro define-response-method (name (&rest vars) &body body)
   (alexandria:with-gensyms (params)
@@ -18,17 +28,21 @@
 (defun pathname-to-uri (pathname)
   (format nil "file://~A" pathname))
 
-(defparameter *log-stream* *error-output*)
-
-(defstruct workspace
-  connection
-  server-capabilities
-  root
-  language-id
-  (file-version-table (make-hash-table)))
-
 (defun {} (&rest plist)
   (alexandria:plist-hash-table plist :test 'equal))
+
+(defun buffer-language-id (buffer)
+  (declare (ignore buffer))
+  *language-id*)
+
+(defun buffer-workspace (buffer)
+  (gethash (buffer-language-id buffer) *workspaces*))
+
+(defun buffer-file-version (buffer)
+  (gethash buffer (workspace-file-version-table (buffer-workspace buffer)) 0))
+
+(defun (setf buffer-file-version) (value buffer)
+  (setf (gethash buffer (workspace-file-version-table (buffer-workspace buffer))) value))
 
 (defun workspace-client-capabilities ()
   ({} "applyEdit" 'yason:false
@@ -83,7 +97,7 @@
       "textDocument" (text-document-client-capabilities)
       #|"experimental"|#))
 
-(defun method-initialize (workspace)
+(defun initialize (workspace)
   (let* ((root (workspace-root workspace))
          (response (jsonrpc:call (workspace-connection workspace)
                                  "initialize"
@@ -98,13 +112,13 @@
     (setf (workspace-server-capabilities workspace)
           (gethash "capabilities" response))))
 
-(defun method-initialized (workspace)
+(defun initialized (workspace)
   (jsonrpc:notify (workspace-connection workspace) "initialized" ({})))
 
-(defun method-shutdown (workspace)
+(defun shutdown (workspace)
   (jsonrpc:call (workspace-connection workspace) "shutdown" ({})))
 
-(defun method-exit (workspace)
+(defun exit (workspace)
   (jsonrpc:notify (workspace-connection workspace) "exit" ({})))
 
 (define-response-method |window/showMessage| (|type| |message|)
@@ -117,30 +131,70 @@
 (define-response-method |window/logMessage| (|type| |message|)
   (format *log-stream* "~A: ~A" |type| |message|))
 
-(defun text-document-item (workspace buffer)
+(defun text-document-item (buffer)
   ({} "uri" (pathname-to-uri (lem:buffer-filename buffer))
-      "languageId" (workspace-language-id workspace)
-      "version" (gethash buffer (workspace-file-version-table workspace) 0)
+      "languageId" (workspace-language-id (buffer-workspace buffer))
+      "version" (buffer-file-version buffer)
       "text" (lem:points-to-string (lem:buffer-start-point buffer) (lem:buffer-end-point buffer))))
 
-(defun text-document-did-open (workspace buffer)
-  (jsonrpc:notify (workspace-connection workspace)
+(defun text-document-did-open (buffer)
+  (jsonrpc:notify (workspace-connection (buffer-workspace buffer))
                   "textDocument/didOpen"
                   ({} "textDocument" (text-document-item buffer))))
 
+(defun versioned-text-document-identifier (buffer)
+  (let* ((workspace (buffer-workspace buffer))
+         (version (gethash buffer (workspace-file-version-table workspace))))
+    ({} "version" version
+        "uri"  (pathname-to-uri (lem:buffer-filename buffer)))))
+
 (defun text-document-did-change (workspace buffer changes)
-  )
+  (jsonrpc:notify (workspace-connection workspace)
+                  "textDocument/didChange"
+                  ({} "textDocument" (versioned-text-document-identifier buffer)
+                      "contentChanges" changes)))
+
+(defun lsp-position (point)
+  ({} "line" (1- (lem:line-number-at-point point))
+      "character" (lem:point-charpos point)))
+
+(defun text-document-content-change-event (point string-or-number)
+  (let ((start-position (lsp-position point)))
+    (etypecase string-or-number
+      (string
+       ({} "range" ({} "start" start-position
+                       "end" start-position)
+           "rangeLength" 0
+           "text" string-or-number))
+      (number
+       (lem:with-point ((end point))
+         (lem:character-offset end string-or-number)
+         (let ((end-position (lsp-position end)))
+           ({} "range" ({} "start" start-position
+                           "end" end-position)
+               "rangeLength" (lem:count-characters end point)
+               "text" "")))))))
+
+(defun on-change (point arg)
+  (let ((buffer (lem:point-buffer point)))
+    (text-document-did-change (buffer-workspace buffer)
+                              buffer
+                              (list (text-document-content-change-event point arg)))))
+
+(defun initialize-hooks (buffer)
+  (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) #'on-change))
 
 (defun start ()
   (let* ((connection (jsonrpc:make-client))
          (workspace (make-workspace :connection connection
                                     :root *root-path*
                                     :language-id *language-id*)))
+    (setf (gethash *language-id* *workspaces*) workspace)
     (dolist (response-method *response-methods*)
       (jsonrpc:expose connection (string response-method) response-method))
     (jsonrpc:client-connect (workspace-connection workspace)
                             :mode :tcp
                             :port 4389)
-    (method-initialize workspace)
-    (method-initialized workspace)
+    (initialize workspace)
+    (initialized workspace)
     workspace))

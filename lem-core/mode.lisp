@@ -19,9 +19,11 @@
 
 (macrolet ((def (name)
              `(progn
-                (defun ,name (mode)
+                (defgeneric ,name (mode))
+                (defgeneric (setf ,name) (new-val mode))
+                (defmethod ,name (mode)
                   (get mode ',name))
-                (defun (setf ,name) (new-val mode)
+                (defmethod (setf ,name) (new-val mode)
                   (setf (get mode ',name) new-val)))))
   (def mode-name)
   (def mode-keymap)
@@ -138,11 +140,11 @@
 (defvar *current-global-mode* nil)
 
 (defclass global-mode ()
-  ((name :initarg :name :accessor global-mode-name)
-   (parent :initarg :parent :accessor global-mode-parent)
-   (keymap :initarg :keymap :accessor global-mode-keymap)
-   (enable-hook :initarg :enable-hook :accessor global-mode-enable-hook)
-   (disable-hook :initarg :disable-hook :accessor global-mode-disable-hook)))
+  ((name :initarg :name :accessor mode-name)
+   (parent :initarg :parent :accessor mode-parent)
+   (keymap :initarg :keymap :accessor mode-keymap)
+   (enable-hook :initarg :enable-hook :accessor mode-enable-hook)
+   (disable-hook :initarg :disable-hook :accessor mode-disable-hook)))
 
 (defun current-global-mode ()
   (if (symbolp *current-global-mode*)
@@ -151,7 +153,7 @@
       *current-global-mode*))
 
 (defun change-global-mode-keymap (mode keymap)
-  (setf (global-mode-keymap (get mode 'global-mode)) keymap))
+  (setf (mode-keymap (get mode 'global-mode)) keymap))
 
 (defun change-global-mode (mode)
   (flet ((call (fun)
@@ -162,9 +164,9 @@
       (check-type global-mode global-mode)
       (when global-mode
         (when *current-global-mode*
-          (call (global-mode-disable-hook *current-global-mode*)))
+          (call (mode-disable-hook *current-global-mode*)))
         (setf *current-global-mode* global-mode)
-        (call (global-mode-enable-hook global-mode))))))
+        (call (mode-enable-hook global-mode))))))
 
 (defmacro define-global-mode (mode parent (&key keymap enable-hook disable-hook))
   (alexandria:with-gensyms (global-mode parent-mode)
@@ -175,7 +177,7 @@
                             :parent (alexandria:when-let ((,parent-mode
                                                            ,(when parent
                                                               `(get ',parent 'global-mode))))
-                                      (global-mode-keymap ,parent-mode))))))
+                                      (mode-keymap ,parent-mode))))))
        (let ((,global-mode
                (make-instance 'global-mode
                               :name ',mode

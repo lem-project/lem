@@ -47,17 +47,13 @@
     :accessor menu-items)
    (origin-items
     :accessor menu-origin-items)
-   (select-callback
-    :initarg :select-callback
-    :initform nil
-    :reader menu-select-callback)
    (update-items-function
     :initarg :update-items-function
     :reader menu-update-items-function)
-   (delete-callback
-    :initarg :delete-callback
+   (callback
+    :initarg :callback
     :initform nil
-    :reader menu-delete-callback)
+    :reader menu-callback)
    ))
 
 (defmethod initialize-instance :around ((menu menu) &rest initargs &key items)
@@ -150,7 +146,8 @@
   :redraw)
 
 (defun menu-select-1 (&key (set-buffer #'switch-to-buffer)
-                           (callback #'menu-select-callback)
+                           (callback
+                            #'(lambda (x) (getf (menu-callback x) :select)))
                            marked)
   (alexandria:when-let* ((menu (buffer-value (current-buffer) 'menu))
                          (fn (funcall callback menu))
@@ -189,7 +186,7 @@
                                      (pop-to-buffer buffer)))))
 
 (define-command menu-delete () ()
-  (menu-select-1 :callback #'menu-delete-callback :marked t))
+  (menu-select-1 :callback #'(lambda (x) (getf (menu-callback x) :delete)) :marked t))
 
 (define-command menu-next-line (n) ("p")
   (line-offset (current-point) n))

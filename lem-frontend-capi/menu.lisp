@@ -16,7 +16,8 @@
                          :column-function (lem.menu-mode::menu-column-function menu)
                          :callback-type :data
                          :action-callback (lambda (item)
-                                            (let ((result (funcall (lem.menu-mode::menu-select-callback menu)
+                                            (let ((result (funcall (getf (lem.menu-mode::menu-callback menu)
+                                                                         :select)
                                                                    menu item)))
                                               (when (lem:bufferp result)
                                                 (lem:switch-to-buffer result)

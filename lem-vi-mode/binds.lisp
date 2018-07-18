@@ -33,6 +33,7 @@
 (define-key *command-keymap* "M" 'vi-move-to-window-middle)
 (define-key *command-keymap* "L" 'vi-move-to-window-bottom)
 (define-key *command-keymap* "^" 'vi-back-to-indentation)
+(define-key *command-keymap* "= =" 'vi-indent-line)
 (define-key *command-keymap* "{" 'backward-paragraph)
 (define-key *command-keymap* "}" 'forward-paragraph)
 (define-key *command-keymap* "x" 'vi-delete-next-char)

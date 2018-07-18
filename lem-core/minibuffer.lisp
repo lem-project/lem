@@ -267,6 +267,7 @@
                       (let ((*inhibit-read-only* t))
                         (erase-buffer))
                       (minibuffer-mode)
+                      (reset-horizontal-scroll *minibuf-window*)
                       (unless (string= "" prompt)
                         (insert-string (current-point) prompt
                                        :attribute 'minibuffer-prompt-attribute

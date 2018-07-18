@@ -627,3 +627,6 @@
 
 (defun update-display ()
   (lem-if:update-display *implementation*))
+
+(defun reset-horizontal-scroll (window)
+  (setf (screen-horizontal-scroll-start (window-screen window)) 0))

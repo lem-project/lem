@@ -7,6 +7,8 @@
            :vi-visual-line
            :vi-visual-block
            :visual-p
+           :visual-char-p
+           :visual-line-p
            :visual-block-p
            :apply-visual-range))
 (in-package :lem-vi-mode.visual)

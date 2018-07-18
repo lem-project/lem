@@ -57,6 +57,8 @@
 (define-key *command-keymap* "N" 'vi-search-previous)
 (define-key *command-keymap* "g g" 'vi-goto-first-line)
 (define-key *command-keymap* "G" 'vi-goto-line)
+(define-key *command-keymap* "f" 'vi-find-char)
+(define-key *command-keymap* "F" 'vi-find-char-backward)
 (define-key *command-keymap* "z z" 'recenter)
 (define-key *command-keymap* "Z Z" 'vi-write-quit)
 (define-key *command-keymap* "C-w s" 'split-active-window-vertically)

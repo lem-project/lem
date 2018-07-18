@@ -42,6 +42,8 @@
            :vi-search-previous
            :vi-goto-first-line
            :vi-goto-line
+           :vi-find-char
+           :vi-find-char-backward
            :vi-write
            :vi-quit
            :vi-write-quit
@@ -356,6 +358,24 @@
   (if (null arg)
       (move-to-end-of-buffer)
       (goto-line arg)))
+
+(define-command vi-find-char () ()
+  (alexandria:when-let (c (key-to-char (read-key)))
+    (with-point ((p (current-point))
+                 (limit (current-point)))
+      (character-offset p 1)
+      (line-end limit)
+      (when (search-forward p (string c) limit)
+        (character-offset p -1)
+        (move-point (current-point) p)))))
+
+(define-command vi-find-char-backward () ()
+  (alexandria:when-let (c (key-to-char (read-key)))
+    (with-point ((p (current-point))
+                 (limit (current-point)))
+      (line-start limit)
+      (when (search-backward p (string c) limit)
+        (move-point (current-point) p)))))
 
 (define-command vi-write () ()
   (lem:write-file (lem:buffer-filename (lem:current-buffer))))

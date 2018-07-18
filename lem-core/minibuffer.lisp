@@ -75,7 +75,8 @@
     (:name "minibuffer"
      :keymap *minibuf-keymap*
      :syntax-table (make-syntax-table
-                    :symbol-chars '(#\_ #\-))))
+                    :symbol-chars '(#\_ #\-)))
+  (setf (variable-value 'truncate-lines :buffer (current-buffer)) nil))
 
 (defun setup-minibuffer ()
   (setf *echoarea-buffer*

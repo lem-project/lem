@@ -44,6 +44,24 @@
 (defun (setf buffer-file-version) (value buffer)
   (setf (gethash buffer (workspace-file-version-table (buffer-workspace buffer))) value))
 
+(defun buffer-uri (buffer)
+  (pathname-to-uri (buffer-filename buffer)))
+
+(defun lsp-position (point)
+  ({} "line" (1- (lem:line-number-at-point point))
+      "character" (lem:point-charpos point)))
+
+(defun lsp-range (start end)
+  ({} "start" (lsp-position start)
+      "end" (lsp-position end)))
+
+(defun lsp-location (start end)
+  (when (lem:point< end start)
+    (rotatef start end))
+  (let ((buffer (point-buffer start)))
+    ({} "uri" (buffer-uri buffer)
+        "range" (lsp-range start end))))
+
 (defun workspace-client-capabilities ()
   ({} "applyEdit" 'yason:false
       "workspaceEdit" ({} "documentChanges" 'yason:false)
@@ -154,10 +172,6 @@
                   ({} "textDocument" (versioned-text-document-identifier buffer)
                       "contentChanges" changes)))
 
-(defun lsp-position (point)
-  ({} "line" (1- (lem:line-number-at-point point))
-      "character" (lem:point-charpos point)))
-
 (defun text-document-content-change-event (point string-or-number)
   (let ((start-position (lsp-position point)))
     (etypecase string-or-number
@@ -177,9 +191,13 @@
 
 (defun on-change (point arg)
   (let ((buffer (lem:point-buffer point)))
+    (incf (buffer-file-version buffer))
     (text-document-did-change (buffer-workspace buffer)
                               buffer
                               (list (text-document-content-change-event point arg)))))
+
+(defun text-document-position-params ()
+  ({} "textDocument" (text-document-identifier)))
 
 (defun initialize-hooks (buffer)
   (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) #'on-change))

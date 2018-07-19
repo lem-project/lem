@@ -31,6 +31,12 @@
 (defun {} (&rest plist)
   (alexandria:plist-hash-table plist :test 'equal))
 
+(defun merge-table (parent child)
+  (maphash (lambda (key value)
+             (setf (gethash key child) value))
+           parent)
+  child)
+
 (defun buffer-language-id (buffer)
   (declare (ignore buffer))
   *language-id*)
@@ -45,22 +51,42 @@
   (setf (gethash buffer (workspace-file-version-table (buffer-workspace buffer))) value))
 
 (defun buffer-uri (buffer)
-  (pathname-to-uri (buffer-filename buffer)))
+  (pathname-to-uri (lem:buffer-filename buffer)))
 
 (defun lsp-position (point)
   ({} "line" (1- (lem:line-number-at-point point))
       "character" (lem:point-charpos point)))
 
 (defun lsp-range (start end)
+  (when (lem:point< end start)
+    (rotatef start end))
   ({} "start" (lsp-position start)
       "end" (lsp-position end)))
 
 (defun lsp-location (start end)
-  (when (lem:point< end start)
-    (rotatef start end))
-  (let ((buffer (point-buffer start)))
+  (let ((buffer (lem:point-buffer start)))
     ({} "uri" (buffer-uri buffer)
         "range" (lsp-range start end))))
+
+(defun text-document-identifier (buffer)
+  ({} "uri" (pathname-to-uri (lem:buffer-filename buffer))))
+
+(defun text-document-item (buffer)
+  ({} "uri" (buffer-uri buffer)
+      "languageId" (workspace-language-id (buffer-workspace buffer))
+      "version" (buffer-file-version buffer)
+      "text" (lem:points-to-string (lem:buffer-start-point buffer)
+                                   (lem:buffer-end-point buffer))))
+
+(defun versioned-text-document-identifier (buffer)
+  (let ((text-document-identifier (text-document-identifier buffer))
+        (version (buffer-file-version buffer)))
+    (merge-table text-document-identifier
+                 ({} "version" version))))
+
+(defun text-document-position-params (point)
+  ({} "textDocument" (text-document-identifier (lem:point-buffer point))
+      "position" (lsp-position point)))
 
 (defun workspace-client-capabilities ()
   ({} "applyEdit" 'yason:false
@@ -149,22 +175,10 @@
 (define-response-method |window/logMessage| (|type| |message|)
   (format *log-stream* "~A: ~A" |type| |message|))
 
-(defun text-document-item (buffer)
-  ({} "uri" (pathname-to-uri (lem:buffer-filename buffer))
-      "languageId" (workspace-language-id (buffer-workspace buffer))
-      "version" (buffer-file-version buffer)
-      "text" (lem:points-to-string (lem:buffer-start-point buffer) (lem:buffer-end-point buffer))))
-
 (defun text-document-did-open (buffer)
   (jsonrpc:notify (workspace-connection (buffer-workspace buffer))
                   "textDocument/didOpen"
                   ({} "textDocument" (text-document-item buffer))))
-
-(defun versioned-text-document-identifier (buffer)
-  (let* ((workspace (buffer-workspace buffer))
-         (version (gethash buffer (workspace-file-version-table workspace))))
-    ({} "version" version
-        "uri"  (pathname-to-uri (lem:buffer-filename buffer)))))
 
 (defun text-document-did-change (workspace buffer changes)
   (jsonrpc:notify (workspace-connection workspace)
@@ -195,9 +209,6 @@
     (text-document-did-change (buffer-workspace buffer)
                               buffer
                               (list (text-document-content-change-event point arg)))))
-
-(defun text-document-position-params ()
-  ({} "textDocument" (text-document-identifier)))
 
 (defun initialize-hooks (buffer)
   (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) #'on-change))

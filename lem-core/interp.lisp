@@ -62,13 +62,13 @@
     (push (cons flag t) *curr-flags*)))
 
 (defun call-command (command-name arg)
-  (run-hooks *pre-command-hook*)
+  (run-hooks *pre-command-hook* command-name)
   (prog1 (let ((cmd (get-command command-name)))
            (if cmd
                (funcall cmd arg)
                (editor-error "~A: command not found" command-name)))
     (buffer-undo-boundary)
-    (run-hooks *post-command-hook*)))
+    (run-hooks *post-command-hook* command-name)))
 
 (defmacro do-command-loop ((&key interactive) &body body)
   (alexandria:once-only (interactive)

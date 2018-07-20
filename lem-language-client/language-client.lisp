@@ -5,7 +5,7 @@
 
 (defparameter *log-stream* *error-output*)
 
-(defvar *workspaces* (make-hash-table :test 'equal))
+(defvar *workspaces* '())
 (defvar *response-methods* '())
 
 (defstruct workspace
@@ -26,7 +26,7 @@
       *response-methods*)))
 
 (defun pathname-to-uri (pathname)
-  (format nil "file://~A" pathname))
+  (format nil "file://~A" (truename pathname)))
 
 (defun {} (&rest plist)
   (alexandria:plist-hash-table plist :test 'equal))
@@ -37,12 +37,19 @@
            parent)
   child)
 
+(defun find-workspace (root-path)
+  (find root-path *workspaces*
+        :test #'equal
+        :key #'workspace-root))
+
 (defun buffer-language-id (buffer)
-  (declare (ignore buffer))
-  *language-id*)
+  (lem:mode-name (lem:buffer-major-mode buffer)))
 
 (defun buffer-workspace (buffer)
-  (gethash (buffer-language-id buffer) *workspaces*))
+  (lem:buffer-value buffer 'workspace))
+
+(defun (setf buffer-workspace) (workspace buffer)
+  (setf (lem:buffer-value buffer 'workspace) workspace))
 
 (defun buffer-file-version (buffer)
   (gethash buffer (workspace-file-version-table (buffer-workspace buffer)) 0))
@@ -170,7 +177,8 @@
   (lem:message "~A" |message|))
 
 (define-response-method |window/showMessageRequest| (|type| |message|)
-  (|window/showMessage| |type| |message|))
+  (declare (ignore |type|))
+  (lem:message "~A" |message|))
 
 (define-response-method |window/logMessage| (|type| |message|)
   (format *log-stream* "~A: ~A" |type| |message|))
@@ -203,6 +211,12 @@
                "rangeLength" (lem:count-characters end point)
                "text" "")))))))
 
+(defun hover (point)
+  (let ((workspace (buffer-workspace (lem:point-buffer point))))
+    (jsonrpc:call (workspace-connection workspace)
+                  "textDocument/hover"
+                  (text-document-position-params point))))
+
 (defun on-change (point arg)
   (let ((buffer (lem:point-buffer point)))
     (incf (buffer-file-version buffer))
@@ -213,17 +227,25 @@
 (defun initialize-hooks (buffer)
   (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) #'on-change))
 
-(defun start ()
-  (let* ((connection (jsonrpc:make-client))
-         (workspace (make-workspace :connection connection
-                                    :root *root-path*
-                                    :language-id *language-id*)))
-    (setf (gethash *language-id* *workspaces*) workspace)
-    (dolist (response-method *response-methods*)
-      (jsonrpc:expose connection (string response-method) response-method))
-    (jsonrpc:client-connect (workspace-connection workspace)
-                            :mode :tcp
-                            :port 4389)
-    (initialize workspace)
-    (initialized workspace)
-    workspace))
+(defun start (buffer)
+  (let* ((root-path *root-path*)
+         (workspace (find-workspace root-path)))
+    (cond
+      (workspace
+       (setf (buffer-workspace buffer) workspace))
+      (t
+       (let* ((connection (jsonrpc:make-client))
+              (workspace (make-workspace :connection connection
+                                         :root root-path
+                                         :language-id *language-id*)))
+         (push workspace *workspaces*)
+         (setf (buffer-workspace buffer) workspace)
+         (dolist (response-method *response-methods*)
+           (jsonrpc:expose connection (string response-method) response-method))
+         (jsonrpc:client-connect (workspace-connection workspace)
+                                 :mode :tcp
+                                 :port 4389)
+         (initialize workspace)
+         (initialized workspace)
+         workspace))))
+  (text-document-did-open buffer))

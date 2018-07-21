@@ -188,8 +188,8 @@
                   "textDocument/didOpen"
                   ({} "textDocument" (text-document-item buffer))))
 
-(defun text-document-did-change (workspace buffer changes)
-  (jsonrpc:notify (workspace-connection workspace)
+(defun text-document-did-change (buffer changes)
+  (jsonrpc:notify (workspace-connection (buffer-workspace buffer))
                   "textDocument/didChange"
                   ({} "textDocument" (versioned-text-document-identifier buffer)
                       "contentChanges" changes)))
@@ -238,8 +238,7 @@
 (defun on-change (point arg)
   (let ((buffer (lem:point-buffer point)))
     (incf (buffer-file-version buffer))
-    (text-document-did-change (buffer-workspace buffer)
-                              buffer
+    (text-document-did-change buffer
                               (list (text-document-content-change-event
                                      point
                                      (if (characterp arg)

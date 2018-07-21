@@ -6,7 +6,7 @@
 
 (defun scan-var/val (str start)
   (multiple-value-bind (start end reg-starts reg-ends)
-      (ppcre:scan "([a-zA-Z0-9-_]+):\\s*" str :start start)
+      (ppcre:scan "\\s*([a-zA-Z0-9-_]+)\\s*:\\s*" str :start start)
     (when start
       (let ((var (subseq str
                          (aref reg-starts 0)

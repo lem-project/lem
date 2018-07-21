@@ -211,21 +211,43 @@
                "rangeLength" (lem:count-characters end point)
                "text" "")))))))
 
+(defun hover-contents-to-string (contents)
+  (typecase contents
+    (string contents)
+    (list
+     (with-output-to-string (out)
+       (dolist (c contents)
+         (write-string (hover-contents-to-string c) out)
+         (terpri out))))
+    (hash-table
+     (gethash "value" contents ""))
+    (otherwise
+     "")))
+
 (defun hover (point)
   (let ((workspace (buffer-workspace (lem:point-buffer point))))
-    (jsonrpc:call (workspace-connection workspace)
-                  "textDocument/hover"
-                  (text-document-position-params point))))
+    (handler-case
+        (let ((hover (jsonrpc:call (workspace-connection workspace)
+                                   "textDocument/hover"
+                                   (text-document-position-params point))))
+          (let ((contents (gethash "contents" hover)))
+            (hover-contents-to-string contents)))
+      (jsonrpc:jsonrpc-error (e)
+        (jsonrpc:jsonrpc-error-message e)))))
 
 (defun on-change (point arg)
   (let ((buffer (lem:point-buffer point)))
     (incf (buffer-file-version buffer))
     (text-document-did-change (buffer-workspace buffer)
                               buffer
-                              (list (text-document-content-change-event point arg)))))
+                              (list (text-document-content-change-event
+                                     point
+                                     (if (characterp arg)
+                                         (string arg)
+                                         arg))))))
 
 (defun initialize-hooks (buffer)
-  (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) #'on-change))
+  (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) 'on-change))
 
 (defun start (buffer)
   (let* ((root-path *root-path*)
@@ -249,7 +271,8 @@
          (initialized workspace)
          workspace))))
   (text-document-did-open buffer)
-  (initialize-hooks buffer))
+  (initialize-hooks buffer)
+  (values))
 
 (defun wrap-text-1 (str width)
   (setq str (concatenate 'string str " "))
@@ -268,20 +291,6 @@
 (defun wrap-text (str width)
   (format nil "~{~A~^~%~}" (wrap-text-1 str width)))
 
-(defun hover-contents-to-string (contents)
-  (typecase contents
-    (string contents)
-    (list
-     (with-output-to-string (out)
-       (dolist (c contents)
-         (write-string (hover-contents-to-string c) out)
-         (terpri out))))
-    (hash-table
-     (gethash "value" contents ""))
-    (otherwise
-     "")))
-
 (lem:define-command lsp-hover () ()
-  (alexandria:when-let ((hover (hover (lem:current-point))))
-    (let ((contents (gethash "contents" hover)))
-      (lem:display-popup-message (wrap-text (hover-contents-to-string contents) 80)))))
+  (alexandria:when-let ((message (hover (lem:current-point))))
+    (lem:display-popup-message (wrap-text message 80))))

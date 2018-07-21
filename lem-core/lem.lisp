@@ -70,7 +70,7 @@
                   (scan-file-property-list buffer)
                   (syntax-scan-buffer buffer))
                 5000)
-      (add-hook *before-save-hook*
+      (add-hook (variable-value 'before-save-hook :global)
                 (lambda (buffer)
                   (scan-file-property-list buffer)))
       (start-idle-timer 100 t

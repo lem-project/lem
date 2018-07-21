@@ -1,8 +1,8 @@
 (in-package :lem-base)
 
 (export '(*find-file-hook*
-          *before-save-hook*
-          *after-save-hook*
+          before-save-hook
+          after-save-hook
           *external-format-function*
           *find-directory-function*
           insert-file-contents
@@ -13,8 +13,9 @@
           changed-disk-p))
 
 (defvar *find-file-hook* '())
-(defvar *before-save-hook* '())
-(defvar *after-save-hook* '())
+
+(define-editor-variable before-save-hook '())
+(define-editor-variable after-save-hook '())
 
 (defvar *external-format-function* nil)
 (defvar *find-directory-function* nil)
@@ -114,13 +115,26 @@
                    buffer))
              :lf)))))
 
+(defun run-before-save-hooks (buffer)
+  (alexandria:when-let ((hooks (variable-value 'before-save-hook :buffer buffer)))
+    (run-hooks hooks buffer))
+  (alexandria:when-let ((hooks (variable-value 'before-save-hook :global buffer)))
+    (run-hooks hooks buffer)))
+
+(defun run-after-save-hooks (buffer)
+  (alexandria:when-let ((hooks (variable-value 'after-save-hook :buffer buffer)))
+    (run-hooks hooks buffer))
+  (alexandria:when-let ((hooks (variable-value 'after-save-hook :global buffer)))
+    (run-hooks hooks buffer)))
+
+(defun call-with-write-hook (buffer function)
+  (run-before-save-hooks buffer)
+  (funcall function)
+  (update-changed-disk-date buffer)
+  (run-after-save-hooks buffer))
+
 (defmacro with-write-hook (buffer &body body)
-  (alexandria:once-only (buffer)
-    `(progn
-       (run-hooks *before-save-hook* ,buffer)
-       ,@body
-       (update-changed-disk-date ,buffer)
-       (run-hooks *after-save-hook* ,buffer))))
+  `(call-with-write-hook ,buffer (lambda () ,@body)))
 
 (defun write-to-file (buffer filename)
   (with-write-hook buffer

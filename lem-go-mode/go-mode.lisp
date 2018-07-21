@@ -41,6 +41,7 @@
   (setf (variable-value 'find-definitions-function) 'find-definitions)
   (setf (variable-value 'completion-function) 'go-completion)
   (setf (variable-value 'idle-function) 'go-idle-function)
+  (add-hook (variable-value 'after-save-hook :buffer (current-buffer)) 'goflymake)
   (run-hooks *go-mode-hook*))
 
 (define-key *go-mode-keymap* "}" 'go-electric-close)
@@ -321,7 +322,5 @@
 
 (defun go-idle-function ()
   (goflymake-message))
-
-(add-hook *after-save-hook* 'goflymake)
 
 (pushnew (cons "\\.go$" 'go-mode) *auto-mode-alist* :test #'equal)

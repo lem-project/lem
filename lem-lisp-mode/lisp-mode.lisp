@@ -633,20 +633,21 @@
     (lisp-eval-async `(,expander ,(form-string-at-point))
                      (lambda (string)
                        (let ((buffer (make-buffer "*lisp-macroexpand*")))
-                         (unless self (erase-buffer buffer))
-                         (change-buffer-mode buffer 'lisp-mode)
-                         (setf (buffer-package buffer) orig-package-name)
-                         (when self
-                           (move-point (current-point) p)
-                           (kill-sexp))
-                         (insert-string (buffer-point buffer)
-                                        string)
-                         (indent-region (buffer-start-point buffer)
-                                        (buffer-end-point buffer))
-                         (with-pop-up-typeout-window (s buffer)
-                           (declare (ignore s)))
-                         (when self
-                           (move-point (buffer-point buffer) p)))))))
+                         (with-buffer-read-only buffer nil
+                           (unless self (erase-buffer buffer))
+                           (change-buffer-mode buffer 'lisp-mode)
+                           (setf (buffer-package buffer) orig-package-name)
+                           (when self
+                             (move-point (current-point) p)
+                             (kill-sexp))
+                           (insert-string (buffer-point buffer)
+                                          string)
+                           (indent-region (buffer-start-point buffer)
+                                          (buffer-end-point buffer))
+                           (with-pop-up-typeout-window (s buffer)
+                             (declare (ignore s)))
+                           (when self
+                             (move-point (buffer-point buffer) p))))))))
 
 (define-command lisp-macroexpand () ()
   (check-connection)

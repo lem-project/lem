@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(*pre-command-hook*
+(export '(*this-command*
+          *pre-command-hook*
           *post-command-hook*
           *exit-editor-hook*
           interactive-p
@@ -9,6 +10,7 @@
           pop-up-backtrace
           call-background-job))
 
+(defvar *this-command* nil)
 (defvar *pre-command-hook* '())
 (defvar *post-command-hook* '())
 (defvar *exit-editor-hook* '())
@@ -61,14 +63,14 @@
     (push (cons flag t) *last-flags*)
     (push (cons flag t) *curr-flags*)))
 
-(defun call-command (command-name arg)
-  (run-hooks *pre-command-hook* command-name)
-  (prog1 (let ((cmd (get-command command-name)))
+(defun call-command (*this-command* arg)
+  (run-hooks *pre-command-hook*)
+  (prog1 (let ((cmd (get-command *this-command*)))
            (if cmd
                (funcall cmd arg)
-               (editor-error "~A: command not found" command-name)))
+               (editor-error "~A: command not found" *this-command*)))
     (buffer-undo-boundary)
-    (run-hooks *post-command-hook* command-name)))
+    (run-hooks *post-command-hook*)))
 
 (defmacro do-command-loop ((&key interactive) &body body)
   (alexandria:once-only (interactive)

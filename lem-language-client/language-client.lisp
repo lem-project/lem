@@ -35,6 +35,17 @@
 (defun {} (&rest plist)
   (alexandria:plist-hash-table plist :test 'equal))
 
+(defun -> (table &rest keys)
+  (loop :for k* :on keys
+        :for k := (first k*)
+        :do (if (rest k*)
+                (progn
+                  (setf table (gethash k table))
+                  (unless (hash-table-p table)
+                    (return nil)))
+                (setf table (gethash k table)))
+        :finally (return table)))
+
 (defun merge-table (parent child)
   (maphash (lambda (key value)
              (setf (gethash key child) value))
@@ -61,6 +72,10 @@
 (defun (setf buffer-file-version) (value buffer)
   (setf (gethash buffer (workspace-file-version-table (buffer-workspace buffer))) value))
 
+(defun buffer-text (buffer)
+  (lem:points-to-string (lem:buffer-start buffer)
+                        (lem:buffer-end buffer)))
+
 (defun buffer-uri (buffer)
   (pathname-to-uri (lem:buffer-filename buffer)))
 
@@ -86,8 +101,7 @@
   ({} "uri" (buffer-uri buffer)
       "languageId" (workspace-language-id (buffer-workspace buffer))
       "version" (buffer-file-version buffer)
-      "text" (lem:points-to-string (lem:buffer-start-point buffer)
-                                   (lem:buffer-end-point buffer))))
+      "text" (buffer-text buffer)))
 
 (defun versioned-text-document-identifier (buffer)
   (let ((text-document-identifier (text-document-identifier buffer))
@@ -198,18 +212,6 @@
                   ({} "textDocument" (versioned-text-document-identifier buffer)
                       "contentChanges" changes)))
 
-(defun text-document-will-save (buffer &optional (reason |TextDocumentSaveReason.Manual|))
-  (jsonrpc:notify (workspace-connection (buffer-workspace buffer))
-                  "textDocument/willSave"
-                  ({} "textDocument"
-                      "reason" reason)))
-
-(defun text-document-will-save-wait-until (buffer &optional (reason |TextDocumentSaveReason.Manual|))
-  (jsonrpc:notify (workspace-connection (buffer-workspace buffer))
-                  "textDocument/willSaveWaitUntil"
-                  ({} "textDocument"
-                      "reason" reason)))
-
 (defun text-document-content-change-event (point string-or-number)
   (let ((start-position (lsp-position point)))
     (etypecase string-or-number
@@ -226,6 +228,27 @@
                            "end" end-position)
                "rangeLength" (lem:count-characters end point)
                "text" "")))))))
+
+(defun text-document-will-save (buffer &optional (reason |TextDocumentSaveReason.Manual|))
+  (jsonrpc:notify (workspace-connection (buffer-workspace buffer))
+                  "textDocument/willSave"
+                  ({} "textDocument"
+                      "reason" reason)))
+
+(defun text-document-will-save-wait-until (buffer &optional (reason |TextDocumentSaveReason.Manual|))
+  (let ((workspace (buffer-workspace buffer)))
+    (jsonrpc:notify (workspace-connection workspace)
+                    "textDocument/willSaveWaitUntil"
+                    ({} "textDocument"
+                        "reason" reason))))
+
+(defun text-document-did-save (buffer)
+  (jsonrpc:notify (workspace-connection (buffer-workspace buffer))
+                  "textDocument/didSave"
+                  ({} "textDocument" (text-document-identifier buffer)
+                      #|"text" (buffer-text buffer)|#)))
+
+(defun text-document-did-close (buffer))
 
 (defun hover-contents-to-string (contents)
   (typecase contents

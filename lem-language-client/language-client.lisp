@@ -5,6 +5,10 @@
 
 (defparameter *log-stream* *error-output*)
 
+(defparameter |TextDocumentSaveReason.Manual| 1)
+(defparameter |TextDocumentSaveReason.AfterDelay| 2)
+(defparameter |TextDocumentSaveReason.FocusOut| 3)
+
 (defvar *workspaces* '())
 (defvar *response-methods* '())
 
@@ -194,6 +198,18 @@
                   ({} "textDocument" (versioned-text-document-identifier buffer)
                       "contentChanges" changes)))
 
+(defun text-document-will-save (buffer &optional (reason |TextDocumentSaveReason.Manual|))
+  (jsonrpc:notify (workspace-connection (buffer-workspace buffer))
+                  "textDocument/willSave"
+                  ({} "textDocument"
+                      "reason" reason)))
+
+(defun text-document-will-save-wait-until (buffer &optional (reason |TextDocumentSaveReason.Manual|))
+  (jsonrpc:notify (workspace-connection (buffer-workspace buffer))
+                  "textDocument/willSaveWaitUntil"
+                  ({} "textDocument"
+                      "reason" reason)))
+
 (defun text-document-content-change-event (point string-or-number)
   (let ((start-position (lsp-position point)))
     (etypecase string-or-number
@@ -246,7 +262,8 @@
                                          arg))))))
 
 (defun initialize-hooks (buffer)
-  (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) 'on-change))
+  (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) 'on-change)
+  (lem:add-hook (lem:variable-value 'lem:before-save-hook :buffer buffer) 'text-document-will-save))
 
 (defun start (buffer)
   (let* ((root-path *root-path*)

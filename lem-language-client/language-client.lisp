@@ -248,7 +248,15 @@
                   ({} "textDocument" (text-document-identifier buffer)
                       #|"text" (buffer-text buffer)|#)))
 
-(defun text-document-did-close (buffer))
+(defun text-document-did-close (buffer)
+  (let* ((workspace (buffer-workspace buffer))
+         (file-version-table (workspace-file-version-table workspace)))
+    (remhash buffer file-version-table)
+    (jsonrpc:notify (workspace-connection workspace)
+                    "textDocument/didClose"
+                    ({} "textDocument" (text-document-identifier buffer)))
+    (when (zerop (hash-table-count file-version-table))
+      (shutdown workspace))))
 
 (defun hover-contents-to-string (contents)
   (typecase contents
@@ -286,7 +294,9 @@
 
 (defun initialize-hooks (buffer)
   (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) 'on-change)
-  (lem:add-hook (lem:variable-value 'lem:before-save-hook :buffer buffer) 'text-document-will-save))
+  ;(lem:add-hook (lem:variable-value 'lem:before-save-hook :buffer buffer) 'text-document-will-save)
+  (lem:add-hook (lem:variable-value 'lem:after-save-hook :buffer buffer) 'text-document-did-save)
+  (lem:add-hook (lem:variable-value 'lem:kill-buffer-hook :buffer buffer) 'text-document-did-close))
 
 (defun start (buffer)
   (let* ((root-path *root-path*)

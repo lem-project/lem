@@ -113,6 +113,7 @@
 
 (defun exit-editor (&optional report)
   (run-hooks *exit-editor-hook*)
+  (mapc #'disable-minor-mode *global-minor-mode-list*)
   (throw +exit-tag+ report))
 
 (defun call-background-job (function cont)

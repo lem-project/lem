@@ -250,10 +250,20 @@
                  (charms/ll:timeout 100)
                  (let ((code (prog1 (charms/ll:getch)
                                (charms/ll:timeout -1))))
-                   (if (= code -1)
-                       (get-key-from-name "escape")
-                       (let ((key (get-key code)))
-                         (make-key :meta t :sym (key-sym key) :ctrl (key-ctrl key))))))
+                   (cond ((= code -1)
+                          (get-key-from-name "escape"))
+                         ((= code #.(char-code #\[))
+                          (if (= (prog1 (charms/ll:getch)
+                                   (charms/ll:timeout -1))
+                                 #.(char-code #\<))
+                              ;;sgr(1006)
+                              (uiop:symbol-call :lem-mouse-sgr1006 :parse-mouse-event)
+                              (get-key-from-name "escape"))) ;; [tbd] unknown escape sequence
+                         (t
+                          (let ((key (get-key code)))
+                            (make-key :meta t
+                                      :sym (key-sym key)
+                                      :ctrl (key-ctrl key)))))))
                 (t
                  (get-key code))))))))
 

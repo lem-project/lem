@@ -8,14 +8,13 @@
 
 (defvar *c-syntax-table*
   (let ((table (make-syntax-table
-                :space-chars '(#\space #\tab #\newline)
+                :space-chars '(#\space #\tab #\newline #\, #\; #\= #\& #\|)
                 :symbol-chars '(#\_)
                 :paren-pairs '((#\( . #\))
                                (#\{ . #\})
                                (#\[ . #\]))
                 :string-quote-chars '(#\" #\' #\`)
-                :expr-prefix-chars '(#\,)
-                :expr-suffix-chars '(#\;)
+                :expr-prefix-chars '(#\- #\+ #\*)
                 :line-comment-string "//"
                 :block-comment-pairs '(("/*" . "*/"))))
         (tmlanguage (lem-c-mode.grammer:make-tmlanguage-c)))
@@ -28,7 +27,7 @@
      :syntax-table *c-syntax-table*)
   (setf (variable-value 'enable-syntax-highlight) t)
   (setf (variable-value 'calc-indent-function) 'calc-indent)
-  (setf (variable-value 'indent-tabs-mode) t)
+  (setf (variable-value 'indent-tabs-mode) nil)
   (setf (variable-value 'beginning-of-defun-function) 'c-beginning-of-defun)
   (setf (variable-value 'end-of-defun-function) 'c-end-of-defun)
   (setf (variable-value 'line-comment) "//")
@@ -39,10 +38,14 @@
 
 (define-key *c-mode-keymap* "}" 'c-electric-brace)
 (define-key *c-mode-keymap* "C-c @" 'lem.gtags:gtags-definition-list)
+(define-key *c-mode-keymap* "M-C-q" 'c-indent-exp)
 
 (define-command c-electric-brace () ()
   (insert-character (current-point) #\})
   (indent))
+
+(define-command c-indent-exp () ()
+  (lem-lisp-mode:lisp-indent-sexp))
 
 (defun c-beginning-of-defun (point n)
   (loop :repeat n :do (search-backward-regexp point "^\\w[^=(]*")))
@@ -199,9 +202,12 @@
 
 (defun calc-indent (point)
   (cond
-    ((in-string-p point)
-     (+ (back-to-indentation point)
-        (variable-value 'tab-width :default point)))
+    ((in-string-or-comment-p point)
+     (with-point ((p point))
+       (back-to-indentation p)
+       (if (in-string-or-comment-p p)
+         (point-column p)
+         (calc-indent p))))
     ((with-point ((p point))
        (when (maybe-beginning-of-comment p)
          (if (eql #\* (character-at (back-to-indentation point)))

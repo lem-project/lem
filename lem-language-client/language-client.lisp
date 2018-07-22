@@ -323,23 +323,6 @@
   (initialize-hooks buffer)
   (values))
 
-(defun wrap-text-1 (str width)
-  (setq str (concatenate 'string str " "))
-  (do* ((len (length str))
-        (lines nil)
-        (begin-curr-line 0)
-        (prev-space 0 pos-space)
-        (pos-space (position #\Space str)
-                   (when (< (1+ prev-space) len)
-                     (position #\Space str :start (1+ prev-space)))))
-      ((null pos-space) (progn (push (subseq str begin-curr-line (1- len)) lines) (nreverse lines)))
-    (when (> (- pos-space begin-curr-line) width)
-      (push (subseq str begin-curr-line prev-space) lines)
-      (setq begin-curr-line (1+ prev-space)))))
-
-(defun wrap-text (str width)
-  (format nil "~{~A~^~%~}" (wrap-text-1 str width)))
-
 (lem:define-command lsp-hover () ()
   (alexandria:when-let ((message (hover (lem:current-point))))
     (lem:display-popup-message (wrap-text message 80))))

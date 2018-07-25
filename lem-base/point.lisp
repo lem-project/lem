@@ -65,7 +65,8 @@
 
 (defmethod print-object ((object point) stream)
   (print-unreadable-object (object stream :identity t)
-    (format stream "POINT ~A ~S"
+    (format stream "POINT (~D, ~D) ~S"
+            (point-linum object)
             (point-charpos object)
             (line-str (point-line object)))))
 

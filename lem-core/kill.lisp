@@ -16,15 +16,16 @@
 (defvar *kill-new-flag* t)
 (defvar *kill-before-p* nil)
 
-(defun kill-append (string before-p)
+(defun kill-append (string before-p options)
   (setf (car *kill-ring*)
-        (if before-p
-            (concatenate 'string
-                         string
-                         (car *kill-ring*))
-            (concatenate 'string
-                         (car *kill-ring*)
-                         string))))
+        (cons (if before-p
+                  (concatenate 'string
+                               string
+                               (first (car *kill-ring*)))
+                  (concatenate 'string
+                               (first (car *kill-ring*))
+                               string))
+              options)))
 
 (defvar *clipboard-newer-than-kill-ring-p* nil)
 (defvar *kill-ring-newer-than-clipboard-p* nil)
@@ -54,19 +55,19 @@
         (setq *clipboard-newer-than-kill-ring-p* nil
               *kill-ring-newer-than-clipboard-p* nil)))))
 
-(defun kill-push (string)
+(defun kill-push (string &rest options)
   (setq *clipboard-newer-than-kill-ring-p* nil
         *kill-ring-newer-than-clipboard-p* t)
   (cond
     (*kill-new-flag*
-     (push string *kill-ring*)
+     (push (cons string options) *kill-ring*)
      (when (nthcdr *kill-ring-max* *kill-ring*)
        (setq *kill-ring*
              (subseq *kill-ring* 0 *kill-ring-max*)))
      (setq *kill-ring-yank-ptr* *kill-ring*)
      (setq *kill-new-flag* nil))
     (t
-     (kill-append string *kill-before-p*)))
+     (kill-append string *kill-before-p* options)))
   t)
 
 (defun current-kill-ring ()
@@ -80,7 +81,7 @@
                 *kill-ring*))
        (n n (1- n)))
       ((>= 1 n)
-       (car ptr))))
+       (apply #'values (car ptr)))))
 
 (defun kill-ring-rotate ()
   (setf *kill-ring-yank-ptr*
@@ -88,10 +89,10 @@
             *kill-ring*)))
 
 (defun kill-ring-first-string ()
-  (car *kill-ring-yank-ptr*))
+  (apply #'values (car *kill-ring-yank-ptr*)))
 
 (defun kill-ring-nth-string (n)
-  (kill-ring-nth n))
+  (apply #'values (kill-ring-nth n)))
 
 (defun kill-ring-new ()
   (setf *kill-new-flag* t))

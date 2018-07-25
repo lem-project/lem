@@ -11,10 +11,6 @@
 (define-vi-state ex (:keymap *ex-keymap*))
 
 (define-key *ex-keymap* "C-m" 'minibuffer-read-line-execute)
-(define-key *ex-keymap* "C-i" 'ex-complete)
-
-(define-command ex-complete () ()
-  )
 
 (define-command vi-ex () ()
   (let ((directory (lem:buffer-directory)))

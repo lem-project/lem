@@ -76,7 +76,10 @@
               :for pathname :in (directory-files input-pathname)
               :for namestr := (namestring pathname)
               :append
-                 (completion (enough-namestring namestr input-directory)
+                 (completion (let ((str (enough-namestring namestr input-directory)))
+                               (if (uiop:directory-pathname-p str)
+                                   (or (ignore-errors (namestring (fad:pathname-as-file str))) "")
+                                   str))
                              files
                              :test test-fn
                              :separator "-."

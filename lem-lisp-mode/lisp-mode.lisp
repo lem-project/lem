@@ -62,6 +62,7 @@
 (define-key *lisp-mode-keymap* "C-c C-z" 'lisp-switch-to-repl-buffer)
 (define-key *lisp-mode-keymap* "C-c z" 'lisp-switch-to-repl-buffer)
 (define-key *lisp-mode-keymap* "C-c C-b" 'lisp-connection-list)
+(define-key *lisp-mode-keymap* "C-c C-g" 'lisp-interrupt)
 
 (defun change-current-connection (conn)
   (when *connection*
@@ -356,6 +357,11 @@
            (lem.listener-mode:listener-reset-prompt (repl-buffer))))
         (t
          (setf (buffer-value (current-buffer) "package") package-name))))
+
+(define-command lisp-interrupt () ()
+  (send-message-string
+   *connection*
+   (format nil "(:emacs-interrupt ~A)" (current-swank-thread))))
 
 (defun prompt-for-sexp (string &optional initial)
   (prompt-for-line string

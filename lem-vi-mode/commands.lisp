@@ -193,6 +193,7 @@
 (define-command vi-delete-next-char (&optional (n 1)) ("p")
   (unless (empty-line (current-point))
     (delete-next-char n)
+    (kill-append "" nil '(:vi-nolf))
     (fall-within-line (current-point))))
 
 (define-command vi-delete-previous-char (&optional (n 1)) ("p")
@@ -298,8 +299,17 @@
                  (move-point (current-point) start))))))))
 
 (define-command vi-paste-after () ()
-  (insert-character (line-end (current-point)) #\newline)
-  (yank))
+  (multiple-value-bind (string type)
+      (lem::current-kill-ring)
+    (declare (ignore string))
+    (if (eql type :vi-nolf)
+        (progn
+          (character-offset (current-point) 1)
+          (yank)
+          (character-offset (current-point) -1))
+        (progn
+          (insert-character (line-end (current-point)) #\newline)
+          (yank)))))
 
 (define-command vi-paste-before () ()
   (line-start (current-point))

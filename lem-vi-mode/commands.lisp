@@ -198,7 +198,8 @@
 
 (define-command vi-delete-previous-char (&optional (n 1)) ("p")
   (unless (bolp (current-point))
-    (delete-previous-char n)))
+    (delete-previous-char n)
+    (kill-append "" nil '(:vi-nolf))))
 
 (defvar *vi-delete-recursive* nil)
 (let ((tag (gensym)))

@@ -202,9 +202,9 @@
 
 (defvar *css22-at-keywords* 
   '(:sequence
-    :word-boundary
+    (:alternation :word-boundary :whitespace-char-class :start-anchor)
     (:regex "@[^\\s]+")
-    :word-boundary))
+    (:alternation :word-boundary :whitespace-char-class :end-anchor)))
 
 ; TODO ?
 ;; shape

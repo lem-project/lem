@@ -121,15 +121,15 @@
 
 (defun tokens-from-strings (strings)
   `(:sequence
-    (:alternation :word-boundary :whitespace-char-class :start-anchor)
+    (:alternation :word-boundary (:positive-lookbehind :whitespace-char-class) :start-anchor)
     (:alternation ,@(sort (copy-list strings) #'> :key #'length))
-    (:alternation :word-boundary :whitespace-char-class :end-anchor)))
+    (:alternation :word-boundary (:positive-lookahead :whitespace-char-class) :end-anchor)))
 
 (defun tokens-from-regex (&rest regex)
   `(:sequence
-    (:alternation :word-boundary :whitespace-char-class :start-anchor)
+    (:alternation :word-boundary (:positive-lookbehind :whitespace-char-class) :start-anchor)
     ,@regex
-    (:alternation :word-boundary :whitespace-char-class :end-anchor)))
+    (:alternation :word-boundary (:positive-lookahead :whitespace-char-class) :end-anchor)))
 
 (defvar *html5-elements* (tokens-from-strings *html5-element-strings*))
 (defvar *css-pseudo-elements* (tokens-from-strings *css-pseudo-element-strings*))
@@ -202,9 +202,9 @@
 
 (defvar *css22-at-keywords* 
   '(:sequence
-    (:alternation :word-boundary :whitespace-char-class :start-anchor)
+    (:alternation :word-boundary (:positive-lookbehind :whitespace-char-class) :start-anchor)
     (:regex "@[^\\s]+")
-    (:alternation :word-boundary :whitespace-char-class :end-anchor)))
+    (:alternation :word-boundary (:positive-lookahead :whitespace-char-class) :end-anchor)))
 
 ; TODO ?
 ;; shape

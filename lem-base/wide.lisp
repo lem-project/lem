@@ -5,11 +5,17 @@
           wide-char-p
           char-width
           string-width
-          wide-index))
+          wide-index
+          *char-replacement*))
 
 (define-editor-variable tab-width 8)
 
 (defvar *tab-size* 8)
+(defvar *char-replacement* (make-hash-table))
+(setf (gethash #\Nul *char-replacement*) "^@")
+(setf (gethash #\Backspace *char-replacement*) "^H")
+(setf (gethash #\Return *char-replacement*) "^R")
+(setf (gethash #\Rubout *char-replacement*) "^?")
 
 (defun tab-size ()
   *tab-size*)
@@ -60,6 +66,10 @@
   (declare (character c) (fixnum w))
   (cond ((char= c #\tab)
          (+ (* (floor w (tab-size)) (tab-size)) (tab-size)))
+        ((gethash c *char-replacement*)
+         (loop :for c :across (gethash c *char-replacement*)
+               :do (setf w (char-width c w)))
+         w)
         ((or (wide-char-p c) (char<= #.(code-char 0) c #.(code-char 26)))
          (+ w 2))
         (t

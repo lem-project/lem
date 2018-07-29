@@ -185,9 +185,10 @@
                        :while (< x size)
                        :do (setf (aref pool-string (incf i)) #\space)
                            (incf x)))
-                ((char= char #\return)
-                 (setf (aref pool-string (incf i)) #\^) (incf x)
-                 (setf (aref pool-string (incf i)) #\R) (incf x))
+                (#1=(gethash char *char-replacement*)
+                    (loop :for c :across #1#
+                          :do (setf (aref pool-string (incf i)) c
+                                    x (char-width c x))))
                 (t
                  (setf (aref pool-string (incf i)) char)
                  (setf x (char-width char x)))))

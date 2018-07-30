@@ -20,36 +20,40 @@
 (defvar *external-format-function* nil)
 (defvar *find-directory-function* nil)
 
-(defun insert-file-contents (point filename)
-  (let ((external-format :utf-8)
-        (end-of-line :lf))
-    (when *external-format-function*
-      (multiple-value-setq (external-format end-of-line)
-        (funcall *external-format-function* filename)))
-    (with-point ((point point :left-inserting))
-      (with-open-virtual-file (in filename
-                                  :external-format external-format
-                                  :direction :input)
-        (loop
-          (multiple-value-bind (str eof-p)
-              (read-line in nil)
-            (cond
-              (eof-p
-               (when str
-                 (insert-string point str))
-               (return))
-              (t
-               (let ((end nil))
-                 #+sbcl
-                 (when (and (eq end-of-line :crlf)
-                            (< 0 (length str)))
-                   (setf end (1- (length str))))
-                 (insert-string point
-                                (if end
-                                    (subseq str 0 end)
-                                    str))
-                 (insert-character point #\newline))))))))
-    (values external-format end-of-line)))
+(defun %insert-file-contents (external-format in point end-of-line)
+  (loop
+    (multiple-value-bind (str eof-p)
+        (read-line in nil)
+      (cond
+        (eof-p
+         (when str
+           (insert-string point str))
+         (return))
+        (t
+         (let ((end nil))
+           #+sbcl
+           (when (and (eq end-of-line :crlf)
+                      (< 0 (length str)))
+             (setf end (1- (length str))))
+           (insert-string point
+                          (if end
+                              (subseq str 0 end)
+                              str))
+           (insert-character point #\newline)))))))
+
+(defun insert-file-contents (point filename
+                             &key (external-format :utf-8)
+                                  (end-of-line :lf))
+  (when (and *external-format-function*)
+    (multiple-value-setq (external-format end-of-line)
+      (funcall *external-format-function* filename)))
+  (with-point ((point point :left-inserting))
+    (with-open-virtual-file (in filename
+                                :element-type nil
+                                :external-format external-format
+                                :direction :input)
+      (%insert-file-contents external-format in point end-of-line)))
+  (values external-format end-of-line))
 
 (defun find-file-buffer (filename &key temporary (enable-undo-p t))
   (when (pathnamep filename)
@@ -86,34 +90,8 @@
            (values buffer t)))))
 
 (defun write-to-file-1 (buffer filename)
-  (flet ((f (out end-of-line)
-           (with-point ((point (buffer-start-point buffer)))
-             (loop :for eof-p := (end-buffer-p point)
-                   :for str := (line-string point)
-                   :do (princ str out)
-                       (unless eof-p
-                         #+sbcl
-                         (ecase end-of-line
-                           ((:crlf)
-                            (princ #\return out)
-                            (princ #\newline out))
-                           ((:lf)
-                            (princ #\newline out))
-                           ((:cr)
-                            (princ #\return out)))
-                         #-sbcl
-                         (princ #\newline out)
-                         )
-                       (unless (line-offset point 1)
-                         (return))))))
-    (with-open-virtual-file (out filename
-                                 :external-format (first (buffer-external-format buffer))
-                                 :direction :output)
-      (f out
-         (if (buffer-external-format buffer)
-             (cdr (buffer-external-format
-                   buffer))
-             :lf)))))
+  (write-region-to-file (buffer-start-point buffer)
+                        (buffer-end-point buffer) filename))
 
 (defun run-before-save-hooks (buffer)
   (alexandria:when-let ((hooks (variable-value 'before-save-hook :buffer buffer)))
@@ -140,14 +118,35 @@
   (with-write-hook buffer
     (write-to-file-1 buffer filename)))
 
+(defun %write-region-to-file (out end-of-line)
+  (lambda (string eof-p)
+    (princ string out)
+    (unless eof-p
+      #+sbcl
+      (ecase end-of-line
+        ((:crlf)
+         (princ #\return out)
+         (princ #\newline out))
+        ((:lf)
+         (princ #\newline out))
+        ((:cr)
+         (princ #\return out)))
+      #-sbcl
+      (princ #\newline out))))
+
 (defun write-region-to-file (start end filename)
-  (let ((string (points-to-string start end))
-        (buffer (point-buffer start)))
+  (let* ((buffer (point-buffer start))
+         (end-of-line (if (buffer-external-format buffer)
+                          (cdr (buffer-external-format
+                                buffer))
+                          :lf)))
     (with-write-hook buffer
       (with-open-virtual-file (out filename
+                                   :element-type nil
                                    :external-format (first (buffer-external-format buffer))
                                    :direction :output)
-        (write-string string out)))))
+        (map-region start end
+                    (%write-region-to-file out end-of-line))))))
 
 (defun file-write-date* (buffer)
   (if (probe-file (buffer-filename buffer))

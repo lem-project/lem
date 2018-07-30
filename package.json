@@ -1,6 +1,6 @@
 {
   "name": "lem",
-  "version": "1.3",
+  "version": "1.3.0",
   "description": "lem frontend",
   "main": "lem-frontend-electron/index.js",
   "scripts": {

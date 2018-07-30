@@ -233,8 +233,12 @@
                        (*cursor-offset* 0))
                    (catch tag
                      (call-command command nil)
-                     (when (point/= start (current-point))
-                       (kill-region start (current-point))))))))))))
+                     (with-point ((end (current-point)))
+                       (when (point< end start)
+                         (rotatef start end)
+                         (character-offset end 1))
+                       (when (point/= start end)
+                         (kill-region start end))))))))))))
 
 (define-command vi-delete-line () ()
   (cond ((visual-block-p)

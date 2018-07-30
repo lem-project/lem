@@ -299,8 +299,12 @@
                        (*cursor-offset* 0))
                    (catch tag
                      (call-command command n)
-                     (when (point/= start (current-point))
-                       (copy-region start (current-point)))))
+                     (with-point ((end (current-point)))
+                       (when (point< end start)
+                         (rotatef start end)
+                         (character-offset end 1))
+                       (when (point/= start end)
+                         (copy-region start end)))))
                  (move-point (current-point) start))))))))
 
 (define-command vi-paste-after () ()

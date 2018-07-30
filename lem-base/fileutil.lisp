@@ -90,22 +90,23 @@
 
 (defvar *virtual-file-open* nil)
 
-(defun open-virtual-file (filename &key external-format direction)
+(defun open-virtual-file (filename &key external-format direction element-type)
   (apply #'values
          (or (loop :for f :in *virtual-file-open*
-                :for result := (funcall f filename
-                                        :external-format external-format
-                                        :direction direction)
-                :when result
-                :do (return result))
+                   :for result := (funcall f filename
+                                           :external-format external-format
+                                           :element-type element-type
+                                           :direction direction)
+                   :when result
+                   :do (return result))
              (list (apply #'open filename
                           `(:direction ,direction
-                                       ,@(when (eql direction :output)
-                                           '(:if-exists :supersede
-                                             :if-does-not-exist :create))
-                                       ,@(when external-format
-                                           `(:external-format ,external-format))
-                                       :element-type character))))))
+                            ,@(when (eql direction :output)
+                                '(:if-exists :supersede
+                                  :if-does-not-exist :create))
+                            ,@(when external-format
+                                `(:external-format ,external-format))
+                            :element-type ,@(if element-type (list element-type) '(character))))))))
 
 (defmacro with-open-virtual-file ((stream filespec &rest options)
                                   &body body)

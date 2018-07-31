@@ -26,5 +26,6 @@
                (:file "syntax")
                (:file "syntax-parser")
                (:file "tmlanguage")
+               (:file "encodings")
                (:file "file")
                (:file "indent")))

@@ -5,6 +5,7 @@
           after-save-hook
           *external-format-function*
           *find-directory-function*
+          *default-external-format*
           insert-file-contents
           find-file-buffer
           write-to-file
@@ -19,40 +20,46 @@
 
 (defvar *external-format-function* nil)
 (defvar *find-directory-function* nil)
+(defvar *default-external-format* :detect-encoding)
 
-(defun %insert-file-contents (external-format in point end-of-line)
-  (loop
-    (multiple-value-bind (str eof-p)
-        (read-line in nil)
-      (cond
-        (eof-p
-         (when str
-           (insert-string point str))
-         (return))
-        (t
-         (let ((end nil))
-           #+sbcl
-           (when (and (eq end-of-line :crlf)
-                      (< 0 (length str)))
-             (setf end (1- (length str))))
-           (insert-string point
-                          (if end
-                              (subseq str 0 end)
-                              str))
-           (insert-character point #\newline)))))))
+(defun %encoding-read (external-format in point)
+  (let ((end-of-line (cdr external-format)))
+    (loop
+      (multiple-value-bind (str eof-p)
+          (read-line in nil)
+        (cond
+          (eof-p
+           (when str
+             (insert-string point str))
+           (return))
+          (t
+           (let ((end nil))
+             #+sbcl
+             (when (and (eq end-of-line :crlf)
+                        (< 0 (length str)))
+               (setf end (1- (length str))))
+             (insert-string point
+                            (if end
+                                (subseq str 0 end)
+                                str))
+             (insert-character point #\newline))))))))
 
 (defun insert-file-contents (point filename
-                             &key (external-format :utf-8)
+                             &key (external-format *default-external-format*)
                                   (end-of-line :lf))
-  (when (and *external-format-function*)
+  (when (and *external-format-function*
+             (eql external-format :detect-encoding))
     (multiple-value-setq (external-format end-of-line)
       (funcall *external-format-function* filename)))
+  (setf external-format (encoding external-format end-of-line))
   (with-point ((point point :left-inserting))
     (with-open-virtual-file (in filename
-                                :element-type nil
-                                :external-format external-format
+                                :element-type (unless (keywordp external-format) '(unsigned-byte 8))
+                                :external-format (and (keywordp external-format) external-format)
                                 :direction :input)
-      (%insert-file-contents external-format in point end-of-line)))
+      (if (keywordp external-format)
+          (%encoding-read (cons external-format end-of-line) in point)
+          (encoding-read  external-format in #'(lambda (c) (when c (insert-char/point point (code-char c))))))))
   (values external-format end-of-line))
 
 (defun find-file-buffer (filename &key temporary (enable-undo-p t))
@@ -81,7 +88,9 @@
                    (insert-file-contents (buffer-start-point buffer)
                                          filename)
                  (setf (buffer-external-format buffer)
-                       (cons external-format end-of-line))))
+                       (if (keywordp external-format)
+                           (cons external-format end-of-line)
+                           external-format))))
              (buffer-unmark buffer))
            (buffer-start (buffer-point buffer))
            (when enable-undo-p (buffer-enable-undo buffer))
@@ -118,35 +127,52 @@
   (with-write-hook buffer
     (write-to-file-1 buffer filename)))
 
-(defun %write-region-to-file (out end-of-line)
-  (lambda (string eof-p)
-    (princ string out)
-    (unless eof-p
-      #+sbcl
-      (ecase end-of-line
-        ((:crlf)
-         (princ #\return out)
-         (princ #\newline out))
-        ((:lf)
-         (princ #\newline out))
-        ((:cr)
-         (princ #\return out)))
-      #-sbcl
-      (princ #\newline out))))
+(defun %write-region-to-file (external-format out)
+  (let ((end-of-line (cdr external-format)))
+    (lambda (string eof-p)
+      (princ string out)
+      (unless eof-p
+        #+sbcl
+        (case end-of-line
+          ((:crlf)
+           (princ #\return out)
+           (princ #\newline out))
+          ((:lf)
+           (princ #\newline out))
+          ((:cr)
+           (princ #\return out)))
+        #-sbcl
+        (princ #\newline out)))))
+
+(defun %%write-region-to-file (external-format out)
+  (let ((f (encoding-write external-format out))
+        (end-of-line (encoding-end-of-line external-format)))
+    (lambda (string eof-p)
+      (loop :for c :across string
+            :do (funcall f c))
+      (unless eof-p
+        (ecase end-of-line
+          ((:crlf)
+           (funcall f #\return)
+           (funcall f #\newline))
+          ((:lf)
+           (funcall f #\newline))
+          ((:cr)
+           (funcall f #\return)))))))
 
 (defun write-region-to-file (start end filename)
   (let* ((buffer (point-buffer start))
-         (end-of-line (if (buffer-external-format buffer)
-                          (cdr (buffer-external-format
-                                buffer))
-                          :lf)))
+         (external-format (buffer-external-format buffer))
+         (use-internal (or (consp external-format) (null external-format))))
     (with-write-hook buffer
       (with-open-virtual-file (out filename
-                                   :element-type nil
-                                   :external-format (first (buffer-external-format buffer))
+                                   :element-type (unless use-internal '(unsigned-byte 8))
+                                   :external-format (and use-internal (first external-format))
                                    :direction :output)
         (map-region start end
-                    (%write-region-to-file out end-of-line))))))
+                    (if use-internal
+                        (%write-region-to-file  external-format out)
+                        (%%write-region-to-file external-format out)))))))
 
 (defun file-write-date* (buffer)
   (if (probe-file (buffer-filename buffer))

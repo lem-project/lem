@@ -17,6 +17,10 @@
 (setf (gethash #\Return *char-replacement*) "^R")
 (setf (gethash #\Rubout *char-replacement*) "^?")
 
+(loop :for i :from 0 :to #xff
+      :do (setf (gethash (code-char (+ #xe000 i)) *char-replacement*)
+                (format nil "\\~D" i)))
+
 (defun tab-size ()
   *tab-size*)
 

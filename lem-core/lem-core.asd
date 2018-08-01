@@ -10,6 +10,7 @@
                "yason"
                "cl-fad"
                "lem-base"
+               "lem-encodings"
                "lem-lisp-syntax")
   :serial t
   :components ((:file "history")

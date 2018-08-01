@@ -28,9 +28,9 @@
 (define-key *completion-mode-keymap* 'delete-previous-char 'completion-delete-prevous-char)
 
 (define-attribute completion-attribute
-  (t :foreground "blue" :background "white" :reverse-p t))
+  (t :foreground "white" :background "RoyalBlue"))
 (define-attribute non-focus-completion-attribute
-  (t))
+  (t :foreground "black" :background "gray"))
 
 (defvar *completion-restart-function* nil)
 (defvar *last-items* nil)

@@ -10,6 +10,11 @@
 (defvar *focus-attribute* nil)
 (defvar *non-focus-attribute* nil)
 
+(define-attribute popup-menu-attribute
+  (t :foreground "white" :background "RoyalBlue"))
+(define-attribute non-focus-popup-menu-attribute
+  (t :foreground "black" :background "gray"))
+
 (defun redraw-display* ()
   (when (redraw-after-modifying-floating-window (implementation))
     (redraw-display t)))
@@ -107,8 +112,11 @@
   (alexandria:when-let (p (focus-point))
     (text-property-at (line-start p) :item)))
 
-(defmethod lem-if:display-popup-menu (implementation items &key action-callback print-function
-                                                                focus-attribute non-focus-attribute)
+(defmethod lem-if:display-popup-menu (implementation items
+                                      &key action-callback
+                                           print-function
+                                           (focus-attribute 'popup-menu-attribute)
+                                           (non-focus-attribute 'non-focus-popup-menu-attribute))
   (setf *print-function* print-function)
   (setf *action-callback* action-callback)
   (setf *focus-attribute* focus-attribute)

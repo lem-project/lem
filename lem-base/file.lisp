@@ -169,7 +169,7 @@
         (map-region start end
                     (if use-internal
                         (%write-region-to-file (if encoding
-                                                   (encoding-external-format encoding)
+                                                   (encoding-end-of-line encoding)
                                                    :lf)
                                                out)
                         (%%write-region-to-file encoding out)))))))

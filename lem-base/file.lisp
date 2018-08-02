@@ -87,7 +87,7 @@
            (when (probe-file filename)
              (let ((*inhibit-modification-hooks* t))
                (let ((encoding (insert-file-contents (buffer-start-point buffer) filename)))
-                 (setf (buffer-external-format buffer) encoding)))
+                 (setf (buffer-encoding buffer) encoding)))
              (buffer-unmark buffer))
            (buffer-start (buffer-point buffer))
            (when enable-undo-p (buffer-enable-undo buffer))
@@ -158,7 +158,7 @@
 
 (defun write-region-to-file (start end filename)
   (let* ((buffer (point-buffer start))
-         (encoding (buffer-external-format buffer))
+         (encoding (buffer-encoding buffer))
          (use-internal (or (typep encoding 'internal-encoding) (null encoding))))
     (with-write-hook buffer
       (with-open-virtual-file (out filename

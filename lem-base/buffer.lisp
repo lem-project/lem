@@ -119,10 +119,10 @@
    (redo-stack
     :initform nil
     :accessor buffer-redo-stack)
-   (external-format
+   (encoding
     :initform nil
-    :initarg :external-format
-    :accessor buffer-external-format)
+    :initarg :encoding
+    :accessor buffer-encoding)
    (last-write-date
     :initform nil
     :initarg :last-write-date

@@ -127,22 +127,21 @@
   (with-write-hook buffer
     (write-to-file-1 buffer filename)))
 
-(defun %write-region-to-file (external-format out)
-  (let ((end-of-line (cdr external-format)))
-    (lambda (string eof-p)
-      (princ string out)
-      (unless eof-p
-        #+sbcl
-        (case end-of-line
-          ((:crlf)
-           (princ #\return out)
-           (princ #\newline out))
-          ((:lf)
-           (princ #\newline out))
-          ((:cr)
-           (princ #\return out)))
-        #-sbcl
-        (princ #\newline out)))))
+(defun %write-region-to-file (end-of-line out)
+  (lambda (string eof-p)
+    (princ string out)
+    (unless eof-p
+      #+sbcl
+      (case end-of-line
+        ((:crlf)
+         (princ #\return out)
+         (princ #\newline out))
+        ((:lf)
+         (princ #\newline out))
+        ((:cr)
+         (princ #\return out)))
+      #-sbcl
+      (princ #\newline out))))
 
 (defun %%write-region-to-file (external-format out)
   (let ((f (encoding-write external-format out))
@@ -171,7 +170,7 @@
                                    :direction :output)
         (map-region start end
                     (if use-internal
-                        (%write-region-to-file  external-format out)
+                        (%write-region-to-file  (or (cdr external-format) :lf) out)
                         (%%write-region-to-file external-format out)))))))
 
 (defun file-write-date* (buffer)

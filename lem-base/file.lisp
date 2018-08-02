@@ -22,8 +22,8 @@
 (defvar *find-directory-function* nil)
 (defvar *default-external-format* :detect-encoding)
 
-(defun %encoding-read (external-format in point)
-  (let ((end-of-line (cdr external-format)))
+(defun %encoding-read (encoding in point)
+  (let ((end-of-line (encoding-end-of-line encoding)))
     (loop
       (multiple-value-bind (str eof-p)
           (read-line in nil)
@@ -51,16 +51,18 @@
              (eql external-format :detect-encoding))
     (multiple-value-setq (external-format end-of-line)
       (funcall *external-format-function* filename)))
-  (setf external-format (encoding external-format end-of-line))
-  (with-point ((point point :left-inserting))
-    (with-open-virtual-file (in filename
-                                :element-type (unless (keywordp external-format) '(unsigned-byte 8))
-                                :external-format (and (keywordp external-format) external-format)
-                                :direction :input)
-      (if (keywordp external-format)
-          (%encoding-read (cons external-format end-of-line) in point)
-          (encoding-read  external-format in #'(lambda (c) (when c (insert-char/point point (code-char c))))))))
-  (values external-format end-of-line))
+  (let* ((encoding (encoding external-format end-of-line))
+         (use-internal-p (typep encoding 'internal-encoding)))
+    (with-point ((point point :left-inserting))
+      (with-open-virtual-file (in filename
+                                  :element-type (unless use-internal-p
+                                                  '(unsigned-byte 8))
+                                  :external-format (and use-internal-p external-format)
+                                  :direction :input)
+        (if use-internal-p
+            (%encoding-read encoding in point)
+            (encoding-read encoding in #'(lambda (c) (when c (insert-char/point point (code-char c))))))))
+    encoding))
 
 (defun find-file-buffer (filename &key temporary (enable-undo-p t))
   (when (pathnamep filename)
@@ -84,13 +86,8 @@
            (setf (buffer-filename buffer) filename)
            (when (probe-file filename)
              (let ((*inhibit-modification-hooks* t))
-               (multiple-value-bind (external-format end-of-line)
-                   (insert-file-contents (buffer-start-point buffer)
-                                         filename)
-                 (setf (buffer-external-format buffer)
-                       (if (keywordp external-format)
-                           (cons external-format end-of-line)
-                           external-format))))
+               (let ((encoding (insert-file-contents (buffer-start-point buffer) filename)))
+                 (setf (buffer-external-format buffer) encoding)))
              (buffer-unmark buffer))
            (buffer-start (buffer-point buffer))
            (when enable-undo-p (buffer-enable-undo buffer))
@@ -143,9 +140,9 @@
       #-sbcl
       (princ #\newline out))))
 
-(defun %%write-region-to-file (external-format out)
-  (let ((f (encoding-write external-format out))
-        (end-of-line (encoding-end-of-line external-format)))
+(defun %%write-region-to-file (encoding out)
+  (let ((f (encoding-write encoding out))
+        (end-of-line (encoding-end-of-line encoding)))
     (lambda (string eof-p)
       (loop :for c :across string
             :do (funcall f c))
@@ -161,17 +158,21 @@
 
 (defun write-region-to-file (start end filename)
   (let* ((buffer (point-buffer start))
-         (external-format (buffer-external-format buffer))
-         (use-internal (or (consp external-format) (null external-format))))
+         (encoding (buffer-external-format buffer))
+         (use-internal (or (typep encoding 'internal-encoding) (null encoding))))
     (with-write-hook buffer
       (with-open-virtual-file (out filename
                                    :element-type (unless use-internal '(unsigned-byte 8))
-                                   :external-format (and use-internal (first external-format))
+                                   :external-format (if (and use-internal encoding)
+                                                        (encoding-external-format encoding))
                                    :direction :output)
         (map-region start end
                     (if use-internal
-                        (%write-region-to-file  (or (cdr external-format) :lf) out)
-                        (%%write-region-to-file external-format out)))))))
+                        (%write-region-to-file (if encoding
+                                                   (encoding-external-format encoding)
+                                                   :lf)
+                                               out)
+                        (%%write-region-to-file encoding out)))))))
 
 (defun file-write-date* (buffer)
   (if (probe-file (buffer-filename buffer))

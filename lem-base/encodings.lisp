@@ -9,7 +9,12 @@
 (defclass encoding () 
   ((end-of-line
     :initarg :end-of-line
-    :accessor encoding-end-of-line)))
+    :reader encoding-end-of-line)))
+
+(defclass internal-encoding (encoding)
+  ((external-format
+    :initarg :external-format
+    :reader encoding-external-format)))
 
 (defvar *encoding-collections* (make-hash-table :test 'equal))
 
@@ -27,7 +32,7 @@
   (let ((symbol (gethash (string symbol) *encoding-collections* symbol)))
     (assert (symbolp symbol))
     (if (keywordp symbol)
-        symbol
+        (make-instance 'internal-encoding :end-of-line end-of-line :external-format symbol)
         (make-instance symbol :end-of-line end-of-line))))
 
 (defgeneric encoding-read (external-format input output-char))

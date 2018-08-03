@@ -61,7 +61,7 @@
   (write-region-to-file start end filename)
   (message "Wrote ~A" filename))
 
-(define-key *global-keymap* "C-x C-i" 'insert-file)
+(define-key *global-keymap* "C-x Tab" 'insert-file)
 (define-command insert-file (filename) ("fInsert file: ")
   (insert-file-contents (current-point)
                         (expand-file-name filename))

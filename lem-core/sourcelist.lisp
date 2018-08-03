@@ -115,7 +115,7 @@
     (:name "sourcelist"
      :keymap *sourcelist-mode-keymap*))
 
-(define-key *sourcelist-mode-keymap* "C-m" 'sourcelist-jump)
+(define-key *sourcelist-mode-keymap* "Return" 'sourcelist-jump)
 (define-key *sourcelist-mode-keymap* "q" 'quit-window)
 
 (define-command sourcelist-jump () ()

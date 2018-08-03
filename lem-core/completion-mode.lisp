@@ -18,12 +18,12 @@
 
 (define-key *completion-mode-keymap* 'next-line 'completion-next-line)
 (define-key *completion-mode-keymap* "M-n"    'completion-next-line)
-(define-key *completion-mode-keymap* "C-i"    'completion-narrowing-down-or-next-line)
+(define-key *completion-mode-keymap* "Tab"    'completion-narrowing-down-or-next-line)
 (define-key *completion-mode-keymap* 'previous-line 'completion-previous-line)
 (define-key *completion-mode-keymap* "M-p"    'completion-previous-line)
 (define-key *completion-mode-keymap* 'move-to-end-of-buffer 'completion-end-of-buffer)
 (define-key *completion-mode-keymap* 'move-to-beginning-of-buffer 'completion-beginning-of-buffer)
-(define-key *completion-mode-keymap* "C-m"    'completion-select)
+(define-key *completion-mode-keymap* "Return"    'completion-select)
 (define-key *completion-mode-keymap* "Space"    'completion-insert-space-and-cancel)
 (define-key *completion-mode-keymap* 'delete-previous-char 'completion-delete-prevous-char)
 

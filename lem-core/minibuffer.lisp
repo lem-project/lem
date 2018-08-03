@@ -154,8 +154,8 @@
          (return nil))))))
 
 (define-key *minibuf-keymap* "C-j" 'minibuffer-read-line-execute)
-(define-key *minibuf-keymap* "C-m" 'minibuffer-read-line-execute)
-(define-key *minibuf-keymap* "C-i" 'minibuffer-read-line-completion)
+(define-key *minibuf-keymap* "Return" 'minibuffer-read-line-execute)
+(define-key *minibuf-keymap* "Tab" 'minibuffer-read-line-completion)
 (define-key *minibuf-keymap* "M-p" 'minibuffer-read-line-prev-history)
 (define-key *minibuf-keymap* "M-n" 'minibuffer-read-line-next-history)
 (define-key *minibuf-keymap* "C-g" 'minibuf-read-line-break)

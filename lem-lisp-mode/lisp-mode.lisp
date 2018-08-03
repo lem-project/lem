@@ -55,7 +55,7 @@
 (define-key *lisp-mode-keymap* "C-c M-c" 'lisp-remove-notes)
 (define-key *lisp-mode-keymap* "C-c C-k" 'lisp-compile-and-load-file)
 (define-key *lisp-mode-keymap* "C-c C-c" 'lisp-compile-defun)
-(define-key *lisp-mode-keymap* "C-c C-m" 'lisp-macroexpand)
+(define-key *lisp-mode-keymap* "C-c Return" 'lisp-macroexpand)
 (define-key *lisp-mode-keymap* "C-c M-m" 'lisp-macroexpand-all)
 (define-key *lisp-mode-keymap* "C-c C-d C-a" 'lisp-autodoc-with-typeout)
 (define-key *lisp-mode-keymap* "C-c C-d d" 'lisp-describe-symbol)

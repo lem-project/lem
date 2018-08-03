@@ -20,7 +20,7 @@
 
 (define-key *menu-mode-keymap* "q" 'quit-window)
 (define-key *menu-mode-keymap* "d" 'menu-delete)
-(define-key *menu-mode-keymap* "C-m" 'menu-select-this-window)
+(define-key *menu-mode-keymap* "Return" 'menu-select-this-window)
 (define-key *menu-mode-keymap* "C-o" 'menu-select-other-window)
 (define-key *menu-mode-keymap* "o" 'menu-select-switch-other-window)
 (define-key *menu-mode-keymap* "n" 'menu-next-line)

@@ -40,7 +40,7 @@
     (setf (%listener-history)
           (lem.history:make-history))))
 
-(define-key *listener-mode-keymap* "C-m" 'listener-return)
+(define-key *listener-mode-keymap* "Return" 'listener-return)
 (define-key *listener-mode-keymap* "M-p" 'listener-prev-input)
 (define-key *listener-mode-keymap* "M-n" 'listener-next-input)
 (define-key *listener-mode-keymap* "M-r" 'listener-previous-matching-input)

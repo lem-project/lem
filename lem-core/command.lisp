@@ -109,7 +109,7 @@
     (dotimes (_ n t)
       (insert-character (current-point) char 1))))
 
-(define-key *global-keymap* "C-m" 'newline)
+(define-key *global-keymap* "Return" 'newline)
 (define-command newline (&optional (n 1)) ("p")
   (insert-character (current-point) #\newline n))
 

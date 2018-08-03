@@ -5,8 +5,8 @@
      :keymap *lisp-ui-keymap*)
   (setf (buffer-read-only-p (current-buffer)) t))
 
-(define-key *lisp-ui-keymap* "C-m" 'lisp-ui-default-action)
-(define-key *lisp-ui-keymap* "C-i" 'lisp-ui-forward-button)
+(define-key *lisp-ui-keymap* "Return" 'lisp-ui-default-action)
+(define-key *lisp-ui-keymap* "Tab" 'lisp-ui-forward-button)
 (define-key *lisp-ui-keymap* "q" 'quit-window)
 
 (define-command lisp-ui-default-action () ()

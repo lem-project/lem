@@ -203,12 +203,13 @@
 
 (defvar *vi-delete-recursive* nil)
 (let ((tag (gensym)))
-  (define-command vi-delete () ()
+  (define-command vi-delete (&optional (n 1)) ("p")
     (cond (*vi-delete-recursive*
            (move-to-beginning-of-line)
            (with-point ((start (current-point))
                         (end (current-point)))
              (line-start start)
+             (line-offset end (1- n))
              (line-end end)
              (character-offset end 1)
              (kill-region start end))
@@ -232,7 +233,7 @@
                  (let ((*vi-delete-recursive* t)
                        (*cursor-offset* 0))
                    (catch tag
-                     (call-command command nil)
+                     (call-command command n)
                      (with-point ((end (current-point)))
                        (when (point< end start)
                          (rotatef start end)

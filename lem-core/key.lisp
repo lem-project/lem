@@ -52,6 +52,8 @@
                      #\Return)
                     ((string= (key-sym key) "Tab")
                      #\Tab)
+                    ((string= (key-sym key) "Space")
+                     #\Space)
                     ((= 1 (length (key-sym key)))
                      (char (key-sym key) 0)))))
     (when char

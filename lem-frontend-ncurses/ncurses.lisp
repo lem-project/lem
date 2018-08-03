@@ -67,7 +67,7 @@
 (defkeycode "C-]" 29 (make-key :ctrl t :sym "]"))
 (defkeycode "C-^" 30 (make-key :ctrl t :sym "^"))
 (defkeycode "C-_" 31 (make-key :ctrl t :sym "_"))
-(defkeycode "Spc" #x20 (make-key :sym " "))
+(defkeycode "Spc" #x20 (make-key :sym "Space"))
 (defkeycode "[backspace]" #x7F (make-key :sym "Backspace"))
 
 (loop :for code :from #x21 :below #x7F

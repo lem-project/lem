@@ -92,7 +92,7 @@
 (set-key-sym "PageDown")
 (set-key-sym "PageUp")
 (set-key-sym "End")
-(set-key-sym "Space" " ")
+(set-key-sym "Space")
 
 (defun parse-keyspec (string)
   (labels ((fail ()
@@ -176,6 +176,7 @@
          (sym (key-sym key)))
     (cond ((match-key key :sym "Return") #\Return)
           ((match-key key :sym "Tab") #\Tab)
+          ((match-key key :sym "Space") #\Space)
           ((and (insertion-key-sym-p sym)
                 (match-key key :sym sym))
            (char sym 0)))))

@@ -442,6 +442,7 @@
       (editor-error "Redo Error"))))
 
 (define-key *global-keymap* "C-@" 'mark-set)
+(define-key *global-keymap* "C-Space" 'mark-set)
 (define-command mark-set () ()
   (run-hooks *set-location-hook* (current-point))
   (set-current-mark (current-point))

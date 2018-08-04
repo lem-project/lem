@@ -153,3 +153,7 @@
 
 (defmethod lem-if:clipboard-copy ((implementation capi-impl) text)
   (capi:set-clipboard (capi:element-interface *lem-panel*) text))
+
+(lem:add-hook lem:*exit-editor-hook*
+              'lw:quit
+              most-negative-fixnum)

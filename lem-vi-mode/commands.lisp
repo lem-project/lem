@@ -120,7 +120,8 @@
   (fall-within-line (current-point)))
 
 (define-command vi-forward-word-begin (&optional (n 1)) ("p")
-  (forward-word-begin (current-point) n nil))
+  (vi-forward-word-end n)
+  (vi-forward-char))
 
 (define-command vi-backward-word-begin (&optional (n 1)) ("p")
   (when (< 0 n)

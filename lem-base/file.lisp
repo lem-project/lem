@@ -46,7 +46,7 @@
 
 (defun insert-file-contents (point filename
                              &key (external-format *default-external-format*)
-                                  (end-of-line :lf))
+                                  (end-of-line :detect))
   (when (and *external-format-function*
              (eql external-format :detect-encoding))
     (multiple-value-setq (external-format end-of-line)
@@ -61,7 +61,7 @@
                                   :direction :input)
         (if use-internal-p
             (%encoding-read encoding in point)
-            (encoding-read encoding in #'(lambda (c) (when c (insert-char/point point (code-char c))))))))
+            (encoding-read encoding in (encoding-read-detect-eol #'(lambda (c) (when c (insert-char/point point (code-char c)))))))))
     encoding))
 
 (defun find-file-buffer (filename &key temporary (enable-undo-p t))

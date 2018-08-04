@@ -120,7 +120,8 @@
   (fall-within-line (current-point)))
 
 (define-command vi-forward-word-begin (&optional (n 1)) ("p")
-  (forward-word-begin (current-point) n nil))
+  (vi-forward-word-end n)
+  (vi-forward-char))
 
 (define-command vi-backward-word-begin (&optional (n 1)) ("p")
   (when (< 0 n)
@@ -153,14 +154,18 @@
         ((vi-word-char-p (character-at p 1))
          (loop
            while (and (not (eolp p)) (vi-word-char-p (character-at p 1)))
-           do (vi-forward-char)))
+           do (vi-forward-char))
+         (when *vi-delete-recursive*
+           (character-offset p 1)))
         ((eolp p)
          (vi-next-line)
          (vi-move-to-beginning-of-line)
          (vi-forward-word-end n))
         (t
          (loop until (or (eolp p) (vi-word-char-p (character-at p 1)))
-               do (vi-forward-char)))))
+               do (vi-forward-char))
+         (when *vi-delete-recursive*
+           (character-offset p 1)))))
     (vi-forward-word-end (1- n))))
 
 (define-command vi-forward-word-end-broad (&optional (n 1)) ("p")
@@ -203,12 +208,13 @@
 
 (defvar *vi-delete-recursive* nil)
 (let ((tag (gensym)))
-  (define-command vi-delete () ()
+  (define-command vi-delete (&optional (n 1)) ("p")
     (cond (*vi-delete-recursive*
            (move-to-beginning-of-line)
            (with-point ((start (current-point))
                         (end (current-point)))
              (line-start start)
+             (line-offset end (1- n))
              (line-end end)
              (character-offset end 1)
              (kill-region start end))
@@ -232,7 +238,7 @@
                  (let ((*vi-delete-recursive* t)
                        (*cursor-offset* 0))
                    (catch tag
-                     (call-command command nil)
+                     (call-command command n)
                      (with-point ((end (current-point)))
                        (when (point< end start)
                          (rotatef start end)

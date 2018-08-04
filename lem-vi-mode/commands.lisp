@@ -153,14 +153,18 @@
         ((vi-word-char-p (character-at p 1))
          (loop
            while (and (not (eolp p)) (vi-word-char-p (character-at p 1)))
-           do (vi-forward-char)))
+           do (vi-forward-char))
+         (when *vi-delete-recursive*
+           (character-offset p 1)))
         ((eolp p)
          (vi-next-line)
          (vi-move-to-beginning-of-line)
          (vi-forward-word-end n))
         (t
          (loop until (or (eolp p) (vi-word-char-p (character-at p 1)))
-               do (vi-forward-char)))))
+               do (vi-forward-char))
+         (when *vi-delete-recursive*
+           (character-offset p 1)))))
     (vi-forward-word-end (1- n))))
 
 (define-command vi-forward-word-end-broad (&optional (n 1)) ("p")

@@ -70,7 +70,7 @@
       (let ((overlay (make-overlay (back-to-indentation start) (line-end end)
                                    'jump-highlight)))
         (start-timer 300 nil (lambda ()
-                               (delete-overlay overlay)))))))
+                               (delete-overlay overlay)) nil "jump-highlighting")))))
 
 (defun jump-current-element (index sourcelist)
   (funcall (aref (sourcelist-elements sourcelist)

@@ -58,7 +58,8 @@
                             (lambda (condition)
                               (stop-timer *idle-timer*)
                               (pop-up-backtrace condition)
-                              (setf *idle-timer* nil))))))
+                              (setf *idle-timer* nil))
+                            "language-idle-function"))))
 
 (define-key *language-mode-keymap* "C-M-a" 'beginning-of-defun)
 (define-key *language-mode-keymap* "C-M-e" 'end-of-defun)

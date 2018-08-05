@@ -76,6 +76,7 @@
   (split-window-horizontally (current-window) n))
 
 (define-key *global-keymap* "C-x o" 'other-window)
+(define-key *global-keymap* "M-o" 'other-window)
 (define-command other-window (&optional (n 1)) ("p")
   (let ((window-list
           (append (alexandria:ensure-list

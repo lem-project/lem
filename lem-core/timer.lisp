@@ -56,7 +56,9 @@
 
 (defun start-timer (ms repeat-p function &optional handle-function name)
   (let ((timer (make-instance 'timer
-                              :name name
+                              :name (or name
+                                        (and (symbolp function)
+                                             (symbol-name function)))
                               :ms ms
                               :repeat-p repeat-p
                               :last-time (get-internal-real-time)
@@ -120,7 +122,8 @@
 
 (defun start-idle-timer (ms repeat-p function &optional handle-function name)
   (let ((timer (make-instance 'timer
-                              :name name
+                              :name (or name (and (symbolp function)
+                                                  (symbol-name function)))
                               :ms ms
                               :repeat-p repeat-p
                               :function function

@@ -58,7 +58,7 @@
                   (funcall f (e+ (char-code #\cr)))
                   (setf cr nil))
                 (funcall f c))))
-      (:detect (if cr
+      (:auto (if cr
                    (case c
                      (#.(char-code #\lf)
                         (setf (encoding-end-of-line encoding) :crlf
@@ -81,5 +81,10 @@
       ((:lf t) (funcall f c)))
     cr))
 
-(defgeneric encoding-read (external-format input output-char))
-(defgeneric encoding-write (external-format out))
+(defgeneric encoding-read (encoding input output-char)
+  (:documentation "read binary stream until eof calling output-char which takes (char cr-state encoding) and return new cr-state"))
+(defgeneric encoding-write (encoding out)
+  (:documentation "return function which takes character and write to `out` binary stream.EOF is informed via passing NIL to the function."))
+(defgeneric encoding-check (encoding)
+  (:documentation "return function which takes (string eofp) to check buffer valid to write into a file."))
+(defmethod encoding-check (encoding) nil)

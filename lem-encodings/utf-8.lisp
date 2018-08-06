@@ -64,8 +64,8 @@
               (return))
         :finally (commit nil))))) ;; signal eof
 
-(defmethod encoding-write ((external-format utf-8) out)
-  (declare(ignore external-format))
+(defmethod encoding-write ((encoding utf-8) out)
+  (declare(ignore encoding))
   (lambda (c)
     (when c
       (let ((p (char-code c)))

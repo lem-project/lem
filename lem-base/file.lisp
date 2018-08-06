@@ -46,7 +46,7 @@
 
 (defun insert-file-contents (point filename
                              &key (external-format *default-external-format*)
-                                  (end-of-line :detect))
+                                  (end-of-line :auto))
   (when (and *external-format-function*
              (eql external-format :detect-encoding))
     (multiple-value-setq (external-format end-of-line)
@@ -159,7 +159,10 @@
 (defun write-region-to-file (start end filename)
   (let* ((buffer (point-buffer start))
          (encoding (buffer-encoding buffer))
-         (use-internal (or (typep encoding 'internal-encoding) (null encoding))))
+         (use-internal (or (typep encoding 'internal-encoding) (null encoding)))
+         (check (encoding-check encoding)))
+    (when check
+      (map-region start end check)) ;; throw condition?
     (with-write-hook buffer
       (with-open-virtual-file (out filename
                                    :element-type (unless use-internal '(unsigned-byte 8))

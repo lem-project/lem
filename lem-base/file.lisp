@@ -61,7 +61,11 @@
                                   :direction :input)
         (if use-internal-p
             (%encoding-read encoding in point)
-            (encoding-read encoding in (encoding-read-detect-eol #'(lambda (c) (when c (insert-char/point point (code-char c)))))))))
+            (encoding-read encoding
+                           in
+                           (encoding-read-detect-eol
+                            #'(lambda (c)
+                                (when c (insert-char/point point (code-char c)))))))))
     encoding))
 
 (defun find-file-buffer (filename &key temporary (enable-undo-p t))

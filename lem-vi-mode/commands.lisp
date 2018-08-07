@@ -229,7 +229,9 @@
                                      (delete-between-points start end))))
              (unless (continue-flag :kill)
                (kill-ring-new))
-             (kill-push (get-output-stream-string out)))
+             (kill-push (get-output-stream-string out))
+             (unless (visual-line-p)
+               (kill-append "" nil '(:vi-nolf))))
            (vi-visual-end))
           (t
            (let ((command (lookup-keybind (read-key))))
@@ -244,7 +246,8 @@
                          (rotatef start end)
                          (character-offset end 1))
                        (when (point/= start end)
-                         (kill-region start end))))))))))))
+                         (kill-region start end)
+                         (kill-append "" nil '(:vi-nolf)))))))))))))
 
 (define-command vi-delete-line () ()
   (cond ((visual-block-p)
@@ -321,10 +324,12 @@
         (progn
           (character-offset (current-point) 1)
           (yank)
+          (delete-previous-char)
           (character-offset (current-point) -1))
         (progn
           (insert-character (line-end (current-point)) #\newline)
-          (yank)))))
+          (yank)
+          (delete-previous-char)))))
 
 (define-command vi-paste-before () ()
   (line-start (current-point))

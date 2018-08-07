@@ -120,11 +120,28 @@
   (fall-within-line (current-point)))
 
 (define-command vi-forward-word-begin (&optional (n 1)) ("p")
-  (vi-forward-word-end n)
-  (when (or (null *vi-delete-recursive*)
-            (member (character-at (current-point) 0)
-                    '(#\Space #\Tab)))
-    (vi-forward-char)))
+  (when (< 0 n)
+    (let ((p (current-point)))
+      (cond
+        ((vi-word-char-p (character-at p 1))
+         (loop
+           while (and (not (eolp p)) (vi-word-char-p (character-at p 1)))
+           do (vi-forward-char))
+         (character-offset p 1))
+        ((eolp p)
+         (if *vi-delete-recursive*
+             (character-offset p 1)
+             (progn
+               (vi-next-line)
+               (vi-move-to-beginning-of-line)
+               (vi-forward-word-begin n))))
+        (t
+         (loop until (or (eolp p) (vi-word-char-p (character-at p 1)))
+               do (vi-forward-char))
+         (character-offset p 1))))
+    (vi-forward-word-begin (1- n)))
+  (when *vi-delete-recursive*
+    (skip-chars-forward (current-point) '(#\Space #\Tab))))
 
 (define-command vi-backward-word-begin (&optional (n 1)) ("p")
   (when (< 0 n)
@@ -151,25 +168,9 @@
   (backward-word-begin (current-point) n t))
 
 (define-command vi-forward-word-end (&optional (n 1)) ("p")
-  (when (< 0 n)
-    (let ((p (current-point)))
-      (cond
-        ((vi-word-char-p (character-at p 1))
-         (loop
-           while (and (not (eolp p)) (vi-word-char-p (character-at p 1)))
-           do (vi-forward-char))
-         (when *vi-delete-recursive*
-           (character-offset p 1)))
-        ((eolp p)
-         (vi-next-line)
-         (vi-move-to-beginning-of-line)
-         (vi-forward-word-end n))
-        (t
-         (loop until (or (eolp p) (vi-word-char-p (character-at p 1)))
-               do (vi-forward-char))
-         (when *vi-delete-recursive*
-           (character-offset p 1)))))
-    (vi-forward-word-end (1- n))))
+  (vi-forward-word-begin n)
+  (unless *vi-delete-recursive*
+    (vi-backward-char)))
 
 (define-command vi-forward-word-end-broad (&optional (n 1)) ("p")
   (forward-word-end (current-point) n t))

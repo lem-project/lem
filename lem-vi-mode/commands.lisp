@@ -158,9 +158,12 @@
          (when *vi-delete-recursive*
            (character-offset p 1)))
         ((eolp p)
-         (vi-next-line)
-         (vi-move-to-beginning-of-line)
-         (vi-forward-word-end n))
+         (if *vi-delete-recursive*
+             (character-offset p 1)
+             (progn
+               (vi-next-line)
+               (vi-move-to-beginning-of-line)
+               (vi-forward-word-end n))))
         (t
          (loop until (or (eolp p) (vi-word-char-p (character-at p 1)))
                do (vi-forward-char))

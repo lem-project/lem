@@ -230,8 +230,9 @@
              (unless (continue-flag :kill)
                (kill-ring-new))
              (kill-push (get-output-stream-string out))
-             (unless (visual-line-p)
-               (kill-append "" nil '(:vi-nolf))))
+             (if (visual-line-p)
+                 (delete-character (current-point))
+                 (kill-append "" nil '(:vi-nolf))))
            (vi-visual-end))
           (t
            (let ((command (lookup-keybind (read-key))))

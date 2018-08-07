@@ -121,7 +121,10 @@
 
 (define-command vi-forward-word-begin (&optional (n 1)) ("p")
   (vi-forward-word-end n)
-  (vi-forward-char))
+  (when (or (null *vi-delete-recursive*)
+            (member (character-at (current-point) 0)
+                    '(#\Space #\Tab)))
+    (vi-forward-char)))
 
 (define-command vi-backward-word-begin (&optional (n 1)) ("p")
   (when (< 0 n)

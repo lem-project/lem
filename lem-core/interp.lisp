@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(*this-command*
+          *universal-argument*
           *pre-command-hook*
           *post-command-hook*
           *exit-editor-hook*
@@ -11,6 +12,7 @@
           call-background-job))
 
 (defvar *this-command* nil)
+(defvar *universal-argument*)
 (defvar *pre-command-hook* '())
 (defvar *post-command-hook* '())
 (defvar *exit-editor-hook* '())
@@ -63,11 +65,11 @@
     (push (cons flag t) *last-flags*)
     (push (cons flag t) *curr-flags*)))
 
-(defun call-command (*this-command* arg)
+(defun call-command (*this-command* *universal-argument*)
   (run-hooks *pre-command-hook*)
   (prog1 (let ((cmd (get-command *this-command*)))
            (if cmd
-               (funcall cmd arg)
+               (funcall cmd *universal-argument*)
                (editor-error "~A: command not found" *this-command*)))
     (buffer-undo-boundary)
     (run-hooks *post-command-hook*)))

@@ -255,7 +255,8 @@
                          (character-offset end 1))
                        (when (point/= start end)
                          (kill-region start end)
-                         (kill-append "" nil '(:vi-nolf)))))))))))))
+                         (kill-append "" nil '(:vi-nolf))))))
+                 (fall-within-line (current-point)))))))))
 
 (define-command vi-delete-line () ()
   (cond ((visual-block-p)

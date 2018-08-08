@@ -267,7 +267,9 @@
         (t
          (with-point ((start (current-point))
                       (end (current-point)))
-           (kill-region start (line-end end))))))
+           (kill-region start (line-end end)))
+         (kill-append "" nil '(:vi-nolf))
+         (fall-within-line (current-point)))))
 
 (defvar *vi-clear-recursive* nil)
 (define-command vi-clear () ()

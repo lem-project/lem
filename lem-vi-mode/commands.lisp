@@ -129,7 +129,8 @@
            do (vi-forward-char))
          (character-offset p 1))
         ((eolp p)
-         (if *vi-delete-recursive*
+         (if (or *vi-delete-recursive*
+                 *vi-yank-recursive*)
              (character-offset p 1)
              (progn
                (vi-next-line)
@@ -169,7 +170,8 @@
 
 (define-command vi-forward-word-end (&optional (n 1)) ("p")
   (vi-forward-word-begin n)
-  (unless *vi-delete-recursive*
+  (unless (or *vi-delete-recursive*
+              *vi-yank-recursive*)
     (vi-backward-char)))
 
 (define-command vi-forward-word-end-broad (&optional (n 1)) ("p")
@@ -220,9 +222,9 @@
              (line-start start)
              (line-offset end (1- n))
              (line-end end)
+             (kill-region start end)
              (unless *vi-clear-recursive*
-               (character-offset end 1))
-             (kill-region start end))
+               (delete-next-char)))
            (throw tag t))
           ((visual-p)
            (with-output-to-string (out)
@@ -230,7 +232,7 @@
                (apply-visual-range (lambda (start end)
                                      (unless (point< start end)
                                        (rotatef start end))
-                                     (write-line (points-to-string start end) out)
+                                     (write-string (points-to-string start end) out)
                                      (delete-between-points start end))))
              (unless (continue-flag :kill)
                (kill-ring-new))
@@ -302,11 +304,12 @@
                (apply-visual-range (lambda (start end)
                                      (unless (point< start end)
                                        (rotatef start end))
-                                     (write-line (points-to-string start end)
-                                                 out))))
+                                     (write-string (points-to-string start end) out))))
              (unless (continue-flag :kill)
                (kill-ring-new))
-             (kill-push (get-output-stream-string out)))
+             (kill-push (get-output-stream-string out))
+             (unless (visual-line-p)
+               (kill-append "" nil '(:vi-nolf))))
            (vi-visual-end))
           (t
            (let ((command (lookup-keybind (read-key))))
@@ -321,7 +324,8 @@
                          (rotatef start end)
                          (character-offset end 1))
                        (when (point/= start end)
-                         (copy-region start end)))))
+                         (copy-region start end)
+                         (kill-append "" nil '(:vi-nolf))))))
                  (move-point (current-point) start))))))))
 
 (define-command vi-paste-after () ()
@@ -332,12 +336,10 @@
         (progn
           (character-offset (current-point) 1)
           (yank)
-          (delete-previous-char)
           (character-offset (current-point) -1))
         (progn
           (insert-character (line-end (current-point)) #\newline)
-          (yank)
-          (delete-previous-char)))))
+          (yank)))))
 
 (define-command vi-paste-before () ()
   (line-start (current-point))

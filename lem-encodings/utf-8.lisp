@@ -55,11 +55,12 @@
                                  (setf state (+ (ash state 6) (logand c #x7f))
                                        read (1+ read))
                                  (when (= read count)
-                                   (if (case count ;; range check
-                                         (1 (< state #x80))
-                                         (2 (< state #x800))
-                                         (3 (< state #x10000)))
-                                       (progn (incf read) #2#)
+                                   (if (or (case count ;; range check
+                                             (1 (< state #x80))
+                                             (2 (< state #x800))
+                                             (3 (< state #x10000)))
+                                           (e-range state)) ;; should be escaped.
+                                       #2#
                                        (if not-first-byte
                                            (commit state)
                                            (progn

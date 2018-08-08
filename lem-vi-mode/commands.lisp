@@ -220,7 +220,8 @@
              (line-start start)
              (line-offset end (1- n))
              (line-end end)
-             (character-offset end 1)
+             (unless *vi-clear-recursive*
+               (character-offset end 1))
              (kill-region start end))
            (throw tag t))
           ((visual-p)
@@ -266,8 +267,10 @@
                       (end (current-point)))
            (kill-region start (line-end end))))))
 
+(defvar *vi-clear-recursive* nil)
 (define-command vi-clear () ()
-  (vi-delete)
+  (let ((*vi-clear-recursive* t))
+    (vi-delete))
   (vi-insert))
 
 (define-command vi-clear-line () ()

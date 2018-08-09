@@ -259,7 +259,8 @@
                        (when (point/= start end)
                          (kill-region start end)
                          (kill-append "" nil '(:vi-nolf))))))
-                 (fall-within-line (current-point)))))))))
+                 (unless *vi-clear-recursive*
+                   (fall-within-line (current-point))))))))))
 
 (define-command vi-delete-line () ()
   (cond ((visual-block-p)
@@ -273,7 +274,8 @@
                       (end (current-point)))
            (kill-region start (line-end end)))
          (kill-append "" nil '(:vi-nolf))
-         (fall-within-line (current-point)))))
+         (unless *vi-clear-recursive*
+           (fall-within-line (current-point))))))
 
 (defvar *vi-clear-recursive* nil)
 (define-command vi-clear () ()
@@ -282,7 +284,8 @@
   (vi-insert))
 
 (define-command vi-clear-line () ()
-  (vi-delete-line)
+  (let ((*vi-clear-recursive* t))
+    (vi-delete-line))
   (vi-insert))
 
 (define-command vi-join-line () ()

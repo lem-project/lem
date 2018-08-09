@@ -13,7 +13,9 @@
     ((:insert-string)
      (move-to-line point linum)
      (line-offset point 0 charpos)
-     (insert-string/point point value))
+     (with-point ((p point))
+       (insert-string/point point value)
+       (move-point point p)))
     ((:delete-char)
      (move-to-line point linum)
      (line-offset point 0 charpos)
@@ -31,4 +33,9 @@
       ((:insert-string)
        (%apply-edit point :delete-char linum charpos (length value)))
       ((:delete-char)
-       (%apply-edit point :insert-string linum charpos value)))))
+       (let ((charp (= 1 (length value))))
+         (%apply-edit point
+                      (if charp :insert-char :insert-string)
+                      linum
+                      charpos
+                      (if charp (aref value 0) value)))))))

@@ -119,7 +119,7 @@
   (previous-line n)
   (fall-within-line (current-point)))
 
-(define-command vi-forward-word-begin (&optional (n 1)) ("p")
+(defun %vi-forward-word-begin (n &key continue-to-next-line)
   (when (< 0 n)
     (let ((p (current-point)))
       (cond
@@ -129,20 +129,21 @@
            do (vi-forward-char))
          (character-offset p 1))
         ((eolp p)
-         (if (or *vi-delete-recursive*
-                 *vi-yank-recursive*)
-             (character-offset p 1)
+         (if continue-to-next-line
              (progn
                (vi-next-line)
                (vi-move-to-beginning-of-line)
-               (vi-forward-word-begin n))))
+               (%vi-forward-word-begin n))
+             (character-offset p 1)))
         (t
          (loop until (or (eolp p) (vi-word-char-p (character-at p 1)))
                do (vi-forward-char))
          (character-offset p 1))))
-    (vi-forward-word-begin (1- n)))
-  (when *vi-delete-recursive*
-    (skip-chars-forward (current-point) '(#\Space #\Tab))))
+    (%vi-forward-word-begin (1- n))))
+
+(define-command vi-forward-word-begin (&optional (n 1)) ("p")
+  (%vi-forward-word-begin n)
+  (skip-chars-forward (current-point) '(#\Space #\Tab #\Newline)))
 
 (define-command vi-backward-word-begin (&optional (n 1)) ("p")
   (when (< 0 n)
@@ -169,7 +170,7 @@
   (backward-word-begin (current-point) n t))
 
 (define-command vi-forward-word-end (&optional (n 1)) ("p")
-  (vi-forward-word-begin n)
+  (%vi-forward-word-begin n :continue-to-next-line t)
   (unless (or *vi-delete-recursive*
               *vi-yank-recursive*)
     (vi-backward-char)))
@@ -233,7 +234,8 @@
                (apply-visual-range (lambda (start end)
                                      (unless (point< start end)
                                        (rotatef start end))
-                                     (character-offset end 1)
+                                     (when (visual-line-p)
+                                       (character-offset end 1))
                                      (write-string (points-to-string start end) out)
                                      (delete-between-points start end))))
              (unless (continue-flag :kill)
@@ -257,7 +259,8 @@
                        (when (point/= start end)
                          (kill-region start end)
                          (kill-append "" nil '(:vi-nolf))))))
-                 (fall-within-line (current-point)))))))))
+                 (unless *vi-clear-recursive*
+                   (fall-within-line (current-point))))))))))
 
 (define-command vi-delete-line () ()
   (cond ((visual-block-p)
@@ -271,7 +274,8 @@
                       (end (current-point)))
            (kill-region start (line-end end)))
          (kill-append "" nil '(:vi-nolf))
-         (fall-within-line (current-point)))))
+         (unless *vi-clear-recursive*
+           (fall-within-line (current-point))))))
 
 (defvar *vi-clear-recursive* nil)
 (define-command vi-clear () ()
@@ -280,7 +284,8 @@
   (vi-insert))
 
 (define-command vi-clear-line () ()
-  (vi-delete-line)
+  (let ((*vi-clear-recursive* t))
+    (vi-delete-line))
   (vi-insert))
 
 (define-command vi-join-line () ()
@@ -308,7 +313,8 @@
                (apply-visual-range (lambda (start end)
                                      (unless (point< start end)
                                        (rotatef start end))
-                                     (character-offset end 1)
+                                     (when (visual-line-p)
+                                       (character-offset end 1))
                                      (write-string (points-to-string start end) out))))
              (unless (continue-flag :kill)
                (kill-ring-new))

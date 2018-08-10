@@ -244,7 +244,15 @@
                (kill-append "" nil '(:vi-nolf))))
            (vi-visual-end))
           (t
-           (let ((command (lookup-keybind (read-key))))
+           (let ((command (loop with uarg = nil
+                                for key = (read-key)
+                                while (char<= #\0 (key-to-char key) #\9)
+                                do (setf uarg (+ (* (or uarg 0) 10)
+                                                 (- (char-code (key-to-char key))
+                                                    (char-code #\0))))
+                                finally
+                                   (when uarg (setf n uarg))
+                                   (return (lookup-keybind key)))))
              (when (symbolp command)
                (with-point ((start (current-point)))
                  (let ((*vi-delete-recursive* t)
@@ -256,8 +264,15 @@
                          (rotatef start end)
                          (character-offset end 1))
                        (when (point/= start end)
-                         (kill-region start end)
-                         (kill-append "" nil '(:vi-nolf))))))
+                         (cond
+                           ((same-line-p start end)
+                            (kill-region start end)
+                            (kill-append "" nil '(:vi-nolf)))
+                           (t
+                            (line-start start)
+                            (line-end end)
+                            (character-offset end 1)
+                            (kill-region start end)))))))
                  (unless *vi-clear-recursive*
                    (fall-within-line (current-point))))))))))
 

@@ -243,7 +243,7 @@
 
 (define-key *global-keymap* "C-p" 'previous-line)
 (define-key *global-keymap* "Up" 'previous-line)
-(define-command previous-line (&optional n) ("p")
+(define-command previous-line (&optional (n 1)) ("p")
   (next-line (- n)))
 
 (define-key *global-keymap* "C-f" 'forward-char)

@@ -217,7 +217,6 @@
 (let ((tag (gensym)))
   (define-command vi-delete (&optional (n 1)) ("p")
     (cond (*vi-delete-recursive*
-           (move-to-beginning-of-line)
            (with-point ((start (current-point))
                         (end (current-point)))
              (line-start start)

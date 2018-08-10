@@ -17,10 +17,6 @@
 (defun e-range (c)
   (<= #xe000 c #xe0ff))
 
-;; Return t if the codepoint is in Basic Multilingual Plane, in terms of Unicode
-(defun on-bmp? (c)
-  (<= #x0000 c #xffff))
-
 (defun decode-char (msb lsb)
   (+ (ash msb 8) lsb))
 
@@ -80,5 +76,39 @@
            (let ((cr (funcall output-char (decode-char first-byte second-byte) nil encoding)))
              (decode input :big-endian cr encoding output-char))))))
 
+(defun write-cp (cp endian out)
+  (ecase endian
+    (:big-endian
+     (progn
+       (write-byte (ash (logand cp #xff00) -8) out)
+       (write-byte (logand cp #x00ff) out)))
+    (:little-endian
+     (progn
+       (write-byte (logand cp #x00ff) out)
+       (write-byte (ash (logand cp #xff00) -8) out)))))
+
+(defun encode (endian out)
+  (lambda (ch)
+    (when ch
+      (let ((cp (char-code ch)))
+        (cond ((e-range cp) (write-cp (e- cp) endian out))
+              ((<= #x10000 cp)
+               (multiple-value-bind (q r)
+                   (truncate (- cp #x10000) #x400)
+                 (write-cp (+ q #xd800) endian out)
+                 (write-cp (+ r #xdc00) endian out)))
+              (t (write-cp cp endian out)))))))
+
 ;; Return a function which encodes a character and writes the result into stream `out`
-(defmethod encoding-write ((external-format utf-16) out))
+(defmethod encoding-write ((external-format utf-16be) out)
+  (declare (ignore external-format))
+  (encode :big-endian out))
+
+(defmethod encoding-write ((external-format utf-16le) out)
+  (declare (ignore external-format))
+  (encode :little-endian out))
+
+(defmethod encoding-write ((external-format utf-16) out)
+  (declare (ignore external-format))
+  (write-byte #xfe out)(write-byte #xff out)  ; BOM for big endian
+  (encode :big-endian out))

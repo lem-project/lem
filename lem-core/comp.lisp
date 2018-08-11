@@ -13,7 +13,7 @@
 (defun fuzzy-match-p (str elt &optional ignore-case)
   (loop :with start := 0
         :for c :across str
-        :do (let ((pos (position c elt :start start :test (if ignore-case #'char-equal char=))))
+        :do (let ((pos (position c elt :start start :test (if ignore-case #'char-equal #'char=))))
               (if pos
                   (setf start pos)
                   (return nil)))

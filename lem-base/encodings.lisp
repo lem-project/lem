@@ -36,6 +36,8 @@
         (make-instance 'internal-encoding :end-of-line end-of-line :external-format symbol)
         (make-instance symbol :end-of-line end-of-line))))
 
+(defun e+ (c) (+ #xe000 c))
+
 (defun encoding-read-detect-eol (f)
   (lambda (c cr encoding)
     (case (encoding-end-of-line encoding)

@@ -230,31 +230,33 @@
 
 (define-key *global-keymap* "C-n" 'next-line)
 (define-key *global-keymap* "Down" 'next-line)
-(define-command next-line (&optional n) ("p")
+
+(defun next-line-aux (n
+                      point-column-fn
+                      forward-line-fn
+                      move-to-column-fn)
   (unless (continue-flag :next-line)
-    (setq *next-line-prev-column* (point-virtual-line-column (current-point))))
-  (unless (prog1 (move-to-next-virtual-line (current-point) n)
-            (move-to-virtual-line-column (current-point) *next-line-prev-column*))
+    (setq *next-line-prev-column* (funcall point-column-fn (current-point))))
+  (unless (prog1 (funcall forward-line-fn (current-point) n)
+            (funcall move-to-column-fn (current-point) *next-line-prev-column*))
     (cond ((plusp n)
            (move-to-end-of-buffer)
            (editor-error "End of buffer"))
           (t
            (move-to-beginning-of-buffer)
-           (editor-error "Beginning of buffer"))))
-  t)
+           (editor-error "Beginning of buffer")))))
+
+(define-command next-line (&optional n) ("p")
+  (next-line-aux n
+                 #'point-virtual-line-column
+                 #'move-to-next-virtual-line
+                 #'move-to-virtual-line-column))
 
 (define-command next-logical-line (&optional n) ("p")
-  (unless (continue-flag :next-line)
-    (setq *next-line-prev-column* (point-column (current-point))))
-  (unless (prog1 (line-offset (current-point) n)
-            (move-to-column (current-point) *next-line-prev-column*))
-    (cond ((plusp n)
-           (move-to-end-of-buffer)
-           (editor-error "End of buffer"))
-          (t
-           (move-to-beginning-of-buffer)
-           (editor-error "Beginning of buffer"))))
-  t)
+  (next-line-aux n
+                 #'point-column
+                 #'line-offset
+                 #'move-to-column))
 
 (define-key *global-keymap* "C-p" 'previous-line)
 (define-key *global-keymap* "Up" 'previous-line)

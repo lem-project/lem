@@ -273,7 +273,9 @@
 (define-key *global-keymap* "C-a" 'move-to-beginning-of-line)
 (define-key *global-keymap* "Home" 'move-to-beginning-of-line)
 (define-command move-to-beginning-of-line () ()
-  (let ((bol (line-start (copy-point (current-point) :temporary))))
+  (let ((bol (backward-line-wrap (copy-point (current-point) :temporary)
+                                 (current-window)
+                                 t)))
     (or (text-property-at (current-point) :field -1)
         (previous-single-property-change (current-point)
                                          :field
@@ -284,7 +286,9 @@
 (define-key *global-keymap* "C-e" 'move-to-end-of-line)
 (define-key *global-keymap* "End" 'move-to-end-of-line)
 (define-command move-to-end-of-line () ()
-  (line-end (current-point))
+  (or (and (forward-line-wrap (current-point) (current-window))
+           (character-offset (current-point) -1))
+      (line-end (current-point)))
   t)
 
 (define-key *global-keymap* "C-v" 'next-page)

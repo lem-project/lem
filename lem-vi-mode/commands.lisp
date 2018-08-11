@@ -189,15 +189,11 @@
 
 (define-command vi-move-to-window-middle () ()
   (vi-move-to-window-top)
-  (move-to-next-virtual-line (current-point)
-                             (floor (/ (- (window-height (current-window)) 2) 2))
-                             (current-window)))
+  (next-line (floor (/ (- (window-height (current-window)) 2) 2))))
 
 (define-command vi-move-to-window-bottom () ()
   (vi-move-to-window-top)
-  (move-to-next-virtual-line (current-point)
-                             (- (window-height (current-window)) 2)
-                             (current-window)))
+  (next-line (- (window-height (current-window)) 2)))
 
 (define-command vi-indent-line () ()
   (with-point ((p (current-point)))

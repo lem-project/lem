@@ -510,7 +510,7 @@
                       (not (null str/attributes))
                       #1=(aref (screen-old-lines screen) i)
                       (equal str/attributes #1#)
-                      (/= cursor-y i))
+                      #+(or)(/= cursor-y i))
                  (let ((n (count i wrap-lines)))
                    (incf y n)
                    (dotimes (_ n)

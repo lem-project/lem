@@ -28,6 +28,8 @@
           window-cursor-y
           move-to-next-virtual-line
           move-to-previous-virtual-line
+          point-virtual-line-column
+          move-to-virtual-line-column
           window-see
           split-window-vertically
           split-window-horizontally
@@ -482,6 +484,22 @@
 
 (defun move-to-previous-virtual-line (point &optional n (window (current-window)))
   (move-to-next-virtual-line point (if n (- n) -1) window))
+
+(defun point-virtual-line-column (point &optional (window (current-window)))
+  (if (variable-value 'truncate-lines :default (point-buffer point))
+      (let ((column (point-column point)))
+        (with-point ((start point))
+          (backward-line-wrap start window t)
+          (- column (point-column start))))
+      (point-column point)))
+
+(defun move-to-virtual-line-column (point column &optional (window (current-window)))
+  (backward-line-wrap point window t)
+  (let ((w 0))
+    (loop
+      :while (< w column)
+      :do (setf w (char-width (character-at point) w))
+          (character-offset point 1))))
 
 (defun window-offset-view (window)
   (cond ((and (point< (window-buffer-point window)

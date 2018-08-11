@@ -16,6 +16,8 @@
 (defvar *kill-new-flag* t)
 (defvar *kill-before-p* nil)
 
+(defvar *enable-clipboard-p* nil)
+
 (defun kill-append (string before-p options)
   (setf (car *kill-ring*)
         (cons (if before-p
@@ -27,37 +29,13 @@
                                string))
               options)))
 
-(defvar *clipboard-newer-than-kill-ring-p* nil)
-(defvar *kill-ring-newer-than-clipboard-p* nil)
-(defvar *sync-kill-ring-with-clipboard* nil)
-
 (defun copy-to-clipboard (string)
-  (lem-if:clipboard-copy (implementation) string)
-  (setq *clipboard-newer-than-kill-ring-p* t
-        *kill-ring-newer-than-clipboard-p* nil))
+  (lem-if:clipboard-copy (implementation) string))
 
 (defun get-clipboard-data ()
   (lem-if:clipboard-paste (implementation)))
 
-(defun sync-kill-ring-to-clipboard ()
-  (when *kill-ring-newer-than-clipboard-p*
-    (let ((x (current-kill-ring)))
-      (when (and x (string/= x (get-clipboard-data)))
-        (copy-to-clipboard x)
-        (setq *clipboard-newer-than-kill-ring-p* nil
-              *kill-ring-newer-than-clipboard-p* nil)))))
-
-(defun sync-clipboard-to-kill-ring ()
-  (when *clipboard-newer-than-kill-ring-p*
-    (let ((x (get-clipboard-data)))
-      (when (and x (string/= x (current-kill-ring)))
-        (kill-push x)
-        (setq *clipboard-newer-than-kill-ring-p* nil
-              *kill-ring-newer-than-clipboard-p* nil)))))
-
 (defun kill-push (string &rest options)
-  (setq *clipboard-newer-than-kill-ring-p* nil
-        *kill-ring-newer-than-clipboard-p* t)
   (cond
     (*kill-new-flag*
      (push (cons string options) *kill-ring*)
@@ -68,12 +46,14 @@
      (setq *kill-new-flag* nil))
     (t
      (kill-append string *kill-before-p* options)))
+  (when *enable-clipboard-p*
+    (copy-to-clipboard (car (first *kill-ring*))))
   t)
 
 (defun current-kill-ring ()
-  (when *sync-kill-ring-with-clipboard*
-    (sync-clipboard-to-kill-ring))
-  (kill-ring-nth 1))
+  (or (and *enable-clipboard-p*
+           (get-clipboard-data))
+      (kill-ring-nth 1)))
 
 (defun kill-ring-nth (n)
   (do ((ptr *kill-ring-yank-ptr*

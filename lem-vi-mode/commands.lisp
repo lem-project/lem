@@ -10,7 +10,9 @@
            :vi-forward-char
            :vi-backward-char
            :vi-next-line
+           :vi-next-display-line
            :vi-previous-line
+           :vi-previous-display-line
            :vi-forward-word-begin
            :vi-backward-word-begin
            :vi-forward-word-begin-broad
@@ -112,10 +114,18 @@
     (goto-eol point)))
 
 (define-command vi-next-line (&optional (n 1)) ("p")
+  (next-logical-line n)
+  (fall-within-line (current-point)))
+
+(define-command vi-next-display-line (&optional (n 1)) ("p")
   (next-line n)
   (fall-within-line (current-point)))
 
 (define-command vi-previous-line (&optional (n 1)) ("p")
+  (previous-logical-line n)
+  (fall-within-line (current-point)))
+
+(define-command vi-previous-display-line (&optional (n 1)) ("p")
   (previous-line n)
   (fall-within-line (current-point)))
 

@@ -499,6 +499,7 @@
     (loop
       :while (< w column)
       :do (setf w (char-width (character-at point) w))
+          (when (end-line-p point) (return))
           (character-offset point 1))))
 
 (defun window-offset-view (window)

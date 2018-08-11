@@ -24,7 +24,9 @@
           yank-to-clipboard
           paste-from-clipboard
           next-line
+          next-logical-line
           previous-line
+          previous-logical-line
           forward-char
           backward-char
           move-to-beginning-of-buffer
@@ -241,10 +243,26 @@
            (editor-error "Beginning of buffer"))))
   t)
 
+(define-command next-logical-line (&optional n) ("p")
+  (unless (continue-flag :next-line)
+    (setq *next-line-prev-column* (point-column (current-point))))
+  (unless (prog1 (line-offset (current-point) n)
+            (move-to-column (current-point) *next-line-prev-column*))
+    (cond ((plusp n)
+           (move-to-end-of-buffer)
+           (editor-error "End of buffer"))
+          (t
+           (move-to-beginning-of-buffer)
+           (editor-error "Beginning of buffer"))))
+  t)
+
 (define-key *global-keymap* "C-p" 'previous-line)
 (define-key *global-keymap* "Up" 'previous-line)
 (define-command previous-line (&optional (n 1)) ("p")
   (next-line (- n)))
+
+(define-command previous-logical-line (&optional (n 1)) ("p")
+  (next-logical-line (- n)))
 
 (define-key *global-keymap* "C-f" 'forward-char)
 (define-key *global-keymap* "Right" 'forward-char)

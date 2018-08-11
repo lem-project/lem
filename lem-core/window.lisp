@@ -26,8 +26,8 @@
           window-recenter
           window-scroll
           window-cursor-y
-          move-to-next-line
-          move-to-previous-line
+          move-to-next-virtual-line
+          move-to-previous-virtual-line
           window-see
           split-window-vertically
           split-window-horizontally
@@ -454,12 +454,12 @@
   (when (variable-value 'truncate-lines :default (point-buffer point))
     (backward-line-wrap-1 point window contain-same-position-p)))
 
-(defun move-to-next-line-1 (point window)
+(defun move-to-next-virtual-line-1 (point window)
   (assert (eq (point-buffer point) (window-buffer window)))
   (or (forward-line-wrap point window)
       (line-offset point 1)))
 
-(defun move-to-previous-line-1 (point window)
+(defun move-to-previous-virtual-line-1 (point window)
   (assert (eq (point-buffer point) (window-buffer window)))
   (backward-line-wrap point window t)
   (or (backward-line-wrap point window nil)
@@ -468,20 +468,20 @@
              (line-end point)
              (backward-line-wrap point window t)))))
 
-(defun move-to-next-line (point &optional n (window (current-window)))
+(defun move-to-next-virtual-line (point &optional n (window (current-window)))
   (unless n (setf n 1))
   (unless (zerop n)
     (multiple-value-bind (n f)
         (if (plusp n)
-            (values n #'move-to-next-line-1)
-            (values (- n) #'move-to-previous-line-1))
+            (values n #'move-to-next-virtual-line-1)
+            (values (- n) #'move-to-previous-virtual-line-1))
       (loop :repeat n
             :do (unless (funcall f point window)
-                  (return-from move-to-next-line nil)))
+                  (return-from move-to-next-virtual-line nil)))
       point)))
 
-(defun move-to-previous-line (point &optional n (window (current-window)))
-  (move-to-next-line point (if n (- n) -1) window))
+(defun move-to-previous-virtual-line (point &optional n (window (current-window)))
+  (move-to-next-virtual-line point (if n (- n) -1) window))
 
 (defun window-offset-view (window)
   (cond ((and (point< (window-buffer-point window)

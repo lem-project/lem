@@ -412,15 +412,74 @@
   (+ (window-cursor-y-not-wrapping window)
      (window-wrapping-offset window)))
 
-(defun move-to-next-line (point &optional (window (current-window)))
+(defun forward-line-wrap (point window)
   (assert (eq (point-buffer point) (window-buffer window)))
-  (map-wrapping-line window
-                     (line-string point)
-                     (lambda (i)
-                       (when (< (point-charpos point) i)
-                         (line-offset point 0 i)
-                         (return-from move-to-next-line point))))
-  (line-offset point 1))
+  (when (variable-value 'truncate-lines :default (point-buffer point))
+    (map-wrapping-line window
+                       (line-string point)
+                       (lambda (i)
+                         (when (< (point-charpos point) i)
+                           (line-offset point 0 i)
+                           (return-from forward-line-wrap point))))))
+
+(defun backward-line-wrap-1 (point window contain-same-position-p)
+  (if (and contain-same-position-p (start-line-p point))
+      point
+      (let (previous-charpos)
+        (map-wrapping-line window
+                           (line-string point)
+                           (lambda (i)
+                             (cond ((and contain-same-position-p (= i (point-charpos point)))
+                                    (line-offset point 0 i)
+                                    (return-from backward-line-wrap-1 point))
+                                   ((< i (point-charpos point))
+                                    (setf previous-charpos i))
+                                   (previous-charpos
+                                    (line-offset point 0 previous-charpos)
+                                    (return-from backward-line-wrap-1 point))
+                                   ((first-line-p point)
+                                    (return-from backward-line-wrap-1 nil))
+                                   ((or contain-same-position-p (= i (point-charpos point)))
+                                    (line-start point)
+                                    (return-from backward-line-wrap-1 point)))))
+        (cond (previous-charpos
+               (line-offset point 0 previous-charpos))
+              (contain-same-position-p
+               (line-start point))))))
+
+(defun backward-line-wrap (point window contain-same-position-p)
+  (assert (eq (point-buffer point) (window-buffer window)))
+  (when (variable-value 'truncate-lines :default (point-buffer point))
+    (backward-line-wrap-1 point window contain-same-position-p)))
+
+(defun move-to-next-line-1 (point window)
+  (assert (eq (point-buffer point) (window-buffer window)))
+  (or (forward-line-wrap point window)
+      (line-offset point 1)))
+
+(defun move-to-previous-line-1 (point window)
+  (assert (eq (point-buffer point) (window-buffer window)))
+  (backward-line-wrap point window t)
+  (or (backward-line-wrap point window nil)
+      (progn
+        (and (line-offset point -1)
+             (line-end point)
+             (backward-line-wrap point window t)))))
+
+(defun move-to-next-line (point &optional n (window (current-window)))
+  (unless n (setf n 1))
+  (unless (zerop n)
+    (multiple-value-bind (n f)
+        (if (plusp n)
+            (values n #'move-to-next-line-1)
+            (values (- n) #'move-to-previous-line-1))
+      (loop :repeat n
+            :do (unless (funcall f point window)
+                  (return-from move-to-next-line nil)))
+      point)))
+
+(defun move-to-previous-line (point &optional n (window (current-window)))
+  (move-to-next-line point (if n (- n) -1) window))
 
 (defun window-offset-view (window)
   (cond ((and (point< (window-buffer-point window)

@@ -10,7 +10,8 @@
                "lem-posix-shell-mode"
                "lem-markdown-mode"
                "lem-js-mode"
-               "lem-css-mode"))
+               "lem-css-mode"
+               "lem-selection-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

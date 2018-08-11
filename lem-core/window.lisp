@@ -376,14 +376,14 @@
                            (line-offset point 0 i)
                            (return-from forward-line-wrap point))))))
 
-(defun backward-line-wrap-1 (point window contain-same-position-p)
-  (if (and contain-same-position-p (start-line-p point))
+(defun backward-line-wrap-1 (point window contain-same-line-p)
+  (if (and contain-same-line-p (start-line-p point))
       point
       (let (previous-charpos)
         (map-wrapping-line window
                            (line-string point)
                            (lambda (i)
-                             (cond ((and contain-same-position-p (= i (point-charpos point)))
+                             (cond ((and contain-same-line-p (= i (point-charpos point)))
                                     (line-offset point 0 i)
                                     (return-from backward-line-wrap-1 point))
                                    ((< i (point-charpos point))
@@ -393,18 +393,20 @@
                                     (return-from backward-line-wrap-1 point))
                                    ((first-line-p point)
                                     (return-from backward-line-wrap-1 nil))
-                                   ((or contain-same-position-p (= i (point-charpos point)))
+                                   ((or contain-same-line-p (= i (point-charpos point)))
                                     (line-start point)
                                     (return-from backward-line-wrap-1 point)))))
         (cond (previous-charpos
                (line-offset point 0 previous-charpos))
-              (contain-same-position-p
+              (contain-same-line-p
                (line-start point))))))
 
-(defun backward-line-wrap (point window contain-same-position-p)
+(defun backward-line-wrap (point window contain-same-line-p)
   (assert (eq (point-buffer point) (window-buffer window)))
-  (when (variable-value 'truncate-lines :default (point-buffer point))
-    (backward-line-wrap-1 point window contain-same-position-p)))
+  (cond ((variable-value 'truncate-lines :default (point-buffer point))
+         (backward-line-wrap-1 point window contain-same-line-p))
+        (contain-same-line-p
+         (line-start point))))
 
 (defun move-to-next-virtual-line-1 (point window)
   (assert (eq (point-buffer point) (window-buffer window)))

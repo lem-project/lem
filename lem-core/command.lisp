@@ -539,11 +539,11 @@
         (t (message "Can't find Library ~A." name))))
 
 (define-command lem-version (&optional name) ("p")
-  (let ((version (format nil #+ros.init"lem ~A (~A-~A)"
-                         #-ros.init "lem ~A"
-                         (asdf:component-version (asdf:find-system :lem))
-                         #+ros.init(roswell.util:uname-m)
-                         #+ros.init(roswell.util:uname))))
+  (let ((version
+          (format nil "lem ~A (~A-~A)"
+                  (asdf:component-version (asdf:find-system :lem))
+                  (machine-type)
+                  (machine-instance))))
     (when (eql name 1)
       (message "~A" version))
     version))

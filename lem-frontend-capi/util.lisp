@@ -1,5 +1,14 @@
 (in-package :lem-capi)
 
+(defparameter *log* nil)
+
+(defun log-format (fmt &rest args)
+  (when *log*
+    (with-open-file (out "~/DEBUG" :direction :output :if-does-not-exist :create :if-exists :append)
+      (fresh-line out)
+      (apply #'format out fmt args)
+      (terpri out))))
+
 (defmacro with-error-handler (() &body body)
   `(handler-case
        (handler-bind ((error (lambda (c)

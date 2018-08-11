@@ -34,10 +34,12 @@
                      (capi:quit-interface *lem-panel*))))))
 
 (defmethod lem-if:set-first-view ((implementation capi-impl) view)
+  (log-format "set-first-view")
   (with-error-handler ()
     (set-first-window (lem-panel-window-panel *lem-panel*) view)))
 
 (defmethod lem-if:display-background-mode ((implementation capi-impl))
+  (log-format "display-background-mode")
   (let ((color (color:get-color-spec
                 (capi:simple-pane-background
                  (first (all-window-panes (lem-panel-window-panel *lem-panel*)))))))
@@ -46,24 +48,29 @@
                                 (* (color:color-blue color) 255))))
 
 (defmethod lem-if:update-foreground ((implementation capi-impl) color-name)
+  (log-format "update-foreground ~S" color-name)
   (map-window-panes (lem-panel-window-panel *lem-panel*)
                     (lambda (window-pane)
                       (change-foreground window-pane color-name))))
 
 (defmethod lem-if:update-background ((implementation capi-impl) color-name)
+  (log-format "update-background ~S" color-name)
   (map-window-panes (lem-panel-window-panel *lem-panel*)
                     (lambda (window-pane)
                       (change-background window-pane color-name))))
 
 (defmethod lem-if:display-width ((implementation capi-impl))
+  (log-format "display-width")
   (with-error-handler ()
     (window-panel-width (lem-panel-window-panel *lem-panel*))))
 
 (defmethod lem-if:display-height ((implementation capi-impl))
+  (log-format "display-height")
   (with-error-handler ()
     (window-panel-height (lem-panel-window-panel *lem-panel*))))
 
 (defmethod lem-if:make-view ((implementation capi-impl) window x y width height use-modeline)
+  (log-format "make-view")
   (with-error-handler ()
     (if (lem:minibuffer-window-p window)
         (window-panel-minibuffer (lem-panel-window-panel *lem-panel*))
@@ -72,33 +79,41 @@
                        :window-panel (lem-panel-window-panel *lem-panel*)))))
 
 (defmethod lem-if:delete-view ((implementation capi-impl) view)
+  (log-format "delete-view")
   (with-error-handler ()
     (window-panel-delete-window (lem-panel-window-panel *lem-panel*) view)
     (destroy-window-pane view)))
 
 (defmethod lem-if:clear ((implementation capi-impl) view)
+  (log-format "clear")
   (with-error-handler ()
     (clear view)))
 
 (defmethod lem-if:set-view-size ((implementation capi-impl) view width height)
+  (log-format "set-view-size ~@{~S ~}" width height)
   (setf (window-panel-modified-p (lem-panel-window-panel *lem-panel*)) t))
 
 (defmethod lem-if:set-view-pos ((implementation capi-impl) view x y)
+  (log-format "set-view-pos ~@{~S ~}" x y)
   (setf (window-panel-modified-p (lem-panel-window-panel *lem-panel*)) t))
 
 (defmethod lem-if:print ((implementation capi-impl) view x y string attribute)
+  (log-format "print ~@{~S ~}" x y string attribute)
   (with-error-handler ()
     (draw-string view string x y (lem:ensure-attribute attribute nil))))
 
 (defmethod lem-if:print-modeline ((implementation capi-impl) view x y string attribute)
+  (log-format "print-modeline ~@{~S ~}" x y string attribute)
   (with-error-handler ()
     (draw-string-in-modeline view string x y (lem:ensure-attribute attribute nil))))
 
 (defmethod lem-if:clear-eol ((implementation capi-impl) view x y)
+  (log-format "clear-eol ~@{~S ~}" x y)
   (with-error-handler ()
     (clear-eol view x y)))
 
 (defmethod lem-if:clear-eob ((implementation capi-impl) view x y)
+  (log-format "clear-eob ~@{~S ~}" x y)
   (with-error-handler ()
     (clear-eob view x y)))
 
@@ -157,3 +172,6 @@
 (lem:add-hook lem:*exit-editor-hook*
               'lw:quit
               most-negative-fixnum)
+
+(defmethod lem-if:redraw-window :before ((implementation capi-impl) window force)
+  (log-format "******************** redraw-window ~A *****************" window))

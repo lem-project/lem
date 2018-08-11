@@ -44,6 +44,14 @@
   (declare (ignore range argument))
   (lem:exit-lem nil))
 
+(define-ex-command ("wqa") (range filename)
+  (ex-write range filename)
+  (lem:exit-lem t))
+
+(define-ex-command ("wqa!") (range filename)
+  (ex-write range filename)
+  (lem:exit-lem nil))
+
 (define-ex-command ("sp") (range filename)
   (declare (ignore range))
   (lem:split-active-window-vertically)

@@ -412,6 +412,16 @@
   (+ (window-cursor-y-not-wrapping window)
      (window-wrapping-offset window)))
 
+(defun move-to-next-line (point &optional (window (current-window)))
+  (assert (eq (point-buffer point) (window-buffer window)))
+  (map-wrapping-line window
+                     (line-string point)
+                     (lambda (i)
+                       (when (< (point-charpos point) i)
+                         (line-offset point 0 i)
+                         (return-from move-to-next-line point))))
+  (line-offset point 1))
+
 (defun window-offset-view (window)
   (cond ((and (point< (window-buffer-point window)
                       (window-view-point window))

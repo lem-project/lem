@@ -87,3 +87,6 @@
 (define-key *command-keymap* ":" 'vi-ex)
 
 (define-key *insert-keymap* "Escape" 'vi-end-insert)
+
+(define-key *command-keymap* "C-p" 'yank-pop)
+(define-key *command-keymap* "C-n" 'yank-pop-next)

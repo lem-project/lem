@@ -21,6 +21,7 @@
           kill-line
           yank
           yank-pop
+          yank-pop-next
           yank-to-clipboard
           paste-from-clipboard
           next-line
@@ -210,6 +211,19 @@
     (cond ((and start end prev-yank-p)
            (delete-between-points start end)
            (kill-ring-rotate)
+           (yank n))
+          (t
+           (message "Previous command was not a yank")
+           nil))))
+
+(define-command yank-pop-next (&optional n) ("p")
+  (let ((start (buffer-value (current-buffer) 'yank-start))
+        (end (buffer-value (current-buffer) 'yank-end))
+        prev-yank-p)
+    (when (continue-flag :yank) (setq prev-yank-p t))
+    (cond ((and start end prev-yank-p)
+           (delete-between-points start end)
+           (kill-ring-rotate-undo)
            (yank n))
           (t
            (message "Previous command was not a yank")

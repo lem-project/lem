@@ -112,11 +112,11 @@
     (goto-eol point)))
 
 (define-command vi-next-line (&optional (n 1)) ("p")
-  (next-line n)
+  (next-logical-line n)
   (fall-within-line (current-point)))
 
 (define-command vi-previous-line (&optional (n 1)) ("p")
-  (previous-line n)
+  (previous-logical-line n)
   (fall-within-line (current-point)))
 
 (defun %vi-forward-word-begin (n &key continue-to-next-line)

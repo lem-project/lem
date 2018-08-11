@@ -26,6 +26,8 @@
           window-recenter
           window-scroll
           window-cursor-y
+          move-to-next-line
+          move-to-previous-line
           window-see
           split-window-vertically
           split-window-horizontally

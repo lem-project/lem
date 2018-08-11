@@ -10,10 +10,10 @@
 
 (defvar *file-completion-ignore-case* t)
 
-(defun fuzzy-match-p (str elt)
+(defun fuzzy-match-p (str elt &optional ignore-case)
   (loop :with start := 0
         :for c :across str
-        :do (let ((pos (position c elt :start start)))
+        :do (let ((pos (position c elt :start start :test (if ignore-case #'char-equal char=))))
               (if pos
                   (setf start pos)
                   (return nil)))
@@ -70,7 +70,7 @@
          (input-pathname (merge-pathnames (enough-namestring str (directory-namestring str))
                                           input-directory))
          (files (mapcar #'namestring (list-directory input-directory :directory-only directory-only)))
-         (test-fn (alexandria:rcurry #'completion-test ignore-case)))
+         (test-fn (alexandria:rcurry #'fuzzy-match-p ignore-case)))
     (let ((strings
             (loop
               :for pathname :in (directory-files input-pathname)

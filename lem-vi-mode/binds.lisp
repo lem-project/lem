@@ -22,6 +22,8 @@
 (define-key *command-keymap* "h" 'vi-backward-char)
 (define-key *command-keymap* "j" 'vi-next-line)
 (define-key *command-keymap* "k" 'vi-previous-line)
+(define-key *command-keymap* "g j" 'vi-next-display-line)
+(define-key *command-keymap* "g k" 'vi-previous-display-line)
 (define-key *command-keymap* "w" 'vi-forward-word-begin)
 (define-key *command-keymap* "b" 'vi-backward-word-begin)
 (define-key *command-keymap* "W" 'vi-forward-word-begin-broad)

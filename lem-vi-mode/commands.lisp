@@ -230,12 +230,15 @@
            (with-point ((start (current-point))
                         (end (current-point)))
              (line-start start)
-             (line-offset end n)
-             (line-start end)
-             (kill-region start end)
-             (when *vi-clear-recursive*
-               (insert-character (current-point) #\Newline)
-               (previous-line)))
+             (line-end end)
+             (let ((eob (not (character-offset end 1))))
+               (kill-region start end)
+               (if eob
+                   (unless *vi-clear-recursive*
+                     (delete-previous-char))
+                   (when *vi-clear-recursive*
+                     (insert-character (current-point) #\Newline)
+                     (vi-previous-line)))))
            (throw tag t))
           ((visual-p)
            (with-output-to-string (out)
@@ -268,7 +271,8 @@
                  (let ((*vi-delete-recursive* t)
                        (*cursor-offset* 0))
                    (catch tag
-                     (call-command command n)
+                     ;; Ignore End of Buffer error and continue the deletion.
+                     (ignore-errors (call-command command n))
                      (with-point ((end (current-point)))
                        (when (point< end start)
                          (rotatef start end)

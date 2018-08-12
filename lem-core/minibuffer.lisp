@@ -384,3 +384,17 @@
                      (lambda (str) (completion str systems))
                      (lambda (system) (find system systems :test #'string=))
                      history-name)))
+
+(defun prompt-for-encodings (prompt history-name)
+  (let (encodings)
+    (maphash (lambda (x y)
+               (declare (ignore y))
+               (push (string-downcase x) encodings))
+             lem-base::*encoding-collections*)
+    (let ((name (prompt-for-line (format nil "~A(~(~A~))" prompt lem-base::*default-external-format*) ""
+                                 (lambda (str) (completion str encodings))
+                                 (lambda (encoding) (or (equal encoding "")
+                                                        (find encoding encodings :test #'string=)))
+                                 history-name)))
+      (cond ((equal name "") lem-base::*default-external-format*)
+            (t (read-from-string (format nil ":~A" name)))))))

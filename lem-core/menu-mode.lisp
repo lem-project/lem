@@ -150,10 +150,10 @@
   :redraw)
 
 (defun menu-select-1 (&key (set-buffer #'switch-to-buffer)
-                           (callback #'menu-select-callback)
+                           (reader #'menu-select-callback)
                            marked)
   (alexandria:when-let* ((menu (buffer-value (current-buffer) 'menu))
-                         (fn (funcall callback menu))
+                         (callback (funcall reader menu))
                          (items (menu-current-items :marked marked)))
     (loop :with cb := (current-buffer)
           :with cw := (current-window)
@@ -161,7 +161,7 @@
           :with close
           :with buffer
           :for item :in items
-          :for result := (funcall fn menu item)
+          :for result := (funcall callback menu item)
           :do (cond ((bufferp result) (setf buffer result))
                     ((eql result :redraw) (setf redraw t))
                     ((eql result :close)  (setf close t)))

@@ -382,8 +382,9 @@
     (if (eql type :vi-nolf)
         (character-offset (current-point) 1)
         (progn
-          (vi-next-line)
-          (line-start (current-point))))
+          (line-end (current-point))
+          (or (character-offset (current-point) 1)
+              (insert-character (current-point) #\Newline))))
     (yank)
     (character-offset (current-point) -1)
     (unless (eql type :vi-nolf)

@@ -59,6 +59,7 @@
                                              (1 (< state #x80))
                                              (2 (< state #x800))
                                              (3 (< state #x10000)))
+                                           (< char-code-limit state)
                                            (e-range state)) ;; should be escaped.
                                        #2#
                                        (if not-first-byte

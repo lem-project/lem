@@ -80,11 +80,13 @@
     (when-let (key (gesture-spec-to-key gesture-spec))
       (lem:send-event key))))
 
+(defvar *press-point* nil)
+
 (defun input-mouse-button (window-pane x y button press-release)
   (case button
     (:button-1
      (case press-release
-       (:press
+       ((:press :motion)
         (multiple-value-bind (w h) (window-pane-char-size window-pane)
           (let ((window (window-pane-window window-pane))
                 (x (floor x w))
@@ -92,9 +94,13 @@
             (lem:send-event (lambda ()
                               (setf (lem:current-window) window)
                               (move-to-cursor window x y)
+                              (if (eq press-release :press)
+                                  (setf *press-point* (lem:copy-point (lem:current-point) :temporary))
+                                  (lem:set-current-mark *press-point*))
                               (lem:redraw-display))))))
-       (:motion)
-       (:release)))
+       (:release
+        (setf *press-point* nil)
+        (lem:buffer-mark-cancel (lem:current-buffer)))))
     (:button-2)
     (:button-3)))
 

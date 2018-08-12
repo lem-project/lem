@@ -391,8 +391,6 @@
                                    (previous-charpos
                                     (line-offset point 0 previous-charpos)
                                     (return-from backward-line-wrap-1 point))
-                                   ((first-line-p point)
-                                    (return-from backward-line-wrap-1 nil))
                                    ((or contain-same-line-p (= i (point-charpos point)))
                                     (line-start point)
                                     (return-from backward-line-wrap-1 point)))))

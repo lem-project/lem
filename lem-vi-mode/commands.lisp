@@ -199,11 +199,11 @@
 
 (define-command vi-move-to-window-middle () ()
   (vi-move-to-window-top)
-  (vi-next-line (floor (/ (- (window-height (current-window)) 2) 2))))
+  (next-line (floor (/ (- (window-height (current-window)) 2) 2))))
 
 (define-command vi-move-to-window-bottom () ()
   (vi-move-to-window-top)
-  (vi-next-line (- (window-height (current-window)) 2)))
+  (next-line (- (window-height (current-window)) 2)))
 
 (define-command vi-indent-line () ()
   (with-point ((p (current-point)))

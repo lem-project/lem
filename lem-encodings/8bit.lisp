@@ -1,4 +1,4 @@
-(uiop/package:define-package :lem-encodings/8bit (:use :cl :lem-base))
+(uiop/package:define-package :lem-encodings/8bit (:use :cl :lem-base :lem-encodings/table))
 (in-package :lem-encodings/8bit)
 ;;;don't edit above
 

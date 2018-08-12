@@ -15,13 +15,32 @@
   (directory-files (expand-file-name filename (buffer-directory))))
 
 (define-key *global-keymap* "C-x C-f" 'find-file)
-(define-command find-file (filename) ("FFind File: ")
+(define-command find-file (filename) ("p")
   (check-switch-minibuffer-window)
-  (when (pathnamep filename)
-    (setf filename (namestring filename)))
-  (dolist (pathname (expand-files* filename))
-    (switch-to-buffer (find-file-buffer (namestring pathname)) t nil))
-  t)
+  (let ((*default-external-format* *default-external-format*))
+    (cond ((and (numberp filename) (= 1 filename))
+           (setf filename (prompt-for-file
+                           "Find File: "
+                           (buffer-directory)
+                           nil
+                           nil)))
+          ((numberp filename)
+           (setf *default-external-format*
+                 (prompt-for-encodings
+                  "Encodings: "
+                  'mh-read-file-encodings)
+                 filename (prompt-for-file
+                           "Find File: "
+                           (buffer-directory)
+                           nil
+                           nil))
+           (message "::~S" *default-external-format*)
+           )
+          ((pathnamep filename)
+           (setf filename (namestring filename))))
+    (dolist (pathname (expand-files* filename))
+      (switch-to-buffer (find-file-buffer (namestring pathname)) t nil))
+    t))
 
 (define-key *global-keymap* "C-x C-r" 'read-file)
 (define-command read-file (filename) ("FRead File: ")

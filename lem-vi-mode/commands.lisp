@@ -378,7 +378,12 @@
       (line-start (current-point)))))
 
 (define-command vi-paste-before () ()
-  (yank))
+  (multiple-value-bind (string type)
+      (lem::current-kill-ring)
+    (declare (ignore string))
+    (unless (eql type :vi-nolf)
+      (line-start (current-point)))
+    (yank)))
 
 (define-command vi-replace-char (c)
     ((list (key-to-char (read-key))))

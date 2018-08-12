@@ -83,26 +83,27 @@
 (defvar *press-point* nil)
 
 (defun input-mouse-button (window-pane x y button press-release)
-  (case button
-    (:button-1
-     (case press-release
-       ((:press :motion)
-        (multiple-value-bind (w h) (window-pane-char-size window-pane)
-          (let ((window (window-pane-window window-pane))
-                (x (floor x w))
-                (y (floor y h)))
-            (lem:send-event (lambda ()
-                              (setf (lem:current-window) window)
-                              (move-to-cursor window x y)
-                              (if (eq press-release :press)
-                                  (setf *press-point* (lem:copy-point (lem:current-point) :temporary))
-                                  (lem:set-current-mark *press-point*))
-                              (lem:redraw-display))))))
-       (:release
-        (setf *press-point* nil)
-        (lem:buffer-mark-cancel (lem:current-buffer)))))
-    (:button-2)
-    (:button-3)))
+  (when (window-pane-window window-pane)
+    (case button
+      (:button-1
+       (case press-release
+         ((:press :motion)
+          (multiple-value-bind (w h) (window-pane-char-size window-pane)
+            (let ((window (window-pane-window window-pane))
+                  (x (floor x w))
+                  (y (floor y h)))
+              (lem:send-event (lambda ()
+                                (setf (lem:current-window) window)
+                                (move-to-cursor window x y)
+                                (if (eq press-release :press)
+                                    (setf *press-point* (lem:copy-point (lem:current-point) :temporary))
+                                    (lem:set-current-mark *press-point*))
+                                (lem:redraw-display))))))
+         (:release
+          (setf *press-point* nil)
+          (lem:buffer-mark-cancel (lem:current-buffer)))))
+      (:button-2)
+      (:button-3))))
 
 (defun move-to-cursor (window x y)
   (lem:move-point (lem:current-point) (lem::window-view-point window))

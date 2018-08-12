@@ -357,14 +357,22 @@
                  (let ((*vi-yank-recursive* t)
                        (*cursor-offset* 0))
                    (catch tag
-                     (call-command command n)
+                     ;; Ignore End of Buffer error and continue the deletion.
+                     (ignore-errors (call-command command n))
                      (with-point ((end (current-point)))
                        (when (point< end start)
                          (rotatef start end)
                          (character-offset end 1))
                        (when (point/= start end)
-                         (copy-region start end)
-                         (kill-append "" nil '(:vi-nolf))))))
+                         (cond
+                           ((same-line-p start end)
+                            (copy-region start end)
+                            (kill-append "" nil '(:vi-nolf)))
+                           (t
+                            (line-start start)
+                            (line-end end)
+                            (character-offset end 1)
+                            (copy-region start end)))))))
                  (move-point (current-point) start))))))))
 
 (define-command vi-paste-after () ()

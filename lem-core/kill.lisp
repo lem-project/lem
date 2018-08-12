@@ -5,12 +5,14 @@
           kill-append
           kill-push
           kill-ring-rotate
+          kill-ring-rotate-undo
           kill-ring-first-string
           kill-ring-nth-string
           kill-ring-new))
 
 (defvar *kill-ring* nil)
 (defvar *kill-ring-yank-ptr* nil)
+(defvar *kill-ring-yank-ptr-prev* nil)
 (defvar *kill-ring-max* 10)
 
 (defvar *kill-new-flag* t)
@@ -43,6 +45,7 @@
        (setq *kill-ring*
              (subseq *kill-ring* 0 *kill-ring-max*)))
      (setq *kill-ring-yank-ptr* *kill-ring*)
+     (setq *kill-ring-yank-ptr-prev* nil)
      (setq *kill-new-flag* nil))
     (t
      (kill-append string *kill-before-p* options)))
@@ -64,8 +67,18 @@
        (apply #'values (car ptr)))))
 
 (defun kill-ring-rotate ()
+  (destructuring-bind (head &rest tail)
+      *kill-ring-yank-ptr*
+    (setf *kill-ring-yank-ptr*
+          (or tail *kill-ring*))
+    (setf *kill-ring-yank-ptr-prev*
+          (and tail (list head)))))
+
+(defun kill-ring-rotate-undo ()
   (setf *kill-ring-yank-ptr*
-        (or (cdr *kill-ring-yank-ptr*)
+        (if (car *kill-ring-yank-ptr-prev*)
+            (cons (pop *kill-ring-yank-ptr-prev*)
+                  *kill-ring-yank-ptr*)
             *kill-ring*)))
 
 (defun kill-ring-first-string ()

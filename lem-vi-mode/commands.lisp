@@ -57,7 +57,8 @@
            :vi-append-line
            :vi-open-below
            :vi-open-adove
-           :vi-normal))
+           :vi-normal
+           :vi-keyboard-quit))
 (in-package :lem-vi-mode.commands)
 
 (defvar *cursor-offset* -1)
@@ -512,3 +513,7 @@
 
 (define-command vi-normal () ()
   (change-state 'command))
+
+(define-command vi-keyboard-quit () ()
+  (vi-visual-end)
+  (keyboard-quit))

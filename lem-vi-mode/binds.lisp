@@ -90,3 +90,5 @@
 
 (define-key *command-keymap* "C-p" 'yank-pop)
 (define-key *command-keymap* "C-n" 'yank-pop-next)
+
+(define-key *command-keymap* "C-g" 'vi-keyboard-quit)

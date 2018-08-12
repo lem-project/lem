@@ -231,12 +231,15 @@
            (with-point ((start (current-point))
                         (end (current-point)))
              (line-start start)
-             (line-offset end n)
-             (line-start end)
-             (kill-region start end)
-             (when *vi-clear-recursive*
-               (insert-character (current-point) #\Newline)
-               (previous-line)))
+             (line-end end)
+             (let ((eob (not (character-offset end 1))))
+               (kill-region start end)
+               (if eob
+                   (unless *vi-clear-recursive*
+                     (delete-previous-char))
+                   (when *vi-clear-recursive*
+                     (insert-character (current-point) #\Newline)
+                     (vi-previous-line)))))
            (throw tag t))
           ((visual-p)
            (with-output-to-string (out)
@@ -269,7 +272,8 @@
                  (let ((*vi-delete-recursive* t)
                        (*cursor-offset* 0))
                    (catch tag
-                     (call-command command n)
+                     ;; Ignore End of Buffer error and continue the deletion.
+                     (ignore-errors (call-command command n))
                      (with-point ((end (current-point)))
                        (when (point< end start)
                          (rotatef start end)
@@ -354,14 +358,22 @@
                  (let ((*vi-yank-recursive* t)
                        (*cursor-offset* 0))
                    (catch tag
-                     (call-command command n)
+                     ;; Ignore End of Buffer error and continue the deletion.
+                     (ignore-errors (call-command command n))
                      (with-point ((end (current-point)))
                        (when (point< end start)
                          (rotatef start end)
                          (character-offset end 1))
                        (when (point/= start end)
-                         (copy-region start end)
-                         (kill-append "" nil '(:vi-nolf))))))
+                         (cond
+                           ((same-line-p start end)
+                            (copy-region start end)
+                            (kill-append "" nil '(:vi-nolf)))
+                           (t
+                            (line-start start)
+                            (line-end end)
+                            (character-offset end 1)
+                            (copy-region start end)))))))
                  (move-point (current-point) start))))))))
 
 (define-command vi-paste-after () ()
@@ -371,8 +383,9 @@
     (if (eql type :vi-nolf)
         (character-offset (current-point) 1)
         (progn
-          (vi-next-line)
-          (line-start (current-point))))
+          (line-end (current-point))
+          (or (character-offset (current-point) 1)
+              (insert-character (current-point) #\Newline))))
     (yank)
     (character-offset (current-point) -1)
     (unless (eql type :vi-nolf)

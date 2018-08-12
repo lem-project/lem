@@ -70,7 +70,7 @@
          (input-pathname (merge-pathnames (enough-namestring str (directory-namestring str))
                                           input-directory))
          (files (mapcar #'namestring (list-directory input-directory :directory-only directory-only)))
-         (test-fn (alexandria:rcurry #'fuzzy-match-p ignore-case)))
+         (test-fn (alexandria:rcurry #'completion-test ignore-case)))
     (let ((strings
             (loop
               :for pathname :in (directory-files input-pathname)

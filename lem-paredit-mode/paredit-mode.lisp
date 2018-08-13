@@ -17,9 +17,6 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (loop while (not (syntax-space-char-p (character-at q)))
         do (character-offset q 1)))
 
-(defun move-to-closed-paren (p)
-  (scan-lists p 1 0))
-
 (defun backward-open-paren-char-p (p)
   (with-point ((q p))
     (skip-whitespace-backward q)
@@ -60,7 +57,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                (p (current-point)))
     (scan-lists p -1 1)
     (when (syntax-open-paren-char-p (character-at p))
-      (move-to-closed-paren p)
+      (scan-lists p 1 0)
       (character-offset p -1)
       (with-point ((yank-point p))
         (character-offset p 1)
@@ -81,7 +78,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                (p (current-point)))
     (scan-lists p -1 1)
     (when (syntax-open-paren-char-p (character-at p))
-      (move-to-closed-paren p)
+      (scan-lists p 1 0)
         (character-offset p -1)
         (with-point ((kill-begin p))
           (character-offset p -1)

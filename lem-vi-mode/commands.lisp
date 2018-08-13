@@ -24,8 +24,8 @@
            :vi-move-to-window-top
            :vi-move-to-window-middle
            :vi-move-to-window-bottom
-           :vi-indent-line
            :vi-back-to-indentation
+           :vi-indent
            :vi-delete-next-char
            :vi-delete-previous-char
            :vi-delete
@@ -206,12 +206,31 @@
   (vi-move-to-window-top)
   (next-line (- (window-height (current-window)) 2)))
 
-(define-command vi-indent-line () ()
-  (with-point ((p (current-point)))
-    (indent-line p)))
-
 (define-command vi-back-to-indentation () ()
   (back-to-indentation-command))
+
+(defvar *vi-indent-recursive* nil)
+(let ((tag (gensym)))
+  (define-command vi-indent (&optional (n 1)) ("p")
+    (cond (*vi-indent-recursive*
+           (indent-line (current-point))
+           (throw tag t))
+          ((visual-p)
+           (apply-visual-range #'indent-region)
+           (vi-visual-end))
+          (t
+           (let ((command (lookup-keybind (read-key))))
+             (when (symbolp command)
+               (with-point ((start (current-point)))
+                 (let ((*vi-indent-recursive* t)
+                       (*cursor-offset* 0))
+                   (catch tag
+                     ;; Ignore End of Buffer error and continue the deletion.
+                     (ignore-errors (call-command command n))
+                     (with-point ((end (current-point)))
+                       (when (point< end start)
+                         (rotatef start end))
+                       (indent-region start end)))))))))))
 
 (define-command vi-delete-next-char (&optional (n 1)) ("p")
   (unless (empty-line (current-point))

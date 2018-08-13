@@ -85,7 +85,8 @@
 (define-key *command-keymap* "o" 'vi-open-below)
 (define-key *command-keymap* "O" 'vi-open-adove)
 (define-key *command-keymap* ":" 'vi-ex)
-(define-key *command-keymap* "Backspace" 'vi-backward-char)
+(define-key *command-keymap* 'delete-previous-char 'vi-backward-char)
+(define-key *command-keymap* 'self-insert 'undefined-key)
 
 (define-key *insert-keymap* "Escape" 'vi-end-insert)
 

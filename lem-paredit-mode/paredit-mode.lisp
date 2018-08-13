@@ -113,7 +113,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 
 (loop for (k . f) in '(("(" . paredit-insert-paren)
                        (")" . paredit-close-parenthesis)
-                       ("Backspace" . paredit-backward-delete)
+                       (delete-previous-char . paredit-backward-delete)
                        ("C-Right" . paredit-slurp)
                        ("C-Left" . paredit-barf))
       do (define-key *paredit-mode-keymap* k f))

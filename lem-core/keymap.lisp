@@ -18,6 +18,7 @@
   insertion-hook
   parent
   table
+  function-table
   name)
 
 (defun %print-keymap (object stream depth)
@@ -32,6 +33,7 @@
                  :insertion-hook insertion-hook
                  :parent parent
                  :table (make-hash-table :test 'eq)
+                 :function-table (make-hash-table :test 'eq)
                  :name name)))
     (push keymap *keymaps*)
     keymap))
@@ -39,11 +41,10 @@
 (defun define-key (keymap keyspec symbol)
   (check-type symbol symbol)
   (let ((keys (typecase keyspec
-                (symbol (loop :for (key1 . keymap1) :in (get keyspec 'keybind)
-                              :do (define-key keymap key1 symbol))
-                        (return-from define-key))
+                (symbol
+                 (setf (gethash keyspec (keymap-function-table keymap)) symbol)
+                 (return-from define-key))
                 (string (parse-keyspec keyspec)))))
-    (pushnew (cons keyspec keymap) (get symbol 'keybind) :test 'equal)
     (define-key-internal keymap keys symbol)))
 
 (defun define-key-internal (keymap keys symbol)
@@ -105,35 +106,31 @@
               (when (rest key*)
                 (write-char #\space out)))))
 
-(defun keymap-find-keybind (keymap key undef-hook)
+(defun keymap-find-keybind (keymap key cmd)
   (let ((table (keymap-table keymap)))
     (labels ((f (k)
                (let ((cmd (gethash k table)))
                  (if (hash-table-p cmd)
                      (setf table cmd)
                      cmd))))
-      (values
-       (or (etypecase key
-             (key
-              (f key))
-             (list
-              (let (cmd)
-                (dolist (k key)
-                  (unless (setf cmd (f k))
-                    (return)))
-                cmd)))
-           (let ((parent (keymap-parent keymap))
-                 _)
-             (when parent
-               (multiple-value-setq (_ undef-hook)
-                 (keymap-find-keybind parent key (or undef-hook
-                                                     (keymap-undef-hook keymap))))))
-           (and (keymap-insertion-hook keymap)
-                (insertion-key-p key)
-                (keymap-insertion-hook keymap))
-           undef-hook
-           (keymap-undef-hook keymap))
-       undef-hook))))
+      (let ((parent (keymap-parent keymap)))
+        (when parent
+          (setf cmd (keymap-find-keybind parent key cmd))))
+      (or (etypecase key
+            (key
+             (f key))
+            (list
+             (let (cmd)
+               (dolist (k key)
+                 (unless (setf cmd (f k))
+                   (return)))
+               cmd)))
+          (gethash cmd (keymap-function-table keymap))
+          (and (keymap-insertion-hook keymap)
+               (insertion-key-p key)
+               (keymap-insertion-hook keymap))
+          (keymap-undef-hook keymap)
+          cmd))))
 
 (defun insertion-key-p (key)
   (let* ((key (typecase key
@@ -164,17 +161,15 @@
                 (keyseq-to-string (last-read-key-sequence))))
 
 (defun lookup-keybind (key)
-  (let ((buffer (current-buffer))
-        undef-hook
-        _)
-    (some (lambda (mode)
-            (when (mode-keymap mode)
-              (multiple-value-setq (_ undef-hook)
-                (keymap-find-keybind (mode-keymap mode) key undef-hook))))
-          (append (buffer-minor-modes buffer)
-                  *global-minor-mode-list*
-                  (list (buffer-major-mode buffer)
-                        (current-global-mode))))))
+  (let (cmd)
+    (loop with buffer = (current-buffer)
+          for mode in (nreverse (append (buffer-minor-modes buffer)
+                                        *global-minor-mode-list*
+                                        (list (buffer-major-mode buffer)
+                                              (current-global-mode))))
+          do (when (mode-keymap mode)
+               (setf cmd (keymap-find-keybind (mode-keymap mode) key cmd))))
+    cmd))
 
 (defun find-keybind (key)
   (let ((cmd (lookup-keybind key)))

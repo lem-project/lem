@@ -303,8 +303,10 @@
                             (kill-region start end)
                             (kill-append "" nil '(:vi-nolf)))
                            (t
-                            (line-start start)
-                            (line-end end)
+                            (unless (or (eq command 'vi-forward-word-end)
+                                        (eq command 'vi-forward-word-begin))
+                              (line-start start)
+                              (line-end end))
                             (character-offset end 1)
                             (kill-region start end)))))))
                  (unless *vi-clear-recursive*

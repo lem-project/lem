@@ -14,57 +14,57 @@
   (ex-write range filename)
   (lem-vi-mode.commands:vi-quit force))
 
-(define-ex-command ("e") (range filename)
+(define-ex-command "^e$" (range filename)
   (declare (ignore range))
   (lem:find-file (merge-pathnames filename
                                   (lem:buffer-directory))))
 
-(define-ex-command ("w" "write") (range filename)
+(define-ex-command "^w|write$" (range filename)
   (ex-write range filename))
 
-(define-ex-command ("wq") (range filename)
+(define-ex-command "^wq$" (range filename)
   (ex-write-quit range filename nil))
 
-(define-ex-command ("wq!") (range filename)
+(define-ex-command "^wq!$" (range filename)
   (ex-write-quit range filename t))
 
-(define-ex-command ("q") (range argument)
+(define-ex-command "^q$" (range argument)
   (declare (ignore range argument))
   (lem-vi-mode.commands:vi-quit t))
 
-(define-ex-command ("qa") (range argument)
+(define-ex-command "^qa$" (range argument)
   (declare (ignore range argument))
   (lem:exit-lem t))
 
-(define-ex-command ("q!") (range argument)
+(define-ex-command "^q!$" (range argument)
   (declare (ignore range argument))
   (lem-vi-mode.commands:vi-quit nil))
 
-(define-ex-command ("qa!") (range argument)
+(define-ex-command "^qa!$" (range argument)
   (declare (ignore range argument))
   (lem:exit-lem nil))
 
-(define-ex-command ("wqa") (range filename)
+(define-ex-command "^wqa$" (range filename)
   (ex-write range filename)
   (lem:exit-lem t))
 
-(define-ex-command ("wqa!") (range filename)
+(define-ex-command "^wqa!$" (range filename)
   (ex-write range filename)
   (lem:exit-lem nil))
 
-(define-ex-command ("sp") (range filename)
+(define-ex-command "^sp$" (range filename)
   (declare (ignore range))
   (lem:split-active-window-vertically)
   (unless (string= filename "")
     (lem:find-file (lem:expand-file-name filename))))
 
-(define-ex-command ("vs") (range filename)
+(define-ex-command "^vs$" (range filename)
   (declare (ignore range))
   (lem:split-active-window-horizontally)
   (unless (string= filename "")
     (lem:find-file (lem:expand-file-name filename))))
 
-(define-ex-command ("s" "substitute") (range argument)
+(define-ex-command "^s|substitute$" (range argument)
   (let (start end)
     (case (length range)
       ((0)
@@ -85,3 +85,10 @@
                                            :count (if (equal flag "g")
                                                       nil
                                                       1)))))
+
+(define-ex-command "^!" (range command)
+  (declare (ignore range))
+  (lem:pipe-command
+   (format nil "~A ~A"
+          (subseq lem-vi-mode.ex-core:*command* 1)
+          command)))

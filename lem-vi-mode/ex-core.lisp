@@ -13,7 +13,8 @@
            :range
            :all-lines
            :call-ex-command
-           :define-ex-command))
+           :define-ex-command
+           :*command*))
 (in-package :lem-vi-mode.ex-core)
 
 (defvar *point*)
@@ -54,17 +55,18 @@
     (list (lem:copy-point (lem:buffer-start-point buffer) :temporary)
           (lem:copy-point (lem:buffer-end-point buffer) :temporary))))
 
-(defun call-ex-command (range command argument)
-  (let ((function (find-ex-command command)))
+(defvar *command* nil)
+(defun call-ex-command (range *command* argument)
+  (let ((function (find-ex-command *command*)))
     (unless function
-      (lem:editor-error "unknown command: ~A" command))
+      (lem:editor-error "unknown command: ~A" *command*))
     (funcall function range argument)))
 
 (defun find-ex-command (command)
-  (loop :for (names function) :in *command-table*
-        :do (when (member command names :test #'string=)
+  (loop :for (regex function) :in *command-table*
+        :do (when (cl-ppcre:scan regex command)
               (return function))))
 
-(defmacro define-ex-command (names (range argument) &body body)
-  `(push (list (list . ,(alexandria:ensure-list names)) (lambda (,range ,argument) ,@body))
+(defmacro define-ex-command (regex (range argument) &body body)
+  `(push (list ,regex (lambda (,range ,argument) ,@body))
          *command-table*))

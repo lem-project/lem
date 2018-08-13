@@ -47,6 +47,19 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
       (insert-character p c))
     (character-offset p -1)))
 
+(define-command paredit-backward-delete (&optional (n 1)) ("p")
+  (when (< 0 n)
+    (with-point ((p (current-point)))
+      (character-offset p -1)
+      (case (character-at p)
+        (#\( (when (char= (character-at p 1) #\))
+               (delete-next-char)
+               (delete-previous-char)))
+        (#\) (backward-char))
+        (otherwise
+         (delete-previous-char))))
+    (paredit-backward-delete (1- n))))
+
 (define-command paredit-slurp () ()
   (with-point ((origin (current-point))
                (p (current-point)))
@@ -91,6 +104,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
     (move-point (current-point) origin)))
 
 (loop for (k . f) in '(("(" . paredit-insert-paren)
+                       ("Backspace" . paredit-backward-delete)
                        ("C-Right" . paredit-slurp)
                        ("C-Left" . paredit-barf))
       do (define-key *paredit-mode-keymap* k f))

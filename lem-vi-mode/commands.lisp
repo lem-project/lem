@@ -151,7 +151,9 @@
          (loop until (or (eolp p)
                          (vi-word-char-p (character-at p))
                          (vi-space-char-p (character-at p)))
-               do (vi-forward-char)))))
+               do (vi-forward-char))
+         (when (eolp p)
+           (character-offset p 1)))))
     (%vi-forward-word-begin (1- n))))
 
 (define-command vi-forward-word-begin (&optional (n 1)) ("p")
@@ -196,9 +198,7 @@
                                         (or (char= char #\Newline)
                                             (vi-space-char-p char))))
   (%vi-forward-word-begin n)
-  (unless (or *vi-delete-recursive*
-              *vi-yank-recursive*)
-    (vi-backward-char)))
+  (vi-backward-char))
 
 (define-command vi-forward-word-end-broad (&optional (n 1)) ("p")
   (forward-word-end (current-point) n t))

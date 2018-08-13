@@ -91,6 +91,11 @@
        (or (alphanumericp char)
            (char= char #\_))))
 
+(defun vi-space-char-p (char)
+  (and (characterp char)
+       (or (char= char #\Space)
+           (char= char #\Tab))))
+
 (define-command vi-move-to-beginning-of-line/universal-argument-0 () ()
   (if (mode-active-p (current-buffer) 'universal-argument)
       (universal-argument-0)
@@ -130,31 +135,36 @@
   (previous-line n)
   (fall-within-line (current-point)))
 
-(defun %vi-forward-word-begin (n &key continue-to-next-line)
+(defun %vi-forward-word-begin (n)
   (when (< 0 n)
     (let ((p (current-point)))
       (cond
-        ((vi-word-char-p (character-at p 1))
+        ((vi-word-char-p (character-at p))
          (loop
            while (and (not (eolp p)) (vi-word-char-p (character-at p 1)))
            do (vi-forward-char))
          (character-offset p 1))
-        ((eolp p)
-         (if continue-to-next-line
-             (progn
-               (vi-next-line)
-               (vi-move-to-beginning-of-line)
-               (%vi-forward-word-begin n))
-             (character-offset p 1)))
+        ((vi-space-char-p (character-at p))
+         (character-offset p 1)
+         (skip-chars-forward p '(#\Space #\Tab)))
         (t
-         (loop until (or (eolp p) (vi-word-char-p (character-at p 1)))
-               do (vi-forward-char))
-         (character-offset p 1))))
+         (loop until (or (eolp p)
+                         (vi-word-char-p (character-at p))
+                         (vi-space-char-p (character-at p)))
+               do (vi-forward-char)))))
     (%vi-forward-word-begin (1- n))))
 
 (define-command vi-forward-word-begin (&optional (n 1)) ("p")
+  (when (and (eolp (current-point))
+             (not (or *vi-delete-recursive*
+                      *vi-yank-recursive*)))
+    (line-offset (current-point) 1)
+    (line-start (current-point)))
   (%vi-forward-word-begin n)
-  (skip-chars-forward (current-point) '(#\Space #\Tab #\Newline)))
+  (if (or *vi-delete-recursive*
+          *vi-yank-recursive*)
+      (skip-chars-forward (current-point) '(#\Space #\Tab))
+      (skip-chars-forward (current-point) '(#\Space #\Tab #\Newline))))
 
 (define-command vi-backward-word-begin (&optional (n 1)) ("p")
   (when (< 0 n)
@@ -181,7 +191,11 @@
   (backward-word-begin (current-point) n t))
 
 (define-command vi-forward-word-end (&optional (n 1)) ("p")
-  (%vi-forward-word-begin n :continue-to-next-line t)
+  (character-offset (current-point) 1)
+  (skip-chars-forward (current-point) (lambda (char)
+                                        (or (char= char #\Newline)
+                                            (vi-space-char-p char))))
+  (%vi-forward-word-begin n)
   (unless (or *vi-delete-recursive*
               *vi-yank-recursive*)
     (vi-backward-char)))

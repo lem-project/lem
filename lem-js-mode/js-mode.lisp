@@ -123,15 +123,90 @@ link :
         (variable-value 'end-of-defun-function) 'end-of-defun)
   (run-hooks *js-mode-hook*))
 
-#| 
-link : 
+(defun get-line-indent (point)
+  (line-start point)
+  (with-point ((start point)
+               (end point))
+    (skip-whitespace-forward end t)
+    (points-to-string start end)))
 
-|#
+(defun move-to-previous-line (point)
+  (line-start point)
+  (loop do (or (line-offset point -1)
+               (return nil))
+        while (or (blank-line-p point)
+                  (in-string-or-comment-p point))
+        finally (return t)))
+
+(defun value-between (value min max)
+  (max min (min max value)))
+
+(defun exceptional-indents (point tab-width)
+  (line-start point)
+  (skip-whitespace-forward point t)
+
+  ;; Indent for ternaries & method chain
+  (when (looking-at point "^(\\?|:|\\.)")
+    (return-from exceptional-indents tab-width))
+
+  ;; Continuing const/let
+  (with-point ((prev-point point))
+    (when (move-to-previous-line prev-point)
+      (with-point ((start prev-point)
+                   (end prev-point))
+        (line-start start)
+        (line-end end)
+        (skip-whitespace-forward start t)
+        (when (search-backward-regexp end ",$" start)
+          (return-from exceptional-indents
+            (cond
+              ((looking-at start "^const ")
+               6)
+              ((looking-at start "^let ")
+               4)
+              (t 0)))))))
+  0)
+
 (defun js-calc-indent (point)
-  (with-point ((point point))
+  (line-start point)
+  (when (in-string-or-comment-p point)
+    (with-point ((point point))
+      (back-to-indentation point)
+      (return-from js-calc-indent
+        (if (in-string-or-comment-p point)
+            (point-column point)
+            (js-calc-indent point)))))
+  (with-point ((point point)
+               (prev-point point))
+    (or (move-to-previous-line prev-point)
+        (return-from js-calc-indent 0))
     (let ((tab-width (variable-value 'tab-width :default point))
-          (column (point-column point)))
-      (+ column (- tab-width (rem column tab-width))))))
+          (column (length (get-line-indent prev-point)))
+          (prev-state (with-point ((start prev-point))
+                        (line-start start)
+                        (parse-partial-sexp (copy-point start :temporary)
+                                            (line-end start)))))
+
+      (incf column (* (value-between (+ (pps-state-paren-depth prev-state)
+                                        (if (pps-state-paren-stack prev-state) 1 0))
+                                     0 1)
+                      tab-width))
+
+      (with-point ((prev-start prev-point)
+                   (prev-end prev-point))
+        (skip-whitespace-forward point t)
+        (line-start prev-start)
+        (skip-whitespace-forward prev-start t)
+        (line-end prev-end)
+
+        ;; Block end
+        (when (looking-at point "^(}|\\)|\\])")
+          (decf column tab-width))
+
+        (decf column (exceptional-indents prev-point tab-width))
+        (incf column (exceptional-indents point tab-width)))
+
+      column)))
 
 (defun beginning-of-defun (point n)
   (loop :repeat n :do (search-backward-regexp point "^\\w")))

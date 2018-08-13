@@ -11,7 +11,8 @@
                "lem-markdown-mode"
                "lem-js-mode"
                "lem-css-mode"
-               "lem-selection-mode"))
+               "lem-selection-mode"
+               "lem-paredit-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

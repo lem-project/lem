@@ -60,6 +60,25 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
          (delete-previous-char))))
     (paredit-backward-delete (1- n))))
 
+(define-command paredit-close-parenthesis () ()
+  (with-point ((p (current-point)))
+    (case (character-at p)
+      (#\) (forward-char))
+      (otherwise
+       (message "aaa")
+       (handler-case (scan-lists p 1 1)
+         (error ()
+           (insert-character p #\))
+           (return-from paredit-close-parenthesis)))
+       (message "bbb")
+       (with-point ((new-p p))
+         (message "~A" new-p)
+         (character-offset new-p -1)
+         (move-point (current-point) new-p)
+         (with-point ((p new-p))
+           (skip-whitespace-backward p)
+           (delete-between-points p new-p)))))))
+
 (define-command paredit-slurp () ()
   (with-point ((origin (current-point))
                (p (current-point)))
@@ -104,6 +123,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
     (move-point (current-point) origin)))
 
 (loop for (k . f) in '(("(" . paredit-insert-paren)
+                       (")" . paredit-close-parenthesis)
                        ("Backspace" . paredit-backward-delete)
                        ("C-Right" . paredit-slurp)
                        ("C-Left" . paredit-barf))

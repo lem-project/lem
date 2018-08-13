@@ -74,7 +74,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
     (move-point (current-point) origin)))
 
 (define-command paredit-barf () ()
-  (with-point ((origin (current-point))
+  (with-point ((origin (current-point) :right-inserting)
                (p (current-point)))
     (scan-lists p -1 1)
     (when (syntax-open-paren-char-p (character-at p))

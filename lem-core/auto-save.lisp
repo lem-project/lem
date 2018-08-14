@@ -20,8 +20,9 @@
   (when (and (buffer-filename buffer)
              (buffer-modified-p buffer))
     (when (mode-active-p buffer 'auto-save-mode)
-      (write-to-file buffer (buffer-filename buffer))
-      (buffer-unmark buffer)
+      (unless (changed-disk-p buffer)
+        (write-to-file buffer (buffer-filename buffer))
+        (buffer-unmark buffer))
       (when *make-backup-files*
         (message "Auto save from ~A to ~A" (buffer-name buffer) (auto-save-filename buffer))
         (write-to-file buffer (auto-save-filename buffer))))))

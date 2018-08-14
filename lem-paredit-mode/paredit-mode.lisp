@@ -7,6 +7,8 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
         :lem
         :lem-vi-mode.word)
   (:export :paredit-mode
+           :paredit-forward
+           :paredit-backward
            :paredit-insert-paren
            :paredit-backward-delete
            :paredit-close-parenthesis
@@ -28,6 +30,12 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (with-point ((q p))
     (skip-whitespace-backward q)
     (syntax-open-paren-char-p (character-at q))))
+
+(define-command paredit-forward (&optional (n 1)) ("p")
+  (forward-sexp n))
+
+(define-command paredit-backward (&optional (n 1)) ("p")
+  (backward-sexp n))
 
 (define-command paredit-insert-paren () ()
   (let ((p (current-point)))
@@ -123,7 +131,9 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
         (delete-character end)
         (indent-region start end)))))
 
-(loop for (k . f) in '(("(" . paredit-insert-paren)
+(loop for (k . f) in '(("C-M-f" . paredit-forward)
+                       ("C-M-b" . paredit-backward)
+                       ("(" . paredit-insert-paren)
                        (")" . paredit-close-parenthesis)
                        (delete-previous-char . paredit-backward-delete)
                        ("C-Right" . paredit-slurp)

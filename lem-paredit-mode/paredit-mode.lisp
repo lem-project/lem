@@ -80,7 +80,11 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
       (return-from paredit-insert-doublequote))
     (unless (or (eql (character-at p -1) #\Space)
                 (eql (character-at p -1) #\()
-                (bolp p))
+                (bolp p)
+                ;; Pathname literal
+                (and (or (eql (character-at p -1) #\p)
+                         (eql (character-at p -1) #\P))
+                     (eql (character-at p -2) #\#)))
       (insert-character p #\Space))
     (dolist (c '(#\" #\"))
       (insert-character p c))

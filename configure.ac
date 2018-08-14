@@ -1,4 +1,4 @@
-AC_INIT([lem],[1.3])
+AC_INIT([lem],[1.4])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_FILES([Makefile])
 

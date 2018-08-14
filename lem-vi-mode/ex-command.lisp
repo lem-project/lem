@@ -19,7 +19,7 @@
   (lem:find-file (merge-pathnames filename
                                   (lem:buffer-directory))))
 
-(define-ex-command "^w|write$" (range filename)
+(define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename))
 
 (define-ex-command "^wq$" (range filename)
@@ -64,7 +64,7 @@
   (unless (string= filename "")
     (lem:find-file (lem:expand-file-name filename))))
 
-(define-ex-command "^s|substitute$" (range argument)
+(define-ex-command "^(s|substitute)$" (range argument)
   (let (start end)
     (case (length range)
       ((0)

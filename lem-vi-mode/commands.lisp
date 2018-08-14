@@ -495,12 +495,16 @@
   (lem.isearch:isearch-prev-highlight n))
 
 (define-command vi-goto-first-line () ()
-  (move-to-beginning-of-buffer))
+  (move-to-beginning-of-buffer)
+  (skip-whitespace-forward (current-point)))
 
 (define-command vi-goto-line (arg) ("P")
   (if (null arg)
-      (move-to-end-of-buffer)
-      (goto-line arg)))
+      (progn
+        (move-to-end-of-buffer)
+        (line-start (current-point)))
+      (goto-line arg))
+  (skip-whitespace-forward (current-point)))
 
 (define-command vi-find-char () ()
   (alexandria:when-let (c (key-to-char (read-key)))

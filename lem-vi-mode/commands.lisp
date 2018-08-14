@@ -41,6 +41,8 @@
            :vi-paste-after
            :vi-paste-before
            :vi-replace-char
+           :vi-undo
+           :vi-redo
            :vi-move-to-matching-paren
            :vi-search-forward
            :vi-search-backward
@@ -461,6 +463,14 @@
   (delete-next-char 1)
   (insert-character (current-point) c)
   (backward-char 1))
+
+(define-command vi-undo (&optional (n 1)) ("p")
+  (undo n)
+  (fall-within-line (current-point)))
+
+(define-command vi-redo (&optional (n 1)) ("p")
+  (redo n)
+  (fall-within-line (current-point)))
 
 (defun forward-matching-paren (p &optional skip)
   (with-point ((p p))

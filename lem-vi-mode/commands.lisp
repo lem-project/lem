@@ -32,6 +32,7 @@
            :vi-delete-line
            :vi-clear
            :vi-clear-line
+           :vi-join
            :vi-join-line
            :vi-yank
            :vi-yank-line
@@ -351,6 +352,10 @@
   (let ((*vi-clear-recursive* t))
     (vi-delete-line))
   (vi-insert))
+
+(define-command vi-join () ()
+  (move-to-end-of-line)
+  (delete-next-char))
 
 (define-command vi-join-line () ()
   (move-to-end-of-line)

@@ -44,6 +44,7 @@
 (define-key *command-keymap* "D" 'vi-delete-line)
 (define-key *command-keymap* "c" 'vi-clear)
 (define-key *command-keymap* "C" 'vi-clear-line)
+(define-key *command-keymap* "g J" 'vi-join)
 (define-key *command-keymap* "J" 'vi-join-line)
 (define-key *command-keymap* "y" 'vi-yank)
 (define-key *command-keymap* "p" 'vi-paste-after)

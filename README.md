@@ -33,6 +33,12 @@ $ ros install cxxxr/lem
 export PATH=$PATH:~/.roswell/bin
 ```
 
+## Updating
+
+```
+$ ros update lem
+```
+
 ## Usage
 
 ```
@@ -42,6 +48,15 @@ $ lem <filename.lisp>
 You can watch the screencast on Youtube.
 
 [Screencast](https://youtu.be/YkSJ3p7Z9H0)
+
+## Configuration
+
+Lem loads `~/.lem/init.lisp` when startup.
+
+You can see an example at [here](lemrc-example).
+
+fukamachi also published his init files on GitHub.
+https://github.com/fukamachi/.lem
 
 ## Electron version (Experiment)
 Electron version is in the experimental stage.

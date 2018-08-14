@@ -171,7 +171,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
     (when (syntax-open-paren-char-p (character-at start))
       (with-point ((end start))
         (scan-lists start 1 0)
-        (character-offset start -2)
+        (character-offset start -1)
         (delete-character start)
         (delete-character end)
         (indent-region start end)))))

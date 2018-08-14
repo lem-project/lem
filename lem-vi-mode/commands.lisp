@@ -49,6 +49,8 @@
            :vi-goto-line
            :vi-find-char
            :vi-find-char-backward
+           :vi-find-char-before
+           :vi-find-char-backward-after
            :vi-write
            :vi-quit
            :vi-write-quit
@@ -517,6 +519,14 @@
       (line-start limit)
       (when (search-backward p (string c) limit)
         (move-point (current-point) p)))))
+
+(define-command vi-find-char-before () ()
+  (vi-find-char)
+  (vi-backward-char))
+
+(define-command vi-find-char-backward-after () ()
+  (vi-find-char-backward)
+  (vi-forward-char))
 
 (define-command vi-write () ()
   (lem:write-file (lem:buffer-filename (lem:current-buffer))))

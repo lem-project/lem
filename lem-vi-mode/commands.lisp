@@ -203,7 +203,9 @@
                                         (or (char= char #\Newline)
                                             (vi-space-char-p char))))
   (%vi-forward-word-begin n)
-  (vi-backward-char))
+  (unless (or *vi-delete-recursive*
+              *vi-clear-recursive*)
+    (vi-backward-char)))
 
 (define-command vi-forward-word-end-broad (&optional (n 1)) ("p")
   (forward-word-end (current-point) n t))

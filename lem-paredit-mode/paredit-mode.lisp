@@ -131,8 +131,8 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
         (delete-character end)
         (indent-region start end)))))
 
-(loop for (k . f) in '(("C-M-f" . paredit-forward)
-                       ("C-M-b" . paredit-backward)
+(loop for (k . f) in '((forward-sexp . paredit-forward)
+                       (backward-sexp . paredit-backward)
                        ("(" . paredit-insert-paren)
                        (")" . paredit-close-parenthesis)
                        (delete-previous-char . paredit-backward-delete)

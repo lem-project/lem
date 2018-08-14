@@ -37,10 +37,26 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 (define-command paredit-backward (&optional (n 1)) ("p")
   (backward-sexp n))
 
+(defun bolp (point)
+  (zerop (point-charpos point)))
+
+(defun eolp (point)
+  (let ((len (length (line-string point))))
+    (or (zerop len)
+        (>= (point-charpos point)
+            (1- len)))))
+
 (define-command paredit-insert-paren () ()
   (let ((p (current-point)))
+    (unless (or (eql (character-at p -1) #\Space)
+                (bolp p))
+      (insert-character p #\Space))
     (dolist (c '(#\( #\)))
       (insert-character p c))
+    (unless (or (eolp p)
+                (eql (character-at p) #\Space))
+      (insert-character p #\Space)
+      (character-offset p -1))
     (character-offset p -1)))
 
 (define-command paredit-backward-delete (&optional (n 1)) ("p")

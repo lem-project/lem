@@ -2,6 +2,7 @@
 
 (export '(*kill-ring-max*
           *kill-before-p*
+          *enable-clipboard-p*
           kill-append
           kill-push
           kill-ring-rotate

@@ -31,6 +31,7 @@
 (define-key *command-keymap* "e" 'vi-forward-word-end)
 (define-key *command-keymap* "E" 'vi-forward-word-end-broad)
 (define-key *command-keymap* "$" 'vi-move-to-end-of-line)
+(define-key *command-keymap* "g _" 'vi-move-to-last-nonblank)
 (define-key *command-keymap* "H" 'vi-move-to-window-top)
 (define-key *command-keymap* "M" 'vi-move-to-window-middle)
 (define-key *command-keymap* "L" 'vi-move-to-window-bottom)

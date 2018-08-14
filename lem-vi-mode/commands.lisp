@@ -21,6 +21,7 @@
            :vi-forward-word-end-broad
            :vi-move-to-beginning-of-line
            :vi-move-to-end-of-line
+           :vi-move-to-last-nonblank
            :vi-move-to-window-top
            :vi-move-to-window-middle
            :vi-move-to-window-bottom
@@ -212,6 +213,13 @@
 
 (define-command vi-move-to-end-of-line () ()
   (goto-eol (current-point)))
+
+(define-command vi-move-to-last-nonblank () ()
+  (vi-move-to-end-of-line)
+  (skip-whitespace-backward (current-point) t)
+  (when (and (not (bolp (current-point)))
+             (eql (character-at (current-point)) #\Space))
+    (vi-backward-char)))
 
 (define-command vi-move-to-window-top () ()
   (move-point (current-point) (window-view-point (current-window))))

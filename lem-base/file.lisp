@@ -47,10 +47,11 @@
 (defun insert-file-contents (point filename
                              &key (external-format *default-external-format*)
                                   (end-of-line :auto))
-  (when (and *external-format-function*
-             (eql external-format :detect-encoding))
-    (multiple-value-setq (external-format end-of-line)
-      (funcall *external-format-function* filename)))
+  (when (eql external-format :detect-encoding)
+    (if *external-format-function*
+        (multiple-value-setq (external-format end-of-line)
+          (funcall *external-format-function* filename))
+        (setf external-format :utf-8)))
   (let* ((encoding (encoding external-format end-of-line))
          (use-internal-p (typep encoding 'internal-encoding)))
     (with-point ((point point :left-inserting))

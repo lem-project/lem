@@ -73,8 +73,8 @@
   (setf (gethash buffer (workspace-file-version-table (buffer-workspace buffer))) value))
 
 (defun buffer-text (buffer)
-  (lem:points-to-string (lem:buffer-start buffer)
-                        (lem:buffer-end buffer)))
+  (lem:points-to-string (lem:buffer-start-point buffer)
+                        (lem:buffer-end-point buffer)))
 
 (defun buffer-uri (buffer)
   (pathname-to-uri (lem:buffer-filename buffer)))

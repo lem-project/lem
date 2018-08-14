@@ -48,6 +48,9 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 
 (define-command paredit-insert-paren () ()
   (let ((p (current-point)))
+    (when (in-string-or-comment-p p)
+      (insert-character p #\()
+      (return-from paredit-insert-paren))
     (when (eql (character-at p -1) #\\)
       (insert-character p #\()
       (return-from paredit-insert-paren))
@@ -66,6 +69,9 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 
 (define-command paredit-insert-doublequote () ()
   (let ((p (current-point)))
+    (when (in-string-or-comment-p p)
+      (insert-character p #\")
+      (return-from paredit-insert-doublequote))
     (when (eql (character-at p -1) #\\)
       (insert-character p #\")
       (return-from paredit-insert-doublequote))

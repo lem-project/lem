@@ -38,6 +38,7 @@
 (define-key *command-keymap* "=" 'vi-indent)
 (define-key *command-keymap* "{" 'backward-paragraph)
 (define-key *command-keymap* "}" 'forward-paragraph)
+(define-key *command-keymap* "s" 'vi-substitute)
 (define-key *command-keymap* "x" 'vi-delete-next-char)
 (define-key *command-keymap* "X" 'vi-delete-previous-char)
 (define-key *command-keymap* "d" 'vi-delete)

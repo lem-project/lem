@@ -26,6 +26,7 @@
            :vi-move-to-window-bottom
            :vi-back-to-indentation
            :vi-indent
+           :vi-substitute
            :vi-delete-next-char
            :vi-delete-previous-char
            :vi-delete
@@ -246,6 +247,10 @@
                        (when (point< end start)
                          (rotatef start end))
                        (indent-region start end)))))))))))
+
+(define-command vi-substitute (&optional (n 1)) ("p")
+  (vi-delete-next-char n)
+  (change-state 'insert))
 
 (define-command vi-delete-next-char (&optional (n 1)) ("p")
   (unless (empty-line (current-point))

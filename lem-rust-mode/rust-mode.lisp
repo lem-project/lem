@@ -63,6 +63,12 @@
                                    :captures (vector nil
                                                      (make-tm-name 'syntax-variable-attribute)
                                                      nil))
+                    (make-tm-match `(:sequence
+                                     :word-boundary
+                                     ,(ppcre:parse-string "([^\\t <>()-]+)!"))
+                                   :captures (vector nil
+                                                     (make-tm-name 'syntax-variable-attribute)
+                                                     nil))
                     (make-tm-match
                      (tokens :word-boundary
                              '("u8" "i8"

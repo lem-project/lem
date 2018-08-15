@@ -68,6 +68,8 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                 (eql (character-at p -1) #\')
                 (eql (character-at p -1) #\`)
                 (eql (character-at p -1) #\,)
+                (and (eql (character-at p -1) #\@)
+                     (eql (character-at p -2) #\,))
                 (bolp p))
       (insert-character p #\Space))
     (dolist (c '(#\( #\)))

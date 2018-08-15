@@ -271,6 +271,18 @@
     (otherwise
      "")))
 
+(defun completion-params (point &optional (trigger-kind 1))
+  (setq trigger-kind 1)
+  (merge-table (text-document-position-params point)
+               ({} "triggerKind" trigger-kind
+                   #|"triggerCharacter"|#)))
+
+(defun completion (point)
+  (let ((workspace (buffer-workspace (lem:point-buffer point))))
+    (jsonrpc:call (workspace-connection workspace)
+                  "textDocument/completion"
+                  (completion-params point))))
+
 (defun hover (point)
   (let ((workspace (buffer-workspace (lem:point-buffer point))))
     (handler-case

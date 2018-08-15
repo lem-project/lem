@@ -985,7 +985,6 @@
     ((:eof)
      (buffer-end point))))
 
-
 (defparameter *impl-name* nil)
 (defvar *slime-command-impls* '(roswell-impls-candidates
                                 qlot-impls-candidates))
@@ -1092,7 +1091,6 @@
     (self-connect))
   (when start-repl (start-lisp-repl)))
 
-
 (defun scan-current-package (point)
   (with-point ((p point))
     (loop

@@ -247,7 +247,6 @@
   (with-error-handler ()
     (notify "update-display" nil)))
 
-
 (defmacro define-enum (name &rest vars)
   (declare (ignore name))
   `(progn

@@ -198,7 +198,6 @@
                        attribute))
     x))
 
-
 (defun redraw-line-p (y)
   (or (not *redraw-start-y*)
       (<= *redraw-start-y* y *redraw-end-y*)))

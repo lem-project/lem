@@ -228,7 +228,6 @@
                     (decf offset-line)
                 :finally (shift-markers point offset-line 0)))))))
 
-
 (declaim (inline call-before-change-functions
                  call-after-change-functions))
 

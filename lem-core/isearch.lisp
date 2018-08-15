@@ -75,7 +75,6 @@
 (define-key *global-keymap* "F3" 'isearch-next-highlight)
 (define-key *global-keymap* "Shift-F3" 'isearch-prev-highlight)
 
-
 (defun isearch-overlays (buffer)
   (buffer-value buffer 'isearch-overlays))
 
@@ -107,7 +106,6 @@
         (return (overlay-start prev)))
       (setf prev ov))))
 
-
 (defun isearch-update-buffer (&optional (point (current-point))
                                         (search-string *isearch-string*))
   (let ((buffer (point-buffer point)))
@@ -350,7 +348,6 @@
     ((boundp '*isearch-string*)
      (isearch-update-buffer))))
 
-
 (defvar *replace-before-string* nil)
 (defvar *replace-after-string* nil)
 

@@ -154,7 +154,6 @@
 (defmethod trivial-gray-streams:clear-output ((stream buffer-output-stream))
   )
 
-
 (defclass minibuffer-input-stream (trivial-gray-streams:fundamental-input-stream)
   ((queue
     :initform nil
@@ -204,7 +203,6 @@
 (defmethod trivial-gray-streams:stream-clear-input ((stream minibuffer-input-stream))
   nil)
 
-
 (defclass editor-output-stream (trivial-gray-streams:fundamental-character-output-stream)
   ((pool
     :initform (make-string-output-stream))

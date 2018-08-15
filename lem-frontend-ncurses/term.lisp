@@ -11,7 +11,6 @@
 
 (cffi:defcvar ("COLOR_PAIRS" *COLOR-PAIRS* :library charms/ll::libcurses) :int)
 
-
 (defvar *colors*)
 
 (defun color-red (color) (first color))
@@ -337,7 +336,6 @@
         (values color t)
         (values 0 nil))))
 
-
 (defvar *pair-counter* 0)
 (defvar *color-pair-table* (make-hash-table :test 'equal))
 
@@ -407,7 +405,6 @@
                                          (color-blue color)))))))
 
 ;;;
-
 (cffi:defcfun "fopen" :pointer (path :string) (mode :string))
 (cffi:defcfun "fclose" :int (fp :pointer))
 (cffi:defcfun "fileno" :int (fd :pointer))

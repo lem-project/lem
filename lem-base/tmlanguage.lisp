@@ -130,7 +130,6 @@
 (defmethod %syntax-scan-region ((tmlanguage tmlanguage) start end)
   (tm-syntax-scan-region start end))
 
-
 (defun set-syntax-context (line x)
   (setf (line-%syntax-context line) x))
 

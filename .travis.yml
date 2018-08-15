@@ -13,10 +13,6 @@ os:
   - osx
   - linux
 
-matrix:
-  allow_failures:
-    - os: osx
-
 install:
   - curl -L https://raw.githubusercontent.com/roswell/roswell/release/scripts/install-for-ci.sh | sh
   - ros install cxxxr/lem

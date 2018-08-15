@@ -114,7 +114,7 @@
             (background (gethash "background" params)))
         (declare (ignore foreground))
         (resize width height)
-        (alexandria:when-let (color (or (get-rgb-from-color-name background) background))
+        (alexandria:when-let (color (or (get-rgb-from-color-name background) (parse-color background)))
           (destructuring-bind (r g b) color
             (lem::set-display-background-mode (rgb-to-background-mode r g b))))
         (funcall loaded-fn)

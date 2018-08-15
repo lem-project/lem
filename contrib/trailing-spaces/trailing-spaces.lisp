@@ -29,9 +29,9 @@
                 (return)))))
 
 (defun enable ()
-  (add-hook (variable-value 'after-syntax-scan-hook :buffer (current-buffer))
+  (add-hook (variable-value 'after-syntax-scan-hook :global)
             'scan-trailing-spaces))
 
 (defun disable ()
-  (add-hook (variable-value 'after-syntax-scan-hook :buffer (current-buffer))
-            'scan-trailing-spaces))
+  (remove-hook (variable-value 'after-syntax-scan-hook :global)
+               'scan-trailing-spaces))

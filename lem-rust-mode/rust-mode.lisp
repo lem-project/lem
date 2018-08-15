@@ -56,6 +56,13 @@
                                    :captures (vector nil
                                                      (make-tm-name 'syntax-keyword-attribute)
                                                      (make-tm-name 'syntax-function-name-attribute)))
+                    (make-tm-match `(:sequence
+                                     ,(ppcre:parse-string "([^A-Z:\\t <>()-]+)")
+                                     "::"
+                                     :word-boundary)
+                                   :captures (vector nil
+                                                     (make-tm-name 'syntax-variable-attribute)
+                                                     nil))
                     (make-tm-match
                      (tokens :word-boundary
                              '("u8" "i8"
@@ -85,17 +92,7 @@
                                                  "=" "->" "." "," "?" ":" "sizeof"))
                                    :name 'syntax-keyword-attribute)
                     (make-tm-match "\\b((0(x|X)[0-9a-fA-F_]*?)|(0(b|B)[01]([01_]*)?)|(([0-9]([0-9_]*)?\\.?[0-9_]*)|(\\.[0-9]([0-9_]*)?))((e|E)(\\+|-)?[0-9]([0-9']*[0-9])?)?)(u8|i8|u16|i16|u32|i32|u64|i64|u128|f32|f64)?\\b"
-                                   :name 'syntax-constant-attribute)
-                    
-                    #+nil(make-tm-match `(:sequence
-                                     :start-anchor
-                                     (:greedy-repetition 0 nil :whitespace-char-class)
-                                     "#"
-                                     ,(tokens nil '("defined" "define" "undef" "include"
-                                                    "ifdef" "ifndef" "if" "elif" "else" "endif"
-                                                    "line" "error" "pragma"))
-                                     :word-boundary)
-                                   :name 'syntax-builtin-attribute))))
+                                   :name 'syntax-constant-attribute))))
     (make-tmlanguage :patterns patterns)))
 
 (defvar *rust-syntax-table*
@@ -103,6 +100,7 @@
                 :space-chars '(#\space #\tab #\newline #\: #\, #\;)
                 :symbol-chars '(#\_)
                 :paren-pairs '((#\( . #\))
+                               ;;(#\< . #\>)
                                (#\{ . #\})
                                (#\[ . #\]))
                 :string-quote-chars '(#\")

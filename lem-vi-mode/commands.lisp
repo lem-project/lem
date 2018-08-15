@@ -269,13 +269,11 @@
 (define-command vi-delete-next-char (&optional (n 1)) ("p")
   (unless (empty-line (current-point))
     (delete-next-char n)
-    (kill-append "" nil '(:vi-nolf))
     (fall-within-line (current-point))))
 
 (define-command vi-delete-previous-char (&optional (n 1)) ("p")
   (unless (bolp (current-point))
-    (delete-previous-char n)
-    (kill-append "" nil '(:vi-nolf))))
+    (delete-previous-char n)))
 
 (defvar *vi-delete-recursive* nil)
 (let ((tag (gensym)))
@@ -287,6 +285,7 @@
              (line-end end)
              (let ((eob (not (character-offset end 1))))
                (kill-region start end)
+               (kill-append "" nil '(:vi-line))
                (if eob
                    (unless *vi-clear-recursive*
                      (delete-previous-char))
@@ -307,8 +306,8 @@
              (unless (continue-flag :kill)
                (kill-ring-new))
              (kill-push (get-output-stream-string out))
-             (unless (visual-line-p)
-               (kill-append "" nil '(:vi-nolf))))
+             (when (visual-line-p)
+               (kill-append "" nil '(:vi-line))))
            (vi-visual-end))
           (t
            (let ((command (loop with uarg = nil
@@ -334,15 +333,15 @@
                        (when (point/= start end)
                          (cond
                            ((same-line-p start end)
-                            (kill-region start end)
-                            (kill-append "" nil '(:vi-nolf)))
+                            (kill-region start end))
                            (t
                             (unless (or (eq command 'vi-forward-word-end)
                                         (eq command 'vi-forward-word-begin))
                               (line-start start)
                               (line-end end))
                             (character-offset end 1)
-                            (kill-region start end)))))))
+                            (kill-region start end)
+                            (kill-append "" nil '(:vi-line))))))))
                  (unless *vi-clear-recursive*
                    (fall-within-line (current-point))))))))))
 
@@ -357,7 +356,6 @@
          (with-point ((start (current-point))
                       (end (current-point)))
            (kill-region start (line-end end)))
-         (kill-append "" nil '(:vi-nolf))
          (unless *vi-clear-recursive*
            (fall-within-line (current-point))))))
 
@@ -394,6 +392,7 @@
              (line-offset end n)
              (line-start end)
              (copy-region start end)
+             (kill-append "" nil '(:vi-line))
              (throw tag t)))
           ((visual-p)
            (with-output-to-string (out)
@@ -407,8 +406,8 @@
              (unless (continue-flag :kill)
                (kill-ring-new))
              (kill-push (get-output-stream-string out))
-             (unless (visual-line-p)
-               (kill-append "" nil '(:vi-nolf))))
+             (when (visual-line-p)
+               (kill-append "" nil '(:vi-line))))
            (vi-visual-end))
           (t
            (let ((command (lookup-keybind (read-key))))
@@ -426,35 +425,35 @@
                        (when (point/= start end)
                          (cond
                            ((same-line-p start end)
-                            (copy-region start end)
-                            (kill-append "" nil '(:vi-nolf)))
+                            (copy-region start end))
                            (t
                             (line-start start)
                             (line-end end)
                             (character-offset end 1)
-                            (copy-region start end)))))))
+                            (copy-region start end)
+                            (kill-append "" nil '(:vi-line))))))))
                  (move-point (current-point) start))))))))
 
 (define-command vi-paste-after () ()
   (multiple-value-bind (string type)
       (lem::current-kill-ring)
     (declare (ignore string))
-    (if (eql type :vi-nolf)
-        (character-offset (current-point) 1)
+    (if (eql type :vi-line)
         (progn
           (line-end (current-point))
           (or (character-offset (current-point) 1)
-              (insert-character (current-point) #\Newline))))
+              (insert-character (current-point) #\Newline)))
+        (character-offset (current-point) 1))
     (yank)
     (character-offset (current-point) -1)
-    (unless (eql type :vi-nolf)
+    (when (eql type :vi-line)
       (line-start (current-point)))))
 
 (define-command vi-paste-before () ()
   (multiple-value-bind (string type)
       (lem::current-kill-ring)
     (declare (ignore string))
-    (unless (eql type :vi-nolf)
+    (when (eql type :vi-line)
       (line-start (current-point)))
     (yank)))
 

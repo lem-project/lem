@@ -48,6 +48,14 @@
                                              "where" "while"
                                              "yield"))
                                    :name 'syntax-keyword-attribute)
+                    (make-tm-match `(:sequence
+                                     (:register "fn")
+                                     (:greedy-repetition 1 nil :whitespace-char-class)
+                                     ,(ppcre:parse-string "([^\\t <>()-]+)")
+                                     :word-boundary)
+                                   :captures (vector nil
+                                                     (make-tm-name 'syntax-keyword-attribute)
+                                                     (make-tm-name 'syntax-function-name-attribute)))
                     (make-tm-match
                      (tokens :word-boundary
                              '("u8" "i8"

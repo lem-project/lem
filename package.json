@@ -4,6 +4,7 @@
   "description": "lem frontend",
   "main": "lem-frontend-electron/index.js",
   "scripts": {
+    "start": "node lem-frontend-electron/cli.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "preinstall": "ros install cxxxr/lem"
   },
@@ -12,6 +13,7 @@
   "dependencies": {
     "child_process": "^1.0.2",
     "electron": "^1.7.9",
+    "keyboard-layout": "^2.0.13",
     "marked": "^0.3.6",
     "utf-8": "^1.0.0",
     "vscode-jsonrpc": "^3.4.1"

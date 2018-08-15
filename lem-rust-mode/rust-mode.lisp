@@ -19,6 +19,9 @@
                     (make-tm-region '(:sequence "/*")
                                     '(:sequence "*/")
                                     :name 'syntax-comment-attribute)
+                    (make-tm-region '(:sequence "#[")
+                                    '(:sequence "]")
+                                    :name 'syntax-builtin-attribute)
                     (make-tm-region '(:sequence "\"")
                                     '(:sequence "\"")
                                     :name 'syntax-string-attribute
@@ -58,6 +61,8 @@
                                "bool"
                                "str" "char"))
                      :name 'syntax-type-attribute)
+                    (make-tm-match "\\b[A-Z][a-zA-Z_0-9]*\\b"
+                                   :name 'syntax-type-attribute)
                     (make-tm-match (tokens :word-boundary
                                            '("const" "extern" "register" "restrict"
                                              "static" "volatile" "inline"))
@@ -92,10 +97,11 @@
                 :paren-pairs '((#\( . #\))
                                (#\{ . #\})
                                (#\[ . #\]))
-                :string-quote-chars '(#\" #\')
+                :string-quote-chars '(#\")
                 :expr-prefix-chars '(#\- #\+ #\*)
                 :block-string-pairs '(("`" . "`"))
-                :line-comment-string "//"))
+                :line-comment-string "//"
+                :block-comment-pairs '(("/*" . "*/"))))
         (tmlanguage (make-tmlanguage-rust)))
     (set-syntax-parser table tmlanguage)
     table))

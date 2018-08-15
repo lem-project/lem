@@ -56,6 +56,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
       (return-from paredit-insert-paren))
     (unless (or (eql (character-at p -1) #\Space)
                 (eql (character-at p -1) #\()
+                (eql (character-at p -1) #\')
                 (bolp p))
       (insert-character p #\Space))
     (dolist (c '(#\( #\)))

@@ -183,7 +183,6 @@
                                       (syntax-table-block-string-pairs
                                        (current-syntax)))))
 
-
 (let ((cache (make-hash-table :test 'equal)))
   (defun %create-pair-regex (pair)
     (let ((tree
@@ -604,7 +603,6 @@
         (skip-chars-forward point #'syntax-symbol-char-p)
         (points-to-string start point)))))
 
-
 (defstruct pps-state
   type
   token-start-point

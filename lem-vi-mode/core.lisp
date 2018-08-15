@@ -30,7 +30,6 @@
   (:enable-hook #'enable-hook
    :disable-hook #'disable-hook))
 
-
 (defvar *modeline-element*)
 
 (define-attribute state-attribute
@@ -52,7 +51,6 @@
 (defun change-element-name (name)
   (setf (element-name *modeline-element*) name))
 
-
 (defstruct vi-state
   name
   keymap
@@ -107,7 +105,6 @@
        (unwind-protect (progn ,@body)
          (change-state ,old-state)))))
 
-
 (defvar *command-keymap* (make-keymap :name '*command-keymap*
                                       :parent *global-keymap*))
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap* :parent *global-keymap*))

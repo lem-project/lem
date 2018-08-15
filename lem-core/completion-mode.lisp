@@ -167,7 +167,6 @@
 
 (setf *minibuffer-completion-function* 'minibuffer-completion)
 
-
 (defun pathname-name* (pathname)
   (enough-namestring
    pathname

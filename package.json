@@ -4,6 +4,7 @@
   "description": "lem frontend",
   "main": "lem-frontend-electron/index.js",
   "scripts": {
+    "start": "node lem-frontend-electron/cli.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "preinstall": "ros install cxxxr/lem"
   },

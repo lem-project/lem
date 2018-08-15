@@ -12,7 +12,6 @@
   "dependencies": {
     "child_process": "^1.0.2",
     "electron": "^1.7.9",
-    "keyboard-layout": "^2.0.13",
     "marked": "^0.3.6",
     "utf-8": "^1.0.0",
     "vscode-jsonrpc": "^3.4.1"

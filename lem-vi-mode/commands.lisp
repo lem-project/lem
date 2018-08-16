@@ -310,22 +310,22 @@
                (kill-append "" nil '(:vi-line))))
            (vi-visual-end))
           (t
-           (let ((command (loop with uarg = nil
-                                for key = (read-key)
-                                while (char<= #\0 (key-to-char key) #\9)
-                                do (setf uarg (+ (* (or uarg 0) 10)
-                                                 (- (char-code (key-to-char key))
-                                                    (char-code #\0))))
-                                finally
-                                   (when uarg (setf n uarg))
-                                   (return (lookup-keybind key)))))
+           (let* ((uarg nil)
+                  (command (loop for key = (read-key)
+                                 while (char<= #\0 (key-to-char key) #\9)
+                                 do (setf uarg (+ (* (or uarg 0) 10)
+                                                  (- (char-code (key-to-char key))
+                                                     (char-code #\0))))
+                                 finally
+                                    (return (lookup-keybind key)))))
              (when (symbolp command)
                (with-point ((start (current-point)))
                  (let ((*vi-delete-recursive* t)
                        (*cursor-offset* 0))
                    (catch tag
-                     ;; Ignore End of Buffer error and continue the deletion.
-                     (ignore-errors (call-command command n))
+                     (dotimes (i n)
+                       ;; Ignore End of Buffer error and continue the deletion.
+                       (ignore-errors (apply command (and uarg (list uarg)))))
                      (with-point ((end (current-point)))
                        (when (point< end start)
                          (rotatef start end)
@@ -517,7 +517,7 @@
   (move-to-beginning-of-buffer)
   (skip-whitespace-forward (current-point) t))
 
-(define-command vi-goto-line (arg) ("P")
+(define-command vi-goto-line (&optional arg) ("P")
   (if (null arg)
       (progn
         (move-to-end-of-buffer)

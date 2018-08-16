@@ -6,8 +6,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (:use :cl
         :lem
         :lem-vi-mode.word)
-  (:export :paredit-mode
-           :paredit-forward
+  (:export :paredit-forward
            :paredit-backward
            :paredit-insert-paren
            :paredit-backward-delete

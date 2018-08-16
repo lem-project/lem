@@ -2,8 +2,7 @@
 
 (defpackage :lem-markdown-mode
   (:use :cl :lem :lem.language-mode)
-  (:export :markdown-mode
-           :*markdown-mode-hook*))
+  (:export :*markdown-mode-hook*))
 (in-package :lem-markdown-mode)
 
 (defvar *markdown-mode-hook* '())

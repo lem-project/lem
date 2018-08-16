@@ -1,7 +1,6 @@
 (defpackage :lem-js-mode
   (:use :cl :lem :lem.language-mode)
-  (:export :js-mode
-           :*js-mode-hook*))
+  (:export :*js-mode-hook*))
 (in-package :lem-js-mode)
 
 (defvar *js-mode-hook* '())

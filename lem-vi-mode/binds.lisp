@@ -99,3 +99,4 @@
 (define-key *command-keymap* "C-n" 'yank-pop-next)
 
 (define-key *command-keymap* "C-g" 'vi-keyboard-quit)
+(define-key *inactive-keymap* "Escape" 'vi-keyboard-quit)

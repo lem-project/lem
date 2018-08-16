@@ -11,6 +11,7 @@
            :with-state
            :*command-keymap*
            :*insert-keymap*
+           :*inactive-keymap*
            :command
            :insert))
 (in-package :lem-vi-mode.core)

@@ -609,5 +609,7 @@
   (change-state 'command))
 
 (define-command vi-keyboard-quit () ()
+  (when (eq (current-state) 'modeline)
+    (lem::minibuf-read-line-break))
   (vi-visual-end)
   (keyboard-quit))

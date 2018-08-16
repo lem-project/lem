@@ -318,6 +318,9 @@
                                                      (char-code #\0))))
                                  finally
                                     (return (lookup-keybind key)))))
+             (loop while (hash-table-p command)
+                   for key = (read-key)
+                   do (setf command (gethash key command)))
              (when (symbolp command)
                (with-point ((start (current-point)))
                  (let ((*vi-delete-recursive* t)

@@ -1121,7 +1121,7 @@
 
 (define-command lisp-scratch () ()
   (let ((buffer (make-buffer "*tmp*")))
-    (change-buffer-mode buffer 'lem-lisp-mode:lisp-mode)
+    (change-buffer-mode buffer 'lisp-mode)
     (switch-to-buffer buffer)))
 
 (pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)

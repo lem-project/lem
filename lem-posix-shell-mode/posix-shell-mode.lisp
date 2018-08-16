@@ -1,8 +1,7 @@
 #| link : http://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html |#
 (defpackage :lem-posix-shell-mode
   (:use :cl :lem :lem.language-mode)
-  (:export :posix-shell-mode
-           :*posix-shell-mode-hook*))
+  (:export :*posix-shell-mode-hook*))
 (in-package :lem-posix-shell-mode)
 
 (defvar *posix-shell-mode-hook* '())

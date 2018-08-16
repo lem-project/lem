@@ -1,7 +1,6 @@
 (defpackage :lem-rust-mode
   (:use :cl :lem :lem.language-mode)
-  (:export :rust-mode
-           :*rust-mode-hook*))
+  (:export :*rust-mode-hook*))
 (in-package :lem-rust-mode)
 
 (defvar *rust-mode-hook* '())

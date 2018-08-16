@@ -1,7 +1,6 @@
 (defpackage :lem.listener-mode
   (:use :cl :lem)
   (:export :listener-prompt-attribute
-           :listener-mode
            :*listener-mode-keymap*
            :listener-start
            :listener-update-point

@@ -3,7 +3,6 @@
   (:export :*isearch-keymap*
            :isearch-highlight-attribute
            :isearch-highlight-active-attribute
-           :isearch-mode
            :isearch-forward
            :isearch-backward
            :isearch-forward-regexp

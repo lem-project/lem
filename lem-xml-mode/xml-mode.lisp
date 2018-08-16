@@ -1,7 +1,6 @@
 (defpackage :lem-xml-mode
   (:use :cl :lem :lem.language-mode)
-  (:export :xml-mode
-           :*xml-mode-hook*))
+  (:export :*xml-mode-hook*))
 (in-package :lem-xml-mode)
 
 (defvar *xml-mode-hook* '())

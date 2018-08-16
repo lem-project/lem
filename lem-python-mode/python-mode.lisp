@@ -1,7 +1,6 @@
 (defpackage :lem-python-mode
   (:use :cl :lem :lem.language-mode)
-  (:export :python-mode
-           :*python-mode-hook*))
+  (:export :*python-mode-hook*))
 (in-package :lem-python-mode)
 
 (defvar *python-mode-hook* '())

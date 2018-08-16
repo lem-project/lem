@@ -11,7 +11,6 @@
    :find-references-function
    :xref-mode-tag
    :completion-function
-   :language-mode
    :go-to-location
    :indent
    :newline-and-indent

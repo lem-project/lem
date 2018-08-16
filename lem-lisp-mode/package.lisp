@@ -8,7 +8,6 @@
         :lem-lisp-mode.swank-protocol)
   (:export
    ;;lisp-ui-mode.lisp
-   :lisp-ui-mode
    :*lisp-ui-keymap*
    :lisp-ui-default-action
    :lisp-ui-forward-button
@@ -17,7 +16,6 @@
    :before-compile-functions
    :*default-port*
    :*localhost*
-   :lisp-mode
    :*lisp-mode-keymap*
    :lisp-connection-list
    :self-connected-p
@@ -66,7 +64,6 @@
    :slime-restart
    :slime-self-connect
    ;; repl.lisp
-   :lisp-repl-mode
    :*lisp-repl-mode-keymap*
    :lisp-repl-interrupt
    :repl-buffer
@@ -86,7 +83,6 @@
    :local-name-attribute
    :local-value-attribute
    :catch-tag-attribute
-   :sldb-mode
    :*sldb-keymap*
    :sldb-default-action
    :sldb-down
@@ -125,7 +121,6 @@
    :inspector-value-attribute
    :inspector-action-attribute
    :*inspector-limit*
-   :lisp-inspector-mode
    :*lisp-inspector-keymap*
    :lisp-inspect
    :lisp-inspector-pop
@@ -143,7 +138,6 @@
    ;; apropos-mode.lisp
    :apropos-headline-attribute
    :*lisp-apropos-mode-keymap*
-   :lisp-apropos-mode
    :lisp-apropos
    :lisp-apropos-all
    :lisp-apropos-package))

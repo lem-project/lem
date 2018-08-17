@@ -103,6 +103,17 @@
        (or (char= char #\Space)
            (char= char #\Tab))))
 
+(defparameter *multiline-motion-commands*
+  (list 'vi-next-line
+        'vi-previous-line
+        'vi-next-display-line
+        'vi-previous-display-line
+        'vi-move-to-window-top
+        'vi-move-to-window-middle
+        'vi-move-to-window-bottom
+        'vi-goto-first-line
+        'vi-goto-line))
+
 (define-command vi-move-to-beginning-of-line/universal-argument-0 () ()
   (if (mode-active-p (current-buffer) 'universal-argument)
       (universal-argument-0)
@@ -335,15 +346,7 @@
                          (character-offset end 1))
                        (when (point/= start end)
                          (let ((multiline (find command
-                                                (list 'vi-next-line
-                                                      'vi-previous-line
-                                                      'vi-next-display-line
-                                                      'vi-previous-display-line
-                                                      'vi-move-to-window-top
-                                                      'vi-move-to-window-middle
-                                                      'vi-move-to-window-bottom
-                                                      'vi-goto-first-line
-                                                      'vi-goto-line))))
+                                                *multiline-motion-commands*)))
                            (when multiline
                              (line-start start)
                              (line-end end)
@@ -398,8 +401,8 @@
            (with-point ((start (current-point))
                         (end (current-point)))
              (line-start start)
-             (line-offset end n)
-             (line-start end)
+             (line-end end)
+             (character-offset end 1)
              (copy-region start end)
              (kill-append "" nil '(:vi-line))
              (throw tag t)))
@@ -419,28 +422,39 @@
                (kill-append "" nil '(:vi-line))))
            (vi-visual-end))
           (t
-           (let ((command (lookup-keybind (read-key))))
+           (let* ((uarg nil)
+                  (command (loop for key = (read-key)
+                                 while (char<= #\0 (key-to-char key) #\9)
+                                 do (setf uarg (+ (* (or uarg 0) 10)
+                                                  (- (char-code (key-to-char key))
+                                                     (char-code #\0))))
+                                 finally
+                                    (return (lookup-keybind key)))))
+             (loop while (hash-table-p command)
+                   for key = (read-key)
+                   do (setf command (gethash key command)))
              (when (symbolp command)
                (with-point ((start (current-point)))
                  (let ((*vi-yank-recursive* t)
                        (*cursor-offset* 0))
                    (catch tag
-                     ;; Ignore End of Buffer error and continue the deletion.
-                     (ignore-errors (call-command command n))
+                     (dotimes (i n)
+                       ;; Ignore End of Buffer error and continue the deletion.
+                       (ignore-errors (apply command (and uarg (list uarg)))))
                      (with-point ((end (current-point)))
                        (when (point< end start)
                          (rotatef start end)
                          (character-offset end 1))
                        (when (point/= start end)
-                         (cond
-                           ((same-line-p start end)
-                            (copy-region start end))
-                           (t
-                            (line-start start)
-                            (line-end end)
-                            (character-offset end 1)
-                            (copy-region start end)
-                            (kill-append "" nil '(:vi-line))))))))
+                         (let ((multiline (find command
+                                                *multiline-motion-commands*)))
+                           (when multiline
+                             (line-start start)
+                             (line-end end)
+                             (character-offset end 1))
+                           (copy-region start end)
+                           (when multiline
+                             (kill-append "" nil '(:vi-line))))))))
                  (move-point (current-point) start))))))))
 
 (define-command vi-paste-after () ()

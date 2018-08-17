@@ -87,3 +87,5 @@
       (+ column (- tab-width (rem column tab-width))))))
 
 (pushnew (cons "\\.sh$" 'posix-shell-mode) *auto-mode-alist* :test #'equal)
+(pushnew (cons "^.bashrc$" 'posix-shell-mode) *auto-mode-alist* :test #'equal)
+(pushnew (cons "^.profile$" 'posix-shell-mode) *auto-mode-alist* :test #'equal)

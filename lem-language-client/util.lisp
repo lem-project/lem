@@ -21,3 +21,10 @@
 
 (defun wrap-text (str width)
   (format nil "~{~A~^~%~}" (wrap-text-1 str width)))
+
+(defmacro let-hash (bindings hash-table &body body)
+  (alexandria:once-only (hash-table)
+    `(let ,(mapcar (lambda (b)
+                     `(,b (gethash ,(string b) ,hash-table)))
+                   bindings)
+       ,@body)))

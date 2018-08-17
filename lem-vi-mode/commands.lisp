@@ -334,17 +334,23 @@
                          (rotatef start end)
                          (character-offset end 1))
                        (when (point/= start end)
-                         (cond
-                           ((same-line-p start end)
-                            (kill-region start end))
-                           (t
-                            (unless (or (eq command 'vi-forward-word-end)
-                                        (eq command 'vi-forward-word-begin))
-                              (line-start start)
-                              (line-end end))
-                            (character-offset end 1)
-                            (kill-region start end)
-                            (kill-append "" nil '(:vi-line))))))))
+                         (let ((multiline (find command
+                                                (list 'vi-next-line
+                                                      'vi-previous-line
+                                                      'vi-next-display-line
+                                                      'vi-previous-display-line
+                                                      'vi-move-to-window-top
+                                                      'vi-move-to-window-middle
+                                                      'vi-move-to-window-bottom
+                                                      'vi-goto-first-line
+                                                      'vi-goto-line))))
+                           (when multiline
+                             (line-start start)
+                             (line-end end)
+                             (character-offset end 1))
+                           (kill-region start end)
+                           (when multiline
+                             (kill-append "" nil '(:vi-line))))))))
                  (unless *vi-clear-recursive*
                    (fall-within-line (current-point))))))))))
 

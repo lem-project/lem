@@ -22,6 +22,7 @@
             (copy-point (current-point))) *next-jump-points*)
   (setf *current-point* (pop *prev-jump-points*))
   (when *current-point*
+    (switch-to-buffer (point-buffer *current-point*))
     (move-point (current-point) *current-point*)))
 
 (defun jump-next ()
@@ -30,4 +31,5 @@
   (let ((p (pop *next-jump-points*)))
     (setf *current-point* p)
     (when *current-point*
+      (switch-to-buffer (point-buffer *current-point*))
       (move-point (current-point) p))))

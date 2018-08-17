@@ -5,7 +5,8 @@
         :lem.show-paren
         :lem-vi-mode.core
         :lem-vi-mode.word
-        :lem-vi-mode.visual)
+        :lem-vi-mode.visual
+        :lem-vi-mode.jump-motions)
   (:export :vi-move-to-beginning-of-line/universal-argument-0
            :vi-forward-char
            :vi-backward-char
@@ -64,6 +65,8 @@
            :vi-append-line
            :vi-open-below
            :vi-open-adove
+           :vi-jump-back
+           :vi-jump-next
            :vi-normal
            :vi-keyboard-quit))
 (in-package :lem-vi-mode.commands)
@@ -624,6 +627,14 @@
   (line-start (current-point))
   (open-line 1)
   (change-state 'insert))
+
+(define-command vi-jump-back (&optional (n 1)) ("p")
+  (dotimes (i n)
+    (jump-back)))
+
+(define-command vi-jump-next (&optional (n 1)) ("p")
+  (dotimes (i n)
+    (jump-next)))
 
 (define-command vi-normal () ()
   (change-state 'command))

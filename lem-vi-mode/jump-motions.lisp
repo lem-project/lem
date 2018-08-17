@@ -1,0 +1,33 @@
+(defpackage #:lem-vi-mode.jump-motions
+  (:use #:cl
+        #:lem)
+  (:export #:with-jump-motion
+           #:jump-back
+           #:jump-next))
+(in-package #:lem-vi-mode.jump-motions)
+
+(defvar *prev-jump-points* '())
+(defvar *current-point* nil)
+(defvar *next-jump-points* '())
+
+(defmacro with-jump-motion (&body body)
+  (let ((p (gensym "P")))
+    `(let ((,p (copy-point (current-point))))
+       (prog1 (progn ,@body)
+         (push ,p *prev-jump-points*)
+         (setf *current-point* nil)))))
+
+(defun jump-back ()
+  (push (or *current-point*
+            (copy-point (current-point))) *next-jump-points*)
+  (setf *current-point* (pop *prev-jump-points*))
+  (when *current-point*
+    (move-point (current-point) *current-point*)))
+
+(defun jump-next ()
+  (when *current-point*
+    (push *current-point* *prev-jump-points*))
+  (let ((p (pop *next-jump-points*)))
+    (setf *current-point* p)
+    (when *current-point*
+      (move-point (current-point) p))))

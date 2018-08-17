@@ -4,6 +4,7 @@
   :components ((:file "core")
                (:file "word")
                (:file "visual")
+               (:file "jump-motions")
                (:file "commands")
                (:file "ex-core")
                (:file "ex-parser")

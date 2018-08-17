@@ -75,9 +75,13 @@
 (define-key *command-keymap* "C-w C-w" 'other-window)
 (define-key *command-keymap* "C-w q" 'vi-quit)
 (define-key *command-keymap* "C-w h" 'window-move-left)
+(define-key *command-keymap* "C-w C-h" 'undefined-key)
 (define-key *command-keymap* "C-w l" 'window-move-right)
+(define-key *command-keymap* "C-w C-l" 'undefined-key)
 (define-key *command-keymap* "C-w k" 'window-move-up)
+(define-key *command-keymap* "C-w C-k" 'undefined-key)
 (define-key *command-keymap* "C-w j" 'window-move-down)
+(define-key *command-keymap* "C-w C-j" 'undefined-key)
 
 (define-key *command-keymap* "v" 'vi-visual-char)
 (define-key *command-keymap* "V" 'vi-visual-line)

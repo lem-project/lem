@@ -240,15 +240,18 @@
     (vi-backward-char)))
 
 (define-command vi-move-to-window-top () ()
-  (move-point (current-point) (window-view-point (current-window))))
+  (with-jump-motion
+    (move-point (current-point) (window-view-point (current-window)))))
 
 (define-command vi-move-to-window-middle () ()
-  (vi-move-to-window-top)
-  (next-line (floor (/ (- (window-height (current-window)) 2) 2))))
+  (with-jump-motion
+    (vi-move-to-window-top)
+    (next-line (floor (/ (- (window-height (current-window)) 2) 2)))))
 
 (define-command vi-move-to-window-bottom () ()
-  (vi-move-to-window-top)
-  (next-line (- (window-height (current-window)) 2)))
+  (with-jump-motion
+    (vi-move-to-window-top)
+    (next-line (- (window-height (current-window)) 2))))
 
 (define-command vi-back-to-indentation () ()
   (back-to-indentation-command))
@@ -510,8 +513,8 @@
 (define-command vi-move-to-matching-paren () ()
   (alexandria:when-let ((p (or (backward-matching-paren (current-point))
                                (forward-matching-paren (current-point) t))))
-
-    (move-point (current-point) p)))
+    (with-jump-motion
+      (move-point (current-point) p))))
 
 (let ((old-forward-matching-paren)
       (old-backward-matching-paren))
@@ -528,28 +531,34 @@
 (add-hook *disable-hook* 'off-matching-paren)
 
 (define-command vi-search-forward () ()
-  (lem.isearch:isearch-forward-regexp "/"))
+  (with-jump-motion
+    (lem.isearch:isearch-forward-regexp "/")))
 
 (define-command vi-search-backward () ()
-  (lem.isearch:isearch-backward-regexp "?"))
+  (with-jump-motion
+    (lem.isearch:isearch-backward-regexp "?")))
 
 (define-command vi-search-next (n) ("p")
-  (lem.isearch:isearch-next-highlight n))
+  (with-jump-motion
+    (lem.isearch:isearch-next-highlight n)))
 
 (define-command vi-search-previous (n) ("p")
-  (lem.isearch:isearch-prev-highlight n))
+  (with-jump-motion
+    (lem.isearch:isearch-prev-highlight n)))
 
 (define-command vi-goto-first-line () ()
-  (move-to-beginning-of-buffer)
-  (skip-whitespace-forward (current-point) t))
+  (with-jump-motion
+    (move-to-beginning-of-buffer)
+    (skip-whitespace-forward (current-point) t)))
 
 (define-command vi-goto-line (&optional arg) ("P")
-  (if (null arg)
-      (progn
-        (move-to-end-of-buffer)
-        (line-start (current-point)))
-      (goto-line arg))
-  (skip-whitespace-forward (current-point) t))
+  (with-jump-motion
+    (if (null arg)
+          (progn
+            (move-to-end-of-buffer)
+            (line-start (current-point)))
+          (goto-line arg))
+    (skip-whitespace-forward (current-point) t)))
 
 (define-command vi-find-char () ()
   (alexandria:when-let (c (key-to-char (read-key)))

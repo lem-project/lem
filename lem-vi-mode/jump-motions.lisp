@@ -10,12 +10,16 @@
 (defvar *current-point* nil)
 (defvar *next-jump-points* '())
 
+(defvar *jump-motion-recursive* nil)
 (defmacro with-jump-motion (&body body)
   (let ((p (gensym "P")))
-    `(let ((,p (copy-point (current-point))))
-       (prog1 (progn ,@body)
-         (push ,p *prev-jump-points*)
-         (setf *current-point* nil)))))
+    `(if *jump-motion-recursive*
+         (progn ,@body)
+         (let ((*jump-motion-recursive* t)
+               (,p (copy-point (current-point))))
+           (prog1 (progn ,@body)
+             (push ,p *prev-jump-points*)
+             (setf *current-point* nil))))))
 
 (defun jump-back ()
   (push (or *current-point*

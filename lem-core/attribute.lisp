@@ -1,6 +1,8 @@
 (in-package :lem)
 
 (export '(make-attribute
+          attribute
+          attribute-p
           ensure-attribute
           merge-attribute
           set-attribute

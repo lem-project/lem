@@ -206,7 +206,7 @@
       (start-lisp-repl)
       (setf buffer (repl-buffer)))
     (with-point ((start (buffer-end-point buffer) :left-inserting))
-      (when (alexandria:starts-with-subseq "CL-USER>" (line-string start))
+      (when (text-property-at start :field -1)
         (insert-character start #\newline))
       (setf (variable-value 'enable-syntax-highlight :buffer start) t)
       (insert-string (buffer-end-point buffer) string)

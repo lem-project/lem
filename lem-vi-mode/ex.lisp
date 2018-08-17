@@ -18,22 +18,29 @@
       (execute-ex
        (prompt-for-line ":" ""
                         (lambda (str)
-                          (when (alexandria:starts-with-subseq "e " str)
-                            ;; Almost same as minibuffer-file-complete in lem-core/completion-file.lisp
-                            ;; except item's :start offsets which will be used when selecting a completion item.
-                            (mapcar (lambda (filename)
-                                      (let ((label (lem.completion-mode::pathname-name* filename)))
-                                        (with-point ((s (lem::minibuffer-start-point))
-                                                     (e (lem::minibuffer-start-point)))
-                                          (lem.completion-mode::make-completion-item
-                                           :label label
-                                           :start (character-offset
-                                                   s
-                                                   (+ (length (namestring (uiop:pathname-directory-pathname (subseq str 2)))) 2))
-                                           :end (line-end e)))))
-                                    (lem.completion-mode::completion-file
-                                     (subseq str 2)
-                                     directory))))
+                          (when (ppcre:scan "^e[ \\.]" str)
+                            (let ((comp-str (ppcre:regex-replace "^e\\s*" str "")))
+                              (if (string= comp-str ".")
+                                  (list (format nil "~A/" str))
+                                  ;; Almost same as minibuffer-file-complete in lem-core/completion-file.lisp
+                                  ;; except item's :start offsets which will be used when selecting a completion item.
+                                  (mapcar (lambda (filename)
+                                            (let ((label (lem.completion-mode::pathname-name* filename))
+                                                  (prefix-len (- (length str) (length comp-str))))
+                                              (with-point ((s (lem::minibuffer-start-point))
+                                                           (e (lem::minibuffer-start-point)))
+                                                (lem.completion-mode::make-completion-item
+                                                 :label label
+                                                 :start (character-offset
+                                                         s
+                                                         (+ (length
+                                                             (namestring
+                                                              (uiop:pathname-directory-pathname (subseq str prefix-len))))
+                                                            prefix-len))
+                                                 :end (line-end e)))))
+                                          (lem.completion-mode::completion-file
+                                           comp-str
+                                           directory))))))
                         nil 'vi-ex)))))
 
 (defun execute-ex (string)

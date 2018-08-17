@@ -15,6 +15,7 @@
                     finally (return result))))
      (setf data nil)
      (defclass ,name (encoding) ())
+     (register-encoding ',name)
      (defmethod encoding-read ((encoding ,name) input output-char)
        (let (cr)
          (labels ((commit (c)
@@ -42,5 +43,12 @@
      ',name))
 
 (def-8bit-encoding koi8-u)
+(def-8bit-encoding iso-8859-2)
+(def-8bit-encoding iso-8859-5)
+(def-8bit-encoding iso-8859-6)
+(def-8bit-encoding iso-8859-7)
+(def-8bit-encoding iso-8859-8)
+(def-8bit-encoding iso-8859-9)
+(def-8bit-encoding iso-8859-13)
 
  

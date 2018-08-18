@@ -4,7 +4,7 @@
 
 (in-package :lem-select-popup)
 
-(defvar *select-mode-keymap* (make-keymap :name '*select-popup-mode-keymap*
+(defvar *select-popup-mode-keymap* (make-keymap :name '*select-popup-mode-keymap*
                                           :undef-hook 'nop))
 
 (define-minor-mode select-popup-mode

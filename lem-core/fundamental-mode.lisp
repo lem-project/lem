@@ -1,8 +1,7 @@
-(in-package :lem-base)
+(in-package :lem)
 
-(lem:define-major-mode fundamental-mode nil
+(define-major-mode fundamental-mode nil
     (:name "fundamental"))
 
-(in-package :lem)
 (define-global-mode emacs-mode ()
   (:keymap *global-keymap*))

@@ -1,5 +1,7 @@
 (defpackage :lem.abbrev
-  (:use :cl :lem :lem.completion-mode))
+  (:use :cl :lem :lem.completion-mode)
+  (:export :abbrev
+           :abbrev-with-pop-up-window))
 (in-package :lem.abbrev)
 
 (defun preceding-word (point)

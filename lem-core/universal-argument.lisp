@@ -1,7 +1,21 @@
 (defpackage :lem.universal-argument
   (:use :cl :lem)
   (:export :*base*
-           :*universal-argument-keymap*))
+           :*universal-argument-keymap*
+           :universal-argument
+           :universal-argument-0
+           :universal-argument-1
+           :universal-argument-2
+           :universal-argument-3
+           :universal-argument-4
+           :universal-argument-5
+           :universal-argument-6
+           :universal-argument-7
+           :universal-argument-8
+           :universal-argument-9
+           :universal-argument-abort
+           :universal-argument-repeat
+           :universal-argument-minus))
 (in-package :lem.universal-argument)
 
 (defparameter *base* 4)

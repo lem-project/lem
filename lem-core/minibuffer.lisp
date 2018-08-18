@@ -18,6 +18,10 @@
           prompt-for-character
           active-minibuffer-window
           check-switch-minibuffer-window
+          minibuffer-read-line-execute
+          minibuffer-read-line-completion
+          minibuffer-read-line-prev-history
+          minibuffer-read-line-next-history
           prompt-for-y-or-n-p
           prompt-for-line
           prompt-for-string

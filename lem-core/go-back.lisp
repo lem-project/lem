@@ -1,6 +1,9 @@
 (defpackage :lem.go-back
   (:use :cl :lem :lem.sourcelist)
-  (:export :*max*))
+  (:export :*max*
+           :select-go-back
+           :go-back-global
+           :go-back))
 (in-package :lem.go-back)
 
 (defparameter *max* 100)

@@ -1,7 +1,8 @@
 (defpackage :lem-lisp-mode.paren-coloring
   (:use :cl :lem)
   (:export :paren-coloring
-           :*paren-attribute*))
+           :*paren-attribute*
+           :toggle-paren-coloring))
 (in-package :lem-lisp-mode.paren-coloring)
 
 (define-editor-variable paren-coloring nil ""

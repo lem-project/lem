@@ -434,6 +434,7 @@
           nil))))
 
 (defun point-bytes (point)
+  "`point`のバイト単位のバッファ先頭からのオフセットを返します。"
   (with-point ((point point))
     (let ((nbytes 0))
       (incf nbytes
@@ -464,6 +465,7 @@
                (line-offset (buffer-end point) (- line-number nlines)))))))
 
 (defun check-marked ()
+  "`current-buffer`内でマークが置かれていなければ`editor-error`を起こします。"
   (unless (buffer-mark (current-buffer))
     (editor-error "Not mark in this buffer")))
 
@@ -479,6 +481,7 @@
   point)
 
 (defun blank-line-p (point)
+  "`point`のある行が空白だけなら、その空白の個数、それ以外ならnilを返します。"
   (let ((string (line-string point))
         (eof-p (last-line-p point))
         (count 0))
@@ -530,6 +533,8 @@
         (delete-point mark)))))
 
 (defun insert-buffer (point buffer)
+  "`point`の位置に`buffer`内のテキストを挿入します。
+`insert-string`との違いは`buffer`内のテキストプロパティも反映することです。"
   (loop :for line := (point-line (buffer-start-point buffer)) :then (line-next line)
         :while line
         :do (insert-string point (line-str line))

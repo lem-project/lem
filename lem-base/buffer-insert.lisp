@@ -5,8 +5,11 @@
           before-change-functions
           after-change-functions))
 
-(defvar *inhibit-read-only* nil)
-(defvar *inhibit-modification-hooks* nil)
+(defvar *inhibit-read-only* nil
+  "Tなら`buffer`のread-onlyを無効にします。")
+
+(defvar *inhibit-modification-hooks* nil
+  "Tなら`before-change-functions`と`after-change-functions`が実行されません。")
 
 (define-editor-variable before-change-functions '())
 (define-editor-variable after-change-functions '())

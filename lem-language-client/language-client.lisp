@@ -94,6 +94,21 @@
     ({} "uri" (buffer-uri buffer)
         "range" (lsp-range start end))))
 
+(defun move-to-lsp-position (point position)
+  (let-hash (|line| |character|) position
+    (lem:move-to-line point (1+ |line|))
+    (lem:line-offset point 0 |character|)
+    point))
+
+(defun decode-lsp-text-edit (buffer text-edit)
+  (let-hash (|range| |newText|) text-edit
+    (let-hash (|start| |end|) |range|
+      (lem:with-point ((start-point (lem:buffer-point buffer))
+                       (end-point (lem:buffer-point buffer)))
+        (move-to-lsp-position start-point |start|)
+        (move-to-lsp-position (lem:move-point end-point start-point) |end|)
+        (values start-point end-point |newText|)))))
+
 (defun text-document-identifier (buffer)
   ({} "uri" (pathname-to-uri (lem:buffer-filename buffer))))
 
@@ -277,11 +292,41 @@
                ({} "triggerKind" trigger-kind
                    #|"triggerCharacter"|#)))
 
+(defun completion-items (buffer items)
+  (delete
+   nil
+   (map 'list
+        (lambda (item)
+          (let-hash (|label|
+                     |kind| |detail| |documentation| |deprecated| |preselect|
+                     |sortText| |filterText| |insertText| |insertTextFormat|
+                     |textEdit| |additionalTextEdits| |commitCharacters|
+                     |command| |data|)
+              item
+            (declare (ignorable |label|
+                                |kind| |detail| |documentation| |deprecated| |preselect|
+                                |sortText| |filterText| |insertText| |insertTextFormat|
+                                |textEdit| |additionalTextEdits| |commitCharacters|
+                                |command| |data|))
+            (when |textEdit|
+              (multiple-value-bind (start end newText)
+                  (decode-lsp-text-edit buffer |textEdit|)
+                (lem.completion-mode:make-completion-item
+                 :label newText :detail |detail| :start start :end end)))))
+        items)))
+
 (defun completion (point)
-  (let ((workspace (buffer-workspace (lem:point-buffer point))))
-    (jsonrpc:call (workspace-connection workspace)
-                  "textDocument/completion"
-                  (completion-params point))))
+  (let* ((workspace (buffer-workspace (lem:point-buffer point)))
+         (result (jsonrpc:call (workspace-connection workspace)
+                               "textDocument/completion"
+                               (completion-params point)))
+         (buffer (lem:point-buffer point)))
+    (etypecase result
+      (null)
+      (vector
+       (completion-items buffer result))
+      (hash-table
+       (completion-items buffer (gethash "items" result))))))
 
 (defun hover (point)
   (let ((workspace (buffer-workspace (lem:point-buffer point))))

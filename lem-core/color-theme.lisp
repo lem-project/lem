@@ -2,6 +2,7 @@
 
 (export '(color-theme-names
           define-color-theme
+          load-theme
           display-background-mode
           foreground
           background))

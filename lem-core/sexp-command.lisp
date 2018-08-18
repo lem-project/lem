@@ -1,5 +1,15 @@
 (in-package :lem)
 
+(export '(forward-sexp
+          backward-sexp
+          forward-list
+          backward-list
+          down-list
+          backward-up-list
+          mark-sexp
+          kill-sexp
+          transpose-sexps))
+
 (define-key *global-keymap* "C-M-f" 'forward-sexp)
 (define-command forward-sexp (&optional (n 1) no-errors) ("p")
   (with-point ((prev (current-point)))

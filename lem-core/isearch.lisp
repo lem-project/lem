@@ -3,7 +3,30 @@
   (:export :*isearch-keymap*
            :isearch-highlight-attribute
            :isearch-highlight-active-attribute
-           :read-query-replace-args))
+           :isearch-forward
+           :isearch-backward
+           :isearch-forward-regexp
+           :isearch-backward-regexp
+           :isearch-forward-symbol
+           :isearch-backward-symbol
+           :isearch-forward-symbol-at-point
+           :isearch-abort
+           :isearch-delete-char
+           :isearch-raw-insert
+           :isearch-end
+           :isearch-next
+           :isearch-prev
+           :isearch-yank
+           :isearch-self-insert
+           :isearch-replace-highlight
+           :isearch-next-highlight
+           :isearch-prev-highlight
+           :isearch-toggle-highlighting
+           :read-query-replace-args
+           :isearch-toggle-highlighting
+           :query-replace
+           :query-replace-regexp
+           :query-replace-symbol))
 (in-package :lem.isearch)
 
 (defvar *isearch-keymap* (make-keymap :name '*isearch-keymap*

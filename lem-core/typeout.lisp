@@ -1,6 +1,7 @@
 (in-package :lem)
 
 (export '(*typeout-mode-keymap*
+          typeout-mode
           pop-up-typeout-window))
 
 (define-minor-mode typeout-mode

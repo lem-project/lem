@@ -39,7 +39,7 @@
     :reader point-kind
     :type (member :temporary :left-inserting :right-inserting)))
   (:documentation
-   @lang(:jp "`point`はバッファ内のテキストの位置を指すオブジェクトです。  
+   "`point`はバッファ内のテキストの位置を指すオブジェクトです。  
 `buffer`とその位置の行、行頭からの0始まりのオフセット`charpos`をもっています。  
 `point`には`kind`があり、バッファ内に挿入、削除した後の位置が`kind`の値によって変わります。  
 `kind`が`:temporary`の時は`point`を一時的な読み取りに使います。  
@@ -51,16 +51,16 @@
 `:right-inserting`では元の位置のままで、`:left-inserting`では移動します。  
 `:left-inserting`または`:right-inserting`の場合は、使用後に`delete-point`で明示的に削除するか、
 `with-point`を使う必要があります。
-")))
+"))
 
 (setf (documentation 'point-buffer 'function)
-      @lang(:jp "`point`が指す`buffer`を返します。"))
+      "`point`が指す`buffer`を返します。")
 
 (setf (documentation 'point-kind 'function)
-      @lang(:jp "`point`の種類(`:temporary`、`:left-inserting`または`:right-inserting`)を返します。"))
+      "`point`の種類(`:temporary`、`:left-inserting`または`:right-inserting`)を返します。")
 
 (defun current-point ()
-  @lang(:jp "現在の`point`を返します。")
+  "現在の`point`を返します。"
   (buffer-point (current-buffer)))
 
 (defmethod print-object ((object point) stream)
@@ -71,7 +71,7 @@
             (line-str (point-line object)))))
 
 (defun pointp (x)
-  @lang(:jp "`x`が`point`ならT、それ以外ならNILを返します。")
+  "`x`が`point`ならT、それ以外ならNILを返します。"
   (typep x 'point))
 
 (defun make-point (buffer linum line charpos &key (kind :right-inserting))
@@ -88,9 +88,9 @@
     point))
 
 (defun copy-point (point &optional kind)
-  @lang(:jp "`point`のコピーを作って返します。
+  "`point`のコピーを作って返します。
 `kind`は`:temporary`、`:left-inserting`または `right-inserting`です。
-省略された場合は`point`と同じ値です。")
+省略された場合は`point`と同じ値です。"
   (make-point (point-buffer point)
               (point-linum point)
               (point-line point)
@@ -98,8 +98,8 @@
               :kind (or kind (point-kind point))))
 
 (defun delete-point (point)
-  @lang(:jp "`point`を削除します。
-`point-kind`が:temporaryの場合はこの関数を使う必要はありません。")
+  "`point`を削除します。
+`point-kind`が:temporaryの場合はこの関数を使う必要はありません。"
   (unless (point-temporary-p point)
     (setf (line-points (point-line point))
           (delete point (line-points (point-line point))))

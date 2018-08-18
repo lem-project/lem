@@ -132,26 +132,26 @@
     :initarg :variables
     :accessor buffer-variables))
   (:documentation
-   @lang(:jp "`buffer`はバッファ名、ファイル名、テキスト、テキストを指す位置等が入った、
+   "`buffer`はバッファ名、ファイル名、テキスト、テキストを指す位置等が入った、
 文書を管理するオブジェクトです。  
-複数の`buffer`はリストで管理されています。")))
+複数の`buffer`はリストで管理されています。"))
 
-(setf (documentation 'buffer-point 'function) @lang(:jp "`buffer`の現在の`point`を返します。"))
-(setf (documentation 'buffer-mark 'function) @lang(:jp "`buffer`の現在のマークの`point`を返します。"))
-(setf (documentation 'buffer-start-point 'function) @lang(:jp "`buffer`の最初の位置の`point`を返します。"))
-(setf (documentation 'buffer-end-point 'function) @lang(:jp "`buffer`の最後の位置の`point`を返します。"))
+(setf (documentation 'buffer-point 'function) "`buffer`の現在の`point`を返します。")
+(setf (documentation 'buffer-mark 'function) "`buffer`の現在のマークの`point`を返します。")
+(setf (documentation 'buffer-start-point 'function) "`buffer`の最初の位置の`point`を返します。")
+(setf (documentation 'buffer-end-point 'function) "`buffer`の最後の位置の`point`を返します。")
 
 (defvar *current-buffer*)
 
 (defun current-buffer ()
-  @lang(:jp "現在の`buffer`を返します。")
+  "現在の`buffer`を返します。"
   (unless (boundp '*current-buffer*)
     (setf *current-buffer*
           (make-buffer +original-buffer-name+)))
   *current-buffer*)
 
 (defun (setf current-buffer) (buffer)
-  @lang(:jp "現在の`buffer`を変更します。")
+  "現在の`buffer`を変更します。"
   (check-type buffer buffer)
   (setf *current-buffer* buffer))
 
@@ -165,14 +165,14 @@
 
 (defun make-buffer (name &key temporary read-only-p (enable-undo-p t)
                               (syntax-table (fundamental-syntax-table)))
-  @lang(:jp "バッファ名が`name`のバッファがバッファリストに含まれていれば
+  "バッファ名が`name`のバッファがバッファリストに含まれていれば
 そのバッファを返し、無ければ作成します。  
 `read-only-p`は読み込み専用にするか。  
 `enable-undo-p`はアンドゥを有効にするか。  
 `syntax-table`はそのバッファの構文テーブルを指定します。  
 `temporary`が非NILならバッファリストに含まないバッファを作成します。  
 引数で指定できるオプションは`temporary`がNILで既にバッファが存在する場合は無視します。
-")
+"
   (unless temporary
     (uiop:if-let ((buffer (get-buffer name)))
       (return-from make-buffer buffer)))
@@ -203,24 +203,24 @@
     buffer))
 
 (defun bufferp (x)
-  @lang(:jp "`x`が`buffer`ならT、それ以外ならNILを返します。")
+  "`x`が`buffer`ならT、それ以外ならNILを返します。"
   (typep x 'buffer))
 
 (defun buffer-modified-p (&optional (buffer (current-buffer)))
-  @lang(:jp "`buffer`が変更されていたらT、それ以外ならNILを返します。")
+  "`buffer`が変更されていたらT、それ以外ならNILを返します。"
   (/= 0 (buffer-%modified-p buffer)))
 
 (defun buffer-enable-undo-p (&optional (buffer (current-buffer)))
-  @lang(:jp "`buffer`でアンドゥが有効ならT、それ以外ならNILを返します。")
+  "`buffer`でアンドゥが有効ならT、それ以外ならNILを返します。"
   (buffer-%enable-undo-p buffer))
 
 (defun buffer-enable-undo (buffer)
-  @lang(:jp "`buffer`のアンドゥを有効にします。")
+  "`buffer`のアンドゥを有効にします。"
   (setf (buffer-%enable-undo-p buffer) t)
   nil)
 
 (defun buffer-disable-undo (buffer)
-  @lang(:jp "`buffer`のアンドゥを無効にしてアンドゥ用の情報を空にします。")
+  "`buffer`のアンドゥを無効にしてアンドゥ用の情報を空にします。"
   (setf (buffer-%enable-undo-p buffer) nil)
   (setf (buffer-edit-history buffer) (make-array 0 :adjustable t :fill-pointer 0))
   (setf (buffer-redo-stack buffer) nil)
@@ -243,11 +243,11 @@
   (delete-point (buffer-point buffer)))
 
 (defun buffer-name (&optional (buffer (current-buffer)))
-  @lang(:jp "`buffer`の名前を返します。")
+  "`buffer`の名前を返します。"
   (buffer-%name buffer))
 
 (defun buffer-filename (&optional (buffer (current-buffer)))
-  @lang(:jp "`buffer`のファイル名を返します。")
+  "`buffer`のファイル名を返します。"
   (alexandria:when-let (filename (buffer-%filename buffer))
     (namestring filename)))
 
@@ -256,7 +256,7 @@
   (setf (buffer-%filename buffer) filename))
 
 (defun buffer-directory (&optional (buffer (current-buffer)))
-  @lang(:jp "`buffer`のディレクトリを返します。")
+  "`buffer`のディレクトリを返します。"
   (or (buffer-%directory buffer)
       (namestring (uiop:getcwd))))
 
@@ -268,7 +268,7 @@
           (namestring result))))
 
 (defun buffer-unmark (buffer)
-  @lang(:jp "`buffer`の変更フラグを下ろします。")
+  "`buffer`の変更フラグを下ろします。"
   (setf (buffer-%modified-p buffer) 0))
 
 (defun buffer-mark-cancel (buffer)
@@ -306,7 +306,7 @@
        (push-redo-stack buffer edit)))))
 
 (defun buffer-rename (buffer name)
-  @lang(:jp "`buffer`の名前を`name`に変更します。")
+  "`buffer`の名前を`name`に変更します。"
   (check-type buffer buffer)
   (check-type name string)
   (when (get-buffer name)
@@ -362,25 +362,25 @@
     (vector-push-extend :separator (buffer-edit-history buffer))))
 
 (defun buffer-value (buffer name &optional default)
-  @lang(:jp "`buffer`のバッファ変数`name`に束縛されている値を返します。  
+  "`buffer`のバッファ変数`name`に束縛されている値を返します。  
 `buffer`の型は`buffer`または`point`です。  
-変数が設定されていない場合は`default`を返します。")
+変数が設定されていない場合は`default`を返します。"
   (setf buffer (ensure-buffer buffer))
   (multiple-value-bind (value foundp)
       (gethash name (buffer-variables buffer))
     (if foundp value default)))
 
 (defun (setf buffer-value) (value buffer name &optional default)
-  @lang(:jp "`buffer`のバッファ変数`name`に`value`を束縛します。  
-`buffer`の型は`buffer`または`point`です。")
+  "`buffer`のバッファ変数`name`に`value`を束縛します。  
+`buffer`の型は`buffer`または`point`です。"
   (declare (ignore default))
   (setf buffer (ensure-buffer buffer))
   (setf (gethash name (buffer-variables buffer)) value))
 
 (defun buffer-unbound (buffer name)
-  @lang(:jp "`buffer`のバッファ変数`name`の束縛を消します。")
+  "`buffer`のバッファ変数`name`の束縛を消します。"
   (remhash name (buffer-variables buffer)))
 
 (defun clear-buffer-variables (&key (buffer (current-buffer)))
-  @lang(:jp "`buffer`に束縛されているすべてのバッファ変数を消します。")
+  "`buffer`に束縛されているすべてのバッファ変数を消します。"
   (clrhash (buffer-variables buffer)))

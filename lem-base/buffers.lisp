@@ -24,7 +24,7 @@
   (push buffer *buffer-list*))
 
 (defun buffer-list ()
-  @lang(:jp "`buffer`のリストを返します。")
+  "`buffer`のリストを返します。"
   *buffer-list*)
 
 (defun any-modified-buffer-p ()
@@ -34,8 +34,8 @@
            (buffer-list)))
 
 (defun get-buffer (buffer-or-name)
-  @lang(:jp "`buffer-or-name`がバッファならそのまま返し、
-文字列ならその名前のバッファを返します。")
+  "`buffer-or-name`がバッファならそのまま返し、
+文字列ならその名前のバッファを返します。"
   (if (bufferp buffer-or-name)
       buffer-or-name
       (find-if #'(lambda (buffer)
@@ -52,8 +52,8 @@
             (return name))))))
 
 (defun delete-buffer (buffer)
-  @lang(:jp "`buffer`をバッファのリストから消します。
-エディタ変数`kill-buffer-hook`がバッファが消される前に実行されます。")
+  "`buffer`をバッファのリストから消します。
+エディタ変数`kill-buffer-hook`がバッファが消される前に実行されます。"
   (check-type buffer buffer)
   (alexandria:when-let ((hooks (variable-value 'kill-buffer-hook :buffer buffer)))
     (run-hooks hooks buffer))
@@ -63,14 +63,14 @@
   (setf *buffer-list* (delete buffer (buffer-list))))
 
 (defun get-next-buffer (buffer)
-  @lang(:jp "バッファリスト内にある`buffer`の次のバッファを返します。")
+  "バッファリスト内にある`buffer`の次のバッファを返します。"
   (check-type buffer buffer)
   (let* ((buffer-list (buffer-list))
          (res (member buffer buffer-list)))
     (cadr res)))
 
 (defun get-previous-buffer (buffer)
-  @lang(:jp "バッファリスト内にある`buffer`の前のバッファを返します。")
+  "バッファリスト内にある`buffer`の前のバッファを返します。"
   (check-type buffer buffer)
   (loop :for prev := nil :then curr
         :for curr :in (buffer-list)
@@ -85,7 +85,7 @@
   buffer)
 
 (defun bury-buffer (buffer)
-  @lang(:jp "`buffer`をバッファリストの一番最後に移動させ、バッファリストの先頭を返します。")
+  "`buffer`をバッファリストの一番最後に移動させ、バッファリストの先頭を返します。"
   (check-type buffer buffer)
   (setf *buffer-list*
         (nconc (delete buffer (buffer-list))
@@ -93,8 +93,8 @@
   (car (buffer-list)))
 
 (defun get-file-buffer (filename)
-  @lang(:jp "`filename`に対応するバッファを返します。
-見つからなければNILを返します。")
+  "`filename`に対応するバッファを返します。
+見つからなければNILを返します。"
   (dolist (buffer (buffer-list))
     (when (uiop:pathname-equal filename (buffer-filename buffer))
       (return buffer))))

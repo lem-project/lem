@@ -19,6 +19,12 @@
   language-id
   (file-version-table (make-hash-table)))
 
+(lem:define-minor-mode language-client-mode
+    (:name "Language Client")
+  (setf (lem:variable-value 'lem.language-mode:completion-function) 'completion)
+  (uiop:run-program "go-langserver -mode tcp -gocodecompletion &")
+  (start (lem:current-buffer)))
+
 (defmacro define-response-method (name (&rest vars) &body body)
   (alexandria:with-gensyms (params)
     `(pushnew

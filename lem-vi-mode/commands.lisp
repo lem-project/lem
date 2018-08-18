@@ -58,7 +58,7 @@
 (define-command vi-move-to-beginning-of-line/universal-argument-0 () ()
   (if (mode-active-p (current-buffer) 'universal-argument)
       (universal-argument-0)
-      (move-to-beginning-of-line)))
+      (vi-move-to-beginning-of-line)))
 
 (define-command vi-forward-char (&optional (n 1)) ("p")
   (let ((p (current-point)))
@@ -558,7 +558,7 @@
   (change-state 'insert))
 
 (define-command vi-insert-line () ()
-  (move-to-beginning-of-line)
+  (vi-move-to-beginning-of-line)
   (skip-whitespace-forward (current-point) t)
   (change-state 'insert))
 

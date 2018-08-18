@@ -1,10 +1,10 @@
 (defpackage :lem-select-popup
   (:use :cl :lem)
-  (:export :start-dialog))
+  (:export :start-select-popup))
 
 (in-package :lem-select-popup)
 
-(defvar *dialog-mode-keymap* (make-keymap :name '*select-popup-mode-keymap*
+(defvar *select-mode-keymap* (make-keymap :name '*select-popup-mode-keymap*
                                           :undef-hook 'nop))
 
 (define-minor-mode select-popup-mode

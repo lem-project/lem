@@ -169,7 +169,7 @@
   (lem-if:set-view-pos *implementation* (screen-view screen) x y))
 
 (defun screen-print-string (screen x y string attribute)
-  (when (eq attribute 'cursor)
+  (when (and (eq attribute 'cursor) (< 0 (length string)))
     (setf *cursor-x* x)
     (setf *cursor-y* y))
   (let ((view (screen-view screen))

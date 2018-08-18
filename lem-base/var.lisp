@@ -1,7 +1,5 @@
 (in-package :lem-base)
 
-(annot:enable-annot-syntax)
-
 (export '(editor-variable
           define-editor-variable
           clear-editor-local-variables

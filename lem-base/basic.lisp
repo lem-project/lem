@@ -47,8 +47,6 @@
           skip-chars-backward
           insert-buffer))
 
-(annot:enable-annot-syntax)
-
 (defun first-line-p (point)
   "`point`が最初の行ならT、それ以外ならNILを返します。"
   (null (line-prev (point-line point))))

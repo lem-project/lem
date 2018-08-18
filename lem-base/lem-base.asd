@@ -3,7 +3,6 @@
                "iterate"
                "alexandria"
                "cl-ppcre"
-               "cl-annot"
                "babel")
   :serial t
   :components ((:file "package")

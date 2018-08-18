@@ -1,7 +1,5 @@
 (in-package :lem-base)
 
-(annot:enable-annot-syntax)
-
 (export '(current-point
           point
           pointp

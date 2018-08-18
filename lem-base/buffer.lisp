@@ -1,7 +1,5 @@
 (in-package :lem-base)
 
-(annot:enable-annot-syntax)
-
 (export '(fundamental-mode
           current-buffer
           make-buffer

@@ -1,7 +1,5 @@
 (in-package :lem-base)
 
-(annot:enable-annot-syntax)
-
 (export '(kill-buffer-hook
           buffer-list
           any-modified-buffer-p

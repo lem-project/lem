@@ -1,7 +1,5 @@
 (in-package :lem-base)
 
-(annot:enable-annot-syntax)
-
 (export '(save-excursion
           with-point
           with-buffer-read-only

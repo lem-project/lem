@@ -13,6 +13,7 @@
                "lem-css-mode"
                "lem-selection-mode"
                "lem-rust-mode"
+               "lem-calc-mode"
                "lem-paredit-mode"))
 
 (defsystem "lem/executable"

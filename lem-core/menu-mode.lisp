@@ -150,7 +150,7 @@
   :redraw)
 
 (defun menu-select-1 (&key (set-buffer #'switch-to-buffer)
-                           (reader #'menu-select-callback)
+                           ((:callback reader) #'menu-select-callback)
                            marked)
   (alexandria:when-let* ((menu (buffer-value (current-buffer) 'menu))
                          (callback (funcall reader menu))

@@ -427,7 +427,7 @@
   (multiple-value-bind (string type)
       (lem::current-kill-ring)
     (cond
-      ((delete-p)
+      ((visual-p)
        (vi-delete)
        (when (eql type :vi-line)
          (insert-character (current-point) #\Newline))

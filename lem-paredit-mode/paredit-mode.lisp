@@ -6,15 +6,8 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (:use :cl
         :lem
         :lem-vi-mode.word)
-  (:export :paredit-forward
-           :paredit-backward
-           :paredit-insert-paren
-           :paredit-backward-delete
-           :paredit-close-parenthesis
-           :paredit-slurp
-           :paredit-barf
-           :paredit-splice
-           :*paredit-mode-keymap*))
+  (:export :*paredit-mode-keymap*))
+
 (in-package :lem-paredit-mode)
 
 (define-minor-mode paredit-mode

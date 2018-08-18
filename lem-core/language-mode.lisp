@@ -12,9 +12,6 @@
    :xref-mode-tag
    :completion-function
    :go-to-location
-   :indent
-   :newline-and-indent
-   :indent-region-command
    :xref-headline-attribute
    :xref-content-attribute
    :xref-insert-content

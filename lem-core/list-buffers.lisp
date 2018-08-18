@@ -1,6 +1,5 @@
 (defpackage :lem.list-buffers
-  (:use :cl :lem :lem.menu-mode)
-  (:export :list-buffers))
+  (:use :cl :lem :lem.menu-mode))
 (in-package :lem.list-buffers)
 
 (define-key *global-keymap* "C-x C-b" 'list-buffers)

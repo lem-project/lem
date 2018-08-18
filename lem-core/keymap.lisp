@@ -4,7 +4,6 @@
           keymap
           make-keymap
           *global-keymap*
-          undefined-key
           define-key
           keyseq-to-string
           find-keybind

@@ -6,69 +6,7 @@
         :lem-vi-mode.core
         :lem-vi-mode.word
         :lem-vi-mode.visual
-        :lem-vi-mode.jump-motions)
-  (:export :vi-move-to-beginning-of-line/universal-argument-0
-           :vi-forward-char
-           :vi-backward-char
-           :vi-next-line
-           :vi-next-display-line
-           :vi-previous-line
-           :vi-previous-display-line
-           :vi-forward-word-begin
-           :vi-backward-word-begin
-           :vi-forward-word-begin-broad
-           :vi-backward-word-begin-broad
-           :vi-forward-word-end
-           :vi-forward-word-end-broad
-           :vi-move-to-beginning-of-line
-           :vi-move-to-end-of-line
-           :vi-move-to-last-nonblank
-           :vi-move-to-window-top
-           :vi-move-to-window-middle
-           :vi-move-to-window-bottom
-           :vi-back-to-indentation
-           :vi-indent
-           :vi-substitute
-           :vi-delete-next-char
-           :vi-delete-previous-char
-           :vi-delete
-           :vi-delete-line
-           :vi-clear
-           :vi-clear-line
-           :vi-join
-           :vi-join-line
-           :vi-yank
-           :vi-yank-line
-           :vi-paste-after
-           :vi-paste-before
-           :vi-replace-char
-           :vi-undo
-           :vi-redo
-           :vi-move-to-matching-paren
-           :vi-search-forward
-           :vi-search-backward
-           :vi-search-next
-           :vi-search-previous
-           :vi-goto-first-line
-           :vi-goto-line
-           :vi-find-char
-           :vi-find-char-backward
-           :vi-find-char-before
-           :vi-find-char-backward-after
-           :vi-write
-           :vi-quit
-           :vi-write-quit
-           :vi-end-insert
-           :vi-insert
-           :vi-insert-line
-           :vi-append
-           :vi-append-line
-           :vi-open-below
-           :vi-open-adove
-           :vi-jump-back
-           :vi-jump-next
-           :vi-normal
-           :vi-keyboard-quit))
+        :lem-vi-mode.jump-motions))
 (in-package :lem-vi-mode.commands)
 
 (defvar *cursor-offset* -1)

@@ -1,10 +1,5 @@
 (in-package :lem)
 
-(export '(describe-key
-          describe-bindings
-          execute-command
-          apropos-command))
-
 (define-key *global-keymap* "C-x ?" 'describe-key)
 (define-command describe-key () ()
   (message "describe-key: ")

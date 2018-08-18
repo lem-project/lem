@@ -1,16 +1,5 @@
 (in-package :lem)
 
-(export '(find-file
-          read-file
-          save-buffer
-          changefile-name
-          write-file
-          write-region-file
-          insert-file
-          save-some-buffers
-          revert-buffer
-          change-directory))
-
 (defun expand-files* (filename)
   (directory-files (expand-file-name filename (buffer-directory))))
 

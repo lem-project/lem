@@ -1,28 +1,5 @@
 (in-package :lem)
 
-(export '(select-buffer
-          kill-buffer
-          previous-buffer
-          next-buffer
-          recenter
-          split-active-window-vertically
-          split-active-window-horizontally
-          other-window
-          window-move-up
-          window-move-down
-          window-move-right
-          window-move-left
-          delete-other-windows
-          delete-current-window
-          quit-window
-          grow-window
-          shrink-window
-          grow-window-horizontally
-          shrink-window-horizontally
-          display-buffer
-          scroll-down
-          scroll-up))
-
 (define-key *global-keymap* "C-x b" 'select-buffer)
 (define-command select-buffer (name) ("BUse Buffer: ")
   (check-switch-minibuffer-window)

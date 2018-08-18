@@ -3,8 +3,7 @@
   (:import-from
    :lem.tmlanguage
    :load-tmlanguage)
-  (:export :gofmt
-           :*go-mode-hook*))
+  (:export :*go-mode-hook*))
 (in-package :lem-go-mode)
 
 (defvar *go-mode-hook* '())

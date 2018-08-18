@@ -2,11 +2,7 @@
   (:use :cl
         :lem
         :lem-vi-mode.core)
-  (:export :vi-visual-end
-           :vi-visual-char
-           :vi-visual-line
-           :vi-visual-block
-           :visual-p
+  (:export :visual-p
            :visual-char-p
            :visual-line-p
            :visual-block-p

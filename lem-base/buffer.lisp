@@ -1,7 +1,6 @@
 (in-package :lem-base)
 
-(export '(fundamental-mode
-          current-buffer
+(export '(current-buffer
           make-buffer
           buffer
           bufferp

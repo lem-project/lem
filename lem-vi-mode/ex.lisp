@@ -2,8 +2,7 @@
   (:use :cl
         :lem
         :lem-vi-mode.core
-        :lem-vi-mode.ex-parser)
-  (:export :vi-ex))
+        :lem-vi-mode.ex-parser))
 (in-package :lem-vi-mode.ex)
 
 (defvar *ex-keymap* (make-keymap :name '*ex-keymap*))

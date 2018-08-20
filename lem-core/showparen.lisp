@@ -2,9 +2,7 @@
   (:use :cl :lem)
   (:export :showparen-attribute
            :forward-matching-paren
-           :backward-matching-paren)
-  #+sbcl
-  (:lock t))
+           :backward-matching-paren))
 (in-package :lem.show-paren)
 
 (defvar *brackets-overlays* '())

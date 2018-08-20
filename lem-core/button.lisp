@@ -8,9 +8,7 @@
            :button-action
            :forward-button
            :backward-button
-           :button-at)
-  #+sbcl
-  (:lock t))
+           :button-at))
 (in-package :lem.button)
 
 (defstruct button

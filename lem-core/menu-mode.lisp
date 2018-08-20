@@ -4,9 +4,7 @@
            :display-menu
            :update-menu
            :menu-change-buffer
-           :menu-delete-buffer)
-  #+sbcl
-  (:lock t))
+           :menu-delete-buffer))
 (in-package :lem.menu-mode)
 
 (define-attribute head-line-attribute

@@ -1,9 +1,7 @@
 (defpackage :lem
   (:use :cl :lem-base)
   (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-base)
-                     :collect (make-symbol (string sym))))
-  #+sbcl
-  (:lock t))
+                     :collect (make-symbol (string sym)))))
 
 (defpackage :lem-interface
   (:nicknames :lem-if)

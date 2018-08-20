@@ -1,9 +1,7 @@
 (defpackage :lem.line-numbers
   (:use :cl :lem)
   (:export :line-numbers-attribute
-           :line-numbers)
-  #+sbcl
-  (:lock t))
+           :line-numbers))
 (in-package :lem.line-numbers)
 
 (defvar *initialized* nil)

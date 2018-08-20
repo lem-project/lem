@@ -1,10 +1,5 @@
 (defpackage :lem.kbdmacro
-  (:use :cl :lem)
-  (:export
-   :kbdmacro-start
-   :kbdmacro-end
-   :kbdmacro-execute
-   :apply-macro-to-region-lines))
+  (:use :cl :lem))
 (in-package :lem.kbdmacro)
 
 (defvar *last-macro-chars* nil)

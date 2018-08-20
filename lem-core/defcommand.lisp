@@ -63,15 +63,15 @@
       `(defun ,cmd-name (,garg)
          (declare (ignorable ,garg))
          (block ,fn-name
-         ,(if (null arg-descripters)
-              (progn
-                (assert (null parms))
-                `(,fn-name))
-              `(destructuring-bind ,parms
-                   ,(if (stringp (car arg-descripters))
-                        (define-command-gen-args cmd-name arg-descripters)
-                        (car arg-descripters))
-                 (,fn-name ,@(collect-variables parms)))))))))
+           ,(if (null arg-descripters)
+                (progn
+                  (assert (null parms))
+                  `(,fn-name))
+                `(destructuring-bind ,parms
+                     ,(if (stringp (car arg-descripters))
+                          (define-command-gen-args cmd-name arg-descripters)
+                          (car arg-descripters))
+                   (,fn-name ,@(collect-variables parms)))))))))
 
 (defun find-command (name)
   (car (gethash name *command-table*)))
@@ -92,6 +92,7 @@
        (setf (get ',name 'command) ',gcmd)
        (setf (get ',gcmd 'name) ,command-name)
        (setf (gethash ,command-name *command-table*) (cons ',gcmd ',name))
+       (export ',name)
        (defun ,name ,parms ,@body)
        ,(define-command-gen-cmd gcmd name parms arg-descripters)
        ',name)))

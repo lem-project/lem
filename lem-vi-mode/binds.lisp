@@ -100,6 +100,7 @@
 (define-key *command-keymap* 'self-insert 'undefined-key)
 
 (define-key *insert-keymap* "Escape" 'vi-end-insert)
+(define-key *insert-keymap* "C-w" 'vi-kill-last-word)
 
 (define-key *command-keymap* "C-p" 'yank-pop)
 (define-key *command-keymap* "C-n" 'yank-pop-next)

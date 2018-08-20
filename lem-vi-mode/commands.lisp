@@ -42,6 +42,7 @@
            :vi-paste-after
            :vi-paste-before
            :vi-replace-char
+           :vi-kill-last-word
            :vi-undo
            :vi-redo
            :vi-move-to-matching-paren
@@ -512,6 +513,11 @@
   (delete-next-char 1)
   (insert-character (current-point) c)
   (backward-char 1))
+
+(define-command vi-kill-last-word (&optional (n 1)) ("p")
+  (let ((p (copy-point (current-point))))
+    (vi-backward-word-begin n)
+    (kill-region p (current-point))))
 
 (define-command vi-undo (&optional (n 1)) ("p")
   (undo n)

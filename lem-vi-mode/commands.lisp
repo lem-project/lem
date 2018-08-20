@@ -510,9 +510,21 @@
 
 (define-command vi-replace-char (c)
     ((list (key-to-char (read-key))))
-  (delete-next-char 1)
-  (insert-character (current-point) c)
-  (backward-char 1))
+  (cond
+    ((visual-p)
+     (apply-visual-range (lambda (start end)
+                           (unless (point< start end)
+                             (rotatef start end))
+                           (let ((count (- (point-column end)
+                                           (point-column start))))
+                             (delete-between-points start end)
+                             (insert-character (current-point) c count)
+                             (move-point (current-point) start))))
+     (vi-visual-end))
+    (t
+     (delete-character (current-point) 1)
+     (insert-character (current-point) c)
+     (backward-char 1))))
 
 (define-command vi-kill-last-word (&optional (n 1)) ("p")
   (let ((p (copy-point (current-point))))

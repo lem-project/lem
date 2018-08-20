@@ -632,7 +632,7 @@
     (change-state 'insert)))
 
 (define-command vi-append-line () ()
-  (move-to-end-of-line)
+  (vi-move-to-end-of-line)
   (change-state 'insert))
 
 (define-command vi-open-below () ()

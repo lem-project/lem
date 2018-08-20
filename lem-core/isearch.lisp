@@ -3,6 +3,15 @@
   (:export :*isearch-keymap*
            :isearch-highlight-attribute
            :isearch-highlight-active-attribute
+           :isearch-forward
+           :isearch-backward
+           :isearch-forward-regexp
+           :isearch-backward-regexp
+           :isearch-forward-symbol
+           :isearch-backward-symbol
+           :isearch-forward-symbol-at-point
+           :isearch-abort
+           :isearch-delete-char
            :isearch-end
            :read-query-replace-args)
   #+sbcl

@@ -69,9 +69,9 @@
 (define-key *global-keymap* "M-j" 'newline-and-indent)
 (define-key *language-mode-keymap* "C-M-\\" 'indent-region-command)
 (define-key *language-mode-keymap* "M-;" 'comment-or-uncomment-region)
-(define-key *language-mode-keymap* "M-." 'find-definitions)
-(define-key *language-mode-keymap* "M-_" 'find-references)
-(define-key *language-mode-keymap* "M-?" 'find-references)
+(define-key *language-mode-keymap* "M-." '%find-definitions)
+(define-key *language-mode-keymap* "M-_" '%find-references)
+(define-key *language-mode-keymap* "M-?" '%find-references)
 (define-key *language-mode-keymap* "M-," 'pop-definition-stack)
 (define-key *language-mode-keymap* "C-M-i" 'complete-symbol)
 
@@ -247,7 +247,7 @@
            (move-to-line (current-point) line-number)
            (line-offset (current-point) 0 charpos)))))))
 
-(define-command find-definitions () ()
+(define-command %find-definitions () ()
   (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))
     (let ((locations (funcall fn (current-point))))
       (unless locations
@@ -273,7 +273,7 @@
                                        (alexandria:curry #'go-to-location location)))
                   (setf prev-file file)))))))))
 
-(define-command find-references () ()
+(define-command %find-references () ()
   (alexandria:when-let (fn (variable-value 'find-references-function :buffer))
     (let ((refs (funcall fn (current-point))))
       (unless refs

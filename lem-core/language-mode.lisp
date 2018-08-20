@@ -81,7 +81,7 @@
 
 (define-command %beginning-of-defun (n) ("p")
   (if (minusp n)
-      (end-of-defun (- n))
+      (%end-of-defun (- n))
       (beginning-of-defun-1 n)))
 
 (define-command %end-of-defun (n) ("p")

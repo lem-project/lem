@@ -284,9 +284,13 @@
   (change-state 'insert))
 
 (define-command vi-delete-next-char (&optional (n 1)) ("p")
-  (unless (empty-line (current-point))
-    (delete-next-char n)
-    (fall-within-line (current-point))))
+  (cond
+    ((visual-p)
+     (vi-delete))
+    (t
+     (unless (empty-line (current-point))
+       (delete-next-char n)
+       (fall-within-line (current-point))))))
 
 (define-command vi-delete-previous-char (&optional (n 1)) ("p")
   (unless (bolp (current-point))

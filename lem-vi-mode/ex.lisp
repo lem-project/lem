@@ -18,8 +18,8 @@
       (execute-ex
        (prompt-for-line ":" ""
                         (lambda (str)
-                          (when (ppcre:scan "^e[ \\.]" str)
-                            (let ((comp-str (ppcre:regex-replace "^e\\s*" str "")))
+                          (when (ppcre:scan "^(e|vs|sp)[ \\.]" str)
+                            (let ((comp-str (ppcre:regex-replace "^(e|vs|sp)\\s*" str "")))
                               (if (string= comp-str ".")
                                   (list (format nil "~A/" str))
                                   ;; Almost same as minibuffer-file-complete in lem-core/completion-file.lisp

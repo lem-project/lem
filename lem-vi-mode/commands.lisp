@@ -468,9 +468,11 @@
       (lem::current-kill-ring)
     (cond
       ((visual-p)
-       (vi-delete)
-       (when (eql type :vi-line)
-         (insert-character (current-point) #\Newline))
+       (let ((visual-line (visual-line-p)))
+         (vi-delete)
+         (when (and (not visual-line)
+                    (eql type :vi-line))
+           (insert-character (current-point) #\Newline)))
        (insert-string (current-point) string)
        (character-offset (current-point) -1))
       (t

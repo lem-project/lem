@@ -47,13 +47,13 @@
                              ((char= #\f (aref arg-descripter 0))
                               `(prompt-for-file
                                 ,(subseq arg-descripter 1)
-                                (buffer-directory)
+                                (buffer-filename)
                                 nil
                                 t))
                              ((char= #\F (aref arg-descripter 0))
                               `(prompt-for-file
                                 ,(subseq arg-descripter 1)
-                                (buffer-directory)
+                                (buffer-filename)
                                 nil
                                 nil))
                              (t

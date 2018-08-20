@@ -58,13 +58,13 @@
   (ex-write range filename)
   (lem:exit-lem nil))
 
-(define-ex-command "^sp$" (range filename)
+(define-ex-command "^(sp|split)$" (range filename)
   (declare (ignore range))
   (lem:split-active-window-vertically)
   (unless (string= filename "")
     (lem:find-file (lem:expand-file-name filename))))
 
-(define-ex-command "^vs$" (range filename)
+(define-ex-command "^(vs|vsplit)$" (range filename)
   (declare (ignore range))
   (lem:split-active-window-horizontally)
   (unless (string= filename "")

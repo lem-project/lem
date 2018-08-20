@@ -1,9 +1,7 @@
 (defpackage :lem.completion-mode
   (:use :cl :lem)
   (:export :make-completion-item
-           :run-completion)
-  #+sbcl
-  (:lock t))
+           :run-completion))
 (in-package :lem.completion-mode)
 
 (defstruct completion-item

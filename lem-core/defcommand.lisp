@@ -92,7 +92,6 @@
        (setf (get ',name 'command) ',gcmd)
        (setf (get ',gcmd 'name) ,command-name)
        (setf (gethash ,command-name *command-table*) (cons ',gcmd ',name))
-       (export ',name)
        (defun ,name ,parms ,@body)
        ,(define-command-gen-cmd gcmd name parms arg-descripters)
        ',name)))

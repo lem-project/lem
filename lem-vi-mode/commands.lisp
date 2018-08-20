@@ -193,18 +193,19 @@
   (when (< 0 n)
     (let ((p (current-point)))
       (cond
-        ((vi-word-char-p (character-at p 0))
-         (vi-backward-char)
+        ((vi-word-char-p (character-at p -1))
          (loop
            while (and (not (bolp p)) (vi-word-char-p (character-at p -1)))
            do (vi-backward-char)))
+        ((or (bolp p)
+             (vi-space-char-p (character-at p -1)))
+         (skip-chars-backward p '(#\Space #\Tab #\Newline #\Return))
+         (vi-backward-word-begin n))
         (t
-         (loop until (or (bolp p) (vi-word-char-p (character-at p 0)))
-               do (vi-backward-char))
-         (when (bolp p)
-           (vi-previous-line)
-           (vi-move-to-end-of-line)
-           (vi-backward-word-begin n)))))
+         (loop until (or (bolp p)
+                         (vi-word-char-p (character-at p -1))
+                         (vi-space-char-p (character-at p -1)))
+               do (vi-backward-char)))))
     (vi-backward-word-begin (1- n))))
 
 (define-command vi-forward-word-begin-broad (&optional (n 1)) ("p")

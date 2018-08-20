@@ -336,7 +336,7 @@
         default
         result)))
 
-(defun prompt-for-file (prompt &optional directory (default (buffer-directory)) existing)
+(defun prompt-for-file (prompt &optional directory (default (buffer-filename)) existing)
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))
   (let ((result

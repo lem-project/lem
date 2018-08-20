@@ -24,6 +24,10 @@
 (define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename))
 
+(define-ex-command "^update$" (range filename)
+  (when (lem:buffer-modified-p (lem:current-buffer))
+    (ex-write range filename)))
+
 (define-ex-command "^wq$" (range filename)
   (ex-write-quit range filename nil))
 

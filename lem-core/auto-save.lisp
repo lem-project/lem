@@ -1,6 +1,8 @@
 (defpackage :lem.auto-save
   (:use :cl :lem)
-  (:export :*make-backup-files*))
+  (:export :*make-backup-files*)
+  #+sbcl
+  (:lock t))
 (in-package :lem.auto-save)
 
 (define-editor-variable auto-save-checkpoint-frequency 5)

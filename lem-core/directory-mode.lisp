@@ -1,5 +1,7 @@
 (defpackage :lem.directory-mode
-  (:use :cl :lem))
+  (:use :cl :lem)
+  #+sbcl
+  (:lock t))
 (in-package :lem.directory-mode)
 
 (define-attribute header-attribute

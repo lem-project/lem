@@ -26,7 +26,9 @@
    :xref-references-type
    :xref-references-locations
    :xref-filespec-to-buffer
-   :xref-filespec-to-filename))
+   :xref-filespec-to-filename)
+  #+sbcl
+  (:lock t))
 (in-package :lem.language-mode)
 
 (define-editor-variable idle-function nil)
@@ -60,16 +62,16 @@
                               (setf *idle-timer* nil))
                             "language-idle-function"))))
 
-(define-key *language-mode-keymap* "C-M-a" 'beginning-of-defun)
-(define-key *language-mode-keymap* "C-M-e" 'end-of-defun)
+(define-key *language-mode-keymap* "C-M-a" '%beginning-of-defun)
+(define-key *language-mode-keymap* "C-M-e" '%end-of-defun)
 (define-key *language-mode-keymap* "Tab" 'indent-line-and-complete-symbol)
 (define-key *global-keymap* "C-j" 'newline-and-indent)
 (define-key *global-keymap* "M-j" 'newline-and-indent)
 (define-key *language-mode-keymap* "C-M-\\" 'indent-region-command)
 (define-key *language-mode-keymap* "M-;" 'comment-or-uncomment-region)
-(define-key *language-mode-keymap* "M-." 'find-definitions)
-(define-key *language-mode-keymap* "M-_" 'find-references)
-(define-key *language-mode-keymap* "M-?" 'find-references)
+(define-key *language-mode-keymap* "M-." '%find-definitions)
+(define-key *language-mode-keymap* "M-_" '%find-references)
+(define-key *language-mode-keymap* "M-?" '%find-references)
 (define-key *language-mode-keymap* "M-," 'pop-definition-stack)
 (define-key *language-mode-keymap* "C-M-i" 'complete-symbol)
 
@@ -77,14 +79,14 @@
   (alexandria:when-let ((fn (variable-value 'beginning-of-defun-function :buffer)))
     (when fn (funcall fn (current-point) n))))
 
-(define-command beginning-of-defun (n) ("p")
+(define-command %beginning-of-defun (n) ("p")
   (if (minusp n)
-      (end-of-defun (- n))
+      (%end-of-defun (- n))
       (beginning-of-defun-1 n)))
 
-(define-command end-of-defun (n) ("p")
+(define-command %end-of-defun (n) ("p")
   (if (minusp n)
-      (beginning-of-defun (- n))
+      (%beginning-of-defun (- n))
       (alexandria:if-let ((fn (variable-value 'end-of-defun-function :buffer)))
         (funcall fn (current-point) n)
         (beginning-of-defun-1 (- n)))))
@@ -245,7 +247,7 @@
            (move-to-line (current-point) line-number)
            (line-offset (current-point) 0 charpos)))))))
 
-(define-command find-definitions () ()
+(define-command %find-definitions () ()
   (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))
     (let ((locations (funcall fn (current-point))))
       (unless locations
@@ -271,7 +273,7 @@
                                        (alexandria:curry #'go-to-location location)))
                   (setf prev-file file)))))))))
 
-(define-command find-references () ()
+(define-command %find-references () ()
   (alexandria:when-let (fn (variable-value 'find-references-function :buffer))
     (let ((refs (funcall fn (current-point))))
       (unless refs

@@ -1,5 +1,7 @@
 (defpackage :lem.popup-window
-  (:use :cl :lem))
+  (:use :cl :lem)
+  #+sbcl
+  (:lock t))
 (in-package :lem.popup-window)
 
 (defvar *menu-buffer* nil)

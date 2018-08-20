@@ -5,6 +5,9 @@
            :listener-start
            :listener-update-point
            :listener-reset-prompt
+           :listener-return
+           :listener-prev-input
+           :listener-next-input
            :listener-reset-interactive
            :listener-get-prompt-function
            :listener-check-input-function

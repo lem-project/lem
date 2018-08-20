@@ -62,13 +62,15 @@
   (declare (ignore range))
   (lem:split-active-window-vertically)
   (unless (string= filename "")
-    (lem:find-file (lem:expand-file-name filename))))
+    (lem:find-file (merge-pathnames filename
+                                    (lem:buffer-directory)))))
 
 (define-ex-command "^(vs|vsplit)$" (range filename)
   (declare (ignore range))
   (lem:split-active-window-horizontally)
   (unless (string= filename "")
-    (lem:find-file (lem:expand-file-name filename))))
+    (lem:find-file (merge-pathnames filename
+                                    (lem:buffer-directory)))))
 
 (define-ex-command "^(s|substitute)$" (range argument)
   (with-jump-motion

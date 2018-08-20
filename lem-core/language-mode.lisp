@@ -23,7 +23,9 @@
    :xref-references-type
    :xref-references-locations
    :xref-filespec-to-buffer
-   :xref-filespec-to-filename))
+   :xref-filespec-to-filename)
+  #+sbcl
+  (:lock t))
 (in-package :lem.language-mode)
 
 (define-editor-variable idle-function nil)
@@ -57,8 +59,8 @@
                               (setf *idle-timer* nil))
                             "language-idle-function"))))
 
-(define-key *language-mode-keymap* "C-M-a" 'beginning-of-defun)
-(define-key *language-mode-keymap* "C-M-e" 'end-of-defun)
+(define-key *language-mode-keymap* "C-M-a" '%beginning-of-defun)
+(define-key *language-mode-keymap* "C-M-e" '%end-of-defun)
 (define-key *language-mode-keymap* "Tab" 'indent-line-and-complete-symbol)
 (define-key *global-keymap* "C-j" 'newline-and-indent)
 (define-key *global-keymap* "M-j" 'newline-and-indent)
@@ -74,14 +76,14 @@
   (alexandria:when-let ((fn (variable-value 'beginning-of-defun-function :buffer)))
     (when fn (funcall fn (current-point) n))))
 
-(define-command beginning-of-defun (n) ("p")
+(define-command %beginning-of-defun (n) ("p")
   (if (minusp n)
       (end-of-defun (- n))
       (beginning-of-defun-1 n)))
 
-(define-command end-of-defun (n) ("p")
+(define-command %end-of-defun (n) ("p")
   (if (minusp n)
-      (beginning-of-defun (- n))
+      (%beginning-of-defun (- n))
       (alexandria:if-let ((fn (variable-value 'end-of-defun-function :buffer)))
         (funcall fn (current-point) n)
         (beginning-of-defun-1 (- n)))))

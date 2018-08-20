@@ -452,19 +452,19 @@
   (redo n)
   (fall-within-line (current-point)))
 
-(defun forward-matching-paren (p &optional skip)
+(defun %forward-matching-paren (p &optional skip)
   (with-point ((p p))
     (when (or skip (syntax-open-paren-char-p (character-at p)))
       (scan-lists p 1 0)
       (character-offset p *cursor-offset*))))
 
-(defun backward-matching-paren (p)
+(defun %backward-matching-paren (p)
   (when (syntax-closed-paren-char-p (character-at p))
     (scan-lists (character-offset (copy-point p :temporary) 1) -1 0)))
 
 (define-command vi-move-to-matching-paren () ()
   (alexandria:when-let ((p (or (backward-matching-paren (current-point))
-                               (forward-matching-paren (current-point) t))))
+                               (%forward-matching-paren (current-point) t))))
     (with-jump-motion
       (move-point (current-point) p))))
 
@@ -473,8 +473,8 @@
   (defun on-matching-paren ()
     (setf old-forward-matching-paren (variable-value 'forward-matching-paren :global))
     (setf old-backward-matching-paren (variable-value 'backward-matching-paren :global))
-    (setf (variable-value 'forward-matching-paren :global) 'forward-matching-paren)
-    (setf (variable-value 'backward-matching-paren :global) 'backward-matching-paren))
+    (setf (variable-value 'forward-matching-paren :global) '%forward-matching-paren)
+    (setf (variable-value 'backward-matching-paren :global) '%backward-matching-paren))
   (defun off-matching-paren ()
     (setf (variable-value 'forward-matching-paren :global) old-forward-matching-paren)
     (setf (variable-value 'backward-matching-paren :global) old-backward-matching-paren)))

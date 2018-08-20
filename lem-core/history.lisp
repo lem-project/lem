@@ -5,7 +5,9 @@
            :add-history
            :prev-history
            :next-history
-           :previous-matching))
+           :previous-matching)
+  #+sbcl
+  (:lock t))
 (in-package :lem.history)
 
 (defstruct (history (:constructor %make-history))

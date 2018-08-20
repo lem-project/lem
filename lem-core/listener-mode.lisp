@@ -9,7 +9,9 @@
            :listener-get-prompt-function
            :listener-check-input-function
            :listener-execute-function
-           :clear-listener))
+           :clear-listener)
+  #+sbcl
+  (:lock t))
 (in-package :lem.listener-mode)
 
 (define-attribute listener-prompt-attribute

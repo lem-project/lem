@@ -1,5 +1,7 @@
 (defpackage :lem.abbrev
-  (:use :cl :lem :lem.completion-mode))
+  (:use :cl :lem :lem.completion-mode)
+  #+sbcl
+  (:lock t))
 (in-package :lem.abbrev)
 
 (defun preceding-word (point)

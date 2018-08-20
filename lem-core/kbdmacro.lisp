@@ -1,5 +1,7 @@
 (defpackage :lem.kbdmacro
-  (:use :cl :lem))
+  (:use :cl :lem)
+  #+sbcl
+  (:lock t))
 (in-package :lem.kbdmacro)
 
 (defvar *last-macro-chars* nil)

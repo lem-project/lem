@@ -4,7 +4,9 @@
            :isearch-highlight-attribute
            :isearch-highlight-active-attribute
            :isearch-end
-           :read-query-replace-args))
+           :read-query-replace-args)
+  #+sbcl
+  (:lock t))
 (in-package :lem.isearch)
 
 (defvar *isearch-keymap* (make-keymap :name '*isearch-keymap*

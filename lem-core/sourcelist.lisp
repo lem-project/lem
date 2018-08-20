@@ -3,7 +3,9 @@
   (:export :with-sourcelist
            :append-jump-function
            :append-sourcelist
-           :jump-highlighting))
+           :jump-highlighting)
+  #+sbcl
+  (:lock t))
 (in-package :lem.sourcelist)
 
 (define-attribute jump-highlight

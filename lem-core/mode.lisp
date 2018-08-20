@@ -97,6 +97,7 @@
             (t
              `(setf (mode-syntax-table ',major-mode)
                     (fundamental-syntax-table))))
+     (export ',major-mode)
      (define-command ,major-mode () ()
        (clear-editor-local-variables (current-buffer))
        ,(when parent-mode `(,parent-mode))
@@ -117,6 +118,7 @@
            (setf (mode-keymap ',minor-mode) ,keymap)))
      (setf (mode-enable-hook ',minor-mode) ,enable-hook)
      (setf (mode-disable-hook ',minor-mode) ,disable-hook)
+     (export ',minor-mode)
      (define-command ,minor-mode (&rest args) ("P")
        (cond ((null args)
               (toggle-minor-mode ',minor-mode))
@@ -187,6 +189,7 @@
                               :disable-hook ,disable-hook)))
          (setf (get ',mode 'global-mode) ,global-mode)
          (pushnew ',mode *global-mode-list*)
+         (export ',mode)
          (define-command ,mode () ()
            (change-global-mode ',mode))
          (when (null *current-global-mode*)

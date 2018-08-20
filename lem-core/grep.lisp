@@ -1,8 +1,9 @@
 (defpackage :lem.grep
   (:use :cl :lem)
   (:export :title-attribute
-           :position-attribute
-           :grep))
+           :position-attribute)
+  #+sbcl
+  (:lock t))
 (in-package :lem.grep)
 
 (define-attribute title-attribute

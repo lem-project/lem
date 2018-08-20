@@ -1,6 +1,8 @@
 (defpackage :lem.tmlanguage
   (:use :cl :lem)
-  (:export :load-tmlanguage))
+  (:export :load-tmlanguage)
+  #+sbcl
+  (:lock t))
 (in-package :lem.tmlanguage)
 
 (defun name-to-attribute (name)

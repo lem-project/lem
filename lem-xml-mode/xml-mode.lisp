@@ -52,12 +52,15 @@
   (run-hooks *xml-mode-hook*))
 
 (defun open-tag-p (string)
-  (and (ppcre:scan "^<[^/].*?>$" string)
-       t))
+  (ppcre:register-groups-bind (tag-content)
+      ("^<([^>]+)>$" string)
+    (not (ppcre:scan "/\\s*$" tag-content))))
 
 (defun close-tag-p (string)
-  (and (ppcre:scan "^</.*?>$" string)
-       t))
+  (ppcre:register-groups-bind (tag-content)
+      ("^<([^>]+)>$" string)
+    (and (ppcre:scan "^\\s*/" tag-content)
+         t)))
 
 (defun xml-tags (string)
   (ppcre:all-matches-as-strings "<.*?>" string))
@@ -90,13 +93,13 @@
          (skip-chars-backward p (lambda (char)
                                   (not (or (eql char #\<)
                                            (eql char #\>)))))
-         (if (character-offset p -1)
-             (case (character-at p)
+         (if (character-at p -1)
+             (case (character-at p -1)
                ;; In the middle of XML tag
                (#\< (with-point ((q p))
                       (skip-tag-name q)
                       (if (end-line-p q)
-                          (+ (point-column p)
+                          (+ (1- (point-column p))
                              (if (eql (character-at point) #\/)
                                  0
                                  tab-width))
@@ -105,20 +108,13 @@
                             (point-column q)))))
                ;; After an XML tag
                (#\>
-                (let ((self-closing (eql (character-at p -1) #\/)))
-                  (move-backward-to-openning-bracket p)
-                  (let ((level (count-tags-indent
-                                (points-to-string (line-start (copy-point p)) p)))
-                        (close-tag (or self-closing
-                                       (and (eql (character-at p) #\<)
-                                            (eql (character-at p 1) #\/)))))
-                    (line-start p)
-                    (back-to-indentation p)
-                    (+ (point-column p)
-                       (* (if (= level 0)
-                              (if close-tag 0 1)
-                              (- level (if close-tag 1 0)))
-                          tab-width)))))
+                (let ((level (count-tags-indent
+                              (points-to-string (line-start (copy-point p)) p))))
+                  (line-start p)
+                  (back-to-indentation p)
+                  (+ (point-column p)
+                     (* (if (< level 0) 0 level)
+                        tab-width))))
                (otherwise (point-column p)))
              ;; Beginning of buffer
              0))

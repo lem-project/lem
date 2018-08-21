@@ -156,7 +156,7 @@
           ((:crlf)
            (funcall f #\return)
            (funcall f #\newline))
-          ((:lf)
+          ((:lf :auto)
            (funcall f #\newline))
           ((:cr)
            (funcall f #\return)))))))

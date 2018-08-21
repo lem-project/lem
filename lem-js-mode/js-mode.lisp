@@ -1,5 +1,7 @@
 (defpackage :lem-js-mode
   (:use :cl :lem :lem.language-mode)
+  (:import-from :lem-xml-mode
+                :xml-calc-indent)
   (:export :*js-mode-hook*))
 (in-package :lem-js-mode)
 
@@ -175,6 +177,13 @@ link :
         (if (in-string-or-comment-p point)
             (point-column point)
             (js-calc-indent point)))))
+  ;; JSX syntax
+  (when (with-point ((p point))
+          (skip-whitespace-backward p)
+          (and (search-backward-regexp p "</?[a-zA-Z0-9\\._-]+[\\s>/]")
+               (not (search-forward-regexp p "\\)\\s*;" (line-end (copy-point point))))))
+    (return-from js-calc-indent
+      (xml-calc-indent point)))
   (with-point ((point point)
                (prev-point point))
     (or (move-to-previous-line prev-point)

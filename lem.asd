@@ -6,6 +6,7 @@
                "lem-go-mode"
                "lem-c-mode"
                "lem-xml-mode"
+               "lem-html-mode"
                "lem-python-mode"
                "lem-posix-shell-mode"
                "lem-markdown-mode"

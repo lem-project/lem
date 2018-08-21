@@ -29,7 +29,8 @@
 (defun open-tag-p (string)
   (ppcre:register-groups-bind (tag-content tag-name)
       ("^<(([^/>\\s]+)[^>]*)>$" string)
-    (and (not (ppcre:scan "/\\s*$" tag-content))
+    (and (not (eql (aref tag-content 0) #\!))
+         (not (ppcre:scan "/\\s*$" tag-content))
          (not (find tag-name *void-elements* :test 'string-equal)))))
 
 (defun close-tag-p (string)

@@ -62,18 +62,21 @@
     (and (ppcre:scan "^\\s*/" tag-content)
          t)))
 
+(defvar *xml-open-tag-p* #'open-tag-p)
+(defvar *xml-close-tag-p* #'close-tag-p)
+
 (defun xml-tags (string)
   (ppcre:all-matches-as-strings "<.*?>" string))
 
 (defun count-tags-indent (string)
   (let ((tags (xml-tags string)))
-    (- (count-if #'open-tag-p tags)
-       (count-if #'close-tag-p tags))))
+    (- (count-if *xml-open-tag-p* tags)
+       (count-if *xml-close-tag-p* tags))))
 
 (defun count-following-close-tags (string)
   (loop with i = 0
         for tag in (xml-tags string)
-        while (close-tag-p tag)
+        while (funcall *xml-close-tag-p* tag)
         do (incf i)
         finally (return i)))
 

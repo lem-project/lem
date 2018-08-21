@@ -235,3 +235,5 @@ link :
     (move-point point p)))
 
 (pushnew (cons "\\.js$" 'js-mode) *auto-mode-alist* :test #'equal)
+(pushnew (cons "\\.json$" 'js-mode) *auto-mode-alist* :test #'equal)
+(pushnew (cons "\\.jsx$" 'js-mode) *auto-mode-alist* :test #'equal)

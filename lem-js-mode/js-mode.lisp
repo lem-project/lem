@@ -1,5 +1,7 @@
 (defpackage :lem-js-mode
   (:use :cl :lem :lem.language-mode)
+  (:import-from :lem-xml-mode
+                :xml-calc-indent)
   (:export :*js-mode-hook*))
 (in-package :lem-js-mode)
 
@@ -175,6 +177,13 @@ link :
         (if (in-string-or-comment-p point)
             (point-column point)
             (js-calc-indent point)))))
+  ;; JSX syntax
+  (when (with-point ((p point))
+          (skip-whitespace-backward p)
+          (and (search-backward-regexp p "</?[a-zA-Z0-9\\._-]+[\\s>/]")
+               (not (search-forward-regexp p "\\)\\s*;" (line-end (copy-point point))))))
+    (return-from js-calc-indent
+      (xml-calc-indent point)))
   (with-point ((point point)
                (prev-point point))
     (or (move-to-previous-line prev-point)
@@ -184,12 +193,13 @@ link :
           (prev-state (with-point ((start prev-point))
                         (line-start start)
                         (parse-partial-sexp (copy-point start :temporary)
-                                            (line-end start)))))
+                                            (line-end start))))
+          (indents 0))
 
-      (incf column (* (value-between (+ (pps-state-paren-depth prev-state)
-                                        (if (pps-state-paren-stack prev-state) 1 0))
-                                     0 1)
-                      tab-width))
+      (incf indents (* (value-between (+ (pps-state-paren-depth prev-state)
+                                         (if (pps-state-paren-stack prev-state) 1 0))
+                                      0 1)
+                       tab-width))
 
       (with-point ((prev-start prev-point)
                    (prev-end prev-point))
@@ -200,12 +210,18 @@ link :
 
         ;; Block end
         (when (looking-at point "^(}|\\)|\\])")
-          (decf column tab-width))
+          (with-point ((p point))
+            (character-offset p 1)
+            (scan-lists p -1 0)
+            (line-start p)
+            (back-to-indentation p)
+            (return-from js-calc-indent (point-column p))))
 
-        (decf column (exceptional-indents prev-point tab-width))
-        (incf column (exceptional-indents point tab-width)))
+        (when (= indents 0)
+          (decf indents (exceptional-indents prev-point tab-width)))
+        (incf indents (exceptional-indents point tab-width)))
 
-      column)))
+      (+ column indents))))
 
 (defun beginning-of-defun (point n)
   (loop :repeat n :do (search-backward-regexp point "^\\w")))

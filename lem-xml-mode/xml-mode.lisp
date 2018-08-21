@@ -75,12 +75,7 @@
         finally (return i)))
 
 (defun skip-tag-name (point)
-  (skip-chars-forward point (lambda (char)
-                              (not (or (eql char #\Space)
-                                       (eql char #\Tab)
-                                       (eql char #\Newline)
-                                       (eql char #\Return)
-                                       (eql char #\>))))))
+  (search-forward-regexp point "[a-zA-Z0-9\\._-]+"))
 
 (defun move-backward-to-openning-bracket (point)
   (skip-chars-backward point (lambda (char)
@@ -89,8 +84,9 @@
 
 (defun xml-calc-indent (point)
   (let ((tab-width (variable-value 'tab-width :default point)))
+    (line-start point)
+    (back-to-indentation point)
     (+ (with-point ((p point))
-         (line-start p)
          (skip-chars-backward p (lambda (char)
                                   (not (or (eql char #\<)
                                            (eql char #\>)))))
@@ -101,30 +97,34 @@
                       (skip-tag-name q)
                       (if (end-line-p q)
                           (+ (point-column p)
-                             tab-width)
+                             (if (eql (character-at point) #\/)
+                                 0
+                                 tab-width))
                           (progn
                             (character-offset q 1)
                             (point-column q)))))
                ;; After an XML tag
-               (#\> (move-backward-to-openning-bracket p)
-                    (let ((level (count-tags-indent
-                                  (points-to-string (line-start (copy-point p)) p)))
-                          (close-tag (and (eql (character-at p) #\<)
-                                          (eql (character-at p 1) #\/))))
-                      (line-start p)
-                      (back-to-indentation p)
-                      (+ (point-column p)
-                         (* (if (= level 0)
-                                (if close-tag 0 1)
-                                (- level (if close-tag 1 0)))
-                            tab-width))))
+               (#\>
+                (let ((self-closing (eql (character-at p -1) #\/)))
+                  (move-backward-to-openning-bracket p)
+                  (let ((level (count-tags-indent
+                                (points-to-string (line-start (copy-point p)) p)))
+                        (close-tag (or self-closing
+                                       (and (eql (character-at p) #\<)
+                                            (eql (character-at p 1) #\/)))))
+                    (line-start p)
+                    (back-to-indentation p)
+                    (+ (point-column p)
+                       (* (if (= level 0)
+                              (if close-tag 0 1)
+                              (- level (if close-tag 1 0)))
+                          tab-width)))))
                (otherwise (point-column p)))
              ;; Beginning of buffer
              0))
        ;; Decrease the indent level if the current line begins with closing tags.
        (with-point ((start point)
                     (end point))
-         (line-start start)
          (line-end end)
          (- (* (count-following-close-tags (points-to-string start end))
                tab-width))))))

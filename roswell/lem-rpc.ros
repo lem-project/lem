@@ -18,9 +18,9 @@ exec ros -Q -m lem-rpc -L sbcl-bin -- $0 "$@"
 
 (defun main (&rest argv)
   (declare (ignorable argv))
-  (destructuring-bind (&key (mode "stdin") port)
+  (destructuring-bind (&key (mode "stdio") port)
       (process-command-line-options +command-line-spec+ argv)
-    (let ((*mode* (if mode (intern (string-upcase mode) :keyword)))
-          (*port* port))
+    (let ((lem-jsonrpc::*mode* (if mode (intern (string-upcase mode) :keyword)))
+          (lem-jsonrpc::*port* port))
       (lem:lem))))
 ;;; vim: set ft=lisp lisp:

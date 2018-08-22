@@ -33,4 +33,7 @@
    "ISO-8859-9")
   (lem-encodings-table/8bit:generate-table
    (asdf:system-relative-pathname :lem-encodings "iso-8859-13.table")
-   "ISO-8859-13"))
+   "ISO-8859-13")
+  (lem-encodings-table/8bit:generate-table
+   (asdf:system-relative-pathname :lem-encodings "koi8-r.table")
+   "KOI8-R"))

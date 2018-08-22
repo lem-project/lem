@@ -50,5 +50,4 @@
 (def-8bit-encoding iso-8859-8)
 (def-8bit-encoding iso-8859-9)
 (def-8bit-encoding iso-8859-13)
-
- 
+(def-8bit-encoding koi8-r)

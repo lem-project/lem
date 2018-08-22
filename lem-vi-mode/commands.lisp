@@ -310,7 +310,8 @@
                (kill-region start end)
                (kill-append "" nil '(:vi-line))
                (if eob
-                   (unless *vi-clear-recursive*
+                   (unless (or (first-line-p (current-point))
+                               *vi-clear-recursive*)
                      (delete-previous-char))
                    (when *vi-clear-recursive*
                      (insert-character (current-point) #\Newline)

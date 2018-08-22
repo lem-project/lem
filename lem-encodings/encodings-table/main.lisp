@@ -36,4 +36,28 @@
    "ISO-8859-13")
   (lem-encodings-table/8bit:generate-table
    (asdf:system-relative-pathname :lem-encodings "koi8-r.table")
-   "KOI8-R"))
+   "KOI8-R")
+  (lem-encodings-table/8bit:generate-table
+   (asdf:system-relative-pathname :lem-encodings "cp866.table")
+   "CP866")
+  (lem-encodings-table/8bit:generate-table
+   (asdf:system-relative-pathname :lem-encodings "cp1250.table")
+   "CP1250")
+  (lem-encodings-table/8bit:generate-table
+   (asdf:system-relative-pathname :lem-encodings "cp1251.table")
+   "CP1251")
+  (lem-encodings-table/8bit:generate-table
+   (asdf:system-relative-pathname :lem-encodings "cp1253.table")
+   "CP1253")
+  (lem-encodings-table/8bit:generate-table
+   (asdf:system-relative-pathname :lem-encodings "cp1254.table")
+   "CP1254")
+  (lem-encodings-table/8bit:generate-table
+   (asdf:system-relative-pathname :lem-encodings "cp1255.table")
+   "CP1255")
+  (lem-encodings-table/8bit:generate-table
+   (asdf:system-relative-pathname :lem-encodings "cp1256.table")
+   "CP1256")
+  (lem-encodings-table/8bit:generate-table
+   (asdf:system-relative-pathname :lem-encodings "cp1257.table")
+   "CP1257"))

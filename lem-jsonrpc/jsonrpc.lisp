@@ -13,6 +13,9 @@
 
 (defparameter *debug* nil)
 
+(defvar *mode* :tcp)
+(defvar *port* 50879)
+
 (defvar *view-id-counter* 0)
 (defvar *display-width* 80)
 (defvar *display-height* 24)
@@ -134,7 +137,9 @@
       (jsonrpc:expose *server* "ready" (ready (lambda () (setf ready t))))
       (jsonrpc:expose *server* "input" 'input-callback)
       (dbg "server-listen")
-      (jsonrpc:server-listen *server* :mode :stdio))))
+      (apply #'jsonrpc:server-listen *server*
+             :mode *mode*
+             (if (eq *mode* :tcp) (list :port *port*))))))
 
 (defmethod lem-if:display-background-mode ((implementation jsonrpc))
   *background-mode*)

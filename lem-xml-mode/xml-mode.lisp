@@ -53,7 +53,7 @@
 
 (defun open-tag-p (string)
   (ppcre:register-groups-bind (tag-content)
-      ("^<([^>]+)>$" string)
+      ("^<([^/>\\s]+[^>]*)>$" string)
     (and (not (eql (aref tag-content 0) #\!))
          (not (ppcre:scan "/\\s*$" tag-content)))))
 

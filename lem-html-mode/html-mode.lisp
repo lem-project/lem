@@ -1,11 +1,9 @@
 (defpackage #:lem-html-mode
   (:use #:cl
         #:lem
-        #:lem.language-mode
-        #:lem-xml-mode)
+        #:lem.language-mode)
   (:import-from #:lem-xml-mode
-                #:*xml-mode-keymap*
-                #:*xml-syntax-table*
+                #:xml-mode
                 #:*xml-open-tag-p*
                 #:*xml-close-tag-p*
                 #:xml-calc-indent)
@@ -14,10 +12,9 @@
 
 (defvar *html-mode-hook* '())
 
-(define-major-mode html-mode language-mode
-    (:name "html"
-     :keymap *xml-mode-keymap*
-     :syntax-table *xml-syntax-table*)
+(define-major-mode html-mode xml-mode
+    (:name "HTML"
+     :keymap *html-mode-keymap*)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'tab-width) 2
         (variable-value 'calc-indent-function) 'html-calc-indent)

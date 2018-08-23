@@ -160,6 +160,9 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 
 (define-command paredit-close-parenthesis () ()
   (with-point ((p (current-point)))
+    (when (in-string-or-comment-p p)
+      (insert-character p #\))
+      (return-from paredit-close-parenthesis))
     (case (character-at p)
       (#\)
        (if (eql (character-at p -1) #\\)

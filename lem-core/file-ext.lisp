@@ -63,13 +63,7 @@
       (change-buffer-mode buffer (cdr elt)))))
 
 (defun detect-external-format-from-file (pathname)
-  (values (let ((external-format (inq:detect-encoding (pathname pathname) :jp)))
-            #+lispworks
-            (if (eq external-format :cp932)
-                :shift-jis
-                external-format)
-            #-lispworks
-            external-format)
+  (values (inq:dependent-name (inq:detect-encoding (pathname pathname) :jp))
           (or (inq:detect-end-of-line (pathname pathname)) :lf)))
 
 (setf *external-format-function* 'detect-external-format-from-file)

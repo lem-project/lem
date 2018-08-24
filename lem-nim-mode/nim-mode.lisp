@@ -18,6 +18,32 @@
                   :name 'syntax-string-attribute
                   :patterns (make-tm-patterns (make-tm-match "\\\\."))))
 
+;; numerical literals
+;; cf. https://nim-lang.org/docs/manual.html#lexical-analysis-numerical-constants
+(let* ((digit "[0-9]")
+       (octdigit "[0-7]")
+       (hexdigit "[0-9A-Fa-f]")
+       (bindigit "[0-1]")
+       (hexlit (format nil "0(x|X)~a(_?~a)*" hexdigit hexdigit))
+       (declit (format nil "~a(_?~a)*" digit digit))
+       (octlit (format nil "0(o|c|C)~a(_?~a)*" octdigit octdigit))
+       (binlit (format nil "0(b|b)~a(_?~a)*" bindigit bindigit)))
+
+  (defun integer-literals ()
+    (let* ((intlit (format nil "(~@{~a~^|~})" hexlit declit octlit binlit))
+           (intsuffix "'?(i|I)(8|16|32|64)"))
+      (format nil "\\b~a(~a)?\\b" intlit intsuffix)))
+
+  (defun float-literals ()
+    (let* ((exponent (format nil "(e|E)[+-]?~a(_?~a)*" digit digit))
+           ;; it seems `10_20.e1_0` should be OK but compiler fails.
+           ;; issue: https://github.com/nim-lang/Nim/issues/8766
+           (floatlit (format nil "~a(_?~a)*((\\.(_?~a)*(~a)?)|~a)" digit digit digit exponent exponent))
+           (floatsuffix "((f|F)(32)?|((f|F)64)|d|D)")
+           (floatsuffixlit (format nil "(~a'~a)|((~a|~a|~a|~a)'?~a)"
+                                   hexlit floatsuffix floatlit declit octlit binlit floatsuffix)))
+      (format nil "\\b(~a|~a)\\b" floatlit floatsuffixlit))))
+
 ;; cf. https://nim-lang.org/docs/manual.html#syntax-grammar
 (defun make-tmlanguage-nim ()
   (let* ((patterns (make-tm-patterns
@@ -40,10 +66,10 @@
                                    :name 'syntax-constant-attribute)
                     (make-tm-string-region "\"")
                     (make-tm-string-region "\"\"\"")
-                    ;; (make-tm-match integer-literals
-                    ;;                :name 'syntax-constant-attribute)
-                    ;; (make-tm-match float-literals
-                    ;;                :name 'syntax-constant-attribute)
+                    (make-tm-match (integer-literals)
+                                   :name 'syntax-constant-attribute)
+                    (make-tm-match (float-literals)
+                                   :name 'syntax-constant-attribute)
                     (make-tm-region
                      `(:sequence "#|")
                      `(:sequence "|#")

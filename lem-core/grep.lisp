@@ -2,7 +2,9 @@
   (:use :cl :lem)
   (:export :title-attribute
            :position-attribute
-           :grep))
+           :grep)
+  #+sbcl
+  (:lock t))
 (in-package :lem.grep)
 
 (define-attribute title-attribute

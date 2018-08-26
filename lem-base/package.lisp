@@ -1,2 +1,4 @@
 (defpackage :lem-base
-  (:use :cl))
+  (:use :cl)
+  #+sbcl
+  (:lock t))

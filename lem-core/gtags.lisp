@@ -2,7 +2,9 @@
   (:use :cl :lem :lem.language-mode)
   (:export :find-definitions
            :find-references
-           :gtags-definition-list))
+           :gtags-definition-list)
+  #+sbcl
+  (:lock t))
 (in-package :lem.gtags)
 
 (defclass content ()

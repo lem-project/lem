@@ -26,7 +26,9 @@
    :xref-references-type
    :xref-references-locations
    :xref-filespec-to-buffer
-   :xref-filespec-to-filename))
+   :xref-filespec-to-filename)
+  #+sbcl
+  (:lock t))
 (in-package :lem.language-mode)
 
 (define-editor-variable idle-function nil)

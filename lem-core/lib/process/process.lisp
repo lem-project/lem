@@ -3,7 +3,9 @@
   (:export :run-process
            :delete-process
            :process-alive-p
-           :process-send-input))
+           :process-send-input)
+  #+sbcl
+  (:lock t))
 (in-package :lem-process)
 
 (defstruct process

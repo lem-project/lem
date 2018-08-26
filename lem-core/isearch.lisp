@@ -26,7 +26,9 @@
            :isearch-toggle-highlighting
            :query-replace
            :query-replace-regexp
-           :query-replace-symbol))
+           :query-replace-symbol)
+  #+sbcl
+  (:lock t))
 (in-package :lem.isearch)
 
 (defvar *isearch-keymap* (make-keymap :name '*isearch-keymap*

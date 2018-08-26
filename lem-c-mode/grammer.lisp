@@ -1,6 +1,8 @@
 (defpackage :lem-c-mode.grammer
   (:use :cl :lem)
-  (:export :make-tmlanguage-c))
+  (:export :make-tmlanguage-c)
+  #+sbcl
+  (:lock t))
 (in-package :lem-c-mode.grammer)
 
 (defun tokens (boundary strings)

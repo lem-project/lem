@@ -4,7 +4,9 @@
    :kbdmacro-start
    :kbdmacro-end
    :kbdmacro-execute
-   :apply-macro-to-region-lines))
+   :apply-macro-to-region-lines)
+  #+sbcl
+  (:lock t))
 (in-package :lem.kbdmacro)
 
 (defvar *last-macro-chars* nil)

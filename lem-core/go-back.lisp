@@ -3,7 +3,9 @@
   (:export :*max*
            :select-go-back
            :go-back-global
-           :go-back))
+           :go-back)
+  #+sbcl
+  (:lock t))
 (in-package :lem.go-back)
 
 (defparameter *max* 100)

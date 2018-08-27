@@ -67,8 +67,22 @@
 
 (define-key *global-keymap* "C-x C-w" 'write-file)
 (define-command write-file (filename) ("FWrite File: ")
-  (setf (buffer-filename (current-buffer)) (expand-file-name filename))
-  (save-buffer t))
+  (let* ((old (buffer-name))
+         (new (file-namestring filename))
+         (expand-file-name (expand-file-name filename)))
+    (unless (and (find expand-file-name (mapcar #'buffer-filename
+                                                (buffer-list))
+                       :test #'equal)
+                 (not (prompt-for-y-or-n-p (format nil
+                                                   "~a is opend, overwrite it?"
+                                                   expand-file-name))))
+      (unless (string= old new)
+        (setf (buffer-name)
+              (if (get-buffer new)
+                  (uniq-buffer-name new)
+                  new)))
+      (setf (buffer-filename) expand-file-name)
+      (save-buffer t))))
 
 (define-command write-region-file (start end filename)
     ((progn

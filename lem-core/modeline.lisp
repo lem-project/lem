@@ -101,22 +101,19 @@
 
 (defun modeline-apply-1 (window print-fn default-attribute items)
   (dolist (item items)
-    (handler-case
-        (multiple-value-bind (name attribute alignment)
-            (if (consp item)
-                (values (first item) (or (second item) default-attribute) (or (third item) :left))
-                (values item default-attribute :left))
-          (let (attribute-1 alignment-1)
-            (setf (values name attribute-1 alignment-1)
-                  (convert-modeline-element name window))
-            (when attribute-1 (setf attribute attribute-1))
-            (when alignment-1 (setf alignment alignment-1)))
-          (funcall print-fn
-                   (princ-to-string name)
-                   attribute
-                   alignment))
-      (error (c)
-        (message "modeline error at ~A: ~A" item c)))))
+    (multiple-value-bind (name attribute alignment)
+        (if (consp item)
+            (values (first item) (or (second item) default-attribute) (or (third item) :left))
+            (values item default-attribute :left))
+      (let (attribute-1 alignment-1)
+        (setf (values name attribute-1 alignment-1)
+              (convert-modeline-element name window))
+        (when attribute-1 (setf attribute attribute-1))
+        (when alignment-1 (setf alignment alignment-1)))
+      (funcall print-fn
+               (princ-to-string name)
+               attribute
+               alignment))))
 
 (defun modeline-apply (window print-fn default-attribute)
   (modeline-apply-1 window

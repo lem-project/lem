@@ -67,7 +67,14 @@
 
 (define-key *global-keymap* "C-x C-w" 'write-file)
 (define-command write-file (filename) ("FWrite File: ")
-  (setf (buffer-filename (current-buffer)) (expand-file-name filename))
+  (let* ((old (buffer-name))
+         (new (file-namestring filename)))
+    (unless (string= old new)
+      (setf (buffer-name)
+            (if (get-buffer new)
+                (uniq-buffer-name new)
+                new)))
+    (setf (buffer-filename) (expand-file-name filename)))
   (save-buffer t))
 
 (define-command write-region-file (start end filename)

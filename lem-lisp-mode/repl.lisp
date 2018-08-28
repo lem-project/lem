@@ -6,7 +6,8 @@
      :syntax-table lem-lisp-syntax:*syntax-table*)
   (repl-reset-input)
   (lem.listener-mode:listener-mode t)
-  (setf *write-string-function* 'write-string-to-repl))
+  (setf *write-string-function* 'write-string-to-repl)
+  (setf (variable-value 'completion-function) 'repl-completion))
 
 (defun read-string-thread-stack ()
   (buffer-value (repl-buffer) 'read-string-thread-stack))
@@ -122,6 +123,18 @@
              (with-point ((end start))
                (form-offset end 1)
                (put-text-property start end :attribute 'compiler-note-attribute)))))))))
+
+(defun repl-completion (point)
+  (with-point ((p point))
+    (cond ((maybe-beginning-of-string p)
+           (character-offset p 1)
+           (let ((str (points-to-string p point)))
+             (mapcar (lambda (filename)
+                       (let ((label (lem.completion-mode::pathname-name* filename)))
+                         (make-completion-item :label label :start p :end point)))
+                     (completion-file str (lem:buffer-directory (point-buffer p))))))
+          (t
+           (completion-symbol p)))))
 
 (defvar *repl-compiler-check* nil)
 

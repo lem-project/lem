@@ -185,7 +185,7 @@
                 (make-completion-item :label label
                                       :start (character-offset
                                               s
-                                              (+ (length (namestring (uiop:pathname-directory-pathname str)))))
+                                              (length (namestring (uiop:pathname-directory-pathname str))))
                                       :end (line-end e)))))
           (completion-file str directory :directory-only directory-only)))
 

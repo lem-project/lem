@@ -21,7 +21,10 @@
           shrink-window-horizontally
           display-buffer
           scroll-down
-          scroll-up))
+          scroll-up
+          find-file-other-window
+          read-file-other-window
+          select-buffer-other-window))
 
 (define-key *global-keymap* "C-x b" 'select-buffer)
 (define-command select-buffer (name) ("BUse Buffer: ")

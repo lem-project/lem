@@ -85,10 +85,14 @@
 (defun set-mark (p mark)
   (with-buffer-read-only (point-buffer p) nil
     (with-point ((p p))
-      (when (get-line-property p 'pathname)
-        (character-offset (line-start p) 1)
-        (delete-character p 1)
-        (insert-character p (if mark #\* #\space))))))
+      (let ((pathname (get-line-property p 'pathname)))
+        (when (and pathname (not (uiop:pathname-equal
+                                  pathname
+                                  (uiop:pathname-parent-directory-pathname
+                                   (buffer-directory (point-buffer p))))))
+          (character-offset (line-start p) 1)
+          (delete-character p 1)
+          (insert-character p (if mark #\* #\space)))))))
 
 (defun iter-marks (p function)
   (with-point ((p p))

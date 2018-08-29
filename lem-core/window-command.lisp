@@ -21,13 +21,29 @@
           shrink-window-horizontally
           display-buffer
           scroll-down
-          scroll-up))
+          scroll-up
+          find-file-other-window
+          read-file-other-window
+          select-buffer-other-window))
+
+(eval-when (:compile-toplevel :load-toplevel)
+  (defmacro define-other-window-command (command prompt)
+    (if (exist-command-p (string-downcase command))
+        `(define-command ,(intern (format nil "~a-OTHER-WINDOW"
+                                          (string-upcase command)))
+           (arg) (,prompt)
+           (if (one-window-p)
+               (split-window-sensibly (current-window)))
+           (other-window)
+           (,command arg))
+        (warn "command ~a is not defined." command)))
+
+  (define-command select-buffer (name) ("BUse Buffer: ")
+    (check-switch-minibuffer-window)
+    (switch-to-buffer (make-buffer name))
+    t))
 
 (define-key *global-keymap* "C-x b" 'select-buffer)
-(define-command select-buffer (name) ("BUse Buffer: ")
-  (check-switch-minibuffer-window)
-  (switch-to-buffer (make-buffer name))
-  t)
 
 (define-key *global-keymap* "C-x k" 'kill-buffer)
 (define-command kill-buffer (buffer-or-name) ("bKill buffer: ")
@@ -212,3 +228,12 @@
      (let ((offset (window-offset-view (current-window))))
        (unless (zerop offset)
          (line-offset (current-point) (- offset)))))))
+
+(define-other-window-command find-file "FFind File Other Window: ")
+(define-key *global-keymap* "C-x 4 f" 'find-file-other-window)
+
+(define-other-window-command read-file "FREAD File Other Window: ")
+(define-key *global-keymap* "C-x 4 r" 'read-file-other-window)
+
+(define-other-window-command select-buffer "BUse Buffer Other Window: ")
+(define-key *global-keymap* "C-x 4 b" 'select-buffer-other-window)

@@ -220,10 +220,12 @@
   (locations nil :read-only t))
 
 (defun xref-filespec-to-buffer (filespec)
-  (etypecase filespec
-    (buffer filespec)
-    (string (find-file-buffer filespec))
-    (pathname (find-file-buffer filespec))))
+  (cond ((bufferp filespec)
+         filespec)
+        (t
+         (assert (or (stringp filespec) (pathnamep filespec)))
+         (or (get-buffer (file-namestring filespec))
+             (find-file-buffer filespec)))))
 
 (defun xref-filespec-to-filename (filespec)
   (etypecase filespec

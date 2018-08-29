@@ -39,7 +39,7 @@
           ((pathnamep filename)
            (setf filename (namestring filename))))
     (dolist (pathname (expand-files* filename))
-      (switch-to-buffer (find-file-buffer (probe-file pathname)) t nil))
+      (switch-to-buffer (find-file-buffer pathname) t nil))
     t))
 
 (define-key *global-keymap* "C-x C-r" 'read-file)

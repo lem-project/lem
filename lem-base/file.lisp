@@ -73,6 +73,7 @@
   (when (pathnamep filename)
     (setf filename (namestring filename)))
   (setf filename (expand-file-name filename))
+  (alexandria:when-let (it (probe-file filename)) (setf filename it))
   (cond ((uiop:directory-pathname-p filename)
          (if *find-directory-function*
              (funcall *find-directory-function* filename)

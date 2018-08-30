@@ -5,11 +5,14 @@
 (in-package :lem-vi-mode.ex-command)
 
 (defun ex-write (range filename)
-  (when (string= filename "")
-    (setf filename (lem:buffer-filename (lem:current-buffer))))
   (case (length range)
-    (0 (lem:write-file filename))
-    (2 (lem:write-region-file (first range) (second range) filename))
+    (0 (if (string= filename "")
+           (lem:save-buffer)
+           (lem:write-file filename)))
+    (2 (lem:write-region-file (first range) (second range)
+                              (if (string= filename "")
+                                  (lem:buffer-filename (lem:current-buffer))
+                                  filename)))
     (otherwise (syntax-error))))
 
 (defun ex-write-quit (range filename force)

@@ -22,7 +22,7 @@
 (lem:define-minor-mode language-client-mode
     (:name "Language Client")
   (setf (lem:variable-value 'lem.language-mode:completion-function) 'completion)
-  (uiop:run-program "go-langserver -mode tcp -gocodecompletion &")
+  ;(uiop:run-program "go-langserver -mode tcp -gocodecompletion &")
   (start (lem:current-buffer)))
 
 (defmacro define-response-method (name (&rest vars) &body body)
@@ -36,7 +36,7 @@
       *response-methods*)))
 
 (defun pathname-to-uri (pathname)
-  (format nil "file://~A" (truename pathname)))
+  (format nil "file://~A" pathname))
 
 (defun {} (&rest plist)
   (alexandria:plist-hash-table plist :test 'equal))

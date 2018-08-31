@@ -307,41 +307,43 @@
                  (when (end-line-p point)
                    (character-offset point 1))))))))
 
-
 (define-command insert-\(\) () ()
   (let ((p (current-point)))
     (insert-character p #\()
     (insert-character p #\))
     (character-offset p -1)))
 
+(defun backward-search-rper ()
+  (save-excursion
+    (do* ((p (character-offset (current-point) -1))
+          (c (character-at p)
+             (character-at p)))
+        ((char= #\) c) p)
+      (unless (syntax-space-char-p c)
+        (return nil))
+      (character-offset p -1))))
+
+(defun backward-delete-to-rper ()
+  (save-excursion
+    (do* ((p (character-offset (current-point) -1))
+          (c (character-at p)
+             (character-at p)))
+        ((char= #\) c) p)
+      (unless (syntax-space-char-p c)
+        (return nil))
+      (delete-character p)
+      (character-offset p -1))))
+
 (define-command move-over-\) () ()
-  (let ((p (current-point)))
-    (when (backward-search-rper p)
-      (backward-delete-to-rper p))
-    (scan-lists p 1 1 t)
-    (lem.language-mode:newline-and-indent 1)))
-
-(defun backward-search-rper (p)
-  (with-point ((p p))
-    (character-offset p -1)
-    (loop :for c := (character-at p)
-          :do (cond ((char= c #\))
-                     (return p))
-                    ((syntax-space-char-p c)
-                     (character-offset p -1))
-                    (t
-                     (return nil))))))
-
-(defun backward-delete-to-rper (p)
-  (with-point ((p p))
-    (character-offset p -1)
-    (loop :for c := (character-at p)
-          :do (cond ((char= c #\))
-                     (return p))
-                    ((syntax-space-char-p c)
-                     (character-offset p -1))
-                    (t
-                     (return nil))))))
+  (let ((rper (backward-search-rper)))
+    (if rper
+        (progn
+          (backward-delete-to-rper)
+          (scan-lists (current-point) 1 1 T)
+          (lem.language-mode:newline-and-indent 1))
+        (progn
+          (scan-lists (current-point) 1 1 T)
+          (lem.language-mode:newline-and-indent 1)))))
 
 (define-command lisp-indent-sexp () ()
   (with-point ((end (current-point) :right-inserting))

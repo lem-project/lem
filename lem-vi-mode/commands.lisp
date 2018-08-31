@@ -229,7 +229,13 @@
   (forward-word-end (current-point) n t))
 
 (define-command vi-move-to-beginning-of-line () ()
-  (goto-bol (current-point)))
+  (with-point ((start (current-point)))
+    (line-start start)
+    (or (text-property-at (current-point) :field -1)
+        (previous-single-property-change (current-point)
+                                         :field
+                                         start)
+        (move-point (current-point) start))))
 
 (define-command vi-move-to-end-of-line () ()
   (goto-eol (current-point)))

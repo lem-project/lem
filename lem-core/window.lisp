@@ -287,8 +287,9 @@
                (window-tree-parent (window-node-cdr tree) node))))))
 
 (defun window-list ()
-  (window-tree-flatten
-   (window-tree)))
+  (append (window-tree-flatten
+           (window-tree))
+          *floating-windows*))
 
 (defun one-window-p ()
   (window-tree-leaf-p (window-tree)))

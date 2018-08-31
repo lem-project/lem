@@ -262,7 +262,8 @@
     (next-line (- (window-height (current-window)) 2))))
 
 (define-command vi-back-to-indentation () ()
-  (back-to-indentation-command))
+  (vi-move-to-beginning-of-line)
+  (skip-whitespace-forward (current-point) t))
 
 (defvar *vi-indent-recursive* nil)
 (let ((tag (gensym)))

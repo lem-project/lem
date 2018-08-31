@@ -354,19 +354,21 @@
                        ;; Ignore End of Buffer error and continue the deletion.
                        (ignore-errors (apply command (and uarg (list uarg)))))
                      (with-point ((end (current-point)))
-                       (when (point< end start)
-                         (rotatef start end)
-                         (character-offset end 1))
-                       (when (point/= start end)
-                         (let ((multiline (find command
-                                                *multiline-motion-commands*)))
-                           (when multiline
-                             (line-start start)
-                             (line-end end)
-                             (character-offset end 1))
-                           (kill-region start end)
-                           (when multiline
-                             (kill-append "" nil '(:vi-line))))))))
+                       (when (eq (point-buffer start)
+                                 (point-buffer end))
+                         (when (point< end start)
+                           (rotatef start end)
+                           (character-offset end 1))
+                         (when (point/= start end)
+                           (let ((multiline (find command
+                                                  *multiline-motion-commands*)))
+                             (when multiline
+                               (line-start start)
+                               (line-end end)
+                               (character-offset end 1))
+                             (kill-region start end)
+                             (when multiline
+                               (kill-append "" nil '(:vi-line)))))))))
                  (unless *vi-clear-recursive*
                    (fall-within-line (current-point))))))))))
 

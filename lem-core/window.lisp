@@ -48,6 +48,7 @@
           make-floating-window
           floating-window-p
           redraw-display
+          redraw-display*
           display-popup-message
           delete-popup-message))
 
@@ -1016,3 +1017,7 @@
 
 (defun delete-popup-message (popup-message)
   (lem-if:delete-popup-message (implementation) popup-message))
+
+(defun redraw-display* ()
+  (when (redraw-after-modifying-floating-window (implementation))
+    (redraw-display t)))

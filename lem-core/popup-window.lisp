@@ -15,10 +15,6 @@
 (define-attribute non-focus-popup-menu-attribute
   (t :foreground "black" :background "gray"))
 
-(defun redraw-display* ()
-  (when (redraw-after-modifying-floating-window (implementation))
-    (redraw-display t)))
-
 (defun compute-popup-window-position (orig-window)
   (let* ((y (+ (window-y orig-window)
                (window-cursor-y orig-window)

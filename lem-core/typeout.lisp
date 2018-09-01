@@ -87,6 +87,6 @@
     (redraw-display t)))
 
 (define-command next-page-or-dismiss-typeout-window () ()
-  (next-page)
-  (when (last-line-p (current-point))
+  (move-point (current-point) (window-view-point (current-window)))
+  (unless (line-offset (current-point) (window-height (current-window)))
     (dismiss-typeout-window)))

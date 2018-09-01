@@ -1,10 +1,10 @@
 'use strict';
 
 var option = {
-    fontName: 'Monospace',
+    fontName: 'monospace',
     fontSize: 14,
-    background: 'white',
-    foreground: 'black',
+    background: '#333',
+    foreground: '#ccc',
 }
 
 exports.option = option;

@@ -3,7 +3,9 @@
   (:export :js-eval
            :set-html-pane
            :set-font
+           :babel
            :delete-html-pane
+           :input-string
            :import-electron-module))
 
 (in-package :lem-electron-backend)
@@ -23,6 +25,14 @@
 
 (define-command delete-html-pane () ()
   (notify "delete-pane" nil))
+
+(define-command input-string (chars) ("sInput String")
+  (let ((str-list (mapcar #'(lambda (char-octets) 
+                              (babel:octets-to-string (make-array (list (length char-octets)) 
+                                                                  :element-type '(unsigned-byte 8) 
+                                                                  :initial-contents char-octets)))
+                          chars)))
+    (insert-string (current-point) (format nil "~{~A~}" str-list))))
 
 (defvar *electron-modules* '())
 

@@ -135,12 +135,6 @@ class LemEditor extends HTMLElement {
             "background": option.background,
         });
 
-        window.onkeydown = (e) => {
-            const k = keyevent.convertKeyEvent(e);
-            this.emitInput(kindKeyEvent, k);
-            return false;
-        };
-
         const mainWindow = getCurrentWindow();
         mainWindow.on('resize', () => {
             const { width, height } = mainWindow.getBounds();
@@ -150,6 +144,9 @@ class LemEditor extends HTMLElement {
         ipcRenderer.on('command', (event, message) => {
             this.emitInput(kindCommand, message);
         })
+        
+        // create input text box;
+        this.picker = new Picker(this);
     }
 
     on(method, handler) {
@@ -204,6 +201,7 @@ class LemEditor extends HTMLElement {
     }
 
     emitInput(kind, value) {
+        console.log(kind, value);
         this.rpcConnection.sendNotification('input', {
             "kind": kind,
             "value": value
@@ -226,10 +224,12 @@ class LemEditor extends HTMLElement {
 
     updateForeground(params) {
         option.foreground = params;
+        this.picker.updateForeground(params);
     }
 
     updateBackground(params) {
         option.background = params;
+        this.picker.updateBackground(params);
     }
 
     makeView(params) {
@@ -318,6 +318,10 @@ class LemEditor extends HTMLElement {
             const { viewInfo, x, y } = params;
             const view = viewTable[viewInfo.id];
             view.setCursor(x, y);
+            const left = view.editSurface.canvas.offsetLeft + x * fontAttribute.width + 3;
+            const top = view.editSurface.canvas.offsetTop + y * fontAttribute.height + 3;
+            //console.log(view.editSurface.canvas.style);
+            this.picker.movePicker(left, top);
         } catch (e) { console.log(e); }
     }
 
@@ -339,6 +343,94 @@ class LemEditor extends HTMLElement {
             eval(params.string);
         } catch (e) { console.log(e); }
     }
+}
+
+class Picker {
+  constructor(editor) {
+    this.__composition = false;
+
+    this.editor = editor;
+
+    this.measure = document.createElement('span');
+    this.picker = document.createElement('input');
+    this.picker.style.backgroundColor = 'transparent';
+    this.picker.style.color = 'transparent';
+    this.picker.style.width = '0';
+    this.picker.style.padding = '0';
+    this.picker.style.margin = '0';
+    this.picker.style.border = 'none';
+    this.picker.style.position = 'absolute';
+    this.picker.style.zIndex = '-10';
+
+ 
+    this.measure.style.color = option.foreground;
+    this.measure.style.backgroundColor = option.background;
+    this.measure.style.position = 'absolute';
+    this.measure.style.zIndex = '';
+
+    this.picker.style.top = '0';
+    this.picker.style.left = '0';
+    this.picker.style.font = fontAttribute.font;
+    this.measure.style.top = '0';
+    this.measure.style.left = '0';
+    this.measure.style.font = fontAttribute.font;
+
+    this.picker.addEventListener('blur', () => {this.picker.focus()});
+    this.picker.addEventListener('keydown', (event) => {
+      if (event.isComposing !== true && event.code !== '') {
+        const k = keyevent.convertKeyEvent(event);
+        this.editor.emitInput(kindKeyEvent, k);
+        this.picker.value = '';
+        return false;
+      }
+    });
+    
+    this.picker.addEventListener('input', (event) => {
+      if (this.__composition === false) {
+        this.picker.value = '';
+        this.measure.innerHTML = this.picker.value;
+        this.picker.style.width = '0';
+      }
+    });
+    this.picker.addEventListener('compositionstart', (event) => {
+      this.__composition = true;
+      console.log(event);
+      this.measure.innerHTML = this.picker.value;
+      this.picker.style.width = this.measure.offsetWidth + 'px';
+    });
+    this.picker.addEventListener('compositionupdate', (event) => {
+      this.measure.innerHTML = event.data;
+      this.picker.style.width = this.measure.offsetWidth + 'px';
+    });
+    this.picker.addEventListener('compositionend', (event) => {
+      this.__composition = false;
+      console.log(this.picker.value); // TODO
+      let chars = this.picker.value.split('').map((char) =>  utf8.setBytesFromString(char));
+      this.editor.emitInput(kindCommand, ['input-string', chars]);
+      this.picker.value = '';
+      this.measure.innerHTML = this.picker.value;
+      this.picker.style.width = '0';
+    });
+    document.body.appendChild(this.picker);
+    document.body.appendChild(this.measure);
+    this.picker.focus();
+  }
+  
+  movePicker(left, top) {
+    this.measure.style.top = top + 'px';
+    this.measure.style.left = left + 'px';
+    // picker follow measure
+    this.picker.style.top = this.measure.offsetTop + 'px';
+    this.picker.style.left = this.measure.offsetLeft + 'px';
+  }
+
+  updateForeground(color) {
+    this.measure.style.color = color;
+  }
+
+  updateBackground(color) {
+    this.measure.style.backgroundColor = color;
+  }
 }
 
 class Surface {

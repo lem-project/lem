@@ -14,11 +14,12 @@
          (unless (deleted-window-p ,gprev-window)
            (setf (current-window) ,gprev-window))))))
 
-(defmacro with-pop-up-typeout-window ((stream-var buffer &key focus erase) &body body)
+(defmacro with-pop-up-typeout-window ((stream-var buffer &key focus erase (read-only t)) &body body)
   `(pop-up-typeout-window ,buffer
                           (lambda (,stream-var) ,@body)
                           :focus ,focus
-                          :erase ,erase))
+                          :erase ,erase
+                          :read-only ,read-only))
 
 (defmacro with-debug-output ((filename) &body body)
   `(with-open-file (out ,filename

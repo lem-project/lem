@@ -18,6 +18,7 @@
           window-buffer
           window-view
           window-parameter
+          window-delete-hook
           window-redraw
           current-window
           window-list
@@ -108,9 +109,7 @@
     :type point)
    (delete-hook
     :initform nil
-    :reader window-delete-hook
-    :writer set-window-delete-hook
-    :type (or null function))
+    :accessor window-delete-hook)
    (use-modeline-p
     :initarg :use-modeline-p
     :initform nil
@@ -665,8 +664,7 @@
 
 (defun delete-window (window)
   (%delete-window window)
-  (when (window-delete-hook window)
-    (funcall (window-delete-hook window)))
+  (run-hooks (window-delete-hook window))
   (%free-window window)
   t)
 

@@ -594,11 +594,11 @@
 
 (define-command vi-search-next (n) ("p")
   (with-jump-motion
-    (lem.isearch:isearch-next-highlight n)))
+    (dotimes (i n) (lem.isearch:isearch-next))))
 
 (define-command vi-search-previous (n) ("p")
   (with-jump-motion
-    (lem.isearch:isearch-prev-highlight n)))
+    (dotimes (i n) (lem.isearch:isearch-prev))))
 
 (define-command vi-goto-first-line () ()
   (with-jump-motion

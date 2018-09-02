@@ -299,6 +299,8 @@
          nil)
         ((window-tree-find (window-tree) window)
          nil)
+        ((find window *floating-windows*)
+         nil)
         (t t)))
 
 (defun %free-window (window)

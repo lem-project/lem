@@ -12,6 +12,7 @@
 (define-key *typeout-mode-keymap* "q" 'dismiss-typeout-window)
 (define-key *typeout-mode-keymap* "Space" 'next-page-or-dismiss-typeout-window)
 (define-key *typeout-mode-keymap* "Backspace" 'previous-page)
+(define-key *typeout-mode-keymap* 'other-window 'dismiss-typeout-window)
 
 (defvar *typeout-window* nil)
 (defvar *typeout-before-window* nil)
@@ -89,6 +90,8 @@
 
 (define-command dismiss-typeout-window () ()
   (when *typeout-window*
+    (when (deleted-window-p *typeout-before-window*)
+      (setf *typeout-before-window* (first (window-list))))
     (setf (current-window) *typeout-before-window*)
     (delete-window *typeout-window*)
     (setf *typeout-window* nil

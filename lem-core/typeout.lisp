@@ -36,7 +36,10 @@
 |#
 
 (defun typeout-window-modeline (typeout-window)
-  (values (let* ((text (format nil "~A" (string-trim " " (modeline-posline typeout-window))))
+  (values (let* ((posline (string-trim " " (modeline-posline typeout-window)))
+                 (text (cond ((member posline '("All" "Bot") :test #'string=)
+                              "Press Space to continue")
+                             (t posline)))
                  (line (concatenate 'string
                                     (make-string (- (floor (display-width) 2)
                                                     (floor (length text) 2)
@@ -62,9 +65,7 @@
       (when fn
         (with-open-stream (out (make-buffer-output-stream (buffer-end-point buffer)))
           (funcall fn out)
-          (fresh-line out)
-          (unless already-created-p
-            (format out "~&~%----- Press Space to continue -----~%")))))
+          (fresh-line out))))
     (when read-only
       (setf (buffer-read-only-p buffer) t))
     (let* ((window-height

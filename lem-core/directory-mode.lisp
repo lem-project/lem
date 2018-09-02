@@ -380,7 +380,8 @@
 
 (setf *find-directory-function* 'directory-buffer)
 
-(add-hook *post-command-hook*
-          (lambda ()
-            (when (eq 'directory-mode (buffer-major-mode (current-buffer)))
-              (update-line (current-point)))))
+(defun post-command-hook ()
+  (when (eq 'directory-mode (buffer-major-mode (current-buffer)))
+    (update-line (current-point))))
+
+(add-hook *post-command-hook* 'post-command-hook)

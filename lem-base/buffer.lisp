@@ -244,9 +244,6 @@
   "`buffer`の名前を返します。"
   (buffer-%name buffer))
 
-(defun (setf buffer-name) (name &optional (buffer (current-buffer)))
-  (setf (buffer-%name buffer) name))
-
 (defun buffer-filename (&optional (buffer (current-buffer)))
   "`buffer`のファイル名を返します。"
   (alexandria:when-let (filename (buffer-%filename buffer))

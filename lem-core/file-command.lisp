@@ -77,10 +77,10 @@
                                                    "~a is opend, overwrite it?"
                                                    expand-file-name))))
       (unless (string= old new)
-        (setf (buffer-name)
-              (if (get-buffer new)
-                  (uniq-buffer-name new)
-                  new)))
+        (buffer-rename (current-buffer)
+                       (if (get-buffer new)
+                           (uniq-buffer-name new)
+                           new)))
       (setf (buffer-filename) expand-file-name)
       (save-buffer t))))
 

@@ -407,7 +407,11 @@
 
 (defmethod lem-if:update-display ((implementation ncurses))
   (let ((scrwin (ncurses-view-scrwin (window-view (current-window)))))
-    (charms/ll:wmove scrwin lem::*cursor-y* lem::*cursor-x*)
+    (if (lem::covered-with-floating-window-p (current-window) lem::*cursor-x* lem::*cursor-y*)
+        (charms/ll:curs-set 0)
+        (progn
+          (charms/ll:curs-set 1)
+          (charms/ll:wmove scrwin lem::*cursor-y* lem::*cursor-x*)))
     (charms/ll:wnoutrefresh scrwin)
     (charms/ll:doupdate)))
 

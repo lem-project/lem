@@ -1026,3 +1026,12 @@
 (defun redraw-display* ()
   (when (redraw-after-modifying-floating-window (implementation))
     (redraw-display t)))
+
+(defun covered-with-floating-window-p (window x y)
+  (let ((x (+ x (window-x window)))
+        (y (+ y (window-y window))))
+    (dolist (w *floating-windows*)
+      (when (and (not (eq w window))
+                 (<= (window-x w) x (+ (window-x w) (window-width w) -1))
+                 (<= (window-y w) y (+ (window-y w) (window-height w) -1)))
+        (return t)))))

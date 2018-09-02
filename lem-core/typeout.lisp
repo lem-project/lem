@@ -74,7 +74,6 @@
            (window
              (cond (already-created-p
                     (lem::window-set-size *typeout-window* (display-width) window-height)
-                    (redraw-display*)
                     *typeout-window*)
                    (t
                     (let ((window (make-floating-window buffer 0 0 (display-width) window-height t)))

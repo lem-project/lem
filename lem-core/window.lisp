@@ -66,6 +66,7 @@
 (defvar *window-show-buffer-functions* '())
 
 (defvar *floating-windows* '())
+(defvar *modified-floating-windows* nil)
 
 (defvar *window-tree*)
 
@@ -586,11 +587,13 @@
         (car window-list))))
 
 (defun window-set-pos (window x y)
+  (when (floating-window-p window) (setf *modified-floating-windows* t))
   (screen-set-pos (window-screen window) x y)
   (setf (window-%x window) x)
   (setf (window-%y window) y))
 
 (defun window-set-size (window width height)
+  (when (floating-window-p window) (setf *modified-floating-windows* t))
   (setf (window-%width window) width)
   (setf (window-%height window) height)
   (screen-set-size (window-screen window)
@@ -975,7 +978,8 @@
 (defmethod initialize-instance :before ((floating-window floating-window) &rest initargs)
   (declare (ignore initargs))
   (unless (support-floating-window (implementation))
-    (error "floating window is not supported")))
+    (error "floating window is not supported"))
+  (setf *modified-floating-windows* t))
 
 (defun make-floating-window (buffer x y width height use-modeline-p)
   (let ((window (make-instance 'floating-window
@@ -991,6 +995,7 @@
 (defmethod %delete-window ((window floating-window))
   (when (eq window (current-window))
     (editor-error "Can not delete this window"))
+  (setf *modified-floating-windows* t)
   (setf *floating-windows*
         (delete window *floating-windows*)))
 
@@ -1027,7 +1032,8 @@
 
 (defun redraw-display* ()
   (when (redraw-after-modifying-floating-window (implementation))
-    (redraw-display t)))
+    (redraw-display *modified-floating-windows*))
+  (setf *modified-floating-windows* nil))
 
 (defun covered-with-floating-window-p (window x y)
   (let ((x (+ x (window-x window)))

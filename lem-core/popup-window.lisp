@@ -50,14 +50,12 @@
     (cond (dst-window
            (lem::window-set-size dst-window width height)
            (lem::window-set-pos dst-window x y)
-           (redraw-display*)
            dst-window)
           (t
            (make-floating-window buffer x y width height nil)))))
 
 (defun quit-popup-window (floating-window)
-  (delete-window floating-window)
-  (redraw-display*))
+  (delete-window floating-window))
 
 (defun focus-point ()
   (alexandria:when-let (buffer *menu-buffer*)
@@ -185,8 +183,7 @@
 (defun clear-popup-message ()
   (when *popup-message-window*
     (delete-window *popup-message-window*)
-    (setf *popup-message-window* nil)
-    (redraw-display*)))
+    (setf *popup-message-window* nil)))
 
 (defun make-popup-buffer (text)
   (let ((buffer (make-buffer "*Popup Message*" :temporary t :enable-undo-p nil)))
@@ -224,5 +221,4 @@
 
 (defmethod lem-if:delete-popup-message (implementation popup-message)
   (when (windowp popup-message)
-    (delete-window popup-message)
-    (redraw-display*)))
+    (delete-window popup-message)))

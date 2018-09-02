@@ -94,8 +94,7 @@
     (setf (current-window) *typeout-before-window*)
     (delete-window *typeout-window*)
     (setf *typeout-window* nil
-          *typeout-before-window* nil)
-    (redraw-display*)))
+          *typeout-before-window* nil)))
 
 (define-command next-page-or-dismiss-typeout-window () ()
   (move-point (current-point) (window-view-point (current-window)))

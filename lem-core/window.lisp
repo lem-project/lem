@@ -1031,8 +1031,8 @@
   (lem-if:delete-popup-message (implementation) popup-message))
 
 (defun redraw-display* ()
-  (when (redraw-after-modifying-floating-window (implementation))
-    (redraw-display *modified-floating-windows*))
+  (redraw-display (and (redraw-after-modifying-floating-window (implementation))
+                       *modified-floating-windows*))
   (setf *modified-floating-windows* nil))
 
 (defun covered-with-floating-window-p (window x y)

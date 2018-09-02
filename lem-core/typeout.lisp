@@ -35,6 +35,24 @@
     window))
 |#
 
+(defun typeout-window-modeline (typeout-window)
+  (values (let* ((text (format nil "~A" (string-trim " " (modeline-posline typeout-window))))
+                 (line (concatenate 'string
+                                    (make-string (- (floor (display-width) 2)
+                                                    (floor (length text) 2)
+                                                    1)
+                                                 :initial-element #\_)
+                                    " "
+                                    text
+                                    " "))
+                 (line (concatenate 'string
+                                    line
+                                    (make-string (- (display-width) (length text))
+                                                 :initial-element #\_))))
+            line)
+          (make-attribute)
+          nil))
+
 (defun pop-up-typeout-window (buffer fn &key focus erase (read-only t))
   (declare (ignore focus))
   (let ((already-created-p (if *typeout-window* t nil)))
@@ -46,34 +64,24 @@
           (funcall fn out)
           (fresh-line out)
           (unless already-created-p
-            (let* ((text "Press Space to continue")
-                   (line (concatenate 'string
-                                      (make-string (- (floor (display-width) 2)
-                                                      (floor (length text) 2)
-                                                      1)
-                                                   :initial-element #\_)
-                                      " "
-                                      text
-                                      " "))
-                   (line (concatenate 'string
-                                      line
-                                      (make-string (- (display-width) (length text))
-                                                   :initial-element #\_))))
-              (write-line line out))))))
+            (format out "~&~%----- Press Space to continue -----~%")))))
     (when read-only
       (setf (buffer-read-only-p buffer) t))
     (let* ((window-height
-             (min (display-height) (buffer-nlines buffer)))
+             (min (floor (display-height) 2) (buffer-nlines buffer)))
            (window
              (cond (already-created-p
                     (lem::window-set-size *typeout-window* (display-width) window-height)
                     (redraw-display*)
                     *typeout-window*)
                    (t
-                    (let ((window (make-floating-window buffer 0 0 (display-width) window-height nil)))
+                    (let ((window (make-floating-window buffer 0 0 (display-width) window-height t)))
                       (setf *typeout-window* window
                             *typeout-before-window* (current-window))
                       window)))))
+      (setf (variable-value 'modeline-format :buffer buffer) '())
+      (setf (buffer-value buffer 'lem::modeline-status-list)
+            (list 'typeout-window-modeline))
       (setf (current-window) window)
       (typeout-mode t)
       window)))

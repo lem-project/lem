@@ -279,6 +279,7 @@
         (meta (gethash "meta" e))
         (super (gethash "super" e))
         (shift (gethash "shift" e)))
+    (cond ((string= key " ") (setf key "Space")))
     (make-key :ctrl ctrl
               :meta meta
               :super super

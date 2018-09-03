@@ -440,7 +440,7 @@
       (charms/ll:newterm term io io))))
 
 (defun term-init ()
-  #+(and ccl unix)
+  #+(or (and ccl unix) (and lispworks unix))
   (lem-setlocale/cffi:setlocale lem-setlocale/cffi:+lc-all+ "")
   (if *tty-name*
       (term-init-tty *tty-name*)

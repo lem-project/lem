@@ -2,7 +2,7 @@
   :depends-on ("cffi"
                "cl-charms"
                "trivial-clipboard"
-               #+(and ccl unix)"lem-setlocale"
+               #+(or (and ccl unix) (and lispworks unix))"lem-setlocale"
                "lem")
   :serial t
   :components ((:file "term")

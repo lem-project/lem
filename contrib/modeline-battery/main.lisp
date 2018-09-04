@@ -18,7 +18,7 @@
 (defun battery (window)
   (declare (ignore window))
   (when (update-cache-p)
-    (alexandria:when-let ((info (trivial-battery:battery-info)))
+    (alexandria:when-let ((info (first (trivial-battery:battery-info))))
       (let ((percentage (alexandria:assoc-value info "percentage" :test #'equal))
             (charging (alexandria:assoc-value info "charging" :test #'equal)))
         (setf *cache-values*

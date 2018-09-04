@@ -57,8 +57,16 @@
           (make-attribute)
           nil))
 
+(defun delete-typeout-window-hook ()
+  (setf *typeout-window* nil
+        *typeout-before-window* nil))
+
 (defun pop-up-typeout-window (buffer fn &key focus erase (read-only t))
   (declare (ignore focus))
+  (when (and *typeout-window*
+             (not (eq buffer (window-buffer *typeout-window*))))
+    (dismiss-typeout-window)
+    (redraw-display*))
   (let ((already-created-p (if *typeout-window* t nil)))
     (with-buffer-read-only buffer nil
       (when erase
@@ -77,6 +85,8 @@
                     *typeout-window*)
                    (t
                     (let ((window (make-floating-window buffer 0 0 (display-width) window-height t)))
+                      (add-hook (window-delete-hook window)
+                                'delete-typeout-window-hook)
                       (setf *typeout-window* window
                             *typeout-before-window* (current-window))
                       window)))))
@@ -92,9 +102,7 @@
     (when (deleted-window-p *typeout-before-window*)
       (setf *typeout-before-window* (first (window-list))))
     (setf (current-window) *typeout-before-window*)
-    (delete-window *typeout-window*)
-    (setf *typeout-window* nil
-          *typeout-before-window* nil)))
+    (delete-window *typeout-window*)))
 
 (define-command next-page-or-dismiss-typeout-window () ()
   (move-point (current-point) (window-view-point (current-window)))

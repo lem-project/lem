@@ -288,9 +288,8 @@
                (window-tree-parent (window-node-cdr tree) node))))))
 
 (defun window-list ()
-  (append (window-tree-flatten
-           (window-tree))
-          *floating-windows*))
+  (window-tree-flatten
+   (window-tree)))
 
 (defun one-window-p ()
   (window-tree-leaf-p (window-tree)))
@@ -934,7 +933,7 @@
 (defun difference-window-x (window)
   (lambda (w1 w2)
     (< (abs (- (window-x window) (window-x w1)))
-       (abs (- (window-x window) (window-x w2))))))    
+       (abs (- (window-x window) (window-x w2))))))
 
 (defun left-window (window)
   (first (sort (remove-if-not (lambda (w)

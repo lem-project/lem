@@ -5,7 +5,7 @@ exec ros -Q -- $0 "$@"
 |#
 (progn ;;init forms
   (ros:ensure-asdf)
-  ;;#+quicklisp(ql:quickload '() :silent t)
+  #+quicklisp(ql:quickload '(:dexador) :silent t)
   )
 
 (defpackage :ros.script.gen-desktop.3744816868
@@ -28,16 +28,20 @@ exec ros -Q -- $0 "$@"
                        "text/x-c"
                        "text/x-c++"))
 
-(defun main (&rest argv)
-  (declare (ignorable argv))
-  (with-open-file (o "lem-ncurses.desktop"
+(defun download-icon (name)
+  (dex:fetch (format nil "https://raw.githubusercontent.com/Shinmera/lem-icon/gh-pages/icon-~A.svg" name)
+             (format nil "~A.svg" name)))
+
+(defun gen-desktop (filename &key explanation command icon)
+  (with-open-file (o filename
                      :direction :output
                      :if-exists :supersede)
     (format o "~{~A~%~}" `("[Desktop Entry]"
                            "Version=1.0"
-                           ,(format nil "Name=lem ~A (ncurses)"
+                           ,(format nil "Name=lem ~A (~A)"
                                     (asdf:component-version
-                                     (asdf:find-system "lem")))
+                                     (asdf:find-system "lem"))
+                                    explanation)
                            "GenericName=Text Editor"
                            "Comment=Common Lisp editor/IDE with high expansibility"
                            ,(format nil "MimeType=~{~A;~}"
@@ -45,30 +49,22 @@ exec ros -Q -- $0 "$@"
                            ,(format nil "TryExec=~A" (roswell.util:which "ros"))
                            ,(format nil "Exec=~A ~A %F"
                                     (roswell.util:which "ros")
-                                    (roswell.util:which "lem-ncurses"))
-                           "Type=Application"
-                           "Terminal=true"
-                           "Categories=Utility;Development;TextEditor;"
-                           "Keywords=Text;Editor;")))
-  (with-open-file (o "lem-ncurses-ccl.desktop"
-                     :direction :output
-                     :if-exists :supersede)
-    (format o "~{~A~%~}" `("[Desktop Entry]"
-                           "Version=1.0"
-                           ,(format nil "Name=lem ~A (ncurses ccl)"
-                                    (asdf:component-version
-                                     (asdf:find-system "lem")))
-                           "GenericName=Text Editor"
-                           "Comment=Common Lisp editor/IDE with high expansibility"
-                           ,(format nil "MimeType=~{~A;~}"
-                                    *mime-types*)
-                           ,(format nil "TryExec=~A" (roswell.util:which "ros"))
-                           ,(format nil "Exec=~A ~A %F"
-                                    (roswell.util:which "ros")
-                                    (roswell.util:which "lem-ncurses-ccl"))
+                                    (roswell.util:which command))
+                           ,(format nil "Icon=~A"
+                                    (namestring
+                                     (merge-pathnames (format nil "~A.svg" icon)
+                                                      *default-pathname-defaults*)))
                            "Type=Application"
                            "Terminal=true"
                            "Categories=Utility;Development;TextEditor;"
                            "Keywords=Text;Editor;"))))
+
+
+(defun main (&rest argv)
+  (let ((name (or (first argv) "blue-shaded")))
+    (unless (probe-file (format nil "~A.svg" name))
+      (download-icon name))
+    (gen-desktop "lem-ncurses.desktop" :explanation "ncurses" :command "lem-ncurses" :icon name)
+    (gen-desktop "lem-ncurses-ccl.desktop" :explanation "ncurses ccl" :command "lem-ncurses-ccl" :icon name)))
 
 ;;; vim: set ft=lisp lisp:

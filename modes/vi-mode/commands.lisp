@@ -343,9 +343,11 @@
           (t
            (let* ((uarg nil)
                   (command (loop for key = (read-key)
-                                 while (char<= #\0 (key-to-char key) #\9)
+                                 for key-char = (key-to-char key)
+                                 while (and key-char
+                                            (char<= #\0 key-char #\9))
                                  do (setf uarg (+ (* (or uarg 0) 10)
-                                                  (- (char-code (key-to-char key))
+                                                  (- (char-code key-char)
                                                      (char-code #\0))))
                                  finally
                                     (return (lookup-keybind key)))))

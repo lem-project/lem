@@ -83,7 +83,10 @@
                         (lem:buffer-end-point buffer)))
 
 (defun buffer-uri (buffer)
-  (pathname-to-uri (lem:buffer-filename buffer)))
+  (let ((filename (lem:buffer-filename buffer)))
+    (pathname-to-uri (if (alexandria:starts-with-subseq "~/" filename)
+                         (merge-pathnames (subseq filename 2) (user-homedir-pathname))
+                         filename))))
 
 (defun lsp-position (point)
   ({} "line" (1- (lem:line-number-at-point point))
@@ -116,7 +119,7 @@
         (values start-point end-point |newText|)))))
 
 (defun text-document-identifier (buffer)
-  ({} "uri" (pathname-to-uri (lem:buffer-filename buffer))))
+  ({} "uri" (pathname-to-uri buffer)))
 
 (defun text-document-item (buffer)
   ({} "uri" (buffer-uri buffer)

@@ -18,13 +18,3 @@
               (lem))
           t)
       sb-ext:*ed-functions*)
-
-(setf asdf:*central-registry*
-      (union (mapcar #'pathname
-                     (mapcar #'directory-namestring
-                             (directory
-                              (merge-pathnames "**/*.asd"
-                                               (merge-pathnames "contrib/"
-                                                                (asdf:system-source-directory :lem))))))
-             asdf:*central-registry*
-             :test #'equal))

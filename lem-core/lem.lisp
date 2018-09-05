@@ -117,9 +117,29 @@
 (defun apply-args (args)
   (mapc #'eval (command-line-arguments-args args)))
 
+(defvar *original-home* (user-homedir-pathname))
+
+(defun init-quicklisp (path)
+  (flet ((replace-homedir (x)
+           (let ((subpath (uiop:subpathp x *original-home*)))
+             (if subpath
+                 (merge-pathnames subpath (user-homedir-pathname))
+                 x))))
+    (setf ql:*quicklisp-home* (ensure-directories-exist path)
+          ql:*local-project-directories* (mapcar #'replace-homedir ql:*local-project-directories*)
+          asdf:*central-registry* (mapcar #'replace-homedir asdf:*central-registry*)
+          asdf:*user-cache* (replace-homedir asdf:*user-cache*)))
+  (asdf:initialize-source-registry)
+  (asdf:clear-output-translations)
+  (unless (uiop:directory-exists-p (ql:qmerge (format nil "dists/~A/" (pathname-name ql:*initial-dist-url*))))
+    (ql-dist:install-dist ql:*initial-dist-url* :prompt nil)))
+
 (let ((once nil))
   (defun init (args)
     (unless once
+      (unless (equal (funcall 'user-homedir-pathname) ;; funcall for sbcl optimization
+                     *original-home*)
+        (init-quicklisp (merge-pathnames ".lem/quicklisp/" (user-homedir-pathname))))
       (setf once t)
       (uiop:symbol-call :lem :load-site-init)
       (run-hooks *before-init-hook*)

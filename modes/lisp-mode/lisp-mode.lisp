@@ -62,7 +62,7 @@
 (define-key *lisp-mode-keymap* "C-c C-z" 'lisp-switch-to-repl-buffer)
 (define-key *lisp-mode-keymap* "C-c z" 'lisp-switch-to-repl-buffer)
 (define-key *lisp-mode-keymap* "C-c C-b" 'lisp-connection-list)
-(define-key *lisp-mode-keymap* "C-c C-g" 'lisp-interrupt)
+(define-key *lisp-mode-keymap* "C-c g" 'lisp-interrupt)
 
 (defun change-current-connection (conn)
   (when *connection*

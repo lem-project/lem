@@ -91,9 +91,23 @@
     (set-syntax-parser table tmlanguage)
     table))
 
-(defun nim-calc-indent (point))
-(defun beginnng-of-defun (point n))
-(defun end-of-defun (point n))
+;; three functions below from lem-python-mode, it seems almost works
+(defun python-calc-indent (point)
+  (with-point ((point point))
+    (let ((tab-width (variable-value 'tab-width :default point))
+          (column (point-column point)))
+      (+ column (- tab-width (rem column tab-width))))))
+
+(defun beginning-of-defun (point n)
+  (loop :repeat n :do (search-backward-regexp point "^\\w")))
+
+(defun end-of-defun (point n)
+  (with-point ((p point))
+    (loop :repeat n
+          :do (line-offset p 1)
+              (unless (search-forward-regexp p "^\\w") (return)))
+    (line-start p)
+    (move-point point p)))
 
 (define-major-mode nim-mode language-mode
     (:name "nim"

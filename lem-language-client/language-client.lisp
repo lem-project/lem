@@ -1,8 +1,6 @@
 (in-package :lem-language-client)
 
 (defparameter *root-path* (probe-file "."))
-(defparameter *language-id* "go")
-
 (defparameter *log-stream* *error-output*)
 
 (defparameter |TextDocumentSaveReason.Manual| 1)
@@ -24,6 +22,11 @@
   (setf (lem:variable-value 'lem.language-mode:completion-function) 'completion)
   ;(uiop:run-program "go-langserver -mode tcp -gocodecompletion &")
   (start (lem:current-buffer)))
+
+(defun get-language-id (language)
+  (ecase language
+    (lem-js-mode:js-mode "javascript")
+    (lem-go-mode:go-mode "go")))
 
 (defmacro define-response-method (name (&rest vars) &body body)
   (alexandria:with-gensyms (params)
@@ -364,7 +367,7 @@
   (lem:add-hook (lem:variable-value 'lem:after-save-hook :buffer buffer) 'text-document-did-save)
   (lem:add-hook (lem:variable-value 'lem:kill-buffer-hook :buffer buffer) 'text-document-did-close))
 
-(defun start (buffer)
+(defun start (language buffer)
   (let* ((root-path *root-path*)
          (workspace (find-workspace root-path)))
     (cond
@@ -374,14 +377,14 @@
        (let* ((connection (jsonrpc:make-client))
               (workspace (make-workspace :connection connection
                                          :root root-path
-                                         :language-id *language-id*)))
+                                         :language-id (get-language-id language))))
          (push workspace *workspaces*)
          (setf (buffer-workspace buffer) workspace)
          (dolist (response-method *response-methods*)
            (jsonrpc:expose connection (string response-method) response-method))
          (jsonrpc:client-connect (workspace-connection workspace)
                                  :mode :tcp
-                                 :port 4389)
+                                 :port 2089)
          (initialize workspace)
          (initialized workspace)
          workspace))))

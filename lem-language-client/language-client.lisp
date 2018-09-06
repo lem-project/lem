@@ -13,15 +13,24 @@
 (defstruct workspace
   connection
   server-capabilities
+  text-document-sync
   root
   language-id
   (file-version-table (make-hash-table)))
+
+(defstruct text-document-sync
+  open-close
+  change
+  will-save
+  will-save-wait-until
+  save)
 
 (lem:define-minor-mode language-client-mode
     (:name "Language Client")
   (setf (lem:variable-value 'lem.language-mode:completion-function) 'completion)
   ;(uiop:run-program "go-langserver -mode tcp -gocodecompletion &")
-  (start (lem:current-buffer)))
+  (let ((buffer (lem:current-buffer)))
+    (start (lem:buffer-major-mode buffer) buffer)))
 
 (defun get-language-id (language)
   (ecase language
@@ -193,6 +202,17 @@
       "textDocument" (text-document-client-capabilities)
       #|"experimental"|#))
 
+(defun convert-text-document-sync (sync)
+  (etypecase sync
+    (number
+     (make-text-document-sync :change sync))
+    (hash-table
+     (make-text-document-sync :open-close (gethash "openClose" sync)
+                              :change (gethash "change" sync)
+                              :will-save (gethash "willSave" sync)
+                              :will-save-wait-until (gethash "willSaveWaitUntil" sync)
+                              :save (gethash "save" sync)))))
+
 (defun initialize (workspace)
   (let* ((root (workspace-root workspace))
          (response (jsonrpc:call (workspace-connection workspace)
@@ -204,9 +224,13 @@
                                   #|"initializationOptions"|#
                                   "capabilities" (client-capabilities)
                                   #|"trace" "off"|#
-                                  #|"workspaceFolders" nil|#))))
+                                  #|"workspaceFolders" nil|#)))
+         (server-capabilities (gethash "capabilities" response)))
     (setf (workspace-server-capabilities workspace)
-          (gethash "capabilities" response))))
+          server-capabilities)
+    (alexandria:when-let (sync (gethash "textDocumentSync" server-capabilities))
+      (setf (workspace-text-document-sync workspace)
+            (convert-text-document-sync sync)))))
 
 (defun initialized (workspace)
   (jsonrpc:notify (workspace-connection workspace) "initialized" ({})))
@@ -352,14 +376,19 @@
         (jsonrpc:jsonrpc-error-message e)))))
 
 (defun on-change (point arg)
-  (let ((buffer (lem:point-buffer point)))
+  (let* ((buffer (lem:point-buffer point))
+         (workspace (buffer-workspace buffer)))
     (incf (buffer-file-version buffer))
     (text-document-did-change buffer
-                              (list (text-document-content-change-event
-                                     point
-                                     (if (characterp arg)
-                                         (string arg)
-                                         arg))))))
+                              (if (eql 1
+                                       (text-document-sync-change
+                                        (workspace-text-document-sync workspace)))
+                                  (list (text-document-content-change-event
+                                         point
+                                         (if (characterp arg)
+                                             (string arg)
+                                             arg)))
+                                  (list ({} "text" (buffer-text buffer)))))))
 
 (defun initialize-hooks (buffer)
   (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) 'on-change)

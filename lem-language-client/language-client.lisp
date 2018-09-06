@@ -48,7 +48,11 @@
       *response-methods*)))
 
 (defun pathname-to-uri (pathname)
-  (format nil "file://~A" pathname))
+  (let ((filename (namestring pathname)))
+    (format nil "file://~A"
+            (if (alexandria:starts-with-subseq "~/" filename)
+                (merge-pathnames (subseq filename 2) (user-homedir-pathname))
+                filename))))
 
 (defun {} (&rest plist)
   (alexandria:plist-hash-table plist :test 'equal))
@@ -95,10 +99,7 @@
                         (lem:buffer-end-point buffer)))
 
 (defun buffer-uri (buffer)
-  (let ((filename (lem:buffer-filename buffer)))
-    (pathname-to-uri (if (alexandria:starts-with-subseq "~/" filename)
-                         (merge-pathnames (subseq filename 2) (user-homedir-pathname))
-                         filename))))
+  (pathname-to-uri (lem:buffer-filename buffer)))
 
 (defun lsp-position (point)
   ({} "line" (1- (lem:line-number-at-point point))
@@ -131,7 +132,7 @@
         (values start-point end-point |newText|)))))
 
 (defun text-document-identifier (buffer)
-  ({} "uri" (pathname-to-uri buffer)))
+  ({} "uri" (buffer-uri buffer)))
 
 (defun text-document-item (buffer)
   ({} "uri" (buffer-uri buffer)

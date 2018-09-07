@@ -220,7 +220,7 @@
 
 (defun initialize (workspace)
   (let* ((root (workspace-root workspace))
-         (response (jsonrpc:call (workspace-connection workspace)
+         (response (jsonrpc-call (workspace-connection workspace)
                                  "initialize"
                                  ({}
                                   "processId" (getpid)
@@ -238,13 +238,13 @@
             (convert-text-document-sync sync)))))
 
 (defun initialized (workspace)
-  (jsonrpc:notify (workspace-connection workspace) "initialized" ({})))
+  (jsonrpc-notify (workspace-connection workspace) "initialized" ({})))
 
 (defun shutdown (workspace)
-  (jsonrpc:call (workspace-connection workspace) "shutdown" ({})))
+  (jsonrpc-call (workspace-connection workspace) "shutdown" ({})))
 
 (defun exit (workspace)
-  (jsonrpc:notify (workspace-connection workspace) "exit" ({})))
+  (jsonrpc-notify (workspace-connection workspace) "exit" ({})))
 
 (define-response-method |window/showMessage| (|type| |message|)
   (declare (ignore |type|))
@@ -258,12 +258,12 @@
   (format *log-stream* "~A: ~A" |type| |message|))
 
 (defun text-document-did-open (buffer)
-  (jsonrpc:notify (workspace-connection (buffer-workspace buffer))
+  (jsonrpc-notify (workspace-connection (buffer-workspace buffer))
                   "textDocument/didOpen"
                   ({} "textDocument" (text-document-item buffer))))
 
 (defun text-document-did-change (buffer changes)
-  (jsonrpc:notify (workspace-connection (buffer-workspace buffer))
+  (jsonrpc-notify (workspace-connection (buffer-workspace buffer))
                   "textDocument/didChange"
                   ({} "textDocument" (versioned-text-document-identifier buffer)
                       "contentChanges" changes)))
@@ -286,20 +286,20 @@
                "text" "")))))))
 
 (defun text-document-will-save (buffer &optional (reason |TextDocumentSaveReason.Manual|))
-  (jsonrpc:notify (workspace-connection (buffer-workspace buffer))
+  (jsonrpc-notify (workspace-connection (buffer-workspace buffer))
                   "textDocument/willSave"
                   ({} "textDocument"
                       "reason" reason)))
 
 (defun text-document-will-save-wait-until (buffer &optional (reason |TextDocumentSaveReason.Manual|))
   (let ((workspace (buffer-workspace buffer)))
-    (jsonrpc:notify (workspace-connection workspace)
+    (jsonrpc-notify (workspace-connection workspace)
                     "textDocument/willSaveWaitUntil"
                     ({} "textDocument"
                         "reason" reason))))
 
 (defun text-document-did-save (buffer)
-  (jsonrpc:notify (workspace-connection (buffer-workspace buffer))
+  (jsonrpc-notify (workspace-connection (buffer-workspace buffer))
                   "textDocument/didSave"
                   ({} "textDocument" (text-document-identifier buffer)
                       #|"text" (buffer-text buffer)|#)))
@@ -308,7 +308,7 @@
   (let* ((workspace (buffer-workspace buffer))
          (file-version-table (workspace-file-version-table workspace)))
     (remhash buffer file-version-table)
-    (jsonrpc:notify (workspace-connection workspace)
+    (jsonrpc-notify (workspace-connection workspace)
                     "textDocument/didClose"
                     ({} "textDocument" (text-document-identifier buffer)))
     (when (zerop (hash-table-count file-version-table))
@@ -358,7 +358,7 @@
 
 (defun completion (point)
   (let* ((workspace (buffer-workspace (lem:point-buffer point)))
-         (result (jsonrpc:call (workspace-connection workspace)
+         (result (jsonrpc-call (workspace-connection workspace)
                                "textDocument/completion"
                                (completion-params point)))
          (buffer (lem:point-buffer point)))
@@ -372,7 +372,7 @@
 (defun hover (point)
   (let ((workspace (buffer-workspace (lem:point-buffer point))))
     (handler-case
-        (let ((hover (jsonrpc:call (workspace-connection workspace)
+        (let ((hover (jsonrpc-call (workspace-connection workspace)
                                    "textDocument/hover"
                                    (text-document-position-params point))))
           (let ((contents (gethash "contents" hover)))

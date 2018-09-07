@@ -3,6 +3,10 @@
 (defparameter *root-path* (probe-file "."))
 (defparameter *log-stream* *error-output*)
 
+(defparameter |TextDocumentSyncKind.None| 0)
+(defparameter |TextDocumentSyncKind.Full| 1)
+(defparameter |TextDocumentSyncKind.Incremental| 2)
+
 (defparameter |TextDocumentSaveReason.Manual| 1)
 (defparameter |TextDocumentSaveReason.AfterDelay| 2)
 (defparameter |TextDocumentSaveReason.FocusOut| 3)
@@ -381,15 +385,19 @@
          (workspace (buffer-workspace buffer)))
     (incf (buffer-file-version buffer))
     (text-document-did-change buffer
-                              (if (eql 1
-                                       (text-document-sync-change
-                                        (workspace-text-document-sync workspace)))
-                                  (list (text-document-content-change-event
-                                         point
-                                         (if (characterp arg)
-                                             (string arg)
-                                             arg)))
-                                  (list ({} "text" (buffer-text buffer)))))))
+                              (alexandria:switch
+                                  ((text-document-sync-change
+                                    (workspace-text-document-sync workspace))
+                                   :test #'eql)
+                                (|TextDocumentSyncKind.None|)
+                                (|TextDocumentSyncKind.Full|
+                                 (list ({} "text" (buffer-text buffer))))
+                                (|TextDocumentSyncKind.Incremental|
+                                 (list (text-document-content-change-event
+                                        point
+                                        (if (characterp arg)
+                                            (string arg)
+                                            arg))))))))
 
 (defun initialize-hooks (buffer)
   (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) 'on-change)

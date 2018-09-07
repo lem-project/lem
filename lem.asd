@@ -15,7 +15,8 @@
                "lem-selection-mode"
                "lem-rust-mode"
                "lem-calc-mode"
-               "lem-paredit-mode"))
+               "lem-paredit-mode"
+               "lem-nim-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

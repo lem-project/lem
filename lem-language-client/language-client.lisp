@@ -349,11 +349,14 @@
                                 |sortText| |filterText| |insertText| |insertTextFormat|
                                 |textEdit| |additionalTextEdits| |commitCharacters|
                                 |command| |data|))
-            (when |textEdit|
-              (multiple-value-bind (start end newText)
-                  (decode-lsp-text-edit buffer |textEdit|)
-                (lem.completion-mode:make-completion-item
-                 :label newText :detail |detail| :start start :end end)))))
+            (cond
+              (|textEdit|
+               (multiple-value-bind (start end newText)
+                   (decode-lsp-text-edit buffer |textEdit|)
+                 (lem.completion-mode:make-completion-item
+                  :label newText :detail |detail| :start start :end end)))
+              (|label|
+               (lem.completion-mode:make-completion-item :label |label|)))))
         items)))
 
 (defun completion (point)

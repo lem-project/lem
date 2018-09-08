@@ -369,6 +369,7 @@
        (completion-items buffer (gethash "items" result))))))
 
 (defun hover (point)
+  (sync-text-document (lem:point-buffer point))
   (let ((workspace (buffer-workspace (lem:point-buffer point))))
     (handler-case
         (let ((hover (jsonrpc-call (workspace-connection workspace)

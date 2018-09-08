@@ -5,8 +5,6 @@
   (:lock t))
 (in-package :lem-nim-mode)
 
-(defvar *nim-mode-hook* '())
-
 (defun tokens (boundary strings)
   (let ((alternation
          `(:alternation ,@(sort (copy-list strings) #'> :key #'length))))
@@ -112,15 +110,15 @@
 (define-major-mode nim-mode language-mode
     (:name "nim"
      :keymap *nim-mode-keymap*
-     :syntax-table *nim-syntax-table*)
+     :syntax-table *nim-syntax-table*
+     :mode-hook *nim-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 2
         (variable-value 'calc-indent-function) 'nim-calc-indent
         (variable-value 'line-comment) "#"
         (variable-value 'beginning-of-defun-function) 'beginning-of-defun
-        (variable-value 'end-of-defun-function) 'end-of-defun)
-  (run-hooks *nim-mode-hook*))
+        (variable-value 'end-of-defun-function) 'end-of-defun))
 
 (pushnew (cons "\\.nim$" 'nim-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons "\\.nimble$" 'nim-mode) *auto-mode-alist* :test #'equal)

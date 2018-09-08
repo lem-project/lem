@@ -7,8 +7,6 @@
            :*go-mode-hook*))
 (in-package :lem-go-mode)
 
-(defvar *go-mode-hook* '())
-
 (defvar *go-syntax-table*
   (let ((table (make-syntax-table
                 :space-chars '(#\space #\tab #\newline)
@@ -28,7 +26,8 @@
 (define-major-mode go-mode language-mode
     (:name "go"
      :keymap *go-mode-keymap*
-     :syntax-table *go-syntax-table*)
+     :syntax-table *go-syntax-table*
+     :mode-hook *go-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t)
   (setf (variable-value 'calc-indent-function) 'go-calc-indent)
   (setf (variable-value 'indent-tabs-mode) t)
@@ -40,8 +39,7 @@
   (setf (variable-value 'find-definitions-function) 'find-definitions)
   (setf (variable-value 'completion-function) 'go-completion)
   (setf (variable-value 'idle-function) 'go-idle-function)
-  (add-hook (variable-value 'after-save-hook :buffer (current-buffer)) 'goflymake)
-  (run-hooks *go-mode-hook*))
+  (add-hook (variable-value 'after-save-hook :buffer (current-buffer)) 'goflymake))
 
 (define-key *go-mode-keymap* "}" 'go-electric-close)
 (define-key *go-mode-keymap* "C-c C-d" 'godef-describe)

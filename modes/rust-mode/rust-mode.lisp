@@ -3,8 +3,6 @@
   (:export :*rust-mode-hook*))
 (in-package :lem-rust-mode)
 
-(defvar *rust-mode-hook* '())
-
 (defun tokens (boundary strings)
   (let ((alternation
           `(:alternation ,@(sort (copy-list strings) #'> :key #'length))))
@@ -120,7 +118,8 @@
 (define-major-mode rust-mode language-mode
     (:name "rust"
      :keymap *rust-mode-keymap*
-     :syntax-table *rust-syntax-table*)
+     :syntax-table *rust-syntax-table*
+     :mode-hook *rust-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'calc-indent-function) 'calc-indent
         (variable-value 'indent-tabs-mode) nil
@@ -131,8 +130,7 @@
         (variable-value 'tab-width :buffer) 4
         ;;(variable-value 'find-definitions-function) 'lem.gtags:find-definitions
         ;;(variable-value 'find-references-function) 'lem.gtags:find-references
-        )
-  (run-hooks *rust-mode-hook*))
+        ))
 
 (define-key *rust-mode-keymap* "C-c C-f" 'rust-format-buffer)
 (define-key *rust-mode-keymap* "M-C-q" 'indent-exp)

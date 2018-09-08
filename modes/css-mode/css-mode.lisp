@@ -6,8 +6,6 @@
 
 (in-package :lem-css-mode)
 
-(defvar *css-mode-hook* '())
-
 #| link: https://www.w3.org/TR/CSS22/propidx.html |#
 
 (defvar *html5-element-strings* 
@@ -288,14 +286,14 @@
 (define-major-mode css-mode language-mode
     (:name "css"
      :keymap *css-mode-keymap*
-     :syntax-table *css-syntax-table*)
+     :syntax-table *css-syntax-table*
+     :mode-hook *css-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 2
         (variable-value 'calc-indent-function) 'css-calc-indent
         (variable-value 'beginning-of-defun-function) 'beginning-of-defun
-        (variable-value 'end-of-defun-function) 'end-of-defun)
-  (run-hooks *css-mode-hook*))
+        (variable-value 'end-of-defun-function) 'end-of-defun))
 
 (defun indent-length (line)
   (do ((counter 0 (1+ counter)))

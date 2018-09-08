@@ -73,9 +73,10 @@
 
 (defmacro define-major-mode (major-mode
                              parent-mode
-                             (&key name keymap syntax-table)
+                             (&key name keymap syntax-table mode-hook)
                              &body body)
   `(progn
+     ,(when mode-hook `(defvar ,mode-hook '()))
      (pushnew ',major-mode *mode-list*)
      (setf (mode-name ',major-mode) ,name)
      ,@(cond (keymap
@@ -103,7 +104,9 @@
        ,(when parent-mode `(,parent-mode))
        (setf (buffer-major-mode (current-buffer)) ',major-mode)
        (setf (buffer-syntax-table (current-buffer)) (mode-syntax-table ',major-mode))
-       ,@body)))
+       ,@body
+       ,(when mode-hook
+          `(run-hooks ,mode-hook)))))
 
 (defmacro define-minor-mode (minor-mode
                              (&key name (keymap nil keymapp) global enable-hook disable-hook)

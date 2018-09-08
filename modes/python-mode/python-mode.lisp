@@ -3,8 +3,6 @@
   (:export :*python-mode-hook*))
 (in-package :lem-python-mode)
 
-(defvar *python-mode-hook* '())
-
 (defun tokens (boundary strings)
   (let ((alternation
          `(:alternation ,@(sort (copy-list strings) #'> :key #'length))))
@@ -76,15 +74,15 @@
 (define-major-mode python-mode language-mode
     (:name "python"
      :keymap *python-mode-keymap*
-     :syntax-table *python-syntax-table*)
+     :syntax-table *python-syntax-table*
+     :mode-hook *python-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 4
         (variable-value 'calc-indent-function) 'python-calc-indent
         (variable-value 'line-comment) "#"
         (variable-value 'beginning-of-defun-function) 'beginning-of-defun
-        (variable-value 'end-of-defun-function) 'end-of-defun)
-  (run-hooks *python-mode-hook*))
+        (variable-value 'end-of-defun-function) 'end-of-defun))
 
 #| link : https://www.python.org/dev/peps/pep-0008/ |#
 (defun python-calc-indent (point)

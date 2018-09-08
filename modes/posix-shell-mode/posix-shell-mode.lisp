@@ -4,8 +4,6 @@
   (:export :*posix-shell-mode-hook*))
 (in-package :lem-posix-shell-mode)
 
-(defvar *posix-shell-mode-hook* '())
-
 (defparameter *reserved-words*
   '("case" "do" "done" "elif" "else"
     "esac" "fi" "for" "if" "in"
@@ -72,13 +70,13 @@
 (define-major-mode posix-shell-mode language-mode
     (:name "posix-shell"
      :keymap *posix-shell-mode-keymap*
-     :syntax-table *posix-shell-syntax-table*)
+     :syntax-table *posix-shell-syntax-table*
+     :mode-hook *posix-shell-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 4
         (variable-value 'calc-indent-function) 'posix-shell-calc-indent
-        (variable-value 'line-comment) "#")
-  (run-hooks *posix-shell-mode-hook*))
+        (variable-value 'line-comment) "#"))
 
 (defun posix-shell-calc-indent (point)
   (with-point ((point point))

@@ -6,8 +6,6 @@
   (:export :*xml-mode-hook*))
 (in-package :lem-xml-mode)
 
-(defvar *xml-mode-hook* '())
-
 (defun tokens (boundary strings)
   (let ((alternation
          `(:alternation ,@(sort (copy-list strings) #'> :key #'length))))
@@ -45,11 +43,11 @@
 (define-major-mode xml-mode language-mode
     (:name "xml"
      :keymap *xml-mode-keymap*
-     :syntax-table *xml-syntax-table*)
+     :syntax-table *xml-syntax-table*
+     :mode-hook *xml-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'tab-width) 2
-        (variable-value 'calc-indent-function) 'xml-calc-indent)
-  (run-hooks *xml-mode-hook*))
+        (variable-value 'calc-indent-function) 'xml-calc-indent))
 
 (defun open-tag-p (string)
   (ppcre:register-groups-bind (tag-content)

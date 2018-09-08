@@ -10,15 +10,13 @@
   (:import-from #:cl-ppcre))
 (in-package #:lem-html-mode)
 
-(defvar *html-mode-hook* '())
-
 (define-major-mode html-mode xml-mode
     (:name "HTML"
-     :keymap *html-mode-keymap*)
+     :keymap *html-mode-keymap*
+     :mode-hook *html-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'tab-width) 2
-        (variable-value 'calc-indent-function) 'html-calc-indent)
-  (run-hooks *html-mode-hook*))
+        (variable-value 'calc-indent-function) 'html-calc-indent))
 
 (defvar *void-elements*
   '("area" "base" "br" "col" "embed" "hr" "img" "input" "link" "meta" "param" "source" "track" "wbr"))

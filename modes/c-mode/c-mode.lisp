@@ -5,8 +5,6 @@
   (:lock t))
 (in-package :lem-c-mode)
 
-(defvar *c-mode-hook* '())
-
 (defvar *c-syntax-table*
   (let ((table (make-syntax-table
                 :space-chars '(#\space #\tab #\newline #\, #\; #\= #\& #\|)
@@ -25,7 +23,8 @@
 (define-major-mode c-mode language-mode
     (:name "c"
      :keymap *c-mode-keymap*
-     :syntax-table *c-syntax-table*)
+     :syntax-table *c-syntax-table*
+     :mode-hook *c-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t)
   (setf (variable-value 'calc-indent-function) 'calc-indent)
   (setf (variable-value 'indent-tabs-mode) nil)
@@ -34,8 +33,7 @@
   (setf (variable-value 'line-comment) "//")
   (setf (variable-value 'insertion-line-comment) "// ")
   (setf (variable-value 'find-definitions-function) 'lem.gtags:find-definitions)
-  (setf (variable-value 'find-references-function) 'lem.gtags:find-references)
-  (run-hooks *c-mode-hook*))
+  (setf (variable-value 'find-references-function) 'lem.gtags:find-references))
 
 (define-key *c-mode-keymap* "}" 'c-electric-brace)
 (define-key *c-mode-keymap* "C-c @" 'lem.gtags:gtags-definition-list)

@@ -5,9 +5,6 @@
   (:export :*js-mode-hook*))
 (in-package :lem-js-mode)
 
-(defvar *js-mode-hook* '())
-
-
 #| 
 link : 
   https://developer.mozilla.org/ja/docs/Web/JavaScript/Guide/Grammar_and_types 
@@ -114,15 +111,15 @@ link :
 (define-major-mode js-mode language-mode
     (:name "js"
      :keymap *js-mode-keymap*
-     :syntax-table *js-syntax-table*)
+     :syntax-table *js-syntax-table*
+     :mode-hook *js-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 2
         (variable-value 'calc-indent-function) 'js-calc-indent
         (variable-value 'line-comment) "//"
         (variable-value 'beginning-of-defun-function) 'beginning-of-defun
-        (variable-value 'end-of-defun-function) 'end-of-defun)
-  (run-hooks *js-mode-hook*))
+        (variable-value 'end-of-defun-function) 'end-of-defun))
 
 (defun get-line-indent (point)
   (line-start point)

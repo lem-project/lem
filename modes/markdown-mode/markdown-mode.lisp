@@ -5,8 +5,6 @@
   (:export :*markdown-mode-hook*))
 (in-package :lem-markdown-mode)
 
-(defvar *markdown-mode-hook* '())
-
 (defun make-tmlanguage-markdown ()
   (let* ((patterns (make-tm-patterns
                     (make-tm-match "^#.*$" :name 'syntax-constant-attribute)
@@ -32,12 +30,12 @@
 (define-major-mode markdown-mode language-mode
     (:name "Markdown"
      :keymap *markdown-mode-keymap*
-     :syntax-table *markdown-syntax-table*)
+     :syntax-table *markdown-syntax-table*
+     :mode-hook *markdown-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 4
-        (variable-value 'calc-indent-function) 'markdown-calc-indent)
-  (run-hooks *markdown-mode-hook*))
+        (variable-value 'calc-indent-function) 'markdown-calc-indent))
 
 (defun markdown-calc-indent (point)
   (with-point ((point point))

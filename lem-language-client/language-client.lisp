@@ -299,6 +299,11 @@
     (when (zerop (hash-table-count file-version-table))
       (shutdown workspace))))
 
+(defun sync-text-document (buffer)
+  (let ((workspace (buffer-workspace buffer)))
+    (unless (incremental-sync-p workspace)
+      (text-document-did-change buffer (list ({} "text" (buffer-text buffer)))))))
+
 (defun hover-contents-to-string (contents)
   (typecase contents
     (string contents)
@@ -345,6 +350,7 @@
         items)))
 
 (defun completion (point)
+  (sync-text-document (lem:point-buffer point))
   (let* ((workspace (buffer-workspace (lem:point-buffer point)))
          (result (jsonrpc-call (workspace-connection workspace)
                                "textDocument/completion"

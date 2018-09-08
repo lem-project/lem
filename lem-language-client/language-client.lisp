@@ -302,7 +302,12 @@
 (defun sync-text-document (buffer)
   (let ((workspace (buffer-workspace buffer)))
     (unless (incremental-sync-p workspace)
-      (text-document-did-change buffer (list ({} "text" (buffer-text buffer)))))))
+      (let ((file-version (buffer-file-version buffer)))
+        (unless (eql file-version
+                     (lem:buffer-value buffer 'last-sync-file-version))
+          (text-document-did-change buffer (list ({} "text" (buffer-text buffer))))
+          (setf (lem:buffer-value buffer 'last-sync-file-version)
+                file-version))))))
 
 (defun hover-contents-to-string (contents)
   (typecase contents

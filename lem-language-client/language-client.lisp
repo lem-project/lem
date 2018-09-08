@@ -47,7 +47,6 @@
 (lem:define-minor-mode language-client-mode
     (:name "Language Client")
   (setf (lem:variable-value 'lem.language-mode:completion-function) 'completion)
-  ;(uiop:run-program "go-langserver -mode tcp -gocodecompletion &")
   (let* ((buffer (lem:current-buffer))
          (client (get (lem:buffer-major-mode buffer) 'client)))
     (unless client
@@ -445,11 +444,15 @@
   (alexandria:when-let ((message (hover (lem:current-point))))
     (lem:display-popup-message (wrap-text message 80))))
 
-(defmacro define-tcp-client (mode-name &rest args)
-  `(setf (get ',mode-name 'client)
-         (make-instance 'tcp-client ,@args)))
+(defmacro define-tcp-client (mode-name (&rest args) &key caller-hook)
+  `(progn
+     (setf (get ',mode-name 'client)
+           (make-instance 'tcp-client ,@args))
+     ,(when caller-hook
+        `(lem:add-hook ,caller-hook 'language-client-mode))))
 
 (define-tcp-client lem-js-mode:js-mode
-  :program "node ~/opt/javascript-typescript-langserver/lib/language-server"
-  :language-id "javascript"
-  :port 2089)
+  (:program "node ~/opt/javascript-typescript-langserver/lib/language-server"
+   :language-id "javascript"
+   :port 2089)
+  :caller-hook lem-js-mode:*js-mode-hook*)

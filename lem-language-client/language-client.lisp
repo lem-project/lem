@@ -29,12 +29,31 @@
   will-save-wait-until
   save)
 
+(defclass client (jsonrpc:client)
+  ((program
+    :initarg :program
+    :reader client-program)
+   (language-id
+    :initarg :language-id
+    :reader client-language-id)))
+
+(defclass tcp-client (client)
+  ((port
+    :initarg :port
+    :reader client-port)))
+
+(defclass stdio-client (client) ())
+
 (lem:define-minor-mode language-client-mode
     (:name "Language Client")
   (setf (lem:variable-value 'lem.language-mode:completion-function) 'completion)
   ;(uiop:run-program "go-langserver -mode tcp -gocodecompletion &")
-  (let ((buffer (lem:current-buffer)))
-    (start (lem:buffer-major-mode buffer) buffer)))
+  (let* ((buffer (lem:current-buffer))
+         (client (get (lem:buffer-major-mode buffer) 'client)))
+    (unless client
+      (lem:editor-error "undefined client: ~A"
+                        (lem:buffer-major-mode buffer)))
+    (start client buffer)))
 
 (defun get-language-id (language)
   (ecase language
@@ -398,7 +417,7 @@
   (lem:add-hook (lem:variable-value 'lem:after-save-hook :buffer buffer) 'text-document-did-save)
   (lem:add-hook (lem:variable-value 'lem:kill-buffer-hook :buffer buffer) 'text-document-did-close))
 
-(defun start (language buffer)
+(defun start (client buffer)
   (let* ((root-path *root-path*)
          (workspace (find-workspace root-path)))
     (cond
@@ -408,14 +427,18 @@
        (let* ((connection (jsonrpc:make-client))
               (workspace (make-workspace :connection connection
                                          :root root-path
-                                         :language-id (get-language-id language))))
+                                         :language-id (client-language-id client))))
          (push workspace *workspaces*)
          (setf (buffer-workspace buffer) workspace)
          (dolist (response-method *response-methods*)
            (jsonrpc:expose connection (string response-method) response-method))
-         (jsonrpc:client-connect (workspace-connection workspace)
-                                 :mode :tcp
-                                 :port 2089)
+         (apply #'jsonrpc:client-connect
+                (workspace-connection workspace)
+                (etypecase client
+                  (tcp-client
+                   (list :mode :tcp :port (client-port client)))
+                  (stdio-client
+                   (list :mode :stdio))))
          (initialize workspace)
          (initialized workspace)
          workspace))))
@@ -426,3 +449,12 @@
 (lem:define-command lsp-hover () ()
   (alexandria:when-let ((message (hover (lem:current-point))))
     (lem:display-popup-message (wrap-text message 80))))
+
+(defmacro define-tcp-client (mode-name &rest args)
+  `(setf (get ',mode-name 'client)
+         (make-instance 'tcp-client ,@args)))
+
+(define-tcp-client lem-js-mode:js-mode
+  :program "node ~/opt/javascript-typescript-langserver/lib/language-server"
+  :language-id "javascript"
+  :port 2089)

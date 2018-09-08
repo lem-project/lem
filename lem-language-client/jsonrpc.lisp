@@ -1,13 +1,19 @@
 (in-package :lem-language-client)
 
+(defun do-log (fmt &rest args)
+  (let* ((string (apply #'format nil fmt args))
+         (buffer (lem:make-buffer "*jsonrpc-log*" :enable-undo-p nil)))
+    (lem:insert-string (lem:buffer-point buffer) string)
+    (lem:insert-character (lem:buffer-point buffer) #\newline)))
+
 (defun pretty-json (params)
   (with-output-to-string (stream)
     (yason:encode params (yason:make-json-output-stream stream))))
 
 (defun jsonrpc-notify (connection method params)
-  (lem:message "notify: ~A ~A" method (pretty-json params))
+  (do-log "notify: ~A ~A" method (pretty-json params))
   (jsonrpc:notify connection method params))
 
 (defun jsonrpc-call (connection method params)
-  (lem:message "call: ~A ~A" method (pretty-json params))
+  (do-log "call: ~A ~A" method (pretty-json params))
   (jsonrpc:call connection method params))

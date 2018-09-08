@@ -51,6 +51,11 @@
           ,@body))
       *response-methods*)))
 
+(defun incremental-sync-p (workspace)
+  (eql (text-document-sync-change
+        (workspace-text-document-sync workspace))
+       |TextDocumentSyncKind.Incremental|))
+
 (defun pathname-to-uri (pathname)
   (let ((filename (namestring pathname)))
     (format nil "file://~A"
@@ -367,9 +372,7 @@
   (let* ((buffer (lem:point-buffer point))
          (workspace (buffer-workspace buffer)))
     (incf (buffer-file-version buffer))
-    (when (eql (text-document-sync-change
-                (workspace-text-document-sync workspace))
-               |TextDocumentSyncKind.Incremental|)
+    (when (incremental-sync-p workspace)
       (text-document-did-change buffer
                                 (list (text-document-content-change-event
                                        point

@@ -28,3 +28,23 @@
                      `(,b (gethash ,(string b) ,hash-table)))
                    bindings)
        ,@body)))
+
+(defun {} (&rest plist)
+  (alexandria:plist-hash-table plist :test 'equal))
+
+(defun -> (table &rest keys)
+  (loop :for k* :on keys
+        :for k := (first k*)
+        :do (if (rest k*)
+                (progn
+                  (setf table (gethash k table))
+                  (unless (hash-table-p table)
+                    (return nil)))
+                (setf table (gethash k table)))
+        :finally (return table)))
+
+(defun merge-table (parent child)
+  (maphash (lambda (key value)
+             (setf (gethash key child) value))
+           parent)
+  child)

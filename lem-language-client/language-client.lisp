@@ -387,20 +387,15 @@
   (let* ((buffer (lem:point-buffer point))
          (workspace (buffer-workspace buffer)))
     (incf (buffer-file-version buffer))
-    (text-document-did-change buffer
-                              (alexandria:switch
-                                  ((text-document-sync-change
-                                    (workspace-text-document-sync workspace))
-                                   :test #'eql)
-                                (|TextDocumentSyncKind.None|)
-                                (|TextDocumentSyncKind.Full|
-                                 (list ({} "text" (buffer-text buffer))))
-                                (|TextDocumentSyncKind.Incremental|
-                                 (list (text-document-content-change-event
-                                        point
-                                        (if (characterp arg)
-                                            (string arg)
-                                            arg))))))))
+    (when (eql (text-document-sync-change
+                (workspace-text-document-sync workspace))
+               |TextDocumentSyncKind.Incremental|)
+      (text-document-did-change buffer
+                                (list (text-document-content-change-event
+                                       point
+                                       (if (characterp arg)
+                                           (string arg)
+                                           arg)))))))
 
 (defun initialize-hooks (buffer)
   (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) 'on-change)

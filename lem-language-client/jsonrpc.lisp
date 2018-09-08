@@ -4,7 +4,9 @@
   (let* ((string (apply #'format nil fmt args))
          (buffer (lem:make-buffer "*jsonrpc-log*" :enable-undo-p nil)))
     (lem:insert-string (lem:buffer-point buffer) string)
-    (lem:insert-character (lem:buffer-point buffer) #\newline)))
+    (lem:insert-character (lem:buffer-point buffer) #\newline)
+    (dolist (window (lem:get-buffer-windows buffer))
+      (lem:window-see window))))
 
 (defun pretty-json (params)
   (with-output-to-string (stream)

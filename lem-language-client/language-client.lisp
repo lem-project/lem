@@ -55,11 +55,6 @@
                         (lem:buffer-major-mode buffer)))
     (start client buffer)))
 
-(defun get-language-id (language)
-  (ecase language
-    (lem-js-mode:js-mode "javascript")
-    (lem-go-mode:go-mode "go")))
-
 (defmacro define-response-method (name (&rest vars) &body body)
   (alexandria:with-gensyms (params)
     `(pushnew

@@ -168,13 +168,22 @@
     (t
      (listener-eval string))))
 
+(defparameter *record-history-of-repl* nil)
+(defvar *repl-history* '())
+
 (defun listener-eval (string)
   (request-listener-eval
    *connection*
    string
    (lambda (value)
      (declare (ignore value))
-     (lem.listener-mode:listener-reset-prompt (repl-buffer)))
+     (lem.listener-mode:listener-reset-prompt (repl-buffer))
+     (when *record-history-of-repl*
+       (start-timer 0 nil
+                    (lambda ()
+                      (when (position-if (complement #'syntax-space-char-p) string)
+                        (push (cons string (lisp-eval-from-string "CL:/" "CL"))
+                              *repl-history*))))))
    (repl-buffer-width)))
 
 (defun repl-read-string (thread tag)

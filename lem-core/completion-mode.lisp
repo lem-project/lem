@@ -10,10 +10,13 @@
 (defclass completion-spec ()
   ((function
     :initarg :function
-    :reader spec-function)))
+    :reader spec-function)
+   (prefix-search
+    :initarg :prefix-search
+    :reader spec-prefix-search)))
 
-(defun make-completion-spec (function)
-  (make-instance 'completion-spec :function function))
+(defun make-completion-spec (function &key prefix-search)
+  (make-instance 'completion-spec :function function :prefix-search prefix-search))
 
 (defstruct completion-item
   (label "" :read-only t :type string)

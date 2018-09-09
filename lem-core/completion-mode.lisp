@@ -46,7 +46,7 @@
 (define-attribute non-focus-completion-attribute
   (t :foreground "black" :background "gray"))
 
-(defvar *completion-restart-function* nil)
+(defvar *current-completion-spec* nil)
 (defvar *last-items* nil)
 
 (defun completion-end ()
@@ -55,8 +55,8 @@
   (lem-if:popup-menu-quit (implementation)))
 
 (defun completion-again ()
-  (when *completion-restart-function*
-    (run-completion-1 *completion-restart-function* t)))
+  (when *current-completion-spec*
+    (run-completion-1 *current-completion-spec* t)))
 
 (define-command completion-self-insert () ()
   (let ((c (insertion-key-p (last-read-key-sequence))))
@@ -117,8 +117,8 @@
               (t
                (completion-next-line)))))))
 
-(defun start-completion-mode (restart-function)
-  (setf *completion-restart-function* restart-function)
+(defun start-completion-mode (completion-spec)
+  (setf *current-completion-spec* completion-spec)
   (completion-mode t))
 
 (defun completion-item-range (point item)
@@ -137,8 +137,8 @@
       (delete-between-points start end)
       (insert-string point (subseq (completion-item-label item) 0 begin)))))
 
-(defun run-completion-1 (function repeat)
-  (let ((items (funcall function (current-point))))
+(defun run-completion-1 (completion-spec repeat)
+  (let ((items (funcall (spec-function completion-spec) (current-point))))
     (setf *last-items* items)
     (cond ((null items)
            (when repeat (completion-end)))
@@ -155,12 +155,14 @@
                                       :print-function 'completion-item-label
                                       :focus-attribute 'completion-attribute
                                       :non-focus-attribute 'non-focus-completion-attribute)
-           (start-completion-mode function)))))
+           (start-completion-mode completion-spec)))))
 
 (defun run-completion (completion)
-  (run-completion-1 (if (typep completion 'completion-spec)
-                        (spec-function completion)
-                        completion)
+  (run-completion-1 (typecase completion
+                      (completion-spec
+                       completion)
+                      (otherwise
+                       (make-completion-spec (alexandria:ensure-function completion))))
                     nil))
 
 (defun minibuffer-completion (comp-f start)

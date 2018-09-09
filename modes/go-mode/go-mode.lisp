@@ -37,7 +37,7 @@
   (setf (variable-value 'line-comment) "//")
   (setf (variable-value 'insertion-line-comment) "// ")
   (setf (variable-value 'find-definitions-function) 'find-definitions)
-  (setf (variable-value 'completion-function) 'go-completion)
+  (setf (variable-value 'completion-spec) 'go-completion)
   (setf (variable-value 'idle-function) 'go-idle-function)
   (add-hook (variable-value 'after-save-hook :buffer (current-buffer)) 'goflymake))
 

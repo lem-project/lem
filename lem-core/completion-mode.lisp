@@ -1,10 +1,19 @@
 (defpackage :lem.completion-mode
   (:use :cl :lem)
-  (:export :make-completion-item
+  (:export :make-completion-spec
+           :make-completion-item
            :run-completion)
   #+sbcl
   (:lock t))
 (in-package :lem.completion-mode)
+
+(defclass completion-spec ()
+  ((function
+    :initarg :function
+    :reader spec-function)))
+
+(defun make-completion-spec (function)
+  (make-instance 'completion-spec :function function))
 
 (defstruct completion-item
   (label "" :read-only t :type string)
@@ -145,8 +154,11 @@
                                       :non-focus-attribute 'non-focus-completion-attribute)
            (start-completion-mode function)))))
 
-(defun run-completion (function)
-  (run-completion-1 function nil))
+(defun run-completion (completion)
+  (run-completion-1 (if (typep completion 'completion-spec)
+                        (spec-function completion)
+                        completion)
+                    nil))
 
 (defun minibuffer-completion (comp-f start)
   (run-completion

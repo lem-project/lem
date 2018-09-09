@@ -46,7 +46,7 @@
 
 (lem:define-minor-mode language-client-mode
     (:name "Language Client")
-  (setf (lem:variable-value 'lem.language-mode:completion-function) 'completion)
+  (setf (lem:variable-value 'lem.language-mode:completion-spec) 'completion)
   (let* ((buffer (lem:current-buffer))
          (client (get (lem:buffer-major-mode buffer) 'client)))
     (unless client

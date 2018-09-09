@@ -7,7 +7,7 @@
   (repl-reset-input)
   (lem.listener-mode:listener-mode t)
   (setf *write-string-function* 'write-string-to-repl)
-  (setf (variable-value 'completion-function) 'repl-completion))
+  (setf (variable-value 'completion-spec) 'repl-completion))
 
 (defun read-string-thread-stack ()
   (buffer-value (repl-buffer) 'read-string-thread-stack))

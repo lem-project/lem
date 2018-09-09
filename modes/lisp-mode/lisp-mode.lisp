@@ -36,7 +36,7 @@
   (setf (variable-value 'xref-mode-tag) 'lisp-mode)
   (setf (variable-value 'find-definitions-function) 'find-definitions)
   (setf (variable-value 'find-references-function) 'find-references)
-  (setf (variable-value 'completion-function) 'completion-symbol)
+  (setf (variable-value 'completion-spec) 'completion-symbol)
   (setf (variable-value 'idle-function) 'lisp-idle-function)
   (set-syntax-parser lem-lisp-syntax:*syntax-table* (make-tmlanguage-lisp))
   (unless (connected-p) (self-connect)))

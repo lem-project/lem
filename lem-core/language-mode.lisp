@@ -1,5 +1,5 @@
 (defpackage :lem.language-mode
-  (:use :cl :lem :lem.sourcelist :lem.completion-mode)
+  (:use :cl :lem :lem.sourcelist)
   (:export
    :*language-mode-keymap*
    :idle-function
@@ -10,7 +10,7 @@
    :find-definitions-function
    :find-references-function
    :xref-mode-tag
-   :completion-function
+   :completion-spec
    :go-to-location
    :indent
    :newline-and-indent
@@ -39,7 +39,7 @@
 (define-editor-variable find-definitions-function nil)
 (define-editor-variable find-references-function nil)
 (define-editor-variable xref-mode-tag nil)
-(define-editor-variable completion-function nil)
+(define-editor-variable completion-spec nil)
 
 (defun prompt-for-symbol (prompt history-name)
   (prompt-for-line prompt "" nil nil history-name))
@@ -330,8 +330,8 @@
       (jump-highlighting))))
 
 (define-command complete-symbol () ()
-  (alexandria:when-let (fn (variable-value 'completion-function :buffer))
-    (run-completion fn)))
+  (alexandria:when-let (fn (variable-value 'completion-spec :buffer))
+    (lem.completion-mode:run-completion fn)))
 
 (define-command indent-line-and-complete-symbol () ()
   (if (variable-value 'calc-indent-function :buffer)

@@ -55,6 +55,8 @@
                                           :do (return nil)
                                           :finally (return t))))))
                              (lambda (elt)
+                               (when key
+                                 (setf elt (funcall key elt)))
                                (funcall test name elt)))
                          list)))
     strings))

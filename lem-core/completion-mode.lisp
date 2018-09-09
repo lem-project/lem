@@ -94,10 +94,11 @@
       (loop :for rest :on strings
             :do (loop :for rest2 :on (cdr rest)
                       :for mismatch := (mismatch (first rest) (first rest2))
-                      :do (setf n
-                                (if n
-                                    (min n mismatch)
-                                    mismatch))))
+                      :do (and mismatch
+                               (setf n
+                                     (if n
+                                         (min n mismatch)
+                                         mismatch)))))
       n)))
 
 (define-command completion-narrowing-down-or-next-line () ()

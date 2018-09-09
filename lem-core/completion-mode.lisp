@@ -48,9 +48,11 @@
 
 (defvar *current-completion-spec* nil)
 (defvar *last-items* nil)
+(defvar *initial-point* nil)
 
 (defun completion-end ()
   (setf *last-items* nil)
+  (when *initial-point* (delete-point *initial-point*))
   (completion-mode nil)
   (lem-if:popup-menu-quit (implementation)))
 
@@ -138,9 +140,26 @@
       (delete-between-points start end)
       (insert-string point (subseq (completion-item-label item) 0 begin)))))
 
+(defun prefix-search (prefix-string items)
+  (completion prefix-string
+              items
+              :test #'alexandria:starts-with-subseq
+              :key #'completion-item-label))
+
+(defun completion-items (completion-spec repeat)
+  (cond ((and repeat (spec-prefix-search completion-spec))
+         (prefix-search (points-to-string *initial-point* (current-point))
+                        *last-items*))
+        (t
+         (let ((items (funcall (spec-function completion-spec) (current-point))))
+           (when (spec-prefix-search completion-spec)
+             (setf items
+                   (prefix-search (points-to-string *initial-point* (current-point))
+                                  items)))
+           (setf *last-items* items)))))
+
 (defun run-completion-1 (completion-spec repeat)
-  (let ((items (funcall (spec-function completion-spec) (current-point))))
-    (setf *last-items* items)
+  (let ((items (completion-items completion-spec repeat)))
     (cond ((null items)
            (when repeat (completion-end)))
           ((and (not repeat) (null (rest items)))
@@ -159,12 +178,18 @@
            (start-completion-mode completion-spec)))))
 
 (defun run-completion (completion)
-  (run-completion-1 (typecase completion
-                      (completion-spec
-                       completion)
-                      (otherwise
-                       (make-completion-spec (alexandria:ensure-function completion))))
-                    nil))
+  (let ((completion-spec
+          (typecase completion
+            (completion-spec
+             completion)
+            (otherwise
+             (make-completion-spec (alexandria:ensure-function completion))))))
+    (when (spec-prefix-search completion-spec)
+      (setf *initial-point*
+            (copy-point (current-point) :right-inserting))
+      (skip-chars-backward *initial-point* #'syntax-symbol-char-p))
+    (run-completion-1 completion-spec
+                      nil)))
 
 (defun minibuffer-completion (comp-f start)
   (run-completion

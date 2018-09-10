@@ -396,6 +396,52 @@
       (jsonrpc:jsonrpc-error (e)
         (jsonrpc:jsonrpc-error-message e)))))
 
+
+(lem:define-attribute signature-help-attribute
+  (t :foreground "black" :background "dark gray"))
+
+(lem:define-attribute signature-help-active-attribute
+  (t :foreground "white" :background "black" :underline-p t :bold-p t))
+
+(defun make-signature-help-buffer (signature-help)
+  (let* ((buffer (lem:make-buffer "*Signature Help*" :enable-undo-p nil :temporary t))
+         (p (lem:buffer-point buffer)))
+    (setf (lem:variable-value 'lem:truncate-lines :buffer buffer) nil)
+    (lem:erase-buffer buffer)
+    (let-hash (|signatures| |activeSignature| |activeParameter|)
+        signature-help
+      (loop :for signature-index :from 0
+            :for signature :in |signatures|
+            :do (let-hash (|label| #||documentation||# |parameters|) signature
+                  (lem:insert-string p |label| :attribute 'signature-help-attribute)
+                  (when (and (eql signature-index |activeSignature|))
+                    (alexandria:when-let
+                        (parameter (nth (min |activeParameter|
+                                             (1- (length |parameters|)))
+                                        |parameters|))
+                      (lem:with-point ((p p))
+                        (lem:line-start p)
+                        (let ((label (gethash "label" parameter)))
+                          (when (lem:search-forward p label)
+                            (lem:with-point ((start p))
+                              (lem:character-offset start (- (length label)))
+                              (lem:put-text-property
+                               start p
+                               :attribute 'signature-help-active-attribute))))))))
+                (lem:insert-character p #\newline))
+      (lem:insert-character p #\newline)
+      (lem:buffer-start p)
+      (lem-if:display-popup-buffer (lem:current-window) buffer 80 (length |signatures|) 3))))
+
+(defun signature-help (point)
+  (sync-text-document (lem:point-buffer point))
+  (let ((workspace (buffer-workspace (lem:point-buffer point))))
+    (let ((signature-help (jsonrpc-call (workspace-connection workspace)
+                                        "textDocument/signatureHelp"
+                                        (text-document-position-params point))))
+      (do-log "signature-help: ~A" (pretty-json signature-help))
+      (make-signature-help-buffer signature-help))))
+
 (defun on-change (point arg)
   (let* ((buffer (lem:point-buffer point))
          (workspace (buffer-workspace buffer)))
@@ -446,6 +492,9 @@
 (lem:define-command lsp-hover () ()
   (alexandria:when-let ((message (hover (lem:current-point))))
     (lem:display-popup-message (wrap-text message 80))))
+
+(lem:define-command lsp-signature-help () ()
+  (signature-help (lem:current-point)))
 
 (defmacro define-tcp-client (mode-name (&rest args) &key caller-hook)
   `(progn

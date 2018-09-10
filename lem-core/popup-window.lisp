@@ -183,7 +183,8 @@
 (defun clear-popup-message ()
   (when *popup-message-window*
     (delete-window *popup-message-window*)
-    (setf *popup-message-window* nil)))
+    (setf *popup-message-window* nil)
+    (redraw-display*)))
 
 (defun make-popup-buffer (text)
   (let ((buffer (make-buffer "*Popup Message*" :temporary t :enable-undo-p nil)))

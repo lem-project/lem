@@ -219,6 +219,17 @@
         (start-timer (* timeout 1000) nil 'clear-popup-message))
       window)))
 
+(defmethod lem-if:display-popup-buffer (implementation buffer width height timeout)
+  (clear-popup-message)
+  (let ((window (popup-window (current-window) buffer width height)))
+    (buffer-start (window-view-point window))
+    (window-see window)
+    (setf *popup-message-window* window)
+    (when timeout
+      (check-type timeout (integer 0 *))
+      (start-timer (* timeout 1000) nil 'clear-popup-message))
+    window))
+
 (defmethod lem-if:delete-popup-message (implementation popup-message)
   (when (windowp popup-message)
     (delete-window popup-message)))

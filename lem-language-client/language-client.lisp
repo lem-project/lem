@@ -396,25 +396,48 @@
       (jsonrpc:jsonrpc-error (e)
         (jsonrpc:jsonrpc-error-message e)))))
 
-
-(lem:define-attribute signature-help-attribute
-  (t :foreground "black" :background "dark gray"))
-
-(lem:define-attribute signature-help-active-attribute
+(lem:define-attribute signature-help-active-parameter-attribute
   (t :foreground "white" :background "black" :underline-p t :bold-p t))
 
-(defun make-signature-help-buffer (signature-help)
+(defun fill-signature-help-window-with-space (window focus-line)
+  (let ((buffer (lem:window-buffer window)))
+    (lem:with-point ((p (lem:buffer-point buffer) :left-inserting))
+      (lem:buffer-start p)
+      (loop :for line :from 0
+            :do (lem:line-end p)
+                (let ((column (lem:point-virtual-line-column p window)))
+                  (let ((offset (- (1- (lem:window-width window))
+                                   column)))
+                    (when (plusp offset)
+                      (lem:insert-string p (make-string offset :initial-element #\space)
+                                         :attribute (if (= focus-line line)
+                                                        'lem:completion-attribute
+                                                        'lem:non-focus-completion-attribute)))))
+                (unless (lem:line-offset p 1) (return))))))
+
+(defvar *signature-help-window*)
+
+(defun signature-help-finalize ()
+  (lem:delete-window *signature-help-window*)
+  (lem:remove-hook lem:*pre-command-hook* 'signature-help-finalize))
+
+(defun make-signature-help-window (signature-help)
   (let* ((buffer (lem:make-buffer "*Signature Help*" :enable-undo-p nil :temporary t))
          (p (lem:buffer-point buffer)))
-    (setf (lem:variable-value 'lem:truncate-lines :buffer buffer) nil)
+    (setf (lem:variable-value 'lem::truncate-character :buffer buffer) #\space)
     (lem:erase-buffer buffer)
     (let-hash (|signatures| |activeSignature| |activeParameter|)
         signature-help
       (loop :for signature-index :from 0
-            :for signature :in |signatures|
+            :for signature* :on |signatures|
+            :for signature := (first signature*)
+            :for active-signature-p := (eql signature-index |activeSignature|)
             :do (let-hash (|label| #||documentation||# |parameters|) signature
-                  (lem:insert-string p |label| :attribute 'signature-help-attribute)
-                  (when (and (eql signature-index |activeSignature|))
+                  (lem:insert-string p |label|
+                                     :attribute (if active-signature-p
+                                                    'lem:completion-attribute
+                                                    'lem:non-focus-completion-attribute))
+                  (when (and active-signature-p)
                     (alexandria:when-let
                         (parameter (nth (min |activeParameter|
                                              (1- (length |parameters|)))
@@ -427,11 +450,14 @@
                               (lem:character-offset start (- (length label)))
                               (lem:put-text-property
                                start p
-                               :attribute 'signature-help-active-attribute))))))))
-                (lem:insert-character p #\newline))
-      (lem:insert-character p #\newline)
-      (lem:buffer-start p)
-      (lem-if:display-popup-buffer (lem:current-window) buffer 80 (length |signatures|) 3))))
+                               :attribute 'signature-help-active-parameter-attribute)))))))
+                  (when (rest signature*)
+                    (lem:insert-character p #\newline))))
+      (let ((window (lem-if:display-popup-buffer (lem:current-window) buffer 60 20 nil)))
+        (setf *signature-help-window* window)
+        (lem:add-hook lem:*pre-command-hook* 'signature-help-finalize)
+        (fill-signature-help-window-with-space window |activeSignature|)
+        window))))
 
 (defun signature-help (point)
   (sync-text-document (lem:point-buffer point))
@@ -440,7 +466,7 @@
                                         "textDocument/signatureHelp"
                                         (text-document-position-params point))))
       (do-log "signature-help: ~A" (pretty-json signature-help))
-      (make-signature-help-buffer signature-help))))
+      (make-signature-help-window signature-help))))
 
 (defun on-change (point arg)
   (let* ((buffer (lem:point-buffer point))

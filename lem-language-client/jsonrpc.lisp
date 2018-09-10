@@ -2,9 +2,11 @@
 
 (defun do-log (fmt &rest args)
   (let* ((string (apply #'format nil fmt args))
-         (buffer (lem:make-buffer "*jsonrpc-log*" :enable-undo-p nil)))
-    (lem:insert-string (lem:buffer-point buffer) string)
-    (lem:insert-character (lem:buffer-point buffer) #\newline)
+         (buffer (lem:make-buffer "*jsonrpc-log*" :enable-undo-p nil))
+         (p (lem:buffer-point buffer)))
+    (lem:buffer-end p)
+    (lem:insert-string p string)
+    (lem:insert-character p #\newline)
     (dolist (window (lem:get-buffer-windows buffer))
       (lem:window-see window))))
 

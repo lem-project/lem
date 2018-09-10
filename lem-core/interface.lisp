@@ -417,7 +417,8 @@
       (disp-set-overlays screen overlays view-point)
       (maybe-set-cursor-attribute window screen view-point))))
 
-(defvar *truncate-character* #\\)
+(define-editor-variable truncate-character #\\)
+(defvar *truncate-character*)
 
 (defun screen-display-line-wrapping (screen screen-width view-charpos cursor-y point-y str/attributes)
   (declare (ignore cursor-y))
@@ -605,17 +606,19 @@
         (run-show-buffer-hooks window)
         (disp-reset-lines window)
         (adjust-horizontal-scroll window)
-        (screen-display-lines screen
-                              (or force
-                                  (screen-modified-p screen)
-                                  (not (eql (screen-left-width screen)
-                                            (screen-old-left-width screen))))
-                              buffer
-                              (point-charpos (window-view-point window))
-                              (if focus-window-p
-                                  (count-lines (window-view-point window)
-                                               (window-point window))
-                                  -1))
+        (let ((*truncate-character*
+                (variable-value 'truncate-character :default buffer)))
+          (screen-display-lines screen
+                                (or force
+                                    (screen-modified-p screen)
+                                    (not (eql (screen-left-width screen)
+                                              (screen-old-left-width screen))))
+                                buffer
+                                (point-charpos (window-view-point window))
+                                (if focus-window-p
+                                    (count-lines (window-view-point window)
+                                                 (window-point window))
+                                    -1)))
         (setf (screen-old-left-width screen)
               (screen-left-width screen))
         (setf (screen-last-buffer-name screen)

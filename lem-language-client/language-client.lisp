@@ -127,14 +127,19 @@
     (lem:line-offset point 0 |character|)
     point))
 
+(defun decode-lsp-range (buffer range)
+  (let-hash (|start| |end|) range
+    (lem:with-point ((start-point (lem:buffer-point buffer))
+                     (end-point (lem:buffer-point buffer)))
+      (move-to-lsp-position start-point |start|)
+      (move-to-lsp-position (lem:move-point end-point start-point) |end|)
+      (values start-point end-point))))
+
 (defun decode-lsp-text-edit (buffer text-edit)
   (let-hash (|range| |newText|) text-edit
-    (let-hash (|start| |end|) |range|
-      (lem:with-point ((start-point (lem:buffer-point buffer))
-                       (end-point (lem:buffer-point buffer)))
-        (move-to-lsp-position start-point |start|)
-        (move-to-lsp-position (lem:move-point end-point start-point) |end|)
-        (values start-point end-point |newText|)))))
+    (multiple-value-bind (start end)
+        (decode-lsp-range buffer |range|)
+      (values start end |newText|))))
 
 (defun text-document-identifier (buffer)
   ({} "uri" (buffer-uri buffer)))

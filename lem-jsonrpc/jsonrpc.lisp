@@ -13,7 +13,7 @@
 
 (defparameter *debug* nil)
 
-(defvar *mode* :tcp)
+(defvar *mode* :stdio)
 (defvar *port* 50879)
 
 (defvar *view-id-counter* 0)

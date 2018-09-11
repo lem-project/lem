@@ -63,45 +63,53 @@
 
 (defun pop-up-typeout-window (buffer fn &key focus erase (read-only t))
   (declare (ignore focus))
-  (when (and *typeout-window*
-             (not (eq buffer (window-buffer *typeout-window*))))
-    (dismiss-typeout-window)
-    (redraw-display*))
-  (let ((already-created-p (if *typeout-window* t nil)))
-    (with-buffer-read-only buffer nil
-      (when erase
-        (erase-buffer buffer))
-      (when fn
-        (with-open-stream (out (make-buffer-output-stream (buffer-end-point buffer)))
-          (funcall fn out)
-          (fresh-line out))))
-    (when read-only
-      (setf (buffer-read-only-p buffer) t))
-    (let* ((window-height
-             (min (floor (display-height) 2) (buffer-nlines buffer)))
-           (window
-             (cond (already-created-p
-                    (lem::window-set-size *typeout-window* (display-width) window-height)
-                    *typeout-window*)
-                   (t
-                    (let ((window (make-floating-window buffer 0 0 (display-width) window-height t)))
-                      (add-hook (window-delete-hook window)
-                                'delete-typeout-window-hook)
-                      (setf *typeout-window* window
-                            *typeout-before-window* (current-window))
-                      window)))))
-      (setf (variable-value 'modeline-format :buffer buffer) '())
-      (setf (buffer-value buffer 'lem::modeline-status-list)
-            (list 'typeout-window-modeline))
-      (setf (current-window) window)
-      (typeout-mode t)
-      window)))
+  (bury-buffer buffer)
+  (let ((typeout-buffer (make-buffer "*Typeout Buffer*" :temporary t)))
+    (insert-buffer (buffer-point typeout-buffer) buffer)
+    (when (and *typeout-window*
+               (not (eq typeout-buffer (window-buffer *typeout-window*))))
+      (dismiss-typeout-window)
+      (redraw-display*))
+    (let ((already-created-p (if *typeout-window* t nil)))
+      (with-buffer-read-only typeout-buffer nil
+        (when erase
+          (erase-buffer typeout-buffer))
+        (when fn
+          (with-open-stream (out (make-buffer-output-stream (buffer-end-point typeout-buffer)))
+            (funcall fn out)
+            (fresh-line out))))
+      (when read-only
+        (setf (buffer-read-only-p typeout-buffer) t))
+      (let* ((window-height
+               (min (floor (display-height) 2) (buffer-nlines typeout-buffer)))
+             (window
+               (cond (already-created-p
+                      (lem::window-set-size *typeout-window* (display-width) window-height)
+                      *typeout-window*)
+                     (t
+                      (let ((window (make-floating-window typeout-buffer 0 0 (display-width) window-height t)))
+                        (setf (window-parameter window 'prohibition-switch-to-buffer) t)
+                        (add-hook (window-delete-hook window)
+                                  'delete-typeout-window-hook)
+                        (setf *typeout-window* window
+                              *typeout-before-window* (current-window))
+                        window)))))
+        (setf (variable-value 'modeline-format :buffer typeout-buffer) '())
+        (setf (buffer-value typeout-buffer 'lem::modeline-status-list)
+              (list 'typeout-window-modeline))
+        (setf (buffer-value typeout-buffer 'typeout-buffer-p) t)
+        (setf (current-window) window)
+        (typeout-mode t)
+        window))))
 
 (define-command dismiss-typeout-window () ()
-  (when *typeout-window*
+  (when (eq (current-window) *typeout-window*)
     (when (deleted-window-p *typeout-before-window*)
       (setf *typeout-before-window* (first (window-list))))
     (setf (current-window) *typeout-before-window*)
+    (let ((buffer (window-buffer *typeout-window*)))
+      (when (buffer-value buffer 'typeout-buffer-p)
+        (delete-buffer buffer)))
     (delete-window *typeout-window*)))
 
 (define-command next-page-or-dismiss-typeout-window () ()

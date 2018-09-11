@@ -641,7 +641,7 @@
          (p (and self (copy-point (current-point) :temporary))))
     (lisp-eval-async `(,expander ,(form-string-at-point))
                      (lambda (string)
-                       (let ((buffer (make-buffer "*lisp-macroexpand*")))
+                       (let ((buffer (make-buffer "*lisp-macroexpand*" :temporary t)))
                          (with-buffer-read-only buffer nil
                            (unless self (erase-buffer buffer))
                            (change-buffer-mode buffer 'lisp-mode)
@@ -744,7 +744,7 @@
                     completions)))))))
 
 (defun show-description (string)
-  (let ((buffer (make-buffer "*lisp-description*")))
+  (let ((buffer (make-buffer "*lisp-description*" :temporary t)))
     (change-buffer-mode buffer 'lisp-mode)
     (with-pop-up-typeout-window (stream buffer :erase t)
       (princ string stream))))

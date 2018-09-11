@@ -77,17 +77,19 @@
 
 (defun unbury-buffer (buffer)
   (check-type buffer buffer)
-  (setf *buffer-list*
-        (cons buffer
-              (delete buffer (buffer-list))))
+  (unless (buffer-temporary-p buffer)
+    (setf *buffer-list*
+          (cons buffer
+                (delete buffer (buffer-list)))))
   buffer)
 
 (defun bury-buffer (buffer)
   "`buffer`をバッファリストの一番最後に移動させ、バッファリストの先頭を返します。"
   (check-type buffer buffer)
-  (setf *buffer-list*
-        (nconc (delete buffer (buffer-list))
-               (list buffer)))
+  (unless (buffer-temporary-p buffer)
+    (setf *buffer-list*
+          (nconc (delete buffer (buffer-list))
+                 (list buffer))))
   (car (buffer-list)))
 
 (defun get-file-buffer (filename)

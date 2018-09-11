@@ -465,8 +465,7 @@
     (let ((signature-help (jsonrpc-call (workspace-connection workspace)
                                         "textDocument/signatureHelp"
                                         (text-document-position-params point))))
-      (do-log "signature-help: ~A" (pretty-json signature-help))
-      (make-signature-help-window signature-help))))
+      signature-help)))
 
 (defun on-change (point arg)
   (let* ((buffer (lem:point-buffer point))
@@ -520,7 +519,8 @@
     (lem:display-popup-message (wrap-text message 80))))
 
 (lem:define-command lsp-signature-help () ()
-  (signature-help (lem:current-point)))
+  (let ((signature-help (signature-help (lem:current-point))))
+    (make-signature-help-window signature-help)))
 
 (defmacro define-tcp-client (mode-name (&rest args) &key caller-hook)
   `(progn

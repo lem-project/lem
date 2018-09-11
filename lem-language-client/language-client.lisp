@@ -50,6 +50,8 @@
         (lem.completion-mode:make-completion-spec
          'completion
          :prefix-search t))
+  (setf (lem:variable-value 'lem.language-mode:find-definitions-function)
+        'definition)
   (let* ((buffer (lem:current-buffer))
          (client (get (lem:buffer-major-mode buffer) 'client)))
     (unless client
@@ -471,6 +473,24 @@
                                         "textDocument/signatureHelp"
                                         (text-document-position-params point))))
       signature-help)))
+
+(defun location-to-xref-location (buffer location)
+  (let-hash (|uri| |range|) location
+    (multiple-value-bind (start end)
+        (decode-lsp-range buffer |range|)
+      (declare (ignore end))
+      (lem.language-mode:make-xref-location :filespec (quri:uri-path (quri:uri |uri|))
+                                            :position start))))
+
+(defun definition (point)
+  (sync-text-document (lem:point-buffer point))
+  (let ((workspace (buffer-workspace (lem:point-buffer point))))
+    (let ((definition (jsonrpc-call (workspace-connection workspace)
+                                    "textDocument/definition"
+                                    (text-document-position-params point))))
+      (do-log "definition: ~A" (pretty-json definition))
+      (loop :for location :in (uiop:ensure-list definition)
+            :collect (location-to-xref-location (lem:point-buffer point) location)))))
 
 (defun on-change (point arg)
   (let* ((buffer (lem:point-buffer point))

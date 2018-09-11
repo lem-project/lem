@@ -510,6 +510,12 @@
       (lem.language-mode:make-xref-location :filespec (quri:uri-path (quri:uri |uri|))
                                             :position start))))
 
+(defun xref-location-equal (xref-1 xref-2)
+  (and (equal (lem.language-mode::xref-location-filespec xref-1)
+              (lem.language-mode::xref-location-filespec xref-2))
+       (lem:point= (lem.language-mode::xref-location-position xref-1)
+                   (lem.language-mode::xref-location-position xref-2))))
+
 (flet ((f (point method)
          (sync-text-document (lem:point-buffer point))
          (let ((workspace (buffer-workspace (lem:point-buffer point))))
@@ -535,7 +541,7 @@
     (let ((xrefs (nconc (definition point)
                         (type-definition point)
                         (implementation point))))
-      xrefs)))
+      (delete-duplicates xrefs :test #'xref-location-equal))))
 
 (defun on-change (point arg)
   (let ((buffer (lem:point-buffer point)))

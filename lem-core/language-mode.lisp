@@ -224,8 +224,9 @@
          filespec)
         (t
          (assert (or (stringp filespec) (pathnamep filespec)))
-         (or (get-buffer (file-namestring filespec))
-             (find-file-buffer filespec)))))
+         (when (probe-file filespec)
+           (or (get-buffer (file-namestring filespec))
+               (find-file-buffer filespec))))))
 
 (defun xref-filespec-to-filename (filespec)
   (etypecase filespec
@@ -235,6 +236,7 @@
 
 (defun go-to-location (location set-buffer-fn)
   (let ((buffer (xref-filespec-to-buffer (xref-location-filespec location))))
+    (unless buffer (editor-error "~A does not exist." (xref-location-filespec location)))
     (funcall set-buffer-fn buffer)
     (let ((position (xref-location-position location)))
       (etypecase position

@@ -2,9 +2,9 @@
   "name": "lem",
   "version": "1.4.0",
   "description": "lem frontend",
-  "main": "lem-frontend-electron/index.js",
+  "main": "frontends/electron/index.js",
   "scripts": {
-    "start": "node lem-frontend-electron/cli.js",
+    "start": "node frontends/electron/cli.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -18,6 +18,6 @@
     "vscode-jsonrpc": "^3.4.1"
   },
   "bin": {
-    "lem-electron": "lem-frontend-electron/cli.js"
+    "lem-electron": "frontends/electron/cli.js"
   }
 }

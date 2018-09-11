@@ -41,7 +41,7 @@ function calcDisplayCols(width) {
 }
 
 function calcDisplayRows(height) {
-    return Math.floor(height / fontAttribute.height) - 2;
+    return Math.floor(height / fontAttribute.height) - (process.platform === 'win32' ? 4 : 2);
 }
 
 function getCurrentWindowSize() {

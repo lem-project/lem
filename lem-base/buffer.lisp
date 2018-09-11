@@ -8,6 +8,7 @@
           buffer-start-point
           buffer-end-point
           buffer-name
+          buffer-temporary-p
           buffer-modified-tick
           buffer-modified-p
           buffer-read-only-p
@@ -61,7 +62,7 @@
     :accessor buffer-%enable-undo-p)
    (temporary
     :initarg :temporary
-    :accessor buffer-temporary-p)
+    :reader buffer-temporary-p)
    (read-only-p
     :initform nil
     :initarg :read-only-p

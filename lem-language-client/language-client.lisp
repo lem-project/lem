@@ -51,7 +51,7 @@
          'completion
          :prefix-search t))
   (setf (lem:variable-value 'lem.language-mode:find-definitions-function)
-        'definition)
+        'generic-definition)
   (let* ((buffer (lem:current-buffer))
          (client (get (lem:buffer-major-mode buffer) 'client)))
     (unless client
@@ -69,10 +69,37 @@
           ,@body))
       *response-methods*)))
 
+(defun ensure-workspace (value)
+  (etypecase value
+    (lem:buffer (buffer-workspace value))
+    (lem:point (buffer-workspace (lem:point-buffer value)))
+    (workspace value)))
+
 (defun incremental-sync-p (workspace)
+  (setf workspace (ensure-workspace workspace))
   (eql (text-document-sync-change
         (workspace-text-document-sync workspace))
        |TextDocumentSyncKind.Incremental|))
+
+(defun hover-provider-p (workspace)
+  (setf workspace (ensure-workspace workspace))
+  (values (gethash "hoverProvider" (workspace-server-capabilities workspace))))
+
+(defun completion-provider-p (workspace)
+  (setf workspace (ensure-workspace workspace))
+  (values (gethash "completionProvider" (workspace-server-capabilities workspace))))
+
+(defun definition-provider-p (workspace)
+  (setf workspace (ensure-workspace workspace))
+  (values (gethash "definitionProvider" (workspace-server-capabilities workspace))))
+
+(defun type-definition-provider-p (workspace)
+  (setf workspace (ensure-workspace workspace))
+  (values (gethash "typeDefinitionProvider" (workspace-server-capabilities workspace))))
+
+(defun implementation-provider-p (workspace)
+  (setf workspace (ensure-workspace workspace))
+  (values (gethash "implementationProvider" (workspace-server-capabilities workspace))))
 
 (defun pathname-to-uri (pathname)
   (let ((filename (namestring pathname)))
@@ -323,14 +350,13 @@
       (shutdown workspace))))
 
 (defun sync-text-document (buffer)
-  (let ((workspace (buffer-workspace buffer)))
-    (unless (incremental-sync-p workspace)
-      (let ((file-version (buffer-file-version buffer)))
-        (unless (eql file-version
-                     (lem:buffer-value buffer 'last-sync-file-version))
-          (text-document-did-change buffer (list ({} "text" (buffer-text buffer))))
-          (setf (lem:buffer-value buffer 'last-sync-file-version)
-                file-version))))))
+  (unless (incremental-sync-p buffer)
+    (let ((file-version (buffer-file-version buffer)))
+      (unless (eql file-version
+                   (lem:buffer-value buffer 'last-sync-file-version))
+        (text-document-did-change buffer (list ({} "text" (buffer-text buffer))))
+        (setf (lem:buffer-value buffer 'last-sync-file-version)
+              file-version)))))
 
 (defun hover-contents-to-string (contents)
   (typecase contents
@@ -378,30 +404,32 @@
         items)))
 
 (defun completion (point)
-  (sync-text-document (lem:point-buffer point))
-  (let* ((workspace (buffer-workspace (lem:point-buffer point)))
-         (result (jsonrpc-call (workspace-connection workspace)
-                               "textDocument/completion"
-                               (completion-params point)))
-         (buffer (lem:point-buffer point)))
-    (etypecase result
-      (null)
-      (vector
-       (completion-items buffer result))
-      (hash-table
-       (completion-items buffer (gethash "items" result))))))
+  (when (completion-provider-p point)
+    (sync-text-document (lem:point-buffer point))
+    (let* ((workspace (buffer-workspace (lem:point-buffer point)))
+           (result (jsonrpc-call (workspace-connection workspace)
+                                 "textDocument/completion"
+                                 (completion-params point)))
+           (buffer (lem:point-buffer point)))
+      (etypecase result
+        (null)
+        (vector
+         (completion-items buffer result))
+        (hash-table
+         (completion-items buffer (gethash "items" result)))))))
 
 (defun hover (point)
-  (sync-text-document (lem:point-buffer point))
-  (let ((workspace (buffer-workspace (lem:point-buffer point))))
-    (handler-case
-        (let ((hover (jsonrpc-call (workspace-connection workspace)
-                                   "textDocument/hover"
-                                   (text-document-position-params point))))
-          (let ((contents (gethash "contents" hover)))
-            (hover-contents-to-string contents)))
-      (jsonrpc:jsonrpc-error (e)
-        (jsonrpc:jsonrpc-error-message e)))))
+  (when (hover-provider-p point)
+    (sync-text-document (lem:point-buffer point))
+    (let ((workspace (buffer-workspace (lem:point-buffer point))))
+      (handler-case
+          (let ((hover (jsonrpc-call (workspace-connection workspace)
+                                     "textDocument/hover"
+                                     (text-document-position-params point))))
+            (let ((contents (gethash "contents" hover)))
+              (hover-contents-to-string contents)))
+        (jsonrpc:jsonrpc-error (e)
+          (jsonrpc:jsonrpc-error-message e))))))
 
 (lem:define-attribute signature-help-active-parameter-attribute
   (t :foreground "white" :background "black" :underline-p t :bold-p t))
@@ -482,21 +510,37 @@
       (lem.language-mode:make-xref-location :filespec (quri:uri-path (quri:uri |uri|))
                                             :position start))))
 
-(defun definition (point)
-  (sync-text-document (lem:point-buffer point))
-  (let ((workspace (buffer-workspace (lem:point-buffer point))))
-    (let ((definition (jsonrpc-call (workspace-connection workspace)
-                                    "textDocument/definition"
-                                    (text-document-position-params point))))
-      (do-log "definition: ~A" (pretty-json definition))
-      (loop :for location :in (uiop:ensure-list definition)
-            :collect (location-to-xref-location (lem:point-buffer point) location)))))
+(flet ((f (point method)
+         (sync-text-document (lem:point-buffer point))
+         (let ((workspace (buffer-workspace (lem:point-buffer point))))
+           (let ((definition (jsonrpc-call (workspace-connection workspace)
+                                           method
+                                           (text-document-position-params point))))
+             (loop :for location :in (uiop:ensure-list definition)
+                   :collect (location-to-xref-location (lem:point-buffer point) location))))))
+
+  (defun definition (point)
+    (when (definition-provider-p point)
+      (f point "textDocument/definition")))
+
+  (defun type-definition (point)
+    (when (type-definition-provider-p point)
+      (f point "textDocument/typeDefinition")))
+
+  (defun implementation (point)
+    (when (implementation-provider-p point)
+      (f point "textDocument/implementation")))
+
+  (defun generic-definition (point)
+    (let ((xrefs (nconc (definition point)
+                        (type-definition point)
+                        (implementation point))))
+      xrefs)))
 
 (defun on-change (point arg)
-  (let* ((buffer (lem:point-buffer point))
-         (workspace (buffer-workspace buffer)))
+  (let ((buffer (lem:point-buffer point)))
     (incf (buffer-file-version buffer))
-    (when (incremental-sync-p workspace)
+    (when (incremental-sync-p buffer)
       (text-document-did-change buffer
                                 (list (text-document-content-change-event
                                        point

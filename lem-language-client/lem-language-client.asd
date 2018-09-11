@@ -1,5 +1,5 @@
 (defsystem "lem-language-client"
-  :depends-on ("jsonrpc")
+  :depends-on ("jsonrpc" "quri")
   :serial t
   :components ((:file "package")
                (:file "util")

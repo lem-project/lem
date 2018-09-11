@@ -201,7 +201,7 @@ class LemEditor extends HTMLElement {
     }
 
     emitInput(kind, value) {
-        console.log(kind, value);
+        //console.log(kind, value);
         this.rpcConnection.sendNotification('input', {
             "kind": kind,
             "value": value

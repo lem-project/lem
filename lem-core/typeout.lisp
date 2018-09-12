@@ -64,7 +64,8 @@
 
 (defun pop-up-typeout-window (buffer function &key focus erase (read-only t))
   (declare (ignore focus))
-  (bury-buffer buffer)
+  ;; !!!!!!!!!!!!!!!
+  (setf lem-base::*buffer-list* (delete buffer lem-base::*buffer-list*))
   (when (and *typeout-window*
              (not (eq buffer (window-buffer *typeout-window*))))
     (dismiss-typeout-window)

@@ -901,8 +901,9 @@
 
 (defun switch-to-buffer (buffer &optional (record t) (move-prev-point t))
   (check-type buffer buffer)
-  (when (window-parameter (current-window) 'prohibition-switch-to-buffer)
-    (editor-error "This window can not switch buffers"))
+  (when (or (buffer-value (window-buffer (current-window)) 'prohibition-switch-to-buffer)
+            (buffer-value buffer 'prohibition-switch-to-buffer))
+    (editor-error "This buffer is not switchable"))
   (%switch-to-buffer buffer record move-prev-point))
 
 (defun pop-to-buffer (buffer &optional force-split-p)

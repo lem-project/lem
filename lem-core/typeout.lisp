@@ -64,8 +64,6 @@
 
 (defun pop-up-typeout-window (buffer function &key focus erase (read-only t))
   (declare (ignore focus))
-  ;; !!!!!!!!!!!!!!!
-  (setf lem-base::*buffer-list* (delete buffer lem-base::*buffer-list*))
   (when (and *typeout-window*
              (not (eq buffer (window-buffer *typeout-window*))))
     (dismiss-typeout-window)
@@ -87,7 +85,6 @@
                   *typeout-window*)
                  (t
                   (let ((window (make-floating-window buffer 0 0 (display-width) window-height t)))
-                    (setf (window-parameter window 'prohibition-switch-to-buffer) t)
                     (add-hook (window-delete-hook window)
                               'delete-typeout-window-hook)
                     (setf *typeout-window* window
@@ -97,6 +94,8 @@
     (setf (buffer-value buffer 'lem::modeline-status-list)
           (list 'typeout-window-modeline))
     (setf (buffer-value buffer 'typeout-buffer-p) t)
+    (setf (buffer-value buffer 'prohibition-switch-to-buffer) t)
+    (bury-buffer buffer)
     (setf (current-window) window)
     (typeout-mode t)
     (redraw-display*)

@@ -524,24 +524,21 @@
                                            (text-document-position-params point))))
              (loop :for location :in (uiop:ensure-list definition)
                    :collect (location-to-xref-location (lem:point-buffer point) location))))))
-
   (defun definition (point)
     (when (definition-provider-p point)
       (f point "textDocument/definition")))
-
   (defun type-definition (point)
     (when (type-definition-provider-p point)
       (f point "textDocument/typeDefinition")))
-
   (defun implementation (point)
     (when (implementation-provider-p point)
-      (f point "textDocument/implementation")))
+      (f point "textDocument/implementation"))))
 
-  (defun generic-definition (point)
-    (let ((xrefs (nconc (definition point)
-                        (type-definition point)
-                        (implementation point))))
-      (delete-duplicates xrefs :test #'xref-location-equal))))
+(defun generic-definition (point)
+  (let ((xrefs (nconc (definition point)
+                      (type-definition point)
+                      (implementation point))))
+    (delete-duplicates xrefs :test #'xref-location-equal)))
 
 (defun on-change (point arg)
   (let ((buffer (lem:point-buffer point)))

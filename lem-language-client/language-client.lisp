@@ -519,7 +519,11 @@
         (decode-lsp-range buffer |range|)
       (declare (ignore end))
       (lem.language-mode:make-xref-location :filespec (quri:uri-path (quri:uri |uri|))
-                                            :position start))))
+                                            :position start
+                                            :content (format nil "~A:~D:~D"
+                                                             |uri|
+                                                             (lem:line-number-at-point start)
+                                                             (lem:point-charpos start))))))
 
 (defun xref-location-equal (xref-1 xref-2)
   (and (equal (lem.language-mode::xref-location-filespec xref-1)

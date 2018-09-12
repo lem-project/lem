@@ -20,6 +20,7 @@
   text-document-sync
   root
   language-id
+  (triggers (make-hash-table))
   (file-version-table (make-hash-table)))
 
 (defstruct text-document-sync
@@ -88,6 +89,11 @@
 (defun completion-provider-p (workspace)
   (setf workspace (ensure-workspace workspace))
   (values (gethash "completionProvider" (workspace-server-capabilities workspace))))
+
+(defun get-completion-trigger-characters (workspace)
+  (mapcar (lambda (string) (char string 0))
+          (-> (workspace-server-capabilities workspace)
+              "completionProvider" "triggerCharacters")))
 
 (defun definition-provider-p (workspace)
   (setf workspace (ensure-workspace workspace))
@@ -551,11 +557,20 @@
                                            (string arg)
                                            arg)))))))
 
-(defun initialize-hooks (buffer)
+(defun self-insert-hook (c)
+  (alexandria:when-let* ((workspace (buffer-workspace (lem:current-buffer)))
+                         (fn (gethash c (workspace-triggers workspace))))
+    (funcall fn)))
+
+(defun initialize-buffer (buffer workspace)
   (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) 'on-change)
   ;(lem:add-hook (lem:variable-value 'lem:before-save-hook :buffer buffer) 'text-document-will-save)
   (lem:add-hook (lem:variable-value 'lem:after-save-hook :buffer buffer) 'text-document-did-save)
-  (lem:add-hook (lem:variable-value 'lem:kill-buffer-hook :buffer buffer) 'text-document-did-close))
+  (lem:add-hook (lem:variable-value 'lem:kill-buffer-hook :buffer buffer) 'text-document-did-close)
+  (lem:add-hook (lem:variable-value 'lem:self-insert-after-hook :buffer buffer)
+                'self-insert-hook)
+  (dolist (c (get-completion-trigger-characters workspace))
+    (setf (gethash c (workspace-triggers workspace)) 'lem.language-mode::complete-symbol)))
 
 (defun start (client buffer)
   (let* ((root-path *root-path*)
@@ -564,10 +579,11 @@
       (workspace
        (setf (buffer-workspace buffer) workspace))
       (t
-       (let* ((connection (jsonrpc:make-client))
-              (workspace (make-workspace :connection connection
-                                         :root root-path
-                                         :language-id (client-language-id client))))
+       (let ((connection (jsonrpc:make-client)))
+         (setf workspace
+               (make-workspace :connection connection
+                               :root root-path
+                               :language-id (client-language-id client)))
          (push workspace *workspaces*)
          (setf (buffer-workspace buffer) workspace)
          (dolist (response-method *response-methods*)
@@ -581,10 +597,10 @@
                    (list :mode :stdio))))
          (initialize workspace)
          (initialized workspace)
-         workspace))))
-  (text-document-did-open buffer)
-  (initialize-hooks buffer)
-  (values))
+         workspace)))
+    (text-document-did-open buffer)
+    (initialize-buffer buffer workspace)
+    (values)))
 
 (lem:define-command lsp-hover () ()
   (alexandria:when-let ((message (hover (lem:current-point))))

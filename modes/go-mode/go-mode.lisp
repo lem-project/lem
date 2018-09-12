@@ -146,7 +146,7 @@
                               :output out
                               :error-output out
                               :ignore-error-status t)))
-        (buffer (make-buffer "*godoc*" :read-only-p t :enable-undo-p nil :temporary t)))
+        (buffer (make-buffer "*godoc*" :read-only-p t :enable-undo-p nil)))
     (change-buffer-mode buffer 'go-mode)
     (with-pop-up-typeout-window (out buffer :erase t)
       (write-string text out))))

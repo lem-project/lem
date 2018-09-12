@@ -48,3 +48,7 @@
              (setf (gethash key child) value))
            parent)
   child)
+
+(defun string-to-char (string)
+  (assert (and (stringp string) (= 1 (length string))))
+  (char string 0))

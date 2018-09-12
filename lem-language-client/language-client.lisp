@@ -90,11 +90,6 @@
   (setf workspace (ensure-workspace workspace))
   (values (gethash "completionProvider" (workspace-server-capabilities workspace))))
 
-(defun get-completion-trigger-characters (workspace)
-  (mapcar (lambda (string) (char string 0))
-          (-> (workspace-server-capabilities workspace)
-              "completionProvider" "triggerCharacters")))
-
 (defun definition-provider-p (workspace)
   (setf workspace (ensure-workspace workspace))
   (values (gethash "definitionProvider" (workspace-server-capabilities workspace))))
@@ -106,6 +101,16 @@
 (defun implementation-provider-p (workspace)
   (setf workspace (ensure-workspace workspace))
   (values (gethash "implementationProvider" (workspace-server-capabilities workspace))))
+
+(defun get-completion-trigger-characters (workspace)
+  (mapcar #'string-to-char
+          (-> (workspace-server-capabilities workspace)
+              "completionProvider" "triggerCharacters")))
+
+(defun get-signature-help-trigger-characters (workspace)
+  (mapcar #'string-to-char
+          (-> (workspace-server-capabilities workspace)
+              "signatureHelpProvider" "triggerCharacters")))
 
 (defun pathname-to-uri (pathname)
   (let ((filename (namestring pathname)))
@@ -570,7 +575,9 @@
   (lem:add-hook (lem:variable-value 'lem:self-insert-after-hook :buffer buffer)
                 'self-insert-hook)
   (dolist (c (get-completion-trigger-characters workspace))
-    (setf (gethash c (workspace-triggers workspace)) 'lem.language-mode::complete-symbol)))
+    (setf (gethash c (workspace-triggers workspace)) 'lem.language-mode::complete-symbol))
+  (dolist (c (get-signature-help-trigger-characters workspace))
+    (setf (gethash c (workspace-triggers workspace)) 'lsp-signature-help)))
 
 (defun start (client buffer)
   (let* ((root-path *root-path*)

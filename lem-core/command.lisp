@@ -4,6 +4,8 @@
           exit-lem
           quick-exit
           keyboard-quit
+          self-insert-before-hook
+          self-insert-after-hook
           self-insert
           unmark-buffer
           *read-only-function*
@@ -78,10 +80,15 @@
 (define-command keyboard-quit () ()
   (error 'editor-abort))
 
+(define-editor-variable self-insert-before-hook '())
+(define-editor-variable self-insert-after-hook '())
+
 (define-command self-insert (n) ("p")
   (let ((c (insertion-key-p (last-read-key-sequence))))
     (cond (c
-           (insert-character (current-point) c n))
+           (run-hooks (variable-value 'self-insert-before-hook) c)
+           (insert-character (current-point) c n)
+           (run-hooks (variable-value 'self-insert-after-hook) c))
           (t
            (undefined-key)))))
 

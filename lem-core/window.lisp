@@ -938,41 +938,45 @@
        (abs (- (window-x window) (window-x w2))))))
 
 (defun left-window (window)
-  (first (sort (remove-if-not (lambda (w)
-                                (and (<= (window-y w)
-                                         (window-y window)
-                                         (+ (window-y w) (window-height w) -1))
-                                     (< (window-x w)
-                                        (window-x window))))
-                              (window-list))
-               #'>
-               :key #'window-x)))
+  (unless (floating-window-p window)
+    (first (sort (remove-if-not (lambda (w)
+                                  (and (<= (window-y w)
+                                           (window-y window)
+                                           (+ (window-y w) (window-height w) -1))
+                                       (< (window-x w)
+                                          (window-x window))))
+                                (window-list))
+                 #'>
+                 :key #'window-x))))
 
 (defun right-window (window)
-  (first (sort (min-if #'window-x
-                       (remove-if-not (lambda (w)
-                                        (> (window-x w)
-                                           (+ (window-x window) (window-width window))))
-                                      (window-list)))
-               (difference-window-y window))))
+  (unless (floating-window-p window)
+    (first (sort (min-if #'window-x
+                         (remove-if-not (lambda (w)
+                                          (> (window-x w)
+                                             (+ (window-x window) (window-width window))))
+                                        (window-list)))
+                 (difference-window-y window)))))
 
 (defun up-window (window)
-  (first (sort (remove-if-not (lambda (w)
-                                (and (<= (window-x w)
-                                         (window-x window)
-                                         (+ (window-x w) (window-width w) -1))
-                                     (< (window-y w)
-                                        (window-y window))))
-                              (window-list))
-               #'>
-               :key #'window-y)))
+  (unless (floating-window-p window)
+    (first (sort (remove-if-not (lambda (w)
+                                  (and (<= (window-x w)
+                                           (window-x window)
+                                           (+ (window-x w) (window-width w) -1))
+                                       (< (window-y w)
+                                          (window-y window))))
+                                (window-list))
+                 #'>
+                 :key #'window-y))))
 
 (defun down-window (window)
-  (first (sort (min-if #'window-y
-                       (remove-if-not (lambda (w)
-                                        (>= (window-y w) (+ (window-y window) (window-height window))))
-                                      (window-list)))
-               (difference-window-x window))))
+  (unless (floating-window-p window)
+    (first (sort (min-if #'window-y
+                         (remove-if-not (lambda (w)
+                                          (>= (window-y w) (+ (window-y window) (window-height window))))
+                                        (window-list)))
+                 (difference-window-x window)))))
 
 (defclass floating-window (window) ())
 

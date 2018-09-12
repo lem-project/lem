@@ -103,7 +103,8 @@
     (values)))
 
 (define-command dismiss-typeout-window () ()
-  (when (eq (current-window) *typeout-window*)
+  (unless (deleted-window-p *typeout-window*)
+    (setf (current-window) *typeout-window*)
     (when (deleted-window-p *typeout-before-window*)
       (setf *typeout-before-window* (first (window-list))))
     (setf (current-window) *typeout-before-window*)
@@ -113,6 +114,8 @@
     (delete-window *typeout-window*)))
 
 (define-command next-page-or-dismiss-typeout-window () ()
-  (move-point (current-point) (window-view-point (current-window)))
-  (unless (line-offset (current-point) (window-height (current-window)))
-    (dismiss-typeout-window)))
+  (unless (deleted-window-p *typeout-window*)
+    (setf (current-window) *typeout-window*)
+    (move-point (current-point) (window-view-point (current-window)))
+    (unless (line-offset (current-point) (window-height (current-window)))
+      (dismiss-typeout-window))))

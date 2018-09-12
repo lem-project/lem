@@ -53,6 +53,8 @@
          :prefix-search t))
   (setf (lem:variable-value 'lem.language-mode:find-definitions-function)
         'generic-definition)
+  (setf (lem:variable-value 'lem.language-mode:find-references-function)
+        'references)
   (let* ((buffer (lem:current-buffer))
          (client (get (lem:buffer-major-mode buffer) 'client)))
     (unless client
@@ -554,6 +556,19 @@
                       (type-definition point)
                       (implementation point))))
     (delete-duplicates xrefs :test #'xref-location-equal)))
+
+(defun references (point)
+  (let* ((buffer (lem:point-buffer point))
+         (workspace (buffer-workspace buffer)))
+    (sync-text-document buffer)
+    (let ((result (jsonrpc-call (workspace-connection workspace)
+                                "textDocument/references"
+                                (text-document-position-params point))))
+      (lem.language-mode:make-xref-references
+       :locations
+       (mapcar (lambda (location)
+                 (location-to-xref-location buffer location))
+               result)))))
 
 (defun on-change (point arg)
   (let ((buffer (lem:point-buffer point)))

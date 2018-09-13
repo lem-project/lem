@@ -15,8 +15,9 @@
   index
   novelty-check)
 
-(defun history-default-novelty-check (x y)
-  (not (equal x y)))
+(defun history-default-novelty-check (input last-input)
+  (and (not (equal input last-input))
+       (not (equal input ""))))
 
 (defun make-history (&optional (novelty-check #'history-default-novelty-check))
   (%make-history

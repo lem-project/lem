@@ -92,6 +92,10 @@
   (setf workspace (ensure-workspace workspace))
   (values (gethash "completionProvider" (workspace-server-capabilities workspace))))
 
+(defun signature-help-provider-p (workspace)
+  (setf workspace (ensure-workspace workspace))
+  (values (gethash "signatureHelpProvider" (workspace-server-capabilities workspace))))
+
 (defun definition-provider-p (workspace)
   (setf workspace (ensure-workspace workspace))
   (values (gethash "definitionProvider" (workspace-server-capabilities workspace))))
@@ -103,6 +107,14 @@
 (defun implementation-provider-p (workspace)
   (setf workspace (ensure-workspace workspace))
   (values (gethash "implementationProvider" (workspace-server-capabilities workspace))))
+
+(defun reference-provider-p (workspace)
+  (setf workspace (ensure-workspace workspace))
+  (values (gethash "referencesProvider" (workspace-server-capabilities workspace))))
+
+(defun document-highlight-provider-p (workspace)
+  (setf workspace (ensure-workspace workspace))
+  (values (gethash "documentHighlightProvider" (workspace-server-capabilities workspace))))
 
 (defun get-completion-trigger-characters (workspace)
   (mapcar #'string-to-char
@@ -508,12 +520,13 @@
         window))))
 
 (defun signature-help (point)
-  (sync-text-document (lem:point-buffer point))
-  (let ((workspace (buffer-workspace (lem:point-buffer point))))
-    (let ((signature-help (jsonrpc-call (workspace-connection workspace)
-                                        "textDocument/signatureHelp"
-                                        (text-document-position-params point))))
-      signature-help)))
+  (when (signature-help-provider-p point)
+    (sync-text-document (lem:point-buffer point))
+    (let ((workspace (buffer-workspace (lem:point-buffer point))))
+      (let ((signature-help (jsonrpc-call (workspace-connection workspace)
+                                          "textDocument/signatureHelp"
+                                          (text-document-position-params point))))
+        signature-help))))
 
 (defun location-to-xref-location (buffer location)
   (let-hash (|uri| |range|) location
@@ -558,17 +571,34 @@
     (delete-duplicates xrefs :test #'xref-location-equal)))
 
 (defun references (point)
-  (let* ((buffer (lem:point-buffer point))
-         (workspace (buffer-workspace buffer)))
-    (sync-text-document buffer)
-    (let ((result (jsonrpc-call (workspace-connection workspace)
-                                "textDocument/references"
-                                (text-document-position-params point))))
-      (lem.language-mode:make-xref-references
-       :locations
-       (mapcar (lambda (location)
-                 (location-to-xref-location buffer location))
-               result)))))
+  (when (reference-provider-p point)
+    (let* ((buffer (lem:point-buffer point))
+           (workspace (buffer-workspace buffer)))
+      (sync-text-document buffer)
+      (let ((result (jsonrpc-call (workspace-connection workspace)
+                                  "textDocument/references"
+                                  (text-document-position-params point))))
+        (lem.language-mode:make-xref-references
+         :locations
+         (mapcar (lambda (location)
+                   (location-to-xref-location buffer location))
+                 result))))))
+
+(defun document-highlight (point)
+  (when (document-highlight-provider-p point)
+    #+(or)
+    (let* ((buffer (lem:point-buffer point))
+           (workspace (buffer-workspace buffer)))
+      (sync-text-document buffer)
+      (let ((document-highlights
+              (jsonrpc-call (workspace-connection workspace)
+                            "textDocument/documentHighlight"
+                            (text-document-position-params point))))
+        (mapcar (lambda (document-highlight)
+                  (let-hash (|range| #||kind||#) document-highlight
+                    (multiple-value-bind (start end) (decode-lsp-range buffer |range|)
+                      )))
+                document-highlights)))))
 
 (defun on-change (point arg)
   (let ((buffer (lem:point-buffer point)))

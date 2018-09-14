@@ -32,7 +32,7 @@ exec ros -Q -- $0 "$@"
   (dex:fetch (format nil "https://raw.githubusercontent.com/Shinmera/lem-icon/gh-pages/icon-~A.svg" name)
              "lem-icon.svg"))
 
-(defun gen-desktop (filename &key explanation command global)
+(defun gen-desktop (filename &key explanation command global prefix)
   (with-open-file (o (format nil "~A.desktop" filename)
                      :direction :output
                      :if-exists :supersede)
@@ -46,18 +46,18 @@ exec ros -Q -- $0 "$@"
                            "Comment=Common Lisp editor/IDE with high expansibility"
                            ,(format nil "MimeType=~{~A;~}" *mime-types*)
                            ,(format nil "TryExec=~A" (if global
-                                                         (format nil "/usr/local/bin/~A" filename)
+                                                         (format nil "~A/bin/~A" prefix filename)
                                                          (roswell.util:which "ros")))
                            ,(format nil "Exec=~A %F"
                                     (if global
-                                        (format nil "/usr/local/bin/~A" filename)
+                                        (format nil "~A/bin/~A" prefix filename)
                                         (format nil "~A ~A"
                                                 (roswell.util:which "ros")
                                                 (roswell.util:which command))))
                            ,(format nil "Icon=~A"
                                     (namestring (merge-pathnames "lem-icon.svg"
                                                                  (if global
-                                                                     "/usr/share/lem/icons/"
+                                                                     (format nil "~A/share/lem/icons/" prefix)
                                                                      *default-pathname-defaults*))))
                            "Type=Application"
                            "Terminal=true"
@@ -66,13 +66,17 @@ exec ros -Q -- $0 "$@"
 
 (defun main (&rest argv)
   (let ((icon (position "--icon" argv :test #'equal))
+        (prefix (position "--prefix" argv :test #'equal))
         (global (not (find "--local" argv :test #'equal))))
     (when icon
       (setf icon (nth (1+ icon) argv)))
     (setf icon (or icon "blue-shaded"))
+    (when prefix
+      (setf prefix (nth (1+ prefix) argv)))
+    (setf prefix (or prefix "/usr/local"))
     (unless (probe-file "lem-icon.svg")
       (download-icon icon))
-    (gen-desktop "lem-ncurses" :explanation "ncurses" :command "lem-ncurses" :global global)
-    (gen-desktop "lem-ncurses-ccl" :explanation "ncurses ccl" :command "lem-ncurses-ccl" :global global)))
+    (gen-desktop "lem-ncurses" :explanation "ncurses" :command "lem-ncurses" :global global :prefix prefix)
+    (gen-desktop "lem-ncurses-ccl" :explanation "ncurses ccl" :command "lem-ncurses-ccl" :global global :prefix prefix)))
 
 ;;; vim: set ft=lisp lisp:

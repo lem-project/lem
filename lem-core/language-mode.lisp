@@ -22,7 +22,7 @@
    :make-xref-references
    :xref-location-filespec
    :xref-location-position
-   :xref-location-title
+   :xref-location-content
    :xref-references-type
    :xref-references-locations
    :xref-filespec-to-buffer

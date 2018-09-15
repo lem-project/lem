@@ -116,6 +116,10 @@
   (setf workspace (ensure-workspace workspace))
   (values (gethash "documentHighlightProvider" (workspace-server-capabilities workspace))))
 
+(defun document-symbol-provider-p (workspace)
+  (setf workspace (ensure-workspace workspace))
+  (values (gethash "documentSymbolProvider" (workspace-server-capabilities workspace))))
+
 (defun get-completion-trigger-characters (workspace)
   (mapcar #'string-to-char
           (-> (workspace-server-capabilities workspace)
@@ -585,6 +589,7 @@
                  result))))))
 
 (defun document-highlight (point)
+  ;; TODO
   (when (document-highlight-provider-p point)
     #+(or)
     (let* ((buffer (lem:point-buffer point))
@@ -599,6 +604,20 @@
                     (multiple-value-bind (start end) (decode-lsp-range buffer |range|)
                       )))
                 document-highlights)))))
+
+(defun document-symbol-params (buffer)
+  ({} "textDocument" (text-document-identifier buffer)))
+
+(defun document-symbol (point)
+  (when (document-symbol-provider-p point)
+    (let* ((buffer (lem:point-buffer point))
+           (workspace (buffer-workspace buffer)))
+      (sync-text-document buffer)
+      (let ((document-symbol
+              (jsonrpc-call (workspace-connection workspace)
+                            "textDocument/documentSymbol"
+                            (document-symbol-params (lem:point-buffer point)))))
+        (do-log "document-symbol: ~A" (pretty-json document-symbol))))))
 
 (defun on-change (point arg)
   (let ((buffer (lem:point-buffer point)))

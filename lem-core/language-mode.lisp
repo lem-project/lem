@@ -324,12 +324,15 @@
   (let ((elt (pop (gethash (xref-table-key (current-buffer))
                            *xref-stack-table*))))
     (when elt
-      (run-hooks *set-location-hook* (current-point))
       (destructuring-bind (buffer-name line-number charpos) elt
+        (unless (get-buffer buffer-name)
+          (pop-definition-stack)
+          (return-from pop-definition-stack))
+        (run-hooks *set-location-hook* (current-point))
         (select-buffer buffer-name)
         (move-to-line (current-point) line-number)
-        (line-offset (current-point) 0 charpos))
-      (jump-highlighting))))
+        (line-offset (current-point) 0 charpos)
+        (jump-highlighting)))))
 
 (define-command complete-symbol () ()
   (alexandria:when-let (fn (variable-value 'completion-spec :buffer))

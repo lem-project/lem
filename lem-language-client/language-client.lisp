@@ -658,21 +658,21 @@
        (setf (buffer-workspace buffer) workspace))
       (t
        (let ((connection (jsonrpc:make-client)))
-         (setf workspace
-               (make-workspace :connection connection
-                               :root root-path
-                               :language-id (client-language-id client)))
-         (push workspace *workspaces*)
-         (setf (buffer-workspace buffer) workspace)
-         (dolist (response-method *response-methods*)
-           (jsonrpc:expose connection (string response-method) response-method))
          (apply #'jsonrpc:client-connect
-                (workspace-connection workspace)
+                connection
                 (etypecase client
                   (tcp-client
                    (list :mode :tcp :port (client-port client)))
                   (stdio-client
                    (list :mode :stdio))))
+         (setf workspace
+               (make-workspace :connection connection
+                               :root root-path
+                               :language-id (client-language-id client)))
+         (setf (buffer-workspace buffer) workspace)
+         (dolist (response-method *response-methods*)
+           (jsonrpc:expose connection (string response-method) response-method))
+         (push workspace *workspaces*)
          (initialize workspace)
          (initialized workspace)
          workspace)))

@@ -638,7 +638,44 @@
                 (jsonrpc-call (workspace-connection workspace)
                               "textDocument/documentSymbol"
                               (document-symbol-params (lem:point-buffer point)))))
-          (mapcar #'symbol-to-definition document-symbol))))))
+          ;(do-log "document-symbol: ~A" (pretty-json document-symbol))
+          (let* ((origin-window (lem:current-window))
+                 (completion-items
+                   (mapcar (lambda (xref-location)
+                             (lem.completion-mode:make-completion-item
+                              :label (lem.language-mode:xref-location-content xref-location)
+                              :focus-action (lambda ()
+                                              (let* ((filespec
+                                                       (lem.language-mode:xref-location-filespec
+                                                        xref-location))
+                                                     (buffer
+                                                       (lem.language-mode:xref-filespec-to-buffer
+                                                        filespec))
+                                                     (point
+                                                       (lem:buffer-point buffer)))
+                                                (lem.language-mode:move-to-xref-location-position
+                                                 point
+                                                 (lem.language-mode:xref-location-position
+                                                  xref-location))
+                                                point)
+                                              (unless (lem:deleted-window-p origin-window)
+                                                (lem:window-see origin-window)
+                                                (lem.sourcelist:jump-highlighting point)))))
+                           (mapcar #'symbol-to-definition document-symbol))))
+            (let (select-item)
+              (lem:prompt-for-line
+               "Document Symbol: " ""
+               (lambda (str)
+                 (lem:completion str completion-items
+                                 :key #'lem.completion-mode:completion-item-label))
+               (lambda (str)
+                 (setf select-item
+                       (find str completion-items
+                             :test #'string=
+                             :key #'lem.completion-mode:completion-item-label)))
+               'mh-document-symbol)
+              (when select-item
+                (funcall (lem.completion-mode::completion-item-focus-action select-item))))))))))
 
 (defun on-change (point arg)
   (let ((buffer (lem:point-buffer point)))

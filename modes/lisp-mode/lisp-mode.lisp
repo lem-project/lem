@@ -1127,6 +1127,14 @@
     (change-buffer-mode buffer 'lisp-mode)
     (switch-to-buffer buffer)))
 
+;; workaround for windows
+#+win32
+(add-hook *exit-editor-hook*
+          (lambda ()
+	    ;; quit slime to exit lem normally (incomplete)
+            (ignore-errors
+              (slime-quit))))
+
 (pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons ".asd$" 'lisp-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons ".cl$" 'lisp-mode) *auto-mode-alist* :test #'equal)

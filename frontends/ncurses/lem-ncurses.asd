@@ -5,5 +5,11 @@
                #+(or (and ccl unix) (and lispworks unix))"lem-setlocale"
                "lem")
   :serial t
-  :components ((:file "term")
-               (:file "ncurses")))
+  :components (#+win32
+               (:file "cl-charms_patch")
+               (:file "term")
+	       #+win32
+               (:file "term_patch")
+               (:file "ncurses")
+	       #+win32
+               (:file "ncurses_patch")))

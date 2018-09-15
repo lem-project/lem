@@ -535,17 +535,18 @@
                                           (text-document-position-params point))))
         signature-help))))
 
-(defun location-to-xref-location (buffer location)
+(defun location-to-xref-location (buffer location &optional content)
   (let-hash (|uri| |range|) location
     (multiple-value-bind (start end)
         (decode-lsp-range buffer |range|)
       (declare (ignore end))
       (lem.language-mode:make-xref-location :filespec (quri:uri-path (quri:uri |uri|))
                                             :position start
-                                            :content (format nil "~A:~D:~D"
-                                                             |uri|
-                                                             (lem:line-number-at-point start)
-                                                             (lem:point-charpos start))))))
+                                            :content (or content
+                                                         (format nil "~A:~D:~D"
+                                                                 |uri|
+                                                                 (lem:line-number-at-point start)
+                                                                 (lem:point-charpos start)))))))
 
 (defun xref-location-equal (xref-1 xref-2)
   (and (equal (lem.language-mode::xref-location-filespec xref-1)
@@ -612,15 +613,32 @@
   ({} "textDocument" (text-document-identifier buffer)))
 
 (defun document-symbol (point)
-  (when (document-symbol-provider-p point)
-    (let* ((buffer (lem:point-buffer point))
-           (workspace (buffer-workspace buffer)))
-      (sync-text-document buffer)
-      (let ((document-symbol
-              (jsonrpc-call (workspace-connection workspace)
-                            "textDocument/documentSymbol"
-                            (document-symbol-params (lem:point-buffer point)))))
-        (do-log "document-symbol: ~A" (pretty-json document-symbol))))))
+  (labels ((document-symbol-to-definition (object)
+             (let-hash (|name| |range|)
+                 object
+               (multiple-value-bind (start end)
+                   (decode-lsp-range (lem:point-buffer point) |range|)
+                 (location-to-xref-location (lem:point-buffer point)
+                                            (lsp-location start end)
+                                            |name|))))
+           (symbol-information-to-definition (object)
+             (let-hash (|name| |location|)
+                 object
+               (location-to-xref-location (lem:point-buffer point) |location| |name|)))
+           (symbol-to-definition (object)
+             (funcall (if (gethash "location" object)
+                          #'document-symbol-to-definition
+                          #'symbol-information-to-definition)
+                      object)))
+    (when (document-symbol-provider-p point)
+      (let* ((buffer (lem:point-buffer point))
+             (workspace (buffer-workspace buffer)))
+        (sync-text-document buffer)
+        (let ((document-symbol
+                (jsonrpc-call (workspace-connection workspace)
+                              "textDocument/documentSymbol"
+                              (document-symbol-params (lem:point-buffer point)))))
+          (mapcar #'symbol-to-definition document-symbol))))))
 
 (defun on-change (point arg)
   (let ((buffer (lem:point-buffer point)))
@@ -687,6 +705,9 @@
 (lem:define-command lsp-signature-help () ()
   (let ((signature-help (signature-help (lem:current-point))))
     (make-signature-help-window signature-help)))
+
+(lem:define-command lsp-document-symbol () ()
+  (document-symbol (lem:current-point)))
 
 (defmacro define-tcp-client (mode-name (&rest args) &key caller-hook)
   `(progn

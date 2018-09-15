@@ -103,7 +103,10 @@
               (unless (minibuffer-window-active-p) (message nil))
               (call-command cmd nil)))
         (editor-condition (c)
-          (message "~A" c))))))
+          (message "~A" c))))
+    (unless (eq (window-buffer (current-window))
+                (current-buffer))
+      (setf (current-buffer) (window-buffer (current-window))))))
 
 (defun toplevel-command-loop (initialize-function)
   (with-catch-bailout

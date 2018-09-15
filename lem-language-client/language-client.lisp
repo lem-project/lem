@@ -626,7 +626,7 @@
                  object
                (location-to-xref-location (lem:point-buffer point) |location| |name|)))
            (symbol-to-definition (object)
-             (funcall (if (gethash "location" object)
+             (funcall (if (gethash "range" object)
                           #'document-symbol-to-definition
                           #'symbol-information-to-definition)
                       object)))

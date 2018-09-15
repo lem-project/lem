@@ -26,7 +26,8 @@
    :xref-references-type
    :xref-references-locations
    :xref-filespec-to-buffer
-   :xref-filespec-to-filename)
+   :xref-filespec-to-filename
+   :move-to-xref-location-position)
   #+sbcl
   (:lock t))
 (in-package :lem.language-mode)
@@ -234,22 +235,26 @@
     (string filespec)
     (pathname (namestring filespec))))
 
+(defun move-to-xref-location-position (point position)
+  (etypecase position
+    (integer
+     (move-to-position point position))
+    (cons
+     (move-to-line point (car position))
+     (line-offset point 0 (cdr position)))
+    (point
+     (let ((line-number (line-number-at-point position))
+           (charpos (point-charpos position)))
+       (move-to-line point line-number)
+       (line-offset point 0 charpos)))))
+
 (defun go-to-location (location set-buffer-fn)
   (let ((buffer (xref-filespec-to-buffer (xref-location-filespec location))))
     (unless buffer (editor-error "~A does not exist." (xref-location-filespec location)))
     (funcall set-buffer-fn buffer)
-    (let ((position (xref-location-position location)))
-      (etypecase position
-        (integer
-         (move-to-position (current-point) position))
-        (cons
-         (move-to-line (current-point) (car position))
-         (line-offset (current-point) 0 (cdr position)))
-        (point
-         (let ((line-number (line-number-at-point position))
-               (charpos (point-charpos position)))
-           (move-to-line (current-point) line-number)
-           (line-offset (current-point) 0 charpos)))))))
+    (let ((position (xref-location-position location))
+          (point (buffer-point buffer)))
+      (move-to-xref-location-position point position))))
 
 (define-command find-definitions () ()
   (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))

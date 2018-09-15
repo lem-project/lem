@@ -111,11 +111,17 @@
    (delete-hook
     :initform nil
     :accessor window-delete-hook)
+   (switch-to-buffer-hook
+    :initform nil
+    :accessor window-switch-to-buffer-hook)
    (use-modeline-p
     :initarg :use-modeline-p
     :initform nil
     :reader window-use-modeline-p
     :type boolean)
+   (modeline-format
+    :initform nil
+    :accessor window-modeline-format)
    (parameters
     :initform nil
     :accessor window-parameters)))
@@ -901,6 +907,7 @@
 
 (defun switch-to-buffer (buffer &optional (record t) (move-prev-point t))
   (check-type buffer buffer)
+  (run-hooks (window-switch-to-buffer-hook (current-window)) buffer)
   (when (or (buffer-value (window-buffer (current-window)) 'prohibition-switch-to-buffer)
             (buffer-value buffer 'prohibition-switch-to-buffer))
     (editor-error "This buffer is not switchable"))

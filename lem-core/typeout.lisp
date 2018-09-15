@@ -6,17 +6,19 @@
 
 (define-minor-mode typeout-mode
     (:name "typeout"
-     :keymap *typeout-mode-keymap*)
-  (setf (variable-value 'truncate-lines :buffer (current-buffer)) nil))
+     :keymap *typeout-mode-keymap*
+     :enable-hook (lambda ()
+                    (setf (variable-value 'truncate-lines :buffer (current-buffer)) nil))))
 
 (define-key *typeout-mode-keymap* "q" 'dismiss-typeout-window)
 (define-key *typeout-mode-keymap* "Space" 'next-page-or-dismiss-typeout-window)
 (define-key *typeout-mode-keymap* "Backspace" 'previous-page)
 (define-key *typeout-mode-keymap* 'other-window 'dismiss-typeout-window)
-(define-key *typeout-mode-keymap* 'execute-command 'undefined-key)
+;(define-key *typeout-mode-keymap* 'execute-command 'undefined-key)
 
 (defvar *typeout-window* nil)
 (defvar *typeout-before-window* nil)
+(defvar *typeout-window-rewinding-values* nil)
 
 #|
 (defun pop-up-typeout-window (buffer fn &key focus erase (read-only t))
@@ -84,15 +86,20 @@
                   (lem::window-set-size *typeout-window* (display-width) window-height)
                   *typeout-window*)
                  (t
+                  (let ((typeout-buffer-p (buffer-value buffer 'typeout-buffer-p))
+                        (prohibition-switch-to-buffer (buffer-value buffer 'prohibition-switch-to-buffer)))
+                    (setf *typeout-window-rewinding-values*
+                          (list typeout-buffer-p
+                                prohibition-switch-to-buffer)))
                   (let ((window (make-floating-window buffer 0 0 (display-width) window-height t)))
+                    (setf (window-modeline-format window) '(typeout-window-modeline))
                     (add-hook (window-delete-hook window)
                               'delete-typeout-window-hook)
+                    (add-hook (window-switch-to-buffer-hook window)
+                              'typeout-window-switch-to-buffer-hook)
                     (setf *typeout-window* window
                           *typeout-before-window* (current-window))
                     window)))))
-    (setf (variable-value 'modeline-format :buffer buffer) '())
-    (setf (buffer-value buffer 'lem::modeline-status-list)
-          (list 'typeout-window-modeline))
     (setf (buffer-value buffer 'typeout-buffer-p) t)
     (setf (buffer-value buffer 'prohibition-switch-to-buffer) t)
     (bury-buffer buffer)
@@ -101,15 +108,24 @@
     (redraw-display*)
     (values)))
 
+(defun typeout-window-switch-to-buffer-hook (&rest args)
+  (declare (ignore args))
+  (dismiss-typeout-window))
+
 (define-command dismiss-typeout-window () ()
   (unless (deleted-window-p *typeout-window*)
     (setf (current-window) *typeout-window*)
+    (typeout-mode nil)
     (when (deleted-window-p *typeout-before-window*)
       (setf *typeout-before-window* (first (window-list))))
     (setf (current-window) *typeout-before-window*)
-    (let ((buffer (window-buffer *typeout-window*)))
-      (when (buffer-value buffer 'typeout-buffer-p)
-        (delete-buffer buffer)))
+    (when *typeout-window-rewinding-values*
+      (let ((buffer (window-buffer *typeout-window*)))
+        (destructuring-bind (typeout-buffer-p
+                             prohibition-switch-to-buffer)
+            *typeout-window-rewinding-values*
+          (setf (buffer-value buffer 'typeout-buffer-p) typeout-buffer-p)
+          (setf (buffer-value buffer 'prohibition-switch-to-buffer) prohibition-switch-to-buffer))))
     (delete-window *typeout-window*)))
 
 (define-command next-page-or-dismiss-typeout-window () ()

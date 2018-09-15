@@ -119,7 +119,8 @@
   (modeline-apply-1 window
                     print-fn
                     default-attribute
-                    (variable-value 'modeline-format :default (window-buffer window)))
+                    (or (window-modeline-format window)
+                        (variable-value 'modeline-format :default (window-buffer window))))
   (alexandria:when-let ((items (buffer-value (window-buffer window) 'modeline-status-list)))
     (modeline-apply-1 window print-fn default-attribute items))
   (alexandria:when-let ((items *modeline-status-list*))

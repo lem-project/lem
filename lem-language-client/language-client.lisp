@@ -46,7 +46,10 @@
 (defclass stdio-client (client) ())
 
 (lem:define-minor-mode language-client-mode
-    (:name "Language Client")
+    (:name "Language Client"
+     :enable-hook 'enable-language-client-mode))
+
+(defun enable-language-client-mode ()
   (setf (lem:variable-value 'lem.language-mode:completion-spec)
         (lem.completion-mode:make-completion-spec
          'completion

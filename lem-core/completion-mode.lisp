@@ -22,7 +22,8 @@
   (label "" :read-only t :type string)
   (detail "" :read-only t :type string)
   (start nil :read-only t :type (or null point))
-  (end nil :read-only t :type (or null point)))
+  (end nil :read-only t :type (or null point))
+  (focus-action nil :read-only t :type (or null function)))
 
 (defvar *completion-mode-keymap* (make-keymap :name '*completion-mode-keymap*
                                               :undef-hook 'completion-self-insert))
@@ -60,6 +61,11 @@
   (when *current-completion-spec*
     (run-completion-1 *current-completion-spec* t)))
 
+(defun call-focus-action ()
+  (alexandria:when-let* ((item (lem.popup-window::get-focus-item))
+                         (fn (completion-item-focus-action item)))
+    (funcall fn)))
+
 (define-command completion-self-insert () ()
   (let ((c (insertion-key-p (last-read-key-sequence))))
     (cond (c (insert-character (current-point) c)
@@ -72,16 +78,20 @@
   (completion-again))
 
 (define-command completion-next-line () ()
-  (lem-if:popup-menu-down (implementation)))
+  (lem-if:popup-menu-down (implementation))
+  (call-focus-action))
 
 (define-command completion-previous-line () ()
-  (lem-if:popup-menu-up (implementation)))
+  (lem-if:popup-menu-up (implementation))
+  (call-focus-action))
 
 (define-command completion-end-of-buffer () ()
-  (lem-if:popup-menu-last (implementation)))
+  (lem-if:popup-menu-last (implementation))
+  (call-focus-action))
 
 (define-command completion-beginning-of-buffer () ()
-  (lem-if:popup-menu-first (implementation)))
+  (lem-if:popup-menu-first (implementation))
+  (call-focus-action))
 
 (define-command completion-select () ()
   (lem-if:popup-menu-select (implementation)))

@@ -1,0 +1,17 @@
+#|-*- mode:lisp -*-|#
+(in-package :cl-user)
+(defpackage :lake.user
+  (:use :cl :lake :cl-syntax)
+  (:shadowing-import-from :lake
+                          :directory))
+(in-package :lake.user)
+
+(use-syntax :interpol)
+
+(defparameter swig (or (ros:getenv "SWIG")
+                       "swig3.0"))
+
+(task "default" ("cffi.lisp"))
+
+(file "cffi.lisp" ("cffi.i")
+  (sh #?"${swig} -swig-lisp -cffi -I/usr/include -I/usr/include/linux -I/usr/include/x86_64-linux-gnu -D__x86_64__ -importall cffi.i"))

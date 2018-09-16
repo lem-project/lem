@@ -15,10 +15,7 @@ os:
 
 install:
   - curl -L https://raw.githubusercontent.com/roswell/roswell/release/scripts/install-for-ci.sh | sh
+  - ros install cxxxr/lem
 
 script:
-  - ros install cxxxr/lem-contrib
   - ros -s lem-ncurses -s lem-modeline-battery -s lem-tetris -s lem-man -s lem-trailing-spaces
-  - ./bootstrap
-  - ./configure
-  - make

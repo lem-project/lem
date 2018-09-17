@@ -100,7 +100,7 @@
 
 (defvar *rust-syntax-table*
   (let ((table (make-syntax-table
-                :space-chars '(#\space #\tab #\newline #\: #\, #\;)
+                :space-chars '(#\space #\tab #\newline)
                 :symbol-chars '(#\_)
                 :paren-pairs '((#\( . #\))
                                ;;(#\< . #\>)
@@ -108,6 +108,7 @@
                                (#\[ . #\]))
                 :string-quote-chars '(#\")
                 :expr-prefix-chars '(#\- #\+ #\*)
+                :expr-suffix-chars '(#\: #\, #\;)
                 :block-string-pairs '(("`" . "`"))
                 :line-comment-string "//"
                 :block-comment-pairs '(("/*" . "*/"))))

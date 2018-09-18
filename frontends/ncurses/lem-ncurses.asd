@@ -7,5 +7,4 @@
   :serial t
   :components (#+win32(:file "cl-charms-pdcurseswin32")
                (:file "term")
-               (:file "ncurses")
-               #+win32(:file "ncurses-pdcurseswin32")))
+               (:file "ncurses")))

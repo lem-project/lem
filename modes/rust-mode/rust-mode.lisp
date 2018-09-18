@@ -24,6 +24,9 @@
                                     :name 'syntax-string-attribute
                                     :patterns (make-tm-patterns
                                                (make-tm-match "\\\\.")))
+                    (make-tm-region "r(#+)\""
+                                    "\"\\1"
+                                    :name 'syntax-string-attribute)
                     (make-tm-match "'\\\\?.'"
                                    :name 'syntax-string-attribute)
                     (make-tm-match (tokens :word-boundary

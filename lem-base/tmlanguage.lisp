@@ -257,10 +257,14 @@
                        contp)))
 
 (defun tm-replace-back-reference (tree string reg-starts reg-ends)
-  (loop :for n :from 1
+  (loop :with copied := nil
+        :for n :from 1
         :for reg-start :across reg-starts
         :for reg-end :across reg-ends
         :do (let ((str (subseq string reg-start reg-end)))
+              (unless copied
+                (setf copied t)
+                (setf tree (copy-tree tree)))
               (setf tree
                     (nsubst-if str
                                (lambda (x)

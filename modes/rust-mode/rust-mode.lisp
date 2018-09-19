@@ -238,8 +238,6 @@
           :do (if (line-offset p 1)
                   (back-to-indentation p)
                   (return-from %indent-line nil)))
-    (when (eql #\# (character-at p))
-      (%indent p 0))
     (when (and (eql #\. (character-at p))
                (not (eql #\. (character-at p 1))))
       (%indent p (+ indent tab-width)))

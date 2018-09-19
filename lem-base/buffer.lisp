@@ -135,6 +135,12 @@
 文書を管理するオブジェクトです。  
 複数の`buffer`はリストで管理されています。"))
 
+;; workaround for windows
+#+win32
+(defmethod initialize-instance :after ((buffer buffer) &rest initargs)
+  "set default buffer encoding to utf-8"
+  (setf (buffer-encoding buffer) (encoding :utf-8 :lf)))
+
 (setf (documentation 'buffer-point 'function) "`buffer`の現在の`point`を返します。")
 (setf (documentation 'buffer-mark 'function) "`buffer`の現在のマークの`point`を返します。")
 (setf (documentation 'buffer-start-point 'function) "`buffer`の最初の位置の`point`を返します。")

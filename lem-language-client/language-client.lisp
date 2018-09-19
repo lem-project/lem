@@ -31,9 +31,9 @@
   save)
 
 (defclass client (jsonrpc:client)
-  ((program
-    :initarg :program
-    :reader client-program)
+  ((command
+    :initarg :command
+    :reader client-command)
    (language-id
     :initarg :language-id
     :reader client-language-id)))
@@ -753,8 +753,20 @@
      ,(when caller-hook
         `(lem:add-hook ,caller-hook 'language-client-mode))))
 
+(defmacro define-stdio-client (mode-name (&rest args) &key caller-hook)
+  `(progn
+     (setf (get ',mode-name 'client)
+           (make-instance 'stdio-client ,@args))
+     ,(when caller-hook
+        `(lem:add-hook ,caller-hook 'language-client-mode))))
+
 (define-tcp-client lem-js-mode:js-mode
-  (:program "node ~/opt/javascript-typescript-langserver/lib/language-server"
+  (:command '("node" "~/opt/javascript-typescript-langserver/lib/language-server")
    :language-id "javascript"
    :port 2089)
   :caller-hook lem-js-mode:*js-mode-hook*)
+
+(define-stdio-client lem-rust-mode:rust-mode
+  (:command '("rls")
+   :language-id "rust")
+  :caller-hook lem-rust-mode:*rust-mode-hook*)

@@ -27,18 +27,15 @@
   (:default-initargs
    :foreground :black
    :background :white
-   :input-model '((:gesture-spec input-key)
+   :input-model '(#-win32
+                  (:gesture-spec input-key)
+                  #+win32
+                  ((:key :press) input-key)
                   ((:button-1 :press) input-mouse-button :button-1 :press)
                   ((:button-1 :release) input-mouse-button :button-1 :release)
                   ((:button-1 :motion) input-mouse-button :button-1 :motion)
                   ((:button-2 :press) input-mouse-button :button-2 :press)
-                  ((:button-3 :press) input-mouse-button :button-3 :press)
-                  . #-win32 ()
-                  #+win32 #.(loop :for code :from 1 :to 127
-                                  :for char := (code-char code)
-                                  :collect `((,char :press :meta) input-key)
-                                  :collect `((,char :press :meta :control) input-key)
-                                  :collect `((,char :press :meta :control :shift) input-key)))
+                  ((:button-3 :press) input-mouse-button :button-3 :press))
    :resize-callback 'window-pane-resize-callback
    :display-callback 'window-pane-display-callback
    :composition-callback 'composition-callback

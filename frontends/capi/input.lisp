@@ -44,13 +44,16 @@
          #\\ #\_)))
 
 (defun convert-gesture-spec-data (data shiftp)
-  (if (not shiftp)
-      (values data nil)
-      (multiple-value-bind (value success)
-          (gethash (code-char data) *keyboard-table*)
-        (if success
-            (values value nil)
-            (values data shiftp)))))
+  (cond ((not shiftp)
+         (values data nil))
+        ((alpha-char-p (code-char data))
+         (values (char-upcase (code-char data)) nil))
+        (t
+         (multiple-value-bind (value success)
+             (gethash (code-char data) *keyboard-table*)
+           (if success
+               (values value nil)
+               (values data shiftp))))))
 
 (defun gesture-spec-to-key-for-windows (gesture-spec)
   (when (sys:gesture-spec-p gesture-spec)

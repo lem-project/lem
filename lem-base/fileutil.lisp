@@ -73,12 +73,13 @@
           (list pathspec))))
 
 (defun list-directory (directory &key directory-only)
-  (mapcar (lambda (x) (virtual-probe-file x directory))
-          (append (sort (copy-list (uiop:subdirectories directory))
-                        #'string< :key #'namestring)
-                  (unless directory-only
-                    (sort (copy-list (uiop:directory-files directory))
-                          #'string< :key #'namestring)))))
+  (delete nil
+          (mapcar (lambda (x) (virtual-probe-file x directory))
+                  (append (sort (copy-list (uiop:subdirectories directory))
+                                #'string< :key #'namestring)
+                          (unless directory-only
+                            (sort (copy-list (uiop:directory-files directory))
+                                  #'string< :key #'namestring))))))
 
 (defun file-size (pathname)
   #+lispworks

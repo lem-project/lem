@@ -14,8 +14,8 @@
             (capi:prompt-with-list-non-focus
              items
              :owner window-pane
-             :x (* (lem:point-column (lem:current-point)) char-width)
-             :y (* (1+ (lem:window-cursor-y (lem:current-window))) char-height)
+             :x (round (* (lem:point-column (lem:current-point)) char-width))
+             :y (round (* (1+ (lem:window-cursor-y (lem:current-window))) char-height))
              :print-function (or print-function #'princ-to-string)
              :action-callback (lambda (item interface)
                                 (declare (ignore interface))
@@ -59,8 +59,8 @@
           (with-apply-in-pane-process-wait-single (*lem-panel*)
             (setf *non-focus-interface*
                   (capi::display-non-focus-editor-pane
-                   :x (* (lem:point-column (lem:current-point)) char-width)
-                   :y (* (1+ (lem:window-cursor-y (lem:current-window))) char-height)
+                   :x (round (* (lem:point-column (lem:current-point)) char-width))
+                   :y (round (* (1+ (lem:window-cursor-y (lem:current-window))) char-height))
                    :owner window-pane
                    :width (* width char-width)
                    :height (* height char-height)

@@ -35,10 +35,25 @@
           (lem:window-y      window)
           (lem:window-width  window)
           (lem:window-height window)))
+;; for ConEmu
+;; get mouse pos-x for adjusting wide characters
+(defun get-mouse-pos-x (view x y)
+  (unless (= lem.term:*windows-term-type* 2)
+    (return-from get-mouse-pos-x x))
+  (let ((disp-x 0)
+        (pos-x  0)
+        (pos-y  (get-pos-y view x y)))
+    (loop :while (< pos-x x)
+       :for c-code := (get-charcode-from-scrwin view pos-x pos-y)
+       :for c := (code-char c-code)
+       :do (setf disp-x (lem-base:char-width c disp-x))
+         (setf pos-x (+ pos-x (if (< c-code #x10000) 1 2))))
+    disp-x))
 (defun mouse-move-to-cursor (window x y)
   (lem:move-point (lem:current-point) (lem::window-view-point window))
   (lem:move-to-next-virtual-line (lem:current-point) y)
-  (lem:move-to-virtual-line-column (lem:current-point) x))
+  (lem:move-to-virtual-line-column (lem:current-point)
+                                   (get-mouse-pos-x (lem:window-view window) x y)))
 (defun mouse-event-proc (bstate x1 y1)
   (lambda ()
     (cond
@@ -137,7 +152,8 @@
         (ctrl-key
          (cond
            ;; C-space / C-@
-           ((= code #x040) (setf code 0))
+           ((= code #x040) (setf code 0)) ; for mintty
+           ((= code #x020) (setf code 0)) ; for ConEmu
            ;; C-down / C-up / C-left / C-right
            ((= code #x1e1) (setf code 525))
            ((= code #x1e0) (setf code 566))
@@ -148,12 +164,16 @@
            ((= code #x1c0) (setf alt-key t) (setf code #x03e)) ; M->
            ((= code #x1bd) (setf code #o523)) ; PageUp
            ((= code #x1be) (setf code #o522)) ; PageDown
+           ;; C-|
+           ((= code #x07c) (setf code 31)) ; C-_ (Redo) for ConEmu
            ))
         ;; alt key workaround
         (alt-key
          (cond
+           ;; M-kanji
+           ((= code #x000) (setf code -1)) ; for cmd.exe
            ;; M-0 - M-9
-					;((<= #x197 code #x1a0) (setf code (- code #x167)))
+           ((<= #x197 code #x1a0) (setf code (- code #x167)))
            ;; M-A - M-Z
            ((<= #x1a1 code #x1ba) (setf code (- code #x140)))
            ;; M-down / M-up / M-left / M-right
@@ -179,10 +199,12 @@
         (t
          (cond
            ;; Home / End / PageUp / PageDown
-					;((= code #x106) (setf code #o406)) ; same code
+           ;;((= code #x106) (setf code #o406)) ; same code
            ((= code #x166) (setf code #o550))
-					;((= code #x153) (setf code #o523)) ; same code
-					;((= code #x152) (setf code #o522)) ; same code
+           ;;((= code #x153) (setf code #o523)) ; same code
+           ;;((= code #x152) (setf code #o522)) ; same code
+           ;; C-|
+           ((= code #x09c) (setf code 31)) ; C-_ (Redo) for mintty
            )))
       code))
   (defun get-event ()
@@ -191,12 +213,12 @@
          (let ((code (get-ch)))
            (cond ((= code -1) (go :start))
                  ((= code resize-code)
-					;(setf esc-key nil)
+                  ;;(setf esc-key nil)
                   ;; for resizing display
                   (setf *resizing* t)
                   :resize)
                  ((= code mouse-code)
-					;(setf esc-key nil)
+                  ;;(setf esc-key nil)
                   ;; for mouse
                   (multiple-value-bind (bstate x y z id)
                       (charms/ll:getmouse)
@@ -264,6 +286,7 @@
 ;; workaround for display update problem (incomplete)
 (defun force-refresh-display (width height)
   (loop :for y1 :from 0 :below height
+     ;; '#\.' is necessary ('#\space' doesn't work)
      :with str := (make-string width :initial-element #\.)
      :do (charms/ll:mvwaddstr charms/ll:*stdscr* y1 0 str))
   (charms/ll:refresh)
@@ -286,7 +309,9 @@
 ;; for resizing display
 (defmethod lem-if:display-height ((implementation ncurses))
   (resize-display)
-  (max 3 charms/ll:*lines*))
+  (max 3 (- charms/ll:*lines*
+            ;; for cmd.exe (windows ime uses the last line)
+            (if (= lem.term:*windows-term-type* 3) 1 0))))
 
 ;; use only stdscr
 (defmethod lem-if:delete-view ((implementation ncurses) view)
@@ -317,7 +342,7 @@
 (defun get-charcode-from-scrwin (view x y)
   (let ((code (logand (charms/ll:mvwinch (ncurses-view-scrwin view) y x)
                       charms/ll:A_CHARTEXT)))
-    (when (and (<= #xd800 code #xdbff) (< x (- (ncurses-view-width view) 1)))
+    (when (<= #xd800 code #xdbff)
       (let ((c-lead  code)
             (c-trail (logand (charms/ll:mvwinch (ncurses-view-scrwin view) y (+ x 1))
                              charms/ll:A_CHARTEXT)))
@@ -325,41 +350,45 @@
           (setf code (+ #x10000 (* (- c-lead #xd800) #x0400) (- c-trail #xdc00))))))
     code))
 
+;; for mintty and ConEmu
 ;; get pos-x/y for printing wide characters
 (defun get-pos-x (view x y &key (modeline nil) (cursor nil))
-  (unless (or (= lem.term:*pos-adjust-mode* 1)
-              (and (= lem.term:*pos-adjust-mode* 2) (not cursor)))
+  (unless (or (and (= lem.term:*windows-term-type* 1) (not cursor))
+              (= lem.term:*windows-term-type* 2))
     (return-from get-pos-x (+ x (ncurses-view-x view))))
-  (let* ((start-x (ncurses-view-x view))
-         (disp-x0 (+ x start-x))
-         (disp-x  start-x)
-         (pos-x   start-x)
-         (pos-y   (get-pos-y view x y :modeline modeline)))
+  (let* ((floating (not (ncurses-view-modeline-scrwin view)))
+         (start-x  (ncurses-view-x view))
+         (disp-x0  (+ x start-x))
+         (disp-x   (if floating 0 start-x))
+         (pos-x    (if floating 0 start-x))
+         (pos-y    (get-pos-y view x y :modeline modeline)))
     (loop :while (< disp-x disp-x0)
        :for c-code := (get-charcode-from-scrwin view pos-x pos-y)
        :for c := (code-char c-code)
        :do (setf disp-x (lem-base:char-width c disp-x))
-         (cond
-           ((gethash c lem-base:*char-replacement*)
-            (setf pos-x (lem-base:char-width c pos-x)))
-           (t
-            ;; pos-x is incremented only 1 at wide characters
-            (incf pos-x))))
+         ;; pos-x is incremented only 1 at wide characters
+         ;; (except for utf-16 surrogate pair characters)
+         (setf pos-x (+ pos-x (if (< c-code #x10000) 1 2))))
     pos-x))
 (defun get-pos-y (view x y &key (modeline nil))
   (+ y (ncurses-view-y view) (if modeline (ncurses-view-height view) 0)))
 
-;; adjust line width by using zero-width-space character (#\u200b)
+;; for mintty and ConEmu
+;; adjust line width by using zero-width-space characters (#\u200b)
 (defun adjust-line (view x y &key (modeline nil))
-  (unless (or (= lem.term:*pos-adjust-mode* 1)
-              (= lem.term:*pos-adjust-mode* 2))
+  (unless (or (= lem.term:*windows-term-type* 1)
+              (= lem.term:*windows-term-type* 2))
     (return-from adjust-line))
   (let* ((start-x    (ncurses-view-x view))
          (disp-width (ncurses-view-width view))
          (disp-x0    (+ disp-width start-x))
          (pos-x      (get-pos-x view disp-width y :modeline modeline))
          (pos-y      (get-pos-y view disp-width y :modeline modeline)))
-    (when (> disp-x0 pos-x)
+    ;; write zero-width-space characters (#\u200b)
+    ;; only when horizontal splitted window
+    ;; (to reduce the possibility of copying zero-width-space characters to clipboard)
+    (when (and (> disp-x0 pos-x)
+               (< (+ start-x disp-width) charms/ll:*cols*))
       (charms/ll:mvwaddstr (ncurses-view-scrwin view) pos-y pos-x
                            (make-string (- disp-x0 pos-x)
                                         :initial-element #\u200b)))))
@@ -370,15 +399,13 @@
         (splitted nil))
     (loop :for c :across string
        :for c-code := (char-code c)
-       :do (cond 
-             ((>= c-code #x10000)
-              ;; split to 2 characters
-              (multiple-value-bind (q r) (floor (- c-code #x10000) #x0400)
-                (push (code-char (+ q #xd800)) clist) ; leading surrogate
-                (push (code-char (+ r #xdc00)) clist) ; trailing surrogate
-                (setf splitted t)))
-             (t
-              (push c clist))))
+       :do (if (< c-code #x10000)
+               (push c clist)
+               ;; split to 2 characters
+               (multiple-value-bind (q r) (floor (- c-code #x10000) #x0400)
+                 (push (code-char (+ q #xd800)) clist) ; leading surrogate
+                 (push (code-char (+ r #xdc00)) clist) ; trailing surrogate
+                 (setf splitted t))))
     (if splitted
         (concatenate 'string (reverse clist))
         string)))
@@ -394,16 +421,50 @@
       (t
        string))))
 
+;; for cmd.exe (using cjk code page)
+;; workaround for printing problem of wide characters (incomplete)
+(defun print-sub (scrwin x y string)
+  (unless (and (= lem.term:*windows-term-type* 3)
+               (member lem.term:*windows-code-page* '(932 936 949 950)))
+    (charms/ll:mvwaddstr scrwin y x string)
+    (return-from print-sub))
+  ;; clear display area
+  (let ((disp-width 0))
+    (loop :for c :across string
+       :for c-code := (char-code c)
+       :do (incf disp-width)
+         ;; check wide characters (except for cp932 halfwidth katakana)
+         (when (and (> c-code #x7f)
+                    (not (and (= lem.term:*windows-code-page* 932)
+                              (<= #xff61 c-code #xff9f))))
+           (incf disp-width)))
+    (charms/ll:mvwaddstr scrwin y x
+                         (make-string disp-width :initial-element #\.))
+    (charms/ll:refresh))
+  ;; display wide characters
+  (loop :for c :across string
+     :for c-code := (char-code c)
+     :with pos-x := x
+     :do (charms/ll:mvwaddch scrwin y pos-x c-code)
+       (incf pos-x)
+       ;; check wide characters (except for cp932 halfwidth katakana)
+       (when (and (> c-code #x7f)
+                  (not (and (= lem.term:*windows-code-page* 932)
+                            (<= #xff61 c-code #xff9f))))
+         (charms/ll:mvwaddch scrwin y pos-x c-code)
+         (incf pos-x)
+         (charms/ll:refresh))))
+
 ;; use get-pos-x/y and adjust-line
 (defmethod lem-if:print ((implementation ncurses) view x y string attribute)
   (let ((attr (attribute-to-bits attribute)))
     (charms/ll:wattron (ncurses-view-scrwin view) attr)
-					;(charms/ll:scrollok (ncurses-view-scrwin view) 0)
-    (charms/ll:mvwaddstr (ncurses-view-scrwin view)
-                         (get-pos-y view x y)
-                         (get-pos-x view x y)
-                         (clip-string view x y (remake-string string)))
-					;(charms/ll:scrollok (ncurses-view-scrwin view) 1)
+    ;;(charms/ll:scrollok (ncurses-view-scrwin view) 0)
+    (print-sub (ncurses-view-scrwin view)
+               (get-pos-x view x y)
+               (get-pos-y view x y)
+               (clip-string view x y (remake-string string)))
+    ;;(charms/ll:scrollok (ncurses-view-scrwin view) 1)
     (charms/ll:wattroff (ncurses-view-scrwin view) attr)
     (adjust-line view x y)))
 
@@ -411,10 +472,10 @@
 (defmethod lem-if:print-modeline ((implementation ncurses) view x y string attribute)
   (let ((attr (attribute-to-bits attribute)))
     (charms/ll:wattron (ncurses-view-modeline-scrwin view) attr)
-    (charms/ll:mvwaddstr (ncurses-view-modeline-scrwin view)
-                         (get-pos-y view x y :modeline t)
-                         (get-pos-x view x y :modeline t)
-                         (clip-string view x y (remake-string string)))
+    (print-sub (ncurses-view-modeline-scrwin view)
+               (get-pos-x view x y :modeline t)
+               (get-pos-y view x y :modeline t)
+               (clip-string view x y (remake-string string)))
     (charms/ll:wattroff (ncurses-view-modeline-scrwin view) attr)
     (adjust-line view x y :modeline t)))
 
@@ -423,7 +484,10 @@
   (charms/ll:mvwaddstr (ncurses-view-scrwin view)
                        (get-pos-y view x y)
                        (get-pos-x view x y)
-                       (make-string (max (- (ncurses-view-width view) x) 0)
+                       (make-string (max (- (ncurses-view-width view)
+                                            (- (get-pos-x view x y)
+                                               (ncurses-view-x view)))
+                                         0)
                                     :initial-element #\space))
   (adjust-line view x y))
 

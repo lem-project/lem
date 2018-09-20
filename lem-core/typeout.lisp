@@ -16,6 +16,8 @@
 (define-key *typeout-mode-keymap* 'other-window 'dismiss-typeout-window)
 ;(define-key *typeout-mode-keymap* 'execute-command 'undefined-key)
 
+(defvar *enable-piece-of-paper* t)
+
 (defvar *typeout-window* nil)
 (defvar *typeout-before-window* nil)
 (defvar *typeout-window-rewinding-values* nil)
@@ -39,33 +41,30 @@
     window))
 |#
 
-(defun typeout-window-modeline (typeout-window)
-  (values (let* ((posline (string-trim " " (modeline-posline typeout-window)))
-                 (text (cond ((member posline '("All" "Bot") :test #'string=)
-                              "Press Space to continue")
-                             (t posline)))
-                 (line (concatenate 'string
-                                    (make-string (- (floor (display-width) 2)
-                                                    (floor (length text) 2)
-                                                    1)
-                                                 :initial-element #\_)
-                                    " "
-                                    text
-                                    " "))
-                 (line (concatenate 'string
-                                    line
-                                    (make-string (- (display-width) (length text))
-                                                 :initial-element #\_))))
-            line)
-          (make-attribute)
-          nil))
-
-(defun delete-typeout-window-hook ()
-  (setf *typeout-window* nil
-        *typeout-before-window* nil))
+(defun pop-up-typeout-window* (buffer function &key focus erase (read-only t))
+  (declare (ignore focus))
+  (let ((window (display-buffer buffer)))
+    (with-buffer-read-only buffer nil
+      (when erase
+        (erase-buffer buffer))
+      (when function
+        (save-excursion
+          (with-open-stream (out (make-buffer-output-stream (buffer-end-point buffer)))
+            (funcall function out)))))
+    (setf (buffer-read-only-p buffer) read-only)
+    (setf *typeout-before-window* (current-window))
+    (setf *typeout-window* window)
+    (setf (current-window) window)
+    (typeout-mode t)
+    (values)))
 
 (defun pop-up-typeout-window (buffer function &key focus erase (read-only t))
-  (declare (ignore focus))
+  (unless *enable-piece-of-paper*
+    (return-from pop-up-typeout-window
+      (pop-up-typeout-window* buffer function
+                              :focus focus
+                              :erase erase
+                              :read-only read-only)))
   (when (and *typeout-window*
              (not (eq buffer (window-buffer *typeout-window*))))
     (dismiss-typeout-window)
@@ -108,11 +107,41 @@
     (redraw-display*)
     (values)))
 
+(defun typeout-window-modeline (typeout-window)
+  (values (let* ((posline (string-trim " " (modeline-posline typeout-window)))
+                 (text (cond ((member posline '("All" "Bot") :test #'string=)
+                              "Press Space to continue")
+                             (t posline)))
+                 (line (concatenate 'string
+                                    (make-string (- (floor (display-width) 2)
+                                                    (floor (length text) 2)
+                                                    1)
+                                                 :initial-element #\_)
+                                    " "
+                                    text
+                                    " "))
+                 (line (concatenate 'string
+                                    line
+                                    (make-string (- (display-width) (length text))
+                                                 :initial-element #\_))))
+            line)
+          (make-attribute)
+          nil))
+
+(defun delete-typeout-window-hook ()
+  (setf *typeout-window* nil
+        *typeout-before-window* nil))
+
 (defun typeout-window-switch-to-buffer-hook (&rest args)
   (declare (ignore args))
   (dismiss-typeout-window))
 
 (define-command dismiss-typeout-window () ()
+  (if *enable-piece-of-paper*
+      (dismiss-typeout-window-1)
+      (dismiss-typeout-window-2)))
+
+(defun dismiss-typeout-window-1 ()
   (unless (deleted-window-p *typeout-window*)
     (setf (current-window) *typeout-window*)
     (typeout-mode nil)
@@ -127,6 +156,12 @@
           (setf (buffer-value buffer 'typeout-buffer-p) typeout-buffer-p)
           (setf (buffer-value buffer 'prohibition-switch-to-buffer) prohibition-switch-to-buffer))))
     (delete-window *typeout-window*)))
+
+(defun dismiss-typeout-window-2 ()
+  (when (and (eq (current-buffer) (window-buffer (current-window)))
+             (find 'typeout-mode (buffer-minor-modes (current-buffer))))
+    (typeout-mode nil) 
+    (quit-window)))
 
 (define-command next-page-or-dismiss-typeout-window () ()
   (unless (deleted-window-p *typeout-window*)

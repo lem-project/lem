@@ -177,3 +177,4 @@
   (log-format "******************** redraw-window ~A *****************" window))
 
 (setq lem:*enable-clipboard-p* t)
+(setq lem::*enable-piece-of-paper* nil)

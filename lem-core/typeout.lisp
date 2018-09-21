@@ -22,25 +22,6 @@
 (defvar *typeout-before-window* nil)
 (defvar *typeout-window-rewinding-values* nil)
 
-#|
-(defun pop-up-typeout-window (buffer fn &key focus erase (read-only t))
-  (let ((window (display-buffer buffer)))
-    (with-current-window window
-      (with-buffer-read-only buffer nil
-        (when erase
-          (erase-buffer buffer))
-        (typeout-mode t)
-        (when fn
-          (save-excursion
-            (with-open-stream (out (make-buffer-output-stream (buffer-end-point buffer)))
-              (funcall fn out)))))
-      (when read-only
-        (setf (buffer-read-only-p buffer) t)))
-    (when focus
-      (setf (current-window) window))
-    window))
-|#
-
 (defun pop-up-typeout-window* (buffer function &key focus erase (read-only t))
   (declare (ignore focus))
   (let ((window (display-buffer buffer)))

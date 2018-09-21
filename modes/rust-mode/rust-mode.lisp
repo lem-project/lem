@@ -167,10 +167,12 @@
 (defun end-block-line-p (p)
   (with-point ((p p))
     (loop :for start := 0 :then (1+ i)
-          :for i := (let ((a (position #\} (line-string p) :start start))
-                          (b (position #\] (line-string p) :start start)))
-                      (cond ((and a b) (min a b))
-                            (t (or a b))))
+          :for i := (loop with result
+                          for c in '(#\} #\] #\))
+                          for v = (position c (line-string p) :start start)
+                          when v
+                          do (setf result (if result (min result v) v))
+                          finally (return result))
           :while i
           :do (unless (let ((p (character-offset (line-start p) i)))
                         (check-type p point)
@@ -186,31 +188,6 @@
       (skip-space-and-comment-forward p)
       (/= old-linenumber (line-number-at-point p)))))
 
-(defun unbalanced-p (state)
-  (if (member #\( (pps-state-paren-stack state)) t nil))
-
-(defun unbalanced-indent (p indent start)
-  (flet ((jmp-start-paren (p)
-           (loop
-             (scan-lists p -1 1)
-             (when (eql #\( (character-at p))
-               (return)))))
-    (let ((state))
-      (%indent p indent)
-      (jmp-start-paren p)
-      (let ((indent1 (1+ (point-column p))))
-        (loop
-          (unless (line-offset p 1) (return-from unbalanced-indent nil))
-          (%indent p indent1)
-          (unless (unbalanced-p (setf state
-                                      (parse-partial-sexp (copy-point start :temporary)
-                                                          (line-end p))))
-            (return))
-          (with-point ((p p))
-            (jmp-start-paren p)
-            (setf indent1 (1+ (point-column p)))))
-        state))))
-
 (defun cond-op-line-p (p limit)
   (and (not (delimiter-line-p p))
        (search-forward (line-start p) "?" limit)
@@ -221,8 +198,7 @@
   (with-point ((tmp (line-end p)))
     (when (cond-op-line-p p tmp)
       (line-start tmp)
-      (when (and (not (unbalanced-p (parse-partial-sexp tmp p)))
-                 (not (delimiter-line-p p)))
+      (unless (delimiter-line-p p)
         (loop
           (unless (line-offset p 1) (return-from indent-cond-op nil))
           (%indent-line p (+ indent tab-width))
@@ -253,8 +229,7 @@
           (decf indent tab-width))))
     (let ((word (looking-at p "\\w+"))
           (word-point)
-          (state)
-          (unbalanced-flag nil))
+          (state))
       (when word
         (setf word-point (copy-point p :temporary))
         (character-offset p (length word))
@@ -264,18 +239,13 @@
         (setf state (parse-partial-sexp (copy-point start :temporary)
                                         (line-end p)))
         (cond
-          ((unbalanced-p state)
-           (setf unbalanced-flag t)
-           (unless (setf state (unbalanced-indent p indent start))
-             (return-from %indent-line nil)))
           ((and word (ppcre:scan "^(?:case|default)$" word))
            (%indent p (- indent tab-width)))
           (t
            (%indent p indent)
            (unless (indent-cond-op p indent)
              (return-from %indent-line nil)))))
-      (when (or (eql #\{ (car (pps-state-paren-stack state)))
-                (eql #\[ (car (pps-state-paren-stack state))))
+      (when (find (car (pps-state-paren-stack state)) '(#\{ #\[ #\())
         (let ((indent (+ indent tab-width))
               (status))
           (loop

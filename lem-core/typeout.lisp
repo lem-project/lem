@@ -28,10 +28,11 @@
     (with-buffer-read-only buffer nil
       (when erase
         (erase-buffer buffer))
-      (when function
-        (save-excursion
-          (with-open-stream (out (make-buffer-output-stream (buffer-end-point buffer)))
-            (funcall function out)))))
+      (with-open-stream (out (make-buffer-output-stream (buffer-end-point buffer)))
+        (when function
+          (save-excursion
+            (funcall function out)))
+        (format out "~%--- Press Space to continue ---~%")))
     (setf (buffer-read-only-p buffer) read-only)
     (setf *typeout-before-window* (current-window))
     (setf *typeout-window* window)

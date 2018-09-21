@@ -640,8 +640,7 @@
                  ((search-forward p (cdr block-pair) to)
                   (setf block-pair nil)
                   (setf type nil)
-                  (setf token-start-point nil)
-                  (return p))
+                  (setf token-start-point nil))
                  (t
                   (move-point p to)
                   (return-from outer))))

@@ -112,7 +112,11 @@
                 :string-quote-chars '(#\")
                 :expr-prefix-chars '(#\- #\+ #\*)
                 :expr-suffix-chars '(#\: #\, #\;)
-                :block-string-pairs '(("`" . "`"))
+                :block-string-pairs `(("`" . "`")
+                                      ,@(loop :for i :from 1 :to 9
+                                              :for s := (make-string i :initial-element #\#)
+                                              :collect (cons (format nil "r~A\"" s)
+                                                             (format nil "\"~A" s))))
                 :line-comment-string "//"
                 :block-comment-pairs '(("/*" . "*/"))))
         (tmlanguage (make-tmlanguage-rust)))

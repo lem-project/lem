@@ -10,8 +10,7 @@
 
 (defmethod initialize-instance :around ((transport lem-stdio-transport) &rest initargs &key process)
   (setf (slot-value transport 'stream)
-        (make-instance 'lem-process:process-io-stream
-                       :process process))
+        (lem-process:make-process-stream process))
   (apply #'call-next-method transport initargs))
 
 (defun find-mode-class (mode)

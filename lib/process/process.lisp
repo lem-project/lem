@@ -6,10 +6,8 @@
   buffer
   read-thread)
 
-(defun run-process (program args &key name buffer)
-  (let ((buffer (get-buffer buffer)))
-    (unless buffer
-      (setf buffer (make-buffer (format nil "*~A*" program))))
+(defun run-process (program args &key name)
+  (let ((buffer (make-buffer (or name program) :temporary t :enable-undo-p nil)))
     (let* ((pointer (async-process:create-process (cons program args) :nonblock nil))
            (thread (bt:make-thread
                     (lambda ()
@@ -34,3 +32,6 @@
 
 (defun process-send-input (process string)
   (async-process:process-send-input (process-pointer process) string))
+
+(defun make-process-stream (process)
+  (make-instance 'process-io-stream :process process))

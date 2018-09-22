@@ -1,9 +1,8 @@
 (defpackage :lem-process
   (:use :cl :lem)
-  (:export :process-io-stream
-           :run-process
+  (:export :run-process
            :delete-process
            :process-alive-p
-           :process-send-input)
+           :make-process-stream)
   #+sbcl
   (:lock t))

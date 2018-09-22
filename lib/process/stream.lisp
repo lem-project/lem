@@ -18,7 +18,7 @@
 (defmethod initialize-instance :after ((stream process-input-stream) &rest initargs)
   (declare (ignore initargs))
   (setf (slot-value stream 'read-ahead-point)
-        (copy-point (buffer-point (process-buffer (stream-process stream)))
+        (copy-point (buffer-start-point (process-buffer (stream-process stream)))
                     :right-inserting)))
 
 (defmethod trivial-gray-streams::close ((stream process-input-stream) &key abort)

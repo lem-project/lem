@@ -1,6 +1,7 @@
 (defpackage :lem-process
   (:use :cl :lem)
-  (:export :run-process
+  (:export :process-io-stream
+           :run-process
            :delete-process
            :process-alive-p
            :process-send-input)

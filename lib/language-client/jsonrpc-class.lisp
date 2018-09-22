@@ -3,14 +3,23 @@
 (defclass lem-stdio-transport (jsonrpc:transport)
   ((stream
     :reader lem-stdio-transport-stream)
+   (program
+    :initarg :program
+    :initform (error ":program missing")
+    :reader lem-stdio-transport-program)
+   (arguments
+    :initarg :arguments
+    :initform (error ":arguments missing")
+    :reader lem-stdio-transport-arguments)
    (process
-    :initarg :process
-    :initform (error ":process missing")
-    :reader lem-stdio-transport-process)))
+    :reader lem-stdio-transport-stream)))
 
-(defmethod initialize-instance :around ((transport lem-stdio-transport) &rest initargs &key process)
-  (setf (slot-value transport 'stream)
-        (lem-process:make-process-stream process))
+;; TODO: デストラクタで(delete-process process), (close stream)をする
+
+(defmethod initialize-instance :around ((transport lem-stdio-transport) &rest initargs &key program arguments)
+  (let ((process (lem-process:run-process program arguments)))
+    (setf (slot-value transport 'process) process)
+    (setf (slot-value transport 'stream) (lem-process:make-process-stream process)))
   (apply #'call-next-method transport initargs))
 
 (defun find-mode-class (mode)
@@ -60,7 +69,6 @@
         (read-sequence body (lem-stdio-transport-stream transport))
         (jsonrpc/request-response:parse-message body)))))
 
-;; character stream
 (defun read-headers (stream)
   (let ((headers (make-hash-table :test 'equal)))
     (loop for line = (read-line stream)

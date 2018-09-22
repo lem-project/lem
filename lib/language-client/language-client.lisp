@@ -719,7 +719,9 @@
                   (tcp-client
                    (list :mode :tcp :port (client-port client)))
                   (stdio-client
-                   (list :mode :stdio))))
+                   (list :mode :lem-stdio
+                         :process (lem-process:run-process (first (client-command client))
+                                                           (rest (client-command client)))))))
          (setf workspace
                (make-workspace :connection connection
                                :root root-path

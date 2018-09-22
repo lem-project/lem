@@ -10,7 +10,8 @@
            :visual-char-p
            :visual-line-p
            :visual-block-p
-           :apply-visual-range))
+           :apply-visual-range
+           :vi-visual-insert))
 (in-package :lem-vi-mode.visual)
 
 (defvar *set-visual-function* nil)
@@ -20,6 +21,7 @@
 (defvar *visual-keymap* (make-keymap :name '*visual-keymap* :parent *command-keymap*))
 
 (define-key *visual-keymap* "Escape" 'vi-visual-end)
+(define-key *visual-keymap* "I" 'vi-visual-insert)
 
 (define-vi-state visual (:keymap *visual-keymap*
                          :post-command-hook 'post-command-hook)
@@ -102,6 +104,18 @@
       (progn
         (change-state 'visual 'visual-block)
         (message "-- VISUAL BLOCK --"))))
+
+(define-command vi-visual-insert () ()
+  (when (visual-block-p)
+    (let ((str (concatenate 'string
+                            (loop for key-char = (key-to-char (read-key))
+                                  while (char/= #\Escape key-char)
+                                  collect key-char))))
+      (apply-visual-range (lambda (start end)
+                            (unless (point< start end)
+                              (rotatef start end))
+                            (insert-string start str))))
+    (vi-visual-end)))
 
 (defun visual-p ()
   (eq 'visual (current-state)))

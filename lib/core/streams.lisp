@@ -87,7 +87,7 @@
   t)
 
 (defmethod stream-element-type ((stream buffer-output-stream))
-  'line)
+  'character)
 
 (defmethod trivial-gray-streams:stream-line-column ((stream buffer-output-stream))
   (point-charpos (buffer-stream-point stream)))

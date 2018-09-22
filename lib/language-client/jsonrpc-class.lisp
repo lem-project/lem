@@ -4,13 +4,14 @@
   ((stream
     :reader lem-stdio-transport-stream)
    (process
+    :initarg :process
     :initform (error ":process missing")
     :reader lem-stdio-transport-process)))
 
-(defmethod initialize-instance :around ((transport lem-stdio-transport) &rest initargs)
+(defmethod initialize-instance :around ((transport lem-stdio-transport) &rest initargs &key process)
   (setf (slot-value transport 'stream)
         (make-instance 'lem-process:process-io-stream
-                       :process (lem-stdio-transport-process transport)))
+                       :process process))
   (apply #'call-next-method transport initargs))
 
 (defun find-mode-class (mode)

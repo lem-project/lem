@@ -8,7 +8,8 @@
 
 (defun run-process (program args &key name buffer)
   (let ((buffer (get-buffer buffer)))
-    (assert (not (null buffer)))
+    (unless buffer
+      (setf buffer (make-buffer (format nil "*~A*" program))))
     (let* ((pointer (async-process:create-process (cons program args) :nonblock nil))
            (thread (bt:make-thread
                     (lambda ()

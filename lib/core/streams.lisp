@@ -29,6 +29,7 @@
   (delete-point (buffer-stream-point stream))
   t)
 
+;;; TODO: unread-charがあるときの処理が間違ってるかも
 (defmethod trivial-gray-streams:stream-read-char ((stream buffer-input-stream))
   (let ((character (buffer-input-stream-unread-char stream)))
     (prog1 (cond (character

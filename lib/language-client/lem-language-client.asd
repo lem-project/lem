@@ -3,5 +3,5 @@
   :serial t
   :components ((:file "package")
                (:file "util")
-               (:file "jsonrpc")
+               (:file "jsonrpc-util")
                (:file "language-client")))

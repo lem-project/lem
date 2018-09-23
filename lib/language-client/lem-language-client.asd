@@ -4,5 +4,5 @@
   :components ((:file "package")
                (:file "util")
                (:file "jsonrpc-util")
-               (:file "jsonrpc-class")
+               (:file "jsonrpc-transport")
                (:file "language-client")))

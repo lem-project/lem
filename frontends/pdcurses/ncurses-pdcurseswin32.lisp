@@ -1,14 +1,20 @@
 (in-package :lem-ncurses)
 
-;; debug log
-(defun dbg-log-format (fmt &rest args)
-  (with-open-file (out "lemlog_ncurses0001.txt"
-                       :direction :output
-                       :if-does-not-exist :create
-                       :if-exists :append)
-    (fresh-line out)
-    (apply #'format out fmt args)
-    (terpri out)))
+;; windows terminal type
+;;   :mintty  : mintty  (winpty is needed)
+;;   :conemu  : ConEmu  (experimental)
+;;               (Settings - Features - 'ANSI and xterm sequences' must be off)
+;;   :cmd.exe : cmd.exe (experimental)
+(defvar *windows-term-type*
+  (cond
+    ((string= (uiop:getenv "MSYSCON") "mintty.exe") :mintty)
+    ((uiop:getenv "ConEmuBuild") :conemu)
+    (t :cmd.exe)))
+
+;; windows console code page
+(cffi:load-foreign-library '(:default "User32"))
+(defvar *windows-code-page*
+  (cffi:foreign-funcall "GetConsoleOutputCP" :int))
 
 ;; for resizing display
 (defkeycode "[resize]" #x222)
@@ -17,6 +23,16 @@
 ;; for mouse
 (defkeycode "[mouse]" #x21b)
 (defvar *dragging-window* '())
+
+;; debug log
+(defun dbg-log-format (fmt &rest args)
+  (with-open-file (out "lemlog_pdcurses0001.txt"
+                       :direction :output
+                       :if-does-not-exist :create
+                       :if-exists :append)
+    (fresh-line out)
+    (apply #'format out fmt args)
+    (terpri out)))
 
 ;; use only stdscr
 (defmethod lem-if:make-view
@@ -37,9 +53,9 @@
           (lem:window-height window)))
 ;; for ConEmu
 ;; get mouse pos-x for adjusting wide characters
-(defun get-mouse-pos-x (view x y)
-  (unless (= lem.term:*windows-term-type* 2)
-    (return-from get-mouse-pos-x x))
+(defun mouse-get-pos-x (view x y)
+  (unless (eq *windows-term-type* :conemu)
+    (return-from mouse-get-pos-x x))
   (let ((disp-x 0)
         (pos-x  0)
         (pos-y  (get-pos-y view x y)))
@@ -53,7 +69,7 @@
   (lem:move-point (lem:current-point) (lem::window-view-point window))
   (lem:move-to-next-virtual-line (lem:current-point) y)
   (lem:move-to-virtual-line-column (lem:current-point)
-                                   (get-mouse-pos-x (lem:window-view window) x y)))
+                                   (mouse-get-pos-x (lem:window-view window) x y)))
 (defun mouse-event-proc (bstate x1 y1)
   (lambda ()
     (cond
@@ -311,7 +327,7 @@
   (resize-display)
   (max 3 (- charms/ll:*lines*
             ;; for cmd.exe (windows ime uses the last line)
-            (if (= lem.term:*windows-term-type* 3) 1 0))))
+            (if (eq *windows-term-type* :cmd.exe) 1 0))))
 
 ;; use only stdscr
 (defmethod lem-if:delete-view ((implementation ncurses) view)
@@ -353,8 +369,8 @@
 ;; for mintty and ConEmu
 ;; get pos-x/y for printing wide characters
 (defun get-pos-x (view x y &key (modeline nil) (cursor nil))
-  (unless (or (and (= lem.term:*windows-term-type* 1) (not cursor))
-              (= lem.term:*windows-term-type* 2))
+  (unless (or (and (eq *windows-term-type* :mintty) (not cursor))
+              (eq *windows-term-type* :conemu))
     (return-from get-pos-x (+ x (ncurses-view-x view))))
   (let* ((floating (not (ncurses-view-modeline-scrwin view)))
          (start-x  (ncurses-view-x view))
@@ -376,8 +392,8 @@
 ;; for mintty and ConEmu
 ;; adjust line width by using zero-width-space characters (#\u200b)
 (defun adjust-line (view x y &key (modeline nil))
-  (unless (or (= lem.term:*windows-term-type* 1)
-              (= lem.term:*windows-term-type* 2))
+  (unless (or (eq *windows-term-type* :mintty)
+              (eq *windows-term-type* :conemu))
     (return-from adjust-line))
   (let* ((start-x    (ncurses-view-x view))
          (disp-width (ncurses-view-width view))
@@ -424,8 +440,8 @@
 ;; for cmd.exe (using cjk code page)
 ;; workaround for printing problem of wide characters (incomplete)
 (defun print-sub (scrwin x y string)
-  (unless (and (= lem.term:*windows-term-type* 3)
-               (member lem.term:*windows-code-page* '(932 936 949 950)))
+  (unless (and (eq *windows-term-type* :cmd.exe)
+               (member *windows-code-page* '(932 936 949 950)))
     (charms/ll:mvwaddstr scrwin y x string)
     (return-from print-sub))
   ;; clear display area
@@ -435,7 +451,7 @@
        :do (incf disp-width)
          ;; check wide characters (except for cp932 halfwidth katakana)
          (when (and (> c-code #x7f)
-                    (not (and (= lem.term:*windows-code-page* 932)
+                    (not (and (= *windows-code-page* 932)
                               (<= #xff61 c-code #xff9f))))
            (incf disp-width)))
     (charms/ll:mvwaddstr scrwin y x
@@ -449,7 +465,7 @@
        (incf pos-x)
        ;; check wide characters (except for cp932 halfwidth katakana)
        (when (and (> c-code #x7f)
-                  (not (and (= lem.term:*windows-code-page* 932)
+                  (not (and (= *windows-code-page* 932)
                             (<= #xff61 c-code #xff9f))))
          (charms/ll:mvwaddch scrwin y pos-x c-code)
          (incf pos-x)
@@ -516,7 +532,7 @@
     (charms/ll:attroff attr))
   (charms/ll:wnoutrefresh (ncurses-view-scrwin view)))
 
-;; adjust cursor position
+;; use get-pos-x/y
 (defmethod lem-if:update-display ((implementation ncurses))
   (let* ((view   (window-view (current-window)))
          (scrwin (ncurses-view-scrwin view)))

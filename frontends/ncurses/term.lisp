@@ -8,33 +8,12 @@
            :term-finalize
            :term-set-tty
            ;;win32 patch
-           :*windows-term-type*
-           :*windows-code-page*
            :get-mouse-mode
            :enable-mouse
            :disable-mouse))
 (in-package :lem.term)
 
 (cffi:defcvar ("COLOR_PAIRS" *COLOR-PAIRS* :library charms/ll::libcurses) :int)
-
-;; windows terminal type
-;;   =0: none
-;;   =1: mintty  (winpty is needed)
-;;   =2: ConEmu  (experimental)
-;;        (Settings - Features - 'ANSI and xterm sequences' must be off)
-;;   =3: cmd.exe (experimental)
-(defvar *windows-term-type*
-  #-win32 0
-  #+win32 (cond
-            ((string= (uiop:getenv "MSYSCON") "mintty.exe") 1)
-            ((uiop:getenv "ConEmuBuild") 2)
-            (t 3)))
-
-;; windows console code page
-#+win32 (cffi:load-foreign-library '(:default "User32"))
-(defvar *windows-code-page*
-  #-win32 0
-  #+win32 (cffi:foreign-funcall "GetConsoleOutputCP" :int))
 
 ;; mouse mode
 ;;   =0: not use mouse

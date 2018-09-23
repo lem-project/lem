@@ -38,6 +38,3 @@
 
 (defun process-send-input (process string)
   (async-process:process-send-input (process-pointer process) string))
-
-(defun make-process-stream (process)
-  (make-instance 'process-io-stream :process process))

@@ -123,3 +123,6 @@
 
 (defclass process-io-stream (process-input-stream process-output-stream)
   ())
+
+(defun make-process-stream (process)
+  (make-instance 'process-io-stream :process process))

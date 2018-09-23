@@ -3,12 +3,12 @@
 (defstruct process
   pointer
   name
-  buffer
+  buffer-stream
   read-thread
   output-callback)
 
 (defun run-process (program args &key name output-callback)
-  (let ((buffer (make-buffer (or name program) :temporary t :enable-undo-p nil)))
+  (let ((buffer-stream (make-string-output-stream)))
     (let* ((pointer (async-process:create-process (cons program args) :nonblock nil))
            (thread (bt:make-thread
                     (lambda ()
@@ -16,16 +16,18 @@
                         (alexandria:when-let
                             (string (async-process:process-receive-output pointer))
                           (send-event (lambda ()
-                                        (write-to-buffer buffer string output-callback)))))))))
+                                        (write-to-buffer buffer-stream string output-callback))))))
+                    :name (format nil "run-process ~A ~A" program args))))
       (make-process :pointer pointer
                     :name name
-                    :buffer buffer
+                    :buffer-stream buffer-stream
                     :read-thread thread
                     :output-callback output-callback))))
 
-(defun write-to-buffer (buffer string output-callback)
-  (insert-string (buffer-end-point buffer) string)
-  (funcall output-callback string))
+(defun write-to-buffer (buffer-stream string output-callback)
+  (write-string string buffer-stream)
+  (when output-callback
+    (funcall output-callback string)))
 
 (defun delete-process (process)
   (bt:destroy-thread (process-read-thread process))

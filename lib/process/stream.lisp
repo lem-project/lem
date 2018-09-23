@@ -9,36 +9,49 @@
 
 ;;; input
 (defclass process-input-stream (%process-stream trivial-gray-streams:fundamental-character-input-stream)
-  ((read-ahead-point
-    :reader stream-read-ahead-point)
-   (unread-char
+  ((unread-char
     :initform nil
-    :accessor stream-unread-char)))
-
-(defmethod initialize-instance :after ((stream process-input-stream) &rest initargs)
-  (declare (ignore initargs))
-  (setf (slot-value stream 'read-ahead-point)
-        (copy-point (buffer-start-point (process-buffer (stream-process stream)))
-                    :right-inserting)))
+    :accessor stream-unread-character)
+   (pool-string
+    :initform ""
+    :accessor stream-pool-string)
+   (string-position
+    :initform 0
+    :accessor stream-string-position)))
 
 (defmethod trivial-gray-streams::close ((stream process-input-stream) &key abort)
-  (declare (ignore abort))
-  (delete-point (stream-read-ahead-point stream)))
+  (declare (ignore abort)))
+
+(defun stream-process-buffer-stream (stream)
+  (process-buffer-stream (stream-process stream)))
+
+(defun end-of-string-p (stream)
+  (<= (length (stream-pool-string stream))
+      (stream-string-position stream)))
+
+(defun update-pool-string-if-required (stream)
+  (when (end-of-string-p stream)
+    (setf (stream-pool-string stream)
+          (get-output-stream-string (stream-process-buffer-stream stream)))
+    (setf (stream-string-position stream) 0)))
+
+(defun stream-next-char (stream &optional spend)
+  (alexandria:when-let (character (stream-unread-character stream))
+    (when spend (setf (stream-unread-character stream) nil))
+    (return-from stream-next-char character))
+  (update-pool-string-if-required stream)
+  (if (end-of-string-p stream)
+      :eof
+      (prog1 (char (stream-pool-string stream)
+                   (stream-string-position stream))
+        (when spend
+          (incf (stream-string-position stream))))))
 
 (defmethod trivial-gray-streams:stream-read-char ((stream process-input-stream))
-  (let ((character (stream-unread-char stream))
-        (point (stream-read-ahead-point stream)))
-    (cond (character
-           (setf (stream-unread-char stream) nil)
-           character)
-          ((end-buffer-p point)
-           :eof)
-          (t
-           (prog1 (character-at point)
-             (character-offset point 1))))))
+  (stream-next-char stream t))
 
 (defmethod trivial-gray-streams:stream-unread-char ((stream process-input-stream) character)
-  (setf (stream-unread-char stream) character)
+  (setf (stream-unread-character stream) character)
   nil)
 
 #+(or)
@@ -46,14 +59,11 @@
   )
 
 (defmethod trivial-gray-streams:stream-peek-char ((stream process-input-stream))
-  (or (stream-unread-char stream)
-      (let ((point (stream-read-ahead-point stream)))
-        (if (end-buffer-p point)
-            :eof
-            (character-at point)))))
+  (stream-next-char stream nil))
 
 (defmethod trivial-gray-streams:stream-listen ((stream process-input-stream))
-  (not (end-buffer-p (stream-read-ahead-point stream))))
+  (update-pool-string-if-required stream)
+  (not (end-of-string-p stream)))
 
 #+(or)
 (defmethod trivial-gray-streams:stream-read-line ((stream process-input-stream))

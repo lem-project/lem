@@ -720,7 +720,7 @@
                    (list :mode :tcp :port (client-port client)))
                   (stdio-client
                    (list :mode :lem-stdio
-                         :program (client-command client)
+                         :program (first (client-command client))
                          :arguments (rest (client-command client))))))
          (setf workspace
                (make-workspace :connection connection

@@ -3,7 +3,7 @@
 ;; windows terminal type
 ;;   :mintty  : mintty  (winpty is needed)
 ;;   :conemu  : ConEmu  (experimental)
-;;               (Settings - Features - 'ANSI and xterm sequences' must be off)
+;;               ('chcp 65001' must be done before run)
 ;;   :cmd.exe : cmd.exe (experimental)
 (defvar *windows-term-type*
   (cond
@@ -15,6 +15,16 @@
 (cffi:load-foreign-library '(:default "User32"))
 (defvar *windows-code-page*
   (cffi:foreign-funcall "GetConsoleOutputCP" :int))
+
+;; for input
+;; (we can't use *stdscr* for input because it calls wrefresh implicitly)
+(defvar *padwin* nil)
+(defun getch-pad ()
+  (unless *padwin*
+    (setf *padwin* (charms/ll:newpad 1 1))
+    (charms/ll:keypad *padwin* 1)
+    (charms/ll:PDC-save-key-modifiers 1))
+  (charms/ll:wgetch *padwin*))
 
 ;; for resizing display
 (defkeycode "[resize]" #x222)
@@ -143,7 +153,7 @@
   (when (<= #xd800 code #xdbff)
     (charms/ll:timeout 100)
     (let ((c-lead  code)
-          (c-trail (charms/ll:getch)))
+          (c-trail (getch-pad)))
       (when (<= #xdc00 c-trail #xdfff)
         (setf code (+ #x10000 (* (- c-lead #xd800) #x0400) (- c-trail #xdc00))))
       (charms/ll:timeout -1)))
@@ -158,8 +168,7 @@
       (alt-key  nil)
       (esc-key  nil))
   (defun get-ch ()
-    (charms/ll:PDC-save-key-modifiers 1)
-    (let ((code          (charms/ll:getch))
+    (let ((code          (getch-pad))
           (modifier-keys (charms/ll:PDC-get-key-modifiers)))
       (setf ctrl-key (logtest modifier-keys charms/ll:PDC_KEY_MODIFIER_CONTROL))
       (setf alt-key  (logtest modifier-keys charms/ll:PDC_KEY_MODIFIER_ALT))
@@ -197,14 +206,17 @@
            ((= code #x1ea) (setf code #o403))
            ((= code #x1ed) (setf code #o404))
            ((= code #x1ec) (setf code #o405))
+           ;; M-( / M-)
+           ((= code #x02A) (setf code #x028))
+           ((= code #x028) (setf code #x029))
            ;; M-[
            ((= code #x1f1)
             (charms/ll:timeout 100)
-            (let ((code1 (charms/ll:getch)))
+            (let ((code1 (getch-pad)))
               (cond
 		;; drop mouse escape sequence
 		((= code1 #x03c)	; <
-                 (loop :for code2 := (charms/ll:getch)
+                 (loop :for code2 := (getch-pad)
                     :until (or (= code2 -1)
                                (= code2 #x04d)	   ; M
                                (= code2 #x06d)))   ; m
@@ -267,7 +279,6 @@
                      (send-abort-event editor-thread nil)
                      (send-event event)))
                ;; workaround for exit problem
-               ;; workaround for display update problem (incomplete)
                (sleep 0.0001))
            #+sbcl
            (sb-sys:interactive-interrupt (c)
@@ -519,18 +530,16 @@
 
 ;; use only stdscr
 (defmethod lem-if:redraw-view-after ((implementation ncurses) view focus-window-p)
-  (let ((attr (attribute-to-bits 'modeline)))
-    (charms/ll:attron attr)
-    (when (and (ncurses-view-modeline-scrwin view)
-               (< 0 (ncurses-view-x view)))
-      ;; vertical line
+  (when (and (ncurses-view-modeline-scrwin view)
+             (< 0 (ncurses-view-x view)))
+    (let ((attr (attribute-to-bits 'modeline)))
+      (charms/ll:attron attr)
+      ;; vertical line for horizontal splitted window
       (loop :for y1 :from 0 :below (+ (ncurses-view-height view) 1)
-         :do (charms/ll:mvwaddch (ncurses-view-scrwin view)
-                                 (+ (ncurses-view-y view) y1)
-                                 (- (ncurses-view-x view) 1)
-                                 (char-code #\space))))
-    (charms/ll:attroff attr))
-  (charms/ll:wnoutrefresh (ncurses-view-scrwin view)))
+         :do (charms/ll:mvaddch (+ (ncurses-view-y view) y1)
+                                (- (ncurses-view-x view) 1)
+                                (char-code #\space)))
+      (charms/ll:attroff attr))))
 
 ;; use get-pos-x/y
 (defmethod lem-if:update-display ((implementation ncurses))

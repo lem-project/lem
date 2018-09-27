@@ -2,6 +2,7 @@
 
 (export '(find-file
           read-file
+          Add-Newline-at-EOF-on-Writing-File
           save-buffer
           changefile-name
           write-file
@@ -53,12 +54,22 @@
       (switch-to-buffer buffer t nil)))
   t)
 
+(define-editor-variable Add-Newline-at-EOF-on-Writing-File nil)
+
+(defun add-newline-at-eof (buffer)
+  (when (variable-value 'Add-Newline-at-EOF-on-Writing-File :default buffer)
+    (unless (start-line-p (buffer-end-point buffer))
+      (with-point ((p (buffer-point buffer) :left-inserting))
+        (save-excursion
+          (insert-character p #\newline))))))
+
 (define-key *global-keymap* "C-x C-s" 'save-buffer)
 (define-command save-buffer (&optional arg) ("P")
   (let ((buffer (current-buffer)))
     (cond
       ((and (or arg (buffer-modified-p buffer))
             (buffer-filename buffer))
+       (add-newline-at-eof buffer)
        (write-to-file buffer (buffer-filename buffer))
        (buffer-unmark buffer)
        (message "Wrote ~A" (buffer-filename)))
@@ -82,6 +93,7 @@
                            (uniq-buffer-name new)
                            new)))
       (setf (buffer-filename) expand-file-name)
+      (add-newline-at-eof (current-buffer))
       (save-buffer t))))
 
 (define-command write-region-file (start end filename)
@@ -91,6 +103,7 @@
              (region-end)
              (prompt-for-file "Write Region To File: " (buffer-directory) nil nil))))
   (setf filename (expand-file-name filename))
+  (add-newline-at-eof (point-buffer start))
   (write-region-to-file start end filename)
   (message "Wrote ~A" filename))
 

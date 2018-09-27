@@ -66,14 +66,15 @@
   (unless (continue-flag :kill)
     (kill-ring-new))
   (setf *overlays* (sort *overlays* #'point< :key #'overlay-start))
-  (with-output-to-string (out)
-    (loop :for ovs :on *overlays*
-          :for ov := (car ovs)
-          :do (delete-between-points (overlay-start ov) (overlay-end ov))
-              (write-string (points-to-string (overlay-start ov) (overlay-end ov))
-                            out)
-              (when (cdr ovs)
-                (write-char #\newline out))))
+  (kill-push
+   (with-output-to-string (out)
+     (loop :for ovs :on *overlays*
+           :for ov := (car ovs)
+           :do (delete-between-points (overlay-start ov) (overlay-end ov))
+               (write-string (points-to-string (overlay-start ov) (overlay-end ov))
+                             out)
+               (when (cdr ovs)
+                 (write-char #\newline out)))))
   (rectangle-end))  
 
 (define-command rectangle-open () ()

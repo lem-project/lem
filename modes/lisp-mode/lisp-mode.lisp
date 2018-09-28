@@ -41,8 +41,6 @@
   (set-syntax-parser lem-lisp-syntax:*syntax-table* (make-tmlanguage-lisp))
   (unless (connected-p) (self-connect)))
 
-(define-key *global-keymap* "M-(" 'insert-\(\))
-(define-key *global-keymap* "M-)" 'move-over-\))
 (define-key *lisp-mode-keymap* "C-M-q" 'lisp-indent-sexp)
 (define-key *lisp-mode-keymap* "C-c M-p" 'lisp-set-package)
 (define-key *global-keymap* "M-:" 'self-lisp-eval-string)
@@ -306,44 +304,6 @@
                  (skip-whitespace-forward point t)
                  (when (end-line-p point)
                    (character-offset point 1))))))))
-
-(define-command insert-\(\) () ()
-  (let ((p (current-point)))
-    (insert-character p #\()
-    (insert-character p #\))
-    (character-offset p -1)))
-
-(defun backward-search-rper ()
-  (save-excursion
-    (do* ((p (character-offset (current-point) -1))
-          (c (character-at p)
-             (character-at p)))
-        ((char= #\) c) p)
-      (unless (syntax-space-char-p c)
-        (return nil))
-      (character-offset p -1))))
-
-(defun backward-delete-to-rper ()
-  (save-excursion
-    (do* ((p (character-offset (current-point) -1))
-          (c (character-at p)
-             (character-at p)))
-        ((char= #\) c) p)
-      (unless (syntax-space-char-p c)
-        (return nil))
-      (delete-character p)
-      (character-offset p -1))))
-
-(define-command move-over-\) () ()
-  (let ((rper (backward-search-rper)))
-    (if rper
-        (progn
-          (backward-delete-to-rper)
-          (scan-lists (current-point) 1 1 T)
-          (lem.language-mode:newline-and-indent 1))
-        (progn
-          (scan-lists (current-point) 1 1 T)
-          (lem.language-mode:newline-and-indent 1)))))
 
 (define-command lisp-indent-sexp () ()
   (with-point ((end (current-point) :right-inserting))

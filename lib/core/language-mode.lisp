@@ -75,6 +75,8 @@
 (define-key *language-mode-keymap* "M-?" 'find-references)
 (define-key *language-mode-keymap* "M-," 'pop-definition-stack)
 (define-key *language-mode-keymap* "C-M-i" 'complete-symbol)
+(define-key *global-keymap* "M-(" 'insert-\(\))
+(define-key *global-keymap* "M-)" 'move-over-\))
 
 (defun beginning-of-defun-1 (n)
   (alexandria:when-let ((fn (variable-value 'beginning-of-defun-function :buffer)))
@@ -354,3 +356,41 @@
         (when (= old (point-charpos p))
           (complete-symbol)))
       (complete-symbol)))
+
+(define-command insert-\(\) () ()
+  (let ((p (current-point)))
+    (insert-character p #\()
+    (insert-character p #\))
+    (character-offset p -1)))
+
+(defun backward-search-rper ()
+  (save-excursion
+    (do* ((p (character-offset (current-point) -1))
+          (c (character-at p)
+             (character-at p)))
+        ((char= #\) c) p)
+      (unless (syntax-space-char-p c)
+        (return nil))
+      (character-offset p -1))))
+
+(defun backward-delete-to-rper ()
+  (save-excursion
+    (do* ((p (character-offset (current-point) -1))
+          (c (character-at p)
+             (character-at p)))
+        ((char= #\) c) p)
+      (unless (syntax-space-char-p c)
+        (return nil))
+      (delete-character p)
+      (character-offset p -1))))
+
+(define-command move-over-\) () ()
+  (let ((rper (backward-search-rper)))
+    (if rper
+        (progn
+          (backward-delete-to-rper)
+          (scan-lists (current-point) 1 1 T)
+          (newline-and-indent 1))
+        (progn
+          (scan-lists (current-point) 1 1 T)
+          (newline-and-indent 1)))))

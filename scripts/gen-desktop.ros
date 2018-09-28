@@ -29,7 +29,7 @@ exec ros -Q -- $0 "$@"
                        "text/x-c++"))
 
 (defun download-icon (name)
-  (dex:fetch (format nil "https://raw.githubusercontent.com/Shinmera/lem-icon/gh-pages/icon-~A.svg" name)
+  (dex:fetch (format nil "https://github.com/Shinmera/lem-icon/blob/gh-pages/icon-~A.svg" name)
              "lem-icon.svg"))
 
 (defun gen-desktop (filename &key explanation command global prefix)
@@ -70,7 +70,7 @@ exec ros -Q -- $0 "$@"
         (global (not (find "--local" argv :test #'equal))))
     (when icon
       (setf icon (nth (1+ icon) argv)))
-    (setf icon (or icon "blue-shaded"))
+    (setf icon (or icon "blue"))
     (when prefix
       (setf prefix (nth (1+ prefix) argv)))
     (setf prefix (or prefix "/usr/local"))

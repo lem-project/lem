@@ -58,7 +58,8 @@
 (defun scheme-output-callback (string)
   (let ((buffer (lem-process::process-buffer *scheme-process*)))
     (with-current-window (pop-to-buffer buffer)
-      (buffer-end (buffer-point buffer)))
+      (buffer-end (buffer-point buffer))
+      (redraw-display))
     (redraw-display)))
 
 (defun scheme-run-process ()

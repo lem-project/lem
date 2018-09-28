@@ -336,3 +336,9 @@
          (setf current-attribute token))
         (string
          (insert-string point token :attribute current-attribute))))))
+
+(define-repl-shortcut sayonara (n)
+  (declare (ignorable n))
+  (if (self-connection-p *connection*)
+      (message "Can't say sayonara because it's self connection.")
+      (interactive-eval "(swank:quit-lisp)")))

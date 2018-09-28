@@ -11,13 +11,15 @@
     ((uiop:getenv "ConEmuBuild") :conemu)
     (t :cmd.exe)))
 
+;; load windows dll
+(cffi:load-foreign-library '(:default "kernel32"))
+
 ;; windows console code page
-(cffi:load-foreign-library '(:default "User32"))
 (defvar *windows-code-page*
   (cffi:foreign-funcall "GetConsoleOutputCP" :int))
 
 ;; for input
-;; (we can't use *stdscr* for input because it calls wrefresh implicitly)
+;; (we can't use stdscr for input because it calls wrefresh implicitly)
 (defvar *padwin* nil)
 (defun getch-pad ()
   (unless *padwin*
@@ -268,6 +270,15 @@
                   (get-key code))))))))
 
 ;; workaround for exit problem
+(defun console-input-count ()
+  (let ((hdl (cffi:foreign-funcall "GetStdHandle" :int -10 :int)))
+    (cffi:with-foreign-objects ((count :int))
+      (if (cffi:foreign-funcall "GetNumberOfConsoleInputEvents"
+                                :int hdl :pointer count :boolean)
+          (cffi:mem-ref count :int)
+          0))))
+
+;; workaround for exit problem
 (defun input-loop (editor-thread)
   (handler-case
       (loop
@@ -279,7 +290,8 @@
                      (send-abort-event editor-thread nil)
                      (send-event event)))
                ;; workaround for exit problem
-               (sleep 0.0001))
+               (when (<= (console-input-count) 10)
+                 (sleep 0.0001)))
            #+sbcl
            (sb-sys:interactive-interrupt (c)
              (declare (ignore c))

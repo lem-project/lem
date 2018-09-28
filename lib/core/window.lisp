@@ -1026,7 +1026,7 @@
            (window-redraw (minibuffer-window) force)
            (window-redraw (current-window) force)))
     (dolist (window *floating-windows*)
-      (window-redraw window t))
+      (window-redraw window (redraw-after-modifying-floating-window (implementation))))
     (update-display)))
 
 (defun change-display-size-hook ()

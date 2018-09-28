@@ -28,7 +28,7 @@
 (defun make-tmlanguage-scheme ()
   (let ((patterns (make-tm-patterns
                    (make-tm-region
-                    `(:alternation ";" "#!")
+                    `(:sequence ";")
                     "$"
                     :name 'syntax-comment-attribute)
                    ;; todo: nested comment
@@ -47,13 +47,29 @@
                     :name 'syntax-string-attribute
                     :patterns (make-tm-patterns
                                (make-tm-match "\\\\.")))
+                   ;; shebang (for Gauche)
+                   (make-tm-region
+                    `(:sequence :start-anchor "#!")
+                    "$"
+                    :name 'syntax-comment-attribute)
+                   ;; regexp (for Gauche)
                    (make-tm-region
                     `(:sequence "#/")
-                    `(:sequence "/i?")
+                    `(:sequence "/" (:greedy-repetition 0 1 #\i))
+                    :name 'syntax-constant-attribute
                     :patterns (make-tm-patterns
                                (make-tm-match "\\\\.")))
                    (make-tm-match
                     "\\\\.")
+                   (make-tm-match
+                    `(:sequence
+                      "("
+                      ,(wrap-symbol-names "define")
+                      "("
+                      (:greedy-repetition 0 1 (:register symbol)))
+                    :captures (vector nil
+                                      (make-tm-name 'syntax-keyword-attribute)
+                                      (make-tm-name 'syntax-function-name-attribute)))
                    (make-tm-match
                     `(:sequence
                       "("
@@ -93,11 +109,9 @@
                       "("
                       (:group
                        (:register (:sequence "make-" ,(ppcre:parse-string "\\S*"))))
-                      (:alternation (:greedy-repetition 1 nil :whitespace-char-class) :end-anchor)
-                      (:greedy-repetition 0 1 (:register symbol)))
+                      (:alternation (:greedy-repetition 1 nil :whitespace-char-class) :end-anchor))
                     :captures (vector nil
-                                      (make-tm-name 'syntax-keyword-attribute)
-                                      (make-tm-name 'syntax-variable-attribute)))
+                                      (make-tm-name 'syntax-keyword-attribute)))
                    (make-tm-match
                     `(:sequence
                       "("

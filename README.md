@@ -1,6 +1,6 @@
-![](https://github.com/Shinmera/lem-icon/blob/gh-pages/icon-blue.svg)
-
 # Lem is the editor/IDE well-tuned for Common Lisp.
+
+![](https://github.com/Shinmera/lem-icon/blob/gh-pages/icon-blue.svg)
 
 [![Build Status](https://travis-ci.org/cxxxr/lem.svg?branch=master)](https://travis-ci.org/cxxxr/lem)
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)

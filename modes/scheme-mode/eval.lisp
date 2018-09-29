@@ -22,6 +22,7 @@
   (lem-process:process-send-input *scheme-process* string))
 
 (define-command scheme-eval-last-expression (p) ("P")
+  (declare (ignore p))
   (with-point ((start (current-point))
                (end   (current-point)))
     (form-offset start -1)

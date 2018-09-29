@@ -18,7 +18,7 @@
 (define-key *scheme-mode-keymap* "C-c C-e" 'scheme-eval-last-expression)
 (define-key *scheme-mode-keymap* "C-c C-r" 'scheme-eval-region)
 
-(defparameter *scheme-run-command* "gosh -i")
+(defparameter *scheme-run-command* "gosh")
 
 (defun calc-indent (point)
   (lem-scheme-syntax:calc-indent point))
@@ -56,22 +56,22 @@
 (defvar *scheme-process* nil)
 
 (defun scheme-output-callback (string)
-  (let ((buffer (lem-process::process-buffer *scheme-process*)))
+  (let ((buffer (make-buffer "*scheme-process*")))
+    (insert-string (buffer-end-point buffer) string)
     (with-current-window (pop-to-buffer buffer)
       (buffer-end (buffer-point buffer))
-      (redraw-display))
-    (redraw-display)))
+      (window-see window)
+      (redraw-display))))
 
 (defun scheme-run-process ()
   (unless *scheme-process*
     (setf *scheme-process* (lem-process:run-process
-                            *scheme-run-command* '()
-                            :name "*scheme-output*"
-                            :output-callback #'scheme-output-callback))
-    (lem-base::add-buffer (lem-process::process-buffer *scheme-process*))))
+                            *scheme-run-command* '("-i")
+                            :name "scheme"
+                            :output-callback #'scheme-output-callback))))
 
 (defun scheme-send-input (string)
-  (lem-process::process-send-input *scheme-process* string))
+  (lem-process:process-send-input *scheme-process* string))
 
 (define-command scheme-eval-last-expression (p) ("P")
   (with-point ((start (current-point))

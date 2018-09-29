@@ -5,10 +5,11 @@
 (defun scheme-output-callback (string)
   (let ((buffer (make-buffer "*scheme-process*")))
     (insert-string (buffer-end-point buffer) string)
-    (with-current-window (pop-to-buffer buffer)
-      (buffer-end (buffer-point buffer))
-      (window-see window)
-      (redraw-display))))
+    (let ((window (pop-to-buffer buffer)))
+      (with-current-window window
+        (buffer-end (buffer-point buffer))
+        (window-see window)
+        (redraw-display)))))
 
 (defun scheme-run-process ()
   (unless *scheme-process*

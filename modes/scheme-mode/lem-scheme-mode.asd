@@ -1,6 +1,6 @@
 (defsystem "lem-scheme-mode"
   :depends-on ("uiop"
-               #+#.(cl:if (cl:find-package :async-process) '(and) '(or)) "lem-process"
+               #+#.(cl:if (ql:where-is-system :async-process) '(and) '(or)) "lem-process"
                "lem-core")
   :serial t
   :components ((:file "syntax-indent")
@@ -10,5 +10,5 @@
                (:file "package")
                (:file "grammer")
                (:file "scheme-mode")
-               #+#.(cl:if (cl:find-package :async-process) '(and) '(or))
+               #+#.(cl:if (ql:where-is-system :async-process) '(and) '(or))
                (:file "eval")))

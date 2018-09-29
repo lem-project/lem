@@ -1,5 +1,6 @@
 (defsystem "lem-scheme-mode"
   :depends-on ("uiop"
+               "lem-process"
                "lem-core")
   :serial t
   :components ((:file "syntax-indent")

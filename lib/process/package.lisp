@@ -3,6 +3,7 @@
   (:export :run-process
            :delete-process
            :process-alive-p
-           :make-process-stream)
+           :make-process-stream
+           :process-send-input)
   #+sbcl
   (:lock t))

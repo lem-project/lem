@@ -3,7 +3,8 @@
 (define-major-mode scheme-mode language-mode
     (:name "scheme"
      :keymap *scheme-mode-keymap*
-     :syntax-table lem-scheme-syntax:*syntax-table*)
+     :syntax-table lem-scheme-syntax:*syntax-table*
+     :mode-hook *scheme-mode-hook*)
   (setf (variable-value 'beginning-of-defun-function) 'scheme-beginning-of-defun)
   (setf (variable-value 'end-of-defun-function) 'scheme-end-of-defun)
   (setf (variable-value 'indent-tabs-mode) nil)
@@ -14,6 +15,10 @@
   (set-syntax-parser lem-scheme-syntax:*syntax-table* (make-tmlanguage-scheme)))
 
 (define-key *scheme-mode-keymap* "C-M-q" 'scheme-indent-sexp)
+(define-key *scheme-mode-keymap* "C-c C-e" 'scheme-eval-last-expression)
+(define-key *scheme-mode-keymap* "C-c C-r" 'scheme-eval-region)
+
+(defparameter *scheme-run-command* "gosh -i")
 
 (defun calc-indent (point)
   (lem-scheme-syntax:calc-indent point))
@@ -47,6 +52,42 @@
   (with-point ((end (current-point) :right-inserting))
     (when (form-offset end 1)
       (indent-region (current-point) end))))
+
+(defvar *scheme-process* nil)
+
+(defun scheme-output-callback (string)
+  (let ((buffer (lem-process::process-buffer *scheme-process*)))
+    (with-current-window (pop-to-buffer buffer)
+      (buffer-end (buffer-point buffer))
+      (redraw-display))
+    (redraw-display)))
+
+(defun scheme-run-process ()
+  (unless *scheme-process*
+    (setf *scheme-process* (lem-process:run-process
+                            *scheme-run-command* '()
+                            :name "*scheme-output*"
+                            :output-callback #'scheme-output-callback))
+    (lem-base::add-buffer (lem-process::process-buffer *scheme-process*))))
+
+(defun scheme-send-input (string)
+  (lem-process::process-send-input *scheme-process* string))
+
+(define-command scheme-eval-last-expression (p) ("P")
+  (with-point ((start (current-point))
+               (end   (current-point)))
+    (form-offset start -1)
+    (scheme-run-process)
+    (scheme-send-input (format nil "~A~%" (points-to-string start end)))))
+
+(define-command scheme-eval-region (start end) ("r")
+  (scheme-run-process)
+  (scheme-send-input (format nil "~A~%" (points-to-string start end))))
+
+(add-hook *exit-editor-hook*
+          (lambda ()
+            (when *scheme-process*
+              (lem-process:delete-process *scheme-process*))))
 
 (define-command scheme-scratch () ()
   (let ((buffer (make-buffer "*tmp*")))

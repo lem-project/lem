@@ -8,13 +8,14 @@
     (let ((window (pop-to-buffer buffer)))
       (with-current-window window
         (buffer-end (buffer-point buffer))
-        (window-see window)
-        (redraw-display)))))
+        (window-see window))
+      (redraw-display))))
 
 (defun scheme-run-process ()
   (unless *scheme-process*
     (setf *scheme-process* (lem-process:run-process
-                            *scheme-run-command* '("-i")
+                            *scheme-run-command*
+                            *scheme-run-options*
                             :name "scheme"
                             :output-callback #'scheme-output-callback))))
 

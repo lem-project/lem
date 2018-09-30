@@ -9,18 +9,23 @@
   (setf (variable-value 'end-of-defun-function) 'scheme-end-of-defun)
   (setf (variable-value 'indent-tabs-mode) nil)
   (setf (variable-value 'enable-syntax-highlight) t)
-  (setf (variable-value 'calc-indent-function) 'calc-indent)
+  (setf (variable-value 'calc-indent-function) 'scheme-calc-indent)
   (setf (variable-value 'line-comment) ";")
   (setf (variable-value 'insertion-line-comment) ";; ")
+  (setf (variable-value 'completion-spec) 'scheme-completion)
   (set-syntax-parser lem-scheme-syntax:*syntax-table* (make-tmlanguage-scheme)))
 
 (define-key *scheme-mode-keymap* "C-M-q" 'scheme-indent-sexp)
 (define-key *scheme-mode-keymap* "C-c C-e" 'scheme-eval-last-expression)
 (define-key *scheme-mode-keymap* "C-c C-r" 'scheme-eval-region)
 
-(defparameter *scheme-run-command* "gosh")
+(defvar *scheme-run-command* "gosh")
+(defvar *scheme-run-options* '("-i"))
 
-(defun calc-indent (point)
+(defvar *scheme-completion-names*
+  (lem-scheme-syntax:get-scheme-completion-data))
+
+(defun scheme-calc-indent (point)
   (lem-scheme-syntax:calc-indent point))
 
 (defun scheme-beginning-of-defun (point n)
@@ -52,6 +57,20 @@
   (with-point ((end (current-point) :right-inserting))
     (when (form-offset end 1)
       (indent-region (current-point) end))))
+
+(defun scheme-completion (point)
+  (with-point ((start point)
+               (end point))
+    (skip-chars-backward start #'syntax-symbol-char-p)
+    (skip-chars-forward end #'syntax-symbol-char-p)
+    (when (point< start end)
+      (mapcar (lambda (name)
+                (make-completion-item :label name
+                                      :start start
+                                      :end end))
+              (completion (points-to-string start end)
+                          *scheme-completion-names*
+                          :test #'alexandria:starts-with-subseq)))))
 
 (define-command scheme-scratch () ()
   (let ((buffer (make-buffer "*tmp*")))

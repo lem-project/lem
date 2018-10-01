@@ -19,8 +19,7 @@
 (define-key *scheme-mode-keymap* "C-c C-e" 'scheme-eval-last-expression)
 (define-key *scheme-mode-keymap* "C-c C-r" 'scheme-eval-region)
 
-(defvar *scheme-run-command* "gosh")
-(defvar *scheme-run-options* '("-i"))
+(defvar *scheme-run-command* '("gosh" "-i"))
 
 (defvar *scheme-completion-names*
   (lem-scheme-syntax:get-scheme-completion-data))

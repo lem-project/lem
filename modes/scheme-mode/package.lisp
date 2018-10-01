@@ -8,7 +8,6 @@
    :*scheme-mode-keymap*
    :*scheme-mode-hook*
    :*scheme-run-command*
-   :*scheme-run-options*
    :*scheme-completion-names*
    :scheme-beginning-of-defun
    :scheme-end-of-defun

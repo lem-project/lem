@@ -15,7 +15,6 @@
   (unless *scheme-process*
     (setf *scheme-process* (lem-process:run-process
                             *scheme-run-command*
-                            *scheme-run-options*
                             :name "scheme"
                             :output-callback #'scheme-output-callback))))
 

@@ -20,7 +20,7 @@
 ;; TODO: デストラクタで(delete-process process), (close stream)をする
 
 (defmethod initialize-instance :around ((transport lem-stdio-transport) &rest initargs &key program arguments)
-  (let ((process (lem-process:run-process program arguments
+  (let ((process (lem-process:run-process (cons program arguments)
                                           :output-callback (lambda (string)
                                                              (process-output-callback transport string)))))
     (setf (slot-value transport 'process) process)

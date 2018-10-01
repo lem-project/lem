@@ -7,9 +7,9 @@
   read-thread
   output-callback)
 
-(defun run-process (program args &key name output-callback)
+(defun run-process (command &key name output-callback)
   (let ((buffer-stream (make-string-output-stream)))
-    (let* ((pointer (async-process:create-process (cons program args) :nonblock nil))
+    (let* ((pointer (async-process:create-process command :nonblock nil))
            (thread (bt:make-thread
                     (lambda ()
                       (loop
@@ -17,7 +17,7 @@
                             (string (async-process:process-receive-output pointer))
                           (send-event (lambda ()
                                         (write-to-buffer buffer-stream string output-callback))))))
-                    :name (format nil "run-process ~A ~A" program args))))
+                    :name (format nil "run-process ~{~A~^ ~}" command))))
       (make-process :pointer pointer
                     :name name
                     :buffer-stream buffer-stream

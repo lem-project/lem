@@ -181,6 +181,8 @@
            ;; C-space / C-@
            ((= code #x040) (setf code 0)) ; for mintty
            ((= code #x020) (setf code 0)) ; for ConEmu
+           ;; C-j
+           ((= code #x211) (setf code 10))
            ;; C-down / C-up / C-left / C-right
            ((= code #x1e1) (setf code 525))
            ((= code #x1e0) (setf code 566))

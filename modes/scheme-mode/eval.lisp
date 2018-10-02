@@ -6,7 +6,8 @@
   (defun scheme-process-buffer ()
     (unless buffer
       (setf buffer (make-buffer "*scheme-process*"))
-      (change-buffer-mode buffer 'scheme-mode))
+      (change-buffer-mode buffer 'scheme-mode)
+      (setf (variable-value 'enable-syntax-highlight :buffer buffer) nil))
     buffer))
 
 (defun scheme-output-callback (string)

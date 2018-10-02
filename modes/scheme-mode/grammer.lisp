@@ -90,6 +90,7 @@
                     `(:sequence
                       "("
                       ,(wrap-symbol-names "define-class" "define-record-type")
+                      (:greedy-repetition 0 1 #\()
                       (:greedy-repetition 0 1 (:register symbol)))
                     :captures (vector nil
                                       (make-tm-name 'syntax-keyword-attribute)

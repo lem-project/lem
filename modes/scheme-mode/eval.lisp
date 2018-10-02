@@ -2,8 +2,15 @@
 
 (defvar *scheme-process* nil)
 
+(let ((buffer nil))
+  (defun scheme-process-buffer ()
+    (unless buffer
+      (setf buffer (make-buffer "*scheme-process*"))
+      (change-buffer-mode buffer 'scheme-mode))
+    buffer))
+
 (defun scheme-output-callback (string)
-  (let ((buffer (make-buffer "*scheme-process*")))
+  (let ((buffer (scheme-process-buffer)))
     (insert-string (buffer-end-point buffer) string)
     (let ((window (pop-to-buffer buffer)))
       (with-current-window window
@@ -12,6 +19,13 @@
       (redraw-display))))
 
 (defun scheme-run-process ()
+  (when (and *scheme-process*
+             (not (lem-process:process-alive-p *scheme-process*)))
+    (let ((buffer (scheme-process-buffer)))
+      (insert-string (buffer-end-point buffer)
+                     (format nil "~%;; Scheme process was aborted. Restarting...~%~%"))
+      (lem-process:delete-process *scheme-process*)
+      (setf *scheme-process* nil)))
   (unless *scheme-process*
     (setf *scheme-process* (lem-process:run-process
                             *scheme-run-command*
@@ -19,7 +33,12 @@
                             :output-callback #'scheme-output-callback))))
 
 (defun scheme-send-input (string)
-  (lem-process:process-send-input *scheme-process* string))
+  (let ((buffer (scheme-process-buffer)))
+    (when (eq buffer (current-buffer))
+      ;; output newline like repl
+      (insert-character (buffer-end-point buffer) #\newline)))
+  (lem-process:process-send-input *scheme-process*
+                                  (format nil "~A~%" string)))
 
 (define-command scheme-eval-last-expression (p) ("P")
   (declare (ignore p))
@@ -27,11 +46,11 @@
                (end   (current-point)))
     (form-offset start -1)
     (scheme-run-process)
-    (scheme-send-input (format nil "~A~%" (points-to-string start end)))))
+    (scheme-send-input (points-to-string start end))))
 
 (define-command scheme-eval-region (start end) ("r")
   (scheme-run-process)
-  (scheme-send-input (format nil "~A~%" (points-to-string start end))))
+  (scheme-send-input (points-to-string start end)))
 
 (add-hook *exit-editor-hook*
           (lambda ()

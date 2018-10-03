@@ -2,13 +2,12 @@
 
 (defvar *scheme-process* nil)
 
-(let ((buffer nil))
-  (defun scheme-process-buffer ()
-    (unless buffer
-      (setf buffer (make-buffer "*scheme-process*"))
-      (change-buffer-mode buffer 'scheme-mode)
-      (setf (variable-value 'enable-syntax-highlight :buffer buffer) nil))
-    buffer))
+(defun scheme-process-buffer ()
+  (or (get-buffer "*scheme-process*")
+      (let ((buffer (make-buffer "*scheme-process*")))
+        (change-buffer-mode buffer 'scheme-mode)
+        (setf (variable-value 'enable-syntax-highlight :buffer buffer) nil)
+        buffer)))
 
 (defun scheme-output-callback (string)
   (let ((buffer (scheme-process-buffer)))

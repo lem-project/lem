@@ -130,14 +130,9 @@
            (character-offset p 1)
            (let ((str (points-to-string p point)))
              (mapcar (lambda (filename)
-                       (let ((label (lem.completion-mode::pathname-name* filename)))
-                         (make-completion-item :label label
-                                               :start (character-offset
-                                                       p
-                                                       (length
-                                                        (namestring
-                                                         (uiop:pathname-directory-pathname str))))
-                                               :end point)))
+                       (make-completion-item :label filename
+                                             :start p
+                                             :end point))
                      (completion-file str (lem:buffer-directory (point-buffer p))))))
           (t
            (completion-symbol p)))))

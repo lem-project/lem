@@ -408,10 +408,9 @@
    `(swank:interactive-eval-region
      ,(points-to-string start end))))
 
-(define-command lisp-load-file (filename) ("fLoad File: ")
+(define-command lisp-load-file (filename)
+  ((list (prompt-for-file "Load File: " (buffer-filename) nil t)))
   (check-connection)
-  (when (uiop:pathname-equal filename (buffer-directory))
-    (setf filename (buffer-filename (current-buffer))))
   (when (and (probe-file filename)
              (not (uiop:directory-pathname-p filename)))
     (run-hooks (variable-value 'load-file-functions) filename)

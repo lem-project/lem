@@ -85,7 +85,7 @@
 (define-command lisp-connection-list () ()
   (lem.menu-mode:display-menu
    (make-instance 'lem.menu-mode:menu
-                  :columns '(" " "hostname" "port" "pid" "name" "version")
+                  :columns '(" " "hostname" "port" "pid" "name" "version" "command")
                   :items *connection-list*
                   :column-function (lambda (c)
                                      (list (if (eq c *connection*) "*" "")
@@ -93,7 +93,8 @@
                                            (connection-port c)
                                            (or (self-connection-p c) (connection-pid c))
                                            (connection-implementation-name c)
-                                           (connection-implementation-version c)))
+                                           (connection-implementation-version c)
+                                           (connection-command c)))
                   :select-callback (lambda (menu c)
                                      (change-current-connection c)
                                      (lem.menu-mode:update-menu menu *connection-list*)

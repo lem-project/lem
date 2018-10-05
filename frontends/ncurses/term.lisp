@@ -42,10 +42,11 @@
 (defun init-colors (n)
   (let ((counter 0))
     (flet ((add-color (r g b)
-             (charms/ll:init-color counter
-                                   (round (* r 1000/255))
-                                   (round (* g 1000/255))
-                                   (round (* b 1000/255)))
+             (when (<= 8 counter)
+               (charms/ll:init-color counter
+                                     (round (* r 1000/255))
+                                     (round (* g 1000/255))
+                                     (round (* b 1000/255))))
              (setf (aref *colors* counter) (list r g b counter))
              (incf counter)))
       (setf *colors* (make-array n))

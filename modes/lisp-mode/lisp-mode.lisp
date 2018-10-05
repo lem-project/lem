@@ -1,3 +1,4 @@
+
 (in-package :lem-lisp-mode)
 
 (define-editor-variable load-file-functions '())
@@ -951,8 +952,6 @@
 (defparameter *impl-name* nil)
 (defvar *slime-command-impls* '(roswell-impls-candidates
                                 qlot-impls-candidates))
-(defvar *last-run-command* nil)
-
 (defun get-lisp-command (&key impl (port *default-port*) (prefix ""))
   (format nil "~Aros ~{~S~^ ~} &" prefix
           `(,@(if impl `("-L" ,impl))
@@ -1009,16 +1008,16 @@
           :when command
           :do (return-from prompt-for-impl command))))
 
-(defun run-slime (cmd)
+(defun run-slime (command)
   (uiop:with-current-directory ((or (buffer-directory) (uiop:getcwd)))
-    (uiop:run-program cmd :output nil :error-output nil))
+    (uiop:run-program command :output nil :error-output nil))
   (sleep 0.5)
   (let ((successp)
         (condition))
     (loop :repeat 10
           :do (handler-case
                   (let ((conn (slime-connect *localhost* *default-port* t)))
-                    (setf (getf (connection-plist conn) 'run) t)
+                    (setf (connection-command conn) command)
                     (setf successp t)
                     (return))
                 (editor-error (c)
@@ -1034,7 +1033,6 @@
 (defun slime-1 (command)
   (unless command
     (setf command (get-lisp-command :impl *impl-name*)))
-  (setf *last-run-command* command)
   (run-slime command))
 
 (define-command slime (&optional ask-impl) ("P")
@@ -1043,15 +1041,17 @@
 
 (define-command slime-quit () ()
   (when *connection*
-    (prog1 (when (getf (connection-plist *connection*) 'run)
+    (prog1 (when (connection-command *connection*)
              (lisp-rex '(uiop:quit))
              t)
       (remove-connection *connection*))))
 
 (define-command slime-restart () ()
-  (when (slime-quit)
-    (sit-for 3)
-    (slime-1 *last-run-command*)))
+  (let ((last-command (when *connection*
+                        (connection-command *connection*))))
+    (when (slime-quit)
+      (sit-for 3)
+      (slime-1 last-command))))
 
 (define-command slime-self-connect (&optional (start-repl t))
     ((list t))

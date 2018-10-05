@@ -57,11 +57,13 @@
   (let ((json (with-output-to-string (s)
                 (yason:encode message s)))
         (stream (jsonrpc/connection:connection-socket connection)))
-    (format stream "Content-Length: ~A~C~C~:*~:*~C~C~A"
-            (length json)
-            #\Return
-            #\Newline
-            json)
+    (let ((string (format nil "Content-Length: ~A~C~C~:*~:*~C~C~A"
+                          (length json)
+                          #\Return
+                          #\Newline
+                          json)))
+      (pdebug stream)
+      (write-string string stream))
     (force-output stream)))
 
 (defmethod jsonrpc/transport/interface:receive-message-using-transport

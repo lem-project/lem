@@ -951,6 +951,7 @@
 (defparameter *impl-name* nil)
 (defvar *slime-command-impls* '(roswell-impls-candidates
                                 qlot-impls-candidates))
+(defvar *last-run-command* nil)
 
 (defun get-lisp-command (&key impl (port *default-port*) (prefix ""))
   (format nil "~Aros ~{~S~^ ~} &" prefix
@@ -1030,11 +1031,15 @@
               (ignore-errors
                (slime-quit)))))
 
+(defun slime-1 (command)
+  (unless command
+    (setf command (get-lisp-command :impl *impl-name*)))
+  (setf *last-run-command* command)
+  (run-slime command))
+
 (define-command slime (&optional ask-impl) ("P")
-  (let ((command (if ask-impl
-                  (prompt-for-impl)
-                  (get-lisp-command :impl *impl-name*))))
-    (run-slime command)))
+  (let ((command (if ask-impl (prompt-for-impl))))
+    (slime-1 command)))
 
 (define-command slime-quit () ()
   (when *connection*
@@ -1046,7 +1051,7 @@
 (define-command slime-restart () ()
   (when (slime-quit)
     (sit-for 3)
-    (slime)))
+    (slime-1 *last-run-command*)))
 
 (define-command slime-self-connect (&optional (start-repl t))
     ((list t))

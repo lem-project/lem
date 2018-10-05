@@ -1026,10 +1026,7 @@
                   (sleep 0.5))))
     (unless successp
       (error condition)))
-  (add-hook *exit-editor-hook*
-            (lambda ()
-              (ignore-errors
-               (slime-quit)))))
+  (add-hook *exit-editor-hook* 'slime-quit*))
 
 (defun slime-1 (command)
   (unless command
@@ -1046,6 +1043,9 @@
              (lisp-rex '(uiop:quit))
              t)
       (remove-connection *connection*))))
+
+(defun slime-quit* ()
+  (ignore-errors (slime-quit)))
 
 (define-command slime-restart () ()
   (let ((last-command (when *connection*
@@ -1095,10 +1095,8 @@
 ;; workaround for windows
 #+win32
 (add-hook *exit-editor-hook*
-          (lambda ()
-	    ;; quit slime to exit lem normally (incomplete)
-            (ignore-errors
-              (slime-quit))))
+          ;; quit slime to exit lem normally (incomplete)
+          'slime-quit*)
 
 (pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons ".asd$" 'lisp-mode) *auto-mode-alist* :test #'equal)

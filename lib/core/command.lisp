@@ -502,6 +502,13 @@
     (set-current-mark point))
   t)
 
+(define-key *global-keymap* "C-x h" 'mark-set-whole-buffer)
+(define-command mark-set-whole-buffer () ()
+  (buffer-end (current-point))
+  (set-current-mark (current-point))
+  (buffer-start (current-point))
+  (message "Mark set whole buffer"))
+
 (define-key *global-keymap* "M-g" 'goto-line)
 (define-command goto-line (n) ("nLine to GOTO: ")
   (cond ((< n 1)

@@ -62,7 +62,6 @@
                           #\Return
                           #\Newline
                           json)))
-      (pdebug stream)
       (write-string string stream))
     (force-output stream)))
 

@@ -763,9 +763,14 @@
         `(lem:add-hook ,caller-hook 'language-client-mode))))
 
 (define-tcp-client lem-js-mode:js-mode
-  (:command '("node" "~/opt/javascript-typescript-langserver/lib/language-server")
+  (:command '("node" "~/src/javascript-typescript-langserver/lib/language-server")
    :language-id "javascript"
    :port 2089)
+  :caller-hook lem-js-mode:*js-mode-hook*)
+
+(define-stdio-client lem-js-mode:js-mode
+  (:command '("node" "~/src/javascript-typescript-langserver/lib/language-server-stdio")
+   :language-id "javascript")
   :caller-hook lem-js-mode:*js-mode-hook*)
 
 (define-stdio-client lem-rust-mode:rust-mode

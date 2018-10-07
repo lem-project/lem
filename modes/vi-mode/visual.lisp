@@ -115,11 +115,19 @@
 
 (define-command vi-visual-append () ()
   (when (visual-block-p)
-    (let ((str (string-without-escape)))
+    (let ((str (string-without-escape))
+          (max-end (apply #'max (mapcar (lambda (ov)
+                                          (point-charpos (overlay-end ov)))
+                                        *visual-overlays*))))
       (apply-visual-range (lambda (start end)
                             (unless (point< start end)
                               (rotatef start end))
-                            (insert-string end str))))
+                            (let* ((space-len (- max-end (point-charpos end)))
+                                   (spaces (make-string space-len
+                                                        :initial-element #\Space)))
+                              (insert-string end (concatenate 'string
+                                                              spaces
+                                                              str))))))
     (vi-visual-end)))
 
 (define-command vi-visual-insert () ()

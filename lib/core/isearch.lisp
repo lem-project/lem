@@ -47,6 +47,9 @@
 (define-attribute isearch-highlight-active-attribute
   (t :foreground "black" :background "cyan"))
 
+(define-editor-variable isearch-next-last nil)
+(define-editor-variable isearch-prev-last nil)
+
 (define-minor-mode isearch-mode
     (:name "isearch"
      :keymap *isearch-keymap*))
@@ -146,7 +149,13 @@
   (isearch-update-buffer))
 
 (defun isearch-update-minibuffer ()
-  (message-without-log "~A~A" *isearch-prompt* *isearch-string*))
+  (message-without-log "~A~A~A"
+                       (if (or (variable-value 'isearch-next-last :buffer)
+                               (variable-value 'isearch-prev-last :buffer))
+                           "Failing "
+                           "")
+                       *isearch-prompt*
+                       *isearch-string*))
 
 (defun make-add-char-callback (search-function)
   (lambda (point string)
@@ -285,14 +294,24 @@
   (when (boundp '*isearch-string*)
     (when (string= "" *isearch-string*)
       (setq *isearch-string* *isearch-prev-string*))
-    (funcall *isearch-search-forward-function* (current-point) *isearch-string*)
+    (setf (variable-value 'isearch-prev-last :buffer) nil)
+    (when (variable-value 'isearch-next-last :buffer)
+      (setf (variable-value 'isearch-next-last :buffer) nil)
+      (buffer-start (current-point)))
+    (unless (funcall *isearch-search-forward-function* (current-point) *isearch-string*)
+      (setf (variable-value 'isearch-next-last :buffer) t))
     (isearch-update-display)))
 
 (define-command isearch-prev () ()
   (when (boundp '*isearch-string*)
     (when (string= "" *isearch-string*)
       (setq *isearch-string* *isearch-prev-string*))
-    (funcall *isearch-search-backward-function* (current-point) *isearch-string*)
+    (setf (variable-value 'isearch-next-last :buffer) nil)
+    (when (variable-value 'isearch-prev-last :buffer)
+      (setf (variable-value 'isearch-prev-last :buffer) nil)
+      (buffer-end (current-point)))
+    (unless (funcall *isearch-search-backward-function* (current-point) *isearch-string*)
+      (setf (variable-value 'isearch-prev-last :buffer) t))
     (isearch-update-display)))
 
 (define-command isearch-yank () ()

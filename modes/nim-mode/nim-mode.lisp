@@ -48,18 +48,27 @@
 (defun make-tmlanguage-nim ()
   (let* ((patterns (make-tm-patterns
                     (make-tm-region "#" "$" :name 'syntax-comment-attribute)
-                    ;; keywords: https://nim-lang.org/docs/manual.html#lexical-analysis-identifiers-keywords
+                    ;; keywords: https://nim-lang.org/docs/manual.html#lexical-analysis-identifiers-amp-keywords
                     (make-tm-match (tokens :word-boundary
-                                           '("addr" "and" "as" "asm" "bind" "block" "break"
-                                             "case" "cast" "concept" "const" "continue" "converter"
-                                             "defer" "discard" "distinct" "div" "do" "elif" "else"
-                                             "end" "enum" "except" "export" "finally" "for" "from"
-                                             "func" "if" "import" "in" "include" "interface" "is"
-                                             "isnot" "iterator" "let" "macro" "method" "mixin" "mod"
-                                             "nil" "not" "notin" "object" "of" "or" "out" "proc"
-                                             "ptr" "raise" "ref" "return" "shl" "shr" "static"
-                                             "template" "try" "tuple" "type" "using" "var" "when"
-                                             "while" "xor" "yield"))
+                                           '("addr" "and" "as" "asm" "bind" "block" "break" "case"
+                                             "cast" "concept" "const" "continue" "converter" "defer"
+                                             "discard" "distinct" "div" "do" "elif" "else" "end" "enum"
+                                             "except" "export" "finally" "for" "from" "func" "if"
+                                             "import" "in" "include" "interface" "is" "isnot" "iterator"
+                                             "let" "macro" "method" "mixin" "mod" "nil" "not" "notin"
+                                             "object" "of" "or" "out" "proc" "ptr" "raise" "ref" "return"
+                                             "shl" "shr" "static" "template" "try" "tuple" "type" "using"
+                                             "var" "when" "while" "xor" "yield"))
+                                   :name 'syntax-keyword-attribute)
+                    ;; basic types: https://nim-lang.org/docs/manual.html#types
+                    (make-tm-match (tokens :word-boundary
+                                           '("int" "int8" "int16" "int32" "int64" "uint" "uint8" "uint16"
+                                             "uint32" "uint64" "range" "float" "float32" "float64" "bool"
+                                             "enum" "char" "string" "cstring" "array" "seq" "openArray"
+                                             "varargs" "tuple" "object" "set" "addr" "ptr" "void" "auto"))
+                                   :name 'syntax-type-attribute)
+                    ;; operators: https://nim-lang.org/docs/manual.html#lexical-analysis-operators
+                    (make-tm-match (tokens nil'("=" "+" "-" "*" "/" "<" ">@" "$" "~" "&" "%" "|!" "?" "^" "." ":"))
                                    :name 'syntax-keyword-attribute)
                     (make-tm-match (tokens :word-boundary
                                            '("false" "true" "nil"))

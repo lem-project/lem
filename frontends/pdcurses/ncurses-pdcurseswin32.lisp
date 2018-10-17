@@ -174,6 +174,7 @@
           (modifier-keys (charms/ll:PDC-get-key-modifiers)))
       (setf ctrl-key (logtest modifier-keys charms/ll:PDC_KEY_MODIFIER_CONTROL))
       (setf alt-key  (logtest modifier-keys charms/ll:PDC_KEY_MODIFIER_ALT))
+      ;;(dbg-log-format "code=~X ctrl=~S alt=~S" code ctrl-key alt-key)
       (cond
         ;; ctrl key workaround
         (ctrl-key
@@ -183,6 +184,8 @@
            ((= code #x020) (setf code 0)) ; for ConEmu
            ;; C-j
            ((= code #x211) (setf code 10))
+           ;; C-Delete
+           ((= code #x20f) (setf code 519))
            ;; C-down / C-up / C-left / C-right
            ((= code #x1e1) (setf code 525))
            ((= code #x1e0) (setf code 566))
@@ -205,14 +208,24 @@
            ((<= #x197 code #x1a0) (setf code (- code #x167)))
            ;; M-A - M-Z
            ((<= #x1a1 code #x1ba) (setf code (- code #x140)))
+           ;; M-Delete / M-Backspace
+           ((= code #x1de) (setf code #o512))
+           ((= code #x1f8) (setf code #x07f))
            ;; M-down / M-up / M-left / M-right
            ((= code #x1eb) (setf code #o402))
            ((= code #x1ea) (setf code #o403))
            ((= code #x1ed) (setf code #o404))
            ((= code #x1ec) (setf code #o405))
-           ;; M-( / M-)
+           ;; M-Home / M-End / M-PageUp / M-PageDown
+           ((= code #x1e6) (setf code #x03c)) ; M-<
+           ((= code #x1e9) (setf code #x03e)) ; M->
+           ((= code #x1e7) (setf code #o523))
+           ((= code #x1e8) (setf code #o522))
+           ;; M-( / M-) / M-^ / M-\
            ((= code #x02A) (setf code #x028))
            ((= code #x028) (setf code #x029))
+           ((= code #x1f4) (setf code #x05e))
+           ((= code #x210) (setf code #x05c))
            ;; M-[
            ((= code #x1f1)
             (charms/ll:timeout 100)

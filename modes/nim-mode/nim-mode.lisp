@@ -99,7 +99,7 @@
     table))
 
 ;; three functions below from lem-python-mode, it seems almost works
-(defun python-calc-indent (point)
+(defun nim-calc-indent (point)
   (with-point ((point point))
     (let ((tab-width (variable-value 'tab-width :default point))
           (column (point-column point)))

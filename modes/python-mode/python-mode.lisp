@@ -36,7 +36,7 @@
                                              "del" "elif" "else" "except" "finally"
                                              "for" "from" "global" "if" "import"
                                              "in" "is" "lambda" "nonlocal" "not"
-                                             "or" "pass" "raise" "return" "try"
+                                             "or" "pass" "raise" "return" "self" "try"
                                              "while" "with" "yield"))
                                    :name 'syntax-keyword-attribute)
                     (make-tm-match (tokens :word-boundary

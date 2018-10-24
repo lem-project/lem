@@ -12,6 +12,8 @@
   (reset-listener-variables (current-buffer))
   (lem.listener-mode:listener-mode t))
 
+(define-key lem-python-mode::*python-mode-keymap* "C-c C-r" 'python-eval-region)
+
 (defun reset-listener-variables (buffer)
   (setf (variable-value 'lem.listener-mode:listener-set-prompt-function :buffer buffer)
         #'identity
@@ -51,13 +53,20 @@
         (window-see window)))
     (redraw-display)))
 
+(defun enable-process-p ()
+  (and *process*
+       (lem-process:process-alive-p *process*)))
+
 (defun run-python-internal ()
-  (when (or (null *process*)
-            (not (lem-process:process-alive-p *process*)))
+  (unless (enable-process-p)
     (setf *process*
           (lem-process:run-process "python"
                                    :name "run-python"
                                    :output-callback 'output-callback))))
+
+(define-command python-eval-region (start end) ("r")
+  (when (enable-process-p)
+    (lem-process:process-send-input *process* (points-to-string start end))))
 
 (define-command run-python () ()
   (run-python-internal))

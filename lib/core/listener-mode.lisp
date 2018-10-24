@@ -65,12 +65,13 @@
             (copy-point point :right-inserting)
             (copy-point (current-point) :right-inserting))))
 
-(defun listener-reset-prompt (&optional (buffer (current-buffer)))
+(defun listener-reset-prompt (&optional (buffer (current-buffer)) (fresh-line t))
   (let ((cur-point (buffer-point buffer)))
     (buffer-end cur-point)
-    (unless (start-line-p cur-point)
-      (insert-character cur-point #\newline 1)
-      (buffer-end cur-point))
+    (when fresh-line
+      (unless (start-line-p cur-point)
+        (insert-character cur-point #\newline 1)
+        (buffer-end cur-point)))
     (let ((point (funcall (variable-value 'listener-set-prompt-function
                                           :buffer buffer)
                           cur-point)))

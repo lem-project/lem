@@ -66,8 +66,10 @@
 (defun repl-buffer ()
   (get-buffer "*lisp-repl*"))
 
-(defun repl-get-prompt ()
-  (format nil "~A> " (connection-prompt-string *connection*)))
+(defun repl-set-prompt (point)
+  (insert-string point
+                 (format nil "~A> " (connection-prompt-string *connection*)))
+  point)
 
 (defun repl-paren-correspond-p (point)
   (unless (eq (repl-buffer) (point-buffer point))
@@ -79,16 +81,16 @@
 (defun repl-reset-input ()
   (let ((buffer (repl-buffer)))
     (when buffer
-      (setf (variable-value 'lem.listener-mode:listener-get-prompt-function :buffer buffer)
-            'repl-get-prompt
+      (setf (variable-value 'lem.listener-mode:listener-set-prompt-function :buffer buffer)
+            'repl-set-prompt
             (variable-value 'lem.listener-mode:listener-check-input-function :buffer buffer)
             'repl-paren-correspond-p
             (variable-value 'lem.listener-mode:listener-execute-function :buffer buffer)
             'repl-eval))))
 
 (defun repl-change-read-line-input ()
-  (setf (variable-value 'lem.listener-mode:listener-get-prompt-function)
-        (constantly "")
+  (setf (variable-value 'lem.listener-mode:listener-set-prompt-function)
+        #'identity
         (variable-value 'lem.listener-mode:listener-check-input-function)
         (constantly t)
         (variable-value 'lem.listener-mode:listener-execute-function)

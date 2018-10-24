@@ -9,7 +9,7 @@
            :listener-prev-input
            :listener-next-input
            :listener-reset-interactive
-           :listener-get-prompt-function
+           :listener-set-prompt-function
            :listener-check-input-function
            :listener-execute-function
            :clear-listener)
@@ -29,7 +29,7 @@
 (defmacro %listener-history ()
   `(buffer-value (current-buffer) %listener-history-indicator))
 
-(define-editor-variable listener-get-prompt-function)
+(define-editor-variable listener-set-prompt-function)
 (define-editor-variable listener-check-input-function)
 (define-editor-variable listener-execute-function)
 
@@ -71,13 +71,14 @@
     (unless (start-line-p cur-point)
       (insert-character cur-point #\newline 1)
       (buffer-end cur-point))
-    (insert-string cur-point
-                   (princ-to-string
-                    (funcall
-                     (variable-value 'listener-get-prompt-function :buffer buffer)))
-                   :attribute 'listener-prompt-attribute
-                   :read-only t
-                   :field t)
+    (let ((point (funcall (variable-value 'listener-set-prompt-function
+                                          :buffer buffer)
+                          cur-point)))
+      (with-point ((s point))
+        (line-start s)
+        (put-text-property s point :attribute 'listener-prompt-attribute)
+        (put-text-property s point :read-only t)
+        (put-text-property s point :field t)))
     (buffer-end cur-point)
     (buffer-undo-boundary buffer)
     (listener-update-point cur-point)))

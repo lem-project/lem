@@ -8,11 +8,14 @@
   output-callback)
 
 (defun run-process (command &key name output-callback)
+  (setf command (uiop:ensure-list command))
   (let ((buffer-stream (make-string-output-stream)))
     (let* ((pointer (async-process:create-process command :nonblock nil))
            (thread (bt:make-thread
                     (lambda ()
                       (loop
+                        (unless (async-process:process-alive-p pointer)
+                          (return))
                         (alexandria:when-let
                             (string (async-process:process-receive-output pointer))
                           (send-event (lambda ()

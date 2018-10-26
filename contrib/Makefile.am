@@ -1,8 +1,6 @@
 lemdir = $(prefix)/share/lem/site-lisp
 dist_lem_DATA = \
-	Makefile \
 	Makefile.am \
-	Makefile.in \
 	README.md \
 	lem-contrib.asd
 

@@ -27,6 +27,10 @@
   (lem-process:process-send-input *process*
                                   (concatenate 'string string (string #\newline))))
 
+(defun alive-process-p ()
+  (and *process*
+       (lem-process:process-alive-p *process*)))
+
 (defun repl-buffer-exists-p ()
   (get-buffer "*python*"))
 
@@ -52,10 +56,6 @@
         (buffer-end p)
         (window-see window)))
     (redraw-display)))
-
-(defun alive-process-p ()
-  (and *process*
-       (lem-process:process-alive-p *process*)))
 
 (defun run-python-internal ()
   (unless (alive-process-p)

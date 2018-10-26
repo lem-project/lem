@@ -53,19 +53,19 @@
         (window-see window)))
     (redraw-display)))
 
-(defun enable-process-p ()
+(defun alive-process-p ()
   (and *process*
        (lem-process:process-alive-p *process*)))
 
 (defun run-python-internal ()
-  (unless (enable-process-p)
+  (unless (alive-process-p)
     (setf *process*
           (lem-process:run-process "python"
                                    :name "run-python"
                                    :output-callback 'output-callback))))
 
 (define-command python-eval-region (start end) ("r")
-  (when (enable-process-p)
+  (when (alive-process-p)
     (lem-process:process-send-input *process* (points-to-string start end))))
 
 (define-command run-python () ()

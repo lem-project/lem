@@ -1,6 +1,6 @@
 AC_INIT([lem],[1.4])
 AM_INIT_AUTOMAKE([foreign])
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile contrib/Makefile])
 
 AC_CHECK_PROG([ROSWELL], [ros], [yes])
 

@@ -1,3 +1,5 @@
+SUBDIRS = contrib
+
 bin_SCRIPTS = bin/${LEM_LAUNCHER}
 EXTRA_DIST =  bin/${LEM_LAUNCHER}
 

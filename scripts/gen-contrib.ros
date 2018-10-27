@@ -1,0 +1,37 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 "$@"
+|#
+(progn ;;init forms
+  (ros:ensure-asdf)
+  #+quicklisp(ql:quickload '(:lem-contrib) :silent t)
+  )
+
+(defpackage :ros.script.gen-contrib.3746240060
+  (:use :cl))
+(in-package :ros.script.gen-contrib.3746240060)
+
+(defun recur (path base str concat &optional root)
+  (format t "~A~Adir = ~A~A~%" concat (remove #\- str) base (if root "" (format nil "/~A" str)))
+  (format t "dist_~A~A_DATA =~{ \\~%~^	~A~}~2%" concat (remove #\- str) 
+          (mapcar (lambda (x) (uiop:subpathp x (asdf:system-relative-pathname :lem "contrib/")))
+                  (remove-if (lambda (x)
+                               (find (file-namestring x)
+                                     '("Makefile" "Makefile.in")
+                                     :test 'equal))
+                             (uiop:directory-files path))))
+  (loop for subpath in (uiop:subdirectories path)
+        for name = (first (last (pathname-directory subpath)))
+        unless (equal name ".git")
+        do (recur subpath (format nil "$(~A~Adir)" concat str) name (format nil "~A~A_" concat str))))
+
+(defun main (&rest argv)
+  (declare (ignorable argv))
+  (with-open-file (*standard-output* (asdf:system-relative-pathname :lem "contrib/Makefile.am")
+                                     :direction :output
+                                     :if-exists :supersede)
+    (recur (asdf:system-source-directory :lem-contrib) 
+           "$(prefix)/share/lem/site-lisp"
+           "lem" "" t)))
+;;; vim: set ft=lisp lisp:

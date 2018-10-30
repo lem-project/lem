@@ -8,7 +8,7 @@
              t)))
     (let ((home (user-homedir-pathname))
           (*package* (find-package :lem-user)))
-      (or (test (merge-pathnames ".lem/init.lisp" home))
+      (or (test (merge-pathnames "init.lisp" (lem-home)))
           (test (merge-pathnames ".lemrc" home))))))
 
 #+sbcl

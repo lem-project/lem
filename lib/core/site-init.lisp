@@ -17,8 +17,8 @@
 
 (defun site-init-list-inits ()
   (loop for i in (sort (mapcar #'pathname-name
-                               (directory (merge-pathnames ".lem/inits/*.lisp"
-                                                           (user-homedir-pathname))))
+                               (directory (merge-pathnames "inits/*.lisp"
+                                                           (lem-home))))
                        #'string<)
      collect (list :file (format nil "inits/~A" i))))
 
@@ -50,8 +50,7 @@
                           (mapcar #'directory-namestring
                                   (directory
                                    (merge-pathnames "**/*.asd"
-                                                    (merge-pathnames ".lem/"
-                                                                     (user-homedir-pathname))))))
+                                                    (lem-home)))))
                   asdf:*central-registry*
                   :test #'equal))
          (system-name *site-init-name*)

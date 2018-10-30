@@ -134,12 +134,16 @@
   (unless (uiop:directory-exists-p (ql:qmerge (format nil "dists/~A/" (pathname-name ql:*initial-dist-url*))))
     (ql-dist:install-dist ql:*initial-dist-url* :prompt nil)))
 
+(defun lem-home ()
+  (or (uiop:getenv "LEM_HOME")
+      (merge-pathnames ".lem/" (user-homedir-pathname))))
+
 (let ((once nil))
   (defun init (args)
     (unless once
       (unless (equal (funcall 'user-homedir-pathname) ;; funcall for sbcl optimization
                      *original-home*)
-        (init-quicklisp (merge-pathnames ".lem/quicklisp/" (user-homedir-pathname))))
+        (init-quicklisp (merge-pathnames "quicklisp/" (lem-home))))
       (setf once t)
       (uiop:symbol-call :lem :load-site-init)
       (run-hooks *before-init-hook*)

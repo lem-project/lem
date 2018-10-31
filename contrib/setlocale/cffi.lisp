@@ -85,7 +85,8 @@
 
 (cl:export '#.(swig-lispify "LC_MESSAGES" 'constant))
 
-(cl:defconstant #.(swig-lispify "LC_ALL" 'constant) 6)
+(cl:defconstant #.(swig-lispify "LC_ALL" 'constant)
+  (if (UIOP:OS-MACOSX-P) 0 6))
 
 (cl:export '#.(swig-lispify "LC_ALL" 'constant))
 

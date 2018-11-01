@@ -14,4 +14,6 @@
 (task "default" ("cffi.lisp"))
 
 (file "cffi.lisp" ("cffi.i")
-  (sh #?"${swig} -swig-lisp -cffi -I/usr/include -I/usr/include/linux -I/usr/include/x86_64-linux-gnu -D__x86_64__ -importall cffi.i"))
+  (if (uiop:os-macosx-p)
+      (sh #?"swig -swig-lisp -cffi -I/usr/include -D__x86_64__ -importall cffi.i")
+      (sh #?"${swig} -swig-lisp -cffi -I/usr/include -I/usr/include/linux -I/usr/include/x86_64-linux-gnu -D__x86_64__ -importall cffi.i")))

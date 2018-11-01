@@ -1,4 +1,4 @@
-lemdir = $(prefix)/share/lem/site-lisp
+lemdir = $(lem_contrib_prefix)/$(PACKAGE_VERSION)/site-lisp
 dist_lem_DATA = \
 	Makefile.am \
 	README.md \
@@ -53,6 +53,7 @@ dist_lem_selectpopup_DATA = \
 lem_setlocaledir = $(lemdir)/setlocale
 dist_lem_setlocale_DATA = \
 	setlocale/cffi.lisp \
+	setlocale/cffi_darwin.lisp \
 	setlocale/lem-setlocale.asd \
 	setlocale/project.lisp
 

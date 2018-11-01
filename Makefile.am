@@ -1,5 +1,7 @@
 SUBDIRS = contrib
 
+export lem_contrib_prefix = ${datadir}/lem
+
 bin_SCRIPTS = bin/${LEM_LAUNCHER}
 EXTRA_DIST =  bin/${LEM_LAUNCHER}
 

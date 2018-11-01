@@ -32,6 +32,6 @@ exec ros -Q -- $0 "$@"
                                      :direction :output
                                      :if-exists :supersede)
     (recur (asdf:system-source-directory :lem-contrib) 
-           "$(prefix)/share/lem/site-lisp"
+           "$(lem_contrib_prefix)/$(PACKAGE_VERSION)/site-lisp"
            "lem" "" t)))
 ;;; vim: set ft=lisp lisp:

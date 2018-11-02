@@ -210,15 +210,25 @@
   ((pool
     :initform (make-string-output-stream))
    (column
-    :initform 0)))
+    :initform 0)
+   (destination
+    :initform nil
+    :initarg :destination)))
 
-(defun make-editor-output-stream ()
-  (make-instance 'editor-output-stream))
+(defun make-editor-output-stream (&optional destination)
+  (make-instance 'editor-output-stream
+                 :destination destination))
 
 (defun editor-output-stream-flush (stream)
-  (with-slots (pool) stream
+  (with-slots (pool destination) stream
     (let ((string (get-output-stream-string pool)))
-      (message "~A" string))))
+      (etypecase destination
+        (point
+         (insert-string destination string))
+        (function
+         (funcall destination string))
+        (null
+         (message "~A" string))))))
 
 (defmethod trivial-gray-streams:stream-write-char ((stream editor-output-stream) character)
   (with-slots (pool column) stream

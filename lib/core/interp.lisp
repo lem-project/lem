@@ -113,7 +113,7 @@
     (catch +exit-tag+
       (with-error-handler ()
         (funcall initialize-function))
-      (let ((*standard-output* (make-editor-output-stream)))
+      (with-editor-stream ()
         (command-loop)))))
 
 (defun exit-editor (&optional report)

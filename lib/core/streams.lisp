@@ -7,7 +7,8 @@
           minibuffer-input-stream
           make-minibuffer-input-stream
           editor-output-stream
-          make-editor-output-stream))
+          make-editor-output-stream
+          make-editor-io-stream))
 
 (defclass buffer-input-stream (trivial-gray-streams:fundamental-input-stream)
   ((unread-char
@@ -266,3 +267,11 @@
 
 ;; (defmethod trivial-gray-streams:stream-advance-to-column ((stream editor-output-stream) column)
 ;;   )
+
+
+(defclass editor-io-stream (minibuffer-input-stream editor-output-stream)
+  ())
+
+(defun make-editor-io-stream (&optional destination)
+  (make-instance 'editor-io-stream
+                 :destination destination))

@@ -374,6 +374,7 @@
               (*query-io* ,io)
               (*debug-io* ,io)
               (*trace-output* ,io)
+              (*terminal-io* ,io)
               (,values (multiple-value-list (eval (read-from-string string)))))
          ,@(if (not values-p) `((declare (ignorable ,values))))
          ,@body))))

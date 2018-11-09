@@ -228,6 +228,13 @@
 (define-command vi-forward-word-end-broad (&optional (n 1)) ("p")
   (forward-word-end (current-point) n t))
 
+(define-command vi-backward-word-end (&optional (n 1)) ("p")
+  (character-offset (current-point) -1)
+  (skip-chars-backward (current-point) (lambda (char)
+                                         (or (char= char #\Newline)
+                                             (vi-space-char-p char))))
+  (vi-backward-word-begin n))
+
 (define-command vi-move-to-beginning-of-line () ()
   (with-point ((start (current-point)))
     (line-start start)
@@ -545,7 +552,7 @@
 
 (define-command vi-kill-last-word (&optional (n 1)) ("p")
   (let ((p (copy-point (current-point))))
-    (vi-backward-word-begin n)
+    (vi-backward-word-end n)
     (kill-region p (current-point))))
 
 (define-command vi-undo (&optional (n 1)) ("p")

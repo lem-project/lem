@@ -748,32 +748,33 @@
 (lem:define-command lsp-document-symbol () ()
   (document-symbol (lem:current-point)))
 
-(defmacro define-tcp-client (mode-name (&rest args) &key caller-hook)
+(defmacro define-lsp-client (mode-name (&rest args
+                                        &key (mode (error ":mode missing"))
+                                        &allow-other-keys))
+  (remf args :mode)
   `(progn
      (setf (get ',mode-name 'client)
-           (make-instance 'tcp-client ,@args))
-     ,(when caller-hook
-        `(lem:add-hook ,caller-hook 'lsp-mode))))
+           ,(ecase mode
+              ((:tcp)
+               `(make-instance 'tcp-client ,@args))
+              ((:stdio)
+               `(make-instance 'stdio-client ,@args))))
+     ,(when (lem:mode-hook mode-name)
+        `(lem:add-hook ,(lem:mode-hook mode-name) 'lsp-mode))))
 
-(defmacro define-stdio-client (mode-name (&rest args) &key caller-hook)
-  `(progn
-     (setf (get ',mode-name 'client)
-           (make-instance 'stdio-client ,@args))
-     ,(when caller-hook
-        `(lem:add-hook ,caller-hook 'lsp-mode))))
-
-(define-tcp-client lem-js-mode:js-mode
-  (:command '("node" "/Users/user/src/javascript-typescript-langserver/lib/language-server")
+(define-lsp-client lem-js-mode:js-mode
+  (:mode :tcp
    :language-id "javascript"
-   :port 2089)
-  :caller-hook lem-js-mode:*js-mode-hook*)
+   :command '("node" "/Users/user/src/javascript-typescript-langserver/lib/language-server")
+   :port 2089))
 
-(define-stdio-client lem-js-mode:js-mode
-  (:command (list "node" "/Users/user/src/javascript-typescript-langserver/lib/language-server-stdio")
-   :language-id "javascript")
-  :caller-hook lem-js-mode:*js-mode-hook*)
+(define-lsp-client lem-js-mode:js-mode
+  (:mode :stdio
+   :language-id "javascript"
+   :command (list "node"
+                  "/Users/user/src/javascript-typescript-langserver/lib/language-server-stdio")))
 
-(define-stdio-client lem-rust-mode:rust-mode
-  (:command '("rls")
-   :language-id "rust")
-  :caller-hook lem-rust-mode:*rust-mode-hook*)
+(define-lsp-client lem-rust-mode:rust-mode
+  (:mode :stdio
+   :command '("rls")
+   :language-id "rust"))

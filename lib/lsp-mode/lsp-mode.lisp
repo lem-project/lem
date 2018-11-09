@@ -768,6 +768,7 @@
    :command '("node" "/Users/user/src/javascript-typescript-langserver/lib/language-server")
    :port 2089))
 
+#+(or)
 (define-lsp-client lem-js-mode:js-mode
   (:mode :stdio
    :language-id "javascript"

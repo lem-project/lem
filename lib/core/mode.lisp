@@ -4,6 +4,7 @@
           mode-name
           mode-keymap
           mode-syntax-table
+          mode-hook
           current-mode-keymap
           find-mode-from-name
           mode-active-p
@@ -29,7 +30,8 @@
   (def mode-keymap)
   (def mode-syntax-table)
   (def mode-enable-hook)
-  (def mode-disable-hook))
+  (def mode-disable-hook)
+  (def mode-hook))
 
 (defun current-mode-keymap ()
   (mode-keymap (buffer-major-mode (current-buffer))))
@@ -76,7 +78,9 @@
                              (&key name keymap syntax-table mode-hook)
                              &body body)
   `(progn
-     ,(when mode-hook `(defvar ,mode-hook '()))
+     ,@(when mode-hook
+         `((defvar ,mode-hook '())
+           (setf (mode-hook ',major-mode) ',mode-hook)))
      (pushnew ',major-mode *mode-list*)
      (setf (mode-name ',major-mode) ,name)
      ,@(cond (keymap

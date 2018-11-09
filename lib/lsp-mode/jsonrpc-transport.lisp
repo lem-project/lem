@@ -1,4 +1,4 @@
-(in-package :lem-language-client)
+(in-package :lem-lsp-mode)
 
 (defclass lem-stdio-transport (jsonrpc:transport)
   ((stream

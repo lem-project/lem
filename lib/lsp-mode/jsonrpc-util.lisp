@@ -1,4 +1,4 @@
-(in-package :lem-language-client)
+(in-package :lem-lsp-mode)
 
 (defun do-log (fmt &rest args)
   (let* ((string (apply #'format nil fmt args))

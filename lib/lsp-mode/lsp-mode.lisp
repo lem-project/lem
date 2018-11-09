@@ -1,4 +1,4 @@
-(in-package :lem-language-client)
+(in-package :lem-lsp-mode)
 
 (defparameter *root-path* (probe-file "."))
 (defparameter *log-stream* *error-output*)
@@ -45,11 +45,11 @@
 
 (defclass stdio-client (client) ())
 
-(lem:define-minor-mode language-client-mode
+(lem:define-minor-mode lsp-mode
     (:name "Language Client"
-     :enable-hook 'enable-language-client-mode))
+     :enable-hook 'enable-lsp-mode))
 
-(defun enable-language-client-mode ()
+(defun enable-lsp-mode ()
   (setf (lem:variable-value 'lem.language-mode:completion-spec)
         (lem.completion-mode:make-completion-spec
          'completion
@@ -753,14 +753,14 @@
      (setf (get ',mode-name 'client)
            (make-instance 'tcp-client ,@args))
      ,(when caller-hook
-        `(lem:add-hook ,caller-hook 'language-client-mode))))
+        `(lem:add-hook ,caller-hook 'lsp-mode))))
 
 (defmacro define-stdio-client (mode-name (&rest args) &key caller-hook)
   `(progn
      (setf (get ',mode-name 'client)
            (make-instance 'stdio-client ,@args))
      ,(when caller-hook
-        `(lem:add-hook ,caller-hook 'language-client-mode))))
+        `(lem:add-hook ,caller-hook 'lsp-mode))))
 
 (define-tcp-client lem-js-mode:js-mode
   (:command '("node" "/Users/user/src/javascript-typescript-langserver/lib/language-server")

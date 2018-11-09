@@ -1,4 +1,4 @@
-(in-package :lem-language-client)
+(in-package :lem-lsp-mode)
 
 (defun getpid ()
   #+sbcl (sb-posix:getpid)

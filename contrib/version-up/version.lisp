@@ -42,14 +42,20 @@
             do (format out "~A~%" line)))))
 
 (defun rewrite-package.json (version target)
-  (let ((path (probe-file (make-pathname :defaults (path target) :type "json" :name "package"))))
+  (let* ((path (probe-file (make-pathname :defaults (path target) :type "json" :name "package")))
+         (count (count #\. version))
+         (version (cond ((= count 0)
+                         (format nil "~A.0.0" version))
+                        ((= count 1)
+                         (format nil "~A.0" version))
+                        (t version))))
     (when path
       (let ((lines (loop with done
                          for line in (uiop:read-file-lines path)
                          collect (if (and (not done)
                                           (equal (ignore-errors (read-from-string line)) "version"))
                                      (setq done (format nil "~A~S,"
-                                                        (subseq line 0 (+ 2(position #\: line)))
+                                                        (subseq line 0 (+ 2 (position #\: line)))
                                                         version))
                                      line))))
         (with-open-file (out path :direction :output :if-exists :supersede)

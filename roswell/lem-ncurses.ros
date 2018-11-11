@@ -6,7 +6,12 @@ exec ros -Q -m lem-ncurses -L sbcl-bin -- $0 "$@"
 (progn
   (unless (find-package :lem)
     (ql:quickload :lem-ncurses :silent t)
-    (uiop:symbol-call :lem :load-site-init)))
+    (uiop:symbol-call :lem :load-site-init)
+    (when (find :roswell.dump.executable *features*)
+      (mapcar (lambda (x)
+                (load x :verbose t))
+              (directory (merge-pathnames "scripts/build/*.lisp"
+                                          (asdf/system:system-source-directory :lem)))))))
 
 (defpackage :ros.script.lem.3672618460
   (:use :cl))

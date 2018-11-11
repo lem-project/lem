@@ -1,8 +1,11 @@
+system-index.txt:
+	ros ../scripts/gen-contrib.ros
 lemdir = $(lem_contrib_prefix)/$(PACKAGE_VERSION)/site-lisp
 dist_lem_DATA = \
 	Makefile.am \
 	README.md \
-	lem-contrib.asd
+	lem-contrib.asd \
+	system-index.txt
 
 lem_bracketparenmodedir = $(lemdir)/bracket-paren-mode
 dist_lem_bracketparenmode_DATA = \

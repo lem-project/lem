@@ -162,7 +162,7 @@
                    name
                    :attribute (get-file-attribute pathname))
     (when (symbolic-link-p pathname)
-      (insert-string point (format nil "-> ~A" (probe-file pathname))))
+      (insert-string point (format nil " -> ~A" (probe-file pathname))))
     (insert-character point #\newline)))
 
 (defun update (buffer)

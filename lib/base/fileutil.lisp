@@ -69,12 +69,12 @@
   (if (uiop:directory-pathname-p pathspec)
       (list (pathname pathspec))
       (or (mapcar (lambda (x) (virtual-probe-file x pathspec))
-                    (directory pathspec))
+                  (directory pathspec))
           (list pathspec))))
 
 (defun list-directory (directory &key directory-only)
   (delete nil
-          (mapcar (lambda (x) (virtual-probe-file x directory))
+          (mapcar (lambda (x) (and (virtual-probe-file x directory) x))
                   (append (sort (copy-list (uiop:subdirectories directory))
                                 #'string< :key #'namestring)
                           (unless directory-only

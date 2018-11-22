@@ -25,6 +25,12 @@ if GENERATE_NCURSES_CCL
  EXTRA_DIST += bin/lem-ncurses-ccl$(EXEEXT)
 endif
 
+lem-icon.svg: scripts/gen-desktop.ros
+	cd $(PWD);ros scripts/gen-desktop.ros --prefix ${prefix} --icon blue
+
+lem-ncurses.desktop: scripts/gen-desktop.ros
+	cd $(PWD);ros scripts/gen-desktop.ros --prefix ${prefix}
+
 %$(EXEEXT): %.ros
 	ros build $<
 
@@ -36,6 +42,7 @@ bin/${LEM_LAUNCHER}:
 	cat roswell/lem | sed -e "s/ncurses/${DEFAULT_FRONTEND}/g" > $@
 
 CLEANFILES = ${bin_SCRIPTS}
+CLEANFILES += lem-icon.svg lem-ncurses.desktop
 
 depend:
 	ros make-depends lem-ncurses bin/lem-ncurses > bin/lem-ncurses.depend

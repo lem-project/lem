@@ -65,18 +65,21 @@ exec ros -Q -- $0 "$@"
                            "Keywords=Text;Editor;"))))
 
 (defun main (&rest argv)
-  (let ((icon (position "--icon" argv :test #'equal))
+  (let ((icon-given (position "--icon" argv :test #'equal))
+        icon
         (prefix (position "--prefix" argv :test #'equal))
         (global (not (find "--local" argv :test #'equal))))
-    (when icon
-      (setf icon (nth (1+ icon) argv)))
+    (when icon-given
+      (setf icon (nth (1+ icon-given) argv)))
     (setf icon (or icon "blue"))
     (when prefix
       (setf prefix (nth (1+ prefix) argv)))
     (setf prefix (or prefix "/usr/local"))
-    (unless (probe-file "lem-icon.svg")
+    (when (and (not (probe-file "lem-icon.svg"))
+               icon-given)
       (download-icon icon))
-    (gen-desktop "lem-ncurses" :explanation "ncurses" :command "lem-ncurses" :global global :prefix prefix)
-    (gen-desktop "lem-ncurses-ccl" :explanation "ncurses ccl" :command "lem-ncurses-ccl" :global global :prefix prefix)))
+    (unless icon-given
+      (gen-desktop "lem-ncurses" :explanation "ncurses" :command "lem-ncurses" :global global :prefix prefix))
+    #+nil(gen-desktop "lem-ncurses-ccl" :explanation "ncurses ccl" :command "lem-ncurses-ccl" :global global :prefix prefix)))
 
 ;;; vim: set ft=lisp lisp:

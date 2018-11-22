@@ -31,15 +31,19 @@
    (buffer-start-point buffer)
    (buffer-end-point buffer)))
 
-(defun ask-revert-buffer ()
-  (when (changed-disk-p (current-buffer))
-    (cond ((eql (buffer-value (current-buffer) 'no-revert-buffer)
-                (file-write-date (buffer-filename))))
-          ((prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))
-           (revert-buffer t))
-          (t
-           (setf (buffer-value (current-buffer) 'no-revert-buffer)
-                 (file-write-date (buffer-filename)))))))
+(let ((last-time nil))
+  (defun ask-revert-buffer ()
+    (when (or (null last-time)
+              (< 100 (- (get-internal-real-time) last-time)))
+      (setf last-time (get-internal-real-time))
+      (when (changed-disk-p (current-buffer))
+        (cond ((eql (buffer-value (current-buffer) 'no-revert-buffer)
+                    (file-write-date (buffer-filename))))
+              ((prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))
+               (revert-buffer t))
+              (t
+               (setf (buffer-value (current-buffer) 'no-revert-buffer)
+                     (file-write-date (buffer-filename)))))))))
 
 (let ((once nil))
   (defun setup ()
@@ -73,8 +77,8 @@
       (add-hook (variable-value 'before-save-hook :global)
                 (lambda (buffer)
                   (scan-file-property-list buffer)))
-      (start-idle-timer 100 t
-                        'ask-revert-buffer))))
+      (add-hook *pre-command-hook*
+                'ask-revert-buffer))))
 
 (defun teardown ()
   (teardown-windows)

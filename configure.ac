@@ -19,6 +19,14 @@ if test `ros roswell-internal-use uname -m` == "armhf"; then
   fi
 fi
 
+ncurses=no
+AC_CHECK_HEADERS(ncurses.h,[ncurses=yes])
+if test "x$ncurses" = xno; then
+  if test frontend=ncurses; then
+    AC_MSG_ERROR([ncurses required]);
+  fi
+fi
+
 AC_ARG_WITH([name_launcher],
   [AC_HELP_STRING([--with-name-launcher=lem],[name launcher for lem frontend])],
   [LEM_LAUNCHER=$withval],[LEM_LAUNCHER="lem"])

@@ -18,6 +18,28 @@
 (defvar *windows-code-page*
   (cffi:foreign-funcall "GetConsoleOutputCP" :int))
 
+;; three position data are used for printing wide characters
+;;   disp-x : (for lem)
+;;            incremented by referencing lem-base::*eastasian-full*
+;;   pos-x  : (for windows console)
+;;            incremented by checking utf-16 surrogate pair characters
+;;   cur-x  : (for terminal) (experimental)
+;;            incremneted by referencing *wide-char-cursor-table*
+(defmacro increment-disp-x (disp-x code)
+  ;; check zero-width-space character (#\u200b)
+  `(unless (= ,code #x200b)
+     (setf ,disp-x (lem-base:char-width (code-char ,code) ,disp-x))))
+(defmacro increment-pos-x (pos-x code)
+  `(incf ,pos-x (if (< ,code #x10000) 1 2)))
+(defmacro increment-cur-x (cur-x code)
+  ;; check zero-width-space character (#\u200b)
+  `(unless (= ,code #x200b)
+     (incf ,cur-x (if (wide-char-cursor-p ,code) 2 1))))
+(defvar *wide-char-cursor-table* nil)
+(defun wide-char-cursor-p (code)
+  ;; dummy (it should be remaked by lem-base::gen-binary-search-function)
+  (> (lem-base:char-width (code-char code) 0) 1))
+
 ;; for input
 ;; (we can't use stdscr for input because it calls wrefresh implicitly)
 (defvar *padwin* nil)
@@ -63,27 +85,47 @@
           (lem:window-y      window)
           (lem:window-width  window)
           (lem:window-height window)))
-;; for ConEmu
-;; get mouse pos-x for adjusting wide characters
+;; for mintty
+;; get mouse pos-x for pointing wide characters properly
 (defun mouse-get-pos-x (view x y)
-  (unless (eq *windows-term-type* :conemu)
+  (unless (and (eq *windows-term-type* :mintty)
+               *wide-char-cursor-table*)
     (return-from mouse-get-pos-x x))
-  (let ((disp-x 0)
-        (pos-x  0)
-        (pos-y  (get-pos-y view x y)))
-    (loop :while (< pos-x x)
-       :for c-code := (get-charcode-from-scrwin view pos-x pos-y)
-       :for c := (code-char c-code)
-       :do (setf disp-x (lem-base:char-width c disp-x))
-         (setf pos-x (+ pos-x (if (< c-code #x10000) 1 2))))
-    disp-x))
+  (let* ((cur-x 0)
+         (pos-x 0)
+         (pos-y (get-pos-y view x y)))
+    (loop :while (< cur-x x)
+       :for code := (get-charcode-from-scrwin view pos-x pos-y)
+       :do (increment-cur-x cur-x code)
+           (increment-pos-x pos-x code))
+    pos-x))
+;; for mintty and ConEmu
+;; get mouse disp-x for pointing wide characters properly
+(defun mouse-get-disp-x (view x y)
+  (unless (or (and (eq *windows-term-type* :mintty)
+                   *wide-char-cursor-table*)
+              (eq *windows-term-type* :conemu))
+    (return-from mouse-get-disp-x x))
+  (let* ((start-x (ncurses-view-x view))
+         (disp-x0 (+ x start-x))
+         (disp-x  start-x)
+         (pos-x   start-x)
+         (pos-y   (get-pos-y view x y)))
+    (loop :while (< pos-x disp-x0)
+       :for code := (get-charcode-from-scrwin view pos-x pos-y)
+       :do (increment-disp-x disp-x code)
+           (increment-pos-x  pos-x  code))
+    (- disp-x start-x)))
 (defun mouse-move-to-cursor (window x y)
   (lem:move-point (lem:current-point) (lem::window-view-point window))
   (lem:move-to-next-virtual-line (lem:current-point) y)
   (lem:move-to-virtual-line-column (lem:current-point)
-                                   (mouse-get-pos-x (lem:window-view window) x y)))
+                                   (mouse-get-disp-x (lem:window-view window) x y)))
 (defun mouse-event-proc (bstate x1 y1)
   (lambda ()
+    ;; workaround for cursor position problem
+    (setf x1 (mouse-get-pos-x (lem:window-view (lem:current-window)) x1 y1))
+    ;; process mouse event
     (cond
       ;; button1 down
       ((logtest bstate (logior charms/ll:BUTTON1_PRESSED
@@ -340,7 +382,8 @@
 ;; workaround for display update problem (incomplete)
 (defun force-refresh-display (width height)
   (loop :for y1 :from 0 :below height
-     ;; '#\.' is necessary ('#\space' doesn't work)
+     ;; clear display area to reset PDCurses's internal cache memory
+     ;; ('#\.' is necessary ('#\space' doesn't work))
      :with str := (make-string width :initial-element #\.)
      :do (charms/ll:mvwaddstr charms/ll:*stdscr* y1 0 str))
   (charms/ll:refresh)
@@ -406,8 +449,8 @@
 
 ;; for mintty and ConEmu
 ;; get pos-x/y for printing wide characters
-(defun get-pos-x (view x y &key (modeline nil) (cursor nil))
-  (unless (or (and (eq *windows-term-type* :mintty) (not cursor))
+(defun get-pos-x (view x y &key (modeline nil))
+  (unless (or (eq *windows-term-type* :mintty)
               (eq *windows-term-type* :conemu))
     (return-from get-pos-x (+ x (ncurses-view-x view))))
   (let* ((floating (not (ncurses-view-modeline-scrwin view)))
@@ -417,18 +460,35 @@
          (pos-x    (if floating 0 start-x))
          (pos-y    (get-pos-y view x y :modeline modeline)))
     (loop :while (< disp-x disp-x0)
-       :for c-code := (get-charcode-from-scrwin view pos-x pos-y)
-       :for c := (code-char c-code)
-       :do (setf disp-x (lem-base:char-width c disp-x))
-         ;; pos-x is incremented only 1 at wide characters
-         ;; (except for utf-16 surrogate pair characters)
-         (setf pos-x (+ pos-x (if (< c-code #x10000) 1 2))))
+       :for code := (get-charcode-from-scrwin view pos-x pos-y)
+       :do (increment-disp-x disp-x code)
+           (increment-pos-x  pos-x  code))
     pos-x))
 (defun get-pos-y (view x y &key (modeline nil))
   (+ y (ncurses-view-y view) (if modeline (ncurses-view-height view) 0)))
 
+;; for mintty
+;; workaround for cursor position problem
+(defun get-cur-x (view x y &key (modeline nil))
+  (unless (eq *windows-term-type* :mintty)
+    (return-from get-cur-x (get-pos-x view x y :modeline modeline)))
+  (unless *wide-char-cursor-table*
+    (return-from get-cur-x (+ x (ncurses-view-x view))))
+  (let* ((start-x (ncurses-view-x view))
+         (disp-x0 (+ x start-x))
+         (disp-x  0)
+         (pos-x   0)
+         (pos-y   (get-pos-y view x y :modeline modeline))
+         (cur-x   0))
+    (loop :while (< disp-x disp-x0)
+       :for code := (get-charcode-from-scrwin view pos-x pos-y)
+       :do (increment-disp-x disp-x code)
+           (increment-pos-x  pos-x  code)
+           (increment-cur-x  cur-x  code))
+    cur-x))
+
 ;; for mintty and ConEmu
-;; adjust line width by using zero-width-space characters (#\u200b)
+;; adjust line width by using zero-width-space character (#\u200b)
 (defun adjust-line (view x y &key (modeline nil))
   (unless (or (eq *windows-term-type* :mintty)
               (eq *windows-term-type* :conemu))
@@ -438,7 +498,7 @@
          (disp-x0    (+ disp-width start-x))
          (pos-x      (get-pos-x view disp-width y :modeline modeline))
          (pos-y      (get-pos-y view disp-width y :modeline modeline)))
-    ;; write zero-width-space characters (#\u200b)
+    ;; write string of zero-width-space character (#\u200b)
     ;; only when horizontal splitted window
     ;; (to reduce the possibility of copying zero-width-space characters to clipboard)
     (when (and (> disp-x0 pos-x)
@@ -452,11 +512,11 @@
   (let ((clist    '())
         (splitted nil))
     (loop :for c :across string
-       :for c-code := (char-code c)
-       :do (if (< c-code #x10000)
+       :for code := (char-code c)
+       :do (if (< code #x10000)
                (push c clist)
                ;; split to 2 characters
-               (multiple-value-bind (q r) (floor (- c-code #x10000) #x0400)
+               (multiple-value-bind (q r) (floor (- code #x10000) #x0400)
                  (push (code-char (+ q #xd800)) clist) ; leading surrogate
                  (push (code-char (+ r #xdc00)) clist) ; trailing surrogate
                  (setf splitted t))))
@@ -482,30 +542,31 @@
                (member *windows-code-page* '(932 936 949 950)))
     (charms/ll:mvwaddstr scrwin y x string)
     (return-from print-sub))
-  ;; clear display area
+  ;; clear display area to reset PDCurses's internal cache memory
+  ;; ('#\.' is necessary ('#\space' doesn't work))
   (let ((disp-width 0))
     (loop :for c :across string
-       :for c-code := (char-code c)
+       :for code := (char-code c)
        :do (incf disp-width)
          ;; check wide characters (except for cp932 halfwidth katakana)
-         (when (and (> c-code #x7f)
+         (when (and (> code #x7f)
                     (not (and (= *windows-code-page* 932)
-                              (<= #xff61 c-code #xff9f))))
+                              (<= #xff61 code #xff9f))))
            (incf disp-width)))
     (charms/ll:mvwaddstr scrwin y x
                          (make-string disp-width :initial-element #\.))
     (charms/ll:refresh))
   ;; display wide characters
   (loop :for c :across string
-     :for c-code := (char-code c)
+     :for code := (char-code c)
      :with pos-x := x
-     :do (charms/ll:mvwaddch scrwin y pos-x c-code)
+     :do (charms/ll:mvwaddch scrwin y pos-x code)
        (incf pos-x)
        ;; check wide characters (except for cp932 halfwidth katakana)
-       (when (and (> c-code #x7f)
+       (when (and (> code #x7f)
                   (not (and (= *windows-code-page* 932)
-                            (<= #xff61 c-code #xff9f))))
-         (charms/ll:mvwaddch scrwin y pos-x c-code)
+                            (<= #xff61 code #xff9f))))
+         (charms/ll:mvwaddch scrwin y pos-x code)
          (incf pos-x)
          (charms/ll:refresh))))
 
@@ -578,6 +639,8 @@
           (charms/ll:curs-set 1)
           (charms/ll:wmove scrwin
                            (get-pos-y view lem::*cursor-x* lem::*cursor-y*)
-                           (get-pos-x view lem::*cursor-x* lem::*cursor-y* :cursor t))))
+                           ;; workaround for cursor position problem
+                           ;(get-pos-x view lem::*cursor-x* lem::*cursor-y*)
+                           (get-cur-x view lem::*cursor-x* lem::*cursor-y*))))
     (charms/ll:wnoutrefresh scrwin)
     (charms/ll:doupdate)))

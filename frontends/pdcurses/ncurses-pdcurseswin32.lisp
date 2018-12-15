@@ -28,7 +28,7 @@
 (defmacro increment-disp-x (disp-x code)
   ;; check zero-width-space character (#\u200b)
   `(unless (= ,code #x200b)
-     (setf ,disp-x (lem-base:char-width (code-char ,code) ,disp-x))))
+     (incf ,disp-x (if (lem-base:wide-char-p (code-char ,code)) 2 1))))
 (defmacro increment-pos-x (pos-x code)
   `(incf ,pos-x (if (< ,code #x10000) 1 2)))
 (defmacro increment-cur-x (cur-x code)
@@ -38,7 +38,7 @@
 (defvar *wide-char-cursor-table* nil)
 (defun wide-char-cursor-p (code)
   ;; dummy (it should be remaked by lem-base::gen-binary-search-function)
-  (> (lem-base:char-width (code-char code) 0) 1))
+  (lem-base:wide-char-p (code-char code)))
 
 ;; for input
 ;; (we can't use stdscr for input because it calls wrefresh implicitly)
@@ -91,9 +91,9 @@
   (unless (and (eq *windows-term-type* :mintty)
                *wide-char-cursor-table*)
     (return-from mouse-get-pos-x x))
-  (let* ((cur-x 0)
-         (pos-x 0)
-         (pos-y (get-pos-y view x y)))
+  (let ((cur-x 0)
+        (pos-x 0)
+        (pos-y (get-pos-y view x y)))
     (loop :while (< cur-x x)
        :for code := (get-charcode-from-scrwin view pos-x pos-y)
        :do (increment-cur-x cur-x code)
@@ -640,7 +640,7 @@
           (charms/ll:wmove scrwin
                            (get-pos-y view lem::*cursor-x* lem::*cursor-y*)
                            ;; workaround for cursor position problem
-                           ;(get-pos-x view lem::*cursor-x* lem::*cursor-y*)
+                           ;;(get-pos-x view lem::*cursor-x* lem::*cursor-y*)
                            (get-cur-x view lem::*cursor-x* lem::*cursor-y*))))
     (charms/ll:wnoutrefresh scrwin)
     (charms/ll:doupdate)))

@@ -142,7 +142,7 @@
     ((list (prompt-for-string "godoc ")))
   (let ((text
           (with-output-to-string (out)
-            (uiop:run-program (concatenate 'string "godoc " command)
+            (uiop:run-program (list "godoc" command)
                               :output out
                               :error-output out
                               :ignore-error-status t)))
@@ -168,10 +168,9 @@
     (let ((text
             (with-output-to-string (out)
               (with-input-from-string (in (buffer-text buffer))
-                (uiop:run-program (format nil
-                                          "godef -i -t -f ~A -o ~D"
-                                          (probe-file (buffer-filename buffer))
-                                          (point-bytes point))
+                (uiop:run-program (list "godef" "-i" "-t" "-f"
+                                        (probe-file (buffer-filename buffer))
+                                        "-o" (point-bytes point))
                                   :input in
                                   :output out
                                   :ignore-error-status t)))))
@@ -235,9 +234,9 @@
     (let ((text
             (with-output-to-string (out)
               (with-input-from-string (in (buffer-text buffer))
-                (uiop:run-program (format nil "gocode -f=json autocomplete '~A' c~D"
-                                          (or (buffer-filename buffer) "")
-                                          (1- (position-at-point point)))
+                (uiop:run-program (list "gocode" "-f=json" "autocomplete"
+                                        (or (buffer-filename buffer) "")
+                                        (format nil "c~D" (1- (position-at-point point))))
                                   :input in
                                   :output out)))))
       (parse-gocode text))))

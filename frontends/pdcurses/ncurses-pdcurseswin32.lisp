@@ -25,7 +25,9 @@
   (unless *padwin*
     (setf *padwin* (charms/ll:newpad 1 1))
     (charms/ll:keypad *padwin* 1)
-    (charms/ll:PDC-save-key-modifiers 1))
+    (charms/ll:PDC-save-key-modifiers 1)
+    ;; timeout setting is necessary to exit lem normally
+    (charms/ll:wtimeout *padwin* 100))
   (charms/ll:wgetch *padwin*))
 
 ;; for resizing display
@@ -154,12 +156,10 @@
 ;; deal with utf-16 surrogate pair characters (input)
 (defun get-key (code)
   (when (<= #xd800 code #xdbff)
-    (charms/ll:timeout 100)
     (let ((c-lead  code)
           (c-trail (getch-pad)))
       (when (<= #xdc00 c-trail #xdfff)
-        (setf code (+ #x10000 (* (- c-lead #xd800) #x0400) (- c-trail #xdc00))))
-      (charms/ll:timeout -1)))
+        (setf code (+ #x10000 (* (- c-lead #xd800) #x0400) (- c-trail #xdc00))))))
   (char-to-key (code-char code)))
 
 ;; enable modifier keys
@@ -229,7 +229,6 @@
            ((= code #x210) (setf code #x05c))
            ;; M-[
            ((= code #x1f1)
-            (charms/ll:timeout 100)
             (let ((code1 (getch-pad)))
               (cond
 		;; drop mouse escape sequence
@@ -238,8 +237,7 @@
                     :until (or (= code2 -1)
                                (= code2 #x04d)	   ; M
                                (= code2 #x06d)))   ; m
-                 (setf code -1)))
-              (charms/ll:timeout -1)))
+                 (setf code -1)))))
            ))
         ;; normal key workaround
         (t
@@ -257,7 +255,10 @@
     (tagbody :start
        (return-from get-event
          (let ((code (get-ch)))
-           (cond ((= code -1) (go :start))
+           (cond ((= code -1)
+                  ;; retry is necessary to exit lem normally
+                  ;;(go :start)
+                  :retry)
                  ((= code resize-code)
                   ;;(setf esc-key nil)
                   ;; for resizing display
@@ -286,15 +287,6 @@
                   (get-key code))))))))
 
 ;; workaround for exit problem
-(defun console-input-count ()
-  (let ((hdl (cffi:foreign-funcall "GetStdHandle" :int -10 :int)))
-    (cffi:with-foreign-objects ((count :int))
-      (if (cffi:foreign-funcall "GetNumberOfConsoleInputEvents"
-                                :int hdl :pointer count :boolean)
-          (cffi:mem-ref count :int)
-          0))))
-
-;; workaround for exit problem
 (defun input-loop (editor-thread)
   (handler-case
       (loop
@@ -302,41 +294,18 @@
              (progn
                (unless (bt:thread-alive-p editor-thread) (return))
                (let ((event (get-event)))
-                 (if (eq event :abort)
-                     (send-abort-event editor-thread nil)
-                     (send-event event)))
-               ;; workaround for exit problem
-               (when (<= (console-input-count) 10)
-                 (sleep 0.0001)))
+                 (case event
+                   ;; retry is necessary to exit lem normally
+                   (:retry)
+                   (:abort
+                    (send-abort-event editor-thread nil))
+                   (t
+                    (send-event event)))))
            #+sbcl
            (sb-sys:interactive-interrupt (c)
              (declare (ignore c))
              (send-abort-event editor-thread t))))
     (exit-editor (c) (return-from input-loop c))))
-
-;; workaround for exit problem
-(defmethod lem-if:invoke ((implementation ncurses) function)
-  (let ((result nil)
-        (input-thread (bt:current-thread)))
-    (unwind-protect
-         (progn
-           (when (lem.term:term-init)
-             (let ((editor-thread
-                    (funcall function
-                             nil
-                             (lambda (report)
-                               (bt:interrupt-thread
-                                input-thread
-                                (lambda () (error 'exit-editor :value report)))))))
-               (setf result (input-loop editor-thread))
-               ;; workaround for exit problem
-               ;; (to avoid 'compilation unit aborted caught 1 fatal ERROR condition')
-               (bt:join-thread editor-thread)
-               )))
-      (lem.term:term-finalize))
-    (when (and (typep result 'exit-editor)
-               (exit-editor-value result))
-      (format t "~&~A~%" (exit-editor-value result)))))
 
 ;; workaround for display update problem (incomplete)
 (defun force-refresh-display (width height)

@@ -75,8 +75,8 @@
          (pos-y   (get-pos-y view x y)))
     (loop :while (< pos-x disp-x0)
        :for code := (get-charcode-from-scrwin view pos-x pos-y)
-       :do (setf disp-x (lem-base:char-width (code-char code) disp-x))
-         (setf pos-x (+ pos-x (if (< code #x10000) 1 2))))
+       :do (incf disp-x (if (lem-base:wide-char-p (code-char code)) 2 1))
+           (incf pos-x  (if (< code #x10000) 1 2)))
     (- disp-x start-x)))
 (defun mouse-move-to-cursor (window x y)
   (lem:move-point (lem:current-point) (lem::window-view-point window))
@@ -151,7 +151,7 @@
        (lem:redraw-display))
       )))
 
-;; deal with utf-16 surrogate pair characters
+;; deal with utf-16 surrogate pair characters (input)
 (defun get-key (code)
   (when (<= #xd800 code #xdbff)
     (charms/ll:timeout 100)
@@ -394,7 +394,7 @@
   (setf (ncurses-view-x view) x)
   (setf (ncurses-view-y view) y))
 
-;; deal with utf-16 surrogate pair characters
+;; deal with utf-16 surrogate pair characters (screen memory)
 (defun get-charcode-from-scrwin (view x y)
   (let ((code (logand (charms/ll:mvwinch (ncurses-view-scrwin view) y x)
                       charms/ll:A_CHARTEXT)))
@@ -420,10 +420,8 @@
          (pos-y    (get-pos-y view x y :modeline modeline)))
     (loop :while (< disp-x disp-x0)
        :for code := (get-charcode-from-scrwin view pos-x pos-y)
-       :do (setf disp-x (lem-base:char-width (code-char code) disp-x))
-         ;; pos-x is incremented only 1 at wide characters
-         ;; (except for utf-16 surrogate pair characters)
-         (setf pos-x (+ pos-x (if (< code #x10000) 1 2))))
+       :do (incf disp-x (if (lem-base:wide-char-p (code-char code)) 2 1))
+           (incf pos-x  (if (< code #x10000) 1 2)))
     pos-x))
 (defun get-pos-y (view x y &key (modeline nil))
   (+ y (ncurses-view-y view) (if modeline (ncurses-view-height view) 0)))
@@ -448,7 +446,7 @@
                            (make-string (- disp-x0 pos-x)
                                         :initial-element #\u200b)))))
 
-;; workaround for display problem of utf-16 surrogate pair characters (incomplete)
+;; deal with utf-16 surrogate pair characters (output)
 (defun remake-string (string)
   (let ((clist    '())
         (splitted nil))

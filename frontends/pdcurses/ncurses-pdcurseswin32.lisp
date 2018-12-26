@@ -18,8 +18,9 @@
 (let* ((csize  1024)
        (cbuf   (cffi:foreign-alloc :char :count csize :initial-element 0))
        (sysdir ""))
-  (unless (zerop (cffi:foreign-funcall "GetSystemDirectoryA"
-                                       :pointer cbuf :int csize :int))
+  (if (zerop (cffi:foreign-funcall "GetSystemDirectoryA"
+                                   :pointer cbuf :int csize :int))
+    (error "winmm.dll load error (GetSystemDirectoryA failed)")
     (setf sysdir (concatenate 'string (cffi:foreign-string-to-lisp cbuf) "\\")))
   (cffi:load-foreign-library (concatenate 'string sysdir "winmm.dll"))
   (cffi:foreign-free cbuf))

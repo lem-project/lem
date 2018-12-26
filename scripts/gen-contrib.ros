@@ -28,6 +28,7 @@ exec ros -Q -- $0 "$@"
 
 (defun main (&rest argv)
   (declare (ignorable argv))
+  (uiop:delete-file-if-exists (asdf:system-relative-pathname :lem "contrib/system-index.txt"))
   (quicklisp-client::make-system-index (asdf:system-relative-pathname :lem "contrib/"))
   (with-open-file (*standard-output* (asdf:system-relative-pathname :lem "contrib/Makefile.am")
                                      :direction :output
@@ -39,4 +40,3 @@ exec ros -Q -- $0 "$@"
            "$(lem_contrib_prefix)/$(PACKAGE_VERSION)/site-lisp"
            "lem" "" t)))
 ;;; vim: set ft=lisp lisp:
-(asdf:system-relative-pathname :lem "contrib/Makefile.am")

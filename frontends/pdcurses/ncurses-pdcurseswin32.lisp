@@ -1,6 +1,4 @@
 (in-package :lem-ncurses)
-(export '(get-input-polling-interval
-          set-input-polling-interval))
 
 ;; windows terminal type
 ;;   :mintty  : mintty  (winpty is needed)
@@ -14,8 +12,17 @@
     (t :cmd.exe)))
 
 ;; load windows dll
+;;   (we load winmm.dll with a full path because it isn't listed
+;;    in windows knowndlls)
 (cffi:load-foreign-library '(:default "kernel32"))
-(cffi:load-foreign-library '(:default "winmm"))
+(let* ((csize  1024)
+       (cbuf   (cffi:foreign-alloc :char :count csize :initial-element 0))
+       (sysdir ""))
+  (unless (zerop (cffi:foreign-funcall "GetSystemDirectoryA"
+                                       :pointer cbuf :int csize :int))
+    (setf sysdir (concatenate 'string (cffi:foreign-string-to-lisp cbuf) "\\")))
+  (cffi:load-foreign-library (concatenate 'string sysdir "winmm.dll"))
+  (cffi:foreign-free cbuf))
 
 ;; windows console code page
 (defvar *windows-code-page*
@@ -24,12 +31,12 @@
 ;; input polling interval (sec)
 ;;   (we don't use PDCurses's internal polling timer (0.05 sec interval))
 ;;   (when interval is less than 0.01, high precision timer is used)
-(defvar *input-polling-interval* 0.01)
-(defun get-input-polling-interval ()
+(defvar *input-polling-interval* 0.001)
+(defun input-polling-interval ()
   *input-polling-interval*)
 (let ((high-precision nil)
       (exit-hook      nil))
-  (defun set-input-polling-interval (v)
+  (defun (setf input-polling-interval) (v)
     (setf *input-polling-interval* v)
     (cond
       ((< v 0.01)
@@ -45,8 +52,9 @@
       (t
        (when high-precision
          (setf high-precision nil)
-         (cffi:foreign-funcall "timeEndPeriod" :int 1 :int)))))
-  (set-input-polling-interval *input-polling-interval*))
+         (cffi:foreign-funcall "timeEndPeriod" :int 1 :int))))
+    v)
+  (setf (input-polling-interval) *input-polling-interval*))
 
 ;; for input
 ;; (we can't use stdscr for input because it calls wrefresh implicitly)

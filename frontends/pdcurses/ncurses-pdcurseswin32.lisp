@@ -12,11 +12,50 @@
     (t :cmd.exe)))
 
 ;; load windows dll
+;;   (we load winmm.dll with a full path because it isn't listed
+;;    in windows knowndlls)
 (cffi:load-foreign-library '(:default "kernel32"))
+(let* ((csize  1024)
+       (cbuf   (cffi:foreign-alloc :char :count csize :initial-element 0))
+       (sysdir ""))
+  (if (zerop (cffi:foreign-funcall "GetSystemDirectoryA"
+                                   :pointer cbuf :int csize :int))
+    (error "winmm.dll load error (GetSystemDirectoryA failed)")
+    (setf sysdir (concatenate 'string (cffi:foreign-string-to-lisp cbuf) "\\")))
+  (cffi:load-foreign-library (concatenate 'string sysdir "winmm.dll"))
+  (cffi:foreign-free cbuf))
 
 ;; windows console code page
 (defvar *windows-code-page*
   (cffi:foreign-funcall "GetConsoleOutputCP" :int))
+
+;; input polling interval (sec)
+;;   (we don't use PDCurses's internal polling timer (0.05 sec interval))
+;;   (when interval is less than 0.01, high precision timer is used)
+(defvar *input-polling-interval* 0.001)
+(defun input-polling-interval ()
+  *input-polling-interval*)
+(let ((high-precision nil)
+      (exit-hook      nil))
+  (defun (setf input-polling-interval) (v)
+    (setf *input-polling-interval* v)
+    (cond
+      ((< v 0.01)
+       (unless high-precision
+         (setf high-precision t)
+         (cffi:foreign-funcall "timeBeginPeriod" :int 1 :int))
+       (unless exit-hook
+         (setf exit-hook t)
+         (add-hook *exit-editor-hook*
+                   (lambda ()
+                     (when high-precision
+                       (cffi:foreign-funcall "timeEndPeriod" :int 1 :int))))))
+      (t
+       (when high-precision
+         (setf high-precision nil)
+         (cffi:foreign-funcall "timeEndPeriod" :int 1 :int))))
+    v)
+  (setf (input-polling-interval) *input-polling-interval*))
 
 ;; for input
 ;; (we can't use stdscr for input because it calls wrefresh implicitly)
@@ -27,7 +66,7 @@
     (charms/ll:keypad *padwin* 1)
     (charms/ll:PDC-save-key-modifiers 1)
     ;; timeout setting is necessary to exit lem normally
-    (charms/ll:wtimeout *padwin* 100))
+    (charms/ll:wtimeout *padwin* 0))
   (charms/ll:wgetch *padwin*))
 
 ;; for resizing display
@@ -156,10 +195,12 @@
 ;; deal with utf-16 surrogate pair characters (input)
 (defun get-key (code)
   (when (<= #xd800 code #xdbff)
+    (charms/ll:wtimeout *padwin* 100)
     (let ((c-lead  code)
           (c-trail (getch-pad)))
       (when (<= #xdc00 c-trail #xdfff)
-        (setf code (+ #x10000 (* (- c-lead #xd800) #x0400) (- c-trail #xdc00))))))
+        (setf code (+ #x10000 (* (- c-lead #xd800) #x0400) (- c-trail #xdc00))))
+      (charms/ll:wtimeout *padwin* 0)))
   (char-to-key (code-char code)))
 
 ;; enable modifier keys
@@ -229,6 +270,7 @@
            ((= code #x210) (setf code #x05c))
            ;; M-[
            ((= code #x1f1)
+            (charms/ll:wtimeout *padwin* 100)
             (let ((code1 (getch-pad)))
               (cond
 		;; drop mouse escape sequence
@@ -237,7 +279,8 @@
                     :until (or (= code2 -1)
                                (= code2 #x04d)	   ; M
                                (= code2 #x06d)))   ; m
-                 (setf code -1)))))
+                 (setf code -1)))
+              (charms/ll:wtimeout *padwin* 0)))
            ))
         ;; normal key workaround
         (t
@@ -296,7 +339,8 @@
                (let ((event (get-event)))
                  (case event
                    ;; retry is necessary to exit lem normally
-                   (:retry)
+                   (:retry
+                    (sleep *input-polling-interval*))
                    (:abort
                     (send-abort-event editor-thread nil))
                    (t

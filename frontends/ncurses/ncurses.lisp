@@ -1,5 +1,7 @@
 (defpackage :lem-ncurses
-  (:use :cl :lem))
+  (:use :cl :lem)
+  (:export ;; ncurses-pdcurseswin32.lisp
+           :input-polling-interval))
 (in-package :lem-ncurses)
 
 (defclass ncurses (lem:implementation)

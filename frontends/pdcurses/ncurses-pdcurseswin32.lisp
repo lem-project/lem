@@ -12,8 +12,8 @@
     (t :cmd.exe)))
 
 ;; load windows dll
-;;   (we load winmm.dll with a full path because it isn't listed
-;;    in windows knowndlls)
+;;  (we load winmm.dll with a full path because it isn't listed in
+;;   windows knowndlls)
 (cffi:load-foreign-library '(:default "kernel32"))
 (let* ((csize  1024)
        (cbuf   (cffi:foreign-alloc :char :count csize :initial-element 0))
@@ -30,8 +30,8 @@
   (cffi:foreign-funcall "GetConsoleOutputCP" :int))
 
 ;; input polling interval (sec)
-;;   (we don't use PDCurses's internal polling timer (0.05 sec interval))
-;;   (when interval is less than 0.01, high precision timer is used)
+;;  (we don't use PDCurses's internal polling timer (0.05 sec interval))
+;;  (we use high precision timer when this interval is less than 0.01)
 (defvar *input-polling-interval* 0.001)
 (defun input-polling-interval ()
   *input-polling-interval*)
@@ -58,7 +58,8 @@
   (setf (input-polling-interval) *input-polling-interval*))
 
 ;; for input
-;; (we can't use stdscr for input because it calls wrefresh implicitly)
+;;  (we don't use stdscr for input because it calls wrefresh implicitly
+;;   and causes the display confliction by two threads)
 (defvar *padwin* nil)
 (defun getch-pad ()
   (unless *padwin*
@@ -295,39 +296,34 @@
            )))
       code))
   (defun get-event ()
-    (tagbody :start
-       (return-from get-event
-         (let ((code (get-ch)))
-           (cond ((= code -1)
-                  ;; retry is necessary to exit lem normally
-                  ;;(go :start)
-                  :retry)
-                 ((= code resize-code)
-                  ;;(setf esc-key nil)
-                  ;; for resizing display
-                  (setf *resizing* t)
-                  :resize)
-                 ((= code mouse-code)
-                  ;;(setf esc-key nil)
-                  ;; for mouse
-                  (multiple-value-bind (bstate x y z id)
-                      (charms/ll:getmouse)
-                    (mouse-event-proc bstate x y)))
-                 ((= code abort-code)
-                  (setf esc-key nil)
-                  :abort)
-                 ((= code escape-code)
-                  (setf esc-key t)
-                  (get-key-from-name "escape"))
-                 ((or alt-key esc-key)
-                  (setf esc-key nil)
-                  (let ((key (get-key code)))
-                    (make-key :meta t
-                              :sym (key-sym key)
-                              :ctrl (key-ctrl key))))
-                 (t
-                  (setf esc-key nil)
-                  (get-key code))))))))
+    (let ((code (get-ch)))
+      (cond ((= code -1)
+             ;; retry is necessary to exit lem normally
+             :retry)
+            ((= code resize-code)
+             ;; for resizing display
+             (setf *resizing* t)
+             :resize)
+            ((= code mouse-code)
+             ;; for mouse
+             (multiple-value-bind (bstate x y z id)
+                 (charms/ll:getmouse)
+               (mouse-event-proc bstate x y)))
+            ((= code abort-code)
+             (setf esc-key nil)
+             :abort)
+            ((= code escape-code)
+             (setf esc-key t)
+             (get-key-from-name "escape"))
+            ((or alt-key esc-key)
+             (setf esc-key nil)
+             (let ((key (get-key code)))
+               (make-key :meta t
+                         :sym (key-sym key)
+                         :ctrl (key-ctrl key))))
+            (t
+             (setf esc-key nil)
+             (get-key code))))))
 
 ;; workaround for exit problem
 (defun input-loop (editor-thread)

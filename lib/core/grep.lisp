@@ -81,7 +81,8 @@
                (call-background-job
                 (lambda ()
                   (with-output-to-string (s)
-                    (Uiop:run-program (format nil "cd '~A'; ~A" directory string)
+                    (Uiop:run-program string
+                                      :directory directory
                                       :output s
                                       :error-output s
                                       :ignore-error-status t)))

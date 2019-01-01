@@ -7,6 +7,9 @@
   (lem-encodings-table/sjis:generate-table 
    (asdf:system-relative-pathname :lem-encodings "cp932.table")
    "CP932")
+  (lem-encodings-table/euc:generate-table
+   (asdf:system-relative-pathname :lem-encodings "gb2312.table")
+   "GB2312")
   (lem-encodings-table/euc:generate-table 
    (asdf:system-relative-pathname :lem-encodings "euc-jp.table")
    "EUC-JP" :country :jp)

@@ -169,8 +169,8 @@
             (with-output-to-string (out)
               (with-input-from-string (in (buffer-text buffer))
                 (uiop:run-program (list "godef" "-i" "-t" "-f"
-                                        (probe-file (buffer-filename buffer))
-                                        "-o" (point-bytes point))
+                                        (namestring (probe-file (buffer-filename buffer)))
+                                        "-o" (princ-to-string (point-bytes point)))
                                   :input in
                                   :output out
                                   :ignore-error-status t)))))

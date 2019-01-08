@@ -541,7 +541,8 @@
                   (with-input-from-string (input string)
                     (multiple-value-setq
                         (output-value error-output-value status)
-                      (uiop:run-program (format nil "cd '~A'; ~A" (buffer-directory buffer) cmd)
+                      (uiop:run-program cmd
+                                        :directory (buffer-directory buffer)
                                         :input input
                                         :output output
                                         :error-output output
@@ -557,7 +558,8 @@
   (let ((directory (buffer-directory)))
     (let ((output-string
             (with-output-to-string (out)
-              (uiop:run-program (format nil "cd '~A'; ~A" directory str)
+              (uiop:run-program str
+                                :directory directory
                                 :output out
                                 :error-output out
                                 :ignore-error-status t))))

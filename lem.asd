@@ -18,7 +18,8 @@
                "lem-paredit-mode"
                "lem-nim-mode"
                "lem-scheme-mode"
-               "lem-diff-mode"))
+               "lem-diff-mode"
+               "lem-yaml-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

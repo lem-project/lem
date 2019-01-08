@@ -12,20 +12,62 @@
     (t :cmd.exe)))
 
 ;; load windows dll
+;;  (we load winmm.dll with a full path because it isn't listed in
+;;   windows knowndlls)
 (cffi:load-foreign-library '(:default "kernel32"))
+(let* ((csize  1024)
+       (cbuf   (cffi:foreign-alloc :char :count csize :initial-element 0))
+       (sysdir ""))
+  (if (zerop (cffi:foreign-funcall "GetSystemDirectoryA"
+                                   :pointer cbuf :int csize :int))
+    (error "winmm.dll load error (GetSystemDirectoryA failed)")
+    (setf sysdir (concatenate 'string (cffi:foreign-string-to-lisp cbuf) "\\")))
+  (cffi:load-foreign-library (concatenate 'string sysdir "winmm.dll"))
+  (cffi:foreign-free cbuf))
 
 ;; windows console code page
 (defvar *windows-code-page*
   (cffi:foreign-funcall "GetConsoleOutputCP" :int))
 
+;; input polling interval (sec)
+;;  (we don't use PDCurses's internal polling timer (0.05 sec interval))
+;;  (we use high precision timer when this interval is less than 0.01)
+(defvar *input-polling-interval* 0.001)
+(defun input-polling-interval ()
+  *input-polling-interval*)
+(let ((high-precision nil)
+      (exit-hook      nil))
+  (defun (setf input-polling-interval) (v)
+    (setf *input-polling-interval* v)
+    (cond
+      ((< v 0.01)
+       (unless high-precision
+         (setf high-precision t)
+         (cffi:foreign-funcall "timeBeginPeriod" :int 1 :int))
+       (unless exit-hook
+         (setf exit-hook t)
+         (add-hook *exit-editor-hook*
+                   (lambda ()
+                     (when high-precision
+                       (cffi:foreign-funcall "timeEndPeriod" :int 1 :int))))))
+      (t
+       (when high-precision
+         (setf high-precision nil)
+         (cffi:foreign-funcall "timeEndPeriod" :int 1 :int))))
+    v)
+  (setf (input-polling-interval) *input-polling-interval*))
+
 ;; for input
-;; (we can't use stdscr for input because it calls wrefresh implicitly)
+;;  (we don't use stdscr for input because it calls wrefresh implicitly
+;;   and causes the display confliction by two threads)
 (defvar *padwin* nil)
 (defun getch-pad ()
   (unless *padwin*
     (setf *padwin* (charms/ll:newpad 1 1))
     (charms/ll:keypad *padwin* 1)
-    (charms/ll:PDC-save-key-modifiers 1))
+    (charms/ll:PDC-save-key-modifiers 1)
+    ;; timeout setting is necessary to exit lem normally
+    (charms/ll:wtimeout *padwin* 0))
   (charms/ll:wgetch *padwin*))
 
 ;; for resizing display
@@ -64,24 +106,25 @@
           (lem:window-width  window)
           (lem:window-height window)))
 ;; for ConEmu
-;; get mouse pos-x for adjusting wide characters
-(defun mouse-get-pos-x (view x y)
+;; get mouse disp-x for pointing wide characters properly
+(defun mouse-get-disp-x (view x y)
   (unless (eq *windows-term-type* :conemu)
-    (return-from mouse-get-pos-x x))
-  (let ((disp-x 0)
-        (pos-x  0)
-        (pos-y  (get-pos-y view x y)))
-    (loop :while (< pos-x x)
-       :for c-code := (get-charcode-from-scrwin view pos-x pos-y)
-       :for c := (code-char c-code)
-       :do (setf disp-x (lem-base:char-width c disp-x))
-         (setf pos-x (+ pos-x (if (< c-code #x10000) 1 2))))
-    disp-x))
+    (return-from mouse-get-disp-x x))
+  (let* ((start-x (ncurses-view-x view))
+         (disp-x0 (+ x start-x))
+         (disp-x  start-x)
+         (pos-x   start-x)
+         (pos-y   (get-pos-y view x y)))
+    (loop :while (< pos-x disp-x0)
+       :for code := (get-charcode-from-scrwin view pos-x pos-y)
+       :do (incf disp-x (if (lem-base:wide-char-p (code-char code)) 2 1))
+           (incf pos-x  (if (< code #x10000) 1 2)))
+    (- disp-x start-x)))
 (defun mouse-move-to-cursor (window x y)
   (lem:move-point (lem:current-point) (lem::window-view-point window))
   (lem:move-to-next-virtual-line (lem:current-point) y)
   (lem:move-to-virtual-line-column (lem:current-point)
-                                   (mouse-get-pos-x (lem:window-view window) x y)))
+                                   (mouse-get-disp-x (lem:window-view window) x y)))
 (defun mouse-event-proc (bstate x1 y1)
   (lambda ()
     (cond
@@ -150,15 +193,15 @@
        (lem:redraw-display))
       )))
 
-;; deal with utf-16 surrogate pair characters
+;; deal with utf-16 surrogate pair characters (input)
 (defun get-key (code)
   (when (<= #xd800 code #xdbff)
-    (charms/ll:timeout 100)
+    (charms/ll:wtimeout *padwin* 100)
     (let ((c-lead  code)
           (c-trail (getch-pad)))
       (when (<= #xdc00 c-trail #xdfff)
         (setf code (+ #x10000 (* (- c-lead #xd800) #x0400) (- c-trail #xdc00))))
-      (charms/ll:timeout -1)))
+      (charms/ll:wtimeout *padwin* 0)))
   (char-to-key (code-char code)))
 
 ;; enable modifier keys
@@ -228,7 +271,7 @@
            ((= code #x210) (setf code #x05c))
            ;; M-[
            ((= code #x1f1)
-            (charms/ll:timeout 100)
+            (charms/ll:wtimeout *padwin* 100)
             (let ((code1 (getch-pad)))
               (cond
 		;; drop mouse escape sequence
@@ -238,7 +281,7 @@
                                (= code2 #x04d)	   ; M
                                (= code2 #x06d)))   ; m
                  (setf code -1)))
-              (charms/ll:timeout -1)))
+              (charms/ll:wtimeout *padwin* 0)))
            ))
         ;; normal key workaround
         (t
@@ -253,45 +296,34 @@
            )))
       code))
   (defun get-event ()
-    (tagbody :start
-       (return-from get-event
-         (let ((code (get-ch)))
-           (cond ((= code -1) (go :start))
-                 ((= code resize-code)
-                  ;;(setf esc-key nil)
-                  ;; for resizing display
-                  (setf *resizing* t)
-                  :resize)
-                 ((= code mouse-code)
-                  ;;(setf esc-key nil)
-                  ;; for mouse
-                  (multiple-value-bind (bstate x y z id)
-                      (charms/ll:getmouse)
-                    (mouse-event-proc bstate x y)))
-                 ((= code abort-code)
-                  (setf esc-key nil)
-                  :abort)
-                 ((= code escape-code)
-                  (setf esc-key t)
-                  (get-key-from-name "escape"))
-                 ((or alt-key esc-key)
-                  (setf esc-key nil)
-                  (let ((key (get-key code)))
-                    (make-key :meta t
-                              :sym (key-sym key)
-                              :ctrl (key-ctrl key))))
-                 (t
-                  (setf esc-key nil)
-                  (get-key code))))))))
-
-;; workaround for exit problem
-(defun console-input-count ()
-  (let ((hdl (cffi:foreign-funcall "GetStdHandle" :int -10 :int)))
-    (cffi:with-foreign-objects ((count :int))
-      (if (cffi:foreign-funcall "GetNumberOfConsoleInputEvents"
-                                :int hdl :pointer count :boolean)
-          (cffi:mem-ref count :int)
-          0))))
+    (let ((code (get-ch)))
+      (cond ((= code -1)
+             ;; retry is necessary to exit lem normally
+             :retry)
+            ((= code resize-code)
+             ;; for resizing display
+             (setf *resizing* t)
+             :resize)
+            ((= code mouse-code)
+             ;; for mouse
+             (multiple-value-bind (bstate x y z id)
+                 (charms/ll:getmouse)
+               (mouse-event-proc bstate x y)))
+            ((= code abort-code)
+             (setf esc-key nil)
+             :abort)
+            ((= code escape-code)
+             (setf esc-key t)
+             (get-key-from-name "escape"))
+            ((or alt-key esc-key)
+             (setf esc-key nil)
+             (let ((key (get-key code)))
+               (make-key :meta t
+                         :sym (key-sym key)
+                         :ctrl (key-ctrl key))))
+            (t
+             (setf esc-key nil)
+             (get-key code))))))
 
 ;; workaround for exit problem
 (defun input-loop (editor-thread)
@@ -301,46 +333,25 @@
              (progn
                (unless (bt:thread-alive-p editor-thread) (return))
                (let ((event (get-event)))
-                 (if (eq event :abort)
-                     (send-abort-event editor-thread nil)
-                     (send-event event)))
-               ;; workaround for exit problem
-               (when (<= (console-input-count) 10)
-                 (sleep 0.0001)))
+                 (case event
+                   ;; retry is necessary to exit lem normally
+                   (:retry
+                    (sleep *input-polling-interval*))
+                   (:abort
+                    (send-abort-event editor-thread nil))
+                   (t
+                    (send-event event)))))
            #+sbcl
            (sb-sys:interactive-interrupt (c)
              (declare (ignore c))
              (send-abort-event editor-thread t))))
     (exit-editor (c) (return-from input-loop c))))
 
-;; workaround for exit problem
-(defmethod lem-if:invoke ((implementation ncurses) function)
-  (let ((result nil)
-        (input-thread (bt:current-thread)))
-    (unwind-protect
-         (progn
-           (when (lem.term:term-init)
-             (let ((editor-thread
-                    (funcall function
-                             nil
-                             (lambda (report)
-                               (bt:interrupt-thread
-                                input-thread
-                                (lambda () (error 'exit-editor :value report)))))))
-               (setf result (input-loop editor-thread))
-               ;; workaround for exit problem
-               ;; (to avoid 'compilation unit aborted caught 1 fatal ERROR condition')
-               (bt:join-thread editor-thread)
-               )))
-      (lem.term:term-finalize))
-    (when (and (typep result 'exit-editor)
-               (exit-editor-value result))
-      (format t "~&~A~%" (exit-editor-value result)))))
-
 ;; workaround for display update problem (incomplete)
 (defun force-refresh-display (width height)
   (loop :for y1 :from 0 :below height
-     ;; '#\.' is necessary ('#\space' doesn't work)
+     ;; clear display area to reset PDCurses's internal cache memory
+     ;; ('#\.' is necessary ('#\space' doesn't work))
      :with str := (make-string width :initial-element #\.)
      :do (charms/ll:mvwaddstr charms/ll:*stdscr* y1 0 str))
   (charms/ll:refresh)
@@ -392,7 +403,7 @@
   (setf (ncurses-view-x view) x)
   (setf (ncurses-view-y view) y))
 
-;; deal with utf-16 surrogate pair characters
+;; deal with utf-16 surrogate pair characters (screen memory)
 (defun get-charcode-from-scrwin (view x y)
   (let ((code (logand (charms/ll:mvwinch (ncurses-view-scrwin view) y x)
                       charms/ll:A_CHARTEXT)))
@@ -417,18 +428,15 @@
          (pos-x    (if floating 0 start-x))
          (pos-y    (get-pos-y view x y :modeline modeline)))
     (loop :while (< disp-x disp-x0)
-       :for c-code := (get-charcode-from-scrwin view pos-x pos-y)
-       :for c := (code-char c-code)
-       :do (setf disp-x (lem-base:char-width c disp-x))
-         ;; pos-x is incremented only 1 at wide characters
-         ;; (except for utf-16 surrogate pair characters)
-         (setf pos-x (+ pos-x (if (< c-code #x10000) 1 2))))
+       :for code := (get-charcode-from-scrwin view pos-x pos-y)
+       :do (incf disp-x (if (lem-base:wide-char-p (code-char code)) 2 1))
+           (incf pos-x  (if (< code #x10000) 1 2)))
     pos-x))
 (defun get-pos-y (view x y &key (modeline nil))
   (+ y (ncurses-view-y view) (if modeline (ncurses-view-height view) 0)))
 
 ;; for mintty and ConEmu
-;; adjust line width by using zero-width-space characters (#\u200b)
+;; adjust line width by using zero-width-space character (#\u200b)
 (defun adjust-line (view x y &key (modeline nil))
   (unless (or (eq *windows-term-type* :mintty)
               (eq *windows-term-type* :conemu))
@@ -438,7 +446,7 @@
          (disp-x0    (+ disp-width start-x))
          (pos-x      (get-pos-x view disp-width y :modeline modeline))
          (pos-y      (get-pos-y view disp-width y :modeline modeline)))
-    ;; write zero-width-space characters (#\u200b)
+    ;; write string of zero-width-space character (#\u200b)
     ;; only when horizontal splitted window
     ;; (to reduce the possibility of copying zero-width-space characters to clipboard)
     (when (and (> disp-x0 pos-x)
@@ -447,16 +455,16 @@
                            (make-string (- disp-x0 pos-x)
                                         :initial-element #\u200b)))))
 
-;; workaround for display problem of utf-16 surrogate pair characters (incomplete)
+;; deal with utf-16 surrogate pair characters (output)
 (defun remake-string (string)
   (let ((clist    '())
         (splitted nil))
     (loop :for c :across string
-       :for c-code := (char-code c)
-       :do (if (< c-code #x10000)
+       :for code := (char-code c)
+       :do (if (< code #x10000)
                (push c clist)
                ;; split to 2 characters
-               (multiple-value-bind (q r) (floor (- c-code #x10000) #x0400)
+               (multiple-value-bind (q r) (floor (- code #x10000) #x0400)
                  (push (code-char (+ q #xd800)) clist) ; leading surrogate
                  (push (code-char (+ r #xdc00)) clist) ; trailing surrogate
                  (setf splitted t))))
@@ -482,30 +490,31 @@
                (member *windows-code-page* '(932 936 949 950)))
     (charms/ll:mvwaddstr scrwin y x string)
     (return-from print-sub))
-  ;; clear display area
+  ;; clear display area to reset PDCurses's internal cache memory
+  ;; ('#\.' is necessary ('#\space' doesn't work))
   (let ((disp-width 0))
     (loop :for c :across string
-       :for c-code := (char-code c)
+       :for code := (char-code c)
        :do (incf disp-width)
          ;; check wide characters (except for cp932 halfwidth katakana)
-         (when (and (> c-code #x7f)
+         (when (and (> code #x7f)
                     (not (and (= *windows-code-page* 932)
-                              (<= #xff61 c-code #xff9f))))
+                              (<= #xff61 code #xff9f))))
            (incf disp-width)))
     (charms/ll:mvwaddstr scrwin y x
                          (make-string disp-width :initial-element #\.))
     (charms/ll:refresh))
   ;; display wide characters
   (loop :for c :across string
-     :for c-code := (char-code c)
+     :for code := (char-code c)
      :with pos-x := x
-     :do (charms/ll:mvwaddch scrwin y pos-x c-code)
+     :do (charms/ll:mvwaddch scrwin y pos-x code)
        (incf pos-x)
        ;; check wide characters (except for cp932 halfwidth katakana)
-       (when (and (> c-code #x7f)
+       (when (and (> code #x7f)
                   (not (and (= *windows-code-page* 932)
-                            (<= #xff61 c-code #xff9f))))
-         (charms/ll:mvwaddch scrwin y pos-x c-code)
+                            (<= #xff61 code #xff9f))))
+         (charms/ll:mvwaddch scrwin y pos-x code)
          (incf pos-x)
          (charms/ll:refresh))))
 

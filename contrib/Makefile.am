@@ -53,18 +53,6 @@ dist_lem_selectpopup_DATA = \
 	select-popup/lem-select-popup.asd \
 	select-popup/select-popup.lisp
 
-lem_setlocaledir = $(lemdir)/setlocale
-dist_lem_setlocale_DATA = \
-	setlocale/cffi.lisp \
-	setlocale/cffi_darwin.lisp \
-	setlocale/lem-setlocale.asd \
-	setlocale/project.lisp
-
-lem_setlocale_swigdir = $(lem_setlocaledir)/swig
-dist_lem_setlocale_swig_DATA = \
-	setlocale/swig/Lakefile \
-	setlocale/swig/cffi.i
-
 lem_tetrisdir = $(lemdir)/tetris
 dist_lem_tetris_DATA = \
 	tetris/lem-tetris.asd \

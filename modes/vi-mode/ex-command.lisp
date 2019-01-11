@@ -104,3 +104,7 @@
    (format nil "~A ~A"
           (subseq lem-vi-mode.ex-core:*command* 1)
           command)))
+
+(define-ex-command "^(buffers|ls|files)$" (range argument)
+  (declare (ignore range argument))
+  (lem.list-buffers:list-buffers))

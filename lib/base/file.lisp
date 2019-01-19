@@ -169,19 +169,18 @@
          (check (encoding-check encoding)))
     (when check
       (map-region start end check)) ;; throw condition?
-    (with-write-hook buffer
-      (with-open-virtual-file (out filename
-                                   :element-type (unless use-internal '(unsigned-byte 8))
-                                   :external-format (if (and use-internal encoding)
-                                                        (encoding-external-format encoding))
-                                   :direction :output)
-        (map-region start end
-                    (if use-internal
-                        (%write-region-to-file (if encoding
-                                                   (encoding-end-of-line encoding)
-                                                   :lf)
-                                               out)
-                        (%%write-region-to-file encoding out)))))))
+    (with-open-virtual-file (out filename
+                                 :element-type (unless use-internal '(unsigned-byte 8))
+                                 :external-format (if (and use-internal encoding)
+                                                      (encoding-external-format encoding))
+                                 :direction :output)
+      (map-region start end
+                  (if use-internal
+                      (%write-region-to-file (if encoding
+                                                 (encoding-end-of-line encoding)
+                                                 :lf)
+                                             out)
+                      (%%write-region-to-file encoding out))))))
 
 (defun file-write-date* (buffer)
   (if (probe-file (buffer-filename buffer))

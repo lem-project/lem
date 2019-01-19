@@ -46,10 +46,12 @@
 (define-key *directory-mode-keymap* "R" 'directory-mode-rename-files)
 (define-key *directory-mode-keymap* "+" 'make-directory)
 
-(defun run-command (string &rest args)
+(defun run-command (command)
+  (when (consp command)
+    (setf command (mapcar #'princ-to-string command)))
   (let ((error-string
          (with-output-to-string (error-output)
-           (uiop:run-program (apply #'format nil string args)
+           (uiop:run-program command
                              :ignore-error-status t
                              :error-output error-output))))
     (when (string/= error-string "")
@@ -209,7 +211,7 @@
   #+windows
   (fad:delete-directory-and-files file)
   #-windows
-  (run-command "rm -fr '~A'" file))
+  (run-command `("rm" "-fr" ,file)))
 
 (defun subdirectory-p (to-pathname from-pathname)
   (let ((to-dir (pathname-directory to-pathname))
@@ -261,8 +263,8 @@
   (copy-file src dst)
   #-windows
   (if *rename-p*
-      (run-command "mv '~A' '~A'" src dst)
-      (run-command "cp -r '~A' '~A'" src dst)))
+      (run-command `("mv" ,src ,dst))
+      (run-command `("cp" "-r" ,src ,dst))))
 
 (defun check-copy-files (src-files dst)
   (let ((n (length src-files)))

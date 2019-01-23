@@ -1,4 +1,6 @@
 (defsystem "lem-vi-mode"
+  :author "cxxxr"
+  :license "MIT"
   :depends-on ("esrap")
   :serial t
   :components ((:file "core")

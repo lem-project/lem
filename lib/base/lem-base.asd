@@ -1,4 +1,6 @@
 (defsystem "lem-base"
+  :author "cxxxr"
+  :license "MIT"
   :depends-on ("uiop"
                "iterate"
                "alexandria"

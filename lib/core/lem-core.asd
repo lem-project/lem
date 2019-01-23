@@ -1,4 +1,6 @@
 (defsystem "lem-core"
+  :author "cxxxr"
+  :license "MIT"
   :depends-on ("uiop"
                "alexandria"
                "swank"

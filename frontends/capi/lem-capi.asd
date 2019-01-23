@@ -1,4 +1,6 @@
 (defsystem "lem-capi"
+  :author "cxxxr"
+  :license "MIT"
   :depends-on ("lem")
   :serial t
   :components ((:file "package")

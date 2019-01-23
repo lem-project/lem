@@ -1,4 +1,6 @@
 (defsystem "lem-lisp-syntax"
+  :author "cxxxr"
+  :license "MIT"
   :depends-on ("lem-base" "cl-ppcre" "swank")
   :serial t
   :components ((:file "indent")

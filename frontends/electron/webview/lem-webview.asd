@@ -1,4 +1,6 @@
 (defsystem "lem-webview"
+  :author "cxxxr"
+  :license "MIT"
   :depends-on ("lem-electron-backend"
                "parenscript"
                "plump"

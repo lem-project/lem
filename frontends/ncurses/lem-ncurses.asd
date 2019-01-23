@@ -1,4 +1,6 @@
 (defsystem "lem-ncurses"
+  :author "cxxxr"
+  :license "MIT"
   :depends-on ("cffi"
                "cl-charms"
                "trivial-clipboard"

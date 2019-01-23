@@ -1,5 +1,7 @@
 (defsystem "lem"
   :version "1.5"
+  :author "cxxxr"
+  :license "MIT"
   :depends-on ("lem-core"
                "lem-vi-mode"
                "lem-lisp-mode"

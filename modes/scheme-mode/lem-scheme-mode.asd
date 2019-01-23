@@ -1,4 +1,6 @@
 (defsystem "lem-scheme-mode"
+  :author "Hamayama <fkyo0985@gmail.com>"
+  :license "MIT"
   :depends-on ("alexandria"
                "uiop"
                #+#.(cl:if (ql:where-is-system :async-process) '(and) '(or)) "lem-process"

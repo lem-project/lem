@@ -1,7 +1,12 @@
 (defpackage :lem-rust-mode
   (:use :cl :lem :lem.language-mode)
-  (:export :*rust-mode-hook*))
+  (:export :*rust-mode-hook* :rust-format-buffer))
 (in-package :lem-rust-mode)
+
+(defvar *rust-format-on-save* t)
+(defvar *rust-format-buffer* "rustfmt")
+
+(define-editor-variable rust-format-on-save t)
 
 (defun tokens (boundary strings)
   (let ((alternation
@@ -138,7 +143,10 @@
         (variable-value 'tab-width :buffer) 4
         ;;(variable-value 'find-definitions-function) 'lem.gtags:find-definitions
         ;;(variable-value 'find-references-function) 'lem.gtags:find-references
-        ))
+        )
+  (add-hook (variable-value 'before-save-hook :buffer) 'rust-before-save-hook)
+  (add-hook (variable-value 'after-save-hook :buffer) 'rust-after-save-hook)
+  (setf (variable-value 'rust-format-on-save :buffer) *rust-format-on-save*))
 
 (define-key *rust-mode-keymap* "C-c C-f" 'rust-format-buffer)
 (define-key *rust-mode-keymap* "M-C-q" 'indent-exp)
@@ -296,5 +304,20 @@
                  (when (same-line-p point p)
                    (return-from calc-indent indent)))))
          (calc-indent-region start point))))))
+
+(define-command rust-format-buffer () ()
+  (message "Formatted buffer with rustfmt."))
+
+(defun rust-before-save-hook (buffer)
+  (declare (ignore buffer))
+  (when (variable-value 'rust-format-on-save :buffer)
+    (ignore-errors
+     (rust-format-buffer))))
+
+(defun rust-after-save-hook (buffer)
+  (declare (ignore buffer))
+  (when (variable-value 'rust-format-on-save :buffer)
+    
+    ))
 
 (pushnew (cons "\\.rs$" 'rust-mode) *auto-mode-alist* :test #'equal)

@@ -81,6 +81,7 @@
 (defkeycode "[left]" #o404 (make-key :sym "Left"))
 (defkeycode "[right]" #o405 (make-key :sym "Right"))
 (defkeycode "C-down" 525 (make-key :ctrl t :sym "Down"))
+(defkeycode "M-up" 564 (make-key :meta t :sym "Up"))
 (defkeycode "C-up" 566 (make-key :ctrl t :sym "Up"))
 (defkeycode "C-left" 545 (make-key :ctrl t :sym "Left"))
 (defkeycode "C-right" 560 (make-key :ctrl t :sym "Right"))

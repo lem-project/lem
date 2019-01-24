@@ -2,6 +2,7 @@
   :version "1.5"
   :author "cxxxr"
   :license "MIT"
+  :description "Lem is the editor/IDE well-tuned for Common Lisp."
   :depends-on ("lem-core"
                "lem-vi-mode"
                "lem-lisp-mode"

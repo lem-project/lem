@@ -1,6 +1,7 @@
 (defsystem "lem-core"
   :author "cxxxr"
   :license "MIT"
+  :description "the core, higher level parts of the Lem editor"
   :depends-on ("uiop"
                "alexandria"
                "swank"

@@ -1,6 +1,7 @@
 (defsystem "lem-lisp-syntax"
   :author "cxxxr"
   :license "MIT"
+  :description "lisp syntax and indentation for the Lem editor"
   :depends-on ("lem-base" "cl-ppcre" "swank")
   :serial t
   :components ((:file "indent")

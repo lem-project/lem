@@ -1,6 +1,7 @@
 (defsystem "lem-lisp-mode"
   :author "cxxxr"
   :license "MIT"
+  :description "lisp mode for the Lem editor"
   :depends-on ("alexandria"
                "trivial-types"
                "usocket"

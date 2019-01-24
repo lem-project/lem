@@ -1,6 +1,7 @@
 (defsystem "lem-ncurses"
   :author "cxxxr"
   :license "MIT"
+  :description "ncurses backend for the Lem editor"
   :depends-on ("cffi"
                "cl-charms"
                "trivial-clipboard"

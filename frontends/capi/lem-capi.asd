@@ -1,6 +1,7 @@
 (defsystem "lem-capi"
   :author "cxxxr"
   :license "MIT"
+  :description "CAPI frontend for the Lem editor"
   :depends-on ("lem")
   :serial t
   :components ((:file "package")

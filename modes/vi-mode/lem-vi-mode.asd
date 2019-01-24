@@ -1,6 +1,7 @@
 (defsystem "lem-vi-mode"
   :author "cxxxr"
   :license "MIT"
+  :description "vi mode for the Lem editor"
   :depends-on ("esrap")
   :serial t
   :components ((:file "core")

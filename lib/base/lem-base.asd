@@ -1,6 +1,7 @@
 (defsystem "lem-base"
   :author "cxxxr"
   :license "MIT"
+  :description "base types for the Lem editor"
   :depends-on ("uiop"
                "iterate"
                "alexandria"

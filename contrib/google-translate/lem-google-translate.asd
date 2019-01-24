@@ -4,4 +4,5 @@
   :class :package-inferred-system
   :components((:file "main"))
   :author "SANO Masatoshi"
-  :mailto "snmsts@gmail.com")
+  :mailto "snmsts@gmail.com"
+  :description "use Google Translate in the Lem editor")

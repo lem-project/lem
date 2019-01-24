@@ -27,5 +27,8 @@
 (defsystem "lem/executable"
   :build-operation program-op
   :build-pathname "lem"
+  :author "cxxxr"
+  :license "MIT"
+  :description "executable entry point for lem-ncurses"
   :entry-point "lem:main"
   :depends-on ("lem-ncurses"))

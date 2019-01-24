@@ -1,6 +1,7 @@
 (asdf:defsystem "lem-xcb"
   :author "StackSmith <fpgasm@apple2.x10.mx>"
   :license "MIT"
+  :description "xcb frontend for the Lem editor"
   :depends-on ("cffi" "cffi-libffi" "cl-freetype2" "lem")
   :serial t
   :components ((:file "package")

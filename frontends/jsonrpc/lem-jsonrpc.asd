@@ -1,6 +1,7 @@
 (defsystem "lem-jsonrpc"
   :author "cxxxr"
   :license "MIT"
+  :description "jsonrpc backend for the Lem editor"
   :depends-on ("lem"
                "jsonrpc")
   :serial t
@@ -9,6 +10,7 @@
 (defsystem "lem-jsonrpc/executable"
   :author "cxxxr"
   :license "MIT"
+  :description "executable entry point for jsonrpc backend for the Lem editor"
   :build-operation program-op
   :build-pathname "lem-rpc"
   :entry-point "lem:main"

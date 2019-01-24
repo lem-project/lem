@@ -4,4 +4,5 @@
   :components ((:file "rust-mode"))
   :license "MIT"
   :author "SANO Masatoshi"
+  :description "rust mode for the Lem editor"
   :mailto "snmsts@gmail.com")

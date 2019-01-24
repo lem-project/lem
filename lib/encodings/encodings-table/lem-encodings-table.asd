@@ -5,4 +5,5 @@
   :components ((:FILE "8bit") (:FILE "euc") (:FILE "sjis") (:FILE "main"))
   :author "SANO Masatoshi"
   :mailto "snmsts@gmail.com"
-  :license "MIT")
+  :license "MIT"
+  :description "character encoding tables for the Lem editor")

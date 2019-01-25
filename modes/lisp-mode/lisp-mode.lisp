@@ -1,4 +1,3 @@
-
 (in-package :lem-lisp-mode)
 
 (define-editor-variable load-file-functions '())

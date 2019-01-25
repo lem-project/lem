@@ -17,4 +17,5 @@
                (:file "sldb")
                (:file "inspector")
                (:file "apropos-mode")
-               (:file "paren-coloring")))
+               (:file "paren-coloring")
+               (:file "misc-commands")))

@@ -393,11 +393,15 @@
 (defun %skip-fence-backward (point)
   (%skip-quote-backward point))
 
+(defvar *scan-lists-limit-point* nil)
+
 (defun %skip-list-forward (point depth)
   (loop :with paren-stack := '()
         :do (unless (skip-space-and-comment-forward point)
               (return nil))
-            (when (end-buffer-p point)
+            (when (if *scan-lists-limit-point*
+                      (point<= *scan-lists-limit-point* point)
+                      (end-buffer-p point))
               (return nil))
             (let ((c (character-at point 0))
                   n pair)
@@ -431,7 +435,9 @@
 
 (defun %skip-list-backward (point depth)
   (loop :with paren-stack := '()
-        :do (when (start-buffer-p point)
+        :do (when (if *scan-lists-limit-point*
+                      (point<= point *scan-lists-limit-point*)
+                      (start-buffer-p point))
               (return nil))
             (let ((c (character-at point -1))
                   n pair)
@@ -553,22 +559,23 @@
                        (return nil)))))
         (move-point point curr)))))
 
-(defun scan-lists (point n depth &optional no-errors)
+(defun scan-lists (point n depth &optional no-errors limit-point)
   (with-point-syntax point
     (with-point ((curr point))
-      (when (cond ((plusp n)
-                   (dotimes (_ n t)
-                     (unless (%skip-list-forward curr depth)
-                       (if no-errors
-                           (return nil)
-                           (scan-error)))))
-                  (t
-                   (dotimes (_ (- n) t)
-                     (unless (%skip-list-backward curr depth)
-                       (if no-errors
-                           (return nil)
-                           (scan-error))))))
-        (move-point point curr)))))
+      (let ((*scan-lists-limit-point* limit-point))
+        (when (cond ((plusp n)
+                     (dotimes (_ n t)
+                       (unless (%skip-list-forward curr depth)
+                         (if no-errors
+                             (return nil)
+                             (scan-error)))))
+                    (t
+                     (dotimes (_ (- n) t)
+                       (unless (%skip-list-backward curr depth)
+                         (if no-errors
+                             (return nil)
+                             (scan-error))))))
+          (move-point point curr))))))
 
 (flet ((f (c)
          (and (not (char= c #\newline))

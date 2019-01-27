@@ -15,13 +15,15 @@
 
 (defun forward-matching-paren-default (p)
   (when (syntax-open-paren-char-p (character-at p))
-    (let ((goal-point (scan-lists (copy-point p :temporary) 1 0 t)))
-      (when goal-point
-        (character-offset goal-point -1)))))
+    (with-point ((limit (window-view-point (current-window))))
+      (move-to-next-virtual-line limit (1+ (- (window-height (current-window)) 2)))
+      (let ((goal-point (scan-lists (copy-point p :temporary) 1 0 t limit)))
+        (when goal-point
+          (character-offset goal-point -1))))))
 
 (defun backward-matching-paren-default (p)
   (when (syntax-closed-paren-char-p (character-at p -1))
-    (scan-lists (copy-point p :temporary) -1 0 t)))
+    (scan-lists (copy-point p :temporary) -1 0 t (window-view-point (current-window)))))
 
 (defun show-paren-function ()
   (mapc #'delete-overlay *brackets-overlays*)

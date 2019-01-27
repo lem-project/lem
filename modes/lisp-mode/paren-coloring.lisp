@@ -11,14 +11,31 @@
         (enable)
         (disable))))
 
-(defvar *rainbow-colors*
-  (map 'vector (lambda (name)
-                 (make-attribute :foreground name))
-       '("red" "blue" "dark green" "sienna4" "dark cyan" "orange")))
+(define-attribute color-1
+   (t :foreground "red"))
+
+(define-attribute color-2
+  (:dark :foreground "royalblue")
+  (:light :foreground "blue"))
+
+(define-attribute color-3
+  (:dark :foreground "green")
+  (:light :foreground "dark green"))
+
+(define-attribute color-4
+  (t :foreground "sienna4"))
+
+(define-attribute color-5
+  (t :foreground "dark cyan"))
+
+(define-attribute color-6
+  (t :foreground "orange"))
+
+(defvar *rainbow-colors* #(color-1 color-2 color-3 color-4 color-5 color-6))
 
 (defvar *paren-attribute* (make-attribute :foreground "dim gray"))
 
-(defvar *rainbow* nil)
+(defvar *rainbow* t)
 
 (defun paren-coloring (start end)
   (when (eq 'lem-lisp-mode:lisp-mode

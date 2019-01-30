@@ -419,16 +419,17 @@
      ,(points-to-string start end))))
 
 (define-command lisp-load-file (filename)
-  ((list (prompt-for-file "Load File: " (buffer-filename) nil t)))
+    ((list (prompt-for-file "Load File: " (buffer-filename) nil t)))
   (check-connection)
   (when (and (probe-file filename)
              (not (uiop:directory-pathname-p filename)))
     (run-hooks (variable-value 'load-file-functions) filename)
-    (eval-with-transcript
-     `(if (and (find-package :roswell)
-               (find-symbol (string :load) :roswell))
-          (uiop:symbol-call :roswell :load ,filename)
-          (swank:load-file ,filename)))))
+    (interactive-eval
+     (prin1-to-string
+      `(if (and (find-package :roswell)
+                (find-symbol (string :load) :roswell))
+           (uiop:symbol-call :roswell :load ,filename)
+           (swank:load-file ,filename))))))
 
 (defun get-operator-name ()
   (with-point ((point (current-point)))

@@ -16,7 +16,8 @@
 (defun forward-matching-paren-default (p)
   (when (syntax-open-paren-char-p (character-at p))
     (with-point ((limit (window-view-point (current-window))))
-      (move-to-next-virtual-line limit (1+ (- (window-height (current-window)) 2)))
+      (unless (line-offset limit (window-height (current-window)))
+        (buffer-end limit))
       (let ((goal-point (scan-lists (copy-point p :temporary) 1 0 t limit)))
         (when goal-point
           (character-offset goal-point -1))))))

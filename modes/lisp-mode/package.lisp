@@ -21,6 +21,8 @@
    :self-connected-p
    :self-connected-port
    :self-connect
+   :check-connection
+   :buffer-package
    :current-package
    :lisp-eval-from-string
    :lisp-eval

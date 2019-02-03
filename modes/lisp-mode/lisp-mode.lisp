@@ -967,7 +967,7 @@
           `(,@(if impl `("-L" ,impl))
             "-s" "swank"
             "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)" port)
-            "wait")))
+            "-e" "(loop (sleep most-positive-fixnum))")))
 
 (let (cache)
   (defun roswell-impls-candidates (&optional impl)

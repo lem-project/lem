@@ -322,6 +322,14 @@
         (t
          (setf (buffer-value (current-buffer) "package") package-name))))
 
+(define-command lisp-listen-in-current-package () ()
+  (check-connection)
+  (alexandria:when-let ((repl-buffer (repl-buffer))
+                        (package (buffer-package (current-buffer))))
+    (save-excursion
+      (setf (current-buffer) repl-buffer)
+      (lisp-set-package package))))
+
 (define-command lisp-interrupt () ()
   (send-message-string
    *connection*

@@ -6,7 +6,8 @@
           completion-hypheen
           completion-file
           completion-strings
-          completion-buffer-name))
+          completion-buffer-name
+          completion-buffer))
 
 (defvar *file-completion-ignore-case* t)
 
@@ -94,3 +95,6 @@
 
 (defun completion-buffer-name (str)
   (completion-strings str (mapcar #'buffer-name (buffer-list))))
+
+(defun completion-buffer (str)
+  (completion str (buffer-list) :test #'fuzzy-match-p :key #'buffer-name))

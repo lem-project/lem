@@ -244,10 +244,11 @@
   (when (and (not *enable-recursive-minibuffers*) (< 0 *minibuf-read-line-depth*))
     (editor-error "ERROR: recursive use of minibuffer"))
   (let ((*minibuffer-calls-window* (current-window))
-        (*minibuf-read-line-history* (let ((table (gethash history-name *minibuf-read-line-history-table*)))
-                                       (or table
-                                           (setf (gethash history-name *minibuf-read-line-history-table*)
-                                                 (lem.history:make-history))))))
+        (*minibuf-read-line-history*
+          (let ((table (gethash history-name *minibuf-read-line-history-table*)))
+            (or table
+                (setf (gethash history-name *minibuf-read-line-history-table*)
+                      (lem.history:make-history))))))
     (let ((result
             (catch +recursive-minibuffer-break-tag+
               (handler-case
@@ -290,7 +291,8 @@
                                            (end (current-point)))
                                 (line-start start)
                                 (line-offset end 0 prev-prompt-length)
-                                (put-text-property start end :attribute 'minibuffer-prompt-attribute)
+                                (put-text-property start end
+                                                   :attribute 'minibuffer-prompt-attribute)
                                 (put-text-property start end :read-only t)
                                 (put-text-property start end :field t)))
                             (move-point (current-point) minibuf-buffer-prev-point)
@@ -367,18 +369,20 @@
         result)))
 
 (defun prompt-for-library (prompt history-name)
-  (let ((systems (append
-                  (mapcar (lambda (x) (pathname-name x))
-                          (directory
-                           (merge-pathnames "**/lem-*.asd"
-                                            (asdf:system-source-directory :lem-contrib))))
-                  (set-difference
-                   (mapcar #'pathname-name
-                           (loop for i in ql:*local-project-directories*
-                                 append (directory (merge-pathnames "**/lem-*.asd" i))))
-                   (mapcar #'pathname-name
-                           (directory (merge-pathnames "**/lem-*.asd" (asdf:system-source-directory :lem))))
-                   :test #'equal))))
+  (let ((systems
+          (append
+           (mapcar (lambda (x) (pathname-name x))
+                   (directory
+                    (merge-pathnames "**/lem-*.asd"
+                                     (asdf:system-source-directory :lem-contrib))))
+           (set-difference
+            (mapcar #'pathname-name
+                    (loop for i in ql:*local-project-directories*
+                          append (directory (merge-pathnames "**/lem-*.asd" i))))
+            (mapcar #'pathname-name
+                    (directory (merge-pathnames "**/lem-*.asd"
+                                                (asdf:system-source-directory :lem))))
+            :test #'equal))))
     (setq systems (mapcar (lambda (x) (subseq x 4)) systems))
     (prompt-for-line prompt ""
                      (lambda (str) (completion str systems))
@@ -391,10 +395,11 @@
                (declare (ignore y))
                (push (string-downcase x) encodings))
              lem-base::*encoding-collections*)
-    (let ((name (prompt-for-line (format nil "~A(~(~A~))" prompt lem-base::*default-external-format*) ""
-                                 (lambda (str) (completion str encodings))
-                                 (lambda (encoding) (or (equal encoding "")
-                                                        (find encoding encodings :test #'string=)))
-                                 history-name)))
+    (let ((name (prompt-for-line
+                 (format nil "~A(~(~A~))" prompt lem-base::*default-external-format*) ""
+                 (lambda (str) (completion str encodings))
+                 (lambda (encoding) (or (equal encoding "")
+                                        (find encoding encodings :test #'string=)))
+                 history-name)))
       (cond ((equal name "") lem-base::*default-external-format*)
             (t (read-from-string (format nil ":~A" name)))))))

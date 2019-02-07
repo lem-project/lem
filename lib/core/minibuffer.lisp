@@ -3,6 +3,7 @@
 (export '(*enable-recursive-minibuffers*
           *minibuffer-completion-function*
           *minibuffer-file-complete-function*
+          *minibuffer-buffer-complete-function*
           *minibuffer-activate-hook*
           *minibuffer-deactivate-hook*
           *minibuf-keymap*
@@ -44,6 +45,7 @@
 
 (defvar *minibuffer-completion-function* nil)
 (defvar *minibuffer-file-complete-function* nil)
+(defvar *minibuffer-buffer-complete-function* 'completion-buffer-name)
 
 (defvar *minibuffer-activate-hook* '())
 (defvar *minibuffer-deactivate-hook* '())
@@ -298,8 +300,7 @@
                             (move-point (current-point) minibuf-buffer-prev-point)
                             (when (= 1 *minibuf-read-line-depth*)
                               (run-hooks *minibuffer-deactivate-hook*)
-                              (%switch-to-buffer *echoarea-buffer* nil nil)
-                              ))))))
+                              (%switch-to-buffer *echoarea-buffer* nil nil)))))))
                 (editor-abort (c)
                   (error c))))))
       (if (eq result +recursive-minibuffer-break-tag+)
@@ -329,7 +330,7 @@
   (let ((result (prompt-for-line
                  prompt
                  ""
-                 'completion-buffer-name
+                 *minibuffer-buffer-complete-function*
                  (and existing
                       (lambda (name)
                         (member name (buffer-list) :test #'string= :key #'buffer-name)))

@@ -328,7 +328,11 @@
                         (package (buffer-package (current-buffer))))
     (save-excursion
       (setf (current-buffer) repl-buffer)
-      (lisp-set-package package))))
+      (destructuring-bind (name prompt-string)
+          (lisp-eval `(swank:set-package ,package))
+        (new-package name prompt-string)))
+    (start-lisp-repl)
+    (buffer-end (buffer-point repl-buffer))))
 
 (define-command lisp-interrupt () ()
   (send-message-string

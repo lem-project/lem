@@ -115,7 +115,7 @@
                                          mismatch)))))
       n)))
 
-(define-command completion-narrowing-down-or-next-line () ()
+(defun narrowing-down ()
   (when *last-items*
     (let ((n (partial-match (mapcar #'completion-item-label *last-items*))))
       (multiple-value-bind (start end)
@@ -124,13 +124,20 @@
                (completion-insert (current-point)
                                   (first *last-items*)
                                   n)
-               (completion-again))
+               (completion-again)
+               t)
               ((alexandria:length= *last-items* 1)
                (completion-insert (current-point)
                                   (first *last-items*))
-               (completion-again))
+               (completion-again)
+               t)
               (t
-               (completion-next-line)))))))
+               nil))))))
+
+(define-command completion-narrowing-down-or-next-line () ()
+  (when *last-items*
+    (or (narrowing-down)
+        (completion-next-line))))
 
 (defun start-completion-mode (completion-spec)
   (setf *current-completion-spec* completion-spec)
@@ -189,7 +196,7 @@
                                       :non-focus-attribute 'non-focus-completion-attribute)
            (start-completion-mode completion-spec)
            (unless repeat
-             (completion-narrowing-down-or-next-line))))))
+             (narrowing-down))))))
 
 (defun run-completion (completion)
   (let ((completion-spec

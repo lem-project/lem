@@ -191,7 +191,19 @@
                                       :action-callback (lambda (item)
                                                          (completion-insert (current-point) item)
                                                          (completion-end))
-                                      :print-function 'completion-item-label
+                                      :print-function (let ((column
+                                                              (loop :for item :in items
+                                                                    :maximize (1+ (length (completion-item-label item)))))
+                                                            (exist-detail-p
+                                                              (not (loop :for item :in items
+                                                                         :always (string= "" (completion-item-detail item))))))
+                                                        (if exist-detail-p
+                                                            (lambda (item)
+                                                              (format nil "~A~vT-- ~A"
+                                                                      (completion-item-label item)
+                                                                      column
+                                                                      (completion-item-detail item)))
+                                                            #'completion-item-label))
                                       :focus-attribute 'completion-attribute
                                       :non-focus-attribute 'non-focus-completion-attribute)
            (start-completion-mode completion-spec)
@@ -253,4 +265,23 @@
                                       :end (line-end e)))))
           (completion-file str directory :directory-only directory-only)))
 
+(defun completion-buffer (str)
+  (completion str (buffer-list)
+              :test (lambda (str buffer)
+                      (or (lem::fuzzy-match-p str (buffer-name buffer))
+                          (and (buffer-filename buffer)
+                               (lem::fuzzy-match-p str (buffer-filename buffer)))))))
+
+(defun minibuffer-buffer-complete (str)
+  (loop :for buffer :in (completion-buffer str)
+        :collect (with-point ((s (lem::minibuffer-start-point))
+                              (e (lem::minibuffer-start-point)))
+                   (make-completion-item :detail (alexandria:if-let (filename (buffer-filename buffer))
+                                                   (enough-namestring filename (probe-file "./"))
+                                                   "")
+                                         :label (buffer-name buffer)
+                                         :start s
+                                         :end (line-end e)))))
+
 (setf *minibuffer-file-complete-function* 'minibuffer-file-complete)
+(setf *minibuffer-buffer-complete-function* 'minibuffer-buffer-complete)

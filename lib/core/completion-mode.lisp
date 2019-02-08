@@ -187,7 +187,9 @@
                                       :print-function 'completion-item-label
                                       :focus-attribute 'completion-attribute
                                       :non-focus-attribute 'non-focus-completion-attribute)
-           (start-completion-mode completion-spec)))))
+           (start-completion-mode completion-spec)
+           (unless repeat
+             (completion-narrowing-down-or-next-line))))))
 
 (defun run-completion (completion)
   (let ((completion-spec

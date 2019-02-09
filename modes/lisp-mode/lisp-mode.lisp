@@ -1040,6 +1040,8 @@
           :do (return-from prompt-for-impl command))))
 
 (defun run-slime (command)
+  (unless command
+    (setf command (get-lisp-command :impl *impl-name*)))
   (uiop:with-current-directory ((or (buffer-directory) (uiop:getcwd)))
     (uiop:run-program command :output nil :error-output nil))
   (sleep 0.5)
@@ -1058,14 +1060,9 @@
       (error condition)))
   (add-hook *exit-editor-hook* 'slime-quit*))
 
-(defun slime-1 (command)
-  (unless command
-    (setf command (get-lisp-command :impl *impl-name*)))
-  (run-slime command))
-
 (define-command slime (&optional ask-impl) ("P")
   (let ((command (if ask-impl (prompt-for-impl))))
-    (slime-1 command)))
+    (run-slime command)))
 
 (define-command slime-quit () ()
   (when *connection*
@@ -1082,7 +1079,7 @@
                         (connection-command *connection*))))
     (when (slime-quit)
       (sit-for 3)
-      (slime-1 last-command))))
+      (run-slime last-command))))
 
 (define-command slime-self-connect (&optional (start-repl t))
     ((list t))

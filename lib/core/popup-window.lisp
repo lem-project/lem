@@ -1,5 +1,7 @@
 (defpackage :lem.popup-window
-  (:use :cl :lem))
+  (:use :cl :lem)
+  (:export :get-focus-item
+           :apply-print-spec))
 (in-package :lem.popup-window)
 
 (defvar *menu-buffer* nil)

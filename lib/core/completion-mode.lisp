@@ -64,7 +64,7 @@
     (run-completion-1 *current-completion-spec* t)))
 
 (defun call-focus-action ()
-  (alexandria:when-let* ((item (lem.popup-window::get-focus-item))
+  (alexandria:when-let* ((item (lem.popup-window:get-focus-item))
                          (fn (completion-item-focus-action item)))
     (funcall fn)))
 

@@ -989,13 +989,15 @@
         (progn
           (unless (and cache
                        (< (get-universal-time) (+ 3600 (cdr cache))))
-            (setf cache (cons (nreverse
-                               (uiop:split-string (string-right-trim
-                                                   (format nil "~%")
-                                                   (with-output-to-string (out)
-                                                     (uiop:run-program "ros list installed" :output out)))
-                                                  :separator '(#\Newline)))
-                              (get-universal-time))))
+            (setf cache
+                  (cons (nreverse
+                         (uiop:split-string (string-right-trim
+                                             (format nil "~%")
+                                             (with-output-to-string (out)
+                                               (uiop:run-program '("ros" "list" "installed")
+                                                                 :output out)))
+                                            :separator '(#\Newline)))
+                        (get-universal-time))))
           (first cache)))))
 
 (defun qlot-impls-candidates (&optional impl)

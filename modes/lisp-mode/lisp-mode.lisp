@@ -970,14 +970,11 @@
 (defparameter *impl-name* nil)
 (defvar *slime-command-impls* '(roswell-impls-candidates
                                 qlot-impls-candidates))
-(defun get-lisp-command (&key impl (port *default-port*) (prefix ""))
-  (format nil "~Aros ~{~S~^ ~} &" prefix
+(defun get-lisp-command (&key impl (prefix ""))
+  (format nil "~Aros ~{~S~^ ~}" prefix
           `(,@(if impl `("-L" ,impl))
             "-s" "swank"
-            "-e" ,(format nil "(swank:create-server :port ~D :dont-close t)"
-                          (or (port-available-p port)
-                              (random-port)))
-            "-e" "(loop (sleep most-positive-fixnum))")))
+            "-e" "(progn (eval (read)) (loop (sleep most-positive-fixnum)))")))
 
 (let (cache)
   (defun roswell-impls-candidates (&optional impl)
@@ -1039,26 +1036,38 @@
           :when command
           :do (return-from prompt-for-impl command))))
 
+(defun run-swank-server (command port)
+  (bt:make-thread
+   (lambda ()
+     (with-input-from-string
+         (input (format nil "(swank:create-server :port ~D :dont-close t)" port))
+       (uiop:run-program command
+                         :input input
+                         :output nil
+                         :error-output nil
+                         :directory (buffer-directory))))))
+
 (defun run-slime (command)
   (unless command
     (setf command (get-lisp-command :impl *impl-name*)))
-  (uiop:with-current-directory ((or (buffer-directory) (uiop:getcwd)))
-    (uiop:run-program command :output nil :error-output nil))
-  (sleep 0.5)
-  (let ((successp)
-        (condition))
-    (loop :repeat 10
-          :do (handler-case
-                  (let ((conn (slime-connect *localhost* *default-port* t)))
-                    (setf (connection-command conn) command)
-                    (setf successp t)
-                    (return))
-                (editor-error (c)
-                  (setf condition c)
-                  (sleep 0.5))))
-    (unless successp
-      (error condition)))
-  (add-hook *exit-editor-hook* 'slime-quit*))
+  (let ((port (or (port-available-p *default-port*)
+                  (random-port))))
+    (run-swank-server command port)
+    (sleep 0.5)
+    (let ((successp)
+          (condition))
+      (loop :repeat 10
+            :do (handler-case
+                    (let ((conn (slime-connect *localhost* port t)))
+                      (setf (connection-command conn) command)
+                      (setf successp t)
+                      (return))
+                  (editor-error (c)
+                    (setf condition c)
+                    (sleep 0.5))))
+      (unless successp
+        (error condition)))
+    (add-hook *exit-editor-hook* 'slime-quit-all)))
 
 (define-command slime (&optional ask-impl) ("P")
   (let ((command (if ask-impl (prompt-for-impl))))
@@ -1073,6 +1082,17 @@
 
 (defun slime-quit* ()
   (ignore-errors (slime-quit)))
+
+(defun slime-quit-all ()
+  (flet ((find-connection ()
+           (dolist (c *connection-list*)
+             (when (connection-command c)
+               (return c)))))
+    (loop
+      (let ((*connection* (find-connection)))
+        (unless *connection* (return))
+        (lisp-rex '(uiop:quit))
+        (remove-connection *connection*)))))
 
 (define-command slime-restart () ()
   (let ((last-command (when *connection*

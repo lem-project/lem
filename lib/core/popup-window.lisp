@@ -5,7 +5,7 @@
 (defvar *menu-buffer* nil)
 (defvar *menu-window* nil)
 (defvar *focus-overlay* nil)
-(defvar *print-function* nil)
+(defvar *print-spec* nil)
 (defvar *action-callback* nil)
 (defvar *focus-attribute* nil)
 (defvar *non-focus-attribute* nil)
@@ -72,10 +72,10 @@
                           (line-end end)
                           *focus-attribute*)))))
 
-(defun create-menu-buffer (items print-function)
+(defun create-menu-buffer (items print-spec)
   (let ((buffer (or *menu-buffer*
                     (make-buffer "*popup menu*" :enable-undo-p nil :temporary t)))
-        (item-names (mapcar print-function items)))
+        (item-names (mapcar print-spec items)))
     (setf *menu-buffer* buffer)
     (erase-buffer buffer)
     (setf (variable-value 'truncate-lines :buffer buffer) nil)
@@ -107,15 +107,15 @@
 
 (defmethod lem-if:display-popup-menu (implementation items
                                       &key action-callback
-                                           print-function
+                                           print-spec
                                            (focus-attribute 'popup-menu-attribute)
                                            (non-focus-attribute 'non-focus-popup-menu-attribute))
-  (setf *print-function* print-function)
+  (setf *print-spec* print-spec)
   (setf *action-callback* action-callback)
   (setf *focus-attribute* focus-attribute)
   (setf *non-focus-attribute* non-focus-attribute)
   (multiple-value-bind (buffer width)
-      (create-menu-buffer items print-function)
+      (create-menu-buffer items print-spec)
     (setf *menu-window*
           (popup-window (current-window)
                          buffer
@@ -124,7 +124,7 @@
 
 (defmethod lem-if:popup-menu-update (implementation items)
   (multiple-value-bind (buffer width)
-      (create-menu-buffer items *print-function*)
+      (create-menu-buffer items *print-spec*)
     (update-focus-overlay (buffer-point buffer))
     (popup-window (current-window)
                    buffer

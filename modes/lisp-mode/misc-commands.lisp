@@ -109,7 +109,7 @@
   (let (selected-item)
     (lem-if:display-popup-menu (implementation)
                                items
-                               :print-function #'princ-to-string
+                               :print-spec #'princ-to-string
                                :action-callback (lambda (item)
                                                   (setf selected-item item)))
     (loop

@@ -42,5 +42,5 @@
                                                 (and (cdr item)
                                                      (funcall (cdr item) item)
                                                 (select-popup-end)))
-                             :print-function 'car)
+                             :print-spec 'car)
   (select-popup-mode t))

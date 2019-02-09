@@ -53,7 +53,7 @@
 (defgeneric lem-if:split-window-vertically (implementation view new-view)
   (:method (implementation view new-view)))
 
-(defgeneric lem-if:display-popup-menu (implementation items &key action-callback print-function
+(defgeneric lem-if:display-popup-menu (implementation items &key action-callback print-spec
                                                       focus-attribute non-focus-attribute))
 (defgeneric lem-if:popup-menu-update (implementation items))
 (defgeneric lem-if:popup-menu-quit (implementation))

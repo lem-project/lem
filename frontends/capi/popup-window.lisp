@@ -4,7 +4,7 @@
 (defvar *menu-items* nil)
 
 (defmethod lem-if:display-popup-menu ((implementation capi-impl) items
-                                      &key action-callback print-function focus-attribute non-focus-attribute)
+                                      &key action-callback print-spec focus-attribute non-focus-attribute)
   (declare (ignore focus-attribute non-focus-attribute))
   (setf *menu-items* items)
   (let ((window-pane (lem:window-view (lem:current-window))))

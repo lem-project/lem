@@ -193,10 +193,10 @@
             (lambda (item)
               (completion-insert (current-point) item)
               (completion-end))
-            :print-function
+            :print-spec
             (let ((column
                     (loop :for item :in items
-                          :maximize (length (completion-item-label item)))))
+                          :maximize (1+ (length (completion-item-label item))))))
               (lambda (item)
                 (if (string= "" (completion-item-detail item))
                     (completion-item-label item)

@@ -1,6 +1,7 @@
 (defpackage :lem-lisp-syntax.indent
   (:use :cl :lem-base)
   (:export :*get-method-function*
+           :get-indentation
            :set-indentation
            :update-system-indentation
            :indentation-update

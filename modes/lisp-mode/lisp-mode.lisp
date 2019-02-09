@@ -107,13 +107,9 @@
   (defun self-connected-port ()
     self-connected-port)
   (defun self-connect ()
-    (prog (port)
-     :START
-      (setf port (random-range 49152 65535))
-      (handler-case (let ((swank::*swank-debug-p* nil))
-                      (swank:create-server :port port))
-        (error ()
-          (go :START)))
+    (let ((port (random-port)))
+      (let ((swank::*swank-debug-p* nil))
+        (swank:create-server :port port))
       (slime-connect *localhost* port nil)
       (update-buffer-package)
       (setf self-connected-port port)))
@@ -974,25 +970,6 @@
 (defparameter *impl-name* nil)
 (defvar *slime-command-impls* '(roswell-impls-candidates
                                 qlot-impls-candidates))
-(defun port-available-p (port)
-  (let (socket)
-    (unwind-protect
-         (handler-case (progn
-                         (setq socket (usocket:socket-listen "127.0.0.1" port :reuse-address t))
-                         port)
-           (usocket:address-in-use-error () nil)
-           (usocket:socket-error (e)
-             (warn "USOCKET:SOCKET-ERROR: ~A" e)
-             nil))
-      (when socket
-        (usocket:socket-close socket)
-        port))))
-
-(defun random-port ()
-  (loop :for port := (random-range 49152 65535)
-        :when (port-available-p port)
-        :return port))
-
 (defun get-lisp-command (&key impl (port *default-port*) (prefix ""))
   (format nil "~Aros ~{~S~^ ~} &" prefix
           `(,@(if impl `("-L" ,impl))

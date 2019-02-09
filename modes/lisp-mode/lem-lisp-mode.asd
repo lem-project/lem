@@ -7,7 +7,8 @@
                "uiop"
                "lem-core")
   :serial t
-  :components ((:file "errors")
+  :components ((:file "util")
+               (:file "errors")
                (:file "swank-protocol")
                (:file "package")
                (:file "lisp-ui-mode")

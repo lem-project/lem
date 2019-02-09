@@ -1008,23 +1008,32 @@
                            :impl (let ((impl (subseq impl 5)))
                                    (unless (zerop (length impl))
                                      impl)))))
-      (when (and #+ros.init (roswell.util:which "qlot"))
-        (mapcar (lambda (x) (format nil "qlot/~A" x)) (roswell-impls-candidates)))))
+      (when (ignore-errors
+             (string-right-trim
+              '(#\newline)
+              (uiop:run-program '("ros" "roswell-internal-use" "which" "qlot")
+                                :output :string)))
+        (mapcar (lambda (x) (format nil "qlot/~A" x))
+                (roswell-impls-candidates)))))
 
-(defun completion-impls (str)
-  (completion-strings
-   str (cons "" (loop :for f :in *slime-command-impls*
-                      :append (funcall f)))))
+(defun get-slime-command-list ()
+  (cons ""
+        (loop :for f :in *slime-command-impls*
+              :append (funcall f))))
+
+(defun completion-impls (str &optional (command-list (get-slime-command-list)))
+  (completion-strings str command-list))
 
 (defun prompt-for-impl (&key (existing t))
-  (let ((impl (prompt-for-line
-               "impl: "
-               ""
-               'completion-impls
-               (and existing
-                    (lambda (name)
-                      (member name (completion-impls name) :test #'string=)))
-               'mh-read-impl)))
+  (let* ((command-list (get-slime-command-list))
+         (impl (prompt-for-line
+                "impl: "
+                ""
+                'completion-impls
+                (and existing
+                     (lambda (name)
+                       (member name command-list :test #'string=)))
+                'mh-read-impl)))
     (loop :for f :in *slime-command-impls*
           :for command := (funcall f impl)
           :when command

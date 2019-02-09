@@ -1036,7 +1036,7 @@
           :when command
           :do (return-from prompt-for-impl command))))
 
-(defun run-swank-server (command port)
+(defun run-swank-server (command port &key (directory (buffer-directory)))
   (bt:make-thread
    (lambda ()
      (with-input-from-string
@@ -1045,7 +1045,7 @@
                          :input input
                          :output nil
                          :error-output nil
-                         :directory (buffer-directory))))
+                         :directory directory)))
    :name (format nil "run-swank-server-thread '~A'" command)))
 
 (defun run-slime (command)

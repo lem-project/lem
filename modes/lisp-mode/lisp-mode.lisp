@@ -1045,7 +1045,8 @@
                          :input input
                          :output nil
                          :error-output nil
-                         :directory (buffer-directory))))))
+                         :directory (buffer-directory))))
+   :name (format nil "run-swank-server-thread '~A'" command)))
 
 (defun run-slime (command)
   (unless command

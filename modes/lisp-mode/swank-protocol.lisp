@@ -11,6 +11,7 @@
            :connection-prompt-string
            :connection-features
            :connection-command
+           :connection-process-directory
            :connection-plist)
   (:export :new-connection
            :log-message
@@ -139,6 +140,9 @@ Parses length information to determine how many characters to read."
    (features :accessor connection-features)
    (info :accessor connection-info)
    (command :initform nil :accessor connection-command)
+   (connection-process-directory
+    :initform nil
+    :accessor connection-process-directory)
    (plist :initform nil :accessor connection-plist))
   (:documentation "A connection to a remote Lisp."))
 

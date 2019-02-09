@@ -1052,12 +1052,12 @@
                          :directory directory)))
    :name (format nil "run-swank-server-thread '~A'" command)))
 
-(defun run-slime (command)
+(defun run-slime (command &key (directory (buffer-directory)))
   (unless command
     (setf command (get-lisp-command :impl *impl-name*)))
   (let ((port (or (port-available-p *default-port*)
                   (random-port))))
-    (run-swank-server command port)
+    (run-swank-server command port :directory directory)
     (sleep 0.5)
     (let ((successp)
           (condition))
@@ -1065,6 +1065,7 @@
             :do (handler-case
                     (let ((conn (slime-connect *localhost* port t)))
                       (setf (connection-command conn) command)
+                      (setf (connection-process-directory conn) directory)
                       (setf successp t)
                       (return))
                   (editor-error (c)
@@ -1099,12 +1100,21 @@
         (lisp-rex '(uiop:quit))
         (remove-connection *connection*)))))
 
+(defun sit-for* (second)
+  (loop :with end-time := (+ (get-internal-real-time)
+                             (* second internal-time-units-per-second))
+        :for e := (read-event (float
+                               (/ (- end-time (get-internal-real-time))
+                                  internal-time-units-per-second)))
+        :while (key-p e)))
+
 (define-command slime-restart () ()
-  (let ((last-command (when *connection*
-                        (connection-command *connection*))))
-    (when (slime-quit)
-      (sit-for 3)
-      (run-slime last-command))))
+  (when *connection*
+    (alexandria:when-let ((last-command (connection-command *connection*))
+                          (directory (connection-process-directory *connection*)))
+      (when (slime-quit)
+        (sit-for* 3)
+        (run-slime last-command :directory directory)))))
 
 (define-command slime-self-connect (&optional (start-repl t))
     ((list t))

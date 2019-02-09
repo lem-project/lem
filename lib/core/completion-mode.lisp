@@ -47,7 +47,22 @@
 (define-attribute completion-attribute
   (t :foreground "white" :background "RoyalBlue"))
 (define-attribute non-focus-completion-attribute
-  (t :foreground "black" :background "gray"))
+  (t :foreground "white" :background "#444"))
+(define-attribute detail-attribute
+  (t :foreground "gray" :background "#444"))
+
+(defclass print-spec ()
+  ((label-width
+    :initarg :label-width
+    :reader label-width)))
+
+(defmethod lem.popup-window:apply-print-spec ((print-spec print-spec) point item)
+  (insert-string point (completion-item-label item))
+  (move-to-column point (label-width print-spec) t)
+  (line-end point)
+  (insert-string point "  ")
+  (insert-string point (completion-item-detail item)
+                 :attribute 'detail-attribute))
 
 (defvar *current-completion-spec* nil)
 (defvar *last-items* nil)
@@ -194,16 +209,10 @@
               (completion-insert (current-point) item)
               (completion-end))
             :print-spec
-            (let ((column
-                    (loop :for item :in items
-                          :maximize (1+ (length (completion-item-label item))))))
-              (lambda (item)
-                (if (string= "" (completion-item-detail item))
-                    (completion-item-label item)
-                    (format nil "~A~vT (~A)"
-                            (completion-item-label item)
-                            column
-                            (completion-item-detail item)))))
+            (make-instance 'print-spec
+                           :label-width
+                           (loop :for item :in items
+                                 :maximize (1+ (length (completion-item-label item)))))
             :focus-attribute 'completion-attribute
             :non-focus-attribute 'non-focus-completion-attribute)
            (start-completion-mode completion-spec)

@@ -15,7 +15,7 @@
 (define-attribute popup-menu-attribute
   (t :foreground "white" :background "RoyalBlue"))
 (define-attribute non-focus-popup-menu-attribute
-  (t :foreground "black" :background "gray"))
+  (t :background "#444" :foreground "white"))
 
 (defun compute-popup-window-position (orig-window)
   (let* ((y (+ (window-y orig-window)
@@ -74,34 +74,67 @@
                           (line-end end)
                           *focus-attribute*)))))
 
+(defgeneric apply-print-spec (print-spec point item)
+  (:method ((print-spec function) point item)
+    (let ((string (funcall print-spec item)))
+      (insert-string point string))))
+
+(defun fill-background (buffer background-color)
+  (with-point ((p (buffer-start-point buffer))
+               (start (buffer-start-point buffer)))
+    (flet ((put-attribute (start end attribute)
+             (put-text-property
+              start end
+              :attribute (make-attribute
+                          :foreground
+                          (or (and attribute
+                                   (attribute-foreground attribute))
+                              (alexandria:when-let
+                                  (attribute (ensure-attribute *non-focus-attribute* nil))
+                                (attribute-foreground attribute)))
+                          :background background-color
+                          :bold-p (and attribute
+                                       (attribute-bold-p attribute))
+                          :underline-p (and attribute
+                                            (attribute-underline-p attribute))))))
+      (loop
+        (let ((start-attribute (ensure-attribute (text-property-at p :attribute) nil)))
+          (unless (next-single-property-change p :attribute)
+            (put-attribute start (buffer-end-point buffer) start-attribute)
+            (return))
+          (put-attribute start p start-attribute)
+          (move-point start p))))))
+
 (defun create-menu-buffer (items print-spec)
-  (let ((buffer (or *menu-buffer*
-                    (make-buffer "*popup menu*" :enable-undo-p nil :temporary t)))
-        (item-names (mapcar print-spec items)))
-    (setf *menu-buffer* buffer)
+  (let* ((buffer (or *menu-buffer*
+                     (make-buffer "*popup menu*" :enable-undo-p nil :temporary t)))
+         (point (buffer-point buffer))
+         (width 0))
     (erase-buffer buffer)
     (setf (variable-value 'truncate-lines :buffer buffer) nil)
-    (let ((point (buffer-point buffer))
-          (width (+ 1 (reduce (lambda (max name)
-                                (max max (string-width name)))
-                              item-names
-                              :initial-value 0))))
-      (loop :for rest-items :on items
-            :for item := (car rest-items)
-            :for item-name :in item-names
-            :do (insert-string point item-name)
-                (move-to-column point width t)
-                (with-point ((start (line-start (copy-point point :temporary))))
-                  (put-text-property start point :item item))
-                (when (cdr rest-items)
-                  (insert-character point #\newline)))
-      (buffer-start point)
-      (put-text-property (buffer-start-point buffer)
-                         (buffer-end-point buffer)
-                         :attribute *non-focus-attribute*)
-      (buffer-start point)
-      (update-focus-overlay point)
-      (values buffer width))))
+    (with-point ((start point :right-inserting))
+      (loop :for (item . continue-p) :on items
+            :for linum :from 0
+            :do (move-point start point)
+                (insert-character point #\space)
+                (apply-print-spec print-spec point item)
+                (line-end point)
+                (setf width (max width (+ 1 (point-column point))))
+                (put-text-property start point :item item)
+                (when continue-p
+                  (insert-character point #\newline))))
+    (buffer-start point)
+    (update-focus-overlay point)
+    (with-point ((p (buffer-start-point buffer) :left-inserting))
+      (loop
+        :do (move-to-column p width t)
+        :while (line-offset p 1)))
+    (fill-background buffer
+                     (alexandria:when-let
+                         (attribute (ensure-attribute *non-focus-attribute* nil))
+                       (attribute-background attribute)))
+    (setf *menu-buffer* buffer)
+    (values buffer width)))
 
 (defun get-focus-item ()
   (alexandria:when-let (p (focus-point))
@@ -120,9 +153,9 @@
       (create-menu-buffer items print-spec)
     (setf *menu-window*
           (popup-window (current-window)
-                         buffer
-                         width
-                         (min 20 (length items))))))
+                        buffer
+                        width
+                        (min 20 (length items))))))
 
 (defmethod lem-if:popup-menu-update (implementation items)
   (multiple-value-bind (buffer width)

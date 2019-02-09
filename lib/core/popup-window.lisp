@@ -87,13 +87,12 @@
       (loop :for rest-items :on items
             :for item := (car rest-items)
             :for item-name :in item-names
-            :do
-            (insert-string point item-name)
-            (move-to-column point width t)
-            (with-point ((start (line-start (copy-point point :temporary))))
-              (put-text-property start point :item item))
-            (when (cdr rest-items)
-              (insert-character point #\newline)))
+            :do (insert-string point item-name)
+                (move-to-column point width t)
+                (with-point ((start (line-start (copy-point point :temporary))))
+                  (put-text-property start point :item item))
+                (when (cdr rest-items)
+                  (insert-character point #\newline)))
       (buffer-start point)
       (put-text-property (buffer-start-point buffer)
                          (buffer-end-point buffer)

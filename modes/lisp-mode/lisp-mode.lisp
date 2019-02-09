@@ -1080,6 +1080,8 @@
     (run-slime command)))
 
 (define-command slime-quit () ()
+  (when (self-connection-p *connection*)
+    (editor-error "The current connection is myself"))
   (when *connection*
     (prog1 (when (connection-command *connection*)
              (lisp-rex '(uiop:quit))

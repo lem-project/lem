@@ -119,8 +119,8 @@
                 (insert-character point #\space)
                 (apply-print-spec print-spec point item)
                 (line-end point)
-                (setf width (max width (+ 1 (point-column point))))
                 (put-text-property start point :item item)
+                (setf width (max width (+ 1 (point-column point))))
                 (when continue-p
                   (insert-character point #\newline))))
     (buffer-start point)

@@ -196,17 +196,14 @@
             :print-function
             (let ((column
                     (loop :for item :in items
-                          :maximize (1+ (length (completion-item-label item)))))
-                  (exist-detail-p
-                    (not (loop :for item :in items
-                               :always (string= "" (completion-item-detail item))))))
-              (if exist-detail-p
-                  (lambda (item)
-                    (format nil "~A~vT-- ~A"
+                          :maximize (length (completion-item-label item)))))
+              (lambda (item)
+                (if (string= "" (completion-item-detail item))
+                    (completion-item-label item)
+                    (format nil "~A~vT (~A)"
                             (completion-item-label item)
                             column
-                            (completion-item-detail item)))
-                  #'completion-item-label))
+                            (completion-item-detail item)))))
             :focus-attribute 'completion-attribute
             :non-focus-attribute 'non-focus-completion-attribute)
            (start-completion-mode completion-spec)

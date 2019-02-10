@@ -2,9 +2,13 @@
 
 (define-editor-variable load-file-functions '())
 (define-editor-variable before-compile-functions '())
+(define-editor-variable before-eval-functions '())
 
 (define-attribute compilation-region-highlight
   (t :background "orange"))
+
+(define-attribute evaluation-region-highlight
+  (t :background "green"))
 
 (defparameter *default-port* 4005)
 (defparameter *localhost* "127.0.0.1")
@@ -361,6 +365,7 @@
   (with-point ((start (current-point))
                (end (current-point)))
     (form-offset start -1)
+    (run-hooks (variable-value 'before-eval-functions) start end)
     (let ((string (points-to-string start end)))
       (if p
           (eval-print string (- (window-width (current-window)) 2))
@@ -410,6 +415,7 @@
   (with-point ((start (current-point))
                (end (current-point)))
     (form-offset start -1)
+    (run-hooks (variable-value 'before-eval-functions) start end)
     (let ((string (points-to-string start end)))
       (if p
           (self-eval-print string (- (window-width (current-window)) 2))
@@ -422,6 +428,7 @@
     (with-point ((start point)
                  (end point))
       (scan-lists end 1 0)
+      (run-hooks (variable-value 'before-eval-functions) start end)
       (let ((string (points-to-string start end)))
         (if (ppcre:scan "^\\(defvar(?:\\s|$)" string)
             (re-eval-defvar string)
@@ -602,21 +609,6 @@
                                                       ,(buffer-filename (current-buffer))
                                                       nil)
                      #'compilation-finished)))
-
-(defun highlight-compilation-region (start end)
-  (let ((overlay (make-overlay start end 'compilation-region-highlight)))
-    (start-timer 100
-                 nil
-                 (lambda ()
-                   (delete-overlay overlay))
-                 (lambda (err)
-                   (declare (ignore err))
-                   (ignore-errors
-                    (delete-overlay overlay)))
-                 "delete-compilation-region-overlay")))
-
-(add-hook (variable-value 'before-compile-functions :global)
-          'highlight-compilation-region)
 
 (define-command lisp-compile-defun () ()
   (check-connection)
@@ -1196,3 +1188,33 @@
 (pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons ".asd$" 'lisp-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons ".cl$" 'lisp-mode) *auto-mode-alist* :test #'equal)
+
+(defun highlight-region (start end attribute name)
+  (let ((overlay (make-overlay start end attribute)))
+    (start-timer 100
+                 nil
+                 (lambda ()
+                   (delete-overlay overlay))
+                 (lambda (err)
+                   (declare (ignore err))
+                   (ignore-errors
+                    (delete-overlay overlay)))
+                 name)))
+
+(defun highlight-compilation-region (start end)
+  (highlight-region start
+                    end
+                    'compilation-region-highlight
+                    "delete-compilation-region-overlay"))
+
+(defun highlight-evaluation-region (start end)
+  (highlight-region start
+                    end
+                    'evaluation-region-highlight
+                    "delete-evaluation-region-overlay"))
+
+(add-hook (variable-value 'before-compile-functions :global)
+          'highlight-compilation-region)
+
+(add-hook (variable-value 'before-eval-functions :global)
+          'highlight-evaluation-region)

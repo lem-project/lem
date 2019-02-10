@@ -1188,16 +1188,6 @@
     (change-buffer-mode buffer 'lisp-mode)
     (switch-to-buffer buffer)))
 
-;; workaround for windows
-#+win32
-(add-hook *exit-editor-hook*
-          ;; quit slime to exit lem normally (incomplete)
-          'slime-quit*)
-
-(pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)
-(pushnew (cons ".asd$" 'lisp-mode) *auto-mode-alist* :test #'equal)
-(pushnew (cons ".cl$" 'lisp-mode) *auto-mode-alist* :test #'equal)
-
 (defun highlight-region (start end attribute name)
   (let ((overlay (make-overlay start end attribute)))
     (start-timer 100
@@ -1227,3 +1217,13 @@
 
 (add-hook (variable-value 'before-eval-functions :global)
           'highlight-evaluation-region)
+
+;; workaround for windows
+#+win32
+(add-hook *exit-editor-hook*
+          ;; quit slime to exit lem normally (incomplete)
+          'slime-quit*)
+
+(pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)
+(pushnew (cons ".asd$" 'lisp-mode) *auto-mode-alist* :test #'equal)
+(pushnew (cons ".cl$" 'lisp-mode) *auto-mode-alist* :test #'equal)

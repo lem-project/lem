@@ -43,6 +43,7 @@
 (define-key *completion-mode-keymap* "Return"    'completion-select)
 (define-key *completion-mode-keymap* "Space"    'completion-insert-space-and-cancel)
 (define-key *completion-mode-keymap* 'delete-previous-char 'completion-delete-prevous-char)
+(define-key *completion-mode-keymap* 'backward-delete-word 'completion-backward-delete-word)
 
 (define-attribute completion-attribute
   (t :foreground "white" :background "RoyalBlue"))
@@ -92,6 +93,10 @@
 
 (define-command completion-delete-prevous-char (n) ("p")
   (delete-previous-char n)
+  (completion-again))
+
+(define-command completion-backward-delete-word (n) ("p")
+  (backward-delete-word n)
   (completion-again))
 
 (define-command completion-next-line () ()

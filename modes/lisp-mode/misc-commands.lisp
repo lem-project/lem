@@ -74,7 +74,7 @@
               (t
                (symbol-string-at-point point)))))))
 
-(define-command lisp-export-defun (symbol-name)
+(define-command lisp-add-export (symbol-name)
     ((list (prompt-for-string "Export: " (get-defun-symbol (current-point)))))
   (check-connection)
   (with-point ((point (current-point) :left-inserting))

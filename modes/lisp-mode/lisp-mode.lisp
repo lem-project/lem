@@ -624,7 +624,7 @@
     (lem-lisp-syntax:top-of-defun point)
     (with-point ((start point)
                  (end point))
-      (form-offset end 1)
+      (scan-lists end 1 0)
       (lisp-compile-region start end))))
 
 (defun form-string-at-point ()

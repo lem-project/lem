@@ -992,8 +992,7 @@
 (defun get-lisp-command (&key impl (prefix ""))
   (format nil "~Aros ~{~S~^ ~}" prefix
           `(,@(if impl `("-L" ,impl))
-            "-s" "swank"
-            "-e" "(progn (eval (read)) (loop (sleep most-positive-fixnum)))")))
+            "-s" "swank" "run")))
 
 (let (cache)
   (defun roswell-impls-candidates (&optional impl)
@@ -1055,11 +1054,16 @@
           :when command
           :do (return-from prompt-for-impl command))))
 
+(defun initialize-forms-string (port)
+  (with-output-to-string (out)
+    (format out "(swank:create-server :port ~D :dont-close t)~%" port)
+    (write-line "(loop (sleep most-positive-fixnum))" out)))
+
 (defun run-swank-server (command port &key (directory (buffer-directory)))
   (bt:make-thread
    (lambda ()
      (with-input-from-string
-         (input (format nil "(swank:create-server :port ~D :dont-close t)" port))
+         (input (initialize-forms-string port))
        (multiple-value-bind (output error-output)
            (uiop:run-program command
                              :input input

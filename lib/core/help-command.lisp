@@ -62,9 +62,9 @@
                       (completion str (all-command-names))))
                 'exist-command-p
                 'mh-execute-command))
-         (cmd (find-command name)))
+         (cmd (find-command-symbol name)))
     (if cmd
-        (funcall cmd arg)
+        (call-command cmd arg)
         (message "invalid command"))))
 
 (define-command apropos-command (str) ("sApropos: ")

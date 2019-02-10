@@ -1064,24 +1064,26 @@
    (lambda ()
      (with-input-from-string
          (input (initialize-forms-string port))
-       (multiple-value-bind (output error-output)
+       (multiple-value-bind (output error-output status)
            (uiop:run-program command
                              :input input
                              :output :string
                              :error-output :string
                              :directory directory
                              :ignore-error-status t)
-         (send-event (lambda ()
-                       (let ((buffer (make-buffer "*Swank Error*")))
-                         (with-pop-up-typeout-window (stream buffer
-                                                             :focus t
-                                                             :erase t
-                                                             :read-only t)
-                           (format stream "command: ~A~%" command)
-                           (format stream "port: ~A~%" port)
-                           (format stream "directory: ~A~%" directory)
-                           (write-string output stream)
-                           (write-string error-output stream))))))))
+         (unless (zerop status)
+           (send-event (lambda ()
+                         (let ((buffer (make-buffer "*Run Lisp Output*")))
+                           (with-pop-up-typeout-window (stream buffer
+                                                               :focus t
+                                                               :erase t
+                                                               :read-only t)
+                             (format stream "command: ~A~%" command)
+                             (format stream "status: ~A~%" status)
+                             (format stream "port: ~A~%" port)
+                             (format stream "directory: ~A~%" directory)
+                             (write-string output stream)
+                             (write-string error-output stream)))))))))
    :name (format nil "run-swank-server-thread '~A'" command)))
 
 (defun run-slime (command &key (directory (buffer-directory)))

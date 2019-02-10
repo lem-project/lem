@@ -203,7 +203,8 @@
 
 (defun search-symbol (string name &key (start 0) (end (length string)) from-end)
   (loop :while (< start end)
-        :do (let ((pos (search name string :start2 start :end2 end :from-end from-end)))
+        :do (let ((pos (search name string :start2 start :end2 end :from-end from-end
+                               :test #'char-equal)))
               (when pos
                 (let ((pos2 (+ pos (length name))))
                   (when (and (or (zerop pos)

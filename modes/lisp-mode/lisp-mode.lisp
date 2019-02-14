@@ -699,17 +699,26 @@
         :when xref
         :collect xref))
 
-(defun find-definitions (point)
-  (check-connection)
+(defun find-local-definition (point name)
+  (let ((point (lem-lisp-syntax:search-local-definition point name)))
+    (when point
+      (list (make-xref-location :filespec (point-buffer point)
+                                :position (position-at-point point))))))
+
+(defun find-definitions-default (point)
   (let ((name (or (symbol-string-at-point point)
                   (prompt-for-symbol-name "Edit Definition of: "))))
-    (let ((point (lem-lisp-syntax:search-local-definition point name)))
-      (when point
-        (return-from find-definitions
-          (list (make-xref-location :filespec (point-buffer point)
-                                    :position (position-at-point point))))))
+    (let ((result (find-local-definition point name)))
+      (when result
+        (return-from find-definitions-default result)))
     (let ((definitions (lisp-eval `(swank:find-definitions-for-emacs ,name))))
       (definitions-to-locations definitions))))
+
+(defparameter *find-definitions* '(find-definitions-default))
+
+(defun find-definitions (point)
+  (check-connection)
+  (some (alexandria:rcurry #'funcall point) *find-definitions*))
 
 (defun find-references (point)
   (check-connection)

@@ -9,13 +9,6 @@
     "define-package"
     "uiop:define-package"))
 
-(define-key lem-lisp-mode:*lisp-mode-keymap* "C-c C-q" 'lisp-quickload)
-
-(define-command lisp-quickload (system-name)
-    ((list (prompt-for-symbol-name "System: " (lem-lisp-mode::buffer-package (current-buffer)))))
-  (check-connection)
-  (eval-with-transcript `(ql:quickload ,(string system-name))))
-
 (defun go-to-defpackage-form (point)
   (buffer-start point)
   (loop

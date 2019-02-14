@@ -68,6 +68,7 @@
 (define-key *lisp-mode-keymap* "C-c z" 'lisp-switch-to-repl-buffer)
 (define-key *lisp-mode-keymap* "C-c C-b" 'lisp-connection-list)
 (define-key *lisp-mode-keymap* "C-c g" 'lisp-interrupt)
+(define-key lem-lisp-mode:*lisp-mode-keymap* "C-c C-q" 'lisp-quickload)
 
 (defun change-current-connection (conn)
   (when *connection*
@@ -662,6 +663,11 @@
 (define-command lisp-macroexpand-all () ()
   (check-connection)
   (macroexpand-internal 'swank:swank-macroexpand-all))
+
+(define-command lisp-quickload (system-name)
+    ((list (prompt-for-symbol-name "System: " (lem-lisp-mode::buffer-package (current-buffer)))))
+  (check-connection)
+  (eval-with-transcript `(ql:quickload ,(string system-name))))
 
 (defun symbol-completion (str &optional (package (current-package)))
   (let ((result (lisp-eval-from-string

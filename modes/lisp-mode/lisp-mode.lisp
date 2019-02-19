@@ -669,16 +669,22 @@
   (check-connection)
   (eval-with-transcript `(ql:quickload ,(string system-name))))
 
+(defvar *completion-symbol-with-fuzzy* t)
+
 (defun symbol-completion (str &optional (package (current-package)))
-  (let ((result (lisp-eval-from-string
-                 (format nil "(swank:fuzzy-completions ~S ~S)"
-                         str
-                         package)
-                 "COMMON-LISP")))
+  (let* ((fuzzy *completion-symbol-with-fuzzy*)
+         (result (lisp-eval-from-string
+                  (format nil "(~A ~S ~S)"
+                          (if fuzzy
+                              "swank:fuzzy-completions"
+                              "swank:completions")
+                          str
+                          package)
+                  "COMMON-LISP")))
     (when result
       (destructuring-bind (completions timeout-p) result
         (declare (ignore timeout-p))
-        (completion-hypheen str (mapcar #'first completions))))))
+        (completion-hypheen str (mapcar (if fuzzy #'first #'identity) completions))))))
 
 (defun prompt-for-symbol-name (prompt &optional (initial ""))
   (let ((package (current-package)))
@@ -740,17 +746,25 @@
     (skip-chars-backward start #'syntax-symbol-char-p)
     (skip-chars-forward end #'syntax-symbol-char-p)
     (when (point< start end)
-      (let ((result
-              (lisp-eval-from-string (format nil "(swank:fuzzy-completions ~S ~S)"
-                                             (points-to-string start end)
-                                             (current-package)))))
+      (let* ((fuzzy *completion-symbol-with-fuzzy*)
+             (result
+               (lisp-eval-from-string (format nil "(~A ~S ~S)"
+                                              (if fuzzy
+                                                  "swank:fuzzy-completions"
+                                                  "swank:completions")
+                                              (points-to-string start end)
+                                              (current-package)))))
         (when result
           (destructuring-bind (completions timeout-p) result
             (declare (ignore timeout-p))
             (mapcar (lambda (completion)
                       (make-completion-item
-                       :label (first completion)
-                       :detail (fourth completion)
+                       :label (if fuzzy
+                                  (first completion)
+                                  completion)
+                       :detail (if fuzzy
+                                   (fourth completion)
+                                   "")
                        :start start
                        :end end))
                     completions)))))))

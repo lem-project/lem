@@ -92,7 +92,6 @@
   (split-window-horizontally (current-window) n))
 
 (define-key *global-keymap* "C-x o" 'other-window)
-(define-key *global-keymap* "M-o" 'other-window)
 (define-command other-window (&optional (n 1)) ("p")
   (let ((window-list
           (append (alexandria:ensure-list
@@ -104,6 +103,12 @@
       (setf (current-window)
             (get-next-window (current-window)
                              window-list)))))
+
+(define-key *global-keymap* "M-o" 'other-window-or-split-window)
+(define-command other-window-or-split-window (&optional (n 1)) ("p")
+  (when (one-window-p)
+    (split-window-sensibly (current-window)))
+  (other-window n))
 
 (define-command window-move-down () ()
   (alexandria:when-let ((window (down-window (current-window))))

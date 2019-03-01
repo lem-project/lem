@@ -245,8 +245,8 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
       (with-point ((end start))
         (scan-lists end 1 0)
         (character-offset end -1)
-        (delete-character start)
         (delete-character end)
+        (delete-character start)
         (indent-region start end)))))
 
 (define-command paredit-splice-backward () ()

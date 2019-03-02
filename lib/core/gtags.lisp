@@ -27,11 +27,11 @@
   (insert-string point (content-name content) :attribute 'xref-content-attribute))
 
 (defmethod xref-insert-content ((content reference-content) point)
-  (insert-string point (content-file content) :attribute 'lem.grep:title-attribute)
+  (insert-string point (content-file content) :attribute 'lem.sourcelist:title-attribute)
   (insert-string point ":")
   (insert-string point
                  (princ-to-string (content-line-number content))
-                 :attribute 'lem.grep:position-attribute)
+                 :attribute 'lem.sourcelist:position-attribute)
   (insert-string point ":")
   (insert-string point (content-desc content)))
 
@@ -116,10 +116,10 @@
            (lambda (p)
              (insert-string p name)
              (move-to-column p max-len t)
-             (insert-string p file :attribute 'lem.grep:title-attribute)
+             (insert-string p file :attribute 'lem.sourcelist:title-attribute)
              (insert-string p ":")
              (insert-string p (princ-to-string linum)
-                            :attribute 'lem.grep:position-attribute))
+                            :attribute 'lem.sourcelist:position-attribute))
            (lambda (set-buffer-fn)
              (alexandria:when-let ((buffer (or (get-buffer file)
                                                (find-file-buffer

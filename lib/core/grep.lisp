@@ -1,19 +1,9 @@
 (defpackage :lem.grep
   (:use :cl :lem)
-  (:export :title-attribute
-           :position-attribute
-           :grep)
+  (:export :grep)
   #+sbcl
   (:lock t))
 (in-package :lem.grep)
-
-(define-attribute title-attribute
-  (:light :foreground "blue")
-  (:dark :foreground "cyan"))
-
-(define-attribute position-attribute
-  (:light :foreground "dark red")
-  (:dark :foreground "red"))
 
 (defun grep-parse-line (line)
   (ignore-errors
@@ -51,10 +41,10 @@
                       (charpos (and charpos-str (parse-integer charpos-str))))
                   (move-point p2 (line-start p))
                   (put-text-property p2 (character-offset p (length filename))
-                                     :attribute 'title-attribute)
+                                     :attribute 'lem.sourcelist:title-attribute)
                   (move-point p2 (character-offset p 1))
                   (put-text-property p2 (character-offset p (length line-number-str))
-                                     :attribute 'position-attribute)
+                                     :attribute 'lem.sourcelist:position-attribute)
                   (when charpos
                     (move-point p2 (character-offset p 1))
                     (put-text-property p2 (character-offset p (length charpos-str))

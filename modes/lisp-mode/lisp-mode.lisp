@@ -574,10 +574,10 @@
                (lem.sourcelist:append-sourcelist
                 sourcelist
                 (lambda (cur-point)
-                  (insert-string cur-point name :attribute 'lem.grep:title-attribute)
+                  (insert-string cur-point name :attribute 'lem.sourcelist:title-attribute)
                   (insert-string cur-point ":")
                   (insert-string cur-point (princ-to-string pos)
-                                 :attribute 'lem.grep:position-attribute)
+                                 :attribute 'lem.sourcelist:position-attribute)
                   (insert-string cur-point ":")
                   (insert-character cur-point #\newline 1)
                   (insert-string cur-point message)

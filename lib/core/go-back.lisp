@@ -68,10 +68,10 @@
                 (append-sourcelist
                  sourcelist
                  (lambda (point)
-                   (insert-string point filename :attribute 'lem.grep:title-attribute)
+                   (insert-string point filename :attribute 'lem.sourcelist:title-attribute)
                    (insert-string point ":")
                    (insert-string point (princ-to-string linum)
-                                  :attribute 'lem.grep:position-attribute)
+                                  :attribute 'lem.sourcelist:position-attribute)
                    (insert-string point ":")
                    (insert-string point linestr))
                  (lambda (set-buffer-fn)

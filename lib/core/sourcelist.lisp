@@ -1,6 +1,8 @@
 (defpackage :lem.sourcelist
   (:use :cl :lem)
-  (:export :with-sourcelist
+  (:export :title-attribute
+           :position-attribute
+           :with-sourcelist
            :append-jump-function
            :append-sourcelist
            :jump-highlighting))
@@ -8,6 +10,14 @@
 
 (define-attribute jump-highlight
   (t :background "cyan"))
+
+(define-attribute title-attribute
+  (:light :foreground "blue")
+  (:dark :foreground "cyan"))
+
+(define-attribute position-attribute
+  (:light :foreground "dark red")
+  (:dark :foreground "red"))
 
 (defvar *sourcelist-point*)
 (defvar *current-sourcelist-buffer* nil)

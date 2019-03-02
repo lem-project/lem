@@ -119,6 +119,7 @@
                (lem-if:popup-menu-quit (implementation))
                (return nil)))))))
 
+#|
 (define-command lisp-add-missing-import-from (symbol-name)
     ((list (prompt-for-symbol-name "Symbol: " (symbol-string-at-point (current-point)))))
   (multiple-value-bind (symbol external-p symbol-name package)
@@ -128,6 +129,7 @@
           (go-to-defpackage-spec-form point ":import-from")
         (when point
           )))))
+|#
 
 (defun find-utopian-route (point)
   (when (in-string-p point)

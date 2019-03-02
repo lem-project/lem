@@ -48,7 +48,7 @@
                   (when charpos
                     (move-point p2 (character-offset p 1))
                     (put-text-property p2 (character-offset p (length charpos-str))
-                                       :attribute 'position-attribute))
+                                       :attribute 'lem.sourcelist:position-attribute))
                   (lem.sourcelist:append-jump-function
                    sourcelist
                    (line-start p2)

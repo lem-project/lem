@@ -64,7 +64,6 @@
                       (line-end end)
                       (character-offset p 1)
                       (put-text-property start end 'jump-fn jump-fn)
-                      (put-text-property start p :read-only t)
                       (put-text-property p end 'match-string (points-to-string p end)))
                     (lem.sourcelist:append-jump-function
                      sourcelist
@@ -87,9 +86,10 @@
   (unless (or (text-property-at point 'match-string)
               (next-single-property-change point 'match-string))
     (return-from next-replace-region))
-  (let ((end (copy-point point :temporary)))
-    (next-single-property-change end 'match-string)
-    (values (copy-point point :temporary) end)))
+  (with-point ((start point)
+               (end point))
+    (line-end end)
+    (values start end)))
 
 (defun replace-diff-with-current-line (point new-string)
   (alexandria:when-let (fn (text-property-at point 'jump-fn))

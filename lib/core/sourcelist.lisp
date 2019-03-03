@@ -34,27 +34,30 @@
 (defun (setf get-sourcelist) (sourcelist buffer)
   (setf (buffer-value buffer 'sourcelist) sourcelist))
 
-(defun call-with-sourcelist (buffer-name function focus)
-  (let ((buffer (make-buffer buffer-name :read-only-p t :enable-undo-p nil))
+(defun call-with-sourcelist (buffer-name function focus read-only-p enable-undo-p)
+  (let ((buffer (make-buffer buffer-name :read-only-p read-only-p :enable-undo-p enable-undo-p))
         (sourcelist (make-sourcelist :buffer-name buffer-name)))
     (with-buffer-read-only buffer nil
-      (erase-buffer buffer)
-      (with-point ((*sourcelist-point* (buffer-point buffer) :left-inserting))
-        (funcall function sourcelist))
-      (buffer-start (buffer-point buffer))
-      (change-buffer-mode buffer 'sourcelist-mode t)
-      (if focus
-          (setf (current-window) (display-buffer buffer))
-          (display-buffer buffer))
-      (setf (variable-value 'truncate-lines :buffer buffer) nil)
-      (setf (get-sourcelist buffer) sourcelist)
-      (setf *current-sourcelist-buffer* buffer))))
+      (let ((*inhibit-read-only* t))
+        (erase-buffer buffer)
+        (with-point ((*sourcelist-point* (buffer-point buffer) :left-inserting))
+          (funcall function sourcelist))
+        (buffer-start (buffer-point buffer))
+        (change-buffer-mode buffer 'sourcelist-mode t)
+        (if focus
+            (setf (current-window) (display-buffer buffer))
+            (display-buffer buffer))
+        (setf (variable-value 'truncate-lines :buffer buffer) nil)
+        (setf (get-sourcelist buffer) sourcelist)
+        (setf *current-sourcelist-buffer* buffer)))))
 
-(defmacro with-sourcelist ((var buffer-name &key focus) &body body)
+(defmacro with-sourcelist ((var buffer-name &key focus (read-only-p t) (enable-undo-p nil)) &body body)
   `(call-with-sourcelist ,buffer-name
                          (lambda (,var)
                            ,@body)
-                         ,focus))
+                         ,focus
+                         ,read-only-p
+                         ,enable-undo-p))
 
 (defun append-jump-function (sourcelist start end jump-function)
   (put-text-property start end

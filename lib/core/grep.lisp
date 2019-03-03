@@ -5,6 +5,32 @@
   (:lock t))
 (in-package :lem.grep)
 
+(defvar *syntax-table*
+  (let ((table (make-syntax-table))
+        (tmlanguage (make-tmlanguage
+                     :patterns (make-tm-patterns
+                                (make-tm-match "^(.*?):(\\d+):(\\d+):(?:.*)"
+                                               :captures (vector nil
+                                                                 (make-tm-name 'lem.sourcelist:title-attribute)
+                                                                 (make-tm-name 'lem.sourcelist:position-attribute)
+                                                                 (make-tm-name 'lem.sourcelist:position-attribute)))
+                                (make-tm-match "^(.*?):(\\d+):(?:.*)"
+                                               :captures (vector nil
+                                                                 (make-tm-name 'lem.sourcelist:title-attribute)
+                                                                 (make-tm-name 'lem.sourcelist:position-attribute)))))))
+    (set-syntax-parser table tmlanguage)
+    table))
+
+(define-major-mode grep-mode nil
+    (:name "grep"
+     :keymap *grep-mode-keymap*
+     :syntax-table *syntax-table*)
+  (setf (variable-value 'enable-syntax-highlight) t)
+  (setf (variable-value 'truncate-lines) nil))
+
+(define-key *grep-mode-keymap* "Return" 'grep-jump)
+(define-key *grep-mode-keymap* "q" 'quit-window)
+
 (defun grep-parse-line (line)
   (ignore-errors
    (let* ((i (position #\: line))
@@ -22,56 +48,50 @@
 (defun grep-parse (string)
   (grep-parse-lines (uiop:split-string string :separator '(#\newline))))
 
-(defun grep-with-string (buffer-name revert-fun string)
+(defun jump (directory file line-number charpos)
+  (let* ((buffer (find-file-buffer (merge-pathnames file directory)))
+         (point (buffer-point buffer)))
+    (move-to-line point line-number)
+    (if charpos
+        (line-offset point 0 charpos)
+        (back-to-indentation point))
+    buffer))
+
+(defun make-jump-function (directory line-string)
+  (ppcre:register-groups-bind (file line-number charpos)
+      ("^(.*?):(\\d+):(\\d+)?" line-string)
+    (lambda (set-buffer-fn)
+      (funcall set-buffer-fn
+               (jump directory
+                     file
+                     (parse-integer line-number)
+                     (and charpos (parse-integer charpos :junk-allowed t)))))))
+
+(defun cut-path-info (line-string)
+  (ppcre:register-groups-bind (string)
+      ("^(?:.*?):(?:\\d+):(?:\\d+:)?(.*)" line-string)
+    string))
+
+(defun grep-with-string (buffer-name directory revert-fun output-text)
   (lem.sourcelist:with-sourcelist (sourcelist buffer-name :read-only-p nil :enable-undo-p t)
     (let* ((buffer (get-buffer buffer-name))
-           (p (buffer-point buffer)))
+           (point (buffer-point buffer)))
       (setf (buffer-value buffer 'grep) t)
+      (setf (buffer-value buffer 'directory) directory)
       (setf (buffer-value buffer 'lem::revert-buffer-function)
             revert-fun)
-      (insert-string p string)
-      (buffer-start p)
-      (with-point ((p2 p))
+      (insert-string point output-text)
+      (buffer-start point)
+      (with-point ((p point))
         (loop
-          (let ((string (line-string p)))
-            (ppcre:register-groups-bind (filename line-number-str charpos-str)
-                ("^(.*?):(\\d+):(\\d+)?" string)
-              (when (and filename line-number-str)
-                (let ((pathname (merge-pathnames filename (buffer-directory)))
-                      (line-number (parse-integer line-number-str))
-                      (charpos (and charpos-str (parse-integer charpos-str))))
-                  (move-point p2 (line-start p))
-                  (put-text-property p2 (character-offset p (length filename))
-                                     :attribute 'lem.sourcelist:title-attribute)
-                  (move-point p2 (character-offset p 1))
-                  (put-text-property p2 (character-offset p (length line-number-str))
-                                     :attribute 'lem.sourcelist:position-attribute)
-                  (when charpos
-                    (move-point p2 (character-offset p 1))
-                    (put-text-property p2 (character-offset p (length charpos-str))
-                                       :attribute 'lem.sourcelist:position-attribute))
-                  (let ((jump-fn
-                          (lambda ()
-                            (let* ((buffer (find-file-buffer pathname))
-                                   (p (buffer-point buffer)))
-                              (move-to-line p line-number)
-                              (if charpos
-                                  (line-offset p 0 charpos)
-                                  (back-to-indentation p))
-                              buffer))))
-                    (with-point ((start p) (end p) (p p))
-                      (line-start start)
-                      (line-end end)
-                      (character-offset p 1)
-                      (put-text-property start end 'jump-fn jump-fn)
-                      (put-text-property p end 'match-string (points-to-string p end)))
-                    (lem.sourcelist:append-jump-function
-                     sourcelist
-                     (line-start p2)
-                     (line-end p)
-                     (lambda (set-buffer-fn)
-                       (funcall set-buffer-fn (funcall jump-fn)))))))))
-          (unless (line-offset p 1) (return))))))
+          (with-point ((start p) (end p))
+            (line-start start)
+            (line-end end)
+            (put-text-property start end 'old-string (line-string start))
+            (lem.sourcelist:append-jump-function sourcelist start end
+                                                 (make-jump-function directory (line-string start))))
+          (unless (line-offset p 1) (return))))
+      (change-buffer-mode buffer 'grep-mode)))
   (redraw-display))
 
 (defun replace-line (point string)
@@ -82,31 +102,27 @@
     (delete-between-points start end)
     (insert-string point string)))
 
-(defun next-replace-region (point)
-  (unless (or (text-property-at point 'match-string)
-              (next-single-property-change point 'match-string))
-    (return-from next-replace-region))
-  (with-point ((start point)
-               (end point))
-    (line-end end)
-    (values start end)))
+(defun replace-diff-with-current-line (point old-string new-string)
+  (ppcre:register-groups-bind (file line-number charpos)
+      ("^(.*?):(\\d+):(\\d+:)?" old-string)
+    (when (and file line-number)
+      (let* ((buffer (jump (buffer-value point 'directory)
+                           file
+                           (parse-integer line-number)
+                           (and charpos (parse-integer charpos))))
+             (point (buffer-point buffer)))
+        (replace-line point new-string)))))
 
-(defun replace-diff-with-current-line (point new-string)
-  (alexandria:when-let (fn (text-property-at point 'jump-fn))
-    (let* ((buffer (funcall fn))
-           (point (buffer-point buffer)))
-      (replace-line point new-string))))
-
-(defun replace-diff (p)
-  (multiple-value-bind (start end)
-      (next-replace-region p)
-    (unless start (return-from replace-diff nil))
-    (let ((old-string (text-property-at start 'match-string))
-          (new-string (points-to-string start end)))
-      (unless (string= old-string new-string)
-        (replace-diff-with-current-line p new-string)))
-    (move-point p end)
-    t))
+(defun replace-diff (point)
+  (with-point ((p point))
+    (line-start p)
+    (let ((new-string (cut-path-info (line-string p)))
+          (old-string (text-property-at p 'old-string)))
+      (when (and new-string
+                 old-string
+                 (not (string= (cut-path-info old-string) new-string)))
+        (replace-diff-with-current-line p old-string new-string))))
+  (line-offset point 1))
 
 (defun replace-all (buffer)
   (with-point ((p (buffer-point buffer)))
@@ -127,6 +143,7 @@
                                       :ignore-error-status t)))
                 (alexandria:curry #'grep-with-string
                                   "*grep*"
+                                  directory
                                   #'f))))
       (f))))
 

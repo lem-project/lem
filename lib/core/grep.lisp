@@ -60,12 +60,13 @@
 (defun make-jump-function (directory line-string)
   (ppcre:register-groups-bind (file line-number charpos)
       ("^(.*?):(\\d+):(\\d+)?" line-string)
-    (lambda (set-buffer-fn)
-      (funcall set-buffer-fn
-               (jump directory
-                     file
-                     (parse-integer line-number)
-                     (and charpos (parse-integer charpos :junk-allowed t)))))))
+    (when file
+      (lambda (set-buffer-fn)
+        (funcall set-buffer-fn
+                 (jump directory
+                       file
+                       (parse-integer line-number)
+                       (and charpos (parse-integer charpos :junk-allowed t))))))))
 
 (defun cut-path-info (line-string)
   (ppcre:register-groups-bind (string)
@@ -87,9 +88,9 @@
           (with-point ((start p) (end p))
             (line-start start)
             (line-end end)
-            (put-text-property start end 'old-string (line-string start))
-            (lem.sourcelist:append-jump-function sourcelist start end
-                                                 (make-jump-function directory (line-string start))))
+            (alexandria:when-let ((fn (make-jump-function directory (line-string start))))
+              (put-text-property start end 'old-string (line-string start))
+              (lem.sourcelist:append-jump-function sourcelist start end fn)))
           (unless (line-offset p 1) (return))))
       (change-buffer-mode buffer 'grep-mode)))
   (redraw-display))

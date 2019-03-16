@@ -53,7 +53,7 @@ You can watch the screencast on Youtube.
 
 ## Configuration
 
-Lem loads `~/.lem/init.lisp` when startup.
+Lem loads `~/.lem/init.lisp` when starting up.
 
 You can see an example at [here](lemrc-example).
 

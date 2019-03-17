@@ -94,11 +94,16 @@ You can launch lem as follows:
 $ lem --frontend ncurses-ccl
 ```
 
+## How to develop lisp
+See https://github.com/cxxxr/lem/wiki/Lisp-Mode
+
+## How to hack on lem itself
+see https://github.com/cxxxr/lem/wiki/How-to-hack-on-lem-itself
+
 ## Contributors
 
 This project exists thanks to all the people who contribute. [[Contribute]](CONTRIBUTING.md).
 <a href="graphs/contributors"><img src="https://opencollective.com/lem/contributors.svg?width=890" /></a>
-
 
 ## Backers
 

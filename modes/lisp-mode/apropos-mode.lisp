@@ -19,7 +19,7 @@
      :syntax-table lem-lisp-syntax:*syntax-table*)
   (setf (variable-value 'enable-syntax-highlight) nil))
 
-(defun show-apropos (data)
+(defun show-apropos (data package)
   (let ((buffer (make-buffer "*lisp-apropos*")))
     (switch-to-buffer buffer)
     (lisp-apropos-mode)
@@ -33,14 +33,17 @@
                                    :attribute 'apropos-headline-attribute)
                     (loop :for (k v) :on plist1 :by #'cddr
                           :do (insert-string point (format nil "~%  ~A: ~A" k v)))
-                    (insert-character point #\newline 2)))))))
+                    (insert-character point #\newline 2)))))
+    (lisp-set-package package)))
 
 (defun lisp-apropos-internal (string only-external-p package case-sensitive-p)
   (show-apropos (lisp-eval
                  `(swank:apropos-list-for-emacs ,string
                                                 ,only-external-p
                                                 ,case-sensitive-p
-                                                ,package))))
+                                                ,package))
+                (or package
+                    (current-package))))
 
 (define-command lisp-apropos (&optional arg) ("P")
   (check-connection)

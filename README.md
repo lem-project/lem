@@ -53,7 +53,7 @@ You can watch the screencast on Youtube.
 
 ## Configuration
 
-Lem loads `~/.lem/init.lisp` when startup.
+Lem loads `~/.lem/init.lisp` when starting up.
 
 You can see an example at [here](lemrc-example).
 
@@ -94,11 +94,16 @@ You can launch lem as follows:
 $ lem --frontend ncurses-ccl
 ```
 
+## How to develop lisp
+See https://github.com/cxxxr/lem/wiki/Lisp-Mode
+
+## How to hack on lem itself
+see https://github.com/cxxxr/lem/wiki/How-to-hack-on-lem-itself
+
 ## Contributors
 
 This project exists thanks to all the people who contribute. [[Contribute]](CONTRIBUTING.md).
 <a href="graphs/contributors"><img src="https://opencollective.com/lem/contributors.svg?width=890" /></a>
-
 
 ## Backers
 

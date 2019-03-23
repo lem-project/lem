@@ -19,4 +19,6 @@
                (:file "inspector")
                (:file "apropos-mode")
                (:file "paren-coloring")
-               (:file "misc-commands")))
+               (:file "misc-commands")
+
+               (:file "main")))

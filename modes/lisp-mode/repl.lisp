@@ -215,9 +215,9 @@
                                          string
                                          (string #\newline))))))
 
-(define-command start-lisp-repl () ()
+(define-command start-lisp-repl (&optional use-this-window) ("P")
   (check-connection)
-  (lem.listener-mode:listener-start "*lisp-repl*" 'lisp-repl-mode))
+  (lem.listener-mode:listener-start "*lisp-repl*" 'lisp-repl-mode (not use-this-window)))
 
 (define-command lisp-switch-to-repl-buffer () ()
   (let ((buffer (repl-buffer)))

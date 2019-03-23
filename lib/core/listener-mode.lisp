@@ -51,9 +51,11 @@
 (defun listener-start-point (buffer)
   (%listener-point buffer))
 
-(defun listener-start (buffer-name mode)
+(defun listener-start (buffer-name mode &optional (split-p t))
   (let ((buffer (make-buffer buffer-name)))
-    (setf (current-window) (pop-to-buffer buffer))
+    (if split-p
+        (setf (current-window) (pop-to-buffer buffer))
+        (switch-to-buffer buffer))
     (funcall mode)
     (listener-reset-prompt buffer)))
 

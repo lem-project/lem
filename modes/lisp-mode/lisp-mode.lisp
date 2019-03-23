@@ -987,7 +987,7 @@
 (defun move-to-location-position (point location-position)
   (alexandria:destructuring-ecase location-position
     ((:position pos)
-     (move-to-bytes point pos))
+     (move-to-bytes point (1+ pos)))
     ((:offset start offset)
      (move-to-position point (1+ start))
      (character-offset point offset))

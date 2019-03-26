@@ -52,7 +52,8 @@
 
 (define-minor-mode isearch-mode
     (:name "isearch"
-     :keymap *isearch-keymap*))
+     :keymap *isearch-keymap*
+     :disable-hook 'disable-hook))
 
 (define-key *global-keymap* "C-s" 'isearch-forward)
 (define-key *global-keymap* "C-r" 'isearch-backward)
@@ -78,6 +79,10 @@
 (define-key *global-keymap* "M-s p" 'isearch-prev-highlight)
 (define-key *global-keymap* "F3" 'isearch-next-highlight)
 (define-key *global-keymap* "Shift-F3" 'isearch-prev-highlight)
+
+(defun disable-hook ()
+  (setf (variable-value 'isearch-next-last :buffer) nil)
+  (setf (variable-value 'isearch-prev-last :buffer) nil))
 
 
 (defun isearch-overlays (buffer)

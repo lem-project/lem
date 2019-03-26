@@ -13,8 +13,6 @@
 (define-key *typeout-mode-keymap* "q" 'dismiss-typeout-window)
 (define-key *typeout-mode-keymap* "Space" 'next-page-or-dismiss-typeout-window)
 (define-key *typeout-mode-keymap* "Backspace" 'previous-page)
-(define-key *typeout-mode-keymap* 'other-window 'dismiss-typeout-window)
-;(define-key *typeout-mode-keymap* 'execute-command 'undefined-key)
 
 (defvar *enable-piece-of-paper* t)
 
@@ -151,3 +149,11 @@
     (move-point (current-point) (window-view-point (current-window)))
     (unless (line-offset (current-point) (window-height (current-window)))
       (dismiss-typeout-window))))
+
+(defun typeout-window-post-command-hook ()
+  (when (and (not (minibuffer-window-active-p))
+             (not (mode-active-p (window-buffer (current-window)) 'typeout-mode))
+             *typeout-window*)
+    (dismiss-typeout-window)))
+
+(add-hook *post-command-hook* 'typeout-window-post-command-hook)

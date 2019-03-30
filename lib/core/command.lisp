@@ -603,11 +603,13 @@
            (uiop:run-program "git rev-parse --short HEAD"
                              :output stream)))))))
 
+(defvar *git-revision* (get-git-hash :lem))
+
 (define-command lem-version (&optional name) ("p")
   (let ((version
           (format nil "lem ~A~@[-~A~] (~A-~A)"
                   (asdf:component-version (asdf:find-system :lem))
-                  (get-git-hash :lem)
+                  *git-revision*
                   (machine-type)
                   (machine-instance))))
     (when (eql name 1)

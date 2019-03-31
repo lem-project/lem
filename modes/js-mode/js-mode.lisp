@@ -227,7 +227,9 @@ link :
   (with-point ((p point))
     (loop :repeat n
           :do (line-offset p 1)
-              (unless (search-forward-regexp p "^\\w") (return)))
+              (if (search-forward-regexp p "^[\\w}]")
+                  (character-offset p 1)
+                  (return)))
     (line-start p)
     (move-point point p)))
 

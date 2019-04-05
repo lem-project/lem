@@ -30,6 +30,11 @@
   will-save-wait-until
   save)
 
+(defgeneric find-root-directory (mode-name client buffer)
+  (:method (mode-name client buffer)
+    (declare (ignore mode-name client))
+    (lem:buffer-directory buffer)))
+
 (defclass client (jsonrpc:client)
   ((command
     :initarg :command
@@ -706,7 +711,7 @@
     (setf (gethash c (workspace-triggers workspace)) 'lsp-signature-help)))
 
 (defun start-lsp (client buffer)
-  (let* ((root-path (find-root-directory client buffer))
+  (let* ((root-path (find-root-directory (lem:buffer-major-mode buffer) client buffer))
          (workspace (find-workspace root-path)))
     (cond
       (workspace
@@ -767,6 +772,21 @@
    :language-id "javascript"
    :command '("node" "/Users/user/src/javascript-typescript-langserver/lib/language-server")
    :port 2089))
+
+(defmethod find-root-directory ((mode-name (eql 'lem-js-mode:js-mode))
+                                client buffer)
+  (declare (ignore client))
+  (or (find-package-json (lem:buffer-directory buffer))
+      (lem:buffer-directory buffer)))
+
+(defun find-package-json (directory)
+  (if (uiop:pathname-equal (user-homedir-pathname) directory)
+      nil
+      (or (dolist (pathname (uiop:directory-files directory))
+            (when (and (equal "package" (pathname-name pathname))
+                       (equal "json" (pathname-type pathname)))
+              (return directory)))
+          (find-package-json (uiop:pathname-parent-directory-pathname directory)))))
 
 #+(or)
 (define-lsp-client lem-js-mode:js-mode

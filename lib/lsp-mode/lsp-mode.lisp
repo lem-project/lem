@@ -63,7 +63,7 @@
     (unless client
       (lem:editor-error "undefined client: ~A"
                         (lem:buffer-major-mode buffer)))
-    (start client buffer)))
+    (start-lsp client buffer)))
 
 (defmacro define-response-method (name (&rest vars) &body body)
   (alexandria:with-gensyms (params)
@@ -705,8 +705,8 @@
   (dolist (c (get-signature-help-trigger-characters workspace))
     (setf (gethash c (workspace-triggers workspace)) 'lsp-signature-help)))
 
-(defun start (client buffer)
-  (let* ((root-path *root-path*)
+(defun start-lsp (client buffer)
+  (let* ((root-path (find-root-directory client buffer))
          (workspace (find-workspace root-path)))
     (cond
       (workspace

@@ -20,4 +20,6 @@
 
 (defun jsonrpc-call (connection method params)
   (do-log "call: ~A ~A" method (pretty-json params))
-  (jsonrpc:call connection method params))
+  (let ((result (jsonrpc:call connection method params)))
+    (do-log "result: ~A" (pretty-json result))
+    result))

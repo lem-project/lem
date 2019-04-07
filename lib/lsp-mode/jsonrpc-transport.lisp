@@ -1,5 +1,10 @@
 (in-package :lem-lsp-mode)
 
+#|
+このファイルで使っているjsonrpcは次のフォークされたブランチに依存する
+https://github.com/cxxxr/jsonrpc/tree/hijack-find-mode-class
+|#
+
 (defclass lem-stdio-transport (jsonrpc:transport)
   ((stream
     :reader lem-stdio-transport-stream)

@@ -5,6 +5,8 @@
   (:lock t))
 (in-package :lem-c-mode)
 
+(define-editor-variable c-basic-offset 4)
+
 (defvar *c-syntax-table*
   (let ((table (make-syntax-table
                 :space-chars '(#\space #\tab #\newline)
@@ -35,6 +37,7 @@
   (setf (variable-value 'insertion-line-comment) "// ")
   (setf (variable-value 'find-definitions-function) 'lem.gtags:find-definitions)
   (setf (variable-value 'find-references-function) 'lem.gtags:find-references))
+(add-hook *c-mode-hook* 'guess-offset)
 
 (define-key *c-mode-keymap* "}" 'c-electric-brace)
 (define-key *c-mode-keymap* "C-c @" 'lem.gtags:gtags-definition-list)
@@ -127,13 +130,13 @@
                  (not (delimiter-line-p p)))
         (loop
           (unless (line-offset p 1) (return-from indent-cond-op nil))
-          (c-indent-line p (+ indent tab-width))
+          (c-indent-line p (+ indent c-basic-offset))
           (when (delimiter-line-p p)
             (return))))))
   t)
 
 (defun c-indent-line (p indent)
-  (let ((tab-width (variable-value 'tab-width :default p)))
+  (let ((c-basic-offset (variable-value 'c-basic-offset :default p)))
     (back-to-indentation p)
     (loop :while (end-line-p p)
           :do (%indent p indent)
@@ -151,7 +154,7 @@
         (line-start start)
         (character-offset (line-start p) (1+ i))
         (when (> 0 (pps-state-paren-depth (parse-partial-sexp start p)))
-          (decf indent tab-width))))
+          (decf indent c-basic-offset))))
     (let ((word (looking-at p "\\w+"))
           (word-point)
           (state)
@@ -170,13 +173,13 @@
            (unless (setf state (unbalanced-indent p indent start))
              (return-from c-indent-line nil)))
           ((and word (ppcre:scan "^(?:case|default)$" word))
-           (%indent p (- indent tab-width)))
+           (%indent p (- indent c-basic-offset)))
           (t
            (%indent p indent)
            (unless (indent-cond-op p indent)
              (return-from c-indent-line nil)))))
       (when (eql #\{ (car (pps-state-paren-stack state)))
-        (let ((indent (+ indent tab-width))
+        (let ((indent (+ indent c-basic-offset))
               (status))
           (loop
             (unless (line-offset p 1) (return-from c-indent-line nil))
@@ -186,7 +189,7 @@
               (return-from c-indent-line (values indent :block-end))))))
       (when (and word-point (dangling-start-p word-point))
         (unless (line-offset p 1) (return-from c-indent-line nil))
-        (c-indent-line p (+ indent tab-width))
+        (c-indent-line p (+ indent c-basic-offset))
         (return-from c-indent-line indent))
       (return-from c-indent-line indent))))
 
@@ -222,6 +225,44 @@
                 (when (same-line-p point p)
                   (return-from calc-indent indent)))))
          (calc-indent-region start point))))))
+
+(defun count-offset (string)
+  (let ((i 0)
+        (tab 0)
+        (space 0))
+    (loop while (ignore-errors (eql (aref string i) #\tab))
+          do (incf i)
+             (incf tab))
+    (loop while (ignore-errors (eql (aref string i) #\space))
+          do (incf i)
+             (incf space))
+    (values tab space)))
+
+(defun guess-offset ()
+  (save-excursion
+    (ignore-errors
+     (with-point ((start (current-point)))
+       (let ((h (make-hash-table :test 'equalp)))
+         (map-region start (buffer-end (current-point))
+                     (lambda (line endp)
+                       (declare(ignore endp))
+                       (multiple-value-bind (tab space)
+                           (count-offset line)
+                         (when (or (not (zerop tab))
+                                   (not (zerop space)))
+                           (incf (gethash (make-array 2
+                                                      :initial-contents
+                                                      (list tab space))
+                                          h 0))))))
+         (let* ((* (loop for k being the hash-keys in h
+                         using (hash-value v)
+                         collect (cons v k)))
+                (* (sort * #'> :key #'first))
+                (* (mapcar #'rest *)))
+           (if (zerop (aref (first *) 0))
+               (setf (variable-value 'c-basic-offset :buffer)
+                     (gcd (aref (first *) 1)
+                          (aref (second *) 1))))))))))
 
 (pushnew (cons "\\.c$" 'c-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons "\\.h$" 'c-mode) *auto-mode-alist* :test #'equal)

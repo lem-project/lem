@@ -26,15 +26,16 @@
 `change-value-hook`はそのエディタ変数の大域的な値が変更されるときに呼び出されるフック関数です。
 "
   (check-type var symbol)
-  `(unless (get ',var 'editor-variable)
-     (defvar ,var)
-     (pushnew ',var *editor-variables*)
-     (setf (get ',var 'editor-variable)
-           (make-editor-variable :value ,value
-                                 :documentation ,documentation
-                                 :local-indicator (gensym ,(string var))
-                                 :change-value-hook ,change-value-hook))
-     t))
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (unless (get ',var 'editor-variable)
+       (defvar ,var)
+       (pushnew ',var *editor-variables*)
+       (setf (get ',var 'editor-variable)
+             (make-editor-variable :value ,value
+                                   :documentation ,documentation
+                                   :local-indicator (gensym ,(string var))
+                                   :change-value-hook ,change-value-hook))
+       t)))
 
 (defun clear-editor-local-variables (buffer)
   "`buffer`の全てのバッファローカルなエディタ変数を未束縛にします。"

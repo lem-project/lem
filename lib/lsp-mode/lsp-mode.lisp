@@ -296,7 +296,7 @@
                                  "initialize"
                                  ({}
                                   "processId" (getpid)
-                                  #|"rootPath" root|#
+                                  "rootPath" (princ-to-string root)
                                   "rootUri" (pathname-to-uri root)
                                   #|"initializationOptions"|#
                                   "capabilities" (client-capabilities)

@@ -5,8 +5,6 @@
   (:lock t))
 (in-package :lem-c-mode)
 
-(define-editor-variable c-basic-offset 4)
-
 (defvar *c-syntax-table*
   (let ((table (make-syntax-table
                 :space-chars '(#\space #\tab #\newline)
@@ -31,6 +29,7 @@
   (setf (variable-value 'enable-syntax-highlight) t)
   (setf (variable-value 'calc-indent-function) 'calc-indent)
   (setf (variable-value 'indent-tabs-mode) nil)
+  (setf (variable-value 'indent-size) 4)
   (setf (variable-value 'beginning-of-defun-function) 'c-beginning-of-defun)
   (setf (variable-value 'end-of-defun-function) 'c-end-of-defun)
   (setf (variable-value 'line-comment) "//")
@@ -130,13 +129,13 @@
                  (not (delimiter-line-p p)))
         (loop
           (unless (line-offset p 1) (return-from indent-cond-op nil))
-          (c-indent-line p (+ indent c-basic-offset))
+          (c-indent-line p (+ indent (variable-value 'indent-size :default p)))
           (when (delimiter-line-p p)
             (return))))))
   t)
 
 (defun c-indent-line (p indent)
-  (let ((c-basic-offset (variable-value 'c-basic-offset :default p)))
+  (let ((indent-size (variable-value 'indent-size :default p)))
     (back-to-indentation p)
     (loop :while (end-line-p p)
           :do (%indent p indent)
@@ -154,7 +153,7 @@
         (line-start start)
         (character-offset (line-start p) (1+ i))
         (when (> 0 (pps-state-paren-depth (parse-partial-sexp start p)))
-          (decf indent c-basic-offset))))
+          (decf indent indent-size))))
     (let ((word (looking-at p "\\w+"))
           (word-point)
           (state)
@@ -173,13 +172,13 @@
            (unless (setf state (unbalanced-indent p indent start))
              (return-from c-indent-line nil)))
           ((and word (ppcre:scan "^(?:case|default)$" word))
-           (%indent p (- indent c-basic-offset)))
+           (%indent p (- indent indent-size)))
           (t
            (%indent p indent)
            (unless (indent-cond-op p indent)
              (return-from c-indent-line nil)))))
       (when (eql #\{ (car (pps-state-paren-stack state)))
-        (let ((indent (+ indent c-basic-offset))
+        (let ((indent (+ indent indent-size))
               (status))
           (loop
             (unless (line-offset p 1) (return-from c-indent-line nil))
@@ -189,7 +188,7 @@
               (return-from c-indent-line (values indent :block-end))))))
       (when (and word-point (dangling-start-p word-point))
         (unless (line-offset p 1) (return-from c-indent-line nil))
-        (c-indent-line p (+ indent c-basic-offset))
+        (c-indent-line p (+ indent indent-size))
         (return-from c-indent-line indent))
       (return-from c-indent-line indent))))
 
@@ -260,7 +259,7 @@
                 (* (sort * #'> :key #'first))
                 (* (mapcar #'rest *)))
            (if (zerop (aref (first *) 0))
-               (setf (variable-value 'c-basic-offset :buffer)
+               (setf (variable-value 'indent-size :buffer)
                      (gcd (aref (first *) 1)
                           (aref (second *) 1))))))))))
 

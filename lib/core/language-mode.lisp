@@ -27,7 +27,8 @@
    :xref-references-locations
    :xref-filespec-to-buffer
    :xref-filespec-to-filename
-   :move-to-xref-location-position)
+   :move-to-xref-location-position
+   :indent-size)
   #+sbcl
   (:lock t))
 (in-package :lem.language-mode)
@@ -41,6 +42,7 @@
 (define-editor-variable find-references-function nil)
 (define-editor-variable xref-mode-tag nil)
 (define-editor-variable completion-spec nil)
+(define-editor-variable indent-size 2)
 
 (defun prompt-for-symbol (prompt history-name)
   (prompt-for-line prompt "" nil nil history-name))

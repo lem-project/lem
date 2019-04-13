@@ -104,6 +104,7 @@
         ("dotimes" . "dolist")
         ("eval-when"   1)
         ("flet"        ((&whole 4 &rest (&whole 1 &lambda &body)) &body))
+        ("ignore-errors" (&rest &body))
         ("labels" . "flet")
         ("macrolet" . "flet")
         ("generic-flet" . "flet")

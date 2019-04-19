@@ -314,7 +314,13 @@
                                     attribute)))))
 
 (defun disp-set-overlay (screen attribute screen-row start end)
-  (disp-set-line screen attribute screen-row (point-charpos start) nil)
+  (let ((start-and-end-on-same-line (same-line-p start end)))
+    (disp-set-line screen attribute screen-row (point-charpos start)
+	         (if start-and-end-on-same-line
+		   (point-charpos end)
+		   nil))
+    (when start-and-end-on-same-line
+      (return-from disp-set-overlay)))
   (with-point ((point start))
     (line-offset point 1)
     (loop :for i :from (1+ screen-row)

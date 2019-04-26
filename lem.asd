@@ -19,7 +19,8 @@
                "lem-nim-mode"
                "lem-scheme-mode"
                "lem-diff-mode"
-               "lem-yaml-mode"))
+               "lem-yaml-mode"
+               "lem-review-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

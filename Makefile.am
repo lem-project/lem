@@ -1,4 +1,4 @@
-SUBDIRS = contrib
+SUBDIRS = scripts/gen-contrib contrib
 
 export lem_contrib_prefix = ${datadir}/lem
 

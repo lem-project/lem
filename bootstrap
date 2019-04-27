@@ -1,4 +1,5 @@
 #!/bin/sh
+touch contrib/Makefile.am
 aclocal
 automake -a
 autoconf

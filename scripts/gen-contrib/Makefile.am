@@ -1,4 +1,4 @@
-all: ../../contrib/Makefile.am
+all: contrib
 	
-../../contrib/Makefile.am:
+contrib:
 	ros gen-contrib.ros

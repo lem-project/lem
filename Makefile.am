@@ -20,11 +20,6 @@ if GENERATE_XCB
  EXTRA_DIST += bin/lem-xcb$(EXEEXT)
 endif
 
-if GENERATE_NCURSES_CCL
- bin_SCRIPTS += bin/lem-ncurses-ccl$(EXEEXT)
- EXTRA_DIST += bin/lem-ncurses-ccl$(EXEEXT)
-endif
-
 lem-icon.svg: scripts/gen-desktop.ros
 	cd $(PWD);ros scripts/gen-desktop.ros --prefix ${prefix} --icon blue
 
@@ -32,7 +27,8 @@ lem-ncurses.desktop: scripts/gen-desktop.ros
 	cd $(PWD);ros scripts/gen-desktop.ros --prefix ${prefix}
 
 %$(EXEEXT): %.ros
-	ros build $<
+	ros -L sbcl-bin -l $< dump output $(basename $(notdir $<))
+	ros -v -L sbcl-bin -l $< dump executable $<
 
 bin/%.ros: roswell/%.ros
 	cp $< $@

@@ -6,8 +6,10 @@ package-lock.json
 roswell/lem-ncurses
 *~
 
+contrib/Makefile.am
 Makefile
 Makefile.in
+compile
 configure
 config.status
 config.log

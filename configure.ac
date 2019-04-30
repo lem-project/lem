@@ -9,16 +9,15 @@ if test "x$ROSWELL" != xyes; then
 fi
 
 dnl [TBD] cross compile possible?
+lisp_impl=sbcl-bin
 frontend=ncurses
 if test `ros roswell-internal-use uname -m` == "armhf"; then
   if test `ros roswell-internal-use uname` == "linux"; then
-    ros install ccl-bin
-    enable_ncurses_ccl=yes
-    enable_ncurses=no
-    frontend=ncurses-ccl
+	lisp_impl=ccl-bin
   fi
 fi
 
+AC_SUBST([LISP_IMPL],$lisp_impl)
 ncurses=no
 AC_CHECK_HEADERS(ncurses.h,[ncurses=yes])
 if test "x$ncurses" = xno; then
@@ -48,9 +47,5 @@ AM_CONDITIONAL(GENERATE_RPC,[test "x$enable_rpc" = "xyes"])
 AC_ARG_ENABLE([xcb],
     AS_HELP_STRING([--enable-xcb], [Enable xcb]))
 AM_CONDITIONAL(GENERATE_XCB,[test "x$enable_xcb" = "xyes"])
-
-AC_ARG_ENABLE([ncurses_ccl],
-    AS_HELP_STRING([--enable-ncurses-ccl], [Enable ncurses-ccl]))
-AM_CONDITIONAL(GENERATE_NCURSES_CCL,[test "x$enable_ncurses_ccl" = "xyes"])
 
 AC_OUTPUT

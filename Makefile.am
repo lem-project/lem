@@ -27,8 +27,8 @@ lem-ncurses.desktop: scripts/gen-desktop.ros
 	cd $(PWD);ros scripts/gen-desktop.ros --prefix ${prefix}
 
 %$(EXEEXT): %.ros
-	ros -L sbcl-bin -l $< dump output $(basename $(notdir $<))
-	ros -v -L sbcl-bin -l $< dump executable $<
+	ros -L ${LISP_IMPL} -l $< dump output $(basename $(notdir $<))
+	ros -L ${LISP_IMPL} -l $< dump executable $<
 
 bin/%.ros: roswell/%.ros
 	cp $< $@
@@ -44,3 +44,6 @@ depend:
 	ros make-depends lem-ncurses bin/lem-ncurses > bin/lem-ncurses.depend
 
 -include bin/lem-ncurses.depend
+
+clean-local:
+	ros -L ${LISP_IMPL} delete dump lem-ncurses|true

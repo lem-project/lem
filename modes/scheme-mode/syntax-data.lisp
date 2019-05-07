@@ -39,6 +39,7 @@
     ("map"                            t   t   nil)
     ("for-each"                       t   t   nil)
     ("case-lambda"                    t   t   nil)
+    ("er-macro-transformer"           t   t   nil)
     ;; part 1
     ("begin"                          t   t   0)
     ("case"                           t   t   (4 &rest (&whole 2 &rest 1)))
@@ -81,8 +82,10 @@
     ("match-let*"                     t   t   "let")
     ("match-letrec"                   t   t   "let")
     ("match-let1"                     t   t   2)
+    ("quasirename"                    t   t   1)
     ("rlet1"                          t   t   2)
     ("unwind-protect"                 t   t   1)
+    ("with-ports"                     t   t   3)
     ;; part 3
     ("and-let*"                       t   t   "let")
     ("begin0"                         t   t   0)

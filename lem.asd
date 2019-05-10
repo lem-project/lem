@@ -20,7 +20,8 @@
                "lem-scheme-mode"
                "lem-diff-mode"
                "lem-yaml-mode"
-               "lem-review-mode"))
+               "lem-review-mode"
+               "lem-asciidoc-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

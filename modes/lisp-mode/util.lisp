@@ -15,6 +15,10 @@
            (usocket:address-in-use-error () nil)
            (usocket:socket-error (e)
              (warn "USOCKET:SOCKET-ERROR: ~A" e)
+             nil)
+           #+sbcl
+           (sb-bsd-sockets:socket-error (e)
+             (warn "SB-BSD-SOCKETS:SOCKET-ERROR: ~A" e)
              nil))
       (when socket
         (usocket:socket-close socket)

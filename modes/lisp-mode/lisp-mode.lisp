@@ -799,6 +799,9 @@
     (setf *wait-message-thread*
           (bt:make-thread (lambda ()
                             (loop
+                              ;; workaround for windows (to reduce cpu usage)
+                              #+win32 (sleep 0.001)
+
                               (unless (connected-p)
                                 (setf *wait-message-thread* nil)
                                 (return))

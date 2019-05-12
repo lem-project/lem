@@ -55,11 +55,7 @@
 (defun disp-char-width-func ()
   (let ((fn (slot-value *windows-term-setting* 'disp-char-width)))
     (if (functionp fn)
-        (lambda (code)
-          ;; check zero-width-space character (#\u200b)
-          (if (= code #x200b)
-              0
-              (funcall fn code)))
+        fn
         (lambda (code)
           ;; check zero-width-space character (#\u200b)
           (if (= code #x200b)
@@ -75,11 +71,7 @@
 (defun cur-char-width-func ()
   (let ((fn (slot-value *windows-term-setting* 'cur-char-width)))
     (if (functionp fn)
-        (lambda (code)
-          ;; check zero-width-space character (#\u200b)
-          (if (= code #x200b)
-              0
-              (funcall fn code)))
+        fn
         (lambda (code)
           ;; check zero-width-space character (#\u200b)
           (if (= code #x200b)

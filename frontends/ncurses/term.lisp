@@ -7,6 +7,7 @@
            :term-init
            :term-finalize
            :term-set-tty
+           :term-set-color
            ;;win32 patch
            :get-mouse-mode
            :enable-mouse
@@ -39,15 +40,18 @@
 (defun color-blue (color) (third color))
 (defun color-number (color) (fourth color))
 
+(defun term-set-color (index r g b &optional (call-init-color t))
+  (when call-init-color
+    (charms/ll:init-color index
+                          (round (* r 1000/255))
+                          (round (* g 1000/255))
+                          (round (* b 1000/255))))
+  (setf (aref *colors* index) (list r g b index)))
+
 (defun init-colors (n)
   (let ((counter 0))
     (flet ((add-color (r g b)
-             (when (<= 8 counter)
-               (charms/ll:init-color counter
-                                     (round (* r 1000/255))
-                                     (round (* g 1000/255))
-                                     (round (* b 1000/255))))
-             (setf (aref *colors* counter) (list r g b counter))
+             (term-set-color counter r g b (<= 8 counter))
              (incf counter)))
       (setf *colors* (make-array n))
       (add-color #x00 #x00 #x00)

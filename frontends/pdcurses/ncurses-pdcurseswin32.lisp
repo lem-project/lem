@@ -361,7 +361,13 @@
 (defun resize-display ()
   (when *resizing*
     (setf *resizing* nil)
-    (charms/ll:resizeterm 0 0)
+    ;; wait to get window size certainly
+    (sleep 0.1)
+    ;; check resize error
+    (when (= (charms/ll:resizeterm 0 0) charms/ll:ERR)
+      ;; this is needed to clear PDCurses's inner event flag
+      (charms/ll:resizeterm (max 3 charms/ll:*lines*)
+                            (max 5 charms/ll:*cols*)))
     (charms/ll:erase)
     ;; workaround for display update problem (incomplete)
     (force-refresh-display charms/ll:*cols* charms/ll:*lines*)))

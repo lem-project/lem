@@ -140,6 +140,8 @@
 ;; for resizing display
 (defkeycode "[resize]" #x222)
 (defvar *resizing* nil)
+(defvar *min-cols*  5)
+(defvar *min-lines* 3)
 
 ;; for mouse
 (defkeycode "[mouse]" #x21b)
@@ -252,19 +254,17 @@
                ((eq (second *dragging-window*) 'y)
                 (let ((vy (- (- (lem:window-y o) 1) y1)))
                   ;; this check is incomplete if 3 or more divisions exist
-                  (when (and (>= y1       3)
-                             (>= (+ h vy) 3))
+                  (when (and (>= y1       *min-lines*)
+                             (>= (+ h vy) *min-lines*))
                     (lem:grow-window vy)
                     (lem:redraw-display))))
                ;; horizontal dragging window
                (t
                 (let ((vx (- (- (lem:window-x o) 1) x1)))
                   ;; this check is incomplete if 3 or more divisions exist
-                  (when (and (>= x1       5)
-                             (>= (+ w vx) 5))
+                  (when (and (>= x1       *min-cols*)
+                             (>= (+ w vx) *min-cols*))
                     (lem:grow-window-horizontally vx)
-                    ;; workaround for display update problem (incomplete)
-                    (force-refresh-display charms/ll:*cols* (- charms/ll:*lines* 1))
                     (lem:redraw-display))))
                )))
          (when o
@@ -436,6 +436,16 @@
     (exit-editor (c) (return-from input-loop c))))
 
 ;; workaround for display update problem (incomplete)
+(let ((toggle-flag t))
+  (defun write-something-to-last-line ()
+    ;; this recovers winpty's screen corruption
+    (charms/ll:mvwaddstr charms/ll:*stdscr*
+                         (- charms/ll:*lines* 1)
+                         (- charms/ll:*cols*  1)
+                         (if toggle-flag "+" "-"))
+    (setf toggle-flag (if toggle-flag nil t))))
+
+;; workaround for display update problem (incomplete)
 (defun force-refresh-display (width height)
   (loop :for y1 :from 0 :below height
      ;; clear display area to reset PDCurses's internal cache memory
@@ -454,8 +464,8 @@
     ;; check resize error
     (when (= (charms/ll:resizeterm 0 0) charms/ll:ERR)
       ;; this is needed to clear PDCurses's inner event flag
-      (charms/ll:resizeterm (max 3 charms/ll:*lines*)
-                            (max 5 charms/ll:*cols*)))
+      (charms/ll:resizeterm (max *min-lines* charms/ll:*lines*)
+                            (max *min-cols*  charms/ll:*cols*)))
     (charms/ll:erase)
     ;; workaround for display update problem (incomplete)
     (force-refresh-display charms/ll:*cols* charms/ll:*lines*)))
@@ -463,14 +473,15 @@
 ;; for resizing display
 (defmethod lem-if:display-width ((implementation ncurses))
   (resize-display)
-  (max 5 charms/ll:*cols*))
+  (max *min-cols* charms/ll:*cols*))
 
 ;; for resizing display
 (defmethod lem-if:display-height ((implementation ncurses))
   (resize-display)
-  (max 3 (- charms/ll:*lines*
-            ;; for cmd.exe (windows ime uses the last line)
-            (if (eq *windows-term-type* :cmd.exe) 1 0))))
+  (max *min-lines*
+       (- charms/ll:*lines*
+          ;; for cmd.exe (windows ime uses the last line)
+          (if (eq *windows-term-type* :cmd.exe) 1 0))))
 
 ;; use only stdscr
 (defmethod lem-if:delete-view ((implementation ncurses) view)
@@ -696,6 +707,9 @@
 (defmethod lem-if:update-display ((implementation ncurses))
   (let* ((view   (window-view (current-window)))
          (scrwin (ncurses-view-scrwin view)))
+    ;; workaround for display update problem (incomplete)
+    (write-something-to-last-line)
+    ;; set mouse cursor
     (if (lem::covered-with-floating-window-p (current-window) lem::*cursor-x* lem::*cursor-y*)
         (charms/ll:curs-set 0)
         (progn

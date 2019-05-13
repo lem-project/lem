@@ -11,6 +11,73 @@
     ((uiop:getenv "ConEmuBuild") :conemu)
     (t :cmd.exe)))
 
+;; windows terminal setting
+(defclass windows-term-setting ()
+  ((disp-char-width ;; character width setting for display
+                    ;;   t        : use default function
+                    ;;   nil      : no conversion
+                    ;;   function : use custom function
+                    ;;                (lambda (code) width)
+    :initform nil
+    :initarg :disp-char-width)
+   (pos-char-width  ;; character width setting for position
+                    ;;   t        : use default function
+                    ;;   nil      : no conversion
+                    ;;   function : use custom function
+                    ;;                (lambda (code) width)
+    :initform nil
+    :initarg :pos-char-width)
+   (cur-char-width  ;; character width setting for cursor movement
+                    ;;   t        : use default function
+                    ;;   nil      : no conversion
+                    ;;   function : use custom function
+                    ;;                (lambda (code) width)
+    :initform nil
+    :initarg :cur-char-width)
+   ))
+(defvar *windows-term-setting*
+  (case *windows-term-type*
+    (:mintty
+     (make-instance 'windows-term-setting
+                    :disp-char-width t
+                    :pos-char-width  t
+                    :cur-char-width  t))
+    (:conemu
+     (make-instance 'windows-term-setting
+                    :disp-char-width t
+                    :pos-char-width  t
+                    :cur-char-width  nil))
+    (t
+     (make-instance 'windows-term-setting
+                    :disp-char-width nil
+                    :pos-char-width  nil
+                    :cur-char-width  nil))))
+(defun disp-char-width-func ()
+  (let ((fn (slot-value *windows-term-setting* 'disp-char-width)))
+    (if (functionp fn)
+        fn
+        (lambda (code)
+          ;; check zero-width-space character (#\u200b)
+          (if (= code #x200b)
+              0
+              (if (lem-base:wide-char-p (code-char code)) 2 1))))))
+(defun pos-char-width-func ()
+  (let ((fn (slot-value *windows-term-setting* 'pos-char-width)))
+    (if (functionp fn)
+        fn
+        (lambda (code)
+          ;; check utf-16 surrogate pair characters
+          (if (< code #x10000) 1 2)))))
+(defun cur-char-width-func ()
+  (let ((fn (slot-value *windows-term-setting* 'cur-char-width)))
+    (if (functionp fn)
+        fn
+        (lambda (code)
+          ;; check zero-width-space character (#\u200b)
+          (if (= code #x200b)
+              0
+              (if (lem-base:wide-char-p (code-char code)) 2 1))))))
+
 ;; load windows dll
 ;;  (we load winmm.dll with a full path because it isn't listed in
 ;;   windows knowndlls)
@@ -99,26 +166,43 @@
    :width width
    :height height))
 
-;; for mouse
+;; mouse function
 (defun mouse-get-window-rect (window)
   (values (lem:window-x      window)
           (lem:window-y      window)
           (lem:window-width  window)
           (lem:window-height window)))
-;; for ConEmu
+;; for mintty
+;; get mouse pos-x for pointing wide characters properly
+(defun mouse-get-pos-x (view x y)
+  (unless (slot-value *windows-term-setting* 'cur-char-width)
+    (return-from mouse-get-pos-x x))
+  (let ((cur-char-width-fn (cur-char-width-func))
+        (pos-char-width-fn (pos-char-width-func))
+        (cur-x 0)
+        (pos-x 0)
+        (pos-y y))
+    (loop :while (< cur-x x)
+       :for code := (get-charcode-from-scrwin view pos-x pos-y)
+       :do (incf cur-x (funcall cur-char-width-fn code))
+           (incf pos-x (funcall pos-char-width-fn code)))
+    pos-x))
+;; for mintty and ConEmu
 ;; get mouse disp-x for pointing wide characters properly
 (defun mouse-get-disp-x (view x y)
-  (unless (eq *windows-term-type* :conemu)
+  (unless (slot-value *windows-term-setting* 'pos-char-width)
     (return-from mouse-get-disp-x x))
-  (let* ((start-x (ncurses-view-x view))
+  (let* ((disp-char-width-fn (disp-char-width-func))
+         (pos-char-width-fn  (pos-char-width-func))
+         (start-x (ncurses-view-x view))
          (disp-x0 (+ x start-x))
          (disp-x  start-x)
          (pos-x   start-x)
          (pos-y   (get-pos-y view x y)))
     (loop :while (< pos-x disp-x0)
        :for code := (get-charcode-from-scrwin view pos-x pos-y)
-       :do (incf disp-x (if (lem-base:wide-char-p (code-char code)) 2 1))
-           (incf pos-x  (if (< code #x10000) 1 2)))
+       :do (incf disp-x (funcall disp-char-width-fn code))
+           (incf pos-x  (funcall pos-char-width-fn  code)))
     (- disp-x start-x)))
 (defun mouse-move-to-cursor (window x y)
   (lem:move-point (lem:current-point) (lem::window-view-point window))
@@ -127,6 +211,9 @@
                                    (mouse-get-disp-x (lem:window-view window) x y)))
 (defun mouse-event-proc (bstate x1 y1)
   (lambda ()
+    ;; workaround for cursor position problem
+    (setf x1 (mouse-get-pos-x (lem:window-view (lem:current-window)) x1 y1))
+    ;; process mouse event
     (cond
       ;; button1 down
       ((logtest bstate (logior charms/ll:BUTTON1_PRESSED
@@ -217,7 +304,8 @@
           (modifier-keys (charms/ll:PDC-get-key-modifiers)))
       (setf ctrl-key (logtest modifier-keys charms/ll:PDC_KEY_MODIFIER_CONTROL))
       (setf alt-key  (logtest modifier-keys charms/ll:PDC_KEY_MODIFIER_ALT))
-      ;;(dbg-log-format "code=~X ctrl=~S alt=~S" code ctrl-key alt-key)
+      ;;(unless (= code -1)
+      ;;  (dbg-log-format "code=~X ctrl=~S alt=~S" code ctrl-key alt-key))
       (cond
         ;; ctrl key workaround
         (ctrl-key
@@ -423,11 +511,12 @@
 
 ;; for mintty and ConEmu
 ;; get pos-x/y for printing wide characters
-(defun get-pos-x (view x y &key (modeline nil) (cursor nil))
-  (unless (or (and (eq *windows-term-type* :mintty) (not cursor))
-              (eq *windows-term-type* :conemu))
+(defun get-pos-x (view x y &key (modeline nil))
+  (unless (slot-value *windows-term-setting* 'pos-char-width)
     (return-from get-pos-x (+ x (ncurses-view-x view))))
-  (let* ((floating (not (ncurses-view-modeline-scrwin view)))
+  (let* ((disp-char-width-fn (disp-char-width-func))
+         (pos-char-width-fn  (pos-char-width-func))
+         (floating (not (ncurses-view-modeline-scrwin view)))
          (start-x  (ncurses-view-x view))
          (disp-x0  (+ x start-x))
          (disp-x   (if floating 0 start-x))
@@ -435,17 +524,37 @@
          (pos-y    (get-pos-y view x y :modeline modeline)))
     (loop :while (< disp-x disp-x0)
        :for code := (get-charcode-from-scrwin view pos-x pos-y)
-       :do (incf disp-x (if (lem-base:wide-char-p (code-char code)) 2 1))
-           (incf pos-x  (if (< code #x10000) 1 2)))
+       :do (incf disp-x (funcall disp-char-width-fn code))
+           (incf pos-x  (funcall pos-char-width-fn  code)))
     pos-x))
 (defun get-pos-y (view x y &key (modeline nil))
   (+ y (ncurses-view-y view) (if modeline (ncurses-view-height view) 0)))
 
+;; for mintty
+;; get cur-x for moving cursor position properly
+(defun get-cur-x (view x y &key (modeline nil))
+  (unless (slot-value *windows-term-setting* 'cur-char-width)
+    (return-from get-cur-x (get-pos-x view x y :modeline modeline)))
+  (let* ((disp-char-width-fn (disp-char-width-func))
+         (pos-char-width-fn  (pos-char-width-func))
+         (cur-char-width-fn  (cur-char-width-func))
+         (start-x (ncurses-view-x view))
+         (disp-x0 (+ x start-x))
+         (disp-x  0)
+         (pos-x   0)
+         (pos-y   (get-pos-y view x y :modeline modeline))
+         (cur-x   0))
+    (loop :while (< disp-x disp-x0)
+       :for code := (get-charcode-from-scrwin view pos-x pos-y)
+       :do (incf disp-x (funcall disp-char-width-fn code))
+           (incf pos-x  (funcall pos-char-width-fn  code))
+           (incf cur-x  (funcall cur-char-width-fn  code)))
+    cur-x))
+
 ;; for mintty and ConEmu
 ;; adjust line width by using zero-width-space character (#\u200b)
 (defun adjust-line (view x y &key (modeline nil))
-  (unless (or (eq *windows-term-type* :mintty)
-              (eq *windows-term-type* :conemu))
+  (unless (slot-value *windows-term-setting* 'pos-char-width)
     (return-from adjust-line))
   (let* ((start-x    (ncurses-view-x view))
          (disp-width (ncurses-view-width view))
@@ -593,6 +702,8 @@
           (charms/ll:curs-set 1)
           (charms/ll:wmove scrwin
                            (get-pos-y view lem::*cursor-x* lem::*cursor-y*)
-                           (get-pos-x view lem::*cursor-x* lem::*cursor-y* :cursor t))))
+                           ;; workaround for cursor position problem
+                           ;;(get-pos-x view lem::*cursor-x* lem::*cursor-y*)
+                           (get-cur-x view lem::*cursor-x* lem::*cursor-y*))))
     (charms/ll:wnoutrefresh scrwin)
     (charms/ll:doupdate)))

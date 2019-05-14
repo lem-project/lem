@@ -34,6 +34,11 @@
                     ;;                (lambda (code) width)
     :initform nil
     :initarg :cur-char-width)
+   (cur-mov-by-pos  ;; cursor movement setting
+                    ;;   t   : cursor movement is specified by pos
+                    ;;   nil : cursor movement is specified by cur
+    :initform nil
+    :initarg :cur-mov-by-pos)
    ))
 (defvar *windows-term-setting*
   (case *windows-term-type*
@@ -41,42 +46,42 @@
      (make-instance 'windows-term-setting
                     :disp-char-width t
                     :pos-char-width  t
-                    :cur-char-width  t))
+                    :cur-char-width  t
+                    :cur-mov-by-pos  nil))
     (:conemu
      (make-instance 'windows-term-setting
                     :disp-char-width t
                     :pos-char-width  t
-                    :cur-char-width  nil))
+                    :cur-char-width  nil
+                    :cur-mov-by-pos  t))
     (t
      (make-instance 'windows-term-setting
                     :disp-char-width nil
                     :pos-char-width  nil
-                    :cur-char-width  nil))))
-(defun disp-char-width-func ()
-  (let ((fn (slot-value *windows-term-setting* 'disp-char-width)))
+                    :cur-char-width  nil
+                    :cur-mov-by-pos  nil))))
+(defmethod disp-char-width ((wt windows-term-setting) code)
+  (let ((fn (slot-value wt 'disp-char-width)))
     (if (functionp fn)
-        fn
-        (lambda (code)
-          ;; check zero-width-space character (#\u200b)
-          (if (= code #x200b)
-              0
-              (if (lem-base:wide-char-p (code-char code)) 2 1))))))
-(defun pos-char-width-func ()
-  (let ((fn (slot-value *windows-term-setting* 'pos-char-width)))
+        (funcall fn code)
+        ;; check zero-width-space character (#\u200b)
+        (if (= code #x200b)
+            0
+            (if (lem-base:wide-char-p (code-char code)) 2 1)))))
+(defmethod pos-char-width ((wt windows-term-setting) code)
+  (let ((fn (slot-value wt 'pos-char-width)))
     (if (functionp fn)
-        fn
-        (lambda (code)
-          ;; check utf-16 surrogate pair characters
-          (if (< code #x10000) 1 2)))))
-(defun cur-char-width-func ()
-  (let ((fn (slot-value *windows-term-setting* 'cur-char-width)))
+        (funcall fn code)
+        ;; check utf-16 surrogate pair characters
+        (if (< code #x10000) 1 2))))
+(defmethod cur-char-width ((wt windows-term-setting) code)
+  (let ((fn (slot-value wt 'cur-char-width)))
     (if (functionp fn)
-        fn
-        (lambda (code)
-          ;; check zero-width-space character (#\u200b)
-          (if (= code #x200b)
-              0
-              (if (lem-base:wide-char-p (code-char code)) 2 1))))))
+        (funcall fn code)
+        ;; check zero-width-space character (#\u200b)
+        (if (= code #x200b)
+            0
+            (if (lem-base:wide-char-p (code-char code)) 2 1)))))
 
 ;; load windows dll
 ;;  (we load winmm.dll with a full path because it isn't listed in
@@ -174,111 +179,134 @@
           (lem:window-y      window)
           (lem:window-width  window)
           (lem:window-height window)))
-;; for mintty
-;; get mouse pos-x for pointing wide characters properly
-(defun mouse-get-pos-x (view x y)
-  (unless (slot-value *windows-term-setting* 'cur-char-width)
-    (return-from mouse-get-pos-x x))
-  (let ((cur-char-width-fn (cur-char-width-func))
-        (pos-char-width-fn (pos-char-width-func))
-        (cur-x 0)
-        (pos-x 0)
-        (pos-y y))
-    (loop :while (< cur-x x)
-       :for code := (get-charcode-from-scrwin view pos-x pos-y)
-       :do (incf cur-x (funcall cur-char-width-fn code))
-           (incf pos-x (funcall pos-char-width-fn code)))
-    pos-x))
 ;; for mintty and ConEmu
 ;; get mouse disp-x for pointing wide characters properly
 (defun mouse-get-disp-x (view x y)
-  (unless (slot-value *windows-term-setting* 'pos-char-width)
-    (return-from mouse-get-disp-x x))
-  (let* ((disp-char-width-fn (disp-char-width-func))
-         (pos-char-width-fn  (pos-char-width-func))
-         (start-x (ncurses-view-x view))
-         (disp-x0 (+ x start-x))
-         (disp-x  start-x)
-         (pos-x   start-x)
-         (pos-y   (get-pos-y view x y)))
-    (loop :while (< pos-x disp-x0)
-       :for code := (get-charcode-from-scrwin view pos-x pos-y)
-       :do (incf disp-x (funcall disp-char-width-fn code))
-           (incf pos-x  (funcall pos-char-width-fn  code)))
-    (- disp-x start-x)))
+  (cond
+    ((and (not (slot-value *windows-term-setting* 'cur-mov-by-pos))
+          (slot-value *windows-term-setting* 'disp-char-width)
+          (slot-value *windows-term-setting* 'pos-char-width)
+          (slot-value *windows-term-setting* 'cur-char-width))
+     ;; for mintty
+     (let ((disp-x 0)
+           (pos-x  0)
+           (pos-y  y)
+           (cur-x  0))
+       (loop :while (< cur-x x)
+          :for code := (get-charcode-from-scrwin view pos-x pos-y)
+          :until (= code charms/ll:ERR)
+          :do (incf disp-x (disp-char-width *windows-term-setting* code))
+              (incf pos-x  (pos-char-width  *windows-term-setting* code))
+              (incf cur-x  (cur-char-width  *windows-term-setting* code)))
+       disp-x))
+    ((and (slot-value *windows-term-setting* 'cur-mov-by-pos)
+          (slot-value *windows-term-setting* 'disp-char-width)
+          (slot-value *windows-term-setting* 'pos-char-width))
+     ;; for ConEmu
+     (let* ((disp-x 0)
+            (pos-x  0)
+            (pos-y  y))
+       (loop :while (< pos-x x)
+          :for code := (get-charcode-from-scrwin view pos-x pos-y)
+          :until (= code charms/ll:ERR)
+          :do (incf disp-x (disp-char-width *windows-term-setting* code))
+              (incf pos-x  (pos-char-width  *windows-term-setting* code)))
+       disp-x))
+    (t x)))
+;; for ConEmu
+;; get mouse cur-x for horizontal dragging window
+(defun mouse-get-cur-x (view x y)
+  (cond
+    ((and (slot-value *windows-term-setting* 'cur-mov-by-pos)
+          (slot-value *windows-term-setting* 'pos-char-width)
+          (slot-value *windows-term-setting* 'cur-char-width))
+     (let* ((pos-x 0)
+            (pos-y y)
+            (cur-x 0))
+       (loop :while (< pos-x x)
+          :for code := (get-charcode-from-scrwin view pos-x pos-y)
+          :until (= code charms/ll:ERR)
+          :do (incf pos-x (pos-char-width *windows-term-setting* code))
+              (incf cur-x (cur-char-width *windows-term-setting* code)))
+       cur-x))
+    ((and (slot-value *windows-term-setting* 'cur-mov-by-pos)
+          (slot-value *windows-term-setting* 'disp-char-width)
+          (slot-value *windows-term-setting* 'pos-char-width))
+     (mouse-get-disp-x view x y))
+    (t x)))
 (defun mouse-move-to-cursor (window x y)
   (lem:move-point (lem:current-point) (lem::window-view-point window))
   (lem:move-to-next-virtual-line (lem:current-point) y)
-  (lem:move-to-virtual-line-column (lem:current-point)
-                                   (mouse-get-disp-x (lem:window-view window) x y)))
+  (lem:move-to-virtual-line-column (lem:current-point) x))
 (defun mouse-event-proc (bstate x1 y1)
   (lambda ()
     ;; workaround for cursor position problem
-    (setf x1 (mouse-get-pos-x (lem:window-view (lem:current-window)) x1 y1))
-    ;; process mouse event
-    (cond
-      ;; button1 down
-      ((logtest bstate (logior charms/ll:BUTTON1_PRESSED
-                               charms/ll:BUTTON1_CLICKED
-                               charms/ll:BUTTON1_DOUBLE_CLICKED
-                               charms/ll:BUTTON1_TRIPLE_CLICKED))
-       (let ((press (logtest bstate charms/ll:BUTTON1_PRESSED)))
-         (find-if
-          (lambda(o)
-            (multiple-value-bind (x y w h) (mouse-get-window-rect o)
-              (cond
-                ;; vertical dragging window
-                ((and press (= y1 (- y 1)) (<= x x1 (+ x w -1)))
-                 (setf *dragging-window* (list o 'y))
-                 t)
-                ;; horizontal dragging window
-                ((and press (= x1 (- x 1)) (<= y y1 (+ y h -2)))
-                 (setf *dragging-window* (list o 'x))
-                 t)
-                ;; move cursor
-                ((and (<= x x1 (+ x w -1)) (<= y y1 (+ y h -2)))
-                 (setf (lem:current-window) o)
-                 (mouse-move-to-cursor o (- x1 x) (- y1 y))
-                 (lem:redraw-display)
-                 t)
-                (t nil))))
-          (lem:window-list))))
-      ;; button1 up
-      ((logtest bstate charms/ll:BUTTON1_RELEASED)
-       (let ((o (first *dragging-window*)))
-         (when (windowp o)
-           (multiple-value-bind (x y w h) (mouse-get-window-rect o)
-             (setf (lem:current-window) o)
-             (cond
-               ;; vertical dragging window
-               ((eq (second *dragging-window*) 'y)
-                (let ((vy (- (- (lem:window-y o) 1) y1)))
-                  ;; this check is incomplete if 3 or more divisions exist
-                  (when (and (>= y1       *min-lines*)
-                             (>= (+ h vy) *min-lines*))
-                    (lem:grow-window vy)
-                    (lem:redraw-display))))
-               ;; horizontal dragging window
-               (t
-                (let ((vx (- (- (lem:window-x o) 1) x1)))
-                  ;; this check is incomplete if 3 or more divisions exist
-                  (when (and (>= x1       *min-cols*)
-                             (>= (+ w vx) *min-cols*))
-                    (lem:grow-window-horizontally vx)
-                    (lem:redraw-display))))
-               )))
-         (when o
-           (setf *dragging-window*
-                 (list nil (list x1 y1) *dragging-window*)))))
-      ;; wheel up
-      ((logtest bstate charms/ll:BUTTON4_PRESSED)
-       (lem:scroll-up 3)
-       (lem:redraw-display))
-      ;; wheel down
-      ((logtest bstate charms/ll:BUTTON5_PRESSED)
-       (lem:scroll-down 3)
-       (lem:redraw-display))
-      )))
+    (let ((disp-x (mouse-get-disp-x (lem:window-view (lem:current-window)) x1 y1))
+          (cur-x  (mouse-get-cur-x  (lem:window-view (lem:current-window)) x1 y1)))
+      ;; process mouse event
+      (cond
+        ;; button1 down
+        ((logtest bstate (logior charms/ll:BUTTON1_PRESSED
+                                 charms/ll:BUTTON1_CLICKED
+                                 charms/ll:BUTTON1_DOUBLE_CLICKED
+                                 charms/ll:BUTTON1_TRIPLE_CLICKED))
+         (let ((press (logtest bstate charms/ll:BUTTON1_PRESSED)))
+           (find-if
+            (lambda(o)
+              (multiple-value-bind (x y w h) (mouse-get-window-rect o)
+                (cond
+                  ;; vertical dragging window
+                  ((and press (= y1 (- y 1)) (<= x disp-x (+ x w -1)))
+                   (setf *dragging-window* (list o 'y))
+                   t)
+                  ;; horizontal dragging window
+                  ((and press (= disp-x (- x 1)) (<= y y1 (+ y h -2)))
+                   (setf *dragging-window* (list o 'x))
+                   t)
+                  ;; move cursor
+                  ((and (<= x disp-x (+ x w -1)) (<= y y1 (+ y h -2)))
+                   (setf (lem:current-window) o)
+                   (mouse-move-to-cursor o (- disp-x x) (- y1 y))
+                   (lem:redraw-display)
+                   t)
+                  (t nil))))
+            (lem:window-list))))
+        ;; button1 up
+        ((logtest bstate charms/ll:BUTTON1_RELEASED)
+         (let ((o (first *dragging-window*)))
+           (when (windowp o)
+             (multiple-value-bind (x y w h) (mouse-get-window-rect o)
+               (setf (lem:current-window) o)
+               (cond
+                 ;; vertical dragging window
+                 ((eq (second *dragging-window*) 'y)
+                  (let ((vy (- (- (lem:window-y o) 1) y1)))
+                    ;; this check is incomplete if 3 or more divisions exist
+                    (when (and (>= y1       *min-lines*)
+                               (>= (+ h vy) *min-lines*))
+                      (lem:grow-window vy)
+                      (lem:redraw-display))))
+                 ;; horizontal dragging window
+                 (t
+                  (let ((vx (- (- (lem:window-x o) 1) cur-x)))
+                    ;; this check is incomplete if 3 or more divisions exist
+                    (when (and (>= cur-x    *min-cols*)
+                               (>= (+ w vx) *min-cols*))
+                      (lem:grow-window-horizontally vx)
+                      (lem:redraw-display))))
+                 )))
+           (when o
+             (setf *dragging-window*
+                   (list nil (list cur-x y1) *dragging-window*)))))
+        ;; wheel up
+        ((logtest bstate charms/ll:BUTTON4_PRESSED)
+         (lem:scroll-up 3)
+         (lem:redraw-display))
+        ;; wheel down
+        ((logtest bstate charms/ll:BUTTON5_PRESSED)
+         (lem:scroll-down 3)
+         (lem:redraw-display))
+        ))))
 
 ;; deal with utf-16 surrogate pair characters (input)
 (defun get-key (code)
@@ -510,24 +538,24 @@
 
 ;; deal with utf-16 surrogate pair characters (screen memory)
 (defun get-charcode-from-scrwin (view x y)
-  (let ((code (logand (charms/ll:mvwinch (ncurses-view-scrwin view) y x)
-                      charms/ll:A_CHARTEXT)))
-    (when (<= #xd800 code #xdbff)
-      (let ((c-lead  code)
-            (c-trail (logand (charms/ll:mvwinch (ncurses-view-scrwin view) y (+ x 1))
-                             charms/ll:A_CHARTEXT)))
-        (when (<= #xdc00 c-trail #xdfff)
-          (setf code (+ #x10000 (* (- c-lead #xd800) #x0400) (- c-trail #xdc00))))))
+  (let ((code (charms/ll:mvwinch (ncurses-view-scrwin view) y x)))
+    (unless (= code charms/ll:ERR)
+      (setf code (logand code charms/ll:A_CHARTEXT))
+      (when (<= #xd800 code #xdbff)
+        (let ((c-lead  code)
+              (c-trail (logand (charms/ll:mvwinch (ncurses-view-scrwin view) y (+ x 1))
+                               charms/ll:A_CHARTEXT)))
+          (when (<= #xdc00 c-trail #xdfff)
+            (setf code (+ #x10000 (* (- c-lead #xd800) #x0400) (- c-trail #xdc00)))))))
     code))
 
 ;; for mintty and ConEmu
 ;; get pos-x/y for printing wide characters
 (defun get-pos-x (view x y &key (modeline nil))
-  (unless (slot-value *windows-term-setting* 'pos-char-width)
+  (unless (and (slot-value *windows-term-setting* 'disp-char-width)
+               (slot-value *windows-term-setting* 'pos-char-width))
     (return-from get-pos-x (+ x (ncurses-view-x view))))
-  (let* ((disp-char-width-fn (disp-char-width-func))
-         (pos-char-width-fn  (pos-char-width-func))
-         (floating (not (ncurses-view-modeline-scrwin view)))
+  (let* ((floating (not (ncurses-view-modeline-scrwin view)))
          (start-x  (ncurses-view-x view))
          (disp-x0  (+ x start-x))
          (disp-x   (if floating 0 start-x))
@@ -535,8 +563,9 @@
          (pos-y    (get-pos-y view x y :modeline modeline)))
     (loop :while (< disp-x disp-x0)
        :for code := (get-charcode-from-scrwin view pos-x pos-y)
-       :do (incf disp-x (funcall disp-char-width-fn code))
-           (incf pos-x  (funcall pos-char-width-fn  code)))
+       :until (= code charms/ll:ERR)
+       :do (incf disp-x (disp-char-width *windows-term-setting* code))
+           (incf pos-x  (pos-char-width  *windows-term-setting* code)))
     pos-x))
 (defun get-pos-y (view x y &key (modeline nil))
   (+ y (ncurses-view-y view) (if modeline (ncurses-view-height view) 0)))
@@ -544,12 +573,12 @@
 ;; for mintty
 ;; get cur-x for moving cursor position properly
 (defun get-cur-x (view x y &key (modeline nil))
-  (unless (slot-value *windows-term-setting* 'cur-char-width)
+  (unless (and (not (slot-value *windows-term-setting* 'cur-mov-by-pos))
+               (slot-value *windows-term-setting* 'disp-char-width)
+               (slot-value *windows-term-setting* 'pos-char-width)
+               (slot-value *windows-term-setting* 'cur-char-width))
     (return-from get-cur-x (get-pos-x view x y :modeline modeline)))
-  (let* ((disp-char-width-fn (disp-char-width-func))
-         (pos-char-width-fn  (pos-char-width-func))
-         (cur-char-width-fn  (cur-char-width-func))
-         (start-x (ncurses-view-x view))
+  (let* ((start-x (ncurses-view-x view))
          (disp-x0 (+ x start-x))
          (disp-x  0)
          (pos-x   0)
@@ -557,15 +586,17 @@
          (cur-x   0))
     (loop :while (< disp-x disp-x0)
        :for code := (get-charcode-from-scrwin view pos-x pos-y)
-       :do (incf disp-x (funcall disp-char-width-fn code))
-           (incf pos-x  (funcall pos-char-width-fn  code))
-           (incf cur-x  (funcall cur-char-width-fn  code)))
+       :until (= code charms/ll:ERR)
+       :do (incf disp-x (disp-char-width *windows-term-setting* code))
+           (incf pos-x  (pos-char-width  *windows-term-setting* code))
+           (incf cur-x  (cur-char-width  *windows-term-setting* code)))
     cur-x))
 
 ;; for mintty and ConEmu
 ;; adjust line width by using zero-width-space character (#\u200b)
 (defun adjust-line (view x y &key (modeline nil))
-  (unless (slot-value *windows-term-setting* 'pos-char-width)
+  (unless (and (slot-value *windows-term-setting* 'disp-char-width)
+               (slot-value *windows-term-setting* 'pos-char-width))
     (return-from adjust-line))
   (let* ((start-x    (ncurses-view-x view))
          (disp-width (ncurses-view-width view))

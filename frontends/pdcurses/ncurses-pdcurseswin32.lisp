@@ -35,8 +35,8 @@
     :initform nil
     :initarg :cur-char-width)
    (cur-mov-by-pos  ;; cursor movement setting
-                    ;;   t   : cursor movement is specified by pos
-                    ;;   nil : cursor movement is specified by cur
+                    ;;   t   : cursor movement is specified by pos-char-width
+                    ;;   nil : cursor movement is specified by cur-char-width
     :initform nil
     :initarg :cur-mov-by-pos)
    ))
@@ -203,9 +203,9 @@
           (slot-value *windows-term-setting* 'disp-char-width)
           (slot-value *windows-term-setting* 'pos-char-width))
      ;; for ConEmu
-     (let* ((disp-x 0)
-            (pos-x  0)
-            (pos-y  y))
+     (let ((disp-x 0)
+           (pos-x  0)
+           (pos-y  y))
        (loop :while (< pos-x x)
           :for code := (get-charcode-from-scrwin view pos-x pos-y)
           :until (= code charms/ll:ERR)
@@ -220,9 +220,9 @@
     ((and (slot-value *windows-term-setting* 'cur-mov-by-pos)
           (slot-value *windows-term-setting* 'pos-char-width)
           (slot-value *windows-term-setting* 'cur-char-width))
-     (let* ((pos-x 0)
-            (pos-y y)
-            (cur-x 0))
+     (let ((pos-x 0)
+           (pos-y y)
+           (cur-x 0))
        (loop :while (< pos-x x)
           :for code := (get-charcode-from-scrwin view pos-x pos-y)
           :until (= code charms/ll:ERR)

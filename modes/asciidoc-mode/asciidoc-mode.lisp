@@ -17,6 +17,10 @@ link : https://asciidoctor.org/docs/asciidoc-syntax-quick-reference/
            (tm-string (pattern)
              (make-tm-match pattern :name 'syntax-string-attribute)))
     (let* ((patterns (make-tm-patterns
+                      ;; block
+                      (make-tm-region '(:sequence "----")
+                                      '(:sequence "----")
+                                      :name 'syntax-comment-attribute)
                       ;; line breaks
                       (tm-constant "(\\+)|(\\[%hardbreaks\\])")
                       ;; lead style
@@ -27,6 +31,9 @@ link : https://asciidoctor.org/docs/asciidoc-syntax-quick-reference/
                       (tm-string "(\\*[^*]+\\*)|(\\*\\*[^*]+\\*\\*)")
                       (tm-string "(_[^_]+_)|(__[^_]+__)")
                       (tm-string "(`[^`]+`)|(``[^`]+``)")
+                      ;; curved quotation marks
+                      (tm-string "\"`[^`\"]+`\"")
+                      (tm-string "'`[^`']+`'")
                       ;; section
                       (tm-function-name "={1,6} .+")
                       ;; unordered list
@@ -39,7 +46,10 @@ link : https://asciidoctor.org/docs/asciidoc-syntax-quick-reference/
                       (tm-builtin "^\\d\\. ")
                       ;; subscript and superscript
                       (tm-string "~[^~]+~")
-                      (tm-string "\\^[^^]+\\^"))))
+                      (tm-string "\\^[^^]+\\^")
+                      ;; tables
+                      (tm-builtin "^\\|(\\=)+$")
+                      (tm-builtin "^\\[.+\\]"))))
       (make-tmlanguage :patterns patterns))))
 
 (defvar *asciidoc-syntax-table*

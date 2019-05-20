@@ -10,78 +10,77 @@
     ((string= (uiop:getenv "MSYSCON") "mintty.exe") :mintty)
     ((uiop:getenv "ConEmuBuild") :conemu)
     (t :cmd.exe)))
+(defun windows-term-type ()
+  *windows-term-type*)
+(defun (setf windows-term-type) (v)
+  (setf *windows-term-type* v)
+  (setf *windows-term-setting*
+        (case v
+          (:mintty
+           (make-windows-term-setting
+            :disp-char-width t
+            :pos-char-width  t
+            :cur-char-width  t
+            :cur-mov-by-pos  nil))
+          (:conemu
+           (make-windows-term-setting
+            :disp-char-width t
+            :pos-char-width  t
+            :cur-char-width  nil
+            :cur-mov-by-pos  t))
+          (t
+           (make-windows-term-setting
+            :disp-char-width nil
+            :pos-char-width  nil
+            :cur-char-width  nil
+            :cur-mov-by-pos  nil))))
+  v)
 
 ;; windows terminal setting
-(defclass windows-term-setting ()
-  ((disp-char-width ;; character width setting for display
-                    ;;   t        : use default function
-                    ;;   nil      : no conversion
-                    ;;   function : use custom function
-                    ;;                (lambda (code) width)
-    :initform nil
-    :initarg :disp-char-width)
-   (pos-char-width  ;; character width setting for position
-                    ;;   t        : use default function
-                    ;;   nil      : no conversion
-                    ;;   function : use custom function
-                    ;;                (lambda (code) width)
-    :initform nil
-    :initarg :pos-char-width)
-   (cur-char-width  ;; character width setting for cursor movement
-                    ;;   t        : use default function
-                    ;;   nil      : no conversion
-                    ;;   function : use custom function
-                    ;;                (lambda (code) width)
-    :initform nil
-    :initarg :cur-char-width)
-   (cur-mov-by-pos  ;; cursor movement setting
-                    ;;   t   : cursor movement is specified by pos-char-width
-                    ;;   nil : cursor movement is specified by cur-char-width
-    :initform nil
-    :initarg :cur-mov-by-pos)
-   ))
-(defvar *windows-term-setting*
-  (case *windows-term-type*
-    (:mintty
-     (make-instance 'windows-term-setting
-                    :disp-char-width t
-                    :pos-char-width  t
-                    :cur-char-width  t
-                    :cur-mov-by-pos  nil))
-    (:conemu
-     (make-instance 'windows-term-setting
-                    :disp-char-width t
-                    :pos-char-width  t
-                    :cur-char-width  nil
-                    :cur-mov-by-pos  t))
-    (t
-     (make-instance 'windows-term-setting
-                    :disp-char-width nil
-                    :pos-char-width  nil
-                    :cur-char-width  nil
-                    :cur-mov-by-pos  nil))))
-(defmethod disp-char-width ((wt windows-term-setting) code)
-  (let ((fn (slot-value wt 'disp-char-width)))
+(defvar *windows-term-setting*)
+(defstruct windows-term-setting
+  disp-char-width ;; character width setting for display
+                  ;;   t        : use default function
+                  ;;   nil      : no conversion
+                  ;;   function : use custom function
+                  ;;                (lambda (code) width)
+  pos-char-width  ;; character width setting for position
+                  ;;   t        : use default function
+                  ;;   nil      : no conversion
+                  ;;   function : use custom function
+                  ;;                (lambda (code) width)
+  cur-char-width  ;; character width setting for cursor movement
+                  ;;   t        : use default function
+                  ;;   nil      : no conversion
+                  ;;   function : use custom function
+                  ;;                (lambda (code) width)
+  cur-mov-by-pos  ;; cursor movement setting
+                  ;;   t   : cursor movement is specified by pos-char-width
+                  ;;   nil : cursor movement is specified by cur-char-width
+  )
+(defmethod calc-disp-char-width ((wt windows-term-setting) code)
+  (let ((fn (windows-term-setting-disp-char-width wt)))
     (if (functionp fn)
         (funcall fn code)
         ;; check zero-width-space character (#\u200b)
         (if (= code #x200b)
             0
             (if (lem-base:wide-char-p (code-char code)) 2 1)))))
-(defmethod pos-char-width ((wt windows-term-setting) code)
-  (let ((fn (slot-value wt 'pos-char-width)))
+(defmethod calc-pos-char-width ((wt windows-term-setting) code)
+  (let ((fn (windows-term-setting-pos-char-width wt)))
     (if (functionp fn)
         (funcall fn code)
         ;; check utf-16 surrogate pair characters
         (if (< code #x10000) 1 2))))
-(defmethod cur-char-width ((wt windows-term-setting) code)
-  (let ((fn (slot-value wt 'cur-char-width)))
+(defmethod calc-cur-char-width ((wt windows-term-setting) code)
+  (let ((fn (windows-term-setting-cur-char-width wt)))
     (if (functionp fn)
         (funcall fn code)
         ;; check zero-width-space character (#\u200b)
         (if (= code #x200b)
             0
             (if (lem-base:wide-char-p (code-char code)) 2 1)))))
+(setf (windows-term-type) *windows-term-type*)
 
 ;; load windows dll
 ;;  (we load winmm.dll with a full path because it isn't listed in
@@ -183,10 +182,10 @@
 ;; get mouse disp-x for pointing wide characters properly
 (defun mouse-get-disp-x (view x y)
   (cond
-    ((and (not (slot-value *windows-term-setting* 'cur-mov-by-pos))
-          (slot-value *windows-term-setting* 'disp-char-width)
-          (slot-value *windows-term-setting* 'pos-char-width)
-          (slot-value *windows-term-setting* 'cur-char-width))
+    ((and (not (windows-term-setting-cur-mov-by-pos *windows-term-setting*))
+          (windows-term-setting-disp-char-width *windows-term-setting*)
+          (windows-term-setting-pos-char-width  *windows-term-setting*)
+          (windows-term-setting-cur-char-width  *windows-term-setting*))
      ;; for mintty
      (let ((disp-x 0)
            (pos-x  0)
@@ -195,13 +194,13 @@
        (loop :while (< cur-x x)
           :for code := (get-charcode-from-scrwin view pos-x pos-y)
           :until (= code charms/ll:ERR)
-          :do (incf disp-x (disp-char-width *windows-term-setting* code))
-              (incf pos-x  (pos-char-width  *windows-term-setting* code))
-              (incf cur-x  (cur-char-width  *windows-term-setting* code)))
+          :do (incf disp-x (calc-disp-char-width *windows-term-setting* code))
+              (incf pos-x  (calc-pos-char-width  *windows-term-setting* code))
+              (incf cur-x  (calc-cur-char-width  *windows-term-setting* code)))
        disp-x))
-    ((and (slot-value *windows-term-setting* 'cur-mov-by-pos)
-          (slot-value *windows-term-setting* 'disp-char-width)
-          (slot-value *windows-term-setting* 'pos-char-width))
+    ((and (windows-term-setting-cur-mov-by-pos  *windows-term-setting*)
+          (windows-term-setting-disp-char-width *windows-term-setting*)
+          (windows-term-setting-pos-char-width  *windows-term-setting*))
      ;; for ConEmu
      (let ((disp-x 0)
            (pos-x  0)
@@ -209,29 +208,29 @@
        (loop :while (< pos-x x)
           :for code := (get-charcode-from-scrwin view pos-x pos-y)
           :until (= code charms/ll:ERR)
-          :do (incf disp-x (disp-char-width *windows-term-setting* code))
-              (incf pos-x  (pos-char-width  *windows-term-setting* code)))
+          :do (incf disp-x (calc-disp-char-width *windows-term-setting* code))
+              (incf pos-x  (calc-pos-char-width  *windows-term-setting* code)))
        disp-x))
     (t x)))
 ;; for ConEmu
 ;; get mouse cur-x for horizontal dragging window
 (defun mouse-get-cur-x (view x y)
   (cond
-    ((and (slot-value *windows-term-setting* 'cur-mov-by-pos)
-          (slot-value *windows-term-setting* 'pos-char-width)
-          (slot-value *windows-term-setting* 'cur-char-width))
+    ((and (windows-term-setting-cur-mov-by-pos *windows-term-setting*)
+          (windows-term-setting-pos-char-width *windows-term-setting*)
+          (windows-term-setting-cur-char-width *windows-term-setting*))
      (let ((pos-x 0)
            (pos-y y)
            (cur-x 0))
        (loop :while (< pos-x x)
           :for code := (get-charcode-from-scrwin view pos-x pos-y)
           :until (= code charms/ll:ERR)
-          :do (incf pos-x (pos-char-width *windows-term-setting* code))
-              (incf cur-x (cur-char-width *windows-term-setting* code)))
+          :do (incf pos-x (calc-pos-char-width *windows-term-setting* code))
+              (incf cur-x (calc-cur-char-width *windows-term-setting* code)))
        cur-x))
-    ((and (slot-value *windows-term-setting* 'cur-mov-by-pos)
-          (slot-value *windows-term-setting* 'disp-char-width)
-          (slot-value *windows-term-setting* 'pos-char-width))
+    ((and (windows-term-setting-cur-mov-by-pos  *windows-term-setting*)
+          (windows-term-setting-disp-char-width *windows-term-setting*)
+          (windows-term-setting-pos-char-width  *windows-term-setting*))
      (mouse-get-disp-x view x y))
     (t x)))
 (defun mouse-move-to-cursor (window x y)
@@ -552,8 +551,8 @@
 ;; for mintty and ConEmu
 ;; get pos-x/y for printing wide characters
 (defun get-pos-x (view x y &key (modeline nil))
-  (unless (and (slot-value *windows-term-setting* 'disp-char-width)
-               (slot-value *windows-term-setting* 'pos-char-width))
+  (unless (and (windows-term-setting-disp-char-width *windows-term-setting*)
+               (windows-term-setting-pos-char-width  *windows-term-setting*))
     (return-from get-pos-x (+ x (ncurses-view-x view))))
   (let* ((floating (not (ncurses-view-modeline-scrwin view)))
          (start-x  (ncurses-view-x view))
@@ -564,8 +563,8 @@
     (loop :while (< disp-x disp-x0)
        :for code := (get-charcode-from-scrwin view pos-x pos-y)
        :until (= code charms/ll:ERR)
-       :do (incf disp-x (disp-char-width *windows-term-setting* code))
-           (incf pos-x  (pos-char-width  *windows-term-setting* code)))
+       :do (incf disp-x (calc-disp-char-width *windows-term-setting* code))
+           (incf pos-x  (calc-pos-char-width  *windows-term-setting* code)))
     pos-x))
 (defun get-pos-y (view x y &key (modeline nil))
   (+ y (ncurses-view-y view) (if modeline (ncurses-view-height view) 0)))
@@ -573,10 +572,10 @@
 ;; for mintty
 ;; get cur-x for moving cursor position properly
 (defun get-cur-x (view x y &key (modeline nil))
-  (unless (and (not (slot-value *windows-term-setting* 'cur-mov-by-pos))
-               (slot-value *windows-term-setting* 'disp-char-width)
-               (slot-value *windows-term-setting* 'pos-char-width)
-               (slot-value *windows-term-setting* 'cur-char-width))
+  (unless (and (not (windows-term-setting-cur-mov-by-pos *windows-term-setting*))
+               (windows-term-setting-disp-char-width *windows-term-setting*)
+               (windows-term-setting-disp-char-width *windows-term-setting*)
+               (windows-term-setting-cur-char-width  *windows-term-setting*))
     (return-from get-cur-x (get-pos-x view x y :modeline modeline)))
   (let* ((start-x (ncurses-view-x view))
          (disp-x0 (+ x start-x))
@@ -587,16 +586,16 @@
     (loop :while (< disp-x disp-x0)
        :for code := (get-charcode-from-scrwin view pos-x pos-y)
        :until (= code charms/ll:ERR)
-       :do (incf disp-x (disp-char-width *windows-term-setting* code))
-           (incf pos-x  (pos-char-width  *windows-term-setting* code))
-           (incf cur-x  (cur-char-width  *windows-term-setting* code)))
+       :do (incf disp-x (calc-disp-char-width *windows-term-setting* code))
+           (incf pos-x  (calc-pos-char-width  *windows-term-setting* code))
+           (incf cur-x  (calc-cur-char-width  *windows-term-setting* code)))
     cur-x))
 
 ;; for mintty and ConEmu
 ;; adjust line width by using zero-width-space character (#\u200b)
 (defun adjust-line (view x y &key (modeline nil))
-  (unless (and (slot-value *windows-term-setting* 'disp-char-width)
-               (slot-value *windows-term-setting* 'pos-char-width))
+  (unless (and (windows-term-setting-disp-char-width *windows-term-setting*)
+               (windows-term-setting-pos-char-width  *windows-term-setting*))
     (return-from adjust-line))
   (let* ((start-x    (ncurses-view-x view))
          (disp-width (ncurses-view-width view))

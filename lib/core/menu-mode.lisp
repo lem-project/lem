@@ -157,6 +157,14 @@
   (alexandria:when-let* ((menu (buffer-value (current-buffer) 'menu))
                          (callback (funcall reader menu))
                          (items (menu-current-items :marked marked)))
+
+    ;; check whether buffer list has been changed
+    (unless (equal (buffer-list) (menu-origin-items menu))
+      (let ((items (funcall (menu-update-items-function menu))))
+        (update-menu menu items))
+      (message "Buffer list has been changed. Please select again.")
+      (return-from menu-select-1))
+
     (loop :with cb := (current-buffer)
           :with cw := (current-window)
           :with redraw

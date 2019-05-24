@@ -159,7 +159,9 @@
                          (items (menu-current-items :marked marked)))
 
     ;; check whether buffer list has been changed
-    (unless (equal (buffer-list) (menu-origin-items menu))
+    (unless (null (set-exclusive-or (buffer-list)
+                                    (menu-origin-items menu)
+                                    :test 'equal))
       (let ((items (funcall (menu-update-items-function menu))))
         (update-menu menu items))
       (message "Buffer list has been changed. Please select again.")

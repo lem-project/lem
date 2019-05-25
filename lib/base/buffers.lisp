@@ -16,14 +16,17 @@
 
 (defvar *buffer-list* '())
 
-(defun add-buffer (buffer)
-  (check-type buffer buffer)
-  (assert (not (get-buffer (buffer-name buffer))))
-  (push buffer *buffer-list*))
-
 (defun buffer-list ()
   "`buffer`のリストを返します。"
   *buffer-list*)
+
+(defun set-buffer-list (buffer-list)
+  (setf *buffer-list* buffer-list))
+
+(defun add-buffer (buffer)
+  (check-type buffer buffer)
+  (assert (not (get-buffer (buffer-name buffer))))
+  (set-buffer-list (cons buffer (buffer-list))))
 
 (defun any-modified-buffer-p ()
   (find-if (lambda (buffer)
@@ -58,7 +61,7 @@
   (alexandria:when-let ((hooks (variable-value 'kill-buffer-hook :global)))
     (run-hooks hooks buffer))
   (buffer-free buffer)
-  (setf *buffer-list* (delete buffer (buffer-list))))
+  (set-buffer-list (delete buffer (buffer-list))))
 
 (defun get-next-buffer (buffer)
   "バッファリスト内にある`buffer`の次のバッファを返します。"
@@ -78,18 +81,18 @@
 (defun unbury-buffer (buffer)
   (check-type buffer buffer)
   (unless (buffer-temporary-p buffer)
-    (setf *buffer-list*
-          (cons buffer
-                (delete buffer (buffer-list)))))
+    (set-buffer-list
+     (cons buffer
+           (delete buffer (buffer-list)))))
   buffer)
 
 (defun bury-buffer (buffer)
   "`buffer`をバッファリストの一番最後に移動させ、バッファリストの先頭を返します。"
   (check-type buffer buffer)
   (unless (buffer-temporary-p buffer)
-    (setf *buffer-list*
-          (nconc (delete buffer (buffer-list))
-                 (list buffer))))
+    (set-buffer-list
+     (nconc (delete buffer (buffer-list))
+            (list buffer))))
   (car (buffer-list)))
 
 (defun get-file-buffer (filename)

@@ -7,6 +7,27 @@
 
 (define-key *global-keymap* "C-x C-b" 'list-buffers)
 
+(defun buffer-list-changed-p (menu &optional (msg-on nil))
+  (cond
+    ((set-exclusive-or (buffer-list)
+                       (lem.menu-mode::menu-origin-items menu)
+                       :test 'equal)
+     (let ((items (funcall (lem.menu-mode::menu-update-items-function menu))))
+       (update-menu menu items))
+     (when msg-on
+       (message "Buffer list has been changed. Please select again."))
+     t)
+    (t nil)))
+
+(defun menu-change-buffer (menu buffer)
+  (unless (buffer-list-changed-p menu t)
+    buffer))
+
+(defun menu-delete-buffer (menu buffer)
+  (unless (buffer-list-changed-p menu t)
+    (kill-buffer buffer)
+    :redraw))
+
 (define-command list-buffers () ()
   ;; copy-list is necessary to detect buffer list changes
   (let ((menu

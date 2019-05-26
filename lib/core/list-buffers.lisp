@@ -7,24 +7,23 @@
 
 (define-key *global-keymap* "C-x C-b" 'list-buffers)
 
-(defun buffer-list-changed-p (menu &optional (msg-on nil))
+(defun check-buffer-list-consistency (menu)
   (cond
     ((set-exclusive-or (buffer-list)
                        (lem.menu-mode::menu-origin-items menu)
                        :test 'equal)
      (let ((items (funcall (lem.menu-mode::menu-update-items-function menu))))
        (update-menu menu items))
-     (when msg-on
-       (message "Buffer list has been changed. Please select again."))
-     t)
-    (t nil)))
+     (message "Buffer list has been changed. Please select again.")
+     nil)
+    (t t)))
 
 (defun menu-change-buffer (menu buffer)
-  (unless (buffer-list-changed-p menu t)
+  (when (check-buffer-list-consistency menu)
     buffer))
 
 (defun menu-delete-buffer (menu buffer)
-  (unless (buffer-list-changed-p menu t)
+  (when (check-buffer-list-consistency menu)
     (kill-buffer buffer)
     :redraw))
 

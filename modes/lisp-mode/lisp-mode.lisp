@@ -797,17 +797,14 @@
 (defun start-thread ()
   (unless *wait-message-thread*
     (setf *wait-message-thread*
-          (bt:make-thread (lambda ()
-                            (loop
-                              ;; workaround for windows (to reduce cpu usage)
-                              #+win32 (sleep 0.001)
-
+          (bt:make-thread
+           (lambda () (loop
+                        (handler-case
+                            (progn
                               (unless (connected-p)
                                 (setf *wait-message-thread* nil)
                                 (return))
-                              (when (handler-case
-                                        (message-waiting-p *connection* :timeout 10)
-                                      (change-connection () nil))
+                              (when (message-waiting-p *connection* :timeout 1)
                                 (let ((barrior t))
                                   (send-event (lambda ()
                                                 (unwind-protect (progn (pull-events)
@@ -818,8 +815,9 @@
                                       (return))
                                     (unless barrior
                                       (return))
-                                    (sleep 0.1))))))
-                          :name "lisp-wait-message"))))
+                                    (sleep 0.1)))))
+                          (change-connection ()))))
+           :name "lisp-wait-message"))))
 
 (define-command slime-connect (hostname port &optional (start-repl t))
     ((list (prompt-for-string "Hostname: " *localhost*)
@@ -1254,10 +1252,15 @@
           'highlight-evaluation-region)
 
 ;; workaround for windows
+;;  (quit slime and close sockets to exit lem normally)
 #+win32
 (add-hook *exit-editor-hook*
-          ;; quit slime to exit lem normally (incomplete)
-          'slime-quit*)
+          (lambda ()
+            (let ((conn-list (copy-list *connection-list*)))
+              (slime-quit*)
+              (dolist (c conn-list)
+                (usocket:socket-close
+                 (lem-lisp-mode.swank-protocol::connection-socket c))))))
 
 (pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons ".asd$" 'lisp-mode) *auto-mode-alist* :test #'equal)

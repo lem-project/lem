@@ -10,7 +10,7 @@
   (let (socket)
     (unwind-protect
          (handler-case (progn
-                         (setq socket (usocket:socket-listen "127.0.0.1" port :reuse-address t))
+                         (setq socket (usocket:socket-listen "127.0.0.1" port :reuse-address nil))
                          port)
            (usocket:address-in-use-error () nil)
            (usocket:socket-error (e)

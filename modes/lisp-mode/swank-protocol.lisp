@@ -232,8 +232,25 @@ to check if input is available."
                        (with-swank-syntax ()
                          (prin1-to-string form))))
 
+;; workaround for windows
+;;  (usocket:wait-for-input needs WSAResetEvent before call)
+#+(and sbcl win32)
+(progn
+  (sb-alien:define-alien-type ws-event sb-alien::hinstance)
+  (sb-alien:define-alien-routine ("WSAResetEvent" wsa-reset-event)
+      (boolean #.sb-vm::n-machine-word-bits)
+    (event-object ws-event)))
+
 (defun message-waiting-p (connection &key (timeout 0))
   "t if there's a message in the connection waiting to be read, nil otherwise."
+
+  ;; workaround for windows
+  ;;  (usocket:wait-for-input needs WSAResetEvent before call)
+  #+(and sbcl win32)
+  (wsa-reset-event
+   (usocket::os-wait-list-%wait
+    (usocket::wait-list (connection-socket connection))))
+
   (if (usocket:wait-for-input (connection-socket connection)
                               :ready-only t
                               :timeout timeout)

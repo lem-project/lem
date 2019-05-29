@@ -247,9 +247,11 @@ to check if input is available."
   ;; workaround for windows
   ;;  (usocket:wait-for-input needs WSAResetEvent before call)
   #+(and sbcl win32)
-  (wsa-reset-event
-   (usocket::os-wait-list-%wait
-    (usocket::wait-list (connection-socket connection))))
+  (let ((socket (connection-socket connection)))
+    (when (usocket::wait-list socket)
+      (wsa-reset-event
+       (usocket::os-wait-list-%wait
+        (usocket::wait-list socket)))))
 
   (if (usocket:wait-for-input (connection-socket connection)
                               :ready-only t

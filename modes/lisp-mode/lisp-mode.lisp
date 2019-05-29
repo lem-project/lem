@@ -1138,6 +1138,7 @@
                     (sleep 0.5))))
       (unless successp
         (error condition)))
+    #-win32
     (add-hook *exit-editor-hook* 'slime-quit-all)))
 
 (define-command slime (&optional ask-impl) ("P")
@@ -1252,15 +1253,16 @@
           'highlight-evaluation-region)
 
 ;; workaround for windows
-;;  (quit slime and close sockets to exit lem normally)
 #+win32
-(add-hook *exit-editor-hook*
-          (lambda ()
-            (let ((conn-list (copy-list *connection-list*)))
-              (slime-quit*)
-              (dolist (c conn-list)
-                (usocket:socket-close
-                 (lem-lisp-mode.swank-protocol::connection-socket c))))))
+(progn
+  (defun slime-quit-all-for-win32 ()
+    "quit slime and close sockets to exit lem normally on windows"
+    (let ((conn-list (copy-list *connection-list*)))
+      (slime-quit-all)
+      (dolist (c conn-list)
+        (usocket:socket-close
+         (lem-lisp-mode.swank-protocol::connection-socket c)))))
+  (add-hook *exit-editor-hook* 'slime-quit-all-for-win32))
 
 (pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons ".asd$" 'lisp-mode) *auto-mode-alist* :test #'equal)

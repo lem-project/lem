@@ -1256,12 +1256,10 @@
 #+win32
 (progn
   (defun slime-quit-all-for-win32 ()
-    "quit slime and close sockets to exit lem normally on windows"
-    (let ((conn-list (copy-list *connection-list*)))
-      (slime-quit-all)
-      (dolist (c conn-list)
-        (usocket:socket-close
-         (lem-lisp-mode.swank-protocol::connection-socket c)))))
+    "quit slime and remove connection to exit lem normally on windows (incomplete)"
+    (slime-quit-all)
+    (loop :while *connection*
+          :do (remove-connection *connection*)))
   (add-hook *exit-editor-hook* 'slime-quit-all-for-win32))
 
 (pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)

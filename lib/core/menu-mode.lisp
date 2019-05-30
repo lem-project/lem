@@ -2,9 +2,7 @@
   (:use :cl :lem)
   (:export :menu
            :display-menu
-           :update-menu
-           :menu-change-buffer
-           :menu-delete-buffer)
+           :update-menu)
   #+sbcl
   (:lock t))
 (in-package :lem.menu-mode)
@@ -141,15 +139,6 @@
 (defmethod lem-if:update-menu (implementation menu items)
   (setf (menu-origin-items menu) items)
   (display-menu menu :name (menu-name menu)))
-
-(defun menu-change-buffer (menu buffer)
-  (declare (ignore menu))
-   buffer)
-
-(defun menu-delete-buffer (menu buffer)
-  (declare (ignore menu))
-  (kill-buffer buffer)
-  :redraw)
 
 (defun menu-select-1 (&key (set-buffer #'switch-to-buffer)
                            ((:callback reader) #'menu-select-callback)

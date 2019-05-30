@@ -7,6 +7,7 @@
           bufferp
           buffer-start-point
           buffer-end-point
+          deleted-buffer-p
           buffer-name
           buffer-temporary-p
           buffer-modified-tick
@@ -245,7 +246,11 @@
 
 (defun buffer-free (buffer)
   (%buffer-clear-keep-binfo buffer)
-  (delete-point (buffer-point buffer)))
+  (delete-point (buffer-point buffer))
+  (setf (buffer-point buffer) nil))
+
+(defun deleted-buffer-p (buffer)
+  (null (buffer-point buffer)))
 
 (defun buffer-name (&optional (buffer (current-buffer)))
   "`buffer`の名前を返します。"

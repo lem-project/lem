@@ -21,19 +21,23 @@
             :disp-char-width t
             :pos-char-width  t
             :cur-char-width  t
-            :cur-mov-by-pos  nil))
+            :cur-mov-by-pos  nil
+            :reserved-last-lines 0))
           (:conemu
            (make-windows-term-setting
             :disp-char-width t
             :pos-char-width  t
             :cur-char-width  nil
-            :cur-mov-by-pos  t))
+            :cur-mov-by-pos  t
+            :reserved-last-lines 0))
           (t
            (make-windows-term-setting
             :disp-char-width nil
             :pos-char-width  nil
             :cur-char-width  nil
-            :cur-mov-by-pos  nil))))
+            :cur-mov-by-pos  nil
+            ;; reserve last line for windows ime
+            :reserved-last-lines 1))))
   v)
 
 ;; windows terminal setting
@@ -57,6 +61,9 @@
   cur-mov-by-pos  ;; cursor movement setting
                   ;;   t   : cursor movement is specified by pos-char-width
                   ;;   nil : cursor movement is specified by cur-char-width
+  (reserved-last-lines 0 :type fixnum)
+                  ;; reserve last lines for windows ime and so on
+                  ;;   fixnum : number of reserved lines
   )
 (defmethod calc-disp-char-width ((wt windows-term-setting) code)
   (let ((fn (windows-term-setting-disp-char-width wt)))
@@ -80,6 +87,10 @@
         (if (= code #x200b)
             0
             (if (lem-base:wide-char-p (code-char code)) 2 1)))))
+(defmethod (setf reserved-last-lines) (v (wt windows-term-setting))
+  (setf (windows-term-setting-reserved-last-lines wt) v)
+  (setf *resizing* t)
+  (lem::change-display-size-hook))
 (setf (windows-term-type) *windows-term-type*)
 
 ;; load windows dll
@@ -150,6 +161,7 @@
 ;; for mouse
 (defkeycode "[mouse]" #x21b)
 (defvar *dragging-window* '())
+(defvar *wheel-scroll-size* 3)
 
 ;; debug log
 (defun dbg-log-format (fmt &rest args)
@@ -299,11 +311,11 @@
                    (list nil (list cur-x y1) *dragging-window*)))))
         ;; wheel up
         ((logtest bstate charms/ll:BUTTON4_PRESSED)
-         (lem:scroll-up 3)
+         (lem:scroll-up *wheel-scroll-size*)
          (lem:redraw-display))
         ;; wheel down
         ((logtest bstate charms/ll:BUTTON5_PRESSED)
-         (lem:scroll-down 3)
+         (lem:scroll-down *wheel-scroll-size*)
          (lem:redraw-display))
         ))))
 
@@ -463,14 +475,21 @@
     (exit-editor (c) (return-from input-loop c))))
 
 ;; workaround for display update problem (incomplete)
-(let ((toggle-flag t))
+(let ((temp-view   nil)
+      (toggle-flag t))
   (defun write-something-to-last-line ()
+    (when (eq *windows-term-type* :cmd.exe)
+      (return-from write-something-to-last-line))
+    (unless temp-view
+      (setf temp-view (lem-if:make-view *implementation* nil 0 0 0 0 nil)))
     ;; this recovers winpty's screen corruption
-    (charms/ll:mvwaddstr charms/ll:*stdscr*
-                         (- charms/ll:*lines* 1)
-                         (- charms/ll:*cols*  1)
-                         (if toggle-flag "+" "-"))
-    (setf toggle-flag (if toggle-flag nil t))))
+    (let ((x (- charms/ll:*cols*  2))
+          (y (- charms/ll:*lines* 1)))
+      (print-sub (ncurses-view-scrwin temp-view)
+                 (get-pos-x temp-view x y)
+                 (get-pos-y temp-view x y)
+                 (if toggle-flag "+" "-"))
+      (setf toggle-flag (if toggle-flag nil t)))))
 
 ;; workaround for display update problem (incomplete)
 (defun force-refresh-display (width height)
@@ -480,7 +499,14 @@
      :with str := (make-string width :initial-element #\.)
      :do (charms/ll:mvwaddstr charms/ll:*stdscr* y1 0 str))
   (charms/ll:refresh)
-  (sleep 0.1))
+  (sleep 0.1)
+  ;; clear reserved last lines
+  (let ((last-lines (windows-term-setting-reserved-last-lines
+                     *windows-term-setting*)))
+    (when (and (> last-lines 0) (> height *min-lines*))
+      (loop :for y1 :from (max (- height last-lines) *min-lines*) :below height
+         :with str := (make-string width :initial-element #\space)
+         :do (charms/ll:mvwaddstr charms/ll:*stdscr* y1 0 str)))))
 
 ;; for resizing display
 (defun resize-display ()
@@ -505,10 +531,11 @@
 ;; for resizing display
 (defmethod lem-if:display-height ((implementation ncurses))
   (resize-display)
+  ;; reserve last lines for windows ime and so on
   (max *min-lines*
        (- charms/ll:*lines*
-          ;; for cmd.exe (windows ime uses the last line)
-          (if (eq *windows-term-type* :cmd.exe) 1 0))))
+          (windows-term-setting-reserved-last-lines
+           *windows-term-setting*))))
 
 ;; use only stdscr
 (defmethod lem-if:delete-view ((implementation ncurses) view)
@@ -739,7 +766,7 @@
          (scrwin (ncurses-view-scrwin view)))
     ;; workaround for display update problem (incomplete)
     (write-something-to-last-line)
-    ;; set mouse cursor
+    ;; set cursor position
     (if (lem::covered-with-floating-window-p (current-window) lem::*cursor-x* lem::*cursor-y*)
         (charms/ll:curs-set 0)
         (progn

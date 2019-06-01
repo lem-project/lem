@@ -19,6 +19,7 @@ You can skip over writing tidy settings or installing many plugins as you do on 
 ## Platform
 - Linux
 - MacOS 10.13+ 
+- [Windows](https://github.com/cxxxr/lem/wiki/Windows-Platform)
 
 ## Installation
 Please install roswell at first.

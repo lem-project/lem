@@ -51,13 +51,17 @@
     :initarg :select-callback
     :initform nil
     :reader menu-select-callback)
-   (update-items-function
-    :initarg :update-items-function
-    :reader menu-update-items-function)
    (delete-callback
     :initarg :delete-callback
     :initform nil
     :reader menu-delete-callback)
+   (update-items-function
+    :initarg :update-items-function
+    :reader menu-update-items-function)
+   (check-consistency-function
+    :initarg :check-consistency-function
+    :initform nil
+    :reader menu-check-consistency-function)
    ))
 
 (defmethod initialize-instance :around ((menu menu) &rest initargs &key items)
@@ -146,6 +150,13 @@
   (alexandria:when-let* ((menu (buffer-value (current-buffer) 'menu))
                          (callback (funcall reader menu))
                          (items (menu-current-items :marked marked)))
+
+    ;; check menu's consistency
+    (when (and (functionp (menu-check-consistency-function menu))
+               (not (funcall (menu-check-consistency-function menu)
+                             menu (menu-origin-items menu))))
+      (return-from menu-select-1))
+
     (loop :with cb := (current-buffer)
           :with cw := (current-window)
           :with redraw

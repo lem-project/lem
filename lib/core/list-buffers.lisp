@@ -7,42 +7,45 @@
 
 (define-key *global-keymap* "C-x C-b" 'list-buffers)
 
-(defun check-buffer-list-consistency (menu)
-  (cond
-    ((set-exclusive-or (buffer-list)
-                       (lem.menu-mode::menu-origin-items menu)
-                       :test 'equal)
-     (let ((items (funcall (lem.menu-mode::menu-update-items-function menu))))
-       (update-menu menu items))
-     (message "Buffer list has been changed. Please select again.")
-     nil)
-    (t t)))
+(defun buffer-menu-items ()
+  ;; copy-list is necessary to detect buffer list changes
+  (copy-list (buffer-list)))
 
-(defun menu-change-buffer (menu buffer)
-  (when (check-buffer-list-consistency menu)
-    buffer))
+(defun buffer-menu-columns (buffer)
+  (list (format nil "~:[-~;%~]~:[-~;%~]"
+                (buffer-modified-p buffer)
+                (buffer-read-only-p buffer))
+        (buffer-name buffer)
+        (buffer-filename buffer)))
 
-(defun menu-delete-buffer (menu buffer)
-  (when (check-buffer-list-consistency menu)
-    (kill-buffer buffer)
-    :redraw))
+(defun buffer-menu-select (menu buffer)
+  (declare (ignore menu))
+  buffer)
+
+(defun buffer-menu-delete (menu buffer)
+  (declare (ignore menu))
+  (kill-buffer buffer)
+  :redraw)
+
+(defun buffer-menu-check-consistency (menu origin-items)
+  (let ((items (buffer-menu-items)))
+    (cond
+      ((set-exclusive-or items origin-items :test 'equal)
+       (update-menu menu items)
+       (message "Buffer list has been changed. Please select again.")
+       nil)
+      (t t))))
 
 (define-command list-buffers () ()
-  ;; copy-list is necessary to detect buffer list changes
   (let ((menu
          (make-instance 'menu
                         :columns '("Attributes" "Buffer" "File")
-                        :items (copy-list (buffer-list))
-                        :column-function (lambda (buffer)
-                                           (list (format nil "~:[-~;%~]~:[-~;%~]"
-                                                         (buffer-modified-p buffer)
-                                                         (buffer-read-only-p buffer))
-                                                 (buffer-name buffer)
-                                                 (buffer-filename buffer)))
-                        :select-callback #'menu-change-buffer
-                        :delete-callback #'menu-delete-buffer
-                        :update-items-function (lambda () (copy-list (buffer-list))))))
+                        :items (buffer-menu-items)
+                        :column-function #'buffer-menu-columns
+                        :select-callback #'buffer-menu-select
+                        :delete-callback #'buffer-menu-delete
+                        :update-items-function #'buffer-menu-items
+                        :check-consistency-function #'buffer-menu-check-consistency)))
     (display-menu menu :name "Buffer Menu")
     ;; update is necessary to add the buffer menu itself
-    (let ((items (funcall (lem.menu-mode::menu-update-items-function menu))))
-      (update-menu menu items))))
+    (update-menu menu (buffer-menu-items))))

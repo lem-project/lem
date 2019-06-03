@@ -121,6 +121,11 @@
   (let ((port (random-port)))
     (let ((swank::*swank-debug-p* nil))
       (swank:create-server :port port))
+
+    ;; workaround for windows
+    ;;  ('Thread not found: :REPL-THREAD' is returned from swank-server)
+    #+win32(sleep 1.0)
+
     (slime-connect *localhost* port nil)
     (update-buffer-package)
     (setf *self-connected-port* port)))
@@ -1123,7 +1128,12 @@
   (let ((port (or (port-available-p *default-port*)
                   (random-port))))
     (run-swank-server command port :directory directory)
-    (sleep 0.5)
+
+    ;; workaround for windows
+    ;;  ('Thread not found: :REPL-THREAD' is returned from swank-server)
+    #+win32(sleep 2.0)
+    #-win32(sleep 0.5)
+
     (let ((successp)
           (condition))
       (loop :repeat 10
@@ -1257,9 +1267,20 @@
 (progn
   (defun slime-quit-all-for-win32 ()
     "quit slime and remove connection to exit lem normally on windows (incomplete)"
-    (slime-quit-all)
-    (loop :while *connection*
-          :do (remove-connection *connection*)))
+    (let ((conn-list (copy-list *connection-list*)))
+      (slime-quit-all)
+      (loop :while *connection*
+            :do (remove-connection *connection*))
+      #+sbcl
+      (progn
+        (sleep 0.5)
+        (dolist (c conn-list)
+          (let* ((s  (lem-lisp-mode.swank-protocol::connection-socket c))
+                 (fd (sb-bsd-sockets::socket-file-descriptor (usocket:socket s))))
+            ;;(usocket:socket-shutdown s :IO)
+            ;;(usocket:socket-close s)
+            (sockint::shutdown fd sockint::SHUT_RDWR)
+            (sockint::close fd))))))
   (add-hook *exit-editor-hook* 'slime-quit-all-for-win32))
 
 (pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)

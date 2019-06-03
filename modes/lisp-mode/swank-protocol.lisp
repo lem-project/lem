@@ -235,11 +235,9 @@ to check if input is available."
 ;; workaround for windows
 ;;  (usocket:wait-for-input needs WSAResetEvent before call)
 #+(and sbcl win32)
-(progn
-  (sb-alien:define-alien-type ws-event sb-alien::hinstance)
-  (sb-alien:define-alien-routine ("WSAResetEvent" wsa-reset-event)
-      (boolean #.sb-vm::n-machine-word-bits)
-    (event-object ws-event)))
+(sb-alien:define-alien-routine ("WSAResetEvent" wsa-reset-event)
+    (boolean #.sb-vm::n-machine-word-bits)
+  (event-object usocket::ws-event))
 
 (defun message-waiting-p (connection &key (timeout 0))
   "t if there's a message in the connection waiting to be read, nil otherwise."

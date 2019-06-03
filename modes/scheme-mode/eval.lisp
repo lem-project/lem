@@ -1,17 +1,26 @@
 (in-package :lem-scheme-mode)
 
 (defvar *scheme-process* nil)
+(defvar *scheme-last-input-point* nil)
 
 (defun scheme-process-buffer ()
   (or (get-buffer "*scheme-process*")
       (let ((buffer (make-buffer "*scheme-process*")))
-        (change-buffer-mode buffer 'scheme-mode)
+        (change-buffer-mode buffer 'scheme-repl-mode)
         (setf (variable-value 'enable-syntax-highlight :buffer buffer) nil)
+        (setf *scheme-last-input-point*
+              (copy-point (buffer-point buffer) :right-inserting))
         buffer)))
+
+(defun scheme-output-string (string)
+  (let ((buffer (scheme-process-buffer)))
+    (insert-string (buffer-end-point buffer) string)
+    (buffer-end (buffer-point buffer))
+    (move-point *scheme-last-input-point* (buffer-point buffer))))
 
 (defun scheme-output-callback (string)
   (let ((buffer (scheme-process-buffer)))
-    (insert-string (buffer-end-point buffer) string)
+    (scheme-output-string string)
     (let ((window (pop-to-buffer buffer)))
       (with-current-window window
         (buffer-end (buffer-point buffer))
@@ -22,8 +31,8 @@
   (when (and *scheme-process*
              (not (lem-process:process-alive-p *scheme-process*)))
     (let ((buffer (scheme-process-buffer)))
-      (insert-string (buffer-end-point buffer)
-                     (format nil "~%;; Scheme process was aborted. Restarting...~%~%"))
+      (scheme-output-string
+       (format nil "~%;; Scheme process was aborted. Restarting...~%~%"))
       (lem-process:delete-process *scheme-process*)
       (setf *scheme-process* nil)))
   (unless *scheme-process*
@@ -36,7 +45,7 @@
   (let ((buffer (scheme-process-buffer)))
     (when (eq buffer (current-buffer))
       ;; output newline like repl
-      (insert-character (buffer-end-point buffer) #\newline)))
+      (scheme-output-string (string #\newline))))
   (lem-process:process-send-input *scheme-process*
                                   (format nil "~A~%" string)))
 

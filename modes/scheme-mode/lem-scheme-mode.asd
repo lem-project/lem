@@ -13,4 +13,6 @@
                (:file "grammer")
                (:file "scheme-mode")
                #+#.(cl:if (ql:where-is-system :async-process) '(and) '(or))
-               (:file "eval")))
+               (:file "eval")
+               #+#.(cl:if (ql:where-is-system :async-process) '(and) '(or))
+               (:file "repl")))

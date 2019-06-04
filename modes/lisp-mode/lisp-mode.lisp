@@ -121,11 +121,6 @@
   (let ((port (random-port)))
     (let ((swank::*swank-debug-p* nil))
       (swank:create-server :port port))
-
-    ;; workaround for windows
-    ;;  ('Thread not found: :REPL-THREAD' is returned from swank-server)
-    #+win32(sleep 1.0)
-
     (slime-connect *localhost* port nil)
     (update-buffer-package)
     (setf *self-connected-port* port)))
@@ -1128,12 +1123,7 @@
   (let ((port (or (port-available-p *default-port*)
                   (random-port))))
     (run-swank-server command port :directory directory)
-
-    ;; workaround for windows
-    ;;  ('Thread not found: :REPL-THREAD' is returned from swank-server)
-    #+win32(sleep 2.0)
-    #-win32(sleep 0.5)
-
+    (sleep 0.5)
     (let ((successp)
           (condition))
       (loop :repeat 10

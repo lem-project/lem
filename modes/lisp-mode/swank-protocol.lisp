@@ -155,10 +155,16 @@ Parses length information to determine how many characters to read."
     (setup connection)
     connection))
 
+(defun read-return-message (connection)
+  "Read only ':return' message. Other messages such as ':indentation-update' are dropped."
+  (loop :for info := (read-message connection)
+        :until (eq (car info) :return)
+        :finally (return info)))
+
 (defun setup (connection)
   (emacs-rex connection `(swank:connection-info))
   ;; Read the connection information message
-  (let* ((info (read-message connection))
+  (let* ((info (read-return-message connection))
          (data (getf (getf info :return) :ok))
          (impl (getf data :lisp-implementation))
          (machine (getf data :machine)))
@@ -193,12 +199,13 @@ Parses length information to determine how many characters to read."
      swank-c-p-c
      swank-arglists
      swank-repl))
-  (read-message connection)
+  (read-return-message connection)
   ;; Start it up
   (emacs-rex-string connection "(swank:init-presentations)")
+  (read-return-message connection)
   (emacs-rex-string connection "(swank-repl:create-repl nil :coding-system \"utf-8-unix\")")
   ;; Wait for startup
-  (read-message connection)
+  (read-return-message connection)
   ;; Read all the other messages, dumping them
   (read-all-messages connection))
 

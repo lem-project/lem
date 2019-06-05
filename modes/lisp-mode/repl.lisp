@@ -11,7 +11,7 @@
      (setf *write-string-function* 'write-string-to-repl)
      (setf (variable-value 'completion-spec) 'repl-completion))
     (t
-     (message "No connection for repl. Did you mean 'start-lisp-repl' command?"))))
+     (editor-error "No connection for repl. Did you mean 'start-lisp-repl' command?"))))
 
 (defun read-string-thread-stack ()
   (buffer-value (repl-buffer) 'read-string-thread-stack))

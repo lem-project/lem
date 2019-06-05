@@ -1,7 +1,8 @@
 (in-package :lem-scheme-mode)
 
 (define-major-mode scheme-repl-mode scheme-mode
-    (:name "scheme-repl")
+    (:name "scheme-repl"
+     :keymap *scheme-repl-mode-keymap*)
   (cond
     ((eq (scheme-process-buffer) (current-buffer))
      (setf (variable-value 'enable-syntax-highlight) nil)

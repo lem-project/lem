@@ -797,17 +797,14 @@
 (defun start-thread ()
   (unless *wait-message-thread*
     (setf *wait-message-thread*
-          (bt:make-thread (lambda ()
-                            (loop
-                              ;; workaround for windows (to reduce cpu usage)
-                              #+win32 (sleep 0.001)
-
+          (bt:make-thread
+           (lambda () (loop
+                        (handler-case
+                            (progn
                               (unless (connected-p)
                                 (setf *wait-message-thread* nil)
                                 (return))
-                              (when (handler-case
-                                        (message-waiting-p *connection* :timeout 10)
-                                      (change-connection () nil))
+                              (when (message-waiting-p *connection* :timeout 1)
                                 (let ((barrior t))
                                   (send-event (lambda ()
                                                 (unwind-protect (progn (pull-events)
@@ -818,8 +815,9 @@
                                       (return))
                                     (unless barrior
                                       (return))
-                                    (sleep 0.1))))))
-                          :name "lisp-wait-message"))))
+                                    (sleep 0.1)))))
+                          (change-connection ()))))
+           :name "lisp-wait-message"))))
 
 (define-command slime-connect (hostname port &optional (start-repl t))
     ((list (prompt-for-string "Hostname: " *localhost*)
@@ -1140,6 +1138,7 @@
                     (sleep 0.5))))
       (unless successp
         (error condition)))
+    #-win32
     (add-hook *exit-editor-hook* 'slime-quit-all)))
 
 (define-command slime (&optional ask-impl) ("P")
@@ -1255,9 +1254,24 @@
 
 ;; workaround for windows
 #+win32
-(add-hook *exit-editor-hook*
-          ;; quit slime to exit lem normally (incomplete)
-          'slime-quit*)
+(progn
+  (defun slime-quit-all-for-win32 ()
+    "quit slime and remove connection to exit lem normally on windows (incomplete)"
+    (let ((conn-list (copy-list *connection-list*)))
+      (slime-quit-all)
+      (loop :while *connection*
+            :do (remove-connection *connection*))
+      #+sbcl
+      (progn
+        (sleep 0.5)
+        (dolist (c conn-list)
+          (let* ((s  (lem-lisp-mode.swank-protocol::connection-socket c))
+                 (fd (sb-bsd-sockets::socket-file-descriptor (usocket:socket s))))
+            ;;(usocket:socket-shutdown s :IO)
+            ;;(usocket:socket-close s)
+            (sockint::shutdown fd sockint::SHUT_RDWR)
+            (sockint::close fd))))))
+  (add-hook *exit-editor-hook* 'slime-quit-all-for-win32))
 
 (pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons ".asd$" 'lisp-mode) *auto-mode-alist* :test #'equal)

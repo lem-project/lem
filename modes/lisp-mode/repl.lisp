@@ -4,10 +4,14 @@
     (:name "lisp-repl"
      :keymap *lisp-repl-mode-keymap*
      :syntax-table lem-lisp-syntax:*syntax-table*)
-  (repl-reset-input)
-  (lem.listener-mode:listener-mode t)
-  (setf *write-string-function* 'write-string-to-repl)
-  (setf (variable-value 'completion-spec) 'repl-completion))
+  (cond
+    ((eq (repl-buffer) (current-buffer))
+     (repl-reset-input)
+     (lem.listener-mode:listener-mode t)
+     (setf *write-string-function* 'write-string-to-repl)
+     (setf (variable-value 'completion-spec) 'repl-completion))
+    (t
+     (editor-error "No connection for repl. Did you mean 'start-lisp-repl' command?"))))
 
 (defun read-string-thread-stack ()
   (buffer-value (repl-buffer) 'read-string-thread-stack))
@@ -76,7 +80,9 @@
     (return-from repl-paren-correspond-p))
   (with-point ((start (lem.listener-mode::listener-start-point (repl-buffer))))
     (let ((state (parse-partial-sexp start point)))
-      (>= 0 (pps-state-paren-depth state)))))
+      (and (not (member (pps-state-type state)
+                        '(:string :fence :block-string :block-comment)))
+           (>= 0 (pps-state-paren-depth state))))))
 
 (defun repl-reset-input ()
   (let ((buffer (repl-buffer)))

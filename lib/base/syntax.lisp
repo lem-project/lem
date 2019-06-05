@@ -26,7 +26,7 @@
           skip-symbol-backward
           symbol-string-at-point
           make-pps-state
-          pps-state-state-type
+          pps-state-type
           pps-state-token-start-point
           pps-state-end-char
           pps-state-block-comment-depth

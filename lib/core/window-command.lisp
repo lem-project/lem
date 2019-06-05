@@ -213,6 +213,7 @@
     window))
 
 (define-key *global-keymap* "C-Down" 'scroll-down)
+(define-key *global-keymap* "M-Down" 'scroll-down)
 (define-command scroll-down (n) ("p")
   (cond
     ((minusp n)
@@ -224,6 +225,7 @@
          (line-offset (current-point) (- offset)))))))
 
 (define-key *global-keymap* "C-Up" 'scroll-up)
+(define-key *global-keymap* "M-Up" 'scroll-up)
 (define-command scroll-up (n) ("p")
   (cond
     ((minusp n)

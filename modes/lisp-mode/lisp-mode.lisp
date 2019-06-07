@@ -799,11 +799,20 @@
     (setf *wait-message-thread*
           (bt:make-thread
            (lambda () (loop
+                        :named exit
+                        :do
                         (handler-case
-                            (progn
+                            (loop
+
+                              ;; workaround for windows
+                              ;;  (sleep seems to be necessary to receive
+                              ;;   change-connection event immediately)
+                              #+(and sbcl win32)
+                              (sleep 0.001)
+
                               (unless (connected-p)
                                 (setf *wait-message-thread* nil)
-                                (return))
+                                (return-from exit))
                               (when (message-waiting-p *connection* :timeout 1)
                                 (let ((barrior t))
                                   (send-event (lambda ()
@@ -1165,7 +1174,7 @@
     (loop
       (let ((*connection* (find-connection)))
         (unless *connection* (return))
-        (lisp-rex '(uiop:quit))
+        (ignore-errors (lisp-rex '(uiop:quit)))
         (remove-connection *connection*)))))
 
 (defun sit-for* (second)
@@ -1267,10 +1276,11 @@
         (dolist (c conn-list)
           (let* ((s  (lem-lisp-mode.swank-protocol::connection-socket c))
                  (fd (sb-bsd-sockets::socket-file-descriptor (usocket:socket s))))
-            ;;(usocket:socket-shutdown s :IO)
-            ;;(usocket:socket-close s)
-            (sockint::shutdown fd sockint::SHUT_RDWR)
-            (sockint::close fd))))))
+            (ignore-errors
+              ;;(usocket:socket-shutdown s :IO)
+              ;;(usocket:socket-close s)
+              (sockint::shutdown fd sockint::SHUT_RDWR)
+              (sockint::close fd)))))))
   (add-hook *exit-editor-hook* 'slime-quit-all-for-win32))
 
 (pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)

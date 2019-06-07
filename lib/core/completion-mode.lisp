@@ -48,9 +48,11 @@
 (define-attribute completion-attribute
   (t :foreground "white" :background "RoyalBlue"))
 (define-attribute non-focus-completion-attribute
-  (t :foreground "white" :background "#444"))
+  (:dark :foreground "white" :background "#444")
+  (:light :foreground "black" :background "#DDD"))
 (define-attribute detail-attribute
-  (t :foreground "gray" :background "#444"))
+  (:dark :foreground "gray" :background "#444")
+  (:light :foreground "#777" :background "#DDD"))
 
 (defclass print-spec ()
   ((label-width

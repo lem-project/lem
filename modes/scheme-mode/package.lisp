@@ -14,4 +14,9 @@
    :scheme-indent-sexp
    ;; eval.lisp
    :scheme-eval-last-expression
-   :scheme-eval-region))
+   :scheme-eval-region
+   ;; repl.lisp
+   :scheme-repl-mode
+   :*scheme-repl-mode-keymap*
+   :start-scheme-repl
+   :scheme-eval-or-newline))

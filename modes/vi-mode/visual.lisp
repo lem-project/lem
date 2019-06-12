@@ -12,7 +12,9 @@
            :visual-block-p
            :apply-visual-range
            :vi-visual-insert
-           :vi-visual-append))
+           :vi-visual-append
+           :vi-visual-upcase
+           :vi-visual-downcase))
 (in-package :lem-vi-mode.visual)
 
 (defvar *set-visual-function* nil)
@@ -24,6 +26,8 @@
 (define-key *visual-keymap* "Escape" 'vi-visual-end)
 (define-key *visual-keymap* "A" 'vi-visual-append)
 (define-key *visual-keymap* "I" 'vi-visual-insert)
+(define-key *visual-keymap* "U" 'vi-visual-upcase)
+(define-key *visual-keymap* "u" 'vi-visual-downcase)
 
 (define-vi-state visual (:keymap *visual-keymap*
                          :post-command-hook 'post-command-hook)
@@ -107,6 +111,27 @@
         (change-state 'visual 'visual-block)
         (message "-- VISUAL BLOCK --"))))
 
+(defun visual-p ()
+  (eq 'visual (current-state)))
+
+(defun visual-char-p ()
+  (and (visual-p)
+       (eq *set-visual-function* 'visual-char)))
+
+(defun visual-line-p ()
+  (and (visual-p)
+       (eq *set-visual-function* 'visual-line)))
+
+(defun visual-block-p ()
+  (and (visual-p)
+       (eq *set-visual-function* 'visual-block)))
+
+(defun apply-visual-range (function)
+  (dolist (ov (sort (copy-list *visual-overlays*) #'point< :key #'overlay-start))
+    (funcall function
+             (overlay-start ov)
+             (overlay-end ov))))
+
 (defun string-without-escape ()
   (concatenate 'string
                (loop for key-char = (key-to-char (read-key))
@@ -139,23 +164,18 @@
                             (insert-string start str))))
     (vi-visual-end)))
 
-(defun visual-p ()
-  (eq 'visual (current-state)))
+(define-command vi-visual-upcase () ()
+  (when (visual-p)
+    (apply-visual-range (lambda (start end)
+                          (unless (point< start end)
+                            (rotatef start end))
+                          (uppercase-region start end)))
+    (vi-visual-end)))
 
-(defun visual-char-p ()
-  (and (visual-p)
-       (eq *set-visual-function* 'visual-char)))
-
-(defun visual-line-p ()
-  (and (visual-p)
-       (eq *set-visual-function* 'visual-line)))
-
-(defun visual-block-p ()
-  (and (visual-p)
-       (eq *set-visual-function* 'visual-block)))
-
-(defun apply-visual-range (function)
-  (dolist (ov (sort (copy-list *visual-overlays*) #'point< :key #'overlay-start))
-    (funcall function
-             (overlay-start ov)
-             (overlay-end ov))))
+(define-command vi-visual-downcase () ()
+  (when (visual-p)
+    (apply-visual-range (lambda (start end)
+                          (unless (point< start end)
+                            (rotatef start end))
+                          (downcase-region start end)))
+    (vi-visual-end)))

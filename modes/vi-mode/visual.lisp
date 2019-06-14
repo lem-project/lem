@@ -166,16 +166,10 @@
 
 (define-command vi-visual-upcase () ()
   (when (visual-p)
-    (apply-visual-range (lambda (start end)
-                          (unless (point< start end)
-                            (rotatef start end))
-                          (uppercase-region start end)))
+    (apply-visual-range #'uppercase-region)
     (vi-visual-end)))
 
 (define-command vi-visual-downcase () ()
   (when (visual-p)
-    (apply-visual-range (lambda (start end)
-                          (unless (point< start end)
-                            (rotatef start end))
-                          (downcase-region start end)))
+    (apply-visual-range #'downcase-region)
     (vi-visual-end)))

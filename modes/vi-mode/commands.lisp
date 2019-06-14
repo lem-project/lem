@@ -316,10 +316,8 @@
 (let ((tag (gensym)))
   (define-command vi-delete (&optional (n 1)) ("p")
     (cond (*vi-delete-recursive*
-           (with-point ((start (current-point))
-                        (end (current-point)))
-             (line-start start)
-             (line-end end)
+           (with-point ((start (line-start (current-point)))
+                        (end (line-end (current-point))))
              (let ((eob (not (character-offset end 1))))
                (kill-region start end)
                (kill-append "" nil '(:vi-line))
@@ -537,13 +535,10 @@
   (cond
     ((visual-p)
      (apply-visual-range (lambda (start end)
-                           (unless (point< start end)
-                             (rotatef start end))
                            (let ((count (- (point-column end)
                                            (point-column start))))
                              (delete-between-points start end)
-                             (insert-character (current-point) c count)
-                             (move-point (current-point) start))))
+                             (insert-character start c count))))
      (vi-visual-end))
     (t
      (delete-character (current-point) 1)

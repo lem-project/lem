@@ -80,8 +80,7 @@
     (return-from repl-paren-correspond-p))
   (with-point ((start (lem.listener-mode::listener-start-point (repl-buffer))))
     (let ((state (parse-partial-sexp start point)))
-      (and (not (member (pps-state-type state)
-                        '(:string :fence :block-string :block-comment)))
+      (and (not (pps-state-string-or-comment-p state))
            (>= 0 (pps-state-paren-depth state))))))
 
 (defun repl-reset-input ()

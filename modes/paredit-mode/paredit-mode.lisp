@@ -10,10 +10,13 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            :paredit-backward
            :paredit-insert-paren
            :paredit-backward-delete
+           :paredit-forward-delete
            :paredit-close-parenthesis
            :paredit-slurp
            :paredit-barf
            :paredit-splice
+           :paredit-splice-backward
+           :paredit-splice-forward
            :*paredit-mode-keymap*))
 (in-package :lem-paredit-mode)
 
@@ -150,13 +153,41 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                   (eql (character-at p) #\")))
          (delete-next-char)
          (delete-previous-char))
-        ((and (not (in-string-or-comment-p p))
-              (or (eql (character-at p -1) #\))
+        ((or (and (not (in-string-or-comment-p p))
+                  (or (eql (character-at p -1) #\))
+                      (eql (character-at p -1) #\()
+                      (eql (character-at p -1) #\")))
+             (and (not (in-comment-p p))
                   (eql (character-at p -1) #\")))
-         (backward-char))
+         (backward-char))       
         (t
          (delete-previous-char))))
     (paredit-backward-delete (1- n))))
+
+(define-command paredit-forward-delete (&optional (n 1)) ("p")
+  (when (< 0 n)
+    (with-point ((p (current-point)))
+      (cond
+        ((eql (character-at p) #\\)
+         (delete-next-char 2))
+        ((or (and (not (in-string-or-comment-p p))
+                  (eql (character-at p -1) #\()
+                  (eql (character-at p) #\)))
+             (and (in-string-p p)
+                  (eql (character-at p -1) #\")
+                  (eql (character-at p) #\")))
+         (delete-next-char)
+         (delete-previous-char))
+        ((or (and (not (in-string-or-comment-p p))
+                  (or (eql (character-at p) #\()
+                      (eql (character-at p) #\))
+                      (eql (character-at p) #\")))
+             (and (not (in-comment-p p))
+                  (eql (character-at p) #\")))
+         (forward-char))
+        (t
+         (delete-next-char))))
+    (paredit-forward-delete (1- n))))
 
 (define-command paredit-close-parenthesis () ()
   (with-point ((p (current-point)))
@@ -186,15 +217,21 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                (par-close (current-point))
                (kill-end (current-point)))
     (line-end line-end)
-    (scan-lists par-close 1 1)
-    (loop while (and (point> (if (point< line-end
-                                         par-close)
-                                 line-end
-                                 par-close)
-                             kill-end)
-                     (not (eql #\) (character-at kill-end))))
-          do (form-offset kill-end 1))
-    (kill-region origin kill-end)))
+    (skip-space-and-comment-forward kill-end)
+    (cond
+      ((point= line-end origin)
+       (kill-line 1))
+      (t
+       (unless (scan-lists par-close 1 1 t line-end)
+         (setf par-close line-end))
+       (loop while (and (point> (if (point< line-end
+                                            par-close)
+                                    line-end
+                                    par-close)
+                                kill-end)
+                        (not (eql #\) (character-at kill-end))))
+             do (form-offset kill-end 1))
+        (kill-region origin kill-end)))))
 
 (define-command paredit-slurp () ()
   (with-point ((origin (current-point))
@@ -261,6 +298,18 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
         (kill-region start origin)
         (indent-region start end)))))
 
+(define-command paredit-splice-forward () ()
+  (with-point ((origin (current-point) :right-inserting)
+               (start (current-point)))
+    (scan-lists start -1 1)
+    (when (syntax-open-paren-char-p (character-at start))
+      (with-point ((end start))
+        (scan-lists end 1 0)
+        (character-offset end -1)
+        (delete-character start)
+        (kill-region origin end)
+        (indent-region start end)))))
+
 (define-command paredit-raise () ()
   (with-point ((start (current-point)))
     (scan-lists start -1 1)
@@ -280,6 +329,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                        (")" . paredit-close-parenthesis)
                        ("\"" . paredit-insert-doublequote)
                        (delete-previous-char . paredit-backward-delete)
+                       (delete-next-char . paredit-forward-delete)
                        ("C-k" . paredit-kill)
                        ("C-Right" . paredit-slurp)
                        ("C-Left" . paredit-barf)

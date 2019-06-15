@@ -10,6 +10,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            :paredit-backward
            :paredit-insert-paren
            :paredit-backward-delete
+           :paredit-forward-delete
            :paredit-close-parenthesis
            :paredit-slurp
            :paredit-barf
@@ -152,13 +153,41 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                   (eql (character-at p) #\")))
          (delete-next-char)
          (delete-previous-char))
-        ((and (not (in-string-or-comment-p p))
-              (or (eql (character-at p -1) #\))
+        ((or (and (not (in-string-or-comment-p p))
+                  (or (eql (character-at p -1) #\))
+                      (eql (character-at p -1) #\()
+                      (eql (character-at p -1) #\")))
+             (and (not (in-comment-p p))
                   (eql (character-at p -1) #\")))
-         (backward-char))
+         (backward-char))       
         (t
          (delete-previous-char))))
     (paredit-backward-delete (1- n))))
+
+(define-command paredit-forward-delete (&optional (n 1)) ("p")
+  (when (< 0 n)
+    (with-point ((p (current-point)))
+      (cond
+        ((eql (character-at p) #\\)
+         (delete-next-char 2))
+        ((or (and (not (in-string-or-comment-p p))
+                  (eql (character-at p -1) #\()
+                  (eql (character-at p) #\)))
+             (and (in-string-p p)
+                  (eql (character-at p -1) #\")
+                  (eql (character-at p) #\")))
+         (delete-next-char)
+         (delete-previous-char))
+        ((or (and (not (in-string-or-comment-p p))
+                  (or (eql (character-at p) #\()
+                      (eql (character-at p) #\))
+                      (eql (character-at p) #\")))
+             (and (not (in-comment-p p))
+                  (eql (character-at p) #\")))
+         (forward-char))
+        (t
+         (delete-next-char))))
+    (paredit-forward-delete (1- n))))
 
 (define-command paredit-close-parenthesis () ()
   (with-point ((p (current-point)))
@@ -294,6 +323,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                        (")" . paredit-close-parenthesis)
                        ("\"" . paredit-insert-doublequote)
                        (delete-previous-char . paredit-backward-delete)
+                       (delete-next-char . paredit-forward-delete)
                        ("C-k" . paredit-kill)
                        ("C-Right" . paredit-slurp)
                        ("C-Left" . paredit-barf)

@@ -14,6 +14,8 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            :paredit-slurp
            :paredit-barf
            :paredit-splice
+           :paredit-splice-backward
+           :paredit-splice-forward
            :*paredit-mode-keymap*))
 (in-package :lem-paredit-mode)
 
@@ -259,6 +261,18 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
         (character-offset end -1)
         (delete-character end)
         (kill-region start origin)
+        (indent-region start end)))))
+
+(define-command paredit-splice-forward () ()
+  (with-point ((origin (current-point) :right-inserting)
+               (start (current-point)))
+    (scan-lists start -1 1)
+    (when (syntax-open-paren-char-p (character-at start))
+      (with-point ((end start))
+        (scan-lists end 1 0)
+        (character-offset end -1)
+        (delete-character start)
+        (kill-region origin end)
         (indent-region start end)))))
 
 (define-command paredit-raise () ()

@@ -9,6 +9,9 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (:export :paredit-forward
            :paredit-backward
            :paredit-insert-paren
+           :paredit-insert-doublequote
+           :paredit-insert-semicolon
+           :paredit-insert-pipe
            :paredit-backward-delete
            :paredit-forward-delete
            :paredit-close-parenthesis
@@ -17,6 +20,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            :paredit-splice
            :paredit-splice-backward
            :paredit-splice-forward
+           :paredit-raise
            :*paredit-mode-keymap*))
 (in-package :lem-paredit-mode)
 
@@ -138,6 +142,32 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            (insert-character p #\Space)
            (character-offset p -1))
          (character-offset p -1)))))
+
+(define-command paredit-insert-semicolon (&optional (n 1)) ("p")
+  (with-point ((origin (current-point))
+               (point (current-point))
+               (line-end (current-point)))
+    (line-end line-end)
+    (skip-space-and-comment-forward point)
+    (unless (or (in-string-or-comment-p (current-point))
+                (eql (character-at (current-point) -1) #\\)
+                (eolp (current-point))
+                (point>= point line-end))
+      (insert-character origin #\Newline)
+      (character-offset (current-point) -1)
+      (character-offset origin 1)
+      (indent-line origin))
+    (insert-character (current-point) #\; n)))
+
+(define-command paredit-insert-pipe (&optional (n 1)) ("p")
+  (cond
+    ((and (eql (character-at (current-point) -1) #\#)
+          (not (in-string-or-comment-p (current-point)))
+          (not (eql (character-at (current-point) -2) #\|)))
+     (insert-character (current-point) #\| n)
+     (insert-string (current-point) "|#")
+     (character-offset (current-point) -2))
+    (t (insert-character (current-point) #\| n))))
 
 (define-command paredit-backward-delete (&optional (n 1)) ("p")
   (when (< 0 n)
@@ -328,6 +358,8 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                        ("(" . paredit-insert-paren)
                        (")" . paredit-close-parenthesis)
                        ("\"" . paredit-insert-doublequote)
+                       (";" . paredit-insert-semicolon)
+                       ("|" . paredit-insert-pipe)
                        (delete-previous-char . paredit-backward-delete)
                        (delete-next-char . paredit-forward-delete)
                        ("C-k" . paredit-kill)

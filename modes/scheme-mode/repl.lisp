@@ -29,6 +29,9 @@
   (scheme-run-process)
   (setf (current-window) (pop-to-buffer (scheme-process-buffer))))
 
+(define-command scheme-switch-to-repl-buffer () ()
+  (start-scheme-repl))
+
 (define-command scheme-eval-or-newline () ()
   (cond
     ((and (eq (scheme-process-buffer) (current-buffer))

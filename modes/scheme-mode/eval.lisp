@@ -51,6 +51,16 @@
       (setf *newline-delay-flag* t)
       (scheme-output-string (string #\newline))))
 
+(define-command scheme-kill-process () ()
+  (cond
+    (*scheme-process*
+     (lem-process:delete-process *scheme-process*)
+     (setf *scheme-process* nil)
+     (scheme-output-callback
+      (format nil "~%;; Scheme process was killed.~%~%")))
+    (t
+     (editor-error  "Scheme process doesn't exist."))))
+
 (defun scheme-send-input (string)
   (lem-process:process-send-input *scheme-process*
                                   (format nil "~A~%" string)))

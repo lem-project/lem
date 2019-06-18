@@ -8,15 +8,19 @@
    :*scheme-mode-keymap*
    :*scheme-mode-hook*
    :*scheme-run-command*
+   :*scheme-load-command*
    :*scheme-completion-names*
    :scheme-beginning-of-defun
    :scheme-end-of-defun
    :scheme-indent-sexp
+   :scheme-load-file
    ;; eval.lisp
+   :scheme-kill-process
    :scheme-eval-last-expression
    :scheme-eval-region
    ;; repl.lisp
    :scheme-repl-mode
    :*scheme-repl-mode-keymap*
    :start-scheme-repl
+   :scheme-switch-to-repl-buffer
    :scheme-eval-or-newline))

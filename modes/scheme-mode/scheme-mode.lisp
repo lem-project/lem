@@ -18,8 +18,12 @@
 (define-key *scheme-mode-keymap* "C-M-q" 'scheme-indent-sexp)
 (define-key *scheme-mode-keymap* "C-c C-e" 'scheme-eval-last-expression)
 (define-key *scheme-mode-keymap* "C-c C-r" 'scheme-eval-region)
+(define-key *scheme-mode-keymap* "C-c C-l" 'scheme-load-file)
+(define-key *scheme-mode-keymap* "C-c C-z" 'scheme-switch-to-repl-buffer)
+(define-key *scheme-mode-keymap* "C-c z" 'scheme-switch-to-repl-buffer)
 
 (defvar *scheme-run-command* '("gosh" "-i"))
+(defvar *scheme-load-command* "load") ; it might be "include" for R6RS Scheme
 
 (defvar *scheme-completion-names*
   (lem-scheme-syntax:get-scheme-completion-data))
@@ -70,6 +74,13 @@
               (completion (points-to-string start end)
                           *scheme-completion-names*
                           :test #'alexandria:starts-with-subseq)))))
+
+(define-command scheme-load-file (filename)
+    ((list (prompt-for-file "Load File: " (or (buffer-filename) (buffer-directory)) nil t)))
+  (scheme-run-process-and-output-newline)
+  (when (and (probe-file filename)
+             (not (uiop:directory-pathname-p filename)))
+    (scheme-send-input (format nil "(~a \"~a\")" *scheme-load-command* filename))))
 
 (define-command scheme-scratch () ()
   (let ((buffer (make-buffer "*tmp*")))

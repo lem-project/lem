@@ -5,7 +5,9 @@
            :add-history
            :prev-history
            :next-history
-           :previous-matching)
+           :previous-matching
+           :backup-edit-string
+           :restore-edit-string)
   #+sbcl
   (:lock t))
 (in-package :lem.history)
@@ -13,7 +15,8 @@
 (defstruct (history (:constructor %make-history))
   data
   index
-  novelty-check)
+  novelty-check
+  edit-string)
 
 (defun history-default-novelty-check (input last-input)
   (and (not (equal input last-input))
@@ -58,3 +61,20 @@
               (setf (history-index history) i)
               (return (values (aref (history-data history) i)
                               t)))))
+
+(defun backup-edit-string (history x)
+  (when (or (>= (history-index history)
+                (length (history-data history)))
+            (not (equal x
+                        (aref (history-data history)
+                              (history-index history)))))
+    (setf (history-edit-string history) x)
+    (setf (history-index history) (length (history-data history)))))
+
+(defun restore-edit-string (history)
+  (when (= (history-index history)
+           (1- (length (history-data history))))
+    (setf (history-index history) (length (history-data history)))
+    (values (history-edit-string history)
+            t)))
+

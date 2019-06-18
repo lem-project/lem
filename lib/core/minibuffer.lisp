@@ -211,7 +211,21 @@
                *minibuf-read-line-comp-f*
                start))))
 
+(defun %backup-edit-string (history)
+  (lem.history:backup-edit-string
+   history
+   (points-to-string (minibuffer-start-point)
+                     (buffer-end-point (minibuffer)))))
+
+(defun %restore-edit-string (history)
+  (multiple-value-bind (str win)
+      (lem.history:restore-edit-string history)
+    (when win
+      (minibuffer-clear-input)
+      (insert-string (current-point) str))))
+
 (define-command minibuffer-read-line-prev-history () ()
+  (%backup-edit-string *minibuf-read-line-history*)
   (multiple-value-bind (str win)
       (lem.history:prev-history *minibuf-read-line-history*)
     (when win
@@ -219,6 +233,8 @@
       (insert-string (current-point) str))))
 
 (define-command minibuffer-read-line-next-history () ()
+  (%backup-edit-string *minibuf-read-line-history*)
+  (%restore-edit-string *minibuf-read-line-history*)
   (multiple-value-bind (str win)
       (lem.history:next-history *minibuf-read-line-history*)
     (when win

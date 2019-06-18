@@ -219,7 +219,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
     (line-end line-end)
     (skip-space-and-comment-forward kill-end)
     (cond
-      ((point= line-end origin)
+      ((point<= line-end kill-end)
        (kill-line 1))
       (t
        (unless (scan-lists par-close 1 1 t line-end)
@@ -231,7 +231,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                                 kill-end)
                         (not (eql #\) (character-at kill-end))))
              do (form-offset kill-end 1))
-        (kill-region origin kill-end)))))
+       (kill-region origin kill-end)))))
 
 (define-command paredit-slurp () ()
   (with-point ((origin (current-point))

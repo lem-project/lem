@@ -90,7 +90,8 @@
 (defmethod (setf reserved-last-lines) (v (wt windows-term-setting))
   (setf (windows-term-setting-reserved-last-lines wt) v)
   (setf *resizing* t)
-  (lem::change-display-size-hook))
+  (lem::change-display-size-hook)
+  v)
 (setf (windows-term-type) *windows-term-type*)
 
 ;; load windows dll
@@ -253,14 +254,16 @@
   (lambda ()
     ;; workaround for cursor position problem
     (let ((disp-x (mouse-get-disp-x (lem:window-view (lem:current-window)) x1 y1))
-          (cur-x  (mouse-get-cur-x  (lem:window-view (lem:current-window)) x1 y1)))
+          (cur-x  (mouse-get-cur-x  (lem:window-view (lem:current-window)) x1 y1))
+          (no-floating-window (if lem::*floating-windows* nil t)))
       ;; process mouse event
       (cond
         ;; button1 down
-        ((logtest bstate (logior charms/ll:BUTTON1_PRESSED
-                                 charms/ll:BUTTON1_CLICKED
-                                 charms/ll:BUTTON1_DOUBLE_CLICKED
-                                 charms/ll:BUTTON1_TRIPLE_CLICKED))
+        ((and no-floating-window
+              (logtest bstate (logior charms/ll:BUTTON1_PRESSED
+                                      charms/ll:BUTTON1_CLICKED
+                                      charms/ll:BUTTON1_DOUBLE_CLICKED
+                                      charms/ll:BUTTON1_TRIPLE_CLICKED)))
          (let ((press (logtest bstate charms/ll:BUTTON1_PRESSED)))
            (find-if
             (lambda(o)
@@ -293,7 +296,8 @@
                  ((eq (second *dragging-window*) 'y)
                   (let ((vy (- (- (lem:window-y o) 1) y1)))
                     ;; this check is incomplete if 3 or more divisions exist
-                    (when (and (>= y1       *min-lines*)
+                    (when (and no-floating-window
+                               (>= y1       *min-lines*)
                                (>= (+ h vy) *min-lines*))
                       (lem:grow-window vy)
                       (lem:redraw-display))))
@@ -301,7 +305,8 @@
                  (t
                   (let ((vx (- (- (lem:window-x o) 1) cur-x)))
                     ;; this check is incomplete if 3 or more divisions exist
-                    (when (and (>= cur-x    *min-cols*)
+                    (when (and no-floating-window
+                               (>= cur-x    *min-cols*)
                                (>= (+ w vx) *min-cols*))
                       (lem:grow-window-horizontally vx)
                       (lem:redraw-display))))

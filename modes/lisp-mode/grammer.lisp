@@ -2,7 +2,8 @@
 
 (defun featurep (form)
   (cond ((atom form)
-         (find (find-symbol (princ-to-string form)
+         (find (find-symbol (let ((*print-case* :upcase))
+                              (princ-to-string form))
                             :keyword)
                (features)))
         ((string-equal 'and (car form))

@@ -15,6 +15,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            :paredit-backward-delete
            :paredit-forward-delete
            :paredit-close-parenthesis
+           :paredit-kill
            :paredit-slurp
            :paredit-barf
            :paredit-splice
@@ -244,7 +245,6 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 (define-command paredit-kill () ()
   (with-point ((origin (current-point))
                (line-end (current-point))
-               (par-close (current-point))
                (kill-end (current-point)))
     (line-end line-end)
     (skip-space-and-comment-forward kill-end)
@@ -252,15 +252,16 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
       ((point<= line-end kill-end)
        (kill-line 1))
       (t
-       (unless (scan-lists par-close 1 1 t line-end)
-         (setf par-close line-end))
-       (loop while (and (point> (if (point< line-end
-                                            par-close)
-                                    line-end
-                                    par-close)
-                                kill-end)
-                        (not (eql #\) (character-at kill-end))))
-             do (form-offset kill-end 1))
+       (loop while (and (point> line-end kill-end)
+                        (not (eql #\) (character-at kill-end)))
+                        (form-offset kill-end 1))
+             do (skip-whitespace-forward kill-end t)
+                (cond
+                  ((eql (character-at kill-end) #\;)
+                   (line-end kill-end)
+                   (character-offset kill-end 1))
+                  ((eql (character-at kill-end) #\Newline)
+                   (character-offset kill-end 1))))
        (kill-region origin kill-end)))))
 
 (define-command paredit-slurp () ()

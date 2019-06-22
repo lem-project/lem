@@ -7,7 +7,7 @@
 (defparameter *body-indent* 2)
 (defparameter *max-depth* 4)
 
-(defvar *static-indent-table*
+(defun make-static-indent-table ()
   (let ((table (make-hash-table :test 'equal)))
     (mapc (lambda (elt)
             (let ((name (car elt))
@@ -17,6 +17,7 @@
               (setf (gethash name table) method)))
           (lem-scheme-syntax.data:get-scheme-indentation-data))
     table))
+(defvar *static-indent-table* (make-static-indent-table))
 
 (defvar *lambda-list-indentation* t)
 (defvar *lambda-list-keyword-parameter-alignment* t)

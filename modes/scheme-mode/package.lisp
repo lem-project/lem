@@ -10,6 +10,7 @@
    :*scheme-run-command*
    :*scheme-load-command*
    :*scheme-completion-names*
+   :scheme-keyword-data
    :scheme-beginning-of-defun
    :scheme-end-of-defun
    :scheme-indent-sexp

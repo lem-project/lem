@@ -28,6 +28,18 @@
 (defvar *scheme-completion-names*
   (lem-scheme-syntax:get-scheme-completion-data))
 
+(defun scheme-keyword-data ()
+  lem-scheme-syntax.data::*scheme-data*)
+(defun (setf scheme-keyword-data) (v)
+  ;; update base data
+  (setf lem-scheme-syntax.data::*scheme-data* v)
+  ;; update completion data
+  (setf lem-scheme-mode:*scheme-completion-names*
+        (lem-scheme-syntax:get-scheme-completion-data))
+  ;; update indentation data
+  (setf lem-scheme-syntax.indent::*static-indent-table*
+        (lem-scheme-syntax.indent::make-static-indent-table))
+  v)
 (defun scheme-calc-indent (point)
   (lem-scheme-syntax:calc-indent point))
 

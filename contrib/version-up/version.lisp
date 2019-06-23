@@ -3,7 +3,7 @@
 ;;;don't edit above
 
 (defun path (target)
-  (let ((path (ql:where-is-system target)))
+  (let ((path (uiop:symbol-call :quicklisp 'where-is-system target)))
     (and path
          (probe-file (merge-pathnames (format nil "~A.asd" target) path)))))
 

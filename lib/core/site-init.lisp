@@ -61,7 +61,7 @@
       (update-site-init-inits)
       (asdf:load-asd (site-init-path))
       (let ((*package* (find-package :lem-user)))
-        #+quicklisp(ql:quickload system-name :silent t)))))
+        (maybe-quickload system-name :silent t)))))
 
 (define-command site-init-add-dependency (symbols)
   ((list (prompt-for-library "library: " 'load-library)))
@@ -71,7 +71,7 @@
         :for s :in (uiop:split-string symbols)
         :for key := (read-from-string (format nil ":lem-~A" s))
         :do (unless (find key depends-on)
-              #+quicklisp(ql:quickload key :silent t)
+              (maybe-quickload key :silent t)
               (push key depends-on))
         :finally (setf (getf (cddr site-init) :depends-on) depends-on)
                  (setf (site-init) site-init)

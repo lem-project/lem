@@ -41,7 +41,7 @@
   (format nil "~A~A" *clhs-base-url* path))
 
 (defun retrieve-clhs-symbols-map ()
-  (ql:quickload '(:drakma :plump :clss) :silent t)
+  (lem-base:maybe-quickload '(:drakma :plump :clss) :silent t)
 
   (with-package-functions :plump (parse text attribute)
     (with-package-functions :clss (select)

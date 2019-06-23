@@ -370,25 +370,27 @@
         result)))
 
 (defun prompt-for-library (prompt history-name)
-  (let ((systems
-          (append
-           (mapcar (lambda (x) (pathname-name x))
-                   (directory
-                    (merge-pathnames "**/lem-*.asd"
-                                     (asdf:system-source-directory :lem-contrib))))
-           (set-difference
-            (mapcar #'pathname-name
-                    (loop for i in ql:*local-project-directories*
-                          append (directory (merge-pathnames "**/lem-*.asd" i))))
-            (mapcar #'pathname-name
-                    (directory (merge-pathnames "**/lem-*.asd"
-                                                (asdf:system-source-directory :lem))))
-            :test #'equal))))
-    (setq systems (mapcar (lambda (x) (subseq x 4)) systems))
-    (prompt-for-line prompt ""
-                     (lambda (str) (completion str systems))
-                     (lambda (system) (find system systems :test #'string=))
-                     history-name)))
+  (macrolet ((ql-symbol-value (symbol)
+               `(symbol-value (uiop:find-symbol* ,symbol :quicklisp))))
+    (let ((systems
+            (append
+             (mapcar (lambda (x) (pathname-name x))
+                     (directory
+                      (merge-pathnames "**/lem-*.asd"
+                                       (asdf:system-source-directory :lem-contrib))))
+             (set-difference
+              (mapcar #'pathname-name
+                      (loop for i in (ql-symbol-value :*local-project-directories*)
+                            append (directory (merge-pathnames "**/lem-*.asd" i))))
+              (mapcar #'pathname-name
+                      (directory (merge-pathnames "**/lem-*.asd"
+                                                  (asdf:system-source-directory :lem))))
+              :test #'equal))))
+      (setq systems (mapcar (lambda (x) (subseq x 4)) systems))
+      (prompt-for-line prompt ""
+                       (lambda (str) (completion str systems))
+                       (lambda (system) (find system systems :test #'string=))
+                       history-name))))
 
 (defun prompt-for-encodings (prompt history-name)
   (let (encodings)

@@ -14,5 +14,6 @@
 
 (defmethod perform :after (operation
                            (system (eql (find-system "lem-python-mode"))))
-  (when (uiop:symbol-call :quicklisp :where-is-system :async-process)
+  (when (and (uiop:featurep :quicklisp)
+             (uiop:symbol-call :quicklisp :where-is-system :async-process))
     (operate operation (find-system "lem-python-mode/run"))))

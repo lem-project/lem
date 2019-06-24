@@ -1,4 +1,4 @@
 all: contrib
 	
 contrib:
-	ros gen-contrib.ros
+	env CL_SOURCE_REGISTRY=$(PWD)/../..// ros gen-contrib.ros

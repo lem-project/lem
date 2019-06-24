@@ -27,8 +27,8 @@ lem-ncurses.desktop: scripts/gen-desktop.ros
 	cd $(PWD);ros scripts/gen-desktop.ros --prefix ${prefix}
 
 %$(EXEEXT): %.ros
-	ros -L ${LISP_IMPL} -l $< dump output $(basename $(notdir $<))
-	ros -L ${LISP_IMPL} -l $< dump executable $<
+	env CL_SOURCE_REGISTRY=$(PWD)// ros -L ${LISP_IMPL} -l $< dump output $(basename $(notdir $<))
+	env CL_SOURCE_REGISTRY=$(PWD)// ros -L ${LISP_IMPL} -l $< dump executable $<
 
 bin/%.ros: roswell/%.ros
 	cp $< $@
@@ -36,12 +36,13 @@ bin/%.ros: roswell/%.ros
 bin/${LEM_LAUNCHER}:
 	${MKDIR_P} bin
 	cat roswell/lem | sed -e "s/ncurses/${DEFAULT_FRONTEND}/g" > $@
+	chmod +x $@
 
 CLEANFILES = ${bin_SCRIPTS}
 CLEANFILES += lem-icon.svg lem-ncurses.desktop
 
 depend:
-	ros make-depends lem-ncurses bin/lem-ncurses > bin/lem-ncurses.depend
+	env CL_SOURCE_REGISTRY=$(PWD)// ros make-depends lem-ncurses bin/lem-ncurses > bin/lem-ncurses.depend
 
 -include bin/lem-ncurses.depend
 

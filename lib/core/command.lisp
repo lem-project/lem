@@ -585,8 +585,8 @@
 (define-command load-library (name)
     ((list (prompt-for-library "load library: " 'load-library)))
   (message "Loading ~A." name)
-  (cond #+quicklisp((ignore-errors (ql:quickload (format nil "lem-~A" name) :silent t))
-                    (message "Loaded ~A." name))
+  (cond ((ignore-errors (maybe-quickload (format nil "lem-~A" name) :silent t))
+         (message "Loaded ~A." name))
         (t (message "Can't find Library ~A." name))))
 
 (defun get-git-hash (&optional (system :lem))

@@ -668,7 +668,7 @@
 (define-command lisp-quickload (system-name)
     ((list (prompt-for-symbol-name "System: " (lem-lisp-mode::buffer-package (current-buffer)))))
   (check-connection)
-  (eval-with-transcript `(ql:quickload ,(string system-name))))
+  (eval-with-transcript `(,(uiop:find-symbol* :quickload :quicklisp) ,(string system-name))))
 
 (defvar *completion-symbol-with-fuzzy* t)
 

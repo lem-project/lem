@@ -13,7 +13,7 @@
   :components ((:file "run-python")))
 
 (defmethod perform :after (operation
-                           (system (eql (find-system "lem-python-mode"))))
+                           (system (eql (find-system "lem-python-mode/run"))))
   (when (and (uiop:featurep :quicklisp)
              (uiop:symbol-call :quicklisp :where-is-system :async-process))
     (operate operation (find-system "lem-python-mode/run"))))

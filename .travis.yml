@@ -1,5 +1,6 @@
 language: common-lisp
 sudo: false
+dist: xenial
 
 env:
   global:

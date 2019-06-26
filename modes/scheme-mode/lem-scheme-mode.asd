@@ -17,13 +17,22 @@
 ;;; See: https://common-lisp.net/project/asdf/asdf/The-defsystem-grammar.html#index-_003aweakly_002ddepends_002don
 
 (defsystem "lem-scheme-mode/repl"
-  :depends-on ("lem-scheme-mode" "lem-process")
+  :depends-on ("lem-process")
   :serial t
   :components ((:file "eval")
                (:file "repl")))
 
-(defmethod perform :after (operation
-                           (system (eql (find-system "lem-scheme-mode"))))
-  (when (and (uiop:featurep :quicklisp)
-             (uiop:symbol-call :quicklisp :where-is-system :async-process))
-    (operate operation (find-system "lem-scheme-mode/repl"))))
+(let ((lem-scheme-mode-loading-p nil))
+  (defmethod perform :after (operation
+                             (system (eql (find-system "lem-scheme-mode"))))
+    (when (and (not lem-scheme-mode-loading-p)
+               (uiop:featurep :quicklisp)
+               (uiop:symbol-call :quicklisp :where-is-system :async-process))
+      (setf lem-scheme-mode-loading-p t)
+      (operate operation (find-system "lem-scheme-mode/repl"))
+      (setf lem-scheme-mode-loading-p nil)))
+
+  (defmethod perform :before (operation
+                              (system (eql (find-system "lem-scheme-mode/repl"))))
+    (unless lem-scheme-mode-loading-p
+      (operate operation (find-system "lem-scheme-mode")))))

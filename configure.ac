@@ -44,8 +44,4 @@ AC_ARG_ENABLE([rpc],
     AS_HELP_STRING([--enable-rpc], [Enable rpc]))
 AM_CONDITIONAL(GENERATE_RPC,[test "x$enable_rpc" = "xyes"])
 
-AC_ARG_ENABLE([xcb],
-    AS_HELP_STRING([--enable-xcb], [Enable xcb]))
-AM_CONDITIONAL(GENERATE_XCB,[test "x$enable_xcb" = "xyes"])
-
 AC_OUTPUT

@@ -15,11 +15,6 @@ if GENERATE_RPC
  EXTRA_DIST += bin/lem-rpc$(EXEEXT)
 endif
 
-if GENERATE_XCB
- bin_SCRIPTS += bin/lem-xcb$(EXEEXT)
- EXTRA_DIST += bin/lem-xcb$(EXEEXT)
-endif
-
 lem-icon.svg: scripts/gen-desktop.ros
 	cd $(PWD);ros scripts/gen-desktop.ros --prefix ${prefix} --icon blue
 

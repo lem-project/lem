@@ -73,7 +73,6 @@
 
 (define-command fbar-select () ()
   (let ((prop (text-property-at (current-point) 'type)))
-;;    (format xcb::*q* "prop: ~A~&" prop)
     (setf (buffer-read-only-p *fbar-buffer*) nil)
     (with-slots (dir open path tab) prop
       (if dir

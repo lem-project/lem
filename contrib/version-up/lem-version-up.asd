@@ -1,3 +1,7 @@
 ;;don't edit
-(DEFSYSTEM "lem-version-up" :CLASS :PACKAGE-INFERRED-SYSTEM :COMPONENTS
- ((:FILE "version")) :AUTHOR "SANO Masatoshi" :MAILTO "snmsts@gmail.com")
+(defsystem "lem-version-up"
+  :depends-on("lem")
+  :class :package-inferred-system
+  :components((:file "version"))
+  :author "SANO Masatoshi"
+  :mailto "snmsts@gmail.com")

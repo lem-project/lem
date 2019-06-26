@@ -25,4 +25,6 @@
   (defmethod perform :before (operation
                               (system (eql (find-system "lem-python-mode/run"))))
     (unless lem-python-mode-loading-p
-      (operate operation (find-system "lem-python-mode")))))
+      (setf lem-python-mode-loading-p t)
+      (operate operation (find-system "lem-python-mode"))
+      (setf lem-python-mode-loading-p nil))))

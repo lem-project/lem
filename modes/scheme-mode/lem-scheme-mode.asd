@@ -35,4 +35,6 @@
   (defmethod perform :before (operation
                               (system (eql (find-system "lem-scheme-mode/repl"))))
     (unless lem-scheme-mode-loading-p
-      (operate operation (find-system "lem-scheme-mode")))))
+      (setf lem-scheme-mode-loading-p t)
+      (operate operation (find-system "lem-scheme-mode"))
+      (setf lem-scheme-mode-loading-p nil))))

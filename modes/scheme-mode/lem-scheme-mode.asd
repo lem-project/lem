@@ -22,19 +22,17 @@
   :components ((:file "eval")
                (:file "repl")))
 
-(let ((lem-scheme-mode-loading-p nil))
-  (defmethod perform :after (operation
+(let ((done nil))
+  (defmethod perform :after ((operation load-op)
                              (system (eql (find-system "lem-scheme-mode"))))
-    (when (and (not lem-scheme-mode-loading-p)
+    (when (and (not done)
                (uiop:featurep :quicklisp)
                (uiop:symbol-call :quicklisp :where-is-system :async-process))
-      (setf lem-scheme-mode-loading-p t)
-      (operate operation (find-system "lem-scheme-mode/repl"))
-      (setf lem-scheme-mode-loading-p nil)))
+      (setf done t)
+      (load-system "lem-scheme-mode/repl")))
 
-  (defmethod perform :before (operation
+  (defmethod perform :before ((operation prepare-op)
                               (system (eql (find-system "lem-scheme-mode/repl"))))
-    (unless lem-scheme-mode-loading-p
-      (setf lem-scheme-mode-loading-p t)
-      (operate operation (find-system "lem-scheme-mode"))
-      (setf lem-scheme-mode-loading-p nil))))
+    (unless done
+      (setf done t)
+      (load-system "lem-scheme-mode"))))

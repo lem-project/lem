@@ -12,19 +12,17 @@
   :serial t
   :components ((:file "run-python")))
 
-(let ((lem-python-mode-loading-p nil))
-  (defmethod perform :after (operation
+(let ((done nil))
+  (defmethod perform :after ((operation load-op)
                              (system (eql (find-system "lem-python-mode"))))
-    (when (and (not lem-python-mode-loading-p)
+    (when (and (not done)
                (uiop:featurep :quicklisp)
                (uiop:symbol-call :quicklisp :where-is-system :async-process))
-      (setf lem-python-mode-loading-p t)
-      (operate operation (find-system "lem-python-mode/run"))
-      (setf lem-python-mode-loading-p nil)))
+      (setf done t)
+      (load-system "lem-python-mode/repl")))
 
-  (defmethod perform :before (operation
+  (defmethod perform :before ((operation prepare-op)
                               (system (eql (find-system "lem-python-mode/run"))))
-    (unless lem-python-mode-loading-p
-      (setf lem-python-mode-loading-p t)
-      (operate operation (find-system "lem-python-mode"))
-      (setf lem-python-mode-loading-p nil))))
+    (unless done
+      (setf done t)
+      (load-system "lem-python-mode"))))

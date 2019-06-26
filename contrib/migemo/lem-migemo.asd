@@ -1,6 +1,9 @@
 ;;don't edit
-(DEFSYSTEM "lem-migemo" :CLASS :PACKAGE-INFERRED-SYSTEM :COMPONENTS
- ((:FILE "main")) :DEPENDS-ON (:CL-MIGEMO))
+(defsystem "lem-migemo"
+  :class :package-inferred-system
+  :components((:file "main"))
+  :depends-on("lem"
+              :cl-migemo))
 (UNLESS (ASDF/SYSTEM:FIND-SYSTEM "cl-migemo" NIL)
   (UIOP/PACKAGE:SYMBOL-CALL "ROSWELL" "ROSWELL"
                             '("install" "snmsts/cl-migemo")))

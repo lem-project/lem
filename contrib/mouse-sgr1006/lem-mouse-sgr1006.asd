@@ -1,3 +1,5 @@
 ;;don't edit
-(DEFSYSTEM "lem-mouse-sgr1006" :CLASS :PACKAGE-INFERRED-SYSTEM :COMPONENTS
- ((:FILE "main")))
+(defsystem "lem-mouse-sgr1006"
+  :depends-on("lem")
+  :class :package-inferred-system
+  :components((:file "main")))

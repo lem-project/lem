@@ -1,6 +1,7 @@
 ;;don't edit
 (defsystem "lem-calc-mode"
+  :depends-on("lem-core")
   :class :package-inferred-system
-  :components ((:FILE "main"))
+  :components((:file "main"))
   :author "SANO Masatoshi"
   :mailto "snmsts@gmail.com")

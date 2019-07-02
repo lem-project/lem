@@ -140,7 +140,9 @@
 (defun buffer-package (buffer &optional default)
   (let ((package-name (buffer-value buffer "package")))
     (if package-name
-        (string-upcase package-name)
+        (or (ignore-errors (string-upcase package-name))
+            (ignore-errors (string-upcase (car package-name)))
+            default)
         default)))
 
 (defun (setf buffer-package) (package buffer)

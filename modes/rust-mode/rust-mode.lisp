@@ -306,6 +306,7 @@
          (calc-indent-region start point))))))
 
 (define-command rust-format-buffer () ()
+  (filter-buffer *rust-format-buffer*)
   (message "Formatted buffer with rustfmt."))
 
 (defun rust-before-save-hook (buffer)

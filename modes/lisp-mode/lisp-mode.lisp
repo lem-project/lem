@@ -138,10 +138,13 @@
     (self-connect)))
 
 (defun buffer-package (buffer &optional default)
-  (let ((package-name (buffer-value buffer "package")))
-    (if package-name
-        (string-upcase package-name)
-        default)))
+  (let ((package-name (buffer-value buffer "package" default)))
+    (typecase package-name
+      (null default)
+      ((or symbol string)
+       (string-upcase package-name))
+      ((cons (or symbol string))
+       (string-upcase (car package-name))))))
 
 (defun (setf buffer-package) (package buffer)
   (setf (buffer-value buffer "package") package))

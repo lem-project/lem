@@ -17,8 +17,7 @@
 
 (defun maybe-create-directory (directory)
   (when (prompt-for-y-or-n-p
-         (format nil "Directory does not exist: ~A. Create"
-                 directory))
+         (format nil "Directory does not exist: ~A. Create" directory))
     (ensure-directories-exist directory)))
 
 (define-key *global-keymap* "C-x C-f" 'find-file)

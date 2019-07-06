@@ -31,16 +31,24 @@
     (if (exist-command-p (string-downcase command))
         `(define-command ,(intern (format nil "~a-OTHER-WINDOW"
                                           (string-upcase command)))
-           (arg) (,prompt)
+             (arg) (,prompt)
            (if (one-window-p)
                (split-window-sensibly (current-window)))
            (other-window)
            (,command arg))
         (warn "command ~a is not defined." command)))
 
+  (defun maybe-create-buffer (name)
+    (when (prompt-for-y-or-n-p
+           (format nil "Buffer ~a does not exist. Create" name))
+      (make-buffer name)))
+
   (define-command select-buffer (name) ("BUse Buffer: ")
     (check-switch-minibuffer-window)
-    (switch-to-buffer (make-buffer name))
+    (let ((buffer (or (get-buffer name)
+                      (maybe-create-buffer name)
+                      (error 'editor-abort))))
+      (switch-to-buffer buffer))
     t))
 
 (define-key *global-keymap* "C-x b" 'select-buffer)

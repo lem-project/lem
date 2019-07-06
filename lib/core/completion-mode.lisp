@@ -42,7 +42,7 @@
 (define-key *completion-mode-keymap* 'move-to-beginning-of-buffer 'completion-beginning-of-buffer)
 (define-key *completion-mode-keymap* "Return"    'completion-select)
 (define-key *completion-mode-keymap* "Space"    'completion-insert-space-and-cancel)
-(define-key *completion-mode-keymap* 'delete-previous-char 'completion-delete-prevous-char)
+(define-key *completion-mode-keymap* 'delete-previous-char 'completion-delete-previous-char)
 (define-key *completion-mode-keymap* 'backward-delete-word 'completion-backward-delete-word)
 
 (define-attribute completion-attribute
@@ -93,7 +93,7 @@
           (t (unread-key-sequence (last-read-key-sequence))
              (completion-end)))))
 
-(define-command completion-delete-prevous-char (n) ("p")
+(define-command completion-delete-previous-char (n) ("p")
   (delete-previous-char n)
   (completion-again))
 

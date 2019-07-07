@@ -353,67 +353,58 @@
 (defun compute-indent-complex-method (method path indent-point sexp-column)
   (loop
     :named exit
-    :for pathrest :on path
-    :for n := (1- (car pathrest))
-    :do (let ((restp nil))
-          (loop
-            (let ((method1 (car method)))
-              (cond ((and restp
-                          (not (or (consp method1)
-                                   (and (symbolp method1)
-                                        (not (member method1 '(&rest &body &whole &lambda)))))))
-                     (return-from exit
-                       'default-indent))
-                    ((eq method1 '&body)
-                     (return-from exit
-                       (if (null (cdr pathrest))
-                           (+ sexp-column *body-indent*)
-                           'default-indent)))
-                    ((eq method1 '&rest)
-                     (setf restp (> n 0))
-                     (setf n 0)
-                     (pop method))
-                    ((> n 0)
-                     (decf n)
-                     (pop method))
-                    ((eq method1 'nil)
-                     (return-from exit
-                       'default-indent))
-                    ((eq method1 '&lambda)
-                     (return-from exit
-                       (cond ((null (cdr pathrest))
-                              (+ sexp-column 4))
-                             (t
-                              (compute-indent-lambda-list path indent-point sexp-column))
-                             ;; ((null (cddr pathrest))
-                             ;;  (compute-indent-lambda-list path indent-point sexp-column))
-                             ;; (t
-                             ;;  'default-indent)
-                             )))
-                    ((integerp method1)
-                     (return-from exit
-                       (if (null (cdr pathrest))
-                           (+ sexp-column method1)
-                           'default-indent)))
-                    ((symbolp method1)
-                     (return-from exit
-                       (compute-indent-symbol-method method1 path indent-point sexp-column)))
-                    ;; (&whole ...)
-                    ((not (null (cdr pathrest)))
-                     (setf method (cddr method1))
-                     (return))
-                    (t
-                     (return-from exit
-                       (let ((method1 (cadr method1)))
-                         (cond (restp
-                                'default-indent)
-                               ((eq method1 'nil)
-                                'default-indent)
-                               ((integerp method1)
-                                (+ sexp-column method1))
-                               (t
-                                (compute-indent-symbol-method
-                                 method1 path indent-point sexp-column))))))))))))
+    :for (n-start . pathrest) :on path
+    :if (zerop n-start) :do (return-from exit 'default-indent)
+    :finally (return-from exit 'default-indent)
+    :do (loop :for (method1 . method-rest) :on method
+              :for n :from (1- n-start) :downto 0
+              :if (eq method1 '&rest) :do
+                 (cond
+                   ((or (not (null (cdr method-rest)))           ; safety-check
+                        (member (car method-rest) '(&rest &body &whole &lambda)))
+                    (return-from exit 'default-indent))         ; malformed method
+                   (t (setq method1 (car method-rest)
+                            method-rest nil
+                            n 0)))
+              :if (eq method1 '&body) :do
+                 (return-from exit
+                   (cond
+                     ((not (null method-rest)) ; safety check
+                      'default-indent)         ; malformed method
+                     ((null pathrest)
+                      (+ sexp-column *body-indent*))
+                     (t 'default-indent)))
+              :if (zerop n) :do
+                 (cond
+                   ((integerp method1)
+                    (return-from exit (if (null pathrest)
+                                          (+ sexp-column method1)
+                                          'default-indent)))
+                   ((eq method1 '&lambda)
+                    (return-from exit (if (null pathrest)
+                                          (+ sexp-column 4)
+                                          (compute-indent-lambda-list
+                                           path indent-point sexp-column))))
+                   ((not method1)
+                    (return-from exit 'default-indent))
+                   ((symbolp method1)
+                    (return-from exit (compute-indent-symbol-method
+                                       method1 path indent-point sexp-column)))
+                   ((or (not (consp method1))
+                        (not (eq '&whole (car method1)))) ; safety check
+                    (return-from exit 'default-indent))    ; malformed method
+                   ;; (&whole ...)
+                   ((consp pathrest)
+                    (setf method (cddr method1))
+                    (return))
+                   (t
+                    (return-from exit
+                      (let ((method1 (cadr method1)))
+                        (cond ((integerp method1)
+                               (+ sexp-column method1))
+                          (t
+                           (compute-indent-symbol-method
+                            method1 path indent-point sexp-column))))))))))
 
 (defun compute-indent-method (method path indent-point sexp-column)
   (funcall (etypecase method

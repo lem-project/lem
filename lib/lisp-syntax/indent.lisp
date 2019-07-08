@@ -29,8 +29,64 @@
   (or (gethash name *static-indent-table*)
       (caar (gethash name *dynamic-indent-table*))))
 
+(defun indent-method-malformed-error (name method &rest msg-args)
+  (apply #'editor-error "Invalid method ~a for ~a: ~@?" method name msg-args))
+
+(defun indent-method-welformed-p (name method &key (if-malformed :error))
+  (flet ((malformed (&rest args)
+           (cond
+             ((eq if-malformed :error)
+              (apply #'indent-method-malformed-error name method args))
+             ((not if-malformed)
+              (return-from indent-method-welformed-p (values nil args)))
+             (t (error "unrecognised ':if-malformed' option: ~a" if-malformed)))))
+    (typecase method
+      ((or integer null) t)
+      (null t)
+      (cons
+       (unless (alexandria:proper-list-p method)
+         (malformed "not a proper list: ~a" method))
+       (loop for (method1 . method-rest) :on method
+             :finally (return t)
+             :do
+                (typecase method1
+                  ((or integer null) nil) ; ok
+                  (cons
+                   (unless (eq '&whole (first method1))
+                     (malformed "submethod must begin with &whole: ~a" method1))
+                   (unless (and (consp (cdr method1))
+                                (consp (cddr method1)))
+                     (malformed "&whole must be followed by two or more elements: ~a"
+                                method1))
+                   (multiple-value-bind (winp error-msg-args)
+                       (indent-method-welformed-p name (cdr method1) :if-malformed nil)
+                     (unless winp
+                       (apply #'malformed error-msg-args))))
+                  (symbol
+                   (case method1
+                     ((&body)
+                      (unless (null method-rest)
+                        (malformed "&body is not the last element")))
+                     ((&rest)
+                      (unless (and (consp method-rest) (null (cdr method-rest)))
+                        (malformed "&rest must be followed by only one element")))
+                     ((&whole)
+                      (malformed "&whole can only be the first element in a submethod"))
+                     ((&lambda) nil)
+                     (t
+                      (unless (fboundp method1)
+                        (warn "undefined function used in method: ~a" method))))))))
+      (symbol (case method
+                ((&body &lambda &rest &whole)
+                 (values nil '("~a should be used inside a list" method)))
+                (t
+                 (unless (fboundp method)
+                   (warn "undefined function used as method: ~a" method))
+                 t))))))
+
 (defun set-indentation (name method)
-  (setf (gethash name *static-indent-table*) method))
+  (when (indent-method-welformed-p name method)
+    (setf (gethash name *static-indent-table*) method)))
 
 (defun update-system-indentation (name indent packages)
   (push (list :update-system-indentation name indent packages) *indent-log*)
@@ -365,7 +421,7 @@
               :if (eq method1 '&rest) :do
                  (cond
                    ((or (not (null (cdr method-rest)))           ; safety-check
-                        (member (car method-rest) '(&rest &body &whole &lambda)))
+                        (member (car method-rest) '(&rest &body &whole)))
                     (return-from exit 'default-indent))         ; malformed method
                    (t (setq method1 (car method-rest)
                             method-rest nil
@@ -395,7 +451,7 @@
                     (return-from exit (compute-indent-symbol-method
                                        method1 path indent-point sexp-column)))
                    ((or (not (consp method1))
-                        (not (eq '&whole (car method1)))) ; safety check
+                        (not (eq '&whole (car method1))))  ; safety check
                     (return-from exit 'default-indent))    ; malformed method
                    ;; (&whole ...)
                    ((consp pathrest)

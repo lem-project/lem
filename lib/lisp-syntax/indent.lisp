@@ -5,7 +5,8 @@
            :set-indentation
            :update-system-indentation
            :indentation-update
-           :calc-indent))
+           :calc-indent
+           :&lambda))
 (in-package :lem-lisp-syntax.indent)
 
 (defparameter *body-indent* 2)
@@ -75,7 +76,7 @@
         ("catch" 1)
         ("cond"        (&rest (&whole 2 &rest 1)))
         ("defvar"      (4 2 2))
-        ("defclass"    (6 4 (&whole 2 &rest 1) (&whole 2 &rest 1)))
+        ("defclass"    (6 (&whole 4 &rest 1) (&whole 2 &rest 1) (&whole 2 &rest 1)))
         ("defconstant" . "defvar")
         ("defcustom"   (4 2 2 2))
         ("defparameter" . "defvar")
@@ -100,7 +101,7 @@
         ;("do"          lisp-indent-do)
         ("do" 2)
         ("do*" . "do")
-        ("dolist"      1)
+        ("dolist"      ((&whole 4 2 1) &body))
         ("dotimes" . "dolist")
         ("eval-when"   1)
         ("flet"        ((&whole 4 &rest (&whole 1 &lambda &body)) &body))
@@ -151,7 +152,7 @@
         ("when" 1)
         ("with-accessors" . "multiple-value-bind")
         ("with-condition-restarts" . "multiple-value-bind")
-        ("with-compilation-unit" (&lambda &body))
+        ("with-compilation-unit" ((&whole 4 &rest 1) &body))
         ("with-output-to-string" (4 2))
         ("with-slots" . "multiple-value-bind")
         ("with-standard-io-syntax" (2))))
@@ -354,7 +355,10 @@
   (loop
     :named exit
     :for (n-start . pathrest) :on path
-    :if (zerop n-start) :do (return-from exit 'default-indent)
+    :if (zerop n-start) :do
+       (case (car method)
+         ((&rest) (setf n-start 1))
+         (t (return-from exit 'default-indent)))
     :finally (return-from exit 'default-indent)
     :do (loop :for (method1 . method-rest) :on method
               :for n :from (1- n-start) :downto 0

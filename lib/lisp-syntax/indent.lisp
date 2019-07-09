@@ -69,7 +69,9 @@
                         (malformed "&body is not the last element")))
                      ((&rest)
                       (unless (and (consp method-rest) (null (cdr method-rest)))
-                        (malformed "&rest must be followed by only one element")))
+                        (malformed "&rest must be followed by only one element"))
+                      (when (eq '&rest (car method-rest))
+                        (malformed "&rest cannot be followed by another &rest")))
                      ((&whole)
                       (malformed "&whole can only be the first element in a submethod"))
                      ((&lambda) nil)
@@ -421,7 +423,7 @@
               :if (eq method1 '&rest) :do
                  (cond
                    ((or (not (null (cdr method-rest)))           ; safety-check
-                        (member (car method-rest) '(&rest &body &whole)))
+                        (member (car method-rest) '(&rest &whole)))
                     (return-from exit 'default-indent))         ; malformed method
                    (t (setq method1 (car method-rest)
                             method-rest nil

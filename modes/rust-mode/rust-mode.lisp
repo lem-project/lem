@@ -306,8 +306,11 @@
          (calc-indent-region start point))))))
 
 (define-command rust-format-buffer () ()
-  (filter-buffer *rust-format-buffer*)
-  (message "Formatted buffer with rustfmt."))
+  (when (zerop (nth-value 2
+                          (uiop:run-program (format nil "~A --version" *rust-format-buffer*)
+                                            :ignore-error-status t)))
+    (filter-buffer *rust-format-buffer*)
+    (message "Formatted buffer with rustfmt.")))
 
 (defun rust-before-save-hook (buffer)
   (declare (ignore buffer))

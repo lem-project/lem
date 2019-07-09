@@ -187,13 +187,14 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (when (< 0 n)
     (let ((p (current-point)))
       (cond
+        ((lem-paredit-mode::eolp p)
+         (delete-next-char))
         ;; The next char is escaped
         ((lem-base::syntax-escape-point-p p 0)
          (delete-next-char)
          (delete-previous-char))
         ;; The next char is an escaping #\\
-        ((and (not (lem-paredit-mode::eolp p))
-              (lem-base::syntax-escape-point-p p 1))
+        ((lem-base::syntax-escape-point-p p 1)
          (delete-next-char 2))
         ;; The point is in a string and the next char is a #\"
         ((and (in-string-p p) (eql (character-at p) #\"))

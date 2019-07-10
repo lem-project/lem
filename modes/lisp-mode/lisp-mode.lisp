@@ -22,6 +22,7 @@
 
 (define-major-mode lisp-mode language-mode
     (:name "lisp"
+     :description "Contains necessary functions to handle lisp code."
      :keymap *lisp-mode-keymap*
      :syntax-table lem-lisp-syntax:*syntax-table*)
   (modeline-add-status-list (lambda (window)

@@ -72,7 +72,7 @@
                            (mode-description mode))))
                (format s "~2%")))
         (print-modes "Major modes" major-modes)
-        (print-modes "Minor modes" minor-modes))))))
+        (print-modes "Minor modes" minor-modes)))))
 
 ;; Unable to use this binding because C-h is used by 'delete-previous-char
 ;; (define-key *global-keymap* "C-h m" 'describe-mode)

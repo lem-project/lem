@@ -412,12 +412,15 @@
 (defun compute-indent-complex-method (method path indent-point sexp-column)
   (loop
     :named exit
-    :for (n-start* . pathrest) :on path
-    :for n-start := (1- n-start*) :then n-start*
+    :for (n-start . pathrest) :on path
     :finally (return-from exit 'default-indent)
+    :if (and (= n-start 0)
+             (eq '&rest (car method))
+             (consp (cadr method))) :do
+       (setq n-start 1)
     :do (loop :with restp := nil
               :for (method1 . method-rest) :on method
-              :for n :from n-start :downto 0
+              :for n :from (1- n-start) :downto 0
               :if (eq method1 '&rest) :do
                  (setq method1 (car method-rest)
                        method-rest nil

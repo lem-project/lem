@@ -473,18 +473,20 @@
   (eql (character-at p -1) #\#))  
 
 (defun find-indent-method (name path)
-  (flet ((f (method)
-           (when method
-             (return-from find-indent-method method))))
-    (f (get-indentation name))
-    (let ((name1 (ppcre:scan-to-strings "(?<=:)[^:]+" name)))
-      (when name1
-        (f (get-indentation name1)))
-      (f (and *get-method-function*
-              (funcall *get-method-function* name)))
-      (f (and (null (cdr path))
-              (ppcre:scan "^(?:with-|without-|within-|do-|def)" (or name1 name))
-              '(&lambda &body))))))
+  (when name
+    (let ((name (string-downcase name)))
+      (flet ((f (method)
+               (when method
+                 (return-from find-indent-method method))))
+        (f (get-indentation name))
+        (let ((name1 (ppcre:scan-to-strings "(?<=:)[^:]+" name)))
+          (when name1
+            (f (get-indentation name1)))
+          (f (and *get-method-function*
+                  (funcall *get-method-function* name)))
+          (f (and (null (cdr path))
+                  (ppcre:scan "^(?:with-|without-|within-|do-|def)" (or name1 name))
+                  '(&lambda &body))))))))
 
 (defun calc-function-indent (point)
   (loop
@@ -528,7 +530,7 @@
                           (or (member (character-at p 0) '(#\: #\"))
                               (looking-at p "#!?[+-]")))
                  (setf const-flag t))
-               (let ((name (string-downcase (symbol-string-at-point p))))
+               (let ((name (symbol-string-at-point p)))
                  (unless (scan-lists p -1 1 t)
                    (return-from outer 'default-indent))
                  (unless sexp-column (setf sexp-column (point-column p)))

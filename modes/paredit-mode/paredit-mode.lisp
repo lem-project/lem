@@ -342,7 +342,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (delete-character kill-point)
              (form-offset yank-point -1)
              (syntax-skip-expr-prefix-backward yank-point)
-             (skip-whitespace-backward yank-point)
+             (skip-space-and-comment-backward yank-point)
              (insert-character yank-point c))
            (move-point (current-point) origin)
            (indent-region origin kill-point)))))))

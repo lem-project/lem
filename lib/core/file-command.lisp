@@ -12,6 +12,7 @@
           revert-buffer
           change-directory))
 
+
 (defun expand-files* (filename)
   (directory-files (expand-file-name filename (buffer-directory))))
 
@@ -19,6 +20,13 @@
   (when (prompt-for-y-or-n-p
          (format nil "Directory does not exist: ~A. Create" directory))
     (ensure-directories-exist directory)))
+
+(defun directory-for-file-or-lose (filename)
+  (let ((directory (directory-namestring filename)))
+    (unless (or (uiop:directory-exists-p directory)
+                (maybe-create-directory directory))
+      (error 'editor-abort))
+    directory))
 
 (define-key *global-keymap* "C-x C-f" 'find-file)
 (define-command find-file (filename) ("p")
@@ -45,10 +53,7 @@
           ((pathnamep filename)
            (setf filename (namestring filename))))
     (dolist (pathname (expand-files* filename))
-      (let ((directory (directory-namestring filename)))
-        (unless (or (uiop:directory-exists-p directory)
-                    (maybe-create-directory directory))
-          (error 'editor-abort)))
+      (directory-for-file-or-lose pathname)
       (switch-to-buffer (find-file-buffer pathname) t nil)
       t)))
 
@@ -96,11 +101,9 @@
                  (not (prompt-for-y-or-n-p (format nil
                                                    "~a is opend, overwrite it?"
                                                    expand-file-name))))
+      (directory-for-file-or-lose filename)
       (unless (string= old new)
-        (buffer-rename (current-buffer)
-                       (if (get-buffer new)
-                           (uniq-buffer-name new)
-                           new)))
+        (buffer-rename (current-buffer) (new-buffer-name name expand-file-name)))
       (setf (buffer-filename) expand-file-name)
       (add-newline-at-eof (current-buffer))
       (save-buffer t))))

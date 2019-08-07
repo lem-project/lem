@@ -25,6 +25,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 
 (define-minor-mode paredit-mode
     (:name "paredit"
+     :description "Helps to handle parentheses balanced in your Lisp code."
      :keymap *paredit-mode-keymap*))
 
 (defun move-to-word-end (q)

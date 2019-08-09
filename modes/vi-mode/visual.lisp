@@ -164,12 +164,17 @@
                             (insert-string start str))))
     (vi-visual-end)))
 
+(defun %visual-case (f)
+  (with-point ((start *start-point*)
+               (end (current-point)))
+    (apply-visual-range f)
+    (vi-visual-end)
+    (move-point (current-point) (if (point< start end)
+                                    start
+                                    end))))
+
 (define-command vi-visual-upcase () ()
-  (when (visual-p)
-    (apply-visual-range #'uppercase-region)
-    (vi-visual-end)))
+  (%visual-case #'uppercase-region))
 
 (define-command vi-visual-downcase () ()
-  (when (visual-p)
-    (apply-visual-range #'downcase-region)
-    (vi-visual-end)))
+  (%visual-case #'downcase-region))

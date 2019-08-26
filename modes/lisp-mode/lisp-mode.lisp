@@ -22,6 +22,7 @@
 
 (define-major-mode lisp-mode language-mode
     (:name "lisp"
+     :description "Contains necessary functions to handle lisp code."
      :keymap *lisp-mode-keymap*
      :syntax-table lem-lisp-syntax:*syntax-table*)
   (modeline-add-status-list (lambda (window)
@@ -138,10 +139,13 @@
     (self-connect)))
 
 (defun buffer-package (buffer &optional default)
-  (let ((package-name (buffer-value buffer "package")))
-    (if package-name
-        (string-upcase package-name)
-        default)))
+  (let ((package-name (buffer-value buffer "package" default)))
+    (typecase package-name
+      (null default)
+      ((or symbol string)
+       (string-upcase package-name))
+      ((cons (or symbol string))
+       (string-upcase (car package-name))))))
 
 (defun (setf buffer-package) (package buffer)
   (setf (buffer-value buffer "package") package))

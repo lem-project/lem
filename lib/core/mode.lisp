@@ -2,9 +2,11 @@
 
 (export '(major-mode
           mode-name
+          mode-description
           mode-keymap
           mode-syntax-table
           mode-hook
+          is-major
           current-mode-keymap
           find-mode-from-name
           mode-active-p
@@ -27,6 +29,7 @@
                 (defmethod (setf ,name) (new-val mode)
                   (setf (get mode ',name) new-val)))))
   (def mode-name)
+  (def mode-description)
   (def mode-keymap)
   (def mode-syntax-table)
   (def mode-enable-hook)
@@ -73,9 +76,12 @@
       (disable-minor-mode minor-mode)
       (enable-minor-mode minor-mode)))
 
+(defun is-major (mode)
+  (get mode 'is-major))
+
 (defmacro define-major-mode (major-mode
                              parent-mode
-                             (&key name keymap syntax-table mode-hook)
+                             (&key name description keymap syntax-table mode-hook)
                              &body body)
   `(progn
      ,@(when mode-hook
@@ -83,6 +89,10 @@
            (setf (mode-hook ',major-mode) ',mode-hook)))
      (pushnew ',major-mode *mode-list*)
      (setf (mode-name ',major-mode) ,name)
+     (setf (get ',major-mode 'is-major) t)
+     ,@(when description
+         `((setf (mode-description ',major-mode)
+                ,description)))
      ,@(cond (keymap
               `((defvar ,keymap (make-keymap :name ',keymap
                                              :parent ,(when parent-mode
@@ -113,13 +123,16 @@
           `(run-hooks ,mode-hook)))))
 
 (defmacro define-minor-mode (minor-mode
-                             (&key name (keymap nil keymapp) global enable-hook disable-hook)
+                             (&key name description (keymap nil keymapp) global enable-hook disable-hook)
                              &body body)
   `(progn
      (pushnew ',minor-mode *mode-list*)
      ,(when global
         `(setf (get ',minor-mode 'global-minor-mode-p) t))
      (setf (mode-name ',minor-mode) ,name)
+     ,@(when description
+         `((setf (mode-description ',minor-mode)
+                ,description)))
      ,@(when keymapp
          `((defvar ,keymap (make-keymap :name ',keymap))
            (setf (mode-keymap ',minor-mode) ,keymap)))

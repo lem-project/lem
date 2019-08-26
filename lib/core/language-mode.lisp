@@ -54,7 +54,8 @@
     (funcall fn)))
 
 (define-major-mode language-mode ()
-    (:keymap *language-mode-keymap*)
+    (:name "language"
+     :keymap *language-mode-keymap*)
   (when (or (null *idle-timer*)
             (not (timer-alive-p *idle-timer*)))
     (setf *idle-timer*

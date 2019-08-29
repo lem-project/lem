@@ -24,7 +24,8 @@
           scroll-up
           find-file-other-window
           read-file-other-window
-          select-buffer-other-window))
+          select-buffer-other-window
+          switch-to-last-focused-window))
 
 (eval-when (:compile-toplevel :load-toplevel)
   (defmacro define-other-window-command (command prompt)
@@ -91,6 +92,11 @@
 (define-command split-active-window-horizontally (&optional n) ("P")
   (split-window-horizontally (current-window) n))
 
+(defvar *last-focused-window-id* nil)
+
+(defun update-last-focused-window ()
+  (setf *last-focused-window-id* (window-id (current-window))))
+
 (define-key *global-keymap* "C-x o" 'other-window)
 (define-command other-window (&optional (n 1)) ("p")
   (let ((window-list
@@ -99,6 +105,7 @@
                   (window-list))))
     (when (minusp n)
       (setf n (- (length window-list) (abs n))))
+    (update-last-focused-window)
     (dotimes (_ n t)
       (setf (current-window)
             (get-next-window (current-window)
@@ -109,6 +116,13 @@
   (when (one-window-p)
     (split-window-sensibly (current-window)))
   (other-window n))
+
+(define-command switch-to-last-focused-window () ()
+  (let ((window (or (and *last-focused-window-id*
+                         (find-window *last-focused-window-id*))
+                    (get-next-window (current-window)))))
+    (update-last-focused-window)
+    (setf (current-window) window)))
 
 (define-command window-move-down () ()
   (alexandria:when-let ((window (down-window (current-window))))

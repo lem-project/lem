@@ -294,6 +294,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
        (character-offset kill-point -1)
        (with-point ((yank-point kill-point))
          (let ((c (character-at kill-point)))
+           (character-offset yank-point 1)
            (form-offset yank-point 1)
            (unless (end-buffer-p yank-point)
              (insert-character yank-point c)

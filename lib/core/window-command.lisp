@@ -39,9 +39,17 @@
            (,command arg))
         (warn "command ~a is not defined." command)))
 
+  (defun maybe-create-buffer (name)
+    (when (prompt-for-y-or-n-p
+           (format nil "Buffer ~a does not exist. Create" name))
+      (make-buffer name)))
+
   (define-command select-buffer (name) ("BUse Buffer: ")
     (check-switch-minibuffer-window)
-    (switch-to-buffer (make-buffer name))
+    (let ((buffer (or (get-buffer name)
+                      (maybe-create-buffer name)
+                      (error 'editor-abort))))
+      (switch-to-buffer buffer))
     t))
 
 (define-key *global-keymap* "C-x b" 'select-buffer)

@@ -36,6 +36,12 @@ $ ros install cxxxr/lem
 export PATH=$PATH:~/.roswell/bin
 ```
 
+Alternatively, if you want to build Lem without running Roswell:
+
+```
+$ sbcl --load build.lisp
+```
+
 ## Updating
 
 ```

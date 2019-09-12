@@ -43,3 +43,6 @@ depend:
 
 clean-local:
 	ros -L ${LISP_IMPL} delete dump lem-ncurses|true
+
+all-sbcl:
+    sbcl --eval '(asdf:make :lem/executable)' --quit

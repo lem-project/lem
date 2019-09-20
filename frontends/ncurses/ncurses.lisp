@@ -4,6 +4,8 @@
            :input-polling-interval))
 (in-package :lem-ncurses)
 
+(define-editor-variable escape-delay 100)
+
 (defclass ncurses (lem:implementation)
   ()
   (:default-initargs
@@ -312,7 +314,7 @@
                 ((= code resize-code) :resize)
                 ((= code abort-code) :abort)
                 ((= code escape-code)
-                 (charms/ll:timeout 200)
+                 (charms/ll:timeout (variable-value 'escape-delay))
                  (let ((code (prog1 (charms/ll:getch)
                                (charms/ll:timeout -1))))
                    (cond ((= code -1)

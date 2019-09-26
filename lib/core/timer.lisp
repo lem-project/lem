@@ -10,8 +10,10 @@
           stop-timer
           alive-timer-p))
 
+(defvar *is-in-idle* nil)
 (defvar *timer-list* nil)
 (defvar *idle-timer-list* nil)
+(defvar *processed-idle-timer-list* nil)
 
 (defclass timer ()
   ((name
@@ -73,30 +75,37 @@
     timer))
 
 (defun stop-timer (timer)
-  (cond
-    ((timer-idle-p timer)
-     (setf (timer-alive-p timer) nil)
-     (setf *idle-timer-list* (delete timer *idle-timer-list*))
-     (setf *timer-list* (delete timer *timer-list*)))
-    (t
-     (setf (timer-alive-p timer) nil)
-     (setf *timer-list* (delete timer *timer-list*)))))
+  (progn
+    (setf (timer-alive-p timer) nil)
+    (if (timer-idle-p timer)
+        (setf *idle-timer-list* (delete timer *idle-timer-list*))
+        (setf *timer-list* (delete timer *timer-list*)))))
 
 (defun update-timer ()
   (let* ((tick-time (get-internal-real-time))
+         (target-timers (if *is-in-idle*
+                            (append *timer-list* *idle-timer-list*)
+                            *timer-list*))
          (updating-timers (remove-if-not (lambda (timer)
                                            (< (timer-next-time timer) tick-time))
-                                         *timer-list*))
+                                         target-timers))
          (deleting-timers (remove-if-not (lambda (timer)
-                                           (or (timer-idle-p timer)
-                                               (not (timer-repeat-p timer))))
-                                         updating-timers)))
+                                           (not (timer-repeat-p timer)))
+                                         updating-timers))
+         (updating-idle-timers (if *is-in-idle*
+                                   (remove-if-not (lambda (timer)
+                                                    (and (timer-idle-p timer)
+                                                         (timer-repeat-p timer)))
+                                                  updating-timers)
+                                   '())))
     (dolist (timer deleting-timers)
-      (unless (and (timer-idle-p timer)
-                   (timer-repeat-p timer))
-        (setf (timer-alive-p timer) nil)))
+      (setf (timer-alive-p timer) nil))
     ;; Not so efficient, but it will be enough.
     (setf *timer-list* (set-difference *timer-list* deleting-timers))
+    (when *is-in-idle*
+      (setf *idle-timer-list* (set-difference *idle-timer-list* deleting-timers))
+      (setf *idle-timer-list* (set-difference *idle-timer-list* updating-idle-timers))
+      (setf *processed-idle-timer-list* (nconc updating-idle-timers *processed-idle-timer-list*)))
 
     (dolist (timer updating-timers)
       (unless (and (timer-idle-p timer)
@@ -114,14 +123,20 @@
     (not (null updating-timers))))
 
 (defun shortest-wait-timers ()
-  (if (null *timer-list*)
-      nil
-      (- (loop :for timer :in *timer-list*
-               :minimize (timer-next-time timer))
-         (get-internal-real-time))))
+  (let ((timers (if *is-in-idle*
+                    (append *timer-list* *idle-timer-list*)
+                    *timer-list*)))
+    (if (null timers)
+        nil
+        (- (loop :for timer :in timers
+                 :minimize (timer-next-time timer))
+           (get-internal-real-time)))))
 
 (defun exist-running-timer-p ()
-  (not (null *timer-list*)))
+  (if *is-in-idle*
+      (or (not (null *timer-list*))
+          (not (null *idle-timer-list*)))
+      (not (null *timer-list*))))
 
 (defun start-idle-timer (ms repeat-p function &optional handle-function name)
   (let ((timer (make-instance 'timer
@@ -137,15 +152,14 @@
     timer))
 
 (defun start-idle-timers ()
-  (dolist (timer *idle-timer-list*)
-    (setf (timer-last-time timer) (get-internal-real-time))
-    (setf (timer-alive-p timer) t)
-    (push timer *timer-list*)))
+  (progn
+    (setf *is-in-idle* t)
+    (dolist (timer *idle-timer-list*)
+      (setf (timer-last-time timer) (get-internal-real-time))
+      (setf (timer-alive-p timer) t))))
 
 (defun stop-idle-timers ()
-  (let ((new-idle-timers))
-    (dolist (timer *idle-timer-list*)
-      (when (timer-repeat-p timer)
-        (push timer new-idle-timers))
-      (setf *timer-list* (delete timer *timer-list*)))
-    (setf *idle-timer-list* new-idle-timers)))
+  (progn
+    (setf *is-in-idle* nil)
+    (setf *idle-timer-list* (nconc *processed-idle-timer-list* *idle-timer-list*))
+    (setf *processed-idle-timer-list* '())))

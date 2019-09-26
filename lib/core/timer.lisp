@@ -108,14 +108,12 @@
     (not (null update-timers))))
 
 (defun shortest-wait-timers ()
-  (let ((min nil))
-    (dolist (timer *timer-list*)
-      (let ((v (- (timer-ms timer)
-                  (- (get-internal-real-time)
-                     (timer-last-time timer)))))
-        (when (or (null min) (< v min))
-          (setf min v))))
-    min))
+  (if (null *timer-list*)
+      nil
+      (loop :for timer :in *timer-list*
+            :minimize (- (timer-ms timer)
+                         (- (get-internal-real-time)
+                            (timer-last-time timer))))))
 
 (defun exist-running-timer-p ()
   (not (null *timer-list*)))

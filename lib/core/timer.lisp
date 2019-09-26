@@ -54,6 +54,9 @@
 (defun timer-p (x)
   (typep x 'timer))
 
+(defun timer-next-time (timer)
+  (+ (timer-last-time timer) (timer-ms timer)))
+
 (defun start-timer (ms repeat-p function &optional handle-function name)
   (let ((timer (make-instance 'timer
                               :name (or name
@@ -80,22 +83,25 @@
      (setf *timer-list* (delete timer *timer-list*)))))
 
 (defun update-timer ()
-  (let ((promised-timers)
-        (update-timers))
-    (dolist (timer *timer-list*)
-      (when (< (timer-ms timer)
-               (- (get-internal-real-time)
-                  (timer-last-time timer)))
-        (push timer update-timers)
-        (cond ((and (timer-repeat-p timer)
-                    (not (timer-idle-p timer)))
-               (setf (timer-last-time timer)
-                     (get-internal-real-time)))
-              (t
-               (unless (timer-idle-p timer)
-                 (setf (timer-alive-p timer) nil))
-               (push timer promised-timers)))))
-    (setq *timer-list* (set-difference *timer-list* promised-timers))
+  (let* ((tick-time (get-internal-real-time))
+         (update-timers (remove-if-not (lambda (timer)
+                                         (< (timer-next-time timer) tick-time))
+                                       *timer-list*))
+         (deleted-timers (remove-if-not (lambda (timer)
+                                          (or (timer-idle-p timer)
+                                              (not (timer-repeat-p timer))))
+                                        update-timers)))
+    (dolist (timer deleted-timers)
+      (unless (and (timer-idle-p timer)
+                   (timer-repeat-p timer))
+        (setf (timer-alive-p timer) nil)))
+    ;; Not so efficient, but it will be enough.
+    (setf *timer-list* (set-difference *timer-list* deleted-timers))
+
+    (dolist (timer update-timers)
+      (unless (and (timer-idle-p timer)
+                   (timer-repeat-p timer))
+        (setf (timer-last-time timer) tick-time)))
     (dolist (timer update-timers)
       (handler-case
           (if (timer-handle-function timer)
@@ -110,10 +116,9 @@
 (defun shortest-wait-timers ()
   (if (null *timer-list*)
       nil
-      (loop :for timer :in *timer-list*
-            :minimize (- (timer-ms timer)
-                         (- (get-internal-real-time)
-                            (timer-last-time timer))))))
+      (- (loop :for timer :in *timer-list*
+               :minimize (timer-next-time timer))
+         (get-internal-real-time))))
 
 (defun exist-running-timer-p ()
   (not (null *timer-list*)))

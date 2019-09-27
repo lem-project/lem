@@ -45,17 +45,19 @@
 
 (defun read-key-1 ()
   (loop
-    (let ((ms (shortest-wait-timers)))
-      (if (null ms)
-          (loop :for obj := (read-event nil)
-                :do (when (key-p obj)
-                      (return-from read-key-1 obj)))
-          (if (minusp ms)
-              (update-timer)
-              (let ((e (read-event (float (/ ms 1000)))))
-                (if (key-p e)
-                    (return e)
-                    (update-timer))))))))
+    (let ((ms (get-next-timer-timing-ms)))
+      (cond ((null ms)
+             (loop
+              (let ((e (read-event nil)))
+                (when (key-p e)
+                  (return-from read-key-1 e)))))
+            ((minusp ms)
+             (update-timer))
+            (t
+             (let ((e (read-event (float (/ ms 1000)))))
+               (when (key-p e)
+                 (return e)))
+             (update-timer))))))
 
 (defun read-key ()
   (let ((key (if (null *unread-keys*)

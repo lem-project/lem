@@ -122,7 +122,7 @@
     (redraw-display)
     (not (null updating-timers))))
 
-(defun shortest-wait-timers ()
+(defun get-next-timer-timing-ms ()
   (let ((timers (if *is-in-idle*
                     (append *timer-list* *idle-timer-list*)
                     *timer-list*)))

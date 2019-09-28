@@ -68,12 +68,13 @@
        (apply #'values (car ptr)))))
 
 (defun kill-ring-rotate ()
-  (destructuring-bind (head &rest tail)
-      *kill-ring-yank-ptr*
-    (setf *kill-ring-yank-ptr*
-          (or tail *kill-ring*))
-    (setf *kill-ring-yank-ptr-prev*
-          (and tail (list head)))))
+  (when *kill-ring-yank-ptr*
+    (destructuring-bind (head &rest tail)
+        *kill-ring-yank-ptr*
+      (setf *kill-ring-yank-ptr*
+            (or tail *kill-ring*))
+      (setf *kill-ring-yank-ptr-prev*
+            (and tail (list head))))))
 
 (defun kill-ring-rotate-undo ()
   (setf *kill-ring-yank-ptr*

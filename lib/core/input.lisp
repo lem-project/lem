@@ -57,7 +57,15 @@
              (let ((e (read-event (float (/ ms 1000)))))
                (when (key-p e)
                  (return e)))
-             (update-timer))))))
+             ;; Note:
+             ;;   This call of `update-timer` is essentially redundant.
+             ;;   The call have effect iff `cond` of next iteration falls into `minusp` clause.
+             ;;   The difference of existance of the call is, there was possibility of consecutive
+             ;;   two call of `update-timer` both have effect.
+             ;;   I think we should forbid this case.  It may include difficulty, e.g., for debugging.
+             ;;   c.f. https://github.com/cxxxr/lem/pull/430
+             ;; (update-timer)
+             )))))
 
 (defun read-key ()
   (let ((key (if (null *unread-keys*)

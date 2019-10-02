@@ -2,26 +2,38 @@
   (:use :cl
         :lem
         :lem.completion-mode
-        :lem.language-mode)
+        :lem.language-mode
+        :lem-scheme-mode.errors
+        :lem-scheme-mode.swank-protocol
+        :lem-scheme-mode.util)
   (:export
    ;; scheme-mode.lisp
+   :scheme-mode
    :*scheme-mode-keymap*
    :*scheme-mode-hook*
    :*scheme-run-command*
    :*scheme-load-command*
+   :*use-scheme-slime*
+   :*scheme-swank-server-run-command*
    :*scheme-completion-names*
    :scheme-keyword-data
    :scheme-beginning-of-defun
    :scheme-end-of-defun
    :scheme-indent-sexp
-   :scheme-load-file
+   ;; swank-connection
+   :scheme-slime-connect
+   :scheme-slime
    ;; eval.lisp
    :scheme-kill-process
-   :scheme-eval-last-expression
-   :scheme-eval-region
    ;; repl.lisp
    :scheme-repl-mode
+   :scheme-repl-input-mode
    :*scheme-repl-mode-keymap*
+   :*scheme-repl-input-mode-keymap*
    :start-scheme-repl
    :scheme-switch-to-repl-buffer
-   :scheme-eval-or-newline))
+   :scheme-eval-or-newline
+   :scheme-eval-last-expression
+   :scheme-eval-region
+   :scheme-load-file
+   :scheme-repl-shortcut))

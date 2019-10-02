@@ -1,10 +1,20 @@
 (in-package :lem-scheme-mode)
 
+(defvar *connection* nil)
+
 (define-major-mode scheme-mode language-mode
     (:name "scheme"
      :keymap *scheme-mode-keymap*
      :syntax-table lem-scheme-syntax:*syntax-table*
      :mode-hook *scheme-mode-hook*)
+  (modeline-add-status-list (lambda (window)
+                              (format nil " [~A~A]" (buffer-package (window-buffer window) "user")
+                                      (if *connection*
+                                          (format nil " ~A:~A"
+                                                  (connection-implementation-name *connection*)
+                                                  (connection-pid *connection*))
+                                          "")))
+                            (current-buffer))
   (setf (variable-value 'beginning-of-defun-function) 'scheme-beginning-of-defun)
   (setf (variable-value 'end-of-defun-function) 'scheme-end-of-defun)
   (setf (variable-value 'indent-tabs-mode) nil)
@@ -12,18 +22,46 @@
   (setf (variable-value 'calc-indent-function) 'scheme-calc-indent)
   (setf (variable-value 'line-comment) ";")
   (setf (variable-value 'insertion-line-comment) ";; ")
-  (setf (variable-value 'completion-spec) 'scheme-completion)
+  (setf (variable-value 'xref-mode-tag) 'scheme-mode)
+  (setf (variable-value 'find-definitions-function) 'find-definitions)
+  (setf (variable-value 'find-references-function) 'find-references)
+  (setf (variable-value 'completion-spec) 'completion-symbol)
+  (setf (variable-value 'idle-function) 'scheme-idle-function)
   (set-syntax-parser lem-scheme-syntax:*syntax-table* (make-tmlanguage-scheme)))
 
 (define-key *scheme-mode-keymap* "C-M-q" 'scheme-indent-sexp)
+(define-key *scheme-mode-keymap* "C-c M-p" 'scheme-set-library)
+(define-key *scheme-mode-keymap* "C-c M-:" 'scheme-eval-string)
 (define-key *scheme-mode-keymap* "C-c C-e" 'scheme-eval-last-expression)
+(define-key *scheme-mode-keymap* "C-M-x" 'scheme-eval-define)
 (define-key *scheme-mode-keymap* "C-c C-r" 'scheme-eval-region)
 (define-key *scheme-mode-keymap* "C-c C-l" 'scheme-load-file)
+(define-key *scheme-mode-keymap* "C-c M-c" 'scheme-remove-notes)
+(define-key *scheme-mode-keymap* "C-c C-k" 'scheme-compile-and-load-file)
+(define-key *scheme-mode-keymap* "C-c C-c" 'scheme-compile-define)
+(define-key *scheme-mode-keymap* "C-c Return" 'scheme-macroexpand)
+(define-key *scheme-mode-keymap* "C-c M-m" 'scheme-macroexpand-all)
+(define-key *scheme-mode-keymap* "C-c C-d C-a" 'scheme-autodoc-with-typeout)
+(define-key *scheme-mode-keymap* "C-c C-d d" 'scheme-describe-symbol)
 (define-key *scheme-mode-keymap* "C-c C-z" 'scheme-switch-to-repl-buffer)
 (define-key *scheme-mode-keymap* "C-c z" 'scheme-switch-to-repl-buffer)
+(define-key *scheme-mode-keymap* "C-c C-b" 'scheme-connection-list)
+(define-key *scheme-mode-keymap* "C-c g" 'scheme-interrupt)
 
+;; for scheme process
 (defvar *scheme-run-command* '("gosh" "-i"))
 (defvar *scheme-load-command* "load") ; it might be "include" for R6RS Scheme
+
+;; for scheme slime
+;;  *use-scheme-slime*
+;;    t     : enable scheme slime commands
+;;    :auto : enable only 'scheme-slime' and 'scheme-slime-connect' commands.
+;;            other scheme slime commands are disabled until executing
+;;            'scheme-slime' or 'scheme-slime-connect' command.
+;;    nil   : disable scheme slime commands
+(defvar *use-scheme-slime* :auto)
+(defvar *scheme-swank-server-run-command*
+  '("gosh" "-AC:/work/r7rs-swank" "-e(begin (import (gauche-swank)) (start-swank ,port))"))
 
 (defvar *scheme-completion-names*
   (lem-scheme-syntax:get-scheme-completion-data))
@@ -34,12 +72,13 @@
   ;; update base data
   (setf lem-scheme-syntax.data::*scheme-data* v)
   ;; update completion data
-  (setf lem-scheme-mode:*scheme-completion-names*
+  (setf *scheme-completion-names*
         (lem-scheme-syntax:get-scheme-completion-data))
   ;; update indentation data
   (setf lem-scheme-syntax.indent::*static-indent-table*
         (lem-scheme-syntax.indent::make-static-indent-table))
   v)
+
 (defun scheme-calc-indent (point)
   (lem-scheme-syntax:calc-indent point))
 
@@ -73,31 +112,68 @@
     (when (form-offset end 1)
       (indent-region (current-point) end))))
 
-(defun scheme-completion (point)
-  (with-point ((start point)
-               (end point))
-    (skip-chars-backward start #'syntax-symbol-char-p)
-    (skip-chars-forward end #'syntax-symbol-char-p)
-    (when (point< start end)
-      (mapcar (lambda (name)
-                (make-completion-item :label name
-                                      :start start
-                                      :end end))
-              (completion (points-to-string start end)
-                          *scheme-completion-names*
-                          :test #'alexandria:starts-with-subseq)))))
-
-(define-command scheme-load-file (filename)
-    ((list (prompt-for-file "Load File: " (or (buffer-filename) (buffer-directory)) nil t)))
-  (scheme-run-process-and-output-newline)
-  (when (and (probe-file filename)
-             (not (uiop:directory-pathname-p filename)))
-    (scheme-send-input (format nil "(~a \"~a\")" *scheme-load-command* filename))))
-
 (define-command scheme-scratch () ()
   (let ((buffer (make-buffer "*tmp*")))
     (change-buffer-mode buffer 'scheme-mode)
     (switch-to-buffer buffer)))
+
+;; for r7rs-swank (disable/enable scheme slime commands)
+(defvar *scheme-slime-command-table* (make-hash-table :test 'equal))
+(defvar *scheme-slime-commands-1*
+  '(scheme-slime-connect
+    scheme-slime))
+(defvar *scheme-slime-commands-2*
+  '(scheme-repl-interrupt
+    scheme-connection-list
+    scheme-set-library
+    scheme-interrupt
+    scheme-eval-string
+    scheme-eval-define
+    scheme-echo-arglist
+    scheme-autodoc-with-typeout
+    scheme-autodoc
+    scheme-remove-notes
+    scheme-compile-and-load-file
+    scheme-compile-region
+    scheme-compile-define
+    scheme-macroexpand
+    scheme-macroexpand-all
+    scheme-describe-symbol
+    scheme-slime-quit
+    scheme-slime-restart))
+(defun disable-scheme-slime-commands ()
+  (flet ((disable-commands (cmds)
+           (loop :for cmd in cmds
+                 :with cmd-str
+                 :do (setf cmd-str (string-downcase cmd))
+                     (multiple-value-bind (value exists)
+                         (gethash cmd-str lem::*command-table*)
+                       (when exists
+                         (setf (gethash cmd-str *scheme-slime-command-table*) value)
+                         (remhash cmd-str lem::*command-table*))))))
+    (case *use-scheme-slime*
+      ((:auto)
+       (disable-commands *scheme-slime-commands-2*))
+      ((nil)
+       (disable-commands *scheme-slime-commands-1*)
+       (disable-commands *scheme-slime-commands-2*)))))
+(defun enable-scheme-slime-commands ()
+  (flet ((enable-commands (cmds)
+           (loop :for cmd in cmds
+                 :with cmd-str
+                 :do (setf cmd-str (string-downcase cmd))
+                     (setf (gethash cmd-str lem::*command-table*)
+                           (gethash cmd-str *scheme-slime-command-table*)))))
+    (case *use-scheme-slime*
+      ((:auto)
+       (multiple-value-bind (value exists)
+           (gethash (string-downcase (car *scheme-slime-commands-2*))
+                    lem::*command-table*)
+         (declare (ignore value))
+         (when exists
+           (return-from enable-scheme-slime-commands)))
+       (enable-commands *scheme-slime-commands-2*)))))
+(add-hook *after-init-hook* #'disable-scheme-slime-commands)
 
 (pushnew (cons "\\.scm$" 'scheme-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons "\\.sld$" 'scheme-mode) *auto-mode-alist* :test #'equal)

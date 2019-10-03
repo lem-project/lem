@@ -1,5 +1,8 @@
 (defsystem "lem-scheme-mode"
   :depends-on ("alexandria"
+               "trivial-types"
+               "usocket"
+               "optima"
                "uiop"
                #+#.(cl:if (asdf:find-system :async-process cl:nil) '(and) '(or)) "lem-process"
                "lem-core")
@@ -8,11 +11,15 @@
                (:file "syntax-indent")
                (:file "syntax-syntax-table")
                (:file "syntax-misc")
+               (:file "syntax-parse")
                (:file "lem-scheme-syntax")
+               (:file "util")
+               (:file "errors")
+               (:file "swank-protocol")
                (:file "package")
                (:file "grammer")
                (:file "scheme-mode")
+               (:file "swank-connection")
                #+#.(cl:if (asdf:find-system :async-process cl:nil) '(and) '(or))
                (:file "eval")
-               #+#.(cl:if (asdf:find-system :async-process cl:nil) '(and) '(or))
                (:file "repl")))

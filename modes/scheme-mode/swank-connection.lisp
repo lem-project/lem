@@ -15,7 +15,7 @@
 (defparameter *localhost* "127.0.0.1")
 
 (defvar *connection-list* '())
-;(defvar *connection* nil) ; move to scheme-mode.lisp
+(defvar *connection* nil)
 (defvar *event-hooks* '())
 (defvar *write-string-function* 'write-string-to-repl)
 (defvar *last-compilation-result* nil)
@@ -52,6 +52,14 @@
   ;(change-current-connection (car *connection-list*))
   (setf *connection* (car *connection-list*))
   *connection*)
+
+(defun connection-mode-line (window)
+  (format nil " [~A~A]" (buffer-package (window-buffer window) "user")
+          (if *connection*
+              (format nil " ~A:~A"
+                      (connection-implementation-name *connection*)
+                      (connection-pid *connection*))
+              "")))
 
 (define-command scheme-connection-list () ()
   (lem.menu-mode:display-menu
@@ -300,6 +308,11 @@
 (let (autodoc-symbol)
   (defun autodoc (function)
     (let ((context (lem-scheme-syntax:parse-for-swank-autodoc (current-point))))
+
+      ;; for r7rs-swank (error check)
+      (unless context
+        (return-from autodoc))
+
       (unless autodoc-symbol
         (setf autodoc-symbol (intern "AUTODOC" :swank))
 
@@ -470,36 +483,46 @@
       (scan-lists end 1 0)
       (scheme-compile-region start end))))
 
-(defun form-string-at-point ()
-  (with-point ((point (current-point)))
-    (skip-chars-backward point #'syntax-symbol-char-p)
-    (with-point ((start point)
-                 (end point))
-      (form-offset end 1)
-      (points-to-string start end))))
+;(defun form-string-at-point ()
+;  (with-point ((point (current-point)))
+(defun form-string-at-point (point)
+  (skip-chars-backward point #'syntax-symbol-char-p)
+  (with-point ((start point)
+               (end point))
+    (form-offset end 1)
+    (points-to-string start end)))
 
 (defun macroexpand-internal (expander)
   (let* ((self (eq (current-buffer) (get-buffer "*scheme-macroexpand*")))
          (orig-package-name (buffer-package (current-buffer) "user"))
-         (p (and self (copy-point (current-point) :temporary))))
-    (scheme-eval-async `(,expander ,(form-string-at-point))
-                       (lambda (string)
-                         (let ((buffer (make-buffer "*scheme-macroexpand*")))
-                           (with-buffer-read-only buffer nil
-                             (unless self (erase-buffer buffer))
-                             (change-buffer-mode buffer 'scheme-mode)
-                             (setf (buffer-package buffer) orig-package-name)
-                             (when self
-                               (move-point (current-point) p)
-                               (kill-sexp))
-                             (insert-string (buffer-point buffer)
-                                            string)
-                             (indent-region (buffer-start-point buffer)
-                                            (buffer-end-point buffer))
-                             (with-pop-up-typeout-window (s buffer)
-                               (declare (ignore s)))
-                             (when self
-                               (move-point (buffer-point buffer) p))))))))
+         ;(p (and self (copy-point (current-point) :temporary)))
+         )
+
+    (with-point ((p (current-point)))
+
+      ;; move to the outside of parentheses
+      ;(maybe-beginning-of-string p)
+      (unless (char= #\( (character-at p))
+        (scan-lists p -1 1 t))
+
+      (scheme-eval-async `(,expander ,(form-string-at-point p))
+                         (lambda (string)
+                           (let ((buffer (make-buffer "*scheme-macroexpand*")))
+                             (with-buffer-read-only buffer nil
+                               (unless self (erase-buffer buffer))
+                               (change-buffer-mode buffer 'scheme-mode)
+                               (setf (buffer-package buffer) orig-package-name)
+                               (when self
+                                 (move-point (current-point) p)
+                                 (kill-sexp))
+                               (insert-string (buffer-point buffer)
+                                              string)
+                               (indent-region (buffer-start-point buffer)
+                                              (buffer-end-point buffer))
+                               (with-pop-up-typeout-window (s buffer)
+                                 (declare (ignore s)))
+                               (when self
+                                 (move-point (buffer-point buffer) p)))))))))
 
 (define-command scheme-macroexpand () ()
   (check-connection)
@@ -1025,7 +1048,7 @@
     (loop
       (multiple-value-bind (result groups)
           (looking-at (line-start p)
-          ;            "^\\s*\\((?:cl:)?in-package (?:#?:|')?([^\)]*)\\)")
+                      ;"^\\s*\\((?:cl:)?in-package (?:#?:|')?([^\)]*)\\)")
                       "^\\s*\\(select-module\\s*([^\)]*)\\)")
         (when result
           (let ((package (aref groups 0)))
@@ -1041,11 +1064,16 @@
 
 (defun scheme-idle-function ()
   (when (connected-p)
-    (let ((major-mode (buffer-major-mode (current-buffer))))
-      (when (eq major-mode 'scheme-mode) (update-buffer-package))
-      (when (member major-mode '(scheme-mode scheme-repl-mode))
-        (unless (active-echoarea-p)
-          (scheme-autodoc))))))
+
+    ;; for r7rs-swank (error check)
+    (handler-case
+        (let ((major-mode (buffer-major-mode (current-buffer))))
+          (when (eq major-mode 'scheme-mode) (update-buffer-package))
+          (when (member major-mode '(scheme-mode scheme-repl-mode))
+            (unless (active-echoarea-p)
+              (scheme-autodoc))))
+      (error () (ignore-errors (interactive-eval "(exit)"))
+                (remove-connection *connection*)))))
 
 (defun highlight-region (start end attribute name)
   (let ((overlay (make-overlay start end attribute)))

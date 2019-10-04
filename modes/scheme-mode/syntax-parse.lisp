@@ -10,7 +10,15 @@
 
 (defun parse-for-swank-autodoc (point)
   (and (parsing-safe-p point)
-       (parse-form-upto-toplevel point 10)))
+       ;(parse-form-upto-toplevel point 10)
+
+       ;; for r7rs-swank (empty string causes error)
+       (let ((ret (parse-form-upto-toplevel point 10)))
+         (if (and (consp ret)
+                  (stringp (car ret))
+                  (string= (car ret) ""))
+             nil
+             ret))))
 
 (defun compare-char (point offset fn &optional unescape)
   (and (funcall fn (character-at point offset))

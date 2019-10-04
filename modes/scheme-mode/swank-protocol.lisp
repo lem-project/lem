@@ -53,7 +53,7 @@
      (let ((*package* (find-package :swank-io-package))
            (*print-case* :downcase)
            ;; for r7rs-swank
-           ;;  (string literal '#a((32) common-lisp:base-char . "filepath")'
+           ;;  (string literal such as '#a((32) common-lisp:base-char . "filepath")'
            ;;   is not accepted)
            (*print-readably* nil))
        ,@body)))
@@ -236,9 +236,6 @@ This function will block until it reads everything. Consider message-waiting-p
 to check if input is available."
   (let* ((socket (connection-socket connection))
          (stream (usocket:socket-stream socket)))
-    ;(when (usocket:wait-for-input socket :timeout 5)
-    ;  (let ((msg (read-message-from-stream stream)))
-    ;    msg))))
     (read-message-from-stream stream)))
 
 (defun send-message-string (connection message)
@@ -263,28 +260,27 @@ to check if input is available."
 
 (defun message-waiting-p (connection &key (timeout 0))
   "t if there's a message in the connection waiting to be read, nil otherwise."
-
-  ;; check stream buffer
   (let* ((socket (connection-socket connection))
          (stream (usocket:socket-stream socket)))
-    (if (listen stream)
-        (return-from message-waiting-p t)))
 
-  ;; workaround for windows
-  ;;  (usocket:wait-for-input needs WSAResetEvent before call)
-  #+(and sbcl win32)
-  (let ((socket (connection-socket connection)))
+    ;; check stream buffer
+    (when (listen stream)
+      (return-from message-waiting-p t))
+
+    ;; workaround for windows
+    ;;  (usocket:wait-for-input needs WSAResetEvent before call)
+    #+(and sbcl win32)
     (when (usocket::wait-list socket)
       (wsa-reset-event
        (usocket::os-wait-list-%wait
-        (usocket::wait-list socket)))))
+        (usocket::wait-list socket))))
 
-  ;; check socket buffer
-  (if (usocket:wait-for-input (connection-socket connection)
-                              :ready-only t
-                              :timeout timeout)
-      t
-      nil))
+    ;; check socket status
+    (if (usocket:wait-for-input (connection-socket connection)
+                                :ready-only t
+                                :timeout timeout)
+        t
+        nil)))
 
 ;;; Sending messages
 

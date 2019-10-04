@@ -1,20 +1,11 @@
 (in-package :lem-scheme-mode)
 
-(defvar *connection* nil)
-
 (define-major-mode scheme-mode language-mode
     (:name "scheme"
      :keymap *scheme-mode-keymap*
      :syntax-table lem-scheme-syntax:*syntax-table*
      :mode-hook *scheme-mode-hook*)
-  (modeline-add-status-list (lambda (window)
-                              (format nil " [~A~A]" (buffer-package (window-buffer window) "user")
-                                      (if *connection*
-                                          (format nil " ~A:~A"
-                                                  (connection-implementation-name *connection*)
-                                                  (connection-pid *connection*))
-                                          "")))
-                            (current-buffer))
+  (modeline-add-status-list 'connection-mode-line (current-buffer))
   (setf (variable-value 'beginning-of-defun-function) 'scheme-beginning-of-defun)
   (setf (variable-value 'end-of-defun-function) 'scheme-end-of-defun)
   (setf (variable-value 'indent-tabs-mode) nil)
@@ -48,11 +39,22 @@
 (define-key *scheme-mode-keymap* "C-c C-b" 'scheme-connection-list)
 (define-key *scheme-mode-keymap* "C-c g" 'scheme-interrupt)
 
-;; for scheme process
+
+;; There are two methods for connecting to Scheme processing system.
+;; One is 'scheme process' executed by async-process library
+;; (https://github.com/cxxxr/async-process is required).
+;; Another is 'scheme slime' function using r7rs-swank server
+;; (https://github.com/ecraven/r7rs-swank is required).
+;;
+;; By default, 'scheme process' is used to evaluate a scheme program.
+;; But, after executing 'scheme-slime' or 'scheme-slime-connect' command,
+;; 'scheme slime' function is used to evaluate a scheme program.
+
+;; settings for 'scheme process'
 (defvar *scheme-run-command* '("gosh" "-i"))
 (defvar *scheme-load-command* "load") ; it might be "include" for R6RS Scheme
 
-;; for scheme slime
+;; settings for 'scheme slime'
 ;;  *use-scheme-slime*
 ;;    t     : enable scheme slime commands
 ;;    :auto : enable only 'scheme-slime' and 'scheme-slime-connect' commands.
@@ -62,6 +64,7 @@
 (defvar *use-scheme-slime* :auto)
 (defvar *scheme-swank-server-run-command*
   '("gosh" "-AC:/work/r7rs-swank" "-e(begin (import (gauche-swank)) (start-swank ,port))"))
+
 
 (defvar *scheme-completion-names*
   (lem-scheme-syntax:get-scheme-completion-data))
@@ -173,7 +176,7 @@
          (when exists
            (return-from enable-scheme-slime-commands)))
        (enable-commands *scheme-slime-commands-2*)))))
-(add-hook *after-init-hook* #'disable-scheme-slime-commands)
+(add-hook *after-init-hook* 'disable-scheme-slime-commands)
 
 (pushnew (cons "\\.scm$" 'scheme-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons "\\.sld$" 'scheme-mode) *auto-mode-alist* :test #'equal)

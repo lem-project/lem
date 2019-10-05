@@ -51,6 +51,10 @@
 ;; 'scheme slime' function is used to evaluate a scheme program.
 
 ;; settings for 'scheme process'
+;;  *use-scheme-process*
+;;    t     : enable scheme process commands
+;;    nil   : disable scheme process commands
+(defvar *use-scheme-process* t)
 (defvar *scheme-run-command* '("gosh" "-i"))
 (defvar *scheme-load-command* "load") ; it might be "include" for R6RS Scheme
 
@@ -122,6 +126,31 @@
     (change-buffer-mode buffer 'scheme-mode)
     (switch-to-buffer buffer)))
 
+(defun disable-commands (cmds &optional cmds-backup-table)
+  (loop :for cmd in cmds
+        :with cmd-str
+        :do (setf cmd-str (string-downcase cmd))
+            (multiple-value-bind (value exists)
+                (gethash cmd-str lem::*command-table*)
+              (when exists
+                (when cmds-backup-table
+                  (setf (gethash cmd-str cmds-backup-table) value))
+                (remhash cmd-str lem::*command-table*)))))
+
+(defun enable-commands (cmds cmds-backup-table)
+  (loop :for cmd in cmds
+        :with cmd-str
+        :do (setf cmd-str (string-downcase cmd))
+            (setf (gethash cmd-str lem::*command-table*)
+                  (gethash cmd-str cmds-backup-table))))
+
+;; for scheme process (disable scheme process commands)
+(let ((cmds-1 '(scheme-kill-process)))
+  (defun disable-scheme-process-commands ()
+    (unless *use-scheme-process*
+      (disable-commands cmds-1)))
+  (add-hook *after-init-hook* 'disable-scheme-process-commands))
+
 ;; for r7rs-swank (disable/enable scheme slime commands)
 (let ((cmds-backup-table (make-hash-table :test 'equal))
       (cmds-1 '(scheme-slime-connect
@@ -145,37 +174,20 @@
                 scheme-slime-quit
                 scheme-slime-restart)))
   (defun disable-scheme-slime-commands ()
-    (flet ((disable-commands (cmds)
-             (loop :for cmd in cmds
-                   :with cmd-str
-                   :do (setf cmd-str (string-downcase cmd))
-                       (multiple-value-bind (value exists)
-                           (gethash cmd-str lem::*command-table*)
-                         (when exists
-                           (setf (gethash cmd-str cmds-backup-table) value)
-                           (remhash cmd-str lem::*command-table*))))))
-      (case *use-scheme-slime*
-        ((:auto)
-         (disable-commands cmds-2))
-        ((nil)
-         (disable-commands cmds-1)
-         (disable-commands cmds-2)))))
+    (case *use-scheme-slime*
+      ((:auto)
+       (disable-commands cmds-2 cmds-backup-table))
+      ((nil)
+       (disable-commands cmds-1)
+       (disable-commands cmds-2))))
   (defun enable-scheme-slime-commands ()
-    (flet ((enable-commands (cmds)
-             (loop :for cmd in cmds
-                   :with cmd-str
-                   :do (setf cmd-str (string-downcase cmd))
-                       (setf (gethash cmd-str lem::*command-table*)
-                             (gethash cmd-str cmds-backup-table)))))
-      (case *use-scheme-slime*
-        ((:auto)
-         (multiple-value-bind (value exists)
-             (gethash (string-downcase (car cmds-2))
-                      lem::*command-table*)
-           (declare (ignore value))
-           (when exists
-             (return-from enable-scheme-slime-commands)))
-         (enable-commands cmds-2)))))
+    (case *use-scheme-slime*
+      ((:auto)
+       (multiple-value-bind (value exists)
+           (gethash (string-downcase (car cmds-2)) lem::*command-table*)
+         (declare (ignore value))
+         (unless exists
+           (enable-commands cmds-2 cmds-backup-table))))))
   (add-hook *after-init-hook* 'disable-scheme-slime-commands))
 
 (pushnew (cons "\\.scm$" 'scheme-mode) *auto-mode-alist* :test #'equal)

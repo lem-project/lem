@@ -36,20 +36,23 @@
      (cond
        ((connected-p)
         :scheme-slime)
-       ((boundp '*scheme-process*)
+       ((and *use-scheme-process*
+             (boundp '*scheme-process*))
         :scheme-process)))
     ((:current)
      (cond
        ((eq (repl-buffer) (current-buffer))
         :scheme-slime)
-       ((and (boundp '*scheme-process*)
+       ((and *use-scheme-process*
+             (boundp '*scheme-process*)
              (eq (scheme-process-buffer :auto-make nil) (current-buffer)))
         :scheme-process)))
     (t
      (cond
        ((repl-buffer)
         :scheme-slime)
-       ((and (boundp '*scheme-process*)
+       ((and *use-scheme-process*
+             (boundp '*scheme-process*)
              (scheme-process-buffer :auto-make nil))
         :scheme-process)))))
 
@@ -198,13 +201,17 @@
                 *scheme-repl-shortcuts* :test #'equal))))
 
 (define-command scheme-repl-shortcut (n) ("p")
-  (with-point ((point (current-point)))
-    (if (point>= (lem.listener-mode::listener-start-point (current-buffer)) point)
-        (let ((fun (prompt-for-shortcuts)))
-          (when fun
-            (funcall fun n)))
-        (let ((c (insertion-key-p (last-read-key-sequence))))
-          (insert-character point c n)))))
+  (case (scheme-repl-type :kind :current)
+    ((:scheme-slime :scheme-process)
+     (with-point ((point (current-point)))
+       (if (point>= (lem.listener-mode::listener-start-point (current-buffer)) point)
+           (let ((fun (prompt-for-shortcuts)))
+             (when fun
+               (funcall fun n)))
+           (let ((c (insertion-key-p (last-read-key-sequence))))
+             (insert-character point c n)))))
+    (t
+     (editor-error "You are not in repl."))))
 
 (defmacro define-repl-shortcut (name lambda-list &body body)
   (if (symbolp lambda-list)

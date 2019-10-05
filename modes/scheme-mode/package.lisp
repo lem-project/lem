@@ -11,6 +11,7 @@
    :scheme-mode
    :*scheme-mode-keymap*
    :*scheme-mode-hook*
+   :*use-scheme-process*
    :*scheme-run-command*
    :*scheme-load-command*
    :*use-scheme-slime*

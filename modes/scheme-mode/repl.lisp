@@ -150,7 +150,7 @@
        ;       (swank:load-file ,filename))))
        (scheme-eval-from-string
         (format nil "(swank:load-file ~S)" filename))
-       ))
+       (message "Loaded.")))
     ((eq (scheme-repl-type :kind :initial) :scheme-process)
      (scheme-run-process-and-output-newline)
      (when (and (probe-file filename)

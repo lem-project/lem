@@ -42,6 +42,7 @@
                              *scheme-run-command*
                              :name "scheme"
                              :output-callback #'scheme-output-callback))
+     (message "Scheme process started.")
      t)
     (t nil)))
 

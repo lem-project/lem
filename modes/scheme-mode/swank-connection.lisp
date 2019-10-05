@@ -1007,12 +1007,9 @@
     (prog1 (when (connection-command *connection*)
              ;(scheme-rex '(uiop:quit))
              ;(scheme-rex '(swank:quit-lisp))
-             (interactive-eval "(exit)")
+             (ignore-errors (interactive-eval "(exit)"))
              t)
       (remove-connection *connection*))))
-
-(defun slime-quit* ()
-  (ignore-errors (scheme-slime-quit)))
 
 (defun slime-quit-all ()
   (flet ((find-connection ()
@@ -1022,10 +1019,7 @@
     (loop
       (let ((*connection* (find-connection)))
         (unless *connection* (return))
-        ;(ignore-errors (scheme-rex '(uiop:quit)))
-        ;(ignore-errors (scheme-rex '(swank:quit-lisp)))
-        (ignore-errors (interactive-eval "(exit)"))
-        (remove-connection *connection*)))))
+        (scheme-slime-quit)))))
 
 (defun sit-for* (second)
   (loop :with end-time := (+ (get-internal-real-time)
@@ -1072,8 +1066,7 @@
           (when (member major-mode '(scheme-mode scheme-repl-mode))
             (unless (active-echoarea-p)
               (scheme-autodoc))))
-      (error () (ignore-errors (interactive-eval "(exit)"))
-                (remove-connection *connection*)))))
+      (error () (scheme-slime-quit)))))
 
 (defun highlight-region (start end attribute name)
   (let ((overlay (make-overlay start end attribute)))

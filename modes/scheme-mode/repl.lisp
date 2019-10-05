@@ -321,20 +321,24 @@
   (when (string= (string-trim '(#\space #\tab) string) "")
     (setf string "(values)"))
 
-  (request-listener-eval
-   *connection*
-   string
-   (lambda (value)
-     (declare (ignore value))
-     (lem.listener-mode:listener-reset-prompt (repl-buffer))
-     (when *record-history-of-repl*
-       (start-timer 0 nil
-                    (lambda ()
-                      (when (position-if (complement #'syntax-space-char-p) string)
-                        (push (cons string (scheme-eval-from-string "CL:/" "CL"))
-                              *repl-history*))))))
-   ;(repl-buffer-width)
-   ))
+  ;; for r7rs-swank (error check)
+  (handler-case
+      (request-listener-eval
+       *connection*
+       string
+       (lambda (value)
+         (declare (ignore value))
+         (lem.listener-mode:listener-reset-prompt (repl-buffer))
+         (when *record-history-of-repl*
+           (start-timer 0 nil
+                        (lambda ()
+                          (when (position-if (complement #'syntax-space-char-p) string)
+                            (push (cons string (scheme-eval-from-string "CL:/" "CL"))
+                                  *repl-history*))))))
+       ;(repl-buffer-width)
+       )
+    (error () (scheme-slime-quit)
+              (editor-error "No connection for repl. (eval failed)"))))
 
 (defun repl-read-string (thread tag)
   (unless (repl-buffer) (start-scheme-repl))
@@ -487,7 +491,6 @@
   ;    ))
   (case (scheme-repl-type)
     ((:scheme-slime)
-     (check-connection)
      (scheme-slime-quit))
     ((:scheme-process)
      (scheme-kill-process))

@@ -53,7 +53,7 @@
      (let ((*package* (find-package :swank-io-package))
            (*print-case* :downcase)
            ;; for r7rs-swank
-           ;;  (string literal such as '#a((32) common-lisp:base-char . "filepath")'
+           ;;  (string literal such as '#a((8) common-lisp:base-char . "filepath")'
            ;;   is not accepted)
            (*print-readably* nil))
        ,@body)))
@@ -276,7 +276,7 @@ to check if input is available."
         (usocket::wait-list socket))))
 
     ;; check socket status
-    (if (usocket:wait-for-input (connection-socket connection)
+    (if (usocket:wait-for-input socket
                                 :ready-only t
                                 :timeout timeout)
         t

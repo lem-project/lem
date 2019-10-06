@@ -128,9 +128,8 @@
 
 (defun disable-commands (cmds &optional cmds-backup-table)
   (loop :for cmd in cmds
-        :with cmd-str
-        :do (setf cmd-str (string-downcase cmd))
-            (multiple-value-bind (value exists)
+        :for cmd-str := (string-downcase cmd)
+        :do (multiple-value-bind (value exists)
                 (gethash cmd-str lem::*command-table*)
               (when exists
                 (when cmds-backup-table
@@ -139,10 +138,15 @@
 
 (defun enable-commands (cmds cmds-backup-table)
   (loop :for cmd in cmds
-        :with cmd-str
-        :do (setf cmd-str (string-downcase cmd))
-            (setf (gethash cmd-str lem::*command-table*)
-                  (gethash cmd-str cmds-backup-table))))
+        :for cmd-str := (string-downcase cmd)
+        :do (multiple-value-bind (value exists)
+                (gethash cmd-str lem::*command-table*)
+              (declare (ignore value))
+              (unless exists
+                (multiple-value-bind (value exists)
+                    (gethash cmd-str cmds-backup-table)
+                  (when exists
+                    (setf (gethash cmd-str lem::*command-table*) value)))))))
 
 ;; for scheme process (disable scheme process commands)
 (let ((cmds-1 '(scheme-kill-process)))
@@ -183,11 +187,7 @@
   (defun enable-scheme-slime-commands ()
     (case *use-scheme-slime*
       ((:auto)
-       (multiple-value-bind (value exists)
-           (gethash (string-downcase (car cmds-2)) lem::*command-table*)
-         (declare (ignore value))
-         (unless exists
-           (enable-commands cmds-2 cmds-backup-table))))))
+       (enable-commands  cmds-2 cmds-backup-table))))
   (add-hook *after-init-hook* 'disable-scheme-slime-commands))
 
 (pushnew (cons "\\.scm$" 'scheme-mode) *auto-mode-alist* :test #'equal)

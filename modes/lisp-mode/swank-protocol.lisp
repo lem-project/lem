@@ -157,9 +157,12 @@ Parses length information to determine how many characters to read."
 
 (defun read-return-message (connection)
   "Read only ':return' message. Other messages such as ':indentation-update' are dropped."
-  (loop :for info := (read-message connection)
-        :until (eq (car info) :return)
-        :finally (return info)))
+  (loop :for waiting := (message-waiting-p connection :timeout 5)
+        :with info
+        :do (unless waiting (return nil))
+            (setf info (read-message connection))
+            (when (eq (car info) :return)
+              (return info))))
 
 (defun setup (connection)
   (emacs-rex connection `(swank:connection-info))
@@ -222,9 +225,7 @@ This function will block until it reads everything. Consider message-waiting-p
 to check if input is available."
   (let* ((socket (connection-socket connection))
          (stream (usocket:socket-stream socket)))
-    (when (usocket:wait-for-input socket :timeout 5)
-      (let ((msg (read-message-from-stream stream)))
-        msg))))
+    (read-message-from-stream stream)))
 
 (defun send-message-string (connection message)
   "Send a message string to a Swank connection."
@@ -243,26 +244,32 @@ to check if input is available."
 ;;  (usocket:wait-for-input needs WSAResetEvent before call)
 #+(and sbcl win32)
 (sb-alien:define-alien-routine ("WSAResetEvent" wsa-reset-event)
-    (boolean #.sb-vm::n-machine-word-bits)
+    (boolean #.(sb-alien:alien-size sb-alien:int))
   (event-object usocket::ws-event))
 
 (defun message-waiting-p (connection &key (timeout 0))
   "t if there's a message in the connection waiting to be read, nil otherwise."
+  (let* ((socket (connection-socket connection))
+         (stream (usocket:socket-stream socket)))
 
-  ;; workaround for windows
-  ;;  (usocket:wait-for-input needs WSAResetEvent before call)
-  #+(and sbcl win32)
-  (let ((socket (connection-socket connection)))
+    ;; check stream buffer
+    (when (listen stream)
+      (return-from message-waiting-p t))
+
+    ;; workaround for windows
+    ;;  (usocket:wait-for-input needs WSAResetEvent before call)
+    #+(and sbcl win32)
     (when (usocket::wait-list socket)
       (wsa-reset-event
        (usocket::os-wait-list-%wait
-        (usocket::wait-list socket)))))
+        (usocket::wait-list socket))))
 
-  (if (usocket:wait-for-input (connection-socket connection)
-                              :ready-only t
-                              :timeout timeout)
-      t
-      nil))
+    ;; check socket status
+    (if (usocket:wait-for-input socket
+                                :ready-only t
+                                :timeout timeout)
+        t
+        nil)))
 
 ;;; Sending messages
 

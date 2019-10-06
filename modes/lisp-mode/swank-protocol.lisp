@@ -157,9 +157,12 @@ Parses length information to determine how many characters to read."
 
 (defun read-return-message (connection)
   "Read only ':return' message. Other messages such as ':indentation-update' are dropped."
-  (loop :for info := (read-message connection)
-        :until (eq (car info) :return)
-        :finally (return info)))
+  (loop :for waiting := (message-waiting-p connection :timeout 5)
+        :with info
+        :do (unless waiting (return nil))
+            (setf info (read-message connection))
+            (when (eq (car info) :return)
+              (return info))))
 
 (defun setup (connection)
   (emacs-rex connection `(swank:connection-info))

@@ -70,7 +70,7 @@
   '("gosh" "-AC:/work/r7rs-swank" "-e(begin (import (gauche-swank)) (start-swank ,port))"))
 
 
-;; this is used by 'scheme process'
+;; this is used only when no scheme slime connection exists
 (defvar *scheme-completion-names*
   (lem-scheme-syntax:get-scheme-completion-data))
 
@@ -148,14 +148,14 @@
                   (when exists
                     (setf (gethash cmd-str lem::*command-table*) value)))))))
 
-;; for scheme process (disable scheme process commands)
+;; disable scheme process commands
 (let ((cmds-1 '(scheme-kill-process)))
   (defun disable-scheme-process-commands ()
     (unless *use-scheme-process*
       (disable-commands cmds-1)))
   (add-hook *after-init-hook* 'disable-scheme-process-commands))
 
-;; for r7rs-swank (disable/enable scheme slime commands)
+;; disable/enable scheme slime commands
 (let ((cmds-backup-table (make-hash-table :test 'equal))
       (cmds-1 '(scheme-slime-connect
                 scheme-slime))

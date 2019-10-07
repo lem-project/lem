@@ -236,6 +236,7 @@
     ((and (windows-term-setting-cur-mov-by-pos *windows-term-setting*)
           (windows-term-setting-pos-char-width *windows-term-setting*)
           (windows-term-setting-cur-char-width *windows-term-setting*))
+     ;; for ConEmu with custom function of cur-char-width
      (let ((pos-x 0)
            (pos-y y)
            (cur-x 0))
@@ -245,6 +246,7 @@
           :do (incf pos-x (calc-pos-char-width *windows-term-setting* code))
               (incf cur-x (calc-cur-char-width *windows-term-setting* code)))
        cur-x))
+     ;; for ConEmu without custom function of cur-char-width
     ((and (windows-term-setting-cur-mov-by-pos  *windows-term-setting*)
           (windows-term-setting-disp-char-width *windows-term-setting*)
           (windows-term-setting-pos-char-width  *windows-term-setting*))

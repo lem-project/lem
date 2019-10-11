@@ -421,43 +421,42 @@
     :do (loop :with restp := nil
               :for (method1 . method-rest) :on method
               :for n :from (1- n-start) :downto 0
-              :do (cond
-                    ((eq method1 '&rest)
-                     (setq method1 (car method-rest)
-                           method-rest nil
-                           restp (> n 0)
-                           n 0))
-                    ((eq method1 '&body)
+              :if (eq method1 '&rest) :do
+                 (setq method1 (car method-rest)
+                       method-rest nil
+                       restp (> n 0)
+                       n 0)
+              :if (eq method1 '&body) :do
+                 (return-from exit
+                   (cond ((null pathrest)
+                          (+ sexp-column *body-indent*))
+                         (t 'default-indent)))
+              :if (zerop n) :do
+                 (if (and (consp pathrest) (consp method1))
+                     ;; since n is 0, (return) is not needed here
+                     (setf method (cddr method1))
                      (return-from exit
-                       (cond ((null pathrest)
-                              (+ sexp-column *body-indent*))
-                             (t 'default-indent))))
-                    ((zerop n)
-                     (if (and (consp pathrest) (consp method1))
-                         ;; since n is 0, (return) is not needed here
-                         (setf method (cddr method1))
-                         (return-from exit
-                           (cond
-                             ((integerp method1)
-                              (if (null pathrest)
-                                  (+ sexp-column method1)
-                                  'default-indent))
-                             ((eq method1 '&lambda)
-                              (if (null pathrest)
-                                  (+ sexp-column 4)
-                                  (compute-indent-lambda-list path indent-point sexp-column)))
-                             ((not method1) 'default-indent)
-                             ((symbolp method1)
-                              (compute-indent-symbol-method method1 path indent-point
-                                                            sexp-column))
-                             ;; (&whole ...)
-                             (t (let ((method1 (cadr method1)))
-                                  (cond (restp 'default-indent)
-                                        ((integerp method1)
-                                         (+ sexp-column method1))
-                                        (t
-                                         (compute-indent-symbol-method
-                                          method1 path indent-point sexp-column)))))))))))))
+                       (cond
+                         ((integerp method1)
+                          (if (null pathrest)
+                              (+ sexp-column method1)
+                              'default-indent))
+                         ((eq method1 '&lambda)
+                          (if (null pathrest)
+                              (+ sexp-column 4)
+                              (compute-indent-lambda-list path indent-point sexp-column)))
+                         ((not method1) 'default-indent)
+                         ((symbolp method1)
+                          (compute-indent-symbol-method method1 path indent-point
+                                                        sexp-column))
+                         ;; (&whole ...)
+                         (t (let ((method1 (cadr method1)))
+                              (cond (restp 'default-indent)
+                                    ((integerp method1)
+                                     (+ sexp-column method1))
+                                    (t
+                                     (compute-indent-symbol-method
+                                      method1 path indent-point sexp-column)))))))))))
 
 (defun compute-indent-method (method path indent-point sexp-column)
   (funcall (etypecase method

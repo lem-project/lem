@@ -94,6 +94,8 @@
   (setf (now-resizing) t)
   (lem::change-display-size-hook)
   v)
+
+;; initialize windows terminal type and setting
 (setf (windows-term-type) *windows-term-type*)
 
 ;; load windows dll
@@ -105,8 +107,8 @@
        (sysdir ""))
   (if (zerop (cffi:foreign-funcall "GetSystemDirectoryA"
                                    :pointer cbuf :int csize :int))
-    (error "winmm.dll load error (GetSystemDirectoryA failed)")
-    (setf sysdir (concatenate 'string (cffi:foreign-string-to-lisp cbuf) "\\")))
+      (error "winmm.dll load error (GetSystemDirectoryA failed)")
+      (setf sysdir (concatenate 'string (cffi:foreign-string-to-lisp cbuf) "\\")))
   (cffi:load-foreign-library (concatenate 'string sysdir "winmm.dll"))
   (cffi:foreign-free cbuf))
 
@@ -179,6 +181,8 @@
     (terpri out)))
 
 ;; use only stdscr
+;;  (we don't make a new scrwin to avoid the display corruption of
+;;   horizontal splitted window with wide characters)
 (defmethod lem-if:make-view
     ((implementation ncurses) window x y width height use-modeline)
   (make-ncurses-view
@@ -236,6 +240,7 @@
     ((and (windows-term-setting-cur-mov-by-pos *windows-term-setting*)
           (windows-term-setting-pos-char-width *windows-term-setting*)
           (windows-term-setting-cur-char-width *windows-term-setting*))
+     ;; for ConEmu with custom function of cur-char-width
      (let ((pos-x 0)
            (pos-y y)
            (cur-x 0))
@@ -248,6 +253,7 @@
     ((and (windows-term-setting-cur-mov-by-pos  *windows-term-setting*)
           (windows-term-setting-disp-char-width *windows-term-setting*)
           (windows-term-setting-pos-char-width  *windows-term-setting*))
+     ;; for ConEmu without custom function of cur-char-width
      (mouse-get-disp-x view x y))
     (t x)))
 (defun mouse-move-to-cursor (window x y)

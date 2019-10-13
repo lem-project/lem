@@ -449,7 +449,7 @@
            ((= code #x09c) (setf code 31)) ; C-_ (Redo) for mintty
            )))
       code))
-  (defun get-event ()
+  (defun get-event (&optional esc-delaying)
     (let ((code (get-ch)))
       (cond
         ((= code -1)
@@ -467,18 +467,15 @@
            (mouse-event-proc bstate x y)))
         ((= code abort-code)
          :abort)
-        ((= code escape-code)
-         ;; check if it is independent escape key input
+        ((and (= code escape-code) (not esc-delaying))
+         ;; make escape key input delaying
          (charms/ll:wtimeout *padwin* (variable-value 'escape-delay))
-         (setf code (get-ch))
-         (charms/ll:wtimeout *padwin* 0)
-         (if (= code -1)
-             (get-key-from-name "escape")
-             (let ((key (get-key code)))
-               (make-key :meta t
-                         :sym (key-sym key)
-                         :ctrl (key-ctrl key)))))
-        (alt-key
+         (let ((event (get-event t)))
+           (charms/ll:wtimeout *padwin* 0)
+           (if (eq event :retry)
+               (get-key-from-name "escape")
+               event)))
+        ((or alt-key esc-delaying)
          (let ((key (get-key code)))
            (make-key :meta t
                      :sym (key-sym key)

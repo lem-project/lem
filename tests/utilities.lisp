@@ -1,5 +1,6 @@
 (in-package :lem-tests)
 
+(defvar *anonymous-name-counter* 0)
 (defvar *tests* '())
 
 (defmacro define-test (name &body body)
@@ -25,14 +26,10 @@
 (defun clear-all-tests ()
   (dolist (test *tests*)
     (fmakunbound test))
-  (setq *tests* '()))
+  (setq *tests* '())
+  (setq *anonymous-name-counter* 0))
 
 (defun generate-anonymous-test-name (&optional prefix)
-  (intern
-   (string-upcase
-    (with-output-to-string (out)
-      (when prefix (write-string prefix out))
-      (loop :repeat 8
-            :do (loop :for char := (code-char (random 128))
-                      :until (alphanumericp char)
-                      :finally (write-char char out)))))))
+  (alexandria:symbolicate "ANONYMOUS-"
+                          (or prefix "")
+                          (princ-to-string (incf *anonymous-name-counter*))))

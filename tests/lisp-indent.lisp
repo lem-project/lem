@@ -2,7 +2,7 @@
 
 (defmacro define-indent-test (name before &optional (after before))
   (let ((name (if (eq name '*)
-                  (generate-anonymous-test-name "indent-")
+                  (generate-anonymous-test-name "INDENT-")
                   name)))
     `(define-test ,name
        (run-indent-test ',name ,before ,after))))
@@ -18,10 +18,15 @@
       (lem:insert-string p before-text))
     (lem:indent-buffer buffer)
     (test (string= after-text (lem:buffer-text buffer))
-          (format nil "# error: ~A~%actual: ~S~%expected: ~S~%"
-                  name
+          (report name
                   (lem:buffer-text buffer)
                   after-text))))
+
+(defun report (name before-text after-text)
+  (format nil "# error: ~A~%actual: ~S~%expected: ~S~%"
+          name
+          before-text
+          after-text))
 
 
 (define-indent-test cond-1

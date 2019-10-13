@@ -58,9 +58,7 @@
 ")
 
 (defun get-location-from-buffer-point (point pathname)
-  (lem:with-point ((point point))
-    (lem:skip-whitespace-forward point)
-    (format nil "~A:~D" pathname (lem:line-number-at-point point))))
+  (format nil "~A:~D" pathname (lem:line-number-at-point point)))
 
 (defun indent-test-for-file (pathname)
   (let ((buffer (lem:find-file-buffer pathname :temporary t :enable-undo-p nil)))
@@ -72,6 +70,7 @@
         (lem:with-point ((start p))
           (unless (lem:form-offset p 1)
             (return))
+          (lem:skip-space-and-comment-forward p)
           (let ((text (lem:points-to-string start p))
                 (name (get-location-from-buffer-point start pathname)))
             (run-indent-test name text text)))))))

@@ -351,3 +351,25 @@ aaaaaaa(
               b
               c))
 ")
+
+(defun indent-test-for-file (pathname)
+  (let ((buffer (lem:find-file-buffer pathname :temporary t :enable-undo-p nil)))
+    (setf (lem:variable-value 'lem:calc-indent-function :buffer buffer)
+          'lem-lisp-syntax:calc-indent)
+    (lem:with-point ((p (lem:buffer-point buffer)))
+      (lem:buffer-start p)
+      (loop
+        (lem:with-point ((start p))
+          (unless (lem:form-offset p 1)
+            (return))
+          (let ((text (lem:points-to-string start p)))
+            (run-indent-test nil text text)))))))
+
+(defun indent-test-for-system (system-name)
+  (dolist (pathname (directory
+                     (merge-pathnames "*.lisp"
+                                      (asdf:system-source-directory system-name))))
+    (indent-test-for-file pathname)))
+
+(define-test indent-test-under-lem-base
+  (indent-test-for-system :lem-base))

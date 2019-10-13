@@ -7,10 +7,9 @@
      (setf *tests* (nconc *tests* (list ',name)))
      (defun ,name () ,@body)))
 
-(defmacro test (form description)
-  `(unless ,form
-     (cerror "skip" (make-condition 'test-error
-                                    :description ,description))))
+(defun test (value description)
+  (unless value
+    (cerror "skip" 'test-error :description description)))
 
 (defun run-test (test-fn)
   (handler-bind ((test-error (lambda (e)

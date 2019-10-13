@@ -39,7 +39,7 @@
                           (write-string (cl-ansi-text:red (format nil "-~A~%" line2)) out)))))))))
 
 (defun report (name before-text after-text)
-  (format nil "# error: ~A~%~A~%"
+  (format nil "# indentation error: ~A~%~A~%"
           name
           (diff-text before-text after-text)))
 

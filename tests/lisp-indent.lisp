@@ -15,23 +15,15 @@
 ")
 
 (define-indent-test defclass-1
-"
+  "
 `(defclass foo ()
 ,(mapcar x
 y))"
-"
+  "
 `(defclass foo ()
    ,(mapcar x
             y))
 ")
-
-(defun indent-buffer (buffer)
-  (lem:with-point ((p (lem:buffer-point buffer)))
-    (lem:buffer-start p)
-    (loop
-      (lem:indent-line p)
-      (unless (lem:line-offset p 1)
-        (return)))))
 
 (defun run-indent-test (name before-text after-text)
   (let ((buffer (lem:make-buffer (format nil "*indent-test ~A*" name)
@@ -41,7 +33,7 @@ y))"
     (lem:erase-buffer buffer)
     (lem:with-point ((p (lem:buffer-point buffer)))
       (lem:insert-string p before-text))
-    (indent-buffer buffer)
+    (lem:indent-buffer buffer)
     (test (string= after-text (lem:buffer-text buffer))
           (format nil "# error: ~A~%actual: ~S~%expected: ~S~%"
                   name

@@ -4,7 +4,8 @@
           indent-tabs-mode
           calc-indent-function
           indent-line
-          indent-region))
+          indent-region
+          indent-buffer))
 
 (define-editor-variable indent-tabs-mode nil)
 (define-editor-variable calc-indent-function 'calc-indent-default)
@@ -65,3 +66,7 @@
                       (lambda (point)
                         (unless (blank-line-p point)
                           (indent-line point)))))
+
+(defun indent-buffer (buffer)
+  (indent-region (buffer-start-point buffer)
+                 (buffer-end-point buffer)))

@@ -6,7 +6,4 @@
    ;; utilities.lisp
    :test
    :run-test
-   :run-all-tests
-   ;; lisp-indent.lisp
-   :cond-1
-   :defclass-1))
+   :run-all-tests))

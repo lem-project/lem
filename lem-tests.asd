@@ -1,7 +1,5 @@
 (defsystem "lem-tests"
-  :depends-on ("lem"
-               "rove")
+  :depends-on ("lem")
   :serial t
-  :components ((:module "tests"
-                :components ((:file "packages")
-                             (:file "indent")))))
+  :components ((:file "tests/packages")
+               (:file "tests/indent")))

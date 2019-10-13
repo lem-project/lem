@@ -1,2 +1,2 @@
-(defpackage :lem-tests
-  (:use :cl :rove))
+(defpackage :lem-tests.lisp-indent
+  (:use :cl))

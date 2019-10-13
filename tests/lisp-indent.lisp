@@ -1,4 +1,4 @@
-(in-package :lem-tests.lisp-indent)
+(in-package :lem-tests)
 
 (defmacro define-indent-test (name before after)
   `(defun ,name ()
@@ -41,18 +41,6 @@ y))"
       (unless (lem:line-offset p 1)
         (return)))))
 
-(define-condition test-error (simple-error)
-  ((description
-    :initarg :description
-    :reader test-error-description))
-  (:report (lambda (condition stream)
-             (write-line (test-error-description condition) stream))))
-
-(defmacro test (form description)
-  `(unless ,form
-     (cerror "skip" (make-condition 'test-error
-                                    :description ,description))))
-
 (defun run-indent-test (name before-text after-text)
   (let ((buffer (lem:make-buffer (format nil "*indent-test ~A*" name)
                                  :syntax-table lem-lisp-syntax:*syntax-table*)))
@@ -65,9 +53,3 @@ y))"
                   name
                   (lem:buffer-text buffer)
                   after-text))))
-
-(defun run-test (test-fn)
-  (handler-bind ((test-error (lambda (e)
-                               (format t "~&~A~%" e)
-                               (invoke-restart 'continue))))
-    (funcall test-fn)))

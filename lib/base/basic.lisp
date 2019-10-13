@@ -45,7 +45,8 @@
           blank-line-p
           skip-chars-forward
           skip-chars-backward
-          insert-buffer))
+          insert-buffer
+          buffer-text))
 
 (defun first-line-p (point)
   "`point`が最初の行ならT、それ以外ならNILを返します。"
@@ -540,3 +541,7 @@
         :do (insert-string point (line-str line))
             (setf (line-plist (point-line point)) (line-plist line))
             (insert-character point #\newline)))
+
+(defun buffer-text (buffer)
+  (points-to-string (buffer-start-point buffer)
+                    (buffer-end-point buffer)))

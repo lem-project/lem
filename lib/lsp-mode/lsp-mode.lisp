@@ -165,10 +165,6 @@
 (defun (setf buffer-file-version) (value buffer)
   (setf (gethash buffer (workspace-file-version-table (buffer-workspace buffer))) value))
 
-(defun buffer-text (buffer)
-  (lem:points-to-string (lem:buffer-start-point buffer)
-                        (lem:buffer-end-point buffer)))
-
 (defun buffer-uri (buffer)
   (pathname-to-uri (lem:buffer-filename buffer)))
 
@@ -214,7 +210,7 @@
   ({} "uri" (buffer-uri buffer)
       "languageId" (workspace-language-id (buffer-workspace buffer))
       "version" (buffer-file-version buffer)
-      "text" (buffer-text buffer)))
+      "text" (lem:buffer-text buffer)))
 
 (defun versioned-text-document-identifier (buffer)
   (let ((text-document-identifier (text-document-identifier buffer))
@@ -374,7 +370,7 @@
   (jsonrpc-notify (workspace-connection (buffer-workspace buffer))
                   "textDocument/didSave"
                   ({} "textDocument" (text-document-identifier buffer)
-                      #|"text" (buffer-text buffer)|#)))
+                      #|"text" (lem:buffer-text buffer)|#)))
 
 (defun text-document-did-close (buffer)
   (let* ((workspace (buffer-workspace buffer))
@@ -391,7 +387,7 @@
     (let ((file-version (buffer-file-version buffer)))
       (unless (eql file-version
                    (lem:buffer-value buffer 'last-sync-file-version))
-        (text-document-did-change buffer (list ({} "text" (buffer-text buffer))))
+        (text-document-did-change buffer (list ({} "text" (lem:buffer-text buffer))))
         (setf (lem:buffer-value buffer 'last-sync-file-version)
               file-version)))))
 

@@ -30,10 +30,6 @@
       (unless (lem:line-offset p 1)
         (return)))))
 
-(defun buffer-text (buffer)
-  (lem:points-to-string (lem:buffer-start-point buffer)
-                        (lem:buffer-end-point buffer)))
-
 (defun run-indent-test (name before-text after-text)
   (let ((buffer (lem:make-buffer (format nil "*indent-test ~A*" name)
                                  :syntax-table lem-lisp-syntax:*syntax-table*)))
@@ -41,5 +37,4 @@
     (lem:with-point ((p (lem:buffer-point buffer)))
       (lem:insert-string p before-text))
     (indent-buffer buffer)
-    (write-string (buffer-text buffer))
-    (ok (string= after-text (buffer-text buffer)))))
+    (ok (string= after-text (lem:buffer-text buffer)))))

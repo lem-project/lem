@@ -151,7 +151,7 @@
     (with-pop-up-typeout-window (out buffer :erase t)
       (write-string text out))))
 
-(defun buffer-text (buffer)
+(defun buffer-text-using-cache (buffer)
   (cond
     ((eql (buffer-value buffer 'prev-tick)
           (buffer-modified-tick buffer))
@@ -167,7 +167,7 @@
   (let ((buffer (point-buffer point)))
     (let ((text
             (with-output-to-string (out)
-              (with-input-from-string (in (buffer-text buffer))
+              (with-input-from-string (in (buffer-text-using-cache buffer))
                 (uiop:run-program (list "godef" "-i" "-t" "-f"
                                         (namestring (probe-file (buffer-filename buffer)))
                                         "-o" (princ-to-string (point-bytes point)))
@@ -233,7 +233,7 @@
   (let ((buffer (point-buffer point)))
     (let ((text
             (with-output-to-string (out)
-              (with-input-from-string (in (buffer-text buffer))
+              (with-input-from-string (in (buffer-text-using-cache buffer))
                 (uiop:run-program (list "gocode" "-f=json" "autocomplete"
                                         (or (buffer-filename buffer) "")
                                         (format nil "c~D" (1- (position-at-point point))))

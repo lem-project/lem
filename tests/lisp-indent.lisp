@@ -9,7 +9,8 @@
 
 (defun run-indent-test (name before-text after-text)
   (let ((buffer (lem:make-buffer (format nil "*indent-test ~A*" name)
-                                 :syntax-table lem-lisp-syntax:*syntax-table*)))
+                                 :syntax-table lem-lisp-syntax:*syntax-table*
+                                 :temporary t)))
     (setf (lem:variable-value 'lem:calc-indent-function :buffer buffer)
           'lem-lisp-syntax:calc-indent)
     (lem:erase-buffer buffer)

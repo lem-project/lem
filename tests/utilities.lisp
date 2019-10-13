@@ -4,7 +4,8 @@
 
 (defmacro define-test (name &body body)
   `(progn
-     (setf *tests* (nconc *tests* (list ',name)))
+     (unless (member ',name *tests*)
+       (setf *tests* (nconc *tests* (list ',name))))
      (defun ,name () ,@body)))
 
 (defun test (value description)

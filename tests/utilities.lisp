@@ -15,7 +15,7 @@
 
 (defun run-test (test-fn)
   (handler-bind ((test-error (lambda (e)
-                               (format t "~&~A~%" e)
+                               (princ e)
                                (invoke-restart 'continue))))
     (funcall test-fn)))
 

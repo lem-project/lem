@@ -1,5 +1,5 @@
 (defsystem "lem-tests"
-  :depends-on ("lem")
+  :depends-on ("lem" "cl-ansi-text")
   :serial t
   :components ((:file "tests/package")
                (:file "tests/conditions")

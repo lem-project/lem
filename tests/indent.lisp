@@ -14,6 +14,17 @@
             2)))
 ")
 
+(define-indent-test defclass-1
+"
+`(defclass foo ()
+,(mapcar x
+y))"
+"
+`(defclass foo ()
+   ,(mapcar x
+            y))
+")
+
 (defun indent-line (p)
   (let ((indent (lem-lisp-syntax:calc-indent p)))
     (lem:back-to-indentation p)

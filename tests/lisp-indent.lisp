@@ -1,7 +1,7 @@
 (in-package :lem-tests)
 
 (defmacro define-indent-test (name before after)
-  `(defun ,name ()
+  `(define-test ,name
      (run-indent-test ',name ,before ,after)))
 
 (define-indent-test cond-1

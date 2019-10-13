@@ -21,3 +21,8 @@
 (defun run-all-tests ()
   (dolist (test *tests*)
     (run-test test)))
+
+(defun clear-all-tests ()
+  (dolist (test *tests*)
+    (fmakunbound test))
+  (setq *tests* '()))

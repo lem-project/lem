@@ -1,16 +1,5 @@
 (in-package :lem-tests)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun generate-anonymous-test-name (&optional prefix)
-    (intern
-     (string-upcase
-      (with-output-to-string (out)
-        (when prefix (write-string prefix out))
-        (loop :repeat 8
-              :do (loop :for char := (code-char (random 128))
-                        :until (alphanumericp char)
-                        :finally (write-char char out))))))))
-
 (defmacro define-indent-test (name before &optional (after before))
   (let ((name (if (eq name '*)
                   (generate-anonymous-test-name "indent-")

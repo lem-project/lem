@@ -20,6 +20,7 @@
     (funcall test-fn)))
 
 (defun run-all-tests ()
+  (lem-lisp-syntax:indentation-update)
   (dolist (test *tests*)
     (run-test test)))
 

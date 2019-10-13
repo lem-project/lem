@@ -35,8 +35,8 @@
                :do (cond ((string= line1 line2)
                           (format out " ~A~%" line1))
                          (t
-                          (write-string (cl-ansi-text:green (format nil "+~A~%" line1)) out)
-                          (write-string (cl-ansi-text:red (format nil "-~A~%" line2)) out)))))))))
+                          (write-string (cl-ansi-text:yellow (format nil "+~A~%" line1)) out)
+                          (write-string (cl-ansi-text:cyan (format nil "-~A~%" line2)) out)))))))))
 
 (defun report (name before-text after-text)
   (format nil "# indentation error: ~A~%~A~%"

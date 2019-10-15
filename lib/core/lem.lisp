@@ -38,6 +38,8 @@
                  (- (get-internal-real-time) last-time)))
       (setf last-time (get-internal-real-time))
       (when (changed-disk-p (current-buffer))
+        (revert-buffer t)
+        #+(or)
         (cond ((eql (buffer-value (current-buffer) 'no-revert-buffer)
                     (file-write-date (buffer-filename))))
               ((prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))

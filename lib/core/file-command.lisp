@@ -149,12 +149,16 @@
               (or does-not-ask-p
                   (prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))))
          (with-buffer-read-only (current-buffer) nil
-           (erase-buffer)
-           (insert-file-contents (current-point)
-                                 (buffer-filename))
-           (buffer-unmark (current-buffer))
-           (update-changed-disk-date (current-buffer))
-           t))))
+           (let ((line-number (line-number-at-point (current-point)))
+                 (column (point-column (current-point))))
+             (erase-buffer)
+             (insert-file-contents (current-point)
+                                   (buffer-filename))
+             (buffer-unmark (current-buffer))
+             (update-changed-disk-date (current-buffer))
+             (move-to-line (current-point) line-number)
+             (move-to-column (current-point) column)
+             t)))))
 
 (define-command change-directory (directory)
     ((list (prompt-for-directory "change directory: " (buffer-directory))))

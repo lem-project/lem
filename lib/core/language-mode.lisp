@@ -270,7 +270,11 @@
       (setf locations (uiop:ensure-list locations))
       (if (null (rest locations))
           (progn
-            (go-to-location (first locations) #'switch-to-buffer)
+            (go-to-location (first locations)
+                            (lambda (buffer)
+                              (alexandria:when-let ((windows (get-buffer-windows buffer)))
+                                (setf (current-window) (car windows)))
+                              (switch-to-buffer buffer)))
             (jump-highlighting))
           (let ((prev-file nil))
             (with-sourcelist (sourcelist "*definitions*")

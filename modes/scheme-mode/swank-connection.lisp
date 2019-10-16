@@ -83,7 +83,7 @@
 
 (defun check-connection ()
   (unless (connected-p)
-    (editor-error "No connection for repl.")))
+    (editor-error "No connection for repl")))
 
 ;; for r7rs-swank (check unsupported function)
 (defun check-aborted (message)
@@ -227,20 +227,55 @@
   (setf (connection-prompt-string *connection*) prompt-string)
   t)
 
+;; for r7rs-swank (add parentheses)
+(defun convert-package-name (string)
+  (setf string (string-trim '(#\space #\tab) string))
+  (when (or (= (length string) 0)
+            (eql (char string 0) #\())
+    (return-from convert-package-name string))
+
+  ;; for r7rs-swank-Gauche-custom
+  ;;  (convert Gauche's module name to R7RS's library name
+  ;;   e.g. scheme.base ==> (scheme base) )
+  (when (and (not (ppcre:scan "\\s" string))
+             (ppcre:scan "\\." string))
+    (loop :with ret := '()
+          :with lis := (uiop:split-string string :separator ".")
+          :while lis
+          :do (if (string= (car lis) "")
+                  (if (null (cdr lis))
+                      (setf lis (cdr lis))
+                      (progn
+                        ;; convert '..' to '.'
+                        (setf (car ret) (concatenate 'string (car ret) "." (cadr lis)))
+                        (setf lis (cddr lis))))
+                  (progn
+                    (push (car lis) ret)
+                    (setf lis (cdr lis))))
+          :finally (setf string (format nil "~{~a~^ ~}" (reverse ret)))))
+
+  (concatenate 'string "(" string ")"))
+
 (defun read-package-name ()
   (check-connection)
-  (let ((package-names (mapcar #'string-downcase
-                               (scheme-eval
-                                '(swank:list-all-package-names t)))))
+  ;(let ((package-names (mapcar #'string-downcase
+  ;                             (scheme-eval
+  ;                              '(swank:list-all-package-names t)))))
+  (let ((package-names (scheme-eval
+                        '(swank:list-all-package-names t))))
+
     ;(dbg-log-format "package-names=~S" package-names)
     ;(string-upcase (prompt-for-line
-    (prompt-for-line ;"Package: " ""
-                     "Library: " ""
-                     (lambda (str)
-                       (completion str package-names))
-                     (lambda (str)
-                       (find str package-names :test #'string=))
-                     'mh-scheme-package)))
+    (convert-package-name
+     (prompt-for-line ;"Package: " ""
+                      "Library: " ""
+                      (lambda (str)
+                        (setf str (convert-package-name str))
+                        (completion str package-names))
+                      (lambda (str)
+                        (setf str (convert-package-name str))
+                        (find str package-names :test #'string=))
+                      'mh-scheme-package))))
 
 ;(define-command scheme-set-package (package-name) ((list (read-package-name)))
 (define-command scheme-set-library (package-name) ((list (read-package-name)))
@@ -370,7 +405,7 @@
 
   ;; for r7rs-swank (check unsupported function)
   (when (check-aborted result)
-    (editor-error "Not supported."))
+    (editor-error "Not supported"))
 
   (setf *last-compilation-result* result)
   (destructuring-bind (notes successp duration loadp fastfile)
@@ -449,7 +484,7 @@
   (check-connection)
 
   (unless (buffer-filename (current-buffer))
-    (editor-error "No file to compile."))
+    (editor-error "No file to compile"))
 
   (when (buffer-modified-p (current-buffer))
     (when (prompt-for-y-or-n-p "Save file")
@@ -472,7 +507,7 @@
                                                         ',position
                                                         ,(buffer-filename (current-buffer))
                                                         nil)
-                     #'compilation-finished)))
+                       #'compilation-finished)))
 
 (define-command scheme-compile-define () ()
   (check-connection)
@@ -498,15 +533,22 @@
          ;(p (and self (copy-point (current-point) :temporary)))
          )
 
+    ;; for r7rs-swank (move point to the outside of parentheses)
     (with-point ((p (current-point)))
-
-      ;; move to the outside of parentheses
       ;(maybe-beginning-of-string p)
-      (unless (char= #\( (character-at p))
+      (unless (eql (character-at p) #\()
         (scan-lists p -1 1 t))
 
       (scheme-eval-async `(,expander ,(form-string-at-point p))
                          (lambda (string)
+
+                           ;; for r7rs-swank-Gauche-custom
+                           ;;  (if macro expanded result is string literal,
+                           ;;   we decode escape sequence characters (\n \t).)
+                           (with-input-from-string (in string)
+                             (if (eql (peek-char t in nil) #\")
+                               (setf string (lem-scheme-mode.swank-protocol::read-string in))))
+
                            (let ((buffer (make-buffer "*scheme-macroexpand*")))
                              (with-buffer-read-only buffer nil
                                (unless self (erase-buffer buffer))
@@ -590,7 +632,7 @@
 
       ;; for r7rs-swank (check unsupported function)
       (when (check-aborted definitions)
-        (editor-error "Not supported."))
+        (editor-error "Not supported"))
 
       (definitions-to-locations definitions))))
 
@@ -610,7 +652,7 @@
 
     ;; for r7rs-swank (check unsupported function)
     (when (check-aborted data)
-      (editor-error "Not supported."))
+      (editor-error "Not supported"))
 
     (loop
       :for (type . definitions) :in data
@@ -1062,7 +1104,7 @@
     ;; for r7rs-swank (error check)
     (handler-case
         (let ((major-mode (buffer-major-mode (current-buffer))))
-          (when (eq major-mode 'scheme-mode) (update-buffer-package))
+          ;(when (eq major-mode 'scheme-mode) (update-buffer-package))
           (when (member major-mode '(scheme-mode scheme-repl-mode))
             (unless (active-echoarea-p)
               (scheme-autodoc))))

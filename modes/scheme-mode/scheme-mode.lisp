@@ -69,6 +69,12 @@
 (defvar *scheme-swank-server-run-command*
   '("gosh" "-AC:/work/r7rs-swank" "-e(begin (import (gauche-swank)) (start-swank ,port))"))
 
+;; settings for scheme repl
+;;  *use-scheme-repl-shortcut*
+;;    t     : enable scheme repl shortcut command
+;;    nil   : disable scheme repl shortcut command
+(defvar *use-scheme-repl-shortcut* nil)
+
 
 ;; this is used only when no scheme slime connection exists
 (defvar *scheme-completion-names*

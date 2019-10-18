@@ -153,7 +153,7 @@
        ;       (swank:load-file ,filename))))
        (scheme-eval-from-string
         (format nil "(swank:load-file ~S)" filename))
-       (message "Loaded.")))
+       (message "Loaded")))
     ((eq (scheme-repl-type :kind :initial) :scheme-process)
      (scheme-run-process-and-output-newline)
      (when (and (probe-file filename)
@@ -201,8 +201,11 @@
                 *scheme-repl-shortcuts* :test #'equal))))
 
 (define-command scheme-repl-shortcut (n) ("p")
-  (case (scheme-repl-type :kind :current)
-    ((:scheme-slime :scheme-process)
+  (cond
+    ((not *use-scheme-repl-shortcut*)
+     (insert-character (current-point) #\,))
+    ((or (eq (scheme-repl-type :kind :current) :scheme-process)
+         (eq (scheme-repl-type :kind :current) :scheme-slime))
      (with-point ((point (current-point)))
        (if (point>= (lem.listener-mode::listener-start-point (current-buffer)) point)
            (let ((fun (prompt-for-shortcuts)))

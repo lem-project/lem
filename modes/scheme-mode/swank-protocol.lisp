@@ -358,7 +358,7 @@ to check if input is available."
           (intern (string-upcase (string-left-trim ":" name))
                   :keyword))))))
 
-;; for r7rs-swank (replace backslash character sequence)
+;; for r7rs-swank (decode escape sequence characters (\n \t))
 (defun read-string (in)
   (let ((token
          (coerce (loop :for c := (peek-char nil in nil)

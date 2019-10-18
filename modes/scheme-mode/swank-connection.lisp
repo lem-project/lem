@@ -54,7 +54,9 @@
   *connection*)
 
 (defun connection-mode-line (window)
-  (format nil " [~A~A]" (buffer-package (window-buffer window) "user")
+  (format nil " [~A~A]"
+          ;(buffer-package (window-buffer window) "(user)")
+          (buffer-package (window-buffer window) "-")
           (if *connection*
               (format nil " ~A:~A"
                       (connection-implementation-name *connection*)
@@ -93,7 +95,11 @@
      (alexandria:destructuring-case value
        ((:abort string)
         (declare (ignore string))
-        t)))))
+        (editor-error "Not supported"))))))
+
+(defun check-scheme-mode ()
+  (unless (eq (buffer-major-mode (current-buffer)) 'scheme-mode)
+    (editor-error "You are not in scheme-mode")))
 
 (defun buffer-package (buffer &optional default)
   (let ((package-name (buffer-value buffer "package" default)))
@@ -281,12 +287,15 @@
 (define-command scheme-set-library (package-name) ((list (read-package-name)))
   (check-connection)
   (cond ((string= package-name ""))
-        ((eq (current-buffer) (repl-buffer))
+        ((or (not *use-scheme-set-library-for-buffer*)
+             (eq (current-buffer) (repl-buffer)))
          (destructuring-bind (name prompt-string)
              (scheme-eval `(swank:set-package ,package-name))
            (new-package name prompt-string)
-           (lem.listener-mode:listener-reset-prompt (repl-buffer))))
+           (when (repl-buffer)
+             (lem.listener-mode:listener-reset-prompt (repl-buffer)))))
         (t
+         (check-scheme-mode)
          (setf (buffer-value (current-buffer) "package") package-name))))
 
 (define-command scheme-interrupt () ()
@@ -404,8 +413,7 @@
 (defun compilation-finished (result)
 
   ;; for r7rs-swank (check unsupported function)
-  (when (check-aborted result)
-    (editor-error "Not supported"))
+  (check-aborted result)
 
   (setf *last-compilation-result* result)
   (destructuring-bind (notes successp duration loadp fastfile)
@@ -529,7 +537,8 @@
 
 (defun macroexpand-internal (expander)
   (let* ((self (eq (current-buffer) (get-buffer "*scheme-macroexpand*")))
-         (orig-package-name (buffer-package (current-buffer) "user"))
+         ;(orig-package-name (buffer-package (current-buffer) "(user)"))
+         (orig-package-name (buffer-package (current-buffer)))
          ;(p (and self (copy-point (current-point) :temporary)))
          )
 
@@ -553,7 +562,9 @@
                              (with-buffer-read-only buffer nil
                                (unless self (erase-buffer buffer))
                                (change-buffer-mode buffer 'scheme-mode)
-                               (setf (buffer-package buffer) orig-package-name)
+                               ;(setf (buffer-package buffer) orig-package-name)
+                               (when orig-package-name
+                                 (setf (buffer-package buffer) orig-package-name))
                                (when self
                                  (move-point (current-point) p)
                                  (kill-sexp))
@@ -631,8 +642,7 @@
     (let ((definitions (scheme-eval `(swank:find-definitions-for-emacs ,name))))
 
       ;; for r7rs-swank (check unsupported function)
-      (when (check-aborted definitions)
-        (editor-error "Not supported"))
+      (check-aborted definitions)
 
       (definitions-to-locations definitions))))
 
@@ -651,8 +661,7 @@
                                           ,name))))
 
     ;; for r7rs-swank (check unsupported function)
-    (when (check-aborted data)
-      (editor-error "Not supported"))
+    (check-aborted data)
 
     (loop
       :for (type . definitions) :in data

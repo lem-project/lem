@@ -65,7 +65,11 @@
 ;;            other scheme slime commands are disabled until executing
 ;;            'scheme-slime' or 'scheme-slime-connect' command.
 ;;    nil   : disable scheme slime commands
+;;  *use-scheme-set-library-for-buffer*
+;;    t     : use 'scheme-set-library' command for each buffer
+;;    nil   : use 'scheme-set-library' command for only repl
 (defvar *use-scheme-slime* :auto)
+(defvar *use-scheme-set-library-for-buffer* nil)
 (defvar *scheme-swank-server-run-command*
   '("gosh" "-AC:/work/r7rs-swank" "-e(begin (import (gauche-swank)) (start-swank ,port))"))
 

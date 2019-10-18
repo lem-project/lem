@@ -118,7 +118,7 @@ Parses length information to determine how many characters to read."
     :documentation "A number that is increased and sent along with every request.")
    (package
     :accessor connection-package
-    :initform "user"
+    :initform "(user)"
     :type string
     :documentation "The name of the connection's package.")
    (prompt-string

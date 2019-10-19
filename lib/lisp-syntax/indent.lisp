@@ -5,8 +5,7 @@
            :set-indentation
            :update-system-indentation
            :indentation-update
-           :calc-indent
-           :&lambda))
+           :calc-indent))
 (in-package :lem-lisp-syntax.indent)
 
 (defparameter *body-indent* 2)
@@ -29,66 +28,8 @@
   (or (gethash name *static-indent-table*)
       (caar (gethash name *dynamic-indent-table*))))
 
-(defun indent-method-malformed-error (name method &rest msg-args)
-  (apply #'editor-error "Invalid method ~a for ~a: ~@?" method name msg-args))
-
-(defun indent-method-welformed-p (name method &key (if-malformed :error))
-  (flet ((malformed (&rest args)
-           (cond
-             ((eq if-malformed :error)
-              (apply #'indent-method-malformed-error name method args))
-             ((not if-malformed)
-              (return-from indent-method-welformed-p (values nil args)))
-             (t (error "unrecognised ':if-malformed' option: ~a" if-malformed)))))
-    (typecase method
-      ((or integer null) t)
-      (null t)
-      (cons
-       (unless (alexandria:proper-list-p method)
-         (malformed "not a proper list: ~a" method))
-       (loop for (method1 . method-rest) :on method
-             :finally (return t)
-             :do
-                (typecase method1
-                  ((or integer null) nil) ; ok
-                  (cons
-                   (unless (eq '&whole (first method1))
-                     (malformed "submethod must begin with &whole: ~a" method1))
-                   (unless (and (consp (cdr method1))
-                                (consp (cddr method1)))
-                     (malformed "&whole must be followed by two or more elements: ~a"
-                                method1))
-                   (multiple-value-bind (winp error-msg-args)
-                       (indent-method-welformed-p name (cdr method1) :if-malformed nil)
-                     (unless winp
-                       (apply #'malformed error-msg-args))))
-                  (symbol
-                   (case method1
-                     ((&body)
-                      (unless (null method-rest)
-                        (malformed "&body is not the last element")))
-                     ((&rest)
-                      (unless (and (consp method-rest) (null (cdr method-rest)))
-                        (malformed "&rest must be followed by only one element"))
-                      (when (eq '&rest (car method-rest))
-                        (malformed "&rest cannot be followed by another &rest")))
-                     ((&whole)
-                      (malformed "&whole can only be the first element in a submethod"))
-                     ((&lambda) nil)
-                     (t
-                      (unless (fboundp method1)
-                        (warn "undefined function used in method: ~a" method))))))))
-      (symbol (case method
-                ((&body &lambda &rest &whole)
-                 (values nil '("~a should be used inside a list" method)))
-                (t
-                 (unless (fboundp method)
-                   (warn "undefined function used as method: ~a" method))
-                 t))))))
-
 (defun set-indentation (name method)
-  (when (indent-method-welformed-p name method)
-    (setf (gethash name *static-indent-table*) method)))
+  (setf (gethash name *static-indent-table*) method))
 
 (defun update-system-indentation (name indent packages)
   (push (list :update-system-indentation name indent packages) *indent-log*)
@@ -134,7 +75,7 @@
         ("catch" 1)
         ("cond"        (&rest (&whole 2 &rest 1)))
         ("defvar"      (4 2 2))
-        ("defclass"    (6 (&whole 4 &rest 1) (&whole 2 &rest 1) (&whole 2 &rest 1)))
+        ("defclass"    (6 4 (&whole 2 &rest 1) (&whole 2 &rest 1)))
         ("defconstant" . "defvar")
         ("defcustom"   (4 2 2 2))
         ("defparameter" . "defvar")
@@ -159,7 +100,7 @@
         ;("do"          lisp-indent-do)
         ("do" 2)
         ("do*" . "do")
-        ("dolist"      ((&whole 4 2 1) &body))
+        ("dolist"      1)
         ("dotimes" . "dolist")
         ("eval-when"   1)
         ("flet"        ((&whole 4 &rest (&whole 1 &lambda &body)) &body))
@@ -210,7 +151,7 @@
         ("when" 1)
         ("with-accessors" . "multiple-value-bind")
         ("with-condition-restarts" . "multiple-value-bind")
-        ("with-compilation-unit" ((&whole 4 &rest 1) &body))
+        ("with-compilation-unit" (&lambda &body))
         ("with-output-to-string" (4 2))
         ("with-slots" . "multiple-value-bind")
         ("with-standard-io-syntax" (2))))
@@ -412,51 +353,67 @@
 (defun compute-indent-complex-method (method path indent-point sexp-column)
   (loop
     :named exit
-    :for (n-start . pathrest) :on path
-    :finally (return-from exit 'default-indent)
-    :if (and (= n-start 0)
-             (eq '&rest (car method))
-             (consp (cadr method))) :do
-       (setq n-start 1)
-    :do (loop :with restp := nil
-              :for (method1 . method-rest) :on method
-              :for n :from (1- n-start) :downto 0
-              :if (eq method1 '&rest) :do
-                 (setq method1 (car method-rest)
-                       method-rest nil
-                       restp (> n 0)
-                       n 0)
-              :if (eq method1 '&body) :do
-                 (return-from exit
-                   (cond ((null pathrest)
-                          (+ sexp-column *body-indent*))
-                         (t 'default-indent)))
-              :if (zerop n) :do
-                 (if (and (consp pathrest) (consp method1))
-                     ;; since n is 0, (return) is not needed here
-                     (setf method (cddr method1))
+    :for pathrest :on path
+    :for n := (1- (car pathrest))
+    :do (let ((restp nil))
+          (loop
+            (let ((method1 (car method)))
+              (cond ((and restp
+                          (not (or (consp method1)
+                                   (and (symbolp method1)
+                                        (not (member method1 '(&rest &body &whole &lambda)))))))
                      (return-from exit
-                       (cond
-                         ((integerp method1)
-                          (if (null pathrest)
-                              (+ sexp-column method1)
-                              'default-indent))
-                         ((eq method1 '&lambda)
-                          (if (null pathrest)
-                              (+ sexp-column 4)
-                              (compute-indent-lambda-list path indent-point sexp-column)))
-                         ((not method1) 'default-indent)
-                         ((symbolp method1)
-                          (compute-indent-symbol-method method1 path indent-point
-                                                        sexp-column))
-                         ;; (&whole ...)
-                         (t (let ((method1 (cadr method1)))
-                              (cond (restp 'default-indent)
-                                    ((integerp method1)
-                                     (+ sexp-column method1))
-                                    (t
-                                     (compute-indent-symbol-method
-                                      method1 path indent-point sexp-column)))))))))))
+                       'default-indent))
+                    ((eq method1 '&body)
+                     (return-from exit
+                       (if (null (cdr pathrest))
+                           (+ sexp-column *body-indent*)
+                           'default-indent)))
+                    ((eq method1 '&rest)
+                     (setf restp (> n 0))
+                     (setf n 0)
+                     (pop method))
+                    ((> n 0)
+                     (decf n)
+                     (pop method))
+                    ((eq method1 'nil)
+                     (return-from exit
+                       'default-indent))
+                    ((eq method1 '&lambda)
+                     (return-from exit
+                       (cond ((null (cdr pathrest))
+                              (+ sexp-column 4))
+                             (t
+                              (compute-indent-lambda-list path indent-point sexp-column))
+                             ;; ((null (cddr pathrest))
+                             ;;  (compute-indent-lambda-list path indent-point sexp-column))
+                             ;; (t
+                             ;;  'default-indent)
+                             )))
+                    ((integerp method1)
+                     (return-from exit
+                       (if (null (cdr pathrest))
+                           (+ sexp-column method1)
+                           'default-indent)))
+                    ((symbolp method1)
+                     (return-from exit
+                       (compute-indent-symbol-method method1 path indent-point sexp-column)))
+                    ;; (&whole ...)
+                    ((not (null (cdr pathrest)))
+                     (setf method (cddr method1))
+                     (return))
+                    (t
+                     (return-from exit
+                       (let ((method1 (cadr method1)))
+                         (cond (restp
+                                'default-indent)
+                               ((eq method1 'nil)
+                                'default-indent)
+                               ((integerp method1)
+                                (+ sexp-column method1))
+                               (t
+                                (compute-indent-symbol-method
+                                 method1 path indent-point sexp-column))))))))))))
 
 (defun compute-indent-method (method path indent-point sexp-column)
   (funcall (etypecase method
@@ -473,20 +430,18 @@
   (eql (character-at p -1) #\#))  
 
 (defun find-indent-method (name path)
-  (when name
-    (let ((name (string-downcase name)))
-      (flet ((f (method)
-               (when method
-                 (return-from find-indent-method method))))
-        (f (get-indentation name))
-        (let ((name1 (ppcre:scan-to-strings "(?<=:)[^:]+" name)))
-          (when name1
-            (f (get-indentation name1)))
-          (f (and *get-method-function*
-                  (funcall *get-method-function* name)))
-          (f (and (null (cdr path))
-                  (ppcre:scan "^(?:with-|without-|within-|do-|def)" (or name1 name))
-                  '(&lambda &body))))))))
+  (flet ((f (method)
+           (when method
+             (return-from find-indent-method method))))
+    (f (get-indentation name))
+    (let ((name1 (ppcre:scan-to-strings "(?<=:)[^:]+" name)))
+      (when name1
+        (f (get-indentation name1)))
+      (f (and *get-method-function*
+              (funcall *get-method-function* name)))
+      (f (and (null (cdr path))
+              (ppcre:scan "^(?:with-|without-|within-|do-|def)" (or name1 name))
+              '(&lambda &body))))))
 
 (defun calc-function-indent (point)
   (loop
@@ -530,7 +485,7 @@
                           (or (member (character-at p 0) '(#\: #\"))
                               (looking-at p "#!?[+-]")))
                  (setf const-flag t))
-               (let ((name (symbol-string-at-point p)))
+               (let ((name (string-downcase (symbol-string-at-point p))))
                  (unless (scan-lists p -1 1 t)
                    (return-from outer 'default-indent))
                  (unless sexp-column (setf sexp-column (point-column p)))

@@ -1,5 +1,7 @@
 (in-package :lem-tests)
 
+(defparameter *enable-colorable* nil)
+
 (defmacro define-indent-test (name before &optional (after before))
   (let ((name (if (eq name '*)
                   (generate-anonymous-test-name "INDENT-")
@@ -34,9 +36,12 @@
                :until (eq line1 eof-value)
                :do (cond ((string= line1 line2)
                           (format out " ~A~%" line1))
-                         (t
+                         (*enable-colorable*
                           (write-string (cl-ansi-text:yellow (format nil "+~A~%" line1)) out)
-                          (write-string (cl-ansi-text:cyan (format nil "-~A~%" line2)) out)))))))))
+                          (write-string (cl-ansi-text:cyan (format nil "-~A~%" line2)) out))
+                         (t
+                          (write-string (format nil "+~A~%" line1) out)
+                          (write-string (format nil "-~A~%" line2) out)))))))))
 
 (defun report (name before-text after-text)
   (format nil "# indentation error: ~A~%~A~%"

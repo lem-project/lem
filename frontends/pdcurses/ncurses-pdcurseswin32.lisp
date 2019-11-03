@@ -1,5 +1,17 @@
 (in-package :lem-ncurses)
 
+;; escape key delay setting
+;;  On PDCurses, we often have to use escape key as an alternative to alt key
+;;  because some combination input with alt key doesn't work (e.g. M-< ).
+;;  Thus, we set escape-delay to a large value (1000 msec) by default.
+;;
+;;  However, if you use vi-mode, you might need to set it to a small value
+;;  by writing the following setting in init.lisp .
+;;    #+(and win32 lem-ncurses)
+;;    (setf (variable-value 'lem-ncurses::escape-delay :global) 100)
+;;
+(setf (variable-value 'escape-delay :global) 1000)
+
 ;; windows terminal type
 ;;   :mintty  : mintty  (winpty is needed)
 ;;   :conemu  : ConEmu  (experimental)
@@ -352,8 +364,7 @@
       (abort-code  (get-code "C-]"))
       (escape-code (get-code "escape"))
       (ctrl-key nil)
-      (alt-key  nil)
-      (esc-key  nil))
+      (alt-key  nil))
   (defun get-ch ()
     (let ((code          (getch-pad))
           (modifier-keys (charms/ll:PDC-get-key-modifiers)))
@@ -438,36 +449,39 @@
            ((= code #x09c) (setf code 31)) ; C-_ (Redo) for mintty
            )))
       code))
-  (defun get-event ()
+  (defun get-event (&optional esc-delaying)
     (let ((code (get-ch)))
-      (cond ((= code -1)
-             ;; retry is necessary to exit lem normally
-             :retry)
-            ((= code resize-code)
-             ;; for resizing display
-             (setf (now-resizing) t)
-             :resize)
-            ((= code mouse-code)
-             ;; for mouse
-             (multiple-value-bind (bstate x y z id)
-                 (charms/ll:getmouse)
-               (declare (ignore z id))
-               (mouse-event-proc bstate x y)))
-            ((= code abort-code)
-             (setf esc-key nil)
-             :abort)
-            ((= code escape-code)
-             (setf esc-key t)
-             (get-key-from-name "escape"))
-            ((or alt-key esc-key)
-             (setf esc-key nil)
-             (let ((key (get-key code)))
-               (make-key :meta t
-                         :sym (key-sym key)
-                         :ctrl (key-ctrl key))))
-            (t
-             (setf esc-key nil)
-             (get-key code))))))
+      (cond
+        ((= code -1)
+         ;; retry is necessary to exit lem normally
+         :retry)
+        ((= code resize-code)
+         ;; for resizing display
+         (setf (now-resizing) t)
+         :resize)
+        ((= code mouse-code)
+         ;; for mouse
+         (multiple-value-bind (bstate x y z id)
+             (charms/ll:getmouse)
+           (declare (ignore z id))
+           (mouse-event-proc bstate x y)))
+        ((= code abort-code)
+         :abort)
+        ((and (= code escape-code) (not esc-delaying))
+         ;; make escape key input delaying
+         (charms/ll:wtimeout *padwin* (variable-value 'escape-delay))
+         (let ((event (get-event t)))
+           (charms/ll:wtimeout *padwin* 0)
+           (if (eq event :retry)
+               (get-key-from-name "escape")
+               event)))
+        ((or alt-key esc-delaying)
+         (let ((key (get-key code)))
+           (make-key :meta t
+                     :sym (key-sym key)
+                     :ctrl (key-ctrl key))))
+        (t
+         (get-key code))))))
 
 ;; workaround for exit problem
 (defun input-loop (editor-thread)

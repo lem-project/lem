@@ -496,6 +496,7 @@
                    (setf innermost-sexp-column sexp-column))
                  (let ((method (find-indent-method name path)))
                    (when method
+                     (setq const-flag nil) ; for the case of (:and ...) in sxql
                      (return-from outer (compute-indent-method method
                                                                path
                                                                indent-point

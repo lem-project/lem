@@ -1,5 +1,17 @@
 (in-package :lem-ncurses)
 
+;; escape key delay setting
+;;  On PDCurses, we often have to use escape key as an alternative to alt key
+;;  because some combination input with alt key doesn't work (e.g. M-< ).
+;;  Thus, we set escape-delay to a large value (1000 msec) by default.
+;;
+;;  However, if you use vi-mode, you might need to set it to a small value
+;;  by writing the following setting in init.lisp .
+;;    #+(and win32 lem-ncurses)
+;;    (setf (variable-value 'lem-ncurses::escape-delay :global) 100)
+;;
+(setf (variable-value 'escape-delay :global) 1000)
+
 ;; windows terminal type
 ;;   :mintty  : mintty  (winpty is needed)
 ;;   :conemu  : ConEmu  (experimental)
@@ -19,6 +31,10 @@
 
 ;; windows terminal setting
 (defvar *windows-term-setting*)
+(defun windows-term-setting ()
+  *windows-term-setting*)
+(defun (setf windows-term-setting) (v)
+  (setf *windows-term-setting* v))
 (defstruct windows-term-setting
   disp-char-width ;; character width setting for display
                   ;;   t        : use default function
@@ -43,8 +59,8 @@
                   ;;   fixnum : number of reserved lines
   )
 (defun update-windows-term-setting ()
-  (setf *windows-term-setting*
-        (case *windows-term-type*
+  (setf (windows-term-setting)
+        (case (windows-term-type)
           (:mintty
            (make-windows-term-setting
             :disp-char-width t
@@ -96,7 +112,7 @@
   v)
 
 ;; initialize windows terminal type and setting
-(setf (windows-term-type) *windows-term-type*)
+(setf (windows-term-type) (windows-term-type))
 
 ;; load windows dll
 ;;  (we load winmm.dll with a full path because it isn't listed in
@@ -119,13 +135,13 @@
 ;; input polling interval (sec)
 ;;  (we don't use PDCurses's internal polling timer (0.05 sec interval))
 ;;  (we use high precision timer when this interval is less than 0.01)
-(defvar *input-polling-interval* 0.001)
-(defun input-polling-interval ()
-  *input-polling-interval*)
-(let ((high-precision nil)
-      (exit-hook      nil))
+(let ((polling-interval 0.001)
+      (high-precision   nil)
+      (exit-hook        nil))
+  (defun input-polling-interval ()
+    polling-interval)
   (defun (setf input-polling-interval) (v)
-    (setf *input-polling-interval* v)
+    (setf polling-interval v)
     (cond
       ((< v 0.01)
        (unless high-precision
@@ -142,7 +158,7 @@
          (setf high-precision nil)
          (cffi:foreign-funcall "timeEndPeriod" :int 1 :int))))
     v)
-  (setf (input-polling-interval) *input-polling-interval*))
+  (setf (input-polling-interval) (input-polling-interval)))
 
 ;; for input
 ;;  (we don't use stdscr for input because it calls wrefresh implicitly
@@ -156,12 +172,17 @@
     ;; timeout setting is necessary to exit lem normally
     (charms/ll:wtimeout *padwin* 0))
   (charms/ll:wgetch *padwin*))
+(defmacro with-pad-input-timeout ((time) &body body)
+  `(progn
+     (charms/ll:wtimeout *padwin* ,time)
+     (unwind-protect (progn ,@body)
+       (charms/ll:wtimeout *padwin* 0))))
 
 ;; for resizing display
 (defkeycode "[resize]" #x222)
-(defvar *resizing* nil)
-(defun now-resizing () *resizing*)
-(defun (setf now-resizing) (v) (setf *resizing* v))
+(let ((resizing nil))
+  (defun now-resizing () resizing)
+  (defun (setf now-resizing) (v) (setf resizing v)))
 (defvar *min-cols*  5)
 (defvar *min-lines* 3)
 
@@ -203,10 +224,10 @@
 ;; get mouse disp-x for pointing wide characters properly
 (defun mouse-get-disp-x (view x y)
   (cond
-    ((and (not (windows-term-setting-cur-mov-by-pos *windows-term-setting*))
-          (windows-term-setting-disp-char-width *windows-term-setting*)
-          (windows-term-setting-pos-char-width  *windows-term-setting*)
-          (windows-term-setting-cur-char-width  *windows-term-setting*))
+    ((and (not (windows-term-setting-cur-mov-by-pos (windows-term-setting)))
+          (windows-term-setting-disp-char-width (windows-term-setting))
+          (windows-term-setting-pos-char-width  (windows-term-setting))
+          (windows-term-setting-cur-char-width  (windows-term-setting)))
      ;; for mintty
      (let ((disp-x 0)
            (pos-x  0)
@@ -215,13 +236,13 @@
        (loop :while (< cur-x x)
           :for code := (get-charcode-from-scrwin view pos-x pos-y)
           :until (= code charms/ll:ERR)
-          :do (incf disp-x (calc-disp-char-width *windows-term-setting* code))
-              (incf pos-x  (calc-pos-char-width  *windows-term-setting* code))
-              (incf cur-x  (calc-cur-char-width  *windows-term-setting* code)))
+          :do (incf disp-x (calc-disp-char-width (windows-term-setting) code))
+              (incf pos-x  (calc-pos-char-width  (windows-term-setting) code))
+              (incf cur-x  (calc-cur-char-width  (windows-term-setting) code)))
        disp-x))
-    ((and (windows-term-setting-cur-mov-by-pos  *windows-term-setting*)
-          (windows-term-setting-disp-char-width *windows-term-setting*)
-          (windows-term-setting-pos-char-width  *windows-term-setting*))
+    ((and (windows-term-setting-cur-mov-by-pos  (windows-term-setting))
+          (windows-term-setting-disp-char-width (windows-term-setting))
+          (windows-term-setting-pos-char-width  (windows-term-setting)))
      ;; for ConEmu
      (let ((disp-x 0)
            (pos-x  0)
@@ -229,17 +250,17 @@
        (loop :while (< pos-x x)
           :for code := (get-charcode-from-scrwin view pos-x pos-y)
           :until (= code charms/ll:ERR)
-          :do (incf disp-x (calc-disp-char-width *windows-term-setting* code))
-              (incf pos-x  (calc-pos-char-width  *windows-term-setting* code)))
+          :do (incf disp-x (calc-disp-char-width (windows-term-setting) code))
+              (incf pos-x  (calc-pos-char-width  (windows-term-setting) code)))
        disp-x))
     (t x)))
 ;; for ConEmu
 ;; get mouse cur-x for horizontal dragging window
 (defun mouse-get-cur-x (view x y)
   (cond
-    ((and (windows-term-setting-cur-mov-by-pos *windows-term-setting*)
-          (windows-term-setting-pos-char-width *windows-term-setting*)
-          (windows-term-setting-cur-char-width *windows-term-setting*))
+    ((and (windows-term-setting-cur-mov-by-pos (windows-term-setting))
+          (windows-term-setting-pos-char-width (windows-term-setting))
+          (windows-term-setting-cur-char-width (windows-term-setting)))
      ;; for ConEmu with custom function of cur-char-width
      (let ((pos-x 0)
            (pos-y y)
@@ -247,12 +268,12 @@
        (loop :while (< pos-x x)
           :for code := (get-charcode-from-scrwin view pos-x pos-y)
           :until (= code charms/ll:ERR)
-          :do (incf pos-x (calc-pos-char-width *windows-term-setting* code))
-              (incf cur-x (calc-cur-char-width *windows-term-setting* code)))
+          :do (incf pos-x (calc-pos-char-width (windows-term-setting) code))
+              (incf cur-x (calc-cur-char-width (windows-term-setting) code)))
        cur-x))
-    ((and (windows-term-setting-cur-mov-by-pos  *windows-term-setting*)
-          (windows-term-setting-disp-char-width *windows-term-setting*)
-          (windows-term-setting-pos-char-width  *windows-term-setting*))
+    ((and (windows-term-setting-cur-mov-by-pos  (windows-term-setting))
+          (windows-term-setting-disp-char-width (windows-term-setting))
+          (windows-term-setting-pos-char-width  (windows-term-setting)))
      ;; for ConEmu without custom function of cur-char-width
      (mouse-get-disp-x view x y))
     (t x)))
@@ -338,12 +359,10 @@
 ;; deal with utf-16 surrogate pair characters (input)
 (defun get-key (code)
   (when (<= #xd800 code #xdbff)
-    (charms/ll:wtimeout *padwin* 100)
     (let ((c-lead  code)
-          (c-trail (getch-pad)))
+          (c-trail (with-pad-input-timeout (100) (getch-pad))))
       (when (<= #xdc00 c-trail #xdfff)
-        (setf code (+ #x10000 (* (- c-lead #xd800) #x0400) (- c-trail #xdc00))))
-      (charms/ll:wtimeout *padwin* 0)))
+        (setf code (+ #x10000 (* (- c-lead #xd800) #x0400) (- c-trail #xdc00))))))
   (char-to-key (code-char code)))
 
 ;; enable modifier keys
@@ -352,8 +371,7 @@
       (abort-code  (get-code "C-]"))
       (escape-code (get-code "escape"))
       (ctrl-key nil)
-      (alt-key  nil)
-      (esc-key  nil))
+      (alt-key  nil))
   (defun get-ch ()
     (let ((code          (getch-pad))
           (modifier-keys (charms/ll:PDC-get-key-modifiers)))
@@ -414,17 +432,16 @@
            ((= code #x210) (setf code #x05c))
            ;; M-[
            ((= code #x1f1)
-            (charms/ll:wtimeout *padwin* 100)
-            (let ((code1 (getch-pad)))
-              (cond
-		;; drop mouse escape sequence
-		((= code1 #x03c)	; <
-                 (loop :for code2 := (getch-pad)
-                    :until (or (= code2 -1)
-                               (= code2 #x04d)	   ; M
-                               (= code2 #x06d)))   ; m
-                 (setf code -1)))
-              (charms/ll:wtimeout *padwin* 0)))
+            (with-pad-input-timeout (100)
+              (let ((code1 (getch-pad)))
+                (cond
+                  ;; drop mouse escape sequence
+                  ((= code1 #x03c)                 ; <
+                   (loop :for code2 := (getch-pad)
+                      :until (or (= code2 -1)
+                                 (= code2 #x04d)   ; M
+                                 (= code2 #x06d))) ; m
+                   (setf code -1))))))
            ))
         ;; normal key workaround
         (t
@@ -438,36 +455,39 @@
            ((= code #x09c) (setf code 31)) ; C-_ (Redo) for mintty
            )))
       code))
-  (defun get-event ()
+  (defun get-event (&optional esc-delaying)
     (let ((code (get-ch)))
-      (cond ((= code -1)
-             ;; retry is necessary to exit lem normally
-             :retry)
-            ((= code resize-code)
-             ;; for resizing display
-             (setf (now-resizing) t)
-             :resize)
-            ((= code mouse-code)
-             ;; for mouse
-             (multiple-value-bind (bstate x y z id)
-                 (charms/ll:getmouse)
-               (declare (ignore z id))
-               (mouse-event-proc bstate x y)))
-            ((= code abort-code)
-             (setf esc-key nil)
-             :abort)
-            ((= code escape-code)
-             (setf esc-key t)
-             (get-key-from-name "escape"))
-            ((or alt-key esc-key)
-             (setf esc-key nil)
-             (let ((key (get-key code)))
-               (make-key :meta t
-                         :sym (key-sym key)
-                         :ctrl (key-ctrl key))))
-            (t
-             (setf esc-key nil)
-             (get-key code))))))
+      (cond
+        ((= code -1)
+         ;; retry is necessary to exit lem normally
+         :retry)
+        ((= code resize-code)
+         ;; for resizing display
+         (setf (now-resizing) t)
+         :resize)
+        ((= code mouse-code)
+         ;; for mouse
+         (multiple-value-bind (bstate x y z id)
+             (charms/ll:getmouse)
+           (declare (ignore z id))
+           (mouse-event-proc bstate x y)))
+        ((= code abort-code)
+         :abort)
+        ((and (= code escape-code) (not esc-delaying))
+         ;; make escape key input delaying
+         (let ((event (with-pad-input-timeout
+                          ((variable-value 'escape-delay))
+                        (get-event t))))
+           (if (eq event :retry)
+               (get-key-from-name "escape")
+               event)))
+        ((or alt-key esc-delaying)
+         (let ((key (get-key code)))
+           (make-key :meta t
+                     :sym (key-sym key)
+                     :ctrl (key-ctrl key))))
+        (t
+         (get-key code))))))
 
 ;; workaround for exit problem
 (defun input-loop (editor-thread)
@@ -480,7 +500,7 @@
                  (case event
                    ;; retry is necessary to exit lem normally
                    (:retry
-                    (sleep *input-polling-interval*))
+                    (sleep (input-polling-interval)))
                    (:abort
                     (send-abort-event editor-thread nil))
                    (t
@@ -495,7 +515,7 @@
 (let ((temp-view   nil)
       (toggle-flag t))
   (defun write-something-to-last-line ()
-    (when (eq *windows-term-type* :cmd.exe)
+    (when (eq (windows-term-type) :cmd.exe)
       (return-from write-something-to-last-line))
     (unless temp-view
       (setf temp-view (lem-if:make-view *implementation* nil 0 0 0 0 nil)))
@@ -519,7 +539,7 @@
   (sleep 0.1)
   ;; clear reserved last lines
   (let ((last-lines (windows-term-setting-reserved-last-lines
-                     *windows-term-setting*)))
+                     (windows-term-setting))))
     (when (and (> last-lines 0) (> height *min-lines*))
       (loop :for y1 :from (max (- height last-lines) *min-lines*) :below height
          :with str := (make-string width :initial-element #\space)
@@ -552,7 +572,7 @@
   (max *min-lines*
        (- charms/ll:*lines*
           (windows-term-setting-reserved-last-lines
-           *windows-term-setting*))))
+           (windows-term-setting)))))
 
 ;; use only stdscr
 (defmethod lem-if:delete-view ((implementation ncurses) view)
@@ -595,8 +615,8 @@
 ;; for mintty and ConEmu
 ;; get pos-x/y for printing wide characters
 (defun get-pos-x (view x y &key (modeline nil))
-  (unless (and (windows-term-setting-disp-char-width *windows-term-setting*)
-               (windows-term-setting-pos-char-width  *windows-term-setting*))
+  (unless (and (windows-term-setting-disp-char-width (windows-term-setting))
+               (windows-term-setting-pos-char-width  (windows-term-setting)))
     (return-from get-pos-x (+ x (ncurses-view-x view))))
   (let* ((floating (not (ncurses-view-modeline-scrwin view)))
          (start-x  (ncurses-view-x view))
@@ -607,8 +627,8 @@
     (loop :while (< disp-x disp-x0)
        :for code := (get-charcode-from-scrwin view pos-x pos-y)
        :until (= code charms/ll:ERR)
-       :do (incf disp-x (calc-disp-char-width *windows-term-setting* code))
-           (incf pos-x  (calc-pos-char-width  *windows-term-setting* code)))
+       :do (incf disp-x (calc-disp-char-width (windows-term-setting) code))
+           (incf pos-x  (calc-pos-char-width  (windows-term-setting) code)))
     pos-x))
 (defun get-pos-y (view x y &key (modeline nil))
   (declare (ignore x))
@@ -617,10 +637,10 @@
 ;; for mintty
 ;; get cur-x for moving cursor position properly
 (defun get-cur-x (view x y &key (modeline nil))
-  (unless (and (not (windows-term-setting-cur-mov-by-pos *windows-term-setting*))
-               (windows-term-setting-disp-char-width *windows-term-setting*)
-               (windows-term-setting-pos-char-width  *windows-term-setting*)
-               (windows-term-setting-cur-char-width  *windows-term-setting*))
+  (unless (and (not (windows-term-setting-cur-mov-by-pos (windows-term-setting)))
+               (windows-term-setting-disp-char-width (windows-term-setting))
+               (windows-term-setting-pos-char-width  (windows-term-setting))
+               (windows-term-setting-cur-char-width  (windows-term-setting)))
     (return-from get-cur-x (get-pos-x view x y :modeline modeline)))
   (let* ((start-x (ncurses-view-x view))
          (disp-x0 (+ x start-x))
@@ -631,17 +651,17 @@
     (loop :while (< disp-x disp-x0)
        :for code := (get-charcode-from-scrwin view pos-x pos-y)
        :until (= code charms/ll:ERR)
-       :do (incf disp-x (calc-disp-char-width *windows-term-setting* code))
-           (incf pos-x  (calc-pos-char-width  *windows-term-setting* code))
-           (incf cur-x  (calc-cur-char-width  *windows-term-setting* code)))
+       :do (incf disp-x (calc-disp-char-width (windows-term-setting) code))
+           (incf pos-x  (calc-pos-char-width  (windows-term-setting) code))
+           (incf cur-x  (calc-cur-char-width  (windows-term-setting) code)))
     cur-x))
 
 ;; for mintty and ConEmu
 ;; adjust line width by using zero-width-space character (#\u200b)
 (defun adjust-line (view x y &key (modeline nil))
   (declare (ignore x))
-  (unless (and (windows-term-setting-disp-char-width *windows-term-setting*)
-               (windows-term-setting-pos-char-width  *windows-term-setting*))
+  (unless (and (windows-term-setting-disp-char-width (windows-term-setting))
+               (windows-term-setting-pos-char-width  (windows-term-setting)))
     (return-from adjust-line))
   (let* ((start-x    (ncurses-view-x view))
          (disp-width (ncurses-view-width view))
@@ -689,7 +709,7 @@
 ;; for cmd.exe (using cjk code page)
 ;; workaround for printing problem of wide characters (incomplete)
 (defun print-sub (scrwin x y string)
-  (unless (and (eq *windows-term-type* :cmd.exe)
+  (unless (and (eq (windows-term-type) :cmd.exe)
                (member *windows-code-page* '(932 936 949 950)))
     (charms/ll:mvwaddstr scrwin y x string)
     (return-from print-sub))

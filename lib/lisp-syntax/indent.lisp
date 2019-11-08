@@ -419,6 +419,7 @@
   (funcall (etypecase method
              (integer #'compute-indent-integer-method)
              (symbol #'compute-indent-symbol-method)
+             (function #'compute-indent-symbol-method)
              (list #'compute-indent-complex-method))
            method path indent-point sexp-column))
 

@@ -426,6 +426,11 @@
 (define-editor-variable truncate-character #\\)
 (defvar *truncate-character*)
 
+;; workaround for long line display
+(define-editor-variable long-line-display nil)
+(define-editor-variable omitted-line-character #\<)
+(defvar *omitted-line-character*)
+
 (defun screen-display-line-wrapping (screen screen-width view-charpos cursor-y point-y str/attributes)
   (declare (ignore cursor-y))
   (when (and (< 0 view-charpos) (= point-y 0))
@@ -434,12 +439,45 @@
                 (lem-base::subseq-elements (cdr str/attributes)
                                            view-charpos
                                            (length (car str/attributes))))))
-  (let ((start 0)
-        (start-x (screen-left-width screen))
-        (truncate-str/attributes
-          (cons (string *truncate-character*)
-                (list (list 0 1 'lem:truncate-attribute)))))
-    (loop :for i := (wide-index (car str/attributes)
+  (let* ((start-x (screen-left-width screen))
+         (truncate-str/attributes
+           (cons (string *truncate-character*)
+                 (list (list 0 1 'lem:truncate-attribute))))
+
+         ;; workaround for long line display
+         (long-line-display (and (variable-value 'long-line-display)
+                                 (eq (window-screen (current-window)) screen)))
+         (over-h (if long-line-display
+                     ;; calc the size that cursor-y exceeds screen height
+                     (max 0 (- (window-cursor-y (current-window))
+                               (1- (screen-height screen))))
+                     0))
+         (omitted-line-str/attributes
+           (when (and long-line-display
+                      (> over-h 0))
+             (cons (string *omitted-line-character*)
+                   (list (list 0 1 'lem:truncate-attribute))))))
+
+    ;; workaround for long line display
+    ;;  (check if the line exceeds screen height)
+    (when (and long-line-display
+               (> over-h 0))
+      (loop :with start := 0
+            :with point-y1 := point-y
+            :for i := (wide-index (car str/attributes)
+                                  (1- screen-width)
+                                  :start start)
+            :while (< point-y1 (screen-height screen))
+            :do (cond ((null i)
+                       (setf over-h 0)
+                       (return))
+                      (t
+                       (incf point-y1)
+                       (setf start i)))))
+
+    (loop :with start := 0
+          :with omitted := 0
+          :for i := (wide-index (car str/attributes)
                                 (1- screen-width)
                                 :start start)
           :while (< point-y (screen-height screen))
@@ -447,12 +485,23 @@
                      (disp-print-line screen point-y str/attributes t
                                       :string-start start :start-x start-x)
                      (return))
+                    ((> over-h 0)
+                     ;; workaround for long line display
+                     ;;  (omit previous over-h lines)
+                     (decf over-h)
+                     (when (= omitted 0) (setf omitted 1))
+                     (setf start i))
                     (t
                      (disp-print-line screen point-y str/attributes t
                                       :string-start start :string-end i
                                       :start-x start-x)
                      (disp-print-line screen point-y
-                                      truncate-str/attributes
+                                      ;; workaround for long line display
+                                      ;;  (display omitted line character)
+                                      (if (= omitted 1)
+                                          (progn (setf omitted 2)
+                                                 omitted-line-str/attributes)
+                                          truncate-str/attributes)
                                       t
                                       :start-x (+ start-x (1- screen-width)))
                      (incf point-y)
@@ -613,7 +662,10 @@
         (disp-reset-lines window)
         (adjust-horizontal-scroll window)
         (let ((*truncate-character*
-                (variable-value 'truncate-character :default buffer)))
+                (variable-value 'truncate-character :default buffer))
+              ;; workaround for long line display
+              (*omitted-line-character*
+                (variable-value 'omitted-line-character :default buffer)))
           (screen-display-lines screen
                                 (or force
                                     (screen-modified-p screen)

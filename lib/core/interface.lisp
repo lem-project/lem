@@ -518,18 +518,16 @@
       ;;  (The real cursor-y is determined only after printing all lines.
       ;;   Thus, we need to check the real cursor-y here and retry if
       ;;   necessary.)
-      (alexandria:when-let
-          ((attr (and long-line-display
-                      first-time
-                      (>= point-y (screen-height screen))
-                      (car (lem-base::subseq-elements (cdr str/attributes)
-                                                      start (1+ start))))))
-        (destructuring-bind (s e attr) attr
-          (declare (ignore s e))
-          (when (eq attr 'cursor)
-            (setf over-h (1+ over-h0))
-            (setf first-time nil)
-            (go :retry)))))
+      (when (and long-line-display
+                 first-time
+                 (>= point-y (screen-height screen)))
+        (dolist (attr-1 (lem-base::subseq-elements (cdr str/attributes)
+                                                   start (1+ start)))
+          (destructuring-bind (s e attr) attr-1
+            (when (and (= s 0) (= e 1) (eq attr 'cursor))
+              (setf over-h (1+ over-h0))
+              (setf first-time nil)
+              (go :retry))))))
 
     point-y))
 

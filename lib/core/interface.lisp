@@ -484,7 +484,7 @@
     (tagbody :retry
       (setf start 0)
       (setf point-y point-y0)
-      (loop :with omitted := 0
+      (loop :with omitted := nil
             :for i := (wide-index (car str/attributes)
                                   (1- screen-width)
                                   :start start)
@@ -497,7 +497,7 @@
                        ;; workaround for long line display
                        ;;  (omit previous over-h lines)
                        (decf over-h)
-                       (when (= omitted 0) (setf omitted 1))
+                       (setf omitted t)
                        (setf start i))
                       (t
                        (disp-print-line screen point-y str/attributes t
@@ -506,9 +506,8 @@
                        (disp-print-line screen point-y
                                         ;; workaround for long line display
                                         ;;  (display omitted line character)
-                                        (if (= omitted 1)
-                                            (progn (setf omitted 2)
-                                                   omitted-line-str/attributes)
+                                        (if omitted
+                                            omitted-line-str/attributes
                                             truncate-str/attributes)
                                         t
                                         :start-x (+ start-x (1- screen-width)))

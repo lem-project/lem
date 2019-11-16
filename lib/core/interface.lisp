@@ -431,6 +431,11 @@
 (define-editor-variable omitted-line-character #\<)
 (defvar *omitted-line-character*)
 
+;; workaround for long line display
+;;  (cf. https://github.com/cxxxr/lem/pull/446
+;;   if the workaround becomes unnecessary,
+;;   please revert this function to the following version.
+;;    https://github.com/cxxxr/lem/blob/d3b1ed84a17a6b3ec150a8b0ab32a4225e2c300a/lib/core/interface.lisp#L429 )
 (defun screen-display-line-wrapping (screen screen-width view-charpos cursor-y point-y str/attributes)
   (declare (ignore cursor-y))
   (when (and (< 0 view-charpos) (= point-y 0))
@@ -439,73 +444,94 @@
                 (lem-base::subseq-elements (cdr str/attributes)
                                            view-charpos
                                            (length (car str/attributes))))))
-  (let* ((start-x (screen-left-width screen))
+  (let* ((start 0)
+         (start-x (screen-left-width screen))
          (truncate-str/attributes
            (cons (string *truncate-character*)
                  (list (list 0 1 'lem:truncate-attribute))))
 
          ;; workaround for long line display
+         (window   (current-window))
          (long-line-display (and (variable-value 'long-line-display)
-                                 (eq (window-screen (current-window)) screen)))
-         (over-h (if long-line-display
-                     ;; calc the size that cursor-y exceeds screen height
-                     (max 0 (- (window-cursor-y (current-window))
-                               (1- (screen-height screen))))
-                     0))
+                                 (eq (window-screen window) screen)))
+         (over-h   (if long-line-display
+                       ;; calc the size that cursor-y exceeds screen height
+                       (max 0 (- (window-cursor-y window) 
+                                 (1- (screen-height screen))))
+                       0))
+         (over-h0  over-h)
+         (point-y0 point-y)
+         (first-time t)
          (omitted-line-str/attributes
-           (when (and long-line-display
-                      (> over-h 0))
+           (when long-line-display
              (cons (string *omitted-line-character*)
                    (list (list 0 1 'lem:truncate-attribute))))))
 
     ;; workaround for long line display
     ;;  (check if the line exceeds screen height)
-    (when (and long-line-display
-               (> over-h 0))
-      (loop :with start := 0
-            :with point-y1 := point-y
-            :for i := (wide-index (car str/attributes)
+    (when (> over-h 0)
+      (loop :for i := (wide-index (car str/attributes)
                                   (1- screen-width)
                                   :start start)
-            :while (< point-y1 (screen-height screen))
+            :while (< point-y (screen-height screen))
             :do (cond ((null i)
                        (setf over-h 0)
                        (return))
                       (t
-                       (incf point-y1)
+                       (incf point-y)
                        (setf start i)))))
 
-    (loop :with start := 0
-          :with omitted := 0
-          :for i := (wide-index (car str/attributes)
-                                (1- screen-width)
-                                :start start)
-          :while (< point-y (screen-height screen))
-          :do (cond ((null i)
-                     (disp-print-line screen point-y str/attributes t
-                                      :string-start start :start-x start-x)
-                     (return))
-                    ((> over-h 0)
-                     ;; workaround for long line display
-                     ;;  (omit previous over-h lines)
-                     (decf over-h)
-                     (when (= omitted 0) (setf omitted 1))
-                     (setf start i))
-                    (t
-                     (disp-print-line screen point-y str/attributes t
-                                      :string-start start :string-end i
-                                      :start-x start-x)
-                     (disp-print-line screen point-y
-                                      ;; workaround for long line display
-                                      ;;  (display omitted line character)
-                                      (if (= omitted 1)
-                                          (progn (setf omitted 2)
-                                                 omitted-line-str/attributes)
-                                          truncate-str/attributes)
-                                      t
-                                      :start-x (+ start-x (1- screen-width)))
-                     (incf point-y)
-                     (setf start i))))
+    (tagbody :retry
+      (setf start 0)
+      (setf point-y point-y0)
+      (loop :with omitted := 0
+            :for i := (wide-index (car str/attributes)
+                                  (1- screen-width)
+                                  :start start)
+            :while (< point-y (screen-height screen))
+            :do (cond ((null i)
+                       (disp-print-line screen point-y str/attributes t
+                                        :string-start start :start-x start-x)
+                       (return))
+                      ((> over-h 0)
+                       ;; workaround for long line display
+                       ;;  (omit previous over-h lines)
+                       (decf over-h)
+                       (when (= omitted 0) (setf omitted 1))
+                       (setf start i))
+                      (t
+                       (disp-print-line screen point-y str/attributes t
+                                        :string-start start :string-end i
+                                        :start-x start-x)
+                       (disp-print-line screen point-y
+                                        ;; workaround for long line display
+                                        ;;  (display omitted line character)
+                                        (if (= omitted 1)
+                                            (progn (setf omitted 2)
+                                                   omitted-line-str/attributes)
+                                            truncate-str/attributes)
+                                        t
+                                        :start-x (+ start-x (1- screen-width)))
+                       (incf point-y)
+                       (setf start i))))
+
+      ;; workaround for long line display
+      ;;  (The real cursor-y is determined only after printing all lines.
+      ;;   Thus, we need to check the real cursor-y here and retry if
+      ;;   necessary.)
+      (alexandria:when-let
+          ((attr (and long-line-display
+                      first-time
+                      (>= point-y (screen-height screen))
+                      (car (lem-base::subseq-elements (cdr str/attributes)
+                                                      start (1+ start))))))
+        (destructuring-bind (s e attr) attr
+          (declare (ignore s e))
+          (when (eq attr 'cursor)
+            (setf over-h (1+ over-h0))
+            (setf first-time nil)
+            (go :retry)))))
+
     point-y))
 
 (defun screen-display-line (screen screen-width view-charpos cursor-y point-y str/attributes)

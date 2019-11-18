@@ -359,7 +359,8 @@
                (declare (ignore arg))
                (incf offset)))
       (map-region (window-view-point window)
-                  (window-buffer-point window)
+                  ;;(window-buffer-point window)
+                  (window-point window)
                   (lambda (string lastp)
                     (declare (ignore lastp))
                     (map-wrapping-line window
@@ -368,7 +369,8 @@
       offset)))
 
 (defun window-cursor-y-not-wrapping (window)
-  (count-lines (window-buffer-point window)
+  (count-lines ;;(window-buffer-point window)
+               (window-point window)
                (window-view-point window)))
 
 (defun window-cursor-y (window)

@@ -436,7 +436,8 @@
 ;;   if the workaround becomes unnecessary,
 ;;   please revert this function to the following version.
 ;;    https://github.com/cxxxr/lem/blob/d3b1ed84a17a6b3ec150a8b0ab32a4225e2c300a/lib/core/interface.lisp#L429 )
-(defun screen-display-line-wrapping (screen screen-width view-charpos cursor-y point-y str/attributes)
+;;(defun screen-display-line-wrapping (screen screen-width view-charpos cursor-y point-y str/attributes)
+(defun screen-display-line-wrapping (window screen-width view-charpos cursor-y point-y str/attributes)
   (declare (ignore cursor-y))
   (when (and (< 0 view-charpos) (= point-y 0))
     (setf str/attributes
@@ -444,24 +445,24 @@
                 (lem-base::subseq-elements (cdr str/attributes)
                                            view-charpos
                                            (length (car str/attributes))))))
-  (let* ((start 0)
+  (let* ((screen (window-screen window))
+         (start 0)
          (start-x (screen-left-width screen))
          (truncate-str/attributes
            (cons (string *truncate-character*)
                  (list (list 0 1 'lem:truncate-attribute))))
 
          ;; workaround for long line display
-         (window   (current-window))
-         (long-line-display (and (variable-value 'long-line-display)
-                                 (eq (window-screen window) screen)))
-         (over-h   (if long-line-display
-                       ;; calc the size that cursor-y exceeds screen height
-                       (max 0 (- (window-cursor-y window) 
-                                 (1- (screen-height screen))))
-                       0))
-         (over-h0  over-h)
-         (point-y0 point-y)
-         (first-time t)
+         (long-line-display (variable-value 'long-line-display))
+         (over-h      (if long-line-display
+                          ;; calc the size that cursor-y exceeds screen height
+                          (max 0 (- (window-cursor-y window) 
+                                    (1- (screen-height screen))))
+                          0))
+         (over-h0     over-h)
+         (point-y0    point-y)
+         (first-time  t)
+         (start-cache 0)
          (omitted-line-str/attributes
            (when long-line-display
              (cons (string *omitted-line-character*)
@@ -482,7 +483,11 @@
                        (setf start i)))))
 
     (tagbody :retry
-      (setf start 0)
+      (if (> start-cache 0)
+          ;; use start-cache for retry
+          (progn (decf over-h over-h0)
+                 (setf start start-cache))
+          (setf start 0))
       (setf point-y point-y0)
       (loop :with omitted := nil
             :for i := (wide-index (car str/attributes)
@@ -498,7 +503,8 @@
                        ;;  (omit previous over-h lines)
                        (decf over-h)
                        (setf omitted t)
-                       (setf start i))
+                       (setf start i)
+                       (setf start-cache i))
                       (t
                        (disp-print-line screen point-y str/attributes t
                                         :string-start start :string-end i
@@ -531,11 +537,13 @@
 
     point-y))
 
-(defun screen-display-line (screen screen-width view-charpos cursor-y point-y str/attributes)
+;;(defun screen-display-line (screen screen-width view-charpos cursor-y point-y str/attributes)
+(defun screen-display-line (window screen-width view-charpos cursor-y point-y str/attributes)
   (declare (ignore view-charpos))
-  (let ((start-x (screen-left-width screen))
-        start
-        end)
+  (let* ((screen (window-screen window))
+         (start-x (screen-left-width screen))
+         start
+         end)
     (cond ((= cursor-y point-y)
            (setf start (or (wide-index (car str/attributes)
                                        (screen-horizontal-scroll-start screen))
@@ -567,8 +575,10 @@
               ((< point-column (screen-horizontal-scroll-start screen))
                (setf (screen-horizontal-scroll-start screen) point-column)))))))
 
-(defun screen-display-lines (screen redraw-flag buffer view-charpos cursor-y)
-  (let* ((lem-base::*tab-size* (variable-value 'tab-width :default buffer))
+;;(defun screen-display-lines (screen redraw-flag buffer view-charpos cursor-y)
+(defun screen-display-lines (window redraw-flag buffer view-charpos cursor-y)
+  (let* ((screen (window-screen window))
+         (lem-base::*tab-size* (variable-value 'tab-width :default buffer))
          (truncate-lines (variable-value 'truncate-lines :default buffer))
          (disp-line-function
            (if truncate-lines
@@ -608,7 +618,8 @@
                                           (cdr left-str/attr)))
                    (setq y2
                          (funcall disp-line-function
-                                  screen
+                                  ;;screen
+                                  window
                                   screen-width
                                   view-charpos
                                   cursor-y
@@ -689,7 +700,8 @@
               ;; workaround for long line display
               (*omitted-line-character*
                 (variable-value 'omitted-line-character :default buffer)))
-          (screen-display-lines screen
+          (screen-display-lines ;;screen
+                                window
                                 (or force
                                     (screen-modified-p screen)
                                     (not (eql (screen-left-width screen)

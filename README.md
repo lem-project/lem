@@ -21,7 +21,16 @@ You can skip over writing tidy settings or installing many plugins as you do on 
 - MacOS 10.13+ 
 - [Windows](https://github.com/cxxxr/lem/wiki/Windows-Platform)
 
+## Play with Lem in the Docker
+
+You can try Lem by running it in a docker container:
+
+```
+docker run --rm -ti -v `pwd`:/app 40ants/lem:latest
+```
+
 ## Installation
+
 Please install roswell at first.
 
 [Roswell Installation Guide](https://github.com/roswell/roswell/wiki/Installation)

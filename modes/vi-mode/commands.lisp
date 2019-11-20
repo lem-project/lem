@@ -52,6 +52,7 @@
            :vi-search-previous
            :vi-goto-first-line
            :vi-goto-line
+           :vi-return
            :vi-find-char
            :vi-find-char-backward
            :vi-find-char-before
@@ -617,6 +618,10 @@
             (line-start (current-point)))
           (goto-line arg))
     (skip-whitespace-forward (current-point) t)))
+
+(define-command vi-return (&optional (n 1)) ("p")
+  (vi-next-line n)
+  (vi-move-to-beginning-of-line))
 
 (define-command vi-find-char () ()
   (alexandria:when-let (c (key-to-char (read-key)))

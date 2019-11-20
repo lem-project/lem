@@ -14,6 +14,7 @@
            :isearch-delete-char
            :isearch-raw-insert
            :isearch-end
+           :isearch-finish
            :isearch-next
            :isearch-prev
            :isearch-yank

@@ -50,6 +50,7 @@
            :vi-search-backward
            :vi-search-next
            :vi-search-previous
+           :vi-search-forward-symbole-at-point
            :vi-goto-first-line
            :vi-goto-line
            :vi-return
@@ -604,6 +605,12 @@
 (define-command vi-search-previous (n) ("p")
   (with-jump-motion
     (dotimes (i n) (lem.isearch:isearch-prev))))
+
+(define-command vi-search-forward-symbol-at-point () ()
+  (with-jump-motion
+    (lem.isearch:isearch-forward-symbol-at-point)
+    (lem.isearch:isearch-finish)
+    (lem.isearch:isearch-next)))
 
 (define-command vi-goto-first-line () ()
   (with-jump-motion

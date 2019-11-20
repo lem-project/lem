@@ -233,6 +233,15 @@ link :
     (line-start p)
     (move-point point p)))
 
+(defparameter *prettier-options*
+  (list "--single-quote" "true"
+        "--jsx-bracket-same-line" "true"))
+
+(define-command prettier () ()
+  (filter-buffer (append '("prettier")
+                         *prettier-options*
+                         (list (buffer-filename (current-buffer))))))
+
 (pushnew (cons "\\.js$" 'js-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons "\\.json$" 'js-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons "\\.jsx$" 'js-mode) *auto-mode-alist* :test #'equal)

@@ -241,10 +241,8 @@
     ((minusp n)
      (scroll-up (- n)))
     (t
-     (window-scroll (current-window) n)
-     (let ((offset (window-offset-view (current-window))))
-       (unless (zerop offset)
-         (line-offset (current-point) (- offset)))))))
+     (next-line n)
+     (window-scroll (current-window) n))))
 
 (define-key *global-keymap* "C-Up" 'scroll-up)
 (define-key *global-keymap* "M-Up" 'scroll-up)
@@ -253,10 +251,8 @@
     ((minusp n)
      (scroll-down (- n)))
     (t
-     (window-scroll (current-window) (- n))
-     (let ((offset (window-offset-view (current-window))))
-       (unless (zerop offset)
-         (line-offset (current-point) (- offset)))))))
+     (previous-line n)
+     (window-scroll (current-window) (- n)))))
 
 (define-other-window-command find-file "FFind File Other Window: ")
 (define-key *global-keymap* "C-x 4 f" 'find-file-other-window)

@@ -336,32 +336,12 @@
 (define-key *global-keymap* "C-v" 'next-page)
 (define-key *global-keymap* "PageDown" 'next-page)
 (define-command next-page (&optional n) ("P")
-  (if n
-      (scroll-down n)
-      (cond
-        ((line-offset (current-point)
-                      (1- (window-height (current-window))))
-         (window-recenter (current-window))
-         t)
-        (t
-         (buffer-end (current-point))
-         (window-recenter (current-window))
-         t))))
+  (scroll-down (or n (1- (window-height (current-window))))))
 
 (define-key *global-keymap* "M-v" 'previous-page)
 (define-key *global-keymap* "PageUp" 'previous-page)
 (define-command previous-page (&optional n) ("P")
-  (if n
-      (scroll-up n)
-      (cond
-        ((line-offset (current-point)
-                      (- (1- (window-height (current-window)))))
-         (window-recenter (current-window))
-         t)
-        (t
-         (buffer-start (current-point))
-         (window-recenter (current-window))
-         t))))
+  (scroll-up (or n (1- (window-height (current-window))))))
 
 (defun delete-while-whitespaces (ignore-newline-p)
   (let ((n (skip-chars-forward (current-point)

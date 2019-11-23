@@ -18,9 +18,12 @@
                   :name 'syntax-string-attribute
                   :patterns (make-tm-patterns (make-tm-match "\\\\."))))
 
+(defun make-tm-line-comment (sepalator)
+  (make-tm-region sepalator "$" :name 'syntax-comment-attribute))
+
 (defun make-tmlanguage-yaml ()
   (let* ((patterns (make-tm-patterns
-                    (make-tm-match "^#.*$" :name 'syntax-comment-attribute)
+                    (make-tm-line-comment "#")
                     (make-tm-string-region "\"")
                     (make-tm-string-region "'")
                     (make-tm-match (tokens nil '("-" "?" ":" "," "[" "]" "{" "}"))

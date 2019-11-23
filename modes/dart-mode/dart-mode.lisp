@@ -5,6 +5,7 @@
 
 #|
 see : https://dart.dev/guides/language/language-tour
+      https://dart.dev/guides/language/specifications/DartLangSpec-v2.2.pdf
 |#
 
 (defvar *dart-keywords*
@@ -15,14 +16,17 @@ see : https://dart.dev/guides/language/language-tour
     "await" "extends" "is" "sync"
     "break" "external" "library" "this"
     "case" "factory" "mixin" "throw"
-    "catch" "false" "new" "true"
-    "class" "final" "null" "try"
+    "catch" #+(or)"false" "new" #+(or)"true"
+    "class" "final" #+(or)"null" "try"
     "const" "finally" "on" "typedef"
     "continue" "for" "operator" "var"
     "covariant" "Function" "part" "void"
     "default" "get" "rethrow" "while"
     "deferred" "hide" "return" "with"
     "do" "if" "set" "yield"))
+
+(defvar *dart-constants*
+  '("false" "true" "null"))
 
 (defun tokens (boundary strings)
   (let ((alternation
@@ -35,7 +39,9 @@ see : https://dart.dev/guides/language/language-tour
   (let ((patterns (make-tm-patterns
                    (make-tm-region "//" "$" :name 'syntax-comment-attribute)
                    (make-tm-match (tokens :word-boundary *dart-keywords*)
-                                  :name 'syntax-keyword-attribute))))
+                                  :name 'syntax-keyword-attribute)
+                   (make-tm-match (tokens :word-boundary *dart-constants*
+                                   :name 'syntax-constant-attribute))))
     (make-tmlanguage :patterns patterns)))
 
 (defvar *dart-syntax-table*

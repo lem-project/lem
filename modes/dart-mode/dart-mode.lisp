@@ -3,9 +3,39 @@
   (:export :*dart-mode-hook*))
 (in-package :lem-dart-mode)
 
+#|
+see : https://dart.dev/guides/language/language-tour
+|#
+
+(defvar *dart-keywords*
+  '("abstract" "dynamic" "implements" "show"
+    "as" "else" "import" "static"
+    "assert" "enum" "in" "super"
+    "async" "export" "interface" "switch"
+    "await" "extends" "is" "sync"
+    "break" "external" "library" "this"
+    "case" "factory" "mixin" "throw"
+    "catch" "false" "new" "true"
+    "class" "final" "null" "try"
+    "const" "finally" "on" "typedef"
+    "continue" "for" "operator" "var"
+    "covariant" "Function" "part" "void"
+    "default" "get" "rethrow" "while"
+    "deferred" "hide" "return" "with"
+    "do" "if" "set" "yield"))
+
+(defun tokens (boundary strings)
+  (let ((alternation
+         `(:alternation ,@(sort (copy-list strings) #'> :key #'length))))
+    (if boundary
+        `(:sequence ,boundary ,alternation ,boundary)
+        alternation)))
+
 (defun make-tmlanguage-dart ()
   (let ((patterns (make-tm-patterns
-                   (make-tm-region "//" "$" :name 'syntax-comment-attribute))))
+                   (make-tm-region "//" "$" :name 'syntax-comment-attribute)
+                   (make-tm-match (tokens :word-boundary *dart-keywords*)
+                                  :name 'syntax-keyword-attribute))))
     (make-tmlanguage :patterns patterns)))
 
 (defvar *dart-syntax-table*

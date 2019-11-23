@@ -30,8 +30,11 @@
                                    :name 'syntax-builtin-atribute)
                     (make-tm-match (tokens :word-boundary '("true" "false"))
                                    :name 'syntax-keyword-attribute)
-                    (make-tm-match "^\\s*[^:]+"
-                                   :name 'syntax-constant-attribute))))
+                    (make-tm-match `(:sequence
+                                     :start-anchor
+                                     (:greedy-repetition 0 nil :whitespace-char-class)
+                                     ,(ppcre:parse-string "([a-zA-Z0-9_]|-)+"))
+                                   :name 'syntax-function-name-attribute))))
     (make-tmlanguage :patterns patterns)))
 
 (defvar *yaml-syntax-table*

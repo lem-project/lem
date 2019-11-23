@@ -21,7 +21,8 @@
                "lem-diff-mode"
                "lem-yaml-mode"
                "lem-review-mode"
-               "lem-asciidoc-mode"))
+               "lem-asciidoc-mode"
+               "lem-dart-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

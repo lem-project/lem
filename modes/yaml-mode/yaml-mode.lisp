@@ -55,4 +55,7 @@
           (column (point-column point)))
       (+ column (- tab-width (rem column tab-width))))))
 
-(pushnew (cons "\\.yaml$" 'yaml-mode) *auto-mode-alist* :test #'equal)
+(dolist (suffix '("\\.yaml$" "\\.yml$"))
+  (pushnew (cons suffix 'yaml-mode)
+           *auto-mode-alist*
+           :test #'equal))

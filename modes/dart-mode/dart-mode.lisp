@@ -28,6 +28,19 @@ see : https://dart.dev/guides/language/language-tour
 (defvar *dart-constants*
   '("false" "true" "null"))
 
+(defvar *dart-builtin-functions*
+  '("BidirectionalIterator" "BigInt" "bool" "Comparable"
+    "DateTime" "Deprecated" "double" "Duration"
+    "Expando" "Function" "Future" "int"
+    "Invocation" "Iterable" "Iterator" "List"
+    "Map" "MapEntry" "Match" "Null"
+    "num" "Object" "Pattern" "pragma"
+    #+(or) "Provisional" "RegExp" "RegExpMatch" "RuneIterator"
+    "Runes" "Set" "Sink" "StackTrace"
+    "Stopwatch" "Stream" "String" "StringBuffer"
+    "StringSink" "Symbol" "Type" "Uri"
+    "UriData"))
+
 (defun tokens (boundary strings)
   (let ((alternation
          `(:alternation ,@(sort (copy-list strings) #'> :key #'length))))
@@ -42,7 +55,9 @@ see : https://dart.dev/guides/language/language-tour
            (make-tm-match (tokens :word-boundary *dart-keywords*)
                           :name 'syntax-keyword-attribute)
            (make-tm-match (tokens :word-boundary *dart-constants*)
-                          :name 'syntax-constant-attribute))))
+                          :name 'syntax-constant-attribute)
+           (make-tm-match (tokens :word-boundary *dart-builtin-functions*)
+                          :name 'syntax-builtin-attribute))))
     (make-tmlanguage :patterns patterns)))
 
 (defvar *dart-syntax-table*

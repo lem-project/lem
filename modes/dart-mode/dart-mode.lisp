@@ -48,10 +48,17 @@ see : https://dart.dev/guides/language/language-tour
         `(:sequence ,boundary ,alternation ,boundary)
         alternation)))
 
+(defun string-region (begin-end)
+  (make-tm-region `(:sequence ,begin-end)
+                  `(:sequence ,begin-end)
+                  :name 'syntax-string-attribute))
+
 (defun make-tmlanguage-dart ()
   (let ((patterns
           (make-tm-patterns
            (make-tm-region "//" "$" :name 'syntax-comment-attribute)
+           (string-region "\'")
+           (string-region "\"")
            (make-tm-match (tokens :word-boundary *dart-keywords*)
                           :name 'syntax-keyword-attribute)
            (make-tm-match (tokens :word-boundary *dart-constants*)

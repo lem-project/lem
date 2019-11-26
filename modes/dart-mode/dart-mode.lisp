@@ -28,7 +28,7 @@ see : https://dart.dev/guides/language/language-tour
 (defvar *dart-constants*
   '("false" "true" "null"))
 
-(defvar *dart-builtin-functions*
+(defvar *dart-builtin-types*
   '("BidirectionalIterator" "BigInt" "bool" "Comparable"
     "DateTime" "Deprecated" "double" "Duration"
     "Expando" "Function" "Future" "int"
@@ -63,8 +63,8 @@ see : https://dart.dev/guides/language/language-tour
                           :name 'syntax-keyword-attribute)
            (make-tm-match (tokens :word-boundary *dart-constants*)
                           :name 'syntax-constant-attribute)
-           (make-tm-match (tokens :word-boundary *dart-builtin-functions*)
-                          :name 'syntax-builtin-attribute))))
+           (make-tm-match (tokens :word-boundary *dart-builtin-types*)
+                          :name 'syntax-type-attribute))))
     (make-tmlanguage :patterns patterns)))
 
 (defvar *dart-syntax-table*

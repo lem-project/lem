@@ -50,7 +50,7 @@
            :vi-search-backward
            :vi-search-next
            :vi-search-previous
-           :vi-search-forward-symbole-at-point
+           :vi-search-forward-symbol-at-point
            :vi-goto-first-line
            :vi-goto-line
            :vi-return

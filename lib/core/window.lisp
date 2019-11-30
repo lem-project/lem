@@ -351,8 +351,7 @@
     n))
 
 (defun cursor-goto-next-line-p (window)
-  "The cursor goes to next line if it is on the end of wrapping.
-This function detects this phenomenon and returns true if it occurs."
+  "Check if the cursor goes to next line because it is at the end of width."
   (unless (variable-value 'truncate-lines :default (window-buffer window))
     (return-from cursor-goto-next-line-p nil))
   (let* ((lem-base::*tab-size* (variable-value 'tab-width :default (window-buffer window)))
@@ -367,7 +366,28 @@ This function detects this phenomenon and returns true if it occurs."
                       1)))
     (loop :for i :from 0 :below charpos
           :for c := (schar line i)
-          :do (setq cur-x (char-width c cur-x))
+          :do (setf cur-x (char-width c cur-x))
+              (when (< width cur-x)
+                (setf cur-x (char-width c 0))))
+    (< width (+ cur-x add-x))))
+
+(defun cursor-end-line-and-width-p (window)
+  "Check if the cursor is at the end of line and at the end of width."
+  (unless (variable-value 'truncate-lines :default (window-buffer window))
+    (return-from cursor-end-line-and-width-p nil))
+  (let* ((lem-base::*tab-size* (variable-value 'tab-width :default (window-buffer window)))
+         (buffer  (window-buffer window))
+         (point   (buffer-point buffer))
+         (charpos (point-charpos point))
+         (line    (line-string point))
+         (width   (1- (window-width window)))
+         (cur-x   0)
+         (add-x   2))
+    (unless (end-line-p point)
+      (return-from cursor-end-line-and-width-p nil))
+    (loop :for i :from 0 :below charpos
+          :for c := (schar line i)
+          :do (setf cur-x (char-width c cur-x))
               (when (< width cur-x)
                 (setf cur-x (char-width c 0))))
     (< width (+ cur-x add-x))))
@@ -464,6 +484,11 @@ This function detects this phenomenon and returns true if it occurs."
 (defun move-to-next-virtual-line (point &optional n (window (current-window)))
   (unless n (setf n 1))
   (unless (zerop n)
+
+    ;; workaround for cursor movement problem
+    (when (cursor-end-line-and-width-p window)
+      (setf *next-line-prev-column* 0))
+
     (multiple-value-bind (n f)
         (if (plusp n)
             (values n #'move-to-next-virtual-line-1)
@@ -518,7 +543,7 @@ This function detects this phenomenon and returns true if it occurs."
                  (when (< (point-charpos point) i)
                    (decf n1)
                    (when (<= n1 0)
-                     (line-offset point 0 i)
+                     (line-offset point 0 (+ i off-x))
                      (return-from window-scroll-down-n point)))))
               (if (line-offset point 1 off-x)
                   (progn

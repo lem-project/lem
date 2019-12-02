@@ -35,7 +35,9 @@
           move-to-beginning-of-buffer
           move-to-end-of-buffer
           move-to-beginning-of-line
+          move-to-beginning-of-logical-line
           move-to-end-of-line
+          move-to-end-of-logical-line
           next-page
           previous-page
           entab-line
@@ -324,6 +326,9 @@
                                          bol)
         (move-point (current-point) bol)))
   t)
+(define-command move-to-beginning-of-logical-line () ()
+  (line-start (current-point))
+  t)
 
 (define-key *global-keymap* "C-e" 'move-to-end-of-line)
 (define-key *global-keymap* "End" 'move-to-end-of-line)
@@ -331,6 +336,9 @@
   (or (and (forward-line-wrap (current-point) (current-window))
            (character-offset (current-point) -1))
       (line-end (current-point)))
+  t)
+(define-command move-to-end-of-logical-line () ()
+  (line-end (current-point))
   t)
 
 (define-key *global-keymap* "C-v" 'next-page)

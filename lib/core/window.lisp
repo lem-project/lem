@@ -74,6 +74,8 @@
 
 (defvar *window-id-counter* 0)
 
+(defvar *use-new-scroll-function* t)
+
 (defclass window ()
   ((id
     :initform (mod (incf *window-id-counter*) most-positive-fixnum)
@@ -347,7 +349,8 @@
                      ;;(1- (window-%height window))
                      (floor (1- (window-%height window)) 2)
                      ))))
-    (window-scroll window n)
+    (when (plusp n)
+      (window-scroll window n))
     n))
 
 (defun cursor-goto-next-line-p (window)
@@ -355,8 +358,7 @@
   (unless (variable-value 'truncate-lines :default (window-buffer window))
     (return-from cursor-goto-next-line-p nil))
   (let* ((lem-base::*tab-size* (variable-value 'tab-width :default (window-buffer window)))
-         (buffer  (window-buffer window))
-         (point   (buffer-point buffer))
+         (point   (window-buffer-point window))
          (charpos (point-charpos point))
          (line    (line-string point))
          (width   (1- (window-width window)))
@@ -376,8 +378,7 @@
   (unless (variable-value 'truncate-lines :default (window-buffer window))
     (return-from cursor-end-line-and-width-p nil))
   (let* ((lem-base::*tab-size* (variable-value 'tab-width :default (window-buffer window)))
-         (buffer  (window-buffer window))
-         (point   (buffer-point buffer))
+         (point   (window-buffer-point window))
          (charpos (point-charpos point))
          (line    (line-string point))
          (width   (1- (window-width window)))
@@ -600,7 +601,6 @@
                       (setf pos-last  0))
                     (return-from window-scroll-up-n nil))))))
 
-(defvar *use-new-scroll-function* t)
 (defun window-scroll (window n)
   (screen-modify (window-screen window))
   (if *use-new-scroll-function*

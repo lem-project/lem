@@ -74,7 +74,7 @@
 
 (defvar *window-id-counter* 0)
 
-(defvar *use-new-scroll-function* t)
+(defvar *use-new-vertical-move-function* t)
 
 (defclass window ()
   ((id
@@ -403,15 +403,15 @@
              (funcall fn i)
              (setq start i))))
 
-(defun window-wrapping-offset (window)
+(defun window-wrapping-offset (window start-point end-point)
   (unless (variable-value 'truncate-lines :default (window-buffer window))
     (return-from window-wrapping-offset 0))
   (let ((offset 0))
     (labels ((inc (arg)
                (declare (ignore arg))
                (incf offset)))
-      (map-region (window-view-point window)
-                  (window-buffer-point window)
+      (map-region start-point
+                  end-point
                   (lambda (string lastp)
                     (declare (ignore lastp))
                     (map-wrapping-line window
@@ -425,7 +425,9 @@
 
 (defun window-cursor-y (window)
   (+ (window-cursor-y-not-wrapping window)
-     (window-wrapping-offset window)
+     (window-wrapping-offset window
+                             (window-view-point window)
+                             (window-buffer-point window))
      (if (cursor-goto-next-line-p window) 1 0)))
 
 (defun forward-line-wrap (point window)
@@ -482,6 +484,82 @@
              (line-end point)
              (backward-line-wrap point window t)))))
 
+(defun move-to-next-virtual-line-n (point window n)
+  (assert (eq (point-buffer point) (window-buffer window)))
+  (let* ((off-x      (point-charpos point))
+         (n1         n)
+         (first-line t))
+    (when (<= n 0)
+      (return-from move-to-next-virtual-line-n point))
+    (unless (variable-value 'truncate-lines :default (point-buffer point))
+      (return-from move-to-next-virtual-line-n (line-offset point n)))
+    (loop :do (map-wrapping-line
+               window
+               (line-string point)
+               (lambda (i)
+                 (when (and first-line
+                            (<= i (point-charpos point)))
+                   (setf off-x (- (point-charpos point) i)))
+                 (when (< (point-charpos point) i)
+                   (decf n1)
+                   (when (<= n1 0)
+                     (line-offset point 0 (+ i off-x))
+                     (return-from move-to-next-virtual-line-n point)))))
+              (if (line-offset point 1 off-x)
+                  (progn
+                    (setf first-line nil)
+                    (decf n1)
+                    (when (<= n1 0)
+                      (return-from move-to-next-virtual-line-n point)))
+                  (return-from move-to-next-virtual-line-n nil)))))
+
+(defun move-to-previous-virtual-line-n (point window n)
+  (assert (eq (point-buffer point) (window-buffer window)))
+  (let* ((off-x      (point-charpos point))
+         (n1         n)
+         (first-line t)
+         (pos-ring   (make-array (1+ n))) ; ring buffer of wrapping position
+         (pos-size   (1+ n))
+         (pos-count  0)
+         (pos-next   0)
+         (pos-last   0))
+    (when (<= n 0)
+      (return-from move-to-previous-virtual-line-n point))
+    (unless (variable-value 'truncate-lines :default (point-buffer point))
+      (return-from move-to-previous-virtual-line-n (line-offset point (- n))))
+    (flet ((pos-ring-push (pos)
+             (setf (aref pos-ring pos-next) pos)
+             (incf pos-next)
+             (when (>= pos-next pos-size) (setf pos-next 0))
+             (incf pos-count)
+             (when (> pos-count pos-size)
+               (setf pos-count pos-size)
+               (incf pos-last)
+               (when (>= pos-last pos-size) (setf pos-last 0)))))
+      (loop :do (block outer
+                  (pos-ring-push 0)
+                  (map-wrapping-line
+                   window
+                   (line-string point)
+                   (lambda (i)
+                     (when first-line
+                       (when (< (point-charpos point) i)
+                         (return-from outer))
+                       (setf off-x (- (point-charpos point) i)))
+                     (pos-ring-push i))))
+                (when (>= pos-count (1+ n1))
+                  (line-offset point 0 (+ (aref pos-ring pos-last) off-x))
+                  (return-from move-to-previous-virtual-line-n point))
+                (if (line-offset point -1)
+                    (progn
+                      (setf first-line nil)
+                      (decf n1 pos-count)
+                      (setf pos-size  (1+ n1)) ; shrink ring-buffer
+                      (setf pos-count 0)
+                      (setf pos-next  0)
+                      (setf pos-last  0))
+                    (return-from move-to-previous-virtual-line-n nil))))))
+
 (defun move-to-next-virtual-line (point &optional n (window (current-window)))
   (unless n (setf n 1))
   (unless (zerop n)
@@ -490,14 +568,18 @@
     (when (cursor-end-line-and-width-p window)
       (setf *next-line-prev-column* 0))
 
-    (multiple-value-bind (n f)
+    (if *use-new-vertical-move-function*
         (if (plusp n)
-            (values n #'move-to-next-virtual-line-1)
-            (values (- n) #'move-to-previous-virtual-line-1))
-      (loop :repeat n
-            :do (unless (funcall f point window)
-                  (return-from move-to-next-virtual-line nil)))
-      point)))
+            (move-to-next-virtual-line-n point window n)
+            (move-to-previous-virtual-line-n point window (- n)))
+        (multiple-value-bind (n f)
+            (if (plusp n)
+                (values n #'move-to-next-virtual-line-1)
+                (values (- n) #'move-to-previous-virtual-line-1))
+          (loop :repeat n
+                :do (unless (funcall f point window)
+                      (return-from move-to-next-virtual-line nil)))
+          point))))
 
 (defun move-to-previous-virtual-line (point &optional n (window (current-window)))
   (move-to-next-virtual-line point (if n (- n) -1) window))
@@ -525,88 +607,12 @@
 (defun window-scroll-up (window)
   (move-to-previous-virtual-line (window-view-point window) 1 window))
 
-(defun window-scroll-down-n (window n)
-  (let* ((point      (window-view-point window))
-         (off-x      (point-charpos point))
-         (n1         n)
-         (first-line t))
-    (when (<= n 0)
-      (return-from window-scroll-down-n point))
-    (unless (variable-value 'truncate-lines :default (point-buffer point))
-      (return-from window-scroll-down-n (line-offset point n)))
-    (loop :do (map-wrapping-line
-               window
-               (line-string point)
-               (lambda (i)
-                 (when (and first-line
-                            (<= i (point-charpos point)))
-                   (setf off-x (- (point-charpos point) i)))
-                 (when (< (point-charpos point) i)
-                   (decf n1)
-                   (when (<= n1 0)
-                     (line-offset point 0 (+ i off-x))
-                     (return-from window-scroll-down-n point)))))
-              (if (line-offset point 1 off-x)
-                  (progn
-                    (setf first-line nil)
-                    (decf n1)
-                    (when (<= n1 0)
-                      (return-from window-scroll-down-n point)))
-                  (return-from window-scroll-down-n nil)))))
-
-(defun window-scroll-up-n (window n)
-  (let* ((point      (window-view-point window))
-         (off-x      (point-charpos point))
-         (n1         n)
-         (first-line t)
-         (pos-ring   (make-array (1+ n))) ; ring buffer of wrapping position
-         (pos-size   (1+ n))
-         (pos-count  0)
-         (pos-next   0)
-         (pos-last   0))
-    (when (<= n 0)
-      (return-from window-scroll-up-n point))
-    (unless (variable-value 'truncate-lines :default (point-buffer point))
-      (return-from window-scroll-up-n (line-offset point (- n))))
-    (flet ((pos-ring-push (pos)
-             (setf (aref pos-ring pos-next) pos)
-             (incf pos-next)
-             (when (>= pos-next pos-size) (setf pos-next 0))
-             (incf pos-count)
-             (when (> pos-count pos-size)
-               (setf pos-count pos-size)
-               (incf pos-last)
-               (when (>= pos-last pos-size) (setf pos-last 0)))))
-      (loop :do (block outer
-                  (pos-ring-push 0)
-                  (map-wrapping-line
-                   window
-                   (line-string point)
-                   (lambda (i)
-                     (when first-line
-                       (when (< (point-charpos point) i)
-                         (return-from outer))
-                       (setf off-x (- (point-charpos point) i)))
-                     (pos-ring-push i))))
-                (when (>= pos-count (1+ n1))
-                  (line-offset point 0 (+ (aref pos-ring pos-last) off-x))
-                  (return-from window-scroll-up-n point))
-                (if (line-offset point -1)
-                    (progn
-                      (setf first-line nil)
-                      (decf n1 pos-count)
-                      (setf pos-size  (1+ n1)) ; shrink ring-buffer
-                      (setf pos-count 0)
-                      (setf pos-next  0)
-                      (setf pos-last  0))
-                    (return-from window-scroll-up-n nil))))))
-
 (defun window-scroll (window n)
   (screen-modify (window-screen window))
-  (if *use-new-scroll-function*
+  (if *use-new-vertical-move-function*
       (if (plusp n)
-          (window-scroll-down-n window n)
-          (window-scroll-up-n window (- n)))
+          (move-to-next-virtual-line-n (window-view-point window) window n)
+          (move-to-previous-virtual-line-n (window-view-point window) window (- n)))
       (dotimes (_ (abs n))
         (if (plusp n)
             (window-scroll-down window)
@@ -617,8 +623,11 @@
   (cond ((point< (window-buffer-point window)
                  (window-view-point window))
          (min -1
-              (- (count-lines (window-buffer-point window)
-                              (window-view-point window)))))
+              (- (+ (count-lines (window-buffer-point window)
+                                 (window-view-point window))
+                    (window-wrapping-offset window
+                                            (window-buffer-point window)
+                                            (window-view-point window))))))
         ((let ((n (- (window-cursor-y window)
                      (- (window-%height window)
                         (if (window-use-modeline-p window) 2 1)))))

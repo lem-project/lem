@@ -240,10 +240,16 @@
   (cond
     ((minusp n)
      (scroll-up (- n)))
+    ((last-line-p (window-view-point (current-window)))
+     (editor-error "End of buffer"))
     (t
      (window-scroll (current-window) n)
-     (loop :while (< (window-offset-view (current-window)) 0)
-           :do (next-line 1)))))
+     (let ((offset (window-offset-view (current-window))))
+       (when (< offset 0)
+         (next-line (- offset))
+         ;; sometimes one more line is needed.
+         (when (< (window-offset-view (current-window)) 0)
+           (next-line 1)))))))
 
 (define-key *global-keymap* "C-Up" 'scroll-up)
 (define-key *global-keymap* "M-Up" 'scroll-up)
@@ -251,6 +257,8 @@
   (cond
     ((minusp n)
      (scroll-down (- n)))
+    ((first-line-p (window-view-point (current-window)))
+     (editor-error "Beginning of buffer"))
     (t
      (window-scroll (current-window) (- n))
      (let ((offset (window-offset-view (current-window))))

@@ -242,9 +242,8 @@
      (scroll-up (- n)))
     (t
      (window-scroll (current-window) n)
-     (let ((offset (window-offset-view (current-window))))
-       (when (< offset 0)
-         (next-line (- offset)))))))
+     (loop :while (< (window-offset-view (current-window)) 0)
+           :do (next-line 1)))))
 
 (define-key *global-keymap* "C-Up" 'scroll-up)
 (define-key *global-keymap* "M-Up" 'scroll-up)

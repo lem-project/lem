@@ -427,10 +427,10 @@
   (if (point< (window-buffer-point window)
               (window-view-point window))
       ;; sometimes one line larger value is returned (incomplete)
-      (+ (window-cursor-y-not-wrapping window)
-         (window-wrapping-offset window
-                                 (window-buffer-point window)
-                                 (window-view-point window)))
+      (- (+ (window-cursor-y-not-wrapping window)
+            (window-wrapping-offset window
+                                    (window-buffer-point window)
+                                    (window-view-point window))))
       ;; always true value is returned
       (+ (window-cursor-y-not-wrapping window)
          (window-wrapping-offset window
@@ -494,9 +494,9 @@
 
 (defun move-to-next-virtual-line-n (point window n)
   (assert (eq (point-buffer point) (window-buffer window)))
-  (let* ((off-x      (point-charpos point))
-         (n1         n)
-         (first-line t))
+  (let ((off-x      (point-charpos point))
+        (n1         n)
+        (first-line t))
     (when (<= n 0)
       (return-from move-to-next-virtual-line-n point))
     (unless (variable-value 'truncate-lines :default (point-buffer point))
@@ -523,14 +523,14 @@
 
 (defun move-to-previous-virtual-line-n (point window n)
   (assert (eq (point-buffer point) (window-buffer window)))
-  (let* ((off-x      (point-charpos point))
-         (n1         n)
-         (first-line t)
-         (pos-ring   (make-array (1+ n))) ; ring buffer of wrapping position
-         (pos-size   (1+ n))
-         (pos-count  0)
-         (pos-next   0)
-         (pos-last   0))
+  (let ((off-x      (point-charpos point))
+        (n1         n)
+        (first-line t)
+        (pos-ring   (make-array (1+ n))) ; ring buffer of wrapping position
+        (pos-size   (1+ n))
+        (pos-count  0)
+        (pos-next   0)
+        (pos-last   0))
     (when (<= n 0)
       (return-from move-to-previous-virtual-line-n point))
     (unless (variable-value 'truncate-lines :default (point-buffer point))
@@ -636,7 +636,7 @@
 (defun window-offset-view (window)
   (cond ((point< (window-buffer-point window)
                  (window-view-point window))
-         (min -1 (- (window-cursor-y window))))
+         (min -1 (window-cursor-y window)))
         ((let ((n (- (window-cursor-y window)
                      (- (window-%height window)
                         (if (window-use-modeline-p window) 2 1)))))

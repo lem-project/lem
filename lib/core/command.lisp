@@ -266,7 +266,7 @@
     (cond ((plusp n)
            (move-to-end-of-buffer)
            (editor-error "End of buffer"))
-          (t
+          ((minusp n)
            (move-to-beginning-of-buffer)
            (editor-error "Beginning of buffer")))))
 

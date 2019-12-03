@@ -241,15 +241,19 @@
     ((minusp n)
      (scroll-up (- n)))
     ((last-line-p (window-view-point (current-window)))
+     (next-line 0) ; to preserve *next-line-prev-column*
      (editor-error "End of buffer"))
     (t
      (window-scroll (current-window) n)
      (let ((offset (window-offset-view (current-window))))
-       (when (< offset 0)
-         (next-line (- offset))
-         ;; sometimes one more line is needed.
-         (when (< (window-offset-view (current-window)) 0)
-           (next-line 1)))))))
+       (if (< offset 0)
+           (progn
+             (next-line (- offset))
+             ;; sometimes one more line is needed
+             (when (< (window-offset-view (current-window)) 0)
+               (next-line 1)))
+           (next-line 0) ; to preserve *next-line-prev-column*
+           )))))
 
 (define-key *global-keymap* "C-Up" 'scroll-up)
 (define-key *global-keymap* "M-Up" 'scroll-up)
@@ -258,12 +262,15 @@
     ((minusp n)
      (scroll-down (- n)))
     ((first-line-p (window-view-point (current-window)))
+     (previous-line 0) ; to preserve *next-line-prev-column*
      (editor-error "Beginning of buffer"))
     (t
      (window-scroll (current-window) (- n))
      (let ((offset (window-offset-view (current-window))))
-       (when (> offset 0)
-         (previous-line offset))))))
+       (if (> offset 0)
+           (previous-line offset)
+           (previous-line 0) ; to preserve *next-line-prev-column*
+           )))))
 
 (define-other-window-command find-file "FFind File Other Window: ")
 (define-key *global-keymap* "C-x 4 f" 'find-file-other-window)

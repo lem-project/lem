@@ -424,11 +424,19 @@
                (window-view-point window)))
 
 (defun window-cursor-y (window)
-  (+ (window-cursor-y-not-wrapping window)
-     (window-wrapping-offset window
-                             (window-view-point window)
-                             (window-buffer-point window))
-     (if (cursor-goto-next-line-p window) 1 0)))
+  (if (point< (window-buffer-point window)
+              (window-view-point window))
+      ;; sometimes one line larger value is returned (incomplete)
+      (+ (window-cursor-y-not-wrapping window)
+         (window-wrapping-offset window
+                                 (window-buffer-point window)
+                                 (window-view-point window)))
+      ;; always true value is returned
+      (+ (window-cursor-y-not-wrapping window)
+         (window-wrapping-offset window
+                                 (window-view-point window)
+                                 (window-buffer-point window))
+         (if (cursor-goto-next-line-p window) 1 0))))
 
 (defun forward-line-wrap (point window)
   (assert (eq (point-buffer point) (window-buffer window)))
@@ -607,12 +615,18 @@
 (defun window-scroll-up (window)
   (move-to-previous-virtual-line (window-view-point window) 1 window))
 
+(defun window-scroll-down-n (window n)
+  (move-to-next-virtual-line-n (window-view-point window) window n))
+
+(defun window-scroll-up-n (window n)
+  (move-to-previous-virtual-line-n (window-view-point window) window n))
+
 (defun window-scroll (window n)
   (screen-modify (window-screen window))
   (if *use-new-vertical-move-function*
       (if (plusp n)
-          (move-to-next-virtual-line-n (window-view-point window) window n)
-          (move-to-previous-virtual-line-n (window-view-point window) window (- n)))
+          (window-scroll-down-n window n)
+          (window-scroll-up-n window (- n)))
       (dotimes (_ (abs n))
         (if (plusp n)
             (window-scroll-down window)
@@ -622,12 +636,7 @@
 (defun window-offset-view (window)
   (cond ((point< (window-buffer-point window)
                  (window-view-point window))
-         (min -1
-              (- (+ (count-lines (window-buffer-point window)
-                                 (window-view-point window))
-                    (window-wrapping-offset window
-                                            (window-buffer-point window)
-                                            (window-view-point window))))))
+         (min -1 (- (window-cursor-y window))))
         ((let ((n (- (window-cursor-y window)
                      (- (window-%height window)
                         (if (window-use-modeline-p window) 2 1)))))

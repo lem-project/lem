@@ -75,6 +75,7 @@
 (defvar *window-id-counter* 0)
 
 (defvar *use-new-vertical-move-function* t)
+(defvar *use-cursor-movement-workaround* t)
 
 (defclass window ()
   ((id
@@ -373,26 +374,6 @@
                 (setf cur-x (char-width c 0))))
     (< width (+ cur-x add-x))))
 
-(defun cursor-end-line-and-width-p (window)
-  "Check if the cursor is at the end of line and at the end of width."
-  (unless (variable-value 'truncate-lines :default (window-buffer window))
-    (return-from cursor-end-line-and-width-p nil))
-  (let* ((lem-base::*tab-size* (variable-value 'tab-width :default (window-buffer window)))
-         (point   (window-buffer-point window))
-         (charpos (point-charpos point))
-         (line    (line-string point))
-         (width   (1- (window-width window)))
-         (cur-x   0)
-         (add-x   2))
-    (unless (end-line-p point)
-      (return-from cursor-end-line-and-width-p nil))
-    (loop :for i :from 0 :below charpos
-          :for c := (schar line i)
-          :do (setf cur-x (char-width c cur-x))
-              (when (< width cur-x)
-                (setf cur-x (char-width c 0))))
-    (< width (+ cur-x add-x))))
-
 (defun map-wrapping-line (window string fn)
   (let ((lem-base::*tab-size* (variable-value 'tab-width :default (window-buffer window))))
     (loop :with start := 0
@@ -494,47 +475,39 @@
 
 (defun move-to-next-virtual-line-n (point window n)
   (assert (eq (point-buffer point) (window-buffer window)))
-  (let ((off-x      (point-charpos point))
-        (n1         n)
-        (first-line t))
-    (when (<= n 0)
-      (return-from move-to-next-virtual-line-n point))
-    (unless (variable-value 'truncate-lines :default (point-buffer point))
-      (return-from move-to-next-virtual-line-n (line-offset point n)))
-    (loop :do (map-wrapping-line
-               window
-               (line-string point)
-               (lambda (i)
-                 (when (and first-line
-                            (<= i (point-charpos point)))
-                   (setf off-x (- (point-charpos point) i)))
-                 (when (< (point-charpos point) i)
-                   (decf n1)
-                   (when (<= n1 0)
-                     (line-offset point 0 (+ i off-x))
-                     (return-from move-to-next-virtual-line-n point)))))
-              (if (line-offset point 1 off-x)
-                  (progn
-                    (setf first-line nil)
-                    (decf n1)
-                    (when (<= n1 0)
-                      (return-from move-to-next-virtual-line-n point)))
-                  (return-from move-to-next-virtual-line-n nil)))))
+  (when (<= n 0)
+    (return-from move-to-next-virtual-line-n point))
+  (unless (variable-value 'truncate-lines :default (point-buffer point))
+    (return-from move-to-next-virtual-line-n (line-offset point n)))
+  (loop :with n1 := n
+        :do (map-wrapping-line
+             window
+             (line-string point)
+             (lambda (i)
+               (when (< (point-charpos point) i)
+                 (decf n1)
+                 (when (<= n1 0)
+                   ;; cursor-x offset is recovered by *next-line-prev-column*
+                   (line-offset point 0 i)
+                   (return-from move-to-next-virtual-line-n point)))))
+            ;; go to next line
+            (unless (line-offset point 1)
+              (return-from move-to-next-virtual-line-n nil))
+            (decf n1)
+            (when (<= n1 0)
+              (return-from move-to-next-virtual-line-n point))))
 
 (defun move-to-previous-virtual-line-n (point window n)
   (assert (eq (point-buffer point) (window-buffer window)))
-  (let ((off-x      (point-charpos point))
-        (n1         n)
-        (first-line t)
-        (pos-ring   (make-array (1+ n))) ; ring buffer of wrapping position
-        (pos-size   (1+ n))
-        (pos-count  0)
-        (pos-next   0)
-        (pos-last   0))
-    (when (<= n 0)
-      (return-from move-to-previous-virtual-line-n point))
-    (unless (variable-value 'truncate-lines :default (point-buffer point))
-      (return-from move-to-previous-virtual-line-n (line-offset point (- n))))
+  (when (<= n 0)
+    (return-from move-to-previous-virtual-line-n point))
+  (unless (variable-value 'truncate-lines :default (point-buffer point))
+    (return-from move-to-previous-virtual-line-n (line-offset point (- n))))
+  (let ((pos-ring  (make-array (1+ n))) ; ring buffer of wrapping position
+        (pos-size  (1+ n))
+        (pos-count 0)
+        (pos-next  0)
+        (pos-last  0))
     (flet ((pos-ring-push (pos)
              (setf (aref pos-ring pos-next) pos)
              (incf pos-next)
@@ -544,36 +517,40 @@
                (setf pos-count pos-size)
                (incf pos-last)
                (when (>= pos-last pos-size) (setf pos-last 0)))))
-      (loop :do (block outer
+      (loop :with n1 := n
+            :with first-line := t
+            :do (block outer
                   (pos-ring-push 0)
                   (map-wrapping-line
                    window
                    (line-string point)
                    (lambda (i)
-                     (when first-line
-                       (when (< (point-charpos point) i)
-                         (return-from outer))
-                       (setf off-x (- (point-charpos point) i)))
+                     (when (and first-line
+                                (< (point-charpos point) i))
+                       (return-from outer))
                      (pos-ring-push i))))
                 (when (>= pos-count (1+ n1))
-                  (line-offset point 0 (+ (aref pos-ring pos-last) off-x))
+                  ;; cursor-x offset is recovered by *next-line-prev-column*
+                  (line-offset point 0 (aref pos-ring pos-last))
                   (return-from move-to-previous-virtual-line-n point))
-                (if (line-offset point -1)
-                    (progn
-                      (setf first-line nil)
-                      (decf n1 pos-count)
-                      (setf pos-size  (1+ n1)) ; shrink ring-buffer
-                      (setf pos-count 0)
-                      (setf pos-next  0)
-                      (setf pos-last  0))
-                    (return-from move-to-previous-virtual-line-n nil))))))
+                ;; go to previous line
+                (unless (line-offset point -1)
+                  (return-from move-to-previous-virtual-line-n nil))
+                (setf first-line nil)
+                (decf n1 pos-count)
+                (setf pos-size  (1+ n1)) ; shrink ring-buffer
+                (setf pos-count 0)
+                (setf pos-next  0)
+                (setf pos-last  0)))))
 
 (defun move-to-next-virtual-line (point &optional n (window (current-window)))
   (unless n (setf n 1))
   (unless (zerop n)
 
     ;; workaround for cursor movement problem
-    (when (cursor-end-line-and-width-p window)
+    (when (and *use-cursor-movement-workaround*
+               (numberp *next-line-prev-column*)
+               (>= *next-line-prev-column* (- (window-width window) 3)))
       (setf *next-line-prev-column* 0))
 
     (if *use-new-vertical-move-function*

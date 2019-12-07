@@ -340,26 +340,16 @@
   (line-start
    (move-point (window-view-point window)
                (window-buffer-point window)))
-  (let ((n (floor (window-%height window) 2)))
-    (window-scroll window (- n))
-    (- n (window-scroll-for-cursor window))))
-
-(defun window-scroll-for-cursor (window)
-  "Scroll down for displaying cursor inside of window."
-  (let ((n (max 0 (- (window-cursor-y window)
-                     ;;(1- (window-%height window))
-                     (floor (1- (window-%height window)) 2)
-                     ))))
-    (when (plusp n)
-      (window-scroll window n))
+  (let ((n (- (window-cursor-y window)
+              (max 0 (1- (floor (window-%height window) 2))))))
+    (window-scroll window n)
     n))
 
-(defun cursor-goto-next-line-p (window)
+(defun cursor-goto-next-line-p (point window)
   "Check if the cursor goes to next line because it is at the end of width."
   (unless (variable-value 'truncate-lines :default (window-buffer window))
     (return-from cursor-goto-next-line-p nil))
   (let* ((lem-base::*tab-size* (variable-value 'tab-width :default (window-buffer window)))
-         (point   (window-buffer-point window))
          (charpos (point-charpos point))
          (line    (line-string point))
          (width   (1- (window-width window)))
@@ -407,17 +397,20 @@
 (defun window-cursor-y (window)
   (if (point< (window-buffer-point window)
               (window-view-point window))
-      ;; sometimes one line larger value is returned (incomplete)
+      ;; return minus number
       (- (+ (window-cursor-y-not-wrapping window)
             (window-wrapping-offset window
                                     (window-buffer-point window)
-                                    (window-view-point window))))
-      ;; always true value is returned
+                                    (window-view-point window))
+            (if (cursor-goto-next-line-p (window-view-point window) window)
+                1 0)))
+      ;; return zero or plus number
       (+ (window-cursor-y-not-wrapping window)
          (window-wrapping-offset window
                                  (window-view-point window)
                                  (window-buffer-point window))
-         (if (cursor-goto-next-line-p window) 1 0))))
+         (if (cursor-goto-next-line-p (window-buffer-point window) window)
+             1 0))))
 
 (defun forward-line-wrap (point window)
   (assert (eq (point-buffer point) (window-buffer window)))

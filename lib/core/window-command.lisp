@@ -247,11 +247,7 @@
      (window-scroll (current-window) n)
      (let ((offset (window-offset-view (current-window))))
        (if (< offset 0)
-           (progn
-             (next-line (- offset))
-             ;; sometimes one more line is needed
-             (when (< (window-offset-view (current-window)) 0)
-               (next-line 1)))
+           (next-line (- offset))
            (next-line 0) ; to preserve *next-line-prev-column*
            )))))
 

@@ -549,6 +549,8 @@
 
     ;; workaround for cursor movement problem
     (when (and *use-cursor-movement-workaround*
+               (eq point (window-buffer-point window))
+               (variable-value 'truncate-lines :default (point-buffer point))
                (numberp *next-line-prev-column*)
                (>= *next-line-prev-column* (- (window-width window) 3)))
       (setf *next-line-prev-column* 0))

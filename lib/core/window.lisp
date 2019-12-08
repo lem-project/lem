@@ -340,8 +340,13 @@
   (line-start
    (move-point (window-view-point window)
                (window-buffer-point window)))
-  (let ((n (- (window-cursor-y window)
-              (max 0 (1- (floor (window-%height window) 2))))))
+  (let* ((height (- (window-%height window)
+                    (if (window-use-modeline-p window) 1 0)))
+         (n (- (window-cursor-y window)
+               ;; height ==> result-y
+               ;;   5    ==>   2
+               ;;   6    ==>   3
+               (floor height 2))))
     (window-scroll window n)
     n))
 
@@ -608,10 +613,11 @@
 (defun window-offset-view (window)
   (cond ((point< (window-buffer-point window)
                  (window-view-point window))
-         (min -1 (window-cursor-y window)))
-        ((let ((n (- (window-cursor-y window)
-                     (- (window-%height window)
-                        (if (window-use-modeline-p window) 2 1)))))
+         (window-cursor-y window))
+        ((let* ((height (- (window-%height window)
+                           (if (window-use-modeline-p window) 1 0)))
+                (n (- (window-cursor-y window)
+                      (1- height))))
            (when (< 0 n) n)))
         (t
          0)))

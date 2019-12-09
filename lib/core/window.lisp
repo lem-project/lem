@@ -403,12 +403,16 @@
   (if (point< (window-buffer-point window)
               (window-view-point window))
       ;; return minus number
-      (- (+ (window-cursor-y-not-wrapping window)
-            (window-wrapping-offset window
-                                    (window-buffer-point window)
-                                    (window-view-point window))
-            (if (cursor-goto-next-line-p (window-view-point window) window)
-                1 0)))
+      (let ((buffer-begin-point
+              (backward-line-wrap
+               (copy-point (window-buffer-point window) :temporary)
+               window t)))
+        (- (+ (window-cursor-y-not-wrapping window)
+              (window-wrapping-offset window
+                                      buffer-begin-point
+                                      (window-view-point window))
+              (if (cursor-goto-next-line-p (window-view-point window) window)
+                  1 0))))
       ;; return zero or plus number
       (+ (window-cursor-y-not-wrapping window)
          (window-wrapping-offset window
@@ -611,16 +615,15 @@
   (run-hooks *window-scroll-functions* window))
 
 (defun window-offset-view (window)
-  (cond ((point< (window-buffer-point window)
-                 (window-view-point window))
-         (window-cursor-y window))
-        ((let* ((height (- (window-%height window)
-                           (if (window-use-modeline-p window) 1 0)))
-                (n (- (window-cursor-y window)
-                      (1- height))))
-           (when (< 0 n) n)))
-        (t
-         0)))
+  (if (point< (window-buffer-point window)
+              (window-view-point window))
+      ;; return minus number
+      (window-cursor-y window)
+      ;; return zero or plus number
+      (let ((height (- (window-%height window)
+                       (if (window-use-modeline-p window) 1 0))))
+        (max 0 (- (window-cursor-y window)
+                  (1- height))))))
 
 (defun window-see (window &optional (recenter *scroll-recenter-p*))
   (let ((offset (window-offset-view window)))

@@ -153,12 +153,15 @@
        ;       (swank:load-file ,filename))))
        (scheme-eval-from-string
         (format nil "(swank:load-file ~S)" filename))
+       (when (repl-buffer)
+         (lem.listener-mode:listener-reset-prompt (repl-buffer)))
        (message "Loaded")))
     ((eq (scheme-repl-type :kind :initial) :scheme-process)
      (scheme-run-process-and-output-newline)
      (when (and (probe-file filename)
                 (not (uiop:directory-pathname-p filename)))
-       (scheme-send-input (format nil "(~a \"~a\")" *scheme-load-command* filename))))
+       (scheme-send-input (format nil "(~a \"~a\")" *scheme-load-command* filename))
+       (message "Loaded")))
     (t
      (editor-error "Scheme repl is not available."))))
 

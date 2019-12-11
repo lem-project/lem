@@ -342,11 +342,8 @@
                (window-buffer-point window)))
   (let* ((height (- (window-%height window)
                     (if (window-use-modeline-p window) 1 0)))
-         (n (- (window-cursor-y window)
-               ;; height ==> result-y
-               ;;   5    ==>   2
-               ;;   6    ==>   3
-               (floor height 2))))
+         (n      (- (window-cursor-y window)
+                    (floor height 2))))
     (window-scroll window n)
     n))
 
@@ -403,16 +400,15 @@
   (if (point< (window-buffer-point window)
               (window-view-point window))
       ;; return minus number
-      (let ((buffer-begin-point
-              (backward-line-wrap
-               (copy-point (window-buffer-point window) :temporary)
-               window t)))
-        (- (+ (window-cursor-y-not-wrapping window)
-              (window-wrapping-offset window
-                                      buffer-begin-point
-                                      (window-view-point window))
-              (if (cursor-goto-next-line-p (window-view-point window) window)
-                  1 0))))
+      (- (+ (window-cursor-y-not-wrapping window)
+            (window-wrapping-offset window
+                                    (backward-line-wrap
+                                     (copy-point (window-buffer-point window)
+                                                 :temporary)
+                                     window t)
+                                    (window-view-point window))
+            (if (cursor-goto-next-line-p (window-view-point window) window)
+                1 0)))
       ;; return zero or plus number
       (+ (window-cursor-y-not-wrapping window)
          (window-wrapping-offset window
@@ -597,10 +593,10 @@
   (move-to-previous-virtual-line (window-view-point window) 1 window))
 
 (defun window-scroll-down-n (window n)
-  (move-to-next-virtual-line-n (window-view-point window) window n))
+  (move-to-next-virtual-line (window-view-point window) n window))
 
 (defun window-scroll-up-n (window n)
-  (move-to-previous-virtual-line-n (window-view-point window) window n))
+  (move-to-previous-virtual-line (window-view-point window) n window))
 
 (defun window-scroll (window n)
   (screen-modify (window-screen window))

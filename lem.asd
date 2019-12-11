@@ -22,7 +22,8 @@
                "lem-yaml-mode"
                "lem-review-mode"
                "lem-asciidoc-mode"
-               "lem-dart-mode"))
+               "lem-dart-mode"
+               "lem-scala-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

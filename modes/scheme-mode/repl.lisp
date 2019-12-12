@@ -132,8 +132,9 @@
      (repl-eval nil (points-to-string start end))
      )
     ((eq (scheme-repl-type :kind :initial) :scheme-process)
-     (scheme-run-process-and-output-newline)
-     (scheme-send-input (points-to-string start end)))
+     (let ((string (points-to-string start end)))
+       (scheme-run-process-and-output-newline)
+       (scheme-send-input string)))
     (t
      (editor-error "Scheme repl is not available."))))
 

@@ -1,5 +1,5 @@
 (defpackage :lem-scala-mode
-  (:use :cl :lem :lem.language-mode))
+  (:use :cl :lem :lem.language-mode :lem.language-mode-tools))
 (in-package :lem-scala-mode)
 
 (defun tokens (boundary strings)
@@ -8,12 +8,6 @@
     (if boundary
         `(:sequence ,boundary ,alternation ,boundary)
         alternation)))
-
-(defun make-tm-string-region (sepalator)
-  (make-tm-region `(:sequence ,sepalator)
-                  `(:sequence ,sepalator)
-                  :name 'syntax-string-attribute
-                  :patterns (make-tm-patterns (make-tm-match "\\\\."))))
 
 (defun make-tmlanguage-scala ()
   (let ((patterns (make-tm-patterns

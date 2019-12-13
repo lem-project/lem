@@ -1,5 +1,5 @@
 (defpackage :lem-css-mode
-  (:use :cl :lem :lem.language-mode)
+  (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
   (:import-from :cl-ppcre
                 :scan)
   (:export :*css-mode-hook*))
@@ -211,13 +211,6 @@
 ;; specific-voice
 
 (defvar *scss-variable* "\\B\\$[^\\s]+\\b")
-
-
-(defun make-tm-string-region (sepalator)
-  (make-tm-region `(:sequence ,sepalator) 
-                  `(:sequence ,sepalator)
-                  :name 'syntax-string-attribute
-                  :patterns (make-tm-patterns (make-tm-match "\\\\."))))
 
 (defmacro tm-constant (regex)
   `(make-tm-match ,regex :name 'syntax-constant-attribute))

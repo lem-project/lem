@@ -1,5 +1,5 @@
 (defpackage :lem-python-mode
-  (:use :cl :lem :lem.language-mode)
+  (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
   (:export :*python-mode-hook*))
 (in-package :lem-python-mode)
 
@@ -9,12 +9,6 @@
     (if boundary
         `(:sequence ,boundary ,alternation ,boundary)
         alternation)))
-
-(defun make-tm-string-region (sepalator)
-  (make-tm-region `(:sequence ,sepalator)
-                  `(:sequence ,sepalator)
-                  :name 'syntax-string-attribute
-                  :patterns (make-tm-patterns (make-tm-match "\\\\."))))
 
 (defun floating-point-literals ()
   (let* ((digitpart "([0-9](_?[0-9])*)")

@@ -1,6 +1,6 @@
 #| link : http://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html |#
 (defpackage :lem-posix-shell-mode
-  (:use :cl :lem :lem.language-mode)
+  (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
   (:export :*posix-shell-mode-hook*))
 (in-package :lem-posix-shell-mode)
 
@@ -26,12 +26,6 @@
     (if boundary
         `(:sequence ,boundary ,alternation ,boundary)
         alternation)))
-
-(defun make-tm-string-region (sepalator)
-  (make-tm-region `(:sequence ,sepalator)
-                  `(:sequence ,sepalator)
-                  :name 'syntax-string-attribute
-                  :patterns (make-tm-patterns (make-tm-match "\\\\."))))
 
 (defun parameter-expression ()
   (let ((special-parameters "[*@#?\\-$!0]")

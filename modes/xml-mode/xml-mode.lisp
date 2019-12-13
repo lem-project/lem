@@ -1,5 +1,5 @@
 (defpackage :lem-xml-mode
-  (:use :cl :lem :lem.language-mode)
+  (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
   (:import-from :cl-ppcre
                 :scan
                 :all-matches-as-strings)
@@ -18,14 +18,8 @@
                     (make-tm-region '(:sequence "<!--")
                                     '(:sequence "-->")
                                     :name 'syntax-comment-attribute)
-                    (make-tm-region '(:sequence "\"")
-                                    '(:sequence "\"")
-                                    :name 'syntax-string-attribute
-                                    :patterns (make-tm-patterns (make-tm-match "\\\\.")))
-                    (make-tm-region '(:sequence "'")
-                                    '(:sequence "'")
-                                    :name 'syntax-string-attribute
-                                    :patterns (make-tm-patterns (make-tm-match "\\\\.")))
+                    (make-tm-string-region "\"")
+                    (make-tm-string-region "'")
                     (make-tm-match (tokens nil '("<" "</" "<?" ">" "/>" "?>" "="))
                                    :name 'syntax-keyword-attribute))))
     (make-tmlanguage :patterns patterns)))

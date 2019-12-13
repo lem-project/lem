@@ -65,6 +65,7 @@
                (:file "grep")
                (:file "go-back")
                (:file "language-mode")
+               (:file "language-mode-tools")
                (:file "gtags")
                (:file "directory-mode")
                (:file "abbrev")

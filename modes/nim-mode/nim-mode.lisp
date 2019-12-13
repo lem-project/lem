@@ -1,5 +1,5 @@
 (defpackage :lem-nim-mode
-  (:use :cl :lem :lem.language-mode)
+  (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
   (:export :*nim-mode-hook*)
   #+sbcl
   (:lock t))
@@ -12,13 +12,6 @@
     (if boundary
         `(:sequence ,boundary ,alternation ,boundary)
         alternation)))
-
-(defun make-tm-string-region (sepalator)
-  (make-tm-region `(:sequence ,sepalator)
-                  `(:sequence ,sepalator)
-                  :name 'syntax-string-attribute
-                  :patterns (make-tm-patterns 
-                      (make-tm-match "\\\\."))))
 
 ;; numerical literals
 ;; cf. https://nim-lang.org/docs/manual.html

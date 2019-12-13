@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(timer
+(export '(*running-timer*
+          timer
           timer-p
           timer-name
           timer-ms
@@ -14,6 +15,7 @@
 (defvar *timer-list* nil)
 (defvar *idle-timer-list* nil)
 (defvar *processed-idle-timer-list* nil)
+(defvar *running-timer* nil)
 
 (defclass timer ()
   ((name
@@ -113,10 +115,11 @@
         (setf (timer-last-time timer) tick-time)))
     (dolist (timer updating-timers)
       (handler-case
-          (if (timer-handle-function timer)
-              (handler-bind ((error (timer-handle-function timer)))
-                (funcall (timer-function timer)))
-              (funcall (timer-function timer)))
+          (let ((*running-timer* timer))
+            (if (timer-handle-function timer)
+                (handler-bind ((error (timer-handle-function timer)))
+                  (funcall (timer-function timer)))
+                (funcall (timer-function timer))))
         (error (condition)
           (message "Error running timer ~S: ~A" (timer-name timer) condition))))
     (redraw-display)

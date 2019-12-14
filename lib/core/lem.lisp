@@ -89,6 +89,8 @@
 
 (defstruct command-line-arguments
   args
+  (debug nil)
+  (log-filename nil)
   (no-init-file nil))
 
 (defun parse-args (args)
@@ -104,6 +106,16 @@
                                  nil)
                                 ((equal arg "--eval")
                                  `(eval ,(read-from-string (pop args))))
+                                ((equal arg "--debug")
+                                 (setf (command-line-arguments-debug parsed-args)
+                                       t))
+                                ((equal arg "--log-filename")
+                                 (let ((filename (pop args)))
+                                   (unless filename
+                                     (error "Please, specify a filename to log to."))
+                                   
+                                   (setf (command-line-arguments-log-filename parsed-args)
+                                         filename)))
                                 ((equal arg "--kill")
                                  `(uiop:quit))
                                 ((member arg '("-v" "--version") :test #'equal)
@@ -186,6 +198,20 @@
 
 (defun lem (&rest args)
   (setf args (parse-args args))
+
+  (cond
+    ((command-line-arguments-log-filename args)
+     (apply #'log:config
+            :sane
+            :daily (command-line-arguments-log-filename args)
+            (list
+             (if (command-line-arguments-debug args)
+                 :debug
+                 :info))))
+    (t (log:config :off)))
+
+  (log:info "Starting Lem")
+  
   (if *in-the-editor*
       (apply-args args)
       (invoke-frontend

@@ -11,7 +11,8 @@
                "cl-fad"
                "lem-base"
                "lem-encodings"
-               "lem-lisp-syntax")
+               "lem-lisp-syntax"
+               "log4cl")
   :serial t
   :components ((:file "history")
                (:file "package")

@@ -120,6 +120,7 @@
 
 (defun self-connect ()
   (let ((port (random-port)))
+    (log:debug "Starting internal SWANK and connecting to it" swank:*communication-style*)
     (let ((swank::*swank-debug-p* nil))
       (swank:create-server :port port))
     (slime-connect *localhost* port nil)

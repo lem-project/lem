@@ -147,6 +147,9 @@ Parses length information to determine how many characters to read."
   (:documentation "A connection to a remote Lisp."))
 
 (defun new-connection (hostname port)
+  (log:debug "Connecting to SWANK"
+             hostname
+             port)
   (let* ((socket (usocket:socket-connect hostname port :element-type '(unsigned-byte 8)))
          (connection (make-instance 'connection
                                     :hostname hostname
@@ -155,16 +158,24 @@ Parses length information to determine how many characters to read."
     (setup connection)
     connection))
 
-(defun read-return-message (connection)
+(defun read-return-message (connection &key (timeout 5))
   "Read only ':return' message. Other messages such as ':indentation-update' are dropped."
-  (loop :for waiting := (message-waiting-p connection :timeout 5)
+  (log:debug "Waiting for response")
+  
+  (loop :for waiting := (message-waiting-p connection :timeout timeout)
         :with info
-        :do (unless waiting (return nil))
+        :do (unless waiting
+              (log:debug "Read timeout")
+              (return nil))
             (setf info (read-message connection))
+            (log:debug "Received" info)
             (when (eq (car info) :return)
+              (log:debug "Exiting from read-return-message")
               (return info))))
 
 (defun setup (connection)
+  (log:debug "Setup connection")
+  
   (emacs-rex connection `(swank:connection-info))
   ;; Read the connection information message
   (let* ((info (read-return-message connection))
@@ -203,14 +214,21 @@ Parses length information to determine how many characters to read."
      swank-arglists
      swank-repl))
   (read-return-message connection)
+  
   ;; Start it up
+  (log:debug "Initializing presentations")
   (emacs-rex-string connection "(swank:init-presentations)")
   (read-return-message connection)
+  
+  (log:debug "Creating the REPL")
   (emacs-rex-string connection "(swank-repl:create-repl nil :coding-system \"utf-8-unix\")")
   ;; Wait for startup
   (read-return-message connection)
+  
+  (log:debug "Reading rest messages")
   ;; Read all the other messages, dumping them
-  (read-all-messages connection))
+  (read-all-messages connection)
+  (log:debug "Setup is done now"))
 
 (defvar *event-log* '())
 
@@ -281,6 +299,12 @@ to check if input is available."
                      (or thread t)
                      (incf (connection-request-count connection)))))
     (log-message msg)
+    (log:debug "Sending string to Swank"
+               msg
+               continuation
+               thread
+               package)
+
     (when continuation
       (push (cons (connection-request-count connection)
                   continuation)
@@ -310,6 +334,7 @@ to check if input is available."
 (defun request-swank-require (connection requirements)
   "Request that the Swank server load contrib modules.
 `requirements` must be a list of symbols, e.g. '(swank-repl swank-media)."
+  (log:debug "Requesting swank requirements" requirements)
   (emacs-rex connection
              `(let ((*load-verbose* nil)
                     (*compile-verbose* nil)

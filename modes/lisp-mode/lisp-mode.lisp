@@ -121,7 +121,7 @@
 (defun self-connect ()
   (let ((port (random-port)))
     (let ((swank::*swank-debug-p* nil))
-      (swank:create-server :port port))
+      (swank:create-server :port port :style :spawn))
     (slime-connect *localhost* port nil)
     (update-buffer-package)
     (setf *self-connected-port* port)))

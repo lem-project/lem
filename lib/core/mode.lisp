@@ -190,7 +190,8 @@
         (setf *current-global-mode* global-mode)
         (call (mode-enable-hook global-mode))))))
 
-(defmacro define-global-mode (mode parent (&key keymap enable-hook disable-hook))
+(defmacro define-global-mode (mode (&optional parent) (&key keymap enable-hook disable-hook))
+  (check-type parent symbol)
   (alexandria:with-gensyms (global-mode parent-mode)
     `(progn
        ,@(when keymap

@@ -487,6 +487,24 @@
     (unless (buffer-redo (current-point))
       (editor-error "Redo Error"))))
 
+(defun *crement-aux (fn)
+  (let ((point (current-point)))
+    (skip-symbol-backward point)
+    (with-point ((start point))
+      (skip-symbol-forward point)
+      (let ((word (points-to-string start point)))
+        (let ((n (handler-case (parse-integer word)
+                   (error ()
+                     (editor-error "not integer")))))
+          (delete-between-points start point)
+          (insert-string point (princ-to-string (funcall fn n))))))))
+
+(define-command increment () ()
+  (*crement-aux #'1+))
+
+(define-command decrement () ()
+  (*crement-aux #'1-))
+
 (define-key *global-keymap* "C-@" 'mark-set)
 (define-key *global-keymap* "C-Space" 'mark-set)
 (define-command mark-set () ()

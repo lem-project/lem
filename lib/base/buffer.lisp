@@ -273,7 +273,7 @@
 (defun (setf buffer-directory) (directory &optional (buffer (current-buffer)))
   (let ((result (uiop:directory-exists-p directory)))
     (unless result
-      (error "directory does not exist: ~A" directory))
+      (error 'directory-does-not-exist :directory directory))
     (setf (buffer-%directory buffer)
           (namestring result))))
 

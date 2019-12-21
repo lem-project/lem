@@ -1,6 +1,8 @@
 (in-package :lem-base)
 
 (export '(editor-condition
+          directory-does-not-exit
+          directory-does-not-exist-directory
           read-only-error
           editor-error
           editor-error-message
@@ -9,6 +11,13 @@
 
 (define-condition editor-condition (simple-error)
   ())
+
+(define-condition directory-does-not-exist (editor-condition)
+  ((directory :initarg :directory
+              :reader directory-does-not-exist-directory))
+  (:report (lambda (condition stream)
+             (format stream "directory does not exist: ~A"
+                     (directory-does-not-exist-directory condition)))))
 
 (define-condition read-only-error (editor-condition)
   ()

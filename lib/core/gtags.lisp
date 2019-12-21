@@ -100,7 +100,7 @@
                           (directory (merge-pathnames "*.h" basedir)))
                   #'string<
                   :key #'file-namestring)
-        :append (parse-global-output (global basedir "-f" filename))))
+        :append (parse-global-output (global basedir "-f" (file-namestring filename)))))
 
 (defun gtags-definition-list-cont (basedir parts-list)
   (let ((max-len (loop :for parts :in parts-list

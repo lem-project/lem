@@ -50,23 +50,20 @@
 (defvar *minibuffer-activate-hook* '())
 (defvar *minibuffer-deactivate-hook* '())
 
-(defclass minibuffer-window (window) ())
-
 (defun make-minibuffer-window (buffer)
-  (make-instance 'minibuffer-window
-                 :buffer buffer
-                 :x 0
-                 :y (- (display-height)
-                       (minibuffer-window-height))
-                 :width (display-width)
-                 :height (minibuffer-window-height)
-                 :use-modeline-p nil))
+  (make-floating-window buffer
+                        0
+                        (- (display-height)
+                           (minibuffer-window-height))
+                        (display-width)
+                        (minibuffer-window-height)
+                        nil))
 
 (define-attribute minibuffer-prompt-attribute
   (t :foreground "blue" :bold-p t))
 
 (defun minibuffer-window () *minibuf-window*)
-(defun minibuffer-window-p (window) (typep window 'minibuffer-window))
+(defun minibuffer-window-p (window) (eq window *minibuf-window*))
 (defun minibuffer-window-active-p () (eq (current-window) (minibuffer-window)))
 (defun minibuffer-window-height () *minibuffer-window-height*)
 (defun minibuffer () (window-buffer (minibuffer-window)))
@@ -85,8 +82,10 @@
         (make-buffer "*echoarea*" :temporary t :enable-undo-p nil))
   (setf *minibuffer-buffer*
         (make-buffer "*minibuffer*" :temporary t :enable-undo-p t))
-  (setf *minibuf-window*
-        (make-minibuffer-window *echoarea-buffer*)))
+  (when (or (not (boundp '*minibuf-window*))
+            (deleted-window-p *minibuf-window*))
+    (setf *minibuf-window*
+          (make-minibuffer-window *echoarea-buffer*))))
 
 (defun teardown-minibuffer ()
   (%free-window *minibuf-window*))

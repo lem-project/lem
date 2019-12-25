@@ -317,7 +317,10 @@
 (defun window-topleft-y () 0)
 (defun window-topleft-x () 0)
 (defun window-max-width () (- (display-width) (window-topleft-x)))
-(defun window-max-height () (- (display-height) (minibuffer-window-height) (window-topleft-y)))
+(defun window-max-height ()
+  (- (display-height)
+     (if (sticky-bottom-minibuffer-p) 1 0)
+     (window-topleft-y)))
 
 (defun setup-windows ()
   (setf *current-window*

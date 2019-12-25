@@ -50,14 +50,19 @@
 (defvar *minibuffer-activate-hook* '())
 (defvar *minibuffer-deactivate-hook* '())
 
+(defclass minibuffer-window (floating-window) ())
+(defclass sticky-minibuffer-window (minibuffer-window) ())
+(defclass popup-minibuffer-window (minibuffer-window) ())
+
 (defun make-minibuffer-window (buffer)
-  (make-floating-window buffer
-                        0
-                        (- (display-height)
-                           (minibuffer-window-height))
-                        (display-width)
-                        (minibuffer-window-height)
-                        nil))
+  (make-instance 'sticky-minibuffer-window
+                 :buffer buffer
+                 :x 0
+                 :y (- (display-height)
+                       (minibuffer-window-height))
+                 :width (display-width)
+                 :height (minibuffer-window-height)
+                 :use-modeline-p nil))
 
 (define-attribute minibuffer-prompt-attribute
   (t :foreground "blue" :bold-p t))
@@ -69,6 +74,8 @@
 (defun minibuffer () (window-buffer (minibuffer-window)))
 (defun minibufferp (buffer) (eq buffer (minibuffer)))
 (defun minibuffer-calls-window () *minibuffer-calls-window*)
+
+(defun sticky-bottom-minibuffer-p () t)
 
 (define-major-mode minibuffer-mode nil
     (:name "minibuffer"
@@ -94,16 +101,12 @@
   (window-set-pos (minibuffer-window) 0 (1- (display-height)))
   (window-set-size (minibuffer-window) (display-width) 1))
 
-(defun log-message (string args)
-  (when string
-    (let ((msg (apply #'format nil string args)))
-      (let ((buffer (make-buffer "*Messages*")))
-        (with-open-stream (stream (make-buffer-output-stream
-                                   (buffer-end-point buffer)))
-          (fresh-line stream)
-          (princ msg stream))))))
+(defgeneric message-using-minibuffer-class (minibuffer string args))
 
-(defun message-without-log (string &rest args)
+(defmethod message-using-minibuffer-class ((minibuffer-window null) string args)
+  nil)
+
+(defmethod message-using-minibuffer-class ((minibuffer-window minibuffer-window) string args)
   (cond (string
          (erase-buffer *echoarea-buffer*)
          (let ((point (buffer-point *echoarea-buffer*)))
@@ -118,12 +121,29 @@
              (editor-abort ()
                (minibuf-read-line-break)))))
         (t
-         (erase-buffer *echoarea-buffer*)))
-  t)
+         (erase-buffer *echoarea-buffer*))))
+
+(defmethod message-using-minibuffer-class ((minibuffer-window popup-minibuffer-window) string args)
+  (cond (string
+         )
+        (t
+         )))
+
+(defun log-message (string args)
+  (when string
+    (let ((msg (apply #'format nil string args)))
+      (let ((buffer (make-buffer "*Messages*")))
+        (with-open-stream (stream (make-buffer-output-stream
+                                   (buffer-end-point buffer)))
+          (fresh-line stream)
+          (princ msg stream))))))
+
+(defun message-without-log (string &rest args)
+  (message-using-minibuffer-class *minibuf-window* string args))
 
 (defun message (string &rest args)
   (log-message string args)
-  (apply #'message-without-log string args)
+  (message-using-minibuffer-class *minibuf-window* string args)
   t)
 
 (defun message-buffer (buffer)

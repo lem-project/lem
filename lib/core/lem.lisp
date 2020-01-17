@@ -85,7 +85,8 @@
 
 (defun teardown ()
   (teardown-windows)
-  (teardown-minibuffer))
+  ;; (teardown-minibuffer) ; minibufferをfloating-windowとして扱うので開放処理はしない
+  )
 
 (defstruct command-line-arguments
   args

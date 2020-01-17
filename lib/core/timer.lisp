@@ -51,6 +51,9 @@
     :accessor timer-idle-p
     :type boolean)))
 
+(defun timer-has-last-time (timer)
+  (slot-boundp timer 'last-time))
+
 (defmethod print-object ((object timer) stream)
   (print-unreadable-object (object stream :identity t)
     (format stream "TIMER: ~S" (timer-name object))))
@@ -90,7 +93,7 @@
                             *timer-list*))
          (updating-timers (remove-if-not (lambda (timer)
                                            (< (timer-next-time timer) tick-time))
-                                         target-timers))
+                                         (remove-if-not 'timer-has-last-time target-timers)))
          (deleting-timers (remove-if-not (lambda (timer)
                                            (not (timer-repeat-p timer)))
                                          updating-timers))
@@ -129,6 +132,8 @@
   (let ((timers (if *is-in-idle*
                     (append *timer-list* *idle-timer-list*)
                     *timer-list*)))
+    ;;Remove timers without a last-time
+    (setf timers (remove-if-not 'timer-has-last-time timers))
     (if (null timers)
         nil
         (- (loop :for timer :in timers

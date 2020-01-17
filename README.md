@@ -70,6 +70,10 @@ You can see an example [here](lemrc-example) or [here](https://github.com/Fedreg
 fukamachi also published his init files on GitHub.
 https://github.com/fukamachi/.lem
 
+## Extensions and modes
+
+* [Pareto](https://github.com/40ants/lem-pareto) - A mode, complement to the Paredit. Makes Lisp code editing even more efficient!
+
 ## Electron version (Experiment)
 Electron version is in the experimental stage.
 

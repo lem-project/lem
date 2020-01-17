@@ -160,7 +160,8 @@
                              (search-forward-regexp
                               point
                               `(:sequence
-                                "(defun"
+                                "(def"
+                                (:greedy-repetition 1 nil (:CHAR-CLASS :WORD-CHAR-CLASS #\-))
                                 (:greedy-repetition 1 nil :whitespace-char-class)
                                 ,name
                                 :whitespace-char-class))

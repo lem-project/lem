@@ -35,7 +35,9 @@
           move-to-beginning-of-buffer
           move-to-end-of-buffer
           move-to-beginning-of-line
+          move-to-beginning-of-logical-line
           move-to-end-of-line
+          move-to-end-of-logical-line
           next-page
           previous-page
           entab-line
@@ -264,7 +266,7 @@
     (cond ((plusp n)
            (move-to-end-of-buffer)
            (editor-error "End of buffer"))
-          (t
+          ((minusp n)
            (move-to-beginning-of-buffer)
            (editor-error "Beginning of buffer")))))
 
@@ -324,6 +326,9 @@
                                          bol)
         (move-point (current-point) bol)))
   t)
+(define-command move-to-beginning-of-logical-line () ()
+  (line-start (current-point))
+  t)
 
 (define-key *global-keymap* "C-e" 'move-to-end-of-line)
 (define-key *global-keymap* "End" 'move-to-end-of-line)
@@ -332,36 +337,19 @@
            (character-offset (current-point) -1))
       (line-end (current-point)))
   t)
+(define-command move-to-end-of-logical-line () ()
+  (line-end (current-point))
+  t)
 
 (define-key *global-keymap* "C-v" 'next-page)
 (define-key *global-keymap* "PageDown" 'next-page)
 (define-command next-page (&optional n) ("P")
-  (if n
-      (scroll-down n)
-      (cond
-        ((line-offset (current-point)
-                      (1- (window-height (current-window))))
-         (window-recenter (current-window))
-         t)
-        (t
-         (buffer-end (current-point))
-         (window-recenter (current-window))
-         t))))
+  (scroll-down (or n (1- (window-height (current-window))))))
 
 (define-key *global-keymap* "M-v" 'previous-page)
 (define-key *global-keymap* "PageUp" 'previous-page)
 (define-command previous-page (&optional n) ("P")
-  (if n
-      (scroll-up n)
-      (cond
-        ((line-offset (current-point)
-                      (- (1- (window-height (current-window)))))
-         (window-recenter (current-window))
-         t)
-        (t
-         (buffer-start (current-point))
-         (window-recenter (current-window))
-         t))))
+  (scroll-up (or n (1- (window-height (current-window))))))
 
 (defun delete-while-whitespaces (ignore-newline-p)
   (let ((n (skip-chars-forward (current-point)

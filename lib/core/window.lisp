@@ -417,7 +417,9 @@
          (window-wrapping-offset window
                                  (window-view-point window)
                                  (window-buffer-point window))
-         (if (cursor-goto-next-line-p (window-buffer-point window) window)
+         (if (and (point< (window-view-point window)
+                          (window-buffer-point window))
+                  (cursor-goto-next-line-p (window-buffer-point window) window))
              1 0))))
 
 (defun forward-line-wrap (point window)

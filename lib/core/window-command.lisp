@@ -240,9 +240,6 @@
   (cond
     ((minusp n)
      (scroll-up (- n)))
-    ((last-line-p (window-view-point (current-window)))
-     (next-line 0) ; to preserve *next-line-prev-column*
-     (editor-error "End of buffer"))
     (t
      (window-scroll (current-window) n)
      (let ((offset (window-offset-view (current-window))))
@@ -257,9 +254,6 @@
   (cond
     ((minusp n)
      (scroll-down (- n)))
-    ((first-line-p (window-view-point (current-window)))
-     (previous-line 0) ; to preserve *next-line-prev-column*
-     (editor-error "Beginning of buffer"))
     (t
      (window-scroll (current-window) (- n))
      (let ((offset (window-offset-view (current-window))))

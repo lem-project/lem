@@ -61,25 +61,25 @@
                   (setf cr nil))
                 (funcall f c))))
       (:auto (if cr
-                   (case c
-                     (#.(char-code #\lf)
-                        (setf (encoding-end-of-line encoding) :crlf
-                              cr nil)
-                        (funcall f c))
-                     (t (setf (encoding-end-of-line encoding) :cr
-                              cr nil)
-                        (funcall f #.(char-code #\lf))
-                        (funcall f
-                                 (if (= c #.(char-code #\cr))
-                                     #\lf
-                                     c))))
-                   (case c
-                     (#.(char-code #\lf)
-                        (setf (encoding-end-of-line encoding) :lf)
-                        (funcall f c))
-                     (#.(char-code #\cr)
-                        (setf cr t))
-                     (t (funcall f c)))))
+                 (case c
+                   (#.(char-code #\lf)
+                      (setf (encoding-end-of-line encoding) :crlf
+                            cr nil)
+                      (funcall f c))
+                   (t (setf (encoding-end-of-line encoding) :cr
+                            cr nil)
+                      (funcall f #.(char-code #\lf))
+                      (funcall f
+                               (if (= c #.(char-code #\cr))
+                                   #\lf
+                                   c))))
+                 (case c
+                   (#.(char-code #\lf)
+                      (setf (encoding-end-of-line encoding) :lf)
+                      (funcall f c))
+                   (#.(char-code #\cr)
+                      (setf cr t))
+                   (t (funcall f c)))))
       ((:lf t) (funcall f c)))
     cr))
 

@@ -605,15 +605,15 @@
 
 (defun window-scroll (window n)
   (screen-modify (window-screen window))
-  (if *use-new-vertical-move-function*
-      (if (plusp n)
-          (window-scroll-down-n window n)
-          (window-scroll-up-n window (- n)))
-      (dotimes (_ (abs n))
-        (if (plusp n)
-            (window-scroll-down window)
-            (window-scroll-up window))))
-  (run-hooks *window-scroll-functions* window))
+  (prog1 (if *use-new-vertical-move-function*
+             (if (plusp n)
+                 (window-scroll-down-n window n)
+                 (window-scroll-up-n window (- n)))
+             (dotimes (_ (abs n))
+               (if (plusp n)
+                   (window-scroll-down window)
+                   (window-scroll-up window))))
+    (run-hooks *window-scroll-functions* window)))
 
 (defun window-offset-view (window)
   (if (point< (window-buffer-point window)

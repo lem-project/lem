@@ -241,7 +241,10 @@
     ((minusp n)
      (scroll-up (- n)))
     (t
-     (window-scroll (current-window) n)
+     (unless (window-scroll (current-window) n)
+       (buffer-end (window-view-point (current-window)))
+       (backward-line-wrap (window-view-point (current-window))
+                           (current-window) t))
      (let ((offset (window-offset-view (current-window))))
        (if (< offset 0)
            (next-line (- offset))
@@ -255,7 +258,8 @@
     ((minusp n)
      (scroll-down (- n)))
     (t
-     (window-scroll (current-window) (- n))
+     (unless (window-scroll (current-window) (- n))
+       (buffer-start (window-view-point (current-window))))
      (let ((offset (window-offset-view (current-window))))
        (if (> offset 0)
            (previous-line offset)

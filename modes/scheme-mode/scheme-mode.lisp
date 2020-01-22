@@ -24,6 +24,7 @@
 (define-key *scheme-mode-keymap* "C-c M-p" 'scheme-set-library)
 (define-key *scheme-mode-keymap* "C-c M-:" 'scheme-eval-string)
 (define-key *scheme-mode-keymap* "C-c C-e" 'scheme-eval-last-expression)
+(define-key *scheme-mode-keymap* "C-x C-e" 'scheme-eval-last-expression)
 (define-key *scheme-mode-keymap* "C-M-x" 'scheme-eval-define)
 (define-key *scheme-mode-keymap* "C-c C-r" 'scheme-eval-region)
 (define-key *scheme-mode-keymap* "C-c C-l" 'scheme-load-file)

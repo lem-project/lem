@@ -245,11 +245,7 @@
        (buffer-end (window-view-point (current-window)))
        (backward-line-wrap (window-view-point (current-window))
                            (current-window) t))
-     (let ((offset (window-offset-view (current-window))))
-       (if (< offset 0)
-           (next-line (- offset))
-           (next-line 0) ; to preserve *next-line-prev-column*
-           )))))
+     (next-line (- (window-offset-view (current-window)))))))
 
 (define-key *global-keymap* "C-Up" 'scroll-up)
 (define-key *global-keymap* "M-Up" 'scroll-up)
@@ -260,11 +256,7 @@
     (t
      (unless (window-scroll (current-window) (- n))
        (buffer-start (window-view-point (current-window))))
-     (let ((offset (window-offset-view (current-window))))
-       (if (> offset 0)
-           (previous-line offset)
-           (previous-line 0) ; to preserve *next-line-prev-column*
-           )))))
+     (previous-line (window-offset-view (current-window))))))
 
 (define-other-window-command find-file "FFind File Other Window: ")
 (define-key *global-keymap* "C-x 4 f" 'find-file-other-window)

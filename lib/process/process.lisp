@@ -33,7 +33,8 @@
     (funcall output-callback string)))
 
 (defun delete-process (process)
-  (bt:destroy-thread (process-read-thread process))
+  (when (bt:thread-alive-p (process-read-thread process))
+    (bt:destroy-thread (process-read-thread process)))
   (async-process:delete-process (process-pointer process)))
 
 (defun process-alive-p (process)

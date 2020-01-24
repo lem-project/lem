@@ -7,7 +7,6 @@
     ((or (eq (scheme-repl-type :kind :current) :scheme-process)
          (eq (scheme-repl-type :kind :current) :scheme-slime))
      (lem.listener-mode:listener-mode t)
-     (lem.listener-mode:listener-update-point)
      (when (eq (scheme-repl-type :kind :current) :scheme-process)
        ;; disable listener-mode functions
        (setf (variable-value 'lem.listener-mode:listener-set-prompt-function)

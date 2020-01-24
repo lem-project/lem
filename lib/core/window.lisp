@@ -417,7 +417,9 @@
          (window-wrapping-offset window
                                  (window-view-point window)
                                  (window-buffer-point window))
-         (if (cursor-goto-next-line-p (window-buffer-point window) window)
+         (if (and (point< (window-view-point window)
+                          (window-buffer-point window))
+                  (cursor-goto-next-line-p (window-buffer-point window) window))
              1 0))))
 
 (defun forward-line-wrap (point window)
@@ -603,15 +605,15 @@
 
 (defun window-scroll (window n)
   (screen-modify (window-screen window))
-  (if *use-new-vertical-move-function*
-      (if (plusp n)
-          (window-scroll-down-n window n)
-          (window-scroll-up-n window (- n)))
-      (dotimes (_ (abs n))
-        (if (plusp n)
-            (window-scroll-down window)
-            (window-scroll-up window))))
-  (run-hooks *window-scroll-functions* window))
+  (prog1 (if *use-new-vertical-move-function*
+             (if (plusp n)
+                 (window-scroll-down-n window n)
+                 (window-scroll-up-n window (- n)))
+             (dotimes (_ (abs n))
+               (if (plusp n)
+                   (window-scroll-down window)
+                   (window-scroll-up window))))
+    (run-hooks *window-scroll-functions* window)))
 
 (defun window-offset-view (window)
   (if (point< (window-buffer-point window)

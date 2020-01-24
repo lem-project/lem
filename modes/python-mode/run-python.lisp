@@ -1,7 +1,11 @@
 (defpackage :lem-python-mode.run-python
   (:use :cl :lem :lem-python-mode)
-  (:export :run-python))
+  (:export :*python-run-command*
+           :run-python))
 (in-package :lem-python-mode.run-python)
+
+(defvar *python-run-command* #-win32 "python"
+                             #+win32 '("python" "-i"))
 
 (defvar *process* nil)
 
@@ -24,6 +28,8 @@
 
 (defun execute-input (point string)
   (declare (ignore point))
+  (unless (alive-process-p)
+    (editor-error "Python process doesn't exist."))
   (lem-process:process-send-input *process*
                                   (concatenate 'string string (string #\newline))))
 
@@ -36,7 +42,8 @@
 
 (defun get-repl-buffer ()
   (let ((buffer (make-buffer "*python*")))
-    (change-buffer-mode buffer 'run-python-mode)
+    (unless (eq (buffer-major-mode buffer) 'run-python-mode)
+      (change-buffer-mode buffer 'run-python-mode))
     buffer))
 
 (defun output-callback (string)
@@ -59,14 +66,22 @@
 
 (defun run-python-internal ()
   (unless (alive-process-p)
+    (when *process*
+      (lem-process:delete-process *process*))
     (setf *process*
-          (lem-process:run-process "python"
+          (lem-process:run-process *python-run-command*
                                    :name "run-python"
                                    :output-callback 'output-callback))))
 
 (define-command python-eval-region (start end) ("r")
-  (when (alive-process-p)
-    (lem-process:process-send-input *process* (points-to-string start end))))
+  (unless (alive-process-p)
+    (editor-error "Python process doesn't exist."))
+  (lem-process:process-send-input *process* (points-to-string start end)))
 
 (define-command run-python () ()
   (run-python-internal))
+
+(add-hook *exit-editor-hook*
+          (lambda ()
+            (when *process*
+              (lem-process:delete-process *process*))))

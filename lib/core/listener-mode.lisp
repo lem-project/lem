@@ -39,7 +39,9 @@
   (setf (variable-value 'enable-syntax-highlight) nil)
   (unless (%listener-history)
     (setf (%listener-history)
-          (lem.history:make-history))))
+          (lem.history:make-history)))
+  (unless (%listener-point (current-buffer))
+    (listener-update-point)))
 
 (define-key *listener-mode-keymap* "Return" 'listener-return)
 (define-key *listener-mode-keymap* "M-p" 'listener-prev-input)

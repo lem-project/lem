@@ -112,7 +112,9 @@ $ lem --frontend ncurses-ccl
 See https://github.com/cxxxr/lem/wiki/Lisp-Mode
 
 ## How to hack on lem itself
-see https://github.com/cxxxr/lem/wiki/How-to-hack-on-lem-itself
+See https://github.com/cxxxr/lem/wiki/How-to-hack-on-lem-itself
+
+If you have a questions, join [this Gitter chat](https://gitter.im/lem-developers/community).
 
 ## Contributors
 

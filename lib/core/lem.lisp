@@ -105,6 +105,12 @@
                                  (setf (command-line-arguments-no-init-file parsed-args)
                                        t)
                                  nil)
+                                ((equal arg "--slime")
+                                 (let ((host-port (pop args)))
+                                   ;; TODO: handle incorrect input
+                                   (destructuring-bind (host port)
+                                       (uiop:split-string (string-trim " " host-port) :separator ":")
+                                     `(uiop:symbol-call :lem-lisp-mode :slime-connect ,host ,(parse-integer port) nil))))
                                 ((equal arg "--eval")
                                  `(eval ,(read-from-string (pop args))))
                                 ((equal arg "--debug")

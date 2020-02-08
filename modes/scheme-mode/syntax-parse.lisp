@@ -10,15 +10,10 @@
 
 (defun parse-for-swank-autodoc (point)
   (and (parsing-safe-p point)
+       ;; for r7rs-swank
        ;(parse-form-upto-toplevel point 10)
-
-       ;; for r7rs-swank (empty string causes error)
-       (let ((ret (parse-form-upto-toplevel point 1)))
-         (if (and (consp ret)
-                  (stringp (car ret))
-                  (string= (car ret) ""))
-             nil
-             ret))))
+       (parse-form-upto-toplevel point 1)
+       ))
 
 (defun compare-char (point offset fn &optional unescape)
   (and (funcall fn (character-at point offset))
@@ -32,7 +27,9 @@
     (let ((suffix (list *cursor-marker*)))
       (cond ((compare-char point 0 #'syntax-open-paren-char-p t)
              (and (form-offset point 1)
-                  (push "" suffix)))
+                  ;; for r7rs-swank
+                  ;(push "" suffix)
+                  ))
             ((or (start-line-p point)
                  (compare-char point -1 #'syntax-space-char-p t))
              (push "" suffix))

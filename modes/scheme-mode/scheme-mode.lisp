@@ -70,8 +70,12 @@
 ;;    t     : use 'scheme-set-library' command for each buffer
 ;;    :repl : use 'scheme-set-library' command for only repl
 ;;    nil   : disable 'scheme-set-library' command
+;;  *use-scheme-autodoc*
+;;    t     : display function information in minibuffer
+;;    nil   : don't display function information in minibuffer
 (defvar *use-scheme-slime* :auto)
 (defvar *use-scheme-set-library* :repl)
+(defvar *use-scheme-autodoc* t)
 (defvar *scheme-swank-server-run-command*
   '("gosh" "-AC:/work/r7rs-swank" "-e(begin (import (gauche-swank)) (start-swank ,port))"))
 

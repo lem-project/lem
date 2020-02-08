@@ -1119,7 +1119,8 @@
           ;           *use-scheme-set-library*
           ;           (not (eq *use-scheme-set-library* :repl)))
           ;  (update-buffer-package))
-          (when (member major-mode '(scheme-mode scheme-repl-mode))
+          (when (and *use-scheme-autodoc*
+                     (member major-mode '(scheme-mode scheme-repl-mode)))
             (unless (active-echoarea-p)
               (scheme-autodoc))))
       (error () (scheme-slime-quit)))))

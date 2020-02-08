@@ -16,6 +16,7 @@
    :*scheme-load-command*
    :*use-scheme-slime*
    :*use-scheme-set-library*
+   :*use-scheme-autodoc*
    :*scheme-swank-server-run-command*
    :*use-scheme-repl-shortcut*
    :*scheme-completion-names*

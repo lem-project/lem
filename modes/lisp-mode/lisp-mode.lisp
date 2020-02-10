@@ -1139,7 +1139,7 @@
     (sleep 0.5)
     (let ((successp)
           (condition))
-      (loop :repeat 10
+      (loop :repeat 30
             :do (handler-case
                     (let ((conn (slime-connect *localhost* port t)))
                       (setf (connection-command conn) command)

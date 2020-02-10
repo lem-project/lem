@@ -1134,8 +1134,7 @@
 (defun run-slime (command &key (directory (buffer-directory)))
   (unless command
     (setf command (get-lisp-command :impl *impl-name*)))
-  (let ((port (or (port-available-p *default-port*)
-                  (random-port))))
+  (let ((port (random-port)))
     (run-swank-server command port :directory directory)
     (sleep 0.5)
     (let ((successp)

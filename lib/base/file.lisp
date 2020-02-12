@@ -69,7 +69,7 @@
                                 (when c (insert-char/point point (code-char c)))))))))
     encoding))
 
-(defun find-file-buffer (filename &key temporary (enable-undo-p t))
+(defun find-file-buffer (filename &key temporary (enable-undo-p t) (syntax-table nil syntax-table-p))
   (when (pathnamep filename)
     (setf filename (namestring filename)))
   (setf filename (expand-file-name filename))
@@ -97,6 +97,7 @@
              (buffer-unmark buffer))
            (buffer-start (buffer-point buffer))
            (when enable-undo-p (buffer-enable-undo buffer))
+           (when syntax-table-p (setf (buffer-syntax-table buffer) syntax-table))
            (update-changed-disk-date buffer)
            (run-hooks *find-file-hook* buffer)
            (values buffer t)))))

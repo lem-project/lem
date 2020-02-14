@@ -23,7 +23,8 @@
                "lem-review-mode"
                "lem-asciidoc-mode"
                "lem-dart-mode"
-               "lem-scala-mode"))
+               "lem-scala-mode"
+               "lem-dot-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

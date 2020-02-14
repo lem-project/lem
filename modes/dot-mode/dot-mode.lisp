@@ -30,6 +30,11 @@
   (let* ((patterns (make-tm-patterns
                     (line-comment-region "//")
                     (block-comment-region "/*" "*/")
+                    (make-tm-region '(:sequence "\"")
+                                    '(:sequence "\"")
+                                    :name 'syntax-string-attribute
+                                    :patterns (make-tm-patterns
+                                               (make-tm-match "\\\\.")))
                     (make-tm-match (tokens :word-boundary *dot-types*)
                                    :name 'syntax-type-attribute))))
     (make-tmlanguage :patterns patterns)))
@@ -38,6 +43,7 @@
 (defvar *dot-syntax-table*
   (let ((table (make-syntax-table
                 :space-chars '(#\space #\tab #\newline)
+                :string-quote-chars '(#\")
                 :line-comment-string "//"
                 :block-comment-pairs '(("/*" . "*/"))))
         (tmlanguage (make-tmlanguage-dot)))

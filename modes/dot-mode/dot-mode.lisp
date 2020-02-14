@@ -7,6 +7,16 @@
   (:export :*dot-mode-hook*))
 (in-package :lem-dot-mode)
 
+(defvar *dot-types*
+ '("strict" "graph" "digraph" "graph" "node" "edge" "subgraph"))
+
+(defun tokens (boundary strings)
+ (let ((alternation
+        `(:alternation ,@(sort (copy-list strings) #'> :key #'length))))
+   (if boundary
+       `(:sequence ,boundary ,alternation ,boundary)
+       alternation)))
+
 (defun line-comment-region (start)
   (make-tm-region start "$"
                   :name 'syntax-comment-attribute))
@@ -19,8 +29,11 @@
 (defun make-tmlanguage-dot ()
   (let* ((patterns (make-tm-patterns
                     (line-comment-region "//")
-                    (block-comment-region "/*" "*/"))))
+                    (block-comment-region "/*" "*/")
+                    (make-tm-match (tokens :word-boundary *dot-types*)
+                                   :name 'syntax-type-attribute))))
     (make-tmlanguage :patterns patterns)))
+ 
 
 (defvar *dot-syntax-table*
   (let ((table (make-syntax-table

@@ -10,6 +10,9 @@
 (defvar *dot-types*
  '("strict" "graph" "digraph" "graph" "node" "edge" "subgraph"))
 
+(defvar *dot-operators*
+  '(";" "," "=" ":" "->" "--" "+"))
+
 (defun tokens (boundary strings)
  (let ((alternation
         `(:alternation ,@(sort (copy-list strings) #'> :key #'length))))
@@ -36,7 +39,10 @@
                                     :patterns (make-tm-patterns
                                                (make-tm-match "\\\\.")))
                     (make-tm-match (tokens :word-boundary *dot-types*)
-                                   :name 'syntax-type-attribute))))
+                                   :name 'syntax-type-attribute)
+                    (make-tm-match (tokens nil *dot-operators*)
+                                   :name 'syntax-keyword-attribute))))
+    
     (make-tmlanguage :patterns patterns)))
  
 

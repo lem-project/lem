@@ -38,13 +38,14 @@
                                     :name 'syntax-string-attribute
                                     :patterns (make-tm-patterns
                                                (make-tm-match "\\\\.")))
+                    (make-tm-match "-?(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?)"
+                                   :name 'syntax-constant-attribute)
                     (make-tm-match (tokens :word-boundary *dot-types*)
                                    :name 'syntax-type-attribute)
                     (make-tm-match (tokens nil *dot-operators*)
                                    :name 'syntax-keyword-attribute))))
     
     (make-tmlanguage :patterns patterns)))
- 
 
 (defvar *dot-syntax-table*
   (let ((table (make-syntax-table

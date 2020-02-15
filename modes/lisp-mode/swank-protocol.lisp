@@ -41,7 +41,8 @@
 (defmacro with-swank-syntax (() &body body)
   `(with-standard-io-syntax
      (let ((*package* (find-package :swank-io-package))
-           (*print-case* :downcase))
+           (*print-case* :downcase)
+           (*print-readably* nil))
        ,@body)))
 
 ;;; Encoding and decoding messages

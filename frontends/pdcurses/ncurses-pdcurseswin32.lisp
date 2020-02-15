@@ -470,6 +470,8 @@
          (multiple-value-bind (bstate x y z id)
              (charms/ll:getmouse)
            (declare (ignore z id))
+           ;; exit isearch-mode
+           (send-event (make-key :sym "NopKey"))
            (mouse-event-proc bstate x y)))
         ((= code abort-code)
          :abort)

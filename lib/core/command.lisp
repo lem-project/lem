@@ -4,6 +4,7 @@
           exit-lem
           quick-exit
           keyboard-quit
+          nop-command
           self-insert-before-hook
           self-insert-after-hook
           self-insert
@@ -82,6 +83,9 @@
 (define-key *global-keymap* "C-g" 'keyboard-quit)
 (define-command keyboard-quit () ()
   (error 'editor-abort))
+
+(define-key *global-keymap* "NopKey" 'nop-command)
+(define-command nop-command () ())
 
 (define-editor-variable self-insert-before-hook '())
 (define-editor-variable self-insert-after-hook '())

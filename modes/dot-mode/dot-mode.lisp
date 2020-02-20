@@ -20,15 +20,10 @@
        `(:sequence ,boundary ,alternation ,boundary)
        alternation)))
 
-(defun block-comment-region (start end)
-  (make-tm-region `(:sequence ,start)
-                  `(:sequence ,end)
-                  :name 'syntax-comment-attribute))
-
 (defun make-tmlanguage-dot ()
   (let* ((patterns (make-tm-patterns
                     (make-tm-line-comment-region "//")
-                    (block-comment-region "/*" "*/")
+                    (make-tm-block-comment-region "/*" "*/")
                     (make-tm-string-region "\"")
                     (make-tm-match "-?(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?)"
                                    :name 'syntax-constant-attribute)

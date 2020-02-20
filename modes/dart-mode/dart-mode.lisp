@@ -41,6 +41,15 @@ see : https://dart.dev/guides/language/language-tour
     "StringSink" "Symbol" "Type" "Uri"
     "UriData"))
 
+(defvar *dart-arithmetic-operators* '("+" "-" "*" "/" "~/" "%" "++" "--"))
+(defvar *dart-equality-and-relational-operators* '("==" "!=" ">" "<" ">=" "<="))
+(defvar *dart-type-test-operators* '("as" "is" "is!"))
+(defvar *dart-assignment-operators* '("=" "-=" "/=" "%=" ">>=" "^=" "+=" "*=" "~/=" "<<=" "&=" "|="))
+(defvar *dart-logical-operators* '("!" "||" "&&"))
+(defvar *dart-bitwise-and-shift-operators* '("&" "|" "^" "~" "<<" ">>"))
+(defvar *dart-conditional-expressions* '("?" ":" "??" "?."))
+(defvar *dart-cascade-notation* '(".."))
+
 (defun tokens (boundary strings)
   (let ((alternation
          `(:alternation ,@(sort (copy-list strings) #'> :key #'length))))
@@ -59,7 +68,17 @@ see : https://dart.dev/guides/language/language-tour
            (make-tm-match (tokens :word-boundary *dart-constants*)
                           :name 'syntax-constant-attribute)
            (make-tm-match (tokens :word-boundary *dart-builtin-types*)
-                          :name 'syntax-type-attribute))))
+                          :name 'syntax-type-attribute)
+           (make-tm-match (tokens nil (append *dart-arithmetic-operators*
+                                              *dart-equality-and-relational-operators*
+                                              *dart-assignment-operators*
+                                              *dart-logical-operators*
+                                              *dart-bitwise-and-shift-operators*
+                                              *dart-conditional-expressions*
+                                              *dart-cascade-notation*))
+                          :name 'syntax-builtin-attribute)
+           (make-tm-match (tokens :word-boundary *dart-type-test-operators*)
+                          :name 'syntax-builtin-attribute))))
     (make-tmlanguage :patterns patterns)))
 
 (defvar *dart-syntax-table*

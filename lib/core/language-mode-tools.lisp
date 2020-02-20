@@ -1,7 +1,8 @@
 (defpackage :lem.language-mode-tools
   (:use :cl :lem)
   (:export :make-tm-string-region
-           :make-tm-line-comment-region)
+           :make-tm-line-comment-region
+           :make-tm-block-comment-region)
   #+sbcl
   (:lock t))
 (in-package :lem.language-mode-tools)
@@ -15,3 +16,8 @@
 
 (defun make-tm-line-comment-region (start)
   (make-tm-region start "$" :name 'syntax-comment-attribute))
+
+(defun make-tm-block-comment-region (start end)
+  (make-tm-region `(:sequence ,start)
+                  `(:sequence ,end)
+                  :name 'syntax-comment-attribute))

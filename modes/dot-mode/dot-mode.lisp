@@ -33,11 +33,7 @@
   (let* ((patterns (make-tm-patterns
                     (line-comment-region "//")
                     (block-comment-region "/*" "*/")
-                    (make-tm-region '(:sequence "\"")
-                                    '(:sequence "\"")
-                                    :name 'syntax-string-attribute
-                                    :patterns (make-tm-patterns
-                                               (make-tm-match "\\\\.")))
+                    (make-tm-string-region "\"")
                     (make-tm-match "-?(\\.[0-9]+)|([0-9]+(\\.[0-9]*)?)"
                                    :name 'syntax-constant-attribute)
                     (make-tm-match (tokens :word-boundary *dot-types*)

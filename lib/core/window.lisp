@@ -48,6 +48,7 @@
           floating-window
           make-floating-window
           floating-window-p
+          header-window
           redraw-display
           redraw-display*
           display-popup-message
@@ -66,6 +67,7 @@
 (defvar *window-show-buffer-functions* '())
 
 (defvar *floating-windows* '())
+(defvar *header-windows* '())
 (defvar *modified-floating-windows* nil)
 
 (defvar *window-tree*)
@@ -317,7 +319,7 @@
   (delete-point (%window-point window))
   (screen-delete (window-screen window)))
 
-(defun window-topleft-y () 0)
+(defun window-topleft-y () (length *header-windows*))
 (defun window-topleft-x () 0)
 (defun window-max-width () (- (display-width) (window-topleft-x)))
 (defun window-max-height ()
@@ -1150,8 +1152,30 @@
 (defun floating-window-p (window)
   (typep window 'floating-window))
 
+(defvar *modify-header-windows* nil)
+
+(defclass header-window (window) ())
+
+(defmethod initialize-instance ((window header-window) &key &allow-other-keys)
+  (with-slots (x y width height) window
+    (setf x 0)
+    (setf y (length *header-windows*))
+    (setf width (display-width))
+    (setf height 1))
+  (push window *header-windows*)
+  (setf *modify-header-windows* t)
+  (call-next-method))
+
+(defmethod %delete-window ((window header-window))
+  (setf *header-windows*
+        (delete window *header-windows*))
+  (setf *modify-header-windows* t))
+
 (defun redraw-display (&optional force)
   (without-interrupts
+    (when *modify-header-windows*
+      (setf *modify-header-windows* nil)
+      (change-display-size-hook))
     (dolist (window (window-list))
       (unless (eq window (current-window))
         (window-redraw window force)))
@@ -1160,11 +1184,15 @@
           (t
            (window-redraw (minibuffer-window) force)
            (window-redraw (current-window) force)))
+    (dolist (window *header-windows*)
+      (window-redraw window (redraw-after-modifying-floating-window (implementation))))
     (dolist (window *floating-windows*)
       (window-redraw window (redraw-after-modifying-floating-window (implementation))))
     (update-display)))
 
 (defun change-display-size-hook ()
+  (dolist (window *header-windows*)
+    (window-set-size window (display-width) 1))
   (adjust-windows (window-topleft-x)
                   (window-topleft-y)
                   (+ (window-max-width) (window-topleft-x))

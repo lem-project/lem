@@ -72,6 +72,7 @@
                (:file "abbrev")
                (:file "rectangle")
                (:file "auto-save")
+               (:file "tabbar")
 
                (:file "color-theme")
                (:file "site-init")))

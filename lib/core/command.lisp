@@ -561,11 +561,12 @@
                                         :output output
                                         :error-output output
                                         :ignore-error-status t))))))
-          (delete-between-points start end)
-          (insert-string start output-string)
-          (move-to-line (current-point) line-number)
-          (line-offset (current-point) 0 charpos)
-          (zerop status))))))
+          (when (zerop status)
+            (delete-between-points start end)
+            (insert-string start output-string)
+            (move-to-line (current-point) line-number)
+            (line-offset (current-point) 0 charpos)
+            t))))))
 
 (define-key *global-keymap* "C-x @" 'pipe-command)
 (define-command pipe-command (str) ("sPipe command: ")

@@ -50,6 +50,12 @@ see : https://dart.dev/guides/language/language-tour
 (defvar *dart-conditional-expressions* '("?" ":" "??" "?."))
 (defvar *dart-cascade-notation* '(".."))
 
+;; numeric literal
+(defvar *dart-exponent-literal* "(e|E)(\\+|\\-)?[0-9]+")
+(defvar *dart-number-literal* (format nil "([0-9]+(\\.[0-9]+)?(~A)?)|(\\.[0-9]+(~A)?)" *dart-exponent-literal* *dart-exponent-literal*))
+(defvar *dart-hex-number-literal* "(0x[a-fA-F0-9]+)|(0X[a-fA-F0-9]+)")
+(defvar *dart-numeric-literal* (format nil "(~A)|(~A)" *dart-hex-number-literal* *dart-number-literal*))
+
 (defun tokens (boundary strings)
   (let ((alternation
          `(:alternation ,@(sort (copy-list strings) #'> :key #'length))))
@@ -66,6 +72,8 @@ see : https://dart.dev/guides/language/language-tour
            (make-tm-match (tokens :word-boundary *dart-keywords*)
                           :name 'syntax-keyword-attribute)
            (make-tm-match (tokens :word-boundary *dart-constants*)
+                          :name 'syntax-constant-attribute)
+           (make-tm-match *dart-numeric-literal*
                           :name 'syntax-constant-attribute)
            (make-tm-match (tokens :word-boundary *dart-builtin-types*)
                           :name 'syntax-type-attribute)

@@ -1,5 +1,5 @@
 (defsystem "lem"
-  :version "1.6"
+  :version "1.7"
   :depends-on ("lem-core"
                "lem-vi-mode"
                "lem-lisp-mode"

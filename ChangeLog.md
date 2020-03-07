@@ -1,6 +1,6 @@
 # ChangeLog
 
-## [Unreleased]
+## [v1.7]
 
 (processed upto 5e10e902)
 

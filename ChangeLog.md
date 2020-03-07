@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-(processed upto 7fb9c99d9f465efa31de4fcb1fb7615f937de541)
+(processed upto 5e10e902)
 
 ### Added
 
@@ -31,6 +31,9 @@
   * `--debug` - with this flag Lem will output also `DEBUG` messages to the log.
     This flag should be used along with `--log-filename`.
 * Added `directory-does-not-exist` condition.
+* Two new commands `move-to-beginning-of-logical-line` and `move-to-end-of-logical-line`.
+  They work correctly for long lines wrapped through the screen width.
+* Functions `move-to-next-virtual-line-n` and `move-to-previous-virtual-line-n` were added.
   
 #### scala-mode
 
@@ -38,7 +41,7 @@
 
 #### dart-mode
 
-* Added highlighting for strings, builtin functions, constants, keywords and
+* Added highlighting for strings, builtin functions, constants, keywords, operators and
   line comments.
   
 #### vi-mode
@@ -62,6 +65,10 @@
 #### paredit
 
 * Command `paredit-wrap` was added. It is bound to a `M-(` by default.
+
+#### dot-mode
+
+* Highting was added.
 
 ### Changed
 
@@ -92,7 +99,13 @@
 #### lisp-mode
 
 * Changed swank protocol read message function to make it more reliable.
-  
+* Command `run-slime` now will ignore `*default-port*` variable and will
+  always choose a random port.
+
+#### scheme-mode
+
+* Now `C-x C-e` is bound to `scheme-eval-last-expression`.
+* Added `*use-scheme-autodoc*` setting.
 
 ### Fixed
 
@@ -105,10 +118,16 @@
 * Choosing an unique name for a buffer when file was saved by `write-file` command.
 * Function `kill-ring-rotate` when `*kill-ring*` is empty.
 * Command `revert-buffer` now keeps position of the cursor.
+* Error raised when checking timers that have no ``last-time`` slot.
+* Fixed cursor movement to the next line when it is at the end of line and width.
+* Now LEM will try to presserve cursor position on scroll if possible.
+* Now function `delete-process` will try to destroy a thread only if it is still alive.
+* Command `filter-buffer` was fixed to not replace a buffer's content if command failed.
 
 #### scheme-mode
 
 * Fixed scheme-eval-region for scheme process.
+* Fixed autodoc signature highlighting.
 
 #### lem-pdcurses
 
@@ -126,6 +145,10 @@
   The root of the problem was that on OSX swank:*communication-style* is equal to :fd-handler
   for some reason. In this case swank:create-server does not start threads which
   accept connections on TCP port and process incoming messages.
+  
+### python-mode
+
+* Command `run-python` was fixed for Windows.
 
   
 ### Thanks to

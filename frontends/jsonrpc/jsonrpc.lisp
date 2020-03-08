@@ -295,8 +295,9 @@
         (cond ((= kind +abort+)
                (send-abort-event *editor-thread* nil))
               ((= kind +keyevent+)
-               (let ((key (convert-keyevent value)))
-                 (send-event key)))
+               (when value
+                 (let ((key (convert-keyevent value)))
+                   (send-event key))))
               ((= kind +resize+)
                (resize (gethash "width" value)
                        (gethash "height" value))

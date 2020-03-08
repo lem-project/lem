@@ -50,8 +50,8 @@
 
 (let ((once nil))
   (defun setup ()
-    (setup-windows)
     (setup-minibuffer)
+    (setup-windows)
     (unless once
       (setf once t)
       (start-idle-timer 100 t

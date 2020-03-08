@@ -85,8 +85,10 @@
 (defmacro with-error-handler (() &body body)
   `(handler-case
        (handler-bind ((error (lambda (c)
-                               (dbg (format nil "~%******ERROR******:~%~A~%" c))
-                               (uiop:print-backtrace :stream *error-output* :condition c))))
+                               (dbg (with-output-to-string (stream)
+                                      (format stream "~%******ERROR******:~%~A~%" c)
+                                      (uiop:print-backtrace :stream stream
+                                                            :condition c))))))
          (progn ,@body))
      (error ())))
 
@@ -315,7 +317,10 @@
               (t
                (error "unexpected kind: ~D" kind))))
     (error (e)
-      (dbg (format nil "~%******ERROR******:~%~A~%" e)))))
+      (dbg (with-output-to-string (stream)
+             (format stream "~%******ERROR******:~%~A~%" e)
+             (let ((stream (yason:make-json-output-stream stream)))
+               (yason:encode args stream)))))))
 
 (add-hook *exit-editor-hook*
           (lambda ()

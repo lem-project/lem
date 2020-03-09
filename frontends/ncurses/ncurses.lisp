@@ -234,7 +234,7 @@
     (setf *padwin* (charms/ll:newpad 1 1))
     (charms/ll:keypad *padwin* 1)
     ;; timeout setting is necessary to exit lem normally
-    (charms/ll:wtimeout *padwin* 0))
+    (charms/ll:wtimeout *padwin* -1))
   (charms/ll:wgetch *padwin*))
 
 (defun get-key (code)

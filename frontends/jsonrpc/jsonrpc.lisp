@@ -314,3 +314,8 @@
 (add-hook *exit-editor-hook*
           (lambda ()
             (notify "exit" nil)))
+
+#+(or)
+(lem:add-hook lem:*after-init-hook*
+              (lambda ()
+                (swank:create-server :dont-close t :port 12345)))

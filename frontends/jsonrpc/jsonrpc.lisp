@@ -109,7 +109,6 @@
                 "height" *display-height*)))))
 
 (defmethod lem-if:invoke ((implementation jsonrpc) function)
-  ;(swank:create-server :port 10005 :dont-close t)
   (with-error-handler ()
     (let ((ready nil))
       (setf *main-thread* (bt:current-thread))

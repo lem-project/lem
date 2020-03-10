@@ -77,12 +77,19 @@
 (defun params (&rest args)
   (alexandria:plist-hash-table args :test #'equal))
 
-(defun notify (method argument)
-  (log:info "~A:~A~%"
+(defvar *notify-output-stream* nil)
+
+(defun notify-log (method argument)
+  (when *notify-output-stream*
+    (format *notify-output-stream*
+            "~A:~A~%"
             method
             (with-output-to-string (out)
               (yason:encode argument
-                            (yason:make-json-output-stream out))))
+                            (yason:make-json-output-stream out))))))
+
+(defun notify (method argument)
+  (notify-log method argument)
   (let ((jsonrpc/connection:*connection*
           (jsonrpc/transport/interface:transport-connection
            (jsonrpc/class:jsonrpc-transport *server*))))

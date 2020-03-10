@@ -200,14 +200,8 @@
     (params "viewInfo" view
             "x" x
             "y" y
-            "chars" (map 'list
-                         (lambda (c)
-                           (let* ((octets (babel:string-to-octets (string c)))
-                                  (bytes (make-array (1+ (length octets)))))
-                             (setf (aref bytes 0) (if (wide-char-p c) 2 1))
-                             (replace bytes octets :start1 1)
-                             bytes))
-                         string)
+            "text" string
+            "textWidth" (string-width string)
             "attribute" (ensure-attribute attribute nil))))
 
 (defmethod lem-if:print ((implementation jsonrpc) view x y string attribute)
@@ -315,7 +309,6 @@
           (lambda ()
             (notify "exit" nil)))
 
-#+(or)
 (lem:add-hook lem:*after-init-hook*
               (lambda ()
                 (swank:create-server :dont-close t :port 12345)))

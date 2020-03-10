@@ -291,17 +291,17 @@ class LemEditor extends HTMLElement {
 
     put(params) {
         try {
-            const { viewInfo, x, y, chars, attribute } = params;
+            const { viewInfo, x, y, text, textWidth, attribute } = params;
             const view = viewTable[viewInfo.id];
-            view.put(x, y, chars, attribute);
+            view.put(x, y, text, textWidth, attribute);
         } catch (e) { console.log(e); }
     }
 
     modelinePut(params) {
         try {
-            const { viewInfo, x, y, chars, attribute } = params;
+            const { viewInfo, x, y, text, textWidth, attribute } = params;
             const view = viewTable[viewInfo.id];
-            view.modelinePut(x, chars, attribute);
+            view.modelinePut(x, text, textWidth, attribute);
         } catch (e) { console.log(e); }
     }
 
@@ -494,6 +494,15 @@ class Surface {
         }
     }
 
+    drawText(x, y, text, font, color) {
+        this.ctx2.fillStyle = color;
+        this.ctx2.font = font;
+        this.ctx2.textBaseline = 'top';
+        x *= fontAttribute.width;
+        y *= fontAttribute.height;
+        this.ctx2.fillText(text, x, y);
+    }
+
     drawUnderline(x, y, length, color) {
         this.ctx2.strokeStyle = color;
         this.ctx2.lineWidth = 1;
@@ -506,15 +515,10 @@ class Surface {
         this.ctx2.stroke();
     }
 
-    static calcCharsWidth(chars) {
-        return chars.reduce((w, bytes) => { return w + bytes[0] }, 0);
-    }
-
-    put(x, y, chars, attribute) {
-        const charsWidth = Surface.calcCharsWidth(chars);
+    put(x, y, text, textWidth, attribute) {
         if (attribute === null) {
-            this.drawBlock(x, y, charsWidth, 1, option.background);
-            this.drawChars(x, y, chars, fontAttribute.font, option.foreground);
+            this.drawBlock(x, y, textWidth, 1, option.background);
+            this.drawText(x, y, text, fontAttribute.font, option.foreground);
         } else {
             let font = fontAttribute.font;
             let foreground = attribute.foreground || option.foreground;
@@ -528,10 +532,10 @@ class Surface {
             if (bold) {
                 font = 'bold ' + font;
             }
-            this.drawBlock(x, y, charsWidth, 1, background);
-            this.drawChars(x, y, chars, font, foreground);
+            this.drawBlock(x, y, textWidth, 1, background);
+            this.drawText(x, y, text, font, foreground);
             if (underline) {
-                this.drawUnderline(x, y, chars.length, foreground);
+                this.drawUnderline(x, y, text.length, foreground);
             }
         }
     }
@@ -643,13 +647,13 @@ class View {
         this.editSurface.drawBlock(x, y + 1, this.width, this.height - y - 1);
     }
 
-    put(x, y, chars, attribute) {
-        this.editSurface.put(x, y, chars, attribute);
+    put(x, y, text, textWidth, attribute) {
+        this.editSurface.put(x, y, text, textWidth, attribute);
     }
 
-    modelinePut(x, chars, attribute) {
+    modelinePut(x, text, textWidth, attribute) {
         if (this.modelineSurface !== null) {
-            this.modelineSurface.put(x, 0, chars, attribute);
+            this.modelineSurface.put(x, 0, text, textWidth, attribute);
         }
     }
 

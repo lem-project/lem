@@ -68,7 +68,7 @@
   (t :foreground "blue" :bold-p t))
 
 (defun minibuffer-window () *minibuf-window*)
-(defun minibuffer-window-p (window) (eq window *minibuf-window*))
+(defun minibuffer-window-p (window) (and (boundp '*minibuf-window*) (eq window *minibuf-window*)))
 (defun minibuffer-window-active-p () (eq (current-window) (minibuffer-window)))
 (defun minibuffer-window-height () *minibuffer-window-height*)
 (defun minibuffer () (window-buffer (minibuffer-window)))

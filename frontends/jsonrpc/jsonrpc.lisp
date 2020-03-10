@@ -11,8 +11,6 @@
    :native-scroll-support t
    :redraw-after-modifying-floating-window nil))
 
-(defparameter *debug* nil)
-
 (defvar *mode* :stdio)
 (defvar *port* 50879)
 
@@ -27,10 +25,6 @@
 (defvar *background-mode*)
 
 (setf *implementation* (make-instance 'jsonrpc))
-
-(when *debug*
-  (setq *error-output*
-        (open "~/ERROR" :direction :output :if-does-not-exist :create :if-exists :supersede)))
 
 (defstruct view
   (id (incf *view-id-counter*))
@@ -70,35 +64,32 @@
       (yason:encode-object-element "use_modeline" (view-use-modeline view))
       (yason:encode-object-element "kind" (view-kind view)))))
 
-(let ((lock (bt:make-lock)))
-  (defun dbg (x)
-    (when *debug*
-      (bt:with-lock-held (lock)
-        (with-open-file (out "~/log"
-                             :direction :output
-                             :if-exists :append
-                             :if-does-not-exist :create)
-          (write-string x out)
-          (terpri out))))
-    x))
-
 (defmacro with-error-handler (() &body body)
   `(handler-case
        (handler-bind ((error (lambda (c)
-                               (dbg (format nil "~%******ERROR******:~%~A~%" c))
-                               (uiop:print-backtrace :stream *error-output* :condition c))))
+                               (log:error (with-output-to-string (stream)
+                                            (format stream "~A~%" c)
+                                            (uiop:print-backtrace :stream stream
+                                                                  :condition c))))))
          (progn ,@body))
      (error ())))
 
 (defun params (&rest args)
   (alexandria:plist-hash-table args :test #'equal))
 
+(defvar *notify-output-stream* nil)
+
+(defun notify-log (method argument)
+  (when *notify-output-stream*
+    (format *notify-output-stream*
+            "~A:~A~%"
+            method
+            (with-output-to-string (out)
+              (yason:encode argument
+                            (yason:make-json-output-stream out))))))
+
 (defun notify (method argument)
-  #+(or)
-  (dbg (format nil "~A:~A"
-               method
-               (with-output-to-string (*standard-output*)
-                 (yason:encode argument))))
+  (notify-log method argument)
   (let ((jsonrpc/connection:*connection*
           (jsonrpc/transport/interface:transport-connection
            (jsonrpc/class:jsonrpc-transport *server*))))
@@ -125,7 +116,6 @@
                 "height" *display-height*)))))
 
 (defmethod lem-if:invoke ((implementation jsonrpc) function)
-  ;(swank:create-server :port 10005 :dont-close t)
   (with-error-handler ()
     (let ((ready nil))
       (setf *main-thread* (bt:current-thread))
@@ -136,7 +126,7 @@
       (setf *server* (jsonrpc:make-server))
       (jsonrpc:expose *server* "ready" (ready (lambda () (setf ready t))))
       (jsonrpc:expose *server* "input" 'input-callback)
-      (dbg "server-listen")
+      (log:info "server-listen")
       (apply #'jsonrpc:server-listen *server*
              :mode *mode*
              (if (eq *mode* :tcp) (list :port *port*))))))
@@ -293,8 +283,9 @@
         (cond ((= kind +abort+)
                (send-abort-event *editor-thread* nil))
               ((= kind +keyevent+)
-               (let ((key (convert-keyevent value)))
-                 (send-event key)))
+               (when value
+                 (let ((key (convert-keyevent value)))
+                   (send-event key))))
               ((= kind +resize+)
                (resize (gethash "width" value)
                        (gethash "height" value))
@@ -315,8 +306,16 @@
               (t
                (error "unexpected kind: ~D" kind))))
     (error (e)
-      (dbg (format nil "~%******ERROR******:~%~A~%" e)))))
+      (log:error e)
+      (log:error (with-output-to-string (stream)
+                   (let ((stream (yason:make-json-output-stream stream)))
+                     (yason:encode args stream)))))))
 
 (add-hook *exit-editor-hook*
           (lambda ()
             (notify "exit" nil)))
+
+#+(or)
+(lem:add-hook lem:*after-init-hook*
+              (lambda ()
+                (swank:create-server :dont-close t :port 12345)))

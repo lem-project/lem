@@ -3,7 +3,6 @@
                "jsonrpc/transport/tcp")
   :serial t
   :components ((:file "package")
-               (:file "jsonrpc")
                (:file "util")
                (:file "jsonrpc-util")
                ;(:file "jsonrpc-transport")

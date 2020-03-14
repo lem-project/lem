@@ -168,3 +168,5 @@
 (add-hook *after-init-hook* 'enable-mouse-sgr-1006-mode)
 (add-hook *exit-editor-hook* 'disable-mouse-sgr-1006-mode)
 
+(eval-when (:load-toplevel)
+  (enable-mouse-sgr-1006-mode))

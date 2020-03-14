@@ -93,11 +93,10 @@
              (o (first *dragging-window*)))
          (when (windowp o)
            (multiple-value-bind (x y w h) (get-window-rect o)
-             (declare (ignore x y))
              (cond
                ;; vertical dragging window
                ((eq (second *dragging-window*) 'y)
-                (let ((vy (- (- (lem:window-y o) 1) y1)))
+                (let ((vy (- (- y 1) y1)))
                   ;; this check is incomplete if 3 or more divisions exist
                   (when (and (not lem::*floating-windows*)
                              (>= y1       *min-lines*)
@@ -108,7 +107,7 @@
                     (lem:redraw-display))))
                ;; horizontal dragging window
                (t
-                (let ((vx (- (- (lem:window-x o) 1) x1)))
+                (let ((vx (- (- x 1) x1)))
                   ;; this check is incomplete if 3 or more divisions exist
                   (when (and (not lem::*floating-windows*)
                              (>= x1       *min-cols*)

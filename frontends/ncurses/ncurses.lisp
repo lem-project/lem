@@ -2,7 +2,6 @@
   (:use :cl :lem)
   (:export ;; ncurses.lisp
            :escape-delay
-           :getch
            ;; ncurses-pdcurseswin32.lisp
            :input-polling-interval))
 (in-package :lem-ncurses)

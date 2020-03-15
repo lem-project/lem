@@ -197,7 +197,7 @@ class LemEditor extends HTMLElement {
     }
 
     sendNotification(method, params) {
-        this.emitInput(kindMethod, {"method": method, "params": params});
+        this.emitInput(kindMethod, { "method": method, "params": params });
     }
 
     emitInput(kind, value) {
@@ -233,109 +233,83 @@ class LemEditor extends HTMLElement {
     }
 
     makeView(params) {
-        try {
-            const { id, x, y, width, height, use_modeline, kind } = params;
-            const view = new View(id, x, y, width, height, use_modeline, kind);
-            view.allTags().forEach((child) => { this.lemEditorPane.appendChild(child); });
-            viewTable[id] = view;
-        } catch (e) { console.log(e); }
+        const { id, x, y, width, height, use_modeline, kind } = params;
+        const view = new View(id, x, y, width, height, use_modeline, kind);
+        view.allTags().forEach((child) => { this.lemEditorPane.appendChild(child); });
+        viewTable[id] = view;
     }
 
     deleteView(params) {
-        try {
-            const { id } = params.viewInfo;
-            const view = viewTable[id];
-            view.delete();
-            delete viewTable[id];
-        } catch (e) { console.log(e); }
+        const { id } = params.viewInfo;
+        const view = viewTable[id];
+        view.delete();
+        delete viewTable[id];
     }
 
     resizeView(params) {
-        try {
-            const { viewInfo, width, height } = params;
-            const view = viewTable[viewInfo.id];
-            view.resize(width, height);
-        } catch (e) { console.log(e); }
+        const { viewInfo, width, height } = params;
+        const view = viewTable[viewInfo.id];
+        view.resize(width, height);
     }
 
     moveView(params) {
-        try {
-            const { x, y, viewInfo } = params;
-            const view = viewTable[viewInfo.id];
-            view.move(x, y);
-        } catch (e) { console.log(e); }
+        const { x, y, viewInfo } = params;
+        const view = viewTable[viewInfo.id];
+        view.move(x, y);
     }
 
     clear(params) {
-        try {
-            const view = viewTable[params.viewInfo.id];
-            view.clear();
-        } catch (e) { console.log(e); }
+        const view = viewTable[params.viewInfo.id];
+        view.clear();
     }
 
     clearEol(params) {
-        try {
-            const { viewInfo, x, y } = params;
-            const view = viewTable[viewInfo.id];
-            view.clearEol(x, y);
-        } catch (e) { console.log(e); }
+        const { viewInfo, x, y } = params;
+        const view = viewTable[viewInfo.id];
+        view.clearEol(x, y);
     }
 
     clearEob(params) {
-        try {
-            const { viewInfo, x, y } = params;
-            const view = viewTable[viewInfo.id];
-            view.clearEob(x, y);
-        } catch (e) { console.log(e); }
+        const { viewInfo, x, y } = params;
+        const view = viewTable[viewInfo.id];
+        view.clearEob(x, y);
     }
 
     put(params) {
-        try {
-            const { viewInfo, x, y, text, textWidth, attribute } = params;
-            const view = viewTable[viewInfo.id];
-            view.put(x, y, text, textWidth, attribute);
-        } catch (e) { console.log(e); }
+        const { viewInfo, x, y, text, textWidth, attribute } = params;
+        const view = viewTable[viewInfo.id];
+        view.put(x, y, text, textWidth, attribute);
     }
 
     modelinePut(params) {
-        try {
-            const { viewInfo, x, y, text, textWidth, attribute } = params;
-            const view = viewTable[viewInfo.id];
-            view.modelinePut(x, text, textWidth, attribute);
-        } catch (e) { console.log(e); }
+        const { viewInfo, x, y, text, textWidth, attribute } = params;
+        const view = viewTable[viewInfo.id];
+        view.modelinePut(x, text, textWidth, attribute);
     }
 
     touch(params) {
-        try {
-            const { viewInfo } = params;
-            const view = viewTable[viewInfo.id];
-            view.touch();
-        } catch (e) { console.log(e); }
+        const { viewInfo } = params;
+        const view = viewTable[viewInfo.id];
+        view.touch();
     }
 
     moveCursor(params) {
-        try {
-            const { viewInfo, x, y } = params;
-            const view = viewTable[viewInfo.id];
-            view.setCursor(x, y);
-            const left = view.editSurface.canvas.offsetLeft + x * fontAttribute.width + 3;
-            const top = view.editSurface.canvas.offsetTop + y * fontAttribute.height + 3;
-            //console.log(view.editSurface.canvas.style);
-            this.picker.movePicker(left, top);
-        } catch (e) { console.log(e); }
+        const { viewInfo, x, y } = params;
+        const view = viewTable[viewInfo.id];
+        view.setCursor(x, y);
+        const left = view.editSurface.canvas.offsetLeft + x * fontAttribute.width + 3;
+        const top = view.editSurface.canvas.offsetTop + y * fontAttribute.height + 3;
+        //console.log(view.editSurface.canvas.style);
+        this.picker.movePicker(left, top);
     }
 
     scroll(params) {
-        try {
-            const { viewInfo, n } = params;
-            const view = viewTable[viewInfo.id];
-            view.scroll(n);
-        } catch (e) { console.log(e); }
+        const { viewInfo, n } = params;
+        const view = viewTable[viewInfo.id];
+        view.scroll(n);
     }
 
     updateDisplay(params) {
-        try {
-        } catch (e) { console.log(e); }
     }
 
     jsEval(params) {
@@ -346,91 +320,91 @@ class LemEditor extends HTMLElement {
 }
 
 class Picker {
-  constructor(editor) {
-    this.__composition = false;
+    constructor(editor) {
+        this.__composition = false;
 
-    this.editor = editor;
+        this.editor = editor;
 
-    this.measure = document.createElement('span');
-    this.picker = document.createElement('input');
-    this.picker.style.backgroundColor = 'transparent';
-    this.picker.style.color = 'transparent';
-    this.picker.style.width = '0';
-    this.picker.style.padding = '0';
-    this.picker.style.margin = '0';
-    this.picker.style.border = 'none';
-    this.picker.style.position = 'absolute';
-    this.picker.style.zIndex = '-10';
-
- 
-    this.measure.style.color = option.foreground;
-    this.measure.style.backgroundColor = option.background;
-    this.measure.style.position = 'absolute';
-    this.measure.style.zIndex = '';
-
-    this.picker.style.top = '0';
-    this.picker.style.left = '0';
-    this.picker.style.font = fontAttribute.font;
-    this.measure.style.top = '0';
-    this.measure.style.left = '0';
-    this.measure.style.font = fontAttribute.font;
-
-    this.picker.addEventListener('blur', () => {this.picker.focus()});
-    this.picker.addEventListener('keydown', (event) => {
-      if (event.isComposing !== true && event.code !== '') {
-        const k = keyevent.convertKeyEvent(event);
-        this.editor.emitInput(kindKeyEvent, k);
-        this.picker.value = '';
-        return false;
-      }
-    });
-    
-    this.picker.addEventListener('input', (event) => {
-      if (this.__composition === false) {
-        this.picker.value = '';
-        this.measure.innerHTML = this.picker.value;
+        this.measure = document.createElement('span');
+        this.picker = document.createElement('input');
+        this.picker.style.backgroundColor = 'transparent';
+        this.picker.style.color = 'transparent';
         this.picker.style.width = '0';
-      }
-    });
-    this.picker.addEventListener('compositionstart', (event) => {
-      this.__composition = true;
-      console.log(event);
-      this.measure.innerHTML = this.picker.value;
-      this.picker.style.width = this.measure.offsetWidth + 'px';
-    });
-    this.picker.addEventListener('compositionupdate', (event) => {
-      this.measure.innerHTML = event.data;
-      this.picker.style.width = this.measure.offsetWidth + 'px';
-    });
-    this.picker.addEventListener('compositionend', (event) => {
-      this.__composition = false;
-      console.log(this.picker.value); // TODO
-      let chars = this.picker.value.split('').map((char) =>  utf8.setBytesFromString(char));
-      this.editor.emitInput(kindCommand, ['input-string', chars]);
-      this.picker.value = '';
-      this.measure.innerHTML = this.picker.value;
-      this.picker.style.width = '0';
-    });
-    document.body.appendChild(this.picker);
-    document.body.appendChild(this.measure);
-    this.picker.focus();
-  }
-  
-  movePicker(left, top) {
-    this.measure.style.top = top + 'px';
-    this.measure.style.left = left + 'px';
-    // picker follow measure
-    this.picker.style.top = this.measure.offsetTop + 'px';
-    this.picker.style.left = this.measure.offsetLeft + 'px';
-  }
+        this.picker.style.padding = '0';
+        this.picker.style.margin = '0';
+        this.picker.style.border = 'none';
+        this.picker.style.position = 'absolute';
+        this.picker.style.zIndex = '-10';
 
-  updateForeground(color) {
-    this.measure.style.color = color;
-  }
 
-  updateBackground(color) {
-    this.measure.style.backgroundColor = color;
-  }
+        this.measure.style.color = option.foreground;
+        this.measure.style.backgroundColor = option.background;
+        this.measure.style.position = 'absolute';
+        this.measure.style.zIndex = '';
+
+        this.picker.style.top = '0';
+        this.picker.style.left = '0';
+        this.picker.style.font = fontAttribute.font;
+        this.measure.style.top = '0';
+        this.measure.style.left = '0';
+        this.measure.style.font = fontAttribute.font;
+
+        this.picker.addEventListener('blur', () => { this.picker.focus() });
+        this.picker.addEventListener('keydown', (event) => {
+            if (event.isComposing !== true && event.code !== '') {
+                const k = keyevent.convertKeyEvent(event);
+                this.editor.emitInput(kindKeyEvent, k);
+                this.picker.value = '';
+                return false;
+            }
+        });
+
+        this.picker.addEventListener('input', (event) => {
+            if (this.__composition === false) {
+                this.picker.value = '';
+                this.measure.innerHTML = this.picker.value;
+                this.picker.style.width = '0';
+            }
+        });
+        this.picker.addEventListener('compositionstart', (event) => {
+            this.__composition = true;
+            console.log(event);
+            this.measure.innerHTML = this.picker.value;
+            this.picker.style.width = this.measure.offsetWidth + 'px';
+        });
+        this.picker.addEventListener('compositionupdate', (event) => {
+            this.measure.innerHTML = event.data;
+            this.picker.style.width = this.measure.offsetWidth + 'px';
+        });
+        this.picker.addEventListener('compositionend', (event) => {
+            this.__composition = false;
+            console.log(this.picker.value); // TODO
+            let chars = this.picker.value.split('').map((char) => utf8.setBytesFromString(char));
+            this.editor.emitInput(kindCommand, ['input-string', chars]);
+            this.picker.value = '';
+            this.measure.innerHTML = this.picker.value;
+            this.picker.style.width = '0';
+        });
+        document.body.appendChild(this.picker);
+        document.body.appendChild(this.measure);
+        this.picker.focus();
+    }
+
+    movePicker(left, top) {
+        this.measure.style.top = top + 'px';
+        this.measure.style.left = left + 'px';
+        // picker follow measure
+        this.picker.style.top = this.measure.offsetTop + 'px';
+        this.picker.style.left = this.measure.offsetLeft + 'px';
+    }
+
+    updateForeground(color) {
+        this.measure.style.color = color;
+    }
+
+    updateBackground(color) {
+        this.measure.style.backgroundColor = color;
+    }
 }
 
 class Surface {

@@ -163,13 +163,9 @@ class LemEditor extends HTMLElement {
     }
 
     setHtmlPane(params) {
-        try {
-            const div = document.createElement('div');
-            div.innerHTML = utf8.getStringFromBytes(params.html);
-            this.setPane(div);
-        } catch (e) {
-            console.log(e);
-        }
+        const div = document.createElement('div');
+        div.innerHTML = utf8.getStringFromBytes(params.html);
+        this.setPane(div);
     }
 
     deletePane() {
@@ -185,15 +181,11 @@ class LemEditor extends HTMLElement {
     }
 
     setFont(params) {
-        try {
-            fontAttribute = new FontAttribute(params.name, params.size);
-        } catch (e) { console.log(e); }
+        fontAttribute = new FontAttribute(params.name, params.size);
     }
 
     exit(params) {
-        try {
-            ipcRenderer.send('exit');
-        } catch (e) { console.log(e); }
+        ipcRenderer.send('exit');
     }
 
     sendNotification(method, params) {

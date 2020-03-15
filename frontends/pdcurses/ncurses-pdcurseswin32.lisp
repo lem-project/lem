@@ -354,7 +354,7 @@
                       (setf (lem:current-window) o-orig)
                       (lem:redraw-display))))
                  ;; horizontal dragging window
-                 (t
+                 ((eq (second *dragging-window*) 'x)
                   (let ((vx (- (- x 1) cur-x)))
                     ;; this check is incomplete if 3 or more divisions exist
                     (when (and (not lem::*floating-windows*)

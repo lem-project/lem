@@ -64,10 +64,19 @@
       (yason:encode-object-element "use_modeline" (view-use-modeline view))
       (yason:encode-object-element "kind" (view-kind view)))))
 
+(defparameter *error-log-file* (merge-pathnames "lem-jsonrpc-error-log" (user-homedir-pathname)))
+
+(defun log-error (value)
+  (with-open-file (out *error-log-file*
+                       :direction :output
+                       :if-exists :append
+                       :if-does-not-exist :create)
+    (format out "~A~%" value)))
+
 (defmacro with-error-handler (() &body body)
   `(handler-case
        (handler-bind ((error (lambda (c)
-                               (log:error (with-output-to-string (stream)
+                               (log-error (with-output-to-string (stream)
                                             (format stream "~A~%" c)
                                             (uiop:print-backtrace :stream stream
                                                                   :condition c))))))
@@ -300,8 +309,8 @@
               (t
                (error "unexpected kind: ~D" kind))))
     (error (e)
-      (log:error e)
-      (log:error (with-output-to-string (stream)
+      (log-error e)
+      (log-error (with-output-to-string (stream)
                    (let ((stream (yason:make-json-output-stream stream)))
                      (yason:encode args stream)))))))
 

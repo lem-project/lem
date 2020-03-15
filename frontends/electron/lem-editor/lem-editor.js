@@ -548,17 +548,20 @@ class Surface {
     }
 
     touch() {
-        for (let rect of this.dirtyRectangles) {
-            const [x, y, w, h] = rect;
-            if (w > 0 && h > 0) {
-                const x1 = Math.ceil(x * fontAttribute.width);
-                const y1 = y * fontAttribute.height;
-                const w1 = Math.ceil(w * fontAttribute.width);
-                const h1 = h * fontAttribute.height;
-                const image = this.ctx2.getImageData(x1, y1, w1, h1);
-                this.ctx.putImageData(image, x1, y1);
-            }
-        }
+        const image = this.ctx2.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.putImageData(image, 0, 0);
+        //変更部分だけを表のキャンバスにコピーするのはコピー回数が増えるので逆に遅くなる
+        //for (let rect of this.dirtyRectangles) {
+        //    const [x, y, w, h] = rect;
+        //    if (w > 0 && h > 0) {
+        //        const x1 = Math.ceil(x * fontAttribute.width);
+        //        const y1 = y * fontAttribute.height;
+        //        const w1 = Math.ceil(w * fontAttribute.width);
+        //        const h1 = h * fontAttribute.height;
+        //        const image = this.ctx2.getImageData(x1, y1, w1, h1);
+        //        this.ctx.putImageData(image, x1, y1);
+        //    }
+        //}
         this.dirtyRectangles = [];
     }
 

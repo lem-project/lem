@@ -454,19 +454,6 @@ class Surface {
         );
     }
 
-    drawChars(x, y, chars, font, color) {
-        this.ctx2.fillStyle = color;
-        this.ctx2.font = font;
-        this.ctx2.textBaseline = 'top';
-        x *= fontAttribute.width;
-        y *= fontAttribute.height;
-        for (let bytes of chars) {
-            const str = utf8.getStringFromBytes(bytes, 1);
-            this.ctx2.fillText(str, x, y);
-            x += fontAttribute.width * bytes[0];
-        }
-    }
-
     drawText(x, y, text, font, color) {
         this.ctx2.fillStyle = color;
         this.ctx2.font = font;

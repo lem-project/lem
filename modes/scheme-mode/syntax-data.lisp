@@ -7,7 +7,7 @@
 
 (defvar *scheme-data*
   ;; name  completion  highlight  indentation
-  '(;; added
+  '(;; == part 0 ==
     ("use"                            t   t   0)
     ("import"                         t   t   0)
     ("select-module"                  t   t   0)
@@ -38,9 +38,10 @@
     ("raise"                          t   t   nil)
     ("map"                            t   t   nil)
     ("for-each"                       t   t   nil)
-    ("case-lambda"                    t   t   nil)
+    ("case-lambda"                    t   t   (&rest (&whole 2 &rest 1)))
     ("er-macro-transformer"           t   t   nil)
-    ;; part 1
+
+    ;; == part 1 ==
     ("begin"                          t   t   0)
     ("case"                           t   t   (4 &rest (&whole 2 &rest 1)))
     ("define"                         t   t   1)
@@ -61,7 +62,8 @@
     ("syntax-case"                    t   t   2)
     ("with-input-from-file"           t   t   1)
     ("with-output-to-file"            t   t   1)
-    ;; part 2
+
+    ;; == part 2 ==
     ("define-class"                   t   t   2)
     ("define-condition-type"          t   t   3)
     ("define-constant"                t   t   1)
@@ -86,7 +88,8 @@
     ("rlet1"                          t   t   2)
     ("unwind-protect"                 t   t   1)
     ("with-ports"                     t   t   3)
-    ;; part 3
+
+    ;; == part 3 ==
     ("and-let*"                       t   t   "let")
     ("begin0"                         t   t   0)
     ("call-with-client-socket"        t   t   1)

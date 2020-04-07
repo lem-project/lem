@@ -136,9 +136,16 @@ class LemEditor extends HTMLElement {
         });
 
         const mainWindow = getCurrentWindow();
-        mainWindow.on('resize', () => {
+        let timeoutId = null;
+        const resizeHandler = () => {
             const { width, height } = mainWindow.getBounds();
             this.resize(width, height);
+        };
+        mainWindow.on('resize', () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            timeoutId = setTimeout(resizeHandler, 200);
         });
 
         ipcRenderer.on('command', (event, message) => {

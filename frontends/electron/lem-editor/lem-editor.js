@@ -14,7 +14,7 @@ class FontAttribute {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d', { alpha: false });
         ctx.font = font;
-        const width = ctx.measureText('a').width;
+        const width = ctx.measureText('W').width;
         this.update(font, name, size, width, size);
     }
     update(font, name, pixel, width, height) {
@@ -37,11 +37,11 @@ const kindMethod = 4;
 const viewTable = {};
 
 function calcDisplayCols(width) {
-    return Math.floor(width / fontAttribute.width);
+    return Math.floor(width / fontAttribute.width) - 2;
 }
 
 function calcDisplayRows(height) {
-    return Math.floor(height / fontAttribute.height) - (process.platform === 'win32' ? 4 : 2);
+    return Math.floor(height / fontAttribute.height) - (process.platform === 'win32' ? 3 : 2);
 }
 
 function getCurrentWindowSize() {
@@ -136,6 +136,20 @@ class LemEditor extends HTMLElement {
         });
 
         const mainWindow = getCurrentWindow();
+
+        // will updated by calling setFont()
+        this.fontWidth = fontAttribute.width;
+        this.fontHeight = fontAttribute.height;
+
+        mainWindow.on('will-resize', (_, newBounds) => {
+            const { x, y, width, height } = mainWindow.getBounds();
+            const nw = this.fontWidth * Math.round(newBounds.width / this.fontWidth);
+            const nh = this.fontHeight * Math.round(newBounds.height / this.fontHeight);
+            const nx = newBounds.x === x ? x : x - (nw - width);
+            const ny = newBounds.y === y ? y : y - (nh - height);
+            mainWindow.setBounds({x: nx, y: ny, width: nw, height: nh});
+        });
+
         let timeoutId = null;
         const resizeHandler = () => {
             const { width, height } = mainWindow.getBounds();
@@ -194,6 +208,8 @@ class LemEditor extends HTMLElement {
     setFont(params) {
         try {
             fontAttribute = new FontAttribute(params.name, params.size);
+            this.fontWidth = fontAttribute.width;
+            this.fontHeight = fontAttribute.height;
         } catch (e) { console.log(e); }
     }
 
@@ -384,6 +400,7 @@ class Picker {
 
     this.picker.addEventListener('blur', () => {this.picker.focus()});
     this.picker.addEventListener('keydown', (event) => {
+      event.preventDefault();
       if (event.isComposing !== true && event.code !== '') {
         const k = keyevent.convertKeyEvent(event);
         this.editor.emitInput(kindKeyEvent, k);

@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "child_process": "^1.0.2",
-    "electron": "^1.7.9",
+    "electron": "^8.2.1",
     "keyboard-layout": "^2.0.13",
     "marked": "^0.3.6",
     "utf-8": "^1.0.0",

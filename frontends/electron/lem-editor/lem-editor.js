@@ -3,7 +3,8 @@
 const rpc = require('vscode-jsonrpc');
 const cp = require('child_process');
 const utf8 = require('utf-8')
-const ipcRenderer = require('electron').ipcRenderer;
+//const ipcRenderer = require('electron').ipcRenderer;
+const {ipcRenderer, screen} = require('electron');
 const getCurrentWindow = require('electron').remote.getCurrentWindow;
 const keyevent = require('./keyevent');
 const { option } = require('./option');
@@ -36,12 +37,33 @@ const kindMethod = 4;
 
 const viewTable = {};
 
+
+let width_tweak = 0;
+let height_tweak = 0;
+switch (process.platform) {
+  case 'win32':
+    width_tweak = 2;
+    height_tweak = 3;
+    break;
+  case 'darwin':
+    width_tweak = 1;
+    height_tweak = 1;
+    break;
+  case 'linux':
+    width_tweak = 1;
+    height_tweak = 1;
+    break;
+  default:
+    width_tweak = 0;
+    height_tweak = 0;
+}
+
 function calcDisplayCols(width) {
-    return Math.floor(width / fontAttribute.width) - 2;
+    return Math.floor(width / fontAttribute.width) - width_tweak;
 }
 
 function calcDisplayRows(height) {
-    return Math.floor(height / fontAttribute.height) - (process.platform === 'win32' ? 3 : 2);
+    return Math.floor(height / fontAttribute.height) - height_tweak;
 }
 
 function getCurrentWindowSize() {
@@ -137,18 +159,23 @@ class LemEditor extends HTMLElement {
 
         const mainWindow = getCurrentWindow();
 
-        // will updated by calling setFont()
+        // will updated by setFont()
         this.fontWidth = fontAttribute.width;
         this.fontHeight = fontAttribute.height;
 
-        mainWindow.on('will-resize', (_, newBounds) => {
-            const { x, y, width, height } = mainWindow.getBounds();
-            const nw = this.fontWidth * Math.round(newBounds.width / this.fontWidth);
-            const nh = this.fontHeight * Math.round(newBounds.height / this.fontHeight);
-            const nx = newBounds.x === x ? x : x - (nw - width);
-            const ny = newBounds.y === y ? y : y - (nh - height);
-            mainWindow.setBounds({x: nx, y: ny, width: nw, height: nh});
-        });
+        // 'will-resize' event handling.
+        // Linux: Not supported
+        // MacOS: Does not work properly e.g. https://github.com/electron/electron/issues/21777
+        if (process.platform === 'win') {
+            mainWindow.on('will-resize', (_, newBounds) => {
+                const { x, y, width, height } = mainWindow.getBounds();
+                const nw = this.fontWidth * Math.round(newBounds.width / this.fontWidth);
+                const nh = this.fontHeight * Math.round(newBounds.height / this.fontHeight);
+                const nx = newBounds.x === x ? x : x - (nw - width);
+                const ny = newBounds.y === y ? y : y - (nh - height);
+                mainWindow.setBounds({x: nx, y: ny, width: nw, height: nh});
+            });
+        }
 
         let timeoutId = null;
         const resizeHandler = () => {

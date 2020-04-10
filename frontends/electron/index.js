@@ -17,9 +17,15 @@ electron.app.on('ready', function () {
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
-    mainWindow.on('will-resize', function(event) {
-        event.preventDefault();
-    });
+
+    // 'will-resize' event handling.
+    // Linux: Not supported
+    // MacOS: Does not work properly e.g. https://github.com/electron/electron/issues/21777
+    if (process.platform === 'win32') {
+        mainWindow.on('will-resize', function(event) {
+            event.preventDefault();
+        });
+    }
 
     electron.ipcMain.on('exit', function() {
         electron.app.quit();

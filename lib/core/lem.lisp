@@ -170,10 +170,6 @@
         (unless (uiop:directory-exists-p (qmerge (format nil "dists/~A/" (pathname-name ql-dist-url))))
           (ql-install-dist ql-dist-url :prompt nil))))))
 
-(defun lem-home ()
-  (or (uiop:getenv "LEM_HOME")
-      (merge-pathnames ".lem/" (user-homedir-pathname))))
-
 (let ((once nil))
   (defun init (args)
     (unless once

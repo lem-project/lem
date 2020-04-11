@@ -1,6 +1,8 @@
 (defsystem "lem-jsonrpc"
   :depends-on ("lem"
-               "jsonrpc")
+               "jsonrpc"
+               "trivial-utf-8"
+               "jsonrpc/transport/stdio")
   :serial t
   :components ((:file "jsonrpc")))
 

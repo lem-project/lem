@@ -16,6 +16,7 @@
   :serial t
   :components ((:file "history")
                (:file "package")
+               (:file "config")
                (:file "errors")
                (:file "key")
                (:file "macros")

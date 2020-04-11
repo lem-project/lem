@@ -64,10 +64,19 @@
       (yason:encode-object-element "use_modeline" (view-use-modeline view))
       (yason:encode-object-element "kind" (view-kind view)))))
 
+(defparameter *error-log-file* (merge-pathnames "lem-jsonrpc-error-log" (user-homedir-pathname)))
+
+(defun log-error (value)
+  (with-open-file (out *error-log-file*
+                       :direction :output
+                       :if-exists :append
+                       :if-does-not-exist :create)
+    (format out "~A~%" value)))
+
 (defmacro with-error-handler (() &body body)
   `(handler-case
        (handler-bind ((error (lambda (c)
-                               (log:error (with-output-to-string (stream)
+                               (log-error (with-output-to-string (stream)
                                             (format stream "~A~%" c)
                                             (uiop:print-backtrace :stream stream
                                                                   :condition c))))))
@@ -200,14 +209,8 @@
     (params "viewInfo" view
             "x" x
             "y" y
-            "chars" (map 'list
-                         (lambda (c)
-                           (let* ((octets (babel:string-to-octets (string c)))
-                                  (bytes (make-array (1+ (length octets)))))
-                             (setf (aref bytes 0) (if (wide-char-p c) 2 1))
-                             (replace bytes octets :start1 1)
-                             bytes))
-                         string)
+            "text" string
+            "textWidth" (string-width string)
             "attribute" (ensure-attribute attribute nil))))
 
 (defmethod lem-if:print ((implementation jsonrpc) view x y string attribute)
@@ -306,8 +309,8 @@
               (t
                (error "unexpected kind: ~D" kind))))
     (error (e)
-      (log:error e)
-      (log:error (with-output-to-string (stream)
+      (log-error e)
+      (log-error (with-output-to-string (stream)
                    (let ((stream (yason:make-json-output-stream stream)))
                      (yason:encode args stream)))))))
 
@@ -319,3 +322,16 @@
 (lem:add-hook lem:*after-init-hook*
               (lambda ()
                 (swank:create-server :dont-close t :port 12345)))
+
+(in-package :jsonrpc/transport/stdio)
+(defmethod send-message-using-transport ((transport stdio-transport) connection message)
+  (let ((json (trivial-utf-8:string-to-utf-8-bytes
+               (with-output-to-string (s)
+                 (yason:encode message s))))
+        (stream (connection-socket connection)))
+    (format stream "Content-Length: ~A~C~C~:*~:*~C~C"
+            (length json)
+            #\Return
+            #\Newline)
+    (write-sequence json stream)
+    (force-output stream)))

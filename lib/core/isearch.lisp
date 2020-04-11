@@ -36,7 +36,7 @@
                                       :undef-hook 'isearch-self-insert))
 (defvar *isearch-prompt*)
 (defvar *isearch-string*)
-(defvar *isearch-prev-string* "")
+(defvar *isearch-previous-string* nil)
 (defvar *isearch-start-point*)
 (defvar *isearch-search-function*)
 (defvar *isearch-search-forward-function*)
@@ -84,6 +84,16 @@
 (defun disable-hook ()
   (setf (variable-value 'isearch-next-last :buffer) nil)
   (setf (variable-value 'isearch-prev-last :buffer) nil))
+
+
+(defun isearch-default-string ()
+  (unless *isearch-previous-string*
+    (setf *isearch-previous-string* (config :isearch-previous-string "")))
+  *isearch-previous-string*)
+
+(defun change-previous-string (string)
+  (setf (config :isearch-previous-string) string
+        *isearch-previous-string* string))
 
 
 (defun isearch-overlays (buffer)
@@ -265,7 +275,7 @@
 
 (defun isearch-end ()
   (isearch-reset-overlays (current-buffer))
-  (setq *isearch-prev-string* *isearch-string*)
+  (change-previous-string *isearch-string*)
   (buffer-unbound (current-buffer) 'isearch-redisplay-string)
   (remove-hook (variable-value 'after-change-functions :buffer)
                'isearch-change-buffer-hook)
@@ -291,7 +301,7 @@
 
 (define-command isearch-finish () ()
   (setf (buffer-value (current-buffer) 'isearch-redisplay-string) *isearch-string*)
-  (setq *isearch-prev-string* *isearch-string*)
+  (change-previous-string *isearch-string*)
   (isearch-add-hooks)
   (isearch-redisplay-inactive (current-buffer))
   (isearch-mode nil))
@@ -299,7 +309,7 @@
 (define-command isearch-next () ()
   (when (boundp '*isearch-string*)
     (when (string= "" *isearch-string*)
-      (setq *isearch-string* *isearch-prev-string*))
+      (setq *isearch-string* (isearch-default-string)))
     (setf (variable-value 'isearch-prev-last :buffer) nil)
     (cond ((variable-value 'isearch-next-last :buffer)
            (setf (variable-value 'isearch-next-last :buffer) nil)
@@ -314,7 +324,7 @@
 (define-command isearch-prev () ()
   (when (boundp '*isearch-string*)
     (when (string= "" *isearch-string*)
-      (setq *isearch-string* *isearch-prev-string*))
+      (setq *isearch-string* (isearch-default-string)))
     (setf (variable-value 'isearch-next-last :buffer) nil)
     (cond ((variable-value 'isearch-prev-last :buffer)
            (setf (variable-value 'isearch-prev-last :buffer) nil)

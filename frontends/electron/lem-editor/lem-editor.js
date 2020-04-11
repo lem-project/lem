@@ -140,29 +140,45 @@ class LemEditor extends HTMLElement {
         this.fontWidth = fontAttribute.width;
         this.fontHeight = fontAttribute.height;
 
+        const charUnitWindowRect = (desiredBounds) => {
+            const { x, y, width, height } = mainWindow.getBounds();
+            const cb = mainWindow.getContentBounds();
+            const dw = width - cb.width;
+            const dh = height - cb.height;
+            const ncw = this.fontWidth * Math.round((desiredBounds.width - dw) / this.fontWidth);
+            const nch = this.fontHeight * Math.round((desiredBounds.height - dh) / this.fontHeight);
+            const nw = ncw + dw;
+            const nh = nch + dh;
+            const nx = desiredBounds.x === x ? x : x - (nw - width);
+            const ny = desiredBounds.y === y ? y : y - (nh - height);
+            return {
+                contentWidth: ncw,
+                contentHeight: nch,
+                windowRect: {x: nx, y: ny, width: nw, height: nh}
+            };
+        }
+
         // 'will-resize' event handling.
         // Linux: Not supported
         // MacOS: Does not work properly e.g. https://github.com/electron/electron/issues/21777
         if (process.platform === 'win32') {
             mainWindow.on('will-resize', (_, newBounds) => {
-                const { x, y, width, height } = mainWindow.getBounds();
-                const cb = mainWindow.getContentBounds();
-                const dw = width - cb.width;
-                const dh = height - cb.height;
-                const ncw = this.fontWidth * Math.round((newBounds.width - dw) / this.fontWidth);
-                const nch = this.fontHeight * Math.round((newBounds.height - dh) / this.fontHeight);
-                const nw = ncw + dw;
-                const nh = nch + dh;
-                const nx = newBounds.x === x ? x : x - (nw - width);
-                const ny = newBounds.y === y ? y : y - (nh - height);
-                mainWindow.setBounds({x: nx, y: ny, width: nw, height: nh});
+                const {contentWidth, contentHeight, windowRect} = charUnitWindowRect(newBounds);
+                mainWindow.setBounds(windowRect);
             });
         }
 
         let timeoutId = null;
         const resizeHandler = () => {
-            const { width, height } = mainWindow.getContentBounds();
-            this.resize(width, height);
+            if (process.platform === 'win32') {
+                const { width, height } = mainWindow.getContentBounds();
+                this.resize(width, height);
+            } else {
+                const r = mainWindow.getBounds();
+                const {contentWidth, contentHeight, windowRect} = charUnitWindowRect(r);
+                mainWindow.setBounds(windowRect);
+                this.resize(contentWidth, contentHeight);
+            }
         };
         mainWindow.on('resize', () => {
             if (timeoutId) {

@@ -4,7 +4,7 @@
                "trivial-utf-8"
                "jsonrpc/transport/stdio")
   :serial t
-  :components ((:file "jsonrpc")))
+  :components ((:file "main")))
 
 (defsystem "lem-jsonrpc/executable"
   :build-operation program-op

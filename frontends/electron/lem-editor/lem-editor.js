@@ -147,8 +147,8 @@ class LemEditor extends HTMLElement {
             const dh = height - cb.height;
             const ncw = this.fontWidth * Math.round((desiredBounds.width - dw) / this.fontWidth);
             const nch = this.fontHeight * Math.round((desiredBounds.height - dh) / this.fontHeight);
-            const nw = ncw + dw;
-            const nh = nch + dh;
+            const nw = Math.ceil(ncw + dw);
+            const nh = Math.ceil(nch + dh);
             const nx = desiredBounds.x === x ? x : x - (nw - width);
             const ny = desiredBounds.y === y ? y : y - (nh - height);
             return {

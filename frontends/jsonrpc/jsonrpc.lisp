@@ -1,4 +1,5 @@
 (in-package :jsonrpc/transport/stdio)
+
 (defmethod send-message-using-transport ((transport stdio-transport) connection message)
   (let ((json (trivial-utf-8:string-to-utf-8-bytes
                (with-output-to-string (s)
@@ -10,3 +11,18 @@
             #\Newline)
     (write-sequence json stream)
     (force-output stream)))
+
+(defmethod receive-message-using-transport ((transport stdio-transport) connection)
+  (let* ((stream (connection-socket connection))
+         (headers (read-headers stream))
+         (length (ignore-errors (parse-integer (gethash "content-length" headers)))))
+    (when length
+      (let ((body
+              (with-output-to-string (out)
+                (loop
+                  :for c := (read-char stream)
+                  :do (write-char c out)
+                      (decf length (babel:string-size-in-octets (string c)))
+                      (when (<= length 0)
+                        (return))))))
+        (parse-message body)))))

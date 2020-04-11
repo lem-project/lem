@@ -3,3 +3,30 @@
 (defun lem-home ()
   (or (uiop:getenv "LEM_HOME")
       (merge-pathnames ".lem/" (user-homedir-pathname))))
+
+(defun config-pathname ()
+  (merge-pathnames "config.lisp" (lem-home)))
+
+(defun ensure-config-pathname ()
+  (ensure-directories-exist (config-pathname)))
+
+(defun config-plist ()
+  (let ((pathname (ensure-config-pathname)))
+    (if (uiop:file-exists-p pathname)
+        (uiop:read-file-form pathname)
+        '())))
+
+(defun config (key &optional default)
+  (let ((plist (config-plist)))
+    (getf plist key default)))
+
+(defun (setf config) (value key &optional default)
+  (declare (ignore default))
+  (let ((plist (config-plist)))
+    (setf (getf plist key) value)
+    (with-open-file (out (ensure-config-pathname)
+                         :direction :output
+                         :if-exists :supersede
+                         :if-does-not-exist :create)
+      (pprint plist out)))
+  value)

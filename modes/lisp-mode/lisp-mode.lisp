@@ -1085,19 +1085,25 @@
   (completion-strings str command-list))
 
 (defun prompt-for-impl (&key (existing t))
-  (let* ((command-list (get-slime-command-list))
+  (let* ((default-impl (config :slime-lisp-implementation ""))
+         (command-list (get-slime-command-list))
          (impl (prompt-for-line
-                "impl: "
+                (format nil "lisp implementation (~A): " default-impl)
                 ""
                 'completion-impls
                 (and existing
                      (lambda (name)
                        (member name command-list :test #'string=)))
-                'mh-read-impl)))
-    (loop :for f :in *slime-command-impls*
-          :for command := (funcall f impl)
-          :when command
-          :do (return-from prompt-for-impl command))))
+                'mh-read-impl))
+         (impl (if (string= impl "")
+                   default-impl
+                   impl))
+         (command (loop :for f :in *slime-command-impls*
+                        :for command := (funcall f impl)
+                        :when command
+                        :do (return command))))
+    (setf (config :slime-lisp-implementation) impl)
+    command))
 
 (defun initialize-forms-string (port)
   (with-output-to-string (out)

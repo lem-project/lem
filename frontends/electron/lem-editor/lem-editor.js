@@ -14,7 +14,7 @@ class FontAttribute {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d', { alpha: false });
         ctx.font = font;
-        const width = ctx.measureText('a').width;
+        const width = ctx.measureText('W').width;
         this.update(font, name, size, width, size);
     }
     update(font, name, pixel, width, height) {
@@ -41,7 +41,7 @@ function calcDisplayCols(width) {
 }
 
 function calcDisplayRows(height) {
-    return Math.floor(height / fontAttribute.height) - (process.platform === 'win32' ? 4 : 2);
+    return Math.floor(height / fontAttribute.height);
 }
 
 function getCurrentWindowSize() {
@@ -124,9 +124,10 @@ class LemEditor extends HTMLElement {
 
         this.lemSidePane = null;
 
-        const [width, height] = getCurrentWindowSize();
-        this.width = width;
-        this.height = height;
+        const mainWindow = getCurrentWindow();
+        const contentBounds = mainWindow.getContentBounds();
+        this.width = contentBounds.width;
+        this.height = contentBounds.height;
 
         this.rpcConnection.sendRequest('ready', {
             "width": calcDisplayCols(this.width),
@@ -135,10 +136,32 @@ class LemEditor extends HTMLElement {
             "background": option.background,
         });
 
-        const mainWindow = getCurrentWindow();
+        // will updated by setFont()
+        this.fontWidth = fontAttribute.width;
+        this.fontHeight = fontAttribute.height;
+
+        // 'will-resize' event handling.
+        // Linux: Not supported
+        // MacOS: Does not work properly e.g. https://github.com/electron/electron/issues/21777
+        if (process.platform === 'win32') {
+            mainWindow.on('will-resize', (_, newBounds) => {
+                const { x, y, width, height } = mainWindow.getBounds();
+                const cb = mainWindow.getContentBounds();
+                const dw = width - cb.width;
+                const dh = height - cb.height;
+                const ncw = this.fontWidth * Math.round((newBounds.width - dw) / this.fontWidth);
+                const nch = this.fontHeight * Math.round((newBounds.height - dh) / this.fontHeight);
+                const nw = ncw + dw;
+                const nh = nch + dh;
+                const nx = newBounds.x === x ? x : x - (nw - width);
+                const ny = newBounds.y === y ? y : y - (nh - height);
+                mainWindow.setBounds({x: nx, y: ny, width: nw, height: nh});
+            });
+        }
+
         let timeoutId = null;
         const resizeHandler = () => {
-            const { width, height } = mainWindow.getBounds();
+            const { width, height } = mainWindow.getContentBounds();
             this.resize(width, height);
         };
         mainWindow.on('resize', () => {
@@ -154,6 +177,20 @@ class LemEditor extends HTMLElement {
         
         // create input text box;
         this.picker = new Picker(this);
+
+        // resize to initial size
+        this.resizeTo(option.cols, option.rows);
+    }
+
+    resizeTo(col, row) {
+        const mainWindow = getCurrentWindow();
+        const { x, y, width, height } = mainWindow.getBounds();
+        const cb = mainWindow.getContentBounds();
+        const dw = width - cb.width;
+        const dh = height - cb.height;
+        const nw = Math.ceil(this.fontWidth * col + dw);
+        const nh = Math.ceil(this.fontHeight * row + dh);
+        mainWindow.setBounds({x: x, y: y, width: nw, height: nh});
     }
 
     on(method, handler) {
@@ -189,7 +226,9 @@ class LemEditor extends HTMLElement {
 
     setFont(params) {
         fontAttribute = new FontAttribute(params.name, params.size);
-    }
+        this.fontWidth = fontAttribute.width;
+        this.fontHeight = fontAttribute.height;
+}
 
     exit(params) {
         ipcRenderer.send('exit');
@@ -350,6 +389,7 @@ class Picker {
 
         this.picker.addEventListener('blur', () => { this.picker.focus() });
         this.picker.addEventListener('keydown', (event) => {
+            event.preventDefault();
             if (event.isComposing !== true && event.code !== '') {
                 const k = keyevent.convertKeyEvent(event);
                 this.editor.emitInput(kindKeyEvent, k);

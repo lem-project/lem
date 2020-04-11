@@ -1,5 +1,8 @@
 (in-package :lem)
 
+(export '(lem-home
+          config))
+
 (defun lem-home ()
   (or (uiop:getenv "LEM_HOME")
       (merge-pathnames ".lem/" (user-homedir-pathname))))

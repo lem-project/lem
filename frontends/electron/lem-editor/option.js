@@ -5,8 +5,8 @@ var option = {
     fontSize: 14,
     background: '#333',
     foreground: '#ccc',
-    initialCols: 80,
-    initialRows: 24
+    cols: 80,
+    rows: 24
 }
 
 exports.option = option;

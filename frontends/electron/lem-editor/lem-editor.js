@@ -179,7 +179,7 @@ class LemEditor extends HTMLElement {
         this.picker = new Picker(this);
 
         // resize to initial size
-        this.resizeTo(option.initialCols, option.initialRows);
+        this.resizeTo(option.cols, option.rows);
     }
 
     resizeTo(col, row) {

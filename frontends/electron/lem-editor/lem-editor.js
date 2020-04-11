@@ -3,8 +3,7 @@
 const rpc = require('vscode-jsonrpc');
 const cp = require('child_process');
 const utf8 = require('utf-8')
-//const ipcRenderer = require('electron').ipcRenderer;
-const {ipcRenderer, screen} = require('electron');
+const ipcRenderer = require('electron').ipcRenderer;
 const getCurrentWindow = require('electron').remote.getCurrentWindow;
 const keyevent = require('./keyevent');
 const { option } = require('./option');
@@ -37,33 +36,12 @@ const kindMethod = 4;
 
 const viewTable = {};
 
-
-let width_tweak = 0;
-let height_tweak = 0;
-switch (process.platform) {
-  case 'win32':
-    width_tweak = 2;
-    height_tweak = 3;
-    break;
-  case 'darwin':
-    width_tweak = 1;
-    height_tweak = 1;
-    break;
-  case 'linux':
-    width_tweak = 1;
-    height_tweak = 1;
-    break;
-  default:
-    width_tweak = 0;
-    height_tweak = 0;
-}
-
 function calcDisplayCols(width) {
-    return Math.floor(width / fontAttribute.width) - width_tweak;
+    return Math.floor(width / fontAttribute.width);
 }
 
 function calcDisplayRows(height) {
-    return Math.floor(height / fontAttribute.height) - height_tweak;
+    return Math.floor(height / fontAttribute.height);
 }
 
 function getCurrentWindowSize() {
@@ -146,9 +124,10 @@ class LemEditor extends HTMLElement {
 
         this.lemSidePane = null;
 
-        const [width, height] = getCurrentWindowSize();
-        this.width = width;
-        this.height = height;
+        const mainWindow = getCurrentWindow();
+        const contentBounds = mainWindow.getContentBounds();
+        this.width = contentBounds.width;
+        this.height = contentBounds.height;
 
         this.rpcConnection.sendRequest('ready', {
             "width": calcDisplayCols(this.width),
@@ -157,8 +136,6 @@ class LemEditor extends HTMLElement {
             "background": option.background,
         });
 
-        const mainWindow = getCurrentWindow();
-
         // will updated by setFont()
         this.fontWidth = fontAttribute.width;
         this.fontHeight = fontAttribute.height;
@@ -166,11 +143,16 @@ class LemEditor extends HTMLElement {
         // 'will-resize' event handling.
         // Linux: Not supported
         // MacOS: Does not work properly e.g. https://github.com/electron/electron/issues/21777
-        if (process.platform === 'win') {
+        if (process.platform === 'win32') {
             mainWindow.on('will-resize', (_, newBounds) => {
                 const { x, y, width, height } = mainWindow.getBounds();
-                const nw = this.fontWidth * Math.round(newBounds.width / this.fontWidth);
-                const nh = this.fontHeight * Math.round(newBounds.height / this.fontHeight);
+                const cb = mainWindow.getContentBounds();
+                const dw = width - cb.width;
+                const dh = height - cb.height;
+                const ncw = this.fontWidth * Math.round((newBounds.width - dw) / this.fontWidth);
+                const nch = this.fontHeight * Math.round((newBounds.height - dh) / this.fontHeight);
+                const nw = ncw + dw;
+                const nh = nch + dh;
                 const nx = newBounds.x === x ? x : x - (nw - width);
                 const ny = newBounds.y === y ? y : y - (nh - height);
                 mainWindow.setBounds({x: nx, y: ny, width: nw, height: nh});
@@ -179,7 +161,7 @@ class LemEditor extends HTMLElement {
 
         let timeoutId = null;
         const resizeHandler = () => {
-            const { width, height } = mainWindow.getBounds();
+            const { width, height } = mainWindow.getContentBounds();
             this.resize(width, height);
         };
         mainWindow.on('resize', () => {
@@ -195,6 +177,20 @@ class LemEditor extends HTMLElement {
         
         // create input text box;
         this.picker = new Picker(this);
+
+        // resize to initial size
+        this.resizeTo(option.initialCols, option.initialRows);
+    }
+
+    resizeTo(col, row) {
+        const mainWindow = getCurrentWindow();
+        const { x, y, width, height } = mainWindow.getBounds();
+        const cb = mainWindow.getContentBounds();
+        const dw = width - cb.width;
+        const dh = height - cb.height;
+        const nw = Math.ceil(this.fontWidth * col + dw);
+        const nh = Math.ceil(this.fontHeight * row + dh);
+        mainWindow.setBounds({x: x, y: y, width: nw, height: nh});
     }
 
     on(method, handler) {

@@ -12,8 +12,8 @@
   "dependencies": {
     "child_process": "^1.0.2",
     "electron": "^8.2.1",
-    "keyboard-layout": "^2.0.13",
     "marked": "^0.3.6",
+    "native-keymap": "^2.1.2",
     "utf-8": "^1.0.0",
     "vscode-jsonrpc": "^3.4.1"
   },

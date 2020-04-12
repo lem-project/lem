@@ -1,5 +1,5 @@
 'use strict';
-const keymap = require('native-keymap');
+const keymap = (process.platform === 'darwin' ? require('native-keymap') : null);
 
 const MODIFIERS = ["Shift", "Control", "Alt", "Meta"];
 const CONVERT_TABLE = {

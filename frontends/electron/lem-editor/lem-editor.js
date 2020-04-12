@@ -6,7 +6,24 @@ const utf8 = require('utf-8')
 const ipcRenderer = require('electron').ipcRenderer;
 const getCurrentWindow = require('electron').remote.getCurrentWindow;
 const keyevent = require('./keyevent');
-const { option } = require('./option');
+
+// load option file
+const defaultOption = require('./option').option;
+const OPTION_FILE_NAME = 'electron.yml';
+const fs = require('fs');
+const path = require('path');
+const yaml = require('js-yaml');
+const homedir = process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME'];
+const lemHome = process.env['LEM_HOME'] ||  path.join(homedir, '.lem');
+const optionFilePath = path.join(lemHome, OPTION_FILE_NAME);
+function loadOption(path) {
+	try {
+		return yaml.safeLoad(fs.readFileSync(path, 'utf-8'));
+	} catch (e) {
+		return {};
+	}
+}
+const option = Object.assign(defaultOption, loadOption(optionFilePath));
 
 class FontAttribute {
     constructor(name, size) {

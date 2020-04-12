@@ -1,0 +1,6 @@
+fontName: 'monospace'
+fontSize: 18
+background: '#333'
+foreground: '#ccc'
+cols: 100
+rows: 30

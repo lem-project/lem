@@ -25,7 +25,8 @@
                "lem-dart-mode"
                "lem-scala-mode"
                "lem-dot-mode"
-               "lem-java-mode"))
+               "lem-java-mode"
+               "lem-haskell-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

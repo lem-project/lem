@@ -61,7 +61,7 @@
   (with-point ((cur-point (buffer-point buffer)))
     (buffer-start cur-point)
     (when (ppcre:scan "^#!" (line-string cur-point))
-      (change-buffer-mode-\#! buffer (line-string cur-point))
+      (ignore-errors (change-buffer-mode-\#! buffer (line-string cur-point)))
       (line-offset cur-point 1))
     (loop :until (end-line-p cur-point)
           :for string := (line-string cur-point)

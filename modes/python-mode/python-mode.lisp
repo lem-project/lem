@@ -23,7 +23,7 @@
   (let* ((integer-literals "\\b(([1-9](_?[0-9])*)|(0(_?0)*)|(0(b|B)(_?[01])+)|(0(o|O)(_?[0-7])+)|(0(x|X)(_?[0-9a-fA-F])+))\\b")
          (floating-point-literals (floating-point-literals))
          (patterns (make-tm-patterns
-                    (make-tm-region "#" "$" :name 'syntax-comment-attribute)
+                    (make-tm-line-comment-region "#")
                     (make-tm-match (tokens :word-boundary
                                            '("and" "as"
                                              "assert" "break" "class" "continue" "def"

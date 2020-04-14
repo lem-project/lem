@@ -42,8 +42,8 @@ see : https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html
 (defun make-tmlanguage-java ()
   (let ((patterns
           (make-tm-patterns
-           (make-tm-region "//" "$" :name 'syntax-comment-attribute)
-           (make-tm-region "/\\*" "\\*/" :name 'syntax-comment-attribute)
+           (make-tm-line-comment-region "//")
+           (make-tm-block-comment-region "/\\*" "\\*/")
            (make-tm-string-region "\'")
            (make-tm-string-region "\"")
            (make-tm-match (tokens :word-boundary *java-keywords*)

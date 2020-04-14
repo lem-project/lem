@@ -3,7 +3,7 @@ link : https://asciidoctor.org/docs/asciidoc-syntax-quick-reference/
 |#
 
 (defpackage :lem-asciidoc-mode
-  (:use :cl :lem :lem.language-mode)
+  (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
   (:export :*asciidoc-mode-hook*))
 (in-package :lem-asciidoc-mode)
 
@@ -18,9 +18,7 @@ link : https://asciidoctor.org/docs/asciidoc-syntax-quick-reference/
              (make-tm-match pattern :name 'syntax-string-attribute)))
     (let* ((patterns (make-tm-patterns
                       ;; block
-                      (make-tm-region '(:sequence "----")
-                                      '(:sequence "----")
-                                      :name 'syntax-comment-attribute)
+                      (make-tm-block-comment-region "----" "----")
                       ;; line breaks
                       (tm-constant "(\\+)|(\\[%hardbreaks\\])")
                       ;; lead style

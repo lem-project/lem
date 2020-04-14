@@ -66,7 +66,7 @@ see : https://dart.dev/guides/language/language-tour
 (defun make-tmlanguage-dart ()
   (let ((patterns
           (make-tm-patterns
-           (make-tm-region "//" "$" :name 'syntax-comment-attribute)
+           (make-tm-line-comment-region "//")
            (make-tm-string-region "\'")
            (make-tm-string-region "\"")
            (make-tm-match (tokens :word-boundary *dart-keywords*)

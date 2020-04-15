@@ -87,18 +87,24 @@
                end (second range))))
       (destructuring-bind (before after flag)
           (lem-vi-mode.ex-parser:parse-subst-argument argument)
-        (if (not (lem:search-forward-regexp start before end))
+        (if (not (lem:with-point ((s start)
+                                  (e end))
+                   (lem:search-forward-regexp s before e)))
             (lem:message "Pattern not found")
-            (lem:with-point ((last-match (lem:search-backward-regexp end before start)))
+            (lem:with-point ((last-match (lem:with-point ((s start)
+                                                          (e end))
+                                           (lem:search-backward-regexp e before s))))
               (flet ((rep (start end count)
-                       (lem.isearch::query-replace-internal before
-                                                            after
-                                                            #'lem:search-forward-regexp
-                                                            #'lem:search-backward-regexp
-                                                            :query nil
-                                                            :start start
-                                                            :end end
-                                                            :count count)))
+                       (lem:with-point ((s start)
+                                        (e end))
+                         (lem.isearch::query-replace-internal before
+                                                              after
+                                                              #'lem:search-forward-regexp
+                                                              #'lem:search-backward-regexp
+                                                              :query nil
+                                                              :start s
+                                                              :end e
+                                                              :count count))))
                 (if (equal flag "g")
                     (rep start end nil)
                     (progn
@@ -106,13 +112,14 @@
                       (loop until (lem:point< end (lem:current-point))
                             do (lem:with-point ((replace-start (lem:current-point))
                                                 (replace-end (lem:current-point)))
+                                 (lem:line-start replace-start)
                                  (lem:line-end replace-end)
                                  (rep replace-start replace-end 1))
                                (lem:next-logical-line 1)
                                (lem:line-start (lem:current-point))))))
-               (let ((p (lem:current-point)))
-                 (lem:move-point p last-match)
-                 (lem:line-start p))))))))
+              (let ((p (lem:current-point)))
+                (lem:move-point p last-match)
+                (lem:line-start p))))))))
 
 (define-ex-command "^!" (range command)
   (declare (ignore range))

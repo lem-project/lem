@@ -168,11 +168,9 @@
 (defun prompt-for-y-or-n-p (prompt)
   (do () (nil)
     (let ((c (prompt-for-character (format nil "~a [y/n]? " prompt))))
-      (cond
-        ((char= #\y c)
-         (return t))
-        ((char= #\n c)
-         (return nil))))))
+      (case c
+        (#\y (return t))
+        (#\n (return nil))))))
 
 (define-key *minibuf-keymap* "C-j" 'minibuffer-read-line-execute)
 (define-key *minibuf-keymap* "Return" 'minibuffer-read-line-execute)

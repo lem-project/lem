@@ -61,6 +61,12 @@
   (ex-write range filename)
   (lem:exit-lem nil))
 
+(define-ex-command "^(x|xit)$" (range filename)
+  (ex-write-quit range filename nil))
+
+(define-ex-command "^(x|xit)!$" (range filename)
+  (ex-write-quit range filename t))
+
 (define-ex-command "^(sp|split)$" (range filename)
   (declare (ignore range))
   (lem:split-active-window-vertically)

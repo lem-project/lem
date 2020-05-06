@@ -141,6 +141,7 @@
   (defun input-polling-interval ()
     polling-interval)
   (defun (setf input-polling-interval) (v)
+    (when (<= v 0) (setf v 0.001))
     (setf polling-interval v)
     (cond
       ((< v 0.01)
@@ -216,10 +217,11 @@
 
 ;; mouse function
 (defun mouse-get-window-rect (window)
-  (values (lem:window-x      window)
-          (lem:window-y      window)
-          (lem:window-width  window)
-          (lem:window-height window)))
+  (values (lem:window-x     window)
+          (lem:window-y     window)
+          (lem:window-width window)
+          (- (lem:window-height window)
+             (if (lem::window-use-modeline-p window) 1 0))))
 ;; for mintty and ConEmu
 ;; get mouse disp-x for pointing wide characters properly
 (defun mouse-get-disp-x (view x y)
@@ -283,14 +285,28 @@
   (lem:move-to-virtual-line-column (lem:current-point) x))
 (defun mouse-event-proc (bstate x1 y1)
   (lambda ()
+    ;; check mouse status
+    (when (or (and (not lem::*floating-windows*)
+                   (logtest bstate (logior charms/ll:BUTTON1_PRESSED
+                                           charms/ll:BUTTON1_CLICKED
+                                           charms/ll:BUTTON1_DOUBLE_CLICKED
+                                           charms/ll:BUTTON1_TRIPLE_CLICKED
+                                           charms/ll:BUTTON1_RELEASED)))
+              (logtest bstate (logior charms/ll:BUTTON4_PRESSED
+                                      charms/ll:BUTTON5_PRESSED)))
+      ;; send a dummy key event to exit isearch-mode
+      (lem:send-event (lem:make-key :sym "NopKey")))
+    ;; send actual mouse event
+    (lem:send-event (mouse-event-proc-sub bstate x1 y1))))
+(defun mouse-event-proc-sub (bstate x1 y1)
+  (lambda ()
     ;; workaround for cursor position problem
     (let ((disp-x (mouse-get-disp-x (lem:window-view (lem:current-window)) x1 y1))
-          (cur-x  (mouse-get-cur-x  (lem:window-view (lem:current-window)) x1 y1))
-          (no-floating-window (if lem::*floating-windows* nil t)))
+          (cur-x  (mouse-get-cur-x  (lem:window-view (lem:current-window)) x1 y1)))
       ;; process mouse event
       (cond
-        ;; button1 down
-        ((and no-floating-window
+        ;; button-1 down
+        ((and (not lem::*floating-windows*)
               (logtest bstate (logior charms/ll:BUTTON1_PRESSED
                                       charms/ll:BUTTON1_CLICKED
                                       charms/ll:BUTTON1_DOUBLE_CLICKED
@@ -305,42 +321,48 @@
                    (setf *dragging-window* (list o 'y))
                    t)
                   ;; horizontal dragging window
-                  ((and press (= disp-x (- x 1)) (<= y y1 (+ y h -2)))
+                  ((and press (= disp-x (- x 1)) (<= y y1 (+ y h -1)))
                    (setf *dragging-window* (list o 'x))
                    t)
                   ;; move cursor
-                  ((and (<= x disp-x (+ x w -1)) (<= y y1 (+ y h -2)))
+                  ((and (<= x disp-x (+ x w -1)) (<= y y1 (+ y h -1)))
                    (setf (lem:current-window) o)
                    (mouse-move-to-cursor o (- disp-x x) (- y1 y))
                    (lem:redraw-display)
                    t)
                   (t nil))))
-            (lem:window-list))))
-        ;; button1 up
+            ;; include active minibuffer window
+            (if (lem::active-minibuffer-window)
+                (cons (lem::active-minibuffer-window) (lem:window-list))
+                (lem:window-list)))))
+        ;; button-1 up
         ((logtest bstate charms/ll:BUTTON1_RELEASED)
-         (let ((o (first *dragging-window*)))
+         (let ((o-orig (lem:current-window))
+               (o (first *dragging-window*)))
            (when (windowp o)
              (multiple-value-bind (x y w h) (mouse-get-window-rect o)
-               (declare (ignore x y))
-               (setf (lem:current-window) o)
                (cond
                  ;; vertical dragging window
                  ((eq (second *dragging-window*) 'y)
-                  (let ((vy (- (- (lem:window-y o) 1) y1)))
+                  (let ((vy (- (- y 1) y1)))
                     ;; this check is incomplete if 3 or more divisions exist
-                    (when (and no-floating-window
+                    (when (and (not lem::*floating-windows*)
                                (>= y1       *min-lines*)
                                (>= (+ h vy) *min-lines*))
+                      (setf (lem:current-window) o)
                       (lem:grow-window vy)
+                      (setf (lem:current-window) o-orig)
                       (lem:redraw-display))))
                  ;; horizontal dragging window
-                 (t
-                  (let ((vx (- (- (lem:window-x o) 1) cur-x)))
+                 ((eq (second *dragging-window*) 'x)
+                  (let ((vx (- (- x 1) cur-x)))
                     ;; this check is incomplete if 3 or more divisions exist
-                    (when (and no-floating-window
+                    (when (and (not lem::*floating-windows*)
                                (>= cur-x    *min-cols*)
                                (>= (+ w vx) *min-cols*))
+                      (setf (lem:current-window) o)
                       (lem:grow-window-horizontally vx)
+                      (setf (lem:current-window) o-orig)
                       (lem:redraw-display))))
                  )))
            (when o
@@ -372,7 +394,7 @@
       (escape-code (get-code "escape"))
       (ctrl-key nil)
       (alt-key  nil))
-  (defun get-ch ()
+  (defun get-charcode-from-input ()
     (let ((code          (getch-pad))
           (modifier-keys (charms/ll:PDC-get-key-modifiers)))
       (setf ctrl-key (logtest modifier-keys charms/ll:PDC_KEY_MODIFIER_CONTROL))
@@ -456,7 +478,7 @@
            )))
       code))
   (defun get-event (&optional esc-delaying)
-    (let ((code (get-ch)))
+    (let ((code (get-charcode-from-input)))
       (cond
         ((= code -1)
          ;; retry is necessary to exit lem normally

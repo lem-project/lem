@@ -1,6 +1,8 @@
 (defpackage :lem-ncurses
   (:use :cl :lem)
-  (:export ;; ncurses-pdcurseswin32.lisp
+  (:export ;; ncurses.lisp
+           :escape-delay
+           ;; ncurses-pdcurseswin32.lisp
            :input-polling-interval))
 (in-package :lem-ncurses)
 
@@ -227,15 +229,21 @@
               (setf (lem::attribute-%internal-value attribute) bits)
               bits)))))
 
-;; XXX: see ncurses-pdcurseswin32.lisp:getch-pad
+;; for input
+;;  (we don't use stdscr for input because it calls wrefresh implicitly
+;;   and causes the display confliction by two threads)
 (defvar *padwin* nil)
 (defun getch ()
   (unless *padwin*
     (setf *padwin* (charms/ll:newpad 1 1))
     (charms/ll:keypad *padwin* 1)
-    ;; timeout setting is necessary to exit lem normally
     (charms/ll:wtimeout *padwin* -1))
   (charms/ll:wgetch *padwin*))
+(defmacro with-getch-input-timeout ((time) &body body)
+  `(progn
+     (charms/ll:wtimeout *padwin* ,time)
+     (unwind-protect (progn ,@body)
+       (charms/ll:wtimeout *padwin* -1))))
 
 (defun get-key (code)
   (let* ((char (let ((nbytes (utf8-bytes code)))
@@ -243,8 +251,9 @@
                    (code-char code)
                    (let ((vec (make-array nbytes :element-type '(unsigned-byte 8))))
                      (setf (aref vec 0) code)
-                     (loop :for i :from 1 :below nbytes
-                           :do (setf (aref vec i) (getch)))
+                     (with-getch-input-timeout (100)
+                       (loop :for i :from 1 :below nbytes
+                             :do (setf (aref vec i) (getch))))
                      (handler-case (schar (babel:octets-to-string vec) 0)
                        (babel-encodings:invalid-utf8-continuation-byte ()
                          (code-char code)))))))
@@ -324,19 +333,22 @@
                 ((= code resize-code) :resize)
                 ((= code abort-code) :abort)
                 ((= code escape-code)
-                 (charms/ll:wtimeout *padwin* (variable-value 'escape-delay))
-                 (let ((code (prog1 (getch)
-                               (charms/ll:wtimeout *padwin* -1))))
+                 (let ((code (with-getch-input-timeout
+                                 ((variable-value 'escape-delay))
+                               (getch))))
                    (cond ((= code -1)
                           (get-key-from-name "escape"))
                          ((= code #.(char-code #\[))
-                          (case (getch)
-                            (#.(char-code #\<)
-                               ;;sgr(1006)
-                               (uiop:symbol-call :lem-mouse-sgr1006 :parse-mouse-event))
-                            (#.(char-code #\1)
-                               (csi\[1))
-                            (t (get-key-from-name "escape"))))
+                          (with-getch-input-timeout (100)
+                            (case (getch)
+                              (#.(char-code #\<)
+                                 ;;sgr(1006)
+                                 (uiop:symbol-call :lem-mouse-sgr1006
+                                                   :parse-mouse-event
+                                                   #'getch))
+                              (#.(char-code #\1)
+                                 (csi\[1))
+                              (t (get-key-from-name "escape")))))
                          (t
                           (let ((key (get-key code)))
                             (make-key :meta t

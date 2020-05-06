@@ -14,7 +14,7 @@
 
 (defparameter *named-key-syms*
   '("Backspace" "Delete" "Down" "End" "Escape" "F0" "F1" "F10" "F11" "F12" "F2" "F3" "F4" "F5" "F6" "F7" "F8" "F9"
-    "Home" "Left" "PageDown" "PageUp" "Return" "Right" "Space" "Tab" "Up"))
+    "Home" "Left" "NopKey" "PageDown" "PageUp" "Return" "Right" "Space" "Tab" "Up"))
 
 (defun named-key-sym-p (key-sym)
   (find key-sym *named-key-syms* :test #'string=))
@@ -149,6 +149,7 @@
 (setf (key-to-character (make-key :shift t :sym "PageDown")) (code-char 396))
 (setf (key-to-character (make-key :shift t :sym "PageUp")) (code-char 398))
 (setf (key-to-character (make-key :shift t :sym "Right")) (code-char 402))
+(setf (key-to-character (make-key :sym "NopKey")) (code-char 600)) ; used for nop-command
 
 (loop :for code :from #x21 :below #x7F
       :do (setf (key-to-character (make-key :sym (string (code-char code)))) (code-char code)))

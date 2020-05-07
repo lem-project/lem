@@ -4,10 +4,10 @@
                 #:with-jump-motion))
 (in-package :lem-vi-mode.ex-command)
 
-(defun ex-write (range filename)
+(defun ex-write (range filename touch)
   (case (length range)
     (0 (if (string= filename "")
-           (lem:save-buffer)
+           (lem:save-buffer touch)
            (lem:write-file filename)))
     (2 (lem:write-region-file (first range) (second range)
                               (if (string= filename "")
@@ -16,7 +16,7 @@
     (otherwise (syntax-error))))
 
 (defun ex-write-quit (range filename force)
-  (ex-write range filename)
+  (ex-write range filename touch)
   (lem-vi-mode.commands:vi-quit force))
 
 (define-ex-command "^e$" (range filename)
@@ -25,17 +25,17 @@
                                   (lem:buffer-directory))))
 
 (define-ex-command "^(w|write)$" (range filename)
-  (ex-write range filename))
+  (ex-write range filename t))
 
 (define-ex-command "^update$" (range filename)
   (when (lem:buffer-modified-p (lem:current-buffer))
-    (ex-write range filename)))
+    (ex-write range filename t)))
 
 (define-ex-command "^wq$" (range filename)
-  (ex-write-quit range filename nil))
+  (ex-write-quit range filename nil t))
 
 (define-ex-command "^wq!$" (range filename)
-  (ex-write-quit range filename t))
+  (ex-write-quit range filename t t))
 
 (define-ex-command "^q$" (range argument)
   (declare (ignore range argument))
@@ -54,18 +54,18 @@
   (lem:exit-lem nil))
 
 (define-ex-command "^wqa$" (range filename)
-  (ex-write range filename)
+  (ex-write range filename nil)
   (lem:exit-lem t))
 
 (define-ex-command "^wqa!$" (range filename)
-  (ex-write range filename)
+  (ex-write range filename nil)
   (lem:exit-lem nil))
 
 (define-ex-command "^(x|xit)$" (range filename)
-  (ex-write-quit range filename nil))
+  (ex-write-quit range filename nil nil))
 
 (define-ex-command "^(x|xit)!$" (range filename)
-  (ex-write-quit range filename t))
+  (ex-write-quit range filename t nil))
 
 (define-ex-command "^(sp|split)$" (range filename)
   (declare (ignore range))

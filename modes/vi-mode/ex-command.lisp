@@ -15,7 +15,7 @@
                                   filename)))
     (otherwise (syntax-error))))
 
-(defun ex-write-quit (range filename force)
+(defun ex-write-quit (range filename force touch)
   (ex-write range filename touch)
   (lem-vi-mode.commands:vi-quit force))
 

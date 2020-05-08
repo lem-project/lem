@@ -114,7 +114,7 @@
                                ;;(#\< . #\>)
                                (#\{ . #\})
                                (#\[ . #\]))
-                :string-quote-chars '(#\")
+                :string-quote-chars '(#\" #\')
                 :expr-prefix-chars '(#\- #\+ #\*)
                 :expr-suffix-chars '(#\: #\, #\;)
                 :block-string-pairs `(("`" . "`")

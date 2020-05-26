@@ -231,7 +231,7 @@
         (t
          (assert (or (stringp filespec) (pathnamep filespec)))
          (when (probe-file filespec)
-           (or (get-buffer (file-namestring filespec))
+           (or (get-file-buffer (file-namestring filespec))
                (find-file-buffer filespec))))))
 
 (defun xref-filespec-to-filename (filespec)

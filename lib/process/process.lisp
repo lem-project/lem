@@ -1,11 +1,24 @@
 (in-package :lem-process)
 
-(defstruct process
-  pointer
-  name
-  buffer-stream
-  read-thread
-  output-callback)
+(defclass process ()
+  ((pointer
+    :initarg :pointer
+    :reader process-pointer)
+   (name
+    :initarg :name
+    :reader process-name)
+   (command
+    :initarg :command
+    :reader process-command)
+   (buffer-stream
+    :initarg :buffer-stream
+    :reader process-buffer-stream)
+   (read-thread
+    :initarg :read-thread
+    :reader process-read-thread)
+   (output-callback
+    :initarg :output-callback
+    :reader process-output-callback)))
 
 (defun run-process (command &key name output-callback)
   (setf command (uiop:ensure-list command))
@@ -21,11 +34,12 @@
                           (send-event (lambda ()
                                         (write-to-buffer buffer-stream string output-callback))))))
                     :name (format nil "run-process ~{~A~^ ~}" command))))
-      (make-process :pointer pointer
-                    :name name
-                    :buffer-stream buffer-stream
-                    :read-thread thread
-                    :output-callback output-callback))))
+      (make-instance 'process :pointer pointer
+                     :name name
+                     :command command
+                     :buffer-stream buffer-stream
+                     :read-thread thread
+                     :output-callback output-callback))))
 
 (defun write-to-buffer (buffer-stream string output-callback)
   (write-string string buffer-stream)

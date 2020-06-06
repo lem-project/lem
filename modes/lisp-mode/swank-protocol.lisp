@@ -11,6 +11,7 @@
            :connection-prompt-string
            :connection-features
            :connection-command
+           :connection-process
            :connection-process-directory
            :connection-plist)
   (:export :new-connection
@@ -141,6 +142,7 @@ Parses length information to determine how many characters to read."
    (features :accessor connection-features)
    (info :accessor connection-info)
    (command :initform nil :accessor connection-command)
+   (process :initform nil :accessor connection-process)
    (connection-process-directory
     :initform nil
     :accessor connection-process-directory)

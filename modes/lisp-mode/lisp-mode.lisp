@@ -1035,7 +1035,7 @@
 (defvar *slime-command-impls* '(roswell-impls-candidates
                                 qlot-impls-candidates))
 (defun get-lisp-command (&key impl (prefix ""))
-  (format nil "~Aros ~{~S~^ ~}" prefix
+  (format nil "~Aros ~{~A~^ ~}" prefix
           `(,@(if impl `("-L" ,impl))
             "-s" "swank" "run")))
 
@@ -1110,6 +1110,20 @@
     (format out "(swank:create-server :port ~D :dont-close t)~%" port)
     (write-line "(loop (sleep most-positive-fixnum))" out)))
 
+(defun closure-output-callback (buffer-name)
+  (lambda (string)
+    (let* ((buffer (make-buffer buffer-name))
+           (point (buffer-point buffer)))
+      (buffer-end point)
+      (insert-string point string))))
+
+(defun run-lisp (command port)
+  (let ((process (lem-process:run-process (uiop:split-string command)
+                                          :output-callback (closure-output-callback command)))
+        (init-code (format nil "(swank:create-server :port ~D :dont-close t)~%" port)))
+    (lem-process:process-send-input process init-code)
+    process))
+
 (defun run-swank-server (command port &key (directory (buffer-directory)))
   (bt:make-thread
    (lambda ()
@@ -1140,8 +1154,8 @@
 (defun run-slime (command &key (directory (buffer-directory)))
   (unless command
     (setf command (get-lisp-command :impl *impl-name*)))
-  (let ((port (random-port)))
-    (run-swank-server command port :directory directory)
+  (let* ((port (random-port))
+         (process (run-lisp command port)))
     (sleep 0.5)
     (let ((successp)
           (condition))
@@ -1149,12 +1163,15 @@
             :do (handler-case
                     (let ((conn (slime-connect *localhost* port t)))
                       (setf (connection-command conn) command)
+                      (setf (connection-process conn) process)
                       (setf (connection-process-directory conn) directory)
                       (setf successp t)
                       (return))
                   (editor-error (c)
                     (setf condition c)
-                    (sleep 0.5))))
+                    (if (lem-process:process-alive-p process)
+                        (sleep 0.5)
+                        (return)))))
       (unless successp
         (error condition)))
     #-win32
@@ -1164,14 +1181,17 @@
   (let ((command (if ask-impl (prompt-for-impl))))
     (run-slime command)))
 
+(defun delete-lisp-connection (connection)
+  (prog1 (when (connection-process connection)
+           (lem-process:delete-process (connection-process connection))
+           t)
+    (remove-connection connection)))
+
 (define-command slime-quit () ()
   (when (self-connection-p *connection*)
     (editor-error "The current connection is myself"))
   (when *connection*
-    (prog1 (when (connection-command *connection*)
-             (lisp-rex '(uiop:quit))
-             t)
-      (remove-connection *connection*))))
+    (delete-lisp-connection *connection*)))
 
 (defun slime-quit* ()
   (ignore-errors (slime-quit)))
@@ -1179,13 +1199,12 @@
 (defun slime-quit-all ()
   (flet ((find-connection ()
            (dolist (c *connection-list*)
-             (when (connection-command c)
+             (when (connection-process c)
                (return c)))))
     (loop
       (let ((*connection* (find-connection)))
         (unless *connection* (return))
-        (ignore-errors (lisp-rex '(uiop:quit)))
-        (remove-connection *connection*)))))
+        (delete-lisp-connection *connection*)))))
 
 (defun sit-for* (second)
   (loop :with end-time := (+ (get-internal-real-time)

@@ -20,10 +20,10 @@
     :initarg :output-callback
     :reader process-output-callback)))
 
-(defun run-process (command &key name output-callback)
+(defun run-process (command &key name output-callback directory)
   (setf command (uiop:ensure-list command))
   (let ((buffer-stream (make-string-output-stream)))
-    (let* ((pointer (async-process:create-process command :nonblock nil))
+    (let* ((pointer (async-process:create-process command :nonblock nil :directory directory))
            (thread (bt:make-thread
                     (lambda ()
                       (loop

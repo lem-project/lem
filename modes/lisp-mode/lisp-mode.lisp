@@ -1117,12 +1117,10 @@
       (buffer-end point)
       (insert-string point string))))
 
-(defun run-lisp (command port)
-  (let ((process (lem-process:run-process (uiop:split-string command)
-                                          :output-callback (closure-output-callback command)))
-        (init-code (format nil "(swank:create-server :port ~D :dont-close t)~%" port)))
-    (lem-process:process-send-input process init-code)
-    process))
+(defun run-lisp (command &key (directory (buffer-directory)))
+  (lem-process:run-process (uiop:split-string command)
+                           :output-callback (closure-output-callback command)
+                           :directory directory))
 
 (defun run-swank-server (command port &key (directory (buffer-directory)))
   (bt:make-thread
@@ -1154,8 +1152,9 @@
 (defun run-slime (command &key (directory (buffer-directory)))
   (unless command
     (setf command (get-lisp-command :impl *impl-name*)))
-  (let* ((port (random-port))
-         (process (run-lisp command port)))
+  (let ((port (random-port))
+        (process (run-lisp command)))
+    (lem-process:process-send-input process (format nil "(swank:create-server :port ~D :dont-close t)~%" port))
     (sleep 0.5)
     (let ((successp)
           (condition))

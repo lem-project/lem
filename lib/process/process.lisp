@@ -34,12 +34,16 @@
                           (send-event (lambda ()
                                         (write-to-buffer buffer-stream string output-callback))))))
                     :name (format nil "run-process ~{~A~^ ~}" command))))
-      (make-instance 'process :pointer pointer
+      (make-instance 'process
+                     :pointer pointer
                      :name name
                      :command command
                      :buffer-stream buffer-stream
                      :read-thread thread
                      :output-callback output-callback))))
+
+(defun get-process-output-string (process)
+  (get-output-stream-string (process-buffer-stream process)))
 
 (defun write-to-buffer (buffer-stream string output-callback)
   (write-string string buffer-stream)

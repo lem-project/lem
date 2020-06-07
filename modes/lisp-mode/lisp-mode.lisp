@@ -1115,9 +1115,13 @@
      (format nil "(swank:create-server :port ~D :dont-close t)~%" port))
     (sleep 0.5)
     (let ((successp)
-          (condition))
+          (condition)
+          (progress-message "SLIME is starting up"))
       (loop :repeat 30
-            :do (handler-case
+            :do (message-without-log "~A" progress-message)
+                (redraw-display)
+                (setf progress-message (format nil "~A." progress-message))
+                (handler-case
                     (let ((conn (slime-connect *localhost* port t)))
                       (setf (connection-command conn) command)
                       (setf (connection-process conn) process)

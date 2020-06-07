@@ -1105,56 +1105,14 @@
     (setf (config :slime-lisp-implementation) impl)
     command))
 
-(defun initialize-forms-string (port)
-  (with-output-to-string (out)
-    (format out "(swank:create-server :port ~D :dont-close t)~%" port)
-    (write-line "(loop (sleep most-positive-fixnum))" out)))
-
-(defun closure-output-callback (buffer-name)
-  (lambda (string)
-    (let* ((buffer (make-buffer buffer-name))
-           (point (buffer-point buffer)))
-      (buffer-end point)
-      (insert-string point string))))
-
-(defun run-lisp (command &key (directory (buffer-directory)))
-  (lem-process:run-process (uiop:split-string command)
-                           :output-callback (closure-output-callback command)
-                           :directory directory))
-
-(defun run-swank-server (command port &key (directory (buffer-directory)))
-  (bt:make-thread
-   (lambda ()
-     (with-input-from-string
-         (input (initialize-forms-string port))
-       (multiple-value-bind (output error-output status)
-           (uiop:run-program command
-                             :input input
-                             :output :string
-                             :error-output :string
-                             :directory directory
-                             :ignore-error-status t)
-         (unless (zerop status)
-           (send-event (lambda ()
-                         (let ((buffer (make-buffer "*Run Lisp Output*")))
-                           (with-pop-up-typeout-window (stream buffer
-                                                               :focus t
-                                                               :erase t
-                                                               :read-only t)
-                             (format stream "command: ~A~%" command)
-                             (format stream "status: ~A~%" status)
-                             (format stream "port: ~A~%" port)
-                             (format stream "directory: ~A~%" directory)
-                             (write-string output stream)
-                             (write-string error-output stream)))))))))
-   :name (format nil "run-swank-server-thread '~A'" command)))
-
 (defun run-slime (command &key (directory (buffer-directory)))
   (unless command
     (setf command (get-lisp-command :impl *impl-name*)))
   (let ((port (random-port))
-        (process (run-lisp command)))
-    (lem-process:process-send-input process (format nil "(swank:create-server :port ~D :dont-close t)~%" port))
+        (process (lem-process:run-process (uiop:split-string command) :directory directory)))
+    (lem-process:process-send-input
+     process
+     (format nil "(swank:create-server :port ~D :dont-close t)~%" port))
     (sleep 0.5)
     (let ((successp)
           (condition))
@@ -1172,6 +1130,14 @@
                         (sleep 0.5)
                         (return)))))
       (unless successp
+        (send-event (lambda ()
+                      (with-pop-up-typeout-window (stream (make-buffer "*Run Lisp Output*")
+                                                          :focus t
+                                                          :erase t
+                                                          :read-only t)
+                        (format stream "command: ~A~%" command)
+                        (write-string (lem-process:get-process-output-string process)
+                                      stream))))
         (error condition)))
     #-win32
     (add-hook *exit-editor-hook* 'slime-quit-all)))

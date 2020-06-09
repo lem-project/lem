@@ -1105,14 +1105,32 @@
     (setf (config :slime-lisp-implementation) impl)
     command))
 
+(defun lisp-process-buffer (port)
+  (make-buffer (format nil "*Run Lisp swank/~D*" port)))
+
+(defun run-lisp (&key command port directory)
+  (labels ((output-callback (string)
+             (let* ((buffer (lisp-process-buffer port))
+                    (point (buffer-point buffer)))
+               (buffer-end point)
+               (insert-escape-sequence-string point string))))
+    (let ((process
+            (lem-process:run-process (uiop:split-string command)
+                                     :directory directory
+                                     :output-callback #'output-callback)))
+      process)))
+
+(defun send-swank-create-server (process port)
+  (lem-process:process-send-input
+   process
+   (format nil "(swank:create-server :port ~D :dont-close t)~%" port)))
+
 (defun run-slime (command &key (directory (buffer-directory)))
   (unless command
     (setf command (get-lisp-command :impl *impl-name*)))
-  (let ((port (random-port))
-        (process (lem-process:run-process (uiop:split-string command) :directory directory)))
-    (lem-process:process-send-input
-     process
-     (format nil "(swank:create-server :port ~D :dont-close t)~%" port))
+  (let* ((port (random-port))
+         (process (run-lisp :command command :directory directory :port port)))
+    (send-swank-create-server process port)
     (sleep 0.5)
     (let ((successp)
           (condition)
@@ -1135,13 +1153,7 @@
                         (return)))))
       (unless successp
         (send-event (lambda ()
-                      (with-pop-up-typeout-window (stream (make-buffer "*Run Lisp Output*")
-                                                          :focus t
-                                                          :erase t
-                                                          :read-only t)
-                        (format stream "command: ~A~%" command)
-                        (write-string (lem-process:get-process-output-string process)
-                                      stream))))
+                      (pop-up-typeout-window (lisp-process-buffer port) nil)))
         (error condition)))
     #-win32
     (add-hook *exit-editor-hook* 'slime-quit-all)))

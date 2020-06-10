@@ -1105,12 +1105,18 @@
     (setf (config :slime-lisp-implementation) impl)
     command))
 
-(defun lisp-process-buffer (port)
-  (make-buffer (format nil "*Run Lisp swank/~D*" port)))
+(defun lisp-process-buffer-name (port)
+  (format nil "*Run Lisp swank/~D*" port))
+
+(defun get-lisp-process-buffer (port)
+  (get-buffer (lisp-process-buffer-name port)))
+
+(defun make-lisp-process-buffer (port)
+  (make-buffer (lisp-process-buffer-name port)))
 
 (defun run-lisp (&key command port directory)
   (labels ((output-callback (string)
-             (let* ((buffer (lisp-process-buffer port))
+             (let* ((buffer (make-lisp-process-buffer port))
                     (point (buffer-point buffer)))
                (buffer-end point)
                (insert-escape-sequence-string point string))))
@@ -1153,7 +1159,7 @@
                         (return)))))
       (unless successp
         (send-event (lambda ()
-                      (pop-up-typeout-window (lisp-process-buffer port) nil)))
+                      (pop-up-typeout-window (make-lisp-process-buffer port) nil)))
         (error condition)))
     #-win32
     (add-hook *exit-editor-hook* 'slime-quit-all)))
@@ -1164,6 +1170,8 @@
 
 (defun delete-lisp-connection (connection)
   (prog1 (when (connection-process connection)
+           (alexandria:when-let (buffer (get-lisp-process-buffer (connection-port connection)))
+             (kill-buffer buffer))
            (lem-process:delete-process (connection-process connection))
            t)
     (remove-connection connection)))

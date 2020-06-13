@@ -678,6 +678,8 @@
              (setf height min))
             ((< max height)
              (setf height max))))
+    (unless (< 1 height)
+      (editor-error "Can not split this window"))
     (let ((new-window
             (make-window (window-buffer window)
                          (window-x window)
@@ -702,6 +704,8 @@
              (setf width min))
             ((< max width)
              (setf width max))))
+    (unless (< 1 width)
+      (editor-error "Can not split this window"))
     (let ((new-window
             (make-window (window-buffer window)
                          (+ *window-left-margin* (window-x window) width)

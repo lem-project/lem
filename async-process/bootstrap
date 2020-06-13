@@ -1,0 +1,10 @@
+#!/bin/sh
+libtoolize
+aclocal
+autoheader
+automake -a
+autoconf
+
+./configure
+make
+make copy

@@ -1,0 +1,228 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  #schedule:
+  #  - cron: '0 */2 * * *'
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      DLL_NAME: libasyncprocess.so
+      RESULT_NAME: result-linux
+      RESULT_PATH: result-linux
+      RESULT_PATH_SUB: result-async/static
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set environment variables
+      run: |
+        pwd
+        uname
+        uname -m
+        OS_NAME=`uname`
+        ARCH_NAME=`uname -m`
+        echo "::set-env name=OS_NAME::$OS_NAME"
+        echo "::set-env name=ARCH_NAME::$ARCH_NAME"
+    - name: Build
+      run: |
+        gcc -v
+        rm static/$ARCH_NAME/$OS_NAME/$DLL_NAME
+        ./bootstrap
+    - name: Copy Result
+      if: always()
+      run: |
+        mkdir -p $RESULT_PATH/$RESULT_PATH_SUB/$ARCH_NAME/$OS_NAME
+        cp static/$ARCH_NAME/$OS_NAME/$DLL_NAME $RESULT_PATH/$RESULT_PATH_SUB/$ARCH_NAME/$OS_NAME
+    - name: Upload Result
+      if: always()
+      uses: actions/upload-artifact@v1
+      with:
+        name: ${{ env.RESULT_NAME }}
+        path: ${{ env.RESULT_PATH }}
+
+  build-linux-aarch64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      OS_NAME: Linux
+      ARCH_NAME: aarch64
+      DLL_NAME: libasyncprocess.so
+      RESULT_NAME: result-linux-aarch64
+      RESULT_PATH: result-linux-aarch64
+      RESULT_PATH_SUB: result-async/static
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build on aarch64 (arm64)
+      id: runcmd
+      uses: uraimo/run-on-arch-action@v1.0.5
+      with:
+        architecture: aarch64
+        distribution: ubuntu18.04
+        run: |
+          apt -y update
+          apt -y install build-essential
+          apt -y install automake
+          apt -y install libtool
+          pwd
+          uname
+          uname -m
+          gcc -v
+          rm static/${{ env.ARCH_NAME }}/${{ env.OS_NAME }}/${{ env.DLL_NAME }}
+          ./bootstrap
+    - name: Copy Result
+      if: always()
+      run: |
+        mkdir -p $RESULT_PATH/$RESULT_PATH_SUB/$ARCH_NAME/$OS_NAME
+        cp static/$ARCH_NAME/$OS_NAME/$DLL_NAME $RESULT_PATH/$RESULT_PATH_SUB/$ARCH_NAME/$OS_NAME
+    - name: Upload Result
+      if: always()
+      uses: actions/upload-artifact@v1
+      with:
+        name: ${{ env.RESULT_NAME }}
+        path: ${{ env.RESULT_PATH }}
+
+  build-osx:
+    runs-on: macos-latest
+    timeout-minutes: 90
+    env:
+      DLL_NAME: libasyncprocess.so
+      RESULT_NAME: result-osx
+      RESULT_PATH: result-osx
+      RESULT_PATH_SUB: result-async/static
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set environment variables
+      run: |
+        pwd
+        uname
+        uname -m
+        OS_NAME=`uname`
+        ARCH_NAME=`uname -m`
+        echo "::set-env name=OS_NAME::$OS_NAME"
+        echo "::set-env name=ARCH_NAME::$ARCH_NAME"
+    - name: Install tools
+      run: |
+        brew install automake
+        #brew install libtool
+        which glibtoolize
+        ln -s /usr/local/bin/glibtoolize /usr/local/bin/libtoolize
+        which libtoolize
+    - name: Build
+      run: |
+        gcc -v
+        rm static/$ARCH_NAME/$OS_NAME/$DLL_NAME
+        ./bootstrap
+    - name: Copy Result
+      if: always()
+      run: |
+        mkdir -p $RESULT_PATH/$RESULT_PATH_SUB/$ARCH_NAME/$OS_NAME
+        cp static/$ARCH_NAME/$OS_NAME/$DLL_NAME $RESULT_PATH/$RESULT_PATH_SUB/$ARCH_NAME/$OS_NAME
+    - name: Upload Result
+      if: always()
+      uses: actions/upload-artifact@v1
+      with:
+        name: ${{ env.RESULT_NAME }}
+        path: ${{ env.RESULT_PATH }}
+
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, i686]
+        include:
+        - arch: x86_64
+          arch2: x86_64
+          bit: 64
+        - arch: i686
+          arch2: x86
+          bit: 32
+    env:
+      MSYSTEM: MINGW${{ matrix.bit }}
+      MSYS2_PATH_TYPE: inherit
+      MSYS2_PATH_LIST: D:\msys64\mingw${{ matrix.bit }}\bin;D:\msys64\usr\local\bin;D:\msys64\usr\bin;D:\msys64\bin
+      MSYS2_TARBALL_URL1: https://github.com/msys2/msys2-installer/releases/download/nightly-x86_64/msys2-base-x86_64-latest.tar.xz
+      MSYS2_TARBALL_URL2: http://repo.msys2.org/distrib/x86_64/msys2-base-x86_64-20190524.tar.xz
+      MSYS2_TARBALL_URL3: https://sourceforge.net/projects/msys2/files/Base/x86_64/msys2-base-x86_64-20190524.tar.xz
+      DLL_NAME: libasyncprocess.dll
+      RESULT_NAME: result-windows-${{ matrix.arch }}
+      RESULT_PATH: result-windows-${{ matrix.arch }}
+      RESULT_PATH_SUB: result-async/static
+    steps:
+    - run: git config --global core.autocrlf false
+    - uses: actions/checkout@v2
+    - name: Install MSYS2
+      run: |
+        bash -lc @'
+          pwd
+          curl -f -L -o msys2.tar.xz $MSYS2_TARBALL_URL1 ||
+          curl -f    -o msys2.tar.xz $MSYS2_TARBALL_URL2 ||
+          curl -f -L -o msys2.tar.xz $MSYS2_TARBALL_URL3
+          err1=$?
+          #tar xf msys2.tar.xz -C /d/
+          7z x msys2.tar.xz -so | 7z x -aoa -si -ttar -oD:
+          ls -l /d/
+          exit $err1
+        '@
+    - name: Add MSYS2 path
+      run: |
+        echo "::set-env name=PATH::$env:MSYS2_PATH_LIST;$env:PATH"
+    - name: Run MSYS2 once
+      run: |
+        bash -lc @'
+          pwd
+          cd $GITHUB_WORKSPACE
+          pwd
+          echo $PATH
+        '@
+    - name: Update MSYS2
+      run: |
+        bash -lc @'
+          pacman --version
+          pacman -Syyuu --noconfirm
+        '@
+    - name: Install MinGW-w64
+      run: |
+        bash -lc @'
+          pacman --version
+          pacman -S --noconfirm base-devel &&
+          pacman -S --noconfirm mingw${{ matrix.bit }}/mingw-w64-${{ matrix.arch }}-toolchain
+        '@
+    - name: Set environment variables
+      run: |
+        bash -lc @'
+          pwd
+          uname
+          uname -m
+          OS_NAME=windows
+          ARCH_NAME=${{ matrix.arch2 }}
+          echo \"::set-env name=OS_NAME::$OS_NAME\"
+          echo \"::set-env name=ARCH_NAME::$ARCH_NAME\"
+        '@
+    - name: Build
+      run: |
+        bash -lc @'
+          cd $GITHUB_WORKSPACE
+          gcc -v
+          rm static/$ARCH_NAME/$OS_NAME/$DLL_NAME
+          ./bootstrap
+        '@
+    - name: Copy Result
+      if: always()
+      run: |
+        bash -lc @'
+          cd $GITHUB_WORKSPACE
+          mkdir -p $RESULT_PATH/$RESULT_PATH_SUB/$ARCH_NAME/$OS_NAME
+          cp static/$ARCH_NAME/$OS_NAME/$DLL_NAME $RESULT_PATH/$RESULT_PATH_SUB/$ARCH_NAME/$OS_NAME
+        '@
+    - name: Upload Result
+      if: always()
+      uses: actions/upload-artifact@v1
+      with:
+        name: ${{ env.RESULT_NAME }}
+        path: ${{ env.RESULT_PATH }}
+

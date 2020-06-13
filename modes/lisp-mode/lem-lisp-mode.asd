@@ -5,7 +5,8 @@
                "swank"
                "optima"
                "uiop"
-               "lem-core")
+               "lem-core"
+               "lem-process")
   :serial t
   :components ((:file "util")
                (:file "errors")

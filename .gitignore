@@ -1,5 +1,4 @@
 DEBUG
-*.so
 *.fasl
 node_modules
 package-lock.json

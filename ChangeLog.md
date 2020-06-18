@@ -2,7 +2,7 @@
 
 ## [v1.7]
 
-(processed upto 5e10e902)
+(processed upto bf9a92b3)
 
 ### Added
 
@@ -34,6 +34,10 @@
 * Two new commands `move-to-beginning-of-logical-line` and `move-to-end-of-logical-line`.
   They work correctly for long lines wrapped through the screen width.
 * Functions `move-to-next-virtual-line-n` and `move-to-previous-virtual-line-n` were added.
+
+#### java-mode
+
+* A `java-mode` was added.
   
 #### scala-mode
 
@@ -70,6 +74,15 @@
 
 * Highting was added.
 
+#### haskel-mode
+
+* Highting was added.
+
+#### ocaml-mode
+
+* Highting was added.
+
+
 ### Changed
 
 * `escape-delay` was made configurable.
@@ -101,6 +114,8 @@
 * Changed swank protocol read message function to make it more reliable.
 * Command `run-slime` now will ignore `*default-port*` variable and will
   always choose a random port.
+* Now Lem will remember a lisp implementation you've chosen as default.
+* Associate `*.lsp` with `lisp-mode`.
 
 #### scheme-mode
 

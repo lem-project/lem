@@ -1,0 +1,22 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 "$@"
+|#
+(progn ;;init forms
+  (ros:ensure-asdf)
+  #+quicklisp(ql:quickload '(:async-process) :silent t)
+  )
+
+(defpackage :ros.script.copy-shared.3801603828
+  (:use :cl))
+(in-package :ros.script.copy-shared.3801603828)
+
+(defun main (&rest argv)
+  (declare (ignorable argv))
+  (let ((orig (sb-alien::shared-object-pathname (first sb-sys:*shared-objects*))))
+    (uiop:copy-file orig
+                    (merge-pathnames 
+                     (file-namestring orig)
+                     (uiop:getcwd)))))
+;;; vim: set ft=lisp lisp:

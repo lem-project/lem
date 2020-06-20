@@ -2,6 +2,9 @@ SUBDIRS = scripts/gen-contrib contrib
 
 export lem_contrib_prefix = ${datadir}/lem
 
+lemdlldir= $(libdir)
+dist_lemdll_DATA= libasyncprocess.$(SOEXT)
+
 bin_SCRIPTS = bin/${LEM_LAUNCHER}
 EXTRA_DIST =  bin/${LEM_LAUNCHER}
 
@@ -30,8 +33,14 @@ bin/%.ros: roswell/%.ros
 
 bin/${LEM_LAUNCHER}:
 	${MKDIR_P} bin
-	cat roswell/lem | sed -e "s/ncurses/${DEFAULT_FRONTEND}/g" > $@
+	echo "#!/bin/sh" > $@
+	echo "SBCL_HOME=\"$(lem_contrib_prefix)/$(PACKAGE_VERSION)/SBCL_HOME\"" >> $@
+	echo "export SBCL_HOME" >> $@
+	cat roswell/lem | sed -e "s/ncurses/${DEFAULT_FRONTEND}/g"| sed -e '1d' >> $@
 	chmod +x $@
+
+libasyncprocess.$(SOEXT):
+	cd $(PWD);ros scripts/copy-shared.ros
 
 CLEANFILES = ${bin_SCRIPTS}
 CLEANFILES += lem-icon.svg lem-ncurses.desktop
@@ -44,5 +53,6 @@ depend:
 clean-local:
 	ros -L ${LISP_IMPL} delete dump lem-ncurses|true
 
+# [tbd] need roswell yet. edit configure.ac
 all-sbcl:
 	sbcl --eval '(asdf:make :lem/executable)' --quit

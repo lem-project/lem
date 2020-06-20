@@ -18,6 +18,14 @@ if test `ros roswell-internal-use uname -m` == "armhf"; then
 fi
 
 AC_SUBST([LISP_IMPL],$lisp_impl)
+
+if test `ros roswell-internal-use uname` == "windows"; then
+  soext=dll
+else
+  soext=so
+fi
+AC_SUBST([SOEXT],$soext)
+
 ncurses=no
 AC_CHECK_HEADERS(ncurses.h,[ncurses=yes])
 if test "x$ncurses" = xno; then

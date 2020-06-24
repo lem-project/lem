@@ -10,20 +10,22 @@ function setMenu(win) {
                 {
                     label: 'Open File',
                     click: () => {
-                        dialog.showOpenDialog(null,
-                            (files) => {
-                                if (files)
-                                    win.webContents.send('command', ['find-file', files[0]]);
+                        dialog.showOpenDialog(null, {})
+                            .then((params) => {
+                                const file_path = params.filePaths[0];
+                                if (file_path)
+                                    win.webContents.send('command', ['find-file', file_path]);
                             });
                     }
                 },
                 {
                     label: 'Open Directory',
                     click: () => {
-                        dialog.showOpenDialog({ properties: ['openFile', 'openDirectory'] },
-                            (files) => {
-                                if (files)
-                                    win.webContents.send('command', ['find-file', files[0]]);
+                        dialog.showOpenDialog({ properties: ['openFile', 'openDirectory'] })
+                            .then((params) => {
+                                const directory_path = params.filePaths[0];
+                                if (directory_path)
+                                    win.webContents.send('command', ['find-file', directory_path]);
                             });
                     }
                 },
@@ -39,10 +41,11 @@ function setMenu(win) {
                 {
                     label: 'Save As...',
                     click: () => {
-                        dialog.showOpenDialog({ properties: ['openFile', 'promptToCreate'] },
-                            (files) => {
-                                if (files)
-                                    win.webContents.send('command', ['write-file', files[0]]);
+                        dialog.showOpenDialog({ properties: ['openFile', 'promptToCreate'] })
+                            .then((params) => {
+                                const file_path = params.filePaths[0];
+                                if (file_path)
+                                    win.webContents.send('command', ['write-file', file_path]);
                             });
                     }
                 },

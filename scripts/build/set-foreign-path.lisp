@@ -4,7 +4,8 @@
 (setf
  cffi:*foreign-library-directories*
  (remove-if (lambda (x)
-              (find "async-process" (pathname-directory x) :test 'string=))
+              (and (pathnamep x)
+                   (find "async-process" (pathname-directory x) :test 'string=)))
             cffi:*foreign-library-directories*))
 
 (defun init-foreign-config ()

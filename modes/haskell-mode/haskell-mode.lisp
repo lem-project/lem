@@ -52,8 +52,8 @@
                                (#\{ . #\})
                                (#\[ . #\]))
                 :string-quote-chars '(#\")
-                :line-comment-string "--")
-                :block-comment-pairs '(("{-" . "-}")))
+                :line-comment-string "--"
+                :block-comment-pairs '(("{-" . "-}"))))
         (tmlanguage (make-tmlanguage-haskell)))
     (set-syntax-parser table tmlanguage)
     table))

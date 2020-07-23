@@ -52,6 +52,11 @@
         (variable-value 'calc-indent-function) 'asm-calc-indent
         (variable-value 'line-comment) ";"))
 
+(define-command asm-insert-tab () ()
+  (insert-character (current-point) #\Tab))
+
+(define-key *asm-mode-keymap* "Tab" 'asm-insert-tab)
+
 (pushnew (cons "\\.asm" 'asm-mode)
          *auto-mode-alist* :test #'equal)
 

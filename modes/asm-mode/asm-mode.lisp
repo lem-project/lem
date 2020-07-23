@@ -26,7 +26,7 @@
                                                     (make-tm-name 'syntax-function-name-attribute))))))
     (make-tmlanguage :patterns patterns)))
 
-(defparameter *asm-syntax-table*
+(defvar *asm-syntax-table*
   (let ((table (make-syntax-table
                 :space-chars '(#\space #\tab)
                 :string-quote-chars '(#\")

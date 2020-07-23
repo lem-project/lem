@@ -35,6 +35,12 @@
     (set-syntax-parser table tmlanguage)
     table))
 
+(defun asm-calc-indent (point)
+  (with-point ((point point))
+    (let ((tab-width (variable-value 'tab-width :default point))
+          (column (point-column point)))
+      (+ column tab-width))))
+
 (define-major-mode asm-mode language-mode
   (:name "asm"
    :keymap *asm-mode-keymap*
@@ -43,6 +49,7 @@
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) t
         (variable-value 'tab-width) 8
+        (variable-value 'calc-indent-function) 'asm-calc-indent
         (variable-value 'line-comment) ";"))
 
 (pushnew (cons "\\.asm" 'asm-mode)

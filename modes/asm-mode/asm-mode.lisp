@@ -26,7 +26,7 @@
                                                     (make-tm-name 'syntax-function-name-attribute))))))
     (make-tmlanguage :patterns patterns)))
 
-(defparameter *asm-syntax-table*
+(defvar *asm-syntax-table*
   (let ((table (make-syntax-table
                 :space-chars '(#\space #\tab)
                 :string-quote-chars '(#\")
@@ -34,6 +34,12 @@
         (tmlanguage (make-tmlanguage-asm)))
     (set-syntax-parser table tmlanguage)
     table))
+
+(defun asm-calc-indent (point)
+  (with-point ((point point))
+    (let ((tab-width (variable-value 'tab-width :default point))
+          (column (point-column point)))
+      (+ column tab-width))))
 
 (define-major-mode asm-mode language-mode
   (:name "asm"
@@ -43,7 +49,13 @@
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) t
         (variable-value 'tab-width) 8
+        (variable-value 'calc-indent-function) 'asm-calc-indent
         (variable-value 'line-comment) ";"))
+
+(define-command asm-insert-tab () ()
+  (insert-character (current-point) #\Tab))
+
+(define-key *asm-mode-keymap* "Tab" 'asm-insert-tab)
 
 (pushnew (cons "\\.asm" 'asm-mode)
          *auto-mode-alist* :test #'equal)

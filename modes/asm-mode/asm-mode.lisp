@@ -5,6 +5,14 @@
   (:lock t))
 (in-package :lem-asm-mode)
 
+#|
+  I referenced softly these documents:
+
+  - [GNU as](https://sourceware.org/binutils/docs-2.34/as/index.html)
+  - [rgbasm: assembler for gameboy development](https://rednex.github.io/rgbds/rgbasm.5.html)
+
+|#
+
 (defun make-tmlanguage-asm ()
   (let ((patterns (make-tm-patterns
                    (make-tm-region "\"" "\"" :name 'syntax-string-attribute)

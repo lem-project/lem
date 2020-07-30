@@ -53,8 +53,7 @@
 
 (let ((once nil))
   (defun setup ()
-    (setup-minibuffer)
-    (setup-windows)
+    (setup-frames)
     (unless once
       (setf once t)
       (start-idle-timer 100 t
@@ -87,8 +86,7 @@
                 'ask-revert-buffer))))
 
 (defun teardown ()
-  (teardown-windows)
-  ;; (teardown-minibuffer) ; minibufferをfloating-windowとして扱うので開放処理はしない
+  (teardown-frames)
   )
 
 (defstruct command-line-arguments

@@ -36,13 +36,6 @@
 
 (defvar +recursive-minibuffer-break-tag+ (gensym))
 
-(defvar *minibuf-window*)
-(defvar *minibuffer-calls-window*)
-(defvar *minibuffer-start-charpos*)
-
-(defvar *echoarea-buffer*)
-(defvar *minibuffer-buffer*)
-
 (defvar *minibuffer-completion-function* nil)
 (defvar *minibuffer-file-complete-function* nil)
 (defvar *minibuffer-buffer-complete-function* 'completion-buffer-name)
@@ -67,13 +60,17 @@
 (define-attribute minibuffer-prompt-attribute
   (t :foreground "blue" :bold-p t))
 
-(defun minibuffer-window () *minibuf-window*)
-(defun minibuffer-window-p (window) (and (boundp '*minibuf-window*) (eq window *minibuf-window*)))
+(defun minibuffer-window (&optional (frame (first *frame-list*)))
+  (frame-minibuf-window frame))
+(defun minibuffer-window-p (window &optional (frame (first *frame-list*)))
+  (and (frame-minibuf-window frame)
+       (eq window (frame-minibuf-window frame))))
 (defun minibuffer-window-active-p () (eq (current-window) (minibuffer-window)))
 (defun minibuffer-window-height () *minibuffer-window-height*)
 (defun minibuffer () (window-buffer (minibuffer-window)))
 (defun minibufferp (buffer) (eq buffer (minibuffer)))
-(defun minibuffer-calls-window () *minibuffer-calls-window*)
+(defun minibuffer-calls-window (&optional (frame (first *frame-list*)))
+  (frame-minibuffer-calls-window frame))
 
 (defun sticky-bottom-minibuffer-p () t)
 
@@ -84,18 +81,18 @@
                     :symbol-chars '(#\_ #\-)))
   (setf (variable-value 'truncate-lines :buffer (current-buffer)) nil))
 
-(defun setup-minibuffer ()
-  (setf *echoarea-buffer*
+(defun setup-minibuffer (frame)
+  (setf (frame-echoarea-buffer frame)
         (make-buffer "*echoarea*" :temporary t :enable-undo-p nil))
-  (setf *minibuffer-buffer*
+  (setf (frame-minibuffer-buffer frame)
         (make-buffer "*minibuffer*" :temporary t :enable-undo-p t))
-  (when (or (not (boundp '*minibuf-window*))
-            (deleted-window-p *minibuf-window*))
-    (setf *minibuf-window*
-          (make-minibuffer-window *echoarea-buffer*))))
+  (when (or (null (frame-minibuf-window frame))
+            (deleted-window-p (frame-minibuf-window frame)))
+    (setf (frame-minibuf-window frame)
+          (make-minibuffer-window (frame-echoarea-buffer frame)))))
 
-(defun teardown-minibuffer ()
-  (%free-window *minibuf-window*))
+(defun teardown-minibuffer (frame)
+  (%free-window (frame-minibuf-window frame)))
 
 (defun minibuf-update-size ()
   (window-set-pos (minibuffer-window) 0 (1- (display-height)))
@@ -139,11 +136,11 @@
           (princ msg stream))))))
 
 (defun message-without-log (string &rest args)
-  (message-using-minibuffer-class *minibuf-window* string args))
+  (message-using-minibuffer-class (minibuffer-window) string args))
 
 (defun message (string &rest args)
   (log-message string args)
-  (message-using-minibuffer-class *minibuf-window* string args)
+  (message-using-minibuffer-class (minibuffer-window) string args)
   t)
 
 (defun message-buffer (buffer)
@@ -303,7 +300,7 @@
                       (let ((*inhibit-read-only* t))
                         (erase-buffer))
                       (minibuffer-mode)
-                      (reset-horizontal-scroll *minibuf-window*)
+                      (reset-horizontal-scroll (minibuffer-window))
                       (unless (string= "" prompt)
                         (insert-string (current-point) prompt
                                        :attribute 'minibuffer-prompt-attribute

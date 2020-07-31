@@ -36,6 +36,19 @@
 
 (defvar +recursive-minibuffer-break-tag+ (gensym))
 
+(defun minibuffer-start-charpos (&optional (frame (first *frame-list*)))
+  (frame-minibuffer-start-charpos frame))
+
+(defun (setf minibuffer-start-charpos) (new-start-charpos)
+  (let ((frame (first *frame-list*)))
+    (setf (frame-minibuffer-start-charpos frame) new-start-charpos)))
+
+(defun echoarea-buffer (&optional (frame (first *frame-list*)))
+  (frame-echoarea-buffer frame))
+
+(defun minibuffer-buffer (&optional (frame (first *frame-list*)))
+  (frame-minibuffer-buffer frame))
+
 (defvar *minibuffer-completion-function* nil)
 (defvar *minibuffer-file-complete-function* nil)
 (defvar *minibuffer-buffer-complete-function* 'completion-buffer-name)
@@ -105,20 +118,20 @@
 
 (defmethod message-using-minibuffer-class ((minibuffer-window minibuffer-window) string args)
   (cond (string
-         (erase-buffer *echoarea-buffer*)
-         (let ((point (buffer-point *echoarea-buffer*)))
+         (erase-buffer (echoarea-buffer))
+         (let ((point (buffer-point (echoarea-buffer))))
            (insert-string point (apply #'format nil string args)))
          (when (active-minibuffer-window)
            (handler-case
                (with-current-window (minibuffer-window)
                  (unwind-protect (progn
-                                   (%switch-to-buffer *echoarea-buffer* nil nil)
+                                   (%switch-to-buffer (echoarea-buffer) nil nil)
                                    (sit-for 1 t))
-                   (%switch-to-buffer *minibuffer-buffer* nil nil)))
+                   (%switch-to-buffer (minibuffer-buffer) nil nil)))
              (editor-abort ()
                (minibuf-read-line-break)))))
         (t
-         (erase-buffer *echoarea-buffer*))))
+         (erase-buffer (echoarea-buffer)))))
 
 (defmethod message-using-minibuffer-class ((minibuffer-window popup-minibuffer-window) string args)
   (cond (string
@@ -144,12 +157,12 @@
   t)
 
 (defun message-buffer (buffer)
-  (erase-buffer *echoarea-buffer*)
-  (insert-buffer (buffer-point *echoarea-buffer*) buffer))
+  (erase-buffer (echoarea-buffer))
+  (insert-buffer (buffer-point (echoarea-buffer)) buffer))
 
 (defun active-echoarea-p ()
-  (point< (buffer-start-point *echoarea-buffer*)
-          (buffer-end-point *echoarea-buffer*)))
+  (point< (buffer-start-point (echoarea-buffer))
+          (buffer-end-point (echoarea-buffer))))
 
 (defun prompt-for-character (prompt)
   (when (interactive-p)
@@ -199,7 +212,7 @@
   (character-offset
    (copy-point (buffer-start-point (minibuffer))
                :temporary)
-   *minibuffer-start-charpos*))
+   (minibuffer-start-charpos)))
 
 (defun get-minibuffer-string ()
   (points-to-string (minibuffer-start-point)
@@ -285,7 +298,7 @@
             (catch +recursive-minibuffer-break-tag+
               (handler-case
                   (with-current-window (minibuffer-window)
-                    (%switch-to-buffer *minibuffer-buffer* nil nil)
+                    (%switch-to-buffer (minibuffer-buffer) nil nil)
                     (let ((minibuf-buffer-prev-string
                             (points-to-string (buffer-start-point (minibuffer))
                                               (buffer-end-point (minibuffer))))
@@ -307,7 +320,8 @@
                                        :read-only t
                                        :field t)
                         (character-offset (current-point) (length prompt)))
-                      (let ((*minibuffer-start-charpos* (point-charpos (current-point))))
+                      (let ((start-charpos (minibuffer-start-charpos)))
+                        (setf (minibuffer-start-charpos) (point-charpos (current-point)))
                         (when initial
                           (insert-string (current-point) initial))
                         (unwind-protect (minibuf-read-line-loop comp-f existing-p syntax-table)
@@ -330,7 +344,8 @@
                             (move-point (current-point) minibuf-buffer-prev-point)
                             (when (= 1 *minibuf-read-line-depth*)
                               (run-hooks *minibuffer-deactivate-hook*)
-                              (%switch-to-buffer *echoarea-buffer* nil nil)))))))
+                              (%switch-to-buffer (echoarea-buffer) nil nil))))
+                        (setf (minibuffer-start-charpos) start-charpos))))
                 (editor-abort (c)
                   (error c))))))
       (if (eq result +recursive-minibuffer-break-tag+)

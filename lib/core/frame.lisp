@@ -35,7 +35,7 @@
     (incf *frame-count*)
     id))
 
-(defun setup-frames ()
+(defun setup-frame ()
   (let ((frame (make-frame)))
     (register-frame frame)
     (add-frame frame)
@@ -45,8 +45,7 @@
 (defun teardown-frame (frame)
   (teardown-windows frame)
   ;; (teardown-minibuffer frame) ; minibufferをfloating-windowとして扱うので開放処理はしない
-  (remove-frame (frame-id frame))
-  )
+  (remove-frame (frame-id frame)))
 
 (defun teardown-frames ()
   (mapc #'teardown-frame *frame-list*))

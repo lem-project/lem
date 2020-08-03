@@ -2,6 +2,7 @@
 
 (defparameter *frame-count* 0)
 (defparameter *frame-list* '())  ;; TODO: change to defvar when ends testing
+(defparameter *frame-display-map* (make-hash-table))
 
 (defstruct frame
   id
@@ -28,6 +29,17 @@
       (progn
         (setf *frame-list* (remove id *frame-list* :key #'frame-id))
         (frame-window-tree target-frame)))))
+
+(defun map-frame (key frame)
+  (setf (gethash key *frame-display-map*) frame))
+
+(defun get-frame (key)
+  (gethash key *frame-display-map*))
+
+(defun unmap-frame (key)
+  (let ((frame (gethash key *frame-display-map*)))
+    (remhash key)
+    frame))
 
 (defun register-frame (frame)
   (let ((id *frame-count*))

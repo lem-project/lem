@@ -70,8 +70,6 @@
 (defun minibuffer-window-height () *minibuffer-window-height*)
 (defun minibuffer () (window-buffer (minibuffer-window)))
 (defun minibufferp (buffer) (eq buffer (minibuffer)))
-(defun minibuffer-calls-window ()
-  (frame-minibuffer-calls-window (get-impl-frame)))
 
 (defun sticky-bottom-minibuffer-p () t)
 
@@ -276,70 +274,76 @@
     (run-hooks *minibuffer-activate-hook*))
   (when (and (not *enable-recursive-minibuffers*) (< 0 *minibuf-read-line-depth*))
     (editor-error "ERROR: recursive use of minibuffer"))
-  (let ((*minibuffer-calls-window* (current-window))
-        (*minibuf-read-line-history*
-          (let ((table (gethash history-name *minibuf-read-line-history-table*)))
-            (or table
-                (setf (gethash history-name *minibuf-read-line-history-table*)
-                      (lem.history:make-history))))))
-    (let ((result
-            (catch +recursive-minibuffer-break-tag+
-              (handler-case
-                  (with-current-window (minibuffer-window)
-                    (%switch-to-buffer (frame-minibuffer-buffer (get-impl-frame)) nil nil)
-                    (let ((minibuf-buffer-prev-string
-                            (points-to-string (buffer-start-point (minibuffer))
-                                              (buffer-end-point (minibuffer))))
-                          (prev-prompt-length
-                            (when *minibuf-prev-prompt*
-                              (length *minibuf-prev-prompt*)))
-                          (minibuf-buffer-prev-point
-                            (window-point (minibuffer-window)))
-                          (*minibuf-prev-prompt* prompt)
-                          (*minibuf-read-line-depth*
-                            (1+ *minibuf-read-line-depth*)))
-                      (let ((*inhibit-read-only* t))
-                        (erase-buffer))
-                      (minibuffer-mode)
-                      (reset-horizontal-scroll (minibuffer-window))
-                      (unless (string= "" prompt)
-                        (insert-string (current-point) prompt
-                                       :attribute 'minibuffer-prompt-attribute
-                                       :read-only t
-                                       :field t)
-                        (character-offset (current-point) (length prompt)))
-                      (let* ((frame (get-impl-frame))
-                             (start-charpos (frame-minibuffer-start-charpos frame)))
-                        (setf (frame-minibuffer-start-charpos frame) (point-charpos (current-point)))
-                        (when initial
-                          (insert-string (current-point) initial))
-                        (unwind-protect (minibuf-read-line-loop comp-f existing-p syntax-table)
-                          (if (deleted-window-p (minibuffer-calls-window))
-                              (setf (current-window) (car (window-list)))
-                              (setf (current-window) (minibuffer-calls-window)))
-                          (with-current-window (minibuffer-window)
-                            (let ((*inhibit-read-only* t))
-                              (erase-buffer))
-                            (insert-string (current-point) minibuf-buffer-prev-string)
-                            (when prev-prompt-length
-                              (with-point ((start (current-point))
-                                           (end (current-point)))
-                                (line-start start)
-                                (line-offset end 0 prev-prompt-length)
-                                (put-text-property start end
-                                                   :attribute 'minibuffer-prompt-attribute)
-                                (put-text-property start end :read-only t)
-                                (put-text-property start end :field t)))
-                            (move-point (current-point) minibuf-buffer-prev-point)
-                            (when (= 1 *minibuf-read-line-depth*)
-                              (run-hooks *minibuffer-deactivate-hook*)
-                              (%switch-to-buffer (frame-echoarea-buffer frame) nil nil))))
-                        (setf (frame-minibuffer-start-charpos frame) start-charpos))))
-                (editor-abort (c)
-                  (error c))))))
-      (if (eq result +recursive-minibuffer-break-tag+)
-          (error 'editor-abort)
-          result))))
+  (let* ((frame (get-impl-frame))
+         (minibuffer-calls-window (frame-minibuffer-calls-window frame)))
+    (unwind-protect
+         (progn
+           (setf (frame-minibuffer-calls-window frame) (current-window))
+           (let ((*minibuf-read-line-history*
+                   (let ((table (gethash history-name *minibuf-read-line-history-table*)))
+                     (or table
+                         (setf (gethash history-name *minibuf-read-line-history-table*)
+                               (lem.history:make-history))))))
+             (let ((result
+                     (catch +recursive-minibuffer-break-tag+
+                       (handler-case
+                           (with-current-window (minibuffer-window)
+                             (%switch-to-buffer (frame-minibuffer-buffer (get-impl-frame)) nil nil)
+                             (let ((minibuf-buffer-prev-string
+                                     (points-to-string (buffer-start-point (minibuffer))
+                                                       (buffer-end-point (minibuffer))))
+                                   (prev-prompt-length
+                                     (when *minibuf-prev-prompt*
+                                       (length *minibuf-prev-prompt*)))
+                                   (minibuf-buffer-prev-point
+                                     (window-point (minibuffer-window)))
+                                   (*minibuf-prev-prompt* prompt)
+                                   (*minibuf-read-line-depth*
+                                     (1+ *minibuf-read-line-depth*)))
+                               (let ((*inhibit-read-only* t))
+                                 (erase-buffer))
+                               (minibuffer-mode)
+                               (reset-horizontal-scroll (minibuffer-window))
+                               (unless (string= "" prompt)
+                                 (insert-string (current-point) prompt
+                                                :attribute 'minibuffer-prompt-attribute
+                                                :read-only t
+                                                :field t)
+                                 (character-offset (current-point) (length prompt)))
+                               (let ((start-charpos (frame-minibuffer-start-charpos frame)))
+                                 (unwind-protect
+                                      (progn
+                                        (setf (frame-minibuffer-start-charpos frame) (point-charpos (current-point)))
+                                        (when initial
+                                          (insert-string (current-point) initial))
+                                        (unwind-protect (minibuf-read-line-loop comp-f existing-p syntax-table)
+                                          (if (deleted-window-p (frame-minibuffer-calls-window (get-impl-frame)))
+                                              (setf (current-window) (car (window-list)))
+                                              (setf (current-window) (frame-minibuffer-calls-window (get-impl-frame))))
+                                          (with-current-window (minibuffer-window)
+                                            (let ((*inhibit-read-only* t))
+                                              (erase-buffer))
+                                            (insert-string (current-point) minibuf-buffer-prev-string)
+                                            (when prev-prompt-length
+                                              (with-point ((start (current-point))
+                                                           (end (current-point)))
+                                                (line-start start)
+                                                (line-offset end 0 prev-prompt-length)
+                                                (put-text-property start end
+                                                                   :attribute 'minibuffer-prompt-attribute)
+                                                (put-text-property start end :read-only t)
+                                                (put-text-property start end :field t)))
+                                            (move-point (current-point) minibuf-buffer-prev-point)
+                                            (when (= 1 *minibuf-read-line-depth*)
+                                              (run-hooks *minibuffer-deactivate-hook*)
+                                              (%switch-to-buffer (frame-echoarea-buffer frame) nil nil)))))
+                                   (setf (frame-minibuffer-start-charpos frame) start-charpos)))))
+                         (editor-abort (c)
+                           (error c))))))
+               (if (eq result +recursive-minibuffer-break-tag+)
+                   (error 'editor-abort)
+                   result))))
+      (setf (frame-minibuffer-calls-window frame) minibuffer-calls-window))))
 
 (defun prompt-for-string (prompt &optional initial)
   (prompt-for-line prompt (or initial "") nil nil 'mh-read-string))

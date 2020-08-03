@@ -53,7 +53,8 @@
 
 (let ((once nil))
   (defun setup ()
-    (setup-frame)
+    (let ((frame (setup-frame)))
+      (map-frame *implementation* frame))
     (unless once
       (setf once t)
       (start-idle-timer 100 t

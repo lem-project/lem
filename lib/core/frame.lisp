@@ -50,13 +50,11 @@
     (incf *frame-count*)
     id))
 
-(defun setup-frame ()
-  (let ((frame (make-frame)))
-    (register-frame frame)
-    (add-frame frame)
-    (setup-minibuffer frame)
-    (setup-windows frame)
-    frame))
+(defun setup-frame (frame)
+  (register-frame frame)
+  (add-frame frame)
+  (setup-minibuffer frame)
+  (setup-windows frame))
 
 (defun teardown-frame (frame)
   (teardown-windows frame)

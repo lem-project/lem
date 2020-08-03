@@ -63,5 +63,5 @@
 (defun teardown-frames ()
   (mapc #'teardown-frame *frame-list*))
 
-(defun redraw-frame (&optional (frame (first *frame-list*)))
+(defun redraw-frame (frame)
   (redraw-display* frame))

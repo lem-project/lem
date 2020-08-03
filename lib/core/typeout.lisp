@@ -48,7 +48,7 @@
   (when (and *typeout-window*
              (not (eq buffer (window-buffer *typeout-window*))))
     (dismiss-typeout-window)
-    (redraw-display*))
+    (redraw-display* (get-frame *implementation*)))
   (with-buffer-read-only buffer nil
     (when erase
       (erase-buffer buffer))
@@ -84,7 +84,7 @@
     (bury-buffer buffer)
     (setf (current-window) window)
     (typeout-mode t)
-    (redraw-display*)
+    (redraw-display* (get-frame *implementation*))
     (values)))
 
 (defun typeout-window-modeline (typeout-window)

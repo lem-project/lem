@@ -1226,7 +1226,7 @@
 (defun delete-popup-message (popup-message)
   (lem-if:delete-popup-message (implementation) popup-message))
 
-(defun redraw-display* (&optional (frame (first *frame-list*)))
+(defun redraw-display* (frame)
   (redraw-display (and (redraw-after-modifying-floating-window (implementation))
                        (frame-modified-floating-windows frame)))
   (setf (frame-modified-floating-windows frame) nil))

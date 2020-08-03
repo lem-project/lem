@@ -40,7 +40,8 @@
     (register-frame frame)
     (add-frame frame)
     (setup-minibuffer frame)
-    (setup-windows frame)))
+    (setup-windows frame)
+    frame))
 
 (defun teardown-frame (frame)
   (teardown-windows frame)

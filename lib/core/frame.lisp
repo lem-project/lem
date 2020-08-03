@@ -36,6 +36,9 @@
 (defun get-frame (key)
   (gethash key *frame-display-map*))
 
+(defun get-impl-frame ()
+  (get-frame *implementation*))
+
 (defun unmap-frame (key)
   (let ((frame (gethash key *frame-display-map*)))
     (remhash key)

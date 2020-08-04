@@ -35,4 +35,5 @@ jobs:
         pwd
         ls
         ros install lem
+        export PATH=$HOME/.roswell/bin:$PATH
         lem-test

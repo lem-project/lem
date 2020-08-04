@@ -2,7 +2,7 @@
 
 ![](https://github.com/Shinmera/lem-icon/blob/gh-pages/icon-blue.svg)
 
-[![Build Status](https://travis-ci.org/cxxxr/lem.svg?branch=master)](https://travis-ci.org/cxxxr/lem)
+![Build Status](https://github.com/cxxxr/lem/workflows/CI/badge.svg)
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
 
 After installing lem, you can start developing in Common Lisp at once. 

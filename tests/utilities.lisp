@@ -13,16 +13,23 @@
   (unless value
     (cerror "skip" 'test-error :description description)))
 
+(defun default-test-handler (e)
+  (warn "~A" e)
+  (invoke-restart 'continue))
+
 (defun run-test (test-fn)
-  (handler-bind ((test-error (lambda (e)
-                               (princ e)
-                               (invoke-restart 'continue))))
+  (handler-bind ((test-error #'default-test-handler))
     (funcall test-fn)))
 
 (defun run-all-tests ()
   (lem-lisp-syntax:indentation-update)
-  (dolist (test *tests*)
-    (run-test test)))
+  (let ((success t))
+    (handler-bind ((test-error (lambda (e)
+                                 (setq success nil)
+                                 (default-test-handler e))))
+      (dolist (test *tests*)
+        (funcall test)))
+    success))
 
 (defun clear-all-tests ()
   (dolist (test *tests*)

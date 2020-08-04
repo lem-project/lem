@@ -35,4 +35,4 @@ jobs:
         pwd
         ls
         ros install lem
-        ros -s lem-tests -e '(asdf:test-system :lem-tests)'
+        lem-test

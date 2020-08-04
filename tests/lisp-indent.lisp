@@ -59,7 +59,7 @@
   "
 `(defclass foo ()
    ,(mapcar x
-            y))
+     y))
 ")
 
 (defun get-location-from-buffer-point (point pathname)

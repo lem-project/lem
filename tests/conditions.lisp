@@ -1,4 +1,8 @@
-(in-package :lem-tests)
+(defpackage :lem-tests/conditions
+  (:use :cl)
+  (:export :test-error
+           :test-error-description))
+(in-package :lem-tests/conditions)
 
 (define-condition test-error (simple-error)
   ((description

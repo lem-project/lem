@@ -1,4 +1,12 @@
-(in-package :lem-tests)
+(defpackage :lem-tests/utilities
+  (:use :cl :lem-tests/conditions)
+  (:import-from :lem-lisp-syntax)
+  (:export :define-test
+           :test
+           :run-test
+           :run-all-tests
+           :clear-all-tests))
+(in-package :lem-tests/utilities)
 
 (defvar *tests* '())
 

@@ -1,6 +1,11 @@
-(in-package :lem-tests)
+(defpackage :lem-tests/lisp-indent-test
+  (:use :cl :lem-tests/utilities)
+  (:import-from :cl-ansi-text)
+  (:import-from :lem)
+  (:import-from :lem-lisp-syntax))
+(in-package :lem-tests/lisp-indent-test)
 
-(defparameter *enable-colorable* nil)
+(defparameter *enable-colorable* t)
 
 (defmacro define-indent-test (name before &optional (after before))
   `(define-test ,name

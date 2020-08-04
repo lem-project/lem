@@ -3,11 +3,8 @@
 (defparameter *enable-colorable* nil)
 
 (defmacro define-indent-test (name before &optional (after before))
-  (let ((name (if (eq name '*)
-                  (generate-anonymous-test-name "INDENT-")
-                  name)))
-    `(define-test ,name
-       (run-indent-test ',name ,before ,after))))
+  `(define-test ,name
+     (run-indent-test ',name ,before ,after)))
 
 (defun run-indent-test (name before-text after-text)
   (let ((buffer (lem:make-buffer (format nil "*indent-test ~A*" name)

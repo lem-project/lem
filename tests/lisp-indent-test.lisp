@@ -1,7 +1,8 @@
 (defpackage :lem-tests/lisp-indent-test
   (:use :cl :lem-tests/utilities)
   (:import-from :cl-ansi-text)
-  (:import-from :lem)
+  (:import-from :lem
+                :add-hook)
   (:import-from :lem-lisp-syntax))
 (in-package :lem-tests/lisp-indent-test)
 
@@ -95,3 +96,5 @@
   (indent-test-for-file
    (asdf:system-relative-pathname :lem
                                   "./tests/sample-code/indent-sample.lisp")))
+
+(add-hook *before-test-hook* 'lem-lisp-syntax:indentation-update)

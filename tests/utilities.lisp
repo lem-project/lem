@@ -1,7 +1,10 @@
 (defpackage :lem-tests/utilities
   (:use :cl :lem-tests/conditions)
   (:import-from :lem-lisp-syntax)
-  (:export :define-test
+  (:import-from :lem
+                :run-hooks)
+  (:export :*before-test-hook*
+           :define-test
            :test
            :run-test
            :run-all-tests
@@ -9,6 +12,7 @@
 (in-package :lem-tests/utilities)
 
 (defvar *tests* '())
+(defvar *before-test-hook* '())
 
 (defmacro define-test (name &body body)
   `(progn
@@ -29,7 +33,7 @@
     (funcall test-fn)))
 
 (defun run-all-tests ()
-  (lem-lisp-syntax:indentation-update)
+  (run-hooks *before-test-hook*)
   (let ((success t))
     (handler-bind ((test-error (lambda (e)
                                  (setq success nil)

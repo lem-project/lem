@@ -5,4 +5,4 @@
     :initarg :description
     :reader test-error-description))
   (:report (lambda (condition stream)
-             (write-line (test-error-description condition) stream))))
+             (write-string (test-error-description condition) stream))))

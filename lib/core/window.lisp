@@ -292,9 +292,9 @@
                (values parent getter setter another-getter another-setter)
                (window-tree-parent (window-node-cdr tree) node))))))
 
-(defun window-list (&optional (frame (first *frame-list*)))
+(defun window-list ()
   (window-tree-flatten
-   (frame-window-tree frame)))
+   (frame-window-tree (get-impl-frame))))
 
 (defun one-window-p ()
   (window-tree-leaf-p (window-tree)))

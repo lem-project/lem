@@ -202,7 +202,8 @@
         (push vf (lem::frame-header-windows frame))
         (when tmp-buffer
           (let ((new-window (lem::make-window tmp-buffer
-                                              0 0 (display-width) (display-height)
+                                              (lem::window-topleft-x) (lem::window-topleft-y)
+                                              (lem::window-max-width) (lem::window-max-height)
                                               t)))
             (setf (lem::frame-window-tree frame) new-window
                   (lem::frame-current-window frame) new-window

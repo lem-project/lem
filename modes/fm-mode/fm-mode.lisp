@@ -49,7 +49,7 @@
 
 (defun make-vf (impl frame)
   (let* ((buffer (make-buffer "*fm*" :enable-undo-p nil :temporary t))
-         (%frame (make-%frame :id 0 :frame frame))
+         (%frame (%make-frame 0 frame))
          (frames (make-array +fm-max-number-of-frames+ :initial-element nil)))
     (setf (aref frames 0) %frame)
     (setf (lem:variable-value 'truncate-lines :buffer buffer) nil)

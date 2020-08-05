@@ -188,6 +188,9 @@
 (define-key *global-keymap* "c-z c" 'fm-create)
 (define-command fm-create () ()
   (block exit
+    (when (null *vf-map*)
+      ;; ERROR: variable `frame-multiplexer- is broken?
+      (return-from exit))
     (let* ((vf (gethash (implementation) *vf-map*))
            (id (position-if #'null (vf-frames vf))))
       (when (null id)
@@ -215,6 +218,9 @@
 (define-key *global-keymap* "c-z d" 'fm-delete)
 (define-command fm-delete () ()
   (block exit
+    (when (null *vf-map*)
+      ;; ERROR: variable `frame-multiplexer- is broken?
+      (return-from exit))
     (let* ((vf (gethash (implementation) *vf-map*))
            (num (count-if-not #'null (vf-frames vf)))
            (id (position (vf-current vf) (vf-frames vf))))
@@ -233,6 +239,9 @@
 (define-key *global-keymap* "C-z p" 'fm-prev)
 (define-command fm-prev () ()
   (block exit
+    (when (null *vf-map*)
+      ;; ERROR: variable `frame-multiplexer- is broken?
+      (return-from exit))
     (let* ((vf (gethash (implementation) *vf-map*))
            (id (position (vf-current vf) (vf-frames vf))))
       (when (null id)
@@ -247,6 +256,9 @@
 (define-key *global-keymap* "C-z n" 'fm-next)
 (define-command fm-next () ()
   (block exit
+    (when (null *vf-map*)
+      ;; ERROR: variable `frame-multiplexer- is broken?
+      (return-from exit))
     (let* ((vf (gethash (implementation) *vf-map*))
            (id (position (vf-current vf) (vf-frames vf))))
       (when (null id)

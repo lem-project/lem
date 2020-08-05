@@ -5,10 +5,10 @@
 (defconstant +fm-max-number-of-frames+ 256)
 
 (define-attribute fm-active-frame-name-attribute
-  (t :foreground "black" :background "dark gray"))
+  (t :foreground "white" :background "blue"))
 
 (define-attribute fm-frame-name-attribute
-  (t :foreground "dark gray" :background "gray"))
+  (t :foreground "white" :background "blue"))
 
 (define-attribute fm-background-attribute
   (t :underline-p t))

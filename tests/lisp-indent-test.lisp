@@ -1,5 +1,7 @@
 (defpackage :lem-tests/lisp-indent-test
   (:use :cl)
+  (:import-from :lem-tests/utilities
+                :sample-file)
   (:import-from :rove)
   (:import-from :cl-ansi-text)
   (:import-from :lem
@@ -93,7 +95,6 @@
 
 (rove:deftest indent-test-for-sample-case
   (indent-test-for-file
-   (asdf:system-relative-pathname :lem
-                                  "./tests/sample-code/indent-sample.lisp")))
+   (sample-file "indent-sample.lisp")))
 
 (rove:defhook :before (lem-lisp-syntax:indentation-update))

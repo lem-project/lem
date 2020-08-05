@@ -1,16 +1,15 @@
 (defpackage :lem-tests/lisp-indent-test
-  (:use :cl :lem-tests/utilities)
+  (:use :cl)
+  (:import-from :rove)
   (:import-from :cl-ansi-text)
   (:import-from :lem
                 :add-hook)
   (:import-from :lem-lisp-syntax))
 (in-package :lem-tests/lisp-indent-test)
 
-(defparameter *enable-colorable* t)
-
 (defmacro define-indent-test (name before &optional (after before))
-  `(define-test ,name
-     (run-indent-test ',name ,before ,after)))
+  `(rove:deftest ,name
+     (run-indent-test ,(string name) ,before ,after)))
 
 (defun run-indent-test (name before-text after-text)
   (let ((buffer (lem:make-buffer (format nil "*indent-test ~A*" name)
@@ -22,10 +21,10 @@
     (lem:with-point ((p (lem:buffer-point buffer)))
       (lem:insert-string p before-text))
     (lem:indent-buffer buffer)
-    (test (string= after-text (lem:buffer-text buffer))
-          (report name
-                  (lem:buffer-text buffer)
-                  after-text))))
+    (unless (rove:ok (string= after-text (lem:buffer-text buffer)) name)
+      (report name
+              (lem:buffer-text buffer)
+              after-text))))
 
 (defun diff-text (text1 text2)
   (string-trim
@@ -39,7 +38,7 @@
                :until (eq line1 eof-value)
                :do (cond ((string= line1 line2)
                           (format out " ~A~%" line1))
-                         (*enable-colorable*
+                         (rove:*enable-colors*
                           (write-string (cl-ansi-text:yellow (format nil "+~A~%" line1)) out)
                           (write-string (cl-ansi-text:cyan (format nil "-~A~%" line2)) out))
                          (t
@@ -66,7 +65,7 @@
 ")
 
 (defun get-location-from-buffer-point (point pathname)
-  (format nil "~A:~D" pathname (lem:line-number-at-point point)))
+  (format nil "~A:~D:~A" pathname (lem:line-number-at-point point) (lem:line-string point)))
 
 (defun indent-test-for-file (pathname)
   (let ((buffer (lem:find-file-buffer pathname :temporary t :enable-undo-p nil)))
@@ -89,12 +88,12 @@
                                       (asdf:system-source-directory system-name))))
     (indent-test-for-file pathname)))
 
-(define-test indent-test-under-lem-base
+(rove:deftest indent-test-under-lem-base
   (indent-test-for-system :lem-base))
 
-(define-test indent-test-for-sample-case
+(rove:deftest indent-test-for-sample-case
   (indent-test-for-file
    (asdf:system-relative-pathname :lem
                                   "./tests/sample-code/indent-sample.lisp")))
 
-(add-hook *before-test-hook* 'lem-lisp-syntax:indentation-update)
+(rove:defhook :before (lem-lisp-syntax:indentation-update))

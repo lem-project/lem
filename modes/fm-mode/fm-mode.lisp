@@ -112,48 +112,49 @@
       (loop
         :for %frame :across (vf-frames window)
         :unless (null %frame)
-        :do (progn
-              (let ((focusp (eq %frame (vf-current window)))
-                    (start-pos (point-charpos p)))
-                (insert-button p
-                               ;; virtual frame name on header
-                               (if focusp
-                                   (format nil "*[#~a] " (%frame-id %frame))
-                                   (format nil " [#~a] "(%frame-id %frame)))
-                               ;; set action when click
-                               (let ((%frame %frame))
-                                 (lambda ()
-                                   (setf (vf-current window) %frame)
-                                   (setf (vf-changed window) t)))
-                               :attribute (if focusp
-                                              'fm-active-frame-name-attribute
-                                              'fm-frame-name-attribute))
-                ;; increment charpos
-                (when focusp
-                  (let ((end-pos (point-charpos p)))
-                    (unless (<= start-pos charpos (1- end-pos))
-                      (setf charpos start-pos))))
-                ;; redraw windows in frame
-                (let ((frame (%frame-frame %frame)))
-                  (dolist (w (lem::window-tree-flatten (lem::frame-window-tree frame)))
-                    (lem:window-redraw w nil))
-                  (dolist (w (lem::frame-floating-windows frame))
-                    (lem:window-redraw w nil))
-                  (dolist (w (lem::frame-header-windows frame))
-                    (unless (eq w window)
-                      (lem:window-redraw w nil)))))))
-            ;; fill right margin
+        :do (let* ((focusp (eq %frame (vf-current window)))
+                   (start-pos (point-charpos p)))
+              (insert-button p
+                             ;; virtual frame name on header
+                             (if focusp
+                                 (format nil "*[#~a] " (%frame-id %frame))
+                                 (format nil " [#~a] "(%frame-id %frame)))
+                             ;; set action when click
+                             (let ((%frame %frame))
+                               (lambda ()
+                                 (setf (vf-current window) %frame)
+                                 (setf (vf-changed window) t)))
+                             :attribute (if focusp
+                                            'fm-active-frame-name-attribute
+                                            'fm-frame-name-attribute))
+              ;; increment charpos
+              (when focusp
+                (let ((end-pos (point-charpos p)))
+                  (unless (<= start-pos charpos (1- end-pos))
+                    (setf charpos start-pos))))))
+      ;; fill right margin
       (let ((margin-right (- (display-width) (point-column p))))
         (when (> margin-right 0)
           (insert-string p (make-string margin-right :initial-element #\space)
                          :attribute 'fm-background-attribute)))
       (line-offset p 0 charpos))
-    ;; set all vf-changed to nil because of applying redraw
-    (maphash (lambda (k vf)
-               (declare (ignore k))
-               (setf (vf-changed vf) nil))
-             *vf-map*)
-    (call-next-method)))
+    ;; redraw windows in current frame
+    (let* ((%frame (vf-current (gethash (lem:implementation) *vf-map*)))
+           (frame (%frame-frame %frame)))
+      (dolist (w (lem::window-tree-flatten (lem::frame-window-tree frame)))
+        (lem:window-redraw w t))
+      (dolist (w (lem::frame-floating-windows frame))
+        (lem:window-redraw w t))
+      (dolist (w (lem::frame-header-windows frame))
+        (unless (eq w window)
+          (lem:window-redraw w t))))
+    (lem-if:update-display (lem:implementation)))
+  ;; clear all vf-changed to nil because of applying redraw
+  (maphash (lambda (k vf)
+             (declare (ignore k))
+             (setf (vf-changed vf) nil))
+           *vf-map*)
+  (call-next-method))
 
 (defun frame-multiplexer-init ()
   (setf *vf-map* (make-hash-table))

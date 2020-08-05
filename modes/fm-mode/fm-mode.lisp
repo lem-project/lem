@@ -199,6 +199,7 @@
                                :key (lambda (b) (slot-value b 'lem-base::name))
                                :test #'string=)))
         (lem::setup-frame frame)
+        (push vf (lem::frame-header-windows frame))
         (when tmp-buffer
           (let ((new-window (lem::make-window tmp-buffer
                                               0 0 (display-width) (display-height)

@@ -205,58 +205,6 @@
     (when (oddp count)
       count)))
 
-(defun inline-line-comment-p (point)
-  (with-point ((p point))
-    (let ((limit)
-          (line (point-line point)))
-      (let (n pair c)
-        (loop :while (eq line (point-line p))
-              :do (cond ((multiple-value-setq (n pair) (syntax-end-block-comment-p p))
-                         (unless limit (setf limit (line-start (copy-point point :temporary))))
-                         (let ((regex (%create-pair-regex pair)))
-                           (character-offset p (- n))
-                           (loop :with depth := 1
-                                 :do (cond ((not (search-backward-regexp p regex limit))
-                                            (return-from inline-line-comment-p nil))
-                                           ((match-string-at p (car pair))
-                                            (when (= 0 (decf depth))
-                                              (return)))
-                                           (t
-                                            (incf depth))))))
-                        ((multiple-value-setq (n pair) (syntax-end-block-string-p p))
-                         (unless limit (setf limit (line-start (copy-point point :temporary))))
-                         (if (search-backward p (car pair) limit)
-                             (return)
-                             (return-from inline-line-comment-p nil)))
-                        (t
-                         (unless (character-offset p -1)
-                           (return))
-                         (cond
-                           ((let ((offset (syntax-escape-point-p p 0)))
-                              (when offset
-                                (character-offset p (- offset)))))
-                           ((syntax-line-comment-p p)
-                            (loop
-                              (when (start-line-p p)
-                                (return-from inline-line-comment-p p))
-                              (character-offset p -1)
-                              (unless (syntax-line-comment-p p)
-                                (return-from inline-line-comment-p
-                                  (character-offset p 1)))))
-                           ((or (syntax-string-quote-char-p (setf c (character-at p)))
-                                (syntax-fence-char-p c))
-                            (let ((quote-char c))
-                              (loop
-                                (character-offset p -1)
-                                (when (start-line-p p)
-                                  (return-from inline-line-comment-p nil))
-                                (cond
-                                  ((let ((offset (syntax-escape-point-p p 0)))
-                                     (when offset
-                                       (character-offset p (1+ (- offset))))))
-                                  ((char= quote-char (character-at p))
-                                   (return))))))))))))))
-
 (defun %skip-comment-forward (point)
   (multiple-value-bind (n pair)
       (syntax-start-block-comment-p point)
@@ -302,7 +250,7 @@
     (cond ((not win)
            (values nil nil))
           ((null p)
-           (let ((p (inline-line-comment-p point)))
+           (let ((p (maybe-beginning-of-comment point)))
              (if p
                  (values (move-point point p) t)
                  (values nil t))))
@@ -320,7 +268,7 @@
 
 (defun skip-space-and-comment-backward (point)
   (with-point-syntax point
-    (if (inline-line-comment-p point)
+    (if (maybe-beginning-of-comment point)
         (skip-chars-backward point #'syntax-space-char-p)
         (loop
           (skip-chars-backward point #'syntax-space-char-p)
@@ -473,7 +421,7 @@
                        (unless p
                          (character-offset point -1))))))
             (when (end-line-p point)
-              (let ((p (inline-line-comment-p point)))
+              (let ((p (maybe-beginning-of-comment point)))
                 (when p (move-point point p))))))
 
 (defun %form-offset-positive (point)

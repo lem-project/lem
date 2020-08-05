@@ -150,7 +150,8 @@
   (loop
     :for impl :in (list (implementation))  ; for multi-frame support in the future...
     :do (let ((vf (make-vf impl (lem::get-frame impl))))
-          (setf (gethash impl *vf-map*) vf))))
+          (setf (gethash impl *vf-map*) vf)
+          (lem::map-frame (implementation) (%frame-frame (vf-current vf))))))
 
 (defun frame-multiplexer-on ()
   (unless (variable-value 'frame-multiplexer :global)
@@ -183,9 +184,20 @@
         ;; ERROR: it's full of frames in virtual frame
         (return-from exit))
       (let* ((frame (lem::make-frame))
-             (%frame (%make-frame id frame)))
-        (setf (aref (vf-frames vf) id) %frame
-              (vf-current vf) %frame))
+             (%frame (%make-frame id frame))
+             (tmp-buffer (find "*tmp*" lem-base::*buffer-list*
+                               :key (lambda (b) (slot-value b 'lem-base::name))
+                               :test #'string=)))
+        (lem::setup-frame frame)
+        (when tmp-buffer
+          (let ((new-window (lem::make-window tmp-buffer
+                                              0 0 (display-width) (display-height)
+                                              t)))
+            (setf (lem::frame-window-tree frame) new-window
+                  (lem::frame-current-window frame) new-window
+                  (aref (vf-frames vf) id) %frame
+                  (vf-current vf) %frame)
+            (lem::map-frame (implementation) frame))))
       (setf (vf-changed vf) t))))
 
 (define-key *global-keymap* "c-z d" 'fm-delete)
@@ -200,8 +212,10 @@
       (when (null id)
         ;; ERROR: something wrong...
         (return-from exit))
-      (setf (aref (vf-frames vf) id) nil
-            (vf-current vf) (search-previous-frame vf id))
+      (setf (aref (vf-frames vf) id) nil)
+      (let ((%frame (search-previous-frame vf id)))
+        (setf (vf-current vf) %frame)
+        (lem::map-frame (implementation) (%frame-frame %frame)))
       (setf (vf-changed vf) t))))
 
 (define-key *global-keymap* "C-z p" 'fm-prev)
@@ -212,7 +226,10 @@
       (when (null id)
         ;; ERROR: something wrong...
         (return-from exit))
-      (setf (vf-current vf) (search-previous-frame vf id))
+      (let ((%frame (search-previous-frame vf id)))
+        (when %frame
+          (setf (vf-current vf) %frame)
+          (lem::map-frame (implementation) (%frame-frame %frame))))
       (setf (vf-changed vf) t))))
 
 (define-key *global-keymap* "C-z n" 'fm-next)
@@ -223,5 +240,8 @@
       (when (null id)
         ;; ERROR: something wrong...
         (return-from exit))
-      (setf (vf-current vf) (search-next-frame vf id))
+      (let ((%frame (search-next-frame vf id)))
+        (when %frame
+          (setf (vf-current vf) %frame)
+          (lem::map-frame (implementation) (%frame-frame %frame))))
       (setf (vf-changed vf) t))))

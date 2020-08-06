@@ -61,9 +61,9 @@
   (t :foreground "blue" :bold-p t))
 
 (defun minibuffer-window ()
-  (frame-minibuf-window (get-impl-frame)))
+  (frame-minibuf-window (current-frame)))
 (defun minibuffer-window-p (window)
-  (let ((frame (get-impl-frame)))
+  (let ((frame (current-frame)))
     (and (frame-minibuf-window frame)
        (eq window (frame-minibuf-window frame)))))
 (defun minibuffer-window-active-p () (eq (current-window) (minibuffer-window)))
@@ -104,20 +104,20 @@
 
 (defmethod message-using-minibuffer-class ((minibuffer-window minibuffer-window) string args)
   (cond (string
-         (erase-buffer (frame-echoarea-buffer (get-impl-frame)))
-         (let ((point (buffer-point (frame-echoarea-buffer (get-impl-frame)))))
+         (erase-buffer (frame-echoarea-buffer (current-frame)))
+         (let ((point (buffer-point (frame-echoarea-buffer (current-frame)))))
            (insert-string point (apply #'format nil string args)))
          (when (active-minibuffer-window)
            (handler-case
                (with-current-window (minibuffer-window)
                  (unwind-protect (progn
-                                   (%switch-to-buffer (frame-echoarea-buffer (get-impl-frame)) nil nil)
+                                   (%switch-to-buffer (frame-echoarea-buffer (current-frame)) nil nil)
                                    (sit-for 1 t))
-                   (%switch-to-buffer (frame-minibuffer-buffer (get-impl-frame)) nil nil)))
+                   (%switch-to-buffer (frame-minibuffer-buffer (current-frame)) nil nil)))
              (editor-abort ()
                (minibuf-read-line-break)))))
         (t
-         (erase-buffer (frame-echoarea-buffer (get-impl-frame))))))
+         (erase-buffer (frame-echoarea-buffer (current-frame))))))
 
 (defmethod message-using-minibuffer-class ((minibuffer-window popup-minibuffer-window) string args)
   (cond (string
@@ -143,12 +143,12 @@
   t)
 
 (defun message-buffer (buffer)
-  (erase-buffer (frame-echoarea-buffer (get-impl-frame)))
-  (insert-buffer (buffer-point (frame-echoarea-buffer (get-impl-frame))) buffer))
+  (erase-buffer (frame-echoarea-buffer (current-frame)))
+  (insert-buffer (buffer-point (frame-echoarea-buffer (current-frame))) buffer))
 
 (defun active-echoarea-p ()
-  (point< (buffer-start-point (frame-echoarea-buffer (get-impl-frame)))
-          (buffer-end-point (frame-echoarea-buffer (get-impl-frame)))))
+  (point< (buffer-start-point (frame-echoarea-buffer (current-frame)))
+          (buffer-end-point (frame-echoarea-buffer (current-frame)))))
 
 (defun prompt-for-character (prompt)
   (when (interactive-p)
@@ -198,7 +198,7 @@
   (character-offset
    (copy-point (buffer-start-point (minibuffer))
                :temporary)
-   (frame-minibuffer-start-charpos (get-impl-frame))))
+   (frame-minibuffer-start-charpos (current-frame))))
 
 (defun get-minibuffer-string ()
   (points-to-string (minibuffer-start-point)
@@ -274,7 +274,7 @@
     (run-hooks *minibuffer-activate-hook*))
   (when (and (not *enable-recursive-minibuffers*) (< 0 *minibuf-read-line-depth*))
     (editor-error "ERROR: recursive use of minibuffer"))
-  (let* ((frame (get-impl-frame))
+  (let* ((frame (current-frame))
          (minibuffer-calls-window (frame-minibuffer-calls-window frame)))
     (unwind-protect
          (progn
@@ -288,7 +288,7 @@
                      (catch +recursive-minibuffer-break-tag+
                        (handler-case
                            (with-current-window (minibuffer-window)
-                             (%switch-to-buffer (frame-minibuffer-buffer (get-impl-frame)) nil nil)
+                             (%switch-to-buffer (frame-minibuffer-buffer (current-frame)) nil nil)
                              (let ((minibuf-buffer-prev-string
                                      (points-to-string (buffer-start-point (minibuffer))
                                                        (buffer-end-point (minibuffer))))
@@ -317,9 +317,9 @@
                                         (when initial
                                           (insert-string (current-point) initial))
                                         (unwind-protect (minibuf-read-line-loop comp-f existing-p syntax-table)
-                                          (if (deleted-window-p (frame-minibuffer-calls-window (get-impl-frame)))
+                                          (if (deleted-window-p (frame-minibuffer-calls-window (current-frame)))
                                               (setf (current-window) (car (window-list)))
-                                              (setf (current-window) (frame-minibuffer-calls-window (get-impl-frame))))
+                                              (setf (current-window) (frame-minibuffer-calls-window (current-frame))))
                                           (with-current-window (minibuffer-window)
                                             (let ((*inhibit-read-only* t))
                                               (erase-buffer))

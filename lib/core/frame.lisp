@@ -23,7 +23,7 @@
 (defun get-frame (key)
   (gethash key *frame-display-map*))
 
-(defun get-impl-frame ()
+(defun current-frame ()
   (get-frame (implementation)))
 
 (defun unmap-frame (key)

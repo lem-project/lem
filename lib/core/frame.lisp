@@ -1,11 +1,8 @@
 (in-package :lem)
 
-(defparameter *frame-count* 0)
-(defparameter *frame-list* '())  ;; TODO: change to defvar when ends testing
 (defparameter *frame-display-map* (make-hash-table))
 
 (defstruct frame
-  id
   ;; window
   current-window
   (window-tree nil)
@@ -19,16 +16,6 @@
   (minibuf-window nil)
   (minibuffer-calls-window nil)
   (minibuffer-start-charpos nil))
-
-(defun add-frame (frame)
-  (setf *frame-list* (append *frame-list* (list frame))))
-
-(defun remove-frame (id)
-  (let ((target-frame (find id *frame-list* :key #'frame-id)))
-    (when target-frame
-      (progn
-        (setf *frame-list* (remove id *frame-list* :key #'frame-id))
-        (frame-window-tree target-frame)))))
 
 (defun map-frame (key frame)
   (setf (gethash key *frame-display-map*) frame))
@@ -44,25 +31,20 @@
     (remhash key)
     frame))
 
-(defun register-frame (frame)
-  (let ((id *frame-count*))
-    (setf (frame-id frame) id)
-    (incf *frame-count*)
-    id))
-
 (defun setup-frame (frame)
-  (register-frame frame)
-  (add-frame frame)
   (setup-minibuffer frame)
   (setup-windows frame))
 
 (defun teardown-frame (frame)
   (teardown-windows frame)
   ;; (teardown-minibuffer frame) ; minibufferをfloating-windowとして扱うので開放処理はしない
-  (remove-frame (frame-id frame)))
+)
 
 (defun teardown-frames ()
-  (mapc #'teardown-frame *frame-list*))
+  (maphash (lambda (k v)
+             (declare (ignore k))
+             (teardown-frame v))
+           *frame-display-map*))
 
 (defun redraw-frame (frame)
   (redraw-display* frame))

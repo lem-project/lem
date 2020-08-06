@@ -198,12 +198,12 @@
 (define-command fm-create () ()
   (block exit
     (when (null *vf-map*)
-      ;; ERROR: variable `frame-multiplexer- is broken?
+      (editor-error "fm-mode is not enabled")
       (return-from exit))
     (let* ((vf (gethash (implementation) *vf-map*))
            (id (position-if #'null (vf-frames vf))))
       (when (null id)
-        ;; ERROR: it's full of frames in virtual frame
+        (editor-error "it's full of frames in virtual frame")
         (return-from exit))
       (let* ((frame (lem::make-frame))
              (%frame (%make-frame id frame))
@@ -228,16 +228,16 @@
 (define-command fm-delete () ()
   (block exit
     (when (null *vf-map*)
-      ;; ERROR: variable `frame-multiplexer- is broken?
+      (editor-error "fm-mode is not enabled")
       (return-from exit))
     (let* ((vf (gethash (implementation) *vf-map*))
            (num (count-if-not #'null (vf-frames vf)))
            (id (position (vf-current vf) (vf-frames vf))))
       (when (= num 1)
-        ;; ERROR: there is just one frame in virtual frame
+        (editor-error "cannot delete this virtual frame")
         (return-from exit))
       (when (null id)
-        ;; ERROR: something wrong...
+        (editor-error "something wrong... fm-mode broken?")
         (return-from exit))
       (setf (aref (vf-frames vf) id) nil)
       (let ((%frame (search-previous-frame vf id)))
@@ -249,12 +249,12 @@
 (define-command fm-prev () ()
   (block exit
     (when (null *vf-map*)
-      ;; ERROR: variable `frame-multiplexer- is broken?
+      (editor-error "fm-mode is not enabled")
       (return-from exit))
     (let* ((vf (gethash (implementation) *vf-map*))
            (id (position (vf-current vf) (vf-frames vf))))
       (when (null id)
-        ;; ERROR: something wrong...
+        (editor-error "something wrong... fm-mode broken?")
         (return-from exit))
       (let ((%frame (search-previous-frame vf id)))
         (when %frame
@@ -266,12 +266,12 @@
 (define-command fm-next () ()
   (block exit
     (when (null *vf-map*)
-      ;; ERROR: variable `frame-multiplexer- is broken?
+      (editor-error "fm-mode is not enabled")
       (return-from exit))
     (let* ((vf (gethash (implementation) *vf-map*))
            (id (position (vf-current vf) (vf-frames vf))))
       (when (null id)
-        ;; ERROR: something wrong...
+        (editor-error "something wrong... fm-mode broken?")
         (return-from exit))
       (let ((%frame (search-next-frame vf id)))
         (when %frame

@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(defparameter *frame-display-map* (make-hash-table))
+(defparameter *display-frame-map* (make-hash-table))
 
 (defstruct frame
   ;; window
@@ -18,16 +18,16 @@
   (minibuffer-start-charpos nil))
 
 (defun map-frame (key frame)
-  (setf (gethash key *frame-display-map*) frame))
+  (setf (gethash key *display-frame-map*) frame))
 
 (defun get-frame (key)
-  (gethash key *frame-display-map*))
+  (gethash key *display-frame-map*))
 
 (defun current-frame ()
   (get-frame (implementation)))
 
 (defun unmap-frame (key)
-  (let ((frame (gethash key *frame-display-map*)))
+  (let ((frame (gethash key *display-frame-map*)))
     (remhash key)
     frame))
 
@@ -44,7 +44,7 @@
   (maphash (lambda (k v)
              (declare (ignore k))
              (teardown-frame v))
-           *frame-display-map*))
+           *display-frame-map*))
 
 (defun redraw-frame (frame)
   (redraw-display* frame))

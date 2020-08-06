@@ -333,7 +333,7 @@
   (setf (frame-window-tree frame) (frame-current-window frame)))
 
 (defun teardown-windows (frame)
-  (mapc #'%free-window (window-list frame)))
+  (mapc #'%free-window (window-list)))
 
 (defun window-recenter (window)
   (line-start

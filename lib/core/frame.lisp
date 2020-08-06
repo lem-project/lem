@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(redraw-frame))
+(export '(current-frame
+          redraw-frame))
 
 (defparameter *display-frame-map* (make-hash-table))
 

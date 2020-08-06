@@ -218,7 +218,7 @@
   (when *popup-message-window*
     (delete-window *popup-message-window*)
     (setf *popup-message-window* nil)
-    (redraw-frame (get-frame *implementation*))))
+    (redraw-frame (current-frame))))
 
 (defun make-popup-buffer (text)
   (let ((buffer (make-buffer "*Popup Message*" :temporary t :enable-undo-p nil)))

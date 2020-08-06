@@ -1,5 +1,7 @@
 (in-package :lem)
 
+(export '(redraw-frame))
+
 (defparameter *display-frame-map* (make-hash-table))
 
 (defstruct frame
@@ -47,4 +49,6 @@
            *display-frame-map*))
 
 (defun redraw-frame (frame)
-  (redraw-display* frame))
+  (redraw-display (and (redraw-after-modifying-floating-window (implementation))
+                       (frame-modified-floating-windows frame)))
+  (setf (frame-modified-floating-windows frame) nil))

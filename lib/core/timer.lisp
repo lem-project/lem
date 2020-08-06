@@ -125,7 +125,7 @@
                 (funcall (timer-function timer))))
         (error (condition)
           (message "Error running timer ~S: ~A" (timer-name timer) condition))))
-    (redraw-display* (get-frame *implementation*))
+    (redraw-frame (current-frame))
     (not (null updating-timers))))
 
 (defun get-next-timer-timing-ms ()

@@ -50,7 +50,6 @@
           floating-window-p
           header-window
           redraw-display
-          redraw-display*
           display-popup-message
           delete-popup-message))
 
@@ -1203,11 +1202,6 @@
 
 (defun delete-popup-message (popup-message)
   (lem-if:delete-popup-message (implementation) popup-message))
-
-(defun redraw-display* (frame)
-  (redraw-display (and (redraw-after-modifying-floating-window (implementation))
-                       (frame-modified-floating-windows frame)))
-  (setf (frame-modified-floating-windows frame) nil))
 
 (defun covered-with-floating-window-p (window x y)
   (let ((x (+ x (window-x window)))

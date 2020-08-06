@@ -19,18 +19,18 @@
   (minibuffer-calls-window nil)
   (minibuffer-start-charpos nil))
 
-(defun map-frame (key frame)
-  (setf (gethash key *display-frame-map*) frame))
+(defun map-frame (implementation frame)
+  (setf (gethash implementation *display-frame-map*) frame))
 
-(defun get-frame (key)
-  (gethash key *display-frame-map*))
+(defun get-frame (implementation)
+  (gethash implementation *display-frame-map*))
 
 (defun current-frame ()
   (get-frame (implementation)))
 
-(defun unmap-frame (key)
-  (let ((frame (gethash key *display-frame-map*)))
-    (remhash key)
+(defun unmap-frame (implementation)
+  (let ((frame (gethash implementation *display-frame-map*)))
+    (remhash implementation frame)
     frame))
 
 (defun setup-frame (frame)

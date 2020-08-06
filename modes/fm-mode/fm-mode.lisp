@@ -3,6 +3,7 @@
 (in-package :lem-fm-mode)
 
 (defconstant +fm-max-number-of-frames+ 256)
+(defconstant +fm-max-width-of-each-frame-name+ 20)
 
 (define-attribute fm-active-frame-name-attribute
   (t :foreground "white" :background "blue"))
@@ -116,9 +117,16 @@
                    (start-pos (point-charpos p)))
               (insert-button p
                              ;; virtual frame name on header
-                             (if focusp
-                                 (format nil "*[#~a] " (%frame-id %frame))
-                                 (format nil " [#~a] "(%frame-id %frame)))
+                             (let* ((frame (%frame-frame %frame))
+                                    (buffer (window-buffer (lem::frame-current-window frame)))
+                                    (name (buffer-name buffer)))
+                               (format nil "~a~a:~a "
+                                       (if focusp #\# #\space)
+                                       (%frame-id %frame)
+                                       (if (>= (length name) +fm-max-width-of-each-frame-name+)
+                                           (format nil "~a..."
+                                                   (subseq name 0 +fm-max-width-of-each-frame-name+))
+                                           name)))
                              ;; set action when click
                              (let ((%frame %frame))
                                (lambda ()

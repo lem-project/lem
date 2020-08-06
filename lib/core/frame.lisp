@@ -15,7 +15,7 @@
   ;; minibuffer
   minibuffer-buffer
   echoarea-buffer
-  (minibuf-window nil)
+  (minibuffer-window nil)
   (minibuffer-calls-window nil)
   (minibuffer-start-charpos nil))
 

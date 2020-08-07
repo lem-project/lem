@@ -21,6 +21,7 @@
                (:file "point")
                (:file "basic")
                (:file "search")
+               (:file "parse-partial-sexp")
                (:file "syntax")
                (:file "syntax-parser")
                (:file "tmlanguage")

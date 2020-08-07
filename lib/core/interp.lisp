@@ -86,7 +86,7 @@
       (when (= 0 (event-queue-length))
         (without-interrupts
           (handler-bind ((error #'bailout))
-            (redraw-display*))))
+            (redraw-frame (current-frame)))))
       (handler-case
           (handler-bind ((editor-abort
                            (lambda (c)

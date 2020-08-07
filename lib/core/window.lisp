@@ -50,7 +50,6 @@
           floating-window-p
           header-window
           redraw-display
-          redraw-display*
           display-popup-message
           delete-popup-message))
 
@@ -65,14 +64,6 @@
 (defvar *window-scroll-functions* '())
 (defvar *window-size-change-functions* '())
 (defvar *window-show-buffer-functions* '())
-
-(defvar *floating-windows* '())
-(defvar *header-windows* '())
-(defvar *modified-floating-windows* nil)
-
-(defvar *window-tree*)
-
-(defvar *current-window*)
 
 (defvar *window-id-counter* 0)
 
@@ -202,25 +193,27 @@
   (setf (getf (window-parameters window) parameter) value))
 
 (defun current-window ()
-  *current-window*)
+  (frame-current-window (current-frame)))
 
 (defun (setf current-window) (new-window)
-  (check-type new-window window)
-  (when (boundp '*current-window*)
-    (let ((old-window (current-window)))
-      (move-point (%window-point old-window)
-                  (window-buffer-point old-window))))
-  (let ((buffer (window-buffer new-window)))
-    (setf (current-buffer) buffer)
-    (move-point (buffer-point buffer)
-                (%window-point new-window)))
-  (setf *current-window* new-window))
+  (let ((frame (current-frame)))
+    (check-type new-window window)
+    (when (frame-current-window frame)
+      (let ((old-window (current-window)))
+        (move-point (%window-point old-window)
+                    (window-buffer-point old-window))))
+    (let ((buffer (window-buffer new-window)))
+      (setf (current-buffer) buffer)
+      (move-point (buffer-point buffer)
+                  (%window-point new-window)))
+    (setf (frame-current-window frame) new-window)))
 
 (defun window-tree ()
-  *window-tree*)
+  (frame-window-tree (current-frame)))
 
 (defun (setf window-tree) (new-window-tree)
-  (setf *window-tree* new-window-tree))
+  (let ((frame (current-frame)))
+    (setf (frame-window-tree frame) new-window-tree)))
 
 (defstruct (window-node (:constructor %make-window-node))
   split-type
@@ -300,7 +293,7 @@
 
 (defun window-list ()
   (window-tree-flatten
-   (window-tree)))
+   (frame-window-tree (current-frame))))
 
 (defun one-window-p ()
   (window-tree-leaf-p (window-tree)))
@@ -310,7 +303,7 @@
          nil)
         ((window-tree-find (window-tree) window)
          nil)
-        ((find window *floating-windows*)
+        ((find window (frame-floating-windows (current-frame)))
          nil)
         (t t)))
 
@@ -319,7 +312,7 @@
   (delete-point (%window-point window))
   (screen-delete (window-screen window)))
 
-(defun window-topleft-y () (length *header-windows*))
+(defun window-topleft-y () (length (frame-header-windows (current-frame))))
 (defun window-topleft-x () 0)
 (defun window-max-width () (- (display-width) (window-topleft-x)))
 (defun window-max-height ()
@@ -327,18 +320,18 @@
      (if (sticky-bottom-minibuffer-p) 1 0)
      (window-topleft-y)))
 
-(defun setup-windows ()
-  (setf *current-window*
+(defun setup-windows (frame)
+  (setf (frame-current-window frame)
         (make-window (current-buffer)
                      (window-topleft-x)
                      (window-topleft-y)
                      (window-max-width)
                      (window-max-height)
                      t))
-  (lem-if:set-first-view (implementation) (window-view (current-window)))
-  (setf (window-tree) (current-window)))
+  (lem-if:set-first-view (implementation) (window-view (frame-current-window frame)))
+  (setf (frame-window-tree frame) (frame-current-window frame)))
 
-(defun teardown-windows ()
+(defun teardown-windows (frame)
   (mapc #'%free-window (window-list)))
 
 (defun window-recenter (window)
@@ -731,13 +724,15 @@
         (car window-list))))
 
 (defun window-set-pos (window x y)
-  (when (floating-window-p window) (setf *modified-floating-windows* t))
+  (when (floating-window-p window)
+    (setf (frame-modified-floating-windows (current-frame)) t))
   (screen-set-pos (window-screen window) x y)
   (setf (window-%x window) x)
   (setf (window-%y window) y))
 
 (defun window-set-size (window width height)
-  (when (floating-window-p window) (setf *modified-floating-windows* t))
+  (when (floating-window-p window)
+    (setf (frame-modified-floating-windows (current-frame)) t))
   (setf (window-%width window) width)
   (setf (window-%height window) height)
   (screen-set-size (window-screen window)
@@ -1062,14 +1057,14 @@
         (when (or (one-window-p) force-split-p)
           (setf split-p t)
           (split-window-sensibly (if (minibuffer-window-active-p)
-                                     (minibuffer-calls-window)
+                                     (frame-minibuffer-calls-window (current-frame))
                                      (current-window))))
         (with-current-window
             (or (window-tree-find-if (window-tree)
                                      (lambda (window)
                                        (eq buffer (window-buffer window))))
                 (get-next-window (if (minibuffer-window-active-p)
-                                     (minibuffer-calls-window)
+                                     (frame-minibuffer-calls-window (current-frame))
                                      (current-window))))
           (switch-to-buffer buffer)
           (setf (window-parameter (current-window) 'split-p) split-p)
@@ -1133,7 +1128,7 @@
   (declare (ignore initargs))
   (unless (support-floating-window (implementation))
     (error "floating window is not supported"))
-  (setf *modified-floating-windows* t))
+  (setf (frame-modified-floating-windows (current-frame)) t))
 
 (defun make-floating-window (buffer x y width height use-modeline-p)
   (let ((window (make-instance 'floating-window
@@ -1143,42 +1138,40 @@
                                :width width
                                :height height
                                :use-modeline-p use-modeline-p)))
-    (push window *floating-windows*)
+    (push window (frame-floating-windows (current-frame)))
     window))
 
 (defmethod %delete-window ((window floating-window))
   (when (eq window (current-window))
     (editor-error "Can not delete this window"))
-  (setf *modified-floating-windows* t)
-  (setf *floating-windows*
-        (delete window *floating-windows*)))
+  (setf (frame-modified-floating-windows (current-frame)) t)
+  (setf (frame-floating-windows (current-frame))
+        (delete window (frame-floating-windows (current-frame)))))
 
 (defun floating-window-p (window)
   (typep window 'floating-window))
-
-(defvar *modify-header-windows* nil)
 
 (defclass header-window (window) ())
 
 (defmethod initialize-instance ((window header-window) &key &allow-other-keys)
   (with-slots (x y width height) window
     (setf x 0)
-    (setf y (length *header-windows*))
+    (setf y (length (frame-header-windows (current-frame))))
     (setf width (display-width))
     (setf height 1))
-  (push window *header-windows*)
-  (setf *modify-header-windows* t)
+  (push window (frame-header-windows (current-frame)))
+  (setf (frame-modified-header-windows (current-frame)) t)
   (call-next-method))
 
 (defmethod %delete-window ((window header-window))
-  (setf *header-windows*
-        (delete window *header-windows*))
-  (setf *modify-header-windows* t))
+  (setf (frame-header-windows (current-frame))
+        (delete window (frame-header-windows (current-frame))))
+  (setf (frame-modified-header-windows (current-frame)) t))
 
 (defun redraw-display (&optional force)
   (without-interrupts
-    (when *modify-header-windows*
-      (setf *modify-header-windows* nil)
+    (when (frame-modified-header-windows (current-frame))
+      (setf (frame-modified-header-windows (current-frame)) nil)
       (change-display-size-hook))
     (dolist (window (window-list))
       (unless (eq window (current-window))
@@ -1188,14 +1181,14 @@
           (t
            (window-redraw (minibuffer-window) force)
            (window-redraw (current-window) force)))
-    (dolist (window *header-windows*)
+    (dolist (window (frame-header-windows (current-frame)))
       (window-redraw window (redraw-after-modifying-floating-window (implementation))))
-    (dolist (window *floating-windows*)
+    (dolist (window (frame-floating-windows (current-frame)))
       (window-redraw window (redraw-after-modifying-floating-window (implementation))))
     (update-display)))
 
 (defun change-display-size-hook ()
-  (dolist (window *header-windows*)
+  (dolist (window (frame-header-windows (current-frame)))
     (window-set-size window (display-width) 1))
   (adjust-windows (window-topleft-x)
                   (window-topleft-y)
@@ -1210,15 +1203,10 @@
 (defun delete-popup-message (popup-message)
   (lem-if:delete-popup-message (implementation) popup-message))
 
-(defun redraw-display* ()
-  (redraw-display (and (redraw-after-modifying-floating-window (implementation))
-                       *modified-floating-windows*))
-  (setf *modified-floating-windows* nil))
-
 (defun covered-with-floating-window-p (window x y)
   (let ((x (+ x (window-x window)))
         (y (+ y (window-y window))))
-    (dolist (w *floating-windows*)
+    (dolist (w (frame-floating-windows (current-frame)))
       (when (and (not (eq w window))
                  (<= (window-x w) x (+ (window-x w) (window-width w) -1))
                  (<= (window-y w) y (+ (window-y w) (window-height w) -1)))

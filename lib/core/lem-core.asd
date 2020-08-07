@@ -39,6 +39,7 @@
                (:file "comp")
                (:file "minibuffer")
                (:file "typeout")
+               (:file "frame")
                (:file "lem")
 
                (:file "command")

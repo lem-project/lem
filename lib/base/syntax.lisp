@@ -755,7 +755,7 @@
   (defun check-ppss-cache (buffer)
     (loop :for prev := nil :then (cache-point cache)
           :for cache :in (syntax-ppss-cache buffer)
-          :do (assert (line-alive-p (point-line (cache-point cache))))
+          :do (assert (alive-point-p (cache-point cache)))
               (when prev
                 (assert (point< (cache-point cache) prev))))))
 

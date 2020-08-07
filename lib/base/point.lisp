@@ -106,6 +106,10 @@
             (delete point (buffer-points buffer))))
     (values)))
 
+(defun alive-point-p (point)
+  (alexandria:when-let (line (point-line point))
+    (line-alive-p line)))
+
 (defun point-change-line (point new-linum new-line)
   (unless (point-temporary-p point)
     (let ((old-line (point-line point)))

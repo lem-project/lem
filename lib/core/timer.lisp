@@ -18,8 +18,9 @@
 (defvar *running-timer* nil)
 
 (defun get-microsecond-time ()
-  (float (/ (get-internal-real-time)
-            (load-time-value (/ internal-time-units-per-second 1000)))))
+  (values
+   (floor (/ (get-internal-real-time)
+             (load-time-value (/ internal-time-units-per-second 1000))))))
 
 (defclass timer ()
   ((name

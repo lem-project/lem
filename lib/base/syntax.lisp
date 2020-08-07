@@ -302,10 +302,9 @@
     (cond ((not win)
            (values nil nil))
           ((null p)
-           (let ((p (inline-line-comment-p point)))
-             (if p
-                 (values (move-point point p) t)
-                 (values nil t))))
+           (alexandria:if-let (p (inline-line-comment-p point))
+             (values (move-point point p) t)
+             (values nil t)))
           (t
            (values point win)))))
 
@@ -473,8 +472,8 @@
                        (unless p
                          (character-offset point -1))))))
             (when (end-line-p point)
-              (let ((p (inline-line-comment-p point)))
-                (when p (move-point point p))))))
+              (alexandria:when-let (p (inline-line-comment-p point))
+                (move-point point p)))))
 
 (defun %form-offset-positive (point)
   (skip-space-and-comment-forward point)

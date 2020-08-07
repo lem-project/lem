@@ -17,6 +17,10 @@
 (defvar *processed-idle-timer-list* nil)
 (defvar *running-timer* nil)
 
+(defun get-microsecond-time ()
+  (float (/ (get-internal-real-time)
+            (load-time-value (/ internal-time-units-per-second 1000)))))
+
 (defclass timer ()
   ((name
     :initarg :name
@@ -71,7 +75,7 @@
                                              (symbol-name function)))
                               :ms ms
                               :repeat-p repeat-p
-                              :last-time (get-internal-real-time)
+                              :last-time (get-microsecond-time)
                               :function function
                               :handle-function handle-function
                               :alive-p t
@@ -87,7 +91,7 @@
         (setf *timer-list* (delete timer *timer-list*)))))
 
 (defun update-timer ()
-  (let* ((tick-time (get-internal-real-time))
+  (let* ((tick-time (get-microsecond-time))
          (target-timers (if *is-in-idle*
                             (append *timer-list* *idle-timer-list*)
                             *timer-list*))
@@ -138,7 +142,7 @@
         nil
         (- (loop :for timer :in timers
                  :minimize (timer-next-time timer))
-           (get-internal-real-time)))))
+           (get-microsecond-time)))))
 
 (defun exist-running-timer-p ()
   (if *is-in-idle*
@@ -163,7 +167,7 @@
   (progn
     (setf *is-in-idle* t)
     (dolist (timer *idle-timer-list*)
-      (setf (timer-last-time timer) (get-internal-real-time))
+      (setf (timer-last-time timer) (get-microsecond-time))
       (setf (timer-alive-p timer) t))))
 
 (defun stop-idle-timers ()

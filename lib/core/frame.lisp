@@ -1,6 +1,25 @@
 (in-package :lem)
 
-(export '(current-frame
+(export '(frame
+          make-frame
+          frame-current-window
+          frame-window-tree
+          frame-floating-windows
+          frame-header-windows
+          frame-modified-floating-windows
+          frame-modified-header-windows
+          frame-minibuffer-buffer
+          frame-echoarea-buffer
+          frame-minibuffer-window
+          frame-minibuffer-calls-window
+          frame-minibuffer-start-charpos
+          map-frame
+          get-frame
+          current-frame
+          unmap-frame
+          setup-frame
+          teardown-frame
+          teardown-frames
           redraw-frame))
 
 (defparameter *display-frame-map* (make-hash-table))

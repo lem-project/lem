@@ -16,7 +16,7 @@
 
 (defstruct %frame
   (id 0 :type integer)
-  (frame nil :type lem::frame))
+  (frame nil :type lem:frame))
 
 (defun %make-frame (id frame)
   (make-%frame :id id :frame frame))
@@ -118,7 +118,7 @@
               (insert-button p
                              ;; virtual frame name on header
                              (let* ((frame (%frame-frame %frame))
-                                    (buffer (window-buffer (lem::frame-current-window frame)))
+                                    (buffer (window-buffer (lem:frame-current-window frame)))
                                     (name (buffer-name buffer)))
                                (format nil "~a~a:~a "
                                        (if focusp #\# #\space)
@@ -149,11 +149,11 @@
     ;; redraw windows in current frame
     (let* ((%frame (vf-current (gethash (lem:implementation) *vf-map*)))
            (frame (%frame-frame %frame)))
-      (dolist (w (lem::window-tree-flatten (lem::frame-window-tree frame)))
+      (dolist (w (lem::window-tree-flatten (lem:frame-window-tree frame)))
         (lem:window-redraw w t))
-      (dolist (w (lem::frame-floating-windows frame))
+      (dolist (w (lem:frame-floating-windows frame))
         (lem:window-redraw w t))
-      (dolist (w (lem::frame-header-windows frame))
+      (dolist (w (lem:frame-header-windows frame))
         (unless (eq w window)
           (lem:window-redraw w t))))
     (lem-if:update-display (lem:implementation)))
@@ -168,9 +168,9 @@
   (setf *vf-map* (make-hash-table))
   (loop
     :for impl :in (list (implementation))  ; for multi-frame support in the future...
-    :do (let ((vf (make-vf impl (lem::get-frame impl))))
+    :do (let ((vf (make-vf impl (lem:get-frame impl))))
           (setf (gethash impl *vf-map*) vf)
-          (lem::map-frame (implementation) (%frame-frame (vf-current vf))))))
+          (lem:map-frame (implementation) (%frame-frame (vf-current vf))))))
 
 (defun frame-multiplexer-on ()
   (unless (variable-value 'frame-multiplexer :global)
@@ -205,23 +205,23 @@
       (when (null id)
         (editor-error "it's full of frames in virtual frame")
         (return-from exit))
-      (let* ((frame (lem::make-frame))
+      (let* ((frame (lem:make-frame))
              (%frame (%make-frame id frame))
              (tmp-buffer (find "*tmp*" lem-base::*buffer-list*
                                :key (lambda (b) (slot-value b 'lem-base::name))
                                :test #'string=)))
-        (lem::setup-frame frame)
-        (push vf (lem::frame-header-windows frame))
+        (lem:setup-frame frame)
+        (push vf (lem:frame-header-windows frame))
         (when tmp-buffer
           (let ((new-window (lem::make-window tmp-buffer
                                               (lem::window-topleft-x) (lem::window-topleft-y)
                                               (lem::window-max-width) (lem::window-max-height)
                                               t)))
-            (setf (lem::frame-window-tree frame) new-window
-                  (lem::frame-current-window frame) new-window
+            (setf (lem:frame-window-tree frame) new-window
+                  (lem:frame-current-window frame) new-window
                   (aref (vf-frames vf) id) %frame
                   (vf-current vf) %frame)
-            (lem::map-frame (implementation) frame))))
+            (lem:map-frame (implementation) frame))))
       (setf (vf-changed vf) t))))
 
 (define-key *global-keymap* "c-z d" 'fm-delete)
@@ -242,7 +242,7 @@
       (setf (aref (vf-frames vf) id) nil)
       (let ((%frame (search-previous-frame vf id)))
         (setf (vf-current vf) %frame)
-        (lem::map-frame (implementation) (%frame-frame %frame)))
+        (lem:map-frame (implementation) (%frame-frame %frame)))
       (setf (vf-changed vf) t))))
 
 (define-key *global-keymap* "C-z p" 'fm-prev)
@@ -259,7 +259,7 @@
       (let ((%frame (search-previous-frame vf id)))
         (when %frame
           (setf (vf-current vf) %frame)
-          (lem::map-frame (implementation) (%frame-frame %frame))))
+          (lem:map-frame (implementation) (%frame-frame %frame))))
       (setf (vf-changed vf) t))))
 
 (define-key *global-keymap* "C-z n" 'fm-next)
@@ -276,5 +276,5 @@
       (let ((%frame (search-next-frame vf id)))
         (when %frame
           (setf (vf-current vf) %frame)
-          (lem::map-frame (implementation) (%frame-frame %frame))))
+          (lem:map-frame (implementation) (%frame-frame %frame))))
       (setf (vf-changed vf) t))))

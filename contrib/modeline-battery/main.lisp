@@ -9,9 +9,9 @@
 (defvar *interval-second* 10)
 
 (defun update-cache-p ()
-  (let ((time (get-internal-real-time)))
+  (let ((time (get-universal-time)))
     (when (or (null *last-time*)
-              (< (* *interval-second* 1000) (- time *last-time*)))
+              (<= *internal-second* (- time *last-time*)))
       (setf *last-time* time)
       t)))
 

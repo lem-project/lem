@@ -576,20 +576,20 @@
                              (scan-error))))))
           (move-point point curr))))))
 
-(flet ((f (c)
-         (and (not (char= c #\newline))
+(flet ((non-newline-whitespace-p (c)
+         (and (char/= c #\newline)
               (syntax-space-char-p c))))
 
   (defun skip-whitespace-forward (point &optional (oneline nil))
     (with-point-syntax point
       (if oneline
-          (skip-chars-forward point #'f)
+          (skip-chars-forward point #'non-newline-whitespace-p)
           (skip-chars-forward point #'syntax-space-char-p))))
 
   (defun skip-whitespace-backward (point &optional (oneline nil))
     (with-point-syntax point
       (if oneline
-          (skip-chars-backward point #'f)
+          (skip-chars-backward point #'non-newline-whitespace-p)
           (skip-chars-backward point #'syntax-space-char-p)))))
 
 (defun skip-symbol-forward (point)

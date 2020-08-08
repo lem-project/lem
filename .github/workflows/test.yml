@@ -35,7 +35,8 @@ jobs:
         ros install lem
         ls
         ros install cxxxr/sblint
+        ros install rove
         export PATH=$HOME/.roswell/bin:$PATH
-        lem-test
+        rove lem-tests.asd
         sblint lib/base/lem-base.asd
         sblint lib/core/lem-core.asd

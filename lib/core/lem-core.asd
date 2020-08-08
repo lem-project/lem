@@ -25,6 +25,7 @@
                (:file "kill")
                (:file "file-ext")
                (:file "screen")
+               (:file "frame")
                (:file "window")
                (:file "modeline")
                (:file "defcommand")
@@ -40,7 +41,6 @@
                (:file "comp")
                (:file "minibuffer")
                (:file "typeout")
-               (:file "frame")
                (:file "lem")
 
                (:file "command")

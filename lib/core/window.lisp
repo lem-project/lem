@@ -291,9 +291,9 @@
                (values parent getter setter another-getter another-setter)
                (window-tree-parent (window-node-cdr tree) node))))))
 
-(defun window-list ()
+(defun window-list (&optional (frame (current-frame)))
   (window-tree-flatten
-   (frame-window-tree (current-frame))))
+   (frame-window-tree frame)))
 
 (defun one-window-p ()
   (window-tree-leaf-p (window-tree)))
@@ -332,7 +332,7 @@
   (setf (frame-window-tree frame) (frame-current-window frame)))
 
 (defun teardown-windows (frame)
-  (mapc #'%free-window (window-list)))
+  (mapc #'%free-window (window-list frame)))
 
 (defun window-recenter (window)
   (line-start

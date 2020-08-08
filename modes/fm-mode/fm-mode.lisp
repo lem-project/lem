@@ -260,6 +260,7 @@
         (when %frame
           (setf (vf-current vf) %frame)
           (lem:map-frame (implementation) (%frame-frame %frame))))
+      (lem::change-display-size-hook)
       (setf (vf-changed vf) t))))
 
 (define-key *global-keymap* "C-z n" 'fm-next)
@@ -277,4 +278,5 @@
         (when %frame
           (setf (vf-current vf) %frame)
           (lem:map-frame (implementation) (%frame-frame %frame))))
+      (lem::change-display-size-hook)
       (setf (vf-changed vf) t))))

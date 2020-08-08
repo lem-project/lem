@@ -33,8 +33,9 @@ jobs:
     - name: Run test
       run: |
         ros install lem
+        ls
         ros install cxxxr/sblint
         export PATH=$HOME/.roswell/bin:$PATH
         lem-test
-        sblint $HOME/.roswell/local-projects/cxxxr/lem/lib/base/lem-base.asd
-        sblint $HOME/.roswell/local-projects/cxxxr/lem/lib/core/lem-core.asd
+        sblint lib/base/lem-base.asd
+        sblint lib/core/lem-core.asd

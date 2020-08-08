@@ -24,6 +24,7 @@
                (:file "attribute")
                (:file "kill")
                (:file "file-ext")
+               (:file "screen")
                (:file "window")
                (:file "modeline")
                (:file "defcommand")

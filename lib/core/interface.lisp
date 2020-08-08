@@ -105,24 +105,6 @@
 (defun invoke-frontend (function)
   (lem-if:invoke *implementation* function))
 
-(defstruct (screen (:constructor %make-screen))
-  view
-  use-modeline
-  modeline-elements
-  x
-  y
-  left-lines
-  left-width
-  old-left-width
-  lines
-  old-lines
-  wrap-lines
-  width
-  modified-p
-  last-buffer-name
-  last-buffer-modified-tick
-  (horizontal-scroll-start 0))
-
 (defun make-screen (window x y width height use-modeline)
   (when use-modeline
     (decf height))

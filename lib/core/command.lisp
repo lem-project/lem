@@ -255,19 +255,25 @@
   (insert-string (current-point) (get-clipboard-data))
   t)
 
-(defvar *next-line-prev-column* nil)
-
 (define-key *global-keymap* "C-n" 'next-line)
 (define-key *global-keymap* "Down" 'next-line)
+
+(let ((saved-column nil))
+
+  (defun get-next-line-context-column ()
+    saved-column)
+
+  (defun save-next-line-context-column (column)
+    (setf saved-column column)))
 
 (defun next-line-aux (n
                       point-column-fn
                       forward-line-fn
                       move-to-column-fn)
   (unless (continue-flag :next-line)
-    (setq *next-line-prev-column* (funcall point-column-fn (current-point))))
+    (save-next-line-context-column (funcall point-column-fn (current-point))))
   (unless (prog1 (funcall forward-line-fn (current-point) n)
-            (funcall move-to-column-fn (current-point) *next-line-prev-column*))
+            (funcall move-to-column-fn (current-point) (get-next-line-context-column)))
     (cond ((plusp n)
            (move-to-end-of-buffer)
            (editor-error "End of buffer"))

@@ -528,7 +528,7 @@
                        (return-from outer))
                      (pos-ring-push i))))
                 (when (>= pos-count (1+ n1))
-                  ;; cursor-x offset is recovered by *next-line-prev-column*
+                  ;; cursor-x offset is recovered by (get-next-line-context-column)
                   (line-offset point 0 (aref pos-ring pos-last))
                   (return-from move-to-previous-virtual-line-n point))
                 ;; go to previous line
@@ -549,9 +549,9 @@
     (when (and *use-cursor-movement-workaround*
                (eq point (window-buffer-point window))
                (variable-value 'truncate-lines :default (point-buffer point))
-               (numberp *next-line-prev-column*)
-               (>= *next-line-prev-column* (- (window-width window) 3)))
-      (setf *next-line-prev-column* 0))
+               (numberp (get-next-line-context-column))
+               (>= (get-next-line-context-column) (- (window-width window) 3)))
+      (save-next-line-context-column 0))
 
     (if *use-new-vertical-move-function*
         (if (plusp n)

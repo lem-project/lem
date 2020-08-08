@@ -23,7 +23,7 @@
                (:file "search")
                (:file "syntax-table")
                (:file "parse-partial-sexp")
-               (:file "syntax")
+               (:file "syntax-scan")
                (:file "syntax-parser")
                (:file "tmlanguage")
                (:file "encodings")

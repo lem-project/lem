@@ -545,6 +545,3 @@
 (defun buffer-text (buffer)
   (points-to-string (buffer-start-point buffer)
                     (buffer-end-point buffer)))
-
-(defun fffffff (xxxx)
-  0)

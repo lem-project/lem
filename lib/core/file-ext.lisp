@@ -47,12 +47,12 @@
          (cmd (first (last (uiop:split-string (first *) :separator "/"))))
          (mode #1=(cdr (assoc cmd *\#!-alist* :test #'ppcre:scan)))
          ;;re-eval for 'env' like command
-         (mode (or (find mode *mode-list*)
+         (mode (or (find-mode mode)
                    (and mode
                         (setf cmd (funcall mode *))
                         #1#)))
          (mode (if mode
-                   (find mode *mode-list*)
+                   (find-mode mode)
                    (find-mode-from-name cmd))))
     (when mode
       (change-buffer-mode buffer mode))))

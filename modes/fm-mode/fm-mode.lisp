@@ -1,5 +1,5 @@
 (defpackage :lem-fm-mode
-  (:use :cl :lem :lem.button))
+  (:use :cl :lem-base :lem :lem.button))
 (in-package :lem-fm-mode)
 
 (defconstant +fm-max-number-of-frames+ 256)
@@ -207,8 +207,8 @@
         (return-from exit))
       (let* ((frame (lem:make-frame))
              (%frame (%make-frame id frame))
-             (tmp-buffer (find "*tmp*" lem-base::*buffer-list*
-                               :key (lambda (b) (slot-value b 'lem-base::name))
+             (tmp-buffer (find "*tmp*" (buffer-list)
+                               :key (lambda (b) (buffer-name b))
                                :test #'string=)))
         (lem:setup-frame frame)
         (push vf (lem:frame-header-windows frame))

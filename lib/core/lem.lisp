@@ -54,7 +54,7 @@
 (let ((once nil))
   (defun setup ()
     (let ((frame (make-frame)))
-      (map-frame *implementation* frame)
+      (map-frame (implementation) frame)
       (setup-frame frame))
     (unless once
       (setf once t)

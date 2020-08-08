@@ -33,11 +33,8 @@ jobs:
     - name: Run test
       run: |
         ros install lem
-        export PATH=$HOME/.roswell/bin:$PATH
-        lem-test
-    - name: sblint
-      run: |
         ros install cxxxr/sblint
         export PATH=$HOME/.roswell/bin:$PATH
+        lem-test
         sblint $HOME/.roswell/local-projects/cxxxr/lem/lib/base/lem-base.asd
         sblint $HOME/.roswell/local-projects/cxxxr/lem/lib/core/lem-core.asd

@@ -485,7 +485,7 @@
                (when (< (point-charpos point) i)
                  (decf n1)
                  (when (<= n1 0)
-                   ;; cursor-x offset is recovered by *next-line-prev-column*
+                   ;; cursor-x offset is recovered by (get-next-line-context-column)
                    (line-offset point 0 i)
                    (return-from move-to-next-virtual-line-n point)))))
             ;; go to next line

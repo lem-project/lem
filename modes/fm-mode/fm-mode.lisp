@@ -67,6 +67,16 @@
                              :buffer-list-map (make-hash-table))))
       vf)))
 
+(defun all-buffer-list ()
+  (remove-duplicates
+   (loop
+     :for k :being :each :hash-key :of *vf-map*
+     :using (hash-value vf)
+     :append (loop
+               :for k :being :each :hash-key :of (vf-buffer-list-map vf)
+               :using (hash-value buffer-list)
+               :append buffer-list))))
+
 (defvar *vf-map* nil)
 
 (defun search-previous-frame (vf id)
@@ -212,7 +222,7 @@
         (return-from exit))
       (let* ((frame (lem:make-frame))
              (%frame (%make-frame id frame))
-             (tmp-buffer (find "*tmp*" (buffer-list)
+             (tmp-buffer (find "*tmp*" (append (buffer-list) (all-buffer-list))
                                :key (lambda (b) (buffer-name b))
                                :test #'string=)))
         (setf (gethash (vf-current vf) (vf-buffer-list-map vf))

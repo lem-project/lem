@@ -63,7 +63,7 @@
                              :current %frame)))
       vf)))
 
-(defparameter *vf-map* nil)
+(defvar *vf-map* nil)
 
 (defun search-previous-frame (vf id)
   (let* ((frames (vf-frames vf))

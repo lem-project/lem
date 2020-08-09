@@ -334,4 +334,6 @@
       (editor-error "fm-mode is not enabled")
       (return-from exit))
     (let ((buffer (find name (all-buffer-list) :test #'string= :key #'buffer-name)))
+      (when (null (find buffer (buffer-list)))
+        (lem-base::set-buffer-list (cons buffer (buffer-list))))
       (select-buffer buffer))))

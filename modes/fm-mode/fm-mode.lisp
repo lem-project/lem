@@ -188,12 +188,45 @@
                 (copy-list (buffer-list)))
           (lem:map-frame (implementation) (%frame-frame (vf-current vf))))))
 
+(defun kill-buffer-from-all-frames (buffer)
+  ;; update buffer-list-map
+  (let ((vf (gethash (implementation) *vf-map*)))
+    (setf (gethash (vf-current vf) (vf-buffer-list-map vf))
+          (copy-list (buffer-list))))
+  ;; kill buffer from all frames in all virtual frames
+  (loop
+    :for display :being :each :hash-key :of *vf-map*
+    :using (hash-value vf)
+    :do (let ((current-frame (vf-current vf)))
+          (dolist (frame (alexandria:hash-table-keys (vf-buffer-list-map vf)))
+            (unwind-protect
+                 (progn
+                   ;; temporary switched current frame and buffer-list
+                   (map-frame display (%frame-frame frame))
+                   (setf (vf-current vf) frame)
+                   (lem-base::set-buffer-list (gethash frame (vf-buffer-list-map vf)))
+                   ;; switch buffers that will be deleted
+                   (dolist (window (get-buffer-windows buffer))
+                     (with-current-window window
+                       (switch-to-buffer (or (get-previous-buffer buffer)
+                                             (car (last (buffer-list)))))))
+                   ;; delete buffer from the frame
+                   (lem-base::set-buffer-list (delete buffer (buffer-list))))
+              ;; restore current frame and buffer-list
+              (progn
+                (setf (vf-current vf) current-frame
+                      (vf-changed vf) t)
+                (setf (gethash frame (vf-buffer-list-map vf)) (buffer-list))
+                (map-frame display (%frame-frame current-frame))))))))
+
 (defun frame-multiplexer-on ()
   (unless (variable-value 'frame-multiplexer :global)
+    (add-hook (variable-value 'kill-buffer-hook :global) 'kill-buffer-from-all-frames)
     (frame-multiplexer-init)))
 
 (defun frame-multiplexer-off ()
   (when (variable-value 'frame-multiplexer :global)
+    (remove-hook (variable-value 'kill-buffer-hook :global) 'kill-buffer-from-all-frames)
     (maphash (lambda (k v)
                (declare (ignore k))
                (delete-window v))

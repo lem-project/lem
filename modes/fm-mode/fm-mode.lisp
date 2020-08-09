@@ -319,3 +319,19 @@
           (lem:map-frame (implementation) (%frame-frame %frame))))
       (lem::change-display-size-hook)
       (setf (vf-changed vf) t))))
+
+(defun completion-buffer-name-from-all-frames (str)
+  (completion-strings str (mapcar #'buffer-name (all-buffer-list))))
+
+(define-key *global-keymap* "C-z b" 'fm-select-buffer-from-all-frames)
+(define-command fm-select-buffer-from-all-frames (name)
+    ((list (let ((lem:*minibuffer-buffer-complete-function*
+                   #'completion-buffer-name-from-all-frames))
+             (prompt-for-buffer "Use buffer: " (buffer-name (current-buffer))
+                                t (all-buffer-list)))))
+  (block exit
+    (when (null *vf-map*)
+      (editor-error "fm-mode is not enabled")
+      (return-from exit))
+    (let ((buffer (find name (all-buffer-list) :test #'string= :key #'buffer-name)))
+      (select-buffer buffer))))

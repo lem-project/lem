@@ -117,7 +117,7 @@
 	     0 0 *fbar-width*
 	     (1- (display-height))  nil))
       
-      (setf lem::*current-window* *fbar-window*)
+      (setf (current-window) *fbar-window*)
       (setf (current-buffer) *fbar-buffer*)
       (redraw-display)))
 

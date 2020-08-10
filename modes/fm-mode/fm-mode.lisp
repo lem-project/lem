@@ -59,6 +59,12 @@
     :initarg :buffer
     :accessor virtual-frame-header-buffer)))
 
+(defun find-unused-frame-id (virtual-frame)
+  (position-if #'null (virtual-frame-frames virtual-frame)))
+
+(defun num-frames (virtual-frame)
+  (count-if-not #'null (virtual-frame-frames virtual-frame)))
+
 (defun make-virtual-frame (impl frame)
   (let* ((buffer (make-buffer "*fm*" :enable-undo-p nil :temporary t))
          (%frame (%make-frame 0 frame))
@@ -253,7 +259,7 @@
 (defun create-frame (new-buffer-list-p)
   (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
-         (id (position-if #'null (virtual-frame-frames vf))))
+         (id (find-unused-frame-id vf)))
     (when (null id)
       (editor-error "it's full of frames in virtual frame"))
     (let* ((frame (lem:make-frame))
@@ -294,7 +300,7 @@
 (define-command fm-delete () ()
   (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
-         (num (count-if-not #'null (virtual-frame-frames vf)))
+         (num (num-frames vf))
          (id (position (virtual-frame-current vf) (virtual-frame-frames vf))))
     (when (= num 1)
       (editor-error "cannot delete this virtual frame"))

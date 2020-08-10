@@ -362,7 +362,7 @@
                            (if max (<= n max) t))))
                     'mh-read-number)))
 
-(defun prompt-for-buffer (prompt &optional default existing)
+(defun prompt-for-buffer (prompt &optional default existing (buffer-list (buffer-list)))
   (when default
     (setq prompt (format nil "~a(~a) " prompt default)))
   (let ((result (prompt-for-line
@@ -371,7 +371,7 @@
                  *minibuffer-buffer-complete-function*
                  (and existing
                       (lambda (name)
-                        (member name (buffer-list) :test #'string= :key #'buffer-name)))
+                        (member name buffer-list :test #'string= :key #'buffer-name)))
                  'mh-read-buffer)))
     (if (string= result "")
         default

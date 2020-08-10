@@ -1,5 +1,5 @@
 (defpackage :lem-fm-mode
-  (:use :cl :lem :lem.button))
+  (:use :cl :lem-base :lem :lem.button))
 (in-package :lem-fm-mode)
 
 (defconstant +fm-max-number-of-frames+ 256)
@@ -35,6 +35,9 @@
     :initarg :current
     :accessor vf-current
     :type %frame)
+   (buffer-list-map
+    :initarg :buffer-list-map
+    :accessor vf-buffer-list-map)
    (display-width
     :initarg :width
     :accessor vf-width)
@@ -60,10 +63,21 @@
                              :width (display-width)
                              :height (display-height)
                              :frames frames
-                             :current %frame)))
+                             :current %frame
+                             :buffer-list-map (make-hash-table))))
       vf)))
 
-(defparameter *vf-map* nil)
+(defun all-buffer-list ()
+  (remove-duplicates
+   (loop
+     :for k :being :each :hash-key :of *vf-map*
+     :using (hash-value vf)
+     :append (loop
+               :for k :being :each :hash-key :of (vf-buffer-list-map vf)
+               :using (hash-value buffer-list)
+               :append buffer-list))))
+
+(defvar *vf-map* nil)
 
 (defun search-previous-frame (vf id)
   (let* ((frames (vf-frames vf))
@@ -170,14 +184,49 @@
     :for impl :in (list (implementation))  ; for multi-frame support in the future...
     :do (let ((vf (make-vf impl (lem:get-frame impl))))
           (setf (gethash impl *vf-map*) vf)
+          (setf (gethash (vf-current vf) (vf-buffer-list-map vf))
+                (copy-list (buffer-list)))
           (lem:map-frame (implementation) (%frame-frame (vf-current vf))))))
+
+(defun kill-buffer-from-all-frames (buffer)
+  ;; update buffer-list-map
+  (let ((vf (gethash (implementation) *vf-map*)))
+    (setf (gethash (vf-current vf) (vf-buffer-list-map vf))
+          (copy-list (buffer-list))))
+  ;; kill buffer from all frames in all virtual frames
+  (loop
+    :for display :being :each :hash-key :of *vf-map*
+    :using (hash-value vf)
+    :do (let ((current-frame (vf-current vf)))
+          (dolist (frame (alexandria:hash-table-keys (vf-buffer-list-map vf)))
+            (unwind-protect
+                 (progn
+                   ;; temporary switched current frame and buffer-list
+                   (map-frame display (%frame-frame frame))
+                   (setf (vf-current vf) frame)
+                   (lem-base::set-buffer-list (gethash frame (vf-buffer-list-map vf)))
+                   ;; switch buffers that will be deleted
+                   (dolist (window (get-buffer-windows buffer))
+                     (with-current-window window
+                       (switch-to-buffer (or (get-previous-buffer buffer)
+                                             (car (last (buffer-list)))))))
+                   ;; delete buffer from the frame
+                   (lem-base::set-buffer-list (delete buffer (buffer-list))))
+              ;; restore current frame and buffer-list
+              (progn
+                (setf (vf-current vf) current-frame
+                      (vf-changed vf) t)
+                (setf (gethash frame (vf-buffer-list-map vf)) (buffer-list))
+                (map-frame display (%frame-frame current-frame))))))))
 
 (defun frame-multiplexer-on ()
   (unless (variable-value 'frame-multiplexer :global)
+    (add-hook (variable-value 'kill-buffer-hook :global) 'kill-buffer-from-all-frames)
     (frame-multiplexer-init)))
 
 (defun frame-multiplexer-off ()
   (when (variable-value 'frame-multiplexer :global)
+    (remove-hook (variable-value 'kill-buffer-hook :global) 'kill-buffer-from-all-frames)
     (maphash (lambda (k v)
                (declare (ignore k))
                (delete-window v))
@@ -194,8 +243,7 @@
   (setf (variable-value 'frame-multiplexer :global)
         (not (variable-value 'frame-multiplexer :global))))
 
-(define-key *global-keymap* "c-z c" 'fm-create)
-(define-command fm-create () ()
+(defun create-frame (new-buffer-list-p)
   (block exit
     (when (null *vf-map*)
       (editor-error "fm-mode is not enabled")
@@ -207,9 +255,16 @@
         (return-from exit))
       (let* ((frame (lem:make-frame))
              (%frame (%make-frame id frame))
-             (tmp-buffer (find "*tmp*" lem-base::*buffer-list*
-                               :key (lambda (b) (slot-value b 'lem-base::name))
+             (tmp-buffer (find "*tmp*" (append (buffer-list) (all-buffer-list))
+                               :key (lambda (b) (buffer-name b))
                                :test #'string=)))
+        (setf (gethash (vf-current vf) (vf-buffer-list-map vf))
+              (copy-list (buffer-list)))
+        (let ((buffer-list (if new-buffer-list-p
+                               (list tmp-buffer)
+                               (copy-list (buffer-list)))))
+          (setf (gethash %frame (vf-buffer-list-map vf)) buffer-list)
+          (lem-base::set-buffer-list buffer-list))
         (lem:setup-frame frame)
         (push vf (lem:frame-header-windows frame))
         (when tmp-buffer
@@ -223,6 +278,14 @@
                   (vf-current vf) %frame)
             (lem:map-frame (implementation) frame))))
       (setf (vf-changed vf) t))))
+
+(define-key *global-keymap* "c-z c" 'fm-create-with-new-buffer-list)
+(define-command fm-create-with-new-buffer-list () ()
+  (create-frame t))
+
+(define-key *global-keymap* "c-z C" 'fm-create)
+(define-command fm-create () ()
+  (create-frame nil))
 
 (define-key *global-keymap* "c-z d" 'fm-delete)
 (define-command fm-delete () ()
@@ -239,6 +302,7 @@
       (when (null id)
         (editor-error "something wrong... fm-mode broken?")
         (return-from exit))
+      (remhash (vf-current vf) (vf-buffer-list-map vf))
       (setf (aref (vf-frames vf) id) nil)
       (let ((%frame (search-previous-frame vf id)))
         (setf (vf-current vf) %frame)
@@ -258,7 +322,11 @@
         (return-from exit))
       (let ((%frame (search-previous-frame vf id)))
         (when %frame
+          (let ((prev-current (vf-current vf))
+                (buffer-list (copy-list (buffer-list))))
+            (setf (gethash prev-current (vf-buffer-list-map vf)) buffer-list))
           (setf (vf-current vf) %frame)
+          (lem-base::set-buffer-list (gethash %frame (vf-buffer-list-map vf)))
           (lem:map-frame (implementation) (%frame-frame %frame))))
       (lem::change-display-size-hook)
       (setf (vf-changed vf) t))))
@@ -276,7 +344,29 @@
         (return-from exit))
       (let ((%frame (search-next-frame vf id)))
         (when %frame
+          (let ((prev-current (vf-current vf))
+                (buffer-list (copy-list (buffer-list))))
+            (setf (gethash prev-current (vf-buffer-list-map vf)) buffer-list))
           (setf (vf-current vf) %frame)
+          (lem-base::set-buffer-list (gethash %frame (vf-buffer-list-map vf)))
           (lem:map-frame (implementation) (%frame-frame %frame))))
       (lem::change-display-size-hook)
       (setf (vf-changed vf) t))))
+
+(defun completion-buffer-name-from-all-frames (str)
+  (completion-strings str (mapcar #'buffer-name (all-buffer-list))))
+
+(define-key *global-keymap* "C-z b" 'fm-select-buffer-from-all-frames)
+(define-command fm-select-buffer-from-all-frames (name)
+    ((list (let ((lem:*minibuffer-buffer-complete-function*
+                   #'completion-buffer-name-from-all-frames))
+             (prompt-for-buffer "Use buffer: " (buffer-name (current-buffer))
+                                t (all-buffer-list)))))
+  (block exit
+    (when (null *vf-map*)
+      (editor-error "fm-mode is not enabled")
+      (return-from exit))
+    (let ((buffer (find name (all-buffer-list) :test #'string= :key #'buffer-name)))
+      (when (null (find buffer (buffer-list)))
+        (lem-base::set-buffer-list (cons buffer (buffer-list))))
+      (select-buffer buffer))))

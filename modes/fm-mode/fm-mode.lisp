@@ -281,31 +281,35 @@
          (id (find-unused-frame-id vf)))
     (when (null id)
       (editor-error "it's full of frames in virtual frame"))
+    (set-to-frame-buffer-list vf (virtual-frame-current vf))
     (let* ((frame (lem:make-frame))
-           (%frame (%make-frame id frame))
-           (tmp-buffer (find "*tmp*" (append (buffer-list) (all-buffer-list))
-                             :key (lambda (b) (buffer-name b))
-                             :test #'string=)))
-      (setf (gethash (virtual-frame-current vf) (virtual-frame-buffer-list-map vf))
-            (copy-list (buffer-list)))
-      (let ((buffer-list (if new-buffer-list-p
-                             (list tmp-buffer)
-                             (copy-list (buffer-list)))))
-        (setf (gethash %frame (virtual-frame-buffer-list-map vf)) buffer-list)
-        (lem-base::set-buffer-list buffer-list))
+           (%frame (%make-frame id frame)))
       (lem:setup-frame frame)
-      (push vf (lem:frame-header-windows frame))
-      (when tmp-buffer
-        (let ((new-window (lem::make-window tmp-buffer
-                                            (lem::window-topleft-x) (lem::window-topleft-y)
-                                            (lem::window-max-width) (lem::window-max-height)
-                                            t)))
-          (setf (lem:frame-window-tree frame) new-window
-                (lem:frame-current-window frame) new-window
-                (virtual-frame-current vf) %frame)
-          (allocate-frame vf %frame)
-          (lem:map-frame (implementation) frame))))
-    (setf (virtual-frame-changed vf) t)))
+      ;;create new-window with *tmp* buffer by default
+      (let* ((tmp-buffer (find "*tmp*" (append (buffer-list) (all-buffer-list))
+                               :key (lambda (b) (buffer-name b))
+                               :test #'string=))
+             (buffer-list (if new-buffer-list-p
+                              (list tmp-buffer)
+                              (copy-list (buffer-list)))))
+        ;; set buffer-list to virtual frame and global buffer-list
+        (setf (gethash %frame (virtual-frame-buffer-list-map vf)) buffer-list)
+        (lem-base::set-buffer-list buffer-list)
+        ;; create window and set to frame
+        (when tmp-buffer
+          (push vf (lem:frame-header-windows frame))
+          (let ((new-window (lem::make-window tmp-buffer
+                                              (lem::window-topleft-x) (lem::window-topleft-y)
+                                              (lem::window-max-width) (lem::window-max-height)
+                                              t)))
+            (setf (lem:frame-window-tree frame) new-window
+                  (lem:frame-current-window frame) new-window
+                  (virtual-frame-current vf) %frame)
+            ;; expose frame
+            (allocate-frame vf %frame)
+            (lem:map-frame (implementation) frame))))
+      ;; new window should be redraw
+      (setf (virtual-frame-changed vf) t))))
 
 (define-key *global-keymap* "C-z c" 'fm-create-with-new-buffer-list)
 (define-command fm-create-with-new-buffer-list () ()

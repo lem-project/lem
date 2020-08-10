@@ -225,13 +225,16 @@
                 (setf (gethash frame (virtual-frame-buffer-list-map vf)) (buffer-list))
                 (map-frame display (%frame-frame current-frame))))))))
 
+(defun enabled-frame-multiplexer-p ()
+  (variable-value 'frame-multiplexer :global))
+
 (defun frame-multiplexer-on ()
-  (unless (variable-value 'frame-multiplexer :global)
+  (unless (enabled-frame-multiplexer-p)
     (add-hook (variable-value 'kill-buffer-hook :global) 'kill-buffer-from-all-frames)
     (frame-multiplexer-init)))
 
 (defun frame-multiplexer-off ()
-  (when (variable-value 'frame-multiplexer :global)
+  (when (enabled-frame-multiplexer-p)
     (remove-hook (variable-value 'kill-buffer-hook :global) 'kill-buffer-from-all-frames)
     (maphash (lambda (k v)
                (declare (ignore k))

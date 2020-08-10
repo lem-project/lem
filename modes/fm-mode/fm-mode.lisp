@@ -68,6 +68,14 @@
 (defun compute-frame-id (virtual-frame frame)
   (position frame (virtual-frame-frames virtual-frame)))
 
+(defun allocate-virtual-frame (virtual-frame id frame)
+  (setf (aref (virtual-frame-frames virtual-frame) id)
+        frame))
+
+(defun free-frame (virtual-frame id)
+  (setf (aref (virtual-frame-frames virtual-frame) id)
+        nil))
+
 (defun make-virtual-frame (impl frame)
   (let* ((buffer (make-buffer "*fm*" :enable-undo-p nil :temporary t))
          (%frame (%make-frame 0 frame))
@@ -286,8 +294,8 @@
                                             t)))
           (setf (lem:frame-window-tree frame) new-window
                 (lem:frame-current-window frame) new-window
-                (aref (virtual-frame-frames vf) id) %frame
                 (virtual-frame-current vf) %frame)
+          (allocate-virtual-frame vf id %frame)
           (lem:map-frame (implementation) frame))))
     (setf (virtual-frame-changed vf) t)))
 
@@ -310,7 +318,7 @@
     (when (null id)
       (editor-error "something wrong... fm-mode broken?"))
     (remhash (virtual-frame-current vf) (virtual-frame-buffer-list-map vf))
-    (setf (aref (virtual-frame-frames vf) id) nil)
+    (free-frame vf id)
     (let ((%frame (search-previous-frame vf id)))
       (setf (virtual-frame-current vf) %frame)
       (lem:map-frame (implementation) (%frame-frame %frame)))

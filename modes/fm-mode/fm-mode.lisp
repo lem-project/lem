@@ -228,6 +228,10 @@
 (defun enabled-frame-multiplexer-p ()
   (variable-value 'frame-multiplexer :global))
 
+(defun check-frame-multiplexer-enabled ()
+  (unless (enabled-frame-multiplexer-p)
+    (editor-error "fm-mode is not enabled")))
+
 (defun frame-multiplexer-on ()
   (unless (enabled-frame-multiplexer-p)
     (add-hook (variable-value 'kill-buffer-hook :global) 'kill-buffer-from-all-frames)
@@ -247,8 +251,7 @@
         (not (variable-value 'frame-multiplexer :global))))
 
 (defun create-frame (new-buffer-list-p)
-  (unless (enabled-frame-multiplexer-p)
-    (editor-error "fm-mode is not enabled"))
+  (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (id (position-if #'null (virtual-frame-frames vf))))
     (when (null id)
@@ -289,8 +292,7 @@
 
 (define-key *global-keymap* "C-z d" 'fm-delete)
 (define-command fm-delete () ()
-  (unless (enabled-frame-multiplexer-p)
-    (editor-error "fm-mode is not enabled"))
+  (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (num (count-if-not #'null (virtual-frame-frames vf)))
          (id (position (virtual-frame-current vf) (virtual-frame-frames vf))))
@@ -307,8 +309,7 @@
 
 (define-key *global-keymap* "C-z p" 'fm-prev)
 (define-command fm-prev () ()
-  (unless (enabled-frame-multiplexer-p)
-    (editor-error "fm-mode is not enabled"))
+  (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (id (position (virtual-frame-current vf) (virtual-frame-frames vf))))
     (when (null id)
@@ -326,8 +327,7 @@
 
 (define-key *global-keymap* "C-z n" 'fm-next)
 (define-command fm-next () ()
-  (unless (enabled-frame-multiplexer-p)
-    (editor-error "fm-mode is not enabled"))
+  (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (id (position (virtual-frame-current vf) (virtual-frame-frames vf))))
     (when (null id)
@@ -352,8 +352,7 @@
                    #'completion-buffer-name-from-all-frames))
              (prompt-for-buffer "Use buffer: " (buffer-name (current-buffer))
                                 t (all-buffer-list)))))
-  (unless (enabled-frame-multiplexer-p)
-    (editor-error "fm-mode is not enabled"))
+  (check-frame-multiplexer-enabled)
   (let ((buffer (find name (all-buffer-list) :test #'string= :key #'buffer-name)))
     (when (null (find buffer (buffer-list)))
       (lem-base::set-buffer-list (cons buffer (buffer-list))))

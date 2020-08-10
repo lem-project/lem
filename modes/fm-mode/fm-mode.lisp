@@ -22,12 +22,9 @@
         (frame-multiplexer-on)
         (frame-multiplexer-off))))
 
-(defstruct %frame
+(defstruct (%frame (:constructor %make-frame (id frame)))
   (id 0 :type integer)
   (frame nil :type lem:frame))
-
-(defun %make-frame (id frame)
-  (make-%frame :id id :frame frame))
 
 (defclass virtual-frame (header-window)
   ((implementation

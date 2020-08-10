@@ -247,7 +247,7 @@
         (not (variable-value 'frame-multiplexer :global))))
 
 (defun create-frame (new-buffer-list-p)
-  (when (null *virtual-frame-map*)
+  (unless (enabled-frame-multiplexer-p)
     (editor-error "fm-mode is not enabled"))
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (id (position-if #'null (virtual-frame-frames vf))))
@@ -289,7 +289,7 @@
 
 (define-key *global-keymap* "C-z d" 'fm-delete)
 (define-command fm-delete () ()
-  (when (null *virtual-frame-map*)
+  (unless (enabled-frame-multiplexer-p)
     (editor-error "fm-mode is not enabled"))
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (num (count-if-not #'null (virtual-frame-frames vf)))
@@ -307,7 +307,7 @@
 
 (define-key *global-keymap* "C-z p" 'fm-prev)
 (define-command fm-prev () ()
-  (when (null *virtual-frame-map*)
+  (unless (enabled-frame-multiplexer-p)
     (editor-error "fm-mode is not enabled"))
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (id (position (virtual-frame-current vf) (virtual-frame-frames vf))))
@@ -326,7 +326,7 @@
 
 (define-key *global-keymap* "C-z n" 'fm-next)
 (define-command fm-next () ()
-  (when (null *virtual-frame-map*)
+  (unless (enabled-frame-multiplexer-p)
     (editor-error "fm-mode is not enabled"))
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (id (position (virtual-frame-current vf) (virtual-frame-frames vf))))
@@ -352,7 +352,7 @@
                    #'completion-buffer-name-from-all-frames))
              (prompt-for-buffer "Use buffer: " (buffer-name (current-buffer))
                                 t (all-buffer-list)))))
-  (when (null *virtual-frame-map*)
+  (unless (enabled-frame-multiplexer-p)
     (editor-error "fm-mode is not enabled"))
   (let ((buffer (find name (all-buffer-list) :test #'string= :key #'buffer-name)))
     (when (null (find buffer (buffer-list)))

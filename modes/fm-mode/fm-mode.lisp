@@ -5,7 +5,7 @@
 (defconstant +fm-max-number-of-frames+ 256)
 (defconstant +fm-max-width-of-each-frame-name+ 20)
 
-(defvar *virtual-frame-map* nil)
+(defvar *virtual-frame-map* (make-hash-table))
 
 (define-attribute fm-active-frame-name-attribute
   (t :foreground "white" :background "blue"))
@@ -185,7 +185,7 @@
   (call-next-method))
 
 (defun frame-multiplexer-init ()
-  (setf *virtual-frame-map* (make-hash-table))
+  (clrhash *virtual-frame-map*)
   (loop
     :for impl :in (list (implementation))  ; for multi-frame support in the future...
     :do (let ((vf (make-virtual-frame impl (lem:get-frame impl))))
@@ -244,7 +244,7 @@
                (declare (ignore k))
                (delete-window v))
              *virtual-frame-map*)
-    (setf *virtual-frame-map* nil)))
+    (clrhash *virtual-frame-map*)))
 
 (define-command fm-mode () ()
   (setf (variable-value 'frame-multiplexer :global)

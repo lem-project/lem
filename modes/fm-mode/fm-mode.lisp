@@ -134,6 +134,16 @@
                  (virtual-frame-height vf)))
          t)))
 
+(defun set-to-frame-buffer-list (vf frame)
+  (let ((buffer-list-map (virtual-frame-buffer-list-map vf))
+        (buffer-list (copy-list (buffer-list))))
+    (setf (gethash frame buffer-list-map) buffer-list)))
+
+(defun set-to-current-buffer-list (vf frame)
+  (let* ((buffer-list-map (virtual-frame-buffer-list-map vf))
+         (buffer-list (gethash frame buffer-list-map)))
+    (lem-base::set-buffer-list buffer-list)))
+
 (defmethod window-redraw ((window virtual-frame) force)
   (when (or force
             (loop :for k :being :each :hash-key :of *virtual-frame-map*
@@ -224,7 +234,8 @@
                    ;; temporary switched current frame and buffer-list
                    (map-frame display (%frame-frame frame))
                    (setf (virtual-frame-current vf) frame)
-                   (lem-base::set-buffer-list (gethash frame (virtual-frame-buffer-list-map vf)))
+                   (let ((frame-buffer-list (gethash frame (virtual-frame-buffer-list-map vf))))
+                     (set-to-current-buffer-list vf frame))
                    ;; switch buffers that will be deleted
                    (dolist (window (get-buffer-windows buffer))
                      (with-current-window window
@@ -236,7 +247,7 @@
               (progn
                 (setf (virtual-frame-current vf) current-frame
                       (virtual-frame-changed vf) t)
-                (setf (gethash frame (virtual-frame-buffer-list-map vf)) (buffer-list))
+                (set-to-frame-buffer-list vf frame)
                 (map-frame display (%frame-frame current-frame))))))))
 
 (defun enabled-frame-multiplexer-p ()
@@ -330,11 +341,10 @@
       (editor-error "something wrong... fm-mode broken?"))
     (let ((%frame (search-previous-frame vf id)))
       (when %frame
-        (let ((prev-current (virtual-frame-current vf))
-              (buffer-list (copy-list (buffer-list))))
-          (setf (gethash prev-current (virtual-frame-buffer-list-map vf)) buffer-list))
+        (let ((prev-current (virtual-frame-current vf)))
+          (set-to-frame-buffer-list vf prev-frame))
         (setf (virtual-frame-current vf) %frame)
-        (lem-base::set-buffer-list (gethash %frame (virtual-frame-buffer-list-map vf)))
+        (set-to-current-buffer-list vf %frame)
         (lem:map-frame (implementation) (%frame-frame %frame))))
     (lem::change-display-size-hook)
     (setf (virtual-frame-changed vf) t)))
@@ -348,11 +358,10 @@
       (editor-error "something wrong... fm-mode broken?"))
     (let ((%frame (search-next-frame vf id)))
       (when %frame
-        (let ((prev-current (virtual-frame-current vf))
-              (buffer-list (copy-list (buffer-list))))
-          (setf (gethash prev-current (virtual-frame-buffer-list-map vf)) buffer-list))
+        (let ((prev-current (virtual-frame-current vf)))
+          (set-to-frame-buffer-list vf prev-current))
         (setf (virtual-frame-current vf) %frame)
-        (lem-base::set-buffer-list (gethash %frame (virtual-frame-buffer-list-map vf)))
+        (set-to-current-buffer-list vf %frame)
         (lem:map-frame (implementation) (%frame-frame %frame))))
     (lem::change-display-size-hook)
     (setf (virtual-frame-changed vf) t)))

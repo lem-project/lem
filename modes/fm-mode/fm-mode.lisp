@@ -16,6 +16,12 @@
 (define-attribute fm-background-attribute
   (t :underline-p t))
 
+(define-editor-variable frame-multiplexer nil ""
+  (lambda (value)
+    (if value
+        (frame-multiplexer-on)
+        (frame-multiplexer-off))))
+
 (defstruct %frame
   (id 0 :type integer)
   (frame nil :type lem:frame))
@@ -232,12 +238,6 @@
                (delete-window v))
              *virtual-frame-map*)
     (setf *virtual-frame-map* nil)))
-
-(define-editor-variable frame-multiplexer nil ""
-  (lambda (value)
-    (if value
-        (frame-multiplexer-on)
-        (frame-multiplexer-off))))
 
 (define-command fm-mode () ()
   (setf (variable-value 'frame-multiplexer :global)

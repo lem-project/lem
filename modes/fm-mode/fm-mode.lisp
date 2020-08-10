@@ -5,6 +5,8 @@
 (defconstant +fm-max-number-of-frames+ 256)
 (defconstant +fm-max-width-of-each-frame-name+ 20)
 
+(defvar *vf-map* nil)
+
 (define-attribute fm-active-frame-name-attribute
   (t :foreground "white" :background "blue"))
 
@@ -76,8 +78,6 @@
                :for k :being :each :hash-key :of (vf-buffer-list-map vf)
                :using (hash-value buffer-list)
                :append buffer-list))))
-
-(defvar *vf-map* nil)
 
 (defun search-previous-frame (vf id)
   (let* ((frames (vf-frames vf))

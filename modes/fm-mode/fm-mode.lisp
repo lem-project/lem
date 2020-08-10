@@ -276,15 +276,15 @@
           (lem:map-frame (implementation) frame))))
     (setf (virtual-frame-changed vf) t)))
 
-(define-key *global-keymap* "c-z c" 'fm-create-with-new-buffer-list)
+(define-key *global-keymap* "C-z c" 'fm-create-with-new-buffer-list)
 (define-command fm-create-with-new-buffer-list () ()
   (create-frame t))
 
-(define-key *global-keymap* "c-z C" 'fm-create)
+(define-key *global-keymap* "C-z C" 'fm-create)
 (define-command fm-create () ()
   (create-frame nil))
 
-(define-key *global-keymap* "c-z d" 'fm-delete)
+(define-key *global-keymap* "C-z d" 'fm-delete)
 (define-command fm-delete () ()
   (when (null *virtual-frame-map*)
     (editor-error "fm-mode is not enabled"))

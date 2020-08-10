@@ -59,23 +59,6 @@
     :initarg :buffer
     :accessor virtual-frame-header-buffer)))
 
-(defun find-unused-frame-id (virtual-frame)
-  (position-if #'null (virtual-frame-frames virtual-frame)))
-
-(defun num-frames (virtual-frame)
-  (count-if-not #'null (virtual-frame-frames virtual-frame)))
-
-(defun compute-frame-id (virtual-frame frame)
-  (position frame (virtual-frame-frames virtual-frame)))
-
-(defun allocate-virtual-frame (virtual-frame id frame)
-  (setf (aref (virtual-frame-frames virtual-frame) id)
-        frame))
-
-(defun free-frame (virtual-frame id)
-  (setf (aref (virtual-frame-frames virtual-frame) id)
-        nil))
-
 (defun make-virtual-frame (impl frame)
   (let* ((buffer (make-buffer "*fm*" :enable-undo-p nil :temporary t))
          (%frame (%make-frame 0 frame))
@@ -101,6 +84,23 @@
                :for k :being :each :hash-key :of (virtual-frame-buffer-list-map vf)
                :using (hash-value buffer-list)
                :append buffer-list))))
+
+(defun find-unused-frame-id (virtual-frame)
+  (position-if #'null (virtual-frame-frames virtual-frame)))
+
+(defun num-frames (virtual-frame)
+  (count-if-not #'null (virtual-frame-frames virtual-frame)))
+
+(defun compute-frame-id (virtual-frame frame)
+  (position frame (virtual-frame-frames virtual-frame)))
+
+(defun allocate-virtual-frame (virtual-frame id frame)
+  (setf (aref (virtual-frame-frames virtual-frame) id)
+        frame))
+
+(defun free-frame (virtual-frame id)
+  (setf (aref (virtual-frame-frames virtual-frame) id)
+        nil))
 
 (defun search-previous-frame (vf id)
   (let* ((frames (virtual-frame-frames vf))

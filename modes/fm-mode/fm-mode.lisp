@@ -346,7 +346,7 @@
     (let ((%frame (search-previous-frame vf id)))
       (when %frame
         (let ((prev-current (virtual-frame-current vf)))
-          (set-to-frame-buffer-list vf prev-frame))
+          (set-to-frame-buffer-list vf prev-current))
         (setf (virtual-frame-current vf) %frame)
         (set-to-current-buffer-list vf %frame)
         (lem:map-frame (implementation) (%frame-frame %frame))))

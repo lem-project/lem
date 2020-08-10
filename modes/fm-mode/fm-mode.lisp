@@ -190,7 +190,7 @@
         (frame-multiplexer-on)
         (frame-multiplexer-off))))
 
-(define-command fm () ()
+(define-command fm-mode () ()
   (setf (variable-value 'frame-multiplexer :global)
         (not (variable-value 'frame-multiplexer :global))))
 

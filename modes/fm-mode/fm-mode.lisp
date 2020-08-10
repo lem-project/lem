@@ -1,5 +1,5 @@
 (defpackage :lem-fm-mode
-  (:use :cl :lem-base :lem :lem.button))
+  (:use :cl :lem :lem.button))
 (in-package :lem-fm-mode)
 
 (defconstant +fm-max-number-of-frames+ 256)

@@ -94,7 +94,7 @@
 (defun compute-frame-id (virtual-frame frame)
   (position frame (virtual-frame-frames virtual-frame)))
 
-(defun allocate-virtual-frame (virtual-frame id frame)
+(defun allocate-frame (virtual-frame id frame)
   (setf (aref (virtual-frame-frames virtual-frame) id)
         frame))
 
@@ -295,7 +295,7 @@
           (setf (lem:frame-window-tree frame) new-window
                 (lem:frame-current-window frame) new-window
                 (virtual-frame-current vf) %frame)
-          (allocate-virtual-frame vf id %frame)
+          (allocate-frame vf id %frame)
           (lem:map-frame (implementation) frame))))
     (setf (virtual-frame-changed vf) t)))
 

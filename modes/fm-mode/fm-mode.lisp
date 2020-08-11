@@ -234,7 +234,7 @@
                    (map-frame display (%frame-frame frame))
                    (setf (virtual-frame-current vf) frame)
                    (let ((frame-buffer-list (gethash frame (virtual-frame-buffer-list-map vf))))
-                     (set-to-current-buffer-list vf frame))
+                     (lem-base::set-buffer-list frame-buffer-list))
                    ;; switch buffers that will be deleted
                    (dolist (window (get-buffer-windows buffer))
                      (with-current-window window

@@ -40,9 +40,6 @@
     :initarg :current
     :accessor virtual-frame-current
     :type %frame)
-   (buffer-list-map
-    :initarg :buffer-list-map
-    :accessor virtual-frame-buffer-list-map)
    (display-width
     :initarg :width
     :accessor virtual-frame-width)
@@ -69,19 +66,8 @@
                              :width (display-width)
                              :height (display-height)
                              :id/frame-table id/frame-table
-                             :current %frame
-                             :buffer-list-map (make-hash-table))))
+                             :current %frame)))
       vf)))
-
-(defun all-buffer-list ()
-  (remove-duplicates
-   (loop
-     :for k :being :each :hash-key :of *virtual-frame-map*
-     :using (hash-value vf)
-     :append (loop
-               :for k :being :each :hash-key :of (virtual-frame-buffer-list-map vf)
-               :using (hash-value buffer-list)
-               :append buffer-list))))
 
 (defun find-unused-frame-id (virtual-frame)
   (position-if #'null (virtual-frame-id/frame-table virtual-frame)))
@@ -143,16 +129,6 @@
         ((not (= (display-height)
                  (virtual-frame-height virtual-frame)))
          t)))
-
-(defun set-to-frame-buffer-list (virtual-frame frame)
-  (let ((buffer-list-map (virtual-frame-buffer-list-map virtual-frame))
-        (buffer-list (copy-list (buffer-list))))
-    (setf (gethash frame buffer-list-map) buffer-list)))
-
-(defun set-to-current-buffer-list (virtual-frame frame)
-  (let* ((buffer-list-map (virtual-frame-buffer-list-map virtual-frame))
-         (buffer-list (gethash frame buffer-list-map)))
-    (lem-base::set-buffer-list buffer-list)))
 
 (defmethod window-redraw ((window virtual-frame) force)
   (when (or force
@@ -222,41 +198,7 @@
     :for impl :in (list (implementation))  ; for multi-frame support in the future...
     :do (let ((vf (make-virtual-frame impl (lem:get-frame impl))))
           (setf (gethash impl *virtual-frame-map*) vf)
-          (setf (gethash (virtual-frame-current vf) (virtual-frame-buffer-list-map vf))
-                (copy-list (buffer-list)))
           (lem:map-frame (implementation) (%frame-frame (virtual-frame-current vf))))))
-
-(defun kill-buffer-from-all-frames (buffer)
-  ;; update buffer-list-map
-  (let ((vf (gethash (implementation) *virtual-frame-map*)))
-    (setf (gethash (virtual-frame-current vf) (virtual-frame-buffer-list-map vf))
-          (copy-list (buffer-list))))
-  ;; kill buffer from all frames in all virtual frames
-  (loop
-    :for display :being :each :hash-key :of *virtual-frame-map*
-    :using (hash-value vf)
-    :do (let ((current-frame (virtual-frame-current vf)))
-          (declare (type %frame current-frame))
-          (dolist (frame (alexandria:hash-table-keys (virtual-frame-buffer-list-map vf)))
-            (unwind-protect
-                 (progn
-                   ;; temporary switched current frame and buffer-list
-                   (map-frame display (%frame-frame frame))
-                   (setf (virtual-frame-current vf) frame)
-                   (set-to-current-buffer-list vf frame)
-                   ;; switch buffers that will be deleted
-                   (dolist (window (get-buffer-windows buffer))
-                     (with-current-window window
-                       (switch-to-buffer (or (get-previous-buffer buffer)
-                                             (car (last (buffer-list)))))))
-                   ;; delete buffer from the frame
-                   (lem-base::set-buffer-list (delete buffer (buffer-list))))
-              ;; restore current frame and buffer-list
-              (progn
-                (setf (virtual-frame-current vf) current-frame
-                      (virtual-frame-changed vf) t)
-                (set-to-frame-buffer-list vf frame)
-                (map-frame display (%frame-frame current-frame))))))))
 
 (defun enabled-frame-multiplexer-p ()
   (variable-value 'frame-multiplexer :global))
@@ -267,12 +209,10 @@
 
 (defun frame-multiplexer-on ()
   (unless (enabled-frame-multiplexer-p)
-    (add-hook (variable-value 'kill-buffer-hook :global) 'kill-buffer-from-all-frames)
     (frame-multiplexer-init)))
 
 (defun frame-multiplexer-off ()
   (when (enabled-frame-multiplexer-p)
-    (remove-hook (variable-value 'kill-buffer-hook :global) 'kill-buffer-from-all-frames)
     (maphash (lambda (k v)
                (declare (ignore k))
                (delete-window v))
@@ -283,49 +223,28 @@
   (setf (variable-value 'frame-multiplexer :global)
         (not (variable-value 'frame-multiplexer :global))))
 
-(defun create-frame (new-buffer-list-p)
+(define-key *global-keymap* "C-z c" 'fm-create-with-new-buffer-list)
+(define-command fm-create-with-new-buffer-list () ()
   (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (id (find-unused-frame-id vf)))
     (when (null id)
       (editor-error "it's full of frames in virtual frame"))
-    (set-to-frame-buffer-list vf (virtual-frame-current vf))
     (let* ((frame (lem:make-frame))
-           (%frame (%make-frame id frame)))
+           (%frame (%make-frame id frame))
+           (tmp-buffer (make-buffer "*tmp*")))
       (lem:setup-frame frame)
-      ;;create new-window with *tmp* buffer by default
-      (let* ((tmp-buffer (find "*tmp*" (append (buffer-list) (all-buffer-list))
-                               :key (lambda (b) (buffer-name b))
-                               :test #'string=))
-             (buffer-list (if new-buffer-list-p
-                              (list tmp-buffer)
-                              (copy-list (buffer-list)))))
-        ;; set buffer-list to virtual frame and global buffer-list
-        (setf (gethash %frame (virtual-frame-buffer-list-map vf)) buffer-list)
-        (lem-base::set-buffer-list buffer-list)
-        ;; create window and set to frame
-        (when tmp-buffer
-          (push vf (lem:frame-header-windows frame))
-          (let ((new-window (lem::make-window tmp-buffer
-                                              (lem::window-topleft-x) (lem::window-topleft-y)
-                                              (lem::window-max-width) (lem::window-max-height)
-                                              t)))
-            (setf (lem:frame-window-tree frame) new-window
-                  (lem:frame-current-window frame) new-window
-                  (virtual-frame-current vf) %frame)
-            ;; expose frame
-            (allocate-frame vf %frame)
-            (lem:map-frame (implementation) frame))))
-      ;; new window should be redraw
+      (push vf (lem:frame-header-windows frame))
+      (let ((new-window (lem::make-window tmp-buffer
+                                          (lem::window-topleft-x) (lem::window-topleft-y)
+                                          (lem::window-max-width) (lem::window-max-height)
+                                          t)))
+        (setf (lem:frame-window-tree frame) new-window
+              (lem:frame-current-window frame) new-window
+              (virtual-frame-current vf) %frame)
+        (allocate-frame vf %frame)
+        (lem:map-frame (implementation) frame))
       (setf (virtual-frame-changed vf) t))))
-
-(define-key *global-keymap* "C-z c" 'fm-create-with-new-buffer-list)
-(define-command fm-create-with-new-buffer-list () ()
-  (create-frame t))
-
-(define-key *global-keymap* "C-z C" 'fm-create)
-(define-command fm-create () ()
-  (create-frame nil))
 
 (define-key *global-keymap* "C-z d" 'fm-delete)
 (define-command fm-delete () ()
@@ -334,7 +253,6 @@
          (num (num-frames vf)))
     (when (= num 1)
       (editor-error "cannot delete this virtual frame"))
-    (remhash (virtual-frame-current vf) (virtual-frame-buffer-list-map vf))
     (free-frame vf (virtual-frame-current vf))
     (let ((%frame (search-previous-frame vf (virtual-frame-current vf))))
       (setf (virtual-frame-current vf) %frame)
@@ -344,45 +262,24 @@
 (define-key *global-keymap* "C-z p" 'fm-prev)
 (define-command fm-prev () ()
   (check-frame-multiplexer-enabled)
-  (let* ((vf (gethash (implementation) *virtual-frame-map*)))
-    (let ((%frame (search-previous-frame vf (virtual-frame-current vf))))
-      (when %frame
-        (let ((prev-current (virtual-frame-current vf)))
-          (set-to-frame-buffer-list vf prev-current))
-        (setf (virtual-frame-current vf) %frame)
-        (set-to-current-buffer-list vf %frame)
-        (lem:map-frame (implementation) (%frame-frame %frame))))
+  (let* ((vf (gethash (implementation) *virtual-frame-map*))
+         (%frame (search-previous-frame vf (virtual-frame-current vf))))
+    (when %frame
+      (setf (virtual-frame-current vf) %frame)
+      (lem:map-frame (implementation) (%frame-frame %frame)))
     (lem::change-display-size-hook)
     (setf (virtual-frame-changed vf) t)))
 
 (define-key *global-keymap* "C-z n" 'fm-next)
 (define-command fm-next () ()
   (check-frame-multiplexer-enabled)
-  (let* ((vf (gethash (implementation) *virtual-frame-map*)))
-    (let ((%frame (search-next-frame vf (virtual-frame-current vf))))
-      (when %frame
-        (let ((prev-current (virtual-frame-current vf)))
-          (set-to-frame-buffer-list vf prev-current))
-        (setf (virtual-frame-current vf) %frame)
-        (set-to-current-buffer-list vf %frame)
-        (lem:map-frame (implementation) (%frame-frame %frame))))
+  (let* ((vf (gethash (implementation) *virtual-frame-map*))
+         (%frame (search-next-frame vf (virtual-frame-current vf))))
+    (when %frame
+      (setf (virtual-frame-current vf) %frame)
+      (lem:map-frame (implementation) (%frame-frame %frame)))
     (lem::change-display-size-hook)
     (setf (virtual-frame-changed vf) t)))
-
-(defun completion-buffer-name-from-all-frames (str)
-  (completion-strings str (mapcar #'buffer-name (all-buffer-list))))
-
-(define-key *global-keymap* "C-z b" 'fm-select-buffer-from-all-frames)
-(define-command fm-select-buffer-from-all-frames (name)
-    ((list (let ((lem:*minibuffer-buffer-complete-function*
-                   #'completion-buffer-name-from-all-frames))
-             (prompt-for-buffer "Use buffer: " (buffer-name (current-buffer))
-                                t (all-buffer-list)))))
-  (check-frame-multiplexer-enabled)
-  (let ((buffer (find name (all-buffer-list) :test #'string= :key #'buffer-name)))
-    (when (null (find buffer (buffer-list)))
-      (lem-base::set-buffer-list (cons buffer (buffer-list))))
-    (select-buffer buffer)))
 
 (define-command fm-test () ()
   (labels ((vf ()

@@ -29,7 +29,8 @@
                "lem-haskell-mode"
                "lem-ocaml-mode"
                "lem-asm-mode"
-               "lem-fm-mode"))
+               "lem-fm-mode"
+               "lem-auto-fill-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

@@ -99,23 +99,23 @@
   (declare (type frame frame))
   (let ((len (length (virtual-frame-id/frame-table virtual-frame))))
     (linear-search-frame virtual-frame
-                        frame
-                        -1
-                        (lambda (n)
-                          (if (minusp n)
-                              (+ (1- len) n)
-                              n)))))
+                         frame
+                         -1
+                         (lambda (n)
+                           (if (minusp n)
+                               (+ (1- len) n)
+                               n)))))
 
 (defun search-next-frame (virtual-frame frame)
   (declare (type frame frame))
   (let ((len (length (virtual-frame-id/frame-table virtual-frame))))
     (linear-search-frame virtual-frame
-                        frame
-                        1
-                        (lambda (n)
-                          (if (>= n len)
-                              (- len n)
-                              n)))))
+                         frame
+                         1
+                         (lambda (n)
+                           (if (>= n len)
+                               (- len n)
+                               n)))))
 
 (defun virtual-frame-frames (virtual-frame)
   (coerce (remove-if #'null (virtual-frame-id/frame-table virtual-frame))

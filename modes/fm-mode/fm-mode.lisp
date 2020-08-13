@@ -22,10 +22,6 @@
         (frame-multiplexer-on)
         (frame-multiplexer-off))))
 
-(defstruct (%frame (:constructor %make-frame (id frame)))
-  (id 0 :type integer)
-  (frame nil :type lem:frame))
-
 (defclass virtual-frame (header-window)
   ((implementation
     :initarg :impl
@@ -39,7 +35,7 @@
    (current
     :initarg :current
     :accessor virtual-frame-current
-    :type %frame)
+    :type frame)
    (display-width
     :initarg :width
     :accessor virtual-frame-width)
@@ -56,9 +52,8 @@
 (defun make-virtual-frame (impl frame)
   (declare (type frame frame))
   (let* ((buffer (make-buffer "*fm*" :enable-undo-p nil :temporary t))
-         (%frame (%make-frame 0 frame))
          (id/frame-table (make-array +fm-max-number-of-frames+ :initial-element nil)))
-    (setf (aref id/frame-table 0) %frame)
+    (setf (aref id/frame-table 0) frame)
     (setf (lem:variable-value 'truncate-lines :buffer buffer) nil)
     (let ((vf (make-instance 'virtual-frame
                              :impl impl
@@ -66,56 +61,61 @@
                              :width (display-width)
                              :height (display-height)
                              :id/frame-table id/frame-table
-                             :current %frame)))
+                             :current frame)))
       vf)))
 
 (defun find-unused-frame-id (virtual-frame)
   (position-if #'null (virtual-frame-id/frame-table virtual-frame)))
 
+(defun find-frame-id (virtual-frame frame)
+  (position frame (virtual-frame-id/frame-table virtual-frame)))
+
 (defun num-frames (virtual-frame)
   (count-if-not #'null (virtual-frame-id/frame-table virtual-frame)))
 
 (defun allocate-frame (virtual-frame frame)
-  (declare (type %frame frame))
-  (setf (aref (virtual-frame-id/frame-table virtual-frame) (%frame-id frame))
-        frame))
+  (declare (type frame frame))
+  (let ((id (find-unused-frame-id virtual-frame)))
+    (setf (aref (virtual-frame-id/frame-table virtual-frame) id)
+          frame)))
 
 (defun free-frame (virtual-frame frame)
-  (declare (type %frame frame))
-  (setf (aref (virtual-frame-id/frame-table virtual-frame) (%frame-id frame))
-        nil))
+  (declare (type frame frame))
+  (let ((id (find-frame-id virtual-frame frame)))
+    (setf (aref (virtual-frame-id/frame-table virtual-frame) id)
+          nil)))
 
 (defun get-frame-from-id (virtual-frame id)
   (aref (virtual-frame-id/frame-table virtual-frame) id))
 
-(defun liner-search-frame (virtual-frame frame dir wrap)
-  (let ((id (%frame-id frame)))
+(defun linear-search-frame (virtual-frame frame dir wrap)
+  (let ((id (find-frame-id virtual-frame frame)))
     (loop :for n := (funcall wrap (+ id dir)) :then (funcall wrap (+ n dir))
           :until (= n id)
           :do (unless (null (get-frame-from-id virtual-frame n))
-                (return-from liner-search-frame (get-frame-from-id virtual-frame n))))))
+                (return-from linear-search-frame (get-frame-from-id virtual-frame n))))))
 
 (defun search-previous-frame (virtual-frame frame)
-  (declare (type %frame frame))
+  (declare (type frame frame))
   (let ((len (length (virtual-frame-id/frame-table virtual-frame))))
-    (liner-search-frame virtual-frame
-                        frame
-                        -1
-                        (lambda (n)
-                          (if (minusp n)
-                              (+ (1- len) n)
-                              n)))))
+    (linear-search-frame virtual-frame
+                         frame
+                         -1
+                         (lambda (n)
+                           (if (minusp n)
+                               (+ (1- len) n)
+                               n)))))
 
 (defun search-next-frame (virtual-frame frame)
-  (declare (type %frame frame))
+  (declare (type frame frame))
   (let ((len (length (virtual-frame-id/frame-table virtual-frame))))
-    (liner-search-frame virtual-frame
-                        frame
-                        1
-                        (lambda (n)
-                          (if (>= n len)
-                              (- len n)
-                              n)))))
+    (linear-search-frame virtual-frame
+                         frame
+                         1
+                         (lambda (n)
+                           (if (>= n len)
+                               (- len n)
+                               n)))))
 
 (defun virtual-frame-frames (virtual-frame)
   (coerce (remove-if #'null (virtual-frame-id/frame-table virtual-frame))
@@ -140,25 +140,24 @@
            (p (buffer-point buffer))
            (charpos (point-charpos p)))
       (erase-buffer buffer)
-      (dolist (%frame (virtual-frame-frames window))
-        (let* ((focusp (eq %frame (virtual-frame-current window)))
-               (start-pos (point-charpos p)))
+      (dolist (frame (virtual-frame-frames window))
+        (let ((focusp (eq frame (virtual-frame-current window)))
+              (start-pos (point-charpos p)))
           (insert-button p
                          ;; virtual frame name on header
-                         (let* ((frame (%frame-frame %frame))
-                                (buffer (window-buffer (lem:frame-current-window frame)))
+                         (let* ((buffer (window-buffer (lem:frame-current-window frame)))
                                 (name (buffer-name buffer)))
                            (format nil "~a~a:~a "
                                    (if focusp #\# #\space)
-                                   (%frame-id %frame)
+                                   (find-frame-id window frame)
                                    (if (>= (length name) +fm-max-width-of-each-frame-name+)
                                        (format nil "~a..."
                                                (subseq name 0 +fm-max-width-of-each-frame-name+))
                                        name)))
                          ;; set action when click
-                         (let ((%frame %frame))
+                         (let ((frame frame))
                            (lambda ()
-                             (setf (virtual-frame-current window) %frame)
+                             (setf (virtual-frame-current window) frame)
                              (setf (virtual-frame-changed window) t)))
                          :attribute (if focusp
                                         'fm-active-frame-name-attribute
@@ -175,8 +174,7 @@
                          :attribute 'fm-background-attribute)))
       (line-offset p 0 charpos))
     ;; redraw windows in current frame
-    (let* ((%frame (virtual-frame-current (gethash (lem:implementation) *virtual-frame-map*)))
-           (frame (%frame-frame %frame)))
+    (let* ((frame (virtual-frame-current (gethash (lem:implementation) *virtual-frame-map*))))
       (dolist (w (lem::window-tree-flatten (lem:frame-window-tree frame)))
         (lem:window-redraw w t))
       (dolist (w (lem:frame-floating-windows frame))
@@ -198,7 +196,7 @@
     :for impl :in (list (implementation))  ; for multi-frame support in the future...
     :do (let ((vf (make-virtual-frame impl (lem:get-frame impl))))
           (setf (gethash impl *virtual-frame-map*) vf)
-          (lem:map-frame (implementation) (%frame-frame (virtual-frame-current vf))))))
+          (lem:map-frame (implementation) (virtual-frame-current vf)))))
 
 (defun enabled-frame-multiplexer-p ()
   (variable-value 'frame-multiplexer :global))
@@ -231,7 +229,6 @@
     (when (null id)
       (editor-error "it's full of frames in virtual frame"))
     (let* ((frame (lem:make-frame))
-           (%frame (%make-frame id frame))
            (tmp-buffer (make-buffer "*tmp*")))
       (lem:setup-frame frame)
       (push vf (lem:frame-header-windows frame))
@@ -241,8 +238,8 @@
                                           t)))
         (setf (lem:frame-window-tree frame) new-window
               (lem:frame-current-window frame) new-window
-              (virtual-frame-current vf) %frame)
-        (allocate-frame vf %frame)
+              (virtual-frame-current vf) frame)
+        (allocate-frame vf frame)
         (lem:map-frame (implementation) frame))
       (setf (virtual-frame-changed vf) t))))
 
@@ -253,20 +250,20 @@
          (num (num-frames vf)))
     (when (= num 1)
       (editor-error "cannot delete this virtual frame"))
-    (free-frame vf (virtual-frame-current vf))
-    (let ((%frame (search-previous-frame vf (virtual-frame-current vf))))
-      (setf (virtual-frame-current vf) %frame)
-      (lem:map-frame (implementation) (%frame-frame %frame)))
+    (let ((frame (search-previous-frame vf (virtual-frame-current vf))))
+      (free-frame vf (virtual-frame-current vf))
+      (setf (virtual-frame-current vf) frame)
+      (lem:map-frame (implementation) frame))
     (setf (virtual-frame-changed vf) t)))
 
 (define-key *global-keymap* "C-z p" 'fm-prev)
 (define-command fm-prev () ()
   (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
-         (%frame (search-previous-frame vf (virtual-frame-current vf))))
-    (when %frame
-      (setf (virtual-frame-current vf) %frame)
-      (lem:map-frame (implementation) (%frame-frame %frame)))
+         (frame (search-previous-frame vf (virtual-frame-current vf))))
+    (when frame
+      (setf (virtual-frame-current vf) frame)
+      (lem:map-frame (implementation) frame))
     (lem::change-display-size-hook)
     (setf (virtual-frame-changed vf) t)))
 
@@ -274,10 +271,10 @@
 (define-command fm-next () ()
   (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
-         (%frame (search-next-frame vf (virtual-frame-current vf))))
-    (when %frame
-      (setf (virtual-frame-current vf) %frame)
-      (lem:map-frame (implementation) (%frame-frame %frame)))
+         (frame (search-next-frame vf (virtual-frame-current vf))))
+    (when frame
+      (setf (virtual-frame-current vf) frame)
+      (lem:map-frame (implementation) frame))
     (lem::change-display-size-hook)
     (setf (virtual-frame-changed vf) t)))
 
@@ -288,10 +285,14 @@
                         (return-from vf v))
                       *virtual-frame-map*))
            (check-nth-frame (expected-id)
-             (let ((actual-id (%frame-id (virtual-frame-current (vf)))))
+             (let* ((virtual-frame (vf))
+                    (actual-id (find-frame-id virtual-frame (virtual-frame-current virtual-frame))))
                (assert (= expected-id actual-id))))
            (check-tabs (&rest nums)
-             (assert (equal nums (mapcar #'%frame-id (virtual-frame-frames (vf)))))))
+             (let ((virtual-frame (vf)))
+               (assert (equal nums (mapcar (lambda (frame)
+                                             (find-frame-id virtual-frame frame))
+                                           (virtual-frame-frames virtual-frame)))))))
     (when (enabled-frame-multiplexer-p)
       (editor-error "fm-mode is already enabled"))
     ;; fm-create-with-new-buffer-list

@@ -88,17 +88,17 @@
 (defun get-frame-from-id (virtual-frame id)
   (aref (virtual-frame-id/frame-table virtual-frame) id))
 
-(defun liner-search-frame (virtual-frame frame dir wrap)
+(defun linear-search-frame (virtual-frame frame dir wrap)
   (let ((id (find-frame-id virtual-frame frame)))
     (loop :for n := (funcall wrap (+ id dir)) :then (funcall wrap (+ n dir))
           :until (= n id)
           :do (unless (null (get-frame-from-id virtual-frame n))
-                (return-from liner-search-frame (get-frame-from-id virtual-frame n))))))
+                (return-from linear-search-frame (get-frame-from-id virtual-frame n))))))
 
 (defun search-previous-frame (virtual-frame frame)
   (declare (type frame frame))
   (let ((len (length (virtual-frame-id/frame-table virtual-frame))))
-    (liner-search-frame virtual-frame
+    (linear-search-frame virtual-frame
                         frame
                         -1
                         (lambda (n)
@@ -109,7 +109,7 @@
 (defun search-next-frame (virtual-frame frame)
   (declare (type frame frame))
   (let ((len (length (virtual-frame-id/frame-table virtual-frame))))
-    (liner-search-frame virtual-frame
+    (linear-search-frame virtual-frame
                         frame
                         1
                         (lambda (n)

@@ -76,6 +76,7 @@
                (:file "rectangle")
                (:file "auto-save")
                (:file "tabbar")
+               (:file "frame-multiplexer")
 
                (:file "color-theme")
                (:file "site-init")))

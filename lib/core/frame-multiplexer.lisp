@@ -295,7 +295,7 @@
                                            (virtual-frame-frames virtual-frame)))))))
     (when (enabled-frame-multiplexer-p)
       (editor-error "frame-multiplexer-mode is already enabled"))
-    ;; fm-create-with-new-buffer-list
+    ;; frame-multiplexer-create-with-new-buffer-list
     (toggle-frame-multiplexer)
     (frame-multiplexer-create-with-new-buffer-list)
     (check-nth-frame 1)

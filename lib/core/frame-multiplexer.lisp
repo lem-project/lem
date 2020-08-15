@@ -1,19 +1,19 @@
-(defpackage :lem-fm-mode
+(defpackage :lem-frame-multiplexer
   (:use :cl :lem :lem.button))
-(in-package :lem-fm-mode)
+(in-package :lem-frame-multiplexer)
 
-(defconstant +fm-max-number-of-frames+ 256)
-(defconstant +fm-max-width-of-each-frame-name+ 20)
+(defconstant +frame-multiplexer-max-number-of-frames+ 256)
+(defconstant +frame-multiplexer-max-width-of-each-frame-name+ 20)
 
 (defvar *virtual-frame-map* (make-hash-table))
 
-(define-attribute fm-active-frame-name-attribute
+(define-attribute frame-multiplexer-active-frame-name-attribute
   (t :foreground "white" :background "blue"))
 
-(define-attribute fm-frame-name-attribute
+(define-attribute frame-multiplexer-frame-name-attribute
   (t :foreground "white" :background "blue"))
 
-(define-attribute fm-background-attribute
+(define-attribute frame-multiplexer-background-attribute
   (t :underline-p t))
 
 (define-editor-variable frame-multiplexer nil ""
@@ -51,8 +51,8 @@
 
 (defun make-virtual-frame (impl frame)
   (declare (type frame frame))
-  (let* ((buffer (make-buffer "*fm*" :enable-undo-p nil :temporary t))
-         (id/frame-table (make-array +fm-max-number-of-frames+ :initial-element nil)))
+  (let* ((buffer (make-buffer "*frame-multiplexer*" :enable-undo-p nil :temporary t))
+         (id/frame-table (make-array +frame-multiplexer-max-number-of-frames+ :initial-element nil)))
     (setf (aref id/frame-table 0) frame)
     (setf (lem:variable-value 'truncate-lines :buffer buffer) nil)
     (let ((vf (make-instance 'virtual-frame
@@ -150,9 +150,9 @@
                            (format nil "~a~a:~a "
                                    (if focusp #\# #\space)
                                    (find-frame-id window frame)
-                                   (if (>= (length name) +fm-max-width-of-each-frame-name+)
+                                   (if (>= (length name) +frame-multiplexer-max-width-of-each-frame-name+)
                                        (format nil "~a..."
-                                               (subseq name 0 +fm-max-width-of-each-frame-name+))
+                                               (subseq name 0 +frame-multiplexer-max-width-of-each-frame-name+))
                                        name)))
                          ;; set action when click
                          (let ((frame frame))
@@ -160,8 +160,8 @@
                              (setf (virtual-frame-current window) frame)
                              (setf (virtual-frame-changed window) t)))
                          :attribute (if focusp
-                                        'fm-active-frame-name-attribute
-                                        'fm-frame-name-attribute))
+                                        'frame-multiplexer-active-frame-name-attribute
+                                        'frame-multiplexer-frame-name-attribute))
           ;; increment charpos
           (when focusp
             (let ((end-pos (point-charpos p)))
@@ -171,7 +171,7 @@
       (let ((margin-right (- (display-width) (point-column p))))
         (when (> margin-right 0)
           (insert-string p (make-string margin-right :initial-element #\space)
-                         :attribute 'fm-background-attribute)))
+                         :attribute 'frame-multiplexer-background-attribute)))
       (line-offset p 0 charpos))
     ;; redraw windows in current frame
     (let* ((frame (virtual-frame-current (gethash (lem:implementation) *virtual-frame-map*))))
@@ -203,7 +203,7 @@
 
 (defun check-frame-multiplexer-enabled ()
   (unless (enabled-frame-multiplexer-p)
-    (editor-error "fm-mode is not enabled")))
+    (editor-error "frame-multiplexer-mode is not enabled")))
 
 (defun frame-multiplexer-on ()
   (unless (enabled-frame-multiplexer-p)
@@ -217,12 +217,12 @@
              *virtual-frame-map*)
     (clrhash *virtual-frame-map*)))
 
-(define-command fm-mode () ()
+(define-command toggle-frame-multiplexer () ()
   (setf (variable-value 'frame-multiplexer :global)
         (not (variable-value 'frame-multiplexer :global))))
 
-(define-key *global-keymap* "C-z c" 'fm-create-with-new-buffer-list)
-(define-command fm-create-with-new-buffer-list () ()
+(define-key *global-keymap* "C-z c" 'frame-multiplexer-create-with-new-buffer-list)
+(define-command frame-multiplexer-create-with-new-buffer-list () ()
   (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (id (find-unused-frame-id vf)))
@@ -243,8 +243,8 @@
         (lem:map-frame (implementation) frame))
       (setf (virtual-frame-changed vf) t))))
 
-(define-key *global-keymap* "C-z d" 'fm-delete)
-(define-command fm-delete () ()
+(define-key *global-keymap* "C-z d" 'frame-multiplexer-delete)
+(define-command frame-multiplexer-delete () ()
   (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (num (num-frames vf)))
@@ -256,8 +256,8 @@
       (lem:map-frame (implementation) frame))
     (setf (virtual-frame-changed vf) t)))
 
-(define-key *global-keymap* "C-z p" 'fm-prev)
-(define-command fm-prev () ()
+(define-key *global-keymap* "C-z p" 'frame-multiplexer-prev)
+(define-command frame-multiplexer-prev () ()
   (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (frame (search-previous-frame vf (virtual-frame-current vf))))
@@ -267,8 +267,8 @@
     (lem::change-display-size-hook)
     (setf (virtual-frame-changed vf) t)))
 
-(define-key *global-keymap* "C-z n" 'fm-next)
-(define-command fm-next () ()
+(define-key *global-keymap* "C-z n" 'frame-multiplexer-next)
+(define-command frame-multiplexer-next () ()
   (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (frame (search-next-frame vf (virtual-frame-current vf))))
@@ -278,7 +278,7 @@
     (lem::change-display-size-hook)
     (setf (virtual-frame-changed vf) t)))
 
-(define-command fm-test () ()
+(define-command frame-multiplexer-test () ()
   (labels ((vf ()
              (maphash (lambda (k v)
                         (declare (ignore k))
@@ -294,33 +294,33 @@
                                              (find-frame-id virtual-frame frame))
                                            (virtual-frame-frames virtual-frame)))))))
     (when (enabled-frame-multiplexer-p)
-      (editor-error "fm-mode is already enabled"))
-    ;; fm-create-with-new-buffer-list
-    (fm-mode)
-    (fm-create-with-new-buffer-list)
+      (editor-error "frame-multiplexer-mode is already enabled"))
+    ;; frame-multiplexer-create-with-new-buffer-list
+    (toggle-frame-multiplexer)
+    (frame-multiplexer-create-with-new-buffer-list)
     (check-nth-frame 1)
-    (fm-create-with-new-buffer-list)
+    (frame-multiplexer-create-with-new-buffer-list)
     (check-nth-frame 2)
-    (fm-create-with-new-buffer-list)
+    (frame-multiplexer-create-with-new-buffer-list)
     (check-nth-frame 3)
-    (fm-next)
-    ;; fm-next, fm-prev
-    (fm-next)
+    (frame-multiplexer-next)
+    ;; frame-multiplexer-next, frame-multiplexer-prev
+    (frame-multiplexer-next)
     (check-nth-frame 1)
-    (fm-prev)
+    (frame-multiplexer-prev)
     (check-nth-frame 0)
-    (fm-prev)
+    (frame-multiplexer-prev)
     (check-nth-frame 3)
-    (fm-next)
+    (frame-multiplexer-next)
     (check-nth-frame 0)
     (check-tabs 0 1 2 3)
-    ;; fm-delete
-    (fm-delete)
+    ;; frame-multiplexer-delete
+    (frame-multiplexer-delete)
     (check-tabs 1 2 3)
     (check-nth-frame 3)
-    (fm-prev)
+    (frame-multiplexer-prev)
     (check-nth-frame 2)
-    (fm-delete)
+    (frame-multiplexer-delete)
     (check-tabs 1 3)
     (check-nth-frame 1)
     ))

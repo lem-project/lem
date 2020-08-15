@@ -28,8 +28,7 @@
                "lem-java-mode"
                "lem-haskell-mode"
                "lem-ocaml-mode"
-               "lem-asm-mode"
-               "lem-fm-mode"))
+               "lem-asm-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

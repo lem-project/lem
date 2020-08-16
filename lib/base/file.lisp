@@ -85,7 +85,7 @@
                 (buffer (make-buffer (if temporary
                                          name
                                          (if (get-buffer name)
-                                             (uniq-buffer-name name)
+                                             (unique-buffer-name name)
                                              name))
                                      :enable-undo-p nil
                                      :temporary temporary)))

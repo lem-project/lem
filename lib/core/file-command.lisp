@@ -105,7 +105,7 @@
       (unless (string= old new)
         (buffer-rename (current-buffer)
                        (if (get-buffer new)
-                           (uniq-buffer-name new)
+                           (unique-buffer-name new)
                            new)))
       (setf (buffer-filename) expand-file-name)
       (add-newline-at-eof (current-buffer))

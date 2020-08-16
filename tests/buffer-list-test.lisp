@@ -11,7 +11,7 @@
 - buffer-list
 - any-modified-buffer-p
 - get-buffer
-- uniq-buffer-name
+- unique-buffer-name
 - delete-buffer
 - get-next-buffer
 - get-previous-buffer
@@ -31,7 +31,6 @@
       (rove:ok (lem-base:bufferp buffer))
       (rove:ok (null (lem-base:buffer-list))))
     (let (buffer-a buffer-b buffer-c)
-      (declare (ignorable buffer-a buffer-b buffer-c)) ;TODO
       (rove:testing "make buffer-a"
         (setf buffer-a (lem-base:make-buffer "a"))
         (rove:ok (equal (list buffer-a) (lem-base:buffer-list))))
@@ -88,17 +87,17 @@
         (rove:ok (eq buffer-b (lem-base:get-buffer buffer-b)))
         (rove:ok (eq buffer-c (lem-base:get-buffer buffer-c)))))))
 
-(rove:deftest uniq-buffer-name
+(rove:deftest unique-buffer-name
   (with-buffer-list-test ()
-    (rove:ok (equal "foo" (lem-base::uniq-buffer-name "foo")))
+    (rove:ok (equal "foo" (lem-base::unique-buffer-name "foo")))
     (let ((buffer-a (lem-base:make-buffer "a"))
           buffer-a<1>
           buffer-a<2>)
       (declare (ignorable buffer-a))
-      (let ((name (lem-base:uniq-buffer-name "a")))
+      (let ((name (lem-base:unique-buffer-name "a")))
         (rove:ok (equal "a<1>" name))
         (setf buffer-a<1> (lem-base:make-buffer name)))
-      (let ((name (lem-base:uniq-buffer-name "a")))
+      (let ((name (lem-base:unique-buffer-name "a")))
         (rove:ok (equal "a<2>" name))
         (setf buffer-a<2> (lem-base:make-buffer name)))
       (rove:ok (string= (lem-base:buffer-name buffer-a) "a"))
@@ -110,23 +109,23 @@
                             buffer-a)))
       (with-buffer-list-test ((copy-list (lem-base:buffer-list)))
         (lem-base:delete-buffer buffer-a<2>)
-        (rove:ok (equal "a<2>" (lem-base:uniq-buffer-name "a")))
+        (rove:ok (equal "a<2>" (lem-base:unique-buffer-name "a")))
         (rove:ok (equal (lem-base:buffer-list)
                         (list buffer-a<1>
                               buffer-a))))
       (with-buffer-list-test ((copy-list (lem-base:buffer-list)))
         (lem-base:delete-buffer buffer-a<1>)
-        (rove:ok (equal "a<1>" (lem-base:uniq-buffer-name "a")))
+        (rove:ok (equal "a<1>" (lem-base:unique-buffer-name "a")))
         (rove:ok (equal (lem-base:buffer-list)
                         (list buffer-a<2>
                               buffer-a))))
       (with-buffer-list-test ((copy-list (lem-base:buffer-list)))
         (lem-base:delete-buffer buffer-a)
-        (rove:ok (equal "a" (lem-base:uniq-buffer-name "a")))
+        (rove:ok (equal "a" (lem-base:unique-buffer-name "a")))
         (rove:ok (equal (lem-base:buffer-list)
                         (list buffer-a<2>
                               buffer-a<1>))))
-      (rove:ok (equal "b" (lem-base:uniq-buffer-name "b"))))))
+      (rove:ok (equal "b" (lem-base:unique-buffer-name "b"))))))
 
 (rove:deftest delete-buffer
   )

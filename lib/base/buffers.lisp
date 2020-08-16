@@ -4,7 +4,7 @@
           buffer-list
           any-modified-buffer-p
           get-buffer
-          uniq-buffer-name
+          unique-buffer-name
           delete-buffer
           get-next-buffer
           get-previous-buffer
@@ -45,7 +45,7 @@
                           (buffer-name buffer)))
                (buffer-list))))
 
-(defun uniq-buffer-name (name)
+(defun unique-buffer-name (name)
   (check-type name string)
   (if (null (get-buffer name))
       name

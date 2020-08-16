@@ -231,7 +231,27 @@
                                 (nreverse called-order)))))))))))
 
 (rove:deftest get-next-buffer
-  )
+  (with-buffer-list ()
+    (rove:testing "argument type"
+      (rove:ok (rove:signals (lem-base:get-next-buffer nil) 'type-error))
+      (rove:ok (rove:signals (lem-base:get-next-buffer 1) 'type-error))
+      (rove:ok (rove:signals (lem-base:get-next-buffer "name") 'type-error))
+      (rove:ok (rove:signals (lem-base:get-next-buffer #(#\a #\b)) 'type-error))))
+  (with-buffer-list ()
+    (let ((buffer-a (lem-base:make-buffer "a")))
+      (assert (equal (lem-base:buffer-list)
+                     (list buffer-a)))
+      (rove:ok (eq (lem-base:get-next-buffer buffer-a) nil))))
+  (with-buffer-list ()
+    (let ((buffer-a (lem-base:make-buffer "a"))
+          (buffer-b (lem-base:make-buffer "b"))
+          (buffer-c (lem-base:make-buffer "c")))
+      (assert (equal (lem-base:buffer-list)
+                     (list buffer-c buffer-b buffer-a)))
+      (rove:ok (eq (lem-base:get-next-buffer buffer-c) buffer-b))
+      (rove:ok (eq (lem-base:get-next-buffer buffer-b) buffer-a))
+      (rove:ok (eq (lem-base:get-next-buffer buffer-a) nil))
+      (rove:ok (eq (lem-base:get-next-buffer (lem-base:make-buffer nil :temporary t)) nil)))))
 
 (rove:deftest get-previous-buffer
   )

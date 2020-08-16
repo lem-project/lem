@@ -17,6 +17,7 @@
                (:file "edit")
                (:file "buffer")
                (:file "buffer-insert")
+               (:file "buffer-list-manager")
                (:file "buffers")
                (:file "point")
                (:file "basic")

@@ -14,14 +14,13 @@
 
 (define-editor-variable kill-buffer-hook '())
 
-(defvar *buffer-list* '())
-
 (defun buffer-list ()
   "`buffer`のリストを返します。"
-  *buffer-list*)
+  (buffer-list-manager-buffers (buffer-list-manager)))
 
 (defun set-buffer-list (buffer-list)
-  (setf *buffer-list* buffer-list))
+  (setf (buffer-list-manager-buffers (buffer-list-manager))
+        buffer-list))
 
 (defun add-buffer (buffer)
   (check-type buffer buffer)

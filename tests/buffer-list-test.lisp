@@ -9,8 +9,7 @@
 (in-package :lem-tests/buffer-list-test)
 
 (defmacro with-buffer-list ((&optional buffer-list) &body body)
-  `(let ((lem-base::*buffer-list* ,buffer-list))
-     ,@body))
+  `(lem-base::with-current-buffers ,buffer-list ,@body))
 
 (defun argument-type-is-buffer-test (function &key allow-string-p)
   (with-buffer-list ()

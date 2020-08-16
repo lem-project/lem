@@ -153,6 +153,31 @@
       (rove:ok (equal "b" (lem-base:unique-buffer-name "b"))))))
 
 (rove:deftest delete-buffer
+  (with-buffer-list ()
+    (rove:testing "argument type"
+      (rove:ok (rove:signals (lem-base:delete-buffer 1) 'type-error))
+      (rove:ok (rove:signals (lem-base:delete-buffer "name") 'type-error))
+      (rove:ok (handler-case (lem-base:delete-buffer (lem-base:make-buffer nil :temporary t))
+                 (error ()
+                   nil)
+                 (:no-error (result)
+                   (declare (ignore result))
+                   t)))))
+  (with-buffer-list ()
+    (let ((buffer-a (lem-base:make-buffer "a"))
+          (buffer-b (lem-base:make-buffer "b"))
+          (buffer-c (lem-base:make-buffer "c")))
+      (assert (equal (list buffer-c buffer-b buffer-a)
+                     (lem-base:buffer-list)))
+      (flet ((test (buffer-list deleting-buffer expected-buffer-list)
+               (with-buffer-list ((copy-list buffer-list))
+                 (let ((result (lem-base:delete-buffer deleting-buffer)))
+                   (rove:ok (lem-base:deleted-buffer-p deleting-buffer))
+                   (rove:ok (equal result expected-buffer-list))))))
+        (test (lem-base:buffer-list) buffer-a (list buffer-c buffer-b))
+        (test (lem-base:buffer-list) buffer-b (list buffer-c buffer-a))
+        (test (lem-base:buffer-list) buffer-c (list buffer-b buffer-a)))))
+  ;; TODO
   )
 
 (rove:deftest get-next-buffer

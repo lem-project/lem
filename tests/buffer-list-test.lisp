@@ -80,7 +80,8 @@
                  (error ()
                    nil)
                  (:no-error (buffer)
-                   (lem-base:bufferp buffer)))))
+                   (lem-base:bufferp buffer))))))
+  (with-buffer-list-test ()
     (rove:ok (null (lem-base:get-buffer "a")))
     (let (buffer-a buffer-b buffer-c)
       (rove:testing "buffer-a"
@@ -111,7 +112,8 @@
                    nil)
                  (:no-error (name)
                    (and (stringp name)
-                        (string= name "abc"))))))
+                        (string= name "abc")))))))
+  (with-buffer-list-test ()
     (rove:ok (equal "foo" (lem-base:unique-buffer-name "foo")))
     (let ((buffer-a (lem-base:make-buffer "a"))
           buffer-a<1>

@@ -37,6 +37,7 @@
 (defun get-buffer (buffer-or-name)
   "`buffer-or-name`がバッファならそのまま返し、
 文字列ならその名前のバッファを返します。"
+  (check-type buffer-or-name (or buffer string))
   (if (bufferp buffer-or-name)
       buffer-or-name
       (find-if (lambda (buffer)
@@ -45,6 +46,7 @@
                (buffer-list))))
 
 (defun uniq-buffer-name (name)
+  (check-type name string)
   (if (null (get-buffer name))
       name
       (do ((n 1 (1+ n))) (nil)

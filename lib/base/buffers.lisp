@@ -5,11 +5,11 @@
           any-modified-buffer-p
           get-buffer
           uniq-buffer-name
-          unbury-buffer
-          bury-buffer
+          delete-buffer
           get-next-buffer
           get-previous-buffer
-          delete-buffer
+          unbury-buffer
+          bury-buffer
           get-file-buffer))
 
 (define-editor-variable kill-buffer-hook '())

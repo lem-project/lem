@@ -90,7 +90,7 @@
       (lem-if:display-background-mode *implementation*)))
 
 (defun set-display-background-mode (mode)
-  (check-type mode (or (eql :light) (eql :dark) null))
+  (check-type mode (member :light :dark nil))
   (setf *display-background-mode* mode))
 
 (defun set-foreground (name)

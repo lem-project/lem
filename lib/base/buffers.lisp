@@ -49,10 +49,10 @@
   (check-type name string)
   (if (null (get-buffer name))
       name
-      (do ((n 1 (1+ n))) (nil)
-        (let ((name (format nil "~a<~d>" name n)))
-          (unless (get-buffer name)
-            (return name))))))
+      (loop :for n :from 1
+            :for sub-name := (format nil "~A<~D>" name n)
+            :do (unless (get-buffer sub-name)
+                  (return sub-name)))))
 
 (defun delete-buffer (buffer)
   "`buffer`をバッファのリストから消します。

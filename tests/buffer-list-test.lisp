@@ -68,6 +68,19 @@
 
 (rove:deftest get-buffer
   (with-buffer-list-test ()
+    (rove:testing "arugment type"
+      (rove:ok (rove:signals (lem-base:get-buffer 1) 'type-error))
+      (rove:ok (rove:signals (lem-base:get-buffer nil) 'type-error))
+      (rove:ok (handler-case (lem-base:get-buffer "foo")
+                 (error ()
+                   nil)
+                 (:no-error (buffer)
+                   (null buffer))))
+      (rove:ok (handler-case (lem-base:get-buffer (lem:make-buffer nil :temporary t))
+                 (error ()
+                   nil)
+                 (:no-error (buffer)
+                   (lem-base:bufferp buffer)))))
     (rove:ok (null (lem-base:get-buffer "a")))
     (let (buffer-a buffer-b buffer-c)
       (rove:testing "buffer-a"

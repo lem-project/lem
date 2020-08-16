@@ -286,7 +286,51 @@
                           (list buffer-c buffer-b buffer-a))))))))
 
 (rove:deftest unbury-buffer
-  )
+  (argument-type-is-buffer-test #'lem-base:unbury-buffer)
+  (rove:testing "buffer-list length is 1"
+    (with-buffer-list ()
+      (let ((buffer-a (lem-base:make-buffer "a")))
+        (assert (equal (lem-base:buffer-list)
+                       (list buffer-a)))
+        (rove:ok (eq buffer-a (lem-base:unbury-buffer buffer-a)))
+        (rove:ok (equal (lem-base:buffer-list)
+                        (list buffer-a))))))
+  (rove:testing "buffer-list length is 3"
+    (with-buffer-list ()
+      (let ((buffer-a (lem-base:make-buffer "a"))
+            (buffer-b (lem-base:make-buffer "b"))
+            (buffer-c (lem-base:make-buffer "c")))
+        (assert (equal (lem-base:buffer-list)
+                       (list buffer-c buffer-b buffer-a)))
+        (with-buffer-list ((copy-list (lem-base:buffer-list)))
+          (rove:ok (eq buffer-a (lem-base:unbury-buffer buffer-a)))
+          (rove:ok (equal (lem-base:buffer-list)
+                          (list buffer-a buffer-c buffer-b))))
+        (with-buffer-list ((copy-list (lem-base:buffer-list)))
+          (rove:ok (eq buffer-b (lem-base:unbury-buffer buffer-b)))
+          (rove:ok (equal (lem-base:buffer-list)
+                          (list buffer-b buffer-c buffer-a))))
+        (with-buffer-list ((copy-list (lem-base:buffer-list)))
+          (rove:ok (eq buffer-c (lem-base:unbury-buffer buffer-c)))
+          (rove:ok (equal (lem-base:buffer-list)
+                          (list buffer-c buffer-b buffer-a)))))))
+  (rove:testing "temporary buffer"
+    (rove:testing "buffer-list length is 0"
+      (with-buffer-list ()
+        (assert (null (lem-base:buffer-list)))
+        (let ((buffer (lem-base:make-buffer nil :temporary t)))
+          (rove:ok (eq buffer (lem-base:unbury-buffer buffer))))))
+    (rove:testing "buffer-list length is 3"
+      (with-buffer-list ()
+        (let ((buffer-a (lem-base:make-buffer "a"))
+              (buffer-b (lem-base:make-buffer "b"))
+              (buffer-c (lem-base:make-buffer "c")))
+          (assert (equal (lem-base:buffer-list)
+                         (list buffer-c buffer-b buffer-a)))
+          (let ((buffer (lem-base:make-buffer nil :temporary t)))
+            (rove:ok (eq buffer (lem-base:unbury-buffer buffer)))
+            (rove:ok (equal (lem-base:buffer-list)
+                            (list buffer-c buffer-b buffer-a)))))))))
 
 (rove:deftest get-file-buffer
   )

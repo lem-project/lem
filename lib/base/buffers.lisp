@@ -68,8 +68,8 @@
 (defun get-next-buffer (buffer)
   "バッファリスト内にある`buffer`の次のバッファを返します。"
   (check-type buffer buffer)
-  (let ((res (member buffer (buffer-list))))
-    (cadr res)))
+  (let ((rest (member buffer (buffer-list))))
+    (cadr rest)))
 
 (defun get-previous-buffer (buffer)
   "バッファリスト内にある`buffer`の前のバッファを返します。"

@@ -102,6 +102,16 @@
 
 (rove:deftest unique-buffer-name
   (with-buffer-list-test ()
+    (rove:testing "argument type"
+      (rove:ok (rove:signals (lem-base:unique-buffer-name (lem-base:make-buffer nil :temporary t)) 'type-error))
+      (rove:ok (rove:signals (lem-base:unique-buffer-name 1) 'type-error))
+      (rove:ok (rove:signals (lem-base:unique-buffer-name #(100 200)) 'type-error))
+      (rove:ok (handler-case (lem-base:unique-buffer-name "abc")
+                 (error ()
+                   nil)
+                 (:no-error (name)
+                   (and (stringp name)
+                        (string= name "abc"))))))
     (rove:ok (equal "foo" (lem-base:unique-buffer-name "foo")))
     (let ((buffer-a (lem-base:make-buffer "a"))
           buffer-a<1>

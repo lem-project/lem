@@ -1,7 +1,8 @@
 (defpackage :lem-tests/buffer-list-test
   (:use :cl)
   (:import-from :lem-tests/utilities
-                :sample-file)
+                :sample-file
+                :with-global-variable-value)
   (:import-from :lem-base)
   (:import-from :rove)
   (:import-from :alexandria))
@@ -171,14 +172,63 @@
                      (lem-base:buffer-list)))
       (flet ((test (buffer-list deleting-buffer expected-buffer-list)
                (with-buffer-list ((copy-list buffer-list))
+                 (rove:ok (not (lem-base:deleted-buffer-p deleting-buffer)))
                  (let ((result (lem-base:delete-buffer deleting-buffer)))
                    (rove:ok (lem-base:deleted-buffer-p deleting-buffer))
                    (rove:ok (equal result expected-buffer-list))))))
         (test (lem-base:buffer-list) buffer-a (list buffer-c buffer-b))
         (test (lem-base:buffer-list) buffer-b (list buffer-c buffer-a))
-        (test (lem-base:buffer-list) buffer-c (list buffer-b buffer-a)))))
-  ;; TODO
-  )
+        (test (lem-base:buffer-list) buffer-c (list buffer-b buffer-a))))
+    (rove:testing "temporary buffer"
+      (let ((buffer (lem-base:make-buffer nil :temporary t))
+            (buffer-list (copy-list (lem-base:buffer-list))))
+        (rove:ok (not (lem-base:deleted-buffer-p buffer)))
+        (rove:ok (equal buffer-list (lem-base:delete-buffer buffer)))
+        (rove:ok (lem-base:deleted-buffer-p buffer))))
+    (rove:testing "kill-buffer-hook"
+      (flet ((hook-body (hooked-buffer deleting-buffer)
+               (rove:ok (eq hooked-buffer deleting-buffer))
+               (rove:ok (not (lem-base:deleted-buffer-p hooked-buffer)))))
+        (rove:testing "buffer local"
+          (let ((buffer (lem-base:make-buffer "test"))
+                (called-hook-p nil))
+            (flet ((hook (arg)
+                     (setf called-hook-p t)
+                     (hook-body arg buffer)))
+              (lem-base:add-hook (lem-base:variable-value 'lem-base:kill-buffer-hook :buffer buffer)
+                                 #'hook)
+              (lem-base:delete-buffer buffer)
+              (rove:ok called-hook-p))))
+        (rove:testing "global"
+          (with-global-variable-value (lem-base:kill-buffer-hook nil)
+            (let ((buffer (lem-base:make-buffer "test"))
+                  (called-hook-p nil))
+              (flet ((hook (arg)
+                       (setf called-hook-p t)
+                       (hook-body arg buffer)))
+                (lem-base:add-hook (lem-base:variable-value 'lem-base:kill-buffer-hook :global)
+                                   #'hook)
+                (lem-base:delete-buffer buffer)
+                (rove:ok called-hook-p)))))
+        (rove:testing "local/global"
+          (with-global-variable-value (lem-base:kill-buffer-hook nil)
+            (let ((buffer (lem-base:make-buffer "test"))
+                  (called-order '()))
+              (flet ((local-hook (arg)
+                       (rove:testing "called local hook"
+                         (hook-body arg buffer)
+                         (push :local called-order)))
+                     (global-hook (arg)
+                       (rove:testing "called global hook"
+                         (hook-body arg buffer)
+                         (push :global called-order))))
+                (lem-base:add-hook (lem-base:variable-value 'lem-base:kill-buffer-hook :buffer buffer)
+                                   #'local-hook)
+                (lem-base:add-hook (lem-base:variable-value 'lem-base:kill-buffer-hook :global)
+                                   #'global-hook)
+                (lem-base:delete-buffer buffer)
+                (rove:ok (equal '(:local :global)
+                                (nreverse called-order)))))))))))
 
 (rove:deftest get-next-buffer
   )

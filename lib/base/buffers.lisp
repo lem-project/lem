@@ -39,9 +39,9 @@
 文字列ならその名前のバッファを返します。"
   (if (bufferp buffer-or-name)
       buffer-or-name
-      (find-if #'(lambda (buffer)
-                   (string= buffer-or-name
-                            (buffer-name buffer)))
+      (find-if (lambda (buffer)
+                 (string= buffer-or-name
+                          (buffer-name buffer)))
                (buffer-list))))
 
 (defun uniq-buffer-name (name)

@@ -89,7 +89,7 @@
 
 (rove:deftest unique-buffer-name
   (with-buffer-list-test ()
-    (rove:ok (equal "foo" (lem-base::unique-buffer-name "foo")))
+    (rove:ok (equal "foo" (lem-base:unique-buffer-name "foo")))
     (let ((buffer-a (lem-base:make-buffer "a"))
           buffer-a<1>
           buffer-a<2>)

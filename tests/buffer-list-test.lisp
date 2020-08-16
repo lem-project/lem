@@ -20,12 +20,12 @@
 - get-file-buffer
 |#
 
-(defmacro with-buffer-list-test ((&optional buffer-list) &body body)
+(defmacro with-buffer-list ((&optional buffer-list) &body body)
   `(let ((lem-base::*buffer-list* ,buffer-list))
      ,@body))
 
 (rove:deftest buffer-list
-  (with-buffer-list-test ()
+  (with-buffer-list ()
     (rove:ok (null (lem-base:buffer-list)))
     (let ((buffer (lem-base:make-buffer "a" :temporary t)))
       (rove:ok (lem-base:bufferp buffer))
@@ -44,7 +44,7 @@
                         (lem-base:buffer-list)))))))
 
 (rove:deftest any-modified-buffer-p
-  (with-buffer-list-test ()
+  (with-buffer-list ()
     (let ((buffer-a (lem-base:make-buffer "a"))
           (buffer-b (lem-base:make-buffer "b"))
           (buffer-c (lem-base:find-file-buffer (sample-file "text.txt"))))
@@ -67,7 +67,7 @@
           (rove:ok (eq t (lem-base:any-modified-buffer-p))))))))
 
 (rove:deftest get-buffer
-  (with-buffer-list-test ()
+  (with-buffer-list ()
     (rove:testing "arugment type"
       (rove:ok (rove:signals (lem-base:get-buffer 1) 'type-error))
       (rove:ok (rove:signals (lem-base:get-buffer nil) 'type-error))
@@ -81,7 +81,7 @@
                    nil)
                  (:no-error (buffer)
                    (lem-base:bufferp buffer))))))
-  (with-buffer-list-test ()
+  (with-buffer-list ()
     (rove:ok (null (lem-base:get-buffer "a")))
     (let (buffer-a buffer-b buffer-c)
       (rove:testing "buffer-a"
@@ -102,7 +102,7 @@
         (rove:ok (eq buffer-c (lem-base:get-buffer buffer-c)))))))
 
 (rove:deftest unique-buffer-name
-  (with-buffer-list-test ()
+  (with-buffer-list ()
     (rove:testing "argument type"
       (rove:ok (rove:signals (lem-base:unique-buffer-name (lem-base:make-buffer nil :temporary t)) 'type-error))
       (rove:ok (rove:signals (lem-base:unique-buffer-name 1) 'type-error))
@@ -113,7 +113,7 @@
                  (:no-error (name)
                    (and (stringp name)
                         (string= name "abc")))))))
-  (with-buffer-list-test ()
+  (with-buffer-list ()
     (rove:ok (equal "foo" (lem-base:unique-buffer-name "foo")))
     (let ((buffer-a (lem-base:make-buffer "a"))
           buffer-a<1>
@@ -132,19 +132,19 @@
                       (list buffer-a<2>
                             buffer-a<1>
                             buffer-a)))
-      (with-buffer-list-test ((copy-list (lem-base:buffer-list)))
+      (with-buffer-list ((copy-list (lem-base:buffer-list)))
         (lem-base:delete-buffer buffer-a<2>)
         (rove:ok (equal "a<2>" (lem-base:unique-buffer-name "a")))
         (rove:ok (equal (lem-base:buffer-list)
                         (list buffer-a<1>
                               buffer-a))))
-      (with-buffer-list-test ((copy-list (lem-base:buffer-list)))
+      (with-buffer-list ((copy-list (lem-base:buffer-list)))
         (lem-base:delete-buffer buffer-a<1>)
         (rove:ok (equal "a<1>" (lem-base:unique-buffer-name "a")))
         (rove:ok (equal (lem-base:buffer-list)
                         (list buffer-a<2>
                               buffer-a))))
-      (with-buffer-list-test ((copy-list (lem-base:buffer-list)))
+      (with-buffer-list ((copy-list (lem-base:buffer-list)))
         (lem-base:delete-buffer buffer-a)
         (rove:ok (equal "a" (lem-base:unique-buffer-name "a")))
         (rove:ok (equal (lem-base:buffer-list)

@@ -99,6 +99,7 @@
 (defun get-file-buffer (filename)
   "`filename`に対応するバッファを返します。
 見つからなければNILを返します。"
+  (check-type filename (or string pathname))
   (dolist (buffer (buffer-list))
     (when (uiop:pathname-equal filename (buffer-filename buffer))
       (return buffer))))

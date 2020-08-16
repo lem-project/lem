@@ -333,4 +333,17 @@
                             (list buffer-c buffer-b buffer-a)))))))))
 
 (rove:deftest get-file-buffer
-  )
+  (rove:testing "argument type"
+    (rove:ok (rove:signals (lem-base:get-file-buffer nil) 'type-error))
+    (rove:ok (rove:signals (lem-base:get-file-buffer t) 'type-error))
+    (rove:ok (rove:signals (lem-base:get-file-buffer 1) 'type-error))
+    (rove:ok (rove:signals (lem-base:get-file-buffer #(#\a)) 'type-error)))
+  (with-buffer-list ()
+    (let ((filename (sample-file "test.txt")))
+      (lem-base:make-buffer "a")
+      (lem-base:make-buffer "b")
+      (lem-base:make-buffer "c")
+      (rove:ok (null (lem-base:get-file-buffer filename)))
+      (let ((buffer (lem-base:find-file-buffer filename)))
+        (rove:ok (eq (lem-base:get-file-buffer filename)
+                     buffer))))))

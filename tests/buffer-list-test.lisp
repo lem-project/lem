@@ -64,7 +64,7 @@
       (rove:testing "edit buffer-c, any-modified-buffer-p = t"
         (lem-base:with-point ((p (lem-base:buffer-point buffer-c)))
           (lem-base:insert-character p #\a)
-          (rove:ok (lem-base:any-modified-buffer-p)))))))
+          (rove:ok (eq t (lem-base:any-modified-buffer-p))))))))
 
 (rove:deftest get-buffer
   (with-buffer-list-test ()

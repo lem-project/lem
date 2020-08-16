@@ -29,10 +29,10 @@
   (set-buffer-list (cons buffer (buffer-list))))
 
 (defun any-modified-buffer-p ()
-  (find-if (lambda (buffer)
-             (and (buffer-filename buffer)
-                  (buffer-modified-p buffer)))
-           (buffer-list)))
+  (some (lambda (buffer)
+          (and (buffer-filename buffer)
+               (buffer-modified-p buffer)))
+        (buffer-list)))
 
 (defun get-buffer (buffer-or-name)
   "`buffer-or-name`がバッファならそのまま返し、

@@ -8,22 +8,18 @@
   (:import-from :alexandria))
 (in-package :lem-tests/buffer-list-test)
 
-#|
-- buffer-list
-- any-modified-buffer-p
-- get-buffer
-- unique-buffer-name
-- delete-buffer
-- get-next-buffer
-- get-previous-buffer
-- unbruy-buffer
-- bury-buffer
-- get-file-buffer
-|#
-
 (defmacro with-buffer-list ((&optional buffer-list) &body body)
   `(let ((lem-base::*buffer-list* ,buffer-list))
      ,@body))
+
+(defun argument-type-is-buffer-test (function &key allow-string-p)
+  (with-buffer-list ()
+    (rove:testing "argument type"
+      (rove:ok (rove:signals (funcall function nil) 'type-error))
+      (rove:ok (rove:signals (funcall function 1) 'type-error))
+      (rove:ok (rove:signals (funcall function #(#\a #\b)) 'type-error))
+      (unless allow-string-p
+        (rove:ok (rove:signals (funcall function "name") 'type-error))))))
 
 (rove:deftest buffer-list
   (with-buffer-list ()
@@ -68,20 +64,7 @@
           (rove:ok (eq t (lem-base:any-modified-buffer-p))))))))
 
 (rove:deftest get-buffer
-  (with-buffer-list ()
-    (rove:testing "arugment type"
-      (rove:ok (rove:signals (lem-base:get-buffer 1) 'type-error))
-      (rove:ok (rove:signals (lem-base:get-buffer nil) 'type-error))
-      (rove:ok (handler-case (lem-base:get-buffer "foo")
-                 (error ()
-                   nil)
-                 (:no-error (buffer)
-                   (null buffer))))
-      (rove:ok (handler-case (lem-base:get-buffer (lem:make-buffer nil :temporary t))
-                 (error ()
-                   nil)
-                 (:no-error (buffer)
-                   (lem-base:bufferp buffer))))))
+  (argument-type-is-buffer-test #'lem-base:get-buffer :allow-string-p t)
   (with-buffer-list ()
     (rove:ok (null (lem-base:get-buffer "a")))
     (let (buffer-a buffer-b buffer-c)
@@ -103,17 +86,7 @@
         (rove:ok (eq buffer-c (lem-base:get-buffer buffer-c)))))))
 
 (rove:deftest unique-buffer-name
-  (with-buffer-list ()
-    (rove:testing "argument type"
-      (rove:ok (rove:signals (lem-base:unique-buffer-name (lem-base:make-buffer nil :temporary t)) 'type-error))
-      (rove:ok (rove:signals (lem-base:unique-buffer-name 1) 'type-error))
-      (rove:ok (rove:signals (lem-base:unique-buffer-name #(100 200)) 'type-error))
-      (rove:ok (handler-case (lem-base:unique-buffer-name "abc")
-                 (error ()
-                   nil)
-                 (:no-error (name)
-                   (and (stringp name)
-                        (string= name "abc")))))))
+  (argument-type-is-buffer-test #'lem-base:unique-buffer-name :allow-string-p t)
   (with-buffer-list ()
     (rove:ok (equal "foo" (lem-base:unique-buffer-name "foo")))
     (let ((buffer-a (lem-base:make-buffer "a"))
@@ -154,16 +127,7 @@
       (rove:ok (equal "b" (lem-base:unique-buffer-name "b"))))))
 
 (rove:deftest delete-buffer
-  (with-buffer-list ()
-    (rove:testing "argument type"
-      (rove:ok (rove:signals (lem-base:delete-buffer 1) 'type-error))
-      (rove:ok (rove:signals (lem-base:delete-buffer "name") 'type-error))
-      (rove:ok (handler-case (lem-base:delete-buffer (lem-base:make-buffer nil :temporary t))
-                 (error ()
-                   nil)
-                 (:no-error (result)
-                   (declare (ignore result))
-                   t)))))
+  (argument-type-is-buffer-test #'lem-base:delete-buffer)
   (with-buffer-list ()
     (let ((buffer-a (lem-base:make-buffer "a"))
           (buffer-b (lem-base:make-buffer "b"))
@@ -230,15 +194,7 @@
                 (rove:ok (equal '(:local :global)
                                 (nreverse called-order)))))))))))
 
-
-(flet ((argument-type-test (function)
-         (with-buffer-list ()
-           (rove:testing "argument type"
-             (rove:ok (rove:signals (funcall function nil) 'type-error))
-             (rove:ok (rove:signals (funcall function 1) 'type-error))
-             (rove:ok (rove:signals (funcall function "name") 'type-error))
-             (rove:ok (rove:signals (funcall function #(#\a #\b)) 'type-error)))))
-       (buffer-list-length=0-case (function)
+(flet ((buffer-list-length=0-case (function)
          (with-buffer-list ()
            (assert (null (lem-base:buffer-list)))
            (rove:ok (eq (funcall function (lem-base:make-buffer nil :temporary t))
@@ -251,7 +207,7 @@
              (rove:ok (eq (funcall function buffer-a) nil))))))
 
   (rove:deftest get-next-buffer
-    (argument-type-test #'lem-base:get-next-buffer)
+    (argument-type-is-buffer-test #'lem-base:get-next-buffer)
     (buffer-list-length=0-case #'lem-base:get-next-buffer)
     (buffer-list-length=1-case #'lem-base:get-next-buffer)
     (with-buffer-list ()
@@ -266,7 +222,7 @@
         (rove:ok (eq (lem-base:get-next-buffer (lem-base:make-buffer nil :temporary t)) nil)))))
 
   (rove:deftest get-previous-buffer
-    (argument-type-test #'lem-base:get-previous-buffer)
+    (argument-type-is-buffer-test #'lem-base:get-previous-buffer)
     (buffer-list-length=0-case #'lem-base:get-previous-buffer)
     (buffer-list-length=1-case #'lem-base:get-previous-buffer)
     (with-buffer-list ()
@@ -280,10 +236,10 @@
         (rove:ok (eq (lem-base:get-previous-buffer buffer-a) buffer-b))
         (rove:ok (eq (lem-base:get-previous-buffer (lem-base:make-buffer nil :temporary t)) nil))))))
 
-(rove:deftest unbury-buffer
+(rove:deftest bury-buffer
   )
 
-(rove:deftest bury-buffer
+(rove:deftest unbury-buffer
   )
 
 (rove:deftest get-file-buffer

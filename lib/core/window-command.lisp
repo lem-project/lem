@@ -156,7 +156,7 @@
         (delete-window win)))
     (window-set-pos (current-window)
                     (topleft-window-x (current-frame))
-                    (window-topleft-y (current-frame)))
+                    (topleft-window-y (current-frame)))
     (window-set-size (current-window)
                      (window-max-width (current-frame))
                      (window-max-height (current-frame)))

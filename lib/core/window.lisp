@@ -312,7 +312,7 @@
   (delete-point (%window-point window))
   (screen-delete (window-screen window)))
 
-(defun window-topleft-y (frame)
+(defun topleft-window-y (frame)
   (length (frame-header-windows frame)))
 (defun topleft-window-x (frame)
   (declare (ignore frame))
@@ -322,14 +322,14 @@
 (defun window-max-height (frame)
   (- (display-height)
      (if (sticky-bottom-minibuffer-p) 1 0)
-     (window-topleft-y frame)))
+     (topleft-window-y frame)))
 
 (defun setup-frame-windows (frame buffer)
   (assert (= (length (frame-header-windows frame))
              (length (frame-header-windows (current-frame)))))
   (let ((window (make-window buffer
                              (topleft-window-x (current-frame))
-                             (window-topleft-y (current-frame))
+                             (topleft-window-y (current-frame))
                              (window-max-width (current-frame))
                              (window-max-height (current-frame))
                              t)))
@@ -1196,9 +1196,9 @@
   (dolist (window (frame-header-windows (current-frame)))
     (window-set-size window (display-width) 1))
   (adjust-windows (topleft-window-x (current-frame))
-                  (window-topleft-y (current-frame))
+                  (topleft-window-y (current-frame))
                   (+ (window-max-width (current-frame)) (topleft-window-x (current-frame)))
-                  (+ (window-max-height (current-frame)) (window-topleft-y (current-frame))))
+                  (+ (window-max-height (current-frame)) (topleft-window-y (current-frame))))
   (minibuf-update-size)
   (recenter t))
 

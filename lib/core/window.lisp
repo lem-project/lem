@@ -312,18 +312,6 @@
   (delete-point (%window-point window))
   (screen-delete (window-screen window)))
 
-(defun topleft-window-y (frame)
-  (length (frame-header-windows frame)))
-(defun topleft-window-x (frame)
-  (declare (ignore frame))
-  0)
-(defun max-window-width (frame)
-  (- (display-width) (topleft-window-x frame)))
-(defun max-window-height (frame)
-  (- (display-height)
-     (if (sticky-bottom-minibuffer-p) 1 0)
-     (topleft-window-y frame)))
-
 (defun setup-frame-windows (frame buffer)
   (assert (= (length (frame-header-windows frame))
              (length (frame-header-windows (current-frame)))))

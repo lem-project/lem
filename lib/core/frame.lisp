@@ -73,3 +73,19 @@
   (redraw-display (and (redraw-after-modifying-floating-window (implementation))
                        (frame-modified-floating-windows frame)))
   (setf (frame-modified-floating-windows frame) nil))
+
+
+(defun topleft-window-y (frame)
+  (length (frame-header-windows frame)))
+
+(defun topleft-window-x (frame)
+  (declare (ignore frame))
+  0)
+
+(defun max-window-width (frame)
+  (- (display-width) (topleft-window-x frame)))
+
+(defun max-window-height (frame)
+  (- (display-height)
+     (if (sticky-bottom-minibuffer-p) 1 0)
+     (topleft-window-y frame)))

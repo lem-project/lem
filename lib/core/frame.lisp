@@ -55,7 +55,7 @@
 
 (defun setup-frame (frame)
   (setup-minibuffer frame)
-  (setup-windows frame))
+  (setup-frame-windows frame))
 
 (defun teardown-frame (frame)
   (teardown-windows frame)

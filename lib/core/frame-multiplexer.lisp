@@ -236,9 +236,9 @@
                                           (lem::window-topleft-x) (lem::window-topleft-y)
                                           (lem::window-max-width) (lem::window-max-height)
                                           t)))
-        (setf (lem:frame-window-tree frame) new-window
-              (lem:frame-current-window frame) new-window
-              (virtual-frame-current vf) frame)
+        (setf (lem:frame-window-tree frame) new-window)
+        (setf (lem:frame-current-window frame) new-window)
+        (setf (virtual-frame-current vf) frame)
         (allocate-frame vf frame)
         (lem:map-frame (implementation) frame))
       (setf (virtual-frame-changed vf) t))))

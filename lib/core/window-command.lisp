@@ -159,7 +159,7 @@
                     (topleft-window-y (current-frame)))
     (window-set-size (current-window)
                      (max-window-width (current-frame))
-                     (window-max-height (current-frame)))
+                     (max-window-height (current-frame)))
     t))
 
 (define-key *global-keymap* "C-x 0" 'delete-current-window)

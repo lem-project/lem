@@ -232,15 +232,13 @@
            (tmp-buffer (primordial-buffer)))
       (lem:setup-frame frame tmp-buffer)
       (push vf (lem:frame-header-windows frame))
-      (let ((new-window (lem::make-window tmp-buffer
-                                          (lem::window-topleft-x) (lem::window-topleft-y)
-                                          (lem::window-max-width) (lem::window-max-height)
-                                          t)))
-        (setf (lem:frame-window-tree frame) new-window)
-        (setf (lem:frame-current-window frame) new-window)
-        (setf (virtual-frame-current vf) frame)
-        (allocate-frame vf frame)
-        (lem:map-frame (implementation) frame))
+
+      (setup-frame-windows frame tmp-buffer)
+
+      (setf (virtual-frame-current vf) frame)
+      (allocate-frame vf frame)
+      (lem:map-frame (implementation) frame)
+
       (setf (virtual-frame-changed vf) t))))
 
 (define-key *global-keymap* "C-z d" 'frame-multiplexer-delete)

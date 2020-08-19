@@ -230,10 +230,8 @@
       (editor-error "it's full of frames in virtual frame"))
     (let* ((frame (lem:make-frame))
            (tmp-buffer (primordial-buffer)))
-      (lem:setup-frame frame tmp-buffer)
       (push vf (lem:frame-header-windows frame))
-
-      (lem::setup-frame-windows frame tmp-buffer)
+      (lem:setup-frame frame tmp-buffer)
 
       (setf (virtual-frame-current vf) frame)
       (allocate-frame vf frame)

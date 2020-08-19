@@ -321,6 +321,8 @@
      (window-topleft-y)))
 
 (defun setup-frame-windows (frame buffer)
+  (assert (= (length (frame-header-windows frame))
+             (length (frame-header-windows (current-frame)))))
   (let ((window (make-window buffer
                              (window-topleft-x)
                              (window-topleft-y)

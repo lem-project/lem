@@ -1245,7 +1245,7 @@
           (lisp-autodoc))))))
 
 (define-command lisp-scratch () ()
-  (let ((buffer (make-buffer "*tmp*")))
+  (let ((buffer (primordial-buffer)))
     (change-buffer-mode buffer 'lisp-mode)
     (switch-to-buffer buffer)))
 

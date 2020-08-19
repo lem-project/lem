@@ -138,7 +138,7 @@
       (indent-region (current-point) end))))
 
 (define-command scheme-scratch () ()
-  (let ((buffer (make-buffer "*tmp*")))
+  (let ((buffer (primordial-buffer)))
     (change-buffer-mode buffer 'scheme-mode)
     (switch-to-buffer buffer)))
 

@@ -53,9 +53,9 @@
     (remhash display frame)
     frame))
 
-(defun setup-frame (frame)
+(defun setup-frame (frame buffer)
   (setup-minibuffer frame)
-  (setup-frame-windows frame)
+  (setup-frame-windows frame buffer)
   (lem-if:set-first-view (implementation) (window-view (frame-current-window frame))))
 
 (defun teardown-frame (frame)

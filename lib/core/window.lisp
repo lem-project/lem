@@ -320,8 +320,8 @@
      (if (sticky-bottom-minibuffer-p) 1 0)
      (window-topleft-y)))
 
-(defun setup-frame-windows (frame)
-  (let ((window (make-window (current-buffer)
+(defun setup-frame-windows (frame buffer)
+  (let ((window (make-window buffer
                              (window-topleft-x)
                              (window-topleft-y)
                              (window-max-width)

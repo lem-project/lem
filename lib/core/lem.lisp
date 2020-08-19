@@ -55,7 +55,7 @@
   (defun setup ()
     (let ((frame (make-frame)))
       (map-frame (implementation) frame)
-      (setup-frame frame))
+      (setup-frame frame (primordial-buffer)))
     (unless once
       (setf once t)
       (start-idle-timer 100 t

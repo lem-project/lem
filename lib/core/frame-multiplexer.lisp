@@ -230,7 +230,7 @@
       (editor-error "it's full of frames in virtual frame"))
     (let* ((frame (lem:make-frame))
            (tmp-buffer (primordial-buffer)))
-      (lem:setup-frame frame)
+      (lem:setup-frame frame tmp-buffer)
       (push vf (lem:frame-header-windows frame))
       (let ((new-window (lem::make-window tmp-buffer
                                           (lem::window-topleft-x) (lem::window-topleft-y)

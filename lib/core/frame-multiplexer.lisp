@@ -233,7 +233,7 @@
       (lem:setup-frame frame tmp-buffer)
       (push vf (lem:frame-header-windows frame))
 
-      (setup-frame-windows frame tmp-buffer)
+      (lem::setup-frame-windows frame tmp-buffer)
 
       (setf (virtual-frame-current vf) frame)
       (allocate-frame vf frame)

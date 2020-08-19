@@ -158,7 +158,7 @@
                     (topleft-window-x (current-frame))
                     (topleft-window-y (current-frame)))
     (window-set-size (current-window)
-                     (window-max-width (current-frame))
+                     (max-window-width (current-frame))
                      (window-max-height (current-frame)))
     t))
 

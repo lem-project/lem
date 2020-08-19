@@ -139,7 +139,7 @@
           (update-window-ratios window-panel)
           (lem::adjust-windows (lem::topleft-window-x (lem:current-frame))
                                (lem::topleft-window-y (lem:current-frame))
-                               (+ (lem::window-max-width (lem:current-frame)) (lem::topleft-window-x (lem:current-frame)))
+                               (+ (lem::max-window-width (lem:current-frame)) (lem::topleft-window-x (lem:current-frame)))
                                (+ (lem::window-max-height (lem:current-frame)) (lem::topleft-window-y (lem:current-frame))))
           (lem::minibuf-update-size)
           (setf (window-panel-modified-p window-panel) nil)

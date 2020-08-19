@@ -1,6 +1,7 @@
 (in-package :lem-base)
 
 (export '(fundamental-mode
+          primordial-buffer
           current-buffer
           make-buffer
           buffer
@@ -38,7 +39,7 @@
 (export '(%buffer-keep-binfo
           %buffer-clear-keep-binfo))
 
-(defparameter +original-buffer-name+ "*tmp*")
+(defparameter +primordial-buffer-name+ "*tmp*")
 
 (defclass buffer ()
   ((name
@@ -149,11 +150,14 @@
 
 (defvar *current-buffer*)
 
+(defun primordial-buffer ()
+  (make-buffer +primordial-buffer-name+))
+
 (defun current-buffer ()
   "現在の`buffer`を返します。"
   (unless (boundp '*current-buffer*)
     (setf *current-buffer*
-          (make-buffer +original-buffer-name+)))
+          (primordial-buffer)))
   *current-buffer*)
 
 (defun (setf current-buffer) (buffer)

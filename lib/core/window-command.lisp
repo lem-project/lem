@@ -155,7 +155,7 @@
       (unless (eq win (current-window))
         (delete-window win)))
     (window-set-pos (current-window)
-                    (window-topleft-x (current-frame))
+                    (topleft-window-x (current-frame))
                     (window-topleft-y (current-frame)))
     (window-set-size (current-window)
                      (window-max-width (current-frame))

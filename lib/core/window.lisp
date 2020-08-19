@@ -328,8 +328,7 @@
                              (window-max-height)
                              t)))
     (setf (frame-current-window frame) window)
-    (setf (frame-window-tree frame) window)
-    (lem-if:set-first-view (implementation) (window-view window))))
+    (setf (frame-window-tree frame) window)))
 
 (defun teardown-windows (frame)
   (mapc #'%free-window (window-list frame)))

@@ -55,7 +55,8 @@
 
 (defun setup-frame (frame)
   (setup-minibuffer frame)
-  (setup-frame-windows frame))
+  (setup-frame-windows frame)
+  (lem-if:set-first-view (implementation) (window-view (frame-current-window frame))))
 
 (defun teardown-frame (frame)
   (teardown-windows frame)

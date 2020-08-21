@@ -563,16 +563,16 @@
              (null (get-buffer-windows (get-buffer "*lisp-compilations*"))))
     (return-from highlight-notes))
   (when (dolist (note notes nil)
-          (optima:match note
-            ((optima:property :location location)
+          (trivia:match note
+            ((trivia:property :location location)
              (when (source-location-to-xref-location location nil t)
                (return t)))))
     (lem.sourcelist:with-sourcelist (sourcelist "*lisp-compilations*")
       (dolist (note notes)
-        (optima:match note
-          ((and (optima:property :location location)
-                (or (optima:property :message message) (and))
-                (or (optima:property :source-context source-context) (and)))
+        (trivia:match note
+          ((and (trivia:property :location location)
+                (or (trivia:property :message message) (and))
+                (or (trivia:property :source-context source-context) (and)))
            (alexandria:when-let ((xref-location (source-location-to-xref-location location nil t)))
              (let* ((name (xref-filespec-to-filename (xref-location-filespec xref-location)))
                     (pos (xref-location-position xref-location))

@@ -3,7 +3,7 @@
                "trivial-types"
                "usocket"
                "swank"
-               "optima"
+               "trivia"
                "uiop"
                "lem-core"
                "lem-process")

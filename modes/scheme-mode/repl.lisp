@@ -273,9 +273,9 @@
 (defun repl-highlight-notes (notes)
   (let ((buffer (repl-buffer)))
     (dolist (note notes)
-      (optima:match note
-        ((and (optima:property :location location)
-              (optima:property :message _))
+      (trivia:match note
+        ((and (trivia:property :location location)
+              (trivia:property :message _))
          (let* ((xref-loc (source-location-to-xref-location location))
                 (offset (xref-location-position xref-loc)))
            (with-point ((start (buffer-point buffer)))

@@ -2,7 +2,7 @@
   :depends-on ("alexandria"
                "trivial-types"
                "usocket"
-               "optima"
+               "trivia"
                "uiop"
                #+#.(cl:if (asdf:find-system :async-process cl:nil) '(and) '(or)) "lem-process"
                "lem-core")

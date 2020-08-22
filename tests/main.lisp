@@ -10,6 +10,6 @@
 
 (defun run-all-tests ()
   (rove:run :lem-tests/lisp-syntax/indent-test)
-  (rove:run :lem-tests/lisp-syntax/defstruct-to-defclass))
+  (rove:run :lem-tests/lisp-syntax/defstruct-to-defclass)
   (rove:run :lem-tests/syntax-test)
-  (rove:run :lem-tests/buffer-list-test)
+  (rove:run :lem-tests/buffer-list-test))

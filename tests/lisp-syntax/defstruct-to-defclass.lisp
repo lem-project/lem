@@ -96,4 +96,12 @@
       (search-input-defstruct point 2)
       (defstruct-to-defclass point)
       (rove:ok (equal (form-string-at-point point)
+                      expected-form-string))))
+  (rove:testing "case-3"
+    (let* ((buffer (make-test-buffer))
+           (expected-form-string (fetch-expected-form-string buffer 3))
+           (point (lem-base:buffer-point buffer)))
+      (search-input-defstruct point 3)
+      (defstruct-to-defclass point)
+      (rove:ok (equal (form-string-at-point point)
                       expected-form-string)))))

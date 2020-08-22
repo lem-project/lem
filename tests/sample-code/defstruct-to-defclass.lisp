@@ -13,6 +13,9 @@
   c ;comment3
   d)
 
+(defstruct foo
+  (x :type integer))
+
 ;;; output
 
 (defclass foo ()
@@ -48,3 +51,9 @@
     :initarg :d
     :initform nil
     :accessor foo-d)))
+
+(defclass foo ()
+  ((x
+    :initarg :x
+    :accessor foo-x
+    :type integer)))

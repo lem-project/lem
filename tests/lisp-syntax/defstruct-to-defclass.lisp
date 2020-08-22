@@ -4,6 +4,7 @@
   (:import-from :lem-tests/utilities
                 :sample-file)
   (:import-from :lem-lisp-syntax.defstruct-to-defclass
+                :defstruct-to-defclass
                 :analyze-defstruct
                 :make-struct-form-info
                 :struct-form-info-p
@@ -38,43 +39,49 @@
         :do (lem-base:search-forward point "(defstruct"))
   (lem-base:scan-lists point -1 1 t))
 
-(defun fetch-expected-form-string (point n)
-  (lem-base:with-point ((point point))
+(defun fetch-expected-form-string (buffer n)
+  (lem-base:with-point ((point (lem-base:buffer-point buffer)))
     (lem-base:buffer-start point)
     (lem-base:search-forward point ";;; output")
     (loop :repeat n
           :do (lem-base:search-forward point "(defclass"))
     (form-string-at-point point)))
 
-(rove:deftest defstruct-to-defclass
-  (let* ((buffer (lem-base:find-file-buffer (sample-file "defstruct-to-defclass.lisp")
-                                            :temporary t
-                                            :syntax-table lem-lisp-syntax:*syntax-table*))
+(defun make-test-buffer ()
+  (lem-base:find-file-buffer (sample-file "defstruct-to-defclass.lisp")
+                             :temporary t
+                             :syntax-table lem-lisp-syntax:*syntax-table*))
+
+(rove:deftest analyze-defstruct
+  (let* ((buffer (make-test-buffer))
          (point (lem-base:buffer-point buffer)))
-    (let ((expected-form-string (fetch-expected-form-string point 1)))
-      (search-input-defstruct point 1)
-      (let ((info (analyze-defstruct point (make-struct-form-info))))
-        (rove:ok (struct-form-info-p info))
-        (rove:ok (equal "foo" (struct-name info)))
-        (rove:ok (expected-point-position-p (struct-start-point info) 3 1))
-        (rove:ok (expected-point-position-p (struct-end-point info) 6 8))
-        (rove:ok (expected-point-position-p (struct-name-and-options-point info) 3 11))
-        (let ((slots (struct-slot-descriptions info)))
-          (rove:ok (= (length slots) 3))
-          (let ((slot (first slots)))
-            (rove:ok (slot-description-info-p slot))
-            (rove:ok (equal (slot-description-info-name slot) "slot-a"))
-            (rove:ok (expected-point-position-p (slot-description-info-point slot) 4 2)))
-          (let ((slot (second slots)))
-            (rove:ok (slot-description-info-p slot))
-            (rove:ok (equal (slot-description-info-name slot) "slot-b"))
-            (rove:ok (expected-point-position-p (slot-description-info-point slot) 5 2)))
-          (let ((slot (third slots)))
-            (rove:ok (slot-description-info-p slot))
-            (rove:ok (equal (slot-description-info-name slot) "slot-c"))
-            (rove:ok (expected-point-position-p (slot-description-info-point slot) 6 2))))
-        (translate-to-defclass-with-info point info)
-        (rove:ok (equal (form-string-at-point point)
-                        expected-form-string))
-        (values (form-string-at-point point)
-                expected-form-string)))))
+    (search-input-defstruct point 1)
+    (let ((info (analyze-defstruct point (make-struct-form-info))))
+      (rove:ok (struct-form-info-p info))
+      (rove:ok (equal "foo" (struct-name info)))
+      (rove:ok (expected-point-position-p (struct-start-point info) 3 1))
+      (rove:ok (expected-point-position-p (struct-end-point info) 6 8))
+      (rove:ok (expected-point-position-p (struct-name-and-options-point info) 3 11))
+      (let ((slots (struct-slot-descriptions info)))
+        (rove:ok (= (length slots) 3))
+        (let ((slot (first slots)))
+          (rove:ok (slot-description-info-p slot))
+          (rove:ok (equal (slot-description-info-name slot) "slot-a"))
+          (rove:ok (expected-point-position-p (slot-description-info-point slot) 4 2)))
+        (let ((slot (second slots)))
+          (rove:ok (slot-description-info-p slot))
+          (rove:ok (equal (slot-description-info-name slot) "slot-b"))
+          (rove:ok (expected-point-position-p (slot-description-info-point slot) 5 2)))
+        (let ((slot (third slots)))
+          (rove:ok (slot-description-info-p slot))
+          (rove:ok (equal (slot-description-info-name slot) "slot-c"))
+          (rove:ok (expected-point-position-p (slot-description-info-point slot) 6 2)))))))
+
+(rove:deftest defstruct-to-defclass
+  (let* ((buffer (make-test-buffer))
+         (expected-form-string (fetch-expected-form-string buffer 1))
+         (point (lem-base:buffer-point buffer)))
+    (search-input-defstruct point 1)
+    (defstruct-to-defclass point)
+    (rove:ok (equal (form-string-at-point point)
+                    expected-form-string))))

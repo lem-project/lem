@@ -6,8 +6,8 @@
   (:import-from :lem-lisp-syntax.defstruct-to-defclass
                 :defstruct-to-defclass
                 :analyze-defstruct
-                :make-struct-form-info
-                :struct-form-info-p
+                :make-struct-info
+                :struct-info-p
                 :struct-start-point
                 :struct-end-point
                 :struct-name
@@ -59,8 +59,8 @@
   (let* ((buffer (make-test-buffer))
          (point (lem-base:buffer-point buffer)))
     (search-input-defstruct point 1)
-    (let ((info (analyze-defstruct point (make-struct-form-info))))
-      (rove:ok (struct-form-info-p info))
+    (let ((info (analyze-defstruct point (make-struct-info))))
+      (rove:ok (struct-info-p info))
       (rove:ok (equal "foo" (struct-name info)))
       (rove:ok (expected-point-position-p (struct-start-point info) 3 1))
       (rove:ok (expected-point-position-p (struct-end-point info) 6 8))

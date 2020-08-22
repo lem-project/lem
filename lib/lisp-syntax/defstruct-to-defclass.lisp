@@ -22,7 +22,7 @@
 (defmacro with-temporary-points (() &body body)
   `(call-with-temporary-points (lambda () ,@body)))
 
-(defvar *struct-form-info*)
+(defvar *struct-info*)
 
 (defun forward-token (point)
   (skip-space-and-comment-forward point)
@@ -51,16 +51,13 @@
   name
   point)
 
-(defstruct (struct-form-info (:conc-name struct-)
-                             (:constructor %make-struct-form-info))
+(defstruct (struct-info (:constructor make-struct-info ())
+                        (:conc-name struct-))
   start-point
   end-point
   name
   name-and-options-point
   slot-descriptions)
-
-(defun make-struct-form-info ()
-  (%make-struct-form-info))
 
 (defun scan-defstruct-name-and-options (point)
   (let ((token (forward-token point)))
@@ -68,9 +65,9 @@
       (cond ((eq token :list-start)
              (editor-error "unimplemented (name-and-options...) parser"))
             (t
-             (setf (struct-name *struct-form-info*)
+             (setf (struct-name *struct-info*)
                    token)
-             (setf (struct-name-and-options-point *struct-form-info*)
+             (setf (struct-name-and-options-point *struct-info*)
                    (save-point point))
              (form-offset point 1))))))
 
@@ -95,7 +92,7 @@
     (enter-list point)
     (let ((token (forward-token point)))
       (when (and (stringp token) (string-equal token "defstruct")) ; (|defstruct
-        (setf (struct-start-point *struct-form-info*)
+        (setf (struct-start-point *struct-info*)
               (save-point point))
         ; (|defstruct ...
         (exact (form-offset point 1))
@@ -104,17 +101,17 @@
         ; (defstruct structure-name| slot-name ...)
         (loop :for slot-description := (scan-forward-slot-description point)
               :while slot-description
-              :do (alexandria:nconcf (struct-slot-descriptions *struct-form-info*)
+              :do (alexandria:nconcf (struct-slot-descriptions *struct-info*)
                                      (list slot-description)))
         (skip-space-and-comment-forward point)
         (exact (char= (character-at point) #\)))
-        (setf (struct-end-point *struct-form-info*)
+        (setf (struct-end-point *struct-info*)
               (save-point point))))))
 
-(defun analyze-defstruct (point *struct-form-info*)
+(defun analyze-defstruct (point *struct-info*)
   (with-point ((point point))
     (scan-defstruct point))
-  *struct-form-info*)
+  *struct-info*)
 
 (defun replace-at-point (point old new)
   (assert (string= old (symbol-string-at-point point)))
@@ -159,7 +156,7 @@
 (defun defstruct-to-defclass (point)
   (handler-case
       (with-temporary-points ()
-        (let ((info (analyze-defstruct point (make-struct-form-info))))
+        (let ((info (analyze-defstruct point (make-struct-info))))
           (translate-to-defclass-with-info point info)))
     (editor-error (c)
       (error c))))

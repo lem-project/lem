@@ -22,17 +22,6 @@
 (defmacro with-temporary-points (() &body body)
   `(call-with-temporary-points (lambda () ,@body)))
 
-(defvar *struct-info*)
-
-(defun forward-token (point)
-  (skip-space-and-comment-forward point)
-  (cond ((eql (character-at point) #\()
-         :list-start)
-        ((eql (character-at point) #\))
-         :list-end)
-        (t
-         (symbol-string-at-point point))))
-
 (define-condition scan-failed (editor-error)
   ())
 
@@ -40,6 +29,37 @@
   (unless result
     (error 'scan-failed))
   result)
+
+(defun safe-read-from-string (string)
+  (handler-case
+      (let ((*read-eval* nil))
+        (read-from-string string))
+    (reader-error ()
+      (error 'scan-failed))))
+
+(defvar *struct-info*)
+
+(defun forward-token (point &key (case-sensitive-p t))
+  (skip-space-and-comment-forward point)
+  (cond ((eql (character-at point) #\()
+         :list-start)
+        ((eql (character-at point) #\))
+         :list-end)
+        (t
+         (let ((string (symbol-string-at-point point)))
+           (cond ((null string)
+                  nil)
+                 (case-sensitive-p
+                  string)
+                 (t
+                  (string-downcase string)))))))
+
+(defun forward-form (point)
+  (exact (form-offset point 1))
+  (with-point ((start point))
+    (exact (form-offset start -1))
+    (let ((*read-eval* nil))
+      (safe-read-from-string (points-to-string start point)))))
 
 (defun enter-list (point)
   (scan-lists point 1 -1))
@@ -49,7 +69,12 @@
 
 (defstruct (slot-description-info (:conc-name slot-description-))
   name
-  point)
+  point
+  initial-value-start-point
+  initial-value-end-point
+  read-only-p
+  type-start-point
+  type-end-point)
 
 (defstruct (struct-info (:constructor make-struct-info ())
                         (:conc-name struct-))
@@ -71,17 +96,58 @@
                    (save-point point))
              (form-offset point 1))))))
 
+(defun scan-slot-description-option (point slot-info)
+  (trivia:match (forward-token point :case-sensitive-p nil)
+    (":type"
+     (form-offset point 1)
+     ;(slot-name ... :type| type)
+     (skip-space-and-comment-forward point)
+     ;(slot-name ... :type |type)
+     (setf (slot-description-type-start-point slot-info) (save-point point))
+     (exact (form-offset point 1))
+     ;(slot-name ... :type type|)
+     (setf (slot-description-type-end-point slot-info) (save-point point))
+     t)
+    (":read-only"
+     (form-offset point 1)
+     ;(slot-name ... :read-only| boolean)
+     (exact (form-offset point 1))
+     (when (forward-form point)
+       (setf (slot-description-read-only-p slot-info) t))
+     ;(slot-name ... :read-only boolean|)
+     t)
+    ((eq :list-end)
+     nil)
+    (otherwise
+     nil)))
+
+(defun scan-complex-slot-description (point)
+  (flet ((scan-slot-name ()
+           (let ((slot-name (forward-token point)))
+             (exact (stringp slot-name))
+             (form-offset point 1)
+             slot-name)))
+    (enter-list point)
+    (let ((slot-info
+            (make-slot-description-info :name (scan-slot-name)
+                                        :point (save-point point))))
+      (skip-space-and-comment-forward point)
+      ;(defstruct structure-name (slot-name |init-form :type integer))
+      (setf (slot-description-initial-value-start-point slot-info) (save-point point))
+      (exact (form-offset point 1))
+      ;(defstruct structure-name (slot-name init-form| :type integer))
+      (setf (slot-description-initial-value-end-point slot-info) (save-point point))
+      (loop :repeat 2 :while (scan-slot-description-option point slot-info))
+      (prog1 slot-info
+        (exit-list point)))))
+
 (defun scan-forward-slot-description (point)
   (trivia:ematch (forward-token point)
     ((trivia:guard token (stringp token))
      (prog1 (make-slot-description-info :name token :point (save-point point))
        (form-offset point 1)))
     ((eq :list-start)
-     (enter-list point)
-     (let ((token (forward-token point)))
-       (exact (stringp token))
-       (prog1 (make-slot-description-info :name token :point (save-point point))
-         (exit-list point))))
+     (scan-complex-slot-description point))
     ((eq :list-end)
      nil)
     ((eq nil)

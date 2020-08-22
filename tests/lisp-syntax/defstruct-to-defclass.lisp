@@ -16,6 +16,11 @@
                 :slot-description-info-p
                 :slot-description-name
                 :slot-description-point
+                :slot-description-initial-value-start-point
+                :slot-description-initial-value-end-point
+                :slot-description-read-only-p
+                :slot-description-type-start-point
+                :slot-description-type-end-point
                 :translate-to-defclass-with-info)
   (:import-from :rove))
 (in-package :lem-tests/lisp-syntax/defstruct-to-defclass)
@@ -56,29 +61,48 @@
     buffer))
 
 (rove:deftest analyze-defstruct
-  (let* ((buffer (make-test-buffer))
-         (point (lem-base:buffer-point buffer)))
-    (search-input-defstruct point 1)
-    (let ((info (analyze-defstruct point (make-struct-info))))
-      (rove:ok (struct-info-p info))
-      (rove:ok (equal "foo" (struct-name info)))
-      (rove:ok (expected-point-position-p (struct-start-point info) 3 1))
-      (rove:ok (expected-point-position-p (struct-end-point info) 6 8))
-      (rove:ok (expected-point-position-p (struct-name-and-options-point info) 3 11))
-      (let ((slots (struct-slot-descriptions info)))
-        (rove:ok (= (length slots) 3))
-        (let ((slot (first slots)))
-          (rove:ok (slot-description-info-p slot))
-          (rove:ok (equal (slot-description-name slot) "slot-a"))
-          (rove:ok (expected-point-position-p (slot-description-point slot) 4 2)))
-        (let ((slot (second slots)))
-          (rove:ok (slot-description-info-p slot))
-          (rove:ok (equal (slot-description-name slot) "slot-b"))
-          (rove:ok (expected-point-position-p (slot-description-point slot) 5 2)))
-        (let ((slot (third slots)))
-          (rove:ok (slot-description-info-p slot))
-          (rove:ok (equal (slot-description-name slot) "slot-c"))
-          (rove:ok (expected-point-position-p (slot-description-point slot) 6 2)))))))
+  (rove:testing "simple"
+    (let* ((buffer (make-test-buffer))
+           (point (lem-base:buffer-point buffer)))
+      (search-input-defstruct point 1)
+      (let ((info (analyze-defstruct point (make-struct-info))))
+        (rove:ok (struct-info-p info))
+        (rove:ok (equal "foo" (struct-name info)))
+        (rove:ok (expected-point-position-p (struct-start-point info) 3 1))
+        (rove:ok (expected-point-position-p (struct-end-point info) 6 8))
+        (rove:ok (expected-point-position-p (struct-name-and-options-point info) 3 11))
+        (let ((slots (struct-slot-descriptions info)))
+          (rove:ok (= (length slots) 3))
+          (let ((slot (first slots)))
+            (rove:ok (slot-description-info-p slot))
+            (rove:ok (equal (slot-description-name slot) "slot-a"))
+            (rove:ok (expected-point-position-p (slot-description-point slot) 4 2)))
+          (let ((slot (second slots)))
+            (rove:ok (slot-description-info-p slot))
+            (rove:ok (equal (slot-description-name slot) "slot-b"))
+            (rove:ok (expected-point-position-p (slot-description-point slot) 5 2)))
+          (let ((slot (third slots)))
+            (rove:ok (slot-description-info-p slot))
+            (rove:ok (equal (slot-description-name slot) "slot-c"))
+            (rove:ok (expected-point-position-p (slot-description-point slot) 6 2)))))))
+  (rove:testing "slot-description"
+    (let* ((buffer (make-test-buffer))
+           (point (lem-base:buffer-point buffer)))
+      (search-input-defstruct point 3)
+      (let ((info (analyze-defstruct point (make-struct-info))))
+        (rove:ok (struct-info-p info))
+        (rove:ok (equal "foo" (struct-name info)))
+        (let ((slots (struct-slot-descriptions info)))
+          (rove:ok (= (length slots) 1))
+          (let ((slot (first slots)))
+            (rove:ok (slot-description-info-p slot))
+            (rove:ok (equal (slot-description-name slot) "x"))
+            (rove:ok (equal "123"
+                            (lem-base:points-to-string (slot-description-initial-value-start-point slot)
+                                                       (slot-description-initial-value-end-point slot))))
+            (rove:ok (equal "integer"
+                            (lem-base:points-to-string (slot-description-type-start-point slot)
+                                                       (slot-description-type-end-point slot))))))))))
 
 (rove:deftest defstruct-to-defclass
   (flet ((test (n)

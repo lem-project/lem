@@ -14,7 +14,7 @@
   d)
 
 (defstruct foo
-  (x :type integer))
+  (x 123 :type integer))
 
 ;;; output
 
@@ -55,5 +55,6 @@
 (defclass foo ()
   ((x
     :initarg :x
+    :initform 123
     :accessor foo-x
     :type integer)))

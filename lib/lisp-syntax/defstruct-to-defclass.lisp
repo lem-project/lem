@@ -111,7 +111,6 @@
     (":read-only"
      (form-offset point 1)
      ;(slot-name ... :read-only| boolean)
-     (exact (form-offset point 1))
      (when (forward-form point)
        (setf (slot-description-read-only-p slot-info) t))
      ;(slot-name ... :read-only boolean|)

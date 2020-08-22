@@ -5,5 +5,5 @@
                (:file "syntax-table")
                (:file "misc")
                (:file "enclosing")
-               (:file "parse")
+               (:file "parse-for-swank-autodoc")
                (:file "lem-lisp-syntax")))

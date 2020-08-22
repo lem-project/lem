@@ -712,17 +712,15 @@
         :collect xref))
 
 (defun find-local-definition (point name)
-  (let ((point (lem-lisp-syntax:search-local-definition point name)))
-    (when point
-      (list (make-xref-location :filespec (point-buffer point)
-                                :position (position-at-point point))))))
+  (alexandria:when-let (point (lem-lisp-syntax:search-local-definition point name))
+    (list (make-xref-location :filespec (point-buffer point)
+                              :position (position-at-point point)))))
 
 (defun find-definitions-default (point)
   (let ((name (or (symbol-string-at-point point)
                   (prompt-for-symbol-name "Edit Definition of: "))))
-    (let ((result (find-local-definition point name)))
-      (when result
-        (return-from find-definitions-default result)))
+    (alexandria:when-let (result (find-local-definition point name))
+      (return-from find-definitions-default result))
     (let ((definitions (lisp-eval `(swank:find-definitions-for-emacs ,name))))
       (definitions-to-locations definitions))))
 

@@ -71,8 +71,53 @@
     :accessor foo-d)))
 
 (defclass foo ()
-  ((x
-    :initarg :x
-    :initform 123
-    :accessor foo-x
+  ((a
+    :initarg :a
+    :initform 12
+    :accessor foo-a)
+   (b
+    :initarg :b
+    :initform nil
+    :accessor foo-b)
+   (c
+    :initarg :c
+    :initform (let ((x 0))
+                (f x))
+    :accessor foo-c)
+   (d
+    :initarg :d
+    :initform 100
+    :accessor foo-d
+    :type integer)
+   (e
+    :initarg :e
+    :initform nil
+    :type (or nil
+              string))
+   (f
+    :initarg :f
+    :initform (progn
+                (foo))
+    :type symbol)
+   (g
+    :initarg :g
+    :initform nil
+    :reader foo-g)
+   (h
+    :initarg :h
+    :initform nil
+    :accessor foo-h)
+   (i
+    :initarg :i
+    :initform nil
+    :reader foo-i)
+   (j
+    :initarg :j
+    :initform 1
+    :reader foo-j
+    :type integer)
+   (k
+    :initarg :k
+    :initform 2
+    :reader foo-k
     :type integer)))

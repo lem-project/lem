@@ -159,7 +159,7 @@
 (defun defstruct-to-defclass (point)
   (handler-case
       (with-temporary-points ()
-        (let ((info (analyze-defstruct (make-struct-form-info) point)))
+        (let ((info (analyze-defstruct point (make-struct-form-info))))
           (translate-to-defclass-with-info point info)))
     (editor-error (c)
       (error c))))

@@ -1,4 +1,4 @@
-(defpackage :lem-tests/lisp-indent-test
+(defpackage :lem-tests/lisp-syntax/indent-test
   (:use :cl)
   (:import-from :lem
                 :add-hook)
@@ -7,7 +7,7 @@
                 :sample-file)
   (:import-from :rove)
   (:import-from :cl-ansi-text))
-(in-package :lem-tests/lisp-indent-test)
+(in-package :lem-tests/lisp-syntax/indent-test)
 
 (defmacro define-indent-test (name before &optional (after before))
   `(rove:deftest ,name

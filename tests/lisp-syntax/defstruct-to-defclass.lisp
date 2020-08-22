@@ -95,7 +95,7 @@
         (let ((slots (struct-slot-descriptions info)))
           (rove:ok (= (length slots) 11))
           (rove:testing "a"
-            (let ((slot (first slots)))
+            (let ((slot (elt slots 0)))
               (rove:ok (slot-description-info-p slot))
               (rove:ok (equal (slot-description-name slot) "a"))
               (rove:ok (equal "12"
@@ -105,7 +105,7 @@
               (rove:ok (null (slot-description-type-end-point slot)))
               (rove:ok (null (slot-description-read-only-p slot)))))
           (rove:testing "b"
-            (let ((slot (second slots)))
+            (let ((slot (elt slots 1)))
               (rove:ok (slot-description-info-p slot))
               (rove:ok (equal (slot-description-name slot) "b"))
               (rove:ok (equal "nil"
@@ -116,7 +116,7 @@
               (rove:ok (null (slot-description-type-end-point slot)))
               (rove:ok (null (slot-description-read-only-p slot)))))
           (rove:testing "c"
-            (let ((slot (third slots)))
+            (let ((slot (elt slots 2)))
               (rove:ok (equal (slot-description-name slot) "c"))
               (rove:ok (equal '(let ((x 0)) (f x))
                               (read-from-string
@@ -127,7 +127,7 @@
               (rove:ok (null (slot-description-type-end-point slot)))
               (rove:ok (null (slot-description-read-only-p slot)))))
           (rove:testing "d"
-            (let ((slot (fourth slots)))
+            (let ((slot (elt slots 3)))
               (rove:ok (equal (slot-description-name slot) "d"))
               (rove:ok (equal "100"
                               (lem-base:points-to-string
@@ -138,7 +138,7 @@
                                                          (slot-description-type-end-point slot))))
               (rove:ok (null (slot-description-read-only-p slot)))))
           (rove:testing "e"
-            (let ((slot (fourth slots)))
+            (let ((slot (elt slots 4)))
               (rove:ok (equal (slot-description-name slot) "e"))
               (rove:ok (equal "nil"
                               (lem-base:points-to-string
@@ -149,18 +149,20 @@
                                                                            (slot-description-type-end-point slot)))))
               (rove:ok (null (slot-description-read-only-p slot)))))
           (rove:testing "f"
-            (let ((slot (fourth slots)))
+            (let ((slot (elt slots 5)))
+              (print slot)
               (rove:ok (equal (slot-description-name slot) "f"))
               (rove:ok (equal '(progn (foo))
-                              (lem-base:points-to-string
-                               (slot-description-initial-value-start-point slot)
-                               (slot-description-initial-value-end-point slot))))
+                              (read-from-string
+                               (lem-base:points-to-string
+                                (slot-description-initial-value-start-point slot)
+                                (slot-description-initial-value-end-point slot)))))
               (rove:ok (equal "symbol"
                               (lem-base:points-to-string (slot-description-type-start-point slot)
                                                          (slot-description-type-end-point slot))))
               (rove:ok (null (slot-description-read-only-p slot)))))
           (rove:testing "g"
-            (let ((slot (fourth slots)))
+            (let ((slot (elt slots 6)))
               (rove:ok (equal (slot-description-name slot) "g"))
               (rove:ok (equal "nil"
                               (lem-base:points-to-string
@@ -170,7 +172,7 @@
               (rove:ok (null (slot-description-type-end-point slot)))
               (rove:ok (eq t (slot-description-read-only-p slot)))))
           (rove:testing "h"
-            (let ((slot (fourth slots)))
+            (let ((slot (elt slots 7)))
               (rove:ok (equal (slot-description-name slot) "h"))
               (rove:ok (equal "nil"
                               (lem-base:points-to-string
@@ -180,7 +182,7 @@
               (rove:ok (null (slot-description-type-end-point slot)))
               (rove:ok (null (slot-description-read-only-p slot)))))
           (rove:testing "i"
-            (let ((slot (fourth slots)))
+            (let ((slot (elt slots 8)))
               (rove:ok (equal (slot-description-name slot) "i"))
               (rove:ok (equal "nil"
                               (lem-base:points-to-string
@@ -188,7 +190,7 @@
                                (slot-description-initial-value-end-point slot))))
               (rove:ok (eq t (slot-description-read-only-p slot)))))
           (rove:testing "j"
-            (let ((slot (fourth slots)))
+            (let ((slot (elt slots 9)))
               (rove:ok (equal (slot-description-name slot) "j"))
               (rove:ok (equal "1"
                               (lem-base:points-to-string
@@ -199,7 +201,7 @@
                                                          (slot-description-type-end-point slot))))
               (rove:ok (eq t (slot-description-read-only-p slot)))))
           (rove:testing "k"
-            (let ((slot (fourth slots)))
+            (let ((slot (elt slots 10)))
               (rove:ok (equal (slot-description-name slot) "k"))
               (rove:ok (equal "2"
                               (lem-base:points-to-string

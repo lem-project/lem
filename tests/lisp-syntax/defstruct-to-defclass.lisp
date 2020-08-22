@@ -14,8 +14,8 @@
                 :struct-name-and-options-point
                 :struct-slot-descriptions
                 :slot-description-info-p
-                :slot-description-info-name
-                :slot-description-info-point
+                :slot-description-name
+                :slot-description-point
                 :translate-to-defclass-with-info)
   (:import-from :rove))
 (in-package :lem-tests/lisp-syntax/defstruct-to-defclass)
@@ -69,16 +69,16 @@
         (rove:ok (= (length slots) 3))
         (let ((slot (first slots)))
           (rove:ok (slot-description-info-p slot))
-          (rove:ok (equal (slot-description-info-name slot) "slot-a"))
-          (rove:ok (expected-point-position-p (slot-description-info-point slot) 4 2)))
+          (rove:ok (equal (slot-description-name slot) "slot-a"))
+          (rove:ok (expected-point-position-p (slot-description-point slot) 4 2)))
         (let ((slot (second slots)))
           (rove:ok (slot-description-info-p slot))
-          (rove:ok (equal (slot-description-info-name slot) "slot-b"))
-          (rove:ok (expected-point-position-p (slot-description-info-point slot) 5 2)))
+          (rove:ok (equal (slot-description-name slot) "slot-b"))
+          (rove:ok (expected-point-position-p (slot-description-point slot) 5 2)))
         (let ((slot (third slots)))
           (rove:ok (slot-description-info-p slot))
-          (rove:ok (equal (slot-description-info-name slot) "slot-c"))
-          (rove:ok (expected-point-position-p (slot-description-info-point slot) 6 2)))))))
+          (rove:ok (equal (slot-description-name slot) "slot-c"))
+          (rove:ok (expected-point-position-p (slot-description-point slot) 6 2)))))))
 
 (rove:deftest defstruct-to-defclass
   (flet ((test (n)

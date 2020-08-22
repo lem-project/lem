@@ -47,7 +47,7 @@
 (defun exit-list (point)
   (scan-lists point 1 1))
 
-(defstruct slot-description-info
+(defstruct (slot-description-info (:conc-name slot-description-))
   name
   point)
 
@@ -120,7 +120,7 @@
 
 (defun translate-to-defclass-with-info (point info)
   (flet ((translate-slot (slot firstp)
-           (move-point point (slot-description-info-point slot))
+           (move-point point (slot-description-point slot))
            (unless firstp
              (insert-character point #\space))
            (insert-character point #\()
@@ -130,13 +130,13 @@
            (insert-character point #\newline)
            (insert-string point
                           (format nil ":initarg :~A"
-                                  (slot-description-info-name slot)))
+                                  (slot-description-name slot)))
            (insert-character point #\newline)
            (insert-string point
                           ":initform nil")
            (insert-character point #\newline)
            (insert-string point
-                          (format nil ":accessor ~A-~A" (struct-name info) (slot-description-info-name slot)))
+                          (format nil ":accessor ~A-~A" (struct-name info) (slot-description-name slot)))
            (insert-character point #\))))
     (move-point point (struct-start-point info))
     (replace-at-point point "defstruct" "defclass")

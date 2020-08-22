@@ -5,6 +5,14 @@
   slot-b
   slot-c)
 
+(defstruct foo
+  ;; comment1
+  a
+  ;; comment2
+  b
+  c ;comment3
+  d)
+
 ;;; output
 
 (defclass foo ()
@@ -20,3 +28,23 @@
     :initarg :slot-c
     :initform nil
     :accessor foo-slot-c)))
+
+(defclass foo ()
+  (;; comment1
+   (a
+    :initarg :a
+    :initform nil
+    :accessor foo-a)
+   ;; comment2
+   (b
+    :initarg :b
+    :initform nil
+    :accessor foo-b)
+   (c ;comment3
+    :initarg :c
+    :initform nil
+    :accessor foo-c)
+   (d
+    :initarg :d
+    :initform nil
+    :accessor foo-d)))

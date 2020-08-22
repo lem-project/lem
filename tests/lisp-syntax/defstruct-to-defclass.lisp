@@ -48,9 +48,12 @@
     (form-string-at-point point)))
 
 (defun make-test-buffer ()
-  (lem-base:find-file-buffer (sample-file "defstruct-to-defclass.lisp")
-                             :temporary t
-                             :syntax-table lem-lisp-syntax:*syntax-table*))
+  (let ((buffer (lem-base:find-file-buffer (sample-file "defstruct-to-defclass.lisp")
+                                           :temporary t
+                                           :syntax-table lem-lisp-syntax:*syntax-table*)))
+    (setf (lem-base:variable-value 'lem-base:calc-indent-function :buffer buffer)
+          'lem-lisp-syntax:calc-indent)
+    buffer))
 
 (rove:deftest analyze-defstruct
   (let* ((buffer (make-test-buffer))
@@ -78,10 +81,19 @@
           (rove:ok (expected-point-position-p (slot-description-info-point slot) 6 2)))))))
 
 (rove:deftest defstruct-to-defclass
-  (let* ((buffer (make-test-buffer))
-         (expected-form-string (fetch-expected-form-string buffer 1))
-         (point (lem-base:buffer-point buffer)))
-    (search-input-defstruct point 1)
-    (defstruct-to-defclass point)
-    (rove:ok (equal (form-string-at-point point)
-                    expected-form-string))))
+  (rove:testing "case-1"
+    (let* ((buffer (make-test-buffer))
+           (expected-form-string (fetch-expected-form-string buffer 1))
+           (point (lem-base:buffer-point buffer)))
+      (search-input-defstruct point 1)
+      (defstruct-to-defclass point)
+      (rove:ok (equal (form-string-at-point point)
+                      expected-form-string))))
+  (rove:testing "case-2"
+    (let* ((buffer (make-test-buffer))
+           (expected-form-string (fetch-expected-form-string buffer 2))
+           (point (lem-base:buffer-point buffer)))
+      (search-input-defstruct point 2)
+      (defstruct-to-defclass point)
+      (rove:ok (equal (form-string-at-point point)
+                      expected-form-string)))))

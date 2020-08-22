@@ -122,39 +122,39 @@
   (insert-string point new))
 
 (defun translate-to-defclass-with-info (point info)
-  (labels ((newline-and-indent (n)
-             (insert-character point #\newline)
-             (loop :repeat n :do (insert-character point #\space)))
-           (translate-slot (slot firstp)
-             (move-point point (slot-description-info-point slot))
-             (if firstp
-                 (insert-character point #\()
-                 (insert-character point #\space))
-             (insert-character point #\()
-             (let ((indent (point-charpos point)))
-               (line-end point)
-               (when (point<= (struct-end-point info) point)
-                 (move-point point (struct-end-point info)))
-               (newline-and-indent indent)
-               (insert-string point
-                              (format nil ":initarg :~A"
-                                      (slot-description-info-name slot)))
-               (newline-and-indent indent)
-               (insert-string point
-                              ":initform nil")
-               (newline-and-indent indent)
-               (insert-string point
-                              (format nil ":accessor ~A-~A" (struct-name info) (slot-description-info-name slot)))
-               (insert-character point #\)))))
+  (flet ((translate-slot (slot firstp)
+           (move-point point (slot-description-info-point slot))
+           (unless firstp
+             (insert-character point #\space))
+           (insert-character point #\()
+           (line-end point)
+           (when (point<= (struct-end-point info) point)
+             (move-point point (struct-end-point info)))
+           (insert-character point #\newline)
+           (insert-string point
+                          (format nil ":initarg :~A"
+                                  (slot-description-info-name slot)))
+           (insert-character point #\newline)
+           (insert-string point
+                          ":initform nil")
+           (insert-character point #\newline)
+           (insert-string point
+                          (format nil ":accessor ~A-~A" (struct-name info) (slot-description-info-name slot)))
+           (insert-character point #\))))
     (move-point point (struct-start-point info))
     (replace-at-point point "defstruct" "defclass")
     (form-offset point 1)
     (insert-character point #\space)
     (insert-string point "()")
+    (line-offset point 1)
+    (back-to-indentation point)
+    (insert-character point #\()
     (loop :for slot :in (struct-slot-descriptions info)
           :for firstp := t :then nil
           :do (translate-slot slot firstp))
-    (insert-character point #\))))
+    (insert-character point #\))
+    (indent-region (struct-start-point info)
+                   (struct-end-point info))))
 
 (defun defstruct-to-defclass (point)
   (handler-case

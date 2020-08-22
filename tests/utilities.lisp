@@ -5,7 +5,7 @@
 (in-package :lem-tests/utilities)
 
 (defun sample-file (filename)
-  (asdf:system-relative-pathname :lem (merge-pathnames filename "tests/sample-code/")))
+  (asdf:system-relative-pathname :lem-tests (merge-pathnames filename "tests/sample-code/")))
 
 (defun call-with-global-variable-value (var value function)
   (let* ((editor-variable (get var 'lem-base::editor-variable))

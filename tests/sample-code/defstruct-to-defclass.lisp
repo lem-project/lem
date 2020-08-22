@@ -14,7 +14,25 @@
   d)
 
 (defstruct foo
-  (x 123 :type integer))
+  (a 12)
+  (b nil)
+  (c (let ((x 0))
+       (f x)))
+  (d 100 :type integer)
+  (e nil :type (or nil
+                   string))
+  (f (progn
+       (foo))
+     :type symbol)
+  (g nil :read-only t)
+  (h nil :read-only nil)
+  (i nil :read-only (complex expression))
+  (j 1
+     :type integer
+     :read-only t)
+  (k 2
+     :read-only t
+     :type integer))
 
 ;;; output
 

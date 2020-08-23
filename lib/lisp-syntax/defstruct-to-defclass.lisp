@@ -210,7 +210,12 @@
   (character-offset point -1))
 
 (defun translate-to-defclass-with-info (point struct-info)
-  (labels ((emit-initarg (slot-info)
+  (labels ((emit-initform (already-initform-p)
+             (insert-string point ":initform")
+             (if already-initform-p
+                 (form-offset point 1)
+                 (insert-string point " nil")))
+           (emit-initarg (slot-info)
              (insert-string point
                             (format nil ":initarg :~A"
                                     (slot-description-name slot-info)))
@@ -223,8 +228,7 @@
                (move-point point (struct-end-point struct-info)))
              (insert-character point #\newline)
              (emit-initarg slot-info)
-             (insert-string point
-                            ":initform nil")
+             (emit-initform nil)
              (insert-character point #\newline)
              (insert-string point
                             (format nil
@@ -239,16 +243,16 @@
              (cond ((null (slot-description-initial-value-start-point slot-info))
                     (insert-character point #\newline)
                     (emit-initarg slot-info)
-                    (insert-string point ":initform nil"))
+                    (emit-initform nil))
                    (t
                     (insert-character point #\newline)
                     (emit-initarg slot-info)
                     (just-one-space point)
-                    (insert-string point ":initform")
-                    (form-offset point 1)))
+                    (emit-initform t)))
              (delete-forward-whitespaces point)
              (unless (char= (character-at point) #\))
-               (insert-character point #\newline))))
+               (insert-character point #\newline))
+             (exit-list point)))
     (move-point point (struct-start-point struct-info))
     (replace-at-point point "defstruct" "defclass")
     (form-offset point 1)

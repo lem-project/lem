@@ -171,4 +171,6 @@
 (pushnew 'find-utopian-route lem-lisp-mode::*find-definitions*)
 
 (define-command lisp-defstruct-to-defclass () ()
-  (lem-lisp-syntax:defstruct-to-defclass (current-point)))
+  (handler-case (lem-lisp-syntax:defstruct-to-defclass (current-point))
+    (editor-error (c)
+      (display-popup-message (princ-to-string c)))))

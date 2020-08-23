@@ -23,12 +23,17 @@
 (defmacro with-temporary-points (() &body body)
   `(call-with-temporary-points (lambda () ,@body)))
 
-(define-condition scan-failed (editor-error)
-  ())
+(define-condition syntax-error (editor-error)
+  ((point :initarg :point
+          :reader syntax-error-point))
+  (:report (lambda (c s)
+             (format s "syntax error near line ~A column ~A"
+                     (line-number-at-point (syntax-error-point c))
+                     (point-column (syntax-error-point c))))))
 
-(defun exact (result)
+(defun exact (result point)
   (unless result
-    (error 'scan-failed))
+    (error 'syntax-error :point point))
   result)
 
 (let ((cached-readtable nil))
@@ -38,7 +43,7 @@
           (setf (readtable-case readtable) :preserve)
           (setf cached-readtable readtable)))))
 
-(defun safe-read-from-string (string &key preserve-p)
+(defun safe-read-from-string (point string &key preserve-p)
   (handler-case
       (let ((*read-eval* nil)
             (*readtable* (if preserve-p
@@ -46,7 +51,7 @@
                              *readtable*)))
         (read-from-string string))
     (reader-error ()
-      (error 'scan-failed))))
+      (error 'syntax-error :point point))))
 
 (defvar *struct-info*)
 
@@ -66,11 +71,11 @@
                   (string-downcase string)))))))
 
 (defun forward-form (point)
-  (exact (form-offset point 1))
+  (exact (form-offset point 1) point)
   (with-point ((start point))
-    (exact (form-offset start -1))
+    (exact (form-offset start -1) start)
     (let ((*read-eval* nil))
-      (safe-read-from-string (points-to-string start point)))))
+      (safe-read-from-string start (points-to-string start point)))))
 
 (defun enter-list (point)
   (scan-lists point 1 -1))
@@ -126,12 +131,12 @@
     ((eq :list-start)
      (with-point ((start point)
                   (end point))
-       (exact (form-offset end 1))
+       (exact (form-offset end 1) end)
        (multiple-value-bind (structure-name options-info)
            (parse-name-and-options
-            (safe-read-from-string (points-to-string start end)
+            (safe-read-from-string start (points-to-string start end)
                                    :preserve-p t))
-         (exact (and structure-name options-info))
+         (exact (and structure-name options-info) point)
          (setf (struct-name *struct-info*) (string structure-name)
                (struct-options *struct-info*) options-info
                (struct-name-and-options-start-point *struct-info*) (save-point start)
@@ -155,7 +160,7 @@
      (skip-space-and-comment-forward point)
      ; (slot-name ... :type |type)
      (setf (slot-description-type-start-point slot-info) (save-point point))
-     (exact (form-offset point 1))
+     (exact (form-offset point 1) point)
      ; (slot-name ... :type type|)
      (setf (slot-description-type-end-point slot-info) (save-point point))
      t)
@@ -174,7 +179,7 @@
 (defun scan-complex-slot-description (point)
   (flet ((scan-slot-name ()
            (let ((slot-name (forward-token point)))
-             (exact (stringp slot-name))
+             (exact (stringp slot-name) point)
              (form-offset point 1)
              slot-name))
          (scan-initform ()
@@ -232,16 +237,16 @@
         (setf (struct-start-point *struct-info*)
               (save-point point))
         ; (|defstruct ...
-        (exact (form-offset point 1))
+        (exact (form-offset point 1) point)
         ; (defstruct| ...
-        (exact (scan-defstruct-name-and-options point))
+        (exact (scan-defstruct-name-and-options point) point)
         ; (defstruct structure-name| slot-name ...)
         (loop :for slot-description := (scan-forward-slot-description point)
               :while slot-description
               :do (alexandria:nconcf (struct-slot-descriptions *struct-info*)
                                      (list slot-description)))
         (skip-space-and-comment-forward point)
-        (exact (char= (character-at point) #\)))
+        (exact (char= (character-at point) #\)) point)
         (setf (struct-end-point *struct-info*)
               (save-point point))
         *struct-info*))))

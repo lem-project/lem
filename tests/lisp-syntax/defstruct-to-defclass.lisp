@@ -14,7 +14,7 @@
                 :struct-end-point
                 :struct-name
                 :struct-options
-                :struct-name-and-options-point
+                :struct-name-and-options-start-point
                 :struct-slot-descriptions
                 :slot-description-info-p
                 :slot-description-complex-p
@@ -113,7 +113,7 @@
         (rove:ok (equal "foo" (struct-name info)))
         (rove:ok (expected-point-position-p (struct-start-point info) 3 1))
         (rove:ok (expected-point-position-p (struct-end-point info) 6 8))
-        (rove:ok (expected-point-position-p (struct-name-and-options-point info) 3 11))
+        (rove:ok (expected-point-position-p (struct-name-and-options-start-point info) 3 11))
         (let ((slots (struct-slot-descriptions info)))
           (rove:ok (= (length slots) 3))
           (let ((slot (first slots)))
@@ -283,4 +283,5 @@
                      (rove:fail (diff-text actual expected))))))))
     (test 1)
     (test 2)
-    (test 3)))
+    (test 3)
+    (test 4)))

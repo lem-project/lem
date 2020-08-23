@@ -93,7 +93,7 @@
   end-point
   name
   options
-  name-and-options-point
+  name-and-options-start-point
   name-and-options-end-point
   slot-descriptions)
 
@@ -106,10 +106,13 @@
      (let ((options-info (make-options-info)))
        (dolist (option options)
          (trivia:match option
-           ((or :conc-name
-                (list :conc-name))
+           ((or :|conc-name|
+                :conc-name
+                (list :conc-name)
+                (list :|conc-name|))
             (setf (options-conc-name options-info) ""))
-           ((list :conc-name conc-name)
+           ((list (or :conc-name :|conc-name|)
+                  conc-name)
             (unless (symbolp conc-name)
               (return-from parse-name-and-options nil))
             (setf (options-conc-name options-info)
@@ -130,14 +133,14 @@
          (exact (and structure-name options-info))
          (setf (struct-name *struct-info*) (string structure-name)
                (struct-options *struct-info*) options-info
-               (struct-name-and-options-point *struct-info*) (save-point start)
+               (struct-name-and-options-start-point *struct-info*) (save-point start)
                (struct-name-and-options-end-point *struct-info*) (save-point end)))
        (move-point point end)))
     ; (defstruct |structure-name ...
     ((trivia:guard structure-name (stringp structure-name))
      (setf (struct-name *struct-info*)
            structure-name)
-     (setf (struct-name-and-options-point *struct-info*)
+     (setf (struct-name-and-options-start-point *struct-info*)
            (save-point point))
      (form-offset point 1))
     (otherwise

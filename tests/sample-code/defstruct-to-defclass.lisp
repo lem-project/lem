@@ -36,7 +36,9 @@
 
 (defstruct (foo (:conc-name xxx-))
   a
-  b)
+  (b 100 :read-only t)
+  (c 200 :type integer)
+  (d 300 :read-only t :type float))
 
 ;;; output
 
@@ -127,3 +129,23 @@
     :initform 2
     :reader foo-k
     :type integer)))
+
+(defclass foo ()
+  ((a
+    :initarg :a
+    :initform nil
+    :accessor xxx-a)
+   (b
+    :initarg :b
+    :initform 100
+    :reader xxx-b)
+   (c
+    :initarg :c
+    :initform 200
+    :accessor xxx-c
+    :type integer)
+   (d
+    :initarg :d
+    :initform 300
+    :reader xxx-d
+    :type float)))

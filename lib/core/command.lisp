@@ -370,13 +370,6 @@
         (previous-line (1- (window-height (current-window))))
         (window-recenter (current-window)))))
 
-(defun delete-while-whitespaces (ignore-newline-p)
-  (let ((n (skip-chars-forward (current-point)
-                               (if ignore-newline-p
-                                   '(#\space #\tab)
-                                   '(#\space #\tab #\newline)))))
-    (delete-character (current-point) (- n))))
-
 (defun tab-line-aux (n make-space-str)
   (let ((p (current-point)))
     (dotimes (_ n t)
@@ -432,6 +425,13 @@
         (if nblanks
             (delete-character point nblanks)
             (return))))))
+
+(defun delete-while-whitespaces (ignore-newline-p)
+  (let ((n (skip-chars-forward (current-point)
+                               (if ignore-newline-p
+                                   '(#\space #\tab)
+                                   '(#\space #\tab #\newline)))))
+    (delete-character (current-point) (- n))))
 
 (define-key *global-keymap* "M-Space" 'just-one-space)
 (define-command just-one-space () ()

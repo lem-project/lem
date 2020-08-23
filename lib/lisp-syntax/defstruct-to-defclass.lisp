@@ -200,28 +200,55 @@
   (delete-character point (length old))
   (insert-string point new))
 
+(defun delete-forward-whitespaces (point)
+  (loop :while (syntax-space-char-p (character-at point)) :do (delete-character point 1)))
+
+(defun just-one-space (point)
+  (assert (eq (point-kind point) :left-inserting))
+  (delete-forward-whitespaces point)
+  (insert-character point #\space)
+  (character-offset point -1))
+
 (defun translate-to-defclass-with-info (point struct-info)
-  (flet ((translate-slot (slot-info)
-           (move-point point (slot-description-point slot-info))
-           (insert-character point #\()
-           (line-end point)
-           (when (point<= (struct-end-point struct-info) point)
-             (move-point point (struct-end-point struct-info)))
-           (insert-character point #\newline)
-           (insert-string point
-                          (format nil ":initarg :~A"
-                                  (slot-description-name slot-info)))
-           (insert-character point #\newline)
-           (insert-string point
-                          ":initform nil")
-           (insert-character point #\newline)
-           (insert-string point
-                          (format nil
-                                  ":~:[accessor~;reader~] ~A-~A"
-                                  (slot-description-read-only-p slot-info)
-                                  (struct-name struct-info)
-                                  (slot-description-name slot-info)))
-           (insert-character point #\))))
+  (labels ((emit-initarg (slot-info)
+             (insert-string point
+                            (format nil ":initarg :~A"
+                                    (slot-description-name slot-info)))
+             (insert-character point #\newline))
+           (translate-simple-slot (slot-info)
+             (move-point point (slot-description-point slot-info))
+             (insert-character point #\()
+             (line-end point)
+             (when (point<= (struct-end-point struct-info) point)
+               (move-point point (struct-end-point struct-info)))
+             (insert-character point #\newline)
+             (emit-initarg slot-info)
+             (insert-string point
+                            ":initform nil")
+             (insert-character point #\newline)
+             (insert-string point
+                            (format nil
+                                    ":~:[accessor~;reader~] ~A-~A"
+                                    (slot-description-read-only-p slot-info)
+                                    (struct-name struct-info)
+                                    (slot-description-name slot-info)))
+             (insert-character point #\)))
+           (translate-complex-slot (slot-info)
+             (move-point point (slot-description-point slot-info))
+             (form-offset point 1)
+             (cond ((null (slot-description-initial-value-start-point slot-info))
+                    (insert-character point #\newline)
+                    (emit-initarg slot-info)
+                    (insert-string point ":initform nil"))
+                   (t
+                    (insert-character point #\newline)
+                    (emit-initarg slot-info)
+                    (just-one-space point)
+                    (insert-string point ":initform")
+                    (form-offset point 1)))
+             (delete-forward-whitespaces point)
+             (unless (char= (character-at point) #\))
+               (insert-character point #\newline))))
     (move-point point (struct-start-point struct-info))
     (replace-at-point point "defstruct" "defclass")
     (form-offset point 1)
@@ -231,7 +258,9 @@
     (back-to-indentation point)
     (insert-character point #\()
     (dolist (slot-info (struct-slot-descriptions struct-info))
-      (translate-slot slot-info))
+      (if (slot-description-complex-p slot-info)
+          (translate-complex-slot slot-info)
+          (translate-simple-slot slot-info)))
     (insert-character point #\))
     (indent-region (struct-start-point struct-info)
                    (struct-end-point struct-info))))

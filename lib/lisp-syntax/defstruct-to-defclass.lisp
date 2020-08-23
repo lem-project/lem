@@ -23,17 +23,17 @@
 (defmacro with-temporary-points (() &body body)
   `(call-with-temporary-points (lambda () ,@body)))
 
-(define-condition syntax-error (editor-error)
+(define-condition scan-failed (editor-error)
   ((point :initarg :point
-          :reader syntax-error-point))
+          :reader scan-failed-point))
   (:report (lambda (c s)
-             (format s "syntax error near line ~A column ~A"
-                     (line-number-at-point (syntax-error-point c))
-                     (point-column (syntax-error-point c))))))
+             (format s "Scan failed line ~A column ~A"
+                     (line-number-at-point (scan-failed-point c))
+                     (point-column (scan-failed-point c))))))
 
 (defun exact (result point)
   (unless result
-    (error 'syntax-error :point point))
+    (error 'scan-failed :point point))
   result)
 
 (let ((cached-readtable nil))
@@ -51,7 +51,7 @@
                              *readtable*)))
         (read-from-string string))
     (reader-error ()
-      (error 'syntax-error :point point))))
+      (error 'scan-failed :point point))))
 
 (defvar *struct-info*)
 

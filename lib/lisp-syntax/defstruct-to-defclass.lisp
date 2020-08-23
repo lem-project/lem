@@ -126,21 +126,31 @@
            (let ((slot-name (forward-token point)))
              (exact (stringp slot-name))
              (form-offset point 1)
-             slot-name)))
+             slot-name))
+         (scan-initform ()
+           ;(defstruct structure-name (slot-name |init-form :type integer))
+           (with-point ((start point))
+             (cond ((form-offset point 1)
+                    ;(defstruct structure-name (slot-name init-form| :type integer))
+                    (values (save-point start) (save-point point)))
+                   (t
+                    nil)))))
     (enter-list point)
     (let ((slot-info
             (make-slot-description-info :point (save-point point)
                                         :name (scan-slot-name)
                                         :complex-p t)))
       (skip-space-and-comment-forward point)
-      ;(defstruct structure-name (slot-name |init-form :type integer))
-      (setf (slot-description-initial-value-start-point slot-info) (save-point point))
-      (exact (form-offset point 1))
-      ;(defstruct structure-name (slot-name init-form| :type integer))
-      (setf (slot-description-initial-value-end-point slot-info) (save-point point))
-      (loop :repeat 2 :while (scan-slot-description-option point slot-info))
-      (prog1 slot-info
-        (exit-list point)))))
+      (multiple-value-bind (start end) (scan-initform)
+        (cond ((null start)
+               (prog1 slot-info
+                 (exit-list point)))
+              (t
+               (setf (slot-description-initial-value-start-point slot-info) start
+                     (slot-description-initial-value-end-point slot-info) end)
+               (loop :repeat 2 :while (scan-slot-description-option point slot-info))
+               (prog1 slot-info
+                 (exit-list point))))))))
 
 (defun scan-simple-slot-description (point slot-name)
   (prog1 (make-slot-description-info :name slot-name

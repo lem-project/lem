@@ -15,7 +15,7 @@
 
 (defstruct foo
   (a 12)
-  (b nil)
+  (b)
   (c (let ((x 0))
        (f x)))
   (d 100 :type integer)

@@ -102,7 +102,7 @@
                         &key expected-slot-name
                              expected-point-line-number
                              expected-point-charpos
-                             expected-initform
+                             (expected-initform nil expected-initform-p)
                              expected-type
                              expected-read-only-p)
                    (rove:ok (slot-description-info-p slot))
@@ -111,10 +111,13 @@
                    (rove:ok (expected-point-position-p (slot-description-point slot)
                                                        expected-point-line-number
                                                        expected-point-charpos))
-                   (rove:ok (equal expected-initform
-                                   (read-from-string
-                                    (lem-base:points-to-string (slot-description-initial-value-start-point slot)
-                                                               (slot-description-initial-value-end-point slot)))))
+                   (if expected-initform-p
+                       (rove:ok (equal expected-initform
+                                       (read-from-string
+                                        (lem-base:points-to-string (slot-description-initial-value-start-point slot)
+                                                                   (slot-description-initial-value-end-point slot)))))
+                       (rove:ok (and (null (slot-description-initial-value-start-point slot))
+                                     (null (slot-description-initial-value-end-point slot)))))
                    (if (null expected-type)
                        (rove:ok (and (null (slot-description-type-start-point slot))
                                      (null (slot-description-type-end-point slot))))
@@ -138,7 +141,7 @@
                     :expected-slot-name "b"
                     :expected-point-line-number 18
                     :expected-point-charpos 3
-                    :expected-initform nil
+                    ;; :expected-initform nil
                     :expected-type nil
                     :expected-read-only-p nil))
             (rove:testing "c"

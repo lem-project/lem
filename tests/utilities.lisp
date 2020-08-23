@@ -3,6 +3,7 @@
   (:export :sample-file
            :with-global-variable-value
            :diff-text)
+  (:import-from :rove)
   (:import-from :cl-ansi-text))
 (in-package :lem-tests/utilities)
 

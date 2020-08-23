@@ -74,7 +74,8 @@
   initial-value-end-point
   read-only-p
   type-start-point
-  type-end-point)
+  type-end-point
+  complex-p)
 
 (defstruct (struct-info (:constructor make-struct-info ())
                         (:conc-name struct-))
@@ -129,7 +130,8 @@
     (enter-list point)
     (let ((slot-info
             (make-slot-description-info :point (save-point point)
-                                        :name (scan-slot-name))))
+                                        :name (scan-slot-name)
+                                        :complex-p t)))
       (skip-space-and-comment-forward point)
       ;(defstruct structure-name (slot-name |init-form :type integer))
       (setf (slot-description-initial-value-start-point slot-info) (save-point point))
@@ -140,11 +142,16 @@
       (prog1 slot-info
         (exit-list point)))))
 
+(defun scan-simple-slot-description (point slot-name)
+  (prog1 (make-slot-description-info :name slot-name
+                                     :point (save-point point)
+                                     :complex-p nil)
+    (form-offset point 1)))
+
 (defun scan-forward-slot-description (point)
   (trivia:ematch (forward-token point)
-    ((trivia:guard token (stringp token))
-     (prog1 (make-slot-description-info :name token :point (save-point point))
-       (form-offset point 1)))
+    ((trivia:guard slot-name (stringp slot-name))
+     (scan-simple-slot-description point slot-name))
     ((eq :list-start)
      (scan-complex-slot-description point))
     ((eq :list-end)

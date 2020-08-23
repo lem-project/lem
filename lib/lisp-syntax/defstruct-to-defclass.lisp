@@ -219,7 +219,12 @@
     ((eq nil)
      nil)))
 
+(defun move-to-toplevel (point)
+  (loop :while (scan-lists point -1 1 t)))
+
 (defun scan-defstruct (point)
+  (unless (eql (character-at point) #\()
+    (move-to-toplevel point))
   (when (eql (character-at point) #\() ; |(defstruct
     (enter-list point)
     (let ((token (forward-token point)))
@@ -238,12 +243,12 @@
         (skip-space-and-comment-forward point)
         (exact (char= (character-at point) #\)))
         (setf (struct-end-point *struct-info*)
-              (save-point point))))))
+              (save-point point))
+        *struct-info*))))
 
 (defun analyze-defstruct (point *struct-info*)
   (with-point ((point point))
-    (scan-defstruct point))
-  *struct-info*)
+    (scan-defstruct point)))
 
 
 (defun replace-at-point (point old new)
@@ -368,7 +373,7 @@
 (defun defstruct-to-defclass (point)
   (handler-case
       (with-temporary-points ()
-        (let ((info (analyze-defstruct point (make-struct-info))))
+        (alexandria:when-let ((info (analyze-defstruct point (make-struct-info))))
           (translate-to-defclass-with-info point info)))
     (editor-error (c)
       (error c))))

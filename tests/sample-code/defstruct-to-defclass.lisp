@@ -34,6 +34,10 @@
      :read-only t
      :type integer))
 
+(defstruct (foo (:conc-name xxx-))
+  a
+  b)
+
 ;;; output
 
 (defclass foo ()

@@ -6,12 +6,14 @@
                 :diff-text)
   (:import-from :lem-lisp-syntax.defstruct-to-defclass
                 :defstruct-to-defclass
+                :parse-name-and-options
                 :analyze-defstruct
                 :make-struct-info
                 :struct-info-p
                 :struct-start-point
                 :struct-end-point
                 :struct-name
+                :struct-options
                 :struct-name-and-options-point
                 :struct-slot-descriptions
                 :slot-description-info-p
@@ -23,7 +25,8 @@
                 :slot-description-read-only-p
                 :slot-description-type-start-point
                 :slot-description-type-end-point
-                :translate-to-defclass-with-info)
+                :options-info-p
+                :options-conc-name)
   (:import-from :rove))
 (in-package :lem-tests/lisp-syntax/defstruct-to-defclass)
 
@@ -61,6 +64,44 @@
     (setf (lem-base:variable-value 'lem-base:calc-indent-function :buffer buffer)
           'lem-lisp-syntax:calc-indent)
     buffer))
+
+(rove:deftest parse-name-and-options
+  (rove:testing "(name)"
+    (let ((values (multiple-value-list (parse-name-and-options '(foo)))))
+      (rove:ok (= 2 (length values)))
+      (destructuring-bind (name options-info) values
+        (rove:ok (eq 'foo name))
+        (rove:ok (options-info-p options-info))
+        (rove:ok (null (options-conc-name options-info))))))
+  (rove:testing ":conc-name"
+    (let ((values (multiple-value-list (parse-name-and-options '(foo :conc-name)))))
+      (rove:ok (= 2 (length values)))
+      (destructuring-bind (name options-info) values
+        (rove:ok (eq 'foo name))
+        (rove:ok (options-info-p options-info))
+        (rove:ok (string= "" (options-conc-name options-info))))))
+  (rove:testing "(:conc-name)"
+    (let ((values (multiple-value-list (parse-name-and-options '(foo (:conc-name))))))
+      (rove:ok (= 2 (length values)))
+      (destructuring-bind (name options-info) values
+        (rove:ok (eq 'foo name))
+        (rove:ok (options-info-p options-info))
+        (rove:ok (string= "" (options-conc-name options-info))))))
+  (rove:testing "(:conc-name conc-name)"
+    (let ((values (multiple-value-list (parse-name-and-options '(foo (:conc-name prefix-))))))
+      (rove:ok (= 2 (length values)))
+      (destructuring-bind (name options-info) values
+        (rove:ok (eq 'foo name))
+        (rove:ok (options-info-p options-info))
+        (rove:ok (string= "PREFIX-" (options-conc-name options-info))))))
+  (rove:testing "invalid"
+    (dolist (input (list
+                    '(1)
+                    '(1 :conc-name)
+                    '(nil)
+                    '(foo (:conc-name 1))
+                    '(foo (:conc-name #()))))
+      (rove:ok (null (parse-name-and-options input)) input))))
 
 (rove:deftest analyze-defstruct
   (rove:testing "simple"
@@ -216,7 +257,16 @@
                     :expected-point-charpos 3
                     :expected-initform 2
                     :expected-type 'integer
-                    :expected-read-only-p t))))))))
+                    :expected-read-only-p t)))))))
+  (rove:testing "name-and-options"
+    (let* ((buffer (make-test-buffer))
+           (point (lem-base:buffer-point buffer)))
+      (search-input-defstruct point 4)
+      (let ((info (analyze-defstruct point (make-struct-info))))
+        (rove:ok (struct-info-p info))
+        (rove:ok (equal "foo" (struct-name info)))
+        (rove:ok (options-info-p (struct-options info)))
+        (equal "xxx-" (options-conc-name (struct-options info)))))))
 
 (rove:deftest defstruct-to-defclass
   (flet ((test (n)

@@ -30,9 +30,19 @@
     (error 'scan-failed))
   result)
 
-(defun safe-read-from-string (string)
+(let ((cached-readtable nil))
+  (defun safe-readtable ()
+    (or cached-readtable
+        (let ((readtable (copy-readtable nil)))
+          (setf (readtable-case readtable) :preserve)
+          (setf cached-readtable readtable)))))
+
+(defun safe-read-from-string (string &key preserve-p)
   (handler-case
-      (let ((*read-eval* nil))
+      (let ((*read-eval* nil)
+            (*readtable* (if preserve-p
+                             (safe-readtable)
+                             *readtable*)))
         (read-from-string string))
     (reader-error ()
       (error 'scan-failed))))
@@ -82,20 +92,56 @@
   start-point
   end-point
   name
+  options
   name-and-options-point
+  name-and-options-end-point
   slot-descriptions)
 
+(defstruct (options-info (:conc-name options-))
+  conc-name)
+
+(defun parse-name-and-options (name-and-options)
+  (trivia:match name-and-options
+    ((cons (trivia:guard name (symbolp name)) options)
+     (let ((options-info (make-options-info)))
+       (dolist (option options)
+         (trivia:match option
+           ((or :conc-name
+                (list :conc-name))
+            (setf (options-conc-name options-info) ""))
+           ((list :conc-name conc-name)
+            (unless (symbolp conc-name)
+              (return-from parse-name-and-options nil))
+            (setf (options-conc-name options-info)
+                  conc-name))))
+       (values name options-info)))))
+
 (defun scan-defstruct-name-and-options (point)
-  (let ((token (forward-token point)))
-    (when (or (stringp token) (eq token :list-start)) ; (defstruct |structure-name ..., (defstruct |(structure-name ...
-      (cond ((eq token :list-start)
-             (editor-error "unimplemented (name-and-options...) parser"))
-            (t
-             (setf (struct-name *struct-info*)
-                   token)
-             (setf (struct-name-and-options-point *struct-info*)
-                   (save-point point))
-             (form-offset point 1))))))
+  (trivia:match (forward-token point)
+    ; (defstruct |(structure-name ...
+    ((eq :list-start)
+     (with-point ((start point)
+                  (end point))
+       (exact (form-offset end 1))
+       (multiple-value-bind (structure-name options-info)
+           (parse-name-and-options
+            (safe-read-from-string (points-to-string start end)
+                                   :preserve-p t))
+         (exact (and structure-name options-info))
+         (setf (struct-name *struct-info*) (string structure-name)
+               (struct-options *struct-info*) options-info
+               (struct-name-and-options-point *struct-info*) (save-point start)
+               (struct-name-and-options-end-point *struct-info*) (save-point end)))
+       (move-point point end)))
+    ; (defstruct |structure-name ...
+    ((trivia:guard structure-name (stringp structure-name))
+     (setf (struct-name *struct-info*)
+           structure-name)
+     (setf (struct-name-and-options-point *struct-info*)
+           (save-point point))
+     (form-offset point 1))
+    (otherwise
+     nil)))
 
 (defun scan-slot-description-option (point slot-info)
   (trivia:match (forward-token point :case-sensitive-p nil)

@@ -195,6 +195,7 @@
     (scan-defstruct point))
   *struct-info*)
 
+
 (defun replace-at-point (point old new)
   (assert (string= old (symbol-string-at-point point)))
   (delete-character point (length old))
@@ -202,6 +203,10 @@
 
 (defun delete-forward-whitespaces (point)
   (loop :while (syntax-space-char-p (character-at point)) :do (delete-character point 1)))
+
+(defun delete-backward-whitespaces (point)
+  (let ((n (skip-chars-backward point #'syntax-space-char-p)))
+    (delete-character point n)))
 
 (defun just-one-space (point)
   (assert (eq (point-kind point) :left-inserting))
@@ -220,6 +225,14 @@
                             (format nil ":initarg :~A"
                                     (slot-description-name slot-info)))
              (insert-character point #\newline))
+           (emit-accessor (slot-info)
+             (insert-string point
+                            (format nil
+                                    ":~:[accessor~;reader~] ~A-~A"
+                                    (slot-description-read-only-p slot-info)
+                                    (struct-name struct-info)
+                                    (slot-description-name slot-info)))
+             (insert-character point #\newline))
            (translate-simple-slot (slot-info)
              (move-point point (slot-description-point slot-info))
              (insert-character point #\()
@@ -230,13 +243,7 @@
              (emit-initarg slot-info)
              (emit-initform nil)
              (insert-character point #\newline)
-             (insert-string point
-                            (format nil
-                                    ":~:[accessor~;reader~] ~A-~A"
-                                    (slot-description-read-only-p slot-info)
-                                    (struct-name struct-info)
-                                    (slot-description-name slot-info)))
-             (insert-character point #\)))
+             (emit-accessor slot-info))
            (translate-complex-slot (slot-info)
              (move-point point (slot-description-point slot-info))
              (form-offset point 1)
@@ -250,8 +257,19 @@
                     (just-one-space point)
                     (emit-initform t)))
              (delete-forward-whitespaces point)
-             (unless (char= (character-at point) #\))
-               (insert-character point #\newline))
+             (insert-character point #\newline)
+             (emit-accessor slot-info)
+             (loop
+               (skip-space-and-comment-forward point)
+               (let ((string (symbol-string-at-point point)))
+                 (when (and string (string-equal ":read-only" string))
+                   (with-point ((start point))
+                     (form-offset point 2)
+                     (delete-between-points start point)
+                     (delete-backward-whitespaces point))))
+               (unless (form-offset point 2)
+                 (return)))
+             (delete-backward-whitespaces point)
              (exit-list point)))
     (move-point point (struct-start-point struct-info))
     (replace-at-point point "defstruct" "defclass")

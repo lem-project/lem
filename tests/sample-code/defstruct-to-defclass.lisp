@@ -92,12 +92,14 @@
    (e
     :initarg :e
     :initform nil
+    :accessor foo-e
     :type (or nil
               string))
    (f
     :initarg :f
     :initform (progn
                 (foo))
+    :accessor foo-f
     :type symbol)
    (g
     :initarg :g

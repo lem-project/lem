@@ -14,6 +14,7 @@
                 :struct-name-and-options-point
                 :struct-slot-descriptions
                 :slot-description-info-p
+                :slot-description-complex-p
                 :slot-description-name
                 :slot-description-point
                 :slot-description-initial-value-start-point
@@ -75,14 +76,17 @@
           (rove:ok (= (length slots) 3))
           (let ((slot (first slots)))
             (rove:ok (slot-description-info-p slot))
+            (rove:ok (not (slot-description-complex-p slot)))
             (rove:ok (equal (slot-description-name slot) "slot-a"))
             (rove:ok (expected-point-position-p (slot-description-point slot) 4 2)))
           (let ((slot (second slots)))
             (rove:ok (slot-description-info-p slot))
+            (rove:ok (not (slot-description-complex-p slot)))
             (rove:ok (equal (slot-description-name slot) "slot-b"))
             (rove:ok (expected-point-position-p (slot-description-point slot) 5 2)))
           (let ((slot (third slots)))
             (rove:ok (slot-description-info-p slot))
+            (rove:ok (not (slot-description-complex-p slot)))
             (rove:ok (equal (slot-description-name slot) "slot-c"))
             (rove:ok (expected-point-position-p (slot-description-point slot) 6 2)))))))
   (rove:testing "complex slot-description"
@@ -102,6 +106,7 @@
                              expected-type
                              expected-read-only-p)
                    (rove:ok (slot-description-info-p slot))
+                   (rove:ok (slot-description-complex-p slot))
                    (rove:ok (equal (slot-description-name slot) expected-slot-name))
                    (rove:ok (expected-point-position-p (slot-description-point slot)
                                                        expected-point-line-number

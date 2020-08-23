@@ -169,3 +169,6 @@
                              (position-at-point point)))))))))))
 
 (pushnew 'find-utopian-route lem-lisp-mode::*find-definitions*)
+
+(define-command lisp-defstruct-to-defclass () ()
+  (lem-lisp-syntax:defstruct-to-defclass (current-point)))

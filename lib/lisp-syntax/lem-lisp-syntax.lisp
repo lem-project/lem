@@ -5,4 +5,5 @@
    :lem-lisp-syntax.syntax-table
    :lem-lisp-syntax.misc
    :lem-lisp-syntax.enclosing
-   :lem-lisp-syntax.parse-for-swank-autodoc))
+   :lem-lisp-syntax.parse-for-swank-autodoc
+   :lem-lisp-syntax.defstruct-to-defclass))

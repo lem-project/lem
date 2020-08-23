@@ -2,7 +2,8 @@
   (:use :cl)
   (:import-from :lem-base)
   (:import-from :lem-tests/utilities
-                :sample-file)
+                :sample-file
+                :diff-text)
   (:import-from :lem-lisp-syntax.defstruct-to-defclass
                 :defstruct-to-defclass
                 :analyze-defstruct
@@ -225,8 +226,11 @@
                     (point (lem-base:buffer-point buffer)))
                (search-input-defstruct point n)
                (defstruct-to-defclass point)
-               (rove:ok (equal (form-string-at-point point)
-                               expected-form-string))))))
+               (let ((actual (form-string-at-point point))
+                     (expected expected-form-string))
+                 (if (equal actual expected)
+                     (rove:pass '(equal actual expected))
+                     (rove:fail (diff-text actual expected))))))))
     (test 1)
     (test 2)
     (test 3)))

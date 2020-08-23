@@ -128,8 +128,8 @@
              slot-name)))
     (enter-list point)
     (let ((slot-info
-            (make-slot-description-info :name (scan-slot-name)
-                                        :point (save-point point))))
+            (make-slot-description-info :point (save-point point)
+                                        :name (scan-slot-name))))
       (skip-space-and-comment-forward point)
       ;(defstruct structure-name (slot-name |init-form :type integer))
       (setf (slot-description-initial-value-start-point slot-info) (save-point point))

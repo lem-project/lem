@@ -1152,13 +1152,12 @@
     (setf y (length (frame-header-windows (current-frame))))
     (setf width (display-width))
     (setf height 1))
-  (push window (frame-header-windows (current-frame)))
+  (add-header-window (current-frame) window)
   (setf (frame-modified-header-windows (current-frame)) t)
   (call-next-method))
 
 (defmethod %delete-window ((window header-window))
-  (setf (frame-header-windows (current-frame))
-        (delete window (frame-header-windows (current-frame))))
+  (remove-header-window (current-frame) window)
   (setf (frame-modified-header-windows (current-frame)) t))
 
 (defun redraw-display (&optional force)

@@ -229,7 +229,7 @@
     (when (null id)
       (editor-error "it's full of frames in virtual frame"))
     (let ((frame (lem:make-frame)))
-      (push vf (lem:frame-header-windows frame))
+      (lem::add-header-window frame vf)
       (lem:setup-frame frame (primordial-buffer))
 
       (setf (virtual-frame-current vf) frame)

@@ -24,20 +24,56 @@
 
 (defparameter *display-frame-map* (make-hash-table))
 
-(defstruct frame
-  ;; window
-  current-window
-  (window-tree nil)
-  (floating-windows '())
-  (header-windows '())
-  (modified-floating-windows nil)
-  (modified-header-windows nil)
-  ;; minibuffer
-  minibuffer-buffer
-  echoarea-buffer
-  (minibuffer-window nil)
-  (minibuffer-calls-window nil)
-  (minibuffer-start-charpos nil))
+(defclass frame ()
+  (;; window
+   (current-window
+    :initarg :current-window
+    :initform nil
+    :accessor frame-current-window)
+   (window-tree
+    :initarg :window-tree
+    :initform nil
+    :accessor frame-window-tree)
+   (floating-windows
+    :initarg :floating-windows
+    :initform '()
+    :accessor frame-floating-windows)
+   (header-windows
+    :initarg :header-windows
+    :initform '()
+    :reader frame-header-windows)
+   (modified-floating-windows
+    :initarg :modified-floating-windows
+    :initform nil
+    :accessor frame-modified-floating-windows)
+   (modified-header-windows
+    :initarg :modified-header-windows
+    :initform nil
+    :accessor frame-modified-header-windows)
+   ;; minibuffer
+   (minibuffer-buffer
+    :initarg :minibuffer-buffer
+    :initform nil
+    :accessor frame-minibuffer-buffer)
+   (echoarea-buffer
+    :initarg :echoarea-buffer
+    :initform nil
+    :accessor frame-echoarea-buffer)
+   (minibuffer-window
+    :initarg :minibuffer-window
+    :initform nil
+    :accessor frame-minibuffer-window)
+   (minibuffer-calls-window
+    :initarg :minibuffer-calls-window
+    :initform nil
+    :accessor frame-minibuffer-calls-window)
+   (minibuffer-start-charpos
+    :initarg :minibuffer-start-charpos
+    :initform nil
+    :accessor frame-minibuffer-start-charpos)))
+
+(defun make-frame ()
+  (make-instance 'frame))
 
 (defun map-frame (display frame)
   (setf (gethash display *display-frame-map*) frame))
@@ -73,6 +109,15 @@
   (redraw-display (and (redraw-after-modifying-floating-window (implementation))
                        (frame-modified-floating-windows frame)))
   (setf (frame-modified-floating-windows frame) nil))
+
+
+(defun add-header-window (frame window)
+  (with-slots (header-windows) frame
+    (push window header-windows)))
+
+(defun remove-header-window (frame window)
+  (with-slots (header-windows) frame
+    (setf header-windows (remove window header-windows))))
 
 
 (defun topleft-window-y (frame)

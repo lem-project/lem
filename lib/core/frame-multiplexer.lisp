@@ -27,7 +27,7 @@
     :initarg :impl
     :initform nil
     :accessor virtual-frame-impl
-    :type lem:implementation)
+    :type implementation)
    (id/frame-table
     :initarg :id/frame-table
     :accessor virtual-frame-id/frame-table
@@ -54,7 +54,7 @@
   (let* ((buffer (make-buffer "*frame-multiplexer*" :enable-undo-p nil :temporary t))
          (id/frame-table (make-array +frame-multiplexer-max-number-of-frames+ :initial-element nil)))
     (setf (aref id/frame-table 0) frame)
-    (setf (lem:variable-value 'truncate-lines :buffer buffer) nil)
+    (setf (variable-value 'truncate-lines :buffer buffer) nil)
     (let ((vf (make-instance 'virtual-frame
                              :impl impl
                              :buffer buffer
@@ -145,7 +145,7 @@
               (start-pos (point-charpos p)))
           (insert-button p
                          ;; virtual frame name on header
-                         (let* ((buffer (window-buffer (lem:frame-current-window frame)))
+                         (let* ((buffer (window-buffer (frame-current-window frame)))
                                 (name (buffer-name buffer)))
                            (format nil "~a~a:~a "
                                    (if focusp #\# #\space)
@@ -174,15 +174,15 @@
                          :attribute 'frame-multiplexer-background-attribute)))
       (line-offset p 0 charpos))
     ;; redraw windows in current frame
-    (let* ((frame (virtual-frame-current (gethash (lem:implementation) *virtual-frame-map*))))
-      (dolist (w (lem::window-tree-flatten (lem:frame-window-tree frame)))
-        (lem:window-redraw w t))
-      (dolist (w (lem:frame-floating-windows frame))
-        (lem:window-redraw w t))
-      (dolist (w (lem:frame-header-windows frame))
+    (let* ((frame (virtual-frame-current (gethash (implementation) *virtual-frame-map*))))
+      (dolist (w (lem::window-tree-flatten (frame-window-tree frame)))
+        (window-redraw w t))
+      (dolist (w (frame-floating-windows frame))
+        (window-redraw w t))
+      (dolist (w (frame-header-windows frame))
         (unless (eq w window)
-          (lem:window-redraw w t))))
-    (lem-if:update-display (lem:implementation)))
+          (window-redraw w t))))
+    (lem-if:update-display (implementation)))
   ;; clear all virtual-frame-changed to nil because of applying redraw
   (maphash (lambda (k vf)
              (declare (ignore k))
@@ -194,9 +194,9 @@
   (clrhash *virtual-frame-map*)
   (loop
     :for impl :in (list (implementation))  ; for multi-frame support in the future...
-    :do (let ((vf (make-virtual-frame impl (lem:get-frame impl))))
+    :do (let ((vf (make-virtual-frame impl (get-frame impl))))
           (setf (gethash impl *virtual-frame-map*) vf)
-          (lem:map-frame (implementation) (virtual-frame-current vf)))))
+          (map-frame (implementation) (virtual-frame-current vf)))))
 
 (defun enabled-frame-multiplexer-p ()
   (variable-value 'frame-multiplexer :global))
@@ -228,12 +228,12 @@
          (id (find-unused-frame-id vf)))
     (when (null id)
       (editor-error "it's full of frames in virtual frame"))
-    (let ((frame (lem:make-frame (current-frame))))
-      (lem:setup-frame frame (primordial-buffer))
+    (let ((frame (make-frame (current-frame))))
+      (setup-frame frame (primordial-buffer))
 
       (setf (virtual-frame-current vf) frame)
       (allocate-frame vf frame)
-      (lem:map-frame (implementation) frame)
+      (map-frame (implementation) frame)
 
       (setf (virtual-frame-changed vf) t))))
 
@@ -247,7 +247,7 @@
     (let ((frame (search-previous-frame vf (virtual-frame-current vf))))
       (free-frame vf (virtual-frame-current vf))
       (setf (virtual-frame-current vf) frame)
-      (lem:map-frame (implementation) frame))
+      (map-frame (implementation) frame))
     (setf (virtual-frame-changed vf) t)))
 
 (define-key *global-keymap* "C-z p" 'frame-multiplexer-prev)
@@ -257,7 +257,7 @@
          (frame (search-previous-frame vf (virtual-frame-current vf))))
     (when frame
       (setf (virtual-frame-current vf) frame)
-      (lem:map-frame (implementation) frame))
+      (map-frame (implementation) frame))
     (lem::change-display-size-hook)
     (setf (virtual-frame-changed vf) t)))
 
@@ -268,7 +268,7 @@
          (frame (search-next-frame vf (virtual-frame-current vf))))
     (when frame
       (setf (virtual-frame-current vf) frame)
-      (lem:map-frame (implementation) frame))
+      (map-frame (implementation) frame))
     (lem::change-display-size-hook)
     (setf (virtual-frame-changed vf) t)))
 

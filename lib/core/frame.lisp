@@ -72,8 +72,12 @@
     :initform nil
     :accessor frame-minibuffer-start-charpos)))
 
-(defun make-frame ()
-  (make-instance 'frame))
+(defun make-frame (&optional (old-frame (current-frame)))
+  (let ((frame (make-instance 'frame)))
+    (when old-frame
+      (dolist (window (frame-header-windows old-frame))
+        (add-header-window frame window)))
+    frame))
 
 (defun map-frame (display frame)
   (setf (gethash display *display-frame-map*) frame))
@@ -113,7 +117,7 @@
 
 (defun add-header-window (frame window)
   (with-slots (header-windows) frame
-    (push window header-windows)))
+    (alexandria:nconcf header-windows (list window))))
 
 (defun remove-header-window (frame window)
   (with-slots (header-windows) frame

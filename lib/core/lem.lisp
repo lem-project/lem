@@ -53,7 +53,7 @@
 
 (let ((once nil))
   (defun setup ()
-    (let ((frame (make-frame)))
+    (let ((frame (make-frame nil)))
       (map-frame (implementation) frame)
       (setup-frame frame (primordial-buffer)))
     (unless once

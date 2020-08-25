@@ -231,8 +231,8 @@
     (let ((frame (make-frame (current-frame))))
       (setup-frame frame (primordial-buffer))
 
-      (setf (virtual-frame-current vf) frame)
       (allocate-frame vf frame)
+      (setf (virtual-frame-current vf) frame)
       (map-frame (implementation) frame)
 
       (setf (virtual-frame-changed vf) t))))

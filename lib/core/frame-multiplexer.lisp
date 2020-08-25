@@ -82,6 +82,10 @@
   (declare (type frame frame))
   (let ((id (find-unused-frame-id virtual-frame)))
     (assert id)
+    ;; NOTE:
+    ;; primordial-bufferは現在のバッファリストから*tmp*バッファを返すが
+    ;; バッファリストをフレームごとに管理する場合にここで*tmp*バッファを返すと
+    ;; 元のフレームの*tmp*バッファを新しい方のフレームから参照することになってしまう
     (setup-frame frame (primordial-buffer))
     (setf (aref (virtual-frame-id/frame-table virtual-frame) id)
           frame)))

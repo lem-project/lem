@@ -164,7 +164,7 @@
                          ;; set action when click
                          (let ((frame frame))
                            (lambda ()
-                             (switch-current-frame virtual-frame frame)))
+                             (switch-current-frame window frame)))
                          :attribute (if focusp
                                         'frame-multiplexer-active-frame-name-attribute
                                         'frame-multiplexer-frame-name-attribute))

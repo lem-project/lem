@@ -87,6 +87,8 @@
 (defun free-frame (virtual-frame frame)
   (declare (type frame frame))
   (let ((id (find-frame-id virtual-frame frame)))
+    (assert id)
+    (teardown-frame frame)
     (setf (aref (virtual-frame-id/frame-table virtual-frame) id)
           nil)))
 

@@ -66,6 +66,7 @@
 
 (defun switch-current-frame (virtual-frame frame)
   (setf (virtual-frame-current virtual-frame) frame)
+  (setf (virtual-frame-changed virtual-frame) t)
   (map-frame (implementation) frame))
 
 (defun find-unused-frame-id (virtual-frame)
@@ -161,8 +162,7 @@
                          ;; set action when click
                          (let ((frame frame))
                            (lambda ()
-                             (setf (virtual-frame-current window) frame)
-                             (setf (virtual-frame-changed window) t)))
+                             (switch-current-frame virtual-frame frame)))
                          :attribute (if focusp
                                         'frame-multiplexer-active-frame-name-attribute
                                         'frame-multiplexer-frame-name-attribute))
@@ -235,8 +235,7 @@
     (let ((frame (make-frame (current-frame))))
       (setup-frame frame (primordial-buffer))
       (allocate-frame vf frame)
-      (switch-current-frame vf frame)
-      (setf (virtual-frame-changed vf) t))))
+      (switch-current-frame vf frame))))
 
 (define-key *global-keymap* "C-z d" 'frame-multiplexer-delete)
 (define-command frame-multiplexer-delete () ()
@@ -247,8 +246,7 @@
       (editor-error "cannot delete this virtual frame"))
     (let ((frame (search-previous-frame vf (virtual-frame-current vf))))
       (free-frame vf (virtual-frame-current vf))
-      (switch-current-frame vf frame))
-    (setf (virtual-frame-changed vf) t)))
+      (switch-current-frame vf frame))))
 
 (define-key *global-keymap* "C-z p" 'frame-multiplexer-prev)
 (define-command frame-multiplexer-prev () ()
@@ -257,8 +255,7 @@
          (frame (search-previous-frame vf (virtual-frame-current vf))))
     (when frame
       (switch-current-frame vf frame))
-    (lem::change-display-size-hook)
-    (setf (virtual-frame-changed vf) t)))
+    (lem::change-display-size-hook)))
 
 (define-key *global-keymap* "C-z n" 'frame-multiplexer-next)
 (define-command frame-multiplexer-next () ()
@@ -267,8 +264,7 @@
          (frame (search-next-frame vf (virtual-frame-current vf))))
     (when frame
       (switch-current-frame vf frame))
-    (lem::change-display-size-hook)
-    (setf (virtual-frame-changed vf) t)))
+    (lem::change-display-size-hook)))
 
 (define-command frame-multiplexer-test () ()
   (labels ((vf ()

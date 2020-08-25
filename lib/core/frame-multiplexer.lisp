@@ -81,6 +81,8 @@
 (defun allocate-frame (virtual-frame frame)
   (declare (type frame frame))
   (let ((id (find-unused-frame-id virtual-frame)))
+    (assert id)
+    (setup-frame frame (primordial-buffer))
     (setf (aref (virtual-frame-id/frame-table virtual-frame) id)
           frame)))
 
@@ -235,7 +237,6 @@
     (when (null id)
       (editor-error "it's full of frames in virtual frame"))
     (let ((frame (make-frame (current-frame))))
-      (setup-frame frame (primordial-buffer))
       (allocate-frame vf frame)
       (switch-current-frame vf frame))))
 

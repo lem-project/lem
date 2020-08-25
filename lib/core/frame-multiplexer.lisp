@@ -64,6 +64,10 @@
                              :current frame)))
       vf)))
 
+(defun switch-current-frame (virtual-frame frame)
+  (setf (virtual-frame-current virtual-frame) frame)
+  (map-frame (implementation) frame))
+
 (defun find-unused-frame-id (virtual-frame)
   (position-if #'null (virtual-frame-id/frame-table virtual-frame)))
 
@@ -196,7 +200,7 @@
     :for impl :in (list (implementation))  ; for multi-frame support in the future...
     :do (let ((vf (make-virtual-frame impl (get-frame impl))))
           (setf (gethash impl *virtual-frame-map*) vf)
-          (map-frame (implementation) (virtual-frame-current vf)))))
+          (switch-current-frame vf (virtual-frame-current vf)))))
 
 (defun enabled-frame-multiplexer-p ()
   (variable-value 'frame-multiplexer :global))
@@ -230,11 +234,8 @@
       (editor-error "it's full of frames in virtual frame"))
     (let ((frame (make-frame (current-frame))))
       (setup-frame frame (primordial-buffer))
-
       (allocate-frame vf frame)
-      (setf (virtual-frame-current vf) frame)
-      (map-frame (implementation) frame)
-
+      (switch-current-frame vf frame)
       (setf (virtual-frame-changed vf) t))))
 
 (define-key *global-keymap* "C-z d" 'frame-multiplexer-delete)
@@ -246,8 +247,7 @@
       (editor-error "cannot delete this virtual frame"))
     (let ((frame (search-previous-frame vf (virtual-frame-current vf))))
       (free-frame vf (virtual-frame-current vf))
-      (setf (virtual-frame-current vf) frame)
-      (map-frame (implementation) frame))
+      (switch-current-frame vf frame))
     (setf (virtual-frame-changed vf) t)))
 
 (define-key *global-keymap* "C-z p" 'frame-multiplexer-prev)
@@ -256,8 +256,7 @@
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (frame (search-previous-frame vf (virtual-frame-current vf))))
     (when frame
-      (setf (virtual-frame-current vf) frame)
-      (map-frame (implementation) frame))
+      (switch-current-frame vf frame))
     (lem::change-display-size-hook)
     (setf (virtual-frame-changed vf) t)))
 
@@ -267,8 +266,7 @@
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (frame (search-next-frame vf (virtual-frame-current vf))))
     (when frame
-      (setf (virtual-frame-current vf) frame)
-      (map-frame (implementation) frame))
+      (switch-current-frame vf frame))
     (lem::change-display-size-hook)
     (setf (virtual-frame-changed vf) t)))
 

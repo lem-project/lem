@@ -1,0 +1,35 @@
+(defpackage :lem-tests/frame-multiplexer
+  (:use :cl :lem))
+(in-package :lem-tests/frame-multiplexer)
+
+(defstruct datum
+  id
+  result)
+
+(rove:deftest test
+  (ql:quickload :lem-fake-interface :silent t)
+  (lem)
+  (let ((event-queue (lem::make-event-queue)))
+    (send-event (lambda ()
+                  (redraw-display)
+                  (unless (lem-frame-multiplexer::enabled-frame-multiplexer-p)
+                    (lem-frame-multiplexer::toggle-frame-multiplexer))
+                  (delete-between-points (buffer-start-point (current-buffer))
+                                         (buffer-end-point (current-buffer)))
+                  (insert-string (current-point) "abc")
+                  (redraw-display t)
+                  (lem-frame-multiplexer::frame-multiplexer-create-with-new-buffer-list)
+                  (redraw-display t)
+                  (send-event (make-datum :id 1 :result (elt (lem::screen-lines (lem::window-screen (current-window))) 0))
+                              event-queue)
+                  (lem-frame-multiplexer::frame-multiplexer-next)
+                  (send-event (make-datum :id 2 :result (elt (lem::screen-lines (lem::window-screen (current-window))) 0))
+                              event-queue)))
+    (let ((datum1 (lem::dequeue-event 3 event-queue))
+          (datum2 (lem::dequeue-event 3 event-queue)))
+      (rove:ok (equal (datum-result datum1) '("abc " (3 4 CURSOR NIL))))
+      (rove:ok (equal (datum-result datum2) '("abc " (3 4 CURSOR NIL))))
+      (list datum1 datum2))
+    (send-event (lambda ()
+                  (exit-lem nil)
+                  (clrhash lem-frame-multiplexer::*virtual-frame-map*)))))

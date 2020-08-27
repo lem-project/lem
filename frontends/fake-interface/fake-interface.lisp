@@ -26,7 +26,16 @@
   y
   width
   height
-  modeline)
+  modeline
+  lines)
+
+(defun display ()
+  (let ((lines (view-lines (lem::screen-view (lem::window-screen (current-window))))))
+    (with-output-to-string (out)
+      (loop :for line :across lines
+            :for line-string := (string-right-trim (string (code-char 0)) line)
+            :do (unless (zerop (length line-string))
+                  (write-string line-string out))))))
 
 (defmethod lem-if:invoke ((implementation fake-interface) function)
   (funcall function))
@@ -52,7 +61,12 @@
    :y y
    :width width
    :height height
-   :modeline use-modeline))
+   :modeline use-modeline
+   :lines (let ((lines (make-array height)))
+            (dotimes (i height)
+              (setf (aref lines i)
+                    (make-string width :initial-element (code-char 0))))
+            lines)))
 
 (defmethod lem-if:delete-view ((implementation fake-interface) view)
   nil)
@@ -69,7 +83,10 @@
         (view-y view) y))
 
 (defmethod lem-if:print ((implementation fake-interface) view x y string attribute)
-  )
+  (let ((line (aref (view-lines view) y)))
+    (loop :for i :from x
+          :for c :across string
+          :do (setf (aref line i) c))))
 
 (defmethod lem-if:print-modeline ((implementation fake-interface) view x y string attribute)
   )

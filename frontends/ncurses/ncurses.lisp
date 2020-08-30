@@ -415,17 +415,13 @@
 
 (defmethod lem-if:make-view
     ((implementation ncurses) window x y width height use-modeline)
-  (flet ((newwin (nlines ncols begin-y begin-x main-screen)
-           (declare (ignore main-screen))
+  (flet ((newwin (nlines ncols begin-y begin-x)
            (let ((win (charms/ll:newwin nlines ncols begin-y begin-x)))
              (when use-modeline (charms/ll:keypad win 1))
-             ;; (when main-screen
-             ;;   (charms/ll:idlok win 1)
-             ;;   (charms/ll:scrollok win 1))
              win)))
     (make-ncurses-view
-     :scrwin (newwin height width y x nil)
-     :modeline-scrwin (when use-modeline (newwin 1 width (+ y height) x nil))
+     :scrwin (newwin height width y x)
+     :modeline-scrwin (when use-modeline (newwin 1 width (+ y height) x))
      :x x
      :y y
      :width width

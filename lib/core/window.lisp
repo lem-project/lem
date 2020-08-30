@@ -131,7 +131,9 @@
                               (window-width window)
                               (window-height window)
                               (window-use-modeline-p window)))
-    (setf view-point (copy-point (buffer-point (window-buffer window)) :right-inserting))
+    (setf view-point (buffer-start
+                      (copy-point (buffer-point (window-buffer window))
+                                  :right-inserting)))
     (setf point (copy-point (buffer-start-point (window-buffer window)) :right-inserting))))
 
 (defun make-window (buffer x y width height use-modeline-p)
@@ -625,6 +627,7 @@
              offset)))))
 
 (defun split-window-after (current-window new-window split-type)
+  (assert (not (eq current-window new-window)))
   (window-set-size current-window
                    (window-%width current-window)
                    (window-%height current-window))

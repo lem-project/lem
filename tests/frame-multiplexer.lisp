@@ -33,9 +33,8 @@
                                   event-queue)))))
     (let* ((datum1 (lem::dequeue-event 1 event-queue))
            (datum2 (lem::dequeue-event 1 event-queue)))
-      ;; (rove:ok (string= (datum-result datum1) "abc ")) ; bug
-      (rove:ok (string= (datum-result datum2) "abc "))
-      (list datum1 datum2))
+      (rove:ok (string= (datum-result datum1) "abc "))
+      (rove:ok (string= (datum-result datum2) "abc ")))
     (send-event (lambda ()
                   (exit-lem nil)
                   (clrhash lem-frame-multiplexer::*virtual-frame-map*)))))

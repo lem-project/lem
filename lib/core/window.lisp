@@ -1172,7 +1172,9 @@
       (unless (eq window (current-window))
         (window-redraw window force)))
     (cond ((minibuffer-window-active-p)
-           (window-redraw (minibuffer-window) force))
+           (if (sticky-bottom-minibuffer-p)
+               (window-redraw (minibuffer-window) force)
+               (window-redraw (minibuffer-window) t)))
           (t
            (window-redraw (minibuffer-window) force)
            (window-redraw (current-window) force)))

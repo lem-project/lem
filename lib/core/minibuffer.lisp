@@ -48,6 +48,15 @@
 (defclass popup-minibuffer-window (minibuffer-window) ())
 
 (defun make-minibuffer-window (buffer)
+  #+lem.TODO.popup-minibuffer
+  (make-instance 'popup-minibuffer-window
+                 :buffer buffer
+                 :x (floor (display-width) 2)
+                 :y (floor (display-height) 2)
+                 :width (display-width)
+                 :height (minibuffer-window-height)
+                 :use-modeline-p nil)
+  #-lem.TODO.popup-minibuffer
   (make-instance 'sticky-minibuffer-window
                  :buffer buffer
                  :x 0
@@ -71,7 +80,8 @@
 (defun minibuffer () (window-buffer (minibuffer-window)))
 (defun minibufferp (buffer) (eq buffer (minibuffer)))
 
-(defun sticky-bottom-minibuffer-p () t)
+(defun sticky-bottom-minibuffer-p ()
+  (typep (minibuffer-window) 'sticky-minibuffer-window))
 
 (define-major-mode minibuffer-mode nil
     (:name "minibuffer"
@@ -120,10 +130,7 @@
          (erase-buffer (frame-echoarea-buffer (current-frame))))))
 
 (defmethod message-using-minibuffer-class ((minibuffer-window popup-minibuffer-window) string args)
-  (cond (string
-         )
-        (t
-         )))
+  (call-next-method))
 
 (defun log-message (string args)
   (when string

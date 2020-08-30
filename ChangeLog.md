@@ -1,5 +1,25 @@
 # ChangeLog
 
+## [v1.8]
+
+(processed upto a4bea761)
+
+### Added
+* asm-mode
+* frame structure
+* frame-multiplexer
+* lisp-defstruct-to-defclass command
+* Added CI with github actions
+* Added unit tests
+
+### Fixed
+* Fixed timer behavior in ccl (https://github.com/cxxxr/lem/issues/431)
+* Fixed backward movement of s-expression in lisp
+* Fixed compiler warning on lem-base and lem-core
+
+### Changed
+* Migration from optima to trivia
+
 ## [v1.7]
 
 (processed upto bf9a92b3)

@@ -117,12 +117,6 @@
   (with-error-handler ()
     (clear-eob view x y)))
 
-;(defmethod lem-if:redraw-window ((implementation capi-impl) window force)
-;  )
-
-(defmethod lem-if:redraw-view-after ((implementation capi-impl) view focus-window-p)
-  )
-
 (defmethod lem-if:update-display ((implementation capi-impl))
   (with-error-handler ()
     (let ((window-panel (lem-panel-window-panel *lem-panel*)))

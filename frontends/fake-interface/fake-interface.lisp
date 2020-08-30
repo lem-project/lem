@@ -97,7 +97,6 @@
 (defmethod lem-if:clear-eob ((implementation fake-interface) view x y)
   )
 
-(defmethod lem-if:redraw-view-after ((implementation fake-interface) view focus-window-p))
 (defmethod lem-if:update-display ((implementation fake-interface)))
 (defmethod lem-if:scroll ((implementation fake-interface) view n))
 

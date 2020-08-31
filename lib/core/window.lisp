@@ -46,6 +46,7 @@
           up-window
           down-window
           floating-window
+          floating-window-border
           make-floating-window
           floating-window-p
           header-window
@@ -1118,7 +1119,11 @@
                                         (window-list)))
                  (difference-window-x window)))))
 
-(defclass floating-window (window) ())
+(defclass floating-window (window)
+  ((border
+    :initarg :border
+    :initform 0
+    :reader floating-window-border)))
 
 (defmethod initialize-instance :before ((floating-window floating-window) &rest initargs)
   (declare (ignore initargs))

@@ -200,7 +200,14 @@
 (defkeycode "[resize]" #o632)
 (defkeycode "[event]" #o633)
 
+(defstruct border
+  win
+  width
+  height
+  size)
+
 (defstruct ncurses-view
+  border
   scrwin
   modeline-scrwin
   x
@@ -413,6 +420,16 @@
 (defmethod lem-if:display-height ((implementation ncurses))
   (max 3 charms/ll:*lines*))
 
+(defun compute-border-window-size (width height border-size)
+  (let ((width (+ width (* border-size 2)))
+        (height (+ height (* border-size 2))))
+    (list width height)))
+
+(defun compute-border-window-position (x y border-size)
+  (let ((x (- x border-size))
+        (y (- y border-size)))
+    (list x y)))
+
 (defmethod lem-if:make-view
     ((implementation ncurses) window x y width height use-modeline)
   (flet ((newwin (nlines ncols begin-y begin-x)
@@ -420,6 +437,22 @@
              (when use-modeline (charms/ll:keypad win 1))
              win)))
     (make-ncurses-view
+     :border (when (and (floating-window-p window)
+                        (floating-window-border window)
+                        (< 0 (floating-window-border window)))
+               (destructuring-bind (x y)
+                   (compute-border-window-position x
+                                                   y
+                                                   (floating-window-border window))
+                 (destructuring-bind (width height)
+                     (compute-border-window-size width
+                                                 height
+                                                 (floating-window-border window))
+                   (let ((win (newwin height width y x)))
+                     (make-border :win win
+                                  :width width
+                                  :height height
+                                  :size (floating-window-border window))))))
      :scrwin (newwin height width y x)
      :modeline-scrwin (when use-modeline (newwin 1 width (+ y height) x))
      :x x
@@ -441,6 +474,12 @@
   (setf (ncurses-view-width view) width)
   (setf (ncurses-view-height view) height)
   (charms/ll:wresize (ncurses-view-scrwin view) height width)
+  (alexandria:when-let (border (ncurses-view-border view))
+    (destructuring-bind (b-width b-height)
+        (compute-border-window-size width height (border-size border))
+      (setf (border-width border) b-width
+            (border-height border) b-height)
+      (charms/ll:wresize (border-win border) b-height b-width)))
   (when (ncurses-view-modeline-scrwin view)
     (charms/ll:mvwin (ncurses-view-modeline-scrwin view)
                      (+ (ncurses-view-y view) height)
@@ -453,6 +492,10 @@
   (setf (ncurses-view-x view) x)
   (setf (ncurses-view-y view) y)
   (charms/ll:mvwin (ncurses-view-scrwin view) y x)
+  (alexandria:when-let (border (ncurses-view-border view))
+    (destructuring-bind (b-x b-y)
+        (compute-border-window-position x y (border-size border))
+      (charms/ll:mvwin (border-win border) b-y b-x)))
   (when (ncurses-view-modeline-scrwin view)
     (charms/ll:mvwin (ncurses-view-modeline-scrwin view)
                      (+ y (ncurses-view-height view))
@@ -480,7 +523,23 @@
   (charms/ll:wmove (ncurses-view-scrwin view) y x)
   (charms/ll:wclrtobot (ncurses-view-scrwin view)))
 
+(defun draw-border (border)
+  (let ((win (border-win border)))
+    ;; (charms/ll:wclear win)
+    ;; (charms/ll:box win 0 0)
+    (let ((attr (attribute-to-bits (make-attribute :foreground "#303030" :reverse-p t))))
+      (charms/ll:wattron win attr)
+      (charms/ll:mvwaddstr win 0 0 (make-string (border-width border) :initial-element #\space))
+      (loop :for i :from 1 :below (1- (border-height border))
+            :do (charms/ll:mvwaddch win i 0 (char-code #\space))
+                (charms/ll:mvwaddch win i (1- (border-width border)) (char-code #\space)))
+      (charms/ll:mvwaddstr win (1- (border-height border)) 0 (make-string (border-width border) :initial-element #\space))
+      (charms/ll:wattroff win attr))
+    (charms/ll:wnoutrefresh win)))
+
 (defmethod lem-if:redraw-view-after ((implementation ncurses) view focus-window-p)
+  (alexandria:when-let (border (ncurses-view-border view))
+    (draw-border border))
   (let ((attr (attribute-to-bits 'modeline)))
     (charms/ll:attron attr)
     (when (and (ncurses-view-modeline-scrwin view)

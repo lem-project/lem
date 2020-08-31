@@ -54,7 +54,13 @@
            (lem::window-set-pos dst-window x y)
            dst-window)
           (t
-           (make-floating-window buffer x y width height nil)))))
+           (make-instance 'floating-window
+                          :buffer buffer
+                          :x x
+                          :y y
+                          :width width
+                          :height height
+                          :use-modeline-p nil)))))
 
 (defun quit-popup-window (floating-window)
   (delete-window floating-window))

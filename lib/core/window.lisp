@@ -47,7 +47,6 @@
           down-window
           floating-window
           floating-window-border
-          make-floating-window
           floating-window-p
           header-window
           redraw-display
@@ -1131,16 +1130,8 @@
     (error "floating window is not supported"))
   (setf (frame-modified-floating-windows (current-frame)) t))
 
-(defun make-floating-window (buffer x y width height use-modeline-p)
-  (let ((window (make-instance 'floating-window
-                               :buffer buffer
-                               :x x
-                               :y y
-                               :width width
-                               :height height
-                               :use-modeline-p use-modeline-p)))
-    (push window (frame-floating-windows (current-frame)))
-    window))
+(defmethod initialize-instance :after ((floating-window floating-window) &key &allow-other-keys)
+  (push floating-window (frame-floating-windows (current-frame))))
 
 (defmethod %delete-window ((window floating-window))
   (when (eq window (current-window))

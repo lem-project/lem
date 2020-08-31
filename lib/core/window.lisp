@@ -1170,6 +1170,7 @@
 
 (defun redraw-display (&optional force)
   (without-interrupts
+    (update-minibuffer-for-redraw (minibuffer-window))
     (when (frame-modified-header-windows (current-frame))
       (setf (frame-modified-header-windows (current-frame)) nil)
       (change-display-size-hook))
@@ -1181,7 +1182,8 @@
                (window-redraw (minibuffer-window) force)
                (window-redraw (minibuffer-window) t)))
           (t
-           (window-redraw (minibuffer-window) force)
+           (when (sticky-bottom-minibuffer-p)
+             (window-redraw (minibuffer-window) force))
            (window-redraw (current-window) force)))
     (dolist (window (frame-header-windows (current-frame)))
       (window-redraw window (redraw-after-modifying-floating-window (implementation))))

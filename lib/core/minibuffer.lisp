@@ -32,7 +32,7 @@
           prompt-for-directory))
 
 (defparameter *minibuffer-window-height* 1)
-(defvar *enable-recursive-minibuffers* t)
+(defvar *enable-recursive-minibuffers* nil)
 
 (defvar +recursive-minibuffer-break-tag+ (gensym))
 

@@ -1035,13 +1035,20 @@
     (setf (window-parameter (current-window) 'change-buffer) t))
   buffer)
 
+(let ((key '#:switchable-buffer-p))
+  (defun switchable-buffer-p (buffer)
+    (buffer-value buffer key))
+
+  (defun (setf switchable-buffer-p) (value buffer)
+    (setf (buffer-value buffer key) value)))
+
 (defun switch-to-buffer (buffer &optional (record t) (move-prev-point t))
   (check-type buffer buffer)
   (when (deleted-buffer-p buffer)
     (editor-error "This buffer has been deleted"))
   (run-hooks (window-switch-to-buffer-hook (current-window)) buffer)
-  (when (or (buffer-value (window-buffer (current-window)) 'prohibition-switch-to-buffer)
-            (buffer-value buffer 'prohibition-switch-to-buffer))
+  (when (or (switchable-buffer-p (window-buffer (current-window)))
+            (switchable-buffer-p buffer))
     (editor-error "This buffer is not switchable"))
   (%switch-to-buffer buffer record move-prev-point))
 

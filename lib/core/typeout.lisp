@@ -66,10 +66,10 @@
                   *typeout-window*)
                  (t
                   (let ((typeout-buffer-p (buffer-value buffer 'typeout-buffer-p))
-                        (prohibition-switch-to-buffer (buffer-value buffer 'prohibition-switch-to-buffer)))
+                        (switchable-buffer-p (switchable-buffer-p buffer)))
                     (setf *typeout-window-rewinding-values*
                           (list typeout-buffer-p
-                                prohibition-switch-to-buffer)))
+                                switchable-buffer-p)))
                   (let ((window (make-instance 'floating-window
                                                :buffer buffer
                                                :x 0
@@ -86,7 +86,7 @@
                           *typeout-before-window* (current-window))
                     window)))))
     (setf (buffer-value buffer 'typeout-buffer-p) t)
-    (setf (buffer-value buffer 'prohibition-switch-to-buffer) t)
+    (setf (switchable-buffer-p buffer) t)
     (bury-buffer buffer)
     (setf (current-window) window)
     (typeout-mode t)
@@ -137,10 +137,10 @@
     (when *typeout-window-rewinding-values*
       (let ((buffer (window-buffer *typeout-window*)))
         (destructuring-bind (typeout-buffer-p
-                             prohibition-switch-to-buffer)
+                             switchable-buffer-p)
             *typeout-window-rewinding-values*
           (setf (buffer-value buffer 'typeout-buffer-p) typeout-buffer-p)
-          (setf (buffer-value buffer 'prohibition-switch-to-buffer) prohibition-switch-to-buffer))))
+          (setf (switchable-buffer-p buffer) switchable-buffer-p))))
     (delete-window *typeout-window*)))
 
 (defun dismiss-typeout-window-2 ()

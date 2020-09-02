@@ -43,7 +43,7 @@ libasyncprocess.$(SOEXT):
 	cd $(PWD);ros scripts/copy-shared.ros
 
 CLEANFILES = ${bin_SCRIPTS}
-CLEANFILES += lem-icon.svg lem-ncurses.desktop
+CLEANFILES += lem-icon.svg lem-ncurses.desktop libasyncprocess.$(SOEXT)
 
 depend:
 	env CL_SOURCE_REGISTRY=$(PWD)// ros make-depends lem-ncurses bin/lem-ncurses > bin/lem-ncurses.depend

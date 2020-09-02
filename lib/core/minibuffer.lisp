@@ -61,25 +61,28 @@
                (floor height 2))))
     (list x y width height)))
 
-(defun make-minibuffer-window (buffer)
-  #+(or)
-  (destructuring-bind (x y width height)
-      (compute-minibuffer-rectangle buffer)
-    (make-instance 'popup-minibuffer-window
+(defun make-minibuffer-window (frame)
+  (let ((buffer (frame-echoarea-buffer frame)))
+    #+(or)
+    (destructuring-bind (x y width height)
+        (compute-minibuffer-rectangle buffer)
+      (make-instance 'popup-minibuffer-window
+                     :buffer buffer
+                     :x x
+                     :y y
+                     :width width
+                     :height height
+                     :use-modeline-p nil
+                     :frame frame))
+    (make-instance 'sticky-minibuffer-window
                    :buffer buffer
-                   :x x
-                   :y y
-                   :width width
-                   :height height
-                   :use-modeline-p nil))
-  (make-instance 'sticky-minibuffer-window
-                 :buffer buffer
-                 :x 0
-                 :y (- (display-height)
-                       (minibuffer-window-height))
-                 :width (display-width)
-                 :height (minibuffer-window-height)
-                 :use-modeline-p nil))
+                   :x 0
+                   :y (- (display-height)
+                         (minibuffer-window-height))
+                   :width (display-width)
+                   :height (minibuffer-window-height)
+                   :use-modeline-p nil
+                   :frame frame)))
 
 (defun update-minibuffer-for-redraw (window)
   (assert (eq window (minibuffer-window)))
@@ -122,7 +125,7 @@
   (when (or (null (frame-minibuffer-window frame))
             (deleted-window-p (frame-minibuffer-window frame)))
     (setf (frame-minibuffer-window frame)
-          (make-minibuffer-window (frame-echoarea-buffer frame)))))
+          (make-minibuffer-window frame))))
 
 (defun teardown-minibuffer (frame)
   (%free-window (frame-minibuffer-window frame)))

@@ -1137,8 +1137,8 @@
     (error "floating window is not supported"))
   (setf (frame-modified-floating-windows (current-frame)) t))
 
-(defmethod initialize-instance :after ((floating-window floating-window) &key &allow-other-keys)
-  (push floating-window (frame-floating-windows (current-frame))))
+(defmethod initialize-instance :after ((floating-window floating-window) &key (frame (current-frame)) &allow-other-keys)
+  (push floating-window (frame-floating-windows frame)))
 
 (defmethod %delete-window ((window floating-window))
   (when (eq window (current-window))

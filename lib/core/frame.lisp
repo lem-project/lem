@@ -24,6 +24,9 @@
 
 (defparameter *display-frame-map* (make-hash-table))
 
+(defgeneric update-prompt-window (window)
+  (:method (window)))
+
 (defclass frame ()
   (;; window
    (current-window
@@ -70,7 +73,11 @@
    (minibuffer-start-charpos
     :initarg :minibuffer-start-charpos
     :initform nil
-    :accessor frame-minibuffer-start-charpos)))
+    :accessor frame-minibuffer-start-charpos)
+   ;; prompt
+   (prompt-window
+    :initform nil
+    :accessor frame-prompt-window)))
 
 (defun make-frame (&optional (old-frame (current-frame)))
   (let ((frame (make-instance 'frame)))
@@ -109,9 +116,23 @@
            *display-frame-map*))
 
 (defun redraw-frame (frame)
+  (when (frame-prompt-window frame)
+    (update-prompt-window (frame-prompt-window frame)))
   (redraw-display (and (redraw-after-modifying-floating-window (implementation))
                        (frame-modified-floating-windows frame)))
   (setf (frame-modified-floating-windows frame) nil))
+
+(defun window-in-frame-p (window frame)
+  (when (or (find window (window-list frame))
+            (find window (frame-floating-windows frame))
+            (find window (frame-header-windows frame))
+            (eq window (frame-minibuffer-window frame)))
+    t))
+
+(defun get-frame-of-window (window)
+  ;; TODO: frameのリストを用意し、その中から探すようにする
+  (when (window-in-frame-p window (current-frame))
+    (current-frame)))
 
 
 (defun add-header-window (frame window)

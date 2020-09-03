@@ -79,6 +79,13 @@
   (apply #'delete-between-points (get-between-input-points))
   (insert-string (current-point-in-prompt) input))
 
+(defun replace-if-history-exists (next-history-fn)
+  (multiple-value-bind (string exists-p)
+      (funcall next-history-fn
+               (prompt-window-history (current-prompt-window)))
+    (when exists-p
+      (replace-prompt-input string))))
+
 (define-command prompt-execute () ()
   (let ((input (get-prompt-string)))
     (when (or (zerop (length input))
@@ -106,13 +113,6 @@
                            (lem.completion-mode:completion-item
                             item))
                    :collect :it))))))))
-
-(defun replace-if-history-exists (next-history-fn)
-  (multiple-value-bind (string exists-p)
-      (funcall next-history-fn
-               (prompt-window-history (current-prompt-window)))
-    (when exists-p
-      (replace-prompt-input string))))
 
 (define-command prompt-previous-history () ()
   (let ((history (prompt-window-history (current-prompt-window))))

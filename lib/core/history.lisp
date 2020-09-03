@@ -33,14 +33,14 @@
     (aref (history-data history)
           (1- (length (history-data history))))))
 
-(defun add-history (history x)
+(defun add-history (history input)
   (when (funcall (history-novelty-check history)
-                 x
+                 input
                  (last-history history))
-    (vector-push-extend x (history-data history)))
+    (vector-push-extend input (history-data history)))
   (setf (history-index history)
         (length (history-data history)))
-  x)
+  input)
 
 (defun prev-history (history)
   (when (< 0 (history-index history))
@@ -62,13 +62,13 @@
               (return (values (aref (history-data history) i)
                               t)))))
 
-(defun backup-edit-string (history x)
+(defun backup-edit-string (history input)
   (when (or (>= (history-index history)
                 (length (history-data history)))
-            (not (equal x
+            (not (equal input
                         (aref (history-data history)
                               (history-index history)))))
-    (setf (history-edit-string history) x)
+    (setf (history-edit-string history) input)
     (setf (history-index history) (length (history-data history)))))
 
 (defun restore-edit-string (history)

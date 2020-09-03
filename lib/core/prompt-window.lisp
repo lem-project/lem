@@ -4,6 +4,13 @@
                 :when-let))
 (in-package :lem.prompt-window)
 
+(defvar *history-table* (make-hash-table))
+
+(defun get-history (history-name)
+  (or (gethash history-name *history-table*)
+      (setf (gethash history-name *history-table*)
+            (lem.history:make-history))))
+
 (define-condition execute ()
   ((input
     :initarg :input
@@ -15,13 +22,16 @@
 (defclass prompt-window-parameters ()
   ((completion-function
     :initarg :completion-function
-    :reader completion-function)
+    :reader prompt-window-completion-function)
    (existing-test-function
     :initarg :existing-test-function
-    :reader existing-test-function)
+    :reader completion-window-existing-test-function)
    (called-window
     :initarg :called-window
-    :reader called-window)))
+    :reader prompt-window-called-window)
+   (history
+    :initarg :history
+    :reader prompt-window-history)))
 
 (defclass prompt-window (floating-window prompt-window-parameters)
   ((start-point
@@ -60,30 +70,52 @@
     (character-offset (copy-point (buffer-start-point buffer) :temporary)
                       (prompt-window-start-charpos prompt-window))))
 
+(defun current-point-in-prompt ()
+  (buffer-point (window-buffer (current-prompt-window))))
+
+(defun get-between-input-points ()
+  (list (prompt-window-start-point (current-prompt-window))
+        (buffer-end-point (window-buffer (current-prompt-window)))))
+
 (defun get-prompt-string ()
-  (points-to-string (prompt-window-start-point (current-prompt-window))
-                    (buffer-end-point (window-buffer (current-prompt-window)))))
+  (apply #'points-to-string (get-between-input-points)))
+
+(defun replace-prompt-input (input)
+  (apply #'delete-between-points (get-between-input-points))
+  (insert-string (current-point-in-prompt) input))
 
 (define-command prompt-execute () ()
   (let ((input (get-prompt-string)))
     (when (or (zerop (length input))
-              (null (existing-test-function (current-prompt-window)))
-              (funcall (existing-test-function (current-prompt-window)) input))
+              (null (completion-window-existing-test-function (current-prompt-window)))
+              (funcall (completion-window-existing-test-function (current-prompt-window)) input))
+      (lem.history:add-history (prompt-window-history (current-prompt-window)) input)
       (error 'execute :input input))))
 
 (define-command prompt-completion () ()
-  (when (and (completion-function (current-prompt-window))
-             lem::*minibuffer-completion-function*)
+  (when (prompt-window-completion-function (current-prompt-window))
     (with-point ((start (prompt-window-start-point (current-prompt-window))))
-      (funcall lem::*minibuffer-completion-function*
-               (completion-function (current-prompt-window))
+      (funcall 'lem.completion-mode::minibuffer-completion
+               (prompt-window-completion-function (current-prompt-window))
                start))))
 
+(defun replace-if-history-exists (next-history-fn)
+  (multiple-value-bind (string exists-p)
+      (funcall next-history-fn
+               (prompt-window-history (current-prompt-window)))
+    (when exists-p
+      (replace-prompt-input string))))
+
 (define-command prompt-previous-history () ()
-  )
+  (let ((history (prompt-window-history (current-prompt-window))))
+    (lem.history:backup-edit-string history (get-prompt-string))
+    (replace-if-history-exists #'lem.history:prev-history)))
 
 (define-command prompt-next-history () ()
-  )
+  (let ((history (prompt-window-history (current-prompt-window))))
+    (lem.history:backup-edit-string history (get-prompt-string))
+    (or (replace-if-history-exists #'lem.history:next-history)
+        (replace-if-history-exists #'lem.history:restore-edit-string))))
 
 (define-command prompt-abort () ()
   (error 'abort-prompt))
@@ -110,9 +142,10 @@
                    :width width
                    :height height
                    :use-modeline-p nil
-                   :completion-function (completion-function parameters)
-                   :existing-test-function (existing-test-function parameters)
-                   :called-window (called-window parameters))))
+                   :completion-function (prompt-window-completion-function parameters)
+                   :existing-test-function (completion-window-existing-test-function parameters)
+                   :called-window (prompt-window-called-window parameters)
+                   :history (prompt-window-history parameters))))
 
 (defmethod lem::update-prompt-window ((window prompt-window))
   (destructuring-bind (x y width height)
@@ -156,7 +189,7 @@
 (defun delete-prompt (prompt-window)
   (let ((frame (lem::get-frame-of-window prompt-window)))
     (when (eq prompt-window (frame-current-window frame))
-      (let ((window (called-window prompt-window)))
+      (let ((window (prompt-window-called-window prompt-window)))
         (setf (frame-current-window frame)
               (if (deleted-window-p window)
                   (first (window-list))
@@ -188,7 +221,7 @@
                          existing-test-function
                          history-name
                          &optional syntax-table)
-  (declare (ignore history-name syntax-table))
+  (declare (ignore syntax-table))
   (when (lem::frame-prompt-window (current-frame))
     (editor-error "recursive use of prompt window"))
   (let* ((called-window (current-window))
@@ -197,7 +230,8 @@
                                      (make-instance 'prompt-window-parameters
                                                     :completion-function completion-function
                                                     :existing-test-function existing-test-function
-                                                    :called-window called-window))))
+                                                    :called-window called-window
+                                                    :history (get-history history-name)))))
     (handler-case
         (with-unwind-setf (((lem::frame-prompt-window (current-frame))
                             prompt-window))
@@ -211,8 +245,10 @@
 (define-command !prompt () ()
   (message "~A"
            (!prompt-for-line "hello: "
-                             "cxxxr"
-                             lem::*minibuffer-buffer-complete-function*
+                             ""
+                             nil
+                             nil
+                             #+(or)
                              (lambda (name)
                                (member name (buffer-list) :test #'string= :key #'buffer-name))
                              nil)))

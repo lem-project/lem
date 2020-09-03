@@ -263,24 +263,25 @@
 (setf *minibuffer-completion-function* 'minibuffer-completion)
 
 
+(defun pathname-name* (pathname)
+  (enough-namestring
+   pathname
+   (if (uiop:directory-pathname-p pathname)
+       (uiop:pathname-parent-directory-pathname pathname)
+       (uiop:pathname-directory-pathname pathname))))
+
 (defun minibuffer-file-complete (str directory &key directory-only)
-  (flet ((pathname-name* (pathname)
-           (enough-namestring
-            pathname
-            (if (uiop:directory-pathname-p pathname)
-                (uiop:pathname-parent-directory-pathname pathname)
-                (uiop:pathname-directory-pathname pathname)))))
-    (mapcar (lambda (filename)
-              (let ((label (pathname-name* filename)))
-                (with-point ((s (lem::minibuffer-start-point))
-                             (e (lem::minibuffer-start-point)))
-                  (make-completion-item
-                   :label label
-                   :start (character-offset
-                           s
-                           (length (namestring (uiop:pathname-directory-pathname str))))
-                   :end (line-end e)))))
-            (completion-file str directory :directory-only directory-only))))
+  (mapcar (lambda (filename)
+            (let ((label (pathname-name* filename)))
+              (with-point ((s (lem::minibuffer-start-point))
+                           (e (lem::minibuffer-start-point)))
+                (make-completion-item
+                 :label label
+                 :start (character-offset
+                         s
+                         (length (namestring (uiop:pathname-directory-pathname str))))
+                 :end (line-end e)))))
+          (completion-file str directory :directory-only directory-only)))
 
 (defun minibuffer-buffer-complete (str)
   (loop :for buffer :in (completion-buffer str)

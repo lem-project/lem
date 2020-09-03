@@ -93,11 +93,24 @@
       (error 'execute :input input))))
 
 (define-command prompt-completion () ()
-  (when (prompt-window-completion-function (current-prompt-window))
+  (alexandria:when-let (completion-fn (prompt-window-completion-function (current-prompt-window)))
     (with-point ((start (prompt-window-start-point (current-prompt-window))))
-      (funcall 'lem.completion-mode::minibuffer-completion
-               (prompt-window-completion-function (current-prompt-window))
-               start))))
+      (lem.completion-mode:run-completion
+       (lambda (point)
+         (with-point ((start start)
+                      (end point))
+           (let ((items (funcall completion-fn
+                                 (points-to-string start
+                                                   (buffer-end-point (point-buffer end))))))
+             (loop :for item :in items
+                   :when (typecase item
+                           (string
+                            (lem.completion-mode:make-completion-item :label item
+                                                                      :start start
+                                                                      :end end))
+                           (lem.completion-mode:completion-item
+                            item))
+                   :collect :it))))))))
 
 (defun replace-if-history-exists (next-history-fn)
   (multiple-value-bind (string exists-p)

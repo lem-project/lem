@@ -72,7 +72,7 @@
   (list (prompt-window-start-point (current-prompt-window))
         (buffer-end-point (window-buffer (current-prompt-window)))))
 
-(defun get-prompt-string ()
+(defun get-input-string ()
   (apply #'points-to-string (get-between-input-points)))
 
 (defun replace-prompt-input (input)
@@ -87,7 +87,7 @@
       (replace-prompt-input string))))
 
 (define-command prompt-execute () ()
-  (let ((input (get-prompt-string)))
+  (let ((input (get-input-string)))
     (when (or (zerop (length input))
               (null (completion-window-existing-test-function (current-prompt-window)))
               (funcall (completion-window-existing-test-function (current-prompt-window)) input))
@@ -116,12 +116,12 @@
 
 (define-command prompt-previous-history () ()
   (let ((history (prompt-window-history (current-prompt-window))))
-    (lem.history:backup-edit-string history (get-prompt-string))
+    (lem.history:backup-edit-string history (get-input-string))
     (replace-if-history-exists #'lem.history:prev-history)))
 
 (define-command prompt-next-history () ()
   (let ((history (prompt-window-history (current-prompt-window))))
-    (lem.history:backup-edit-string history (get-prompt-string))
+    (lem.history:backup-edit-string history (get-input-string))
     (or (replace-if-history-exists #'lem.history:next-history)
         (replace-if-history-exists #'lem.history:restore-edit-string))))
 

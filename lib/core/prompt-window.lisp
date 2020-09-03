@@ -19,7 +19,7 @@
 (define-condition abort-prompt ()
   ())
 
-(defclass prompt-window-parameters ()
+(defclass prompt-parameters ()
   ((completion-function
     :initarg :completion-function
     :reader prompt-window-completion-function)
@@ -33,7 +33,7 @@
     :initarg :history
     :reader prompt-window-history)))
 
-(defclass prompt-window (floating-window prompt-window-parameters)
+(defclass prompt-window (floating-window prompt-parameters)
   ((start-point
     :accessor prompt-window-start-charpos))
   (:default-initargs
@@ -221,13 +221,12 @@
                          existing-test-function
                          history-name
                          &optional syntax-table)
-  (declare (ignore syntax-table))
   (when (lem::frame-prompt-window (current-frame))
     (editor-error "recursive use of prompt window"))
   (let* ((called-window (current-window))
          (prompt-window (show-prompt prompt-string
                                      initial-string
-                                     (make-instance 'prompt-window-parameters
+                                     (make-instance 'prompt-parameters
                                                     :completion-function completion-function
                                                     :existing-test-function existing-test-function
                                                     :called-window called-window
@@ -235,7 +234,8 @@
     (handler-case
         (with-unwind-setf (((lem::frame-prompt-window (current-frame))
                             prompt-window))
-            (lem::command-loop)
+            (with-current-syntax syntax-table
+              (lem::command-loop))
           (delete-prompt prompt-window))
       (abort-prompt ()
         (error 'editor-abort))

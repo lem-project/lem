@@ -1138,7 +1138,8 @@
   (setf (frame-modified-floating-windows (current-frame)) t))
 
 (defmethod initialize-instance :after ((floating-window floating-window) &key (frame (current-frame)) &allow-other-keys)
-  (push floating-window (frame-floating-windows frame)))
+  (alexandria:appendf (frame-floating-windows frame)
+                      (list floating-window)))
 
 (defmethod %delete-window ((window floating-window))
   (when (eq window (current-window))

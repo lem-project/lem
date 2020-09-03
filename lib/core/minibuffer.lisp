@@ -38,7 +38,7 @@
 
 (defvar *minibuffer-completion-function* nil)
 (defvar *minibuffer-file-complete-function* nil)
-(defvar *minibuffer-buffer-complete-function* 'completion-buffer-name)
+(defvar *minibuffer-buffer-complete-function* nil)
 
 (defvar *minibuffer-activate-hook* '())
 (defvar *minibuffer-deactivate-hook* '())

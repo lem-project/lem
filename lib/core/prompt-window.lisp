@@ -6,11 +6,6 @@
 
 (defvar *history-table* (make-hash-table))
 
-(defun get-history (history-name)
-  (or (gethash history-name *history-table*)
-      (setf (gethash history-name *history-table*)
-            (lem.history:make-history))))
-
 (define-condition execute ()
   ((input
     :initarg :input
@@ -227,6 +222,11 @@
                      `(setf ,(first b) ,g))
                    gensyms
                    bindings)))))
+
+(defun get-history (history-name)
+  (or (gethash history-name *history-table*)
+      (setf (gethash history-name *history-table*)
+            (lem.history:make-history))))
 
 (defun !prompt-for-line (prompt-string
                          initial-string

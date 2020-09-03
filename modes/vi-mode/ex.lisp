@@ -25,7 +25,7 @@
                                   ;; Almost same as minibuffer-file-complete in lem-core/completion-file.lisp
                                   ;; except item's :start offsets which will be used when selecting a completion item.
                                   (mapcar (lambda (filename)
-                                            (let ((label (lem.completion-mode::pathname-name* filename))
+                                            (let ((label (tail-of-pathname filename))
                                                   (prefix-len (- (length str) (length comp-str))))
                                               (with-point ((s (lem::minibuffer-start-point))
                                                            (e (lem::minibuffer-start-point)))

@@ -1,6 +1,7 @@
 (in-package :lem-base)
 
 (export '(expand-file-name
+          tail-of-pathname
           directory-files
           list-directory
           file-size
@@ -49,6 +50,14 @@
   (when (pathnamep filename) (setf filename (namestring filename)))
   (let ((pathname (parse-filename filename (pathname-directory directory))))
     (namestring (merge-pathnames pathname directory))))
+
+(defun tail-of-pathname (pathname)
+  (let ((pathname (uiop:ensure-absolute-pathname pathname #p"/")))
+    (enough-namestring
+     pathname
+     (if (uiop:directory-pathname-p pathname)
+         (uiop:pathname-parent-directory-pathname pathname)
+         (uiop:pathname-directory-pathname pathname)))))
 
 (defun probe-file% (x)
   (let ((x2 (probe-file x)))

@@ -263,16 +263,9 @@
 (setf *minibuffer-completion-function* 'minibuffer-completion)
 
 
-(defun pathname-name* (pathname)
-  (enough-namestring
-   pathname
-   (if (uiop:directory-pathname-p pathname)
-       (uiop:pathname-parent-directory-pathname pathname)
-       (uiop:pathname-directory-pathname pathname))))
-
 (defun minibuffer-file-complete (str directory &key directory-only)
   (mapcar (lambda (filename)
-            (let ((label (pathname-name* filename)))
+            (let ((label (tail-of-pathname filename)))
               (with-point ((s (lem::minibuffer-start-point))
                            (e (lem::minibuffer-start-point)))
                 (make-completion-item

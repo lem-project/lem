@@ -5,7 +5,8 @@
           completion-test
           completion-hypheen
           completion-file
-          completion-strings))
+          completion-strings
+          completion-buffer))
 
 (defvar *file-completion-ignore-case* t)
 
@@ -90,3 +91,20 @@
 
 (defun completion-strings (str strings)
   (completion str strings :test #'fuzzy-match-p))
+
+(defun completion-buffer (str)
+  (let ((candidates1
+          (completion str (buffer-list)
+                      :test (lambda (str buffer)
+                              (or (search str (buffer-name buffer))
+                                  (and (buffer-filename buffer)
+                                       (search str (buffer-filename buffer)))))))
+        (candidates2
+          (completion str (buffer-list)
+                      :test (lambda (str buffer)
+                              (or (lem::fuzzy-match-p str (buffer-name buffer))
+                                  (and (buffer-filename buffer)
+                                       (lem::fuzzy-match-p str (buffer-filename buffer))))))))
+    (dolist (c candidates1)
+      (setf candidates2 (delete c candidates2)))
+    (append candidates1 candidates2)))

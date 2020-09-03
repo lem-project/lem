@@ -282,23 +282,6 @@
                    :end (line-end e)))))
             (completion-file str directory :directory-only directory-only))))
 
-(defun completion-buffer (str)
-  (let ((candidates1
-          (completion str (buffer-list)
-                      :test (lambda (str buffer)
-                              (or (search str (buffer-name buffer))
-                                  (and (buffer-filename buffer)
-                                       (search str (buffer-filename buffer)))))))
-        (candidates2
-          (completion str (buffer-list)
-                      :test (lambda (str buffer)
-                              (or (lem::fuzzy-match-p str (buffer-name buffer))
-                                  (and (buffer-filename buffer)
-                                       (lem::fuzzy-match-p str (buffer-filename buffer))))))))
-    (dolist (c candidates1)
-      (setf candidates2 (delete c candidates2)))
-    (append candidates1 candidates2)))
-
 (defun minibuffer-buffer-complete (str)
   (loop :for buffer :in (completion-buffer str)
         :collect (with-point ((s (lem::minibuffer-start-point))

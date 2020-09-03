@@ -263,7 +263,7 @@
 (setf *minibuffer-completion-function* 'minibuffer-completion)
 
 
-(defun minibuffer-file-complete (str directory &key directory-only)
+(defun minibuffer-file-complete (string directory &key directory-only)
   (mapcar (lambda (filename)
             (let ((label (tail-of-pathname filename)))
               (with-point ((s (lem::minibuffer-start-point))
@@ -272,12 +272,12 @@
                  :label label
                  :start (character-offset
                          s
-                         (length (namestring (uiop:pathname-directory-pathname str))))
+                         (length (namestring (uiop:pathname-directory-pathname string))))
                  :end (line-end e)))))
-          (completion-file str directory :directory-only directory-only)))
+          (completion-file string directory :directory-only directory-only)))
 
-(defun minibuffer-buffer-complete (str)
-  (loop :for buffer :in (completion-buffer str)
+(defun minibuffer-buffer-complete (string)
+  (loop :for buffer :in (completion-buffer string)
         :collect (with-point ((s (lem::minibuffer-start-point))
                               (e (lem::minibuffer-start-point)))
                    (make-completion-item

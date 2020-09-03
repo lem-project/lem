@@ -233,7 +233,7 @@
                          completion-function
                          existing-test-function
                          history-name
-                         &optional syntax-table)
+                         &optional (syntax-table (current-syntax)))
   (when (lem::frame-prompt-window (current-frame))
     (editor-error "recursive use of prompt window"))
   (let* ((called-window (current-window))

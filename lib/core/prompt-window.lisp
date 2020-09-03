@@ -60,7 +60,7 @@
 (defun current-prompt-window ()
   (lem::frame-prompt-window (current-frame)))
 
-(defun prompt-window-start-point (prompt-window)
+(defun prompt-start-point (prompt-window)
   (let ((buffer (window-buffer prompt-window)))
     (character-offset (copy-point (buffer-start-point buffer) :temporary)
                       (prompt-window-start-charpos prompt-window))))
@@ -69,7 +69,7 @@
   (buffer-point (window-buffer (current-prompt-window))))
 
 (defun get-between-input-points ()
-  (list (prompt-window-start-point (current-prompt-window))
+  (list (prompt-start-point (current-prompt-window))
         (buffer-end-point (window-buffer (current-prompt-window)))))
 
 (defun get-input-string ()
@@ -96,7 +96,7 @@
 
 (define-command prompt-completion () ()
   (alexandria:when-let (completion-fn (prompt-window-completion-function (current-prompt-window)))
-    (with-point ((start (prompt-window-start-point (current-prompt-window))))
+    (with-point ((start (prompt-start-point (current-prompt-window))))
       (lem.completion-mode:run-completion
        (lambda (point)
          (with-point ((start start)

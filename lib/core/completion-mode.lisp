@@ -2,6 +2,7 @@
   (:use :cl :lem)
   (:export :make-completion-spec
            :make-completion-item
+           :completion-item
            :completion-item-label
            :completion-item-detail
            :run-completion)

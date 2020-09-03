@@ -1,7 +1,9 @@
 (defpackage :lem.prompt-window
   (:use :cl :lem)
   (:import-from :alexandria
-                :when-let))
+                :when-let)
+  #+sbcl
+  (:lock t))
 (in-package :lem.prompt-window)
 
 (defvar *history-table* (make-hash-table))
@@ -60,8 +62,9 @@
 (defun current-prompt-window ()
   (lem::frame-prompt-window (current-frame)))
 
-(defun prompt-start-point (prompt-window)
-  (let ((buffer (window-buffer prompt-window)))
+(defun prompt-start-point ()
+  (let* ((prompt-window (current-prompt-window))
+         (buffer (window-buffer prompt-window)))
     (character-offset (copy-point (buffer-start-point buffer) :temporary)
                       (prompt-window-start-charpos prompt-window))))
 
@@ -69,7 +72,7 @@
   (buffer-point (window-buffer (current-prompt-window))))
 
 (defun get-between-input-points ()
-  (list (prompt-start-point (current-prompt-window))
+  (list (prompt-start-point)
         (buffer-end-point (window-buffer (current-prompt-window)))))
 
 (defun get-input-string ()
@@ -96,7 +99,7 @@
 
 (define-command prompt-completion () ()
   (alexandria:when-let (completion-fn (prompt-window-completion-function (current-prompt-window)))
-    (with-point ((start (prompt-start-point (current-prompt-window))))
+    (with-point ((start (prompt-start-point)))
       (lem.completion-mode:run-completion
        (lambda (point)
          (with-point ((start start)
@@ -228,12 +231,12 @@
       (setf (gethash history-name *history-table*)
             (lem.history:make-history))))
 
-(defun !prompt-for-line (prompt-string
-                         initial-string
-                         completion-function
-                         existing-test-function
-                         history-name
-                         &optional (syntax-table (current-syntax)))
+(defmethod prompt-for-line (prompt-string
+                            initial-string
+                            completion-function
+                            existing-test-function
+                            history-name
+                            &optional (syntax-table (current-syntax)))
   (when (lem::frame-prompt-window (current-frame))
     (editor-error "recursive use of prompt window"))
   (let* ((called-window (current-window))
@@ -255,13 +258,30 @@
       (execute (execute)
         (execute-input execute)))))
 
-(define-command !prompt () ()
-  (message "~A"
-           (!prompt-for-line "hello: "
-                             ""
-                             nil
-                             nil
-                             #+(or)
-                             (lambda (name)
-                               (member name (buffer-list) :test #'string= :key #'buffer-name))
-                             nil)))
+(defun prompt-file-complete (string directory &key directory-only)
+  (mapcar (lambda (filename)
+            (let ((label (tail-of-pathname filename)))
+              (with-point ((s (prompt-start-point))
+                           (e (prompt-start-point)))
+                (lem.completion-mode:make-completion-item
+                 :label label
+                 :start (character-offset
+                         s
+                         (length (namestring (uiop:pathname-directory-pathname string))))
+                 :end (line-end e)))))
+          (completion-file string directory :directory-only directory-only)))
+
+(defun prompt-buffer-complete (string)
+  (loop :for buffer :in (completion-buffer string)
+        :collect (with-point ((s (prompt-start-point))
+                              (e (prompt-start-point)))
+                   (lem.completion-mode:make-completion-item
+                    :detail (alexandria:if-let (filename (buffer-filename buffer))
+                                               (enough-namestring filename (probe-file "./"))
+                                               "")
+                    :label (buffer-name buffer)
+                    :start s
+                    :end (line-end e)))))
+
+(setf *minibuffer-file-complete-function* 'prompt-file-complete)
+(setf *minibuffer-buffer-complete-function* 'prompt-buffer-complete)

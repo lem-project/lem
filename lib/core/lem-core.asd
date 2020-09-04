@@ -55,7 +55,6 @@
                (:file "popup-window")
 
                (:file "completion-mode")
-               (:file "prompt-window")
                (:file "tmlanguage")
                (:file "button")
                (:file "listener-mode")

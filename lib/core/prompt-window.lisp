@@ -239,24 +239,25 @@
                             &optional (syntax-table (current-syntax)))
   (when (lem::frame-prompt-window (current-frame))
     (editor-error "recursive use of prompt window"))
-  (let* ((called-window (current-window))
-         (prompt-window (show-prompt prompt-string
-                                     initial-string
-                                     (make-instance 'prompt-parameters
-                                                    :completion-function completion-function
-                                                    :existing-test-function existing-test-function
-                                                    :called-window called-window
-                                                    :history (get-history history-name)))))
-    (handler-case
-        (with-unwind-setf (((lem::frame-prompt-window (current-frame))
-                            prompt-window))
-            (with-current-syntax syntax-table
-              (lem::command-loop))
-          (delete-prompt prompt-window))
-      (abort-prompt ()
-        (error 'editor-abort))
-      (execute (execute)
-        (execute-input execute)))))
+  (with-current-window (current-window)
+    (let* ((called-window (current-window))
+           (prompt-window (show-prompt prompt-string
+                                       initial-string
+                                       (make-instance 'prompt-parameters
+                                                      :completion-function completion-function
+                                                      :existing-test-function existing-test-function
+                                                      :called-window called-window
+                                                      :history (get-history history-name)))))
+      (handler-case
+          (with-unwind-setf (((lem::frame-prompt-window (current-frame))
+                              prompt-window))
+              (with-current-syntax syntax-table
+                (lem::command-loop))
+            (delete-prompt prompt-window))
+        (abort-prompt ()
+          (error 'editor-abort))
+        (execute (execute)
+          (execute-input execute))))))
 
 (defun prompt-file-complete (string directory &key directory-only)
   (mapcar (lambda (filename)

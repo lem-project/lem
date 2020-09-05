@@ -220,6 +220,11 @@
                   window))))
     (delete-window prompt-window)))
 
+(defun get-history (history-name)
+  (or (gethash history-name *history-table*)
+      (setf (gethash history-name *history-table*)
+            (lem.history:make-history))))
+
 (defmacro with-unwind-setf (bindings form &body cleanup-forms)
   (let ((gensyms (mapcar (lambda (b)
                            (declare (ignore b))
@@ -238,11 +243,6 @@
                      `(setf ,(first b) ,g))
                    gensyms
                    bindings)))))
-
-(defun get-history (history-name)
-  (or (gethash history-name *history-table*)
-      (setf (gethash history-name *history-table*)
-            (lem.history:make-history))))
 
 (defun prompt-for-aux (&key (prompt-string (alexandria:required-argument :prompt-string))
                             (initial-string (alexandria:required-argument :initial-string))

@@ -1169,7 +1169,6 @@
 
 (defun redraw-display (&optional force)
   (without-interrupts
-    (update-minibuffer-for-redraw (minibuffer-window))
     (when (frame-modified-header-windows (current-frame))
       (setf (frame-modified-header-windows (current-frame)) nil)
       (change-display-size-hook))

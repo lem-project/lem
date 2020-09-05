@@ -1,7 +1,9 @@
 (defpackage :lem.prompt-window
   (:use :cl :lem)
   (:import-from :alexandria
-                :when-let))
+                :when-let)
+  #+sbcl
+  (:lock t))
 (in-package :lem.prompt-window)
 
 (defvar *history-table* (make-hash-table))
@@ -17,15 +19,19 @@
 (defclass prompt-parameters ()
   ((completion-function
     :initarg :completion-function
+    :initform nil
     :reader prompt-window-completion-function)
    (existing-test-function
     :initarg :existing-test-function
-    :reader completion-window-existing-test-function)
+    :initform nil
+    :reader prompt-window-existing-test-function)
    (called-window
     :initarg :called-window
+    :initform nil
     :reader prompt-window-called-window)
    (history
     :initarg :history
+    :initform nil
     :reader prompt-window-history)))
 
 (defclass prompt-window (floating-window prompt-parameters)
@@ -60,8 +66,9 @@
 (defun current-prompt-window ()
   (lem::frame-prompt-window (current-frame)))
 
-(defun prompt-start-point (prompt-window)
-  (let ((buffer (window-buffer prompt-window)))
+(defun prompt-start-point ()
+  (let* ((prompt-window (current-prompt-window))
+         (buffer (window-buffer prompt-window)))
     (character-offset (copy-point (buffer-start-point buffer) :temporary)
                       (prompt-window-start-charpos prompt-window))))
 
@@ -69,7 +76,7 @@
   (buffer-point (window-buffer (current-prompt-window))))
 
 (defun get-between-input-points ()
-  (list (prompt-start-point (current-prompt-window))
+  (list (prompt-start-point)
         (buffer-end-point (window-buffer (current-prompt-window)))))
 
 (defun get-input-string ()
@@ -89,14 +96,14 @@
 (define-command prompt-execute () ()
   (let ((input (get-input-string)))
     (when (or (zerop (length input))
-              (null (completion-window-existing-test-function (current-prompt-window)))
-              (funcall (completion-window-existing-test-function (current-prompt-window)) input))
+              (null (prompt-window-existing-test-function (current-prompt-window)))
+              (funcall (prompt-window-existing-test-function (current-prompt-window)) input))
       (lem.history:add-history (prompt-window-history (current-prompt-window)) input)
       (error 'execute :input input))))
 
 (define-command prompt-completion () ()
   (alexandria:when-let (completion-fn (prompt-window-completion-function (current-prompt-window)))
-    (with-point ((start (prompt-start-point (current-prompt-window))))
+    (with-point ((start (prompt-start-point)))
       (lem.completion-mode:run-completion
        (lambda (point)
          (with-point ((start start)
@@ -151,7 +158,7 @@
                    :height height
                    :use-modeline-p nil
                    :completion-function (prompt-window-completion-function parameters)
-                   :existing-test-function (completion-window-existing-test-function parameters)
+                   :existing-test-function (prompt-window-existing-test-function parameters)
                    :called-window (prompt-window-called-window parameters)
                    :history (prompt-window-history parameters))))
 
@@ -161,18 +168,16 @@
     (lem::window-set-pos window x y)
     (lem::window-set-size window width height)))
 
-(defun initialize-prompt (prompt-window buffer)
-  (let ((*inhibit-read-only* t))
-    (erase-buffer buffer))
-  (let ((prompt-string (prompt-buffer-prompt-string buffer)))
+(defun initialize-prompt-buffer (buffer)
+  (let ((*inhibit-read-only* t)
+        (prompt-string (prompt-buffer-prompt-string buffer)))
+    (erase-buffer buffer)
     (when (plusp (length prompt-string))
       (insert-string (buffer-point buffer)
-                     (prompt-buffer-prompt-string buffer)
+                     prompt-string
                      :attribute 'prompt-attribute
                      :read-only t
-                     :field t)
-      (setf (prompt-window-start-charpos prompt-window)
-            (length prompt-string)))
+                     :field t))
     (when-let (initial-string (prompt-buffer-initial-string buffer))
       (insert-string (buffer-point buffer) initial-string))))
 
@@ -183,16 +188,27 @@
                     'prompt-buffer
                     :prompt-string prompt-string
                     :initial-string initial-string))
+    (initialize-prompt-buffer buffer)
     buffer))
 
-(defun show-prompt (prompt-string initial-string parameters)
+(defun initialize-prompt (prompt-window)
+  (let* ((buffer (window-buffer prompt-window))
+         (prompt-string (prompt-buffer-prompt-string buffer)))
+    (when (plusp (length prompt-string))
+      (setf (prompt-window-start-charpos prompt-window)
+            (length prompt-string)))
+    (buffer-end (buffer-point buffer))))
+
+(defun create-prompt (prompt-string initial-string parameters)
   (let* ((buffer (make-prompt-buffer prompt-string initial-string))
          (prompt-window (make-prompt-window buffer parameters)))
-    (setf (current-window) prompt-window)
-    (assert (eq (current-buffer) buffer))
-    (prompt-mode)
-    (initialize-prompt prompt-window buffer)
+    (change-buffer-mode buffer 'prompt-mode)
+    (initialize-prompt prompt-window)
     prompt-window))
+
+(defun switch-to-prompt-window (prompt-window)
+  (setf (current-window) prompt-window)
+  (buffer-end (buffer-point (window-buffer prompt-window))))
 
 (defun delete-prompt (prompt-window)
   (let ((frame (lem::get-frame-of-window prompt-window)))
@@ -203,6 +219,11 @@
                   (first (window-list))
                   window))))
     (delete-window prompt-window)))
+
+(defun get-history (history-name)
+  (or (gethash history-name *history-table*)
+      (setf (gethash history-name *history-table*)
+            (lem.history:make-history))))
 
 (defmacro with-unwind-setf (bindings form &body cleanup-forms)
   (let ((gensyms (mapcar (lambda (b)
@@ -223,46 +244,85 @@
                    gensyms
                    bindings)))))
 
-(defun get-history (history-name)
-  (or (gethash history-name *history-table*)
-      (setf (gethash history-name *history-table*)
-            (lem.history:make-history))))
-
-(defun !prompt-for-line (prompt-string
-                         initial-string
-                         completion-function
-                         existing-test-function
-                         history-name
-                         &optional (syntax-table (current-syntax)))
+(defun prompt-for-aux (&key (prompt-string (alexandria:required-argument :prompt-string))
+                            (initial-string (alexandria:required-argument :initial-string))
+                            (parameters (alexandria:required-argument :parameters))
+                            (body-function (alexandria:required-argument :body-function))
+                            (syntax-table nil))
   (when (lem::frame-prompt-window (current-frame))
     (editor-error "recursive use of prompt window"))
   (with-current-window (current-window)
-    (let* ((called-window (current-window))
-           (prompt-window (show-prompt prompt-string
-                                       initial-string
-                                       (make-instance 'prompt-parameters
-                                                      :completion-function completion-function
-                                                      :existing-test-function existing-test-function
-                                                      :called-window called-window
-                                                      :history (get-history history-name)))))
+    (let* ((prompt-window (create-prompt prompt-string
+                                         initial-string
+                                         parameters)))
+      (switch-to-prompt-window prompt-window)
       (handler-case
           (with-unwind-setf (((lem::frame-prompt-window (current-frame))
                               prompt-window))
-              (with-current-syntax syntax-table
-                (lem::command-loop))
+              (if syntax-table
+                  (with-current-syntax syntax-table
+                    (funcall body-function))
+                  (funcall body-function))
             (delete-prompt prompt-window))
         (abort-prompt ()
           (error 'editor-abort))
         (execute (execute)
           (execute-input execute))))))
 
-(define-command !prompt () ()
-  (message "~A"
-           (!prompt-for-line "hello: "
-                             ""
-                             nil
-                             nil
-                             #+(or)
-                             (lambda (name)
-                               (member name (buffer-list) :test #'string= :key #'buffer-name))
-                             nil)))
+(defmethod prompt-for-character (prompt-string)
+  (let ((called-window (current-window)))
+    (prompt-for-aux :prompt-string prompt-string
+                    :initial-string ""
+                    :parameters (make-instance 'prompt-parameters
+                                               :called-window called-window)
+                    :body-function (lambda ()
+                                     (with-current-window called-window
+                                       (redraw-display t)
+                                       (let ((key (read-key)))
+                                         (if (lem::abort-key-p key)
+                                             (error 'editor-abort)
+                                             (key-to-char key))))))))
+
+(defmethod prompt-for-line (prompt-string
+                            initial-string
+                            completion-function
+                            existing-test-function
+                            history-name
+                            &optional (syntax-table (current-syntax)))
+  (prompt-for-aux :prompt-string prompt-string
+                  :initial-string initial-string
+                  :parameters (make-instance 'prompt-parameters
+                                             :completion-function completion-function
+                                             :existing-test-function existing-test-function
+                                             :called-window (current-window)
+                                             :history (get-history history-name))
+                  :syntax-table syntax-table
+                  :body-function #'lem::command-loop))
+
+(defun prompt-file-complete (string directory &key directory-only)
+  (mapcar (lambda (filename)
+            (let ((label (tail-of-pathname filename)))
+              (with-point ((s (prompt-start-point))
+                           (e (prompt-start-point)))
+                (lem.completion-mode:make-completion-item
+                 :label label
+                 :start (character-offset
+                         s
+                         (length (namestring (uiop:pathname-directory-pathname string))))
+                 :end (line-end e)))))
+          (completion-file string directory :directory-only directory-only)))
+
+(defun prompt-buffer-complete (string)
+  (loop :for buffer :in (completion-buffer string)
+        :collect (with-point ((s (prompt-start-point))
+                              (e (prompt-start-point)))
+                   (lem.completion-mode:make-completion-item
+                    :detail (alexandria:if-let (filename (buffer-filename buffer))
+                                               (enough-namestring filename (probe-file "./"))
+                                               "")
+                    :label (buffer-name buffer)
+                    :start s
+                    :end (line-end e)))))
+
+(setf *minibuffer-file-complete-function* 'prompt-file-complete)
+(setf *minibuffer-buffer-complete-function* 'prompt-buffer-complete)

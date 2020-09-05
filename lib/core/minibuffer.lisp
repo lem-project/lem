@@ -45,53 +45,17 @@
 
 (defclass minibuffer-window (floating-window) ())
 (defclass sticky-minibuffer-window (minibuffer-window) ())
-(defclass popup-minibuffer-window (minibuffer-window)
-  ()
-  (:default-initargs
-   :border 1))
-
-(defun compute-minibuffer-rectangle (buffer)
-  (let* ((width (min (- (display-width) 3) ;TODO
-                     (loop :for string :in (uiop:split-string (buffer-text buffer) :separator '(#\newline))
-                           :maximize (+ 2 (string-width string)))))
-         (height (buffer-nlines buffer))
-         (x (- (floor (display-width) 2)
-               (floor width 2)))
-         (y (- (floor (display-height) 2)
-               (floor height 2))))
-    (list x y width height)))
 
 (defun make-minibuffer-window (frame)
-  (let ((buffer (frame-echoarea-buffer frame)))
-    #+(or)
-    (destructuring-bind (x y width height)
-        (compute-minibuffer-rectangle buffer)
-      (make-instance 'popup-minibuffer-window
-                     :buffer buffer
-                     :x x
-                     :y y
-                     :width width
-                     :height height
-                     :use-modeline-p nil
-                     :frame frame))
-    (make-instance 'sticky-minibuffer-window
-                   :buffer buffer
-                   :x 0
-                   :y (- (display-height)
-                         (minibuffer-window-height))
-                   :width (display-width)
-                   :height (minibuffer-window-height)
-                   :use-modeline-p nil
-                   :frame frame)))
-
-(defun update-minibuffer-for-redraw (window)
-  (assert (eq window (minibuffer-window)))
-  (when (and (minibuffer-window-active-p)
-             (typep window 'popup-minibuffer-window))
-    (destructuring-bind (x y width height)
-        (compute-minibuffer-rectangle (window-buffer window))
-      (window-set-pos window x y)
-      (window-set-size window width height))))
+  (make-instance 'sticky-minibuffer-window
+                 :buffer (frame-echoarea-buffer frame)
+                 :x 0
+                 :y (- (display-height)
+                       (minibuffer-window-height))
+                 :width (display-width)
+                 :height (minibuffer-window-height)
+                 :use-modeline-p nil
+                 :frame frame))
 
 (define-attribute minibuffer-prompt-attribute
   (t :foreground "blue" :bold-p t))
@@ -134,12 +98,16 @@
   (window-set-pos (minibuffer-window) 0 (1- (display-height)))
   (window-set-size (minibuffer-window) (display-width) 1))
 
-(defgeneric message-using-minibuffer-class (minibuffer string args))
+(defun log-message (string args)
+  (when string
+    (let ((msg (apply #'format nil string args)))
+      (let ((buffer (make-buffer "*Messages*")))
+        (with-open-stream (stream (make-buffer-output-stream
+                                   (buffer-end-point buffer)))
+          (fresh-line stream)
+          (princ msg stream))))))
 
-(defmethod message-using-minibuffer-class ((minibuffer-window null) string args)
-  nil)
-
-(defmethod message-using-minibuffer-class ((minibuffer-window minibuffer-window) string args)
+(defun message-without-log (string &rest args)
   (cond (string
          (erase-buffer (frame-echoarea-buffer (current-frame)))
          (let ((point (buffer-point (frame-echoarea-buffer (current-frame)))))
@@ -156,24 +124,9 @@
         (t
          (erase-buffer (frame-echoarea-buffer (current-frame))))))
 
-(defmethod message-using-minibuffer-class ((minibuffer-window popup-minibuffer-window) string args)
-  (call-next-method))
-
-(defun log-message (string args)
-  (when string
-    (let ((msg (apply #'format nil string args)))
-      (let ((buffer (make-buffer "*Messages*")))
-        (with-open-stream (stream (make-buffer-output-stream
-                                   (buffer-end-point buffer)))
-          (fresh-line stream)
-          (princ msg stream))))))
-
-(defun message-without-log (string &rest args)
-  (message-using-minibuffer-class (minibuffer-window) string args))
-
 (defun message (string &rest args)
   (log-message string args)
-  (message-using-minibuffer-class (minibuffer-window) string args)
+  (apply #'message-without-log string args)
   t)
 
 (defun message-buffer (buffer)
@@ -184,16 +137,17 @@
   (point< (buffer-start-point (frame-echoarea-buffer (current-frame)))
           (buffer-end-point (frame-echoarea-buffer (current-frame)))))
 
-(defun prompt-for-character (prompt)
-  (when (interactive-p)
-    (message "~A" prompt)
-    (redraw-display))
-  (let ((key (read-key)))
+(defgeneric prompt-for-character (prompt)
+  (:method (prompt)
     (when (interactive-p)
-      (message nil))
-    (if (abort-key-p key)
-        (error 'editor-abort)
-        (key-to-char key))))
+      (message "~A" prompt)
+      (redraw-display))
+    (let ((key (read-key)))
+      (when (interactive-p)
+        (message nil))
+      (if (abort-key-p key)
+          (error 'editor-abort)
+          (key-to-char key)))))
 
 (defun prompt-for-y-or-n-p (prompt)
   (do () (nil)
@@ -302,8 +256,10 @@
         (lem.history:add-history *minibuf-read-line-history* str)
         str))))
 
-(defun prompt-for-line (prompt initial comp-f existing-p history-name
-                        &optional (syntax-table (current-syntax)))
+(defgeneric prompt-for-line (prompt initial comp-f existing-p history-name &optional syntax-table))
+
+(defmethod prompt-for-line (prompt initial comp-f existing-p history-name
+                            &optional (syntax-table (current-syntax)))
   (when (= 0 *minibuf-read-line-depth*)
     (run-hooks *minibuffer-activate-hook*))
   (when (and (not *enable-recursive-minibuffers*) (< 0 *minibuf-read-line-depth*))

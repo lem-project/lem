@@ -86,33 +86,41 @@
     (setf (current-buffer) (window-buffer (current-window)))))
 
 (defun command-loop-body ()
-  (with-error-handler ()
-    (when (= 0 (event-queue-length))
-      (without-interrupts
-        (handler-bind ((error #'bailout))
-          (redraw-frame (current-frame)))))
-    (handler-case
-        (handler-bind ((editor-abort
-                         (lambda (c)
-                           (declare (ignore c))
-                           (buffer-mark-cancel (current-buffer))))
-                       (editor-condition
-                         (lambda (c)
-                           (declare (ignore c))
-                           (stop-record-key))))
-          (let ((cmd (progn
-                       (start-idle-timers)
-                       (prog1 (read-command)
-                         (stop-idle-timers)))))
-            (unless (minibuffer-window-active-p) (message nil))
-            (call-command cmd nil)))
-      (editor-condition (c)
-        (message "~A" c))))
-  (fix-current-buffer-if-broken))
+  (when (= 0 (event-queue-length))
+    (without-interrupts
+      (handler-bind ((error #'bailout))
+        (redraw-frame (current-frame)))))
+  (handler-case
+      (handler-bind ((editor-abort
+                       (lambda (c)
+                         (declare (ignore c))
+                         (buffer-mark-cancel (current-buffer))))
+                     (editor-condition
+                       (lambda (c)
+                         (declare (ignore c))
+                         (stop-record-key))))
+        (let ((cmd (progn
+                     (start-idle-timers)
+                     (prog1 (read-command)
+                       (stop-idle-timers)))))
+          (unless (minibuffer-window-active-p) (message nil))
+          (call-command cmd nil)))
+    (editor-condition (c)
+      (message "~A" c))))
+
+(defvar *toplevel-command-loop-p* t)
+
+(defun toplevel-command-loop-p ()
+  *toplevel-command-loop-p*)
 
 (defun command-loop ()
   (do-command-loop (:interactive t)
-    (command-loop-body)))
+    (if (toplevel-command-loop-p)
+        (with-error-handler ()
+          (let ((*toplevel-command-loop-p* nil))
+            (command-loop-body)))
+        (command-loop-body))
+    (fix-current-buffer-if-broken)))
 
 (defun toplevel-command-loop (initialize-function)
   (with-catch-bailout

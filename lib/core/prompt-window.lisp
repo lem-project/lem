@@ -181,13 +181,6 @@
     (when-let (initial-string (prompt-buffer-initial-string buffer))
       (insert-string (buffer-point buffer) initial-string))))
 
-(defun initialize-prompt (prompt-window buffer)
-  (initialize-prompt-buffer buffer)
-  (let ((prompt-string (prompt-buffer-prompt-string buffer)))
-    (when (plusp (length prompt-string))
-      (setf (prompt-window-start-charpos prompt-window)
-            (length prompt-string)))))
-
 (defun make-prompt-buffer (prompt-string initial-string)
   (let ((buffer (make-buffer "*prompt*" :temporary t)))
     (unless (typep buffer 'prompt-buffer)
@@ -195,16 +188,27 @@
                     'prompt-buffer
                     :prompt-string prompt-string
                     :initial-string initial-string))
+    (initialize-prompt-buffer buffer)
     buffer))
 
-(defun show-prompt (prompt-string initial-string parameters)
+(defun initialize-prompt (prompt-window)
+  (let* ((buffer (window-buffer prompt-window))
+         (prompt-string (prompt-buffer-prompt-string buffer)))
+    (when (plusp (length prompt-string))
+      (setf (prompt-window-start-charpos prompt-window)
+            (length prompt-string)))
+    (buffer-end (buffer-point buffer))))
+
+(defun create-prompt (prompt-string initial-string parameters)
   (let* ((buffer (make-prompt-buffer prompt-string initial-string))
          (prompt-window (make-prompt-window buffer parameters)))
-    (setf (current-window) prompt-window)
-    (assert (eq (current-buffer) buffer))
-    (prompt-mode)
-    (initialize-prompt prompt-window buffer)
+    (change-buffer-mode buffer 'prompt-mode)
+    (initialize-prompt prompt-window)
     prompt-window))
+
+(defun switch-to-prompt-window (prompt-window)
+  (setf (current-window) prompt-window)
+  (buffer-end (buffer-point (window-buffer prompt-window))))
 
 (defun delete-prompt (prompt-window)
   (let ((frame (lem::get-frame-of-window prompt-window)))
@@ -249,9 +253,10 @@
   (when (lem::frame-prompt-window (current-frame))
     (editor-error "recursive use of prompt window"))
   (with-current-window (current-window)
-    (let* ((prompt-window (show-prompt prompt-string
-                                       initial-string
-                                       parameters)))
+    (let* ((prompt-window (create-prompt prompt-string
+                                         initial-string
+                                         parameters)))
+      (switch-to-prompt-window prompt-window)
       (handler-case
           (with-unwind-setf (((lem::frame-prompt-window (current-frame))
                               prompt-window))

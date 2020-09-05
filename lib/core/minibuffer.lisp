@@ -98,12 +98,16 @@
   (window-set-pos (minibuffer-window) 0 (1- (display-height)))
   (window-set-size (minibuffer-window) (display-width) 1))
 
-(defgeneric message-using-minibuffer-class (minibuffer string args))
+(defun log-message (string args)
+  (when string
+    (let ((msg (apply #'format nil string args)))
+      (let ((buffer (make-buffer "*Messages*")))
+        (with-open-stream (stream (make-buffer-output-stream
+                                   (buffer-end-point buffer)))
+          (fresh-line stream)
+          (princ msg stream))))))
 
-(defmethod message-using-minibuffer-class ((minibuffer-window null) string args)
-  nil)
-
-(defmethod message-using-minibuffer-class ((minibuffer-window minibuffer-window) string args)
+(defun message-without-log (string &rest args)
   (cond (string
          (erase-buffer (frame-echoarea-buffer (current-frame)))
          (let ((point (buffer-point (frame-echoarea-buffer (current-frame)))))
@@ -119,18 +123,6 @@
                (minibuf-read-line-break)))))
         (t
          (erase-buffer (frame-echoarea-buffer (current-frame))))))
-
-(defun log-message (string args)
-  (when string
-    (let ((msg (apply #'format nil string args)))
-      (let ((buffer (make-buffer "*Messages*")))
-        (with-open-stream (stream (make-buffer-output-stream
-                                   (buffer-end-point buffer)))
-          (fresh-line stream)
-          (princ msg stream))))))
-
-(defun message-without-log (string &rest args)
-  (message-using-minibuffer-class (minibuffer-window) string args))
 
 (defun message (string &rest args)
   (log-message string args)

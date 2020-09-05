@@ -48,7 +48,7 @@
         (decf x1)
         (decf y1)
         ;; check mouse status
-        (when (or (and (not (lem:frame-floating-windows (lem:current-frame)))
+        (when (or (and (not (lem:floating-window-p (lem:current-window)))
                        (eql btype *mouse-button-1*)
                        (or (eql bstate #\m)
                            (eql bstate #\M)))
@@ -65,11 +65,11 @@
     ;; process mouse event
     (cond
       ;; button-1 down
-      ((and (not (lem:frame-floating-windows (lem:current-frame)))
+      ((and (not (lem:floating-window-p (lem:current-window)))
             (eql btype *mouse-button-1*)
             (eql bstate #\M))
        (find-if
-        (lambda(o)
+        (lambda (o)
           (multiple-value-bind (x y w h) (get-window-rect o)
             (cond
               ;; vertical dragging window
@@ -103,7 +103,7 @@
                ((eq (second *dragging-window*) 'y)
                 (let ((vy (- (- y 1) y1)))
                   ;; this check is incomplete if 3 or more divisions exist
-                  (when (and (not (lem:frame-floating-windows (lem:current-frame)))
+                  (when (and (not (lem:floating-window-p (lem:current-window)))
                              (>= y1       *min-lines*)
                              (>= (+ h vy) *min-lines*))
                     (setf (lem:current-window) o)
@@ -114,7 +114,7 @@
                ((eq (second *dragging-window*) 'x)
                 (let ((vx (- (- x 1) x1)))
                   ;; this check is incomplete if 3 or more divisions exist
-                  (when (and (not (lem:frame-floating-windows (lem:current-frame)))
+                  (when (and (not (lem:floating-window-p (lem:current-window)))
                              (>= x1       *min-cols*)
                              (>= (+ w vx) *min-cols*))
                     (setf (lem:current-window) o)

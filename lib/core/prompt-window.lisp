@@ -8,6 +8,9 @@
 
 (defvar *history-table* (make-hash-table))
 
+(defvar *prompt-activate-hook* '())
+(defvar *prompt-deactivate-hook* '())
+
 (define-condition execute ()
   ((input
     :initarg :input
@@ -244,6 +247,7 @@
                             (syntax-table nil))
   (when (lem::frame-prompt-window (current-frame))
     (editor-error "recursive use of prompt window"))
+  (run-hooks *prompt-activate-hook*)
   (with-current-window (current-window)
     (let* ((prompt-window (create-prompt prompt-string
                                          initial-string
@@ -256,7 +260,8 @@
                   (with-current-syntax syntax-table
                     (funcall body-function))
                   (funcall body-function))
-            (delete-prompt prompt-window))
+            (delete-prompt prompt-window)
+            (run-hooks *prompt-deactivate-hook*))
         (execute (execute)
           (execute-input execute))))))
 

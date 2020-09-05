@@ -720,6 +720,6 @@
 
 (define-command vi-keyboard-quit () ()
   (when (eq (current-state) 'modeline)
-    (lem::minibuf-read-line-break))
+    (error 'editor-abort))
   (vi-visual-end)
   (keyboard-quit))

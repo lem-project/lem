@@ -134,7 +134,7 @@
 
 (defun message (string &rest args)
   (log-message string args)
-  (message-using-minibuffer-class (minibuffer-window) string args)
+  (apply #'message-without-log string args)
   t)
 
 (defun message-buffer (buffer)

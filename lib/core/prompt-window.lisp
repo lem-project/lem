@@ -168,20 +168,25 @@
     (lem::window-set-pos window x y)
     (lem::window-set-size window width height)))
 
-(defun initialize-prompt (prompt-window buffer)
-  (let ((*inhibit-read-only* t))
-    (erase-buffer buffer))
-  (let ((prompt-string (prompt-buffer-prompt-string buffer)))
+(defun initialize-prompt-buffer (buffer)
+  (let ((*inhibit-read-only* t)
+        (prompt-string (prompt-buffer-prompt-string buffer)))
+    (erase-buffer buffer)
     (when (plusp (length prompt-string))
       (insert-string (buffer-point buffer)
-                     (prompt-buffer-prompt-string buffer)
+                     prompt-string
                      :attribute 'prompt-attribute
                      :read-only t
-                     :field t)
-      (setf (prompt-window-start-charpos prompt-window)
-            (length prompt-string)))
+                     :field t))
     (when-let (initial-string (prompt-buffer-initial-string buffer))
       (insert-string (buffer-point buffer) initial-string))))
+
+(defun initialize-prompt (prompt-window buffer)
+  (initialize-prompt-buffer buffer)
+  (let ((prompt-string (prompt-buffer-prompt-string buffer)))
+    (when (plusp (length prompt-string))
+      (setf (prompt-window-start-charpos prompt-window)
+            (length prompt-string)))))
 
 (defun make-prompt-buffer (prompt-string initial-string)
   (let ((buffer (make-buffer "*prompt*" :temporary t)))

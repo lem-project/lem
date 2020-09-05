@@ -86,27 +86,38 @@
     (setf (current-buffer) (window-buffer (current-window)))))
 
 (defun command-loop-body ()
-  (when (= 0 (event-queue-length))
-    (without-interrupts
-      (handler-bind ((error #'bailout))
-        (redraw-frame (current-frame)))))
-  (handler-case
-      (handler-bind ((editor-abort
-                       (lambda (c)
-                         (declare (ignore c))
-                         (buffer-mark-cancel (current-buffer))))
-                     (editor-condition
-                       (lambda (c)
-                         (declare (ignore c))
-                         (stop-record-key))))
-        (let ((cmd (progn
-                     (start-idle-timers)
-                     (prog1 (read-command)
-                       (stop-idle-timers)))))
-          (unless (minibuffer-window-active-p) (message nil))
-          (call-command cmd nil)))
-    (editor-condition (c)
-      (message "~A" c))))
+  (flet ((redraw ()
+           (when (= 0 (event-queue-length))
+             (without-interrupts
+               (handler-bind ((error #'bailout))
+                 (redraw-frame (current-frame))))))
+
+         (read-command-and-call ()
+           (let ((cmd (progn
+                        (start-idle-timers)
+                        (prog1 (read-command)
+                          (stop-idle-timers)))))
+             (unless (minibuffer-window-active-p) (message nil))
+             (call-command cmd nil)))
+
+         (editor-abort-handler (c)
+           (declare (ignore c))
+           (buffer-mark-cancel (current-buffer)))
+
+         (editor-condition-handler (c)
+           (declare (ignore c))
+           (stop-record-key)))
+
+    (redraw)
+
+    (handler-case
+        (handler-bind ((editor-abort
+                         #'editor-abort-handler)
+                       (editor-condition
+                         #'editor-condition-handler))
+          (read-command-and-call))
+      (editor-condition (c)
+        (message "~A" c)))))
 
 (defvar *toplevel-command-loop-p* t)
 

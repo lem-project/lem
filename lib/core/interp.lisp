@@ -80,33 +80,39 @@
            :for *curr-flags* := nil
            :do (let ((*interactive-p* ,interactive)) ,@body))))
 
+(defun fix-current-buffer-if-broken ()
+  (unless (eq (window-buffer (current-window))
+              (current-buffer))
+    (setf (current-buffer) (window-buffer (current-window)))))
+
+(defun command-loop-body ()
+  (with-error-handler ()
+    (when (= 0 (event-queue-length))
+      (without-interrupts
+        (handler-bind ((error #'bailout))
+          (redraw-frame (current-frame)))))
+    (handler-case
+        (handler-bind ((editor-abort
+                         (lambda (c)
+                           (declare (ignore c))
+                           (buffer-mark-cancel (current-buffer))))
+                       (editor-condition
+                         (lambda (c)
+                           (declare (ignore c))
+                           (stop-record-key))))
+          (let ((cmd (progn
+                       (start-idle-timers)
+                       (prog1 (read-command)
+                         (stop-idle-timers)))))
+            (unless (minibuffer-window-active-p) (message nil))
+            (call-command cmd nil)))
+      (editor-condition (c)
+        (message "~A" c))))
+  (fix-current-buffer-if-broken))
+
 (defun command-loop ()
   (do-command-loop (:interactive t)
-    (with-error-handler ()
-      (when (= 0 (event-queue-length))
-        (without-interrupts
-          (handler-bind ((error #'bailout))
-            (redraw-frame (current-frame)))))
-      (handler-case
-          (handler-bind ((editor-abort
-                           (lambda (c)
-                             (declare (ignore c))
-                             (buffer-mark-cancel (current-buffer))))
-                         (editor-condition
-                           (lambda (c)
-                             (declare (ignore c))
-                             (stop-record-key))))
-            (let ((cmd (progn
-                         (start-idle-timers)
-                         (prog1 (read-command)
-                           (stop-idle-timers)))))
-              (unless (minibuffer-window-active-p) (message nil))
-              (call-command cmd nil)))
-        (editor-condition (c)
-          (message "~A" c))))
-    (unless (eq (window-buffer (current-window))
-                (current-buffer))
-      (setf (current-buffer) (window-buffer (current-window))))))
+    (command-loop-body)))
 
 (defun toplevel-command-loop (initialize-function)
   (with-catch-bailout

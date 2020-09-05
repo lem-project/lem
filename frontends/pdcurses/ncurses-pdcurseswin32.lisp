@@ -286,7 +286,7 @@
 (defun mouse-event-proc (bstate x1 y1)
   (lambda ()
     ;; check mouse status
-    (when (or (and (not (lem:floating-window-p (lem:current-window)))
+    (when (or (and (not (lem:frame-floating-windows (lem:current-frame)))
                    (logtest bstate (logior charms/ll:BUTTON1_PRESSED
                                            charms/ll:BUTTON1_CLICKED
                                            charms/ll:BUTTON1_DOUBLE_CLICKED
@@ -306,14 +306,14 @@
       ;; process mouse event
       (cond
         ;; button-1 down
-        ((and (not (lem:floating-window-p (lem:current-window)))
+        ((and (not (lem:frame-floating-windows (lem:current-frame)))
               (logtest bstate (logior charms/ll:BUTTON1_PRESSED
                                       charms/ll:BUTTON1_CLICKED
                                       charms/ll:BUTTON1_DOUBLE_CLICKED
                                       charms/ll:BUTTON1_TRIPLE_CLICKED)))
          (let ((press (logtest bstate charms/ll:BUTTON1_PRESSED)))
            (find-if
-            (lambda (o)
+            (lambda(o)
               (multiple-value-bind (x y w h) (mouse-get-window-rect o)
                 (cond
                   ;; vertical dragging window
@@ -346,7 +346,7 @@
                  ((eq (second *dragging-window*) 'y)
                   (let ((vy (- (- y 1) y1)))
                     ;; this check is incomplete if 3 or more divisions exist
-                    (when (and (not (lem:floating-window-p (lem:current-window)))
+                    (when (and (not (lem:frame-floating-windows (lem:current-frame)))
                                (>= y1       *min-lines*)
                                (>= (+ h vy) *min-lines*))
                       (setf (lem:current-window) o)
@@ -357,7 +357,7 @@
                  ((eq (second *dragging-window*) 'x)
                   (let ((vx (- (- x 1) cur-x)))
                     ;; this check is incomplete if 3 or more divisions exist
-                    (when (and (not (lem:floating-window-p (lem:current-window)))
+                    (when (and (not (lem:frame-floating-windows (lem:current-frame)))
                                (>= cur-x    *min-cols*)
                                (>= (+ w vx) *min-cols*))
                       (setf (lem:current-window) o)

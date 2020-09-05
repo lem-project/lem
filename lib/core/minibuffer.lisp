@@ -45,53 +45,17 @@
 
 (defclass minibuffer-window (floating-window) ())
 (defclass sticky-minibuffer-window (minibuffer-window) ())
-(defclass popup-minibuffer-window (minibuffer-window)
-  ()
-  (:default-initargs
-   :border 1))
-
-(defun compute-minibuffer-rectangle (buffer)
-  (let* ((width (min (- (display-width) 3) ;TODO
-                     (loop :for string :in (uiop:split-string (buffer-text buffer) :separator '(#\newline))
-                           :maximize (+ 2 (string-width string)))))
-         (height (buffer-nlines buffer))
-         (x (- (floor (display-width) 2)
-               (floor width 2)))
-         (y (- (floor (display-height) 2)
-               (floor height 2))))
-    (list x y width height)))
 
 (defun make-minibuffer-window (frame)
-  (let ((buffer (frame-echoarea-buffer frame)))
-    #+(or)
-    (destructuring-bind (x y width height)
-        (compute-minibuffer-rectangle buffer)
-      (make-instance 'popup-minibuffer-window
-                     :buffer buffer
-                     :x x
-                     :y y
-                     :width width
-                     :height height
-                     :use-modeline-p nil
-                     :frame frame))
-    (make-instance 'sticky-minibuffer-window
-                   :buffer buffer
-                   :x 0
-                   :y (- (display-height)
-                         (minibuffer-window-height))
-                   :width (display-width)
-                   :height (minibuffer-window-height)
-                   :use-modeline-p nil
-                   :frame frame)))
-
-(defun update-minibuffer-for-redraw (window)
-  (assert (eq window (minibuffer-window)))
-  (when (and (minibuffer-window-active-p)
-             (typep window 'popup-minibuffer-window))
-    (destructuring-bind (x y width height)
-        (compute-minibuffer-rectangle (window-buffer window))
-      (window-set-pos window x y)
-      (window-set-size window width height))))
+  (make-instance 'sticky-minibuffer-window
+                 :buffer (frame-echoarea-buffer frame)
+                 :x 0
+                 :y (- (display-height)
+                       (minibuffer-window-height))
+                 :width (display-width)
+                 :height (minibuffer-window-height)
+                 :use-modeline-p nil
+                 :frame frame))
 
 (define-attribute minibuffer-prompt-attribute
   (t :foreground "blue" :bold-p t))
@@ -155,9 +119,6 @@
                (minibuf-read-line-break)))))
         (t
          (erase-buffer (frame-echoarea-buffer (current-frame))))))
-
-(defmethod message-using-minibuffer-class ((minibuffer-window popup-minibuffer-window) string args)
-  (call-next-method))
 
 (defun log-message (string args)
   (when string

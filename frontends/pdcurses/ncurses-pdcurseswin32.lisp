@@ -286,14 +286,13 @@
 (defun mouse-event-proc (bstate x1 y1)
   (lambda ()
     ;; check mouse status
-    (when (or (and (not (lem:frame-floating-windows (lem:current-frame)))
-                   (logtest bstate (logior charms/ll:BUTTON1_PRESSED
-                                           charms/ll:BUTTON1_CLICKED
-                                           charms/ll:BUTTON1_DOUBLE_CLICKED
-                                           charms/ll:BUTTON1_TRIPLE_CLICKED
-                                           charms/ll:BUTTON1_RELEASED)))
-              (logtest bstate (logior charms/ll:BUTTON4_PRESSED
-                                      charms/ll:BUTTON5_PRESSED)))
+    (when (logtest bstate (logior charms/ll:BUTTON1_PRESSED
+                                  charms/ll:BUTTON1_CLICKED
+                                  charms/ll:BUTTON1_DOUBLE_CLICKED
+                                  charms/ll:BUTTON1_TRIPLE_CLICKED
+                                  charms/ll:BUTTON1_RELEASED
+                                  charms/ll:BUTTON4_PRESSED
+                                  charms/ll:BUTTON5_PRESSED))
       ;; send a dummy key event to exit isearch-mode
       (lem:send-event (lem:make-key :sym "NopKey")))
     ;; send actual mouse event
@@ -306,11 +305,10 @@
       ;; process mouse event
       (cond
         ;; button-1 down
-        ((and (not (lem:frame-floating-windows (lem:current-frame)))
-              (logtest bstate (logior charms/ll:BUTTON1_PRESSED
-                                      charms/ll:BUTTON1_CLICKED
-                                      charms/ll:BUTTON1_DOUBLE_CLICKED
-                                      charms/ll:BUTTON1_TRIPLE_CLICKED)))
+        ((logtest bstate (logior charms/ll:BUTTON1_PRESSED
+                                 charms/ll:BUTTON1_CLICKED
+                                 charms/ll:BUTTON1_DOUBLE_CLICKED
+                                 charms/ll:BUTTON1_TRIPLE_CLICKED))
          (let ((press (logtest bstate charms/ll:BUTTON1_PRESSED)))
            (find-if
             (lambda(o)
@@ -346,8 +344,7 @@
                  ((eq (second *dragging-window*) 'y)
                   (let ((vy (- (- y 1) y1)))
                     ;; this check is incomplete if 3 or more divisions exist
-                    (when (and (not (lem:frame-floating-windows (lem:current-frame)))
-                               (>= y1       *min-lines*)
+                    (when (and (>= y1       *min-lines*)
                                (>= (+ h vy) *min-lines*))
                       (setf (lem:current-window) o)
                       (lem:grow-window vy)
@@ -357,8 +354,7 @@
                  ((eq (second *dragging-window*) 'x)
                   (let ((vx (- (- x 1) cur-x)))
                     ;; this check is incomplete if 3 or more divisions exist
-                    (when (and (not (lem:frame-floating-windows (lem:current-frame)))
-                               (>= cur-x    *min-cols*)
+                    (when (and (>= cur-x    *min-cols*)
                                (>= (+ w vx) *min-cols*))
                       (setf (lem:current-window) o)
                       (lem:grow-window-horizontally vx)

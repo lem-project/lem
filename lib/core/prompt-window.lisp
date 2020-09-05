@@ -244,7 +244,6 @@
       (setf (gethash history-name *history-table*)
             (lem.history:make-history))))
 
-
 (defun prompt-for-aux (&key (prompt-string (alexandria:required-argument :prompt-string))
                             (initial-string (alexandria:required-argument :initial-string))
                             (parameters (alexandria:required-argument :parameters))

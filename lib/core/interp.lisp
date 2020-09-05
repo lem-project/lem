@@ -117,7 +117,11 @@
                          #'editor-condition-handler))
           (read-command-and-call))
       (editor-condition (c)
-        (message "~A" c)))))
+        (restart-case (error c)
+          (message ()
+            (message "~A" c))
+          (call-function (fn)
+            (funcall fn)))))))
 
 (defvar *toplevel-command-loop-p* t)
 
@@ -129,7 +133,11 @@
     (if (toplevel-command-loop-p)
         (with-error-handler ()
           (let ((*toplevel-command-loop-p* nil))
-            (command-loop-body)))
+            (handler-bind ((editor-condition
+                             (lambda (c)
+                               (declare (ignore c))
+                               (invoke-restart 'message))))
+              (command-loop-body))))
         (command-loop-body))
     (fix-current-buffer-if-broken)))
 

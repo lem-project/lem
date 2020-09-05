@@ -13,9 +13,6 @@
     :initarg :input
     :reader execute-input)))
 
-(define-condition abort-prompt ()
-  ())
-
 (defclass prompt-parameters ()
   ((completion-function
     :initarg :completion-function
@@ -61,7 +58,6 @@
 (define-key *prompt-mode-keymap* "Tab" 'prompt-completion)
 (define-key *prompt-mode-keymap* "M-p" 'prompt-previous-history)
 (define-key *prompt-mode-keymap* "M-n" 'prompt-next-history)
-(define-key *prompt-mode-keymap* "C-g" 'prompt-abort)
 
 (defun current-prompt-window ()
   (lem::frame-prompt-window (current-frame)))
@@ -131,9 +127,6 @@
     (lem.history:backup-edit-string history (get-input-string))
     (or (replace-if-history-exists #'lem.history:next-history)
         (replace-if-history-exists #'lem.history:restore-edit-string))))
-
-(define-command prompt-abort () ()
-  (error 'abort-prompt))
 
 (defun compute-window-rectangle (buffer)
   (flet ((compute-width ()
@@ -264,8 +257,6 @@
                     (funcall body-function))
                   (funcall body-function))
             (delete-prompt prompt-window))
-        (abort-prompt ()
-          (error 'editor-abort))
         (execute (execute)
           (execute-input execute))))))
 
@@ -283,6 +274,16 @@
                                              (error 'editor-abort)
                                              (key-to-char key))))))))
 
+(defun prompt-for-line-command-loop ()
+  (handler-bind ((editor-abort
+                   (lambda (c)
+                     (error c)))
+                 (editor-condition
+                   (lambda (c)
+                     (declare (ignore c))
+                     (invoke-restart 'lem::message))))
+    (lem::command-loop)))
+
 (defmethod prompt-for-line (prompt-string
                             initial-string
                             completion-function
@@ -297,7 +298,7 @@
                                              :called-window (current-window)
                                              :history (get-history history-name))
                   :syntax-table syntax-table
-                  :body-function #'lem::command-loop))
+                  :body-function #'prompt-for-line-command-loop))
 
 (defun prompt-file-complete (string directory &key directory-only)
   (mapcar (lambda (filename)

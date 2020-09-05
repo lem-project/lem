@@ -281,7 +281,7 @@
                  (editor-condition
                    (lambda (c)
                      (declare (ignore c))
-                     (invoke-restart 'lem::message))))
+                     (invoke-restart 'lem-restart:message))))
     (lem::command-loop)))
 
 (defmethod prompt-for-line (prompt-string

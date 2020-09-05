@@ -118,9 +118,9 @@
           (read-command-and-call))
       (editor-condition (c)
         (restart-case (error c)
-          (message ()
+          (lem-restart:message ()
             (message "~A" c))
-          (call-function (fn)
+          (lem-restart:call-function (fn)
             (funcall fn)))))))
 
 (defvar *toplevel-command-loop-p* t)
@@ -136,7 +136,7 @@
             (handler-bind ((editor-condition
                              (lambda (c)
                                (declare (ignore c))
-                               (invoke-restart 'message))))
+                               (invoke-restart 'lem-restart:message))))
               (command-loop-body))))
         (command-loop-body))
     (fix-current-buffer-if-broken)))

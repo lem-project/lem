@@ -49,3 +49,8 @@
 
 (defpackage :lem-user
   (:use :cl :lem))
+
+(defpackage :lem-restart
+  (:use)
+  (:export :message
+           :call-function))

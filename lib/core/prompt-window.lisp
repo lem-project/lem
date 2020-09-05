@@ -22,7 +22,7 @@
     :reader prompt-window-completion-function)
    (existing-test-function
     :initarg :existing-test-function
-    :reader completion-window-existing-test-function)
+    :reader prompt-window-existing-test-function)
    (called-window
     :initarg :called-window
     :reader prompt-window-called-window)
@@ -92,8 +92,8 @@
 (define-command prompt-execute () ()
   (let ((input (get-input-string)))
     (when (or (zerop (length input))
-              (null (completion-window-existing-test-function (current-prompt-window)))
-              (funcall (completion-window-existing-test-function (current-prompt-window)) input))
+              (null (prompt-window-existing-test-function (current-prompt-window)))
+              (funcall (prompt-window-existing-test-function (current-prompt-window)) input))
       (lem.history:add-history (prompt-window-history (current-prompt-window)) input)
       (error 'execute :input input))))
 
@@ -154,7 +154,7 @@
                    :height height
                    :use-modeline-p nil
                    :completion-function (prompt-window-completion-function parameters)
-                   :existing-test-function (completion-window-existing-test-function parameters)
+                   :existing-test-function (prompt-window-existing-test-function parameters)
                    :called-window (prompt-window-called-window parameters)
                    :history (prompt-window-history parameters))))
 

@@ -19,15 +19,19 @@
 (defclass prompt-parameters ()
   ((completion-function
     :initarg :completion-function
+    :initform nil
     :reader prompt-window-completion-function)
    (existing-test-function
     :initarg :existing-test-function
+    :initform nil
     :reader prompt-window-existing-test-function)
    (called-window
     :initarg :called-window
+    :initform nil
     :reader prompt-window-called-window)
    (history
     :initarg :history
+    :initform nil
     :reader prompt-window-history)))
 
 (defclass prompt-window (floating-window prompt-parameters)
@@ -231,33 +235,47 @@
       (setf (gethash history-name *history-table*)
             (lem.history:make-history))))
 
+
+(defun prompt-for-aux (&key (prompt-string (alexandria:required-argument :prompt-string))
+                            (initial-string (alexandria:required-argument :initial-string))
+                            (parameters (alexandria:required-argument :parameters))
+                            (body-function (alexandria:required-argument :body-function))
+                            (syntax-table nil))
+  (when (lem::frame-prompt-window (current-frame))
+    (editor-error "recursive use of prompt window"))
+  (with-current-window (current-window)
+    (let* ((prompt-window (show-prompt prompt-string
+                                       initial-string
+                                       parameters)))
+      (handler-case
+          (with-unwind-setf (((lem::frame-prompt-window (current-frame))
+                              prompt-window))
+              (if syntax-table
+                  (with-current-syntax syntax-table
+                    (funcall body-function))
+                  (funcall body-function))
+            (delete-prompt prompt-window))
+        (abort-prompt ()
+          (error 'editor-abort))
+        (execute (execute)
+          (execute-input execute))))))
+
+
 (defmethod prompt-for-line (prompt-string
                             initial-string
                             completion-function
                             existing-test-function
                             history-name
                             &optional (syntax-table (current-syntax)))
-  (when (lem::frame-prompt-window (current-frame))
-    (editor-error "recursive use of prompt window"))
-  (with-current-window (current-window)
-    (let* ((called-window (current-window))
-           (prompt-window (show-prompt prompt-string
-                                       initial-string
-                                       (make-instance 'prompt-parameters
-                                                      :completion-function completion-function
-                                                      :existing-test-function existing-test-function
-                                                      :called-window called-window
-                                                      :history (get-history history-name)))))
-      (handler-case
-          (with-unwind-setf (((lem::frame-prompt-window (current-frame))
-                              prompt-window))
-              (with-current-syntax syntax-table
-                (lem::command-loop))
-            (delete-prompt prompt-window))
-        (abort-prompt ()
-          (error 'editor-abort))
-        (execute (execute)
-          (execute-input execute))))))
+  (prompt-for-aux :prompt-string prompt-string
+                  :initial-string initial-string
+                  :parameters (make-instance 'prompt-parameters
+                                             :completion-function completion-function
+                                             :existing-test-function existing-test-function
+                                             :called-window (current-window)
+                                             :history (get-history history-name))
+                  :syntax-table syntax-table
+                  :body-function #'lem::command-loop))
 
 (defun prompt-file-complete (string directory &key directory-only)
   (mapcar (lambda (filename)

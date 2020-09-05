@@ -16,7 +16,8 @@
               ((not (char= #\& (schar (symbol-name parm) 0)))
                (push parm acc))))
       (nreverse acc)))
-  (let ((garg (gensym "ARG")))
+  (let ((garg (gensym "ARG"))
+        (g-args (gensym)))
     (defun define-command-gen-args (name arg-descripters)
       (declare (ignorable name))
       (cond
@@ -67,11 +68,11 @@
               (progn
                 (assert (null parms))
                 `(,fn-name))
-              `(destructuring-bind ,parms
+              `(destructuring-bind (&rest ,g-args)
                    ,(if (stringp (car arg-descripters))
                         (define-command-gen-args cmd-name arg-descripters)
                         (car arg-descripters))
-                 (,fn-name ,@(collect-variables parms)))))))))
+                 (apply #',fn-name ,g-args))))))))
 
 (defun find-command (name)
   (car (gethash name *command-table*)))

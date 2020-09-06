@@ -47,9 +47,7 @@
                            "Find File: "
                            (buffer-directory)
                            nil
-                           nil))
-           (message "::~S" *default-external-format*)
-           )
+                           nil)))
           ((pathnamep filename)
            (setf filename (namestring filename))))
     (dolist (pathname (expand-files* filename))

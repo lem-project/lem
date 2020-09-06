@@ -107,22 +107,28 @@
           (fresh-line stream)
           (princ msg stream))))))
 
+(defgeneric show-message (string)
+  (:method (string)
+    (cond (string
+           (erase-buffer (frame-echoarea-buffer (current-frame)))
+           (let ((point (buffer-point (frame-echoarea-buffer (current-frame)))))
+             (insert-string point string))
+           (when (active-minibuffer-window)
+             (handler-case
+                 (with-current-window (minibuffer-window)
+                   (unwind-protect (progn
+                                     (%switch-to-buffer (frame-echoarea-buffer (current-frame)) nil nil)
+                                     (sit-for 1 t))
+                     (%switch-to-buffer (frame-minibuffer-buffer (current-frame)) nil nil)))
+               (editor-abort ()
+                 (minibuf-read-line-break)))))
+          (t
+           (erase-buffer (frame-echoarea-buffer (current-frame)))))))
+
 (defun message-without-log (string &rest args)
-  (cond (string
-         (erase-buffer (frame-echoarea-buffer (current-frame)))
-         (let ((point (buffer-point (frame-echoarea-buffer (current-frame)))))
-           (insert-string point (apply #'format nil string args)))
-         (when (active-minibuffer-window)
-           (handler-case
-               (with-current-window (minibuffer-window)
-                 (unwind-protect (progn
-                                   (%switch-to-buffer (frame-echoarea-buffer (current-frame)) nil nil)
-                                   (sit-for 1 t))
-                   (%switch-to-buffer (frame-minibuffer-buffer (current-frame)) nil nil)))
-             (editor-abort ()
-               (minibuf-read-line-break)))))
-        (t
-         (erase-buffer (frame-echoarea-buffer (current-frame))))))
+  (show-message (if string
+                    (apply #'format nil string args)
+                    nil)))
 
 (defun message (string &rest args)
   (log-message string args)

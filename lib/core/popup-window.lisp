@@ -274,3 +274,10 @@
 (defmethod lem-if:delete-popup-message (implementation popup-message)
   (when (windowp popup-message)
     (delete-window popup-message)))
+
+(defmethod lem::show-message (string)
+  (if (null string)
+      (clear-popup-message)
+      (lem-if:display-popup-message (implementation)
+                                    string
+                                    nil)))

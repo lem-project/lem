@@ -135,9 +135,13 @@
   (apply #'message-without-log string args)
   t)
 
+(defgeneric show-message-buffer (buffer)
+  (:method (buffer)
+    (erase-buffer (frame-echoarea-buffer (current-frame)))
+    (insert-buffer (buffer-point (frame-echoarea-buffer (current-frame))) buffer)))
+
 (defun message-buffer (buffer)
-  (erase-buffer (frame-echoarea-buffer (current-frame)))
-  (insert-buffer (buffer-point (frame-echoarea-buffer (current-frame))) buffer))
+  (show-message-buffer buffer))
 
 (defun active-echoarea-p ()
   (point< (buffer-start-point (frame-echoarea-buffer (current-frame)))

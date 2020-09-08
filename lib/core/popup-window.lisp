@@ -233,27 +233,6 @@
     (setf *popup-message-window* nil)
     (redraw-frame (current-frame))))
 
-(defun make-popup-buffer (text)
-  (let ((buffer (make-buffer "*Popup Message*" :temporary t :enable-undo-p nil)))
-    (setf (variable-value 'truncate-lines :buffer buffer) nil)
-    (erase-buffer buffer)
-    (let ((p (buffer-point buffer))
-          (max-column 0))
-      (insert-string p text)
-      (buffer-start p)
-      (loop :for column := (point-column (line-end p))
-            :do (setf max-column (max max-column column))
-            :while (line-offset p 1))
-      (buffer-start p)
-      (loop :do (move-to-column p max-column t)
-            :while (line-offset p 1))
-      ;; (put-text-property (buffer-start-point buffer)
-      ;;                    (buffer-end-point buffer)
-      ;;                    :attribute 'popup-window-attribute)
-      (values buffer
-              max-column
-              (buffer-nlines buffer)))))
-
 (defun compute-size-from-buffer (buffer)
   (flet ((compute-height ()
            (buffer-nlines buffer))
@@ -265,6 +244,15 @@
                :while (line-offset p 1)))))
     (list (compute-width)
           (compute-height))))
+
+(defun make-popup-buffer (text)
+  (let ((buffer (make-buffer "*Popup Message*" :temporary t :enable-undo-p nil)))
+    (setf (variable-value 'truncate-lines :buffer buffer) nil)
+    (erase-buffer buffer)
+    (insert-string (buffer-point buffer) text)
+    (buffer-start (buffer-point buffer))
+    (destructuring-bind (width height) (compute-size-from-buffer buffer)
+      (values buffer width height))))
 
 (defun display-popup-buffer-default (buffer timeout &optional (size (compute-size-from-buffer buffer)))
   (clear-popup-message)

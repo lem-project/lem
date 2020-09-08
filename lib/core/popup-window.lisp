@@ -247,8 +247,7 @@
     (erase-buffer buffer)
     (insert-string (buffer-point buffer) text)
     (buffer-start (buffer-point buffer))
-    (destructuring-bind (width height) (compute-size-from-buffer buffer)
-      (values buffer width height))))
+    (list buffer (compute-size-from-buffer buffer))))
 
 (defun display-popup-buffer-default (buffer timeout &optional (size (compute-size-from-buffer buffer)))
   (clear-popup-message)
@@ -264,7 +263,7 @@
 
 (defun display-popup-message-default (text timeout)
   (clear-popup-message)
-  (multiple-value-bind (buffer width height)
+  (destructuring-bind (buffer (width height))
       (make-popup-buffer text)
     (display-popup-buffer-default buffer timeout (list width height))))
 

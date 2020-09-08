@@ -4,6 +4,8 @@
            :apply-print-spec))
 (in-package :lem.popup-window)
 
+(defparameter +border-size+ 1)
+
 (defvar *menu-buffer* nil)
 (defvar *menu-window* nil)
 (defvar *focus-overlay* nil)
@@ -11,6 +13,11 @@
 (defvar *action-callback* nil)
 (defvar *focus-attribute* nil)
 (defvar *non-focus-attribute* nil)
+
+(defclass popup-window (floating-window)
+  ()
+  (:default-initargs
+   :border +border-size+))
 
 (define-attribute popup-menu-attribute
   (t :foreground "white" :background "RoyalBlue"))
@@ -54,10 +61,10 @@
            (lem::window-set-pos dst-window x y)
            dst-window)
           (t
-           (make-instance 'floating-window
+           (make-instance 'popup-window
                           :buffer buffer
-                          :x x
-                          :y y
+                          :x (+ x +border-size+)
+                          :y (+ y +border-size+)
                           :width width
                           :height height
                           :use-modeline-p nil)))))
@@ -240,17 +247,28 @@
       (buffer-start p)
       (loop :do (move-to-column p max-column t)
             :while (line-offset p 1))
-      (put-text-property (buffer-start-point buffer)
-                         (buffer-end-point buffer)
-                         :attribute 'popup-window-attribute)
+      ;; (put-text-property (buffer-start-point buffer)
+      ;;                    (buffer-end-point buffer)
+      ;;                    :attribute 'popup-window-attribute)
       (values buffer
               max-column
               (buffer-nlines buffer)))))
 
-(defmethod lem-if:display-popup-message (implementation text timeout)
+(defun compute-size-from-buffer (buffer)
+  (flet ((compute-height ()
+           (buffer-nlines buffer))
+         (compute-width ()
+           (with-point ((p (buffer-point buffer)))
+             (buffer-start p)
+             (loop
+               :maximize (string-width (line-string p))
+               :while (line-offset p 1)))))
+    (list (compute-width)
+          (compute-height))))
+
+(defun display-popup-buffer-default (buffer timeout &optional (size (compute-size-from-buffer buffer)))
   (clear-popup-message)
-  (multiple-value-bind (buffer width height)
-      (make-popup-buffer text)
+  (destructuring-bind (width height) size
     (let ((window (popup-window (current-window) buffer width height)))
       (buffer-start (window-view-point window))
       (window-see window)
@@ -260,16 +278,17 @@
         (start-timer (* timeout 1000) nil 'clear-popup-message))
       window)))
 
-(defmethod lem-if:display-popup-buffer (implementation buffer width height timeout)
+(defun display-popup-message-default (text timeout)
   (clear-popup-message)
-  (let ((window (popup-window (current-window) buffer width height)))
-    (buffer-start (window-view-point window))
-    (window-see window)
-    (setf *popup-message-window* window)
-    (when timeout
-      (check-type timeout (integer 0 *))
-      (start-timer (* timeout 1000) nil 'clear-popup-message))
-    window))
+  (multiple-value-bind (buffer width height)
+      (make-popup-buffer text)
+    (display-popup-buffer-default buffer timeout (list width height))))
+
+(defmethod lem-if:display-popup-message (implementation text timeout)
+  (display-popup-message-default text timeout))
+
+(defmethod lem-if:display-popup-buffer (implementation buffer width height timeout)
+  (display-popup-buffer-default buffer timeout (list width height)))
 
 (defmethod lem-if:delete-popup-message (implementation popup-message)
   (when (windowp popup-message)

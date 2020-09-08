@@ -221,10 +221,6 @@
                         (item (get-focus-item)))
     (funcall f item)))
 
-(define-attribute popup-window-attribute
-  (:light :background "gray" :foreground "black")
-  (:dark :background "white" :foreground "blue"))
-
 (defvar *popup-message-window* nil)
 
 (defun clear-popup-message ()

@@ -484,26 +484,27 @@
       (lisp-eval-async
        `(,autodoc-symbol ',context)
        (lambda (doc)
-         (ignore-errors
-          (destructuring-bind (doc cache-p) doc
-            (declare (ignore cache-p))
-            (unless (eq doc :not-available)
-              (let* ((buffer (make-buffer "*swank:autodoc-fontity*"
-                                          :temporary t :enable-undo-p nil))
-                     (point (buffer-point buffer)))
-                (erase-buffer buffer)
-                (change-buffer-mode buffer 'lisp-mode)
-                (insert-string point (ppcre:regex-replace-all "\\s*\\n\\s*" doc " "))
-                (buffer-start point)
-                (multiple-value-bind (result string)
-                    (search-forward-regexp point "(?====> (.*) <===)")
-                  (when result
-                    (with-point ((start point))
-                      (character-offset point 5)
-                      (search-forward point "<===")
-                      (delete-between-points start point)
-                      (insert-string point string :attribute 'region))))
-                (funcall function buffer))))))))))
+         (destructuring-bind (doc cache-p) doc
+           (declare (ignore cache-p))
+           (unless (eq doc :not-available)
+             (let* ((buffer (make-buffer "*swank:autodoc-fontity*"
+                                         :temporary t :enable-undo-p nil))
+                    (point (buffer-point buffer)))
+               (erase-buffer buffer)
+               (change-buffer-mode buffer 'lisp-mode)
+               (insert-string point doc)
+               (buffer-start point)
+               (multiple-value-bind (result string)
+                   (search-forward-regexp point "(?====> (.*) <===)")
+                 (when result
+                   (with-point ((start point))
+                     (character-offset point 5)
+                     (search-forward point "<===")
+                     (delete-between-points start point)
+                     (insert-string point string :attribute 'region))))
+               (buffer-start (buffer-point buffer))
+               (setf (variable-value 'truncate-lines :buffer buffer) nil)
+               (funcall function buffer)))))))))
 
 (define-command lisp-autodoc-with-typeout () ()
   (autodoc (lambda (temp-buffer)
@@ -514,7 +515,8 @@
                  (declare (ignore stream)))))))
 
 (define-command lisp-autodoc () ()
-  (autodoc (lambda (buffer) (message-buffer buffer))))
+  (autodoc (lambda (buffer)
+             (display-popup-message buffer :timeout nil))))
 
 (defun check-parens ()
   (with-point ((point (current-point)))
@@ -1238,9 +1240,10 @@
   (when (connected-p)
     (let ((major-mode (buffer-major-mode (current-buffer))))
       (when (eq major-mode 'lisp-mode) (update-buffer-package))
-      (when (member major-mode '(lisp-mode lisp-repl-mode))
-        (unless (active-echoarea-p)
-          (lisp-autodoc))))))
+      (when (and (member major-mode '(lisp-mode lisp-repl-mode))
+                 (not (active-echoarea-p))
+                 (syntax-symbol-char-p (character-at (current-point))))
+        (lisp-autodoc)))))
 
 (define-command lisp-scratch () ()
   (let ((buffer (primordial-buffer)))

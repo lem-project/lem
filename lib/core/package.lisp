@@ -40,7 +40,6 @@
    :popup-menu-last
    :popup-menu-select
    :display-popup-message
-   :display-popup-buffer
    :display-menu
    :update-menu
    :delete-popup-message

@@ -249,29 +249,31 @@
     (buffer-start (buffer-point buffer))
     (list buffer (compute-size-from-buffer buffer))))
 
-(defun display-popup-buffer-default (buffer timeout &optional (size (compute-size-from-buffer buffer)))
+(defun display-popup-buffer-default (buffer timeout &optional size)
+  (let ((size (or size (compute-size-from-buffer buffer))))
+    (clear-popup-message)
+    (destructuring-bind (width height) size
+      (let ((window (popup-window (current-window) buffer width height)))
+        (buffer-start (window-view-point window))
+        (window-see window)
+        (setf *popup-message-window* window)
+        (when timeout
+          (check-type timeout (integer 0 *))
+          (start-timer (* timeout 1000) nil 'clear-popup-message))
+        window))))
+
+(defun display-popup-message-default (text timeout size)
   (clear-popup-message)
-  (destructuring-bind (width height) size
-    (let ((window (popup-window (current-window) buffer width height)))
-      (buffer-start (window-view-point window))
-      (window-see window)
-      (setf *popup-message-window* window)
-      (when timeout
-        (check-type timeout (integer 0 *))
-        (start-timer (* timeout 1000) nil 'clear-popup-message))
-      window)))
+  (etypecase text
+    (string
+     (destructuring-bind (buffer (width height))
+         (make-popup-buffer text)
+       (display-popup-buffer-default buffer timeout (list width height))))
+    (buffer
+     (display-popup-buffer-default text timeout size))))
 
-(defun display-popup-message-default (text timeout)
-  (clear-popup-message)
-  (destructuring-bind (buffer (width height))
-      (make-popup-buffer text)
-    (display-popup-buffer-default buffer timeout (list width height))))
-
-(defmethod lem-if:display-popup-message (implementation text timeout)
-  (display-popup-message-default text timeout))
-
-(defmethod lem-if:display-popup-buffer (implementation buffer width height timeout)
-  (display-popup-buffer-default buffer timeout (list width height)))
+(defmethod lem-if:display-popup-message (implementation text &key timeout size)
+  (display-popup-message-default text timeout size))
 
 (defmethod lem-if:delete-popup-message (implementation popup-message)
   (when (windowp popup-message)
@@ -280,6 +282,4 @@
 (defmethod lem::show-message (string)
   (if (null string)
       (clear-popup-message)
-      (lem-if:display-popup-message (implementation)
-                                    string
-                                    nil)))
+      (lem-if:display-popup-message (implementation) string)))

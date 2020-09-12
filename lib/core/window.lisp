@@ -1193,8 +1193,8 @@
   (minibuf-update-size)
   (recenter t))
 
-(defun display-popup-message (text &key (timeout *default-popup-message-timeout*))
-  (lem-if:display-popup-message (implementation) text timeout))
+(defun display-popup-message (text &key (timeout *default-popup-message-timeout*) size)
+  (lem-if:display-popup-message (implementation) text :timeout timeout :size size))
 
 (defun delete-popup-message (popup-message)
   (lem-if:delete-popup-message (implementation) popup-message))

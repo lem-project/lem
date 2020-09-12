@@ -521,7 +521,10 @@
                                :attribute 'signature-help-active-parameter-attribute)))))))
                   (when (rest signature*)
                     (lem:insert-character p #\newline))))
-      (let ((window (lem-if:display-popup-buffer (lem:current-window) buffer 60 20 nil)))
+      (let ((window (display-popup-message (lem:current-window)
+                                           buffer
+                                           :size (list 60 20)
+                                           :timeout nil)))
         (setf *signature-help-window* window)
         (lem:add-hook lem:*pre-command-hook* 'signature-help-finalize)
         (fill-signature-help-window-with-space window |activeSignature|)

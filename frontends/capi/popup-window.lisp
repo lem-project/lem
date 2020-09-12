@@ -44,7 +44,7 @@
 (defmethod lem-if:popup-menu-select ((implementation capi-impl))
   (capi:non-focus-maybe-capture-gesture *non-focus-interface* (sys:coerce-to-gesture-spec #\return)))
 
-(defmethod lem-if:display-popup-message ((implementation capi-impl) text timeout)
+(defmethod lem-if:display-popup-message ((implementation capi-impl) text &key timeout size)
   (clear-popup-message)
   (let ((window-pane (lem:window-view (lem:current-window))))
     (multiple-value-bind (char-width char-height)

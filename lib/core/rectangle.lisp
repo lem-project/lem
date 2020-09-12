@@ -15,12 +15,15 @@
      :name "rect")
   (setf *mark-point* (copy-point (current-point) :temporary)))
 
-(define-key *global-keymap* "C-x Space" 'rectangle-mark-mode)
+(define-key *global-keymap* "C-x Space" 'start-rectangle-mark-mode)
 (define-key *rectangle-mark-mode-keymap* 'copy-region 'rectangle-copy)
 (define-key *rectangle-mark-mode-keymap* 'kill-region 'rectangle-kill)
 (define-key *rectangle-mark-mode-keymap* "C-o" 'rectangle-open)
 (define-key *rectangle-mark-mode-keymap* "C-t" 'rectangle-string)
 (define-key *rectangle-mark-mode-keymap* 'exchange-point-mark 'rectangle-exchange-point-mark)
+
+(define-command start-rectangle-mark-mode () ()
+  (rectangle-mark-mode t))
 
 (defun remove-overlays ()
   (mapc #'delete-overlay *overlays*)

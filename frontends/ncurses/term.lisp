@@ -373,13 +373,19 @@
         (charms/ll:color-pair *pair-counter*)))
 
 (defun get-color-pair (fg-color-name bg-color-name)
-  (let* ((fg-color (if (null fg-color-name) -1 (get-color fg-color-name)))
-         (bg-color (if (null bg-color-name) -1 (get-color bg-color-name)))
-         (pair-color (cons fg-color bg-color)))
-    (cond ((gethash pair-color *color-pair-table*))
-          ((< *pair-counter* *color-pairs*)
-           (init-pair pair-color))
-          (t 0))))
+  (multiple-value-bind (default-fg default-bg)
+      (get-default-colors)
+    (let* ((fg-color (if (null fg-color-name)
+                         default-fg
+                         (get-color fg-color-name)))
+           (bg-color (if (null bg-color-name)
+                         default-bg
+                         (get-color bg-color-name)))
+           (pair-color (cons fg-color bg-color)))
+      (cond ((gethash pair-color *color-pair-table*))
+            ((< *pair-counter* *color-pairs*)
+             (init-pair pair-color))
+            (t 0)))))
 
 #+(or)
 (defun get-color-content (n)

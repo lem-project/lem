@@ -74,7 +74,8 @@
             :pos-char-width  t
             :cur-char-width  nil
             :cur-mov-by-pos  t
-            :reserved-last-lines 0))
+            ;; reserve last line for display problem
+            :reserved-last-lines 1))
           (t
            (make-windows-term-setting
             :disp-char-width nil
@@ -208,6 +209,21 @@
 (defmethod lem-if:make-view
     ((implementation ncurses) window x y width height use-modeline)
   (make-ncurses-view
+   :border (when (and (floating-window-p window)
+                      (floating-window-border window)
+                      (< 0 (floating-window-border window)))
+             (destructuring-bind (x y)
+                 (compute-border-window-position x
+                                                 y
+                                                 (floating-window-border window))
+               (destructuring-bind (width height)
+                   (compute-border-window-size width
+                                               height
+                                               (floating-window-border window))
+                 (make-border :win charms/ll:*stdscr*
+                              :width width
+                              :height height
+                              :size (floating-window-border window)))))
    :scrwin charms/ll:*stdscr*
    :modeline-scrwin (if use-modeline charms/ll:*stdscr* nil)
    :x x
@@ -614,7 +630,12 @@
 ;; use only stdscr
 (defmethod lem-if:set-view-size ((implementation ncurses) view width height)
   (setf (ncurses-view-width view) width)
-  (setf (ncurses-view-height view) height))
+  (setf (ncurses-view-height view) height)
+  (alexandria:when-let (border (ncurses-view-border view))
+    (destructuring-bind (b-width b-height)
+        (compute-border-window-size width height (border-size border))
+      (setf (border-width  border) b-width)
+      (setf (border-height border) b-height))))
 
 ;; use only stdscr
 (defmethod lem-if:set-view-pos ((implementation ncurses) view x y)
@@ -810,12 +831,41 @@
                               str)))
 
 ;; use only stdscr
+(defun draw-border (border view)
+  ;; b-width includes a margin for wide characters display problem
+  (let* ((attr     (attribute-to-bits (make-attribute :background "#666666" :foreground "white")))
+         (b-width  (+ (border-width border) 2))
+         (b-height (border-height border))
+         (x1       -2)
+         (y1       -1)
+         (x2       (+ x1 b-width  -1))
+         (y2       (+ y1 b-height -1)))
+    (charms/ll:attron attr)
+    (charms/ll:mvaddstr (get-pos-y view x1 y1)
+                        (get-pos-x view x1 y1)
+                        (make-string b-width :initial-element #\space))
+    (loop :for y :from (+ y1 1) :below y2
+          :do (charms/ll:mvaddch (get-pos-y view x1 y)
+                                 (get-pos-x view x1 y)
+                                 (char-code #\space))
+              (charms/ll:mvaddch (get-pos-y view x2 y)
+                                 (get-pos-x view x2 y)
+                                 (char-code #\space)))
+    (charms/ll:mvaddstr (get-pos-y view x1 y2)
+                        (get-pos-x view x1 y2)
+                        (make-string b-width :initial-element #\space))
+    (charms/ll:attroff attr)))
+
+;; use only stdscr
 (defmethod lem-if:redraw-view-after ((implementation ncurses) view focus-window-p)
+  ;; draw border
+  (alexandria:when-let (border (ncurses-view-border view))
+    (draw-border border view))
+  ;; draw vertical line for horizontal splitted window
   (when (and (ncurses-view-modeline-scrwin view)
              (< 0 (ncurses-view-x view)))
     (let ((attr (attribute-to-bits 'modeline)))
       (charms/ll:attron attr)
-      ;; vertical line for horizontal splitted window
       (loop :for y1 :from 0 :below (+ (ncurses-view-height view) 1)
          :do (charms/ll:mvaddch (+ (ncurses-view-y view) y1)
                                 (- (ncurses-view-x view) 1)
@@ -824,8 +874,7 @@
 
 ;; use get-pos-x/y
 (defmethod lem-if:update-display ((implementation ncurses))
-  (let* ((view   (window-view (current-window)))
-         (scrwin (ncurses-view-scrwin view)))
+  (let ((view (window-view (current-window))))
     ;; workaround for display update problem (incomplete)
     (write-something-to-last-line)
     ;; set cursor position
@@ -833,10 +882,10 @@
         (charms/ll:curs-set 0)
         (progn
           (charms/ll:curs-set 1)
-          (charms/ll:wmove scrwin
+          (charms/ll:wmove (ncurses-view-scrwin view)
                            (get-pos-y view lem::*cursor-x* lem::*cursor-y*)
                            ;; workaround for cursor position problem
                            ;;(get-pos-x view lem::*cursor-x* lem::*cursor-y*)
                            (get-cur-x view lem::*cursor-x* lem::*cursor-y*))))
-    (charms/ll:wnoutrefresh scrwin)
+    (charms/ll:wnoutrefresh (ncurses-view-scrwin view))
     (charms/ll:doupdate)))

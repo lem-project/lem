@@ -1,5 +1,15 @@
 # ChangeLog
 
+## Not released
+
+### Fixed
+
+* Now if color attribute does not specify foreground or background color,
+  the default color is used explicitly.
+  
+  This fixes colour glitches in case if colour theme sets the background
+  and foreground colours and Lem's frontend is NCurses.
+
 ## [v1.8]
 
 (processed upto a4bea761)

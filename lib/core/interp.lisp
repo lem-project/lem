@@ -119,7 +119,11 @@
       (editor-condition (c)
         (restart-case (error c)
           (lem-restart:message ()
-            (message "~A" c))
+            (typecase c
+              (editor-abort
+               (display-popup-message (princ-to-string c) :timeout 0.2))
+              (otherwise
+               (message "~A" c))))
           (lem-restart:call-function (fn)
             (funcall fn)))))))
 

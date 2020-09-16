@@ -258,8 +258,8 @@
         (window-see window)
         (setf *popup-message-window* window)
         (when timeout
-          (check-type timeout (integer 0 *))
-          (start-timer (* timeout 1000) nil 'clear-popup-message))
+          (check-type timeout number)
+          (start-timer (round (* timeout 1000)) nil 'clear-popup-message))
         window))))
 
 (defun display-popup-message-default (text timeout size)

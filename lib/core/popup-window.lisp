@@ -247,7 +247,7 @@
     (erase-buffer buffer)
     (insert-string (buffer-point buffer) text)
     (buffer-start (buffer-point buffer))
-    (list buffer (compute-size-from-buffer buffer))))
+    buffer))
 
 (defun display-popup-buffer-default (buffer timeout &optional size)
   (let ((size (or size (compute-size-from-buffer buffer))))
@@ -259,16 +259,21 @@
         (setf *popup-message-window* window)
         (when timeout
           (check-type timeout number)
-          (start-timer (round (* timeout 1000)) nil 'clear-popup-message))
+          (start-timer (round (* timeout 1000))
+                       nil
+                       (lambda ()
+                         (unless (deleted-window-p window)
+                           (delete-window window)))))
         window))))
 
 (defun display-popup-message-default (text timeout size)
   (clear-popup-message)
   (etypecase text
     (string
-     (destructuring-bind (buffer (width height))
-         (make-popup-buffer text)
-       (display-popup-buffer-default buffer timeout (list width height))))
+     (let* ((buffer (make-popup-buffer text))
+            (size (or size (compute-size-from-buffer buffer))))
+       (destructuring-bind (width height) size
+         (display-popup-buffer-default buffer timeout (list width height)))))
     (buffer
      (display-popup-buffer-default text timeout size))))
 

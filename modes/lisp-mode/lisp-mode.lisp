@@ -64,7 +64,7 @@
 (define-key *lisp-mode-keymap* "C-c Return" 'lisp-macroexpand)
 (define-key *lisp-mode-keymap* "C-c M-m" 'lisp-macroexpand-all)
 (define-key *lisp-mode-keymap* "Space" 'lisp-insert-space-and-autodoc)
-(define-key *lisp-mode-keymap* "C-c C-d C-a" 'lisp-autodoc-with-typeout)
+(define-key *lisp-mode-keymap* "C-c C-d C-a" 'lisp-autodoc)
 (define-key *lisp-mode-keymap* "C-c C-d d" 'lisp-describe-symbol)
 (define-key *lisp-mode-keymap* "C-c C-z" 'lisp-switch-to-repl-buffer)
 (define-key *lisp-mode-keymap* "C-c z" 'lisp-switch-to-repl-buffer)

@@ -63,6 +63,7 @@
 (define-key *lisp-mode-keymap* "C-c C-c" 'lisp-compile-defun)
 (define-key *lisp-mode-keymap* "C-c Return" 'lisp-macroexpand)
 (define-key *lisp-mode-keymap* "C-c M-m" 'lisp-macroexpand-all)
+(define-key *lisp-mode-keymap* "Space" 'lisp-insert-space-and-autodoc)
 (define-key *lisp-mode-keymap* "C-c C-d C-a" 'lisp-autodoc-with-typeout)
 (define-key *lisp-mode-keymap* "C-c C-d d" 'lisp-describe-symbol)
 (define-key *lisp-mode-keymap* "C-c C-z" 'lisp-switch-to-repl-buffer)
@@ -517,6 +518,10 @@
 (define-command lisp-autodoc () ()
   (autodoc (lambda (buffer)
              (display-popup-message buffer :timeout nil))))
+
+(define-command lisp-insert-space-and-autodoc (n) ("p")
+  (loop :repeat n :do (insert-character (current-point) #\space))
+  (lisp-autodoc))
 
 (defun check-parens ()
   (with-point ((point (current-point)))

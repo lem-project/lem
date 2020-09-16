@@ -288,3 +288,11 @@
   (if (null string)
       (clear-popup-message)
       (lem-if:display-popup-message (implementation) string)))
+
+
+(defun visible-popup-window-p ()
+  (flet ((alivep (window)
+           (and window (not (deleted-window-p window)))))
+    (or (alivep *popup-message-window*)
+        ;; TODO
+        (alivep *menu-window*))))

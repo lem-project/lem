@@ -485,27 +485,27 @@
       (lisp-eval-async
        `(,autodoc-symbol ',context)
        (lambda (doc)
-         (destructuring-bind (doc cache-p) doc
-           (declare (ignore cache-p))
-           (unless (eq doc :not-available)
-             (let* ((buffer (make-buffer "*swank:autodoc-fontity*"
-                                         :temporary t :enable-undo-p nil))
-                    (point (buffer-point buffer)))
-               (erase-buffer buffer)
-               (change-buffer-mode buffer 'lisp-mode)
-               (insert-string point doc)
-               (buffer-start point)
-               (multiple-value-bind (result string)
-                   (search-forward-regexp point "(?====> (.*) <===)")
-                 (when result
-                   (with-point ((start point))
-                     (character-offset point 5)
-                     (search-forward point "<===")
-                     (delete-between-points start point)
-                     (insert-string point string :attribute 'region))))
-               (buffer-start (buffer-point buffer))
-               (setf (variable-value 'truncate-lines :buffer buffer) nil)
-               (funcall function buffer)))))))))
+         (trivia:match doc
+           ((list doc _)
+            (unless (eq doc :not-available)
+              (let* ((buffer (make-buffer "*swank:autodoc-fontity*"
+                                          :temporary t :enable-undo-p nil))
+                     (point (buffer-point buffer)))
+                (erase-buffer buffer)
+                (change-buffer-mode buffer 'lisp-mode)
+                (insert-string point doc)
+                (buffer-start point)
+                (multiple-value-bind (result string)
+                    (search-forward-regexp point "(?====> (.*) <===)")
+                  (when result
+                    (with-point ((start point))
+                      (character-offset point 5)
+                      (search-forward point "<===")
+                      (delete-between-points start point)
+                      (insert-string point string :attribute 'region))))
+                (buffer-start (buffer-point buffer))
+                (setf (variable-value 'truncate-lines :buffer buffer) nil)
+                (funcall function buffer))))))))))
 
 (define-command lisp-autodoc-with-typeout () ()
   (autodoc (lambda (temp-buffer)

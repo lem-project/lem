@@ -217,34 +217,42 @@
                   (setf start (1+ (or pos start)))))))
 
 (defun search-forward-symbol (point name &optional limit-point)
-  (let ((charpos (point-charpos point)))
-    (search-step point
-                 (lambda (point)
-                   (cdr (search-symbol (line-string point) name :start charpos)))
-                 (lambda (point)
-                   (cdr (search-symbol (line-string point) name)))
-                 (lambda (point)
-                   (line-offset point 1))
-                 (lambda (point charpos)
-                   (line-offset point 0 charpos))
-                 (search-forward-endp-function limit-point))))
+  ;; NOTE:
+  ;; search-symbol関数ないで使っているsyntax-symbol-char-pがcurrent-syntaxを参照しているので
+  ;; ここでcurrent-syntaxを一時的にpointのものに切り替える
+  (with-current-syntax (buffer-syntax-table (point-buffer point))
+    (let ((charpos (point-charpos point)))
+      (search-step point
+                   (lambda (point)
+                     (cdr (search-symbol (line-string point) name :start charpos)))
+                   (lambda (point)
+                     (cdr (search-symbol (line-string point) name)))
+                   (lambda (point)
+                     (line-offset point 1))
+                   (lambda (point charpos)
+                     (line-offset point 0 charpos))
+                   (search-forward-endp-function limit-point)))))
 
 (defun search-backward-symbol (point name &optional limit-point)
-  (search-step point
-               (lambda (point)
-                 (car (search-symbol (line-string point)
-                                     name
-                                     :end (point-charpos point)
-                                     :from-end t)))
-               (lambda (point)
-                 (car (search-symbol (line-string point)
-                                     name
-                                     :from-end t)))
-               (lambda (point)
-                 (line-offset point -1))
-               (lambda (point charpos)
-                 (line-offset point 0 charpos))
-               (search-backward-endp-function limit-point)))
+  ;; NOTE:
+  ;; search-symbol関数ないで使っているsyntax-symbol-char-pがcurrent-syntaxを参照しているので
+  ;; ここでcurrent-syntaxを一時的にpointのものに切り替える
+  (with-current-syntax (buffer-syntax-table (point-buffer point))
+    (search-step point
+                 (lambda (point)
+                   (car (search-symbol (line-string point)
+                                       name
+                                       :end (point-charpos point)
+                                       :from-end t)))
+                 (lambda (point)
+                   (car (search-symbol (line-string point)
+                                       name
+                                       :from-end t)))
+                 (lambda (point)
+                   (line-offset point -1))
+                 (lambda (point charpos)
+                   (line-offset point 0 charpos))
+                 (search-backward-endp-function limit-point))))
 
 (defun looking-at (point regex)
   (let ((start (point-charpos point))

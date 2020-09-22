@@ -29,31 +29,32 @@
     directory))
 
 (define-key *global-keymap* "C-x C-f" 'find-file)
-(define-command find-file (filename) ("p")
+(define-command find-file (arg) ("p")
   (check-switch-minibuffer-window)
   (let ((*default-external-format* *default-external-format*))
-    (cond ((and (numberp filename) (= 1 filename))
-           (setf filename (prompt-for-file
-                           "Find File: "
-                           (buffer-directory)
-                           nil
-                           nil)))
-          ((numberp filename)
-           (setf *default-external-format*
-                 (prompt-for-encodings
-                  "Encodings: "
-                  'mh-read-file-encodings)
-                 filename (prompt-for-file
-                           "Find File: "
-                           (buffer-directory)
-                           nil
-                           nil)))
-          ((pathnamep filename)
-           (setf filename (namestring filename))))
-    (dolist (pathname (expand-files* filename))
-      (directory-for-file-or-lose pathname)
-      (switch-to-buffer (find-file-buffer pathname) t nil)
-      t)))
+    (let ((filename
+            (cond ((and (numberp arg) (= 1 arg))
+                   (prompt-for-file
+                    "Find File: "
+                    (buffer-directory)
+                    nil
+                    nil))
+                  ((numberp arg)
+                   (setf *default-external-format*
+                         (prompt-for-encodings
+                          "Encodings: "
+                          'mh-read-file-encodings))
+                   (prompt-for-file
+                    "Find File: "
+                    (buffer-directory)
+                    nil
+                    nil))
+                  ((pathnamep arg)
+                   (namestring arg)))))
+      (dolist (pathname (expand-files* filename))
+        (directory-for-file-or-lose pathname)
+        (switch-to-buffer (find-file-buffer pathname) t nil)
+        t))))
 
 (define-key *global-keymap* "C-x C-r" 'read-file)
 (define-command read-file (filename) ("FRead File: ")

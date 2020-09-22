@@ -74,13 +74,17 @@
                   (line-offset cur-point 1)
                   (return)))))
 
-(defun prepare-auto-mode (buffer)
-  (let* ((filename (file-namestring (buffer-filename buffer)))
+(defun detect-mode-from-pathname (pathname)
+  (let* ((filename (file-namestring pathname))
          (elt (find-if (lambda (elt)
                          (ppcre:scan (car elt) filename))
                        *auto-mode-alist*)))
-    (when elt
-      (change-buffer-mode buffer (cdr elt)))))
+    (cdr elt)))
+
+(defun prepare-auto-mode (buffer)
+  (let ((mode (detect-mode-from-pathname (buffer-filename buffer))))
+    (when mode
+      (change-buffer-mode buffer mode))))
 
 (defun detect-external-format-from-file (pathname)
   (values (inq:dependent-name (inq:detect-encoding (pathname pathname) :jp))

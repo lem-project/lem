@@ -313,3 +313,8 @@
     (or (alivep *popup-message-window*)
         ;; TODO
         (alivep *menu-window*))))
+
+(define-key *global-keymap* "Escape" 'dismiss-popup-window)
+
+(define-command dismiss-popup-window () ()
+  (clear-popup-message))

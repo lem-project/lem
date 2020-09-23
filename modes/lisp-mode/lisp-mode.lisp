@@ -70,7 +70,7 @@
 (define-key *lisp-mode-keymap* "C-c z" 'lisp-switch-to-repl-buffer)
 (define-key *lisp-mode-keymap* "C-c C-b" 'lisp-connection-list)
 (define-key *lisp-mode-keymap* "C-c g" 'lisp-interrupt)
-(define-key lem-lisp-mode:*lisp-mode-keymap* "C-c C-q" 'lisp-quickload)
+(define-key *lisp-mode-keymap* "C-c C-q" 'lisp-quickload)
 
 (defun change-current-connection (conn)
   (when *connection*

@@ -24,23 +24,18 @@
 (define-attribute non-focus-popup-menu-attribute
   (t :background "#444" :foreground "white"))
 
-(defun compute-popup-window-position (orig-window)
-  (let* ((y (+ (window-y orig-window)
-               (window-cursor-y orig-window)
+(defun compute-cursor-position (source-window width height)
+  (let* ((y (+ (window-y source-window)
+               (window-cursor-y source-window)
                1))
-         (x (+ (window-x orig-window)
-               (let ((x (point-column (lem::window-buffer-point orig-window))))
-                 (when (<= (window-width orig-window) x)
-                   (let ((mod (mod x (window-width orig-window)))
-                         (floor (floor x (window-width orig-window))))
+         (x (+ (window-x source-window)
+               (let ((x (point-column (lem::window-buffer-point source-window))))
+                 (when (<= (window-width source-window) x)
+                   (let ((mod (mod x (window-width source-window)))
+                         (floor (floor x (window-width source-window))))
                      (setf x (+ mod floor))
                      (incf y floor)))
                  x))))
-    (values x y)))
-
-(defun popup-window (orig-window buffer width height &optional dst-window)
-  (multiple-value-bind (x y)
-      (compute-popup-window-position orig-window)
     (cond
       ((<= (display-height)
            (+ y (min height
@@ -56,10 +51,32 @@
       (when (< (display-width) width)
         (setf width (display-width)))
       (setf x (- (display-width) width)))
-    (cond (dst-window
-           (lem::window-set-size dst-window width height)
-           (lem::window-set-pos dst-window x y)
-           dst-window)
+    (values x y width height)))
+
+(defun compute-topright-position (source-window width height)
+  (let ((x (+ (window-x source-window)
+              (alexandria:clamp (- (window-width source-window) width 4)
+                                0
+                                (window-width source-window))))
+        (y 1))
+    (when (< (window-width source-window) width)
+      (setf width (- (window-width source-window) 4)))
+    (values x y width height)))
+
+(defun compute-popup-window-position (source-window width height &optional (gravity :cursor))
+  (ecase gravity
+    ((:cursor nil)
+     (compute-cursor-position source-window width height))
+    (:topright
+     (compute-topright-position source-window width height))))
+
+(defun popup-window (source-window buffer width height &key destination-window (gravity :cursor))
+  (multiple-value-bind (x y width height)
+      (compute-popup-window-position source-window width height gravity)
+    (cond (destination-window
+           (lem::window-set-size destination-window width height)
+           (lem::window-set-pos destination-window x y)
+           destination-window)
           (t
            (make-instance 'popup-window
                           :buffer buffer
@@ -178,7 +195,7 @@
                    buffer
                    width
                    (min 20 (length items))
-                   *menu-window*)))
+                   :destination-window *menu-window*)))
 
 (defmethod lem-if:popup-menu-quit (implementation)
   (when *focus-overlay*
@@ -249,11 +266,11 @@
     (buffer-start (buffer-point buffer))
     buffer))
 
-(defun display-popup-buffer-default (buffer timeout &optional size)
+(defun display-popup-buffer-default (buffer timeout size gravity)
   (let ((size (or size (compute-size-from-buffer buffer))))
     (clear-popup-message)
     (destructuring-bind (width height) size
-      (let ((window (popup-window (current-window) buffer width height)))
+      (let ((window (popup-window (current-window) buffer width height :gravity gravity)))
         (buffer-start (window-view-point window))
         (window-see window)
         (setf *popup-message-window* window)
@@ -266,19 +283,19 @@
                            (delete-window window)))))
         window))))
 
-(defun display-popup-message-default (text timeout size)
+(defun display-popup-message-default (text &key timeout size gravity)
   (clear-popup-message)
   (etypecase text
     (string
      (let* ((buffer (make-popup-buffer text))
             (size (or size (compute-size-from-buffer buffer))))
        (destructuring-bind (width height) size
-         (display-popup-buffer-default buffer timeout (list width height)))))
+         (display-popup-buffer-default buffer timeout (list width height) gravity))))
     (buffer
-     (display-popup-buffer-default text timeout size))))
+     (display-popup-buffer-default text timeout size gravity))))
 
-(defmethod lem-if:display-popup-message (implementation text &key timeout size)
-  (display-popup-message-default text timeout size))
+(defmethod lem-if:display-popup-message (implementation text &key timeout size gravity)
+  (display-popup-message-default text :timeout timeout :size size :gravity gravity))
 
 (defmethod lem-if:delete-popup-message (implementation popup-message)
   (when (windowp popup-message)

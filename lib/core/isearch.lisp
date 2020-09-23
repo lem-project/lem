@@ -165,13 +165,15 @@
   (isearch-update-buffer))
 
 (defun isearch-update-minibuffer ()
-  (message-without-log "~A~A~A"
-                       (if (or (variable-value 'isearch-next-last :buffer)
-                               (variable-value 'isearch-prev-last :buffer))
-                           "Failing "
-                           "")
-                       *isearch-prompt*
-                       *isearch-string*))
+  (display-popup-message (format nil
+                                 "~A~A~A"
+                                 (if (or (variable-value 'isearch-next-last :buffer)
+                                         (variable-value 'isearch-prev-last :buffer))
+                                     "Failing "
+                                     "")
+                                 *isearch-prompt*
+                                 *isearch-string*)
+                         :gravity :topright))
 
 (defun make-add-char-callback (search-function)
   (lambda (point string)

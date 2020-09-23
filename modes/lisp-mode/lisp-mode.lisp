@@ -547,7 +547,8 @@
 
 (define-command lisp-insert-space-and-autodoc (n) ("p")
   (loop :repeat n :do (insert-character (current-point) #\space))
-  (lisp-autodoc))
+  (unless (continue-flag 'lisp-insert-space-and-autodoc)
+    (lisp-autodoc)))
 
 (defun check-parens ()
   (with-point ((point (current-point)))

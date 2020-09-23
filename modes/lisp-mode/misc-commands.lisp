@@ -80,14 +80,15 @@
           (if (or (search-forward-symbol point symbol-name limit)
                   (search-forward-symbol point (format nil ":~A" symbol-name) limit)
                   (search-forward-symbol point (format nil "#:~A" symbol-name) limit))
-              (message "~A already exported" symbol-name)
+              (editor-error "~A already exported" symbol-name)
               (with-point ((point point :left-inserting))
                 (scan-lists point 1 1)
                 (scan-lists point -1 -1)
                 (fresh-line* point)
                 (indent-line point)
-                (insert-string point (format nil "#:~A" symbol-name)))))))))
+                (insert-string point (format nil ":~A" symbol-name)))))))))
 
+
 (defun find-symbol-matchies (symbol-name)
   (let ((symbols '()))
     (do-all-symbols (s)
@@ -131,6 +132,7 @@
           )))))
 |#
 
+
 (defun find-utopian-route (point)
   (when (in-string-p point)
     (with-point ((start point)

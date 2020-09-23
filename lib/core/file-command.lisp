@@ -28,8 +28,19 @@
       (error 'editor-abort))
     directory))
 
-(define-key *global-keymap* "C-x C-f" 'find-file)
-(define-command find-file (arg) ("p")
+(defgeneric execute (command arg))
+(defgeneric execute-find-file (command mode pathname))
+
+(defclass find-file-command () ())
+
+(defmethod execute-find-file ((command find-file-command) mode pathname)
+  (directory-for-file-or-lose pathname)
+  (multiple-value-bind (buffer new-file-p)
+      (find-file-buffer pathname)
+    (switch-to-buffer buffer t nil)
+    (values buffer new-file-p)))
+
+(defmethod execute ((command find-file-command) arg)
   (check-switch-minibuffer-window)
   (let ((*default-external-format* *default-external-format*))
     (let ((filename
@@ -52,9 +63,14 @@
                   ((pathnamep arg)
                    (namestring arg)))))
       (dolist (pathname (expand-files* filename))
-        (directory-for-file-or-lose pathname)
-        (switch-to-buffer (find-file-buffer pathname) t nil)
-        t))))
+        (execute-find-file command
+                           (detect-mode-from-pathname pathname)
+                           pathname)))))
+
+(define-key *global-keymap* "C-x C-f" 'find-file)
+(define-command find-file (arg) ("p")
+  (execute (make-instance 'find-file-command)
+           arg))
 
 (define-key *global-keymap* "C-x C-r" 'read-file)
 (define-command read-file (filename) ("FRead File: ")

@@ -84,6 +84,10 @@
 (define-command keyboard-quit () ()
   (error 'editor-abort))
 
+(define-key *global-keymap* "Escape" 'escape)
+(define-command escape () ()
+  (error 'editor-abort :message nil))
+
 (define-key *global-keymap* "NopKey" 'nop-command)
 (define-command nop-command () ())
 

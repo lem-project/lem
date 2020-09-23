@@ -121,7 +121,9 @@
           (lem-restart:message ()
             (typecase c
               (editor-abort
-               (display-popup-message (princ-to-string c) :timeout 1))
+               (let ((message (princ-to-string c)))
+                 (unless (string= "" message)
+                   (display-popup-message message :timeout 1))))
               (otherwise
                (message "~A" c))))
           (lem-restart:call-function (fn)

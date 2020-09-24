@@ -173,7 +173,6 @@
 (define-key *minibuf-keymap* "M-n" 'minibuffer-read-line-next-history)
 (define-key *minibuf-keymap* "C-g" 'minibuf-read-line-break)
 
-(defvar *minibuf-read-line-prompt*)
 (defvar *minibuf-read-line-comp-f*)
 (defvar *minibuf-read-line-existing-p*)
 

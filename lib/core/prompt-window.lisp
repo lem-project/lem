@@ -332,3 +332,6 @@
 
 (setf *minibuffer-file-complete-function* 'prompt-file-complete)
 (setf *minibuffer-buffer-complete-function* 'prompt-buffer-complete)
+
+(defmethod active-minibuffer-window ()
+  (current-prompt-window))

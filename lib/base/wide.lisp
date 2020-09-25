@@ -10,8 +10,9 @@
 
 (define-editor-variable tab-width 8)
 
+(defparameter *char-replacement* (make-hash-table))
+
 (defvar *tab-size* 8)
-(defvar *char-replacement* (make-hash-table))
 
 (setf (gethash (code-char 0) *char-replacement*) "^@")
 (setf (gethash (code-char 1) *char-replacement*) "^A")

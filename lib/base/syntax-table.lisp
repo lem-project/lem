@@ -38,7 +38,7 @@
 (defun set-syntax-parser (syntax-table parser)
   (setf (syntax-table-parser syntax-table) parser))
 
-(defvar *fundamental-syntax-table* (make-syntax-table))
+(defparameter *fundamental-syntax-table* (make-syntax-table))
 
 (defun fundamental-syntax-table ()
   *fundamental-syntax-table*)

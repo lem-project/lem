@@ -165,7 +165,7 @@
   (check-type buffer buffer)
   (setf *current-buffer* buffer))
 
-(defvar *undo-modes* '(:edit :undo :redo))
+(defparameter *undo-modes* '(:edit :undo :redo))
 (defvar *undo-mode* :edit)
 
 (defun last-edit-history (buffer)

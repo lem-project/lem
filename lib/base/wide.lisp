@@ -1,7 +1,6 @@
 (in-package :lem-base)
 
 (export '(tab-width
-          tab-size
           wide-char-p
           char-width
           string-width
@@ -11,8 +10,6 @@
 (define-editor-variable tab-width 8)
 
 (defparameter *char-replacement* (make-hash-table))
-
-(defvar *tab-size* 8)
 
 (setf (gethash (code-char 0) *char-replacement*) "^@")
 (setf (gethash (code-char 1) *char-replacement*) "^A")
@@ -51,6 +48,7 @@
       :do (setf (gethash (code-char (+ #xe000 i)) *char-replacement*)
                 (format nil "\\~D" i)))
 
+(defvar *tab-size* 8)
 (defun tab-size ()
   *tab-size*)
 

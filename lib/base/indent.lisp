@@ -19,7 +19,7 @@
     (return-from indent-line-1 t))
   (when (minusp column)
     (setf column 0))
-  (let ((*tab-size* (variable-value 'tab-width :default point)))
+  (let ((tab-width (variable-value 'tab-width :default point)))
     (let ((old-column (point-column point))
           (old-indent-string
             (with-point ((start point)
@@ -29,7 +29,7 @@
           (new-indent-string
             (if (variable-value 'indent-tabs-mode :default point)
                 (multiple-value-bind (div mod)
-                    (floor column (tab-size))
+                    (floor column tab-width)
                   (concatenate 'string
                                (make-string div :initial-element #\tab)
                                (make-string mod :initial-element #\space)))

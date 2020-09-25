@@ -151,6 +151,8 @@
   (setf (screen-y screen) y)
   (lem-if:set-view-pos *implementation* (screen-view screen) x y))
 
+(defvar *printing-tab-size*)
+
 (defun screen-print-string (screen x y string attribute)
   (when (and (eq attribute 'cursor) (< 0 (length string)))
     (setf *cursor-x* x)
@@ -164,7 +166,7 @@
                 ((char= char #\tab)
                  (loop :with size :=
                           (+ *print-start-x*
-                             (* (tab-size) (floor (+ (tab-size) x) (tab-size))))
+                             (* *printing-tab-size* (floor (+ *printing-tab-size* x) *printing-tab-size*)))
                        :while (< x size)
                        :do (setf (aref pool-string (incf i)) #\space)
                            (incf x)))
@@ -478,7 +480,7 @@
                (setf (screen-horizontal-scroll-start screen) point-column)))))))
 
 (defun screen-display-lines (screen redraw-flag buffer view-charpos cursor-y)
-  (let* ((lem-base::*tab-size* (variable-value 'tab-width :default buffer))
+  (let* ((*printing-tab-size* (variable-value 'tab-width :default buffer))
          (truncate-lines (variable-value 'truncate-lines :default buffer))
          (disp-line-function
            (if truncate-lines

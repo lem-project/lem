@@ -114,31 +114,31 @@
   (declare (character c))
   (%binary-search (char-code c)))
 
-(defun char-width (c w)
+(defun char-width (c w &key (tab-size (tab-size)))
   (declare (character c) (fixnum w))
   (cond ((char= c #\tab)
-         (+ (* (floor w (tab-size)) (tab-size)) (tab-size)))
+         (+ (* (floor w tab-size) tab-size) tab-size))
         ((gethash c *char-replacement*)
          (loop :for c :across (gethash c *char-replacement*)
-               :do (setf w (char-width c w)))
+               :do (setf w (char-width c w :tab-size tab-size)))
          w)
         ((or (wide-char-p c) (char<= #.(code-char 0) c #.(code-char 26)))
          (+ w 2))
         (t
          (+ w 1))))
 
-(defun string-width (str &optional (start 0) end)
+(defun string-width (str &key (start 0) end (tab-size (tab-size)))
   (loop :with width := 0
         :for i :from start :below (or end (length str))
         :for c := (aref str i)
-        :do (setq width (char-width c width))
+        :do (setq width (char-width c width :tab-size tab-size))
         :finally (return width)))
 
-(defun wide-index (str goal &key (start 0))
+(defun wide-index (str goal &key (start 0) (tab-size (tab-size)))
   (loop
     :with w := 0
     :for i :from start :below (length str) :by 1
     :for c := (schar str i)
-    :do (setq w (char-width c w))
+    :do (setq w (char-width c w :tab-size tab-size))
         (when (< goal w)
           (return i))))

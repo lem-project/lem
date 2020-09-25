@@ -4,7 +4,8 @@
                "lem-tests/lisp-syntax/defstruct-to-defclass"
                "lem-tests/syntax-test"
                "lem-tests/buffer-list-test"
-               "lem-tests/frame-multiplexer")
+               "lem-tests/frame-multiplexer"
+               "lem-tests/vi-mode")
   :pathname "tests"
   :perform (test-op (o c)
                     (symbol-call :rove :run c)))

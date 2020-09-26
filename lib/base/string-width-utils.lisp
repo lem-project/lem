@@ -137,7 +137,7 @@
 (defun wide-index (string goal &key (start 0) (tab-size +default-tab-size+))
   (loop :with width := 0
         :for index :from start :below (length string)
-        :for char := (schar string index)
+        :for char := (aref string index)
         :do (setq width (char-width char width :tab-size tab-size))
             (when (< goal width)
               (return index))))

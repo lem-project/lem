@@ -1,10 +1,12 @@
-(in-package :lem-base)
-
-(export '(control-char
-          wide-char-p
-          char-width
-          string-width
-          wide-index))
+(defpackage :lem-base.string-width-utils
+  (:use :cl)
+  (:export :+default-tab-size+
+           :control-char
+           :wide-char-p
+           :char-width
+           :string-width
+           :wide-index))
+(in-package :lem-base.string-width-utils)
 
 (defparameter +default-tab-size+ 8)
 

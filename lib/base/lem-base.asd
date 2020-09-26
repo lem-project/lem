@@ -5,8 +5,8 @@
                "cl-ppcre"
                "babel")
   :serial t
-  :components ((:file "package")
-               (:file "string-width-utils")
+  :components ((:file "string-width-utils")
+               (:file "package")
                (:file "fileutil")
                (:file "util")
                (:file "errors")

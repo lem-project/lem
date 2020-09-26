@@ -1,4 +1,4 @@
-(defpackage :lem-base.string-width-utils
+(defpackage :lem-base/string-width-utils
   (:use :cl)
   (:export :+default-tab-size+
            :control-char
@@ -6,7 +6,7 @@
            :char-width
            :string-width
            :wide-index))
-(in-package :lem-base.string-width-utils)
+(in-package :lem-base/string-width-utils)
 
 (defconstant +default-tab-size+ 8)
 

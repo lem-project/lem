@@ -1,4 +1,4 @@
-(defpackage :lem-base.utils
+(defpackage :lem-base/utils
   (:use :cl)
   (:export :pdebug
            :utf8-bytes
@@ -7,7 +7,7 @@
            :min-if
            :random-range
            :find-tree))
-(in-package :lem-base.utils)
+(in-package :lem-base/utils)
 
 (defun pdebug (x &optional (file "DEBUG"))
   (with-open-file (out file

@@ -261,6 +261,27 @@
           (point (buffer-point buffer)))
       (move-to-xref-location-position point position))))
 
+(defgeneric location-position< (position1 position2)
+  (:method ((position1 integer) (position2 integer))
+    (< position1 position2))
+  (:method ((position1 cons) (position2 cons))
+    (or (< (car position1) (car position2))
+        (and (= (car position1) (car position2))
+             (< (cdr position1) (cdr position2)))))
+  (:method ((position1 point) (position2 point))
+    (point< position1 position2))
+  (:method (position1 position2)
+    nil))
+
+(defun sort-xref-locations (locations)
+  (sort (sort (copy-list locations)
+              #'string<
+              :key (lambda (location)
+                     (xref-filespec-to-filename
+                      (xref-location-filespec location))))
+        #'location-position<
+        :key #'xref-location-position))
+
 (define-command find-definitions () ()
   (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))
     (let ((locations (funcall fn (current-point))))
@@ -274,7 +295,7 @@
             (jump-highlighting))
           (let ((prev-file nil))
             (with-sourcelist (sourcelist "*definitions*")
-              (dolist (location locations)
+              (dolist (location (sort-xref-locations locations))
                 (let ((file (xref-filespec-to-filename (xref-location-filespec location)))
                       (content (xref-location-content location)))
                   (append-sourcelist sourcelist

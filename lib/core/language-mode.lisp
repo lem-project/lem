@@ -284,13 +284,14 @@
     nil))
 
 (defun sort-xref-locations (locations)
-  (sort (sort (copy-list locations)
-              #'string<
-              :key (lambda (location)
-                     (xref-filespec-to-filename
-                      (xref-location-filespec location))))
-        #'location-position<
-        :key #'xref-location-position))
+  (sort (copy-list locations)
+        (lambda (location1 location2)
+          (and (string< (xref-filespec-to-filename
+                         (xref-location-filespec location1))
+                        (xref-filespec-to-filename
+                         (xref-location-filespec location2)))
+               (location-position< (xref-location-position location1)
+                                   (xref-location-position location2))))))
 
 (define-command find-definitions () ()
   (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))

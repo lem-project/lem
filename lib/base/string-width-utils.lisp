@@ -8,7 +8,7 @@
            :wide-index))
 (in-package :lem-base.string-width-utils)
 
-(defparameter +default-tab-size+ 8)
+(defconstant +default-tab-size+ 8)
 
 (defparameter *char-replacement*
   (let ((table (make-hash-table)))

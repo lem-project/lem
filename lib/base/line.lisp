@@ -1,7 +1,5 @@
 (in-package :lem-base)
 
-(defconstant +line-increment+ 256)
-
 (defstruct (line (:constructor %make-line))
   prev
   next

@@ -173,7 +173,8 @@
                 ((alexandria:when-let ((control-char (control-char char)))
                    (loop :for c :across control-char
                          :do (setf (aref pool-string (incf i)) c
-                                   x (char-width c x)))))
+                                   x (char-width c x)))
+                   t))
                 (t
                  (setf (aref pool-string (incf i)) char)
                  (setf x (char-width char x)))))

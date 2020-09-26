@@ -10,7 +10,7 @@
                (:file "util")
                (:file "errors")
                (:file "var")
-               (:file "wide")
+               (:file "string-width-utils")
                (:file "macros")
                (:file "hooks")
                (:file "line")

@@ -4,7 +4,8 @@
         :lem-base/file-utils
         :lem-base/utils
         :lem-base/errors
-        :lem-base/hooks)
+        :lem-base/hooks
+        :lem-base/line)
   #+sbcl
   (:lock t)
   (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-base/string-width-utils)

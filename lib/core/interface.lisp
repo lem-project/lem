@@ -204,7 +204,7 @@
                         (if (null string-end)
                             nil
                             (min (length str) string-end))))
-      (setf attributes (lem-base::subseq-elements attributes string-start string-end)))
+      (setf attributes (lem-base/line::subseq-elements attributes string-start string-end)))
     (let ((prev-end 0)
           (x start-x))
       (loop :for (start end attr) :in attributes
@@ -293,10 +293,10 @@
                            (make-string (- end-charpos (length string))
                                         :initial-element #\space))))
       (setf (cdr (aref (screen-lines screen) screen-row))
-            (lem-base::put-elements attributes
-                                    start-charpos
-                                    (or end-charpos (length string))
-                                    attribute)))))
+            (lem-base/line::put-elements attributes
+                                         start-charpos
+                                         (or end-charpos (length string))
+                                         attribute)))))
 
 (defun disp-set-overlay (screen attribute screen-row start end)
   (let ((start-and-end-on-same-line (same-line-p start end)))
@@ -396,7 +396,7 @@
     (with-point ((point view-point))
       (loop :for i :from 0 :below (screen-height screen)
             :do (let* ((line (lem-base::point-line point))
-                       (str/attributes (lem-base::line-string/attributes line)))
+                       (str/attributes (lem-base/line::line-string/attributes line)))
                   (setf (aref (screen-left-lines screen) i) nil)
                   (setf (aref (screen-lines screen) i) str/attributes))
                 (unless (line-offset point 1)
@@ -416,9 +416,9 @@
   (when (and (< 0 view-charpos) (= point-y 0))
     (setf str/attributes
           (cons (subseq (car str/attributes) view-charpos)
-                (lem-base::subseq-elements (cdr str/attributes)
-                                           view-charpos
-                                           (length (car str/attributes))))))
+                (lem-base/line::subseq-elements (cdr str/attributes)
+                                                view-charpos
+                                                (length (car str/attributes))))))
   (let ((start 0)
         (start-x (screen-left-width screen))
         (truncate-str/attributes

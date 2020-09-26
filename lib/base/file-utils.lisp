@@ -1,13 +1,14 @@
-(in-package :lem-base)
-
-(export '(expand-file-name
-          tail-of-pathname
-          directory-files
-          list-directory
-          file-size
-          virtual-probe-file
-          *virtual-file-open*
-          with-open-virtual-file))
+(defpackage :lem-base/file-utils
+  (:use :cl)
+  (:export :expand-file-name
+           :tail-of-pathname
+           :directory-files
+           :list-directory
+           :file-size
+           :virtual-probe-file
+           :*virtual-file-open*
+           :with-open-virtual-file))
+(in-package :lem-base/file-utils)
 
 (defun guess-host-name (filename)
   (declare (ignorable filename))

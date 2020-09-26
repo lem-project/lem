@@ -6,9 +6,9 @@
                "babel")
   :serial t
   :components ((:file "string-width-utils")
+               (:file "file-utils")
                (:file "utils")
                (:file "package")
-               (:file "fileutil")
                (:file "errors")
                (:file "var")
                (:file "editor-variables")

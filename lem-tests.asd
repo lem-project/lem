@@ -1,6 +1,7 @@
 (defsystem "lem-tests"
   :class :package-inferred-system
-  :depends-on ("lem-tests/lisp-syntax/indent-test"
+  :depends-on ("lem-tests/string-width-utils"
+               "lem-tests/lisp-syntax/indent-test"
                "lem-tests/lisp-syntax/defstruct-to-defclass"
                "lem-tests/syntax-test"
                "lem-tests/buffer-list-test"

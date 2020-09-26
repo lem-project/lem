@@ -1,11 +1,11 @@
 (in-package :lem-base)
 
-(export '(tab-width
+(export '(control-char
+          tab-width
           wide-char-p
           char-width
           string-width
-          wide-index
-          *char-replacement*))
+          wide-index))
 
 (define-editor-variable tab-width 8)
 
@@ -47,6 +47,9 @@
           :do (setf (gethash (code-char (+ #xe000 i)) table)
                     (format nil "\\~D" i)))
     table))
+
+(defun control-char (char)
+  (values (gethash char *char-replacement*)))
 
 (defvar *tab-size* 8)
 
@@ -117,8 +120,8 @@
   (declare (character c) (fixnum w))
   (cond ((char= c #\tab)
          (+ (* (floor w tab-size) tab-size) tab-size))
-        ((gethash c *char-replacement*)
-         (loop :for c :across (gethash c *char-replacement*)
+        ((control-char c)
+         (loop :for c :across (control-char c)
                :do (setf w (char-width c w :tab-size tab-size)))
          w)
         ((or (wide-char-p c) (char<= #.(code-char 0) c #.(code-char 26)))

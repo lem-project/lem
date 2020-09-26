@@ -6,7 +6,6 @@
            :list-directory
            :file-size
            :virtual-probe-file
-           :*virtual-file-open*
            :with-open-virtual-file))
 (in-package :lem-base/file-utils)
 
@@ -99,7 +98,7 @@
   #-win32
   (ignore-errors (with-open-file (in pathname) (file-length in))))
 
-(defvar *virtual-file-open* nil)
+(defparameter *virtual-file-open* nil)
 
 (defun open-virtual-file (filename &key external-format direction element-type)
   (apply #'values

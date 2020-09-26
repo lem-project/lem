@@ -69,7 +69,8 @@
   (let ((point *sourcelist-point*))
     (with-point ((start-point point :right-inserting))
       (funcall write-function point)
-      (insert-character point #\newline)
+      (unless (start-line-p point)
+        (insert-character point #\newline))
       (when jump-function
         (append-jump-function sourcelist
                               start-point

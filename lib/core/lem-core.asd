@@ -16,6 +16,7 @@
   :serial t
   :components ((:file "history")
                (:file "package")
+               (:file "quicklisp-utils")
                (:file "config")
                (:file "errors")
                (:file "key")

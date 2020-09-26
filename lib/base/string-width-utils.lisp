@@ -110,35 +110,34 @@
 
     (gen-binary-search-function '%binary-search eastasian-full)))
 
-(defun wide-char-p (c)
-  (declare (character c))
-  (%binary-search (char-code c)))
+(defun wide-char-p (char)
+  (declare (character char))
+  (%binary-search (char-code char)))
 
-(defun char-width (c w &key (tab-size +default-tab-size+))
-  (declare (character c) (fixnum w))
-  (cond ((char= c #\tab)
-         (+ (* (floor w tab-size) tab-size) tab-size))
-        ((control-char c)
-         (loop :for c :across (control-char c)
-               :do (setf w (char-width c w :tab-size tab-size)))
-         w)
-        ((or (wide-char-p c) (char<= #.(code-char 0) c #.(code-char 26)))
-         (+ w 2))
+(defun char-width (char width &key (tab-size +default-tab-size+))
+  (declare (character char) (fixnum width))
+  (cond ((char= char #\tab)
+         (+ (* (floor width tab-size) tab-size) tab-size))
+        ((control-char char)
+         (loop :for char :across (control-char char)
+               :do (setf width (char-width char width :tab-size tab-size)))
+         width)
+        ((or (wide-char-p char) (char<= #.(code-char 0) char #.(code-char 26)))
+         (+ width 2))
         (t
-         (+ w 1))))
+         (+ width 1))))
 
-(defun string-width (str &key (start 0) end (tab-size +default-tab-size+))
+(defun string-width (string &key (start 0) end (tab-size +default-tab-size+))
   (loop :with width := 0
-        :for i :from start :below (or end (length str))
-        :for c := (aref str i)
-        :do (setq width (char-width c width :tab-size tab-size))
+        :for index :from start :below (or end (length string))
+        :for char := (aref string index)
+        :do (setq width (char-width char width :tab-size tab-size))
         :finally (return width)))
 
-(defun wide-index (str goal &key (start 0) (tab-size +default-tab-size+))
-  (loop
-    :with w := 0
-    :for i :from start :below (length str) :by 1
-    :for c := (schar str i)
-    :do (setq w (char-width c w :tab-size tab-size))
-        (when (< goal w)
-          (return i))))
+(defun wide-index (string goal &key (start 0) (tab-size +default-tab-size+))
+  (loop :with width := 0
+        :for index :from start :below (length string)
+        :for char := (schar string index)
+        :do (setq width (char-width char width :tab-size tab-size))
+            (when (< goal width)
+              (return index))))

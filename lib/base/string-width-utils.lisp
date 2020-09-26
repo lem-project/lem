@@ -7,7 +7,10 @@
           string-width
           wide-index))
 
-(define-editor-variable tab-width 8)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defparameter +default-tab-size+ 8))
+
+(define-editor-variable tab-width +default-tab-size+)
 
 (defparameter *char-replacement*
   (let ((table (make-hash-table)))
@@ -50,11 +53,6 @@
 
 (defun control-char (char)
   (values (gethash char *char-replacement*)))
-
-(defvar *tab-size* 8)
-
-(defun tab-size ()
-  *tab-size*)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (let ((eastasian-full
@@ -116,7 +114,7 @@
   (declare (character c))
   (%binary-search (char-code c)))
 
-(defun char-width (c w &key (tab-size (tab-size)))
+(defun char-width (c w &key (tab-size +default-tab-size+))
   (declare (character c) (fixnum w))
   (cond ((char= c #\tab)
          (+ (* (floor w tab-size) tab-size) tab-size))
@@ -129,14 +127,14 @@
         (t
          (+ w 1))))
 
-(defun string-width (str &key (start 0) end (tab-size (tab-size)))
+(defun string-width (str &key (start 0) end (tab-size +default-tab-size+))
   (loop :with width := 0
         :for i :from start :below (or end (length str))
         :for c := (aref str i)
         :do (setq width (char-width c width :tab-size tab-size))
         :finally (return width)))
 
-(defun wide-index (str goal &key (start 0) (tab-size (tab-size)))
+(defun wide-index (str goal &key (start 0) (tab-size +default-tab-size+))
   (loop
     :with w := 0
     :for i :from start :below (length str) :by 1

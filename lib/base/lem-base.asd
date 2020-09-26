@@ -6,11 +6,12 @@
                "babel")
   :serial t
   :components ((:file "package")
+               (:file "string-width-utils")
                (:file "fileutil")
                (:file "util")
                (:file "errors")
                (:file "var")
-               (:file "string-width-utils")
+               (:file "editor-variables")
                (:file "macros")
                (:file "hooks")
                (:file "line")

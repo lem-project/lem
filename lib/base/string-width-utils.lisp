@@ -1,16 +1,12 @@
 (in-package :lem-base)
 
 (export '(control-char
-          tab-width
           wide-char-p
           char-width
           string-width
           wide-index))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defparameter +default-tab-size+ 8))
-
-(define-editor-variable tab-width +default-tab-size+)
+(defparameter +default-tab-size+ 8)
 
 (defparameter *char-replacement*
   (let ((table (make-hash-table)))

@@ -123,7 +123,7 @@
               (editor-abort
                (let ((message (princ-to-string c)))
                  (unless (string= "" message)
-                   (display-popup-message message :timeout 1))))
+                   (message "~A" message))))
               (otherwise
                (message "~A" c))))
           (lem-restart:call-function (fn)

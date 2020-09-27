@@ -173,6 +173,7 @@
                                      "")
                                  *isearch-prompt*
                                  *isearch-string*)
+                         :timeout nil
                          :gravity :topright))
 
 (defun make-add-char-callback (search-function)

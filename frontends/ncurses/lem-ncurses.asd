@@ -2,7 +2,7 @@
   :depends-on ("cffi"
                "cl-charms"
                "trivial-clipboard"
-               "lem-setlocale"
+               "cl-setlocale"
                "lem")
   :serial t
   :components (#+win32(:file "cl-charms-pdcurseswin32")

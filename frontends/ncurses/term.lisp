@@ -471,7 +471,7 @@
       (charms/ll:newterm term io io))))
 
 (defun term-init ()
-  (lem-setlocale/cffi:setlocale lem-setlocale/cffi:+lc-all+ "")
+  (cl-setlocale:set-all-to-native)
   (if *tty-name*
       (term-init-tty *tty-name*)
       (charms/ll:initscr))

@@ -118,17 +118,19 @@
 
 
 (defun command-loop-autodoc ()
-  (if (should-continue-autodoc-p (judgement-instance)
-                                 (current-point))
-      nil
-      (clear-autodoc-message)))
+  (when (lisp-buffer-p (current-buffer))
+    (if (should-continue-autodoc-p (judgement-instance)
+                                   (current-point))
+        nil
+        (clear-autodoc-message))))
 
 
 (defvar *autodoc-idle-timer* nil)
 
 (defun autodoc-with-idle-timer ()
-  (when (should-use-autodoc-p (judgement-instance) (current-point))
-    (lisp-autodoc)))
+  (when (lisp-buffer-p (current-buffer))
+    (when (should-use-autodoc-p (judgement-instance) (current-point))
+      (lisp-autodoc))))
 
 (defun start-autodoc-idle-timer ()
   (unless *autodoc-idle-timer*

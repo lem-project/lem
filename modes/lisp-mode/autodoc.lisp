@@ -2,8 +2,6 @@
   (:use :cl :lem :lem-lisp-mode))
 (in-package :lem-lisp-mode.autodoc)
 
-(defvar *debug-stream* nil)
-
 (define-key *lisp-mode-keymap* "Space" 'lisp-insert-space-and-autodoc)
 (define-key *lisp-mode-keymap* "C-c C-d C-a" 'lisp-autodoc)
 
@@ -60,23 +58,20 @@
       (syntax-symbol-char-p (character-at point -1))))
 
 (defun point-on-same-symbol-p (point1 point2)
-  (let ((result
-          (flet ((range (point)
-                   (with-point ((start point)
-                                (end point))
-                     (skip-chars-backward start #'syntax-symbol-char-p)
-                     (skip-chars-forward end #'syntax-symbol-char-p)
-                     (values start end))))
-            (and (on-symbol-p point1)
-                 (on-symbol-p point2)
-                 (multiple-value-bind (start1 end1) (range point1)
-                   (multiple-value-bind (start2 end2) (range point2)
-                     (and start1 end1
-                          start2 end2
-                          (point= start1 start2)
-                          (point= end1 end2))))))))
-    (format *debug-stream* "~&point-on-same-symbol-p: ~S ~S ~S~%" result point1 point2)
-    result))
+  (flet ((range (point)
+           (with-point ((start point)
+                        (end point))
+             (skip-chars-backward start #'syntax-symbol-char-p)
+             (skip-chars-forward end #'syntax-symbol-char-p)
+             (values start end))))
+    (and (on-symbol-p point1)
+         (on-symbol-p point2)
+         (multiple-value-bind (start1 end1) (range point1)
+           (multiple-value-bind (start2 end2) (range point2)
+             (and start1 end1
+                  start2 end2
+                  (point= start1 start2)
+                  (point= end1 end2)))))))
 
 (defmethod should-use-autodoc-p ((judgement autodoc-judgement) point)
   (let ((result
@@ -89,12 +84,8 @@
               (return-from judge t))
             (not (point-on-same-symbol-p point (autodoc-judgemnet-last-point judgement))))))
     (when result
-      (setf (autodoc-judgemnet-last-point judgement) point))
-    result))
-
-(defmethod should-use-autodoc-p :around ((judgement autodoc-judgement) point)
-  (let ((result (call-next-method)))
-    (format *debug-stream* "~&should-use-autodoc-p: ~S~%" result)
+      (setf (autodoc-judgemnet-last-point judgement)
+            (copy-point point :temporary)))
     result))
 
 (defmethod should-continue-autodoc-p ((judgement autodoc-judgement) point)
@@ -102,11 +93,6 @@
        (eq (point-buffer (autodoc-judgemnet-last-point judgement))
            (point-buffer point))
        (point-on-same-symbol-p point (autodoc-judgemnet-last-point judgement))))
-
-(defmethod should-continue-autodoc-p :around ((judgement autodoc-judgement) point)
-  (let ((result (call-next-method)))
-    (format *debug-stream* "~&should-continue-autodoc-p: ~S~%" result)
-    result))
 
 (defmethod reset-state ((judgement autodoc-judgement))
   (setf (autodoc-judgemnet-last-point judgement) nil))

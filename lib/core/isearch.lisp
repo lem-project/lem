@@ -41,6 +41,7 @@
 (defvar *isearch-search-function*)
 (defvar *isearch-search-forward-function*)
 (defvar *isearch-search-backward-function*)
+(defvar *isearch-popup-message* nil)
 
 (define-attribute isearch-highlight-attribute
   (t :foreground "black" :background "gray"))
@@ -165,16 +166,18 @@
   (isearch-update-buffer))
 
 (defun isearch-update-minibuffer ()
-  (display-popup-message (format nil
-                                 "~A~A~A"
-                                 (if (or (variable-value 'isearch-next-last :buffer)
-                                         (variable-value 'isearch-prev-last :buffer))
-                                     "Failing "
-                                     "")
-                                 *isearch-prompt*
-                                 *isearch-string*)
-                         :timeout nil
-                         :gravity :topright))
+  (setf *isearch-popup-message*
+        (display-popup-message (format nil
+                                       "~A~A~A"
+                                       (if (or (variable-value 'isearch-next-last :buffer)
+                                               (variable-value 'isearch-prev-last :buffer))
+                                           "Failing "
+                                           "")
+                                       *isearch-prompt*
+                                       *isearch-string*)
+                               :timeout nil
+                               :gravity :topright
+                               :destination-window *isearch-popup-message*)))
 
 (defun make-add-char-callback (search-function)
   (lambda (point string)
@@ -277,6 +280,7 @@
     (isearch-add-char char)))
 
 (defun isearch-end ()
+  (delete-popup-message *isearch-popup-message*)
   (isearch-reset-overlays (current-buffer))
   (change-previous-string *isearch-string*)
   (buffer-unbound (current-buffer) 'isearch-redisplay-string)

@@ -238,14 +238,6 @@
                         (item (get-focus-item)))
     (funcall f item)))
 
-(defvar *popup-message-window* nil)
-
-(defun clear-popup-message ()
-  (when *popup-message-window*
-    (delete-window *popup-message-window*)
-    (setf *popup-message-window* nil)
-    (redraw-frame (current-frame))))
-
 (defun compute-size-from-buffer (buffer)
   (flet ((compute-height ()
            (buffer-nlines buffer))
@@ -266,14 +258,13 @@
     (buffer-start (buffer-point buffer))
     buffer))
 
-(defun display-popup-buffer-default (buffer timeout size gravity)
+(defun display-popup-buffer-default (buffer timeout size gravity destination-window)
   (let ((size (or size (compute-size-from-buffer buffer))))
-    (clear-popup-message)
     (destructuring-bind (width height) size
+      (delete-popup-message destination-window)
       (let ((window (popup-window (current-window) buffer width height :gravity gravity)))
         (buffer-start (window-view-point window))
         (window-see window)
-        (setf *popup-message-window* window)
         (when timeout
           (check-type timeout number)
           (start-timer (round (* timeout 1000))
@@ -283,33 +274,51 @@
                            (delete-window window)))))
         window))))
 
-(defun display-popup-message-default (text &key timeout size gravity)
-  (clear-popup-message)
+(defun display-popup-message-default (text &key timeout size gravity destination-window)
   (etypecase text
     (string
      (let* ((buffer (make-popup-buffer text))
             (size (or size (compute-size-from-buffer buffer))))
        (destructuring-bind (width height) size
-         (display-popup-buffer-default buffer timeout (list width height) gravity))))
+         (display-popup-buffer-default buffer
+                                       timeout
+                                       (list width height)
+                                       gravity
+                                       destination-window))))
     (buffer
-     (display-popup-buffer-default text timeout size gravity))))
+     (display-popup-buffer-default text
+                                   timeout
+                                   size
+                                   gravity
+                                   destination-window))))
 
-(defmethod lem-if:display-popup-message (implementation text &key timeout size gravity)
-  (display-popup-message-default text :timeout timeout :size size :gravity gravity))
+(defmethod lem-if:display-popup-message (implementation text
+                                         &key timeout size gravity destination-window)
+  (display-popup-message-default text
+                                 :timeout timeout
+                                 :size size
+                                 :gravity gravity
+                                 :destination-window destination-window))
 
 (defmethod lem-if:delete-popup-message (implementation popup-message)
-  (when (windowp popup-message)
+  (when (and popup-message (not (deleted-window-p popup-message)))
     (delete-window popup-message)))
 
+(defvar *show-message* nil)
+
 (defmethod lem::show-message (string)
-  (if (null string)
-      (clear-popup-message)
-      (lem-if:display-popup-message (implementation) string)))
+  (cond ((null string)
+         (delete-popup-message *show-message*)
+         (setf *show-message* nil))
+        (t
+         (setf *show-message*
+               (display-popup-message string
+                                      :timeout nil
+                                      :destination-window *show-message*)))))
 
 
 (defun visible-popup-window-p ()
   (flet ((alivep (window)
            (and window (not (deleted-window-p window)))))
-    (or (alivep *popup-message-window*)
-        ;; TODO
-        (alivep *menu-window*))))
+    ;; TODO
+    (alivep *menu-window*)))

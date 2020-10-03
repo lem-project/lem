@@ -26,6 +26,7 @@
           deleted-window-p
           window-recenter
           window-scroll
+          window-cursor-x
           window-cursor-y
           move-to-next-virtual-line
           move-to-previous-virtual-line
@@ -340,10 +341,11 @@
     (window-scroll window n)
     n))
 
-(defun cursor-goto-next-line-p (point window)
-  "Check if the cursor goes to next line because it is at the end of width."
+(defun %calc-window-cursor-x (point window)
+  "Return (values cur-x next). the 'next' is a flag if the cursor goes to
+next line because it is at the end of width."
   (unless (variable-value 'truncate-lines :default (window-buffer window))
-    (return-from cursor-goto-next-line-p nil))
+    (return-from %calc-window-cursor-x (values (point-column point) nil)))
   (let* ((lem-base::*tab-size* (variable-value 'tab-width :default (window-buffer window)))
          (charpos (point-charpos point))
          (line    (line-string point))
@@ -357,7 +359,21 @@
           :do (setf cur-x (char-width c cur-x))
               (when (< width cur-x)
                 (setf cur-x (char-width c 0))))
-    (< width (+ cur-x add-x))))
+    (if (< width (+ cur-x add-x))
+        (values 0     t)
+        (values cur-x nil))))
+
+(defun window-cursor-x (window)
+  (let ((point (window-buffer-point window)))
+    (multiple-value-bind (x next)
+        (%calc-window-cursor-x point window)
+      x)))
+
+(defun cursor-goto-next-line-p (point window)
+  "Check if the cursor goes to next line because it is at the end of width."
+  (multiple-value-bind (x next)
+      (%calc-window-cursor-x point window)
+    next))
 
 (defun map-wrapping-line (window string fn)
   (let ((lem-base::*tab-size* (variable-value 'tab-width :default (window-buffer window))))

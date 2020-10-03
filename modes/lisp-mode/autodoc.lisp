@@ -134,7 +134,7 @@
 
 (defun start-autodoc-idle-timer ()
   (unless *autodoc-idle-timer*
-    (setf *autodoc-idle-timer* (start-idle-timer 200 t 'autodoc-with-idle-timer))))
+    (setf *autodoc-idle-timer* (start-idle-timer 1000 t 'autodoc-with-idle-timer))))
 
 (defun stop-autodoc-idle-timer ()
   (when *autodoc-idle-timer*

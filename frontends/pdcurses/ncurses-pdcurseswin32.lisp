@@ -1,5 +1,43 @@
 (in-package :lem-ncurses)
 
+;; load windows dll
+;;  (we load ntdll.dll and winmm.dll with a full path because they aren't
+;;   listed in windows knowndlls)
+(cffi:load-foreign-library '(:default "kernel32"))
+(let* ((csize  1024)
+       (cbuf   (cffi:foreign-alloc :char :count csize :initial-element 0))
+       (sysdir ""))
+  (if (zerop (cffi:foreign-funcall "GetSystemDirectoryA"
+                                   :pointer cbuf :int csize :int))
+      (error "windows dll load error (GetSystemDirectoryA failed)")
+      (setf sysdir (concatenate 'string (cffi:foreign-string-to-lisp cbuf) "\\")))
+  (cffi:load-foreign-library (concatenate 'string sysdir "ntdll.dll"))
+  (cffi:load-foreign-library (concatenate 'string sysdir "winmm.dll"))
+  (cffi:foreign-free cbuf))
+
+;; windows os version
+(cffi:defcstruct osversioninfow
+  (size            :unsigned-long)
+  (major-version   :unsigned-long)
+  (minor-version   :unsigned-long)
+  (build-number    :unsigned-long)
+  (platform-id     :unsigned-long)
+  (version-wstring :short :count 128))
+(defvar *windows-os-version*
+  (cffi:with-foreign-object (ver-info '(:struct osversioninfow))
+    (cffi:foreign-funcall "RtlGetVersion" :pointer ver-info :int)
+    (cffi:foreign-slot-value ver-info '(:struct osversioninfow) 'major-version)))
+
+;; check if PDCurses is modified for windows 10 jp
+;; ( https://github.com/Hamayama/PDCurses-win10-jp )
+(defvar *pdcurses-win10-jp*
+  (logtest (car charms/ll:*pdcurses-version-info*) #x4000))
+
+;; windows console code page
+(defvar *windows-code-page*
+  (cffi:foreign-funcall "GetConsoleOutputCP" :int))
+
+
 ;; escape key delay setting
 ;;  On PDCurses, we often have to use escape key as an alternative to alt key
 ;;  because some combination input with alt key doesn't work (e.g. M-< ).
@@ -12,15 +50,18 @@
 ;;
 (setf (variable-value 'escape-delay :global) 1000)
 
+
 ;; windows terminal type
 ;;   :mintty  : mintty  (winpty is needed)
 ;;   :conemu  : ConEmu  (experimental)
 ;;               ('chcp 65001' must be done before run)
+;;   :winterm : Windows Terminal (windows 10) (experimental)
 ;;   :cmd.exe : cmd.exe (experimental)
 (defvar *windows-term-type*
   (cond
     ((string= (uiop:getenv "MSYSCON") "mintty.exe") :mintty)
     ((uiop:getenv "ConEmuBuild") :conemu)
+    ((uiop:getenv "WT_SESSION") :winterm)
     (t :cmd.exe)))
 (defun windows-term-type ()
   *windows-term-type*)
@@ -36,53 +77,104 @@
 (defun (setf windows-term-setting) (v)
   (setf *windows-term-setting* v))
 (defstruct windows-term-setting
-  disp-char-width ;; character width setting for display
-                  ;;   t        : use default function
-                  ;;   nil      : no conversion
-                  ;;   function : use custom function
-                  ;;                (lambda (code) width)
-  pos-char-width  ;; character width setting for position
-                  ;;   t        : use default function
-                  ;;   nil      : no conversion
-                  ;;   function : use custom function
-                  ;;                (lambda (code) width)
-  cur-char-width  ;; character width setting for cursor movement
-                  ;;   t        : use default function
-                  ;;   nil      : no conversion
-                  ;;   function : use custom function
-                  ;;                (lambda (code) width)
-  cur-mov-by-pos  ;; cursor movement setting
-                  ;;   t   : cursor movement is specified by pos-char-width
-                  ;;   nil : cursor movement is specified by cur-char-width
-  (reserved-last-lines 0 :type fixnum)
-                  ;; reserve last lines for windows ime and so on
-                  ;;   fixnum : number of reserved lines
+  disp-char-width  ;; character width setting for display
+                   ;;   t        : use default function
+                   ;;   nil      : no conversion
+                   ;;   function : use custom function
+                   ;;                (lambda (code) width)
+  pos-char-width   ;; character width setting for position
+                   ;;   t        : use default function
+                   ;;   nil      : no conversion
+                   ;;   function : use custom function
+                   ;;                (lambda (code) width)
+  cur-char-width   ;; character width setting for cursor movement
+                   ;;   t        : use default function
+                   ;;   nil      : no conversion
+                   ;;   function : use custom function
+                   ;;                (lambda (code) width)
+  cur-mov-by-pos   ;; cursor movement setting
+                   ;;   t   : cursor movement is specified by pos-char-width
+                   ;;   nil : cursor movement is specified by cur-char-width
+  mouse-mov-by-pos ;; mouse cursor movement setting
+                   ;;   t   : mouse cursor movement is specified by pos-char-width
+                   ;;         (as an exception case, mouse-get-cur-x for horizontal
+                   ;;          dragging window is specified by cur-char-width
+                   ;;          if cur-char-width is not nil)
+                   ;;   nil : mouse cursor movement is specified by cur-char-width
+  cmd-exe-print    ;; use special print function for cmd.exe (windows 8.1 or earlier)
+                   ;;   t   : enabled
+                   ;;   nil : disabled
+  conemu-mouse     ;; count zero-width-space character for ConEmu mouse (windows 10)
+                   ;;   t   : enabled
+                   ;;   nil : disabled
+  winterm-input    ;; drop some input for Windows Terminal (windows 10)
+                   ;;   t   : enabled
+                   ;;   nil : disabled
+  resize-refresh   ;; force refresh when display is resized (windows 8.1 or earlier)
+                   ;;   t   : enabled
+                   ;;   nil : disabled
+  (resize-delay 0 :type fixnum)
+                   ;; set resize delay counter (windows 10)
+                   ;;   fixnum : number of delay count (1count=0.1sec)
+  (reserved-last-lines 1 :type fixnum)
+                   ;; reserve last line for windows ime (windows 8.1 or earlier)
+                   ;; reserve last line for safety (windows 10)
+                   ;;   fixnum : number of reserved lines
   )
 (defun update-windows-term-setting ()
   (setf (windows-term-setting)
         (case (windows-term-type)
           (:mintty
            (make-windows-term-setting
-            :disp-char-width t
-            :pos-char-width  t
-            :cur-char-width  t
-            :cur-mov-by-pos  nil
-            :reserved-last-lines 0))
+            :disp-char-width     t
+            :pos-char-width      t
+            :cur-char-width      t
+            :cur-mov-by-pos      *pdcurses-win10-jp*
+            :mouse-mov-by-pos    nil
+            :cmd-exe-print       nil
+            :conemu-mouse        nil
+            :winterm-input       nil
+            :resize-refresh      (not *pdcurses-win10-jp*)
+            :resize-delay        (if *pdcurses-win10-jp* 5 0)
+            :reserved-last-lines 1))
           (:conemu
            (make-windows-term-setting
-            :disp-char-width t
-            :pos-char-width  t
-            :cur-char-width  nil
-            :cur-mov-by-pos  t
-            ;; reserve last line for display problem
+            :disp-char-width     t
+            :pos-char-width      t
+            :cur-char-width      nil
+            :cur-mov-by-pos      t
+            :mouse-mov-by-pos    t
+            :cmd-exe-print       nil
+            :conemu-mouse        *pdcurses-win10-jp*
+            :winterm-input       nil
+            :resize-refresh      (not *pdcurses-win10-jp*)
+            :resize-delay        (if *pdcurses-win10-jp* 5 0)
+            :reserved-last-lines 1))
+          (:winterm
+           (make-windows-term-setting
+            :disp-char-width     t
+            :pos-char-width      t
+            :cur-char-width      t
+            :cur-mov-by-pos      t
+            :mouse-mov-by-pos    nil
+            :cmd-exe-print       nil
+            :conemu-mouse        nil
+            :winterm-input       t
+            :resize-refresh      (not *pdcurses-win10-jp*)
+            :resize-delay        (if *pdcurses-win10-jp* 10 0)
             :reserved-last-lines 1))
           (t
            (make-windows-term-setting
-            :disp-char-width nil
-            :pos-char-width  nil
-            :cur-char-width  nil
-            :cur-mov-by-pos  nil
-            ;; reserve last line for windows ime
+            :disp-char-width     *pdcurses-win10-jp*
+            :pos-char-width      *pdcurses-win10-jp*
+            :cur-char-width      *pdcurses-win10-jp*
+            :cur-mov-by-pos      *pdcurses-win10-jp*
+            :mouse-mov-by-pos    nil
+            :cmd-exe-print       (not *pdcurses-win10-jp*)
+            :conemu-mouse        nil
+            :winterm-input       nil
+            :resize-refresh      (not *pdcurses-win10-jp*)
+            :resize-delay        (if *pdcurses-win10-jp* 10 0)
             :reserved-last-lines 1)))))
 (defmethod calc-disp-char-width ((wt windows-term-setting) code)
   (let ((fn (windows-term-setting-disp-char-width wt)))
@@ -108,30 +200,14 @@
             (if (lem-base:wide-char-p (code-char code)) 2 1)))))
 (defmethod (setf reserved-last-lines) (v (wt windows-term-setting))
   (setf (windows-term-setting-reserved-last-lines wt) v)
-  (setf (now-resizing) t)
+  (setf (now-resizing)
+        (max (windows-term-setting-resize-delay wt) 1))
   (lem::change-display-size-hook)
   v)
 
 ;; initialize windows terminal type and setting
 (setf (windows-term-type) (windows-term-type))
 
-;; load windows dll
-;;  (we load winmm.dll with a full path because it isn't listed in
-;;   windows knowndlls)
-(cffi:load-foreign-library '(:default "kernel32"))
-(let* ((csize  1024)
-       (cbuf   (cffi:foreign-alloc :char :count csize :initial-element 0))
-       (sysdir ""))
-  (if (zerop (cffi:foreign-funcall "GetSystemDirectoryA"
-                                   :pointer cbuf :int csize :int))
-      (error "winmm.dll load error (GetSystemDirectoryA failed)")
-      (setf sysdir (concatenate 'string (cffi:foreign-string-to-lisp cbuf) "\\")))
-  (cffi:load-foreign-library (concatenate 'string sysdir "winmm.dll"))
-  (cffi:foreign-free cbuf))
-
-;; windows console code page
-(defvar *windows-code-page*
-  (cffi:foreign-funcall "GetConsoleOutputCP" :int))
 
 ;; input polling interval (sec)
 ;;  (we don't use PDCurses's internal polling timer (0.05 sec interval))
@@ -173,7 +249,15 @@
     (charms/ll:PDC-save-key-modifiers 1)
     ;; timeout setting is necessary to exit lem normally
     (charms/ll:wtimeout *padwin* 0))
-  (charms/ll:wgetch *padwin*))
+  (let ((code (charms/ll:wgetch *padwin*)))
+    ;; drop some input for Windows Terminal (windows 10)
+    ;; (they appears when we input surrogate pair characters)
+    (when (windows-term-setting-winterm-input (windows-term-setting))
+      (when (= code #x020b)
+        (setf code (charms/ll:wgetch *padwin*))
+        (when (= code #x0208)
+          (setf code (charms/ll:wgetch *padwin*)))))
+    code))
 (defmacro with-pad-input-timeout ((time) &body body)
   `(progn
      (charms/ll:wtimeout *padwin* ,time)
@@ -182,9 +266,17 @@
 
 ;; for resizing display
 (defkeycode "[resize]" #x222)
-(let ((resizing nil))
-  (defun now-resizing () resizing)
-  (defun (setf now-resizing) (v) (setf resizing v)))
+(let ((resizing-count 0)
+      (lock (bt:make-lock)))
+  (defun now-resizing ()
+         (bt:with-lock-held (lock)
+           resizing-count))
+  (defun (setf now-resizing) (v)
+         (bt:with-lock-held (lock)
+           (setf resizing-count v)))
+  (defun now-resizing-countdown ()
+         (bt:with-lock-held (lock)
+           (decf resizing-count))))
 (defvar *min-cols*  5)
 (defvar *min-lines* 3)
 
@@ -242,7 +334,7 @@
 ;; get mouse disp-x for pointing wide characters properly
 (defun mouse-get-disp-x (view x y)
   (cond
-    ((and (not (windows-term-setting-cur-mov-by-pos (windows-term-setting)))
+    ((and (not (windows-term-setting-mouse-mov-by-pos (windows-term-setting)))
           (windows-term-setting-disp-char-width (windows-term-setting))
           (windows-term-setting-pos-char-width  (windows-term-setting))
           (windows-term-setting-cur-char-width  (windows-term-setting)))
@@ -258,9 +350,9 @@
               (incf pos-x  (calc-pos-char-width  (windows-term-setting) code))
               (incf cur-x  (calc-cur-char-width  (windows-term-setting) code)))
        disp-x))
-    ((and (windows-term-setting-cur-mov-by-pos  (windows-term-setting))
-          (windows-term-setting-disp-char-width (windows-term-setting))
-          (windows-term-setting-pos-char-width  (windows-term-setting)))
+    ((and (windows-term-setting-mouse-mov-by-pos (windows-term-setting))
+          (windows-term-setting-disp-char-width  (windows-term-setting))
+          (windows-term-setting-pos-char-width   (windows-term-setting)))
      ;; for ConEmu
      (let ((disp-x 0)
            (pos-x  0)
@@ -269,16 +361,20 @@
           :for code := (get-charcode-from-scrwin view pos-x pos-y)
           :until (= code charms/ll:ERR)
           :do (incf disp-x (calc-disp-char-width (windows-term-setting) code))
-              (incf pos-x  (calc-pos-char-width  (windows-term-setting) code)))
+              (incf pos-x  (calc-pos-char-width  (windows-term-setting) code))
+              ;; count zero-width-space character (#\u200b)
+              (incf x (if (and (windows-term-setting-conemu-mouse (windows-term-setting))
+                               (= code #x200b))
+                          1 0)))
        disp-x))
     (t x)))
 ;; for ConEmu
 ;; get mouse cur-x for horizontal dragging window
 (defun mouse-get-cur-x (view x y)
   (cond
-    ((and (windows-term-setting-cur-mov-by-pos (windows-term-setting))
-          (windows-term-setting-pos-char-width (windows-term-setting))
-          (windows-term-setting-cur-char-width (windows-term-setting)))
+    ((and (windows-term-setting-mouse-mov-by-pos (windows-term-setting))
+          (windows-term-setting-pos-char-width   (windows-term-setting))
+          (windows-term-setting-cur-char-width   (windows-term-setting)))
      ;; for ConEmu with custom function of cur-char-width
      (let ((pos-x 0)
            (pos-y y)
@@ -289,9 +385,9 @@
           :do (incf pos-x (calc-pos-char-width (windows-term-setting) code))
               (incf cur-x (calc-cur-char-width (windows-term-setting) code)))
        cur-x))
-    ((and (windows-term-setting-cur-mov-by-pos  (windows-term-setting))
-          (windows-term-setting-disp-char-width (windows-term-setting))
-          (windows-term-setting-pos-char-width  (windows-term-setting)))
+    ((and (windows-term-setting-mouse-mov-by-pos (windows-term-setting))
+          (windows-term-setting-disp-char-width  (windows-term-setting))
+          (windows-term-setting-pos-char-width   (windows-term-setting)))
      ;; for ConEmu without custom function of cur-char-width
      (mouse-get-disp-x view x y))
     (t x)))
@@ -501,7 +597,8 @@
          :retry)
         ((= code resize-code)
          ;; for resizing display
-         (setf (now-resizing) t)
+         (setf (now-resizing)
+               (max (windows-term-setting-resize-delay (windows-term-setting)) 1))
          :resize)
         ((= code mouse-code)
          ;; for mouse
@@ -553,8 +650,6 @@
 (let ((temp-view   nil)
       (toggle-flag t))
   (defun write-something-to-last-line ()
-    (when (eq (windows-term-type) :cmd.exe)
-      (return-from write-something-to-last-line))
     (unless temp-view
       (setf temp-view (lem-if:make-view *implementation* nil 0 0 0 0 nil)))
     ;; this recovers winpty's screen corruption
@@ -568,35 +663,32 @@
 
 ;; workaround for display update problem (incomplete)
 (defun force-refresh-display (width height)
+  (unless (windows-term-setting-resize-refresh (windows-term-setting))
+    (return-from force-refresh-display))
   (loop :for y1 :from 0 :below height
      ;; clear display area to reset PDCurses's internal cache memory
      ;; ('#\.' is necessary ('#\space' doesn't work))
      :with str := (make-string width :initial-element #\.)
      :do (charms/ll:mvwaddstr charms/ll:*stdscr* y1 0 str))
   (charms/ll:refresh)
-  (sleep 0.1)
-  ;; clear reserved last lines
-  (let ((last-lines (windows-term-setting-reserved-last-lines
-                     (windows-term-setting))))
-    (when (and (> last-lines 0) (> height *min-lines*))
-      (loop :for y1 :from (max (- height last-lines) *min-lines*) :below height
-         :with str := (make-string width :initial-element #\space)
-         :do (charms/ll:mvwaddstr charms/ll:*stdscr* y1 0 str)))))
+  (sleep 0.1))
 
 ;; for resizing display
 (defun resize-display ()
-  (when (now-resizing)
-    (setf (now-resizing) nil)
-    ;; wait to get window size certainly
-    (sleep 0.1)
-    ;; check resize error
-    (when (= (charms/ll:resizeterm 0 0) charms/ll:ERR)
-      ;; this is needed to clear PDCurses's inner event flag
-      (charms/ll:resizeterm (max *min-lines* charms/ll:*lines*)
-                            (max *min-cols*  charms/ll:*cols*)))
-    (charms/ll:erase)
-    ;; workaround for display update problem (incomplete)
-    (force-refresh-display charms/ll:*cols* charms/ll:*lines*)))
+  (when (<= (now-resizing) 0)
+    (return-from resize-display))
+  ;; wait to get window size certainly
+  (loop :while (> (now-resizing) 0)
+     :do (now-resizing-countdown)
+         (sleep 0.1))
+  ;; check resize error
+  (when (= (charms/ll:resizeterm 0 0) charms/ll:ERR)
+    ;; this is needed to clear PDCurses's inner event flag
+    (charms/ll:resizeterm (max *min-lines* charms/ll:*lines*)
+                          (max *min-cols*  charms/ll:*cols*)))
+  ;; workaround for display update problem (incomplete)
+  (force-refresh-display charms/ll:*cols* charms/ll:*lines*)
+  (charms/ll:erase))
 
 ;; for resizing display
 (defmethod lem-if:display-width ((implementation ncurses))
@@ -609,8 +701,7 @@
   ;; reserve last lines for windows ime and so on
   (max *min-lines*
        (- charms/ll:*lines*
-          (windows-term-setting-reserved-last-lines
-           (windows-term-setting)))))
+          (windows-term-setting-reserved-last-lines (windows-term-setting)))))
 
 ;; use only stdscr
 (defmethod lem-if:delete-view ((implementation ncurses) view)
@@ -749,10 +840,10 @@
       (t
        string))))
 
-;; for cmd.exe (using cjk code page)
-;; workaround for printing problem of wide characters (incomplete)
+;; for cmd.exe (windows 8.1 or earlier) (using cjk code page)
+;; use special print function for printing wide characters (incomplete)
 (defun print-sub (scrwin x y string)
-  (unless (and (eq (windows-term-type) :cmd.exe)
+  (unless (and (windows-term-setting-cmd-exe-print (windows-term-setting))
                (member *windows-code-page* '(932 936 949 950)))
     (charms/ll:mvwaddstr scrwin y x string)
     (return-from print-sub))
@@ -780,7 +871,8 @@
        (when (and (> code #x7f)
                   (not (and (= *windows-code-page* 932)
                             (<= #xff61 code #xff9f))))
-         (charms/ll:mvwaddch scrwin y pos-x code)
+         ;; add space character for windows console problem
+         (charms/ll:mvwaddch scrwin y pos-x (char-code #\space))
          (incf pos-x)
          (charms/ll:refresh))))
 
@@ -833,7 +925,8 @@
 ;; use only stdscr
 (defun draw-border (border view)
   ;; b-width includes a margin for wide characters display problem
-  (let* ((attr     (attribute-to-bits (make-attribute :background "#666666" :foreground "white")))
+  (let* ((attr     (attribute-to-bits (make-attribute :background "#666666"
+                                                      :foreground "#b0b0b0")))
          (b-width  (+ (border-width border) 2))
          (b-height (border-height border))
          (x1       -2)
@@ -841,20 +934,25 @@
          (x2       (+ x1 b-width  -1))
          (y2       (+ y1 b-height -1)))
     (charms/ll:attron attr)
-    (charms/ll:mvaddstr (get-pos-y view x1 y1)
-                        (get-pos-x view x1 y1)
-                        (make-string b-width :initial-element #\space))
+    (loop :for x :from x1 :to x2
+          :do (draw-border-one-block view x y1))
     (loop :for y :from (+ y1 1) :below y2
-          :do (charms/ll:mvaddch (get-pos-y view x1 y)
-                                 (get-pos-x view x1 y)
-                                 (char-code #\space))
-              (charms/ll:mvaddch (get-pos-y view x2 y)
-                                 (get-pos-x view x2 y)
-                                 (char-code #\space)))
-    (charms/ll:mvaddstr (get-pos-y view x1 y2)
-                        (get-pos-x view x1 y2)
-                        (make-string b-width :initial-element #\space))
+          :do (draw-border-one-block view x1 y)
+              (draw-border-one-block view x2 y))
+    (loop :for x :from x1 :to x2
+          :do (draw-border-one-block view x y2))
     (charms/ll:attroff attr)))
+(defun draw-border-one-block (view x y)
+  ;; write same character to avoid wide characters display problem
+  (let* ((pos-x (get-pos-x view x y))
+         (pos-y (get-pos-y view x y))
+         (code  (charms/ll:mvinch pos-y pos-x)))
+    (when (and (not (= code charms/ll:ERR))
+               (< pos-y
+                  (- charms/ll:*lines*
+                     (windows-term-setting-reserved-last-lines (windows-term-setting)))))
+      (setf code (logand code charms/ll:A_CHARTEXT))
+      (charms/ll:mvaddch pos-y pos-x code))))
 
 ;; use only stdscr
 (defmethod lem-if:redraw-view-after ((implementation ncurses) view focus-window-p)

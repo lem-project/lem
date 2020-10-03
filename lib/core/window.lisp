@@ -367,12 +367,14 @@ next line because it is at the end of width."
   (let ((point (window-buffer-point window)))
     (multiple-value-bind (x next)
         (%calc-window-cursor-x point window)
+      (declare (ignore next))
       x)))
 
 (defun cursor-goto-next-line-p (point window)
   "Check if the cursor goes to next line because it is at the end of width."
   (multiple-value-bind (x next)
       (%calc-window-cursor-x point window)
+    (declare (ignore x))
     next))
 
 (defun map-wrapping-line (window string fn)

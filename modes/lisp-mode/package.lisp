@@ -45,8 +45,6 @@
    :lisp-eval-region
    :lisp-load-file
    :lisp-echo-arglist
-   :lisp-autodoc-with-typeout
-   :lisp-autodoc
    :lisp-remove-notes
    :lisp-compile-and-load-file
    :lisp-compile-region

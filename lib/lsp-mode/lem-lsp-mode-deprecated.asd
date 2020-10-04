@@ -1,4 +1,4 @@
-(defsystem "lem-lsp-mode"
+(defsystem "lem-lsp-mode-deprecated"
   :depends-on ("jsonrpc" "quri" "lem-core" #|"lem-process"|#
                "jsonrpc/transport/tcp")
   :serial t

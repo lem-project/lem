@@ -141,6 +141,9 @@
     (setf *autodoc-idle-timer* nil)))
 
 
+(defun autodoc-enabled-p ()
+  (not (null *autodoc-idle-timer*)))
+
 (defun enable-autodoc ()
   (start-autodoc-idle-timer)
   (add-hook *post-command-hook* 'command-loop-autodoc)
@@ -154,5 +157,6 @@
 
 (define-command lisp-insert-space-and-autodoc (n) ("p")
   (loop :repeat n :do (insert-character (current-point) #\space))
-  (unless (continue-flag 'lisp-insert-space-and-autodoc)
-    (lisp-autodoc)))
+  (when (autodoc-enabled-p)
+    (unless (continue-flag 'lisp-insert-space-and-autodoc)
+      (lisp-autodoc))))

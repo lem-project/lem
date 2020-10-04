@@ -5,6 +5,7 @@
                "lem-tests/lisp-syntax/defstruct-to-defclass"
                "lem-tests/syntax-test"
                "lem-tests/buffer-list-test"
+               "lem-tests/lisp-mode/package-inferred-system"
                "lem-tests/frame-multiplexer"
                "lem-tests/vi-mode")
   :pathname "tests"
@@ -12,3 +13,4 @@
                     (symbol-call :rove :run c)))
 
 (asdf:register-system-packages "lem-lisp-syntax" '(:lem-lisp-syntax.defstruct-to-defclass))
+(asdf:register-system-packages "lem-lisp-mode" '(:lem-lisp-mode.package-inferred-system))

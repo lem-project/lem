@@ -47,7 +47,10 @@
 (defclass autodoc-judgement ()
   ((last-point
     :initform nil
-    :accessor autodoc-judgemnet-last-point)))
+    :accessor autodoc-judgement-last-point)
+   (modified-tick
+    :initform nil
+    :accessor autodoc-judgement-modified-tick)))
 
 (defun lisp-buffer-p (buffer)
   (member (buffer-major-mode buffer)
@@ -73,26 +76,45 @@
                   (point= start1 start2)
                   (point= end1 end2)))))))
 
+(defun rotten-last-point (autodoc-judgement)
+  (if (null (autodoc-judgement-last-point autodoc-judgement))
+      nil
+      (not (eql (autodoc-judgement-modified-tick autodoc-judgement)
+                (buffer-modified-tick (point-buffer (autodoc-judgement-last-point autodoc-judgement)))))))
+
+(defun care-last-point (autodoc-judgement)
+  ;; last-pointはtemporaryなのでバッファ変更後の位置が行の外側を指す場合がある
+  ;; そのためlast-point保存時にbuffer-tickも保存しておき、
+  ;; 保存時のbuffer-tickと違う(変更されている)場合は無効なものとして扱う
+  (when (rotten-last-point autodoc-judgement)
+    (setf (autodoc-judgement-last-point autodoc-judgement) nil)
+    (setf (autodoc-judgement-modified-tick autodoc-judgement) nil)))
+
 (defmethod should-use-autodoc-p ((judgement autodoc-judgement) point)
+  (care-last-point judgement)
   (let ((result
           (and (lisp-buffer-p (point-buffer point))
                (on-symbol-p point)
-               (or (null (autodoc-judgemnet-last-point judgement))
-                   (not (point-on-same-symbol-p point (autodoc-judgemnet-last-point judgement)))))))
+               (or (null (autodoc-judgement-last-point judgement))
+                   (not (point-on-same-symbol-p point (autodoc-judgement-last-point judgement)))))))
     (when result
-      (setf (autodoc-judgemnet-last-point judgement)
-            (copy-point point :temporary)))
+      (setf (autodoc-judgement-last-point judgement)
+            (copy-point point :temporary))
+      (setf (autodoc-judgement-modified-tick judgement)
+            (buffer-modified-tick (point-buffer point))))
     result))
 
 (defmethod should-continue-autodoc-p ((judgement autodoc-judgement) point)
+  (care-last-point judgement)
   (and (lisp-buffer-p (point-buffer point))
-       (autodoc-judgemnet-last-point judgement)
-       (eq (point-buffer (autodoc-judgemnet-last-point judgement))
+       (autodoc-judgement-last-point judgement)
+       (eq (point-buffer (autodoc-judgement-last-point judgement))
            (point-buffer point))
-       (point-on-same-symbol-p point (autodoc-judgemnet-last-point judgement))))
+       (point-on-same-symbol-p point (autodoc-judgement-last-point judgement))))
 
 (defmethod reset-state ((judgement autodoc-judgement))
-  (setf (autodoc-judgemnet-last-point judgement) nil))
+  (setf (autodoc-judgement-last-point judgement) nil
+        (autodoc-judgement-modified-tick judgement) nil))
 
 (defun judgement-instance ()
   (or *judgement-instance*

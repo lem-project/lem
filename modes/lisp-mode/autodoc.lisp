@@ -64,6 +64,16 @@
                   (point= end1 end2)))))))
 
 
+;;; dirty hack
+
+(defparameter *disable-autodoc-minor-modes* '(lem.isearch:isearch-mode lem.completion-mode:completion-mode))
+
+(defun conflict-minor-mode-p ()
+  (dolist (mode (buffer-minor-modes (current-buffer)) t)
+    (when (member mode *disable-autodoc-minor-modes*)
+      (return nil))))
+
+
 (defgeneric should-use-autodoc-p (judgement point))
 (defgeneric should-continue-autodoc-p (judgement point))
 (defgeneric reset-state (judgement))
@@ -99,7 +109,8 @@
 (defmethod should-use-autodoc-p ((judgement autodoc-judgement) point)
   (care-last-point judgement)
   (let ((result
-          (and (lisp-buffer-p (point-buffer point))
+          (and (conflict-minor-mode-p)
+               (lisp-buffer-p (point-buffer point))
                (on-symbol-p point)
                (or (null (autodoc-judgement-last-point judgement))
                    (not (point-on-same-symbol-p point (autodoc-judgement-last-point judgement)))))))

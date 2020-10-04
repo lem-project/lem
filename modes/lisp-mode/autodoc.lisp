@@ -84,7 +84,10 @@
     :accessor autodoc-judgement-last-point)
    (modified-tick
     :initform nil
-    :accessor autodoc-judgement-modified-tick)))
+    :accessor autodoc-judgement-modified-tick)
+   (cancel-p
+    :initform nil
+    :accessor autodoc-judgement-cancel-p)))
 
 (defvar *judgement-instance* nil)
 
@@ -109,7 +112,8 @@
 (defmethod should-use-autodoc-p ((judgement autodoc-judgement) point)
   (care-last-point judgement)
   (let ((result
-          (and (conflict-minor-mode-p)
+          (and (not (autodoc-judgement-cancel-p judgement))
+               (conflict-minor-mode-p)
                (lisp-buffer-p (point-buffer point))
                (on-symbol-p point)
                (or (null (autodoc-judgement-last-point judgement))
@@ -157,7 +161,8 @@
 
 (defun command-loop-autodoc ()
   (unless (should-continue-autodoc-p (judgement-instance) (current-point))
-    (clear-autodoc-message)))
+    (clear-autodoc-message))
+  (setf (autodoc-judgement-cancel-p (judgement-instance)) nil))
 
 
 (defvar *autodoc-idle-timer* nil)
@@ -198,3 +203,11 @@
 
 
 (add-hook *lisp-mode-hook* 'enable-autodoc)
+
+(defun cancel-autodoc (c)
+  (declare (ignore c))
+  (when (autodoc-enabled-p)
+    (clear-autodoc-message)
+    (setf (autodoc-judgement-cancel-p (judgement-instance)) t)))
+
+(lem::register-command-loop-condition-handler 'editor-abort 'cancel-autodoc)

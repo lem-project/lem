@@ -315,3 +315,9 @@
                (display-popup-message string
                                       :timeout nil
                                       :destination-window *show-message*)))))
+
+(defmethod lem::show-message-buffer (buffer)
+  (setf *show-message*
+        (display-popup-message buffer
+                               :timeout nil
+                               :destination-window *show-message*)))

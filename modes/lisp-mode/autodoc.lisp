@@ -75,14 +75,10 @@
 
 (defmethod should-use-autodoc-p ((judgement autodoc-judgement) point)
   (let ((result
-          (block judge
-            (unless (lisp-buffer-p (point-buffer point))
-              (return-from judge nil))
-            (unless (on-symbol-p point)
-              (return-from judge nil))
-            (when (null (autodoc-judgemnet-last-point judgement))
-              (return-from judge t))
-            (not (point-on-same-symbol-p point (autodoc-judgemnet-last-point judgement))))))
+          (and (lisp-buffer-p (point-buffer point))
+               (on-symbol-p point)
+               (or (null (autodoc-judgemnet-last-point judgement))
+                   (not (point-on-same-symbol-p point (autodoc-judgemnet-last-point judgement)))))))
     (when result
       (setf (autodoc-judgemnet-last-point judgement)
             (copy-point point :temporary)))

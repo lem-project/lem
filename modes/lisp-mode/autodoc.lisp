@@ -159,7 +159,7 @@
                (redraw-frame (current-frame))))))
 
 
-(defun command-loop-autodoc ()
+(defun post-command-hook ()
   (unless (should-continue-autodoc-p (judgement-instance) (current-point))
     (clear-autodoc-message))
   (setf (autodoc-judgement-cancel-p (judgement-instance)) nil))
@@ -186,12 +186,12 @@
 
 (defun enable-autodoc ()
   (start-autodoc-idle-timer)
-  (add-hook *post-command-hook* 'command-loop-autodoc)
+  (add-hook *post-command-hook* 'post-command-hook)
   (values))
 
 (defun disable-autodoc ()
   (stop-autodoc-idle-timer)
-  (remove-hook *post-command-hook* 'command-loop-autodoc)
+  (remove-hook *post-command-hook* 'post-command-hook)
   (values))
 
 

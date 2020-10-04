@@ -320,6 +320,7 @@
   (check-connection)
   (interactive-eval string))
 
+;(define-command scheme-eval-defun () ()
 (define-command scheme-eval-define () ()
   (check-connection)
   (with-point ((point (current-point)))
@@ -371,9 +372,8 @@
       (scheme-eval-async
        `(,autodoc-symbol ',context)
        (lambda (doc)
-         (ignore-errors
-          (destructuring-bind (doc cache-p) doc
-            (declare (ignore cache-p))
+         (trivia:match doc
+           ((list doc _)
             (unless (eq doc :not-available)
               (let* ((buffer (make-buffer "*swank:autodoc-fontity*"
                                           :temporary t :enable-undo-p nil))
@@ -390,6 +390,8 @@
                       (search-forward point "<===")
                       (delete-between-points start point)
                       (insert-string point string :attribute 'region))))
+                (buffer-start (buffer-point buffer))
+                (setf (variable-value 'truncate-lines :buffer buffer) nil)
                 (funcall function buffer))))))))))
 
 (define-command scheme-autodoc-with-typeout () ()
@@ -403,7 +405,17 @@
 
 (define-command scheme-autodoc () ()
   (check-connection)
-  (autodoc (lambda (buffer) (message-buffer buffer))))
+  (autodoc (lambda (buffer)
+             (display-popup-message buffer
+                                    :timeout nil
+                                    :gravity (if (eq *use-scheme-autodoc* :topright)
+                                                 :topright
+                                                 nil)))))
+
+(define-command scheme-insert-space-and-autodoc (n) ("p")
+  (loop :repeat n :do (insert-character (current-point) #\space))
+  (unless (continue-flag 'scheme-insert-space-and-autodoc)
+    (scheme-autodoc)))
 
 (defun check-parens ()
   (with-point ((point (current-point)))
@@ -519,6 +531,7 @@
                                                         nil)
                        #'compilation-finished)))
 
+;(define-command scheme-compile-defun () ()
 (define-command scheme-compile-define () ()
   (check-connection)
   (with-point ((point (current-point)))
@@ -1120,9 +1133,9 @@
           ;           (not (eq *use-scheme-set-library* :repl)))
           ;  (update-buffer-package))
           (when (and *use-scheme-autodoc*
-                     (member major-mode '(scheme-mode scheme-repl-mode)))
-            (unless (active-echoarea-p)
-              (scheme-autodoc))))
+                     (member major-mode '(scheme-mode scheme-repl-mode))
+                     (not (lem.popup-window::visible-popup-window-p)))
+            (scheme-autodoc)))
       (error () (scheme-slime-quit)))))
 
 (defun highlight-region (start end attribute name)

@@ -510,8 +510,9 @@
 (define-command lisp-autodoc-with-typeout () ()
   (autodoc (lambda (temp-buffer)
              (let ((buffer (make-buffer (buffer-name temp-buffer))))
-               (erase-buffer buffer)
-               (insert-buffer (buffer-point buffer) temp-buffer)
+               (with-buffer-read-only buffer nil
+                 (erase-buffer buffer)
+                 (insert-buffer (buffer-point buffer) temp-buffer))
                (with-pop-up-typeout-window (stream buffer)
                  (declare (ignore stream)))))))
 

@@ -18,6 +18,7 @@
    :*default-port*
    :*localhost*
    :*lisp-mode-keymap*
+   :*lisp-mode-hook*
    :lisp-connection-list
    :self-connected-p
    :self-connected-port

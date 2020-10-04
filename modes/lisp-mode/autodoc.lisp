@@ -195,3 +195,6 @@
   (when (autodoc-enabled-p)
     (unless (continue-flag 'lisp-insert-space-and-autodoc)
       (lisp-autodoc))))
+
+
+(add-hook *lisp-mode-hook* 'enable-autodoc)

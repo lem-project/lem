@@ -24,7 +24,8 @@
     (:name "lisp"
      :description "Contains necessary functions to handle lisp code."
      :keymap *lisp-mode-keymap*
-     :syntax-table lem-lisp-syntax:*syntax-table*)
+     :syntax-table lem-lisp-syntax:*syntax-table*
+     :mode-hook *lisp-mode-hook*)
   (modeline-add-status-list (lambda (window)
                               (format nil " [~A~A]" (buffer-package (window-buffer window) "CL-USER")
                                       (if *connection*

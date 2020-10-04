@@ -109,6 +109,8 @@
   (let ((line-number (line-number-at-point (current-point)))
         (charpos (point-charpos (current-point))))
     (autodoc (lambda (buffer)
+               ;; autodocのための情報はサーバーへの問い合わせがあり非同期なので
+               ;; 情報が返ってきた時にはカーソルが別の場所にあって表示するべきではないことがある
                (when (and (= line-number (line-number-at-point (current-point)))
                           (= charpos (point-charpos (current-point))))
                  (setf *autodoc-message*

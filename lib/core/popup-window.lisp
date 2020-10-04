@@ -315,10 +315,3 @@
                (display-popup-message string
                                       :timeout nil
                                       :destination-window *show-message*)))))
-
-
-(defun visible-popup-window-p ()
-  (flet ((alivep (window)
-           (and window (not (deleted-window-p window)))))
-    ;; TODO
-    (alivep *menu-window*)))

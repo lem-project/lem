@@ -5,6 +5,7 @@
 (define-key *lisp-mode-keymap* "Space" 'lisp-insert-space-and-autodoc)
 (define-key *lisp-mode-keymap* "C-c C-d C-a" 'lisp-autodoc)
 
+
 (let ((autodoc-symbol nil))
   (defun autodoc-symbol ()
     (or autodoc-symbol
@@ -38,20 +39,6 @@
               (funcall function buffer)))))))))
 
 
-(defvar *judgement-instance* nil)
-
-(defgeneric should-use-autodoc-p (judgement point))
-(defgeneric should-continue-autodoc-p (judgement point))
-(defgeneric reset-state (judgement))
-
-(defclass autodoc-judgement ()
-  ((last-point
-    :initform nil
-    :accessor autodoc-judgement-last-point)
-   (modified-tick
-    :initform nil
-    :accessor autodoc-judgement-modified-tick)))
-
 (defun lisp-buffer-p (buffer)
   (member (buffer-major-mode buffer)
           '(lisp-mode lisp-repl-mode)))
@@ -75,6 +62,25 @@
                   start2 end2
                   (point= start1 start2)
                   (point= end1 end2)))))))
+
+
+(defgeneric should-use-autodoc-p (judgement point))
+(defgeneric should-continue-autodoc-p (judgement point))
+(defgeneric reset-state (judgement))
+
+(defclass autodoc-judgement ()
+  ((last-point
+    :initform nil
+    :accessor autodoc-judgement-last-point)
+   (modified-tick
+    :initform nil
+    :accessor autodoc-judgement-modified-tick)))
+
+(defvar *judgement-instance* nil)
+
+(defun judgement-instance ()
+  (or *judgement-instance*
+      (setf *judgement-instance* (make-instance 'autodoc-judgement))))
 
 (defun rotten-last-point (autodoc-judgement)
   (if (null (autodoc-judgement-last-point autodoc-judgement))
@@ -115,10 +121,6 @@
 (defmethod reset-state ((judgement autodoc-judgement))
   (setf (autodoc-judgement-last-point judgement) nil
         (autodoc-judgement-modified-tick judgement) nil))
-
-(defun judgement-instance ()
-  (or *judgement-instance*
-      (setf *judgement-instance* (make-instance 'autodoc-judgement))))
 
 
 (defvar *autodoc-message* nil)

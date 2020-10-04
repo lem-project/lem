@@ -64,7 +64,7 @@
                   (point= end1 end2)))))))
 
 
-;;; dirty hack
+;;; TODO: isearch-modeやcompletion-modeという具体的なモードを指定しないようにする
 
 (defparameter *disable-autodoc-minor-modes* '(lem.isearch:isearch-mode lem.completion-mode:completion-mode))
 

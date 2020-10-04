@@ -27,7 +27,13 @@
   (t :background "#444" :foreground "white"))
 
 (defun compute-cursor-position (source-window width height)
-  (let* ((x (+ (window-x source-window)
+  (let* ((b2 (* +border-size+ 2))
+         ;; -2 is workaround for windows pdcurses
+         (disp-w (max (- (display-width)  b2 #+win32 2)
+                      +min-width+))
+         (disp-h (max (- (display-height) b2)
+                      +min-height+))
+         (x (+ (window-x source-window)
                (window-cursor-x source-window)))
          (y (+ (window-y source-window)
                (window-cursor-y source-window)
@@ -36,13 +42,7 @@
          (w  (max (+ width #+win32 1)
                   +min-width+))
          (h  (max height
-                  +min-height+))
-         (b2 (* +border-size+ 2))
-         ;; -2 is workaround for windows pdcurses
-         (disp-w (max (- (display-width)  b2 #+win32 2)
-                      +min-width+))
-         (disp-h (max (- (display-height) b2)
-                      +min-height+)))
+                  +min-height+)))
     ;; calc y and h
     (when (> (+ y height) disp-h)
       (decf h (- (+ y height) disp-h)))
@@ -64,29 +64,31 @@
     (values x y w h)))
 
 (defun compute-topright-position (source-window width height)
-  (let* ((x  (window-x source-window))
-         (y  1)
+  (let* ((b2 (* +border-size+ 2))
+         (win-x (window-x source-window))
+         (win-y (window-y source-window))
+         (win-w (max (- (window-width source-window)  b2 2)
+                     +min-width+))
+         (win-h (max (- (window-height source-window) b2)
+                     +min-height+))
+         (x  win-x)
+         (y  (+ win-y 1))
          ;; +1 is workaround for windows pdcurses
          (w  (max (+ width #+win32 1)
                   +min-width+))
          (h  (max height
-                  +min-height+))
-         (b2 (* +border-size+ 2))
-         (disp-w (max (- (display-width)  b2 2)
-                      +min-width+))
-         (disp-h (max (- (display-height) b2)
-                      +min-height+)))
+                  +min-height+)))
     ;; calc y and h
-    (when (> (+ y height) disp-h)
-      (decf h (- (+ y height) disp-h)))
-    (when (<= h 0) ; for safety
-      (setf y 0)
-      (setf h (min height disp-h)))
+    (when (> (+ y height) (+ win-y win-h))
+      (decf h (- (+ y height) (+ win-y win-h))))
+    (when (<= h 0)    ; for safety
+      (setf y win-y)
+      (setf h (min height win-h)))
     ;; calc x and w
-    (incf x (- disp-w w))
-    (when (< x 0)  ; for safety
-      (setf x 0)
-      (setf w (min width disp-w)))
+    (incf x (- win-w w))
+    (when (< x win-x) ; for safety
+      (setf x win-x)
+      (setf w (min width win-w)))
     (values x y w h)))
 
 (defun compute-popup-window-position (source-window width height &optional (gravity :cursor))

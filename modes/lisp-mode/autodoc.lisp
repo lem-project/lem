@@ -89,7 +89,8 @@
     result))
 
 (defmethod should-continue-autodoc-p ((judgement autodoc-judgement) point)
-  (and (autodoc-judgemnet-last-point judgement)
+  (and (lisp-buffer-p (point-buffer point))
+       (autodoc-judgemnet-last-point judgement)
        (eq (point-buffer (autodoc-judgemnet-last-point judgement))
            (point-buffer point))
        (point-on-same-symbol-p point (autodoc-judgemnet-last-point judgement))))
@@ -118,17 +119,15 @@
 
 
 (defun command-loop-autodoc ()
-  (when (lisp-buffer-p (current-buffer))
-    (unless (should-continue-autodoc-p (judgement-instance) (current-point))
-      (clear-autodoc-message))))
+  (unless (should-continue-autodoc-p (judgement-instance) (current-point))
+    (clear-autodoc-message)))
 
 
 (defvar *autodoc-idle-timer* nil)
 
 (defun autodoc-with-idle-timer ()
-  (when (lisp-buffer-p (current-buffer))
-    (when (should-use-autodoc-p (judgement-instance) (current-point))
-      (lisp-autodoc))))
+  (when (should-use-autodoc-p (judgement-instance) (current-point))
+    (lisp-autodoc)))
 
 (defun start-autodoc-idle-timer ()
   (unless *autodoc-idle-timer*

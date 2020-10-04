@@ -106,12 +106,16 @@
   (delete-popup-message *autodoc-message*))
 
 (define-command lisp-autodoc () ()
-  (autodoc (lambda (buffer)
-             (setf *autodoc-message*
-                   (display-popup-message buffer
-                                          :timeout nil
-                                          :destination-window *autodoc-message*))
-             (redraw-frame (current-frame)))))
+  (let ((line-number (line-number-at-point (current-point)))
+        (charpos (point-charpos (current-point))))
+    (autodoc (lambda (buffer)
+               (when (and (= line-number (line-number-at-point (current-point)))
+                          (= charpos (point-charpos (current-point))))
+                 (setf *autodoc-message*
+                       (display-popup-message buffer
+                                              :timeout nil
+                                              :destination-window *autodoc-message*)))
+               (redraw-frame (current-frame))))))
 
 
 (defun command-loop-autodoc ()

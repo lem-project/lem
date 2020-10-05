@@ -203,6 +203,12 @@
    :name "editor"))
 
 (defun lem (&rest args)
+
+  ;; for sbcl, set the default file encoding to utf-8
+  ;; (on windows, the default is determined by code page (e.g. :cp932))
+  #+sbcl
+  (setf sb-impl::*default-external-format* :utf-8)
+
   (setf args (parse-args args))
 
   (cond
@@ -217,7 +223,7 @@
     (t (log:config :off)))
 
   (log:info "Starting Lem")
-  
+
   (if *in-the-editor*
       (apply-args args)
       (invoke-frontend

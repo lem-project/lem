@@ -30,7 +30,6 @@
     (with-open-file (out (ensure-config-pathname)
                          :direction :output
                          :if-exists :supersede
-                         :if-does-not-exist :create
-                         :external-format uiop:*utf-8-external-format*)
+                         :if-does-not-exist :create)
       (pprint plist out)))
   value)

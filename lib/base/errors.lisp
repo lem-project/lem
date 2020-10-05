@@ -1,13 +1,14 @@
-(in-package :lem-base)
-
-(export '(editor-condition
-          directory-does-not-exit
-          directory-does-not-exist-directory
-          read-only-error
-          editor-error
-          editor-error-message
-          scan-error
-          editor-interrupt))
+(defpackage :lem-base/errors
+  (:use :cl)
+  (:export :editor-condition
+           :directory-does-not-exit
+           :directory-does-not-exist-directory
+           :read-only-error
+           :editor-error
+           :editor-error-message
+           :scan-error
+           :editor-interrupt))
+(in-package :lem-base/errors)
 
 (define-condition editor-condition (simple-error)
   ())

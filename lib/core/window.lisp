@@ -344,30 +344,29 @@
   "Check if the cursor goes to next line because it is at the end of width."
   (unless (variable-value 'truncate-lines :default (window-buffer window))
     (return-from cursor-goto-next-line-p nil))
-  (let* ((lem-base::*tab-size* (variable-value 'tab-width :default (window-buffer window)))
+  (let* ((tab-size (variable-value 'tab-width :default (window-buffer window)))
          (charpos (point-charpos point))
          (line    (line-string point))
          (width   (1- (window-width window)))
          (cur-x   0)
          (add-x   (if (< charpos (length line))
-                      (char-width (schar line charpos) 0)
+                      (char-width (schar line charpos) 0 :tab-size tab-size)
                       1)))
     (loop :for i :from 0 :below charpos
           :for c := (schar line i)
-          :do (setf cur-x (char-width c cur-x))
+          :do (setf cur-x (char-width c cur-x :tab-size tab-size))
               (when (< width cur-x)
-                (setf cur-x (char-width c 0))))
+                (setf cur-x (char-width c 0 :tab-size tab-size))))
     (< width (+ cur-x add-x))))
 
 (defun map-wrapping-line (window string fn)
-  (let ((lem-base::*tab-size* (variable-value 'tab-width :default (window-buffer window))))
+  (let ((tab-size (variable-value 'tab-width :default (window-buffer window))))
     (loop :with start := 0
           :and width := (1- (window-width window))
-          :for i := (wide-index string width :start start)
+          :for i := (wide-index string width :start start :tab-size tab-size)
           :while i
-          :do
-             (funcall fn i)
-             (setq start i))))
+          :do (funcall fn i)
+              (setq start i))))
 
 (defun window-wrapping-offset (window start-point end-point)
   (unless (variable-value 'truncate-lines :default (window-buffer window))
@@ -1193,8 +1192,17 @@
   (minibuf-update-size)
   (recenter t))
 
-(defun display-popup-message (text &key (timeout *default-popup-message-timeout*) size (gravity :cursor))
-  (lem-if:display-popup-message (implementation) text :timeout timeout :size size :gravity gravity))
+(defun display-popup-message (text
+                              &key (timeout *default-popup-message-timeout*)
+                                   size
+                                   (gravity :cursor)
+                                   destination-window)
+  (lem-if:display-popup-message (implementation)
+                                text
+                                :timeout timeout
+                                :size size
+                                :gravity gravity
+                                :destination-window destination-window))
 
 (defun delete-popup-message (popup-message)
   (lem-if:delete-popup-message (implementation) popup-message))

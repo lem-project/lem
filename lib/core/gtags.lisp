@@ -23,10 +23,10 @@
 
 (defclass reference-content (content) ())
 
-(defmethod xref-insert-content ((content content) point)
+(defmethod xref-insert-content ((content content) point level)
   (insert-string point (content-name content) :attribute 'xref-content-attribute))
 
-(defmethod xref-insert-content ((content reference-content) point)
+(defmethod xref-insert-content ((content reference-content) point level)
   (insert-string point (content-file content) :attribute 'lem.sourcelist:title-attribute)
   (insert-string point ":")
   (insert-string point

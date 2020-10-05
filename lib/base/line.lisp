@@ -1,13 +1,34 @@
-(in-package :lem-base)
-
-(defconstant +line-increment+ 256)
+(defpackage :lem-base/line
+  (:use :cl)
+  (:export :line-prev
+           :line-next
+           :line-str
+           :line-plist
+           :line-syntax-context
+           :line-points
+           :make-line
+           :line-alive-p
+           :line-char
+           :line-length
+           :line-merge
+           :line-remove-property
+           :line-add-property
+           :line-clear-property
+           :line-search-property
+           :line-search-property-range
+           :line-property-insert-pos
+           :line-property-insert-newline
+           :line-property-delete-pos
+           :line-property-delete-line
+           :line-free))
+(in-package :lem-base/line)
 
 (defstruct (line (:constructor %make-line))
   prev
   next
   str
   plist
-  %syntax-context
+  syntax-context
   points)
 
 (defmethod print-object ((object line) stream)

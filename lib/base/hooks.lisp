@@ -1,6 +1,10 @@
-(in-package :lem-base)
-
-(export '(run-hooks add-hook remove-hook find-hook))
+(defpackage :lem-base/hooks
+  (:use :cl)
+  (:export :run-hooks
+           :add-hook
+           :remove-hook
+           :find-hook))
+(in-package :lem-base/hooks)
 
 (defun run-hooks (hooks &rest args)
   (dolist (hook hooks)

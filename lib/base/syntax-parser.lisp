@@ -18,7 +18,7 @@
 (define-editor-variable after-syntax-scan-hook nil)
 (define-editor-variable enable-syntax-highlight nil)
 
-(defvar *global-syntax-highlight* t)
+(defparameter *global-syntax-highlight* t)
 
 (defun enable-syntax-highlight-p (buffer)
   (and *global-syntax-highlight*

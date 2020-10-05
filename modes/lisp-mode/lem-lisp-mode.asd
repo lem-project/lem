@@ -19,6 +19,7 @@
                (:file "sldb")
                (:file "inspector")
                (:file "apropos-mode")
+               (:file "autodoc")
                (:file "paren-coloring")
                (:file "misc-commands")
                (:file "package-inferred-system")))

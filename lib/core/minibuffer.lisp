@@ -173,7 +173,6 @@
 (define-key *minibuf-keymap* "M-n" 'minibuffer-read-line-next-history)
 (define-key *minibuf-keymap* "C-g" 'minibuf-read-line-break)
 
-(defvar *minibuf-read-line-prompt*)
 (defvar *minibuf-read-line-comp-f*)
 (defvar *minibuf-read-line-existing-p*)
 
@@ -187,7 +186,8 @@
   (when (minibuffer-window-active-p)
     (editor-error "Cannot switch buffer in minibuffer window")))
 
-(defun active-minibuffer-window ()
+(defgeneric active-minibuffer-window ())
+(defmethod active-minibuffer-window ()
   (if (/= 0 *minibuf-read-line-depth*)
       (minibuffer-window)
       nil))

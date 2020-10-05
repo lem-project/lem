@@ -132,10 +132,10 @@
 
 
 (defun set-syntax-context (line x)
-  (setf (line-%syntax-context line) x))
+  (setf (line-syntax-context line) x))
 
 (defun get-syntax-context (line)
-  (line-%syntax-context line))
+  (line-syntax-context line))
 
 (defun tm-get-repository (name)
   (gethash name (tmlanguage-repository (current-syntax-parser))))

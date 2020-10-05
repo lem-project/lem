@@ -24,7 +24,8 @@
     (:name "lisp"
      :description "Contains necessary functions to handle lisp code."
      :keymap *lisp-mode-keymap*
-     :syntax-table lem-lisp-syntax:*syntax-table*)
+     :syntax-table lem-lisp-syntax:*syntax-table*
+     :mode-hook *lisp-mode-hook*)
   (modeline-add-status-list (lambda (window)
                               (format nil " [~A~A]" (buffer-package (window-buffer window) "CL-USER")
                                       (if *connection*
@@ -63,8 +64,6 @@
 (define-key *lisp-mode-keymap* "C-c C-c" 'lisp-compile-defun)
 (define-key *lisp-mode-keymap* "C-c Return" 'lisp-macroexpand)
 (define-key *lisp-mode-keymap* "C-c M-m" 'lisp-macroexpand-all)
-(define-key *lisp-mode-keymap* "Space" 'lisp-insert-space-and-autodoc)
-(define-key *lisp-mode-keymap* "C-c C-d C-a" 'lisp-autodoc)
 (define-key *lisp-mode-keymap* "C-c C-d d" 'lisp-describe-symbol)
 (define-key *lisp-mode-keymap* "C-c C-z" 'lisp-switch-to-repl-buffer)
 (define-key *lisp-mode-keymap* "C-c z" 'lisp-switch-to-repl-buffer)
@@ -476,79 +475,6 @@
                        (lambda (arglist)
                          (when arglist
                            (message "~A" (ppcre:regex-replace-all "\\s+" arglist " "))))))))
-
-(let (autodoc-symbol)
-  (defun autodoc (function)
-    (let ((context (lem-lisp-syntax:parse-for-swank-autodoc (current-point))))
-      (unless autodoc-symbol
-        (setf autodoc-symbol (intern "AUTODOC" :swank)))
-      (lisp-eval-async
-       `(,autodoc-symbol ',context)
-       (lambda (doc)
-         (trivia:match doc
-           ((list doc _)
-            (unless (eq doc :not-available)
-              (let* ((buffer (make-buffer "*swank:autodoc-fontity*"
-                                          :temporary t :enable-undo-p nil))
-                     (point (buffer-point buffer)))
-                (erase-buffer buffer)
-                (change-buffer-mode buffer 'lisp-mode)
-                (insert-string point doc)
-                (buffer-start point)
-                (multiple-value-bind (result string)
-                    (search-forward-regexp point "(?====> (.*) <===)")
-                  (when result
-                    (with-point ((start point))
-                      (character-offset point 5)
-                      (search-forward point "<===")
-                      (delete-between-points start point)
-                      (insert-string point string :attribute 'region))))
-                (buffer-start (buffer-point buffer))
-                (setf (variable-value 'truncate-lines :buffer buffer) nil)
-                (funcall function buffer))))))))))
-
-(define-command lisp-autodoc-with-typeout () ()
-  (autodoc (lambda (temp-buffer)
-             (let ((buffer (make-buffer (buffer-name temp-buffer))))
-               (erase-buffer buffer)
-               (insert-buffer (buffer-point buffer) temp-buffer)
-               (with-pop-up-typeout-window (stream buffer)
-                 (declare (ignore stream)))))))
-
-(let ((last-point nil))
-  (labels ((hover-p (point)
-             (let ((char (character-at point))
-                   (before-char (character-at point -1)))
-               (or (syntax-symbol-char-p char)
-                   (and (syntax-space-char-p before-char)
-                        (syntax-closed-paren-char-p char))
-                   (syntax-symbol-char-p before-char))))
-           (same-last-buffer-p ()
-             (or (null last-point)
-                 (eq (current-buffer)
-                     (point-buffer last-point))))
-           (moved-point-p ()
-             (or (null last-point)
-                 (not (eq (point-buffer (current-point))
-                          (point-buffer last-point)))
-                 (point/= (current-point) last-point)))
-           (autodocp ()
-             (prog1 (and (hover-p (current-point))
-                         (moved-point-p)
-                         (same-last-buffer-p))
-               (setq last-point (copy-point (current-point) :temporary)))))
-    (defun autodoc-when-idle ()
-      (when (autodocp)
-        (lisp-autodoc)))))
-
-(define-command lisp-autodoc () ()
-  (autodoc (lambda (buffer)
-             (display-popup-message buffer :timeout nil))))
-
-(define-command lisp-insert-space-and-autodoc (n) ("p")
-  (loop :repeat n :do (insert-character (current-point) #\space))
-  (unless (continue-flag 'lisp-insert-space-and-autodoc)
-    (lisp-autodoc)))
 
 (defun check-parens ()
   (with-point ((point (current-point)))
@@ -1271,10 +1197,8 @@
 (defun lisp-idle-function ()
   (when (connected-p)
     (let ((major-mode (buffer-major-mode (current-buffer))))
-      (when (eq major-mode 'lisp-mode) (update-buffer-package))
-      (when (and (member major-mode '(lisp-mode lisp-repl-mode))
-                 (not (lem.popup-window::visible-popup-window-p)))
-        (autodoc-when-idle)))))
+      (when (eq major-mode 'lisp-mode)
+        (update-buffer-package)))))
 
 (define-command lisp-scratch () ()
   (let ((buffer (primordial-buffer)))

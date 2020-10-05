@@ -394,10 +394,10 @@
 
 (defun point-column (point)
   "`point`の行頭からの列幅を返します。"
-  (let ((*tab-size* (variable-value 'tab-width :default point)))
-    (string-width (line-string point)
-                  0
-                  (point-charpos point))))
+  (string-width (line-string point)
+                :start 0
+                :end (point-charpos point)
+                :tab-size (variable-value 'tab-width :default point)))
 
 (defun move-to-column (point column &optional force)
   "`point`を行頭から列幅`column`まで移動し、移動後の`point`を返します。
@@ -407,8 +407,9 @@
   (let ((cur-column (point-column point)))
     (cond ((< column cur-column)
            (setf (point-charpos point)
-                 (let ((*tab-size* (variable-value 'tab-width :default point)))
-                   (wide-index (line-string point) column)))
+                 (wide-index (line-string point)
+                             column
+                             :tab-size (variable-value 'tab-width :default point)))
            point)
           (force
            (insert-character point #\space (- column cur-column))

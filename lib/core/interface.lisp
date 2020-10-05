@@ -63,7 +63,7 @@
 (defgeneric lem-if:popup-menu-first (implementation))
 (defgeneric lem-if:popup-menu-last (implementation))
 (defgeneric lem-if:popup-menu-select (implementation))
-(defgeneric lem-if:display-popup-message (implementation text &key timeout size gravity))
+(defgeneric lem-if:display-popup-message (implementation text &key timeout size gravity destination-window))
 (defgeneric lem-if:delete-popup-message (implementation popup-message))
 
 (defgeneric lem-if:display-menu (implementation menu name))
@@ -151,6 +151,8 @@
   (setf (screen-y screen) y)
   (lem-if:set-view-pos *implementation* (screen-view screen) x y))
 
+(defvar *printing-tab-size*)
+
 (defun screen-print-string (screen x y string attribute)
   (when (and (eq attribute 'cursor) (< 0 (length string)))
     (setf *cursor-x* x)
@@ -164,14 +166,15 @@
                 ((char= char #\tab)
                  (loop :with size :=
                           (+ *print-start-x*
-                             (* (tab-size) (floor (+ (tab-size) x) (tab-size))))
+                             (* *printing-tab-size* (floor (+ *printing-tab-size* x) *printing-tab-size*)))
                        :while (< x size)
                        :do (setf (aref pool-string (incf i)) #\space)
                            (incf x)))
-                (#1=(gethash char *char-replacement*)
-                    (loop :for c :across #1#
-                          :do (setf (aref pool-string (incf i)) c
-                                    x (char-width c x))))
+                ((alexandria:when-let ((control-char (control-char char)))
+                   (loop :for c :across control-char
+                         :do (setf (aref pool-string (incf i)) c
+                                   x (char-width c x)))
+                   t))
                 (t
                  (setf (aref pool-string (incf i)) char)
                  (setf x (char-width char x)))))
@@ -201,7 +204,7 @@
                         (if (null string-end)
                             nil
                             (min (length str) string-end))))
-      (setf attributes (lem-base::subseq-elements attributes string-start string-end)))
+      (setf attributes (lem-base/line::subseq-elements attributes string-start string-end)))
     (let ((prev-end 0)
           (x start-x))
       (loop :for (start end attr) :in attributes
@@ -290,10 +293,10 @@
                            (make-string (- end-charpos (length string))
                                         :initial-element #\space))))
       (setf (cdr (aref (screen-lines screen) screen-row))
-            (lem-base::put-elements attributes
-                                    start-charpos
-                                    (or end-charpos (length string))
-                                    attribute)))))
+            (lem-base/line::put-elements attributes
+                                         start-charpos
+                                         (or end-charpos (length string))
+                                         attribute)))))
 
 (defun disp-set-overlay (screen attribute screen-row start end)
   (let ((start-and-end-on-same-line (same-line-p start end)))
@@ -393,7 +396,7 @@
     (with-point ((point view-point))
       (loop :for i :from 0 :below (screen-height screen)
             :do (let* ((line (lem-base::point-line point))
-                       (str/attributes (lem-base::line-string/attributes line)))
+                       (str/attributes (lem-base/line::line-string/attributes line)))
                   (setf (aref (screen-left-lines screen) i) nil)
                   (setf (aref (screen-lines screen) i) str/attributes))
                 (unless (line-offset point 1)
@@ -413,9 +416,9 @@
   (when (and (< 0 view-charpos) (= point-y 0))
     (setf str/attributes
           (cons (subseq (car str/attributes) view-charpos)
-                (lem-base::subseq-elements (cdr str/attributes)
-                                           view-charpos
-                                           (length (car str/attributes))))))
+                (lem-base/line::subseq-elements (cdr str/attributes)
+                                                view-charpos
+                                                (length (car str/attributes))))))
   (let ((start 0)
         (start-x (screen-left-width screen))
         (truncate-str/attributes
@@ -478,7 +481,7 @@
                (setf (screen-horizontal-scroll-start screen) point-column)))))))
 
 (defun screen-display-lines (screen redraw-flag buffer view-charpos cursor-y)
-  (let* ((lem-base::*tab-size* (variable-value 'tab-width :default buffer))
+  (let* ((*printing-tab-size* (variable-value 'tab-width :default buffer))
          (truncate-lines (variable-value 'truncate-lines :default buffer))
          (disp-line-function
            (if truncate-lines

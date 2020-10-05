@@ -80,8 +80,10 @@
                    (dir2 (pathname-directory lisp-file)))
                (assert (eq :absolute (first dir1)))
                (assert (eq :absolute (first dir2)))
-               (let ((mismatch (mismatch dir1 dir2 :test #'equal)))
-                 (unless (eql mismatch (length dir1))
+               (let ((mismatch (or (mismatch dir1 dir2 :test #'equal)
+                                   (length dir1))))
+                 (unless (or (eql mismatch (length dir1))
+                             (null mismatch))
                    (return-from infer nil))
                  (if-let (pathname (project-root-pathname project-root))
                    (let ((prefix-directory (pathname-directory (uiop:ensure-directory-pathname pathname))))
@@ -102,26 +104,6 @@
                            (list (pathname-name lisp-file))))))))
     (when-let (names (infer project-root lisp-file))
       (join-strings "/" names))))
-
-(defun test-infer-package-name-1 ()
-  (assert (equal "project-root/foo/bar"
-                 (infer-package-name-1 (make-project-root :name "project-root"
-                                                        :asd-file #P"/common-lisp/project-root/project-root.asd")
-                                     #P"/common-lisp/project-root/foo/bar.lisp")))
-  (assert (equal "project-root-tests/a"
-                 (infer-package-name-1 (make-project-root :name "project-root-tests"
-                                                        :asd-file #P"/common-lisp/project-root/project-root-tests.asd"
-                                                        :pathname "tests")
-                                     #P"/common-lisp/project-root/tests/a.lisp")))
-  (assert (equal "project-root/test/a/b"
-                 (infer-package-name-1 (make-project-root :name "project-root/test"
-                                                        :asd-file #P"/common-lisp/project-root/project-root.asd"
-                                                        :pathname "test")
-                                     #P"/common-lisp/project-root/test/a/b.lisp")))
-  (assert (equal "project-root/test/a/b"
-                 (infer-package-name-1 (make-project-root :name "project-root"
-                                                        :asd-file #P"/common-lisp/project-root/project-root.asd")
-                                     #P"/common-lisp/project-root/test/a/b.lisp"))))
 
 (defun infer-package-name (lisp-file)
   (loop :for project-root :in (find-project-roots-from-working-directory lisp-file)

@@ -207,14 +207,24 @@
   (:dark :foreground "cyan" :bold-p t)
   (:light :foreground "blue" :bold-p t))
 
-(defgeneric xref-insert-content (content point)
-  (:method (content point)
-    (xref-insert-content (princ-to-string content) point))
-  (:method ((content string) point)
-   (insert-string point
-                  (concatenate 'string
-                               "  " content)
-                  :attribute 'xref-content-attribute)))
+(defun xref-insert-headline (headline point level)
+  (insert-string point
+                 (concatenate 'string
+                              (make-string (* 2 level) :initial-element #\space)
+                              (princ-to-string headline))
+                 :attribute 'xref-headline-attribute)
+  (insert-character point #\newline))
+
+(defgeneric xref-insert-content (content point level)
+  (:method (content point level)
+    (xref-insert-content (princ-to-string content) point level))
+  (:method ((content string) point level)
+    (insert-string point
+                   (concatenate 'string
+                                (make-string (* 2 level) :initial-element #\space)
+                                content)
+                   :attribute 'xref-content-attribute)
+    (insert-character point #\newline)))
 
 (defstruct xref-location
   (filespec nil :read-only t :type (or buffer string pathname))
@@ -261,6 +271,29 @@
           (point (buffer-point buffer)))
       (move-to-xref-location-position point position))))
 
+(defgeneric location-position< (position1 position2)
+  (:method ((position1 integer) (position2 integer))
+    (< position1 position2))
+  (:method ((position1 cons) (position2 cons))
+    (or (< (car position1) (car position2))
+        (and (= (car position1) (car position2))
+             (< (cdr position1) (cdr position2)))))
+  (:method ((position1 point) (position2 point))
+    (point< position1 position2))
+  (:method (position1 position2)
+    nil))
+
+(defun sort-xref-locations (locations)
+  (stable-sort (copy-list locations)
+               (lambda (location1 location2)
+                 (flet ((filespec (location)
+                          (xref-filespec-to-filename
+                           (xref-location-filespec location))))
+                   (or (string< (filespec location1) (filespec location2))
+                       (and (string= (filespec location1) (filespec location2))
+                            (location-position< (xref-location-position location1)
+                                                (xref-location-position location2))))))))
+
 (define-command find-definitions () ()
   (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))
     (let ((locations (funcall fn (current-point))))
@@ -274,15 +307,14 @@
             (jump-highlighting))
           (let ((prev-file nil))
             (with-sourcelist (sourcelist "*definitions*")
-              (dolist (location locations)
+              (dolist (location (sort-xref-locations locations))
                 (let ((file (xref-filespec-to-filename (xref-location-filespec location)))
                       (content (xref-location-content location)))
                   (append-sourcelist sourcelist
                                      (lambda (p)
                                        (unless (equal prev-file file)
-                                         (insert-string p file :attribute 'xref-headline-attribute)
-                                         (insert-character p #\newline))
-                                       (xref-insert-content content p))
+                                         (xref-insert-headline file p 0))
+                                       (xref-insert-content content p 1))
                                      (let ((location location))
                                        (alexandria:curry #'go-to-location location)))
                   (setf prev-file file)))))))))
@@ -299,17 +331,20 @@
             (when type
               (append-sourcelist sourcelist
                                  (lambda (p)
-                                   (insert-string p (princ-to-string type)
-                                                  :attribute 'xref-headline-attribute))
+                                   (xref-insert-headline type p 0))
                                  nil))
-            (dolist (location (xref-references-locations ref))
-              (let ((content (xref-location-content location)))
-                (append-sourcelist
-                 sourcelist
-                 (lambda (p)
-                   (xref-insert-content content p))
-                 (let ((location location))
-                   (alexandria:curry #'go-to-location location)))))))))))
+            (let ((prev-file nil))
+              (dolist (location (sort-xref-locations (xref-references-locations ref)))
+                (let ((file (xref-filespec-to-filename (xref-location-filespec location)))
+                      (content (xref-location-content location)))
+                  (append-sourcelist sourcelist
+                                     (lambda (p)
+                                       (unless (equal prev-file file)
+                                         (xref-insert-headline file p 1))
+                                       (xref-insert-content content p 2))
+                                     (let ((location location))
+                                       (alexandria:curry #'go-to-location location)))
+                  (setf prev-file file))))))))))
 
 (defvar *xref-stack-table* (make-hash-table :test 'equal))
 (defvar *xref-history-table* (make-hash-table :test 'equal))

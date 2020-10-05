@@ -1,13 +1,13 @@
-(in-package :lem-base)
-
-(export '(expand-file-name
-          tail-of-pathname
-          directory-files
-          list-directory
-          file-size
-          virtual-probe-file
-          *virtual-file-open*
-          with-open-virtual-file))
+(defpackage :lem-base/file-utils
+  (:use :cl)
+  (:export :expand-file-name
+           :tail-of-pathname
+           :directory-files
+           :list-directory
+           :file-size
+           :virtual-probe-file
+           :with-open-virtual-file))
+(in-package :lem-base/file-utils)
 
 (defun guess-host-name (filename)
   (declare (ignorable filename))
@@ -98,7 +98,7 @@
   #-win32
   (ignore-errors (with-open-file (in pathname) (file-length in))))
 
-(defvar *virtual-file-open* nil)
+(defparameter *virtual-file-open* nil)
 
 (defun open-virtual-file (filename &key external-format direction element-type)
   (apply #'values

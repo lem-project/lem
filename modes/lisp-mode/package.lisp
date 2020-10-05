@@ -18,6 +18,7 @@
    :*default-port*
    :*localhost*
    :*lisp-mode-keymap*
+   :*lisp-mode-hook*
    :lisp-connection-list
    :self-connected-p
    :self-connected-port
@@ -45,8 +46,6 @@
    :lisp-eval-region
    :lisp-load-file
    :lisp-echo-arglist
-   :lisp-autodoc-with-typeout
-   :lisp-autodoc
    :lisp-remove-notes
    :lisp-compile-and-load-file
    :lisp-compile-region

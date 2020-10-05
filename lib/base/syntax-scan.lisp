@@ -246,14 +246,12 @@
 (defun %skip-fence-backward (point)
   (%skip-quote-backward point))
 
-(defvar *scan-lists-limit-point* nil)
-
-(defun %skip-list-forward (point depth)
+(defun %skip-list-forward (point depth limit-point)
   (loop :with paren-stack := '()
         :do (unless (skip-space-and-comment-forward point)
               (return nil))
-            (when (if *scan-lists-limit-point*
-                      (point<= *scan-lists-limit-point* point)
+            (when (if limit-point
+                      (point<= limit-point point)
                       (end-buffer-p point))
               (return nil))
             (let ((c (character-at point 0))
@@ -286,10 +284,10 @@
                     (t
                      (character-offset point 1))))))
 
-(defun %skip-list-backward (point depth)
+(defun %skip-list-backward (point depth limit-point)
   (loop :with paren-stack := '()
-        :do (when (if *scan-lists-limit-point*
-                      (point<= point *scan-lists-limit-point*)
+        :do (when (if limit-point
+                      (point<= point limit-point)
                       (start-buffer-p point))
               (return nil))
             (let ((c (character-at point -1))
@@ -345,7 +343,7 @@
                          point
                          nil))
                     ((syntax-open-paren-char-p c)
-                     (%skip-list-forward point 0))
+                     (%skip-list-forward point 0 nil))
                     ((or (syntax-symbol-char-p c)
                          (syntax-escape-char-p c))
                      (%skip-symbol-forward point))
@@ -377,7 +375,7 @@
         n pair)
     (prog1 (cond ((and (syntax-closed-paren-char-p c)
                        (not escape-point-p))
-                  (%skip-list-backward point 0))
+                  (%skip-list-backward point 0 nil))
                  ((or (syntax-symbol-char-p c)
                       (syntax-escape-char-p c)
                       (syntax-expr-prefix-char-p c)
@@ -415,20 +413,19 @@
 (defun scan-lists (point n depth &optional no-errors limit-point)
   (with-point-syntax point
     (with-point ((curr point))
-      (let ((*scan-lists-limit-point* limit-point))
-        (when (cond ((plusp n)
-                     (dotimes (_ n t)
-                       (unless (%skip-list-forward curr depth)
-                         (if no-errors
-                             (return nil)
-                             (scan-error)))))
-                    (t
-                     (dotimes (_ (- n) t)
-                       (unless (%skip-list-backward curr depth)
-                         (if no-errors
-                             (return nil)
-                             (scan-error))))))
-          (move-point point curr))))))
+      (when (cond ((plusp n)
+                   (dotimes (_ n t)
+                     (unless (%skip-list-forward curr depth limit-point)
+                       (if no-errors
+                           (return nil)
+                           (scan-error)))))
+                  (t
+                   (dotimes (_ (- n) t)
+                     (unless (%skip-list-backward curr depth limit-point)
+                       (if no-errors
+                           (return nil)
+                           (scan-error))))))
+        (move-point point curr)))))
 
 (flet ((non-newline-whitespace-p (c)
          (and (char/= c #\newline)

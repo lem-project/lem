@@ -364,11 +364,10 @@ next line because it is at the end of width."
         (values cur-x nil))))
 
 (defun window-cursor-x (window)
-  (let ((point (window-buffer-point window)))
-    (multiple-value-bind (x next)
-        (%calc-window-cursor-x point window)
-      (declare (ignore next))
-      x)))
+  (multiple-value-bind (x next)
+      (%calc-window-cursor-x (window-buffer-point window) window)
+    (declare (ignore next))
+    x))
 
 (defun cursor-goto-next-line-p (point window)
   "Check if the cursor goes to next line because it is at the end of width."

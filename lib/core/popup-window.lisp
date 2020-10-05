@@ -67,7 +67,7 @@
   (let* ((b2 (* +border-size+ 2))
          (win-x (window-x source-window))
          (win-y (window-y source-window))
-         (win-w (max (- (window-width source-window)  b2 2)
+         (win-w (max (- (window-width  source-window) b2 2)
                      +min-width+))
          (win-h (max (- (window-height source-window) b2)
                      +min-height+))

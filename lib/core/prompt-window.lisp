@@ -51,7 +51,8 @@
 (define-major-mode prompt-mode nil
     (:name "prompt"
      :keymap *prompt-mode-keymap*)
-  (setf (lem::switchable-buffer-p (current-buffer)) t))
+  (setf (lem::switchable-buffer-p (current-buffer)) t)
+  (setf (variable-value 'truncate-lines :buffer (current-buffer)) nil))
 
 (define-attribute prompt-attribute
   (:light :foreground "gray27" :bold-p t)

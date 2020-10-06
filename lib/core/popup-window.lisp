@@ -8,6 +8,10 @@
 (defparameter +min-width+   3)
 (defparameter +min-height+  1)
 
+;; for windows pdcurses
+(defvar *extra-right-margin* 0)
+(defvar *extra-width-margin* 0)
+
 (defvar *menu-buffer* nil)
 (defvar *menu-window* nil)
 (defvar *focus-overlay* nil)
@@ -28,8 +32,7 @@
 
 (defun compute-cursor-position (source-window width height)
   (let* ((b2 (* +border-size+ 2))
-         ;; -2 is workaround for windows pdcurses
-         (disp-w (max (- (display-width)  b2 #+win32 2)
+         (disp-w (max (- (display-width)  b2 *extra-right-margin*)
                       +min-width+))
          (disp-h (max (- (display-height) b2)
                       +min-height+))
@@ -38,11 +41,10 @@
          (y (+ (window-y source-window)
                (window-cursor-y source-window)
                1))
-         ;; +1 is workaround for windows pdcurses
-         (w  (max (+ width #+win32 1)
-                  +min-width+))
-         (h  (max height
-                  +min-height+)))
+         (w (max (+ width *extra-width-margin*)
+                 +min-width+))
+         (h (max height
+                 +min-height+)))
     ;; calc y and h
     (when (> (+ y height) disp-h)
       (decf h (- (+ y height) disp-h)))
@@ -73,8 +75,7 @@
                      +min-height+))
          (x  win-x)
          (y  (+ win-y 1))
-         ;; +1 is workaround for windows pdcurses
-         (w  (max (+ width #+win32 1)
+         (w  (max (+ width *extra-width-margin*)
                   +min-width+))
          (h  (max height
                   +min-height+)))

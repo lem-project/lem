@@ -144,7 +144,7 @@
   (reset-state (judgement-instance))
   (delete-popup-message *autodoc-message*))
 
-(defun display-autodoc ()
+(defun display-autodoc-aux (display-function)
   (let ((line-number (line-number-at-point (current-point)))
         (charpos (point-charpos (current-point))))
     (autodoc (lambda (buffer)
@@ -152,11 +152,15 @@
                ;; 情報が返ってきた時にはカーソルが別の場所にあって表示するべきではないことがある
                (when (and (= line-number (line-number-at-point (current-point)))
                           (= charpos (point-charpos (current-point))))
-                 (setf *autodoc-message*
-                       (display-popup-message buffer
-                                              :timeout nil
-                                              :destination-window *autodoc-message*)))
-               (redraw-frame (current-frame))))))
+                 (funcall display-function buffer))))))
+
+(defun display-autodoc ()
+  (display-autodoc-aux
+   (lambda (buffer)
+     (setf *autodoc-message*
+           (display-popup-message buffer
+                                  :timeout nil
+                                  :destination-window *autodoc-message*)))))
 
 
 (defun post-command-hook ()
@@ -204,6 +208,16 @@
   (when (autodoc-enabled-p)
     (unless (continue-flag 'lisp-insert-space-and-autodoc)
       (lisp-autodoc))))
+
+(define-command lisp-autodoc-with-typeout () ()
+  (display-autodoc-aux
+   (lambda (temp-buffer)
+     (let ((buffer (make-buffer (buffer-name temp-buffer))))
+       (with-buffer-read-only buffer nil
+         (erase-buffer buffer)
+         (insert-buffer (buffer-point buffer) temp-buffer))
+       (with-pop-up-typeout-window (stream buffer)
+         (declare (ignore stream)))))))
 
 
 (add-hook *lisp-mode-hook* 'enable-autodoc)

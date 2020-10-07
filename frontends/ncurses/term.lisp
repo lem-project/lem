@@ -49,6 +49,10 @@
   (setf (aref *colors* index) (list r g b index)))
 
 (defun init-colors (n)
+
+  ;; limit max colors
+  (if (> n 256) (setf n 256))
+
   (let ((counter 0))
     (flet ((add-color (r g b)
              (term-set-color counter r g b (<= 8 counter))

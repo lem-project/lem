@@ -34,7 +34,6 @@ jobs:
         ros install cxxxr/sblint
         ros install rove
         export PATH=$HOME/.roswell/bin:$PATH
-        ros config dynamic-space-size 2048
         rove lem-tests.asd
         sblint lib/base/lem-base.asd
         sblint lib/core/lem-core.asd

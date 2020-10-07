@@ -5,6 +5,12 @@
 (in-package :lem.popup-window)
 
 (defparameter +border-size+ 1)
+(defparameter +min-width+   3)
+(defparameter +min-height+  1)
+
+;; for windows pdcurses
+(defvar *extra-right-margin* 0)
+(defvar *extra-width-margin* 0)
 
 (defvar *menu-buffer* nil)
 (defvar *menu-window* nil)
@@ -25,43 +31,66 @@
   (t :background "#444" :foreground "white"))
 
 (defun compute-cursor-position (source-window width height)
-  (let* ((y (+ (window-y source-window)
+  (let* ((b2 (* +border-size+ 2))
+         (disp-w (max (- (display-width)  b2 *extra-right-margin*)
+                      +min-width+))
+         (disp-h (max (- (display-height) b2)
+                      +min-height+))
+         (x (+ (window-x source-window)
+               (window-cursor-x source-window)))
+         (y (+ (window-y source-window)
                (window-cursor-y source-window)
                1))
-         (x (+ (window-x source-window)
-               (let ((x (point-column (lem::window-buffer-point source-window))))
-                 (when (<= (window-width source-window) x)
-                   (let ((mod (mod x (window-width source-window)))
-                         (floor (floor x (window-width source-window))))
-                     (setf x (+ mod floor))
-                     (incf y floor)))
-                 x))))
-    (cond
-      ((<= (display-height)
-           (+ y (min height
-                     (floor (display-height) 3))))
-       (cond ((>= 0 (- y height))
-              (setf y 1)
-              (setf height (min height (- (display-height) 1))))
-             (t
-              (decf y (+ height 1)))))
-      ((<= (display-height) (+ y height))
-       (setf height (- (display-height) y))))
-    (when (<= (display-width) (+ x width))
-      (when (< (display-width) width)
-        (setf width (display-width)))
-      (setf x (- (display-width) width)))
-    (values x y width height)))
+         (w (max (+ width *extra-width-margin*)
+                 +min-width+))
+         (h (max height
+                 +min-height+)))
+    ;; calc y and h
+    (when (> (+ y height) disp-h)
+      (decf h (- (+ y height) disp-h)))
+    (when (< h (min height (floor disp-h 3)))
+      (setf h height)
+      (decf y (+ height b2 1)))
+    (when (< y 0)
+      (decf h (- y))
+      (setf y 0))
+    (when (<= h 0) ; for safety
+      (setf y 0)
+      (setf h (min height disp-h)))
+    ;; calc x and w
+    (when (> (+ x width) disp-w)
+      (decf x (- (+ x width) disp-w)))
+    (when (< x 0)  ; for safety
+      (setf x 0)
+      (setf w (min width disp-w)))
+    (values x y w h)))
 
 (defun compute-topright-position (source-window width height)
-  (let ((x (+ (window-x source-window)
-              (alexandria:clamp (- (window-width source-window) width 4)
-                                0
-                                (window-width source-window))))
-        (y 1))
-    (when (< (window-width source-window) width)
-      (setf width (- (window-width source-window) 4)))
-    (values x y width height)))
+  (let* ((b2 (* +border-size+ 2))
+         (win-x (window-x source-window))
+         (win-y (window-y source-window))
+         (win-w (max (- (window-width  source-window) b2 2)
+                     +min-width+))
+         (win-h (max (- (window-height source-window) b2)
+                     +min-height+))
+         (x  win-x)
+         (y  (+ win-y 1))
+         (w  (max (+ width *extra-width-margin*)
+                  +min-width+))
+         (h  (max height
+                  +min-height+)))
+    ;; calc y and h
+    (when (> (+ y height) (+ win-y win-h))
+      (decf h (- (+ y height) (+ win-y win-h))))
+    (when (<= h 0)    ; for safety
+      (setf y win-y)
+      (setf h (min height win-h)))
+    ;; calc x and w
+    (incf x (- win-w w))
+    (when (< x win-x) ; for safety
+      (setf x win-x)
+      (setf w (min width win-w)))
+    (values x y w h)))
 
 (defun compute-popup-window-position (source-window width height &optional (gravity :cursor))
   (ecase gravity
@@ -75,7 +104,9 @@
       (compute-popup-window-position source-window width height gravity)
     (cond (destination-window
            (lem::window-set-size destination-window width height)
-           (lem::window-set-pos destination-window x y)
+           (lem::window-set-pos destination-window
+                                (+ x +border-size+)
+                                (+ y +border-size+))
            destination-window)
           (t
            (make-instance 'popup-window
@@ -192,10 +223,10 @@
       (create-menu-buffer items *print-spec*)
     (update-focus-overlay (buffer-point buffer))
     (popup-window (current-window)
-                   buffer
-                   width
-                   (min 20 (length items))
-                   :destination-window *menu-window*)))
+                  buffer
+                  width
+                  (min 20 (length items))
+                  :destination-window *menu-window*)))
 
 (defmethod lem-if:popup-menu-quit (implementation)
   (when *focus-overlay*

@@ -21,10 +21,6 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
-
-    - uses: actions/checkout@v2
-      with:
-        path: ./cl-string-generator
     - name: Install Roswell
       env:
         LISP: ${{ matrix.lisp }}
@@ -33,7 +29,6 @@ jobs:
     - name: Run test
       run: |
         ros install lem
-        ls
         ros install cxxxr/sblint
         ros install rove
         export PATH=$HOME/.roswell/bin:$PATH

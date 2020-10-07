@@ -144,7 +144,7 @@
   (reset-state (judgement-instance))
   (delete-popup-message *autodoc-message*))
 
-(define-command lisp-autodoc () ()
+(defun display-autodoc ()
   (let ((line-number (line-number-at-point (current-point)))
         (charpos (point-charpos (current-point))))
     (autodoc (lambda (buffer)
@@ -169,7 +169,7 @@
 
 (defun autodoc-with-idle-timer ()
   (when (should-use-autodoc-p (judgement-instance) (current-point))
-    (lisp-autodoc)))
+    (display-autodoc)))
 
 (defun start-autodoc-idle-timer ()
   (unless *autodoc-idle-timer*
@@ -195,6 +195,10 @@
   (values))
 
 
+(define-command lisp-autodoc () ()
+  (clear-autodoc-message)
+  (display-autodoc))
+
 (define-command lisp-insert-space-and-autodoc (n) ("p")
   (loop :repeat n :do (insert-character (current-point) #\space))
   (when (autodoc-enabled-p)

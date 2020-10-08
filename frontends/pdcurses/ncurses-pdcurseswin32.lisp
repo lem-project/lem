@@ -51,6 +51,13 @@
 (setf (variable-value 'escape-delay :global) 1000)
 
 
+;; popup window margin setting
+;;  (extra margin is required to avoid partial loss of popup window display
+;;   caused by wide characters)
+(setf lem.popup-window::*extra-right-margin* 2)
+(setf lem.popup-window::*extra-width-margin* 1)
+
+
 ;; windows terminal type
 ;;   :mintty  : mintty  (winpty is needed)
 ;;   :conemu  : ConEmu  (experimental)
@@ -927,30 +934,38 @@
   ;; b-width includes a margin for wide characters display problem
   (let* ((attr     (attribute-to-bits (make-attribute :background "#666666"
                                                       :foreground "#b0b0b0")))
-         (b-width  (+ (border-width border) 2))
+         (b-width  (+ (border-width border) 1))
          (b-height (border-height border))
-         (x1       -2)
+         (x1       -1)
          (y1       -1)
          (x2       (+ x1 b-width  -1))
          (y2       (+ y1 b-height -1)))
     (charms/ll:attron attr)
-    (loop :for x :from x1 :to x2
-          :do (draw-border-one-block view x y1))
+    (draw-border-line view x1 x2 y1)
     (loop :for y :from (+ y1 1) :below y2
-          :do (draw-border-one-block view x1 y)
-              (draw-border-one-block view x2 y))
-    (loop :for x :from x1 :to x2
-          :do (draw-border-one-block view x y2))
+          :do (draw-border-line view x1 x2 y :fill nil))
+    (draw-border-line view x1 x2 y2)
     (charms/ll:attroff attr)))
-(defun draw-border-one-block (view x y)
+(defun draw-border-line (view x1 x2 y &key (fill t))
+  (let ((pos-x1 (get-pos-x view x1 y))
+        (pos-x2 (get-pos-x view x2 y))
+        (pos-y  (get-pos-y view x1 y)))
+    ;; workaround for left side display problem
+    (when (= pos-x1 (get-pos-x view (1+ x1) y))
+      (decf pos-x1))
+    (if fill
+        (loop :for pos-x :from pos-x1 :to pos-x2
+              :do (draw-border-one-block pos-x pos-y))
+        (progn
+          (draw-border-one-block pos-x1 pos-y)
+          ;; workaround for right side display problem
+          (draw-border-one-block (1- pos-x2) pos-y)
+          (draw-border-one-block pos-x2 pos-y)
+          ))))
+(defun draw-border-one-block (pos-x pos-y)
   ;; write same character to avoid wide characters display problem
-  (let* ((pos-x (get-pos-x view x y))
-         (pos-y (get-pos-y view x y))
-         (code  (charms/ll:mvinch pos-y pos-x)))
-    (when (and (not (= code charms/ll:ERR))
-               (< pos-y
-                  (- charms/ll:*lines*
-                     (windows-term-setting-reserved-last-lines (windows-term-setting)))))
+  (let ((code (charms/ll:mvinch pos-y pos-x)))
+    (unless (= code charms/ll:ERR)
       (setf code (logand code charms/ll:A_CHARTEXT))
       (charms/ll:mvaddch pos-y pos-x code))))
 

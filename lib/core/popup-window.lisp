@@ -21,7 +21,12 @@
 (defvar *non-focus-attribute* nil)
 
 (defclass popup-window (floating-window)
-  ()
+  ((gravity
+    :initarg :gravity
+    :reader popup-window-gravity)
+   (source-window
+    :initarg :source-window
+    :reader popup-window-source-window))
   (:default-initargs
    :border +border-size+))
 
@@ -29,6 +34,18 @@
   (t :foreground "white" :background "RoyalBlue"))
 (define-attribute non-focus-popup-menu-attribute
   (t :background "#444" :foreground "white"))
+
+(defmethod window-redraw ((popup-window popup-window) force)
+  (when (eq (popup-window-gravity popup-window) :cursor)
+    (multiple-value-bind (x y width height)
+        (compute-cursor-position (popup-window-source-window popup-window)
+                                 (window-width popup-window)
+                                 (window-height popup-window))
+      (lem::window-set-size popup-window width height)
+      (lem::window-set-pos popup-window
+                           (+ x +border-size+)
+                           (+ y +border-size+))))
+  (call-next-method))
 
 (defun compute-cursor-position (source-window width height)
   (let* ((b2 (* +border-size+ 2))
@@ -115,7 +132,10 @@
                           :y (+ y +border-size+)
                           :width width
                           :height height
-                          :use-modeline-p nil)))))
+                          :use-modeline-p nil
+                          :source-window source-window
+                          :gravity gravity
+                          :source-window source-window)))))
 
 (defun quit-popup-window (floating-window)
   (delete-window floating-window))

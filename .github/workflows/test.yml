@@ -28,8 +28,7 @@ jobs:
         curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh
     - name: Run test
       run: |
-        ros install sbcl-bin/2.0.7
-        ros use sbcl-bin/2.0.7
+        ros config set dynamic-space-size 2048
         ros install lem
         ros install cxxxr/sblint
         ros install rove

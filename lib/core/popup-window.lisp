@@ -38,9 +38,12 @@
                       +min-height+))
          (x (+ (window-x source-window)
                (window-cursor-x source-window)))
-         (y (+ (window-y source-window)
-               (window-cursor-y source-window)
-               1))
+         (y (alexandria:clamp
+             (+ (window-y source-window)
+                (window-cursor-y source-window)
+                1)
+             0
+             (1- (display-height))))
          (w (max (+ width *extra-width-margin*)
                  +min-width+))
          (h (max height

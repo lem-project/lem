@@ -280,9 +280,13 @@
             (funcall move-to-column-fn (current-point) (get-next-line-context-column)))
     (cond ((plusp n)
            (move-to-end-of-buffer)
+           ;; to fix popup window position
+           (window-recenter (current-window))
            (editor-error "End of buffer"))
           ((minusp n)
            (move-to-beginning-of-buffer)
+           ;; to fix popup window position
+           (window-recenter (current-window))
            (editor-error "Beginning of buffer")))))
 
 (define-command next-line (&optional n) ("p")

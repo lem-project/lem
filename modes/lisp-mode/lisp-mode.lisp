@@ -796,14 +796,13 @@
            (parse-integer (prompt-for-string "Port: " (princ-to-string *default-port*)))
            t))
   (message "Connecting...")
-  (let (connection)
-    (handler-case (setf connection
-                        (if (eq hostname *localhost*)
+  (let ((connection
+          (handler-case (if (eq hostname *localhost*)
                             (or (ignore-errors (new-connection "127.0.0.1" port))
                                 (new-connection "localhost" port))
-                            (new-connection hostname port)))
-      (error (c)
-        (editor-error "~A" c)))
+                            (new-connection hostname port))
+            (error (c)
+              (editor-error "~A" c)))))
     (message "Swank server running on ~A ~A"
              (connection-implementation-name connection)
              (connection-implementation-version connection))

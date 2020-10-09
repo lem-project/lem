@@ -355,9 +355,9 @@
                              (delete-window window)))))
           window)))))
 
-(defmethod lem-if:display-popup-message (implementation text &key timeout size gravity destination-window)
+(defmethod lem-if:display-popup-message (implementation buffer-or-string &key timeout size gravity destination-window)
   (display-popup-buffer-default-impl
-   (make-popup-parameters :buffer-or-string text
+   (make-popup-parameters :buffer-or-string buffer-or-string
                           :timeout timeout
                           :size size
                           :gravity (or gravity :cursor)

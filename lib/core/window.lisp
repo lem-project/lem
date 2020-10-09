@@ -1209,13 +1209,13 @@ next line because it is at the end of width."
   (minibuf-update-size)
   (recenter t))
 
-(defun display-popup-message (text
+(defun display-popup-message (buffer-or-string
                               &key (timeout *default-popup-message-timeout*)
                                    size
                                    (gravity :cursor)
                                    destination-window)
   (lem-if:display-popup-message (implementation)
-                                text
+                                buffer-or-string
                                 :timeout timeout
                                 :size size
                                 :gravity gravity

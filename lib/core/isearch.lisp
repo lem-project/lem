@@ -84,7 +84,8 @@
 
 (defun disable-hook ()
   (setf (variable-value 'isearch-next-last :buffer) nil)
-  (setf (variable-value 'isearch-prev-last :buffer) nil))
+  (setf (variable-value 'isearch-prev-last :buffer) nil)
+  (delete-popup-message *isearch-popup-message*))
 
 
 (defun isearch-default-string ()
@@ -280,7 +281,6 @@
     (isearch-add-char char)))
 
 (defun isearch-end ()
-  (delete-popup-message *isearch-popup-message*)
   (isearch-reset-overlays (current-buffer))
   (change-previous-string *isearch-string*)
   (buffer-unbound (current-buffer) 'isearch-redisplay-string)

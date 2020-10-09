@@ -12,7 +12,8 @@
                "lem-base"
                "lem-encodings"
                "lem-lisp-syntax"
-               "log4cl")
+               "log4cl"
+               "cl-singleton-mixin")
   :serial t
   :components ((:file "history")
                (:file "package")

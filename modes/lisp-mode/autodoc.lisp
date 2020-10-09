@@ -160,7 +160,8 @@
      (setf *autodoc-message*
            (display-popup-message buffer
                                   :timeout nil
-                                  :destination-window *autodoc-message*)))))
+                                  :destination-window *autodoc-message*
+                                  :gravity :cursor)))))
 
 
 (defun post-command-hook ()

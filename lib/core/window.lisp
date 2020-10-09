@@ -1210,16 +1210,16 @@ next line because it is at the end of width."
   (recenter t))
 
 (defun display-popup-message (buffer-or-string
+                              &rest args
                               &key (timeout *default-popup-message-timeout*)
                                    size
                                    (gravity :cursor)
                                    destination-window)
-  (lem-if:display-popup-message (implementation)
-                                buffer-or-string
-                                :timeout timeout
-                                :size size
-                                :gravity gravity
-                                :destination-window destination-window))
+  (declare (ignore timeout size gravity destination-window))
+  (apply #'lem-if:display-popup-message
+         (implementation)
+         buffer-or-string
+         args))
 
 (defun delete-popup-message (popup-message)
   (lem-if:delete-popup-message (implementation) popup-message))

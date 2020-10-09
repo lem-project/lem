@@ -20,34 +20,36 @@
 (defvar *focus-attribute* nil)
 (defvar *non-focus-attribute* nil)
 
-(defclass popup-window (floating-window)
-  ((gravity
-    :initarg :gravity
-    :reader popup-window-gravity)
-   (source-window
-    :initarg :source-window
-    :reader popup-window-source-window))
-  (:default-initargs
-   :border +border-size+))
+(defgeneric adjust-for-redrawing (gravity popup-window)
+  (:method (gravity popup-window)))
 
-(define-attribute popup-menu-attribute
-  (t :foreground "white" :background "RoyalBlue"))
-(define-attribute non-focus-popup-menu-attribute
-  (t :background "#444" :foreground "white"))
+(defgeneric compute-popup-window-position (gravity source-window width height))
 
-(defmethod window-redraw ((popup-window popup-window) force)
-  (when (eq (popup-window-gravity popup-window) :cursor)
-    (multiple-value-bind (x y width height)
-        (compute-cursor-position (popup-window-source-window popup-window)
-                                 (window-width popup-window)
-                                 (window-height popup-window))
-      (lem::window-set-size popup-window width height)
-      (lem::window-set-pos popup-window
-                           (+ x +border-size+)
-                           (+ y +border-size+))))
-  (call-next-method))
+(defclass gravity (cl-singleton-mixin:singleton-class) ())
+(defclass gravity-topright (gravity) ())
+(defclass gravity-cursor (gravity) ())
+(defclass gravity-follow-cursor (gravity-cursor) ())
 
-(defun compute-cursor-position (source-window width height)
+(defun ensure-gravity (gravity)
+  (if (typep gravity 'gravity)
+      gravity
+      (ecase gravity
+        (:topright (make-instance 'gravity-topright))
+        (:cursor (make-instance 'gravity-cursor))
+        (:follow-cursor (make-instance 'gravity-follow-cursor)))))
+
+(defmethod adjust-for-redrawing ((gravity gravity-follow-cursor) popup-window)
+  (multiple-value-bind (x y width height)
+      (compute-popup-window-position (popup-window-gravity popup-window)
+                                     (popup-window-source-window popup-window)
+                                     (window-width popup-window)
+                                     (window-height popup-window))
+    (lem::window-set-size popup-window width height)
+    (lem::window-set-pos popup-window
+                         (+ x +border-size+)
+                         (+ y +border-size+))))
+
+(defmethod compute-popup-window-position ((gravity gravity-cursor) source-window width height)
   (let* ((b2 (* +border-size+ 2))
          (disp-w (max (- (display-width)  b2 *extra-right-margin*)
                       +min-width+))
@@ -82,7 +84,7 @@
       (setf w (min width disp-w)))
     (values x y w h)))
 
-(defun compute-topright-position (source-window width height)
+(defmethod compute-popup-window-position ((gravity gravity-topright) source-window width height)
   (let* ((b2 (* +border-size+ 2))
          (win-x (window-x source-window))
          (win-y (window-y source-window))
@@ -109,33 +111,46 @@
       (setf w (min width win-w)))
     (values x y w h)))
 
-(defun compute-popup-window-position (source-window width height gravity)
-  (ecase gravity
-    (:cursor
-     (compute-cursor-position source-window width height))
-    (:topright
-     (compute-topright-position source-window width height))))
+(defclass popup-window (floating-window)
+  ((gravity
+    :initarg :gravity
+    :reader popup-window-gravity)
+   (source-window
+    :initarg :source-window
+    :reader popup-window-source-window))
+  (:default-initargs
+   :border +border-size+))
+
+(define-attribute popup-menu-attribute
+  (t :foreground "white" :background "RoyalBlue"))
+(define-attribute non-focus-popup-menu-attribute
+  (t :background "#444" :foreground "white"))
+
+(defmethod window-redraw ((popup-window popup-window) force)
+  (adjust-for-redrawing (popup-window-gravity popup-window) popup-window)
+  (call-next-method))
 
 (defun popup-window (source-window buffer width height &key destination-window (gravity :cursor))
-  (multiple-value-bind (x y width height)
-      (compute-popup-window-position source-window width height gravity)
-    (cond (destination-window
-           (lem::window-set-size destination-window width height)
-           (lem::window-set-pos destination-window
-                                (+ x +border-size+)
-                                (+ y +border-size+))
-           destination-window)
-          (t
-           (make-instance 'popup-window
-                          :buffer buffer
-                          :x (+ x +border-size+)
-                          :y (+ y +border-size+)
-                          :width width
-                          :height height
-                          :use-modeline-p nil
-                          :source-window source-window
-                          :gravity gravity
-                          :source-window source-window)))))
+  (let ((gravity (ensure-gravity gravity)))
+    (multiple-value-bind (x y width height)
+        (compute-popup-window-position gravity source-window width height)
+      (cond (destination-window
+             (lem::window-set-size destination-window width height)
+             (lem::window-set-pos destination-window
+                                  (+ x +border-size+)
+                                  (+ y +border-size+))
+             destination-window)
+            (t
+             (make-instance 'popup-window
+                            :buffer buffer
+                            :x (+ x +border-size+)
+                            :y (+ y +border-size+)
+                            :width width
+                            :height height
+                            :use-modeline-p nil
+                            :source-window source-window
+                            :gravity gravity
+                            :source-window source-window))))))
 
 (defun quit-popup-window (floating-window)
   (delete-window floating-window))
@@ -373,10 +388,12 @@
          (setf *show-message*
                (display-popup-message string
                                       :timeout nil
-                                      :destination-window *show-message*)))))
+                                      :destination-window *show-message*
+                                      :gravity :follow-cursor)))))
 
 (defmethod lem::show-message-buffer (buffer)
   (setf *show-message*
         (display-popup-message buffer
                                :timeout nil
-                               :destination-window *show-message*)))
+                               :destination-window *show-message*
+                               :gravity :follow-cursor)))

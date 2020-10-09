@@ -309,47 +309,59 @@
     (buffer-start (buffer-point buffer))
     buffer))
 
-(defun display-popup-buffer-default (buffer timeout size gravity destination-window)
-  (let ((size (or size (compute-size-from-buffer buffer))))
-    (destructuring-bind (width height) size
-      (delete-popup-message destination-window)
-      (let ((window (popup-window (current-window) buffer width height :gravity gravity)))
-        (buffer-start (window-view-point window))
-        (window-see window)
-        (when timeout
-          (check-type timeout number)
-          (start-timer (round (* timeout 1000))
-                       nil
-                       (lambda ()
-                         (unless (deleted-window-p window)
-                           (delete-window window)))))
-        window))))
+(defstruct (popup-parameters (:constructor %make-popup-parameters))
+  buffer
+  timeout
+  size
+  gravity
+  destination-window)
 
-(defun display-popup-message-default (text &key timeout size gravity destination-window)
-  (etypecase text
+(defun make-popup-buffer-from-string (string size)
+  (let* ((buffer (make-popup-buffer string))
+         (size (or size (compute-size-from-buffer buffer))))
+    (values buffer size)))
+
+(defun make-popup-parameters (&key buffer-or-string timeout size gravity destination-window)
+  (etypecase buffer-or-string
     (string
-     (let* ((buffer (make-popup-buffer text))
-            (size (or size (compute-size-from-buffer buffer))))
-       (destructuring-bind (width height) size
-         (display-popup-buffer-default buffer
-                                       timeout
-                                       (list width height)
-                                       gravity
-                                       destination-window))))
+     (multiple-value-bind (buffer size)
+         (make-popup-buffer-from-string buffer-or-string size)
+       (%make-popup-parameters :buffer buffer
+                               :timeout timeout
+                               :size size
+                               :gravity gravity
+                               :destination-window destination-window)))
     (buffer
-     (display-popup-buffer-default text
-                                   timeout
-                                   size
-                                   gravity
-                                   destination-window))))
+     (%make-popup-parameters :buffer buffer-or-string
+                             :timeout timeout
+                             :size size
+                             :gravity gravity
+                             :destination-window destination-window))))
 
-(defmethod lem-if:display-popup-message (implementation text
-                                         &key timeout size gravity destination-window)
-  (display-popup-message-default text
-                                 :timeout timeout
-                                 :size size
-                                 :gravity gravity
-                                 :destination-window destination-window))
+(defun display-popup-buffer-default-impl (popup-parameters)
+  (with-slots (buffer timeout size gravity destination-window) popup-parameters
+    (let ((size (or size (compute-size-from-buffer buffer))))
+      (destructuring-bind (width height) size
+        (delete-popup-message destination-window)
+        (let ((window (popup-window (current-window) buffer width height :gravity gravity)))
+          (buffer-start (window-view-point window))
+          (window-see window)
+          (when timeout
+            (check-type timeout number)
+            (start-timer (round (* timeout 1000))
+                         nil
+                         (lambda ()
+                           (unless (deleted-window-p window)
+                             (delete-window window)))))
+          window)))))
+
+(defmethod lem-if:display-popup-message (implementation text &key timeout size gravity destination-window)
+  (display-popup-buffer-default-impl
+   (make-popup-parameters :buffer-or-string text
+                          :timeout timeout
+                          :size size
+                          :gravity gravity
+                          :destination-window destination-window)))
 
 (defmethod lem-if:delete-popup-message (implementation popup-message)
   (when (and popup-message (not (deleted-window-p popup-message)))

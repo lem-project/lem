@@ -109,9 +109,9 @@
       (setf w (min width win-w)))
     (values x y w h)))
 
-(defun compute-popup-window-position (source-window width height &optional (gravity :cursor))
+(defun compute-popup-window-position (source-window width height gravity)
   (ecase gravity
-    ((:cursor nil)
+    (:cursor
      (compute-cursor-position source-window width height))
     (:topright
      (compute-topright-position source-window width height))))
@@ -360,7 +360,7 @@
    (make-popup-parameters :buffer-or-string text
                           :timeout timeout
                           :size size
-                          :gravity gravity
+                          :gravity (or gravity :cursor)
                           :destination-window destination-window)))
 
 (defmethod lem-if:delete-popup-message (implementation popup-message)

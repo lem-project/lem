@@ -2,7 +2,8 @@
   (:use :cl :alexandria)
   (:import-from :cl-change-case)
   (:import-from :trivial-types)
-  (:import-from :cl-ppcre))
+  (:import-from :cl-ppcre)
+  (:export :translate))
 (in-package :lem-lsp-mode/typescript)
 
 (declaim (optimize (speed 0) (safety 3) (debug 3)))
@@ -227,3 +228,8 @@
   (with-slots (name extends elements) named-interface
     `(defclass ,(symbolize name) ,(if extends `(,(symbolize extends)) ())
        ,(mapcar #'element-to-slot-specifier elements))))
+
+(defun translate (file)
+  (let ((form (to-lisp (parse (tokenize (read-file-into-string file)))))
+        (*print-case* :downcase))
+    (pprint form)))

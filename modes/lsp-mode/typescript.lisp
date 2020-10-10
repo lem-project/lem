@@ -220,9 +220,15 @@
     (exact 'operator "}")
     (make-instance 'interface :elements (nreverse elements))))
 
+(defun parse-polymorphism-spec ()
+  (when (accept 'operator "<")
+    (exact 'word)
+    (accept 'operator ">")))
+
 (defun parse-def-interface ()
   (when (accept 'word "interface")
     (let ((interface-name (token-string (exact 'word)))
+          (* (parse-polymorphism-spec))
           (extends-interface
             (when (accept 'word "extends")
               (token-string (accept 'word)))))
@@ -321,6 +327,10 @@
                   :collect (with-slots (var value) declaration
                              `(defparameter ,(symbolicate name #\. (symbolize var)) ,value)))))
       `(progn ,@forms))))
+
+(defmethod to-lisp ((type-declaration type-declaration))
+  ;; nop
+  )
 
 (defun parse-text (text)
   (let ((token-iterator (tokenize text)))

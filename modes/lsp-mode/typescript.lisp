@@ -113,6 +113,17 @@
 (defclass string-expression ()
   ((string :initarg :string)))
 
+(defclass namespace ()
+  ((name :initarg :name)
+   (declarations :initarg :declarations)))
+
+(defclass namespace-declaration ()
+  ((var :initarg :var)
+   (value :initarg :value)
+   (type :initarg :type)
+   (export-p :initarg :export-p)
+   (comment :initarg :comment)))
+
 (defvar *token-iterator*)
 
 (defun next-token ()
@@ -132,9 +143,12 @@
   (when (match token-type string)
     (next-token)))
 
+(defun parsing-error ()
+  (error "Token not expected: ~S" (ahead-token)))
+
 (defun exact (token-type &optional string)
   (or (accept token-type string)
-      (error "Token not expected: ~S" (ahead-token))))
+      (parsing-error)))
 
 (defun parse-type-expression ()
   (labels ((type-name ()
@@ -165,19 +179,22 @@
                    (make-instance 'type-or :types types)))))
     (type-or)))
 
-(defun comment-to-string (comment)
-  (ppcre:regex-replace-all "\\n\\s*" (token-string comment) (string #\newline)))
+(defun parse-comments ()
+  (flet ((comment-to-string (comment)
+           (ppcre:regex-replace-all "\\n\\s*"
+                                    (token-string comment)
+                                    (string #\newline))))
+    (string-trim '(#\newline #\space #\tab)
+                 (with-output-to-string (out)
+                   (loop :for comment := (accept 'comment)
+                         :while comment
+                         :do (write-line (comment-to-string comment) out))))))
 
 (defun parse-interface-expression ()
   (exact 'operator "{")
   (let ((elements '()))
     (loop
-      (let ((comment
-              (string-trim '(#\newline #\space #\tab)
-                           (with-output-to-string (out)
-                             (loop :for comment := (accept 'comment)
-                                   :while comment
-                                   :do (write-line (comment-to-string comment) out))))))
+      (let ((comment (parse-comments)))
         (if-let ((element-name (accept 'word)))
           (let ((optional-p (not (null (accept 'operator "?")))))
             (exact 'operator ":")
@@ -194,7 +211,6 @@
     (make-instance 'interface :elements (nreverse elements))))
 
 (defun parse-def-interface ()
-  (accept 'word "export")
   (when (accept 'word "interface")
     (let ((interface-name (token-string (exact 'word)))
           (extends-interface
@@ -206,9 +222,53 @@
                       :name interface-name
                       :extends extends-interface)))))
 
+(defun parse-value ()
+  (flet ((parse-number (token)
+           (read-from-string (token-string token))))
+    (cond ((when-let (token (accept 'string-literal))
+             (token-string token)))
+          ((when-let (token (accept 'number-literal))
+             (parse-number token)))
+          ((accept 'operator "-")
+           (let ((token (exact 'number-literal)))
+             (- (parse-number token))))
+          (t
+           (parsing-error)))))
+
+(defun parse-def-namespace ()
+  (when (accept 'word "namespace")
+    (let ((namespace-name (token-string (exact 'word))))
+      (exact 'operator "{")
+      (let ((decls '()))
+        (loop
+          (let ((comment (parse-comments)))
+            (declare (ignore comment))
+            (when (accept 'operator "}")
+              (return))
+            (let ((export-p (not (null (accept 'word "export")))))
+              (exact 'word "const")
+              (let ((var (token-string (exact 'word)))
+                    (type (when (accept 'operator ":")
+                            (parse-type-expression))))
+                (exact 'operator "=")
+                (let ((value (parse-value)))
+                  (accept 'operator ";")
+                  (push (make-instance 'namespace-declaration
+                                       :var var
+                                       :value value
+                                       :type type
+                                       :export-p export-p
+                                       #|:comment comment|#)
+                        decls))))))
+        (make-instance 'namespace
+                       :declarations (nreverse decls)
+                       :name namespace-name)))))
+
 (defun parse (*token-iterator*)
   (loop :while (accept 'comment))
-  (parse-def-interface))
+  (accept 'word "export")
+  (or (parse-def-interface)
+      (parse-def-namespace)))
 
 (defun symbolize (string &optional package)
   (let ((name (string-upcase (cl-change-case:param-case string))))

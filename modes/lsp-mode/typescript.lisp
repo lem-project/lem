@@ -288,12 +288,23 @@
         (accept 'operator ";")
         (make-instance 'type-declaration :name name :type type)))))
 
+(defun parse-constant-declaration ()
+  (when (accept 'word "const")
+    (let ((name (accept 'word))
+          (type (when (accept 'operator ":")
+                  (parse-type-expression))))
+      (declare (ignore name type))
+      (exact 'operator "=")
+      (loop :until (accept 'operator ";")
+            :do (next-token)))))
+
 (defun parse (*token-iterator*)
   (loop :while (accept 'comment))
   (accept 'word "export")
   (or (parse-def-interface)
       (parse-def-namespace)
       (parse-def-type)
+      (parse-constant-declaration)
       (if (end-of-token-p)
           nil
           (parsing-error))))

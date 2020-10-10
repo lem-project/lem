@@ -416,3 +416,11 @@
                                   :defaults (asdf:system-relative-pathname :lem-lsp-mode "./specification/"))))
       (format out "~&~%;; file: ~A~%" file)
       (translate-file file out))))
+
+(defun deploy! (spec-file)
+  (dolist (text (lem-lsp-mode/specification::extract-typescript spec-file))
+    (write-line "==================================================")
+    (write-line text)
+    (handler-case (translate-text text)
+      (ts-parse-error (c)
+        (format t "*** ERROR: ~A~%" c)))))

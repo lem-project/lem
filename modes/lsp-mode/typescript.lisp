@@ -143,7 +143,10 @@
   ((name :initarg :name)))
 
 (defclass string-expression ()
-  ((string :initarg :string)))
+  ((value :initarg :value)))
+
+(defclass number-expression ()
+  ((value :initarg :value)))
 
 (defclass namespace ()
   ((name :initarg :name)
@@ -204,12 +207,17 @@
            (string-literal ()
              (when-let ((token (accept 'string-literal)))
                (make-instance 'string-expression
-                              :string (token-string token))))
+                              :value (token-string token))))
+           (number-literal ()
+             (when-let ((token (accept 'number-literal)))
+               (make-instance 'number-expression
+                              :value (read-from-string (token-string token)))))
            (type-1 ()
              (cond ((match 'operator "{")
                     (parse-interface-expression))
                    ((type-name))
-                   ((string-literal))))
+                   ((string-literal))
+                   ((number-literal))))
            (type-or ()
              (let ((types
                      (loop :for type := (type-1)

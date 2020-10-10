@@ -8,11 +8,24 @@
 
 (declaim (optimize (speed 0) (safety 3) (debug 3)))
 
+(define-condition ts-parse-error ()
+  ((message :initarg :message
+            :reader ts-parse-error-message)
+   (position :initarg :position
+             :initform nil
+             :reader ts-parse-error-position))
+  (:report (lambda (c s)
+             (format s
+                     "~A: ~A"
+                     (ts-parse-error-position c)
+                     (ts-parse-error-message c)))))
+
 (defun whitespacep (char)
   (member char '(#\space #\tab #\newline)))
 
 (defclass token ()
-  ((string :initarg :string :reader token-string)))
+  ((string :initarg :string :reader token-string)
+   (position :initarg :position :reader token-position)))
 
 (defclass word (token) ())
 (defclass comment (token) ())
@@ -67,28 +80,44 @@
       (cond ((string= str "/*")
              (let ((end (search "*/" text :start2 (+ pos 2))))
                (assert end)
-               (push (make-instance 'block-comment :string (subseq text pos end) :start-column (get-column text pos))
+               (push (make-instance 'block-comment
+                                    :position pos
+                                    :string (subseq text pos end)
+                                    :start-column (get-column text pos))
                      tokens)
                (setf pos (+ end 2))))
             ((string= str "//")
              (let ((end (position #\newline text :start pos)))
                (assert end)
-               (push (make-instance 'line-comment :string (subseq text pos end))
+               (push (make-instance 'line-comment
+                                    :position pos
+                                    :string (subseq text pos end))
                      tokens)
                (setf pos (1+ end))))
             ((string= str "'")
              (let ((string-start pos))
                (let ((end (search "'" text :start2 (1+ pos))))
                  (assert end)
-                 (push (make-instance 'string-literal :string (subseq text string-start end))
+                 (push (make-instance 'string-literal
+                                      :position pos
+                                      :string (subseq text string-start end))
                        tokens)
                  (setf pos (1+ end)))))
             ((digit-char-p (char str 0))
-             (push (make-instance 'number-literal :string str) tokens))
+             (push (make-instance 'number-literal
+                                  :position pos
+                                  :string str)
+                   tokens))
             ((word-char-p (char str 0))
-             (push (make-instance 'word :string str) tokens))
+             (push (make-instance 'word
+                                  :position pos
+                                  :string str)
+                   tokens))
             (t
-             (push (make-instance 'operator :string str) tokens))))
+             (push (make-instance 'operator
+                                  :position pos
+                                  :string str)
+                   tokens))))
     (make-instance 'iterator :list (nreverse tokens))))
 
 (defclass interface ()
@@ -153,12 +182,14 @@
   (when (match token-type string)
     (next-token)))
 
-(defun parsing-error ()
-  (error "Token not expected: ~S" (ahead-token)))
+(defun ts-parse-error ()
+  (error 'ts-parse-error
+         :position (token-position (ahead-token))
+         :message (format nil "Token not expected: ~S" (ahead-token))))
 
 (defun exact (token-type &optional string)
   (or (accept token-type string)
-      (parsing-error)))
+      (ts-parse-error)))
 
 (defun parse-type-expression ()
   (labels ((type-name ()
@@ -249,7 +280,7 @@
            (let ((token (exact 'number-literal)))
              (- (parse-number token))))
           (t
-           (parsing-error)))))
+           (ts-parse-error)))))
 
 (defun parse-def-namespace ()
   (when (accept 'word "namespace")
@@ -289,6 +320,8 @@
         (make-instance 'type-declaration :name name :type type)))))
 
 (defun parse-constant-declaration ()
+  ;; export const EOL: string[] = ['\n', '\r\n', '\r'];
+  ;; という行をスキップすることしか想定していない
   (when (accept 'word "const")
     (let ((name (accept 'word))
           (type (when (accept 'operator ":")
@@ -307,7 +340,7 @@
       (parse-constant-declaration)
       (if (end-of-token-p)
           nil
-          (parsing-error))))
+          (ts-parse-error))))
 
 (defun symbolize (string &optional package)
   (let ((name (string-upcase (cl-change-case:param-case string))))

@@ -240,24 +240,27 @@
                          :do (write-line (comment-to-string comment) out))))))
 
 (defun parse-interface-expression ()
-  (exact 'operator "{")
-  (let ((elements '()))
-    (loop
-      (let ((comment (parse-comments)))
-        (if-let ((element-name (accept 'word)))
-          (let ((optional-p (not (null (accept 'operator "?")))))
-            (exact 'operator ":")
-            (let ((type (parse-type-expression)))
-              (accept 'operator ";")
-              (push (make-instance 'element
-                                   :name (token-string element-name)
-                                   :optional-p optional-p
-                                   :type type
-                                   :comment comment)
-                    elements)))
-          (return))))
-    (exact 'operator "}")
-    (make-instance 'interface :elements (nreverse elements))))
+  (flet ((parse-element ()
+           (let ((comment (parse-comments)))
+             (if-let ((element-name (accept 'word)))
+               (let ((optional-p (not (null (accept 'operator "?")))))
+                 (exact 'operator ":")
+                 (let ((type (parse-type-expression)))
+                   (make-instance 'element
+                                  :name (token-string element-name)
+                                  :optional-p optional-p
+                                  :type type
+                                  :comment comment)))))))
+    (exact 'operator "{")
+    (let ((elements '()))
+      (loop
+        (if-let ((element (parse-element)))
+          (progn
+            (accept 'operator ";")
+            (push element elements))
+          (return)))
+      (exact 'operator "}")
+      (make-instance 'interface :elements (nreverse elements)))))
 
 (defun parse-polymorphism-spec ()
   (when (accept 'operator "<")
@@ -420,7 +423,8 @@
 (defun deploy! (spec-file)
   (dolist (text (lem-lsp-mode/specification::extract-typescript spec-file))
     (write-line "==================================================")
-    (write-line text)
+    (prin1 text)
+    (terpri)
     (handler-case (translate-text text)
       (ts-parse-error (c)
         (format t "*** ERROR: ~A~%" c)))))

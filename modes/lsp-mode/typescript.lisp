@@ -181,7 +181,7 @@
           (let ((optional-p (not (null (accept 'operator "?")))))
             (exact 'operator ":")
             (let ((type-expression (parse-type-expression)))
-              (exact 'operator ";")
+              (accept 'operator ";")
               (push (make-instance 'element
                                    :name (token-string element-name)
                                    :optional-p optional-p
@@ -193,6 +193,7 @@
     (make-instance 'interface :elements (nreverse elements))))
 
 (defun parse-def-interface ()
+  (accept 'word "export")
   (when (accept 'word "interface")
     (let ((interface-name (token-string (exact 'word)))
           (extends-interface
@@ -205,6 +206,7 @@
                       :extends extends-interface)))))
 
 (defun parse (*token-iterator*)
+  (loop :while (accept 'comment))
   (parse-def-interface))
 
 (defun symbolize (string &optional package)

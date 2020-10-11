@@ -148,6 +148,10 @@
 (defclass number-expression ()
   ((value :initarg :value)))
 
+(defclass property-type ()
+  ((key-type :initarg :key-type)
+   (value-type :initarg :value-type)))
+
 (defclass namespace ()
   ((name :initarg :name)
    (declarations :initarg :declarations)))
@@ -240,17 +244,34 @@
                          :do (write-line (comment-to-string comment) out))))))
 
 (defun parse-interface-expression ()
-  (flet ((parse-element ()
-           (let ((comment (parse-comments)))
-             (if-let ((element-name (accept 'word)))
-               (let ((optional-p (not (null (accept 'operator "?")))))
+  (labels ((parse-property (comment)
+             (exact 'operator "[")
+             (let ((name (exact 'word)))
+               (exact 'operator ":")
+               (let ((key-type (parse-type-expression)))
+                 (exact 'operator "]")
                  (exact 'operator ":")
-                 (let ((type (parse-type-expression)))
+                 (let ((value-type (parse-type-expression)))
                    (make-instance 'element
-                                  :name (token-string element-name)
-                                  :optional-p optional-p
-                                  :type type
-                                  :comment comment)))))))
+                                  :name (token-string name)
+                                  :optional-p nil
+                                  :type (make-instance 'property-type
+                                                       :key-type key-type
+                                                       :value-type value-type)
+                                  :comment comment)))))
+           (parse-element ()
+             (let ((comment (parse-comments)))
+               (if (match 'operator "[")
+                   (parse-property comment)
+                   (if-let ((element-name (accept 'word)))
+                     (let ((optional-p (not (null (accept 'operator "?")))))
+                       (exact 'operator ":")
+                       (let ((type (parse-type-expression)))
+                         (make-instance 'element
+                                        :name (token-string element-name)
+                                        :optional-p optional-p
+                                        :type type
+                                        :comment comment))))))))
     (exact 'operator "{")
     (let ((elements '()))
       (loop

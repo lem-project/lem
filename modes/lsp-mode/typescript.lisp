@@ -3,6 +3,7 @@
   (:import-from :cl-change-case)
   (:import-from :trivial-types)
   (:import-from :cl-ppcre)
+  (:import-from :lem-lsp-mode/specification)
   (:export :translate))
 (in-package :lem-lsp-mode/typescript)
 
@@ -95,14 +96,13 @@
                      tokens)
                (setf pos (1+ end))))
             ((string= str "'")
-             (let ((string-start pos))
-               (let ((end (search "'" text :start2 (1+ pos))))
-                 (assert end)
-                 (push (make-instance 'string-literal
-                                      :position pos
-                                      :string (subseq text string-start end))
-                       tokens)
-                 (setf pos (1+ end)))))
+             (let ((end (search "'" text :start2 pos)))
+               (assert end)
+               (push (make-instance 'string-literal
+                                    :position pos
+                                    :string (subseq text pos end))
+                     tokens)
+               (setf pos (1+ end))))
             ((digit-char-p (char str 0))
              (push (make-instance 'number-literal
                                   :position pos

@@ -140,7 +140,7 @@
   ((name :initarg :name)))
 
 (defclass array-type ()
-  ((name :initarg :name)))
+  ((item-type :initarg :item-type)))
 
 (defclass string-expression ()
   ((value :initarg :value)))
@@ -199,15 +199,15 @@
       (ts-parse-error)))
 
 (defun parse-type-expression ()
-  (labels ((type-name ()
+  (labels ((array-suffix (type)
+             (cond ((accept 'operator "[")
+                    (exact 'operator)
+                    (make-instance 'array-type :item-type type))
+                   (t
+                    type)))
+           (type-name ()
              (when-let ((name (accept 'word)))
-               (cond ((accept 'operator "[")
-                      (exact 'operator "]")
-                      (make-instance 'array-type
-                                     :name (token-string name)))
-                     (t
-                      (make-instance 'simple-type
-                                     :name (token-string name))))))
+               (array-suffix (make-instance 'simple-type :name (token-string name)))))
            (string-literal ()
              (when-let ((token (accept 'string-literal)))
                (make-instance 'string-expression
@@ -216,21 +216,25 @@
              (when-let ((token (accept 'number-literal)))
                (make-instance 'number-expression
                               :value (read-from-string (token-string token)))))
-           (type-1 ()
-             (cond ((match 'operator "{")
+           (primary ()
+             (cond ((accept 'operator "(")
+                    (let ((type (or-expr)))
+                      (exact 'operator ")")
+                      (array-suffix type)))
+                   ((match 'operator "{")
                     (parse-interface-expression))
                    ((type-name))
                    ((string-literal))
                    ((number-literal))))
-           (type-or ()
+           (or-expr ()
              (let ((types
-                     (loop :for type := (type-1)
+                     (loop :for type := (primary)
                            :collect type
                            :while (accept 'operator "|"))))
                (if (length= types 1)
                    (first types)
                    (make-instance 'type-or :types types)))))
-    (type-or)))
+    (or-expr)))
 
 (defun parse-comments ()
   (flet ((comment-to-string (comment)

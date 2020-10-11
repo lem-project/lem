@@ -267,13 +267,18 @@
     (exact 'word)
     (accept 'operator ">")))
 
+(defun parse-extends-names ()
+  (loop
+    :collect (token-string (exact 'word))
+    :while (accept 'operator ",")))
+
 (defun parse-def-interface ()
   (when (accept 'word "interface")
     (let ((interface-name (token-string (exact 'word)))
           (* (parse-polymorphism-spec))
           (extends-interface
             (when (accept 'word "extends")
-              (token-string (accept 'word)))))
+              (parse-extends-names))))
       (let ((interface (parse-interface-expression)))
         (change-class interface
                       'named-interface
@@ -371,7 +376,10 @@
 
 (defmethod to-lisp ((named-interface named-interface))
   (with-slots (name extends elements) named-interface
-    `(defclass ,(symbolize name) ,(if extends `(,(symbolize extends)) ())
+    `(defclass ,(symbolize name)
+         ,(if extends
+              (mapcar #'symbolize extends)
+              ())
        ,(mapcar #'element-to-slot-specifier elements))))
 
 (defmethod to-lisp ((namespace namespace))
@@ -423,8 +431,7 @@
 (defun deploy! (spec-file)
   (dolist (text (lem-lsp-mode/specification::extract-typescript spec-file))
     (write-line "==================================================")
-    (prin1 text)
-    (terpri)
-    (handler-case (translate-text text)
-      (ts-parse-error (c)
-        (format t "*** ERROR: ~A~%" c)))))
+    (format t "~S~%" text)
+    (restart-case (translate-text text)
+      (skip ()
+        :report "skip error"))))

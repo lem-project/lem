@@ -259,11 +259,8 @@
                                                        :key-type key-type
                                                        :value-type value-type)
                                   :comment comment)))))
-           (parse-element ()
-             (let ((comment (parse-comments)))
-               (if (match 'operator "[")
-                   (parse-property comment)
-                   (if-let ((element-name (accept 'word)))
+           (parse-simple-element (comment)
+             (if-let ((element-name (accept 'word)))
                      (let ((optional-p (not (null (accept 'operator "?")))))
                        (exact 'operator ":")
                        (let ((type (parse-type-expression)))
@@ -271,7 +268,12 @@
                                         :name (token-string element-name)
                                         :optional-p optional-p
                                         :type type
-                                        :comment comment))))))))
+                                        :comment comment)))))
+           (parse-element ()
+             (let ((comment (parse-comments)))
+               (if (match 'operator "[")
+                   (parse-property comment)
+                   (parse-simple-element comment)))))
     (exact 'operator "{")
     (let ((elements '()))
       (loop

@@ -152,6 +152,9 @@
   ((key-type :initarg :key-type)
    (value-type :initarg :value-type)))
 
+(defclass tuple-type ()
+  ((types :initarg :types)))
+
 (defclass namespace ()
   ((name :initarg :name)
    (declarations :initarg :declarations)))
@@ -216,6 +219,15 @@
              (when-let ((token (accept 'number-literal)))
                (make-instance 'number-expression
                               :value (read-from-string (token-string token)))))
+           (array-literal ()
+             (when (accept 'operator "[")
+               (make-instance 'tuple-type
+                              :types (if (accept 'operator "]")
+                                         '()
+                                         (loop
+                                           :collect (or-expr)
+                                           :until (accept 'operator "]")
+                                           :do (exact 'operator ","))))))
            (primary ()
              (cond ((accept 'operator "(")
                     (let ((type (or-expr)))
@@ -225,11 +237,12 @@
                     (parse-interface-expression))
                    ((type-name))
                    ((string-literal))
-                   ((number-literal))))
+                   ((number-literal))
+                   ((array-literal))
+                   (t (ts-parse-error))))
            (or-expr ()
              (let ((types
-                     (loop :for type := (primary)
-                           :collect type
+                     (loop :collect (primary)
                            :while (accept 'operator "|"))))
                (if (length= types 1)
                    (first types)

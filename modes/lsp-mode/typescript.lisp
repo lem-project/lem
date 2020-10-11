@@ -130,6 +130,7 @@
 (defclass element ()
   ((name :initarg :name)
    (optional-p :initarg :optional-p)
+   (read-only-p :initarg :read-only-p)
    (comment :initarg :comment)
    (type :initarg :type)))
 
@@ -261,7 +262,7 @@
                          :do (write-line (comment-to-string comment) out))))))
 
 (defun parse-interface-expression ()
-  (labels ((parse-property (comment)
+  (labels ((parse-property (comment read-only-p)
              (exact 'operator "[")
              (let ((name (exact 'word)))
                (exact 'operator ":")
@@ -272,25 +273,28 @@
                    (make-instance 'element
                                   :name (token-string name)
                                   :optional-p nil
+                                  :read-only-p read-only-p
                                   :type (make-instance 'property-type
                                                        :key-type key-type
                                                        :value-type value-type)
                                   :comment comment)))))
-           (parse-simple-element (comment)
+           (parse-simple-element (comment read-only-p)
              (if-let ((element-name (accept 'word)))
-                     (let ((optional-p (not (null (accept 'operator "?")))))
-                       (exact 'operator ":")
-                       (let ((type (parse-type-expression)))
-                         (make-instance 'element
-                                        :name (token-string element-name)
-                                        :optional-p optional-p
-                                        :type type
-                                        :comment comment)))))
+               (let ((optional-p (not (null (accept 'operator "?")))))
+                 (exact 'operator ":")
+                 (let ((type (parse-type-expression)))
+                   (make-instance 'element
+                                  :name (token-string element-name)
+                                  :optional-p optional-p
+                                  :read-only-p read-only-p
+                                  :type type
+                                  :comment comment)))))
            (parse-element ()
-             (let ((comment (parse-comments)))
+             (let ((comment (parse-comments))
+                   (read-only-p (not (null (accept 'word "readonly")))))
                (if (match 'operator "[")
-                   (parse-property comment)
-                   (parse-simple-element comment)))))
+                   (parse-property comment read-only-p)
+                   (parse-simple-element comment read-only-p)))))
     (exact 'operator "{")
     (let ((elements '()))
       (loop

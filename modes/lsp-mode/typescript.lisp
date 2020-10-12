@@ -171,6 +171,15 @@
   ((name :initarg :name)
    (type :initarg :type)))
 
+(defclass enum ()
+  ((name :initarg :name)
+   (declarations :initarg :declarations)))
+
+(defclass enum-declarations ()
+  ((name :initarg :name)
+   (value :initarg :value)
+   (comment :initarg :comment)))
+
 (defvar *token-iterator*)
 
 (defun next-token ()
@@ -379,6 +388,32 @@
         (accept 'operator ";")
         (make-instance 'type-declaration :name name :type type)))))
 
+(defun parse-def-enum ()
+  (flet ((parse-enum-value ()
+           (let ((token (exact 'string-literal)))
+             (make-instance 'string-expression :value (token-string token)))))
+    (when (accept 'word "enum")
+      (let ((name (token-string (exact 'word)))
+            (declarations '()))
+        (exact 'operator "{")
+        (loop
+          (let ((comment (parse-comments))
+                (name (token-string (exact 'word)))
+                (value (if (accept 'operator "=")
+                           (parse-enum-value)
+                           nil)))
+            (push (make-instance 'enum-declarations
+                                 :name name
+                                 :value value
+                                 :comment comment)
+                  declarations)
+            (if (accept 'operator "}")
+                (return)
+                (exact 'operator ","))))
+        (make-instance 'enum
+                       :name name
+                       :declarations (nreverse declarations))))))
+
 (defun parse-constant-declaration ()
   ;; export const EOL: string[] = ['\n', '\r\n', '\r'];
   ;; という行をスキップすることしか想定していない
@@ -397,6 +432,7 @@
   (or (parse-def-interface)
       (parse-def-namespace)
       (parse-def-type)
+      (parse-def-enum)
       (parse-constant-declaration)
       (if (end-of-token-p)
           nil
@@ -434,6 +470,9 @@
                   :collect (with-slots (var value) declaration
                              `(defparameter ,(symbolicate name #\. (symbolize var)) ,value)))))
       `(progn ,@forms))))
+
+(defmethod to-lisp ((enum enum))
+  )
 
 (defmethod to-lisp ((type-declaration type-declaration))
   ;; nop

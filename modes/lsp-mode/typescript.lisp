@@ -12,18 +12,24 @@
             :reader ts-parse-error-message)
    (position :initarg :position
              :initform nil
-             :reader ts-parse-error-position))
+             :reader ts-parse-error-position)
+   (file-line-number :initarg :file-line-number
+                     :initform nil
+                     :reader ts-parse-error-file-line-number))
   (:report (lambda (c s)
              (format s
-                     "~A: ~A"
+                     "line ~A, offset ~A: ~A"
+                     (ts-parse-error-file-line-number c)
                      (ts-parse-error-position c)
                      (ts-parse-error-message c)))))
 
-(defun whitespacep (char)
-  (member char '(#\space #\tab #\newline)))
+(defstruct file-part
+  text
+  line-number)
 
 (defclass token ()
-  ((string :initarg :string :reader token-string)
+  ((file-line-number :initarg :file-line-number :reader token-file-line-number)
+   (string :initarg :string :reader token-string)
    (position :initarg :position :reader token-position)))
 
 (defclass word (token) ())
@@ -69,8 +75,9 @@
                       ((char= #\newline (char text i))
                        (return (- pos i 1)))))))
 
-(defun tokenize (text)
-  (let ((pos 0)
+(defun tokenize (file-part)
+  (let ((text (file-part-text file-part))
+        (pos 0)
         (str)
         (tokens '()))
     (loop
@@ -81,6 +88,7 @@
                (assert end)
                (push (make-instance 'block-comment
                                     :position pos
+                                    :file-line-number (file-part-line-number file-part)
                                     :string (subseq text pos end)
                                     :start-column (get-column text pos))
                      tokens)
@@ -90,6 +98,7 @@
                (assert end)
                (push (make-instance 'line-comment
                                     :position pos
+                                    :file-line-number (file-part-line-number file-part)
                                     :string (subseq text pos end))
                      tokens)
                (setf pos (1+ end))))
@@ -98,22 +107,26 @@
                (assert end)
                (push (make-instance 'string-literal
                                     :position pos
+                                    :file-line-number (file-part-line-number file-part)
                                     :string (subseq text pos end))
                      tokens)
                (setf pos (1+ end))))
             ((digit-char-p (char str 0))
              (push (make-instance 'number-literal
                                   :position pos
+                                  :file-line-number (file-part-line-number file-part)
                                   :string str)
                    tokens))
             ((word-char-p (char str 0))
              (push (make-instance 'word
                                   :position pos
+                                  :file-line-number (file-part-line-number file-part)
                                   :string str)
                    tokens))
             (t
              (push (make-instance 'operator
                                   :position pos
+                                  :file-line-number (file-part-line-number file-part)
                                   :string str)
                    tokens))))
     (make-instance 'iterator :list (nreverse tokens))))
@@ -203,6 +216,7 @@
 (defun ts-parse-error ()
   (error 'ts-parse-error
          :position (token-position (ahead-token))
+         :file-line-number (token-file-line-number (ahead-token))
          :message (format nil "Token not expected: ~S" (ahead-token))))
 
 (defun exact (token-type &optional string)
@@ -477,8 +491,8 @@
   ;; nop
   )
 
-(defun parse-text (text)
-  (let ((token-iterator (tokenize text)))
+(defun parse-text (file-part)
+  (let ((token-iterator (tokenize file-part)))
     (loop :for result := (parse token-iterator)
           :while result
           :collect result)))
@@ -487,8 +501,8 @@
   (let ((*print-pretty* t))
     (prin1 form stream)))
 
-(defun translate-text (text &optional (stream *standard-output*))
-  (dolist (result (parse-text text))
+(defun translate-text (file-part &optional (stream *standard-output*))
+  (dolist (result (parse-text file-part))
     (fresh-line stream)
     (terpri stream)
     (print-form (to-lisp result) stream)
@@ -503,18 +517,23 @@
       (let ((code-list '()))
         (loop :with in-code-p := nil
               :and lines := '()
+              :and start-line-number := nil
               :for line := (read-line in nil nil)
+              :for line-number :from 1
               :while line
               :do (let ((line (string-right-trim '(#\Return) line)))
                     (if in-code-p
                         (cond ((ppcre:scan "^```" line)
                                (setf in-code-p nil)
-                               (push (lines-to-string (nreverse lines)) code-list))
+                               (push (make-file-part :line-number (1+ start-line-number)
+                                                     :text (lines-to-string (nreverse lines)))
+                                     code-list))
                               (t
                                (push line lines)))
                         (when (ppcre:scan "^```typescript" line)
                           (setf in-code-p t)
-                          (setf lines '())))))
+                          (setf lines '())
+                          (setf start-line-number line-number)))))
         (nreverse code-list)))))
 
 (defun deploy (spec-file out-file)
@@ -523,7 +542,7 @@
                        :if-exists :supersede
                        :if-does-not-exist :create)
     (format out ";;; Code generated by ~A; DO NOT EDIT.~%" (package-name *package*))
-    (dolist (code (extract-typescript spec-file))
-      (handler-case (translate-text code out)
-        (ts-parse-error (c)
-          (warn "~A" c))))))
+    (loop :for file-part :in (extract-typescript spec-file)
+          :do (handler-case (translate-text file-part out)
+                (ts-parse-error (c)
+                  (warn "~A" c))))))

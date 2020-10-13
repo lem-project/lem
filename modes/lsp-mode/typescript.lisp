@@ -3,7 +3,6 @@
   (:import-from :cl-change-case)
   (:import-from :trivial-types)
   (:import-from :cl-ppcre)
-  (:import-from :lem-lsp-mode/specification)
   (:export :translate))
 (in-package :lem-lsp-mode/typescript)
 

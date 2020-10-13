@@ -1,10 +1,9 @@
-(defpackage :lem-lsp-mode/typescript
+(defpackage :lem-lsp-mode/protocol-generator
   (:use :cl :alexandria)
   (:import-from :cl-change-case)
   (:import-from :trivial-types)
-  (:import-from :cl-ppcre)
-  (:export :translate))
-(in-package :lem-lsp-mode/typescript)
+  (:import-from :cl-ppcre))
+(in-package :lem-lsp-mode/protocol-generator)
 
 (define-condition ts-parse-error ()
   ((message :initarg :message
@@ -535,7 +534,7 @@
                           (setf start-line-number line-number)))))
         (nreverse code-list)))))
 
-(defun deploy (spec-file out-file)
+(defun generate (spec-file out-file)
   (with-open-file (out out-file
                        :direction :output
                        :if-exists :supersede
@@ -545,3 +544,7 @@
           :do (handler-case (translate-text file-part out)
                 (ts-parse-error (c)
                   (warn "~A" c))))))
+
+#+(or)
+(generate (asdf:system-relative-pathname :lem-lsp-mode "specification/specification-3-15.md")
+          (asdf:system-relative-pathname :lem-lsp-mode "protocol.lisp"))

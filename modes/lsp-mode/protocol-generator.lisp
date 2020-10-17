@@ -1,10 +1,15 @@
 (defpackage :lem-lsp-mode/protocol-generator
-  (:use :cl :alexandria)
+  (:use :cl
+        :alexandria)
+  (:import-from :lem-lsp-mode/type)
   (:import-from :cl-change-case)
   (:import-from :trivial-types)
   (:import-from :cl-ppcre)
   (:export :deploy))
 (in-package :lem-lsp-mode/protocol-generator)
+
+#+sbcl
+(sb-ext:lock-package :lem-lsp-mode/protocol-generator)
 
 (define-condition ts-parse-error ()
   ((message :initarg :message
@@ -148,16 +153,19 @@
   ((types :initarg :types)))
 
 (defclass simple-type ()
-  ((name :initarg :name)))
+  ((name :initarg :name :reader simple-type-name)))
 
 (defclass array-type ()
-  ((item-type :initarg :item-type)))
+  ((item-type :initarg :item-type :reader array-type-item-type)))
 
-(defclass string-expression ()
-  ((value :initarg :value)))
+(defclass value-expression ()
+  ((value :initarg :value :reader value-expression-value)))
 
-(defclass number-expression ()
-  ((value :initarg :value)))
+(defclass string-expression (value-expression)
+  ())
+
+(defclass number-expression (value-expression)
+  ())
 
 (defclass property-type ()
   ((key-type :initarg :key-type)
@@ -458,13 +466,29 @@
         (intern name package)
         (intern name))))
 
+(defmethod to-lisp-type ((type simple-type))
+  (switch ((simple-type-name type) :test #'string=)
+    ("any" t)
+    ("boolean" 'boolean) ; TODO: jsonライブラリ毎のt/nilや:true/:falseという違いを考慮する
+    ("number" 'number)
+    ("string" 'string)
+    (otherwise
+     (symbolize (simple-type-name type)))))
+
 (defmethod to-lisp-type ((type type-or))
   )
 
-(defmethod to-lisp-type ((type simple-type))
+(defmethod to-lisp-type ((type array-type))
+  (let ((item-type (array-type-item-type type)))
+    `(lem-lsp-mode/type:lsp-array ,item-type)))
+
+(defmethod to-lisp-type ((type value-expression))
+  `(lem-lsp-mode/type:equal-specializer ,(value-expression-value type)))
+
+(defmethod to-lisp-type ((type interface))
   )
 
-(defmethod to-lisp-type ((type array-type))
+(defmethod to-lisp-type ((type property-type))
   )
 
 (defun element-to-slot-specifier (element)
@@ -474,7 +498,7 @@
            (symbolize name))
       :initarg ,(symbolize name :keyword)
       :documentation ,comment
-      :type (to-lisp-type type))))
+      :type ,(to-lisp-type type))))
 
 (defmethod to-lisp ((named-interface named-interface))
   (with-slots (name extends elements) named-interface

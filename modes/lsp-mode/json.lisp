@@ -63,7 +63,6 @@
 
 
 (defgeneric to-json-internal (json-library object))
-(defgeneric to-json-string-internal (json-library json))
 (defgeneric json-get-internal (json-library json key))
 
 (defclass json-library ()
@@ -86,9 +85,6 @@
                 object)
     (apply #'st-json:jso (nreverse fields))))
 
-(defmethod to-json-string-internal ((json-library st-json) json)
-  (st-json:write-json-to-string json))
-
 (defmethod json-get-internal ((json-library st-json) json key)
   (st-json:getjso key json))
 
@@ -106,10 +102,6 @@
                 object)
     table))
 
-(defmethod to-json-string-internal ((json-library yason) object)
-  (with-output-to-string (out)
-    (yason:encode object out)))
-
 (defmethod json-get-internal ((json-library yason) json key)
   (gethash key json))
 
@@ -118,9 +110,6 @@
 
 (defun to-json (object)
   (to-json-internal *json-library* object))
-
-(defun to-json-string (object)
-  (to-json-string-internal *json-library* (to-json object)))
 
 (defun json-null ()
   (json-library-null *json-library*))
@@ -204,26 +193,6 @@
         (rove:ok (equal "test" (gethash "a" json)))
         (rove:ok (equal 100 (gethash "b" json)))
         (rove:ok (equal '(1 2) (gethash "c" json)))))))
-
-(rove:deftest to-json-string
-  (rove:testing "st-json"
-    (let ((*json-library* (make-instance 'st-json)))
-      (rove:ok
-       (string= (to-json-string
-                 (make-instance 'test-params
-                                :a "test"
-                                :b 100
-                                :c '(1 2)))
-                "{\"a\":\"test\",\"b\":100,\"c\":[1,2]}"))))
-  (rove:testing "yason"
-    (let ((*json-library* (make-instance 'yason)))
-      (rove:ok
-       (string= (to-json-string
-                 (make-instance 'test-params
-                                :a "test"
-                                :b 100
-                                :c '(1 2)))
-                "{\"a\":\"test\",\"b\":100,\"c\":[1,2]}")))))
 
 (rove:deftest json-get
   (rove:testing "st-json"

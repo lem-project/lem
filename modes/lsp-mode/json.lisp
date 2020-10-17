@@ -5,21 +5,26 @@
   (:import-from :yason)
   (:import-from :closer-mop)
   (:import-from :cl-change-case)
-  (:import-from :rove)
   (:export :missing-parameter
+           :missing-parameter-slot-name
+           :missing-parameter-class-name
            :object
            :to-json
            :to-json-string
            :json-null
            :json-true
-           :json-false))
+           :json-false
+           :json-get
+           :from-json))
 (in-package :lem-lsp-mode/json)
 
 (define-condition missing-parameter ()
   ((slot-name
-    :initarg :slot-name)
+    :initarg :slot-name
+    :reader missing-parameter-slot-name)
    (class-name
-    :initarg :class-name))
+    :initarg :class-name
+    :reader missing-parameter-class-name))
   (:report (lambda (condition stream)
              (format stream
                      "Required parameter ~A missing for ~A"
@@ -130,84 +135,3 @@
           :do (setf (slot-value object slot-name)
                     (json-get json (cl-change-case:camel-case (string slot-name)))))
     object))
-
-
-(defclass test-params (object)
-  ((a
-    :initarg :a)
-   (b?
-    :initarg :b)
-   (c
-    :initarg :c)))
-
-(defun json-match-p (jso alist)
-  (equalp (st-json::jso-alist jso)
-          alist))
-
-(rove:deftest check-required-initarg
-  (rove:testing "Missing parameters"
-    (flet ((make ()
-             (let ((conditions '()))
-               (handler-bind ((missing-parameter
-                                (lambda (c)
-                                  (push c conditions)
-                                  (continue c))))
-                 (make-instance 'test-params))
-               (nreverse conditions)))
-           (equals (condition class-name slot-name)
-             (and (eq (slot-value condition 'class-name) class-name)
-                  (eq (slot-value condition 'slot-name) slot-name))))
-      (let ((conditions (make)))
-        (rove:ok (= 2 (length conditions)))
-        (rove:ok (equals (first conditions) 'test-params 'a))
-        (rove:ok (equals (second conditions) 'test-params 'c))))))
-
-(rove:deftest primitive-value
-  (rove:testing "st-json"
-    (let ((*json-library* (make-instance 'st-json)))
-      (rove:ok (eq :null (json-null)))
-      (rove:ok (eq :true (json-true)))
-      (rove:ok (eq :false (json-false)))))
-  (rove:testing "yason"
-    (let ((*json-library* (make-instance 'yason)))
-      (rove:ok (eq :null (json-null)))
-      (rove:ok (eq t (json-true)))
-      (rove:ok (eq nil (json-false))))))
-
-(rove:deftest to-json
-  (let ((test-params
-          (make-instance 'test-params
-                         :a "test"
-                         :b 100
-                         :c '(1 2))))
-    (rove:testing "st-json"
-      (let* ((*json-library* (make-instance 'st-json))
-             (json (to-json test-params)))
-        (rove:ok (typep json 'st-json:jso))
-        (rove:ok (json-match-p json '(("a" . "test") ("b" . 100) ("c" 1 2))))))
-    (rove:testing "yason"
-      (let* ((*json-library* (make-instance 'yason))
-             (json (to-json test-params)))
-        (rove:ok (hash-table-p json))
-        (rove:ok (= 3 (hash-table-count json)))
-        (rove:ok (equal "test" (gethash "a" json)))
-        (rove:ok (equal 100 (gethash "b" json)))
-        (rove:ok (equal '(1 2) (gethash "c" json)))))))
-
-(rove:deftest json-get
-  (rove:testing "st-json"
-    (let ((*json-library* (make-instance 'st-json)))
-      (rove:ok (equal 1
-                      (json-get (st-json:jso "foo" 1 "bar" 2)
-                                "foo")))
-      (rove:ok (equal nil
-                      (json-get (st-json:jso "foo" 1 "bar" 2)
-                                "xxx")))))
-  (rove:testing "yason"
-    (let ((*json-library* (make-instance 'yason)))
-      (rove:ok (equal 1
-                      (json-get (alexandria:plist-hash-table (list "foo" 1 "bar" 2) :test 'equal)
-                                "foo")))
-      (rove:ok (equal nil
-                      (json-get (alexandria:plist-hash-table (list "foo" 1 "bar" 2) :test 'equal)
-                                "xxx"))))))

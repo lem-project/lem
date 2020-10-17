@@ -154,7 +154,13 @@
      (loop :for item :in value
            :collect (coerce-element item item-type)))
     ((cons 'lem-lsp-mode/type:interface elements)
-     )
+     (assert-type value 'hash-table)
+     (let ((new-hash-table (make-hash-table :test 'equal)))
+       (dolist (element elements)
+         (destructuring-bind (name &key type) element
+           (setf (gethash name new-hash-table)
+                 (coerce-element (gethash name value) type))))
+       new-hash-table))
     ((list 'lem-lsp-mode/type:equal-specializer value-spec)
      (unless (equal value value-spec)
        (error 'json-type-error :type type :value value))
@@ -180,6 +186,16 @@
      (assert-type value type)
      value)))
 
+(defun coerce-json (json json-class-name)
+  (let ((object (make-instance json-class-name)))
+    (loop :for slot :in (closer-mop:class-slots (class-of object))
+          :for slot-name := (closer-mop:slot-definition-name slot)
+          :do (setf (slot-value object slot-name)
+                    (coerce-element (json-get json (cl-change-case:camel-case (string slot-name)))
+                                    (closer-mop:slot-definition-type slot))))
+    object))
+
+
 (defun hash-equal (ht1 ht2)
   (and (= (hash-table-count ht1)
           (hash-table-count ht2))
@@ -239,12 +255,3 @@
                            'json-type-error))
     (rove:ok (equal (coerce-element '(1 2 "foo") '(lem-lsp-mode/type:tuple integer integer string))
                     '(1 2 "foo")))))
-
-(defun coerce-json (json json-class-name)
-  (let ((object (make-instance json-class-name)))
-    (loop :for slot :in (closer-mop:class-slots (class-of object))
-          :for slot-name := (closer-mop:slot-definition-name slot)
-          :do (setf (slot-value object slot-name)
-                    (coerce-element (json-get json (cl-change-case:camel-case (string slot-name)))
-                                    (closer-mop:slot-definition-type slot))))
-    object))

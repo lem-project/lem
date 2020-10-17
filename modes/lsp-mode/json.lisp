@@ -5,6 +5,9 @@
   (:import-from :yason)
   (:import-from :closer-mop)
   (:import-from :cl-change-case)
+  (:import-from :trivia)
+  (:import-from :lem-lsp-mode/type)
+  (:import-from :rove)
   (:export :missing-parameter
            :missing-parameter-slot-name
            :missing-parameter-class-name
@@ -18,7 +21,7 @@
            :json-true
            :json-false
            :json-get
-           :from-json))
+           :coerce-json))
 (in-package :lem-lsp-mode/json)
 
 (define-condition missing-parameter ()
@@ -131,10 +134,117 @@
 (defun json-get (json key)
   (json-get-internal *json-backend* json key))
 
-(defun from-json (json json-class-name)
+
+(define-condition json-type-error ()
+  ((type :initarg :type)
+   (value :initarg :value))
+  (:report (lambda (c s)
+             (with-slots (value type) c
+               (format s "~S is not a ~S" value type)))))
+
+(defun assert-type (value type)
+  (unless (typep value type)
+    (error 'json-type-error :value value :type type))
+  (values))
+
+(defun coerce-element (value type)
+  (trivia:match type
+    ((list 'lem-lsp-mode/type:lsp-array item-type)
+     (assert-type value 'list)
+     (loop :for item :in value
+           :collect (coerce-element item item-type)))
+    ((cons 'lem-lsp-mode/type:interface elements)
+     )
+    ((list 'lem-lsp-mode/type:equal-specializer value-spec)
+     (unless (equal value value-spec)
+       (error 'json-type-error :type type :value value))
+     value)
+    ((list 'lem-lsp-mode/type:object key-type value-type)
+     (assert-type value 'hash-table)
+     (let ((new-hash-table (make-hash-table :test 'equal)))
+       (maphash (lambda (key value)
+                  (setf (gethash (coerce-element key key-type) new-hash-table)
+                        (coerce-element value value-type)))
+                value)
+       new-hash-table))
+    ((cons 'lem-lsp-mode/type:tuple types)
+     (assert-type value 'list)
+     (unless (alexandria:length= value types)
+       (error 'json-type-error :type type :value value))
+     (loop :for type :in types
+           :for item :in value
+           :collect (coerce-element item type)))
+    ;; ((cons 'or types)
+    ;;  )
+    (otherwise
+     (assert-type value type)
+     value)))
+
+(defun hash-equal (ht1 ht2)
+  (and (= (hash-table-count ht1)
+          (hash-table-count ht2))
+       (let ((default '#:default))
+         (maphash (lambda (k v)
+                    (unless (equal v (gethash k ht2 default))
+                      (return-from hash-equal nil)))
+                  ht1)
+         t)))
+
+(defun contain-hash-keys-p (ht keys)
+  (alexandria:set-equal (alexandria:hash-table-keys ht)
+                        keys
+                        :test #'equal))
+
+(defun hash (&rest plist)
+  (alexandria:plist-hash-table plist :test 'equal))
+
+(rove:deftest coerce-element
+  (rove:testing "lsp-array"
+    (rove:ok (rove:signals (coerce-element 100 '(lem-lsp-mode/type:lsp-array integer))
+                           'json-type-error))
+    (rove:ok (rove:signals (coerce-element '(1 "a") '(lem-lsp-mode/type:lsp-array integer))
+                           'json-type-error))
+    (rove:ok (equal '(1 2 3)
+                    (coerce-element '(1 2 3) '(lem-lsp-mode/type:lsp-array integer)))))
+  (rove:testing "equal-specializer"
+    (rove:ok (rove:signals (coerce-element 1 '(lem-lsp-mode/type:equal-specializer "foo"))
+                           'json-type-error))
+    (rove:ok (equal "foo" (coerce-element "foo" '(lem-lsp-mode/type:equal-specializer "foo")))))
+  (rove:testing "object"
+    (rove:ok (rove:signals (coerce-element 1
+                                           '(lem-lsp-mode/type:object string integer))
+                           'json-type-error))
+    (rove:ok (rove:signals (coerce-element (hash "foo" 100 'bar 200)
+                                           '(lem-lsp-mode/type:object string integer))
+                           'json-type-error))
+    (rove:ok (hash-equal (coerce-element (hash "foo" 100 "bar" 200)
+                                         '(lem-lsp-mode/type:object string integer))
+                         (hash "foo" 100 "bar" 200)))
+    (rove:ok (contain-hash-keys-p (coerce-element (hash "foo" '(100 200) "bar" '(1 2 3))
+                                                  '(lem-lsp-mode/type:object string (lem-lsp-mode/type:lsp-array integer)))
+                                  '("foo" "bar")))
+    (rove:ok (rove:signals (coerce-element (hash "foo" '(100 200) "bar" '(1 "a" 3))
+                                           '(lem-lsp-mode/type:object string (lem-lsp-mode/type:lsp-array integer)))
+                           'json-type-error)))
+  (rove:testing "tuple"
+    (rove:ok (rove:signals (coerce-element "foo" '(lem-lsp-mode/type:tuple integer))
+                           'json-type-error))
+    (rove:ok (rove:signals (coerce-element '(1 2) '(lem-lsp-mode/type:tuple integer))
+                           'json-type-error))
+    (rove:ok (rove:signals (coerce-element '(1 2) '(lem-lsp-mode/type:tuple integer string))
+                           'json-type-error))
+    (rove:ok (equal (coerce-element '(1 2) '(lem-lsp-mode/type:tuple integer integer))
+                    '(1 2)))
+    (rove:ok (rove:signals (coerce-element '(1 2 "foo") '(lem-lsp-mode/type:tuple string integer string))
+                           'json-type-error))
+    (rove:ok (equal (coerce-element '(1 2 "foo") '(lem-lsp-mode/type:tuple integer integer string))
+                    '(1 2 "foo")))))
+
+(defun coerce-json (json json-class-name)
   (let ((object (make-instance json-class-name)))
     (loop :for slot :in (closer-mop:class-slots (class-of object))
           :for slot-name := (closer-mop:slot-definition-name slot)
           :do (setf (slot-value object slot-name)
-                    (json-get json (cl-change-case:camel-case (string slot-name)))))
+                    (coerce-element (json-get json (cl-change-case:camel-case (string slot-name)))
+                                    (closer-mop:slot-definition-type slot))))
     object))

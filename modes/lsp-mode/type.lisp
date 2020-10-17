@@ -2,7 +2,9 @@
   (:use :cl)
   (:export :lsp-array
            :interface
-           :equal-specializer))
+           :equal-specializer
+           :object
+           :tuple))
 (in-package :lem-lsp-mode/type)
 
 #+sbcl
@@ -35,9 +37,10 @@
   (declare (ignore value))
   t)
 
-#+(or)
-(defclass initialize-params ()
-  ((client-info?
-    :initarg :client-info
-    :type (interface (name :type string)
-                     (version? :type string)))))
+(deftype object (key value)
+  (declare (ignore key value))
+  `hash-table)
+
+(deftype tuple (&rest types)
+  (declare (ignore types))
+  'list)

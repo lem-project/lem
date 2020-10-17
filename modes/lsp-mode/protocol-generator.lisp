@@ -136,21 +136,21 @@
     (make-instance 'iterator :list (nreverse tokens))))
 
 (defclass interface ()
-  ((elements :initarg :elements)))
+  ((elements :initarg :elements :reader interface-elements)))
 
 (defclass named-interface (interface)
   ((name :initarg :name)
    (extends :initarg :extends)))
 
 (defclass element ()
-  ((name :initarg :name)
-   (optional-p :initarg :optional-p)
-   (read-only-p :initarg :read-only-p)
-   (comment :initarg :comment)
-   (type :initarg :type)))
+  ((name :initarg :name :reader element-name)
+   (optional-p :initarg :optional-p :reader element-optional-p)
+   (read-only-p :initarg :read-only-p :reader element-read-only-p)
+   (comment :initarg :comment :reader element-comment)
+   (type :initarg :type :reader element-type)))
 
 (defclass type-or ()
-  ((types :initarg :types)))
+  ((types :initarg :types :reader type-or-types)))
 
 (defclass simple-type ()
   ((name :initarg :name :reader simple-type-name)))
@@ -168,11 +168,11 @@
   ())
 
 (defclass property-type ()
-  ((key-type :initarg :key-type)
-   (value-type :initarg :value-type)))
+  ((key-type :initarg :key-type :reader property-type-key-type)
+   (value-type :initarg :value-type :reader property-type-value-type)))
 
 (defclass tuple-type ()
-  ((types :initarg :types)))
+  ((types :initarg :types :reader tuple-type-types)))
 
 (defclass namespace ()
   ((name :initarg :name)
@@ -476,7 +476,7 @@
      (symbolize (simple-type-name type)))))
 
 (defmethod to-lisp-type ((type type-or))
-  )
+  `(or ,@(mapcar #'to-lisp-type (type-or-types type))))
 
 (defmethod to-lisp-type ((type array-type))
   (let ((item-type (array-type-item-type type)))
@@ -486,10 +486,18 @@
   `(lem-lsp-mode/type:equal-specializer ,(value-expression-value type)))
 
 (defmethod to-lisp-type ((type interface))
-  )
+  `(lem-lsp-mode/type:interface
+    ,@(mapcar (lambda (element)
+                (list (element-name element)
+                      :type (to-lisp-type (element-type element))))
+              (interface-elements type))))
 
 (defmethod to-lisp-type ((type property-type))
-  )
+  `(lem-lsp-mode/type:object ,(to-lisp-type (property-type-key-type type))
+                             ,(to-lisp-type (property-type-value-type type))))
+
+(defmethod to-lisp-type ((type tuple-type))
+  `(lem-lsp-mode/type:tuple ,@(mapcar #'to-lisp-type (tuple-type-types type))))
 
 (defun element-to-slot-specifier (element)
   (with-slots (name optional-p comment type) element

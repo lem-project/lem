@@ -9,6 +9,7 @@
            :missing-parameter-slot-name
            :missing-parameter-class-name
            :object
+           :*json-backend*
            :st-json-backend
            :yason-backend
            :to-json
@@ -69,22 +70,22 @@
     (rec object)))
 
 
-(defgeneric to-json-internal (json-library object))
-(defgeneric json-get-internal (json-library json key))
+(defgeneric to-json-internal (json-backend object))
+(defgeneric json-get-internal (json-backend json key))
 
-(defclass json-library ()
-  ((null :initarg :null :reader json-library-null)
-   (false :initarg :false :reader json-library-false)
-   (true :initarg :true :reader json-library-true)))
+(defclass json-backend ()
+  ((null :initarg :null :reader json-backend-null)
+   (false :initarg :false :reader json-backend-false)
+   (true :initarg :true :reader json-backend-true)))
 
-(defclass st-json-backend (json-library)
+(defclass st-json-backend (json-backend)
   ()
   (:default-initargs
    :null :null
    :false :false
    :true :true))
 
-(defmethod to-json-internal ((json-library st-json-backend) object)
+(defmethod to-json-internal ((json-backend st-json-backend) object)
   (let ((fields '()))
     (map-object (lambda (k v)
                   (push k fields)
@@ -92,43 +93,43 @@
                 object)
     (apply #'st-json:jso (nreverse fields))))
 
-(defmethod json-get-internal ((json-library st-json-backend) json key)
+(defmethod json-get-internal ((json-backend st-json-backend) json key)
   (st-json:getjso key json))
 
-(defclass yason-backend (json-library)
+(defclass yason-backend (json-backend)
   ()
   (:default-initargs
    :null :null
    :false nil
    :true t))
 
-(defmethod to-json-internal ((json-library yason-backend) object)
+(defmethod to-json-internal ((json-backend yason-backend) object)
   (let ((table (make-hash-table :test 'equal)))
     (map-object (lambda (k v)
                   (setf (gethash k table) v))
                 object)
     table))
 
-(defmethod json-get-internal ((json-library yason-backend) json key)
+(defmethod json-get-internal ((json-backend yason-backend) json key)
   (gethash key json))
 
 
-(defparameter *json-library* (make-instance 'yason-backend))
+(defparameter *json-backend* (make-instance 'yason-backend))
 
 (defun to-json (object)
-  (to-json-internal *json-library* object))
+  (to-json-internal *json-backend* object))
 
 (defun json-null ()
-  (json-library-null *json-library*))
+  (json-backend-null *json-backend*))
 
 (defun json-true ()
-  (json-library-true *json-library*))
+  (json-backend-true *json-backend*))
 
 (defun json-false ()
-  (json-library-false *json-library*))
+  (json-backend-false *json-backend*))
 
 (defun json-get (json key)
-  (json-get-internal *json-library* json key))
+  (json-get-internal *json-backend* json key))
 
 (defun from-json (json json-class-name)
   (let ((object (make-instance json-class-name)))

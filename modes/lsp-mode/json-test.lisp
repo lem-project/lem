@@ -32,12 +32,12 @@
 
 (deftest primitive-value
   (testing "st-json"
-    (let ((lem-lsp-mode/json::*json-library* (make-instance 'st-json-backend)))
+    (let ((*json-backend* (make-instance 'st-json-backend)))
       (ok (eq :null (json-null)))
       (ok (eq :true (json-true)))
       (ok (eq :false (json-false)))))
   (testing "yason"
-    (let ((lem-lsp-mode/json::*json-library* (make-instance 'yason-backend)))
+    (let ((*json-backend* (make-instance 'yason-backend)))
       (ok (eq :null (json-null)))
       (ok (eq t (json-true)))
       (ok (eq nil (json-false))))))
@@ -49,14 +49,14 @@
                          :b 100
                          :c '(1 2))))
     (testing "st-json"
-      (let* ((lem-lsp-mode/json::*json-library* (make-instance 'st-json-backend))
+      (let* ((*json-backend* (make-instance 'st-json-backend))
              (json (to-json test-params)))
         (ok (typep json 'st-json:jso))
         (ok (equal (st-json:getjso "a" json) "test"))
         (ok (equal (st-json:getjso "b" json) 100))
         (ok (equal (st-json:getjso "c" json) '(1 2)))))
     (testing "yason"
-      (let* ((lem-lsp-mode/json::*json-library* (make-instance 'yason-backend))
+      (let* ((*json-backend* (make-instance 'yason-backend))
              (json (to-json test-params)))
         (ok (hash-table-p json))
         (ok (= 3 (hash-table-count json)))
@@ -66,7 +66,7 @@
 
 (deftest json-get
   (testing "st-json"
-    (let ((lem-lsp-mode/json::*json-library* (make-instance 'st-json-backend)))
+    (let ((*json-backend* (make-instance 'st-json-backend)))
       (ok (equal 1
                  (json-get (st-json:jso "foo" 1 "bar" 2)
                            "foo")))
@@ -74,7 +74,7 @@
                  (json-get (st-json:jso "foo" 1 "bar" 2)
                            "xxx")))))
   (testing "yason"
-    (let ((lem-lsp-mode/json::*json-library* (make-instance 'yason-backend)))
+    (let ((*json-backend* (make-instance 'yason-backend)))
       (ok (equal 1
                  (json-get (alexandria:plist-hash-table (list "foo" 1 "bar" 2) :test 'equal)
                            "foo")))

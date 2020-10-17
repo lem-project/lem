@@ -1,5 +1,6 @@
 (defpackage :lem-lsp-mode/json
   (:use :cl)
+  (:import-from :alexandria)
   (:import-from :st-json)
   (:import-from :yason)
   (:import-from :closer-mop)
@@ -60,8 +61,10 @@
                  value)))
     (rec object)))
 
+
 (defgeneric to-json-internal (json-library object))
 (defgeneric to-json-string-internal (json-library json))
+(defgeneric json-get-internal (json-library json key))
 
 (defclass json-library ()
   ((null :initarg :null :reader json-library-null)
@@ -86,6 +89,9 @@
 (defmethod to-json-string-internal ((json-library st-json) json)
   (st-json:write-json-to-string json))
 
+(defmethod json-get-internal ((json-library st-json) json key)
+  (st-json:getjso key json))
+
 (defclass yason (json-library)
   ()
   (:default-initargs
@@ -104,6 +110,10 @@
   (with-output-to-string (out)
     (yason:encode object out)))
 
+(defmethod json-get-internal ((json-library yason) json key)
+  (gethash key json))
+
+
 (defparameter *json-library* (make-instance 'yason))
 
 (defun to-json (object)
@@ -120,6 +130,17 @@
 
 (defun json-false ()
   (json-library-false *json-library*))
+
+(defun json-get (json key)
+  (json-get-internal *json-library* json key))
+
+(defun from-json (json json-class-name)
+  (let ((object (make-instance json-class-name)))
+    (loop :for slot :in (closer-mop:class-slots (class-of object))
+          :for slot-name := (closer-mop:slot-definition-name slot)
+          :do (setf (slot-value object slot-name)
+                    (json-get json (cl-change-case:camel-case (string slot-name)))))
+    object))
 
 
 (defclass test-params (object)
@@ -153,12 +174,12 @@
         (rove:ok (equals (second conditions) 'test-params 'c))))))
 
 (rove:deftest primitive-value
-  (rove:testing "st-json" 
+  (rove:testing "st-json"
     (let ((*json-library* (make-instance 'st-json)))
       (rove:ok (eq :null (json-null)))
       (rove:ok (eq :true (json-true)))
       (rove:ok (eq :false (json-false)))))
-  (rove:testing "yason" 
+  (rove:testing "yason"
     (let ((*json-library* (make-instance 'yason)))
       (rove:ok (eq :null (json-null)))
       (rove:ok (eq t (json-true)))
@@ -170,12 +191,12 @@
                          :a "test"
                          :b 100
                          :c '(1 2))))
-    (rove:testing "st-json" 
+    (rove:testing "st-json"
       (let* ((*json-library* (make-instance 'st-json))
              (json (to-json test-params)))
         (rove:ok (typep json 'st-json:jso))
         (rove:ok (json-match-p json '(("a" . "test") ("b" . 100) ("c" 1 2))))))
-    (rove:testing "yason" 
+    (rove:testing "yason"
       (let* ((*json-library* (make-instance 'yason))
              (json (to-json test-params)))
         (rove:ok (hash-table-p json))
@@ -185,7 +206,7 @@
         (rove:ok (equal '(1 2) (gethash "c" json)))))))
 
 (rove:deftest to-json-string
-  (rove:testing "st-json" 
+  (rove:testing "st-json"
     (let ((*json-library* (make-instance 'st-json)))
       (rove:ok
        (string= (to-json-string
@@ -203,3 +224,21 @@
                                 :b 100
                                 :c '(1 2)))
                 "{\"a\":\"test\",\"b\":100,\"c\":[1,2]}")))))
+
+(rove:deftest json-get
+  (rove:testing "st-json"
+    (let ((*json-library* (make-instance 'st-json)))
+      (rove:ok (equal 1
+                      (json-get (st-json:jso "foo" 1 "bar" 2)
+                                "foo")))
+      (rove:ok (equal nil
+                      (json-get (st-json:jso "foo" 1 "bar" 2)
+                                "xxx")))))
+  (rove:testing "yason"
+    (let ((*json-library* (make-instance 'yason)))
+      (rove:ok (equal 1
+                      (json-get (alexandria:plist-hash-table (list "foo" 1 "bar" 2) :test 'equal)
+                                "foo")))
+      (rove:ok (equal nil
+                      (json-get (alexandria:plist-hash-table (list "foo" 1 "bar" 2) :test 'equal)
+                                "xxx"))))))

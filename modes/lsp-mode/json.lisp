@@ -55,9 +55,9 @@
 (defclass object ()
   ())
 
-(defmethod initialize-instance ((object object) &key &allow-other-keys)
+(defmethod initialize-instance ((object object) &key no-error &allow-other-keys)
   (let ((instance (call-next-method)))
-    (check-required-initarg instance)
+    (unless no-error (check-required-initarg instance))
     instance))
 
 (defun map-object (function object)
@@ -147,6 +147,10 @@
     (error 'json-type-error :value value :type type))
   (values))
 
+(defun object-class-p (class)
+  (and (not (typep class 'closer-mop:built-in-class))
+       (member 'object (closer-mop:class-precedence-list class) :key #'class-name)))
+
 (defun coerce-element (value type)
   (trivia:match type
     ((list 'lem-lsp-mode/type:lsp-array item-type)
@@ -183,11 +187,17 @@
     ;; ((cons 'or types)
     ;;  )
     (otherwise
-     (assert-type value type)
-     value)))
+     (let ((class (and (symbolp type)
+                       (find-class type))))
+       (cond ((and class
+                   (object-class-p class))
+              (coerce-json value class))
+             (t
+              (assert-type value type)
+              value))))))
 
 (defun coerce-json (json json-class-name)
-  (let ((object (make-instance json-class-name)))
+  (let ((object (make-instance json-class-name :no-error t)))
     (loop :for slot :in (closer-mop:class-slots (class-of object))
           :for slot-name := (closer-mop:slot-definition-name slot)
           :do (setf (slot-value object slot-name)
@@ -196,6 +206,14 @@
     object))
 
 
+(defclass position/test (object)
+  ((line :initarg :line :type number)
+   (character :initarg :character :type number)))
+
+(defclass range/test (object)
+  ((start :initarg :start :type position/test)
+   (end :initarg :end :type position/test)))
+
 (defun hash-equal (ht1 ht2)
   (and (= (hash-table-count ht1)
           (hash-table-count ht2))
@@ -255,3 +273,19 @@
                            'json-type-error))
     (rove:ok (equal (coerce-element '(1 2 "foo") '(lem-lsp-mode/type:tuple integer integer string))
                     '(1 2 "foo")))))
+
+(rove:deftest coerce-json
+  (flet ((position-equals (object &key line character)
+           (and (typep object 'position/test)
+                (= line (slot-value object 'line))
+                (= character (slot-value object 'character)))))
+    (let ((object (coerce-json (hash "line" 10
+                                     "character" 3)
+                               'position/test)))
+      (rove:ok (position-equals object :line 10 :character 3)))
+    (let ((object (coerce-json (hash "start" (hash "line" 3 "character" 0)
+                                     "end" (hash "line" 5 "character" 10))
+                               'range/test)))
+      (rove:ok (typep object 'range/test))
+      (rove:ok (position-equals (slot-value object 'start) :line 3 :character 0))
+      (rove:ok (position-equals (slot-value object 'end) :line 5 :character 10)))))

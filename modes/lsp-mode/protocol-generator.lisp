@@ -479,7 +479,7 @@
   `(or ,@(mapcar #'to-lisp-type (type-or-types type))))
 
 (defmethod to-lisp-type ((type array-type))
-  (let ((item-type (array-type-item-type type)))
+  (let ((item-type (to-lisp-type (array-type-item-type type))))
     `(lem-lsp-mode/type:lsp-array ,item-type)))
 
 (defmethod to-lisp-type ((type value-expression))

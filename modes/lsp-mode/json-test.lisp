@@ -12,10 +12,6 @@
    (c
     :initarg :c)))
 
-(defun json-match-p (jso alist)
-  (equalp (st-json::jso-alist jso)
-          alist))
-
 (rove:deftest check-required-initarg
   (rove:testing "Missing parameters"
     (flet ((make ()
@@ -56,7 +52,9 @@
       (let* ((lem-lsp-mode/json::*json-library* (make-instance 'lem-lsp-mode/json::st-json))
              (json (to-json test-params)))
         (rove:ok (typep json 'st-json:jso))
-        (rove:ok (json-match-p json '(("a" . "test") ("b" . 100) ("c" 1 2))))))
+        (rove:ok (equal (st-json:getjso "a" json) "test"))
+        (rove:ok (equal (st-json:getjso "b" json) 100))
+        (rove:ok (equal (st-json:getjso "c" json) '(1 2)))))
     (rove:testing "yason"
       (let* ((lem-lsp-mode/json::*json-library* (make-instance 'lem-lsp-mode/json::yason))
              (json (to-json test-params)))

@@ -449,11 +449,23 @@
           nil
           (ts-parse-error))))
 
+(defgeneric to-lisp (object))
+(defgeneric to-lisp-type (type))
+
 (defun symbolize (string &optional package)
   (let ((name (string-upcase (cl-change-case:param-case string))))
     (if package
         (intern name package)
         (intern name))))
+
+(defmethod to-lisp-type ((type type-or))
+  )
+
+(defmethod to-lisp-type ((type simple-type))
+  )
+
+(defmethod to-lisp-type ((type array-type))
+  )
 
 (defun element-to-slot-specifier (element)
   (with-slots (name optional-p comment type) element
@@ -461,9 +473,8 @@
            (symbolicate (symbolize name) '?)
            (symbolize name))
       :initarg ,(symbolize name :keyword)
-      :documentation ,comment)))
-
-(defgeneric to-lisp (object))
+      :documentation ,comment
+      :type (to-lisp-type type))))
 
 (defmethod to-lisp ((named-interface named-interface))
   (with-slots (name extends elements) named-interface

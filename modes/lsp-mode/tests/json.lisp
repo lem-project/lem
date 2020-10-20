@@ -1,8 +1,8 @@
-(defpackage :lem-lsp-mode/json-test
+(defpackage :lem-lsp-mode/tests/json
   (:use :cl
         :rove
         :lem-lsp-mode/json))
-(in-package :lem-lsp-mode/json-test)
+(in-package :lem-lsp-mode/tests/json)
 
 (defclass test-params (object)
   ((a

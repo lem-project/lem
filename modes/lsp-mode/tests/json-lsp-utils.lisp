@@ -1,9 +1,9 @@
-(defpackage :lem-lsp-mode/json-lsp-utils-test
+(defpackage :lem-lsp-mode/tests/json-lsp-utils
   (:import-from :rove)
   (:use :cl
         :lem-lsp-mode/json
         :lem-lsp-mode/json-lsp-utils))
-(in-package :lem-lsp-mode/json-lsp-utils-test)
+(in-package :lem-lsp-mode/tests/json-lsp-utils)
 
 (defclass position/test (object)
   ((line :initarg :line :type number)

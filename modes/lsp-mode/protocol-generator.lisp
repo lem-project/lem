@@ -2,6 +2,7 @@
   (:use :cl
         :alexandria)
   (:import-from :lem-lsp-mode/type)
+  (:import-from :lem-lsp-mode/json)
   (:import-from :cl-change-case)
   (:import-from :trivial-types)
   (:import-from :cl-ppcre)
@@ -513,7 +514,7 @@
     `(defclass ,(symbolize name)
          ,(if extends
               (mapcar #'symbolize extends)
-              ())
+              '(lem-lsp-mode/json:object))
        ,(mapcar #'element-to-slot-specifier elements))))
 
 (defmethod to-lisp ((namespace namespace))

@@ -4,7 +4,6 @@
         :alexandria)
   (:import-from :usocket)
   (:import-from :babel)
-  (:import-from :rove)
   (:export :connect
            :send-message
            :receive-message))

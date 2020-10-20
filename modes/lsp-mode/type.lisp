@@ -14,10 +14,11 @@
   (defun lsp-array-p (object &optional (element-type '*))
     (typecase object
       (null t)
+      (vector t)
       (cons
        (if (eq element-type '*)
            (null (cdr (last object)))
-            (do ((rest object (cdr rest)))
+           (do ((rest object (cdr rest)))
                ((atom rest)
                 (null rest))
              (unless (typep (car rest) element-type)
@@ -27,7 +28,7 @@
 
 (deftype lsp-array (&optional (element-type '*))
   (declare (ignore element-type))
-  '(and list (satisfies lsp-array-p)))
+  '(satisfies lsp-array-p))
 
 (deftype interface (&rest args)
   (declare (ignore args))

@@ -123,4 +123,8 @@
                      ("version" :TYPE COMMON-LISP:STRING)))))
       (ok (hash-table-p result))
       (ok (equal "abc" (gethash "name" result)))
-      (ok (equal "1.0" (gethash "version" result))))))
+      (ok (equal "1.0" (gethash "version" result)))))
+  (testing "primitive"
+    (ok (equal 1 (coerce-element 1 'integer)))
+    (ok (equal nil (coerce-element nil 'boolean)))
+    (ok (equal t (coerce-element t 'boolean)))))

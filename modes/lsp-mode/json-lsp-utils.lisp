@@ -59,7 +59,7 @@
            (return result)))))
     (otherwise
      (let ((class (and (symbolp type)
-                       (find-class type))))
+                       (find-class type nil))))
        (cond ((and class
                    (object-class-p class))
               (coerce-json value class))

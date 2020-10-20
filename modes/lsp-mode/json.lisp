@@ -320,4 +320,14 @@
                                                     "character" 3)
                                               '(or null position/test))
                               :line 10
-                              :character 3))))
+                              :character 3)))
+  (rove:testing "interface"
+    (let ((result (coerce-element
+                   (hash "name" "abc"
+                         "version" "1.0")
+                   '(LEM-LSP-MODE/TYPE:INTERFACE
+                     ("name" :TYPE COMMON-LISP:STRING)
+                     ("version" :TYPE COMMON-LISP:STRING)))))
+      (rove:ok (hash-table-p result))
+      (rove:ok (equal "abc" (gethash "name" result)))
+      (rove:ok (equal "1.0" (gethash "version" result))))))

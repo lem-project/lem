@@ -6,6 +6,7 @@
   (:import-from :closer-mop)
   (:import-from :cl-change-case)
   (:import-from :trivia)
+  (:import-from :trivial-types)
   (:export :missing-parameter
            :missing-parameter-slot-name
            :missing-parameter-class-name
@@ -19,7 +20,8 @@
            :json-null
            :json-true
            :json-false
-           :json-get))
+           :json-get
+           :json-array-p))
 (in-package :lem-lsp-mode/json)
 
 (define-condition missing-parameter ()
@@ -83,14 +85,16 @@
 (defclass json-backend ()
   ((null :initarg :null :reader json-backend-null)
    (false :initarg :false :reader json-backend-false)
-   (true :initarg :true :reader json-backend-true)))
+   (true :initarg :true :reader json-backend-true)
+   (array-type :initarg :array-type :reader json-backend-array-type)))
 
 (defclass st-json-backend (json-backend)
   ()
   (:default-initargs
    :null :null
    :false :false
-   :true :true))
+   :true :true
+   :array-type 'trivial-types:proper-list))
 
 (defmethod to-json-internal ((json-backend st-json-backend) object)
   (let ((fields '()))
@@ -109,7 +113,8 @@
   (:default-initargs
    :null :null
    :false nil
-   :true t))
+   :true t
+   :array-type 'trivial-types:proper-list))
 
 (defmethod to-json-internal ((json-backend yason-backend) object)
   (let ((table (make-hash-table :test 'equal)))
@@ -138,3 +143,6 @@
 
 (defun json-get (json key)
   (json-get-internal *json-backend* json key))
+
+(defun json-array-p (value)
+  (typep value (json-backend-array-type *json-backend*)))

@@ -81,3 +81,17 @@
       (ok (equal nil
                  (json-get (alexandria:plist-hash-table (list "foo" 1 "bar" 2) :test 'equal)
                            "xxx"))))))
+
+(deftest json-array-p
+  (testing "st-json"
+    (ok (not (json-array-p 1)))
+    (ok (not (json-array-p #(1 2 3))))
+    (ok (not (json-array-p '(1 2 . 3))))
+    (ok (json-array-p '()))
+    (ok (json-array-p '(1 2 3))))
+  (testing "yason"
+    (ok (not (json-array-p 1)))
+    (ok (not (json-array-p #(1 2 3))))
+    (ok (not (json-array-p '(1 2 . 3))))
+    (ok (json-array-p '()))
+    (ok (json-array-p '(1 2 3)))))

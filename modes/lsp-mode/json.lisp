@@ -25,6 +25,9 @@
            :json-object-p))
 (in-package :lem-lsp-mode/json)
 
+#+sbcl
+(sb-ext:lock-package :lem-lsp-mode/json)
+
 (define-condition missing-parameter ()
   ((slot-name
     :initarg :slot-name

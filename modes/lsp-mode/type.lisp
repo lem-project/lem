@@ -1,5 +1,7 @@
 (defpackage :lem-lsp-mode/type
   (:use :cl)
+  (:import-from :lem-lsp-mode/json
+                :json-array-p)
   (:export :lsp-array
            :interface
            :equal-specializer
@@ -27,7 +29,7 @@
 
 (deftype lsp-array (&optional (element-type '*))
   (declare (ignore element-type))
-  '(satisfies lsp-array-p))
+  '(satisfies json-array-p))
 
 (deftype interface (&rest args)
   (declare (ignore args))

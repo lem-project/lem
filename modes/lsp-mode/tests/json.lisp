@@ -84,14 +84,32 @@
 
 (deftest json-array-p
   (testing "st-json"
-    (ok (not (json-array-p 1)))
-    (ok (not (json-array-p #(1 2 3))))
-    (ok (not (json-array-p '(1 2 . 3))))
-    (ok (json-array-p '()))
-    (ok (json-array-p '(1 2 3))))
+    (let ((*json-backend* (make-instance 'st-json-backend)))
+      (ok (not (json-array-p 1)))
+      (ok (not (json-array-p #(1 2 3))))
+      (ok (not (json-array-p '(1 2 . 3))))
+      (ok (json-array-p '()))
+      (ok (json-array-p '(1 2 3)))))
   (testing "yason"
-    (ok (not (json-array-p 1)))
-    (ok (not (json-array-p #(1 2 3))))
-    (ok (not (json-array-p '(1 2 . 3))))
-    (ok (json-array-p '()))
-    (ok (json-array-p '(1 2 3)))))
+    (let ((*json-backend* (make-instance 'yason-backend)))
+      (ok (not (json-array-p 1)))
+      (ok (not (json-array-p #(1 2 3))))
+      (ok (not (json-array-p '(1 2 . 3))))
+      (ok (json-array-p '()))
+      (ok (json-array-p '(1 2 3))))))
+
+(deftest json-object-p
+  (testing "st-json"
+    (let ((*json-backend* (make-instance 'st-json-backend)))
+      (ok (not (json-object-p 1)))
+      (ok (not (json-object-p #())))
+      (ok (not (json-object-p nil)))
+      (ok (json-object-p (st-json:jso "foo" 1)))
+      (ok (not (json-object-p (make-hash-table))))))
+  (testing "yason"
+    (let ((*json-backend* (make-instance 'yason-backend)))
+      (ok (not (json-object-p 1)))
+      (ok (not (json-object-p #())))
+      (ok (not (json-object-p nil)))
+      (ok (not (json-object-p (st-json:jso "foo" 1))))
+      (ok (json-object-p (make-hash-table))))))

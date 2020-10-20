@@ -21,7 +21,8 @@
            :json-true
            :json-false
            :json-get
-           :json-array-p))
+           :json-array-p
+           :json-object-p))
 (in-package :lem-lsp-mode/json)
 
 (define-condition missing-parameter ()
@@ -86,7 +87,8 @@
   ((null :initarg :null :reader json-backend-null)
    (false :initarg :false :reader json-backend-false)
    (true :initarg :true :reader json-backend-true)
-   (array-type :initarg :array-type :reader json-backend-array-type)))
+   (array-type :initarg :array-type :reader json-backend-array-type)
+   (object-type :initarg :object-type :reader json-backend-object-type)))
 
 (defclass st-json-backend (json-backend)
   ()
@@ -94,7 +96,8 @@
    :null :null
    :false :false
    :true :true
-   :array-type 'trivial-types:proper-list))
+   :array-type 'trivial-types:proper-list
+   :object-type 'st-json:jso))
 
 (defmethod to-json-internal ((json-backend st-json-backend) object)
   (let ((fields '()))
@@ -114,7 +117,8 @@
    :null :null
    :false nil
    :true t
-   :array-type 'trivial-types:proper-list))
+   :array-type 'trivial-types:proper-list
+   :object-type 'hash-table))
 
 (defmethod to-json-internal ((json-backend yason-backend) object)
   (let ((table (make-hash-table :test 'equal)))
@@ -146,3 +150,6 @@
 
 (defun json-array-p (value)
   (typep value (json-backend-array-type *json-backend*)))
+
+(defun json-object-p (value)
+  (typep value (json-backend-object-type *json-backend*)))

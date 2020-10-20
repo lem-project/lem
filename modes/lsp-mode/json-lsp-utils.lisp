@@ -1,6 +1,7 @@
 (defpackage :lem-lsp-mode/json-lsp-utils
-  (:use :cl :lem-lsp-mode/json)
-  (:import-from :lem-lsp-mode/type)
+  (:use :cl
+        :lem-lsp-mode/json
+        :lem-lsp-mode/type)
   (:export :json-type-error
            :coerce-element
            :coerce-json))
@@ -23,11 +24,11 @@
 
 (defun coerce-element (value type)
   (trivia:match type
-    ((list 'lem-lsp-mode/type:ts-array item-type)
+    ((list 'ts-array item-type)
      (assert-type value 'list)
      (loop :for item :in value
            :collect (coerce-element item item-type)))
-    ((cons 'lem-lsp-mode/type:ts-interface elements)
+    ((cons 'ts-interface elements)
      (assert-type value 'hash-table)
      (let ((new-hash-table (make-hash-table :test 'equal)))
        (dolist (element elements)
@@ -35,11 +36,11 @@
            (setf (gethash name new-hash-table)
                  (coerce-element (gethash name value) type))))
        new-hash-table))
-    ((list 'lem-lsp-mode/type:ts-equal-specializer value-spec)
+    ((list 'ts-equal-specializer value-spec)
      (unless (equal value value-spec)
        (error 'json-type-error :type type :value value))
      value)
-    ((list 'lem-lsp-mode/type:ts-object key-type value-type)
+    ((list 'ts-object key-type value-type)
      (assert-type value 'hash-table)
      (let ((new-hash-table (make-hash-table :test 'equal)))
        (maphash (lambda (key value)
@@ -47,7 +48,7 @@
                         (coerce-element value value-type)))
                 value)
        new-hash-table))
-    ((cons 'lem-lsp-mode/type:ts-tuple types)
+    ((cons 'ts-tuple types)
      (assert-type value 'list)
      (unless (alexandria:length= value types)
        (error 'json-type-error :type type :value value))

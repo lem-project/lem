@@ -6,7 +6,6 @@
   (:import-from :closer-mop)
   (:import-from :cl-change-case)
   (:import-from :trivia)
-  (:import-from :lem-lsp-mode/type)
   (:export :missing-parameter
            :missing-parameter-slot-name
            :missing-parameter-class-name
@@ -104,6 +103,7 @@
 (defmethod json-get-internal ((json-backend st-json-backend) json key)
   (st-json:getjso key json))
 
+
 (defclass yason-backend (json-backend)
   ()
   (:default-initargs

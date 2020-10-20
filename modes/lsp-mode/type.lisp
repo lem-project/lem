@@ -14,7 +14,6 @@
   (defun lsp-array-p (object &optional (element-type '*))
     (typecase object
       (null t)
-      (vector t)
       (cons
        (if (eq element-type '*)
            (null (cdr (last object)))

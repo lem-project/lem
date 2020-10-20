@@ -481,24 +481,24 @@
 
 (defmethod to-lisp-type ((type array-type))
   (let ((item-type (to-lisp-type (array-type-item-type type))))
-    `(lem-lsp-mode/type:lsp-array ,item-type)))
+    `(lem-lsp-mode/type:ts-array ,item-type)))
 
 (defmethod to-lisp-type ((type value-expression))
-  `(lem-lsp-mode/type:equal-specializer ,(value-expression-value type)))
+  `(lem-lsp-mode/type:ts-equal-specializer ,(value-expression-value type)))
 
 (defmethod to-lisp-type ((type interface))
-  `(lem-lsp-mode/type:interface
+  `(lem-lsp-mode/type:ts-interface
     ,@(mapcar (lambda (element)
                 (list (element-name element)
                       :type (to-lisp-type (element-type element))))
               (interface-elements type))))
 
 (defmethod to-lisp-type ((type property-type))
-  `(lem-lsp-mode/type:object ,(to-lisp-type (property-type-key-type type))
-                             ,(to-lisp-type (property-type-value-type type))))
+  `(lem-lsp-mode/type:ts-object ,(to-lisp-type (property-type-key-type type))
+                                ,(to-lisp-type (property-type-value-type type))))
 
 (defmethod to-lisp-type ((type tuple-type))
-  `(lem-lsp-mode/type:tuple ,@(mapcar #'to-lisp-type (tuple-type-types type))))
+  `(lem-lsp-mode/type:ts-tuple ,@(mapcar #'to-lisp-type (tuple-type-types type))))
 
 (defun element-to-slot-specifier (element)
   (with-slots (name optional-p comment type) element

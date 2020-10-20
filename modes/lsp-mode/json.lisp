@@ -20,8 +20,7 @@
            :json-null
            :json-true
            :json-false
-           :json-get
-           :coerce-json))
+           :json-get))
 (in-package :lem-lsp-mode/json)
 
 (define-condition missing-parameter ()

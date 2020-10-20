@@ -20,17 +20,7 @@
                                
 
 #|
-(defvar *connection* (lem-lsp-mode/jsonrpc::connect :port 2089))
+(defvar *connection* (connect-tcp-client 2089))
 
-(lem-lsp-mode/jsonrpc::send-message
- *connection*
- (make-instance 'lem-lsp-mode/jsonrpc::request-message
-                :id 1
-                :method "initialize"
-                :params (make-instance 'initialize-params
-                                       :process-id nil
-                                       :root-uri nil
-                                       :capabilities nil)))
-
-(lem-lsp-mode/jsonrpc::receive-message *connection*)
+(initialize *connection*)
 |#

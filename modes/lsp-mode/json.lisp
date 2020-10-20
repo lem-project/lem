@@ -148,6 +148,8 @@
   (values))
 
 (defun object-class-p (class)
+  (unless (closer-mop:class-finalized-p class)
+    (closer-mop:finalize-inheritance class))
   (and (not (typep class 'closer-mop:built-in-class))
        (member 'object (closer-mop:class-precedence-list class) :key #'class-name)))
 
@@ -184,8 +186,12 @@
      (loop :for type :in types
            :for item :in value
            :collect (coerce-element item type)))
-    ;; ((cons 'or types)
-    ;;  )
+    ((cons 'or types)
+     (dolist (type1 types (error 'json-type-error :type type :value value))
+       (handler-case (coerce-element value type1)
+         (json-type-error ())
+         (:no-error (result)
+           (return result)))))
     (otherwise
      (let ((class (and (symbolp type)
                        (find-class type))))
@@ -232,6 +238,23 @@
 (defun hash (&rest plist)
   (alexandria:plist-hash-table plist :test 'equal))
 
+(defun position-equals (object &key line character)
+  (and (typep object 'position/test)
+       (= line (slot-value object 'line))
+       (= character (slot-value object 'character))))
+
+(rove:deftest coerce-json
+  (let ((object (coerce-json (hash "line" 10
+                                   "character" 3)
+                             'position/test)))
+    (rove:ok (position-equals object :line 10 :character 3)))
+  (let ((object (coerce-json (hash "start" (hash "line" 3 "character" 0)
+                                   "end" (hash "line" 5 "character" 10))
+                             'range/test)))
+    (rove:ok (typep object 'range/test))
+    (rove:ok (position-equals (slot-value object 'start) :line 3 :character 0))
+    (rove:ok (position-equals (slot-value object 'end) :line 5 :character 10))))
+
 (rove:deftest coerce-element
   (rove:testing "lsp-array"
     (rove:ok (rove:signals (coerce-element 100 '(lem-lsp-mode/type:lsp-array integer))
@@ -239,7 +262,19 @@
     (rove:ok (rove:signals (coerce-element '(1 "a") '(lem-lsp-mode/type:lsp-array integer))
                            'json-type-error))
     (rove:ok (equal '(1 2 3)
-                    (coerce-element '(1 2 3) '(lem-lsp-mode/type:lsp-array integer)))))
+                    (coerce-element '(1 2 3) '(lem-lsp-mode/type:lsp-array integer))))
+    (let ((result
+            (coerce-element (list (hash "line" 10
+                                        "character" 3)
+                                  (hash "line" 3
+                                        "character" 2)
+                                  (hash "line" 0
+                                        "character" 100))
+                            '(lem-lsp-mode/type:lsp-array position/test))))
+      (rove:ok (= 3 (length result)))
+      (rove:ok (position-equals (first result) :line 10 :character 3))
+      (rove:ok (position-equals (second result) :line 3 :character 2))
+      (rove:ok (position-equals (third result) :line 0 :character 100))))
   (rove:testing "equal-specializer"
     (rove:ok (rove:signals (coerce-element 1 '(lem-lsp-mode/type:equal-specializer "foo"))
                            'json-type-error))
@@ -272,20 +307,17 @@
     (rove:ok (rove:signals (coerce-element '(1 2 "foo") '(lem-lsp-mode/type:tuple string integer string))
                            'json-type-error))
     (rove:ok (equal (coerce-element '(1 2 "foo") '(lem-lsp-mode/type:tuple integer integer string))
-                    '(1 2 "foo")))))
-
-(rove:deftest coerce-json
-  (flet ((position-equals (object &key line character)
-           (and (typep object 'position/test)
-                (= line (slot-value object 'line))
-                (= character (slot-value object 'character)))))
-    (let ((object (coerce-json (hash "line" 10
-                                     "character" 3)
-                               'position/test)))
-      (rove:ok (position-equals object :line 10 :character 3)))
-    (let ((object (coerce-json (hash "start" (hash "line" 3 "character" 0)
-                                     "end" (hash "line" 5 "character" 10))
-                               'range/test)))
-      (rove:ok (typep object 'range/test))
-      (rove:ok (position-equals (slot-value object 'start) :line 3 :character 0))
-      (rove:ok (position-equals (slot-value object 'end) :line 5 :character 10)))))
+                    '(1 2 "foo"))))
+  (rove:testing "or"
+    (rove:ok (equal 1 (coerce-element 1 '(or integer string))))
+    (rove:ok (equal "a" (coerce-element "a" '(or integer string))))
+    (rove:ok (position-equals (coerce-element (hash "line" 10
+                                                    "character" 3)
+                                              '(or position/test null))
+                              :line 10
+                              :character 3))
+    (rove:ok (position-equals (coerce-element (hash "line" 10
+                                                    "character" 3)
+                                              '(or null position/test))
+                              :line 10
+                              :character 3))))

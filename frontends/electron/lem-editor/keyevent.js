@@ -51,7 +51,7 @@ exports.convertKeyEvent = function (e) {
     }
     key = CONVERT_TABLE[key] || key;
     if (keymap !== null && e.altKey) {
-        key = keymap.getKeyMap()[e.code]["value"];
+        key = keymap.getKeyMap()[e.code][e.shiftKey ? "withShift" : "value"];
     }
     return {
         "key": key,
@@ -59,5 +59,5 @@ exports.convertKeyEvent = function (e) {
         "meta": e.altKey,
         "super": e.metaKey,
         "shift": e.shiftKey,
-    }
+    };
 }

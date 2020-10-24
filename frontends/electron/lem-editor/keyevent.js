@@ -50,7 +50,7 @@ exports.convertKeyEvent = function (e) {
         return null;
     }
     key = CONVERT_TABLE[key] || key;
-    if (keymap !== null && e.altKey) {
+    if (keymap !== null && e.altKey && e.code != 'Backspace') {
         key = keymap.getKeyMap()[e.code][e.shiftKey ? "withShift" : "value"];
     }
     return {

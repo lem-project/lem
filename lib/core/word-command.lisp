@@ -84,6 +84,7 @@
 
 (define-key *global-keymap* "C-M-h" 'backward-delete-word)
 (define-key *global-keymap* "M-Backspace" 'backward-delete-word)
+(define-key *global-keymap* "C-Backspace" 'backward-delete-word)
 (define-command backward-delete-word (n) ("p")
   (delete-word (- n)))
 

@@ -516,7 +516,6 @@ class Surface {
     this.ctx2 = this.canvas2.getContext("2d", { alpha: false });
     this.ctx2.textBaseline = "top";
     this.ctx2.font = fontAttribute.font;
-    this.dirtyRectangles = [];
   }
 
   move(x, y) {
@@ -536,7 +535,6 @@ class Surface {
   }
 
   drawBlock(x, y, w, h, color) {
-    this.dirtyRectangles.push([x, y, w, h]);
     this.ctx2.fillStyle = color || option.background;
     this.ctx2.fillRect(
       x * fontAttribute.width,
@@ -600,19 +598,6 @@ class Surface {
       this.canvas.height
     );
     this.ctx.putImageData(image, 0, 0);
-    //変更部分だけを表のキャンバスにコピーするのはコピー回数が増えるので逆に遅くなる
-    //for (let rect of this.dirtyRectangles) {
-    //    const [x, y, w, h] = rect;
-    //    if (w > 0 && h > 0) {
-    //        const x1 = Math.ceil(x * fontAttribute.width);
-    //        const y1 = y * fontAttribute.height;
-    //        const w1 = Math.ceil(w * fontAttribute.width);
-    //        const h1 = h * fontAttribute.height;
-    //        const image = this.ctx2.getImageData(x1, y1, w1, h1);
-    //        this.ctx.putImageData(image, x1, y1);
-    //    }
-    //}
-    this.dirtyRectangles = [];
   }
 
   scroll(n) {

@@ -618,7 +618,7 @@ class Surface {
 
 const viewStyleTable = {
     "minibuffer": {},
-    "popup": { "zIndex": 2 },
+    "popup": { "zIndex": 2, "box-shadow": "0 0 0 12px #555555" },
 };
 
 class View {

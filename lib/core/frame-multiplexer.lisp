@@ -27,7 +27,7 @@
     :initarg :impl
     :initform nil
     :accessor virtual-frame-impl
-    :type implementation)
+    :type (or null implementation))
    (id/frame-table
     :initarg :id/frame-table
     :accessor virtual-frame-id/frame-table

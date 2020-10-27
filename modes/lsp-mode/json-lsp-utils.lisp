@@ -7,8 +7,7 @@
            :coerce-json))
 (in-package :lem-lsp-mode/json-lsp-utils)
 
-#+sbcl
-(sb-ext:lock-package :lem-lsp-mode/json-lsp-utils)
+(cl-package-locks:lock-package :lem-lsp-mode/json-lsp-utils)
 
 (define-condition json-type-error ()
   ((type :initarg :type)

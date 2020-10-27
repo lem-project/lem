@@ -6,8 +6,7 @@
   (:import-from :jsonrpc))
 (in-package :lem-lsp-mode/main)
 
-#+sbcl
-(sb-ext:lock-package :lem-lsp-mode/main)
+(cl-package-locks:lock-package :lem-lsp-mode/main)
 
 (defun connect-tcp-client (port)
   (let ((client (jsonrpc:make-client)))

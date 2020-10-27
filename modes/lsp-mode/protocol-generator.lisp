@@ -9,8 +9,7 @@
   (:export :deploy))
 (in-package :lem-lsp-mode/protocol-generator)
 
-#+sbcl
-(sb-ext:lock-package :lem-lsp-mode/protocol-generator)
+(cl-package-locks:lock-package :lem-lsp-mode/protocol-generator)
 
 (define-condition ts-parse-error ()
   ((message :initarg :message
@@ -596,7 +595,7 @@
               (:import-from :lem-lsp-mode/type))
             out)
     (pprint '(in-package :lem-lsp-mode/protocol) out)
-    (format out "~&~A" "#+sbcl (sb-ext:lock-package :lem-lsp-mode/protocol)")
+    (format out "~&~A" "(cl-package-locks:lock-package :lem-lsp-mode/protocol)")
     (dolist (file-part (extract-typescript spec-file))
       (handler-case (translate-text file-part out)
         (ts-parse-error (c)

@@ -10,8 +10,7 @@
            :ts-tuple))
 (in-package :lem-lsp-mode/type)
 
-#+sbcl
-(sb-ext:lock-package :lem-lsp-mode/type)
+(cl-package-locks:lock-package :lem-lsp-mode/type)
 
 (deftype ts-array (&optional (element-type '*))
   (declare (ignore element-type))

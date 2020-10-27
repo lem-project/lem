@@ -1178,15 +1178,12 @@
 (defun scan-current-package (point)
   (with-point ((p point))
     (loop
-      (multiple-value-bind (result groups)
-          (looking-at (line-start p)
-                      "^\\s*\\((?:cl:)?in-package (?:#?:|')?([^\)]*)\\)")
-        (when result
-          (let ((package (aref groups 0)))
-            (when package
-              (return package))))
-        (unless (line-offset p -1)
-          (return))))))
+      (ppcre:register-groups-bind (package-name)
+          ("^\\s*\\(\\s*(?:cl:)?in-package (?:#?:|')?([^\)\\s]*)\\s*\\)"
+           (string-downcase (line-string p)))
+        (return package-name))
+      (unless (line-offset p -1)
+        (return)))))
 
 (defun update-buffer-package ()
   (let ((package (scan-current-package (current-point))))

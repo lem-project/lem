@@ -499,22 +499,26 @@
 (defmethod to-lisp-type ((type tuple-type))
   `(lem-lsp-mode/type:ts-tuple ,@(mapcar #'to-lisp-type (tuple-type-types type))))
 
-(defun element-to-slot-specifier (element)
-  (with-slots (name optional-p comment type) element
-    `(,(if optional-p
-           (symbolicate (symbolize name) '?)
-           (symbolize name))
-      :initarg ,(symbolize name :keyword)
-      :documentation ,comment
-      :type ,(to-lisp-type type))))
+(defun element-to-slot-specifier (class-name element)
+  (flet ((reader (class-name slot-name)
+           (symbolicate class-name '- slot-name)))
+    (with-slots (name optional-p comment type) element
+      `(,(if optional-p
+             (symbolicate (symbolize name) '?)
+             (symbolize name))
+        :initarg ,(symbolize name :keyword)
+        :documentation ,comment
+        :type ,(to-lisp-type type)
+        :reader ,(reader class-name (symbolize name))))))
 
 (defmethod to-lisp ((named-interface named-interface))
   (with-slots (name extends elements) named-interface
-    `(defclass ,(symbolize name)
-         ,(if extends
-              (mapcar #'symbolize extends)
-              '(lem-lsp-mode/json:object))
-       ,(mapcar #'element-to-slot-specifier elements))))
+    (let ((class-name (symbolize name)))
+      `(defclass ,class-name
+           ,(if extends
+                (mapcar #'symbolize extends)
+                '(lem-lsp-mode/json:object))
+         ,(mapcar (curry #'element-to-slot-specifier class-name) elements)))))
 
 (defmethod to-lisp ((namespace namespace))
   (with-slots (name declarations) namespace

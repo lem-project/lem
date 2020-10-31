@@ -15,8 +15,8 @@
            :*json-backend*
            :st-json-backend
            :yason-backend
-           :to-json
-           :to-json-string
+           :make-json
+           :object-to-json
            :json-null
            :json-true
            :json-false
@@ -82,7 +82,8 @@
        (member 'object (closer-mop:class-precedence-list class) :key #'class-name)))
 
 
-(defgeneric to-json-internal (json-backend object))
+(defgeneric make-json-internal (json-backend alist))
+(defgeneric object-to-json-internal (json-backend object))
 (defgeneric json-get-internal (json-backend json key))
 
 (defclass json-backend ()
@@ -101,7 +102,10 @@
    :array-type 'trivial-types:proper-list
    :object-type 'st-json:jso))
 
-(defmethod to-json-internal ((json-backend st-json-backend) object)
+(defmethod make-json-internal ((json-backend st-json-backend) plist)
+  (apply #'st-json:jso plist))
+
+(defmethod object-to-json-internal ((json-backend st-json-backend) object)
   (let ((fields '()))
     (map-object (lambda (k v)
                   (push k fields)
@@ -122,7 +126,10 @@
    :array-type 'trivial-types:proper-list
    :object-type 'hash-table))
 
-(defmethod to-json-internal ((json-backend yason-backend) object)
+(defmethod make-json-internal ((json-backend yason-backend) plist)
+  (alexandria:plist-hash-table plist :test 'equal))
+
+(defmethod object-to-json-internal ((json-backend yason-backend) object)
   (let ((table (make-hash-table :test 'equal)))
     (map-object (lambda (k v)
                   (setf (gethash k table) v))
@@ -135,8 +142,16 @@
 
 (defparameter *json-backend* (make-instance 'yason-backend))
 
-(defun to-json (object)
-  (to-json-internal *json-backend* object))
+(defun make-json (&rest plist)
+  (make-json-internal *json-backend*
+                      (loop :for (k v) :on plist :by #'cddr
+                            :collect (etypecase k
+                                       (symbol (cl-change-case:camel-case (string k)))
+                                       (string k))
+                            :collect v)))
+
+(defun object-to-json (object)
+  (object-to-json-internal *json-backend* object))
 
 (defun json-null ()
   (json-backend-null *json-backend*))

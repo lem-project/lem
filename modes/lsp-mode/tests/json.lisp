@@ -42,7 +42,24 @@
       (ok (eq t (json-true)))
       (ok (eq nil (json-false))))))
 
-(deftest to-json
+(deftest make-json
+  (testing "st-json"
+    (let ((*json-backend* (make-instance 'st-json-backend)))
+      (let ((json (make-json "foo" 100 "bar" 200 :foo-bar 300)))
+        (ok (typep json 'st-json:jso))
+        (ok (equal (json-get json "foo") 100))
+        (ok (equal (json-get json "bar") 200))
+        (ok (equal (json-get json "fooBar") 300)))))
+  (testing "yason"
+    (let ((*json-backend* (make-instance 'yason-backend)))
+      (let ((json (make-json "foo" 100 "bar" 200 :foo-bar 300)))
+        (ok (hash-table-p json))
+        (ok (equal (json-get json "foo") 100))
+        (ok (equal (json-get json "bar") 200))
+        (ok (equal (json-get json "fooBar") 300))
+        json))))
+
+(deftest object-to-json
   (let ((test-params
           (make-instance 'test-params
                          :a "test"
@@ -50,14 +67,14 @@
                          :c '(1 2))))
     (testing "st-json"
       (let* ((*json-backend* (make-instance 'st-json-backend))
-             (json (to-json test-params)))
+             (json (object-to-json test-params)))
         (ok (typep json 'st-json:jso))
         (ok (equal (st-json:getjso "a" json) "test"))
         (ok (equal (st-json:getjso "b" json) 100))
         (ok (equal (st-json:getjso "c" json) '(1 2)))))
     (testing "yason"
       (let* ((*json-backend* (make-instance 'yason-backend))
-             (json (to-json test-params)))
+             (json (object-to-json test-params)))
         (ok (hash-table-p json))
         (ok (= 3 (hash-table-count json)))
         (ok (equal "test" (gethash "a" json)))

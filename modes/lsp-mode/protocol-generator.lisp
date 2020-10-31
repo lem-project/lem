@@ -500,7 +500,8 @@
   `(lem-lsp-mode/type:ts-interface
     ,@(mapcar (lambda (element)
                 (list (element-name element)
-                      :type (to-lisp-type (element-type element))))
+                      :type (to-lisp-type (element-type element))
+                      :optional-p (element-optional-p element)))
               (interface-elements type))))
 
 (defmethod to-lisp-type ((type property-type))

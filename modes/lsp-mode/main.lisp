@@ -75,15 +75,40 @@
                           :mode :tcp
                           :port (tcp-client-port client)))
 
-(defun initialize-lsp (client)
-  (let* ((initialize-result (lsp-call-method (make-instance 'initialize-request) client))
+(defun root-uri-pattern-p (file-name)
+  ;; TODO
+  (equal "asd" (pathname-type file-name)))
+
+(defun find-root-uri (editing-pathname)
+  (labels ((find-root-uri-pattern-file (directory)
+             (dolist (pathname (uiop:directory-files directory))
+               (when (root-uri-pattern-p (file-namestring pathname))
+                 (return directory))))
+           (recursive (directory)
+             (cond ((find-root-uri-pattern-file directory))
+                   ((uiop:pathname-equal directory (user-homedir-pathname))
+                    nil)
+                   (t (recursive (uiop:pathname-parent-directory-pathname directory))))))
+    (recursive (uiop:pathname-directory-pathname editing-pathname))))
+
+(defun project-root-pathname (editing-pathname)
+  (or (find-root-uri editing-pathname)
+      (uiop:pathname-directory-pathname editing-pathname)))
+
+(defun initialize-lsp (client initialize-request)
+  (let* ((initialize-result (lsp-call-method initialize-request client))
          (server-info (protocol:initialize-result-server-info initialize-result))
          (server-capabilities (protocol:initialize-result-capabilities initialize-result)))
     (set-server-info (json-to-server-info server-info) client)
     (set-server-capabilities server-capabilities client)))
 
 (defun main ()
-  (let ((client (make-instance 'tcp-client :port 2089)))
-    (jsonrpc-connect client)
-    (initialize-lsp client)
-    client))
+  (let ((editing-pathname (asdf:system-relative-pathname :lem-lsp-mode "main.lisp")))
+    (let ((client (make-instance 'tcp-client :port 2089)))
+      (jsonrpc-connect client)
+      (initialize-lsp client
+                      (make-instance 'initialize-request
+                                     :root-uri (utils:pathname-to-uri
+                                                (project-root-pathname
+                                                 editing-pathname))))
+      client)))

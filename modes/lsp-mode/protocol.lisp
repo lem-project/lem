@@ -957,7 +957,8 @@ COMMON-LISP:NIL
                       ((CHANGES? :INITARG :CHANGES :DOCUMENTATION "*
 * Holds changes to existing resources."
                         :TYPE
-                        (LEM-LSP-MODE/TYPE:TS-INTERFACE ("uri" :TYPE (LEM-LSP-MODE/TYPE:TS-OBJECT DOCUMENT-URI (LEM-LSP-MODE/TYPE:TS-ARRAY TEXT-EDIT))))
+                        (LEM-LSP-MODE/TYPE:TS-INTERFACE
+                         ("uri" :TYPE (LEM-LSP-MODE/TYPE:TS-OBJECT DOCUMENT-URI (LEM-LSP-MODE/TYPE:TS-ARRAY TEXT-EDIT)) :OPTIONAL-P COMMON-LISP:NIL))
                         :READER WORKSPACE-EDIT-CHANGES)
                        (DOCUMENT-CHANGES? :INITARG :DOCUMENT-CHANGES :DOCUMENTATION "*
 * Depending on the client capability `workspace.workspaceEdit.resourceOperations` document changes
@@ -1180,8 +1181,10 @@ COMMON-LISP:NIL
 * Information about the client
 *
 * @since 3.15.0"
-                        :TYPE (LEM-LSP-MODE/TYPE:TS-INTERFACE ("name" :TYPE COMMON-LISP:STRING) ("version" :TYPE COMMON-LISP:STRING)) :READER
-                        INITIALIZE-PARAMS-CLIENT-INFO)
+                        :TYPE
+                        (LEM-LSP-MODE/TYPE:TS-INTERFACE ("name" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:NIL)
+                         ("version" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:T))
+                        :READER INITIALIZE-PARAMS-CLIENT-INFO)
                        (ROOT-PATH? :INITARG :ROOT-PATH :DOCUMENTATION "*
 * The rootPath of the workspace. Is null
 * if no folder is open.
@@ -1298,19 +1301,22 @@ COMMON-LISP:NIL
                       ((WORKSPACE? :INITARG :WORKSPACE :DOCUMENTATION "*
 * Workspace specific client capabilities."
                         :TYPE
-                        (LEM-LSP-MODE/TYPE:TS-INTERFACE ("applyEdit" :TYPE COMMON-LISP:BOOLEAN)
-                         ("workspaceEdit" :TYPE WORKSPACE-EDIT-CLIENT-CAPABILITIES)
-                         ("didChangeConfiguration" :TYPE DID-CHANGE-CONFIGURATION-CLIENT-CAPABILITIES)
-                         ("didChangeWatchedFiles" :TYPE DID-CHANGE-WATCHED-FILES-CLIENT-CAPABILITIES)
-                         ("symbol" :TYPE WORKSPACE-SYMBOL-CLIENT-CAPABILITIES) ("executeCommand" :TYPE EXECUTE-COMMAND-CLIENT-CAPABILITIES)
-                         ("workspaceFolders" :TYPE COMMON-LISP:BOOLEAN) ("configuration" :TYPE COMMON-LISP:BOOLEAN))
+                        (LEM-LSP-MODE/TYPE:TS-INTERFACE ("applyEdit" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)
+                         ("workspaceEdit" :TYPE WORKSPACE-EDIT-CLIENT-CAPABILITIES :OPTIONAL-P COMMON-LISP:T)
+                         ("didChangeConfiguration" :TYPE DID-CHANGE-CONFIGURATION-CLIENT-CAPABILITIES :OPTIONAL-P COMMON-LISP:T)
+                         ("didChangeWatchedFiles" :TYPE DID-CHANGE-WATCHED-FILES-CLIENT-CAPABILITIES :OPTIONAL-P COMMON-LISP:T)
+                         ("symbol" :TYPE WORKSPACE-SYMBOL-CLIENT-CAPABILITIES :OPTIONAL-P COMMON-LISP:T)
+                         ("executeCommand" :TYPE EXECUTE-COMMAND-CLIENT-CAPABILITIES :OPTIONAL-P COMMON-LISP:T)
+                         ("workspaceFolders" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)
+                         ("configuration" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T))
                         :READER CLIENT-CAPABILITIES-WORKSPACE)
                        (TEXT-DOCUMENT? :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
 * Text document specific client capabilities."
                         :TYPE TEXT-DOCUMENT-CLIENT-CAPABILITIES :READER CLIENT-CAPABILITIES-TEXT-DOCUMENT)
                        (WINDOW? :INITARG :WINDOW :DOCUMENTATION "*
 * Window specific client capabilities."
-                        :TYPE (LEM-LSP-MODE/TYPE:TS-INTERFACE ("workDoneProgress" :TYPE COMMON-LISP:BOOLEAN)) :READER CLIENT-CAPABILITIES-WINDOW)
+                        :TYPE (LEM-LSP-MODE/TYPE:TS-INTERFACE ("workDoneProgress" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)) :READER
+                        CLIENT-CAPABILITIES-WINDOW)
                        (EXPERIMENTAL? :INITARG :EXPERIMENTAL :DOCUMENTATION "*
 * Experimental client capabilities."
                         :TYPE COMMON-LISP:T :READER CLIENT-CAPABILITIES-EXPERIMENTAL)))
@@ -1323,8 +1329,10 @@ COMMON-LISP:NIL
 * Information about the server.
 *
 * @since 3.15.0"
-                        :TYPE (LEM-LSP-MODE/TYPE:TS-INTERFACE ("name" :TYPE COMMON-LISP:STRING) ("version" :TYPE COMMON-LISP:STRING)) :READER
-                        INITIALIZE-RESULT-SERVER-INFO)))
+                        :TYPE
+                        (LEM-LSP-MODE/TYPE:TS-INTERFACE ("name" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:NIL)
+                         ("version" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:T))
+                        :READER INITIALIZE-RESULT-SERVER-INFO)))
 
 (COMMON-LISP:PROGN (COMMON-LISP:DEFPARAMETER INITIALIZE-ERROR.UNKNOWN-PROTOCOL-VERSION 1))
 
@@ -1432,8 +1440,9 @@ COMMON-LISP:NIL
                         :TYPE COMMON-LISP:BOOLEAN :READER SERVER-CAPABILITIES-WORKSPACE-SYMBOL-PROVIDER)
                        (WORKSPACE? :INITARG :WORKSPACE :DOCUMENTATION "*
 * Workspace specific server capabilities"
-                        :TYPE (LEM-LSP-MODE/TYPE:TS-INTERFACE ("workspaceFolders" :TYPE WORKSPACE-FOLDERS-SERVER-CAPABILITIES)) :READER
-                        SERVER-CAPABILITIES-WORKSPACE)
+                        :TYPE
+                        (LEM-LSP-MODE/TYPE:TS-INTERFACE ("workspaceFolders" :TYPE WORKSPACE-FOLDERS-SERVER-CAPABILITIES :OPTIONAL-P COMMON-LISP:T))
+                        :READER SERVER-CAPABILITIES-WORKSPACE)
                        (EXPERIMENTAL? :INITARG :EXPERIMENTAL :DOCUMENTATION "*
 * Experimental server capabilities."
                         :TYPE COMMON-LISP:T :READER SERVER-CAPABILITIES-EXPERIMENTAL)))
@@ -1638,8 +1647,8 @@ COMMON-LISP:NIL
                         :TYPE COMMON-LISP:BOOLEAN :READER WORKSPACE-SYMBOL-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (SYMBOL-KIND? :INITARG :SYMBOL-KIND :DOCUMENTATION "*
 * Specific capabilities for the `SymbolKind` in the `workspace/symbol` request."
-                        :TYPE (LEM-LSP-MODE/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY SYMBOL-KIND))) :READER
-                        WORKSPACE-SYMBOL-CLIENT-CAPABILITIES-SYMBOL-KIND)))
+                        :TYPE (LEM-LSP-MODE/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY SYMBOL-KIND) :OPTIONAL-P COMMON-LISP:T))
+                        :READER WORKSPACE-SYMBOL-CLIENT-CAPABILITIES-SYMBOL-KIND)))
 
 (COMMON-LISP:DEFCLASS WORKSPACE-SYMBOL-OPTIONS (WORK-DONE-PROGRESS-OPTIONS) COMMON-LISP:NIL)
 
@@ -1829,8 +1838,9 @@ COMMON-LISP:NIL
 * Clients supporting tags have to handle unknown tags gracefully.
 *
 * @since 3.15.0"
-                        :TYPE (LEM-LSP-MODE/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY DIAGNOSTIC-TAG))) :READER
-                        PUBLISH-DIAGNOSTICS-CLIENT-CAPABILITIES-TAG-SUPPORT)
+                        :TYPE
+                        (LEM-LSP-MODE/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY DIAGNOSTIC-TAG) :OPTIONAL-P COMMON-LISP:NIL))
+                        :READER PUBLISH-DIAGNOSTICS-CLIENT-CAPABILITIES-TAG-SUPPORT)
                        (VERSION-SUPPORT? :INITARG :VERSION-SUPPORT :DOCUMENTATION "*
 * Whether the client interprets the version property of the
 * `textDocument/publishDiagnostics` notification's parameter.
@@ -1859,14 +1869,19 @@ COMMON-LISP:NIL
 * The client supports the following `CompletionItem` specific
 * capabilities."
                         :TYPE
-                        (LEM-LSP-MODE/TYPE:TS-INTERFACE ("snippetSupport" :TYPE COMMON-LISP:BOOLEAN)
-                         ("commitCharactersSupport" :TYPE COMMON-LISP:BOOLEAN) ("documentationFormat" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY MARKUP-KIND))
-                         ("deprecatedSupport" :TYPE COMMON-LISP:BOOLEAN) ("preselectSupport" :TYPE COMMON-LISP:BOOLEAN)
-                         ("tagSupport" :TYPE (LEM-LSP-MODE/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY COMPLETION-ITEM-TAG)))))
+                        (LEM-LSP-MODE/TYPE:TS-INTERFACE ("snippetSupport" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)
+                         ("commitCharactersSupport" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)
+                         ("documentationFormat" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY MARKUP-KIND) :OPTIONAL-P COMMON-LISP:T)
+                         ("deprecatedSupport" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)
+                         ("preselectSupport" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)
+                         ("tagSupport" :TYPE
+                          (LEM-LSP-MODE/TYPE:TS-INTERFACE
+                           ("valueSet" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY COMPLETION-ITEM-TAG) :OPTIONAL-P COMMON-LISP:NIL))
+                          :OPTIONAL-P COMMON-LISP:T))
                         :READER COMPLETION-CLIENT-CAPABILITIES-COMPLETION-ITEM)
                        (COMPLETION-ITEM-KIND? :INITARG :COMPLETION-ITEM-KIND :DOCUMENTATION "" :TYPE
-                        (LEM-LSP-MODE/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY COMPLETION-ITEM-KIND))) :READER
-                        COMPLETION-CLIENT-CAPABILITIES-COMPLETION-ITEM-KIND)
+                        (LEM-LSP-MODE/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY COMPLETION-ITEM-KIND) :OPTIONAL-P COMMON-LISP:T))
+                        :READER COMPLETION-CLIENT-CAPABILITIES-COMPLETION-ITEM-KIND)
                        (CONTEXT-SUPPORT? :INITARG :CONTEXT-SUPPORT :DOCUMENTATION "*
 * The client supports to send additional context information for a
 * `textDocument/completion` request."
@@ -2090,8 +2105,10 @@ COMMON-LISP:NIL
 * The client supports the following `SignatureInformation`
 * specific properties."
                         :TYPE
-                        (LEM-LSP-MODE/TYPE:TS-INTERFACE ("documentationFormat" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY MARKUP-KIND))
-                         ("parameterInformation" :TYPE (LEM-LSP-MODE/TYPE:TS-INTERFACE ("labelOffsetSupport" :TYPE COMMON-LISP:BOOLEAN))))
+                        (LEM-LSP-MODE/TYPE:TS-INTERFACE ("documentationFormat" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY MARKUP-KIND) :OPTIONAL-P COMMON-LISP:T)
+                         ("parameterInformation" :TYPE
+                          (LEM-LSP-MODE/TYPE:TS-INTERFACE ("labelOffsetSupport" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)) :OPTIONAL-P
+                          COMMON-LISP:T))
                         :READER SIGNATURE-HELP-CLIENT-CAPABILITIES-SIGNATURE-INFORMATION)
                        (CONTEXT-SUPPORT? :INITARG :CONTEXT-SUPPORT :DOCUMENTATION "*
 * The client supports to send additional context information for a
@@ -2329,8 +2346,8 @@ COMMON-LISP:NIL
                         :TYPE COMMON-LISP:BOOLEAN :READER DOCUMENT-SYMBOL-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (SYMBOL-KIND? :INITARG :SYMBOL-KIND :DOCUMENTATION "*
 * Specific capabilities for the `SymbolKind` in the `textDocument/documentSymbol` request."
-                        :TYPE (LEM-LSP-MODE/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY SYMBOL-KIND))) :READER
-                        DOCUMENT-SYMBOL-CLIENT-CAPABILITIES-SYMBOL-KIND)
+                        :TYPE (LEM-LSP-MODE/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY SYMBOL-KIND) :OPTIONAL-P COMMON-LISP:T))
+                        :READER DOCUMENT-SYMBOL-CLIENT-CAPABILITIES-SYMBOL-KIND)
                        (HIERARCHICAL-DOCUMENT-SYMBOL-SUPPORT? :INITARG :HIERARCHICAL-DOCUMENT-SYMBOL-SUPPORT :DOCUMENTATION "*
 * The client supports hierarchical document symbols."
                         :TYPE COMMON-LISP:BOOLEAN :READER DOCUMENT-SYMBOL-CLIENT-CAPABILITIES-HIERARCHICAL-DOCUMENT-SYMBOL-SUPPORT)))
@@ -2438,7 +2455,9 @@ COMMON-LISP:NIL
 * @since 3.8.0"
                         :TYPE
                         (LEM-LSP-MODE/TYPE:TS-INTERFACE
-                         ("codeActionKind" :TYPE (LEM-LSP-MODE/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY CODE-ACTION-KIND)))))
+                         ("codeActionKind" :TYPE
+                          (LEM-LSP-MODE/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-MODE/TYPE:TS-ARRAY CODE-ACTION-KIND) :OPTIONAL-P COMMON-LISP:NIL))
+                          :OPTIONAL-P COMMON-LISP:NIL))
                         :READER CODE-ACTION-CLIENT-CAPABILITIES-CODE-ACTION-LITERAL-SUPPORT)
                        (IS-PREFERRED-SUPPORT? :INITARG :IS-PREFERRED-SUPPORT :DOCUMENTATION "*
 * Whether code action supports the `isPreferred` property.

@@ -58,9 +58,9 @@
 (defclass object ()
   ())
 
-(defmethod initialize-instance ((object object) &key no-error &allow-other-keys)
+(defmethod initialize-instance ((object object) &key (dont-check-required-initarg nil) &allow-other-keys)
   (let ((instance (call-next-method)))
-    (unless no-error (check-required-initarg instance))
+    (unless dont-check-required-initarg (check-required-initarg instance))
     instance))
 
 (defun map-object (function object)

@@ -71,7 +71,7 @@
               value))))))
 
 (defun coerce-json (json json-class-name)
-  (let ((object (make-instance json-class-name :no-error t)))
+  (let ((object (make-instance json-class-name :dont-check-required-initarg t)))
     (loop :for slot :in (closer-mop:class-slots (class-of object))
           :for slot-name := (closer-mop:slot-definition-name slot)
           :do (setf (slot-value object slot-name)

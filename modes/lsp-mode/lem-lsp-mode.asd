@@ -3,4 +3,4 @@
   :depends-on ("cl-package-locks"
                "trivial-package-local-nicknames"
                "lem-lsp-mode/project"
-               "lem-lsp-mode/main"))
+               "lem-lsp-mode/lsp-mode"))

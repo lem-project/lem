@@ -77,14 +77,14 @@
          (language-id (spec-langauge-id spec)))
     (let ((workspace (find-workspace root-uri language-id)))
       (cond ((null workspace)
-             (let ((client (make-client (spec-mode spec) spec)))
-               (let ((workspace (make-workspace :client client
-                                                :root-uri root-uri
-                                                :language-id language-id)))
-                 (push workspace *workspaces*)
-                 (setf (buffer-workspace buffer) workspace)
-                 (initialize workspace)
-                 (initialized workspace))))
+             (let* ((client (make-client (spec-mode spec) spec))
+                    (workspace (make-workspace :client client
+                                               :root-uri root-uri
+                                               :language-id language-id)))
+               (push workspace *workspaces*)
+               (setf (buffer-workspace buffer) workspace)
+               (initialize workspace)
+               (initialized workspace)))
             (t
              (setf (buffer-workspace buffer) workspace))))))
 

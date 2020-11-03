@@ -42,8 +42,8 @@
   (multiple-value-bind (x y width height)
       (compute-popup-window-position (popup-window-gravity popup-window)
                                      (popup-window-source-window popup-window)
-                                     (window-width popup-window)
-                                     (window-height popup-window))
+                                     (popup-window-base-width popup-window)
+                                     (popup-window-base-height popup-window))
     (lem::window-set-size popup-window width height)
     (lem::window-set-pos popup-window
                          (+ x +border-size+)
@@ -55,15 +55,20 @@
                       +min-width+))
          (disp-h (max (- (display-height) b2)
                       +min-height+))
+         (width  (max (+ width *extra-width-margin*)
+                      +min-width+))
+         (height (max height
+                      +min-height+))
          (x (+ (window-x source-window)
                (window-cursor-x source-window)))
-         (y (+ (window-y source-window)
-               (window-cursor-y source-window)
-               1))
-         (w (max (+ width *extra-width-margin*)
-                 +min-width+))
-         (h (max height
-                 +min-height+)))
+         (y (alexandria:clamp
+             (+ (window-y source-window)
+                (window-cursor-y source-window)
+                1)
+             0
+             (1- (display-height))))
+         (w width)
+         (h height))
     ;; calc y and h
     (when (> (+ y height) disp-h)
       (decf h (- (+ y height) disp-h)))
@@ -92,12 +97,14 @@
                      +min-width+))
          (win-h (max (- (window-height source-window) b2)
                      +min-height+))
-         (x  win-x)
-         (y  (+ win-y 1))
-         (w  (max (+ width *extra-width-margin*)
-                  +min-width+))
-         (h  (max height
-                  +min-height+)))
+         (width  (max (+ width *extra-width-margin*)
+                      +min-width+))
+         (height (max height
+                      +min-height+))
+         (x (+ win-x (- win-w width)))
+         (y (+ win-y 1))
+         (w width)
+         (h height))
     ;; calc y and h
     (when (> (+ y height) (+ win-y win-h))
       (decf h (- (+ y height) (+ win-y win-h))))
@@ -105,7 +112,6 @@
       (setf y win-y)
       (setf h (min height win-h)))
     ;; calc x and w
-    (incf x (- win-w w))
     (when (< x win-x) ; for safety
       (setf x win-x)
       (setf w (min width win-w)))
@@ -117,7 +123,13 @@
     :reader popup-window-gravity)
    (source-window
     :initarg :source-window
-    :reader popup-window-source-window))
+    :reader popup-window-source-window)
+   (base-width
+    :initarg :base-width
+    :reader popup-window-base-width)
+   (base-height
+    :initarg :base-height
+    :reader popup-window-base-height))
   (:default-initargs
    :border +border-size+))
 
@@ -132,10 +144,10 @@
 
 (defun popup-window (source-window buffer width height &key destination-window (gravity :cursor))
   (let ((gravity (ensure-gravity gravity)))
-    (multiple-value-bind (x y width height)
+    (multiple-value-bind (x y w h)
         (compute-popup-window-position gravity source-window width height)
       (cond (destination-window
-             (lem::window-set-size destination-window width height)
+             (lem::window-set-size destination-window w h)
              (lem::window-set-pos destination-window
                                   (+ x +border-size+)
                                   (+ y +border-size+))
@@ -145,12 +157,13 @@
                             :buffer buffer
                             :x (+ x +border-size+)
                             :y (+ y +border-size+)
-                            :width width
-                            :height height
+                            :width  w
+                            :height h
                             :use-modeline-p nil
-                            :source-window source-window
                             :gravity gravity
-                            :source-window source-window))))))
+                            :source-window source-window
+                            :base-width  width
+                            :base-height height))))))
 
 (defun quit-popup-window (floating-window)
   (delete-window floating-window))

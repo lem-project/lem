@@ -23,4 +23,4 @@
            (when (funcall root-test-function file)
              (return directory))))
         ((uiop:pathname-equal directory (user-homedir-pathname)) nil)
-        ((find-root-directory (uiop:pathname-parent-directory-pathname directory) root-test-function))))
+        ((find-root-pathname (uiop:pathname-parent-directory-pathname directory) root-test-function))))

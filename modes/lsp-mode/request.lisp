@@ -7,7 +7,8 @@
                 :object-to-json)
   (:import-from :lem-lsp-mode/client
                 :client-connection)
-  (:export :lsp-call-method
+  (:export :set-log-stream
+           :lsp-call-method
            :initialize-request
            :initialized-request
            :text-document-did-open))
@@ -19,6 +20,28 @@
 (lem-lsp-mode/project:local-nickname :utils :lem-lsp-mode/utils)
 
 (defgeneric lsp-call-method (client request))
+
+(defvar *log-stream* nil)
+
+(defun set-log-stream (stream)
+  (setf *log-stream* stream))
+
+(defun do-log (string &rest args)
+  (fresh-line *log-stream*)
+  (apply #'format *log-stream* string args)
+  (terpri *log-stream*))
+
+(defun pretty-json (params)
+  (with-output-to-string (stream)
+    (yason:encode params (yason:make-json-output-stream stream))))
+
+(defun jsonrpc-call (jsonrpc method params)
+  (do-log "request: ~A ~A" method (pretty-json params))
+  (jsonrpc:call jsonrpc method params))
+
+(defun jsonrpc-notify (jsonrpc method params)
+  (do-log "notify: ~A ~A" method (pretty-json params))
+  (jsonrpc:notify jsonrpc method params))
 
 ;;;
 (defclass abstract-request ()
@@ -38,13 +61,13 @@
   ())
 
 (defmethod lsp-call-method (client (request request))
-  (coerce-json (jsonrpc:call (client-connection client)
+  (coerce-json (jsonrpc-call (client-connection client)
                              (request-method request)
                              (object-to-json (request-params request)))
                (request-response-class-name request)))
 
 (defmethod lsp-call-method (client (request notification))
-  (jsonrpc:notify (client-connection client)
+  (jsonrpc-notify (client-connection client)
                   (request-method request)
                   (object-to-json (request-params request))))
 

@@ -123,7 +123,13 @@
                      ("version" :type common-lisp:string)))))
       (ok (hash-table-p result))
       (ok (equal "abc" (gethash "name" result)))
-      (ok (equal "1.0" (gethash "version" result)))))
+      (ok (equal "1.0" (gethash "version" result))))
+    (let ((result (coerce-element (hash "foo" 100)
+                                  `(lem-lsp-mode/type:ts-interface
+                                    ("foo" :type integer :optional-p t)
+                                    ("bar" :type string :optional-p t)))))
+      (ok (hash-table-p result))
+      (ok (equal 100 (gethash "foo" result)))))
   (testing "primitive"
     (ok (equal 1 (coerce-element 1 'integer)))
     (ok (equal nil (coerce-element nil 'boolean)))

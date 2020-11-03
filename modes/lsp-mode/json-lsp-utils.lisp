@@ -7,8 +7,7 @@
            :coerce-json))
 (in-package :lem-lsp-mode/json-lsp-utils)
 
-#+sbcl
-(sb-ext:lock-package :lem-lsp-mode/json-lsp-utils)
+(cl-package-locks:lock-package :lem-lsp-mode/json-lsp-utils)
 
 (define-condition json-type-error ()
   ((type :initarg :type)
@@ -22,6 +21,11 @@
     (error 'json-type-error :value value :type type))
   (values))
 
+(defun exist-hash-table-key-p (hash-table key)
+  (let ((default '#:default))
+    (not (eq default (gethash key hash-table default)))))
+
+;; TODO: yasonに依存しているのを直す
 (defun coerce-element (value type)
   (trivia:match type
     ((list 'ts-array item-type)
@@ -32,9 +36,13 @@
      (assert-type value 'hash-table)
      (let ((new-hash-table (make-hash-table :test 'equal)))
        (dolist (element elements)
-         (destructuring-bind (name &key type) element
-           (setf (gethash name new-hash-table)
-                 (coerce-element (gethash name value) type))))
+         (destructuring-bind (name &key type optional-p) element
+           (cond ((exist-hash-table-key-p value name)
+                  (setf (gethash name new-hash-table)
+                        (coerce-element (gethash name value) type)))
+                 ((not optional-p)
+                  ;; 必須要素が入っていない場合エラーを出すべきか?
+                  ))))
        new-hash-table))
     ((list 'ts-equal-specializer value-spec)
      (unless (equal value value-spec)
@@ -72,7 +80,7 @@
               value))))))
 
 (defun coerce-json (json json-class-name)
-  (let ((object (make-instance json-class-name :no-error t)))
+  (let ((object (make-instance json-class-name :dont-check-required-initarg t)))
     (loop :for slot :in (closer-mop:class-slots (class-of object))
           :for slot-name := (closer-mop:slot-definition-name slot)
           :do (setf (slot-value object slot-name)

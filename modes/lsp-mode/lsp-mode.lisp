@@ -1,5 +1,6 @@
 (defpackage :lem-lsp-mode/lsp-mode
   (:use :cl :lem)
+  (:import-from :lem-lsp-mode/json)
   (:import-from :lem-lsp-mode/utils)
   (:import-from :lem-lsp-mode/protocol)
   (:import-from :lem-lsp-mode/request)
@@ -10,6 +11,8 @@
 (lem-lsp-mode/project:local-nickname :protocol :lem-lsp-mode/protocol)
 (lem-lsp-mode/project:local-nickname :utils :lem-lsp-mode/utils)
 (lem-lsp-mode/project:local-nickname :request :lem-lsp-mode/request)
+(lem-lsp-mode/project:local-nickname :json :lem-lsp-mode/json)
+(lem-lsp-mode/project:local-nickname :client :lem-lsp-mode/client)
 
 (defvar *workspaces* '())
 
@@ -24,7 +27,7 @@
   (dolist (workspace *workspaces*)
     (when (and (equal (workspace-root-uri workspace)
                       root-uri)
-               (equal (workspace-root-uri workspace)
+               (equal (workspace-language-id workspace)
                       language-id))
       (return workspace))))
 
@@ -39,26 +42,46 @@
      :enable-hook 'enable-hook))
 
 (defun enable-hook ()
-  (ensure-lsp-connection (current-buffer)))
+  (message "enable hook")
+  (ensure-lsp-buffer (current-buffer)))
 
 (defun find-root-pathname (directory uri-patterns)
-  (utils:find-root-pathname directory
-                            (lambda (file)
-                              (let ((file-name (file-namestring file)))
-                                (dolist (uri-pattern uri-patterns)
-                                  (when (search uri-pattern file-name)
-                                    (return t)))))))
+  (or (utils:find-root-pathname directory
+                                (lambda (file)
+                                  (let ((file-name (file-namestring file)))
+                                    (dolist (uri-pattern uri-patterns)
+                                      (when (search uri-pattern file-name)
+                                        (return t))))))
+      (pathname directory)))
 
 (defgeneric make-client (mode spec))
 
 (defmethod make-client ((mode (eql :tcp)) spec)
-  (make-instance 'lem-lsp-mode/client:tcp-client :port (spec-port spec)))
+  (make-instance 'client:tcp-client :port (spec-port spec)))
 
 (defun initialize (workspace)
   (let ((initialize-result
-          (request:lsp-call-method (workspace-client workspace)
-                                   (make-instance 'request:initialize-request
-                                                  :root-uri (workspace-root-uri workspace)))))
+          (request:lsp-call-method
+           (workspace-client workspace)
+           (make-instance
+            'request:initialize-request
+            :params (let ((x (make-instance
+                              'protocol:initialize-params
+                              :process-id (utils:get-pid)
+                              :client-info (json:make-json :name "lem" #|:version "0.0.0"|#)
+                              :root-uri (workspace-root-uri workspace)
+                              :capabilities (make-instance 'protocol:client-capabilities
+                                                           :workspace (json:make-json
+                                                                       :apply-edit nil
+                                                                       :workspace-edit nil
+                                                                       :did-change-configuration nil
+                                                                       :symbol nil
+                                                                       :execute-command nil)
+                                                           :text-document nil
+                                                           :experimental nil)
+                              :trace nil
+                              :workspace-folders nil)))
+                      x)))))
     (setf (workspace-server-capabilities workspace)
           (protocol:initialize-result-capabilities initialize-result))
     (setf (workspace-server-info workspace)
@@ -69,7 +92,7 @@
   (request:lsp-call-method (workspace-client workspace)
                            (make-instance 'request:initialized-request)))
 
-(defun ensure-lsp-connection (buffer)
+(defun ensure-lsp-buffer (buffer)
   (let* ((spec (get-language-spec (buffer-major-mode buffer)))
          (root-pathname (find-root-pathname (buffer-directory buffer)
                                             (spec-root-uri-patterns spec)))
@@ -83,6 +106,7 @@
                                                :language-id language-id)))
                (push workspace *workspaces*)
                (setf (buffer-workspace buffer) workspace)
+               (client:jsonrpc-connect client)
                (initialize workspace)
                (initialized workspace)))
             (t
@@ -91,7 +115,7 @@
 (defvar *language-spec-table* (make-hash-table))
 
 (defun get-language-spec (major-mode)
-  (get *language-spec-table* major-mode))
+  (gethash major-mode *language-spec-table*))
 
 (defun spec-langauge-id (spec)
   (getf spec :language-id))

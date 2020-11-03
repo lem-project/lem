@@ -20,12 +20,41 @@
 (defgeneric lsp-call-method (client request))
 
 ;;;
-(defclass initialize-request ()
-  ((root-uri
-    :initform nil
-    :initarg :root-uri
-    :reader initialize-request-root-uri)))
+(defclass abstract-request ()
+  ((method-name
+    :initarg :method-name
+    :reader request-method-name)
+   (params
+    :initarg :params
+    :reader request-params)))
 
+(defclass request (abstract-request)
+  ((response-class-name
+    :initarg :response-class-name
+    :reader request-response-class-name)))
+
+(defclass notification (abstract-request)
+  ())
+
+(defmethod lsp-call-method (client (request request))
+  (coerce-json (jsonrpc:call (client-connection client)
+                             (request-method-name request)
+                             (object-to-json (request-params request)))
+               (request-response-class-name request)))
+
+(defmethod lsp-call-method (client (request notification))
+  (jsonrpc:notify (client-connection client)
+                  (request-method-name request)
+                  (object-to-json (request-params request))))
+
+;;;
+(defclass initialize-request (request)
+  ()
+  (:default-initargs
+   :method-name "initialize"
+   :response-class-name 'protocol:initialize-result))
+
+#|
 (defclass server-info ()
   ((name
     :initarg :name)
@@ -36,7 +65,9 @@
   (make-instance 'server-info
                  :name (json-get json "name")
                  :version (json-get json "version")))
+|#
 
+#+(or)
 (defmethod lsp-call-method (client (request initialize-request))
   (coerce-json (jsonrpc:call (client-connection client)
                              "initialize"
@@ -58,12 +89,8 @@
                'protocol:initialize-result))
 
 ;;;
-(defclass initialized-request ()
-  ())
-
-(defmethod lsp-call-method (client (request initialized-request))
-  (jsonrpc:notify (client-connection client)
-                  "initialized"
-                  (object-to-json
-                   (make-instance 'protocol:initialized-params)))
-  (values))
+(defclass initialized-request (notification)
+  ()
+  (:default-initargs
+   :method-name "initialized"
+   :params (make-instance 'protocol:initialized-params)))

@@ -37,6 +37,14 @@
 (defun (setf buffer-workspace) (workspace buffer)
   (setf (buffer-value buffer 'workspace) workspace))
 
+(defun buffer-language-spec (buffer)
+  (get-language-spec (buffer-major-mode buffer)))
+
+(defun buffer-language-id (buffer)
+  (let ((spec (buffer-language-spec buffer)))
+    (when spec
+      (spec-langauge-id spec))))
+
 (lem:define-minor-mode lsp-mode
     (:name "Language Client"
      :enable-hook 'enable-hook))
@@ -58,6 +66,27 @@
 
 (defmethod make-client ((mode (eql :tcp)) spec)
   (make-instance 'client:tcp-client :port (spec-port spec)))
+
+(defun ensure-lsp-buffer (buffer)
+  (let* ((spec (buffer-language-spec buffer))
+         (root-pathname (find-root-pathname (buffer-directory buffer)
+                                            (spec-root-uri-patterns spec)))
+         (root-uri (utils:pathname-to-uri root-pathname))
+         (language-id (spec-langauge-id spec)))
+    (let ((workspace (find-workspace root-uri language-id)))
+      (cond ((null workspace)
+             (let* ((client (make-client (spec-mode spec) spec))
+                    (workspace (make-workspace :client client
+                                               :root-uri root-uri
+                                               :language-id language-id)))
+               (push workspace *workspaces*)
+               (setf (buffer-workspace buffer) workspace)
+               (client:jsonrpc-connect client)
+               (initialize workspace)
+               (initialized workspace)))
+            (t
+             (setf (buffer-workspace buffer) workspace)))
+      (text-document/did-open buffer))))
 
 (defun initialize (workspace)
   (let ((initialize-result
@@ -92,25 +121,18 @@
   (request:lsp-call-method (workspace-client workspace)
                            (make-instance 'request:initialized-request)))
 
-(defun ensure-lsp-buffer (buffer)
-  (let* ((spec (get-language-spec (buffer-major-mode buffer)))
-         (root-pathname (find-root-pathname (buffer-directory buffer)
-                                            (spec-root-uri-patterns spec)))
-         (root-uri (utils:pathname-to-uri root-pathname))
-         (language-id (spec-langauge-id spec)))
-    (let ((workspace (find-workspace root-uri language-id)))
-      (cond ((null workspace)
-             (let* ((client (make-client (spec-mode spec) spec))
-                    (workspace (make-workspace :client client
-                                               :root-uri root-uri
-                                               :language-id language-id)))
-               (push workspace *workspaces*)
-               (setf (buffer-workspace buffer) workspace)
-               (client:jsonrpc-connect client)
-               (initialize workspace)
-               (initialized workspace)))
-            (t
-             (setf (buffer-workspace buffer) workspace))))))
+(defun buffer-to-text-document-item (buffer)
+  (make-instance 'protocol:text-document-item
+                 :uri (utils:pathname-to-uri (buffer-filename buffer))
+                 :language-id (buffer-language-id buffer)
+                 :version 0
+                 :text (buffer-text buffer)))
+
+(defun text-document/did-open (buffer)
+  (request:lsp-call-method (workspace-client (buffer-workspace buffer))
+                           (make-instance 'request:text-document-did-open
+                                          :params (make-instance 'protocol:did-open-text-document-params
+                                                                 :text-document (buffer-to-text-document-item buffer)))))
 
 (defvar *language-spec-table* (make-hash-table))
 

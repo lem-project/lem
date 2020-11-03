@@ -54,7 +54,7 @@
 ;; popup window margin setting
 ;;  (extra margin is required to avoid partial loss of popup window display
 ;;   caused by wide characters)
-(setf lem.popup-window::*extra-right-margin* 2)
+(setf lem.popup-window::*extra-right-margin* 1)
 (setf lem.popup-window::*extra-width-margin* 1)
 
 
@@ -121,7 +121,7 @@
                    ;;   t   : enabled
                    ;;   nil : disabled
   (resize-delay 0 :type fixnum)
-                   ;; set resize delay counter (windows 10)
+                   ;; set resize delay counter
                    ;;   fixnum : number of delay count (1count=0.1sec)
   (reserved-last-lines 1 :type fixnum)
                    ;; reserve last line for windows ime (windows 8.1 or earlier)
@@ -142,7 +142,7 @@
             :conemu-mouse        nil
             :winterm-input       nil
             :resize-refresh      (not *pdcurses-win10-jp*)
-            :resize-delay        (if *pdcurses-win10-jp* 5 0)
+            :resize-delay        1
             :reserved-last-lines 1))
           (:conemu
            (make-windows-term-setting
@@ -155,7 +155,7 @@
             :conemu-mouse        *pdcurses-win10-jp*
             :winterm-input       nil
             :resize-refresh      (not *pdcurses-win10-jp*)
-            :resize-delay        (if *pdcurses-win10-jp* 5 0)
+            :resize-delay        1
             :reserved-last-lines 1))
           (:winterm
            (make-windows-term-setting
@@ -168,7 +168,7 @@
             :conemu-mouse        nil
             :winterm-input       t
             :resize-refresh      (not *pdcurses-win10-jp*)
-            :resize-delay        (if *pdcurses-win10-jp* 10 0)
+            :resize-delay        1
             :reserved-last-lines 1))
           (t
            (make-windows-term-setting
@@ -181,7 +181,7 @@
             :conemu-mouse        nil
             :winterm-input       nil
             :resize-refresh      (not *pdcurses-win10-jp*)
-            :resize-delay        (if *pdcurses-win10-jp* 10 0)
+            :resize-delay        1
             :reserved-last-lines 1)))))
 (defmethod calc-disp-char-width ((wt windows-term-setting) code)
   (let ((fn (windows-term-setting-disp-char-width wt)))
@@ -273,17 +273,17 @@
 
 ;; for resizing display
 (defkeycode "[resize]" #x222)
-(let ((resizing-count 0)
+(let ((resize-delay-counter 0)
       (lock (bt:make-lock)))
   (defun now-resizing ()
-         (bt:with-lock-held (lock)
-           resizing-count))
+    (bt:with-lock-held (lock)
+      resize-delay-counter))
   (defun (setf now-resizing) (v)
-         (bt:with-lock-held (lock)
-           (setf resizing-count v)))
+    (bt:with-lock-held (lock)
+      (setf resize-delay-counter v)))
   (defun now-resizing-countdown ()
-         (bt:with-lock-held (lock)
-           (decf resizing-count))))
+    (bt:with-lock-held (lock)
+      (decf resize-delay-counter))))
 (defvar *min-cols*  5)
 (defvar *min-lines* 3)
 
@@ -302,7 +302,7 @@
     (apply #'format out fmt args)
     (terpri out)))
 
-;; use only stdscr
+;; overwite method (use only stdscr)
 ;;  (we don't make a new scrwin to avoid the display corruption of
 ;;   horizontal splitted window with wide characters)
 (defmethod lem-if:make-view
@@ -511,13 +511,15 @@
       (mouse-code  (get-code "[mouse]"))
       (abort-code  (get-code "C-]"))
       (escape-code (get-code "escape"))
-      (ctrl-key nil)
-      (alt-key  nil))
+      (ctrl-key  nil)
+      (alt-key   nil)
+      (shift-key nil))
   (defun get-charcode-from-input ()
     (let ((code          (getch-pad))
           (modifier-keys (charms/ll:PDC-get-key-modifiers)))
-      (setf ctrl-key (logtest modifier-keys charms/ll:PDC_KEY_MODIFIER_CONTROL))
-      (setf alt-key  (logtest modifier-keys charms/ll:PDC_KEY_MODIFIER_ALT))
+      (setf ctrl-key   (logtest modifier-keys charms/ll:PDC_KEY_MODIFIER_CONTROL))
+      (setf alt-key    (logtest modifier-keys charms/ll:PDC_KEY_MODIFIER_ALT))
+      (setf shift-key  (logtest modifier-keys charms/ll:PDC_KEY_MODIFIER_SHIFT))
       ;;(unless (= code -1)
       ;;  (dbg-log-format "code=~X ctrl=~S alt=~S" code ctrl-key alt-key))
       (cond
@@ -584,6 +586,24 @@
                                  (= code2 #x06d))) ; m
                    (setf code -1))))))
            ))
+        ;; shift key workaround
+        (shift-key
+         (cond
+           ;; S-down / S-up / S-left / S-right
+           ((= code #x224) (setf code #o520))
+           ((= code #x223) (setf code #o521))
+           ((= code #x187) (setf code #o611))
+           ((= code #x190) (setf code #o622))
+           ;; S-Home / S-End / S-PageUp / S-PageDown
+           ((= code #x184) (setf code #o607))
+           ((= code #x180) (setf code #o602))
+           ((= code #x18c) (setf code #o616))
+           ((= code #x18a) (setf code #o614))
+           ;; S-Tab
+           ((= code #x15f) (setf code #o541))
+           ;; S-Delete
+           ((= code #x17d) (setf code #o577))
+           ))
         ;; normal key workaround
         (t
          (cond
@@ -596,6 +616,7 @@
            ((= code #x09c) (setf code 31)) ; C-_ (Redo) for mintty
            )))
       code))
+  ;; overwite function (workaround for exit problem)
   (defun get-event (&optional esc-delaying)
     (let ((code (get-charcode-from-input)))
       (cond
@@ -631,7 +652,7 @@
         (t
          (get-key code))))))
 
-;; workaround for exit problem
+;; overwite function (workaround for exit problem)
 (defun input-loop (editor-thread)
   (handler-case
       (loop
@@ -697,12 +718,12 @@
   (force-refresh-display charms/ll:*cols* charms/ll:*lines*)
   (charms/ll:erase))
 
-;; for resizing display
+;; overwrite method (for resizing display)
 (defmethod lem-if:display-width ((implementation ncurses))
   (resize-display)
   (max *min-cols* charms/ll:*cols*))
 
-;; for resizing display
+;; overwrite method (for resizing display)
 (defmethod lem-if:display-height ((implementation ncurses))
   (resize-display)
   ;; reserve last lines for windows ime and so on
@@ -710,12 +731,12 @@
        (- charms/ll:*lines*
           (windows-term-setting-reserved-last-lines (windows-term-setting)))))
 
-;; use only stdscr
+;; overwrite method (use only stdscr)
 (defmethod lem-if:delete-view ((implementation ncurses) view)
   ;; nop
   )
 
-;; use only stdscr
+;; overwrite method (use only stdscr)
 (defmethod lem-if:clear ((implementation ncurses) view)
   (loop :for y1 :from 0 :below (+ (ncurses-view-height view)
                                   (if (ncurses-view-modeline-scrwin view) 1 0))
@@ -725,7 +746,7 @@
                               (get-pos-x view 0 y1)
                               str)))
 
-;; use only stdscr
+;; overwrite method (use only stdscr)
 (defmethod lem-if:set-view-size ((implementation ncurses) view width height)
   (setf (ncurses-view-width view) width)
   (setf (ncurses-view-height view) height)
@@ -735,7 +756,7 @@
       (setf (border-width  border) b-width)
       (setf (border-height border) b-height))))
 
-;; use only stdscr
+;; overwrite method (use only stdscr)
 (defmethod lem-if:set-view-pos ((implementation ncurses) view x y)
   (setf (ncurses-view-x view) x)
   (setf (ncurses-view-y view) y))
@@ -883,7 +904,7 @@
          (incf pos-x)
          (charms/ll:refresh))))
 
-;; use get-pos-x/y and adjust-line
+;; overwrite method (use get-pos-x/y and adjust-line)
 (defmethod lem-if:print ((implementation ncurses) view x y string attribute)
   (let ((attr (attribute-to-bits attribute)))
     (charms/ll:wattron (ncurses-view-scrwin view) attr)
@@ -896,7 +917,7 @@
     (charms/ll:wattroff (ncurses-view-scrwin view) attr)
     (adjust-line view x y)))
 
-;; use get-pos-x/y and adjust-line
+;; overwrite method (use get-pos-x/y and adjust-line)
 (defmethod lem-if:print-modeline ((implementation ncurses) view x y string attribute)
   (let ((attr (attribute-to-bits attribute)))
     (charms/ll:wattron (ncurses-view-modeline-scrwin view) attr)
@@ -907,7 +928,7 @@
     (charms/ll:wattroff (ncurses-view-modeline-scrwin view) attr)
     (adjust-line view x y :modeline t)))
 
-;; use get-pos-x/y and adjust-line
+;; overwrite method (use get-pos-x/y and adjust-line)
 (defmethod lem-if:clear-eol ((implementation ncurses) view x y)
   (charms/ll:mvwaddstr (ncurses-view-scrwin view)
                        (get-pos-y view x y)
@@ -919,7 +940,7 @@
                                     :initial-element #\space))
   (adjust-line view x y))
 
-;; use get-pos-x/y and adjust-line
+;; overwrite method (use get-pos-x/y and adjust-line)
 (defmethod lem-if:clear-eob ((implementation ncurses) view x y)
   (lem-if:clear-eol implementation view x y)
   (loop :for y1 :from (+ y 1) :below (ncurses-view-height view)
@@ -929,7 +950,7 @@
                               (get-pos-x view 0 y1)
                               str)))
 
-;; use only stdscr
+;; overwrite function (use only stdscr)
 (defun draw-border (border view)
   ;; b-width includes a margin for wide characters display problem
   (let* ((attr     (attribute-to-bits (make-attribute :background "#666666"
@@ -969,7 +990,7 @@
       (setf code (logand code charms/ll:A_CHARTEXT))
       (charms/ll:mvaddch pos-y pos-x code))))
 
-;; use only stdscr
+;; overwrite method (use only stdscr)
 (defmethod lem-if:redraw-view-after ((implementation ncurses) view focus-window-p)
   ;; draw border
   (alexandria:when-let (border (ncurses-view-border view))
@@ -985,7 +1006,7 @@
                                 (char-code #\space)))
       (charms/ll:attroff attr))))
 
-;; use get-pos-x/y
+;; overwrite method (use get-pos-x/y)
 (defmethod lem-if:update-display ((implementation ncurses))
   (let ((view (window-view (current-window))))
     ;; workaround for display update problem (incomplete)

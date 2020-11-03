@@ -61,7 +61,6 @@
 ;; windows terminal type
 ;;   :mintty  : mintty  (winpty is needed)
 ;;   :conemu  : ConEmu  (experimental)
-;;               ('chcp 65001' must be done before run)
 ;;   :winterm : Windows Terminal (windows 10) (experimental)
 ;;   :cmd.exe : cmd.exe (experimental)
 (defvar *windows-term-type*

@@ -9,7 +9,8 @@
                 :client-connection)
   (:export :lsp-call-method
            :initialize-request
-           :initialized-request))
+           :initialized-request
+           :text-document-did-open))
 (in-package :lem-lsp-mode/request)
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
@@ -21,9 +22,9 @@
 
 ;;;
 (defclass abstract-request ()
-  ((method-name
-    :initarg :method-name
-    :reader request-method-name)
+  ((method
+    :initarg :method
+    :reader request-method)
    (params
     :initarg :params
     :reader request-params)))
@@ -38,20 +39,20 @@
 
 (defmethod lsp-call-method (client (request request))
   (coerce-json (jsonrpc:call (client-connection client)
-                             (request-method-name request)
+                             (request-method request)
                              (object-to-json (request-params request)))
                (request-response-class-name request)))
 
 (defmethod lsp-call-method (client (request notification))
   (jsonrpc:notify (client-connection client)
-                  (request-method-name request)
+                  (request-method request)
                   (object-to-json (request-params request))))
 
 ;;;
 (defclass initialize-request (request)
-  ()
+  ((params :type protocol:initialize-params))
   (:default-initargs
-   :method-name "initialize"
+   :method "initialize"
    :response-class-name 'protocol:initialize-result))
 
 #|
@@ -67,30 +68,15 @@
                  :version (json-get json "version")))
 |#
 
-#+(or)
-(defmethod lsp-call-method (client (request initialize-request))
-  (coerce-json (jsonrpc:call (client-connection client)
-                             "initialize"
-                             (object-to-json
-                              (make-instance 'protocol:initialize-params
-                                             :process-id (utils:get-pid)
-                                             :client-info (make-json :name "lem" #|:version "0.0.0"|#)
-                                             :root-uri (initialize-request-root-uri request)
-                                             :capabilities (make-instance 'protocol:client-capabilities
-                                                                          :workspace (make-json :apply-edit nil
-                                                                                                :workspace-edit nil
-                                                                                                :did-change-configuration nil
-                                                                                                :symbol nil
-                                                                                                :execute-command nil)
-                                                                          :text-document nil
-                                                                          :experimental nil)
-                                             :trace nil
-                                             :workspace-folders nil)))
-               'protocol:initialize-result))
-
 ;;;
 (defclass initialized-request (notification)
-  ()
+  ((params :type protocol:initialized-params))
   (:default-initargs
-   :method-name "initialized"
+   :method "initialized"
    :params (make-instance 'protocol:initialized-params)))
+
+;;;
+(defclass text-document-did-open (notification)
+  ((params :type protocol:did-open-text-document-params))
+  (:default-initargs
+   :method "textDocument/didOpen"))

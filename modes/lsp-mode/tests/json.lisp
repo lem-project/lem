@@ -1,8 +1,11 @@
 (defpackage :lem-lsp-mode/tests/json
   (:use :cl
         :rove
-        :lem-lsp-mode/json))
+        :lem-lsp-mode/json)
+  (:import-from :lem-lsp-mode/protocol))
 (in-package :lem-lsp-mode/tests/json)
+
+(lem-lsp-mode/project:local-nickname :protocol :lem-lsp-mode/protocol)
 
 (defclass test-params (object)
   ((a
@@ -80,6 +83,22 @@
         (ok (equal "test" (gethash "a" json)))
         (ok (equal 100 (gethash "b" json)))
         (ok (equal '(1 2) (gethash "c" json)))))))
+
+(deftest object-to-json/nest-structure
+  (let ((json
+          (object-to-json
+           (make-instance
+            'protocol:hover-params
+            :text-document (make-instance
+                            'protocol:text-document-identifier
+                            :uri "file:///foo/bar/test.txt")
+            :position (make-instance 'protocol:position :character 3 :line 5)))))
+    (ok (= 2 (json-object-length json)))
+    (ok (= 1 (json-object-length (json-get json "textDocument"))))
+    (ok (equal "file:///foo/bar/test.txt" (json-get (json-get json "textDocument") "uri")))
+    (ok (= 2 (json-object-length (json-get json "position"))))
+    (ok (= 5 (json-get (json-get json "position") "line")))
+    (ok (= 3 (json-get (json-get json "position") "character")))))
 
 (deftest json-get
   (testing "st-json"

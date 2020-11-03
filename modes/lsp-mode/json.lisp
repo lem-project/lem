@@ -21,6 +21,7 @@
            :json-true
            :json-false
            :json-get
+           :json-object-length
            :json-array-p
            :json-object-p))
 (in-package :lem-lsp-mode/json)
@@ -63,7 +64,7 @@
     (unless dont-check-required-initarg (check-required-initarg instance))
     instance))
 
-(defun map-object (function object)
+(defun map-object (function object &key (recursivep t))
   (labels ((rec (value)
              (if (typep value 'object)
                  (loop :for slot :in (closer-mop:class-slots (class-of value))
@@ -71,7 +72,9 @@
                        :when (slot-boundp value slot-name)
                        :do (funcall function
                                     (cl-change-case:camel-case (string slot-name))
-                                    (map-object function (slot-value value slot-name))))
+                                    (if recursivep
+                                        (map-object function (slot-value value slot-name))
+                                        (slot-value value slot-name))))
                  value)))
     (rec object)))
 
@@ -85,6 +88,7 @@
 (defgeneric make-json-internal (json-backend alist))
 (defgeneric object-to-json-internal (json-backend object))
 (defgeneric json-get-internal (json-backend json key))
+(defgeneric json-object-length-internal (json-backend json))
 
 (defclass json-backend ()
   ((null :initarg :null :reader json-backend-null)
@@ -109,12 +113,19 @@
   (let ((fields '()))
     (map-object (lambda (k v)
                   (push k fields)
-                  (push v fields))
-                object)
+                  (push (if (typep v 'object)
+                            (object-to-json-internal json-backend v)
+                            v)
+                        fields))
+                object
+                :recursivep nil)
     (apply #'st-json:jso (nreverse fields))))
 
 (defmethod json-get-internal ((json-backend st-json-backend) json key)
   (st-json:getjso key json))
+
+(defmethod json-object-length-internal ((json-backend st-json-backend) json)
+  (length (st-json::jso-alist json)))
 
 
 (defclass yason-backend (json-backend)
@@ -132,12 +143,19 @@
 (defmethod object-to-json-internal ((json-backend yason-backend) object)
   (let ((table (make-hash-table :test 'equal)))
     (map-object (lambda (k v)
-                  (setf (gethash k table) v))
-                object)
+                  (setf (gethash k table)
+                        (if (typep v 'object)
+                            (object-to-json-internal json-backend v)
+                            v)))
+                object
+                :recursivep nil)
     table))
 
 (defmethod json-get-internal ((json-backend yason-backend) json key)
   (gethash key json))
+
+(defmethod json-object-length-internal ((json-backend yason-backend) json)
+  (hash-table-count json))
 
 
 (defparameter *json-backend* (make-instance 'yason-backend))
@@ -164,6 +182,9 @@
 
 (defun json-get (json key)
   (json-get-internal *json-backend* json key))
+
+(defun json-object-length (json)
+  (json-object-length-internal *json-backend* json))
 
 (defun json-array-p (value)
   (typep value (json-backend-array-type *json-backend*)))

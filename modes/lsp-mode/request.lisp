@@ -11,7 +11,8 @@
            :lsp-call-method
            :initialize-request
            :initialized-request
-           :text-document-did-open))
+           :text-document-did-open
+           :hover-request))
 (in-package :lem-lsp-mode/request)
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
@@ -105,3 +106,9 @@
   ((params :type protocol:did-open-text-document-params))
   (:default-initargs
    :method "textDocument/didOpen"))
+
+(defclass hover-request (request)
+  ((params :type protocol:hover-params))
+  (:default-initargs
+   :method "textDocument/hover"
+   :response-class-name 'protocol:hover))

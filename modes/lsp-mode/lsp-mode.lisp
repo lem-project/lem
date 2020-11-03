@@ -134,6 +134,27 @@
                                           :params (make-instance 'protocol:did-open-text-document-params
                                                                  :text-document (buffer-to-text-document-item buffer)))))
 
+(defun point-to-position (point)
+  (make-instance 'protocol:position
+                 :line (line-number-at-point point)
+                 :character (point-charpos point)))
+
+(defun hover (point)
+  (request:lsp-call-method
+   (workspace-client (buffer-workspace (point-buffer point)))
+   (make-instance 'request:hover-request
+                  :params (make-instance
+                           'protocol:hover-params
+                           :text-document (make-instance
+                                           'protocol:text-document-identifier
+                                           :uri (utils:pathname-to-uri
+                                                 (buffer-filename
+                                                  (point-buffer point))))
+                           :position (point-to-position point)))))
+
+(define-command lsp-hover () ()
+  (defparameter cl-user::$ (hover (current-point))))
+
 (defvar *language-spec-table* (make-hash-table))
 
 (defun get-language-spec (major-mode)

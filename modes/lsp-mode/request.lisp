@@ -37,7 +37,9 @@
 
 (defun jsonrpc-call (jsonrpc method params)
   (do-log "request: ~A ~A" method (pretty-json params))
-  (jsonrpc:call jsonrpc method params))
+  (let ((response (jsonrpc:call jsonrpc method params)))
+    (do-log "response: ~A" (pretty-json response))
+    response))
 
 (defun jsonrpc-notify (jsonrpc method params)
   (do-log "notify: ~A ~A" method (pretty-json params))

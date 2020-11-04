@@ -45,6 +45,16 @@
       (ok (eq t (json-true)))
       (ok (eq nil (json-false))))))
 
+(deftest json-array
+  (testing "st-json"
+    (let ((*json-backend* (make-instance 'st-json-backend)))
+      (ok (equal '(1 2 3)
+                 (json-array (vector 1 2 3))))))
+  (testing "yason"
+    (let ((*json-backend* (make-instance 'yason-backend)))
+      (ok (equalp #(1 2 3)
+                  (json-array (vector 1 2 3)))))))
+
 (deftest make-json
   (testing "st-json"
     (let ((*json-backend* (make-instance 'st-json-backend)))

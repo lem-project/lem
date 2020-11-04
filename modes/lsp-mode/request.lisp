@@ -7,8 +7,7 @@
                 :object-to-json)
   (:import-from :lem-lsp-mode/client
                 :client-connection)
-  (:export :set-log-stream
-           :lsp-call-method
+  (:export :lsp-call-method
            :initialize-request
            :initialized-request
            :text-document-did-open
@@ -23,9 +22,6 @@
 (defgeneric lsp-call-method (client request))
 
 (defvar *log-stream* nil)
-
-(defun set-log-stream (stream)
-  (setf *log-stream* stream))
 
 (defun do-log (string &rest args)
   (fresh-line *log-stream*)
@@ -111,4 +107,4 @@
   ((params :type protocol:hover-params))
   (:default-initargs
    :method "textDocument/hover"
-   :response-class-name 'protocol:hover))
+   :response-class-name '(or null protocol:hover)))

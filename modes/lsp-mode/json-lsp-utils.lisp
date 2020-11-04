@@ -3,7 +3,6 @@
         :lem-lsp-mode/json
         :lem-lsp-mode/type)
   (:export :json-type-error
-           :coerce-element
            :coerce-json))
 (in-package :lem-lsp-mode/json-lsp-utils)
 
@@ -26,12 +25,12 @@
     (not (eq default (gethash key hash-table default)))))
 
 ;; TODO: yasonに依存しているのを直す
-(defun coerce-element (value type)
+(defun coerce-json (value type)
   (trivia:match type
     ((list 'ts-array item-type)
      (assert-type value 'list)
      (loop :for item :in value
-           :collect (coerce-element item item-type)))
+           :collect (coerce-json item item-type)))
     ((cons 'ts-interface elements)
      (assert-type value 'hash-table)
      (let ((new-hash-table (make-hash-table :test 'equal)))
@@ -39,7 +38,7 @@
          (destructuring-bind (name &key type optional-p) element
            (cond ((exist-hash-table-key-p value name)
                   (setf (gethash name new-hash-table)
-                        (coerce-element (gethash name value) type)))
+                        (coerce-json (gethash name value) type)))
                  ((not optional-p)
                   ;; 必須要素が入っていない場合エラーを出すべきか?
                   ))))
@@ -52,8 +51,8 @@
      (assert-type value 'hash-table)
      (let ((new-hash-table (make-hash-table :test 'equal)))
        (maphash (lambda (key value)
-                  (setf (gethash (coerce-element key key-type) new-hash-table)
-                        (coerce-element value value-type)))
+                  (setf (gethash (coerce-json key key-type) new-hash-table)
+                        (coerce-json value value-type)))
                 value)
        new-hash-table))
     ((cons 'ts-tuple types)
@@ -62,10 +61,10 @@
        (error 'json-type-error :type type :value value))
      (loop :for type :in types
            :for item :in value
-           :collect (coerce-element item type)))
+           :collect (coerce-json item type)))
     ((cons 'or types)
      (dolist (type1 types (error 'json-type-error :type type :value value))
-       (handler-case (coerce-element value type1)
+       (handler-case (coerce-json value type1)
          (json-type-error ())
          (:no-error (result)
            (return result)))))
@@ -74,16 +73,16 @@
                        (find-class type nil))))
        (cond ((and class
                    (object-class-p class))
-              (coerce-json value class))
+              (coerce-json-object-class value class))
              (t
               (assert-type value type)
               value))))))
 
-(defun coerce-json (json json-class-name)
+(defun coerce-json-object-class (json json-class-name)
   (let ((object (make-instance json-class-name :dont-check-required-initarg t)))
     (loop :for slot :in (closer-mop:class-slots (class-of object))
           :for slot-name := (closer-mop:slot-definition-name slot)
           :do (setf (slot-value object slot-name)
-                    (coerce-element (json-get json (cl-change-case:camel-case (string slot-name)))
+                    (coerce-json (json-get json (cl-change-case:camel-case (string slot-name)))
                                     (closer-mop:slot-definition-type slot))))
     object))

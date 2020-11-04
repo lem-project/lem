@@ -37,85 +37,84 @@
        (= character (slot-value object 'character))))
 
 (deftest coerce-json
-  (let ((object (coerce-json (hash "line" 10
-                                   "character" 3)
-                             'position/test)))
-    (ok (position-equals object :line 10 :character 3)))
-  (let ((object (coerce-json (hash "start" (hash "line" 3 "character" 0)
-                                   "end" (hash "line" 5 "character" 10))
-                             'range/test)))
-    (ok (typep object 'range/test))
-    (ok (position-equals (slot-value object 'start) :line 3 :character 0))
-    (ok (position-equals (slot-value object 'end) :line 5 :character 10))))
-
-(deftest coerce-element
+  (testing "object class"
+    (let ((object (coerce-json (hash "line" 10
+                                     "character" 3)
+                               'position/test)))
+      (ok (position-equals object :line 10 :character 3)))
+    (let ((object (coerce-json (hash "start" (hash "line" 3 "character" 0)
+                                     "end" (hash "line" 5 "character" 10))
+                               'range/test)))
+      (ok (typep object 'range/test))
+      (ok (position-equals (slot-value object 'start) :line 3 :character 0))
+      (ok (position-equals (slot-value object 'end) :line 5 :character 10))))
   (testing "lsp-array"
-    (ok (signals (coerce-element 100 '(lem-lsp-mode/type:ts-array integer))
+    (ok (signals (coerce-json 100 '(lem-lsp-mode/type:ts-array integer))
                  'json-type-error))
-    (ok (signals (coerce-element '(1 "a") '(lem-lsp-mode/type:ts-array integer))
+    (ok (signals (coerce-json '(1 "a") '(lem-lsp-mode/type:ts-array integer))
                  'json-type-error))
     (ok (equal '(1 2 3)
-               (coerce-element '(1 2 3) '(lem-lsp-mode/type:ts-array integer))))
+               (coerce-json '(1 2 3) '(lem-lsp-mode/type:ts-array integer))))
     (let ((result
-            (coerce-element (list (hash "line" 10
-                                        "character" 3)
-                                  (hash "line" 3
-                                        "character" 2)
-                                  (hash "line" 0
-                                        "character" 100))
-                            '(lem-lsp-mode/type:ts-array position/test))))
+            (coerce-json (list (hash "line" 10
+                                     "character" 3)
+                               (hash "line" 3
+                                     "character" 2)
+                               (hash "line" 0
+                                     "character" 100))
+                         '(lem-lsp-mode/type:ts-array position/test))))
       (ok (= 3 (length result)))
       (ok (position-equals (first result) :line 10 :character 3))
       (ok (position-equals (second result) :line 3 :character 2))
       (ok (position-equals (third result) :line 0 :character 100))))
   (testing "equal-specializer"
-    (ok (signals (coerce-element 1 '(lem-lsp-mode/type:ts-equal-specializer "foo"))
+    (ok (signals (coerce-json 1 '(lem-lsp-mode/type:ts-equal-specializer "foo"))
                  'json-type-error))
-    (ok (equal "foo" (coerce-element "foo" '(lem-lsp-mode/type:ts-equal-specializer "foo")))))
+    (ok (equal "foo" (coerce-json "foo" '(lem-lsp-mode/type:ts-equal-specializer "foo")))))
   (testing "object"
-    (ok (signals (coerce-element 1
-                                 '(lem-lsp-mode/type:ts-object string integer))
+    (ok (signals (coerce-json 1
+                              '(lem-lsp-mode/type:ts-object string integer))
                  'json-type-error))
-    (ok (signals (coerce-element (hash "foo" 100 'bar 200)
-                                 '(lem-lsp-mode/type:ts-object string integer))
+    (ok (signals (coerce-json (hash "foo" 100 'bar 200)
+                              '(lem-lsp-mode/type:ts-object string integer))
                  'json-type-error))
-    (ok (hash-equal (coerce-element (hash "foo" 100 "bar" 200)
-                                    '(lem-lsp-mode/type:ts-object string integer))
+    (ok (hash-equal (coerce-json (hash "foo" 100 "bar" 200)
+                                 '(lem-lsp-mode/type:ts-object string integer))
                     (hash "foo" 100 "bar" 200)))
-    (ok (contain-hash-keys-p (coerce-element (hash "foo" '(100 200) "bar" '(1 2 3))
-                                             '(lem-lsp-mode/type:ts-object string (lem-lsp-mode/type:ts-array integer)))
+    (ok (contain-hash-keys-p (coerce-json (hash "foo" '(100 200) "bar" '(1 2 3))
+                                          '(lem-lsp-mode/type:ts-object string (lem-lsp-mode/type:ts-array integer)))
                              '("foo" "bar")))
-    (ok (signals (coerce-element (hash "foo" '(100 200) "bar" '(1 "a" 3))
-                                 '(lem-lsp-mode/type:ts-object string (lem-lsp-mode/type:ts-array integer)))
+    (ok (signals (coerce-json (hash "foo" '(100 200) "bar" '(1 "a" 3))
+                              '(lem-lsp-mode/type:ts-object string (lem-lsp-mode/type:ts-array integer)))
                  'json-type-error)))
   (testing "tuple"
-    (ok (signals (coerce-element "foo" '(lem-lsp-mode/type:ts-tuple integer))
+    (ok (signals (coerce-json "foo" '(lem-lsp-mode/type:ts-tuple integer))
                  'json-type-error))
-    (ok (signals (coerce-element '(1 2) '(lem-lsp-mode/type:ts-tuple integer))
+    (ok (signals (coerce-json '(1 2) '(lem-lsp-mode/type:ts-tuple integer))
                  'json-type-error))
-    (ok (signals (coerce-element '(1 2) '(lem-lsp-mode/type:ts-tuple integer string))
+    (ok (signals (coerce-json '(1 2) '(lem-lsp-mode/type:ts-tuple integer string))
                  'json-type-error))
-    (ok (equal (coerce-element '(1 2) '(lem-lsp-mode/type:ts-tuple integer integer))
+    (ok (equal (coerce-json '(1 2) '(lem-lsp-mode/type:ts-tuple integer integer))
                '(1 2)))
-    (ok (signals (coerce-element '(1 2 "foo") '(lem-lsp-mode/type:ts-tuple string integer string))
+    (ok (signals (coerce-json '(1 2 "foo") '(lem-lsp-mode/type:ts-tuple string integer string))
                  'json-type-error))
-    (ok (equal (coerce-element '(1 2 "foo") '(lem-lsp-mode/type:ts-tuple integer integer string))
+    (ok (equal (coerce-json '(1 2 "foo") '(lem-lsp-mode/type:ts-tuple integer integer string))
                '(1 2 "foo"))))
   (testing "or"
-    (ok (equal 1 (coerce-element 1 '(or integer string))))
-    (ok (equal "a" (coerce-element "a" '(or integer string))))
-    (ok (position-equals (coerce-element (hash "line" 10
-                                               "character" 3)
-                                         '(or position/test null))
+    (ok (equal 1 (coerce-json 1 '(or integer string))))
+    (ok (equal "a" (coerce-json "a" '(or integer string))))
+    (ok (position-equals (coerce-json (hash "line" 10
+                                            "character" 3)
+                                      '(or position/test null))
                          :line 10
                          :character 3))
-    (ok (position-equals (coerce-element (hash "line" 10
-                                               "character" 3)
-                                         '(or null position/test))
+    (ok (position-equals (coerce-json (hash "line" 10
+                                            "character" 3)
+                                      '(or null position/test))
                          :line 10
                          :character 3)))
   (testing "interface"
-    (let ((result (coerce-element
+    (let ((result (coerce-json
                    (hash "name" "abc"
                          "version" "1.0")
                    '(lem-lsp-mode/type:ts-interface
@@ -124,13 +123,13 @@
       (ok (hash-table-p result))
       (ok (equal "abc" (gethash "name" result)))
       (ok (equal "1.0" (gethash "version" result))))
-    (let ((result (coerce-element (hash "foo" 100)
-                                  `(lem-lsp-mode/type:ts-interface
-                                    ("foo" :type integer :optional-p t)
-                                    ("bar" :type string :optional-p t)))))
+    (let ((result (coerce-json (hash "foo" 100)
+                               `(lem-lsp-mode/type:ts-interface
+                                 ("foo" :type integer :optional-p t)
+                                 ("bar" :type string :optional-p t)))))
       (ok (hash-table-p result))
       (ok (equal 100 (gethash "foo" result)))))
   (testing "primitive"
-    (ok (equal 1 (coerce-element 1 'integer)))
-    (ok (equal nil (coerce-element nil 'boolean)))
-    (ok (equal t (coerce-element t 'boolean)))))
+    (ok (equal 1 (coerce-json 1 'integer)))
+    (ok (equal nil (coerce-json nil 'boolean)))
+    (ok (equal t (coerce-json t 'boolean)))))

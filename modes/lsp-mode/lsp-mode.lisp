@@ -99,15 +99,19 @@
                               :process-id (utils:get-pid)
                               :client-info (json:make-json :name "lem" #|:version "0.0.0"|#)
                               :root-uri (workspace-root-uri workspace)
-                              :capabilities (make-instance 'protocol:client-capabilities
-                                                           :workspace (json:make-json
-                                                                       :apply-edit nil
-                                                                       :workspace-edit nil
-                                                                       :did-change-configuration nil
-                                                                       :symbol nil
-                                                                       :execute-command nil)
-                                                           :text-document nil
-                                                           :experimental nil)
+                              :capabilities (make-instance
+                                             'protocol:client-capabilities
+                                             :workspace (json:make-json
+                                                         :apply-edit nil
+                                                         :workspace-edit nil
+                                                         :did-change-configuration nil
+                                                         :symbol nil
+                                                         :execute-command nil)
+                                             :text-document (make-instance
+                                                             'protocol:text-document-client-capabilities
+                                                             :hover (make-instance
+                                                                     'protocol:hover-client-capabilities))
+                                             :experimental nil)
                               :trace nil
                               :workspace-folders nil)))
                       x)))))
@@ -129,10 +133,11 @@
                  :text (buffer-text buffer)))
 
 (defun text-document/did-open (buffer)
-  (request:lsp-call-method (workspace-client (buffer-workspace buffer))
-                           (make-instance 'request:text-document-did-open
-                                          :params (make-instance 'protocol:did-open-text-document-params
-                                                                 :text-document (buffer-to-text-document-item buffer)))))
+  (request:lsp-call-method
+   (workspace-client (buffer-workspace buffer))
+   (make-instance 'request:text-document-did-open
+                  :params (make-instance 'protocol:did-open-text-document-params
+                                         :text-document (buffer-to-text-document-item buffer)))))
 
 (defun point-to-position (point)
   (make-instance 'protocol:position
@@ -153,7 +158,7 @@
                            :position (point-to-position point)))))
 
 (define-command lsp-hover () ()
-  (defparameter cl-user::$ (hover (current-point))))
+  (hover (current-point)))
 
 (defvar *language-spec-table* (make-hash-table))
 

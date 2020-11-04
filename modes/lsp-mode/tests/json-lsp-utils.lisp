@@ -13,6 +13,9 @@
   ((start :initarg :start :type position/test)
    (end :initarg :end :type position/test)))
 
+(deftype hoge ()
+  '(or position/test null))
+
 (defun hash-equal (ht1 ht2)
   (and (= (hash-table-count ht1)
           (hash-table-count ht2))
@@ -132,4 +135,9 @@
   (testing "primitive"
     (ok (equal 1 (coerce-json 1 'integer)))
     (ok (equal nil (coerce-json nil 'boolean)))
-    (ok (equal t (coerce-json t 'boolean)))))
+    (ok (equal t (coerce-json t 'boolean))))
+  (testing "expand type"
+    (ok (position-equals (coerce-json (hash "line" 10 "character" 3)
+                                      'hoge)
+                         :line 10
+                         :character 3))))

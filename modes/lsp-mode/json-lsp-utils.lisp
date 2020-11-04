@@ -71,12 +71,15 @@
     (otherwise
      (let ((class (and (symbolp type)
                        (find-class type nil))))
-       (cond ((and class
-                   (object-class-p class))
-              (coerce-json-object-class value class))
-             (t
-              (assert-type value type)
-              value))))))
+       (if (and class (object-class-p class))
+           (coerce-json-object-class value class)
+           (multiple-value-bind (type expanded)
+               (typexpand type)
+             (if expanded
+                 (coerce-json value type)
+                 (progn
+                   (assert-type value type)
+                   value))))))))
 
 (defun coerce-json-object-class (json json-class-name)
   (let ((object (make-instance json-class-name :dont-check-required-initarg t)))
@@ -84,5 +87,11 @@
           :for slot-name := (closer-mop:slot-definition-name slot)
           :do (setf (slot-value object slot-name)
                     (coerce-json (json-get json (cl-change-case:camel-case (string slot-name)))
-                                    (closer-mop:slot-definition-type slot))))
+                                 (closer-mop:slot-definition-type slot))))
     object))
+
+(defun typexpand (type)
+  #+sbcl
+  (sb-ext:typexpand type)
+  #+ccl
+  (ccl::type-expand type))

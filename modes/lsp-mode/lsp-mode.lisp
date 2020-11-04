@@ -141,7 +141,7 @@
 
 (defun point-to-position (point)
   (make-instance 'protocol:position
-                 :line (line-number-at-point point)
+                 :line (1- (line-number-at-point point))
                  :character (point-charpos point)))
 
 (defun hover (point)

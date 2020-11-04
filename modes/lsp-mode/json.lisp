@@ -20,6 +20,7 @@
            :json-null
            :json-true
            :json-false
+           :json-array
            :json-get
            :json-object-length
            :json-array-p
@@ -89,6 +90,7 @@
 (defgeneric object-to-json-internal (json-backend object))
 (defgeneric json-get-internal (json-backend json key))
 (defgeneric json-object-length-internal (json-backend json))
+(defgeneric json-array-internal (json-backend vector))
 
 (defclass json-backend ()
   ((null :initarg :null :reader json-backend-null)
@@ -127,6 +129,9 @@
 (defmethod json-object-length-internal ((json-backend st-json-backend) json)
   (length (st-json::jso-alist json)))
 
+(defmethod json-array-internal ((json-backend st-json-backend) vector)
+  (coerce vector 'list))
+
 
 (defclass yason-backend (json-backend)
   ()
@@ -157,6 +162,9 @@
 (defmethod json-object-length-internal ((json-backend yason-backend) json)
   (hash-table-count json))
 
+(defmethod json-array-internal ((json-backend yason-backend) vector)
+  vector)
+
 
 (defparameter *json-backend* (make-instance 'yason-backend))
 
@@ -176,6 +184,9 @@
 
 (defun json-true ()
   (json-backend-true *json-backend*))
+
+(defun json-array (vector)
+  (json-array-internal *json-backend* vector))
 
 (defun json-false ()
   (json-backend-false *json-backend*))

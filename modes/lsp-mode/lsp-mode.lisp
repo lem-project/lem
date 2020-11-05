@@ -144,21 +144,54 @@
                  :line (1- (line-number-at-point point))
                  :character (point-charpos point)))
 
+;;; hover
+
+;; TODO
+;; - hoverのrangeを使って範囲に背景色をつける
+;; - markdownの中のコード表示時に対象の言語のシンタックスハイライトをする
+
+(defun hover-to-string (hover)
+  (flet ((marked-string-to-string (marked-string)
+           (if (stringp marked-string)
+               marked-string
+               (or (json:json-get marked-string "value")
+                   ""))))
+    (let ((contents (protocol:hover-contents hover)))
+      (cond
+        ;; MarkedString
+        ((json:json-object-p contents)
+         (marked-string-to-string contents))
+        ;; MarkedString[]
+        ((json:json-array-p contents)
+         (with-output-to-string (out)
+           (dolist (content contents)
+             (write-string (marked-string-to-string content)
+                           out))))
+        ;; MarkupContent
+        ((typep contents 'protocol:markup-content)
+         (protocol:markup-content-value contents))
+        (t
+         "")))))
+
 (defun hover (point)
-  (request:lsp-call-method
-   (workspace-client (buffer-workspace (point-buffer point)))
-   (make-instance 'request:hover-request
-                  :params (make-instance
-                           'protocol:hover-params
-                           :text-document (make-instance
-                                           'protocol:text-document-identifier
-                                           :uri (utils:pathname-to-uri
-                                                 (buffer-filename
-                                                  (point-buffer point))))
-                           :position (point-to-position point)))))
+  (let ((result
+          (request:lsp-call-method
+           (workspace-client (buffer-workspace (point-buffer point)))
+           (make-instance 'request:hover-request
+                          :params (make-instance
+                                   'protocol:hover-params
+                                   :text-document (make-instance
+                                                   'protocol:text-document-identifier
+                                                   :uri (utils:pathname-to-uri
+                                                         (buffer-filename
+                                                          (point-buffer point))))
+                                   :position (point-to-position point))))))
+    (when (typep result 'protocol:hover)
+      (display-popup-message (hover-to-string result)))))
 
 (define-command lsp-hover () ()
   (hover (current-point)))
+
 
 (defvar *language-spec-table* (make-hash-table))
 

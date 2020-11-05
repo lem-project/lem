@@ -147,6 +147,7 @@
 ;;; hover
 
 ;; TODO
+;; - hoverClientCapabilitiesのcontentFormatを設定する
 ;; - hoverのrangeを使って範囲に背景色をつける
 ;; - markdownの中のコード表示時に対象の言語のシンタックスハイライトをする
 

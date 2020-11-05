@@ -186,8 +186,8 @@
    (comment :initarg :comment)))
 
 (defclass type-declaration ()
-  ((name :initarg :name)
-   (type :initarg :type)))
+  ((name :initarg :name :reader type-declaration-name)
+   (type :initarg :type :reader type-declaration-type)))
 
 (defclass enum ()
   ((name :initarg :name)
@@ -549,8 +549,8 @@
   )
 
 (defmethod to-lisp ((type-declaration type-declaration))
-  ;; nop
-  )
+  `(deftype ,(symbolize (type-declaration-name type-declaration)) ()
+     ',(to-lisp-type (type-declaration-type type-declaration))))
 
 (defun print-form (form &optional (stream *standard-output*))
   (let ((*print-pretty* t))

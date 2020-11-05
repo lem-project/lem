@@ -193,7 +193,7 @@
 (define-command lsp-hover () ()
   (hover (current-point)))
 
-
+;;;
 (defvar *language-spec-table* (make-hash-table))
 
 (defun get-language-spec (major-mode)

@@ -35,4 +35,10 @@
               (lem-lisp-mode.package-inferred-system::make-project-root
                :name "project-root"
                :asd-file #P"/common-lisp/project-root/project-root.asd")
-              #p"/common-lisp/project-root/main.lisp"))))
+              #p"/common-lisp/project-root/main.lisp")))
+  (ok (equal "lem-project-root/foo/bar"
+             (lem-lisp-mode.package-inferred-system::infer-package-name-1
+              (lem-lisp-mode.package-inferred-system::make-project-root
+               :name "lem-project-root"
+               :asd-file #P"/common-lisp/project-root/project-root.asd")
+              #P"/common-lisp/project-root/foo/bar.lisp"))))

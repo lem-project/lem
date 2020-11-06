@@ -33,6 +33,9 @@
 (define-key *scheme-mode-keymap* "C-c C-c" 'scheme-compile-define)
 (define-key *scheme-mode-keymap* "C-c Return" 'scheme-macroexpand)
 (define-key *scheme-mode-keymap* "C-c M-m" 'scheme-macroexpand-all)
+(define-key *scheme-mode-keymap* "Space" 'scheme-insert-space-and-autodoc)
+(define-key *scheme-mode-keymap* "M-a" 'scheme-autodoc)
+;;(define-key *scheme-mode-keymap* "C-c C-d C-a" 'scheme-autodoc)
 (define-key *scheme-mode-keymap* "C-c C-d C-a" 'scheme-autodoc-with-typeout)
 (define-key *scheme-mode-keymap* "C-c C-d d" 'scheme-describe-symbol)
 (define-key *scheme-mode-keymap* "C-c C-z" 'scheme-switch-to-repl-buffer)
@@ -71,8 +74,9 @@
 ;;    :repl : use 'scheme-set-library' command for only repl
 ;;    nil   : disable 'scheme-set-library' command
 ;;  *use-scheme-autodoc*
-;;    t     : display function information in minibuffer
-;;    nil   : don't display function information in minibuffer
+;;    t     : display function information in popup window when space key is input
+;;    :auto : display function information in popup window automatically
+;;    nil   : don't display function information
 (defvar *use-scheme-slime* :auto)
 (defvar *use-scheme-set-library* :repl)
 (defvar *use-scheme-autodoc* t)

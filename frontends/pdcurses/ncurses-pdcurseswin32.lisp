@@ -50,12 +50,16 @@
 ;;
 (setf (variable-value 'escape-delay :global) 1000)
 
-
 ;; popup window margin setting
 ;;  (extra margin is required to avoid partial loss of popup window display
 ;;   caused by wide characters)
 (setf lem.popup-window::*extra-right-margin* 1)
 (setf lem.popup-window::*extra-width-margin* 1)
+
+;; prompt window margin setting
+;;  (extra margin is required to avoid partial loss of popup window display
+;;   caused by wide characters)
+(setf lem.prompt-window::*extra-width-margin* 2)
 
 
 ;; windows terminal type

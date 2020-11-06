@@ -6,6 +6,12 @@
   (:lock t))
 (in-package :lem.prompt-window)
 
+(defparameter +border-size+ 1)
+(defparameter +min-width+   3)
+(defparameter +min-height+  1)
+
+(defvar *extra-width-margin* 0)
+
 (defvar *history-table* (make-hash-table))
 
 (defvar *prompt-activate-hook* '())
@@ -38,7 +44,7 @@
   ((start-point
     :accessor prompt-window-start-charpos))
   (:default-initargs
-   :border 1))
+   :border +border-size+))
 
 (defclass prompt-buffer (buffer)
   ((prompt-string
@@ -135,9 +141,14 @@
 (defun compute-window-rectangle (buffer)
   (flet ((compute-width ()
            (loop :for string :in (uiop:split-string (buffer-text buffer) :separator '(#\newline))
-                 :maximize (+ 2 (string-width string)))))
-    (let* ((width (alexandria:clamp (compute-width) 3 (- (display-width) 3)))
-           (height (buffer-nlines buffer))
+                 :maximize (+ (string-width string) 2))))
+    (let* ((b2 (* +border-size+ 2))
+           (width  (max (min (compute-width)
+                             (- (display-width)  b2 *extra-width-margin*))
+                        +min-width+))
+           (height (max (min (buffer-nlines buffer)
+                             (- (display-height) b2))
+                        +min-height+))
            (x (- (floor (display-width) 2)
                  (floor width 2)))
            (y (- (floor (display-height) 2)

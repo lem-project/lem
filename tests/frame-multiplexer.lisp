@@ -1,5 +1,7 @@
 (defpackage :lem-tests/frame-multiplexer
-  (:use :cl :lem))
+  (:use :cl
+        :lem
+        :lem-tests/deftest))
 (in-package :lem-tests/frame-multiplexer)
 
 (defstruct datum
@@ -8,7 +10,7 @@
 
 (defstruct (error-datum (:include datum)))
 
-(rove:deftest test
+(deftest test
   (ql:quickload :lem-fake-interface :silent t)
   (lem)
   (let ((event-queue (lem::make-event-queue)))
@@ -33,8 +35,8 @@
                                   event-queue)))))
     (let* ((datum1 (lem::dequeue-event 1 event-queue))
            (datum2 (lem::dequeue-event 1 event-queue)))
-      (rove:ok (string= (datum-result datum1) "abc "))
-      (rove:ok (string= (datum-result datum2) "abc ")))
+      (ok (string= (datum-result datum1) "abc "))
+      (ok (string= (datum-result datum2) "abc ")))
     (send-event (lambda ()
                   (exit-lem nil)
                   (clrhash lem-frame-multiplexer::*virtual-frame-map*)))))

@@ -1,15 +1,15 @@
 (defpackage :lem-tests/lisp-syntax/indent-test
-  (:use :cl)
+  (:use :cl
+        :lem-tests/deftest)
   (:import-from :lem-base)
   (:import-from :lem-lisp-syntax)
   (:import-from :lem-tests/utilities
                 :sample-file
-                :diff-text)
-  (:import-from :rove))
+                :diff-text))
 (in-package :lem-tests/lisp-syntax/indent-test)
 
 (defmacro define-indent-test (name before &optional (after before))
-  `(rove:deftest ,name
+  `(deftest ,name
      (run-indent-test ,(string name) ,before ,after)))
 
 (defun run-indent-test (name before-text after-text)
@@ -22,7 +22,7 @@
     (lem-base:with-point ((p (lem-base:buffer-point buffer)))
       (lem-base:insert-string p before-text))
     (lem-base:indent-buffer buffer)
-    (unless (rove:ok (string= after-text (lem-base:buffer-text buffer)) name)
+    (unless (ok (string= after-text (lem-base:buffer-text buffer)) name)
       (report name
               (lem-base:buffer-text buffer)
               after-text))))
@@ -70,11 +70,11 @@
                                       (asdf:system-source-directory system-name))))
     (indent-test-for-file pathname)))
 
-(rove:deftest indent-test-under-lem-base
+(deftest indent-test-under-lem-base
   (indent-test-for-system :lem-base))
 
-(rove:deftest indent-test-for-sample-case
+(deftest indent-test-for-sample-case
   (indent-test-for-file
    (sample-file "indent-sample.lisp")))
 
-(rove:defhook :before (lem-lisp-syntax:indentation-update))
+(lem-lisp-syntax:indentation-update)

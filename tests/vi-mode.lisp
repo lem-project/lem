@@ -1,5 +1,7 @@
 (defpackage :lem-tests/vi-mode
-  (:use :cl :rove :lem))
+  (:use :cl
+        :lem
+        :lem-tests/deftest))
 (in-package :lem-tests/vi-mode)
 
 (deftest vi-mode

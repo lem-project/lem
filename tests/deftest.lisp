@@ -57,20 +57,6 @@
   (indent *level*)
   (format t "~A~%" description))
 
-(defun print-ok-or-ng (result)
-  (write-string (if result
-                    (cl-ansi-text:green "✓")
-                    (cl-ansi-text:red "×"))))
-
-(defun print-result (result form)
-  (indent *level*)
-  (print-ok-or-ng result)
-  (write-char #\space)
-  (cl-ansi-text:with-color (:black :effect :bright)
-    (prin1 form))
-  (terpri)
-  result)
-
 (defun ok-aux (form function)
   (let ((result (funcall function)))
     (if result
@@ -87,8 +73,7 @@
 (defun print-pass-or-fail (mark description)
   (indent *level*)
   (write-string mark)
-  (cl-ansi-text:with-color (:black :effect :bright)
-    (uiop:println description)))
+  (uiop:println description))
 
 (defun pass (description)
   (push (make-test-result :description description) *success*)

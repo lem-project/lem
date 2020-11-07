@@ -45,12 +45,17 @@
     (when spec
       (spec-langauge-id spec))))
 
+(defun buffer-version (buffer)
+  (buffer-modified-tick buffer))
+
+(defun buffer-uri (buffer)
+  (utils:pathname-to-uri (buffer-filename buffer)))
+
 (lem:define-minor-mode lsp-mode
     (:name "Language Client"
      :enable-hook 'enable-hook))
 
 (defun enable-hook ()
-  (message "enable hook")
   (ensure-lsp-buffer (current-buffer)))
 
 (defun find-root-pathname (directory uri-patterns)
@@ -66,6 +71,37 @@
 
 (defmethod make-client ((mode (eql :tcp)) spec)
   (make-instance 'client:tcp-client :port (spec-port spec)))
+
+(defun buffer-change-event-to-content-change-event (point arg)
+  (labels ((inserting-content-change-event (string)
+             (let ((position (point-to-position point)))
+               (json:make-json :range (make-instance 'protocol:range
+                                                     :start position
+                                                     :end position)
+                               :range-length 0
+                               :text string)))
+           (deleting-content-change-event (count)
+             (with-point ((end point))
+               (character-offset end count)
+               (json:make-json :range (make-instance 'protocol:range
+                                                     :start (point-to-position point)
+                                                     :end (point-to-position end))
+                               :range-length (count-characters point end)
+                               :text ""))))
+    (etypecase arg
+      (character
+       (inserting-content-change-event (string arg)))
+      (string
+       (inserting-content-change-event arg))
+      (integer
+       (deleting-content-change-event arg)))))
+
+(defun handle-change-buffer (point arg)
+  (let ((buffer (point-buffer point))
+        (change-event (buffer-change-event-to-content-change-event point arg)))
+    (text-document/did-change buffer
+                              (make-instance 'protocol:did-change-text-document-params
+                                             :content-changes (json:json-array (vector change-event))))))
 
 (defun ensure-lsp-buffer (buffer)
   (let* ((spec (buffer-language-spec buffer))
@@ -86,7 +122,8 @@
                (initialized workspace)))
             (t
              (setf (buffer-workspace buffer) workspace)))
-      (text-document/did-open buffer))))
+      (text-document/did-open buffer)
+      (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) 'handle-change-buffer))))
 
 (defun initialize (workspace)
   (let ((initialize-result
@@ -125,11 +162,16 @@
   (request:lsp-call-method (workspace-client workspace)
                            (make-instance 'request:initialized-request)))
 
+(defun point-to-position (point)
+  (make-instance 'protocol:position
+                 :line (1- (line-number-at-point point))
+                 :character (point-charpos point)))
+
 (defun buffer-to-text-document-item (buffer)
   (make-instance 'protocol:text-document-item
-                 :uri (utils:pathname-to-uri (buffer-filename buffer))
+                 :uri (buffer-uri buffer)
                  :language-id (buffer-language-id buffer)
-                 :version 0
+                 :version (buffer-version buffer)
                  :text (buffer-text buffer)))
 
 (defun text-document/did-open (buffer)
@@ -139,10 +181,15 @@
                   :params (make-instance 'protocol:did-open-text-document-params
                                          :text-document (buffer-to-text-document-item buffer)))))
 
-(defun point-to-position (point)
-  (make-instance 'protocol:position
-                 :line (1- (line-number-at-point point))
-                 :character (point-charpos point)))
+(defun text-document/did-change (buffer content-changes)
+  (request:lsp-call-method
+   (workspace-client (buffer-workspace buffer))
+   (make-instance 'request:text-document-did-change
+                  :params (make-instance 'protocol:did-change-text-document-params
+                                         :text-document (make-instance 'protocol:versioned-text-document-identifier
+                                                                       :version (buffer-version buffer)
+                                                                       :uri (buffer-uri buffer))
+                                         :content-changes content-changes))))
 
 ;;; hover
 
@@ -183,9 +230,7 @@
                                    'protocol:hover-params
                                    :text-document (make-instance
                                                    'protocol:text-document-identifier
-                                                   :uri (utils:pathname-to-uri
-                                                         (buffer-filename
-                                                          (point-buffer point))))
+                                                   :uri (buffer-uri (point-buffer point)))
                                    :position (point-to-position point))))))
     (when (typep result 'protocol:hover)
       (display-popup-message (hover-to-string result)))))

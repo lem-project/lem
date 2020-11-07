@@ -10,7 +10,7 @@
 (defparameter +min-width+   3)
 (defparameter +min-height+  1)
 
-(defvar *extra-width-margin* 0)
+(defvar *extra-side-margin* 0)
 
 (defvar *history-table* (make-hash-table))
 
@@ -144,7 +144,7 @@
                  :maximize (+ (string-width string) 2))))
     (let* ((b2 (* +border-size+ 2))
            (width  (max (min (compute-width)
-                             (- (display-width)  b2 *extra-width-margin*))
+                             (- (display-width)  b2 *extra-side-margin*))
                         +min-width+))
            (height (max (min (buffer-nlines buffer)
                              (- (display-height) b2))

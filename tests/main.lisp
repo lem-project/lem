@@ -1,0 +1,15 @@
+(defpackage :lem-tests/main
+  (:nicknames :lem-tests)
+  (:use :cl)
+  (:import-from :lem-tests/deftest
+                :run-all-tests)
+  (:import-from :lem-tests/string-width-utils)
+  (:import-from :lem-tests/lisp-syntax/indent-test)
+  (:import-from :lem-tests/lisp-syntax/defstruct-to-defclass)
+  (:import-from :lem-tests/syntax-test)
+  (:import-from :lem-tests/buffer-list-test)
+  (:import-from :lem-tests/lisp-mode/package-inferred-system)
+  (:import-from :lem-tests/frame-multiplexer)
+  (:import-from :lem-tests/vi-mode)
+  (:export :run-all-tests))
+(in-package :lem-tests/main)

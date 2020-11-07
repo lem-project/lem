@@ -3,7 +3,6 @@
   (:export :sample-file
            :with-global-variable-value
            :diff-text)
-  (:import-from :rove)
   (:import-from :cl-ansi-text))
 (in-package :lem-tests/utilities)
 
@@ -32,9 +31,10 @@
                :until (eq line1 eof-value)
                :do (cond ((string= line1 line2)
                           (format out " ~A~%" line1))
-                         (rove:*enable-colors*
+                         (t
                           (write-string (cl-ansi-text:yellow (format nil "+~A~%" line1)) out)
                           (write-string (cl-ansi-text:cyan (format nil "-~A~%" line2)) out))
+                         #+(or)
                          (t
                           (write-string (format nil "+~A~%" line1) out)
                           (write-string (format nil "-~A~%" line2) out)))))))))

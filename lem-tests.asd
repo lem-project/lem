@@ -1,20 +1,11 @@
 (defsystem "lem-tests"
   :class :package-inferred-system
-  :depends-on ("rove"
-               "lem-base"
+  :depends-on ("lem-base"
                "lem-core"
-               ;; "lem-tests/string-width-utils"
-               "lem-tests/lisp-syntax/indent-test"
-               "lem-tests/lisp-syntax/defstruct-to-defclass"
-               "lem-tests/syntax-test"
-               "lem-tests/buffer-list-test"
-               "lem-tests/lisp-mode/package-inferred-system"
-               "lem-tests/frame-multiplexer"
-               "lem-tests/vi-mode"
-               )
+               "lem-tests/main")
   :pathname "tests"
   :perform (test-op (o c)
-                    (symbol-call :rove :run c)))
+                    (symbol-call :lem-tests :run-all-tests)))
 
 (asdf:register-system-packages "lem-lisp-syntax" '(:lem-lisp-syntax.defstruct-to-defclass))
 (asdf:register-system-packages "lem-lisp-mode" '(:lem-lisp-mode.package-inferred-system))

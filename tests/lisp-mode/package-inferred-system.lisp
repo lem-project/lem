@@ -1,5 +1,6 @@
 (defpackage :lem-tests/lisp-mode/package-inferred-system
-  (:use :cl :rove)
+  (:use :cl
+        :lem-tests/deftest)
   (:import-from :lem-lisp-mode))
 (in-package :lem-tests/lisp-mode/package-inferred-system)
 

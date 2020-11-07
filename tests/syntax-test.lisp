@@ -1,9 +1,8 @@
 (defpackage :lem-tests/syntax-test
-  (:use :cl :rove)
+  (:use :cl :lem-tests/deftest)
   (:import-from :lem-tests/utilities
                 :sample-file)
-  (:import-from :lem-base)
-  (:import-from :rove))
+  (:import-from :lem-base))
 (in-package :lem-tests/syntax-test)
 
 (deftest form-offset

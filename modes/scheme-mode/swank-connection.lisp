@@ -1023,8 +1023,8 @@
    :name (format nil "run-scheme-swank-server-thread '~A'" command)))
 
 (defun run-slime (command &key (directory (buffer-directory)))
-  ;(unless command
-  ;  (setf command (get-lisp-command :impl *impl-name*)))
+  ;;(unless command
+  ;;  (setf command (get-lisp-command :impl *impl-name*)))
   (let ((port (or (port-available-p *default-port*)
                   (random-port))))
 
@@ -1036,10 +1036,13 @@
                                                str
                                                (write-to-string port)))
                     (uiop:ensure-list *scheme-swank-server-run-command*))))
-    ;(dbg-log-format "command=~S" command)
+    ;;(dbg-log-format "command=~S" command)
 
-    (run-swank-server command port :directory directory)
-    (sleep 0.5)
+    (let ((thread (run-swank-server command port :directory directory)))
+      (sleep 0.5)
+      (unless (bt:thread-alive-p thread)
+        (editor-error "Scheme swank server start error")))
+
     (let ((successp)
           (condition))
       (loop :repeat 10

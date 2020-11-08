@@ -22,6 +22,7 @@
            :json-false
            :json-array
            :json-get
+           :json-get*
            :json-object-length
            :json-array-p
            :json-object-p))
@@ -88,6 +89,7 @@
 
 (defgeneric make-json-internal (json-backend alist))
 (defgeneric object-to-json-internal (json-backend object))
+(defgeneric to-json-internal (json-backend object))
 (defgeneric json-get-internal (json-backend json key))
 (defgeneric json-object-length-internal (json-backend json))
 (defgeneric json-array-internal (json-backend vector))
@@ -149,12 +151,32 @@
   (let ((table (make-hash-table :test 'equal)))
     (map-object (lambda (k v)
                   (setf (gethash k table)
-                        (if (typep v 'object)
-                            (object-to-json-internal json-backend v)
-                            v)))
+                        (to-json-internal json-backend v)))
                 object
                 :recursivep nil)
     table))
+
+(defmethod to-json-internal ((json-backend yason-backend) (string string))
+  string)
+
+(defmethod to-json-internal ((json-backend yason-backend) (vector vector))
+  (map 'list
+       (lambda (item)
+         (to-json-internal json-backend item))
+       vector))
+
+(defmethod to-json-internal ((json-backend yason-backend) (hash-table hash-table))
+  (let ((new-table (make-hash-table :test 'equal)))
+    (maphash (lambda (k v)
+               (setf (gethash k new-table)
+                     (to-json-internal json-backend v)))
+             hash-table)
+    new-table))
+
+(defmethod to-json-internal ((json-backend yason-backend) object)
+  (if (typep object 'object)
+      (object-to-json-internal json-backend object)
+      object))
 
 (defmethod json-get-internal ((json-backend yason-backend) json key)
   (gethash key json))
@@ -185,14 +207,18 @@
 (defun json-true ()
   (json-backend-true *json-backend*))
 
-(defun json-array (vector)
-  (json-array-internal *json-backend* vector))
+(defun json-array (&rest args)
+  (json-array-internal *json-backend* (apply #'vector args)))
 
 (defun json-false ()
   (json-backend-false *json-backend*))
 
 (defun json-get (json key)
   (json-get-internal *json-backend* json key))
+
+(defun json-get* (json &rest keys)
+  (dolist (key keys json)
+    (setq json (json-get json key))))
 
 (defun json-object-length (json)
   (json-object-length-internal *json-backend* json))

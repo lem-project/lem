@@ -49,11 +49,11 @@
   (testing "st-json"
     (let ((*json-backend* (make-instance 'st-json-backend)))
       (ok (equal '(1 2 3)
-                 (json-array (vector 1 2 3))))))
+                 (json-array 1 2 3)))))
   (testing "yason"
     (let ((*json-backend* (make-instance 'yason-backend)))
       (ok (equalp #(1 2 3)
-                  (json-array (vector 1 2 3)))))))
+                  (json-array 1 2 3))))))
 
 (deftest make-json
   (testing "st-json"
@@ -108,7 +108,30 @@
     (ok (equal "file:///foo/bar/test.txt" (json-get (json-get json "textDocument") "uri")))
     (ok (= 2 (json-object-length (json-get json "position"))))
     (ok (= 5 (json-get (json-get json "position") "line")))
-    (ok (= 3 (json-get (json-get json "position") "character")))))
+    (ok (= 3 (json-get (json-get json "position") "character"))))
+  (let ((json
+          (object-to-json
+           (make-instance
+            'protocol:did-change-text-document-params
+            :text-document (make-instance 'protocol:versioned-text-document-identifier
+                                          :uri "file://Users/user/test.lisp"
+                                          :version 0)
+            :content-changes (json-array
+                              (make-json :range (make-instance 'protocol:range
+                                                               :start (make-instance 'protocol:position :character 2 :line 1)
+                                                               :end (make-instance 'protocol:position :character 3 :line 5))
+                                         :rangeLength 0
+                                         :text "abc"))))))
+    (ok (equal "file://Users/user/test.lisp"
+               (json-get* json "textDocument" "uri")))
+    (ok (equal 0
+               (json-get* json "textDocument" "version")))
+    (ok (json-array-p (json-get json "contentChanges")))
+    (let ((content-change (elt (json-get json "contentChanges") 0)))
+      (ok (equal 1 (json-get* content-change "range" "start" "line")))
+      (ok (equal 2 (json-get* content-change "range" "start" "character")))
+      (ok (equal 5 (json-get* content-change "range" "end" "line")))
+      (ok (equal 3 (json-get* content-change "range" "end" "character"))))))
 
 (deftest json-get
   (testing "st-json"

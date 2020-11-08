@@ -29,8 +29,10 @@
   (trivia:match type
     ((list 'ts-array item-type)
      (assert-type value 'list)
-     (loop :for item :in value
-           :collect (coerce-json item item-type)))
+     (map 'vector
+          (lambda (item)
+            (coerce-json item item-type))
+          value))
     ((cons 'ts-interface elements)
      (assert-type value 'hash-table)
      (let ((new-hash-table (make-hash-table :test 'equal)))

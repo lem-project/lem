@@ -56,8 +56,9 @@
                  'json-type-error))
     (ok (signals (coerce-json '(1 "a") '(lem-lsp-mode/type:ts-array integer))
                  'json-type-error))
-    (ok (equal '(1 2 3)
-               (coerce-json '(1 2 3) '(lem-lsp-mode/type:ts-array integer))))
+    (ok (json-array-p (coerce-json '(1 2 3) '(lem-lsp-mode/type:ts-array integer))))
+    (ok (equalp #(1 2 3)
+                (coerce-json '(1 2 3) '(lem-lsp-mode/type:ts-array integer))))
     (let ((result
             (coerce-json (list (hash "line" 10
                                      "character" 3)
@@ -67,9 +68,9 @@
                                      "character" 100))
                          '(lem-lsp-mode/type:ts-array position/test))))
       (ok (= 3 (length result)))
-      (ok (position-equals (first result) :line 10 :character 3))
-      (ok (position-equals (second result) :line 3 :character 2))
-      (ok (position-equals (third result) :line 0 :character 100))))
+      (ok (position-equals (elt result 0) :line 10 :character 3))
+      (ok (position-equals (elt result 1) :line 3 :character 2))
+      (ok (position-equals (elt result 2) :line 0 :character 100))))
   (testing "equal-specializer"
     (ok (signals (coerce-json 1 '(lem-lsp-mode/type:ts-equal-specializer "foo"))
                  'json-type-error))

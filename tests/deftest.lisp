@@ -11,7 +11,8 @@
            :pass
            :fail
            :signals
-           :run-all-tests))
+           :run-all-tests
+           :run-test))
 (in-package :lem-tests/deftest)
 
 (defvar *test-table* (make-hash-table))
@@ -92,7 +93,7 @@
 (defun get-tests-to-each-packages ()
   (hash-table-alist *test-table*))
 
-(defun run-test (test)
+(defun run-test-1 (test)
   (testing (string-downcase (test-name test))
     (let ((*package* (test-package test)))
       (funcall (test-function test)))))
@@ -103,5 +104,19 @@
     (loop :for (package . tests) :in (get-tests-to-each-packages)
           :do (testing (string-downcase (package-name package))
                 (dolist (test tests)
-                  (run-test test))))
+                  (run-test-1 test))))
     (null *failure*)))
+
+(defun find-test (test-name)
+  (maphash (lambda (package tests)
+             (declare (ignore package))
+             (dolist (test tests)
+               (when (eq test-name (test-name test))
+                 (return-from find-test test))))
+           *test-table*))
+
+(defun run-test (test-name)
+  (let ((test (find-test test-name)))
+    (unless test
+      (error "The test does not exists: ~A" test-name))
+    (run-test-1 test)))

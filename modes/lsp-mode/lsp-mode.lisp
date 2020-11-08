@@ -99,9 +99,7 @@
 (defun handle-change-buffer (point arg)
   (let ((buffer (point-buffer point))
         (change-event (buffer-change-event-to-content-change-event point arg)))
-    (text-document/did-change buffer
-                              (make-instance 'protocol:did-change-text-document-params
-                                             :content-changes (json:json-array (vector change-event))))))
+    (text-document/did-change buffer (json:json-array change-event))))
 
 (defun ensure-lsp-buffer (buffer)
   (let* ((spec (buffer-language-spec buffer))

@@ -4,9 +4,9 @@
            :apply-print-spec))
 (in-package :lem.popup-window)
 
-(defparameter +border-size+ 1)
-(defparameter +min-width+   3)
-(defparameter +min-height+  1)
+(defconstant +border-size+ 1)
+(defconstant +min-width+   3)
+(defconstant +min-height+  1)
 
 (defvar *extra-right-margin* 0)
 (defvar *extra-width-margin* 0)

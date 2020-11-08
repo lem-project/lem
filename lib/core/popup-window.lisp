@@ -8,7 +8,6 @@
 (defparameter +min-width+   3)
 (defparameter +min-height+  1)
 
-;; for windows pdcurses
 (defvar *extra-right-margin* 0)
 (defvar *extra-width-margin* 0)
 
@@ -61,12 +60,11 @@
                       +min-height+))
          (x (+ (window-x source-window)
                (window-cursor-x source-window)))
-         (y (alexandria:clamp
-             (+ (window-y source-window)
-                (window-cursor-y source-window)
-                1)
-             0
-             (1- (display-height))))
+         (y (max (min (+ (window-y source-window)
+                         (window-cursor-y source-window)
+                         1)
+                      (1- (display-height)))
+                 0))
          (w width)
          (h height))
     ;; calc y and h

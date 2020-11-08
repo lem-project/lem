@@ -8,6 +8,7 @@
 (defclass jsonrpc (implementation)
   ()
   (:default-initargs
+   :name :jsonrpc
    :native-scroll-support t
    :redraw-after-modifying-floating-window nil))
 
@@ -23,8 +24,6 @@
 (defvar *server*)
 
 (defvar *background-mode*)
-
-(setf *implementation* (make-instance 'jsonrpc))
 
 (defstruct view
   (id (incf *view-id-counter*))

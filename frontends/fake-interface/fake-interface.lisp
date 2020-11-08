@@ -16,10 +16,9 @@
     :initform 24
     :reader fake-interface-display-height))
   (:default-initargs
+   :name :fake
    :native-scroll-support nil
    :redraw-after-modifying-floating-window t))
-
-(setf *implementation* (make-instance 'fake-interface))
 
 (defstruct view
   x

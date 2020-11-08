@@ -13,7 +13,11 @@
 (defvar *implementation*)
 
 (defclass implementation ()
-  ((native-scroll-support
+  ((name
+    :initform (alexandria:required-argument :name)
+    :initarg :name
+    :reader implementation-name)
+   (native-scroll-support
     :initform nil
     :initarg :native-scroll-support
     :reader native-scroll-support)
@@ -25,6 +29,9 @@
     :initform t
     :initarg :support-floating-window
     :reader support-floating-window)))
+
+(defun get-default-implementation ()
+  (make-instance (first (c2mop:class-direct-subclasses (find-class 'implementation)))))
 
 (defgeneric lem-if:invoke (implementation function))
 (defgeneric lem-if:display-background-mode (implementation))
@@ -103,7 +110,11 @@
 (defun display-height () (lem-if:display-height *implementation*))
 
 (defun invoke-frontend (function)
-  (lem-if:invoke *implementation* function))
+  (let* ((*implementation* (get-default-implementation))
+         (bt:*default-special-bindings* (acons '*implementation*
+                                               *implementation*
+                                               bt:*default-special-bindings*)))
+    (lem-if:invoke *implementation* function)))
 
 (defun make-screen (window x y width height use-modeline)
   (when use-modeline

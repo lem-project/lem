@@ -3,11 +3,10 @@
 (defclass capi-impl (lem:implementation)
   ()
   (:default-initargs
+   :name :capi
    :support-floating-window nil
    :native-scroll-support nil
    :redraw-after-modifying-floating-window nil))
-
-(setf lem:*implementation* (make-instance 'capi-impl))
 
 (defvar *lem-panel*)
 (defvar *editor-thread*)

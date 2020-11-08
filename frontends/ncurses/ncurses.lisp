@@ -20,10 +20,9 @@
 (defclass ncurses (lem:implementation)
   ()
   (:default-initargs
+   :name :ncurses
    :native-scroll-support nil
    :redraw-after-modifying-floating-window t))
-
-(setf *implementation* (make-instance 'ncurses))
 
 (define-condition exit-editor (editor-condition)
   ((value

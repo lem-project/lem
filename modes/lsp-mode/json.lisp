@@ -141,7 +141,7 @@
    :null :null
    :false nil
    :true t
-   :array-type 'trivial-types:proper-list
+   :array-type 'vector
    :object-type 'hash-table))
 
 (defmethod make-json-internal ((json-backend yason-backend) plist)
@@ -160,7 +160,7 @@
   string)
 
 (defmethod to-json-internal ((json-backend yason-backend) (vector vector))
-  (map 'list
+  (map 'vector
        (lambda (item)
          (to-json-internal json-backend item))
        vector))

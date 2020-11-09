@@ -4,6 +4,8 @@
         :lem-tests/deftest))
 (in-package :lem-tests/frame-multiplexer)
 
+;;; このテストは不十分で動作も不安定なので、まだ動かさない
+
 (defstruct datum
   id
   result)

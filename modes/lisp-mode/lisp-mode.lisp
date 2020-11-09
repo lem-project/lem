@@ -118,14 +118,18 @@
 (defun self-connected-port ()
   *self-connected-port*)
 
+;; DO NOT USE THIS VARIABLE, this is for unit-test
+(defvar *disable-self-connect* nil)
+
 (defun self-connect ()
-  (let ((port (random-port)))
-    (log:debug "Starting internal SWANK and connecting to it" swank:*communication-style*)
-    (let ((swank::*swank-debug-p* nil))
-      (swank:create-server :port port :style :spawn))
-    (slime-connect *localhost* port nil)
-    (update-buffer-package)
-    (setf *self-connected-port* port)))
+  (unless *disable-self-connect*
+    (let ((port (random-port)))
+      (log:debug "Starting internal SWANK and connecting to it" swank:*communication-style*)
+      (let ((swank::*swank-debug-p* nil))
+        (swank:create-server :port port :style :spawn))
+      (slime-connect *localhost* port nil)
+      (update-buffer-package)
+      (setf *self-connected-port* port))))
 
 (defun self-connection-p (c)
   (and (typep c 'connection)

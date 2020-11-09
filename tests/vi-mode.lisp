@@ -1,12 +1,17 @@
 (defpackage :lem-tests/vi-mode
   (:use :cl
         :lem
-        :lem-tests/deftest))
+        :lem-tests/deftest)
+  (:import-from :lem-fake-interface
+                :fake-interface))
 (in-package :lem-tests/vi-mode)
 
+;;; このテストは不十分で動作も不安定なので、まだ動かさない
+
+#+(or)
 (deftest vi-mode
-  (ql:quickload :lem-fake-interface :silent t)
   (lem)
+  (sleep 0.1)
   (lem-vi-mode:vi-mode)
   (testing "enable hook"
     (testing "initialize-vi-modeline"

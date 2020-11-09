@@ -51,11 +51,14 @@
                (setf (buffer-value (current-buffer) 'no-revert-buffer)
                      (file-write-date (buffer-filename)))))))))
 
+(defun setup-first-frame ()
+  (let ((frame (make-frame nil)))
+    (map-frame (implementation) frame)
+    (setup-frame frame (primordial-buffer))))
+
 (let ((once nil))
   (defun setup ()
-    (let ((frame (make-frame nil)))
-      (map-frame (implementation) frame)
-      (setup-frame frame (primordial-buffer)))
+    (setup-first-frame)
     (unless once
       (setf once t)
       (start-idle-timer 100 t

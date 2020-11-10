@@ -231,7 +231,7 @@
                                                    :uri (buffer-uri (point-buffer point)))
                                    :position (point-to-position point))))))
     (when (typep result 'protocol:hover)
-      (display-popup-message (hover-to-string result)))))
+      (message "~A" (hover-to-string result)))))
 
 (define-command lsp-hover () ()
   (hover (current-point)))

@@ -90,7 +90,7 @@
 (defgeneric make-json-internal (json-backend alist))
 (defgeneric object-to-json-internal (json-backend object))
 (defgeneric to-json-internal (json-backend object))
-(defgeneric json-get-internal (json-backend json key))
+(defgeneric json-get-internal (json-backend json key default))
 (defgeneric json-object-length-internal (json-backend json))
 (defgeneric json-array-internal (json-backend vector))
 
@@ -125,8 +125,12 @@
                 :recursivep nil)
     (apply #'st-json:jso (nreverse fields))))
 
-(defmethod json-get-internal ((json-backend st-json-backend) json key)
-  (st-json:getjso key json))
+(defmethod json-get-internal ((json-backend st-json-backend) json key default)
+  (multiple-value-bind (value exists-p)
+      (st-json:getjso key json)
+    (if exists-p
+        value
+        default)))
 
 (defmethod json-object-length-internal ((json-backend st-json-backend) json)
   (length (st-json::jso-alist json)))
@@ -178,8 +182,8 @@
       (object-to-json-internal json-backend object)
       object))
 
-(defmethod json-get-internal ((json-backend yason-backend) json key)
-  (gethash key json))
+(defmethod json-get-internal ((json-backend yason-backend) json key default)
+  (gethash key json default))
 
 (defmethod json-object-length-internal ((json-backend yason-backend) json)
   (hash-table-count json))
@@ -213,8 +217,8 @@
 (defun json-false ()
   (json-backend-false *json-backend*))
 
-(defun json-get (json key)
-  (json-get-internal *json-backend* json key))
+(defun json-get (json key &optional default)
+  (json-get-internal *json-backend* json key default))
 
 (defun json-get* (json &rest keys)
   (dolist (key keys json)

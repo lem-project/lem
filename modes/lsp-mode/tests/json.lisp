@@ -141,7 +141,11 @@
                            "foo")))
       (ok (equal nil
                  (json-get (st-json:jso "foo" 1 "bar" 2)
-                           "xxx")))))
+                           "xxx")))
+      (ok (eq :unbound
+              (json-get (st-json:jso "foo" 1)
+                        "xxx"
+                        :unbound)))))
   (testing "yason"
     (let ((*json-backend* (make-instance 'yason-backend)))
       (ok (equal 1
@@ -149,7 +153,11 @@
                            "foo")))
       (ok (equal nil
                  (json-get (alexandria:plist-hash-table (list "foo" 1 "bar" 2) :test 'equal)
-                           "xxx"))))))
+                           "xxx")))
+      (ok (eq :unbound
+              (json-get (alexandria:plist-hash-table (list "foo" 1 "bar" 2) :test 'equal)
+                        "xxx"
+                        :unbound))))))
 
 (deftest json-array-p
   (testing "st-json"

@@ -149,8 +149,10 @@
                                                          :execute-command nil)
                                              :text-document (make-instance
                                                              'protocol:text-document-client-capabilities
-                                                             :hover (make-instance
-                                                                     'protocol:hover-client-capabilities))
+                                                             :hover (make-instance 'protocol:hover-client-capabilities)
+                                                             :completion (make-instance 'protocol:completion-client-capabilities
+                                                                                        :completion-item (json:make-json)
+                                                                                        :context-support t))
                                              :experimental nil)
                               :trace nil
                               :workspace-folders nil)))
@@ -245,7 +247,22 @@
       (message "~A" (hover-to-string result)))))
 
 (define-command lsp-hover () ()
-  (hover (current-point)))
+  (text-document/hover (current-point)))
+
+;;; completion
+
+;; TODO
+;; - workDoneProgress
+;; - partialResult
+;; - completionParams.context, どのように補完が起動されたかの情報を含める
+
+(defun text-document/completion (point)
+  (request:lsp-call-method
+   (workspace-client (buffer-workspace (point-buffer point)))
+   (make-instance 'request:completion-request
+                  :params (apply #'make-instance
+                                 'protocol:completion-params
+                                 (make-text-document-position-arguments point)))))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))

@@ -101,6 +101,11 @@
         (change-event (buffer-change-event-to-content-change-event point arg)))
     (text-document/did-change buffer (json:json-array change-event))))
 
+(defun make-and-connect-client (spec)
+  (let ((client (make-client (spec-mode spec) spec)))
+    (client:jsonrpc-connect client)
+    client))
+
 (defun ensure-lsp-buffer (buffer)
   (let* ((spec (buffer-language-spec buffer))
          (root-pathname (find-root-pathname (buffer-directory buffer)
@@ -109,13 +114,13 @@
          (language-id (spec-langauge-id spec)))
     (let ((workspace (find-workspace root-uri language-id)))
       (cond ((null workspace)
-             (let* ((client (make-client (spec-mode spec) spec))
+             (let* ((client (make-and-connect-client spec))
                     (workspace (make-workspace :client client
                                                :root-uri root-uri
                                                :language-id language-id)))
                (push workspace *workspaces*)
                (setf (buffer-workspace buffer) workspace)
-               (client:jsonrpc-connect client)
+               ;; initialize, initializedが失敗したときに、無効なworkspaceが残ってしまう問題があるかもしれない
                (initialize workspace)
                (initialized workspace)))
             (t

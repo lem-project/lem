@@ -197,6 +197,8 @@
 ;;; hover
 
 ;; TODO
+;; - workDoneProgress
+;; - partialResult
 ;; - hoverClientCapabilitiesのcontentFormatを設定する
 ;; - hoverのrangeを使って範囲に背景色をつける
 ;; - markdownの中のコード表示時に対象の言語のシンタックスハイライトをする
@@ -224,17 +226,21 @@
         (t
          "")))))
 
-(defun hover (point)
+(defun make-text-document-position-arguments (point)
+  (list
+   :text-document (make-instance
+                   'protocol:text-document-identifier
+                   :uri (buffer-uri (point-buffer point)))
+   :position (point-to-position point)))
+
+(defun text-document/hover (point)
   (let ((result
           (request:lsp-call-method
            (workspace-client (buffer-workspace (point-buffer point)))
            (make-instance 'request:hover-request
-                          :params (make-instance
-                                   'protocol:hover-params
-                                   :text-document (make-instance
-                                                   'protocol:text-document-identifier
-                                                   :uri (buffer-uri (point-buffer point)))
-                                   :position (point-to-position point))))))
+                          :params (apply #'make-instance
+                                         'protocol:hover-params
+                                         (make-text-document-position-arguments point))))))
     (when (typep result 'protocol:hover)
       (message "~A" (hover-to-string result)))))
 

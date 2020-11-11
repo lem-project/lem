@@ -10,14 +10,17 @@
 
 (define-condition json-type-error ()
   ((type :initarg :type)
-   (value :initarg :value))
+   (value :initarg :value)
+   (context :initarg :context))
   (:report (lambda (c s)
-             (with-slots (value type) c
-               (format s "~S is not a ~S" value type)))))
+             (with-slots (value type context) c
+               (if context
+                   (format s "~S is not a ~S in ~S" value type context)
+                   (format s "~S is not a ~S" value type))))))
 
-(defun assert-type (value type)
+(defun assert-type (value type &optional context)
   (unless (typep value type)
-    (error 'json-type-error :value value :type type))
+    (error 'json-type-error :value value :type type :context context))
   (values))
 
 (defun exist-hash-table-key-p (hash-table key)
@@ -25,7 +28,7 @@
     (not (eq default (gethash key hash-table default)))))
 
 ;; TODO: yasonに依存しているのを直す
-(defun coerce-json (value type)
+(defun coerce-json (value type &optional context)
   (trivia:match type
     ((list 'ts-array item-type)
      (assert-type value 'list)
@@ -80,16 +83,20 @@
              (if expanded
                  (coerce-json value type)
                  (progn
-                   (assert-type value type)
+                   (assert-type value type context)
                    value))))))))
 
 (defun coerce-json-object-class (json json-class-name)
   (let ((object (make-instance json-class-name :dont-check-required-initarg t)))
-    (loop :for slot :in (closer-mop:class-slots (class-of object))
+    (loop :with unbound := '#:unbound
+          :for slot :in (closer-mop:class-slots (class-of object))
           :for slot-name := (closer-mop:slot-definition-name slot)
+          :for value := (json-get json (cl-change-case:camel-case (string slot-name)) unbound)
+          :unless (eq value unbound)
           :do (setf (slot-value object slot-name)
-                    (coerce-json (json-get json (cl-change-case:camel-case (string slot-name)))
-                                 (closer-mop:slot-definition-type slot))))
+                    (coerce-json value
+                                 (closer-mop:slot-definition-type slot)
+                                 slot-name)))
     object))
 
 (defun typexpand (type)

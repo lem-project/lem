@@ -12,7 +12,8 @@
            :initialized-request
            :text-document-did-open
            :text-document-did-change
-           :hover-request))
+           :hover-request
+           :completion-request))
 (in-package :lem-lsp-mode/request)
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
@@ -97,3 +98,15 @@
   (:default-initargs
    :method "textDocument/hover"
    :response-class-name '(or null protocol:hover)))
+
+(defclass completion-request (request)
+  ((params :type protocol:completion-params))
+  (:default-initargs
+   :method "textDocument/completion"
+   :response-class-name '(or
+                          (lem-lsp-mode/type:ts-array protocol:completion-item)
+                          protocol:completion-list
+                          null)))
+
+;;; TODO
+;;; response-class-nameのnullは特定のjsonライブラリに依存していないか確認する

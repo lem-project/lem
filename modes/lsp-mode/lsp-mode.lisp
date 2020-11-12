@@ -126,7 +126,11 @@
             (t
              (setf (buffer-workspace buffer) workspace)))
       (text-document/did-open buffer)
-      (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) 'handle-change-buffer))))
+      (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) 'handle-change-buffer)
+      (setf (variable-value 'lem.language-mode:completion-spec)
+            (lem.completion-mode:make-completion-spec
+             'text-document/completion
+             :prefix-search t)))))
 
 (defun initialize (workspace)
   (let ((initialize-result
@@ -204,6 +208,7 @@
 ;; - hoverClientCapabilitiesのcontentFormatを設定する
 ;; - hoverのrangeを使って範囲に背景色をつける
 ;; - markdownの中のコード表示時に対象の言語のシンタックスハイライトをする
+;; - serverでサポートしているかのチェックをする
 
 (defun hover-to-string (hover)
   (flet ((marked-string-to-string (marked-string)
@@ -255,14 +260,23 @@
 ;; - workDoneProgress
 ;; - partialResult
 ;; - completionParams.context, どのように補完が起動されたかの情報を含める
+;; - serverでサポートしているかのチェックをする
+
+(defun convert-completion-list (completion-list)
+  (map 'list
+       (lambda (item)
+         (lem.completion-mode:make-completion-item :label (protocol:completion-item-label item)
+                                                   :detail (protocol:completion-item-detail item)))
+       (protocol:completion-list-items completion-list)))
 
 (defun text-document/completion (point)
-  (request:lsp-call-method
-   (workspace-client (buffer-workspace (point-buffer point)))
-   (make-instance 'request:completion-request
-                  :params (apply #'make-instance
-                                 'protocol:completion-params
-                                 (make-text-document-position-arguments point)))))
+  (convert-completion-list
+   (request:lsp-call-method
+    (workspace-client (buffer-workspace (point-buffer point)))
+    (make-instance 'request:completion-request
+                   :params (apply #'make-instance
+                                  'protocol:completion-params
+                                  (make-text-document-position-arguments point))))))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))

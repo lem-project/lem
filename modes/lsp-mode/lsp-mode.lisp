@@ -13,6 +13,7 @@
 (lem-lsp-mode/project:local-nickname :request :lem-lsp-mode/request)
 (lem-lsp-mode/project:local-nickname :json :lem-lsp-mode/json)
 (lem-lsp-mode/project:local-nickname :client :lem-lsp-mode/client)
+(lem-lsp-mode/project:local-nickname :completion :lem.completion-mode)
 
 (defvar *workspaces* '())
 
@@ -128,7 +129,7 @@
       (text-document/did-open buffer)
       (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) 'handle-change-buffer)
       (setf (variable-value 'lem.language-mode:completion-spec)
-            (lem.completion-mode:make-completion-spec
+            (completion:make-completion-spec
              'text-document/completion
              :prefix-search t)))))
 
@@ -257,17 +258,30 @@
 ;;; completion
 
 ;; TODO
+;; - serverでサポートしているかのチェックをする
 ;; - workDoneProgress
 ;; - partialResult
 ;; - completionParams.context, どのように補完が起動されたかの情報を含める
-;; - serverでサポートしているかのチェックをする
+;; - completionItemの使っていない要素が多分にある
+;; - completionResolve
+
+(defclass completion-item (completion:completion-item)
+  ((sort-text
+    :initarg :sort-text
+    :reader completion-item-sort-text)))
 
 (defun convert-completion-items (items)
-  (map 'list
-       (lambda (item)
-         (lem.completion-mode:make-completion-item :label (protocol:completion-item-label item)
-                                                   :detail (protocol:completion-item-detail item)))
-       items))
+  (sort (map 'list
+             (lambda (item)
+               (make-instance 'completion-item
+                              :label (protocol:completion-item-label item)
+                              :detail (protocol:completion-item-detail item)
+                              :sort-text (or (handler-case (protocol:completion-item-sort-text item)
+                                               (unbound-slot ()
+                                                 (protocol:completion-item-label item))))))
+             items)
+        #'string<
+        :key #'completion-item-sort-text))
 
 (defun convert-completion-list (completion-list)
   (convert-completion-items (protocol:completion-list-items completion-list)))

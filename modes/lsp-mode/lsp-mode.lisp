@@ -262,15 +262,26 @@
 ;; - completionParams.context, どのように補完が起動されたかの情報を含める
 ;; - serverでサポートしているかのチェックをする
 
-(defun convert-completion-list (completion-list)
+(defun convert-completion-items (items)
   (map 'list
        (lambda (item)
          (lem.completion-mode:make-completion-item :label (protocol:completion-item-label item)
                                                    :detail (protocol:completion-item-detail item)))
-       (protocol:completion-list-items completion-list)))
+       items))
+
+(defun convert-completion-list (completion-list)
+  (convert-completion-items (protocol:completion-list-items completion-list)))
+
+(defun convert-completion-response (value)
+  (cond ((typep value 'protocol:completion-list)
+         (convert-completion-list value))
+        ((json:json-array-p value)
+         (convert-completion-items value))
+        (t
+         nil)))
 
 (defun text-document/completion (point)
-  (convert-completion-list
+  (convert-completion-response
    (request:lsp-call-method
     (workspace-client (buffer-workspace (point-buffer point)))
     (make-instance 'request:completion-request

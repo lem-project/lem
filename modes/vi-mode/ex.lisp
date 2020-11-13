@@ -29,7 +29,7 @@
                                                   (prefix-len (- (length str) (length comp-str))))
                                               (with-point ((s (lem::minibuffer-start-point))
                                                            (e (lem::minibuffer-start-point)))
-                                                (lem.completion-mode::make-completion-item
+                                                (lem.completion-mode:make-completion-item
                                                  :label label
                                                  :start (character-offset
                                                          s

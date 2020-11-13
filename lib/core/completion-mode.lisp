@@ -21,12 +21,35 @@
 (defun make-completion-spec (function &key prefix-search)
   (make-instance 'completion-spec :function function :prefix-search prefix-search))
 
-(defstruct completion-item
-  (label "" :read-only t :type string)
-  (detail "" :read-only t :type string)
-  (start nil :read-only t :type (or null point))
-  (end nil :read-only t :type (or null point))
-  (focus-action nil :read-only t :type (or null function)))
+(defclass completion-item ()
+  ((label
+    :initarg :label
+    :initform ""
+    :reader completion-item-label
+    :type string)
+   (detail
+    :initarg :detail
+    :initform ""
+    :reader completion-item-detail
+    :type string)
+   (start
+    :initarg :start
+    :initform nil
+    :reader completion-item-start
+    :type (or null point))
+   (end
+    :initarg :end
+    :initform nil
+    :reader completion-item-end
+    :type (or null point))
+   (focus-action
+    :initarg :focus-action
+    :initform nil
+    :reader completion-item-focus-action
+    :type (or null function))))
+
+(defun make-completion-item (&rest initargs)
+  (apply #'make-instance 'completion-item initargs))
 
 (defvar *completion-mode-keymap* (make-keymap :name '*completion-mode-keymap*
                                               :undef-hook 'completion-self-insert))

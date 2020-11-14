@@ -22,7 +22,8 @@
   client
   language-id
   server-capabilities
-  server-info)
+  server-info
+  (trigger-characters (make-hash-table)))
 
 (defun find-workspace (root-uri language-id)
   (dolist (workspace *workspaces*)
@@ -52,12 +53,16 @@
 (defun buffer-uri (buffer)
   (utils:pathname-to-uri (buffer-filename buffer)))
 
+(defun get-workspace-from-point (point)
+  (buffer-workspace (point-buffer point)))
+
 (lem:define-minor-mode lsp-mode
     (:name "Language Client"
      :enable-hook 'enable-hook))
 
 (defun enable-hook ()
-  (ensure-lsp-buffer (current-buffer)))
+  (ensure-lsp-buffer (current-buffer))
+  (text-document/did-open (current-buffer)))
 
 (defun find-root-pathname (directory uri-patterns)
   (or (utils:find-root-pathname directory
@@ -72,6 +77,26 @@
 
 (defmethod make-client ((mode (eql :tcp)) spec)
   (make-instance 'client:tcp-client :port (spec-port spec)))
+
+(defun make-and-connect-client (spec)
+  (let ((client (make-client (spec-mode spec) spec)))
+    (client:jsonrpc-connect client)
+    client))
+
+(defun get-completion-trigger-characters (workspace)
+  (map 'list
+       (lambda (string) (char string 0))
+       (handler-case
+           (protocol:completion-options-trigger-characters
+            (protocol:server-capabilities-completion-provider
+             (workspace-server-capabilities workspace)))
+         (unbound-slot ()
+           nil))))
+
+(defun self-insert-hook (c)
+  (alexandria:when-let* ((workspace (buffer-workspace (current-buffer)))
+                         (command (gethash c (workspace-trigger-characters workspace))))
+    (funcall command)))
 
 (defun buffer-change-event-to-content-change-event (point arg)
   (labels ((inserting-content-change-event (string)
@@ -102,36 +127,35 @@
         (change-event (buffer-change-event-to-content-change-event point arg)))
     (text-document/did-change buffer (json:json-array change-event))))
 
-(defun make-and-connect-client (spec)
-  (let ((client (make-client (spec-mode spec) spec)))
-    (client:jsonrpc-connect client)
-    client))
+(defun assign-workspace-to-buffer (buffer workspace)
+  (setf (buffer-workspace buffer) workspace)
+  (add-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)
+  (add-hook (variable-value 'self-insert-after-hook :buffer buffer) 'self-insert-hook)
+  (setf (variable-value 'lem.language-mode:completion-spec)
+        (completion:make-completion-spec #'text-document/completion
+                                         :prefix-search t))
+  (dolist (character (get-completion-trigger-characters workspace))
+    (setf (gethash character (workspace-trigger-characters workspace))
+          #'lem.language-mode::complete-symbol)))
+
+(defun initialize-workspace (workspace)
+  (push workspace *workspaces*)
+  ;; initialize, initializedが失敗したときに、無効なworkspaceが残ってしまう問題があるかもしれない
+  (initialize workspace)
+  (initialized workspace)
+  workspace)
 
 (defun ensure-lsp-buffer (buffer)
   (let* ((spec (buffer-language-spec buffer))
          (root-pathname (find-root-pathname (buffer-directory buffer)
                                             (spec-root-uri-patterns spec)))
          (root-uri (utils:pathname-to-uri root-pathname))
-         (language-id (spec-langauge-id spec)))
-    (let ((workspace (find-workspace root-uri language-id)))
-      (cond ((null workspace)
-             (let* ((client (make-and-connect-client spec))
-                    (workspace (make-workspace :client client
-                                               :root-uri root-uri
-                                               :language-id language-id)))
-               (push workspace *workspaces*)
-               (setf (buffer-workspace buffer) workspace)
-               ;; initialize, initializedが失敗したときに、無効なworkspaceが残ってしまう問題があるかもしれない
-               (initialize workspace)
-               (initialized workspace)))
-            (t
-             (setf (buffer-workspace buffer) workspace)))
-      (text-document/did-open buffer)
-      (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer buffer) 'handle-change-buffer)
-      (setf (variable-value 'lem.language-mode:completion-spec)
-            (completion:make-completion-spec
-             'text-document/completion
-             :prefix-search t)))))
+         (language-id (spec-langauge-id spec))
+         (workspace (or (find-workspace root-uri language-id)
+                        (initialize-workspace (make-workspace :client (make-and-connect-client spec)
+                                                              :root-uri root-uri
+                                                              :language-id language-id)))))
+    (assign-workspace-to-buffer buffer workspace)))
 
 (defun initialize (workspace)
   (let ((initialize-result
@@ -252,8 +276,12 @@
     (when (typep result 'protocol:hover)
       (message "~A" (hover-to-string result)))))
 
+(defun provide-hover-p (workspace)
+  (protocol:server-capabilities-hover-provider (workspace-server-capabilities workspace)))
+
 (define-command lsp-hover () ()
-  (text-document/hover (current-point)))
+  (when (provide-hover-p (get-workspace-from-point (current-point)))
+    (text-document/hover (current-point))))
 
 ;;; completion
 
@@ -294,14 +322,18 @@
         (t
          nil)))
 
+(defun provide-completion-p (workspace)
+  (protocol:server-capabilities-completion-provider (workspace-server-capabilities workspace)))
+
 (defun text-document/completion (point)
-  (convert-completion-response
-   (request:lsp-call-method
-    (workspace-client (buffer-workspace (point-buffer point)))
-    (make-instance 'request:completion-request
-                   :params (apply #'make-instance
-                                  'protocol:completion-params
-                                  (make-text-document-position-arguments point))))))
+  (when (provide-completion-p (get-workspace-from-point point))
+    (convert-completion-response
+     (request:lsp-call-method
+      (workspace-client (buffer-workspace (point-buffer point)))
+      (make-instance 'request:completion-request
+                     :params (apply #'make-instance
+                                    'protocol:completion-params
+                                    (make-text-document-position-arguments point)))))))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))

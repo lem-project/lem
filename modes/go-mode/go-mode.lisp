@@ -199,8 +199,9 @@
       ("(.+):(\\d+):(\\d+)" output)
     (when (and filename line-number charpos)
       (make-xref-location :filespec filename
-                          :position (cons (parse-integer line-number)
-                                          (1- (parse-integer charpos)))))))
+                          :position (lem.language-mode::make-position
+                                     (parse-integer line-number)
+                                     (1- (parse-integer charpos)))))))
 
 (defun find-definitions (point)
   (unless (buffer-filename (point-buffer point))

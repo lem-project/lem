@@ -226,13 +226,17 @@
                    :attribute 'xref-content-attribute)
     (insert-character point #\newline)))
 
+(defstruct xref-position
+  line-number
+  charpos)
+
 ;; TODO
 (defun make-position (line-number charpos)
-  (cons line-number charpos))
+  (make-xref-position :line-number line-number :charpos charpos))
 
 (defstruct xref-location
   (filespec nil :read-only t :type (or buffer string pathname))
-  (position 1 :read-only t)
+  (position 1 :read-only t :type (or point xref-position integer))
   (content "" :read-only t))
 
 (defstruct xref-references
@@ -258,9 +262,9 @@
   (etypecase position
     (integer
      (move-to-position point position))
-    (cons
-     (move-to-line point (car position))
-     (line-offset point 0 (cdr position)))
+    (xref-position
+     (move-to-line point (xref-position-line-number position))
+     (line-offset point 0 (xref-position-charpos position)))
     (point
      (let ((line-number (line-number-at-point position))
            (charpos (point-charpos position)))
@@ -278,10 +282,13 @@
 (defgeneric location-position< (position1 position2)
   (:method ((position1 integer) (position2 integer))
     (< position1 position2))
-  (:method ((position1 cons) (position2 cons))
-    (or (< (car position1) (car position2))
-        (and (= (car position1) (car position2))
-             (< (cdr position1) (cdr position2)))))
+  (:method ((position1 xref-position) (position2 xref-position))
+    (or (< (xref-position-line-number position1)
+           (xref-position-line-number position2))
+        (and (= (xref-position-line-number position1)
+                (xref-position-line-number position2))
+             (< (xref-position-charpos position1)
+                (xref-position-charpos position2)))))
   (:method ((position1 point) (position2 point))
     (point< position1 position2))
   (:method (position1 position2)

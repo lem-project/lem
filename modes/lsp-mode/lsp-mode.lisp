@@ -462,6 +462,7 @@
     (unbound-slot () nil)))
 
 (defun convert-location (location)
+  ;; TODO: end-positionも使い、定義位置への移動後のハイライトをstart/endの範囲にする
   (let* ((start-position (protocol:range-start (protocol:location-range location)))
          (end-position (protocol:range-end (protocol:location-range location)))
          (uri (protocol:location-uri location))

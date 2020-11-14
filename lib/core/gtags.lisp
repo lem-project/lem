@@ -64,7 +64,7 @@
 (defun result-to-xref-locations (text content-name)
   (loop :for (name line-number file desc) :in (parse-global-output text)
         :collect (make-xref-location :filespec (merge-pathnames file (buffer-directory))
-                                     :position (cons line-number 0)
+                                     :position (lem.language-mode::make-position line-number 0)
                                      :content (make-instance content-name
                                                              :name name
                                                              :line-number line-number

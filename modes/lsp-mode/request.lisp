@@ -14,7 +14,8 @@
            :text-document-did-change
            :hover-request
            :completion-request
-           :signature-help))
+           :signature-help
+           :definition))
 (in-package :lem-lsp-mode/request)
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
@@ -27,19 +28,23 @@
 (defvar *log-stream* nil)
 
 (defun do-log (string &rest args)
-  (fresh-line *log-stream*)
-  (apply #'format *log-stream* string args)
-  (terpri *log-stream*))
+  (when *log-stream*
+    (fresh-line *log-stream*)
+    (apply #'format *log-stream* string args)
+    (terpri *log-stream*)))
 
 (defun pretty-json (params)
   (with-output-to-string (stream)
     (yason:encode params (yason:make-json-output-stream stream))))
 
 (defun jsonrpc-call (jsonrpc method params)
-  (do-log "request: ~A ~A" method (pretty-json params))
-  (let ((response (jsonrpc:call jsonrpc method params)))
-    (do-log "response: ~A" (pretty-json response))
-    response))
+  (handler-bind ((jsonrpc/errors:jsonrpc-callback-error
+                   (lambda (c)
+                     (do-log "response: ~A" c))))
+    (do-log "request: ~A ~A" method (pretty-json params))
+    (let ((response (jsonrpc:call jsonrpc method params)))
+      (do-log "response: ~A" (pretty-json response))
+      response)))
 
 (defun jsonrpc-notify (jsonrpc method params)
   (do-log "notify: ~A ~A" method (pretty-json params))
@@ -114,6 +119,16 @@
   (:default-initargs
    :method "textDocument/signatureHelp"
    :response-class-name '(or protocol:signature-help null)))
+
+(defclass definition (request)
+  ((params :type protocol:definition-params))
+  (:default-initargs
+   :method "textDocument/definition"
+   :response-class-name '(or
+                          protocol:location
+                          (lem-lsp-mode/type:ts-array protocol:location)
+                          (lem-lsp-mode/type:ts-array protocol:location-link)
+                          null)))
 
 ;;; TODO
 ;;; response-class-nameのnullは特定のjsonライブラリに依存していないか確認する

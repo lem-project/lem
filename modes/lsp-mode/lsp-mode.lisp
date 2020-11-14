@@ -1,5 +1,5 @@
 (defpackage :lem-lsp-mode/lsp-mode
-  (:use :cl :lem)
+  (:use :cl :lem :alexandria)
   (:import-from :lem-lsp-mode/json)
   (:import-from :lem-lsp-mode/utils)
   (:import-from :lem-lsp-mode/protocol)
@@ -107,8 +107,8 @@
        nil))))
 
 (defun self-insert-hook (c)
-  (alexandria:when-let* ((workspace (buffer-workspace (current-buffer)))
-                         (command (gethash c (workspace-trigger-characters workspace))))
+  (when-let* ((workspace (buffer-workspace (current-buffer)))
+              (command (gethash c (workspace-trigger-characters workspace))))
     (funcall command c)))
 
 (defun buffer-change-event-to-content-change-event (point arg)
@@ -147,6 +147,8 @@
   (setf (variable-value 'lem.language-mode:completion-spec)
         (completion:make-completion-spec #'text-document/completion
                                          :prefix-search t))
+  (setf (variable-value 'lem.language-mode:find-definitions-function)
+        #'lsp-definition)
   (dolist (character (get-completion-trigger-characters workspace))
     (setf (gethash character (workspace-trigger-characters workspace))
           (lambda (c)
@@ -292,10 +294,11 @@
    :position (point-to-position point)))
 
 (defun provide-hover-p (workspace)
-  (protocol:server-capabilities-hover-provider (workspace-server-capabilities workspace)))
+  (handler-case (protocol:server-capabilities-hover-provider (workspace-server-capabilities workspace))
+    (unbound-slot () nil)))
 
 (defun text-document/hover (point)
-  (alexandria:when-let ((workspace (get-workspace-from-point point)))
+  (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-hover-p workspace)
       (let ((result
               (request:lsp-call-method
@@ -351,10 +354,11 @@
          nil)))
 
 (defun provide-completion-p (workspace)
-  (protocol:server-capabilities-completion-provider (workspace-server-capabilities workspace)))
+  (handler-case (protocol:server-capabilities-completion-provider (workspace-server-capabilities workspace))
+    (unbound-slot () nil)))
 
 (defun text-document/completion (point)
-  (alexandria:when-let ((workspace (get-workspace-from-point point)))
+  (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-completion-p workspace)
       (convert-completion-response
        (request:lsp-call-method
@@ -370,7 +374,8 @@
   (t :underline-p t))
 
 (defun provide-signature-help-p (workspace)
-  (protocol:server-capabilities-signature-help-provider (workspace-server-capabilities workspace)))
+  (handler-case (protocol:server-capabilities-signature-help-provider (workspace-server-capabilities workspace))
+    (unbound-slot () nil)))
 
 (defun display-signature-help (signature-help)
   (let* ((buffer (make-buffer nil :temporary t))
@@ -412,7 +417,7 @@
       (message-buffer buffer))))
 
 (defun text-document/signature-help (point &optional signature-help-context)
-  (alexandria:when-let ((workspace (get-workspace-from-point point)))
+  (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-signature-help-p workspace)
       (let ((result (request:lsp-call-method
                      (workspace-client workspace)
@@ -436,7 +441,51 @@
 (define-command lsp-signature-help () ()
   (text-document/signature-help (current-point)
                                 (make-instance 'protocol:signature-help-context
-                                               :tirgger-kind protocol:signature-help-trigger-kind.invoked)))
+                                               :trigger-kind protocol:signature-help-trigger-kind.invoked
+                                               :is-retrigger (json:json-false))))
+
+;;; declaration
+
+(defun provide-declaration-p (workspace)
+  (handler-case (protocol:server-capabilities-declaration-provider (workspace-server-capabilities workspace))
+    (unbound-slot () nil)))
+
+(defun text-document/declaration (point)
+  (declare (ignore point))
+  ;; TODO: goplsが対応していなかったので後回し
+  nil)
+
+;;; definition
+
+(defun provide-definition-p (workspace)
+  (handler-case (protocol:server-capabilities-definition-provider (workspace-server-capabilities workspace))
+    (unbound-slot () nil)))
+
+(defun convert-definition-response (value)
+  ;; TODO
+  (cond ((typep value 'protocol:location)
+         (list value))
+        ((json:json-array-p value)
+         value)
+        (t
+         nil)))
+
+(defun text-document/definition (point)
+  (when-let ((workspace (get-workspace-from-point point)))
+    (when (provide-definition-p workspace)
+      (convert-definition-response
+       (request:lsp-call-method
+        (workspace-client workspace)
+        (make-instance 'request:definition
+                       :params (apply #'make-instance
+                                      'protocol:definition-params
+                                      (make-text-document-position-arguments point))))))))
+
+(defun lsp-definition ()
+  (handler-case
+      (text-document/definition (current-point))
+    (jsonrpc/errors:jsonrpc-callback-error (c)
+      (editor-error "~A" c))))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))

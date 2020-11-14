@@ -148,7 +148,7 @@
         (completion:make-completion-spec #'text-document/completion
                                          :prefix-search t))
   (setf (variable-value 'lem.language-mode:find-definitions-function)
-        #'lsp-definition)
+        #'find-definitions)
   (dolist (character (get-completion-trigger-characters workspace))
     (setf (gethash character (workspace-trigger-characters workspace))
           (lambda (c)
@@ -461,12 +461,24 @@
   (handler-case (protocol:server-capabilities-definition-provider (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
+(defun convert-location (location)
+  (let* ((start-position (protocol:range-start (protocol:location-range location)))
+         (end-position (protocol:range-end (protocol:location-range location)))
+         (uri (protocol:location-uri location))
+         (file (utils:uri-to-pathname uri)))
+    (declare (ignore end-position))
+    (lem.language-mode:make-xref-location
+     :filespec file
+     :position (lem.language-mode::make-position
+                (1+ (protocol:position-line start-position))
+                (protocol:position-character start-position)))))
+
 (defun convert-definition-response (value)
-  ;; TODO
   (cond ((typep value 'protocol:location)
-         (list value))
+         (list (convert-location value)))
         ((json:json-array-p value)
-         value)
+         ;; TODO: location-link
+         (map 'list #'convert-location value))
         (t
          nil)))
 
@@ -481,9 +493,9 @@
                                       'protocol:definition-params
                                       (make-text-document-position-arguments point))))))))
 
-(defun lsp-definition ()
+(defun find-definitions (point)
   (handler-case
-      (text-document/definition (current-point))
+      (text-document/definition point)
     (jsonrpc/errors:jsonrpc-callback-error (c)
       (editor-error "~A" c))))
 

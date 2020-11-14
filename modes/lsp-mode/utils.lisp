@@ -1,7 +1,9 @@
 (defpackage :lem-lsp-mode/utils
   (:use :cl)
+  (:import-from :quri)
   (:export :get-pid
            :pathname-to-uri
+           :uri-to-pathname
            :find-root-pathname
            :do-sequence))
 (in-package :lem-lsp-mode/utils)
@@ -18,6 +20,9 @@
 
 (defun pathname-to-uri (pathname)
   (format nil "file://~A" (namestring pathname)))
+
+(defun uri-to-pathname (uri)
+  (pathname (quri:uri-path (quri:uri uri))))
 
 (defun find-root-pathname (directory root-test-function)
   (cond ((dolist (file (uiop:directory-files directory))

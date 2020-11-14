@@ -226,6 +226,10 @@
                    :attribute 'xref-content-attribute)
     (insert-character point #\newline)))
 
+;; TODO
+(defun make-position (line-number charpos)
+  (cons line-number charpos))
+
 (defstruct xref-location
   (filespec nil :read-only t :type (or buffer string pathname))
   (position 1 :read-only t)

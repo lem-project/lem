@@ -203,12 +203,16 @@
                                                              :completion (make-instance 'protocol:completion-client-capabilities
                                                                                         :completion-item (json:make-json)
                                                                                         :context-support t)
-                                                             :signature-help (make-instance 'protocol:signature-help-client-capabilities
-                                                                                            :signature-information
-                                                                                            (json:make-json
-                                                                                             :documentation-format (json:json-array "plaintext")
-                                                                                             :parameter-information (json:make-json
-                                                                                                                     :label-offset-support (json:json-false)))))
+                                                             :signature-help (make-instance
+                                                                              'protocol:signature-help-client-capabilities
+                                                                              :signature-information
+                                                                              (json:make-json
+                                                                               :documentation-format (json:json-array "plaintext")
+                                                                               :parameter-information (json:make-json
+                                                                                                       :label-offset-support (json:json-false))))
+                                                             :definition (make-instance
+                                                                          'protocol:definition-client-capabilities
+                                                                          :link-support (json:json-false)))
                                              ;; :experimental
                                              )
                               :trace "off"
@@ -461,18 +465,21 @@
   (handler-case (protocol:server-capabilities-definition-provider (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
-(defun convert-location (location)
-  ;; TODO: end-positionも使い、定義位置への移動後のハイライトをstart/endの範囲にする
-  (let* ((start-position (protocol:range-start (protocol:location-range location)))
-         (end-position (protocol:range-end (protocol:location-range location)))
-         (uri (protocol:location-uri location))
-         (file (utils:uri-to-pathname uri)))
-    (declare (ignore end-position))
-    (lem.language-mode:make-xref-location
-     :filespec file
-     :position (lem.language-mode::make-position
-                (1+ (protocol:position-line start-position))
-                (protocol:position-character start-position)))))
+(defgeneric convert-location (location)
+  (:method ((location protocol:location))
+    ;; TODO: end-positionも使い、定義位置への移動後のハイライトをstart/endの範囲にする
+    (let* ((start-position (protocol:range-start (protocol:location-range location)))
+           (end-position (protocol:range-end (protocol:location-range location)))
+           (uri (protocol:location-uri location))
+           (file (utils:uri-to-pathname uri)))
+      (declare (ignore end-position))
+      (lem.language-mode:make-xref-location
+       :filespec file
+       :position (lem.language-mode::make-position
+                  (1+ (protocol:position-line start-position))
+                  (protocol:position-character start-position)))))
+  (:method ((location protocol:location-link))
+    (error "locationLink is unsupported")))
 
 (defun convert-definition-response (value)
   (cond ((typep value 'protocol:location)

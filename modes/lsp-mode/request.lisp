@@ -13,7 +13,8 @@
            :text-document-did-open
            :text-document-did-change
            :hover-request
-           :completion-request))
+           :completion-request
+           :signature-help))
 (in-package :lem-lsp-mode/request)
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
@@ -107,6 +108,12 @@
                           (lem-lsp-mode/type:ts-array protocol:completion-item)
                           protocol:completion-list
                           null)))
+
+(defclass signature-help (request)
+  ((params :type protocol:signature-help-params))
+  (:default-initargs
+   :method "textDocument/signatureHelp"
+   :response-class-name '(or protocol:signature-help null)))
 
 ;;; TODO
 ;;; response-class-nameのnullは特定のjsonライブラリに依存していないか確認する

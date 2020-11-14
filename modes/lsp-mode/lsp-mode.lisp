@@ -83,20 +83,33 @@
     (client:jsonrpc-connect client)
     client))
 
-(defun get-completion-trigger-characters (workspace)
+(defun convert-to-characters (string-characters)
   (map 'list
        (lambda (string) (char string 0))
-       (handler-case
-           (protocol:completion-options-trigger-characters
-            (protocol:server-capabilities-completion-provider
-             (workspace-server-capabilities workspace)))
-         (unbound-slot ()
-           nil))))
+       string-characters))
+
+(defun get-completion-trigger-characters (workspace)
+  (convert-to-characters
+   (handler-case
+       (protocol:completion-options-trigger-characters
+        (protocol:server-capabilities-completion-provider
+         (workspace-server-capabilities workspace)))
+     (unbound-slot ()
+       nil))))
+
+(defun get-signature-help-trigger-characters (workspace)
+  (convert-to-characters
+   (handler-case
+       (protocol:signature-help-options-trigger-characters
+        (protocol:server-capabilities-signature-help-provider
+         (workspace-server-capabilities workspace)))
+     (unbound-slot ()
+       nil))))
 
 (defun self-insert-hook (c)
   (alexandria:when-let* ((workspace (buffer-workspace (current-buffer)))
                          (command (gethash c (workspace-trigger-characters workspace))))
-    (funcall command)))
+    (funcall command c)))
 
 (defun buffer-change-event-to-content-change-event (point arg)
   (labels ((inserting-content-change-event (string)
@@ -136,7 +149,12 @@
                                          :prefix-search t))
   (dolist (character (get-completion-trigger-characters workspace))
     (setf (gethash character (workspace-trigger-characters workspace))
-          #'lem.language-mode::complete-symbol)))
+          (lambda (c)
+            (declare (ignore c))
+            (lem.language-mode::complete-symbol))))
+  (dolist (character (get-signature-help-trigger-characters workspace))
+    (setf (gethash character (workspace-trigger-characters workspace))
+          #'lsp-signature-help-with-trigger-character)))
 
 (defun initialize-workspace (workspace)
   (push workspace *workspaces*)
@@ -265,23 +283,24 @@
                    :uri (buffer-uri (point-buffer point)))
    :position (point-to-position point)))
 
-(defun text-document/hover (point)
-  (let ((result
-          (request:lsp-call-method
-           (workspace-client (buffer-workspace (point-buffer point)))
-           (make-instance 'request:hover-request
-                          :params (apply #'make-instance
-                                         'protocol:hover-params
-                                         (make-text-document-position-arguments point))))))
-    (when (typep result 'protocol:hover)
-      (message "~A" (hover-to-string result)))))
-
 (defun provide-hover-p (workspace)
   (protocol:server-capabilities-hover-provider (workspace-server-capabilities workspace)))
 
+(defun text-document/hover (point)
+  (alexandria:when-let ((workspace (get-workspace-from-point point)))
+    (when (provide-hover-p workspace)
+      (let ((result
+              (request:lsp-call-method
+               (workspace-client workspace)
+               (make-instance 'request:hover-request
+                              :params (apply #'make-instance
+                                             'protocol:hover-params
+                                             (make-text-document-position-arguments point))))))
+        (when result
+          (hover-to-string result))))))
+
 (define-command lsp-hover () ()
-  (when (provide-hover-p (get-workspace-from-point (current-point)))
-    (text-document/hover (current-point))))
+  (message "~A" (text-document/hover (current-point))))
 
 ;;; completion
 
@@ -303,10 +322,11 @@
              (lambda (item)
                (make-instance 'completion-item
                               :label (protocol:completion-item-label item)
-                              :detail (protocol:completion-item-detail item)
-                              :sort-text (or (handler-case (protocol:completion-item-sort-text item)
-                                               (unbound-slot ()
-                                                 (protocol:completion-item-label item))))))
+                              :detail (handler-case (protocol:completion-item-detail item)
+                                        (unbound-slot () ""))
+                              :sort-text (handler-case (protocol:completion-item-sort-text item)
+                                           (unbound-slot ()
+                                             (protocol:completion-item-label item)))))
              items)
         #'string<
         :key #'completion-item-sort-text))
@@ -326,14 +346,90 @@
   (protocol:server-capabilities-completion-provider (workspace-server-capabilities workspace)))
 
 (defun text-document/completion (point)
-  (when (provide-completion-p (get-workspace-from-point point))
-    (convert-completion-response
-     (request:lsp-call-method
-      (workspace-client (buffer-workspace (point-buffer point)))
-      (make-instance 'request:completion-request
-                     :params (apply #'make-instance
-                                    'protocol:completion-params
-                                    (make-text-document-position-arguments point)))))))
+  (alexandria:when-let ((workspace (get-workspace-from-point point)))
+    (when (provide-completion-p workspace)
+      (convert-completion-response
+       (request:lsp-call-method
+        (workspace-client workspace)
+        (make-instance 'request:completion-request
+                       :params (apply #'make-instance
+                                      'protocol:completion-params
+                                      (make-text-document-position-arguments point))))))))
+
+;;; signatureHelp
+
+;; TODO
+;; clientCapabilities
+
+(define-attribute signature-help-active-parameter-attribute
+  (t :underline-p t))
+
+(defun provide-signature-help-p (workspace)
+  (protocol:server-capabilities-signature-help-provider (workspace-server-capabilities workspace)))
+
+(defun display-signature-help (signature-help)
+  (let* ((buffer (make-buffer nil :temporary t))
+         (point (buffer-point buffer)))
+    (setf (lem:variable-value 'lem::truncate-character :buffer buffer) #\space)
+    (let ((active-parameter
+            (handler-case (protocol:signature-help-active-parameter signature-help)
+              (unbound-slot () nil)))
+          (active-signature
+            (handler-case (protocol:signature-help-active-signature signature-help)
+              (unbound-slot () nil))))
+      (utils:do-sequence (signature index (protocol:signature-help-signatures signature-help))
+        (when (plusp index) (insert-character point #\newline))
+        (let ((active-signature-p (eql index active-signature)))
+          (if active-signature-p
+              (insert-string point "* ")
+              (insert-string point "- "))
+          (insert-string point
+                         (protocol:signature-information-label signature))
+          (when active-signature-p
+            (let ((parameters
+                    (handler-case
+                        (protocol:signature-information-parameters signature)
+                      (unbound-slot () nil))))
+              (when (< active-parameter (length parameters))
+                ;; TODO: labelが[number, number]の場合に対応する
+                (let ((label (protocol:parameter-information-label (elt parameters active-parameter))))
+                  (when (stringp label)
+                    (with-point ((p point))
+                      (line-start p)
+                      (when (search-forward p label)
+                        (with-point ((start p))
+                          (character-offset start (- (length label)))
+                          (put-text-property start p :attribute 'signature-help-active-parameter-attribute)))))))))
+          (insert-character point #\space)
+          (insert-character point #\newline)
+          (insert-string point (protocol:signature-information-documentation signature))))
+      (buffer-start (buffer-point buffer))
+      (message-buffer buffer))))
+
+(defun text-document/signature-help (point &optional signature-help-context)
+  (alexandria:when-let ((workspace (get-workspace-from-point point)))
+    (when (provide-signature-help-p workspace)
+      (let ((result (request:lsp-call-method
+                     (workspace-client workspace)
+                     (make-instance 'request:signature-help
+                                    :params (apply #'make-instance
+                                                   'protocol:signature-help-params
+                                                   (append (when signature-help-context
+                                                             `(:context ,signature-help-context))
+                                                           (make-text-document-position-arguments point)))))))
+        (when result
+          (display-signature-help result))))))
+
+(defun lsp-signature-help-with-trigger-character (character)
+  (text-document/signature-help (current-point)
+                                (make-instance 'protocol:signature-help-context
+                                               :trigger-kind protocol:signature-help-trigger-kind.trigger-character
+                                               :trigger-character (string character)
+                                               :is-retrigger nil
+                                               #|:active-signature-help|#)))
+
+(define-command lsp-signature-help () ()
+  (text-document/signature-help (current-point)))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))

@@ -50,7 +50,8 @@
                                'range/test)))
       (ok (typep object 'range/test))
       (ok (position-equals (slot-value object 'start) :line 3 :character 0))
-      (ok (position-equals (slot-value object 'end) :line 5 :character 10))))
+      (ok (position-equals (slot-value object 'end) :line 5 :character 10)))
+    (ok (typep nil '(or range/test null))))
   (testing "lsp-array"
     (ok (signals (coerce-json 100 '(lem-lsp-mode/type:ts-array integer))
                  'json-type-error))

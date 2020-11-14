@@ -87,6 +87,7 @@
                    value))))))))
 
 (defun coerce-json-object-class (json json-class-name)
+  (assert-type json 'hash-table)
   (let ((object (make-instance json-class-name :dont-check-required-initarg t)))
     (loop :with unbound := '#:unbound
           :for slot :in (closer-mop:class-slots (class-of object))

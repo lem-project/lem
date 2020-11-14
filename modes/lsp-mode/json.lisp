@@ -143,7 +143,7 @@
   ()
   (:default-initargs
    :null :null
-   :false nil
+   :false 'yason:false
    :true t
    :array-type 'vector
    :object-type 'hash-table))

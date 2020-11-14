@@ -43,7 +43,7 @@
     (let ((*json-backend* (make-instance 'yason-backend)))
       (ok (eq :null (json-null)))
       (ok (eq t (json-true)))
-      (ok (eq nil (json-false))))))
+      (ok (eq 'yason:false (json-false))))))
 
 (deftest json-array
   (testing "st-json"

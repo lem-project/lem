@@ -189,20 +189,28 @@
                               :capabilities (make-instance
                                              'protocol:client-capabilities
                                              :workspace (json:make-json
-                                                         :apply-edit nil
-                                                         :workspace-edit nil
-                                                         :did-change-configuration nil
-                                                         :symbol nil
-                                                         :execute-command nil)
+                                                         ;; :apply-edit
+                                                         ;; :workspace-edit
+                                                         ;; :did-change-configuration
+                                                         ;; :symbol
+                                                         ;; :execute-command
+                                                         )
                                              :text-document (make-instance
                                                              'protocol:text-document-client-capabilities
                                                              :hover (make-instance 'protocol:hover-client-capabilities)
                                                              :completion (make-instance 'protocol:completion-client-capabilities
                                                                                         :completion-item (json:make-json)
-                                                                                        :context-support t))
-                                             :experimental nil)
-                              :trace nil
-                              :workspace-folders nil)))
+                                                                                        :context-support t)
+                                                             :signature-help (make-instance 'protocol:signature-help-client-capabilities
+                                                                                            :signature-information
+                                                                                            (json:make-json
+                                                                                             :documentation-format (json:json-array "plaintext")
+                                                                                             :parameter-information (json:make-json
+                                                                                                                     :label-offset-support (json:json-false)))))
+                                             ;; :experimental
+                                             )
+                              :trace "off"
+                              :workspace-folders (json:json-null))))
                       x)))))
     (setf (workspace-server-capabilities workspace)
           (protocol:initialize-result-capabilities initialize-result))
@@ -358,9 +366,6 @@
 
 ;;; signatureHelp
 
-;; TODO
-;; clientCapabilities
-
 (define-attribute signature-help-active-parameter-attribute
   (t :underline-p t))
 
@@ -425,11 +430,13 @@
                                 (make-instance 'protocol:signature-help-context
                                                :trigger-kind protocol:signature-help-trigger-kind.trigger-character
                                                :trigger-character (string character)
-                                               :is-retrigger nil
+                                               :is-retrigger (json:json-false)
                                                #|:active-signature-help|#)))
 
 (define-command lsp-signature-help () ()
-  (text-document/signature-help (current-point)))
+  (text-document/signature-help (current-point)
+                                (make-instance 'protocol:signature-help-context
+                                               :tirgger-kind protocol:signature-help-trigger-kind.invoked)))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))
@@ -458,22 +465,3 @@
   :root-uri-patterns '("go.mod")
   :mode :tcp
   :port 12345)
-
-#|
-ファイルを開く
-そのファイルがどの言語のファイルかを判別し、それをlanguage-idとする
-そのファイルのルートディレクトリをlanguage-idを元に探す
-ルートディレクトリに対応するworkspaceが既に作られていないか確認する
-あればそのファイルとworkspaceを紐付ける
-なければ新しくworkspaceを作る
-
-workspaceは以下のような要素を含んだ構造
-- 一つ以上のルートディレクトリ
-- language-id
-- サーバとのコネクション
-- etc
-
-workspaceを作るとき、新しくサーバプログラムを起動してstdioかtcpで接続する(tcpの場合は既に立ち上がってるサーバに接続したい場合もある?)
-そのときクライアントはサーバに対してinitializeリクエストを行う
-返ってきたレスポンスinitialized-resultにserverの情報が入っているので、それをワーススペースに保存する
-|#

@@ -137,7 +137,7 @@
                (call-background-job
                 (lambda ()
                   (with-output-to-string (s)
-                    (Uiop:run-program string
+                    (uiop:run-program string
                                       :directory directory
                                       :output s
                                       :error-output s

@@ -8,7 +8,6 @@
   :serial t
   :components ((:file "string-width-utils")
                (:file "file-utils")
-               (:file "utils")
                (:file "errors")
                (:file "hooks")
                (:file "line")

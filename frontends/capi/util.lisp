@@ -13,9 +13,11 @@
   `(handler-case
        (handler-bind ((error (lambda (c)
                                (capi:display-message "error: ~A" c)
+                               #|
                                (lem:pdebug (format nil "~%******ERROR******:~%~A~%" c))
                                (lem:pdebug (with-output-to-string (out)
-                                             (uiop:print-backtrace :stream out :condition c))))))
+                                             (uiop:print-backtrace :stream out :condition c)))
+                               |#)))
          (progn ,@body))
      (error ())))
 

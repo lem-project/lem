@@ -167,10 +167,10 @@
 
 (defun ensure-lsp-buffer (buffer)
   (let* ((spec (buffer-language-spec buffer))
-         (root-pathname (find-root-pathname (buffer-directory buffer)
-                                            (spec-root-uri-patterns spec)))
-         (root-uri (utils:pathname-to-uri root-pathname))
          (language-id (spec-langauge-id spec))
+         (root-uri (utils:pathname-to-uri
+                    (find-root-pathname (buffer-directory buffer)
+                                        (spec-root-uri-patterns spec))))
          (workspace (or (find-workspace root-uri language-id)
                         (initialize-workspace (make-workspace :client (make-and-connect-client spec)
                                                               :root-uri root-uri

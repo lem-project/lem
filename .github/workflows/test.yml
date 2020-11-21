@@ -27,3 +27,4 @@ jobs:
         sblint lib/base/lem-base.asd
         sblint lib/core/lem-core.asd
         sblint lib/lisp-syntax/lem-lisp-syntax.asd
+        sblint modes/lisp-mode/lem-lisp-mode.asd

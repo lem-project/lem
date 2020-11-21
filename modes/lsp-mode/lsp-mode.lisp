@@ -49,9 +49,9 @@
     (values)))
 
 (defun quit-all-server-process ()
-  (maphash (lambda (language-id process)
+  (maphash (lambda (language-id server-info)
              (declare (ignore language-id))
-             (lem-process:delete-process process))
+             (lem-process:delete-process (server-info-process server-info)))
            *language-id-server-info-map*))
 
 

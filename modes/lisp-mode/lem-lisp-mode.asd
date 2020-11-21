@@ -6,10 +6,10 @@
                "trivia"
                "uiop"
                "lem-core"
-               "lem-process")
+               "lem-process"
+               "lem-utils")
   :serial t
-  :components ((:file "util")
-               (:file "errors")
+  :components ((:file "errors")
                (:file "swank-protocol")
                (:file "package")
                (:file "lisp-ui-mode")

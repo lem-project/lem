@@ -524,7 +524,7 @@
                   (point (buffer-point buffer)))
              (buffer-end point)
              (insert-string point string))))
-    (lem-process:run-process (funcall (spec-command spec) spec)
+    (lem-process:run-process (funcall (spec-command spec) (spec-port spec))
                              :output-callback #'output-callback)))
 
 (defun ensure-running-server (spec)
@@ -569,6 +569,6 @@
 (def-language-spec lem-go-mode:go-mode
   :language-id "go"
   :root-uri-patterns '("go.mod")
-  :command (lambda (spec) `("gopls" "serve" "-port" ,(princ-to-string (spec-port spec))))
+  :command (lambda (port) `("gopls" "serve" "-port" ,(princ-to-string port)))
   :mode :tcp
   :port 12345)

@@ -13,7 +13,6 @@
                (:file "syntax-misc")
                (:file "syntax-parse")
                (:file "lem-scheme-syntax")
-               (:file "util")
                (:file "errors")
                (:file "swank-protocol")
                (:file "package")

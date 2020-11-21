@@ -1,10 +1,14 @@
-(defpackage :lem-lisp-mode.util
+(defpackage :lem-utils/network
   (:use :cl)
-  (:import-from :lem
+  (:import-from :usocket)
+  (:import-from :lem-utils/random
                 :random-range)
   (:export :port-available-p
            :random-port))
-(in-package :lem-lisp-mode.util)
+(in-package :lem-utils/network)
+
+#+sbcl
+(sb-ext:lock-package :lem-utils/network)
 
 (defun port-available-p (port)
   (let (socket)

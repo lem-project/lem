@@ -5,7 +5,6 @@
            :bests-if
            :max-if
            :min-if
-           :random-range
            :find-tree))
 (in-package :lem-base/utils)
 
@@ -42,9 +41,6 @@
 
 (defun min-if (fn list)
   (bests-if fn list #'<))
-
-(defun random-range (min max &optional (state *random-state*))
-  (+ min (random (- max min) state)))
 
 (defun find-tree (x tree)
   (cond ((null tree) nil)

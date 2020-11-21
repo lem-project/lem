@@ -552,8 +552,11 @@
   (getf spec :command))
 
 (defmacro def-language-spec (major-mode &rest plist)
-  `(setf (gethash ',major-mode *language-spec-table*)
-         (list ,@plist)))
+  `(progn
+     (setf (gethash ',major-mode *language-spec-table*)
+           (list ,@plist))
+     ,(when (mode-hook major-mode)
+        `(add-hook ,(mode-hook major-mode) 'lsp-mode))))
 
 (def-language-spec lem-go-mode:go-mode
   :language-id "go"

@@ -78,10 +78,32 @@
 (defmethod make-client ((mode (eql :tcp)) spec)
   (make-instance 'client:tcp-client :port (spec-port spec)))
 
-(defun make-and-connect-client (spec)
+(defun make-client-and-connect (spec)
   (let ((client (make-client (spec-mode spec) spec)))
     (client:jsonrpc-connect client)
     client))
+
+(defun server-process-buffer-name (spec)
+  (format nil "Lsp ~A" (spec-langauge-id spec)))
+
+(defun make-server-process-buffer (spec)
+  (make-buffer (server-process-buffer-name spec)))
+
+(defvar *language-id-process-map* (make-hash-table :test 'equal))
+
+(defun run-server (spec)
+  (flet ((output-callback (string)
+           (let* ((buffer (make-server-process-buffer spec))
+                  (point (buffer-point buffer)))
+             (buffer-end point)
+             (insert-string point string))))
+    (lem-process:run-process (funcall (spec-command spec) spec)
+                             :output-callback #'output-callback)))
+
+(defun ensure-running-server (spec)
+  (or (gethash (spec-langauge-id spec) *language-id-process-map*)
+      (setf (gethash (spec-langauge-id spec) *language-id-process-map*)
+            (run-server spec))))
 
 (defun convert-to-characters (string-characters)
   (map 'list
@@ -166,16 +188,17 @@
   workspace)
 
 (defun ensure-lsp-buffer (buffer)
-  (let* ((spec (buffer-language-spec buffer))
-         (language-id (spec-langauge-id spec))
-         (root-uri (utils:pathname-to-uri
-                    (find-root-pathname (buffer-directory buffer)
-                                        (spec-root-uri-patterns spec))))
-         (workspace (or (find-workspace root-uri language-id)
-                        (initialize-workspace (make-workspace :client (make-and-connect-client spec)
-                                                              :root-uri root-uri
-                                                              :language-id language-id)))))
-    (assign-workspace-to-buffer buffer workspace)))
+  (let ((spec (buffer-language-spec buffer)))
+    (ensure-running-server spec)
+    (let* ((language-id (spec-langauge-id spec))
+           (root-uri (utils:pathname-to-uri
+                      (find-root-pathname (buffer-directory buffer)
+                                          (spec-root-uri-patterns spec))))
+           (workspace (or (find-workspace root-uri language-id)
+                          (initialize-workspace (make-workspace :client (make-client-and-connect spec)
+                                                                :root-uri root-uri
+                                                                :language-id language-id)))))
+      (assign-workspace-to-buffer buffer workspace))))
 
 (defun initialize (workspace)
   (let ((initialize-result
@@ -525,6 +548,9 @@
 (defun spec-port (spec)
   (getf spec :port))
 
+(defun spec-command (spec)
+  (getf spec :command))
+
 (defmacro def-language-spec (major-mode &rest plist)
   `(setf (gethash ',major-mode *language-spec-table*)
          (list ,@plist)))
@@ -532,5 +558,6 @@
 (def-language-spec lem-go-mode:go-mode
   :language-id "go"
   :root-uri-patterns '("go.mod")
+  :command (lambda (spec) `("gopls" "serve" "-port" ,(princ-to-string (spec-port spec))))
   :mode :tcp
   :port 12345)

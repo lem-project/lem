@@ -15,6 +15,47 @@
 (lem-lsp-mode/project:local-nickname :client :lem-lsp-mode/client)
 (lem-lsp-mode/project:local-nickname :completion :lem.completion-mode)
 
+;;;
+(defvar *language-id-server-info-map* (make-hash-table :test 'equal))
+
+(defstruct server-info
+  port
+  process)
+
+(defun server-process-buffer-name (spec)
+  (format nil "*Lsp <~A>*" (spec-langauge-id spec)))
+
+(defun make-server-process-buffer (spec)
+  (make-buffer (server-process-buffer-name spec)))
+
+(defun run-server (spec)
+  (flet ((output-callback (string)
+           (let* ((buffer (make-server-process-buffer spec))
+                  (point (buffer-point buffer)))
+             (buffer-end point)
+             (insert-string point string))))
+    (let* ((port (lem-utils/socket:random-available-port))
+           (process (lem-process:run-process (funcall (spec-command spec) port)
+                                             :output-callback #'output-callback)))
+      (make-server-info :process process :port port))))
+
+(defun get-running-server-info (spec)
+  (gethash (spec-langauge-id spec) *language-id-server-info-map*))
+
+(defun ensure-running-server-process (spec)
+  (unless (get-running-server-info spec)
+    (setf (gethash (spec-langauge-id spec) *language-id-server-info-map*)
+          (run-server spec))
+    (values)))
+
+(defun quit-all-server-process ()
+  (maphash (lambda (language-id process)
+             (declare (ignore language-id))
+             (lem-process:delete-process process))
+           *language-id-server-info-map*))
+
+
+;;;
 (defvar *workspaces* '())
 
 (defstruct workspace
@@ -74,13 +115,25 @@
                                         (return t))))))
       (pathname directory)))
 
-(defgeneric make-client (mode spec))
+(defgeneric make-client (client-params))
 
-(defmethod make-client ((mode (eql :tcp)) spec)
-  (make-instance 'client:tcp-client :port (spec-port spec)))
+(defstruct client-params)
+(defstruct (tcp-client-params (:include client-params)) port)
+
+(defun get-connected-port (spec)
+  (let ((server-info (get-running-server-info spec)))
+    (assert server-info)
+    (server-info-port server-info)))
+
+(defun make-client-params-from-spec (spec)
+  (ecase (spec-mode spec)
+    (:tcp (make-tcp-client-params :port (get-connected-port spec)))))
+
+(defmethod make-client ((client-params tcp-client-params))
+  (make-instance 'client:tcp-client :port (tcp-client-params-port client-params)))
 
 (defun make-client-and-connect (spec)
-  (let ((client (make-client (spec-mode spec) spec)))
+  (let ((client (make-client (make-client-params-from-spec spec))))
     (client:jsonrpc-connect client)
     client))
 
@@ -168,15 +221,16 @@
 
 (defun ensure-lsp-buffer (buffer)
   (let ((spec (buffer-language-spec buffer)))
-    (ensure-running-server spec)
+    (ensure-running-server-process spec)
     (let* ((language-id (spec-langauge-id spec))
            (root-uri (utils:pathname-to-uri
                       (find-root-pathname (buffer-directory buffer)
                                           (spec-root-uri-patterns spec))))
            (workspace (or (find-workspace root-uri language-id)
-                          (initialize-workspace (make-workspace :client (make-client-and-connect spec)
-                                                                :root-uri root-uri
-                                                                :language-id language-id)))))
+                          (initialize-workspace
+                           (make-workspace :client (make-client-and-connect spec)
+                                           :root-uri root-uri
+                                           :language-id language-id)))))
       (assign-workspace-to-buffer buffer workspace))))
 
 (defun initialize (workspace)
@@ -508,35 +562,6 @@
       (text-document/definition point)
     (jsonrpc/errors:jsonrpc-callback-error (c)
       (editor-error "~A" c))))
-
-;;;
-(defvar *language-id-process-map* (make-hash-table :test 'equal))
-
-(defun server-process-buffer-name (spec)
-  (format nil "*Lsp <~A>*" (spec-langauge-id spec)))
-
-(defun make-server-process-buffer (spec)
-  (make-buffer (server-process-buffer-name spec)))
-
-(defun run-server (spec)
-  (flet ((output-callback (string)
-           (let* ((buffer (make-server-process-buffer spec))
-                  (point (buffer-point buffer)))
-             (buffer-end point)
-             (insert-string point string))))
-    (lem-process:run-process (funcall (spec-command spec) (spec-port spec))
-                             :output-callback #'output-callback)))
-
-(defun ensure-running-server (spec)
-  (or (gethash (spec-langauge-id spec) *language-id-process-map*)
-      (setf (gethash (spec-langauge-id spec) *language-id-process-map*)
-            (run-server spec))))
-
-(defun quit-all-server-process ()
-  (maphash (lambda (language-id process)
-             (declare (ignore language-id))
-             (lem-process:delete-process process))
-           *language-id-process-map*))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))

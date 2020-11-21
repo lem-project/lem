@@ -90,28 +90,6 @@
 (defun make-server-process-buffer (spec)
   (make-buffer (server-process-buffer-name spec)))
 
-(defvar *language-id-process-map* (make-hash-table :test 'equal))
-
-(defun run-server (spec)
-  (flet ((output-callback (string)
-           (let* ((buffer (make-server-process-buffer spec))
-                  (point (buffer-point buffer)))
-             (buffer-end point)
-             (insert-string point string))))
-    (lem-process:run-process (funcall (spec-command spec) spec)
-                             :output-callback #'output-callback)))
-
-(defun ensure-running-server (spec)
-  (or (gethash (spec-langauge-id spec) *language-id-process-map*)
-      (setf (gethash (spec-langauge-id spec) *language-id-process-map*)
-            (run-server spec))))
-
-(defun quit-all-server-process ()
-  (maphash (lambda (language-id process)
-             (declare (ignore language-id))
-             (lem-process:delete-process process))
-           *language-id-process-map*))
-
 (defun convert-to-characters (string-characters)
   (map 'list
        (lambda (string) (char string 0))
@@ -536,6 +514,29 @@
       (text-document/definition point)
     (jsonrpc/errors:jsonrpc-callback-error (c)
       (editor-error "~A" c))))
+
+;;;
+(defvar *language-id-process-map* (make-hash-table :test 'equal))
+
+(defun run-server (spec)
+  (flet ((output-callback (string)
+           (let* ((buffer (make-server-process-buffer spec))
+                  (point (buffer-point buffer)))
+             (buffer-end point)
+             (insert-string point string))))
+    (lem-process:run-process (funcall (spec-command spec) spec)
+                             :output-callback #'output-callback)))
+
+(defun ensure-running-server (spec)
+  (or (gethash (spec-langauge-id spec) *language-id-process-map*)
+      (setf (gethash (spec-langauge-id spec) *language-id-process-map*)
+            (run-server spec))))
+
+(defun quit-all-server-process ()
+  (maphash (lambda (language-id process)
+             (declare (ignore language-id))
+             (lem-process:delete-process process))
+           *language-id-process-map*))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))

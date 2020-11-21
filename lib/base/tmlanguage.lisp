@@ -97,7 +97,7 @@
                  :end (let ((tree (if (stringp end)
                                       (ppcre:parse-string end)
                                       end)))
-                        (if (find-tree :back-reference tree)
+                        (if (lem-utils:find-tree :back-reference tree)
                             tree
                             (ppcre:create-scanner end)))
                  :begin-captures (or begin-captures captures)

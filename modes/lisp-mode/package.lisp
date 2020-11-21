@@ -5,8 +5,7 @@
         :lem.language-mode
         :lem.button
         :lem-lisp-mode.errors
-        :lem-lisp-mode.swank-protocol
-        :lem-utils/socket)
+        :lem-lisp-mode.swank-protocol)
   (:export
    ;;lisp-ui-mode.lisp
    :*lisp-ui-keymap*

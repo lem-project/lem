@@ -3,7 +3,8 @@
                "iterate"
                "alexandria"
                "cl-ppcre"
-               "babel")
+               "babel"
+               "lem-utils")
   :serial t
   :components ((:file "string-width-utils")
                (:file "file-utils")

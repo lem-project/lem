@@ -769,7 +769,7 @@ next line because it is at the end of width."
     (if horizontal-p
         (cond ((< (window-%x deleted-window)
                   (window-%x (car window-list)))
-               (dolist (win (min-if #'window-%x window-list))
+               (dolist (win (lem-utils:min-if #'window-%x window-list))
                  (window-set-pos win
                                  (window-%x deleted-window)
                                  (window-%y win))
@@ -779,7 +779,7 @@ next line because it is at the end of width."
                                      (window-%width win))
                                   (window-%height win))))
               (t
-               (dolist (win (max-if #'window-%x window-list))
+               (dolist (win (lem-utils:max-if #'window-%x window-list))
                  (window-set-size win
                                   (+ (window-%width deleted-window)
                                      1
@@ -787,7 +787,7 @@ next line because it is at the end of width."
                                   (window-%height win)))))
         (cond ((< (window-%y deleted-window)
                   (window-%y (car window-list)))
-               (dolist (win (min-if #'window-%y window-list))
+               (dolist (win (lem-utils:min-if #'window-%y window-list))
                  (window-set-pos win
                                  (window-%x win)
                                  (window-%y deleted-window))
@@ -796,7 +796,7 @@ next line because it is at the end of width."
                                   (+ (window-%height deleted-window)
                                      (window-%height win)))))
               (t
-               (dolist (win (max-if #'window-%y window-list))
+               (dolist (win (lem-utils:max-if #'window-%y window-list))
                  (window-set-size win
                                   (window-%width win)
                                   (+ (window-%height deleted-window)
@@ -830,22 +830,22 @@ next line because it is at the end of width."
   t)
 
 (defun collect-left-windows (window-list)
-  (min-if #'window-%x window-list))
+  (lem-utils:min-if #'window-%x window-list))
 
 (defun collect-right-windows (window-list)
-  (max-if (lambda (window)
-            (+ (window-%x window)
-               (window-%width window)))
-          window-list))
+  (lem-utils:max-if (lambda (window)
+                      (+ (window-%x window)
+                         (window-%width window)))
+                    window-list))
 
 (defun collect-top-windows (window-list)
-  (min-if #'window-%y window-list))
+  (lem-utils:min-if #'window-%y window-list))
 
 (defun collect-bottom-windows (window-list)
-  (max-if (lambda (window)
-            (+ (window-%y window)
-               (window-%height window)))
-          window-list))
+  (lem-utils:max-if (lambda (window)
+                      (+ (window-%y window)
+                         (window-%height window)))
+                    window-list))
 
 (defun %shrink-windows (window-list
                         collect-windows-fn
@@ -1114,11 +1114,11 @@ next line because it is at the end of width."
 
 (defun right-window (window)
   (unless (floating-window-p window)
-    (first (sort (min-if #'window-x
-                         (remove-if-not (lambda (w)
-                                          (> (window-x w)
-                                             (+ (window-x window) (window-width window))))
-                                        (window-list)))
+    (first (sort (lem-utils:min-if #'window-x
+                                   (remove-if-not (lambda (w)
+                                                    (> (window-x w)
+                                                       (+ (window-x window) (window-width window))))
+                                                  (window-list)))
                  (difference-window-y window)))))
 
 (defun up-window (window)
@@ -1135,10 +1135,10 @@ next line because it is at the end of width."
 
 (defun down-window (window)
   (unless (floating-window-p window)
-    (first (sort (min-if #'window-y
-                         (remove-if-not (lambda (w)
-                                          (>= (window-y w) (+ (window-y window) (window-height window))))
-                                        (window-list)))
+    (first (sort (lem-utils:min-if #'window-y
+                                   (remove-if-not (lambda (w)
+                                                    (>= (window-y w) (+ (window-y window) (window-height window))))
+                                                  (window-list)))
                  (difference-window-x window)))))
 
 (defclass floating-window (window)

@@ -61,6 +61,7 @@
      :enable-hook 'enable-hook))
 
 (defun enable-hook ()
+  (add-hook *exit-editor-hook* 'quit-all-server-process)
   (ensure-lsp-buffer (current-buffer))
   (text-document/did-open (current-buffer)))
 
@@ -104,6 +105,12 @@
   (or (gethash (spec-langauge-id spec) *language-id-process-map*)
       (setf (gethash (spec-langauge-id spec) *language-id-process-map*)
             (run-server spec))))
+
+(defun quit-all-server-process ()
+  (maphash (lambda (language-id process)
+             (declare (ignore language-id))
+             (lem-process:delete-process process))
+           *language-id-process-map*))
 
 (defun convert-to-characters (string-characters)
   (map 'list

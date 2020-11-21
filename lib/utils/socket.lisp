@@ -3,7 +3,7 @@
   (:import-from :usocket)
   (:import-from :lem-utils)
   (:export :port-available-p
-           :random-port))
+           :random-available-port))
 (in-package :lem-utils/socket)
 
 #+sbcl
@@ -27,7 +27,7 @@
         (usocket:socket-close socket)
         port))))
 
-(defun random-port ()
+(defun random-available-port ()
   (loop :for port := (lem-utils:random-range 49152 65535)
         :when (port-available-p port)
         :return port))

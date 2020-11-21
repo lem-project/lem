@@ -1026,7 +1026,7 @@
   ;;(unless command
   ;;  (setf command (get-lisp-command :impl *impl-name*)))
   (let ((port (or (lem-utils/socket:port-available-p *default-port*)
-                  (lem-utils/socket:random-port))))
+                  (lem-utils/socket:random-available-port))))
 
     ;; for r7rs-swank (make command)
     (unless command

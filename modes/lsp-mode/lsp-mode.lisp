@@ -84,12 +84,6 @@
     (client:jsonrpc-connect client)
     client))
 
-(defun server-process-buffer-name (spec)
-  (format nil "Lsp ~A" (spec-langauge-id spec)))
-
-(defun make-server-process-buffer (spec)
-  (make-buffer (server-process-buffer-name spec)))
-
 (defun convert-to-characters (string-characters)
   (map 'list
        (lambda (string) (char string 0))
@@ -517,6 +511,12 @@
 
 ;;;
 (defvar *language-id-process-map* (make-hash-table :test 'equal))
+
+(defun server-process-buffer-name (spec)
+  (format nil "*Lsp <~A>*" (spec-langauge-id spec)))
+
+(defun make-server-process-buffer (spec)
+  (make-buffer (server-process-buffer-name spec)))
 
 (defun run-server (spec)
   (flet ((output-callback (string)

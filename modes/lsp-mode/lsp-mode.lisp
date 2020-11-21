@@ -183,41 +183,41 @@
            (workspace-client workspace)
            (make-instance
             'request:initialize-request
-            :params (let ((x (make-instance
-                              'protocol:initialize-params
-                              :process-id (utils:get-pid)
-                              :client-info (json:make-json :name "lem" #|:version "0.0.0"|#)
-                              :root-uri (workspace-root-uri workspace)
-                              :capabilities (make-instance
-                                             'protocol:client-capabilities
-                                             :workspace (json:make-json
-                                                         ;; :apply-edit
-                                                         ;; :workspace-edit
-                                                         ;; :did-change-configuration
-                                                         ;; :symbol
-                                                         ;; :execute-command
-                                                         )
-                                             :text-document (make-instance
-                                                             'protocol:text-document-client-capabilities
-                                                             :hover (make-instance 'protocol:hover-client-capabilities)
-                                                             :completion (make-instance 'protocol:completion-client-capabilities
-                                                                                        :completion-item (json:make-json)
-                                                                                        :context-support t)
-                                                             :signature-help (make-instance
-                                                                              'protocol:signature-help-client-capabilities
-                                                                              :signature-information
-                                                                              (json:make-json
-                                                                               :documentation-format (json:json-array "plaintext")
-                                                                               :parameter-information (json:make-json
-                                                                                                       :label-offset-support (json:json-false))))
-                                                             :definition (make-instance
-                                                                          'protocol:definition-client-capabilities
-                                                                          :link-support (json:json-false)))
-                                             ;; :experimental
-                                             )
-                              :trace "off"
-                              :workspace-folders (json:json-null))))
-                      x)))))
+            :params (make-instance
+                     'protocol:initialize-params
+                     :process-id (utils:get-pid)
+                     :client-info (json:make-json :name "lem" #|:version "0.0.0"|#)
+                     :root-uri (workspace-root-uri workspace)
+                     :capabilities (make-instance
+                                    'protocol:client-capabilities
+                                    :workspace (json:make-json
+                                                ;; :apply-edit
+                                                ;; :workspace-edit
+                                                ;; :did-change-configuration
+                                                ;; :symbol
+                                                ;; :execute-command
+                                                )
+                                    :text-document (make-instance
+                                                    'protocol:text-document-client-capabilities
+                                                    :hover (make-instance 'protocol:hover-client-capabilities)
+                                                    :completion (make-instance 'protocol:completion-client-capabilities
+                                                                               :completion-item (json:make-json)
+                                                                               :context-support t)
+                                                    :signature-help (make-instance
+                                                                     'protocol:signature-help-client-capabilities
+                                                                     :signature-information
+                                                                     (json:make-json
+                                                                      :documentation-format (json:json-array "plaintext")
+                                                                      :parameter-information (json:make-json
+                                                                                              :label-offset-support
+                                                                                              (json:json-false))))
+                                                    :definition (make-instance
+                                                                 'protocol:definition-client-capabilities
+                                                                 :link-support (json:json-false)))
+                                    ;; :experimental
+                                    )
+                     :trace "off"
+                     :workspace-folders (json:json-null))))))
     (setf (workspace-server-capabilities workspace)
           (protocol:initialize-result-capabilities initialize-result))
     (setf (workspace-server-info workspace)

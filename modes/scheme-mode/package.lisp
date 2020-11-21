@@ -5,7 +5,7 @@
         :lem.language-mode
         :lem-scheme-mode.errors
         :lem-scheme-mode.swank-protocol
-        :lem-utils/network)
+        :lem-utils/socket)
   (:export
    ;; scheme-mode.lisp
    :scheme-mode

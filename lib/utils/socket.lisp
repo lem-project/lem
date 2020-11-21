@@ -1,14 +1,14 @@
-(defpackage :lem-utils/network
+(defpackage :lem-utils/socket
   (:use :cl)
   (:import-from :usocket)
   (:import-from :lem-utils/random
                 :random-range)
   (:export :port-available-p
            :random-port))
-(in-package :lem-utils/network)
+(in-package :lem-utils/socket)
 
 #+sbcl
-(sb-ext:lock-package :lem-utils/network)
+(sb-ext:lock-package :lem-utils/socket)
 
 (defun port-available-p (port)
   (let (socket)

@@ -1,6 +1,7 @@
 (defpackage :lem-lsp-mode/lsp-mode
   (:use :cl :lem :alexandria)
   (:import-from :lem-lsp-mode/json)
+  (:import-from :lem-lsp-mode/json-lsp-utils)
   (:import-from :lem-lsp-mode/utils)
   (:import-from :lem-lsp-mode/protocol)
   (:import-from :lem-lsp-mode/request)
@@ -14,6 +15,14 @@
 (lem-lsp-mode/project:local-nickname :json :lem-lsp-mode/json)
 (lem-lsp-mode/project:local-nickname :client :lem-lsp-mode/client)
 (lem-lsp-mode/project:local-nickname :completion :lem.completion-mode)
+
+(defparameter *client-capabilities-text*
+  #.(uiop:read-file-string (asdf:system-relative-pathname :lem-lsp-mode "client-capabilities.json")))
+
+(defun client-capabilities ()
+  (lem-lsp-mode/json-lsp-utils:coerce-json
+   (yason:parse *client-capabilities-text*)
+   'protocol:client-capabilities))
 
 ;;;
 (defvar *language-id-server-info-map* (make-hash-table :test 'equal))
@@ -252,40 +261,7 @@
                      :process-id (utils:get-pid)
                      :client-info (json:make-json :name "lem" #|:version "0.0.0"|#)
                      :root-uri (workspace-root-uri workspace)
-                     :capabilities (make-instance
-                                    'protocol:client-capabilities
-                                    :workspace (json:make-json
-                                                ;; :apply-edit
-                                                ;; :workspace-edit
-                                                ;; :did-change-configuration
-                                                ;; :symbol
-                                                ;; :execute-command
-                                                )
-                                    :text-document (make-instance
-                                                    'protocol:text-document-client-capabilities
-                                                    :hover (make-instance 'protocol:hover-client-capabilities)
-                                                    :completion (make-instance 'protocol:completion-client-capabilities
-                                                                               :completion-item (json:make-json)
-                                                                               :context-support t)
-                                                    :signature-help (make-instance
-                                                                     'protocol:signature-help-client-capabilities
-                                                                     :signature-information
-                                                                     (json:make-json
-                                                                      :documentation-format (json:json-array "plaintext")
-                                                                      :parameter-information (json:make-json
-                                                                                              :label-offset-support
-                                                                                              (json:json-false))))
-                                                    :definition (make-instance
-                                                                 'protocol:definition-client-capabilities
-                                                                 :link-support (json:json-false))
-                                                    :type-definition (make-instance
-                                                                      'protocol:type-definition-client-capabilities
-                                                                      :link-support (json:json-false))
-                                                    :implementation (make-instance
-                                                                     'protocol:implementation-client-capabilities
-                                                                     :link-support (json:json-false))
-                                                    :references (make-instance
-                                                                 'protocol:reference-client-capabilities)))
+                     :capabilities (client-capabilities)
                      :trace "off"
                      :workspace-folders (json:json-null))))))
     (setf (workspace-server-capabilities workspace)
@@ -665,6 +641,11 @@
 
 (defun find-references (point)
   (text-document/references point))
+
+;;; document highlights
+
+(defun text-document/document-highlight (point)
+  )
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))

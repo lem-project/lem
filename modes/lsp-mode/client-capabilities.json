@@ -1,0 +1,34 @@
+{
+  "workspace":{
+  },
+  "textDocument":{
+    "completion":{
+      "completionItem":{
+      },
+      "contextSupport":true
+    },
+    "hover":{
+    },
+    "signatureHelp":{
+      "signatureInformation":{
+        "documentationFormat":[
+          "plaintext"
+        ],
+        "parameterInformation":{
+          "labelOffsetSupport":false
+        }
+      }
+    },
+    "definition":{
+      "linkSupport":false
+    },
+    "typeDefinition":{
+      "linkSupport":false
+    },
+    "implementation":{
+      "linkSupport":false
+    },
+    "references":{
+    }
+  }
+}

@@ -277,9 +277,15 @@
                                                                                               (json:json-false))))
                                                     :definition (make-instance
                                                                  'protocol:definition-client-capabilities
-                                                                 :link-support (json:json-false)))
-                                    ;; :experimental
-                                    )
+                                                                 :link-support (json:json-false))
+                                                    :type-definition (make-instance
+                                                                      'protocol:type-definition-client-capabilities
+                                                                      :link-support (json:json-false))
+                                                    :implementation (make-instance
+                                                                     'protocol:implementation-client-capabilities
+                                                                     :link-support (json:json-false))
+                                                    :references (make-instance
+                                                                 'protocol:reference-client-capabilities)))
                      :trace "off"
                      :workspace-folders (json:json-null))))))
     (setf (workspace-server-capabilities workspace)

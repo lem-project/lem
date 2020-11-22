@@ -15,7 +15,8 @@
            :hover-request
            :completion-request
            :signature-help
-           :definition))
+           :definition
+           :type-definition))
 (in-package :lem-lsp-mode/request)
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
@@ -124,6 +125,16 @@
   ((params :type protocol:definition-params))
   (:default-initargs
    :method "textDocument/definition"
+   :response-class-name '(or
+                          protocol:location
+                          (lem-lsp-mode/type:ts-array protocol:location)
+                          (lem-lsp-mode/type:ts-array protocol:location-link)
+                          null)))
+
+(defclass type-definition (request)
+  ((params :type protocol:definition-params))
+  (:default-initargs
+   :method "textDocument/typeDefinition"
    :response-class-name '(or
                           protocol:location
                           (lem-lsp-mode/type:ts-array protocol:location)

@@ -563,6 +563,33 @@
     (jsonrpc/errors:jsonrpc-callback-error (c)
       (editor-error "~A" c))))
 
+;;; type definition
+
+(defun provide-type-definition-p (workspace)
+  (handler-case (protocol:server-capabilities-type-definition-provider (workspace-server-capabilities workspace))
+    (unbound-slot () nil)))
+
+(defun convert-type-definition-response (value)
+  (convert-definition-response value))
+
+(defun text-document/type-definition (point)
+  (when-let ((workspace (get-workspace-from-point point)))
+    (when (provide-type-definition-p workspace)
+      (convert-type-definition-response
+       (request:lsp-call-method
+        (workspace-client workspace)
+        (make-instance 'request:type-definition
+                       :params (apply #'make-instance
+                                      'protocol:type-definition-params
+                                      (make-text-document-position-arguments point))))))))
+
+(define-command lsp-type-definition () ()
+  (let ((xref-locations
+          (handler-case (text-document/type-definition (current-point))
+            (jsonrpc/errors:jsonrpc-callback-error (c)
+              (editor-error "~A" c)))))
+    (lem.language-mode::show-locations xref-locations)))
+
 ;;;
 (defvar *language-spec-table* (make-hash-table))
 
@@ -597,3 +624,32 @@
   :command (lambda (port) `("gopls" "serve" "-port" ,(princ-to-string port)))
   :mode :tcp
   :port 12345)
+
+
+#|
+- [X] completion
+- [ ] completion resolve
+- [X] hover
+- [X] signatureHelp
+- [ ] declaration
+- [X] definition
+- [ ] typeDefinition
+- [ ] implementation
+- [ ] references
+- [ ] documentHighlight
+- [ ] documentSymbol
+- [ ] codeAction
+- [ ] codeLens
+- [ ] codeLens resolve
+- [ ] documentLink
+- [ ] documentLink resolve
+- [ ] documentColor
+- [ ] colorPresentation
+- [ ] formatting
+- [ ] rangeFormatting
+- [ ] onTypeFormatting
+- [ ] rename
+- [ ] prepareRename
+- [ ] foldingRange
+- [ ] selectionRange
+|#

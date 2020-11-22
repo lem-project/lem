@@ -7,6 +7,8 @@
                 :object-to-json)
   (:import-from :lem-lsp-mode/client
                 :client-connection)
+  (:import-from :lem-lsp-mode/type
+                :ts-array)
   (:export :lsp-call-method
            :initialize-request
            :initialized-request
@@ -18,7 +20,8 @@
            :definition
            :type-definition
            :implementation
-           :references))
+           :references
+           :document-highlight))
 (in-package :lem-lsp-mode/request)
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
@@ -113,7 +116,7 @@
   (:default-initargs
    :method "textDocument/completion"
    :response-class-name '(or
-                          (lem-lsp-mode/type:ts-array protocol:completion-item)
+                          (ts-array protocol:completion-item)
                           protocol:completion-list
                           null)))
 
@@ -129,8 +132,8 @@
    :method "textDocument/definition"
    :response-class-name '(or
                           protocol:location
-                          (lem-lsp-mode/type:ts-array protocol:location)
-                          (lem-lsp-mode/type:ts-array protocol:location-link)
+                          (ts-array protocol:location)
+                          (ts-array protocol:location-link)
                           null)))
 
 (defclass type-definition (request)
@@ -139,8 +142,8 @@
    :method "textDocument/typeDefinition"
    :response-class-name '(or
                           protocol:location
-                          (lem-lsp-mode/type:ts-array protocol:location)
-                          (lem-lsp-mode/type:ts-array protocol:location-link)
+                          (ts-array protocol:location)
+                          (ts-array protocol:location-link)
                           null)))
 
 (defclass implementation (request)
@@ -149,8 +152,8 @@
    :method "textDocument/implementation"
    :response-class-name '(or
                           protocol:location
-                          (lem-lsp-mode/type:ts-array protocol:location)
-                          (lem-lsp-mode/type:ts-array protocol:location-link)
+                          (ts-array protocol:location)
+                          (ts-array protocol:location-link)
                           null)))
 
 (defclass references (request)
@@ -158,7 +161,15 @@
   (:default-initargs
    :method "textDocument/references"
    :response-class-name '(or
-                          (lem-lsp-mode/type:ts-array protocol:location)
+                          (ts-array protocol:location)
+                          null)))
+
+(defclass document-highlight (request)
+  ((params :type protocol:document-highlight-params))
+  (:default-initargs
+   :method "textDocument/documentHighlight"
+   :response-class-name '(or
+                          (ts-array protocol:document-highlight)
                           null)))
 
 ;;; TODO

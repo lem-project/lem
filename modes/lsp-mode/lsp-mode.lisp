@@ -279,6 +279,12 @@
                  :line (1- (line-number-at-point point))
                  :character (point-charpos point)))
 
+(defun move-to-lsp-position (point position)
+  (buffer-start point)
+  (line-offset point
+               (protocol:position-line position)
+               (protocol:position-character position)))
+
 (defun buffer-to-text-document-item (buffer)
   (make-instance 'protocol:text-document-item
                  :uri (buffer-uri buffer)
@@ -437,7 +443,7 @@
           (active-signature
             (handler-case (protocol:signature-help-active-signature signature-help)
               (unbound-slot () nil))))
-      (utils:do-sequence (signature index (protocol:signature-help-signatures signature-help))
+      (utils:do-sequence ((signature index) (protocol:signature-help-signatures signature-help))
         (when (plusp index) (insert-character point #\newline))
         (let ((active-signature-p (eql index active-signature)))
           (if active-signature-p
@@ -644,8 +650,35 @@
 
 ;;; document highlights
 
+(define-attribute document-highlight-text-attribute
+  (t :background :gray))
+
+(defun provide-document-highlight-p (workspace)
+  (handler-case (protocol:server-capabilities-document-highlight-provider (workspace-server-capabilities workspace))
+    (unbound-slot () nil)))
+
+(defun display-document-highlights (buffer document-highlights)
+  (with-point ((start (buffer-point buffer))
+               (end (buffer-point buffer)))
+    (utils:do-sequence (document-highlight document-highlights)
+      (let* ((range (protocol:document-highlight-range document-highlight)))
+        (move-to-lsp-position start (protocol:range-start range))
+        (move-to-lsp-position end (protocol:range-end range))
+        (make-overlay start end 'document-highlight-text-attribute)))))
+
 (defun text-document/document-highlight (point)
-  )
+  (when-let ((workspace (get-workspace-from-point point)))
+    (when (provide-document-highlight-p workspace)
+      (request:lsp-call-method
+       (workspace-client workspace)
+       (make-instance 'request:document-highlight
+                      :params (apply #'make-instance
+                                     'protocol:document-highlight-params
+                                     (make-text-document-position-arguments point)))))))
+
+(define-command lsp-document-highlight () ()
+  (display-document-highlights (current-buffer)
+                               (text-document/document-highlight (current-point))))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))

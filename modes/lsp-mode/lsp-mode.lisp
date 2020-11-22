@@ -112,14 +112,15 @@
 (defun get-workspace-from-point (point)
   (buffer-workspace (point-buffer point)))
 
-(lem:define-minor-mode lsp-mode
+(define-minor-mode lsp-mode
     (:name "Language Client"
      :enable-hook 'enable-hook))
 
 (defun enable-hook ()
   (add-hook *exit-editor-hook* 'quit-all-server-process)
   (ensure-lsp-buffer (current-buffer))
-  (text-document/did-open (current-buffer)))
+  (text-document/did-open (current-buffer))
+  (enable-document-highlight-idle-timer))
 
 (defun find-root-pathname (directory uri-patterns)
   (or (utils:find-root-pathname directory
@@ -651,20 +652,27 @@
 ;;; document highlights
 
 (define-attribute document-highlight-text-attribute
-  (t :background :gray))
+  (t :background "yellow4"))
 
 (defun provide-document-highlight-p (workspace)
   (handler-case (protocol:server-capabilities-document-highlight-provider (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
+(defvar *document-highlight-overlays* '())
+
+(defun clear-document-highlight-overlays ()
+  (mapc #'delete-overlay *document-highlight-overlays*))
+
 (defun display-document-highlights (buffer document-highlights)
+  (clear-document-highlight-overlays)
   (with-point ((start (buffer-point buffer))
                (end (buffer-point buffer)))
     (utils:do-sequence (document-highlight document-highlights)
       (let* ((range (protocol:document-highlight-range document-highlight)))
         (move-to-lsp-position start (protocol:range-start range))
         (move-to-lsp-position end (protocol:range-end range))
-        (make-overlay start end 'document-highlight-text-attribute)))))
+        (push (make-overlay start end 'document-highlight-text-attribute)
+              *document-highlight-overlays*)))))
 
 (defun text-document/document-highlight (point)
   (when-let ((workspace (get-workspace-from-point point)))
@@ -675,13 +683,23 @@
                       :callback (lambda (value)
                                   (send-event (lambda ()
                                                 (display-document-highlights (point-buffer point)
-                                                                             value))))
+                                                                             value)
+                                                (redraw-display))))
                       :params (apply #'make-instance
                                      'protocol:document-highlight-params
                                      (make-text-document-position-arguments point)))))))
 
 (define-command lsp-document-highlight () ()
-  (text-document/document-highlight (current-point)))
+  (when (mode-active-p (current-buffer) 'lsp-mode)
+    (text-document/document-highlight (current-point))))
+
+(defvar *document-highlight-idle-timer* nil)
+
+(defun enable-document-highlight-idle-timer ()
+  (unless *document-highlight-idle-timer*
+    (setf *document-highlight-idle-timer*
+          (start-idle-timer 500 t #'lsp-document-highlight))
+    (add-hook *post-command-hook* 'clear-document-highlight-overlays)))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))
@@ -730,7 +748,7 @@ Language Features
 - [X] typeDefinition
 - [X] implementation
 - [X] references
-- [ ] documentHighlight
+- [X] documentHighlight
 - [ ] documentSymbol
 - [ ] codeAction
 - [ ] codeLens

@@ -672,13 +672,16 @@
       (request:lsp-call-method
        (workspace-client workspace)
        (make-instance 'request:document-highlight
+                      :callback (lambda (value)
+                                  (send-event (lambda ()
+                                                (display-document-highlights (point-buffer point)
+                                                                             value))))
                       :params (apply #'make-instance
                                      'protocol:document-highlight-params
                                      (make-text-document-position-arguments point)))))))
 
 (define-command lsp-document-highlight () ()
-  (display-document-highlights (current-buffer)
-                               (text-document/document-highlight (current-point))))
+  (text-document/document-highlight (current-point)))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))

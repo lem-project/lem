@@ -32,25 +32,46 @@
 (defgeneric lsp-call-method (client request))
 
 (defvar *log-stream* nil)
+(defvar *log-mutex* (bt:make-lock))
 
 (defun do-log (string &rest args)
   (when *log-stream*
-    (fresh-line *log-stream*)
-    (apply #'format *log-stream* string args)
-    (terpri *log-stream*)))
+    (bt:with-lock-held (*log-mutex*)
+      (fresh-line *log-stream*)
+      (apply #'format *log-stream* string args)
+      (terpri *log-stream*))))
 
 (defun pretty-json (params)
   (with-output-to-string (stream)
     (yason:encode params (yason:make-json-output-stream stream))))
 
+(defun do-request-log (method params)
+  (do-log "request: ~A ~A" method (pretty-json params)))
+
+(defun do-response-log (response)
+  (do-log "response: ~A" (pretty-json response)))
+
+(defun do-error-response-log (condition)
+  (do-log "response: ~A" condition))
+
 (defun jsonrpc-call (jsonrpc method params)
   (handler-bind ((jsonrpc/errors:jsonrpc-callback-error
-                   (lambda (c)
-                     (do-log "response: ~A" c))))
-    (do-log "request: ~A ~A" method (pretty-json params))
+                   #'do-error-response-log))
+    (do-request-log method params)
     (let ((response (jsonrpc:call jsonrpc method params)))
-      (do-log "response: ~A" (pretty-json response))
+      (do-response-log response)
       response)))
+
+(defun jsonrpc-call-async (jsonrpc method params callback)
+  (handler-bind ((jsonrpc/errors:jsonrpc-callback-error
+                   #'do-error-response-log))
+    (do-request-log method params)
+    (jsonrpc:call-async jsonrpc
+                        method
+                        params
+                        (lambda (response)
+                          (do-response-log response)
+                          (funcall callback response)))))
 
 (defun jsonrpc-notify (jsonrpc method params)
   (do-log "notify: ~A ~A" method (pretty-json params))
@@ -69,14 +90,34 @@
     :initarg :response-class-name
     :reader request-response-class-name)))
 
+(defclass async-request (abstract-request)
+  ((response-class-name
+    :initarg :response-class-name
+    :reader request-response-class-name)
+   (callback
+    :initarg :callback
+    :initform (alexandria:required-argument :callback)
+    :reader async-request-callback)))
+
 (defclass notification (abstract-request)
   ())
 
+(defun coerce-response (request response)
+  (coerce-json response (request-response-class-name request)))
+
 (defmethod lsp-call-method (client (request request))
-  (coerce-json (jsonrpc-call (client-connection client)
-                             (request-method request)
-                             (object-to-json (request-params request)))
-               (request-response-class-name request)))
+  (coerce-response request
+                   (jsonrpc-call (client-connection client)
+                                 (request-method request)
+                                 (object-to-json (request-params request)))))
+
+(defmethod lsp-call-method (client (request async-request))
+  (jsonrpc-call-async (client-connection client)
+                      (request-method request)
+                      (object-to-json (request-params request))
+                      (lambda (response)
+                        (funcall (async-request-callback request)
+                                 (coerce-response request response)))))
 
 (defmethod lsp-call-method (client (request notification))
   (jsonrpc-notify (client-connection client)
@@ -164,7 +205,7 @@
                           (ts-array protocol:location)
                           null)))
 
-(defclass document-highlight (request)
+(defclass document-highlight (async-request)
   ((params :type protocol:document-highlight-params))
   (:default-initargs
    :method "textDocument/documentHighlight"
